@@ -44,6 +44,10 @@ No enumerar `intent_id` en orquestadores ni en prompts de IA para “elegir la a
 5. Cambiar opciones de encauzamiento: `assistant/prompts/ambiguous.yaml`.
 6. Cambiar prompt preprocess: `assistant/prompts/preprocess.yaml`.
 
+## Prompts de canal (2ª IA)
+
+Reglas **transversales** en `stable_prompt`; sin casos particulares ni registros globales de limitaciones. Ver [`asistente-prompts-sin-casos-particulares.mdc`](asistente-prompts-sin-casos-particulares.mdc).
+
 ## Excepciones
 
 - Umbrales técnicos del classifier (`RULES_MIN_SCORE`, márgenes).

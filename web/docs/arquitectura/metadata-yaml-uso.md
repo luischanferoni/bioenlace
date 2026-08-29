@@ -49,6 +49,7 @@ ADR: [captura-clinica-contratos-yii-vs-yaml.md](../decisions/captura-clinica-con
 
 - Intents, alias, scores NL y atajos: YAML + motores genéricos.
 - No poner `intent_id` fijos en orquestadores ni prompts.
+- **Prompts de canal** (`assistant/prompts/clinical.yaml`, `informational.yaml`, …): reglas transversales; **no** casos particulares. Los huecos de datos se expresan en **loaders** (campo `null`/ausente en el volcado), no en listas globales de limitaciones. Regla Cursor: `asistente-prompts-sin-casos-particulares.mdc`.
 - Lectura (“cuántos / listar / último X”): métrica DataAccess + YAML en `intents/read/` con params hidratados; pantallas que no caben van en `intents/read/flows/`. No reabrir `data-access.info|listar` como intents NL.
 
 Ver [asistente-motores.md](./asistente-motores.md), [asistente-lectura-data-access.md](./asistente-lectura-data-access.md) y [rbac-catalogo-permisos.md](./rbac-catalogo-permisos.md).

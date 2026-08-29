@@ -1,0 +1,51 @@
+---
+description: Prompts del asistente — reglas transversales, sin casos ni claves internas
+globs: web/common/metadata/bioenlace/assistant/prompts/**,web/docs/**/asistente*.md
+alwaysApply: false
+---
+
+# Asistente: prompts sin casos particulares
+
+Complementa [`asistente-routing-sin-hardcode.mdc`](asistente-routing-sin-hardcode.mdc) y [`metadata-yaml-uso.mdc`](metadata-yaml-uso.mdc).
+
+## Principio
+
+Los `stable_prompt` de canal (`clinical.yaml`, `informational.yaml`, …) llevan **reglas transversales de tono y uso de contexto**. **No** enumeran casos de negocio, claves técnicas, nombres de aspectos HIS ni predicados PHP.
+
+Si falta un dato concreto → **loader** (campo `null` o ausente en el volcado), artículo `info_content`, o regla de dominio — **no** un registro central de “limitaciones” ni una línea nueva en el prompt por cada hueco.
+
+## Qué SÍ va en el prompt
+
+- Cómo usar `context:his` y la fuente del artículo cuando exista.
+- Regla genérica: usar solo campos **presentes y no nulos**; no inventar; **no** citar `context:his` al usuario.
+- Tono: prudencia, no filtrar arquitectura interna al paciente.
+- En **preprocess** (`preprocess.yaml`): ejemplos de **intención del usuario** para elegir `user_goal` (p. ej. “llegar tarde” → informational) — clasificación de canal, no reglas de respuesta.
+
+## Qué NO va en el prompt ni en un registro global
+
+| Anti-patrón | Dónde va en su lugar |
+|-------------|----------------------|
+| Lista `limitations: [arrival_time_not_recorded_in_system, …]` | Loader devuelve el campo (`null` si no hay dato); prompt transversal “no inventes null/ausentes” |
+| Una regla en YAML por cada campo que falta | Mismo loader + regla transversal |
+| `if`-equivalente por intent, efector o pregunta frecuente | Artículo editorial, `ChatChannelPolicy`, servicio de dominio |
+| Explicar al usuario “no se registra en el sistema” | Copy prudente orientado al paciente |
+
+## Ejemplo
+
+```yaml
+# ❌ Caso particular (prompt o PHP)
+- Si limitations incluye arrival_time_not_recorded_in_system, no afirmes tolerancia de minutos.
+
+# ✅ Transversal (prompt)
+- Usá solo campos presentes y no nulos en context:his; no inventes valores para campos ausentes o null.
+- No menciones context:his ni detalles internos al usuario.
+- Si faltan datos, orientá con prudencia sin explicar por qué falta info a nivel técnico.
+```
+
+## Checklist al tocar `assistant/prompts/` o loaders HIS
+
+1. ¿La regla aplica a **más de un escenario**? Si no, no va en el prompt.
+2. ¿Menciona una clave técnica o un hueco puntual? Expresarlo en el **loader** (dato/null), no en lista global.
+3. ¿Es clasificación de canal? Solo en `preprocess.yaml` — no en `stable_prompt` de 2ª IA.
+
+Guía: [`web/docs/arquitectura/metadata-yaml-uso.md`](web/docs/arquitectura/metadata-yaml-uso.md) (§ Asistente — prompts).

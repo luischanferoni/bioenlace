@@ -59,11 +59,6 @@ final class AssistantContextAssemblyService
             return $result;
         }
 
-        $limitations = self::globalLimitations();
-        if ($limitations !== []) {
-            $payload['limitations'] = $limitations;
-        }
-
         $result->scopeApplied = array_merge($plan->anchors->toScopeArray(), ['aspects' => $scopeApplied]);
         $result->promptSection = AssistantContextFormatter::formatBlock($payload, $result->scopeApplied);
 
@@ -98,16 +93,6 @@ final class AssistantContextAssemblyService
     {
         self::$lastResult = null;
         AssistantContextAspectLoaderRegistry::resetForTests();
-    }
-
-    /**
-     * @return list<string>
-     */
-    private static function globalLimitations(): array
-    {
-        return [
-            'arrival_time_not_recorded_in_system',
-        ];
     }
 
     public static function isDebugEnabled(): bool

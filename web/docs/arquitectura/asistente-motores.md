@@ -139,6 +139,8 @@ MVP implementado: área `appointments` (cita actual, políticas del centro, setu
 
 Parámetros Yii: `asistente_context_max_aspects`, `asistente_context_max_chars`, `asistente_context_history_limit`, `asistente_context_debug` (envelope `context_applied`).
 
+**Volcado HIS y prompts:** cada loader expone lo que hay (incluido `null` si el dato no existe). La 2ª IA usa reglas transversales («solo campos no nulos; no inventar»). **No** mantener un registro global de limitaciones por hueco. Ver regla `asistente-prompts-sin-casos-particulares.mdc`.
+
 ADR: [decisions/asistente-contexto-his-areas-aspectos.md](../decisions/asistente-contexto-his-areas-aspectos.md). Producto: [asistente-y-chat.md](../producto/asistente-y-chat.md).
 
 ## Sinónimos de servicios (HintServiceSynonyms)

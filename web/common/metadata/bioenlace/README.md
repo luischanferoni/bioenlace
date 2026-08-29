@@ -70,4 +70,5 @@ Maestros vs metadata (runtime + cognitivo): [`web/docs/arquitectura/runtime-dato
 Contrato de pasos de intent: `common/components/Platform/Assistant/SubIntentEngine/schemas/SUBINTENT_CONTRACT.md`.
 
 Canal síntoma/trámite/menú: `ChatChannelPolicy` (PHP). Copy clinical: `assistant/prompts/clinical.yaml`.
+Prompts de canal: reglas transversales; huecos de datos en loaders (`null`), sin registro global de limitaciones (regla `asistente-prompts-sin-casos-particulares.mdc`).
 Booking CTA: `assistant/routing/booking-offer.yaml`.

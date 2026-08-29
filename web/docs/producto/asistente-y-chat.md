@@ -74,7 +74,7 @@ Reglas de producto:
 
 - Saludo solo o meta sin datos → `context_areas: []` → **sin loaders**.
 - El preprocess **no** elige aspectos ni SQL; PHP resuelve anclas y aspectos tras el preprocess.
-- El bloque en prompt es `--- context:his ---` con JSON; incluye `limitations` (p. ej. no afirmar tolerancia de llegada si el sistema no la registra).
+- El bloque en prompt es `--- context:his ---` con JSON de aspectos (valores reales o `null` si el loader no tiene el dato). Reglas transversales en el prompt; sin listas globales de “limitaciones”.
 - Canal **informational** sin artículo pero con áreas HIS: respuesta con IA + volcado (no mensaje genérico `no_article`).
 
 Detalle técnico: [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md) · ADR: [decisions/asistente-contexto-his-areas-aspectos.md](../decisions/asistente-contexto-his-areas-aspectos.md).

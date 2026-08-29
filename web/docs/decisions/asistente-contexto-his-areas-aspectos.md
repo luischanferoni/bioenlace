@@ -37,7 +37,8 @@ MVP: área `appointments` con cuatro aspectos implementados. Otras áreas declar
 ## Consecuencias
 
 - Nuevos datos HIS para el asistente: definir aspecto en enum, loader en dominio, registro en `assistantContextAspectLoaders`; opcional ampliar mapa área→aspectos en `AssistantContextAreaAspectResolver`.
-- Prompts `clinical.yaml` / `informational.yaml` referencian bloque `context:his` y `limitations`.
+- Prompts `clinical.yaml` / `informational.yaml`: bloque `context:his` con reglas **transversales** (usar solo datos no nulos del volcado).
+- **Descartado:** registro central `limitations[]` por cada dato que el sistema aún no expone — escala mal; el loader ya señala ausencia con `null`/campo omitido.
 - Debug QA: `asistente_context_debug` adjunta `context_applied` al envelope público.
 - Parámetros de cap: `asistente_context_max_aspects`, `asistente_context_max_chars`, `asistente_context_history_limit`.
 

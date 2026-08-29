@@ -13,7 +13,7 @@ use common\traits\LegacyIdConsultaAsEncounterColumnTrait;
  *
  * @property-read Encounter|null $encounter
  * @property-read BeneficiarioSumar|null $beneficiario
- * @property-read \common\models\Persona|null $profesionalPersona Persona del profesional vía PES.
+ * @property-read \common\models\Person\Persona|null $profesionalPersona Persona del profesional vía PES.
  * @property-read ProfesionalEfectorServicio|null $profesionalEfectorServicio
  */
 class Autofacturacion extends \yii\db\ActiveRecord
@@ -96,7 +96,7 @@ class Autofacturacion extends \yii\db\ActiveRecord
 
     public function getProfesionalPersona()
     {
-        return $this->hasOne(\common\models\Persona::className(), ['id_persona' => 'id_persona'])
+        return $this->hasOne(\common\models\Person\Persona::className(), ['id_persona' => 'id_persona'])
             ->viaTable(ProfesionalEfectorServicio::tableName(), ['id' => 'id_profesional_efector_servicio']);
     }
 

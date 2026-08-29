@@ -4,7 +4,7 @@ namespace common\components\Domain\Organization\Service\ProfesionalEfectorServic
 
 use common\components\Domain\Scheduling\Service\TurnoIndisponibilidadImpactService;
 use common\models\ProfesionalEfectorServicio as ProfesionalEfectorServicioModel;
-use common\models\Turno;
+use common\models\Scheduling\Turno;
 use Yii;
 
 /**

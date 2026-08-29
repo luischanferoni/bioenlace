@@ -87,7 +87,7 @@ class PersonaTelefono extends \yii\db\ActiveRecord
         parent::beforeSave($insert);
         extract($_GET);
 
-        var_dump( $model_persona = new \common\models\Persona());
+        var_dump( $model_persona = new \common\models\Person\Persona());
         $model_persona->load(Yii::$app->request->post());
              
         if ($insert) {

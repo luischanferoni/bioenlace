@@ -3,7 +3,7 @@
 namespace common\components\Domain\Scheduling\Service;
 
 use common\models\Clinical\Encounter;
-use common\models\Persona;
+use common\models\Person\Persona;
 use Yii;
 
 /**

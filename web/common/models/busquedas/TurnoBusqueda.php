@@ -5,12 +5,12 @@ namespace common\models\busquedas;
 use Yii;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
-use common\models\Turno;
+use common\models\Scheduling\Turno;
 use common\models\ProfesionalEfectorServicio;
 use common\models\ServiciosEfector;
 
 /**
- * TurnoBusqueda represents the model behind the search form about `common\models\Turno`.
+ * TurnoBusqueda represents the model behind the search form about `common\models\Scheduling\Turno`.
  */
 class TurnoBusqueda extends Turno
 {

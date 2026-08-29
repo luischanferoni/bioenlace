@@ -11,7 +11,7 @@ use common\models\Clinical\MedicationRequest;
 use common\models\Clinical\ServiceRequest;
 use common\components\Domain\Clinical\Prescription\Enum\PrescriptionLegalStatus;
 use common\models\Efector;
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio;
 
 /**

@@ -56,7 +56,6 @@ final class DemoSandboxPurgeService
         '{{%care_followup_response}}',
         '{{%care_pack_job}}',
         '{{%agent_run}}',
-        '{{%snomed_deferred_jobs}}',
         '{{%persona_antecedentes}}',
         '{{%practicas_personas}}',
         '{{%practicas_personas_viejo}}',

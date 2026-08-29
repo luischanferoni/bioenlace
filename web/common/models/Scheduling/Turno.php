@@ -13,7 +13,7 @@ use Yii;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
 use yii\helpers\Url;
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\traits\ParameterQuestionsTrait;
 
 

@@ -1,6 +1,6 @@
 # Grupos de presentación + permisos por atributo (read / info / edit).
 entity: Persona
-model: common\models\Persona
+model: common\models\Person\Persona
 
 attributes:
   nombre:

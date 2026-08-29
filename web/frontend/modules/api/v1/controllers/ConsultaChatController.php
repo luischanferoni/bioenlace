@@ -12,7 +12,7 @@ use common\components\Domain\Scheduling\Service\ConsultaAsyncChatPolicyService;
 use common\components\Domain\Scheduling\Service\ConsultaAsyncEncounterMetaService;
 use common\components\Domain\Scheduling\Service\ConsultaAsyncIntakeContextService;
 use common\models\Clinical\Encounter;
-use common\models\Persona;
+use common\models\Person\Persona;
 use frontend\modules\api\v1\controllers\clinical\ClinicalAccessTrait;
 use Yii;
 use yii\web\UploadedFile;

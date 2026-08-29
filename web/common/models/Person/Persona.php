@@ -14,7 +14,7 @@ use common\models\PersonasAntecedente;
 use common\models\ProfesionalSalud;
 use common\models\SegNivelInternacion;
 use common\models\Tipo_documento;
-use common\models\Turno;
+use common\models\Scheduling\Turno;
 use common\models\User;
 
 /**

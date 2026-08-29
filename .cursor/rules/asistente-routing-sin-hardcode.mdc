@@ -32,7 +32,7 @@ No enumerar `intent_id` en orquestadores ni en prompts de IA para “elegir la a
 | Copy UX por perfil | `assistant/copy/channel-copy.yaml` |
 | Familias NL / hints | `assistant/routing/intent-families.yaml`, `hint-resolution.yaml` |
 | ¿Síntoma o turno? ¿Menú? ¿Staff list/edit? | `ChatChannelPolicy` (PHP) |
-| Alias legacy | `assistant/intent-aliases.yaml` (path vigente) |
+| Alias legacy de `user_goal` (preprocess) | `ChatPreprocessService::canonicalizeGoal()` |
 | Atajos visibles | `assistant/assistant-shortcuts.yaml` |
 
 ## Al agregar routing NL

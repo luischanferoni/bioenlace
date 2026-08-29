@@ -67,7 +67,7 @@ class Persona_mails extends \yii\db\ActiveRecord
         parent::beforeSave($insert);
         extract($_GET);
 
-        $model_persona = new \common\models\Persona();
+        $model_persona = new \common\models\Person\Persona();
         $model_persona->load(Yii::$app->request->post());
              
         if ($insert) {

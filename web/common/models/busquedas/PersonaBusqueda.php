@@ -5,10 +5,10 @@ namespace common\models\busquedas;
 use Yii;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
-use common\models\Persona;
+use common\models\Person\Persona;
 
 /**
- * PersonaBusqueda represents the model behind the search form about `common\models\Persona`.
+ * PersonaBusqueda represents the model behind the search form about `common\models\Person\Persona`.
  */
 class PersonaBusqueda extends Persona
 {

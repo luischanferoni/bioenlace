@@ -3,10 +3,10 @@
 namespace common\models\Clinical;
 
 use common\components\Domain\Clinical\Enum\EncounterStatus;
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio;
 use common\models\Efector;
-use common\models\Turno;
+use common\models\Scheduling\Turno;
 use Yii;
 use yii\db\ActiveRecord;
 
@@ -58,7 +58,7 @@ class Encounter extends ActiveRecord
     const WORKFLOW_STEP_FINALIZED = 999;
 
     const PARENT_CLASSES = [
-        self::PARENT_TURNO => '\common\models\Turno',
+        self::PARENT_TURNO => '\common\models\Scheduling\Turno',
         self::PARENT_DERIVACION => '\common\models\ConsultaDerivaciones',
         self::PARENT_INTERNACION => '\common\models\SegNivelInternacion',
         self::PARENT_GENERICO_AMB => '\common\models\GenericoAMB',
@@ -130,7 +130,7 @@ class Encounter extends ActiveRecord
         }
 
         $class = self::PARENT_CLASSES[$this->parent_type] ?? null;
-        if ($class === Turno::class || $class === '\common\models\Turno') {
+        if ($class === Turno::class) {
             return $this->hasOne(Turno::class, ['id_turnos' => 'parent_id']);
         }
         if ($class !== null && class_exists($class)) {

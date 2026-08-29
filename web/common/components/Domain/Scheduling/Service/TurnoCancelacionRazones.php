@@ -4,7 +4,7 @@ namespace common\components\Domain\Scheduling\Service;
 
 /**
  * Razones declaradas al cancelar un turno (texto orientado a usuario).
- * No reemplazan {@see \common\models\Turno::estado_motivo} de rol (paciente vs médico/efector): ese valor
+ * No reemplazan {@see \common\models\Scheduling\Turno::estado_motivo} de rol (paciente vs médico/efector): ese valor
  * lo fija el flujo (p. ej. autogestión paciente → siempre CANCELADO_X_PACIENTE).
  *
  * Los códigos de esta clase se envían en POST como `razon_cancelacion` y se persisten en

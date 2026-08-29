@@ -1,7 +1,7 @@
 <?php
 
 use yii\db\Migration;
-use common\models\Turno;
+use common\models\Scheduling\Turno;
 
 /**
  * Agrega tipo_atencion a turnos y acepta_consultas_online a agenda_rrhh para chat paciente-médico.

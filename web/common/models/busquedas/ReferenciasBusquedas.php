@@ -4,7 +4,7 @@ namespace common\models\busquedas;
 
 use common\models\Clinical\Encounter;
 use common\models\Referencia;
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio;
 use common\models\User;
 use Yii;

@@ -8,7 +8,7 @@ use common\components\Platform\Core\Permission\Domain\DomainOperationContext;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Platform\Core\Permission\Domain\DomainOperationPolicyCatalog;
 use common\components\Platform\Core\Permission\Domain\DomainOperationPolicyRegistry;
-use common\models\Turno;
+use common\models\Scheduling\Turno;
 
 class DomainOperationAuthorizerTest extends Unit
 {

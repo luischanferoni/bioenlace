@@ -2,7 +2,7 @@
 # Operaciones de negocio (crear, cancelar, reubicar, …) vía intents turnos.* en metadata/assistant/intents/.
 # Candidato a métrica list (sujeto = persona de sesión): última/listado paciente filtrado por oferta (id_servicio), alcance, limit.
 entity: Turno
-model: common\models\Turno
+model: common\models\Scheduling\Turno
 
 # Atributos mutados solo por flows (no declarar en edit disperso).
 flow_only_attributes:

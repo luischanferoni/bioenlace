@@ -63,7 +63,8 @@ Para otro rubro: nuevo `Domain/`, metadata y registries; **`Platform/`** se mant
 | Guardia, triage | `Domain/Clinical/Emergency/Service/` |
 | Mapa camas, ingreso internación | `Domain/Clinical/Inpatient/Service/` |
 | Encounter, care plan | `Domain/Clinical/Service/` |
-| Turno, agenda | `Domain/Scheduling/Service/` |
+| Persona, registro | `Domain/Person/Service/` · AR: `Person/Persona.php` |
+| Turno, agenda | `Domain/Scheduling/Service/` · AR: `Scheduling/Turno.php` |
 | Efector, PES | `Domain/Organization/Service/` |
 | Motor asistente / flow genérico | `Platform/Assistant/` |
 | Intent / YAML producto | `common/metadata/bioenlace/assistant/` |

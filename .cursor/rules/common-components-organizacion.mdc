@@ -2,15 +2,17 @@
 description: Organización de web/common/components — Platform vs Domain
 globs:
   - web/common/components/**
+  - web/common/models/**
 alwaysApply: false
 ---
 
 # common/components: Platform vs Domain
 
-**Antes de crear, mover o refactorizar** cualquier archivo bajo `web/common/components/`, leer:
+**Antes de crear, mover o refactorizar** cualquier archivo bajo `web/common/components/` o `web/common/models/`, leer:
 
 - [web/docs/arquitectura/common-components.md](web/docs/arquitectura/common-components.md)
 - [web/common/components/README.md](web/common/components/README.md)
+- [web/common/README.md](web/common/README.md) (modelos AR)
 
 ## Dos capas
 
@@ -28,6 +30,12 @@ Metadata producto: `web/common/metadata/bioenlace/`. Cableado: `web/common/confi
 - **Quirófano** → `Domain/Scheduling/Service/Quirofano/`.
 - **`Platform/Assistant/`**: motores; el rubro en metadata + registries, no en switches PHP.
 - **Services sin HTTP**: no `*HttpException`, HTML ni flash en `*/Service/`.
+
+## Modelos AR (`web/common/models/`)
+
+- Rutas canónicas: `Person/Persona.php`, `Scheduling/Turno.php`, `Clinical/*`, `Terminology/Snomed/*`.
+- **No** crear alias `@deprecated` en la raíz de `models/` (`Persona.php`, `Turno.php` retirados).
+- Referencias en código, DataAccess YAML y tests: namespace completo (`common\models\Person\Persona`, `common\models\Scheduling\Turno`).
 
 ## Regla práctica
 

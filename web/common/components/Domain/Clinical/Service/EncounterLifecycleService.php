@@ -12,7 +12,7 @@ use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio;
 use common\models\Scheduling\Turno;
-use common\models\Turno as TurnoAlias;
+use common\models\Scheduling\Turno as TurnoAlias;
 use Yii;
 
 final class EncounterLifecycleService

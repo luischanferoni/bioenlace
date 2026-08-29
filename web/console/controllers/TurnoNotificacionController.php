@@ -5,7 +5,7 @@ namespace console\controllers;
 use Yii;
 use yii\console\Controller;
 use common\models\TurnoNotificacionProgramada;
-use common\models\Turno;
+use common\models\Scheduling\Turno;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\components\Platform\Core\Service\Push\FcmPushConfig;
 use common\components\Domain\Scheduling\Service\TurnoReminderContentBuilder;

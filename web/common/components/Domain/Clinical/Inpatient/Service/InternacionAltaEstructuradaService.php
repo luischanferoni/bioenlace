@@ -25,7 +25,7 @@ final class InternacionAltaEstructuradaService
     {
         $paciente = $internacion->paciente;
         $nombre = $paciente && method_exists($paciente, 'getNombreCompleto')
-            ? $paciente->getNombreCompleto(\common\models\Persona::FORMATO_NOMBRE_A_N)
+            ? $paciente->getNombreCompleto(\common\models\Person\Persona::FORMATO_NOMBRE_A_N)
             : 'Paciente';
 
         $pesId = (int) (\Yii::$app->user->getIdProfesionalEfectorServicio() ?? 0);
@@ -183,6 +183,6 @@ final class InternacionAltaEstructuradaService
             return null;
         }
 
-        return $pes->persona->getNombreCompleto(\common\models\Persona::FORMATO_NOMBRE_A_N);
+        return $pes->persona->getNombreCompleto(\common\models\Person\Persona::FORMATO_NOMBRE_A_N);
     }
 }

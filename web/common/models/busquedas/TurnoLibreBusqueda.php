@@ -2,15 +2,15 @@
 
 namespace common\models\busquedas;
 
-use common\models\Persona;
+use common\models\Person\Persona;
 use Yii;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
-use common\models\Turno;
+use common\models\Scheduling\Turno;
 use common\models\ServiciosEfector;
 
 /**
- * TurnoBusqueda represents the model behind the search form about `common\models\Turno`.
+ * TurnoBusqueda represents the model behind the search form about `common\models\Scheduling\Turno`.
  */
 class TurnoLibreBusqueda extends Turno
 {

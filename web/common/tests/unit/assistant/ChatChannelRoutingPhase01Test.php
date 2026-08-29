@@ -7,17 +7,20 @@ use common\components\Platform\Assistant\Chat\Channels\Ambiguous\AmbiguousChanne
 use common\components\Platform\Assistant\Chat\Channels\Ambiguous\AmbiguousChannelConfig;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
 use common\components\Platform\Assistant\Chat\Routing\ChatRouter;
+use common\components\Platform\Assistant\Chat\Thread\AssistantThreadStateService;
 
 class ChatChannelRoutingPhase01Test extends Unit
 {
     protected function _before()
     {
         AmbiguousChannelConfig::resetCacheForTests();
+        AssistantThreadStateService::resetCacheForTests();
     }
 
     protected function _after()
     {
         AmbiguousChannelConfig::resetCacheForTests();
+        AssistantThreadStateService::resetCacheForTests();
     }
 
     public function testCanonicalizeGoalAliases(): void
@@ -90,5 +93,26 @@ class ChatChannelRoutingPhase01Test extends Unit
             )
         );
         $this->assertFalse(AmbiguousChannelConfig::isSteerIntentId('atencion.necesito-atencion'));
+    }
+
+    public function testLateArrivalPolicyQuestionDoesNotForceAmbiguousAfterClinicalThread(): void
+    {
+        $msg = 'voy a tener problemas si llego 10min tarde al turno?';
+
+        AssistantThreadStateService::observe(42, 'clinical', 'me duele la cabeza');
+
+        $observed = AssistantThreadStateService::observe(42, 'informational', $msg);
+
+        $this->assertSame('informational', $observed['goal']);
+        $this->assertSame('product_help', $observed['thread_tag']);
+    }
+
+    public function testDispatchLateArrivalPolicyQuestionIsNotAmbiguousSteering(): void
+    {
+        $msg = 'voy a tener problemas si llego 10min tarde al turno?';
+        $out = ChatRouter::dispatchByGoal('informational', $msg, 0);
+
+        $this->assertNotSame('interactive', $out['kind'] ?? null);
+        $this->assertStringNotContainsString('Es sobre mi salud o malestar', (string) ($out['text'] ?? ''));
     }
 }

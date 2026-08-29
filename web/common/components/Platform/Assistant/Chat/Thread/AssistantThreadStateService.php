@@ -64,7 +64,10 @@ final class AssistantThreadStateService
         if ($diverted) {
             $clearHistory = true;
             $confidence = 0.0;
-            if (self::shouldForceAmbiguous($incomingTag)) {
+            if (
+                self::shouldForceAmbiguous($incomingTag)
+                && !ChatChannelPolicy::isAppointmentPolicyQuestion($content)
+            ) {
                 $goal = 'ambiguous';
                 $incomingTag = self::tagFromGoal($goal);
             }

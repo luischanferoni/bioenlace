@@ -65,7 +65,8 @@ final class ChatRouter
         \common\components\Platform\Assistant\Chat\ChatPreprocessContext::set($preprocess);
 
         $observed = AssistantThreadStateService::observe($userId, $goal, $content);
-        $goal = $observed['goal'];
+        // observe() puede forzar ambiguous por desvío de hilo; re-aplicar refinamiento HIS.
+        $goal = self::refineGoalForHisContext($observed['goal'], $content, $preprocess);
         $preprocess['user_goal'] = $goal;
         \common\components\Platform\Assistant\Chat\ChatPreprocessContext::set($preprocess);
 
@@ -154,6 +155,10 @@ final class ChatRouter
         if (ChatChannelPolicy::isAppointmentPolicyQuestion($content)) {
             $areas = array_values(array_unique(array_merge($areas, [AssistantContextHISArea::APPOINTMENTS])));
             $preprocess['context_areas'] = $areas;
+
+            if (!ChatChannelPolicy::requestsOperationalTramiteExecution($content)) {
+                return 'informational';
+            }
         }
 
         if ($areas === []) {
@@ -161,10 +166,6 @@ final class ChatRouter
         }
 
         if ($goal === 'operational' && !ChatChannelPolicy::requestsOperationalTramiteExecution($content)) {
-            return 'informational';
-        }
-
-        if ($goal === 'ambiguous' && ChatChannelPolicy::isAppointmentPolicyQuestion($content)) {
             return 'informational';
         }
 

@@ -425,9 +425,23 @@ Smoke WhatsApp: [asistente-whatsapp.md](./asistente-whatsapp.md).
 | [ ] | Cómo saco turno     | *«¿Cómo saco un turno?»*                                           | **Hoy**   | Informational (artículo turnos) **o** operational si pide ejecutar; no mezclar |
 | [ ] | Qué es Bioenlace    | *«¿Qué es Bioenlace?»* / *«¿Para qué sirve la app?»*               | **Hoy**   | Artículo `que_es_bioenlace` (puede no tener CTA único) |
 | [ ] | Pre-consulta (concepto) | *«¿Para qué son las preguntas antes del turno?»*               | **Hoy** / **Futuro** | Artículo concepto pre-consulta + CTA al flow; **no** explicar pregunta a pregunta del pack |
-| [ ] | Llegar tarde al turno   | *«¿Voy a tener problemas si llego 10 min tarde al turno?»*        | **Hoy**   | Informational + volcado HIS (`appointments`); respuesta prudente; **no** prometer que esperan; **no** mencionar limitaciones internas del sistema al usuario |
+| [ ] | Llegar tarde al turno   | *«¿Voy a tener problemas si llego 10 min tarde al turno?»* / *«voy a tener problemas si llego 10min tarde al turno?»* | **Hoy**   | Informational + volcado HIS (`appointments`); respuesta prudente; **no** prometer que esperan; **no** mencionar limitaciones internas del sistema al usuario; CTAs de **agenda**, no Solicitar Atención (ver respuestas de referencia abajo) |
 | [ ] | Saludo solo             | *«Hola»* / *«Buen día»*                                         | **Hoy**   | Informational corto; `context_areas` vacío → **sin** volcado HIS ni loaders |
 | [ ] | Pregunta citas sin guía | *«¿Puedo cancelar el turno de mañana?»* (sin artículo)          | **Hoy**   | Informational + HIS si preprocess activó `appointments`; no inventar políticas del centro |
+
+#### Llegar tarde al turno — respuestas de referencia
+
+**Payload de smoke (en frío):** *«voy a tener problemas si llego 10min tarde al turno?»*
+
+**Qué hace el sistema:** canal informational; preprocess activa área `appointments`; PHP carga turno pendiente del paciente autenticado (si hay), políticas del efector de ese turno y setup de agenda. Hoy no hay tolerancia de llegada registrada por centro (`late_arrival_tolerance_minutes` ausente en BD) → **no** afirmar minutos concretos.
+
+**Qué no deberías ver:** botones *Solicitar Atención* ni CTAs clínicos; meta-explicaciones del tipo “no se registra en el sistema”; promesa de que “te esperan 10 minutos”.
+
+| Escenario | Respuesta ideal (tono, no texto fijo) |
+| --------- | ------------------------------------- |
+| **A — Con turno pendiente** (ej. martes 10:00, CIS Banda, Medicina general) | Mencionar **fecha, hora, centro y servicio** del turno cargado. Decir que **no puede confirmarse** desde la app si 10 min de demora serán un problema (depende del centro/profesional). Recomendar **llegar a horario**; si se demora, **contactar al centro** o **reprogramar** si aún está a tiempo. CTAs: *Ver mis turnos* / *Reprogramar* — **no** Solicitar Atención. |
+| **B — Sin turnos pendientes** | Indicar que **no hay turnos pendientes** en la cuenta. Si la cita es por otro canal, la puntualidad la define cada centro. Consejo general: llegar unos minutos antes; si se demora, avisar al centro. CTA opcional: *Sacar turno* o *Ver mis turnos*. |
+| **C — Con tolerancia registrada** (futuro: ej. 15 min en políticas del efector) | Anclar al turno concreto del paciente. Citar la **tolerancia del centro** (ej. “hasta 15 minutos”). Si puede llegar más tarde, sugerir **avisar** o **mover el turno**. **No** inventar el número si el volcado HIS no lo trae. |
 
 La queja **no** es para síntomas ni urgencias. Saludo solo: ver §1 casos borde.
 

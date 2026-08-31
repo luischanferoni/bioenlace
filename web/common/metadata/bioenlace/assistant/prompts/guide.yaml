@@ -36,18 +36,6 @@ stable_prompt: |
   {block_his}
   {block_intent_semantics}
 
-messages:
-  intro: >-
-    Soy el asistente del portal: te ayudo con gestiones y con dudas sobre cómo usar el sistema.
-    Contame qué necesitás.
-  ia_failed: >-
-    No pudimos generar una respuesta en este momento. Probá de nuevo en unos segundos.
-  no_article: >-
-    No encontré una guía sobre eso. Reformulá la pregunta
-    (por ejemplo: cómo sacar un turno) o pedime el trámite concreto.
-  capability_menu_intro: >-
-    Estas son algunas cosas que podés hacer. Elegí una opción o contame qué necesitás.
-
 source_injection:
   header: 'Artículo de ayuda (verdad para pasos del trámite; el volcado HIS complementa datos personales):'
   title_line: 'Título: {title}'

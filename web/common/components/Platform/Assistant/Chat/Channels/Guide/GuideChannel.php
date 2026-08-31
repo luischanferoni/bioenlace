@@ -45,23 +45,11 @@ final class GuideChannel
     }
 
     if (ChatChannelPolicy::isCapabilityMenuQuery($content)) {
-      return self::capabilityMenu($userId);
+      return AmbiguousChannel::handle();
     }
 
     if ($content === '') {
       return AmbiguousChannel::handle();
-    }
-
-    if (
-      ChatChannelPolicy::isGreetingOnly($content)
-      && ChatPreprocessContext::contextAreas() === []
-    ) {
-      return AssistantEnvelope::message(
-        GuideChannelConfig::message(
-          'intro',
-          'Soy el asistente de Bioenlace. Contame qué necesitás.'
-        )
-      );
     }
 
     return self::handleWithGuideIa($content, $userId, $formattedHistory);
@@ -279,10 +267,7 @@ final class GuideChannel
   {
     return [
       'success' => false,
-      'error' => GuideChannelConfig::message(
-        'ia_failed',
-        'No pudimos generar una respuesta en este momento. Probá de nuevo en unos segundos.'
-      ),
+      'error' => 'No pudimos generar una respuesta en este momento. Probá de nuevo en unos segundos.',
     ];
   }
 
@@ -309,29 +294,6 @@ final class GuideChannel
 
     return AssistantContextAssemblyService::attachDebugIfEnabled(
       AssistantEnvelope::interactive($text, [$button])
-    );
-  }
-
-  /**
-   * @return array<string, mixed>
-   */
-  private static function capabilityMenu(int $userId): array
-  {
-    $catalog = UiActionCatalog::forUser($userId);
-    $buttons = [];
-    foreach (array_slice($catalog->items, 0, 8) as $it) {
-      $buttons[] = [
-        'label' => $it->display_name !== '' ? $it->display_name : $it->action_id,
-        'intent_id' => $it->action_id,
-      ];
-    }
-
-    return AssistantEnvelope::interactive(
-      GuideChannelConfig::message(
-        'capability_menu_intro',
-        'Estas son algunas cosas que podés hacer. Elegí una opción o contame qué necesitás.'
-      ),
-      $buttons
     );
   }
 

@@ -76,13 +76,6 @@ final class GuideChannelConfig
         return $out;
     }
 
-    public static function message(string $key, string $default = ''): string
-    {
-        $text = AssistantMetadataLoader::dotString(self::load(), 'messages.' . $key);
-
-        return $text !== '' ? $text : $default;
-    }
-
     public static function formatSourceBlock(string $title, string $body): string
     {
         $title = trim($title);

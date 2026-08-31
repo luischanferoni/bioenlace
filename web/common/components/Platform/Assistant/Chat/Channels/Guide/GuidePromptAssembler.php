@@ -4,6 +4,7 @@ namespace common\components\Platform\Assistant\Chat\Channels\Guide;
 
 use common\components\Domain\Clinical\AiContext\PatientAiContextBuilder;
 use common\components\Platform\Assistant\Context\AssistantContextAssemblyService;
+use common\components\Platform\Assistant\Context\AssistantContextHISArea;
 use common\components\Platform\Assistant\Chat\ChatPreprocessContext;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalog;
 use Yii;
@@ -27,9 +28,19 @@ final class GuidePromptAssembler
     $content = trim($content);
     $parts = [rtrim(GuideChannelConfig::stablePrompt())];
 
+    $focusLine = self::formatFocusAreasLine($focus);
+    if ($focusLine !== '') {
+      $parts[] = '';
+      $parts[] = $focusLine;
+    }
+
     $clinicalBlock = self::formatClinicalRecordBlock();
     if ($clinicalBlock !== '') {
       $parts[] = '';
+      $parts[] = GuideChannelConfig::promptFragment(
+        'block_clinical_record',
+        'Historia clínica resumida del paciente autenticado (referencia; no inventar):'
+      );
       $parts[] = '--- context:clinical_record ---';
       $parts[] = $clinicalBlock;
       $parts[] = '--- end context:clinical_record ---';
@@ -38,6 +49,10 @@ final class GuidePromptAssembler
     $hisContext = AssistantContextAssemblyService::assembleForChannel('guide', $userId);
     if (!$hisContext->isEmpty()) {
       $parts[] = '';
+      $parts[] = GuideChannelConfig::promptFragment(
+        'block_his',
+        'Datos del sistema sobre el paciente y el centro para el ámbito indicado:'
+      );
       $parts[] = $hisContext->promptSection;
     }
 
@@ -45,6 +60,10 @@ final class GuidePromptAssembler
     $semantics = GuideIntentSemanticsFilter::formatPromptSection($catalog, $focus->activeAreas);
     if ($semantics !== '') {
       $parts[] = '';
+      $parts[] = GuideChannelConfig::promptFragment(
+        'block_intent_semantics',
+        'Funcionalidades que este usuario puede ejecutar en la app:'
+      );
       $parts[] = $semantics;
     }
 
@@ -113,5 +132,29 @@ final class GuidePromptAssembler
       $idPersona,
       PatientAiContextBuilder::PROFILE_GUIDE
     );
+  }
+
+  private static function formatFocusAreasLine(GuideFocusState $focus): string
+  {
+    $areas = $focus->activeAreas;
+    if ($areas === []) {
+      $areas = ChatPreprocessContext::contextAreas();
+    }
+    if ($areas === []) {
+      return '';
+    }
+
+    $sorted = AssistantContextHISArea::sortByProductPriority($areas);
+    $header = GuideChannelConfig::promptFragment(
+      'focus_areas_header',
+      'Ámbito de la consulta (según preprocess):'
+    );
+    $lines = [$header];
+    foreach ($sorted as $area) {
+      $desc = AssistantContextHISArea::description($area);
+      $lines[] = $desc !== '' ? '- ' . $area . ' — ' . $desc : '- ' . $area;
+    }
+
+    return implode("\n", $lines);
   }
 }

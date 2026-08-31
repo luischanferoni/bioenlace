@@ -72,7 +72,7 @@ class GuidePromptAssemblerTest extends Unit
             null
         );
 
-        $this->assertStringContainsString('sistema de salud', $prompt);
+        $this->assertStringContainsString('portal del paciente', $prompt);
         $this->assertStringContainsString('context:intent_semantics', $prompt);
         $this->assertStringContainsString('turnos.crear-como-paciente', $prompt);
         $this->assertStringContainsString('Mensaje actual del paciente:', $prompt);

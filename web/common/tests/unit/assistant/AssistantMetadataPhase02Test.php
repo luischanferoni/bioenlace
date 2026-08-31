@@ -44,8 +44,8 @@ class AssistantMetadataPhase02Test extends Unit
     public function testGuidePromptIncludesPerimetro(): void
     {
         $prompt = GuideChannelConfig::stablePrompt();
-        $this->assertStringContainsString('sistema de salud', $prompt);
-        $this->assertStringContainsString('context:his', $prompt);
+        $this->assertStringContainsString('portal del paciente', $prompt);
+        $this->assertStringContainsString('Datos del sistema', GuideChannelConfig::promptFragment('block_his', ''));
     }
 
     public function testBookingOfferFromRoutingYaml(): void

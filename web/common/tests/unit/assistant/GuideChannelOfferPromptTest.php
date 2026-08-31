@@ -51,7 +51,7 @@ class GuideChannelOfferPromptTest extends Unit
     {
         $prompt = GuideChannel::buildPrompt('me duele la cabeza', 0, null, '');
         verify($prompt)->stringContainsString('me duele la cabeza');
-        verify($prompt)->stringContainsString('sistema de salud');
+        verify($prompt)->stringContainsString('portal del paciente');
     }
 
     public function testFormatPreprocessFacts(): void
@@ -75,7 +75,8 @@ class GuideChannelOfferPromptTest extends Unit
     public function testStablePromptFromGuideYaml(): void
     {
         $prompt = GuideChannelConfig::stablePrompt();
-        verify($prompt)->stringContainsString('Bioenlace');
-        verify($prompt)->stringContainsString('context:his');
+        verify($prompt)->stringContainsString('portal del paciente');
+        verify($prompt)->notContainsString('Bioenlace');
+        verify($prompt)->stringContainsString('bloques');
     }
 }

@@ -6,11 +6,11 @@ prompt_fragments:
   offer_block_title: Oferta disponible
   focus_areas_header: 'Ámbito de la consulta (según preprocess):'
   block_clinical_record: >-
-    Historia clínica resumida del paciente autenticado (referencia; no inventar ni extraer salvo indicación):
+    Historia clínica resumida del paciente autor de la consulta:
   block_his: >-
-    Datos del sistema sobre el paciente y el centro para el ámbito indicado (usar solo campos presentes y no nulos):
+    Registros de la base de datos sobre el paciente:
   block_intent_semantics: >-
-    Funcionalidades que este usuario puede ejecutar en la app (resúmenes; no prometer pasos fuera de lo declarado):
+    Funcionalidades que este usuario puede ejecutar en el sistema:
   conversation_header: 'Conversación previa (más antigua → más reciente):'
   continuation_hint: 'Continuación: respondé al mensaje actual; no repitas la misma apertura empática ni recontés el síntoma.'
   current_message_header: 'Mensaje actual del paciente:'

@@ -261,16 +261,29 @@ final class GuideChannel
       }
     } catch (\Throwable $e) {
       Yii::warning('GuideChannel: ' . $e->getMessage(), 'asistente');
+
+      return self::iaFailureEnvelope();
     }
 
     if ($text === null || $text === '') {
-      $text = GuideChannelConfig::message(
-        'no_article',
-        GuideChannelConfig::emptyResponseFallback()
-      );
+      return self::iaFailureEnvelope();
     }
 
     return self::finalizeResponse($text, $offer, $origin);
+  }
+
+  /**
+   * @return array{success: false, error: string}
+   */
+  public static function iaFailureEnvelope(): array
+  {
+    return [
+      'success' => false,
+      'error' => GuideChannelConfig::message(
+        'ia_failed',
+        'No pudimos generar una respuesta en este momento. Probá de nuevo en unos segundos.'
+      ),
+    ];
   }
 
   /**

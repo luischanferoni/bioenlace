@@ -100,6 +100,9 @@ final class InfoContentAssistantService
         $body = trim((string) $article->body);
         $title = trim((string) $article->title);
         $text = self::generateAnswer($userQuestion, $title, $body, $userId);
+        if ($text === null) {
+            return GuideChannel::iaFailureEnvelope();
+        }
         $buttons = self::ctaButtons($article, $userId);
 
         if ($buttons === []) {
@@ -113,17 +116,12 @@ final class InfoContentAssistantService
         );
     }
 
-    private static function generateAnswer(string $userQuestion, string $title, string $body, int $userId): string
+    private static function generateAnswer(string $userQuestion, string $title, string $body, int $userId): ?string
     {
-        $fallback = $title !== '' ? "**{$title}**\n\n{$body}" : $body;
         $prompt = self::buildArticlePrompt($userQuestion, $title, $body, $userId);
-
         $text = self::consultGuideIa($prompt);
-        if ($text !== '') {
-            return $text;
-        }
 
-        return $fallback;
+        return $text !== '' ? $text : null;
     }
 
     private static function consultGuideIa(string $prompt): string

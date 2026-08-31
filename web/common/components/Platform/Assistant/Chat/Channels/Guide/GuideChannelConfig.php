@@ -76,13 +76,6 @@ final class GuideChannelConfig
         return $out;
     }
 
-    public static function emptyResponseFallback(): string
-    {
-        $text = trim((string) (self::load()['empty_response_fallback'] ?? ''));
-
-        return $text !== '' ? $text : 'Entiendo tu consulta.';
-    }
-
     public static function message(string $key, string $default = ''): string
     {
         $text = AssistantMetadataLoader::dotString(self::load(), 'messages.' . $key);

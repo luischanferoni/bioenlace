@@ -2,6 +2,9 @@
 
 namespace common\components\Platform\Assistant\Chat\Thread;
 
+use common\components\Platform\Assistant\Chat\Channels\Guide\GuideFocusResolver;
+use common\components\Platform\Assistant\Chat\Channels\Guide\GuideFocusState;
+use common\components\Platform\Assistant\Chat\ChatPreprocessContext;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
 use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
@@ -53,6 +56,18 @@ final class AssistantThreadStateService
     {
         $goal = ChatPreprocessService::canonicalizeGoal($goal);
         $incomingTag = self::tagFromGoal($goal);
+        $guideFocusMeta = null;
+
+        if ($goal === 'guide') {
+            $focus = GuideFocusResolver::resolve(
+                ChatPreprocessContext::contextAreas(),
+                self::loadGuideFocus($userId),
+                GuideFocusResolver::carryFocusEnabled()
+            );
+            $guideFocusMeta = $focus->toMetadataArray();
+            $incomingTag = $focus->threadTag();
+        }
+
         $state = self::loadPersistedState($userId);
         $previousTag = trim((string) ($state['active_tag'] ?? ''));
         $confidence = (float) ($state['confidence'] ?? 0.0);
@@ -73,13 +88,10 @@ final class AssistantThreadStateService
             }
         }
 
-        if ($incomingTag === 'clinical') {
-            $confidence = self::updateClinicalConfidence($confidence, $content, $diverted || $previousTag !== 'clinical');
+        if ($incomingTag === 'guide' || str_starts_with($incomingTag, 'guide:')) {
+            $confidence = self::updateGuideConfidence($confidence, $content, $diverted || $previousTag !== 'guide');
             $offerCta = $confidence >= self::ctaThreshold()
                 || ChatChannelPolicy::isClinicalSymptomContent($content);
-        } elseif ($incomingTag === 'product_help') {
-            $confidence = min(1.0, $confidence + 0.1);
-            $offerCta = false;
         } else {
             $confidence = 0.0;
             $offerCta = false;
@@ -92,7 +104,7 @@ final class AssistantThreadStateService
             'confidence' => $confidence,
             'hypothesis' => self::hypothesisForTag($incomingTag),
             'updated_at' => date('c'),
-        ]);
+        ], $guideFocusMeta);
 
         AssistantThreadContext::set([
             'thread_tag' => $incomingTag,
@@ -101,6 +113,7 @@ final class AssistantThreadStateService
             'confidence' => $confidence,
             'offer_cta' => $offerCta,
             'clear_history' => $clearHistory,
+            'guide_focus' => $guideFocusMeta,
         ]);
 
         return [
@@ -116,9 +129,39 @@ final class AssistantThreadStateService
      */
     public static function metadataForPersistence(): array
     {
+        $meta = [];
         $tag = AssistantThreadContext::threadTag();
+        if ($tag !== '') {
+            $meta['thread_tag'] = $tag;
+        }
+        $focus = AssistantThreadContext::guideFocus();
+        if ($focus !== null) {
+            $meta['guide_focus'] = $focus;
+        }
 
-        return $tag !== '' ? ['thread_tag' => $tag] : [];
+        return $meta;
+    }
+
+    /**
+     * @param mixed $raw
+     * @return array{primary_area: string, active_areas: list<string>}|null
+     */
+    public static function guideFocusFromMetadata($raw): ?array
+    {
+        if (is_string($raw) && $raw !== '') {
+            $decoded = json_decode($raw, true);
+            $raw = is_array($decoded) ? $decoded : [];
+        }
+        if (!is_array($raw)) {
+            return null;
+        }
+        $focus = $raw['guide_focus'] ?? null;
+        if (!is_array($focus)) {
+            return null;
+        }
+        $state = GuideFocusState::fromMetadataArray($focus);
+
+        return $state !== null ? $state->toMetadataArray() : null;
     }
 
     /**
@@ -161,7 +204,7 @@ final class AssistantThreadStateService
         return !in_array($incomingTag, $ignoreTo, true);
     }
 
-    private static function updateClinicalConfidence(float $current, string $content, bool $newThread): float
+    private static function updateGuideConfidence(float $current, string $content, bool $newThread): float
     {
         $cfg = self::load()['certainty'] ?? [];
         if ($newThread) {
@@ -198,9 +241,11 @@ final class AssistantThreadStateService
 
     private static function hypothesisForTag(string $tag): string
     {
+        if (str_starts_with($tag, 'guide')) {
+            return 'guia_his';
+        }
+
         return match ($tag) {
-            'clinical' => 'salud_malestar',
-            'product_help' => 'ayuda_producto',
             'operational' => 'tramite',
             'ambiguous' => 'por_definir',
             default => '',
@@ -250,8 +295,9 @@ final class AssistantThreadStateService
 
     /**
      * @param array{active_tag: string, confidence: float, hypothesis: string, updated_at?: string} $thread
+     * @param array{primary_area: string, active_areas: list<string>}|null $guideFocus
      */
-    private static function savePersistedState(int $userId, array $thread): void
+    private static function savePersistedState(int $userId, array $thread, ?array $guideFocus = null): void
     {
         self::$memoryStates[$userId] = $thread;
         if ($userId <= 0) {
@@ -272,6 +318,9 @@ final class AssistantThreadStateService
 
         $ctx = self::decodeContexto($conv->contexto_json);
         $ctx['thread'] = $thread;
+        if ($guideFocus !== null) {
+            $ctx['guide_focus'] = $guideFocus;
+        }
         $conv->contexto_json = json_encode($ctx, JSON_UNESCAPED_UNICODE);
         $conv->updated_at = date('Y-m-d H:i:s');
         if (!$conv->save(false)) {
@@ -295,6 +344,38 @@ final class AssistantThreadStateService
         }
 
         return [];
+    }
+
+    /**
+     * @return array{primary_area: string, active_areas: list<string>}|null
+     */
+    private static function loadGuideFocus(int $userId): ?array
+    {
+        if ($userId <= 0) {
+            return null;
+        }
+
+        try {
+            $conv = AsistenteConversacion::findOne([
+                'usuario_id' => (string) $userId,
+                'bot_id' => self::BOT_ID,
+            ]);
+        } catch (\Throwable $e) {
+            return null;
+        }
+        if ($conv === null) {
+            return null;
+        }
+
+        $ctx = self::decodeContexto($conv->contexto_json);
+        $focus = $ctx['guide_focus'] ?? null;
+        if (!is_array($focus)) {
+            return null;
+        }
+
+        $state = GuideFocusState::fromMetadataArray($focus);
+
+        return $state !== null ? $state->toMetadataArray() : null;
     }
 
     /**

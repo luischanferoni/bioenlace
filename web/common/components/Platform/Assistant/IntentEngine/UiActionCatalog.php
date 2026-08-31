@@ -102,7 +102,8 @@ final class UiActionCatalog
                 $sem,
                 null,
                 null,
-                $spaPresentation
+                $spaPresentation,
+                self::parseHisAreas($a['his_areas'] ?? null)
             );
 
             $items[] = $item;
@@ -130,7 +131,8 @@ final class UiActionCatalog
                 is_array($a['intent_semantics'] ?? null) ? $a['intent_semantics'] : null,
                 $clientOpen,
                 $clientInteraction,
-                null
+                null,
+                self::parseHisAreas($a['his_areas'] ?? null)
             );
             $items[] = $item;
             $byId[$actionId] = $item;
@@ -183,7 +185,8 @@ final class UiActionCatalog
                 $item->intent_semantics,
                 $item->client_open,
                 $item->client_interaction,
-                $item->spa_presentation
+                $item->spa_presentation,
+                $item->his_areas
             );
             $byId[$actionId] = $updated;
             foreach ($items as $i => $it) {
@@ -211,7 +214,8 @@ final class UiActionCatalog
                     $item->intent_semantics,
                     $item->client_open,
                     $item->client_interaction,
-                    $item->spa_presentation
+                    $item->spa_presentation,
+                    $item->his_areas
                 );
                 $byId['data-access.editar'] = $updated;
                 foreach ($items as $i => $it) {
@@ -354,6 +358,25 @@ final class UiActionCatalog
         }
 
         return false;
+    }
+
+    /**
+     * @param mixed $raw
+     * @return list<string>
+     */
+    private static function parseHisAreas($raw): array
+    {
+        if (!is_array($raw)) {
+            return [];
+        }
+        $out = [];
+        foreach ($raw as $area) {
+            if (is_string($area) && trim($area) !== '') {
+                $out[] = trim($area);
+            }
+        }
+
+        return array_values(array_unique($out));
     }
 }
 

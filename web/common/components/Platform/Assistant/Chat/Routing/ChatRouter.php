@@ -4,14 +4,14 @@ namespace common\components\Platform\Assistant\Chat\Routing;
 
 use common\components\Platform\Assistant\Chat\Channels\Ambiguous\AmbiguousChannel;
 use common\components\Platform\Assistant\Chat\Channels\Ambiguous\AmbiguousChannelConfig;
-use common\components\Platform\Assistant\Chat\Channels\Conversational\ConversationalChannel;
-use common\components\Platform\Assistant\Chat\Channels\Conversational\ConversationalHistoryWindow;
-use common\components\Platform\Assistant\Chat\Channels\Informational\InformationalChannel;
+use common\components\Platform\Assistant\Chat\Channels\Guide\GuideChannel;
+use common\components\Platform\Assistant\Chat\Channels\Guide\GuideHistoryWindow;
 use common\components\Platform\Assistant\Chat\Channels\Operational\OperationalChannel;
 use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
 use common\components\Platform\Assistant\Context\AssistantContextHISArea;
+use common\components\Platform\Assistant\Chat\Thread\AssistantThreadContext;
 use common\components\Platform\Assistant\Chat\Thread\AssistantThreadStateService;
 
 /**
@@ -72,10 +72,10 @@ final class ChatRouter
 
         $formattedHistory = '';
         if ($userId > 0 && empty($observed['clear_history'])) {
-            $formattedHistory = ConversationalHistoryWindow::formatForPrompt(
+            $formattedHistory = GuideHistoryWindow::formatForPrompt(
                 $userId,
                 $content,
-                $observed['thread_tag']
+                AssistantThreadContext::guideFocusPrimaryArea()
             );
         }
 
@@ -103,10 +103,10 @@ final class ChatRouter
 
         $formattedHistory = '';
         if ($userId > 0 && empty($observed['clear_history'])) {
-            $formattedHistory = ConversationalHistoryWindow::formatForPrompt(
+            $formattedHistory = GuideHistoryWindow::formatForPrompt(
                 $userId,
                 $content,
-                $observed['thread_tag']
+                AssistantThreadContext::guideFocusPrimaryArea()
             );
         }
 
@@ -129,12 +129,8 @@ final class ChatRouter
             case 'in_flow_question':
                 return OperationalChannel::handle($content, null, $userId);
 
-            case 'clinical':
-                return ConversationalChannel::handle($content, $userId, $formattedHistory);
-
-            case 'informational':
-            case 'meta':
-                return InformationalChannel::handle($content, $userId);
+            case 'guide':
+                return GuideChannel::handle($content, $userId, $formattedHistory);
 
             case 'ambiguous':
             default:
@@ -143,7 +139,7 @@ final class ChatRouter
     }
 
     /**
-     * Preguntas sobre datos/reglas del HIS con context_areas → informational (no IntentEngine).
+     * Preguntas sobre datos/reglas del HIS con context_areas → guide (no IntentEngine).
      *
      * @param array<string, mixed> $preprocess
      */
@@ -157,7 +153,7 @@ final class ChatRouter
             $preprocess['context_areas'] = $areas;
 
             if (!ChatChannelPolicy::requestsOperationalTramiteExecution($content)) {
-                return 'informational';
+                return 'guide';
             }
         }
 
@@ -166,7 +162,11 @@ final class ChatRouter
         }
 
         if ($goal === 'operational' && !ChatChannelPolicy::requestsOperationalTramiteExecution($content)) {
-            return 'informational';
+            return 'guide';
+        }
+
+        if ($goal === 'ambiguous' && ChatChannelPolicy::isAppointmentPolicyQuestion($content)) {
+            return 'guide';
         }
 
         return $goal;

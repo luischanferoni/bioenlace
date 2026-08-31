@@ -41,7 +41,7 @@ Maestros vs metadata (runtime + cognitivo): [`web/docs/arquitectura/runtime-dato
 | Ruta | Tipo | Contenido |
 |------|------|-----------|
 | `assistant/intents/` | flow | Flows por `intent_id` (`create`/`read`/`update`/`delete`) |
-| `assistant/prompts/` | copy | Prompts por canal (`preprocess`, `clinical`, `informational`, `ambiguous`, …) |
+| `assistant/prompts/` | copy | Prompts por canal (`preprocess`, `guide`, `ambiguous`, …) |
 | `assistant/routing/` | routing | `intent-families`, `hint-resolution`, `booking-offer`, `thread-state` |
 | `assistant/copy/channel-copy.yaml` | copy | Textos UX por perfil de cliente (`X-App-Client`) |
 | `assistant/assistant-shortcuts.yaml` | manifest | Atajos visibles (si el catálogo está desplegado) |
@@ -68,6 +68,6 @@ Maestros vs metadata (runtime + cognitivo): [`web/docs/arquitectura/runtime-dato
 
 Contrato de pasos de intent: `common/components/Platform/Assistant/SubIntentEngine/schemas/SUBINTENT_CONTRACT.md`.
 
-Canal síntoma/trámite/menú: `ChatChannelPolicy` (PHP). Copy clinical: `assistant/prompts/clinical.yaml`.
+Canal guide / trámite / menú: `ChatChannelPolicy` (PHP). Copy guide: `assistant/prompts/guide.yaml`.
 Prompts de canal: reglas transversales; huecos de datos en loaders (`null`), sin registro global de limitaciones (regla `asistente-prompts-sin-casos-particulares.mdc`).
 Booking CTA: `assistant/routing/booking-offer.yaml`.

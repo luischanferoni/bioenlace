@@ -46,9 +46,13 @@ return [
      */
     'vertex_context_cache_simulado' => true,
 
-    /** Ventana de historial para ConversationalChannel (coste y contexto acotados). */
+    /** Ventana de historial para GuideChannel (coste y contexto acotados). */
     'asistente_conversacional_historial_max_turnos' => 5,
     'asistente_conversacional_historial_max_chars' => 3200,
+    'asistente_guide_max_intent_semantics' => 6,
+    'asistente_guide_historial_max_turnos' => 5,
+    'asistente_guide_historial_max_chars' => 3200,
+    'asistente_guide_carry_focus' => true,
 
     /**
      * Bloque clínico acotado en prompts IA (captura, motivos batch, chat conversacional).
@@ -61,6 +65,7 @@ return [
             'encounter' => ['max_conditions' => 8, 'max_medications' => 8, 'max_allergies' => 12],
             'motivos' => ['max_conditions' => 6, 'max_medications' => 6, 'max_allergies' => 12],
             'conversational' => ['max_conditions' => 4, 'max_medications' => 4, 'max_allergies' => 8],
+            'guide' => ['max_conditions' => 4, 'max_medications' => 4, 'max_allergies' => 8],
         ],
     ],
 

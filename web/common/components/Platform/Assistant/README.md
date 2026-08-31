@@ -1,59 +1,24 @@
-# Assistant (UI Intents + Flows)
+# Platform Assistant
 
-Este feature agrupa el stack del **asistente**: descubrimiento de UIs, catálogo de intents, resolución de permisos, y ejecución de flujos conversacionales dentro de un intent.
+Orquestación del chat: preprocess → router → canales.
 
-## Componentes
+## Flujo
 
-- `IntentEngine/`: entrypoint para clasificar y devolver una acción UI (o arrancar un flow conversacional).
-- `Catalog/`: catálogo de UIs sugeribles (hoy basado en YAML).
-- `Chat/`: `asistente/enviar` — preprocess, routing, canales, sobre (`message` | `interactive` | `flow`).
-- `WhatsApp/`: transporte Meta Cloud API (webhook → identidad → mismo orquestador → render texto/botones/listas).
-- Entrypoints de dominio clínico: `Clinical/Assistant/` (`ClinicalEncounterEntry`, `AppointmentReasonEntry`).
-- `Catalog/UiActionCatalogProviderRegistry.php`: resuelve providers declarados en `common/config/product-registries.php`.
-- `Catalog/DataAccessUiActionCatalog.php`: acciones API genéricas staff (`/api/info`, `/api/listar`, `/api/editar`).
-- `Service/AssistantDraftNormalizer.php`: `encounter_id`, `care_plan_id` en draft de flows.
-- Documentación: [web/docs/arquitectura/asistente-motores.md](../../docs/arquitectura/asistente-motores.md), [web/docs/producto/asistente-y-chat.md](../../docs/producto/asistente-y-chat.md)
-- `SubIntentEngine/`: motor conversacional *dentro* de un intent (YAML); evaluación de **`business_rules`** (`pre_flow`) vía `IntentBusinessRules`; **`draft_hydrator`** vía `FlowDraftHydratorService` (sin listar intents en `ChatOrchestrator`).
-- `FlowManifest/`: construye `flow_manifest` **en runtime** a partir del YAML (sin artefactos `ui_type=flow` en `views/json`).
-- `UiActions/`: discovery + RBAC + enriquecedores para construir `client_open` y resolver rutas permitidas.
+1. **Preprocess** (`ChatPreprocessService`): `user_goal`, `normalized_text`, `context_areas`, extracciones.
+2. **Router** (`ChatRouter`): despacha por `user_goal`.
+3. **Hilos** (`AssistantThreadStateService`): `thread_tag` desde `assistant/routing/thread-state.yaml`.
+4. **Canal** (`user_goal` preprocess): `guide`, `operational`, `ambiguous`, `in_flow_question`. Predicados de dominio: `ChatChannelPolicy`. Prompts: `assistant/prompts/`. Booking CTA: `assistant/routing/booking-offer.yaml`.
 
-## Fuentes de verdad
+## Canales
 
-- **Conversación por intent**: `common/metadata/bioenlace/assistant/intents/*.yaml` — contrato: `SubIntentEngine/schemas/SUBINTENT_CONTRACT.md`
-- **Registries producto**: `common/config/product-registries.php` vía `Core/Product/ProductRegistryConfig.php`
-- **Mini-UIs** (`ui_json` / wizard): `frontend/modules/api/v1/views/json/<entidad>/<accion>.json`
+| `user_goal` | Handler |
+|-------------|---------|
+| `guide` | `GuideChannel` |
+| `operational` / `in_flow_question` | `OperationalChannel` |
+| `ambiguous` | `AmbiguousChannel` |
 
-## Clasificación NL
+Contexto HIS: `AssistantContextAssemblyService` → bloque `context:his` en prompt guide.
 
-1. **Keywords** del YAML de cada intent → score PHP (sin IA de clasificación).
-2. **Ganador claro** → lanza; **empate** → desambiguación con botones.
-3. Si no hay match → no-match / sugerencias.
-4. **Canal** (`user_goal` preprocess): clinical / informational / ambiguous / operational. Predicados de dominio: `ChatChannelPolicy`. Prompts: `assistant/prompts/`. Booking CTA: `assistant/routing/booking-offer.yaml`. Hilos: `assistant/routing/thread-state.yaml`.
+## Otros entrypoints
 
-## Entrypoints importantes
-
-- API chat: `ChatController` → `asistente/enviar`
-- WhatsApp: `WhatsAppWebhookController` → `whatsapp/webhook` (público; firma Meta)
-- Motivos consulta: `MotivosConsultaController` → `Clinical/Assistant/AppointmentReasonEntry`
 - Captura clínica: `clinical/EncounterController` → `Clinical/Assistant/ClinicalEncounterEntry`
- 
-
-## Comandos útiles
-
-No hay comando de compilación de `ui_type=flow` hacia `views/json`. El servidor usa YAML en runtime.
-
-## Intents clínicos / operativos (referencia)
-
-| Intent | Área |
-|--------|------|
-| `urgencias.ver-tablero-guardia` | Guardia EMER |
-| `urgencias.triage-paciente-guardia` | Triage Manchester (UI JSON) |
-| `internacion.mapa-camas-flow` | Mapa de camas |
-| `internacion.cambio-cama-flow` | Cambio de cama |
-| `turnos.indicadores-agenda-flow` | KPIs agenda staff |
-| `tratamiento.adherencia-resumen-staff` | Adherencia care plans |
-| `personas.vincular-menor-flow` | Tutela verificada (menor sin cuenta) |
-| `personas.designar-representante-flow` | Delegación paciente → representante |
-
-Documentación de producto: [internacion.md](../../docs/producto/internacion.md), [urgencias-guardia.md](../../docs/producto/urgencias-guardia.md), [representacion-paciente.md](../../docs/producto/representacion-paciente.md).
-

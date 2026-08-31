@@ -1,15 +1,14 @@
 <?php
 
-namespace common\components\Platform\Assistant\Chat\Channels\Conversational;
+namespace common\components\Platform\Assistant\Chat\Channels\Guide;
 
 use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
 use common\components\Platform\Core\Product\ProductMetadataPaths;
 
 /**
- * Metadata del canal clinical ({@see prompts/clinical.yaml}).
- * Prioridad booking: {@see routing/booking-offer.yaml}.
+ * Metadata del canal guide ({@see prompts/guide.yaml}).
  */
-final class ChatConversationalConfig
+final class GuideChannelConfig
 {
     /** @var array<string, mixed>|null */
     private static ?array $config = null;
@@ -24,28 +23,16 @@ final class ChatConversationalConfig
         AssistantMetadataLoader::resetCacheForTests();
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    public static function all(): array
-    {
-        return self::load();
-    }
-
     public static function stablePrompt(): string
     {
         $template = trim((string) (self::load()['stable_prompt'] ?? ''));
         if ($template === '') {
-            return 'Respondé en español, breve y amable.';
+            return 'Respondé en español, breve y claro.';
         }
 
         return self::applyPromptPlaceholders($template);
     }
 
-    /**
-     * Fragmento de copy del prompt ({@see prompts/clinical.yaml} → prompt_fragments).
-     * Ruta con punto: offer.header, offer.continuing_line, etc.
-     */
     public static function promptFragment(string $path, string $default = ''): string
     {
         $raw = self::load()['prompt_fragments'] ?? [];
@@ -96,6 +83,60 @@ final class ChatConversationalConfig
         return $text !== '' ? $text : 'Entiendo tu consulta.';
     }
 
+    public static function message(string $key, string $default = ''): string
+    {
+        $text = AssistantMetadataLoader::dotString(self::load(), 'messages.' . $key);
+
+        return $text !== '' ? $text : $default;
+    }
+
+    public static function formatSourceBlock(string $title, string $body): string
+    {
+        $title = trim($title);
+        $body = trim($body);
+        if ($body === '') {
+            return '';
+        }
+
+        $parts = [self::sourceInjectionHeader()];
+        if ($title !== '') {
+            $parts[] = self::formatSourceTitleLine($title);
+        }
+        $parts[] = self::sourceInjectionBodyHeader();
+        $parts[] = $body;
+
+        return implode("\n", $parts);
+    }
+
+    public static function sourceInjectionHeader(): string
+    {
+        return AssistantMetadataLoader::dotString(
+            self::load(),
+            'source_injection.header',
+            'Fuente (única verdad para la respuesta):'
+        );
+    }
+
+    public static function formatSourceTitleLine(string $title): string
+    {
+        $template = AssistantMetadataLoader::dotString(
+            self::load(),
+            'source_injection.title_line',
+            'Título: {title}'
+        );
+
+        return AssistantMetadataLoader::applyPlaceholders($template, ['title' => $title]);
+    }
+
+    public static function sourceInjectionBodyHeader(): string
+    {
+        return AssistantMetadataLoader::dotString(
+            self::load(),
+            'source_injection.body_header',
+            'Contenido:'
+        );
+    }
+
     /**
      * @return array<string, string>
      */
@@ -140,7 +181,7 @@ final class ChatConversationalConfig
             return self::$config;
         }
 
-        self::$config = AssistantMetadataLoader::load(ProductMetadataPaths::clinicalChannelFile());
+        self::$config = AssistantMetadataLoader::load(ProductMetadataPaths::guideChannelFile());
 
         return self::$config;
     }

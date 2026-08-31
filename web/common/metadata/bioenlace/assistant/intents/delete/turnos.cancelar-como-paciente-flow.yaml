@@ -13,6 +13,8 @@ intent_semantics:
   capabilities:
     - ver_turnos_propios
     - cancelar_turno_propio
+his_areas:
+  - appointments
 subintents:
   -
     id: select_turno

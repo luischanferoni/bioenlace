@@ -26,6 +26,7 @@ final class PatientAiContextBuilder
     public const PROFILE_ENCOUNTER = 'encounter';
     public const PROFILE_MOTIVOS = 'motivos';
     public const PROFILE_CONVERSATIONAL = 'conversational';
+    public const PROFILE_GUIDE = 'guide';
 
     public const BLOCK_HEADER = 'Contexto clínico del paciente (referencia; no inventar ni extraer al JSON salvo indicación):';
 
@@ -44,6 +45,11 @@ final class PatientAiContextBuilder
             'max_allergies' => 12,
         ],
         self::PROFILE_CONVERSATIONAL => [
+            'max_conditions' => 4,
+            'max_medications' => 4,
+            'max_allergies' => 8,
+        ],
+        self::PROFILE_GUIDE => [
             'max_conditions' => 4,
             'max_medications' => 4,
             'max_allergies' => 8,
@@ -85,7 +91,7 @@ final class PatientAiContextBuilder
         }
 
         if (
-            $profile === self::PROFILE_CONVERSATIONAL
+            ($profile === self::PROFILE_CONVERSATIONAL || $profile === self::PROFILE_GUIDE)
             && !(new PersonaAsistentePreferenciasService())->usaResumenHcEnAsistente($subjectPersonaId)
         ) {
             return '';
@@ -150,7 +156,11 @@ final class PatientAiContextBuilder
         self::appendListSection($lines, 'Alergias/intolerancias activas', $data['allergies'] ?? [], 'Sin alergias registradas.');
         self::appendListSection($lines, 'Condiciones activas', $data['conditions'] ?? [], 'Sin condiciones activas registradas.');
 
-        if ($profile !== self::PROFILE_CONVERSATIONAL || ($data['medications'] ?? []) !== []) {
+        if (
+            $profile !== self::PROFILE_CONVERSATIONAL
+            && $profile !== self::PROFILE_GUIDE
+            || ($data['medications'] ?? []) !== []
+        ) {
             self::appendListSection($lines, 'Medicación activa', $data['medications'] ?? [], 'Sin medicación activa registrada.');
         }
 
@@ -332,7 +342,10 @@ final class PatientAiContextBuilder
 
         $isSelf = $sessionPersonaId > 0 && $sessionPersonaId === $subjectPersonaId;
 
-        if ($profile === self::PROFILE_CONVERSATIONAL) {
+        if (
+            $profile === self::PROFILE_CONVERSATIONAL
+            || $profile === self::PROFILE_GUIDE
+        ) {
             return $isSelf;
         }
 

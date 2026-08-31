@@ -131,14 +131,14 @@ final class VertexContextCacheSimulator
                     ),
                 ];
 
-            case 'asistente-conversational':
+            case 'asistente-guide':
                 $marker = "Mensaje actual del paciente:\n";
                 $pos = strrpos($fullPrompt, $marker);
                 if ($pos === false) {
                     return null;
                 }
                 return [
-                    'cache_key' => 'asistente-conversational:v6',
+                    'cache_key' => 'asistente-guide:v1',
                     'stable' => substr($fullPrompt, 0, $pos + strlen($marker)),
                     'variable' => substr($fullPrompt, $pos + strlen($marker)),
                 ];

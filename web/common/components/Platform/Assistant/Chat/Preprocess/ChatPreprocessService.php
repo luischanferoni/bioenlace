@@ -17,22 +17,10 @@ use common\components\Ai\IAManager;
 final class ChatPreprocessService
 {
     public const GOALS = [
+        'guide',
         'operational',
-        'clinical',
-        'informational',
         'ambiguous',
         'in_flow_question',
-        'meta',
-    ];
-
-    /** Alias legacy del modelo / prompts previos → goal canónico. */
-    private const GOAL_ALIASES = [
-        'conversational' => 'clinical',
-        'conversational_clinical' => 'clinical',
-        'informational' => 'informational',
-        'informational_conversational' => 'informational',
-        'unclear' => 'ambiguous',
-        'ambiguous_conversational' => 'ambiguous',
     ];
 
     private const ENTITY_CATEGORIES = ['servicio', 'efector', 'persona', 'profesional', 'turno', 'tiempo'];
@@ -70,9 +58,6 @@ final class ChatPreprocessService
         $goal = trim($goal);
         if ($goal === '') {
             return 'ambiguous';
-        }
-        if (isset(self::GOAL_ALIASES[$goal])) {
-            $goal = self::GOAL_ALIASES[$goal];
         }
         if (!in_array($goal, self::GOALS, true)) {
             return 'ambiguous';

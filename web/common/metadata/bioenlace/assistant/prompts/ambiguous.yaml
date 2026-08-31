@@ -7,15 +7,10 @@ prompt_text: >
   (o reformulá en un mensaje).
 
 options:
-  - id: clinical
-    label: Es sobre mi salud o malestar
-    next_channel: clinical
-    content: Quiero hablar de mi salud
-
-  - id: product_help
-    label: Cómo funciona la app o un trámite
-    next_channel: informational
-    content: Quiero entender cómo funciona Bioenlace
+  - id: guide
+    label: Charla, salud o cómo funciona la app
+    next_channel: guide
+    content: Necesito orientación o ayuda en Bioenlace
 
   - id: do_now
     label: Quiero hacer un trámite ahora

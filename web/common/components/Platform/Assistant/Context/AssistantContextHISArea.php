@@ -33,6 +33,52 @@ final class AssistantContextHISArea
     /**
      * @return list<string>
      */
+    public static function sortByProductPriority(array $areas): array
+    {
+        $valid = [];
+        foreach ($areas as $area) {
+            if (!is_string($area)) {
+                continue;
+            }
+            $area = trim($area);
+            if ($area !== '' && self::isValid($area) && !in_array($area, $valid, true)) {
+                $valid[] = $area;
+            }
+        }
+        if ($valid === []) {
+            return [];
+        }
+
+        $order = array_flip(self::productPriorityOrder());
+        usort(
+            $valid,
+            static fn (string $a, string $b): int => ($order[$a] ?? 999) <=> ($order[$b] ?? 999)
+        );
+
+        return $valid;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function productPriorityOrder(): array
+    {
+        return [
+            self::APPOINTMENTS,
+            self::ENCOUNTERS,
+            self::CLINICAL_RECORD,
+            self::DIAGNOSTICS,
+            self::MEDICATION,
+            self::REPRESENTATION,
+            self::COVERAGE,
+            self::PRODUCT,
+            self::GEO_RESOURCES,
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
     public static function all(): array
     {
         return array_keys(self::CATALOG);

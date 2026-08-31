@@ -92,21 +92,21 @@ class ConversationalHistoryWindowTest extends \Codeception\Test\Unit
         $rows = [
             $this->row('42', 'cómo represento a mi sobrino', 5, 'product_help'),
             $this->row('BOT', 'Podés vincular un menor.', 4, 'product_help'),
-            $this->row('42', 'Me duele el pecho', 3, 'clinical'),
-            $this->row('BOT', '¿Desde cuándo?', 2, 'clinical'),
-            $this->row('42', 'Desde ayer', 1, 'clinical'),
+            $this->row('42', 'Me duele el pecho', 3, 'guide'),
+            $this->row('BOT', '¿Desde cuándo?', 2, 'guide'),
+            $this->row('42', 'Desde ayer', 1, 'guide'),
         ];
 
-        $clinical = ConversationalHistoryWindow::buildFromInteractions(
+        $guide = ConversationalHistoryWindow::buildFromInteractions(
             $rows,
             '42',
-            'mensaje nuevo clinical',
+            'mensaje nuevo guide',
             5,
             3200,
-            'clinical'
+            'guide'
         );
-        verify(str_contains($clinical, 'Me duele el pecho'))->true();
-        verify(str_contains($clinical, 'sobrino'))->false();
+        verify(str_contains($guide, 'Me duele el pecho'))->true();
+        verify(str_contains($guide, 'sobrino'))->false();
 
         $product = ConversationalHistoryWindow::buildFromInteractions(
             $rows,

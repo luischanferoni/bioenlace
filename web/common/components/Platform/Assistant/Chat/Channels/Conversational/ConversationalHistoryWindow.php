@@ -163,7 +163,7 @@ final class ConversationalHistoryWindow
         return $lines;
     }
 
-    private static function isOperationalBoundary(string $text): bool
+    public static function isOperationalBoundary(string $text): bool
     {
         return strncmp($text, '[action_id:', 11) === 0;
     }

@@ -60,6 +60,9 @@ intent_semantics:
     - reserva_turno
     - consulta_por_mensaje
     - teleconsulta
+his_areas:
+  - appointments
+  - clinical_record
 draft_hydrator:
   handler: scheduling.solicitar_atencion
 draft_keys_extra:

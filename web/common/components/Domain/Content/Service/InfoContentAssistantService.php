@@ -4,7 +4,8 @@ namespace common\components\Domain\Content\Service;
 
 use common\components\Ai\IAManager;
 use common\components\Platform\Assistant\Context\AssistantContextAssemblyService;
-use common\components\Platform\Assistant\Chat\Channels\Informational\InformationalChannelConfig;
+use common\components\Platform\Assistant\Chat\Channels\Guide\GuideChannel;
+use common\components\Platform\Assistant\Chat\Channels\Guide\GuideChannelConfig;
 use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
 use common\components\Platform\Assistant\Chat\ChatPreprocessContext;
 use common\components\Platform\Core\Permission\IntentAccessService;
@@ -20,9 +21,6 @@ use Yii;
 final class InfoContentAssistantService
 {
     /**
-     * Intenta resolver un artículo informativo desde el texto del usuario.
-     * Retorna un envelope listo si hay match visible, null si no.
-     *
      * @return array<string, mixed>|null
      */
     public static function tryResolveFromText(string $text, int $userId, ?int $idEfector = null, ?int $idProvincia = null): ?array
@@ -36,8 +34,6 @@ final class InfoContentAssistantService
     }
 
     /**
-     * Resuelve un artículo por topic directo (para llamadas desde intents/shortcuts).
-     *
      * @return array<string, mixed>|null
      */
     public static function resolveByTopic(
@@ -57,25 +53,26 @@ final class InfoContentAssistantService
         return self::envelopeFromArticle($article, $topic, $userId);
     }
 
-    /**
-     * Prompt listo para IA informational anclada a fuente.
-     */
     public static function buildArticlePrompt(string $userQuestion, string $title, string $body, int $userId = 0): string
     {
+        $articleBlock = GuideChannelConfig::formatSourceBlock($title, $body);
         $parts = [
-            rtrim(InformationalChannelConfig::stablePrompt()),
+            rtrim(GuideChannelConfig::stablePrompt()),
         ];
 
         if ($userId > 0) {
-            $hisContext = AssistantContextAssemblyService::assembleForChannel('informational', $userId);
+            $hisContext = AssistantContextAssemblyService::assembleForChannel('guide', $userId);
             if (!$hisContext->isEmpty()) {
                 $parts[] = '';
                 $parts[] = $hisContext->promptSection;
             }
         }
 
-        $parts[] = '';
-        $parts[] = InformationalChannelConfig::formatSourceBlock($title, $body);
+        if ($articleBlock !== '') {
+            $parts[] = '';
+            $parts[] = $articleBlock;
+        }
+
         $parts[] = '';
         $parts[] = 'Pregunta del usuario:';
         $parts[] = trim($userQuestion);
@@ -84,8 +81,6 @@ final class InfoContentAssistantService
     }
 
     /**
-     * Respuesta informational sin artículo cuando preprocess pidió áreas HIS.
-     *
      * @return array<string, mixed>|null
      */
     public static function tryAnswerFromHisContext(string $content, int $userId): ?array
@@ -94,33 +89,7 @@ final class InfoContentAssistantService
             return null;
         }
 
-        $message = ChatPreprocessContext::normalizedText();
-        if ($message === '') {
-            $message = trim($content);
-        }
-        if ($message === '') {
-            return null;
-        }
-
-        $parts = [rtrim(InformationalChannelConfig::stablePrompt())];
-        $hisContext = AssistantContextAssemblyService::assembleForChannel('informational', $userId);
-        if (!$hisContext->isEmpty()) {
-            $parts[] = '';
-            $parts[] = $hisContext->promptSection;
-        }
-
-        $parts[] = '';
-        $parts[] = 'Pregunta del usuario:';
-        $parts[] = $message;
-
-        $text = self::consultInformationalIa(implode("\n", $parts));
-        if ($text === '') {
-            return null;
-        }
-
-        return AssistantContextAssemblyService::attachDebugIfEnabled(
-            AssistantEnvelope::message($text)
-        );
+        return GuideChannel::handle($content, $userId);
     }
 
     /**
@@ -144,15 +113,12 @@ final class InfoContentAssistantService
         );
     }
 
-    /**
-     * IA anclada a fuente; si falla → dump del artículo (no inventar).
-     */
     private static function generateAnswer(string $userQuestion, string $title, string $body, int $userId): string
     {
         $fallback = $title !== '' ? "**{$title}**\n\n{$body}" : $body;
         $prompt = self::buildArticlePrompt($userQuestion, $title, $body, $userId);
 
-        $text = self::consultInformationalIa($prompt);
+        $text = self::consultGuideIa($prompt);
         if ($text !== '') {
             return $text;
         }
@@ -160,10 +126,10 @@ final class InfoContentAssistantService
         return $fallback;
     }
 
-    private static function consultInformationalIa(string $prompt): string
+    private static function consultGuideIa(string $prompt): string
     {
         try {
-            $raw = IAManager::consultarIA($prompt, 'asistente-informational', 'text-generation');
+            $raw = IAManager::consultarIA($prompt, 'asistente-guide', 'text-generation');
             if (is_string($raw) && trim($raw) !== '') {
                 return trim($raw);
             }

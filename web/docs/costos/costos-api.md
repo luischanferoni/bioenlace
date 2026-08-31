@@ -127,7 +127,7 @@ Catálogo completo: [producto/catalogo-usos-ia.md](../producto/catalogo-usos-ia.
 | Contexto | Bloque COGS | Vol./prof/mes (ref.) | Input / output (tok.) | % input cacheado |
 |----------|-------------|----------------------|------------------------|------------------|
 | `asistente-preprocess` | §1 | **2.000** | 700 / 250 | **40 %** |
-| `asistente-conversational` | §1 | **660** | 930 / 180 | **40 %** |
+| `asistente-guide` | §1 | **660** | 1000 / 200 | **40 %** |
 | `asistente-onboarding` | §3 | **400** | 1.000 / 500 | **25 %** |
 | `intent-engine-classification` | Anexo A | **25** (bajo) | 800 / 200 | **25 %** |
 | `motivos-consulta-batch` | §2 | **400** | 1.350 / 400 | **25 %** |
@@ -147,7 +147,7 @@ Catálogo completo: [producto/catalogo-usos-ia.md](../producto/catalogo-usos-ia.
 | Contexto | Gemini | DeepSeek |
 |----------|--------|----------|
 | `asistente-preprocess` | ~$0.000145 | ~$0.000130 |
-| `asistente-conversational` | ~$0.000132 | ~$0.000130 |
+| `asistente-guide` | ~$0.000140 | ~$0.000138 |
 | `motivos-consulta-batch` | ~$0.000265 | ~$0.000255 |
 | `motivos-consulta-insights` | ~$0.000240 | ~$0.000230 |
 | `analisis-consulta` | ~$0.000333 | ~$0.000295 |
@@ -157,11 +157,12 @@ A **5.000 profesionales**, solo los seis contextos del Apartado 1 (sin §3 ni in
 
 ### Contexto clínico en prompts IA
 
-Implementación: `PatientAiContextBuilder` (`patient_ai_context` en `params.php`). El perfil **conversacional** respeta el interruptor del paciente y solo arma el bloque para la persona de sesión — [ia-datos-y-privacidad.md](../producto/ia-datos-y-privacidad.md).
+Implementación: `PatientAiContextBuilder` (`patient_ai_context` en `params.php`). Perfiles **guide** y **conversational** respetan el interruptor del paciente y solo arman el bloque para la persona de sesión — [ia-datos-y-privacidad.md](../producto/ia-datos-y-privacidad.md).
 
 | Flujo | Perfil | Qué incluye | Tokens input extra (ref.) |
 |-------|--------|-------------|---------------------------|
-| §1 conversacional | `conversational` | Edad, sexo, alergias, condiciones y medicación (límites menores) | **~+280** |
+| §1 canal guide | `guide` | Edad, sexo, alergias, condiciones y medicación (límites menores) | **~+280** |
+| §1 legacy | `conversational` | Igual (referencia histórica en código) | **~+280** |
 | §2 motivos batch | `motivos` | Igual, perfil medio | **~+350** |
 | §4 captura clínica | `encounter` | Igual, perfil completo | **~+350** |
 

@@ -15,7 +15,7 @@ No hace falta la frase exacta. Si el tipo está en **Hoy**, algo parecido deber�
 ## Cómo usar este catálogo
 
 1. **Vos** escribís el ejemplo de la columna (o una variante). Si hay **1.** y **2.**, son dos envíos: primero el 1, después el 2.
-2. **El sistema** clasifica el canal (preprocess IA): clinical, informational, ambiguous u operational.
+2. **El sistema** clasifica el canal (preprocess IA): `guide`, `ambiguous`, `operational` o `in_flow_question`.
 3. **Vos** marcás si abrió el camino correcto y si **no** prometió lo que no puede hacer (diagnóstico, receta, teléfono inventado, turno en urgencia, CTA clínico en ayuda de producto).
 4. Tildá la casilla **✓** de la fila (`[ ]` → `[x]`) cuando el caso pasó. Dejá `[ ]` si falló o no lo probaste.
 
@@ -32,18 +32,18 @@ flowchart LR
   P --> B["Trámite de agenda"]
   P --> C["Ver lo mío"]
   P --> D["¿Cómo funciona?"]
-  A --> SA[Clinical + Solicitar Atención]
+  A --> SA[Guide + Solicitar Atención]
   B --> TU[Operational turnos.*]
   C --> MI[Lectura / hubs]
-  D --> IC[Informational + artículo + CTA]
+  D --> IC[Guide + artículo + CTA]
 ```
 
 | Puerta            | Qué busca el paciente                                | Camino típico |
 | ----------------- | ---------------------------------------------------- | ------------- |
-| Me pasa algo      | Síntoma, estudio, control, urgencia                  | Charla clinical + **Solicitar Atención** (`atencion.necesito-atencion`) |
+| Me pasa algo      | Síntoma, estudio, control, urgencia                  | Canal guide + **Solicitar Atención** (`atencion.necesito-atencion`) |
 | Trámite de agenda | Sacar / ver / cancelar / mover / confirmar           | Operational `turnos.*` |
 | Ver lo mío        | Resumen, recetas, lab, recordatorios, representación | Intents de lectura / hub nativo |
-| ¿Cómo funciona?   | Qué es X, cómo se hace Y en la app                   | **Informational**: artículo + CTA a intent(s); no charla clínica |
+| ¿Cómo funciona?   | Qué es X, cómo se hace Y en la app                   | **Guide**: artículo + CTA a intent(s); charla + volcado HIS si aplica |
 
 ---
 
@@ -64,7 +64,7 @@ Hacia dónde va el producto (agentes, educación post-consulta, preguntas dinám
 
 ## 1. Me siento mal / orientación (sin pedir turno todavía)
 
-Canal **clinical**: empatía breve, orientación prudente y botón **Solicitar Atención**. No abrir reserva de agenda si no pidió turno. Saludo solo → canal **informational** (sin CTA clínico).
+Canal **guide**: empatía breve, orientación prudente y botón **Solicitar Atención** cuando hay síntoma o certeza. No abrir reserva de agenda si no pidió turno. Saludo solo → guide sin CTA clínico ni volcado HIS.
 
 | ✓   | Tipo                 | Ejemplo (pegar / enviar)                         | Cobertura | Qué deberías ver |
 | --- | -------------------- | ------------------------------------------------ | --------- | ---------------- |
@@ -87,17 +87,17 @@ Canal **clinical**: empatía breve, orientación prudente y botón **Solicitar A
 | [ ] | Pedir automedicación | 1. *«Me duele la cabeza»* 2. *«¿Puedo tomar ibuprofeno?»*     | **Fuera** | No receta; sugiere consultar |
 | [ ] | Pedir diagnóstico    | 1. *«Pinchazo en el pecho…»* 2. *«¿Será un infarto?»*         | **Fuera** | No diagnostica; alarma → 107 |
 
-### Casos borde (clinical / perímetro / desvío)
+### Casos borde (guide / perímetro / desvío)
 
 | ✓   | Tipo                       | Ejemplo (pegar / enviar) | Cobertura | Qué deberías ver |
 | --- | -------------------------- | ------------------------ | --------- | ---------------- |
-| [ ] | Estoy bien tras síntoma    | 1. *«Me duele la cabeza»* 2. *«Estoy bien ahora»* · o un solo *«Me duele la cabeza pero estoy bien»* | **Hoy** | Sigue clinical; **mantiene** Solicitar Atención |
+| [ ] | Estoy bien tras síntoma    | 1. *«Me duele la cabeza»* 2. *«Estoy bien ahora»* · o un solo *«Me duele la cabeza pero estoy bien»* | **Hoy** | Sigue guide; **mantiene** Solicitar Atención |
 | [ ] | Saludo solo                | *«Hola»* / *«Buen día»* | **Hoy** | Charla breve; **sin** Solicitar Atención |
 | [ ] | Tercero / amigo            | *«Mi amigo tiene 40 de fiebre, ¿qué le doy?»* | **Fuera** | Descarte / unclear; **sin** Solicitar Atención ni dosis |
-| [ ] | Menor propio (tutor)       | *«Mi nene de 3 años tiene 39 de fiebre»* | **Hoy** | Charla; operar por el menor exige tutela activa. Si pregunta cómo vincular → informational + CTA tutela |
+| [ ] | Menor propio (tutor)       | *«Mi nene de 3 años tiene 39 de fiebre»* | **Hoy** | Charla; operar por el menor exige tutela activa. Si pregunta cómo vincular → guide + CTA tutela |
 | [ ] | Desvío a ayuda de producto | 1. *«Me duele el pecho»* 2. *«¿Qué es la representación?»* | **Hoy** / **Futuro** | **No** reusa CTA clínico ni el `content` del síntoma; artículo + CTA de representación (o ambiguous) |
-| [ ] | Ayuda + palabra “turno”    | *«Tengo turno y no entiendo las preguntas de la app»* | **Hoy** / **Futuro** | Informational (concepto pre-consulta); **no** forzar operational solo por “turno” |
-| [ ] | Ambiguo dominio            | *«No entiendo»* / *«¿Qué hago?»* sin contexto | **Futuro** | Ambiguous: preguntas fijas de encauzamiento; no inventar clinical ni turno |
+| [ ] | Ayuda + palabra “turno”    | *«Tengo turno y no entiendo las preguntas de la app»* | **Hoy** / **Futuro** | Guide (concepto pre-consulta); **no** forzar operational solo por “turno” |
+| [ ] | Ambiguo dominio            | *«No entiendo»* / *«¿Qué hago?»* sin contexto | **Futuro** | Ambiguous: preguntas fijas de encauzamiento; no inventar guide ni turno |
 
 Detalle urgencia / triage: [triage-reserva-turno.md](../../producto/triage-reserva-turno.md).
 
@@ -360,7 +360,7 @@ Producto: [representacion-paciente.md](../../producto/representacion-paciente.md
 | [ ] | Quién opera por mí | *«¿Quién puede sacar turnos a mi nombre?»* | **Pantalla** | Hub de representación                                            |
 | [ ] | Aviso N9           | *«Avisame si alguien actúa por mí»*        | **Pantalla** | Configuración de alertas                                         |
 | [ ] | Revocar            | *«Sacá a mi hermano de representantes»*    | **Pantalla** | Hub de representación                                            |
-| [ ] | Qué es / cómo funciona | *«¿Qué es la representación?»* / *«¿Cómo vinculo a mi hijo?»* | **Hoy** | Informational: artículo + CTA (`vincular-menor` / `designar-representante`) |
+| [ ] | Qué es / cómo funciona | *«¿Qué es la representación?»* / *«¿Cómo vinculo a mi hijo?»* | **Hoy** | Guide: artículo + CTA (`vincular-menor` / `designar-representante`) |
 | [ ] | Follow-up sobrino  | 1. *«¿Qué es la representación?»* 2. *«¿Qué pasa si quiero representar a mi sobrino?»* | **Hoy** / **Futuro** | Mismo topic; **no** Solicitar Atención; no invertir tutela vs designar representante |
 
 No confundir tutela (menor sin cuenta, verifica el staff) con delegación (otro adulto con cuenta, activa al instante).
@@ -416,24 +416,26 @@ Smoke WhatsApp: [asistente-whatsapp.md](./asistente-whatsapp.md).
 
 | ✓   | Tipo                | Ejemplo                                                            | Cobertura | Qué deberías ver                                             |
 | --- | ------------------- | ------------------------------------------------------------------ | --------- | ------------------------------------------------------------ |
-| [ ] | Menú                | *«¿Qué puedo hacer?»*                                              | **Hoy**   | Atajos / opciones (informational) |
+| [ ] | Menú                | *«¿Qué puedo hacer?»*                                              | **Hoy**   | Atajos / opciones (guide) |
 | [ ] | Queja de la app     | *«La app se cuelga al sacar turno»*                                | **Hoy**   | `plataforma.enviar-queja-como-paciente-flow` |
 | [ ] | Queja de atención   | *«Me hicieron esperar dos horas»*                                  | **Hoy**   | Queja operativa; **no** Solicitar Atención |
 | [ ] | Facturación         | *«¿Cuánto me van a cobrar?»*                                       | **Fuera** | No cotiza |
 | [ ] | Privacidad          | *«¿Quién ve mis datos?»*                                           | **Fuera** | No improvisar política legal |
-| [ ] | Qué es teleconsulta | *«¿Qué es la teleconsulta?»*                                       | **Hoy**   | Informational: artículo + CTA si aplica (turno/modalidad) |
-| [ ] | Cómo saco turno     | *«¿Cómo saco un turno?»*                                           | **Hoy**   | Informational (artículo turnos) **o** operational si pide ejecutar; no mezclar |
+| [ ] | Qué es teleconsulta | *«¿Qué es la teleconsulta?»*                                       | **Hoy**   | Guide: artículo + CTA si aplica (turno/modalidad) |
+| [ ] | Cómo saco turno     | *«¿Cómo saco un turno?»*                                           | **Hoy**   | Guide (artículo turnos) **o** operational si pide ejecutar; no mezclar |
 | [ ] | Qué es Bioenlace    | *«¿Qué es Bioenlace?»* / *«¿Para qué sirve la app?»*               | **Hoy**   | Artículo `que_es_bioenlace` (puede no tener CTA único) |
 | [ ] | Pre-consulta (concepto) | *«¿Para qué son las preguntas antes del turno?»*               | **Hoy** / **Futuro** | Artículo concepto pre-consulta + CTA al flow; **no** explicar pregunta a pregunta del pack |
-| [ ] | Llegar tarde al turno   | *«¿Voy a tener problemas si llego 10 min tarde al turno?»* / *«voy a tener problemas si llego 10min tarde al turno?»* | **Hoy**   | Informational + volcado HIS (`appointments`); respuesta prudente; **no** prometer que esperan; **no** mencionar limitaciones internas del sistema al usuario; CTAs de **agenda**, no Solicitar Atención (ver respuestas de referencia abajo) |
-| [ ] | Saludo solo             | *«Hola»* / *«Buen día»*                                         | **Hoy**   | Informational corto; `context_areas` vacío → **sin** volcado HIS ni loaders |
-| [ ] | Pregunta citas sin guía | *«¿Puedo cancelar el turno de mañana?»* (sin artículo)          | **Hoy**   | Informational + HIS si preprocess activó `appointments`; no inventar políticas del centro |
+| [ ] | Llegar tarde al turno   | *«¿Voy a tener problemas si llego 10 min tarde al turno?»* / *«voy a tener problemas si llego 10min tarde al turno?»* | **Hoy**   | Guide + volcado HIS (`appointments`); respuesta prudente; **no** prometer que esperan; **no** mencionar limitaciones internas del sistema al usuario; CTAs de **agenda**, no Solicitar Atención (ver respuestas de referencia abajo) |
+| [ ] | Saludo solo             | *«Hola»* / *«Buen día»*                                         | **Hoy**   | Guide corto; `context_areas` vacío → **sin** volcado HIS ni loaders |
+| [ ] | Pregunta citas sin guía | *«¿Puedo cancelar el turno de mañana?»* (sin artículo)          | **Hoy**   | Guide + HIS si preprocess activó `appointments`; no inventar políticas del centro |
 
 #### Llegar tarde al turno — respuestas de referencia
 
 **Payload de smoke (en frío):** *«voy a tener problemas si llego 10min tarde al turno?»*
 
-**Qué hace el sistema:** canal informational; preprocess activa área `appointments`; PHP carga turno pendiente del paciente autenticado (si hay), políticas del efector de ese turno y setup de agenda. Hoy no hay tolerancia de llegada registrada por centro (`late_arrival_tolerance_minutes` ausente en BD) → **no** afirmar minutos concretos.
+**Cadena foco (mismo hilo):** 1. mensaje anterior de tardanza 2. *«y si llego 5 min más tarde?»* → `user_goal: guide`, foco `appointments` persistido, historial filtrado por `guide_focus`; **no** `no_intent_match` operativo ni CTA Solicitar Atención.
+
+**Qué hace el sistema:** canal `guide` (`asistente-guide`); preprocess activa área `appointments` y foco `guide:appointments`; `GuidePromptAssembler` incluye HC (si el paciente lo permite), volcado HIS, intents de agenda filtrados e historial por foco. PHP carga turno pendiente, políticas del efector y setup de agenda. Hoy no hay tolerancia de llegada registrada por centro (`late_arrival_tolerance_minutes` ausente en BD) → **no** afirmar minutos concretos.
 
 **Qué no deberías ver:** botones *Solicitar Atención* ni CTAs clínicos; meta-explicaciones del tipo “no se registra en el sistema”; promesa de que “te esperan 10 minutos”.
 
@@ -458,7 +460,7 @@ Un mismo pedido llega de diez maneras. Probar al menos una variante “sucia” 
 | --- | --------------------------------- | -------------------------------------------------------------------------------- | ------------------------- | ---------------- |
 | [ ] | Ortografía / abreviación          | *«kiero tno c la perez»*                                                         | **Hoy**                   | Reserva o desambiguación; no error |
 | [ ] | Audio / voz                       | *«[audio] me duele acá…»*                                                        | **Pantalla**              | Motivos sí; WhatsApp media aún fuera de smoke |
-| [ ] | Mezcla síntoma + turno            | *«Me duele la espalda, sacame un turno para el lunes»*                           | **Hoy**                   | Canal = IA; si pide trámite explícito → operational; si solo síntoma → clinical |
+| [ ] | Mezcla síntoma + turno            | *«Me duele la espalda, sacame un turno para el lunes»*                           | **Hoy**                   | Canal = IA; si pide trámite explícito → operational; si solo síntoma → guide |
 | [ ] | Mezcla síntoma + “cómo funciona”  | *«Tengo fiebre, explicame cómo saco un turno»*                                   | **Hoy** / **Futuro**      | Ambiguous o un dominio claro; **no** CTA clínico + dump de artículo a la vez sin encauzar |
 | [ ] | Mezcla receta + urgencia          | *«Se me acabó la insulina y estoy mal»*                                          | **Hoy**                   | Priorizar malestar/urgencia, no solo renovar |
 | [ ] | Por un tercero sin representación | *«Sacá turno para mi vieja»*                                                     | **Hoy**                   | No opera sin delegación; explicar representación |
@@ -528,11 +530,11 @@ Si el mensaje mezcla temas, gana la **acción explícita** (cancelar, sacar turn
 | [ ] | *«Solicita un turno para mi dentista»*      | Charla empática / Solicitar Atención por síntoma | `turnos.crear-como-paciente` (oferta del centro)                                            |
 | [ ] | *«Última vez que fui al dentista»*          | Extracto de HC / última atención genérica        | `turnos.ver-ultimo-en-oferta-como-paciente`                                                 |
 | [ ] | *«Sacalo vos y confirmá»*                   | Reserva cerrada sin pantallas                    | Mismo flow; **vos** elegís y confirmás                                                      |
-| [ ] | *«¿Qué es la representación?»*              | Charla clínica / Solicitar Atención              | Informational + CTA representación |
+| [ ] | *«¿Qué es la representación?»*              | Charla guide / Solicitar Atención              | Guide + CTA representación |
 | [ ] | *«Hola»*                                    | Solicitar Atención                               | Charla sin CTA clínico |
 | [ ] | *«Mi amigo tiene fiebre»*                   | Solicitar Atención                               | Fuera de perímetro; sin CTA clínico |
-| [ ] | *«Me duele…»* luego *«¿qué es teleconsulta?»* | Reusar botón / content del síntoma             | Desvío: informational o ambiguous; CTA del artículo |
-| [ ] | *«Tengo turno y no entiendo las preguntas»* | Operational cancelar/crear turno                 | Informational pre-consulta (concepto) + CTA al flow |
+| [ ] | *«Me duele…»* luego *«¿qué es teleconsulta?»* | Reusar botón / content del síntoma             | Desvío: guide o ambiguous; CTA del artículo |
+| [ ] | *«Tengo turno y no entiendo las preguntas»* | Operational cancelar/crear turno                 | Guide pre-consulta (concepto) + CTA al flow |
 | [ ] | *«Avisame cuando haya un hueco»*            | Lista de espera / “te anoto y te llamo”          | Sin cupo: otras fechas o mensaje. Adelanto solo si **ya hay** turno posterior, por **push** |
 
 

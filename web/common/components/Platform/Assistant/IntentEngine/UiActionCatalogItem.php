@@ -22,6 +22,9 @@ final class UiActionCatalogItem
     /** @var array<string, mixed>|null Semántica declarativa del intent (goal/how/constraints/etc.). */
     public ?array $intent_semantics = null;
 
+    /** @var list<string> Áreas HIS para filtrar semántica en canal guide. */
+    public array $his_areas = [];
+
     /** @var array<string, mixed>|null Instrucción explícita para abrir UI (web/mobile). */
     public ?array $client_open = null;
 
@@ -50,7 +53,8 @@ final class UiActionCatalogItem
         ?array $intent_semantics = null,
         ?array $client_open = null,
         ?string $client_interaction = null,
-        ?string $spa_presentation = null
+        ?string $spa_presentation = null,
+        array $his_areas = []
     ) {
         $this->action_id = $action_id;
         $this->display_name = $display_name;
@@ -63,6 +67,27 @@ final class UiActionCatalogItem
         $this->client_open = $client_open;
         $this->client_interaction = $client_interaction;
         $this->spa_presentation = $spa_presentation;
+        $this->his_areas = self::normalizeHisAreas($his_areas);
+    }
+
+    /**
+     * @param list<string> $raw
+     * @return list<string>
+     */
+    private static function normalizeHisAreas(array $raw): array
+    {
+        $out = [];
+        foreach ($raw as $area) {
+            if (!is_string($area)) {
+                continue;
+            }
+            $area = trim($area);
+            if ($area !== '' && !in_array($area, $out, true)) {
+                $out[] = $area;
+            }
+        }
+
+        return $out;
     }
 
     /**

@@ -18,6 +18,8 @@ intent_semantics:
   summary: 'Solicitá tutela sobre un menor sin cuenta; el centro debe verificarla antes de activarla.'
   capabilities:
     - vincular_menor
+his_areas:
+  - representation
 subintents:
   -
     id: gestionar_tutela

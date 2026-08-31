@@ -58,7 +58,7 @@ class AssistantContextAreasTest extends Unit
             [
                 ['span' => '10 minutos tarde', 'category' => 'tiempo', 'synonyms' => []],
             ],
-            'informational',
+            'guide',
             $anchors
         );
 
@@ -77,7 +77,7 @@ class AssistantContextAreasTest extends Unit
             [
                 ['span' => 'última vez que fui', 'category' => 'turno', 'synonyms' => []],
             ],
-            'informational',
+            'guide',
             $anchors
         );
 

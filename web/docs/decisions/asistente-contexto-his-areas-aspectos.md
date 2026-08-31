@@ -2,7 +2,7 @@
 
 ## Contexto
 
-La 2ª IA (conversacional clinical e informational) necesita datos del HIS (turno próximo, reglas del centro, agenda) sin pegar la historia clínica completa ni nombres de tablas (`EfectorTurnosConfig`) en prompts. El preprocess ya clasifica canal y extracciones; faltaba un mecanismo escalable para decidir **qué** volcar y **cómo** cargarlo desde PHP.
+La 2ª IA del canal **guide** necesita datos del HIS (turno próximo, reglas del centro, agenda) sin pegar la historia clínica completa ni nombres de tablas (`EfectorTurnosConfig`) en prompts. El preprocess ya clasifica canal y extracciones; faltaba un mecanismo escalable para decidir **qué** volcar y **cómo** cargarlo desde PHP.
 
 Alternativas descartadas en diseño: manifests YAML de bloques por pregunta, predicados regex en orquestadores (`if preg_match tarde`), catálogo de aspectos en preprocess.
 
@@ -37,7 +37,7 @@ MVP: área `appointments` con cuatro aspectos implementados. Otras áreas declar
 ## Consecuencias
 
 - Nuevos datos HIS para el asistente: definir aspecto en enum, loader en dominio, registro en `assistantContextAspectLoaders`; opcional ampliar mapa área→aspectos en `AssistantContextAreaAspectResolver`.
-- Prompts `clinical.yaml` / `informational.yaml`: bloque `context:his` con reglas **transversales** (usar solo datos no nulos del volcado).
+- Prompt `guide.yaml`: bloque `context:his` con reglas **transversales** (usar solo datos no nulos del volcado).
 - **Descartado:** registro central `limitations[]` por cada dato que el sistema aún no expone — escala mal; el loader ya señala ausencia con `null`/campo omitido.
 - Debug QA: `asistente_context_debug` adjunta `context_applied` al envelope público.
 - Parámetros de cap: `asistente_context_max_aspects`, `asistente_context_max_chars`, `asistente_context_history_limit`.

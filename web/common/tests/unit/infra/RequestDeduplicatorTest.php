@@ -36,17 +36,17 @@ class RequestDeduplicatorTest extends Unit
         $this->assertGreaterThan(255, strlen($primero));
         $this->assertGreaterThan(255, strlen($segundo));
 
-        RequestDeduplicator::guardar($primero, 'Lamento que sientas ese pinchazo', 'asistente-conversational');
+        RequestDeduplicator::guardar($primero, 'Lamento que sientas ese pinchazo', 'asistente-guide');
 
-        $hit = RequestDeduplicator::buscarSimilar($segundo, 'asistente-conversational');
+        $hit = RequestDeduplicator::buscarSimilar($segundo, 'asistente-guide');
         $this->assertNull($hit);
     }
 
     public function testMatchExactoSigueDeduplicando(): void
     {
         $prompt = str_repeat('x', 300) . 'mismo';
-        RequestDeduplicator::guardar($prompt, 'cached', 'asistente-conversational');
+        RequestDeduplicator::guardar($prompt, 'cached', 'asistente-guide');
 
-        $this->assertSame('cached', RequestDeduplicator::buscarSimilar($prompt, 'asistente-conversational'));
+        $this->assertSame('cached', RequestDeduplicator::buscarSimilar($prompt, 'asistente-guide'));
     }
 }

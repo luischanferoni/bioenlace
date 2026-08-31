@@ -31,9 +31,9 @@ contextos:
     candidates_tokens: 250
     cached_ratio: 0.40
     volumen_mensual_por_profesional: 2000
-  asistente-conversational:
-    prompt_tokens: 930
-    candidates_tokens: 180
+  asistente-guide:
+    prompt_tokens: 1000
+    candidates_tokens: 200
     cached_ratio: 0.40
     volumen_mensual_por_profesional: 660
   asistente-onboarding:

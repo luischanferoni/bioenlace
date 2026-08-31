@@ -30,6 +30,7 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 
 | Plan | Documentación estable |
 |------|------------------------|
+| Canal guide (fusión clinical + informational) | [asistente-y-chat.md](../producto/asistente-y-chat.md) + [decisions/asistente-canal-guide.md](../decisions/asistente-canal-guide.md) + QA [asistente-consultas.md](../qa/paciente/asistente-consultas.md) |
 | Asistente: canales, chat, info_content | [producto/asistente-y-chat.md](../producto/asistente-y-chat.md) + [producto/contenido-informativo.md](../producto/contenido-informativo.md) + QA [asistente-consultas.md](../qa/paciente/asistente-consultas.md) |
 | Contexto HIS asistente (áreas + aspectos) | [producto/asistente-y-chat.md](../producto/asistente-y-chat.md) + [decisions/asistente-contexto-his-areas-aspectos.md](../decisions/asistente-contexto-his-areas-aspectos.md) + [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md) |
 | Control/Seguimiento + protocolos | [producto/solicitar-atencion.md](../producto/solicitar-atencion.md) + [decisions/care-protocols-plandefinition-lite.md](../decisions/care-protocols-plandefinition-lite.md) |

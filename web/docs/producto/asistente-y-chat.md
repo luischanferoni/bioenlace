@@ -41,12 +41,12 @@ Clasificación de acción: keywords del intent + desambiguación si hay empate (
 
 | Canal | Rol | Botones |
 |-------|-----|---------|
-| **clinical** | Malestar o preocupación por **su** salud sin trámite explícito | Solicitar Atención si hay síntoma en el hilo (o certeza) |
-| **informational** | Cómo funciona el producto; **saludo solo** sin síntoma | Artículo + CTA a intent(s) del artículo |
+| **guide** | Charla de salud, ayuda de producto, preguntas HIS sin ejecutar trámite | Artículo + CTA; Solicitar Atención si hay síntoma en el hilo (o certeza); volcado `context:his` si hay áreas |
 | **ambiguous** | Dominio poco claro / desvío de hilo | Preguntas fijas para encauzar |
 | **operational** | Trámite concreto | Flow del intent |
+| **in_flow_question** | Pregunta dentro de un flow abierto | Sigue el flow operativo |
 
-Hilos: no se mezcla historial clínico con ayuda de producto; un cambio de dominio puede pasar por ambiguous. Metadata de prompts: `assistant/prompts/`; booking: `assistant/routing/booking-offer.yaml`.
+Hilos: foco de guía persistido (`guide_focus`, `thread_tag` dinámico `guide:appointments`); no mezclar historial de áreas distintas; un cambio fuerte de dominio puede pasar por ambiguous. Metadata de prompts: `assistant/prompts/guide.yaml`; booking: `assistant/routing/booking-offer.yaml`.
 
 Contenido editorial: [contenido-informativo.md](./contenido-informativo.md).
 
@@ -60,7 +60,7 @@ flowchart LR
   A[context_areas]
   R[PHP: anclas + aspectos]
   L[Loaders → JSON HIS]
-  I[2ª IA clinical / informational]
+  I[2ª IA guide asistente-guide]
   P --> A --> R --> L --> I
 ```
 
@@ -75,7 +75,7 @@ Reglas de producto:
 - Saludo solo o meta sin datos → `context_areas: []` → **sin loaders**.
 - El preprocess **no** elige aspectos ni SQL; PHP resuelve anclas y aspectos tras el preprocess.
 - El bloque en prompt es `--- context:his ---` con JSON de aspectos (valores reales o `null` si el loader no tiene el dato). Reglas transversales en el prompt; sin listas globales de “limitaciones”.
-- Canal **informational** sin artículo pero con áreas HIS: respuesta con IA + volcado (no mensaje genérico `no_article`).
+- Canal **guide** sin artículo pero con áreas HIS: respuesta con IA + volcado + semántica de intents filtrada (no mensaje genérico `no_article`).
 
 Detalle técnico: [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md) · ADR: [decisions/asistente-contexto-his-areas-aspectos.md](../decisions/asistente-contexto-his-areas-aspectos.md).
 

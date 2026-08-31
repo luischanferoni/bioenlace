@@ -38,6 +38,8 @@ intent_semantics:
     - elige_profesional
     - elige_horario
     - reserva_turno
+his_areas:
+  - appointments
 draft_keys_extra:
   - tipo_atencion
   - fecha_turno

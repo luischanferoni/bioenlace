@@ -87,19 +87,14 @@ final class ProductMetadataPaths
         return self::assistantRoutingDir() . DIRECTORY_SEPARATOR . $name;
     }
 
-    public static function clinicalChannelFile(): string
+    public static function guideChannelFile(): string
     {
-        return self::assistantPromptFile('clinical');
+        return self::assistantPromptFile('guide');
     }
 
     public static function preprocessPromptFile(): string
     {
         return self::assistantPromptFile('preprocess');
-    }
-
-    public static function informationalChannelFile(): string
-    {
-        return self::assistantPromptFile('informational');
     }
 
     public static function ambiguousChannelFile(): string

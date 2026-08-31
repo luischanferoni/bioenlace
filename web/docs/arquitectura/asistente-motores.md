@@ -54,7 +54,7 @@ flowchart LR
 - Texto del usuario y permisos (rutas API del catálogo).
 - `keywords` e `intent_semantics` del YAML de cada intent.
 - Si dos intents empatan de cerca → **desambiguación** (botones); no boosts entre `intent_id`.
-- Canal (síntoma → `clinical`, etc.): `ChatChannelPolicy` (PHP). Copy: `assistant/prompts/clinical.yaml`.
+- Canal (síntoma → `guide`, etc.): `ChatChannelPolicy` (PHP). Copy: `assistant/prompts/guide.yaml`.
 
 ---
 
@@ -115,13 +115,13 @@ Cuando el paciente pregunta "¿qué es X?" o "¿cómo funciona X?", antes de cae
 
 **Resolución jerárquica:** efector → provincia → producto (global). Si el centro tiene un artículo específico sobre el topic, ese prevalece.
 
-**Integración:** `InformationalChannel` llama a `InfoContentAssistantService::tryResolveFromText()`. Si hay match visible (RBAC), responde con IA anclada a la fuente + botones CTA; si la IA falla, dump del artículo (sin inventar). Sin artículo pero con `context_areas` del preprocess → `tryAnswerFromHisContext()` (IA + volcado HIS).
+**Integración:** `GuideChannel` (y `InfoContentAssistantService` para artículos) llama a `InfoContentAssistantService::tryResolveFromText()`. Si hay match visible (RBAC), responde con IA anclada a la fuente + botones CTA; si la IA falla, dump del artículo (sin inventar). Sin artículo pero con `context_areas` del preprocess → `GuideChannel` con volcado HIS + `GuidePromptAssembler`.
 
 **Administración:** CRUD en `/admin/info-content-article`. Producto: [contenido-informativo.md](../producto/contenido-informativo.md).
 
 ## Contexto HIS (áreas + aspectos)
 
-Segunda capa de contexto para canales que usan **2ª IA** (`clinical`, `informational`). Complementa el extracto estrecho de HC en conversacional; no reemplaza intents de lectura ni DataAccess.
+Segunda capa de contexto para el canal **guide** (2ª IA `asistente-guide`). Complementa el extracto de HC (`PROFILE_GUIDE`); no reemplaza intents de lectura ni DataAccess.
 
 | Pieza | Ubicación | Rol |
 |-------|-----------|-----|
@@ -131,9 +131,9 @@ Segunda capa de contexto para canales que usan **2ª IA** (`clinical`, `informat
 | Plan | `AssistantContextAreaAspectResolver` | Áreas + extracciones → lista de aspectos |
 | Loaders | `Domain/*/Assistant/Context/*AspectLoader` | Un aspecto → JSON HIS desde AR/servicios |
 | Registry | `product-registries.php` → `assistantContextAspectLoaders` | Cableado loaders |
-| Ensamblaje | `AssistantContextAssemblyService` | Orquesta y formatea `--- context:his ---` |
+| Ensamblaje | `GuidePromptAssembler` + `AssistantContextAssemblyService` | HC + `context:his` + `context:intent_semantics` + historial por foco |
 
-Flujo: preprocess persiste `context_areas` en `ChatPreprocessContext` → assembly resuelve anclas y aspectos → loaders (cache request-scoped) → `ConversationalChannel` / `InfoContentAssistantService` inyectan el bloque antes del mensaje o del artículo.
+Flujo: preprocess persiste `context_areas` en `ChatPreprocessContext` → `GuideFocusResolver` fija foco → assembly resuelve anclas y aspectos → loaders (cache request-scoped) → `GuideChannel` / `GuidePromptAssembler` inyectan bloques antes del mensaje o del artículo.
 
 MVP implementado: área `appointments` (cita actual, políticas del centro, setup de agenda, historial opcional). Otras áreas reservadas en enum hasta tener loaders.
 

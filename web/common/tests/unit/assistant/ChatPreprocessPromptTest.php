@@ -15,7 +15,7 @@ class ChatPreprocessPromptTest extends Unit
         $this->assertStringContainsString('context_areas', $prompt);
         $this->assertStringContainsString('appointments', $prompt);
         $this->assertStringContainsString('operational: ejecutar o consultar un trámite concreto', $prompt);
-        $this->assertStringContainsString('clinical:', $prompt);
+        $this->assertStringContainsString('guide:', $prompt);
         $this->assertStringContainsString('ambiguous:', $prompt);
         $this->assertStringContainsString('No incluye saludo solo', $prompt);
         $this->assertStringNotContainsString('ecografía', $prompt);

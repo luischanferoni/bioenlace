@@ -25,7 +25,7 @@ Tres usos de ese extracto (mismos datos, distinta puerta):
 
 | Uso | Quién lo dispara | ¿El paciente puede apagarlo? |
 |-----|------------------|------------------------------|
-| Chat conversacional del asistente | La persona (o el staff) escribiendo en el asistente | **Sí** — Configuración → *Resumen de historia en el asistente* |
+| Chat canal guide del asistente | La persona (o el staff) escribiendo en el asistente | **Sí** — Configuración → *Resumen de historia en el asistente* (`PROFILE_GUIDE` / `PROFILE_CONVERSATIONAL`) |
 | Motivos pre-consulta (resumen al cerrar la ventana) | Job del sistema, como parte de la atención | **No** — es el circuito clínico, no un chat opcional |
 | Captura del encounter (análisis del dictado) | El profesional en la consulta | **No** — igual |
 
@@ -55,7 +55,7 @@ Otros encargados del mismo tipo (transcripción, identidad, push) están en la [
 
 ## Qué ve y qué puede elegir el paciente
 
-En **Configuración** de la app paciente hay un interruptor **Resumen de historia en el asistente**.
+En **Configuración** de la app paciente hay un interruptor **Resumen de historia en el asistente** (canal **guide**).
 
 - **Encendido (predeterminado):** el chat conversacional puede incluir el extracto acotado en el prompt a Vertex. Es el comportamiento que ya tenía el producto.
 - **Apagado:** el asistente sigue funcionando (historial del hilo, turnos, flujos). **No** manda alergias, condiciones ni medicación del expediente en esa charla.

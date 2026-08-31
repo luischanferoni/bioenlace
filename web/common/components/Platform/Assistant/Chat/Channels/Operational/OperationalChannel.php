@@ -2,7 +2,7 @@
 
 namespace common\components\Platform\Assistant\Chat\Channels\Operational;
 
-use common\components\Domain\Content\Service\InfoContentAssistantService;
+use common\components\Platform\Assistant\Chat\Channels\Guide\GuideChannel;
 use common\components\Platform\Assistant\Chat\ChatPreprocessContext;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
 use common\components\Platform\Assistant\IntentEngine\IntentClassifier;
@@ -59,9 +59,8 @@ final class OperationalChannel
         }
 
         if ($classification === null) {
-            $hisAnswer = InfoContentAssistantService::tryAnswerFromHisContext($content, $userId);
-            if ($hisAnswer !== null) {
-                return $hisAnswer;
+            if (ChatPreprocessContext::contextAreas() !== []) {
+                return GuideChannel::handle($content, $userId);
             }
 
             return self::finalize(IntentEngine::processQueryNoMatch($queryText, $catalog));

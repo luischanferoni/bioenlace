@@ -1,10 +1,9 @@
-# Enruta por `user_goal` tras preprocess (+ hilo / desvío).
+# Routing
 
-| `user_goal` | Handler |
-|-------------|---------|
-| `clinical` | `ConversationalChannel` |
-| `informational` / `meta` | `InformationalChannel` |
-| `ambiguous` | `AmbiguousChannel` (botones fijos → `assistant.channel.*`) |
+| `user_goal` | Canal |
+|-------------|-------|
+| `guide` | `GuideChannel` |
 | `operational` / `in_flow_question` | `OperationalChannel` |
+| `ambiguous` | `AmbiguousChannel` |
 
-Alias legacy (`conversational_clinical`, `informational_conversational`, …) se canonicalizan en `ChatPreprocessService::canonicalizeGoal`.
+`ChatRouter::refineGoalForHisContext` puede reorientar a `guide` cuando hay `context_areas` y la pregunta no es trámite operativo.

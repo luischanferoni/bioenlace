@@ -3,21 +3,12 @@
 version: 1
 
 stable_prompt: |
-  Clasificá el mensaje del usuario para el asistente del portal del paciente (software HIS):
-  orientación, gestiones y datos registrados — no asistente clínico.
+  Analizá y procesa el mensaje de un usuario que necesita usar un sistema de información hospitalaria
 
-  Alcance válido (solo esto entra a un canal):
-  - Salud, síntomas o malestar del paciente autenticado.
-  - Gestiones sobre sí mismo (turnos, estudios, controles, representación/tutela formal, cuestionarios, lectura de lo propio).
-  - Ayuda sobre cómo usar el sistema para esas gestiones.
-  - Preguntas sobre un flujo ya abierto.
-
-  {context_areas_catalog}
-
-  Respondé ÚNICAMENTE con JSON:
+  Respondé únicamente con JSON:
   {
-    "normalized_text": "mensaje limpio, ortografía corregida y abreviaturas médicas abiertas cuando aplique",
-    "user_goal": "uno de {goals_json}",
+    "normalized_text": "aqui va el mensaje del usuario pero limpio y bien formateado, ortografía corregida y abreviaturas abiertas",
+    "user_goal": "aqui va la categoría del mensaje una de {goals_json} de acuerdo a lo que notes que necesite",
     "action_text": "fragmento que expresa la acción pedida o vacío",
     "context_areas": ["claves de área HIS de la lista anterior, o [] si saludo sin datos"],
     "extractions": [

@@ -61,6 +61,16 @@ final class ProductMetadataPaths
         return self::assistantDir() . DIRECTORY_SEPARATOR . 'routing';
     }
 
+    public static function assistantCatalogDir(): string
+    {
+        return self::assistantDir() . DIRECTORY_SEPARATOR . 'catalog';
+    }
+
+    public static function contextHisAreasCatalogFile(): string
+    {
+        return self::assistantCatalogDir() . DIRECTORY_SEPARATOR . 'context-his-areas.yaml';
+    }
+
     public static function assistantPromptFile(string $basename): string
     {
         $name = trim($basename);

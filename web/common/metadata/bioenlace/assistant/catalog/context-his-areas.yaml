@@ -1,0 +1,14 @@
+# Catálogo cerrado de áreas HIS (context_areas). Claves = {@see AssistantContextHISArea}.
+# Consumidor: preprocess ({context_his_areas_list}), guide (query_scope_lines).
+version: 1
+
+areas:
+  appointments: Citas y turnos del paciente; reglas del centro sobre citas
+  encounters: Atenciones y consultas ya realizadas
+  clinical_record: Resumen clínico del paciente (alergias, medicación, condiciones)
+  diagnostics: Estudios, laboratorio y resultados
+  medication: Recetas y medicación
+  representation: Tutela, representantes y operar por otro
+  coverage: Cobertura y obra social
+  product: Cómo funciona Bioenlace (guías de uso)
+  geo_resources: Centros, ubicación y recursos del sistema de salud

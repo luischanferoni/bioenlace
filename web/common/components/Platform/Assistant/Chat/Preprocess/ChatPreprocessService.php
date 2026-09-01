@@ -69,6 +69,7 @@ final class ChatPreprocessService
     public static function resetCacheForTests(): void
     {
         AssistantMetadataLoader::resetCacheForTests();
+        AssistantContextHISArea::resetCacheForTests();
     }
 
     /**
@@ -107,7 +108,7 @@ final class ChatPreprocessService
             'goals_json' => json_encode(self::GOALS, JSON_UNESCAPED_UNICODE),
             'categories_json' => json_encode($categoriesList, JSON_UNESCAPED_UNICODE),
             'categories_human' => implode(', ', $categoriesList),
-            'context_areas_catalog' => AssistantContextHISArea::catalogForPreprocess(),
+            'context_his_areas_list' => AssistantContextHISArea::listForPrompt(),
         ]);
     }
 

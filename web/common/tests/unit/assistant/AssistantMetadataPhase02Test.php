@@ -30,7 +30,7 @@ class AssistantMetadataPhase02Test extends Unit
         $this->assertFileExists(ProductMetadataPaths::assistantChannelCopyFile());
         $this->assertFileExists(ProductMetadataPaths::bookingOfferFile());
         $this->assertFileExists(ProductMetadataPaths::intentFamiliesFile());
-        $this->assertFileExists(ProductMetadataPaths::hintResolutionFile());
+        $this->assertFileExists(ProductMetadataPaths::contextHisAreasCatalogFile());
     }
 
     public function testPreprocessPromptLoadedFromYaml(): void

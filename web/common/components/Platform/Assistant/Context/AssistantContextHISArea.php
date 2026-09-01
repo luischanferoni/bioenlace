@@ -2,8 +2,13 @@
 
 namespace common\components\Platform\Assistant\Context;
 
+use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
+use common\components\Platform\Core\Product\ProductMetadataPaths;
+
 /**
  * Áreas top-level del HIS expuestas al preprocess (lista cerrada).
+ *
+ * Descripciones de prompt: {@see catalog/context-his-areas.yaml}.
  */
 final class AssistantContextHISArea
 {
@@ -17,18 +22,21 @@ final class AssistantContextHISArea
     public const PRODUCT = 'product';
     public const GEO_RESOURCES = 'geo_resources';
 
-    /** @var array<string, string> id => descripción para preprocess */
-    private const CATALOG = [
-        self::APPOINTMENTS => 'Citas y turnos del paciente; reglas del centro sobre citas',
-        self::ENCOUNTERS => 'Atenciones y consultas ya realizadas',
-        self::CLINICAL_RECORD => 'Resumen clínico del paciente (alergias, medicación, condiciones)',
-        self::DIAGNOSTICS => 'Estudios, laboratorio y resultados',
-        self::MEDICATION => 'Recetas y medicación',
-        self::REPRESENTATION => 'Tutela, representantes y operar por otro',
-        self::COVERAGE => 'Cobertura y obra social',
-        self::PRODUCT => 'Cómo funciona Bioenlace (guías de uso)',
-        self::GEO_RESOURCES => 'Centros, ubicación y recursos del sistema de salud',
+    /** @var list<string> */
+    private const AREA_IDS = [
+        self::APPOINTMENTS,
+        self::ENCOUNTERS,
+        self::CLINICAL_RECORD,
+        self::DIAGNOSTICS,
+        self::MEDICATION,
+        self::REPRESENTATION,
+        self::COVERAGE,
+        self::PRODUCT,
+        self::GEO_RESOURCES,
     ];
+
+    /** @var array<string, string>|null */
+    private static ?array $descriptionCache = null;
 
     /**
      * @return list<string>
@@ -63,17 +71,7 @@ final class AssistantContextHISArea
      */
     private static function productPriorityOrder(): array
     {
-        return [
-            self::APPOINTMENTS,
-            self::ENCOUNTERS,
-            self::CLINICAL_RECORD,
-            self::DIAGNOSTICS,
-            self::MEDICATION,
-            self::REPRESENTATION,
-            self::COVERAGE,
-            self::PRODUCT,
-            self::GEO_RESOURCES,
-        ];
+        return self::AREA_IDS;
     }
 
     /**
@@ -81,33 +79,67 @@ final class AssistantContextHISArea
      */
     public static function all(): array
     {
-        return array_keys(self::CATALOG);
+        return self::AREA_IDS;
     }
 
     public static function isValid(string $id): bool
     {
-        return isset(self::CATALOG[trim($id)]);
+        return in_array(trim($id), self::AREA_IDS, true);
     }
 
     public static function description(string $id): string
     {
-        return self::CATALOG[$id] ?? '';
+        $id = trim($id);
+        if ($id === '') {
+            return '';
+        }
+
+        return self::descriptionsCatalog()[$id] ?? '';
     }
 
     /**
-     * Texto para inyectar en el prompt del preprocess.
+     * Lista `- id — descripción` para placeholders de prompt (valores desde metadata YAML).
      */
-    public static function catalogForPreprocess(): string
+    public static function listForPrompt(): string
     {
-        $lines = [
-            'Áreas del sistema (context_areas). Devolvé solo claves de la lista.',
-            'Si el mensaje es solo saludo o meta sin necesidad de datos del HIS, devolvé [].',
-            '',
-        ];
-        foreach (self::CATALOG as $id => $desc) {
-            $lines[] = '- ' . $id . ' — ' . $desc;
+        $lines = [];
+        foreach (self::AREA_IDS as $id) {
+            $desc = self::description($id);
+            $lines[] = $desc !== '' ? '- ' . $id . ' — ' . $desc : '- ' . $id;
         }
 
         return implode("\n", $lines);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private static function descriptionsCatalog(): array
+    {
+        if (self::$descriptionCache !== null) {
+            return self::$descriptionCache;
+        }
+
+        $config = AssistantMetadataLoader::load(ProductMetadataPaths::contextHisAreasCatalogFile());
+        $raw = $config['areas'] ?? [];
+        if (!is_array($raw)) {
+            return self::$descriptionCache = [];
+        }
+
+        $out = [];
+        foreach ($raw as $id => $desc) {
+            $id = trim((string) $id);
+            if ($id === '' || !self::isValid($id)) {
+                continue;
+            }
+            $out[$id] = trim((string) $desc);
+        }
+
+        return self::$descriptionCache = $out;
+    }
+
+    public static function resetCacheForTests(): void
+    {
+        self::$descriptionCache = null;
     }
 }

@@ -10,116 +10,94 @@ use common\components\Platform\Assistant\IntentEngine\UiActionCatalog;
 use Yii;
 
 /**
- * Ensambla el prompt de la 2ª IA del canal guide (orden cache-friendly).
+ * Ensambla el prompt de la 2ª IA del canal guide.
+ *
+ * Adjuntos opcionales (HC, artículo): solo si preprocess/áreas y datos lo justifican.
+ * CTA: no va en el prompt; se adjunta en la respuesta HTTP (GuideChannel::finalizeResponse).
  */
 final class GuidePromptAssembler
 {
-  /**
-   * @param array{label: string, intent_id: string, summary: string, capabilities: list<string>}|null $offer
-   */
   public static function build(
     string $content,
     int $userId,
     GuideFocusState $focus,
-    ?array $offer = null,
     ?string $formattedHistory = null,
-    ?string $articleBlock = null
+    ?string $articleData = null
   ): string {
     $content = trim($content);
-    $parts = [rtrim(GuideChannelConfig::stablePrompt())];
-
-    $focusLine = self::formatFocusAreasLine($focus);
-    if ($focusLine !== '') {
-      $parts[] = '';
-      $parts[] = $focusLine;
-    }
-
-    $clinicalBlock = self::formatClinicalRecordBlock();
-    if ($clinicalBlock !== '') {
-      $parts[] = '';
-      $parts[] = GuideChannelConfig::promptFragment(
-        'block_clinical_record',
-        'Historia clínica resumida del paciente autenticado (referencia; no inventar):'
-      );
-      $parts[] = '--- context:clinical_record ---';
-      $parts[] = $clinicalBlock;
-      $parts[] = '--- end context:clinical_record ---';
-    }
-
-    $hisContext = AssistantContextAssemblyService::assembleForChannel('guide', $userId);
-    if (!$hisContext->isEmpty()) {
-      $parts[] = '';
-      $parts[] = GuideChannelConfig::promptFragment(
-        'block_his',
-        'Datos del sistema sobre el paciente y el centro para el ámbito indicado:'
-      );
-      $parts[] = $hisContext->promptSection;
-    }
-
-    $catalog = UiActionCatalog::forUser($userId);
-    $semantics = GuideIntentSemanticsFilter::formatPromptSection($catalog, $focus->activeAreas);
-    if ($semantics !== '') {
-      $parts[] = '';
-      $parts[] = GuideChannelConfig::promptFragment(
-        'block_intent_semantics',
-        'Funcionalidades que este usuario puede ejecutar en la app:'
-      );
-      $parts[] = $semantics;
-    }
-
-    if ($articleBlock !== null && trim($articleBlock) !== '') {
-      $parts[] = '';
-      $parts[] = trim($articleBlock);
-    }
 
     $history = $formattedHistory ?? GuideHistoryWindow::formatForPrompt(
       $userId,
       $content,
       $focus->primaryArea
     );
-    $continuing = $history !== '';
-    if ($continuing) {
-      $parts[] = '';
-      $parts[] = GuideChannelConfig::promptFragment(
-        'conversation_header',
-        'Conversación previa (más antigua → más reciente):'
-      );
-      $parts[] = $history;
-      $parts[] = GuideChannelConfig::promptFragment(
-        'continuation_hint',
-        'Continuación: respondé al mensaje actual.'
-      );
-    }
+    $activeAreas = self::resolvedActiveAreas($focus);
 
-    $facts = GuideChannel::formatPreprocessFacts();
-    if ($facts !== '') {
-      $parts[] = '';
-      $parts[] = $facts;
-    }
+    $assembled = AssistantContextAssemblyService::assembleForChannel('guide', $userId);
+    $catalog = UiActionCatalog::forUser($userId);
 
     $messageForPrompt = ChatPreprocessContext::normalizedText();
     if ($messageForPrompt === '') {
       $messageForPrompt = $content;
     }
 
-    $parts[] = '';
-    $parts[] = GuideChannelConfig::promptFragment(
-      'current_message_header',
-      'Mensaje actual del paciente:'
-    );
-    $parts[] = $messageForPrompt;
-
-    $offerBlock = GuideChannel::formatOfferForPrompt($offer, $continuing);
-    if ($offerBlock !== '') {
-      $parts[] = '';
-      $parts[] = $offerBlock;
-    }
-
-    return implode("\n", $parts);
+    return GuideChannelConfig::assemblePrompt([
+      'query_scope_lines' => self::formatQueryScopeLines($activeAreas),
+      'scoped_system_records' => trim($assembled->promptSection),
+      'clinical_record_block' => GuideChannelConfig::formatOptionalAttachment(
+        'clinical_record',
+        self::formatClinicalRecordData($activeAreas)
+      ),
+      'intent_semantics' => GuideIntentSemanticsFilter::formatPromptSection($catalog, $activeAreas),
+      'article_block' => GuideChannelConfig::formatOptionalAttachment(
+        'article',
+        trim((string) $articleData)
+      ),
+      'conversation_history' => trim($history),
+      'current_message' => $messageForPrompt,
+    ]);
   }
 
-  private static function formatClinicalRecordBlock(): string
+  /**
+   * @return list<string>
+   */
+  private static function resolvedActiveAreas(GuideFocusState $focus): array
   {
+    $areas = $focus->activeAreas;
+    if ($areas === []) {
+      $areas = ChatPreprocessContext::contextAreas();
+    }
+
+    return AssistantContextHISArea::sortByProductPriority($areas);
+  }
+
+  /**
+   * @param list<string> $activeAreas
+   */
+  private static function formatQueryScopeLines(array $activeAreas): string
+  {
+    if ($activeAreas === []) {
+      return '';
+    }
+
+    $lines = [];
+    foreach ($activeAreas as $area) {
+      $desc = AssistantContextHISArea::description($area);
+      $lines[] = $desc !== '' ? '- ' . $area . ' — ' . $desc : '- ' . $area;
+    }
+
+    return implode("\n", $lines);
+  }
+
+  /**
+   * @param list<string> $activeAreas
+   */
+  private static function formatClinicalRecordData(array $activeAreas): string
+  {
+    if (!in_array(AssistantContextHISArea::CLINICAL_RECORD, $activeAreas, true)) {
+      return '';
+    }
+
     if (!Yii::$app->has('user', true)) {
       return '';
     }
@@ -128,33 +106,16 @@ final class GuidePromptAssembler
       return '';
     }
 
-    return (new PatientAiContextBuilder())->build(
+    $clinicalBlock = (new PatientAiContextBuilder())->build(
       $idPersona,
       PatientAiContextBuilder::PROFILE_GUIDE
     );
-  }
-
-  private static function formatFocusAreasLine(GuideFocusState $focus): string
-  {
-    $areas = $focus->activeAreas;
-    if ($areas === []) {
-      $areas = ChatPreprocessContext::contextAreas();
-    }
-    if ($areas === []) {
+    if ($clinicalBlock === '') {
       return '';
     }
 
-    $sorted = AssistantContextHISArea::sortByProductPriority($areas);
-    $header = GuideChannelConfig::promptFragment(
-      'focus_areas_header',
-      'Ámbito de la consulta (según preprocess):'
-    );
-    $lines = [$header];
-    foreach ($sorted as $area) {
-      $desc = AssistantContextHISArea::description($area);
-      $lines[] = $desc !== '' ? '- ' . $area . ' — ' . $desc : '- ' . $area;
-    }
-
-    return implode("\n", $lines);
+    return '--- context:clinical_record ---'
+      . "\n" . $clinicalBlock
+      . "\n--- end context:clinical_record ---";
   }
 }

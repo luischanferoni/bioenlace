@@ -44,8 +44,8 @@ class AssistantMetadataPhase02Test extends Unit
     public function testGuidePromptIncludesPerimetro(): void
     {
         $prompt = GuideChannelConfig::stablePrompt();
-        $this->assertStringContainsString('portal del paciente', $prompt);
-        $this->assertStringContainsString('Datos del sistema', GuideChannelConfig::promptFragment('block_his', ''));
+        $this->assertStringContainsString('Información Hospitalaria', $prompt);
+        $this->assertStringContainsString('Registros del sistema', GuideChannelConfig::stablePrompt());
     }
 
     public function testBookingOfferFromRoutingYaml(): void
@@ -55,9 +55,9 @@ class AssistantMetadataPhase02Test extends Unit
         $this->assertSame('turnos.crear', GuideChannelConfig::bookingOfferIntentPrefixFallback());
     }
 
-    public function testGuideSourceBlock(): void
+    public function testGuideArticleContent(): void
     {
-        $block = GuideChannelConfig::formatSourceBlock('Turnos', 'Podés sacar turno desde el menú.');
+        $block = GuideChannelConfig::formatArticleContent('Turnos', 'Podés sacar turno desde el menú.');
         $this->assertStringContainsString('Turnos', $block);
         $this->assertStringContainsString('Podés sacar turno', $block);
     }
@@ -69,7 +69,7 @@ class AssistantMetadataPhase02Test extends Unit
             'Cancelar turno',
             'Entrá a Mis turnos y elegí cancelar.'
         );
-        $this->assertStringContainsString('fuente inyectada', strtolower($prompt));
+        $this->assertStringContainsString('artículo de ayuda', strtolower($prompt));
         $this->assertStringContainsString('Cancelar turno', $prompt);
         $this->assertStringContainsString('¿Cómo cancelo?', $prompt);
     }

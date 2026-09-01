@@ -25,58 +25,40 @@ final class GuideChannelConfig
 
     public static function stablePrompt(): string
     {
-        $template = trim((string) (self::load()['stable_prompt'] ?? ''));
-        if ($template === '') {
-            return 'Respondé en español, breve y claro.';
-        }
-
-        return self::applyPromptPlaceholders($template);
-    }
-
-    public static function promptFragment(string $path, string $default = ''): string
-    {
-        $raw = self::load()['prompt_fragments'] ?? [];
-        if (!is_array($raw)) {
-            return $default;
-        }
-
-        $node = $raw;
-        foreach (explode('.', $path) as $segment) {
-            if (!is_array($node) || !array_key_exists($segment, $node)) {
-                return $default;
-            }
-            $node = $node[$segment];
-        }
-
-        if (!is_string($node)) {
-            return $default;
-        }
-
-        $text = trim($node);
-
-        return $text !== '' ? self::applyPromptPlaceholders($text) : $default;
+        return self::stablePromptTemplate();
     }
 
     /**
-     * @param array<string, string> $extra
+     * @param array<string, string> $dataVars
      */
-    public static function formatPromptFragment(string $path, array $extra = [], string $default = ''): string
+    public static function assemblePrompt(array $dataVars): string
     {
-        $template = self::promptFragment($path, $default);
-        if ($template === '') {
+        $out = AssistantMetadataLoader::applyPlaceholders(self::stablePromptTemplate(), $dataVars);
+        $out = self::stripOrphanInlineHeaders($out, $dataVars);
+        $out = preg_replace("/\n{3,}/", "\n\n", $out) ?? $out;
+
+        return trim($out);
+    }
+
+    /**
+     * Adjunto opcional: plantilla en optional_attachments.{key} con placeholder {data}.
+     */
+    public static function formatOptionalAttachment(string $key, string $data): string
+    {
+        $data = trim($data);
+        if ($data === '') {
             return '';
         }
 
-        $vars = array_merge(self::basePromptPlaceholders(), $extra);
-        $out = $template;
-        foreach ($vars as $key => $value) {
-            $out = str_replace('{' . $key . '}', $value, $out);
+        $template = AssistantMetadataLoader::dotString(self::load(), 'optional_attachments.' . $key);
+        if ($template === '') {
+            return $data;
         }
 
-        return $out;
+        return trim(AssistantMetadataLoader::applyPlaceholders($template, ['data' => $data]));
     }
 
-    public static function formatSourceBlock(string $title, string $body): string
+    public static function formatArticleContent(string $title, string $body): string
     {
         $title = trim($title);
         $body = trim($body);
@@ -84,43 +66,14 @@ final class GuideChannelConfig
             return '';
         }
 
-        $parts = [self::sourceInjectionHeader()];
+        $parts = [];
         if ($title !== '') {
-            $parts[] = self::formatSourceTitleLine($title);
+            $parts[] = 'Título: ' . $title;
         }
-        $parts[] = self::sourceInjectionBodyHeader();
+        $parts[] = 'Contenido:';
         $parts[] = $body;
 
         return implode("\n", $parts);
-    }
-
-    public static function sourceInjectionHeader(): string
-    {
-        return AssistantMetadataLoader::dotString(
-            self::load(),
-            'source_injection.header',
-            'Fuente (única verdad para la respuesta):'
-        );
-    }
-
-    public static function formatSourceTitleLine(string $title): string
-    {
-        $template = AssistantMetadataLoader::dotString(
-            self::load(),
-            'source_injection.title_line',
-            'Título: {title}'
-        );
-
-        return AssistantMetadataLoader::applyPlaceholders($template, ['title' => $title]);
-    }
-
-    public static function sourceInjectionBodyHeader(): string
-    {
-        return AssistantMetadataLoader::dotString(
-            self::load(),
-            'source_injection.body_header',
-            'Contenido:'
-        );
     }
 
     /**
@@ -159,6 +112,44 @@ final class GuideChannelConfig
     }
 
     /**
+     * @param array<string, string> $vars
+     */
+    private static function stripOrphanInlineHeaders(string $text, array $vars): string
+    {
+        $stripWhenEmpty = [
+            'query_scope_lines' => ['Ámbito de esta consulta:'],
+            'scoped_system_records' => ['Registros del sistema para el ámbito de la consulta:'],
+            'intent_semantics' => [
+                'Funcionalidades que este usuario puede ejecutar en el sistema:',
+            ],
+            'conversation_history' => [
+                'Conversación previa (más antigua → más reciente):',
+            ],
+        ];
+
+        foreach ($stripWhenEmpty as $dataKey => $headerLines) {
+            if (trim((string) ($vars[$dataKey] ?? '')) !== '') {
+                continue;
+            }
+            foreach ($headerLines as $line) {
+                $text = str_replace($line, '', $text);
+            }
+        }
+
+        return $text;
+    }
+
+    private static function stablePromptTemplate(): string
+    {
+        $template = trim((string) (self::load()['stable_prompt'] ?? ''));
+        if ($template === '') {
+            return 'Respondé en español, breve y claro.';
+        }
+
+        return $template;
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private static function load(): array
@@ -184,21 +175,5 @@ final class GuideChannelConfig
         self::$bookingConfig = AssistantMetadataLoader::load(ProductMetadataPaths::bookingOfferFile());
 
         return self::$bookingConfig;
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    private static function basePromptPlaceholders(): array
-    {
-        $raw = self::load()['prompt_fragments']['offer_block_title'] ?? 'Oferta disponible';
-        $title = is_string($raw) ? trim($raw) : 'Oferta disponible';
-
-        return ['offer_block_title' => $title !== '' ? $title : 'Oferta disponible'];
-    }
-
-    private static function applyPromptPlaceholders(string $text): string
-    {
-        return AssistantMetadataLoader::applyPlaceholders($text, self::basePromptPlaceholders());
     }
 }

@@ -43,9 +43,10 @@ class GuidePromptAssemblerFocusLineTest extends Unit
             null
         );
 
-        $this->assertStringContainsString('Ámbito de la consulta', $prompt);
         $this->assertStringContainsString('appointments', $prompt);
         $this->assertStringContainsString('Citas y turnos', $prompt);
+        $this->assertStringContainsString('Ámbito de esta consulta', $prompt);
         $this->assertStringNotContainsString('turnos, estudios, controles', $prompt);
+        $this->assertStringNotContainsString('Ámbito de la consulta', $prompt);
     }
 }

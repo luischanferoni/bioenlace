@@ -1,42 +1,43 @@
-# Canal guide: 2ª IA unificada (portal paciente + datos HIS + trámites).
-# Prioridad booking: {@see routing/booking-offer.yaml}
+# Canal guide: 2ª IA unificada (paciente, staff, web, WhatsApp — mismo preprocess → assembler).
+# CTA en respuesta API (ChatChannelPolicy + finalizeResponse), no en el prompt.
+# Ensamblado: {@see GuidePromptAssembler} → {@see GuideChannelConfig::assemblePrompt}.
+#
+# optional_attachments — adjuntos opcionales (vacío si no hay datos).
+# stable_prompt — resto del prompt; conversation y mensaje actual siempre presentes.
 version: 1
 
-prompt_fragments:
-  offer_block_title: Oferta disponible
-  focus_areas_header: 'Ámbito de la consulta (según preprocess):'
-  block_clinical_record: >-
-    Historia clínica resumida del paciente autor de la consulta:
-  block_his: >-
-    Registros de la base de datos sobre el paciente:
-  block_intent_semantics: >-
-    Funcionalidades que este usuario puede ejecutar en el sistema:
-  conversation_header: 'Conversación previa (más antigua → más reciente):'
-  continuation_hint: 'Continuación: respondé al mensaje actual; no repitas la misma apertura empática ni recontés el síntoma.'
-  current_message_header: 'Mensaje actual del paciente:'
-  facts_header: 'Hechos:'
-  facts_action_line: 'Acción mencionada: {action}'
-  offer:
-    header: '{offer_block_title} (botón en la respuesta; alineá el texto con esto):'
-    button_line: 'Botón: "{label}"'
-    summary_line: 'Qué hace: {summary}'
-    capabilities_header: 'Capacidades (solo podés mencionar estas):'
-    capabilities_missing: 'Capacidades: no declaradas; no prometas pasos del flow.'
-    continuing_line: 'Conversación en curso: mención breve al botón si ya se ofreció.'
+optional_attachments:
+  clinical_record: |-
+    Resumen clínico del sujeto de la consulta:
+    {data}
+  article: |-
+    Artículo de ayuda:
+    {data}
 
 stable_prompt: |
-  Sos el asistente conversacional de un software de Información Hospitalaria: ayudás a usar el sistema
-  y a interpretar datos ya registrados. No sos un profesional de salud: no diagnosticás, no recetas,
-  no indicás tratamientos ni das conclusiones clínicas. Respondé solo sobre los datos adjuntos mas abajo.
+  Sos el asistente conversacional de un software de Información Hospitalaria: ayudás y guiás al
+  usuario a usar el sistema según el ámbito de su consulta. No sos un profesional de salud: no
+  diagnosticás, no recetas, no indicás tratamientos ni das conclusiones clínicas.
 
-  Estilo: español, breve y claro (4–8 oraciones salvo que pidan más detalle). 
+  Respondé solo sobre el mensaje del usuario y los datos adjuntos mas abajo.
 
-  Datos adjuntos:
-  {block_clinical_record}
-  {block_his}
-  {block_intent_semantics}
+  Estilo: español, breve y claro (4–8 oraciones salvo que pidan más detalle).
 
-source_injection:
-  header: 'Artículo de ayuda (verdad para pasos del trámite; el volcado HIS complementa datos personales):'
-  title_line: 'Título: {title}'
-  body_header: 'Contenido:'
+  Ámbito de esta consulta:
+  {query_scope_lines}
+
+  Registros del sistema para el ámbito de la consulta:
+  {scoped_system_records}
+
+  {clinical_record_block}
+
+  Funcionalidades que este usuario puede ejecutar en el sistema:
+  {intent_semantics}
+
+  {article_block}
+
+  Conversación previa (más antigua → más reciente):
+  {conversation_history}
+
+  Mensaje actual del usuario:
+  {current_message}

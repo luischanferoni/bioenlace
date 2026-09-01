@@ -21,14 +21,14 @@ class GuideChannelOfferPromptTest extends Unit
         ChatPreprocessContext::clear();
     }
 
-    public function testFormatOfferNull(): void
+    public function testFormatCtaDetailsNull(): void
     {
-        verify(GuideChannel::formatOfferForPrompt(null))->equals('');
+        verify(GuideChannel::formatCtaDetailsForPrompt(null))->equals('');
     }
 
-    public function testFormatOfferWithCapabilities(): void
+    public function testFormatCtaDetailsWithCapabilities(): void
     {
-        $block = GuideChannel::formatOfferForPrompt([
+        $block = GuideChannel::formatCtaDetailsForPrompt([
             'label' => 'Solicitar Atención',
             'intent_id' => 'atencion.necesito-atencion',
             'summary' => 'Pedir atención',
@@ -49,12 +49,12 @@ class GuideChannelOfferPromptTest extends Unit
 
     public function testBuildPromptIncludesStableAndMessage(): void
     {
-        $prompt = GuideChannel::buildPrompt('me duele la cabeza', 0, null, '');
+        $prompt = GuideChannel::buildPrompt('me duele la cabeza', 0, '', null);
         verify($prompt)->stringContainsString('me duele la cabeza');
-        verify($prompt)->stringContainsString('portal del paciente');
+        verify($prompt)->stringContainsString('Información Hospitalaria');
     }
 
-    public function testFormatPreprocessFacts(): void
+    public function testFormatPreprocessFactsLines(): void
     {
         ChatPreprocessContext::set([
             'ok' => true,
@@ -67,16 +67,16 @@ class GuideChannelOfferPromptTest extends Unit
             'context_areas' => [],
         ]);
 
-        $facts = GuideChannel::formatPreprocessFacts();
+        $facts = GuideChannel::formatPreprocessFactsLines();
         verify($facts)->stringContainsString('cabeza');
         verify($facts)->stringContainsString('pedir turno');
     }
 
     public function testStablePromptFromGuideYaml(): void
     {
-        $prompt = GuideChannelConfig::stablePrompt();
-        verify($prompt)->stringContainsString('portal del paciente');
-        verify($prompt)->notContainsString('Bioenlace');
-        verify($prompt)->stringContainsString('bloques');
+        $template = GuideChannelConfig::stablePrompt();
+        verify($template)->stringContainsString('Información Hospitalaria');
+        verify($template)->stringContainsString('{current_message}');
+        verify($template)->stringContainsString('Mensaje actual del usuario');
     }
 }

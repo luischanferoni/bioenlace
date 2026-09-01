@@ -72,10 +72,10 @@ class GuidePromptAssemblerTest extends Unit
             null
         );
 
-        $this->assertStringContainsString('portal del paciente', $prompt);
+        $this->assertStringContainsString('Información Hospitalaria', $prompt);
         $this->assertStringContainsString('context:intent_semantics', $prompt);
         $this->assertStringContainsString('turnos.crear-como-paciente', $prompt);
-        $this->assertStringContainsString('Mensaje actual del paciente:', $prompt);
+        $this->assertStringContainsString('Mensaje actual del usuario', $prompt);
 
         $semInPrompt = strpos($prompt, 'context:intent_semantics');
         $historyInPrompt = strpos($prompt, 'Conversación previa');

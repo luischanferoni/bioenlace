@@ -6,6 +6,8 @@ use common\components\Ai\IAManager;
 use common\components\Platform\Assistant\Context\AssistantContextAssemblyService;
 use common\components\Platform\Assistant\Chat\Channels\Guide\GuideChannel;
 use common\components\Platform\Assistant\Chat\Channels\Guide\GuideChannelConfig;
+use common\components\Platform\Assistant\Chat\Channels\Guide\GuideFocusState;
+use common\components\Platform\Assistant\Chat\Channels\Guide\GuidePromptAssembler;
 use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
 use common\components\Platform\Assistant\Chat\ChatPreprocessContext;
 use common\components\Platform\Core\Permission\IntentAccessService;
@@ -55,29 +57,14 @@ final class InfoContentAssistantService
 
     public static function buildArticlePrompt(string $userQuestion, string $title, string $body, int $userId = 0): string
     {
-        $articleBlock = GuideChannelConfig::formatSourceBlock($title, $body);
-        $parts = [
-            rtrim(GuideChannelConfig::stablePrompt()),
-        ];
-
-        if ($userId > 0) {
-            $hisContext = AssistantContextAssemblyService::assembleForChannel('guide', $userId);
-            if (!$hisContext->isEmpty()) {
-                $parts[] = '';
-                $parts[] = $hisContext->promptSection;
-            }
-        }
-
-        if ($articleBlock !== '') {
-            $parts[] = '';
-            $parts[] = $articleBlock;
-        }
-
-        $parts[] = '';
-        $parts[] = 'Pregunta del usuario:';
-        $parts[] = trim($userQuestion);
-
-        return implode("\n", $parts);
+        return GuidePromptAssembler::build(
+            $userQuestion,
+            $userId,
+            new GuideFocusState(),
+            null,
+            '',
+            GuideChannelConfig::formatArticleContent($title, $body)
+        );
     }
 
     /**

@@ -3,7 +3,7 @@
 namespace common\components\Platform\Assistant\Chat\Channels\Guide;
 
 use common\components\Ai\IAManager;
-use common\components\Domain\Content\Service\InfoContentAssistantService;
+use common\components\Domain\Content\Service\InfoContentResolverService;
 use common\components\Platform\Assistant\Chat\Channels\Ambiguous\AmbiguousChannel;
 use common\components\Platform\Assistant\Chat\Channels\Guide\GuideFocusResolver;
 use common\components\Platform\Assistant\Chat\Channels\Guide\GuideFocusState;
@@ -34,16 +34,6 @@ final class GuideChannel
       return self::finalizeMotor(IntentEngine::processQuery($content, $userId, null));
     }
 
-    $infoArticle = InfoContentAssistantService::tryResolveFromText(
-      $content,
-      $userId,
-      self::currentIdEfector(),
-      null
-    );
-    if ($infoArticle !== null) {
-      return $infoArticle;
-    }
-
     if (ChatChannelPolicy::isCapabilityMenuQuery($content)) {
       return AmbiguousChannel::handle();
     }
@@ -55,23 +45,18 @@ final class GuideChannel
     return self::handleWithGuideIa($content, $userId, $formattedHistory);
   }
 
-  /**
-   * @param array{label: string, intent_id: string, summary: string, capabilities: list<string>}|null $offer
-   */
   public static function buildPrompt(
     string $content,
     int $userId,
-    ?array $offer = null,
     ?string $formattedHistory = null,
-    ?string $articleBlock = null
+    ?string $articleData = null
   ): string {
     return GuidePromptAssembler::build(
       $content,
       $userId,
       self::focusState(),
-      $offer,
       $formattedHistory,
-      $articleBlock
+      $articleData
     );
   }
 
@@ -92,7 +77,7 @@ final class GuideChannel
     );
   }
 
-  public static function formatPreprocessFacts(): string
+  public static function formatPreprocessFactsLines(): string
   {
     $normalized = ChatPreprocessContext::normalizedText();
     $actionText = ChatPreprocessContext::actionText();
@@ -100,14 +85,7 @@ final class GuideChannel
 
     $lines = [];
     if ($actionText !== '' && $actionText !== $normalized) {
-      $line = GuideChannelConfig::formatPromptFragment(
-        'facts_action_line',
-        ['action' => $actionText],
-        'Acción mencionada: {action}'
-      );
-      if ($line !== '') {
-        $lines[] = '- ' . $line;
-      }
+      $lines[] = '- Acción mencionada: ' . $actionText;
     }
     foreach ($extractions as $row) {
       if (!is_array($row)) {
@@ -123,19 +101,13 @@ final class GuideChannel
         : '- ' . $span;
     }
 
-    if ($lines === []) {
-      return '';
-    }
-
-    $header = GuideChannelConfig::promptFragment('facts_header', 'Hechos:');
-
-    return $header . "\n" . implode("\n", $lines);
+    return $lines === [] ? '' : implode("\n", $lines);
   }
 
   /**
    * @param array{label?: string, intent_id?: string, summary?: string, capabilities?: list<string>}|null $offer
    */
-  public static function formatOfferForPrompt(?array $offer, bool $continuingConversation = false): string
+  public static function formatCtaDetailsForPrompt(?array $offer, bool $continuingConversation = false): string
   {
     if ($offer === null) {
       return '';
@@ -151,58 +123,29 @@ final class GuideChannel
       $capabilities = array_slice($capabilities, 0, 4);
     }
 
-    $lines = [
-      GuideChannelConfig::promptFragment(
-        'offer.header',
-        'Oferta disponible (botón en la respuesta; alineá el texto con esto):'
-      ),
-    ];
+    $lines = [];
     if ($label !== '') {
-      $buttonLine = GuideChannelConfig::formatPromptFragment(
-        'offer.button_line',
-        ['label' => $label],
-        'Botón: "{label}"'
-      );
-      if ($buttonLine !== '') {
-        $lines[] = '- ' . $buttonLine;
-      }
+      $lines[] = '- Botón: "' . $label . '"';
     }
     if ($summary !== '') {
-      $summaryLine = GuideChannelConfig::formatPromptFragment(
-        'offer.summary_line',
-        ['summary' => $summary],
-        'Qué hace: {summary}'
-      );
-      if ($summaryLine !== '') {
-        $lines[] = '- ' . $summaryLine;
-      }
+      $lines[] = '- Qué hace: ' . $summary;
     }
 
     $capLines = self::formatCapabilityLines($capabilities);
     if ($capLines !== []) {
-      $capHeader = GuideChannelConfig::promptFragment(
-        'offer.capabilities_header',
-        'Capacidades (solo podés mencionar estas):'
-      );
-      $lines[] = '- ' . $capHeader;
+      $lines[] = '- Capacidades (solo podés mencionar estas):';
       foreach ($capLines as $capLine) {
         $lines[] = '  - ' . $capLine;
       }
     } elseif ($summary === '') {
-      $lines[] = '- ' . GuideChannelConfig::promptFragment(
-        'offer.capabilities_missing',
-        'Capacidades: no declaradas; no prometas pasos del flow.'
-      );
+      $lines[] = '- Capacidades: no declaradas; no prometas pasos del flow.';
     }
 
     if ($continuingConversation) {
-      $lines[] = '- ' . GuideChannelConfig::promptFragment(
-        'offer.continuing_line',
-        'Conversación en curso: mención breve al botón si ya se ofreció.'
-      );
+      $lines[] = '- Conversación en curso: mención breve al botón si ya se ofreció.';
     }
 
-    return implode("\n", $lines);
+    return $lines === [] ? '' : implode("\n", $lines);
   }
 
   public static function bookingOfferOriginContent(string $content, string $patientHistory = ''): string
@@ -237,7 +180,8 @@ final class GuideChannel
       : null;
     $origin = self::bookingOfferOriginContent($content, $patientHistory);
 
-    $prompt = self::buildPrompt($content, $userId, $offer, $history);
+    $articleData = self::resolveArticlePromptData($content, $userId);
+    $prompt = self::buildPrompt($content, $userId, $history, $articleData);
 
     $text = null;
     try {
@@ -319,6 +263,28 @@ final class GuideChannel
     } catch (\Throwable $e) {
       return null;
     }
+  }
+
+  private static function resolveArticlePromptData(string $content, int $userId): string
+  {
+    if ($userId <= 0) {
+      return '';
+    }
+
+    $article = InfoContentResolverService::resolveByText(
+      $content,
+      self::currentIdEfector(),
+      null,
+      $userId
+    );
+    if ($article === null || !InfoContentResolverService::isVisibleToUser($article, $userId)) {
+      return '';
+    }
+
+    return GuideChannelConfig::formatArticleContent(
+      (string) $article->title,
+      (string) $article->body
+    );
   }
 
   /**

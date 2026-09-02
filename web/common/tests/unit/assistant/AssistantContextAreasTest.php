@@ -4,6 +4,7 @@ namespace common\tests\unit\assistant;
 
 use Codeception\Test\Unit;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
+use common\components\Platform\Assistant\Context\AssistantContextAreaAspectCatalog;
 use common\components\Platform\Assistant\Context\AssistantContextHISArea;
 use common\components\Platform\Assistant\Context\AssistantContextAreaAspectResolver;
 use common\components\Platform\Assistant\Context\AssistantContextAnchorBag;
@@ -45,6 +46,12 @@ class AssistantContextAreasTest extends Unit
     public function testCatalogListsAllNineAreas(): void
     {
         $this->assertCount(9, AssistantContextHISArea::all());
+    }
+
+    protected function _after(): void
+    {
+        ChatPreprocessService::resetCacheForTests();
+        AssistantContextAreaAspectCatalog::resetCacheForTests();
     }
 
     public function testAreaAspectPlanForAppointmentsWithoutHistory(): void

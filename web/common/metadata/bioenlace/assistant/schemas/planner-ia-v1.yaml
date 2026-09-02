@@ -1,0 +1,32 @@
+# Contrato IA planificadora (opcional, fase 06).
+# ADR: web/docs/decisions/asistente-catalogo-inteligente.md
+version: 1
+
+input:
+  required: [necesidad_usuario, shortlist]
+  fields:
+    necesidad_usuario:
+      type: string
+    shortlist:
+      type: list<object>
+      item_subfields:
+        tool_id: string
+        tool_type: string
+        description: string
+        param_schema: object
+      notes: Solo tools permitidos al usuario; PHP resuelve params tras la elección.
+    declarative_tool_ids:
+      type: list<string>
+      optional: true
+      notes: Plan PHP previo; la IA puede reordenar o completar desde shortlist.
+
+output:
+  required: [tool_ids_ordered]
+  fields:
+    tool_ids_ordered:
+      type: list<string>
+      notes: Subconjunto ordenado del shortlist; sin tools nuevos.
+    rationale:
+      type: string
+      optional: true
+      notes: Breve; va a planning_log.planner_plan.

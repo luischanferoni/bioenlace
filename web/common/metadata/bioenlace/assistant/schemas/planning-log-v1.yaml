@@ -1,0 +1,39 @@
+# Estructura planning_applied — telemetría por mensaje raíz del asistente.
+# ADR: web/docs/decisions/asistente-catalogo-inteligente.md
+version: 1
+
+envelope_key: planning_applied
+
+fields:
+  first_ia:
+    type: object
+    subfields: [normalized_text, necesidad_usuario, routing_hint, tags, context_areas, extractions, intent_ids_hint]
+  catalog_matches:
+    type: list<object>
+    item_subfields: [catalog_id, tool_id, score, routing_result]
+    notes: Top N candidatos del match.
+  routing_result:
+    type: enum
+    values: [directo, clara, dudosa, incompletas, fuera_de_his]
+  declarative_plan:
+    type: object
+    subfields: [tool_ids, reason, needs_planner]
+  planner_invoked:
+    type: boolean
+  planner_reason:
+    type: enum
+    optional: true
+    values: [empty_plan, too_many_tools, no_useful_data]
+  planner_plan:
+    type: object
+    optional: true
+    subfields: [tool_ids_ordered, rationale]
+  executed_tools:
+    type: list<object>
+    item_subfields: [tool_id, ms, chars, had_null_fields]
+  final_path:
+    type: enum
+    values: [1ia_direct, 1ia_clara, 1ia_dudosa, 1ia_fuera, 2ia_synthesis, 3ia_planner_synthesis]
+  gaps:
+    type: list<string>
+    notes: tool_ids en planner_plan ausentes en declarative_plan; candidatos a nuevos triggers.

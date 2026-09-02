@@ -1,0 +1,58 @@
+# Forma de una fila en assistant/catalog/smart-catalog.yaml
+# ADR: web/docs/decisions/asistente-catalogo-inteligente.md
+version: 1
+
+required:
+  - id
+  - tool_type
+  - tool_ref
+  - triggers
+
+fields:
+  id:
+    type: string
+    notes: Identificador estable de la fila del catálogo.
+  match_only:
+    type: boolean
+    optional: true
+    notes: Sin tool ejecutable; solo routing por score (p. ej. fuera_de_his).
+  tool_type:
+    type: enum
+    values: [intent, article, aspect, metric]
+  tool_ref:
+    type: string
+    notes: >
+      intent_id, topic info_content, aspect_key o metric_id según tool_type.
+      tool_id canónico en runtime: "{tool_type}:{tool_ref}" salvo intent (tool_ref = intent_id).
+  triggers:
+    type: object
+    subfields:
+      tags: list<string>
+      context_areas: list<string>
+      phrases: list<string>
+      keywords: list<string>
+    notes: Al menos uno; match acumula score por coincidencia.
+  required_anchors:
+    type: list<string>
+    optional: true
+    values: [subject_persona, site_id, appointment_ref, pes]
+  requires_data_fields:
+    type: list<string>
+    optional: true
+    notes: Paths dot-notation en payload del tool; match 100% exige presentes y no null.
+  response_template:
+    type: string
+    optional: true
+    notes: Match 100% directo sin síntesis IA; placeholders TBD en fase 04.
+  cta_intent_id:
+    type: string
+    optional: true
+  priority:
+    type: integer
+    default: 50
+    notes: Mayor gana en empate de score.
+  routing_result:
+    type: enum
+    optional: true
+    values: [directo, clara, incompletas, fuera_de_his]
+    notes: Camino preferido si esta fila gana el match.

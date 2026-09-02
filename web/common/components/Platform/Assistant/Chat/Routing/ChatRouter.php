@@ -2,20 +2,20 @@
 
 namespace common\components\Platform\Assistant\Chat\Routing;
 
-use common\components\Platform\Assistant\Chat\Channels\Ambiguous\AmbiguousChannel;
 use common\components\Platform\Assistant\Chat\Channels\Ambiguous\AmbiguousChannelConfig;
-use common\components\Platform\Assistant\Chat\Channels\Guide\GuideChannel;
-use common\components\Platform\Assistant\Chat\Channels\Guide\GuideHistoryWindow;
 use common\components\Platform\Assistant\Chat\Channels\Operational\OperationalChannel;
 use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
 use common\components\Platform\Assistant\Context\AssistantContextHISArea;
-use common\components\Platform\Assistant\Chat\Thread\AssistantThreadContext;
 use common\components\Platform\Assistant\Chat\Thread\AssistantThreadStateService;
+use common\components\Platform\Assistant\Chat\Routing\Handlers\LegacyRoutingFallback;
+use common\components\Platform\Assistant\Chat\Routing\Handlers\SmartCatalogRoutingHandlers;
+use common\components\Platform\Assistant\Planning\AssistantPlanningLogService;
+use common\components\Platform\Assistant\Planning\SmartCatalogRoutingService;
 
 /**
- * Enruta por user_goal tras preprocess (+ hilo / desvío).
+ * Router unificado post-preprocess (catálogo inteligente + handlers).
  */
 final class ChatRouter
 {
@@ -55,97 +55,125 @@ final class ChatRouter
         }
 
         \common\components\Platform\Assistant\Chat\ChatPreprocessContext::set($preprocess);
-
-        $goal = isset($preprocess['user_goal'])
-            ? ChatPreprocessService::canonicalizeGoal((string) $preprocess['user_goal'])
-            : 'ambiguous';
-
-        $goal = self::refineGoalForHisContext($goal, $content, $preprocess);
-        $preprocess['user_goal'] = $goal;
+        self::enrichPreprocessHisContext($content, $preprocess);
         \common\components\Platform\Assistant\Chat\ChatPreprocessContext::set($preprocess);
 
-        $observed = AssistantThreadStateService::observe($userId, $goal, $content);
-        // observe() puede forzar ambiguous por desvío de hilo; re-aplicar refinamiento HIS.
-        $goal = self::refineGoalForHisContext($observed['goal'], $content, $preprocess);
-        $preprocess['user_goal'] = $goal;
-        \common\components\Platform\Assistant\Chat\ChatPreprocessContext::set($preprocess);
+        $threadGoal = ChatPreprocessService::canonicalizeGoal((string) ($preprocess['user_goal'] ?? 'ambiguous'));
+        AssistantThreadStateService::observe($userId, $threadGoal, $content);
 
-        $formattedHistory = '';
-        if ($userId > 0 && empty($observed['clear_history'])) {
-            $formattedHistory = GuideHistoryWindow::formatForPrompt(
-                $userId,
-                $content,
-                AssistantThreadContext::guideFocusPrimaryArea()
-            );
-        }
-
-        return self::dispatchByGoal($goal, $content, $userId, $formattedHistory);
+        return self::routeFromPreprocess($preprocess, $content, $userId);
     }
 
     /**
-     * Encauzamiento desde botón ambiguous (`assistant.channel.*`) o tests con fixture de goal.
+     * Encauzamiento desde botón ambiguous (`assistant.channel.*`) o tests con fixture.
      *
      * @return array<string, mixed>
      */
     public static function routeForcedChannel(string $channel, string $content, int $userId): array
     {
-        $channel = ChatPreprocessService::canonicalizeGoal($channel);
-        \common\components\Platform\Assistant\Chat\ChatPreprocessContext::set([
+        $channel = trim($channel);
+        $routingHint = self::routingHintFromForcedChannel($channel);
+        $preprocess = [
             'ok' => true,
             'normalized_text' => $content,
-            'user_goal' => $channel,
+            'necesidad_usuario' => $content !== '' ? $content : 'Necesito orientación en Bioenlace.',
+            'routing_hint' => $routingHint,
+            'tags' => [],
+            'user_goal' => ChatPreprocessService::userGoalFromRoutingHint($routingHint, []),
             'action_text' => '',
             'extractions' => [],
-        ]);
+            'context_areas' => $routingHint === 'incompletas'
+                ? [AssistantContextHISArea::PRODUCT]
+                : [],
+            'intent_ids_hint' => [],
+        ];
 
-        $observed = AssistantThreadStateService::observe($userId, $channel, $content);
-        $channel = $observed['goal'];
+        self::enrichPreprocessHisContext($content, $preprocess);
+        \common\components\Platform\Assistant\Chat\ChatPreprocessContext::set($preprocess);
+        AssistantThreadStateService::observe($userId, $preprocess['user_goal'], $content);
 
-        $formattedHistory = '';
-        if ($userId > 0 && empty($observed['clear_history'])) {
-            $formattedHistory = GuideHistoryWindow::formatForPrompt(
-                $userId,
-                $content,
-                AssistantThreadContext::guideFocusPrimaryArea()
-            );
-        }
-
-        return self::dispatchByGoal($channel, $content, $userId, $formattedHistory);
+        return self::routeFromPreprocess($preprocess, $content, $userId);
     }
 
     /**
+     * Compat tests / callers legacy: despacha por user_goal sin GuideChannel.
+     *
      * @return array<string, mixed>
      */
-    public static function dispatchByGoal(
-        string $goal,
-        string $content,
-        int $userId,
-        string $formattedHistory = ''
-    ): array {
+    public static function dispatchByGoal(string $goal, string $content, int $userId): array
+    {
         $goal = ChatPreprocessService::canonicalizeGoal($goal);
+        $routingHint = ChatPreprocessService::routingHintFromLegacyGoal($goal);
 
-        switch ($goal) {
-            case 'operational':
-            case 'in_flow_question':
-                return OperationalChannel::handle($content, null, $userId);
+        $preprocess = [
+            'ok' => true,
+            'normalized_text' => $content,
+            'necesidad_usuario' => $content,
+            'routing_hint' => $routingHint,
+            'tags' => [],
+            'user_goal' => $goal,
+            'action_text' => '',
+            'extractions' => [],
+            'context_areas' => ChatPreprocessService::normalizeContextAreas(
+                $goal === 'guide' ? [AssistantContextHISArea::APPOINTMENTS] : []
+            ),
+            'intent_ids_hint' => [],
+        ];
 
-            case 'guide':
-                return GuideChannel::handle($content, $userId, $formattedHistory);
-
-            case 'ambiguous':
-            default:
-                return AmbiguousChannel::handle();
+        if ($goal === 'guide') {
+            self::enrichPreprocessHisContext($content, $preprocess);
         }
+
+        \common\components\Platform\Assistant\Chat\ChatPreprocessContext::set($preprocess);
+
+        return self::routeFromPreprocess($preprocess, $content, $userId);
     }
 
     /**
-     * Preguntas sobre datos/reglas del HIS con context_areas → guide (no IntentEngine).
+     * @param array<string, mixed> $preprocess
+     * @return array<string, mixed>
+     */
+    private static function routeFromPreprocess(array $preprocess, string $content, int $userId): array
+    {
+        $evaluation = SmartCatalogRoutingService::evaluate($preprocess, $userId, $content);
+        $preprocess['smart_routing'] = $evaluation->decision->routingResult;
+        \common\components\Platform\Assistant\Chat\ChatPreprocessContext::set($preprocess);
+
+        $handled = SmartCatalogRoutingHandlers::tryHandle($evaluation, $content, $userId);
+        if ($handled !== null) {
+            return self::finalizeWithPlanning($handled);
+        }
+
+        return self::finalizeWithPlanning(
+            LegacyRoutingFallback::handle($evaluation, $content, $userId)
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $motor
+     * @return array<string, mixed>
+     */
+    private static function finalizeWithPlanning(array $motor): array
+    {
+        AssistantPlanningLogService::flushToYiiLog();
+
+        return AssistantPlanningLogService::attachDebugIfEnabled($motor);
+    }
+
+    private static function routingHintFromForcedChannel(string $channel): string
+    {
+        return ChatPreprocessService::routingHintFromLegacyGoal(
+            ChatPreprocessService::canonicalizeGoal($channel)
+        );
+    }
+
+    /**
+     * Enriquece context_areas / routing_hint; no fuerza GuideChannel.
      *
      * @param array<string, mixed> $preprocess
      */
-    private static function refineGoalForHisContext(string $goal, string $content, array &$preprocess): string
+    private static function enrichPreprocessHisContext(string $content, array &$preprocess): void
     {
-        $goal = ChatPreprocessService::canonicalizeGoal($goal);
         $areas = ChatPreprocessService::normalizeContextAreas($preprocess['context_areas'] ?? []);
 
         if (ChatChannelPolicy::isAppointmentPolicyQuestion($content)) {
@@ -153,22 +181,12 @@ final class ChatRouter
             $preprocess['context_areas'] = $areas;
 
             if (!ChatChannelPolicy::requestsOperationalTramiteExecution($content)) {
-                return 'guide';
+                $preprocess['routing_hint'] = 'incompletas';
+                $preprocess['user_goal'] = ChatPreprocessService::userGoalFromRoutingHint(
+                    'incompletas',
+                    is_array($preprocess['tags'] ?? null) ? $preprocess['tags'] : []
+                );
             }
         }
-
-        if ($areas === []) {
-            return $goal;
-        }
-
-        if ($goal === 'operational' && !ChatChannelPolicy::requestsOperationalTramiteExecution($content)) {
-            return 'guide';
-        }
-
-        if ($goal === 'ambiguous' && ChatChannelPolicy::isAppointmentPolicyQuestion($content)) {
-            return 'guide';
-        }
-
-        return $goal;
     }
 }

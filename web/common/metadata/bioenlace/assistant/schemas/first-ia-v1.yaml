@@ -1,0 +1,57 @@
+# Contrato JSON — 1ª IA (etiquetado). Consumidor: ChatPreprocessService.
+# ADR: web/docs/decisions/asistente-catalogo-inteligente.md
+version: 1
+
+description: >
+  Respuesta exclusivamente JSON del preprocess. Mensaje + historial reciente en el prompt;
+  sin catálogo de funcionalidades completo.
+
+required:
+  - normalized_text
+  - necesidad_usuario
+  - routing_hint
+  - tags
+  - context_areas
+  - extractions
+
+fields:
+  normalized_text:
+    type: string
+    notes: Ortografía corregida; sentido conservado.
+  necesidad_usuario:
+    type: string
+    notes: Una frase operativa; obligatoria siempre; input principal de síntesis.
+  routing_hint:
+    type: enum
+    values: [directo, clara, dudosa, incompletas, fuera_de_his]
+    notes: Orientación; PHP decide camino final tras SmartCatalogMatchService.
+  tags:
+    type: list<string>
+    notes: Etiquetas cerradas o extendidas; usadas por triggers del catálogo inteligente.
+  context_areas:
+    type: list<string>
+    notes: Claves de context-his-areas.yaml; [] si saludo sin datos HIS.
+  extractions:
+    type: list<object>
+    item_fields:
+      span: string
+      category: enum
+      category_values: [servicio, efector, persona, profesional, turno, tiempo]
+      synonyms: list<string>
+    notes: Máximo 2 synonyms por extracción.
+  intent_ids_hint:
+    type: list<string>
+    optional: true
+    notes: PHP valida contra UiActionCatalog; no ejecuta sin filtro RBAC.
+
+example:
+  normalized_text: "¿Voy a tener problemas si llego 10 minutos tarde?"
+  necesidad_usuario: "Saber consecuencias de llegar 10 minutos tarde a su cita."
+  routing_hint: incompletas
+  tags: [llegar_tarde, appointments]
+  context_areas: [appointments]
+  extractions:
+    - span: "10 minutos"
+      category: tiempo
+      synonyms: []
+  intent_ids_hint: []

@@ -1,0 +1,10 @@
+# Aspectos HIS por área (plan declarativo). Claves = {@see AssistantContextHISAreaAspect}.
+# Consumidor: AssistantContextAreaAspectCatalog.
+version: 1
+
+areas:
+  appointments:
+    aspects:
+      - appointment.current
+      - site.appointment.policies
+      - appointment.scheduling.setup

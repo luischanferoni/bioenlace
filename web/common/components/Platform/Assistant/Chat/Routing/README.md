@@ -1,9 +1,17 @@
 # Routing
 
-| `user_goal` | Canal |
-|-------------|-------|
-| `guide` | `GuideChannel` |
-| `operational` / `in_flow_question` | `OperationalChannel` |
-| `ambiguous` | `AmbiguousChannel` |
+Post-preprocess unificado (`ChatRouter`):
 
-`ChatRouter::refineGoalForHisContext` puede reorientar a `guide` cuando hay `context_areas` y la pregunta no es trámite operativo.
+| `routing_result` | Handler |
+|------------------|---------|
+| `directo` | `DirectMatchHandler` |
+| `clara` | `ClaraRoutingHandler` |
+| `dudosa` | `DudosaRoutingHandler` |
+| `fuera_de_his` | `FueraDeHisHandler` |
+| `incompletas` | `IncompleteRoutingHandler` (+ opcional `PlannerRoutingStep`) |
+
+Fallback sin match handler: `LegacyRoutingFallback` (operational / dudosa / mensaje síntesis).
+
+El alias `user_goal: guide` en hilo equivale a routing **incompletas**; no hay `GuideChannel` en raíz.
+
+ADR: `web/docs/decisions/asistente-catalogo-inteligente.md`

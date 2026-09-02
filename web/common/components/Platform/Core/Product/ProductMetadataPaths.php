@@ -71,6 +71,39 @@ final class ProductMetadataPaths
         return self::assistantCatalogDir() . DIRECTORY_SEPARATOR . 'context-his-areas.yaml';
     }
 
+    public static function smartCatalogFile(): string
+    {
+        return self::assistantCatalogDir() . DIRECTORY_SEPARATOR . 'smart-catalog.yaml';
+    }
+
+    public static function areaAspectsCatalogFile(): string
+    {
+        return self::assistantCatalogDir() . DIRECTORY_SEPARATOR . 'area-aspects.yaml';
+    }
+
+    public static function smartCatalogRoutingFile(): string
+    {
+        return self::assistantRoutingFile('smart-catalog-routing');
+    }
+
+    public static function assistantSchemasDir(): string
+    {
+        return self::assistantDir() . DIRECTORY_SEPARATOR . 'schemas';
+    }
+
+    public static function assistantSchemaFile(string $basename): string
+    {
+        $name = trim($basename);
+        if ($name === '') {
+            return self::assistantSchemasDir();
+        }
+        if (!str_ends_with($name, '.yaml')) {
+            $name .= '.yaml';
+        }
+
+        return self::assistantSchemasDir() . DIRECTORY_SEPARATOR . $name;
+    }
+
     public static function assistantPromptFile(string $basename): string
     {
         $name = trim($basename);
@@ -100,6 +133,16 @@ final class ProductMetadataPaths
     public static function guideChannelFile(): string
     {
         return self::assistantPromptFile('guide');
+    }
+
+    public static function synthesisPromptFile(): string
+    {
+        return self::assistantPromptFile('synthesis');
+    }
+
+    public static function plannerPromptFile(): string
+    {
+        return self::assistantPromptFile('planner');
     }
 
     public static function preprocessPromptFile(): string

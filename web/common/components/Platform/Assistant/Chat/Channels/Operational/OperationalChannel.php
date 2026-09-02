@@ -2,11 +2,11 @@
 
 namespace common\components\Platform\Assistant\Chat\Channels\Operational;
 
-use common\components\Platform\Assistant\Chat\Channels\Guide\GuideChannel;
 use common\components\Platform\Assistant\Chat\ChatPreprocessContext;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
+use common\components\Platform\Assistant\Chat\Routing\Handlers\SmartCatalogRoutingHandlers;
 use common\components\Platform\Assistant\IntentEngine\IntentClassifier;
-use common\components\Platform\Assistant\IntentEngine\IntentEngine;
+use common\components\Platform\Assistant\Planning\SmartCatalogRoutingService;use common\components\Platform\Assistant\IntentEngine\IntentEngine;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalog;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
 use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
@@ -60,7 +60,10 @@ final class OperationalChannel
 
         if ($classification === null) {
             if (ChatPreprocessContext::contextAreas() !== []) {
-                return GuideChannel::handle($content, $userId);
+                $incompletas = self::tryIncompletasFromContextAreas($content, $userId);
+                if ($incompletas !== null) {
+                    return $incompletas;
+                }
             }
 
             return self::finalize(IntentEngine::processQueryNoMatch($queryText, $catalog));
@@ -136,6 +139,41 @@ final class OperationalChannel
             'confidence' => (float) ($classification['confidence'] ?? 0.0),
             'method' => (string) ($classification['method'] ?? 'unknown'),
         ];
+    }
+
+    /**
+     * Fallback staff: preguntas HIS con context_areas → catálogo inteligente (sin GuideChannel).
+     *
+     * @return array<string, mixed>|null
+     */
+    private static function tryIncompletasFromContextAreas(string $content, int $userId): ?array
+    {
+        $queryText = ChatPreprocessContext::normalizedText();
+        if ($queryText === '') {
+            $queryText = trim($content);
+        }
+
+        $preprocess = [
+            'ok' => true,
+            'normalized_text' => $queryText,
+            'necesidad_usuario' => $queryText,
+            'routing_hint' => 'incompletas',
+            'tags' => [],
+            'user_goal' => 'guide',
+            'action_text' => '',
+            'extractions' => ChatPreprocessContext::extractions(),
+            'context_areas' => ChatPreprocessContext::contextAreas(),
+            'intent_ids_hint' => [],
+        ];
+        ChatPreprocessContext::set($preprocess);
+
+        $evaluation = SmartCatalogRoutingService::evaluate($preprocess, $userId, $content);
+        $handled = SmartCatalogRoutingHandlers::tryHandle($evaluation, $content, $userId);
+        if ($handled === null) {
+            return null;
+        }
+
+        return self::finalize($handled);
     }
 
 }

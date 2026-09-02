@@ -253,13 +253,8 @@ final class ChatChannelPolicy
     }
 
     /**
-     * Ofrecer botón Solicitar Atención en clinical:
-     * - síntoma en mensaje actual, o
-     * - síntoma en historial del hilo activo, o
-     * - certeza del hilo (salvo saludo puro sin síntoma en el hilo).
-     *
-     * Saludo solo (sin síntoma en hilo) → sin CTA.
-     * Tras síntoma propio, aunque diga «estoy bien» → sí CTA.
+     * Ofrecer botón Solicitar Atención (legacy {@see GuideChannel}; no usado en router raíz fase 07).
+     * Mantener para tests y compat hasta migrar CTA al catálogo inteligente.
      */
     public static function shouldOfferBookingButton(
         string $content,

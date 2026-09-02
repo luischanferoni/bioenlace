@@ -1,5 +1,5 @@
 # Catálogo cerrado de áreas HIS (context_areas). Claves = {@see AssistantContextHISArea}.
-# Consumidor: preprocess ({context_his_areas_list}), guide (query_scope_lines).
+# Consumidor: preprocess ({context_his_areas_list}), guide ({context_his_areas_lines}).
 version: 1
 
 areas:

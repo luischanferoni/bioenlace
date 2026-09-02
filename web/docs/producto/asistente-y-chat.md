@@ -35,49 +35,50 @@ flowchart TB
 
 Los YAML de flujo viven en `common/metadata/bioenlace/assistant/intents/`.
 
-Clasificación de acción: keywords del intent + desambiguación si hay empate (sin IA eligiendo `intent_id`).
+Clasificación de acción: catálogo inteligente (triggers en metadata) + desambiguación PHP; `IntentClassifier` solo como fallback operativo staff.
 
-**Canales** (preprocess IA → `user_goal`):
+**Routing** (1ª IA preprocess → catálogo inteligente PHP):
 
-| Canal | Rol | Botones |
-|-------|-----|---------|
-| **guide** | Charla de salud, ayuda de producto, preguntas HIS sin ejecutar trámite | Artículo + CTA; Solicitar Atención si hay síntoma en el hilo (o certeza); volcado `context:his` si hay áreas |
-| **ambiguous** | Dominio poco claro / desvío de hilo | Preguntas fijas para encauzar |
-| **operational** | Trámite concreto | Flow del intent |
-| **in_flow_question** | Pregunta dentro de un flow abierto | Sigue el flow operativo |
+| Resultado | Rol | IAs totales (típico) |
+|-----------|-----|----------------------|
+| **clara** | Trámite concreto → flow o botones | 1 |
+| **directo** | Artículo o template sin síntesis | 1 |
+| **dudosa** | Saludo o dominio poco claro → preguntas fijas | 1 |
+| **fuera_de_his** | Tema ajeno al HIS → mensaje límite | 1 |
+| **incompletas** | Pregunta HIS con loaders → síntesis | 2 (± planificadora = 3) |
 
-Hilos: foco de guía persistido (`guide_focus`, `thread_tag` dinámico `guide:appointments`); no mezclar historial de áreas distintas; un cambio fuerte de dominio puede pasar por ambiguous. Metadata de prompts: `assistant/prompts/guide.yaml`; booking: `assistant/routing/booking-offer.yaml`.
+El alias legacy `user_goal: guide` en hilo equivale a **incompletas**; el router raíz ya no usa el canal `GuideChannel`. Hilos: foco persistido (`guide_focus`, `thread_tag`); desvío fuerte → **dudosa**. Metadata: `assistant/catalog/smart-catalog.yaml`, prompts `preprocess`, `synthesis`, `planner`. ADR: [decisions/asistente-catalogo-inteligente.md](../decisions/asistente-catalogo-inteligente.md).
 
 Contenido editorial: [contenido-informativo.md](./contenido-informativo.md).
 
-## Contexto HIS en la 2ª IA
+## Contexto HIS en la 2ª IA (incompletas)
 
-Cuando el paciente pregunta algo que **necesita datos del sistema** (próximo turno, reglas del centro, llegar tarde) pero no hay un artículo editorial, Bioenlace **no** pega la historia clínica completa al prompt. Usa un volcado acotado del HIS con vocabulario operativo.
+Cuando el paciente pregunta algo que **necesita datos del sistema** (próximo turno, reglas del centro, llegar tarde) pero no hay match directo al 100 %, Bioenlace entra en **incompletas**: plan declarativo (áreas → aspect loaders), opcionalmente planificadora, y **síntesis** (`asistente-synthesis`) con volcado acotado del HIS.
 
 ```mermaid
 flowchart LR
   P[Preprocess IA]
-  A[context_areas]
-  R[PHP: anclas + aspectos]
+  M[Match catálogo PHP]
+  PL[Plan declarativo]
   L[Loaders → JSON HIS]
-  I[2ª IA guide asistente-guide]
-  P --> A --> R --> L --> I
+  S[IA síntesis]
+  P --> M --> PL --> L --> S
 ```
 
 | Concepto | Quién lo ve | Qué es |
 |----------|-------------|--------|
-| **Área HIS** | Preprocess (`context_areas`) | Tema top-level: `appointments`, `product`, … |
-| **Aspecto** | 2ª IA (clave JSON en volcado) | Unidad de carga: `appointment.current`, `site.appointment.policies`, … |
-| **Entidad** | Solo PHP (loaders) | `Turno`, `EfectorTurnosConfig`, … — **no** aparece en prompts |
+| **Área HIS** | Preprocess (`context_areas`) | Tema top-level: `appointments`, `representation`, … |
+| **Aspecto** | Síntesis (clave JSON en volcado) | Unidad de carga: `appointment.current`, `site.appointment.policies`, … |
+| **Entidad** | Solo PHP (loaders) | Modelos de dominio — **no** aparece en prompts |
 
 Reglas de producto:
 
-- Saludo solo o meta sin datos → `context_areas: []` → **sin loaders**.
-- El preprocess **no** elige aspectos ni SQL; PHP resuelve anclas y aspectos tras el preprocess.
-- El bloque en prompt es `--- context:his ---` con JSON de aspectos (valores reales o `null` si el loader no tiene el dato). Reglas transversales en el prompt; sin listas globales de “limitaciones”.
-- Canal **guide** sin artículo pero con áreas HIS: respuesta con IA + volcado + semántica de intents filtrada; si la 2ª IA falla → error HTTP (sin texto genérico de relleno).
+- Saludo solo → routing **dudosa** → sin loaders.
+- El preprocess **no** elige aspectos; PHP resuelve anclas y aspectos tras el match.
+- Volcado `--- context:his ---` con JSON; valores `null` si el dato no existe (p. ej. tolerancia de llegada tarde no configurada) → la síntesis responde con honestidad.
+- Artículo editorial con match **directo** → body + CTA sin 2ª IA (`InfoContentAssistantService::envelopeFromArticleDirect`).
 
-Detalle técnico: [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md) · ADR: [decisions/asistente-contexto-his-areas-aspectos.md](../decisions/asistente-contexto-his-areas-aspectos.md).
+Detalle técnico: [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md) · ADR: [decisions/asistente-catalogo-inteligente.md](../decisions/asistente-catalogo-inteligente.md).
 
 ## Qué interpreta y qué no resuelve el modelo
 

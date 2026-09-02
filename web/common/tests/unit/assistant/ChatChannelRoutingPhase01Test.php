@@ -33,18 +33,18 @@ class ChatChannelRoutingPhase01Test extends Unit
         $this->assertSame('operational', ChatPreprocessService::canonicalizeGoal('operational'));
     }
 
-    public function testGoalsIncludeGuide(): void
+    public function testGoalsIncludeGuideLegacyAliasForThread(): void
     {
         $this->assertContains('guide', ChatPreprocessService::GOALS);
-        $this->assertNotContains('clinical', ChatPreprocessService::GOALS);
-        $this->assertNotContains('informational', ChatPreprocessService::GOALS);
+        $this->assertSame('incompletas', ChatPreprocessService::routingHintFromLegacyGoal('guide'));
+        $this->assertContains('incompletas', ChatPreprocessService::ROUTING_HINTS);
     }
 
-    public function testStablePromptListsGuideGoal(): void
+    public function testStablePromptListsRoutingHints(): void
     {
         $prompt = ChatPreprocessService::stablePromptPrefix();
-        $this->assertStringContainsString('"guide"', $prompt);
-        $this->assertStringContainsString('Alcance válido', $prompt);
+        $this->assertStringContainsString('"incompletas"', $prompt);
+        $this->assertStringContainsString('routing_hint', $prompt);
     }
 
     public function testAmbiguousChannelEnvelopeFromMetadata(): void
@@ -88,12 +88,30 @@ class ChatChannelRoutingPhase01Test extends Unit
         $this->assertSame('guide', $observed['thread_tag']);
     }
 
-    public function testDispatchLateArrivalPolicyQuestionIsNotAmbiguousSteering(): void
+    public function testDispatchLateArrivalUsesSmartCatalogNotAmbiguousSteering(): void
     {
         $msg = 'voy a tener problemas si llego 10min tarde al turno?';
+        \common\components\Platform\Assistant\Chat\ChatPreprocessContext::set([
+            'ok' => true,
+            'normalized_text' => $msg,
+            'routing_hint' => 'incompletas',
+            'tags' => ['llegar_tarde', 'appointments'],
+            'context_areas' => ['appointments'],
+            'extractions' => [],
+        ]);
+
         $out = ChatRouter::dispatchByGoal('guide', $msg, 0);
 
         $this->assertNotSame('interactive', $out['kind'] ?? null);
         $this->assertStringNotContainsString('Es sobre mi salud o malestar', (string) ($out['text'] ?? ''));
+    }
+
+    public function testChatRouterDoesNotReferenceGuideChannel(): void
+    {
+        $source = file_get_contents(
+            dirname(__DIR__, 3) . '/components/Platform/Assistant/Chat/Routing/ChatRouter.php'
+        );
+        $this->assertIsString($source);
+        $this->assertStringNotContainsString('GuideChannel::handle', $source);
     }
 }

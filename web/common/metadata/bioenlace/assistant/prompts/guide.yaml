@@ -2,8 +2,17 @@
 # CTA en respuesta API (ChatChannelPolicy + finalizeResponse), no en el prompt.
 # Ensamblado: {@see GuidePromptAssembler} → {@see GuideChannelConfig::assemblePrompt}.
 #
-# optional_attachments — adjuntos opcionales (vacío si no hay datos).
-# stable_prompt — resto del prompt; conversation y mensaje actual siempre presentes.
+# optional_attachments — plantillas de adjuntos opcionales; {data} vacío → bloque omitido.
+# stable_prompt — cuerpo del prompt; placeholders sustituidos por GuidePromptAssembler:
+#   {context_his_areas_lines} — áreas HIS activas (foco guide + preprocess context_areas);
+#     viñetas "clave — descripción" según {@see context-his-areas.yaml}. Vacío → sin encabezado.
+#   {scoped_system_records} — volcado context:his: loaders por aspecto según áreas y extracciones.
+#   {clinical_record_block} — resumen clínico del paciente (adjunto clinical_record); solo si el
+#     área clinical_record está activa y hay datos.
+#   {intent_semantics} — capacidades del catálogo filtradas por áreas; bloque context:intent_semantics.
+#   {article_block} — artículo de ayuda editorial (adjunto article); vacío si no aplica.
+#   {conversation_history} — historial reciente filtrado por foco guide (guide_focus).
+#   {current_message} — mensaje actual: normalized_text del preprocess o texto crudo del usuario.
 version: 1
 
 optional_attachments:
@@ -24,7 +33,7 @@ stable_prompt: |
   Estilo: español, breve y claro (4–8 oraciones salvo que pidan más detalle).
 
   Ámbito de esta consulta:
-  {query_scope_lines}
+  {context_his_areas_lines}
 
   Registros del sistema para el ámbito de la consulta:
   {scoped_system_records}

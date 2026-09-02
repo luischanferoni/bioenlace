@@ -21,6 +21,37 @@ Incluye preprocess, canal operativo, conversacional, informativo.
 
 ### Flujo real (`ChatOrchestrator` → `ChatRouter`)
 
+En **cada mensaje raíz** (sin `intent_id` en curso), **siempre** corre preprocess (1ª IA); después el **catálogo inteligente** decide el camino (`routing_result`) y cuántas IAs más hacen falta.
+
+```mermaid
+flowchart TB
+  M[Mensaje POST asistente/enviar]
+  P[IA: asistente-preprocess]
+  MCH[SmartCatalogMatchService PHP]
+  H{routing_result}
+  D[1 IA directo / clara / dudosa / fuera]
+  INC[incompletas]
+  SYN[IA: asistente-synthesis]
+  PLN[IA: asistente-planner opcional]
+  M --> P --> MCH --> H
+  H -->|directo clara dudosa fuera| D
+  H -->|incompletas| INC --> SYN
+  INC -->|needs_planner| PLN --> SYN
+```
+
+Código: [`ChatRouter.php`](../../common/components/Platform/Assistant/Chat/Routing/ChatRouter.php).
+
+| `routing_result` | Llamadas IA adicionales | Contexto `IAManager` | Producto |
+|------------------|-------------------------|----------------------|----------|
+| *(siempre)* | **1ª** preprocess | `asistente-preprocess` | tags, context_areas, necesidad_usuario |
+| `directo` / `clara` / `dudosa` / `fuera_de_his` | **0** | — | template, flow, interactive o mensaje límite |
+| `incompletas` | **+1** síntesis | `asistente-synthesis` | plan declarativo + loaders + redacción |
+| `incompletas` + `needs_planner` | **+2** (planner + síntesis) | `asistente-planner`, `asistente-synthesis` | shortlist RBAC; `final_path: 3ia_planner_synthesis` |
+
+**Nota:** el canal legacy `GuideChannel` / `asistente-guide` **no** se usa en el router raíz; queda para `InfoContentAssistantService` (artículos con IA) hasta deprecación total.
+
+### Flujo anterior (referencia histórica — user_goal)
+
 En **cada mensaje raíz** (sin `intent_id` en curso), **siempre** corre preprocess; después el **`user_goal`** decide si hay **otra** llamada a IA o solo reglas/UI.
 
 ```mermaid

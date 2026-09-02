@@ -54,7 +54,26 @@ flowchart LR
 - Texto del usuario y permisos (rutas API del catálogo).
 - `keywords` e `intent_semantics` del YAML de cada intent.
 - Si dos intents empatan de cerca → **desambiguación** (botones); no boosts entre `intent_id`.
-- Canal (síntoma → `guide`, etc.): `ChatChannelPolicy` (PHP). Copy: `assistant/prompts/guide.yaml`.
+- **Routing raíz:** 1ª IA preprocess → `SmartCatalogMatchService` (PHP, RBAC) → handlers (`directo`, `clara`, `dudosa`, `incompletas`, `fuera_de_his`). `IntentClassifier` queda como fallback en `OperationalChannel` (staff / sin match con `context_areas`).
+
+---
+
+## Catálogo inteligente y router unificado
+
+Tras preprocess, el mensaje **no** se reparte por `user_goal: guide|operational`. PHP matchea contra `assistant/catalog/smart-catalog.yaml` y elige camino:
+
+| Pieza | Ubicación | Rol |
+|-------|-----------|-----|
+| Match | `Catalog/SmartCatalogMatchService` | Score tags + áreas + hints → tools |
+| Plan | `Planning/DeclarativePlanService` | Área → aspect loaders + artículos |
+| Handlers | `Chat/Routing/Handlers/*` | Envelope 1 IA o encadena síntesis |
+| Log | `Planning/AssistantPlanningLogService` | `planning_applied` por mensaje |
+| Síntesis | `Channels/Synthesis/` + `asistente-synthesis` | 2ª IA incompletas |
+| Planificadora | `Planning/PlannerRoutingStep` + `asistente-planner` | Opcional si `needs_planner` |
+
+Entrypoint: `Chat/Routing/ChatRouter.php` → `SmartCatalogRoutingHandlers`. Sin `GuideChannel` en raíz (fase 07).
+
+ADR: [decisions/asistente-catalogo-inteligente.md](../decisions/asistente-catalogo-inteligente.md).
 
 ---
 
@@ -115,33 +134,24 @@ Cuando el paciente pregunta "¿qué es X?" o "¿cómo funciona X?", antes de cae
 
 **Resolución jerárquica:** efector → provincia → producto (global). Si el centro tiene un artículo específico sobre el topic, ese prevalece.
 
-**Integración:** `GuideChannel` (y `InfoContentAssistantService` para artículos) llama a `InfoContentAssistantService::tryResolveFromText()`. Si hay match visible (RBAC), responde con IA anclada a la fuente + botones CTA; si la IA falla, dump del artículo (sin inventar). Sin artículo pero con `context_areas` del preprocess → `GuideChannel` con volcado HIS + `GuidePromptAssembler`.
+**Integración:** match **directo** en catálogo → `InfoContentAssistantService::envelopeFromArticleDirect` (sin 2ª IA). Otros casos informativos → routing **incompletas** + síntesis, o artículo vía plan declarativo. El canal legacy `GuideChannel` (`asistente-guide`) queda solo para compat puntual fuera del router raíz.
 
 **Administración:** CRUD en `/admin/info-content-article`. Producto: [contenido-informativo.md](../producto/contenido-informativo.md).
 
 ## Contexto HIS (áreas + aspectos)
 
-Segunda capa de contexto para el canal **guide** (2ª IA `asistente-guide`). Complementa el extracto de HC (`PROFILE_GUIDE`); no reemplaza intents de lectura ni DataAccess.
+Capa de datos para routing **incompletas** (2ª IA `asistente-synthesis`, no `asistente-guide` en raíz). Complementa extracto de HC cuando aplica; no reemplaza intents de lectura ni DataAccess.
 
 | Pieza | Ubicación | Rol |
 |-------|-----------|-----|
 | Áreas | `AssistantContextHISArea` | Catálogo en preprocess → `context_areas` |
 | Aspectos | `AssistantContextHISAreaAspect` | Claves JSON del volcado (`appointment.current`, …) |
 | Anclas | `AssistantContextAnchorResolver` | Sujeto, cita referencia, `site_id`, PES |
-| Plan | `AssistantContextAreaAspectResolver` | Áreas + extracciones → lista de aspectos |
+| Plan | `DeclarativePlanService` + `AssistantContextAreaAspectResolver` | Áreas + match → `tool_ids` |
 | Loaders | `Domain/*/Assistant/Context/*AspectLoader` | Un aspecto → JSON HIS desde AR/servicios |
-| Registry | `product-registries.php` → `assistantContextAspectLoaders` | Cableado loaders |
-| Ensamblaje | `GuidePromptAssembler` + `AssistantContextAssemblyService` | HC + `context:his` + `context:intent_semantics` + historial por foco |
+| Ensamblaje | `DeclarativePlanExecutor` + `SynthesisPromptAssembler` | Volcado en prompt de síntesis |
 
-Flujo: preprocess persiste `context_areas` en `ChatPreprocessContext` → `GuideFocusResolver` fija foco → assembly resuelve anclas y aspectos → loaders (cache request-scoped) → `GuideChannel` / `GuidePromptAssembler` inyectan bloques antes del mensaje o del artículo.
-
-MVP implementado: área `appointments` (cita actual, políticas del centro, setup de agenda, historial opcional). Otras áreas reservadas en enum hasta tener loaders.
-
-Parámetros Yii: `asistente_context_max_aspects`, `asistente_context_max_chars`, `asistente_context_history_limit`, `asistente_context_debug` (envelope `context_applied`).
-
-**Volcado HIS y prompts:** cada loader expone lo que hay (incluido `null` si el dato no existe). La 2ª IA usa reglas transversales («solo campos no nulos; no inventar»). **No** mantener un registro global de limitaciones por hueco. Ver regla `asistente-prompts-sin-casos-particulares.mdc`.
-
-ADR: [decisions/asistente-contexto-his-areas-aspectos.md](../decisions/asistente-contexto-his-areas-aspectos.md). Producto: [asistente-y-chat.md](../producto/asistente-y-chat.md).
+Flujo: preprocess → match catálogo → plan declarativo → loaders → síntesis. Parámetros: `asistente_plan_max_tools`, `asistente_planner_enabled`, `asistente_context_max_aspects`, `asistente_planning_debug`.
 
 ## Sinónimos de servicios (HintServiceSynonyms)
 

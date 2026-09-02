@@ -25,12 +25,12 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Captura actor + enfermería | `captura-actor-enfermeria/` | Quitar alias ConsultasConfiguracion; overlay PES + CarePlan; app triage |
 | Admisión: identidad + ventanilla | `admision-identidad-ventanilla/` | Ingreso DNI (sin alta libre); Didit; NN; sesión de mostrador |
 | RBAC capabilities UI nativa | `rbac-capabilities-ui-nativa/` | Permisos assignables fuera de intents; guardia + encounter + panel |
-| Asistente — catalogación unificada | `asistente-catalogacion-unificada/` | 1ª IA + catálogo completo; clara/dudosa/incompletas/fuera_de_his; retira guide |
 
 ## Planes archivados (carpeta eliminada)
 
 | Plan | Documentación estable |
 |------|------------------------|
+| Asistente — catálogo inteligente | [decisions/asistente-catalogo-inteligente.md](../decisions/asistente-catalogo-inteligente.md) + [producto/asistente-y-chat.md](../producto/asistente-y-chat.md) + [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md) |
 | Canal guide (fusión clinical + informational) | [asistente-y-chat.md](../producto/asistente-y-chat.md) + [decisions/asistente-canal-guide.md](../decisions/asistente-canal-guide.md) + QA [asistente-consultas.md](../qa/paciente/asistente-consultas.md) |
 | Asistente: canales, chat, info_content | [producto/asistente-y-chat.md](../producto/asistente-y-chat.md) + [producto/contenido-informativo.md](../producto/contenido-informativo.md) + QA [asistente-consultas.md](../qa/paciente/asistente-consultas.md) |
 | Contexto HIS asistente (áreas + aspectos) | [producto/asistente-y-chat.md](../producto/asistente-y-chat.md) + [decisions/asistente-contexto-his-areas-aspectos.md](../decisions/asistente-contexto-his-areas-aspectos.md) + [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md) |

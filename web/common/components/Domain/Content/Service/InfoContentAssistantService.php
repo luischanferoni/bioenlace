@@ -80,6 +80,35 @@ final class InfoContentAssistantService
     }
 
     /**
+     * Artículo informativo sin llamada a IA (camino directo 1 IA total).
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function envelopeFromArticleDirect(
+        string $topic,
+        int $userId,
+        string $userQuestion = ''
+    ): ?array {
+        $article = InfoContentResolverService::resolve($topic);
+        if ($article === null) {
+            return null;
+        }
+        if ($userId > 0 && !InfoContentResolverService::isVisibleToUser($article, $userId)) {
+            return null;
+        }
+
+        $text = GuideChannelConfig::formatArticleContent(
+            trim((string) $article->title),
+            trim((string) $article->body)
+        );
+        if ($text === '') {
+            return null;
+        }
+
+        return self::envelopeWithTextAndCta($article, $text, $userId);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private static function envelopeFromArticle(InfoContentArticle $article, string $userQuestion, int $userId): array
@@ -90,6 +119,15 @@ final class InfoContentAssistantService
         if ($text === null) {
             return GuideChannel::iaFailureEnvelope();
         }
+
+        return self::envelopeWithTextAndCta($article, $text, $userId);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function envelopeWithTextAndCta(InfoContentArticle $article, string $text, int $userId): array
+    {
         $buttons = self::ctaButtons($article, $userId);
 
         if ($buttons === []) {

@@ -36,6 +36,16 @@ contextos:
     candidates_tokens: 200
     cached_ratio: 0.40
     volumen_mensual_por_profesional: 660
+  asistente-synthesis:
+    prompt_tokens: 900
+    candidates_tokens: 200
+    cached_ratio: 0.40
+    volumen_mensual_por_profesional: 400
+  asistente-planner:
+    prompt_tokens: 700
+    candidates_tokens: 150
+    cached_ratio: 0.35
+    volumen_mensual_por_profesional: 80
   asistente-onboarding:
     # §3 costos-api: sin contexto dedicado en código; reutiliza preprocess/conversacional.
     prompt_tokens: 1000

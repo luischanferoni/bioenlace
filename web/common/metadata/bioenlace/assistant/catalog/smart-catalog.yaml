@@ -1,0 +1,85 @@
+# Catálogo inteligente del asistente — triggers → tools ejecutables.
+# Schema: assistant/schemas/smart-catalog-entry-v1.yaml
+# Consumidor: SmartCatalogRegistry / SmartCatalogMatchService
+version: 1
+
+entries:
+  - id: atencion-sintoma
+    tool_type: intent
+    tool_ref: atencion.necesito-atencion
+    routing_result: clara
+    priority: 90
+    triggers:
+      tags: [sintoma, dolor, malestar, necesito_atencion]
+      phrases: [me duele, me molesta, me siento mal, necesito atencion, necesito atención]
+      keywords: [panza, cabeza, fiebre, vomito, vómito]
+
+  - id: turnos-crear
+    tool_type: intent
+    tool_ref: turnos.crear-como-paciente
+    routing_result: clara
+    priority: 85
+    triggers:
+      tags: [sacar_turno, turno, appointments]
+      phrases: [sacar turno, quiero un turno, pedir turno, reservar turno]
+      context_areas: [appointments]
+
+  - id: turnos-ver-paciente
+    tool_type: intent
+    tool_ref: turnos.ver-ultimo-en-oferta-como-paciente
+    routing_result: clara
+    priority: 80
+    triggers:
+      tags: [mis_turnos, ver_turnos, appointments]
+      phrases: [mis turnos, cuales son mis turnos, cuáles son mis turnos, que turnos tengo, próximo turno, proximo turno]
+      context_areas: [appointments]
+
+  - id: llegar-tarde-politicas
+    tool_type: aspect
+    tool_ref: site.appointment.policies
+    routing_result: incompletas
+    priority: 75
+    triggers:
+      tags: [llegar_tarde, tolerancia, appointments]
+      phrases: [llego tarde, llegar tarde, me esperan, voy tarde, minutos tarde]
+      context_areas: [appointments]
+
+  - id: llegar-tarde-cita-actual
+    tool_type: aspect
+    tool_ref: appointment.current
+    routing_result: incompletas
+    priority: 70
+    triggers:
+      tags: [llegar_tarde, appointments]
+      phrases: [llego tarde, llegar tarde, voy tarde, mi turno, mi cita]
+      context_areas: [appointments]
+    required_anchors: [subject_persona]
+
+  - id: articulo-representacion
+    tool_type: article
+    tool_ref: representacion
+    routing_result: directo
+    priority: 85
+    triggers:
+      tags: [representacion, tutela, representante]
+      phrases: [representacion, representación, operar por mi hijo, vincular menor, designar representante, tutor]
+      context_areas: [representation]
+      keywords: [sobrino, sobrina, hijo, hija, menor, tutela]
+
+  - id: fuera-his-servicios-inexistentes
+    match_only: true
+    routing_result: fuera_de_his
+    priority: 10
+    triggers:
+      tags: [fuera_his]
+      phrases: [medium, sesion con una medium, clima, chiste, horoscopo, horóscopo]
+
+  - id: profesionales-listado-staff
+    tool_type: intent
+    tool_ref: profesionales.listado-efector
+    routing_result: clara
+    priority: 70
+    triggers:
+      tags: [listar_profesionales, staff]
+      phrases: [listar profesionales, profesionales del centro, medicos del centro, médicos del centro]
+      context_areas: [geo_resources]

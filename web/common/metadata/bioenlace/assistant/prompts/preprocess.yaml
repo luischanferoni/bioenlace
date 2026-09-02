@@ -1,40 +1,61 @@
-# Preprocess IA: clasificación de user_goal, context_areas (áreas HIS) y extracciones.
-# {@see ChatPreprocessService} — PHP sustituye placeholders dinámicos.
-version: 1
+# Preprocess IA v1: etiquetado + routing_hint + historial reciente.
+# Contrato: assistant/schemas/first-ia-v1.yaml — {@see ChatPreprocessService}
+version: 2
 
 stable_prompt: |
-  Analizá y procesa el mensaje de un usuario que necesita usar un sistema de información hospitalaria
+  Analizá el mensaje de un usuario de un sistema de Información Hospitalaria (Bioenlace).
+  Usá el historial reciente solo para desambiguar referencias ("este turno", "ese médico", etc.).
 
   Respondé únicamente con JSON:
   {
-    "normalized_text": "aqui va el mensaje del usuario pero limpio y bien formateado, ortografía corregida y abreviaturas abiertas",
-    "user_goal": "aqui va la categoría del mensaje una de {goals_json} de acuerdo a lo que notes que necesite",
-    "action_text": "fragmento que expresa la acción pedida o vacío",
-    "context_areas": ["claves de área HIS de la lista anterior, o [] si saludo sin datos"],
+    "normalized_text": "mensaje actual limpio, ortografía corregida, abreviaturas abiertas",
+    "necesidad_usuario": "una frase: qué necesita el usuario con este mensaje",
+    "routing_hint": "uno de {routing_hints_json}",
+    "tags": ["etiquetas en snake_case según reglas abajo"],
+    "context_areas": ["claves de área HIS de la lista, o [] si saludo sin datos"],
     "extractions": [
       {
         "span": "fragmento mencionado (no palabras sueltas)",
         "category": "una de {categories_json}",
         "synonyms": ["0-2 variantes ortográficas o abreviaturas"]
       }
-    ]
+    ],
+    "intent_ids_hint": ["intent_id sugerido si reconocés un trámite concreto, o []"]
   }
 
-  Reglas de user_goal (elige uno; debe encajar en el alcance válido):
-  - guide: charla, orientación, ayuda de producto o preguntas sobre el HIS sin ejecutar trámite. Incluye síntomas sin pedir turno explícito, saludo solo, preguntas sobre citas (llegar tarde, políticas), cómo funciona un trámite, preguntas sobre el asistente.
-  - operational: ejecutar o consultar un trámite concreto (sacar turno, cancelar, ver recetas, estudio con acto nombrado, etc.). No incluye preguntas sobre reglas del centro (llegar tarde, tolerancia).
-  - in_flow_question: pregunta sobre un flujo ya en curso.
-  - ambiguous: el mensaje no encaja con claridad, está fuera de alcance, es sobre un tercero sin representación, o dominio poco claro.
+  Reglas de routing_hint:
+  - clara: ejecutar o consultar un trámite concreto (sacar/cancelar/ver turno, ver recetas, listar profesionales, síntoma que pide atención/turno).
+  - incompletas: preguntas sobre reglas, políticas, cómo funciona, datos del HIS para responder (llegar tarde, representación, comparar con datos del centro).
+  - directo: pregunta que un artículo o respuesta fija del sistema resolvería sin más datos (poco frecuente).
+  - dudosa: saludo solo, mensaje vacío de sentido, falta un dato clave para actuar.
+  - fuera_de_his: temas ajenos al sistema (clima, chistes, servicios inexistentes como medium/horóscopo).
+
+  Reglas de tags (snake_case, incluir las que apliquen):
+  - Área HIS activa: repetir claves de context_areas (ej. appointments, representation).
+  - llegar_tarde: preguntas sobre tolerancia, llegar tarde, si esperan.
+  - sintoma / necesito_atencion: malestar o síntoma sin trámite explícito.
+  - representacion / tutela: operar por otro, menores, representantes.
+  - sacar_turno / mis_turnos / cancelar_turno: según intención de agenda.
+  - fuera_his: servicio o tema inexistente en el HIS.
+  - in_flow_question: pregunta sobre un trámite ya en curso en el historial.
 
   Reglas de context_areas:
   - Solo claves de la lista de áreas HIS.
-  - Saludo solo sin necesidad de datos del sistema → [].
-  - Preguntas sobre citas/turnos, llegar tarde, cancelar, horarios → incluir appointments si aplica.
-  - Preguntas sobre guía de producto sin datos personales → product si aplica.
+  - Saludo solo → [].
+  - Citas, turnos, llegar tarde → appointments si aplica.
+  - Representación, tutela, operar por menor → representation.
+  - Guía de producto sin datos personales → product.
 
   Otras:
-  - normalized_text: corregí ortografía y expandí abreviaturas clínicas; conservá el sentido completo.
-  - extractions: solo entidades del mundo ({categories_human}); category servicio solo para ofertas/servicios del centro, no para síntomas ni partes del cuerpo.
-  - synonyms: máximo 2 strings por extracción.
+  - normalized_text: solo el mensaje actual del usuario (no reescribas el historial).
+  - necesidad_usuario: obligatorio; una sola frase operativa.
+  - extractions: categorías {categories_human}; servicio solo para ofertas del centro, no síntomas.
+  - intent_ids_hint: solo si estás razonablemente seguro; PHP valida permisos.
 
-  Mensaje:
+  Áreas HIS válidas:
+  {context_his_areas_list}
+
+  Historial reciente (más antiguo → más reciente):
+  {conversation_history}
+
+  Mensaje actual:

@@ -42,7 +42,7 @@ final class GuidePromptAssembler
     }
 
     return GuideChannelConfig::assemblePrompt([
-      'query_scope_lines' => self::formatQueryScopeLines($activeAreas),
+      'context_his_areas_lines' => self::formatContextHisAreasLines($activeAreas),
       'scoped_system_records' => trim($assembled->promptSection),
       'clinical_record_block' => GuideChannelConfig::formatOptionalAttachment(
         'clinical_record',
@@ -74,7 +74,7 @@ final class GuidePromptAssembler
   /**
    * @param list<string> $activeAreas
    */
-  private static function formatQueryScopeLines(array $activeAreas): string
+  private static function formatContextHisAreasLines(array $activeAreas): string
   {
     if ($activeAreas === []) {
       return '';

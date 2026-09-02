@@ -71,6 +71,60 @@ final class ChatPreprocessContext
         return isset($d['action_text']) ? trim((string) $d['action_text']) : '';
     }
 
+    public static function routingHint(): string
+    {
+        $d = self::get();
+
+        return isset($d['routing_hint']) ? trim((string) $d['routing_hint']) : '';
+    }
+
+    public static function necesidadUsuario(): string
+    {
+        $d = self::get();
+
+        return isset($d['necesidad_usuario']) ? trim((string) $d['necesidad_usuario']) : '';
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function tags(): array
+    {
+        $d = self::get();
+        $tags = $d['tags'] ?? [];
+        if (!is_array($tags)) {
+            return [];
+        }
+        $out = [];
+        foreach ($tags as $tag) {
+            if (is_string($tag) && trim($tag) !== '') {
+                $out[] = trim($tag);
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function intentIdsHint(): array
+    {
+        $d = self::get();
+        $ids = $d['intent_ids_hint'] ?? [];
+        if (!is_array($ids)) {
+            return [];
+        }
+        $out = [];
+        foreach ($ids as $id) {
+            if (is_string($id) && trim($id) !== '') {
+                $out[] = trim($id);
+            }
+        }
+
+        return $out;
+    }
+
     /**
      * @return list<string>
      */

@@ -12,7 +12,6 @@ use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio;
 use common\models\Scheduling\Turno;
-use common\models\Scheduling\Turno as TurnoAlias;
 use Yii;
 
 final class EncounterLifecycleService
@@ -206,7 +205,7 @@ final class EncounterLifecycleService
     /**
      * Encounter ambulatorio vinculado a un turno (motivos pre-consulta). Idempotente.
      */
-    public function ensureFromTurno(Turno|TurnoAlias $turno): ?Encounter
+    public function ensureFromTurno(Turno $turno): ?Encounter
     {
         $turnoId = (int) $turno->id_turnos;
         if ($turnoId <= 0) {

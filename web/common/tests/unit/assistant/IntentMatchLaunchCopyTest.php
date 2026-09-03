@@ -14,58 +14,51 @@ class IntentMatchLaunchCopyTest extends Unit
         AssistantChannelCopy::resetCacheForTests();
     }
 
-    public function testNecesidadIsTheLeadAndDropsShortStepTitle(): void
+    public function testLeadUsesLabelNotNecesidadAndDropsShortStepTitle(): void
     {
         $item = $this->item('Turno con un especialista', 'Reservá un turno eligiendo servicio.');
-        $text = IntentMatchLaunchCopy::forFlowLaunch(
-            $item,
-            'Servicio',
-            'Sacar un turno con cardiología',
-            ['cardiología']
-        );
+        $text = IntentMatchLaunchCopy::forFlowLaunch($item, 'Servicio', []);
 
-        $this->assertSame('Sacar un turno con cardiología', $text);
+        $this->assertStringContainsString('Turno con un especialista', $text);
+        $this->assertStringNotContainsString('Informar un efecto', $text);
         $this->assertStringNotContainsString('Iniciar:', $text);
         $this->assertStringNotContainsString('Servicio', $text);
+    }
+
+    public function testSpansEnrichLabelWithoutDumpingInternalNecesidad(): void
+    {
+        $item = $this->item('Solicitar Atención');
+        $text = IntentMatchLaunchCopy::forFlowLaunch($item, '', ['enalapril']);
+
+        $this->assertStringContainsString('Solicitar Atención', $text);
+        $this->assertStringContainsString('enalapril', $text);
     }
 
     public function testAppendsUserFacingStepQuestion(): void
     {
         $item = $this->item('Solicitar Atención');
-        $text = IntentMatchLaunchCopy::forFlowLaunch(
-            $item,
-            '¿Qué te está pasando?',
-            'Pedir orientación por dolor de cabeza',
-            []
-        );
+        $text = IntentMatchLaunchCopy::forFlowLaunch($item, '¿Qué te está pasando?', []);
 
-        $this->assertStringContainsString('Pedir orientación por dolor de cabeza', $text);
+        $this->assertStringContainsString('Solicitar Atención', $text);
         $this->assertStringContainsString('¿Qué te está pasando?', $text);
-    }
-
-    public function testSummaryWhenNoNecesidad(): void
-    {
-        $item = $this->item('Turno con un especialista', 'Reservá un turno eligiendo servicio y horario.');
-        $text = IntentMatchLaunchCopy::forFlowLaunch($item, '', '', []);
-
-        $this->assertSame('Reservá un turno eligiendo servicio y horario.', $text);
     }
 
     public function testFallbackUsesLabel(): void
     {
         $item = $this->item('Ver laboratorio');
-        $text = IntentMatchLaunchCopy::forFlowLaunch($item, '', '', []);
+        $text = IntentMatchLaunchCopy::forFlowLaunch($item, '', []);
 
         $this->assertStringContainsString('Ver laboratorio', $text);
         $this->assertStringNotContainsString('Abrir:', $text);
     }
 
-    public function testOpenActionUsesNecesidad(): void
+    public function testOpenActionUsesLabel(): void
     {
         $item = $this->item('Mis recetas');
-        $text = IntentMatchLaunchCopy::forOpenAction($item, 'Ver mis recetas vigentes');
+        $text = IntentMatchLaunchCopy::forOpenAction($item, []);
 
-        $this->assertSame('Ver mis recetas vigentes', $text);
+        $this->assertStringContainsString('Mis recetas', $text);
+        $this->assertStringNotContainsString('Ver mis recetas vigentes', $text);
     }
 
     public function testUniqueSpansDedupesCase(): void

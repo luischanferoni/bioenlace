@@ -53,8 +53,8 @@ flowchart LR
 
 - Texto del usuario y permisos (rutas API del catálogo).
 - `keywords` e `intent_semantics` del YAML de cada intent.
-- Si dos intents empatan de cerca → **desambiguación** (botones); no boosts entre `intent_id`.
-- **Routing raíz:** 1ª IA preprocess → `SmartCatalogMatchService` (PHP, RBAC) → handlers (`directo`, `clara`, `dudosa`, `incompletas`, `fuera_de_his`). `IntentClassifier` queda como fallback en `OperationalChannel` (staff / sin match con `context_areas`).
+- Si dos intents empatan de cerca y hay tema HIS → **incompletas** (síntesis); no botones entre `intent_id`.
+- **Routing raíz:** 1ª IA preprocess → `SmartCatalogMatchService` (PHP, RBAC) → handlers (`clara` = match 100 % flow o artículo, `dudosa`, `incompletas`, `fuera_de_his`). `IntentClassifier` queda como fallback en `OperationalChannel` (staff / sin match con `context_areas`).
 
 ---
 
@@ -134,7 +134,7 @@ Cuando el paciente pregunta "¿qué es X?" o "¿cómo funciona X?", antes de cae
 
 **Resolución jerárquica:** efector → provincia → producto (global). Si el centro tiene un artículo específico sobre el topic, ese prevalece.
 
-**Integración:** match **directo** en catálogo → `InfoContentAssistantService::envelopeFromArticleDirect` (sin 2ª IA). Otros casos informativos → routing **incompletas** + síntesis, o artículo vía plan declarativo. El canal legacy `GuideChannel` (`asistente-guide`) queda solo para compat puntual fuera del router raíz.
+**Integración:** match **clara** (100 %) a un artículo del catálogo → envelope sin 2ª IA. Otros casos informativos → routing **incompletas** + síntesis, o artículo vía plan declarativo. El canal legacy `GuideChannel` (`asistente-guide`) queda solo para compat puntual fuera del router raíz.
 
 **Administración:** CRUD en `/admin/info-content-article`. Producto: [contenido-informativo.md](../producto/contenido-informativo.md).
 

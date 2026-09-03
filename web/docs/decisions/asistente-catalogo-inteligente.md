@@ -14,8 +14,8 @@ Documentación estable: [producto/asistente-y-chat.md](../producto/asistente-y-c
 
 1. **1ª IA (etiquetado)** — JSON v1: `normalized_text`, `necesidad_usuario`, `routing_hint`, `tags`, `context_areas`, `extractions`, `intent_ids_hint` opcional. Sin catálogo completo de funcionalidades en el prompt.
 2. **Catálogo inteligente (PHP)** — metadata `assistant/catalog/smart-catalog.yaml`: entradas con `tool_id`, `tool_type`, `triggers`, anclas requeridas, template opcional. Match con score; RBAC antes de exponer tools tipo `intent` o `metric`.
-3. **Routing PHP** — resultados: `directo`, `clara`, `dudosa`, `incompletas`, `fuera_de_his`. PHP decide camino final; `routing_hint` de la IA orienta pero no obliga.
-4. **Match 100%** — score + margen + anclas resueltas + dato presente cuando la pregunta lo exige → respuesta templated + botones (**1 IA**).
+3. **Routing PHP** — resultados: `clara` (match 100 %: intent, artículo o template), `dudosa`, `incompletas`, `fuera_de_his`. PHP decide camino final; `routing_hint` de la IA orienta pero no obliga.
+4. **Match 100%** — score + margen + tool ejecutable → flow, artículo o template (**1 IA**). Empate → **incompletas** si hay tema HIS; no botones entre intents.
 5. **Plan declarativo** — reutiliza `AssistantContextAnchorResolver` y `AssistantContextAreaAspectResolver` (evolucionar a registry YAML); output `tool_ids` + `needs_planner`.
 6. **2ª IA síntesis** — `necesidad_usuario` + `scoped_system_records`; reemplaza guide para incompletas.
 7. **3ª IA planificadora (opcional)** — solo si `needs_planner` (plan vacío, demasiados tools, sin datos útiles post-load); elige `tool_ids_ordered` del **shortlist filtrado**; PHP resuelve params.
@@ -35,7 +35,7 @@ Documentación estable: [producto/asistente-y-chat.md](../producto/asistente-y-c
 | Antes | Después |
 |-------|---------|
 | `user_goal: operational` | `clara` (match intent) |
-| `user_goal: guide` | `incompletas` o `directo` (artículo / template) |
+| `user_goal: guide` | `incompletas` (pregunta HIS) o `clara` (artículo / template / flow al 100 %) |
 | `user_goal: ambiguous` | `dudosa` |
 | `user_goal: in_flow_question` | `clara` o `incompletas` según match |
 | `catalogacion: funcionalidades_incompletas` (plan previo) | `incompletas` |

@@ -91,6 +91,7 @@ final class ChatPreprocessService
         if ($hint === '') {
             return 'dudosa';
         }
+        $hint = PreprocessRoutingHintCatalog::applyAlias($hint);
         if (!PreprocessRoutingHintCatalog::isValid($hint)) {
             return 'dudosa';
         }

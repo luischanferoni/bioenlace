@@ -3,7 +3,6 @@
 namespace common\tests\unit\assistant;
 
 use Codeception\Test\Unit;
-use common\components\Platform\Assistant\Catalog\SmartCatalogMatchService;
 use common\components\Platform\Assistant\Catalog\SmartCatalogRegistry;
 use common\components\Platform\Assistant\Context\AssistantContextAreaAspectCatalog;
 use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
@@ -31,7 +30,7 @@ class SmartCatalogRoutingServiceTest extends Unit
         ], 0);
 
         $decision = $evaluation->decision;
-        $this->assertSame('directo', $decision->routingResult);
+        $this->assertSame('clara', $decision->routingResult);
         $this->assertTrue($decision->isDirectArticle());
         $this->assertSame('representacion', $decision->articleTopic);
         $this->assertSame('articulo-representacion', $decision->catalogEntry?->id);
@@ -53,33 +52,15 @@ class SmartCatalogRoutingServiceTest extends Unit
         $this->assertSame('turnos.crear-como-paciente', $decision->primaryIntentId());
     }
 
-    public function testClaraMultipleIntentsFromHints(): void
+    public function testTurnosTieWithoutClearWinnerGoesIncompletas(): void
     {
-        $match = SmartCatalogMatchService::match([
-            'normalized_text' => 'turnos',
-            'tags' => ['turno', 'appointments'],
-            'context_areas' => ['appointments'],
-            'intent_ids_hint' => [
-                'turnos.crear-como-paciente',
-                'turnos.ver-ultimo-en-oferta-como-paciente',
-            ],
-        ], 0);
-
-        $intentIds = SmartCatalogMatchService::collectClaraIntentIds($match, [
-            'intent_ids_hint' => [
-                'turnos.crear-como-paciente',
-                'turnos.ver-ultimo-en-oferta-como-paciente',
-            ],
-        ], 0);
-
-        $this->assertCount(2, $intentIds);
-
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'turnos',
             'routing_hint' => 'clara',
-            'tags' => ['turno', 'appointments'],
+            'tags' => ['turno'],
             'context_areas' => ['appointments'],
             'intent_ids_hint' => [
+                'atencion.necesito-atencion',
                 'turnos.crear-como-paciente',
                 'turnos.ver-ultimo-en-oferta-como-paciente',
             ],
@@ -87,9 +68,33 @@ class SmartCatalogRoutingServiceTest extends Unit
         ], 0);
 
         $decision = $evaluation->decision;
+        $this->assertTrue($decision->isIncompletas());
+        $this->assertFalse($decision->shouldRouteIntentDirectly());
+        $this->assertSame([], $decision->intentIds);
+    }
+
+    public function testEfectoAdversoMatchesAtencionNotTurnosCluster(): void
+    {
+        $evaluation = SmartCatalogRoutingService::evaluate([
+            'normalized_text' => 'quiero informar un efecto adverso de una medicacion',
+            'necesidad_usuario' => 'Informar un efecto adverso de una medicación.',
+            'routing_hint' => 'clara',
+            'tags' => ['sintoma', 'medicamento', 'necesito_atencion', 'appointments'],
+            'context_areas' => ['appointments', 'medication'],
+            'intent_ids_hint' => [
+                'atencion.necesito-atencion',
+                'turnos.crear-como-paciente',
+                'turnos.ver-ultimo-en-oferta-como-paciente',
+            ],
+            'extractions' => [
+                ['span' => 'medicación', 'category' => 'medicamento', 'synonyms' => []],
+            ],
+        ], 0);
+
+        $decision = $evaluation->decision;
         $this->assertSame('clara', $decision->routingResult);
-        $this->assertTrue($decision->hasMultipleClaraIntents());
-        $this->assertCount(2, $decision->intentIds);
+        $this->assertTrue($decision->shouldRouteIntentDirectly());
+        $this->assertSame('atencion.necesito-atencion', $decision->primaryIntentId());
     }
 
     public function testDudosaWhenNoMatch(): void

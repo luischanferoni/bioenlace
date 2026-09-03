@@ -21,6 +21,9 @@ final class PreprocessRoutingHintCatalog
     /** @var array<string, string>|null */
     private static ?array $legacyGoalCache = null;
 
+    /** @var array<string, string>|null */
+    private static ?array $aliasCache = null;
+
     /** @var list<string>|null */
     private static ?array $extraTagsCache = null;
 
@@ -36,9 +39,20 @@ final class PreprocessRoutingHintCatalog
 
     public static function isValid(string $id): bool
     {
-        $id = trim($id);
+        $id = self::applyAlias(trim($id));
 
         return $id !== '' && in_array($id, self::all(), true);
+    }
+
+    public static function applyAlias(string $id): string
+    {
+        $id = trim($id);
+        if ($id === '') {
+            return '';
+        }
+        self::loadCatalog();
+
+        return self::$aliasCache[$id] ?? $id;
     }
 
     public static function description(string $id): string
@@ -101,7 +115,7 @@ final class PreprocessRoutingHintCatalog
         if ($routingHint === 'clara') {
             return 'operational';
         }
-        if ($routingHint === 'incompletas' || $routingHint === 'directo') {
+        if ($routingHint === 'incompletas') {
             return 'guide';
         }
 
@@ -123,6 +137,7 @@ final class PreprocessRoutingHintCatalog
         self::$idsCache = null;
         self::$descriptionCache = null;
         self::$legacyGoalCache = null;
+        self::$aliasCache = null;
         self::$extraTagsCache = null;
     }
 
@@ -138,6 +153,7 @@ final class PreprocessRoutingHintCatalog
             self::$idsCache = [];
             self::$descriptionCache = [];
             self::$legacyGoalCache = [];
+            self::$aliasCache = [];
             self::$extraTagsCache = [];
 
             return;
@@ -167,6 +183,19 @@ final class PreprocessRoutingHintCatalog
             }
         }
 
+        $aliases = [];
+        $rawAliases = $config['aliases'] ?? [];
+        if (is_array($rawAliases)) {
+            foreach ($rawAliases as $from => $to) {
+                $from = trim((string) $from);
+                $to = trim((string) $to);
+                if ($from === '' || $to === '') {
+                    continue;
+                }
+                $aliases[$from] = $to;
+            }
+        }
+
         $extraTags = [];
         $rawExtra = $config['extra_preprocess_tags'] ?? [];
         if (is_array($rawExtra)) {
@@ -180,6 +209,7 @@ final class PreprocessRoutingHintCatalog
         self::$idsCache = $ids;
         self::$descriptionCache = $descriptions;
         self::$legacyGoalCache = $legacy;
+        self::$aliasCache = $aliases;
         self::$extraTagsCache = $extraTags;
     }
 }

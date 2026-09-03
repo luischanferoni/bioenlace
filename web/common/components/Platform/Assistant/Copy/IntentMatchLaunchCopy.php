@@ -8,7 +8,7 @@ use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
 /**
  * Texto de arranque cuando PHP matchea un intent al 100% (sin 2ª IA).
  *
- * Copy genérico en channel-copy.yaml; variables del preprocess, catálogo y primer paso del flow.
+ * Copy genérico en channel-copy.yaml. No usa necesidad_usuario (etiqueta interna del preprocess).
  */
 final class IntentMatchLaunchCopy
 {
@@ -18,10 +18,9 @@ final class IntentMatchLaunchCopy
     public static function forFlowLaunch(
         UiActionCatalogItem $item,
         string $flowText = '',
-        ?string $necesidad = null,
         ?array $extractionSpans = null
     ): string {
-        $lead = self::leadText($item, $necesidad, $extractionSpans);
+        $lead = self::leadText($item, $extractionSpans);
         $step = self::userFacingStepPrompt($flowText, $item->display_name, $lead);
         if ($lead === '') {
             return $step;
@@ -33,9 +32,9 @@ final class IntentMatchLaunchCopy
         return $lead . "\n\n" . $step;
     }
 
-    public static function forOpenAction(UiActionCatalogItem $item, ?string $necesidad = null): string
+    public static function forOpenAction(UiActionCatalogItem $item, ?array $extractionSpans = null): string
     {
-        $lead = self::leadText($item, $necesidad, null);
+        $lead = self::leadText($item, $extractionSpans);
         if ($lead !== '') {
             return $lead;
         }
@@ -46,32 +45,26 @@ final class IntentMatchLaunchCopy
     /**
      * @param list<string>|null $extractionSpans
      */
-    private static function leadText(
-        UiActionCatalogItem $item,
-        ?string $necesidad,
-        ?array $extractionSpans
-    ): string {
-        $necesidad = trim((string) ($necesidad ?? self::necesidadFromContext()));
+    private static function leadText(UiActionCatalogItem $item, ?array $extractionSpans): string
+    {
         $spans = $extractionSpans ?? self::spansFromContext();
         $label = self::fallbackLabel($item);
-        $summary = self::summaryFromItem($item);
         $vars = [
-            'necesidad' => $necesidad,
             'label' => $label,
-            'summary' => $summary,
+            'summary' => self::summaryFromItem($item),
             'spans' => implode(', ', $spans),
         ];
 
-        if ($necesidad !== '') {
-            $text = trim(AssistantChannelCopy::t('full_match_intent', $vars));
-
-            return $text !== '' ? $text : $necesidad;
+        if ($spans !== []) {
+            $text = trim(AssistantChannelCopy::t('full_match_intent_with_spans', $vars));
+            if ($text !== '') {
+                return $text;
+            }
         }
 
-        if ($summary !== '') {
-            $text = trim(AssistantChannelCopy::t('full_match_intent_summary', $vars));
-
-            return $text !== '' ? $text : $summary;
+        $text = trim(AssistantChannelCopy::t('full_match_intent', $vars));
+        if ($text !== '') {
+            return $text;
         }
 
         $text = trim(AssistantChannelCopy::t('full_match_intent_fallback', $vars));
@@ -98,15 +91,6 @@ final class IntentMatchLaunchCopy
         }
 
         return trim($item->description);
-    }
-
-    private static function necesidadFromContext(): string
-    {
-        try {
-            return ChatPreprocessContext::necesidadUsuario();
-        } catch (\Throwable) {
-            return '';
-        }
     }
 
     /**

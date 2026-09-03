@@ -29,12 +29,12 @@ flowchart TB
   P[IA: asistente-preprocess]
   MCH[SmartCatalogMatchService PHP]
   H{routing_result}
-  D[1 IA directo / clara / dudosa / fuera]
+  D[1 IA clara / dudosa / fuera]
   INC[incompletas]
   SYN[IA: asistente-synthesis]
   PLN[IA: asistente-planner opcional]
   M --> P --> MCH --> H
-  H -->|directo clara dudosa fuera| D
+  H -->|clara dudosa fuera| D
   H -->|incompletas| INC --> SYN
   INC -->|needs_planner| PLN --> SYN
 ```
@@ -44,7 +44,7 @@ Código: [`ChatRouter.php`](../../common/components/Platform/Assistant/Chat/Rout
 | `routing_result` | Llamadas IA adicionales | Contexto `IAManager` | Producto |
 |------------------|-------------------------|----------------------|----------|
 | *(siempre)* | **1ª** preprocess | `asistente-preprocess` | tags, context_areas, necesidad_usuario |
-| `directo` / `clara` / `dudosa` / `fuera_de_his` | **0** | — | template, flow, interactive o mensaje límite |
+| `clara` / `dudosa` / `fuera_de_his` | **0** | — | flow, artículo, template, interactive o mensaje límite |
 | `incompletas` | **+1** síntesis | `asistente-synthesis` | plan declarativo + loaders + redacción |
 | `incompletas` + `needs_planner` | **+2** (planner + síntesis) | `asistente-planner`, `asistente-synthesis` | shortlist RBAC; `final_path: 3ia_planner_synthesis` |
 

@@ -28,6 +28,15 @@ class SmartCatalogConversationalQaTest extends Unit
     protected function conversationalCases(): array
     {
         return [
+            'efecto_adverso' => [
+                'quiero informar un efecto adverso de una medicacion',
+                [
+                    'routing_hint' => 'clara',
+                    'tags' => ['sintoma', 'medicamento', 'necesito_atencion'],
+                    'context_areas' => ['medication'],
+                ],
+                ['clara'],
+            ],
             'sintoma_panza' => [
                 'me duele la panza',
                 [
@@ -53,7 +62,7 @@ class SmartCatalogConversationalQaTest extends Unit
                     'tags' => ['mis_turnos', 'appointments'],
                     'context_areas' => ['appointments'],
                 ],
-                ['clara', 'directo'],
+                ['clara'],
             ],
             'llegar_tarde' => [
                 'llego 10 min tarde hay problema',
@@ -71,7 +80,7 @@ class SmartCatalogConversationalQaTest extends Unit
                     'tags' => ['representacion', 'tutela'],
                     'context_areas' => ['representation'],
                 ],
-                ['directo', 'dudosa', 'incompletas'],
+                ['clara', 'dudosa', 'incompletas'],
             ],
             'fuera_his_medium' => [
                 'necesito una sesion con una medium',

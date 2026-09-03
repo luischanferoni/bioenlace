@@ -3,11 +3,14 @@
 version: 1
 
 hints:
-  clara: Hay un trámite o consulta operativa concreta a ejecutar o abrir
+  clara: Hay un trámite, artículo o respuesta fija concreta a ejecutar o abrir (match 100%)
   incompletas: Pregunta de reglas, políticas, cómo funciona, o hace falta dato HIS para responder
-  directo: Alcanza un artículo o respuesta fija sin más datos (poco frecuente)
   dudosa: Saludo solo, sin sentido útil, o falta un dato clave para actuar
   fuera_de_his: Tema ajeno al HIS
+
+# Alias preprocess (IA o tests legacy).
+aliases:
+  directo: clara
 
 # Alias legacy user_goal → routing_hint (transición preprocess v1).
 legacy_user_goal:

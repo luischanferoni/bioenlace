@@ -56,6 +56,16 @@ class ChatPreprocessNormalizeV1Test extends Unit
         $this->assertSame('in_flow_question', $out['user_goal']);
     }
 
+    public function testDirectAliasMapsToClara(): void
+    {
+        $out = ChatPreprocessService::normalizeFromAi([
+            'routing_hint' => 'directo',
+            'normalized_text' => 'qué es representacion',
+        ], 'qué es representacion');
+
+        $this->assertSame('clara', $out['routing_hint']);
+    }
+
     public function testInvalidRoutingHintBecomesDudosa(): void
     {
         $out = ChatPreprocessService::normalizeFromAi([

@@ -14,7 +14,7 @@ fields:
     notes: Top N candidatos del match.
   routing_result:
     type: enum
-    values: [directo, clara, dudosa, incompletas, fuera_de_his]
+    values: [clara, dudosa, incompletas, fuera_de_his]
   declarative_plan:
     type: object
     subfields: [tool_ids, reason, needs_planner]

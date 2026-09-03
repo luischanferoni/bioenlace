@@ -45,9 +45,9 @@ class SmartCatalogPlanningLogPathsTest extends Unit
         ], 0);
 
         $snap = AssistantPlanningLogService::snapshot();
-        $this->assertSame('directo', $snap['routing_result'] ?? null);
+        $this->assertSame('clara', $snap['routing_result'] ?? null);
         $this->assertNotEmpty($snap['catalog_matches'] ?? []);
-        $this->assertSame('directo', $evaluation->decision->routingResult);
+        $this->assertSame('clara', $evaluation->decision->routingResult);
     }
 
     public function testTwoIaSynthesisFinalPathWithSimulatedIa(): void

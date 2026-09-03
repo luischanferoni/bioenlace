@@ -106,69 +106,6 @@ final class SmartCatalogMatchService
     }
 
     /**
-     * Intents claros del match + hints de la 1ª IA (filtrados por RBAC).
-     *
-     * @param array<string, mixed> $firstIa
-     * @return list<string>
-     */
-    public static function collectClaraIntentIds(SmartCatalogMatchResult $match, array $firstIa, int $userId): array
-    {
-        $allowed = self::allowedIntentIdsForUser($userId);
-        $out = [];
-
-        $hints = $firstIa['intent_ids_hint'] ?? [];
-        if (is_array($hints)) {
-            foreach ($hints as $hint) {
-                if (!is_string($hint)) {
-                    continue;
-                }
-                $hint = trim($hint);
-                if ($hint !== '' && isset($allowed[$hint]) && !in_array($hint, $out, true)) {
-                    $out[] = $hint;
-                }
-            }
-        }
-
-        if ($match->ranked === []) {
-            return $out;
-        }
-
-        $bestScore = $match->bestScore;
-        foreach ($match->ranked as $row) {
-            if (($row['routing_result'] ?? '') !== 'clara') {
-                continue;
-            }
-
-            $catalogId = trim((string) ($row['catalog_id'] ?? ''));
-            $entry = $catalogId !== '' ? SmartCatalogRegistry::findById($catalogId) : null;
-            if ($entry === null || $entry->toolType !== 'intent' || $entry->toolRef === '') {
-                continue;
-            }
-            if (!isset($allowed[$entry->toolRef])) {
-                continue;
-            }
-
-            $score = (int) ($row['score'] ?? 0);
-            if ($score < self::MIN_SCORE) {
-                continue;
-            }
-
-            $include = false;
-            if ($match->isClearWinner && $match->best !== null && $entry->id === $match->best->id) {
-                $include = true;
-            } elseif (!$match->isClearWinner && $bestScore > 0 && $bestScore - $score <= self::CLEAR_MARGIN) {
-                $include = true;
-            }
-
-            if ($include && !in_array($entry->toolRef, $out, true)) {
-                $out[] = $entry->toolRef;
-            }
-        }
-
-        return $out;
-    }
-
-    /**
      * @param list<string> $tags
      * @param list<string> $areas
      * @param array<string, true> $intentHints
@@ -192,6 +129,10 @@ final class SmartCatalogMatchService
         $score = (int) floor($entry->priority / 10);
 
         foreach ($entry->triggerTags as $triggerTag) {
+            // El preprocess copia cada context_area a tags; no puntuar dos veces el mismo eje.
+            if (in_array($triggerTag, $entry->triggerContextAreas, true)) {
+                continue;
+            }
             if (in_array($triggerTag, $tags, true)) {
                 $score += self::SCORE_TAG;
             }

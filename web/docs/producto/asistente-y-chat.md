@@ -35,17 +35,16 @@ flowchart TB
 
 Los YAML de flujo viven en `common/metadata/bioenlace/assistant/intents/`.
 
-Clasificación de acción: catálogo inteligente (triggers en metadata) + desambiguación PHP; `IntentClassifier` solo como fallback operativo staff.
+Clasificación de acción: catálogo inteligente (triggers en metadata). Empate o sin ganador claro, con tema HIS → **incompletas**; no hay botones de desambiguación entre intents.
 
 **Routing** (1ª IA preprocess → catálogo inteligente PHP):
 
 | Resultado | Rol | IAs totales (típico) |
 |-----------|-----|----------------------|
-| **clara** | Trámite concreto → flow o botones | 1 |
-| **directo** | Artículo o template sin síntesis | 1 |
+| **clara** | Match 100%: flow, artículo o template | 1 |
 | **dudosa** | Saludo o dominio poco claro → preguntas fijas | 1 |
 | **fuera_de_his** | Tema ajeno al HIS → mensaje límite | 1 |
-| **incompletas** | Pregunta HIS con loaders → síntesis | 2 (± planificadora = 3) |
+| **incompletas** | Pregunta HIS con loaders, o sin ganador claro → síntesis | 2 (± planificadora = 3) |
 
 El alias legacy `user_goal: guide` en hilo equivale a **incompletas**; el router raíz ya no usa el canal `GuideChannel`. Hilos: foco persistido (`guide_focus`, `thread_tag`); desvío fuerte → **dudosa**. Metadata: `assistant/catalog/smart-catalog.yaml`, prompts `preprocess`, `synthesis`, `planner`. ADR: [decisions/asistente-catalogo-inteligente.md](../decisions/asistente-catalogo-inteligente.md).
 
@@ -53,7 +52,7 @@ Contenido editorial: [contenido-informativo.md](./contenido-informativo.md).
 
 ## Contexto HIS en la 2ª IA (incompletas)
 
-Cuando el paciente pregunta algo que **necesita datos del sistema** (próximo turno, reglas del centro, llegar tarde) pero no hay match directo al 100 %, Bioenlace entra en **incompletas**: plan declarativo (áreas → aspect loaders), opcionalmente planificadora, y **síntesis** (`asistente-synthesis`) con volcado acotado del HIS.
+Cuando el paciente pregunta algo que **necesita datos del sistema** (próximo turno, reglas del centro, llegar tarde) pero no hay match al 100 %, Bioenlace entra en **incompletas**: plan declarativo (áreas → aspect loaders), opcionalmente planificadora, y **síntesis** (`asistente-synthesis`) con volcado acotado del HIS.
 
 ```mermaid
 flowchart LR
@@ -76,7 +75,7 @@ Reglas de producto:
 - Saludo solo → routing **dudosa** → sin loaders.
 - El preprocess **no** elige aspectos; PHP resuelve anclas y aspectos tras el match.
 - Volcado `--- context:his ---` con JSON; valores `null` si el dato no existe (p. ej. tolerancia de llegada tarde no configurada) → la síntesis responde con honestidad.
-- Artículo editorial con match **directo** → body + CTA sin 2ª IA (`InfoContentAssistantService::envelopeFromArticleDirect`).
+- Artículo editorial con match **clara** (100 %) → body + CTA sin 2ª IA.
 
 Detalle técnico: [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md) · ADR: [decisions/asistente-catalogo-inteligente.md](../decisions/asistente-catalogo-inteligente.md).
 

@@ -71,12 +71,12 @@ class SmartCatalogMatchServiceTest extends Unit
         ];
         $match = SmartCatalogMatchService::match($firstIa, 0);
         AssistantPlanningLogService::begin($firstIa, $match->ranked);
-        AssistantPlanningLogService::setRoutingResult('directo');
+        AssistantPlanningLogService::setRoutingResult('clara');
         AssistantPlanningLogService::setFinalPath('1ia_direct');
 
         $snap = AssistantPlanningLogService::snapshot();
         $this->assertIsArray($snap);
-        $this->assertSame('directo', $snap['routing_result']);
+        $this->assertSame('clara', $snap['routing_result']);
         $this->assertNotEmpty($snap['catalog_matches']);
     }
 }

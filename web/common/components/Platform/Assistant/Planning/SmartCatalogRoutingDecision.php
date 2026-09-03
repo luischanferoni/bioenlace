@@ -27,24 +27,27 @@ final class SmartCatalogRoutingDecision
         return $this->intentIds[0] ?? '';
     }
 
-    public function shouldRouteIntentDirectly(): bool
+    public function isMatch100(): bool
     {
-        return $this->routingResult === 'clara' && count($this->intentIds) === 1;
+        return $this->routingResult === 'clara';
     }
 
-    public function hasMultipleClaraIntents(): bool
+    public function shouldRouteIntentDirectly(): bool
     {
-        return $this->routingResult === 'clara' && count($this->intentIds) > 1;
+        return $this->isMatch100() && count($this->intentIds) === 1;
     }
 
     public function isDirectArticle(): bool
     {
-        return $this->routingResult === 'directo' && $this->articleTopic !== '';
+        return $this->isMatch100() && $this->articleTopic !== '';
     }
 
     public function isDirectTemplate(): bool
     {
-        return $this->routingResult === 'directo' && trim($this->responseText) !== '';
+        return $this->isMatch100()
+            && $this->articleTopic === ''
+            && $this->intentIds === []
+            && trim($this->responseText) !== '';
     }
 
     public function isFueraDeHis(): bool

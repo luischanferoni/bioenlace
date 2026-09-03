@@ -44,8 +44,8 @@ fields:
     type: string
     optional: true
     notes: >
-      Solo camino directo (artículo/dato fijo). Match 100% a intent clara
-      usa copy genérico channel-copy.yaml (full_match_intent*) + flow; no un template por fila.
+      Copy UX opcional para match 100% (artículo/dato fijo). El intent usa
+      channel-copy.yaml (full_match_intent*). No hay un camino de routing aparte.
   cta_intent_id:
     type: string
     optional: true
@@ -56,5 +56,7 @@ fields:
   routing_result:
     type: enum
     optional: true
-    values: [directo, clara, incompletas, fuera_de_his]
-    notes: Camino preferido si esta fila gana el match.
+    values: [clara, incompletas, fuera_de_his]
+    notes: >
+      incompletas / fuera_de_his si esta fila gana. Tool ejecutable (intent, article)
+      en match 100% se enruta como clara aunque no se declare.

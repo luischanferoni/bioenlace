@@ -57,27 +57,18 @@ class SmartCatalogRoutingHandlersTest extends Unit
         $this->assertSame('1ia_dudosa', $snap['final_path'] ?? null);
     }
 
-    public function testClaraMultipleReturnsInteractiveWhenNoSingleIntentFlow(): void
+    public function testTurnosTieUsesIncompletasNotDisambiguationButtons(): void
     {
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'turnos',
             'routing_hint' => 'clara',
-            'tags' => ['turno', 'appointments'],
+            'tags' => ['turno'],
             'context_areas' => ['appointments'],
-            'intent_ids_hint' => [
-                'turnos.crear-como-paciente',
-                'turnos.ver-ultimo-en-oferta-como-paciente',
-            ],
+            'intent_ids_hint' => [],
             'extractions' => [],
         ], 0);
 
-        if (!$evaluation->decision->hasMultipleClaraIntents()) {
-            $this->markTestSkipped('El match no produjo múltiples intents claros en este entorno.');
-        }
-
-        $envelope = SmartCatalogRoutingHandlers::tryHandle($evaluation, 'turnos', 0);
-
-        $this->assertIsArray($envelope);
-        $this->assertContains($envelope['kind'] ?? null, ['interactive', 'flow']);
+        $this->assertTrue($evaluation->decision->isIncompletas());
+        $this->assertFalse($evaluation->decision->shouldRouteIntentDirectly());
     }
 }

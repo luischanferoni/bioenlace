@@ -10,8 +10,19 @@ entries:
     routing_result: clara
     priority: 90
     triggers:
-      tags: [sintoma, dolor, malestar, necesito_atencion]
-      phrases: [me duele, me molesta, me siento mal, necesito atencion, necesito atención]
+      tags: [sintoma, dolor, malestar, necesito_atencion, medicamento]
+      phrases:
+        - me duele
+        - me molesta
+        - me siento mal
+        - necesito atencion
+        - necesito atención
+        - efecto adverso
+        - efectos adversos
+        - me cayo mal
+        - me cayó mal
+        - reaccion al medicamento
+        - reacción al medicamento
       keywords: [panza, cabeza, fiebre, vomito, vómito]
 
   - id: turnos-crear
@@ -20,7 +31,7 @@ entries:
     routing_result: clara
     priority: 85
     triggers:
-      tags: [sacar_turno, turno, appointments]
+      tags: [sacar_turno, turno]
       phrases: [sacar turno, quiero un turno, pedir turno, reservar turno]
       context_areas: [appointments]
 
@@ -30,7 +41,7 @@ entries:
     routing_result: clara
     priority: 80
     triggers:
-      tags: [mis_turnos, ver_turnos, appointments]
+      tags: [mis_turnos, ver_turnos, turno]
       phrases: [mis turnos, cuales son mis turnos, cuáles son mis turnos, que turnos tengo, próximo turno, proximo turno]
       context_areas: [appointments]
 
@@ -40,7 +51,7 @@ entries:
     routing_result: incompletas
     priority: 75
     triggers:
-      tags: [llegar_tarde, tolerancia, appointments]
+      tags: [llegar_tarde, tolerancia]
       phrases: [llego tarde, llegar tarde, me esperan, voy tarde, minutos tarde]
       context_areas: [appointments]
 
@@ -50,7 +61,7 @@ entries:
     routing_result: incompletas
     priority: 70
     triggers:
-      tags: [llegar_tarde, appointments]
+      tags: [llegar_tarde]
       phrases: [llego tarde, llegar tarde, voy tarde, mi turno, mi cita]
       context_areas: [appointments]
     required_anchors: [subject_persona]
@@ -58,7 +69,7 @@ entries:
   - id: articulo-representacion
     tool_type: article
     tool_ref: representacion
-    routing_result: directo
+    routing_result: clara
     priority: 85
     triggers:
       tags: [representacion, tutela, representante]

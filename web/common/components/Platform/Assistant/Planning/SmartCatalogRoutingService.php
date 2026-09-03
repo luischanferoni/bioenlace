@@ -35,7 +35,7 @@ final class SmartCatalogRoutingService
             $declarative->needsPlanner
         );
 
-        $decision = self::resolveRouting($firstIa, $match, $userId);
+        $decision = self::resolveRouting($firstIa, $match);
         AssistantPlanningLogService::setRoutingResult($decision->routingResult);
 
         return new SmartCatalogRoutingEvaluation($firstIa, $match, $decision, $declarative);
@@ -46,49 +46,20 @@ final class SmartCatalogRoutingService
      */
     private static function resolveRouting(
         array $firstIa,
-        SmartCatalogMatchResult $match,
-        int $userId
+        SmartCatalogMatchResult $match
     ): SmartCatalogRoutingDecision {
         $best = $match->best;
         $hint = trim((string) ($firstIa['routing_hint'] ?? 'dudosa'));
-        $claraIntentIds = SmartCatalogMatchService::collectClaraIntentIds($match, $firstIa, $userId);
+        $areas = is_array($firstIa['context_areas']) ? $firstIa['context_areas'] : [];
 
         if ($best !== null && $match->isClearWinner) {
             if ($best->matchOnly && $best->routingResult === 'fuera_de_his') {
                 return self::fueraDeHisDecision($best);
             }
 
-            if ($best->routingResult === 'directo' && $best->toolType === 'article' && $best->toolRef !== '') {
-                return new SmartCatalogRoutingDecision(
-                    'directo',
-                    'guide',
-                    [],
-                    '',
-                    $best->toolRef,
-                    $best,
-                );
-            }
-
-            if ($best->routingResult === 'directo' && $best->responseTemplate !== '') {
-                return new SmartCatalogRoutingDecision(
-                    'directo',
-                    'guide',
-                    [],
-                    $best->responseTemplate,
-                    '',
-                    $best,
-                );
-            }
-
-            if ($best->toolType === 'intent' && $best->routingResult === 'clara' && $best->toolRef !== '') {
-                return new SmartCatalogRoutingDecision(
-                    'clara',
-                    'operational',
-                    [$best->toolRef],
-                    '',
-                    '',
-                    $best,
-                );
+            $full = self::match100Decision($best);
+            if ($full !== null) {
+                return $full;
             }
         }
 
@@ -96,22 +67,15 @@ final class SmartCatalogRoutingService
             return self::fueraDeHisDecision($best);
         }
 
-        if ($claraIntentIds !== []) {
+        if (
+            $hint === 'incompletas'
+            || ($best !== null && $best->routingResult === 'incompletas')
+            || ($areas !== [] && !$match->isClearWinner)
+        ) {
             return new SmartCatalogRoutingDecision(
-                'clara',
-                'operational',
-                $claraIntentIds,
-                '',
-                '',
-                $best,
-            );
-        }
-
-        if ($hint === 'clara' && $best !== null && $best->toolType === 'intent' && $best->toolRef !== '') {
-            return new SmartCatalogRoutingDecision(
-                'clara',
-                'operational',
-                [$best->toolRef],
+                'incompletas',
+                PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint('incompletas'),
+                [],
                 '',
                 '',
                 $best,
@@ -119,9 +83,8 @@ final class SmartCatalogRoutingService
         }
 
         $routing = PreprocessRoutingHintCatalog::isValid($hint) ? $hint : 'dudosa';
-
-        if ($routing === 'incompletas' || ($best !== null && $best->routingResult === 'incompletas')) {
-            $routing = 'incompletas';
+        if ($routing === 'clara') {
+            $routing = 'dudosa';
         }
 
         return new SmartCatalogRoutingDecision(
@@ -132,6 +95,46 @@ final class SmartCatalogRoutingService
             '',
             $best,
         );
+    }
+
+    private static function match100Decision(SmartCatalogEntry $best): ?SmartCatalogRoutingDecision
+    {
+        $goal = PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint('clara');
+
+        if ($best->toolType === 'article' && $best->toolRef !== '') {
+            return new SmartCatalogRoutingDecision(
+                'clara',
+                $goal,
+                [],
+                '',
+                $best->toolRef,
+                $best,
+            );
+        }
+
+        if ($best->responseTemplate !== '') {
+            return new SmartCatalogRoutingDecision(
+                'clara',
+                $goal,
+                [],
+                $best->responseTemplate,
+                '',
+                $best,
+            );
+        }
+
+        if ($best->toolType === 'intent' && $best->toolRef !== '') {
+            return new SmartCatalogRoutingDecision(
+                'clara',
+                $goal,
+                [$best->toolRef],
+                '',
+                '',
+                $best,
+            );
+        }
+
+        return null;
     }
 
     private static function fueraDeHisDecision(?SmartCatalogEntry $entry): SmartCatalogRoutingDecision

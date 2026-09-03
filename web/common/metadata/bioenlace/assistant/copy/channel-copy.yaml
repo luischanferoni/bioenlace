@@ -39,13 +39,14 @@ messages:
     default: ""
     whatsapp_paciente: ""
 
-  # Match PHP 100% → flow (sin 2ª IA). Placeholders: {necesidad} {label} {summary} {spans}
+  # Match PHP 100% → flow (sin 2ª IA). No usar necesidad_usuario (etiqueta interna).
+  # Placeholders: {label} {summary} {spans}
   full_match_intent:
-    default: "{necesidad}"
-    whatsapp_paciente: "{necesidad}"
+    default: "Te ayudo con {label}."
+    whatsapp_paciente: "Dale, vamos con {label}."
 
-  full_match_intent_summary:
-    default: "{summary}"
+  full_match_intent_with_spans:
+    default: "Te ayudo con {label} ({spans})."
 
   full_match_intent_fallback:
     default: "Te ayudo con {label}."

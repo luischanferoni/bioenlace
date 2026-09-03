@@ -26,32 +26,23 @@ final class SmartCatalogRoutingHandlers
             return FueraDeHisHandler::handle($decision);
         }
 
-        if ($decision->isDirectArticle() || $decision->isDirectTemplate()) {
-            $envelope = DirectMatchHandler::handle($decision, $content, $userId);
-            if ($envelope !== null) {
-                AssistantPlanningLogService::setFinalPath('1ia_direct');
+        if ($decision->isMatch100()) {
+            if ($decision->isDirectArticle() || $decision->isDirectTemplate()) {
+                $envelope = DirectMatchHandler::handle($decision, $content, $userId);
+                if ($envelope !== null) {
+                    AssistantPlanningLogService::setFinalPath('1ia_direct');
 
-                return $envelope;
+                    return $envelope;
+                }
+
+                return null;
             }
 
-            return null;
-        }
-
-        if ($decision->shouldRouteIntentDirectly()) {
-            AssistantPlanningLogService::setFinalPath('1ia_clara');
-
-            return ClaraRoutingHandler::handleSingle($content, $decision->primaryIntentId(), $userId);
-        }
-
-        if ($decision->hasMultipleClaraIntents()) {
-            $envelope = ClaraRoutingHandler::handleMultiple($decision, $evaluation->firstIa, $content, $userId);
-            if ($envelope !== null) {
+            if ($decision->shouldRouteIntentDirectly()) {
                 AssistantPlanningLogService::setFinalPath('1ia_clara');
 
-                return $envelope;
+                return ClaraRoutingHandler::handleSingle($content, $decision->primaryIntentId(), $userId);
             }
-
-            return null;
         }
 
         if ($decision->isDudosa()) {

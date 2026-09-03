@@ -6,6 +6,7 @@ use Codeception\Test\Unit;
 use common\components\Platform\Assistant\Chat\Channels\Ambiguous\AmbiguousChannel;
 use common\components\Platform\Assistant\Chat\Channels\Ambiguous\AmbiguousChannelConfig;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
+use common\components\Platform\Assistant\Preprocess\PreprocessRoutingHintCatalog;
 use common\components\Platform\Assistant\Chat\Routing\ChatRouter;
 use common\components\Platform\Assistant\Chat\Thread\AssistantThreadStateService;
 
@@ -35,15 +36,15 @@ class ChatChannelRoutingPhase01Test extends Unit
 
     public function testGoalsIncludeGuideLegacyAliasForThread(): void
     {
-        $this->assertContains('guide', ChatPreprocessService::GOALS);
+        $this->assertContains('guide', ChatPreprocessService::legacyGoals());
         $this->assertSame('incompletas', ChatPreprocessService::routingHintFromLegacyGoal('guide'));
-        $this->assertContains('incompletas', ChatPreprocessService::ROUTING_HINTS);
+        $this->assertContains('incompletas', PreprocessRoutingHintCatalog::all());
     }
 
     public function testStablePromptListsRoutingHints(): void
     {
         $prompt = ChatPreprocessService::stablePromptPrefix();
-        $this->assertStringContainsString('"incompletas"', $prompt);
+        $this->assertStringContainsString('- incompletas —', $prompt);
         $this->assertStringContainsString('routing_hint', $prompt);
     }
 

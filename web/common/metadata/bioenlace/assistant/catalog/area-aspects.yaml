@@ -1,10 +1,21 @@
-# Aspectos HIS por área (plan declarativo). Claves = {@see AssistantContextHISAreaAspect}.
-# Consumidor: AssistantContextAreaAspectCatalog.
-version: 1
+# Aspectos HIS (volcado / plan declarativo). Claves = {@see AssistantContextHISAreaAspect}.
+# Consumidor: AssistantContextHISAreaAspect, AssistantContextAreaAspectCatalog.
+version: 2
 
-areas:
-  appointments:
-    aspects:
-      - appointment.current
-      - site.appointment.policies
-      - appointment.scheduling.setup
+aspects:
+  appointment.current:
+    area: appointments
+    priority: 10
+    implemented: true
+  site.appointment.policies:
+    area: appointments
+    priority: 30
+    implemented: true
+  appointment.scheduling.setup:
+    area: appointments
+    priority: 25
+    implemented: true
+  appointment.history.subject_at_site:
+    area: appointments
+    priority: 40
+    implemented: true

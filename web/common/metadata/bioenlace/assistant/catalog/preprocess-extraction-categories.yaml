@@ -1,0 +1,17 @@
+# Categorías de extractions del preprocess (1ª IA). Claves = {@see PreprocessExtractionCategoryCatalog}.
+# Alineado con hint-resolution entity_ownership (servicio, efector, profesional, persona)
+# y áreas HIS ({@see context-his-areas.yaml}).
+version: 1
+
+categories:
+  servicio: Oferta de salud del centro (área o línea institucional); no síntoma ni acto clínico
+  acto: Estudio, procedimiento o pedido clínico (ecografía, laboratorio, RX); no confundir con servicio del centro
+  efector: Centro, sede o establecimiento de salud
+  profesional: Profesional de salud mencionado por nombre o rol
+  persona: Otra persona (menor, familiar, representado)
+  turno: Cita o turno concreto
+  tiempo: Plazo, duración, fecha u hora relativa
+  sintoma: Malestar o síntoma (dolor, fiebre); no usar servicio
+  medicamento: Fármaco o medicación mencionada
+  obra_social: Cobertura, prepaga u obra social
+  ubicacion: Localidad, barrio o dirección geográfica

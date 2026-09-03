@@ -1,56 +1,50 @@
 # Preprocess IA v1: etiquetado + routing_hint + historial reciente.
 # Contrato: assistant/schemas/first-ia-v1.yaml — {@see ChatPreprocessService}
-version: 2
+version: 6
 
 stable_prompt: |
-  Analizá el mensaje de un usuario de un sistema de Información Hospitalaria (Bioenlace).
+  Analizá el mensaje de un usuario de un sistema de Información Hospitalaria.
   Usá el historial reciente solo para desambiguar referencias ("este turno", "ese médico", etc.).
 
   Respondé únicamente con JSON:
   {
     "normalized_text": "mensaje actual limpio, ortografía corregida, abreviaturas abiertas",
     "necesidad_usuario": "una frase: qué necesita el usuario con este mensaje",
-    "routing_hint": "uno de {routing_hints_json}",
-    "tags": ["etiquetas en snake_case según reglas abajo"],
-    "context_areas": ["claves de área HIS de la lista, o [] si saludo sin datos"],
+    "routing_hint": "<ver routing_hint abajo>",
+    "tags": ["señales snake_case; ver vocabulario abajo"],
+    "context_areas": ["claves de Áreas HIS válidas, o []"],
     "extractions": [
       {
         "span": "fragmento mencionado (no palabras sueltas)",
-        "category": "una de {categories_json}",
+        "category": "<ver categorías extracción>",
         "synonyms": ["0-2 variantes ortográficas o abreviaturas"]
       }
-    ],
-    "intent_ids_hint": ["intent_id sugerido si reconocés un trámite concreto, o []"]
+    ]
   }
 
-  Reglas de routing_hint:
-  - clara: ejecutar o consultar un trámite concreto (sacar/cancelar/ver turno, ver recetas, listar profesionales, síntoma que pide atención/turno).
-  - incompletas: preguntas sobre reglas, políticas, cómo funciona, datos del HIS para responder (llegar tarde, representación, comparar con datos del centro).
-  - directo: pregunta que un artículo o respuesta fija del sistema resolvería sin más datos (poco frecuente).
-  - dudosa: saludo solo, mensaje vacío de sentido, falta un dato clave para actuar.
-  - fuera_de_his: temas ajenos al sistema (clima, chistes, servicios inexistentes como medium/horóscopo).
+  Un eje por campo (no repitas el mismo caso en los tres):
+  - routing_hint = cómo enrutar (eje).
+  - context_areas = qué ámbito HIS cargar (solo claves de la lista).
+  - tags = señales finas para el catálogo (vocabulario abajo + claves de context_areas activas).
 
-  Reglas de tags (snake_case, incluir las que apliquen):
-  - Área HIS activa: repetir claves de context_areas (ej. appointments, representation).
-  - llegar_tarde: preguntas sobre tolerancia, llegar tarde, si esperan.
-  - sintoma / necesito_atencion: malestar o síntoma sin trámite explícito.
-  - representacion / tutela: operar por otro, menores, representantes.
-  - sacar_turno / mis_turnos / cancelar_turno: según intención de agenda.
-  - fuera_his: servicio o tema inexistente en el HIS.
-  - in_flow_question: pregunta sobre un trámite ya en curso en el historial.
+  routing_hint (exactamente uno):
+  {routing_hints_list}
 
-  Reglas de context_areas:
-  - Solo claves de la lista de áreas HIS.
-  - Saludo solo → [].
-  - Citas, turnos, llegar tarde → appointments si aplica.
-  - Representación, tutela, operar por menor → representation.
-  - Guía de producto sin datos personales → product.
+  context_areas:
+  - Solo claves de "Áreas HIS válidas".
+  - Saludo o sin tema HIS → [].
+
+  tags (snake_case; las que apliquen):
+  - Incluí cada clave de context_areas activa.
+  - Vocabulario operacional: {preprocess_tags_vocabulary}.
+
+  Categorías extracción (category en extractions; solo claves de la lista):
+  {extraction_categories_list}
 
   Otras:
-  - normalized_text: solo el mensaje actual del usuario (no reescribas el historial).
+  - normalized_text: solo el mensaje actual (no reescribas el historial).
   - necesidad_usuario: obligatorio; una sola frase operativa.
-  - extractions: categorías {categories_human}; servicio solo para ofertas del centro, no síntomas.
-  - intent_ids_hint: solo si estás razonablemente seguro; PHP valida permisos.
+  - extractions: span = fragmento literal del mensaje; 0-2 synonyms por ítem.
 
   Áreas HIS válidas:
   {context_his_areas_list}

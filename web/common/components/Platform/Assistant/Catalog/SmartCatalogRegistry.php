@@ -3,6 +3,7 @@
 namespace common\components\Platform\Assistant\Catalog;
 
 use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
+use common\components\Platform\Assistant\Preprocess\PreprocessRoutingHintCatalog;
 use common\components\Platform\Core\Product\ProductMetadataPaths;
 
 /**
@@ -47,6 +48,26 @@ final class SmartCatalogRegistry
         return self::$entriesCache = $out;
     }
 
+    /**
+     * Tags únicos declarados en triggers del smart-catalog.
+     *
+     * @return list<string>
+     */
+    public static function allTriggerTags(): array
+    {
+        $tags = [];
+        foreach (self::entries() as $entry) {
+            foreach ($entry->triggerTags as $tag) {
+                if ($tag !== '' && !in_array($tag, $tags, true)) {
+                    $tags[] = $tag;
+                }
+            }
+        }
+        sort($tags);
+
+        return $tags;
+    }
+
     public static function findById(string $id): ?SmartCatalogEntry
     {
         $id = trim($id);
@@ -83,7 +104,7 @@ final class SmartCatalogRegistry
         }
 
         $routingResult = trim((string) ($row['routing_result'] ?? 'incompletas'));
-        if ($routingResult === '') {
+        if ($routingResult === '' || !PreprocessRoutingHintCatalog::isValid($routingResult)) {
             $routingResult = 'incompletas';
         }
 

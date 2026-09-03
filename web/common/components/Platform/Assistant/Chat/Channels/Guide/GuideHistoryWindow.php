@@ -4,7 +4,6 @@ namespace common\components\Platform\Assistant\Chat\Channels\Guide;
 
 use common\components\Platform\Assistant\Chat\Channels\Conversational\ConversationalHistoryWindow;
 use common\components\Platform\Assistant\Chat\Thread\AssistantThreadStateService;
-use common\components\Platform\Assistant\Chat\Channels\Conversational\ConversationalHistoryWindow;
 use common\models\AsistenteConversacion;
 use common\models\AsistenteInteraccion;
 use Yii;

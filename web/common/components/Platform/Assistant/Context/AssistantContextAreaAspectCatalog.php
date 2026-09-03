@@ -2,9 +2,6 @@
 
 namespace common\components\Platform\Assistant\Context;
 
-use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
-use common\components\Platform\Core\Product\ProductMetadataPaths;
-
 /**
  * Aspectos por área HIS desde metadata ({@see area-aspects.yaml}).
  */
@@ -16,6 +13,7 @@ final class AssistantContextAreaAspectCatalog
     public static function resetCacheForTests(): void
     {
         self::$aspectsByAreaCache = null;
+        AssistantContextHISAreaAspect::resetCacheForTests();
     }
 
     /**
@@ -53,32 +51,9 @@ final class AssistantContextAreaAspectCatalog
             return self::$aspectsByAreaCache;
         }
 
-        $config = AssistantMetadataLoader::load(ProductMetadataPaths::areaAspectsCatalogFile());
-        $raw = $config['areas'] ?? [];
-        if (!is_array($raw)) {
-            return self::$aspectsByAreaCache = [];
-        }
-
         $out = [];
-        foreach ($raw as $areaId => $row) {
-            if (!is_string($areaId) || !is_array($row)) {
-                continue;
-            }
-            $areaId = trim($areaId);
-            if ($areaId === '') {
-                continue;
-            }
-            $list = $row['aspects'] ?? [];
-            if (!is_array($list)) {
-                continue;
-            }
-            $aspects = [];
-            foreach ($list as $aspect) {
-                if (is_string($aspect) && trim($aspect) !== '') {
-                    $aspects[] = trim($aspect);
-                }
-            }
-            $out[$areaId] = $aspects;
+        foreach (AssistantContextHISArea::all() as $areaId) {
+            $out[$areaId] = AssistantContextHISAreaAspect::allForArea($areaId);
         }
 
         return self::$aspectsByAreaCache = $out;

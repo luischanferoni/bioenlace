@@ -23,8 +23,8 @@ fields:
     notes: Una frase operativa; obligatoria siempre; input principal de síntesis.
   routing_hint:
     type: enum
-    values: [directo, clara, dudosa, incompletas, fuera_de_his]
-    notes: Orientación; PHP decide camino final tras SmartCatalogMatchService.
+    values: catalog/preprocess-routing-hints.yaml
+    notes: Orientación; PHP valida vía PreprocessRoutingHintCatalog.
   tags:
     type: list<string>
     notes: Etiquetas cerradas o extendidas; usadas por triggers del catálogo inteligente.
@@ -36,13 +36,18 @@ fields:
     item_fields:
       span: string
       category: enum
-      category_values: [servicio, efector, persona, profesional, turno, tiempo]
+      category_values: catalog/preprocess-extraction-categories.yaml
       synonyms: list<string>
-    notes: Máximo 2 synonyms por extracción.
+    notes: Máximo 2 synonyms por extracción. Categorías validadas en PHP vía PreprocessExtractionCategoryCatalog.
   intent_ids_hint:
     type: list<string>
     optional: true
-    notes: PHP valida contra UiActionCatalog; no ejecuta sin filtro RBAC.
+    deprecated: true
+    notes: >
+      No pedido al modelo en el prompt (sin catálogo de intents en contexto).
+      PHP lo acepta si viene, valida contra RBAC y lo pasa al match;
+      pero el scoring real viene de tags + context_areas + phrases.
+      Campo preservado por compat; no agregar al prompt.
 
 example:
   normalized_text: "¿Voy a tener problemas si llego 10 minutos tarde?"

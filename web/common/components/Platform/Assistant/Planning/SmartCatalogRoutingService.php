@@ -7,6 +7,7 @@ use common\components\Platform\Assistant\Catalog\SmartCatalogMatchResult;
 use common\components\Platform\Assistant\Catalog\SmartCatalogMatchService;
 use common\components\Platform\Assistant\Context\AssistantContextAnchorResolver;
 use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
+use common\components\Platform\Assistant\Preprocess\PreprocessRoutingHintCatalog;
 use common\components\Platform\Core\Product\ProductMetadataPaths;
 
 /**
@@ -117,9 +118,7 @@ final class SmartCatalogRoutingService
             );
         }
 
-        $routing = in_array($hint, ['directo', 'clara', 'dudosa', 'incompletas', 'fuera_de_his'], true)
-            ? $hint
-            : 'dudosa';
+        $routing = PreprocessRoutingHintCatalog::isValid($hint) ? $hint : 'dudosa';
 
         if ($routing === 'incompletas' || ($best !== null && $best->routingResult === 'incompletas')) {
             $routing = 'incompletas';
@@ -127,7 +126,7 @@ final class SmartCatalogRoutingService
 
         return new SmartCatalogRoutingDecision(
             $routing,
-            self::legacyGoalForRouting($routing),
+            PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint($routing),
             [],
             '',
             '',
@@ -139,24 +138,12 @@ final class SmartCatalogRoutingService
     {
         return new SmartCatalogRoutingDecision(
             'fuera_de_his',
-            self::legacyGoalForRouting('fuera_de_his'),
+            PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint('fuera_de_his'),
             [],
             self::fueraDeHisText(),
             '',
             $entry,
         );
-    }
-
-    private static function legacyGoalForRouting(string $routing): string
-    {
-        if ($routing === 'clara') {
-            return 'operational';
-        }
-        if ($routing === 'incompletas' || $routing === 'directo') {
-            return 'guide';
-        }
-
-        return 'ambiguous';
     }
 
     private static function fueraDeHisText(): string

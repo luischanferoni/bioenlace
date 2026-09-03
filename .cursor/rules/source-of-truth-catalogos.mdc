@@ -1,0 +1,48 @@
+---
+description: Una sola fuente de verdad por catálogo; sin listas duplicadas en PHP, prompts y schemas
+alwaysApply: true
+---
+
+# Source of truth — catálogos y listas cerradas
+
+Complementa [`runtime-datos-vs-metadata.mdc`](runtime-datos-vs-metadata.mdc) y [`metadata-yaml-uso.mdc`](metadata-yaml-uso.mdc).
+
+## Principio
+
+Cada **lista cerrada** que el runtime valida o inyecta en prompts tiene **exactamente una fuente** y **un loader PHP** que la consume. Prohibido mantener la misma lista en dos sitios (const PHP + YAML, JSON en prompt + enum en schema, `categories_json` + `categories_human`, etc.).
+
+## Dónde va cada cosa
+
+| Tipo de dato | Source of truth | Loader / validación |
+|---|---|---|
+| Áreas HIS (`context_areas`) | `assistant/catalog/context-his-areas.yaml` | `AssistantContextHISArea` |
+| Categorías extracción preprocess | `assistant/catalog/preprocess-extraction-categories.yaml` | `PreprocessExtractionCategoryCatalog` |
+| `routing_hint` preprocess | `assistant/catalog/preprocess-routing-hints.yaml` | `PreprocessRoutingHintCatalog` |
+| Tags preprocess (vocabulario IA) | tags de `smart-catalog.yaml` + extras declarados en routing hints | `PreprocessTagVocabularyCatalog` |
+| Aspectos HIS / plan declarativo | `assistant/catalog/area-aspects.yaml` | `AssistantContextHISAreaAspect`, `AssistantContextAreaAspectCatalog` |
+| Entidades hint (flows) | `assistant/routing/hint-resolution.yaml` → `entity_ownership` | `HintResolutionMetadata` |
+| Copy routing catálogo | `assistant/routing/smart-catalog-routing.yaml` | metadata loader |
+| Maestros consultados en request (geo, recursos) | **BD** + seed console | servicio dominio + cache |
+
+## Reglas PHP
+
+- **Constantes nombradas** (`AssistantContextHISArea::APPOINTMENTS`) solo como alias del id string; la lista `all()` / `isValid()` sale del YAML.
+- **Prompts**: placeholders `{…_list}` generados por el loader; no repetir enums en el cuerpo del prompt si ya se inyectan.
+- **Schemas** (`assistant/schemas/*.yaml`): referenciar path del catálogo en `category_values` / notas; no duplicar arrays completos salvo ejemplo ilustrativo.
+- **Validación**: `normalize*` y motores llaman al catalog loader; categorías/hints inventados se descartan.
+
+## Al agregar o cambiar un valor
+
+1. Editar **solo** el YAML catálogo (o BD + seed si es maestro runtime).
+2. Si hace falta código nuevo: extender el **loader existente**, no otra lista en un service.
+3. Test: catálogo carga y constantes nombradas (si existen) siguen en el catálogo.
+4. No copiar la lista al prompt, al schema ni a un `private const` en otro archivo.
+
+## Anti-patrones
+
+- `private const AREA_IDS = [...]` paralelo a `context-his-areas.yaml`.
+- `ROUTING_HINTS` en PHP distinto del YAML de routing hints.
+- Mismo vocabulario en preprocess.yaml y en smart-catalog sin derivación.
+- Enum hardcodeado en `SmartCatalogRoutingService` en lugar del catalog loader.
+
+Guía: [`web/docs/arquitectura/metadata-yaml-uso.md`](web/docs/arquitectura/metadata-yaml-uso.md).

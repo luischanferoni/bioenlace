@@ -81,6 +81,16 @@ final class ProductMetadataPaths
         return self::assistantCatalogDir() . DIRECTORY_SEPARATOR . 'area-aspects.yaml';
     }
 
+    public static function preprocessExtractionCategoriesFile(): string
+    {
+        return self::assistantCatalogDir() . DIRECTORY_SEPARATOR . 'preprocess-extraction-categories.yaml';
+    }
+
+    public static function preprocessRoutingHintsFile(): string
+    {
+        return self::assistantCatalogDir() . DIRECTORY_SEPARATOR . 'preprocess-routing-hints.yaml';
+    }
+
     public static function smartCatalogRoutingFile(): string
     {
         return self::assistantRoutingFile('smart-catalog-routing');

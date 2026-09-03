@@ -5,6 +5,9 @@ namespace common\components\Platform\Assistant\Chat\Preprocess;
 use common\components\Platform\Assistant\Chat\Channels\Guide\GuideHistoryWindow;
 use common\components\Platform\Assistant\Context\AssistantContextHISArea;
 use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
+use common\components\Platform\Assistant\Preprocess\PreprocessExtractionCategoryCatalog;
+use common\components\Platform\Assistant\Preprocess\PreprocessRoutingHintCatalog;
+use common\components\Platform\Assistant\Preprocess\PreprocessTagVocabularyCatalog;
 use common\components\Platform\Core\Product\ProductMetadataPaths;
 use Yii;
 use common\components\Ai\IAManager;
@@ -16,32 +19,6 @@ use common\components\Ai\IAManager;
  */
 final class ChatPreprocessService
 {
-    /** @deprecated Derivar desde routing_hint; guide = alias de incompletas para hilo. */
-    public const GOALS = [
-        'guide',
-        'operational',
-        'ambiguous',
-        'in_flow_question',
-    ];
-
-    /** Alias legacy → routing_hint canónico. */
-    public const LEGACY_GOAL_TO_ROUTING_HINT = [
-        'guide' => 'incompletas',
-        'operational' => 'clara',
-        'in_flow_question' => 'clara',
-        'ambiguous' => 'dudosa',
-    ];
-
-    public const ROUTING_HINTS = [
-        'directo',
-        'clara',
-        'dudosa',
-        'incompletas',
-        'fuera_de_his',
-    ];
-
-    private const ENTITY_CATEGORIES = ['servicio', 'efector', 'persona', 'profesional', 'turno', 'tiempo'];
-
     public static function isClinicalSymptomContent(string $content): bool
     {
         return ChatChannelPolicy::isClinicalSymptomContent($content);
@@ -67,7 +44,24 @@ final class ChatPreprocessService
      */
     public static function allowedEntityCategories(): array
     {
-        return self::ENTITY_CATEGORIES;
+        return PreprocessExtractionCategoryCatalog::all();
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function routingHints(): array
+    {
+        return PreprocessRoutingHintCatalog::all();
+    }
+
+    /**
+     * @return list<string>
+     * @deprecated Usar {@see PreprocessRoutingHintCatalog::legacyGoals()}.
+     */
+    public static function legacyGoals(): array
+    {
+        return PreprocessRoutingHintCatalog::legacyGoals();
     }
 
     public static function canonicalizeGoal(string $goal): string
@@ -79,7 +73,7 @@ final class ChatPreprocessService
         if ($goal === 'incompletas') {
             return 'guide';
         }
-        if (!in_array($goal, self::GOALS, true)) {
+        if (!in_array($goal, PreprocessRoutingHintCatalog::legacyGoals(), true)) {
             return 'ambiguous';
         }
 
@@ -88,9 +82,7 @@ final class ChatPreprocessService
 
     public static function routingHintFromLegacyGoal(string $goal): string
     {
-        $goal = self::canonicalizeGoal($goal);
-
-        return self::LEGACY_GOAL_TO_ROUTING_HINT[$goal] ?? 'dudosa';
+        return PreprocessRoutingHintCatalog::routingHintFromLegacyGoal(self::canonicalizeGoal($goal));
     }
 
     public static function canonicalizeRoutingHint(string $hint): string
@@ -99,7 +91,7 @@ final class ChatPreprocessService
         if ($hint === '') {
             return 'dudosa';
         }
-        if (!in_array($hint, self::ROUTING_HINTS, true)) {
+        if (!PreprocessRoutingHintCatalog::isValid($hint)) {
             return 'dudosa';
         }
 
@@ -136,23 +128,19 @@ final class ChatPreprocessService
      */
     public static function userGoalFromRoutingHint(string $routingHint, array $tags): string
     {
-        if (in_array('in_flow_question', $tags, true)) {
-            return 'in_flow_question';
-        }
-        if ($routingHint === 'clara') {
-            return 'operational';
-        }
-        if ($routingHint === 'incompletas' || $routingHint === 'directo') {
-            return 'guide';
-        }
-
-        return 'ambiguous';
+        return PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint(
+            $routingHint,
+            in_array('in_flow_question', $tags, true)
+        );
     }
 
     public static function resetCacheForTests(): void
     {
         AssistantMetadataLoader::resetCacheForTests();
         AssistantContextHISArea::resetCacheForTests();
+        PreprocessExtractionCategoryCatalog::resetCacheForTests();
+        PreprocessRoutingHintCatalog::resetCacheForTests();
+        PreprocessTagVocabularyCatalog::resetCacheForTests();
     }
 
     /**
@@ -189,12 +177,10 @@ final class ChatPreprocessService
             return 'Mensaje:';
         }
 
-        $categoriesList = self::allowedEntityCategories();
-
         return AssistantMetadataLoader::applyPlaceholders($template, [
-            'routing_hints_json' => json_encode(self::ROUTING_HINTS, JSON_UNESCAPED_UNICODE),
-            'categories_json' => json_encode($categoriesList, JSON_UNESCAPED_UNICODE),
-            'categories_human' => implode(', ', $categoriesList),
+            'routing_hints_list' => PreprocessRoutingHintCatalog::listForPrompt(),
+            'preprocess_tags_vocabulary' => PreprocessTagVocabularyCatalog::listForPrompt(),
+            'extraction_categories_list' => PreprocessExtractionCategoryCatalog::listForPrompt(),
             'context_his_areas_list' => AssistantContextHISArea::listForPrompt(),
             'conversation_history' => '(sin historial previo)',
         ]);

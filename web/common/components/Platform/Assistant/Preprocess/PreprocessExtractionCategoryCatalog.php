@@ -1,60 +1,22 @@
 <?php
 
-namespace common\components\Platform\Assistant\Context;
+namespace common\components\Platform\Assistant\Preprocess;
 
 use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
 use common\components\Platform\Core\Product\ProductMetadataPaths;
 
 /**
- * Áreas top-level del HIS expuestas al preprocess (lista cerrada).
+ * Catálogo cerrado de categorías para extractions del preprocess.
  *
- * Source of truth: {@see catalog/context-his-areas.yaml}.
+ * Definiciones: {@see catalog/preprocess-extraction-categories.yaml}.
  */
-final class AssistantContextHISArea
+final class PreprocessExtractionCategoryCatalog
 {
-    public const APPOINTMENTS = 'appointments';
-    public const ENCOUNTERS = 'encounters';
-    public const CLINICAL_RECORD = 'clinical_record';
-    public const DIAGNOSTICS = 'diagnostics';
-    public const MEDICATION = 'medication';
-    public const REPRESENTATION = 'representation';
-    public const COVERAGE = 'coverage';
-    public const PRODUCT = 'product';
-    public const GEO_RESOURCES = 'geo_resources';
-
     /** @var list<string>|null */
     private static ?array $idsCache = null;
 
     /** @var array<string, string>|null */
     private static ?array $descriptionCache = null;
-
-    /**
-     * @return list<string>
-     */
-    public static function sortByProductPriority(array $areas): array
-    {
-        $valid = [];
-        foreach ($areas as $area) {
-            if (!is_string($area)) {
-                continue;
-            }
-            $area = trim($area);
-            if ($area !== '' && self::isValid($area) && !in_array($area, $valid, true)) {
-                $valid[] = $area;
-            }
-        }
-        if ($valid === []) {
-            return [];
-        }
-
-        $order = array_flip(self::all());
-        usort(
-            $valid,
-            static fn (string $a, string $b): int => ($order[$a] ?? 999) <=> ($order[$b] ?? 999)
-        );
-
-        return $valid;
-    }
 
     /**
      * @return list<string>
@@ -68,7 +30,9 @@ final class AssistantContextHISArea
 
     public static function isValid(string $id): bool
     {
-        return in_array(trim($id), self::all(), true);
+        $id = trim($id);
+
+        return $id !== '' && in_array($id, self::all(), true);
     }
 
     public static function description(string $id): string
@@ -83,7 +47,7 @@ final class AssistantContextHISArea
     }
 
     /**
-     * Lista `- id — descripción` para placeholders de prompt.
+     * Lista `- clave — descripción` para placeholders de prompt.
      */
     public static function listForPrompt(): string
     {
@@ -108,8 +72,8 @@ final class AssistantContextHISArea
             return;
         }
 
-        $config = AssistantMetadataLoader::load(ProductMetadataPaths::contextHisAreasCatalogFile());
-        $raw = $config['areas'] ?? [];
+        $config = AssistantMetadataLoader::load(ProductMetadataPaths::preprocessExtractionCategoriesFile());
+        $raw = $config['categories'] ?? [];
         if (!is_array($raw)) {
             self::$idsCache = [];
             self::$descriptionCache = [];

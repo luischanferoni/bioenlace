@@ -24,9 +24,6 @@ final class BioenlaceDb
     public static function ensureAllConnections(): void
     {
         self::ensureConnection('db');
-        if (Yii::$app->has('dbMap')) {
-            self::ensureConnection('dbMap');
-        }
     }
 
     public static function ensureConnection(string $componentId = 'db'): void

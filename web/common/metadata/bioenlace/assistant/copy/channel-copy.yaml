@@ -38,3 +38,15 @@ messages:
   interactive_buttons_hint_many:
     default: ""
     whatsapp_paciente: ""
+
+  # Match PHP 100% → flow (sin 2ª IA). Placeholders: {necesidad} {label} {summary} {spans}
+  full_match_intent:
+    default: "{necesidad}"
+    whatsapp_paciente: "{necesidad}"
+
+  full_match_intent_summary:
+    default: "{summary}"
+
+  full_match_intent_fallback:
+    default: "Te ayudo con {label}."
+    whatsapp_paciente: "Dale, vamos con {label}."

@@ -43,7 +43,9 @@ fields:
   response_template:
     type: string
     optional: true
-    notes: Match 100% directo sin síntesis IA; placeholders TBD en fase 04.
+    notes: >
+      Solo camino directo (artículo/dato fijo). Match 100% a intent clara
+      usa copy genérico channel-copy.yaml (full_match_intent*) + flow; no un template por fila.
   cta_intent_id:
     type: string
     optional: true

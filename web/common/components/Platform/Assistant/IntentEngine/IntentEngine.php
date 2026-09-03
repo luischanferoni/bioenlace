@@ -4,6 +4,7 @@ namespace common\components\Platform\Assistant\IntentEngine;
 
 use Yii;
 use common\components\Platform\Assistant\Copy\AssistantChannelCopy;
+use common\components\Platform\Assistant\Copy\IntentMatchLaunchCopy;
 use common\components\Platform\Core\Permission\IntentAccessService;
 use common\components\Platform\Assistant\Catalog\IntentCatalogService;
 use common\components\Platform\Assistant\Catalog\DataAccessCatalogIntentSupport;
@@ -270,10 +271,8 @@ final class IntentEngine
 
             if (!empty($flow['success']) && is_array($flow)) {
                 unset($flow['success']);
-                $intro = $item->display_name !== '' ? ('Iniciar: ' . $item->display_name) : 'Iniciar flujo.';
-                if (!isset($flow['text']) || trim((string) $flow['text']) === '') {
-                    $flow['text'] = $intro;
-                }
+                $flowText = isset($flow['text']) ? trim((string) $flow['text']) : '';
+                $flow['text'] = IntentMatchLaunchCopy::forFlowLaunch($item, $flowText);
                 $base = [
                     'success' => true,
                     'flow_action_id' => $item->action_id,
@@ -293,7 +292,7 @@ final class IntentEngine
 
         return [
             'success' => true,
-            'text' => $item->display_name !== '' ? ('Abrir: ' . $item->display_name) : 'Acción disponible.',
+            'text' => IntentMatchLaunchCopy::forOpenAction($item),
             'actions' => [$action],
             'match' => [
                 'action_id' => $item->action_id,

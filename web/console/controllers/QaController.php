@@ -188,7 +188,8 @@ class QaController extends Controller
             (int) ($summary['observe'] ?? 0),
             (int) ($summary['error'] ?? 0)
         ));
-        $this->stdout('Reporte: ' . (string) ($batch['report_path'] ?? '') . "\n");
+        $this->stdout('Reporte JSON: ' . (string) ($batch['report_path'] ?? '') . "\n");
+        $this->stdout('Reporte TXT:  ' . (string) ($batch['report_txt_path'] ?? '') . "\n");
 
         if ((int) ($summary['fail'] ?? 0) > 0 || (int) ($summary['error'] ?? 0) > 0) {
             return ExitCode::UNSPECIFIED_ERROR;

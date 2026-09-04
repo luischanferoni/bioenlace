@@ -120,6 +120,7 @@ final class AsistenteConsultasQaService
      *   finished_at: string,
      *   user_id: int,
      *   report_path: string,
+     *   report_txt_path: string,
      *   summary: array{total: int, pass: int, fail: int, observe: int, error: int},
      *   results: list<array<string, mixed>>
      * }
@@ -160,15 +161,18 @@ final class AsistenteConsultasQaService
 
         $finishedAt = date('c');
         $path = $reportPath ?? self::defaultReportPath();
+        $txtPath = self::companionTxtPath($path);
         $payload = [
             'started_at' => $startedAt,
             'finished_at' => $finishedAt,
             'user_id' => $userId,
             'report_path' => $path,
+            'report_txt_path' => $txtPath,
             'summary' => $summary,
             'results' => $results,
         ];
         self::writeReport($path, $payload);
+        self::writeReadableReport($txtPath, $payload);
 
         return $payload;
     }
@@ -278,6 +282,7 @@ final class AsistenteConsultasQaService
             'intent_refs' => $intentRefs,
             'flow_intent_id' => self::flowIntentId($envelope),
             'button_intent_ids' => self::buttonIntentIds($envelope),
+            'buttons' => self::buttonSummaries($envelope),
             'reply_text' => $text,
             'error' => AssistantDraftNormalizer::scalarString($envelope['error'] ?? ''),
             'planning_applied' => $planning,
@@ -447,22 +452,44 @@ final class AsistenteConsultasQaService
      */
     private static function buttonIntentIds(array $envelope): array
     {
-        $buttons = $envelope['buttons'] ?? null;
-        if (!is_array($buttons)) {
-            return [];
-        }
         $ids = [];
-        foreach ($buttons as $b) {
-            if (!is_array($b)) {
-                continue;
-            }
-            $iid = AssistantDraftNormalizer::scalarString($b['intent_id'] ?? '');
+        foreach (self::buttonSummaries($envelope) as $b) {
+            $iid = (string) ($b['intent_id'] ?? '');
             if ($iid !== '') {
                 $ids[] = $iid;
             }
         }
 
         return array_values(array_unique($ids));
+    }
+
+    /**
+     * @param array<string, mixed> $envelope
+     * @return list<array{label: string, intent_id: string}>
+     */
+    private static function buttonSummaries(array $envelope): array
+    {
+        $buttons = $envelope['buttons'] ?? null;
+        if (!is_array($buttons)) {
+            return [];
+        }
+        $out = [];
+        foreach ($buttons as $b) {
+            if (!is_array($b)) {
+                continue;
+            }
+            $label = AssistantDraftNormalizer::scalarString($b['label'] ?? ($b['text'] ?? ''));
+            $iid = AssistantDraftNormalizer::scalarString($b['intent_id'] ?? '');
+            if ($label === '' && $iid === '') {
+                continue;
+            }
+            $out[] = [
+                'label' => $label !== '' ? $label : $iid,
+                'intent_id' => $iid,
+            ];
+        }
+
+        return $out;
     }
 
     /**
@@ -518,6 +545,15 @@ final class AsistenteConsultasQaService
         return $dir . DIRECTORY_SEPARATOR . 'qa-asistente-consultas-' . date('Ymd-His') . '.json';
     }
 
+    private static function companionTxtPath(string $jsonPath): string
+    {
+        if (str_ends_with(strtolower($jsonPath), '.json')) {
+            return substr($jsonPath, 0, -5) . '.txt';
+        }
+
+        return $jsonPath . '.txt';
+    }
+
     /**
      * @param array<string, mixed> $payload
      */
@@ -534,5 +570,248 @@ final class AsistenteConsultasQaService
         if (file_put_contents($path, $json . "\n") === false) {
             throw new \RuntimeException('No se pudo escribir el reporte QA: ' . $path);
         }
+    }
+
+    /**
+     * Resumen legible (mensaje / respuesta / botones / flujo).
+     *
+     * @param array<string, mixed> $payload
+     */
+    private static function writeReadableReport(string $path, array $payload): void
+    {
+        $dir = dirname($path);
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0775, true);
+        }
+        $text = self::formatReadableReport($payload);
+        if (file_put_contents($path, $text) === false) {
+            throw new \RuntimeException('No se pudo escribir el reporte TXT QA: ' . $path);
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    public static function formatReadableReport(array $payload): string
+    {
+        $summary = is_array($payload['summary'] ?? null) ? $payload['summary'] : [];
+        $lines = [];
+        $lines[] = 'QA asistente consultas (resumen legible)';
+        $lines[] = 'Inicio: ' . (string) ($payload['started_at'] ?? '');
+        $lines[] = 'Fin:    ' . (string) ($payload['finished_at'] ?? '');
+        $lines[] = 'userId: ' . (string) ($payload['user_id'] ?? '');
+        $lines[] = sprintf(
+            'Resumen: total=%d pass=%d fail=%d observe=%d error=%d',
+            (int) ($summary['total'] ?? 0),
+            (int) ($summary['pass'] ?? 0),
+            (int) ($summary['fail'] ?? 0),
+            (int) ($summary['observe'] ?? 0),
+            (int) ($summary['error'] ?? 0)
+        );
+        $lines[] = 'JSON: ' . (string) ($payload['report_path'] ?? '');
+        $lines[] = '';
+
+        $results = is_array($payload['results'] ?? null) ? $payload['results'] : [];
+        foreach ($results as $result) {
+            if (!is_array($result)) {
+                continue;
+            }
+            $status = strtoupper((string) ($result['status'] ?? '?'));
+            $lines[] = str_repeat('=', 72);
+            $lines[] = sprintf(
+                '[%s] %s',
+                $status,
+                (string) ($result['id'] ?? '')
+            );
+            $lines[] = sprintf(
+                'tipo: %s | seccion: %s | cobertura: %s',
+                (string) ($result['tipo'] ?? ''),
+                (string) ($result['seccion'] ?? ''),
+                (string) ($result['cobertura'] ?? '')
+            );
+
+            $failures = is_array($result['failures'] ?? null) ? $result['failures'] : [];
+            if ($failures !== []) {
+                $lines[] = 'Fallos:';
+                foreach ($failures as $f) {
+                    $lines[] = '  - ' . (is_string($f) ? $f : json_encode($f, JSON_UNESCAPED_UNICODE));
+                }
+            }
+
+            $detalle = is_array($result['detalle'] ?? null) ? $result['detalle'] : [];
+            if ($detalle === []) {
+                $lines[] = '';
+                $lines[] = '(sin mensajes ejecutados)';
+                $lines[] = '';
+                continue;
+            }
+
+            foreach ($detalle as $turn) {
+                if (!is_array($turn)) {
+                    continue;
+                }
+                $obs = is_array($turn['observation'] ?? null) ? $turn['observation'] : [];
+                $n = (int) ($turn['indice'] ?? 0) + 1;
+                $lines[] = '';
+                $lines[] = '--- mensaje ' . $n . ' ---';
+                $lines[] = 'Usuario: ' . (string) ($turn['mensaje'] ?? '');
+                $lines[] = '';
+                $reply = trim((string) ($obs['reply_text'] ?? ''));
+                $error = trim((string) ($obs['error'] ?? ''));
+                if ($reply !== '') {
+                    $lines[] = 'Asistente: ' . $reply;
+                } elseif ($error !== '') {
+                    $lines[] = 'Asistente: (error) ' . $error;
+                } else {
+                    $lines[] = 'Asistente: (sin texto)';
+                }
+                $lines[] = '';
+                $lines[] = 'Botones:';
+                $buttons = is_array($obs['buttons'] ?? null) ? $obs['buttons'] : [];
+                if ($buttons === []) {
+                    $lines[] = '  (ninguno)';
+                } else {
+                    foreach ($buttons as $b) {
+                        if (!is_array($b)) {
+                            continue;
+                        }
+                        $label = trim((string) ($b['label'] ?? ''));
+                        $iid = trim((string) ($b['intent_id'] ?? ''));
+                        if ($iid !== '') {
+                            $lines[] = '  - "' . $label . '" → ' . $iid;
+                        } else {
+                            $lines[] = '  - "' . $label . '"';
+                        }
+                    }
+                }
+                $lines[] = '';
+                foreach (self::formatFlowLegendLines($obs) as $flowLine) {
+                    $lines[] = $flowLine;
+                }
+            }
+            $lines[] = '';
+        }
+
+        return implode("\n", $lines) . "\n";
+    }
+
+    /**
+     * @param array<string, mixed> $observation
+     * @return list<string>
+     */
+    public static function formatFlowLegendLines(array $observation): array
+    {
+        $planning = is_array($observation['planning_applied'] ?? null)
+            ? $observation['planning_applied']
+            : null;
+        $finalPath = is_string($planning['final_path'] ?? null)
+            ? trim((string) $planning['final_path'])
+            : '';
+        $routing = is_string($planning['routing_result'] ?? null)
+            ? trim((string) $planning['routing_result'])
+            : '';
+        $userGoal = trim((string) ($observation['user_goal'] ?? ''));
+        $hint = trim((string) ($observation['routing_hint'] ?? ''));
+        $flowIntent = trim((string) ($observation['flow_intent_id'] ?? ''));
+
+        $lines = [];
+        $lines[] = 'Flujo:';
+
+        if ($planning === null || $finalPath === '') {
+            $lines[] = '  preprocess + PHP (sin telemetría de planning / path vacío)';
+            if ($userGoal !== '') {
+                $lines[] = '  canal: ' . $userGoal;
+            }
+            if ($flowIntent !== '') {
+                $lines[] = '  intent: ' . $flowIntent;
+            }
+
+            return $lines;
+        }
+
+        if (str_starts_with($finalPath, '2ia')) {
+            $lines[] = '  preprocess + 2 IA (síntesis)';
+            if ($routing !== '') {
+                $lines[] = '  routing: ' . $routing;
+            }
+            if ($userGoal !== '') {
+                $lines[] = '  canal: ' . $userGoal;
+            }
+            $tools = self::attachedContextToolIds($planning);
+            $lines[] = '  Contextos adjuntos:';
+            if ($tools === []) {
+                $lines[] = '    (ninguno)';
+            } else {
+                foreach ($tools as $toolId) {
+                    $lines[] = '    - ' . $toolId;
+                }
+            }
+            if (!empty($planning['planner_invoked'])) {
+                $lines[] = '  planner: sí'
+                    . (($planning['planner_reason'] ?? '') !== ''
+                        ? ' (' . trim((string) $planning['planner_reason']) . ')'
+                        : '');
+            }
+
+            return $lines;
+        }
+
+        // 1ia_* y demás: preprocess + decisión PHP (sin 2ª IA de síntesis)
+        $pathLabels = [
+            '1ia_clara' => 'match claro → intent directo',
+            '1ia_dudosa' => 'dudosa → desambiguación',
+            '1ia_direct' => 'match directo (artículo/plantilla)',
+            '1ia_fuera' => 'fuera de HIS',
+        ];
+        $pathLabel = $pathLabels[$finalPath] ?? $finalPath;
+        $lines[] = '  preprocess + PHP solamente (' . $pathLabel . ')';
+        if ($routing !== '') {
+            $lines[] = '  routing: ' . $routing;
+        }
+        if ($hint !== '') {
+            $lines[] = '  hint preprocess: ' . $hint;
+        }
+        if ($userGoal !== '') {
+            $lines[] = '  canal: ' . $userGoal;
+        }
+        if ($flowIntent !== '') {
+            $lines[] = '  intent: ' . $flowIntent;
+        }
+
+        return $lines;
+    }
+
+    /**
+     * @param array<string, mixed> $planning
+     * @return list<string>
+     */
+    private static function attachedContextToolIds(array $planning): array
+    {
+        $executed = is_array($planning['executed_tools'] ?? null) ? $planning['executed_tools'] : [];
+        $ids = [];
+        foreach ($executed as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $id = trim((string) ($row['tool_id'] ?? ''));
+            if ($id !== '') {
+                $ids[] = $id;
+            }
+        }
+        if ($ids !== []) {
+            return array_values(array_unique($ids));
+        }
+
+        $decl = is_array($planning['declarative_plan'] ?? null) ? $planning['declarative_plan'] : [];
+        $toolIds = is_array($decl['tool_ids'] ?? null) ? $decl['tool_ids'] : [];
+        $out = [];
+        foreach ($toolIds as $id) {
+            $id = is_string($id) ? trim($id) : '';
+            if ($id !== '') {
+                $out[] = $id;
+            }
+        }
+
+        return array_values(array_unique($out));
     }
 }

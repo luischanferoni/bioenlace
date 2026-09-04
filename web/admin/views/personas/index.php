@@ -77,17 +77,25 @@ $esAdmin = User::hasRole(['Admin']);
                                     ],
                                 ];
 
-                                return
-                                    Html::tag('span', 'Ver Más', [
-                                        'id' => 'dropdownMenuButton',
+                                $toggleId = 'dropdownMenuPersona' . (int) $model->id_persona;
+
+                                return Html::tag(
+                                    'div',
+                                    Html::button('Ver Más', [
+                                        'id' => $toggleId,
+                                        'type' => 'button',
                                         'class' => 'btn btn-link dropdown-toggle',
                                         'data-bs-toggle' => 'dropdown',
-                                        'aria-haspopup' => 'true',
-                                        'aria-expanded' => 'false'
+                                        'aria-expanded' => 'false',
                                     ]) . Dropdown::widget([
                                         'items' => $array_opciones,
-                                        'options' => ['aria-labelledby' => 'dropdownMenuButton']
-                                    ]);
+                                        'options' => [
+                                            'class' => 'dropdown-menu-end',
+                                            'aria-labelledby' => $toggleId,
+                                        ],
+                                    ]),
+                                    ['class' => 'dropdown d-inline-block']
+                                );
                             },
                         ]
                     ],

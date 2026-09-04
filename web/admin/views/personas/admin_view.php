@@ -60,7 +60,8 @@ $this->params['breadcrumbs'][] = $this->title;
                         <?php
                         $tels = $model->telefonos;
                         foreach ($tels as $tells) {
-                            echo $tells->numero . ' - ' . $tells->tipoTelefono->nombre . '<br>';
+                            $tipoNombre = $tells->tipoTelefono->nombre ?? 'Sin tipo';
+                            echo Html::encode($tells->numero) . ' - ' . Html::encode($tipoNombre) . '<br>';
                         }
                         ?>
                     </td>

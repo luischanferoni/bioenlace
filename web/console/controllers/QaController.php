@@ -16,7 +16,7 @@ use yii\helpers\Console;
  */
 class QaController extends Controller
 {
-    /** @var int Usuario paciente (permisos de intents paciente). */
+    /** @var int ID de fila en tabla `user` (no id_persona). Debe ser usuario con rol paciente. */
     public $userId = 0;
 
     /** @var string Coberturas separadas por coma (default: Hoy). Vacío = todas. */
@@ -73,23 +73,54 @@ class QaController extends Controller
      * Ejecuta el catálogo de consultas paciente (ChatOrchestrator, IA real).
      *
      * Ejemplos:
-     *   php yii qa/asistente-consultas --userId=123
-     *   php yii qa/asistente-consultas --userId=123 --cobertura=Hoy,Fuera --seccion=smoke
-     *   php yii qa/asistente-consultas --userId=123 --id=smoke-sintoma-cabeza
-     *   php yii qa/asistente-consultas --list=1 --cobertura=Hoy
+     *   php yii qa/asistente-consultas --list=1 --seccion=smoke
+     *   php yii qa/asistente-consultas --userId=123 --seccion=smoke
+     *
+     * --userId = columna `user.id` (mismo id que /user-management/user-permission/set?id=…).
+     * No es id_persona. La persona se resuelve por personas.id_user.
      */
     public function actionAsistenteConsultas(): int
     {
         $coberturas = $this->parseCoberturas($this->cobertura);
+        $seccion = trim($this->seccion);
+        $caseId = trim($this->id);
         $cases = AsistenteConsultasQaService::filterCases(
             $coberturas,
-            trim($this->seccion) !== '' ? trim($this->seccion) : null,
-            trim($this->id) !== '' ? trim($this->id) : null,
+            $seccion !== '' ? $seccion : null,
+            $caseId !== '' ? $caseId : null,
             $this->limit > 0 ? (int) $this->limit : null
         );
 
         if ($cases === []) {
+            $catalog = AsistenteConsultasQaService::loadCatalog();
+            $secciones = [];
+            foreach ($catalog['cases'] as $c) {
+                $s = (string) ($c['seccion'] ?? '');
+                if ($s !== '') {
+                    $secciones[$s] = ($secciones[$s] ?? 0) + 1;
+                }
+            }
             $this->stderr("No hay casos con el filtro indicado.\n", Console::FG_YELLOW);
+            $this->stderr(sprintf(
+                "Filtro: cobertura=%s seccion=%s id=%s | casos en catálogo=%d\n",
+                $coberturas === null ? '*' : implode(',', $coberturas),
+                $seccion !== '' ? $seccion : '(todas)',
+                $caseId !== '' ? $caseId : '(todos)',
+                count($catalog['cases'])
+            ));
+            if ($secciones !== []) {
+                $parts = [];
+                foreach ($secciones as $name => $n) {
+                    $parts[] = $name . '=' . $n;
+                }
+                $this->stderr('Secciones disponibles: ' . implode(', ', $parts) . "\n");
+            } else {
+                $this->stderr(
+                    "El catálogo no tiene casos (¿falta common/data/qa/asistente-consultas.yaml en el servidor?).\n",
+                    Console::FG_RED
+                );
+            }
+            $this->stderr("Probar: php yii qa/asistente-consultas --list=1 --cobertura=*\n");
 
             return ExitCode::OK;
         }
@@ -110,7 +141,10 @@ class QaController extends Controller
         }
 
         if ((int) $this->userId <= 0) {
-            $this->stderr("Indique --userId=<id> de un usuario paciente.\n", Console::FG_RED);
+            $this->stderr(
+                "Indique --userId=<user.id> de un usuario paciente (tabla user, no id_persona).\n",
+                Console::FG_RED
+            );
 
             return ExitCode::USAGE;
         }

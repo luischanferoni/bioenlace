@@ -26,6 +26,8 @@ Requisito de contexto para turnos: [contexto-registro.md](./contexto-registro.md
 
 ## Smoke mínimo
 
+Automatizable en servidor: `php yii qa/asistente-consultas --userId=<paciente> --seccion=smoke` (ver [asistente-consultas.md](./asistente-consultas.md) § Runner CLI).
+
 Con contexto de provincia/sector OK:
 
 | Frase | Debería abrir |

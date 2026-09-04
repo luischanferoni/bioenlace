@@ -34,6 +34,39 @@ final class AssistantThreadStateService
         AssistantThreadContext::clear();
     }
 
+    /**
+     * Limpia hilo en memoria y, si hay conversación, `thread` / `guide_focus` en BD.
+     * Útil entre casos de smoke QA para arrancar “en frío”.
+     */
+    public static function clearPersistedStateForUser(int $userId): void
+    {
+        unset(self::$memoryStates[$userId]);
+        AssistantThreadContext::clear();
+        if ($userId <= 0) {
+            return;
+        }
+
+        try {
+            $conv = AsistenteConversacion::findOne([
+                'usuario_id' => (string) $userId,
+                'bot_id' => self::BOT_ID,
+            ]);
+        } catch (\Throwable $e) {
+            return;
+        }
+        if ($conv === null) {
+            return;
+        }
+
+        $ctx = self::decodeContexto($conv->contexto_json);
+        unset($ctx['thread'], $ctx['guide_focus']);
+        $conv->contexto_json = json_encode($ctx, JSON_UNESCAPED_UNICODE);
+        $conv->updated_at = date('Y-m-d H:i:s');
+        if (!$conv->save(false)) {
+            Yii::warning('AssistantThreadStateService: no se pudo limpiar contexto_json', __METHOD__);
+        }
+    }
+
     public static function tagFromGoal(string $goal): string
     {
         $goal = ChatPreprocessService::canonicalizeGoal($goal);

@@ -12,7 +12,7 @@
 | [turnos.md](./turnos.md) | Sacar, cancelar, reprogramar, sin cupo / adelanto, **motivos pre-turno** |
 | [laboratorio-receta-planes.md](./laboratorio-receta-planes.md) | Resultados, recetas, tratamientos, resúmenes |
 | [asistente.md](./asistente.md) | Frases y atajos del chat |
-| [asistente-consultas.md](./asistente-consultas.md) | Catálogo: tipos, ejemplo, cobertura, pasado / “hacelo vos” |
+| [asistente-consultas.md](./asistente-consultas.md) | Catálogo: tipos, ejemplo, cobertura; runner CLI `php yii qa/asistente-consultas` |
 | [asistente-whatsapp.md](./asistente-whatsapp.md) | Smoke MVP canal WhatsApp (Cloud API) |
 
 ## Checklist

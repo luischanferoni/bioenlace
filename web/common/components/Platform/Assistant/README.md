@@ -22,3 +22,4 @@ Contexto HIS: `AssistantContextAssemblyService` → bloque `context:his` en prom
 ## Otros entrypoints
 
 - Captura clínica: `clinical/EncounterController` → `Clinical/Assistant/ClinicalEncounterEntry`
+- Smoke QA consultas paciente (CLI): `php yii qa/asistente-consultas` → `Qa/AsistenteConsultasQaService` + `common/data/qa/asistente-consultas.yaml`

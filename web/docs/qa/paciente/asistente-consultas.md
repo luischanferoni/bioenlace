@@ -8,6 +8,22 @@ Producto de fondo: [asistente-y-chat.md](../../producto/asistente-y-chat.md), [s
 
 No hace falta la frase exacta. Si el tipo está en **Hoy**, algo parecido debería enrutar bien.
 
+### Runner CLI (servidor)
+
+Catálogo ejecutable (subset **Hoy** / **Fuera** + smoke): `web/common/data/qa/asistente-consultas.yaml`. Llama al mismo `ChatOrchestrator` que la app (**IA real**, no el modo simulado de costos).
+
+Desde `web/`:
+
+```bash
+php yii qa/asistente-consultas --list=1 --cobertura=Hoy
+php yii qa/asistente-consultas --userId=<id_paciente> --cobertura=Hoy --seccion=smoke
+php yii qa/asistente-consultas --userId=<id_paciente> --id=smoke-sintoma-cabeza
+```
+
+Salida: consola + JSON en `runtime/logs/qa-asistente-consultas-*.json` y log `runtime/logs/qa-asistente-consultas.log` (categorías `qa-asistente-consultas` y `asistente-planning`).
+
+`--cobertura=Hoy,Fuera` o `--cobertura=*` / `all` para ampliar. Casos **Pantalla** / **Futuro** se registran como `observe` (no fallan el batch).
+
 **Perímetro:** Bioenlace une centros con la **salud del paciente que consulta** (o sujetos de representación/tutela formal). Consejo sobre terceros, medicación genérica para otros, etc. = **Fuera** (sin Solicitar Atención).
 
 ---

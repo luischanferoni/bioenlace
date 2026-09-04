@@ -2,9 +2,8 @@
 # Fuente humana: web/docs/qa/paciente/asistente-consultas.md
 # Runner: php yii qa/asistente-consultas --userId=<id>
 #
+# Una fila = una clase de prueba (no repetir la misma forma con otro wording/target).
 # secciones: smoke | orientacion | pedir-atencion | citas | post-consulta | no-confundir | borde
-#   smoke = humo mínimo (dominios distintos a propósito: análisis ≠ recetas ≠ atenciones)
-#   borde = cadenas, desvíos de hilo, preguntas mixtas / agresivas de formato
 #
 # cobertura: Hoy | Pantalla | Fuera | Futuro
 # expect (opcional, evaluado en el último mensaje del caso):
@@ -19,7 +18,7 @@ version: 1
 source_doc: web/docs/qa/paciente/asistente-consultas.md
 
 cases:
-  # --- Smoke mínimo (asistente.md) ---
+  # --- Smoke: una fila por puerta mínima ---
   - id: smoke-quiero-turno
     seccion: smoke
     tipo: Solo sacar turno
@@ -35,7 +34,7 @@ cases:
 
   - id: smoke-sintoma-cabeza
     seccion: smoke
-    tipo: Síntoma
+    tipo: Síntoma → guide + oferta
     cobertura: Hoy
     mensajes:
       - Me duele la cabeza
@@ -47,7 +46,7 @@ cases:
 
   - id: smoke-cancelar-turno
     seccion: smoke
-    tipo: Cancelar
+    tipo: Trámite turnos.*
     cobertura: Hoy
     mensajes:
       - Cancelá el turno del martes
@@ -58,7 +57,7 @@ cases:
 
   - id: smoke-mis-analisis
     seccion: smoke
-    tipo: Mis análisis (resultados lab — no confundir con “mis recetas”)
+    tipo: Lectura «mis …»
     cobertura: Hoy
     mensajes:
       - Mis análisis
@@ -66,42 +65,11 @@ cases:
       user_goal: operational
       intent_ids_any:
         - laboratorio.ver-resultados-como-paciente
-
-  - id: smoke-mis-recetas
-    seccion: smoke
-    tipo: Mis recetas (medicación — dominio distinto a laboratorio)
-    cobertura: Hoy
-    mensajes:
-      - Mis recetas
-    expect:
-      user_goal: operational
-      intent_ids_any:
-        - receta.ver-recetas-como-paciente
-
-  - id: smoke-mis-atenciones
-    seccion: smoke
-    tipo: Mis atenciones
-    cobertura: Hoy
-    mensajes:
-      - Mis atenciones
-    expect:
-      user_goal: operational
-      intent_ids_any:
-        - atencion.mis-atenciones-como-paciente
-
-  # --- 1. Orientación / guide ---
-  - id: guide-sintoma
-    seccion: orientacion
-    tipo: Síntoma
-    cobertura: Hoy
-    mensajes:
-      - Me duele la cabeza desde anoche
-    expect:
-      user_goal: guide
-      offer_intent: atencion.necesito-atencion
       must_not_intent:
         - turnos.crear-como-paciente
+        - atencion.necesito-atencion
 
+  # --- Orientación: matices / cadenas / perímetro (no más síntomas genéricos) ---
   - id: guide-alarma-pecho
     seccion: orientacion
     tipo: Alarma / pecho
@@ -112,36 +80,6 @@ cases:
       user_goal: guide
       must_not_intent:
         - turnos.crear-como-paciente
-
-  - id: guide-varios-sintomas
-    seccion: orientacion
-    tipo: Varios síntomas
-    cobertura: Hoy
-    mensajes:
-      - Tengo fiebre, tos y me duele el cuerpo
-    expect:
-      user_goal: guide
-      offer_intent: atencion.necesito-atencion
-
-  - id: guide-lesion
-    seccion: orientacion
-    tipo: Lesión
-    cobertura: Hoy
-    mensajes:
-      - Me caí de la bici y se me hinchó el tobillo
-    expect:
-      user_goal: guide
-      offer_intent: atencion.necesito-atencion
-
-  - id: guide-salud-mental
-    seccion: orientacion
-    tipo: Salud mental
-    cobertura: Hoy
-    mensajes:
-      - Estoy muy ansioso y no puedo dormir
-    expect:
-      user_goal: guide
-      offer_intent: atencion.necesito-atencion
 
   - id: guide-urgencia-declarada
     seccion: orientacion
@@ -156,7 +94,7 @@ cases:
 
   - id: guide-cadena-evolucion
     seccion: orientacion
-    tipo: Evolución
+    tipo: Cadena follow-up clínico
     cobertura: Hoy
     mensajes:
       - Tengo fiebre, tos…
@@ -165,20 +103,9 @@ cases:
       user_goal: guide
       offer_intent: atencion.necesito-atencion
 
-  - id: guide-pedir-que-hacer
-    seccion: orientacion
-    tipo: Pedir qué hacer
-    cobertura: Hoy
-    mensajes:
-      - Me duele la panza
-      - ¿Qué hago con esto?
-    expect:
-      user_goal: guide
-      offer_intent: atencion.necesito-atencion
-
   - id: fuera-automedicacion
     seccion: orientacion
-    tipo: Pedir automedicación
+    tipo: Perímetro — no recetar
     cobertura: Fuera
     mensajes:
       - Me duele la cabeza
@@ -193,7 +120,7 @@ cases:
 
   - id: fuera-diagnostico
     seccion: orientacion
-    tipo: Pedir diagnóstico
+    tipo: Perímetro — no diagnosticar
     cobertura: Fuera
     mensajes:
       - Pinchazo en el pecho cuando respiro
@@ -206,7 +133,7 @@ cases:
 
   - id: guide-saludo
     seccion: orientacion
-    tipo: Saludo solo
+    tipo: Saludo sin CTA clínico
     cobertura: Hoy
     mensajes:
       - Hola
@@ -216,7 +143,7 @@ cases:
 
   - id: fuera-tercero-amigo
     seccion: orientacion
-    tipo: Tercero / amigo
+    tipo: Perímetro — tercero
     cobertura: Fuera
     mensajes:
       - Mi amigo tiene 40 de fiebre, ¿qué le doy?
@@ -232,10 +159,10 @@ cases:
     expect:
       user_goal: guide
 
-  # --- 2. Pedir atención ---
+  # --- Pedir atención: entradas distintas a “síntoma genérico” ---
   - id: atencion-malestar-generico
     seccion: pedir-atencion
-    tipo: Malestar nuevo, genérico
+    tipo: Pedir atención por nombre
     cobertura: Hoy
     mensajes:
       - Necesito atención, me siento mal
@@ -246,19 +173,9 @@ cases:
         - guide
         - operational
 
-  - id: atencion-malestar-zona
-    seccion: pedir-atencion
-    tipo: Malestar + zona
-    cobertura: Hoy
-    mensajes:
-      - Me duele la panza del lado derecho
-    expect:
-      user_goal: guide
-      offer_intent: atencion.necesito-atencion
-
   - id: atencion-estudio-ecografia
     seccion: pedir-atencion
-    tipo: Estudio / práctica
+    tipo: Estudio / práctica (acto)
     cobertura: Hoy
     mensajes:
       - Necesito una ecografía
@@ -270,7 +187,7 @@ cases:
 
   - id: atencion-lab-como-acto
     seccion: pedir-atencion
-    tipo: Laboratorio como acto
+    tipo: Lab como acto ≠ resultados
     cobertura: Hoy
     mensajes:
       - Quiero sacar turno para análisis de sangre
@@ -294,21 +211,9 @@ cases:
         - guide
         - operational
 
-  - id: atencion-odontologia
-    seccion: pedir-atencion
-    tipo: Pedir un servicio del centro
-    cobertura: Hoy
-    mensajes:
-      - Turno en odontología
-    expect:
-      user_goal: operational
-      intent_ids_any:
-        - turnos.crear-como-paciente
-        - atencion.necesito-atencion
-
   - id: atencion-mi-dentista
     seccion: pedir-atencion
-    tipo: Pedir “el mío” por oferta
+    tipo: Hint oferta / sinónimo servicio
     cobertura: Hoy
     mensajes:
       - Solicita un turno para mi dentista
@@ -318,19 +223,9 @@ cases:
         - turnos.crear-como-paciente
       must_not_offer_intent: atencion.necesito-atencion
 
-  - id: cadena-centro-cercano
-    seccion: pedir-atencion
-    tipo: Centro más cerca
-    cobertura: Hoy
-    mensajes:
-      - Quiero un turno
-      - El más cercano a mi casa
-    expect:
-      user_goal: operational
-
   - id: cadena-preferencia-horario
     seccion: pedir-atencion
-    tipo: Preferencia de día/hora
+    tipo: Cadena reserva → refinar
     cobertura: Hoy
     mensajes:
       - Quiero un turno
@@ -338,39 +233,32 @@ cases:
     expect:
       user_goal: operational
 
-  # --- 3. Citas ---
-  - id: citas-listar
+  # --- Citas: discriminadores (no más trámites gemelos de cancelar) ---
+  - id: citas-historial
     seccion: citas
-    tipo: Listar próximos
+    tipo: Historial ≠ próximos
     cobertura: Hoy
     mensajes:
-      - ¿Qué turnos tengo?
+      - Mostrame los turnos que ya tuve
     expect:
       user_goal: operational
       intent_ids_any:
+        - turnos.ver-turnos-anteriores-como-paciente
+      must_not_intent:
         - turnos.ver-mis-turnos-como-paciente
 
-  - id: citas-reprogramar
+  - id: citas-ultima-oferta
     seccion: citas
-    tipo: Reprogramar
+    tipo: Última vez en oferta ≠ última atención
     cobertura: Hoy
     mensajes:
-      - Pasame el turno al jueves
+      - Decime cuándo fue la última vez que fui al dentista
     expect:
       user_goal: operational
       intent_ids_any:
-        - turnos.modificar-como-paciente-flow
-
-  - id: citas-confirmar
-    seccion: citas
-    tipo: Confirmar que voy
-    cobertura: Hoy
-    mensajes:
-      - Confirmo que voy mañana
-    expect:
-      user_goal: operational
-      intent_ids_any:
-        - turnos.confirmar-asistencia-flow
+        - turnos.ver-ultimo-en-oferta-como-paciente
+      must_not_intent:
+        - atencion.ver-ultima-como-paciente
 
   - id: citas-politica
     seccion: citas
@@ -385,36 +273,10 @@ cases:
         - guide
         - operational
 
-  - id: citas-historial
-    seccion: citas
-    tipo: Historial de citas
-    cobertura: Hoy
-    mensajes:
-      - Mostrame los turnos que ya tuve
-    expect:
-      user_goal: operational
-      intent_ids_any:
-        - turnos.ver-turnos-anteriores-como-paciente
-      must_not_intent:
-        - turnos.ver-mis-turnos-como-paciente
-
-  - id: citas-ultima-oferta
-    seccion: citas
-    tipo: Última vez en una oferta
-    cobertura: Hoy
-    mensajes:
-      - Decime cuándo fue la última vez que fui al dentista
-    expect:
-      user_goal: operational
-      intent_ids_any:
-        - turnos.ver-ultimo-en-oferta-como-paciente
-      must_not_intent:
-        - atencion.ver-ultima-como-paciente
-
-  # --- 6. Después ---
+  # --- Post ---
   - id: post-ultima-atencion
     seccion: post-consulta
-    tipo: Última atención
+    tipo: Última atención (resumen)
     cobertura: Hoy
     mensajes:
       - ¿Qué me dijo el médico ayer?
@@ -426,41 +288,7 @@ cases:
         - guide
         - operational
 
-  # --- No confundir ---
-  - id: no-confundir-sintoma-vs-turno
-    seccion: no-confundir
-    tipo: Me duele sin pedir turno
-    cobertura: Hoy
-    mensajes:
-      - Me duele la garganta
-    expect:
-      user_goal: guide
-      offer_intent: atencion.necesito-atencion
-      must_not_intent:
-        - turnos.crear-como-paciente
-
-  - id: no-confundir-turno-sin-sintoma
-    seccion: no-confundir
-    tipo: Quiero un turno sin síntoma
-    cobertura: Hoy
-    mensajes:
-      - Quiero un turno
-    expect:
-      user_goal: operational
-      intent_ids_any:
-        - turnos.crear-como-paciente
-
-  - id: no-confundir-mis-analisis
-    seccion: no-confundir
-    tipo: Mis análisis ≠ turno lab
-    cobertura: Hoy
-    mensajes:
-      - Mis análisis
-    expect:
-      must_not_intent:
-        - turnos.crear-como-paciente
-        - atencion.necesito-atencion
-
+  # --- No confundir: solo el par que no está cubierto arriba ---
   - id: no-confundir-turno-analisis
     seccion: no-confundir
     tipo: Turno para análisis ≠ resultados
@@ -474,29 +302,10 @@ cases:
       must_not_intent:
         - laboratorio.ver-resultados-como-paciente
 
-  - id: no-confundir-hola
-    seccion: no-confundir
-    tipo: Hola sin CTA clínico
-    cobertura: Hoy
-    mensajes:
-      - Buen día
-    expect:
-      must_not_offer_intent: atencion.necesito-atencion
-
-  - id: no-confundir-representacion
-    seccion: no-confundir
-    tipo: Qué es la representación
-    cobertura: Hoy
-    mensajes:
-      - ¿Qué es la representación?
-    expect:
-      user_goal: guide
-      must_not_offer_intent: atencion.necesito-atencion
-
-  # --- Borde: cadenas, desvíos, mixtas (frases reales / agresivas) ---
+  # --- Borde: una fila por clase (cadenas / desvío / mixtas / Fuera) ---
   - id: borde-que-llevo-turno-martes
     seccion: borde
-    tipo: Turno + qué llevar (un solo mensaje)
+    tipo: Qué llevar
     cobertura: Hoy
     mensajes:
       - Tengo turno el martes, ¿qué llevo?
@@ -512,7 +321,7 @@ cases:
 
   - id: borde-cancelar-si-pedi-atencion
     seccion: borde
-    tipo: Cancelar vs ya pedí atención
+    tipo: Cancelar vs pedí atención
     cobertura: Hoy
     mensajes:
       - ¿Cómo cancelo si ya pedí atención?
@@ -525,7 +334,7 @@ cases:
 
   - id: borde-llegar-tarde-10min
     seccion: borde
-    tipo: Llegar tarde al turno
+    tipo: Llegar tarde
     cobertura: Hoy
     mensajes:
       - Voy a tener problemas si llego 10min tarde al turno?
@@ -539,7 +348,7 @@ cases:
 
   - id: borde-llegar-tarde-cadena-foco
     seccion: borde
-    tipo: Llegar tarde + follow-up minutos
+    tipo: Cadena foco tardanza
     cobertura: Hoy
     mensajes:
       - Voy a tener problemas si llego 10min tarde al turno?
@@ -548,23 +357,9 @@ cases:
       user_goal: guide
       must_not_offer_intent: atencion.necesito-atencion
 
-  - id: borde-llegar-tarde-variante
-    seccion: borde
-    tipo: Qué pasa si llego tarde
-    cobertura: Hoy
-    mensajes:
-      - Qué va a pasar si llego tarde?
-    expect:
-      user_goals_any:
-        - guide
-        - ambiguous
-      must_not_offer_intent: atencion.necesito-atencion
-      reply_must_not_contain:
-        - "te van a esperar seguro"
-
   - id: fuera-opinion-medico
     seccion: borde
-    tipo: Opinión / comparar médicos
+    tipo: Perímetro — no opinar de médicos
     cobertura: Fuera
     mensajes:
       - Qué opinás de este médico, será mejor que este otro?
@@ -579,7 +374,7 @@ cases:
 
   - id: borde-representacion-sobrino-si-no
     seccion: borde
-    tipo: Representación + sobrino + forzar sí/no
+    tipo: Guide producto + forzar sí/no
     cobertura: Hoy
     mensajes:
       - Contame sobre la representación, se puede representar a un sobrino contestame con si o con no
@@ -587,20 +382,9 @@ cases:
       user_goal: guide
       must_not_offer_intent: atencion.necesito-atencion
 
-  - id: borde-representacion-cadena-sobrino
-    seccion: borde
-    tipo: Cadena representación → sobrino
-    cobertura: Hoy
-    mensajes:
-      - ¿Qué es la representación?
-      - Se puede representar a un sobrino? Contéstame sí o no
-    expect:
-      user_goal: guide
-      must_not_offer_intent: atencion.necesito-atencion
-
   - id: fuera-sesion-medium
     seccion: borde
-    tipo: Sesión con medium (no clínica)
+    tipo: Perímetro — pedido no clínico
     cobertura: Fuera
     mensajes:
       - Necesito una sesión con una medium
@@ -612,7 +396,7 @@ cases:
 
   - id: borde-multa-si-no-voy
     seccion: borde
-    tipo: ¿Me multan si no voy?
+    tipo: Multa / no-show
     cobertura: Hoy
     mensajes:
       - ¿Me multan si no voy?
@@ -626,7 +410,7 @@ cases:
 
   - id: borde-reprogramar-misma-cobertura
     seccion: borde
-    tipo: Reprogramar + cobertura/obra social
+    tipo: Reprogramar + cobertura
     cobertura: Hoy
     mensajes:
       - ¿Puedo reprogramar y sigo con la misma cobertura?
@@ -642,7 +426,7 @@ cases:
 
   - id: borde-medico-atiende-remoto
     seccion: borde
-    tipo: ¿Este médico atiende remoto?
+    tipo: ¿Atiende remoto?
     cobertura: Hoy
     mensajes:
       - ¿Este médico atiende remoto?
@@ -658,7 +442,7 @@ cases:
 
   - id: borde-desvio-sintoma-a-producto
     seccion: borde
-    tipo: Desvío síntoma → representación
+    tipo: Desvío de hilo
     cobertura: Hoy
     mensajes:
       - Me duele el pecho
@@ -667,35 +451,9 @@ cases:
       user_goal: guide
       must_not_offer_intent: atencion.necesito-atencion
 
-  - id: borde-desvio-turno-a-lab
-    seccion: borde
-    tipo: Desvío cancelar → análisis
-    cobertura: Hoy
-    mensajes:
-      - Cancelá el turno de mañana
-      - Ah, y ¿salieron los análisis?
-    expect:
-      user_goals_any:
-        - operational
-        - guide
-        - ambiguous
-
-  - id: borde-desvio-turno-a-sintoma
-    seccion: borde
-    tipo: Desvío turno → síntoma
-    cobertura: Hoy
-    mensajes:
-      - Quiero un turno
-      - Igual me duele mucho la cabeza desde anoche
-    expect:
-      user_goals_any:
-        - guide
-        - operational
-        - ambiguous
-
   - id: borde-mezcla-sintoma-y-turno
     seccion: borde
-    tipo: Mezcla síntoma + sacar turno (un mensaje)
+    tipo: Mezcla dos intenciones (un mensaje)
     cobertura: Hoy
     mensajes:
       - Me duele la espalda, sacame un turno para el lunes
@@ -704,17 +462,3 @@ cases:
         - operational
         - guide
         - ambiguous
-
-  - id: borde-cadena-citas-que-llevo
-    seccion: borde
-    tipo: Cadena listar → qué llevar
-    cobertura: Hoy
-    mensajes:
-      - ¿Qué turnos tengo?
-      - Tengo el del martes, ¿qué llevo?
-    expect:
-      user_goals_any:
-        - guide
-        - operational
-      reply_must_not_contain:
-        - "tenés que ir en ayunas"

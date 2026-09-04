@@ -21,7 +21,7 @@ php yii qa/asistente-consultas --userId=<id_paciente> --seccion=borde
 php yii qa/asistente-consultas --userId=<id_paciente> --id=smoke-sintoma-cabeza
 ```
 
-**Secciones del YAML:** `smoke` (humo mínimo; *mis análisis* ≠ *mis recetas* son dominios distintos), `orientacion`, `pedir-atencion`, `citas`, `post-consulta`, `no-confundir`, `borde` (cadenas, desvíos de hilo, frases mixtas).
+**Secciones del YAML:** `smoke` (una fila por puerta mínima), `orientacion`, `pedir-atencion`, `citas`, `post-consulta`, `no-confundir`, `borde`. Sin repetir la misma clase de prueba con otro wording/target.
 
 Salida: consola + JSON en `runtime/logs/qa-asistente-consultas-*.json` y log `runtime/logs/qa-asistente-consultas.log` (categorías `qa-asistente-consultas` y `asistente-planning`).
 

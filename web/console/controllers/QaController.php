@@ -25,8 +25,8 @@ class QaController extends Controller
     /** @var string Filtrar por seccion del catálogo (ej. smoke). */
     public $seccion = '';
 
-    /** @var string Ejecutar un solo case id. */
-    public $id = '';
+    /** @var string Ejecutar un solo case id del catálogo (ej. smoke-sintoma-cabeza). No usar `id`: choca con Controller::$id. */
+    public $caseId = '';
 
     /** @var int Máximo de casos (0 = sin límite). */
     public $limit = 0;
@@ -47,7 +47,7 @@ class QaController extends Controller
             'userId',
             'cobertura',
             'seccion',
-            'id',
+            'caseId',
             'limit',
             'list',
             'report',
@@ -75,6 +75,7 @@ class QaController extends Controller
      * Ejemplos:
      *   php yii qa/asistente-consultas --list=1 --seccion=smoke
      *   php yii qa/asistente-consultas --userId=123 --seccion=smoke
+     *   php yii qa/asistente-consultas --userId=123 --caseId=smoke-sintoma-cabeza
      *
      * --userId = columna `user.id` (mismo id que /user-management/user-permission/set?id=…).
      * No es id_persona. La persona se resuelve por personas.id_user.
@@ -83,7 +84,7 @@ class QaController extends Controller
     {
         $coberturas = $this->parseCoberturas($this->cobertura);
         $seccion = trim($this->seccion);
-        $caseId = trim($this->id);
+        $caseId = trim($this->caseId);
         $cases = AsistenteConsultasQaService::filterCases(
             $coberturas,
             $seccion !== '' ? $seccion : null,
@@ -102,7 +103,7 @@ class QaController extends Controller
             }
             $this->stderr("No hay casos con el filtro indicado.\n", Console::FG_YELLOW);
             $this->stderr(sprintf(
-                "Filtro: cobertura=%s seccion=%s id=%s | casos en catálogo=%d\n",
+                "Filtro: cobertura=%s seccion=%s caseId=%s | casos en catálogo=%d\n",
                 $coberturas === null ? '*' : implode(',', $coberturas),
                 $seccion !== '' ? $seccion : '(todas)',
                 $caseId !== '' ? $caseId : '(todos)',

@@ -16,11 +16,12 @@ Desde `web/`:
 
 ```bash
 php yii qa/asistente-consultas --list=1 --cobertura=Hoy
-php yii qa/asistente-consultas --userId=<id_paciente> --cobertura=Hoy --seccion=smoke
-php yii qa/asistente-consultas --userId=<id_paciente> --seccion=borde
-php yii qa/asistente-consultas --userId=<id_paciente> --id=smoke-sintoma-cabeza
+php yii qa/asistente-consultas --userId=<user.id> --cobertura=Hoy --seccion=smoke
+php yii qa/asistente-consultas --userId=<user.id> --seccion=borde
+php yii qa/asistente-consultas --userId=<user.id> --caseId=smoke-sintoma-cabeza
 ```
 
+`--userId` = `user.id` (tabla `user`), no `id_persona`.
 **Secciones del YAML:** `smoke` (una fila por puerta mínima), `orientacion`, `pedir-atencion`, `citas`, `post-consulta`, `no-confundir`, `borde`. Sin repetir la misma clase de prueba con otro wording/target.
 
 Salida: consola + JSON en `runtime/logs/qa-asistente-consultas-*.json` y log `runtime/logs/qa-asistente-consultas.log` (categorías `qa-asistente-consultas` y `asistente-planning`).

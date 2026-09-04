@@ -9,7 +9,7 @@ CTA **Probar demo** en el sitio institucional → código de un solo uso → log
 1. Institucional: captcha + `POST /api/v1/licencia/demo-acceso` (`role`, `email` opcional, honeypot).
 2. API **provisiona** staff efímero (`demo_m_*` médico, `demo_e_*` enfermería, `demo_a_*` administrativo) + seed en efector DEV, persiste el código y responde `enter_url` + `username` + `id_efector`.
 3. Browser abre `/site/demo-entrar?code=…` → consume (solo login del user ya creado; rechaza `medico_med_general_*`). Médico entra en **AMB**; enfermería y administrativo en **EMER**.
-4. Logout o TTL de sesión → purga de filas de esa visita.
+4. Logout o TTL de sesión → purga de filas de esa visita (todos los PES del staff, `id_user` anulado, chat asistente / WhatsApp). Hard-delete también adopta demos incompletos (`demo_*` sin soft-purge).
 
 ## Modelo de datos
 

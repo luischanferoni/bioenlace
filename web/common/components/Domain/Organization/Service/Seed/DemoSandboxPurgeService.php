@@ -2,6 +2,10 @@
 
 namespace common\components\Domain\Organization\Service\Seed;
 
+use common\models\AsistenteConversacion;
+use common\models\AsistenteInteraccion;
+use common\models\AsistenteWhatsappMensaje;
+use common\models\AsistenteWhatsappVinculo;
 use common\components\Domain\Scheduling\Service\TurnoSlotClaimService;
 use common\models\Clinical\Encounter;
 use common\models\Emergency\GuardiaCircuitoEvent;
@@ -27,9 +31,10 @@ use yii\db\Query;
 /**
  * Purga filas creadas por una sesión demo sandbox.
  *
- * Soft-purge: retiros / soft-delete + anonimización.
- * Hard-delete: elimina residuos de personas DemoPurged sin dejar hijos clínicos huérfanos
- * (tablas sin ON DELETE CASCADE según el esquema).
+ * Soft-purge: retiros / soft-delete + anonimización; soft-delete **todos** los PES del staff
+ * (no solo `id_pes` de sesión) y anula `id_user` también en la persona staff.
+ * Hard-delete: elimina residuos DemoPurged (PES vivos o soft-deleted), adopta demos incompletos
+ * (`demo_*@demo.bioenlace.local` sin sesión viva) y chat asistente huérfano.
  */
 final class DemoSandboxPurgeService
 {
@@ -143,6 +148,10 @@ final class DemoSandboxPurgeService
         $db = Yii::$app->db;
         $tx = $db->beginTransaction();
         try {
+            // Chat del asistente antes de anular id_user en personas demo.
+            $asistenteUserIds = $this->collectAsistenteUserIdsForSession($session, $pacienteIds);
+            $this->deleteAsistenteChatForUserIds($db, $asistenteUserIds, $errors);
+
             $turnoIds = $this->normalizeIds((array) ($payload['turno_ids'] ?? []));
             if ($pacienteIds !== []) {
                 $extraTurnos = (new Query())
@@ -264,10 +273,21 @@ final class DemoSandboxPurgeService
                 }
             }
 
-            $pes = ProfesionalEfectorServicio::findOne((int) $session->id_pes);
-            if ($pes !== null && $pes->deleted_at === null) {
-                $pes->deleted_at = $now;
-                $pes->save(false);
+            // Todos los PES del staff (sesión + extras p.ej. cambio AMB/EMER a otro efector).
+            $staffPersonaId = (int) $session->id_persona;
+            $this->softDeletePesForPersonas(
+                $this->normalizeIds([$staffPersonaId]),
+                $now
+            );
+            $idPesSesion = (int) $session->id_pes;
+            if ($idPesSesion > 0) {
+                $pesSesion = ProfesionalEfectorServicio::find()
+                    ->where(['id' => $idPesSesion, 'deleted_at' => null])
+                    ->one();
+                if ($pesSesion !== null) {
+                    $pesSesion->deleted_at = $now;
+                    $pesSesion->save(false);
+                }
             }
 
             foreach ($pacienteIds as $idPaciente) {
@@ -291,10 +311,11 @@ final class DemoSandboxPurgeService
                 $persona->save(false);
             }
 
-            $staff = Persona::findOne((int) $session->id_persona);
+            $staff = Persona::findOne($staffPersonaId);
             if ($staff !== null) {
                 $staff->documento = $this->retireDocumento((string) $staff->documento, (int) $staff->id_persona);
                 $staff->apellido = self::APELLIDO_PURGED;
+                $staff->id_user = null;
                 $staff->save(false);
             }
 
@@ -365,6 +386,8 @@ final class DemoSandboxPurgeService
      *   internaciones: int,
      *   pes: int,
      *   users: int,
+     *   asistente_conversaciones: int,
+     *   asistente_interacciones: int,
      *   errors: list<string>
      * }
      */
@@ -379,20 +402,63 @@ final class DemoSandboxPurgeService
             'internaciones' => 0,
             'pes' => 0,
             'users' => 0,
+            'asistente_conversaciones' => 0,
+            'asistente_interacciones' => 0,
             'errors' => [],
         ];
+
+        $db = Yii::$app->db;
+        $now = date('Y-m-d H:i:s');
+
+        // Demos a medias (demo_m_* sin soft-purge) → misma forma que DemoPurged.
+        $this->retireIncompleteDemoStaff($db, $now, $errors);
 
         $personaIds = (new Query())
             ->select('id_persona')
             ->from(Persona::tableName())
             ->where(['apellido' => self::APELLIDO_PURGED])
-            ->column(Yii::$app->db);
+            ->column($db);
         $personaIds = $this->normalizeIds($personaIds);
         if ($personaIds === []) {
+            // Personas ya borradas: limpiar chat/users purged huérfanos.
+            $orphanUserIds = $this->findPurgedOrOrphanDemoUserIds($db);
+            if ($orphanUserIds === []) {
+                $counts['errors'] = $errors;
+
+                return $counts;
+            }
+            $tx = $db->beginTransaction();
+            try {
+                $chatDeleted = $this->deleteAsistenteChatForUserIds($db, $orphanUserIds, $errors);
+                $counts['asistente_conversaciones'] = $chatDeleted['conversaciones'];
+                $counts['asistente_interacciones'] = $chatDeleted['interacciones'];
+                $unlinkable = [];
+                foreach ($orphanUserIds as $uid) {
+                    $linked = (new Query())
+                        ->from(Persona::tableName())
+                        ->where(['id_user' => $uid])
+                        ->exists($db);
+                    if (!$linked) {
+                        $unlinkable[] = $uid;
+                    }
+                }
+                if ($unlinkable !== []) {
+                    $counts['users'] = $this->safeDelete($db, User::tableName(), ['id' => $unlinkable], $errors);
+                }
+                $tx->commit();
+            } catch (\Throwable $e) {
+                if ($tx->isActive) {
+                    $tx->rollBack();
+                }
+                $counts['errors'] = array_merge($errors, [$e->getMessage()]);
+
+                return $counts;
+            }
+            $counts['errors'] = $errors;
+
             return $counts;
         }
 
-        $db = Yii::$app->db;
         $tx = $db->beginTransaction();
         try {
             // 1) Guardias (todas, no solo soft-deleted)
@@ -442,12 +508,11 @@ final class DemoSandboxPurgeService
             // 4) Residuos clínicos por persona (SET NULL / sin cascade desde encounter)
             $this->hardDeletePersonaClinical($db, $personaIds, $errors);
 
-            // 5) PES soft-deleted (staff demo)
+            // 5) PES del staff DemoPurged (vivos o soft-deleted)
             $pesIds = (new Query())
                 ->select('id')
                 ->from(ProfesionalEfectorServicio::tableName())
                 ->where(['id_persona' => $personaIds])
-                ->andWhere(['not', ['deleted_at' => null]])
                 ->column($db);
             $pesIds = $this->normalizeIds($pesIds);
             if ($pesIds !== []) {
@@ -460,35 +525,16 @@ final class DemoSandboxPurgeService
                 );
             }
 
-            $userIds = [];
-            foreach ($personaIds as $idPersona) {
-                $persona = Persona::findOne($idPersona);
-                if ($persona === null) {
-                    continue;
-                }
-                $idUser = (int) ($persona->id_user ?? 0);
-                if ($idUser > 0) {
-                    $userIds[] = $idUser;
-                }
-            }
-            $userIdsFromEmail = (new Query())
-                ->select('id')
-                ->from(User::tableName())
-                ->where(['or',
-                    ['like', 'email', 'purged_%@demo.bioenlace.local', false],
-                    ['and',
-                        ['like', 'email', '%@demo.bioenlace.local', false],
-                        ['or',
-                            ['like', 'username', 'x\\_%', false],
-                            ['like', 'username', 'x\\_p\\_%', false],
-                        ],
-                    ],
-                ])
-                ->column($db);
-            $userIds = array_values(array_unique(array_merge(
-                $userIds,
-                array_map('intval', $userIdsFromEmail)
-            )));
+            // Staff soft-purge antiguo dejaba id_user; desenganchar antes de borrar users.
+            $db->createCommand()
+                ->update(
+                    Persona::tableName(),
+                    ['id_user' => null],
+                    ['and', ['apellido' => self::APELLIDO_PURGED], ['not', ['id_user' => null]]]
+                )
+                ->execute();
+
+            $userIds = $this->findPurgedOrOrphanDemoUserIds($db);
 
             $personasToDelete = [];
             foreach ($personaIds as $idPersona) {
@@ -523,6 +569,10 @@ final class DemoSandboxPurgeService
             }
 
             if ($userIds !== []) {
+                $chatDeleted = $this->deleteAsistenteChatForUserIds($db, $userIds, $errors);
+                $counts['asistente_conversaciones'] = $chatDeleted['conversaciones'];
+                $counts['asistente_interacciones'] = $chatDeleted['interacciones'];
+
                 $orphanUsers = [];
                 foreach ($userIds as $uid) {
                     $linked = (new Query())
@@ -553,6 +603,8 @@ final class DemoSandboxPurgeService
                 'internaciones' => 0,
                 'pes' => 0,
                 'users' => 0,
+                'asistente_conversaciones' => 0,
+                'asistente_interacciones' => 0,
                 'errors' => [$e->getMessage()],
             ];
         }
@@ -560,6 +612,242 @@ final class DemoSandboxPurgeService
         $counts['errors'] = $errors;
 
         return $counts;
+    }
+
+    /**
+     * Users staff + pacientes de la sesión (antes de anular id_user).
+     *
+     * @param list<int> $pacienteIds
+     * @return list<int>
+     */
+    private function collectAsistenteUserIdsForSession(DemoSandboxSession $session, array $pacienteIds): array
+    {
+        $ids = [(int) $session->id_user];
+        foreach ($pacienteIds as $idPaciente) {
+            $persona = Persona::findOne($idPaciente);
+            if ($persona === null) {
+                continue;
+            }
+            $ids[] = (int) ($persona->id_user ?? 0);
+        }
+
+        return $this->normalizeIds($ids);
+    }
+
+    /**
+     * Soft-delete de todos los PES vivos de las personas dadas.
+     *
+     * @param list<int> $personaIds
+     */
+    private function softDeletePesForPersonas(array $personaIds, string $now): void
+    {
+        $personaIds = $this->normalizeIds($personaIds);
+        if ($personaIds === []) {
+            return;
+        }
+        ProfesionalEfectorServicio::updateAll(
+            ['deleted_at' => $now],
+            ['and', ['id_persona' => $personaIds], ['deleted_at' => null]]
+        );
+    }
+
+    /**
+     * Aprovisionamientos demo incompletos (`demo_m_*` / `demo_*@demo…`) sin soft-purge:
+     * soft-delete PES, anonimiza persona y renombra user (salvo sesión demo aún viva).
+     *
+     * @param list<string> $errors
+     */
+    private function retireIncompleteDemoStaff(Connection $db, string $now, array &$errors): void
+    {
+        $activeUserIds = $this->normalizeIds((new Query())
+            ->select('id_user')
+            ->from(DemoSandboxSession::tableName())
+            ->where(['purged_at' => null])
+            ->column($db));
+
+        $query = (new Query())
+            ->select(['id', 'username'])
+            ->from(User::tableName())
+            ->where(['like', 'email', '%@demo.bioenlace.local', false])
+            ->andWhere(['like', 'username', 'demo\\_%', false]);
+        if ($activeUserIds !== []) {
+            $query->andWhere(['not in', 'id', $activeUserIds]);
+        }
+
+        try {
+            $rows = $query->all($db);
+        } catch (\Throwable $e) {
+            $errors[] = 'retireIncompleteDemoStaff: ' . $e->getMessage();
+
+            return;
+        }
+
+        foreach ($rows as $row) {
+            $userId = (int) ($row['id'] ?? 0);
+            if ($userId <= 0) {
+                continue;
+            }
+            try {
+                $personaIds = $this->normalizeIds((new Query())
+                    ->select('id_persona')
+                    ->from(Persona::tableName())
+                    ->where(['id_user' => $userId])
+                    ->column($db));
+                $this->softDeletePesForPersonas($personaIds, $now);
+
+                foreach ($personaIds as $idPersona) {
+                    $persona = Persona::findOne($idPersona);
+                    if ($persona === null) {
+                        continue;
+                    }
+                    $persona->documento = $this->retireDocumento((string) $persona->documento, $idPersona);
+                    $persona->apellido = self::APELLIDO_PURGED;
+                    $persona->id_user = null;
+                    $persona->save(false);
+                }
+
+                $user = User::findOne($userId);
+                if ($user !== null) {
+                    $user->status = User::STATUS_INACTIVE;
+                    $user->username = 'x_orphan_' . $userId . '_' . substr((string) $user->username, 0, 28);
+                    $user->email = 'purged_orphan_' . $userId . '@demo.bioenlace.local';
+                    $user->save(false);
+                }
+
+                $this->deleteAsistenteChatForUserIds($db, [$userId], $errors);
+            } catch (\Throwable $e) {
+                $errors[] = 'retireIncomplete user ' . $userId . ': ' . $e->getMessage();
+            }
+        }
+    }
+
+    /**
+     * Users ya anonimizados o huérfanos demo (no tocar sesiones activas).
+     *
+     * @return list<int>
+     */
+    private function findPurgedOrOrphanDemoUserIds(Connection $db): array
+    {
+        $activeUserIds = $this->normalizeIds((new Query())
+            ->select('id_user')
+            ->from(DemoSandboxSession::tableName())
+            ->where(['purged_at' => null])
+            ->column($db));
+
+        $query = (new Query())
+            ->select('id')
+            ->from(User::tableName())
+            ->where(['or',
+                ['like', 'email', 'purged_%@demo.bioenlace.local', false],
+                ['and',
+                    ['like', 'email', '%@demo.bioenlace.local', false],
+                    ['or',
+                        ['like', 'username', 'x\\_%', false],
+                        ['like', 'username', 'x\\_p\\_%', false],
+                        ['like', 'username', 'demo\\_%', false],
+                    ],
+                ],
+            ]);
+        if ($activeUserIds !== []) {
+            $query->andWhere(['not in', 'id', $activeUserIds]);
+        }
+
+        return $this->normalizeIds($query->column($db));
+    }
+
+    /**
+     * Borra historial del asistente y vínculo WhatsApp de los users demo.
+     *
+     * @param list<int> $userIds
+     * @param list<string> $errors
+     * @return array{conversaciones: int, interacciones: int}
+     */
+    private function deleteAsistenteChatForUserIds(Connection $db, array $userIds, array &$errors): array
+    {
+        $out = ['conversaciones' => 0, 'interacciones' => 0];
+        $userIds = $this->normalizeIds($userIds);
+        if ($userIds === []) {
+            return $out;
+        }
+
+        $usuarioIdStrs = array_map(static fn (int $id): string => (string) $id, $userIds);
+
+        try {
+            $convSchema = $db->schema->getTableSchema(AsistenteConversacion::tableName(), true);
+            if ($convSchema !== null) {
+                $convIds = (new Query())
+                    ->select('id')
+                    ->from(AsistenteConversacion::tableName())
+                    ->where(['usuario_id' => $usuarioIdStrs])
+                    ->column($db);
+                $convIds = $this->normalizeIds($convIds);
+                if ($convIds !== []) {
+                    $interSchema = $db->schema->getTableSchema(AsistenteInteraccion::tableName(), true);
+                    if ($interSchema !== null) {
+                        $out['interacciones'] = $this->safeDelete(
+                            $db,
+                            AsistenteInteraccion::tableName(),
+                            ['conversacion_id' => $convIds],
+                            $errors
+                        );
+                    }
+                    $out['conversaciones'] = $this->safeDelete(
+                        $db,
+                        AsistenteConversacion::tableName(),
+                        ['id' => $convIds],
+                        $errors
+                    );
+                }
+            }
+        } catch (\Throwable $e) {
+            $errors[] = 'asistente_chat: ' . $e->getMessage();
+        }
+
+        try {
+            $vinculoSchema = $db->schema->getTableSchema(AsistenteWhatsappVinculo::tableName(), true);
+            if ($vinculoSchema !== null) {
+                $waIds = (new Query())
+                    ->select('wa_id')
+                    ->from(AsistenteWhatsappVinculo::tableName())
+                    ->where([
+                        'or',
+                        ['user_id' => $userIds],
+                        ['pending_user_id' => $userIds],
+                    ])
+                    ->column($db);
+                $waIds = array_values(array_filter(array_map(
+                    static fn ($w) => is_string($w) ? trim($w) : '',
+                    $waIds
+                ), static fn (string $w): bool => $w !== ''));
+
+                if ($waIds !== []) {
+                    $msgSchema = $db->schema->getTableSchema(AsistenteWhatsappMensaje::tableName(), true);
+                    if ($msgSchema !== null) {
+                        $this->safeDelete(
+                            $db,
+                            AsistenteWhatsappMensaje::tableName(),
+                            ['wa_id' => $waIds],
+                            $errors
+                        );
+                    }
+                }
+
+                $this->safeDelete(
+                    $db,
+                    AsistenteWhatsappVinculo::tableName(),
+                    [
+                        'or',
+                        ['user_id' => $userIds],
+                        ['pending_user_id' => $userIds],
+                    ],
+                    $errors
+                );
+            }
+        } catch (\Throwable $e) {
+            $errors[] = 'asistente_whatsapp: ' . $e->getMessage();
+        }
+
+        return $out;
     }
 
     /**

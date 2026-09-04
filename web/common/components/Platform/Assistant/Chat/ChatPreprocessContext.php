@@ -5,18 +5,28 @@ namespace common\components\Platform\Assistant\Chat;
 use Yii;
 
 /**
- * Contexto de preprocess de la última consulta raíz (por sesión web).
+ * Contexto de preprocess de la última consulta raíz.
+ *
+ * En web usa sesión HTTP; en consola/tests sin componente `session`, memoria de proceso.
  */
 final class ChatPreprocessContext
 {
     private const SESSION_KEY = 'asistente_chat_preprocess';
+
+    /** @var array<string, mixed> */
+    private static array $memory = [];
 
     /**
      * @param array<string, mixed> $data
      */
     public static function set(array $data): void
     {
-        Yii::$app->session->set(self::SESSION_KEY, $data);
+        if (self::sessionAvailable()) {
+            Yii::$app->session->set(self::SESSION_KEY, $data);
+
+            return;
+        }
+        self::$memory = $data;
     }
 
     /**
@@ -24,13 +34,23 @@ final class ChatPreprocessContext
      */
     public static function get(): array
     {
-        $v = Yii::$app->session->get(self::SESSION_KEY, []);
-        return is_array($v) ? $v : [];
+        if (self::sessionAvailable()) {
+            $v = Yii::$app->session->get(self::SESSION_KEY, []);
+
+            return is_array($v) ? $v : [];
+        }
+
+        return self::$memory;
     }
 
     public static function clear(): void
     {
-        Yii::$app->session->remove(self::SESSION_KEY);
+        if (self::sessionAvailable()) {
+            Yii::$app->session->remove(self::SESSION_KEY);
+
+            return;
+        }
+        self::$memory = [];
     }
 
     public static function userGoal(): string
@@ -144,5 +164,22 @@ final class ChatPreprocessContext
         }
 
         return array_values(array_unique($out));
+    }
+
+    private static function sessionAvailable(): bool
+    {
+        if (!Yii::$app->has('session')) {
+            return false;
+        }
+        try {
+            $session = Yii::$app->session;
+            if (!$session->getIsActive()) {
+                $session->open();
+            }
+
+            return true;
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 }

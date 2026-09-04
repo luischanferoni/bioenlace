@@ -31,8 +31,9 @@ return [
     ],
     'components' => [
         // AR con blames (created_by) y servicios que leen Yii::$app->user en consola.
+        // ConsoleUser expone getIdPersona/getIdEfector… (API web usa ApiUser + sesión).
         'user' => [
-            'class' => \yii\web\User::class,
+            'class' => \console\components\ConsoleUser::class,
             'identityClass' => \common\models\User::class,
             'enableSession' => false,
             'enableAutoLogin' => false,

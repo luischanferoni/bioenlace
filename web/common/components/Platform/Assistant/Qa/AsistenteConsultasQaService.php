@@ -8,6 +8,9 @@ use common\components\Platform\Assistant\Chat\Thread\AssistantThreadContext;
 use common\components\Platform\Assistant\Chat\Thread\AssistantThreadStateService;
 use common\components\Platform\Assistant\Planning\AssistantPlanningLogService;
 use common\components\Platform\Assistant\Service\AssistantDraftNormalizer;
+use common\models\Person\Persona;
+use common\models\ProfesionalEfectorServicio;
+use common\models\User;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
 
@@ -127,6 +130,8 @@ final class AsistenteConsultasQaService
             throw new \InvalidArgumentException('userId debe ser un usuario paciente válido (> 0).');
         }
 
+        self::ensurePatientIdentity($userId);
+
         $startedAt = date('c');
         $results = [];
         $summary = [
@@ -180,6 +185,7 @@ final class AsistenteConsultasQaService
         $mensajes = is_array($case['mensajes'] ?? null) ? $case['mensajes'] : [];
         $expect = is_array($case['expect'] ?? null) ? $case['expect'] : [];
 
+        self::ensurePatientIdentity($userId);
         AssistantThreadStateService::clearPersistedStateForUser($userId);
         ChatPreprocessContext::clear();
         AssistantPlanningLogService::resetForTests();
@@ -457,6 +463,49 @@ final class AsistenteConsultasQaService
         }
 
         return array_values(array_unique($ids));
+    }
+
+    /**
+     * Identity + contexto paciente para consola (sin cookies ni ApiUser::afterLogin).
+     */
+    private static function ensurePatientIdentity(int $userId): void
+    {
+        $user = User::findOne($userId);
+        if ($user === null) {
+            throw new \InvalidArgumentException("Usuario user.id={$userId} no existe.");
+        }
+        if ((int) ($user->status ?? 0) !== User::STATUS_ACTIVE) {
+            throw new \InvalidArgumentException("Usuario user.id={$userId} no está activo.");
+        }
+
+        $persona = Persona::findOne(['id_user' => $userId]);
+        if ($persona === null) {
+            throw new \InvalidArgumentException(
+                "Usuario user.id={$userId} no tiene personas.id_user (no es paciente usable en QA)."
+            );
+        }
+
+        Yii::$app->user->setIdentity($user);
+
+        if (!Yii::$app->has('session')) {
+            return;
+        }
+        try {
+            $session = Yii::$app->session;
+            if (!$session->getIsActive()) {
+                $session->open();
+            }
+            $session->set('idPersona', (int) $persona->id_persona);
+            $session->set('apellidoUsuario', $persona->apellido);
+            $session->set('nombreUsuario', $persona->nombre);
+            $session->set(
+                'efectores',
+                ProfesionalEfectorServicio::getEfectoresParaSesion((int) $persona->id_persona)
+            );
+            $session->set('__efectores_persona_id', (int) $persona->id_persona);
+        } catch (\Throwable $e) {
+            // ConsoleUser resuelve idPersona por BD si la sesión no abre.
+        }
     }
 
     private static function defaultReportPath(): string

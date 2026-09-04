@@ -15,6 +15,7 @@ $this->params['breadcrumbs'][] = ['label' => 'Usuarios', 'url' => ['/user-manage
 $this->params['breadcrumbs'][] = $this->title;
 
 $userRoleNames = ArrayHelper::map(RbacRoleQueryService::getUserRoles($user->id), 'name', 'name');
+$pesRolesByEfector = RbacRoleQueryService::listPesRolesByEfectorForUser((int) $user->id);
 $multipleRoles = true;
 if (Yii::$app->has('user-management')) {
     $module = Yii::$app->getModule('user-management');
@@ -42,7 +43,46 @@ if (Yii::$app->has('user-management')) {
 	<div class="col-sm-8">
 		<div class="card mb-3">
 			<div class="card-header">
-				<strong>Roles asignados</strong>
+				<strong>Roles por efector (PES)</strong>
+				<span class="text-muted small ms-2">Solo lectura — se definen al asignar el profesional al servicio del centro</span>
+			</div>
+			<div class="card-body">
+				<?php if ($pesRolesByEfector === []): ?>
+					<p class="text-muted mb-0">
+						Este usuario no tiene persona vinculada o no tiene asignaciones PES activas en ningún efector.
+					</p>
+				<?php else: ?>
+					<div class="table-responsive">
+						<table class="table table-sm table-striped mb-0">
+							<thead>
+								<tr>
+									<th>Efector</th>
+									<th>Servicio del centro</th>
+									<th>Rol</th>
+								</tr>
+							</thead>
+							<tbody>
+								<?php foreach ($pesRolesByEfector as $row): ?>
+									<tr>
+										<td>
+											<?= Html::encode($row['efector_nombre'] !== '' ? $row['efector_nombre'] : ('#' . $row['id_efector'])) ?>
+											<span class="text-muted small">(<?= (int) $row['id_efector'] ?>)</span>
+										</td>
+										<td><?= Html::encode($row['servicio_nombre'] !== '' ? $row['servicio_nombre'] : ('#' . $row['id_servicio'])) ?></td>
+										<td><code><?= Html::encode($row['role_name']) ?></code></td>
+									</tr>
+								<?php endforeach; ?>
+							</tbody>
+						</table>
+					</div>
+				<?php endif; ?>
+			</div>
+		</div>
+
+		<div class="card mb-3">
+			<div class="card-header">
+				<strong>Roles especiales (auth_assignment)</strong>
+				<span class="text-muted small ms-2">Plataforma / multi-efector — editables abajo</span>
 			</div>
 			<div class="card-body">
 				<?= Html::beginForm(['set-roles', 'id' => $user->id]) ?>
@@ -83,7 +123,9 @@ if (Yii::$app->has('user-management')) {
 	</div>
 	<div class="col-sm-4">
 		<div class="alert alert-info">
-			Los <strong>intents</strong> se administran por rol en
+			Los roles clínicos (<code>Medico</code>, <code>enfermeria</code>, …) vienen del
+			<strong>servicio del PES</strong> en cada efector; no se tildan aquí.
+			Los <strong>intents</strong> de roles especiales se administran en
 			<?= Html::a('Roles RBAC', ['/user-management/role/index']) ?>.
 			Los <strong>atributos</strong> en
 			<?= Html::a('Catálogo de permisos', ['/permission-catalog/index']) ?>.

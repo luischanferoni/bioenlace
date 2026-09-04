@@ -9,7 +9,9 @@ use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 
 /**
- * Asignación de roles a usuario (auth_assignment). Permisos por rol: {@see PermissionCatalogController}.
+ * Asignación de roles especiales a usuario (auth_assignment).
+ * Roles clínicos por efector (PES): solo lectura en la vista.
+ * Permisos por rol: {@see PermissionCatalogController}.
  */
 class UserRoleController extends Controller
 {

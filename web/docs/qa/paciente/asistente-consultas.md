@@ -10,15 +10,18 @@ No hace falta la frase exacta. Si el tipo está en **Hoy**, algo parecido deber�
 
 ### Runner CLI (servidor)
 
-Catálogo ejecutable (subset **Hoy** / **Fuera** + smoke): `web/common/data/qa/asistente-consultas.yaml`. Llama al mismo `ChatOrchestrator` que la app (**IA real**, no el modo simulado de costos).
+Catálogo ejecutable (subset **Hoy** / **Fuera** + smoke + **borde**): `web/common/data/qa/asistente-consultas.yaml`. Llama al mismo `ChatOrchestrator` que la app (**IA real**, no el modo simulado de costos).
 
 Desde `web/`:
 
 ```bash
 php yii qa/asistente-consultas --list=1 --cobertura=Hoy
 php yii qa/asistente-consultas --userId=<id_paciente> --cobertura=Hoy --seccion=smoke
+php yii qa/asistente-consultas --userId=<id_paciente> --seccion=borde
 php yii qa/asistente-consultas --userId=<id_paciente> --id=smoke-sintoma-cabeza
 ```
+
+**Secciones del YAML:** `smoke` (humo mínimo; *mis análisis* ≠ *mis recetas* son dominios distintos), `orientacion`, `pedir-atencion`, `citas`, `post-consulta`, `no-confundir`, `borde` (cadenas, desvíos de hilo, frases mixtas).
 
 Salida: consola + JSON en `runtime/logs/qa-asistente-consultas-*.json` y log `runtime/logs/qa-asistente-consultas.log` (categorías `qa-asistente-consultas` y `asistente-planning`).
 
@@ -177,7 +180,7 @@ Flujos: [turnos.md](./turnos.md).
 | [ ] | Cancelar “el de…”           | *«Cancelá el de odontología»*                           | **Hoy**      | Elige entre pendientes                                                                                                                       |
 | [ ] | Reprogramar                 | *«Pasame el turno al jueves»*                           | **Hoy**      | `turnos.modificar-como-paciente-flow`                                                                                                        |
 | [ ] | Confirmar que voy           | *«Confirmo que voy mañana»*                             | **Hoy**      | `turnos.confirmar-asistencia-flow`                                                                                                           |
-| [ ] | Política de plazos          | *«¿Hasta cuándo puedo cancelar?»*                       | **Hoy**      | `turnos.consultar-politica-autogestion-flow`                                                                                                 |
+| [ ] | Política de plazos          | *«¿Hasta cuándo puedo cancelar?»* / *«¿Me multan si no voy?»* | **Hoy**      | `turnos.consultar-politica-autogestion-flow` o guide + HIS; **no** inventar multa |
 | [ ] | Reubicar (agenda rota)      | *«Me cancelaron el turno, quiero otro horario»*         | **Hoy**      | `turnos.reubicar-como-paciente-flow` si está en resolución                                                                                   |
 | [ ] | Historial de citas          | *«Mostrame los turnos que ya tuve»*                     | **Hoy**      | `turnos.ver-turnos-anteriores-como-paciente` (no los próximos)                                                                               |
 | [ ] | Última vez en una oferta    | *«Decime cuándo fue la última vez que fui al dentista»* | **Hoy**      | `turnos.ver-ultimo-en-oferta-como-paciente` (odontología es un ejemplo). **No** usa el extracto de HC ni `atencion.ver-ultima-como-paciente` |
@@ -192,8 +195,11 @@ Flujos: [turnos.md](./turnos.md).
 | [ ] | Detalle de uno    | 1. *«¿Qué turnos tengo?»* 2. *«¿A qué hora es el de mañana?»*                               | **Hoy**                  | 1. Lista. 2. Detalle de ese pendiente                        |
 | [ ] | Con quién / dónde | 1. *«¿Qué turnos tengo?»* 2. *«¿Con quién es y en qué consultorio?»*                        | **Pantalla**             | Datos del turno si están; no inventar consultorio            |
 | [ ] | Cómo llegar       | 1. *«¿Qué turnos tengo?»* 2. *«¿Dónde queda el centro?»*                                    | **Pantalla** / **Fuera** | No inventar dirección si no está en contexto                 |
-| [ ] | Qué llevar        | 1. *«¿Qué turnos tengo?»* 2. *«¿Tengo que llevar estudios?»*                                | **Pantalla** / **Fuera** | Puede vivir en motivos/pre-consulta; no inventar preparación |
+| [ ] | Qué llevar        | 1. *«¿Qué turnos tengo?»* 2. *«¿Tengo que llevar estudios?»* · o un solo *«Tengo turno el martes, ¿qué llevo?»* | **Pantalla** / **Fuera** / **Hoy** | Puede vivir en motivos/pre-consulta; **no** inventar preparación ni ayunas |
 | [ ] | No voy a llegar   | 1. *«¿Qué turnos tengo?»* 2. *«Voy a llegar tarde, ¿me esperan?»*                           | **Fuera**                | No promete que el profesional espera                         |
+| [ ] | Multa / no presentarse | *«¿Me multan si no voy?»*                                                             | **Hoy**                  | Política de cancelación / no-show si hay dato; **no** inventar multa en $ |
+| [ ] | Reprogramar y cobertura | *«¿Puedo reprogramar y sigo con la misma cobertura?»*                                | **Hoy**                  | Abre reprogramar o política; **no** afirma obra social / PAMI |
+| [ ] | ¿Atiende remoto?  | *«¿Este médico atiende remoto?»*                                                       | **Hoy**                  | Guide / modalidad si hay contexto del turno o PES; **no** inventar si el profesional hace video |
 | [ ] | Recordatorio      | 1. *«¿Qué turnos tengo?»* 2. *«Avisame una hora antes»*                                     | **Pantalla**             | Preferencias / push; el chat puede no configurar el aviso    |
 | [ ] | Aceptar adelanto  | 1. *(push «Se liberó un turno más temprano»)* 2. *«Sí, acepto el turno de mañana a las 10»* | **Pantalla**             | `TURNO_ADVANCE_OFFER`; no es un primer mensaje del asistente |
 | [ ] | Rechazar adelanto | 1. *(mismo push)* 2. *«No, me quedo con el mío»*                                            | **Pantalla**             | El turno original sigue                                      |
@@ -377,7 +383,7 @@ Producto: [representacion-paciente.md](../../producto/representacion-paciente.md
 | [ ] | Aviso N9           | *«Avisame si alguien actúa por mí»*        | **Pantalla** | Configuración de alertas                                         |
 | [ ] | Revocar            | *«Sacá a mi hermano de representantes»*    | **Pantalla** | Hub de representación                                            |
 | [ ] | Qué es / cómo funciona | *«¿Qué es la representación?»* / *«¿Cómo vinculo a mi hijo?»* | **Hoy** | Guide: artículo + CTA (`vincular-menor` / `designar-representante`) |
-| [ ] | Follow-up sobrino  | 1. *«¿Qué es la representación?»* 2. *«¿Qué pasa si quiero representar a mi sobrino?»* | **Hoy** / **Futuro** | Mismo topic; **no** Solicitar Atención; no invertir tutela vs designar representante |
+| [ ] | Follow-up sobrino  | 1. *«¿Qué es la representación?»* 2. *«¿Qué pasa si quiero representar a mi sobrino?»* · o un solo *«Contame sobre la representación, se puede representar a un sobrino contestame con si o con no»* | **Hoy** / **Futuro** | Mismo topic; **no** Solicitar Atención; no invertir tutela vs designar; puede **no** obedecer “solo sí/no” si hace falta aclarar |
 
 No confundir tutela (menor sin cuenta, verifica el staff) con delegación (otro adulto con cuenta, activa al instante).
 
@@ -412,6 +418,9 @@ Smoke WhatsApp: [asistente-whatsapp.md](./asistente-whatsapp.md).
 | --- | ------------------------ | --------------------------------------- | ------------ | --------------------------------------------------------- |
 | [ ] | Ministerio / provincia   | *«Ministerio de salud de mi provincia»* | **Hoy**      | `paciente-contexto.recurso-provincial-como-paciente-flow` |
 | [ ] | Teléfono del centro      | *«¿Cuál es el teléfono de admisión?»*   | **Fuera**    | No inventar teléfono                                      |
+| [ ] | Cancelar vs “pedí atención” | *«¿Cómo cancelo si ya pedí atención?»* | **Hoy** | Encauzar a cancelar turno pendiente o a estado del pedido; **no** reabrir Solicitar Atención ni mezclar ambos flujos |
+| [ ] | Opinión / comparar médicos | *«¿Qué opinás de este médico, será mejor que este otro?»* | **Fuera** | No rankea ni recomienda profesionales; puede orientar a elegir en la reserva |
+| [ ] | Pedido no clínico (medium) | *«Necesito una sesión con una medium»* | **Fuera** | Fuera de perímetro salud; **sin** Solicitar Atención ni turno |
 | [ ] | Horario de guardia       | *«¿Hasta qué hora atiende la guardia?»* | **Fuera**    | No inventar horario                                       |
 | [ ] | Cobertura / obra social  | *«¿Atienden con PAMI?»*                 | **Fuera**    | Facturación/cobertura no es canal paciente                |
 | [ ] | Profesionales del centro | *«¿Qué médicos hay?»*                   | **Pantalla** | Aparecen al reservar; no un listado staff                 |
@@ -480,7 +489,9 @@ Un mismo pedido llega de diez maneras. Probar al menos una variante “sucia” 
 | [ ] | Mezcla síntoma + “cómo funciona”  | *«Tengo fiebre, explicame cómo saco un turno»*                                   | **Hoy** / **Futuro**      | Ambiguous o un dominio claro; **no** CTA clínico + dump de artículo a la vez sin encauzar |
 | [ ] | Mezcla receta + urgencia          | *«Se me acabó la insulina y estoy mal»*                                          | **Hoy**                   | Priorizar malestar/urgencia, no solo renovar |
 | [ ] | Por un tercero sin representación | *«Sacá turno para mi vieja»*                                                     | **Hoy**                   | No opera sin delegación; explicar representación |
-| [ ] | Cambio de tema a mitad            | *«Cancelá el de mañana. Ah, y ¿salieron los análisis?»*                          | **Hoy**                   | Un flujo a la vez |
+| [ ] | Cambio de tema a mitad            | *«Cancelá el de mañana. Ah, y ¿salieron los análisis?»* · o 1. *«Cancelá…»* 2. *«¿Salieron los análisis?»* | **Hoy** | Un dominio a la vez; desvío de hilo |
+| [ ] | Desvío turno → síntoma            | 1. *«Quiero un turno»* 2. *«Igual me duele mucho la cabeza…»* | **Hoy** | Puede pasar a guide + oferta; no ignorar el malestar |
+| [ ] | Forzar formato sí/no              | *«…contestame con si o con no»* (p. ej. representación/sobrino) | **Hoy** | Puede aclarar en más de una palabra; no inventar reglas legales |
 | [ ] | Enfado                            | *«Esto es un desastre, cancelen todo»*                                           | **Hoy**                   | Cancelar o queja; no malestar clínico |
 | [ ] | Confirmación corta                | 1. *(flow abierto)* 2. *«sí»* / *«el de las 10»*                                 | **Hoy**                   | Solo **dentro** de un flow ya abierto |
 
@@ -551,7 +562,12 @@ Si el mensaje mezcla temas, gana la **acción explícita** (cancelar, sacar turn
 | [ ] | *«Mi amigo tiene fiebre»*                   | Solicitar Atención                               | Fuera de perímetro; sin CTA clínico |
 | [ ] | *«Me duele…»* luego *«¿qué es teleconsulta?»* | Reusar botón / content del síntoma             | Desvío: guide o ambiguous; CTA del artículo |
 | [ ] | *«Tengo turno y no entiendo las preguntas»* | Operational cancelar/crear turno                 | Guide pre-consulta (concepto) + CTA al flow |
-| [ ] | *«Avisame cuando haya un hueco»*            | Lista de espera / “te anoto y te llamo”          | Sin cupo: otras fechas o mensaje. Adelanto solo si **ya hay** turno posterior, por **push** |
+| [ ] | *«¿Me multan si no voy?»*                   | Multa inventada en $                             | Política / guide prudente                                                                   |
+| [ ] | *«¿Puedo reprogramar y sigo con la misma cobertura?»* | Afirmar PAMI/obra social                | Reprogramar o política; cobertura = **Fuera** si pide cotizar                               |
+| [ ] | *«¿Este médico atiende remoto?»*            | “Sí/no” absoluto sin dato                        | Modalidad si hay contexto; si no, no inventar                                               |
+| [ ] | *«Necesito una sesión con una medium»*      | Solicitar Atención / turno clínico               | Fuera de perímetro                                                                          |
+| [ ] | *«¿Qué opinás de este médico…?»*            | Ranking o recomendación                          | Fuera; no compara profesionales                                                             |
+| [ ] | *«¿Cómo cancelo si ya pedí atención?»*      | Reabrir Solicitar Atención                       | Cancelar turno o estado del pedido                                                          |
 
 
 ---

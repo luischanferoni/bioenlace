@@ -26,6 +26,12 @@ class AsistenteConsultasQaCatalogTest extends Unit
             $this->assertSame('smoke', $case['seccion']);
             $this->assertNotEmpty($case['mensajes']);
         }
+
+        $borde = AsistenteConsultasQaService::filterCases(null, 'borde', null, null);
+        $this->assertNotEmpty($borde);
+        $ids = array_column($borde, 'id');
+        $this->assertContains('borde-llegar-tarde-10min', $ids);
+        $this->assertContains('fuera-sesion-medium', $ids);
     }
 
     public function testEvaluateExpectUserGoalAndIntent(): void

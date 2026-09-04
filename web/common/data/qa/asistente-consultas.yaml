@@ -2,6 +2,10 @@
 # Fuente humana: web/docs/qa/paciente/asistente-consultas.md
 # Runner: php yii qa/asistente-consultas --userId=<id>
 #
+# secciones: smoke | orientacion | pedir-atencion | citas | post-consulta | no-confundir | borde
+#   smoke = humo mínimo (dominios distintos a propósito: análisis ≠ recetas ≠ atenciones)
+#   borde = cadenas, desvíos de hilo, preguntas mixtas / agresivas de formato
+#
 # cobertura: Hoy | Pantalla | Fuera | Futuro
 # expect (opcional, evaluado en el último mensaje del caso):
 #   user_goal / user_goals_any
@@ -54,7 +58,7 @@ cases:
 
   - id: smoke-mis-analisis
     seccion: smoke
-    tipo: Mis análisis
+    tipo: Mis análisis (resultados lab — no confundir con “mis recetas”)
     cobertura: Hoy
     mensajes:
       - Mis análisis
@@ -65,7 +69,7 @@ cases:
 
   - id: smoke-mis-recetas
     seccion: smoke
-    tipo: Mis recetas
+    tipo: Mis recetas (medicación — dominio distinto a laboratorio)
     cobertura: Hoy
     mensajes:
       - Mis recetas
@@ -488,3 +492,229 @@ cases:
     expect:
       user_goal: guide
       must_not_offer_intent: atencion.necesito-atencion
+
+  # --- Borde: cadenas, desvíos, mixtas (frases reales / agresivas) ---
+  - id: borde-que-llevo-turno-martes
+    seccion: borde
+    tipo: Turno + qué llevar (un solo mensaje)
+    cobertura: Hoy
+    mensajes:
+      - Tengo turno el martes, ¿qué llevo?
+    expect:
+      user_goals_any:
+        - guide
+        - operational
+      must_not_intent:
+        - turnos.crear-como-paciente
+      reply_must_not_contain:
+        - "llevá ayunas"
+        - "traé análisis de"
+
+  - id: borde-cancelar-si-pedi-atencion
+    seccion: borde
+    tipo: Cancelar vs ya pedí atención
+    cobertura: Hoy
+    mensajes:
+      - ¿Cómo cancelo si ya pedí atención?
+    expect:
+      user_goals_any:
+        - guide
+        - operational
+        - ambiguous
+      must_not_offer_intent: atencion.necesito-atencion
+
+  - id: borde-llegar-tarde-10min
+    seccion: borde
+    tipo: Llegar tarde al turno
+    cobertura: Hoy
+    mensajes:
+      - Voy a tener problemas si llego 10min tarde al turno?
+    expect:
+      user_goal: guide
+      must_not_offer_intent: atencion.necesito-atencion
+      reply_must_not_contain:
+        - "te esperan 10"
+        - "no se registra en el sistema"
+        - "late_arrival"
+
+  - id: borde-llegar-tarde-cadena-foco
+    seccion: borde
+    tipo: Llegar tarde + follow-up minutos
+    cobertura: Hoy
+    mensajes:
+      - Voy a tener problemas si llego 10min tarde al turno?
+      - Y si llego 5 min más tarde?
+    expect:
+      user_goal: guide
+      must_not_offer_intent: atencion.necesito-atencion
+
+  - id: borde-llegar-tarde-variante
+    seccion: borde
+    tipo: Qué pasa si llego tarde
+    cobertura: Hoy
+    mensajes:
+      - Qué va a pasar si llego tarde?
+    expect:
+      user_goals_any:
+        - guide
+        - ambiguous
+      must_not_offer_intent: atencion.necesito-atencion
+      reply_must_not_contain:
+        - "te van a esperar seguro"
+
+  - id: fuera-opinion-medico
+    seccion: borde
+    tipo: Opinión / comparar médicos
+    cobertura: Fuera
+    mensajes:
+      - Qué opinás de este médico, será mejor que este otro?
+    expect:
+      must_not_intent:
+        - turnos.crear-como-paciente
+      must_not_offer_intent: atencion.necesito-atencion
+      reply_must_not_contain:
+        - "es mejor el"
+        - "te recomiendo al doctor"
+        - "elegí a"
+
+  - id: borde-representacion-sobrino-si-no
+    seccion: borde
+    tipo: Representación + sobrino + forzar sí/no
+    cobertura: Hoy
+    mensajes:
+      - Contame sobre la representación, se puede representar a un sobrino contestame con si o con no
+    expect:
+      user_goal: guide
+      must_not_offer_intent: atencion.necesito-atencion
+
+  - id: borde-representacion-cadena-sobrino
+    seccion: borde
+    tipo: Cadena representación → sobrino
+    cobertura: Hoy
+    mensajes:
+      - ¿Qué es la representación?
+      - Se puede representar a un sobrino? Contéstame sí o no
+    expect:
+      user_goal: guide
+      must_not_offer_intent: atencion.necesito-atencion
+
+  - id: fuera-sesion-medium
+    seccion: borde
+    tipo: Sesión con medium (no clínica)
+    cobertura: Fuera
+    mensajes:
+      - Necesito una sesión con una medium
+    expect:
+      must_not_offer_intent: atencion.necesito-atencion
+      must_not_intent:
+        - turnos.crear-como-paciente
+        - atencion.necesito-atencion
+
+  - id: borde-multa-si-no-voy
+    seccion: borde
+    tipo: ¿Me multan si no voy?
+    cobertura: Hoy
+    mensajes:
+      - ¿Me multan si no voy?
+    expect:
+      user_goals_any:
+        - guide
+        - operational
+      must_not_offer_intent: atencion.necesito-atencion
+      reply_must_not_contain:
+        - "te van a multar"
+
+  - id: borde-reprogramar-misma-cobertura
+    seccion: borde
+    tipo: Reprogramar + cobertura/obra social
+    cobertura: Hoy
+    mensajes:
+      - ¿Puedo reprogramar y sigo con la misma cobertura?
+    expect:
+      user_goals_any:
+        - guide
+        - operational
+        - ambiguous
+      must_not_offer_intent: atencion.necesito-atencion
+      reply_must_not_contain:
+        - "con PAMI sí"
+        - "tu cobertura cubre"
+
+  - id: borde-medico-atiende-remoto
+    seccion: borde
+    tipo: ¿Este médico atiende remoto?
+    cobertura: Hoy
+    mensajes:
+      - ¿Este médico atiende remoto?
+    expect:
+      user_goals_any:
+        - guide
+        - operational
+        - ambiguous
+      must_not_offer_intent: atencion.necesito-atencion
+      reply_must_not_contain:
+        - "sí, atiende por video siempre"
+        - "no atiende remoto nunca"
+
+  - id: borde-desvio-sintoma-a-producto
+    seccion: borde
+    tipo: Desvío síntoma → representación
+    cobertura: Hoy
+    mensajes:
+      - Me duele el pecho
+      - ¿Qué es la representación?
+    expect:
+      user_goal: guide
+      must_not_offer_intent: atencion.necesito-atencion
+
+  - id: borde-desvio-turno-a-lab
+    seccion: borde
+    tipo: Desvío cancelar → análisis
+    cobertura: Hoy
+    mensajes:
+      - Cancelá el turno de mañana
+      - Ah, y ¿salieron los análisis?
+    expect:
+      user_goals_any:
+        - operational
+        - guide
+        - ambiguous
+
+  - id: borde-desvio-turno-a-sintoma
+    seccion: borde
+    tipo: Desvío turno → síntoma
+    cobertura: Hoy
+    mensajes:
+      - Quiero un turno
+      - Igual me duele mucho la cabeza desde anoche
+    expect:
+      user_goals_any:
+        - guide
+        - operational
+        - ambiguous
+
+  - id: borde-mezcla-sintoma-y-turno
+    seccion: borde
+    tipo: Mezcla síntoma + sacar turno (un mensaje)
+    cobertura: Hoy
+    mensajes:
+      - Me duele la espalda, sacame un turno para el lunes
+    expect:
+      user_goals_any:
+        - operational
+        - guide
+        - ambiguous
+
+  - id: borde-cadena-citas-que-llevo
+    seccion: borde
+    tipo: Cadena listar → qué llevar
+    cobertura: Hoy
+    mensajes:
+      - ¿Qué turnos tengo?
+      - Tengo el del martes, ¿qué llevo?
+    expect:
+      user_goals_any:
+        - guide
+        - operational
+      reply_must_not_contain:
+        - "tenés que ir en ayunas"

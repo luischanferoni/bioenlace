@@ -99,6 +99,7 @@ $home = Yii::$app->getHomeUrl();
                                 [
                                     'label' => 'Acceso a datos',
                                     'items' => [
+                                        ['label' => 'Usuarios', 'url' => ['/user-management/user/index']],
                                         ['label' => 'Catálogo de permisos', 'url' => ['/permission-catalog/index']],
                                         ['label' => 'Grupos de atajos', 'url' => ['/shortcut-group/index']],
                                         ['label' => 'Roles RBAC', 'url' => ['/user-management/role/index']],

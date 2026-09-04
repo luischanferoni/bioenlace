@@ -12,12 +12,30 @@ use yii\data\ActiveDataProvider;
  */
 class UserSearch extends User
 {
+    /** @var string|null */
+    public $persona_apellido;
+
+    /** @var string|null */
+    public $persona_nombre;
+
+    /** @var string|null */
+    public $persona_documento;
+
     public function rules(): array
     {
         return [
             [['id', 'superadmin', 'status', 'created_at', 'updated_at', 'email_confirmed'], 'integer'],
-            [['username', 'gridRoleSearch', 'registration_ip', 'email'], 'safe'],
+            [['username', 'gridRoleSearch', 'registration_ip', 'email', 'persona_apellido', 'persona_nombre', 'persona_documento'], 'safe'],
         ];
+    }
+
+    public function attributeLabels(): array
+    {
+        return array_merge(parent::attributeLabels(), [
+            'persona_apellido' => 'Apellido',
+            'persona_nombre' => 'Nombre',
+            'persona_documento' => 'Documento',
+        ]);
     }
 
     public function scenarios(): array
@@ -27,7 +45,7 @@ class UserSearch extends User
 
     public function search(array $params): ActiveDataProvider
     {
-        $query = User::find()->with(['roles']);
+        $query = User::find()->with(['roles', 'persona']);
 
         if (!Yii::$app->user->isSuperadmin) {
             $query->andWhere(['superadmin' => 0]);
@@ -47,8 +65,16 @@ class UserSearch extends User
             return $dataProvider;
         }
 
+        $needsPersonaJoin = $this->persona_apellido !== null && $this->persona_apellido !== ''
+            || $this->persona_nombre !== null && $this->persona_nombre !== ''
+            || $this->persona_documento !== null && $this->persona_documento !== '';
+
         if ($this->gridRoleSearch) {
             $query->joinWith(['roles']);
+        }
+
+        if ($needsPersonaJoin) {
+            $query->joinWith(['persona']);
         }
 
         $query->andFilterWhere([
@@ -63,7 +89,10 @@ class UserSearch extends User
         ]);
 
         $query->andFilterWhere(['like', 'user.username', $this->username])
-            ->andFilterWhere(['like', 'user.email', $this->email]);
+            ->andFilterWhere(['like', 'user.email', $this->email])
+            ->andFilterWhere(['like', 'personas.apellido', $this->persona_apellido])
+            ->andFilterWhere(['like', 'personas.nombre', $this->persona_nombre])
+            ->andFilterWhere(['like', 'personas.documento', $this->persona_documento]);
 
         return $dataProvider;
     }

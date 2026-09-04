@@ -12,13 +12,15 @@ use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\widgets\Pjax;
- * @var yii\web\View $this
- * @var yii\data\ActiveDataProvider $dataProvider
- * @var common\models\search\UserSearch $searchModel
- */
+
+/* @var yii\web\View $this */
+/* @var yii\data\ActiveDataProvider $dataProvider */
+/* @var common\models\search\UserSearch $searchModel */
 
 $this->title = UserManagementCompat::t('back', 'Users');
 $this->params['breadcrumbs'][] = $this->title;
+
+$roleFilter = RbacRoleQueryService::getAllRolesForFilter();
 ?>
 <div class="user-index">
 
@@ -29,11 +31,11 @@ $this->params['breadcrumbs'][] = $this->title;
 
 			<div class="row">
 				<div class="col-sm-8">
-					<div class="alert alert-info alert-dismissable">
-						<button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>
-						<i class="glyphicon glyphicon-info-sign"></i> Para agregar un usuario primero debe registrar los datos de la persona
-
-						<?= Html::a('Buscar Persona', ['/personas/index'], ['class' => 'btn btn-primary']) ?>
+					<div class="alert alert-info alert-dismissible fade show" role="alert">
+						<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+						Para agregar un usuario primero debe registrar los datos de la persona.
+						Filtrá por rol (p. ej. paciente) para ver quién tiene acceso con ese perfil.
+						<?= Html::a('Buscar Persona', ['/personas/index'], ['class' => 'btn btn-primary btn-sm ms-2']) ?>
 					</div>
 				</div>
 
@@ -76,6 +78,27 @@ $this->params['breadcrumbs'][] = $this->title;
 							'visible' => Yii::$app->user->isSuperadmin,
 						],
 						[
+							'attribute' => 'persona_apellido',
+							'label' => 'Apellido',
+							'value' => static function (User $model) {
+								return $model->persona->apellido ?? '';
+							},
+						],
+						[
+							'attribute' => 'persona_nombre',
+							'label' => 'Nombre',
+							'value' => static function (User $model) {
+								return $model->persona->nombre ?? '';
+							},
+						],
+						[
+							'attribute' => 'persona_documento',
+							'label' => 'Documento',
+							'value' => static function (User $model) {
+								return $model->persona->documento ?? '';
+							},
+						],
+						[
 							'label' => 'Username',
 							'attribute' => 'username',
 							'value' => function (User $model) {
@@ -97,9 +120,14 @@ $this->params['breadcrumbs'][] = $this->title;
 						],
 						[
 							'attribute' => 'gridRoleSearch',
-							'filter' => ArrayHelper::map(RbacRoleQueryService::getAvailableRoles(Yii::$app->user->isSuperadmin), 'name', 'description'),
+							'filter' => $roleFilter,
 							'value' => function (User $model) {
-								return implode('</br>', ArrayHelper::map($model->roles, 'name', 'name'));
+								$names = ArrayHelper::getColumn($model->roles, 'name');
+								if ($names === []) {
+									return '<span class="text-muted">sin roles</span>';
+								}
+
+								return Html::encode(implode(', ', $names));
 							},
 							'format' => 'raw',
 							'visible' => User::hasPermission('viewUserRoles'),

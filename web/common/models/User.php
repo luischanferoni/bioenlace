@@ -33,6 +33,7 @@ use yii\web\IdentityInterface;
  * @property int|null $activation_code_expires_at
  * @property string|null $repeat_password
  * @property string|null $gridRoleSearch
+ * @property-read \common\models\Person\Persona|null $persona
  */
 class User extends ActiveRecord implements IdentityInterface
 {
@@ -398,6 +399,16 @@ class User extends ActiveRecord implements IdentityInterface
             \common\models\rbac\AuthRole::class,
             ['name' => 'item_name']
         )->viaTable('auth_assignment', ['user_id' => 'id']);
+    }
+
+    /**
+     * Persona demográfica vinculada (`personas.id_user`).
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getPersona()
+    {
+        return $this->hasOne(\common\models\Person\Persona::class, ['id_user' => 'id']);
     }
 
     public function beforeSave($insert)

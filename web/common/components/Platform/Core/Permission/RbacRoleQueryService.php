@@ -60,4 +60,22 @@ final class RbacRoleQueryService
 
         return $asArray ? ArrayHelper::map($result, 'name', 'name') : $result;
     }
+
+    /**
+     * Todos los roles RBAC para filtro de listados admin (p. ej. usuarios).
+     * No usar para asignación PES: ahí sigue {@see getAvailableRoles()}.
+     *
+     * @return array<string, string> name => etiqueta (description o name)
+     */
+    public static function getAllRolesForFilter(): array
+    {
+        $roles = AuthRole::find()->orderBy(['name' => SORT_ASC])->all();
+        $map = [];
+        foreach ($roles as $role) {
+            $label = trim((string) ($role->description ?? ''));
+            $map[$role->name] = $label !== '' ? $label : $role->name;
+        }
+
+        return $map;
+    }
 }

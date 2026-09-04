@@ -21,6 +21,9 @@ $esAdmin = User::hasRole(['Admin']);
 
 <div class="card">
     <div class="card-body">
+        <p class="mb-2">
+            <?= Html::a('Ver cuentas y roles', ['/user-management/user/index'], ['class' => 'btn btn-outline-secondary btn-sm']) ?>
+        </p>
         <div class="custom-table-effect">
             <br>
             <?= GridView::widget([

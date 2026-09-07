@@ -124,7 +124,7 @@ final class AssistantFirstIaAdapter
         if (preg_match(
             '/\b(mis turnos|mis citas|que turnos tengo|qué turnos tengo|proximos? turnos|próximos? turnos|turnos pendientes)\b/u',
             $folded
-        )) {
+        ) && !self::isGestionTurnoExistente($folded)) {
             $tags[] = 'mis_turnos';
         }
 
@@ -211,7 +211,7 @@ final class AssistantFirstIaAdapter
         $isGestion = self::isGestionTurnoExistente($folded);
         $out = [];
         foreach ($tags as $tag) {
-            if ($isGestion && ($tag === 'pedido_turno_sin_destino' || $tag === 'sacar_turno')) {
+            if ($isGestion && ($tag === 'pedido_turno_sin_destino' || $tag === 'sacar_turno' || $tag === 'mis_turnos')) {
                 continue;
             }
             if ($hasDestino && $tag === 'pedido_turno_sin_destino') {

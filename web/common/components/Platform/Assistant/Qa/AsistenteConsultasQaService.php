@@ -438,12 +438,33 @@ final class AsistenteConsultasQaService
         if ($direct !== '') {
             return $direct;
         }
-        $flow = $envelope['flow'] ?? null;
-        if (is_array($flow)) {
-            return AssistantDraftNormalizer::scalarString($flow['intent_id'] ?? '');
+
+        // Envelope público v3: kind=flow → session.intent_id
+        $session = $envelope['session'] ?? null;
+        if (is_array($session)) {
+            $fromSession = AssistantDraftNormalizer::scalarString($session['intent_id'] ?? '');
+            if ($fromSession !== '') {
+                return $fromSession;
+            }
         }
 
-        return '';
+        $flow = $envelope['flow'] ?? null;
+        if (is_array($flow)) {
+            $fromFlow = AssistantDraftNormalizer::scalarString($flow['intent_id'] ?? '');
+            if ($fromFlow !== '') {
+                return $fromFlow;
+            }
+        }
+
+        $match = $envelope['match'] ?? null;
+        if (is_array($match)) {
+            $fromMatch = AssistantDraftNormalizer::scalarString($match['action_id'] ?? '');
+            if ($fromMatch !== '') {
+                return $fromMatch;
+            }
+        }
+
+        return AssistantDraftNormalizer::scalarString($envelope['flow_action_id'] ?? '');
     }
 
     /**
@@ -780,6 +801,10 @@ final class AsistenteConsultasQaService
         }
         if ($flowIntent !== '') {
             $lines[] = '  intent: ' . $flowIntent;
+        }
+        $kind = trim((string) ($observation['kind'] ?? ''));
+        if ($kind !== '') {
+            $lines[] = '  kind: ' . $kind;
         }
         self::appendPreprocessContextLines($lines, $normalized, $tags, $areas, $hint);
 

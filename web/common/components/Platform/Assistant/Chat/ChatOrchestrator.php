@@ -82,6 +82,15 @@ final class ChatOrchestrator
             return $text;
         }
 
+        // Flow sin copy de paso: no ocultar el arranque como “Consulta procesada” vacío.
+        $kind = AssistantDraftNormalizer::scalarString($envelope['kind'] ?? '');
+        if ($kind === 'flow') {
+            $intentId = AssistantDraftNormalizer::scalarString($envelope['session']['intent_id'] ?? ($envelope['intent_id'] ?? ''));
+            if ($intentId !== '') {
+                return 'Abriendo «' . $intentId . '»';
+            }
+        }
+
         return 'Consulta procesada';
     }
 

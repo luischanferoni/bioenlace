@@ -4,6 +4,7 @@ namespace common\components\Platform\Assistant\Chat\Routing\Handlers;
 
 use common\components\Platform\Assistant\Chat\Channels\Operational\OperationalChannel;
 use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
+use common\components\Platform\Assistant\Copy\AssistantChannelCopy;
 use common\components\Platform\Assistant\Service\AssistantDraftNormalizer;
 
 /**
@@ -63,7 +64,7 @@ final class ClaraRoutingHandler
 
         $error = AssistantDraftNormalizer::scalarString($out['error'] ?? '');
         if ($error === '') {
-            $error = 'No se pudo abrir el trámite.';
+            $error = AssistantChannelCopy::t('intent_not_allowed');
         }
 
         return [

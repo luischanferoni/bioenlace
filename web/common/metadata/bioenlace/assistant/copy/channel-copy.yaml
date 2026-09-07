@@ -51,3 +51,8 @@ messages:
   full_match_intent_fallback:
     default: "Te ayudo con {label}."
     whatsapp_paciente: "Dale, vamos con {label}."
+
+  # Clara / CTA: el usuario no puede ejecutar ese trámite (sin grant ni ruta API).
+  intent_not_allowed:
+    default: "Entendí tu pedido, pero desde tu cuenta no podés hacer ese trámite acá. Si creés que debería estar disponible, consultá en tu centro de salud."
+    whatsapp_paciente: "Entendí lo que pedís, pero con esta cuenta no puedo abrir ese trámite. Si necesitás ayuda, escribinos o consultá en tu centro."

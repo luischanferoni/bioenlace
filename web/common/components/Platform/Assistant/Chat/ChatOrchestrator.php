@@ -7,6 +7,7 @@ use common\components\Platform\Assistant\Chat\ChatPreprocessContext;
 use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
 use common\components\Platform\Assistant\Chat\Routing\ChatRouter;
+use common\components\Platform\Assistant\Copy\AssistantChannelCopy;
 use common\components\Platform\Assistant\Service\AssistantDraftNormalizer;
 use common\components\Platform\Core\Permission\IntentAccessService;
 use common\components\Platform\Assistant\SubIntentEngine\FlowDraftHydratorService;
@@ -35,7 +36,14 @@ final class ChatOrchestrator
 
         if ($intentId !== '') {
             if (!IntentAccessService::userCanExecuteIntent($userId, $intentId)) {
-                return ['success' => false, 'error' => 'No tiene permiso para ejecutar esta acción.'];
+                $msg = AssistantChannelCopy::t('intent_not_allowed');
+
+                return [
+                    'kind' => 'message',
+                    'text' => $msg,
+                    'success' => false,
+                    'error' => $msg,
+                ];
             }
 
             $content = AssistantDraftNormalizer::scalarString($body['content'] ?? '');

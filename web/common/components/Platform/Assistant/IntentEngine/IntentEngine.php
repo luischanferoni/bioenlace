@@ -46,7 +46,7 @@ final class IntentEngine
             if ($item === null) {
                 return [
                     'success' => false,
-                    'error' => 'action_id no permitido o inexistente para este usuario.',
+                    'error' => AssistantChannelCopy::t('intent_not_allowed'),
                     'actions' => [],
                 ];
             }
@@ -184,7 +184,7 @@ final class IntentEngine
         if ($userId > 0 && self::requiresIntentPermissionCheck($item->action_id) && !IntentAccessService::userCanExecuteIntent($userId, $item->action_id)) {
             return [
                 'success' => false,
-                'error' => 'No tiene permiso para ejecutar esta acción.',
+                'error' => AssistantChannelCopy::t('intent_not_allowed'),
                 'actions' => [],
             ];
         }

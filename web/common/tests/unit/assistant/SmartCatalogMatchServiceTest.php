@@ -58,25 +58,35 @@ class SmartCatalogMatchServiceTest extends Unit
         $this->assertSame('fuera_de_his', $result->best?->routingResult);
     }
 
-    public function testPlanningLogCapturesMatchSnapshot(): void
+    public function testBareTurnoDoesNotRankArticleWithoutTrigger(): void
     {
-        $firstIa = [
-            'normalized_text' => 'contame sobre representacion',
-            'necesidad_usuario' => 'Entender representacion de menores.',
-            'routing_hint' => 'directo',
-            'tags' => ['representacion'],
-            'context_areas' => ['representation'],
+        $result = SmartCatalogMatchService::match([
+            'normalized_text' => 'quiero un turno',
+            'tags' => ['pedido_turno_sin_destino', 'appointments'],
+            'context_areas' => ['appointments'],
             'extractions' => [],
-            'intent_ids_hint' => [],
-        ];
-        $match = SmartCatalogMatchService::match($firstIa, 0);
-        AssistantPlanningLogService::begin($firstIa, $match->ranked);
-        AssistantPlanningLogService::setRoutingResult('clara');
-        AssistantPlanningLogService::setFinalPath('1ia_direct');
+        ], 0);
 
-        $snap = AssistantPlanningLogService::snapshot();
-        $this->assertIsArray($snap);
-        $this->assertSame('clara', $snap['routing_result']);
-        $this->assertNotEmpty($snap['catalog_matches']);
+        $this->assertSame('agenda-pedido-sin-destino', $result->best?->id);
+        $this->assertTrue($result->isClearWinner);
+        $ids = array_column($result->ranked, 'catalog_id');
+        $this->assertNotContains('articulo-representacion', $ids);
+        $this->assertSame(
+            ['turnos.crear-como-paciente', 'atencion.necesito-atencion'],
+            $result->best?->ctaIntentIds
+        );
+    }
+
+    public function testNoBaseScoreLeakWithoutTriggerHit(): void
+    {
+        $result = SmartCatalogMatchService::match([
+            'normalized_text' => 'hola',
+            'tags' => [],
+            'context_areas' => [],
+            'extractions' => [],
+        ], 0);
+
+        $this->assertTrue($result->isEmpty());
+        $this->assertSame([], $result->ranked);
     }
 }

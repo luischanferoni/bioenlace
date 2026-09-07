@@ -27,6 +27,19 @@ final class DeclarativePlanService
         $toolIds = [];
         $reasons = [];
 
+        // Zona C / orientación: match_only + CTAs → síntesis con semántica, sin volcar HIS.
+        if (self::isCtaOrientationOnly($match)) {
+            /** @var SmartCatalogEntry $best */
+            $best = $match->best;
+
+            return new DeclarativePlanResult(
+                [],
+                'cta_orientation:' . $best->id,
+                false,
+                null,
+            );
+        }
+
         $loadPlan = AssistantContextAreaAspectResolver::plan(
             $contextAreas,
             $extractions,
@@ -74,6 +87,21 @@ final class DeclarativePlanService
             $needsPlanner,
             $plannerReason,
         );
+    }
+
+    /**
+     * Pedido incompleto con puertas CTA declaradas: no hace falta cargar aspectos del área.
+     */
+    private static function isCtaOrientationOnly(?SmartCatalogMatchResult $match): bool
+    {
+        if ($match === null || $match->best === null) {
+            return false;
+        }
+        $best = $match->best;
+
+        return $best->matchOnly
+            && $best->routingResult === 'incompletas'
+            && $best->ctaIntentIds !== [];
     }
 
     public static function aspectToolId(string $aspectKey): string

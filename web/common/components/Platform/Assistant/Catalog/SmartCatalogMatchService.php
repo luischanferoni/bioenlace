@@ -51,6 +51,7 @@ final class SmartCatalogMatchService
             }
 
             $score = self::scoreEntry($entry, $normalized, $tags, $areas, $intentHints);
+            // Sin hit de trigger (tag/área/frase/keyword/hint) no rankear: evita leak por priority base.
             if ($score <= 0) {
                 continue;
             }
@@ -126,7 +127,7 @@ final class SmartCatalogMatchService
             return 0;
         }
 
-        $score = (int) floor($entry->priority / 10);
+        $hit = 0;
 
         foreach ($entry->triggerTags as $triggerTag) {
             // El preprocess copia cada context_area a tags; no puntuar dos veces el mismo eje.
@@ -134,34 +135,38 @@ final class SmartCatalogMatchService
                 continue;
             }
             if (in_array($triggerTag, $tags, true)) {
-                $score += self::SCORE_TAG;
+                $hit += self::SCORE_TAG;
             }
         }
 
         foreach ($entry->triggerContextAreas as $triggerArea) {
             if (in_array($triggerArea, $areas, true)) {
-                $score += self::SCORE_CONTEXT_AREA;
+                $hit += self::SCORE_CONTEXT_AREA;
             }
         }
 
         if ($normalized !== '') {
             foreach ($entry->triggerPhrases as $phrase) {
                 if ($phrase !== '' && str_contains($normalized, $phrase)) {
-                    $score += self::SCORE_PHRASE;
+                    $hit += self::SCORE_PHRASE;
                 }
             }
             foreach ($entry->triggerKeywords as $keyword) {
                 if ($keyword !== '' && str_contains($normalized, $keyword)) {
-                    $score += self::SCORE_KEYWORD;
+                    $hit += self::SCORE_KEYWORD;
                 }
             }
         }
 
         if ($entry->toolType === 'intent' && $entry->toolRef !== '' && isset($intentHints[$entry->toolRef])) {
-            $score += self::SCORE_INTENT_HINT;
+            $hit += self::SCORE_INTENT_HINT;
         }
 
-        return $score;
+        if ($hit === 0) {
+            return 0;
+        }
+
+        return (int) floor($entry->priority / 10) + $hit;
     }
 
     /**

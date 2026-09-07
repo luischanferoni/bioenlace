@@ -117,4 +117,22 @@ class DeclarativePlanServiceTest extends Unit
         $snap = AssistantPlanningLogService::snapshot();
         $this->assertSame('fuera_de_his', $snap['routing_result'] ?? null);
     }
+
+    public function testBareTurnoOrientationPlanHasNoHisTools(): void
+    {
+        $evaluation = SmartCatalogRoutingService::evaluate([
+            'normalized_text' => 'Quiero un turno',
+            'user_goal' => 'guide',
+            'routing_hint' => 'incompletas',
+            'tags' => ['pedido_turno_sin_destino', 'appointments'],
+            'context_areas' => ['appointments'],
+            'extractions' => [],
+        ], 1);
+
+        $this->assertTrue($evaluation->decision->isIncompletas());
+        $this->assertSame('agenda-pedido-sin-destino', $evaluation->decision->catalogEntry?->id);
+        $this->assertSame([], $evaluation->declarativePlan->toolIds);
+        $this->assertFalse($evaluation->declarativePlan->needsPlanner);
+        $this->assertStringContainsString('cta_orientation', $evaluation->declarativePlan->reason);
+    }
 }

@@ -3,12 +3,15 @@
 namespace common\components\Platform\Assistant\Planning;
 
 use common\components\Platform\Assistant\Catalog\SmartCatalogRegistry;
+use common\components\Platform\Assistant\Catalog\YamlIntentManifestLoader;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalog;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
-use common\components\Platform\Core\Permission\IntentAccessService;
 
 /**
  * Resuelve CTA(s) post-síntesis desde catálogo inteligente (sin regex).
+ *
+ * El smart-catalog declara qué ofrecer; el label sale de action_name / catálogo.
+ * La autorización de ejecución sigue en ChatOrchestrator al lanzar el intent.
  */
 final class SynthesisCtaResolver
 {
@@ -31,7 +34,7 @@ final class SynthesisCtaResolver
             return [];
         }
 
-        $intentIds = self::resolveIntentIds($evaluation);
+        $intentIds = self::declaredIntentIds($evaluation);
         if ($intentIds === []) {
             return [];
         }
@@ -39,13 +42,10 @@ final class SynthesisCtaResolver
         $catalog = UiActionCatalog::forUser($userId);
         $out = [];
         foreach ($intentIds as $intentId) {
-            if (!IntentAccessService::userCanExecuteIntent($userId, $intentId)) {
+            $label = self::labelForIntent($intentId, $catalog);
+            if ($label === '') {
                 continue;
             }
-            $item = $catalog->byActionId[$intentId] ?? null;
-            $label = $item instanceof UiActionCatalogItem && $item->display_name !== ''
-                ? $item->display_name
-                : $intentId;
             $out[] = [
                 'label' => $label,
                 'intent_id' => $intentId,
@@ -56,9 +56,11 @@ final class SynthesisCtaResolver
     }
 
     /**
+     * Intent ids declarados por el match (sin filtrar por usuario).
+     *
      * @return list<string>
      */
-    private static function resolveIntentIds(SmartCatalogRoutingEvaluation $evaluation): array
+    public static function declaredIntentIds(SmartCatalogRoutingEvaluation $evaluation): array
     {
         $fromEntry = $evaluation->decision->catalogEntry?->ctaIntentIds ?? [];
         if ($fromEntry !== []) {
@@ -77,5 +79,21 @@ final class SynthesisCtaResolver
         }
 
         return [];
+    }
+
+    private static function labelForIntent(string $intentId, UiActionCatalog $catalog): string
+    {
+        $item = $catalog->byActionId[$intentId] ?? null;
+        if ($item instanceof UiActionCatalogItem && $item->display_name !== '') {
+            return $item->display_name;
+        }
+
+        $manifest = YamlIntentManifestLoader::load($intentId);
+        if ($manifest === null) {
+            return '';
+        }
+        $name = trim((string) ($manifest['action_name'] ?? ''));
+
+        return $name !== '' ? $name : $intentId;
     }
 }

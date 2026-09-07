@@ -21,16 +21,13 @@ cases:
   # --- Smoke: una fila por puerta mínima ---
   - id: smoke-quiero-turno
     seccion: smoke
-    tipo: Solo sacar turno
+    tipo: Pedido bare → incompletas + CTAs
     cobertura: Hoy
     mensajes:
       - Quiero un turno
     expect:
-      user_goal: operational
-      intent_ids_any:
-        - turnos.crear-como-paciente
-      must_not_intent:
-        - atencion.necesito-atencion
+      user_goal: guide
+      offer_intent: turnos.crear-como-paciente
 
   - id: smoke-sintoma-cabeza
     seccion: smoke
@@ -228,10 +225,12 @@ cases:
     tipo: Cadena reserva → refinar
     cobertura: Hoy
     mensajes:
-      - Quiero un turno
+      - Turno en odontología
       - La semana que viene a la tarde
     expect:
       user_goal: operational
+      intent_ids_any:
+        - turnos.crear-como-paciente
 
   # --- Citas: discriminadores (no más trámites gemelos de cancelar) ---
   - id: citas-historial

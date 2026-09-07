@@ -10,6 +10,9 @@ use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
  */
 final class AssistantFirstIaAdapter
 {
+    /** Destino usable para agenda pura (oferta / profesional / “para mi …”). */
+    private const DESTINO_AGENDA = '/\b(con|en|para)\s+\S+/u';
+
     /**
      * @param array<string, mixed> $preprocess
      * @return array{
@@ -32,8 +35,10 @@ final class AssistantFirstIaAdapter
         $tags = ChatPreprocessService::normalizeTags($preprocess['tags'] ?? []);
         $tags = array_values(array_unique(array_merge(
             $tags,
-            self::inferTags($normalized, $areas, $goal, $tags !== [])
+            self::inferOperationalTags($normalized, $areas),
+            self::inferSoftTags($normalized, $goal, $tags !== [])
         )));
+        $tags = self::reconcileAgendaTags($tags, $normalized);
 
         $actionText = trim((string) ($preprocess['action_text'] ?? ''));
         $necesidad = trim((string) ($preprocess['necesidad_usuario'] ?? ''));
@@ -69,21 +74,79 @@ final class AssistantFirstIaAdapter
     }
 
     /**
+     * Tags que separan puertas del smart-catalog (A/B/C vs ver-turnos). Siempre.
+     *
      * @param list<string> $areas
-     * @param list<string> $existingTags
      * @return list<string>
      */
-    private static function inferTags(string $normalized, array $areas, string $goal, bool $skipHeuristics = false): array
+    private static function inferOperationalTags(string $normalized, array $areas): array
     {
-        if ($skipHeuristics) {
-            return [];
-        }
-
         $tags = [];
         foreach ($areas as $area) {
             $tags[] = $area;
         }
 
+        if ($normalized === '') {
+            return array_values(array_unique($tags));
+        }
+
+        $folded = ChatChannelPolicy::fold($normalized);
+
+        if (ChatChannelPolicy::isStudyOrPracticeRequest($normalized)) {
+            $tags[] = 'estudio';
+        } elseif (
+            ChatChannelPolicy::requestsOperationalTramiteExecution($normalized)
+            && ChatChannelPolicy::isSchedulingRequest($normalized)
+            && !ChatChannelPolicy::isClinicalSymptomContent($normalized)
+        ) {
+            if (self::hasAgendaDestino($folded)) {
+                $tags[] = 'sacar_turno';
+            } else {
+                $tags[] = 'pedido_turno_sin_destino';
+            }
+        }
+
+        if (preg_match(
+            '/\b(mis turnos|mis citas|que turnos tengo|qué turnos tengo|proximos? turnos|próximos? turnos|turnos pendientes)\b/u',
+            $folded
+        )) {
+            $tags[] = 'mis_turnos';
+        }
+
+        if (preg_match(
+            '/\b(ultima vez que fui|última vez que fui|cuando fui al|cuándo fui al|cuando fue la ultima|cuándo fue la última)\b/u',
+            $folded
+        )) {
+            $tags[] = 'ultima_vez_oferta';
+        }
+
+        if (preg_match(
+            '/\b(controlar|control de seguimiento|pedir un control|seguimiento tratamiento|renovar medicacion|renovar medicación|consulta por mensaje)\b/u',
+            $folded
+        )) {
+            $tags[] = 'control';
+        }
+
+        return array_values(array_unique($tags));
+    }
+
+    private static function hasAgendaDestino(string $folded): bool
+    {
+        return (bool) preg_match(self::DESTINO_AGENDA, $folded);
+    }
+
+    /**
+     * Heurísticas blandas: no pisan si la 1ª IA ya etiquetó.
+     *
+     * @return list<string>
+     */
+    private static function inferSoftTags(string $normalized, string $goal, bool $skipIfIaTagged): array
+    {
+        if ($skipIfIaTagged) {
+            return [];
+        }
+
+        $tags = [];
         if ($normalized !== '') {
             if (ChatChannelPolicy::isAppointmentPolicyQuestion($normalized)) {
                 $tags[] = 'llegar_tarde';
@@ -105,6 +168,33 @@ final class AssistantFirstIaAdapter
         }
 
         return array_values(array_unique($tags));
+    }
+
+    /**
+     * Evita que la 1ª IA deje `sacar_turno` y `pedido_turno_sin_destino` a la vez.
+     *
+     * @param list<string> $tags
+     * @return list<string>
+     */
+    private static function reconcileAgendaTags(array $tags, string $normalized): array
+    {
+        if ($normalized === '') {
+            return $tags;
+        }
+        $folded = ChatChannelPolicy::fold($normalized);
+        $hasDestino = self::hasAgendaDestino($folded);
+        $out = [];
+        foreach ($tags as $tag) {
+            if ($hasDestino && $tag === 'pedido_turno_sin_destino') {
+                continue;
+            }
+            if (!$hasDestino && $tag === 'sacar_turno') {
+                continue;
+            }
+            $out[] = $tag;
+        }
+
+        return array_values(array_unique($out));
     }
 
     private static function routingHintFromGoal(string $goal): string

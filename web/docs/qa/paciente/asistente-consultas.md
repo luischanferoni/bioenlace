@@ -127,7 +127,7 @@ Detalle urgencia / triage: [triage-reserva-turno.md](../../producto/triage-reser
 
 Atajo **Solicitar Atención** (`atencion.necesito-atencion`): malestar nuevo, estudio o práctica, control/seguimiento, urgencia.
 
-*«Quiero un turno»* / *«sacar turno»* sin motivo clínico → `turnos.crear-como-paciente` (agenda pura). Pasos: [turnos.md](./turnos.md).
+|*«Quiero un turno»* bare → routing **incompletas** + CTAs (agenda vs Solicitar Atención). Con destino (*«turno en odontología»*, *«con la doctora Pérez»*) → `turnos.crear-como-paciente`. Pasos: [turnos.md](./turnos.md).
 
 
 | ✓   | Tipo                         | Ejemplo                                                              | Cobertura | Qué deberías ver                                                                                                                                                                                                                                                                                                   |
@@ -145,7 +145,7 @@ Atajo **Solicitar Atención** (`atencion.necesito-atencion`): malestar nuevo, es
 | [ ] | Pedir un servicio del centro | *«Turno en odontología»*                                             | **Hoy**   | Elige oferta del **centro**, no “especialidad” suelta                                                                                                                                                                                                                                                              |
 | [ ] | Pedir “el mío” por oferta    | *«Solicita un turno para mi dentista»*                               | **Hoy**   | `turnos.crear-como-paciente` (no charla empática). Cruza la mención con la oferta usando **sinónimos de servicios** (servicio-synonyms.yaml): “dentista” → ODONTOLOGIA, “oculista” → OFTALMOLOGIA, etc. Si aun así no matchea (el centro no tiene ese servicio), elegís manualmente. **No** confirma el turno solo |
 | [ ] | Pedir un especialista        | *«Necesito un cardiólogo»*                                           | **Hoy**   | Hub de medicina clínica; especialista suele pedir derivación vigente                                                                                                                                                                                                                                               |
-| [ ] | Solo sacar turno             | *«Quiero un turno»*                                                  | **Hoy**   | `turnos.crear-como-paciente`                                                                                                                                                                                                                                                                                       |
+| [ ] | Solo sacar turno             | *«Quiero un turno»*                                                  | **Hoy**   | incompletas + CTAs (especialista / Solicitar Atención); no abre flow solo |
 
 
 **1.** enviá · **2.** enviá (no en el mismo mensaje).

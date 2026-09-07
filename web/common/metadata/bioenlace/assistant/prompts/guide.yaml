@@ -9,7 +9,7 @@
 #   {scoped_system_records} — volcado context:his: loaders por aspecto según áreas y extracciones.
 #   {clinical_record_block} — resumen clínico del paciente (adjunto clinical_record); solo si el
 #     área clinical_record está activa y hay datos.
-#   {intent_semantics} — capacidades del catálogo filtradas por áreas; bloque context:intent_semantics.
+#   {intent_semantics} — flows ofrecibles: objective + pasos (IntentSemanticsPromptFormatter).
 #   {article_block} — artículo de ayuda editorial (adjunto article); vacío si no aplica.
 #   {conversation_history} — historial reciente filtrado por foco guide (guide_focus).
 #   {current_message} — mensaje actual: normalized_text del preprocess o texto crudo del usuario.
@@ -40,7 +40,7 @@ stable_prompt: |
 
   {clinical_record_block}
 
-  Funcionalidades que este usuario puede ejecutar en el sistema:
+  Funcionalidades / flujos que este usuario puede ejecutar (objetivo y pasos):
   {intent_semantics}
 
   {article_block}

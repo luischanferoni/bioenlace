@@ -3,7 +3,6 @@ version: 1
 shortcut:
   hidden: true
 action_name: 'ABM plantillas epicrisis'
-description: 'Administrar plantillas de epicrisis de internación por efector.'
 rbac_route: /api/clinical/internacion-epicrisis-plantilla/listar-admin
 keywords:
   - 'plantillas epicrisis'

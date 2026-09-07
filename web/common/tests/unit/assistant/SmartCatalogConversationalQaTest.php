@@ -50,8 +50,26 @@ class SmartCatalogConversationalQaTest extends Unit
                 'quiero un turno con el cardiologo',
                 [
                     'routing_hint' => 'clara',
-                    'tags' => ['sacar_turno', 'turno'],
+                    'tags' => ['sacar_turno'],
                     'context_areas' => ['appointments'],
+                ],
+                ['clara'],
+            ],
+            'turno_bare' => [
+                'quiero un turno',
+                [
+                    'routing_hint' => 'incompletas',
+                    'tags' => ['pedido_turno_sin_destino'],
+                    'context_areas' => ['appointments'],
+                ],
+                ['incompletas'],
+            ],
+            'estudio_ecografia' => [
+                'necesito una ecografia',
+                [
+                    'routing_hint' => 'clara',
+                    'tags' => ['estudio'],
+                    'context_areas' => [],
                 ],
                 ['clara'],
             ],

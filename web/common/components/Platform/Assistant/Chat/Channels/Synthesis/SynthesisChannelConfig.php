@@ -55,6 +55,7 @@ final class SynthesisChannelConfig
             'context_his_areas_lines' => ['Ámbito de la consulta:'],
             'scoped_system_records' => ['Registros del sistema para responder:'],
             'necesidad_usuario' => ['Necesidad del usuario (explicitada por el sistema):'],
+            'intent_semantics' => ['Flujos que el sistema puede ofrecer (objetivo y pasos; no inventes pasos que no figuren):'],
         ];
 
         foreach ($stripWhenEmpty as $dataKey => $headerLines) {

@@ -82,15 +82,14 @@ final class IntentMatchLaunchCopy
     private static function summaryFromItem(UiActionCatalogItem $item): string
     {
         $sem = $item->intent_semantics;
-        if (!is_array($sem)) {
-            return trim($item->description);
-        }
-        $summary = trim((string) ($sem['summary'] ?? ''));
-        if ($summary !== '') {
-            return $summary;
+        if (is_array($sem)) {
+            $objective = trim((string) ($sem['objective'] ?? $sem['summary'] ?? ''));
+            if ($objective !== '') {
+                return $objective;
+            }
         }
 
-        return trim($item->description);
+        return self::fallbackLabel($item);
     }
 
     /**

@@ -49,6 +49,11 @@ fields:
   cta_intent_id:
     type: string
     optional: true
+    notes: CTA único post-síntesis (legacy). Preferir cta_intent_ids.
+  cta_intent_ids:
+    type: list<string>
+    optional: true
+    notes: Uno o más intent_id ofrecidos como botones tras routing incompletas.
   priority:
     type: integer
     default: 50

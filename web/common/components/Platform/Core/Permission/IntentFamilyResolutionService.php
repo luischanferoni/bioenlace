@@ -62,9 +62,9 @@ final class IntentFamilyResolutionService
                 continue;
             }
             $semantics = is_array($manifest['intent_semantics'] ?? null) ? $manifest['intent_semantics'] : [];
-            $summary = trim((string) ($semantics['summary'] ?? ''));
+            $summary = trim((string) ($semantics['objective'] ?? $semantics['summary'] ?? ''));
             if ($summary === '') {
-                $summary = trim((string) ($manifest['description'] ?? ''));
+                $summary = trim((string) ($manifest['action_name'] ?? $intentId));
             }
             $options[] = [
                 'intent_id' => $intentId,

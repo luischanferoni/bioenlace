@@ -1,6 +1,6 @@
 # Catálogo inteligente del asistente — triggers → tools ejecutables.
 # Schema: assistant/schemas/smart-catalog-entry-v1.yaml
-# Consumidor: SmartCatalogRegistry / SmartCatalogMatchService
+# Frontera A/B/C: .cursor/rules/asistente-intents-frontera-sin-solape.mdc
 version: 1
 
 entries:
@@ -25,24 +25,111 @@ entries:
         - reacción al medicamento
       keywords: [panza, cabeza, fiebre, vomito, vómito]
 
+  - id: atencion-estudio
+    tool_type: intent
+    tool_ref: atencion.necesito-atencion
+    routing_result: clara
+    priority: 92
+    triggers:
+      tags: [estudio, pedido_estudio, acto_clinico]
+      phrases:
+        - necesito una ecografia
+        - necesito una ecografía
+        - necesito una mamografia
+        - necesito una mamografía
+        - necesito un estudio
+        - sacar turno para estudio
+        - turno para ecografia
+        - turno para ecografía
+        - turno para mamografia
+        - turno para mamografía
+        - turno para laboratorio
+        - turno para analisis
+        - turno para análisis
+        - analisis de sangre
+        - análisis de sangre
+
+  - id: atencion-control
+    tool_type: intent
+    tool_ref: atencion.necesito-atencion
+    routing_result: clara
+    priority: 91
+    triggers:
+      tags: [control, seguimiento]
+      phrases:
+        - controlar la diabetes
+        - control de seguimiento
+        - renovar medicacion
+        - renovar medicación
+        - consulta por mensaje
+        - consulta clinica por mensaje
+        - consulta clínica por mensaje
+        - pedir un control
+
+  # Zona C: pedido de agenda sin destino → incompletas + CTAs (no lanzar flow).
+  - id: agenda-pedido-sin-destino
+    match_only: true
+    routing_result: incompletas
+    priority: 88
+    triggers:
+      tags: [pedido_turno_sin_destino]
+      context_areas: [appointments]
+    cta_intent_ids:
+      - turnos.crear-como-paciente
+      - atencion.necesito-atencion
+
+  # Zona A: ya hay oferta/profesional → agenda pura.
   - id: turnos-crear
     tool_type: intent
     tool_ref: turnos.crear-como-paciente
     routing_result: clara
     priority: 85
     triggers:
-      tags: [sacar_turno, turno]
-      phrases: [sacar turno, quiero un turno, pedir turno, reservar turno]
+      tags: [sacar_turno]
+      phrases:
+        - turno con
+        - turno en
+        - cita con
+        - cita en
+        - turno para mi
+        - solicita un turno para mi
       context_areas: [appointments]
 
   - id: turnos-ver-paciente
     tool_type: intent
-    tool_ref: turnos.ver-ultimo-en-oferta-como-paciente
+    tool_ref: turnos.ver-mis-turnos-como-paciente
     routing_result: clara
     priority: 80
     triggers:
-      tags: [mis_turnos, ver_turnos, turno]
-      phrases: [mis turnos, cuales son mis turnos, cuáles son mis turnos, que turnos tengo, próximo turno, proximo turno]
+      tags: [mis_turnos, ver_turnos]
+      phrases:
+        - mis turnos
+        - cuales son mis turnos
+        - cuáles son mis turnos
+        - que turnos tengo
+        - qué turnos tengo
+        - próximo turno
+        - proximo turno
+        - mis citas
+        - turnos pendientes
+      context_areas: [appointments]
+
+  - id: turnos-ultimo-en-oferta
+    tool_type: intent
+    tool_ref: turnos.ver-ultimo-en-oferta-como-paciente
+    routing_result: clara
+    priority: 78
+    triggers:
+      tags: [ultima_vez_oferta]
+      phrases:
+        - ultima vez que fui
+        - última vez que fui
+        - cuando fui al
+        - cuándo fui al
+        - ultima vez al dentista
+        - última vez al dentista
+        - cuando fue la ultima vez
+        - cuándo fue la última vez
       context_areas: [appointments]
 
   - id: llegar-tarde-politicas

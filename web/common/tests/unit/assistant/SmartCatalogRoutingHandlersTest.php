@@ -57,12 +57,12 @@ class SmartCatalogRoutingHandlersTest extends Unit
         $this->assertSame('1ia_dudosa', $snap['final_path'] ?? null);
     }
 
-    public function testTurnosTieUsesIncompletasNotDisambiguationButtons(): void
+    public function testTurnosBareWordUsesIncompletasNotDisambiguationButtons(): void
     {
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'turnos',
             'routing_hint' => 'clara',
-            'tags' => ['turno'],
+            'tags' => ['appointments'],
             'context_areas' => ['appointments'],
             'intent_ids_hint' => [],
             'extractions' => [],

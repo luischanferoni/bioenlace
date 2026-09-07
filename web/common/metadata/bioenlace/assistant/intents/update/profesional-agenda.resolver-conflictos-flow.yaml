@@ -1,7 +1,6 @@
 intent_id: profesional-agenda.resolver-conflictos-flow
 version: 1
 action_name: 'Resolver conflictos de agenda (staff)'
-description: 'Para resolver turnos con conflicto por cambios en la agenda.'
 rbac_route: /api/profesional-agenda/resolver-conflictos-flow
 keywords:
   - 'conflictos agenda'

@@ -1,7 +1,6 @@
 intent_id: personas.designar-representante-flow
 version: 1
 action_name: 'Designar representante'
-description: 'El paciente con cuenta autoriza a otra persona con cuenta para operar en su nombre (activo de inmediato).'
 rbac_route: /api/person-representation/designar-representante
 keywords:
   - 'designar representante'
@@ -17,7 +16,7 @@ keywords:
   - 'autorizar a un familiar para turnos'
   - 'designar quién opera por mí'
 intent_semantics:
-  summary: 'Autorizá a otra persona con cuenta para gestionar turnos y gestiones en tu nombre.'
+  objective: 'Autorizá a otra persona con cuenta para gestionar turnos y gestiones en tu nombre.'
   capabilities:
     - designar_representante
 subintents:

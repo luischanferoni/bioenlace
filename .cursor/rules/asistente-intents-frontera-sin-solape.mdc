@@ -1,0 +1,38 @@
+---
+description: Frontera entre intents del asistente — sin keywords/tags solapados (A/B/C agenda vs atención)
+globs: web/common/metadata/bioenlace/assistant/intents/**/*.yaml,web/common/metadata/bioenlace/assistant/catalog/smart-catalog.yaml,web/common/components/Platform/Assistant/**/*.php
+alwaysApply: false
+---
+
+# Asistente: frontera de intents sin solape
+
+Complementa [`asistente-routing-sin-hardcode.mdc`](asistente-routing-sin-hardcode.mdc).
+
+## Jobs del paciente
+
+| Zona | Señal | Destino |
+|------|--------|---------|
+| **A** | Cita **con destino** (oferta/profesional / `con|en|para` + token) | `clara` → `turnos.crear-como-paciente` |
+| **B** | Síntoma, estudio/acto, control/seguimiento, urgencia | `clara` → `atencion.necesito-atencion` |
+| **C** | Solo “quiero/sacar/pedir un turno” **sin** destino | `incompletas` + CTAs (crear + Solicitar Atención). **No** lanzar flow |
+
+## Keywords / semantics (escalable)
+
+- **`intent_semantics`**: contexto 2ª IA (`objective`, `outline` si hay ramas, `capabilities`). Pasos = `subintents[].assistant_text` (no mapa `steps` paralelo).
+- **`keywords`**: anclas discriminadoras. **NL bare / zona C**: smart-catalog.
+- **`description`**: **retirado** de intents YAML. UX = `action_name`; IA = `objective`.
+- Tags operativos: `AssistantFirstIaAdapter`.
+
+## Prohibido
+
+- Tag/keyword genérico **`turno`** compartido entre crear, ver y atención.
+- Phrases bare de agenda en `turnos.crear-como-paciente` o en `atencion.necesito-atencion`.
+- Token suelto `laboratorio`/`análisis` pelean pedir-estudio vs ver-resultados.
+- Boost / `if intent` en PHP para desempatar A vs B.
+
+## Checklist
+
+1. ¿Misma phrase/tag en dos filas del catálogo? → separar.
+2. ¿“turno para {acto}”? → **B**.
+3. ¿Bare agenda? → **C** incompletas + `cta_intent_ids`.
+4. Actualizar QA si cambia la frontera.

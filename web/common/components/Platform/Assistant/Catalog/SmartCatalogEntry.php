@@ -28,7 +28,8 @@ final class SmartCatalogEntry
         /** @var list<string> */
         public readonly array $requiresDataFields,
         public readonly string $responseTemplate,
-        public readonly string $ctaIntentId,
+        /** @var list<string> */
+        public readonly array $ctaIntentIds,
     ) {
     }
 
@@ -39,5 +40,10 @@ final class SmartCatalogEntry
         }
 
         return $this->toolRef !== '';
+    }
+
+    public function primaryCtaIntentId(): string
+    {
+        return $this->ctaIntentIds[0] ?? '';
     }
 }

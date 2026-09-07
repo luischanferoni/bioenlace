@@ -1,7 +1,6 @@
 intent_id: turnos.ver-ultimo-en-oferta-como-paciente
 version: 1
 action_name: 'Última vez en un servicio'
-description: 'Consultar el último turno pasado en una oferta del centro (odontología, kinesio, etc.). No es un intent por profesión: la mención coloquial se cruza con la oferta institucional.'
 rbac_route: /api/turnos/listar-como-paciente
 keywords:
   - 'última vez que fui'
@@ -24,7 +23,7 @@ keywords:
   - 'cuándo fui a kinesio'
   - 'última cita en odontología'
 intent_semantics:
-  summary: 'Consultá cuándo fue tu último turno en un área del centro (la que nombraste o, si no se cruza, tus últimos turnos).'
+  objective: 'Consultá cuándo fue tu último turno en un área del centro (la que nombraste o, si no se cruza, tus últimos turnos).'
   capabilities:
     - ver_turnos_propios
 draft_hydrator:

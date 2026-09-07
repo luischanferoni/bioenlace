@@ -3,7 +3,6 @@ version: 1
 shortcut:
   hidden: true
 action_name: 'Cambio de cama'
-description: 'Cambiar a un paciente internado de cama.'
 rbac_route: /api/clinical/episode-of-care/by-internacion
 keywords:
   - 'cambio de cama'

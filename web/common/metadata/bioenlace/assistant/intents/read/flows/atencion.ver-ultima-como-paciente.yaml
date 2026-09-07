@@ -1,7 +1,6 @@
 intent_id: atencion.ver-ultima-como-paciente
 version: 1
 action_name: 'Ver mi última atención'
-description: 'Abrir el resumen de tu última atención.'
 rbac_route: /api/clinical/encounter-patient-summary/ultima-atencion-como-paciente
 keywords:
   - 'última atención'
@@ -10,7 +9,7 @@ keywords:
   - 'resumen de la consulta'
   - 'mi última consulta'
 intent_semantics:
-  summary: 'Abrí el resumen de tu última atención ambulatoria finalizada.'
+  objective: 'Abrí el resumen de tu última atención ambulatoria finalizada.'
   capabilities:
     - ver_ultima_atencion
 subintents:

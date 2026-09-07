@@ -176,9 +176,10 @@ final class PlannerShortlistBuilder
         $item = $catalog->byActionId[$entry->toolRef] ?? null;
         if ($item instanceof UiActionCatalogItem) {
             $name = $item->display_name !== '' ? $item->display_name : $entry->toolRef;
-            $desc = trim((string) ($item->description ?? ''));
+            $sem = is_array($item->intent_semantics) ? $item->intent_semantics : [];
+            $objective = trim((string) ($sem['objective'] ?? $sem['summary'] ?? ''));
 
-            return $desc !== '' ? $name . ' — ' . $desc : $name;
+            return $objective !== '' ? $name . ' — ' . $objective : $name;
         }
 
         return 'Intent trámite: ' . $entry->toolRef;

@@ -1,7 +1,6 @@
 intent_id: turnos.ver-turnos-anteriores-como-paciente
 version: 1
 action_name: 'Ver turnos anteriores'
-description: 'Consultar un listado corto de tus turnos ya realizados o vencidos.'
 rbac_route: /api/turnos/listar-como-paciente
 keywords:
   - 'turnos anteriores'
@@ -14,7 +13,7 @@ keywords:
   - 'ver turnos anteriores'
   - 'listar turnos anteriores'
 intent_semantics:
-  summary: 'Consultá un resumen corto de tus turnos anteriores (fecha, servicio y profesional).'
+  objective: 'Consultá un resumen corto de tus turnos anteriores (fecha, servicio y profesional).'
   capabilities:
     - ver_turnos_propios
 draft_hydrator:

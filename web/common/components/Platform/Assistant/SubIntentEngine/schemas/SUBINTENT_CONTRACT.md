@@ -9,9 +9,10 @@ Fuente de verdad para las claves que **`SubIntentEngine`** lee y combina con el 
 |--------|-----|
 | `intent_id` | Identificador estable (alineado con `action_id` del catálogo cuando aplica). |
 | `version` | Entero legible para humanos; el motor no lo valida hoy. |
-| `action_name`, `description`, `keywords` | Metadatos / descubrimiento. |
+| `action_name`, `keywords` | Metadatos / descubrimiento. `action_name` = label UX. |
+| ~~`description`~~ | **Retirado** de intents YAML. No usar. |
 | `rbac_route` | Ruta HTTP del **permiso API base** que se asigna al rol (sin `v1`), no una ruta UI/ghost heredada por migración. Ej.: `listar-atenciones-como-paciente`, no `mis-atenciones-como-paciente`. Las rutas hijas se heredan vía `auth_item_child` al migrate; si el rol recibe el padre después, ejecutar la migración de resync correspondiente. |
-| `intent_semantics` | Opcional: señal para IA y oferta conversacional (ver abajo). |
+| `intent_semantics` | Opcional: **contexto para 2ª IA** (objetivo del flow + pasos). Ver abajo. |
 | `draft_keys_extra` | Opcional: claves de draft adicionales reconocidas por el producto. |
 | `business_rules` | Opcional: reglas `pre_flow` (vía `IntentBusinessRules`). |
 | `draft_hydrator` | Opcional: enriquecimiento del `draft` **antes** de `SubIntentEngine::process` (ver abajo). |
@@ -20,14 +21,26 @@ Fuente de verdad para las claves que **`SubIntentEngine`** lee y combina con el 
 
 ### `intent_semantics` (raíz del intent)
 
-Señal para el canal conversacional (oferta del botón) y desambiguación entre miembros de una `intent_family`.
+**Función:** adjuntar contexto al prompt de la **2ª IA** (síntesis / guide) para que entienda el flow: objetivo, que es multi-paso, y qué hace cada paso.  
+**No** es copy de marketing al paciente (`action_name`, `channel-copy`, `capability_labels`).
 
 | Clave | Uso |
 |--------|-----|
-| `summary` | Texto corto orientado al usuario: qué logra al abrir este intent. También etiqueta desambiguación entre variantes de familia. |
-| `capabilities` | Lista de IDs estables de lo que el flow **sí** ofrece. El canal conversacional solo debe prometer IDs presentes aquí. |
+| `objective` | Objetivo del flow (qué logra al completarlo). Obligatorio si hay bloque. |
+| `outline` | Opcional. Solo flows con muchas ramas; evita volcar decenas de subintents al prompt. |
+| `capabilities` | IDs estables de lo que el flow **sí** ofrece (gates de oferta). |
+| `summary` / `steps` | **Legacy.** `summary` → alias de `objective`. `steps` mapa paralelo a subintents: **no usar**; el formatter deriva pasos de `subintents[].assistant_text`. |
 
-Omitir el bloque entero en intents staff/operativos que no participan del canal conversacional ni de familias NL. Las frases de descubrimiento van en `keywords` del intent, no en `intent_semantics`.
+El formatter (`IntentSemanticsPromptFormatter`) arma `context:intent_semantics` con `kind: multi-step flow` y lista de pasos desde **`subintents`** (orden del YAML).
+
+| Campo raíz | Audiencia |
+|------------|-----------|
+| `action_name` | Usuario (atajo, botón, label). |
+| `intent_semantics` | 2ª IA (síntesis/guide). |
+
+No campo `description` en intents.
+
+Omitir `intent_semantics` en intents staff/ocultos que no entran a síntesis/guide (p. ej. `data-access.*` genéricos). Descubrimiento NL = `keywords` / smart-catalog.
 
 Vocabulario inicial de `capabilities` (ampliar solo documentando acá):
 

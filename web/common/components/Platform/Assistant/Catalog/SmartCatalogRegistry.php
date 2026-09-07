@@ -125,8 +125,35 @@ final class SmartCatalogRegistry
             self::normalizeTriggerList($row['required_anchors'] ?? []),
             self::normalizeTriggerList($row['requires_data_fields'] ?? []),
             trim((string) ($row['response_template'] ?? '')),
-            trim((string) ($row['cta_intent_id'] ?? '')),
+            self::normalizeCtaIntentIds($row),
         );
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     * @return list<string>
+     */
+    private static function normalizeCtaIntentIds(array $row): array
+    {
+        $out = [];
+        $list = $row['cta_intent_ids'] ?? null;
+        if (is_array($list)) {
+            foreach ($list as $id) {
+                if (!is_string($id)) {
+                    continue;
+                }
+                $id = trim($id);
+                if ($id !== '' && !in_array($id, $out, true)) {
+                    $out[] = $id;
+                }
+            }
+        }
+        $single = trim((string) ($row['cta_intent_id'] ?? ''));
+        if ($single !== '' && !in_array($single, $out, true)) {
+            $out[] = $single;
+        }
+
+        return $out;
     }
 
     private static function buildToolId(string $toolType, string $toolRef): string

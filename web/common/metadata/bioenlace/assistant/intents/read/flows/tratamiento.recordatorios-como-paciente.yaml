@@ -1,7 +1,6 @@
 intent_id: tratamiento.recordatorios-como-paciente
 version: 1
 action_name: 'Recordatorios de tratamiento'
-description: 'Activar recordatorios de tu plan de tratamiento.'
 rbac_route: /api/clinical/care-plans/preferencias-recordatorios-como-paciente
 keywords:
   - recordatorios
@@ -11,7 +10,7 @@ keywords:
   - 'recordatorio de estudio'
   - 'horarios de tratamiento'
 intent_semantics:
-  summary: 'Activá o ajustá recordatorios locales de medicación y preparación de estudios de tu tratamiento.'
+  objective: 'Activá o ajustá recordatorios locales de medicación y preparación de estudios de tu tratamiento.'
   capabilities:
     - recordatorios_tratamiento
 subintents:

@@ -1,7 +1,6 @@
 intent_id: personas.vincular-menor-flow
 version: 1
 action_name: 'Solicitar tutela de menor'
-description: 'Un padre, madre o tutor solicita operar por un menor sin cuenta (queda pendiente hasta que el centro lo verifique).'
 rbac_route: /api/person-representation/solicitar-menor-como-tutor
 keywords:
   - 'vincular hijo'
@@ -15,7 +14,7 @@ keywords:
   - 'solicitar tutela'
   - 'tutela de menor'
 intent_semantics:
-  summary: 'Solicitá tutela sobre un menor sin cuenta; el centro debe verificarla antes de activarla.'
+  objective: 'Solicitá tutela sobre un menor sin cuenta; el centro debe verificarla antes de activarla.'
   capabilities:
     - vincular_menor
 his_areas:

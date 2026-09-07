@@ -5,7 +5,6 @@ intent_family: profesionales.distribucion-servicio-efector
 domain_operation: DataAccess.info
 metric_id: profesionales_conteo_por_servicio_efector
 action_name: 'Distribución de profesionales por servicio'
-description: 'Cuántos profesionales hay en cada servicio del efector.'
 rbac_route: /api/info
 keywords:
   - 'profesionales por servicio'
@@ -14,7 +13,7 @@ keywords:
   - 'cuantos medicos por servicio'
   - 'plantilla por servicio'
 intent_semantics:
-  summary: 'Consultar la distribución de profesionales por servicio en el efector de sesión.'
+  objective: 'Consultar la distribución de profesionales por servicio en el efector de sesión.'
 subintents:
   -
     id: mostrar_distribucion

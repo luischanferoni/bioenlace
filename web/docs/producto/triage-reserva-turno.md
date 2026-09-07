@@ -12,7 +12,7 @@ La puerta de producto es [Solicitar Atención](./solicitar-atencion.md). Este do
 2. **Catálogo declarativo:** nodos en metadata de scheduling (`reserva_triage_catalog_v1.yaml`). El flujo conversacional es `atencion.necesito-atencion`.
 3. **IA después:** texto libre opcional en confirmación; el lote de motivos pre-consulta es el canal rico de IA.
 
-*«Sacar turno»* sin motivo clínico usa `turnos.crear-como-paciente` (sin este árbol).
+*«Sacar turno»* / *«quiero un turno»* sin destino → routing **incompletas** + CTAs. Con destino (oferta/profesional) → `turnos.crear-como-paciente` (sin este árbol).
 
 ## Recorrido
 

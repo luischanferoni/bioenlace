@@ -4,7 +4,6 @@ operation: edit
 intent_family: condicion-laboral.edit
 domain_operation: ProfesionalEfectorServicio.condicion_laboral_staff
 action_name: 'Condición laboral de un profesional'
-description: 'Registrar o modificar condición laboral de un profesional del efector (staff).'
 rbac_route: /api/profesional-efector-servicio/crear-condicion-laboral
 keywords:
   - 'condición laboral de un profesional'
@@ -13,7 +12,7 @@ keywords:
   - 'vigencia de un profesional'
   - 'ausencia de un colega'
 intent_semantics:
-  summary: 'Registrar o editar condición laboral de un profesional del efector en sesión (staff).'
+  objective: 'Registrar o editar condición laboral de un profesional del efector en sesión (staff).'
 subject_resolution:
   handler: organization.pes_staff_in_efector
   open_ui:

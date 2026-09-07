@@ -5,7 +5,6 @@ intent_family: profesional-identidad.editar
 domain_operation: DataAccess.edit
 edit_surface_id: ProfesionalEfectorServicio
 action_name: 'Editar datos de un profesional'
-description: 'Modificar nombre y apellido de un profesional del centro.'
 rbac_route: /api/editar
 keywords:
   - 'editar personal'
@@ -15,7 +14,7 @@ keywords:
   - 'cambiar nombre del medico'
   - 'corregir apellido profesional'
 intent_semantics:
-  summary: 'Editar datos de identidad básica de un profesional del efector.'
+  objective: 'Editar datos de identidad básica de un profesional del efector.'
 fields:
   -
     name: nombre

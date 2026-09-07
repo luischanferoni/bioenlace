@@ -27,7 +27,7 @@ final class YamlIntentCatalogService
     {
         $cache = Yii::$app->cache;
         // Cache key debe cambiar cuando cambian los YAML (keywords/rules/etc.).
-        $cacheKeyBase = 'yaml_intents_catalog_v8';
+        $cacheKeyBase = 'yaml_intents_catalog_v9';
 
         $base = IntentSchemaPaths::baseDir();
         $files = IntentSchemaPaths::discoverYamlFiles();
@@ -105,7 +105,6 @@ final class YamlIntentCatalogService
             }
             $operation = IntentManifestMetadata::resolveOperation($category, $data);
             $actionName = IntentManifestMetadata::formatDisplayActionName($actionNameBase, $operation);
-            $desc = AssistantDraftNormalizer::scalarString($data['description'] ?? '');
             $rbacRoute = AssistantDraftNormalizer::scalarString($data['rbac_route'] ?? '');
             if ($rbacRoute !== '') {
                 $rbacRoute = '/' . ltrim($rbacRoute, '/');
@@ -137,7 +136,8 @@ final class YamlIntentCatalogService
                 'action_name' => $actionName,
                 'action_name_base' => $actionNameBase,
                 'display_name' => $actionName,
-                'description' => $desc,
+                // description retirado del YAML de intents; compat API vacía.
+                'description' => '',
                 'route' => '', // flows se ejecutan vía /asistente/enviar con action_id
                 'rbac_route' => $rbacRoute,
                 'permission' => $permission,
@@ -258,15 +258,46 @@ final class YamlIntentCatalogService
 
     /**
      * @param array<string, mixed> $sem
-     * @return array{summary?: string, capabilities?: list<string>}
+     * @return array{
+     *   objective?: string,
+     *   summary?: string,
+     *   outline?: string,
+     *   capabilities?: list<string>
+     * }
+     */
+    public static function normalizeIntentSemanticsPublic(array $sem): array
+    {
+        return self::normalizeIntentSemantics($sem);
+    }
+
+    /**
+     * @param array<string, mixed> $sem
+     * @return array{
+     *   objective?: string,
+     *   summary?: string,
+     *   outline?: string,
+     *   capabilities?: list<string>
+     * }
      */
     private static function normalizeIntentSemantics(array $sem): array
     {
         $out = [];
-        $summary = trim((string) ($sem['summary'] ?? ''));
-        if ($summary !== '') {
-            $out['summary'] = $summary;
+
+        $objective = trim((string) ($sem['objective'] ?? ''));
+        if ($objective === '') {
+            $objective = trim((string) ($sem['summary'] ?? ''));
         }
+        if ($objective !== '') {
+            $out['objective'] = $objective;
+            // Compat lectores legacy (oferta guide / familias) que aún leen summary.
+            $out['summary'] = $objective;
+        }
+
+        $outline = trim((string) ($sem['outline'] ?? ''));
+        if ($outline !== '') {
+            $out['outline'] = $outline;
+        }
+
         $capabilities = [];
         foreach ($sem['capabilities'] ?? [] as $cap) {
             if (is_string($cap) && trim($cap) !== '') {

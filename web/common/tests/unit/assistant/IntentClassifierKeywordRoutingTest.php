@@ -26,17 +26,33 @@ class IntentClassifierKeywordRoutingTest extends Unit
         $this->assertGreaterThanOrEqual(0.7, $out['confidence']);
     }
 
-    public function testNecesitoUnTurnoRoutesByKeyword(): void
+    public function testTurnoConDestinoRoutesByKeyword(): void
     {
         $catalog = $this->catalog([
-            ['turnos.crear-como-paciente', 'Reservar turno', ['necesito un turno', 'quiero un turno']],
+            ['turnos.crear-como-paciente', 'Turno con un especialista', ['turno con', 'turno en']],
             ['turnos.ver-mis-turnos-como-paciente', 'Ver mis turnos', ['mis turnos']],
             ['atencion.necesito-atencion', 'Solicitar Atención', ['necesito atención']],
         ]);
 
-        $out = IntentClassifier::classifyAmongItems('necesito un turno', $catalog->items, $catalog, 0);
+        $out = IntentClassifier::classifyAmongItems('quiero un turno con el dentista', $catalog->items, $catalog, 0);
         $this->assertNotNull($out);
         $this->assertSame('turnos.crear-como-paciente', $out['item']->action_id);
+    }
+
+    public function testBareQuieroUnTurnoDoesNotMatchAgendaPuraKeywords(): void
+    {
+        $catalog = $this->catalog([
+            ['turnos.crear-como-paciente', 'Turno con un especialista', ['turno con', 'turno en']],
+            ['turnos.ver-mis-turnos-como-paciente', 'Ver mis turnos', ['mis turnos']],
+            ['atencion.necesito-atencion', 'Solicitar Atención', ['necesito atención', 'me duele']],
+        ]);
+
+        $out = IntentClassifier::classifyAmongItems('quiero un turno', $catalog->items, $catalog, 0);
+        $this->assertTrue(
+            $out === null || ($out['item']->action_id ?? '') !== 'turnos.crear-como-paciente'
+            || isset($out['disambiguation']),
+            'Bare agenda no debe abrir crear-como-paciente por keywords'
+        );
     }
 
     public function testLongerKeywordBeatsShortToken(): void

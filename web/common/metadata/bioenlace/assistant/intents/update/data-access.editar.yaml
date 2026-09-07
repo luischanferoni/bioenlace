@@ -3,7 +3,6 @@ version: 1
 shortcut:
   hidden: true
 action_name: 'Edición dispersa'
-description: 'Modificar datos por superficie y aspectos autorizados (permiso write por grupo).'
 rbac_route: /api/editar
 keywords:
   - editar

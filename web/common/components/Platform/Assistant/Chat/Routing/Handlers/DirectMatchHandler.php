@@ -41,7 +41,7 @@ final class DirectMatchHandler
     private static function envelopeFromTemplate(SmartCatalogRoutingDecision $decision, int $userId): array
     {
         $text = trim($decision->responseText);
-        $ctaIntentId = trim((string) ($decision->catalogEntry?->ctaIntentId ?? ''));
+        $ctaIntentId = trim((string) ($decision->catalogEntry?->primaryCtaIntentId() ?? ''));
 
         if ($ctaIntentId === '' || $userId <= 0 || !IntentAccessService::userCanExecuteIntent($userId, $ctaIntentId)) {
             return AssistantContextAssemblyService::attachDebugIfEnabled(

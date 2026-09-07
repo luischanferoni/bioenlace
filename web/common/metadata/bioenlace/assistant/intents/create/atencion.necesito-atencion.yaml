@@ -1,7 +1,6 @@
 intent_id: atencion.necesito-atencion
 version: 1
 action_name: 'Solicitar Atención'
-description: 'Contanos qué necesitás; te guiamos a turno, control, teleconsulta o derivación según el caso.'
 rbac_route: /api/turnos/crear-como-paciente
 keywords:
   - 'solicitar atencion'
@@ -26,26 +25,36 @@ keywords:
   - 'contar evolucion'
   - 'consulta por mensaje'
   - 'consulta clinica por mensaje'
+  # Zona B: acto/estudio/control — no frases bare de agenda ("quiero un turno").
   - ecografia
-  - estudio
+  - ecografía
   - radiografia
+  - radiografía
   - mamografia
-  - laboratorio
+  - mamografía
   - kinesio
   - kinesiologia
+  - kinesiología
   - 'necesito un estudio'
   - 'sacar turno para estudio'
   - 'necesito una ecografia'
+  - 'necesito una ecografía'
   - 'necesito una mamografia'
+  - 'necesito una mamografía'
   - 'turno para laboratorio'
   - 'turno para ecografia'
+  - 'turno para ecografía'
+  - 'turno para mamografia'
+  - 'análisis de sangre'
+  - 'analisis de sangre'
   - 'necesito ayuda con un síntoma'
   - 'quiero atención médica'
   - 'pedir un control'
-  - 'necesito una ecografía'
   - 'no sé si ir a urgencias o pedir turno'
 intent_semantics:
-  summary: 'Te guía según lo que necesitás: malestar nuevo (elegís servicio y centro, inclusive cercanos en mapa), estudio o práctica (acto SNOMED → línea con agenda), control o seguimiento, o orientación a guardia. Podés terminar en turno, teleconsulta o consulta por mensaje.'
+  # Contexto para 2ª IA: objetivo + outline (flow con muchas ramas). Pasos detallados = subintents.
+  objective: 'Guiar según lo que necesita el paciente (malestar, estudio/acto, control/seguimiento u urgencia) hasta turno, teleconsulta, consulta por mensaje u orientación a guardia.'
+  outline: 'Motivo raíz → malestar (zona/modalidad/servicio) | estudio (acto→línea) | control (hub) | urgencia (107/guardia) → opcional reserva (centro, profesional, horario) u otro canal.'
   capabilities:
     - triage_malestar
     - pedido_estudio_acto

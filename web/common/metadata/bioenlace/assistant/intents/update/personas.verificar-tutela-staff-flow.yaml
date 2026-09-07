@@ -1,7 +1,6 @@
 intent_id: personas.verificar-tutela-staff-flow
 version: 1
 action_name: 'Verificar tutela de menor'
-description: 'El staff del centro aprueba solicitudes de tutela (padre/madre/tutor sobre menor sin cuenta).'
 rbac_route: /api/person-representation/verificar-vinculo-para-staff
 keywords:
   - 'verificar tutela'

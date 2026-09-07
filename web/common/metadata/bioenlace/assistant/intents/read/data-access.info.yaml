@@ -3,7 +3,6 @@ version: 1
 shortcut:
   hidden: true
 action_name: 'Consulta informativa staff'
-description: 'Métricas aggregate/grouped del catálogo DataAccess (sin flow conversacional).'
 rbac_route: /api/info
 keywords:
   - 'info staff'

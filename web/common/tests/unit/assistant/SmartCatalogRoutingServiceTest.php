@@ -36,12 +36,12 @@ class SmartCatalogRoutingServiceTest extends Unit
         $this->assertSame('articulo-representacion', $decision->catalogEntry?->id);
     }
 
-    public function testClaraSingleIntentTurnos(): void
+    public function testClaraSingleIntentTurnosConDestino(): void
     {
         $evaluation = SmartCatalogRoutingService::evaluate([
-            'normalized_text' => 'quiero sacar un turno',
+            'normalized_text' => 'quiero un turno con el cardiologo',
             'routing_hint' => 'clara',
-            'tags' => ['sacar_turno', 'turno'],
+            'tags' => ['sacar_turno'],
             'context_areas' => ['appointments'],
             'extractions' => [],
         ], 0);
@@ -52,18 +52,66 @@ class SmartCatalogRoutingServiceTest extends Unit
         $this->assertSame('turnos.crear-como-paciente', $decision->primaryIntentId());
     }
 
-    public function testTurnosTieWithoutClearWinnerGoesIncompletas(): void
+    public function testBareQuieroUnTurnoGoesIncompletas(): void
+    {
+        $evaluation = SmartCatalogRoutingService::evaluate([
+            'normalized_text' => 'quiero un turno',
+            'routing_hint' => 'incompletas',
+            'tags' => ['pedido_turno_sin_destino'],
+            'context_areas' => ['appointments'],
+            'extractions' => [],
+        ], 0);
+
+        $decision = $evaluation->decision;
+        $this->assertTrue($decision->isIncompletas());
+        $this->assertFalse($decision->shouldRouteIntentDirectly());
+        $this->assertSame('agenda-pedido-sin-destino', $decision->catalogEntry?->id);
+        $this->assertSame(
+            ['turnos.crear-como-paciente', 'atencion.necesito-atencion'],
+            $decision->catalogEntry?->ctaIntentIds
+        );
+    }
+
+    public function testEstudioRoutesAtencionNotAgendaPura(): void
+    {
+        $evaluation = SmartCatalogRoutingService::evaluate([
+            'normalized_text' => 'necesito una ecografia',
+            'routing_hint' => 'clara',
+            'tags' => ['estudio'],
+            'context_areas' => [],
+            'extractions' => [],
+        ], 0);
+
+        $decision = $evaluation->decision;
+        $this->assertSame('clara', $decision->routingResult);
+        $this->assertTrue($decision->shouldRouteIntentDirectly());
+        $this->assertSame('atencion.necesito-atencion', $decision->primaryIntentId());
+    }
+
+    public function testMisTurnosNotCrearTurno(): void
+    {
+        $evaluation = SmartCatalogRoutingService::evaluate([
+            'normalized_text' => 'cuales son mis turnos',
+            'routing_hint' => 'clara',
+            'tags' => ['mis_turnos'],
+            'context_areas' => ['appointments'],
+            'extractions' => [],
+        ], 0);
+
+        $decision = $evaluation->decision;
+        $this->assertSame('clara', $decision->routingResult);
+        $this->assertTrue($decision->shouldRouteIntentDirectly());
+        $this->assertSame('turnos.ver-mis-turnos-como-paciente', $decision->primaryIntentId());
+    }
+
+    public function testTurnosBareWordWithoutDiscriminatorGoesIncompletas(): void
     {
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'turnos',
             'routing_hint' => 'clara',
-            'tags' => ['turno'],
+            'tags' => ['appointments'],
             'context_areas' => ['appointments'],
-            'intent_ids_hint' => [
-                'atencion.necesito-atencion',
-                'turnos.crear-como-paciente',
-                'turnos.ver-ultimo-en-oferta-como-paciente',
-            ],
+            'intent_ids_hint' => [],
             'extractions' => [],
         ], 0);
 

@@ -207,7 +207,7 @@ final class CommonActionsService
         $row = [
             'route' => '',
             'name' => $name,
-            'description' => (string) ($flow['description'] ?? ''),
+            'description' => '',
             'action_id' => $aid !== '' ? $aid : null,
         ];
 

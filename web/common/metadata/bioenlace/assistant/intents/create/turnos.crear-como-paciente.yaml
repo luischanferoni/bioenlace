@@ -1,36 +1,20 @@
 intent_id: turnos.crear-como-paciente
-version: 3
+version: 4
 action_name: 'Turno con un especialista'
-description: 'Elegir servicio, centro de salud, profesional y horario (sin repreguntar motivo clínico).'
 rbac_route: /api/turnos/crear-como-paciente
+# Descubrimiento NL: solo anclas de destino (zona A). Pedido bare ("quiero un turno") → smart-catalog incompletas.
+# No enumerar conjugaciones de verbo; no keyword suelta `turno`.
 keywords:
-  - turno
-  - 'sacar turno'
-  - 'sacar un turno'
-  - 'reservar turno'
-  - 'reservar un turno'
-  - 'pedir turno'
-  - 'pedir un turno'
-  - 'necesito un turno'
-  - 'necesito turno'
-  - 'quiero un turno'
-  - 'quiero turno'
-  - 'agendar turno'
-  - 'agendar un turno'
-  - autogestión
-  - 'agendar cita'
-  - 'solicita un turno'
-  - 'solicitar un turno'
-  - 'sacame un turno'
+  - 'turno con'
+  - 'turno en'
+  - 'cita con'
+  - 'cita en'
   - 'turno para mi'
-  - 'turno con mi dentista'
-  - 'turno en odontología'
-  - 'reservar una cita'
-  - 'sacar turno en un centro de salud'
-  - 'solicita un turno para mi dentista'
-  - 'elegir servicio y horario disponible'
+  - 'agendar con'
+  - 'reservar con'
 intent_semantics:
-  summary: 'Reservá un turno eligiendo servicio, centro (podés buscar cercanos en mapa), profesional y horario disponible.'
+  # Contexto 2ª IA. Pasos = subintents (assistant_text); no duplicar acá.
+  objective: 'Reservar un turno ambulatorio eligiendo oferta del centro, efector, profesional y horario, sin triage de motivo clínico.'
   capabilities:
     - elige_servicio
     - elige_centro
@@ -43,33 +27,10 @@ his_areas:
 draft_keys_extra:
   - tipo_atencion
   - fecha_turno
-business_rules:
-  -
-    id: reserva_directa_vs_asistencia_guiada
-    when: pre_flow
-    checker: content_regex
-    require_any:
-      - '^(necesito|quiero|pedir|pido|sacar|reservar|agendar|solicita|solicitar)(\s+un)?\s+turno\b'
-      - '^turno(\s+por\s+favor)?\.?$'
-    forbid_any:
-      - \b(con|de|para)\s+\S+
-      - \b(cancelar|reprogramar|reubicar|modificar|ver|listar|mis)\b
-    user_message: '¿Sabés con qué especialista o servicio querés el turno, o preferís que te guiemos según lo que te pasa?'
-    remediation:
-      -
-        id: turno_especialista
-        label: 'Turno con un especialista'
-        intent_id: turnos.crear-como-paciente
-        reset_flow: true
-      -
-        id: asistencia_guiada
-        label: 'Solicitar Atención'
-        intent_id: atencion.necesito-atencion
-        reset_flow: true
 subintents:
   -
     id: select_servicio
-    assistant_text: Servicio
+    assistant_text: 'Elegir oferta del centro (servicio con agenda)'
     provides:
       - draft.id_servicio_asignado
     next: select_efector
@@ -80,7 +41,7 @@ subintents:
       action_id: servicios.elegir-acepta-turnos
   -
     id: select_efector
-    assistant_text: 'Centro de salud'
+    assistant_text: 'Elegir centro de salud (incluye cercanos en mapa)'
     requires:
       - draft.id_servicio_asignado
     provides:
@@ -100,7 +61,7 @@ subintents:
           params: { id_servicio: draft.id_servicio_asignado }
   -
     id: select_profesional
-    assistant_text: Profesional
+    assistant_text: 'Elegir profesional (PES) de esa oferta en ese centro'
     requires:
       - draft.id_efector
       - draft.id_servicio_asignado
@@ -117,7 +78,7 @@ subintents:
         id_servicio: draft.id_servicio_asignado
   -
     id: select_dia
-    assistant_text: Día
+    assistant_text: 'Elegir día con cupos disponibles'
     requires:
       - draft.id_profesional_efector_servicio
     provides:
@@ -131,7 +92,7 @@ subintents:
         id_profesional_efector_servicio: draft.id_profesional_efector_servicio
   -
     id: select_slot
-    assistant_text: Horario
+    assistant_text: 'Elegir horario (slot) para cerrar la reserva'
     requires:
       - draft.id_profesional_efector_servicio
       - draft.fecha_turno

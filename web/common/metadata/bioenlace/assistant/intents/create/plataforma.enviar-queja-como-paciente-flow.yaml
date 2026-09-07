@@ -1,7 +1,6 @@
 intent_id: plataforma.enviar-queja-como-paciente-flow
 version: 1
 action_name: 'Enviar queja'
-description: 'Registrar una queja sobre la app, turnos, atención u otro tema operativo.'
 rbac_route: /api/queja-paciente/enviar-como-paciente
 keywords:
   - queja
@@ -12,7 +11,7 @@ keywords:
   - 'reportar problema'
   - 'sugerencia de mejora'
 intent_semantics:
-  summary: 'Registrá una queja operativa sobre la app, turnos o atención administrativa (no para síntomas clínicos).'
+  objective: 'Registrá una queja operativa sobre la app, turnos o atención administrativa (no para síntomas clínicos).'
   capabilities:
     - enviar_queja
 subintents:

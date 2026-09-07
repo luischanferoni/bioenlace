@@ -3,7 +3,6 @@ version: 1
 shortcut:
   hidden: true
 action_name: 'Ingreso a internación'
-description: 'Registrar el ingreso a internación y asignar una cama.'
 rbac_route: /api/home/panel
 keywords:
   - 'ingreso internación'

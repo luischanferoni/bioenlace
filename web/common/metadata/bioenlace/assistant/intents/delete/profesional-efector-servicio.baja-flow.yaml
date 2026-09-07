@@ -1,7 +1,6 @@
 intent_id: profesional-efector-servicio.baja-flow
 version: 1
 action_name: 'Quitar profesional de un servicio'
-description: 'Dar de baja la asignación de un profesional a un servicio del efector.'
 rbac_route: /api/profesional-efector-servicio/baja-flow
 keywords:
   - 'quitar profesional del servicio'

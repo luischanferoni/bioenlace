@@ -1,7 +1,6 @@
 intent_id: atencion.mis-atenciones-como-paciente
 version: 1
 action_name: 'Ver mis atenciones'
-description: 'Ver tus atenciones y sus resúmenes.'
 rbac_route: /api/clinical/encounter-patient-summary/listar-atenciones-como-paciente
 keywords:
   - 'mis atenciones'
@@ -10,7 +9,7 @@ keywords:
   - 'atenciones anteriores'
   - 'resumen de atención'
 intent_semantics:
-  summary: 'Revisá tus atenciones ambulatorias finalizadas y el resumen de cada una.'
+  objective: 'Revisá tus atenciones ambulatorias finalizadas y el resumen de cada una.'
   capabilities:
     - ver_atenciones
 subintents:

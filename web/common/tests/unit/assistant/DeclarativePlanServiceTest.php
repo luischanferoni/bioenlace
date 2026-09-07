@@ -60,6 +60,50 @@ class DeclarativePlanServiceTest extends Unit
         $this->assertSame('incompletas', $first['routing_hint']);
     }
 
+    public function testFirstIaAdapterAlwaysInfersSacarTurnoEvenIfIaTaggedArea(): void
+    {
+        $first = AssistantFirstIaAdapter::fromPreprocess([
+            'normalized_text' => 'Quiero un turno con el dentista',
+            'user_goal' => 'guide',
+            'routing_hint' => 'incompletas',
+            'tags' => ['appointments'],
+            'context_areas' => ['appointments'],
+            'extractions' => [],
+        ]);
+
+        $this->assertContains('sacar_turno', $first['tags']);
+        $this->assertNotContains('pedido_turno_sin_destino', $first['tags']);
+    }
+
+    public function testFirstIaAdapterInfersPedidoSinDestinoForBareTurno(): void
+    {
+        $first = AssistantFirstIaAdapter::fromPreprocess([
+            'normalized_text' => 'Quiero un turno',
+            'user_goal' => 'guide',
+            'routing_hint' => 'incompletas',
+            'tags' => ['appointments'],
+            'context_areas' => ['appointments'],
+            'extractions' => [],
+        ]);
+
+        $this->assertContains('pedido_turno_sin_destino', $first['tags']);
+        $this->assertNotContains('sacar_turno', $first['tags']);
+    }
+
+    public function testFirstIaAdapterInfersEstudioNotSacarTurno(): void
+    {
+        $first = AssistantFirstIaAdapter::fromPreprocess([
+            'normalized_text' => 'necesito una ecografia',
+            'tags' => [],
+            'context_areas' => [],
+            'extractions' => [],
+        ]);
+
+        $this->assertContains('estudio', $first['tags']);
+        $this->assertNotContains('sacar_turno', $first['tags']);
+        $this->assertNotContains('pedido_turno_sin_destino', $first['tags']);
+    }
+
     public function testRoutingFueraDeHisForMedium(): void
     {
         $evaluation = SmartCatalogRoutingService::evaluate([

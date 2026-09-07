@@ -1,7 +1,6 @@
 intent_id: turnos.ver-mis-turnos-como-paciente
 version: 1
 action_name: 'Ver mis turnos'
-description: 'Consultar tus próximos turnos pendientes.'
 rbac_route: /api/turnos/listar-como-paciente
 keywords:
   - 'mis turnos'
@@ -16,7 +15,7 @@ keywords:
   - 'proximos turnos'
   - 'turnos pendientes'
 intent_semantics:
-  summary: 'Consultá tus próximos turnos pendientes (fecha, servicio y profesional).'
+  objective: 'Consultá tus próximos turnos pendientes (fecha, servicio y profesional).'
   capabilities:
     - ver_turnos_propios
 draft_hydrator:

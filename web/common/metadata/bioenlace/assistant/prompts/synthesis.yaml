@@ -1,4 +1,4 @@
-# Canal síntesis (2ª IA incompletas): necesidad + datos hidratados del HIS.
+# Canal síntesis (2ª IA incompletas): necesidad + datos HIS + semántica de flows ofrecibles.
 # CTA en envelope (SynthesisCtaResolver), no en el prompt.
 # Placeholders: {@see SynthesisPromptAssembler}
 version: 1
@@ -24,11 +24,16 @@ stable_prompt: |
 
   {article_block}
 
+  Flujos que el sistema puede ofrecer (objetivo y pasos; no inventes pasos que no figuren):
+  {intent_semantics}
+
   Reglas transversales:
   - Si un dato clave es null, ausente o no configurado (p. ej. tolerancia de llegada tarde),
     decilo con honestidad; no inventes números ni políticas.
   - No compares calidad subjetiva de profesionales más allá de los datos disponibles.
-  - No prometas acciones del sistema que no figuren en los datos adjuntos.
+  - No prometas acciones del sistema que no figuren en los datos adjuntos ni en intent_semantics.
+  - Si el usuario pide un trámite incompleto, orientá a elegir un flujo de intent_semantics
+    (los botones CTA los agrega el sistema; no digas "hacé clic en…").
   - Español, claro, 4–8 oraciones salvo que pidan más detalle.
 
   Mensaje original del usuario:

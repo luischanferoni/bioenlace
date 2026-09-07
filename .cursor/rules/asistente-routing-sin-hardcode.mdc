@@ -13,8 +13,10 @@ No enumerar `intent_id` en orquestadores ni en prompts de IA para “elegir la a
 **Clasificación de acción (qué intent abrir):**
 
 1. `keywords` / `intent_semantics` en el YAML de **cada intent** (keywords ricas; el preprocess normaliza ortografía y el match hace fold de acentos).
-2. `IntentClassifier`: **solo** score PHP por keywords; ganador claro → lanza; empate → desambiguación. **Sin IA** de clasificación.
+2. Catálogo inteligente (`smart-catalog.yaml`) + `IntentClassifier`: **solo** score PHP; ganador claro → lanza; empate → incompletas/desambiguación. **Sin IA** de clasificación.
 3. Si no hay match → no-match / sugerencias del catálogo.
+
+**Frontera entre puertas (agenda vs Solicitar Atención, sin tags compartidos):** ver [`asistente-intents-frontera-sin-solape.mdc`](asistente-intents-frontera-sin-solape.mdc).
 
 **Canal (charla vs trámite vs menú vs ambiguous):** `user_goal` del preprocess IA → `ChatRouter`. Predicados de dominio (síntoma, menú, staff) en `ChatChannelPolicy` (PHP). No es configuración de intents.
 

@@ -38,7 +38,7 @@ final class IntentCatalogActionMapper
         return [
             'route' => $route,
             'display_name' => $display !== '' ? $display : $intentId,
-            'description' => trim((string) ($flow['description'] ?? '')),
+            'description' => '',
             'controller' => $controller,
             'action' => $action,
             'action_id' => $intentId,

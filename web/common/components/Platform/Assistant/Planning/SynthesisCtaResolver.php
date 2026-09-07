@@ -8,40 +8,60 @@ use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
 use common\components\Platform\Core\Permission\IntentAccessService;
 
 /**
- * Resuelve CTA post-síntesis desde catálogo inteligente (sin regex).
+ * Resuelve CTA(s) post-síntesis desde catálogo inteligente (sin regex).
  */
 final class SynthesisCtaResolver
 {
     /**
-     * @return array{label: string, intent_id: string}|null
+     * @return array{label: string, intent_id: string}|null Primer CTA (compat).
      */
     public static function resolve(SmartCatalogRoutingEvaluation $evaluation, int $userId): ?array
     {
+        $all = self::resolveAll($evaluation, $userId);
+
+        return $all[0] ?? null;
+    }
+
+    /**
+     * @return list<array{label: string, intent_id: string}>
+     */
+    public static function resolveAll(SmartCatalogRoutingEvaluation $evaluation, int $userId): array
+    {
         if ($userId <= 0) {
-            return null;
+            return [];
         }
 
-        $intentId = self::resolveIntentId($evaluation);
-        if ($intentId === '' || !IntentAccessService::userCanExecuteIntent($userId, $intentId)) {
-            return null;
+        $intentIds = self::resolveIntentIds($evaluation);
+        if ($intentIds === []) {
+            return [];
         }
 
         $catalog = UiActionCatalog::forUser($userId);
-        $item = $catalog->byActionId[$intentId] ?? null;
-        $label = $item instanceof UiActionCatalogItem && $item->display_name !== ''
-            ? $item->display_name
-            : $intentId;
+        $out = [];
+        foreach ($intentIds as $intentId) {
+            if (!IntentAccessService::userCanExecuteIntent($userId, $intentId)) {
+                continue;
+            }
+            $item = $catalog->byActionId[$intentId] ?? null;
+            $label = $item instanceof UiActionCatalogItem && $item->display_name !== ''
+                ? $item->display_name
+                : $intentId;
+            $out[] = [
+                'label' => $label,
+                'intent_id' => $intentId,
+            ];
+        }
 
-        return [
-            'label' => $label,
-            'intent_id' => $intentId,
-        ];
+        return $out;
     }
 
-    private static function resolveIntentId(SmartCatalogRoutingEvaluation $evaluation): string
+    /**
+     * @return list<string>
+     */
+    private static function resolveIntentIds(SmartCatalogRoutingEvaluation $evaluation): array
     {
-        $fromEntry = trim((string) ($evaluation->decision->catalogEntry?->ctaIntentId ?? ''));
-        if ($fromEntry !== '') {
+        $fromEntry = $evaluation->decision->catalogEntry?->ctaIntentIds ?? [];
+        if ($fromEntry !== []) {
             return $fromEntry;
         }
 
@@ -51,11 +71,11 @@ final class SynthesisCtaResolver
                 continue;
             }
             $entry = SmartCatalogRegistry::findById($catalogId);
-            if ($entry !== null && $entry->ctaIntentId !== '') {
-                return $entry->ctaIntentId;
+            if ($entry !== null && $entry->ctaIntentIds !== []) {
+                return $entry->ctaIntentIds;
             }
         }
 
-        return '';
+        return [];
     }
 }

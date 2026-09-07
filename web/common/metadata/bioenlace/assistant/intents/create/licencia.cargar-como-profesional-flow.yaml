@@ -17,7 +17,6 @@ fields:
   -
     name: confirmar_impacto_turnos
 action_name: 'Mi licencia'
-description: 'Para registrar una licencia o permiso sobre uno de tus servicios en el efector.'
 rbac_route: /api/profesional-efector-servicio/cargar-licencia-como-profesional-flow
 keywords:
   - licencia
@@ -34,7 +33,7 @@ keywords:
   - 'registrar vacaciones o licencia en mi servicio'
   - 'informar ausencia programada'
 intent_semantics:
-  summary: 'Registrar una licencia, permiso o ausencia (solo fechas de inicio y fin) sobre una asignación propia PES en el efector.'
+  objective: 'Registrar una licencia, permiso o ausencia (solo fechas de inicio y fin) sobre una asignación propia PES en el efector.'
 draft_keys_extra:
   - condicion_laboral_ui_completed
 draft_hydrator:

@@ -31,7 +31,8 @@ final class SynthesisChannel
             $firstIa,
             $execution->scopedSystemRecords,
             $execution->articleBlock,
-            $content
+            $content,
+            $evaluation
         );
 
         $text = self::consultSynthesisIa($prompt);
@@ -39,15 +40,15 @@ final class SynthesisChannel
             return null;
         }
 
-        $cta = SynthesisCtaResolver::resolve($evaluation, $userId);
-        if ($cta === null) {
+        $ctaButtons = SynthesisCtaResolver::resolveAll($evaluation, $userId);
+        if ($ctaButtons === []) {
             return AssistantContextAssemblyService::attachDebugIfEnabled(
                 AssistantEnvelope::message($text)
             );
         }
 
         return AssistantContextAssemblyService::attachDebugIfEnabled(
-            AssistantEnvelope::interactive($text, [$cta])
+            AssistantEnvelope::interactive($text, $ctaButtons)
         );
     }
 

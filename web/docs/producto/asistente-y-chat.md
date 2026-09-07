@@ -126,10 +126,11 @@ Qué puede preguntar un paciente: [qa/paciente/asistente-consultas.md](../qa/pac
 
 ## Puertas frecuentes (paciente)
 
-| Qué pide | Intent |
+| Qué pide | Intent / routing |
 |----------|--------|
 | Malestar, estudio, control o urgencia | `atencion.necesito-atencion` — [solicitar-atencion.md](./solicitar-atencion.md) |
-| Solo sacar turno (sin motivo clínico) | `turnos.crear-como-paciente` — [turnos.md](./turnos.md) |
+| Solo sacar turno (sin destino) | **incompletas** + CTAs (agenda / Solicitar Atención) |
+| Turno con destino (oferta/profesional) | `turnos.crear-como-paciente` — [turnos.md](./turnos.md) |
 | Última vez en una oferta del centro | `turnos.ver-ultimo-en-oferta-como-paciente` |
 | Tutela / delegación | `personas.vincular-menor-flow`, `personas.designar-representante-flow` — [representacion-paciente.md](./representacion-paciente.md) |
 

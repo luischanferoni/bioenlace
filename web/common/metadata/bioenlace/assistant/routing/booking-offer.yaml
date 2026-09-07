@@ -11,7 +11,7 @@ booking_offer_intent_priority:
 
 booking_offer_intent_prefix_fallback: turnos.crear
 
-# Solo intents de oferta clinical necesitan summary/capabilities en su YAML;
+# Solo intents de oferta clinical necesitan objective/capabilities en su YAML;
 # estas etiquetas humanizan los ids en el prompt.
 capability_labels:
   triage_malestar: guía por síntoma hacia un servicio adecuado

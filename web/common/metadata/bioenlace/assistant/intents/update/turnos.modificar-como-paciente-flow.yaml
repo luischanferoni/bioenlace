@@ -1,7 +1,6 @@
 intent_id: turnos.modificar-como-paciente-flow
 version: 1
 action_name: 'Cambiar horario de turno'
-description: 'Para cambiar el horario de tus turnos pendientes.'
 rbac_route: /api/turnos/reprogramar-como-paciente
 keywords:
   - 'modificar turno'
@@ -10,7 +9,7 @@ keywords:
   - 'mover cita'
   - 'otro horario'
 intent_semantics:
-  summary: 'Cambiá la fecha u horario de un turno pendiente propio eligiendo un nuevo slot disponible.'
+  objective: 'Cambiá la fecha u horario de un turno pendiente propio eligiendo un nuevo slot disponible.'
   capabilities:
     - ver_turnos_propios
     - elige_horario

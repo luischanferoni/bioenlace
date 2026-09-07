@@ -82,8 +82,11 @@ final class GuidePromptAssembler
 
     $lines = [];
     foreach ($activeAreas as $area) {
-      $desc = AssistantContextHISArea::description($area);
-      $lines[] = $desc !== '' ? '- ' . $area . ' — ' . $desc : '- ' . $area;
+      $desc = trim(AssistantContextHISArea::description($area));
+      if ($desc === '') {
+        continue;
+      }
+      $lines[] = '- ' . $desc;
     }
 
     return implode("\n", $lines);

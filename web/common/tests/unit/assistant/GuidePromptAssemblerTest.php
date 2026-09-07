@@ -26,6 +26,36 @@ class GuidePromptAssemblerTest extends Unit
         ChatPreprocessContext::clear();
     }
 
+    public function testSemanticsSectionIsHumanReadableWithoutMarkers(): void
+    {
+        $catalog = UiActionCatalog::fromItems([
+            new UiActionCatalogItem(
+                'turnos.crear-como-paciente',
+                'Turno',
+                'Sacar turno',
+                null,
+                '/api/turnos/crear-como-paciente',
+                ['turno'],
+                ['expected' => [], 'provided' => []],
+                ['objective' => 'Reservá turno', 'capabilities' => ['reserva_turno']],
+                null,
+                null,
+                null,
+                [AssistantContextHISArea::APPOINTMENTS]
+            ),
+        ], []);
+
+        $section = GuideIntentSemanticsFilter::formatPromptSection(
+            $catalog,
+            [AssistantContextHISArea::APPOINTMENTS]
+        );
+
+        $this->assertStringContainsString('Turno con un especialista:', $section);
+        $this->assertStringNotContainsString('context:intent_semantics', $section);
+        $this->assertStringNotContainsString('turnos.crear-como-paciente', $section);
+        $this->assertStringNotContainsString('---', $section);
+    }
+
     public function testBlockOrderIncludesSemanticsBeforeHistory(): void
     {
         ChatPreprocessContext::set([
@@ -37,49 +67,23 @@ class GuidePromptAssemblerTest extends Unit
             'extractions' => [],
         ]);
 
-        $catalog = UiActionCatalog::fromItems([
-            new UiActionCatalogItem(
-                'turnos.crear-como-paciente',
-                'Turno',
-                'Sacar turno',
-                null,
-                '/api/turnos/crear-como-paciente',
-                ['turno'],
-                ['expected' => [], 'provided' => []],
-                ['summary' => 'Reservá turno', 'capabilities' => ['reserva_turno']],
-                null,
-                null,
-                null,
-                [AssistantContextHISArea::APPOINTMENTS]
-            ),
-        ], []);
-
-        $semPos = strpos(
-            GuideIntentSemanticsFilter::formatPromptSection(
-                $catalog,
-                [AssistantContextHISArea::APPOINTMENTS]
-            ),
-            'context:intent_semantics'
-        );
-        $this->assertNotFalse($semPos);
-
         $prompt = GuidePromptAssembler::build(
             'llego tarde',
             0,
             new GuideFocusState(AssistantContextHISArea::APPOINTMENTS, [AssistantContextHISArea::APPOINTMENTS]),
             null,
-            '',
             null
         );
 
-        $this->assertStringContainsString('Información Hospitalaria', $prompt);
-        $this->assertStringContainsString('context:intent_semantics', $prompt);
-        $this->assertStringContainsString('turnos.crear-como-paciente', $prompt);
-        $this->assertStringContainsString('Mensaje actual del usuario', $prompt);
+        $this->assertStringContainsString('sistema de salud', $prompt);
+        $this->assertStringContainsString('Tema de la consulta', $prompt);
+        $this->assertStringContainsString('Mensaje de la persona', $prompt);
+        $this->assertStringNotContainsString('context:intent_semantics', $prompt);
+        $this->assertStringNotContainsString('Ámbito de esta consulta', $prompt);
 
-        $semInPrompt = strpos($prompt, 'context:intent_semantics');
+        $semInPrompt = strpos($prompt, 'Gestiones que el sistema puede ofrecer ahora');
         $historyInPrompt = strpos($prompt, 'Conversación previa');
-        if ($historyInPrompt !== false) {
+        if ($semInPrompt !== false && $historyInPrompt !== false) {
             $this->assertLessThan($historyInPrompt, $semInPrompt);
         }
     }

@@ -7,12 +7,13 @@ use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
 /**
  * Formatea {@see intent_semantics} + subintents para prompts de 2ª IA (síntesis / guide).
  *
- * Función del bloque: que la IA sepa objetivo del flow, que es multi-paso y qué hace cada paso.
- * No es copy UX al paciente ({@see action_name}, channel-copy, capability_labels).
+ * Solo lo que la IA necesita: objetivo + pasos (o outline si hay ramas).
+ * `capabilities` quedan en YAML para gates PHP; no van al prompt.
+ * `kind` no se emite: se infiere de steps/outline.
  */
 final class IntentSemanticsPromptFormatter
 {
-    private const MAX_STEPS = 14;
+    private const MAX_STEPS = 12;
 
     /**
      * @param list<string> $intentIds
@@ -43,9 +44,7 @@ final class IntentSemanticsPromptFormatter
             return '';
         }
 
-        return "--- context:intent_semantics ---\n"
-            . implode("\n\n", $blocks)
-            . "\n--- end context:intent_semantics ---";
+        return implode("\n\n", $blocks);
     }
 
     public static function formatCatalogItem(UiActionCatalogItem $item): string
@@ -69,35 +68,14 @@ final class IntentSemanticsPromptFormatter
         }
 
         $lines = [];
-        $lines[] = '- intent: ' . $intentId . ($label !== $intentId ? ' (' . $label . ')' : '');
-        if ($objective !== '') {
-            $lines[] = '  objective: ' . $objective;
-        }
+        $lines[] = '- ' . $label . ': ' . $objective;
 
-        $hasSubintents = self::manifestHasSubintents($manifest);
-        if ($hasSubintents) {
-            $lines[] = '  kind: multi-step flow (wizard); el usuario avanza paso a paso hasta confirmar.';
-            $outline = trim((string) ($sem['outline'] ?? ''));
-            if ($outline !== '') {
-                $lines[] = '  outline: ' . $outline;
-            }
+        $outline = trim((string) ($sem['outline'] ?? ''));
+        if ($outline !== '') {
+            $lines[] = '  Recorrido: ' . $outline;
+        } else {
             foreach (self::stepLines($manifest) as $stepLine) {
                 $lines[] = $stepLine;
-            }
-        } elseif ($objective !== '') {
-            $lines[] = '  kind: single action / lectura (sin wizard de pasos).';
-        }
-
-        $caps = $sem['capabilities'] ?? [];
-        if (is_array($caps) && $caps !== []) {
-            $capIds = [];
-            foreach (array_slice($caps, 0, 10) as $cap) {
-                if (is_string($cap) && trim($cap) !== '') {
-                    $capIds[] = trim($cap);
-                }
-            }
-            if ($capIds !== []) {
-                $lines[] = '  capabilities: ' . implode(', ', $capIds);
             }
         }
 
@@ -140,27 +118,6 @@ final class IntentSemanticsPromptFormatter
 
     /**
      * @param array<string, mixed>|null $manifest
-     */
-    private static function manifestHasSubintents(?array $manifest): bool
-    {
-        if ($manifest === null) {
-            return false;
-        }
-        $subs = $manifest['subintents'] ?? null;
-        if (!is_array($subs) || $subs === []) {
-            return false;
-        }
-        foreach ($subs as $sub) {
-            if (is_array($sub) && trim((string) ($sub['id'] ?? '')) !== '') {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * @param array<string, mixed>|null $manifest
      * @return list<string>
      */
     private static function stepLines(?array $manifest): array
@@ -173,7 +130,7 @@ final class IntentSemanticsPromptFormatter
             return [];
         }
 
-        $lines = ['  steps:'];
+        $lines = ['  Pasos:'];
         $count = 0;
         $total = 0;
         foreach ($subs as $sub) {
@@ -192,11 +149,11 @@ final class IntentSemanticsPromptFormatter
             if ($does === '') {
                 $does = $id;
             }
-            $lines[] = '    - ' . $id . ': ' . $does;
+            $lines[] = '    ' . ($count + 1) . '. ' . $does;
             $count++;
         }
         if ($total > self::MAX_STEPS) {
-            $lines[] = '    - … (+' . ($total - self::MAX_STEPS) . ' pasos/ramas adicionales en el manifiesto)';
+            $lines[] = '    … (+' . ($total - self::MAX_STEPS) . ' pasos más)';
         }
 
         return $count > 0 ? $lines : [];

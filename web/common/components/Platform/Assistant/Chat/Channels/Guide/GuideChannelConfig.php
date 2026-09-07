@@ -117,10 +117,12 @@ final class GuideChannelConfig
     private static function stripOrphanInlineHeaders(string $text, array $vars): string
     {
         $stripWhenEmpty = [
-            'context_his_areas_lines' => ['Ámbito de esta consulta:'],
-            'scoped_system_records' => ['Registros del sistema para el ámbito de la consulta:'],
+            'context_his_areas_lines' => ['Tema de la consulta:'],
+            'scoped_system_records' => [
+                'Datos del sistema (usá solo lo que esté presente; si falta un dato, no lo inventes):',
+            ],
             'intent_semantics' => [
-                'Funcionalidades que este usuario puede ejecutar en el sistema:',
+                'Gestiones que el sistema puede ofrecer ahora (orientá con estas opciones; no inventes pasos):',
             ],
             'conversation_history' => [
                 'Conversación previa (más antigua → más reciente):',

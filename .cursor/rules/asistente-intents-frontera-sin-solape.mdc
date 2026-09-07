@@ -18,7 +18,7 @@ Complementa [`asistente-routing-sin-hardcode.mdc`](asistente-routing-sin-hardcod
 
 ## Keywords / semantics (escalable)
 
-- **`intent_semantics`**: contexto 2ª IA (`objective`, `outline` si hay ramas, `capabilities`). Pasos = `subintents[].assistant_text` (no mapa `steps` paralelo).
+- **`intent_semantics`**: contexto 2ª IA — en prompt solo `objective` + `steps`/`outline` (sin `kind` ni `capabilities`). `capabilities` quedan en YAML para gates PHP.
 - **`keywords`**: anclas discriminadoras. **NL bare / zona C**: smart-catalog.
 - **`description`**: **retirado** de intents YAML. UX = `action_name`; IA = `objective`.
 - Tags operativos: `AssistantFirstIaAdapter`.

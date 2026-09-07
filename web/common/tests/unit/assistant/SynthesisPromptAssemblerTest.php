@@ -30,7 +30,10 @@ class SynthesisPromptAssemblerTest extends Unit
 
         $this->assertStringContainsString('Saber si hay problema por llegar 10 minutos tarde.', $prompt);
         $this->assertStringContainsString('site.appointment.policies', $prompt);
-        $this->assertStringContainsString('appointments', $prompt);
-        $this->assertStringContainsString('no inventes números', $prompt);
+        $this->assertStringContainsString('Tema de la consulta', $prompt);
+        $this->assertStringContainsString('Citas y turnos', $prompt);
+        $this->assertStringNotContainsString('appointments —', $prompt);
+        $this->assertStringNotContainsString('Ámbito de la consulta', $prompt);
+        $this->assertStringContainsString('no inventes políticas ni números', $prompt);
     }
 }

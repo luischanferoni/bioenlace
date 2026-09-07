@@ -39,14 +39,14 @@ class GuidePromptAssemblerFocusLineTest extends Unit
             0,
             new GuideFocusState(AssistantContextHISArea::APPOINTMENTS, [AssistantContextHISArea::APPOINTMENTS]),
             null,
-            '',
             null
         );
 
-        $this->assertStringContainsString('appointments', $prompt);
         $this->assertStringContainsString('Citas y turnos', $prompt);
-        $this->assertStringContainsString('Ámbito de esta consulta', $prompt);
+        $this->assertStringContainsString('Tema de la consulta', $prompt);
+        $this->assertStringNotContainsString('appointments', $prompt);
         $this->assertStringNotContainsString('turnos, estudios, controles', $prompt);
         $this->assertStringNotContainsString('Ámbito de la consulta', $prompt);
+        $this->assertStringNotContainsString('Ámbito de esta consulta', $prompt);
     }
 }

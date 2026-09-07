@@ -52,10 +52,14 @@ final class SynthesisChannelConfig
     private static function stripOrphanInlineHeaders(string $text, array $vars): string
     {
         $stripWhenEmpty = [
-            'context_his_areas_lines' => ['Ámbito de la consulta:'],
-            'scoped_system_records' => ['Registros del sistema para responder:'],
-            'necesidad_usuario' => ['Necesidad del usuario (explicitada por el sistema):'],
-            'intent_semantics' => ['Flujos que el sistema puede ofrecer (objetivo y pasos; no inventes pasos que no figuren):'],
+            'context_his_areas_lines' => ['Tema de la consulta:'],
+            'scoped_system_records' => [
+                'Datos del sistema (usá solo lo que esté presente; si falta un dato, no lo inventes):',
+            ],
+            'necesidad_usuario' => ['Qué necesita la persona:'],
+            'intent_semantics' => [
+                'Gestiones que el sistema puede ofrecer ahora (orientá con estas opciones; no inventes pasos):',
+            ],
         ];
 
         foreach ($stripWhenEmpty as $dataKey => $headerLines) {

@@ -31,7 +31,7 @@ Fuente de verdad para las claves que **`SubIntentEngine`** lee y combina con el 
 | `capabilities` | IDs estables de lo que el flow **sí** ofrece (gates de oferta). |
 | `summary` / `steps` | **Legacy.** `summary` → alias de `objective`. `steps` mapa paralelo a subintents: **no usar**; el formatter deriva pasos de `subintents[].assistant_text`. |
 
-El formatter (`IntentSemanticsPromptFormatter`) arma `context:intent_semantics` con `kind: multi-step flow` y lista de pasos desde **`subintents`** (orden del YAML).
+El formatter (`IntentSemanticsPromptFormatter`) arma texto para la 2ª IA: **nombre humano + objetivo** y **Pasos** (desde `subintents[].assistant_text`) o **Recorrido** (`outline`) si hay muchas ramas. Sin ids técnicos, sin `kind`/`capabilities` en el prompt.
 
 | Campo raíz | Audiencia |
 |------------|-----------|

@@ -9,6 +9,7 @@ use common\components\Platform\Core\Permission\IntentAccessService;
 use common\components\Platform\Assistant\Catalog\IntentCatalogService;
 use common\components\Platform\Assistant\Catalog\DataAccessCatalogIntentSupport;
 use common\components\Platform\Assistant\Catalog\YamlIntentCatalogService;
+use common\components\Platform\Assistant\Catalog\YamlIntentManifestLoader;
 use common\components\Platform\Assistant\Service\AssistantDraftNormalizer;
 use common\components\Platform\Assistant\UiActions\AssistantClientOpenEnricher;
 use common\components\Platform\Core\Permission\IntentFieldResolutionService;
@@ -36,18 +37,12 @@ final class IntentEngine
     {
         $content = trim($content);
         $catalog = UiActionCatalog::forUser($userId);
+        $actionId = $actionId !== null ? trim($actionId) : '';
 
-        if ($catalog->items === []) {
-            return [
-                'success' => false,
-                'error' => 'No hay UIs disponibles para este usuario.',
-                'actions' => [],
-            ];
-        }
-
-        // Ejecución directa por action_id (cuando el cliente ya eligió una UI).
-        if ($actionId !== null && $actionId !== '') {
-            $item = $catalog->byActionId[$actionId] ?? null;
+        // Ejecución directa por action_id (CTA / match clara del smart-catalog).
+        // No exige que el intent figure en el listado de atajos del usuario.
+        if ($actionId !== '') {
+            $item = self::resolveActionItemForExecution($actionId, $userId, $catalog);
             if ($item === null) {
                 return [
                     'success' => false,
@@ -55,7 +50,16 @@ final class IntentEngine
                     'actions' => [],
                 ];
             }
+
             return self::buildSingleActionResponse($item, 'action_id', 1.0, $content, $userId);
+        }
+
+        if ($catalog->items === []) {
+            return [
+                'success' => false,
+                'error' => 'No hay UIs disponibles para este usuario.',
+                'actions' => [],
+            ];
         }
 
         // Consulta vacía no debería llegar aquí (lo valida el controller), pero toleramos.
@@ -300,6 +304,69 @@ final class IntentEngine
                 'method' => $method,
             ],
         ];
+    }
+
+    /**
+     * Resuelve un intent ejecutable: catálogo del usuario o manifiesto YAML + permiso.
+     */
+    private static function resolveActionItemForExecution(
+        string $actionId,
+        int $userId,
+        UiActionCatalog $catalog
+    ): ?UiActionCatalogItem {
+        $item = $catalog->byActionId[$actionId] ?? null;
+        if ($item instanceof UiActionCatalogItem) {
+            return $item;
+        }
+
+        if ($userId <= 0 || !IntentAccessService::userCanExecuteIntent($userId, $actionId)) {
+            return null;
+        }
+
+        if (!YamlIntentCatalogService::intentExists($actionId)) {
+            return null;
+        }
+
+        $manifest = YamlIntentManifestLoader::load($actionId);
+        if ($manifest === null) {
+            return null;
+        }
+
+        $display = trim((string) ($manifest['action_name'] ?? ''));
+        if ($display === '') {
+            $display = $actionId;
+        }
+        $route = trim((string) ($manifest['rbac_route'] ?? ''));
+        $keywords = [];
+        foreach ($manifest['keywords'] ?? [] as $kw) {
+            if (is_string($kw) && trim($kw) !== '') {
+                $keywords[] = trim($kw);
+            }
+        }
+        $sem = isset($manifest['intent_semantics']) && is_array($manifest['intent_semantics'])
+            ? $manifest['intent_semantics']
+            : null;
+        $his = [];
+        foreach ($manifest['his_areas'] ?? [] as $area) {
+            if (is_string($area) && trim($area) !== '') {
+                $his[] = trim($area);
+            }
+        }
+
+        return new UiActionCatalogItem(
+            $actionId,
+            $display,
+            '',
+            null,
+            $route,
+            $keywords,
+            ['expected' => [], 'provided' => []],
+            $sem,
+            null,
+            null,
+            null,
+            $his
+        );
     }
 
     private static function isFlowUiTemplateForCatalogItem(UiActionCatalogItem $item): bool

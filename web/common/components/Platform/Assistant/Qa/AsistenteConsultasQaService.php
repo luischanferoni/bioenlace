@@ -686,6 +686,17 @@ final class AsistenteConsultasQaService
                 } else {
                     $lines[] = 'Asistente: (sin texto)';
                 }
+                if ($error !== '' && $reply !== '' && $reply !== $error) {
+                    $lines[] = 'Error: ' . $error;
+                }
+                $kind = trim((string) ($obs['kind'] ?? ''));
+                if ($kind !== '') {
+                    $lines[] = 'kind: ' . $kind;
+                }
+                $flowId = trim((string) ($obs['flow_intent_id'] ?? ''));
+                if ($flowId !== '') {
+                    $lines[] = 'flow_intent_id: ' . $flowId;
+                }
                 $lines[] = '';
                 $lines[] = 'Botones:';
                 $buttons = is_array($obs['buttons'] ?? null) ? $obs['buttons'] : [];

@@ -77,6 +77,11 @@ final class ChatOrchestrator
      */
     public static function botReplyTextForPersistence(array $envelope): string
     {
+        $error = AssistantDraftNormalizer::scalarString($envelope['error'] ?? '');
+        if ($error !== '' && empty($envelope['success']) && AssistantDraftNormalizer::scalarString($envelope['kind'] ?? '') === '') {
+            return $error;
+        }
+
         $text = AssistantDraftNormalizer::scalarString($envelope['text'] ?? '');
         if ($text !== '') {
             return $text;
@@ -85,7 +90,11 @@ final class ChatOrchestrator
         // Flow sin copy de paso: no ocultar el arranque como “Consulta procesada” vacío.
         $kind = AssistantDraftNormalizer::scalarString($envelope['kind'] ?? '');
         if ($kind === 'flow') {
-            $intentId = AssistantDraftNormalizer::scalarString($envelope['session']['intent_id'] ?? ($envelope['intent_id'] ?? ''));
+            $intentId = AssistantDraftNormalizer::scalarString(
+                is_array($envelope['session'] ?? null)
+                    ? ($envelope['session']['intent_id'] ?? '')
+                    : ($envelope['intent_id'] ?? '')
+            );
             if ($intentId !== '') {
                 return 'Abriendo «' . $intentId . '»';
             }

@@ -21,7 +21,7 @@ Documentación estable del modelo de autorización Bioenlace: motor Yii, **permi
 | API v1 | `BioenlaceApiAccessControl`, `ApiRoutePermissionResolver` | `403` si falta permiso de ruta (intent o capability padre) |
 | Web SPA | `FrontendAuthenticatedAccessControl`, `EnforceGhostAccessBootstrap` | Solo login; sin enumerar intents/capabilities en controllers |
 | Sesión | `BioenlaceSessionPermissions`, `BioenlaceRbacRevision` | Pobla permisos tras login; revisión global invalida caché tras cambios RBAC |
-| Permiso intent | `IntentPermissionResolver`, `IntentAccessService` | Clave = `intent_id`; atajos y ejecución asistente |
+| Permiso intent | `IntentPermissionResolver`, `IntentAccessService` | Clave = `intent_id`; atajos = grant explícito; ejecución NL = grant **o** `rbac_route` |
 | Capability UI | `CapabilityManifestIndex`, `CapabilityAccessService`, `CapabilityPermissionSyncService` | Clave = `capability_id`; UIs nativas + rutas API enlazadas |
 | Flow step | `FlowStepAccessService`, header `X-Flow-Intent-Id` | Pasos `open_ui` heredan intent padre |
 | Dominio recurso | `DomainOperationAuthorizer`, políticas en `domain-operation-policies.yaml` | ¿Sobre **este** PES/turno/encounter/efector? |
@@ -46,8 +46,8 @@ rol → encounter.capturar (type 2) → /api/clinical/encounter/captura-guardar 
 | CTAs tablero EMER | `ui/home-panel-manifest.yaml` (`capability_id`, exclusiones UX por rol) |
 | Staff métricas / edición (migrado) | Intent con `metric_id` o `edit_surface_id` |
 | Pasos UI dentro de flow | Derivados del intent; `FlowStepAccessService` + `X-Flow-Intent-Id` |
-| Listado NL / IA | `IntentAccessService::userCanExecuteIntent` vía catálogo intents |
-| Atajos inicio | `IntentAccessService::userHasIntentGrant` — solo intents (no pantallas nativas); UI genérica embebida en el asistente |
+| Listado NL / IA | `IntentAccessService::userCanExecuteIntent` (grant intent **o** ruta API del manifiesto) |
+| Atajos inicio | `IntentAccessService::userHasIntentGrant` — solo grant del `intent_id`; UI genérica embebida en el asistente |
 | Campos editables | `fields` / `field_groups` en YAML del intent |
 | Migración legacy → capability | `intent-grant-migration-map.yaml` (`capability_grant_sources`) |
 | Alias deprecados | `legacy-permission-aliases.yaml` |

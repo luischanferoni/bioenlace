@@ -13,8 +13,10 @@ Complementa [`asistente-routing-sin-hardcode.mdc`](asistente-routing-sin-hardcod
 | Zona | Señal | Destino |
 |------|--------|---------|
 | **A** | Cita **con destino** (oferta/profesional / `con|en|para` + token) | `clara` → `turnos.crear-como-paciente` |
-| **B** | Síntoma, estudio/acto, control/seguimiento, urgencia | `clara` → `atencion.necesito-atencion` |
+| **B síntoma** | Malestar sin pedir trámite | `incompletas` + CTA `atencion.necesito-atencion` (charla; no abrir triage solo) |
+| **B estudio/control** | Estudio/acto o control/seguimiento explícito | `clara` → `atencion.necesito-atencion` |
 | **C** | Solo “quiero/sacar/pedir un turno” **sin** destino | `incompletas` + CTAs (crear + Solicitar Atención). **No** lanzar flow |
+| **Gestión** | Cancelar / ver mis turnos / mis análisis | `clara` → intent de gestión/lectura (nunca zona C) |
 
 ## Keywords / semantics (escalable)
 

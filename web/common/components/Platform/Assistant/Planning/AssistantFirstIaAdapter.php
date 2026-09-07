@@ -13,6 +13,9 @@ final class AssistantFirstIaAdapter
     /** Destino usable para agenda pura (oferta / profesional / “para mi …”). */
     private const DESTINO_AGENDA = '/\b(con|en|para)\s+\S+/u';
 
+    /** Gestión de turno ya existente (no es pedido bare de reserva). */
+    private const GESTION_TURNO_EXISTENTE = '/\b(cancelar|anular|dar de baja|reprogramar|mover|cambiar el turno|confirmar (el )?turno|confirmar asistencia)\b/u';
+
     /**
      * @param array<string, mixed> $preprocess
      * @return array{
@@ -32,11 +35,11 @@ final class AssistantFirstIaAdapter
         $extractions = is_array($preprocess['extractions'] ?? null) ? $preprocess['extractions'] : [];
         $goal = ChatPreprocessService::canonicalizeGoal((string) ($preprocess['user_goal'] ?? 'ambiguous'));
 
-        $tags = ChatPreprocessService::normalizeTags($preprocess['tags'] ?? []);
+        $iaTags = ChatPreprocessService::normalizeTags($preprocess['tags'] ?? []);
         $tags = array_values(array_unique(array_merge(
-            $tags,
+            $iaTags,
             self::inferOperationalTags($normalized, $areas),
-            self::inferSoftTags($normalized, $goal, $tags !== [])
+            self::inferSoftTags($normalized, $goal, $iaTags)
         )));
         $tags = self::reconcileAgendaTags($tags, $normalized);
 
@@ -92,10 +95,22 @@ final class AssistantFirstIaAdapter
 
         $folded = ChatChannelPolicy::fold($normalized);
 
+        if (preg_match(self::GESTION_TURNO_EXISTENTE, $folded)) {
+            $tags[] = 'cancelar_turno';
+        }
+
+        if (preg_match(
+            '/\b(mis analisis|mis análisis|mis resultados|resultados de laboratorio|informes de laboratorio|ver mis estudios)\b/u',
+            $folded
+        )) {
+            $tags[] = 'mis_analisis';
+        }
+
         if (ChatChannelPolicy::isStudyOrPracticeRequest($normalized)) {
             $tags[] = 'estudio';
         } elseif (
-            ChatChannelPolicy::requestsOperationalTramiteExecution($normalized)
+            !self::isGestionTurnoExistente($folded)
+            && ChatChannelPolicy::requestsOperationalTramiteExecution($normalized)
             && ChatChannelPolicy::isSchedulingRequest($normalized)
             && !ChatChannelPolicy::isClinicalSymptomContent($normalized)
         ) {
@@ -135,32 +150,42 @@ final class AssistantFirstIaAdapter
         return (bool) preg_match(self::DESTINO_AGENDA, $folded);
     }
 
+    private static function isGestionTurnoExistente(string $folded): bool
+    {
+        return (bool) preg_match(self::GESTION_TURNO_EXISTENTE, $folded);
+    }
+
     /**
-     * Heurísticas blandas: no pisan si la 1ª IA ya etiquetó.
+     * Heurísticas blandas. Síntoma clínico siempre (aunque la 1ª IA haya etiquetado otra cosa).
+     * El resto no pisa si la IA ya trajo tags propios.
      *
+     * @param list<string> $iaTags
      * @return list<string>
      */
-    private static function inferSoftTags(string $normalized, string $goal, bool $skipIfIaTagged): array
+    private static function inferSoftTags(string $normalized, string $goal, array $iaTags): array
     {
-        if ($skipIfIaTagged) {
-            return [];
+        $tags = [];
+        if ($normalized === '') {
+            return $tags;
         }
 
-        $tags = [];
-        if ($normalized !== '') {
-            if (ChatChannelPolicy::isAppointmentPolicyQuestion($normalized)) {
-                $tags[] = 'llegar_tarde';
-            }
-            if (ChatPreprocessService::isClinicalSymptomContent($normalized)) {
-                $tags[] = 'sintoma';
-                $tags[] = 'necesito_atencion';
-            }
-            if (preg_match('/\b(medium|horoscop|clima)\b/u', mb_strtolower($normalized, 'UTF-8'))) {
-                $tags[] = 'fuera_his';
-            }
-            if (preg_match('/\b(representacion|representación|tutela|sobrin|sobrina|menor|representante)\b/u', mb_strtolower($normalized, 'UTF-8'))) {
-                $tags[] = 'representacion';
-            }
+        if (ChatPreprocessService::isClinicalSymptomContent($normalized)) {
+            $tags[] = 'sintoma';
+            $tags[] = 'necesito_atencion';
+        }
+
+        if ($iaTags !== []) {
+            return array_values(array_unique($tags));
+        }
+
+        if (ChatChannelPolicy::isAppointmentPolicyQuestion($normalized)) {
+            $tags[] = 'llegar_tarde';
+        }
+        if (preg_match('/\b(medium|horoscop|clima)\b/u', mb_strtolower($normalized, 'UTF-8'))) {
+            $tags[] = 'fuera_his';
+        }
+        if (preg_match('/\b(representacion|representación|tutela|sobrin|sobrina|menor|representante)\b/u', mb_strtolower($normalized, 'UTF-8'))) {
+            $tags[] = 'representacion';
         }
 
         if ($goal === 'operational') {
@@ -183,8 +208,12 @@ final class AssistantFirstIaAdapter
         }
         $folded = ChatChannelPolicy::fold($normalized);
         $hasDestino = self::hasAgendaDestino($folded);
+        $isGestion = self::isGestionTurnoExistente($folded);
         $out = [];
         foreach ($tags as $tag) {
+            if ($isGestion && ($tag === 'pedido_turno_sin_destino' || $tag === 'sacar_turno')) {
+                continue;
+            }
             if ($hasDestino && $tag === 'pedido_turno_sin_destino') {
                 continue;
             }

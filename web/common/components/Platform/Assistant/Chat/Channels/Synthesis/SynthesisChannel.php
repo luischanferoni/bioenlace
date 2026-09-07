@@ -35,12 +35,15 @@ final class SynthesisChannel
             $evaluation
         );
 
+        $ctaButtons = SynthesisCtaResolver::resolveAll($evaluation, $userId);
         $text = self::consultSynthesisIa($prompt);
         if ($text === null || $text === '') {
-            return null;
+            if ($ctaButtons === []) {
+                return null;
+            }
+            $text = self::ctaFallbackText($ctaButtons);
         }
 
-        $ctaButtons = SynthesisCtaResolver::resolveAll($evaluation, $userId);
         if ($ctaButtons === []) {
             return AssistantContextAssemblyService::attachDebugIfEnabled(
                 AssistantEnvelope::message($text)
@@ -50,6 +53,25 @@ final class SynthesisChannel
         return AssistantContextAssemblyService::attachDebugIfEnabled(
             AssistantEnvelope::interactive($text, $ctaButtons)
         );
+    }
+
+    /**
+     * @param list<array{label: string, intent_id: string}> $ctaButtons
+     */
+    private static function ctaFallbackText(array $ctaButtons): string
+    {
+        if (count($ctaButtons) === 1) {
+            $label = $ctaButtons[0]['label'];
+
+            return 'Para continuar, podés usar la opción «' . $label . '».';
+        }
+
+        $parts = [];
+        foreach ($ctaButtons as $b) {
+            $parts[] = '«' . $b['label'] . '»';
+        }
+
+        return 'Para continuar, elegí una de estas opciones: ' . implode(' o ', $parts) . '.';
     }
 
     private static function consultSynthesisIa(string $prompt): ?string

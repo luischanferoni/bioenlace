@@ -5,9 +5,9 @@ version: 1
 
 entries:
   - id: atencion-sintoma
-    tool_type: intent
-    tool_ref: atencion.necesito-atencion
-    routing_result: clara
+    # Charla + CTA (no abrir triage solo por “me duele”).
+    match_only: true
+    routing_result: incompletas
     priority: 90
     triggers:
       tags: [sintoma, dolor, malestar, necesito_atencion, medicamento]
@@ -24,6 +24,8 @@ entries:
         - reaccion al medicamento
         - reacción al medicamento
       keywords: [panza, cabeza, fiebre, vomito, vómito]
+    cta_intent_ids:
+      - atencion.necesito-atencion
 
   - id: atencion-estudio
     tool_type: intent
@@ -94,6 +96,36 @@ entries:
         - turno para mi
         - solicita un turno para mi
       context_areas: [appointments]
+
+  - id: turnos-cancelar-paciente
+    tool_type: intent
+    tool_ref: turnos.cancelar-como-paciente-flow
+    routing_result: clara
+    priority: 87
+    triggers:
+      tags: [cancelar_turno]
+      phrases:
+        - cancelar turno
+        - cancela el turno
+        - anular turno
+        - dar de baja turno
+        - no puedo ir al turno
+      context_areas: [appointments]
+
+  - id: laboratorio-mis-resultados
+    tool_type: intent
+    tool_ref: laboratorio.ver-resultados-como-paciente
+    routing_result: clara
+    priority: 86
+    triggers:
+      tags: [mis_analisis]
+      phrases:
+        - mis analisis
+        - mis resultados
+        - resultados de laboratorio
+        - informes de laboratorio
+        - ver mis estudios
+      context_areas: [diagnostics]
 
   - id: turnos-ver-paciente
     tool_type: intent

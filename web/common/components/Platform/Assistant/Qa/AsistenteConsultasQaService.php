@@ -717,6 +717,10 @@ final class AsistenteConsultasQaService
         $lines = [];
         $lines[] = 'Flujo:';
 
+        $tags = is_array($observation['tags'] ?? null) ? $observation['tags'] : [];
+        $areas = is_array($observation['context_areas'] ?? null) ? $observation['context_areas'] : [];
+        $normalized = trim((string) ($observation['normalized_text'] ?? ''));
+
         if ($planning === null || $finalPath === '') {
             $lines[] = '  preprocess + PHP (sin telemetría de planning / path vacío)';
             if ($userGoal !== '') {
@@ -725,6 +729,7 @@ final class AsistenteConsultasQaService
             if ($flowIntent !== '') {
                 $lines[] = '  intent: ' . $flowIntent;
             }
+            self::appendPreprocessContextLines($lines, $normalized, $tags, $areas, $hint);
 
             return $lines;
         }
@@ -752,6 +757,7 @@ final class AsistenteConsultasQaService
                         ? ' (' . trim((string) $planning['planner_reason']) . ')'
                         : '');
             }
+            self::appendPreprocessContextLines($lines, $normalized, $tags, $areas, $hint);
 
             return $lines;
         }
@@ -762,14 +768,12 @@ final class AsistenteConsultasQaService
             '1ia_dudosa' => 'dudosa → desambiguación',
             '1ia_direct' => 'match directo (artículo/plantilla)',
             '1ia_fuera' => 'fuera de HIS',
+            'synthesis_unavailable' => 'síntesis no disponible / fallback',
         ];
         $pathLabel = $pathLabels[$finalPath] ?? $finalPath;
         $lines[] = '  preprocess + PHP solamente (' . $pathLabel . ')';
         if ($routing !== '') {
             $lines[] = '  routing: ' . $routing;
-        }
-        if ($hint !== '') {
-            $lines[] = '  hint preprocess: ' . $hint;
         }
         if ($userGoal !== '') {
             $lines[] = '  canal: ' . $userGoal;
@@ -777,8 +781,43 @@ final class AsistenteConsultasQaService
         if ($flowIntent !== '') {
             $lines[] = '  intent: ' . $flowIntent;
         }
+        self::appendPreprocessContextLines($lines, $normalized, $tags, $areas, $hint);
 
         return $lines;
+    }
+
+    /**
+     * @param list<string> $lines
+     * @param list<mixed> $tags
+     * @param list<mixed> $areas
+     */
+    private static function appendPreprocessContextLines(
+        array &$lines,
+        string $normalized,
+        array $tags,
+        array $areas,
+        string $hint
+    ): void {
+        if ($normalized !== '') {
+            $lines[] = '  normalized: ' . $normalized;
+        }
+        if ($hint !== '') {
+            $lines[] = '  hint preprocess: ' . $hint;
+        }
+        $tagStr = [];
+        foreach ($tags as $t) {
+            if (is_string($t) && trim($t) !== '') {
+                $tagStr[] = trim($t);
+            }
+        }
+        $areaStr = [];
+        foreach ($areas as $a) {
+            if (is_string($a) && trim($a) !== '') {
+                $areaStr[] = trim($a);
+            }
+        }
+        $lines[] = '  tags: ' . ($tagStr === [] ? '(ninguno)' : implode(', ', $tagStr));
+        $lines[] = '  context_areas: ' . ($areaStr === [] ? '(ninguno)' : implode(', ', $areaStr));
     }
 
     /**

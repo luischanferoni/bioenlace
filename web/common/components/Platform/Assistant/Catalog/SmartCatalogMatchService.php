@@ -3,7 +3,7 @@
 namespace common\components\Platform\Assistant\Catalog;
 
 use common\components\Platform\Assistant\Context\AssistantContextHISArea;
-use common\components\Platform\Assistant\IntentEngine\UiActionCatalog;
+use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
 
 /**
  * Match de etiquetas 1ª IA contra {@see SmartCatalogRegistry}.
@@ -35,21 +35,16 @@ final class SmartCatalogMatchService
      */
     public static function match(array $firstIa, int $userId): SmartCatalogMatchResult
     {
+        unset($userId); // firma estable; auth de ejecución no se resuelve en el match
         $normalized = self::fold(trim((string) ($firstIa['normalized_text'] ?? '')));
         $tags = self::foldList($firstIa['tags'] ?? []);
         $areas = self::normalizeAreas($firstIa['context_areas'] ?? []);
         $intentHints = self::normalizeIntentHints($firstIa['intent_ids_hint'] ?? []);
 
-        $allowedIntentIds = self::allowedIntentIdsForUser($userId);
-
         $ranked = [];
         foreach (SmartCatalogRegistry::entries() as $entry) {
-            if (!$entry->matchOnly && $entry->toolType === 'intent' && $entry->toolRef !== '') {
-                if (!isset($allowedIntentIds[$entry->toolRef])) {
-                    continue;
-                }
-            }
-
+            // No filtrar intents por catálogo del usuario acá: el match decide routing;
+            // la autorización de ejecución vive en OperationalChannel / IntentEngine.
             $score = self::scoreEntry($entry, $normalized, $tags, $areas, $intentHints);
             // Sin hit de trigger (tag/área/frase/keyword/hint) no rankear: evita leak por priority base.
             if ($score <= 0) {
@@ -147,11 +142,13 @@ final class SmartCatalogMatchService
 
         if ($normalized !== '') {
             foreach ($entry->triggerPhrases as $phrase) {
+                $phrase = self::fold($phrase);
                 if ($phrase !== '' && str_contains($normalized, $phrase)) {
                     $hit += self::SCORE_PHRASE;
                 }
             }
             foreach ($entry->triggerKeywords as $keyword) {
+                $keyword = self::fold($keyword);
                 if ($keyword !== '' && str_contains($normalized, $keyword)) {
                     $hit += self::SCORE_KEYWORD;
                 }
@@ -167,23 +164,6 @@ final class SmartCatalogMatchService
         }
 
         return (int) floor($entry->priority / 10) + $hit;
-    }
-
-    /**
-     * @return array<string, true>
-     */
-    private static function allowedIntentIdsForUser(int $userId): array
-    {
-        $catalog = UiActionCatalog::forUser($userId);
-        $out = [];
-        foreach ($catalog->items as $item) {
-            $id = trim($item->action_id);
-            if ($id !== '') {
-                $out[$id] = true;
-            }
-        }
-
-        return $out;
     }
 
     /**
@@ -249,6 +229,6 @@ final class SmartCatalogMatchService
 
     private static function fold(string $value): string
     {
-        return mb_strtolower($value, 'UTF-8');
+        return ChatChannelPolicy::fold($value);
     }
 }

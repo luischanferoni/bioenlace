@@ -90,6 +90,95 @@ class DeclarativePlanServiceTest extends Unit
         $this->assertNotContains('sacar_turno', $first['tags']);
     }
 
+    public function testFirstIaAdapterCancelDoesNotGetPedidoTurno(): void
+    {
+        $first = AssistantFirstIaAdapter::fromPreprocess([
+            'normalized_text' => 'Cancelá el turno del martes',
+            'user_goal' => 'operational',
+            'tags' => ['appointments'],
+            'context_areas' => ['appointments'],
+            'extractions' => [],
+        ]);
+
+        $this->assertContains('cancelar_turno', $first['tags']);
+        $this->assertNotContains('pedido_turno_sin_destino', $first['tags']);
+        $this->assertNotContains('sacar_turno', $first['tags']);
+    }
+
+    public function testFirstIaAdapterAlwaysInfersSintomaEvenIfIaTagged(): void
+    {
+        $first = AssistantFirstIaAdapter::fromPreprocess([
+            'normalized_text' => 'Me duele la cabeza',
+            'user_goal' => 'guide',
+            'tags' => ['appointments'],
+            'context_areas' => ['appointments'],
+            'extractions' => [],
+        ]);
+
+        $this->assertContains('sintoma', $first['tags']);
+        $this->assertContains('necesito_atencion', $first['tags']);
+    }
+
+    public function testFirstIaAdapterInfersMisAnalisis(): void
+    {
+        $first = AssistantFirstIaAdapter::fromPreprocess([
+            'normalized_text' => 'Mis análisis',
+            'user_goal' => 'operational',
+            'tags' => [],
+            'context_areas' => [],
+            'extractions' => [],
+        ]);
+
+        $this->assertContains('mis_analisis', $first['tags']);
+    }
+
+    public function testRoutingCancelIsClaraNotAgendaCtas(): void
+    {
+        $evaluation = SmartCatalogRoutingService::evaluate([
+            'normalized_text' => 'Cancelá el turno del martes',
+            'user_goal' => 'operational',
+            'routing_hint' => 'clara',
+            'tags' => ['cancelar_turno', 'appointments'],
+            'context_areas' => ['appointments'],
+            'extractions' => [],
+        ], 1);
+
+        $this->assertTrue($evaluation->decision->isMatch100());
+        $this->assertSame('turnos.cancelar-como-paciente-flow', $evaluation->decision->primaryIntentId());
+    }
+
+    public function testRoutingSintomaIsIncompletasWithAtencionCta(): void
+    {
+        $evaluation = SmartCatalogRoutingService::evaluate([
+            'normalized_text' => 'Me duele la cabeza',
+            'user_goal' => 'guide',
+            'routing_hint' => 'incompletas',
+            'tags' => ['sintoma', 'necesito_atencion'],
+            'context_areas' => [],
+            'extractions' => [],
+        ], 1);
+
+        $this->assertTrue($evaluation->decision->isIncompletas());
+        $this->assertSame('atencion-sintoma', $evaluation->decision->catalogEntry?->id);
+        $this->assertSame(['atencion.necesito-atencion'], $evaluation->decision->catalogEntry?->ctaIntentIds);
+        $this->assertSame([], $evaluation->declarativePlan->toolIds);
+    }
+
+    public function testRoutingMisAnalisisIsClaraLab(): void
+    {
+        $evaluation = SmartCatalogRoutingService::evaluate([
+            'normalized_text' => 'Mis análisis',
+            'user_goal' => 'operational',
+            'routing_hint' => 'clara',
+            'tags' => ['mis_analisis'],
+            'context_areas' => ['diagnostics'],
+            'extractions' => [],
+        ], 1);
+
+        $this->assertTrue($evaluation->decision->isMatch100());
+        $this->assertSame('laboratorio.ver-resultados-como-paciente', $evaluation->decision->primaryIntentId());
+    }
+
     public function testFirstIaAdapterInfersEstudioNotSacarTurno(): void
     {
         $first = AssistantFirstIaAdapter::fromPreprocess([

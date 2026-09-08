@@ -198,6 +198,12 @@ final class AsistenteConsultasQaService
 
         $detalle = [];
         $lastObservation = null;
+        // SubIntentEngine es stateless: el cliente reenvía session (como spa-home en modo flow).
+        $flowContinue = [
+            'intent_id' => '',
+            'subintent_id' => '',
+            'draft' => [],
+        ];
 
         try {
             foreach ($mensajes as $indice => $mensaje) {
@@ -207,7 +213,9 @@ final class AsistenteConsultasQaService
                 ChatPreprocessContext::clear();
                 AssistantPlanningLogService::resetForTests();
 
-                $out = ChatOrchestrator::handle(['content' => trim($mensaje)], $userId);
+                $body = self::buildTurnRequestBody(trim($mensaje), $flowContinue);
+                $out = ChatOrchestrator::handle($body, $userId);
+                $flowContinue = self::updateFlowContinueFromEnvelope($out, $flowContinue);
                 $observation = self::observeEnvelope($out);
                 $lastObservation = $observation;
                 $detalle[] = [
@@ -276,10 +284,16 @@ final class AsistenteConsultasQaService
         $effectiveGoal = $routing !== ''
             ? PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint($routing)
             : $preprocessGoal;
+        // Continuación de flow (SubIntentEngine): el trámite operativo está abierto aunque el
+        // preprocess del turno clasifique el texto suelto como guide/tiempo.
+        $kind = AssistantDraftNormalizer::scalarString($envelope['kind'] ?? '');
+        if ($kind === 'flow') {
+            $effectiveGoal = 'operational';
+        }
 
         return [
             'success' => (bool) ($envelope['success'] ?? ($envelope['kind'] ?? '') !== ''),
-            'kind' => AssistantDraftNormalizer::scalarString($envelope['kind'] ?? ''),
+            'kind' => $kind,
             'user_goal' => $effectiveGoal,
             'preprocess_user_goal' => $preprocessGoal,
             'routing_hint' => ChatPreprocessContext::routingHint(),
@@ -521,6 +535,80 @@ final class AsistenteConsultasQaService
         }
 
         return $out;
+    }
+
+    /**
+     * Arma el body del turno: root query o continuación de flow (intent + draft).
+     *
+     * @param array{intent_id: string, subintent_id: string, draft: array<string, mixed>} $flowContinue
+     * @return array<string, mixed>
+     */
+    private static function buildTurnRequestBody(string $content, array $flowContinue): array
+    {
+        $body = ['content' => $content];
+        $intentId = trim((string) ($flowContinue['intent_id'] ?? ''));
+        if ($intentId === '') {
+            return $body;
+        }
+
+        $body['intent_id'] = $intentId;
+        $sub = trim((string) ($flowContinue['subintent_id'] ?? ''));
+        if ($sub !== '') {
+            $body['subintent_id'] = $sub;
+        }
+        $draft = $flowContinue['draft'] ?? [];
+        $body['draft'] = is_array($draft) ? $draft : [];
+
+        return $body;
+    }
+
+    /**
+     * Tras cada respuesta: si es flow, actualiza snapshot; si no, corta la cadena.
+     *
+     * @param array<string, mixed> $envelope
+     * @param array{intent_id: string, subintent_id: string, draft: array<string, mixed>} $flowContinue
+     * @return array{intent_id: string, subintent_id: string, draft: array<string, mixed>}
+     */
+    private static function updateFlowContinueFromEnvelope(array $envelope, array $flowContinue): array
+    {
+        $empty = [
+            'intent_id' => '',
+            'subintent_id' => '',
+            'draft' => [],
+        ];
+
+        if (AssistantDraftNormalizer::scalarString($envelope['kind'] ?? '') !== 'flow') {
+            return $empty;
+        }
+
+        $session = isset($envelope['session']) && is_array($envelope['session'])
+            ? $envelope['session']
+            : [];
+        $intentId = AssistantDraftNormalizer::scalarString($session['intent_id'] ?? '');
+        if ($intentId === '') {
+            $intentId = AssistantDraftNormalizer::scalarString($envelope['intent_id'] ?? '');
+        }
+        if ($intentId === '') {
+            return $empty;
+        }
+
+        $subintentId = AssistantDraftNormalizer::scalarString($session['subintent_id'] ?? '');
+        $draft = is_array($flowContinue['draft'] ?? null) ? $flowContinue['draft'] : [];
+        $delta = $session['draft_delta'] ?? null;
+        if (is_array($delta)) {
+            foreach ($delta as $k => $v) {
+                if (!is_string($k) || $k === '') {
+                    continue;
+                }
+                $draft[$k] = $v;
+            }
+        }
+
+        return [
+            'intent_id' => $intentId,
+            'subintent_id' => $subintentId,
+            'draft' => $draft,
+        ];
     }
 
     /**

@@ -24,6 +24,8 @@ php yii qa/asistente-consultas --userId=<user.id> --caseId=smoke-sintoma-cabeza
 `--userId` = `user.id` (tabla `user`), no `id_persona`.
 **Secciones del YAML:** `smoke` (una fila por puerta mínima), `orientacion`, `pedir-atencion`, `citas`, `post-consulta`, `no-confundir`, `borde`. Sin repetir la misma clase de prueba con otro wording/target.
 
+En cadenas (varios `mensajes`), si un turno abre `kind: flow`, el siguiente reenvía `intent_id` / `subintent_id` / `draft` (SubIntentEngine es stateless; mismo contrato que el cliente en modo flow).
+
 Salida: consola + JSON y TXT en `runtime/logs/qa-asistente-consultas-*` (mismo basename `.json` / `.txt`) y log `runtime/logs/qa-asistente-consultas.log` (categorías `qa-asistente-consultas` y `asistente-planning`). El TXT es un resumen legible: mensaje, respuesta, botones y leyenda de flujo (preprocess+PHP vs preprocess+2IA con contextos).
 
 `--cobertura=Hoy,Fuera` o `--cobertura=*` / `all` para ampliar. Casos **Pantalla** / **Futuro** se registran como `observe` (no fallan el batch).

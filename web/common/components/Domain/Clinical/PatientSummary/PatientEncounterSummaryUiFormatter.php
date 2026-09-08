@@ -70,10 +70,10 @@ final class PatientEncounterSummaryUiFormatter
                     continue;
                 }
                 $label = trim((string) ($o['display'] ?? 'Pedido'));
-                $cat = (string) ($o['category'] ?? '');
+                $catLabel = $this->orderCategoryLabelForPatient((string) ($o['category'] ?? ''));
                 $status = (string) ($o['resultStatus'] ?? '');
                 $suffix = $status === 'available' ? ' (resultado disponible)' : ($status === 'pending' ? ' (pendiente)' : '');
-                $parts[] = '* ' . $label . ($cat !== '' ? " [{$cat}]" : '') . $suffix;
+                $parts[] = '* ' . $label . ($catLabel !== '' ? " ({$catLabel})" : '') . $suffix;
             }
         }
 
@@ -88,5 +88,28 @@ final class PatientEncounterSummaryUiFormatter
         }
 
         return implode("\n", $parts);
+    }
+
+    /**
+     * Etiqueta legible para el paciente (no códigos internos de ServiceRequest.category).
+     */
+    private function orderCategoryLabelForPatient(string $category): string
+    {
+        $key = mb_strtolower(trim(str_replace('_', '-', $category)));
+        if ($key === '') {
+            return '';
+        }
+
+        $labels = [
+            'follow-up' => 'control / seguimiento',
+            'counseling' => 'indicación',
+            'conditional' => 'según evolución',
+            'procedure' => 'práctica',
+            'laboratory' => 'laboratorio',
+            'lab' => 'laboratorio',
+            'referral' => 'derivación',
+        ];
+
+        return $labels[$key] ?? '';
     }
 }

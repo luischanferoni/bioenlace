@@ -5,11 +5,11 @@ shortcut:
 action_name: 'Cuestionario pre-consulta'
 rbac_route: /api/care-packs/assistance
 keywords:
-  - 'pre consulta'
-  - 'cuestionario antes de la consulta'
   - 'asistencia preconsulta'
-  - 'preguntas antes del turno'
   - 'cuestionario pre consulta'
+  - 'preguntas antes de la consulta'
+  - 'cuestionario antes de la consulta'
+  - preconsulta
 intent_semantics:
   objective: 'Completá el cuestionario de asistencia antes de un turno pendiente propio.'
   capabilities:

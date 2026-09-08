@@ -17,11 +17,17 @@ final class AssistantFirstIaAdapter
     /** Gestión de turno ya existente (no es pedido bare de reserva). */
     private const GESTION_TURNO_EXISTENTE = '/\b(cancelar|anular|dar de baja|reprogramar|mover|cambiar el turno|confirmar (el )?turno|confirmar asistencia)\b/u';
 
-    /** Historial / pasados (≠ próximos pendientes). */
-    private const HISTORIAL_TURNOS = '/\b(turnos? que (ya )?tuve|ya tuve|turnos anteriores|historial de turnos|turnos pasados|citas anteriores|citas pasadas|mis turnos pasados)\b/u';
+    /** Historial / pasados (≠ próximos pendientes). Requiere turno/cita. */
+    private const HISTORIAL_TURNOS = '/\b(turnos? que (ya )?tuve|turnos anteriores|historial de turnos|turnos pasados|citas anteriores|citas pasadas|mis turnos pasados)\b/u';
 
     /** Plazos/reglas de cancelación (≠ ejecutar cancelar). */
     private const POLITICA_TURNOS = '/\b(hasta cuando (puedo )?cancelar|hasta cuándo (puedo )?cancelar|me multan|multa si|plazo.{0,24}cancel|politica (de )?(cancel|turno|autogestion)|política (de )?(cancel|turno|autogestión)|puedo cancelar por app|reglas (de )?cancel)\b/u';
+
+    /** Resumen de la última atención clínica (≠ última vez en oferta). */
+    private const ULTIMA_ATENCION = '/\b(que me dijo|qué me dijo|me dijo el medico|me dijo el médico|ultima atencion|última atención|ultima consulta|última consulta|resumen de (la )?consulta|mi ultima consulta|mi última consulta)\b/u';
+
+    /** Listado de atenciones/consultas finalizadas. */
+    private const MIS_ATENCIONES = '/\b(mis atenciones|mis consultas|historial de consultas|atenciones anteriores|consultas anteriores|resumen de atencion|resumen de atención)\b/u';
 
     /**
      * @param array<string, mixed> $preprocess
@@ -147,11 +153,17 @@ final class AssistantFirstIaAdapter
             $tags[] = 'mis_turnos';
         }
 
-        if (preg_match(
+        if (preg_match(self::ULTIMA_ATENCION, $folded)) {
+            $tags[] = 'ultima_atencion';
+        } elseif (preg_match(
             '/\b(ultima vez que fui|última vez que fui|cuando fui al|cuándo fui al|cuando fue la ultima|cuándo fue la última)\b/u',
             $folded
         )) {
             $tags[] = 'ultima_vez_oferta';
+        }
+
+        if (preg_match(self::MIS_ATENCIONES, $folded)) {
+            $tags[] = 'mis_atenciones';
         }
 
         if (preg_match(
@@ -232,12 +244,33 @@ final class AssistantFirstIaAdapter
         $isGestion = self::isGestionTurnoExistente($folded);
         $isHistorial = (bool) preg_match(self::HISTORIAL_TURNOS, $folded);
         $isPolitica = (bool) preg_match(self::POLITICA_TURNOS, $folded);
+        $isUltimaAtencion = (bool) preg_match(self::ULTIMA_ATENCION, $folded);
+        $isMisAtenciones = (bool) preg_match(self::MIS_ATENCIONES, $folded);
         $out = [];
         foreach ($tags as $tag) {
+            // Tags de catálogo inventados por la IA sin ancla en el texto → descartar.
+            if ($tag === 'historial_turnos' && !$isHistorial) {
+                continue;
+            }
+            if ($tag === 'politica_turnos' && !$isPolitica) {
+                continue;
+            }
+            if ($tag === 'ultima_atencion' && !$isUltimaAtencion) {
+                continue;
+            }
+            if ($tag === 'mis_atenciones' && !$isMisAtenciones) {
+                continue;
+            }
             if ($isPolitica && $tag === 'cancelar_turno') {
                 continue;
             }
             if ($isHistorial && $tag === 'mis_turnos') {
+                continue;
+            }
+            if ($isUltimaAtencion && ($tag === 'ultima_vez_oferta' || $tag === 'historial_turnos' || $tag === 'mis_turnos')) {
+                continue;
+            }
+            if ($isMisAtenciones && ($tag === 'historial_turnos' || $tag === 'mis_turnos')) {
                 continue;
             }
             if ($isGestion && !$isPolitica && ($tag === 'pedido_turno_sin_destino' || $tag === 'sacar_turno' || $tag === 'mis_turnos')) {

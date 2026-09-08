@@ -133,6 +133,20 @@ class DeclarativePlanServiceTest extends Unit
         $this->assertNotContains('cancelar_turno', $first['tags']);
     }
 
+    public function testFirstIaAdapterUltimaAtencionStripsHistorialTurnosNoise(): void
+    {
+        $first = AssistantFirstIaAdapter::fromPreprocess([
+            'normalized_text' => '¿Qué me dijo el médico ayer?',
+            'user_goal' => 'guide',
+            'tags' => ['historial_turnos', 'staff', 'encounters'],
+            'context_areas' => ['encounters'],
+            'extractions' => [],
+        ]);
+
+        $this->assertContains('ultima_atencion', $first['tags']);
+        $this->assertNotContains('historial_turnos', $first['tags']);
+    }
+
     public function testFirstIaAdapterAlwaysInfersSintomaEvenIfIaTagged(): void
     {
         $first = AssistantFirstIaAdapter::fromPreprocess([

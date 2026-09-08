@@ -6,14 +6,9 @@ keywords:
   - 'designar representante'
   - 'delegar cuenta'
   - 'delegar gestión de turnos'
-  - 'delegar gestion de turnos'
   - 'autorizar familiar'
-  - 'quien opera por mí'
-  - representante
+  - 'quién opera por mí'
   - 'paciente a cargo'
-  - 'delegar la gestión de turnos'
-  - 'que otra persona gestione mis turnos'
-  - 'autorizar a un familiar para turnos'
   - 'designar quién opera por mí'
 intent_semantics:
   objective: 'Autorizá a otra persona con cuenta para gestionar turnos y gestiones en tu nombre.'

@@ -5,15 +5,11 @@ rbac_route: /api/turnos/listar-como-paciente
 keywords:
   - 'mis turnos'
   - 'qué turnos tengo'
-  - 'que turnos tengo'
-  - 'decime los turnos'
-  - 'decime mis turnos'
-  - 'ver mis turnos'
-  - 'listar mis turnos'
-  - 'mis citas'
   - 'próximos turnos'
-  - 'proximos turnos'
+  - 'mis citas'
   - 'turnos pendientes'
+  - 'ver mis turnos'
+  - 'decime mis turnos'
 intent_semantics:
   objective: 'Consultá tus próximos turnos pendientes (fecha, servicio y profesional).'
   capabilities:

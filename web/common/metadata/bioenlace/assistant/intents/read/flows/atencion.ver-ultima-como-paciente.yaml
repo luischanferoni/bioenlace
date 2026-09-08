@@ -5,7 +5,9 @@ rbac_route: /api/clinical/encounter-patient-summary/ultima-atencion-como-pacient
 keywords:
   - 'última atención'
   - 'última consulta'
+  - 'qué me dijo'
   - 'qué me dijeron'
+  - 'me dijo el médico'
   - 'resumen de la consulta'
   - 'mi última consulta'
 intent_semantics:

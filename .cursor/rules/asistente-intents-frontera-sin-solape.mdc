@@ -19,11 +19,16 @@ Complementa [`asistente-routing-sin-hardcode.mdc`](asistente-routing-sin-hardcod
 | **Gestión** | Cancelar / ver mis turnos / mis análisis | `clara` → intent de gestión/lectura (nunca zona C) |
 | **Historial citas** | “turnos que ya tuve / anteriores / pasados” | `clara` → `turnos.ver-turnos-anteriores-como-paciente` (no `ver-mis-turnos`) |
 | **Política plazos** | “hasta cuándo cancelar / multa / reglas” | `clara` → `turnos.consultar-politica-autogestion-flow` (no abrir cancelar) |
+| **Última atención** | “qué me dijo el médico / última consulta” | `clara` → `atencion.ver-ultima-como-paciente` (no historial de turnos ni última vez en oferta) |
 
 ## Keywords / semantics (escalable)
 
 - **`intent_semantics`**: contexto 2ª IA — en prompt solo `objective` + `steps`/`outline` (sin `kind` ni `capabilities`). `capabilities` quedan en YAML para gates PHP.
-- **`keywords`**: anclas discriminadoras. **NL bare / zona C**: smart-catalog.
+- **`keywords`**: anclas discriminadoras (3–10 frases cortas). Match contra el mensaje (suele ser `normalized_text` del preprocess) con **fold de acentos** en PHP (`IntentClassifier`, smart-catalog).
+  - Escribir **español correcto con acentos** (`qué`, `última`, `médico`).
+  - **No** duplicar la misma frase sin acento (`que` / `ultima` / `medico`).
+  - **No** enumerar conjugaciones ni “todas las variantes” de consulta: el preprocess normaliza ortografía/abreviaturas; el catálogo cubre NL bare / zona C.
+  - **NL bare / zona C / síntomas**: smart-catalog (`phrases`/`tags`), no inflar el YAML del intent.
 - **`description`**: **retirado** de intents YAML. UX = `action_name`; IA = `objective`.
 - Tags operativos: `AssistantFirstIaAdapter`.
 
@@ -33,6 +38,7 @@ Complementa [`asistente-routing-sin-hardcode.mdc`](asistente-routing-sin-hardcod
 - Phrases bare de agenda en `turnos.crear-como-paciente` o en `atencion.necesito-atencion`.
 - Token suelto `laboratorio`/`análisis` pelean pedir-estudio vs ver-resultados.
 - Boost / `if intent` en PHP para desempatar A vs B.
+- Listas encyclopédicas de keywords “por si el usuario escribe mal”.
 
 ## Checklist
 

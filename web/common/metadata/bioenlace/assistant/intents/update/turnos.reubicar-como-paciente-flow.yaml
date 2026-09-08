@@ -5,8 +5,8 @@ rbac_route: /api/turnos/reubicar-como-paciente
 keywords:
   - 'reubicar turno'
   - 'turno en resolución'
-  - 'cambiar profesional turno'
-  - 'nuevo turno consultorio'
+  - 'cambiar profesional del turno'
+  - 'nuevo turno en consultorio'
 intent_semantics:
   objective: 'Si tu turno quedó en reubicación, elegí de nuevo servicio, centro, profesional y horario.'
   capabilities:

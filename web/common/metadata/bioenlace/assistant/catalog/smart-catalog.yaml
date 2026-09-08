@@ -1,6 +1,7 @@
 # Catálogo inteligente del asistente — triggers → tools ejecutables.
 # Schema: assistant/schemas/smart-catalog-entry-v1.yaml
 # Frontera A/B/C: .cursor/rules/asistente-intents-frontera-sin-solape.mdc
+# Phrases/keywords: español con acentos; el match hace fold (no duplicar sin acento).
 version: 1
 
 entries:
@@ -15,20 +16,17 @@ entries:
         - me duele
         - me molesta
         - me siento mal
-        - necesito atencion
         - necesito atención
         - efecto adverso
         - efectos adversos
-        - me cayo mal
         - me cayó mal
-        - reaccion al medicamento
         - reacción al medicamento
         - pinchazo en el pecho
         - pinchazo en pecho
         - dolor en el pecho
         - me duele el pecho
         - falta de aire
-      keywords: [panza, cabeza, fiebre, vomito, vómito, pecho, pinchazo, torax, tórax]
+      keywords: [panza, cabeza, fiebre, vómito, pecho, pinchazo, tórax]
     cta_intent_ids:
       - atencion.necesito-atencion
 
@@ -40,20 +38,14 @@ entries:
     triggers:
       tags: [estudio, pedido_estudio, acto_clinico]
       phrases:
-        - necesito una ecografia
         - necesito una ecografía
-        - necesito una mamografia
         - necesito una mamografía
         - necesito un estudio
         - sacar turno para estudio
-        - turno para ecografia
         - turno para ecografía
-        - turno para mamografia
         - turno para mamografía
         - turno para laboratorio
-        - turno para analisis
         - turno para análisis
-        - analisis de sangre
         - análisis de sangre
 
   - id: atencion-control
@@ -66,10 +58,8 @@ entries:
       phrases:
         - controlar la diabetes
         - control de seguimiento
-        - renovar medicacion
         - renovar medicación
         - consulta por mensaje
-        - consulta clinica por mensaje
         - consulta clínica por mensaje
         - pedir un control
 
@@ -98,8 +88,8 @@ entries:
         - turno en
         - cita con
         - cita en
-        - turno para mi
-        - solicita un turno para mi
+        - turno para mí
+        - solicita un turno para mí
       context_areas: [appointments]
 
   # Pregunta de plazos/reglas ≠ ejecutar cancelación.
@@ -111,14 +101,11 @@ entries:
     triggers:
       tags: [politica_turnos]
       phrases:
-        - hasta cuando puedo cancelar
         - hasta cuándo puedo cancelar
         - me multan
         - multa si no voy
-        - politica de cancelacion
         - política de cancelación
         - puedo cancelar por app
-        - reglas de cancelacion
         - reglas de cancelación
       context_areas: [appointments]
 
@@ -145,7 +132,7 @@ entries:
     triggers:
       tags: [mis_analisis]
       phrases:
-        - mis analisis
+        - mis análisis
         - mis resultados
         - resultados de laboratorio
         - informes de laboratorio
@@ -163,7 +150,6 @@ entries:
       phrases:
         - turnos que ya tuve
         - turnos que tuve
-        - ya tuve
         - turnos anteriores
         - historial de turnos
         - turnos pasados
@@ -181,12 +167,9 @@ entries:
       tags: [mis_turnos, ver_turnos]
       phrases:
         - mis turnos
-        - cuales son mis turnos
         - cuáles son mis turnos
-        - que turnos tengo
         - qué turnos tengo
         - próximo turno
-        - proximo turno
         - mis citas
         - turnos pendientes
       context_areas: [appointments]
@@ -199,15 +182,44 @@ entries:
     triggers:
       tags: [ultima_vez_oferta]
       phrases:
-        - ultima vez que fui
         - última vez que fui
-        - cuando fui al
         - cuándo fui al
-        - ultima vez al dentista
         - última vez al dentista
-        - cuando fue la ultima vez
         - cuándo fue la última vez
       context_areas: [appointments]
+
+  # Resumen clínico de la última consulta (≠ última vez en oferta / ≠ turnos pasados).
+  - id: atencion-ultima-resumen
+    tool_type: intent
+    tool_ref: atencion.ver-ultima-como-paciente
+    routing_result: clara
+    priority: 90
+    triggers:
+      tags: [ultima_atencion]
+      phrases:
+        - qué me dijo
+        - me dijo el médico
+        - última atención
+        - última consulta
+        - resumen de la consulta
+        - mi última consulta
+      context_areas: [encounters]
+
+  - id: atencion-mis-consultas
+    tool_type: intent
+    tool_ref: atencion.mis-atenciones-como-paciente
+    routing_result: clara
+    priority: 84
+    triggers:
+      tags: [mis_atenciones]
+      phrases:
+        - mis atenciones
+        - mis consultas
+        - historial de consultas
+        - atenciones anteriores
+        - consultas anteriores
+        - resumen de atención
+      context_areas: [encounters]
 
   - id: llegar-tarde-politicas
     tool_type: aspect
@@ -237,7 +249,7 @@ entries:
     priority: 85
     triggers:
       tags: [representacion, tutela, representante]
-      phrases: [representacion, representación, operar por mi hijo, vincular menor, designar representante, tutor]
+      phrases: [representación, operar por mi hijo, vincular menor, designar representante, tutor]
       context_areas: [representation]
       keywords: [sobrino, sobrina, hijo, hija, menor, tutela]
 
@@ -247,7 +259,7 @@ entries:
     priority: 10
     triggers:
       tags: [fuera_his]
-      phrases: [medium, sesion con una medium, clima, chiste, horoscopo, horóscopo]
+      phrases: [medium, sesión con una medium, clima, chiste, horóscopo]
 
   - id: profesionales-listado-staff
     tool_type: intent
@@ -256,5 +268,5 @@ entries:
     priority: 70
     triggers:
       tags: [listar_profesionales, staff]
-      phrases: [listar profesionales, profesionales del centro, medicos del centro, médicos del centro]
+      phrases: [listar profesionales, profesionales del centro, médicos del centro]
       context_areas: [geo_resources]

@@ -3,15 +3,12 @@ version: 1
 action_name: 'Ver resultados de laboratorio'
 rbac_route: /api/clinical/laboratory-results/mis-resultados
 keywords:
-  # Evitar tokens sueltos laboratorio/estudios/análisis (pelean con pedir estudio / Solicitar Atención).
+  # Evitar tokens sueltos laboratorio/estudios/análisis (pelean con pedir estudio).
   - 'mis resultados'
   - 'mis análisis'
-  - 'mis analisis'
   - 'informes de laboratorio'
-  - 'ver análisis'
-  - 'ver analisis'
-  - 'ver mis estudios'
   - 'resultados de laboratorio'
+  - 'ver mis estudios'
 intent_semantics:
   objective: 'Consultá tus informes de laboratorio sincronizados, con detalle y descarga PDF.'
   capabilities:

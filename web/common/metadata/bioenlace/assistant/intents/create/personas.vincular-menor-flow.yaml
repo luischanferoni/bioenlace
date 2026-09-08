@@ -3,16 +3,12 @@ version: 1
 action_name: 'Solicitar tutela de menor'
 rbac_route: /api/person-representation/solicitar-menor-como-tutor
 keywords:
-  - 'vincular hijo'
   - 'vincular menor'
-  - 'agregar hijo'
-  - 'tutela menor'
-  - 'mi hijo'
-  - 'mi hija'
-  - 'menor a cargo'
-  - 'quiero vincular a mi hijo menor'
-  - 'solicitar tutela'
+  - 'vincular hijo'
   - 'tutela de menor'
+  - 'menor a cargo'
+  - 'solicitar tutela'
+  - 'agregar hijo'
 intent_semantics:
   objective: 'Solicitá tutela sobre un menor sin cuenta; el centro debe verificarla antes de activarla.'
   capabilities:

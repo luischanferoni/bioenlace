@@ -113,4 +113,16 @@ class SmartCatalogMatchServiceTest extends Unit
         $this->assertSame('turnos-politica-autogestion', $result->best?->id);
         $this->assertSame('turnos.consultar-politica-autogestion-flow', $result->best?->toolRef);
     }
+
+    public function testUltimaAtencionResumenBeatsHistorialTurnosNoise(): void
+    {
+        $result = SmartCatalogMatchService::match([
+            'normalized_text' => '¿Qué me dijo el médico ayer?',
+            'tags' => ['ultima_atencion', 'encounters'],
+            'context_areas' => ['encounters'],
+        ], 0);
+
+        $this->assertSame('atencion-ultima-resumen', $result->best?->id);
+        $this->assertSame('atencion.ver-ultima-como-paciente', $result->best?->toolRef);
+    }
 }

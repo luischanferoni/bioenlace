@@ -8,7 +8,7 @@ stable_prompt: |
 
   Respondé únicamente con JSON:
   {
-    "normalized_text": "mensaje actual limpio, ortografía corregida, abreviaturas abiertas",
+    "normalized_text": "mensaje actual limpio, ortografía corregida, abreviaturas abiertas (el match de keywords asume esto; los acentos los pliega PHP)",
     "necesidad_usuario": "una frase: qué necesita el usuario con este mensaje",
     "routing_hint": "<ver routing_hint abajo>",
     "tags": ["señales snake_case; ver vocabulario abajo"],

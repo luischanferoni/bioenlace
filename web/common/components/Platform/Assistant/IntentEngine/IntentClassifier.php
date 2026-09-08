@@ -175,7 +175,8 @@ final class IntentClassifier
             }
         }
 
-        // Una sola mejor keyword (el preprocess ya normaliza ortografía; fold cubre acentos).
+        // Una sola mejor keyword. Preprocess corrige ortografía; foldAccents cubre tildes.
+        // En YAML: escribir español con acentos; no duplicar la forma sin tilde.
         $bestKeyword = 0;
         $messageFolded = self::foldAccents($messageLower);
         foreach ($item->keywords as $keyword) {

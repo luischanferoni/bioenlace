@@ -3,54 +3,30 @@ version: 1
 action_name: 'Solicitar Atención'
 rbac_route: /api/turnos/crear-como-paciente
 keywords:
-  - 'solicitar atencion'
-  - 'necesito atencion'
+  # Anclas discriminadoras (español con acentos). Match con fold; no duplicar sin acento.
+  - 'necesito atención'
+  - 'solicitar atención'
   - 'me siento mal'
   - 'me duele'
-  - 'que hago'
-  - 'ayuda medica'
-  - 'ver un medico'
-  - 'consulta medica'
-  - 'atencion medica'
-  - control
-  - seguimiento
+  - 'consulta médica'
+  - 'atención médica'
   - 'control de seguimiento'
-  - 'consultas y seguimiento'
-  - 'consulta general'
-  - 'seguimiento tratamiento'
-  - 'consulta previa'
-  - 'renovar medicacion'
-  - 'solicitar ajuste'
-  - 'consulta o evolucion'
-  - 'contar evolucion'
+  - 'renovar medicación'
   - 'consulta por mensaje'
-  - 'consulta clinica por mensaje'
-  # Zona B: acto/estudio/control — no frases bare de agenda ("quiero un turno").
-  - ecografia
-  - ecografía
-  - radiografia
-  - radiografía
-  - mamografia
-  - mamografía
-  - kinesio
-  - kinesiologia
-  - kinesiología
+  - 'consulta clínica por mensaje'
+  - 'pedir un control'
   - 'necesito un estudio'
   - 'sacar turno para estudio'
-  - 'necesito una ecografia'
   - 'necesito una ecografía'
-  - 'necesito una mamografia'
   - 'necesito una mamografía'
   - 'turno para laboratorio'
-  - 'turno para ecografia'
   - 'turno para ecografía'
-  - 'turno para mamografia'
   - 'análisis de sangre'
-  - 'analisis de sangre'
-  - 'necesito ayuda con un síntoma'
-  - 'quiero atención médica'
-  - 'pedir un control'
-  - 'no sé si ir a urgencias o pedir turno'
+  - ecografía
+  - mamografía
+  - radiografía
+  - kinesiología
+  - kinesio
 intent_semantics:
   # Contexto para 2ª IA: objetivo + outline (flow con muchas ramas). Pasos detallados = subintents.
   objective: 'Guiar según lo que necesita el paciente (malestar, estudio/acto, control/seguimiento u urgencia) hasta turno, teleconsulta, consulta por mensaje u orientación a guardia.'

@@ -20,6 +20,20 @@ final class AssistantThreadStateService
 {
     private const BOT_ID = 'BOT';
 
+    /** @var array<string, string> */
+    private const GOAL_TO_THREAD_TAG = [
+        'guide' => 'guide',
+        'operational' => 'operational',
+        'in_flow_question' => 'operational',
+        'ambiguous' => 'ambiguous',
+    ];
+
+    /** @var list<string> */
+    private const DIVERSION_IGNORE_FROM_TAGS = ['ambiguous', ''];
+
+    /** @var list<string> */
+    private const DIVERSION_IGNORE_TO_TAGS = ['ambiguous', 'operational'];
+
     /** @var array<string, mixed>|null */
     private static ?array $config = null;
 
@@ -70,13 +84,8 @@ final class AssistantThreadStateService
     public static function tagFromGoal(string $goal): string
     {
         $goal = ChatPreprocessService::canonicalizeGoal($goal);
-        $map = self::load()['goal_to_thread_tag'] ?? [];
-        if (!is_array($map)) {
-            return '';
-        }
-        $tag = trim((string) ($map[$goal] ?? ''));
 
-        return $tag;
+        return trim((string) (self::GOAL_TO_THREAD_TAG[$goal] ?? ''));
     }
 
     /**
@@ -218,8 +227,7 @@ final class AssistantThreadStateService
         if ($incomingTag === '' || $previousTag === '' || $previousTag === $incomingTag) {
             return false;
         }
-        $ignoreFrom = self::stringList(self::load()['diversion']['ignore_from_tags'] ?? ['ambiguous', '']);
-        if (in_array($previousTag, $ignoreFrom, true)) {
+        if (in_array($previousTag, self::DIVERSION_IGNORE_FROM_TAGS, true)) {
             return false;
         }
 
@@ -228,13 +236,11 @@ final class AssistantThreadStateService
 
     private static function shouldForceAmbiguous(string $incomingTag): bool
     {
-        $cfg = self::load()['diversion'] ?? [];
-        if (empty($cfg['force_ambiguous'])) {
+        if (empty(self::load()['force_ambiguous'])) {
             return false;
         }
-        $ignoreTo = self::stringList($cfg['ignore_to_tags'] ?? ['ambiguous', 'operational']);
 
-        return !in_array($incomingTag, $ignoreTo, true);
+        return !in_array($incomingTag, self::DIVERSION_IGNORE_TO_TAGS, true);
     }
 
     private static function updateGuideConfidence(float $current, string $content, bool $newThread): float
@@ -422,24 +428,5 @@ final class AssistantThreadStateService
         self::$config = AssistantMetadataLoader::load(ProductMetadataPaths::threadStateFile());
 
         return self::$config;
-    }
-
-    /**
-     * @param mixed $raw
-     * @return list<string>
-     */
-    private static function stringList($raw): array
-    {
-        if (!is_array($raw)) {
-            return [];
-        }
-        $out = [];
-        foreach ($raw as $item) {
-            if (is_string($item) || is_int($item)) {
-                $out[] = trim((string) $item);
-            }
-        }
-
-        return $out;
     }
 }

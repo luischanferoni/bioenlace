@@ -67,7 +67,7 @@ class SobreturnoService
             }
         }
 
-        TurnoEventoAudit::registrar($sobreturno->id_turnos, TurnoEventoAudit::TIPO_SOBRETURNO, Yii::$app->user->id ?? null, [
+        TurnoEventoAudit::registrar($sobreturno->id_turnos, TurnoEventoAudit::EVENT_OVERBOOK_CREATED, Yii::$app->user->id ?? null, [
             'notificados' => count($otros),
         ]);
     }

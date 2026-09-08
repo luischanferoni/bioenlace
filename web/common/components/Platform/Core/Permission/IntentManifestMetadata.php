@@ -3,6 +3,7 @@
 namespace common\components\Platform\Core\Permission;
 
 use common\components\Platform\Assistant\Catalog\IntentSchemaPaths;
+use common\components\Platform\Core\Permission\Domain\DomainOperationPolicyCatalog;
 use common\components\Platform\Core\Product\ProductMetadataPaths;
 use Symfony\Component\Yaml\Yaml;
 
@@ -233,13 +234,7 @@ final class IntentManifestMetadata
             return true;
         }
 
-        foreach ($parsed['domain_only_operations'] ?? [] as $item) {
-            if (trim((string) $item) === $domainOperation) {
-                return true;
-            }
-        }
-
-        return false;
+        return DomainOperationPolicyCatalog::isDomainOnlyOperation($domainOperation);
     }
 
     public static function isKnownMetricId(string $metricId): bool

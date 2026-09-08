@@ -58,15 +58,4 @@ class CapabilityManifestIndexTest extends Unit
         $this->assertSame('guardia.ingreso', $manifest['capability_id']);
         $this->assertNotEmpty($manifest['routes']);
     }
-
-    public function testLegacyPermissionAliases(): void
-    {
-        $all = \common\components\Platform\Core\Permission\LegacyPermissionAliasIndex::all();
-        $this->assertArrayHasKey('analisis', $all);
-        $this->assertSame('encounter.capturar', $all['analisis']['replacement_capability']);
-        $this->assertArrayHasKey('front_ver_historial_paciente', $all);
-
-        $deprecated = (new \common\components\Platform\Core\Permission\PermissionCatalogService())->listDeprecatedPermissions();
-        $this->assertNotEmpty($deprecated);
-    }
 }

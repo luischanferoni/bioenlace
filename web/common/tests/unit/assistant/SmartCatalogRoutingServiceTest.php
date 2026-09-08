@@ -23,7 +23,7 @@ class SmartCatalogRoutingServiceTest extends Unit
     {
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'contame sobre representacion de mi hijo',
-            'routing_hint' => 'directo',
+            'routing_hint' => 'clara',
             'tags' => ['representacion', 'tutela'],
             'context_areas' => ['representation'],
             'extractions' => [],

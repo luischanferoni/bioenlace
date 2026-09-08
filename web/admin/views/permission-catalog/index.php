@@ -5,7 +5,6 @@ use yii\helpers\Html;
 /* @var $this yii\web\View */
 /* @var $intents list<array<string, mixed>> */
 /* @var $capabilities list<array<string, mixed>> */
-/* @var $deprecatedPermissions list<array<string, mixed>> */
 /* @var $flowSteps list<array<string, mixed>> */
 /* @var $rolesByKey array<string, list<string>> */
 /* @var $intentInAuth array<string, bool> */
@@ -62,64 +61,6 @@ $this->params['breadcrumbs'][] = $this->title;
         <div class="alert alert-warning py-2 small">
             <?= (int) $unregisteredCapabilitiesCount ?> capability(s) aún no están en <code>auth_item</code>.
             Ejecutá «Sincronizar capabilities → auth_item».
-        </div>
-    <?php endif; ?>
-
-    <?php if (($deprecatedPermissions ?? []) !== []): ?>
-        <div class="card mb-3 border-secondary">
-            <div class="card-header py-2">
-                <strong class="small">Permisos legacy (deprecados)</strong>
-            </div>
-            <div class="card-body p-0">
-                <table class="table table-sm mb-0">
-                    <thead>
-                    <tr>
-                        <th>Legacy</th>
-                        <th>Reemplazo (capability)</th>
-                        <th>Roles que aún lo tienen</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <?php foreach ($deprecatedPermissions as $row): ?>
-                        <?php
-                        $legacyKey = (string) ($row['key'] ?? '');
-                        $replacement = trim((string) ($row['replacement_capability'] ?? ''));
-                        $legacyRoles = $rolesByKey[$legacyKey] ?? [];
-                        ?>
-                        <tr>
-                            <td>
-                                <code><?= Html::encode($legacyKey) ?></code>
-                                <span class="badge bg-secondary ms-1">deprecated</span>
-                            </td>
-                            <td class="small">
-                                <?php if ($replacement !== ''): ?>
-                                    <?= Html::a(Html::encode($replacement), [
-                                        'view-capability',
-                                        'capability_id' => $replacement,
-                                    ], ['class' => 'text-decoration-none']) ?>
-                                <?php else: ?>
-                                    —
-                                <?php endif; ?>
-                            </td>
-                            <td class="small">
-                                <?= $legacyRoles === [] ? '—' : Html::encode(implode(', ', $legacyRoles)) ?>
-                            </td>
-                        </tr>
-                        <?php if (!empty($row['note'])): ?>
-                            <tr>
-                                <td colspan="3" class="small text-muted py-1 border-0 pt-0">
-                                    <?= Html::encode((string) $row['note']) ?>
-                                </td>
-                            </tr>
-                        <?php endif; ?>
-                    <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-            <div class="card-footer py-2 small text-muted">
-                Migración idempotente:
-                <code>php yii catalog-permission/migrate-grants</code>
-            </div>
         </div>
     <?php endif; ?>
 

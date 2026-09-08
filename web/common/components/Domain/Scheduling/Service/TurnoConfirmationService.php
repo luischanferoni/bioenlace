@@ -122,7 +122,7 @@ class TurnoConfirmationService
         $actor = $actorType !== null && in_array($actorType, TurnoEventoAudit::actorTypeValues(), true)
             ? $actorType
             : TurnoEventoAudit::ACTOR_PACIENTE;
-        TurnoEventoAudit::registrar($turno->id_turnos, TurnoEventoAudit::TIPO_CONFIRMED, $idUser, [
+        TurnoEventoAudit::registrar($turno->id_turnos, TurnoEventoAudit::EVENT_CONFIRMED, $idUser, [
             'actor_type' => $actor,
             'canal' => 'app',
             'origin' => 'confirmation',

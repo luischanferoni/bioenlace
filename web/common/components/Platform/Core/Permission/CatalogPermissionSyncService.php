@@ -258,7 +258,7 @@ final class CatalogPermissionSyncService
 
     /**
      * Elimina permisos atómicos Entidad.atributo.{read|info|edit} de auth_item (fase 6).
-     * Ejecutar tras catalog-permission/migrate-grants y validar integridad.
+     * La migración one-shot de grants ya se aplicó; validar integridad antes de `--execute=1`.
      *
      * @return array{dry_run: bool, candidates: list<string>, removed: int, errors: list<string>}
      */

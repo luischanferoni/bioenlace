@@ -8,8 +8,8 @@ use common\components\Platform\Core\Permission\CapabilityManifestIndex;
 use common\components\Platform\Core\Permission\IntentFamilyCatalog;
 use common\components\Platform\Core\Permission\IntentManifestIndex;
 use common\components\Platform\Core\Permission\IntentManifestMetadata;
-use common\components\Platform\Core\Permission\LegacyPermissionAliasIndex;
 use common\components\Platform\Core\Product\ProductMetadataPaths;
+use common\components\Platform\Core\Permission\Domain\DomainOperationPolicyCatalog;
 use common\components\Platform\Core\Permission\Domain\DomainOperationPolicyRegistry;
 use common\components\Platform\Core\Permission\PermissionCatalogService;
 use common\components\Platform\Ui\OpenUiStaticTemplatePolicy;
@@ -54,7 +54,6 @@ final class CatalogIntegrityService
         $warnings = array_merge($warnings, $this->checkDomainOperationsCatalogCoverage());
         $warnings = array_merge($warnings, $this->checkLogicalPermissionRoutePollution());
         $warnings = array_merge($warnings, $this->checkGuardiaRoutesLegacyListadoPacientes());
-        $warnings = array_merge($warnings, $this->checkLegacyPermissionWithoutReplacementCapability());
         $warnings = array_merge($warnings, $this->checkInfoContentIntentIds());
 
         $errors = array_values(array_unique($errors));
@@ -495,14 +494,6 @@ final class CatalogIntegrityService
             return [];
         }
 
-        $domainOnly = [];
-        foreach ($parsed['domain_only_operations'] ?? [] as $item) {
-            $key = trim((string) $item);
-            if ($key !== '') {
-                $domainOnly[$key] = true;
-            }
-        }
-
         $catalogKeys = [];
         $catalog = new PermissionCatalogService();
         foreach ($catalog->listIntents() as $row) {
@@ -527,11 +518,14 @@ final class CatalogIntegrityService
         $operations = is_array($parsed['operations'] ?? null) ? $parsed['operations'] : [];
         foreach (array_keys($operations) as $operationKey) {
             $operationKey = trim((string) $operationKey);
-            if ($operationKey === '' || isset($domainOnly[$operationKey]) || isset($catalogKeys[$operationKey])) {
+            if ($operationKey === ''
+                || DomainOperationPolicyCatalog::isDomainOnlyOperation($operationKey)
+                || isset($catalogKeys[$operationKey])
+            ) {
                 continue;
             }
             $warnings[] = 'domain-operation-policies: «' . $operationKey
-                . '» no está en catálogo ni en domain_only_operations; agregar intent/permission o marcarla como solo dominio';
+                . '» no está en catálogo ni domain_only; agregar intent/permission o marcarla como solo dominio';
         }
 
         return $warnings;
@@ -640,53 +634,6 @@ final class CatalogIntegrityService
             if ($hasListadoPacientes && !$hasCapabilityParent) {
                 $warnings[] = 'Ruta guardia «' . $route
                     . '» solo alcanzable vía listado_pacientes; ejecutar sync-capabilities y revisar grants';
-            }
-        }
-
-        return $warnings;
-    }
-
-    /**
-     * Roles con permiso legacy sin la capability de reemplazo (legacy-permission-aliases.yaml).
-     *
-     * @return list<string>
-     */
-    private function checkLegacyPermissionWithoutReplacementCapability(): array
-    {
-        if (!Yii::$app->has('db')) {
-            return [];
-        }
-
-        $childTable = Yii::$app->db->schema->getTableSchema('{{%auth_item_child}}', true);
-        if ($childTable === null) {
-            return [];
-        }
-
-        $warnings = [];
-        foreach (LegacyPermissionAliasIndex::all() as $legacy => $meta) {
-            $capability = trim((string) ($meta['replacement_capability'] ?? ''));
-            if ($capability === '') {
-                continue;
-            }
-
-            $rolesWithLegacy = (new \yii\db\Query())
-                ->select('parent')
-                ->from('{{%auth_item_child}}')
-                ->where(['child' => $legacy])
-                ->column();
-
-            foreach ($rolesWithLegacy as $role) {
-                if (!is_string($role) || $role === '') {
-                    continue;
-                }
-                $hasCapability = (new \yii\db\Query())
-                    ->from('{{%auth_item_child}}')
-                    ->where(['parent' => $role, 'child' => $capability])
-                    ->exists();
-                if (!$hasCapability) {
-                    $warnings[] = 'Rol «' . $role . '» tiene «' . $legacy
-                        . '» sin «' . $capability . '»; ejecutar catalog-permission/migrate-grants';
-                }
             }
         }
 
@@ -841,7 +788,7 @@ final class CatalogIntegrityService
             if ($name === '' || !isset($catalogKeys[$name])) {
                 continue;
             }
-            $errors[] = 'RBAC legacy: grant atributo «' . $name . '» aún en auth_item; ejecutar catalog-permission/migrate-grants y catalog-permission/prune-attributes';
+            $errors[] = 'RBAC legacy: grant atributo «' . $name . '» aún en auth_item; ejecutar catalog-permission/prune-attributes (migración one-shot de grants ya aplicada)';
         }
 
         return $errors;

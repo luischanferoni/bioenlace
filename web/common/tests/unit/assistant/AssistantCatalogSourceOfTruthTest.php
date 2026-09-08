@@ -42,7 +42,7 @@ class AssistantCatalogSourceOfTruthTest extends Unit
             }
             $this->assertTrue(
                 AssistantContextHISAreaAspect::isValid($aspect),
-                'Constante aspecto sin entrada en area-aspects.yaml: ' . $aspect
+                'Constante aspecto sin entrada en ASPECTS: ' . $aspect
             );
         }
     }
@@ -93,10 +93,6 @@ class AssistantCatalogSourceOfTruthTest extends Unit
         $this->assertSame(
             PreprocessRoutingHintCatalog::INCOMPLETAS,
             PreprocessRoutingHintCatalog::routingHintFromLegacyGoal('guide')
-        );
-        $this->assertSame(
-            PreprocessRoutingHintCatalog::CLARA,
-            PreprocessRoutingHintCatalog::applyAlias('directo')
         );
         $this->assertContains(
             PreprocessRoutingHintCatalog::TAG_IN_FLOW_QUESTION,

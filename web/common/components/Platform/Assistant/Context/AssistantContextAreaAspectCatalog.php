@@ -3,7 +3,7 @@
 namespace common\components\Platform\Assistant\Context;
 
 /**
- * Aspectos por área HIS desde metadata ({@see area-aspects.yaml}).
+ * Aspectos por área HIS ({@see AssistantContextHISAreaAspect}).
  */
 final class AssistantContextAreaAspectCatalog
 {

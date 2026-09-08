@@ -41,50 +41,29 @@ late_cancellation:
   hours_before_appointment: 24
 
 events:
-  APPOINTMENT_CREATED:
-    legacy_tipos: [CREATE]
-  APPOINTMENT_RESCHEDULED:
-    legacy_tipos: []
-  APPOINTMENT_CANCELLED:
-    legacy_tipos: [CANCEL_PAC, CANCEL_MED, BULK_DAY_CANCEL]
-  APPOINTMENT_ENTERED_RESOLUTION:
-    legacy_tipos: []
-  CONFIRMATION_REQUESTED:
-    legacy_tipos: []
-  CONFIRMATION_DELIVERY_CONFIRMED:
-    legacy_tipos: []
-    # Evidencia: ACK autenticado de la app paciente (mobile_fcm_ack). HTTP 200 de FCM no alcanza.
-  CONFIRMATION_OPENED:
-    legacy_tipos: []
-    # Evidencia: tap explícito del push (onMessageOpenedApp / getInitialMessage). No inferir desde bandeja.
-  CONFIRMED:
-    legacy_tipos: [CONFIRMED]
-  ATTENTION_STARTED:
-    legacy_tipos: []
-  ATTENDED:
-    legacy_tipos: []
-  NO_SHOW_RECORDED:
-    legacy_tipos: [NO_SHOW]
-  NO_SHOW_CORRECTED:
-    legacy_tipos: []
-  APPOINTMENT_ADVANCE_OFFERED:
-    legacy_tipos: []
-  APPOINTMENT_ADVANCE_DELIVERED:
-    legacy_tipos: []
-  APPOINTMENT_ADVANCE_OPENED:
-    legacy_tipos: []
-  APPOINTMENT_ADVANCE_ACCEPTED:
-    legacy_tipos: []
-  APPOINTMENT_ADVANCE_UNAVAILABLE:
-    legacy_tipos: []
-  APPOINTMENT_ADVANCE_EXPIRED:
-    legacy_tipos: []
-  SYSTEM_SLOT_RELEASED:
-    legacy_tipos: []
-  MODALITY_CHANGED:
-    legacy_tipos: [MODALITY_CHANGE]
-  OVERBOOK_CREATED:
-    legacy_tipos: [SOBRETURNO]
+  - APPOINTMENT_CREATED
+  - APPOINTMENT_RESCHEDULED
+  - APPOINTMENT_CANCELLED
+  - APPOINTMENT_ENTERED_RESOLUTION
+  - CONFIRMATION_REQUESTED
+  - CONFIRMATION_DELIVERY_CONFIRMED
+  # Evidencia: ACK autenticado de la app paciente (mobile_fcm_ack). HTTP 200 de FCM no alcanza.
+  - CONFIRMATION_OPENED
+  # Evidencia: tap explícito del push (onMessageOpenedApp / getInitialMessage). No inferir desde bandeja.
+  - CONFIRMED
+  - ATTENTION_STARTED
+  - ATTENDED
+  - NO_SHOW_RECORDED
+  - NO_SHOW_CORRECTED
+  - APPOINTMENT_ADVANCE_OFFERED
+  - APPOINTMENT_ADVANCE_DELIVERED
+  - APPOINTMENT_ADVANCE_OPENED
+  - APPOINTMENT_ADVANCE_ACCEPTED
+  - APPOINTMENT_ADVANCE_UNAVAILABLE
+  - APPOINTMENT_ADVANCE_EXPIRED
+  - SYSTEM_SLOT_RELEASED
+  - MODALITY_CHANGED
+  - OVERBOOK_CREATED
 
 # Métricas V1: el materializador calcula numerador/denominador/value según metric_code.
 # Las tasas no se emiten con denominador 0; sample_size < min_sample_size → insufficient_data.

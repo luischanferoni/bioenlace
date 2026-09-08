@@ -8,7 +8,7 @@ namespace common\components\Platform\Assistant\Service;
 interface HintCandidateProviderInterface
 {
     /**
-     * Clave estable del provider (debe coincidir con entity_ownership en hint-resolution.yaml).
+     * Clave estable del provider (debe coincidir con ENTITY_OWNERSHIP en HintResolutionMetadata).
      */
     public static function providerKey(): string;
 

@@ -18,7 +18,7 @@ No enumerar `intent_id` en orquestadores ni en prompts de IA para “elegir la a
 
 **Frontera entre puertas (agenda vs Solicitar Atención, sin tags compartidos):** ver [`asistente-intents-frontera-sin-solape.mdc`](asistente-intents-frontera-sin-solape.mdc).
 
-**Canal (charla vs trámite vs menú vs ambiguous):** `user_goal` del preprocess IA → `ChatRouter`. Predicados de dominio (síntoma, menú, staff) en `ChatChannelPolicy` (PHP). No es configuración de intents.
+**Canal (charla vs trámite vs menú vs ambiguous):** `routing_hint` / `routing_result` (catálogo) + `user_goal` derivado para hilo → `ChatRouter`. Predicados de dominio (síntoma, menú, staff) en `ChatChannelPolicy` (PHP). No es configuración de intents.
 
 **Prompt guide:** `assistant/channels/Guide/prompt.yaml`. Encauzamiento ambiguous: `assistant/channels/Ambiguous/ui-text.yaml`. Preprocess: `assistant/preprocess/prompt.yaml`.
 
@@ -32,9 +32,9 @@ No enumerar `intent_id` en orquestadores ni en prompts de IA para “elegir la a
 | Texto UX + botones de encauzamiento ambiguous | `assistant/channels/Ambiguous/ui-text.yaml` |
 | Prioridad CTA booking + capability_labels | `assistant/routing/booking-offer.yaml` |
 | Texto UX por perfil de cliente | `assistant/ui-text/by-client.yaml` |
-| Familias NL / hints | `assistant/routing/intent-families.yaml`, `hint-resolution.yaml` |
+| Familias NL / hints | `assistant/routing/intent-families.yaml`; ownership/hints → `HintResolutionMetadata` (PHP) |
 | ¿Síntoma o turno? ¿Menú? ¿Staff list/edit? | `ChatChannelPolicy` (PHP) |
-| Alias legacy de `user_goal` (preprocess) | `PreprocessRoutingHintCatalog` (constantes PHP; no YAML) |
+| Derivación `user_goal` ↔ `routing_hint` (hilo) | `PreprocessRoutingHintCatalog` (constantes PHP; no YAML) |
 | Atajos visibles | `assistant/assistant-shortcuts.yaml` |
 
 ## Al agregar routing NL

@@ -183,18 +183,14 @@ final class TurnoBehaviorProfileCalculator
             if ($code === TurnoEventoAudit::EVENT_ATTENDED || $code === 'ATTENDED') {
                 $attended = true;
                 $noShow = false;
-            } elseif ($code === TurnoEventoAudit::EVENT_NO_SHOW_RECORDED || $code === TurnoEventoAudit::TIPO_NO_SHOW) {
+            } elseif ($code === TurnoEventoAudit::EVENT_NO_SHOW_RECORDED) {
                 if (in_array($actor, $patientActors, true)) {
                     $noShow = true;
                 }
             } elseif ($code === TurnoEventoAudit::EVENT_NO_SHOW_CORRECTED) {
                 $noShowCorrected = true;
                 $noShow = false;
-            } elseif ($code === TurnoEventoAudit::EVENT_APPOINTMENT_CANCELLED
-                || $code === TurnoEventoAudit::TIPO_CANCEL_PAC
-                || $code === TurnoEventoAudit::TIPO_CANCEL_MED
-                || $code === TurnoEventoAudit::TIPO_BULK_DAY_CANCEL
-            ) {
+            } elseif ($code === TurnoEventoAudit::EVENT_APPOINTMENT_CANCELLED) {
                 if (in_array($actor, $patientActors, true)) {
                     $cancelPatient = true;
                     $occ = $e['occurred_ts'];
@@ -209,7 +205,7 @@ final class TurnoBehaviorProfileCalculator
                 $confirmRequested = true;
             } elseif ($code === TurnoEventoAudit::EVENT_CONFIRMATION_DELIVERY_CONFIRMED) {
                 $confirmDelivered = true;
-            } elseif ($code === TurnoEventoAudit::EVENT_CONFIRMED || $code === TurnoEventoAudit::TIPO_CONFIRMED) {
+            } elseif ($code === TurnoEventoAudit::EVENT_CONFIRMED) {
                 $confirmResponded = true;
             }
         }

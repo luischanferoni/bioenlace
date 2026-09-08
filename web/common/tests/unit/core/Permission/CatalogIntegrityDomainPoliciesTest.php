@@ -13,7 +13,7 @@ class CatalogIntegrityDomainPoliciesTest extends Unit
         $coverageWarnings = array_values(array_filter(
             $result['warnings'],
             static fn (string $msg): bool => str_contains($msg, 'domain-operation-policies')
-                && str_contains($msg, 'domain_only_operations')
+                && str_contains($msg, 'domain_only')
         ));
 
         $this->assertEmpty(

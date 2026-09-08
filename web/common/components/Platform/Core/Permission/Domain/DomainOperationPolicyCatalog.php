@@ -7,9 +7,26 @@ use Symfony\Component\Yaml\Yaml;
 
 /**
  * Catálogo declarativo: operación RBAC → políticas de recurso (YAML).
+ * Operaciones solo ABAC (sin permiso assignable) viven en {@see DOMAIN_ONLY_OPERATIONS}.
  */
 final class DomainOperationPolicyCatalog
 {
+    /**
+     * Operaciones solo ABAC (sin permiso assignable en auth_item; RBAC vía ruta/intent padre).
+     *
+     * @var list<string>
+     */
+    public const DOMAIN_ONLY_OPERATIONS = [
+        'Encounter.access',
+        'Clinical.staff_efector',
+        'Internacion.staff_access',
+        'ProfesionalEfectorServicio.flow_closure_staff',
+        'ProfesionalEfectorServicio.flow_closure_own',
+        'ProfesionalEfectorServicio.condicion_laboral_staff',
+        'ProfesionalEfectorServicio.condicion_laboral_own',
+        'ProfesionalEfectorServicio.pes_own',
+    ];
+
     private static function configFile(): string
     {
         return ProductMetadataPaths::domainOperationPoliciesFile();
@@ -17,6 +34,13 @@ final class DomainOperationPolicyCatalog
 
     /** @var array<string, array<string, mixed>>|null */
     private static ?array $operations = null;
+
+    public static function isDomainOnlyOperation(string $op): bool
+    {
+        $op = trim($op);
+
+        return $op !== '' && in_array($op, self::DOMAIN_ONLY_OPERATIONS, true);
+    }
 
     /**
      * @return array<string, mixed>|null

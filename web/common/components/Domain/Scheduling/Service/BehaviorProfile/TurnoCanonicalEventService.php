@@ -62,15 +62,12 @@ final class TurnoCanonicalEventService
             return $existing;
         }
 
-        $legacyTipo = $cmd->legacyTipoEvento
-            ?: $this->contract->legacyTipoForEvent($cmd->eventCode)
-            ?: $cmd->eventCode;
         $turno = Turno::findOne(['id_turnos' => $cmd->idTurno]);
 
         $row = new TurnoEventoAudit();
         $row->id_turno = $cmd->idTurno;
         $row->id_persona = $cmd->idPersona;
-        $row->tipo_evento = $legacyTipo;
+        $row->tipo_evento = $cmd->eventCode;
         $row->event_code = $cmd->eventCode;
         $row->id_user = $cmd->idUser;
         $row->actor_type = $cmd->actorType;
@@ -115,16 +112,15 @@ final class TurnoCanonicalEventService
     }
 
     /**
-     * Puente compat: {@see TurnoEventoAudit::registrar()}.
+     * Puente desde {@see TurnoEventoAudit::registrar()}: `$eventCode` debe ser canónico del contrato.
      *
      * @param array<string, mixed> $meta
      */
-    public function recordFromLegacy(int $idTurno, string $tipo, ?int $idUser, array $meta = []): TurnoEventoAudit
+    public function recordFromLegacy(int $idTurno, string $eventCode, ?int $idUser, array $meta = []): TurnoEventoAudit
     {
         $turno = Turno::findOne(['id_turnos' => $idTurno]);
         $idPersona = $turno !== null ? (int) $turno->id_persona : 0;
         if ($idPersona <= 0) {
-            // Fallback mínimo para no romper callers si el turno ya no está.
             $idPersona = (int) ($meta['id_persona'] ?? 0);
         }
         if ($idPersona <= 0) {
@@ -132,17 +128,20 @@ final class TurnoCanonicalEventService
             $idPersona = 0;
         }
 
-        $eventCode = $this->contract->eventCodeForLegacyTipo($tipo) ?: $tipo;
-        $actor = $this->inferActorFromLegacy($tipo, $meta);
+        $eventCode = trim($eventCode);
+        if (!in_array($eventCode, $this->contract->eventCodes(), true)) {
+            throw new \InvalidArgumentException('event_code no está en el contrato: ' . $eventCode);
+        }
+
+        $actor = $this->inferActor($eventCode, $meta);
         $channel = isset($meta['canal']) ? (string) $meta['canal'] : null;
         $motivo = isset($meta['razon_cancelacion']) ? (string) $meta['razon_cancelacion'] : null;
-        $key = 'legacy:' . $idTurno . ':' . $tipo . ':' . md5(json_encode($meta, JSON_UNESCAPED_UNICODE) ?: '');
+        $key = 'registrar:' . $idTurno . ':' . $eventCode . ':' . md5(json_encode($meta, JSON_UNESCAPED_UNICODE) ?: '');
 
-        // Sin persona no usamos el path canónico estricto: escritura directa legacy.
         if ($idPersona <= 0) {
             $r = new TurnoEventoAudit();
             $r->id_turno = $idTurno;
-            $r->tipo_evento = $tipo;
+            $r->tipo_evento = $eventCode;
             $r->event_code = $eventCode;
             $r->id_user = $idUser;
             $r->meta_json = $meta ? json_encode($meta, JSON_UNESCAPED_UNICODE) : null;
@@ -174,33 +173,26 @@ final class TurnoCanonicalEventService
             TurnoEventoAudit::QUALITY_NATIVE,
             $idUser,
             $channel,
-            isset($meta['origin']) ? (string) $meta['origin'] : 'legacy_registrar',
+            isset($meta['origin']) ? (string) $meta['origin'] : 'registrar',
             $motivo,
             null,
-            $meta,
-            $tipo
+            $meta
         ));
     }
 
     /**
      * @param array<string, mixed> $meta
      */
-    private function inferActorFromLegacy(string $tipo, array $meta): string
+    private function inferActor(string $eventCode, array $meta): string
     {
         if (isset($meta['actor_type']) && in_array((string) $meta['actor_type'], TurnoEventoAudit::actorTypeValues(), true)) {
             return (string) $meta['actor_type'];
         }
-        if ($tipo === TurnoEventoAudit::TIPO_CANCEL_PAC) {
+        if ($eventCode === TurnoEventoAudit::EVENT_CONFIRMED) {
             return TurnoEventoAudit::ACTOR_PACIENTE;
         }
-        if ($tipo === TurnoEventoAudit::TIPO_CANCEL_MED || $tipo === TurnoEventoAudit::TIPO_BULK_DAY_CANCEL) {
+        if ($eventCode === TurnoEventoAudit::EVENT_APPOINTMENT_CANCELLED) {
             return TurnoEventoAudit::ACTOR_STAFF;
-        }
-        if ($tipo === TurnoEventoAudit::TIPO_CONFIRMED) {
-            return TurnoEventoAudit::ACTOR_PACIENTE;
-        }
-        if (($meta['canal'] ?? '') === 'sistema') {
-            return TurnoEventoAudit::ACTOR_SISTEMA;
         }
 
         return TurnoEventoAudit::ACTOR_STAFF;

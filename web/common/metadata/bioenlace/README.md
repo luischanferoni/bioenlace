@@ -24,7 +24,7 @@ Maestros vs metadata (runtime + cognitivo): [`web/docs/arquitectura/runtime-dato
 | **catalog** | Vocabulario cerrado `id → texto` para IA o UX | Alias id→id, mapas legacy, listas de ids sin copy (van en el loader PHP) |
 | **routing** | Familias NL, hints, booking CTA, thread tags | `if intent_id` en orquestadores |
 | **manifest** | Composición de superficie (panel, client-context, screen-params) | RBAC HTTP (eso es `permission/`) |
-| **auth** | Capabilities, políticas de recurso, aliases legacy | Autorización ad hoc en controllers |
+| **auth** | Capabilities, políticas de recurso (`domain-operation-policies`) | Autorización ad hoc en controllers; aliases legacy (retirados) |
 
 **No** usar metadata para maestros/catálogos de lookup en request (provincias, vecinos, recursos institucionales, etc.): van en **BD** + seed **console**. Ver ADR runtime datos vs metadata.
 
@@ -47,23 +47,20 @@ Maestros vs metadata (runtime + cognitivo): [`web/docs/arquitectura/runtime-dato
 | `assistant/channels/{Name}/` | prompt / ui-text | Espejo de `Chat/Channels/{Name}/` (`prompt.yaml` o `ui-text.yaml`) |
 | `assistant/preprocess/prompt.yaml` | prompt | Preprocess IA (espejo `Chat/Preprocess/`) |
 | `assistant/ui-text/by-client.yaml` | ui-text | Textos UX por perfil de cliente (`X-App-Client`) |
-| `assistant/routing/` | routing | `intent-families`, `hint-resolution`, `booking-offer`, `thread-state` |
-| `assistant/catalog/` | catalog | Vocabularios cerrados (`context-his-areas`, `preprocess-*-*`, `smart-catalog`, `area-aspects`) |
+| `assistant/routing/` | routing / knob | `intent-families`, `booking-offer`, `thread-state` (certeza); hint-resolution → PHP |
+| `assistant/catalog/` | catalog | Vocabularios cerrados (`context-his-areas`, `preprocess-*-*`, `smart-catalog`); aspectos HIS → PHP |
 | `assistant/assistant-shortcuts.yaml` | manifest | Atajos visibles (si el catálogo está desplegado) |
 | `assistant/assistant-shortcut-group-labels.yaml` | manifest | Etiquetas/orden de grupos de atajos |
 | `agents/` | knob | Política operativa por `agent_id` (umbrales; gates hard en dominio) |
-| `permission/` | auth | `domain-operation-policies`, `legacy-permission-aliases`, `capabilities/` |
-| `permission/migration/` | auth | Mapas one-shot de grants (`intent-grant-migration-map`) |
+| `permission/` | auth | `domain-operation-policies`, `capabilities/` (migración one-shot de grants legacy ya aplicada; sin aliases en metadata) |
 | `ui/home-panel-manifest.yaml` | manifest | Layout panel inicio staff/paciente |
 | `ui/client-context.yaml` | manifest | Contextos por cliente y ocultamiento staff |
-| `ui/json-domains.yaml` | catalog | Entidad API → carpeta `views/json/{dominio}/` |
 | `ui/screen-params.yaml` | manifest | Expansión de params UI |
-| `ui/select-option-sources.yaml` | catalog | `option_config.source` → provider de dominio |
 | `ui/paciente-contexto-offering.yaml` | manifest | Ofertas de contexto paciente |
 | `ai/clinical-text-ia.yaml` | prompt + knob | Prompts SNOMED/captura + overrides de post-proceso |
 | `ai/ai-cost-reference.yaml` | catalog | Tarifas/referencia de costo IA |
 | `terminology/` | catalog | SNOMED ECL, sinónimos de servicio institucional |
-| `clinical/pedido-atencion.yaml` | knob + catalog | Systems, modos, capacity_rules, aliases NL de acto |
+| `clinical/pedido-atencion.yaml` | catalog | capacity_rules + aliases NL de acto/línea (systems/defaults en PHP) |
 | `organization/` | knob | Agenda por encounter class, pricing PES, atributos efector |
 | `scheduling/turno-behavior-profile.yaml` | catalog | Eventos/métricas de comportamiento (no risk policy) |
 | `person/ventanilla-sesion.yaml` | knob | Ventanilla / sesión persona |

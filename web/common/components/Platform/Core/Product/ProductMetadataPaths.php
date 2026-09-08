@@ -104,11 +104,6 @@ final class ProductMetadataPaths
         return self::assistantCatalogDir() . DIRECTORY_SEPARATOR . 'smart-catalog.yaml';
     }
 
-    public static function areaAspectsCatalogFile(): string
-    {
-        return self::assistantCatalogDir() . DIRECTORY_SEPARATOR . 'area-aspects.yaml';
-    }
-
     public static function preprocessExtractionCategoriesFile(): string
     {
         return self::assistantCatalogDir() . DIRECTORY_SEPARATOR . 'preprocess-extraction-categories.yaml';
@@ -185,11 +180,6 @@ final class ProductMetadataPaths
         return self::assistantRoutingFile('intent-families');
     }
 
-    public static function hintResolutionFile(): string
-    {
-        return self::assistantRoutingFile('hint-resolution');
-    }
-
     public static function threadStateFile(): string
     {
         return self::assistantRoutingFile('thread-state');
@@ -215,18 +205,6 @@ final class ProductMetadataPaths
         return self::permissionDir() . DIRECTORY_SEPARATOR . 'domain-operation-policies.yaml';
     }
 
-    public static function intentGrantMigrationMapFile(): string
-    {
-        return self::permissionDir()
-            . DIRECTORY_SEPARATOR . 'migration'
-            . DIRECTORY_SEPARATOR . 'intent-grant-migration-map.yaml';
-    }
-
-    public static function legacyPermissionAliasesFile(): string
-    {
-        return self::permissionDir() . DIRECTORY_SEPARATOR . 'legacy-permission-aliases.yaml';
-    }
-
     public static function capabilitiesDir(): string
     {
         return self::permissionDir() . DIRECTORY_SEPARATOR . 'capabilities';
@@ -247,19 +225,9 @@ final class ProductMetadataPaths
         return self::baseDir() . DIRECTORY_SEPARATOR . 'ui' . DIRECTORY_SEPARATOR . 'paciente-contexto-offering.yaml';
     }
 
-    public static function uiJsonDomainsFile(): string
-    {
-        return self::baseDir() . DIRECTORY_SEPARATOR . 'ui' . DIRECTORY_SEPARATOR . 'json-domains.yaml';
-    }
-
     public static function uiScreenParamsFile(): string
     {
         return self::baseDir() . DIRECTORY_SEPARATOR . 'ui' . DIRECTORY_SEPARATOR . 'screen-params.yaml';
-    }
-
-    public static function uiSelectOptionSourcesFile(): string
-    {
-        return self::baseDir() . DIRECTORY_SEPARATOR . 'ui' . DIRECTORY_SEPARATOR . 'select-option-sources.yaml';
     }
 
     public static function clinicalTextIaFile(): string

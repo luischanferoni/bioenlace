@@ -23,8 +23,6 @@ final class TurnoCanonicalEventCommand
     public ?string $relatedTurnoRole = null;
     /** @var array<string, mixed> */
     public array $meta = [];
-    /** Tipo legacy opcional para UI histórica; si null se deriva del event_code. */
-    public ?string $legacyTipoEvento = null;
 
     /**
      * @param array<string, mixed> $meta
@@ -42,7 +40,6 @@ final class TurnoCanonicalEventCommand
         ?string $motivoNormalizado = null,
         ?string $occurredAt = null,
         array $meta = [],
-        ?string $legacyTipoEvento = null,
         ?int $correctedEventId = null,
         ?int $idTurnoRelacionado = null,
         ?string $relatedTurnoRole = null
@@ -60,7 +57,6 @@ final class TurnoCanonicalEventCommand
         $c->motivoNormalizado = $motivoNormalizado;
         $c->occurredAt = $occurredAt;
         $c->meta = $meta;
-        $c->legacyTipoEvento = $legacyTipoEvento;
         $c->correctedEventId = $correctedEventId;
         $c->idTurnoRelacionado = $idTurnoRelacionado;
         $c->relatedTurnoRole = $relatedTurnoRole;

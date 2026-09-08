@@ -2,16 +2,50 @@
 
 namespace common\components\Platform\Core\Product;
 
-use Symfony\Component\Yaml\Yaml;
-use Yii;
-
 /**
- * Metadata de carpetas JSON UI ({@see ProductMetadataPaths::uiJsonDomainsFile()}).
+ * Mapeo entidad API → dominio / carpeta de templates UI JSON.
  */
 final class UiJsonDomainMetadata
 {
-    /** @var array<string, mixed>|null */
-    private static ?array $config = null;
+    private const CLINICAL_PREFIX = 'clinical';
+
+    /** @var array<string, string> */
+    private const ENTITY_DOMAINS = [
+        'turnos' => 'scheduling',
+        'turnos-perfil' => 'scheduling',
+        'consultas-seguimiento' => 'scheduling',
+        'profesional-agenda' => 'scheduling',
+        'profesional-horarios' => 'organization',
+        'servicio-teleconsulta' => 'scheduling',
+        'efectores' => 'scheduling',
+        'servicios' => 'scheduling',
+        'care-plan' => 'clinical',
+        'care-plans' => 'clinical',
+        'emergency-guardia' => 'clinical',
+        'internacion' => 'clinical',
+        'laboratory-result' => 'clinical',
+        'electronic-prescription' => 'clinical',
+        'encounter' => 'clinical',
+        'medication-request' => 'clinical',
+        'service-request' => 'clinical',
+        'condition' => 'clinical',
+        'persona' => 'persona',
+        'profesional-efector-servicio' => 'organization',
+        'data-access' => 'core',
+        'queja-paciente' => 'core',
+        'paciente-contexto' => 'persona',
+        'person-representation' => 'persona',
+    ];
+
+    /** @var array<string, string> */
+    private const ACTION_TEMPLATE_ALIASES = [
+        'encounter/ultima-atencion-ui-como-paciente' => 'ver-resumen-atencion-como-paciente',
+    ];
+
+    /** @var array<string, string> */
+    private const ENTITY_FOLDER_ALIASES = [
+        'care-plans' => 'care-plan',
+    ];
 
     public static function domainForEntity(string $entity): ?string
     {
@@ -19,20 +53,14 @@ final class UiJsonDomainMetadata
         if ($entity === '') {
             return null;
         }
-        $map = self::loadConfig()['entity_domains'] ?? [];
-        if (!is_array($map)) {
-            return null;
-        }
-        $domain = $map[$entity] ?? null;
+        $domain = self::ENTITY_DOMAINS[$entity] ?? null;
 
-        return is_string($domain) && trim($domain) !== '' ? trim($domain) : null;
+        return is_string($domain) && $domain !== '' ? $domain : null;
     }
 
     public static function clinicalActionIdPrefix(): string
     {
-        $prefix = trim((string) (self::loadConfig()['action_id_parse']['clinical_prefix'] ?? ''));
-
-        return $prefix !== '' ? $prefix : 'clinical';
+        return self::CLINICAL_PREFIX;
     }
 
     public static function templateAliasAction(string $entity, string $action): ?string
@@ -42,14 +70,10 @@ final class UiJsonDomainMetadata
         if ($entity === '' || $action === '') {
             return null;
         }
-        $aliases = self::loadConfig()['action_template_aliases'] ?? [];
-        if (!is_array($aliases)) {
-            return null;
-        }
         $key = $entity . '/' . $action;
-        $target = $aliases[$key] ?? null;
+        $target = self::ACTION_TEMPLATE_ALIASES[$key] ?? null;
 
-        return is_string($target) && trim($target) !== '' ? trim($target) : null;
+        return is_string($target) && $target !== '' ? $target : null;
     }
 
     public static function templateFolderForEntity(string $entity): string
@@ -58,59 +82,13 @@ final class UiJsonDomainMetadata
         if ($entity === '') {
             return '';
         }
-        $aliases = self::loadConfig()['entity_folder_aliases'] ?? [];
-        if (!is_array($aliases)) {
-            return $entity;
-        }
-        $target = $aliases[$entity] ?? null;
+        $target = self::ENTITY_FOLDER_ALIASES[$entity] ?? null;
 
-        return is_string($target) && trim($target) !== '' ? trim($target) : $entity;
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private static function loadConfig(): array
-    {
-        if (self::$config !== null) {
-            return self::$config;
-        }
-
-        self::$config = [
-            'entity_domains' => [],
-            'action_id_parse' => [],
-            'action_template_aliases' => [],
-            'entity_folder_aliases' => [],
-        ];
-
-        $path = ProductMetadataPaths::uiJsonDomainsFile();
-        if (!is_file($path)) {
-            return self::$config;
-        }
-
-        try {
-            $data = Yaml::parseFile($path);
-        } catch (\Throwable $e) {
-            Yii::warning('UiJsonDomainMetadata: YAML inválido: ' . $e->getMessage(), __METHOD__);
-
-            return self::$config;
-        }
-
-        if (!is_array($data)) {
-            return self::$config;
-        }
-
-        foreach (['entity_domains', 'action_id_parse', 'action_template_aliases', 'entity_folder_aliases'] as $key) {
-            if (isset($data[$key]) && is_array($data[$key])) {
-                self::$config[$key] = $data[$key];
-            }
-        }
-
-        return self::$config;
+        return is_string($target) && $target !== '' ? $target : $entity;
     }
 
     public static function resetCacheForTests(): void
     {
-        self::$config = null;
+        // Sin cache de archivo; no-op para compatibilidad de tests.
     }
 }

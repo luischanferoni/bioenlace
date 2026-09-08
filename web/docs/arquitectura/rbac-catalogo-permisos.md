@@ -10,7 +10,7 @@ Documentación estable del modelo de autorización Bioenlace: motor Yii, **permi
   - **Intents** — clave = `intent_id` del YAML (asistente, flows NL, métricas staff).
   - **Capabilities UI nativa** — clave = `capability_id` (`guardia.*`, `encounter.*`, `panel.*`) para web/móvil sin intent en cada request.
 - **Atributos `Entidad.atributo.*`:** legacy; no se asignan en admin; eliminar de `auth_item` tras migración (ver ADR [autorizacion-solo-por-intents.md](../decisions/autorizacion-solo-por-intents.md)).
-- **Permisos operativos legacy** (`analisis`, `front_ver_historial_paciente`): deprecados; migrar grants a capabilities (ver ADR [autorizacion-capabilities-ui-nativa.md](../decisions/autorizacion-capabilities-ui-nativa.md)).
+- **Permisos operativos `analisis` / `front_ver_historial_paciente`:** migración one-shot ya aplicada; sin aliases legacy en metadata (ver ADR [autorizacion-capabilities-ui-nativa.md](../decisions/autorizacion-capabilities-ui-nativa.md)).
 - **Web staff (SPA):** `frontend/controllers` exigen autenticación; el RBAC real vive en **API v1** (`BioenlaceApiAccessControl`).
 - **Admin:** RBAC por ruta (`BioenlaceAdminAccessControl`).
 
@@ -49,8 +49,7 @@ rol → encounter.capturar (type 2) → /api/clinical/encounter/captura-guardar 
 | Listado NL / IA | `IntentAccessService::userCanExecuteIntent` (grant intent **o** ruta API del manifiesto) |
 | Atajos inicio | `IntentAccessService::userHasIntentGrant` — solo grant del `intent_id`; UI genérica embebida en el asistente |
 | Campos editables | `fields` / `field_groups` en YAML del intent |
-| Migración legacy → capability | `intent-grant-migration-map.yaml` (`capability_grant_sources`) |
-| Alias deprecados | `legacy-permission-aliases.yaml` |
+| Operaciones solo dominio | `DomainOperationPolicyCatalog::DOMAIN_ONLY_OPERATIONS` (PHP) |
 
 Los intents YAML **no** declaran campo `permission:`; la clave RBAC es el propio `intent_id`.
 
@@ -72,9 +71,7 @@ Entrypoint: **`/admin/permission-catalog/index`**.
 
 Menú admin «Acceso a datos»: **Catálogo** + **Integridad**.
 
-La portada del catálogo lista **permisos legacy deprecados** con enlace a la capability de reemplazo y roles que aún los tienen.
-
-### Redirects legacy
+### Redirects de URLs antiguas
 
 | URL antigua | Destino |
 |-------------|---------|
@@ -88,7 +85,7 @@ La portada del catálogo lista **permisos legacy deprecados** con enlace a la ca
 cd web
 php yii catalog-permission/sync-capabilities --applyDefaultRoles=1 --propagatePanel=1
 php yii catalog-permission/sync              # Intents → auth_item + rutas API
-php yii catalog-permission/migrate-grants      # Legacy / fuentes YAML → intents + capabilities
+php yii catalog-permission/migrate-grants      # No-op: migraciones legacy retiradas
 php yii catalog-permission/list-capabilities   # Inventario capabilities declaradas
 php yii catalog-permission/prune-attributes    # Dry-run: Entidad.atributo.* a borrar
 php yii catalog-permission/prune-attributes --execute=1
@@ -101,7 +98,6 @@ Orden recomendado en staging:
 php yii migrate
 php yii catalog-permission/sync-capabilities --applyDefaultRoles=1 --propagatePanel=1
 php yii catalog-permission/sync
-php yii catalog-permission/migrate-grants
 # validar asistente, tablero guardia, captura encounter
 php yii catalog-integrity/check
 # opcional tras backup:
@@ -139,7 +135,7 @@ Checklist staging:
 - [ ] Login `/auth/login` (staff y paciente)
 - [ ] Tablero guardia: ingreso/triage/atender según rol (Administrativo, enfermería, Médico)
 - [ ] Captura encounter y lectura HC staff
-- [ ] `catalog-integrity/check` sin errores; revisar warnings legacy/capability
+- [ ] `catalog-integrity/check` sin errores; revisar warnings de coverage domain_only / rutas guardia
 - [ ] Admin: catálogo intents + capabilities, asignación roles, sync capabilities
 - [ ] Re-login tras deploy RBAC
 
@@ -150,15 +146,14 @@ Checklist staging:
 ```
 web/common/components/Platform/Core/Permission/
   BioenlaceAccessChecker.php, IntentAccessService.php, CapabilityAccessService.php
-  BioenlaceRbacRevision.php, CapabilityManifestIndex.php, LegacyPermissionAliasIndex.php
+  BioenlaceRbacRevision.php, CapabilityManifestIndex.php
   CapabilityPermissionSyncService.php, CatalogPermissionSyncService.php
-  IntentGrantMigrationService.php, PermissionCatalogService.php
+  Domain/DomainOperationPolicyCatalog.php, PermissionCatalogService.php
 
 web/common/metadata/bioenlace/
   assistant/intents/
   permission/capabilities/
-  permission/migration/intent-grant-migration-map.yaml
-  permission/legacy-permission-aliases.yaml
+  permission/domain-operation-policies.yaml
   ui/home-panel-manifest.yaml
 ```
 

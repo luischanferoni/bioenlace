@@ -2,13 +2,10 @@
 
 namespace common\components\Platform\Assistant\Context;
 
-use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
-use common\components\Platform\Core\Product\ProductMetadataPaths;
-
 /**
  * Aspectos de contexto HIS (volcado 2ª IA). Clave JSON = {@see aspectKey()}.
  *
- * Source of truth: {@see catalog/area-aspects.yaml}.
+ * Source of truth: constantes {@see ASPECTS}.
  */
 final class AssistantContextHISAreaAspect
 {
@@ -16,6 +13,32 @@ final class AssistantContextHISAreaAspect
     public const SITE_APPOINTMENT_POLICIES = 'site.appointment.policies';
     public const APPOINTMENT_SCHEDULING_SETUP = 'appointment.scheduling.setup';
     public const APPOINTMENT_HISTORY_SUBJECT_AT_SITE = 'appointment.history.subject_at_site';
+
+    /**
+     * @var array<string, array{area: string, priority: int, implemented: bool}>
+     */
+    private const ASPECTS = [
+        self::APPOINTMENT_CURRENT => [
+            'area' => 'appointments',
+            'priority' => 10,
+            'implemented' => true,
+        ],
+        self::SITE_APPOINTMENT_POLICIES => [
+            'area' => 'appointments',
+            'priority' => 30,
+            'implemented' => true,
+        ],
+        self::APPOINTMENT_SCHEDULING_SETUP => [
+            'area' => 'appointments',
+            'priority' => 25,
+            'implemented' => true,
+        ],
+        self::APPOINTMENT_HISTORY_SUBJECT_AT_SITE => [
+            'area' => 'appointments',
+            'priority' => 40,
+            'implemented' => true,
+        ],
+    ];
 
     /** @var array<string, array{area: string, priority: int, implemented: bool}>|null */
     private static ?array $metaCache = null;
@@ -82,30 +105,6 @@ final class AssistantContextHISAreaAspect
             return;
         }
 
-        $config = AssistantMetadataLoader::load(ProductMetadataPaths::areaAspectsCatalogFile());
-        $raw = $config['aspects'] ?? [];
-        if (!is_array($raw)) {
-            self::$metaCache = [];
-
-            return;
-        }
-
-        $out = [];
-        foreach ($raw as $aspect => $row) {
-            if (!is_string($aspect) || !is_array($row)) {
-                continue;
-            }
-            $aspect = trim($aspect);
-            if ($aspect === '') {
-                continue;
-            }
-            $out[$aspect] = [
-                'area' => trim((string) ($row['area'] ?? '')),
-                'priority' => (int) ($row['priority'] ?? 100),
-                'implemented' => (bool) ($row['implemented'] ?? false),
-            ];
-        }
-
-        self::$metaCache = $out;
+        self::$metaCache = self::ASPECTS;
     }
 }

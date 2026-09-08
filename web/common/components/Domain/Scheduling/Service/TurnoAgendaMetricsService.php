@@ -166,16 +166,12 @@ final class TurnoAgendaMetricsService
                 $byTurno[$idTurno]['appointment_ts'] = $appointmentTs;
             }
 
-            if ($code === TurnoEventoAudit::EVENT_APPOINTMENT_CREATED
-                || $code === TurnoEventoAudit::TIPO_CREATE
-            ) {
+            if ($code === TurnoEventoAudit::EVENT_APPOINTMENT_CREATED) {
                 $byTurno[$idTurno]['created_ts'] = $occurredTs;
             } elseif ($code === TurnoEventoAudit::EVENT_ATTENDED) {
                 $byTurno[$idTurno]['attended'] = true;
                 $byTurno[$idTurno]['no_show_attributable'] = false;
-            } elseif ($code === TurnoEventoAudit::EVENT_NO_SHOW_RECORDED
-                || $code === TurnoEventoAudit::TIPO_NO_SHOW
-            ) {
+            } elseif ($code === TurnoEventoAudit::EVENT_NO_SHOW_RECORDED) {
                 if (in_array($actor, $patientActors, true)) {
                     $byTurno[$idTurno]['no_show_attributable'] = true;
                 }

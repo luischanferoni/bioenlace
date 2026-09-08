@@ -51,8 +51,7 @@ class TurnoLifecycleService
             'lifecycle',
             null,
             null,
-            $canal !== null ? ['canal' => $canal] : [],
-            TurnoEventoAudit::TIPO_CREATE
+            $canal !== null ? ['canal' => $canal] : []
         ));
     }
 
@@ -121,10 +120,6 @@ class TurnoLifecycleService
                 'estado_motivo' => $estadoMotivo,
                 'actor_type' => $actor,
             ]);
-            $legacyTipo = $actor === TurnoEventoAudit::ACTOR_PACIENTE
-                || $actor === TurnoEventoAudit::ACTOR_REPRESENTANTE
-                ? TurnoEventoAudit::TIPO_CANCEL_PAC
-                : TurnoEventoAudit::TIPO_CANCEL_MED;
 
             $this->canonicalEvents->record(TurnoCanonicalEventCommand::create(
                 (int) $turno->id_turnos,
@@ -138,8 +133,7 @@ class TurnoLifecycleService
                 'lifecycle',
                 $motivoNorm,
                 null,
-                $meta,
-                $legacyTipo
+                $meta
             ));
             $tx->commit();
         } catch (\Throwable $e) {
@@ -195,8 +189,7 @@ class TurnoLifecycleService
                 'lifecycle',
                 Turno::ESTADO_MOTIVO_SIN_ATENDER_PACIENTE,
                 null,
-                [],
-                TurnoEventoAudit::TIPO_NO_SHOW
+                []
             ));
             $tx->commit();
         } catch (\Throwable $e) {
@@ -278,7 +271,6 @@ class TurnoLifecycleService
                 'CORRECCION_NO_SHOW',
                 null,
                 ['replacement_outcome' => $replacementOutcome],
-                null,
                 $correctedEventId
             ));
             if ($replacementOutcome === 'ATTENDED') {

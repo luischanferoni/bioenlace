@@ -97,6 +97,13 @@ final class TurnoBehaviorProfileContract
             return [];
         }
 
+        if (array_is_list($events)) {
+            return array_values(array_filter(array_map(
+                static fn ($code): string => trim((string) $code),
+                $events
+            ), static fn (string $code): bool => $code !== ''));
+        }
+
         return array_values(array_map('strval', array_keys($events)));
     }
 
@@ -123,36 +130,6 @@ final class TurnoBehaviorProfileContract
         }
 
         return $out;
-    }
-
-    public function eventCodeForLegacyTipo(string $legacyTipo): ?string
-    {
-        $events = $this->data['events'] ?? [];
-        if (!is_array($events)) {
-            return null;
-        }
-        foreach ($events as $code => $def) {
-            $legacy = is_array($def) ? ($def['legacy_tipos'] ?? []) : [];
-            if (is_array($legacy) && in_array($legacyTipo, $legacy, true)) {
-                return (string) $code;
-            }
-        }
-
-        return null;
-    }
-
-    public function legacyTipoForEvent(string $eventCode): ?string
-    {
-        $def = $this->data['events'][$eventCode] ?? null;
-        if (!is_array($def)) {
-            return null;
-        }
-        $legacy = $def['legacy_tipos'] ?? [];
-        if (!is_array($legacy) || $legacy === []) {
-            return null;
-        }
-
-        return (string) $legacy[0];
     }
 
     /**
@@ -207,29 +184,27 @@ final class TurnoBehaviorProfileContract
                 TurnoEventoAudit::ACTOR_REPRESENTANTE,
             ],
             'events' => [
-                TurnoEventoAudit::EVENT_APPOINTMENT_CREATED => ['legacy_tipos' => [TurnoEventoAudit::TIPO_CREATE]],
-                TurnoEventoAudit::EVENT_APPOINTMENT_CANCELLED => [
-                    'legacy_tipos' => [
-                        TurnoEventoAudit::TIPO_CANCEL_PAC,
-                        TurnoEventoAudit::TIPO_CANCEL_MED,
-                        TurnoEventoAudit::TIPO_BULK_DAY_CANCEL,
-                    ],
-                ],
-                TurnoEventoAudit::EVENT_CONFIRMED => ['legacy_tipos' => [TurnoEventoAudit::TIPO_CONFIRMED]],
-                TurnoEventoAudit::EVENT_ATTENDED => ['legacy_tipos' => []],
-                TurnoEventoAudit::EVENT_NO_SHOW_RECORDED => ['legacy_tipos' => [TurnoEventoAudit::TIPO_NO_SHOW]],
-                TurnoEventoAudit::EVENT_NO_SHOW_CORRECTED => ['legacy_tipos' => []],
-                TurnoEventoAudit::EVENT_APPOINTMENT_RESCHEDULED => ['legacy_tipos' => []],
-                TurnoEventoAudit::EVENT_CONFIRMATION_REQUESTED => ['legacy_tipos' => []],
-                TurnoEventoAudit::EVENT_CONFIRMATION_DELIVERY_CONFIRMED => ['legacy_tipos' => []],
-                TurnoEventoAudit::EVENT_CONFIRMATION_OPENED => ['legacy_tipos' => []],
-                TurnoEventoAudit::EVENT_SYSTEM_SLOT_RELEASED => ['legacy_tipos' => []],
-                TurnoEventoAudit::EVENT_APPOINTMENT_ADVANCE_OFFERED => ['legacy_tipos' => []],
-                TurnoEventoAudit::EVENT_APPOINTMENT_ADVANCE_DELIVERED => ['legacy_tipos' => []],
-                TurnoEventoAudit::EVENT_APPOINTMENT_ADVANCE_OPENED => ['legacy_tipos' => []],
-                TurnoEventoAudit::EVENT_APPOINTMENT_ADVANCE_ACCEPTED => ['legacy_tipos' => []],
-                TurnoEventoAudit::EVENT_APPOINTMENT_ADVANCE_UNAVAILABLE => ['legacy_tipos' => []],
-                TurnoEventoAudit::EVENT_APPOINTMENT_ADVANCE_EXPIRED => ['legacy_tipos' => []],
+                TurnoEventoAudit::EVENT_APPOINTMENT_CREATED,
+                TurnoEventoAudit::EVENT_APPOINTMENT_RESCHEDULED,
+                TurnoEventoAudit::EVENT_APPOINTMENT_CANCELLED,
+                TurnoEventoAudit::EVENT_APPOINTMENT_ENTERED_RESOLUTION,
+                TurnoEventoAudit::EVENT_CONFIRMATION_REQUESTED,
+                TurnoEventoAudit::EVENT_CONFIRMATION_DELIVERY_CONFIRMED,
+                TurnoEventoAudit::EVENT_CONFIRMATION_OPENED,
+                TurnoEventoAudit::EVENT_CONFIRMED,
+                TurnoEventoAudit::EVENT_ATTENTION_STARTED,
+                TurnoEventoAudit::EVENT_ATTENDED,
+                TurnoEventoAudit::EVENT_NO_SHOW_RECORDED,
+                TurnoEventoAudit::EVENT_NO_SHOW_CORRECTED,
+                TurnoEventoAudit::EVENT_APPOINTMENT_ADVANCE_OFFERED,
+                TurnoEventoAudit::EVENT_APPOINTMENT_ADVANCE_DELIVERED,
+                TurnoEventoAudit::EVENT_APPOINTMENT_ADVANCE_OPENED,
+                TurnoEventoAudit::EVENT_APPOINTMENT_ADVANCE_ACCEPTED,
+                TurnoEventoAudit::EVENT_APPOINTMENT_ADVANCE_UNAVAILABLE,
+                TurnoEventoAudit::EVENT_APPOINTMENT_ADVANCE_EXPIRED,
+                TurnoEventoAudit::EVENT_SYSTEM_SLOT_RELEASED,
+                TurnoEventoAudit::EVENT_MODALITY_CHANGED,
+                TurnoEventoAudit::EVENT_OVERBOOK_CREATED,
             ],
             'metrics' => [
                 ['code' => 'CLOSED_ELIGIBLE', 'kind' => 'count'],

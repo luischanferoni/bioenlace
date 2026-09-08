@@ -1,13 +1,8 @@
-# Tipo: routing
-# Propósito: tags de hilo del asistente (dominio + certeza) desde user_goal.
+# Tipo: knob
+# Propósito: umbrales de certeza del hilo + flag force_ambiguous.
 # Consumidor: AssistantThreadStateService / ProductMetadataPaths::threadStateFile()
+# Mapas goal→tag e ignore lists: constantes PHP en AssistantThreadStateService.
 version: 1
-
-goal_to_thread_tag:
-  guide: guide
-  operational: operational
-  in_flow_question: operational
-  ambiguous: ambiguous
 
 certainty:
   symptom_confidence: 0.85
@@ -16,11 +11,4 @@ certainty:
   confidence_min: 0.0
   confidence_max: 1.0
 
-diversion:
-  force_ambiguous: true
-  ignore_from_tags:
-    - ambiguous
-    - ''
-  ignore_to_tags:
-    - ambiguous
-    - operational
+force_ambiguous: true

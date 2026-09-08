@@ -11,7 +11,7 @@ Complementa [`runtime-datos-vs-metadata.mdc`](runtime-datos-vs-metadata.mdc) y [
 
 Cada **lista cerrada** que el runtime valida o inyecta en prompts tiene **exactamente una fuente** y **un loader PHP** que la consume. Prohibido mantener la misma lista en dos sitios (const PHP + YAML, JSON en prompt + enum en schema, `categories_json` + `categories_human`, etc.).
 
-**YAML del catálogo = vocabulario + textos** (para prompt o UX). **PHP del loader =** `all()` / `isValid()` / `listForPrompt()` y, si hace falta, **mapas técnicos** (alias id→id, legacy, tags extra sin copy). No mezclar esos mapas en el YAML.
+**YAML del catálogo = vocabulario + textos** (para prompt o UX). **PHP del loader =** `all()` / `isValid()` / `listForPrompt()` y, si hace falta, **mapas técnicos** (wiring id→id, tags extra sin copy). No mezclar esos mapas en el YAML. No mantener capas de retrocompatibilidad en metadata ni en PHP.
 
 ## Dónde va cada cosa
 
@@ -20,10 +20,10 @@ Cada **lista cerrada** que el runtime valida o inyecta en prompts tiene **exacta
 | Áreas HIS (`context_areas`) | `assistant/catalog/context-his-areas.yaml` | `AssistantContextHISArea` |
 | Categorías extracción preprocess | `assistant/catalog/preprocess-extraction-categories.yaml` | `PreprocessExtractionCategoryCatalog` |
 | `routing_hint` preprocess (id → texto IA) | `assistant/catalog/preprocess-routing-hints.yaml` | `PreprocessRoutingHintCatalog` |
-| Alias / legacy `user_goal` / tags extra preprocess | constantes en `PreprocessRoutingHintCatalog` | mismo loader |
+| Alias / mapas técnicos preprocess (`user_goal`, tags extra) | constantes en `PreprocessRoutingHintCatalog` | mismo loader |
 | Tags preprocess (vocabulario IA) | tags de `smart-catalog.yaml` + `extraPreprocessTags()` PHP | `PreprocessTagVocabularyCatalog` |
-| Aspectos HIS / plan declarativo | `assistant/catalog/area-aspects.yaml` | `AssistantContextHISAreaAspect`, `AssistantContextAreaAspectCatalog` |
-| Entidades hint (flows) | `assistant/routing/hint-resolution.yaml` → `entity_ownership` | `HintResolutionMetadata` |
+| Aspectos HIS / plan declarativo | constantes `ASPECTS` en `AssistantContextHISAreaAspect` | `AssistantContextHISAreaAspect`, `AssistantContextAreaAspectCatalog` |
+| Entidades hint (flows) | constantes en `HintResolutionMetadata` (`ENTITY_OWNERSHIP`, intent_ids) | `HintResolutionMetadata` |
 | Copy routing catálogo | `assistant/routing/smart-catalog-routing.yaml` | metadata loader |
 | Maestros consultados en request (geo, recursos) | **BD** + seed console | servicio dominio + cache |
 

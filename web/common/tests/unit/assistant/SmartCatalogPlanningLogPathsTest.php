@@ -38,7 +38,7 @@ class SmartCatalogPlanningLogPathsTest extends Unit
     {
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'contame representacion',
-            'routing_hint' => 'directo',
+            'routing_hint' => 'clara',
             'tags' => ['representacion'],
             'context_areas' => ['representation'],
             'extractions' => [],

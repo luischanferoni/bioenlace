@@ -33,16 +33,6 @@ use yii\db\ActiveRecord;
  */
 class TurnoEventoAudit extends ActiveRecord
 {
-    /** Tipos legacy (compat UI / callers antiguos). */
-    const TIPO_CONFIRMED = 'CONFIRMED';
-    const TIPO_CANCEL_PAC = 'CANCEL_PAC';
-    const TIPO_CANCEL_MED = 'CANCEL_MED';
-    const TIPO_NO_SHOW = 'NO_SHOW';
-    const TIPO_MODALITY_CHANGE = 'MODALITY_CHANGE';
-    const TIPO_SOBRETURNO = 'SOBRETURNO';
-    const TIPO_BULK_DAY_CANCEL = 'BULK_DAY_CANCEL';
-    const TIPO_CREATE = 'CREATE';
-
     /** Códigos canónicos (contrato V1). */
     public const EVENT_APPOINTMENT_CREATED = 'APPOINTMENT_CREATED';
     public const EVENT_APPOINTMENT_RESCHEDULED = 'APPOINTMENT_RESCHEDULED';
@@ -78,16 +68,20 @@ class TurnoEventoAudit extends ActiveRecord
     public const RELATED_PREVIOUS = 'PREVIOUS';
     public const RELATED_NEW = 'NEW';
 
-    /** @var array<string, string> Códigos almacenados en {@see $tipo_evento} → texto para UI e informes */
+    /**
+     * Códigos almacenados en {@see $tipo_evento} / {@see $event_code} → texto UI.
+     * Incluye literales históricos de filas previas a la unificación canónica.
+     *
+     * @var array<string, string>
+     */
     private const ETIQUETAS_TIPO_EVENTO_ES = [
-        self::TIPO_CONFIRMED => 'Confirmado',
-        self::TIPO_CANCEL_PAC => 'Cancelación por paciente',
-        self::TIPO_CANCEL_MED => 'Cancelación por profesional',
-        self::TIPO_NO_SHOW => 'Inasistencia',
-        self::TIPO_MODALITY_CHANGE => 'Cambio de modalidad',
-        self::TIPO_SOBRETURNO => 'Sobreturno',
-        self::TIPO_BULK_DAY_CANCEL => 'Cancelación masiva por día',
-        self::TIPO_CREATE => 'Creación de turno',
+        'CREATE' => 'Creación de turno',
+        'CANCEL_PAC' => 'Cancelación por paciente',
+        'CANCEL_MED' => 'Cancelación por profesional',
+        'BULK_DAY_CANCEL' => 'Cancelación masiva por día',
+        'NO_SHOW' => 'Inasistencia',
+        'MODALITY_CHANGE' => 'Cambio de modalidad',
+        'SOBRETURNO' => 'Sobreturno',
         self::EVENT_APPOINTMENT_CREATED => 'Turno creado',
         self::EVENT_APPOINTMENT_RESCHEDULED => 'Turno reprogramado',
         self::EVENT_APPOINTMENT_CANCELLED => 'Turno cancelado',
@@ -164,7 +158,7 @@ class TurnoEventoAudit extends ActiveRecord
     }
 
     /**
-     * Compatibilidad: delega al servicio canónico idempotente.
+     * Delega al servicio canónico idempotente. `$tipo` = event_code canónico del contrato.
      *
      * @param int $idTurno
      * @param string $tipo

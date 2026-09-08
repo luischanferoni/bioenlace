@@ -1,7 +1,7 @@
 # Tipo: catalog
 # Propósito: routing_hint del preprocess (1ª IA) — id → texto para el prompt.
 # Consumidor: PreprocessRoutingHintCatalog / ChatPreprocessService.
-# No poner aquí: alias, mapas legacy user_goal→hint, tags extra (van en el loader PHP).
+# No poner aquí: alias, mapas user_goal↔hint, tags extra (van en el loader PHP).
 version: 1
 
 hints:

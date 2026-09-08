@@ -69,7 +69,7 @@ class BulkCancelDayService
                     [
                         'fecha' => $fecha,
                         'bulk_day_cancel' => true,
-                        'razon_cancelacion' => TurnoEventoAudit::TIPO_BULK_DAY_CANCEL,
+                        'razon_cancelacion' => 'BULK_DAY_CANCEL',
                     ],
                     true,
                     TurnoEventoAudit::ACTOR_EFECTOR

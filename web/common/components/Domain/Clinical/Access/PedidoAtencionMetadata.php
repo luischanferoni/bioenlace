@@ -11,6 +11,34 @@ use Yii;
  */
 final class PedidoAtencionMetadata
 {
+    /**
+     * Acto por defecto cuando solo hay línea y el modo no aporta otro código.
+     *
+     * @var array<string, array{code: string, code_system: string, display: string}>
+     */
+    private const DEFAULTS_POR_MODO = [
+        'consulta' => [
+            'code' => '11429006',
+            'code_system' => CodingSystems::SNOMED,
+            'display' => 'Consulta',
+        ],
+        'interconsulta' => [
+            'code' => '183515008',
+            'code_system' => CodingSystems::SNOMED,
+            'display' => 'Interconsulta',
+        ],
+        'practica' => [
+            'code' => '71388002',
+            'code_system' => CodingSystems::SNOMED,
+            'display' => 'Práctica',
+        ],
+        'estudio' => [
+            'code' => '363679005',
+            'code_system' => CodingSystems::SNOMED,
+            'display' => 'Estudio de imagen',
+        ],
+    ];
+
     /** @var array<string, mixed>|null */
     private static ?array $config = null;
 
@@ -27,19 +55,7 @@ final class PedidoAtencionMetadata
      */
     public static function allowedSystems(): array
     {
-        $raw = self::load()['allowed_systems'] ?? null;
-        if (!is_array($raw) || $raw === []) {
-            return CodingSystems::defaults();
-        }
-        $out = [];
-        foreach ($raw as $uri) {
-            $s = trim((string) $uri);
-            if ($s !== '') {
-                $out[] = $s;
-            }
-        }
-
-        return $out !== [] ? $out : CodingSystems::defaults();
+        return CodingSystems::defaults();
     }
 
     /**
@@ -48,14 +64,13 @@ final class PedidoAtencionMetadata
     public static function defaultActoForModo(string $modo): ?array
     {
         $modo = strtolower(trim($modo));
-        $defaults = self::load()['defaults_por_modo'] ?? null;
-        if (!is_array($defaults) || !isset($defaults[$modo]) || !is_array($defaults[$modo])) {
+        if (!isset(self::DEFAULTS_POR_MODO[$modo])) {
             return null;
         }
-        $row = $defaults[$modo];
-        $code = trim((string) ($row['code'] ?? ''));
-        $system = trim((string) ($row['code_system'] ?? ''));
-        $display = trim((string) ($row['display'] ?? ''));
+        $row = self::DEFAULTS_POR_MODO[$modo];
+        $code = trim($row['code']);
+        $system = trim($row['code_system']);
+        $display = trim($row['display']);
         if ($code === '' || $system === '' || !CodingSystems::isAllowed($system, self::allowedSystems())) {
             return null;
         }
@@ -124,9 +139,6 @@ final class PedidoAtencionMetadata
         }
 
         self::$config = [
-            'allowed_systems' => CodingSystems::defaults(),
-            'defaults_por_modo' => [],
-            'modos' => [],
             'capacity_rules' => [],
             'linea_nl_aliases' => [],
             'acto_nl_aliases' => [],
@@ -151,9 +163,6 @@ final class PedidoAtencionMetadata
         }
 
         foreach ([
-            'allowed_systems',
-            'defaults_por_modo',
-            'modos',
             'capacity_rules',
             'linea_nl_aliases',
             'acto_nl_aliases',

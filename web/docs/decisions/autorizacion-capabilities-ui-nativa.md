@@ -12,7 +12,7 @@ En paralelo convivían:
 
 1. **Rutas API** (`/api/...`) en `auth_item_child`
 2. **Capabilities UX** en `home-panel-manifest.yaml` (visibilidad de botones, no sustituyen RBAC)
-3. **Permisos legacy** (`analisis`, `front_ver_historial_paciente`, `listado_pacientes` como padre de rutas guardia)
+3. **Permisos operativos** (`analisis`, `front_ver_historial_paciente`, `listado_pacientes` como padre de rutas guardia) — migración one-shot ya aplicada; sin aliases en metadata
 4. **Dominio** (`EncounterAccessService`, reglas de episodio guardia)
 
 Síntoma típico: botón visible en manifiesto → **403** en API, o rol con intent de tablero sin grant a rutas de ingreso/triage.
@@ -37,7 +37,7 @@ RBAC ruta (rol → capability → /api/...)
 - **YAML capabilities:** `common/metadata/bioenlace/permission/capabilities/*.yaml` — `routes`, `default_roles`, `related_intents` (enlace opcional intent → capability).
 - **Manifiesto panel:** `home-panel-manifest.yaml` referencia `capability_id` en CTAs EMER; no reemplaza grants RBAC.
 - **Admin:** pestaña «Capabilities UI nativa» en catálogo de permisos; asignación de roles paritaria a intents.
-- **Legacy:** `legacy-permission-aliases.yaml` + `intent-grant-migration-map.yaml` (`capability_grant_sources`) migran grants sin SQL manual.
+- **Migración one-shot:** grants desde `analisis` / `front_ver_*` hacia capabilities ya aplicados; YAML de aliases y mapa de grants retirados (sin capas de retrocompatibilidad).
 
 ### Principios heredados
 
@@ -53,14 +53,14 @@ RBAC ruta (rol → capability → /api/...)
 ## Consecuencias
 
 - Assignables en admin = **intents + capabilities** (no atributos `Entidad.atributo.*`).
-- Deploy: `migrate` → `sync-capabilities` → `sync` → `migrate-grants` → `catalog-integrity/check`.
-- Permisos `analisis` y `front_ver_historial_paciente` **deprecados**; reemplazo assignable: `encounter.capturar` y `encounter.ver_como_staff`.
-- Integridad advierte rutas guardia solo bajo `listado_pacientes` y roles con legacy sin capability de reemplazo.
+- Deploy: `migrate` → `sync-capabilities` → `sync` → `catalog-integrity/check`.
+- Reemplazo assignable de operaciones históricas: `encounter.capturar` y `encounter.ver_como_staff`.
+- Integridad puede advertir rutas guardia solo bajo `listado_pacientes` (debt residual).
 - Re-login tras cambios RBAC (`BioenlaceRbacRevision`).
 
 ## Referencias
 
 - [rbac-catalogo-permisos.md](../arquitectura/rbac-catalogo-permisos.md)
 - [autorizacion-solo-por-intents.md](./autorizacion-solo-por-intents.md)
-- Metadata: `permission/capabilities/`, `permission/legacy-permission-aliases.yaml`, `ui/home-panel-manifest.yaml`
-- CLI: `catalog-permission/sync-capabilities`, `catalog-permission/migrate-grants`, `catalog-integrity/check`
+- Metadata: `permission/capabilities/`, `ui/home-panel-manifest.yaml`
+- CLI: `catalog-permission/sync-capabilities`, `catalog-integrity/check`

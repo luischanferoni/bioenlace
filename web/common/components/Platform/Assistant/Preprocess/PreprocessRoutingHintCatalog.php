@@ -9,7 +9,7 @@ use common\components\Platform\Core\Product\ProductMetadataPaths;
  * Catálogo cerrado de routing_hint del preprocess.
  *
  * Textos para la IA: {@see catalog/preprocess-routing-hints.yaml}.
- * Alias, mapas legacy y tags extra: constantes de esta clase (no YAML).
+ * Mapas user_goal (hilo) y tags extra: constantes de esta clase (no YAML).
  */
 final class PreprocessRoutingHintCatalog
 {
@@ -18,13 +18,10 @@ final class PreprocessRoutingHintCatalog
     public const DUDOSA = 'dudosa';
     public const FUERA_DE_HIS = 'fuera_de_his';
 
-    /** Alias preprocess (IA o tests legacy) → hint canónico. */
-    private const ALIASES = [
-        'directo' => self::CLARA,
-    ];
+    public const TAG_IN_FLOW_QUESTION = 'in_flow_question';
 
     /**
-     * Alias legacy user_goal → routing_hint (transición preprocess v1).
+     * Alias legacy user_goal → routing_hint (hilo / ChatRouter aún usan user_goal).
      *
      * @var array<string, string>
      */
@@ -34,9 +31,6 @@ final class PreprocessRoutingHintCatalog
         'in_flow_question' => self::CLARA,
         'ambiguous' => self::DUDOSA,
     ];
-
-    /** Tag preprocess no derivado del smart-catalog. */
-    public const TAG_IN_FLOW_QUESTION = 'in_flow_question';
 
     /**
      * Tags que la 1ª IA puede emitir aunque no estén en smart-catalog triggers.
@@ -65,19 +59,15 @@ final class PreprocessRoutingHintCatalog
 
     public static function isValid(string $id): bool
     {
-        $id = self::applyAlias(trim($id));
+        $id = trim($id);
 
         return $id !== '' && in_array($id, self::all(), true);
     }
 
+    /** @deprecated Sin aliases de routing_hint; identidad. */
     public static function applyAlias(string $id): string
     {
-        $id = trim($id);
-        if ($id === '') {
-            return '';
-        }
-
-        return self::ALIASES[$id] ?? $id;
+        return trim($id);
     }
 
     public static function description(string $id): string

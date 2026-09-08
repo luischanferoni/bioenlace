@@ -68,21 +68,6 @@ final class PermissionCatalogService
     }
 
     /**
-     * Permisos legacy con capability de reemplazo (solo lectura admin / integridad).
-     *
-     * @return list<array<string, mixed>>
-     */
-    public function listDeprecatedPermissions(): array
-    {
-        $rows = [];
-        foreach (LegacyPermissionAliasIndex::all() as $key => $meta) {
-            $rows[] = array_merge(['kind' => 'legacy_permission', 'key' => $key], $meta);
-        }
-
-        return $rows;
-    }
-
-    /**
      * Atributos declarados para grants read/info/edit (data-access-config).
      *
      * @deprecated Convivencia integridad/migración; no usar para asignación admin.

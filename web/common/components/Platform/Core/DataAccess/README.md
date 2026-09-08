@@ -27,9 +27,8 @@ Layout de intents de lectura: métricas en `assistant/intents/read/`; pantallas/
 
 1. Crear intent(s) YAML con `metric_id` o `edit_surface_id`, `domain_operation`, `fields` si aplica.
 2. Marcar `migrated_intent_id(s)` en la entrada de `data-access-config` (convivencia).
-3. Entrada en `intent-grant-migration-map.yaml` si hay grants legacy que copiar.
-4. `php yii catalog-permission/sync` + `migrate-grants`.
-5. **No** crear nuevos intents genéricos `data-access.*`.
+3. `php yii catalog-permission/sync` (la migración one-shot de grants legacy ya se aplicó; `migrate-grants` es no-op).
+4. **No** crear nuevos intents genéricos `data-access.*`.
 
 ## Admin e integridad
 

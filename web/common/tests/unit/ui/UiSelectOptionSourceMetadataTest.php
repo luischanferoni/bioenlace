@@ -14,14 +14,6 @@ class UiSelectOptionSourceMetadataTest extends Unit
         UiSelectOptionSourceProviderRegistry::resetForTests();
     }
 
-    public function testCondicionesLaboralesAliasToCatalog(): void
-    {
-        $normalized = UiSelectOptionSourceMetadata::normalizeSource('condiciones_laborales', []);
-        $this->assertNotNull($normalized);
-        $this->assertSame('catalog', $normalized['source']);
-        $this->assertSame('condiciones_laborales', $normalized['option_config']['catalog']);
-    }
-
     public function testProviderKeyForOrganizationSources(): void
     {
         $this->assertSame('organization', UiSelectOptionSourceMetadata::providerKeyForSource('efectores'));

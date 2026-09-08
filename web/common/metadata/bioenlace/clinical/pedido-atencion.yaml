@@ -1,39 +1,9 @@
-# Tipo: knob + catalog
-# Propósito: pedido de atención (servicio institucional × acto SNOMED/LOINC).
+# Tipo: catalog (NL aliases) + capacity_rules + acto_coding
+# Propósito: aliases NL línea/acto, reglas ECL de capacidad y knobs de coding de acto.
+# Systems admitidos y defaults por modo viven en PedidoAtencionMetadata (PHP).
 # Consumidor: ProductMetadataPaths::pedidoAtencionFile() / coding y capacity domain services
-# No poner aquí: filas de `servicios` como actos; integrity de PedidoAtencion en Yii/dominio.
-#
-# Systems admitidos (CodeableConcept). Sin code system local.
-allowed_systems:
-  - http://snomed.info/sct
-  - http://loinc.org
-  - http://terminology.hl7.org/CodeSystem/service-type
-  - http://terminology.hl7.org/CodeSystem/service-category
-
-# Acto por defecto cuando solo hay línea y el modo no aporta otro código.
-defaults_por_modo:
-  consulta:
-    code: "11429006"
-    code_system: http://snomed.info/sct
-    display: Consulta
-  interconsulta:
-    code: "183515008"
-    code_system: http://snomed.info/sct
-    display: Interconsulta
-  practica:
-    code: "71388002"
-    code_system: http://snomed.info/sct
-    display: Práctica
-  estudio:
-    code: "363679005"
-    code_system: http://snomed.info/sct
-    display: Estudio de imagen
-
-modos:
-  - consulta
-  - interconsulta
-  - practica
-  - estudio
+# No poner aquí: filas de `servicios` como actos; integrity de PedidoAtencion en Yii/dominio;
+#   allowed_systems / defaults_por_modo / modos (loader PHP).
 
 # Capacidad por tipología de oferta (specialty_* / tipo en servicios), no por nombre de fila.
 # El acto matchea act_ecl (Snowstorm); se une a linea_acto (excepciones / preferentes).

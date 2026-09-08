@@ -105,18 +105,9 @@ class CatalogPermissionController extends Controller
 
     public function actionMigrateGrants(): int
     {
-        $result = (new \common\components\Platform\Core\Permission\IntentGrantMigrationService())->migrate();
+        $this->stdout("Migraciones legacy retiradas (ya aplicadas; sin aliases ni mapa de grants).\n");
 
-        $this->stdout(sprintf(
-            "Migración grants: permisos_creados=%d grants_rol=%d\n",
-            $result['created_permissions'],
-            $result['role_grants']
-        ));
-        foreach ($result['errors'] as $err) {
-            $this->stderr(' - ' . $err . "\n");
-        }
-
-        return $result['errors'] === [] ? ExitCode::OK : ExitCode::UNSPECIFIED_ERROR;
+        return ExitCode::OK;
     }
 
     /**
@@ -133,7 +124,7 @@ class CatalogPermissionController extends Controller
                 $this->stdout('  - ' . $key . "\n");
             }
             if ($result['candidates'] !== []) {
-                $this->stdout("Ejecutar con --execute=1 tras validar migrate-grants\n");
+                $this->stdout("Ejecutar con --execute=1 tras validar integridad del catálogo\n");
             }
         } else {
             $this->stdout(sprintf("Eliminados: %d ítem(s) auth_item\n", $result['removed']));

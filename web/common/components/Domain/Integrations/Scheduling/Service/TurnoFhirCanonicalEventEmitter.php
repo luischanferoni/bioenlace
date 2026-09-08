@@ -53,8 +53,7 @@ final class TurnoFhirCanonicalEventEmitter
                 TurnoEventoAudit::EVENT_APPOINTMENT_CREATED,
                 $versionKey,
                 $occurredAt,
-                $baseMeta,
-                TurnoEventoAudit::TIPO_CREATE
+                $baseMeta
             );
         }
 
@@ -96,8 +95,7 @@ final class TurnoFhirCanonicalEventEmitter
                 TurnoEventoAudit::EVENT_NO_SHOW_RECORDED,
                 $versionKey . ':noshow',
                 $occurredAt,
-                $baseMeta,
-                TurnoEventoAudit::TIPO_NO_SHOW
+                $baseMeta
             );
         }
         if (in_array($status, ['cancelled', 'entered-in-error'], true)
@@ -108,8 +106,7 @@ final class TurnoFhirCanonicalEventEmitter
                 TurnoEventoAudit::EVENT_APPOINTMENT_CANCELLED,
                 $versionKey . ':cancel',
                 $occurredAt,
-                array_merge($baseMeta, ['before_fhir_status' => $beforeFhirStatus]),
-                TurnoEventoAudit::TIPO_CANCEL_MED
+                array_merge($baseMeta, ['before_fhir_status' => $beforeFhirStatus])
             );
         }
     }
@@ -122,8 +119,7 @@ final class TurnoFhirCanonicalEventEmitter
         string $eventCode,
         string $versionKey,
         ?string $occurredAt,
-        array $meta,
-        ?string $legacyTipo = null
+        array $meta
     ): void {
         $this->events->record(TurnoCanonicalEventCommand::create(
             (int) $turno->id_turnos,
@@ -139,8 +135,7 @@ final class TurnoFhirCanonicalEventEmitter
             'fhir_inbound',
             isset($meta['fhir_status']) ? (string) $meta['fhir_status'] : null,
             $occurredAt,
-            $meta,
-            $legacyTipo
+            $meta
         ));
     }
 

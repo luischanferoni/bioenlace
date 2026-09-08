@@ -64,14 +64,6 @@ class PermissionCatalogController extends Controller
             $rolesByKey[$key] = $matrix->buildMatrixRowRoles($key);
         }
 
-        foreach ($catalog->listDeprecatedPermissions() as $legacy) {
-            $key = trim((string) ($legacy['key'] ?? ''));
-            if ($key === '') {
-                continue;
-            }
-            $rolesByKey[$key] = $matrix->buildMatrixRowRoles($key);
-        }
-
         $unregisteredIntents = count(array_filter(
             $intentInAuth,
             static fn (bool $ok): bool => !$ok
@@ -84,7 +76,6 @@ class PermissionCatalogController extends Controller
         return $this->render('index', [
             'intents' => $catalog->listIntents(),
             'capabilities' => $catalog->listCapabilities(),
-            'deprecatedPermissions' => $catalog->listDeprecatedPermissions(),
             'flowSteps' => $catalog->listFlowStepDependencies(),
             'rolesByKey' => $rolesByKey,
             'intentInAuth' => $intentInAuth,

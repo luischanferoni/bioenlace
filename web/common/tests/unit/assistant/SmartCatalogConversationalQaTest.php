@@ -94,7 +94,7 @@ class SmartCatalogConversationalQaTest extends Unit
             'representacion' => [
                 'contame representacion puedo operar por mi sobrino',
                 [
-                    'routing_hint' => 'directo',
+                    'routing_hint' => 'clara',
                     'tags' => ['representacion', 'tutela'],
                     'context_areas' => ['representation'],
                 ],

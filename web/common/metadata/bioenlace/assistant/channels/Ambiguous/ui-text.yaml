@@ -1,8 +1,13 @@
-# Canal ambiguous: encauzamiento sin 2.ª IA.
+# Tipo: ui-text
+# Propósito: mensaje + opciones de encauzamiento del canal ambiguous (sin 2.ª IA).
+# Consumidor: AmbiguousChannelConfig / ProductMetadataPaths::ambiguousChannelFile()
+# Espejo PHP: Platform/Assistant/Chat/Channels/Ambiguous/
+# No poner aquí: prompts de IA ni predicados de canal (ChatChannelPolicy).
+#
 # Botones → intent_id `assistant.channel.<next_channel>` (ChatRouter).
 version: 1
 
-prompt_text: >
+message: >
   No estoy seguro de qué necesitás. Elegí la opción que mejor describa tu pedido
   (o reformulá en un mensaje).
 

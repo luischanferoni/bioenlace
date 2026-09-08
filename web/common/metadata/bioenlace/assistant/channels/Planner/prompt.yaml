@@ -1,4 +1,7 @@
-# IA planificadora (3ª capa opcional): elige tools del shortlist RBAC.
+# Tipo: prompt
+# Propósito: stable_prompt IA planificadora (3ª capa opcional).
+# Consumidor: PlannerChannelConfig / ProductMetadataPaths::plannerPromptFile()
+# Espejo PHP: Platform/Assistant/Chat/Channels/Planner/
 # Contrato: assistant/schemas/planner-ia-v1.yaml
 version: 1
 

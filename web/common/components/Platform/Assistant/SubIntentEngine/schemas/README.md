@@ -6,7 +6,7 @@ Este directorio conserva el **contrato del motor** y documentación.
 **Contrato de claves por paso (`subintents`) y raíz (`flow_submit`):** [`SUBINTENT_CONTRACT.md`](SUBINTENT_CONTRACT.md)
 
 - Intents: `common/metadata/bioenlace/assistant/intents/`
-- Canal guide (copy): `common/metadata/bioenlace/assistant/prompts/guide.yaml`
+- Canal guide (prompt): `common/metadata/bioenlace/assistant/channels/Guide/prompt.yaml`
 - Atajos: `common/metadata/bioenlace/assistant/assistant-shortcuts.yaml`
 - Permisos dominio: `common/metadata/bioenlace/permission/domain-operation-policies.yaml`
 - DataAccess staff: `Core/DataAccess/schemas/data-access-config/`

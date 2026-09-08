@@ -27,7 +27,7 @@ class AssistantMetadataPhase02Test extends Unit
         $this->assertFileExists(ProductMetadataPaths::preprocessPromptFile());
         $this->assertFileExists(ProductMetadataPaths::guideChannelFile());
         $this->assertFileExists(ProductMetadataPaths::ambiguousChannelFile());
-        $this->assertFileExists(ProductMetadataPaths::assistantChannelCopyFile());
+        $this->assertFileExists(ProductMetadataPaths::assistantUiTextByClientFile());
         $this->assertFileExists(ProductMetadataPaths::bookingOfferFile());
         $this->assertFileExists(ProductMetadataPaths::intentFamiliesFile());
         $this->assertFileExists(ProductMetadataPaths::contextHisAreasCatalogFile());
@@ -44,8 +44,8 @@ class AssistantMetadataPhase02Test extends Unit
     public function testGuidePromptIncludesPerimetro(): void
     {
         $prompt = GuideChannelConfig::stablePrompt();
-        $this->assertStringContainsString('Información Hospitalaria', $prompt);
-        $this->assertStringContainsString('Registros del sistema', GuideChannelConfig::stablePrompt());
+        $this->assertStringContainsString('sistema de salud', $prompt);
+        $this->assertStringContainsString('Datos del sistema', $prompt);
     }
 
     public function testBookingOfferFromRoutingYaml(): void

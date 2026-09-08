@@ -1,5 +1,5 @@
 ---
-description: Routing del asistente — keywords en intents, desambiguación genérica, canal en PHP + copy YAML
+description: Routing del asistente — keywords en intents, desambiguación genérica, canal en PHP + texto UX YAML
 globs: web/common/components/Platform/Assistant/**/*.php,web/common/metadata/bioenlace/assistant/**
 alwaysApply: false
 ---
@@ -20,18 +20,18 @@ No enumerar `intent_id` en orquestadores ni en prompts de IA para “elegir la a
 
 **Canal (charla vs trámite vs menú vs ambiguous):** `user_goal` del preprocess IA → `ChatRouter`. Predicados de dominio (síntoma, menú, staff) en `ChatChannelPolicy` (PHP). No es configuración de intents.
 
-**Copy canal clinical:** `assistant/prompts/clinical.yaml`. Encauzamiento ambiguous: `assistant/prompts/ambiguous.yaml`. Preprocess: `assistant/prompts/preprocess.yaml`.
+**Prompt guide:** `assistant/channels/Guide/prompt.yaml`. Encauzamiento ambiguous: `assistant/channels/Ambiguous/ui-text.yaml`. Preprocess: `assistant/preprocess/prompt.yaml`.
 
 ## Dónde va cada cosa
 
 | Necesidad | Dónde |
 |-----------|--------|
 | Frases NL del intent, flow, `when`/`next` sobre draft | `assistant/intents/**/*.yaml` |
-| Prompt preprocess / por canal | `assistant/prompts/*.yaml` |
-| Prompt / labels del canal clinical | `assistant/prompts/clinical.yaml` |
-| Botones de encauzamiento ambiguous | `assistant/prompts/ambiguous.yaml` |
+| Prompt por canal (2ª/3ª IA) | `assistant/channels/{Name}/prompt.yaml` (espejo `Chat/Channels/{Name}/`) |
+| Prompt preprocess | `assistant/preprocess/prompt.yaml` |
+| Texto UX + botones de encauzamiento ambiguous | `assistant/channels/Ambiguous/ui-text.yaml` |
 | Prioridad CTA booking + capability_labels | `assistant/routing/booking-offer.yaml` |
-| Copy UX por perfil | `assistant/copy/channel-copy.yaml` |
+| Texto UX por perfil de cliente | `assistant/ui-text/by-client.yaml` |
 | Familias NL / hints | `assistant/routing/intent-families.yaml`, `hint-resolution.yaml` |
 | ¿Síntoma o turno? ¿Menú? ¿Staff list/edit? | `ChatChannelPolicy` (PHP) |
 | Alias legacy de `user_goal` (preprocess) | `ChatPreprocessService::canonicalizeGoal()` |
@@ -42,9 +42,9 @@ No enumerar `intent_id` en orquestadores ni en prompts de IA para “elegir la a
 1. Enriquecer `keywords` del intent.
 2. Empate ambiguo entre dos puertas: unificar flow o desambiguación del motor — no un YAML de boost.
 3. Cambiar política de canal (p. ej. qué cuenta como síntoma): ajustar `ChatChannelPolicy`.
-4. Cambiar tono/copy del canal clinical: `assistant/prompts/clinical.yaml`.
-5. Cambiar opciones de encauzamiento: `assistant/prompts/ambiguous.yaml`.
-6. Cambiar prompt preprocess: `assistant/prompts/preprocess.yaml`.
+4. Cambiar tono del canal guide: `assistant/channels/Guide/prompt.yaml`.
+5. Cambiar opciones de encauzamiento: `assistant/channels/Ambiguous/ui-text.yaml`.
+6. Cambiar prompt preprocess: `assistant/preprocess/prompt.yaml`.
 
 ## Prompts de canal (2ª IA)
 

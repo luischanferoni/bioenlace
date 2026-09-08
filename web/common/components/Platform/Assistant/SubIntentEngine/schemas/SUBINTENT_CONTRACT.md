@@ -22,7 +22,7 @@ Fuente de verdad para las claves que **`SubIntentEngine`** lee y combina con el 
 ### `intent_semantics` (raíz del intent)
 
 **Función:** adjuntar contexto al prompt de la **2ª IA** (síntesis / guide) para que entienda el flow: objetivo, que es multi-paso, y qué hace cada paso.  
-**No** es copy de marketing al paciente (`action_name`, `channel-copy`, `capability_labels`).
+**No** es texto UX al paciente (`action_name`, `ui-text/by-client`, `capability_labels`).
 
 | Clave | Uso |
 |--------|-----|

@@ -46,19 +46,47 @@ final class ProductMetadataPaths
         return self::assistantDir() . DIRECTORY_SEPARATOR . 'globals';
     }
 
-    public static function assistantPromptsDir(): string
+    /** Espejo de Platform/Assistant/Chat/Channels/ */
+    public static function assistantChannelsDir(): string
     {
-        return self::assistantDir() . DIRECTORY_SEPARATOR . 'prompts';
+        return self::assistantDir() . DIRECTORY_SEPARATOR . 'channels';
     }
 
-    public static function assistantCopyDir(): string
+    /** Textos UX transversales (no de un canal concreto). */
+    public static function assistantUiTextDir(): string
     {
-        return self::assistantDir() . DIRECTORY_SEPARATOR . 'copy';
+        return self::assistantDir() . DIRECTORY_SEPARATOR . 'ui-text';
+    }
+
+    /** Espejo de Platform/Assistant/Chat/Preprocess/ */
+    public static function assistantPreprocessDir(): string
+    {
+        return self::assistantDir() . DIRECTORY_SEPARATOR . 'preprocess';
     }
 
     public static function assistantRoutingDir(): string
     {
         return self::assistantDir() . DIRECTORY_SEPARATOR . 'routing';
+    }
+
+    public static function assistantChannelDir(string $channelName): string
+    {
+        $name = trim($channelName);
+        if ($name === '') {
+            return self::assistantChannelsDir();
+        }
+
+        return self::assistantChannelsDir() . DIRECTORY_SEPARATOR . $name;
+    }
+
+    public static function assistantChannelPromptFile(string $channelName): string
+    {
+        return self::assistantChannelDir($channelName) . DIRECTORY_SEPARATOR . 'prompt.yaml';
+    }
+
+    public static function assistantChannelUiTextFile(string $channelName): string
+    {
+        return self::assistantChannelDir($channelName) . DIRECTORY_SEPARATOR . 'ui-text.yaml';
     }
 
     public static function assistantCatalogDir(): string
@@ -114,19 +142,6 @@ final class ProductMetadataPaths
         return self::assistantSchemasDir() . DIRECTORY_SEPARATOR . $name;
     }
 
-    public static function assistantPromptFile(string $basename): string
-    {
-        $name = trim($basename);
-        if ($name === '') {
-            return self::assistantPromptsDir();
-        }
-        if (!str_ends_with($name, '.yaml')) {
-            $name .= '.yaml';
-        }
-
-        return self::assistantPromptsDir() . DIRECTORY_SEPARATOR . $name;
-    }
-
     public static function assistantRoutingFile(string $basename): string
     {
         $name = trim($basename);
@@ -142,27 +157,27 @@ final class ProductMetadataPaths
 
     public static function guideChannelFile(): string
     {
-        return self::assistantPromptFile('guide');
+        return self::assistantChannelPromptFile('Guide');
     }
 
     public static function synthesisPromptFile(): string
     {
-        return self::assistantPromptFile('synthesis');
+        return self::assistantChannelPromptFile('Synthesis');
     }
 
     public static function plannerPromptFile(): string
     {
-        return self::assistantPromptFile('planner');
+        return self::assistantChannelPromptFile('Planner');
     }
 
     public static function preprocessPromptFile(): string
     {
-        return self::assistantPromptFile('preprocess');
+        return self::assistantPreprocessDir() . DIRECTORY_SEPARATOR . 'prompt.yaml';
     }
 
     public static function ambiguousChannelFile(): string
     {
-        return self::assistantPromptFile('ambiguous');
+        return self::assistantChannelUiTextFile('Ambiguous');
     }
 
     public static function bookingOfferFile(): string
@@ -195,9 +210,9 @@ final class ProductMetadataPaths
         return self::assistantDir() . DIRECTORY_SEPARATOR . $file;
     }
 
-    public static function assistantChannelCopyFile(): string
+    public static function assistantUiTextByClientFile(): string
     {
-        return self::assistantCopyDir() . DIRECTORY_SEPARATOR . 'channel-copy.yaml';
+        return self::assistantUiTextDir() . DIRECTORY_SEPARATOR . 'by-client.yaml';
     }
 
     public static function domainOperationPoliciesFile(): string

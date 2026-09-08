@@ -15,7 +15,7 @@ use common\components\Ai\IAManager;
 /**
  * Preprocess: etiquetado 1ª IA (v1) + compat legacy {@see user_goal}.
  *
- * Prompt: {@see prompts/preprocess.yaml}. Predicados: {@see ChatChannelPolicy}.
+ * Prompt: {@see preprocess/prompt.yaml}. Predicados: {@see ChatChannelPolicy}.
  */
 final class ChatPreprocessService
 {

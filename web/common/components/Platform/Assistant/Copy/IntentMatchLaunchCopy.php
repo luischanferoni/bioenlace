@@ -8,7 +8,7 @@ use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
 /**
  * Texto de arranque cuando PHP matchea un intent al 100% (sin 2ª IA).
  *
- * Copy genérico en channel-copy.yaml. No usa necesidad_usuario (etiqueta interna del preprocess).
+ * Texto UX genérico en ui-text/by-client.yaml. No usa necesidad_usuario (etiqueta interna del preprocess).
  */
 final class IntentMatchLaunchCopy
 {

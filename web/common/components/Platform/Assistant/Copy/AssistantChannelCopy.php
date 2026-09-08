@@ -7,7 +7,7 @@ use common\components\Platform\Core\Product\ClientContextMetadata;
 use yii\web\Request;
 
 /**
- * Textos UX del asistente por perfil de cliente ({@see channel-copy.yaml}).
+ * Textos UX del asistente por perfil de cliente ({@see ui-text/by-client.yaml}).
  * Los motores piden una clave; no enumeran canales ni redactan por intent.
  */
 final class AssistantChannelCopy
@@ -80,7 +80,7 @@ final class AssistantChannelCopy
         }
 
         $data = AssistantMetadataLoader::load(
-            \common\components\Platform\Core\Product\ProductMetadataPaths::assistantChannelCopyFile()
+            \common\components\Platform\Core\Product\ProductMetadataPaths::assistantUiTextByClientFile()
         );
         self::$config = [
             'messages' => is_array($data['messages'] ?? null) ? $data['messages'] : [],

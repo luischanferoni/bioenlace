@@ -1,6 +1,6 @@
-# Tipo: copy
-# Propósito: textos UX del asistente por canal/perfil de cliente.
-# Consumidor: AssistantChannelCopy / ProductMetadataPaths::assistantChannelCopyFile()
+# Tipo: ui-text
+# Propósito: textos UX del asistente por perfil de cliente (transversal a canales).
+# Consumidor: AssistantChannelCopy / ProductMetadataPaths::assistantUiTextByClientFile()
 # No poner aquí: predicados de canal (ChatChannelPolicy) ni intent_id en motores.
 #
 # profile_id = clave de sección en client-context.yaml que matchea X-App-Client

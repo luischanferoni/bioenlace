@@ -7,7 +7,7 @@ Orquestación del chat: preprocess → router → canales.
 1. **Preprocess** (`ChatPreprocessService`): `user_goal`, `normalized_text`, `context_areas`, extracciones.
 2. **Router** (`ChatRouter`): despacha por `user_goal`.
 3. **Hilos** (`AssistantThreadStateService`): `thread_tag` desde `assistant/routing/thread-state.yaml`.
-4. **Canal** (`user_goal` preprocess): `guide`, `operational`, `ambiguous`, `in_flow_question`. Predicados de dominio: `ChatChannelPolicy`. Prompts: `assistant/prompts/`. Booking CTA: `assistant/routing/booking-offer.yaml`.
+4. **Canal** (`user_goal` preprocess): `guide`, `operational`, `ambiguous`, `in_flow_question`. Predicados de dominio: `ChatChannelPolicy`. Prompts/texto UX por canal: `assistant/channels/{Name}/`. Booking CTA: `assistant/routing/booking-offer.yaml`.
 
 ## Canales
 

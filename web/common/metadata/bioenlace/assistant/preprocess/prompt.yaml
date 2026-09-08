@@ -1,5 +1,8 @@
-# Preprocess IA v1: etiquetado + routing_hint + historial reciente.
-# Contrato: assistant/schemas/first-ia-v1.yaml — {@see ChatPreprocessService}
+# Tipo: prompt
+# Propósito: preprocess IA v1 (etiquetado + routing_hint + historial reciente).
+# Consumidor: ChatPreprocessService / ProductMetadataPaths::preprocessPromptFile()
+# Espejo PHP: Platform/Assistant/Chat/Preprocess/
+# Contrato: assistant/schemas/first-ia-v1.yaml
 version: 6
 
 stable_prompt: |

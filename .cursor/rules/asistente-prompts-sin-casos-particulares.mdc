@@ -1,6 +1,6 @@
 ---
 description: Prompts del asistente — reglas transversales, sin casos ni claves internas
-globs: web/common/metadata/bioenlace/assistant/prompts/**,web/docs/**/asistente*.md
+globs: web/common/metadata/bioenlace/assistant/channels/**/prompt.yaml,web/common/metadata/bioenlace/assistant/preprocess/prompt.yaml,web/docs/**/asistente*.md
 alwaysApply: false
 ---
 
@@ -42,7 +42,7 @@ Si falta un dato concreto → **loader** (campo `null` o ausente en el volcado),
 - Si faltan datos, orientá con prudencia sin explicar por qué falta info a nivel técnico.
 ```
 
-## Checklist al tocar `assistant/prompts/` o loaders HIS
+## Checklist al tocar `assistant/channels/**/prompt.yaml`, `assistant/preprocess/prompt.yaml` o loaders HIS
 
 1. ¿La regla aplica a **más de un escenario**? Si no, no va en el prompt.
 2. ¿Menciona una clave técnica o un hueco puntual? Expresarlo en el **loader** (dato/null), no en lista global.

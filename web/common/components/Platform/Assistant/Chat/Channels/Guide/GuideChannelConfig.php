@@ -6,7 +6,7 @@ use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
 use common\components\Platform\Core\Product\ProductMetadataPaths;
 
 /**
- * Metadata del canal guide ({@see prompts/guide.yaml}).
+ * Metadata del canal guide ({@see channels/Guide/prompt.yaml}).
  */
 final class GuideChannelConfig
 {

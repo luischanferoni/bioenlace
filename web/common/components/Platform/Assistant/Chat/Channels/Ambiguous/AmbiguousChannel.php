@@ -23,6 +23,6 @@ final class AmbiguousChannel
             ];
         }
 
-        return AssistantEnvelope::interactive(AmbiguousChannelConfig::promptText(), $buttons);
+        return AssistantEnvelope::interactive(AmbiguousChannelConfig::message(), $buttons);
     }
 }

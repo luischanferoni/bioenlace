@@ -6,7 +6,7 @@ use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
 use common\components\Platform\Core\Product\ProductMetadataPaths;
 
 /**
- * Metadata del canal síntesis ({@see prompts/synthesis.yaml}).
+ * Metadata del canal síntesis ({@see channels/Synthesis/prompt.yaml}).
  */
 final class SynthesisChannelConfig
 {

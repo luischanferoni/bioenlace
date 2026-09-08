@@ -1,7 +1,8 @@
-# Canal guide: 2ª IA unificada (paciente, staff, web, WhatsApp — mismo preprocess → assembler).
+# Tipo: prompt
+# Propósito: stable_prompt 2ª IA del canal guide.
+# Consumidor: GuideChannelConfig / GuidePromptAssembler / ProductMetadataPaths::guideChannelFile()
+# Espejo PHP: Platform/Assistant/Chat/Channels/Guide/
 # CTA en respuesta API (ChatChannelPolicy + finalizeResponse), no en el prompt.
-# Ensamblado: {@see GuidePromptAssembler} → {@see GuideChannelConfig::assemblePrompt}.
-#
 # Placeholders: {@see GuidePromptAssembler}. Áreas HIS = solo descripción humana (sin clave técnica).
 version: 1
 

@@ -6,7 +6,7 @@ use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
 use common\components\Platform\Core\Product\ProductMetadataPaths;
 
 /**
- * Metadata de encauzamiento ambiguous ({@see prompts/ambiguous.yaml}).
+ * Metadata de encauzamiento ambiguous ({@see channels/Ambiguous/ui-text.yaml}).
  */
 final class AmbiguousChannelConfig
 {
@@ -21,9 +21,9 @@ final class AmbiguousChannelConfig
         AssistantMetadataLoader::resetCacheForTests();
     }
 
-    public static function promptText(): string
+    public static function message(): string
     {
-        $text = AssistantMetadataLoader::dotString(self::load(), 'prompt_text');
+        $text = AssistantMetadataLoader::dotString(self::load(), 'message');
 
         return $text !== ''
             ? $text

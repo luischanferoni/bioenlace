@@ -6,7 +6,7 @@ namespace common\components\Platform\Assistant\Chat\Preprocess;
  * Predicados de dominio del asistente (síntoma, menú, staff data-access, oferta de botón).
  *
  * No clasifica `user_goal`: eso lo decide el preprocess IA.
- * Copy guide: {@see GuideChannelConfig}.
+ * Prompt guide: {@see GuideChannelConfig}.
  *
  * Predicados nombrados (p. ej. `own_agenda_config_edit`) solo para cablear metadata
  * de superficies DataAccess que ya referencian un id estable.

@@ -45,7 +45,7 @@ fields:
     optional: true
     notes: >
       Copy UX opcional para match 100% (artículo/dato fijo). El intent usa
-      channel-copy.yaml (full_match_intent*). No hay un camino de routing aparte.
+      ui-text/by-client.yaml (full_match_intent*). No hay un camino de routing aparte.
   cta_intent_id:
     type: string
     optional: true

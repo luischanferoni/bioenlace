@@ -6,7 +6,7 @@ use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
 use common\components\Platform\Core\Product\ProductMetadataPaths;
 
 /**
- * Metadata del canal planificador ({@see prompts/planner.yaml}).
+ * Metadata del canal planificador ({@see channels/Planner/prompt.yaml}).
  */
 final class PlannerChannelConfig
 {

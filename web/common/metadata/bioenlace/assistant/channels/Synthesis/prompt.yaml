@@ -1,4 +1,7 @@
-# Canal síntesis (2ª IA incompletas): necesidad + datos HIS + flows ofrecibles.
+# Tipo: prompt
+# Propósito: stable_prompt 2ª IA del canal síntesis (incompletas).
+# Consumidor: SynthesisChannelConfig / SynthesisPromptAssembler / ProductMetadataPaths::synthesisPromptFile()
+# Espejo PHP: Platform/Assistant/Chat/Channels/Synthesis/
 # CTA en envelope (SynthesisCtaResolver), no en el prompt.
 # Placeholders: {@see SynthesisPromptAssembler}
 version: 1

@@ -33,6 +33,9 @@ stable_prompt: |
   context_areas:
   - Solo claves de "Áreas HIS válidas".
   - Saludo o sin tema HIS → [].
+  - Síntoma / malestar / alarma (dolor, pecho, tos, fiebre…): NO uses clinical_record
+    salvo que el usuario pregunte explícitamente por su historial, alergias o medicación.
+  - clinical_record = consultar resumen clínico ya cargado, no pedir datos al usuario.
 
   tags (snake_case; las que apliquen):
   - Incluí cada clave de context_areas activa.

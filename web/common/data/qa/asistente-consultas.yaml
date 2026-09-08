@@ -75,8 +75,17 @@ cases:
       - Tengo un pinchazo en el pecho cuando respiro
     expect:
       user_goal: guide
+      offer_intent: atencion.necesito-atencion
       must_not_intent:
         - turnos.crear-como-paciente
+      reply_must_not_contain:
+        - alergias
+        - medicación actual
+        - medicacion actual
+        - condiciones médicas
+        - condiciones medicas
+        - resumen clínico
+        - resumen clinico
 
   - id: guide-urgencia-declarada
     seccion: orientacion

@@ -34,6 +34,7 @@ class SynthesisPromptAssemblerTest extends Unit
         $this->assertStringContainsString('Citas y turnos', $prompt);
         $this->assertStringNotContainsString('appointments —', $prompt);
         $this->assertStringNotContainsString('Ámbito de la consulta', $prompt);
+        $this->assertStringContainsString('NO pidas al usuario alergias', $prompt);
         $this->assertStringContainsString('no inventes políticas ni números', $prompt);
     }
 }

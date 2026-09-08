@@ -52,7 +52,7 @@ final class SynthesisChannelConfig
     private static function stripOrphanInlineHeaders(string $text, array $vars): string
     {
         $stripWhenEmpty = [
-            'context_his_areas_lines' => ['Tema de la consulta:'],
+            'context_his_areas_lines' => ['Tema de la consulta (ámbito; NO es un formulario a completar):'],
             'scoped_system_records' => [
                 'Datos del sistema (usá solo lo que esté presente; si falta un dato, no lo inventes):',
             ],

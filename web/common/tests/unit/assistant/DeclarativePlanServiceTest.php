@@ -119,6 +119,34 @@ class DeclarativePlanServiceTest extends Unit
         $this->assertContains('necesito_atencion', $first['tags']);
     }
 
+    public function testSymptomDropsClinicalRecordAreaUnlessAsked(): void
+    {
+        $first = AssistantFirstIaAdapter::fromPreprocess([
+            'normalized_text' => 'Tengo un pinchazo en el pecho cuando respiro',
+            'user_goal' => 'guide',
+            'tags' => ['sintoma', 'clinical_record'],
+            'context_areas' => ['clinical_record'],
+            'extractions' => [],
+        ]);
+
+        $this->assertNotContains('clinical_record', $first['context_areas']);
+        $this->assertNotContains('clinical_record', $first['tags']);
+        $this->assertContains('sintoma', $first['tags']);
+    }
+
+    public function testAsksAboutAllergiesKeepsClinicalRecordArea(): void
+    {
+        $first = AssistantFirstIaAdapter::fromPreprocess([
+            'normalized_text' => '¿Cuáles son mis alergias?',
+            'user_goal' => 'guide',
+            'tags' => ['clinical_record'],
+            'context_areas' => ['clinical_record'],
+            'extractions' => [],
+        ]);
+
+        $this->assertContains('clinical_record', $first['context_areas']);
+    }
+
     public function testFirstIaAdapterInfersMisAnalisis(): void
     {
         $first = AssistantFirstIaAdapter::fromPreprocess([

@@ -23,7 +23,12 @@ entries:
         - me cayó mal
         - reaccion al medicamento
         - reacción al medicamento
-      keywords: [panza, cabeza, fiebre, vomito, vómito]
+        - pinchazo en el pecho
+        - pinchazo en pecho
+        - dolor en el pecho
+        - me duele el pecho
+        - falta de aire
+      keywords: [panza, cabeza, fiebre, vomito, vómito, pecho, pinchazo, torax, tórax]
     cta_intent_ids:
       - atencion.necesito-atencion
 

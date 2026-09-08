@@ -7,6 +7,7 @@ use common\components\Platform\Assistant\Chat\ChatPreprocessContext;
 use common\components\Platform\Assistant\Chat\Thread\AssistantThreadContext;
 use common\components\Platform\Assistant\Chat\Thread\AssistantThreadStateService;
 use common\components\Platform\Assistant\Planning\AssistantPlanningLogService;
+use common\components\Platform\Assistant\Preprocess\PreprocessRoutingHintCatalog;
 use common\components\Platform\Assistant\Service\AssistantDraftNormalizer;
 use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio;
@@ -267,11 +268,20 @@ final class AsistenteConsultasQaService
         $intentRefs = self::collectIntentRefs($envelope);
         $text = ChatOrchestrator::botReplyTextForPersistence($envelope);
         $planning = AssistantPlanningLogService::snapshot();
+        $preprocessGoal = ChatPreprocessContext::userGoal();
+        $routing = is_string($planning['routing_result'] ?? null)
+            ? trim((string) $planning['routing_result'])
+            : '';
+        // Canal efectivo = decisión de routing (incompletas→guide), no el user_goal crudo del preprocess.
+        $effectiveGoal = $routing !== ''
+            ? PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint($routing)
+            : $preprocessGoal;
 
         return [
             'success' => (bool) ($envelope['success'] ?? ($envelope['kind'] ?? '') !== ''),
             'kind' => AssistantDraftNormalizer::scalarString($envelope['kind'] ?? ''),
-            'user_goal' => ChatPreprocessContext::userGoal(),
+            'user_goal' => $effectiveGoal,
+            'preprocess_user_goal' => $preprocessGoal,
             'routing_hint' => ChatPreprocessContext::routingHint(),
             'normalized_text' => ChatPreprocessContext::normalizedText(),
             'tags' => ChatPreprocessContext::tags(),
@@ -758,6 +768,10 @@ final class AsistenteConsultasQaService
             if ($userGoal !== '') {
                 $lines[] = '  canal: ' . $userGoal;
             }
+            $preprocessGoal = trim((string) ($observation['preprocess_user_goal'] ?? ''));
+            if ($preprocessGoal !== '' && $preprocessGoal !== $userGoal) {
+                $lines[] = '  preprocess_user_goal: ' . $preprocessGoal;
+            }
             if ($flowIntent !== '') {
                 $lines[] = '  intent: ' . $flowIntent;
             }
@@ -773,6 +787,10 @@ final class AsistenteConsultasQaService
             }
             if ($userGoal !== '') {
                 $lines[] = '  canal: ' . $userGoal;
+            }
+            $preprocessGoal = trim((string) ($observation['preprocess_user_goal'] ?? ''));
+            if ($preprocessGoal !== '' && $preprocessGoal !== $userGoal) {
+                $lines[] = '  preprocess_user_goal: ' . $preprocessGoal;
             }
             $tools = self::attachedContextToolIds($planning);
             $lines[] = '  Contextos adjuntos:';
@@ -809,6 +827,10 @@ final class AsistenteConsultasQaService
         }
         if ($userGoal !== '') {
             $lines[] = '  canal: ' . $userGoal;
+        }
+        $preprocessGoal = trim((string) ($observation['preprocess_user_goal'] ?? ''));
+        if ($preprocessGoal !== '' && $preprocessGoal !== $userGoal) {
+            $lines[] = '  preprocess_user_goal: ' . $preprocessGoal;
         }
         if ($flowIntent !== '') {
             $lines[] = '  intent: ' . $flowIntent;

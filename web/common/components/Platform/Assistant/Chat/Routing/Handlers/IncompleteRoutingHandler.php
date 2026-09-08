@@ -2,17 +2,17 @@
 
 namespace common\components\Platform\Assistant\Chat\Routing\Handlers;
 
-use common\components\Platform\Assistant\Chat\Channels\Synthesis\SynthesisChannel;
+use common\components\Platform\Assistant\Chat\Channels\Guide\GuideChannel;
 use common\components\Platform\Assistant\Planning\AssistantPlanningLogService;
+use common\components\Platform\Assistant\Planning\CatalogCtaResolver;
 use common\components\Platform\Assistant\Planning\DeclarativePlanExecutionResult;
 use common\components\Platform\Assistant\Planning\DeclarativePlanExecutor;
 use common\components\Platform\Assistant\Planning\PlannerRoutingStep;
 use common\components\Platform\Assistant\Planning\SmartCatalogRoutingEvaluation;
-use common\components\Platform\Assistant\Planning\SynthesisCtaResolver;
 use Yii;
 
 /**
- * Routing incompletas: plan declarativo ± planificadora + 2ª IA síntesis.
+ * Routing incompletas: plan declarativo ± planificadora + 2ª IA guide.
  */
 final class IncompleteRoutingHandler
 {
@@ -37,12 +37,12 @@ final class IncompleteRoutingHandler
             );
         }
 
-        return self::finalizeSynthesis(
+        return self::finalizeGuide(
             $evaluation,
             $content,
             $userId,
             $declarativeExecution,
-            '2ia_synthesis'
+            '2ia_guide'
         );
     }
 
@@ -69,12 +69,12 @@ final class IncompleteRoutingHandler
 
         $execution = DeclarativePlanExecutionResult::merge($declarativeExecution, $plannerExecution);
 
-        return self::finalizeSynthesis(
+        return self::finalizeGuide(
             $evaluation,
             $content,
             $userId,
             $execution,
-            '3ia_planner_synthesis'
+            '3ia_planner_guide'
         );
     }
 
@@ -87,36 +87,36 @@ final class IncompleteRoutingHandler
         int $userId,
         DeclarativePlanExecutionResult $declarativeExecution
     ): ?array {
-        if (!self::canSynthesize($evaluation, $declarativeExecution)) {
+        if (!self::canGuide($evaluation, $declarativeExecution)) {
             return null;
         }
 
-        return self::finalizeSynthesis(
+        return self::finalizeGuide(
             $evaluation,
             $content,
             $userId,
             $declarativeExecution,
-            '2ia_synthesis'
+            '2ia_guide'
         );
     }
 
     /**
      * @return array<string, mixed>|null
      */
-    private static function finalizeSynthesis(
+    private static function finalizeGuide(
         SmartCatalogRoutingEvaluation $evaluation,
         string $content,
         int $userId,
         DeclarativePlanExecutionResult $execution,
         string $finalPath
     ): ?array {
-        if (!self::canSynthesize($evaluation, $execution)) {
+        if (!self::canGuide($evaluation, $execution)) {
             Yii::info(['incomplete_no_useful_data' => true], 'asistente-planning');
 
             return null;
         }
 
-        $envelope = SynthesisChannel::handle(
+        $envelope = GuideChannel::handleIncomplete(
             $evaluation->firstIa,
             $execution,
             $evaluation,
@@ -133,9 +133,9 @@ final class IncompleteRoutingHandler
     }
 
     /**
-     * Síntesis con datos HIS, o solo con puertas CTA (zona C / orientación).
+     * Guide incompletas con datos HIS, o solo con puertas CTA (zona C / orientación).
      */
-    private static function canSynthesize(
+    private static function canGuide(
         SmartCatalogRoutingEvaluation $evaluation,
         DeclarativePlanExecutionResult $execution
     ): bool {
@@ -147,7 +147,6 @@ final class IncompleteRoutingHandler
             return true;
         }
 
-        return SynthesisCtaResolver::declaredIntentIds($evaluation) !== [];
+        return CatalogCtaResolver::declaredIntentIds($evaluation) !== [];
     }
 }
-

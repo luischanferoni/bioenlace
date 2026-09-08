@@ -113,6 +113,6 @@ class IncompleteRoutingHandlerTest extends Unit
 
         $this->assertContains($envelope['kind'] ?? null, ['message', 'interactive']);
         $snap = AssistantPlanningLogService::snapshot();
-        $this->assertSame('2ia_synthesis', $snap['final_path'] ?? null);
+        $this->assertSame('2ia_guide', $snap['final_path'] ?? null);
     }
 }

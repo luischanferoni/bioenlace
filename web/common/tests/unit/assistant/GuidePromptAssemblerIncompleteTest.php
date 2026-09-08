@@ -3,38 +3,36 @@
 namespace common\tests\unit\assistant;
 
 use Codeception\Test\Unit;
-use common\components\Platform\Assistant\Chat\Channels\Synthesis\SynthesisChannelConfig;
-use common\components\Platform\Assistant\Chat\Channels\Synthesis\SynthesisPromptAssembler;
+use common\components\Platform\Assistant\Chat\Channels\Guide\GuideChannelConfig;
+use common\components\Platform\Assistant\Chat\Channels\Guide\GuidePromptAssembler;
 use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
 
-class SynthesisPromptAssemblerTest extends Unit
+class GuidePromptAssemblerIncompleteTest extends Unit
 {
     protected function _after(): void
     {
-        SynthesisChannelConfig::resetCacheForTests();
+        GuideChannelConfig::resetCacheForTests();
         AssistantMetadataLoader::resetCacheForTests();
     }
 
-    public function testPromptIncludesNecesidadAndScopedRecords(): void
+    public function testIncompletePromptIncludesScopedRecordsAndAreas(): void
     {
-        $prompt = SynthesisPromptAssembler::build(
+        $prompt = GuidePromptAssembler::buildForIncomplete(
             [
                 'necesidad_usuario' => 'Saber si hay problema por llegar 10 minutos tarde.',
                 'normalized_text' => '¿Voy a tener problemas si llego 10 minutos tarde?',
                 'context_areas' => ['appointments'],
             ],
+            '¿Voy a tener problemas si llego 10 minutos tarde?',
+            0,
             "--- context:his ---\n{\"site.appointment.policies\":{\"late_arrival_tolerance_minutes\":null}}\n--- end context:his ---",
-            '',
-            '¿Voy a tener problemas si llego 10 minutos tarde?'
+            ''
         );
 
-        $this->assertStringContainsString('Saber si hay problema por llegar 10 minutos tarde.', $prompt);
         $this->assertStringContainsString('site.appointment.policies', $prompt);
         $this->assertStringContainsString('Tema de la consulta', $prompt);
         $this->assertStringContainsString('Citas y turnos', $prompt);
         $this->assertStringNotContainsString('appointments —', $prompt);
-        $this->assertStringNotContainsString('Ámbito de la consulta', $prompt);
-        $this->assertStringContainsString('NO pidas al usuario alergias', $prompt);
-        $this->assertStringContainsString('no inventes políticas ni números', $prompt);
+        $this->assertStringContainsString('NO pidas alergias', $prompt);
     }
 }

@@ -10,7 +10,7 @@ Post-preprocess unificado (`ChatRouter`):
 | `fuera_de_his` | `FueraDeHisHandler` |
 | `incompletas` | `IncompleteRoutingHandler` (+ opcional `PlannerRoutingStep`) |
 
-Fallback sin match handler: `LegacyRoutingFallback` (operational / dudosa / mensaje síntesis).
+Fallback sin match handler: `LegacyRoutingFallback` (operational / dudosa / mensaje guide).
 
 El alias `user_goal: guide` en hilo equivale a routing **incompletas**; no hay `GuideChannel` en raíz. `directo` es alias de preprocess hacia `clara`.
 

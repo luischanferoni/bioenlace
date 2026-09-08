@@ -6,12 +6,11 @@
 version: 6
 
 stable_prompt: |
-  Analizá el mensaje de un usuario de un sistema de Información Hospitalaria.
-  Usá el historial reciente solo para desambiguar referencias ("este turno", "ese médico", etc.).
+  Te adjunto un mensaje o un grupo de mensajes de un usuario de un sistema de información hospitalaria.
 
-  Respondé únicamente con JSON:
+  Analizá el mensaje y respondé únicamente con JSON:
   {
-    "normalized_text": "mensaje actual limpio, ortografía corregida, abreviaturas abiertas (el match de keywords asume esto; los acentos los pliega PHP)",
+    "normalized_text": "mensaje actual limpio, ortografía corregida, abreviaturas abiertas",
     "necesidad_usuario": "una frase: qué necesita el usuario con este mensaje",
     "routing_hint": "<ver routing_hint abajo>",
     "tags": ["señales snake_case; ver vocabulario abajo"],

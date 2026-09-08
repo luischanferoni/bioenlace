@@ -19,7 +19,7 @@ use common\components\Platform\Ai\Cost\AICostTracker;
 use Yii;
 
 /**
- * Verifica planning_applied en caminos 1ia_direct, 2ia_synthesis y 3ia_planner_synthesis.
+ * Verifica planning_applied en caminos 1ia_direct, 2ia_guide y 3ia_planner_guide.
  */
 class SmartCatalogPlanningLogPathsTest extends Unit
 {
@@ -50,7 +50,7 @@ class SmartCatalogPlanningLogPathsTest extends Unit
         $this->assertSame('clara', $evaluation->decision->routingResult);
     }
 
-    public function testTwoIaSynthesisFinalPathWithSimulatedIa(): void
+    public function testTwoIaGuideFinalPathWithSimulatedIa(): void
     {
         if (!class_exists(AICostTracker::class)) {
             $this->markTestSkipped('AICostTracker no disponible.');
@@ -90,11 +90,11 @@ class SmartCatalogPlanningLogPathsTest extends Unit
         }
 
         $snap = AssistantPlanningLogService::snapshot();
-        $this->assertSame('2ia_synthesis', $snap['final_path'] ?? null);
+        $this->assertSame('2ia_guide', $snap['final_path'] ?? null);
         $this->assertNotEmpty($snap['executed_tools'] ?? []);
     }
 
-    public function testThreeIaPlannerSynthesisFinalPath(): void
+    public function testThreeIaPlannerGuideFinalPath(): void
     {
         ChatPreprocessContext::set([
             'ok' => true,
@@ -140,11 +140,11 @@ class SmartCatalogPlanningLogPathsTest extends Unit
         AICostTracker::finalizarEjecucionPrueba();
 
         if ($envelope === null) {
-            $this->markTestSkipped('Planner+síntesis no disponible en este entorno.');
+            $this->markTestSkipped('Planner+guide no disponible en este entorno.');
         }
 
         $snap = AssistantPlanningLogService::snapshot();
         $this->assertTrue($snap['planner_invoked'] ?? false);
-        $this->assertSame('3ia_planner_synthesis', $snap['final_path'] ?? null);
+        $this->assertSame('3ia_planner_guide', $snap['final_path'] ?? null);
     }
 }

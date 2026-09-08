@@ -160,11 +160,6 @@ final class ProductMetadataPaths
         return self::assistantChannelPromptFile('Guide');
     }
 
-    public static function synthesisPromptFile(): string
-    {
-        return self::assistantChannelPromptFile('Synthesis');
-    }
-
     public static function plannerPromptFile(): string
     {
         return self::assistantChannelPromptFile('Planner');

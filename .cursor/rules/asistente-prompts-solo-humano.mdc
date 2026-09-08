@@ -1,0 +1,31 @@
+---
+description: No modificar prompts YAML del asistente/IA — solo sugerir en chat
+globs: web/common/metadata/bioenlace/assistant/**/prompt.yaml,web/common/metadata/bioenlace/assistant/preprocess/prompt.yaml,web/common/metadata/bioenlace/ai/**/*.yaml
+alwaysApply: true
+---
+
+# Prompts: solo el humano los edita
+
+Los archivos de **prompt** (instrucciones a la IA) los modifica **únicamente el usuario**, a mano.
+
+## Qué cuenta como prompt
+
+- `assistant/channels/*/prompt.yaml`
+- `assistant/preprocess/prompt.yaml`
+- `ai/**/*.yaml` con `stable_prompt` / `prompt_template` (p. ej. `clinical-text-ia.yaml`)
+
+**No** aplica a texto UX (`ui-text.yaml`, `assistant/ui-text/*`): ahí sí se puede editar código/metadata de mensajes y rótulos si la tarea lo pide.
+
+## Qué debe hacer el agente
+
+- **Prohibido** crear, editar, mover o borrar esos YAML de prompt (incluido “fusionar” guide+synthesis en el YAML).
+- Si hace falta un cambio de prompt: **mostrar la sugerencia en el chat** (diff o texto propuesto) y **parar**; el usuario lo aplica a mano.
+- Sí puede cambiar PHP/tests/docs/paths que *consumen* prompts, sin reescribir el cuerpo del `stable_prompt`.
+
+## Ejemplo
+
+```text
+❌ Editar channels/Guide/prompt.yaml para agregar una regla de alarma
+✅ En el chat: “Sugerencia para Guide/prompt.yaml: agregar después de la línea X: …”
+✅ Cambiar IncompleteRoutingHandler para llamar GuideChannel en vez de SynthesisChannel
+```

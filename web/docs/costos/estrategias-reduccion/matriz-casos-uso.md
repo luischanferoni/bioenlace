@@ -31,12 +31,12 @@ flowchart TB
   H{routing_result}
   D[1 IA clara / dudosa / fuera]
   INC[incompletas]
-  SYN[IA: asistente-synthesis]
+  G[IA: asistente-guide]
   PLN[IA: asistente-planner opcional]
   M --> P --> MCH --> H
   H -->|clara dudosa fuera| D
-  H -->|incompletas| INC --> SYN
-  INC -->|needs_planner| PLN --> SYN
+  H -->|incompletas| INC --> G
+  INC -->|needs_planner| PLN --> G
 ```
 
 Código: [`ChatRouter.php`](../../common/components/Platform/Assistant/Chat/Routing/ChatRouter.php).
@@ -45,10 +45,10 @@ Código: [`ChatRouter.php`](../../common/components/Platform/Assistant/Chat/Rout
 |------------------|-------------------------|----------------------|----------|
 | *(siempre)* | **1ª** preprocess | `asistente-preprocess` | tags, context_areas, necesidad_usuario |
 | `clara` / `dudosa` / `fuera_de_his` | **0** | — | flow, artículo, template, interactive o mensaje límite |
-| `incompletas` | **+1** síntesis | `asistente-synthesis` | plan declarativo + loaders + redacción |
-| `incompletas` + `needs_planner` | **+2** (planner + síntesis) | `asistente-planner`, `asistente-synthesis` | shortlist RBAC; `final_path: 3ia_planner_synthesis` |
+| `incompletas` | **+1** guide | `asistente-guide` | plan declarativo + loaders + redacción |
+| `incompletas` + `needs_planner` | **+2** (planner + guide) | `asistente-planner`, `asistente-guide` | shortlist RBAC; `final_path: 3ia_planner_guide` |
 
-**Nota:** el canal legacy `GuideChannel` / `asistente-guide` **no** se usa en el router raíz; queda para `InfoContentAssistantService` (artículos con IA) hasta deprecación total.
+**Nota:** incompletas y charla usan el mismo contexto `asistente-guide` (`GuideChannel` / `GuidePromptAssembler`).
 
 ### Flujo anterior (referencia histórica — user_goal)
 

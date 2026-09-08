@@ -21,7 +21,7 @@ Fuente de verdad para las claves que **`SubIntentEngine`** lee y combina con el 
 
 ### `intent_semantics` (raíz del intent)
 
-**Función:** adjuntar contexto al prompt de la **2ª IA** (síntesis / guide) para que entienda el flow: objetivo, que es multi-paso, y qué hace cada paso.  
+**Función:** adjuntar contexto al prompt de la **2ª IA** (guide) para que entienda el flow: objetivo, que es multi-paso, y qué hace cada paso.  
 **No** es texto UX al paciente (`action_name`, `ui-text/by-client`, `capability_labels`).
 
 | Clave | Uso |
@@ -36,11 +36,11 @@ El formatter (`IntentSemanticsPromptFormatter`) arma texto para la 2ª IA: **nom
 | Campo raíz | Audiencia |
 |------------|-----------|
 | `action_name` | Usuario (atajo, botón, label). |
-| `intent_semantics` | 2ª IA (síntesis/guide). |
+| `intent_semantics` | 2ª IA (guide). |
 
 No campo `description` en intents.
 
-Omitir `intent_semantics` en intents staff/ocultos que no entran a síntesis/guide (p. ej. `data-access.*` genéricos). Descubrimiento NL = `keywords` / smart-catalog.
+Omitir `intent_semantics` en intents staff/ocultos que no entran a guide (p. ej. `data-access.*` genéricos). Descubrimiento NL = `keywords` / smart-catalog.
 
 Vocabulario inicial de `capabilities` (ampliar solo documentando acá):
 

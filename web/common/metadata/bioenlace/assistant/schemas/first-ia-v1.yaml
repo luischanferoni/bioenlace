@@ -20,7 +20,7 @@ fields:
     notes: Ortografía corregida; sentido conservado.
   necesidad_usuario:
     type: string
-    notes: Una frase operativa; obligatoria siempre; input principal de síntesis.
+    notes: Una frase operativa; obligatoria siempre; input útil para guide / planning.
   routing_hint:
     type: enum
     values: catalog/preprocess-routing-hints.yaml

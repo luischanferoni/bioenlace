@@ -124,7 +124,7 @@ class PlannerRoutingStepTest extends Unit
         $snap = AssistantPlanningLogService::snapshot();
         $this->assertTrue($snap['planner_invoked'] ?? false);
         $this->assertContains('aspect:appointment.current', $snap['gaps'] ?? []);
-        $this->assertSame('3ia_planner_synthesis', $snap['final_path'] ?? null);
+        $this->assertSame('3ia_planner_guide', $snap['final_path'] ?? null);
     }
 
     public function testGapsComputedAgainstDeclarativePlan(): void

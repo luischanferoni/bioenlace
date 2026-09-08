@@ -44,15 +44,15 @@ Clasificación de acción: catálogo inteligente (triggers en metadata). Empate 
 | **clara** | Match 100%: flow, artículo o template | 1 |
 | **dudosa** | Saludo o dominio poco claro → preguntas fijas | 1 |
 | **fuera_de_his** | Tema ajeno al HIS → mensaje límite | 1 |
-| **incompletas** | Pregunta HIS con loaders, o sin ganador claro → síntesis | 2 (± planificadora = 3) |
+| **incompletas** | Pregunta HIS con loaders, o sin ganador claro → 2ª IA guide | 2 (± planificadora = 3) |
 
-El alias legacy `user_goal: guide` en hilo equivale a **incompletas**; el router raíz ya no usa el canal `GuideChannel`. Hilos: foco persistido (`guide_focus`, `thread_tag`); desvío fuerte → **dudosa**. Metadata: `assistant/catalog/smart-catalog.yaml`, prompts `preprocess`, `synthesis`, `planner`. ADR: [decisions/asistente-catalogo-inteligente.md](../decisions/asistente-catalogo-inteligente.md).
+El alias legacy `user_goal: guide` en hilo equivale a **incompletas** o canal guide según el camino. Hilos: foco persistido (`guide_focus`, `thread_tag`); desvío fuerte → **dudosa**. Metadata: `assistant/catalog/smart-catalog.yaml`, prompts `preprocess`, `channels/Guide`, `planner`. ADR: [decisions/asistente-catalogo-inteligente.md](../decisions/asistente-catalogo-inteligente.md).
 
 Contenido editorial: [contenido-informativo.md](./contenido-informativo.md).
 
 ## Contexto HIS en la 2ª IA (incompletas)
 
-Cuando el paciente pregunta algo que **necesita datos del sistema** (próximo turno, reglas del centro, llegar tarde) pero no hay match al 100 %, Bioenlace entra en **incompletas**: plan declarativo (áreas → aspect loaders), opcionalmente planificadora, y **síntesis** (`asistente-synthesis`) con volcado acotado del HIS.
+Cuando el paciente pregunta algo que **necesita datos del sistema** (próximo turno, reglas del centro, llegar tarde) pero no hay match al 100 %, Bioenlace entra en **incompletas**: plan declarativo (áreas → aspect loaders), opcionalmente planificadora, y **guide** (`asistente-guide`) con volcado acotado del HIS.
 
 ```mermaid
 flowchart LR
@@ -60,21 +60,21 @@ flowchart LR
   M[Match catálogo PHP]
   PL[Plan declarativo]
   L[Loaders → JSON HIS]
-  S[IA síntesis]
-  P --> M --> PL --> L --> S
+  G[IA guide]
+  P --> M --> PL --> L --> G
 ```
 
 | Concepto | Quién lo ve | Qué es |
 |----------|-------------|--------|
 | **Área HIS** | Preprocess (`context_areas`) | Tema top-level: `appointments`, `representation`, … |
-| **Aspecto** | Síntesis (clave JSON en volcado) | Unidad de carga: `appointment.current`, `site.appointment.policies`, … |
+| **Aspecto** | Guide (clave JSON en volcado) | Unidad de carga: `appointment.current`, `site.appointment.policies`, … |
 | **Entidad** | Solo PHP (loaders) | Modelos de dominio — **no** aparece en prompts |
 
 Reglas de producto:
 
 - Saludo solo → routing **dudosa** → sin loaders.
 - El preprocess **no** elige aspectos; PHP resuelve anclas y aspectos tras el match.
-- Volcado `--- context:his ---` con JSON; valores `null` si el dato no existe (p. ej. tolerancia de llegada tarde no configurada) → la síntesis responde con honestidad.
+- Volcado `--- context:his ---` con JSON; valores `null` si el dato no existe (p. ej. tolerancia de llegada tarde no configurada) → guide responde con honestidad.
 - Artículo editorial con match **clara** (100 %) → body + CTA sin 2ª IA.
 
 Detalle técnico: [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md) · ADR: [decisions/asistente-catalogo-inteligente.md](../decisions/asistente-catalogo-inteligente.md).

@@ -4,7 +4,6 @@ namespace common\components\Platform\Assistant\Planning;
 
 use common\components\Domain\Content\Service\InfoContentResolverService;
 use common\components\Platform\Assistant\Chat\Channels\Guide\GuideChannelConfig;
-use common\components\Platform\Assistant\Chat\Channels\Synthesis\SynthesisChannelConfig;
 use common\components\Platform\Assistant\Context\AssistantContextAnchorResolver;
 use common\components\Platform\Assistant\Context\AssistantContextAspectLoaderRegistry;
 use common\components\Platform\Assistant\Context\AssistantContextFormatter;
@@ -21,7 +20,7 @@ final class DeclarativePlanExecutor
     /**
      * @param list<string> $toolIds
      */
-    public static function execute(array $toolIds, int $userId, string $channel = 'synthesis'): DeclarativePlanExecutionResult
+    public static function execute(array $toolIds, int $userId, string $channel = 'guide'): DeclarativePlanExecutionResult
     {
         $toolIds = array_values(array_unique(array_filter(array_map('strval', $toolIds), static fn (string $id): bool => trim($id) !== '')));
         if ($toolIds === []) {
@@ -89,7 +88,7 @@ final class DeclarativePlanExecutor
                         trim((string) $article->body)
                     );
                     if ($formatted !== '') {
-                        $articleBlock = SynthesisChannelConfig::formatOptionalAttachment('article', $formatted);
+                        $articleBlock = GuideChannelConfig::formatOptionalAttachment('article', $formatted);
                         $hasUsefulData = true;
                     }
                 }

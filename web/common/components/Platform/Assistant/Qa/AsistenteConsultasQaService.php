@@ -868,8 +868,10 @@ final class AsistenteConsultasQaService
             return $lines;
         }
 
-        if (str_starts_with($finalPath, '2ia')) {
-            $lines[] = '  preprocess + 2 IA (síntesis)';
+        if (str_starts_with($finalPath, '2ia') || str_starts_with($finalPath, '3ia')) {
+            $lines[] = str_starts_with($finalPath, '3ia')
+                ? '  preprocess + planner + 2 IA (guide)'
+                : '  preprocess + 2 IA (guide)';
             if ($routing !== '') {
                 $lines[] = '  routing: ' . $routing;
             }
@@ -900,13 +902,14 @@ final class AsistenteConsultasQaService
             return $lines;
         }
 
-        // 1ia_* y demás: preprocess + decisión PHP (sin 2ª IA de síntesis)
+        // 1ia_* y demás: preprocess + decisión PHP (sin 2ª IA guide)
         $pathLabels = [
             '1ia_clara' => 'match claro → intent directo',
             '1ia_dudosa' => 'dudosa → desambiguación',
             '1ia_direct' => 'match directo (artículo/plantilla)',
             '1ia_fuera' => 'fuera de HIS',
-            'synthesis_unavailable' => 'síntesis no disponible / fallback',
+            'guide_unavailable' => 'guide no disponible / fallback',
+            'synthesis_unavailable' => 'guide no disponible / fallback (legacy)',
         ];
         $pathLabel = $pathLabels[$finalPath] ?? $finalPath;
         $lines[] = '  preprocess + PHP solamente (' . $pathLabel . ')';

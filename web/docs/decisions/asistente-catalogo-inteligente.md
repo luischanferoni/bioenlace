@@ -4,7 +4,7 @@
 
 El chat del HIS mezcla preprocess (`user_goal`), canal **guide** (2ª IA con volcado amplio), `IntentClassifier` por keywords y regex en `ChatChannelPolicy`. Eso duplica interpretación, gasta tokens y no hay un catálogo unificado que relacione lenguaje natural con intents, artículos editoriales, aspect loaders y métricas DataAccess.
 
-En conversación de diseño se acordó: la IA **etiqueta** (mensaje + historial); PHP **matchea, planifica y ejecuta** contra tools cerrados; síntesis IA solo cuando hace falta; planificadora IA opcional como red de seguridad; **log de planificación** para mantener el catálogo.
+En conversación de diseño se acordó: la IA **etiqueta** (mensaje + historial); PHP **matchea, planifica y ejecuta** contra tools cerrados; 2ª IA guide cuando hace falta; planificadora IA opcional como red de seguridad; **log de planificación** para mantener el catálogo.
 
 Documentación estable: [producto/asistente-y-chat.md](../producto/asistente-y-chat.md), [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md).
 
@@ -17,7 +17,7 @@ Documentación estable: [producto/asistente-y-chat.md](../producto/asistente-y-c
 3. **Routing PHP** — resultados: `clara` (match 100 %: intent, artículo o template), `dudosa`, `incompletas`, `fuera_de_his`. PHP decide camino final; `routing_hint` de la IA orienta pero no obliga.
 4. **Match 100%** — score + margen + tool ejecutable → flow, artículo o template (**1 IA**). Empate → **incompletas** si hay tema HIS; no botones entre intents.
 5. **Plan declarativo** — reutiliza `AssistantContextAnchorResolver` y `AssistantContextAreaAspectResolver` (evolucionar a registry YAML); output `tool_ids` + `needs_planner`.
-6. **2ª IA síntesis** — `necesidad_usuario` + `scoped_system_records`; reemplaza guide para incompletas.
+6. **2ª IA guide** — incompletas y charla: `scoped_system_records` + prompt `channels/Guide`; CTAs de catálogo vía `CatalogCtaResolver`.
 7. **3ª IA planificadora (opcional)** — solo si `needs_planner` (plan vacío, demasiados tools, sin datos útiles post-load); elige `tool_ids_ordered` del **shortlist filtrado**; PHP resuelve params.
 8. **Log de planificación** — estructura `planning_applied` por mensaje (ver schema metadata).
 
@@ -56,7 +56,7 @@ Alias temporal de preprocess: mapear `user_goal` legacy a `routing_hint` hasta r
 - Nuevos servicios: `SmartCatalogRegistry`, `SmartCatalogMatchService`, `DeclarativePlanService`, `AssistantPlanningLogService` (nombres en Platform/Assistant/Catalog/ y Planning/).
 - Params Yii: `asistente_plan_max_tools`, `asistente_planning_debug`, umbrales de match (TBD en fase 01).
 - Deprecación progresiva: canal `GuideChannel` en raíz, `user_goal` como eje, regex CTA donde el catálogo cubra el caso.
-- Telemetría IA: mantener `asistente-preprocess`; añadir `asistente-planner`, `asistente-synthesis` al cablear fases 05–06.
+- Telemetría IA: mantener `asistente-preprocess`; incompletas usan `asistente-guide`; `asistente-planner` si `needs_planner`.
 - Documentación al cierre: actualizar `producto/asistente-y-chat.md`, `arquitectura/asistente-motores.md`.
 
 Schemas: `assistant/schemas/first-ia-v1.yaml`, `smart-catalog-entry-v1.yaml`, `planning-log-v1.yaml`, `planner-ia-v1.yaml`.

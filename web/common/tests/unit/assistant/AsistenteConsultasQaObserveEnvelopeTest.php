@@ -67,7 +67,7 @@ class AsistenteConsultasQaObserveEnvelopeTest extends Unit
             'intent_ids_hint' => [],
         ], []);
         AssistantPlanningLogService::setRoutingResult('incompletas');
-        AssistantPlanningLogService::setFinalPath('2ia_synthesis');
+        AssistantPlanningLogService::setFinalPath('2ia_guide');
 
         ChatPreprocessContext::set([
             'ok' => true,

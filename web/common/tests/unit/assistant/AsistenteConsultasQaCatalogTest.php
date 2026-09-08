@@ -61,7 +61,7 @@ class AsistenteConsultasQaCatalogTest extends Unit
             'routing_hint' => 'incompletas',
             'flow_intent_id' => '',
             'planning_applied' => [
-                'final_path' => '2ia_synthesis',
+                'final_path' => '2ia_guide',
                 'routing_result' => 'incompletas',
                 'executed_tools' => [
                     ['tool_id' => 'aspect:appointment.current'],
@@ -113,7 +113,7 @@ class AsistenteConsultasQaCatalogTest extends Unit
                         ],
                         'user_goal' => 'guide',
                         'planning_applied' => [
-                            'final_path' => '2ia_synthesis',
+                            'final_path' => '2ia_guide',
                             'routing_result' => 'incompletas',
                             'executed_tools' => [
                                 ['tool_id' => 'aspect:appointment.current'],

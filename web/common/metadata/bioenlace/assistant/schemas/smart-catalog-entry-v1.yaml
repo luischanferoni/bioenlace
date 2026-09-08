@@ -49,7 +49,7 @@ fields:
   cta_intent_id:
     type: string
     optional: true
-    notes: CTA único post-síntesis (legacy). Preferir cta_intent_ids.
+    notes: CTA único post-guide (legacy). Preferir cta_intent_ids.
   cta_intent_ids:
     type: list<string>
     optional: true

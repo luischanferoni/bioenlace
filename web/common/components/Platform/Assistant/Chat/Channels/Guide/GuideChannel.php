@@ -17,6 +17,9 @@ use common\components\Platform\Assistant\Context\AssistantContextAssemblyService
 use common\components\Platform\Assistant\IntentEngine\IntentEngine;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalog;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
+use common\components\Platform\Assistant\Planning\CatalogCtaResolver;
+use common\components\Platform\Assistant\Planning\DeclarativePlanExecutionResult;
+use common\components\Platform\Assistant\Planning\SmartCatalogRoutingEvaluation;
 use Yii;
 
 /**
@@ -43,6 +46,86 @@ final class GuideChannel
     }
 
     return self::handleWithGuideIa($content, $userId, $formattedHistory);
+  }
+
+  /**
+   * 2ª IA para routing incompletas (plan declarativo + CTAs de catálogo).
+   *
+   * @param array<string, mixed> $firstIa
+   * @return array<string, mixed>|null
+   */
+  public static function handleIncomplete(
+    array $firstIa,
+    DeclarativePlanExecutionResult $execution,
+    SmartCatalogRoutingEvaluation $evaluation,
+    string $content,
+    int $userId
+  ): ?array {
+    $prompt = GuidePromptAssembler::buildForIncomplete(
+      $firstIa,
+      $content,
+      $userId,
+      $execution->scopedSystemRecords,
+      $execution->articleBlock,
+      $evaluation
+    );
+
+    $ctaButtons = CatalogCtaResolver::resolveAll($evaluation, $userId);
+    $text = self::consultGuideIa($prompt);
+    if ($text === null || $text === '') {
+      if ($ctaButtons === []) {
+        return null;
+      }
+      $text = self::ctaFallbackText($ctaButtons);
+    }
+
+    if ($ctaButtons === []) {
+      return AssistantContextAssemblyService::attachDebugIfEnabled(
+        AssistantEnvelope::message($text)
+      );
+    }
+
+    return AssistantContextAssemblyService::attachDebugIfEnabled(
+      AssistantEnvelope::interactive($text, $ctaButtons)
+    );
+  }
+
+  /**
+   * @param list<array{label: string, intent_id: string}> $ctaButtons
+   */
+  private static function ctaFallbackText(array $ctaButtons): string
+  {
+    if (count($ctaButtons) === 1) {
+      $label = $ctaButtons[0]['label'];
+
+      return 'Para continuar, podés usar la opción «' . $label . '».';
+    }
+
+    $parts = [];
+    foreach ($ctaButtons as $b) {
+      $parts[] = '«' . $b['label'] . '»';
+    }
+
+    return 'Para continuar, elegí una de estas opciones: ' . implode(' o ', $parts) . '.';
+  }
+
+  private static function consultGuideIa(string $prompt): ?string
+  {
+    try {
+      $raw = IAManager::consultarIA($prompt, 'asistente-guide', 'text-generation');
+      if (is_string($raw) && trim($raw) !== '') {
+        return trim($raw);
+      }
+      if (is_array($raw) && isset($raw['text'])) {
+        $text = trim((string) $raw['text']);
+
+        return $text !== '' ? $text : null;
+      }
+    } catch (\Throwable $e) {
+      Yii::warning('GuideChannel: ' . $e->getMessage(), 'asistente');
+    }
+
+    return null;
   }
 
   public static function buildPrompt(

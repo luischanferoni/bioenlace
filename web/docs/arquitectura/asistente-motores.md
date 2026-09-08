@@ -53,7 +53,7 @@ flowchart LR
 
 - Texto del usuario y permisos (rutas API del catálogo).
 - `keywords` e `intent_semantics` del YAML de cada intent.
-- Si dos intents empatan de cerca y hay tema HIS → **incompletas** (síntesis); no botones entre `intent_id`.
+- Si dos intents empatan de cerca y hay tema HIS → **incompletas** (guide); no botones entre `intent_id`.
 - **Routing raíz:** 1ª IA preprocess → `SmartCatalogMatchService` (PHP, RBAC) → handlers (`clara` = match 100 % flow o artículo, `dudosa`, `incompletas`, `fuera_de_his`). `IntentClassifier` queda como fallback en `OperationalChannel` (staff / sin match con `context_areas`).
 
 ---
@@ -66,12 +66,12 @@ Tras preprocess, el mensaje **no** se reparte por `user_goal: guide|operational`
 |-------|-----------|-----|
 | Match | `Catalog/SmartCatalogMatchService` | Score tags + áreas + hints → tools |
 | Plan | `Planning/DeclarativePlanService` | Área → aspect loaders + artículos |
-| Handlers | `Chat/Routing/Handlers/*` | Envelope 1 IA o encadena síntesis |
+| Handlers | `Chat/Routing/Handlers/*` | Envelope 1 IA o encadena guide |
 | Log | `Planning/AssistantPlanningLogService` | `planning_applied` por mensaje |
-| Síntesis | `Channels/Synthesis/` + `asistente-synthesis` | 2ª IA incompletas |
+| Guide (2ª IA) | `Channels/Guide/` + `asistente-guide` | Charla e incompletas |
 | Planificadora | `Planning/PlannerRoutingStep` + `asistente-planner` | Opcional si `needs_planner` |
 
-Entrypoint: `Chat/Routing/ChatRouter.php` → `SmartCatalogRoutingHandlers`. Sin `GuideChannel` en raíz (fase 07).
+Entrypoint: `Chat/Routing/ChatRouter.php` → `SmartCatalogRoutingHandlers`. Incompletas → `GuideChannel::handleIncomplete`.
 
 ADR: [decisions/asistente-catalogo-inteligente.md](../decisions/asistente-catalogo-inteligente.md).
 
@@ -134,13 +134,13 @@ Cuando el paciente pregunta "¿qué es X?" o "¿cómo funciona X?", antes de cae
 
 **Resolución jerárquica:** efector → provincia → producto (global). Si el centro tiene un artículo específico sobre el topic, ese prevalece.
 
-**Integración:** match **clara** (100 %) a un artículo del catálogo → envelope sin 2ª IA. Otros casos informativos → routing **incompletas** + síntesis, o artículo vía plan declarativo. El canal legacy `GuideChannel` (`asistente-guide`) queda solo para compat puntual fuera del router raíz.
+**Integración:** match **clara** (100 %) a un artículo del catálogo → envelope sin 2ª IA. Otros casos informativos → routing **incompletas** + guide, o artículo vía plan declarativo.
 
 **Administración:** CRUD en `/admin/info-content-article`. Producto: [contenido-informativo.md](../producto/contenido-informativo.md).
 
 ## Contexto HIS (áreas + aspectos)
 
-Capa de datos para routing **incompletas** (2ª IA `asistente-synthesis`, no `asistente-guide` en raíz). Complementa extracto de HC cuando aplica; no reemplaza intents de lectura ni DataAccess.
+Capa de datos para routing **incompletas** (2ª IA `asistente-guide`). Complementa extracto de HC cuando aplica; no reemplaza intents de lectura ni DataAccess.
 
 | Pieza | Ubicación | Rol |
 |-------|-----------|-----|
@@ -149,9 +149,9 @@ Capa de datos para routing **incompletas** (2ª IA `asistente-synthesis`, no `as
 | Anclas | `AssistantContextAnchorResolver` | Sujeto, cita referencia, `site_id`, PES |
 | Plan | `DeclarativePlanService` + `AssistantContextAreaAspectResolver` | Áreas + match → `tool_ids` |
 | Loaders | `Domain/*/Assistant/Context/*AspectLoader` | Un aspecto → JSON HIS desde AR/servicios |
-| Ensamblaje | `DeclarativePlanExecutor` + `SynthesisPromptAssembler` | Volcado en prompt de síntesis |
+| Ensamblaje | `DeclarativePlanExecutor` + `GuidePromptAssembler::buildForIncomplete` | Volcado en prompt guide |
 
-Flujo: preprocess → match catálogo → plan declarativo → loaders → síntesis. Parámetros: `asistente_plan_max_tools`, `asistente_planner_enabled`, `asistente_context_max_aspects`, `asistente_planning_debug`.
+Flujo: preprocess → match catálogo → plan declarativo → loaders → guide. Parámetros: `asistente_plan_max_tools`, `asistente_planner_enabled`, `asistente_context_max_aspects`, `asistente_planning_debug`.
 
 ## Sinónimos de servicios (HintServiceSynonyms)
 

@@ -27,7 +27,7 @@ final class DeclarativePlanService
         $toolIds = [];
         $reasons = [];
 
-        // Zona C / orientación: match_only + CTAs → síntesis con semántica, sin volcar HIS.
+        // Zona C / orientación: match_only + CTAs → guide incompletas con semántica, sin volcar HIS.
         if (self::isCtaOrientationOnly($match)) {
             /** @var SmartCatalogEntry $best */
             $best = $match->best;

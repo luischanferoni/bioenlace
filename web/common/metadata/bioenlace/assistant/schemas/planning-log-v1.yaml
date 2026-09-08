@@ -33,7 +33,7 @@ fields:
     item_subfields: [tool_id, ms, chars, had_null_fields]
   final_path:
     type: enum
-    values: [1ia_direct, 1ia_clara, 1ia_dudosa, 1ia_fuera, 2ia_synthesis, 3ia_planner_synthesis]
+    values: [1ia_direct, 1ia_clara, 1ia_dudosa, 1ia_fuera, 2ia_guide, 3ia_planner_guide]
   gaps:
     type: list<string>
     notes: tool_ids en planner_plan ausentes en declarative_plan; candidatos a nuevos triggers.

@@ -5,7 +5,7 @@ namespace common\components\Platform\Assistant\Catalog;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
 
 /**
- * Formatea {@see intent_semantics} + subintents para prompts de 2ª IA (síntesis / guide).
+ * Formatea {@see intent_semantics} + subintents para prompts de 2ª IA (guide).
  *
  * Solo lo que la IA necesita: objetivo + pasos (o outline si hay ramas).
  * `capabilities` quedan en YAML para gates PHP; no van al prompt.

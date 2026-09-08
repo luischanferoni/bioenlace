@@ -2,8 +2,8 @@
 
 namespace common\components\Platform\Assistant\Chat\Routing\Handlers;
 
+use common\components\Platform\Assistant\Chat\Channels\Guide\GuideChannel;
 use common\components\Platform\Assistant\Chat\Channels\Operational\OperationalChannel;
-use common\components\Platform\Assistant\Chat\Channels\Synthesis\SynthesisChannel;
 use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
 use common\components\Platform\Assistant\Planning\AssistantPlanningLogService;
 use common\components\Platform\Assistant\Planning\SmartCatalogRoutingEvaluation;
@@ -35,9 +35,9 @@ final class LegacyRoutingFallback
             return DudosaRoutingHandler::handle();
         }
 
-        AssistantPlanningLogService::setFinalPath('synthesis_unavailable');
+        AssistantPlanningLogService::setFinalPath('guide_unavailable');
 
-        $failure = SynthesisChannel::iaFailureEnvelope();
+        $failure = GuideChannel::iaFailureEnvelope();
         if (($failure['success'] ?? true) === false && isset($failure['error'])) {
             return AssistantEnvelope::message((string) $failure['error']);
         }

@@ -23,7 +23,8 @@ Este documento cubre sobre todo la **IA generativa** y enlaza STT donde comparte
 | Contexto | Quién | Para qué | Frecuencia típica | Código principal |
 |----------|-------|----------|-------------------|------------------|
 | `asistente-preprocess` | Paciente o staff en chat | Normalizar mensaje, fijar `user_goal`, **`context_areas`**, extracciones ligeras | **Cada mensaje raíz** del asistente | `ChatPreprocessService` |
-| `asistente-guide` | Paciente (chat) | 2ª IA unificada: salud, producto, artículos, volcado `context:his` | Cuando `user_goal` = `guide` | `GuideChannel`, `InfoContentAssistantService` |
+| `asistente-guide` | Paciente (chat) | 2ª IA: charla, incompletas (HIS), artículos | Cuando guide / incompletas | `GuideChannel`, `InfoContentAssistantService` |
+| `asistente-planner` | Sistema (incompletas) | Elige tools del shortlist si `needs_planner` | Raro | `PlannerRoutingStep` |
 | `intent-engine-classification` | Paciente o staff | Elegir intent del catálogo cuando las reglas no alcanzan confianza | Ocasional (fallback del motor de intents) | `IntentClassifier` → `IntentEngine` |
 | `motivos-consulta-batch` | Sistema (cron/lote) | Resumir el hilo de motivos en `encounter.reason_text` | **1× por consulta** al cerrar ventana de motivos | `AppointmentReasonBatchService` |
 | `motivos-consulta-insights` | Sistema (tras el lote) | Sugerencias orientativas: hipótesis diagnósticas y prácticas (máx. 5 c/u) | **1× por consulta** si hay resumen de motivos | `AppointmentReasonClinicalInsightsService` |
@@ -47,18 +48,18 @@ Este documento cubre sobre todo la **IA generativa** y enlaza STT donde comparte
 flowchart LR
   M[Mensaje usuario]
   P[asistente-preprocess]
-  R{user_goal}
+  C[Catálogo PHP]
   G[asistente-guide]
   O[Reglas / flujos sin 2.ª IA]
-  M --> P --> R
-  R -->|guide| G
-  R -->|operacional / ambiguous| O
+  M --> P --> C
+  C -->|guide / incompletas| G
+  C -->|clara / dudosa / operational| O
 ```
 
 | Paso | Contexto IA | ¿Siempre IA? |
 |------|-------------|--------------|
 | Entender el mensaje | `asistente-preprocess` | Sí (mensaje con texto nuevo); incluye catálogo de áreas HIS |
-| Guía (salud, producto, HIS) | `asistente-guide` | Si `user_goal` = `guide`; prompt puede incluir `context:his` y artículo |
+| Guía / incompletas (salud, producto, HIS) | `asistente-guide` | Charla forzada o incompletas; prompt puede incluir `context:his` y artículo |
 | Reservar turno, menú, wizard | — | No (reglas + `SubIntentEngine`) |
 | Clasificar intent (motor global) | `intent-engine-classification` | Solo si reglas + IA del classifier |
 

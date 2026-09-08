@@ -8,12 +8,12 @@ use common\components\Platform\Assistant\IntentEngine\UiActionCatalog;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
 
 /**
- * Resuelve CTA(s) post-síntesis desde catálogo inteligente (sin regex).
+ * CTA(s) post-2ª IA (incompletas) desde catálogo inteligente (sin regex).
  *
  * El smart-catalog declara qué ofrecer; el label sale de action_name / catálogo.
  * La autorización de ejecución sigue en ChatOrchestrator al lanzar el intent.
  */
-final class SynthesisCtaResolver
+final class CatalogCtaResolver
 {
     /**
      * @return array{label: string, intent_id: string}|null Primer CTA (compat).

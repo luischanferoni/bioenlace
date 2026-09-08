@@ -30,6 +30,13 @@ return [
         ],
     ],
     'components' => [
+        // Mismo motor RBAC que frontend/admin: sin esto, IntentAccessService /
+        // qa/asistente-consultas siempre niegan ejecución (authManager null).
+        'authManager' => [
+            'class' => 'common\models\BioenlaceDbManager',
+            'efectorAssignmentTable' => 'profesional_efector_servicio',
+            'rolesEspeciales' => ['_x_efector_', '_sin_efector_', 'AdminMinisterio'],
+        ],
         // AR con blames (created_by) y servicios que leen Yii::$app->user en consola.
         // ConsoleUser expone getIdPersona/getIdEfector… (API web usa ApiUser + sesión).
         'user' => [

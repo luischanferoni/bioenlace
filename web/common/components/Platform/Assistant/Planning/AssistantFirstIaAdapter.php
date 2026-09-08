@@ -17,6 +17,12 @@ final class AssistantFirstIaAdapter
     /** Gestión de turno ya existente (no es pedido bare de reserva). */
     private const GESTION_TURNO_EXISTENTE = '/\b(cancelar|anular|dar de baja|reprogramar|mover|cambiar el turno|confirmar (el )?turno|confirmar asistencia)\b/u';
 
+    /** Historial / pasados (≠ próximos pendientes). */
+    private const HISTORIAL_TURNOS = '/\b(turnos? que (ya )?tuve|ya tuve|turnos anteriores|historial de turnos|turnos pasados|citas anteriores|citas pasadas|mis turnos pasados)\b/u';
+
+    /** Plazos/reglas de cancelación (≠ ejecutar cancelar). */
+    private const POLITICA_TURNOS = '/\b(hasta cuando (puedo )?cancelar|hasta cuándo (puedo )?cancelar|me multan|multa si|plazo.{0,24}cancel|politica (de )?(cancel|turno|autogestion)|política (de )?(cancel|turno|autogestión)|puedo cancelar por app|reglas (de )?cancel)\b/u';
+
     /**
      * @param array<string, mixed> $preprocess
      * @return array{
@@ -103,7 +109,9 @@ final class AssistantFirstIaAdapter
 
         $folded = ChatChannelPolicy::fold($normalized);
 
-        if (preg_match(self::GESTION_TURNO_EXISTENTE, $folded)) {
+        if (preg_match(self::POLITICA_TURNOS, $folded)) {
+            $tags[] = 'politica_turnos';
+        } elseif (preg_match(self::GESTION_TURNO_EXISTENTE, $folded)) {
             $tags[] = 'cancelar_turno';
         }
 
@@ -118,6 +126,7 @@ final class AssistantFirstIaAdapter
             $tags[] = 'estudio';
         } elseif (
             !self::isGestionTurnoExistente($folded)
+            && !preg_match(self::POLITICA_TURNOS, $folded)
             && ChatChannelPolicy::requestsOperationalTramiteExecution($normalized)
             && ChatChannelPolicy::isSchedulingRequest($normalized)
             && !ChatChannelPolicy::isClinicalSymptomContent($normalized)
@@ -129,7 +138,9 @@ final class AssistantFirstIaAdapter
             }
         }
 
-        if (preg_match(
+        if (preg_match(self::HISTORIAL_TURNOS, $folded)) {
+            $tags[] = 'historial_turnos';
+        } elseif (preg_match(
             '/\b(mis turnos|mis citas|que turnos tengo|qué turnos tengo|proximos? turnos|próximos? turnos|turnos pendientes)\b/u',
             $folded
         ) && !self::isGestionTurnoExistente($folded)) {
@@ -186,7 +197,9 @@ final class AssistantFirstIaAdapter
             return array_values(array_unique($tags));
         }
 
-        if (ChatChannelPolicy::isAppointmentPolicyQuestion($normalized)) {
+        if (ChatChannelPolicy::isAppointmentPolicyQuestion($normalized)
+            && !preg_match(self::POLITICA_TURNOS, ChatChannelPolicy::fold($normalized))
+        ) {
             $tags[] = 'llegar_tarde';
         }
         if (preg_match('/\b(medium|horoscop|clima)\b/u', mb_strtolower($normalized, 'UTF-8'))) {
@@ -217,9 +230,17 @@ final class AssistantFirstIaAdapter
         $folded = ChatChannelPolicy::fold($normalized);
         $hasDestino = self::hasAgendaDestino($folded);
         $isGestion = self::isGestionTurnoExistente($folded);
+        $isHistorial = (bool) preg_match(self::HISTORIAL_TURNOS, $folded);
+        $isPolitica = (bool) preg_match(self::POLITICA_TURNOS, $folded);
         $out = [];
         foreach ($tags as $tag) {
-            if ($isGestion && ($tag === 'pedido_turno_sin_destino' || $tag === 'sacar_turno' || $tag === 'mis_turnos')) {
+            if ($isPolitica && $tag === 'cancelar_turno') {
+                continue;
+            }
+            if ($isHistorial && $tag === 'mis_turnos') {
+                continue;
+            }
+            if ($isGestion && !$isPolitica && ($tag === 'pedido_turno_sin_destino' || $tag === 'sacar_turno' || $tag === 'mis_turnos')) {
                 continue;
             }
             if ($hasDestino && $tag === 'pedido_turno_sin_destino') {

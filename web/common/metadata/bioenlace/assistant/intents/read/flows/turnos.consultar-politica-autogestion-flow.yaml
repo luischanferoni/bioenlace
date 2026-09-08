@@ -7,6 +7,12 @@ keywords:
   - 'puedo cancelar por app'
   - 'autogestión turnos'
   - 'reglas cancelación paciente'
+  - 'hasta cuándo puedo cancelar'
+  - 'hasta cuando puedo cancelar'
+  - 'me multan'
+  - 'multa si no voy'
+  - 'política de cancelación'
+  - 'politica de cancelacion'
 subintents:
   -
     id: consultar

@@ -102,6 +102,26 @@ entries:
         - solicita un turno para mi
       context_areas: [appointments]
 
+  # Pregunta de plazos/reglas ≠ ejecutar cancelación.
+  - id: turnos-politica-autogestion
+    tool_type: intent
+    tool_ref: turnos.consultar-politica-autogestion-flow
+    routing_result: clara
+    priority: 89
+    triggers:
+      tags: [politica_turnos]
+      phrases:
+        - hasta cuando puedo cancelar
+        - hasta cuándo puedo cancelar
+        - me multan
+        - multa si no voy
+        - politica de cancelacion
+        - política de cancelación
+        - puedo cancelar por app
+        - reglas de cancelacion
+        - reglas de cancelación
+      context_areas: [appointments]
+
   - id: turnos-cancelar-paciente
     tool_type: intent
     tool_ref: turnos.cancelar-como-paciente-flow
@@ -131,6 +151,26 @@ entries:
         - informes de laboratorio
         - ver mis estudios
       context_areas: [diagnostics]
+
+  # Pasados ≠ próximos pendientes.
+  - id: turnos-historial-paciente
+    tool_type: intent
+    tool_ref: turnos.ver-turnos-anteriores-como-paciente
+    routing_result: clara
+    priority: 88
+    triggers:
+      tags: [historial_turnos]
+      phrases:
+        - turnos que ya tuve
+        - turnos que tuve
+        - ya tuve
+        - turnos anteriores
+        - historial de turnos
+        - turnos pasados
+        - citas anteriores
+        - citas pasadas
+        - mis turnos pasados
+      context_areas: [appointments]
 
   - id: turnos-ver-paciente
     tool_type: intent

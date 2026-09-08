@@ -20,7 +20,7 @@ final class ChatChannelPolicy
     private const SCHEDULING = '/\b(turno|turnos|reservar|sacar turno|cancelar turno|cancelar|agenda|cita|reprogramar|sobreturno)\b/u';
 
     /** Pregunta sobre efectos/reglas de una cita (no pedido de trámite). */
-    private const SCHEDULING_POLICY_QUESTION = '/\b(tengo problemas|voy a tener|va a pasar|puedo llegar|me van a|habra problema|habrá problema|que pasa si|qué pasa si|pasa algo si|me esperan|esperan si|problemas si|problema si)\b|\b(llego|llegar)\b.{0,24}\btarde\b/u';
+    private const SCHEDULING_POLICY_QUESTION = '/\b(tengo problemas|voy a tener|va a pasar|puedo llegar|me van a|habra problema|habrá problema|que pasa si|qué pasa si|pasa algo si|me esperan|esperan si|problemas si|problema si|hasta cuando (puedo )?cancelar|hasta cuándo (puedo )?cancelar|me multan|multa si|plazo.{0,24}cancel|politica (de )?(cancel|turno|autogestion)|política (de )?(cancel|turno|autogestión)|puedo cancelar por app|reglas (de )?cancel)\b|\b(llego|llegar)\b.{0,24}\btarde\b/u';
 
     /** Verbo de ejecución de trámite de agenda (sacar, cancelar, ver mis…). */
     private const SCHEDULING_EXECUTION = '/\b(sacar|reservar|pedir|solicitar|cancelar|anular|reprogramar|mover|cambiar el turno|confirmar|quiero un turno|quiero turno|necesito turno|necesito un turno|dar de baja|ver mis turnos|mis turnos|mis citas)\b/u';

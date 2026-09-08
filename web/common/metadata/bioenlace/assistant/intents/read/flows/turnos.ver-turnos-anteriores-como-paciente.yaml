@@ -7,11 +7,14 @@ keywords:
   - 'historial de turnos'
   - 'turnos pasados'
   - 'turnos que tuve'
+  - 'turnos que ya tuve'
+  - 'ya tuve'
   - 'mis turnos pasados'
   - 'citas anteriores'
   - 'citas pasadas'
   - 'ver turnos anteriores'
   - 'listar turnos anteriores'
+  - 'mostrame los turnos que ya tuve'
 intent_semantics:
   objective: 'Consultá un resumen corto de tus turnos anteriores (fecha, servicio y profesional).'
   capabilities:

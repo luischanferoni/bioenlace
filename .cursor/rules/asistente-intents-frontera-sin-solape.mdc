@@ -17,6 +17,8 @@ Complementa [`asistente-routing-sin-hardcode.mdc`](asistente-routing-sin-hardcod
 | **B estudio/control** | Estudio/acto o control/seguimiento explícito | `clara` → `atencion.necesito-atencion` |
 | **C** | Solo “quiero/sacar/pedir un turno” **sin** destino | `incompletas` + CTAs (crear + Solicitar Atención). **No** lanzar flow |
 | **Gestión** | Cancelar / ver mis turnos / mis análisis | `clara` → intent de gestión/lectura (nunca zona C) |
+| **Historial citas** | “turnos que ya tuve / anteriores / pasados” | `clara` → `turnos.ver-turnos-anteriores-como-paciente` (no `ver-mis-turnos`) |
+| **Política plazos** | “hasta cuándo cancelar / multa / reglas” | `clara` → `turnos.consultar-politica-autogestion-flow` (no abrir cancelar) |
 
 ## Keywords / semantics (escalable)
 

@@ -105,6 +105,34 @@ class DeclarativePlanServiceTest extends Unit
         $this->assertNotContains('sacar_turno', $first['tags']);
     }
 
+    public function testFirstIaAdapterHistorialNotMisTurnos(): void
+    {
+        $first = AssistantFirstIaAdapter::fromPreprocess([
+            'normalized_text' => 'Mostrame los turnos que ya tuve',
+            'user_goal' => 'operational',
+            'tags' => ['mis_turnos', 'appointments'],
+            'context_areas' => ['appointments'],
+            'extractions' => [],
+        ]);
+
+        $this->assertContains('historial_turnos', $first['tags']);
+        $this->assertNotContains('mis_turnos', $first['tags']);
+    }
+
+    public function testFirstIaAdapterPoliticaNotCancelar(): void
+    {
+        $first = AssistantFirstIaAdapter::fromPreprocess([
+            'normalized_text' => '¿Hasta cuándo puedo cancelar?',
+            'user_goal' => 'guide',
+            'tags' => ['cancelar_turno', 'appointments'],
+            'context_areas' => ['appointments'],
+            'extractions' => [],
+        ]);
+
+        $this->assertContains('politica_turnos', $first['tags']);
+        $this->assertNotContains('cancelar_turno', $first['tags']);
+    }
+
     public function testFirstIaAdapterAlwaysInfersSintomaEvenIfIaTagged(): void
     {
         $first = AssistantFirstIaAdapter::fromPreprocess([

@@ -89,4 +89,28 @@ class SmartCatalogMatchServiceTest extends Unit
         $this->assertTrue($result->isEmpty());
         $this->assertSame([], $result->ranked);
     }
+
+    public function testHistorialTurnosBeatsMisTurnosProximos(): void
+    {
+        $result = SmartCatalogMatchService::match([
+            'normalized_text' => 'Mostrame los turnos que ya tuve',
+            'tags' => ['historial_turnos', 'appointments'],
+            'context_areas' => ['appointments'],
+        ], 0);
+
+        $this->assertSame('turnos-historial-paciente', $result->best?->id);
+        $this->assertSame('turnos.ver-turnos-anteriores-como-paciente', $result->best?->toolRef);
+    }
+
+    public function testPoliticaCancelacionBeatsCancelarFlow(): void
+    {
+        $result = SmartCatalogMatchService::match([
+            'normalized_text' => '¿Hasta cuándo puedo cancelar?',
+            'tags' => ['politica_turnos', 'appointments'],
+            'context_areas' => ['appointments'],
+        ], 0);
+
+        $this->assertSame('turnos-politica-autogestion', $result->best?->id);
+        $this->assertSame('turnos.consultar-politica-autogestion-flow', $result->best?->toolRef);
+    }
 }

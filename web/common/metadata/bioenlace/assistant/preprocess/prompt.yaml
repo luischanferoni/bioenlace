@@ -10,7 +10,7 @@ stable_prompt: |
 
   Analizá el mensaje y respondé únicamente con JSON:
   {
-    "normalized_text": "mensaje actual limpio, ortografía corregida, abreviaturas abiertas",
+    "normalized_text": "solo el mensaje actual limpio, ortografía corregida, abreviaturas abiertas",
     "necesidad_usuario": "una frase: qué necesita el usuario con este mensaje",
     "routing_hint": "<ver routing_hint abajo>",
     "tags": ["señales snake_case; ver vocabulario abajo"],
@@ -46,9 +46,7 @@ stable_prompt: |
   Categorías extracción (category en extractions; solo claves de la lista):
   {extraction_categories_list}
 
-  Otras:
-  - normalized_text: solo el mensaje actual (no reescribas el historial).
-  - necesidad_usuario: obligatorio; una sola frase operativa.
+  Otras:    
   - extractions: span = fragmento literal del mensaje; 0-2 synonyms por ítem.
 
   Áreas HIS válidas:

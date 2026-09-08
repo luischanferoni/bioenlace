@@ -10,6 +10,12 @@ YAML describe **qué hacer y con qué parámetros**. No decide por sí solo **si
 
 Si falta un archivo YAML, el producto no debe «abrir» gates duros ni inventar integridad: deben seguir vigentes los defaults del dominio.
 
+### Textos vs constantes en catálogos
+
+Los YAML de catálogo / ui-text / prompt llevan **textos** que ve el usuario o la IA (descripciones inyectadas en prompts, copy UX).
+
+No llevan mapas máquina↔máquina (`aliases` id→id, `legacy_*`), ni listas de ids auxiliares sin copy: eso va en el **loader PHP** del catálogo. Patrón: YAML `id → descripción`; PHP `all()` / `isValid()` + constantes de alias/legacy. Ver `PreprocessRoutingHintCatalog` y `assistant/catalog/preprocess-routing-hints.yaml`.
+
 ## Matriz rápida
 
 | Pregunta | Respuesta típica |
@@ -62,14 +68,16 @@ Ver [asistente-motores.md](./asistente-motores.md), [asistente-lectura-data-acce
 - Parchear orquestadores con `if` por pantalla, intent o tipología.
 - Autocompletar en silencio campos clínicos faltantes con la IA.
 - Maestros de lookup en metadata YAML (van en BD + seed console).
+- Poner alias técnicos, mapas legacy o ids sin texto en un YAML de catálogo cerrado.
 
 ## Checklist al agregar metadata
 
-1. ¿Es composición o knob? Si sí, YAML está bien.
-2. ¿Es lookup de hechos en request? → BD (+ cache); seed en console.
-3. ¿Cambia «puede guardarse / emitirse»? Si sí, modelar en Yii o servicio y test de dominio.
-4. ¿El motor ya interpreta el manifiesto? Extender el motor una vez; no if en el entrypoint.
-5. ¿Si borrás el YAML, el gate hard sigue? Debe seguir.
+1. ¿Es composición, knob o **texto** para usuario/IA? Si sí, YAML está bien.
+2. ¿Es mapa de ids, alias técnico o fallback de código? → loader PHP del catálogo.
+3. ¿Es lookup de hechos en request? → BD (+ cache); seed en console.
+4. ¿Cambia «puede guardarse / emitirse»? Si sí, modelar en Yii o servicio y test de dominio.
+5. ¿El motor ya interpreta el manifiesto? Extender el motor una vez; no if en el entrypoint.
+6. ¿Si borrás el YAML, el gate hard sigue? Debe seguir.
 
 ## Referencias de código (anclas)
 
@@ -85,6 +93,7 @@ Ver [asistente-motores.md](./asistente-motores.md), [asistente-lectura-data-acce
 | Tipo | Ejemplo | Dónde |
 |------|---------|-------|
 | flow / routing / prompt / ui-text | `assistant/intents`, `assistant/channels`, `assistant/ui-text` | Metadata; no sustituye `rules()` |
+| catalog (id → texto IA/UX) | `assistant/catalog/preprocess-*-*.yaml` | Metadata; mapas técnicos en el loader PHP |
 | knob | `agents/*.yaml`, overrides en `ai/` | Metadata; gates hard en dominio |
 | manifest | `ui/home-panel-manifest.yaml` | Metadata |
 | auth declarativa | `permission/` | Metadata → sync RBAC |

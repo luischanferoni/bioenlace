@@ -1,5 +1,7 @@
-# routing_hint del preprocess (1ª IA). Claves = {@see PreprocessRoutingHintCatalog}.
-# Consumidor: ChatPreprocessService, SmartCatalogRoutingService, smart-catalog routing_result.
+# Tipo: catalog
+# Propósito: routing_hint del preprocess (1ª IA) — id → texto para el prompt.
+# Consumidor: PreprocessRoutingHintCatalog / ChatPreprocessService.
+# No poner aquí: alias, mapas legacy user_goal→hint, tags extra (van en el loader PHP).
 version: 1
 
 hints:
@@ -7,18 +9,3 @@ hints:
   incompletas: Pregunta de reglas, políticas, cómo funciona, o hace falta dato HIS para responder
   dudosa: Saludo solo, sin sentido útil, o falta un dato clave para actuar
   fuera_de_his: Tema ajeno al HIS
-
-# Alias preprocess (IA o tests legacy).
-aliases:
-  directo: clara
-
-# Alias legacy user_goal → routing_hint (transición preprocess v1).
-legacy_user_goal:
-  guide: incompletas
-  operational: clara
-  in_flow_question: clara
-  ambiguous: dudosa
-
-# Tags que la 1ª IA puede emitir aunque no estén en smart-catalog triggers.
-extra_preprocess_tags:
-  - in_flow_question

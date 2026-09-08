@@ -21,6 +21,7 @@ Maestros vs metadata (runtime + cognitivo): [`web/docs/arquitectura/runtime-dato
 | **knob** | Umbrales, flags, overrides sobre policy PHP | Fuente de verdad de «¿puede emitirse?» |
 | **prompt** | `stable_prompt` / instrucciones a la IA | Texto que ve el usuario (eso es ui-text) |
 | **ui-text** | Textos UX (mensaje, rótulos, variantes por cliente) | Predicados de dominio (van en PHP) |
+| **catalog** | Vocabulario cerrado `id → texto` para IA o UX | Alias id→id, mapas legacy, listas de ids sin copy (van en el loader PHP) |
 | **routing** | Familias NL, hints, booking CTA, thread tags | `if intent_id` en orquestadores |
 | **manifest** | Composición de superficie (panel, client-context, screen-params) | RBAC HTTP (eso es `permission/`) |
 | **auth** | Capabilities, políticas de recurso, aliases legacy | Autorización ad hoc en controllers |
@@ -31,10 +32,11 @@ Maestros vs metadata (runtime + cognitivo): [`web/docs/arquitectura/runtime-dato
 ## Plantilla de cabecera (YAML nuevos o al tocar)
 
 ```yaml
-# Tipo: flow | knob | prompt | ui-text | routing | manifest | auth
+# Tipo: flow | knob | prompt | ui-text | routing | catalog | manifest | auth
 # Propósito: una línea
 # Consumidor: ClassName / ProductMetadataPaths::foo()
 # No poner aquí: integridad clínica / gates hard / maestros de lookup (van en BD)
+# Catalog: solo id → texto (IA o UX); alias/mapas técnicos en el loader PHP
 ```
 
 ## Estructura
@@ -46,6 +48,7 @@ Maestros vs metadata (runtime + cognitivo): [`web/docs/arquitectura/runtime-dato
 | `assistant/preprocess/prompt.yaml` | prompt | Preprocess IA (espejo `Chat/Preprocess/`) |
 | `assistant/ui-text/by-client.yaml` | ui-text | Textos UX por perfil de cliente (`X-App-Client`) |
 | `assistant/routing/` | routing | `intent-families`, `hint-resolution`, `booking-offer`, `thread-state` |
+| `assistant/catalog/` | catalog | Vocabularios cerrados (`context-his-areas`, `preprocess-*-*`, `smart-catalog`, `area-aspects`) |
 | `assistant/assistant-shortcuts.yaml` | manifest | Atajos visibles (si el catálogo está desplegado) |
 | `assistant/assistant-shortcut-group-labels.yaml` | manifest | Etiquetas/orden de grupos de atajos |
 | `agents/` | knob | Política operativa por `agent_id` (umbrales; gates hard en dominio) |

@@ -34,7 +34,7 @@ No enumerar `intent_id` en orquestadores ni en prompts de IA para “elegir la a
 | Texto UX por perfil de cliente | `assistant/ui-text/by-client.yaml` |
 | Familias NL / hints | `assistant/routing/intent-families.yaml`, `hint-resolution.yaml` |
 | ¿Síntoma o turno? ¿Menú? ¿Staff list/edit? | `ChatChannelPolicy` (PHP) |
-| Alias legacy de `user_goal` (preprocess) | `ChatPreprocessService::canonicalizeGoal()` |
+| Alias legacy de `user_goal` (preprocess) | `PreprocessRoutingHintCatalog` (constantes PHP; no YAML) |
 | Atajos visibles | `assistant/assistant-shortcuts.yaml` |
 
 ## Al agregar routing NL

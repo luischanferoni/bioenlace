@@ -73,4 +73,34 @@ class AssistantCatalogSourceOfTruthTest extends Unit
             ChatPreprocessService::routingHints()
         );
     }
+
+    public function testRoutingHintConstantsExistInCatalog(): void
+    {
+        $ref = new ReflectionClass(PreprocessRoutingHintCatalog::class);
+        foreach ($ref->getConstants() as $name => $id) {
+            if (!is_string($id) || str_starts_with((string) $name, 'TAG_')) {
+                continue;
+            }
+            $this->assertTrue(
+                PreprocessRoutingHintCatalog::isValid($id),
+                'Constante routing_hint sin entrada en preprocess-routing-hints.yaml: ' . $id
+            );
+        }
+    }
+
+    public function testRoutingHintTechnicalMapsLiveInPhp(): void
+    {
+        $this->assertSame(
+            PreprocessRoutingHintCatalog::INCOMPLETAS,
+            PreprocessRoutingHintCatalog::routingHintFromLegacyGoal('guide')
+        );
+        $this->assertSame(
+            PreprocessRoutingHintCatalog::CLARA,
+            PreprocessRoutingHintCatalog::applyAlias('directo')
+        );
+        $this->assertContains(
+            PreprocessRoutingHintCatalog::TAG_IN_FLOW_QUESTION,
+            PreprocessRoutingHintCatalog::extraPreprocessTags()
+        );
+    }
 }

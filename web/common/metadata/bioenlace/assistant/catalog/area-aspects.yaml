@@ -1,4 +1,5 @@
-# Aspectos HIS (volcado / plan declarativo). Claves = {@see AssistantContextHISAreaAspect}.
+# Tipo: catalog
+# Propósito: aspectos HIS (volcado / plan declarativo) — metadata de composición por aspect_key.
 # Consumidor: AssistantContextHISAreaAspect, AssistantContextAreaAspectCatalog.
 version: 2
 

@@ -70,7 +70,7 @@ final class ChatPreprocessService
         if ($goal === '') {
             return 'ambiguous';
         }
-        if ($goal === 'incompletas') {
+        if ($goal === PreprocessRoutingHintCatalog::INCOMPLETAS) {
             return 'guide';
         }
         if (!in_array($goal, PreprocessRoutingHintCatalog::legacyGoals(), true)) {
@@ -89,11 +89,11 @@ final class ChatPreprocessService
     {
         $hint = mb_strtolower(trim($hint), 'UTF-8');
         if ($hint === '') {
-            return 'dudosa';
+            return PreprocessRoutingHintCatalog::DUDOSA;
         }
         $hint = PreprocessRoutingHintCatalog::applyAlias($hint);
         if (!PreprocessRoutingHintCatalog::isValid($hint)) {
-            return 'dudosa';
+            return PreprocessRoutingHintCatalog::DUDOSA;
         }
 
         return $hint;
@@ -131,7 +131,7 @@ final class ChatPreprocessService
     {
         return PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint(
             $routingHint,
-            in_array('in_flow_question', $tags, true)
+            in_array(PreprocessRoutingHintCatalog::TAG_IN_FLOW_QUESTION, $tags, true)
         );
     }
 
@@ -221,7 +221,7 @@ final class ChatPreprocessService
     public static function normalizeFromAi(array $raw, string $fallbackContent): array
     {
         $routingHint = self::canonicalizeRoutingHint((string) ($raw['routing_hint'] ?? ''));
-        if ($routingHint === 'dudosa' && isset($raw['user_goal'])) {
+        if ($routingHint === PreprocessRoutingHintCatalog::DUDOSA && isset($raw['user_goal'])) {
             $legacyGoal = self::canonicalizeGoal((string) $raw['user_goal']);
             $routingHint = self::routingHintFromLegacyGoal($legacyGoal);
         }
@@ -392,7 +392,7 @@ final class ChatPreprocessService
             'ok' => true,
             'normalized_text' => $content,
             'necesidad_usuario' => $content,
-            'routing_hint' => 'dudosa',
+            'routing_hint' => PreprocessRoutingHintCatalog::DUDOSA,
             'tags' => [],
             'user_goal' => 'ambiguous',
             'action_text' => '',

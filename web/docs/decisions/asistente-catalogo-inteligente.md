@@ -41,7 +41,7 @@ Documentación estable: [producto/asistente-y-chat.md](../producto/asistente-y-c
 | `catalogacion: funcionalidades_incompletas` (plan previo) | `incompletas` |
 | `catalogacion: fuera_de_his` | `fuera_de_his` |
 
-Alias temporal de preprocess: mapear `user_goal` legacy a `routing_hint` hasta retirar fase 07.
+Alias temporal de preprocess: mapear `user_goal` legacy a `routing_hint` en `PreprocessRoutingHintCatalog` (constantes PHP; el YAML de hints solo lleva id → texto para el prompt).
 
 ## Alternativas descartadas
 

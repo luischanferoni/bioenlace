@@ -103,9 +103,9 @@ final class SmartCatalogRegistry
             return null;
         }
 
-        $routingResult = trim((string) ($row['routing_result'] ?? 'incompletas'));
+        $routingResult = trim((string) ($row['routing_result'] ?? PreprocessRoutingHintCatalog::INCOMPLETAS));
         if ($routingResult === '' || !PreprocessRoutingHintCatalog::isValid($routingResult)) {
-            $routingResult = 'incompletas';
+            $routingResult = PreprocessRoutingHintCatalog::INCOMPLETAS;
         }
 
         $triggers = is_array($row['triggers'] ?? null) ? $row['triggers'] : [];

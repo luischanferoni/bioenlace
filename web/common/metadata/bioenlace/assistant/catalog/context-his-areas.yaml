@@ -1,5 +1,7 @@
-# Catálogo cerrado de áreas HIS (context_areas). Claves = {@see AssistantContextHISArea}.
-# Consumidor: preprocess ({context_his_areas_list}), guide ({context_his_areas_lines}).
+# Tipo: catalog
+# Propósito: áreas HIS (context_areas) — id → texto para prompts.
+# Consumidor: AssistantContextHISArea / preprocess + guide.
+# No poner aquí: mapas técnicos ni alias id→id (van en el loader PHP si hacen falta).
 version: 1
 
 areas:

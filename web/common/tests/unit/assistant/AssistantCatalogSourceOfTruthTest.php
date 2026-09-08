@@ -78,7 +78,7 @@ class AssistantCatalogSourceOfTruthTest extends Unit
     {
         $ref = new ReflectionClass(PreprocessRoutingHintCatalog::class);
         foreach ($ref->getConstants() as $name => $id) {
-            if (!is_string($id) || str_starts_with((string) $name, 'TAG_')) {
+            if (!is_string($id) || str_starts_with((string) $name, 'TAG_') || str_starts_with((string) $name, 'PATH_')) {
                 continue;
             }
             $this->assertTrue(
@@ -91,7 +91,7 @@ class AssistantCatalogSourceOfTruthTest extends Unit
     public function testRoutingHintTechnicalMapsLiveInPhp(): void
     {
         $this->assertSame(
-            PreprocessRoutingHintCatalog::INCOMPLETAS,
+            PreprocessRoutingHintCatalog::PEDIDO_CLARO,
             PreprocessRoutingHintCatalog::routingHintFromLegacyGoal('guide')
         );
         $this->assertContains(

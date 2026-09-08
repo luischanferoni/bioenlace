@@ -23,7 +23,7 @@ class CatalogCtaResolverTest extends Unit
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'Quiero un turno',
             'user_goal' => 'guide',
-            'routing_hint' => 'incompletas',
+            'routing_hint' => 'pedido_claro',
             'tags' => ['pedido_turno_sin_destino', 'appointments'],
             'context_areas' => ['appointments'],
             'extractions' => [],
@@ -48,7 +48,7 @@ class CatalogCtaResolverTest extends Unit
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'Quiero un turno',
             'user_goal' => 'guide',
-            'routing_hint' => 'incompletas',
+            'routing_hint' => 'pedido_claro',
             'tags' => ['pedido_turno_sin_destino', 'appointments'],
             'context_areas' => ['appointments'],
             'extractions' => [],

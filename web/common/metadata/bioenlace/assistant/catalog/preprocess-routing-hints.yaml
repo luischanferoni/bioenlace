@@ -1,11 +1,11 @@
 # Tipo: catalog
-# Propósito: routing_hint del preprocess (1ª IA) — id → texto para el prompt.
+# Propósito: routing_hint del preprocess (1ª IA) — lectura del mensaje, no veredicto PHP.
 # Consumidor: PreprocessRoutingHintCatalog / ChatPreprocessService.
-# No poner aquí: alias, mapas user_goal↔hint, tags extra (van en el loader PHP).
+# Paths de decisión PHP (match 100 %, Guide, botones) no viven aquí.
 version: 1
 
 hints:
-  clara: Hay un trámite, artículo o respuesta fija concreta a ejecutar o abrir (match 100%)
-  incompletas: Pregunta de reglas, políticas, cómo funciona, o hace falta dato HIS para responder
-  dudosa: Saludo solo, sin sentido útil, o falta un dato clave para actuar
-  fuera_de_his: Tema ajeno al HIS
+  pedido_claro: Un solo pedido entendible, concreto y directo (un eje)
+  pedido_claro_multiple: Varios pedidos claros y concretos mezclados en el mensaje
+  sin_pedido: Saludo, ruido o sin necesidad accionable
+  pedido_fuera_his: Tema ajeno al HIS / producto

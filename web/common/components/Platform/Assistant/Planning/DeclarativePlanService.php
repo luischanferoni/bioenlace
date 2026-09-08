@@ -7,6 +7,7 @@ use common\components\Platform\Assistant\Catalog\SmartCatalogMatchResult;
 use common\components\Platform\Assistant\Context\AssistantContextAnchorBag;
 use common\components\Platform\Assistant\Context\AssistantContextAreaAspectResolver;
 use common\components\Platform\Assistant\Context\AssistantContextHISAreaAspect;
+use common\components\Platform\Assistant\Preprocess\PreprocessRoutingHintCatalog;
 use Yii;
 
 /**
@@ -100,7 +101,7 @@ final class DeclarativePlanService
         $best = $match->best;
 
         return $best->matchOnly
-            && $best->routingResult === 'incompletas'
+            && $best->routingResult === PreprocessRoutingHintCatalog::PATH_NEEDS_CONTEXT
             && $best->ctaIntentIds !== [];
     }
 

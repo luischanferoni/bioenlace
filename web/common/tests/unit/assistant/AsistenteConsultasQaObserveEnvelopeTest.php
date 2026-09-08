@@ -60,7 +60,7 @@ class AsistenteConsultasQaObserveEnvelopeTest extends Unit
         AssistantPlanningLogService::begin([
             'normalized_text' => 'pinchazo',
             'necesidad_usuario' => '',
-            'routing_hint' => 'clara',
+            'routing_hint' => 'pedido_claro',
             'tags' => [],
             'context_areas' => [],
             'extractions' => [],
@@ -72,7 +72,7 @@ class AsistenteConsultasQaObserveEnvelopeTest extends Unit
         ChatPreprocessContext::set([
             'ok' => true,
             'user_goal' => 'operational',
-            'routing_hint' => 'clara',
+            'routing_hint' => 'pedido_claro',
             'normalized_text' => 'pinchazo',
             'tags' => [],
             'context_areas' => [],

@@ -6,35 +6,55 @@ use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
 use common\components\Platform\Core\Product\ProductMetadataPaths;
 
 /**
- * Catálogo cerrado de routing_hint del preprocess.
+ * Catálogo cerrado de routing_hint del preprocess (capa IA).
  *
  * Textos para la IA: {@see catalog/preprocess-routing-hints.yaml}.
- * Mapas user_goal (hilo) y tags extra: constantes de esta clase (no YAML).
+ * Paths de decisión PHP ({@see PATH_*}) son vocabulario interno del router/match;
+ * no se piden al modelo ni viven en el YAML de hints.
  */
 final class PreprocessRoutingHintCatalog
 {
-    public const CLARA = 'clara';
-    public const INCOMPLETAS = 'incompletas';
-    public const DUDOSA = 'dudosa';
-    public const FUERA_DE_HIS = 'fuera_de_his';
+    /** Hints 1ª IA (lectura del mensaje). */
+    public const PEDIDO_CLARO = 'pedido_claro';
+    public const PEDIDO_CLARO_MULTIPLE = 'pedido_claro_multiple';
+    public const SIN_PEDIDO = 'sin_pedido';
+    public const PEDIDO_FUERA_HIS = 'pedido_fuera_his';
+
+    /**
+     * Paths de decisión PHP / routing_result (smart-catalog + handlers).
+     * No son hints de IA.
+     */
+    public const PATH_MATCH_DIRECT = 'clara';
+    public const PATH_NEEDS_CONTEXT = 'incompletas';
+    public const PATH_NO_ACTION = 'dudosa';
+    public const PATH_OUTSIDE = 'fuera_de_his';
 
     public const TAG_IN_FLOW_QUESTION = 'in_flow_question';
 
     /**
-     * Alias legacy user_goal → routing_hint (hilo / ChatRouter aún usan user_goal).
+     * Alias de hints IA (respuestas viejas / tests).
      *
      * @var array<string, string>
      */
-    private const LEGACY_USER_GOAL_TO_HINT = [
-        'guide' => self::INCOMPLETAS,
-        'operational' => self::CLARA,
-        'in_flow_question' => self::CLARA,
-        'ambiguous' => self::DUDOSA,
+    private const HINT_ALIASES = [
+        'clara' => self::PEDIDO_CLARO,
+        'incompletas' => self::PEDIDO_CLARO,
+        'dudosa' => self::SIN_PEDIDO,
+        'fuera_de_his' => self::PEDIDO_FUERA_HIS,
+        'directo' => self::PEDIDO_CLARO,
     ];
 
     /**
-     * Tags que la 1ª IA puede emitir aunque no estén en smart-catalog triggers.
-     *
+     * @var array<string, string>
+     */
+    private const LEGACY_USER_GOAL_TO_HINT = [
+        'guide' => self::PEDIDO_CLARO,
+        'operational' => self::PEDIDO_CLARO,
+        'in_flow_question' => self::PEDIDO_CLARO,
+        'ambiguous' => self::SIN_PEDIDO,
+    ];
+
+    /**
      * @var list<string>
      */
     private const EXTRA_PREPROCESS_TAGS = [
@@ -57,22 +77,46 @@ final class PreprocessRoutingHintCatalog
         return self::$idsCache ?? [];
     }
 
+    /**
+     * @return list<string>
+     */
+    public static function phpDecisionPaths(): array
+    {
+        return [
+            self::PATH_MATCH_DIRECT,
+            self::PATH_NEEDS_CONTEXT,
+            self::PATH_NO_ACTION,
+            self::PATH_OUTSIDE,
+        ];
+    }
+
     public static function isValid(string $id): bool
     {
-        $id = trim($id);
+        $id = self::applyAlias(trim($id));
 
         return $id !== '' && in_array($id, self::all(), true);
     }
 
-    /** @deprecated Sin aliases de routing_hint; identidad. */
+    public static function isPhpDecisionPath(string $id): bool
+    {
+        $id = trim($id);
+
+        return $id !== '' && in_array($id, self::phpDecisionPaths(), true);
+    }
+
     public static function applyAlias(string $id): string
     {
-        return trim($id);
+        $id = trim($id);
+        if ($id === '') {
+            return '';
+        }
+
+        return self::HINT_ALIASES[$id] ?? $id;
     }
 
     public static function description(string $id): string
     {
-        $id = trim($id);
+        $id = self::applyAlias($id);
         if ($id === '') {
             return '';
         }
@@ -81,9 +125,6 @@ final class PreprocessRoutingHintCatalog
         return self::$descriptionCache[$id] ?? '';
     }
 
-    /**
-     * Lista `- clave — descripción` para placeholders de prompt.
-     */
     public static function listForPrompt(): string
     {
         $lines = [];
@@ -96,8 +137,22 @@ final class PreprocessRoutingHintCatalog
     }
 
     /**
-     * @deprecated Alias legacy user_goal del preprocess.
-     *
+     * Hint IA → path PHP cuando no hay match 100 % que mande.
+     */
+    public static function decisionPathFromHint(string $routingHint): string
+    {
+        $routingHint = self::applyAlias($routingHint);
+
+        return match ($routingHint) {
+            self::PEDIDO_FUERA_HIS => self::PATH_OUTSIDE,
+            self::SIN_PEDIDO => self::PATH_NO_ACTION,
+            self::PEDIDO_CLARO_MULTIPLE => self::PATH_NEEDS_CONTEXT,
+            self::PEDIDO_CLARO => self::PATH_NEEDS_CONTEXT,
+            default => self::PATH_NO_ACTION,
+        };
+    }
+
+    /**
      * @return list<string>
      */
     public static function legacyGoals(): array
@@ -109,22 +164,25 @@ final class PreprocessRoutingHintCatalog
     {
         $goal = trim($goal);
         if ($goal === '') {
-            return self::DUDOSA;
+            return self::SIN_PEDIDO;
         }
 
-        return self::LEGACY_USER_GOAL_TO_HINT[$goal] ?? self::DUDOSA;
+        return self::LEGACY_USER_GOAL_TO_HINT[$goal] ?? self::SIN_PEDIDO;
     }
 
-    public static function legacyUserGoalFromRoutingHint(string $routingHint, bool $inFlowQuestion = false): string
+    public static function legacyUserGoalFromRoutingHint(string $routingHintOrPath, bool $inFlowQuestion = false): string
     {
         if ($inFlowQuestion) {
             return self::TAG_IN_FLOW_QUESTION;
         }
-        $routingHint = trim($routingHint);
-        if ($routingHint === self::CLARA) {
+        $id = self::applyAlias($routingHintOrPath);
+        if ($id === self::PATH_MATCH_DIRECT || $id === self::PEDIDO_CLARO) {
             return 'operational';
         }
-        if ($routingHint === self::INCOMPLETAS) {
+        if (
+            $id === self::PATH_NEEDS_CONTEXT
+            || $id === self::PEDIDO_CLARO_MULTIPLE
+        ) {
             return 'guide';
         }
 

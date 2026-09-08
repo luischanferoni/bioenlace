@@ -70,7 +70,10 @@ final class ChatPreprocessService
         if ($goal === '') {
             return 'ambiguous';
         }
-        if ($goal === PreprocessRoutingHintCatalog::INCOMPLETAS) {
+        if ($goal === PreprocessRoutingHintCatalog::PATH_NEEDS_CONTEXT
+            || $goal === PreprocessRoutingHintCatalog::PEDIDO_CLARO
+            || $goal === PreprocessRoutingHintCatalog::PEDIDO_CLARO_MULTIPLE
+        ) {
             return 'guide';
         }
         if (!in_array($goal, PreprocessRoutingHintCatalog::legacyGoals(), true)) {
@@ -89,11 +92,11 @@ final class ChatPreprocessService
     {
         $hint = mb_strtolower(trim($hint), 'UTF-8');
         if ($hint === '') {
-            return PreprocessRoutingHintCatalog::DUDOSA;
+            return PreprocessRoutingHintCatalog::SIN_PEDIDO;
         }
         $hint = PreprocessRoutingHintCatalog::applyAlias($hint);
         if (!PreprocessRoutingHintCatalog::isValid($hint)) {
-            return PreprocessRoutingHintCatalog::DUDOSA;
+            return PreprocessRoutingHintCatalog::SIN_PEDIDO;
         }
 
         return $hint;
@@ -221,7 +224,7 @@ final class ChatPreprocessService
     public static function normalizeFromAi(array $raw, string $fallbackContent): array
     {
         $routingHint = self::canonicalizeRoutingHint((string) ($raw['routing_hint'] ?? ''));
-        if ($routingHint === PreprocessRoutingHintCatalog::DUDOSA && isset($raw['user_goal'])) {
+        if ($routingHint === PreprocessRoutingHintCatalog::SIN_PEDIDO && isset($raw['user_goal'])) {
             $legacyGoal = self::canonicalizeGoal((string) $raw['user_goal']);
             $routingHint = self::routingHintFromLegacyGoal($legacyGoal);
         }
@@ -234,11 +237,8 @@ final class ChatPreprocessService
             $normalized = trim($fallbackContent);
         }
 
-        $necesidad = isset($raw['necesidad_usuario']) ? trim((string) $raw['necesidad_usuario']) : '';
-        if ($necesidad === '') {
-            $actionText = isset($raw['action_text']) ? trim((string) $raw['action_text']) : '';
-            $necesidad = $actionText !== '' ? $actionText : $normalized;
-        }
+        $necesidades = self::normalizeNecesidadesUsuario($raw, $normalized);
+        $necesidad = $necesidades[0] ?? $normalized;
 
         $actionText = isset($raw['action_text']) ? trim((string) $raw['action_text']) : '';
 
@@ -246,6 +246,7 @@ final class ChatPreprocessService
             'ok' => true,
             'normalized_text' => $normalized,
             'necesidad_usuario' => $necesidad,
+            'necesidades_usuario' => $necesidades,
             'routing_hint' => $routingHint,
             'tags' => $tags,
             'user_goal' => $goal,
@@ -254,6 +255,38 @@ final class ChatPreprocessService
             'context_areas' => self::normalizeContextAreas($raw['context_areas'] ?? []),
             'intent_ids_hint' => self::normalizeIntentIdsHint($raw['intent_ids_hint'] ?? []),
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $raw
+     * @return list<string>
+     */
+    private static function normalizeNecesidadesUsuario(array $raw, string $fallback): array
+    {
+        $out = [];
+        if (isset($raw['necesidades_usuario']) && is_array($raw['necesidades_usuario'])) {
+            foreach ($raw['necesidades_usuario'] as $item) {
+                if (!is_string($item)) {
+                    continue;
+                }
+                $t = trim($item);
+                if ($t !== '') {
+                    $out[] = $t;
+                }
+            }
+        }
+        if ($out === []) {
+            $single = isset($raw['necesidad_usuario']) ? trim((string) $raw['necesidad_usuario']) : '';
+            if ($single === '') {
+                $actionText = isset($raw['action_text']) ? trim((string) $raw['action_text']) : '';
+                $single = $actionText !== '' ? $actionText : $fallback;
+            }
+            if ($single !== '') {
+                $out[] = $single;
+            }
+        }
+
+        return array_values(array_unique($out));
     }
 
     /**
@@ -392,7 +425,8 @@ final class ChatPreprocessService
             'ok' => true,
             'normalized_text' => $content,
             'necesidad_usuario' => $content,
-            'routing_hint' => PreprocessRoutingHintCatalog::DUDOSA,
+            'necesidades_usuario' => $content !== '' ? [$content] : [],
+            'routing_hint' => PreprocessRoutingHintCatalog::SIN_PEDIDO,
             'tags' => [],
             'user_goal' => 'ambiguous',
             'action_text' => '',

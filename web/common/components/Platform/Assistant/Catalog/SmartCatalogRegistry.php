@@ -103,9 +103,9 @@ final class SmartCatalogRegistry
             return null;
         }
 
-        $routingResult = trim((string) ($row['routing_result'] ?? PreprocessRoutingHintCatalog::INCOMPLETAS));
-        if ($routingResult === '' || !PreprocessRoutingHintCatalog::isValid($routingResult)) {
-            $routingResult = PreprocessRoutingHintCatalog::INCOMPLETAS;
+        $routingResult = trim((string) ($row['routing_result'] ?? PreprocessRoutingHintCatalog::PATH_NEEDS_CONTEXT));
+        if ($routingResult === '' || !PreprocessRoutingHintCatalog::isPhpDecisionPath($routingResult)) {
+            $routingResult = PreprocessRoutingHintCatalog::PATH_NEEDS_CONTEXT;
         }
 
         $triggers = is_array($row['triggers'] ?? null) ? $row['triggers'] : [];

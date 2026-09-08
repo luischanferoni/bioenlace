@@ -29,7 +29,7 @@ class PreprocessExtractionCategoryCatalogTest extends Unit
     public function testInvalidCategoryIsDroppedOnNormalize(): void
     {
         $out = ChatPreprocessService::normalizeFromAi([
-            'routing_hint' => 'clara',
+            'routing_hint' => 'pedido_claro',
             'normalized_text' => 'turno con cardiólogo',
             'extractions' => [
                 ['span' => 'cardiólogo', 'category' => 'profesional', 'synonyms' => []],

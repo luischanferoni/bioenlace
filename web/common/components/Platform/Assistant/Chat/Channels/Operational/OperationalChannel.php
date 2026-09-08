@@ -6,10 +6,12 @@ use common\components\Platform\Assistant\Chat\ChatPreprocessContext;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
 use common\components\Platform\Assistant\Chat\Routing\Handlers\SmartCatalogRoutingHandlers;
 use common\components\Platform\Assistant\IntentEngine\IntentClassifier;
-use common\components\Platform\Assistant\Planning\SmartCatalogRoutingService;use common\components\Platform\Assistant\IntentEngine\IntentEngine;
+use common\components\Platform\Assistant\IntentEngine\IntentEngine;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalog;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
 use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
+use common\components\Platform\Assistant\Planning\SmartCatalogRoutingService;
+use common\components\Platform\Assistant\Preprocess\PreprocessRoutingHintCatalog;
 use common\components\Platform\Assistant\SubIntentEngine\SubIntentEngine;
 
 /**
@@ -157,7 +159,7 @@ final class OperationalChannel
             'ok' => true,
             'normalized_text' => $queryText,
             'necesidad_usuario' => $queryText,
-            'routing_hint' => 'incompletas',
+            'routing_hint' => PreprocessRoutingHintCatalog::PEDIDO_CLARO,
             'tags' => [],
             'user_goal' => 'guide',
             'action_text' => '',

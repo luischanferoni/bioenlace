@@ -5,6 +5,7 @@ namespace common\components\Platform\Assistant\Planning;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
 use common\components\Platform\Assistant\Context\AssistantContextHISArea;
+use common\components\Platform\Assistant\Preprocess\PreprocessRoutingHintCatalog;
 
 /**
  * Adapta preprocess → shape 1ª IA v1 (campos nativos o inferidos).
@@ -70,7 +71,7 @@ final class AssistantFirstIaAdapter
         }
 
         $routingHint = ChatPreprocessService::canonicalizeRoutingHint((string) ($preprocess['routing_hint'] ?? ''));
-        if ($routingHint === 'dudosa' && isset($preprocess['user_goal'])) {
+        if ($routingHint === PreprocessRoutingHintCatalog::SIN_PEDIDO && isset($preprocess['user_goal'])) {
             $routingHint = self::routingHintFromGoal(
                 ChatPreprocessService::canonicalizeGoal((string) $preprocess['user_goal'])
             );
@@ -322,13 +323,6 @@ final class AssistantFirstIaAdapter
 
     private static function routingHintFromGoal(string $goal): string
     {
-        if ($goal === 'operational' || $goal === 'in_flow_question') {
-            return 'clara';
-        }
-        if ($goal === 'guide') {
-            return 'incompletas';
-        }
-
-        return 'dudosa';
+        return ChatPreprocessService::routingHintFromLegacyGoal($goal);
     }
 }

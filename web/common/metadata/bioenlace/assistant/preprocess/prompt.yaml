@@ -11,7 +11,8 @@ stable_prompt: |
   Analizá el mensaje y respondé únicamente con JSON:
   {
     "normalized_text": "solo el mensaje actual limpio, ortografía corregida, abreviaturas abiertas",
-    "necesidad_usuario": "una frase: qué necesita el usuario con este mensaje",
+    "necesidad_usuario": "una frase: qué cosas necesita el usuario con este mensaje",
+    "necesidades_usuario": ["pedido 1", "pedido 2"],
     "routing_hint": "<ver routing_hint abajo>",
     "tags": ["señales snake_case; ver vocabulario abajo"],
     "context_areas": ["claves de Áreas HIS válidas, o []"],

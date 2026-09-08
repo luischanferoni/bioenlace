@@ -13,6 +13,7 @@ use common\components\Platform\Assistant\Chat\Routing\Handlers\LegacyRoutingFall
 use common\components\Platform\Assistant\Chat\Routing\Handlers\SmartCatalogRoutingHandlers;
 use common\components\Platform\Assistant\Planning\AssistantPlanningLogService;
 use common\components\Platform\Assistant\Planning\SmartCatalogRoutingService;
+use common\components\Platform\Assistant\Preprocess\PreprocessRoutingHintCatalog;
 
 /**
  * Router unificado post-preprocess (catálogo inteligente + handlers).
@@ -82,7 +83,9 @@ final class ChatRouter
             'user_goal' => ChatPreprocessService::userGoalFromRoutingHint($routingHint, []),
             'action_text' => '',
             'extractions' => [],
-            'context_areas' => $routingHint === 'incompletas'
+            'context_areas' => $routingHint === PreprocessRoutingHintCatalog::PATH_NEEDS_CONTEXT
+                || $routingHint === PreprocessRoutingHintCatalog::PEDIDO_CLARO
+                || $routingHint === PreprocessRoutingHintCatalog::PEDIDO_CLARO_MULTIPLE
                 ? [AssistantContextHISArea::PRODUCT]
                 : [],
             'intent_ids_hint' => [],
@@ -181,9 +184,9 @@ final class ChatRouter
             $preprocess['context_areas'] = $areas;
 
             if (!ChatChannelPolicy::requestsOperationalTramiteExecution($content)) {
-                $preprocess['routing_hint'] = 'incompletas';
+                $preprocess['routing_hint'] = PreprocessRoutingHintCatalog::PEDIDO_CLARO;
                 $preprocess['user_goal'] = ChatPreprocessService::userGoalFromRoutingHint(
-                    'incompletas',
+                    PreprocessRoutingHintCatalog::PEDIDO_CLARO,
                     is_array($preprocess['tags'] ?? null) ? $preprocess['tags'] : []
                 );
             }

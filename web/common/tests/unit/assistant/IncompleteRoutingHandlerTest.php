@@ -42,7 +42,7 @@ class IncompleteRoutingHandlerTest extends Unit
     {
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => '¿Voy a tener problemas si llego 10 minutos tarde?',
-            'routing_hint' => 'incompletas',
+            'routing_hint' => 'pedido_claro',
             'tags' => ['llegar_tarde', 'appointments'],
             'context_areas' => ['appointments'],
             'extractions' => [
@@ -59,7 +59,7 @@ class IncompleteRoutingHandlerTest extends Unit
     {
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => '¿Voy a tener problemas si llego 10 minutos tarde?',
-            'routing_hint' => 'incompletas',
+            'routing_hint' => 'pedido_claro',
             'tags' => ['llegar_tarde', 'appointments'],
             'context_areas' => ['appointments'],
             'extractions' => [],
@@ -84,7 +84,7 @@ class IncompleteRoutingHandlerTest extends Unit
 
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => '¿Voy a tener problemas si llego 10 minutos tarde?',
-            'routing_hint' => 'incompletas',
+            'routing_hint' => 'pedido_claro',
             'necesidad_usuario' => 'Saber si hay problema por llegar tarde.',
             'tags' => ['llegar_tarde', 'appointments'],
             'context_areas' => ['appointments'],

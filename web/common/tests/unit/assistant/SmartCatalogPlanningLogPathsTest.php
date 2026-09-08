@@ -38,7 +38,7 @@ class SmartCatalogPlanningLogPathsTest extends Unit
     {
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'contame representacion',
-            'routing_hint' => 'clara',
+            'routing_hint' => 'pedido_claro',
             'tags' => ['representacion'],
             'context_areas' => ['representation'],
             'extractions' => [],
@@ -67,7 +67,7 @@ class SmartCatalogPlanningLogPathsTest extends Unit
 
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'llego 10 min tarde hay problema',
-            'routing_hint' => 'incompletas',
+            'routing_hint' => 'pedido_claro',
             'necesidad_usuario' => 'Saber tolerancia llegada tarde.',
             'tags' => ['llegar_tarde', 'appointments'],
             'context_areas' => ['appointments'],
@@ -105,7 +105,7 @@ class SmartCatalogPlanningLogPathsTest extends Unit
 
         $base = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'consulta vaga turnos',
-            'routing_hint' => 'incompletas',
+            'routing_hint' => 'pedido_claro',
             'necesidad_usuario' => 'Entender algo sobre turnos.',
             'tags' => ['appointments'],
             'context_areas' => ['appointments'],

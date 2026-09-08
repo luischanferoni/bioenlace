@@ -31,7 +31,7 @@ class SmartCatalogConversationalQaTest extends Unit
             'efecto_adverso' => [
                 'quiero informar un efecto adverso de una medicacion',
                 [
-                    'routing_hint' => 'clara',
+                    'routing_hint' => 'pedido_claro',
                     'tags' => ['sintoma', 'medicamento', 'necesito_atencion'],
                     'context_areas' => ['medication'],
                 ],
@@ -40,7 +40,7 @@ class SmartCatalogConversationalQaTest extends Unit
             'sintoma_panza' => [
                 'me duele la panza',
                 [
-                    'routing_hint' => 'clara',
+                    'routing_hint' => 'pedido_claro',
                     'tags' => ['sintoma', 'dolor', 'necesito_atencion'],
                     'context_areas' => [],
                 ],
@@ -49,7 +49,7 @@ class SmartCatalogConversationalQaTest extends Unit
             'turno_cardiologo' => [
                 'quiero un turno con el cardiologo',
                 [
-                    'routing_hint' => 'clara',
+                    'routing_hint' => 'pedido_claro',
                     'tags' => ['sacar_turno'],
                     'context_areas' => ['appointments'],
                 ],
@@ -58,7 +58,7 @@ class SmartCatalogConversationalQaTest extends Unit
             'turno_bare' => [
                 'quiero un turno',
                 [
-                    'routing_hint' => 'incompletas',
+                    'routing_hint' => 'pedido_claro',
                     'tags' => ['pedido_turno_sin_destino'],
                     'context_areas' => ['appointments'],
                 ],
@@ -67,7 +67,7 @@ class SmartCatalogConversationalQaTest extends Unit
             'estudio_ecografia' => [
                 'necesito una ecografia',
                 [
-                    'routing_hint' => 'clara',
+                    'routing_hint' => 'pedido_claro',
                     'tags' => ['estudio'],
                     'context_areas' => [],
                 ],
@@ -76,7 +76,7 @@ class SmartCatalogConversationalQaTest extends Unit
             'mis_turnos' => [
                 'cuales son mis turnos',
                 [
-                    'routing_hint' => 'clara',
+                    'routing_hint' => 'pedido_claro',
                     'tags' => ['mis_turnos', 'appointments'],
                     'context_areas' => ['appointments'],
                 ],
@@ -85,7 +85,7 @@ class SmartCatalogConversationalQaTest extends Unit
             'llegar_tarde' => [
                 'llego 10 min tarde hay problema',
                 [
-                    'routing_hint' => 'incompletas',
+                    'routing_hint' => 'pedido_claro',
                     'tags' => ['llegar_tarde', 'appointments'],
                     'context_areas' => ['appointments'],
                 ],
@@ -94,7 +94,7 @@ class SmartCatalogConversationalQaTest extends Unit
             'representacion' => [
                 'contame representacion puedo operar por mi sobrino',
                 [
-                    'routing_hint' => 'clara',
+                    'routing_hint' => 'pedido_claro',
                     'tags' => ['representacion', 'tutela'],
                     'context_areas' => ['representation'],
                 ],
@@ -103,7 +103,7 @@ class SmartCatalogConversationalQaTest extends Unit
             'fuera_his_medium' => [
                 'necesito una sesion con una medium',
                 [
-                    'routing_hint' => 'fuera_de_his',
+                    'routing_hint' => 'pedido_fuera_his',
                     'tags' => ['fuera_his'],
                     'context_areas' => [],
                 ],
@@ -112,7 +112,7 @@ class SmartCatalogConversationalQaTest extends Unit
             'saludo' => [
                 'hola',
                 [
-                    'routing_hint' => 'dudosa',
+                    'routing_hint' => 'sin_pedido',
                     'tags' => [],
                     'context_areas' => [],
                 ],
@@ -121,7 +121,7 @@ class SmartCatalogConversationalQaTest extends Unit
             'listar_profesionales' => [
                 'listar profesionales del centro',
                 [
-                    'routing_hint' => 'clara',
+                    'routing_hint' => 'pedido_claro',
                     'tags' => ['listar_profesionales', 'staff'],
                     'context_areas' => ['geo_resources'],
                 ],

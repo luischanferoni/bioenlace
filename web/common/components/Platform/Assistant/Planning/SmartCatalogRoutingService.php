@@ -49,11 +49,16 @@ final class SmartCatalogRoutingService
         SmartCatalogMatchResult $match
     ): SmartCatalogRoutingDecision {
         $best = $match->best;
-        $hint = trim((string) ($firstIa['routing_hint'] ?? PreprocessRoutingHintCatalog::DUDOSA));
+        $hint = PreprocessRoutingHintCatalog::applyAlias(
+            (string) ($firstIa['routing_hint'] ?? PreprocessRoutingHintCatalog::SIN_PEDIDO)
+        );
         $areas = is_array($firstIa['context_areas']) ? $firstIa['context_areas'] : [];
 
         if ($best !== null && $match->isClearWinner) {
-            if ($best->matchOnly && $best->routingResult === PreprocessRoutingHintCatalog::FUERA_DE_HIS) {
+            if (
+                $best->matchOnly
+                && $best->routingResult === PreprocessRoutingHintCatalog::PATH_OUTSIDE
+            ) {
                 return self::fueraDeHisDecision($best);
             }
 
@@ -63,18 +68,19 @@ final class SmartCatalogRoutingService
             }
         }
 
-        if ($hint === PreprocessRoutingHintCatalog::FUERA_DE_HIS || ($best !== null && $best->routingResult === PreprocessRoutingHintCatalog::FUERA_DE_HIS)) {
+        if (
+            $hint === PreprocessRoutingHintCatalog::PEDIDO_FUERA_HIS
+            || ($best !== null && $best->routingResult === PreprocessRoutingHintCatalog::PATH_OUTSIDE)
+        ) {
             return self::fueraDeHisDecision($best);
         }
 
-        if (
-            $hint === PreprocessRoutingHintCatalog::INCOMPLETAS
-            || ($best !== null && $best->routingResult === PreprocessRoutingHintCatalog::INCOMPLETAS)
-            || ($areas !== [] && !$match->isClearWinner)
-        ) {
+        if ($hint === PreprocessRoutingHintCatalog::SIN_PEDIDO && $areas === []) {
             return new SmartCatalogRoutingDecision(
-                PreprocessRoutingHintCatalog::INCOMPLETAS,
-                PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint(PreprocessRoutingHintCatalog::INCOMPLETAS),
+                PreprocessRoutingHintCatalog::PATH_NO_ACTION,
+                PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint(
+                    PreprocessRoutingHintCatalog::PATH_NO_ACTION
+                ),
                 [],
                 '',
                 '',
@@ -82,14 +88,30 @@ final class SmartCatalogRoutingService
             );
         }
 
-        $routing = PreprocessRoutingHintCatalog::isValid($hint) ? $hint : PreprocessRoutingHintCatalog::DUDOSA;
-        if ($routing === PreprocessRoutingHintCatalog::CLARA) {
-            $routing = PreprocessRoutingHintCatalog::DUDOSA;
+        // Pedido claro (uno o varios) sin match 100 %, o fila/área HIS → contexto + Guide.
+        if (
+            $hint === PreprocessRoutingHintCatalog::PEDIDO_CLARO
+            || $hint === PreprocessRoutingHintCatalog::PEDIDO_CLARO_MULTIPLE
+            || ($best !== null && $best->routingResult === PreprocessRoutingHintCatalog::PATH_NEEDS_CONTEXT)
+            || ($areas !== [] && !$match->isClearWinner)
+        ) {
+            return new SmartCatalogRoutingDecision(
+                PreprocessRoutingHintCatalog::PATH_NEEDS_CONTEXT,
+                PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint(
+                    PreprocessRoutingHintCatalog::PATH_NEEDS_CONTEXT
+                ),
+                [],
+                '',
+                '',
+                $best,
+            );
         }
 
         return new SmartCatalogRoutingDecision(
-            $routing,
-            PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint($routing),
+            PreprocessRoutingHintCatalog::PATH_NO_ACTION,
+            PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint(
+                PreprocessRoutingHintCatalog::PATH_NO_ACTION
+            ),
             [],
             '',
             '',
@@ -99,11 +121,13 @@ final class SmartCatalogRoutingService
 
     private static function match100Decision(SmartCatalogEntry $best): ?SmartCatalogRoutingDecision
     {
-        $goal = PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint(PreprocessRoutingHintCatalog::CLARA);
+        $goal = PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint(
+            PreprocessRoutingHintCatalog::PATH_MATCH_DIRECT
+        );
 
         if ($best->toolType === 'article' && $best->toolRef !== '') {
             return new SmartCatalogRoutingDecision(
-                PreprocessRoutingHintCatalog::CLARA,
+                PreprocessRoutingHintCatalog::PATH_MATCH_DIRECT,
                 $goal,
                 [],
                 '',
@@ -114,7 +138,7 @@ final class SmartCatalogRoutingService
 
         if ($best->responseTemplate !== '') {
             return new SmartCatalogRoutingDecision(
-                PreprocessRoutingHintCatalog::CLARA,
+                PreprocessRoutingHintCatalog::PATH_MATCH_DIRECT,
                 $goal,
                 [],
                 $best->responseTemplate,
@@ -125,7 +149,7 @@ final class SmartCatalogRoutingService
 
         if ($best->toolType === 'intent' && $best->toolRef !== '') {
             return new SmartCatalogRoutingDecision(
-                PreprocessRoutingHintCatalog::CLARA,
+                PreprocessRoutingHintCatalog::PATH_MATCH_DIRECT,
                 $goal,
                 [$best->toolRef],
                 '',
@@ -140,8 +164,10 @@ final class SmartCatalogRoutingService
     private static function fueraDeHisDecision(?SmartCatalogEntry $entry): SmartCatalogRoutingDecision
     {
         return new SmartCatalogRoutingDecision(
-            PreprocessRoutingHintCatalog::FUERA_DE_HIS,
-            PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint(PreprocessRoutingHintCatalog::FUERA_DE_HIS),
+            PreprocessRoutingHintCatalog::PATH_OUTSIDE,
+            PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint(
+                PreprocessRoutingHintCatalog::PATH_OUTSIDE
+            ),
             [],
             self::fueraDeHisText(),
             '',

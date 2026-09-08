@@ -20,11 +20,17 @@ fields:
     notes: Ortografía corregida; sentido conservado.
   necesidad_usuario:
     type: string
-    notes: Una frase operativa; obligatoria siempre; input útil para guide / planning.
+    notes: Una frase operativa (primer pedido si hay varios); obligatoria siempre.
+  necesidades_usuario:
+    type: list<string>
+    optional: true
+    notes: >
+      Si routing_hint = pedido_claro_multiple, lista de pedidos claros (2+).
+      Si viene vacío y hay necesidad_usuario, PHP lo normaliza a [necesidad_usuario].
   routing_hint:
     type: enum
     values: catalog/preprocess-routing-hints.yaml
-    notes: Orientación; PHP valida vía PreprocessRoutingHintCatalog.
+    notes: Lectura del mensaje (capa IA); PHP adjudica el path de decisión.
   tags:
     type: list<string>
     notes: Etiquetas cerradas o extendidas; usadas por triggers del catálogo inteligente.
@@ -52,7 +58,9 @@ fields:
 example:
   normalized_text: "¿Voy a tener problemas si llego 10 minutos tarde?"
   necesidad_usuario: "Saber consecuencias de llegar 10 minutos tarde a su cita."
-  routing_hint: incompletas
+  necesidades_usuario:
+    - "Saber consecuencias de llegar 10 minutos tarde a su cita."
+  routing_hint: pedido_claro
   tags: [llegar_tarde, appointments]
   context_areas: [appointments]
   extractions:

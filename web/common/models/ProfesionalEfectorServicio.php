@@ -2,6 +2,8 @@
 
 namespace common\models;
 
+use common\models\Person\Persona;
+
 use Yii;
 use yii\db\ActiveRecord;
 use yii\db\Expression;

@@ -2,6 +2,8 @@
 
 namespace common\models;
 
+use common\models\Person\Persona;
+
 use common\components\Domain\Clinical\Enum\RequestStatus;
 use common\components\Domain\Clinical\Service\ReferralRequestService;
 use common\models\Clinical\Encounter;

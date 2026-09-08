@@ -2,6 +2,8 @@
 
 namespace common\models;
 
+use common\models\Person\Persona;
+
 use yii\db\ActiveRecord;
 
 /**

@@ -2,6 +2,8 @@
 
 namespace common\models;
 
+use common\models\Person\Persona;
+
 use common\components\Domain\Clinical\PatientHistoriaUrl;
 use common\models\Clinical\Encounter;
 use Yii;

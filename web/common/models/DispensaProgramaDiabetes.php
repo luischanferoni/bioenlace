@@ -2,6 +2,8 @@
 
 namespace common\models;
 
+use common\models\Person\Persona;
+
 /**
  * This is the model class for table "dispensa_programa_diabetes".
  *

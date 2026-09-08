@@ -2,6 +2,8 @@
 
 namespace common\models;
 
+use common\models\Person\Persona;
+
 use common\components\Platform\Core\Product\AgendaByEncounterClassMetadata;
 use Yii;
 use yii\db\ActiveRecord;

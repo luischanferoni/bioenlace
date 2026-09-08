@@ -2,6 +2,7 @@
 
 namespace common\models;
 
+use common\models\Person\Persona;
 use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
 use common\components\Platform\Core\Permission\BioenlaceRbacRevision;
 use common\components\Platform\Core\Permission\BioenlaceSessionPermissions;

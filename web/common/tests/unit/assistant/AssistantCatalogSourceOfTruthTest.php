@@ -99,4 +99,30 @@ class AssistantCatalogSourceOfTruthTest extends Unit
             PreprocessRoutingHintCatalog::extraPreprocessTags()
         );
     }
+
+    public function testLegacyUserGoalDoesNotAliasPhpPathsAsHints(): void
+    {
+        $this->assertSame(
+            'guide',
+            PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint(
+                PreprocessRoutingHintCatalog::PATH_NEEDS_CONTEXT
+            )
+        );
+        $this->assertSame(
+            'operational',
+            PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint(
+                PreprocessRoutingHintCatalog::PATH_MATCH_DIRECT
+            )
+        );
+        $this->assertSame(
+            'operational',
+            PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint(
+                PreprocessRoutingHintCatalog::PEDIDO_CLARO
+            )
+        );
+        $this->assertSame(
+            'guide',
+            PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint('incompletas')
+        );
+    }
 }

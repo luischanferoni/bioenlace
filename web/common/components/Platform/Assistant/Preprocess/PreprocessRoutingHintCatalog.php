@@ -175,14 +175,23 @@ final class PreprocessRoutingHintCatalog
         if ($inFlowQuestion) {
             return self::TAG_IN_FLOW_QUESTION;
         }
-        $id = self::applyAlias($routingHintOrPath);
-        if ($id === self::PATH_MATCH_DIRECT || $id === self::PEDIDO_CLARO) {
+        $raw = trim($routingHintOrPath);
+        // Paths PHP primero: no aplicar HINT_ALIASES (p. ej. incompletas ≠ pedido_claro).
+        if ($raw === self::PATH_MATCH_DIRECT) {
             return 'operational';
         }
-        if (
-            $id === self::PATH_NEEDS_CONTEXT
-            || $id === self::PEDIDO_CLARO_MULTIPLE
-        ) {
+        if ($raw === self::PATH_NEEDS_CONTEXT) {
+            return 'guide';
+        }
+        if ($raw === self::PATH_NO_ACTION || $raw === self::PATH_OUTSIDE) {
+            return 'ambiguous';
+        }
+
+        $id = self::applyAlias($raw);
+        if ($id === self::PEDIDO_CLARO) {
+            return 'operational';
+        }
+        if ($id === self::PEDIDO_CLARO_MULTIPLE) {
             return 'guide';
         }
 

@@ -17,7 +17,7 @@ stable_prompt: |
     "context_areas": ["áreas, apectos o ámbitos de un sistema de información para la salud o []"],
     "extractions": [
       {
-        "span": "fragmento mencionado (no palabras sueltas)",
+        "span": "fragmentos literales del mensaje",
         "category": "<ver categorías extracción>",
         "synonyms": ["0-2 variantes ortográficas o abreviaturas"]
       }
@@ -27,14 +27,11 @@ stable_prompt: |
   routing_hint (exactamente uno) de acuerdo a la necesidad del usuario:
   {routing_hints_list}
 
-  Categorías extracción (category en extractions; solo claves de la lista):
-  {extraction_categories_list}
-
-  Otras:
-  - extractions: span = fragmento literal del mensaje; 0-2 synonyms por ítem.
-
   Áreas HIS válidas:
   {context_his_areas_list}
+
+  Categorías extracción (category en extractions; solo claves de la lista):
+  {extraction_categories_list}
 
   Historial reciente (más antiguo → más reciente):
   {conversation_history}

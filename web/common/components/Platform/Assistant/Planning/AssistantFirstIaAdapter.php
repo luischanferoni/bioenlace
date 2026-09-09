@@ -46,7 +46,7 @@ final class AssistantFirstIaAdapter
     {
         $normalized = trim((string) ($preprocess['normalized_text'] ?? $rawContent));
         $areas = ChatPreprocessService::normalizeContextAreas($preprocess['context_areas'] ?? []);
-        $areas = self::reconcileContextAreasForSymptom($areas, $normalized);
+        $areas = ChatPreprocessService::reconcileContextAreasForSymptom($areas, $normalized);
         $extractions = is_array($preprocess['extractions'] ?? null) ? $preprocess['extractions'] : [];
         $goal = ChatPreprocessService::canonicalizeGoal((string) ($preprocess['user_goal'] ?? 'ambiguous'));
 
@@ -57,12 +57,7 @@ final class AssistantFirstIaAdapter
             self::inferSoftTags($normalized, $goal, $iaTags)
         )));
         $tags = self::reconcileAgendaTags($tags, $normalized);
-        if (!self::asksAboutOwnClinicalRecord($normalized) && ChatChannelPolicy::isClinicalSymptomContent($normalized)) {
-            $tags = array_values(array_filter(
-                $tags,
-                static fn (string $t): bool => $t !== AssistantContextHISArea::CLINICAL_RECORD
-            ));
-        }
+        $tags = ChatPreprocessService::reconcileTagsForSymptom($tags, $normalized);
 
         $actionText = trim((string) ($preprocess['action_text'] ?? ''));
         $necesidad = trim((string) ($preprocess['necesidad_usuario'] ?? ''));
@@ -287,38 +282,6 @@ final class AssistantFirstIaAdapter
         }
 
         return array_values(array_unique($out));
-    }
-
-    /**
-     * Síntoma/alarma: no etiquetar clinical_record (evita que la 2ª IA pida alergias/medicación).
-     * Solo se conserva si el usuario pregunta por su historia clínica.
-     *
-     * @param list<string> $areas
-     * @return list<string>
-     */
-    private static function reconcileContextAreasForSymptom(array $areas, string $normalized): array
-    {
-        if ($normalized === '' || !ChatChannelPolicy::isClinicalSymptomContent($normalized)) {
-            return $areas;
-        }
-        if (self::asksAboutOwnClinicalRecord($normalized)) {
-            return $areas;
-        }
-
-        return array_values(array_filter(
-            $areas,
-            static fn (string $a): bool => $a !== AssistantContextHISArea::CLINICAL_RECORD
-        ));
-    }
-
-    private static function asksAboutOwnClinicalRecord(string $normalized): bool
-    {
-        $folded = ChatChannelPolicy::fold($normalized);
-
-        return (bool) preg_match(
-            '/\b(alergia|alergias|medicacion|medicación|medicamentos|condiciones? (medicas|médicas|preexistentes)|historial clinico|historial clínico|historia clinica|historia clínica|mi hc|resumen clinico|resumen clínico)\b/u',
-            $folded
-        );
     }
 
     private static function routingHintFromGoal(string $goal): string

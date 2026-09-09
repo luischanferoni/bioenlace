@@ -30,9 +30,11 @@ class GuidePromptAssemblerIncompleteTest extends Unit
         );
 
         $this->assertStringContainsString('site.appointment.policies', $prompt);
-        $this->assertStringContainsString('Tema de la consulta', $prompt);
+        $this->assertStringContainsString('Qué necesita la persona', $prompt);
+        $this->assertStringContainsString('Saber si hay problema por llegar 10 minutos tarde.', $prompt);
+        $this->assertStringContainsString('Ambito/s del sistema de información hospitalaria', $prompt);
         $this->assertStringContainsString('Citas y turnos', $prompt);
         $this->assertStringNotContainsString('appointments —', $prompt);
-        $this->assertStringContainsString('NO pidas alergias', $prompt);
+        $this->assertStringNotContainsString('{necesidad_usuario}', $prompt);
     }
 }

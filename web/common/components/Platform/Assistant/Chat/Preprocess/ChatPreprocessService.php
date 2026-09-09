@@ -241,6 +241,9 @@ final class ChatPreprocessService
         $necesidad = $necesidades[0] ?? $normalized;
 
         $actionText = isset($raw['action_text']) ? trim((string) $raw['action_text']) : '';
+        $areas = self::normalizeContextAreas($raw['context_areas'] ?? []);
+        $areas = self::reconcileContextAreasForSymptom($areas, $normalized);
+        $tags = self::reconcileTagsForSymptom($tags, $normalized);
 
         return [
             'ok' => true,
@@ -252,7 +255,7 @@ final class ChatPreprocessService
             'user_goal' => $goal,
             'action_text' => $actionText,
             'extractions' => self::normalizeExtractions($raw['extractions'] ?? []),
-            'context_areas' => self::normalizeContextAreas($raw['context_areas'] ?? []),
+            'context_areas' => $areas,
             'intent_ids_hint' => self::normalizeIntentIdsHint($raw['intent_ids_hint'] ?? []),
         ];
     }
@@ -371,6 +374,58 @@ final class ChatPreprocessService
         }
 
         return array_values(array_unique($out));
+    }
+
+    /**
+     * Síntoma/alarma: no etiquetar clinical_record salvo pregunta explícita por HC.
+     *
+     * @param list<string> $areas
+     * @return list<string>
+     */
+    public static function reconcileContextAreasForSymptom(array $areas, string $normalized): array
+    {
+        $normalized = trim($normalized);
+        if ($normalized === '' || !ChatChannelPolicy::isClinicalSymptomContent($normalized)) {
+            return $areas;
+        }
+        if (self::asksAboutOwnClinicalRecord($normalized)) {
+            return $areas;
+        }
+
+        return array_values(array_filter(
+            $areas,
+            static fn (string $a): bool => $a !== AssistantContextHISArea::CLINICAL_RECORD
+        ));
+    }
+
+    /**
+     * @param list<string> $tags
+     * @return list<string>
+     */
+    public static function reconcileTagsForSymptom(array $tags, string $normalized): array
+    {
+        $normalized = trim($normalized);
+        if ($normalized === '' || !ChatChannelPolicy::isClinicalSymptomContent($normalized)) {
+            return $tags;
+        }
+        if (self::asksAboutOwnClinicalRecord($normalized)) {
+            return $tags;
+        }
+
+        return array_values(array_filter(
+            $tags,
+            static fn (string $t): bool => $t !== AssistantContextHISArea::CLINICAL_RECORD
+        ));
+    }
+
+    private static function asksAboutOwnClinicalRecord(string $normalized): bool
+    {
+        $folded = ChatChannelPolicy::fold($normalized);
+
+        return (bool) preg_match(
+            '/\b(alergia|alergias|medicacion|medicación|medicamentos|condiciones? (medicas|médicas|preexistentes)|historial clinico|historial clínico|historia clinica|historia clínica|mi hc|resumen clinico|resumen clínico)\b/u',
+            $folded
+        );
     }
 
     /**

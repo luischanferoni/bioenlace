@@ -100,4 +100,34 @@ class ChatPreprocessNormalizeV1Test extends Unit
 
         $this->assertSame('sin_pedido', $out['routing_hint']);
     }
+
+    public function testSymptomStripsClinicalRecordAreaAndTag(): void
+    {
+        $out = ChatPreprocessService::normalizeFromAi([
+            'normalized_text' => 'me duele la cabeza desde ayer',
+            'necesidad_usuario' => 'Alivio o orientación por dolor de cabeza.',
+            'routing_hint' => 'sin_pedido',
+            'tags' => ['clinical_record', 'dolor'],
+            'context_areas' => ['clinical_record'],
+            'extractions' => [],
+        ], 'me duele la cabeza desde ayer');
+
+        $this->assertSame([], $out['context_areas']);
+        $this->assertSame(['dolor'], $out['tags']);
+    }
+
+    public function testExplicitClinicalRecordQuestionKeepsArea(): void
+    {
+        $out = ChatPreprocessService::normalizeFromAi([
+            'normalized_text' => 'quiero ver mis alergias en la historia clinica',
+            'necesidad_usuario' => 'Consultar alergias en HC.',
+            'routing_hint' => 'pedido_claro',
+            'tags' => ['clinical_record'],
+            'context_areas' => ['clinical_record'],
+            'extractions' => [],
+        ], 'quiero ver mis alergias en la historia clinica');
+
+        $this->assertSame(['clinical_record'], $out['context_areas']);
+        $this->assertContains('clinical_record', $out['tags']);
+    }
 }

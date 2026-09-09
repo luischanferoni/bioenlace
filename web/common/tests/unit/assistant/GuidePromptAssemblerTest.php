@@ -61,6 +61,7 @@ class GuidePromptAssemblerTest extends Unit
         ChatPreprocessContext::set([
             'ok' => true,
             'normalized_text' => 'llego tarde',
+            'necesidad_usuario' => 'Saber consecuencias de llegar tarde.',
             'user_goal' => 'guide',
             'action_text' => '',
             'context_areas' => [AssistantContextHISArea::APPOINTMENTS],
@@ -75,13 +76,14 @@ class GuidePromptAssemblerTest extends Unit
             null
         );
 
-        $this->assertStringContainsString('sistema de salud', $prompt);
-        $this->assertStringContainsString('Tema de la consulta', $prompt);
-        $this->assertStringContainsString('Mensaje de la persona', $prompt);
+        $this->assertStringContainsString('sistema de información de salud', $prompt);
+        $this->assertStringContainsString('Qué necesita la persona', $prompt);
+        $this->assertStringContainsString('Saber consecuencias de llegar tarde.', $prompt);
+        $this->assertStringNotContainsString('{necesidad_usuario}', $prompt);
         $this->assertStringNotContainsString('context:intent_semantics', $prompt);
-        $this->assertStringNotContainsString('Ámbito de esta consulta', $prompt);
+        $this->assertStringNotContainsString('Tema de la consulta', $prompt);
 
-        $semInPrompt = strpos($prompt, 'Gestiones que el sistema puede ofrecer ahora');
+        $semInPrompt = strpos($prompt, 'Funcionalidades que el sistema puede ofrecer ahora');
         $historyInPrompt = strpos($prompt, 'Conversación previa');
         if ($semInPrompt !== false && $historyInPrompt !== false) {
             $this->assertLessThan($historyInPrompt, $semInPrompt);

@@ -45,6 +45,7 @@ final class GuidePromptAssembler
     }
 
     return GuideChannelConfig::assemblePrompt([
+      'necesidad_usuario' => self::resolveNecesidadUsuario($messageForPrompt),
       'context_his_areas_lines' => self::formatContextHisAreasLines($activeAreas),
       'scoped_system_records' => trim($assembled->promptSection),
       'clinical_record_block' => GuideChannelConfig::formatOptionalAttachment(
@@ -100,6 +101,10 @@ final class GuidePromptAssembler
     }
 
     return GuideChannelConfig::assemblePrompt([
+      'necesidad_usuario' => self::resolveNecesidadUsuario(
+        $messageForPrompt,
+        is_array($firstIa) ? $firstIa : null
+      ),
       'context_his_areas_lines' => self::formatContextHisAreasLines($areas),
       'scoped_system_records' => trim($scopedSystemRecords),
       'clinical_record_block' => GuideChannelConfig::formatOptionalAttachment(
@@ -111,6 +116,25 @@ final class GuidePromptAssembler
       'conversation_history' => trim($history),
       'current_message' => $messageForPrompt,
     ]);
+  }
+
+  /**
+   * @param array<string, mixed>|null $firstIa
+   */
+  private static function resolveNecesidadUsuario(string $fallbackMessage, ?array $firstIa = null): string
+  {
+    $fromIa = '';
+    if ($firstIa !== null) {
+      $fromIa = trim((string) ($firstIa['necesidad_usuario'] ?? ''));
+    }
+    if ($fromIa === '') {
+      $fromIa = trim(ChatPreprocessContext::necesidadUsuario());
+    }
+    if ($fromIa !== '') {
+      return $fromIa;
+    }
+
+    return trim($fallbackMessage);
   }
 
   private static function formatIncompleteIntentSemantics(

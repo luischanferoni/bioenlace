@@ -5,7 +5,7 @@
 version: 1
 
 hints:
-  pedido_claro: Un solo pedido entendible, concreto y directo (un eje)
-  pedido_claro_multiple: Varios pedidos claros y concretos mezclados en el mensaje
-  sin_pedido: Saludo, ruido o sin necesidad accionable
-  pedido_fuera_his: Tema ajeno al HIS / producto
+  pedido_claro: oraciones que expresan una sola necesidad, situación o problema entendible.
+  pedido_claro_multiple: dos o más necesidades/situaciones claras y distintas en el mismo mensaje.
+  sin_pedido: oracion u oraciones unimembres que no expresa una necesidad, situación o problema entendible
+  pedido_fuera_his: oraciones que expresan un tema ajeno al ámbito de la salud.

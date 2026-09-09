@@ -1,31 +1,34 @@
 ---
-description: No modificar prompts YAML del asistente/IA — solo sugerir en chat
-globs: web/common/metadata/bioenlace/assistant/**/prompt.yaml,web/common/metadata/bioenlace/assistant/preprocess/prompt.yaml,web/common/metadata/bioenlace/ai/**/*.yaml
+description: No modificar prompts YAML del asistente/IA ni catálogos inyectados en prompt — solo sugerir en chat
+globs: web/common/metadata/bioenlace/assistant/**/prompt.yaml,web/common/metadata/bioenlace/assistant/preprocess/prompt.yaml,web/common/metadata/bioenlace/assistant/catalog/preprocess-routing-hints.yaml,web/common/metadata/bioenlace/ai/**/*.yaml
 alwaysApply: true
 ---
 
 # Prompts: solo el humano los edita
 
-Los archivos de **prompt** (instrucciones a la IA) los modifica **únicamente el usuario**, a mano.
+Los archivos de **prompt** (instrucciones a la IA) y los **catálogos cuyo texto se inyecta en el prompt** los modifica **únicamente el usuario**, a mano.
 
 ## Qué cuenta como prompt
 
 - `assistant/channels/*/prompt.yaml`
 - `assistant/preprocess/prompt.yaml`
+- `assistant/catalog/preprocess-routing-hints.yaml` (descripciones de `routing_hint` → `{routing_hints_list}` en preprocess)
 - `ai/**/*.yaml` con `stable_prompt` / `prompt_template` (p. ej. `clinical-text-ia.yaml`)
 
 **No** aplica a texto UX (`ui-text.yaml`, `assistant/ui-text/*`): ahí sí se puede editar código/metadata de mensajes y rótulos si la tarea lo pide.
 
 ## Qué debe hacer el agente
 
-- **Prohibido** crear, editar, mover o borrar esos YAML de prompt (incluido “fusionar” guide+synthesis en el YAML).
-- Si hace falta un cambio de prompt: **mostrar la sugerencia en el chat** (diff o texto propuesto) y **parar**; el usuario lo aplica a mano.
-- Sí puede cambiar PHP/tests/docs/paths que *consumen* prompts, sin reescribir el cuerpo del `stable_prompt`.
+- **Prohibido** crear, editar, mover o borrar esos YAML (incluido “fusionar” guide+synthesis en el YAML, o reescribir hints del catálogo de routing).
+- Si hace falta un cambio: **mostrar la sugerencia en el chat** (diff o texto propuesto) y **parar**; el usuario lo aplica a mano.
+- Sí puede cambiar PHP/tests/docs/paths que *consumen* prompts/catálogos, sin reescribir el cuerpo del `stable_prompt` ni las descripciones del YAML de hints.
 
 ## Ejemplo
 
 ```text
 ❌ Editar channels/Guide/prompt.yaml para agregar una regla de alarma
+❌ Editar catalog/preprocess-routing-hints.yaml para cambiar textos de hints
 ✅ En el chat: “Sugerencia para Guide/prompt.yaml: agregar después de la línea X: …”
+✅ En el chat: “Sugerencia para preprocess-routing-hints.yaml: …”
 ✅ Cambiar IncompleteRoutingHandler para llamar GuideChannel en vez de SynthesisChannel
 ```

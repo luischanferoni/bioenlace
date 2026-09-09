@@ -6,16 +6,16 @@
 version: 6
 
 stable_prompt: |
-  Te adjunto un mensaje o un grupo de mensajes de un usuario de un sistema de información hospitalaria.
+  Te adjunto un mensaje o un grupo de mensajes de un usuario de un sistema de información para la salud.
 
   Analizá el mensaje y respondé únicamente con JSON:
   {
     "normalized_text": "solo el mensaje actual limpio, ortografía corregida, abreviaturas abiertas",
     "necesidad_usuario": "una frase: qué cosas necesita el usuario con este mensaje",
-    "necesidades_usuario": ["pedido 1", "pedido 2"],
+    "necesidades_usuario": ["pedido o situacion 1", "pedido o situacion 2"],
     "routing_hint": "<ver routing_hint abajo>",
     "tags": ["señales snake_case; ver vocabulario abajo"],
-    "context_areas": ["claves de Áreas HIS válidas, o []"],
+    "context_areas": ["áreas, apectos o ámbitos de un sistema de información para la salud o []"],
     "extractions": [
       {
         "span": "fragmento mencionado (no palabras sueltas)",

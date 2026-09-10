@@ -50,7 +50,7 @@ final class GuidePromptAssembler
       'scoped_system_records' => trim($assembled->promptSection),
       'clinical_record_block' => GuideChannelConfig::formatOptionalAttachment(
         'clinical_record',
-        self::formatClinicalRecordData($activeAreas)
+        self::formatClinicalRecordData()
       ),
       'intent_semantics' => GuideIntentSemanticsFilter::formatPromptSection($catalog, $activeAreas),
       'article_block' => GuideChannelConfig::formatOptionalAttachment(
@@ -109,7 +109,7 @@ final class GuidePromptAssembler
       'scoped_system_records' => trim($scopedSystemRecords),
       'clinical_record_block' => GuideChannelConfig::formatOptionalAttachment(
         'clinical_record',
-        self::formatClinicalRecordData($areas)
+        self::formatClinicalRecordData()
       ),
       'intent_semantics' => $intentSemantics,
       'article_block' => trim($articleBlock),
@@ -206,14 +206,11 @@ final class GuidePromptAssembler
   }
 
   /**
-   * @param list<string> $activeAreas
+   * Resumen clínico del sujeto en sesión. Siempre se intenta adjuntar en Guide
+   * (el placeholder del prompt queda vacío solo si no hay persona o no hay datos).
    */
-  private static function formatClinicalRecordData(array $activeAreas): string
+  private static function formatClinicalRecordData(): string
   {
-    if (!in_array(AssistantContextHISArea::CLINICAL_RECORD, $activeAreas, true)) {
-      return '';
-    }
-
     if (!Yii::$app->has('user', true)) {
       return '';
     }

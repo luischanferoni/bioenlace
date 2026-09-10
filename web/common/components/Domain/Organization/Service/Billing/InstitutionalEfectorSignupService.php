@@ -2,14 +2,14 @@
 
 namespace common\components\Domain\Organization\Service\Billing;
 
-use common\models\BillingAccount;
-use common\models\BillingAccountEfector;
-use common\models\BillingSignupRequest;
+use common\models\Organization\BillingAccount;
+use common\models\Organization\BillingAccountEfector;
+use common\models\Organization\BillingSignupRequest;
 use common\models\Clinical\EncounterDefinition;
-use common\models\Efector;
-use common\models\Localidad;
+use common\models\Organization\Efector;
+use common\models\Geo\Localidad;
 use common\models\Person\Persona;
-use common\models\User;
+use common\models\Platform\User;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\AdminEfectorAsignacionService;
 use common\components\Platform\Core\Product\PricingPesByEncounterClassMetadata;
 use Symfony\Component\Yaml\Yaml;

@@ -3,14 +3,14 @@
 use common\components\Platform\Core\Auth\StaffAccountInvitationService;
 use common\components\Platform\Core\Permission\BioenlaceGhostHtml;
 use common\components\Platform\Core\Permission\RbacRoleQueryService;
-use common\models\User;
+use common\models\Platform\User;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
 use yii\widgets\DetailView;
 
 /**
  * @var yii\web\View $this
- * @var common\models\User $model
+ * @var common\models\Platform\User $model
  */
 
 $this->title = 'Administrar Usuario';

@@ -2,9 +2,9 @@
 
 namespace common\components\Domain\Clinical\Inpatient\Service;
 
-use common\models\InternacionEpicrisisPlantilla;
+use common\models\Clinical\InternacionEpicrisisPlantilla;
 use common\models\Person\Persona;
-use common\models\SegNivelInternacion;
+use common\models\Clinical\SegNivelInternacion;
 use yii\db\Query;
 
 /**

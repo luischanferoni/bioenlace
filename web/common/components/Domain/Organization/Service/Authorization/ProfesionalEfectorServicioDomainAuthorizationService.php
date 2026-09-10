@@ -6,7 +6,7 @@ use common\components\Platform\Core\Permission\Domain\DomainOperationAuthorizer;
 use common\components\Platform\Core\Permission\Domain\DomainOperationContext;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Platform\Core\Permission\IntentRequestContextService;
-use common\models\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicio;
 
 /**
  * Autorización de dominio sobre PES (flujos asistente, condición laboral, draft hydrator).

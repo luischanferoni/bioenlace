@@ -2,16 +2,18 @@
 
 namespace common\components\Platform\Ui;
 
-use common\components\Platform\Core\Product\UiJsonDomainMetadata;
-
 /**
- * Resolución de carpetas bajo `views/json/` según metadata de producto.
+ * Resolución de carpetas bajo `views/json/` a partir del árbol de descriptores.
+ *
+ * Tanto los action id (`clinical.internacion.mapa-camas`) como las rutas API
+ * (`/api/v1/clinical/encounter/ver-resumen`) pueden llevar el dominio adelante. Qué segmento es
+ * un dominio lo dice {@see UiJsonDomainIndex::isDomain()}, no una constante por dominio.
  */
 final class UiJsonDomain
 {
     public static function forEntity(string $entity): ?string
     {
-        return UiJsonDomainMetadata::domainForEntity($entity);
+        return UiJsonDomainIndex::domainForEntity($entity);
     }
 
     /**
@@ -25,8 +27,7 @@ final class UiJsonDomain
         }
 
         $parts = explode('.', $actionId);
-        $clinicalPrefix = UiJsonDomainMetadata::clinicalActionIdPrefix();
-        if ($parts[0] === $clinicalPrefix && count($parts) >= 3) {
+        if (count($parts) >= 3 && UiJsonDomainIndex::isDomain($parts[0])) {
             return [
                 'entity' => $parts[1],
                 'action' => implode('.', array_slice($parts, 2)),
@@ -54,7 +55,7 @@ final class UiJsonDomain
             return $path;
         }
 
-        $aliasAction = UiJsonDomainMetadata::templateAliasAction($parsed['entity'], $parsed['action']);
+        $aliasAction = UiJsonDomainIndex::templateAliasAction($parsed['entity'], $parsed['action']);
         if ($aliasAction === null || $aliasAction === '') {
             return null;
         }
@@ -76,7 +77,7 @@ final class UiJsonDomain
             return [];
         }
 
-        $folderEntity = UiJsonDomainMetadata::templateFolderForEntity($entity);
+        $folderEntity = UiJsonDomainIndex::templateFolderForEntity($entity);
         $file = $action . '.json';
         $out = [];
         $domain = self::forEntity($folderEntity) ?? self::forEntity($entity);
@@ -98,20 +99,26 @@ final class UiJsonDomain
             $path = trim($route);
         }
 
-        $clinicalPrefix = preg_quote(UiJsonDomainMetadata::clinicalActionIdPrefix(), '#');
+        // Con dominio adelante y recurso identificado: /api/v{n}/{dominio}/{entidad}/{id}/{accion}
+        if (preg_match('#^/api/v\d+/([\w-]+)/([\w-]+)/(?:\d+|\{[\w-]+\})/([\w-]+)$#', $path, $m) === 1
+            && UiJsonDomainIndex::isDomain((string) $m[1])
+        ) {
+            return ['entity' => strtolower((string) $m[2]), 'action' => (string) $m[3]];
+        }
 
-        if (preg_match('#^/api/v\d+/' . $clinicalPrefix . '/([\\w-]+)/(?:\d+|\{[\w-]+\})/([\\w-]+)$#', $path, $m) === 1) {
+        // Con dominio adelante: /api/v{n}/{dominio}/{entidad}/{accion}
+        if (preg_match('#^/api/v\d+/([\w-]+)/([\w-]+)/([\w-]+)$#', $path, $m) === 1
+            && UiJsonDomainIndex::isDomain((string) $m[1])
+        ) {
+            return ['entity' => strtolower((string) $m[2]), 'action' => (string) $m[3]];
+        }
+
+        // Sin dominio en la URL: /api/v{n}/{entidad}/{accion}
+        if (preg_match('#^/api/v\d+/([\w-]+)/([\w-]+)$#', $path, $m) === 1) {
             return ['entity' => strtolower((string) $m[1]), 'action' => (string) $m[2]];
         }
 
-        if (preg_match('#^/api/v\d+/' . $clinicalPrefix . '/([\\w-]+)/([\\w-]+)$#', $path, $m) === 1) {
-            return ['entity' => strtolower((string) $m[1]), 'action' => (string) $m[2]];
-        }
-
-        if (preg_match('#^/api/v\d+/([\\w-]+)/([\\w-]+)$#', $path, $m) === 1) {
-            return ['entity' => strtolower((string) $m[1]), 'action' => (string) $m[2]];
-        }
-
+        // DataAccess se expone sin entidad en la ruta.
         if (preg_match('#^/api/v\d+/(info|listar)$#', $path, $m) === 1) {
             return ['entity' => 'data-access', 'action' => (string) $m[1]];
         }

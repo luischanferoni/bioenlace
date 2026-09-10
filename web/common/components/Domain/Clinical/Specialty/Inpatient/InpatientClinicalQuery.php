@@ -11,7 +11,7 @@ use common\models\Clinical\Condition;
 use common\models\Clinical\EpisodeOfCare;
 use common\models\Clinical\MedicationRequest;
 use common\models\Clinical\ServiceRequest;
-use common\models\SegNivelInternacion;
+use common\models\Clinical\SegNivelInternacion;
 
 /**
  * Lectura del bundle clínico de internación (staff / API).

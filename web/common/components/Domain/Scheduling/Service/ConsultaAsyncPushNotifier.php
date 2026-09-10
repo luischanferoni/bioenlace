@@ -6,8 +6,8 @@ use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\components\Platform\Core\Service\Push\PushNotificationTypes;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
-use common\models\ProfesionalEfectorServicio;
-use common\models\Servicio;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Organization\Servicio;
 
 /**
  * Push FCM del lifecycle de consulta async (plantillas en metadata).

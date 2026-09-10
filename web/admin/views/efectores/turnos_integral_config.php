@@ -2,8 +2,8 @@
 
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
-use common\models\EfectorTurnosConfig;
-use common\models\SolicitudProfesionalEfector;
+use common\models\Scheduling\EfectorTurnosConfig;
+use common\models\Organization\SolicitudProfesionalEfector;
 
 $this->title = 'Turnos — ' . $efector->nombre;
 $this->params['breadcrumbs'][] = ['label' => 'Efectores', 'url' => ['indexuserefector']];

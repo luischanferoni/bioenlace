@@ -7,8 +7,8 @@ use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\MethodNotAllowedHttpException;
 use common\components\Domain\Person\Service\PacienteContextoService;
-use common\components\Domain\Person\Service\ProvinciaSuggestionService;
-use common\components\Domain\Person\Service\ProvincialResourceLookupService;
+use common\components\Domain\Geo\Service\ProvinciaSuggestionService;
+use common\components\Domain\Geo\Service\ProvincialResourceLookupService;
 
 /**
  * Contexto operativo persistente del paciente (sector salud, provincia de contexto).

@@ -8,11 +8,11 @@ use common\components\Platform\Core\Service\Push\PushNotificationTypes;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\AgendaIntervaloMinutos;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\AgendaSlotEngine;
 use common\models\Person\Persona;
-use common\models\ProfesionalEfectorServicio;
-use common\models\ProfesionalEfectorServicioAgendaVersion;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicioAgendaVersion;
 use common\models\Scheduling\Turno;
-use common\models\TurnoNotificacionProgramada;
-use common\models\TurnoResolucion;
+use common\models\Scheduling\TurnoNotificacionProgramada;
+use common\models\Scheduling\TurnoResolucion;
 use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\NotFoundHttpException;
@@ -70,7 +70,7 @@ final class TurnoResolucionService
 
         (new TurnoLifecycleService())->entrarEnResolucion(
             $turno,
-            \common\models\TurnoEventoAudit::ACTOR_SISTEMA,
+            \common\models\Scheduling\TurnoEventoAudit::ACTOR_SISTEMA,
             Yii::$app->user->id ?? null
         );
         $turno->refresh();
@@ -395,7 +395,7 @@ final class TurnoResolucionService
         (new TurnoLifecycleService())->reprogramar(
             $turno,
             $before,
-            \common\models\TurnoEventoAudit::ACTOR_PACIENTE,
+            \common\models\Scheduling\TurnoEventoAudit::ACTOR_PACIENTE,
             'app',
             Yii::$app->user->id ?? null
         );
@@ -481,7 +481,7 @@ final class TurnoResolucionService
             (new TurnoLifecycleService())->reprogramar(
                 $turno,
                 $before,
-                \common\models\TurnoEventoAudit::ACTOR_PACIENTE,
+                \common\models\Scheduling\TurnoEventoAudit::ACTOR_PACIENTE,
                 'app',
                 Yii::$app->user->id ?? null
             );

@@ -8,7 +8,7 @@ use common\components\Platform\Core\Permission\BioenlaceRbacRevision;
 use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
 use common\components\Platform\Core\Permission\BioenlaceSessionPermissions;
 use common\components\Platform\Core\Permission\RbacRoute;
-use common\models\User;
+use common\models\Platform\User;
 
 /**
  * Resuelve el conjunto de rutas permitidas para un usuario o roles sin repetir

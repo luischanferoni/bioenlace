@@ -3,7 +3,7 @@
 namespace frontend\components;
 
 use common\models\Person\Persona;
-use common\models\User;
+use common\models\Platform\User;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use Yii;

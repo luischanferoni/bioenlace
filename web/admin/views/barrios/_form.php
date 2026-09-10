@@ -3,9 +3,9 @@
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 use yii\helpers\ArrayHelper;
-use common\models\Departamento;
-use common\models\Provincia;
-use common\models\Localidad;
+use common\models\Geo\Departamento;
+use common\models\Geo\Provincia;
+use common\models\Geo\Localidad;
 use kartik\select2\Select2;
 
 
@@ -13,7 +13,7 @@ use kartik\depdrop\DepDrop;
 use yii\helpers\Url;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\Barrios */
+/* @var $model common\models\Geo\Barrios */
 /* @var $form yii\widgets\ActiveForm */
 ?>
 

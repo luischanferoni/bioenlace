@@ -1,6 +1,6 @@
 <?php
 
-use common\models\TurnoNotificacionProgramada;
+use common\models\Scheduling\TurnoNotificacionProgramada;
 use yii\grid\GridView;
 use yii\helpers\Html;
 use yii\helpers\Url;

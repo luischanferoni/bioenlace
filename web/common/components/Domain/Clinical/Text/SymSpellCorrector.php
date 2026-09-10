@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\Text;
 
 use Yii;
 use common\helpers\TextoMedicoHelper;
-use common\models\DiccionarioOrtografico;
+use common\models\Clinical\DiccionarioOrtografico;
 use common\components\Domain\Clinical\Legacy\ConsultaLogger;
 
 /**

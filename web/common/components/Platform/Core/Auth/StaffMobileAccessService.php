@@ -3,8 +3,8 @@
 namespace common\components\Platform\Core\Auth;
 
 use common\components\Platform\Ui\Home\Service\HomePanelManifest;
-use common\models\ProfesionalEfectorServicio;
-use common\models\User;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Platform\User;
 use Yii;
 
 /**

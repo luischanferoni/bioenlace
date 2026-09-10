@@ -1,6 +1,6 @@
 <?php
 
-use common\models\BillingSignupRequest;
+use common\models\Organization\BillingSignupRequest;
 use yii\grid\GridView;
 use yii\helpers\Html;
 

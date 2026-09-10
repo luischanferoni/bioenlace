@@ -9,11 +9,11 @@ use yii\filters\VerbFilter;
 use yii\helpers\ArrayHelper;
 use yii\web\NotFoundHttpException;
 
-use common\models\User;
+use common\models\Platform\User;
 
-use common\models\LoginForm;
-use common\models\Efector;
-use common\models\ContactForm;
+use common\models\Platform\LoginForm;
+use common\models\Organization\Efector;
+use common\models\Platform\ContactForm;
 use common\models\Person\Persona;
 
 class SiteController extends Controller

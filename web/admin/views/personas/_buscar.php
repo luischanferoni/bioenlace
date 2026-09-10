@@ -6,7 +6,7 @@ use kartik\switchinput\SwitchInput;
 use yii\widgets\MaskedInput;
 use yii\helpers\Url;
 /* @var $this yii\web\View */
-/* @var $model common\models\busquedas\PersonaBusqueda */
+/* @var $model common\models\Person\PersonaBusqueda */
 /* @var $form yii\widgets\ActiveForm */
 
 
@@ -127,7 +127,7 @@ use yii\helpers\Url;
       </div>
       <div class="form-group col-md-5">
         <input type="hidden" id="hidden_id_tipodoc" name="Persona[id_tipodoc]" value="<?= (isset($_POST['Persona']['id_tipodoc'])) ? $_POST['Persona']['id_tipodoc'] : '' ?>">
-        <?= $form->field($model, 'id_tipodoc')->dropDownList(common\models\Tipo_documento::getListaTiposDocumento('BUSQUEDA'), ['prompt' => ' -- Elija una opcion --'])->label(false); ?>
+        <?= $form->field($model, 'id_tipodoc')->dropDownList(common\models\Person\Tipo_documento::getListaTiposDocumento('BUSQUEDA'), ['prompt' => ' -- Elija una opcion --'])->label(false); ?>
 
       </div>
       <div class="form-group col-md-5">

@@ -5,7 +5,7 @@ namespace frontend\modules\api\v1\components;
 use Yii;
 use common\components\Platform\Assistant\UiActions\AllowedRoutesResolver;
 use common\models\Person\Persona;
-use common\models\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicio;
 use frontend\components\WebApiJwtSessionService;
 use yii\filters\auth\HttpBearerAuth;
 use yii\web\Request;
@@ -120,14 +120,14 @@ class JsonHttpBearerAuth extends HttpBearerAuth
 
     /**
      * @param object $decoded payload JWT
-     * @return \common\models\User|null
+     * @return \common\models\Platform\User|null
      */
     private function authenticateDecodedToken($user, $response, object $decoded)
     {
         $userId = $decoded->user_id;
         $idPersonaClaim = isset($decoded->id_persona) ? (int) $decoded->id_persona : 0;
 
-        $userModel = \common\models\User::findOne($userId);
+        $userModel = \common\models\Platform\User::findOne($userId);
         if (!$userModel) {
             $response->statusCode = 401;
             $response->data = [
@@ -139,7 +139,7 @@ class JsonHttpBearerAuth extends HttpBearerAuth
             Yii::$app->end();
         }
 
-        if ($userModel->status !== \common\models\User::STATUS_ACTIVE) {
+        if ($userModel->status !== \common\models\Platform\User::STATUS_ACTIVE) {
             $response->statusCode = 401;
             $response->data = [
                 'success' => false,
@@ -150,7 +150,7 @@ class JsonHttpBearerAuth extends HttpBearerAuth
             Yii::$app->end();
         }
 
-        \common\models\BioenlaceDbManager::asignarRolPacienteSiNoExiste($userId);
+        \common\models\Platform\BioenlaceDbManager::asignarRolPacienteSiNoExiste($userId);
 
         $session = Yii::$app->session;
         if (!$session->isActive) {

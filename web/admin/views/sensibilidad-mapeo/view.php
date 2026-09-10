@@ -4,7 +4,7 @@ use yii\helpers\Html;
 use yii\widgets\DetailView;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\SensibilidadMapeoSnomed */
+/* @var $model common\models\Clinical\SensibilidadMapeoSnomed */
 
 $this->title = $model->codigo . ' → ' . ($model->categoria ? $model->categoria->nombre : '');
 $this->params['breadcrumbs'][] = ['label' => 'Mapeo SNOMED', 'url' => ['index']];
@@ -31,7 +31,7 @@ $this->params['breadcrumbs'][] = $this->title;
             'id',
             [
                 'attribute' => 'tabla_snomed',
-                'value' => \common\models\SensibilidadMapeoSnomed::TABLAS[$model->tabla_snomed] ?? $model->tabla_snomed,
+                'value' => \common\models\Clinical\SensibilidadMapeoSnomed::TABLAS[$model->tabla_snomed] ?? $model->tabla_snomed,
             ],
             'codigo',
             [

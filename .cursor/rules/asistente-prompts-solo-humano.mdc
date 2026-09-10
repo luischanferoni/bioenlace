@@ -1,6 +1,6 @@
 ---
 description: No modificar prompts YAML del asistente/IA ni catálogos inyectados en prompt — solo sugerir en chat
-globs: web/common/metadata/bioenlace/assistant/**/prompt.yaml,web/common/metadata/bioenlace/assistant/preprocess/prompt.yaml,web/common/metadata/bioenlace/assistant/catalog/preprocess-routing-hints.yaml,web/common/metadata/bioenlace/ai/**/*.yaml
+globs: web/common/metadata/bioenlace/platform/assistant/**/prompt.yaml,web/common/metadata/bioenlace/platform/assistant/preprocess/prompt.yaml,web/common/metadata/bioenlace/platform/assistant/catalog/preprocess-routing-hints.yaml,web/common/metadata/bioenlace/platform/ai/**/*.yaml
 alwaysApply: true
 ---
 
@@ -10,12 +10,12 @@ Los archivos de **prompt** (instrucciones a la IA) y los **catálogos cuyo texto
 
 ## Qué cuenta como prompt
 
-- `assistant/channels/*/prompt.yaml`
-- `assistant/preprocess/prompt.yaml`
-- `assistant/catalog/preprocess-routing-hints.yaml` (descripciones de `routing_hint` → `{routing_hints_list}` en preprocess)
-- `ai/**/*.yaml` con `stable_prompt` / `prompt_template` (p. ej. `clinical-text-ia.yaml`)
+- `platform/assistant/channels/*/prompt.yaml`
+- `platform/assistant/preprocess/prompt.yaml`
+- `platform/assistant/catalog/preprocess-routing-hints.yaml` (descripciones de `routing_hint` → `{routing_hints_list}` en preprocess)
+- `platform/ai/**/*.yaml` con `stable_prompt` / `prompt_template` (p. ej. `clinical-text-ia.yaml`)
 
-**No** aplica a texto UX (`ui-text.yaml`, `assistant/ui-text/*`): ahí sí se puede editar código/metadata de mensajes y rótulos si la tarea lo pide.
+**No** aplica a texto UX (`ui-text.yaml`, `platform/assistant/ui-text/*`): ahí sí se puede editar código/metadata de mensajes y rótulos si la tarea lo pide.
 
 ## Qué debe hacer el agente
 

@@ -4,7 +4,7 @@ use yii\helpers\Html;
 use yii\widgets\DetailView;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\SensibilidadRegla */
+/* @var $model common\models\Clinical\SensibilidadRegla */
 
 $this->title = 'Regla: ' . ($model->categoria ? $model->categoria->nombre : $model->id_categoria);
 $this->params['breadcrumbs'][] = ['label' => 'Reglas de sensibilidad', 'url' => ['index']];

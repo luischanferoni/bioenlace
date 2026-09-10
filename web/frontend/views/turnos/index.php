@@ -12,11 +12,11 @@ use yii\widgets\ActiveForm;
 use yii\bootstrap5\Dropdown;
 
 use common\models\Person\Persona;
-use common\models\ServiciosEfector;
+use common\models\Organization\ServiciosEfector;
 
 
 /* @var $this yii\web\View */
-/* @var $searchModel common\models\busquedas\TurnoBusqueda */
+/* @var $searchModel common\models\Scheduling\TurnoBusqueda */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
 /* @var $this yii\web\View */

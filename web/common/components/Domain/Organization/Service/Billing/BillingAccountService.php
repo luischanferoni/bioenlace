@@ -2,11 +2,11 @@
 
 namespace common\components\Domain\Organization\Service\Billing;
 
-use common\models\BillingAccount;
-use common\models\BillingAccountEfector;
-use common\models\BillingAccountEncounterEntitlement;
+use common\models\Organization\BillingAccount;
+use common\models\Organization\BillingAccountEfector;
+use common\models\Organization\BillingAccountEncounterEntitlement;
 use common\models\Clinical\EncounterDefinition;
-use common\models\Efector;
+use common\models\Organization\Efector;
 
 /**
  * CRUD de cuentas de licencia y membresías / filas de entitlement (sin HTTP).

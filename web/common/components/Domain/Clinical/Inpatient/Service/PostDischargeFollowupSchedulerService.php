@@ -5,8 +5,8 @@ namespace common\components\Domain\Clinical\Inpatient\Service;
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
 use common\models\Clinical\CareFollowupTouchpointQueue;
 use common\models\Clinical\Encounter;
-use common\models\SegNivelInternacion;
-use common\models\SegNivelInternacionTipoIngreso;
+use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\SegNivelInternacionTipoIngreso;
 use Yii;
 
 /**

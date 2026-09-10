@@ -2,8 +2,8 @@
 
 namespace common\components\Platform\Core\Auth;
 
-use common\models\User;
-use common\models\UserAccountInvitationLog;
+use common\models\Platform\User;
+use common\models\Platform\UserAccountInvitationLog;
 use Yii;
 use yii\helpers\Url;
 

@@ -9,7 +9,7 @@ use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\components\Platform\Core\Service\Push\PushNotificationTypes;
 use common\models\Person\Persona;
 use common\models\Scheduling\Turno;
-use common\models\TurnoNotificacionProgramada;
+use common\models\Scheduling\TurnoNotificacionProgramada;
 use Yii;
 
 /**
@@ -226,7 +226,7 @@ final class TurnoAntinoshowAgent
                 'agent_id' => self::AGENT_ID,
             ],
             false,
-            \common\models\TurnoEventoAudit::ACTOR_SISTEMA
+            \common\models\Scheduling\TurnoEventoAudit::ACTOR_SISTEMA
         );
 
         $msgs = is_array($config['patient_messages'] ?? null) ? $config['patient_messages'] : [];

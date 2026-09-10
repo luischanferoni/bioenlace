@@ -9,8 +9,8 @@ use common\components\Domain\Clinical\Support\CarePlanProgramMeta;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EpisodeOfCare;
-use common\models\ProfesionalEfectorServicio;
-use common\models\SegNivelInternacion;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Clinical\SegNivelInternacion;
 use Yii;
 
 /**

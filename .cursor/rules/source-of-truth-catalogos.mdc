@@ -17,14 +17,14 @@ Cada **lista cerrada** que el runtime valida o inyecta en prompts tiene **exacta
 
 | Tipo de dato | Source of truth | Loader / validación |
 |---|---|---|
-| Áreas HIS (`context_areas`) | `assistant/catalog/context-his-areas.yaml` | `AssistantContextHISArea` |
-| Categorías extracción preprocess | `assistant/catalog/preprocess-extraction-categories.yaml` | `PreprocessExtractionCategoryCatalog` |
-| `routing_hint` preprocess (id → texto IA) | `assistant/catalog/preprocess-routing-hints.yaml` | `PreprocessRoutingHintCatalog` |
+| Áreas HIS (`context_areas`) | `platform/assistant/catalog/context-his-areas.yaml` | `AssistantContextHISArea` |
+| Categorías extracción preprocess | textos: `platform/assistant/catalog/preprocess-extraction-categories.yaml`; **ids**: `HintCandidateProviderInterface::declaredEntities()` | `PreprocessExtractionCategoryCatalog` |
+| `routing_hint` preprocess (id → texto IA) | `platform/assistant/catalog/preprocess-routing-hints.yaml` | `PreprocessRoutingHintCatalog` |
 | Alias / mapas técnicos preprocess (`user_goal`, tags extra) | constantes en `PreprocessRoutingHintCatalog` | mismo loader |
 | Tags preprocess (vocabulario IA) | tags de `smart-catalog.yaml` + `extraPreprocessTags()` PHP | `PreprocessTagVocabularyCatalog` |
 | Aspectos HIS / plan declarativo | constantes `ASPECTS` en `AssistantContextHISAreaAspect` | `AssistantContextHISAreaAspect`, `AssistantContextAreaAspectCatalog` |
-| Entidades hint (flows) | constantes en `HintResolutionMetadata` (`ENTITY_OWNERSHIP`, intent_ids) | `HintResolutionMetadata` |
-| Copy routing catálogo | `assistant/routing/smart-catalog-routing.yaml` | metadata loader |
+| Entidades hint (flows) | `declaredEntities()` en cada `*HintCandidateProvider` (ownership compuesto) | `HintCandidateProviderRegistry`, `HintResolutionMetadata` |
+| Copy routing catálogo | `platform/assistant/routing/smart-catalog-routing.yaml` | metadata loader |
 | Maestros consultados en request (geo, recursos) | **BD** + seed console | servicio dominio + cache |
 
 ## Reglas PHP

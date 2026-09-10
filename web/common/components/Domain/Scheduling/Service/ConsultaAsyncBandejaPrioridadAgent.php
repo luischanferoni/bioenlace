@@ -7,7 +7,7 @@ use common\components\Platform\Core\Product\AutonomousAgentMetadata;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\components\Platform\Core\Service\Push\PushNotificationTypes;
 use common\models\Clinical\Encounter;
-use common\models\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicio;
 use Yii;
 
 /**

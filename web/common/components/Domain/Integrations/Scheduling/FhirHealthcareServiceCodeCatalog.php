@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Integrations\Scheduling;
 
-use common\models\Integration\IntegrationFhirServiceCode;
+use common\models\Integrations\IntegrationFhirServiceCode;
 use Yii;
 
 /**

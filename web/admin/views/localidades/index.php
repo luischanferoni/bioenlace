@@ -8,11 +8,11 @@
 use yii\helpers\Html;
 use yii\grid\GridView;
 use yii\helpers\ArrayHelper;
-//use common\models\Departamento;
-use common\models\Provincia;
+//use common\models\Geo\Departamento;
+use common\models\Geo\Provincia;
 
 /* @var $this yii\web\View */
-/* @var $searchModel common\models\busquedas\LocalidadBusqueda */
+/* @var $searchModel common\models\Geo\LocalidadBusqueda */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
 $this->title = 'Localidades';

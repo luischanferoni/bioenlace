@@ -6,9 +6,9 @@ use common\components\Domain\Organization\Service\AgendaWeeklyOccupancyService;
 use common\components\Platform\Core\Product\AgendaByEncounterClassMetadata;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
-use common\models\ProfesionalEfectorServicio;
-use common\models\ProfesionalHorario;
-use common\models\Servicio;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalHorario;
+use common\models\Organization\Servicio;
 
 /**
  * Consultas de horario activo y conflictos vs grilla AMB.

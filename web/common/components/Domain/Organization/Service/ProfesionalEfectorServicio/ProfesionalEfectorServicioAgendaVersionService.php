@@ -5,9 +5,9 @@ namespace common\components\Domain\Organization\Service\ProfesionalEfectorServic
 use common\components\Domain\Organization\Service\AgendaWeeklyOccupancyService;
 use common\components\Domain\Scheduling\Service\TurnoIndisponibilidadImpactService;
 use common\models\Clinical\Encounter;
-use common\models\ProfesionalEfectorServicio;
-use common\models\ProfesionalEfectorServicioAgenda;
-use common\models\ProfesionalEfectorServicioAgendaVersion;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicioAgenda;
+use common\models\Organization\ProfesionalEfectorServicioAgendaVersion;
 use common\models\Scheduling\Turno;
 use common\components\Domain\Scheduling\Service\TurnoResolucionService;
 use Yii;

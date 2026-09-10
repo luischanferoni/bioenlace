@@ -3,13 +3,13 @@
 namespace common\components\Domain\Organization\Service\SesionOperativa;
 
 use common\models\Clinical\EncounterDefinition;
-use common\models\ProfesionalEfectorServicio;
-use common\models\ProfesionalEfectorServicioAgenda;
-use common\models\ProfesionalEfectorServicioCondicionLaboral;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicioAgenda;
+use common\models\Organization\ProfesionalEfectorServicioCondicionLaboral;
 use common\models\Person\Persona;
-use common\models\Efector;
-use common\models\Servicio;
-use common\models\ServiciosEfector;
+use common\models\Organization\Efector;
+use common\models\Organization\Servicio;
+use common\models\Organization\ServiciosEfector;
 use common\components\Domain\Organization\Service\Entitlement\EfectorEncounterEntitlementService;
 use Yii;
 use yii\base\Component;

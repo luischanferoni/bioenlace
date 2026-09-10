@@ -4,7 +4,7 @@ namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
 use common\models\Clinical\Input\MedicacionInput;
-use common\models\ConsultaMedicamentos;
+use common\models\Clinical\ConsultaMedicamentos;
 
 class MedicacionInputTest extends Unit
 {

@@ -6,13 +6,13 @@ use kartik\select2\Select2;
 use yii\helpers\ArrayHelper;
 use kartik\date\DatePicker;
 use kartik\time\TimePicker;
-use common\models\SegNivelInternacion;
-use common\models\SegNivelInternacionTipoAlta;
-use common\models\Efector;
+use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\SegNivelInternacionTipoAlta;
+use common\models\Organization\Efector;
 use yii\web\JsExpression;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\SegNivelInternacion */
+/* @var $model common\models\Clinical\SegNivelInternacion */
 /* @var $form yii\widgets\ActiveForm */
 ?>
 <div class="seg-nivel-internacion-form">

@@ -12,7 +12,7 @@ use yii\web\User;
  */
 class ConsoleUser extends User
 {
-    public $identityClass = \common\models\User::class;
+    public $identityClass = \common\models\Platform\User::class;
 
     public $enableSession = false;
 

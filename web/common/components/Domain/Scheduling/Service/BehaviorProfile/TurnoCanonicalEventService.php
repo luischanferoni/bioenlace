@@ -3,7 +3,7 @@
 namespace common\components\Domain\Scheduling\Service\BehaviorProfile;
 
 use common\models\Scheduling\Turno;
-use common\models\TurnoEventoAudit;
+use common\models\Scheduling\TurnoEventoAudit;
 use Yii;
 use yii\db\IntegrityException;
 

@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
-use common\models\ReservaTriageTeleconsultaElegibilidad;
+use common\models\Scheduling\ReservaTriageTeleconsultaElegibilidad;
 use common\models\Scheduling\Turno;
 use yii\db\Query;
 

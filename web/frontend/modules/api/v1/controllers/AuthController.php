@@ -6,9 +6,9 @@ use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\UnauthorizedHttpException;
 use common\components\Platform\Assistant\UiActions\AllowedRoutesResolver;
-use common\models\BioenlaceDbManager;
-use common\models\ProfesionalEfectorServicio;
-use common\models\User;
+use common\models\Platform\BioenlaceDbManager;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Platform\User;
 use common\models\Person\Persona;
 use common\components\Domain\Integrations\Identity\DiditClient;
 use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
@@ -455,7 +455,7 @@ class AuthController extends BaseController
         ?string $encounterClass = null,
         bool $autoPes = true
     ): array {
-        $identity = \common\models\User::findOne((int) $user->id);
+        $identity = \common\models\Platform\User::findOne((int) $user->id);
         if (!$identity) {
             throw new \RuntimeException('No se pudo cargar identidad para user_id ' . $user->id);
         }

@@ -5,7 +5,7 @@ namespace frontend\controllers;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Domain\Organization\Service\Authorization\EfectorAccessService;
 use common\components\Domain\Clinical\Inpatient\Service\InternacionEpicrisisPlantillaAdminService;
-use common\models\ServiciosEfector;
+use common\models\Organization\ServiciosEfector;
 use frontend\filters\SisseActionFilter;
 use Yii;
 use yii\filters\VerbFilter;

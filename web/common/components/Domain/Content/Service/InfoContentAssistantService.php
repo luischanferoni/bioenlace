@@ -13,7 +13,7 @@ use common\components\Platform\Assistant\Chat\ChatPreprocessContext;
 use common\components\Platform\Core\Permission\IntentAccessService;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalog;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
-use common\models\InfoContentArticle;
+use common\models\Content\InfoContentArticle;
 use Yii;
 
 /**

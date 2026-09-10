@@ -41,7 +41,7 @@ return [
             'class' => 'yii\caching\FileCache',
         ],
         'authManager' => [
-            'class' => 'common\models\BioenlaceDbManager',
+            'class' => 'common\models\Platform\BioenlaceDbManager',
             'efectorAssignmentTable' => 'profesional_efector_servicio',
             'rolesEspeciales' => ['_x_efector_', '_sin_efector_', 'AdminMinisterio'],
         ],        

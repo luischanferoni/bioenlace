@@ -3,10 +3,10 @@
 use yii\helpers\Html;
 use yii\grid\GridView;
 use yii\helpers\ArrayHelper;
-use common\models\InfraestructuraSala;
+use common\models\Organization\InfraestructuraSala;
 
 /* @var $this yii\web\View */
-/* @var $searchModel common\models\busquedas\InfraestructuraCamaBusqueda */
+/* @var $searchModel common\models\Organization\InfraestructuraCamaBusqueda */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
 $this->title = 'Camas';

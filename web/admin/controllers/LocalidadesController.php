@@ -9,9 +9,9 @@
 namespace admin\controllers;
 
 use Yii;
-use common\models\Localidad;
-use common\models\Departamento;
-use common\models\busquedas\LocalidadBusqueda;
+use common\models\Geo\Localidad;
+use common\models\Geo\Departamento;
+use common\models\Geo\LocalidadBusqueda;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;

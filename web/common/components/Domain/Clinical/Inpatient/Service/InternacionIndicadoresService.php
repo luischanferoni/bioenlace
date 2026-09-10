@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Inpatient\Service;
 
-use common\models\SegNivelInternacion;
+use common\models\Clinical\SegNivelInternacion;
 use yii\db\ActiveQuery;
 
 /**

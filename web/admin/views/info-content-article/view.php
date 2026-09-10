@@ -2,10 +2,10 @@
 
 use yii\helpers\Html;
 use yii\widgets\DetailView;
-use common\models\InfoContentArticle;
+use common\models\Content\InfoContentArticle;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\InfoContentArticle */
+/* @var $model common\models\Content\InfoContentArticle */
 
 $this->title = $model->title;
 $this->params['breadcrumbs'][] = ['label' => 'Contenido informativo', 'url' => ['index']];

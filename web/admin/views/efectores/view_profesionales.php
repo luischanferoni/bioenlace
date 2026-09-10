@@ -6,15 +6,15 @@ use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
 use yii\web\JsExpression;
 
-use common\models\User;
+use common\models\Platform\User;
 use kartik\select2\Select2;
 
-use common\models\ProfesionalEfectorServicio;
-use common\models\Servicio;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Organization\Servicio;
 use common\models\Person\Persona;
 
 /* @var $this yii\web\View */
-/* @var $searchModel common\models\busquedas\ProfesionalEfectorServicioBusqueda */
+/* @var $searchModel common\models\Organization\ProfesionalEfectorServicioBusqueda */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
 $efCtx = $searchModel->efector;

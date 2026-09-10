@@ -9,7 +9,7 @@ use common\components\Domain\Clinical\Service\ServiceRequestService;
 use common\models\Clinical\DiagnosticReport;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\ServiceRequest;
-use common\models\Guardia;
+use common\models\Clinical\Guardia;
 
 /**
  * Pedidos y laboratorio del episodio de guardia (encounter EMER con parent GUARDIA).

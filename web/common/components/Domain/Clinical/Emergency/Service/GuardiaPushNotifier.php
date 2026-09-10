@@ -5,9 +5,9 @@ namespace common\components\Domain\Clinical\Emergency\Service;
 use common\components\Domain\Clinical\Emergency\Enum\TriageScale;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\components\Platform\Core\Service\Push\PushNotificationTypes;
-use common\models\Guardia;
+use common\models\Clinical\Guardia;
 use common\models\Person\Persona;
-use common\models\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicio;
 
 /**
  * Notificaciones push del circuito de guardia (staff).

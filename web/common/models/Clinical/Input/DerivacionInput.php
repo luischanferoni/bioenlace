@@ -8,8 +8,8 @@ use common\components\Domain\Clinical\Access\PedidoAtencionActoCoderInterface;
 use common\components\Domain\Clinical\Access\PedidoAtencionActoCodingService;
 use common\components\Domain\Clinical\Access\PedidoAtencionMetadata;
 use common\components\Domain\Clinical\Access\PedidoAtencionService;
-use common\models\ConsultaDerivaciones;
-use common\models\Servicio;
+use common\models\Clinical\ConsultaDerivaciones;
+use common\models\Organization\Servicio;
 use yii\base\Model;
 
 /**

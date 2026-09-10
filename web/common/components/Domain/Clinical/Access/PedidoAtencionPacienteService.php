@@ -294,10 +294,10 @@ final class PedidoAtencionPacienteService
         }
 
         $ids = array_map(static fn (array $l) => (int) $l['id'], $lineas);
-        $ok = \common\models\Servicio::find()
+        $ok = \common\models\Organization\Servicio::find()
             ->select(['id_servicio'])
             ->where(['id_servicio' => $ids, 'acepta_turnos' => 'SI'])
-            ->andWhere(['<>', 'tipo', \common\models\Servicio::TIPO_SOPORTE])
+            ->andWhere(['<>', 'tipo', \common\models\Organization\Servicio::TIPO_SOPORTE])
             ->column();
         $okSet = array_fill_keys(array_map('intval', $ok), true);
 
@@ -315,10 +315,10 @@ final class PedidoAtencionPacienteService
         $q = (new \yii\db\Query())
             ->from(['a' => \common\models\Clinical\ActoClinico::tableName()])
             ->innerJoin(['la' => \common\models\Clinical\LineaActo::tableName()], 'la.id_acto = a.id')
-            ->innerJoin(['s' => \common\models\Servicio::tableName()], 's.id_servicio = la.id_servicio')
+            ->innerJoin(['s' => \common\models\Organization\Servicio::tableName()], 's.id_servicio = la.id_servicio')
             ->select(['a.code', 'a.code_system', 'a.display', 'a.fhir_category'])
             ->where(['s.acepta_turnos' => 'SI'])
-            ->andWhere(['<>', 's.tipo', \common\models\Servicio::TIPO_SOPORTE])
+            ->andWhere(['<>', 's.tipo', \common\models\Organization\Servicio::TIPO_SOPORTE])
             ->andWhere(['not in', 'a.fhir_category', ['consultation', 'referral']]);
         $rows = $q->distinct()->orderBy(['a.display' => SORT_ASC])->all();
 

@@ -3,12 +3,15 @@
 namespace common\components\Platform\Assistant\Preprocess;
 
 use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
+use common\components\Platform\Assistant\Service\HintCandidateProviderRegistry;
 use common\components\Platform\Core\Product\ProductMetadataPaths;
 
 /**
- * Catálogo cerrado de categorías para extractions del preprocess.
+ * Catálogo de categorías de extractions del preprocess.
  *
- * Definiciones: {@see catalog/preprocess-extraction-categories.yaml}.
+ * - **Ids**: los declaran los dominios vía {@see HintCandidateProviderInterface::declaredEntities()}.
+ * - **Texto** para el prompt: YAML `preprocess-extraction-categories.yaml` (id → descripción).
+ * - Un test cierra el círculo: id sin texto / texto sin id → falla.
  */
 final class PreprocessExtractionCategoryCatalog
 {
@@ -23,7 +26,7 @@ final class PreprocessExtractionCategoryCatalog
      */
     public static function all(): array
     {
-        self::loadCatalog();
+        self::ensureLoaded();
 
         return self::$idsCache ?? [];
     }
@@ -41,13 +44,14 @@ final class PreprocessExtractionCategoryCatalog
         if ($id === '') {
             return '';
         }
-        self::loadCatalog();
+        self::ensureLoaded();
 
         return self::$descriptionCache[$id] ?? '';
     }
 
     /**
      * Lista `- clave — descripción` para placeholders de prompt.
+     * Solo entidades declaradas por un dominio (con texto del YAML).
      */
     public static function listForPrompt(): string
     {
@@ -60,39 +64,58 @@ final class PreprocessExtractionCategoryCatalog
         return implode("\n", $lines);
     }
 
+    /**
+     * Textos del YAML (pueden incluir huérfanos; el test de source-of-truth los marca).
+     *
+     * @return array<string, string>
+     */
+    public static function textsFromYaml(): array
+    {
+        self::loadYamlTexts();
+
+        return self::$descriptionCache ?? [];
+    }
+
     public static function resetCacheForTests(): void
     {
         self::$idsCache = null;
         self::$descriptionCache = null;
+        HintCandidateProviderRegistry::resetForTests();
     }
 
-    private static function loadCatalog(): void
+    private static function ensureLoaded(): void
     {
         if (self::$idsCache !== null) {
+            return;
+        }
+
+        self::loadYamlTexts();
+        self::$idsCache = HintCandidateProviderRegistry::allDeclaredEntities();
+    }
+
+    private static function loadYamlTexts(): void
+    {
+        if (self::$descriptionCache !== null) {
             return;
         }
 
         $config = AssistantMetadataLoader::load(ProductMetadataPaths::preprocessExtractionCategoriesFile());
         $raw = $config['categories'] ?? [];
         if (!is_array($raw)) {
-            self::$idsCache = [];
             self::$descriptionCache = [];
 
             return;
         }
 
-        $ids = [];
         $descriptions = [];
         foreach ($raw as $id => $desc) {
             $id = trim((string) $id);
             if ($id === '') {
                 continue;
             }
-            $ids[] = $id;
             $descriptions[$id] = trim((string) $desc);
         }
 
-        self::$idsCache = $ids;
         self::$descriptionCache = $descriptions;
     }
 }

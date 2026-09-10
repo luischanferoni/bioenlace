@@ -2,11 +2,11 @@
 
 /**
  * @var yii\web\View $this
- * @var common\models\forms\ChangeOwnPasswordForm $model
+ * @var common\models\Platform\ChangeOwnPasswordForm $model
  * @var string|null $title
  */
 
-use common\models\forms\ChangeOwnPasswordForm;
+use common\models\Platform\ChangeOwnPasswordForm;
 use yii\bootstrap5\ActiveForm;
 use yii\helpers\Html;
 

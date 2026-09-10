@@ -5,7 +5,7 @@ namespace common\models\Clinical;
 use yii\db\ActiveRecord;
 
 /**
- * Indicaciones de régimen / dieta (ex {@see \common\models\ConsultaRegimen}).
+ * Indicaciones de régimen / dieta (ex {@see \common\models\Clinical\ConsultaRegimen}).
  */
 class NutritionOrder extends ActiveRecord
 {

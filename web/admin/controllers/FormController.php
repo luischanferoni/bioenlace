@@ -6,13 +6,13 @@ use Yii;
 use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\filters\VerbFilter;
-use common\models\Efector;
+use common\models\Organization\Efector;
 use common\models\Person\Persona;
 use yii\httpclient\Client;
 use yii\base\DynamicModel;
-use common\models\Barrios;
+use common\models\Geo\Barrios;
 //agregamos el modulo de la extension para el control de acceso
-use common\models\User;
+use common\models\Platform\User;
 
 class FormController extends Controller
 {

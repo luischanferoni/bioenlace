@@ -822,7 +822,7 @@ final class CatalogIntegrityService
 
         foreach ($rows as $row) {
             $raw = trim((string) ($row['intent_ids'] ?? ''));
-            foreach (\common\models\InfoContentArticle::splitCsv($raw) as $intentId) {
+            foreach (\common\models\Content\InfoContentArticle::splitCsv($raw) as $intentId) {
                 if (IntentManifestIndex::get($intentId) === null) {
                     $warnings[] = 'info_content_article id=' . (int) $row['id']
                         . ' topic=' . (string) $row['topic']

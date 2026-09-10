@@ -6,9 +6,9 @@ use Yii;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
-use common\models\SensibilidadMapeoSnomed;
-use common\models\SensibilidadCategoria;
-use common\models\busquedas\SensibilidadMapeoSnomedBusqueda;
+use common\models\Clinical\SensibilidadMapeoSnomed;
+use common\models\Clinical\SensibilidadCategoria;
+use common\models\Clinical\SensibilidadMapeoSnomedBusqueda;
 
 /**
  * CRUD del mapeo código SNOMED → categoría de sensibilidad.

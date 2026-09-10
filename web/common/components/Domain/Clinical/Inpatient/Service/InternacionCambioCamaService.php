@@ -2,11 +2,11 @@
 
 namespace common\components\Domain\Clinical\Inpatient\Service;
 
-use common\models\InfraestructuraCama;
+use common\models\Organization\InfraestructuraCama;
 use common\models\Person\Persona;
-use common\models\SegNivelInternacion;
-use common\models\SegNivelInternacionHcama;
-use common\models\SegNivelInternacionRepository;
+use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\SegNivelInternacionHcama;
+use common\models\Clinical\SegNivelInternacionRepository;
 
 /**
  * Cambio de cama durante un episodio de internación activo (staff).

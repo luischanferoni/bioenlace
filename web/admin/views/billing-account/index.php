@@ -1,11 +1,11 @@
 <?php
 
-use common\models\BillingAccount;
+use common\models\Organization\BillingAccount;
 use yii\grid\GridView;
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
-/* @var $searchModel common\models\busquedas\BillingAccountBusqueda */
+/* @var $searchModel common\models\Organization\BillingAccountBusqueda */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
 $this->title = 'Licencias / Contratos';

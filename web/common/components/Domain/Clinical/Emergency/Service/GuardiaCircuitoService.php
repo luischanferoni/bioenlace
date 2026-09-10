@@ -4,8 +4,8 @@ namespace common\components\Domain\Clinical\Emergency\Service;
 
 use common\components\Domain\Clinical\Emergency\Enum\CircuitoEstado;
 use common\components\Domain\Clinical\Emergency\Enum\CircuitoEventType;
-use common\models\Emergency\GuardiaCircuitoEvent;
-use common\models\Guardia;
+use common\models\Clinical\Emergency\GuardiaCircuitoEvent;
+use common\models\Clinical\Guardia;
 use Yii;
 
 final class GuardiaCircuitoService

@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\Service\EncounterJourney;
 
 use common\models\Clinical\Encounter;
 use common\models\Scheduling\Turno;
-use common\models\TurnoNotificacionProgramada;
+use common\models\Scheduling\TurnoNotificacionProgramada;
 
 /**
  * Programa recordatorios del journey desde metadata de ventanas.

@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\Access;
 
 use common\models\Clinical\ActoClinico;
 use common\models\Clinical\LineaActo;
-use common\models\Servicio;
+use common\models\Organization\Servicio;
 use yii\db\Query;
 
 /**

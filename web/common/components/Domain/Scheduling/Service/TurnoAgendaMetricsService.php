@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
-use common\models\TurnoEventoAudit;
+use common\models\Scheduling\TurnoEventoAudit;
 use yii\db\Query;
 
 /**

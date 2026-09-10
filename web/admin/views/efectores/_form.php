@@ -1,7 +1,7 @@
 <?php
 
 use common\components\Platform\Core\Product\EfectorAtributosMetadata;
-use common\models\Provincia;
+use common\models\Geo\Provincia;
 use kartik\depdrop\DepDrop;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
@@ -9,7 +9,7 @@ use yii\helpers\Url;
 use yii\widgets\ActiveForm;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\Efector */
+/* @var $model common\models\Organization\Efector */
 /* @var $form yii\widgets\ActiveForm */
 
 $localidad = $model->localidad;

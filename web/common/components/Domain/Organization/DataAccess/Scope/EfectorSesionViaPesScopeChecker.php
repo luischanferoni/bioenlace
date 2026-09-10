@@ -7,7 +7,7 @@ use common\components\Platform\Core\DataAccess\QuerySpec;
 use common\components\Platform\Core\DataAccess\ScopeCheckerInterface;
 use common\components\Platform\Core\DataAccess\ScopeConstraint;
 use common\components\Domain\Organization\Service\Efectores\OrganizationEfectorAccess;
-use common\models\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicio;
 use Yii;
 
 /**

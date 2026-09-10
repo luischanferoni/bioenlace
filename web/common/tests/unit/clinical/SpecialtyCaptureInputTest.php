@@ -6,8 +6,8 @@ use Codeception\Test\Unit;
 use common\components\Domain\Clinical\Workflow\EncounterCaptureCompletenessValidator;
 use common\models\Clinical\Input\OdontologiaItemInput;
 use common\models\Clinical\Input\OftalmologiaEstudioInput;
-use common\models\ConsultaOdontologiaPracticas;
-use common\models\ConsultaPracticasOftalmologiaEstudios;
+use common\models\Clinical\ConsultaOdontologiaPracticas;
+use common\models\Clinical\ConsultaPracticasOftalmologiaEstudios;
 
 class SpecialtyCaptureInputTest extends Unit
 {

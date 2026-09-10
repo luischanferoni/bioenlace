@@ -2,13 +2,13 @@
 
 namespace common\models\Clinical;
 
-use common\models\Servicio;
+use common\models\Organization\Servicio;
 use yii\db\ActiveRecord;
 
 /**
  * Caché / catálogo de acto clínico codificado (SNOMED / LOINC) — ServiceRequest.code.
  *
- * No es un {@see \common\models\Servicio}: el servicio es la oferta del centro;
+ * No es un {@see \common\models\Organization\Servicio}: el servicio es la oferta del centro;
  * el acto es qué se pide o realiza. Fuente de verdad terminológica: Snowstorm.
  *
  * Glosario: `docs/producto/glosario-servicio-pes-acto.md`

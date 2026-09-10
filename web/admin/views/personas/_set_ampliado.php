@@ -7,14 +7,14 @@ use yii\bootstrap5\ActiveField;
 use nex\chosen\Chosen;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
-use common\models\Provincia;
-use common\models\Departamento;
-use common\models\Barrios;
+use common\models\Geo\Provincia;
+use common\models\Geo\Departamento;
+use common\models\Geo\Barrios;
 use kartik\depdrop\DepDrop;
 use wbraganca\dynamicform\DynamicFormWidget;
 use kartik\select2\Select2;
 
-$localidades = \common\models\Localidad::find()->indexBy('id_localidad')->asArray()->all();
+$localidades = \common\models\Geo\Localidad::find()->indexBy('id_localidad')->asArray()->all();
 $lista_localidades = \yii\helpers\ArrayHelper::map($localidades, 'id_localidad', 'nombre');
 ?>
 <style type="text/css">
@@ -72,7 +72,7 @@ $lista_localidades = \yii\helpers\ArrayHelper::map($localidades, 'id_localidad',
             </div>
             <div class="col-sm-4">
                 <?= $form->field($model, 'id_estado_civil', ['labelOptions' =>  ['class' => 'col-sm-4 control-label align-self-center mb-0']])->dropDownList(
-                    common\models\EstadoCivil::getListaEstadosCiviles(),
+                    common\models\Person\EstadoCivil::getListaEstadosCiviles(),
                     ['prompt' => 'Elija una opcion']
                 ); ?>
             </div>
@@ -135,7 +135,7 @@ $lista_localidades = \yii\helpers\ArrayHelper::map($localidades, 'id_localidad',
                     <div class="form-group row mb-5">
                         <div class="col-sm-5">
                             <?php echo $form->field($model_persona_tel, "[{$i}]id_tipo_telefono", ['labelOptions' =>  ['class' => 'col-sm-4 control-label align-self-center mb-0']])->dropdownList(
-                                common\models\Tipo_telefono::getTiposTelefonoxCategoria('PERSONA'),
+                                common\models\Person\Tipo_telefono::getTiposTelefonoxCategoria('PERSONA'),
                                 ['prompt' => 'Seleccione una opcion']
                             )->label('Tipo de Teléfono'); ?>
                         </div>

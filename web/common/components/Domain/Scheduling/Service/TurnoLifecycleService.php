@@ -8,9 +8,9 @@ use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use Yii;
 use yii\db\Expression;
 use common\models\Scheduling\Turno;
-use common\models\TurnoNotificacionProgramada;
-use common\models\TurnoEventoAudit;
-use common\models\TurnoResolucion;
+use common\models\Scheduling\TurnoNotificacionProgramada;
+use common\models\Scheduling\TurnoEventoAudit;
+use common\models\Scheduling\TurnoResolucion;
 
 class TurnoLifecycleService
 {
@@ -364,8 +364,8 @@ class TurnoLifecycleService
         $afterPes = (int) ($after['id_profesional_efector_servicio'] ?? 0);
         $beforeFecha = trim((string) ($before['fecha'] ?? ''));
         $afterFecha = trim((string) ($after['fecha'] ?? ''));
-        $beforeHora = substr(\common\models\TurnoResolucion::normalizarHora((string) ($before['hora'] ?? '')), 0, 5);
-        $afterHora = substr(\common\models\TurnoResolucion::normalizarHora((string) ($after['hora'] ?? '')), 0, 5);
+        $beforeHora = substr(\common\models\Scheduling\TurnoResolucion::normalizarHora((string) ($before['hora'] ?? '')), 0, 5);
+        $afterHora = substr(\common\models\Scheduling\TurnoResolucion::normalizarHora((string) ($after['hora'] ?? '')), 0, 5);
 
         if ($beforePes === $afterPes && $beforeFecha === $afterFecha && $beforeHora === $afterHora) {
             return;

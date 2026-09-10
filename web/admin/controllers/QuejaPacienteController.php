@@ -7,7 +7,7 @@ use yii\web\Controller;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
-use common\models\QuejaPaciente;
+use common\models\Platform\QuejaPaciente;
 
 /**
  * Bandeja de quejas de pacientes (solo superadmin).

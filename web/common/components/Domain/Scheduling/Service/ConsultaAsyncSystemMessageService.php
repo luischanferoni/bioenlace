@@ -4,7 +4,7 @@ namespace common\components\Domain\Scheduling\Service;
 
 use common\components\Domain\Clinical\Enum\EncounterStatus;
 use common\models\Clinical\Encounter;
-use common\models\ConsultaChatMessage;
+use common\models\Clinical\ConsultaChatMessage;
 
 /**
  * Mensajes de sistema en chat async (message_type sistema).

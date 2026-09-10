@@ -7,7 +7,7 @@ use common\components\Domain\Clinical\Emergency\Enum\CircuitoEventType;
 use common\components\Domain\Clinical\PatientHistoriaUrl;
 use common\components\Domain\Organization\Service\ProfesionalHorario\ProfesionalHorarioActivaService;
 use common\models\Clinical\Encounter;
-use common\models\Guardia;
+use common\models\Clinical\Guardia;
 use Yii;
 
 /**

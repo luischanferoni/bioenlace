@@ -10,8 +10,8 @@ use common\components\Platform\Assistant\Planning\AssistantPlanningLogService;
 use common\components\Platform\Assistant\Preprocess\PreprocessRoutingHintCatalog;
 use common\components\Platform\Assistant\Service\AssistantDraftNormalizer;
 use common\models\Person\Persona;
-use common\models\ProfesionalEfectorServicio;
-use common\models\User;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Platform\User;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
 

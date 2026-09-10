@@ -5,9 +5,9 @@ namespace common\components\Domain\Clinical\Emergency\Service;
 use common\components\Domain\Clinical\Emergency\Enum\CircuitoEstado;
 use common\models\Clinical\DiagnosticReport;
 use common\models\Clinical\ServiceRequest;
-use common\models\Efector;
-use common\models\Emergency\GuardiaTriage;
-use common\models\Guardia;
+use common\models\Organization\Efector;
+use common\models\Clinical\Emergency\GuardiaTriage;
+use common\models\Clinical\Guardia;
 use common\models\Person\Persona;
 use yii\db\ActiveQuery;
 

@@ -4,12 +4,12 @@ namespace common\components\Domain\Clinical\Home;
 
 use Yii;
 use common\components\Domain\Clinical\Service\EncounterAppointmentReasonLookupService;
-use common\models\Cirugia;
-use common\models\InfraestructuraPiso;
+use common\models\Scheduling\Cirugia;
+use common\models\Organization\InfraestructuraPiso;
 use common\models\Person\Persona;
-use common\models\ProfesionalEfectorServicio;
-use common\models\QuirofanoSala;
-use common\models\ServiciosEfector;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Scheduling\QuirofanoSala;
+use common\models\Organization\ServiciosEfector;
 use common\components\Domain\Scheduling\Service\ReservaModalidadAtencionCatalogService;
 use common\components\Domain\Scheduling\Service\StaffTurnoModalidadInsightService;
 use common\models\Scheduling\Turno;

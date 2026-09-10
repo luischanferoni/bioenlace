@@ -4,7 +4,7 @@ use yii\helpers\Html;
 use yii\grid\GridView;
 
 /* @var $this yii\web\View */
-/* @var $searchModel common\models\busquedas\SensibilidadMapeoSnomedBusqueda */
+/* @var $searchModel common\models\Clinical\SensibilidadMapeoSnomedBusqueda */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
 $this->title = 'Mapeo SNOMED → sensibilidad';
@@ -33,9 +33,9 @@ $this->params['breadcrumbs'][] = $this->title;
                         [
                             'attribute' => 'tabla_snomed',
                             'value' => function ($model) {
-                                return \common\models\SensibilidadMapeoSnomed::TABLAS[$model->tabla_snomed] ?? $model->tabla_snomed;
+                                return \common\models\Clinical\SensibilidadMapeoSnomed::TABLAS[$model->tabla_snomed] ?? $model->tabla_snomed;
                             },
-                            'filter' => \common\models\SensibilidadMapeoSnomed::TABLAS,
+                            'filter' => \common\models\Clinical\SensibilidadMapeoSnomed::TABLAS,
                         ],
                         'codigo',
                         [
@@ -50,7 +50,7 @@ $this->params['breadcrumbs'][] = $this->title;
                             'value' => function ($model) {
                                 return $model->categoria ? $model->categoria->nombre : '';
                             },
-                            'filter' => \yii\helpers\ArrayHelper::map(\common\models\SensibilidadCategoria::find()->orderBy('nombre')->all(), 'id', 'nombre'),
+                            'filter' => \yii\helpers\ArrayHelper::map(\common\models\Clinical\SensibilidadCategoria::find()->orderBy('nombre')->all(), 'id', 'nombre'),
                         ],
                         ['class' => 'yii\grid\ActionColumn'],
                     ],

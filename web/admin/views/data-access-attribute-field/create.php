@@ -3,7 +3,7 @@
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\DataAccess\DataAccessAttributeField */
+/* @var $model common\models\Platform\DataAccess\DataAccessAttributeField */
 
 $this->title = 'Nuevo campo';
 $this->params['breadcrumbs'][] = ['label' => 'Campos por grupo', 'url' => ['index']];

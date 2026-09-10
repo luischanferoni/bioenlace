@@ -8,8 +8,8 @@ use common\components\Domain\Clinical\Service\PatientActiveCarePlanQuery;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\CarePlanActivity;
 use common\models\Clinical\ServiceRequest;
-use common\models\ProfesionalEfectorServicio;
-use common\models\Servicio;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Organization\Servicio;
 
 /**
  * Servicios reservables sugeridos desde un care plan activo del paciente (seguimiento crónico).

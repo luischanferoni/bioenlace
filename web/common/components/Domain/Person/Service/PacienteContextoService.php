@@ -4,7 +4,7 @@ namespace common\components\Domain\Person\Service;
 
 use common\models\Person\Persona;
 use common\models\Person\PersonaPacienteContexto;
-use common\models\Provincia;
+use common\models\Geo\Provincia;
 use Yii;
 
 /**

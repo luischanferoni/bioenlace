@@ -2,10 +2,10 @@
 
 namespace common\components\Platform\Core\Auth;
 
-use common\models\LoginForm;
+use common\models\Platform\LoginForm;
 use common\models\Person\Persona;
-use common\models\ProfesionalEfectorServicio;
-use common\models\User;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Platform\User;
 
 /**
  * Login usuario/contraseña para app móvil Personal de Salud (primera vez en el dispositivo).

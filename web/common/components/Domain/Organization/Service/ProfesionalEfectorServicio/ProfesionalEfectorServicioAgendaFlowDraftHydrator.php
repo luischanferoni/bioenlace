@@ -4,8 +4,8 @@ namespace common\components\Domain\Organization\Service\ProfesionalEfectorServic
 
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Domain\Organization\Service\Authorization\ProfesionalEfectorServicioDomainAuthorizationService;
-use common\models\ProfesionalEfectorServicio;
-use common\models\Servicio;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Organization\Servicio;
 use Yii;
 use yii\web\ForbiddenHttpException;
 

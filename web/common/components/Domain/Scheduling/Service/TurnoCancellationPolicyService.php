@@ -5,8 +5,8 @@ namespace common\components\Domain\Scheduling\Service;
 use common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoBehaviorProfileReader;
 use common\models\Scheduling\Turno;
 use common\models\Scheduling\PersonaTurnosPerfilMetrica;
-use common\models\EfectorTurnosConfig;
-use common\models\PersonaEfectorAutogestionLiberacion;
+use common\models\Scheduling\EfectorTurnosConfig;
+use common\models\Scheduling\PersonaEfectorAutogestionLiberacion;
 
 /**
  * Política suave → moderada sobre autogestión (app), no sobre derecho a cancelar en persona/llamada.

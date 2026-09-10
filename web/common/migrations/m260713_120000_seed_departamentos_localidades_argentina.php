@@ -1,7 +1,7 @@
 <?php
 
-use common\components\Domain\Person\Service\Seed\DepartamentosLocalidadesArgentinaSeedService;
-use common\components\Domain\Person\Service\Seed\ProvinciasArgentinaSeedService;
+use common\components\Domain\Geo\Service\Seed\DepartamentosLocalidadesArgentinaSeedService;
+use common\components\Domain\Geo\Service\Seed\ProvinciasArgentinaSeedService;
 use yii\db\Migration;
 
 /**

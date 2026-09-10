@@ -7,11 +7,11 @@ use common\components\Platform\Agent\AutonomousAgentRuleEngine;
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\components\Platform\Core\Service\Push\PushNotificationTypes;
-use common\models\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Person\Persona;
 use common\models\Scheduling\Turno;
-use common\models\TurnoNotificacionProgramada;
-use common\models\TurnoResolucion;
+use common\models\Scheduling\TurnoNotificacionProgramada;
+use common\models\Scheduling\TurnoResolucion;
 use Yii;
 
 /**
@@ -126,7 +126,7 @@ final class TurnoResolucionLoopCloseAgent
                 'agent_id' => self::AGENT_ID,
             ],
             false,
-            \common\models\TurnoEventoAudit::ACTOR_SISTEMA
+            \common\models\Scheduling\TurnoEventoAudit::ACTOR_SISTEMA
         );
 
         $msgs = is_array($config['patient_messages'] ?? null) ? $config['patient_messages'] : [];

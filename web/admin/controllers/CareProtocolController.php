@@ -4,7 +4,7 @@ namespace admin\controllers;
 
 use common\components\Domain\Clinical\Service\CareProtocolAdminService;
 use common\models\Clinical\CareProtocol;
-use common\models\Provincia;
+use common\models\Geo\Provincia;
 use Yii;
 use yii\filters\VerbFilter;
 use yii\helpers\ArrayHelper;

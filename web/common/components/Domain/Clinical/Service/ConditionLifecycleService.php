@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\Service;
 
 use common\components\Domain\Clinical\Enum\ConditionClinicalStatus;
 use common\models\Clinical\Condition;
-use common\models\DiagnosticoConsulta;
+use common\models\Clinical\DiagnosticoConsulta;
 
 /**
  * Ciclo de vida de Condition (diagnósticos / problemas activos).

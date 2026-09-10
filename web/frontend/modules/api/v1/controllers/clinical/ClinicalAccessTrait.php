@@ -10,7 +10,7 @@ use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenEx
 use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;
-use common\models\SegNivelInternacion;
+use common\models\Clinical\SegNivelInternacion;
 use Yii;
 use yii\web\ForbiddenHttpException;
 

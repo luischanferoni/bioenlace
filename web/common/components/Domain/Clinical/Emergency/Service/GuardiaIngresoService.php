@@ -8,13 +8,13 @@ use common\components\Domain\Person\Service\PersonaBusquedaAsistenteUiService;
 use common\components\Domain\Person\Service\PersonaIdentidadPendienteService;
 use common\components\Domain\Person\Service\PersonaIdentidadResolverService;
 use common\components\Platform\Ui\Home\Service\HomePanelManifest;
-use common\models\Guardia;
-use common\models\InfraestructuraCama;
-use common\models\InfraestructuraPiso;
-use common\models\InfraestructuraSala;
+use common\models\Clinical\Guardia;
+use common\models\Organization\InfraestructuraCama;
+use common\models\Organization\InfraestructuraPiso;
+use common\models\Organization\InfraestructuraSala;
 use common\models\Person\Persona;
 use common\models\Scheduling\Turno;
-use common\models\SegNivelInternacion;
+use common\models\Clinical\SegNivelInternacion;
 use Yii;
 use yii\db\Query;
 

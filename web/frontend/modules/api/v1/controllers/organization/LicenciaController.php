@@ -8,7 +8,7 @@ use common\components\Domain\Organization\Service\Billing\InstitutionalEfectorSi
 use common\components\Domain\Organization\Service\Billing\MinistrySignupRequestService;
 use common\components\Platform\Core\Auth\DemoSandboxAccessService;
 use common\components\Platform\Core\Auth\DemoSandboxCaptchaService;
-use common\models\User;
+use common\models\Platform\User;
 use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;

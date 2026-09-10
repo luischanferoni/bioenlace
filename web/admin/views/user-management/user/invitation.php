@@ -2,15 +2,15 @@
 
 use common\components\Platform\Core\Auth\StaffAccountInvitationService;
 use common\components\Platform\Legacy\UserManagementCompat;
-use common\models\User;
-use common\models\UserAccountInvitationLog;
+use common\models\Platform\User;
+use common\models\Platform\UserAccountInvitationLog;
 use yii\helpers\Html;
 use yii\helpers\Url;
 
 /**
  * @var yii\web\View $this
  * @var User $model
- * @var list<\common\models\UserAccountInvitationLog> $logs
+ * @var list<\common\models\Platform\UserAccountInvitationLog> $logs
  * @var string|null $continueUrl
  */
 

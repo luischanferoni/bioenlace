@@ -3,8 +3,8 @@
 namespace admin\controllers;
 
 use common\components\Platform\Core\Auth\StaffAccountInvitationService;
-use common\models\search\UserSearch;
-use common\models\User;
+use common\models\Platform\UserSearch;
+use common\models\Platform\User;
 use common\components\Platform\Ui\Grid\GridAdminActionsTrait;
 use Yii;
 use yii\filters\VerbFilter;
@@ -136,7 +136,7 @@ class UserAccountController extends Controller
 
         return $this->render(self::VIEW_PREFIX . '/invitation', [
             'model' => $model,
-            'logs' => \common\models\UserAccountInvitationLog::listForUser((int) $model->id),
+            'logs' => \common\models\Platform\UserAccountInvitationLog::listForUser((int) $model->id),
             'continueUrl' => $continue,
         ]);
     }

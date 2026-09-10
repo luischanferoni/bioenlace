@@ -9,8 +9,8 @@ use common\components\Platform\Core\Product\AutonomousAgentMetadata;
 use common\models\Scheduling\Turno;
 use common\models\Scheduling\TurnoAdvanceCampaign;
 use common\models\Scheduling\TurnoAdvanceOffer;
-use common\models\TurnoEventoAudit;
-use common\models\TurnoResolucion;
+use common\models\Scheduling\TurnoEventoAudit;
+use common\models\Scheduling\TurnoResolucion;
 use Yii;
 
 /**

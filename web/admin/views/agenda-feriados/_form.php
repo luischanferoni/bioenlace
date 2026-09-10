@@ -5,7 +5,7 @@ use yii\bootstrap5\ActiveForm;
 use kartik\date\DatePicker;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\AgendaFeriados */
+/* @var $model common\models\Scheduling\AgendaFeriados */
 /* @var $form yii\widgets\ActiveForm */
 ?>
 <style>

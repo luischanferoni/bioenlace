@@ -3,7 +3,7 @@
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\EncuestaParchesMamarios */
+/* @var $model common\models\Clinical\EncuestaParchesMamarios */
 
 $this->title = 'Encuesta Parches Mamarios';
 $this->params['breadcrumbs'][] = ['label' => 'Personas', 'url' => ['personas/buscar-persona']];

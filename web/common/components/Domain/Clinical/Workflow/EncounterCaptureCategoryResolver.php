@@ -11,8 +11,8 @@ use common\models\Clinical\CarePlan;
 use common\models\Clinical\CarePlanActivity;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterDefinition;
-use common\models\Servicio;
-use common\models\User;
+use common\models\Organization\Servicio;
+use common\models\Platform\User;
 use Yii;
 
 /**

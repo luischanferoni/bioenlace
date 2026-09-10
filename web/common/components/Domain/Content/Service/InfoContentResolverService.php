@@ -4,7 +4,7 @@ namespace common\components\Domain\Content\Service;
 
 use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
 use common\components\Platform\Core\Permission\IntentAccessService;
-use common\models\InfoContentArticle;
+use common\models\Content\InfoContentArticle;
 
 /**
  * Resuelve el artículo informativo más específico para un tema dado,
@@ -172,15 +172,15 @@ final class InfoContentResolverService
     private static function provinciaFromEfector(int $idEfector): ?int
     {
         try {
-            $efector = \common\models\Efector::findOne($idEfector);
+            $efector = \common\models\Organization\Efector::findOne($idEfector);
             if ($efector === null || empty($efector->id_localidad)) {
                 return null;
             }
-            $localidad = \common\models\Localidad::findOne($efector->id_localidad);
+            $localidad = \common\models\Geo\Localidad::findOne($efector->id_localidad);
             if ($localidad === null) {
                 return null;
             }
-            $depto = \common\models\Departamento::findOne($localidad->id_departamento);
+            $depto = \common\models\Geo\Departamento::findOne($localidad->id_departamento);
 
             return $depto !== null ? (int) $depto->id_provincia : null;
         } catch (\Throwable $e) {

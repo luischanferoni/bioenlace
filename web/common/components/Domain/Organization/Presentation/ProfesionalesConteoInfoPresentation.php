@@ -4,7 +4,7 @@ namespace common\components\Domain\Organization\Presentation;
 
 use common\components\Platform\Core\DataAccess\MetricExecutionResult;
 use common\components\Platform\Core\DataAccess\Presentation\MetricInfoPresentationHandlerInterface;
-use common\models\Efector;
+use common\models\Organization\Efector;
 
 /**
  * Texto de resumen para métrica profesionales_conteo_efector.

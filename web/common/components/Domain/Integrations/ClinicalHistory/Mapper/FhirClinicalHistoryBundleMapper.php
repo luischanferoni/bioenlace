@@ -10,9 +10,9 @@ use common\models\Clinical\Encounter;
 use common\models\Clinical\MedicationRequest;
 use common\models\Clinical\ServiceRequest;
 use common\components\Domain\Clinical\Prescription\Enum\PrescriptionLegalStatus;
-use common\models\Efector;
+use common\models\Organization\Efector;
 use common\models\Person\Persona;
-use common\models\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicio;
 
 /**
  * Arma Bundle FHIR documental para export interoperable.

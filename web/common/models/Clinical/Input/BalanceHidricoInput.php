@@ -2,7 +2,7 @@
 
 namespace common\models\Clinical\Input;
 
-use common\models\ConsultaBalanceHidrico;
+use common\models\Clinical\ConsultaBalanceHidrico;
 use yii\base\Model;
 
 /**

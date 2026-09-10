@@ -3,7 +3,7 @@
 namespace common\tests\unit\person;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Person\Service\Seed\ProvinciasArgentinaSeedService;
+use common\components\Domain\Geo\Service\Seed\ProvinciasArgentinaSeedService;
 
 class ProvinciasArgentinaSeedServiceTest extends Unit
 {

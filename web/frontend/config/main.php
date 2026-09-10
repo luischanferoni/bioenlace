@@ -46,7 +46,7 @@ return [
             'errorAction' => 'site/error'
         ],        
         'authManager' => [
-            'class' => 'common\models\BioenlaceDbManager',
+            'class' => 'common\models\Platform\BioenlaceDbManager',
             'efectorAssignmentTable' => 'profesional_efector_servicio',
             'rolesEspeciales' => ['_x_efector_', '_sin_efector_', 'AdminMinisterio'],
         ],
@@ -56,7 +56,7 @@ return [
             'identityCookie' => ['name' => '_identity-bioenlace-frontend', 'httpOnly' => true],            
             // Comment this if you don't want to record user logins
             'on afterLogin' => function ($event) {
-                \common\models\UserVisitLog::newVisitor($event->identity->id);
+                \common\models\Platform\UserVisitLog::newVisitor($event->identity->id);
                 \frontend\controllers\SiteController::despuesDeLogin();
             },
         ],
@@ -810,7 +810,7 @@ return [
                 'user' => 'admin\controllers\UserAccountController',
                 'user-permission' => 'admin\controllers\UserRoleController',
             ],
-            //'registrationFormClass' => 'common\models\User',
+            //'registrationFormClass' => 'common\models\Platform\User',
             // 'enableRegistration' => true,
             // Here you can set your handler to change layout for any controller or action
             // Tip: you can use this event in any module

@@ -7,8 +7,8 @@ use yii\helpers\Html;
 
 use yii\widgets\Breadcrumbs;
 use frontend\assets\PublicAsset;
-use common\models\Mensajes;
-use common\models\Referencia;
+use common\models\Clinical\Mensajes;
+use common\models\Clinical\Referencia;
 use yii\helpers\Url;
 
 PublicAsset::register($this);

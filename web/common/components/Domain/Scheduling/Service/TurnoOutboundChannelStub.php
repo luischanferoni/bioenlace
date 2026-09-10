@@ -3,9 +3,9 @@
 namespace common\components\Domain\Scheduling\Service;
 
 use common\models\Person\Persona;
-use common\models\Persona_mails;
-use common\models\PersonaTelefono;
-use common\models\User;
+use common\models\Person\Persona_mails;
+use common\models\Person\PersonaTelefono;
+use common\models\Platform\User;
 use Yii;
 
 /**

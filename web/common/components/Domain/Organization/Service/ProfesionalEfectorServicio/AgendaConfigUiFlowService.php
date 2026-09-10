@@ -6,8 +6,8 @@ use common\components\Domain\Organization\Service\AgendaWeeklyOccupancyService;
 use common\components\Domain\Scheduling\Service\AgendaAtencionRemotaCatalogService;
 use common\components\Platform\Ui\UiScreenService;
 use common\models\Clinical\Encounter;
-use common\models\ProfesionalEfectorServicio;
-use common\models\ProfesionalEfectorServicioAgenda;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicioAgenda;
 
 /**
  * Flujo UI configurar agenda: datos → (impacto) → persistir.

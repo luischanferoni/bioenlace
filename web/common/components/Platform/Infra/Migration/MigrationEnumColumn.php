@@ -5,7 +5,7 @@ namespace common\components\Platform\Infra\Migration;
 /**
  * Definición de columnas ENUM MySQL con literales en MAYÚSCULAS (convención Bioenlace).
  *
- * En el AR del dominio: constantes homónimas (ej. {@see \common\models\Servicio::TELECONSULTA_POLITICA_NINGUNA}).
+ * En el AR del dominio: constantes homónimas (ej. {@see \common\models\Organization\Servicio::TELECONSULTA_POLITICA_NINGUNA}).
  */
 final class MigrationEnumColumn
 {

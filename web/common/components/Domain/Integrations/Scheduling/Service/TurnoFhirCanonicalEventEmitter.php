@@ -7,7 +7,7 @@ use common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoCanonicalEv
 use common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoCanonicalEventService;
 use common\components\Domain\Scheduling\Service\TurnoLifecycleService;
 use common\models\Scheduling\Turno;
-use common\models\TurnoEventoAudit;
+use common\models\Scheduling\TurnoEventoAudit;
 
 /**
  * Emite eventos canónicos a partir de transiciones FHIR inbound.

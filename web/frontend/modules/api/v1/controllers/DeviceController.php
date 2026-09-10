@@ -4,7 +4,7 @@ namespace frontend\modules\api\v1\controllers;
 
 use Yii;
 use yii\web\BadRequestHttpException;
-use common\models\UserDevice;
+use common\models\Platform\UserDevice;
 
 /**
  * Registro de dispositivos / push token para la app.

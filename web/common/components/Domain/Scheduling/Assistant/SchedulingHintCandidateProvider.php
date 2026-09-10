@@ -20,6 +20,11 @@ final class SchedulingHintCandidateProvider implements HintCandidateProviderInte
         return 'scheduling';
     }
 
+    public static function declaredEntities(): array
+    {
+        return ['servicio'];
+    }
+
     public static function providesFor(string $entity, HintResolutionContext $ctx): bool
     {
         $entity = strtolower(trim($entity));

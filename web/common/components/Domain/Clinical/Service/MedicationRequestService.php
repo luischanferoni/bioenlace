@@ -9,7 +9,7 @@ use common\components\Domain\Terminology\Snomed\SnomedCodeSystem;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\MedicationRequest;
-use common\models\ConsultaMedicamentos;
+use common\models\Clinical\ConsultaMedicamentos;
 
 final class MedicationRequestService
 {

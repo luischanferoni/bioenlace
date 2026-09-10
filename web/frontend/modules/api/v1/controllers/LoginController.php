@@ -7,11 +7,11 @@ use Exception;
 use yii\web\UnauthorizedHttpException;
 
 use common\models\Person\Persona;
-use common\models\User;
-use common\models\Localidad;
-use common\models\Barrios;
+use common\models\Platform\User;
+use common\models\Geo\Localidad;
+use common\models\Geo\Barrios;
 
-use common\models\LoginForm;
+use common\models\Platform\LoginForm;
 class LoginController extends BaseController
 {
 	public $enableCsrfValidation = false;

@@ -7,8 +7,8 @@ use common\components\Domain\Integrations\Scheduling\FhirSchedulePesResolver;
 use common\components\Domain\Integrations\Scheduling\ScheduleActorSet;
 use common\components\Domain\Integrations\Scheduling\Mapper\FhirAppointmentStatusMapper;
 use common\components\Domain\Integrations\Scheduling\Dto\FhirAppointmentInboundDto;
-use common\models\Integration\IntegrationScheduleLink;
-use common\models\ProfesionalEfectorServicio;
+use common\models\Integrations\IntegrationScheduleLink;
+use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Scheduling\Turno;
 use Yii;
 

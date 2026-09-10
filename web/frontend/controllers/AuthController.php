@@ -4,12 +4,12 @@ namespace frontend\controllers;
 
 use common\components\Platform\Core\Auth\DemoSandboxSessionService;
 use common\components\Platform\Core\Auth\StaffAccountInvitationService;
-use common\models\forms\ActivateAccountForm;
-use common\models\forms\ChangeOwnPasswordForm;
-use common\models\forms\ConfirmEmailForm;
-use common\models\forms\PasswordRecoveryForm;
-use common\models\LoginForm;
-use common\models\User;
+use common\models\Platform\ActivateAccountForm;
+use common\models\Platform\ChangeOwnPasswordForm;
+use common\models\Platform\ConfirmEmailForm;
+use common\models\Platform\PasswordRecoveryForm;
+use common\models\Platform\LoginForm;
+use common\models\Platform\User;
 use frontend\components\WebApiJwtSessionService;
 use Yii;
 use yii\web\Controller;

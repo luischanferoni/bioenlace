@@ -3,8 +3,8 @@
 namespace common\components\Domain\Scheduling\Service;
 
 use common\components\Domain\Organization\Service\Servicios\ServiciosEfectorAutogestionListadoService;
-use common\models\ReservaTriageCodigoServicio;
-use common\models\Servicio;
+use common\models\Scheduling\ReservaTriageCodigoServicio;
+use common\models\Organization\Servicio;
 
 /**
  * Resuelve servicio(s) sugeridos desde el draft de triage (FK directa a {@see Servicio}).

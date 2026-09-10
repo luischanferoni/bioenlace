@@ -97,7 +97,7 @@ final class EncounterDefinitionWorkflowCatalog
     /**
      * Plantilla según oferta del centro (`item_name` + nombre) y clase FHIR.
      */
-    public static function templateForServicio(?\common\models\Servicio $servicio, string $encounterClass): string
+    public static function templateForServicio(?\common\models\Organization\Servicio $servicio, string $encounterClass): string
     {
         $itemName = '';
         $nombre = '';

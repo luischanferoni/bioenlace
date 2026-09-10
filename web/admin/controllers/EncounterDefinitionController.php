@@ -2,7 +2,7 @@
 
 namespace admin\controllers;
 
-use common\models\busquedas\EncounterDefinitionBusqueda;
+use common\models\Clinical\EncounterDefinitionBusqueda;
 use common\models\Clinical\EncounterDefinition;
 use Yii;
 use yii\filters\VerbFilter;

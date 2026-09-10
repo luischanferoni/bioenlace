@@ -3,7 +3,7 @@
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\Efector */
+/* @var $model common\models\Organization\Efector */
 
 $this->title = 'Modificar Efector: ' . ' ' . $model->nombre;
 $this->params['breadcrumbs'][] = ['label' => 'Efectors', 'url' => ['index']];

@@ -8,7 +8,7 @@ use common\components\Platform\Assistant\Service\HintCandidateMapper;
 use common\components\Platform\Assistant\Service\HintCandidateProviderInterface;
 use common\components\Platform\Assistant\Service\HintResolutionContext;
 use common\components\Platform\Assistant\Service\HintResolutionMetadata;
-use common\models\Servicio;
+use common\models\Organization\Servicio;
 
 /**
  * Candidatos de hints para servicios, efectores y profesionales del centro.
@@ -18,6 +18,11 @@ final class OrganizationHintCandidateProvider implements HintCandidateProviderIn
     public static function providerKey(): string
     {
         return 'organization';
+    }
+
+    public static function declaredEntities(): array
+    {
+        return ['servicio', 'efector', 'profesional'];
     }
 
     public static function providesFor(string $entity, HintResolutionContext $ctx): bool

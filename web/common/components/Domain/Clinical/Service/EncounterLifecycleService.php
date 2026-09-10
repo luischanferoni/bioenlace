@@ -10,7 +10,7 @@ use common\components\Domain\Clinical\Workflow\ClinicalOperationalContextResolve
 use common\components\Domain\Integrations\Scheduling\Service\TurnoFhirOutboundNotifier;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
-use common\models\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Scheduling\Turno;
 use Yii;
 

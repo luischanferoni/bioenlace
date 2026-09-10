@@ -21,7 +21,7 @@ final class ConsultaAsyncInitialChatService
             return;
         }
 
-        if (\common\models\ConsultaChatMessage::find()->where(['encounter_id' => (int) $encounter->id])->exists()) {
+        if (\common\models\Clinical\ConsultaChatMessage::find()->where(['encounter_id' => (int) $encounter->id])->exists()) {
             return;
         }
 
@@ -41,7 +41,7 @@ final class ConsultaAsyncInitialChatService
         $catalog = new ConsultaAsyncChatPolicyCatalogService();
         $categoria = $catalog->solicitudCategoriaFromMeta($meta);
 
-        $chatMessage = new \common\models\ConsultaChatMessage();
+        $chatMessage = new \common\models\Clinical\ConsultaChatMessage();
         $chatMessage->encounter_id = (int) $encounter->id;
         $chatMessage->user_id = $userId;
         $chatMessage->user_name = $userName;

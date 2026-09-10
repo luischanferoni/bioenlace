@@ -6,7 +6,7 @@ use common\components\Platform\Core\Permission\Domain\DomainOperationContext;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Platform\Core\Permission\Domain\DomainOperationPolicyInterface;
 use common\components\Domain\Organization\Service\Efectores\OrganizationEfectorAccess;
-use common\models\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicio;
 
 /**
  * PES existente y perteneciente al efector de sesión/request; usuario con acceso al efector.

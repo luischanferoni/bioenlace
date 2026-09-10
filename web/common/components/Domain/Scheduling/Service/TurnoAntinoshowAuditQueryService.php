@@ -3,8 +3,8 @@
 namespace common\components\Domain\Scheduling\Service;
 
 use common\models\Platform\AgentRun;
-use common\models\TurnoEventoAudit;
-use common\models\TurnoNotificacionProgramada;
+use common\models\Scheduling\TurnoEventoAudit;
+use common\models\Scheduling\TurnoNotificacionProgramada;
 use yii\data\ActiveDataProvider;
 use yii\db\ActiveQuery;
 

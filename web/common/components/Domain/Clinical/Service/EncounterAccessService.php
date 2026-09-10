@@ -6,7 +6,7 @@ use common\components\Domain\Person\Representation\Service\PersonRepresentationA
 use common\components\Domain\Scheduling\Service\ConsultaAsyncAccessService;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
-use common\models\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Scheduling\Turno;
 use Yii;
 

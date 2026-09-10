@@ -5,12 +5,12 @@ namespace common\components\Domain\Organization\Service\Seed;
 use common\components\Domain\Organization\Service\ProfesionalHorario\ProfesionalHorarioService;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAltaService;
 use common\components\Domain\Person\Util\CuilValidator;
-use common\models\Efector;
+use common\models\Organization\Efector;
 use common\models\Person\Persona;
-use common\models\ProfesionalEfectorServicioAgenda;
-use common\models\Servicio;
-use common\models\ServiciosEfector;
-use common\models\User;
+use common\models\Organization\ProfesionalEfectorServicioAgenda;
+use common\models\Organization\Servicio;
+use common\models\Organization\ServiciosEfector;
+use common\models\Platform\User;
 use Yii;
 
 /**

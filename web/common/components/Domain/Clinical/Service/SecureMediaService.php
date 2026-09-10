@@ -4,8 +4,8 @@ namespace common\components\Domain\Clinical\Service;
 
 use common\components\Domain\Clinical\Service\Authorization\EncounterAccessService;
 use common\models\Clinical\Encounter;
-use common\models\ConsultaChatMessage;
-use common\models\ConsultaMotivosMessage;
+use common\models\Clinical\ConsultaChatMessage;
+use common\models\Clinical\ConsultaMotivosMessage;
 use Yii;
 use yii\web\NotFoundHttpException;
 use yii\web\ForbiddenHttpException;

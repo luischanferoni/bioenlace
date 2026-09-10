@@ -1,6 +1,6 @@
 ---
 description: Frontera entre intents del asistente — sin keywords/tags solapados (A/B/C agenda vs atención)
-globs: web/common/metadata/bioenlace/assistant/intents/**/*.yaml,web/common/metadata/bioenlace/assistant/catalog/smart-catalog.yaml,web/common/components/Platform/Assistant/**/*.php
+globs: web/common/metadata/bioenlace/*/intents/**/*.yaml,web/common/metadata/bioenlace/platform/assistant/catalog/smart-catalog.yaml,web/common/components/Platform/Assistant/**/*.php
 alwaysApply: false
 ---
 

@@ -6,10 +6,10 @@ use common\components\Domain\Organization\Service\Seed\DemoSandboxClinicalSeedSe
 use common\components\Domain\Organization\Service\Seed\DemoSandboxPurgeService;
 use common\components\Domain\Organization\Service\Seed\DemoSandboxStaffProvisionService;
 use common\components\Domain\Organization\Service\Seed\EfectorDemoSeedService;
-use common\models\Efector;
+use common\models\Organization\Efector;
 use common\models\Platform\DemoSandboxAccess;
 use common\models\Platform\DemoSandboxSession;
-use common\models\User;
+use common\models\Platform\User;
 use Yii;
 
 /**

@@ -14,7 +14,7 @@ use common\components\Domain\Person\Representation\Service\PersonRepresentationS
 use common\models\Person\PersonRelatedAuditLog;
 use common\components\Domain\Clinical\Service\SecureMediaService;
 use common\models\Clinical\Encounter;
-use common\models\ConsultaMotivosMessage;
+use common\models\Clinical\ConsultaMotivosMessage;
 use common\models\Scheduling\Turno;
 use frontend\modules\api\v1\controllers\clinical\ClinicalAccessTrait;
 

@@ -3,11 +3,11 @@
 namespace admin\controllers;
 
 use Yii;
-use common\models\Provincia;
-use common\models\Barrios;
-use common\models\Departamento;
-use common\models\Localidad;
-use common\models\busquedas\BarriosBusqueda;
+use common\models\Geo\Provincia;
+use common\models\Geo\Barrios;
+use common\models\Geo\Departamento;
+use common\models\Geo\Localidad;
+use common\models\Geo\BarriosBusqueda;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;

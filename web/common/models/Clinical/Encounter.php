@@ -4,8 +4,8 @@ namespace common\models\Clinical;
 
 use common\components\Domain\Clinical\Enum\EncounterStatus;
 use common\models\Person\Persona;
-use common\models\ProfesionalEfectorServicio;
-use common\models\Efector;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Organization\Efector;
 use common\models\Scheduling\Turno;
 use Yii;
 use yii\db\ActiveRecord;
@@ -59,14 +59,14 @@ class Encounter extends ActiveRecord
 
     const PARENT_CLASSES = [
         self::PARENT_TURNO => '\common\models\Scheduling\Turno',
-        self::PARENT_DERIVACION => '\common\models\ConsultaDerivaciones',
-        self::PARENT_INTERNACION => '\common\models\SegNivelInternacion',
+        self::PARENT_DERIVACION => '\common\models\Clinical\ConsultaDerivaciones',
+        self::PARENT_INTERNACION => '\common\models\Clinical\SegNivelInternacion',
         self::PARENT_GENERICO_AMB => '\common\models\GenericoAMB',
         self::PARENT_GENERICO_EMER => '\common\models\GenericoEMER',
-        self::PARENT_GUARDIA => '\common\models\Guardia',
-        self::PARENT_PASE_PREVIO => '\common\models\ServiciosEfector',
-        self::PARENT_ENCUESTA_PARCHES => '\common\models\EncuestaParchesMamarios',
-        self::PARENT_CIRUGIA => '\common\models\Cirugia',
+        self::PARENT_GUARDIA => '\common\models\Clinical\Guardia',
+        self::PARENT_PASE_PREVIO => '\common\models\Organization\ServiciosEfector',
+        self::PARENT_ENCUESTA_PARCHES => '\common\models\Clinical\EncuestaParchesMamarios',
+        self::PARENT_CIRUGIA => '\common\models\Scheduling\Cirugia',
     ];
 
     public static function tableName(): string
@@ -162,9 +162,9 @@ class Encounter extends ActiveRecord
 
     public function getAutofacturacion(): \yii\db\ActiveQuery
     {
-        $fk = \common\models\sumar\Autofacturacion::legacyConsultaFkAttribute();
+        $fk = \common\models\Programs\Autofacturacion::legacyConsultaFkAttribute();
 
-        return $this->hasOne(\common\models\sumar\Autofacturacion::class, [$fk => 'id']);
+        return $this->hasOne(\common\models\Programs\Autofacturacion::class, [$fk => 'id']);
     }
 
     /** Alias para vistas legacy de autofacturación. */
@@ -197,7 +197,7 @@ class Encounter extends ActiveRecord
 
     public function getAtencionEnfermeria(): \yii\db\ActiveQuery
     {
-        return $this->hasOne(\common\models\ConsultaAtencionesEnfermeria::class, ['encounter_id' => 'id']);
+        return $this->hasOne(\common\models\Clinical\ConsultaAtencionesEnfermeria::class, ['encounter_id' => 'id']);
     }
 
     /**
@@ -215,7 +215,7 @@ class Encounter extends ActiveRecord
     /** @deprecated Tabla `consultas_motivos` retirada (03e-8). Usar {@see $reason_text}. */
     public function getMotivoConsulta(): \yii\db\ActiveQuery
     {
-        return $this->legacyChildRelation(\common\models\ConsultaMotivos::class, ['id_consulta' => 'id']);
+        return $this->legacyChildRelation(\common\models\Clinical\ConsultaMotivos::class, ['id_consulta' => 'id']);
     }
 
     /** @deprecated Usar {@see getMedicamentosActivos()} o {@see getMedicationRequests()}. */
@@ -227,14 +227,14 @@ class Encounter extends ActiveRecord
     /** @deprecated Usar {@see getConditions()} / {@see getDiagnosticos()}. */
     public function getDiagnosticoConsultasLegacy(): \yii\db\ActiveQuery
     {
-        return $this->legacyChildRelation(\common\models\DiagnosticoConsulta::class, ['id_consulta' => 'id']);
+        return $this->legacyChildRelation(\common\models\Clinical\DiagnosticoConsulta::class, ['id_consulta' => 'id']);
     }
 
     /** @deprecated Odontología → {@see getConditions()} con nota odontology (03e-5). */
     public function getOdontologiaDiagnosticos(): \yii\db\ActiveQuery
     {
         return $this->legacyChildRelation(
-            \common\models\ConsultaOdontologiaDiagnosticos::class,
+            \common\models\Clinical\ConsultaOdontologiaDiagnosticos::class,
             ['id_consulta' => 'id']
         );
     }
@@ -243,7 +243,7 @@ class Encounter extends ActiveRecord
     public function getOdontologiaPracticas(): \yii\db\ActiveQuery
     {
         return $this->legacyChildRelation(
-            \common\models\ConsultaOdontologiaPracticas::class,
+            \common\models\Clinical\ConsultaOdontologiaPracticas::class,
             ['id_consulta' => 'id']
         );
     }

@@ -23,8 +23,8 @@ use common\components\Domain\Clinical\Presentation\EncounterCaptureReviewPresent
 use common\models\Clinical\Condition;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterDefinition;
-use common\models\ConsultaAtencionesEnfermeria;
-use common\models\DiagnosticoConsulta;
+use common\models\Clinical\ConsultaAtencionesEnfermeria;
+use common\models\Clinical\DiagnosticoConsulta;
 use common\models\Person\Persona;
 use common\models\Scheduling\Turno;
 use Yii;
@@ -913,7 +913,7 @@ class EncounterDocumentationService extends Component
         [$idPes, $idServicio] = array_slice(ClinicalOperationalContextResolver::resolve($body), 0, 2);
         $efectorId = Yii::$app->user->getIdEfector();
         if (($efectorId === null || $efectorId === '' || (int) $efectorId <= 0) && $idPes > 0) {
-            $pes = \common\models\ProfesionalEfectorServicio::findOne($idPes);
+            $pes = \common\models\Organization\ProfesionalEfectorServicio::findOne($idPes);
             if ($pes !== null && (int) $pes->id_efector > 0) {
                 $efectorId = (int) $pes->id_efector;
             }

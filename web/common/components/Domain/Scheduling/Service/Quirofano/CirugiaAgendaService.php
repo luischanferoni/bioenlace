@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Service\Quirofano;
 
-use common\models\Cirugia;
+use common\models\Scheduling\Cirugia;
 use yii\base\Component;
 
 /**

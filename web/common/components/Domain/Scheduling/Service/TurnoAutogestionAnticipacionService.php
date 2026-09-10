@@ -4,7 +4,7 @@ namespace common\components\Domain\Scheduling\Service;
 
 use Yii;
 use common\models\Scheduling\Turno;
-use common\models\EfectorTurnosConfig;
+use common\models\Scheduling\EfectorTurnosConfig;
 
 /**
  * Horas mínimas antes del inicio del turno para autogestión (cancelar / reprogramar) por app.

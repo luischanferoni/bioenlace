@@ -6,10 +6,10 @@ use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
-use common\models\SolicitudProfesionalEfector;
-use common\models\SolicitudProfesionalEfectorEvento;
-use common\models\EfectorTurnosConfig;
-use common\models\ProfesionalEfectorServicio;
+use common\models\Organization\SolicitudProfesionalEfector;
+use common\models\Organization\SolicitudProfesionalEfectorEvento;
+use common\models\Scheduling\EfectorTurnosConfig;
+use common\models\Organization\ProfesionalEfectorServicio;
 use yii\db\Query;
 
 /**

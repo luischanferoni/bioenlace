@@ -3,7 +3,7 @@
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
-/* @var $roles list<common\models\rbac\AuthRole> */
+/* @var $roles list<common\models\Platform\Permission\AuthRole> */
 
 $this->title = 'Roles RBAC';
 $this->params['breadcrumbs'][] = ['label' => 'Catálogo de permisos', 'url' => ['/permission-catalog/index']];

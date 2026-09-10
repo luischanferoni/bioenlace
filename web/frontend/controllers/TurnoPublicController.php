@@ -4,7 +4,7 @@ namespace frontend\controllers;
 
 use common\components\Domain\Scheduling\Service\TurnoResolucionLinkTokenService;
 use common\models\Scheduling\Turno;
-use common\models\TurnoResolucion;
+use common\models\Scheduling\TurnoResolucion;
 use Yii;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;

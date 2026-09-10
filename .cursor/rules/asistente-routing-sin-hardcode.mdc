@@ -1,6 +1,6 @@
 ---
 description: Routing del asistente — keywords en intents, desambiguación genérica, canal en PHP + texto UX YAML
-globs: web/common/components/Platform/Assistant/**/*.php,web/common/metadata/bioenlace/assistant/**
+globs: web/common/components/Platform/Assistant/**/*.php,web/common/metadata/bioenlace/platform/assistant/**,web/common/metadata/bioenlace/*/intents/**/*.yaml
 alwaysApply: false
 ---
 

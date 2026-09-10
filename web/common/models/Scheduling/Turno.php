@@ -4,11 +4,11 @@ namespace common\models\Scheduling;
 
 use common\components\Domain\Clinical\PatientHistoriaUrl;
 use common\models\Clinical\Encounter;
-use common\models\ConsultaAtencionesEnfermeria;
-use common\models\Efector;
-use common\models\ProfesionalEfectorServicio;
-use common\models\Servicio;
-use common\models\ServiciosEfector;
+use common\models\Clinical\ConsultaAtencionesEnfermeria;
+use common\models\Organization\Efector;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Organization\Servicio;
+use common\models\Organization\ServiciosEfector;
 use Yii;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
@@ -373,7 +373,7 @@ class Turno extends \yii\db\ActiveRecord
     }
 
     /**
-     * Paciente asociado al turno (alineado con {@see Consulta::getPaciente()} / {@see Guardia::getPaciente()}).
+     * Paciente asociado al turno (alineado con {@see Encounter::getPaciente()} / {@see \common\models\Clinical\Guardia::getPaciente()}).
      */
     public function getPaciente()
     {

@@ -4,7 +4,7 @@ namespace common\components\Domain\Scheduling\Service;
 
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\models\Scheduling\Turno;
-use common\models\TurnoResolucion;
+use common\models\Scheduling\TurnoResolucion;
 
 /**
  * Turnos pendientes afectados por indisponibilidad de un PES en un rango de fechas

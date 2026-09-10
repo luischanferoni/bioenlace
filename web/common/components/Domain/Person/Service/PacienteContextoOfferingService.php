@@ -4,7 +4,7 @@ namespace common\components\Domain\Person\Service;
 
 use common\components\Platform\Core\Product\PacienteContextoOfferingMetadata;
 use common\components\Platform\Core\Service\ClientContextService;
-use common\models\Efector;
+use common\models\Organization\Efector;
 use common\models\Person\PersonaPacienteContexto;
 use Yii;
 

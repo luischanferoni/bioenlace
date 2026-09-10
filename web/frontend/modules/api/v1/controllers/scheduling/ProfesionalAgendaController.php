@@ -16,8 +16,8 @@ use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\Pro
 use common\components\Domain\Scheduling\Service\TurnoResolucionElecciones;
 use common\components\Domain\Scheduling\Service\TurnoResolucionService;
 use common\components\Platform\Ui\UiScreenService;
-use common\models\ProfesionalEfectorServicio;
-use common\models\ProfesionalEfectorServicioAgenda;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicioAgenda;
 
 /**
  * Agenda profesional AMB (día operativo / cupos) y CRUD de agendas laborales por servicio ({@see ProfesionalEfectorServicioAgenda}).

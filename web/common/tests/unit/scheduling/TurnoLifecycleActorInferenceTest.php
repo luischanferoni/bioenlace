@@ -5,7 +5,7 @@ namespace common\tests\unit\scheduling;
 use Codeception\Test\Unit;
 use common\components\Domain\Scheduling\Service\TurnoLifecycleService;
 use common\models\Scheduling\Turno;
-use common\models\TurnoEventoAudit;
+use common\models\Scheduling\TurnoEventoAudit;
 
 class TurnoLifecycleActorInferenceTest extends Unit
 {

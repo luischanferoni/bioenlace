@@ -8,8 +8,8 @@ use yii\web\UploadedFile;
 
 use common\components\Platform\Core\Http\UserRequest;
 
-use common\models\DocumentosExternos;
-use common\models\Adjunto;
+use common\models\Clinical\DocumentosExternos;
+use common\models\Platform\Adjunto;
 
 class DocumentosExternosController extends Controller
 {

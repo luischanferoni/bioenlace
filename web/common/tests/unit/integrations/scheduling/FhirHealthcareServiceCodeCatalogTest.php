@@ -4,7 +4,7 @@ namespace common\tests\unit\integrations\scheduling;
 
 use Codeception\Test\Unit;
 use common\components\Domain\Integrations\Scheduling\FhirHealthcareServiceCodeCatalog;
-use common\models\Integration\IntegrationFhirServiceCode;
+use common\models\Integrations\IntegrationFhirServiceCode;
 
 /**
  * @group integrations

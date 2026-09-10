@@ -1,7 +1,7 @@
 <?php
 
 use common\components\Platform\Infra\Migration\MigrationEnumColumn;
-use common\models\Servicio;
+use common\models\Organization\Servicio;
 use yii\db\Migration;
 
 /**

@@ -8,7 +8,7 @@ use common\components\Domain\Person\Representation\Service\PersonRepresentationS
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
 use common\models\Scheduling\Turno;
-use common\models\TurnoResolucion;
+use common\models\Scheduling\TurnoResolucion;
 use Yii;
 use yii\db\Expression;
 

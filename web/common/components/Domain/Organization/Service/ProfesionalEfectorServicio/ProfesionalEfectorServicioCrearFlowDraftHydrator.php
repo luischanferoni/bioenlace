@@ -4,8 +4,8 @@ namespace common\components\Domain\Organization\Service\ProfesionalEfectorServic
 
 use common\components\Domain\Person\Service\PersonCuilService;
 use common\models\Person\Persona;
-use common\models\ProfesionalEfectorServicio as ProfesionalEfectorServicioModel;
-use common\models\Servicio;
+use common\models\Organization\ProfesionalEfectorServicio as ProfesionalEfectorServicioModel;
+use common\models\Organization\Servicio;
 use Yii;
 
 /**

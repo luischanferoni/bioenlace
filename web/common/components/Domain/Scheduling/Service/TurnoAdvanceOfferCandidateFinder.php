@@ -5,8 +5,8 @@ namespace common\components\Domain\Scheduling\Service;
 use common\models\Scheduling\Turno;
 use common\models\Scheduling\TurnoAdvanceCampaign;
 use common\models\Scheduling\TurnoAdvanceOffer;
-use common\models\TurnoResolucion;
-use common\models\UserDevice;
+use common\models\Scheduling\TurnoResolucion;
+use common\models\Platform\UserDevice;
 use yii\db\Query;
 
 /**

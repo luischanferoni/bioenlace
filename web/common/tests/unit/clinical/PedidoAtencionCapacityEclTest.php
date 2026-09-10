@@ -11,7 +11,7 @@ use common\components\Domain\Clinical\Access\InMemoryLineaActoCatalog;
 use common\components\Domain\Clinical\Access\PedidoAtencion;
 use common\components\Domain\Clinical\Access\PedidoAtencionMetadata;
 use common\components\Domain\Clinical\Access\PedidoAtencionService;
-use common\models\Servicio;
+use common\models\Organization\Servicio;
 
 class PedidoAtencionCapacityEclTest extends Unit
 {

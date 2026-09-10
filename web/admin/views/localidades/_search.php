@@ -9,7 +9,7 @@ use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\busquedas\LocalidadBusqueda */
+/* @var $model common\models\Geo\LocalidadBusqueda */
 /* @var $form yii\widgets\ActiveForm */
 ?>
 

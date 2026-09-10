@@ -4,7 +4,7 @@ namespace common\components\Domain\Scheduling\Service;
 
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
 use common\models\Scheduling\Turno;
-use common\models\TurnoResolucion;
+use common\models\Scheduling\TurnoResolucion;
 use Yii;
 
 /**

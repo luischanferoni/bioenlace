@@ -5,14 +5,14 @@ namespace common\components\Domain\Scheduling\Service;
 use common\components\Domain\Clinical\Service\EncounterLifecycleService;
 use common\models\Scheduling\Turno;
 use common\models\Clinical\Encounter;
-use common\models\ProfesionalEfectorServicio;
-use common\models\ProfesionalEfectorServicioAgenda;
-use common\models\ServiciosEfector;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicioAgenda;
+use common\models\Organization\ServiciosEfector;
 use common\components\Domain\Clinical\Service\ReferralRequestService;
-use common\models\ConsultaDerivaciones;
-use common\models\EfectorTurnosConfig;
-use common\models\Servicio;
-use common\models\TurnoResolucion;
+use common\models\Clinical\ConsultaDerivaciones;
+use common\models\Scheduling\EfectorTurnosConfig;
+use common\models\Organization\Servicio;
+use common\models\Scheduling\TurnoResolucion;
 use common\components\Domain\Organization\Service\Servicios\ServiciosEfectorAutogestionListadoService;
 use Yii;
 
@@ -125,7 +125,7 @@ class TurnoPersistService
             }
             $idPes = (int) ($model->id_profesional_efector_servicio ?? 0);
             $fecha = (string) ($model->fecha ?? '');
-            $hora = substr(\common\models\TurnoResolucion::normalizarHora((string) ($model->hora ?? '')), 0, 5);
+            $hora = substr(\common\models\Scheduling\TurnoResolucion::normalizarHora((string) ($model->hora ?? '')), 0, 5);
             if ($idPes > 0 && $fecha !== '' && $hora !== ''
                 && !TurnoSlotClaimService::tryClaim($idPes, $fecha, $hora, (int) $model->id_turnos)
             ) {
@@ -135,8 +135,8 @@ class TurnoPersistService
             (new TurnoLifecycleService())->afterTurnoCreado(
                 $model,
                 $esPaciente
-                    ? \common\models\TurnoEventoAudit::ACTOR_PACIENTE
-                    : \common\models\TurnoEventoAudit::ACTOR_STAFF,
+                    ? \common\models\Scheduling\TurnoEventoAudit::ACTOR_PACIENTE
+                    : \common\models\Scheduling\TurnoEventoAudit::ACTOR_STAFF,
                 $esPaciente ? 'app' : 'admin'
             );
             $tx->commit();

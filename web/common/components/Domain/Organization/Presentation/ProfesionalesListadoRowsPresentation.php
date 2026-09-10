@@ -4,7 +4,7 @@ namespace common\components\Domain\Organization\Presentation;
 
 use common\components\Platform\Core\DataAccess\MetricExecutionResult;
 use common\components\Platform\Core\DataAccess\Presentation\MetricListPresentationHandlerInterface;
-use common\models\Servicio;
+use common\models\Organization\Servicio;
 
 /**
  * Items de lista para métrica profesionales_listado_efector.

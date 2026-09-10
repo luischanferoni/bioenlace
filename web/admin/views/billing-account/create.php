@@ -3,7 +3,7 @@
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\BillingAccount */
+/* @var $model common\models\Organization\BillingAccount */
 
 $this->title = 'Nueva cuenta de licencia';
 $this->params['breadcrumbs'][] = ['label' => 'Licencias / Contratos', 'url' => ['index']];

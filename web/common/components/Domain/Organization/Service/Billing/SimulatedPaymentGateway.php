@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Organization\Service\Billing;
 
-use common\models\BillingPayment;
+use common\models\Organization\BillingPayment;
 use Yii;
 
 /**

@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Clinical\Emergency\Service;
 
-use common\models\Guardia;
-use common\models\SegNivelInternacion;
+use common\models\Clinical\Guardia;
+use common\models\Clinical\SegNivelInternacion;
 use yii\helpers\Url;
 
 /**

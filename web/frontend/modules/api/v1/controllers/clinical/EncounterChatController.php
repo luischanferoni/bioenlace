@@ -3,7 +3,7 @@
 namespace frontend\modules\api\v1\controllers\clinical;
 
 use frontend\modules\api\v1\controllers\BaseController;
-use common\models\ConsultaChatMessage;
+use common\models\Clinical\ConsultaChatMessage;
 use common\components\Domain\Clinical\Service\SecureMediaService;
 use common\components\Domain\Scheduling\Service\ConsultaAsyncChatUploadService;
 use common\components\Domain\Scheduling\Service\ConsultaAsyncPushNotifier;

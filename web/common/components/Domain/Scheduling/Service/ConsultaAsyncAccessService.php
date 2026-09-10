@@ -3,7 +3,7 @@
 namespace common\components\Domain\Scheduling\Service;
 
 use common\models\Clinical\Encounter;
-use common\models\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicio;
 use Yii;
 
 /**

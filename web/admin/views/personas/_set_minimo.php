@@ -3,8 +3,8 @@
 use yii\helpers\Html;
 use yii\widgets\DetailView;
 use common\models\persona_telefono;
-use common\models\Tipo_telefono;
-use common\models\Localidad;
+use common\models\Person\Tipo_telefono;
+use common\models\Geo\Localidad;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
 

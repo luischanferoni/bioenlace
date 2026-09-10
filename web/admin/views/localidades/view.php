@@ -7,9 +7,9 @@
 
 use yii\helpers\Html;
 use yii\widgets\DetailView;
-use common\models\Provincia;
+use common\models\Geo\Provincia;
 /* @var $this yii\web\View */
-/* @var $model common\models\Localidad */
+/* @var $model common\models\Geo\Localidad */
 
 $this->title = 'Id localidad =' . ' ' . $model-> id_localidad;
 $this->params['breadcrumbs'][] = ['label' => 'Localidades', 'url' => ['index']];

@@ -4,9 +4,9 @@ namespace common\components\Domain\Scheduling\Service;
 
 use common\models\Clinical\Encounter;
 use common\models\Scheduling\Turno;
-use common\models\TurnoNotificacionProgramada;
-use common\models\EfectorTurnosConfig;
-use common\models\TurnoEventoAudit;
+use common\models\Scheduling\TurnoNotificacionProgramada;
+use common\models\Scheduling\EfectorTurnosConfig;
+use common\models\Scheduling\TurnoEventoAudit;
 use common\components\Domain\Clinical\Service\AppointmentReasonWindowService;
 use common\components\Domain\Clinical\Service\EncounterJourney\EncounterJourneyNotificationScheduler;
 

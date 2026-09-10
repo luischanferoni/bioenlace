@@ -3,8 +3,8 @@
 namespace admin\controllers;
 
 use Yii;
-use common\models\InfoContentArticle;
-use common\models\busquedas\InfoContentArticleBusqueda;
+use common\models\Content\InfoContentArticle;
+use common\models\Content\InfoContentArticleBusqueda;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;

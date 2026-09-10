@@ -3,7 +3,7 @@
 namespace common\components\Platform\Ui\Home\Service;
 
 use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
-use common\models\User;
+use common\models\Platform\User;
 use Yii;
 
 /**

@@ -2,7 +2,7 @@
 
 namespace admin\controllers;
 
-use common\models\User;
+use common\models\Platform\User;
 use common\components\Platform\Core\Permission\RbacRoleQueryService;
 use Yii;
 use yii\web\Controller;

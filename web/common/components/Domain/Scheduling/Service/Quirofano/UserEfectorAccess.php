@@ -5,7 +5,7 @@ namespace common\components\Domain\Scheduling\Service\Quirofano;
 use Yii;
 use yii\web\ForbiddenHttpException;
 use common\models\Person\Persona;
-use common\models\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicio;
 
 /**
  * Acceso a datos de quirófano acotado por efectores asignados al usuario.

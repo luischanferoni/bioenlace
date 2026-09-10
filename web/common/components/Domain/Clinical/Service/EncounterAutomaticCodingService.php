@@ -9,7 +9,7 @@ use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
 use common\models\Clinical\Condition;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterDefinition;
-use common\models\DiagnosticoConsulta;
+use common\models\Clinical\DiagnosticoConsulta;
 use Yii;
 
 /**

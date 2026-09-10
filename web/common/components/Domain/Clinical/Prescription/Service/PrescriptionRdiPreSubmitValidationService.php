@@ -6,7 +6,7 @@ use common\components\Domain\Clinical\Prescription\Enum\PrescriptionLegalStatus;
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
 use common\models\Clinical\ElectronicPrescription;
 use common\models\Clinical\ElectronicPrescriptionItem;
-use common\models\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicio;
 use yii\base\Model;
 
 /**

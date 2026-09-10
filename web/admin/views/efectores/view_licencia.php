@@ -1,11 +1,11 @@
 <?php
 
-use common\models\BillingAccount;
+use common\models\Organization\BillingAccount;
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\Efector */
-/* @var $account common\models\BillingAccount|null */
+/* @var $model common\models\Organization\Efector */
+/* @var $account common\models\Organization\BillingAccount|null */
 /* @var $summary array */
 /* @var $affiliations list<array{id: int, nombre: string, tipo: string}> */
 

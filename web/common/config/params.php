@@ -66,7 +66,7 @@ return [
 
     /** Autogestión paciente: oferta de próximos slots (endpoint slots-disponibles-como-paciente en API v1). */
     /**
-     * Defaults de {@see \common\models\EfectorTurnosConfig} cuando el campo en BD es NULL.
+     * Defaults de {@see \common\models\Scheduling\EfectorTurnosConfig} cuando el campo en BD es NULL.
      * 0 = sin restricción por anticipación para esa operación.
      */
     'efectorTurnosConfigDefaults' => [
@@ -136,7 +136,7 @@ return [
     ],
     /**
      * IDs de servicio (tabla servicios) que bajo encounter IMP listan agenda quirúrgica en home/panel (sección surgeries_day).
-     * Vacío: solo heurística por nombre (cirugía, quirófano, etc.) en {@see \common\models\Servicio::esServicioAgendaQuirurgica}.
+     * Vacío: solo heurística por nombre (cirugía, quirófano, etc.) en {@see \common\models\Organization\Servicio::esServicioAgendaQuirurgica}.
      */
     'serviciosAgendaQuirurgicaIds' => [],
 

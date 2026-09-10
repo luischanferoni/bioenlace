@@ -3,7 +3,7 @@
 namespace common\components\Domain\Scheduling\Service\BehaviorProfile;
 
 use common\components\Platform\Core\Product\ProductMetadataPaths;
-use common\models\TurnoEventoAudit;
+use common\models\Scheduling\TurnoEventoAudit;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
 

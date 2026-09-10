@@ -5,7 +5,7 @@ namespace common\components\Platform\Core\DataAccess\Validation;
 use common\components\Platform\Core\DataAccess\AttributeGroupCatalog;
 use common\components\Platform\Ui\UiDefinitionTemplateManager;
 use common\components\Platform\Ui\UiJsonDomain;
-use common\models\DataAccess\DataAccessAttributeField;
+use common\models\Platform\DataAccess\DataAccessAttributeField;
 use Symfony\Component\Yaml\Yaml;
 use yii\db\ActiveRecord;
 use yii\helpers\Json;

@@ -6,7 +6,7 @@ use Yii;
 use yii\web\BadRequestHttpException;
 use common\components\Platform\Core\Service\Notificaciones\PersonaNotificacionService;
 use common\components\Platform\Core\Service\Notificaciones\PersonaNotificacionInteractionService;
-use common\models\TurnoEventoAudit;
+use common\models\Scheduling\TurnoEventoAudit;
 
 /**
  * Bandeja de alertas del usuario autenticado (persona del JWT).

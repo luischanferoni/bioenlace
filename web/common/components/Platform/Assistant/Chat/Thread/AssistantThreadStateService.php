@@ -9,7 +9,7 @@ use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
 use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
 use common\components\Platform\Core\Product\ProductMetadataPaths;
-use common\models\AsistenteConversacion;
+use common\models\Platform\AsistenteConversacion;
 use Yii;
 
 /**

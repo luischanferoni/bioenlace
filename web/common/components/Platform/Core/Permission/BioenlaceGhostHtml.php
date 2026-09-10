@@ -2,7 +2,7 @@
 
 namespace common\components\Platform\Core\Permission;
 
-use common\models\User;
+use common\models\Platform\User;
 use yii\bootstrap5\Nav;
 use yii\helpers\Html;
 

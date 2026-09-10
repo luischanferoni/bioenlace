@@ -1,7 +1,7 @@
 <?php
 
 use common\components\Platform\Infra\Migration\MigrationEnumColumn;
-use common\models\AsistenteWhatsappVinculo;
+use common\models\Integrations\AsistenteWhatsappVinculo;
 use yii\db\Migration;
 
 /**

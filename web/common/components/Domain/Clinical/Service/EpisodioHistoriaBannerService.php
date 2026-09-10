@@ -7,9 +7,9 @@ use common\components\Domain\Clinical\Emergency\Enum\CircuitoEstado;
 use common\components\Domain\Clinical\Emergency\Service\GuardiaCircuitoService;
 use common\components\Domain\Clinical\Emergency\Service\GuardiaTriageService;
 use common\models\Clinical\Encounter;
-use common\models\Emergency\GuardiaTriage;
-use common\models\Guardia;
-use common\models\SegNivelInternacion;
+use common\models\Clinical\Emergency\GuardiaTriage;
+use common\models\Clinical\Guardia;
+use common\models\Clinical\SegNivelInternacion;
 
 /**
  * Banner de episodio para HC / captura EMER e IMP (triaje, estado, motivo, ingreso).

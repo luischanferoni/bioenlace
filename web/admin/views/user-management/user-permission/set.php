@@ -1,7 +1,7 @@
 <?php
 /**
  * @var yii\web\View $this
- * @var common\models\User $user
+ * @var common\models\Platform\User $user
  */
 
 use common\components\Platform\Core\Permission\RbacRoleQueryService;

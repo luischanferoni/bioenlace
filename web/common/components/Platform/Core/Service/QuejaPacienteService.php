@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace common\components\Platform\Core\Service;
 
-use common\models\QuejaPaciente;
+use common\models\Platform\QuejaPaciente;
 
 /**
  * Registro de quejas operativas enviadas por pacientes.

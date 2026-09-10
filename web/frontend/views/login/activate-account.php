@@ -2,7 +2,7 @@
 
 /**
  * @var yii\web\View $this
- * @var common\models\forms\ActivateAccountForm $model
+ * @var common\models\Platform\ActivateAccountForm $model
  */
 
 use yii\bootstrap5\ActiveForm;

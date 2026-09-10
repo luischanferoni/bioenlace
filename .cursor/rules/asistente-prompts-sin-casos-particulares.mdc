@@ -1,6 +1,6 @@
 ---
 description: Prompts del asistente — reglas transversales, sin casos ni claves internas
-globs: web/common/metadata/bioenlace/assistant/channels/**/prompt.yaml,web/common/metadata/bioenlace/assistant/preprocess/prompt.yaml,web/docs/**/asistente*.md
+globs: web/common/metadata/bioenlace/platform/assistant/channels/**/prompt.yaml,web/common/metadata/bioenlace/platform/assistant/preprocess/prompt.yaml,web/docs/**/asistente*.md
 alwaysApply: false
 ---
 

@@ -5,11 +5,11 @@ use yii\grid\GridView;
 use common\models\Clinical\EncounterDefinition;
 use kartik\select2\Select2;
 use yii\helpers\ArrayHelper;
-use common\models\Servicio;
+use common\models\Organization\Servicio;
 
 /* @var $this yii\web\View */
 /* @var $dataProvider yii\data\ActiveDataProvider */
-/* @var $searchModel common\models\busquedas\EncounterDefinitionBusqueda */
+/* @var $searchModel common\models\Clinical\EncounterDefinitionBusqueda */
 
 $this->title = 'Definiciones de encounter';
 $this->params['breadcrumbs'][] = $this->title;

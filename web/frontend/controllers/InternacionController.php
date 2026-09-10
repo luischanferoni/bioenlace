@@ -8,12 +8,12 @@ use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 
-use common\models\SegNivelInternacion;
-use common\models\SegNivelInternacionRepository;
-use common\models\busquedas\SegNivelInternacionBusqueda;
+use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\SegNivelInternacionRepository;
+use common\models\Clinical\SegNivelInternacionBusqueda;
 use common\models\Person\Persona;
-use common\models\ProfesionalEfectorServicio;
-use common\models\Servicio;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Organization\Servicio;
 use common\models\Clinical\Encounter;
 use common\components\Domain\Clinical\PatientHistoriaUrl;
 

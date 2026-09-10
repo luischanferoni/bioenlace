@@ -9,8 +9,8 @@ use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
 use common\components\Platform\Assistant\Chat\Thread\AssistantThreadContext;
 use common\components\Platform\Assistant\Chat\Thread\AssistantThreadStateService;
 use common\components\Platform\Core\Db\BioenlaceDb;
-use common\models\AsistenteConversacion;
-use common\models\AsistenteInteraccion;
+use common\models\Platform\AsistenteConversacion;
+use common\models\Platform\AsistenteInteraccion;
 use yii\helpers\Json;
 
 /**

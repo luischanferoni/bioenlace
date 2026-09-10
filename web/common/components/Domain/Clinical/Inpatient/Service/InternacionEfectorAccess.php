@@ -2,9 +2,9 @@
 
 namespace common\components\Domain\Clinical\Inpatient\Service;
 
-use common\models\InfraestructuraCama;
-use common\models\InfraestructuraPiso;
-use common\models\SegNivelInternacion;
+use common\models\Organization\InfraestructuraCama;
+use common\models\Organization\InfraestructuraPiso;
+use common\models\Clinical\SegNivelInternacion;
 
 /**
  * Pertinencia geográfica internación ↔ efector (camas, pisos).

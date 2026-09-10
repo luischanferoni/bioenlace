@@ -6,12 +6,12 @@ use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
 use yii\bootstrap5\Modal;
 
-use common\models\User;
+use common\models\Platform\User;
 use common\components\Platform\Core\Permission\BioenlaceGhostHtml;
 
 use common\models\persona_telefono;
-use common\models\Tipo_telefono;
-use common\models\Localidad;
+use common\models\Person\Tipo_telefono;
+use common\models\Geo\Localidad;
 
 /* @var $this yii\web\View */
 /* @var $model common\models\Person\Persona */

@@ -3,11 +3,11 @@
 namespace common\components\Domain\Scheduling\Service;
 
 use common\components\Domain\Organization\Service\Servicios\ServiciosEfectorAutogestionListadoService;
-use common\models\ConsultaDerivaciones;
+use common\models\Clinical\ConsultaDerivaciones;
 use common\models\Scheduling\Turno;
-use common\models\Servicio;
-use common\models\ReservaTriageTeleconsultaElegibilidad;
-use common\models\ServicioTeleconsultaCaso;
+use common\models\Organization\Servicio;
+use common\models\Scheduling\ReservaTriageTeleconsultaElegibilidad;
+use common\models\Scheduling\ServicioTeleconsultaCaso;
 
 /**
  * Reglas simples de elegibilidad de teleconsulta al reservar turno (triage + servicio).

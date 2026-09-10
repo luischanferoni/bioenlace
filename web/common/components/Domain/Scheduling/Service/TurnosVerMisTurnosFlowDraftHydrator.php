@@ -197,7 +197,7 @@ final class TurnosVerMisTurnosFlowDraftHydrator
             return 0;
         }
         try {
-            $rows = \common\models\Servicio::find()->orderBy(['nombre' => SORT_ASC])->all();
+            $rows = \common\models\Organization\Servicio::find()->orderBy(['nombre' => SORT_ASC])->all();
         } catch (\Throwable $e) {
             return 0;
         }
@@ -211,7 +211,7 @@ final class TurnosVerMisTurnosFlowDraftHydrator
                 'id' => (string) (int) $s->id_servicio,
                 'nombre' => $nombre,
             ];
-            foreach (\common\models\Servicio::getSearchTermsForNombre($nombre) as $term) {
+            foreach (\common\models\Organization\Servicio::getSearchTermsForNombre($nombre) as $term) {
                 $candidates[] = [
                     'id' => (string) (int) $s->id_servicio,
                     'nombre' => $term,

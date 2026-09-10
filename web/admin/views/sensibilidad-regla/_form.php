@@ -4,8 +4,8 @@ use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\SensibilidadRegla */
-/* @var $servicios common\models\Servicio[] */
+/* @var $model common\models\Clinical\SensibilidadRegla */
+/* @var $servicios common\models\Organization\Servicio[] */
 /* @var $idsServicios int[] */
 
 $form = ActiveForm::begin();
@@ -13,7 +13,7 @@ $form = ActiveForm::begin();
 
 <div class="sensibilidad-regla-form">
 
-    <?= $form->field($model, 'accion')->dropDownList(\common\models\SensibilidadRegla::accionesDisponibles(), ['prompt' => 'Seleccione']) ?>
+    <?= $form->field($model, 'accion')->dropDownList(\common\models\Clinical\SensibilidadRegla::accionesDisponibles(), ['prompt' => 'Seleccione']) ?>
     <?= $form->field($model, 'codigo_generalizacion')->textInput(['maxlength' => true]) ?>
     <?= $form->field($model, 'etiqueta_generalizacion')->textInput(['maxlength' => true]) ?>
 

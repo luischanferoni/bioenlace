@@ -6,12 +6,12 @@ use common\components\Domain\Organization\Service\Authorization\ProfesionalEfect
 use common\components\Platform\Core\Permission\IntentRequestContextService;
 use common\components\Platform\Core\Permission\IntentSubmitFieldFilter;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
-use common\models\Condiciones_laborales;
+use common\models\Organization\Condiciones_laborales;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\AgendaIntervaloMinutos;
-use common\models\ProfesionalEfectorServicio as ProfesionalEfectorServicioRecord;
-use common\models\ProfesionalEfectorServicioAgenda;
-use common\models\ProfesionalEfectorServicioCondicionLaboral;
-use common\models\Servicio;
+use common\models\Organization\ProfesionalEfectorServicio as ProfesionalEfectorServicioRecord;
+use common\models\Organization\ProfesionalEfectorServicioAgenda;
+use common\models\Organization\ProfesionalEfectorServicioCondicionLaboral;
+use common\models\Organization\Servicio;
 use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;

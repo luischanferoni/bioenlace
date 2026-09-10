@@ -3,7 +3,7 @@
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\SensibilidadCategoria */
+/* @var $model common\models\Clinical\SensibilidadCategoria */
 
 $this->title = 'Editar categoría: ' . $model->nombre;
 $this->params['breadcrumbs'][] = ['label' => 'Categorías de sensibilidad', 'url' => ['index']];

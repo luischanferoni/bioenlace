@@ -6,7 +6,7 @@ use common\components\Domain\Clinical\Service\EpisodeOfCareService;
 use common\components\Domain\Clinical\Specialty\Inpatient\InpatientClinicalContext;
 use common\components\Domain\Clinical\Specialty\Inpatient\InpatientClinicalQuery;
 use common\models\Clinical\EpisodeOfCare;
-use common\models\SegNivelInternacion;
+use common\models\Clinical\SegNivelInternacion;
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 

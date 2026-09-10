@@ -4,12 +4,12 @@ namespace admin\controllers;
 
 use common\components\Domain\Organization\Service\Billing\BillingAccountService;
 use common\components\Domain\Organization\Service\Entitlement\EfectorEncounterEntitlementService;
-use common\models\BillingAccount;
-use common\models\BillingAccountEncounterEntitlement;
-use common\models\BillingAccountEfector;
-use common\models\busquedas\BillingAccountBusqueda;
+use common\models\Organization\BillingAccount;
+use common\models\Organization\BillingAccountEncounterEntitlement;
+use common\models\Organization\BillingAccountEfector;
+use common\models\Organization\BillingAccountBusqueda;
 use common\models\Clinical\EncounterDefinition;
-use common\models\Efector;
+use common\models\Organization\Efector;
 use Yii;
 use yii\filters\VerbFilter;
 use yii\web\Controller;

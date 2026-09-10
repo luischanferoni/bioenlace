@@ -58,7 +58,7 @@ class EncounterCaptureCategoryResolverTest extends Unit
 
     public function testTemplateForServicioEnfermeria(): void
     {
-        $servicio = new \common\models\Servicio();
+        $servicio = new \common\models\Organization\Servicio();
         $servicio->item_name = 'enfermeria';
         $servicio->nombre = 'ENFERMERIA';
 

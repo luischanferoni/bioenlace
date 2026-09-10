@@ -3,7 +3,7 @@
 namespace admin\controllers;
 
 use admin\components\UserConfig;
-use common\models\LoginForm;
+use common\models\Platform\LoginForm;
 use Yii;
 
 /**

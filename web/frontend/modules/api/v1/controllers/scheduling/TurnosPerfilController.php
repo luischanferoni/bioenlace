@@ -13,7 +13,7 @@ use common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoBehaviorPro
 use common\components\Platform\Ui\UiScreenService;
 use common\models\Platform\AgentRun;
 use common\models\Scheduling\Turno;
-use common\models\TurnoEventoAudit;
+use common\models\Scheduling\TurnoEventoAudit;
 use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;

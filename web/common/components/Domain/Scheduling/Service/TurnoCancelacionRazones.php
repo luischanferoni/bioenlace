@@ -8,7 +8,7 @@ namespace common\components\Domain\Scheduling\Service;
  * lo fija el flujo (p. ej. autogestión paciente → siempre CANCELADO_X_PACIENTE).
  *
  * Los códigos de esta clase se envían en POST como `razon_cancelacion` y se persisten en
- * {@see \common\models\TurnoEventoAudit::registrar()} (`meta_json`), junto con la etiqueta legible.
+ * {@see \common\models\Scheduling\TurnoEventoAudit::registrar()} (`meta_json`), junto con la etiqueta legible.
  *
  * Futuro endpoint cancelación por médico/app staff: usar {@see self::medicoAppOpcionesSelect()} y
  * `estado_motivo` = CANCELADO_X_MEDICO en el lifecycle.

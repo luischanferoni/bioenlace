@@ -2,9 +2,9 @@
 
 namespace common\components\Domain\Organization\Service\Billing;
 
-use common\models\BillingAccount;
-use common\models\BillingSignupRequest;
-use common\models\User;
+use common\models\Organization\BillingAccount;
+use common\models\Organization\BillingSignupRequest;
+use common\models\Platform\User;
 use Yii;
 
 /**

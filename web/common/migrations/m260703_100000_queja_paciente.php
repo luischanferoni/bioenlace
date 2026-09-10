@@ -2,7 +2,7 @@
 
 use yii\db\Migration;
 use common\components\Platform\Infra\Migration\MigrationEnumColumn;
-use common\models\QuejaPaciente;
+use common\models\Platform\QuejaPaciente;
 
 /**
  * Quejas enviadas por pacientes desde la app (solo lectura superadmin en admin).

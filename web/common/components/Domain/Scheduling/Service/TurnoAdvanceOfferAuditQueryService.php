@@ -5,7 +5,7 @@ namespace common\components\Domain\Scheduling\Service;
 use common\models\Platform\AgentRun;
 use common\models\Scheduling\TurnoAdvanceCampaign;
 use common\models\Scheduling\TurnoAdvanceOffer;
-use common\models\TurnoEventoAudit;
+use common\models\Scheduling\TurnoEventoAudit;
 use yii\data\ActiveDataProvider;
 use yii\db\ActiveQuery;
 

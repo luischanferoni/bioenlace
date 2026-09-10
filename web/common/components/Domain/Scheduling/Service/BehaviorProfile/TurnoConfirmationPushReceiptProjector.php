@@ -4,10 +4,10 @@ namespace common\components\Domain\Scheduling\Service\BehaviorProfile;
 
 use common\components\Domain\Scheduling\Service\TurnoConfirmationService;
 use common\components\Platform\Core\Service\Notificaciones\PushNotificationReceiptProjectorInterface;
-use common\models\PersonaNotificacion;
-use common\models\PersonaNotificacionInteraccion;
+use common\models\Platform\PersonaNotificacion;
+use common\models\Platform\PersonaNotificacionInteraccion;
 use common\models\Scheduling\Turno;
-use common\models\TurnoEventoAudit;
+use common\models\Scheduling\TurnoEventoAudit;
 
 /**
  * Proyecta DELIVERED/OPENED de notificaciones de confirmación al stream canónico.

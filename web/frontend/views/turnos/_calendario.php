@@ -1,6 +1,6 @@
 <?php
 
-use common\models\AgendaFeriados;
+use common\models\Scheduling\AgendaFeriados;
 use yii\bootstrap5\Modal;
 use yii\helpers\Html;
 use frontend\assets\BioenlaceApiClientAsset;

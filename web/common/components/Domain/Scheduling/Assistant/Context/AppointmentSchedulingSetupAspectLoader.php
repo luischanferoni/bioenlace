@@ -5,8 +5,8 @@ namespace common\components\Domain\Scheduling\Assistant\Context;
 use common\components\Platform\Assistant\Context\AssistantContextAspectLoaderInterface;
 use common\components\Platform\Assistant\Context\AssistantContextHISAreaAspect;
 use common\components\Platform\Assistant\Context\AssistantContextLoadContext;
-use common\models\ProfesionalEfectorServicioAgenda;
-use common\models\ServiciosEfector;
+use common\models\Organization\ProfesionalEfectorServicioAgenda;
+use common\models\Organization\ServiciosEfector;
 
 final class AppointmentSchedulingSetupAspectLoader implements AssistantContextAspectLoaderInterface
 {

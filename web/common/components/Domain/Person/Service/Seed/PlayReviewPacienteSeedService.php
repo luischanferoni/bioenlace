@@ -3,8 +3,8 @@
 namespace common\components\Domain\Person\Service\Seed;
 
 use common\models\Person\Persona;
-use common\models\User;
-use common\models\rbac\AuthRole;
+use common\models\Platform\User;
+use common\models\Platform\Permission\AuthRole;
 use Yii;
 
 /**
@@ -94,10 +94,10 @@ final class PlayReviewPacienteSeedService
     private function ensurePacienteRole(int $userId): void
     {
         try {
-            if (class_exists(\common\models\BioenlaceDbManager::class)
-                && method_exists(\common\models\BioenlaceDbManager::class, 'asignarRolPacienteSiNoExiste')
+            if (class_exists(\common\models\Platform\BioenlaceDbManager::class)
+                && method_exists(\common\models\Platform\BioenlaceDbManager::class, 'asignarRolPacienteSiNoExiste')
             ) {
-                \common\models\BioenlaceDbManager::asignarRolPacienteSiNoExiste($userId);
+                \common\models\Platform\BioenlaceDbManager::asignarRolPacienteSiNoExiste($userId);
 
                 return;
             }

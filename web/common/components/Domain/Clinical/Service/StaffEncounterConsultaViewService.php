@@ -7,7 +7,7 @@ use common\components\Domain\Clinical\CareCohort\Service\CarePackEncounterStaffS
 use common\components\Domain\Clinical\Presentation\EncounterStaffDocumentationViewService;
 use common\components\Domain\Clinical\Service\EncounterJourney\EncounterMotivosIntakeStaffViewService;
 use common\models\Clinical\Encounter;
-use common\models\ConsultaMotivosMessage;
+use common\models\Clinical\ConsultaMotivosMessage;
 use common\models\Person\Persona;
 use common\models\Scheduling\Turno;
 

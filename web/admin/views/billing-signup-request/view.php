@@ -1,7 +1,7 @@
 <?php
 
-use common\models\BillingAccount;
-use common\models\BillingSignupRequest;
+use common\models\Organization\BillingAccount;
+use common\models\Organization\BillingSignupRequest;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
 

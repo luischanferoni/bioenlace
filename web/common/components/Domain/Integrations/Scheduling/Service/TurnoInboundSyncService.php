@@ -12,9 +12,9 @@ use common\components\Domain\Integrations\Scheduling\Util\FhirBundleHelper;
 use common\components\Domain\Scheduling\Service\TurnoAdvanceOfferAgent;
 use common\components\Domain\Scheduling\Service\TurnoLifecycleService;
 use common\components\Domain\Scheduling\Service\TurnoSlotClaimService;
-use common\models\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Scheduling\Turno;
-use common\models\TurnoResolucion;
+use common\models\Scheduling\TurnoResolucion;
 use Yii;
 
 /**

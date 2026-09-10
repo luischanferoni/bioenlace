@@ -3,10 +3,10 @@
 use yii\helpers\Html;
 use yii\grid\GridView;
 use yii\helpers\ArrayHelper;
-use common\models\Efector;
+use common\models\Organization\Efector;
 
 /* @var $this yii\web\View */
-/* @var $searchModel common\models\busquedas\InfraestructuraPisoBusqueda */
+/* @var $searchModel common\models\Organization\InfraestructuraPisoBusqueda */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
 $this->title = 'Pisos';

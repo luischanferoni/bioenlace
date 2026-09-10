@@ -71,7 +71,7 @@ class EfectoresController extends BaseController
         if ($q === null && $filters === []) {
             return $out;
         }
-        $data = \common\models\Efector::liveSearch($q, $filters);
+        $data = \common\models\Organization\Efector::liveSearch($q, $filters);
 
         return ['results' => array_values($data)];
     }
@@ -171,7 +171,7 @@ class EfectoresController extends BaseController
         $filters = EfectoresListadosService::extractFilters($req, false);
         $filters['id_servicio'] = $idServicio;
         $q = $this->reqParamRaw('q');
-        $rows = \common\models\Efector::liveSearch($q, $filters);
+        $rows = \common\models\Organization\Efector::liveSearch($q, $filters);
 
         return ['results' => array_values($rows)];
     }

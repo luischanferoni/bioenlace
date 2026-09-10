@@ -10,7 +10,7 @@ use common\components\Platform\Core\Service\Push\PushNotificationTypes;
 use common\models\Clinical\CareFollowupTouchpointQueue;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
-use common\models\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicio;
 use Yii;
 
 /**

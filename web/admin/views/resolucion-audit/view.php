@@ -2,7 +2,7 @@
 
 use common\components\Platform\Agent\AgentRunAuditQueryService;
 use common\models\Platform\AgentRun;
-use common\models\TurnoNotificacionProgramada;
+use common\models\Scheduling\TurnoNotificacionProgramada;
 use yii\helpers\Html;
 use yii\helpers\Json;
 use yii\widgets\DetailView;

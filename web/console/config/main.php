@@ -33,7 +33,7 @@ return [
         // Mismo motor RBAC que frontend/admin: sin esto, IntentAccessService /
         // qa/asistente-consultas siempre niegan ejecución (authManager null).
         'authManager' => [
-            'class' => 'common\models\BioenlaceDbManager',
+            'class' => 'common\models\Platform\BioenlaceDbManager',
             'efectorAssignmentTable' => 'profesional_efector_servicio',
             'rolesEspeciales' => ['_x_efector_', '_sin_efector_', 'AdminMinisterio'],
         ],
@@ -41,7 +41,7 @@ return [
         // ConsoleUser expone getIdPersona/getIdEfector… (API web usa ApiUser + sesión).
         'user' => [
             'class' => \console\components\ConsoleUser::class,
-            'identityClass' => \common\models\User::class,
+            'identityClass' => \common\models\Platform\User::class,
             'enableSession' => false,
             'enableAutoLogin' => false,
         ],

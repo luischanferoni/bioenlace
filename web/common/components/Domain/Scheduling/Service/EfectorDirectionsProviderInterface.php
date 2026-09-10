@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
-use common\models\Efector;
+use common\models\Organization\Efector;
 
 /**
  * Provee datos de ubicación / indicaciones para recordatorios.

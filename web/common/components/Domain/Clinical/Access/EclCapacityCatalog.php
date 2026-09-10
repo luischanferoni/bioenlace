@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Access;
 
-use common\models\Servicio;
+use common\models\Organization\Servicio;
 use yii\db\Query;
 
 /**

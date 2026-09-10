@@ -9,7 +9,7 @@ use yii\helpers\Html;
 
 
 /* @var $this yii\web\View */
-/* @var $model common\models\Localidad */
+/* @var $model common\models\Geo\Localidad */
 
 $this->title = 'Nueva Localidad';
 $this->params['breadcrumbs'][] = ['label' => 'Localidades', 'url' => ['index']];

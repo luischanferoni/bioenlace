@@ -3,7 +3,7 @@
 namespace common\components\Domain\Organization\Service\ProfesionalEfectorServicio;
 
 use common\components\Domain\Scheduling\Service\TurnoIndisponibilidadImpactService;
-use common\models\ProfesionalEfectorServicio as ProfesionalEfectorServicioModel;
+use common\models\Organization\ProfesionalEfectorServicio as ProfesionalEfectorServicioModel;
 use common\models\Scheduling\Turno;
 use Yii;
 

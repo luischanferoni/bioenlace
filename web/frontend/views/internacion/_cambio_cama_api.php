@@ -3,7 +3,7 @@
 use yii\helpers\Html;
 use yii\helpers\Url;
 
-/** @var common\models\SegNivelInternacion $model */
+/** @var common\models\Clinical\SegNivelInternacion $model */
 /** @var array<string, mixed> $ctx */
 
 $camas = $ctx['camas_disponibles'] ?? [];

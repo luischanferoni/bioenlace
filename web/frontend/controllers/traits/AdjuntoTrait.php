@@ -8,7 +8,7 @@ use yii\base\InvalidConfigException;
 use \yii\web\Request;
 use yii\helpers\Url;
 
-use common\models\Adjunto;
+use common\models\Platform\Adjunto;
 
 trait AdjuntoTrait
 {

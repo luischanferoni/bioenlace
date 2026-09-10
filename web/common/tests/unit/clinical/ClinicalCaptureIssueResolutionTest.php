@@ -6,7 +6,7 @@ use Codeception\Test\Unit;
 use common\components\Domain\Clinical\Capture\ClinicalCaptureIssueFactory;
 use common\components\Domain\Clinical\Capture\ClinicalCaptureResolutionApplier;
 use common\models\Clinical\Input\IndicacionInput;
-use common\models\ConsultaIndicaciones;
+use common\models\Clinical\ConsultaIndicaciones;
 
 class ClinicalCaptureIssueResolutionTest extends Unit
 {

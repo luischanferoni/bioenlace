@@ -4,10 +4,10 @@ namespace common\components\Domain\Scheduling\Service;
 
 use Yii;
 use common\models\Scheduling\Turno;
-use common\models\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicio;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\AgendaSlotEngine;
-use common\models\ProfesionalEfectorServicioAgenda;
-use common\models\ProfesionalEfectorServicioAgendaVersion;
+use common\models\Organization\ProfesionalEfectorServicioAgenda;
+use common\models\Organization\ProfesionalEfectorServicioAgendaVersion;
 
 /**
  * Servicio de búsqueda de slots de turnos AMB a partir de parámetros ya NORMALIZADOS.

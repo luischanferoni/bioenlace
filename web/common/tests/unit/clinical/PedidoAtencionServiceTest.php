@@ -9,7 +9,7 @@ use common\components\Domain\Clinical\Access\PedidoAtencion;
 use common\components\Domain\Clinical\Access\PedidoAtencionMetadata;
 use common\components\Domain\Clinical\Access\PedidoAtencionService;
 use common\models\Clinical\Input\DerivacionInput;
-use common\models\ConsultaDerivaciones;
+use common\models\Clinical\ConsultaDerivaciones;
 
 class PedidoAtencionServiceTest extends Unit
 {

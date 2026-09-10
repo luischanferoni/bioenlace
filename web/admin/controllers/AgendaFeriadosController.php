@@ -10,8 +10,8 @@ use yii\web\Controller;
 use yii\web\UnprocessableEntityHttpException;
 use yii\filters\VerbFilter;
 
-use common\models\AgendaFeriados;
-use common\models\busquedas\AgendaFeriadosBusqueda;
+use common\models\Scheduling\AgendaFeriados;
+use common\models\Scheduling\AgendaFeriadosBusqueda;
 
 /**
  * AgendaFeriadosController implements the CRUD actions for AgendaFeriados model.

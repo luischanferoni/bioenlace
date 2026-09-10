@@ -82,7 +82,7 @@ class AudioController extends BaseController
 
                 $idProfCtx = (int) ($idPesCtx ?? 0);
                 if ($idServicio && $idProfCtx > 0) {
-                    $servicio = \common\models\Servicio::findOne($idServicio);
+                    $servicio = \common\models\Organization\Servicio::findOne($idServicio);
                     $tabId = $request->post('tab_id') ?? 'tab_' . uniqid() . '_' . time();
 
                     // Procesar el texto transcrito

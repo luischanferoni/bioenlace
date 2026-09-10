@@ -8,10 +8,10 @@ use common\components\Domain\Person\Service\PersonaSignosVitalesService;
 use common\models\Clinical\AllergyIntolerance;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterPatientSummary;
-use common\models\DiagnosticoConsultaRepository as DCRepo;
-use common\models\Efector;
+use common\models\Clinical\DiagnosticoConsultaRepository as DCRepo;
+use common\models\Organization\Efector;
 use common\models\Person\Persona;
-use common\models\PersonasAntecedente;
+use common\models\Clinical\PersonasAntecedente;
 
 /**
  * Arma el payload estructurado del expediente legal (PDF).

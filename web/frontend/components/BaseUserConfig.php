@@ -7,11 +7,11 @@ use yii\web\User;
 
 /**
  * Base del componente user para web y API.
- * Comparte identityClass ({@see \common\models\User}) y helpers de sesión.
+ * Comparte identityClass ({@see \common\models\Platform\User}) y helpers de sesión.
  */
 abstract class BaseUserConfig extends User
 {
-    public $identityClass = \common\models\User::class;
+    public $identityClass = \common\models\Platform\User::class;
 
     public function getIsSuperadmin()
     {

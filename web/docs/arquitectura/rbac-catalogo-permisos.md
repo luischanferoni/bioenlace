@@ -27,7 +27,7 @@ Documentación estable del modelo de autorización Bioenlace: motor Yii, **permi
 | Dominio recurso | `DomainOperationAuthorizer`, políticas en `domain-operation-policies.yaml` | ¿Sobre **este** PES/turno/encounter/efector? |
 | Manifiesto UX | `home-panel-manifest.yaml`, `GuardiaBoardCapabilityService` | Visibilidad CTAs (complementa RBAC; no lo sustituye) |
 | Admin catálogo | `PermissionCatalogController` | Intents, capabilities, integridad, roles |
-| Identidad | `common\models\User`, `AuthController` | Login, contraseña, confirmación e-mail |
+| Identidad | `common\models\Platform\User`, `AuthController` | Login, contraseña, confirmación e-mail |
 
 ### Jerarquía RBAC (ejemplos)
 

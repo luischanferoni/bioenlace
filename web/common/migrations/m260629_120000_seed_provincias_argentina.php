@@ -1,6 +1,6 @@
 <?php
 
-use common\components\Domain\Person\Service\Seed\ProvinciasArgentinaSeedService;
+use common\components\Domain\Geo\Service\Seed\ProvinciasArgentinaSeedService;
 use yii\db\Migration;
 
 /**

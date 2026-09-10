@@ -3,7 +3,7 @@
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\AgendaFeriados */
+/* @var $model common\models\Scheduling\AgendaFeriados */
 
 $this->title = 'Update Agenda Feriados: ' . $model->id;
 $this->params['breadcrumbs'][] = ['label' => 'Agenda Feriados', 'url' => ['index']];

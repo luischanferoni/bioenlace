@@ -11,7 +11,7 @@ use yii\helpers\Html;
 use yii\grid\GridView;
 
 /* @var $this yii\web\View */
-/* @var $searchModel common\models\busquedas\PersonaBusqueda */
+/* @var $searchModel common\models\Person\PersonaBusqueda */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
 $this->title = '';

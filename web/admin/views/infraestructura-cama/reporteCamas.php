@@ -3,10 +3,10 @@
 use yii\helpers\Html;
 use yii\grid\GridView;
 use yii\helpers\ArrayHelper;
-use common\models\InfraestructuraSala;
+use common\models\Organization\InfraestructuraSala;
 
 /* @var $this yii\web\View */
-/* @var $searchModel common\models\busquedas\InfraestructuraCamaBusqueda */
+/* @var $searchModel common\models\Organization\InfraestructuraCamaBusqueda */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
 $this->title = 'Reporte de Camas';
@@ -31,7 +31,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'attribute'=> 'id_efector',
                 'label'=> 'Efector',
                 'value'=>function($data){
-                    $consulta = \common\models\Efector::findOne(['id_efector'=>$data['id_efector']]);
+                    $consulta = \common\models\Organization\Efector::findOne(['id_efector'=>$data['id_efector']]);
                     
                     return $consulta->nombre;
                 }
@@ -41,7 +41,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'attribute'=> 'id_servicio',
                 'label'=> 'Servicio',
                 'value'=>function($data){
-                    $consulta = \common\models\Servicio::findOne(['id_servicio'=>$data['id_servicio']]);
+                    $consulta = \common\models\Organization\Servicio::findOne(['id_servicio'=>$data['id_servicio']]);
                     
                     return $consulta? $consulta->nombre: 'No definido' ;
                 }

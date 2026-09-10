@@ -5,7 +5,7 @@ namespace common\tests\unit\clinical;
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\CareCohort\Service\CareFollowupSchedulerService;
 use common\components\Domain\Clinical\Service\ServiceRequestService;
-use common\models\ConsultaIndicaciones;
+use common\models\Clinical\ConsultaIndicaciones;
 
 class CareFollowupTouchpointsNormalizeTest extends Unit
 {

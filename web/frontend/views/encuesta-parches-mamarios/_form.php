@@ -8,7 +8,7 @@ use frontend\assets\BioenlaceApiClientAsset;
 use yii\web\JsExpression;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\EncuestaParchesMamarios */
+/* @var $model common\models\Clinical\EncuestaParchesMamarios */
 /* @var $form yii\widgets\ActiveForm */
 
 $idEfectorAutocomplete = (int) Yii::$app->user->getIdEfector();

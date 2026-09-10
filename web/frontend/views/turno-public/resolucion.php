@@ -1,7 +1,7 @@
 <?php
 /** @var yii\web\View $this */
 /** @var common\models\Scheduling\Turno $turno */
-/** @var common\models\TurnoResolucion $resolucion */
+/** @var common\models\Scheduling\TurnoResolucion $resolucion */
 /** @var string $appUrl */
 
 use yii\helpers\Html;

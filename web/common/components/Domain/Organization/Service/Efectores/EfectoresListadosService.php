@@ -3,7 +3,7 @@
 namespace common\components\Domain\Organization\Service\Efectores;
 
 use common\components\Domain\Person\Service\PacienteContextoOfferingService;
-use common\models\Efector;
+use common\models\Organization\Efector;
 use yii\web\Request;
 
 /**

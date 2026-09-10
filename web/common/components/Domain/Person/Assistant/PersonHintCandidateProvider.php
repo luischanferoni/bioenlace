@@ -17,6 +17,11 @@ final class PersonHintCandidateProvider implements HintCandidateProviderInterfac
         return 'person';
     }
 
+    public static function declaredEntities(): array
+    {
+        return ['persona'];
+    }
+
     public static function providesFor(string $entity, HintResolutionContext $ctx): bool
     {
         return strtolower(trim($entity)) === 'persona';

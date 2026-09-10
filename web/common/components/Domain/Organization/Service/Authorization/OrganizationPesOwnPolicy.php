@@ -5,7 +5,7 @@ namespace common\components\Domain\Organization\Service\Authorization;
 use common\components\Platform\Core\Permission\Domain\DomainOperationContext;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Platform\Core\Permission\Domain\DomainOperationPolicyInterface;
-use common\models\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicio;
 
 /**
  * El PES pertenece al profesional autenticado (id_persona de sesión).

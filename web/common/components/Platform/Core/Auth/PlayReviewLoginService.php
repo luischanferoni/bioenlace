@@ -2,9 +2,9 @@
 
 namespace common\components\Platform\Core\Auth;
 
-use common\models\LoginForm;
+use common\models\Platform\LoginForm;
 use common\models\Person\Persona;
-use common\models\User;
+use common\models\Platform\User;
 use Yii;
 
 /**

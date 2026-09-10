@@ -3,9 +3,9 @@
 namespace common\tests\unit\person;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Person\Service\Seed\ProvinciasArgentinaSeedService;
-use common\components\Domain\Person\Service\Seed\ProvinciasUruguaySeedService;
-use common\components\Domain\Person\Service\Seed\ProvinciaVecinosSeedService;
+use common\components\Domain\Geo\Service\Seed\ProvinciasArgentinaSeedService;
+use common\components\Domain\Geo\Service\Seed\ProvinciasUruguaySeedService;
+use common\components\Domain\Geo\Service\Seed\ProvinciaVecinosSeedService;
 
 class GeoMultipaisSeedDefinitionTest extends Unit
 {

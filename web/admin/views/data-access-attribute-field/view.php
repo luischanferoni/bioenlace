@@ -4,7 +4,7 @@ use yii\helpers\Html;
 use yii\widgets\DetailView;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\DataAccess\DataAccessAttributeField */
+/* @var $model common\models\Platform\DataAccess\DataAccessAttributeField */
 
 $this->title = $model->field_name . ' @ ' . $model->entity_group_key;
 $this->params['breadcrumbs'][] = ['label' => 'Campos por grupo', 'url' => ['index', 'group' => $model->entity_group_key]];

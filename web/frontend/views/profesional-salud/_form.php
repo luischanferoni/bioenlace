@@ -7,12 +7,12 @@ use kartik\depdrop\DepDrop;
 use kartik\select2\Select2;
 use yii\widgets\ActiveForm;
 
-use common\models\Profesiones;
-use common\models\Especialidades;
+use common\models\Person\Profesiones;
+use common\models\Organization\Especialidades;
 
 
 /* @var $this yii\web\View */
-/* @var $model common\models\ProfesionalSalud */
+/* @var $model common\models\Person\ProfesionalSalud */
 /* @var $form yii\widgets\ActiveForm */
 ?>
 

@@ -3,7 +3,7 @@
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\Barrios */
+/* @var $model common\models\Geo\Barrios */
 
 $this->title = 'Editar Barrio: ' . $model->nombre;
 $this->params['breadcrumbs'][] = ['label' => 'Barrios', 'url' => ['index']];

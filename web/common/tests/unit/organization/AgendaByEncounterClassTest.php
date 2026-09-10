@@ -5,7 +5,7 @@ namespace common\tests\unit\organization;
 use Codeception\Test\Unit;
 use common\components\Platform\Core\Product\AgendaByEncounterClassMetadata;
 use common\models\Clinical\Encounter;
-use common\models\ProfesionalHorario;
+use common\models\Organization\ProfesionalHorario;
 
 class AgendaByEncounterClassTest extends Unit
 {

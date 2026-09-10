@@ -6,10 +6,10 @@ use common\components\Domain\Clinical\Service\CarePlanService;
 use common\components\Domain\Clinical\Service\MedicationRequestService;
 use common\components\Domain\Clinical\Service\ServiceRequestService;
 use common\models\Clinical\Condition;
-use common\models\DiagnosticoConsulta;
-use common\models\SegNivelInternacionDiagnostico;
-use common\models\SegNivelInternacionMedicamento;
-use common\models\SegNivelInternacionPractica;
+use common\models\Clinical\DiagnosticoConsulta;
+use common\models\Clinical\SegNivelInternacionDiagnostico;
+use common\models\Clinical\SegNivelInternacionMedicamento;
+use common\models\Clinical\SegNivelInternacionPractica;
 
 /**
  * Órdenes clínicas de internación → recursos FHIR (sin tablas seg_nivel_internacion_* hijas).

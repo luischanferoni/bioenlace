@@ -10,7 +10,7 @@ use common\components\Domain\Clinical\Inpatient\Service\InternacionIndicadoresSe
 use common\components\Domain\Clinical\Inpatient\Service\InternacionMapaCamasService;
 use common\components\Platform\Ui\UiScreenService;
 use common\models\Person\Persona;
-use common\models\SegNivelInternacion;
+use common\models\Clinical\SegNivelInternacion;
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 use yii\web\ForbiddenHttpException;

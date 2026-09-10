@@ -3,9 +3,9 @@
 namespace common\components\Domain\Integrations\Scheduling;
 
 use common\components\Domain\Person\Service\PersonCuilService;
-use common\models\Efector;
-use common\models\Integration\IntegrationScheduleLink;
-use common\models\ProfesionalEfectorServicio;
+use common\models\Organization\Efector;
+use common\models\Integrations\IntegrationScheduleLink;
+use common\models\Organization\ProfesionalEfectorServicio;
 
 /**
  * Resolución Schedule HAPI → PES (catálogo verificado + compuesto fail-closed).

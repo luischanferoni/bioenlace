@@ -6,7 +6,7 @@ use common\components\Domain\Scheduling\Service\TurnoAutogestionAnticipacionServ
 use common\components\Platform\Assistant\Context\AssistantContextAspectLoaderInterface;
 use common\components\Platform\Assistant\Context\AssistantContextHISAreaAspect;
 use common\components\Platform\Assistant\Context\AssistantContextLoadContext;
-use common\models\EfectorTurnosConfig;
+use common\models\Scheduling\EfectorTurnosConfig;
 
 final class SiteAppointmentPoliciesAspectLoader implements AssistantContextAspectLoaderInterface
 {

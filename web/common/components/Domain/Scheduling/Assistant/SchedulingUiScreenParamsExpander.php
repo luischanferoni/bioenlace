@@ -4,7 +4,7 @@ namespace common\components\Domain\Scheduling\Assistant;
 
 use common\components\Domain\Scheduling\Service\TurnoReservaSlotService;
 use common\components\Platform\Ui\UiScreenParamsExpanderInterface;
-use common\models\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicio;
 
 /**
  * Expande `slot_id` de turnos a fecha, hora, PES, efector y servicio.

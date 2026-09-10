@@ -6,7 +6,7 @@ use common\components\Platform\Legacy\UserManagementCompat;
 use common\components\Platform\Ui\Grid\GridBulkActions;
 use common\components\Platform\Ui\Grid\GridPageSize;
 use common\components\Platform\Ui\Grid\StatusColumn;
-use common\models\User;
+use common\models\Platform\User;
 use yii\grid\GridView;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
@@ -15,7 +15,7 @@ use yii\widgets\Pjax;
 
 /* @var yii\web\View $this */
 /* @var yii\data\ActiveDataProvider $dataProvider */
-/* @var common\models\search\UserSearch $searchModel */
+/* @var common\models\Platform\UserSearch $searchModel */
 
 $this->title = UserManagementCompat::t('back', 'Users');
 $this->params['breadcrumbs'][] = $this->title;

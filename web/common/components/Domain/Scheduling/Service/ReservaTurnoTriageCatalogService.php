@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
-use common\models\ReservaTriageTeleconsultaElegibilidad;
+use common\models\Scheduling\ReservaTriageTeleconsultaElegibilidad;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
 

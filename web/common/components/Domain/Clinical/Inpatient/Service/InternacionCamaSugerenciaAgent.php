@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\Inpatient\Service;
 
 use common\components\Platform\Agent\AgentRunRecorder;
-use common\models\Guardia;
+use common\models\Clinical\Guardia;
 use common\models\Person\Persona;
 use Yii;
 

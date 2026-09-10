@@ -5,7 +5,7 @@ namespace frontend\components;
 use Yii;
 use yii\web\NotFoundHttpException;
 use common\models\Person\Persona;
-use common\models\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicio;
 
 /**
  * Componente user para la API (JWT; sesión solo para datos derivados como idPersona).

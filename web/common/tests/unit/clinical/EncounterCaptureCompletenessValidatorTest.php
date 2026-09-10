@@ -94,7 +94,7 @@ class EncounterCaptureCompletenessValidatorTest extends Unit
                     'titulo' => 'Medicación',
                     'modelo' => 'ConsultaMedicamentos',
                     'requerido' => false,
-                    'campos_requeridos' => (new \common\models\ConsultaMedicamentos())->requeridosPrompt(),
+                    'campos_requeridos' => (new \common\models\Clinical\ConsultaMedicamentos())->requeridosPrompt(),
                 ],
             ]
         );
@@ -121,7 +121,7 @@ class EncounterCaptureCompletenessValidatorTest extends Unit
                     'titulo' => 'Medicación',
                     'modelo' => 'ConsultaMedicamentos',
                     'requerido' => false,
-                    'campos_requeridos' => (new \common\models\ConsultaMedicamentos())->requeridosPrompt(),
+                    'campos_requeridos' => (new \common\models\Clinical\ConsultaMedicamentos())->requeridosPrompt(),
                 ],
             ]
         );

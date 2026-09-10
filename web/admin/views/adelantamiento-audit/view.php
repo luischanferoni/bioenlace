@@ -3,7 +3,7 @@
 use common\models\Platform\AgentRun;
 use common\models\Scheduling\TurnoAdvanceCampaign;
 use common\models\Scheduling\TurnoAdvanceOffer;
-use common\models\TurnoEventoAudit;
+use common\models\Scheduling\TurnoEventoAudit;
 use yii\helpers\Html;
 use yii\helpers\Json;
 use yii\widgets\DetailView;

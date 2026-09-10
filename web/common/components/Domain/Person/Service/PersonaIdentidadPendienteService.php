@@ -13,9 +13,9 @@ use common\models\Clinical\MedicationRequest;
 use common\models\Clinical\Procedure;
 use common\models\Clinical\ServiceRequest;
 use common\models\Clinical\VisionPrescription;
-use common\models\Guardia;
+use common\models\Clinical\Guardia;
 use common\models\Person\Persona;
-use common\models\SegNivelInternacion;
+use common\models\Clinical\SegNivelInternacion;
 
 /**
  * Placeholder de Persona por episodio NN (sin documento). No es padrón ni MPI.

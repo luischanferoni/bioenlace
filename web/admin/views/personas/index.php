@@ -6,12 +6,12 @@ use yii\helpers\Url;
 use yii\bootstrap5\Modal;
 use yii\bootstrap5\Dropdown;
 
-use common\models\User;
+use common\models\Platform\User;
 
 use common\models\Person\Persona;
 
 /* @var $this yii\web\View */
-/* @var $searchModel common\models\busquedas\PersonaBusqueda */
+/* @var $searchModel common\models\Person\PersonaBusqueda */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
 $this->title = 'Listado de personas';

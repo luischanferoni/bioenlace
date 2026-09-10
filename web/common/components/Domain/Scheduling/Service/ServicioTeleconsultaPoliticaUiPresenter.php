@@ -101,14 +101,14 @@ final class ServicioTeleconsultaPoliticaUiPresenter
         if ($idServicio <= 0) {
             return $params;
         }
-        $servicio = \common\models\Servicio::findOne($idServicio);
+        $servicio = \common\models\Organization\Servicio::findOne($idServicio);
         if ($servicio === null) {
             return $params;
         }
         $params['id_servicio'] = (string) $idServicio;
         $params['teleconsulta_politica'] = (string) ($servicio->teleconsulta_politica
-            ?: \common\models\Servicio::TELECONSULTA_POLITICA_NINGUNA);
-        $codes = \common\models\ServicioTeleconsultaCaso::listCodigosPorServicio($idServicio);
+            ?: \common\models\Organization\Servicio::TELECONSULTA_POLITICA_NINGUNA);
+        $codes = \common\models\Scheduling\ServicioTeleconsultaCaso::listCodigosPorServicio($idServicio);
         $params['caso_codigos_text'] = $codes !== [] ? implode("\n", $codes) : '';
 
         return $params;

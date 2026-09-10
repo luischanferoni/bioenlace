@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Enum;
 
-use common\models\DiagnosticoConsulta;
+use common\models\Clinical\DiagnosticoConsulta;
 
 /**
  * clinical_status FHIR Condition (valores alineados a DiagnosticoConsulta).

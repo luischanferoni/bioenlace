@@ -1,0 +1,517 @@
+<?php
+namespace common\models\Platform;
+
+use common\models\Organization\Efector;
+use common\components\Platform\Core\Service\ClientContextService;
+use Yii;
+use yii\db\Query;
+use yii\rbac\Item;
+use yii\rbac\DbManager;
+
+class BioenlaceDbManager extends DbManager
+{
+    public $rolesEspeciales;
+    public $efectorAssignmentTable;
+
+    /**
+     * Yii {@see DbManager::getChildrenRecursive} reentra hijos ya visitados (diamantes) y no corta
+     * ciclos en `auth_item_child`. Eso deriva en OOM (p. ej. al armar permisos de sesión en site/index).
+     *
+     * {@inheritdoc}
+     */
+    protected function getChildrenRecursive($name, $childrenList, &$result)
+    {
+        if (!isset($childrenList[$name])) {
+            return;
+        }
+        foreach ($childrenList[$name] as $child) {
+            if (isset($result[$child])) {
+                continue;
+            }
+            $result[$child] = true;
+            $this->getChildrenRecursive($child, $childrenList, $result);
+        }
+    }
+
+    /**
+     * Corta ciclos al subir la jerarquía en checkAccess (mismo riesgo que getChildrenRecursive).
+     *
+     * @var array<string, true>
+     */
+    private array $checkAccessStack = [];
+
+    /**
+     * {@inheritdoc}
+     */
+    public function checkAccess($userId, $permissionName, $params = [])
+    {
+        $this->checkAccessStack = [];
+        try {
+            return parent::checkAccess($userId, $permissionName, $params);
+        } finally {
+            $this->checkAccessStack = [];
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function checkAccessRecursive($user, $itemName, $params, $assignments)
+    {
+        if (isset($this->checkAccessStack[$itemName])) {
+            Yii::warning("Ciclo RBAC detectado en checkAccessRecursive: {$itemName}", __METHOD__);
+
+            return false;
+        }
+        $this->checkAccessStack[$itemName] = true;
+        try {
+            return parent::checkAccessRecursive($user, $itemName, $params, $assignments);
+        } finally {
+            unset($this->checkAccessStack[$itemName]);
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function checkAccessFromCache($user, $itemName, $params, $assignments)
+    {
+        if (isset($this->checkAccessStack[$itemName])) {
+            Yii::warning("Ciclo RBAC detectado en checkAccessFromCache: {$itemName}", __METHOD__);
+
+            return false;
+        }
+        $this->checkAccessStack[$itemName] = true;
+        try {
+            return parent::checkAccessFromCache($user, $itemName, $params, $assignments);
+        } finally {
+            unset($this->checkAccessStack[$itemName]);
+        }
+    }
+
+    /**
+     * Cuando {@see $efectorAssignmentTable} es `profesional_efector_servicio`, los permisos/roles
+     * por servicio se filtran por `id_persona` + `id_efector` de sesión (mismas columnas en PES).
+     */
+    protected function isProfesionalEfectorServicioAssignmentTable(): bool
+    {
+        $t = (string) $this->efectorAssignmentTable;
+        $t = str_replace(['{{%', '}}'], '', $t);
+
+        return strpos($t, 'profesional_efector_servicio') !== false;
+    }
+
+    /**
+     * @param Query $query consulta que ya incluye alias `a` = {@see $efectorAssignmentTable}
+     */
+    protected function applyEfectorAssignmentSessionFilter(Query $query): void
+    {
+        if (!$this->isProfesionalEfectorServicioAssignmentTable()) {
+            throw new \RuntimeException('BioenlaceDbManager: configure authManager.efectorAssignmentTable como profesional_efector_servicio.');
+        }
+        $idPersona = (int) Yii::$app->user->getIdPersona();
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        if ($idPersona > 0) {
+            $query->andWhere(['{{a}}.[[id_persona]]' => $idPersona]);
+        }
+        if ($idEfector > 0) {
+            $query->andWhere(['{{a}}.[[id_efector]]' => $idEfector]);
+        }
+    }
+
+    /**
+     * ¿Hay contexto de efector suficiente para sumar permisos/roles desde {@see $efectorAssignmentTable}?
+     */
+    protected function shouldLoadEfectorPermissionsForCurrentUser(): bool
+    {
+        if (!$this->isProfesionalEfectorServicioAssignmentTable()) {
+            return false;
+        }
+        if ((int) Yii::$app->user->getIdPersona() <= 0) {
+            return false;
+        }
+        if ((int) Yii::$app->user->getIdEfector() > 0) {
+            return true;
+        }
+
+        return ClientContextService::shouldMergeAllPesRolesForPerson();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getPermissionsByUser($userId)
+    {
+        if ($this->isEmptyUserId($userId)) {
+            return [];
+        }
+
+        $directPermission = $this->getDirectPermissionsByUser($userId);
+
+        $inheritedPermission = $this->getInheritedPermissionsByUser($userId);
+
+        return array_merge($directPermission, $inheritedPermission);
+    }
+
+    /**
+     * Returns all permissions that are directly assigned to user.
+     * @param string|int $userId the user ID (see [[\yii\web\User::id]])
+     * @return Permission[] all direct permissions that the user has. The array is indexed by the permission names.
+     * @since 2.0.7
+     */
+    protected function getDirectPermissionsByUser($userId)
+    {
+        $permissions = [];
+
+        // Sumamos los roles permisos recurso humano / PES
+        if ($this->shouldLoadEfectorPermissionsForCurrentUser()) {
+            $permissions = $this->getDirectPermissionsByEfectorAssignment();
+        }
+
+        // TODO: desde esta linea hasta el final en un futuro debería de quedar parent::getInheritedPermissionsByUser()
+        if (!isset(Yii::$app->authManager->rolesEspeciales) || count(Yii::$app->authManager->rolesEspeciales) == 0) {
+            return [];
+        }
+        foreach (Yii::$app->authManager->rolesEspeciales as $rolEspecial) {
+            $rolesEspeciales[] = 'a.item_name LIKE "%'.$rolEspecial.'%"';
+        }
+
+        $query = (new Query())->select('b.*')
+            ->from(['a' => $this->assignmentTable, 'b' => $this->itemTable])
+            ->where('{{a}}.[[item_name]]={{b}}.[[name]]')
+            ->andWhere(['a.user_id' => (string) $userId])
+            ->andWhere(implode(' OR ', $rolesEspeciales))
+            ->andWhere(['b.type' => Item::TYPE_PERMISSION]);
+
+        foreach ($query->all($this->db) as $row) {
+            $permissions[$row['name']] = $this->populateItem($row);
+        }
+
+        return $permissions;
+    }
+
+    protected function getDirectPermissionsByEfectorAssignment()
+    {
+        $query = (new Query())->select('b.*')
+            ->from(['a' => $this->efectorAssignmentTable, 'b' => $this->itemTable, 'c' => 'servicios']);
+        $query->where('{{c}}.[[item_name]]={{b}}.[[name]]')
+            ->andWhere('{{a}}.id_servicio={{c}}.[[id_servicio]]');
+        $this->applyEfectorAssignmentSessionFilter($query);
+        $query->andWhere(['{{b}}.type' => Item::TYPE_PERMISSION])
+            ->andWhere('{{a}}.deleted_at IS NULL')
+            ->groupBy(['{{c}}.[[item_name]]']);
+       
+        $permissions = [];
+        foreach ($query->all($this->db) as $row) {
+            $permissions[$row['name']] = $this->populateItem($row);
+        }
+
+        return $permissions;
+    }
+    /**
+     * Returns all permissions that the user inherits from the roles assigned to him.
+     * @param string|int $userId the user ID (see [[\yii\web\User::id]])
+     * @return Permission[] all inherited permissions that the user has. The array is indexed by the permission names.
+     * @since 2.0.7
+     */
+    protected function getInheritedPermissionsByUser($userId)
+    {
+        $permissions = [];
+
+        // Sumamos los permisos por recurso humano / PES
+        if ($this->shouldLoadEfectorPermissionsForCurrentUser()) {
+            $permissions = $this->getInheritedPermissionsByEfectorAssignment();
+        }
+
+        // Obtener todos los roles del usuario (incluyendo "paciente" si se agregó dinámicamente)
+        $userRoles = $this->getRolesByUser($userId);
+        
+        // TODO: desde esta linea hasta el final en un futuro debería de quedar parent::getInheritedPermissionsByUser()
+        if (!isset(Yii::$app->authManager->rolesEspeciales) || count(Yii::$app->authManager->rolesEspeciales) == 0) {
+            // Si no hay rolesEspeciales, obtener permisos de todos los roles del usuario
+            // (incluyendo "paciente" que se agregó dinámicamente)
+            $childrenList = $this->getChildrenList();
+            $result = [];
+            foreach ($userRoles as $roleName => $role) {
+                $this->getChildrenRecursive($roleName, $childrenList, $result);
+            }
+            
+            if (!empty($result)) {
+                $query = (new Query())->from($this->itemTable)->where([
+                    'type' => Item::TYPE_PERMISSION,
+                    'name' => array_keys($result),
+                ]);
+                
+                foreach ($query->all($this->db) as $row) {
+                    $permissions[$row['name']] = $this->populateItem($row);
+                }
+            }
+            
+            return $permissions;
+        }
+        
+        foreach (Yii::$app->authManager->rolesEspeciales as $rolEspecial) {
+            $rolesEspeciales[] = 'item_name LIKE "%'.$rolEspecial.'%"';
+        }
+
+        $query = (new Query())->select('item_name')
+            ->from($this->assignmentTable)
+            ->where(['user_id' => (string) $userId])
+            ->andWhere(implode(' OR ', $rolesEspeciales));
+        
+        $childrenList = $this->getChildrenList();
+        $result = [];
+        foreach ($query->column($this->db) as $roleName) {            
+            $this->getChildrenRecursive($roleName, $childrenList, $result);
+        }
+        
+        // También obtener permisos del rol "paciente" si el usuario lo tiene
+        // (aunque no esté en auth_assignment con el patrón especial)
+        if (!ClientContextService::shouldOmitPacienteRole() && isset($userRoles['paciente'])) {
+            $this->getChildrenRecursive('paciente', $childrenList, $result);
+        }
+
+        if (empty($result)) {
+            return $permissions;
+        }
+        
+        $query = (new Query())->from($this->itemTable)->where([
+            'type' => Item::TYPE_PERMISSION,
+            'name' => array_keys($result),
+        ]);
+        
+        foreach ($query->all($this->db) as $row) {
+            $permissions[$row['name']] = $this->populateItem($row);
+        }
+        
+        return $permissions;
+    }
+
+    protected function getInheritedPermissionsByEfectorAssignment()
+    {
+        $query = (new Query())->select('c.item_name')
+            ->from(['a' => $this->efectorAssignmentTable, 'c' => 'servicios']);
+        $this->applyEfectorAssignmentSessionFilter($query);
+        $query->andWhere('{{a}}.id_servicio={{c}}.[[id_servicio]]')
+            ->andWhere('{{a}}.deleted_at IS NULL')
+            ->groupBy(['{{c}}.[[item_name]]']);
+        //echo $query->createCommand()->getRawSql();die;
+        $childrenList = $this->getChildrenList();
+        $result = [];
+        foreach ($query->column($this->db) as $roleName) {            
+            $this->getChildrenRecursive($roleName, $childrenList, $result);
+        }
+
+        if (empty($result)) {
+            return [];
+        }
+        
+        $query = (new Query())->from($this->itemTable)->where([
+            'type' => Item::TYPE_PERMISSION,
+            'name' => array_keys($result),
+        ]);
+        $permissions = [];
+        foreach ($query->all($this->db) as $row) {
+            $permissions[$row['name']] = $this->populateItem($row);
+        }
+
+        return $permissions;        
+    }
+
+    /**
+     * {@inheritdoc}
+     * The roles returned by this method include the roles assigned via [[$defaultRoles]].
+     */
+    public function getRolesByUser($userId)
+    {
+        if ($this->isEmptyUserId($userId)) {
+            return [];
+        }
+
+        $roles = $this->getDefaultRoleInstances();
+
+        // Sumamos los roles por recurso humano / PES
+        if ($this->shouldLoadEfectorPermissionsForCurrentUser()) {
+            $roles = array_merge($roles, $this->getRolesByEfectorAssignment());
+        }
+
+        // TODO: desde esta linea hasta el final en un futuro debería de quedar parent::getRolesByUser()        
+        if (!isset(Yii::$app->authManager->rolesEspeciales) || count(Yii::$app->authManager->rolesEspeciales) == 0) {
+            if (!ClientContextService::shouldOmitPacienteRole()) {
+                $this->agregarRolPaciente($roles);
+            }
+            return $roles;
+        }
+        foreach (Yii::$app->authManager->rolesEspeciales as $rolEspecial) {
+            $rolesEspeciales[] = 'a.item_name LIKE "%'.$rolEspecial.'%"';
+        }
+
+        $query = (new Query())->select('b.*')
+            ->from(['a' => $this->assignmentTable, 'b' => $this->itemTable])
+            ->where('{{a}}.[[item_name]]={{b}}.[[name]]')
+            ->andWhere(['a.user_id' => (string) $userId])
+            ->andWhere(implode(' OR ', $rolesEspeciales))
+            ->andWhere(['b.type' => Item::TYPE_ROLE]);
+        //echo $query->createCommand()->getRawSql();die;
+        foreach ($query->all($this->db) as $row) {
+            $roles[$row['name']] = $this->populateItem($row);
+        }
+
+        // Agregar rol "paciente" a todos los usuarios logueados (móvil / API paciente)
+        if (!ClientContextService::shouldOmitPacienteRole()) {
+            $this->agregarRolPaciente($roles);
+        }
+
+        return $roles;
+    }
+
+    /**
+     * Agregar el rol "paciente" a la lista de roles si no existe ya
+     * Lanza una excepción si el rol "paciente" no existe en la base de datos
+     * @param array $roles Array de roles por referencia
+     * @throws \Exception Si el rol "paciente" no existe en la base de datos
+     */
+    protected function agregarRolPaciente(&$roles)
+    {
+        if (ClientContextService::shouldOmitPacienteRole()) {
+            return;
+        }
+        // Verificar si el rol "paciente" ya existe en los roles
+        if (isset($roles['paciente'])) {
+            return;
+        }
+
+        // Buscar el rol "paciente" en la base de datos
+        $query = (new Query())
+            ->from($this->itemTable)
+            ->where(['name' => 'paciente', 'type' => Item::TYPE_ROLE])
+            ->one($this->db);
+
+        if (!$query) {
+            throw new \Exception('El rol "paciente" no existe en la base de datos. Debe crearse antes de usar el sistema.');
+        }
+
+        // Si el rol existe, agregarlo a la lista
+        $roles['paciente'] = $this->populateItem($query);
+    }
+
+    /**
+     * Asignar rol "paciente" al usuario si no lo tiene (solo clientes no-web: app móvil / autogestión).
+     *
+     * En web ({@see ClientContextService::shouldOmitPacienteRole}) no se persiste ni inyecta paciente;
+     * el staff opera con roles PES / especiales.
+     *
+     * @param int $userId ID del usuario
+     * @return bool true si se asignó el rol, false si ya lo tenía o hubo error
+     */
+    public static function asignarRolPacienteSiNoExiste($userId)
+    {
+        if (ClientContextService::shouldOmitPacienteRole()) {
+            return false;
+        }
+
+        try {
+            $authManager = Yii::$app->authManager;
+
+            // Consultar auth_assignment directamente: getRolesByUser puede ocultar paciente según cliente.
+            $exists = (new Query())
+                ->from($authManager->assignmentTable)
+                ->where(['user_id' => (string) $userId, 'item_name' => 'paciente'])
+                ->exists($authManager->db);
+            if ($exists) {
+                return false;
+            }
+
+            $pacienteRole = $authManager->getRole('paciente');
+            if (!$pacienteRole) {
+                Yii::warning("El rol 'paciente' no existe en la base de datos", 'rbac');
+
+                return false;
+            }
+
+            $authManager->assign($pacienteRole, $userId);
+
+            return true;
+        } catch (\Exception $e) {
+            Yii::error("Error asignando rol paciente al usuario {$userId}: " . $e->getMessage(), 'rbac');
+
+            return false;
+        }
+    }
+
+    /**
+     * Existen roles que no dependen del Efector asignado.
+     * Que trabajan con todos o con ninguno
+     * Revisar web/config rolesEspeciales
+     * TODO: Eventualmente todos los usuarios estarían asignados a roles con prefijos (especiales),
+     * el resto de roles son asignados a recursos humanos
+     */    
+    public function getRolesByEfectorAssignment()
+    {
+        $roles = [];
+        $query = (new Query())->select('b.*')
+            ->from(['a' => $this->efectorAssignmentTable, 'b' => $this->itemTable, 'c' => 'servicios']);
+        $query->where('{{c}}.[[item_name]]={{b}}.[[name]]')
+            ->andWhere('{{a}}.id_servicio={{c}}.[[id_servicio]]')
+            ->andWhere('{{a}}.deleted_at IS NULL');
+        $this->applyEfectorAssignmentSessionFilter($query);
+        $query->andWhere(['b.type' => Item::TYPE_ROLE])
+            ->groupBy(['{{c}}.[[item_name]]']);
+
+        foreach ($query->all($this->db) as $row) {
+            $roles[$row['name']] = $this->populateItem($row);
+        }
+
+        return $roles;
+    }
+
+    /**
+     * Rutas RBAC (type 3) hijas directas de permisos o roles, en pocas consultas.
+     *
+     * @param list<string> $parentNames
+     * @return array<string, true>
+     */
+    public function resolveRouteMapForParents(array $parentNames): array
+    {
+        $parentNames = array_values(array_unique(array_filter(
+            array_map(static fn ($n): string => trim((string) $n), $parentNames),
+            static fn (string $n): bool => $n !== ''
+        )));
+        if ($parentNames === []) {
+            return [];
+        }
+
+        $childrenList = $this->getChildrenList();
+        $candidateChildren = [];
+        foreach ($parentNames as $parent) {
+            if (!isset($childrenList[$parent]) || !is_array($childrenList[$parent])) {
+                continue;
+            }
+            foreach ($childrenList[$parent] as $childName) {
+                $childName = trim((string) $childName);
+                if ($childName !== '') {
+                    $candidateChildren[$childName] = true;
+                }
+            }
+        }
+        if ($candidateChildren === []) {
+            return [];
+        }
+
+        $routeNames = (new Query())
+            ->select(['name'])
+            ->from($this->itemTable)
+            ->where(['type' => 3, 'name' => array_keys($candidateChildren)])
+            ->column($this->db);
+
+        $routes = [];
+        foreach ($routeNames as $name) {
+            $name = trim((string) $name);
+            if ($name !== '') {
+                $routes[$name] = true;
+            }
+        }
+
+        return $routes;
+    }
+}

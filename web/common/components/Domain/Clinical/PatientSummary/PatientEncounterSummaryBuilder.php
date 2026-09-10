@@ -10,10 +10,10 @@ use common\models\Clinical\DiagnosticReport;
 use common\models\Clinical\ElectronicPrescription;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\ServiceRequest;
-use common\models\Efector;
+use common\models\Organization\Efector;
 use common\models\Person\Persona;
-use common\models\ProfesionalEfectorServicio;
-use common\models\Servicio;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Organization\Servicio;
 
 /**
  * Arma el DTO de resumen paciente desde encounter finalizado (texto IA en note).

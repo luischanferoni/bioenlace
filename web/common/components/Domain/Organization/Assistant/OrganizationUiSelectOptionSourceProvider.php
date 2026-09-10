@@ -3,9 +3,9 @@
 namespace common\components\Domain\Organization\Assistant;
 
 use common\components\Platform\Ui\UiSelectOptionSourceProviderInterface;
-use common\models\Efector;
-use common\models\Servicio;
-use common\models\UserEfector;
+use common\models\Organization\Efector;
+use common\models\Organization\Servicio;
+use common\models\Organization\UserEfector;
 use Yii;
 
 /**

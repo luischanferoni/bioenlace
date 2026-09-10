@@ -95,7 +95,7 @@ class UserConfig extends BaseUserConfig
      */
     protected function afterLogin($identity, $cookieBased, $duration)
     {
-        if (!$identity->superadmin && !\common\models\User::hasRole('_x_efector_AdminSisse')) {
+        if (!$identity->superadmin && !\common\models\Platform\User::hasRole('_x_efector_AdminSisse')) {
             throw new ForbiddenHttpException();
         }
 

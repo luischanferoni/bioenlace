@@ -1,13 +1,13 @@
 <?php
 
 use common\components\Platform\Legacy\UserManagementCompat;
-use common\models\User;
+use common\models\Platform\User;
 use yii\helpers\Html;
 use yii\bootstrap5\ActiveForm;
 
 /**
  * @var yii\web\View $this
- * @var common\models\User $model
+ * @var common\models\Platform\User $model
  * @var yii\bootstrap\ActiveForm $form
  */
 ?>

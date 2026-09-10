@@ -26,9 +26,11 @@ Así la pregunta "¿esto es dominio o plataforma?" se responde mirando, no recor
 
 Fuente de verdad: las carpetas de `common/components/Domain/`.
 
-`clinical` · `content` · `integrations` · `organization` · `person` · `scheduling` · `terminology`
+`clinical` · `content` · `geo` · `integrations` · `organization` · `person` · `programs` · `scheduling` · `terminology`
 
 Crear una carpeta ahí = declarar un dominio. No hay lista paralela que actualizar.
+
+`geo` y `programs` los declaró la Fase 2, al quedar en evidencia que ya tenían dueño propio y estaban dispersos: los servicios de geo vivían repartidos entre `Domain/Person/` y `Domain/Organization/`, y el padrón/nomenclador de los programas de salud no encajaba en perfil, oferta ni acto codificado. Cada uno lleva README con su límite.
 
 El eje ya está decidido en [`common-components-organizacion.mdc`](../../../../.cursor/rules/common-components-organizacion.mdc): `Platform/` (motores: Assistant, Core, Ai, Ui, Infra, Legacy) vs `Domain/` (rubro salud). Este plan **no inventa el eje**: corrige el árbol que se desvió de esa regla y lo extiende a las capas que todavía no la siguen.
 

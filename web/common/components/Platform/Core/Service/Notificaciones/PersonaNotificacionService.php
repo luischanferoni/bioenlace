@@ -3,7 +3,7 @@
 namespace common\components\Platform\Core\Service\Notificaciones;
 
 use common\components\Platform\Core\Service\ClientContextService;
-use common\models\PersonaNotificacion;
+use common\models\Platform\PersonaNotificacion;
 use yii\db\Expression;
 
 /**

@@ -2,7 +2,7 @@
 
 /**
  * @var yii\web\View $this
- * @var common\models\forms\ConfirmEmailForm $model
+ * @var common\models\Platform\ConfirmEmailForm $model
  */
 
 use yii\bootstrap5\ActiveForm;

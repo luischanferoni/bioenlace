@@ -2,7 +2,7 @@
 
 /**
  * @var yii\web\View $this
- * @var common\models\forms\PasswordRecoveryForm $model
+ * @var common\models\Platform\PasswordRecoveryForm $model
  */
 
 use yii\bootstrap5\ActiveForm;

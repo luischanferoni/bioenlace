@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Organization\Service\ProfesionalEfectorServicio;
 
-use common\models\ProfesionalEfectorServicio as ProfesionalEfectorServicioRecord;
+use common\models\Organization\ProfesionalEfectorServicio as ProfesionalEfectorServicioRecord;
 use Yii;
 
 /**

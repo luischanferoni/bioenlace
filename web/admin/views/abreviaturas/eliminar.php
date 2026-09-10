@@ -3,7 +3,7 @@ use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 
 /* @var $this yii\web\View */
-/* @var $abreviatura common\models\AbreviaturasMedicas */
+/* @var $abreviatura common\models\Clinical\AbreviaturasMedicas */
 
 $this->title = 'Eliminar abreviatura';
 ?>

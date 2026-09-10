@@ -6,7 +6,7 @@ use yii\db\Migration;
  * Tabla `seg_nivel_internacion_practica` (prácticas asociadas a internación).
  *
  * En entornos donde nunca existió el DDL, esta migración la crea con las columnas PES
- * previstas en {@see \common\models\SegNivelInternacionPractica}.
+ * previstas en {@see \common\models\Clinical\SegNivelInternacionPractica}.
  */
 class m260508_000005_create_seg_nivel_internacion_practica extends Migration
 {

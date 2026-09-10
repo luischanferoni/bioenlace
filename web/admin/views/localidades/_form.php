@@ -9,12 +9,12 @@ use yii\helpers\Html;
 use yii\helpers\ArrayHelper;
 use yii\widgets\ActiveForm;
 use yii\helpers\Url;
-use common\models\Provincia;
-use common\models\Departamento;
-//use common\models\Localidad;
+use common\models\Geo\Provincia;
+use common\models\Geo\Departamento;
+//use common\models\Geo\Localidad;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\Localidad */
+/* @var $model common\models\Geo\Localidad */
 /* @var $form yii\widgets\ActiveForm */
 ?>
 

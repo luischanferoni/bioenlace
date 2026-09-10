@@ -6,7 +6,7 @@ use Yii;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
-use common\models\SensibilidadCategoria;
+use common\models\Clinical\SensibilidadCategoria;
 
 /**
  * CRUD de categorías de sensibilidad (resumen con IA).

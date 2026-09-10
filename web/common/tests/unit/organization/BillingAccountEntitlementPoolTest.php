@@ -4,8 +4,8 @@ namespace common\tests\unit\organization;
 
 use Codeception\Test\Unit;
 use common\components\Domain\Organization\Service\Entitlement\EfectorEncounterEntitlementService;
-use common\models\BillingAccount;
-use common\models\BillingAccountEfector;
+use common\models\Organization\BillingAccount;
+use common\models\Organization\BillingAccountEfector;
 
 class BillingAccountEntitlementPoolTest extends Unit
 {

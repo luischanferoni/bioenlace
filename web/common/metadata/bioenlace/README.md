@@ -23,12 +23,13 @@ Maestros vs metadata (runtime + cognitivo): [`web/docs/arquitectura/runtime-dato
 | **ui-text** | Textos UX (mensaje, rótulos, variantes por cliente) | Predicados de dominio (van en PHP) |
 | **catalog** | Vocabulario cerrado `id → texto` para IA o UX | Alias id→id, mapas legacy, listas de ids sin copy (van en el loader PHP) |
 | **routing** | Familias NL, hints, booking CTA, thread tags | `if intent_id` en orquestadores |
-| **manifest** | Composición de superficie (panel, client-context, screen-params) | RBAC HTTP (eso es `permission/`) |
+| **manifest** | Composición de superficie (panel, client-context, screen-params) | RBAC HTTP (eso es `platform/permission/`) |
 | **auth** | Capabilities, políticas de recurso (`domain-operation-policies`) | Autorización ad hoc en controllers; aliases legacy (retirados) |
 
 **No** usar metadata para maestros/catálogos de lookup en request (provincias, vecinos, recursos institucionales, etc.): van en **BD** + seed **console**. Ver ADR runtime datos vs metadata.
 
 > Seeds one-shot / dumps Georef no viven aquí. Geo: tablas `geo_*` + console por país.
+
 ## Plantilla de cabecera (YAML nuevos o al tocar)
 
 ```yaml
@@ -41,35 +42,33 @@ Maestros vs metadata (runtime + cognitivo): [`web/docs/arquitectura/runtime-dato
 
 ## Estructura
 
+El primer nivel es **dominio** o `platform` (misma posición). Los intents viven en el dominio que persiste el resultado (`IntentSchemaPaths` los descubre solos).
+
 | Ruta | Tipo | Contenido |
 |------|------|-----------|
-| `assistant/intents/` | flow | Flows por `intent_id` (`create`/`read`/`update`/`delete`) |
-| `assistant/channels/{Name}/` | prompt / ui-text | Espejo de `Chat/Channels/{Name}/` (`prompt.yaml` o `ui-text.yaml`) |
-| `assistant/preprocess/prompt.yaml` | prompt | Preprocess IA (espejo `Chat/Preprocess/`) |
-| `assistant/ui-text/by-client.yaml` | ui-text | Textos UX por perfil de cliente (`X-App-Client`) |
-| `assistant/routing/` | routing / knob | `intent-families`, `booking-offer`, `thread-state` (certeza); hint-resolution → PHP |
-| `assistant/catalog/` | catalog | Vocabularios cerrados (`context-his-areas`, `preprocess-*-*`, `smart-catalog`); aspectos HIS → PHP |
-| `assistant/assistant-shortcuts.yaml` | manifest | Atajos visibles (si el catálogo está desplegado) |
-| `assistant/assistant-shortcut-group-labels.yaml` | manifest | Etiquetas/orden de grupos de atajos |
-| `agents/` | knob | Política operativa por `agent_id` (umbrales; gates hard en dominio) |
-| `permission/` | auth | `domain-operation-policies`, `capabilities/` (migración one-shot de grants legacy ya aplicada; sin aliases en metadata) |
-| `ui/home-panel-manifest.yaml` | manifest | Layout panel inicio staff/paciente |
-| `ui/client-context.yaml` | manifest | Contextos por cliente y ocultamiento staff |
-| `ui/screen-params.yaml` | manifest | Expansión de params UI |
-| `ui/paciente-contexto-offering.yaml` | manifest | Ofertas de contexto paciente |
-| `ai/clinical-text-ia.yaml` | prompt + knob | Prompts SNOMED/captura + overrides de post-proceso |
-| `ai/ai-cost-reference.yaml` | catalog | Tarifas/referencia de costo IA |
+| `<dominio>/intents/{create,read,update,delete}/` | flow | Flows por `intent_id` (métricas en `read/`; pantallas en `read/flows/`) |
+| `platform/intents/` | flow | DataAccess y flujos transversales (p. ej. queja) |
+| `platform/assistant/channels/{Name}/` | prompt / ui-text | Espejo de `Chat/Channels/{Name}/` |
+| `platform/assistant/preprocess/prompt.yaml` | prompt | Preprocess IA |
+| `platform/assistant/ui-text/by-client.yaml` | ui-text | Textos UX por perfil de cliente |
+| `platform/assistant/routing/` | routing / knob | `intent-families`, `booking-offer`, `thread-state` |
+| `platform/assistant/catalog/` | catalog | Vocabularios cerrados (`context-his-areas`, `preprocess-*`, `smart-catalog`) |
+| `platform/assistant/assistant-shortcut-group-labels.yaml` | manifest | Etiquetas/orden de grupos de atajos |
+| `platform/agents/` | knob | Política operativa por `agent_id` |
+| `platform/permission/` | auth | `domain-operation-policies`, `capabilities/` |
+| `platform/ui/` | manifest | home-panel, client-context, screen-params, paciente-contexto-offering |
+| `platform/ai/` | prompt + knob / catalog | clinical-text-ia, ai-cost-reference |
 | `terminology/` | catalog | SNOMED ECL, sinónimos de servicio institucional |
-| `clinical/pedido-atencion.yaml` | catalog | capacity_rules + aliases NL de acto/línea (systems/defaults en PHP) |
-| `organization/` | knob | Agenda por encounter class, pricing PES, atributos efector |
-| `scheduling/turno-behavior-profile.yaml` | catalog | Eventos/métricas de comportamiento (no risk policy) |
-| `person/ventanilla-sesion.yaml` | knob | Ventanilla / sesión persona |
+| `clinical/` | catalog + intents | p. ej. `pedido-atencion.yaml` |
+| `organization/` | knob + intents | Agenda por encounter class, pricing PES, atributos efector |
+| `scheduling/` | catalog + intents | `turno-behavior-profile.yaml` |
+| `person/` | knob + intents | `ventanilla-sesion.yaml` |
 | `integrations/` | *(revisar)* | Si es lookup runtime → BD; si es mapa de motor → OK |
 
 > Geo multi-país: tablas `geo_paises`, `geo_provincias`, `geo_provincia_vecinos`, `geo_recursos_*`. Seeds: `php yii clinical-seed/geo-multipais`.
 
 Contrato de pasos de intent: `common/components/Platform/Assistant/SubIntentEngine/schemas/SUBINTENT_CONTRACT.md`.
 
-Canal guide / trámite / menú: `ChatChannelPolicy` (PHP). Prompt guide: `assistant/channels/Guide/prompt.yaml`.
+Canal guide / trámite / menú: `ChatChannelPolicy` (PHP). Prompt guide: `platform/assistant/channels/Guide/prompt.yaml`.
 Prompts de canal: reglas transversales; huecos de datos en loaders (`null`), sin registro global de limitaciones (regla `asistente-prompts-sin-casos-particulares.mdc`).
-Booking CTA: `assistant/routing/booking-offer.yaml`.
+Booking CTA: `platform/assistant/routing/booking-offer.yaml`.

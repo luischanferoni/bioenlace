@@ -6,7 +6,7 @@ use common\components\Domain\Clinical\Enum\RequestStatus;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\Input\DerivacionInput;
 use common\models\Clinical\ServiceRequest;
-use common\models\ConsultaDerivaciones;
+use common\models\Clinical\ConsultaDerivaciones;
 
 /**
  * Derivaciones clínicas (antes `consultas_derivaciones`) como ServiceRequest referral.

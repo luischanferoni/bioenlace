@@ -6,8 +6,8 @@ use common\components\Domain\Clinical\Emergency\Enum\CircuitoEstado;
 use common\components\Domain\Clinical\Emergency\Enum\CircuitoEventType;
 use common\components\Domain\Clinical\Presentation\EpisodioDateTimeFormatter;
 use common\components\Domain\Clinical\Emergency\Enum\TriageScale;
-use common\models\Emergency\GuardiaTriage;
-use common\models\Guardia;
+use common\models\Clinical\Emergency\GuardiaTriage;
+use common\models\Clinical\Guardia;
 use Yii;
 
 final class GuardiaTriageService

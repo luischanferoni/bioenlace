@@ -3,7 +3,7 @@
 namespace common\tests\unit\organization;
 
 use Codeception\Test\Unit;
-use common\models\Servicio;
+use common\models\Organization\Servicio;
 
 class ServicioFindByNameTermsTest extends Unit
 {

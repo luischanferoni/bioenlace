@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Organization\Service;
 
-use common\models\InfraestructuraSala;
+use common\models\Organization\InfraestructuraSala;
 
 /**
  * DepDrop piso → sala (filtros de internación / mapa de camas).

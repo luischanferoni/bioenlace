@@ -2,7 +2,7 @@
 use yii\helpers\Html;
 use yii\helpers\Url;
 
-use common\models\ServiciosEfector;
+use common\models\Organization\ServiciosEfector;
 ?>
 
 <div class="col-lg-4 livesearchparent">

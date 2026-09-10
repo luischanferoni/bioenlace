@@ -3,7 +3,7 @@
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\ProfesionalEfectorServicio */
+/* @var $model common\models\Organization\ProfesionalEfectorServicio */
 
 $this->title = 'Actualizar PES #' . (int) $model->id;
 $this->params['breadcrumbs'][] = ['label' => 'Profesional–efector–servicio', 'url' => ['index']];

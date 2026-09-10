@@ -3,7 +3,7 @@
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\InfoContentArticle */
+/* @var $model common\models\Content\InfoContentArticle */
 
 $this->title = 'Nuevo artículo informativo';
 $this->params['breadcrumbs'][] = ['label' => 'Contenido informativo', 'url' => ['index']];

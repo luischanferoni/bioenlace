@@ -73,7 +73,7 @@ class EncounterDefinition extends ActiveRecord
 
     public function getServicio(): \yii\db\ActiveQuery
     {
-        return $this->hasOne(\common\models\Servicio::class, ['id_servicio' => 'service_id']);
+        return $this->hasOne(\common\models\Organization\Servicio::class, ['id_servicio' => 'service_id']);
     }
 
     /**

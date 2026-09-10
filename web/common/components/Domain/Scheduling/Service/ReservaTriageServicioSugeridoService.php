@@ -5,9 +5,9 @@ namespace common\components\Domain\Scheduling\Service;
 use common\components\Domain\Clinical\Access\PedidoAtencionPacienteService;
 use common\components\Domain\Organization\Service\Servicios\ServicioMencionLookupService;
 use common\components\Domain\Organization\Service\Servicios\ServiciosEfectorAutogestionListadoService;
-use common\models\ConsultaDerivaciones;
+use common\models\Clinical\ConsultaDerivaciones;
 use common\models\Scheduling\Turno;
-use common\models\Servicio;
+use common\models\Organization\Servicio;
 use Yii;
 
 /**
@@ -153,7 +153,7 @@ final class ReservaTriageServicioSugeridoService
         }
 
         $codigos = (new ReservaTriageServicioRolResolver())->codigosTriagePublicosDesdeDraft($draft);
-        $prioridad = \common\models\ReservaTriageCodigoServicio::idsParaCodigos($codigos);
+        $prioridad = \common\models\Scheduling\ReservaTriageCodigoServicio::idsParaCodigos($codigos);
         if ($prioridad === []) {
             return $items;
         }

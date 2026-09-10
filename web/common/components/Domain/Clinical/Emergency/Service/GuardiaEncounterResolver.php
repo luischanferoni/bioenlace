@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\Emergency\Service;
 
 use common\models\Clinical\Encounter;
-use common\models\Guardia;
+use common\models\Clinical\Guardia;
 
 /**
  * Resuelve el encounter clínico vinculado a un episodio de guardia (parent GUARDIA).

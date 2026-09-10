@@ -4,9 +4,9 @@ namespace common\components\Domain\Organization\Service\ProfesionalHorario;
 
 use common\components\Domain\Organization\Service\AgendaWeeklyOccupancyService;
 use common\models\Clinical\Encounter;
-use common\models\ProfesionalHorario;
-use common\models\ProfesionalHorarioPlantilla;
-use common\models\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalHorario;
+use common\models\Organization\ProfesionalHorarioPlantilla;
+use common\models\Organization\ProfesionalEfectorServicio;
 use Yii;
 
 /**

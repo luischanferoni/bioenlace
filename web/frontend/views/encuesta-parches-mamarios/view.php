@@ -7,7 +7,7 @@ use common\models\Person\Persona;
 
 
 /* @var $this yii\web\View */
-/* @var $model common\models\EncuestaParchesMamarios */
+/* @var $model common\models\Clinical\EncuestaParchesMamarios */
 
 $this->title = $model->id;
 $this->params['breadcrumbs'][] = ['label' => 'Encuesta Parches Mamarios', 'url' => ['index']];

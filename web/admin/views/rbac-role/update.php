@@ -4,7 +4,7 @@ use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 
 /* @var $this yii\web\View */
-/* @var $role common\models\rbac\AuthRole */
+/* @var $role common\models\Platform\Permission\AuthRole */
 /* @var $intents list<array{key: string, description: string, assigned: bool, in_auth_item: bool}> */
 
 $this->title = 'Rol: ' . $role->name;

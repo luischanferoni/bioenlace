@@ -3,7 +3,7 @@
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\SegNivelInternacion */
+/* @var $model common\models\Clinical\SegNivelInternacion */
 
 $this->title = 'Alta Internacion: ' . $model->id;
 $this->params['breadcrumbs'][] = ['label' => 'Seg Nivel Internacions', 'url' => ['index']];

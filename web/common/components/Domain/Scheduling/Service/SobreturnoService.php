@@ -5,10 +5,10 @@ namespace common\components\Domain\Scheduling\Service;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use Yii;
 use common\models\Scheduling\Turno;
-use common\models\ProfesionalEfectorServicio;
-use common\models\TurnoNotificacionProgramada;
-use common\models\EfectorTurnosConfig;
-use common\models\TurnoEventoAudit;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Scheduling\TurnoNotificacionProgramada;
+use common\models\Scheduling\EfectorTurnosConfig;
+use common\models\Scheduling\TurnoEventoAudit;
 
 class SobreturnoService
 {

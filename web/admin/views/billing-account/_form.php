@@ -1,11 +1,11 @@
 <?php
 
-use common\models\BillingAccount;
+use common\models\Organization\BillingAccount;
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\BillingAccount */
+/* @var $model common\models\Organization\BillingAccount */
 
 $form = ActiveForm::begin();
 ?>

@@ -4,7 +4,7 @@ namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\Service\MedicationRequestService;
-use common\models\ConsultaMedicamentos;
+use common\models\Clinical\ConsultaMedicamentos;
 
 class MedicationRequestExtractionNormalizeTest extends Unit
 {

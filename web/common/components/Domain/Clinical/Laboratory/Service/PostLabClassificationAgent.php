@@ -10,7 +10,7 @@ use common\models\Clinical\DiagnosticReport;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\Observation;
 use common\models\Person\Persona;
-use common\models\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicio;
 use Yii;
 
 /**

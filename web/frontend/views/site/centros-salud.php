@@ -4,7 +4,7 @@
 
 use yii\helpers\Html;
 use yii\helpers\Url;
-use common\models\Efector;
+use common\models\Organization\Efector;
 use yii\grid\GridView;
 use yii\data\ActiveDataProvider;
 

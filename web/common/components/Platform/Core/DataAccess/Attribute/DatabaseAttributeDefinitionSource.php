@@ -2,7 +2,7 @@
 
 namespace common\components\Platform\Core\DataAccess\Attribute;
 
-use common\models\DataAccess\DataAccessAttributeField;
+use common\models\Platform\DataAccess\DataAccessAttributeField;
 
 /**
  * Definiciones de campos por grupo desde BD ({@see DataAccessAttributeField}).

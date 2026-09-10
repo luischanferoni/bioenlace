@@ -3,11 +3,11 @@
 namespace common\components\Domain\Organization\Service\Entitlement;
 
 use common\components\Platform\Core\Product\PricingPesByEncounterClassMetadata;
-use common\models\BillingAccountEncounterEntitlement;
-use common\models\BillingAccountEfector;
+use common\models\Organization\BillingAccountEncounterEntitlement;
+use common\models\Organization\BillingAccountEfector;
 use common\models\Clinical\EncounterDefinition;
-use common\models\ProfesionalEfectorServicio;
-use common\models\Servicio;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Organization\Servicio;
 use Yii;
 use yii\db\Query;
 

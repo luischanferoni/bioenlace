@@ -4,9 +4,9 @@ namespace common\components\Domain\Scheduling\Service;
 
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\AgendaIntervaloMinutos;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\AgendaSlotEngine;
-use common\models\ProfesionalEfectorServicioAgendaVersion;
+use common\models\Organization\ProfesionalEfectorServicioAgendaVersion;
 use common\models\Scheduling\Turno;
-use common\models\TurnoResolucion;
+use common\models\Scheduling\TurnoResolucion;
 
 /**
  * Normaliza fecha/hora PES desde slot_id y persiste intervalo, hora_fin e id_agenda_version.

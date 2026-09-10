@@ -9,9 +9,9 @@ use kartik\date\DatePicker;
 use kartik\select2\Select2;
 use kartik\file\FileInput;
 
-use common\models\DocumentosExternos;
+use common\models\Clinical\DocumentosExternos;
 
-use common\models\Adjunto;
+use common\models\Platform\Adjunto;
 
 use \frontend\controllers\traits\AdjuntoTrait;
 

@@ -5,7 +5,7 @@ namespace common\components\Domain\Organization\Service\ProfesionalHorario;
 use common\components\Domain\Organization\Service\AgendaWeeklyOccupancyService;
 use common\components\Platform\Ui\UiScreenService;
 use common\models\Clinical\Encounter;
-use common\models\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicio;
 use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 

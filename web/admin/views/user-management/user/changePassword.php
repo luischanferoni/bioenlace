@@ -6,7 +6,7 @@ use yii\helpers\Html;
 
 /**
  * @var yii\web\View $this
- * @var common\models\User $model
+ * @var common\models\Platform\User $model
  */
 
 $this->title = UserManagementCompat::t('back', 'Changing password for user: ') . ' ' . $model->username;

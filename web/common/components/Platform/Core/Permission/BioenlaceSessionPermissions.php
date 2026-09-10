@@ -87,7 +87,7 @@ final class BioenlaceSessionPermissions
         $roles = array_keys($auth->getRolesByUser($userId));
 
         $routes = [];
-        if ($auth instanceof \common\models\BioenlaceDbManager) {
+        if ($auth instanceof \common\models\Platform\BioenlaceDbManager) {
             $routes = $auth->resolveRouteMapForParents(array_merge(array_keys($permissions), $roles));
         } else {
             foreach (array_keys($permissions) as $permName) {

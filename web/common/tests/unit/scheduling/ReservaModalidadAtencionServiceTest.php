@@ -86,13 +86,13 @@ class ReservaModalidadAtencionServiceTest extends Unit
 
     private function seedTeleconsultaElegibilidad(string $codigo, string $elegibilidad): void
     {
-        if (!class_exists(\common\models\ReservaTriageTeleconsultaElegibilidad::class)) {
+        if (!class_exists(\common\models\Scheduling\ReservaTriageTeleconsultaElegibilidad::class)) {
             $this->markTestSkipped('ReservaTriageTeleconsultaElegibilidad no disponible');
         }
-        \common\models\ReservaTriageTeleconsultaElegibilidad::resetCache();
-        $row = \common\models\ReservaTriageTeleconsultaElegibilidad::findOne(['triage_codigo' => $codigo]);
+        \common\models\Scheduling\ReservaTriageTeleconsultaElegibilidad::resetCache();
+        $row = \common\models\Scheduling\ReservaTriageTeleconsultaElegibilidad::findOne(['triage_codigo' => $codigo]);
         if ($row === null) {
-            $row = new \common\models\ReservaTriageTeleconsultaElegibilidad();
+            $row = new \common\models\Scheduling\ReservaTriageTeleconsultaElegibilidad();
             $row->triage_codigo = $codigo;
         }
         $row->elegibilidad = $elegibilidad;
@@ -100,6 +100,6 @@ class ReservaModalidadAtencionServiceTest extends Unit
         if (!$row->save(false)) {
             $this->markTestSkipped('No se pudo sembrar elegibilidad de teleconsulta en BD de test');
         }
-        \common\models\ReservaTriageTeleconsultaElegibilidad::resetCache();
+        \common\models\Scheduling\ReservaTriageTeleconsultaElegibilidad::resetCache();
     }
 }

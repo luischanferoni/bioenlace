@@ -2,27 +2,27 @@
 
 namespace common\components\Domain\Organization\Service\Seed;
 
-use common\models\AsistenteConversacion;
-use common\models\AsistenteInteraccion;
-use common\models\AsistenteWhatsappMensaje;
-use common\models\AsistenteWhatsappVinculo;
+use common\models\Platform\AsistenteConversacion;
+use common\models\Platform\AsistenteInteraccion;
+use common\models\Integrations\AsistenteWhatsappMensaje;
+use common\models\Integrations\AsistenteWhatsappVinculo;
 use common\components\Domain\Scheduling\Service\TurnoSlotClaimService;
 use common\models\Clinical\Encounter;
-use common\models\Emergency\GuardiaCircuitoEvent;
-use common\models\Emergency\GuardiaTriage;
-use common\models\Guardia;
-use common\models\InfraestructuraCama;
-use common\models\InfraestructuraPiso;
-use common\models\InfraestructuraSala;
+use common\models\Clinical\Emergency\GuardiaCircuitoEvent;
+use common\models\Clinical\Emergency\GuardiaTriage;
+use common\models\Clinical\Guardia;
+use common\models\Organization\InfraestructuraCama;
+use common\models\Organization\InfraestructuraPiso;
+use common\models\Organization\InfraestructuraSala;
 use common\models\Person\Persona;
 use common\models\Platform\DemoSandboxSession;
-use common\models\ProfesionalEfectorServicio;
-use common\models\ProfesionalEfectorServicioAgenda;
-use common\models\ProfesionalEfectorServicioAgendaVersion;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicioAgenda;
+use common\models\Organization\ProfesionalEfectorServicioAgendaVersion;
 use common\models\Scheduling\Turno;
-use common\models\SegNivelInternacion;
-use common\models\SegNivelInternacionHcama;
-use common\models\User;
+use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\SegNivelInternacionHcama;
+use common\models\Platform\User;
 use Yii;
 use yii\db\Connection;
 use yii\db\Expression;
@@ -858,7 +858,7 @@ final class DemoSandboxPurgeService
     {
         foreach ($encounterIds as $idEncounter) {
             try {
-                \common\models\ConsultaChatMessage::deleteAll(['encounter_id' => $idEncounter]);
+                \common\models\Clinical\ConsultaChatMessage::deleteAll(['encounter_id' => $idEncounter]);
             } catch (\Throwable $e) {
                 $errors[] = 'chat ' . $idEncounter . ': ' . $e->getMessage();
             }

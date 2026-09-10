@@ -3,7 +3,7 @@
 namespace common\components\Domain\Organization\Service\Servicios;
 
 use common\components\Domain\Scheduling\Service\ReservaTriageServicioSugeridoService;
-use common\models\ServiciosEfector;
+use common\models\Organization\ServiciosEfector;
 
 /**
  * Listados de servicios para autogestión de turnos (origen {@see ServiciosEfector}, no catálogo `servicios` aislado).

@@ -4,6 +4,10 @@ namespace common\components\Platform\Assistant\Service;
 
 /**
  * Reglas de resolución de hints del asistente (intent_ids, ownership de entidades).
+ *
+ * El ownership entidad → providers se compone desde
+ * {@see HintCandidateProviderInterface::declaredEntities()} vía el registry;
+ * no hay mapa central a mano.
  */
 final class HintResolutionMetadata
 {
@@ -20,14 +24,6 @@ final class HintResolutionMetadata
     ];
 
     private const TRIAGE_ATENCION_INTENT_ID = 'atencion.necesito-atencion';
-
-    /** @var array<string, list<string>> */
-    private const ENTITY_OWNERSHIP = [
-        'servicio' => ['scheduling', 'organization'],
-        'efector' => ['organization'],
-        'profesional' => ['organization'],
-        'persona' => ['person'],
-    ];
 
     public static function intentUsesServiciosAceptaTurnos(string $intentId): bool
     {
@@ -61,24 +57,11 @@ final class HintResolutionMetadata
      */
     public static function providerKeysForEntity(string $entity): array
     {
-        $entity = strtolower(trim($entity));
-        if ($entity === '') {
-            return [];
-        }
-
-        $keys = self::ENTITY_OWNERSHIP[$entity] ?? [];
-        $out = [];
-        foreach ($keys as $key) {
-            if (is_string($key) && trim($key) !== '') {
-                $out[] = trim($key);
-            }
-        }
-
-        return $out;
+        return HintCandidateProviderRegistry::providerKeysDeclaringEntity($entity);
     }
 
     public static function resetCacheForTests(): void
     {
-        // Sin cache de archivo; no-op para compatibilidad de tests.
+        HintCandidateProviderRegistry::resetForTests();
     }
 }

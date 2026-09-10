@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Emergency\Service;
 
-use common\models\Guardia;
+use common\models\Clinical\Guardia;
 use Yii;
 
 /**

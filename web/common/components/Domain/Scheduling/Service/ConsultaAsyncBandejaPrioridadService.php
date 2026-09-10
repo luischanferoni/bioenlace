@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
-use common\models\ConsultaChatMessage;
+use common\models\Clinical\ConsultaChatMessage;
 use common\models\Clinical\Encounter;
 
 /**

@@ -51,7 +51,7 @@ final class ProductRegistryConfig
         }
 
         $fromParams = [];
-        if (class_exists(Yii::class) && Yii::$app->has('params')) {
+        if (class_exists(Yii::class, false) && Yii::$app !== null && Yii::$app->has('params')) {
             $raw = Yii::$app->params['productRegistries'] ?? null;
             if (is_array($raw)) {
                 $fromParams = $raw;

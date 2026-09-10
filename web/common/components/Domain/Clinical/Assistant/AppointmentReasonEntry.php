@@ -6,7 +6,7 @@ use common\components\Domain\Clinical\Service\AppointmentReasonWindowService;
 use common\components\Domain\Clinical\Service\Authorization\EncounterAccessService;
 use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
 use common\models\Clinical\Encounter;
-use common\models\ConsultaMotivosMessage;
+use common\models\Clinical\ConsultaMotivosMessage;
 use Yii;
 
 /**

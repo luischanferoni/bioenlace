@@ -11,8 +11,8 @@ use yii\helpers\ArrayHelper;
 use yii\helpers\Json;
 use yii\web\Response;
 
-use common\models\busquedas\ProfesionalEfectorServicioBusqueda;
-use common\models\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicioBusqueda;
+use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Person\Persona;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\AdminEfectorAsignacionService;
 

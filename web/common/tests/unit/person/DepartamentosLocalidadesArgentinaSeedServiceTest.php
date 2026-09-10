@@ -3,8 +3,8 @@
 namespace common\tests\unit\person;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Person\Service\Seed\DepartamentosLocalidadesArgentinaSeedService;
-use common\components\Domain\Person\Service\Seed\ProvinciasArgentinaSeedService;
+use common\components\Domain\Geo\Service\Seed\DepartamentosLocalidadesArgentinaSeedService;
+use common\components\Domain\Geo\Service\Seed\ProvinciasArgentinaSeedService;
 
 /**
  * El dump Georef one-shot ya no vive en el repo; solo se valida alineación de códigos canónicos.

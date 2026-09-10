@@ -1,7 +1,7 @@
 # Asignación PES y métricas staff — modelo ProfesionalEfectorServicio.
 # Agenda → ProfesionalEfectorServicioAgenda.yaml
 entity: ProfesionalEfectorServicio
-model: common\models\ProfesionalEfectorServicio
+model: common\models\Organization\ProfesionalEfectorServicio
 
 attributes:
   id_profesional_efector_servicio:
@@ -47,7 +47,7 @@ info_list:
       Persona.sexo_genero: efector_sesion_via_pes
     query:
       root:
-        model: common\models\ProfesionalEfectorServicio
+        model: common\models\Organization\ProfesionalEfectorServicio
         alias: pes
       joins:
         persona:
@@ -109,7 +109,7 @@ info_list:
       Persona.sexo_genero: efector_sesion_via_pes
     query:
       root:
-        model: common\models\ProfesionalEfectorServicio
+        model: common\models\Organization\ProfesionalEfectorServicio
         alias: pes
       joins:
         persona:
@@ -179,7 +179,7 @@ info_list:
       - ProfesionalEfectorServicio.asignacion
     query:
       root:
-        model: common\models\ProfesionalEfectorServicio
+        model: common\models\Organization\ProfesionalEfectorServicio
         alias: pes
       joins:
         servicio:

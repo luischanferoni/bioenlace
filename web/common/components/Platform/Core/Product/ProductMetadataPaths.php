@@ -28,14 +28,22 @@ final class ProductMetadataPaths
 
     public static function assistantDir(): string
     {
-        return self::baseDir() . DIRECTORY_SEPARATOR . 'assistant';
+        return self::platformDir() . DIRECTORY_SEPARATOR . 'assistant';
+    }
+
+    public static function platformDir(): string
+    {
+        return self::baseDir() . DIRECTORY_SEPARATOR . 'platform';
     }
 
     public static function permissionDir(): string
     {
-        return self::baseDir() . DIRECTORY_SEPARATOR . 'permission';
+        return self::platformDir() . DIRECTORY_SEPARATOR . 'permission';
     }
 
+    /**
+     * @deprecated Los intents viven en `<dominio>/intents/`. Usar {@see IntentSchemaPaths::intentRoots()}.
+     */
     public static function intentsDir(): string
     {
         return self::assistantDir() . DIRECTORY_SEPARATOR . 'intents';
@@ -212,41 +220,41 @@ final class ProductMetadataPaths
 
     public static function homePanelManifestFile(): string
     {
-        return self::baseDir() . DIRECTORY_SEPARATOR . 'ui' . DIRECTORY_SEPARATOR . 'home-panel-manifest.yaml';
+        return self::platformDir() . DIRECTORY_SEPARATOR . 'ui' . DIRECTORY_SEPARATOR . 'home-panel-manifest.yaml';
     }
 
     public static function clientContextFile(): string
     {
-        return self::baseDir() . DIRECTORY_SEPARATOR . 'ui' . DIRECTORY_SEPARATOR . 'client-context.yaml';
+        return self::platformDir() . DIRECTORY_SEPARATOR . 'ui' . DIRECTORY_SEPARATOR . 'client-context.yaml';
     }
 
     public static function pacienteContextoOfferingFile(): string
     {
-        return self::baseDir() . DIRECTORY_SEPARATOR . 'ui' . DIRECTORY_SEPARATOR . 'paciente-contexto-offering.yaml';
+        return self::platformDir() . DIRECTORY_SEPARATOR . 'ui' . DIRECTORY_SEPARATOR . 'paciente-contexto-offering.yaml';
     }
 
     public static function uiScreenParamsFile(): string
     {
-        return self::baseDir() . DIRECTORY_SEPARATOR . 'ui' . DIRECTORY_SEPARATOR . 'screen-params.yaml';
+        return self::platformDir() . DIRECTORY_SEPARATOR . 'ui' . DIRECTORY_SEPARATOR . 'screen-params.yaml';
     }
 
     public static function clinicalTextIaFile(): string
     {
-        return self::baseDir() . DIRECTORY_SEPARATOR . 'ai' . DIRECTORY_SEPARATOR . 'clinical-text-ia.yaml';
+        return self::platformDir() . DIRECTORY_SEPARATOR . 'ai' . DIRECTORY_SEPARATOR . 'clinical-text-ia.yaml';
     }
 
     public static function aiCostReferenceFile(): string
     {
-        return self::baseDir() . DIRECTORY_SEPARATOR . 'ai' . DIRECTORY_SEPARATOR . 'ai-cost-reference.yaml';
+        return self::platformDir() . DIRECTORY_SEPARATOR . 'ai' . DIRECTORY_SEPARATOR . 'ai-cost-reference.yaml';
     }
 
     /**
-     * Políticas operativas de agentes (`agents/{agent_id}.yaml`).
+     * Políticas operativas de agentes (`platform/agents/{agent_id}.yaml`).
      * Knobs/umbrales; gates hard viven en dominio.
      */
     public static function agentsDir(): string
     {
-        return self::baseDir() . DIRECTORY_SEPARATOR . 'agents';
+        return self::platformDir() . DIRECTORY_SEPARATOR . 'agents';
     }
 
     public static function agentFile(string $agentId): string

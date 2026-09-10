@@ -1,0 +1,12 @@
+# Tipo: catalog
+# Propósito: textos para el prompt de categorías de extractions resolubles (id → descripción).
+# Consumidor: PreprocessExtractionCategoryCatalog.
+# Ids: los declara cada dominio vía HintCandidateProviderInterface::declaredEntities().
+# No poner aquí: tags (van en smart-catalog / PreprocessTagVocabularyCatalog) ni mapas técnicos.
+version: 1
+
+categories:
+  servicio: Oferta de salud del centro (área o línea institucional); no síntoma ni acto clínico
+  efector: Centro, sede o establecimiento de salud
+  profesional: Profesional de salud mencionado por nombre o rol
+  persona: Otra persona (menor, familiar, representado)

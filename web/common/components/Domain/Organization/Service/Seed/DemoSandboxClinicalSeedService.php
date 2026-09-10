@@ -11,16 +11,16 @@ use common\components\Domain\Person\Util\CuilValidator;
 use common\components\Domain\Scheduling\Service\ConsultaAsyncInitialChatService;
 use common\components\Domain\Scheduling\Service\TurnoSlotClaimService;
 use common\models\Clinical\Encounter;
-use common\models\Guardia;
-use common\models\InfraestructuraCama;
-use common\models\InfraestructuraPiso;
-use common\models\InfraestructuraSala;
+use common\models\Clinical\Guardia;
+use common\models\Organization\InfraestructuraCama;
+use common\models\Organization\InfraestructuraPiso;
+use common\models\Organization\InfraestructuraSala;
 use common\models\Person\Persona;
 use common\models\Scheduling\Turno;
-use common\models\SegNivelInternacion;
-use common\models\SegNivelInternacionRepository;
-use common\models\SegNivelInternacionTipoIngreso;
-use common\models\User;
+use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\SegNivelInternacionRepository;
+use common\models\Clinical\SegNivelInternacionTipoIngreso;
+use common\models\Platform\User;
 use Yii;
 
 /**

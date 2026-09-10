@@ -2,7 +2,7 @@
 
 namespace common\models\Person;
 
-use common\models\Provincia;
+use common\models\Geo\Provincia;
 use yii\db\ActiveRecord;
 
 /**

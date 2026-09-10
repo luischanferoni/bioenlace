@@ -3,8 +3,8 @@
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\SensibilidadRegla */
-/* @var $servicios common\models\Servicio[] */
+/* @var $model common\models\Clinical\SensibilidadRegla */
+/* @var $servicios common\models\Organization\Servicio[] */
 
 $this->title = 'Editar regla: ' . ($model->categoria ? $model->categoria->nombre : $model->id_categoria);
 $this->params['breadcrumbs'][] = ['label' => 'Reglas de sensibilidad', 'url' => ['index']];

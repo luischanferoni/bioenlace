@@ -2,9 +2,9 @@
 
 namespace common\components\Domain\Clinical\Inpatient\Service;
 
-use common\models\SegNivelInternacion;
-use common\models\SegNivelInternacionRepository;
-use common\models\SegNivelInternacionTipoAlta;
+use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\SegNivelInternacionRepository;
+use common\models\Clinical\SegNivelInternacionTipoAlta;
 
 /**
  * Alta hospitalaria con epicrisis y checklist mínimo (staff).
@@ -178,7 +178,7 @@ final class InternacionAltaEstructuradaService
         if ($pesId <= 0) {
             return null;
         }
-        $pes = \common\models\ProfesionalEfectorServicio::findOne(['id' => $pesId, 'deleted_at' => null]);
+        $pes = \common\models\Organization\ProfesionalEfectorServicio::findOne(['id' => $pesId, 'deleted_at' => null]);
         if ($pes === null || $pes->persona === null) {
             return null;
         }

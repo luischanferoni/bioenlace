@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\Home;
 
 use common\components\Platform\Ui\Home\Service\HomePanelStaffPanelSliceResolverInterface;
 use common\models\Clinical\Encounter;
-use common\models\Servicio;
+use common\models\Organization\Servicio;
 use Yii;
 
 /**

@@ -10,7 +10,7 @@ use common\components\Domain\Clinical\Service\EpisodeOfCareService;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EpisodeOfCare;
-use common\models\SegNivelInternacion;
+use common\models\Clinical\SegNivelInternacion;
 
 /**
  * Contexto clínico activo de una internación (episode + care plan inpatient + encounter IMP).

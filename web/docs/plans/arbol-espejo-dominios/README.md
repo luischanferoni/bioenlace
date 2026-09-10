@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|--------|
 | Slug | `arbol-espejo-dominios` |
-| Estado | Fase 1 implementada (falta smoke QA) — Fases 2-6 pendientes |
+| Estado | Fases 1–4 implementadas (falta smoke QA) — Fases 5-6 pendientes |
 | Dueño | Arquitectura / API / asistente |
 | Objetivo | Carga cognitiva extrínseca: que la misma palabra de dominio se pueda seguir por el árbol en **todas** las capas, sin mapas intermedios |
 
@@ -24,7 +24,7 @@
 |------|------------|
 | `common/components/` | `Domain/` + `Platform/` + `Ai/` + `Core/` al mismo nivel; hay un `Domain/Platform/` |
 | `common/components/Domain/` | 7 dominios: `Clinical`, `Content`, `Integrations`, `Organization`, `Person`, `Scheduling`, `Terminology` |
-| `common/models/` | 143 archivos planos + 15 carpetas de ejes mezclados (`Clinical`, `Scheduling`, … junto a `busquedas`, `forms`, `fullcalendar`, `rbac`, `search`, `sumar`) |
+| `common/models/` | 143 archivos planos + 15 carpetas de ejes mezclados (`Clinical`, `Scheduling`, … junto a `busquedas`, `forms`, `fullcalendar`, `rbac`, `search`, `sumar`) — **resuelto en Fase 2**: 0 planos, 10 carpetas, todas dominios |
 | `frontend/modules/api/v1/controllers/` | 19 archivos bajo `clinical/`; **41 planos** (`TurnosController`, `ServiciosController`, `PersonaController`, …) — **resuelto en Fase 1**: 46 en `clinical/`, `scheduling/`, `organization/`, `person/`, `integrations/` y 13 transversales en la raíz |
 | `frontend/modules/api/v1/views/json/` | 98 archivos en 6 carpetas: `clinical`, `scheduling`, `organization`, `persona`, `core`, `common` |
 | `common/metadata/bioenlace/` | 11 carpetas mezclando dominio (`clinical`, `person`, `scheduling`, …) y plataforma (`assistant`, `agents`, `ai`, `permission`, `ui`) |

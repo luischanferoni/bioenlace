@@ -4,12 +4,12 @@ namespace common\components\Platform\Assistant\WhatsApp;
 
 use common\components\Platform\Assistant\UiActions\AllowedRoutesResolver;
 use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
-use common\models\AsistenteWhatsappVinculo;
-use common\models\PersonaTelefono;
+use common\models\Integrations\AsistenteWhatsappVinculo;
+use common\models\Person\PersonaTelefono;
 use common\models\Person\Persona;
-use common\models\User;
-use common\models\ProfesionalEfectorServicio;
-use common\models\BioenlaceDbManager;
+use common\models\Platform\User;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Platform\BioenlaceDbManager;
 use Yii;
 
 /**

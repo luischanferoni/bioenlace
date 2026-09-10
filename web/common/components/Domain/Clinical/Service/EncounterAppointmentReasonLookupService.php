@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\Service;
 
 use common\models\Clinical\Encounter;
-use common\models\ConsultaMotivosMessage;
+use common\models\Clinical\ConsultaMotivosMessage;
 use common\models\Scheduling\Turno;
 use yii\db\Expression;
 use yii\db\Query;

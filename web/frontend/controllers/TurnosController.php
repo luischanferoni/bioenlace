@@ -7,10 +7,10 @@ use yii\web\Controller;
 use yii\web\BadRequestHttpException;
 use yii\filters\VerbFilter;
 
-use common\models\AgendaFeriados;
-use common\models\ProfesionalEfectorServicio;
-use common\models\ServiciosEfector;
-use common\models\ConsultaDerivaciones;
+use common\models\Scheduling\AgendaFeriados;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Organization\ServiciosEfector;
+use common\models\Clinical\ConsultaDerivaciones;
 use common\models\Person\Persona;
 use common\models\Scheduling\Turno;
 

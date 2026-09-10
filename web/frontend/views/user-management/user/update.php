@@ -1,13 +1,13 @@
 <?php
 
 use common\components\Platform\Legacy\UserManagementCompat;
-use common\models\User;
+use common\models\Platform\User;
 use yii\bootstrap\ActiveForm;
 use yii\helpers\Html;
 
 /**
  * @var yii\web\View $this
- * @var common\models\User $model
+ * @var common\models\Platform\User $model
  */
 
 $this->title = UserManagementCompat::t('back', 'Editing user: ') . ' ' . $model->username;

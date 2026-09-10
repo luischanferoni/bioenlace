@@ -2,10 +2,10 @@
 
 namespace common\components\Domain\Organization\Service\Seed;
 
-use common\models\Departamento;
-use common\models\Efector;
-use common\models\Localidad;
-use common\models\Provincia;
+use common\models\Geo\Departamento;
+use common\models\Organization\Efector;
+use common\models\Geo\Localidad;
+use common\models\Geo\Provincia;
 use yii\db\Query;
 
 /**

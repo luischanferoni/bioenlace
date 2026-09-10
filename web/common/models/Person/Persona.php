@@ -3,19 +3,19 @@
 namespace common\models\Person;
 
 use Yii;
-use common\models\ConsultaAtencionesEnfermeria;
-use common\models\EncuestaParchesMamarios;
-use common\models\EstadoCivil;
-use common\models\Guardia;
-use common\models\Persona_domicilio;
-use common\models\Persona_mails;
-use common\models\PersonaTelefono;
-use common\models\PersonasAntecedente;
-use common\models\ProfesionalSalud;
-use common\models\SegNivelInternacion;
-use common\models\Tipo_documento;
+use common\models\Clinical\ConsultaAtencionesEnfermeria;
+use common\models\Clinical\EncuestaParchesMamarios;
+use common\models\Person\EstadoCivil;
+use common\models\Clinical\Guardia;
+use common\models\Person\Persona_domicilio;
+use common\models\Person\Persona_mails;
+use common\models\Person\PersonaTelefono;
+use common\models\Clinical\PersonasAntecedente;
+use common\models\Person\ProfesionalSalud;
+use common\models\Clinical\SegNivelInternacion;
+use common\models\Person\Tipo_documento;
 use common\models\Scheduling\Turno;
-use common\models\User;
+use common\models\Platform\User;
 
 /**
  * This is the model class for table "personas".
@@ -465,17 +465,17 @@ class Persona extends \yii\db\ActiveRecord
     }
 
     // funcion para consultar los departamentos segun un id de provincia
-    /** @deprecated use {@see \common\components\Domain\Organization\Service\GeografiaDepdropService::departamentosPorProvincia} */
+    /** @deprecated use {@see \common\components\Domain\Geo\Service\GeografiaDepdropService::departamentosPorProvincia} */
     public function getDepartamentoxidprovincia($id)
     {
-        return \common\components\Domain\Organization\Service\GeografiaDepdropService::departamentosPorProvincia((int) $id);
+        return \common\components\Domain\Geo\Service\GeografiaDepdropService::departamentosPorProvincia((int) $id);
     }
 
     // funcion para consultar las localidades segun el id de departamento
-    /** @deprecated use {@see \common\components\Domain\Organization\Service\GeografiaDepdropService::localidadesPorDepartamento} */
+    /** @deprecated use {@see \common\components\Domain\Geo\Service\GeografiaDepdropService::localidadesPorDepartamento} */
     public function getLocalidadxiddepartamento($idd)
     {
-        return \common\components\Domain\Organization\Service\GeografiaDepdropService::localidadesPorDepartamento((int) $idd);
+        return \common\components\Domain\Geo\Service\GeografiaDepdropService::localidadesPorDepartamento((int) $idd);
     }
 
     public function getDatosPersonaXDni($dni, $nombre)

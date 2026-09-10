@@ -3,7 +3,7 @@
 use yii\db\Migration;
 
 /**
- * Elimina la tabla legacy `rr_hh` tras migración completa a {@see \common\models\ProfesionalEfectorServicio}.
+ * Elimina la tabla legacy `rr_hh` tras migración completa a {@see \common\models\Organization\ProfesionalEfectorServicio}.
  *
  * Ejecutar solo cuando no existan FKs activas hacia `rr_hh` y el código ya no consulte esa tabla.
  */

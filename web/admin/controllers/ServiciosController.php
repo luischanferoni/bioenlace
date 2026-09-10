@@ -11,8 +11,8 @@ use yii\helpers\ArrayHelper;
 use common\components\Platform\Core\Permission\RbacRoleQueryService;
 
 
-use common\models\Servicio;
-use common\models\busquedas\ServicioBusqueda;
+use common\models\Organization\Servicio;
+use common\models\Organization\ServicioBusqueda;
 
 /**
  * ServiciosController implements the CRUD actions for Servicio model.

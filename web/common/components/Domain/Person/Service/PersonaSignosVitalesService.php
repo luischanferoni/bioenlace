@@ -3,7 +3,7 @@
 namespace common\components\Domain\Person\Service;
 
 use common\models\Person\Persona;
-use common\models\PersonaRepository;
+use common\models\Person\PersonaRepository;
 
 /**
  * Orquesta la lectura de signos vitales desde atenciones de enfermería (JSON en ae.datos).

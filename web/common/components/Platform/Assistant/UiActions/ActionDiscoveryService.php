@@ -8,7 +8,7 @@ use yii\helpers\Inflector;
 use yii\helpers\Url;
 use ReflectionClass;
 use ReflectionMethod;
-use common\models\User;
+use common\models\Platform\User;
 
 /**
  * Servicio para descubrir dinámicamente todas las acciones disponibles en los controladores

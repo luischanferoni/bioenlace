@@ -4,12 +4,12 @@ namespace common\components\Platform\Core\Auth;
 
 use common\components\Platform\Core\Auth\DemoSandboxCaptchaService;
 use common\models\Clinical\EncounterDefinition;
-use common\models\Efector;
+use common\models\Organization\Efector;
 use common\models\Person\Persona;
 use common\models\Platform\DemoSandboxAccess;
 use common\models\Platform\DemoSandboxSession;
-use common\models\Servicio;
-use common\models\User;
+use common\models\Organization\Servicio;
+use common\models\Platform\User;
 use Firebase\JWT\JWT;
 use Yii;
 use yii\db\Query;
@@ -174,7 +174,7 @@ final class DemoSandboxAccessService
             DemoSandboxSessionService::assertIdEfectorEsPlantillaDev($idEfector);
             $idPes = (int) $session->id_pes;
             $sessionId = (int) $session->id;
-            $efectorRow = \common\models\Efector::findOne($idEfector);
+            $efectorRow = \common\models\Organization\Efector::findOne($idEfector);
             $efectorCodigoSisa = $efectorRow !== null ? trim((string) $efectorRow->codigo_sisa) : '';
             $efectorNombre = $efectorRow !== null ? trim((string) $efectorRow->nombre) : '';
             $seedPayload = $session->getSeedPayload();

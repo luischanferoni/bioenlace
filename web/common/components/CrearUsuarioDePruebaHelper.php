@@ -4,8 +4,8 @@ namespace common\components;
 
 use Yii;
 use common\models\Person\Persona;
-use common\models\User;
-use common\models\rbac\AuthRole;
+use common\models\Platform\User;
+use common\models\Platform\Permission\AuthRole;
 
 /**
  * Alta única de persona + usuario de prueba (sin Didit ni MPI). No actualiza registros existentes.
@@ -105,10 +105,10 @@ final class CrearUsuarioDePruebaHelper
         try {
             if (!Yii::$app->has('authManager', true)) {
                 // Consola u otra app sin RBAC.
-            } elseif (class_exists(\common\models\BioenlaceDbManager::class)
-                && method_exists(\common\models\BioenlaceDbManager::class, 'asignarRolPacienteSiNoExiste')
+            } elseif (class_exists(\common\models\Platform\BioenlaceDbManager::class)
+                && method_exists(\common\models\Platform\BioenlaceDbManager::class, 'asignarRolPacienteSiNoExiste')
             ) {
-                \common\models\BioenlaceDbManager::asignarRolPacienteSiNoExiste($user->id);
+                \common\models\Platform\BioenlaceDbManager::asignarRolPacienteSiNoExiste($user->id);
             } else {
                 $pacienteRole = AuthRole::findOne(['name' => 'paciente']);
                 if ($pacienteRole) {

@@ -4,7 +4,7 @@ use yii\helpers\Html;
 
 
 /* @var $this yii\web\View */
-/* @var $model common\models\Efector */
+/* @var $model common\models\Organization\Efector */
 
 $this->title = 'Nuevo Efector';
 $this->params['breadcrumbs'][] = ['label' => 'Efectors', 'url' => ['index']];

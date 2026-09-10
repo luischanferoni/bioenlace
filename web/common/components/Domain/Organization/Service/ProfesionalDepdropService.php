@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Organization\Service;
 
-use common\models\Especialidades;
+use common\models\Organization\Especialidades;
 
 /**
  * DepDrop profesión → especialidad (wizard alta profesional de salud).

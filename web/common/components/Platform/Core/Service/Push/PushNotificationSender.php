@@ -3,8 +3,8 @@
 namespace common\components\Platform\Core\Service\Push;
 
 use Yii;
-use common\models\UserDevice;
-use common\models\PersonaNotificacion;
+use common\models\Platform\UserDevice;
+use common\models\Platform\PersonaNotificacion;
 use common\components\Platform\Core\Service\Notificaciones\PersonaNotificacionService;
 
 /**

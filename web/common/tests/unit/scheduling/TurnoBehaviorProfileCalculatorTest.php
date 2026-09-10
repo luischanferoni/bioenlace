@@ -7,7 +7,7 @@ use common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoBehaviorPro
 use common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoBehaviorProfileContract;
 use common\models\Scheduling\PersonaTurnosPerfil;
 use common\models\Scheduling\PersonaTurnosPerfilMetrica;
-use common\models\TurnoEventoAudit;
+use common\models\Scheduling\TurnoEventoAudit;
 
 class TurnoBehaviorProfileCalculatorTest extends Unit
 {

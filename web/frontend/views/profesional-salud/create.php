@@ -3,7 +3,7 @@
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\ProfesionalSalud */
+/* @var $model common\models\Person\ProfesionalSalud */
 
 $this->title = 'Agregar profesiones a '.$persona->apellido.', '.$persona->nombre;
 $this->params['breadcrumbs'][] = ['label' => 'Profesional Salud', 'url' => ['index']];

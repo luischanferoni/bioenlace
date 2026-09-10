@@ -1,8 +1,8 @@
 <?php
 
 use common\components\Platform\Infra\Migration\MigrationEnumColumn;
-use common\models\BillingPayment;
-use common\models\BillingSignupRequest;
+use common\models\Organization\BillingPayment;
+use common\models\Organization\BillingSignupRequest;
 use yii\db\Migration;
 use yii\db\Query;
 

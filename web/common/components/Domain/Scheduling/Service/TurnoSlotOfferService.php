@@ -68,7 +68,7 @@ class TurnoSlotOfferService
                     : 0;
                 if ($fechaSlot !== '' && $horaSlot !== '' && $idPes > 0) {
                     $intervalo = 15;
-                    $ver = \common\models\ProfesionalEfectorServicioAgendaVersion::findVigenteParaPesEnFecha($idPes, $fechaSlot);
+                    $ver = \common\models\Organization\ProfesionalEfectorServicioAgendaVersion::findVigenteParaPesEnFecha($idPes, $fechaSlot);
                     if ($ver !== null) {
                         $intervalo = $ver->getIntervaloMinutosEfectivo();
                     }

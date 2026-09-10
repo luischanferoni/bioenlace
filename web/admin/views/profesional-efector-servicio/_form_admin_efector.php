@@ -10,12 +10,12 @@ use kartik\select2\Select2;
 use kartik\date\DatePicker;
 use wbraganca\dynamicform\DynamicFormWidget;
 
-use common\models\Efector;
-use common\models\Servicio;
-use common\models\Condiciones_laborales;
+use common\models\Organization\Efector;
+use common\models\Organization\Servicio;
+use common\models\Organization\Condiciones_laborales;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\ProfesionalEfectorServicio */
+/* @var $model common\models\Organization\ProfesionalEfectorServicio */
 /* @var $form yii\widgets\ActiveForm */
 ?>
 

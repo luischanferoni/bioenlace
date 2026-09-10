@@ -6,7 +6,7 @@ use common\components\Domain\Clinical\Inpatient\Service\InternacionAccessService
 use common\components\Platform\Core\Permission\Domain\DomainOperationContext;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Platform\Core\Permission\Domain\DomainOperationPolicyInterface;
-use common\models\SegNivelInternacion;
+use common\models\Clinical\SegNivelInternacion;
 
 /**
  * Staff o paciente con acceso clínico a la internación (efector, encounter abierto, titular).

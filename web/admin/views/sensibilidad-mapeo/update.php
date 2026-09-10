@@ -3,8 +3,8 @@
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\SensibilidadMapeoSnomed */
-/* @var $categorias common\models\SensibilidadCategoria[] */
+/* @var $model common\models\Clinical\SensibilidadMapeoSnomed */
+/* @var $categorias common\models\Clinical\SensibilidadCategoria[] */
 
 $this->title = 'Editar mapeo: ' . $model->codigo;
 $this->params['breadcrumbs'][] = ['label' => 'Mapeo SNOMED', 'url' => ['index']];

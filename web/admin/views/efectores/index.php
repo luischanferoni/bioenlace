@@ -10,13 +10,13 @@
 use yii\helpers\Html;
 use yii\grid\GridView;
 use yii\helpers\ArrayHelper;
-use common\models\Departamento;
-use common\models\Provincia;
+use common\models\Geo\Departamento;
+use common\models\Geo\Provincia;
 use common\models\Person\PersonaPacienteContexto;
 
 
 /* @var $this yii\web\View */
-/* @var $searchModel common\models\busquedas\EfectorBusqueda */
+/* @var $searchModel common\models\Organization\EfectorBusqueda */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
 $this->title = 'Listado de Efectores';
@@ -54,7 +54,7 @@ $this->params['breadcrumbs'][] = $this->title;
                             
                         'filter' => Html::activeTextInput($searchModel, 'localidadNombre', ['class' => 'form-control'])
                         /*'filter' => Html::activeDropDownList($searchModel, 'id_localidad', 
-                                        ArrayHelper::map(\common\models\Localidad::find()->all(),'id_localidad', 'nombre'), 
+                                        ArrayHelper::map(\common\models\Geo\Localidad::find()->all(),'id_localidad', 'nombre'), 
                                         ['class' => 'form-control', 
                                         'prompt' => '- Seleccione una -']) */ 
                     ],

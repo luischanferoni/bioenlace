@@ -3,8 +3,8 @@
 namespace common\components\Domain\Clinical\Emergency\Service;
 
 use common\components\Domain\Clinical\Emergency\Enum\CircuitoEstado;
-use common\models\Emergency\EfectorEmergencyConfig;
-use common\models\Guardia;
+use common\models\Clinical\Emergency\EfectorEmergencyConfig;
+use common\models\Clinical\Guardia;
 
 /**
  * Evalúa incumplimiento de plazos por fila de tablero.

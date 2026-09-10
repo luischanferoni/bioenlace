@@ -4,8 +4,8 @@ namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\Service\ServiceRequestService;
-use common\models\ConsultaIndicaciones;
-use common\models\ConsultaPracticas;
+use common\models\Clinical\ConsultaIndicaciones;
+use common\models\Clinical\ConsultaPracticas;
 
 /**
  * Separación tipológica: prácticas realizadas vs indicaciones (campos de prompt).

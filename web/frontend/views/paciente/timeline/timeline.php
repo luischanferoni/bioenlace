@@ -6,7 +6,7 @@ use yii\bootstrap5\Modal;
 
 use common\models\Person\Persona;
 use common\helpers\TimelineHelper;
-use common\models\User;
+use common\models\Platform\User;
 use common\models\Clinical\Encounter;
 use frontend\assets\GuardiaTableroAsset;
 use frontend\components\Clinical\EpisodioTimelineViewBuilder;

@@ -4,7 +4,7 @@ use yii\helpers\Html;
 use yii\grid\GridView;
 
 /* @var $this yii\web\View */
-/* @var $searchModel common\models\busquedas\ProfesionalEfectorServicioBusqueda */
+/* @var $searchModel common\models\Organization\ProfesionalEfectorServicioBusqueda */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
 $this->title = 'Recursos Humanos';

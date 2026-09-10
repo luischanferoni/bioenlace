@@ -2,9 +2,9 @@
 
 namespace common\components\Domain\Organization\Service\ProfesionalEfectorServicio;
 
-use common\models\ProfesionalEfectorServicio;
-use common\models\Servicio;
-use common\models\ServiciosEfector;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Organization\Servicio;
+use common\models\Organization\ServiciosEfector;
 use Yii;
 
 /**

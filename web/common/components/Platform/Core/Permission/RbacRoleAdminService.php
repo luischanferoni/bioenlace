@@ -2,7 +2,7 @@
 
 namespace common\components\Platform\Core\Permission;
 
-use common\models\rbac\AuthRole;
+use common\models\Platform\Permission\AuthRole;
 use Yii;
 use yii\db\Query;
 use yii\rbac\Item;

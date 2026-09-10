@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\Inpatient\Service;
 
 use common\components\Platform\Agent\AgentRunRecorder;
-use common\models\SegNivelInternacion;
+use common\models\Clinical\SegNivelInternacion;
 use Yii;
 
 /**

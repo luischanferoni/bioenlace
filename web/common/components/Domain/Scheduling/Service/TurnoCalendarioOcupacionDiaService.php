@@ -4,10 +4,10 @@ namespace common\components\Domain\Scheduling\Service;
 
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\AgendaIntervaloMinutos;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\AgendaSlotEngine;
-use common\models\AgendaFeriados;
+use common\models\Scheduling\AgendaFeriados;
 use common\models\Person\Persona;
-use common\models\ProfesionalEfectorServicio;
-use common\models\ProfesionalEfectorServicioAgenda;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicioAgenda;
 use common\models\Scheduling\Turno;
 use Yii;
 use yii\helpers\Html;

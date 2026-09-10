@@ -4,8 +4,8 @@ namespace common\components\Platform\Assistant\WhatsApp;
 
 use common\components\Platform\Assistant\Chat\ChatOrchestrator;
 use common\components\Platform\Core\Service\Actions\CommonActionsService;
-use common\models\AsistenteWhatsappMensaje;
-use common\models\AsistenteWhatsappVinculo;
+use common\models\Integrations\AsistenteWhatsappMensaje;
+use common\models\Integrations\AsistenteWhatsappVinculo;
 use Yii;
 use yii\web\Request;
 

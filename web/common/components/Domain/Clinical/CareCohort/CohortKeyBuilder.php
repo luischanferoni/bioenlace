@@ -4,8 +4,8 @@ namespace common\components\Domain\Clinical\CareCohort;
 
 use common\components\Domain\Clinical\AiContext\PatientAiContextBuilder;
 use common\models\Clinical\Encounter;
-use common\models\DiagnosticoConsultaRepository as DCRepo;
-use common\models\Efector;
+use common\models\Clinical\DiagnosticoConsultaRepository as DCRepo;
+use common\models\Organization\Efector;
 use common\models\Person\Persona;
 
 /**

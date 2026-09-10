@@ -4,8 +4,8 @@ namespace admin\controllers;
 
 use common\components\Domain\Organization\Service\Billing\BillingMembershipSwitchService;
 use common\components\Domain\Organization\Service\Billing\MinistrySignupRequestService;
-use common\models\BillingAccount;
-use common\models\BillingSignupRequest;
+use common\models\Organization\BillingAccount;
+use common\models\Organization\BillingSignupRequest;
 use Yii;
 use yii\data\ActiveDataProvider;
 use yii\filters\VerbFilter;

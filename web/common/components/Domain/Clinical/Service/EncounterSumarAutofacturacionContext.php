@@ -5,11 +5,11 @@ namespace common\components\Domain\Clinical\Service;
 use common\models\Clinical\Condition;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\ServiceRequest;
-use common\models\Guardia;
+use common\models\Clinical\Guardia;
 use common\models\Person\Persona;
-use common\models\SegNivelInternacion;
+use common\models\Clinical\SegNivelInternacion;
 use common\models\Scheduling\Turno;
-use common\models\sumar\Autofacturacion;
+use common\models\Programs\Autofacturacion;
 use Yii;
 
 /**

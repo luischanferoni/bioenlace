@@ -13,10 +13,10 @@ use common\components\Domain\Clinical\Service\AppointmentReasonWindowService;
 use common\components\Domain\Clinical\Service\EncounterLifecycleService;
 use common\models\Clinical\Encounter;
 use common\models\Scheduling\Turno;
-use common\models\AgendaFeriados;
-use common\models\ProfesionalEfectorServicio;
-use common\models\ServiciosEfector;
-use common\models\ConsultaDerivaciones;
+use common\models\Scheduling\AgendaFeriados;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Organization\ServiciosEfector;
+use common\models\Clinical\ConsultaDerivaciones;
 use common\models\Person\Persona;
 use common\components\Platform\Ui\UiDefinitionTemplateManager;
 use common\components\Platform\Ui\UiScreenService;
@@ -53,7 +53,7 @@ use common\components\Domain\Scheduling\Service\TurnoAdvanceOfferAcceptService;
 use common\components\Domain\Scheduling\Service\TurnoResolucionShortlistAgent;
 use common\components\Domain\Scheduling\Service\PersonaAgendaPreferenciasService;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalContextResolver;
-use common\models\TurnoResolucion;
+use common\models\Scheduling\TurnoResolucion;
 use yii\web\ForbiddenHttpException;
 use yii\web\ConflictHttpException;
 use yii\web\MethodNotAllowedHttpException;
@@ -1060,8 +1060,8 @@ class TurnosController extends BaseController
                 }
                 $actorPersonaId = (int) Yii::$app->user->getIdPersona();
                 $actorType = $actorPersonaId > 0 && $actorPersonaId !== (int) $turno->id_persona
-                    ? \common\models\TurnoEventoAudit::ACTOR_REPRESENTANTE
-                    : \common\models\TurnoEventoAudit::ACTOR_PACIENTE;
+                    ? \common\models\Scheduling\TurnoEventoAudit::ACTOR_REPRESENTANTE
+                    : \common\models\Scheduling\TurnoEventoAudit::ACTOR_PACIENTE;
                 (new TurnoConfirmationService())->confirmarAsistencia(
                     $turno,
                     Yii::$app->user->id ?? null,
@@ -1300,7 +1300,7 @@ class TurnosController extends BaseController
      */
     public function actionCancelarDiaEfector()
     {
-        if (!\common\models\User::hasRole('AdminEfector')) {
+        if (!\common\models\Platform\User::hasRole('AdminEfector')) {
             throw new ForbiddenHttpException('Solo administrador de efector');
         }
         $req = Yii::$app->request;
@@ -2051,14 +2051,14 @@ class TurnosController extends BaseController
             (new TurnoLifecycleService())->reprogramar(
                 $turno,
                 $before,
-                \common\models\TurnoEventoAudit::ACTOR_PACIENTE,
+                \common\models\Scheduling\TurnoEventoAudit::ACTOR_PACIENTE,
                 'app',
                 Yii::$app->user->id ?? null
             );
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         }
-        \common\models\TurnoNotificacionProgramada::cancelarPendientesPorTurno($turno->id_turnos);
+        \common\models\Scheduling\TurnoNotificacionProgramada::cancelarPendientesPorTurno($turno->id_turnos);
         try {
             $conf = new TurnoConfirmationService();
             $conf->ensureConfirmacionToken($turno);
@@ -2324,8 +2324,8 @@ class TurnosController extends BaseController
         $token = (string) ($post['offer_token'] ?? $post['token'] ?? '');
         $actorPersonaId = (int) Yii::$app->user->getIdPersona();
         $actorType = $actorPersonaId > 0 && $actorPersonaId !== $idPersona
-            ? \common\models\TurnoEventoAudit::ACTOR_REPRESENTANTE
-            : \common\models\TurnoEventoAudit::ACTOR_PACIENTE;
+            ? \common\models\Scheduling\TurnoEventoAudit::ACTOR_REPRESENTANTE
+            : \common\models\Scheduling\TurnoEventoAudit::ACTOR_PACIENTE;
 
         try {
             $data = (new TurnoAdvanceOfferAcceptService())->accept($token, $idPersona, $actorType);

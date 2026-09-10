@@ -6,10 +6,10 @@ use Yii;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
-use common\models\SensibilidadRegla;
-use common\models\SensibilidadReglaServicio;
-use common\models\SensibilidadCategoria;
-use common\models\Servicio;
+use common\models\Clinical\SensibilidadRegla;
+use common\models\Clinical\SensibilidadReglaServicio;
+use common\models\Clinical\SensibilidadCategoria;
+use common\models\Organization\Servicio;
 
 /**
  * CRUD de reglas de sensibilidad (por categoría: acción + lista de servicios que la reciben).

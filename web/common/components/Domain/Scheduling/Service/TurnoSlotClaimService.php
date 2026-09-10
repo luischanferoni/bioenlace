@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
-use common\models\TurnoResolucion;
+use common\models\Scheduling\TurnoResolucion;
 use Yii;
 use yii\db\Exception as DbException;
 

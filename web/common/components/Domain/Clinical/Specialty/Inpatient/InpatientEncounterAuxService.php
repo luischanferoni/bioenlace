@@ -6,9 +6,9 @@ use common\models\Clinical\Encounter;
 use common\models\Clinical\MedicationAdministration;
 use common\models\Clinical\NutritionOrder;
 use common\models\Clinical\Observation;
-use common\models\ConsultaBalanceHidrico;
-use common\models\ConsultaRegimen;
-use common\models\SegNivelInternacion;
+use common\models\Clinical\ConsultaBalanceHidrico;
+use common\models\Clinical\ConsultaRegimen;
+use common\models\Clinical\SegNivelInternacion;
 
 /**
  * Balance hídrico, régimen y suministro de medicación en internación (FHIR).

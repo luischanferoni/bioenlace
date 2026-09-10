@@ -4,8 +4,8 @@ namespace common\components\Domain\Clinical\Service;
 
 use common\components\Domain\Clinical\Enum\EpisodeOfCareStatus;
 use common\models\Clinical\EpisodeOfCare;
-use common\models\InfraestructuraCama;
-use common\models\SegNivelInternacion;
+use common\models\Organization\InfraestructuraCama;
+use common\models\Clinical\SegNivelInternacion;
 
 final class EpisodeOfCareService
 {

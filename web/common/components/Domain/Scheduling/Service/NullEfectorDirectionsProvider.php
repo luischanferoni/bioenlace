@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
-use common\models\Efector;
+use common\models\Organization\Efector;
 
 /**
  * Stub: solo texto desde efector (domicilio, formas_acceso, dias_horario).

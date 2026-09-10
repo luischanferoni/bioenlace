@@ -3,9 +3,9 @@
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\SensibilidadRegla */
-/* @var $categoria common\models\SensibilidadCategoria */
-/* @var $servicios common\models\Servicio[] */
+/* @var $model common\models\Clinical\SensibilidadRegla */
+/* @var $categoria common\models\Clinical\SensibilidadCategoria */
+/* @var $servicios common\models\Organization\Servicio[] */
 
 $this->title = 'Nueva regla: ' . $categoria->nombre;
 $this->params['breadcrumbs'][] = ['label' => 'Reglas de sensibilidad', 'url' => ['index']];

@@ -16,7 +16,7 @@ class ConsultasSeguimientoFlowYamlTest extends Unit
     public function testRoutingPorNecesidadYDraftKeys(): void
     {
         $path = dirname(__DIR__, 3)
-            . '/metadata/bioenlace/assistant/intents/create/atencion.necesito-atencion.yaml';
+            . '/metadata/bioenlace/clinical/intents/create/atencion.necesito-atencion.yaml';
         $this->assertFileExists($path);
         $yaml = Yaml::parseFile($path);
         $this->assertIsArray($yaml);

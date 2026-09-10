@@ -11,7 +11,7 @@ use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 use yii\helpers\Url;
 /* @var $this yii\web\View */
-/* @var $model common\models\Efector */
+/* @var $model common\models\Organization\Efector */
 
 $this->title = 'Actualización de la tabla Efectores';
 $this->params['breadcrumbs'][] = $this->title;

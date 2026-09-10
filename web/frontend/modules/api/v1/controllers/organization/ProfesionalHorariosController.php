@@ -10,8 +10,8 @@ use yii\web\NotFoundHttpException;
 use common\components\Domain\Organization\Service\ProfesionalHorario\ProfesionalHorarioActivaService;
 use common\components\Domain\Organization\Service\ProfesionalHorario\ProfesionalHorarioService;
 use common\components\Domain\Organization\Service\ProfesionalHorario\ProfesionalHorarioUiFlowService;
-use common\models\ProfesionalHorario;
-use common\models\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalHorario;
+use common\models\Organization\ProfesionalEfectorServicio;
 
 /**
  * Horario de presencia EMER e IMP (entrada–salida). No expone cupos a pacientes.

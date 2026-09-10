@@ -9,13 +9,13 @@ use common\models\Clinical\Encounter;
 use common\models\Clinical\MedicationAdministration;
 use common\models\Clinical\MedicationRequest;
 use common\models\Clinical\ServiceRequest;
-use common\models\ConsultaAtencionesEnfermeria;
-use common\models\Emergency\GuardiaCircuitoEvent;
-use common\models\Emergency\GuardiaTriage;
-use common\models\Guardia;
+use common\models\Clinical\ConsultaAtencionesEnfermeria;
+use common\models\Clinical\Emergency\GuardiaCircuitoEvent;
+use common\models\Clinical\Emergency\GuardiaTriage;
+use common\models\Clinical\Guardia;
 use common\models\Person\Persona;
-use common\models\ProfesionalEfectorServicio;
-use common\models\SegNivelInternacion;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Clinical\SegNivelInternacion;
 use common\components\Domain\Clinical\Laboratory\Service\LaboratoryResultQueryService;
 
 /**

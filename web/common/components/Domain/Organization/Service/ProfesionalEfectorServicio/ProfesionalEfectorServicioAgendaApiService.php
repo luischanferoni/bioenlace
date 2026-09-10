@@ -2,9 +2,9 @@
 
 namespace common\components\Domain\Organization\Service\ProfesionalEfectorServicio;
 
-use common\models\busquedas\ProfesionalEfectorServicioAgendaBusqueda;
-use common\models\ProfesionalEfectorServicio;
-use common\models\ProfesionalEfectorServicioAgenda;
+use common\models\Organization\ProfesionalEfectorServicioAgendaBusqueda;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicioAgenda;
 use yii\data\ActiveDataProvider;
 use yii\web\BadRequestHttpException;
 

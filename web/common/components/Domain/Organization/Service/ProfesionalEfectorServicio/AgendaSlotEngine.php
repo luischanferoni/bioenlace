@@ -38,7 +38,7 @@ final class AgendaSlotEngine
     /**
      * @return list<string> HH:MM
      */
-    public static function slotsParaDiaDesdeVersion(\common\models\ProfesionalEfectorServicioAgendaVersion $version, string $diaYmd): array
+    public static function slotsParaDiaDesdeVersion(\common\models\Organization\ProfesionalEfectorServicioAgendaVersion $version, string $diaYmd): array
     {
         return self::slotsParaDia($version, $diaYmd, $version->getIntervaloMinutosEfectivo());
     }

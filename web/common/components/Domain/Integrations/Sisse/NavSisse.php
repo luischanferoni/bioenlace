@@ -6,7 +6,7 @@ namespace common\components\Domain\Integrations\Sisse;
 
 use Yii;
 use yii\base\Widget;
-use common\models\User;
+use common\models\Platform\User;
 use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
 use common\components\Platform\Core\Permission\BioenlaceSessionPermissions;
 

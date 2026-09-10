@@ -3,8 +3,8 @@
 namespace common\components\Platform\Core\Permission;
 
 use common\models\Person\Persona;
-use common\models\ProfesionalEfectorServicio;
-use common\models\rbac\AuthRole;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Platform\Permission\AuthRole;
 use Yii;
 use yii\db\Query;
 use yii\helpers\ArrayHelper;

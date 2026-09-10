@@ -9,11 +9,11 @@ use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 
 use frontend\filters\SisseActionFilter;
-use common\models\EncuestaParchesMamarios;
-use common\models\PersonasAntecedente;
+use common\models\Clinical\EncuestaParchesMamarios;
+use common\models\Clinical\PersonasAntecedente;
 use common\components\Domain\Clinical\Service\EncounterLifecycleService;
 use common\models\Clinical\Encounter;
-use common\models\ConsultaAtencionesEnfermeria;
+use common\models\Clinical\ConsultaAtencionesEnfermeria;
 
 /**
  * EncuestaParchesMamariosController implements the CRUD actions for EncuestaParchesMamarios model.

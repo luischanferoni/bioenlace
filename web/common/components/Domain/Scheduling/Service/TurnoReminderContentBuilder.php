@@ -3,7 +3,7 @@
 namespace common\components\Domain\Scheduling\Service;
 
 use common\models\Scheduling\Turno;
-use common\models\Efector;
+use common\models\Organization\Efector;
 
 /**
  * Arma título/cuerpo y payload enriquecido para recordatorios (ubicación / transporte stub).

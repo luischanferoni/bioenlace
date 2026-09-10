@@ -3,12 +3,12 @@
 use yii\helpers\Html;
 use yii\helpers\ArrayHelper;
 use yii\widgets\ActiveForm;
-use common\models\InfoContentArticle;
-use common\models\Provincia;
-use common\models\Efector;
+use common\models\Content\InfoContentArticle;
+use common\models\Geo\Provincia;
+use common\models\Organization\Efector;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\InfoContentArticle */
+/* @var $model common\models\Content\InfoContentArticle */
 /* @var $form yii\widgets\ActiveForm */
 ?>
 

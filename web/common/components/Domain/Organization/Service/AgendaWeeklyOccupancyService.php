@@ -4,9 +4,9 @@ namespace common\components\Domain\Organization\Service;
 
 use common\components\Platform\Core\Product\AgendaByEncounterClassMetadata;
 use common\models\Clinical\Encounter;
-use common\models\ProfesionalHorarioPlantilla;
-use common\models\ProfesionalEfectorServicio;
-use common\models\ProfesionalEfectorServicioAgenda;
+use common\models\Organization\ProfesionalHorarioPlantilla;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicioAgenda;
 
 /**
  * Horas de la grilla semanal ya tomadas por otra clase de encounter (misma persona + efector).

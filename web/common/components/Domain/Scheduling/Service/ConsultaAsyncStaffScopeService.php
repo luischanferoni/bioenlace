@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
-use common\models\ProfesionalEfectorServicio;
-use common\models\ServiciosEfector;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Organization\ServiciosEfector;
 use Yii;
 
 /**

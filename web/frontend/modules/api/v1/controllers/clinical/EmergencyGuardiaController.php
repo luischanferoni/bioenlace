@@ -14,7 +14,7 @@ use common\components\Domain\Clinical\Emergency\Service\GuardiaQueueService;
 use common\components\Domain\Clinical\Emergency\Service\GuardiaSlaService;
 use common\components\Domain\Clinical\Emergency\Service\GuardiaTriageService;
 use common\components\Platform\Ui\UiScreenService;
-use common\models\Emergency\GuardiaTriage;
+use common\models\Clinical\Emergency\GuardiaTriage;
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 use yii\web\ForbiddenHttpException;

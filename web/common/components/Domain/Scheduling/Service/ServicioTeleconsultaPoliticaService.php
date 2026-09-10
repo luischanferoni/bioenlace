@@ -5,11 +5,11 @@ namespace common\components\Domain\Scheduling\Service;
 use common\components\Domain\Organization\Service\Authorization\EfectorAccessService;
 use common\components\Domain\Organization\Service\SesionOperativa\SesionOperativaService;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
-use common\models\ReservaTriageTeleconsultaElegibilidad;
-use common\models\Servicio;
-use common\models\ServicioTeleconsultaCaso;
-use common\models\ServiciosEfector;
-use common\models\User;
+use common\models\Scheduling\ReservaTriageTeleconsultaElegibilidad;
+use common\models\Organization\Servicio;
+use common\models\Scheduling\ServicioTeleconsultaCaso;
+use common\models\Organization\ServiciosEfector;
+use common\models\Platform\User;
 use Yii;
 use yii\db\Transaction;
 

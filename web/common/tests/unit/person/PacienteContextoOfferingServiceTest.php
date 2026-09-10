@@ -4,7 +4,7 @@ namespace common\tests\unit\person;
 
 use Codeception\Test\Unit;
 use common\components\Domain\Person\Service\PacienteContextoOfferingService;
-use common\models\Efector;
+use common\models\Organization\Efector;
 use common\models\Person\PersonaPacienteContexto;
 
 class PacienteContextoOfferingServiceTest extends Unit

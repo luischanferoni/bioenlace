@@ -2,10 +2,10 @@
 
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
-use common\models\DataAccess\DataAccessAttributeField;
+use common\models\Platform\DataAccess\DataAccessAttributeField;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\DataAccess\DataAccessAttributeField */
+/* @var $model common\models\Platform\DataAccess\DataAccessAttributeField */
 
 $entityGroups = (new \common\components\Platform\Core\DataAccess\AttributeGroupCatalog())->listEntityGroupOptions();
 $model->config_json = $model->configJsonForForm();

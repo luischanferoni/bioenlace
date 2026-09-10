@@ -33,7 +33,7 @@ final class TurnoCanonicalEventCommand
         string $eventCode,
         string $actorType,
         string $idempotencyKey,
-        string $attributionQuality = \common\models\TurnoEventoAudit::QUALITY_NATIVE,
+        string $attributionQuality = \common\models\Scheduling\TurnoEventoAudit::QUALITY_NATIVE,
         ?int $idUser = null,
         ?string $channel = null,
         ?string $origin = null,

@@ -8,7 +8,7 @@ use common\components\Platform\Core\DataAccess\PermissionContext;
 use common\components\Domain\Organization\Service\Efectores\OrganizationEfectorAccess;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaUiService;
 use common\models\Person\Persona;
-use common\models\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicio;
 
 /**
  * Resuelve sujeto de edición y snapshot de valores actuales (prefill).

@@ -68,7 +68,7 @@ class ConsultaProcesamientoService extends Component
                 $tabId = 'tab_' . uniqid() . '_' . time();
             }
 
-            $servicio = \common\models\Servicio::findOne($idServicio);
+            $servicio = \common\models\Organization\Servicio::findOne($idServicio);
             if (!$servicio) {
                 return [
                     '__statusCode' => 400,

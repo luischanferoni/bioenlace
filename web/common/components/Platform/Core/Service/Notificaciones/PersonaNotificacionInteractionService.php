@@ -2,9 +2,9 @@
 
 namespace common\components\Platform\Core\Service\Notificaciones;
 
-use common\models\PersonaNotificacion;
-use common\models\PersonaNotificacionInteraccion;
-use common\models\TurnoEventoAudit;
+use common\models\Platform\PersonaNotificacion;
+use common\models\Platform\PersonaNotificacionInteraccion;
+use common\models\Scheduling\TurnoEventoAudit;
 use Yii;
 use yii\db\IntegrityException;
 

@@ -7,7 +7,7 @@ use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\Age
 
 /**
  * Cálculo de slots HH:MM y validación de solapamiento entre agendas (columnas *_2).
- * Compartido por {@see \common\models\ProfesionalEfectorServicioAgenda} (tabla canónica; `agenda_rrhh` retirada vía {@see m260510_000001_drop_agenda_rrhh_table}).
+ * Compartido por {@see \common\models\Organization\ProfesionalEfectorServicioAgenda} (tabla canónica; `agenda_rrhh` retirada vía {@see m260510_000001_drop_agenda_rrhh_table}).
  */
 trait AgendaHorarioSlotsTrait
 {

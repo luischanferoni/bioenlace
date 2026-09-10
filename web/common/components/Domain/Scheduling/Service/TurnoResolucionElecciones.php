@@ -3,7 +3,7 @@
 namespace common\components\Domain\Scheduling\Service;
 
 use common\models\Scheduling\Turno;
-use common\models\TurnoResolucion;
+use common\models\Scheduling\TurnoResolucion;
 use yii\web\BadRequestHttpException;
 
 /**

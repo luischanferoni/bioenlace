@@ -6,10 +6,10 @@ use kartik\select2\Select2;
 use kartik\depdrop\DepDrop;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
-use common\models\InfraestructuraPiso;
+use common\models\Organization\InfraestructuraPiso;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\InfraestructuraCama */
+/* @var $model common\models\Organization\InfraestructuraCama */
 /* @var $form yii\widgets\ActiveForm */
 ?>
 

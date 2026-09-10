@@ -142,37 +142,34 @@ class CatalogPermissionController extends Controller
      */
     public function actionSeedPermissions(): int
     {
-        $base = \common\components\Platform\Assistant\Catalog\IntentSchemaPaths::baseDir();
         $updated = 0;
-        foreach (\common\components\Platform\Assistant\Catalog\IntentSchemaPaths::CATEGORIES as $cat) {
-            foreach (glob($base . DIRECTORY_SEPARATOR . $cat . DIRECTORY_SEPARATOR . '*.yaml') ?: [] as $path) {
-                $raw = (string) file_get_contents($path);
-                $data = \Symfony\Component\Yaml\Yaml::parseFile($path);
-                if (!is_array($data)) {
-                    continue;
-                }
-                $intentId = trim((string) ($data['intent_id'] ?? basename($path, '.yaml')));
-                if (trim((string) ($data['permission'] ?? '')) !== '' || preg_match('/^permission\s*:/m', $raw)) {
-                    continue;
-                }
-                $permission = \common\components\Platform\Core\Permission\IntentPermissionResolver::resolve($intentId, $data);
-                if ($permission === '' || strncmp($permission, '/api/', 5) === 0) {
-                    $this->stderr("Skip {$intentId}\n");
-                    continue;
-                }
-                $lines = preg_split('/\r\n|\n|\r/', $raw);
-                $insertAt = 0;
-                foreach ($lines as $i => $line) {
-                    if (preg_match('/^intent_id\s*:/', $line)) {
-                        $insertAt = $i + 1;
-                        break;
-                    }
-                }
-                array_splice($lines, $insertAt, 0, ['permission: ' . $permission]);
-                file_put_contents($path, implode("\n", $lines));
-                $this->stdout(basename($path) . ' => ' . $permission . "\n");
-                $updated++;
+        foreach (\common\components\Platform\Assistant\Catalog\IntentSchemaPaths::discoverYamlFiles() as $path) {
+            $raw = (string) file_get_contents($path);
+            $data = \Symfony\Component\Yaml\Yaml::parseFile($path);
+            if (!is_array($data)) {
+                continue;
             }
+            $intentId = trim((string) ($data['intent_id'] ?? basename($path, '.yaml')));
+            if (trim((string) ($data['permission'] ?? '')) !== '' || preg_match('/^permission\s*:/m', $raw)) {
+                continue;
+            }
+            $permission = \common\components\Platform\Core\Permission\IntentPermissionResolver::resolve($intentId, $data);
+            if ($permission === '' || strncmp($permission, '/api/', 5) === 0) {
+                $this->stderr("Skip {$intentId}\n");
+                continue;
+            }
+            $lines = preg_split('/\r\n|\n|\r/', $raw);
+            $insertAt = 0;
+            foreach ($lines as $i => $line) {
+                if (preg_match('/^intent_id\s*:/', $line)) {
+                    $insertAt = $i + 1;
+                    break;
+                }
+            }
+            array_splice($lines, $insertAt, 0, ['permission: ' . $permission]);
+            file_put_contents($path, implode("\n", $lines));
+            $this->stdout(basename($path) . ' => ' . $permission . "\n");
+            $updated++;
         }
         $this->stdout("Actualizados: {$updated}\n");
 

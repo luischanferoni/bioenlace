@@ -6,8 +6,8 @@ use common\components\Platform\Agent\AgentRunRecorder;
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
 use common\models\Person\Persona;
 use common\models\Scheduling\Turno;
-use common\models\TurnoNotificacionProgramada;
-use common\models\TurnoResolucion;
+use common\models\Scheduling\TurnoNotificacionProgramada;
+use common\models\Scheduling\TurnoResolucion;
 use Yii;
 
 /**

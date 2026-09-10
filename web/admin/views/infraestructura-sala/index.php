@@ -3,12 +3,12 @@
 use yii\helpers\Html;
 use yii\grid\GridView;
 use yii\helpers\ArrayHelper;
-use common\models\InfraestructuraPiso;
+use common\models\Organization\InfraestructuraPiso;
 use common\models\Person\Persona;
-use common\models\Servicio;
+use common\models\Organization\Servicio;
 
 /* @var $this yii\web\View */
-/* @var $searchModel common\models\busquedas\InfraestructuraSalaBusqueda */
+/* @var $searchModel common\models\Organization\InfraestructuraSalaBusqueda */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
 $this->title = 'Salas';
@@ -42,7 +42,7 @@ $this->params['breadcrumbs'][] = $this->title;
                     return $p !== null ? $p->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON) : '';
                 },
                 'filter' => Html::activeDropDownList($searchModel, 'id_responsable',
-                            ArrayHelper::map(\common\models\ProfesionalEfectorServicio::obtenerMedicosPorEfector(yii::$app->user->getIdEfector()),'id', 'datos'),
+                            ArrayHelper::map(\common\models\Organization\ProfesionalEfectorServicio::obtenerMedicosPorEfector(yii::$app->user->getIdEfector()),'id', 'datos'),
                             ['class' => 'form-control',
                             'prompt' => '- Seleccione -'])
             ],

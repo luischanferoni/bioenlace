@@ -12,17 +12,17 @@ use common\components\Platform\Core\Auth\DemoSandboxAccessService;
 use common\components\Platform\Core\Auth\DemoSandboxSessionService;
 use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
 use common\components\Platform\Core\Permission\BioenlaceSessionPermissions;
-use common\models\User;
+use common\models\Platform\User;
 
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterDefinition;
-use common\models\Efector;
+use common\models\Organization\Efector;
 use common\models\Person\Persona;
 use common\models\Platform\DemoSandboxAccess;
 use common\models\Platform\DemoSandboxSession;
 use frontend\components\WebApiJwtSessionService;
-use common\models\ProfesionalEfectorServicio;
-use common\models\Servicio;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Organization\Servicio;
 use common\components\Domain\Organization\Service\SesionOperativa\SesionOperativaService;
 
 class SiteController extends Controller

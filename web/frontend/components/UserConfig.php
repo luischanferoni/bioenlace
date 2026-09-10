@@ -6,8 +6,8 @@ use Yii;
 use yii\helpers\ArrayHelper;
 use yii\web\NotFoundHttpException;
 use common\models\Person\Persona;
-use common\models\User;
-use common\models\ProfesionalEfectorServicio;
+use common\models\Platform\User;
+use common\models\Organization\ProfesionalEfectorServicio;
 use common\components\Domain\Organization\Service\SesionOperativa\SesionOperativaService;
 
 /**
@@ -45,7 +45,7 @@ class UserConfig extends BaseUserConfig
             throw new \yii\web\ForbiddenHttpException('Usuario inactivo');
         }
 
-        \common\models\BioenlaceDbManager::asignarRolPacienteSiNoExiste($identity->id);
+        \common\models\Platform\BioenlaceDbManager::asignarRolPacienteSiNoExiste($identity->id);
 
         // Refrescar permisos/rutas Bioenlace en sesión para la identidad actual.
         \common\components\Platform\Core\Permission\BioenlaceAccessChecker::refreshForIdentity($identity);

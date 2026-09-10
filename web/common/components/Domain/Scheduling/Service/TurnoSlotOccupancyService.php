@@ -3,9 +3,9 @@
 namespace common\components\Domain\Scheduling\Service;
 
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\AgendaIntervaloMinutos;
-use common\models\ProfesionalEfectorServicioAgendaVersion;
+use common\models\Organization\ProfesionalEfectorServicioAgendaVersion;
 use common\models\Scheduling\Turno;
-use common\models\TurnoResolucion;
+use common\models\Scheduling\TurnoResolucion;
 
 /**
  * Ocupación por solapamiento de intervalo (no solo igualdad exacta de hora).

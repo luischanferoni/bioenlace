@@ -4,14 +4,14 @@ use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\widgets\DetailView;
 
-use common\models\SegNivelInternacion;
-use common\models\Servicio;
+use common\models\Clinical\SegNivelInternacion;
+use common\models\Organization\Servicio;
 use yii\bootstrap5\Modal;
 
-use common\models\User;
+use common\models\Platform\User;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\SegNivelInternacion */
+/* @var $model common\models\Clinical\SegNivelInternacion */
 
 $this->title = "Internación";
 $this->params['breadcrumbs'][] = ['label' => 'Internaciones', 'url' => ['index']];

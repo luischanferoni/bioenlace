@@ -9,7 +9,7 @@ use common\components\Platform\Assistant\Service\AssistantDraftNormalizer;
 use common\components\Platform\Core\Permission\BioenlaceRbacRevision;
 use common\components\Platform\Core\Permission\RbacFreeRouteChecker;
 use common\components\Platform\Core\Service\ClientContextService;
-use common\models\User;
+use common\models\Platform\User;
 use Yii;
 
 /**

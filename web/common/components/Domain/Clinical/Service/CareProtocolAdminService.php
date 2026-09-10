@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\Service;
 
 use common\models\Clinical\CareProtocol;
-use common\models\Provincia;
+use common\models\Geo\Provincia;
 use Yii;
 
 /**

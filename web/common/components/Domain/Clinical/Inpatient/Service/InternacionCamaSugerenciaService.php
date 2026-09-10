@@ -3,10 +3,10 @@
 namespace common\components\Domain\Clinical\Inpatient\Service;
 
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
-use common\models\Guardia;
-use common\models\InfraestructuraCama;
+use common\models\Clinical\Guardia;
+use common\models\Organization\InfraestructuraCama;
 use common\models\Person\Persona;
-use common\models\SegNivelInternacionHcama;
+use common\models\Clinical\SegNivelInternacionHcama;
 
 /**
  * Score de camas libres según requisitos clínicos declarados (agente F02).

@@ -7,9 +7,9 @@ use yii\bootstrap5\ActiveField;
 use nex\chosen\Chosen;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
-use common\models\Provincia;
-use common\models\Departamento;
-use common\models\Barrios;
+use common\models\Geo\Provincia;
+use common\models\Geo\Departamento;
+use common\models\Geo\Barrios;
 use kartik\depdrop\DepDrop;
 
 // se agregan las librerias google-maps para obtener las coordenadas
@@ -30,7 +30,7 @@ use kartik\depdrop\DepDrop;
 /* @var $model common\models\Person\Persona */
 /* @var $form yii\widgets\ActiveForm */
 
-$localidades = \common\models\Localidad::find()->indexBy('id_localidad')->asArray()->all();
+$localidades = \common\models\Geo\Localidad::find()->indexBy('id_localidad')->asArray()->all();
 $lista_localidades = \yii\helpers\ArrayHelper::map($localidades, 'id_localidad', 'nombre');
 ?>
 <script src="//code.jquery.com/jquery-1.10.2.js"></script>
@@ -207,12 +207,12 @@ $lista_localidades = \yii\helpers\ArrayHelper::map($localidades, 'id_localidad',
              $tip= (isset($_POST["Persona"]["id_tipodoc"]))? $_POST["Persona"]["id_tipodoc"]:1;
             echo $form->field($model, 'id_tipodoc', [
                 'template' => "<div class=''>{input}{error}{hint}</div>"
-            ])->dropDownList(common\models\Tipo_documento::getListaTiposDocumento(),
+            ])->dropDownList(common\models\Person\Tipo_documento::getListaTiposDocumento(),
                     ['options' => [ $tip => ['Selected'=> true]], 'prompt' => ' -- Elija una opcion --']);
             }else{
                 echo $form->field($model, 'id_tipodoc', [
                 'template' => "<div class=''>{input}{error}{hint}</div>"
-            ])->dropDownList(common\models\Tipo_documento::getListaTiposDocumento(),
+            ])->dropDownList(common\models\Person\Tipo_documento::getListaTiposDocumento(),
                     ['prompt' => ' -- Elija una opcion --']);
             }
             ?>
@@ -314,7 +314,7 @@ $lista_localidades = \yii\helpers\ArrayHelper::map($localidades, 'id_localidad',
             <?php
             $id_ec = (isset($_POST["Persona"]["id_estado_civil"]))? $_POST["Persona"]["id_estado_civil"] :0;
             echo $form->field($model, 'id_estado_civil', [
-                'template' => '{input}{error}{hint}'])->dropDownList(common\models\EstadoCivil::getListaEstadosCiviles(),
+                'template' => '{input}{error}{hint}'])->dropDownList(common\models\Person\EstadoCivil::getListaEstadosCiviles(),
                          ['options' => [ $id_ec => ['Selected'=> true]], 'prompt' => ' -- Elija una opcion --']);
             ?>
         </div>
@@ -344,7 +344,7 @@ $lista_localidades = \yii\helpers\ArrayHelper::map($localidades, 'id_localidad',
                 <?php
                  $tip_te = (isset($_POST["Tipo_telefono"]["id_tipo_telefono"]))? $_POST["Tipo_telefono"]["id_tipo_telefono"] :0;
                 echo $form->field($model_tipo_telefono, 'id_tipo_telefono', [
-                    'template' => '{input}{error}{hint}'])->dropDownList(common\models\Tipo_telefono::getListaTiposTelefono(),
+                    'template' => '{input}{error}{hint}'])->dropDownList(common\models\Person\Tipo_telefono::getListaTiposTelefono(),
                              ['options' => [ $tip_te  => ['Selected'=> true]], 'prompt' => ' -- Elija una opcion --']);
                 ?>
             </div>
@@ -698,7 +698,7 @@ $lista_localidades = \yii\helpers\ArrayHelper::map($localidades, 'id_localidad',
                 <tr><th style="width: 100px">Teléfono</th><td>
                         <?php
                         foreach ($tels as $tells) {
-                            $tipo_tel = \common\models\Tipo_telefono::findOne($tells['id_tipo_telefono']);
+                            $tipo_tel = \common\models\Person\Tipo_telefono::findOne($tells['id_tipo_telefono']);
 //.'/bioenlace/web/index.php?r=personas_telefono/update&id=' . $tells['id_persona_telefono'] . '&idp=' . $model->id_persona                            
                             echo $tells['numero'] . ' - ' . $tipo_tel->nombre . ' ('.$tells['comentario'].') ';
                             echo ' - <a data-pjax="0" aria-label="Actualizar" title="Actualizar" '
@@ -740,7 +740,7 @@ $lista_localidades = \yii\helpers\ArrayHelper::map($localidades, 'id_localidad',
                 <tr><th style="width: 100px">Domicilio</th><td>
                         <?php
                         foreach ($domicilios as $domi) {
-                            $localidad = \common\models\Localidad::findOne($domi['id_localidad']);
+                            $localidad = \common\models\Geo\Localidad::findOne($domi['id_localidad']);
                             $zona = $domi['urbano_rural'] == 'U' ? 'Urbana' : 'Rural';
                             $activo = $domi['activo'] == 'SI' ? 'Activo' : 'Inactivo';
                             echo "Domicilio " . $activo . ' (Fecha alta:' . $domi['fecha_alta'] . ')';

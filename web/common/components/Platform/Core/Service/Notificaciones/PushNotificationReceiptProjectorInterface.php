@@ -9,8 +9,8 @@ interface PushNotificationReceiptProjectorInterface
 {
     /**
      * @param array{
-     *   notification: \common\models\PersonaNotificacion,
-     *   interaction: \common\models\PersonaNotificacionInteraccion,
+     *   notification: \common\models\Platform\PersonaNotificacion,
+     *   interaction: \common\models\Platform\PersonaNotificacionInteraccion,
      *   interaction_type: string,
      *   id_user: int|null,
      *   actor_type: string|null

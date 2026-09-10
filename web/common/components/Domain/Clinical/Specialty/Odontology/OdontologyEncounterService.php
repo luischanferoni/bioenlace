@@ -11,7 +11,7 @@ use common\models\Clinical\Condition;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\Procedure;
 use common\models\Clinical\ProcedureOdontologyExt;
-use common\models\DiagnosticoConsulta;
+use common\models\Clinical\DiagnosticoConsulta;
 
 /**
  * Prácticas y diagnósticos odontológicos sobre {@see Encounter} (ex consultas_odontologia_*).
@@ -162,7 +162,7 @@ final class OdontologyEncounterService
     }
 
     /**
-     * @param mixed $payload filas ex {@see \common\models\ConsultaOdontologiaEstados}
+     * @param mixed $payload filas ex {@see \common\models\Clinical\ConsultaOdontologiaEstados}
      */
     public function persistToothStates(Encounter $encounter, $payload): void
     {

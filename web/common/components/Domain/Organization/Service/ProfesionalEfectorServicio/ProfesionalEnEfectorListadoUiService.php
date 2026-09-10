@@ -3,8 +3,8 @@
 namespace common\components\Domain\Organization\Service\ProfesionalEfectorServicio;
 
 use common\models\Person\Persona;
-use common\models\ProfesionalEfectorServicio;
-use common\models\ServiciosEfector;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Organization\ServiciosEfector;
 use common\models\Scheduling\Turno;
 use yii\db\Expression;
 use yii\db\Query;

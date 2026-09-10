@@ -8,7 +8,7 @@ use common\models\Clinical\Condition;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\MedicationRequest;
 use common\models\Clinical\ServiceRequest;
-use common\models\DiagnosticoConsulta;
+use common\models\Clinical\DiagnosticoConsulta;
 
 /**
  * Anti-duplicado de evoluciones en episodio (INTERNACION / GUARDIA):

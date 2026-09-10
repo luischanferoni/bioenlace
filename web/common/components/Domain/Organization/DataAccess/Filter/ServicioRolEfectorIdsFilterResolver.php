@@ -6,7 +6,7 @@ use common\components\Platform\Core\DataAccess\Filter\FilterResolvedValue;
 use common\components\Platform\Core\DataAccess\Filter\FilterValueResolverContext;
 use common\components\Platform\Core\DataAccess\Filter\FilterValueResolverInterface;
 use common\components\Domain\Organization\Service\Servicios\ServicioMencionLookupService;
-use common\models\ServiciosEfector;
+use common\models\Organization\ServiciosEfector;
 
 /**
  * Mención o token de servicio → ids de servicio habilitados en el efector.

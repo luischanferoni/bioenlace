@@ -4,7 +4,7 @@ use yii\helpers\Html;
 use yii\widgets\DetailView;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\Barrios */
+/* @var $model common\models\Geo\Barrios */
 
 $this->title = "Listado de Atenciones hasta 27/03/2024";
 $this->params['breadcrumbs'][] = ['label' => 'Enfermería', 'url' => ['index']];

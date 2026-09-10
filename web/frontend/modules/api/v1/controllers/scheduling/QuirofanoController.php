@@ -8,8 +8,8 @@ use yii\web\BadRequestHttpException;
 use yii\web\ConflictHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
-use common\models\Cirugia;
-use common\models\QuirofanoSala;
+use common\models\Scheduling\Cirugia;
+use common\models\Scheduling\QuirofanoSala;
 use common\components\Domain\Scheduling\Service\Quirofano\CirugiaAgendaService;
 use common\components\Domain\Scheduling\Service\Quirofano\UserEfectorAccess;
 

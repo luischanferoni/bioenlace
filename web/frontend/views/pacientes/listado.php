@@ -7,7 +7,7 @@ use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\helpers\Json;
 use common\models\Clinical\Encounter;
-use common\models\Servicio;
+use common\models\Organization\Servicio;
 use common\components\Domain\Clinical\Emergency\Enum\TriageScale;
 use common\components\Domain\Clinical\Emergency\Service\GuardiaBoardCapabilityService;
 

@@ -3,10 +3,10 @@
 namespace common\components\Domain\Scheduling\Service;
 
 use Yii;
-use common\models\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Scheduling\Turno;
-use common\models\EfectorTurnosConfig;
-use common\models\TurnoEventoAudit;
+use common\models\Scheduling\EfectorTurnosConfig;
+use common\models\Scheduling\TurnoEventoAudit;
 
 class BulkCancelDayService
 {

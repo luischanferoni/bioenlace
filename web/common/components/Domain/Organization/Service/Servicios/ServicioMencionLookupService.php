@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Organization\Service\Servicios;
 
-use common\models\Servicio;
+use common\models\Organization\Servicio;
 
 /**
  * Resuelve menciones de texto libre → filas de {@see Servicio} (sin capa rol/YAML).

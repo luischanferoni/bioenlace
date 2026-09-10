@@ -2,10 +2,10 @@
 
 use yii\helpers\Html;
 use yii\widgets\DetailView;
-use common\models\QuejaPaciente;
+use common\models\Platform\QuejaPaciente;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\QuejaPaciente */
+/* @var $model common\models\Platform\QuejaPaciente */
 
 $this->title = 'Queja #' . $model->id;
 $this->params['breadcrumbs'][] = ['label' => 'Quejas de pacientes', 'url' => ['index']];

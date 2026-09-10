@@ -3,10 +3,10 @@
 namespace common\components\Domain\Organization\Service\Billing;
 
 use common\components\Domain\Organization\Service\Entitlement\EfectorEncounterEntitlementService;
-use common\models\BillingAccount;
-use common\models\BillingAccountEfector;
-use common\models\BillingSignupRequest;
-use common\models\User;
+use common\models\Organization\BillingAccount;
+use common\models\Organization\BillingAccountEfector;
+use common\models\Organization\BillingSignupRequest;
+use common\models\Platform\User;
 use Yii;
 
 /**

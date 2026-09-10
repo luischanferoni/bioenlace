@@ -2,7 +2,7 @@
 
 /**
  * @var yii\web\View $this
- * @var common\models\User $user
+ * @var common\models\Platform\User $user
  */
 
 use yii\helpers\Html;

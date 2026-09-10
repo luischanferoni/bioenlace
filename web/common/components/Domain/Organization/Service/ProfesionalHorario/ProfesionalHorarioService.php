@@ -3,9 +3,9 @@
 namespace common\components\Domain\Organization\Service\ProfesionalHorario;
 
 use common\components\Platform\Core\Product\AgendaByEncounterClassMetadata;
-use common\models\ProfesionalEfectorServicio;
-use common\models\ProfesionalHorario;
-use common\models\Servicio;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalHorario;
+use common\models\Organization\Servicio;
 use yii\db\ActiveQuery;
 
 /**

@@ -7,7 +7,7 @@ use common\components\Ai\IAManager;
 use common\components\Platform\Ai\SpeechToText\SpeechToTextManager;
 use common\components\Domain\Clinical\Service\SecureMediaService;
 use common\models\Clinical\Encounter;
-use common\models\ConsultaMotivosMessage;
+use common\models\Clinical\ConsultaMotivosMessage;
 use Yii;
 
 /**

@@ -2,6 +2,7 @@
 
 namespace console\controllers;
 
+use common\components\Platform\Ui\UiJsonDomainIndex;
 use yii\console\Controller;
 use yii\console\ExitCode;
 use yii\helpers\Json;
@@ -21,7 +22,7 @@ class UiJsonTemplatesController extends Controller
      */
     public function actionCheck(): int
     {
-        $root = \Yii::getAlias('@frontend/modules/api/v1/views/json');
+        $root = \Yii::getAlias(UiJsonDomainIndex::BASE_ALIAS);
         $files = $this->collectJsonFiles($root);
         $errors = [];
 

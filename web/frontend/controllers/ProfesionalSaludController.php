@@ -8,9 +8,9 @@ use yii\base\Exception;
 use yii\helpers\ArrayHelper;
 
 use frontend\filters\SisseActionFilter;
-use common\models\ProfesionalSalud;
-use common\models\Profesiones;
-use common\models\Especialidades;
+use common\models\Person\ProfesionalSalud;
+use common\models\Person\Profesiones;
+use common\models\Organization\Especialidades;
 
 /**
  * ProfesionalSaludController implements the CRUD actions for ProfesionalSalud model.

@@ -6,7 +6,7 @@ use common\components\Domain\Scheduling\Service\TurnoLifecycleService;
 use common\components\Platform\Agent\AgentRunRecorder;
 use common\models\Platform\AgentRun;
 use common\models\Scheduling\Turno;
-use common\models\TurnoEventoAudit;
+use common\models\Scheduling\TurnoEventoAudit;
 use Yii;
 use yii\db\Query;
 

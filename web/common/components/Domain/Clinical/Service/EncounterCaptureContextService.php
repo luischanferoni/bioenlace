@@ -3,15 +3,15 @@
 namespace common\components\Domain\Clinical\Service;
 
 use common\components\Domain\Clinical\Specialty\Inpatient\InpatientClinicalContext;
-use common\models\Cirugia;
+use common\models\Scheduling\Cirugia;
 use common\models\Clinical\Encounter;
-use common\models\ConsultaDerivaciones;
-use common\models\Guardia;
+use common\models\Clinical\ConsultaDerivaciones;
+use common\models\Clinical\Guardia;
 use common\models\Person\Persona;
-use common\models\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Scheduling\Turno;
-use common\models\SegNivelInternacion;
-use common\models\ServiciosEfector;
+use common\models\Clinical\SegNivelInternacion;
+use common\models\Organization\ServiciosEfector;
 use Yii;
 
 /**

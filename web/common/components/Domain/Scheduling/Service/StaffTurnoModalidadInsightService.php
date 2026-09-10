@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
-use common\models\ProfesionalEfectorServicioAgenda;
+use common\models\Organization\ProfesionalEfectorServicioAgenda;
 use common\models\Scheduling\Turno;
 
 /**

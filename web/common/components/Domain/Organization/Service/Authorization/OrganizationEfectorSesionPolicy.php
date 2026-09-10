@@ -6,7 +6,7 @@ use common\components\Platform\Core\Permission\Domain\DomainOperationContext;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Platform\Core\Permission\Domain\DomainOperationPolicyInterface;
 use common\components\Domain\Organization\Service\Efectores\OrganizationEfectorAccess;
-use common\models\ProfesionalEfectorServicio;
+use common\models\Organization\ProfesionalEfectorServicio;
 
 /**
  * Staff: operación acotada al efector de sesión o al indicado en request.

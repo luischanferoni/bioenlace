@@ -4,49 +4,55 @@
 
 Que `preprocess-extraction-categories.yaml` deje de ser una lista cerrada mantenida a mano: los **ids** los aportan los dominios, el **texto** queda en YAML, y un test cierra el círculo. Sin archivos generados.
 
-## Estado hoy
+## Estado al cerrar
 
-- 10 categorías en el YAML; **3** se usan de verdad (`servicio`, `efector`, `profesional` vía `hint.entity` en 3 intents)
-- `persona` está en `ENTITY_OWNERSHIP` pero ningún intent la declara
-- `sintoma`, `medicamento`, `acto`, `turno` **duplican** el eje de tags (ya derivado del smart-catalog)
-- Precedente correcto en el repo: `PreprocessTagVocabularyCatalog` compone en runtime, sin YAML paralelo
+- YAML reducido a 4 entidades resolubles: `servicio`, `efector`, `profesional`, `persona`
+- Quitados del vocabulario de extracción (viven como **tags** o no tenían consumidor): `sintoma`, `medicamento`, `acto`, `turno`, `tiempo`, `obra_social`, `ubicacion`
+- `ENTITY_OWNERSHIP` central eliminado: ownership compuesto desde `declaredEntities()` de cada provider
+- Placeholder `{extraction_categories_list}` sigue saliendo del loader; **no** se tocó el cuerpo del prompt
 
 ## Tareas
 
 ### 4.1 Declaración por dominio
 
-- [ ] Cada dominio declara qué entidades resuelve, junto a su `HintCandidateProvider` (`scheduling` → `servicio`; `organization` → `servicio`, `efector`, `profesional`; `person` → `persona`)
-- [ ] `HintResolutionMetadata::ENTITY_OWNERSHIP` pasa a componerse desde esas declaraciones en lugar de ser un mapa central
+- [x] `HintCandidateProviderInterface::declaredEntities()`
+  - `scheduling` → `servicio`
+  - `organization` → `servicio`, `efector`, `profesional`
+  - `person` → `persona`
+- [x] `HintCandidateProviderRegistry::entityOwnership()` / `allDeclaredEntities()`
+- [x] `HintResolutionMetadata::providerKeysForEntity()` delega al registry (sin mapa a mano)
 
 ### 4.2 Reducir el catálogo a entidades resolubles
 
-- [ ] Quitar del vocabulario de extracción lo que ya es tag (`sintoma`, `medicamento`, `acto`, `turno`, `tiempo`, `obra_social`, `ubicacion`), verificando antes que ningún consumidor dependa de esa `category`
-- [ ] Revisar `AssistantContextAreaAspectCatalog::wantsAppointmentHistory()` (usa el **span**, no la category) y `DataAccessEditDiscoveryService`
-- [ ] El YAML queda solo con `id → texto` de entidades resolubles
+- [x] YAML solo con id → texto de entidades resolubles
+- [x] `PreprocessExtractionCategoryCatalog::all()` = ids declarados por providers; textos desde YAML
+- [x] Verificado: `wantsAppointmentHistory` usa span; `DataAccessEditDiscoveryService` no usa category
+- [x] Fixtures de tests actualizados; `sintoma`/`tiempo`/`turno` como category se descartan en normalize
 
 ### 4.3 Cerrar el círculo con tests
 
-- [ ] Id declarado por un dominio sin texto en YAML → falla
-- [ ] Texto en YAML sin dominio que lo declare → falla
-- [ ] Todo `hint.entity` de los intents pertenece al catálogo
-- [ ] Ampliar `AssistantCatalogSourceOfTruthTest`
+- [x] Id declarado sin texto en YAML → falla (`testDeclaredEntitiesHaveYamlText`)
+- [x] Texto en YAML sin dominio que lo declare → falla (`testYamlExtractionTextsHaveDeclaringDomain`)
+- [x] Todo `hint.entity` de intents ⊆ catálogo (`testIntentHintEntitiesBelongToCatalog`)
+- [x] Entidad no puede ser también tag (`testExtractionCategoriesDoNotOverlapPreprocessTags`)
+- [x] `AssistantCatalogSourceOfTruthTest` y `PreprocessExtractionCategoryCatalogTest` ampliados
 
 ### 4.4 Prompt
 
-- [ ] El placeholder `{extraction_categories_list}` sigue saliendo del loader; **no** se toca el cuerpo del prompt
-- [ ] Si hace falta ajustar redacción: dejar la sugerencia en el chat para que la aplique el usuario
+- [x] `{extraction_categories_list}` sigue del loader (lista más corta sola)
+- [x] Sin cambio de cuerpo de prompt (no hace falta sugerencia)
 
 ## Fuera de esta fase
 
 - Áreas (Fase 5).
-- Generar YAML en deploy: descartado, ver `design.md` §7.
+- Generar YAML en deploy: descartado.
 
 ## Criterios de aceptación
 
-- [ ] Agregar un provider de hint hace aparecer la entidad en el prompt y **obliga** a agregar su texto
-- [ ] Borrar un provider deja el texto marcado como huérfano por el test
-- [ ] Ninguna palabra vive a la vez como entidad de extracción y como tag
-- [ ] QA del asistente sin regresión en resolución de hints (reserva de turno, triage)
+- [x] Agregar un provider con `declaredEntities()` exige texto en YAML (test)
+- [x] Texto huérfano en YAML falla el test
+- [x] Ninguna palabra vive a la vez como entidad de extracción y como tag
+- [ ] QA del asistente sin regresión en resolución de hints (reserva de turno, triage) — smoke del usuario
 
 ## PR sugerido
 

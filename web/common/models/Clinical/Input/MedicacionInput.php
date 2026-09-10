@@ -2,7 +2,7 @@
 
 namespace common\models\Clinical\Input;
 
-use common\models\ConsultaMedicamentos;
+use common\models\Clinical\ConsultaMedicamentos;
 use yii\base\Model;
 
 /**

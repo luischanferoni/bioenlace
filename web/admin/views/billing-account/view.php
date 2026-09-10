@@ -1,13 +1,13 @@
 <?php
 
-use common\models\BillingAccount;
-use common\models\BillingAccountEfector;
+use common\models\Organization\BillingAccount;
+use common\models\Organization\BillingAccountEfector;
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\BillingAccount */
+/* @var $model common\models\Organization\BillingAccount */
 /* @var $summary array */
-/* @var $members common\models\BillingAccountEfector[] */
+/* @var $members common\models\Organization\BillingAccountEfector[] */
 /* @var $sellableClasses string[] */
 /* @var $classLabels array */
 

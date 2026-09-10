@@ -4,10 +4,10 @@ namespace common\components\Domain\Scheduling\Service;
 
 use common\components\Domain\Clinical\Enum\EncounterStatus;
 use common\models\Clinical\Encounter;
-use common\models\ConsultaChatMessage;
+use common\models\Clinical\ConsultaChatMessage;
 use common\models\Person\Persona;
-use common\models\ProfesionalEfectorServicio;
-use common\models\Servicio;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Organization\Servicio;
 use Yii;
 
 /**

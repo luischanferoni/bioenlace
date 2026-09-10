@@ -2,12 +2,12 @@
 
 namespace common\components\Domain\Person\Service;
 
-use common\models\Departamento;
-use common\models\Domicilio;
-use common\models\Localidad;
+use common\models\Geo\Departamento;
+use common\models\Person\Domicilio;
+use common\models\Geo\Localidad;
 use common\models\Person\Persona;
-use common\models\Persona_domicilio;
-use common\models\Provincia;
+use common\models\Person\Persona_domicilio;
+use common\models\Geo\Provincia;
 use Yii;
 
 /**
@@ -88,7 +88,7 @@ final class RenaperDomicilioPersisterService
     public function resolveProvincia(array $renaper): ?Provincia
     {
         // RENAPER es fuente argentina: el país se resuelve desde BD por iso2, no por constante de modelo.
-        $idPaisAr = (int) \common\models\Pais::requireByIso2('AR')->id_pais;
+        $idPaisAr = (int) \common\models\Geo\Pais::requireByIso2('AR')->id_pais;
         $codIndec = trim((string) ($renaper['id_provincia'] ?? $renaper['cod_provincia'] ?? ''));
         if ($codIndec !== '') {
             $codIndec = str_pad($codIndec, 2, '0', STR_PAD_LEFT);

@@ -4,7 +4,7 @@ namespace common\components\Domain\Scheduling\Service\BehaviorProfile;
 
 use common\models\Scheduling\PersonaTurnosPerfil;
 use common\models\Scheduling\PersonaTurnosPerfilMetrica;
-use common\models\TurnoEventoAudit;
+use common\models\Scheduling\TurnoEventoAudit;
 
 /**
  * Cálculo determinista de métricas a partir de eventos (sin persistencia).

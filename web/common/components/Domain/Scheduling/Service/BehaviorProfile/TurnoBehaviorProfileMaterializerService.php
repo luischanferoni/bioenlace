@@ -6,7 +6,7 @@ use common\models\Scheduling\PersonaTurnosPerfil;
 use common\models\Scheduling\PersonaTurnosPerfilMaterializacion;
 use common\models\Scheduling\PersonaTurnosPerfilMetrica;
 use common\models\Scheduling\Turno;
-use common\models\TurnoEventoAudit;
+use common\models\Scheduling\TurnoEventoAudit;
 use Yii;
 use yii\db\Query;
 

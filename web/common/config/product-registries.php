@@ -55,7 +55,7 @@ use common\components\Domain\Scheduling\Home\Sections\SurgeriesDaySectionProvide
 use common\components\Domain\Scheduling\Service\Authorization\TurnoCreateSubjectPolicy;
 use common\components\Domain\Scheduling\Service\Authorization\TurnoStaffEfectorBelongsPolicy;
 use common\components\Domain\Scheduling\Service\Authorization\TurnoSubjectOrRepresentativePolicy;
-use common\models\Condiciones_laborales;
+use common\models\Organization\Condiciones_laborales;
 use common\components\Domain\Organization\Assistant\OrganizationHintCandidateProvider;
 use common\components\Domain\Organization\Assistant\OrganizationUiSelectOptionSourceProvider;
 use common\components\Domain\Person\Assistant\PersonHintCandidateProvider;

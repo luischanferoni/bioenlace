@@ -7,8 +7,8 @@ use common\components\Domain\Integrations\Identity\DiditClient;
 use common\components\Domain\Person\Service\PacienteDomicilioVerificacionService;
 use common\components\Domain\Person\Service\PacienteContextoService;
 use common\models\Person\Persona;
-use common\models\User;
-use common\models\rbac\AuthRole;
+use common\models\Platform\User;
+use common\models\Platform\Permission\AuthRole;
 use common\components\Platform\Core\Permission\RbacRoleQueryService;
 use Firebase\JWT\JWT;
 
@@ -206,9 +206,9 @@ class RegistroService
 
         if ($user !== null && $tipo === 'paciente') {
             try {
-                if (class_exists(\common\models\BioenlaceDbManager::class)
-                    && method_exists(\common\models\BioenlaceDbManager::class, 'asignarRolPacienteSiNoExiste')) {
-                    \common\models\BioenlaceDbManager::asignarRolPacienteSiNoExiste((int) $user->id);
+                if (class_exists(\common\models\Platform\BioenlaceDbManager::class)
+                    && method_exists(\common\models\Platform\BioenlaceDbManager::class, 'asignarRolPacienteSiNoExiste')) {
+                    \common\models\Platform\BioenlaceDbManager::asignarRolPacienteSiNoExiste((int) $user->id);
                 }
             } catch (\Throwable $e) {
                 Yii::warning('No se pudo asegurar rol paciente: ' . $e->getMessage(), 'registro');

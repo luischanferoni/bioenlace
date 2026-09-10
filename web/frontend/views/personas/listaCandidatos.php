@@ -6,7 +6,7 @@ use yii\helpers\Url;
 use yii\bootstrap5\Modal;
 
 /* @var $this yii\web\View */
-/* @var $searchModel common\models\busquedas\PersonaBusqueda */
+/* @var $searchModel common\models\Person\PersonaBusqueda */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
 $this->params['breadcrumbs'][] = $this->title;

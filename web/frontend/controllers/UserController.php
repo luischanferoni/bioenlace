@@ -3,7 +3,7 @@
 namespace frontend\controllers;
 
 use common\models\Person\Persona;
-use common\models\User;
+use common\models\Platform\User;
 use frontend\filters\SisseActionFilter;
 use Yii;
 use yii\web\NotFoundHttpException;

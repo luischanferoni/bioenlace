@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\Emergency\Service;
 
 use common\components\Platform\Core\Permission\CapabilityAccessService;
 use common\components\Platform\Ui\Home\Service\HomePanelManifest;
-use common\models\User;
+use common\models\Platform\User;
 use Yii;
 
 /**

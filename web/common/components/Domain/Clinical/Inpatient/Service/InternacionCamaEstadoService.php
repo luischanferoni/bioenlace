@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Clinical\Inpatient\Service;
 
-use common\models\InfraestructuraCama;
-use common\models\SegNivelInternacion;
+use common\models\Organization\InfraestructuraCama;
+use common\models\Clinical\SegNivelInternacion;
 
 /**
  * Bloqueo / aislamiento / liberación operativa de camas.

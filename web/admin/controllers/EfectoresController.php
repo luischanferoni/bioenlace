@@ -6,14 +6,14 @@ use Yii;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
-use common\models\ValidarArchivo; //incluyo el modelo que me permite validar el archivo 
+use common\models\Platform\ValidarArchivo; //incluyo el modelo que me permite validar el archivo 
 use yii\web\UploadedFile; //incluyo la extensión para cargar el archivo
 
-use common\models\Efector;
-use common\models\EfectorTurnosConfig;
-use common\models\PersonaEfectorAutogestionLiberacion;
-use common\models\busquedas\EfectorBusqueda;
-use common\models\busquedas\ProfesionalEfectorServicioBusqueda;
+use common\models\Organization\Efector;
+use common\models\Scheduling\EfectorTurnosConfig;
+use common\models\Scheduling\PersonaEfectorAutogestionLiberacion;
+use common\models\Organization\EfectorBusqueda;
+use common\models\Organization\ProfesionalEfectorServicioBusqueda;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Worksheet;
 /**
@@ -100,7 +100,7 @@ class EfectoresController extends Controller
         $svc = \common\components\Domain\Organization\Service\Entitlement\EfectorEncounterEntitlementService::class;
         $accountId = $svc::resolveAccountIdForEfector((int) $id);
         $account = $accountId
-            ? \common\models\BillingAccount::findOne(['id' => $accountId, 'deleted_at' => null])
+            ? \common\models\Organization\BillingAccount::findOne(['id' => $accountId, 'deleted_at' => null])
             : null;
         $summary = $svc::contractSummary((int) $id);
         $affiliations = $svc::affiliationAccountsForEfector((int) $id);
@@ -256,7 +256,7 @@ class EfectoresController extends Controller
                  
                 //Busco por el nombre y el id_provincia 22(Sgo), el id_departamento al que corresponde el efector
                 
-                $departamentos = \common\models\Departamento::find() 
+                $departamentos = \common\models\Geo\Departamento::find() 
                                   ->where(['nombre' => $regDatos_dos[0][3]]) 
                                   ->andWhere(['id_provincia'=> 22])->one();
                  
@@ -264,7 +264,7 @@ class EfectoresController extends Controller
                  
                 //Busco por el nombre y el id_departamento encontrado, el id_localidad al que corresponde el efector
               
-                 $localidades = \common\models\Localidad::find() 
+                 $localidades = \common\models\Geo\Localidad::find() 
                                   ->where(['nombre' => $regDatos_dos[0][7]]) 
                                   ->andWhere(['id_departamento'=> $id_dpto])->one();
                  

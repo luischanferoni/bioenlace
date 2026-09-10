@@ -3,10 +3,10 @@
 namespace common\components\Domain\Scheduling\Service\BehaviorProfile;
 
 use common\components\Platform\Core\Service\Notificaciones\PushNotificationReceiptProjectorInterface;
-use common\models\PersonaNotificacion;
-use common\models\PersonaNotificacionInteraccion;
+use common\models\Platform\PersonaNotificacion;
+use common\models\Platform\PersonaNotificacionInteraccion;
 use common\models\Scheduling\Turno;
-use common\models\TurnoEventoAudit;
+use common\models\Scheduling\TurnoEventoAudit;
 
 /**
  * Proyecta DELIVERED/OPENED de ofertas de adelantamiento al stream canónico.

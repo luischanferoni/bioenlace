@@ -33,7 +33,8 @@ use yii\helpers\Json;
  */
 class UiDefinitionTemplateManager
 {
-    public const TEMPLATE_BASE_PATH = '@frontend/modules/api/v1/views/json';
+    /** @see UiJsonDomainIndex::BASE_ALIAS donde se define la raíz del árbol de descriptores. */
+    public const TEMPLATE_BASE_PATH = UiJsonDomainIndex::BASE_ALIAS;
 
     public const LOG_CATEGORY = 'ui-definition-template';
 
@@ -178,25 +179,6 @@ class UiDefinitionTemplateManager
             'version' => $request->headers->get('X-App-Version') ?: null,
             'android_sdk' => $request->headers->get('X-Android-Sdk') ?: null,
         ];
-    }
-
-    private static function loadCommonTemplate()
-    {
-        $commonPath = Yii::getAlias(self::TEMPLATE_BASE_PATH . '/common/_form.json');
-
-        if (!file_exists($commonPath)) {
-            return ['wizard_config' => []];
-        }
-
-        $content = file_get_contents($commonPath);
-        $decoded = Json::decode($content);
-
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            Yii::error('Error parseando JSON común: ' . json_last_error_msg(), self::LOG_CATEGORY);
-            return ['wizard_config' => []];
-        }
-
-        return $decoded;
     }
 
     private static function loadSpecificTemplate($entity, $action)

@@ -2,7 +2,7 @@
 
 namespace common\models\Clinical;
 
-use common\models\Servicio;
+use common\models\Organization\Servicio;
 use yii\db\ActiveRecord;
 
 /**

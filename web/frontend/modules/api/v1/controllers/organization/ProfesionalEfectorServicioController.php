@@ -20,8 +20,8 @@ use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\Pro
 use common\components\Platform\Ui\UiScreenService;
 use common\components\Platform\Ui\UiSelectOptionSourceResolver;
 use common\models\Person\Persona;
-use common\models\ProfesionalEfectorServicio;
-use common\models\ServiciosEfector;
+use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Organization\ServiciosEfector;
 
 /**
  * API profesional en efector: autocomplete por efector/servicio; servicios asignados en sesión.

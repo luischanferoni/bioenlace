@@ -827,10 +827,15 @@ return [
             'class' => 'frontend\modules\api\v1\Module',
             'basePath' => '@frontend/modules/api/v1',
             'controllerNamespace' => 'frontend\modules\api\v1\controllers',
+            // Los controllers de dominio (controllers/<dominio>/) se registran solos con su id
+            // público sin dominio: ver DomainControllerMap. Acá solo van los alias cuyo id
+            // público no coincide con el nombre de la clase.
             'controllerMap' => [
-                'servicio-teleconsulta' => \frontend\modules\api\v1\controllers\ServicioTeleconsultaPoliticaController::class,
+                'servicio-teleconsulta' => \frontend\modules\api\v1\controllers\organization\ServicioTeleconsultaPoliticaController::class,
                 // Evita ID nativo whats-app-webhook (Inflector sobre WhatsApp*).
-                'whatsapp' => \frontend\modules\api\v1\controllers\WhatsAppWebhookController::class,
+                'whatsapp' => \frontend\modules\api\v1\controllers\integrations\WhatsAppWebhookController::class,
+                // URL pública histórica del chat del encounter (clase renombrada a EncounterChatController).
+                'consulta-chat' => \frontend\modules\api\v1\controllers\clinical\EncounterChatController::class,
             ],
         ],           
     ],

@@ -160,5 +160,5 @@ El **intake previo al chat** (YAML fijo, sin IA por cohorte) es un bloque distin
 | Área | Ubicación |
 |------|-----------|
 | Dominio | `common/components/Domain/Clinical/CareCohort/` |
-| API | `frontend/modules/api/v1/controllers/CarePacksController.php` |
+| API | `frontend/modules/api/v1/controllers/clinical/CarePacksController.php` |
 | Consola | `console/controllers/CarePackController.php` |

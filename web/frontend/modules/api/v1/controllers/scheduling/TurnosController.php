@@ -1,7 +1,9 @@
 <?php
 
-namespace frontend\modules\api\v1\controllers;
+namespace frontend\modules\api\v1\controllers\scheduling;
 
+use frontend\modules\api\v1\controllers\BaseController;
+use frontend\modules\api\v1\controllers\clinical\PacientesController;
 use Yii;
 use yii\web\NotFoundHttpException;
 use yii\web\BadRequestHttpException;

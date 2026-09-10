@@ -10,7 +10,11 @@ use common\components\Platform\Core\Permission\Domain\ApiDomainOperationBridge;
 /**
  * Listados por métrica DataAccess.
  *
- * @deprecated Preferir intents concretos con metric_id (p. ej. profesionales.listado-efector).
+ * Es el transporte HTTP del `open_ui` de los intents que declaran `action_id: data-access.listar`,
+ * no un endpoint retirado. Lo que no se hace es reabrirlo como intent NL: cada listado concreto
+ * entra por su intent con `metric_id` (p. ej. `profesionales.listado-efector`).
+ *
+ * @see \common\components\Platform\Core\DataAccess\README.md
  */
 class ListarController extends BaseController
 {

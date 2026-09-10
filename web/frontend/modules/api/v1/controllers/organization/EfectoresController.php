@@ -1,7 +1,8 @@
 <?php
 
-namespace frontend\modules\api\v1\controllers;
+namespace frontend\modules\api\v1\controllers\organization;
 
+use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 use common\components\Domain\Organization\Service\Efectores\EfectoresListadosService;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEnEfectorListadoUiService;

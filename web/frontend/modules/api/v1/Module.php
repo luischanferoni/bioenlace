@@ -17,7 +17,11 @@ class Module extends \yii\base\Module
     public function init()
     {
         parent::init();
-        
+
+        // Controllers agrupados por dominio: el id público no lleva el dominio.
+        // Los alias declarados en config ganan sobre los derivados del árbol.
+        $this->controllerMap = array_merge(DomainControllerMap::build(), $this->controllerMap);
+
         \Yii::$app->setComponents([
             'user'=>[
                 'class'=>'frontend\components\ApiUser',

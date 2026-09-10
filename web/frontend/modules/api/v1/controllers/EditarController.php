@@ -11,7 +11,11 @@ use common\components\Platform\Core\Permission\Domain\ApiDomainOperationBridge;
 /**
  * Edición dispersa staff (superficies / aspectos / sujeto vía listar).
  *
- * @deprecated Preferir intents concretos con edit_surface_id (agenda, identidad profesional).
+ * Es el transporte HTTP del `open_ui` de los intents que declaran `action_id: data-access.editar`,
+ * no un endpoint retirado. Lo que no se hace es reabrirlo como intent NL: cada caso concreto entra
+ * por su intent con `edit_surface_id` (agenda, identidad profesional).
+ *
+ * @see \common\components\Platform\Core\DataAccess\README.md
  */
 class EditarController extends BaseController
 {

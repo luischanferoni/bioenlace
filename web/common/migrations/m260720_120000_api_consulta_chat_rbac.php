@@ -7,7 +7,7 @@ use yii\db\Query;
  * RBAC: chat clínico consulta-chat (listar / enviar / subir / estado).
  *
  * Paciente hereda de quienes pueden solicitar async; staff de quienes pueden tomar.
- * El acceso de dominio al encounter sigue en ConsultaChatController.
+ * El acceso de dominio al encounter sigue en clinical\EncounterChatController (ex ConsultaChatController).
  */
 class m260720_120000_api_consulta_chat_rbac extends Migration
 {

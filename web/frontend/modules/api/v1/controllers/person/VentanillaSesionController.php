@@ -1,7 +1,8 @@
 <?php
 
-namespace frontend\modules\api\v1\controllers;
+namespace frontend\modules\api\v1\controllers\person;
 
+use frontend\modules\api\v1\controllers\BaseController;
 use common\components\Domain\Person\Service\PersonaBusquedaAsistenteUiService;
 use common\components\Domain\Person\Ventanilla\VentanillaSesionService;
 use Yii;

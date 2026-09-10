@@ -1,7 +1,8 @@
 <?php
 
-namespace frontend\modules\api\v1\controllers;
+namespace frontend\modules\api\v1\controllers\scheduling;
 
+use frontend\modules\api\v1\controllers\BaseController;
 use common\components\Domain\Organization\Service\Authorization\EfectorAccessService;
 use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
 use common\components\Domain\Person\Representation\Service\PersonRepresentationSubjectService;

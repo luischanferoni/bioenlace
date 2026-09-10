@@ -73,9 +73,11 @@ Los `*Input` de captura clínica siguen siendo el borde de integridad (`rules()`
 
 `BioenlaceApiAccessControl::beforeAction()` pide las rutas a chequear a `ApiRoutePermissionResolver::checkedRoutesForAction($pathInfo, $action->uniqueId)`, que devuelve **dos**: la derivada del path HTTP público y la derivada del route del controller. El chequeo pasa si **alguna** está concedida.
 
-Consecuencia: mover `TurnosController` a `controllers/scheduling/` cambia el `uniqueId`, pero la ruta `/api/turnos/crear-como-paciente` sigue en la lista y sigue concedida. **No hay reseed de permisos** mientras la URL pública no cambie.
+Ese doble chequeo era la red de seguridad prevista, pero al implementar la Fase 1 resultó innecesaria: `urlManager` tiene catch-all genéricos (`GET|POST api/<version>/<controller>/<action>`), así que reapuntar reglas obligaba a enumerar todos los endpoints. En su lugar, [`DomainControllerMap`](../../../frontend/modules/api/v1/DomainControllerMap.php) registra cada controller de `controllers/<dominio>/` en el `controllerMap` del módulo con su **id público sin dominio**.
 
-Las reglas de `urlManager` pasan a apuntar al nuevo route interno (`v1/scheduling/turnos/...`) manteniendo el patrón público intacto.
+Consecuencia: mover `TurnosController` a `controllers/scheduling/` **no cambia** el `uniqueId` (`v1/turnos/crear-como-paciente`) ni la URL ni la ruta RBAC. No hay reseed de permisos y no se toca ninguna regla de `urlManager`. El único mapa a mano que queda en config son los alias cuyo id público no coincide con la clase (`servicio-teleconsulta`, `whatsapp`, `consulta-chat`).
+
+Poner el dominio en la URL pública (`/api/v1/scheduling/turnos/...`) queda como decisión aparte: hoy solo `clinical` lo hace, y unificarlo toca clientes móviles y seeds de permisos.
 
 ## 7. Muerte de los mapas intermedios
 

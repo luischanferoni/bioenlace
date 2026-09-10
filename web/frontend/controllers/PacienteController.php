@@ -42,7 +42,7 @@ class PacienteController extends Controller
      *
      * La vista usa timeline por API (`views/paciente/timeline/timeline.php`). Cualquier rearmado de SQL local
      * debe filtrar también por {@see \common\models\ProfesionalEfectorServicio} además de `consultas.id_profesional_efector_servicio`
-     * (ver `web/docs/dominio/MIGRACION_PES_ESTADO.md`). Listados ambulatorios: {@see \frontend\modules\api\v1\controllers\PacientesController::turnosAmbulatorioMedico}.
+     * (ver `web/docs/dominio/MIGRACION_PES_ESTADO.md`). Listados ambulatorios: {@see \frontend\modules\api\v1\controllers\clinical\PacientesController::turnosAmbulatorioMedico}.
      *
      * @param integer $paciente_id
      * @return mixed

@@ -1,7 +1,9 @@
 <?php
 
-namespace frontend\modules\api\v1\controllers;
+namespace frontend\modules\api\v1\controllers\person;
 
+use frontend\modules\api\v1\controllers\BaseController;
+use frontend\modules\api\v1\controllers\clinical\PacientesController;
 use Yii;
 use common\components\Domain\Person\Service\PersonaBusquedaAsistenteUiService;
 use common\components\Domain\Person\Service\PersonaSignosVitalesService;

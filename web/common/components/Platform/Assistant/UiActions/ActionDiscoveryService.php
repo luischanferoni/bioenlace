@@ -177,6 +177,10 @@ class ActionDiscoveryService
     /**
      * Acciones del módulo API v1: path HTTP versionado ({@see urlManager} `api/<version>/...`).
      * RBAC/webvimark sigue usando `/api/&lt;controller&gt;/&lt;action&gt;` sin segmento de versión; véase {@see AllowedRoutesResolver::apiHttpPathToPermissionRoute}.
+     *
+     * Recorre también `controllers/<dominio>/`: agrupar por dominio no debe esconder acciones.
+     * El id del controller sale del nombre de la clase, igual que el id público que registra
+     * {@see \frontend\modules\api\v1\DomainControllerMap}, así que la ruta no lleva el dominio.
      */
     private static function discoverApiV1ControllerActions(): array
     {
@@ -188,7 +192,7 @@ class ActionDiscoveryService
 
         $files = FileHelper::findFiles($realPath, [
             'only' => ['*Controller.php'],
-            'recursive' => false,
+            'recursive' => true,
         ]);
 
         $actions = [];

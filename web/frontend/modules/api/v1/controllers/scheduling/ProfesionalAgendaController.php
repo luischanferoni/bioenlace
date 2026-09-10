@@ -1,7 +1,9 @@
 <?php
 
-namespace frontend\modules\api\v1\controllers;
+namespace frontend\modules\api\v1\controllers\scheduling;
 
+use frontend\modules\api\v1\controllers\BaseController;
+use frontend\modules\api\v1\controllers\organization\ProfesionalHorariosController;
 use Yii;
 use yii\data\ActiveDataProvider;
 use yii\web\BadRequestHttpException;

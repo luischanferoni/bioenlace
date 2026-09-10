@@ -1,7 +1,8 @@
 <?php
 
-namespace frontend\modules\api\v1\controllers;
+namespace frontend\modules\api\v1\controllers\organization;
 
+use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 use frontend\components\WebApiJwtSessionService;
 use common\components\Platform\Core\Auth\StaffMobileAccessService;

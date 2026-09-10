@@ -51,26 +51,35 @@ Dominio asignado según los servicios que el controller consume (evidencia: sus 
 ### 1.1 Congelar el mapa
 
 - [x] Decisiones 1–5 resueltas
-- [ ] Congelar la tabla de asignación antes de mover archivos
+- [x] Congelar la tabla de asignación antes de mover archivos
 
 ### 1.2 Mover y renombrar namespace
 
-- [ ] Mover archivos a `controllers/<dominio>/`
-- [ ] Actualizar `namespace` y todos los `use`
-- [ ] `ClinicalAccessTrait` queda en `clinical/` (ya está)
-- [ ] Renombrar `ConsultaChatController` → `EncounterChatController` (semántica `Consulta` = atención médica → `Encounter`; ver `design.md` §10)
-- [ ] Corregir el docblock de `Editar` / `Info` / `Listar`: son transporte de `open_ui`, no endpoints muertos
+- [x] Mover archivos a `controllers/<dominio>/`
+- [x] Actualizar `namespace` y todos los `use`
+- [x] `ClinicalAccessTrait` queda en `clinical/` (ya está)
+- [x] Renombrar `ConsultaChatController` → `EncounterChatController` (semántica `Consulta` = atención médica → `Encounter`; ver `design.md` §10)
+- [x] Corregir el docblock de `Editar` / `Info` / `Listar`: son transporte de `open_ui`, no endpoints muertos
 
-### 1.3 urlManager
+### 1.3 Routing: `controllerMap` derivado, no reescritura de reglas
 
-- [ ] Reapuntar cada regla al nuevo route interno (`'GET api/<version:\w+>/turnos/listar-como-paciente' => '<version>/scheduling/turnos/listar-como-paciente'`)
-- [ ] **No** cambiar ningún patrón público
-- [ ] Verificar que no queden reglas apuntando a routes inexistentes
+Al medir apareció que `urlManager` tiene **catch-all genéricos** (`GET|POST api/<version>/<controller>/<action>` y los dos `OPTIONS`), así que muchos endpoints funcionan **sin** regla explícita. Reapuntar reglas una por una no alcanzaba: había que enumerar todos los endpoints.
+
+Mecanismo elegido: [`DomainControllerMap`](../../../../frontend/modules/api/v1/DomainControllerMap.php) recorre `controllers/<dominio>/` y registra cada controller en el `controllerMap` del módulo con su **id público sin dominio**. El árbol sigue siendo la fuente y nada más se mueve:
+
+- las 624 reglas de `urlManager` quedan **intactas**, incluidos los catch-all;
+- el route interno sigue siendo `v1/<id>/<accion>`, así que el `uniqueId` y la ruta RBAC derivada son **idénticos**;
+- agregar un controller en cualquier carpeta de dominio queda ruteable sin tocar config.
+
+- [x] `DomainControllerMap` + merge en `Module::init()` (los alias de config ganan)
+- [x] Alias en config solo cuando el id público no coincide con la clase: `servicio-teleconsulta`, `whatsapp` y ahora `consulta-chat` (por el rename a `EncounterChatController`)
+- [x] Cero cambios en patrones de `urlManager`
+- [x] `ActionDiscoveryService` pasa a recorrer subcarpetas: agrupar por dominio no debe esconder acciones
 
 ### 1.4 Tests
 
-- [ ] Mover los tests de API afectados a `tests/unit/<dominio>/`
-- [ ] Test de humo: para una ruta por dominio, `ApiRoutePermissionResolver::checkedRoutesForAction()` sigue devolviendo la ruta `/api/<entidad>/<accion>` histórica
+- [x] Test de invariante: [`DomainControllerMapTest`](../../../../common/tests/unit/api/DomainControllerMapTest.php) verifica id público sin dominio, unicidad de ids, que las 46 clases carguen, que `checkedRoutesForAction()` siga devolviendo `/api/turnos/listar-como-paciente` y que los alias sigan declarados
+- [x] No hubo tests de API por controller que mover: los de `tests/unit/api/` son transversales de la capa (resolver de rutas, access control)
 
 ## Fuera de esta fase
 
@@ -81,9 +90,9 @@ Dominio asignado según los servicios que el controller consume (evidencia: sus 
 
 ## Criterios de aceptación
 
-- [ ] En la raíz de `controllers/` solo quedan los 13 transversales de la tabla (ningún controller de dominio)
-- [ ] Cero cambios en patrones de `urlManager` públicos
-- [ ] Cero migraciones RBAC nuevas
+- [x] En la raíz de `controllers/` solo quedan los 13 transversales de la tabla (ningún controller de dominio)
+- [x] Cero cambios en patrones de `urlManager` públicos
+- [x] Cero migraciones RBAC nuevas
 - [ ] Smoke de asistente y de turnos paciente pasan sin cambios de fixtures
 
 ## PR sugerido

@@ -1,7 +1,8 @@
 <?php
 
-namespace frontend\modules\api\v1\controllers;
+namespace frontend\modules\api\v1\controllers\clinical;
 
+use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 use yii\web\BadRequestHttpException;
 use common\components\Domain\Clinical\CareCohort\Service\CarePackAssistanceService;

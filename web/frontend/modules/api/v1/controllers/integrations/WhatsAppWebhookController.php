@@ -1,7 +1,8 @@
 <?php
 
-namespace frontend\modules\api\v1\controllers;
+namespace frontend\modules\api\v1\controllers\integrations;
 
+use frontend\modules\api\v1\controllers\BaseController;
 use common\components\Platform\Assistant\WhatsApp\WhatsAppConfig;
 use common\components\Platform\Assistant\WhatsApp\WhatsAppInboundService;
 use Yii;

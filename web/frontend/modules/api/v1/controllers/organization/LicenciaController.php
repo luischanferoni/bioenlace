@@ -1,7 +1,8 @@
 <?php
 
-namespace frontend\modules\api\v1\controllers;
+namespace frontend\modules\api\v1\controllers\organization;
 
+use frontend\modules\api\v1\controllers\BaseController;
 use common\components\Domain\Organization\Service\Billing\BillingMembershipSwitchService;
 use common\components\Domain\Organization\Service\Billing\InstitutionalEfectorSignupService;
 use common\components\Domain\Organization\Service\Billing\MinistrySignupRequestService;

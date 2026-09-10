@@ -1,7 +1,8 @@
 <?php
 
-namespace frontend\modules\api\v1\controllers;
+namespace frontend\modules\api\v1\controllers\clinical;
 
+use frontend\modules\api\v1\controllers\BaseController;
 use common\models\ConsultaChatMessage;
 use common\components\Domain\Clinical\Service\SecureMediaService;
 use common\components\Domain\Scheduling\Service\ConsultaAsyncChatUploadService;
@@ -22,7 +23,7 @@ use yii\web\UploadedFile;
  *
  * La URL conserva el segmento `consulta-chat`; el identificador es `encounter_id`.
  */
-class ConsultaChatController extends BaseController
+class EncounterChatController extends BaseController
 {
     use ClinicalAccessTrait;
 

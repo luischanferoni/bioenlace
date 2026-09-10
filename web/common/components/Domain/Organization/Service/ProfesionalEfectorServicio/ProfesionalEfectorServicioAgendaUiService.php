@@ -19,7 +19,7 @@ use Yii;
 
 /**
  * Pre-carga y persistencia de agenda / condición laboral para UI JSON
- * ({@see \frontend\modules\api\v1\controllers\ProfesionalAgendaController::actionConfigurarAgenda}).
+ * ({@see \frontend\modules\api\v1\controllers\scheduling\ProfesionalAgendaController::actionConfigurarAgenda}).
  */
 final class ProfesionalEfectorServicioAgendaUiService
 {

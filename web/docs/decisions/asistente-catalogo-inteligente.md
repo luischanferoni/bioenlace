@@ -12,14 +12,15 @@ Documentación estable: [producto/asistente-y-chat.md](../producto/asistente-y-c
 
 ### Capas
 
-1. **1ª IA (etiquetado)** — JSON v1: `normalized_text`, `necesidad_usuario`, `routing_hint`, `tags`, `context_areas`, `extractions`, `intent_ids_hint` opcional. Sin catálogo completo de funcionalidades en el prompt.
-2. **Catálogo inteligente (PHP)** — metadata `assistant/catalog/smart-catalog.yaml`: entradas con `tool_id`, `tool_type`, `triggers`, anclas requeridas, template opcional. Match con score; RBAC antes de exponer tools tipo `intent` o `metric`.
-3. **Routing PHP** — resultados: `clara` (match 100 %: intent, artículo o template), `dudosa`, `incompletas`, `fuera_de_his`. PHP decide camino final; `routing_hint` de la IA orienta pero no obliga.
-4. **Match 100%** — score + margen + tool ejecutable → flow, artículo o template (**1 IA**). Empate → **incompletas** si hay tema HIS; no botones entre intents.
-5. **Plan declarativo** — reutiliza `AssistantContextAnchorResolver` y `AssistantContextAreaAspectResolver` (evolucionar a registry YAML); output `tool_ids` + `needs_planner`.
-6. **2ª IA guide** — incompletas y charla: `scoped_system_records` + prompt `channels/Guide`; CTAs de catálogo vía `CatalogCtaResolver`.
-7. **3ª IA planificadora (opcional)** — solo si `needs_planner` (plan vacío, demasiados tools, sin datos útiles post-load); elige `tool_ids_ordered` del **shortlist filtrado**; PHP resuelve params.
-8. **Log de planificación** — estructura `planning_applied` por mensaje (ver schema metadata).
+1. **1ª IA (etiquetado)** — JSON (`first-ia-v1`, v2): `normalized_text`, `necesidad_usuario` / `necesidades_usuario`, `routing_hint`, `tags`, `extractions`; `intent_ids_hint` opcional y deprecado. Sin catálogo completo de funcionalidades en el prompt. **No** pide `context_areas`: si vienen, PHP las ignora.
+2. **Áreas de contexto (PHP)** — se derivan del match del smart-catalog → `tool_ref` / CTA → carpeta de dominio del intent (`IntentSchemaPaths::domainForIntentId` / `AssistantContextAreaDerivation`). El área es la carpeta bajo `metadata/bioenlace/<dominio>/intents/`, no un campo de la 1ª IA. Ver [arbol-espejo-dominios.md](../arquitectura/arbol-espejo-dominios.md).
+3. **Catálogo inteligente (PHP)** — metadata `platform/assistant/catalog/smart-catalog.yaml`: entradas con `tool_id`, `tool_type`, `triggers`, anclas requeridas, template opcional. Match con score; RBAC antes de exponer tools tipo `intent` o `metric`.
+4. **Routing PHP** — resultados: `clara` (match 100 %: intent, artículo o template), `dudosa`, `incompletas`, `fuera_de_his`. PHP decide camino final; `routing_hint` de la IA orienta pero no obliga.
+5. **Match 100%** — score + margen + tool ejecutable → flow, artículo o template (**1 IA**). Empate → **incompletas** si hay tema HIS; no botones entre intents.
+6. **Plan declarativo** — reutiliza `AssistantContextAnchorResolver` y `AssistantContextAreaAspectResolver` (evolucionar a registry YAML); output `tool_ids` + `needs_planner`.
+7. **2ª IA guide** — incompletas y charla: `scoped_system_records` + prompt `channels/Guide`; líneas de ámbito desde áreas **derivadas**; CTAs de catálogo vía `CatalogCtaResolver`.
+8. **3ª IA planificadora (opcional)** — solo si `needs_planner` (plan vacío, demasiados tools, sin datos útiles post-load); elige `tool_ids_ordered` del **shortlist filtrado**; PHP resuelve params.
+9. **Log de planificación** — estructura `planning_applied` por mensaje (ver schema metadata).
 
 ### Convención `tool_id`
 
@@ -49,16 +50,17 @@ Alias temporal de preprocess: mapear `user_goal` de hilo ↔ `routing_hint` en `
 - **IA elige métodos PHP libres** — riesgo permisos e integridad; no testeable.
 - **Planificadora siempre activa** — latencia y costo; el catálogo declarativo debe absorber casos frecuentes vía log `gaps`.
 - **Solo regex/IntentClassifier sin catálogo** — no escala a artículos, aspectos y métricas en un solo match.
+- **`context_areas` / `his_areas` pedidos a la 1ª IA** — inventaba o reconciliaba áreas; la carpeta del intent ya es el área. Pedirlas a la IA duplicaba verdad y forzaba reconcile (p. ej. síntoma → `clinical_record`).
 
 ## Consecuencias
 
-- Contratos JSON: `common/metadata/bioenlace/assistant/schemas/*.yaml`.
+- Contratos JSON: `common/metadata/bioenlace/platform/assistant/schemas/*.yaml`.
 - Nuevos servicios: `SmartCatalogRegistry`, `SmartCatalogMatchService`, `DeclarativePlanService`, `AssistantPlanningLogService` (nombres en Platform/Assistant/Catalog/ y Planning/).
-- Params Yii: `asistente_plan_max_tools`, `asistente_planning_debug`, umbrales de match (TBD en fase 01).
-- Deprecación progresiva: canal `GuideChannel` en raíz, `user_goal` como eje, regex CTA donde el catálogo cubra el caso.
+- Params Yii: `asistente_plan_max_tools`, `asistente_planning_debug`, umbrales de match.
+- Deprecación progresiva: canal `GuideChannel` en raíz, `user_goal` como eje, regex CTA donde el catálogo cubra el caso; campo `context_areas` en preprocess (ignorado; quitar del prompt a mano).
 - Telemetría IA: mantener `asistente-preprocess`; incompletas usan `asistente-guide`; `asistente-planner` si `needs_planner`.
-- Documentación al cierre: actualizar `producto/asistente-y-chat.md`, `arquitectura/asistente-motores.md`.
+- Documentación: [producto/asistente-y-chat.md](../producto/asistente-y-chat.md), [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md), [arquitectura/arbol-espejo-dominios.md](../arquitectura/arbol-espejo-dominios.md).
 
-Schemas: `assistant/schemas/first-ia-v1.yaml`, `smart-catalog-entry-v1.yaml`, `planning-log-v1.yaml`, `planner-ia-v1.yaml`.
+Schemas: `platform/assistant/schemas/first-ia-v1.yaml`, `smart-catalog-entry-v1.yaml`, `planning-log-v1.yaml`, `planner-ia-v1.yaml`.
 
 Relacionado: [asistente-contexto-his-areas-aspectos.md](./asistente-contexto-his-areas-aspectos.md), [asistente-canal-guide.md](./asistente-canal-guide.md) (guide queda obsoleto en raíz al cerrar el plan).

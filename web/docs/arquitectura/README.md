@@ -5,6 +5,7 @@ Explica piezas que atraviesan varios módulos del producto. Hoy el foco principa
 | Documento | Contenido |
 |-----------|-----------|
 | [common-components.md](./common-components.md) | Organización de `web/common/components/` (leer antes de mover código) |
+| [arbol-espejo-dominios.md](./arbol-espejo-dominios.md) | Invariante `capa/dominio\|platform/entidad` en models, API, metadata, tests |
 | [metadata-yaml-uso.md](./metadata-yaml-uso.md) | Qué va en YAML vs modelos Yii / dominio (integridad, gates, knobs) |
 | [runtime-datos-y-metadata.md](./runtime-datos-y-metadata.md) | Maestros en BD vs metadata; mapa cognitivo + escala; caso geo |
 | [asistente-motores.md](./asistente-motores.md) | IntentEngine y SubIntentEngine: qué hace cada uno y cómo encadenan |

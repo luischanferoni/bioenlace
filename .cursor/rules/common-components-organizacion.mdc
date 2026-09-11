@@ -11,6 +11,7 @@ alwaysApply: false
 **Antes de crear, mover o refactorizar** cualquier archivo bajo `web/common/components/` o `web/common/models/`, leer:
 
 - [web/docs/arquitectura/common-components.md](web/docs/arquitectura/common-components.md)
+- [web/docs/arquitectura/arbol-espejo-dominios.md](web/docs/arquitectura/arbol-espejo-dominios.md)
 - [web/common/components/README.md](web/common/components/README.md)
 - [web/common/README.md](web/common/README.md) (modelos AR)
 
@@ -19,9 +20,17 @@ alwaysApply: false
 | Capa | Ruta | Qué va |
 |------|------|--------|
 | **Motores** | `web/common/components/Platform/` | Assistant, Core, Ai, Ui, Infra, Legacy — agnóstico del rubro |
-| **Rubro salud** | `web/common/components/Domain/` | Clinical, Scheduling, Person, Organization, Integrations, Terminology |
+| **Rubro salud** | `web/common/components/Domain/` | Clinical, Scheduling, Person, Organization, Integrations, Terminology, Content, Geo, Programs |
 
 Metadata producto: `web/common/metadata/bioenlace/`. Cableado: `web/common/config/product-registries.php`.
+
+## Invariante de forma (espejo)
+
+```text
+<capa>/<dominio|platform>/<entidad>/…
+```
+
+Misma palabra de dominio en `components/Domain/`, `models/`, `controllers/`, `views/json/`, `metadata/bioenlace/` y `tests/unit/`. Fuente del conjunto: carpetas en `Domain/` (`ProductDomainCatalog`). `platform` es eje paralelo, **no** carpeta bajo `Domain/`.
 
 ## Reglas
 

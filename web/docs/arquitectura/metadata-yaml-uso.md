@@ -14,7 +14,7 @@ Si falta un archivo YAML, el producto no debe «abrir» gates duros ni inventar 
 
 Los YAML de catálogo / ui-text / prompt llevan **textos** que ve el usuario o la IA (descripciones inyectadas en prompts, copy UX).
 
-No llevan mapas máquina↔máquina (`aliases` id→id, listas de ids auxiliares sin copy): eso va en el **loader PHP** del catálogo. No se mantienen capas de retrocompatibilidad en metadata. Patrón: YAML `id → descripción`; PHP `all()` / `isValid()` + constantes de wiring. Ejemplos: `PreprocessRoutingHintCatalog`, `HintResolutionMetadata`, `UiJsonDomainMetadata`, `DomainOperationPolicyCatalog::DOMAIN_ONLY_OPERATIONS`.
+No llevan mapas máquina↔máquina (`aliases` id→id, listas de ids auxiliares sin copy): eso va en el **loader PHP** del catálogo. No se mantienen capas de retrocompatibilidad en metadata. Patrón: YAML `id → descripción`; PHP `all()` / `isValid()` + constantes de wiring. Ejemplos: `PreprocessRoutingHintCatalog`, `HintResolutionMetadata`, `UiJsonDomainIndex`, `DomainOperationPolicyCatalog::DOMAIN_ONLY_OPERATIONS`.
 
 ## Matriz rápida
 

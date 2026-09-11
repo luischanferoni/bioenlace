@@ -11,7 +11,7 @@ alwaysApply: true
 
 - **Controller API**: delgado — request/response, permisos por ruta, llama a **Services** y modelos; aquí `*HttpException`, JSON y códigos HTTP.
 
-- **Services por dominio** (`common/components/{Clinical|Scheduling|Person|Organization|Core|Ui}/…`): lógica pesada; **API, consola, jobs**. Sin HTTP (`*HttpException`, HTML, flash). **No** usar `components/Services/` (eliminado). Dominio: `\InvalidArgumentException`, excepciones en `common`, o retornos que el controller API traduzca.
+- **Services por dominio** (`common/components/Domain/{Clinical|Scheduling|Person|Organization|…}/…`) y motores en `common/components/Platform/{Assistant|Core|Ui|Ai|…}/…`: lógica pesada; **API, consola, jobs**. Sin HTTP (`*HttpException`, HTML, flash). **No** usar `components/Services/` (eliminado). Dominio: `\InvalidArgumentException`, excepciones en `common`, o retornos que el controller API traduzca. Árbol espejo: [arbol-espejo-dominios.md](web/docs/arquitectura/arbol-espejo-dominios.md).
 
 - **Modelos (AR)**: persistencia, `rules()`, relaciones, consultas tipo `exists…` sin excepciones HTTP. Sin autorización ni dueño de recurso.
 

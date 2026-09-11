@@ -39,8 +39,15 @@ Para otro rubro: nuevo `Domain/`, metadata y registries; **`Platform/`** se mant
 | **`Domain/Organization/`** | Efectores, PES, sesión operativa |
 | **`Domain/Integrations/`** | Sistemas externos (SISSE, receta, MPI, LIS) |
 | **`Domain/Terminology/`** | SNOMED |
+| **`Domain/Content/`** | Contenido institucional (`InfoContent`, novedades) |
+| **`Domain/Geo/`** | Maestros geo (provincias, recursos provinciales) |
+| **`Domain/Programs/`** | Programas de salud / SUMAR |
 
-**No crear** carpetas clínicas sueltas fuera de `Domain/Clinical/` (`Emergency/`, `Inpatient/` van ahí).
+**No crear** carpetas clínicas sueltas fuera de `Domain/Clinical/` (`Emergency/`, `Inpatient/` van ahí). **No** existe `Domain/Platform/` — la plataforma va en `components/Platform/`.
+
+## Árbol espejo (otras capas)
+
+La misma palabra de dominio se sigue en models, controllers API, `views/json`, metadata y tests. Ver [arbol-espejo-dominios.md](./arbol-espejo-dominios.md). Fuente del conjunto: `ProductDomainCatalog` ← carpetas en `Domain/`.
 
 ## Patrones dentro de un dominio
 
@@ -67,7 +74,7 @@ Para otro rubro: nuevo `Domain/`, metadata y registries; **`Platform/`** se mant
 | Turno, agenda | `Domain/Scheduling/Service/` · AR: `Scheduling/Turno.php` |
 | Efector, PES | `Domain/Organization/Service/` |
 | Motor asistente / flow genérico | `Platform/Assistant/` |
-| Intent / YAML producto | `common/metadata/bioenlace/assistant/` |
+| Intent / YAML producto | `common/metadata/bioenlace/<dominio>/intents/` · motores en `…/platform/assistant/` |
 | Proveedor IA | `Platform/Ai/` |
 | Cliente externo salud | `Domain/Integrations/` |
 | Texto clínico pre-IA | `Domain/Clinical/Text/` |

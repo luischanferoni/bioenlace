@@ -4,6 +4,8 @@ Namespace base: `common\components\Domain\…`
 
 Todo lo **específico del rubro actual**. Para otro producto, esta carpeta se reemplaza o se empaqueta aparte; los motores en `../Platform/` permanecen.
 
+Las carpetas de primer nivel **son** el conjunto de dominios del producto (`ProductDomainCatalog`). No existe `Domain/Platform/`.
+
 ## Subcarpetas
 
 | Carpeta | Contenido |
@@ -14,8 +16,13 @@ Todo lo **específico del rubro actual**. Para otro producto, esta carpeta se re
 | **`Organization/`** | Efectores, PES, sesión operativa |
 | **`Integrations/`** | SISSE, receta digital, **export HC FHIR**, MPI, laboratorio FHIR, identidad |
 | **`Terminology/`** | SNOMED, codificación clínica (`SnomedCategoryCatalog`, `SnomedSearchProfileCatalog`) |
+| **`Content/`** | Contenido institucional / novedades |
+| **`Geo/`** | Maestros geo y recursos provinciales |
+| **`Programs/`** | Programas de salud / SUMAR |
 
 Metadata SNOMED: `common/metadata/bioenlace/terminology/snomed-terminology.yaml` (ECL canónicos + codificación + búsqueda).
+
+Árbol espejo en otras capas: [arbol-espejo-dominios.md](../../../docs/arquitectura/arbol-espejo-dominios.md).
 
 ## Cableado con motores
 

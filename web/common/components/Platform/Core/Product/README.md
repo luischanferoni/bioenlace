@@ -5,7 +5,8 @@
 | `ProductMetadataPaths` | Rutas YAML bajo `common/metadata/bioenlace/` (mapa: `metadata/bioenlace/README.md`) |
 | `AutonomousAgentMetadata` | Knobs de agentes (`agents/{agent_id}.yaml`) |
 | `ClientContextMetadata` | Reglas web staff vs paciente (`ui/client-context.yaml`) |
-| `UiJsonDomainMetadata` | Mapeo entidades UI JSON (constantes PHP) |
+| `ProductDomainCatalog` | Dominios canónicos desde `components/Domain/` (árbol espejo) |
+| `UiJsonDomainIndex` | Dominio de entidad UI desde `views/json/<dominio>/` (no mapa a mano) |
 | `UiScreenParamsMetadata` | Expansión params pantallas (`ui/screen-params.yaml`) |
 | `UiSelectOptionSourceMetadata` | Fuentes select UI (constantes PHP) |
 | `ProductRegistryConfig` | Lee `common/config/product-registries.php` (`productRegistries` en params) |

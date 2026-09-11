@@ -118,7 +118,7 @@ final class ChatRouter
             'action_text' => '',
             'extractions' => [],
             'context_areas' => ChatPreprocessService::normalizeContextAreas(
-                $goal === 'guide' ? [AssistantContextHISArea::APPOINTMENTS] : []
+                $goal === 'guide' ? [AssistantContextHISArea::SCHEDULING] : []
             ),
             'intent_ids_hint' => [],
         ];
@@ -139,6 +139,9 @@ final class ChatRouter
     private static function routeFromPreprocess(array $preprocess, string $content, int $userId): array
     {
         $evaluation = SmartCatalogRoutingService::evaluate($preprocess, $userId, $content);
+        $preprocess['context_areas'] = is_array($evaluation->firstIa['context_areas'] ?? null)
+            ? $evaluation->firstIa['context_areas']
+            : [];
         $preprocess['smart_routing'] = $evaluation->decision->routingResult;
         \common\components\Platform\Assistant\Chat\ChatPreprocessContext::set($preprocess);
 
@@ -180,7 +183,7 @@ final class ChatRouter
         $areas = ChatPreprocessService::normalizeContextAreas($preprocess['context_areas'] ?? []);
 
         if (ChatChannelPolicy::isAppointmentPolicyQuestion($content)) {
-            $areas = array_values(array_unique(array_merge($areas, [AssistantContextHISArea::APPOINTMENTS])));
+            $areas = array_values(array_unique(array_merge($areas, [AssistantContextHISArea::SCHEDULING])));
             $preprocess['context_areas'] = $areas;
 
             if (!ChatChannelPolicy::requestsOperationalTramiteExecution($content)) {

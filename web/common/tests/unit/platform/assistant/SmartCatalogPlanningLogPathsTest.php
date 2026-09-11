@@ -40,7 +40,7 @@ class SmartCatalogPlanningLogPathsTest extends Unit
             'normalized_text' => 'contame representacion',
             'routing_hint' => 'pedido_claro',
             'tags' => ['representacion'],
-            'context_areas' => ['representation'],
+            'context_areas' => ['person'],
             'extractions' => [],
         ], 0);
 
@@ -59,7 +59,7 @@ class SmartCatalogPlanningLogPathsTest extends Unit
         ChatPreprocessContext::set([
             'ok' => true,
             'normalized_text' => 'llego 10 min tarde',
-            'context_areas' => ['appointments'],
+            'context_areas' => ['scheduling'],
             'extractions' => [],
         ]);
 
@@ -69,8 +69,8 @@ class SmartCatalogPlanningLogPathsTest extends Unit
             'normalized_text' => 'llego 10 min tarde hay problema',
             'routing_hint' => 'pedido_claro',
             'necesidad_usuario' => 'Saber tolerancia llegada tarde.',
-            'tags' => ['llegar_tarde', 'appointments'],
-            'context_areas' => ['appointments'],
+            'tags' => ['llegar_tarde', 'scheduling'],
+            'context_areas' => ['scheduling'],
             'extractions' => [],
         ], 0);
 
@@ -99,7 +99,7 @@ class SmartCatalogPlanningLogPathsTest extends Unit
         ChatPreprocessContext::set([
             'ok' => true,
             'normalized_text' => 'consulta vaga turnos',
-            'context_areas' => ['appointments'],
+            'context_areas' => ['scheduling'],
             'extractions' => [],
         ]);
 
@@ -107,8 +107,8 @@ class SmartCatalogPlanningLogPathsTest extends Unit
             'normalized_text' => 'consulta vaga turnos',
             'routing_hint' => 'pedido_claro',
             'necesidad_usuario' => 'Entender algo sobre turnos.',
-            'tags' => ['appointments'],
-            'context_areas' => ['appointments'],
+            'tags' => ['scheduling'],
+            'context_areas' => ['scheduling'],
             'extractions' => [],
         ], 0);
 

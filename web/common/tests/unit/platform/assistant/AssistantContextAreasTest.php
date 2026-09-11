@@ -17,20 +17,20 @@ class AssistantContextAreasTest extends Unit
         $prompt = ChatPreprocessService::stablePromptPrefix();
 
         $this->assertStringContainsString('context_areas', $prompt);
-        $this->assertStringContainsString('appointments', $prompt);
-        $this->assertStringContainsString('Citas y turnos', $prompt);
+        $this->assertStringContainsString('scheduling', $prompt);
+        $this->assertStringContainsString('Citas, agenda y turnos', $prompt);
     }
 
     public function testNormalizeContextAreasFiltersInvalid(): void
     {
         $areas = ChatPreprocessService::normalizeContextAreas([
-            'appointments',
+            'scheduling',
             'invalid_area',
             'product',
-            'appointments',
+            'scheduling',
         ]);
 
-        $this->assertSame(['appointments', 'product'], $areas);
+        $this->assertSame(['scheduling', 'product'], $areas);
     }
 
     public function testNormalizeContextAreasEmptyForNonArray(): void
@@ -43,9 +43,12 @@ class AssistantContextAreasTest extends Unit
         $this->assertSame([], ChatPreprocessService::normalizeContextAreas([]));
     }
 
-    public function testCatalogListsAllNineAreas(): void
+    public function testCatalogListsDomainAndContextOnlyAreas(): void
     {
-        $this->assertCount(9, AssistantContextHISArea::all());
+        $this->assertCount(7, AssistantContextHISArea::all());
+        $this->assertTrue(AssistantContextHISArea::isContextOnly(AssistantContextHISArea::PRODUCT));
+        $this->assertTrue(AssistantContextHISArea::isContextOnly(AssistantContextHISArea::GEO_RESOURCES));
+        $this->assertFalse(AssistantContextHISArea::isContextOnly(AssistantContextHISArea::SCHEDULING));
     }
 
     protected function _after(): void
@@ -61,7 +64,7 @@ class AssistantContextAreasTest extends Unit
         $anchors->siteId = 7;
 
         $plan = AssistantContextAreaAspectResolver::plan(
-            [AssistantContextHISArea::APPOINTMENTS],
+            [AssistantContextHISArea::SCHEDULING],
             [
                 ['span' => '10 minutos tarde', 'category' => 'servicio', 'synonyms' => []],
             ],
@@ -80,7 +83,7 @@ class AssistantContextAreasTest extends Unit
         $anchors->subjectPersonaId = 1;
 
         $plan = AssistantContextAreaAspectResolver::plan(
-            [AssistantContextHISArea::APPOINTMENTS],
+            [AssistantContextHISArea::SCHEDULING],
             [
                 ['span' => 'última vez que fui', 'category' => 'servicio', 'synonyms' => []],
             ],

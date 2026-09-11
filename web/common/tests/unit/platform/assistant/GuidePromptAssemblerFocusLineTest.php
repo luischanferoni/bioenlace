@@ -30,21 +30,21 @@ class GuidePromptAssemblerFocusLineTest extends Unit
             'normalized_text' => 'llego tarde',
             'user_goal' => 'guide',
             'action_text' => '',
-            'context_areas' => [AssistantContextHISArea::APPOINTMENTS],
+            'context_areas' => [AssistantContextHISArea::SCHEDULING],
             'extractions' => [],
         ]);
 
         $prompt = GuidePromptAssembler::build(
             'llego tarde',
             0,
-            new GuideFocusState(AssistantContextHISArea::APPOINTMENTS, [AssistantContextHISArea::APPOINTMENTS]),
+            new GuideFocusState(AssistantContextHISArea::SCHEDULING, [AssistantContextHISArea::SCHEDULING]),
             null,
             null
         );
 
         $this->assertStringContainsString('Citas y turnos', $prompt);
         $this->assertStringContainsString('Ambito/s del sistema de información hospitalaria', $prompt);
-        $this->assertStringNotContainsString('appointments', $prompt);
+        $this->assertStringNotContainsString('scheduling', $prompt);
         $this->assertStringNotContainsString('turnos, estudios, controles', $prompt);
         $this->assertStringNotContainsString('Tema de la consulta', $prompt);
         $this->assertStringNotContainsString('Ámbito de esta consulta', $prompt);

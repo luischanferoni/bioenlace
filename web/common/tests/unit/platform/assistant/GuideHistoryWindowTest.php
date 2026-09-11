@@ -26,17 +26,17 @@ class GuideHistoryWindowTest extends Unit
     public function testFiltraPorGuideFocus(): void
     {
         $focus = [
-            'primary_area' => 'appointments',
-            'active_areas' => ['appointments'],
+            'primary_area' => 'scheduling',
+            'active_areas' => ['scheduling'],
         ];
         $rows = [
             $this->row('42', 'cómo represento a mi sobrino', 5, 'guide:representation', [
-                'primary_area' => 'representation',
-                'active_areas' => ['representation'],
+                'primary_area' => 'person',
+                'active_areas' => ['person'],
             ]),
-            $this->row('42', 'Me duele el pecho', 3, 'guide:appointments', $focus),
-            $this->row('BOT', '¿Desde cuándo?', 2, 'guide:appointments', $focus),
-            $this->row('42', 'Desde ayer', 1, 'guide:appointments', $focus),
+            $this->row('42', 'Me duele el pecho', 3, 'guide:scheduling', $focus),
+            $this->row('BOT', '¿Desde cuándo?', 2, 'guide:scheduling', $focus),
+            $this->row('42', 'Desde ayer', 1, 'guide:scheduling', $focus),
         ];
 
         $history = GuideHistoryWindow::buildFromInteractions(
@@ -45,7 +45,7 @@ class GuideHistoryWindowTest extends Unit
             'mensaje nuevo',
             5,
             3200,
-            'appointments'
+            'scheduling'
         );
         $this->assertStringContainsString('Me duele el pecho', $history);
         $this->assertStringNotContainsString('sobrino', $history);
@@ -54,8 +54,8 @@ class GuideHistoryWindowTest extends Unit
     public function testLegacyThreadTagGuideAppointments(): void
     {
         $rows = [
-            $this->row('42', 'llego tarde al turno', 2, 'guide:appointments'),
-            $this->row('BOT', 'Podés avisar al centro', 1, 'guide:appointments'),
+            $this->row('42', 'llego tarde al turno', 2, 'guide:scheduling'),
+            $this->row('BOT', 'Podés avisar al centro', 1, 'guide:scheduling'),
         ];
 
         $history = GuideHistoryWindow::buildFromInteractions(
@@ -64,7 +64,7 @@ class GuideHistoryWindowTest extends Unit
             'y si llego 5 min más tarde',
             5,
             3200,
-            'appointments'
+            'scheduling'
         );
         $this->assertStringContainsString('llego tarde', $history);
     }

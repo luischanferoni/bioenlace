@@ -1,16 +1,19 @@
 # Tipo: catalog
-# Propósito: áreas HIS (context_areas) — id → texto para prompts.
-# Consumidor: AssistantContextHISArea / preprocess + guide.
-# No poner aquí: mapas técnicos ni alias id→id (van en el loader PHP si hacen falta).
-version: 1
+# Propósito: áreas de contexto del asistente — id → texto para prompts.
+# Ids = carpetas de dominio (metadata/bioenlace/<dominio>/intents) o solo-contexto.
+# Consumidor: AssistantContextHISArea / Guide (líneas de ámbito).
+# No poner aquí: mapas técnicos (van en PHP). HC Guide se adjunta siempre (no es un área).
+version: 2
 
 areas:
-  appointments: Citas y turnos del paciente; reglas del centro sobre citas
-  encounters: Atenciones y consultas ya realizadas
-  clinical_record: Resumen clínico del paciente (alergias, medicación, condiciones)
-  diagnostics: Estudios, laboratorio y resultados
-  medication: Recetas y medicación
-  representation: Tutela, representantes y operar por otro
-  coverage: Cobertura y obra social
-  product: Cómo funciona Bioenlace (guías de uso)
-  geo_resources: Centros, ubicación y recursos del sistema de salud
+  scheduling: Citas, agenda y turnos
+  clinical: Atenciones, estudios, medicación y pedido de atención
+  person: Perfil, representación y tutelas
+  organization: Oferta del centro, profesionales y efectores
+  platform: Consultas genéricas y trámites de la plataforma
+  product:
+    text: Cómo funciona Bioenlace (guías de uso)
+    context_only: true
+  geo_resources:
+    text: Centros, ubicación y recursos del sistema de salud
+    context_only: true

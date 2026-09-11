@@ -96,8 +96,8 @@ class ChatChannelRoutingPhase01Test extends Unit
             'ok' => true,
             'normalized_text' => $msg,
             'routing_hint' => 'pedido_claro',
-            'tags' => ['llegar_tarde', 'appointments'],
-            'context_areas' => ['appointments'],
+            'tags' => ['llegar_tarde', 'scheduling'],
+            'context_areas' => ['scheduling'],
             'extractions' => [],
         ]);
 

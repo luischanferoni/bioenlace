@@ -8,8 +8,10 @@ use common\components\Platform\Assistant\Copy\IntentMatchLaunchCopy;
 use common\components\Platform\Core\Permission\IntentAccessService;
 use common\components\Platform\Assistant\Catalog\IntentCatalogService;
 use common\components\Platform\Assistant\Catalog\DataAccessCatalogIntentSupport;
+use common\components\Platform\Assistant\Catalog\IntentSchemaPaths;
 use common\components\Platform\Assistant\Catalog\YamlIntentCatalogService;
 use common\components\Platform\Assistant\Catalog\YamlIntentManifestLoader;
+use common\components\Platform\Assistant\Context\AssistantContextHISArea;
 use common\components\Platform\Assistant\Service\AssistantDraftNormalizer;
 use common\components\Platform\Assistant\UiActions\AssistantClientOpenEnricher;
 use common\components\Platform\Core\Permission\IntentFieldResolutionService;
@@ -347,10 +349,14 @@ final class IntentEngine
             ? $manifest['intent_semantics']
             : null;
         $his = [];
-        foreach ($manifest['his_areas'] ?? [] as $area) {
-            if (is_string($area) && trim($area) !== '') {
-                $his[] = trim($area);
-            }
+        $domain = IntentSchemaPaths::domainForIntentId($actionId);
+        if (
+            $domain !== null
+            && $domain !== ''
+            && AssistantContextHISArea::isValid($domain)
+            && !AssistantContextHISArea::isContextOnly($domain)
+        ) {
+            $his[] = $domain;
         }
 
         return new UiActionCatalogItem(

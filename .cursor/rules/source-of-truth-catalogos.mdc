@@ -29,7 +29,7 @@ Cada **lista cerrada** que el runtime valida o inyecta en prompts tiene **exacta
 
 ## Reglas PHP
 
-- **Constantes nombradas** (`AssistantContextHISArea::APPOINTMENTS`, `PreprocessRoutingHintCatalog::CLARA`) solo como alias del id string; la lista `all()` / `isValid()` sale del YAML (cuando el catálogo es vocabulario+texto).
+- **Constantes nombradas** (`AssistantContextHISArea::SCHEDULING`, `PreprocessRoutingHintCatalog::CLARA`) solo como alias del id string; la lista `all()` / `isValid()` sale del YAML (cuando el catálogo es vocabulario+texto).
 - **Mapas técnicos** viven en el loader; no en un segundo YAML ni en otro service.
 - **Prompts**: placeholders `{…_list}` generados por el loader; no repetir enums en el cuerpo del prompt si ya se inyectan.
 - **Schemas** (`assistant/schemas/*.yaml`): referenciar path del catálogo en `category_values` / notas; no duplicar arrays completos salvo ejemplo ilustrativo.

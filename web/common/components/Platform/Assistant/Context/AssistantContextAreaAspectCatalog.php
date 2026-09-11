@@ -28,7 +28,7 @@ final class AssistantContextAreaAspectCatalog
         }
 
         $aspects = self::aspectsByArea()[$areaId] ?? [];
-        if ($areaId === AssistantContextHISArea::APPOINTMENTS && self::wantsAppointmentHistory($extractions)) {
+        if ($areaId === AssistantContextHISArea::SCHEDULING && self::wantsAppointmentHistory($extractions)) {
             $aspects[] = AssistantContextHISAreaAspect::APPOINTMENT_HISTORY_SUBJECT_AT_SITE;
         }
 

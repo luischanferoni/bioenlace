@@ -1,17 +1,17 @@
 # Contrato JSON — 1ª IA (etiquetado). Consumidor: ChatPreprocessService.
 # ADR: web/docs/decisions/asistente-catalogo-inteligente.md
-version: 1
+version: 2
 
 description: >
   Respuesta exclusivamente JSON del preprocess. Mensaje + historial reciente en el prompt;
-  sin catálogo de funcionalidades completo.
+  sin catálogo de funcionalidades completo. Las áreas de contexto las deriva PHP
+  del match (carpeta del intent), no la 1ª IA.
 
 required:
   - normalized_text
   - necesidad_usuario
   - routing_hint
   - tags
-  - context_areas
   - extractions
 
 fields:
@@ -34,9 +34,6 @@ fields:
   tags:
     type: list<string>
     notes: Etiquetas cerradas o extendidas; usadas por triggers del catálogo inteligente.
-  context_areas:
-    type: list<string>
-    notes: Claves de context-his-areas.yaml; [] si saludo sin datos HIS.
   extractions:
     type: list<object>
     item_fields:
@@ -52,8 +49,15 @@ fields:
     notes: >
       No pedido al modelo en el prompt (sin catálogo de intents en contexto).
       PHP lo acepta si viene, valida contra RBAC y lo pasa al match;
-      pero el scoring real viene de tags + context_areas + phrases.
+      pero el scoring real viene de tags + phrases.
       Campo preservado por compat; no agregar al prompt.
+  context_areas:
+    type: list<string>
+    optional: true
+    deprecated: true
+    notes: >
+      Ignorado por PHP. Las áreas activas se derivan del match → intent → carpeta de dominio.
+      No pedir al modelo.
 
 example:
   normalized_text: "¿Voy a tener problemas si llego 10 minutos tarde?"
@@ -61,7 +65,6 @@ example:
   necesidades_usuario:
     - "Saber consecuencias de llegar 10 minutos tarde a su cita."
   routing_hint: pedido_claro
-  tags: [llegar_tarde, appointments]
-  context_areas: [appointments]
+  tags: [llegar_tarde, scheduling]
   extractions: []
   intent_ids_hint: []

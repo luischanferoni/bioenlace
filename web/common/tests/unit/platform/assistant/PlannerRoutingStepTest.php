@@ -52,8 +52,8 @@ class PlannerRoutingStepTest extends Unit
         $firstIa = [
             'normalized_text' => '¿Voy a tener problemas si llego 10 minutos tarde?',
             'necesidad_usuario' => 'Saber tolerancia de llegada tarde.',
-            'tags' => ['llegar_tarde', 'appointments'],
-            'context_areas' => ['appointments'],
+            'tags' => ['llegar_tarde', 'scheduling'],
+            'context_areas' => ['scheduling'],
             'extractions' => [],
         ];
         $match = SmartCatalogRoutingService::evaluate($firstIa, 0)->match;
@@ -70,7 +70,7 @@ class PlannerRoutingStepTest extends Unit
         ChatPreprocessContext::set([
             'ok' => true,
             'normalized_text' => 'consulta vaga sobre turnos',
-            'context_areas' => ['appointments'],
+            'context_areas' => ['scheduling'],
             'extractions' => [],
         ]);
 
@@ -78,8 +78,8 @@ class PlannerRoutingStepTest extends Unit
             'normalized_text' => 'consulta vaga sobre turnos',
             'routing_hint' => 'pedido_claro',
             'necesidad_usuario' => 'Entender algo sobre mis turnos.',
-            'tags' => ['appointments'],
-            'context_areas' => ['appointments'],
+            'tags' => ['scheduling'],
+            'context_areas' => ['scheduling'],
             'extractions' => [],
         ], 0);
 

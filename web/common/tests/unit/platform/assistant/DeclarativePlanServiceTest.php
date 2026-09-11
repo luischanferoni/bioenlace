@@ -30,7 +30,7 @@ class DeclarativePlanServiceTest extends Unit
         $anchors->subjectPersonaId = 1;
 
         $plan = DeclarativePlanService::plan(
-            [AssistantContextHISArea::APPOINTMENTS],
+            [AssistantContextHISArea::SCHEDULING],
             [['span' => '10 minutos tarde', 'category' => 'servicio', 'synonyms' => []]],
             $anchors,
             null
@@ -52,7 +52,7 @@ class DeclarativePlanServiceTest extends Unit
         $first = AssistantFirstIaAdapter::fromPreprocess([
             'normalized_text' => '¿Voy a tener problemas si llego 10 minutos tarde?',
             'user_goal' => 'guide',
-            'context_areas' => ['appointments'],
+            'context_areas' => ['scheduling'],
             'extractions' => [],
         ]);
 
@@ -66,8 +66,8 @@ class DeclarativePlanServiceTest extends Unit
             'normalized_text' => 'Quiero un turno con el dentista',
             'user_goal' => 'guide',
             'routing_hint' => 'pedido_claro',
-            'tags' => ['appointments'],
-            'context_areas' => ['appointments'],
+            'tags' => ['scheduling'],
+            'context_areas' => ['scheduling'],
             'extractions' => [],
         ]);
 
@@ -81,8 +81,8 @@ class DeclarativePlanServiceTest extends Unit
             'normalized_text' => 'Quiero un turno',
             'user_goal' => 'guide',
             'routing_hint' => 'pedido_claro',
-            'tags' => ['appointments'],
-            'context_areas' => ['appointments'],
+            'tags' => ['scheduling'],
+            'context_areas' => ['scheduling'],
             'extractions' => [],
         ]);
 
@@ -95,8 +95,8 @@ class DeclarativePlanServiceTest extends Unit
         $first = AssistantFirstIaAdapter::fromPreprocess([
             'normalized_text' => 'Cancelá el turno del martes',
             'user_goal' => 'operational',
-            'tags' => ['appointments'],
-            'context_areas' => ['appointments'],
+            'tags' => ['scheduling'],
+            'context_areas' => ['scheduling'],
             'extractions' => [],
         ]);
 
@@ -110,8 +110,8 @@ class DeclarativePlanServiceTest extends Unit
         $first = AssistantFirstIaAdapter::fromPreprocess([
             'normalized_text' => 'Mostrame los turnos que ya tuve',
             'user_goal' => 'operational',
-            'tags' => ['mis_turnos', 'appointments'],
-            'context_areas' => ['appointments'],
+            'tags' => ['mis_turnos', 'scheduling'],
+            'context_areas' => ['scheduling'],
             'extractions' => [],
         ]);
 
@@ -124,8 +124,8 @@ class DeclarativePlanServiceTest extends Unit
         $first = AssistantFirstIaAdapter::fromPreprocess([
             'normalized_text' => '¿Hasta cuándo puedo cancelar?',
             'user_goal' => 'guide',
-            'tags' => ['cancelar_turno', 'appointments'],
-            'context_areas' => ['appointments'],
+            'tags' => ['cancelar_turno', 'scheduling'],
+            'context_areas' => ['scheduling'],
             'extractions' => [],
         ]);
 
@@ -138,8 +138,8 @@ class DeclarativePlanServiceTest extends Unit
         $first = AssistantFirstIaAdapter::fromPreprocess([
             'normalized_text' => '¿Qué me dijo el médico ayer?',
             'user_goal' => 'guide',
-            'tags' => ['historial_turnos', 'staff', 'encounters'],
-            'context_areas' => ['encounters'],
+            'tags' => ['historial_turnos', 'staff', 'clinical'],
+            'context_areas' => ['clinical'],
             'extractions' => [],
         ]);
 
@@ -152,8 +152,8 @@ class DeclarativePlanServiceTest extends Unit
         $first = AssistantFirstIaAdapter::fromPreprocess([
             'normalized_text' => 'Me duele la cabeza',
             'user_goal' => 'guide',
-            'tags' => ['appointments'],
-            'context_areas' => ['appointments'],
+            'tags' => ['scheduling'],
+            'context_areas' => ['scheduling'],
             'extractions' => [],
         ]);
 
@@ -161,32 +161,33 @@ class DeclarativePlanServiceTest extends Unit
         $this->assertContains('necesito_atencion', $first['tags']);
     }
 
-    public function testSymptomDropsClinicalRecordAreaUnlessAsked(): void
+    public function testAdapterIgnoresInvalidAiContextAreas(): void
     {
         $first = AssistantFirstIaAdapter::fromPreprocess([
             'normalized_text' => 'Tengo un pinchazo en el pecho cuando respiro',
             'user_goal' => 'guide',
-            'tags' => ['sintoma', 'clinical_record'],
-            'context_areas' => ['clinical_record'],
+            'tags' => ['sintoma'],
+            'context_areas' => ['clinical_record', 'no_existe'],
             'extractions' => [],
         ]);
 
-        $this->assertNotContains('clinical_record', $first['context_areas']);
-        $this->assertNotContains('clinical_record', $first['tags']);
+        $this->assertSame([], $first['context_areas']);
         $this->assertContains('sintoma', $first['tags']);
+        $this->assertContains('necesito_atencion', $first['tags']);
     }
 
-    public function testAsksAboutAllergiesKeepsClinicalRecordArea(): void
+    public function testRoutingDerivesClinicalAreaFromSintomaMatch(): void
     {
-        $first = AssistantFirstIaAdapter::fromPreprocess([
-            'normalized_text' => '¿Cuáles son mis alergias?',
+        $evaluation = SmartCatalogRoutingService::evaluate([
+            'normalized_text' => 'Me duele la cabeza',
             'user_goal' => 'guide',
-            'tags' => ['clinical_record'],
-            'context_areas' => ['clinical_record'],
+            'routing_hint' => 'pedido_claro',
+            'tags' => ['sintoma', 'necesito_atencion'],
+            'context_areas' => [],
             'extractions' => [],
-        ]);
+        ], 1);
 
-        $this->assertContains('clinical_record', $first['context_areas']);
+        $this->assertContains('clinical', $evaluation->firstIa['context_areas']);
     }
 
     public function testFirstIaAdapterInfersMisAnalisis(): void
@@ -208,8 +209,8 @@ class DeclarativePlanServiceTest extends Unit
             'normalized_text' => 'Cancelá el turno del martes',
             'user_goal' => 'operational',
             'routing_hint' => 'pedido_claro',
-            'tags' => ['cancelar_turno', 'appointments'],
-            'context_areas' => ['appointments'],
+            'tags' => ['cancelar_turno', 'scheduling'],
+            'context_areas' => ['scheduling'],
             'extractions' => [],
         ], 1);
 
@@ -241,7 +242,7 @@ class DeclarativePlanServiceTest extends Unit
             'user_goal' => 'operational',
             'routing_hint' => 'pedido_claro',
             'tags' => ['mis_analisis'],
-            'context_areas' => ['diagnostics'],
+            'context_areas' => ['clinical'],
             'extractions' => [],
         ], 1);
 
@@ -283,8 +284,8 @@ class DeclarativePlanServiceTest extends Unit
             'normalized_text' => 'Quiero un turno',
             'user_goal' => 'guide',
             'routing_hint' => 'pedido_claro',
-            'tags' => ['pedido_turno_sin_destino', 'appointments'],
-            'context_areas' => ['appointments'],
+            'tags' => ['pedido_turno_sin_destino', 'scheduling'],
+            'context_areas' => ['scheduling'],
             'extractions' => [],
         ], 1);
 

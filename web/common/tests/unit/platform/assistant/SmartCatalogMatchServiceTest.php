@@ -31,8 +31,8 @@ class SmartCatalogMatchServiceTest extends Unit
     {
         $result = SmartCatalogMatchService::match([
             'normalized_text' => '¿Voy a tener problemas si llego 10 minutos tarde?',
-            'tags' => ['llegar_tarde', 'appointments'],
-            'context_areas' => ['appointments'],
+            'tags' => ['llegar_tarde', 'scheduling'],
+            'context_areas' => ['scheduling'],
             'extractions' => [
                 ['span' => '10 minutos', 'category' => 'servicio', 'synonyms' => []],
             ],
@@ -62,8 +62,8 @@ class SmartCatalogMatchServiceTest extends Unit
     {
         $result = SmartCatalogMatchService::match([
             'normalized_text' => 'quiero un turno',
-            'tags' => ['pedido_turno_sin_destino', 'appointments'],
-            'context_areas' => ['appointments'],
+            'tags' => ['pedido_turno_sin_destino', 'scheduling'],
+            'context_areas' => ['scheduling'],
             'extractions' => [],
         ], 0);
 
@@ -94,8 +94,8 @@ class SmartCatalogMatchServiceTest extends Unit
     {
         $result = SmartCatalogMatchService::match([
             'normalized_text' => 'Mostrame los turnos que ya tuve',
-            'tags' => ['historial_turnos', 'appointments'],
-            'context_areas' => ['appointments'],
+            'tags' => ['historial_turnos', 'scheduling'],
+            'context_areas' => ['scheduling'],
         ], 0);
 
         $this->assertSame('turnos-historial-paciente', $result->best?->id);
@@ -106,8 +106,8 @@ class SmartCatalogMatchServiceTest extends Unit
     {
         $result = SmartCatalogMatchService::match([
             'normalized_text' => '¿Hasta cuándo puedo cancelar?',
-            'tags' => ['politica_turnos', 'appointments'],
-            'context_areas' => ['appointments'],
+            'tags' => ['politica_turnos', 'scheduling'],
+            'context_areas' => ['scheduling'],
         ], 0);
 
         $this->assertSame('turnos-politica-autogestion', $result->best?->id);
@@ -118,8 +118,8 @@ class SmartCatalogMatchServiceTest extends Unit
     {
         $result = SmartCatalogMatchService::match([
             'normalized_text' => '¿Qué me dijo el médico ayer?',
-            'tags' => ['ultima_atencion', 'encounters'],
-            'context_areas' => ['encounters'],
+            'tags' => ['ultima_atencion', 'clinical'],
+            'context_areas' => ['clinical'],
         ], 0);
 
         $this->assertSame('atencion-ultima-resumen', $result->best?->id);

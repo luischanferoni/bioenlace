@@ -70,7 +70,12 @@ entries:
     priority: 88
     triggers:
       tags: [pedido_turno_sin_destino]
-      context_areas: [appointments]
+      phrases:
+        - quiero un turno
+        - necesito un turno
+        - sacar un turno
+        - agendar un turno
+      context_areas: [scheduling]
     cta_intent_ids:
       - turnos.crear-como-paciente
       - atencion.necesito-atencion
@@ -90,7 +95,7 @@ entries:
         - cita en
         - turno para mí
         - solicita un turno para mí
-      context_areas: [appointments]
+      context_areas: [scheduling]
 
   # Pregunta de plazos/reglas ≠ ejecutar cancelación.
   - id: turnos-politica-autogestion
@@ -107,7 +112,7 @@ entries:
         - política de cancelación
         - puedo cancelar por app
         - reglas de cancelación
-      context_areas: [appointments]
+      context_areas: [scheduling]
 
   - id: turnos-cancelar-paciente
     tool_type: intent
@@ -122,7 +127,7 @@ entries:
         - anular turno
         - dar de baja turno
         - no puedo ir al turno
-      context_areas: [appointments]
+      context_areas: [scheduling]
 
   - id: laboratorio-mis-resultados
     tool_type: intent
@@ -137,7 +142,7 @@ entries:
         - resultados de laboratorio
         - informes de laboratorio
         - ver mis estudios
-      context_areas: [diagnostics]
+      context_areas: [clinical]
 
   # Pasados ≠ próximos pendientes.
   - id: turnos-historial-paciente
@@ -156,7 +161,7 @@ entries:
         - citas anteriores
         - citas pasadas
         - mis turnos pasados
-      context_areas: [appointments]
+      context_areas: [scheduling]
 
   - id: turnos-ver-paciente
     tool_type: intent
@@ -172,7 +177,7 @@ entries:
         - próximo turno
         - mis citas
         - turnos pendientes
-      context_areas: [appointments]
+      context_areas: [scheduling]
 
   - id: turnos-ultimo-en-oferta
     tool_type: intent
@@ -186,7 +191,7 @@ entries:
         - cuándo fui al
         - última vez al dentista
         - cuándo fue la última vez
-      context_areas: [appointments]
+      context_areas: [scheduling]
 
   # Resumen clínico de la última consulta (≠ última vez en oferta / ≠ turnos pasados).
   - id: atencion-ultima-resumen
@@ -203,7 +208,7 @@ entries:
         - última consulta
         - resumen de la consulta
         - mi última consulta
-      context_areas: [encounters]
+      context_areas: [clinical]
 
   - id: atencion-mis-consultas
     tool_type: intent
@@ -219,7 +224,7 @@ entries:
         - atenciones anteriores
         - consultas anteriores
         - resumen de atención
-      context_areas: [encounters]
+      context_areas: [clinical]
 
   - id: llegar-tarde-politicas
     tool_type: aspect
@@ -229,7 +234,7 @@ entries:
     triggers:
       tags: [llegar_tarde, tolerancia]
       phrases: [llego tarde, llegar tarde, me esperan, voy tarde, minutos tarde]
-      context_areas: [appointments]
+      context_areas: [scheduling]
 
   - id: llegar-tarde-cita-actual
     tool_type: aspect
@@ -239,7 +244,7 @@ entries:
     triggers:
       tags: [llegar_tarde]
       phrases: [llego tarde, llegar tarde, voy tarde, mi turno, mi cita]
-      context_areas: [appointments]
+      context_areas: [scheduling]
     required_anchors: [subject_persona]
 
   - id: articulo-representacion
@@ -250,7 +255,7 @@ entries:
     triggers:
       tags: [representacion, tutela, representante]
       phrases: [representación, operar por mi hijo, vincular menor, designar representante, tutor]
-      context_areas: [representation]
+      context_areas: [person]
       keywords: [sobrino, sobrina, hijo, hija, menor, tutela]
 
   - id: fuera-his-servicios-inexistentes

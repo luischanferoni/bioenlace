@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|--------|
 | Slug | `arbol-espejo-dominios` |
-| Estado | Fases 1–4 implementadas (falta smoke QA) — Fases 5-6 pendientes |
+| Estado | Fases 1–5 implementadas (falta smoke QA + aplicar sugerencia prompt preprocess) — Fase 6 pendiente |
 | Dueño | Arquitectura / API / asistente |
 | Objetivo | Carga cognitiva extrínseca: que la misma palabra de dominio se pueda seguir por el árbol en **todas** las capas, sin mapas intermedios |
 

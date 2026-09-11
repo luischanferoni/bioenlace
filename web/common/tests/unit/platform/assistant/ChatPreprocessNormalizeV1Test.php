@@ -13,8 +13,8 @@ class ChatPreprocessNormalizeV1Test extends Unit
             'normalized_text' => '¿Voy a tener problemas si llego 10 minutos tarde?',
             'necesidad_usuario' => 'Saber si hay problema por llegar tarde.',
             'routing_hint' => 'pedido_claro',
-            'tags' => ['llegar_tarde', 'appointments'],
-            'context_areas' => ['appointments'],
+            'tags' => ['llegar_tarde', 'scheduling'],
+            'context_areas' => ['scheduling'],
             'extractions' => [
                 ['span' => '10 minutos', 'category' => 'servicio', 'synonyms' => []],
             ],
@@ -23,8 +23,8 @@ class ChatPreprocessNormalizeV1Test extends Unit
 
         $this->assertSame('pedido_claro', $out['routing_hint']);
         $this->assertSame('operational', $out['user_goal']);
-        $this->assertSame(['llegar_tarde', 'appointments'], $out['tags']);
-        $this->assertSame(['appointments'], $out['context_areas']);
+        $this->assertSame(['llegar_tarde', 'scheduling'], $out['tags']);
+        $this->assertSame([], $out['context_areas']);
         $this->assertSame(['Saber si hay problema por llegar tarde.'], $out['necesidades_usuario']);
         $this->assertCount(1, $out['extractions']);
     }
@@ -40,7 +40,7 @@ class ChatPreprocessNormalizeV1Test extends Unit
             ],
             'routing_hint' => 'pedido_claro_multiple',
             'tags' => [],
-            'context_areas' => ['appointments'],
+            'context_areas' => ['scheduling'],
             'extractions' => [],
         ], 'fallback');
 
@@ -55,9 +55,9 @@ class ChatPreprocessNormalizeV1Test extends Unit
 
     public function testNormalizeTagsSanitizesCaseAndSpaces(): void
     {
-        $tags = ChatPreprocessService::normalizeTags(['Llegar Tarde', ' appointments ']);
+        $tags = ChatPreprocessService::normalizeTags(['Llegar Tarde', ' scheduling ']);
 
-        $this->assertSame(['llegar_tarde', 'appointments'], $tags);
+        $this->assertSame(['llegar_tarde', 'scheduling'], $tags);
     }
 
     public function testLegacyUserGoalMapsToRoutingHint(): void
@@ -102,33 +102,18 @@ class ChatPreprocessNormalizeV1Test extends Unit
         $this->assertSame('sin_pedido', $out['routing_hint']);
     }
 
-    public function testSymptomStripsClinicalRecordAreaAndTag(): void
+    public function testNormalizeIgnoresAiContextAreas(): void
     {
         $out = ChatPreprocessService::normalizeFromAi([
             'normalized_text' => 'me duele la cabeza desde ayer',
             'necesidad_usuario' => 'Alivio o orientación por dolor de cabeza.',
             'routing_hint' => 'sin_pedido',
-            'tags' => ['clinical_record', 'dolor'],
-            'context_areas' => ['clinical_record'],
+            'tags' => ['dolor', 'sintoma'],
+            'context_areas' => ['clinical', 'scheduling'],
             'extractions' => [],
         ], 'me duele la cabeza desde ayer');
 
         $this->assertSame([], $out['context_areas']);
-        $this->assertSame(['dolor'], $out['tags']);
-    }
-
-    public function testExplicitClinicalRecordQuestionKeepsArea(): void
-    {
-        $out = ChatPreprocessService::normalizeFromAi([
-            'normalized_text' => 'quiero ver mis alergias en la historia clinica',
-            'necesidad_usuario' => 'Consultar alergias en HC.',
-            'routing_hint' => 'pedido_claro',
-            'tags' => ['clinical_record'],
-            'context_areas' => ['clinical_record'],
-            'extractions' => [],
-        ], 'quiero ver mis alergias en la historia clinica');
-
-        $this->assertSame(['clinical_record'], $out['context_areas']);
-        $this->assertContains('clinical_record', $out['tags']);
+        $this->assertSame(['dolor', 'sintoma'], $out['tags']);
     }
 }

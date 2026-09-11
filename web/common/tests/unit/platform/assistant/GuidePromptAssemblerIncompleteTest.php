@@ -21,7 +21,7 @@ class GuidePromptAssemblerIncompleteTest extends Unit
             [
                 'necesidad_usuario' => 'Saber si hay problema por llegar 10 minutos tarde.',
                 'normalized_text' => '¿Voy a tener problemas si llego 10 minutos tarde?',
-                'context_areas' => ['appointments'],
+                'context_areas' => ['scheduling'],
             ],
             '¿Voy a tener problemas si llego 10 minutos tarde?',
             0,
@@ -34,7 +34,7 @@ class GuidePromptAssemblerIncompleteTest extends Unit
         $this->assertStringContainsString('Saber si hay problema por llegar 10 minutos tarde.', $prompt);
         $this->assertStringContainsString('Ambito/s del sistema de información hospitalaria', $prompt);
         $this->assertStringContainsString('Citas y turnos', $prompt);
-        $this->assertStringNotContainsString('appointments —', $prompt);
+        $this->assertStringNotContainsString('scheduling —', $prompt);
         $this->assertStringNotContainsString('{necesidad_usuario}', $prompt);
     }
 }

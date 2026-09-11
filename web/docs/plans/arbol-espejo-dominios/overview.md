@@ -8,7 +8,7 @@ Tres manifestaciones concretas:
 
 1. **Eje inconsistente por capa.** `controllers/clinical/` existe, pero `TurnosController` está plano. `models/Clinical/` existe, pero hay 143 modelos planos. `metadata/bioenlace/` pone `clinical/` (dominio) al lado de `assistant/` (plataforma).
 2. **Mapas que sustituían la forma faltante.** ~~`UiJsonDomainMetadata::ENTITY_DOMAINS`~~ — resuelto en Fase 3: el dominio se lee del árbol (`UiJsonDomainIndex` / `IntentSchemaPaths::domainForIntentId`).
-3. **Catálogos desconectados.** ~~`preprocess-extraction-categories.yaml`~~ — resuelto en Fase 4: ids desde `declaredEntities()` de cada dominio, texto en YAML. Queda `context-his-areas.yaml` (Fase 5: área = carpeta del intent).
+3. **Catálogos desconectados.** ~~`preprocess-extraction-categories.yaml`~~ — resuelto en Fase 4. ~~`context-his-areas.yaml`~~ — resuelto en Fase 5: área = carpeta del intent (o solo-contexto).
 
 ## Objetivo
 

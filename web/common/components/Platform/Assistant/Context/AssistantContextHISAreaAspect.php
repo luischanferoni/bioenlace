@@ -19,22 +19,22 @@ final class AssistantContextHISAreaAspect
      */
     private const ASPECTS = [
         self::APPOINTMENT_CURRENT => [
-            'area' => 'appointments',
+            'area' => 'scheduling',
             'priority' => 10,
             'implemented' => true,
         ],
         self::SITE_APPOINTMENT_POLICIES => [
-            'area' => 'appointments',
+            'area' => 'scheduling',
             'priority' => 30,
             'implemented' => true,
         ],
         self::APPOINTMENT_SCHEDULING_SETUP => [
-            'area' => 'appointments',
+            'area' => 'scheduling',
             'priority' => 25,
             'implemented' => true,
         ],
         self::APPOINTMENT_HISTORY_SUBJECT_AT_SITE => [
-            'area' => 'appointments',
+            'area' => 'scheduling',
             'priority' => 40,
             'implemented' => true,
         ],

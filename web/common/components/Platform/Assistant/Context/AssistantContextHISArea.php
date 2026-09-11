@@ -6,19 +6,19 @@ use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
 use common\components\Platform\Core\Product\ProductMetadataPaths;
 
 /**
- * Áreas top-level del HIS expuestas al preprocess (lista cerrada).
+ * Áreas de contexto del asistente (lista cerrada).
  *
- * Source of truth: {@see catalog/context-his-areas.yaml}.
+ * Source of truth de **textos**: {@see catalog/context-his-areas.yaml}.
+ * Los ids de dominio espejan carpetas `metadata/bioenlace/<dominio>/`;
+ * `product` y `geo_resources` son solo-contexto (sin intents).
  */
 final class AssistantContextHISArea
 {
-    public const APPOINTMENTS = 'appointments';
-    public const ENCOUNTERS = 'encounters';
-    public const CLINICAL_RECORD = 'clinical_record';
-    public const DIAGNOSTICS = 'diagnostics';
-    public const MEDICATION = 'medication';
-    public const REPRESENTATION = 'representation';
-    public const COVERAGE = 'coverage';
+    public const SCHEDULING = 'scheduling';
+    public const CLINICAL = 'clinical';
+    public const PERSON = 'person';
+    public const ORGANIZATION = 'organization';
+    public const PLATFORM = 'platform';
     public const PRODUCT = 'product';
     public const GEO_RESOURCES = 'geo_resources';
 
@@ -27,6 +27,9 @@ final class AssistantContextHISArea
 
     /** @var array<string, string>|null */
     private static ?array $descriptionCache = null;
+
+    /** @var array<string, true>|null */
+    private static ?array $contextOnlyCache = null;
 
     /**
      * @return list<string>
@@ -66,9 +69,37 @@ final class AssistantContextHISArea
         return self::$idsCache ?? [];
     }
 
+    /**
+     * Áreas con intents (excluye solo-contexto).
+     *
+     * @return list<string>
+     */
+    public static function domainAreas(): array
+    {
+        $out = [];
+        foreach (self::all() as $id) {
+            if (!self::isContextOnly($id)) {
+                $out[] = $id;
+            }
+        }
+
+        return $out;
+    }
+
     public static function isValid(string $id): bool
     {
         return in_array(trim($id), self::all(), true);
+    }
+
+    public static function isContextOnly(string $id): bool
+    {
+        $id = trim($id);
+        if ($id === '') {
+            return false;
+        }
+        self::loadCatalog();
+
+        return isset(self::$contextOnlyCache[$id]);
     }
 
     public static function description(string $id): string
@@ -100,6 +131,7 @@ final class AssistantContextHISArea
     {
         self::$idsCache = null;
         self::$descriptionCache = null;
+        self::$contextOnlyCache = null;
     }
 
     private static function loadCatalog(): void
@@ -113,22 +145,32 @@ final class AssistantContextHISArea
         if (!is_array($raw)) {
             self::$idsCache = [];
             self::$descriptionCache = [];
+            self::$contextOnlyCache = [];
 
             return;
         }
 
         $ids = [];
         $descriptions = [];
-        foreach ($raw as $id => $desc) {
+        $contextOnly = [];
+        foreach ($raw as $id => $value) {
             $id = trim((string) $id);
             if ($id === '') {
                 continue;
             }
             $ids[] = $id;
-            $descriptions[$id] = trim((string) $desc);
+            if (is_array($value)) {
+                $descriptions[$id] = trim((string) ($value['text'] ?? $value['description'] ?? ''));
+                if (!empty($value['context_only'])) {
+                    $contextOnly[$id] = true;
+                }
+            } else {
+                $descriptions[$id] = trim((string) $value);
+            }
         }
 
         self::$idsCache = $ids;
         self::$descriptionCache = $descriptions;
+        self::$contextOnlyCache = $contextOnly;
     }
 }

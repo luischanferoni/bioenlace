@@ -5,7 +5,9 @@ namespace common\components\Platform\Assistant\Planning;
 use common\components\Platform\Assistant\Catalog\SmartCatalogEntry;
 use common\components\Platform\Assistant\Catalog\SmartCatalogMatchResult;
 use common\components\Platform\Assistant\Catalog\SmartCatalogMatchService;
+use common\components\Platform\Assistant\Context\AssistantContextAreaDerivation;
 use common\components\Platform\Assistant\Context\AssistantContextAnchorResolver;
+use common\components\Platform\Assistant\Context\AssistantContextHISArea;
 use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
 use common\components\Platform\Assistant\Preprocess\PreprocessRoutingHintCatalog;
 use common\components\Platform\Core\Product\ProductMetadataPaths;
@@ -22,6 +24,10 @@ final class SmartCatalogRoutingService
     {
         $firstIa = AssistantFirstIaAdapter::fromPreprocess($preprocess, $rawContent);
         $match = SmartCatalogMatchService::match($firstIa, $userId);
+        $firstIa['context_areas'] = self::mergeDerivedAreas(
+            is_array($firstIa['context_areas']) ? $firstIa['context_areas'] : [],
+            AssistantContextAreaDerivation::fromMatch($match)
+        );
         $extractions = is_array($firstIa['extractions']) ? $firstIa['extractions'] : [];
         $anchors = AssistantContextAnchorResolver::resolve($userId, $extractions);
         $areas = is_array($firstIa['context_areas']) ? $firstIa['context_areas'] : [];
@@ -181,5 +187,28 @@ final class SmartCatalogRoutingService
         $text = AssistantMetadataLoader::dotString($config, 'fuera_de_his_text');
 
         return $text !== '' ? $text : 'No puedo ayudarte con esa consulta desde el asistente del sistema de salud.';
+    }
+
+    /**
+     * Conserva áreas solo-contexto forzadas por PHP y suma dominios del match.
+     *
+     * @param list<string> $existing
+     * @param list<string> $derived
+     * @return list<string>
+     */
+    private static function mergeDerivedAreas(array $existing, array $derived): array
+    {
+        $kept = [];
+        foreach ($existing as $area) {
+            if (!is_string($area)) {
+                continue;
+            }
+            $area = trim($area);
+            if ($area !== '' && AssistantContextHISArea::isContextOnly($area)) {
+                $kept[] = $area;
+            }
+        }
+
+        return AssistantContextHISArea::sortByProductPriority(array_merge($kept, $derived));
     }
 }

@@ -28,14 +28,14 @@ class AssistantThreadPhase04Test extends Unit
             'normalized_text' => 'llego tarde',
             'user_goal' => 'guide',
             'action_text' => '',
-            'context_areas' => ['appointments'],
+            'context_areas' => ['scheduling'],
             'extractions' => [],
         ]);
         $r = AssistantThreadStateService::observe(0, 'guide', 'llego 10 min tarde');
-        $this->assertSame('guide:appointments', $r['thread_tag']);
+        $this->assertSame('guide:scheduling', $r['thread_tag']);
         $focus = AssistantThreadContext::guideFocus();
         $this->assertNotNull($focus);
-        $this->assertSame('appointments', $focus['primary_area']);
+        $this->assertSame('scheduling', $focus['primary_area']);
     }
 
     public function testThreadStateYamlExists(): void

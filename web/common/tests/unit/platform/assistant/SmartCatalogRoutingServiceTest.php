@@ -25,7 +25,7 @@ class SmartCatalogRoutingServiceTest extends Unit
             'normalized_text' => 'contame sobre representacion de mi hijo',
             'routing_hint' => 'pedido_claro',
             'tags' => ['representacion', 'tutela'],
-            'context_areas' => ['representation'],
+            'context_areas' => ['person'],
             'extractions' => [],
         ], 0);
 
@@ -42,7 +42,7 @@ class SmartCatalogRoutingServiceTest extends Unit
             'normalized_text' => 'quiero un turno con el cardiologo',
             'routing_hint' => 'pedido_claro',
             'tags' => ['sacar_turno'],
-            'context_areas' => ['appointments'],
+            'context_areas' => ['scheduling'],
             'extractions' => [],
         ], 0);
 
@@ -58,7 +58,7 @@ class SmartCatalogRoutingServiceTest extends Unit
             'normalized_text' => 'quiero un turno',
             'routing_hint' => 'pedido_claro',
             'tags' => ['pedido_turno_sin_destino'],
-            'context_areas' => ['appointments'],
+            'context_areas' => ['scheduling'],
             'extractions' => [],
         ], 0);
 
@@ -94,7 +94,7 @@ class SmartCatalogRoutingServiceTest extends Unit
             'normalized_text' => 'cuales son mis turnos',
             'routing_hint' => 'pedido_claro',
             'tags' => ['mis_turnos'],
-            'context_areas' => ['appointments'],
+            'context_areas' => ['scheduling'],
             'extractions' => [],
         ], 0);
 
@@ -109,8 +109,8 @@ class SmartCatalogRoutingServiceTest extends Unit
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'turnos',
             'routing_hint' => 'pedido_claro',
-            'tags' => ['appointments'],
-            'context_areas' => ['appointments'],
+            'tags' => ['scheduling'],
+            'context_areas' => ['scheduling'],
             'intent_ids_hint' => [],
             'extractions' => [],
         ], 0);
@@ -127,8 +127,8 @@ class SmartCatalogRoutingServiceTest extends Unit
             'normalized_text' => 'quiero informar un efecto adverso de una medicacion',
             'necesidad_usuario' => 'Informar un efecto adverso de una medicación.',
             'routing_hint' => 'pedido_claro',
-            'tags' => ['sintoma', 'medicamento', 'necesito_atencion', 'appointments'],
-            'context_areas' => ['appointments', 'medication'],
+            'tags' => ['sintoma', 'medicamento', 'necesito_atencion', 'scheduling'],
+            'context_areas' => ['scheduling', 'medication'],
             'intent_ids_hint' => [
                 'atencion.necesito-atencion',
                 'turnos.crear-como-paciente',
@@ -163,8 +163,8 @@ class SmartCatalogRoutingServiceTest extends Unit
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => '¿Voy a tener problemas si llego 10 minutos tarde?',
             'routing_hint' => 'pedido_claro',
-            'tags' => ['llegar_tarde', 'appointments'],
-            'context_areas' => ['appointments'],
+            'tags' => ['llegar_tarde', 'scheduling'],
+            'context_areas' => ['scheduling'],
             'extractions' => [
                 ['span' => '10 minutos', 'category' => 'servicio', 'synonyms' => []],
             ],

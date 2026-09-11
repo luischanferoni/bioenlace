@@ -41,13 +41,13 @@ class GuidePromptAssemblerTest extends Unit
                 null,
                 null,
                 null,
-                [AssistantContextHISArea::APPOINTMENTS]
+                [AssistantContextHISArea::SCHEDULING]
             ),
         ], []);
 
         $section = GuideIntentSemanticsFilter::formatPromptSection(
             $catalog,
-            [AssistantContextHISArea::APPOINTMENTS]
+            [AssistantContextHISArea::SCHEDULING]
         );
 
         $this->assertStringContainsString('Turno con un especialista:', $section);
@@ -64,14 +64,14 @@ class GuidePromptAssemblerTest extends Unit
             'necesidad_usuario' => 'Saber consecuencias de llegar tarde.',
             'user_goal' => 'guide',
             'action_text' => '',
-            'context_areas' => [AssistantContextHISArea::APPOINTMENTS],
+            'context_areas' => [AssistantContextHISArea::SCHEDULING],
             'extractions' => [],
         ]);
 
         $prompt = GuidePromptAssembler::build(
             'llego tarde',
             0,
-            new GuideFocusState(AssistantContextHISArea::APPOINTMENTS, [AssistantContextHISArea::APPOINTMENTS]),
+            new GuideFocusState(AssistantContextHISArea::SCHEDULING, [AssistantContextHISArea::SCHEDULING]),
             null,
             null
         );

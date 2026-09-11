@@ -11,12 +11,12 @@ class ChatPreprocessPromptTest extends Unit
     {
         $prompt = ChatPreprocessService::stablePromptPrefix();
 
-        $this->assertStringContainsString('Información Hospitalaria', $prompt);
         $this->assertStringContainsString('routing_hint', $prompt);
         $this->assertStringContainsString('necesidad_usuario', $prompt);
         $this->assertStringContainsString('tags', $prompt);
         $this->assertStringContainsString('context_areas', $prompt);
-        $this->assertStringContainsString('appointments', $prompt);
+        $this->assertStringContainsString('scheduling', $prompt);
+        $this->assertStringContainsString('Citas, agenda y turnos', $prompt);
         $this->assertStringContainsString('pedido_claro', $prompt);
         $this->assertStringContainsString('pedido_fuera_his', $prompt);
         $this->assertStringContainsString('sin_pedido', $prompt);

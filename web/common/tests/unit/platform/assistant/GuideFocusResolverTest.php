@@ -12,29 +12,29 @@ class GuideFocusResolverTest extends Unit
     public function testResolvesPrimaryFromPreprocessAreas(): void
     {
         $state = GuideFocusResolver::resolve(
-            [AssistantContextHISArea::CLINICAL_RECORD, AssistantContextHISArea::APPOINTMENTS],
+            [AssistantContextHISArea::CLINICAL, AssistantContextHISArea::SCHEDULING],
             null,
             true
         );
-        $this->assertSame(AssistantContextHISArea::APPOINTMENTS, $state->primaryArea);
-        $this->assertSame('guide:appointments', $state->threadTag());
+        $this->assertSame(AssistantContextHISArea::SCHEDULING, $state->primaryArea);
+        $this->assertSame('guide:scheduling', $state->threadTag());
     }
 
     public function testCarriesPreviousFocusOnGreeting(): void
     {
         $prev = [
-            'primary_area' => AssistantContextHISArea::APPOINTMENTS,
-            'active_areas' => [AssistantContextHISArea::APPOINTMENTS],
+            'primary_area' => AssistantContextHISArea::SCHEDULING,
+            'active_areas' => [AssistantContextHISArea::SCHEDULING],
         ];
         $state = GuideFocusResolver::resolve([], $prev, true);
-        $this->assertSame(AssistantContextHISArea::APPOINTMENTS, $state->primaryArea);
+        $this->assertSame(AssistantContextHISArea::SCHEDULING, $state->primaryArea);
     }
 
     public function testNoCarryWhenDisabled(): void
     {
         $prev = [
-            'primary_area' => AssistantContextHISArea::APPOINTMENTS,
-            'active_areas' => [AssistantContextHISArea::APPOINTMENTS],
+            'primary_area' => AssistantContextHISArea::SCHEDULING,
+            'active_areas' => [AssistantContextHISArea::SCHEDULING],
         ];
         $state = GuideFocusResolver::resolve([], $prev, false);
         $this->assertTrue($state->isEmpty());
@@ -43,8 +43,8 @@ class GuideFocusResolverTest extends Unit
     public function testMetadataRoundtrip(): void
     {
         $state = new GuideFocusState(
-            AssistantContextHISArea::APPOINTMENTS,
-            [AssistantContextHISArea::APPOINTMENTS]
+            AssistantContextHISArea::SCHEDULING,
+            [AssistantContextHISArea::SCHEDULING]
         );
         $restored = GuideFocusState::fromMetadataArray($state->toMetadataArray());
         $this->assertNotNull($restored);

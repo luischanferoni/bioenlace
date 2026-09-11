@@ -24,8 +24,8 @@ class CatalogCtaResolverTest extends Unit
             'normalized_text' => 'Quiero un turno',
             'user_goal' => 'guide',
             'routing_hint' => 'pedido_claro',
-            'tags' => ['pedido_turno_sin_destino', 'appointments'],
-            'context_areas' => ['appointments'],
+            'tags' => ['pedido_turno_sin_destino', 'scheduling'],
+            'context_areas' => ['scheduling'],
             'extractions' => [],
         ], 1);
 
@@ -49,8 +49,8 @@ class CatalogCtaResolverTest extends Unit
             'normalized_text' => 'Quiero un turno',
             'user_goal' => 'guide',
             'routing_hint' => 'pedido_claro',
-            'tags' => ['pedido_turno_sin_destino', 'appointments'],
-            'context_areas' => ['appointments'],
+            'tags' => ['pedido_turno_sin_destino', 'scheduling'],
+            'context_areas' => ['scheduling'],
             'extractions' => [],
         ], 1);
 

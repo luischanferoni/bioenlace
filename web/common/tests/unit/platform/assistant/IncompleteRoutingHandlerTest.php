@@ -21,7 +21,7 @@ class IncompleteRoutingHandlerTest extends Unit
             'ok' => true,
             'normalized_text' => '¿Voy a tener problemas si llego 10 minutos tarde?',
             'user_goal' => 'guide',
-            'context_areas' => ['appointments'],
+            'context_areas' => ['scheduling'],
             'extractions' => [
                 ['span' => '10 minutos', 'category' => 'servicio', 'synonyms' => []],
             ],
@@ -43,8 +43,8 @@ class IncompleteRoutingHandlerTest extends Unit
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => '¿Voy a tener problemas si llego 10 minutos tarde?',
             'routing_hint' => 'pedido_claro',
-            'tags' => ['llegar_tarde', 'appointments'],
-            'context_areas' => ['appointments'],
+            'tags' => ['llegar_tarde', 'scheduling'],
+            'context_areas' => ['scheduling'],
             'extractions' => [
                 ['span' => '10 minutos', 'category' => 'servicio', 'synonyms' => []],
             ],
@@ -60,8 +60,8 @@ class IncompleteRoutingHandlerTest extends Unit
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => '¿Voy a tener problemas si llego 10 minutos tarde?',
             'routing_hint' => 'pedido_claro',
-            'tags' => ['llegar_tarde', 'appointments'],
-            'context_areas' => ['appointments'],
+            'tags' => ['llegar_tarde', 'scheduling'],
+            'context_areas' => ['scheduling'],
             'extractions' => [],
         ], 0);
 
@@ -86,8 +86,8 @@ class IncompleteRoutingHandlerTest extends Unit
             'normalized_text' => '¿Voy a tener problemas si llego 10 minutos tarde?',
             'routing_hint' => 'pedido_claro',
             'necesidad_usuario' => 'Saber si hay problema por llegar tarde.',
-            'tags' => ['llegar_tarde', 'appointments'],
-            'context_areas' => ['appointments'],
+            'tags' => ['llegar_tarde', 'scheduling'],
+            'context_areas' => ['scheduling'],
             'extractions' => [],
         ], 0);
 

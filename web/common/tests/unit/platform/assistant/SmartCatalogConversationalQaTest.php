@@ -51,7 +51,7 @@ class SmartCatalogConversationalQaTest extends Unit
                 [
                     'routing_hint' => 'pedido_claro',
                     'tags' => ['sacar_turno'],
-                    'context_areas' => ['appointments'],
+                    'context_areas' => ['scheduling'],
                 ],
                 ['clara'],
             ],
@@ -60,7 +60,7 @@ class SmartCatalogConversationalQaTest extends Unit
                 [
                     'routing_hint' => 'pedido_claro',
                     'tags' => ['pedido_turno_sin_destino'],
-                    'context_areas' => ['appointments'],
+                    'context_areas' => ['scheduling'],
                 ],
                 ['incompletas'],
             ],
@@ -77,8 +77,8 @@ class SmartCatalogConversationalQaTest extends Unit
                 'cuales son mis turnos',
                 [
                     'routing_hint' => 'pedido_claro',
-                    'tags' => ['mis_turnos', 'appointments'],
-                    'context_areas' => ['appointments'],
+                    'tags' => ['mis_turnos', 'scheduling'],
+                    'context_areas' => ['scheduling'],
                 ],
                 ['clara'],
             ],
@@ -86,8 +86,8 @@ class SmartCatalogConversationalQaTest extends Unit
                 'llego 10 min tarde hay problema',
                 [
                     'routing_hint' => 'pedido_claro',
-                    'tags' => ['llegar_tarde', 'appointments'],
-                    'context_areas' => ['appointments'],
+                    'tags' => ['llegar_tarde', 'scheduling'],
+                    'context_areas' => ['scheduling'],
                 ],
                 ['incompletas'],
             ],
@@ -96,7 +96,7 @@ class SmartCatalogConversationalQaTest extends Unit
                 [
                     'routing_hint' => 'pedido_claro',
                     'tags' => ['representacion', 'tutela'],
-                    'context_areas' => ['representation'],
+                    'context_areas' => ['person'],
                 ],
                 ['clara', 'dudosa', 'incompletas'],
             ],

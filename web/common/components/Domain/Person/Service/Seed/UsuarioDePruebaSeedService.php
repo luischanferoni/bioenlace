@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components;
+namespace common\components\Domain\Person\Service\Seed;
 
 use Yii;
 use common\models\Person\Persona;
@@ -10,7 +10,7 @@ use common\models\Platform\Permission\AuthRole;
 /**
  * Alta única de persona + usuario de prueba (sin Didit ni MPI). No actualiza registros existentes.
  */
-final class CrearUsuarioDePruebaHelper
+final class UsuarioDePruebaSeedService
 {
     /** Documento reservado para entornos de desarrollo; cambiar si ya existe en tu base. */
     public const DOCUMENTO = '39999901';
@@ -20,7 +20,7 @@ final class CrearUsuarioDePruebaHelper
     /**
      * @return array{ok:bool, message:string, persona?:array, user?:array|null, errors?:mixed}
      */
-    public static function crear(): array
+    public function crear(): array
     {
         $dni = self::DOCUMENTO;
         $username = 'usr_prueba_' . $dni;
@@ -95,7 +95,7 @@ final class CrearUsuarioDePruebaHelper
             if ($tx->isActive) {
                 $tx->rollBack();
             }
-            Yii::error('CrearUsuarioDePruebaHelper: ' . $e->getMessage(), __METHOD__);
+            Yii::error('UsuarioDePruebaSeedService: ' . $e->getMessage(), __METHOD__);
             return [
                 'ok' => false,
                 'message' => 'Error inesperado: ' . $e->getMessage(),

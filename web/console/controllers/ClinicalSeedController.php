@@ -2,7 +2,7 @@
 
 namespace console\controllers;
 
-use common\components\CrearUsuarioDePruebaHelper;
+use common\components\Domain\Person\Service\Seed\UsuarioDePruebaSeedService;
 use common\components\Domain\Clinical\Laboratory\Service\LaboratoryDemoSeedService;
 use common\components\Domain\Clinical\Laboratory\Service\LaboratoryResultQueryService;
 use common\components\Domain\Clinical\CarePlan\Reminder\CarePlanReminderDemoTimingService;
@@ -185,16 +185,16 @@ class ClinicalSeedController extends Controller
     }
 
     /**
-     * Crea persona + usuario de prueba genérico (documento {@see CrearUsuarioDePruebaHelper::DOCUMENTO}).
+     * Crea persona + usuario de prueba genérico (documento {@see UsuarioDePruebaSeedService::DOCUMENTO}).
      */
     public function actionUsuarioDePrueba(): int
     {
         $this->stdout(
-            'Creando usuario de prueba (documento ' . CrearUsuarioDePruebaHelper::DOCUMENTO . ")...\n",
+            'Creando usuario de prueba (documento ' . UsuarioDePruebaSeedService::DOCUMENTO . ")...\n",
             Console::FG_YELLOW
         );
 
-        $result = CrearUsuarioDePruebaHelper::crear();
+        $result = (new UsuarioDePruebaSeedService())->crear();
 
         if (!$result['ok']) {
             $this->stderr($result['message'] . "\n", Console::FG_RED);

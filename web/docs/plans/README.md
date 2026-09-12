@@ -25,12 +25,12 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Captura actor + enfermería | `captura-actor-enfermeria/` | Quitar alias ConsultasConfiguracion; overlay PES + CarePlan; app triage |
 | Admisión: identidad + ventanilla | `admision-identidad-ventanilla/` | Ingreso DNI (sin alta libre); Didit; NN; sesión de mostrador |
 | RBAC capabilities UI nativa | `rbac-capabilities-ui-nativa/` | Permisos assignables fuera de intents; guardia + encounter + panel |
-| Forma interna de Domain | `domain-forma-interna/` | Gramática Service/subdominio/roles; Access→PedidoAtencion; sin tercera raíz |
 
 ## Planes archivados (carpeta eliminada)
 
 | Plan | Documentación estable |
 |------|------------------------|
+| Forma interna de Domain | [arquitectura/common-components.md](../arquitectura/common-components.md) + `common/components/Domain/README.md` + `Domain/Integrations/README.md` |
 | Asistente — catálogo inteligente | [decisions/asistente-catalogo-inteligente.md](../decisions/asistente-catalogo-inteligente.md) + [producto/asistente-y-chat.md](../producto/asistente-y-chat.md) + [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md) |
 | Árbol espejo por dominio | [arquitectura/arbol-espejo-dominios.md](../arquitectura/arbol-espejo-dominios.md) + [arquitectura/common-components.md](../arquitectura/common-components.md) |
 | Canal guide (fusión clinical + informational) | [asistente-y-chat.md](../producto/asistente-y-chat.md) + [decisions/asistente-canal-guide.md](../decisions/asistente-canal-guide.md) + QA [asistente-consultas.md](../qa/paciente/asistente-consultas.md) |

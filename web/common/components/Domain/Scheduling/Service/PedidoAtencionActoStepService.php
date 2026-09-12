@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
-use common\components\Domain\Clinical\Access\PedidoAtencionPacienteService;
+use common\components\Domain\Clinical\PedidoAtencion\Service\PedidoAtencionPacienteService;
 
 /**
  * Paso flow-only: elección de acto clínico (estudio/práctica) en Solicitar Atención.

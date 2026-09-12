@@ -2,9 +2,9 @@
 
 namespace common\components\Domain\Integrations\Scheduling\Service;
 
-use common\components\Domain\Integrations\Scheduling\FhirScheduleActorExtractor;
-use common\components\Domain\Integrations\Scheduling\FhirSchedulePesResolver;
-use common\components\Domain\Integrations\Scheduling\ScheduleActorSet;
+use common\components\Domain\Integrations\Scheduling\Service\FhirScheduleActorExtractor;
+use common\components\Domain\Integrations\Scheduling\Service\FhirSchedulePesResolver;
+use common\components\Domain\Integrations\Scheduling\Service\ScheduleActorSet;
 use common\components\Domain\Integrations\Scheduling\Mapper\FhirAppointmentStatusMapper;
 use common\components\Domain\Integrations\Scheduling\Dto\FhirAppointmentInboundDto;
 use common\models\Integrations\IntegrationScheduleLink;
@@ -86,13 +86,13 @@ final class IntegrationScheduleLinkService
      */
     public function previewFromScheduleBundle(string $sourceSystem, array $scheduleBundle): array
     {
-        $schedules = \common\components\Domain\Integrations\Scheduling\Util\FhirBundleHelper::collectResources($scheduleBundle, 'Schedule');
+        $schedules = \common\components\Domain\Integrations\Scheduling\Service\FhirBundleHelper::collectResources($scheduleBundle, 'Schedule');
         $schedule = $schedules[0] ?? null;
         if ($schedule === null) {
             throw new \InvalidArgumentException('Bundle sin Schedule.');
         }
 
-        $scheduleId = \common\components\Domain\Integrations\Scheduling\Util\FhirBundleHelper::resourceId($schedule);
+        $scheduleId = \common\components\Domain\Integrations\Scheduling\Service\FhirBundleHelper::resourceId($schedule);
         $actors = (new FhirScheduleActorExtractor())->extractFromBundle($scheduleBundle);
         $resolution = $this->resolver->resolve($sourceSystem, $scheduleId, $actors);
 

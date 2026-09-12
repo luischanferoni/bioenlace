@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Integrations\Scheduling\Service;
 
-use common\components\Domain\Integrations\Scheduling\FhirSchedulingConnectorRegistry;
-use common\components\Domain\Integrations\Scheduling\Util\FhirBundleHelper;
+use common\components\Domain\Integrations\Scheduling\Service\FhirSchedulingConnectorRegistry;
+use common\components\Domain\Integrations\Scheduling\Service\FhirBundleHelper;
 use common\models\Integrations\IntegrationFhirSyncState;
 use Yii;
 

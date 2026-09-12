@@ -2,9 +2,9 @@
 
 namespace common\components\Domain\Organization\Service\ProfesionalEfectorServicio;
 
-use common\components\Domain\Integrations\Scheduling\FhirSchedulingConnectorRegistry;
+use common\components\Domain\Integrations\Scheduling\Service\FhirSchedulingConnectorRegistry;
 use common\components\Domain\Integrations\Scheduling\Service\IntegrationScheduleLinkService;
-use common\components\Domain\Integrations\Scheduling\Util\FhirBundleHelper;
+use common\components\Domain\Integrations\Scheduling\Service\FhirBundleHelper;
 use Yii;
 
 /**
@@ -63,7 +63,7 @@ final class FhirScheduleOnboardingUiService
         $bundle = $connector->readSchedule($scheduleId, ['Schedule:actor']);
         $linkService = new IntegrationScheduleLinkService();
         $preview = $linkService->previewFromScheduleBundle($source, $bundle);
-        $actors = (new \common\components\Domain\Integrations\Scheduling\FhirScheduleActorExtractor())
+        $actors = (new \common\components\Domain\Integrations\Scheduling\Service\FhirScheduleActorExtractor())
             ->extractFromBundle($bundle);
 
         $userId = Yii::$app->has('user', true) && !Yii::$app->user->isGuest ? (int) Yii::$app->user->id : 0;

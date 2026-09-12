@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Integrations\Scheduling\Service;
 
-use common\components\Domain\Integrations\Scheduling\FhirSchedulingConnectorRegistry;
+use common\components\Domain\Integrations\Scheduling\Service\FhirSchedulingConnectorRegistry;
 use common\components\Domain\Integrations\Scheduling\Mapper\FhirAppointmentStatusMapper;
 use common\models\Scheduling\Turno;
 use Yii;

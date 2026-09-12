@@ -43,7 +43,7 @@ return [
     ],
     /**
      * Didit — KYC (registro paciente/médico) y login biométrico.
-     * API key en params-local.php. Cliente: {@see \common\components\Domain\Integrations\Identity\DiditClient}.
+     * API key en params-local.php. Cliente: {@see \common\components\Domain\Integrations\Identity\Connector\DiditClient}.
      */
     'didit_base_url' => 'https://api.didit.me',
     'didit_verification_base_url' => 'https://verification.didit.me',
@@ -304,7 +304,7 @@ return [
 
     /**
      * Capacidades MPI/SEIPA habilitadas. renaper (identidad), coberturas y domicilio por defecto.
-     * {@see \common\components\Domain\Integrations\Mpi\MpiCapability}
+     * {@see \common\components\Domain\Integrations\Mpi\Service\MpiCapability}
      */
     'mpiCapabilities' => ['renaper', 'coberturas', 'domicilio'],
 

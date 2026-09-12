@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Person\Service;
 
-use common\components\Domain\Integrations\Mpi\MpiDomicilioGatewayService;
+use common\components\Domain\Integrations\Mpi\Service\MpiDomicilioGatewayService;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\models\Person\Persona;
 use common\models\Person\PersonaPacienteContexto;

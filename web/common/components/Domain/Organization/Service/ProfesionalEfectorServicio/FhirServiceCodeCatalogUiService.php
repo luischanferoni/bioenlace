@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Organization\Service\ProfesionalEfectorServicio;
 
-use common\components\Domain\Integrations\Scheduling\FhirHealthcareServiceCodeCatalog;
+use common\components\Domain\Integrations\Scheduling\Service\FhirHealthcareServiceCodeCatalog;
 use common\models\Organization\Servicio;
 use Yii;
 

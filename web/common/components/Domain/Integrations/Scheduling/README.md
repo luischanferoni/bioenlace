@@ -6,16 +6,16 @@ Documentación de producto: [interoperabilidad-agendamiento-fhir.md](../../../..
 
 | Componente | Rol |
 |------------|-----|
-| `MsalNisFhirSchedulingConnector` | HTTP FHIR R4 (GET + PUT Appointment) |
-| `FhirSchedulingConnectorRegistry` | Factory desde `params.fhirSchedulingInbound` |
-| `FhirSchedulePesResolver` | Schedule → PES (confianza) |
-| `FhirHealthcareServiceCodeCatalog` | Código servicio → `id_servicio` |
-| `TurnoInboundSyncService` | Appointment → espejo `turnos` |
-| `FhirSchedulingInboundPullService` | Pull incremental |
-| `FhirAppointmentOutboundSyncService` | Push `Appointment.status` |
-| `TurnoFhirOutboundNotifier` | Hook post-cambio de estado |
-| `IntegrationScheduleLinkService` | Onboarding verificado |
-| `FhirScheduleLinkReconcileService` | Detecta links `stale` |
+| `Connector/MsalNisFhirSchedulingConnector` | HTTP FHIR R4 (GET + PUT Appointment) |
+| `Service/FhirSchedulingConnectorRegistry` | Factory desde `params.fhirSchedulingInbound` |
+| `Service/FhirSchedulePesResolver` | Schedule → PES (confianza) |
+| `Service/FhirHealthcareServiceCodeCatalog` | Código servicio → `id_servicio` |
+| `Service/TurnoInboundSyncService` | Appointment → espejo `turnos` |
+| `Service/FhirSchedulingInboundPullService` | Pull incremental |
+| `Service/FhirAppointmentOutboundSyncService` | Push `Appointment.status` |
+| `Service/TurnoFhirOutboundNotifier` | Hook post-cambio de estado |
+| `Service/IntegrationScheduleLinkService` | Onboarding verificado |
+| `Service/FhirScheduleLinkReconcileService` | Detecta links `stale` |
 
 Plan de construcción (interno): `web/docs/plans/fhir-scheduling-inbound/`
 

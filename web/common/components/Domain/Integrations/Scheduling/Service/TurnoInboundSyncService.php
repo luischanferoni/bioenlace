@@ -4,11 +4,11 @@ namespace common\components\Domain\Integrations\Scheduling\Service;
 
 use common\components\Domain\Integrations\Scheduling\Contract\FhirSchedulingInboundConnector;
 use common\components\Domain\Integrations\Scheduling\Dto\FhirAppointmentInboundDto;
-use common\components\Domain\Integrations\Scheduling\FhirScheduleActorExtractor;
-use common\components\Domain\Integrations\Scheduling\FhirSchedulePesResolver;
+use common\components\Domain\Integrations\Scheduling\Service\FhirScheduleActorExtractor;
+use common\components\Domain\Integrations\Scheduling\Service\FhirSchedulePesResolver;
 use common\components\Domain\Integrations\Scheduling\Mapper\FhirAppointmentInboundMapper;
 use common\components\Domain\Integrations\Scheduling\Mapper\FhirAppointmentStatusMapper;
-use common\components\Domain\Integrations\Scheduling\Util\FhirBundleHelper;
+use common\components\Domain\Integrations\Scheduling\Service\FhirBundleHelper;
 use common\components\Domain\Scheduling\Service\TurnoAdvanceOfferAgent;
 use common\components\Domain\Scheduling\Service\TurnoLifecycleService;
 use common\components\Domain\Scheduling\Service\TurnoSlotClaimService;

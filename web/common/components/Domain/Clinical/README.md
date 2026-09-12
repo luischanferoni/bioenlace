@@ -10,6 +10,9 @@ Dominio FHIR clínico (Encounter, CarePlan, órdenes).
 | `Support/` | Metadatos JSON (`CarePlanProgramMeta`) |
 | `AiContext/` | Extracto acotado de HC para prompts (`PatientAiContextBuilder`) |
 | `Service/` | Negocio sin HTTP (`CarePlanService`, `CarePlanLifecycleService`, `EncounterAccessService`, …) |
+| `PedidoAtencion/Service/` | Pedido de atención (línea × acto, coding, capacity ECL) |
+| `Emergency/` | Guardia, triage |
+| `Inpatient/` | Internación operativa |
 | `Workflow/` | Flujos compuestos (`EncounterDocumentationService`) |
 | `Specialty/` | Odontología, oftalmología (Fase 7); ver [Specialty/README.md](Specialty/README.md) |
 | `Laboratory/` | Ingesta pull LIS FHIR → `diagnostic_report` / `observation` |

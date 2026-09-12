@@ -4,8 +4,8 @@ use yii\helpers\Html;
 
 use admin\assets\AppAsset;
 
-use common\components\Domain\Integrations\Sisse\NavSisse;
-use common\components\Domain\Integrations\Sisse\NavSisseHigh;
+use common\components\Domain\Integrations\Sisse\Service\NavSisse;
+use common\components\Domain\Integrations\Sisse\Service\NavSisseHigh;
 
 AppAsset::register($this);
 

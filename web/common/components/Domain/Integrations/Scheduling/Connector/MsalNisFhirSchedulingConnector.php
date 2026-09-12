@@ -4,7 +4,7 @@ namespace common\components\Domain\Integrations\Scheduling\Connector;
 
 use common\components\Domain\Integrations\Scheduling\Contract\FhirSchedulingInboundConnector;
 use common\components\Domain\Integrations\Scheduling\Exception\FhirSchedulingConnectorException;
-use common\components\Domain\Integrations\Scheduling\Util\FhirBundleHelper;
+use common\components\Domain\Integrations\Scheduling\Service\FhirBundleHelper;
 use Yii;
 use yii\base\Component;
 use yii\httpclient\Client;

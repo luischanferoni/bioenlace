@@ -40,6 +40,6 @@ El catálogo `servicios` debe modelar la **oferta de salud del efector** (Health
 ## Referencias
 
 - Glosario: [producto/glosario-servicio-pes-acto.md](../producto/glosario-servicio-pes-acto.md)
-- Código: `common/components/Domain/Clinical/Access/` (`CompositeLineaActoCatalog`, `EclCapacityCatalog`, `PedidoAtencionService`)
+- Código: `common/components/Domain/Clinical/PedidoAtencion/Service/` (`CompositeLineaActoCatalog`, `EclCapacityCatalog`, `PedidoAtencionService`)
 - Metadata: `common/metadata/bioenlace/clinical/pedido-atencion.yaml`
 - [fhir-clinical.md](./fhir-clinical.md)

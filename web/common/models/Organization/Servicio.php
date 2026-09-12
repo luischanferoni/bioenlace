@@ -342,7 +342,7 @@ class Servicio extends \yii\db\ActiveRecord
         if ($code === '') {
             return null;
         }
-        $system = trim((string) ($specialtySystem ?? \common\components\Domain\Clinical\Access\CodingSystems::SNOMED));
+        $system = trim((string) ($specialtySystem ?? \common\components\Domain\Clinical\PedidoAtencion\Service\CodingSystems::SNOMED));
         $query = self::find()
             ->andWhere(['specialty_code' => $code])
             ->andWhere(['acepta_turnos' => 'SI']);

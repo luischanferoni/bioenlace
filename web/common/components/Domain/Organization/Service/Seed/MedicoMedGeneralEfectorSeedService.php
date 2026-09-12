@@ -4,7 +4,7 @@ namespace common\components\Domain\Organization\Service\Seed;
 
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAltaService;
 use common\components\Domain\Person\Service\PersonCuilService;
-use common\components\Domain\Person\Util\CuilValidator;
+use common\components\Domain\Person\Service\CuilValidator;
 use common\models\Organization\Efector;
 use common\models\Person\Persona;
 use common\models\Organization\ProfesionalEfectorServicio;

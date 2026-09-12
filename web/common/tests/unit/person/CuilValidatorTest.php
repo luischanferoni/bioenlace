@@ -3,7 +3,7 @@
 namespace common\tests\unit\person;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Person\Util\CuilValidator;
+use common\components\Domain\Person\Service\CuilValidator;
 
 class CuilValidatorTest extends Unit
 {

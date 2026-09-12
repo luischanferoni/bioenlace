@@ -2,7 +2,6 @@
 
 namespace common\components\Domain\Person\Service;
 
-use common\components\Domain\Person\Util\CuilValidator;
 use common\models\Person\Persona;
 
 /**

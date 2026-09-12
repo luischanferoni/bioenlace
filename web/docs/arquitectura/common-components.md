@@ -51,8 +51,19 @@ La misma palabra de dominio se sigue en models, controllers API, `views/json`, m
 
 ## Patrones dentro de un dominio
 
-- Servicios: `{Dominio}/{Subdominio}/Service/*.php`
-- Plugins para motores: registrar en `product-registries.php`, implementación en `Domain/…`
+Gramática: **dominio → subdominio (opcional) → rol técnico → capacidad (opcional)**.
+
+```text
+Domain/<Dominio>/
+  <Subdominio>/Service/…     # p. ej. Clinical/Emergency, Clinical/PedidoAtencion
+  Service/<Capacidad>/…      # p. ej. Scheduling/Service/Quirofano
+  Assistant/ | Home/ | DataAccess/ | Presentation/
+  metadata/
+```
+
+- **Integrations:** `Domain/Integrations/<Sistema>/{Contract,Connector,Mapper,Service,…}/` — 2.º nivel = sistema externo. Sigue bajo `Domain/` (no hermana de `Domain/`).
+- Plugins para motores: registrar en `product-registries.php`, implementación en `Domain/…`.
+- Detalle y sufijos de clase: [Domain/README.md](../../common/components/Domain/README.md).
 
 ## Motores vs metadata vs negocio
 
@@ -76,7 +87,8 @@ La misma palabra de dominio se sigue en models, controllers API, `views/json`, m
 | Motor asistente / flow genérico | `Platform/Assistant/` |
 | Intent / YAML producto | `common/metadata/bioenlace/<dominio>/intents/` · motores en `…/platform/assistant/` |
 | Proveedor IA | `Platform/Ai/` |
-| Cliente externo salud | `Domain/Integrations/` |
+| Cliente externo salud | `Domain/Integrations/<Sistema>/` |
+| Pedido de atención (línea × acto) | `Domain/Clinical/PedidoAtencion/Service/` |
 | Texto clínico pre-IA | `Domain/Clinical/Text/` |
 
 ## Referencias

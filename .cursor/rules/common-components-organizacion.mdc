@@ -32,11 +32,18 @@ Metadata producto: `web/common/metadata/bioenlace/`. Cableado: `web/common/confi
 
 Misma palabra de dominio en `components/Domain/`, `models/`, `controllers/`, `views/json/`, `metadata/bioenlace/` y `tests/unit/`. Fuente del conjunto: carpetas en `Domain/` (`ProductDomainCatalog`). `platform` es eje paralelo, **no** carpeta bajo `Domain/`.
 
-## Reglas
+## Forma interna de Domain
 
-- **Negocio** solo bajo `Domain/…/Service/` (o subdominio). **No** `Services/` (eliminado).
-- **Clinical**: guardia → `Domain/Clinical/Emergency/`; internación operativa → `Domain/Clinical/Inpatient/`.
+```text
+Domain/<Dominio>/<Subdominio?>/{Service|Assistant|Home|DataAccess|Presentation}/…
+Domain/Integrations/<Sistema>/{Contract|Connector|Mapper|Service|…}/
+```
+
+- **Negocio** bajo `…/Service/` (o subdominio + `Service/`). **No** `Services/`. **No** carpeta `Integrations/` hermana de `Domain/`.
+- **Clinical**: guardia → `Emergency/`; internación → `Inpatient/`; pedido atención → `PedidoAtencion/Service/` (no `Access/`).
 - **Quirófano** → `Domain/Scheduling/Service/Quirofano/`.
+- Roles técnicos (`Assistant/`, `Home/`, `DataAccess/`, `Presentation/`) al nivel del dominio/subdominio, no dentro de `Service/`.
+- Sufijos: `*Service`, `*Policy`, `*Catalog`, `*Agent`, `*FlowDraftHydrator`, `*SectionProvider`, `*Connector`, … — ver [Domain/README.md](web/common/components/Domain/README.md).
 - **`Platform/Assistant/`**: motores; el rubro en metadata + registries, no en switches PHP.
 - **Services sin HTTP**: no `*HttpException`, HTML ni flash en `*/Service/`.
 

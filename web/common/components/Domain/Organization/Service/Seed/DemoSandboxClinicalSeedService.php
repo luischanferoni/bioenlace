@@ -7,7 +7,7 @@ use common\components\Domain\Clinical\Emergency\Service\GuardiaTriageService;
 use common\components\Domain\Clinical\Enum\EncounterStatus;
 use common\components\Domain\Clinical\Service\CarePlanLifecycleService;
 use common\components\Domain\Clinical\Service\EncounterLifecycleService;
-use common\components\Domain\Person\Util\CuilValidator;
+use common\components\Domain\Person\Service\CuilValidator;
 use common\components\Domain\Scheduling\Service\ConsultaAsyncInitialChatService;
 use common\components\Domain\Scheduling\Service\TurnoSlotClaimService;
 use common\models\Clinical\Encounter;

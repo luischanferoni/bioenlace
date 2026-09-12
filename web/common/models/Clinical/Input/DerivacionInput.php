@@ -2,12 +2,12 @@
 
 namespace common\models\Clinical\Input;
 
-use common\components\Domain\Clinical\Access\CodingSystems;
-use common\components\Domain\Clinical\Access\PedidoAtencion;
-use common\components\Domain\Clinical\Access\PedidoAtencionActoCoderInterface;
-use common\components\Domain\Clinical\Access\PedidoAtencionActoCodingService;
-use common\components\Domain\Clinical\Access\PedidoAtencionMetadata;
-use common\components\Domain\Clinical\Access\PedidoAtencionService;
+use common\components\Domain\Clinical\PedidoAtencion\Service\CodingSystems;
+use common\components\Domain\Clinical\PedidoAtencion\Service\PedidoAtencion;
+use common\components\Domain\Clinical\PedidoAtencion\Service\PedidoAtencionActoCoderInterface;
+use common\components\Domain\Clinical\PedidoAtencion\Service\PedidoAtencionActoCodingService;
+use common\components\Domain\Clinical\PedidoAtencion\Service\PedidoAtencionMetadata;
+use common\components\Domain\Clinical\PedidoAtencion\Service\PedidoAtencionService;
 use common\models\Clinical\ConsultaDerivaciones;
 use common\models\Organization\Servicio;
 use yii\base\Model;

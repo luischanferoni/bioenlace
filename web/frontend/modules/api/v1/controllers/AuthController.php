@@ -10,7 +10,7 @@ use common\models\Platform\BioenlaceDbManager;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Platform\User;
 use common\models\Person\Persona;
-use common\components\Domain\Integrations\Identity\DiditClient;
+use common\components\Domain\Integrations\Identity\Connector\DiditClient;
 use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
 use common\components\Platform\Core\Permission\RbacRoleQueryService;
 use common\components\Platform\Core\Auth\PlayReviewLoginService;

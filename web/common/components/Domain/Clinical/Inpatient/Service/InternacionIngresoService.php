@@ -15,7 +15,7 @@ use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Clinical\SegNivelInternacion;
 use common\models\Clinical\SegNivelInternacionHcama;
 use common\models\Clinical\SegNivelInternacionRepository;
-use common\components\Domain\Integrations\Mpi\MpiApiClient;
+use common\components\Domain\Integrations\Mpi\Service\MpiApiClient;
 use Yii;
 use yii\helpers\ArrayHelper;
 

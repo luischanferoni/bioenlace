@@ -3,7 +3,7 @@
 namespace common\components\Domain\Person\Service;
 
 use Yii;
-use common\components\Domain\Integrations\Identity\DiditClient;
+use common\components\Domain\Integrations\Identity\Connector\DiditClient;
 use common\components\Domain\Person\Service\PacienteDomicilioVerificacionService;
 use common\components\Domain\Person\Service\PacienteContextoService;
 use common\models\Person\Persona;

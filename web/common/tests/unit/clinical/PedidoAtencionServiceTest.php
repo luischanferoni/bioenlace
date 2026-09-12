@@ -3,11 +3,11 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Access\CodingSystems;
-use common\components\Domain\Clinical\Access\InMemoryLineaActoCatalog;
-use common\components\Domain\Clinical\Access\PedidoAtencion;
-use common\components\Domain\Clinical\Access\PedidoAtencionMetadata;
-use common\components\Domain\Clinical\Access\PedidoAtencionService;
+use common\components\Domain\Clinical\PedidoAtencion\Service\CodingSystems;
+use common\components\Domain\Clinical\PedidoAtencion\Service\InMemoryLineaActoCatalog;
+use common\components\Domain\Clinical\PedidoAtencion\Service\PedidoAtencion;
+use common\components\Domain\Clinical\PedidoAtencion\Service\PedidoAtencionMetadata;
+use common\components\Domain\Clinical\PedidoAtencion\Service\PedidoAtencionService;
 use common\models\Clinical\Input\DerivacionInput;
 use common\models\Clinical\ConsultaDerivaciones;
 

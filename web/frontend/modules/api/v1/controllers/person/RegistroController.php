@@ -6,7 +6,7 @@ use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 use common\components\Domain\Person\Service\RegistroService;
 use common\components\Domain\Person\Service\RegistroStaffPacienteService;
-use common\components\Domain\Integrations\Identity\DiditClient;
+use common\components\Domain\Integrations\Identity\Connector\DiditClient;
 
 /**
  * Controlador de registro unificado para pacientes y médicos.

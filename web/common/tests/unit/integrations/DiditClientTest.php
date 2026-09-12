@@ -3,7 +3,7 @@
 namespace common\tests\unit\integrations;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Integrations\Identity\DiditClient;
+use common\components\Domain\Integrations\Identity\Connector\DiditClient;
 
 final class DiditClientTestable extends DiditClient
 {

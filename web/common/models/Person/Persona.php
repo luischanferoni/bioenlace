@@ -635,13 +635,13 @@ class Persona extends \yii\db\ActiveRecord
 
     public function validateCuilAttribute(string $attribute): void
     {
-        $value = \common\components\Domain\Person\Util\CuilValidator::normalize((string) ($this->$attribute ?? ''));
+        $value = \common\components\Domain\Person\Service\CuilValidator::normalize((string) ($this->$attribute ?? ''));
         if ($value === '') {
             $this->$attribute = null;
 
             return;
         }
-        if (!\common\components\Domain\Person\Util\CuilValidator::isValid($value)) {
+        if (!\common\components\Domain\Person\Service\CuilValidator::isValid($value)) {
             $this->addError($attribute, 'CUIL inválido.');
 
             return;

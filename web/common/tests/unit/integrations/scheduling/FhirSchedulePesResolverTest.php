@@ -3,8 +3,8 @@
 namespace common\tests\unit\integrations\scheduling;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Integrations\Scheduling\FhirSchedulePesResolver;
-use common\components\Domain\Integrations\Scheduling\ScheduleActorSet;
+use common\components\Domain\Integrations\Scheduling\Service\FhirSchedulePesResolver;
+use common\components\Domain\Integrations\Scheduling\Service\ScheduleActorSet;
 
 class FhirSchedulePesResolverTest extends Unit
 {

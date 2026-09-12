@@ -3,7 +3,7 @@
 namespace common\components\Domain\Person\Representation\Service;
 
 use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
-use common\components\Domain\Person\Ventanilla\VentanillaSesionService;
+use common\components\Domain\Person\Ventanilla\Service\VentanillaSesionService;
 use common\models\Person\PersonRelatedAuditLog;
 use common\models\Scheduling\Turno;
 use Yii;

@@ -2,9 +2,9 @@
 
 namespace common\components\Domain\Integrations\Scheduling\Service;
 
-use common\components\Domain\Integrations\Scheduling\FhirScheduleActorExtractor;
-use common\components\Domain\Integrations\Scheduling\FhirSchedulePesResolver;
-use common\components\Domain\Integrations\Scheduling\FhirSchedulingConnectorRegistry;
+use common\components\Domain\Integrations\Scheduling\Service\FhirScheduleActorExtractor;
+use common\components\Domain\Integrations\Scheduling\Service\FhirSchedulePesResolver;
+use common\components\Domain\Integrations\Scheduling\Service\FhirSchedulingConnectorRegistry;
 use common\models\Integrations\IntegrationScheduleLink;
 use Yii;
 

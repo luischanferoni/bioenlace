@@ -1,3 +1,31 @@
+/**
+ * Calendario de turnos: lee config de #turnos-calendario-root[data-turnos-config]
+ * y publica globals turnos_* para el resto del archivo.
+ */
+(function bootstrapTurnosCalendarioConfig() {
+  var root = document.getElementById('turnos-calendario-root');
+  if (!root) {
+    return;
+  }
+  var cfg = {};
+  try {
+    cfg = JSON.parse(root.getAttribute('data-turnos-config') || '{}');
+  } catch (e) {
+    console.error('turnos calendario config inválida', e);
+    return;
+  }
+  window.turnos_url_eventos = cfg.urlEventos;
+  window.turnos_url_create = cfg.urlCreate;
+  window.turnos_url_crear_sobreturno = cfg.urlCrearSobreturno;
+  window.turnos_url_cancelar_operativo_base = cfg.urlCancelarOperativoBase;
+  window.turnos_id_efector = cfg.idEfector;
+  window.turnos_id_persona = cfg.idPersona;
+  window.turnos_id_servicio = cfg.idServicio != null ? cfg.idServicio : 0;
+  window.turnos_pes_slot_id = cfg.pesSlotId != null ? cfg.pesSlotId : 0;
+  window.turnos_id_profesional_efector_servicio =
+    cfg.idProfesionalEfectorServicio != null ? cfg.idProfesionalEfectorServicio : 0;
+})();
+
 function turnosPayloadExtra() {
   var p = {};
   if (

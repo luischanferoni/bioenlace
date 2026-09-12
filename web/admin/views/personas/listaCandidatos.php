@@ -18,7 +18,11 @@ $Array_dni = ['1' => 'DNI', '2' => 'DNI de la Madre', '3' => 'Libreta de Enrolam
 
 
   <h1><?= Html::encode($this->title) ?></h1>
-  <?php echo $this->render('_buscar', ['model' => $model, 'desde' => 'listaCandidatos']); ?>
+  <?php echo $this->render('_buscar', [
+    'model' => $model,
+    'desde' => 'listaCandidatos',
+    'lectorDefault' => isset($_POST['lector']) ? (int) $_POST['lector'] : 1,
+  ]); ?>
 
   <div class="card mt-5">
     <div class="row">

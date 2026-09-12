@@ -124,10 +124,18 @@ class TurnosController extends Controller
             ? Turno::getTurnosPorContextoProfesionalPorFecha($fecha, $staffContextId)
             : [];
 
+        $page = \frontend\components\Scheduling\TurnosEsperaPageBuilder::build(
+            $fecha,
+            $profesional instanceof ProfesionalEfectorServicio ? $profesional : null,
+            $turnos
+        );
+
+        Yii::$app->response->headers->set('Refresh', (string) $page['refreshSeconds']);
+        $this->view->title = $page['pageTitle'];
+        \frontend\assets\TurnosEsperaAsset::register($this->view);
+
         return $this->render('espera', [
-            'turnos' => $turnos,
-            'fecha' => $fecha,
-            'profesional' => $profesional,
+            'page' => $page,
         ]);
     }
 

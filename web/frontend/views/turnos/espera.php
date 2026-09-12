@@ -1,215 +1,119 @@
 <?php
 
 use yii\helpers\Html;
-use yii\helpers\Url;
 
-use common\models\Person\Persona;
-
+/**
+ * @var yii\web\View $this
+ * @var array $page {@see \frontend\components\Scheduling\TurnosEsperaPageBuilder}
+ */
 
 $this->title = 'Lista de Espera';
-$this->params['breadcrumbs'][] = $this->title; ?>
-<?php
-$sec = "120";
-header("Refresh: $sec");
-
-
-
-// Sufijo del título cuando la lista se filtra por un profesional (vista desde otros perfiles).
-$sufijoTituloProfesional = '';
-
-if ($profesional != '') {
-    $sufijoTituloProfesional = ' para ' . $profesional->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON);
-}
-
-$fecha_espera = isset($_GET['fecha']) ? ' del ' . date('d-m-Y', strtotime($_GET['fecha'])) : ' del ' . date('d-m-Y');
+$this->params['breadcrumbs'][] = $this->title;
+$tieneProfesional = !empty($page['tieneProfesional']);
 ?>
 
-<?php
-// Cabecera institucional solo cuando hay profesional en contexto (otros perfiles).
-if ($profesional != '') { ?>
+<?php if ($tieneProfesional): ?>
 <div class="row">
   <div class="col-4 text-center">
-    <img src="<?= Yii::getAlias('@web') ?>/images/logo_ministerio_salud.png" style="height: 55px;"/>
+    <img src="<?= Html::encode($page['logoMinisterioUrl']) ?>" style="height: 55px;" alt=""/>
   </div>
   <div class="col-4">
     <p class="text-center">
           MINISTERIO DE SALUD - PROVINCIA DE SANTIAGO DEL ESTERO<br/>
-          BIOENLACE <?=Yii::$app->user->getNombreEfector()?>
+          BIOENLACE <?= Html::encode($page['nombreEfector']) ?>
       </p>
   </div>
   <div class="col-4 text-center">
-    <img class="" src="<?= Yii::getAlias('@web') ?>/images/logo_small.png" style="height: 55px;"/>
+    <img src="<?= Html::encode($page['logoSmallUrl']) ?>" style="height: 55px;" alt=""/>
   </div>
-</div> 
-<?php } ?>
-
+</div>
+<?php endif; ?>
 
 <div class="row d-flex align-items-center text-center mb-5">
   <div class="card">
     <div class="card-body">
        <div class="row">
           <div class="col-12">
-              <h3 class="float-center mt-2 mb-2"><?= Html::encode($this->title) . $sufijoTituloProfesional . $fecha_espera ?></h3>
+              <h3 class="float-center mt-2 mb-2"><?= Html::encode($page['pageTitle']) ?></h3>
             </div>
        </div>
 
-      <div class="row  no-print">
+      <div class="row no-print">
         <div class="col-4">
-          <?php
-            $fecha1 = date('Y-m-d', strtotime($fecha . ' -1 day'));
-            $linkFecha1 = 'turnos/espera?fecha='.$fecha1;
-
-            if($profesional != ''){
-              $linkFecha1 .= '&pes='.$profesional->id;
-            }
-
-            $linkFecha1 = Url::toRoute($linkFecha1);
-
-            echo Html::a('<svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
-            <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
-            </svg>', $linkFecha1, ['class' => 'btn btn-primary rounded-pill float-end', 'data-bs-toggle'=>'tooltip', 'data-bs-placement'=>'bottom', 'data-bs-original-title'=>'Dia Anterior']);
-          ?>
+          <?= Html::a(
+              '<svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/></svg>',
+              $page['urlFechaAnterior'],
+              ['class' => 'btn btn-primary rounded-pill float-end', 'data-bs-toggle' => 'tooltip', 'data-bs-placement' => 'bottom', 'data-bs-original-title' => 'Dia Anterior']
+          ) ?>
         </div>
 
-        
-
         <div class="col-4 justify-content-center d-flex text-center align-items-center">
-          <button id="cal-lista-espera" class="btn btn-sm bg-soft-primary w-25 float-start rounded" 
-            <?php if($profesional != '') { echo "data-pes='$profesional->id'";  } ?>
+          <button id="cal-lista-espera" class="btn btn-sm bg-soft-primary w-25 float-start rounded"
+            <?= $page['pesId'] !== null ? 'data-pes="' . (int) $page['pesId'] . '"' : '' ?>
             data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-original-title="Buscar por fecha">
             <i class="bi bi-calendar-date" style="font-size: 25px;"></i>
           </button>
         </div>
 
         <div class="col-4">
-          <?php $fecha2 = date('Y-m-d', strtotime($fecha . ' +1 day'));
-
-            $linkFecha2 = '/turnos/espera?fecha='.$fecha2;
-
-            if($profesional != ''){
-              $linkFecha2 .= '&pes='.$profesional->id;
-            }
-
-            $linkFecha2 = Url::toRoute($linkFecha2);
-
-            if ($fecha2 <= date('Y-m-d')) {
-              echo Html::a('<svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
-                <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
-              </svg>', $linkFecha2, ['class' => 'btn btn-primary rounded-pill float-start', 'data-bs-toggle'=>'tooltip', 'data-bs-placement'=>'bottom', 'data-bs-original-title'=>'Dia Siguiente']);
-          }
-          ?>
+          <?php if (!empty($page['mostrarFechaSiguiente'])): ?>
+            <?= Html::a(
+                '<svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg>',
+                $page['urlFechaSiguiente'],
+                ['class' => 'btn btn-primary rounded-pill float-start', 'data-bs-toggle' => 'tooltip', 'data-bs-placement' => 'bottom', 'data-bs-original-title' => 'Dia Siguiente']
+            ) ?>
+          <?php endif; ?>
         </div>
-
       </div>
-
     </div>
   </div>
 </div>
 
-<?php
-if (isset($turnos) && count($turnos) == 0) {
-  if (isset($_GET['fecha'])) {
-    echo "<h3>No existen turnos para la fecha {$_GET['fecha']}.</h3>";
-  } else {
-    echo "<h3>No existen turnos pendientes.</h3>";
-  }
-}
+<?php if ($page['emptyMessage'] !== null): ?>
+  <h3><?= Html::encode($page['emptyMessage']) ?></h3>
+<?php endif; ?>
 
-$i = 1;
-foreach ($turnos as $turno) { ?>
+<?php foreach ($page['cards'] as $card): ?>
   <div class="card">
     <div class="card-body">
-
       <div class="row justify-content-center d-flex text-center align-items-center">
-
-        <div <?php echo ($profesional != '')?'class="col-4" " style="font-size: 18px"':'class="col-xl-2 col-lg-3 border-end" " style="font-size: 24px"'?>>
+        <div class="<?= $tieneProfesional ? 'col-4' : 'col-xl-2 col-lg-3 border-end' ?>" style="font-size: <?= $tieneProfesional ? '18px' : '24px' ?>">
           <h3>TURNO</h3>
-          <span>
-            <h4>#<?php echo $i; ?></h4>
-          </span>
-          <div style="font-size: 17px"><i class="bi bi-clock"></i></i> <?= htmlspecialchars(substr((string) $turno->hora, 0, 5), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+          <span><h4>#<?= (int) $card['orden'] ?></h4></span>
+          <div style="font-size: 17px"><i class="bi bi-clock"></i> <?= Html::encode($card['hora']) ?></div>
         </div>
 
-        <div class="<?php echo ($profesional != '') ? 'col-4' : 'col-7' ?>">
-          <h4 class="mb-2"><?php echo $turno->paciente->apellido . ', ' . $turno->paciente->nombre; ?></h4>
-          <?php
-            $edadEspera = null;
-            if (!empty($turno->paciente->fecha_nacimiento)) {
-              try {
-                $edadEspera = (int) $turno->paciente->getEdad();
-              } catch (\Throwable $e) {
-                $edadEspera = null;
-              }
-            }
-          ?>
-          <?php if ($edadEspera !== null): ?>
-          <h4 class="mb-2">Edad: <?php echo $edadEspera; ?> años</h4>
+        <div class="<?= $tieneProfesional ? 'col-4' : 'col-7' ?>">
+          <h4 class="mb-2"><?= Html::encode($card['nombrePaciente']) ?></h4>
+          <?php if ($card['edad'] !== null): ?>
+          <h4 class="mb-2">Edad: <?= (int) $card['edad'] ?> años</h4>
           <?php endif; ?>
-          <?php 
-              if($turno->id_consulta_referencia != 0):
-                echo '<h4 class="mb-2"><span class="badge bg-info">Referencia</span></h4>';
-              endif;
-          ?>
-          <p>Confirmado: <?php echo $turno->confirmado && $turno->confirmado == 'SI' ? '<span class="badge bg-success">Si</span>' : '<span class="badge bg-warning">No</span>'; ?>
-            Programado: <?php echo $turno->programado == 0 ? '<span class="badge bg-warning">No</span>' : '<span class="badge bg-success">Si</span>' ?>
+          <?php if (!empty($card['esReferencia'])): ?>
+            <h4 class="mb-2"><span class="badge bg-info">Referencia</span></h4>
+          <?php endif; ?>
+          <p>Confirmado: <?= $card['confirmado'] ? '<span class="badge bg-success">Si</span>' : '<span class="badge bg-warning">No</span>' ?>
+            Programado: <?= $card['programado'] ? '<span class="badge bg-success">Si</span>' : '<span class="badge bg-warning">No</span>' ?>
           </p>
         </div>
 
         <div class="col-3">
-        <?php if($profesional != ''){?>
+        <?php if ($tieneProfesional): ?>
           <div class="col-xs-4">
             <h4><?php
-              if ($edadEspera !== null) {
-                echo 'Edad: ' . (int) $edadEspera . ' años - ';
+              if ($card['edad'] !== null) {
+                  echo 'Edad: ' . (int) $card['edad'] . ' años - ';
               }
-            ?>HC: <?php echo $turno->paciente->obtenerNHistoriaClinica(Yii::$app->user->getIdEfector());?></h4>
+            ?>HC: <?= Html::encode((string) $card['nHistoriaClinica']) ?></h4>
           </div>
-        <?php } else { ?>
-            <?php echo Html::a(
-              'No se presentó',
-              $turno['id_turnos'],
-              ['class' => 'btn btn-light', 'id' => 'no_se_presento']
-            ); ?>
-            <br /><br />
-            <?php
-            // Timeline deshabilitado temporalmente
-            // $urlConsulta = Url::toRoute('paciente/historia/'.$turno['id_persona']);
-            // echo Html::a('Cargar Consulta', $urlConsulta, ['class' => 'btn btn-success', 'id' => 'cargar_consulta']);
-          }
-          ?>
-
+        <?php else: ?>
+            <?= Html::a(
+                'No se presentó',
+                (string) $card['idTurnos'],
+                ['class' => 'btn btn-light', 'id' => 'no_se_presento']
+            ) ?>
+        <?php endif; ?>
         </div>
-
       </div>
     </div>
-
   </div>
-<?php
-  $i++;
-}
-
-$this->registerJs(
-  "
-    $(document).on('click', '#no_se_presento', function(e) {
-
-      if(!confirm('Seguro?')) return false;
-      
-      e.preventDefault();
-      var id_turno = $(this).attr('href');
-
-      var nosepresento = $.ajax({
-          type: 'post',
-          async: true,
-          url: '/api/v1/turnos/' + id_turno + '/no-se-presento',
-          headers: (typeof window.getBioenlaceApiClientHeaders === 'function') ? window.getBioenlaceApiClientHeaders() : {},
-          data: {}
-      });
-      nosepresento.done(function(response){   
-        $('#no_se_presento').attr('disabled', true);
-        $('#cargar_consulta').attr('disabled', true);
-        location.reload();
-      });
-    });"
-);
-
-?>
+<?php endforeach; ?>

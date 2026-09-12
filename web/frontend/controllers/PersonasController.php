@@ -254,20 +254,24 @@ class PersonasController extends Controller
 
         $datos_crecimiento = PersonaRepository::getDatosCrecimiento($persona);
 
-        $context = [
-            'persona' => $persona,
-            'peso_pc_data' => $peso_pc_data,
-            'peso_labels' => $peso_labels,
-            'talla_pc_data' => $talla_pc_data,
-            'talla_labels' => $talla_labels,
-            'pcef_pc_data' => $pcef_pc_data,
-            'pcef_labels' => $pcef_labels,
-            'imc_pc_data' => $imc_pc_data,
-            'imc_labels' => $imc_labels,
-            'datos_crecimiento' => $datos_crecimiento
-        ];
+        $page = \frontend\components\Person\CurvasCrecimientoPageBuilder::build(
+            $persona,
+            $peso_pc_data,
+            $peso_labels,
+            $talla_pc_data,
+            $talla_labels,
+            $pcef_pc_data,
+            $pcef_labels,
+            $imc_pc_data,
+            $imc_labels,
+            $datos_crecimiento
+        );
 
-        return $this->renderAjax('curvas_crecimiento', $context);
+        \frontend\assets\CurvasCrecimientoAsset::registerWithPlotly($this->view);
+
+        return $this->renderAjax('curvas_crecimiento', [
+            'page' => $page,
+        ]);
     }
 
     /**

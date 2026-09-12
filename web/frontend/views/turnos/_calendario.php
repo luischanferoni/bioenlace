@@ -1,42 +1,21 @@
 <?php
 
-use common\models\Scheduling\AgendaFeriados;
+use common\components\Domain\Scheduling\Service\TurnoCancelacionRazones;
+use frontend\assets\TurnosCalendarioAsset;
+use frontend\components\Scheduling\TurnosCalendarioPageBuilder;
 use yii\bootstrap5\Modal;
 use yii\helpers\Html;
-use frontend\assets\BioenlaceApiClientAsset;
+use yii\helpers\Json;
 
+/**
+ * @var yii\web\View $this
+ * @var mixed $feriados
+ * @var \common\models\Person\Persona|null $persona
+ */
 
-$period = new DatePeriod(
-    new DateTime('NOW -60 day'),
-    new DateInterval('P1D'),
-    new DateTime('NOW +90day')
-);
-
-$turnos_url_eventos = '/api/v1/turnos/calendario-ocupacion-dia';
-$turnos_url_create = '/api/v1/turnos/para-paciente';
-$turnos_url_crear_sobreturno = '/api/v1/turnos/crear-sobreturno';
-$turnos_url_cancelar_operativo_base = '/api/v1/turnos';
-$turnos_id_efector = Yii::$app->user->getIdEfector();
-$turnos_id_persona = isset($persona) && isset($persona->id_persona) ? (int) $persona->id_persona : 0;
-$hoy = (new DateTime())->format('Y-m-d');
-
-$this->registerJsVar("turnos_url_eventos", $turnos_url_eventos);
-$this->registerJsVar("turnos_url_create", $turnos_url_create);
-$this->registerJsVar("turnos_url_crear_sobreturno", $turnos_url_crear_sobreturno);
-$this->registerJsVar("turnos_url_cancelar_operativo_base", $turnos_url_cancelar_operativo_base);
-$this->registerJsVar("turnos_id_efector", $turnos_id_efector);
-$this->registerJsVar("turnos_id_persona", $turnos_id_persona);
-$this->registerJsVar("turnos_id_servicio", 0);
-$this->registerJsVar("turnos_pes_slot_id", 0);
-$idPesCal = Yii::$app->user->getIdProfesionalEfectorServicio();
-$this->registerJsVar(
-    'turnos_id_profesional_efector_servicio',
-    $idPesCal !== null && $idPesCal !== '' ? (int) $idPesCal : 0
-);
-$this->registerJsFile(
-    "@web/js/turnos_calendario.js",
-    ['depends' => [BioenlaceApiClientAsset::class]]
-);
+$persona = $persona ?? null;
+$page = TurnosCalendarioPageBuilder::build($persona, $feriados);
+TurnosCalendarioAsset::register($this);
 
 Modal::begin([
     'title' => '',
@@ -44,6 +23,7 @@ Modal::begin([
     'size' => 'modal-xl',
 ]);
 ?>
+<div id="turnos-calendario-root" data-turnos-config="<?= Json::htmlEncode($page['jsConfig']) ?>">
 <div class="row mb-1">
     <div class="col-12 d-flex justify-content-center controls" id="controles-personalizados">
         <button type="button" class="btn btn-sm btn-soft-primary me-1 prev" data-controls="prev">Días anteriores</button>
@@ -51,48 +31,26 @@ Modal::begin([
     </div>
 </div>
 <div class="weekday-slider">
-    <?php foreach ($period as $key => $value) :
-        $colorBgClass = "";
-
-        if (Yii::$app->formatter->asDate($value, 'EEE') == 'sáb.' || Yii::$app->formatter->asDate($value, 'EEE') == 'dom.') {
-            $colorBgClass = "bg-soft-dark";
-        } else if ($value->format('Y-m-d') === $hoy) {
-            $colorBgClass = "bg-soft-info";
-        } else {
-            $colorBgClass = "bg-soft-secondary";
-        }
-
-        if(AgendaFeriados::esFeriado($value->format('Y-m-d'),$feriados)){
-            $colorBgClass = "bg-soft-danger";
-        }
-
-
-
-    ?>
-
-        <div class="card text-center mb-3 me-4 <?= $value->format('Y-m-d') === $hoy ?  'border border-dark' : '' ?> <?= $colorBgClass ?>" style="height: 9rem; width: 8rem; !important">
-            <a href="<?= $value->format('Y-m-d') ?>" class="mostrar-turnos">
+    <?php foreach ($page['days'] as $day): ?>
+        <div class="card text-center mb-3 me-4 <?= $day['isToday'] ? 'border border-dark' : '' ?> <?= Html::encode($day['bgClass']) ?>" style="height: 9rem; width: 8rem;">
+            <a href="<?= Html::encode($day['date']) ?>" class="mostrar-turnos">
                 <div class="card-body pb-1">
                     <div class="d-flex flex-column align-items-center">
-
                         <div>
-                            <span><?= ucfirst(Yii::$app->formatter->asDate($value, 'EEE')) ?></span>
+                            <span><?= Html::encode($day['weekday']) ?></span>
                             <span>
-                                <h4><?= UCWORDS(Yii::$app->formatter->asDate($value, 'dd')) ?></h4>
+                                <h4><?= Html::encode($day['dayNum']) ?></h4>
                             </span>
                             <span>
-                                <h5 class="counter mb-2" style="visibility: visible;"><?= UCWORDS(Yii::$app->formatter->asDate($value, 'MMMM')) ?></h5>
+                                <h5 class="counter mb-2" style="visibility: visible;"><?= Html::encode($day['month']) ?></h5>
                             </span>
-                            <span class="text-muted"><?= $value->format('Y-m-d') === $hoy ?  'HOY' : ' ' ?></span>
+                            <span class="text-muted"><?= $day['isToday'] ? 'HOY' : ' ' ?></span>
                         </div>
-
-
                     </div>
                 </div>
-                </a>
+            </a>
         </div>
-
-    <?php endforeach ?>
+    <?php endforeach; ?>
 </div>
 <div class="row">
     <div id="mensaje_feriado" class="text-center mt-5"></div>
@@ -105,29 +63,27 @@ Modal::begin([
     <div class="col-12">
         <div class="row pt-3">
             <input type="hidden" name="id_turnos" id="id_turnos" value="">
-            <input type="hidden" name="fecha" id="fecha_input" value="<?= $hoy ?>">
+            <input type="hidden" name="fecha" id="fecha_input" value="<?= Html::encode($page['hoy']) ?>">
             <input type="hidden" name="hora" id="hora_input" value="">
             <input type="hidden" name="todosTomados" id="todosTomados" value="">
 
             <div class="col pe-0">
                 <div id="motivo_cancelacion_div" class="col float-end" style="display: none;">
-                    <?php
-                    echo html::dropDownList(
+                    <?= Html::dropDownList(
                         'motivos_cancelacion',
                         [],
-                        \common\components\Domain\Scheduling\Service\TurnoCancelacionRazones::medicoAppOpcionesDropdown(),
+                        TurnoCancelacionRazones::medicoAppOpcionesDropdown(),
                         [
                             'prompt' => 'Motivo de Cancelación',
                             'class' => 'form-control',
-                            'id' => 'motivo_cancelacion'
+                            'id' => 'motivo_cancelacion',
                         ]
-                    );
-                    ?>
+                    ) ?>
                 </div>
             </div>
 
             <div id="msg_turno_atendido" class="text-center" style="display: none;">
-                        <h5>EL TURNO YA SE ATENDIÓ O ESTA ATENDIENDOSE</h5>
+                <h5>EL TURNO YA SE ATENDIÓ O ESTA ATENDIENDOSE</h5>
             </div>
 
             <div class="col-3 ps-0">
@@ -135,11 +91,9 @@ Modal::begin([
                 <button id="btn_turno_cancel" class="btn btn-danger float-end">Cancelar Turno</button>
                 <button id="btn_turno_sobreturno" class="btn btn-secondary float-end">Sobreturno</button>
             </div>
-
-
-
         </div>
     </div>
+</div>
 </div>
 <?php
 Modal::end();

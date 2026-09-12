@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Content\Service;
 
-use common\components\Ai\IAManager;
+use common\components\Platform\Ai\IAManager;
 use common\components\Platform\Assistant\Context\AssistantContextAssemblyService;
 use common\components\Platform\Assistant\Chat\Channels\Guide\GuideChannel;
 use common\components\Platform\Assistant\Chat\Channels\Guide\GuideChannelConfig;

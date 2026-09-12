@@ -2,7 +2,7 @@
 
 namespace common\components\Platform\Assistant\Planning;
 
-use common\components\Ai\IAManager;
+use common\components\Platform\Ai\IAManager;
 use common\components\Platform\Assistant\Chat\Channels\Planner\PlannerPromptAssembler;
 use Yii;
 

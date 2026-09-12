@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\Service;
 
 use common\components\Domain\Clinical\AiContext\PatientAiContextBuilder;
 use common\components\Domain\Clinical\Enum\ConditionClinicalStatus;
-use common\components\Ai\IAManager;
+use common\components\Platform\Ai\IAManager;
 use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
 use common\models\Clinical\Condition;
 use common\models\Clinical\Encounter;

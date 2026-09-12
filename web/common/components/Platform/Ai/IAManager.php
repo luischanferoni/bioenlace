@@ -1,24 +1,36 @@
 <?php
 
-namespace common\components\Ai;
+namespace common\components\Platform\Ai;
 
 use Yii;
 use common\components\Platform\Core\Db\BioenlaceDb;
 use yii\httpclient\Client;
-use common\components\Domain\Clinical\Legacy\ConsultaLogger;
 use common\components\Platform\Ai\HuggingFace\HuggingFaceRateLimiter;
 use common\components\Platform\Infra\Requests\RequestDeduplicator;
 use common\components\Platform\Ai\Providers\Google\GoogleAuth;
 use common\components\Platform\Ai\Providers\Google\GoogleCloudConfigResolver;
-use common\components\Domain\Clinical\Text\MedicalLlmConfidenceService;
-use common\components\Domain\Terminology\Snomed\SnomedContextualPromptBuilder;
 
 /**
- * Componente para manejar todas las interacciones con IA
- * Centraliza la lógica de proveedores, configuración y procesamiento
+ * Fachada de interacciones con LLMs (proveedores, caché, telemetría).
+ *
+ * Hooks de rubro (logger clínico, boost de confianza, prompt SNOMED) se resuelven
+ * por FQCN opcional para no acoplar Platform a Domain en compile-time.
  */
 class IAManager
 {
+    /**
+     * Logger clínico del rubro si está cargado (Domain); null en plataforma pura.
+     */
+    private static function clinicalLogger(): ?object
+    {
+        $class = 'common\\components\\Domain\\Clinical\\Legacy\\ConsultaLogger';
+        if (!class_exists($class)) {
+            return null;
+        }
+
+        return $class::obtenerInstancia();
+    }
+
     /**
      * Extraer ID del modelo desde endpoint
      * @param string $endpoint
@@ -636,7 +648,7 @@ class IAManager
      */
     public static function consultarIA($prompt, $contexto = 'consulta-general', $tipoModelo = 'text-generation')
     {
-        $logger = ConsultaLogger::obtenerInstancia();
+        $logger = self::clinicalLogger();
         
         try {
             // Validación previa: prompt vacío o muy corto
@@ -967,7 +979,12 @@ class IAManager
      */
     public static function crearPromptContextual($texto, $categoria)
     {
-        return SnomedContextualPromptBuilder::build($texto, $categoria);
+        $class = 'common\\components\\Domain\\Terminology\\Snomed\\SnomedContextualPromptBuilder';
+        if (!class_exists($class)) {
+            return $texto;
+        }
+
+        return $class::build($texto, $categoria);
     }
 
     /**
@@ -981,8 +998,9 @@ class IAManager
     {
         // Intentar corrección básica con CPU primero
         $usarCPU = Yii::$app->params['usar_cpu_tareas_simples'] ?? true;
-        if ($usarCPU && CPUProcessor::puedeProcesarConCPU('correccion_ortografica_basica')) {
-            $corregidaCPU = CPUProcessor::procesar('correccion_ortografica_basica', $palabra);
+        $cpuProcessor = 'common\\helpers\\CPUProcessor';
+        if ($usarCPU && class_exists($cpuProcessor) && $cpuProcessor::puedeProcesarConCPU('correccion_ortografica_basica')) {
+            $corregidaCPU = $cpuProcessor::procesar('correccion_ortografica_basica', $palabra);
             if ($corregidaCPU !== $palabra) {
                 \Yii::info("Corrección CPU aplicada: '{$palabra}' -> '{$corregidaCPU}'", 'ia-manager');
                 if (class_exists(\common\components\Platform\Ai\Cost\AICostTracker::class)) {
@@ -1109,7 +1127,7 @@ class IAManager
                 ]
             ];
 
-            $logger = ConsultaLogger::obtenerInstancia();
+            $logger = self::clinicalLogger();
             if ($logger) {
                 $logger->registrar(
                     'PROCESAMIENTO',
@@ -1254,7 +1272,7 @@ class IAManager
      */
     public function corregirTextoCompletoConIA($texto, $especialidad = null)
     {
-        $logger = ConsultaLogger::obtenerInstancia();
+        $logger = self::clinicalLogger();
         $inicio = microtime(true);
         
         try {
@@ -1741,7 +1759,10 @@ Texto: {$texto}";
         $similitud = 1 - (levenshtein($original, $suggestion) / max(strlen($original), strlen($suggestion)));
         $confianza += $similitud * 0.3;
 
-        $confianza += MedicalLlmConfidenceService::contextBoost($contexto);
+        $confidenceClass = 'common\\components\\Domain\\Clinical\\Text\\MedicalLlmConfidenceService';
+        if (class_exists($confidenceClass)) {
+            $confianza += $confidenceClass::contextBoost($contexto);
+        }
 
         if (strlen($suggestion) < 3) {
             $confianza -= 0.2;

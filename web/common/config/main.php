@@ -47,7 +47,7 @@ return [
             ]
         ],
         'iamanager' => [
-            'class' => \common\components\Ai\IAManager::class,
+            'class' => \common\components\Platform\Ai\IAManager::class,
         ],
         'mpi' => [
             'class' => \common\components\Domain\Integrations\Mpi\MpiApiClient::class,

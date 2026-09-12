@@ -10,7 +10,7 @@ use common\components\Platform\Assistant\Preprocess\PreprocessRoutingHintCatalog
 use common\components\Platform\Assistant\Preprocess\PreprocessTagVocabularyCatalog;
 use common\components\Platform\Core\Product\ProductMetadataPaths;
 use Yii;
-use common\components\Ai\IAManager;
+use common\components\Platform\Ai\IAManager;
 
 /**
  * Preprocess: etiquetado 1ª IA (v1) + compat legacy {@see user_goal}.

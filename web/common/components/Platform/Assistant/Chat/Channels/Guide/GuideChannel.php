@@ -2,7 +2,7 @@
 
 namespace common\components\Platform\Assistant\Chat\Channels\Guide;
 
-use common\components\Ai\IAManager;
+use common\components\Platform\Ai\IAManager;
 use common\components\Domain\Content\Service\InfoContentResolverService;
 use common\components\Platform\Assistant\Chat\Channels\Ambiguous\AmbiguousChannel;
 use common\components\Platform\Assistant\Chat\Channels\Guide\GuideFocusResolver;

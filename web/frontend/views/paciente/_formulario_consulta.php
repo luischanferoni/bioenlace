@@ -1,62 +1,41 @@
 <?php
 /**
  * Vista parcial para el formulario de consulta / evolución.
- * @var $paciente \common\models\Person\Persona
- * @var $idConfiguracion int|null
- * @var $idConsulta int|string|null
- * @var $parent string|null
- * @var $parentId int|string|null
- * @var $motivoPacientePrefill string Resumen IA de motivos cargados por el paciente (pre-atención)
+ *
+ * @var array $form {@see \frontend\components\Clinical\EncounterCaptureFormViewBuilder}
  */
-use yii\helpers\Url;
 use yii\helpers\Html;
-use common\models\Clinical\Encounter;
+use yii\helpers\Json;
 
-$idConsulta = $idConsulta ?? null;
-$parent = $parent ?? null;
-$parentId = $parentId ?? null;
-$motivoPacientePrefill = trim((string) ($motivoPacientePrefill ?? ''));
-$sttClientConfig = \common\components\Platform\Ai\SpeechToText\SttConfigService::clientSnapshot();
-$esEvolucionImp = strtoupper(trim((string) $parent)) === Encounter::PARENT_INTERNACION;
-if ($esEvolucionImp) {
-    $motivoPacientePrefill = '';
-}
-$formLabel = $esEvolucionImp ? 'Evolución' : 'Formulario de consulta';
-$placeholder = $esEvolucionImp
-    ? 'Escribí o dictá la evolución del paciente internado (estado actual, cambios clínicos, plan).'
-    : 'Escriba o dicte los detalles de la consulta. El asistente verificará motivos, evolución, diagnóstico, prácticas, etc.';
-$analyzeLabel = $esEvolucionImp ? 'Analizar evolución' : 'Analizar consulta';
-$analyzeTitle = $esEvolucionImp
-    ? 'Analizar la evolución con IA'
-    : 'Analizar la consulta con IA';
+$prefill = (string) $form['motivoPacientePrefill'];
 ?>
-<form id="form-consulta-chat" method="POST" action="<?= Url::to(['/api/v1/clinical/encounter/guardar']) ?>"
-      data-stt-config="<?= Html::encode(json_encode($sttClientConfig, JSON_UNESCAPED_UNICODE)) ?>"
-      data-url-inicio="<?= Html::encode(Url::to(['/site/index'])) ?>"
-      data-modo-captura="<?= $esEvolucionImp ? 'imp' : 'amb' ?>">
-    <?= Html::hiddenInput('id_persona', $paciente->id_persona) ?>
-    <?php if (!empty($idConfiguracion)): ?>
-        <?= Html::hiddenInput('id_configuracion', (int) $idConfiguracion) ?>
+<form id="form-consulta-chat" method="POST" action="<?= Html::encode($form['urlGuardar']) ?>"
+      data-stt-config="<?= Json::htmlEncode($form['sttClientConfig']) ?>"
+      data-url-inicio="<?= Html::encode($form['urlInicio']) ?>"
+      data-modo-captura="<?= Html::encode($form['modoCaptura']) ?>">
+    <?= Html::hiddenInput('id_persona', $form['personaId']) ?>
+    <?php if (!empty($form['idConfiguracion'])): ?>
+        <?= Html::hiddenInput('id_configuracion', (int) $form['idConfiguracion']) ?>
     <?php endif; ?>
-    <?php if ($idConsulta !== null && $idConsulta !== '' && (int) $idConsulta > 0): ?>
-        <?= Html::hiddenInput('id_consulta', (int) $idConsulta) ?>
+    <?php if (!empty($form['idConsulta'])): ?>
+        <?= Html::hiddenInput('id_consulta', (int) $form['idConsulta']) ?>
     <?php endif; ?>
-    <?php if ($parent !== null && $parent !== ''): ?>
-        <?= Html::hiddenInput('parent', (string) $parent) ?>
+    <?php if (!empty($form['parent'])): ?>
+        <?= Html::hiddenInput('parent', (string) $form['parent']) ?>
     <?php endif; ?>
-    <?php if ($parentId !== null && $parentId !== ''): ?>
-        <?= Html::hiddenInput('parent_id', (int) $parentId) ?>
+    <?php if (!empty($form['parentId'])): ?>
+        <?= Html::hiddenInput('parent_id', (int) $form['parentId']) ?>
     <?php endif; ?>
-    <?php if ($motivoPacientePrefill !== ''): ?>
+    <?php if ($prefill !== ''): ?>
     <div class="alert alert-info mb-3" id="motivos-paciente-resumen" role="status">
         <strong>Motivos informados por el paciente</strong>
-        <p class="mb-0 mt-2 small"><?= nl2br(Html::encode($motivoPacientePrefill)) ?></p>
+        <p class="mb-0 mt-2 small"><?= nl2br(Html::encode($prefill)) ?></p>
     </div>
     <?php endif; ?>
 
     <div class="form-group mb-3" id="chat-form">
         <label for="chat-input" class="form-label">
-            <strong><?= Html::encode($formLabel) ?></strong>
+            <strong><?= Html::encode($form['formLabel']) ?></strong>
         </label>
         <textarea
             class="form-control"
@@ -64,8 +43,8 @@ $analyzeTitle = $esEvolucionImp
             name="consulta_texto"
             lang="es-AR"
             rows="4"
-            placeholder="<?= Html::encode($placeholder) ?>"
-            style="border-width: 2px; resize: vertical;"><?= $motivoPacientePrefill !== '' ? Html::encode($motivoPacientePrefill) : '' ?></textarea>
+            placeholder="<?= Html::encode($form['placeholder']) ?>"
+            style="border-width: 2px; resize: vertical;"><?= $prefill !== '' ? Html::encode($prefill) : '' ?></textarea>
         <div class="d-flex flex-wrap gap-2 mt-2 align-items-center">
             <button type="button" class="btn btn-sm btn-outline-secondary" id="encounter-dictate-btn" title="Dictar">
                 <i class="bi bi-mic"></i> Dictar
@@ -78,8 +57,8 @@ $analyzeTitle = $esEvolucionImp
     </div>
 
     <div class="float-end mb-3" id="analyze-btn">
-        <button class="btn btn-outline-primary" type="button" id="analyze-consultation" title="<?= Html::encode($analyzeTitle) ?>">
-            <i class="bi bi-clipboard2-check"></i>&nbsp;&nbsp;<?= Html::encode($analyzeLabel) ?>
+        <button class="btn btn-outline-primary" type="button" id="analyze-consultation" title="<?= Html::encode($form['analyzeTitle']) ?>">
+            <i class="bi bi-clipboard2-check"></i>&nbsp;&nbsp;<?= Html::encode($form['analyzeLabel']) ?>
         </button>
     </div>
 

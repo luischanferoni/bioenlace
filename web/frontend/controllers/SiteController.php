@@ -23,6 +23,9 @@ use common\models\Platform\DemoSandboxSession;
 use frontend\components\WebApiJwtSessionService;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Organization\Servicio;
+use frontend\components\Clinical\PacientesListadoPageBuilder;
+use frontend\assets\GuardiaTableroAsset;
+use frontend\assets\PacientesListadoAsset;
 use common\components\Domain\Organization\Service\SesionOperativa\SesionOperativaService;
 
 class SiteController extends Controller
@@ -146,11 +149,23 @@ class SiteController extends Controller
         $esImpPiso = $encounterClass === Encounter::ENCOUNTER_CLASS_IMP
             && (!$idServicio || !Servicio::esServicioAgendaQuirurgica($idServicio));
 
+        $page = PacientesListadoPageBuilder::build(
+            $fecha,
+            $encounterClass !== null && $encounterClass !== '' ? (string) $encounterClass : null,
+            $idServicio,
+            $esImpPiso
+        );
+
+        $this->view->title = $page['pageTitle'];
+        $panelJsDepends = [];
+        if (!empty($page['registerGuardiaAssets'])) {
+            GuardiaTableroAsset::register($this->view);
+            $panelJsDepends[] = GuardiaTableroAsset::class;
+        }
+        PacientesListadoAsset::registerWithDepends($this->view, $panelJsDepends);
+
         return $this->render('//pacientes/listado', [
-            'fecha' => $fecha,
-            'encounter_class' => $encounterClass,
-            'id_servicio_actual' => $idServicio,
-            'es_imp_piso' => $esImpPiso,
+            'page' => $page,
         ]);
     }
 

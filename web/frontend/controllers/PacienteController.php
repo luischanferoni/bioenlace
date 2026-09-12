@@ -13,9 +13,12 @@ use common\models\Clinical\EncounterDefinition;
 use common\components\Domain\Clinical\Service\EncounterCaptureContextService;
 use common\components\Domain\Clinical\Service\EpisodioTimelineService;
 use common\components\Domain\Clinical\Workflow\EncounterDefinitionBootstrapService;
+use frontend\components\Clinical\EncounterCaptureFormViewBuilder;
 use frontend\components\Clinical\EpisodioTimelineViewBuilder;
 use frontend\components\Clinical\PacienteHistoriaTimelinePageBuilder;
 use frontend\assets\GuardiaTableroAsset;
+use frontend\assets\PacienteHistoriaTimelineAsset;
+use frontend\assets\VerConsultaAsset;
 use frontend\filters\SisseActionFilter;
 
 /**
@@ -88,6 +91,7 @@ class PacienteController extends Controller
         );
 
         $this->view->title = $page['pageTitle'];
+        PacienteHistoriaTimelineAsset::registerWithPlotly($this->view);
         if (!empty($page['registerGuardiaAssets'])) {
             GuardiaTableroAsset::register($this->view);
         }
@@ -198,11 +202,16 @@ class PacienteController extends Controller
         $apiPath = '/api/v1/clinical/encounter/ver-consulta-como-staff?'
             . http_build_query($apiQuery);
 
+        $pageTitle = $paciente
+            ? ('Consulta cargada · ' . $paciente->getNombreCompleto(\common\models\Person\Persona::FORMATO_NOMBRE_A_N))
+            : 'Consulta cargada';
+        $this->view->title = $pageTitle;
+        VerConsultaAsset::register($this->view);
+
         return $this->render('ver_consulta', [
             'persona' => $paciente,
-            'turnoId' => $turnoId > 0 ? $turnoId : null,
-            'encounterId' => $encounterId > 0 ? $encounterId : null,
             'apiPath' => $apiPath,
+            'pageTitle' => $pageTitle,
         ]);
     }
 
@@ -276,12 +285,14 @@ class PacienteController extends Controller
                 }
 
                 $formularioHtml = $this->renderPartial('_formulario_consulta', [
-                    'paciente' => $paciente,
-                    'idConfiguracion' => $idConfiguracion,
-                    'idConsulta' => $idConsulta,
-                    'parent' => $parent,
-                    'parentId' => $parentId,
-                    'motivoPacientePrefill' => $motivoPacientePrefill,
+                    'form' => EncounterCaptureFormViewBuilder::build(
+                        $paciente,
+                        $idConfiguracion,
+                        $idConsulta,
+                        $parent,
+                        $parentId,
+                        $motivoPacientePrefill
+                    ),
                 ]);
             }
 

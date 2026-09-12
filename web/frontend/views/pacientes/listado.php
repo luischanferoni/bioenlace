@@ -1,70 +1,35 @@
 <?php
 
-use frontend\assets\AppAsset;
-use frontend\assets\GuardiaTableroAsset;
-use frontend\assets\PacientesListadoAsset;
-use yii\helpers\Html;
-use yii\helpers\Url;
-use yii\helpers\Json;
-use common\models\Clinical\Encounter;
-use common\models\Organization\Servicio;
 use common\components\Domain\Clinical\Emergency\Enum\TriageScale;
-use common\components\Domain\Clinical\Emergency\Service\GuardiaBoardCapabilityService;
+use yii\helpers\Html;
 
-$idServicioActual = isset($id_servicio_actual) ? (int) $id_servicio_actual : 0;
-$esAmbulatorio = ($encounter_class === Encounter::ENCOUNTER_CLASS_AMB);
-$esVirtual = ($encounter_class === Encounter::ENCOUNTER_CLASS_VR);
-$esGuardia = ($encounter_class === Encounter::ENCOUNTER_CLASS_EMER);
-$esImpQuirurgico = ($encounter_class === Encounter::ENCOUNTER_CLASS_IMP && $idServicioActual && Servicio::esServicioAgendaQuirurgica($idServicioActual));
-$esImpPiso = !empty($es_imp_piso);
-$fechaAnterior = date('Y-m-d', strtotime($fecha . ' -1 day'));
-$fechaSiguiente = date('Y-m-d', strtotime($fecha . ' +1 day'));
-$hoy = date('Y-m-d');
+/**
+ * @var yii\web\View $this
+ * @var array $page {@see \frontend\components\Clinical\PacientesListadoPageBuilder}
+ */
 
-$encounterMeta = [
-    Encounter::ENCOUNTER_CLASS_AMB => [
-        'label' => 'Ambulatorio',
-    ],
-    Encounter::ENCOUNTER_CLASS_IMP => [
-        'label' => 'Internación',
-    ],
-    Encounter::ENCOUNTER_CLASS_EMER => [
-        'label' => 'Guardia',
-    ],
-    Encounter::ENCOUNTER_CLASS_VR => [
-        'label' => 'Virtual',
-    ],
-];
-$metaEc = ($encounter_class && isset($encounterMeta[$encounter_class]))
-    ? $encounterMeta[$encounter_class]
-    : ['label' => ''];
-
-$encounterJson = Json::encode($encounter_class);
-$esPacienteHome = empty($encounter_class);
-$guardiaCaps = new GuardiaBoardCapabilityService();
-$puedeTriageGuardia = $esGuardia && $guardiaCaps->canTriage();
-$puedeIngresarGuardia = $esGuardia && $guardiaCaps->canIngresar();
-$puedeIngresarDniGuardia = $puedeIngresarGuardia && $guardiaCaps->canIngresarConDni();
-$puedeAtenderGuardia = $esGuardia && $guardiaCaps->canAtender();
-$puedeDocumentarGuardia = $esGuardia && $guardiaCaps->canDocumentar();
-
-$this->title = $esGuardia
-    ? 'Tablero de guardia'
-    : ($esVirtual
-        ? 'Consultas clínicas por mensaje'
-        : ($esPacienteHome ? 'Inicio' : 'Pacientes'));
+$fecha = (string) $page['fecha'];
+$esAmbulatorio = (bool) $page['esAmbulatorio'];
+$esImpQuirurgico = (bool) $page['esImpQuirurgico'];
+$esGuardia = (bool) $page['esGuardia'];
+$esImpPiso = (bool) $page['esImpPiso'];
+$esPacienteHome = (bool) $page['esPacienteHome'];
+$mostrarNavFechas = (bool) $page['mostrarNavFechas'];
+$encounterLabel = (string) $page['encounterLabel'];
+$urls = $page['urls'];
+$messages = $page['messages'];
 ?>
 
 <div class="mb-4">
-    <h2 class="mb-2"><?= Html::encode($this->title) ?></h2>
-    <?php if ($metaEc['label']): ?>
+    <h2 class="mb-2"><?= Html::encode($page['pageTitle']) ?></h2>
+    <?php if ($encounterLabel !== ''): ?>
         <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-            <span class="badge bg-primary"><?= Html::encode($metaEc['label']) ?></span>
+            <span class="badge bg-primary"><?= Html::encode($encounterLabel) ?></span>
         </div>
     <?php endif; ?>
 </div>
 
-<?php if ($esAmbulatorio || $esImpQuirurgico): ?>
+<?php if ($mostrarNavFechas): ?>
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
     <div class="text-muted small">
         <?php if ($esAmbulatorio): ?>
@@ -74,13 +39,13 @@ $this->title = $esGuardia
         <?php endif; ?>
     </div>
     <div class="btn-group" role="group">
-        <a href="<?= Url::to(['site/index', 'fecha' => $fechaAnterior]) ?>" class="btn btn-outline-secondary btn-sm">
+        <a href="<?= Html::encode($urls['fechaAnterior']) ?>" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-chevron-left"></i> Fecha anterior
         </a>
-        <a href="<?= Url::to(['site/index', 'fecha' => $hoy]) ?>" class="btn btn-outline-secondary btn-sm ms-2 me-2">
+        <a href="<?= Html::encode($urls['fechaHoy']) ?>" class="btn btn-outline-secondary btn-sm ms-2 me-2">
             Fecha de hoy
         </a>
-        <a href="<?= Url::to(['site/index', 'fecha' => $fechaSiguiente]) ?>" class="btn btn-outline-secondary btn-sm">
+        <a href="<?= Html::encode($urls['fechaSiguiente']) ?>" class="btn btn-outline-secondary btn-sm">
             Fecha siguiente <i class="bi bi-chevron-right"></i>
         </a>
     </div>
@@ -89,27 +54,27 @@ $this->title = $esGuardia
 
 <div id="pacientes-listado-container"
      data-fecha="<?= Html::encode($fecha) ?>"
-     data-encounter="<?= Html::encode($encounter_class) ?>"
-     data-url-historia="<?= Html::encode(Url::to(['/paciente/historia'], true)) ?>"
-     data-url-ver-consulta="<?= Html::encode(Url::to(['/paciente/ver-consulta'], true)) ?>"
-     data-url-asistente="<?= Html::encode(Url::to(['/site/asistente'], true)) ?>"
-     data-msg-empty-turnos="<?= Html::encode('No hay pacientes con turno en la fecha seleccionada.') ?>"
-     data-msg-empty-internados="<?= Html::encode('No hay pacientes internados para mostrar.') ?>"
-     data-msg-empty-guardias="<?= Html::encode('No hay pacientes en el tablero de guardia.') ?>"
-     data-msg-empty-cirugias="<?= Html::encode('No hay cirugías agendadas para la fecha seleccionada.') ?>"
+     data-encounter="<?= Html::encode($page['encounterClass']) ?>"
+     data-url-historia="<?= Html::encode($urls['historia']) ?>"
+     data-url-ver-consulta="<?= Html::encode($urls['verConsulta']) ?>"
+     data-url-asistente="<?= Html::encode($urls['asistente']) ?>"
+     data-msg-empty-turnos="<?= Html::encode($messages['emptyTurnos']) ?>"
+     data-msg-empty-internados="<?= Html::encode($messages['emptyInternados']) ?>"
+     data-msg-empty-guardias="<?= Html::encode($messages['emptyGuardias']) ?>"
+     data-msg-empty-cirugias="<?= Html::encode($messages['emptyCirugias']) ?>"
      data-es-guardia="<?= $esGuardia ? '1' : '0' ?>"
-     data-puede-triage="<?= $puedeTriageGuardia ? '1' : '0' ?>"
-     data-puede-ingresar="<?= $puedeIngresarGuardia ? '1' : '0' ?>"
-     data-puede-ingresar-dni="<?= $puedeIngresarDniGuardia ? '1' : '0' ?>"
-     data-puede-atender="<?= $puedeAtenderGuardia ? '1' : '0' ?>"
-     data-puede-documentar="<?= $puedeDocumentarGuardia ? '1' : '0' ?>"
+     data-puede-triage="<?= !empty($page['puedeTriageGuardia']) ? '1' : '0' ?>"
+     data-puede-ingresar="<?= !empty($page['puedeIngresarGuardia']) ? '1' : '0' ?>"
+     data-puede-ingresar-dni="<?= !empty($page['puedeIngresarDniGuardia']) ? '1' : '0' ?>"
+     data-puede-atender="<?= !empty($page['puedeAtenderGuardia']) ? '1' : '0' ?>"
+     data-puede-documentar="<?= !empty($page['puedeDocumentarGuardia']) ? '1' : '0' ?>"
 >
     <div id="pacientes-listado-flash" class="d-none alert mb-3" role="status"></div>
     <div id="pacientes-listado-loading" class="text-center py-5">
         <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Cargando...</span>
         </div>
-        <p class="mt-2 text-muted"><?= $esPacienteHome ? 'Cargando tu panel…' : 'Cargando listado de pacientes…' ?></p>
+        <p class="mt-2 text-muted"><?= Html::encode($page['loadingMessage']) ?></p>
     </div>
     <div id="pacientes-listado-content" class="d-none"></div>
     <div id="pacientes-listado-error" class="d-none alert alert-warning"></div>
@@ -429,13 +394,3 @@ $this->title = $esGuardia
     </div>
 </div>
 <?php endif; ?>
-
-<?php
-// Tras AppAsset: BioenlaceApiClient.mergeHeaders + native-page-bridge (BioenlaceNativePage).
-$panelJsDepends = [];
-if ($esGuardia) {
-    GuardiaTableroAsset::register($this);
-    $panelJsDepends[] = GuardiaTableroAsset::class;
-}
-PacientesListadoAsset::registerWithDepends($this, $panelJsDepends);
-?>

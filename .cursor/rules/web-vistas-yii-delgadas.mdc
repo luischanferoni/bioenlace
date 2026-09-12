@@ -29,15 +29,17 @@ Eso vive en el **controller** o en un **page builder / presenter** de `frontend/
 - `<?php if ($page['mostrarBannerEpisodio']): ?>` (flag ya calculado)
 - `data-*` / JSON de config **ya armado** por el builder (`json_encode($page['jsConfig'])`)
 - Registro de assets **fijos** de la pantalla; assets **condicionales** se deciden con un flag del view model (o se registran en el controller)
+- JS de pantalla en `frontend/web/js/` + `AssetBundle` (no `<script>` / `registerJs` largos en la vista)
 
 ## Patrón
 
 1. Controller lee request, llama dominio/API helpers, obtiene feed/datos.
 2. Page builder → array/DTO (`$page`) con flags, textos, URLs, grupos de UI.
-3. `return $this->render('…', ['page' => $page, …]);`
-4. Vista: cero/mínima preparación PHP al inicio.
+3. Registrar AssetBundle en el controller; config al JS vía `data-*` / `Json::htmlEncode`.
+4. `return $this->render('…', ['page' => $page, …]);`
+5. Vista: markup + flags del view model.
 
-Referencia: `PacienteController::actionHistoria` + `PacienteHistoriaTimelinePageBuilder` + `views/paciente/timeline/timeline.php`.
+Referencia: `PacienteController::actionHistoria` + `PacienteHistoriaTimelinePageBuilder` + `PacienteHistoriaTimelineAsset` + `views/paciente/timeline/timeline.php`.
 
 ## Anti-patrones
 

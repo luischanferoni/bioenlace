@@ -1,6 +1,5 @@
 <?php
 
-use common\components\Platform\Legacy\UserManagementCompat;
 use common\models\Platform\User;
 use yii\helpers\Html;
 use yii\bootstrap5\ActiveForm;
@@ -57,12 +56,12 @@ use yii\bootstrap5\ActiveForm;
 		<div class="float-end pe-4">
 			<?php if ( $model->isNewRecord ): ?>
 				<?= Html::submitButton(
-					'<span class="glyphicon glyphicon-plus-sign"></span> ' . UserManagementCompat::t('back', 'Crear'),
+					'<span class="glyphicon glyphicon-plus-sign"></span> Crear',
 					['class' => 'btn btn-success rounded-pill']
 				) ?>
 			<?php else: ?>
 				<?= Html::submitButton(
-					'<span class="glyphicon glyphicon-ok"></span> ' . UserManagementCompat::t('back', 'Save'),
+					'<span class="glyphicon glyphicon-ok"></span> Guardar',
 					['class' => 'btn btn-primary rounded-pill']
 				) ?>
 			<?php endif; ?>

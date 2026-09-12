@@ -1,6 +1,5 @@
 <?php
 
-use common\components\Platform\Legacy\UserManagementCompat;
 use yii\bootstrap5\ActiveForm;
 use yii\helpers\Html;
 
@@ -9,10 +8,10 @@ use yii\helpers\Html;
  * @var common\models\Platform\User $model
  */
 
-$this->title = UserManagementCompat::t('back', 'Changing password for user: ') . ' ' . $model->username;
-$this->params['breadcrumbs'][] = ['label' => UserManagementCompat::t('back', 'Users'), 'url' => ['index']];
+$this->title = 'Cambiar contraseña: ' . $model->username;
+$this->params['breadcrumbs'][] = ['label' => 'Usuarios', 'url' => ['index']];
 $this->params['breadcrumbs'][] = ['label' => $model->username, 'url' => ['view', 'id' => $model->id]];
-$this->params['breadcrumbs'][] = UserManagementCompat::t('back', 'Changing password');
+$this->params['breadcrumbs'][] = 'Cambiar contraseña';
 ?>
 <div class="user-update">
 
@@ -37,12 +36,12 @@ $this->params['breadcrumbs'][] = UserManagementCompat::t('back', 'Changing passw
 					<div class="col-sm-offset-3 col-sm-9">
 						<?php if ( $model->isNewRecord ): ?>
 							<?= Html::submitButton(
-								'<span class="glyphicon glyphicon-plus-sign"></span> ' . UserManagementCompat::t('back', 'Create'),
+								'<span class="glyphicon glyphicon-plus-sign"></span> Crear',
 								['class' => 'btn btn-success']
 							) ?>
 						<?php else: ?>
 							<?= Html::submitButton(
-								'<span class="glyphicon glyphicon-ok"></span> ' . UserManagementCompat::t('back', 'Save'),
+								'<span class="glyphicon glyphicon-ok"></span> Guardar',
 								['class' => 'btn btn-primary']
 							) ?>
 						<?php endif; ?>

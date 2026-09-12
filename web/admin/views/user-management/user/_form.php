@@ -1,7 +1,6 @@
 <?php
 
 use common\models\Platform\User;
-use common\components\Platform\Legacy\UserManagementCompat;
 use yii\helpers\Html;
 use yii\bootstrap5\ActiveForm;
 
@@ -35,7 +34,7 @@ use yii\bootstrap5\ActiveForm;
 
 		<?= $form->field($model, 'bind_to_ip')
 			->textInput(['maxlength' => 255])
-			->hint(UserManagementCompat::t('back','For example: 123.34.56.78, 168.111.192.12')) ?>
+			->hint('Ejemplo: 123.34.56.78, 168.111.192.12') ?>
 
 	<?php endif; ?>
 
@@ -53,12 +52,12 @@ use yii\bootstrap5\ActiveForm;
 		<div class="col-sm-offset-3 col-sm-9">
 			<?php if ( $model->isNewRecord ): ?>
 				<?= Html::submitButton(
-					'<span class="glyphicon glyphicon-plus-sign"></span> ' . UserManagementCompat::t('back', 'Nuevo'),
+					'<span class="glyphicon glyphicon-plus-sign"></span> Nuevo',
 					['class' => 'btn btn-success']
 				) ?>
 			<?php else: ?>
 				<?= Html::submitButton(
-					'<span class="glyphicon glyphicon-ok"></span> ' . UserManagementCompat::t('back', 'Save'),
+					'<span class="glyphicon glyphicon-ok"></span> Guardar',
 					['class' => 'btn btn-primary']
 				) ?>
 			<?php endif; ?>

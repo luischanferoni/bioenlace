@@ -13,7 +13,6 @@ Código **reutilizable en otro producto** cambiando metadata (`common/metadata/{
 | **`Core/`** | DataAccess, permisos de dominio (autorizadores genéricos), push, `Core/Product/` |
 | **`Ui/`** | UI JSON, panel home (motor), grid |
 | **`Infra/`** | Utilidades técnicas (migraciones, deduplicación) |
-| **`Legacy/`** | Compatibilidad técnica (p. ej. webvimark) |
 
 ## Qué **no** va aquí
 

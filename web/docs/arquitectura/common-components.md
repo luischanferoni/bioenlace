@@ -25,7 +25,7 @@ Para otro rubro: nuevo `Domain/`, metadata y registries; **`Platform/`** se mant
 | **`Platform/Core/`** | DataAccess, permisos, push, `Core/Product/` |
 | **`Platform/Ui/`** | Pantallas JSON, panel home (motor), grid |
 | **`Platform/Ai/`** | Proveedores IA, STT genérico, embeddings |
-| **`Platform/Infra/`**, **`Platform/Legacy/`** | Técnico transversal |
+| **`Platform/Infra/`** | Técnico transversal |
 
 **Prohibido** en `Platform/`: reglas de negocio clínico, listas de intents por rubro, `if (intentId === …)`.
 

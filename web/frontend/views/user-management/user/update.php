@@ -1,8 +1,5 @@
 <?php
 
-use common\components\Platform\Legacy\UserManagementCompat;
-use common\models\Platform\User;
-use yii\bootstrap\ActiveForm;
 use yii\helpers\Html;
 
 /**
@@ -10,10 +7,10 @@ use yii\helpers\Html;
  * @var common\models\Platform\User $model
  */
 
-$this->title = UserManagementCompat::t('back', 'Editing user: ') . ' ' . $model->username;
-$this->params['breadcrumbs'][] = ['label' => UserManagementCompat::t('back', 'Users'), 'url' => ['index']];
+$this->title = 'Editar usuario: ' . $model->username;
+$this->params['breadcrumbs'][] = ['label' => 'Usuarios', 'url' => ['index']];
 $this->params['breadcrumbs'][] = ['label' => $model->username, 'url' => ['view', 'id' => $model->id]];
-$this->params['breadcrumbs'][] = UserManagementCompat::t('back', 'Editing');
+$this->params['breadcrumbs'][] = 'Edición';
 ?>
 <div class="card">
 

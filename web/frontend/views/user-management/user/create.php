@@ -1,6 +1,5 @@
 <?php
 
-use common\components\Platform\Legacy\UserManagementCompat;
 use yii\helpers\Html;
 
 /**
@@ -8,8 +7,8 @@ use yii\helpers\Html;
  * @var common\models\Platform\User $model
  */
 
-$this->title = UserManagementCompat::t('back', 'User creation');
-$this->params['breadcrumbs'][] = ['label' => UserManagementCompat::t('back', 'Users'), 'url' => ['index']];
+$this->title = 'Alta de usuario';
+$this->params['breadcrumbs'][] = ['label' => 'Usuarios', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 
@@ -20,6 +19,5 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <div class="card-body">
 		<?= $this->render('_form', ['model' => $model]) ?>
-	</div>
-
+    </div>
 </div>

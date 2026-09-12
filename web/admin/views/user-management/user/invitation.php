@@ -1,7 +1,6 @@
 <?php
 
 use common\components\Platform\Core\Auth\StaffAccountInvitationService;
-use common\components\Platform\Legacy\UserManagementCompat;
 use common\models\Platform\User;
 use common\models\Platform\UserAccountInvitationLog;
 use yii\helpers\Html;
@@ -15,7 +14,7 @@ use yii\helpers\Url;
  */
 
 $this->title = 'Activar acceso: ' . $model->username;
-$this->params['breadcrumbs'][] = ['label' => UserManagementCompat::t('back', 'Users'), 'url' => ['index']];
+$this->params['breadcrumbs'][] = ['label' => 'Usuarios', 'url' => ['index']];
 $this->params['breadcrumbs'][] = ['label' => $model->username, 'url' => ['view', 'id' => $model->id]];
 $this->params['breadcrumbs'][] = 'Invitación';
 

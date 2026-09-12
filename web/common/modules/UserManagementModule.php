@@ -5,10 +5,12 @@ namespace common\modules;
 use yii\base\Module;
 
 /**
- * Módulo compatibilidad que reemplaza webvimark {@see \webvimark\modules\UserManagement\UserManagementModule}
- * en configuración Yii. Mantiene propiedades leídas por formularios y RBAC legacy.
+ * Módulo Yii `user-management`: knobs de cuentas/RBAC leídos por formularios y auth.
+ *
+ * El id de módulo y las URLs `/user-management/...` se mantienen; la implementación
+ * es Bioenlace (controllers en admin/frontend), no un paquete externo.
  */
-class UserManagementCompatModule extends Module
+class UserManagementModule extends Module
 {
     public $commonPermissionName = 'commonPermission';
 

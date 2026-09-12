@@ -801,7 +801,7 @@ return [
     'params' => $params,
     'modules' => [
         'user-management' => [
-            'class' => \common\modules\UserManagementCompatModule::class,
+            'class' => \common\modules\UserManagementModule::class,
             'controllerMap' => [
                 'auth' => 'frontend\controllers\userManagement\AuthController',
                 'permission' => 'admin\controllers\LegacyRbacRedirectController',

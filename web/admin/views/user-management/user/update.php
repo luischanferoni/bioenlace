@@ -1,6 +1,5 @@
 <?php
 
-use common\components\Platform\Legacy\UserManagementCompat;
 use yii\helpers\Html;
 
 /**
@@ -8,10 +7,10 @@ use yii\helpers\Html;
  * @var common\models\Platform\User $model
  */
 
-$this->title = UserManagementCompat::t('back', 'Editing user: ') . ' ' . $model->username;
-$this->params['breadcrumbs'][] = ['label' => UserManagementCompat::t('back', 'Users'), 'url' => ['index']];
+$this->title = 'Editar usuario: ' . $model->username;
+$this->params['breadcrumbs'][] = ['label' => 'Usuarios', 'url' => ['index']];
 $this->params['breadcrumbs'][] = ['label' => $model->username, 'url' => ['view', 'id' => $model->id]];
-$this->params['breadcrumbs'][] = UserManagementCompat::t('back', 'Editing');
+$this->params['breadcrumbs'][] = 'Edición';
 ?>
 <div class="user-update">
 
@@ -19,6 +18,7 @@ $this->params['breadcrumbs'][] = UserManagementCompat::t('back', 'Editing');
 
 	<div class="panel panel-default">
 		<div class="panel-body">
+
 			<?= $this->render('_form', ['model' => $model]) ?>
 		</div>
 	</div>

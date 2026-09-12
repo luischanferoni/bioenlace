@@ -19,7 +19,7 @@ alwaysApply: false
 
 | Capa | Ruta | Qué va |
 |------|------|--------|
-| **Motores** | `web/common/components/Platform/` | Assistant, Core, Ai, Ui, Infra, Legacy — agnóstico del rubro |
+| **Motores** | `web/common/components/Platform/` | Assistant, Core, Ai, Ui, Infra — agnóstico del rubro |
 | **Rubro salud** | `web/common/components/Domain/` | Clinical, Scheduling, Person, Organization, Integrations, Terminology, Content, Geo, Programs |
 
 Metadata producto: `web/common/metadata/bioenlace/`. Cableado: `web/common/config/product-registries.php`.

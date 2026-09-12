@@ -21,12 +21,12 @@ return [
     ],
     'controllerNamespace' => 'console\controllers',
     /**
-     * Módulo user-management (UserManagementCompatModule) expone nombres de tabla.
-     * Sin registrarlo, comandos que crean usuarios fallan con "user_table on null".
+     * Módulo user-management ({@see \common\modules\UserManagementModule}) expone knobs
+     * (p. ej. confirmationTokenExpire, commonPermissionName) usados por User / RBAC.
      */
     'modules' => [
         'user-management' => [
-            'class' => \common\modules\UserManagementCompatModule::class,
+            'class' => \common\modules\UserManagementModule::class,
         ],
     ],
     'components' => [

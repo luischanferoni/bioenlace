@@ -35,6 +35,8 @@ Sí permitido en JS:
 
 Referencia: listado pacientes (`_listado_templates.php` + `pacientes-listado.js`); HC episodio (`_episodio_timeline_*.php`, `_timeline_templates.php`).
 
+Vistas delgadas (sin lógica de request/contexto en PHP de la vista): `web-vistas-yii-delgadas.mdc`.
+
 ## Qué no es Camino A
 
 - Reescribir todo el producto en React/Vue “porque SPA”.

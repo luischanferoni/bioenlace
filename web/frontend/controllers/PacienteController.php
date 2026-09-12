@@ -14,6 +14,8 @@ use common\components\Domain\Clinical\Service\EncounterCaptureContextService;
 use common\components\Domain\Clinical\Service\EpisodioTimelineService;
 use common\components\Domain\Clinical\Workflow\EncounterDefinitionBootstrapService;
 use frontend\components\Clinical\EpisodioTimelineViewBuilder;
+use frontend\components\Clinical\PacienteHistoriaTimelinePageBuilder;
+use frontend\assets\GuardiaTableroAsset;
 use frontend\filters\SisseActionFilter;
 
 /**
@@ -77,9 +79,21 @@ class PacienteController extends Controller
             $parentId
         );
 
+        $page = PacienteHistoriaTimelinePageBuilder::build(
+            $paciente,
+            $timelineEpisodio,
+            $parent !== null ? (string) $parent : null,
+            $parentId,
+            (string) Yii::$app->request->get('vista', '')
+        );
+
+        $this->view->title = $page['pageTitle'];
+        if (!empty($page['registerGuardiaAssets'])) {
+            GuardiaTableroAsset::register($this->view);
+        }
+
         return $this->render('timeline/timeline', [
-            'persona' => $paciente,
-            'timelineEpisodio' => $timelineEpisodio,
+            'page' => $page,
         ]);
     }
 

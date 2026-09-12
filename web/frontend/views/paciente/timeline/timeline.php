@@ -3,102 +3,32 @@
 use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\bootstrap5\Modal;
-
-use common\models\Person\Persona;
-use common\helpers\TimelineHelper;
-use common\models\Platform\User;
-use common\models\Clinical\Encounter;
-use frontend\assets\GuardiaTableroAsset;
-use frontend\components\Clinical\EpisodioTimelineViewBuilder;
 use yii\web\View;
 
+/**
+ * @var yii\web\View $this
+ * @var array $page view model {@see \frontend\components\Clinical\PacienteHistoriaTimelinePageBuilder}
+ */
 
+$esContextoInternacion = (bool) $page['esContextoInternacion'];
+$esContextoGuardia = (bool) $page['esContextoGuardia'];
+$esContextoEpisodio = (bool) $page['esContextoEpisodio'];
+$mostrarMotivosAmbulatorios = (bool) $page['mostrarMotivosAmbulatorios'];
+$mostrarCurvasCrecimiento = (bool) $page['mostrarCurvasCrecimiento'];
+$timelineEpisodioGroups = $page['timelineEpisodioGroups'];
+$timelineEpisodioItemCount = $page['timelineEpisodioItemCount'];
+$episodioBannerAccent = (string) $page['episodioBannerAccent'];
+$episodioTipoData = (string) $page['episodioTipoData'];
+$jsConfig = $page['jsConfig'];
 
-$tieneRolEnfermeria = User::hasRole(['enfermeria']) ? true : false;
-// Barrio del paciente (domicilio activo)
-$barrioNombre = null;
-if (is_object($persona) && is_object($persona->domicilioActivo)) {
-    if (is_object($persona->domicilioActivo->modelBarrio)) {
-        $barrioNombre = $persona->domicilioActivo->modelBarrio->nombre;
-    } elseif (!empty($persona->domicilioActivo->barrio)) {
-        // Fallback: el campo guarda el id del barrio; si no hay relación, mostramos el valor crudo.
-        $barrioNombre = $persona->domicilioActivo->barrio;
-    }
-}
-
-$barrioTexto = !empty($barrioNombre) ? $barrioNombre : 'Sin datos';
-$edad = is_object($persona) ? $persona->edad : null;
-$edadTexto = $edad !== null && $edad !== '' ? ((int) $edad) . ' años' : 'edad s/d';
-$generoLabels = [1 => 'Femenino', 2 => 'Masculino', 3 => 'Otro', 4 => 'Indefinido'];
-$generoTexto = $generoLabels[(int) ($persona->genero ?? 0)] ?? 'Sin datos';
-$vistaConsultaCargada = strtolower((string) Yii::$app->request->get('vista', '')) === 'consulta';
-$this->title = $vistaConsultaCargada
-    ? ('Consulta cargada · ' . $persona->apellido . ', ' . $persona->nombre . ' | ' . $edadTexto)
-    : ($persona->nombre . ' ' . $persona->otro_nombre . ', ' . $persona->apellido . ' | ' . $edadTexto . ' · ' . $generoTexto . ' · Barrio: ' . $barrioTexto);
-
-$parentQuery = Yii::$app->request->get('parent');
-$parentIdQuery = (int) Yii::$app->request->get('parent_id', 0);
-$parentUpper = strtoupper(trim((string) $parentQuery));
-$esContextoInternacion = $parentUpper === Encounter::PARENT_INTERNACION && $parentIdQuery > 0;
-$esContextoGuardia = $parentUpper === Encounter::PARENT_GUARDIA && $parentIdQuery > 0;
-$esContextoEpisodio = $esContextoInternacion || $esContextoGuardia;
-$mostrarMotivosAmbulatorios = !$esContextoEpisodio
-    && !in_array($parentUpper, [Encounter::PARENT_CIRUGIA, Encounter::PARENT_GENERICO_EMER], true);
-
-$modoCaptura = $esContextoInternacion ? 'imp' : ($esContextoGuardia ? 'emer' : 'amb');
-
-$timelineEpisodio = $timelineEpisodio ?? null;
-$timelineEpisodioGroups = $esContextoEpisodio
-    ? EpisodioTimelineViewBuilder::groupsFromFeed(is_array($timelineEpisodio) ? $timelineEpisodio : null)
-    : [];
-$timelineEpisodioItemCount = $esContextoEpisodio
-    ? EpisodioTimelineViewBuilder::itemCount(is_array($timelineEpisodio) ? $timelineEpisodio : null)
-    : 0;
-
-$historiaClinicaQs = [];
-$verConsultaStaffPath = null;
-$episodioTimelineHtmlPath = null;
-if ($parentUpper === Encounter::PARENT_TURNO && $parentIdQuery > 0) {
-    $historiaClinicaQs['turno_id'] = $parentIdQuery;
-    $verConsultaStaffPath = '/api/v1/clinical/encounter/ver-consulta-como-staff?'
-        . http_build_query(['turno_id' => $parentIdQuery]);
-} elseif ($esContextoInternacion) {
-    $historiaClinicaQs['parent'] = Encounter::PARENT_INTERNACION;
-    $historiaClinicaQs['parent_id'] = $parentIdQuery;
-    $episodioTimelineHtmlPath = Url::to([
-        '/paciente/episodio-timeline-html',
-        'id' => (int) $persona->id_persona,
-        'parent' => Encounter::PARENT_INTERNACION,
-        'parent_id' => $parentIdQuery,
-    ]);
-} elseif ($esContextoGuardia) {
-    $historiaClinicaQs['parent'] = Encounter::PARENT_GUARDIA;
-    $historiaClinicaQs['parent_id'] = $parentIdQuery;
-    $episodioTimelineHtmlPath = Url::to([
-        '/paciente/episodio-timeline-html',
-        'id' => (int) $persona->id_persona,
-        'parent' => Encounter::PARENT_GUARDIA,
-        'parent_id' => $parentIdQuery,
-    ]);
-}
-$historiaClinicaPath = '/api/v1/personas/' . (int) $persona->id_persona . '/historia-clinica';
-if ($historiaClinicaQs !== []) {
-    $historiaClinicaPath .= '?' . http_build_query($historiaClinicaQs);
-}
-
-// Los archivos JS (turnos.js, chat-inteligente.js, timeline.js) se cargan automáticamente desde AppAsset
-// Solo registrar Plotly si es necesario para gráficos
 $this->registerJsFile(
-    "https://cdn.plot.ly/plotly-2.27.1.min.js",
+    'https://cdn.plot.ly/plotly-2.27.1.min.js',
     [
         'position' => View::POS_HEAD,
-        'charset' => 'utf-8'
+        'charset' => 'utf-8',
     ]
 );
 $this->registerCssFile(Url::to('@web/css/episodio-historia-banner.css'));
-if (!empty($esContextoGuardia)) {
-    GuardiaTableroAsset::register($this);
-}
 
 ?>
 
@@ -109,17 +39,13 @@ if (!empty($esContextoGuardia)) {
                 <i class="bi bi-arrow-left"></i> Volver
             </button>
         </div>
-        <div class="fw-bold text-body text-truncate" style="font-size: 1.05rem;" title="<?= Html::encode($this->title) ?>">
-            <?= Html::encode($this->title) ?>
+        <div class="fw-bold text-body text-truncate" style="font-size: 1.05rem;" title="<?= Html::encode($page['pageTitle']) ?>">
+            <?= Html::encode($page['pageTitle']) ?>
         </div>
     </div>
 
-<?php if ($esContextoEpisodio):
-    $episodioBannerAccent = $esContextoGuardia
-        ? 'border-danger bg-danger-subtle'
-        : 'border-primary bg-primary-subtle';
-?>
-<div id="tl_episodio_banner" class="mb-3" hidden data-episodio-tipo="<?= Html::encode($esContextoGuardia ? 'GUARDIA' : 'INTERNACION') ?>">
+<?php if ($esContextoEpisodio): ?>
+<div id="tl_episodio_banner" class="mb-3" hidden data-episodio-tipo="<?= Html::encode($episodioTipoData) ?>">
     <div class="sticky-top rounded shadow-sm p-3 border-start border-4 <?= Html::encode($episodioBannerAccent) ?>">
         <div class="d-flex flex-wrap align-items-center gap-2 mb-2" id="tl_episodio_triage" hidden>
             <span class="badge" id="tl_episodio_triage_badge"></span>
@@ -299,7 +225,7 @@ if (!empty($esContextoGuardia)) {
                         </div>
                         
                         <!-- Contenedores para el contenido -->
-                        <?php if ($edad !== null && (int) $edad < 14) : ?>
+                        <?php if ($mostrarCurvasCrecimiento) : ?>
                             <div id="curvas-crecimiento-content" class="mb-3" style="display: none;"></div>
                         <?php endif; ?>
                     </div>
@@ -443,26 +369,12 @@ endif;
                 window.history.back();
                 return;
             }
-            window.location.href = <?= json_encode(Url::to(['/site/index'])) ?>;
+            window.location.href = <?= json_encode($jsConfig['siteIndexUrl'], JSON_UNESCAPED_SLASHES) ?>;
         });
     }
     
     // Configuración para el timeline (usar var para permitir redeclaración en SPA)
-    var timelineConfig = {
-        pacienteId: <?= $persona->id_persona ?>,
-        vistaConsultaCargada: <?= $vistaConsultaCargada ? 'true' : 'false' ?>,
-        modoCaptura: <?= json_encode($modoCaptura) ?>,
-        parent: <?= json_encode($esContextoEpisodio ? $parentUpper : null) ?>,
-        parentId: <?= $esContextoEpisodio ? (int) $parentIdQuery : 'null' ?>,
-        endpoints: {
-            curvasCrecimiento: <?= ($edad !== null && (int) $edad < 14) ? "'" . \yii\helpers\Url::to(['personas/curvas-crecimiento', 'id' => $persona->id_persona]) . "'" : 'null' ?>,
-            //vacunas: '<?= \yii\helpers\Url::to(['personas/vacunas', 'dni' => $persona->documento, 'sexo' => $persona->sexo_biologico]) ?>',
-            formularioConsulta: '<?= Url::to(['paciente/formulario-consulta', 'id' => $persona->id_persona]) ?>',
-            historiaClinica: <?= json_encode($vistaConsultaCargada ? null : $historiaClinicaPath, JSON_UNESCAPED_SLASHES) ?>,
-            verConsultaComoStaff: <?= json_encode($verConsultaStaffPath, JSON_UNESCAPED_SLASHES) ?>,
-            episodioTimelineHtml: <?= json_encode($episodioTimelineHtmlPath, JSON_UNESCAPED_SLASHES) ?>
-        }
-    };
+    var timelineConfig = <?= json_encode($jsConfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 
     function bioHeaders() {
         if (typeof window.getBioenlaceApiClientHeaders === "function") {

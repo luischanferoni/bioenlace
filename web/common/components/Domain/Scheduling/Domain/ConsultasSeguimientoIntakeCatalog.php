@@ -1,0 +1,95 @@
+<?php
+
+namespace common\components\Domain\Scheduling\Domain;
+
+/**
+ * Catálogo de dominio (ex Scheduling/metadata/consultas_seguimiento_intake.yaml).
+ */
+final class ConsultasSeguimientoIntakeCatalog
+{
+    /**
+     * @return array<string, mixed>
+     */
+    public static function config(): array
+    {
+        return [
+        'version' => '1',
+        'intake_tipos' => [
+            'consulta_general' => [
+                'code' => 'consulta_general',
+                'label' => 'Consulta general',
+                'description' => 'Mensaje libre, sin vincular a un tratamiento en curso. Se resuelve como consulta clínica por mensaje.',
+                'composer_placeholder' => 'Contanos tu consulta. Un profesional te responderá por mensaje.',
+            ],
+            'seguimiento' => [
+                'code' => 'seguimiento',
+                'label' => 'Seguimiento de tratamiento activo',
+                'description' => 'Dudas, renovación o evolución sobre un plan de salud que ya tenés.',
+            ],
+            'seguimiento_consulta_previa' => [
+                'code' => 'seguimiento_consulta_previa',
+                'label' => 'Seguimiento de una consulta previa',
+                'description' => 'Consultá sobre una atención que ya tuviste y tiene resumen publicado.',
+                'composer_placeholder' => 'Contanos tu consulta o evolución respecto de esa atención.',
+            ],
+        ],
+        'seguimiento_necesidades' => [
+            'renovar_medicacion' => [
+                'code' => 'renovar_medicacion',
+                'label' => 'Renovar medicación',
+                'description' => 'Pedí renovación de uno o más medicamentos de tu plan (sin escribir texto).',
+                'permite_async' => true,
+            ],
+            'solicitar_ajuste' => [
+                'code' => 'solicitar_ajuste',
+                'label' => 'Solicitar ajuste de medicación',
+                'description' => 'Pedí un cambio en dosis, horario u otro aspecto; un profesional lo evaluará.',
+                'composer_placeholder' => 'Indicá qué cambio necesitás y por qué (síntomas, horarios, etc.).',
+                'permite_async' => true,
+            ],
+            'solicitar_turno' => [
+                'code' => 'solicitar_turno',
+                'label' => 'Solicitar turno',
+                'description' => 'Reservá un control (presencial o por videollamada) con el mismo médico u otro profesional.',
+                'permite_async' => false,
+            ],
+            'contar_evolucion' => [
+                'code' => 'contar_evolucion',
+                'label' => 'Consulta o evolución',
+                'description' => 'Dudas sobre el tratamiento o cómo te está yendo.',
+                'composer_placeholder' => 'Contanos tu duda o cómo te sentís, con el mayor detalle posible.',
+                'permite_async' => true,
+            ],
+        ],
+        'preferencias_turno' => [
+            'mismo_medico' => [
+                'code' => 'mismo_medico',
+                'label' => 'Mismo médico',
+                'description' => 'Turno con quien te atendió en este tratamiento, si hay agenda.',
+            ],
+            'otro_medico' => [
+                'code' => 'otro_medico',
+                'label' => 'Otro profesional',
+                'description' => 'Elegí centro, servicio y profesional disponibles.',
+            ],
+        ],
+        'ui_steps' => [
+            'tipo' => [
+                'title' => 'Consultas y seguimiento',
+                'draft_field' => 'intake_tipo',
+                'opciones' => 'intake_tipos',
+            ],
+            'necesidad' => [
+                'title' => '¿Qué necesitás?',
+                'draft_field' => 'seguimiento_necesidad',
+                'opciones' => 'seguimiento_necesidades',
+            ],
+            'preferencia_turno' => [
+                'title' => '¿Con quién querés el control?',
+                'draft_field' => 'preferencia_profesional_turno',
+                'opciones' => 'preferencias_turno',
+            ],
+        ],
+    ];
+    }
+}

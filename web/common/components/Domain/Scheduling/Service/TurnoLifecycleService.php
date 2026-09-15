@@ -157,12 +157,12 @@ class TurnoLifecycleService
         }
 
         try {
-            (new \common\components\Domain\Scheduling\Service\TurnoAdvanceOfferAgent())->onTurnoCancelled($turno);
+            (new \common\components\Domain\Scheduling\Application\Agent\TurnoAdvanceOfferAgent())->onTurnoCancelled($turno);
         } catch (\Throwable $e) {
             Yii::warning('Advance offer: ' . $e->getMessage(), 'turno-advance');
         }
 
-        \common\components\Domain\Integrations\Scheduling\Service\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
+        \common\components\Domain\Scheduling\Infrastructure\External\Service\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
 
         return true;
     }
@@ -198,7 +198,7 @@ class TurnoLifecycleService
             }
             throw $e;
         }
-        \common\components\Domain\Integrations\Scheduling\Service\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
+        \common\components\Domain\Scheduling\Infrastructure\External\Service\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
     }
 
     public function marcarAtendido(Turno $turno, ?int $idUser = null): void
@@ -229,7 +229,7 @@ class TurnoLifecycleService
             }
             throw $e;
         }
-        \common\components\Domain\Integrations\Scheduling\Service\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
+        \common\components\Domain\Scheduling\Infrastructure\External\Service\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
     }
 
     public function corregirNoShow(
@@ -293,7 +293,7 @@ class TurnoLifecycleService
             }
             throw $e;
         }
-        \common\components\Domain\Integrations\Scheduling\Service\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
+        \common\components\Domain\Scheduling\Infrastructure\External\Service\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
     }
 
     /**
@@ -350,7 +350,7 @@ class TurnoLifecycleService
             throw $e;
         }
         if ($notifyOutbound) {
-            \common\components\Domain\Integrations\Scheduling\Service\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
+            \common\components\Domain\Scheduling\Infrastructure\External\Service\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
         }
     }
 

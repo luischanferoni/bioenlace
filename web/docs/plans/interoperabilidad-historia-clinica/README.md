@@ -23,7 +23,7 @@
 
 | Área | Ubicación |
 |------|-----------|
-| Conectores + mapper | `common/components/Domain/Integrations/ClinicalHistory/` |
+| Conectores + mapper | `common/components/Domain/Clinical/Infrastructure/External/ClinicalHistory/` |
 | Dominio (cola, retry, reconcile) | `common/components/Domain/Clinical/HistoryExchange/` |
 | Modelos | `ClinicalHistoryOutboundJob`, `ClinicalHistoryOutboundAudit` |
 | API staff | `frontend/modules/api/v1/controllers/clinical/HistoryExchangeController.php` |

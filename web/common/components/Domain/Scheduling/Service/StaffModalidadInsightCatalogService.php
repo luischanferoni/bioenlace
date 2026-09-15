@@ -2,15 +2,13 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
-use Symfony\Component\Yaml\Yaml;
+use common\components\Domain\Scheduling\Domain\StaffModalidadInsightCatalog;
 
 /**
- * Catálogo declarativo de textos y modalidades para insight staff ({@see metadata/staff_modalidad_insight.yaml}).
+ * Catálogo declarativo de textos y modalidades para insight staff ({@see StaffModalidadInsightCatalog}).
  */
 final class StaffModalidadInsightCatalogService
 {
-    private const CATALOG_FILE = 'staff_modalidad_insight.yaml';
-
     /** @var array<string, mixed>|null */
     private static ?array $cache = null;
 
@@ -85,14 +83,7 @@ final class StaffModalidadInsightCatalogService
             return self::$cache;
         }
 
-        $path = __DIR__ . '/../metadata/' . self::CATALOG_FILE;
-        if (!is_file($path)) {
-            self::$cache = [];
-
-            return self::$cache;
-        }
-
-        $parsed = Yaml::parseFile($path);
+        $parsed = StaffModalidadInsightCatalog::config();
         self::$cache = is_array($parsed) ? $parsed : [];
 
         return self::$cache;

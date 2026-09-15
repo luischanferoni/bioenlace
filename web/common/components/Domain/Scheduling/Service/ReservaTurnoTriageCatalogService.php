@@ -3,18 +3,16 @@
 namespace common\components\Domain\Scheduling\Service;
 
 use common\models\Scheduling\ReservaTriageTeleconsultaElegibilidad;
-use Symfony\Component\Yaml\Yaml;
+use common\components\Domain\Scheduling\Domain\ReservaTriageCatalog;
 use Yii;
 
 /**
- * Catálogo declarativo de triage clínico al reservar turno ({@see metadata/reserva_triage_catalog_v1.yaml}).
+ * Catálogo declarativo de triage clínico al reservar turno ({@see ReservaTriageCatalog}).
  *
  * Pasos de flow-only (p. ej. modalidad) viven en servicios dedicados ({@see ReservaTriageModalidadStepService}).
  */
 final class ReservaTurnoTriageCatalogService
 {
-    private const CATALOG_FILE = 'reserva_triage_catalog_v1.yaml';
-
     /** @var array<string, array{title: string, draft_field: string}> */
     private const FLOW_ONLY_STEPS = [
         ReservaTriageModalidadStepService::STEP_ID => [
@@ -354,11 +352,7 @@ final class ReservaTurnoTriageCatalogService
         if (self::$cache !== null) {
             return self::$cache;
         }
-        $path = dirname(__DIR__) . '/metadata/' . self::CATALOG_FILE;
-        if (!is_file($path)) {
-            throw new \RuntimeException('Catálogo de triage no encontrado: ' . $path);
-        }
-        $data = Yaml::parseFile($path);
+        $data = ReservaTriageCatalog::config();
         if (!is_array($data)) {
             throw new \RuntimeException('Catálogo de triage inválido.');
         }

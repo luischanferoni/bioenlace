@@ -213,7 +213,7 @@ final class TurnoAdvanceOfferAcceptService
             throw $e;
         }
 
-        \common\components\Domain\Integrations\Scheduling\Service\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
+        \common\components\Domain\Scheduling\Infrastructure\External\Service\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
 
         return [
             'id_turno' => (int) $turno->id_turnos,

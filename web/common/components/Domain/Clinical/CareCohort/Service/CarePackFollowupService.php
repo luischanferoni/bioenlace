@@ -2,6 +2,8 @@
 
 namespace common\components\Domain\Clinical\CareCohort\Service;
 
+use common\components\Domain\Clinical\Application\Agent\CareFollowupBranchingAgent;
+
 use common\components\Domain\Clinical\CareCohort\Presentation\CareEducationModuleResolver;
 use common\components\Domain\Clinical\CareCohort\Presentation\CarePackFollowupPresenter;
 use common\components\Domain\Clinical\Service\Authorization\EncounterAccessService;

@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Person\Service;
 
-use common\components\Domain\Integrations\Identity\Connector\DiditClient;
-use common\components\Domain\Integrations\Mpi\Service\RenaperGatewayService;
+use common\components\Domain\Person\Infrastructure\External\Identity\Connector\DiditClient;
+use common\components\Domain\Person\Infrastructure\External\Mpi\RenaperGatewayService;
 use common\models\Person\Persona;
 use Yii;
 

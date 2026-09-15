@@ -2,6 +2,8 @@
 
 namespace common\components\Domain\Clinical\Inpatient\Service;
 
+use common\components\Domain\Clinical\Application\Agent\InternacionCamaSugerenciaAgent;
+
 use common\components\Domain\Clinical\Service\CarePlanLifecycleService;
 use common\components\Domain\Clinical\Emergency\Service\GuardiaInternacionService;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
@@ -15,7 +17,7 @@ use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Clinical\SegNivelInternacion;
 use common\models\Clinical\SegNivelInternacionHcama;
 use common\models\Clinical\SegNivelInternacionRepository;
-use common\components\Domain\Integrations\Mpi\Service\MpiApiClient;
+use common\components\Domain\Person\Infrastructure\External\Mpi\MpiApiClient;
 use Yii;
 use yii\helpers\ArrayHelper;
 

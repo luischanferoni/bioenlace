@@ -2,16 +2,14 @@
 
 namespace common\components\Domain\Clinical\Service\EncounterJourney;
 
-use Symfony\Component\Yaml\Yaml;
+use common\components\Domain\Clinical\Domain\EncounterPhaseWindowsCatalog;
 use Yii;
 
 /**
- * Catálogo declarativo de ventanas por fase ({@see metadata/encounter_phase_windows.yaml}).
+ * Catálogo declarativo de ventanas por fase ({@see EncounterPhaseWindowsCatalog}).
  */
 final class EncounterPhaseWindowsCatalogService
 {
-    private const CATALOG_FILE = 'encounter_phase_windows.yaml';
-
     /** @var array<string, mixed>|null */
     private static ?array $cache = null;
 
@@ -157,11 +155,7 @@ final class EncounterPhaseWindowsCatalogService
         if (self::$cache !== null) {
             return self::$cache;
         }
-        $path = dirname(__DIR__, 2) . '/metadata/' . self::CATALOG_FILE;
-        if (!is_file($path)) {
-            throw new \RuntimeException('Catálogo encounter_phase_windows no encontrado: ' . $path);
-        }
-        $data = Yaml::parseFile($path);
+        $data = EncounterPhaseWindowsCatalog::config();
         if (!is_array($data)) {
             throw new \RuntimeException('Catálogo encounter_phase_windows inválido.');
         }

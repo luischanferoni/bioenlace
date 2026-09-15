@@ -2,15 +2,13 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
-use Symfony\Component\Yaml\Yaml;
+use common\components\Domain\Scheduling\Domain\ServicioTeleconsultaPoliticaCatalog;
 
 /**
- * Copy y opciones de política de teleconsulta ({@see metadata/servicio_teleconsulta_politica.yaml}).
+ * Copy y opciones de política de teleconsulta ({@see ServicioTeleconsultaPoliticaCatalog}).
  */
 final class ServicioTeleconsultaPoliticaCatalogService
 {
-    private const CATALOG_FILE = 'servicio_teleconsulta_politica.yaml';
-
     /** @var array<string, mixed>|null */
     private static ?array $cache = null;
 
@@ -90,13 +88,7 @@ final class ServicioTeleconsultaPoliticaCatalogService
         if (self::$cache !== null) {
             return self::$cache;
         }
-        $path = __DIR__ . '/../metadata/' . self::CATALOG_FILE;
-        if (!is_file($path)) {
-            self::$cache = [];
-
-            return self::$cache;
-        }
-        $parsed = Yaml::parseFile($path);
+        $parsed = ServicioTeleconsultaPoliticaCatalog::config();
 
         self::$cache = is_array($parsed) ? $parsed : [];
 

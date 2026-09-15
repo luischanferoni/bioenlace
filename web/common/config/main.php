@@ -50,7 +50,7 @@ return [
             'class' => \common\components\Platform\Ai\IAManager::class,
         ],
         'mpi' => [
-            'class' => \common\components\Domain\Integrations\Mpi\Service\MpiApiClient::class,
+            'class' => \common\components\Domain\Person\Infrastructure\External\Mpi\MpiApiClient::class,
         ],
         'snowstorm' => [
             'class' => \common\components\Domain\Terminology\Snomed\SnowstormClient::class,

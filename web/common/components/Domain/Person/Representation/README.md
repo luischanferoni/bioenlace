@@ -18,9 +18,9 @@ Documentación de producto: [web/docs/producto/representacion-paciente.md](../..
 | `PersonRepresentationMpiService` | Alta/resolución de menor vía MPI |
 | `PersonRepresentationPresenter` | Serialización API de vínculos |
 
-## Metadata
+## Catálogo / enums
 
-- Permisos v1: `metadata/representation_permissions_v1.yaml`
+- Permisos v1: `Person/Domain/RepresentationPermissionsV1Catalog` (ex `metadata/representation_permissions_v1.yaml`)
 - Enums: `Enum/RepresentationPermission.php`, `RepresentationRegime.php`, …
 
 ## API (`PersonRepresentationController`)

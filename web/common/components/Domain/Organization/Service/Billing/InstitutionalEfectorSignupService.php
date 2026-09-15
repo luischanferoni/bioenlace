@@ -12,7 +12,6 @@ use common\models\Person\Persona;
 use common\models\Platform\User;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\AdminEfectorAsignacionService;
 use common\components\Platform\Core\Product\PricingPesByEncounterClassMetadata;
-use Symfony\Component\Yaml\Yaml;
 use Yii;
 
 /**
@@ -229,13 +228,7 @@ final class InstitutionalEfectorSignupService
      */
     public static function planesCatalog(): array
     {
-        $path = Yii::getAlias('@common/metadata/bioenlace/organization/pricing-pes-by-encounter-class.yaml');
-        if (!is_file($path)) {
-            return ['version' => 0, 'sellable_classes' => []];
-        }
-        $data = Yaml::parseFile($path);
-
-        return is_array($data) ? $data : ['version' => 0, 'sellable_classes' => []];
+        return PricingPesByEncounterClassMetadata::loadConfig();
     }
 
     /**

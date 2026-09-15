@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Clinical\HistoryExchange;
 
-use common\components\Domain\Integrations\ClinicalHistory\ClinicalHistoryExchangeRegistry;
-use common\components\Domain\Integrations\ClinicalHistory\Mapper\FhirClinicalHistoryBundleMapper;
+use common\components\Domain\Clinical\Infrastructure\External\ClinicalHistory\ClinicalHistoryExchangeRegistry;
+use common\components\Domain\Clinical\Infrastructure\External\ClinicalHistory\Mapper\FhirClinicalHistoryBundleMapper;
 use common\models\Clinical\ClinicalHistoryOutboundAudit;
 use common\models\Clinical\ClinicalHistoryOutboundJob;
 use common\models\Clinical\Encounter;

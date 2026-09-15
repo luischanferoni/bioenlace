@@ -2,9 +2,9 @@
 
 namespace common\components\Domain\Clinical\Prescription\Service;
 
-use common\components\Domain\Integrations\Prescription\Dto\PrescriptionRepositoryRegisterResult;
-use common\components\Domain\Integrations\Prescription\Exception\RecetaDigitalRepositoryException;
-use common\components\Domain\Integrations\Prescription\RecetaDigitalRepositoryRegistry;
+use common\components\Domain\Clinical\Infrastructure\External\Prescription\Dto\PrescriptionRepositoryRegisterResult;
+use common\components\Domain\Clinical\Infrastructure\External\Prescription\Exception\RecetaDigitalRepositoryException;
+use common\components\Domain\Clinical\Infrastructure\External\Prescription\RecetaDigitalRepositoryRegistry;
 use common\models\Clinical\ElectronicPrescription;
 use Yii;
 

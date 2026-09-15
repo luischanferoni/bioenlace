@@ -60,8 +60,8 @@ final class BoundedContextLayerShapeTest extends Unit
     {
         $root = ProductDomainCatalog::domainRoot();
         $errors = [];
-        // BCs con *Agent aún en Service/ legacy; se vacían en oleada fase 06.
-        $pending = ['clinical' => true, 'scheduling' => true];
+        // BCs con agents aún pendientes de migrar (ninguno tras oleada Application/Agent).
+        $pending = [];
 
         foreach (scandir($root) ?: [] as $bc) {
             if ($bc === '.' || $bc === '..' || !is_dir($root . DIRECTORY_SEPARATOR . $bc)) {
@@ -120,6 +120,32 @@ final class BoundedContextLayerShapeTest extends Unit
             . DIRECTORY_SEPARATOR . 'Flows'
             . DIRECTORY_SEPARATOR . 'intents';
         $this->assertDirectoryExists($path);
+    }
+
+    public function testDomainNoTieneMetadataYamlLocal(): void
+    {
+        $root = ProductDomainCatalog::domainRoot();
+        $leftover = [];
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS)
+        );
+        foreach ($iterator as $file) {
+            if (!$file->isFile()) {
+                continue;
+            }
+            $pathname = str_replace('\\', '/', $file->getPathname());
+            if (preg_match('#/metadata/[^/]+\\.ya?ml$#', $pathname)
+                && !str_contains($pathname, '/Application/Flows/')
+            ) {
+                $leftover[] = $pathname;
+            }
+        }
+        $this->assertSame(
+            [],
+            $leftover,
+            "Knobs de negocio no deben vivir en Domain/*/metadata/*.yaml:\n"
+            . implode("\n", $leftover)
+        );
     }
 
     /**

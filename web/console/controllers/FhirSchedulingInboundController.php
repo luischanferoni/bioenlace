@@ -2,9 +2,9 @@
 
 namespace console\controllers;
 
-use common\components\Domain\Integrations\Scheduling\Service\FhirAppointmentOutboundSyncService;
-use common\components\Domain\Integrations\Scheduling\Service\FhirScheduleLinkReconcileService;
-use common\components\Domain\Integrations\Scheduling\Service\FhirSchedulingInboundPullService;
+use common\components\Domain\Scheduling\Infrastructure\External\Service\FhirAppointmentOutboundSyncService;
+use common\components\Domain\Scheduling\Infrastructure\External\Service\FhirScheduleLinkReconcileService;
+use common\components\Domain\Scheduling\Infrastructure\External\Service\FhirSchedulingInboundPullService;
 use yii\console\Controller;
 
 /**

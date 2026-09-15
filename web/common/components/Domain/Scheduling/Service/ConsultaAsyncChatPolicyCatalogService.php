@@ -2,15 +2,13 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
-use Symfony\Component\Yaml\Yaml;
+use common\components\Domain\Scheduling\Domain\ConsultaAsyncChatPolicyCatalog;
 
 /**
- * Catálogo {@see metadata/consulta_async_chat_policy.yaml}.
+ * Catálogo {@see ConsultaAsyncChatPolicyCatalog}.
  */
 final class ConsultaAsyncChatPolicyCatalogService
 {
-    private const CATALOG_FILE = 'consulta_async_chat_policy.yaml';
-
     public const CATEGORIA_RENOVACION_MEDICACION = 'renovacion_medicacion';
 
     public const CATEGORIA_AJUSTE_MEDICACION = 'ajuste_medicacion';
@@ -441,13 +439,7 @@ final class ConsultaAsyncChatPolicyCatalogService
         if (self::$cache !== null) {
             return self::$cache;
         }
-        $path = __DIR__ . '/../metadata/' . self::CATALOG_FILE;
-        if (!is_file($path)) {
-            self::$cache = [];
-
-            return self::$cache;
-        }
-        $parsed = Yaml::parseFile($path);
+        $parsed = ConsultaAsyncChatPolicyCatalog::config();
         self::$cache = is_array($parsed) ? $parsed : [];
 
         return self::$cache;

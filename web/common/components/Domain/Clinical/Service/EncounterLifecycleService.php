@@ -7,7 +7,7 @@ use common\components\Domain\Clinical\CareCohort\Service\CareEncounterOrchestrat
 use common\components\Domain\Clinical\HistoryExchange\ClinicalHistoryOutboundEnqueueService;
 use common\components\Domain\Clinical\PatientSummary\PatientEncounterSummaryPublishService;
 use common\components\Domain\Clinical\Workflow\ClinicalOperationalContextResolver;
-use common\components\Domain\Integrations\Scheduling\Service\TurnoFhirOutboundNotifier;
+use common\components\Domain\Scheduling\Infrastructure\External\Service\TurnoFhirOutboundNotifier;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
 use common\models\Organization\ProfesionalEfectorServicio;

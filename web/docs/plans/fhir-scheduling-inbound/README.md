@@ -22,7 +22,7 @@
 
 | Área | Ubicación |
 |------|-----------|
-| Conector NIS | `common/components/Domain/Integrations/Scheduling/Connector/MsalNisFhirSchedulingConnector.php` |
+| Conector NIS | `common/components/Domain/Scheduling/Infrastructure/External/Connector/MsalNisFhirSchedulingConnector.php` |
 | Contrato HTTP | `…/Contract/FhirSchedulingInboundConnector.php` |
 | Pull | `FhirSchedulingInboundPullService`, `TurnoInboundSyncService` |
 | Push estados | `FhirAppointmentOutboundSyncService`, `TurnoFhirOutboundNotifier` |

@@ -7,16 +7,14 @@ use common\components\Domain\Clinical\Service\CareProtocolMatcherService;
 use common\components\Domain\Clinical\Service\ConditionPresentationService;
 use common\components\Domain\Clinical\Service\PatientActiveCarePlanQuery;
 use common\components\Domain\Person\Service\PacienteContextoService;
+use common\components\Domain\Scheduling\Domain\ControlSeguimientoHubCatalog;
 use common\models\Person\Persona;
-use Symfony\Component\Yaml\Yaml;
 
 /**
  * Arma el hub Control/Seguimiento: tratamientos, condiciones y controles recomendados.
  */
 final class ControlSeguimientoHubService
 {
-    private const CATALOG_FILE = 'control_seguimiento_hub.yaml';
-
     public const ANCHOR_PREFIX_CARE_PLAN = 'cp:';
 
     public const ANCHOR_PREFIX_CONDITION = 'diag:';
@@ -485,13 +483,7 @@ final class ControlSeguimientoHubService
         if (self::$cache !== null) {
             return self::$cache;
         }
-        $path = dirname(__DIR__) . '/metadata/' . self::CATALOG_FILE;
-        if (!is_file($path)) {
-            self::$cache = [];
-
-            return self::$cache;
-        }
-        $parsed = Yaml::parseFile($path);
+        $parsed = ControlSeguimientoHubCatalog::config();
         self::$cache = is_array($parsed) ? $parsed : [];
 
         return self::$cache;

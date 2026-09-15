@@ -2,6 +2,8 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
+use common\components\Domain\Scheduling\Application\Agent\ConsultaAsyncBandejaPrioridadAgent;
+
 use common\components\Domain\Clinical\Enum\EncounterStatus;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\ConsultaChatMessage;

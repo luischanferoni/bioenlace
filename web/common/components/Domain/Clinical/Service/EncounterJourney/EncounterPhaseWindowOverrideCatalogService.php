@@ -2,15 +2,13 @@
 
 namespace common\components\Domain\Clinical\Service\EncounterJourney;
 
-use Symfony\Component\Yaml\Yaml;
+use common\components\Domain\Clinical\Domain\EncounterPhaseWindowOverridesCatalog;
 
 /**
- * Overrides declarativos de ventanas por efector/servicio.
+ * Overrides declarativos de ventanas por efector/servicio ({@see EncounterPhaseWindowOverridesCatalog}).
  */
 final class EncounterPhaseWindowOverrideCatalogService
 {
-    private const CATALOG_FILE = 'encounter_phase_window_overrides.yaml';
-
     /** @var array<string, mixed>|null */
     private static ?array $cache = null;
 
@@ -96,13 +94,7 @@ final class EncounterPhaseWindowOverrideCatalogService
         if (self::$cache !== null) {
             return self::$cache;
         }
-        $path = dirname(__DIR__, 2) . '/metadata/' . self::CATALOG_FILE;
-        if (!is_file($path)) {
-            self::$cache = ['version' => 1, 'rules' => []];
-
-            return self::$cache;
-        }
-        $data = Yaml::parseFile($path);
+        $data = EncounterPhaseWindowOverridesCatalog::config();
         if (!is_array($data)) {
             throw new \RuntimeException('Catálogo encounter_phase_window_overrides inválido.');
         }

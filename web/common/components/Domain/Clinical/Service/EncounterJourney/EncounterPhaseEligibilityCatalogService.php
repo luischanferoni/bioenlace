@@ -2,15 +2,13 @@
 
 namespace common\components\Domain\Clinical\Service\EncounterJourney;
 
-use Symfony\Component\Yaml\Yaml;
+use common\components\Domain\Clinical\Domain\EncounterPhaseEligibilityCatalog;
 
 /**
- * Catálogo declarativo de elegibilidad por fase ({@see metadata/encounter_phase_eligibility.yaml}).
+ * Catálogo declarativo de elegibilidad por fase ({@see EncounterPhaseEligibilityCatalog}).
  */
 final class EncounterPhaseEligibilityCatalogService
 {
-    private const CATALOG_FILE = 'encounter_phase_eligibility.yaml';
-
     /** @var array<string, mixed>|null */
     private static ?array $cache = null;
 
@@ -41,11 +39,7 @@ final class EncounterPhaseEligibilityCatalogService
         if (self::$cache !== null) {
             return self::$cache;
         }
-        $path = dirname(__DIR__, 2) . '/metadata/' . self::CATALOG_FILE;
-        if (!is_file($path)) {
-            throw new \RuntimeException('Catálogo encounter_phase_eligibility no encontrado: ' . $path);
-        }
-        $data = Yaml::parseFile($path);
+        $data = EncounterPhaseEligibilityCatalog::config();
         if (!is_array($data)) {
             throw new \RuntimeException('Catálogo encounter_phase_eligibility inválido.');
         }

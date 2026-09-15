@@ -2,9 +2,11 @@
 
 namespace common\components\Domain\Clinical\Laboratory\Service;
 
+use common\components\Domain\Clinical\Application\Agent\PostLabClassificationAgent;
+
 use common\components\Domain\Clinical\Laboratory\Mapper\FhirDiagnosticReportMapper;
-use common\components\Domain\Integrations\Laboratory\Contract\FhirLabResultsConnector;
-use common\components\Domain\Integrations\Laboratory\LabConnectorRegistry;
+use common\components\Domain\Clinical\Infrastructure\External\Laboratory\Contract\FhirLabResultsConnector;
+use common\components\Domain\Clinical\Infrastructure\External\Laboratory\LabConnectorRegistry;
 use common\models\Clinical\DiagnosticReport;
 use common\models\Clinical\Observation;
 use common\models\Person\Persona;

@@ -116,4 +116,4 @@ Requiere permisos RBAC de staff sobre esas rutas.
 | Agendamiento entrante NIS (Appointment espejo) | [interoperabilidad-agendamiento-fhir.md](./interoperabilidad-agendamiento-fhir.md) |
 | Madurez ambulatoria | [his-completo/10-atencion-ambulatoria.md](../his-completo/10-atencion-ambulatoria.md) |
 
-Referencia técnica de módulo: `common/components/Domain/Integrations/ClinicalHistory/README.md`.
+Referencia técnica de módulo: `common/components/Domain/Clinical/Infrastructure/External/ClinicalHistory/README.md`.

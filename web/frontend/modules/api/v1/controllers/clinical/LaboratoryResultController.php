@@ -2,7 +2,7 @@
 
 namespace frontend\modules\api\v1\controllers\clinical;
 
-use common\components\Domain\Clinical\Laboratory\Service\LaboratoryEncounterLinkAgent;
+use common\components\Domain\Clinical\Application\Agent\LaboratoryEncounterLinkAgent;
 use common\components\Domain\Clinical\Laboratory\Service\LaboratoryEncounterLinkPendingService;
 use common\components\Domain\Clinical\Laboratory\Service\LaboratoryReportPdfService;
 use common\components\Domain\Clinical\Laboratory\Service\LaboratoryResultQueryService;

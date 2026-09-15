@@ -2,6 +2,8 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
+use common\components\Domain\Scheduling\Application\Agent\TurnoAdvanceOfferAgent;
+
 use common\components\Domain\Clinical\Service\EncounterLifecycleService;
 use common\models\Scheduling\Turno;
 use common\models\Clinical\Encounter;

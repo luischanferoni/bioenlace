@@ -2,15 +2,13 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
-use Symfony\Component\Yaml\Yaml;
+use common\components\Domain\Scheduling\Domain\TurnoSlotOfferUiCatalog;
 
 /**
- * Copy y plantillas de UI para oferta de slots/días ({@see metadata/turno_slot_offer_ui.yaml}).
+ * Copy y plantillas de UI para oferta de slots/días ({@see TurnoSlotOfferUiCatalog}).
  */
 final class TurnoSlotOfferUiCatalogService
 {
-    private const CATALOG_FILE = 'turno_slot_offer_ui.yaml';
-
     /** @var array<string, mixed>|null */
     private static ?array $cache = null;
 
@@ -77,13 +75,7 @@ final class TurnoSlotOfferUiCatalogService
         if (self::$cache !== null) {
             return self::$cache;
         }
-        $path = dirname(__DIR__) . '/metadata/' . self::CATALOG_FILE;
-        if (!is_file($path)) {
-            self::$cache = [];
-
-            return self::$cache;
-        }
-        $parsed = Yaml::parseFile($path);
+        $parsed = TurnoSlotOfferUiCatalog::config();
         self::$cache = is_array($parsed) ? $parsed : [];
 
         return self::$cache;

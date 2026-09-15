@@ -37,7 +37,7 @@ Para otro rubro: nuevo `Domain/`, metadata y registries; **`Platform/`** se mant
 | **`Domain/Scheduling/`** | Turnos, agenda, quirófano |
 | **`Domain/Person/`** | Personas, registro |
 | **`Domain/Organization/`** | Efectores, PES, sesión operativa |
-| **`Domain/Integrations/`** | Sistemas externos (SISSE, receta, MPI, LIS) |
+| **`Domain/<BC>/Infrastructure/External/`** | ACL sistemas externos (MPI, LIS, receta, HC FHIR, agenda FHIR) |
 | **`Domain/Terminology/`** | SNOMED |
 | **`Domain/Content/`** | Contenido institucional (`InfoContent`, novedades) |
 | **`Domain/Geo/`** | Maestros geo (provincias, recursos provinciales) |
@@ -57,20 +57,21 @@ Gramática: **dominio → subdominio (opcional) → rol técnico → capacidad (
 Domain/<Dominio>/
   <Subdominio>/Service/…     # p. ej. Clinical/Emergency, Clinical/PedidoAtencion
   Service/<Capacidad>/…      # p. ej. Scheduling/Service/Quirofano
-  Assistant/ | Home/ | DataAccess/ | Presentation/
-  metadata/
+  Application/ | Domain/ | Infrastructure/External/ | Presentation/
+  Assistant/ | Home/ | DataAccess/
 ```
 
-- **Integrations:** `Domain/Integrations/<Sistema>/{Contract,Connector,Mapper,Service,…}/` — 2.º nivel = sistema externo. Sigue bajo `Domain/` (no hermana de `Domain/`).
+- **ACL externos:** `Domain/<BC>/Infrastructure/External/<Sistema>/` (Contract, Connector, Mapper, …). No carpetas hermanas de `Domain/`.
 - Plugins para motores: registrar en `product-registries.php`, implementación en `Domain/…`.
 - Detalle y sufijos de clase: [Domain/README.md](../../common/components/Domain/README.md).
+- Migración DDD: [ddd-capas-y-metadata](../plans/ddd-capas-y-metadata/).
 
 ## Motores vs metadata vs negocio
 
 | Capa | Ubicación | Responsabilidad |
 |------|-----------|-----------------|
 | **Motores** | `Platform/Assistant/…`, `Platform/Core/DataAccess`, `Platform/Core/Product/` | Interpretar manifiestos; sin reglas por rubro en PHP |
-| **Metadata producto** | `common/metadata/bioenlace/` | Qué hacer (flows, métricas, permisos, panel) |
+| **Metadata producto** | Colocalizada en Platform/BC (`Application/Flows`, prompts, ui-text); knobs de negocio en PHP `*Catalog` / `*AgentPolicy` | Composición de motores + políticas tipadas |
 | **Plugins dominio** | `product-registries.php` + clases en `Domain/` | Catálogos UI, scope, políticas, panel home |
 | **Negocio** | `Domain/Clinical/`, `Domain/Scheduling/`, … | Persistencia, reglas, autorización de recurso |
 
@@ -85,9 +86,9 @@ Domain/<Dominio>/
 | Turno, agenda | `Domain/Scheduling/Service/` · AR: `Scheduling/Turno.php` |
 | Efector, PES | `Domain/Organization/Service/` |
 | Motor asistente / flow genérico | `Platform/Assistant/` |
-| Intent / YAML producto | `common/metadata/bioenlace/<dominio>/intents/` · motores en `…/platform/assistant/` |
+| Intent / YAML producto | `Domain/<BC>/Application/Flows/intents/` · Platform Assistant |
 | Proveedor IA | `Platform/Ai/` |
-| Cliente externo salud | `Domain/Integrations/<Sistema>/` |
+| Cliente externo salud | `Domain/<BC>/Infrastructure/External/<Sistema>/` |
 | Pedido de atención (línea × acto) | `Domain/Clinical/PedidoAtencion/Service/` |
 | Texto clínico pre-IA | `Domain/Clinical/Text/` |
 

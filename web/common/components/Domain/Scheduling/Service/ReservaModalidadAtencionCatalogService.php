@@ -2,10 +2,10 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
-use Symfony\Component\Yaml\Yaml;
+use common\components\Domain\Scheduling\Domain\ReservaModalidadAtencionCatalog;
 
 /**
- * Catálogo declarativo de modalidades de reserva ({@see metadata/reserva_modalidad_atencion.yaml}).
+ * Catálogo declarativo de modalidades de reserva ({@see ReservaModalidadAtencionCatalog}).
  */
 final class ReservaModalidadAtencionCatalogService
 {
@@ -14,8 +14,6 @@ final class ReservaModalidadAtencionCatalogService
     public const CODE_TELECONSULTA = 'teleconsulta';
 
     public const CODE_ASYNC = 'async';
-
-    private const CATALOG_FILE = 'reserva_modalidad_atencion.yaml';
 
     /** @var array<string, mixed>|null */
     private static ?array $cache = null;
@@ -107,14 +105,7 @@ final class ReservaModalidadAtencionCatalogService
             return self::$cache;
         }
 
-        $path = __DIR__ . '/../metadata/' . self::CATALOG_FILE;
-        if (!is_file($path)) {
-            self::$cache = [];
-
-            return self::$cache;
-        }
-
-        $parsed = Yaml::parseFile($path);
+        $parsed = ReservaModalidadAtencionCatalog::config();
         self::$cache = is_array($parsed) ? $parsed : [];
 
         return self::$cache;

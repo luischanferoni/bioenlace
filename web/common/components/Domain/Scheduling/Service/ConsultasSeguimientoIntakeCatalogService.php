@@ -2,15 +2,13 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
-use Symfony\Component\Yaml\Yaml;
+use common\components\Domain\Scheduling\Domain\ConsultasSeguimientoIntakeCatalog;
 
 /**
- * Catálogo declarativo de intake consultas / seguimiento ({@see metadata/consultas_seguimiento_intake.yaml}).
+ * Catálogo declarativo de intake consultas / seguimiento ({@see ConsultasSeguimientoIntakeCatalog}).
  */
 final class ConsultasSeguimientoIntakeCatalogService
 {
-    private const CATALOG_FILE = 'consultas_seguimiento_intake.yaml';
-
     public const INTAKE_CONSULTA_GENERAL = 'consulta_general';
 
     public const INTAKE_SEGUIMIENTO = 'seguimiento';
@@ -37,7 +35,7 @@ final class ConsultasSeguimientoIntakeCatalogService
     }
 
     /**
-     * Definición de paso UI ({@see metadata/consultas_seguimiento_intake.yaml} → `ui_steps`).
+     * Definición de paso UI ({@see ConsultasSeguimientoIntakeCatalog} → `ui_steps`).
      *
      * @return array{title: string, draft_field: string, opciones: string}|null
      */
@@ -225,13 +223,7 @@ final class ConsultasSeguimientoIntakeCatalogService
         if (self::$cache !== null) {
             return self::$cache;
         }
-        $path = dirname(__DIR__) . '/metadata/' . self::CATALOG_FILE;
-        if (!is_file($path)) {
-            self::$cache = [];
-
-            return self::$cache;
-        }
-        $parsed = Yaml::parseFile($path);
+        $parsed = ConsultasSeguimientoIntakeCatalog::config();
 
         self::$cache = is_array($parsed) ? $parsed : [];
 

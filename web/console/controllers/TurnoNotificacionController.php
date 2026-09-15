@@ -71,7 +71,7 @@ class TurnoNotificacionController extends Controller
                     );
                     $confirmation->recordConfirmationRequested($turno, (int) $row->id);
                     try {
-                        (new \common\components\Domain\Scheduling\Service\TurnoAntinoshowAgent())
+                        (new \common\components\Domain\Scheduling\Application\Agent\TurnoAntinoshowAgent())
                             ->evaluateSharedConfirmationCheckpoint($turno, 48);
                     } catch (\Throwable $e) {
                         Yii::warning('Antinoshow shared checkpoint: ' . $e->getMessage(), 'turno-antinoshow');
@@ -135,7 +135,7 @@ class TurnoNotificacionController extends Controller
                         );
                     }
                 } elseif ($row->tipo === TurnoNotificacionProgramada::TIPO_RESOLUCION_MULTICANAL) {
-                    $result = (new \common\components\Domain\Scheduling\Service\TurnoResolucionMulticanalAgent())
+                    $result = (new \common\components\Domain\Scheduling\Application\Agent\TurnoResolucionMulticanalAgent())
                         ->processScheduled($row, $turno);
                     if ($result === 'cancelled') {
                         $row->estado = TurnoNotificacionProgramada::ESTADO_CANCELADA;
@@ -146,7 +146,7 @@ class TurnoNotificacionController extends Controller
                         continue;
                     }
                 } elseif ($row->tipo === TurnoNotificacionProgramada::TIPO_RESOLUCION_LOOP_CLOSE) {
-                    $result = (new \common\components\Domain\Scheduling\Service\TurnoResolucionLoopCloseAgent())
+                    $result = (new \common\components\Domain\Scheduling\Application\Agent\TurnoResolucionLoopCloseAgent())
                         ->processScheduled($row, $turno);
                     if ($result === 'cancelled') {
                         $row->estado = TurnoNotificacionProgramada::ESTADO_CANCELADA;
@@ -154,7 +154,7 @@ class TurnoNotificacionController extends Controller
                         continue;
                     }
                 } elseif ($row->tipo === TurnoNotificacionProgramada::TIPO_ANTINOSHOW_CHECKPOINT) {
-                    $result = (new \common\components\Domain\Scheduling\Service\TurnoAntinoshowAgent())
+                    $result = (new \common\components\Domain\Scheduling\Application\Agent\TurnoAntinoshowAgent())
                         ->processCheckpoint($row, $turno);
                     if ($result === 'cancelled') {
                         $row->estado = TurnoNotificacionProgramada::ESTADO_CANCELADA;
@@ -162,7 +162,7 @@ class TurnoNotificacionController extends Controller
                         continue;
                     }
                 } elseif ($row->tipo === TurnoNotificacionProgramada::TIPO_ANTINOSHOW_RELEASE) {
-                    $result = (new \common\components\Domain\Scheduling\Service\TurnoAntinoshowAgent())
+                    $result = (new \common\components\Domain\Scheduling\Application\Agent\TurnoAntinoshowAgent())
                         ->processRelease($row, $turno);
                     if ($result === 'cancelled') {
                         $row->estado = TurnoNotificacionProgramada::ESTADO_CANCELADA;

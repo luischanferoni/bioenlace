@@ -5,7 +5,7 @@ namespace common\components\Domain\Scheduling\Service\BehaviorProfile;
 use common\models\Platform\AgentRun;
 use common\models\Scheduling\PersonaTurnosPerfil;
 use common\models\Scheduling\Turno;
-use common\components\Domain\Scheduling\Service\TurnoAntinoshowAgent;
+use common\components\Domain\Scheduling\Application\Agent\TurnoAntinoshowAgent;
 
 /**
  * Explicación neutral de una acción anti no-show para el titular.

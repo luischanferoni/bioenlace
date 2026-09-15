@@ -43,7 +43,7 @@ return [
     ],
     /**
      * Didit — KYC (registro paciente/médico) y login biométrico.
-     * API key en params-local.php. Cliente: {@see \common\components\Domain\Integrations\Identity\Connector\DiditClient}.
+     * API key en params-local.php. Cliente: {@see \common\components\Domain\Person\Infrastructure\External\Identity\Connector\DiditClient}.
      */
     'didit_base_url' => 'https://api.didit.me',
     'didit_verification_base_url' => 'https://verification.didit.me',
@@ -158,7 +158,7 @@ return [
         'default' => 'sianlabs',
         'connectors' => [
             'sianlabs' => [
-                'class' => \common\components\Domain\Integrations\Laboratory\Connector\SianlabsFhirConnector::class,
+                'class' => \common\components\Domain\Clinical\Infrastructure\External\Laboratory\Connector\SianlabsFhirConnector::class,
                 'baseUrl' => 'https://sianlabs.msalsgo.gob.ar/api/fhir/',
                 'tokenUrl' => 'https://sianlabs.msalsgo.gob.ar/oauth/token',
                 'clientId' => null,
@@ -177,10 +177,10 @@ return [
         'verificationPublicBaseUrl' => null,
         'connectors' => [
             'null' => [
-                'class' => \common\components\Domain\Integrations\Prescription\Connector\NullRecetaDigitalRepositoryConnector::class,
+                'class' => \common\components\Domain\Clinical\Infrastructure\External\Prescription\Connector\NullRecetaDigitalRepositoryConnector::class,
             ],
             'msal-rdi' => [
-                'class' => \common\components\Domain\Integrations\Prescription\Connector\HttpRecetaDigitalRepositoryConnector::class,
+                'class' => \common\components\Domain\Clinical\Infrastructure\External\Prescription\Connector\HttpRecetaDigitalRepositoryConnector::class,
                 'enabled' => false,
                 'baseUrl' => null,
                 'tokenUrl' => null,
@@ -213,10 +213,10 @@ return [
         ],
         'connectors' => [
             'null' => [
-                'class' => \common\components\Domain\Integrations\ClinicalHistory\Connector\NullClinicalHistoryExchangeConnector::class,
+                'class' => \common\components\Domain\Clinical\Infrastructure\External\ClinicalHistory\Connector\NullClinicalHistoryExchangeConnector::class,
             ],
             'nacional-fhir' => [
-                'class' => \common\components\Domain\Integrations\ClinicalHistory\Connector\HttpNationalClinicalHistoryConnector::class,
+                'class' => \common\components\Domain\Clinical\Infrastructure\External\ClinicalHistory\Connector\HttpNationalClinicalHistoryConnector::class,
                 'enabled' => false,
                 'baseUrl' => null,
                 'tokenUrl' => null,
@@ -247,7 +247,7 @@ return [
         ],
         'connectors' => [
             'msal-nis' => [
-                'class' => \common\components\Domain\Integrations\Scheduling\Connector\MsalNisFhirSchedulingConnector::class,
+                'class' => \common\components\Domain\Scheduling\Infrastructure\External\Connector\MsalNisFhirSchedulingConnector::class,
                 'baseUrl' => 'https://nis.msalsgo.gob.ar/fhir',
                 'tokenUrl' => null,
                 'clientId' => null,
@@ -304,7 +304,7 @@ return [
 
     /**
      * Capacidades MPI/SEIPA habilitadas. renaper (identidad), coberturas y domicilio por defecto.
-     * {@see \common\components\Domain\Integrations\Mpi\Service\MpiCapability}
+     * {@see \common\components\Domain\Person\Infrastructure\External\Mpi\MpiCapability}
      */
     'mpiCapabilities' => ['renaper', 'coberturas', 'domicilio'],
 

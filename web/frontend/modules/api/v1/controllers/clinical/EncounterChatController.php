@@ -7,7 +7,7 @@ use common\models\Clinical\ConsultaChatMessage;
 use common\components\Domain\Clinical\Service\SecureMediaService;
 use common\components\Domain\Scheduling\Service\ConsultaAsyncChatUploadService;
 use common\components\Domain\Scheduling\Service\ConsultaAsyncPushNotifier;
-use common\components\Domain\Scheduling\Service\ConsultaAsyncBandejaPrioridadAgent;
+use common\components\Domain\Scheduling\Application\Agent\ConsultaAsyncBandejaPrioridadAgent;
 use common\components\Domain\Scheduling\Service\ConsultaAsyncChatPolicyCatalogService;
 use common\components\Domain\Scheduling\Service\ConsultaAsyncChatPolicyService;
 use common\components\Domain\Scheduling\Service\ConsultaAsyncEncounterMetaService;

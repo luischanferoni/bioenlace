@@ -3,17 +3,15 @@
 namespace common\components\Domain\Person\Representation\Service;
 
 use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
+use common\components\Domain\Person\Domain\RepresentationPermissionsV1Catalog;
 use common\models\Person\PersonDelegationConsent;
 use common\models\Person\PersonRelated;
-use Symfony\Component\Yaml\Yaml;
 
 /**
- * Catálogo declarativo de permisos de representación ({@see metadata/representation_permissions_v1.yaml}).
+ * Catálogo declarativo de permisos de representación ({@see RepresentationPermissionsV1Catalog}).
  */
 final class RepresentationPermissionsCatalog
 {
-    private const CATALOG_FILE = 'representation_permissions_v1.yaml';
-
     /** @var array<string, mixed>|null */
     private static ?array $cache = null;
 
@@ -85,11 +83,7 @@ final class RepresentationPermissionsCatalog
         if (self::$cache !== null) {
             return self::$cache;
         }
-        $path = dirname(__DIR__) . '/metadata/' . self::CATALOG_FILE;
-        if (!is_file($path)) {
-            throw new \RuntimeException('Catálogo de permisos de representación no encontrado: ' . $path);
-        }
-        $data = Yaml::parseFile($path);
+        $data = RepresentationPermissionsV1Catalog::config();
         if (!is_array($data)) {
             throw new \RuntimeException('Catálogo de permisos de representación inválido.');
         }

@@ -1,6 +1,6 @@
 # Fase 05 — Migrar catálogos/knobs de negocio (YAML → Domain PHP)
 
-**Estado: parcial (lote A hecho).**
+**Estado: hecha.**
 
 ## Hecho (lote A — `metadata/bioenlace`)
 
@@ -20,6 +20,24 @@ Loaders (`*Metadata`, `TurnoBehaviorProfileContract`, `HintServiceSynonyms`) apu
 
 `metadata/bioenlace/` queda solo con README.
 
-## Pendiente (lote B)
+## Hecho (lote B — `Domain/*/metadata`)
 
-YAML aún bajo `Domain/*/metadata/` (encounter phases, scheduling async/teleconsulta, representation permissions).
+| Origen | Destino PHP |
+|--------|-------------|
+| `Clinical/metadata/encounter_phase_*.yaml` | `Clinical/Domain/EncounterPhase*Catalog` |
+| `Clinical/metadata/motivos_consulta_intake.yaml` | `Clinical/Domain/MotivosConsultaIntakeCatalog` |
+| `Scheduling/metadata/consulta_async_*.yaml` | `Scheduling/Domain/ConsultaAsync*Catalog` |
+| `Scheduling/metadata/reserva_*.yaml` | `Scheduling/Domain/Reserva*Catalog` |
+| `Scheduling/metadata/agenda_atencion_remota.yaml` | `Scheduling/Domain/AgendaAtencionRemotaCatalog` |
+| `Scheduling/metadata/staff_modalidad_insight.yaml` | `Scheduling/Domain/StaffModalidadInsightCatalog` |
+| `Scheduling/metadata/servicio_teleconsulta_politica.yaml` | `Scheduling/Domain/ServicioTeleconsultaPoliticaCatalog` |
+| `Scheduling/metadata/control_seguimiento_hub.yaml` | `Scheduling/Domain/ControlSeguimientoHubCatalog` |
+| `Scheduling/metadata/consultas_seguimiento_intake.yaml` | `Scheduling/Domain/ConsultasSeguimientoIntakeCatalog` |
+| `Scheduling/metadata/turno_slot_offer_ui.yaml` | `Scheduling/Domain/TurnoSlotOfferUiCatalog` |
+| `Person/Representation/metadata/representation_permissions_v1.yaml` | `Person/Domain/RepresentationPermissionsV1Catalog` |
+
+`*CatalogService` / hub services leen `*Catalog::config()`. Carpetas `Domain/*/metadata/` eliminadas.
+
+## Siguiente
+
+Fase 06 (Integrations → `Infrastructure/External`) / 07 (docs).

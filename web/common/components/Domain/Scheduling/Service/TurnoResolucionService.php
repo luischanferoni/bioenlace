@@ -2,7 +2,10 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
-use common\components\Domain\Integrations\Scheduling\Service\TurnoFhirOutboundNotifier;
+use common\components\Domain\Scheduling\Application\Agent\TurnoResolucionAutoReservaAgent;
+use common\components\Domain\Scheduling\Application\Agent\TurnoResolucionShortlistAgent;
+
+use common\components\Domain\Scheduling\Infrastructure\External\Service\TurnoFhirOutboundNotifier;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\components\Platform\Core\Service\Push\PushNotificationTypes;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\AgendaIntervaloMinutos;

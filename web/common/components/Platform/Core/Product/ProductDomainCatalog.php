@@ -87,6 +87,10 @@ final class ProductDomainCatalog
             if ($id === self::PLATFORM) {
                 continue;
             }
+            // Carpeta residual con README de redirección (ACL → Infrastructure/External).
+            if ($id === 'integrations') {
+                continue;
+            }
             $ids[] = $id;
         }
         sort($ids);

@@ -16,4 +16,4 @@ ADR: [`ddd-bounded-contexts-capas-y-metadata.md`](../../../docs/decisions/ddd-bo
 
 `ProductMetadataPaths::baseDir()` sigue apuntando a esta carpeta por compat; puede quedar vacía salvo este README hasta el cierre del plan (fase 07).
 
-Pendiente (fases 05b–06): YAML aún en `Domain/*/metadata/` (encounter phases, scheduling knobs locales); desarmar resto de `Integrations/`.
+Fase 06 hecha: ACL en `Domain/<BC>/Infrastructure/External/`. Pendiente fase 07: pulir docs/planes que aún citen paths viejos.

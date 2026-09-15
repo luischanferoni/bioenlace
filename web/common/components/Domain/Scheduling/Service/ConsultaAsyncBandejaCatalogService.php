@@ -2,15 +2,13 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
-use Symfony\Component\Yaml\Yaml;
+use common\components\Domain\Scheduling\Domain\ConsultaAsyncBandejaCatalog;
 
 /**
- * Textos y SLA de la bandeja async ({@see metadata/consulta_async_bandeja.yaml}).
+ * Textos y SLA de la bandeja async ({@see ConsultaAsyncBandejaCatalog}).
  */
 final class ConsultaAsyncBandejaCatalogService
 {
-    private const CATALOG_FILE = 'consulta_async_bandeja.yaml';
-
     /** @var array<string, mixed>|null */
     private static ?array $cache = null;
 
@@ -198,13 +196,7 @@ final class ConsultaAsyncBandejaCatalogService
         if (self::$cache !== null) {
             return self::$cache;
         }
-        $path = __DIR__ . '/../metadata/' . self::CATALOG_FILE;
-        if (!is_file($path)) {
-            self::$cache = [];
-
-            return self::$cache;
-        }
-        $parsed = Yaml::parseFile($path);
+        $parsed = ConsultaAsyncBandejaCatalog::config();
 
         self::$cache = is_array($parsed) ? $parsed : [];
 

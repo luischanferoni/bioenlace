@@ -44,7 +44,7 @@ use common\models\Clinical\Persona_hc;
 use common\models\Person\Tipo_documento;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\controllers\Model;
-use common\components\Domain\Integrations\Mpi\Service\MpiApiClient;
+use common\components\Domain\Person\Infrastructure\External\Mpi\MpiApiClient;
 use frontend\filters\SisseActionFilter;
 
 /**
@@ -820,7 +820,7 @@ public function actionListaCandidatos(){
         $dni = Yii::$app->getRequest()->getQueryParam('dni');
         $sexo = Yii::$app->getRequest()->getQueryParam('sexo');
 
-        $dniLong = \common\components\Domain\Integrations\Mpi\Service\MpiSeipaDni::toLongQueryParam(
+        $dniLong = \common\components\Domain\Person\Infrastructure\External\Mpi\MpiSeipaDni::toLongQueryParam(
             is_scalar($dni) ? (string) $dni : null
         );
         if ($dniLong === null) {
@@ -996,9 +996,9 @@ public function actionListaCandidatos(){
             $callback = Url::to(['personas/registrar-paciente'], true);
         }
 
-        $didit = Yii::$container->has(\common\components\Domain\Integrations\Identity\Connector\DiditClient::class)
-            ? Yii::$container->get(\common\components\Domain\Integrations\Identity\Connector\DiditClient::class)
-            : new \common\components\Domain\Integrations\Identity\Connector\DiditClient();
+        $didit = Yii::$container->has(\common\components\Domain\Person\Infrastructure\External\Identity\Connector\DiditClient::class)
+            ? Yii::$container->get(\common\components\Domain\Person\Infrastructure\External\Identity\Connector\DiditClient::class)
+            : new \common\components\Domain\Person\Infrastructure\External\Identity\Connector\DiditClient();
 
         $session = $didit->createVerificationSession([
             'callback' => $callback,

@@ -12,7 +12,7 @@ Código compartido por API v1, consola, jobs y (legacy) frontend Yii.
 | **Organization** | `Domain/Organization/Service/` (PES, sesión operativa, efectores) | `ProfesionalEfectorServicio`, … |
 | **Plataforma** | `Platform/Core/`, `Platform/Ui/`, `Platform/Assistant/`, `Platform/Ai/`, `Platform/Infra/` | — |
 | **Terminology** | `Domain/Terminology/` | `Terminology/Snomed/*` (modelos AR) |
-| **Integrations** | `Domain/Integrations/` | — |
+| **ACL externos** | `Domain/<BC>/Infrastructure/External/` | — |
 
 ## Reglas
 

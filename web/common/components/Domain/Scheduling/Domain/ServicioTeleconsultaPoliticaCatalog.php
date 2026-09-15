@@ -1,0 +1,44 @@
+<?php
+
+namespace common\components\Domain\Scheduling\Domain;
+
+/**
+ * Catálogo de dominio (ex Scheduling/metadata/servicio_teleconsulta_politica.yaml).
+ */
+final class ServicioTeleconsultaPoliticaCatalog
+{
+    /**
+     * @return array<string, mixed>
+     */
+    public static function config(): array
+    {
+        return [
+        'version' => '1',
+        'ui' => [
+            'title' => 'Política de teleconsulta por servicio',
+            'info_message' => 'Define si los pacientes pueden elegir videollamada al reservar en cada servicio del efector. La consulta clínica por mensaje sigue las reglas clínicas de triage y no depende de esta política.',
+            'caso_codigos_hint' => 'Un código de triage por línea (solo si elegís «Algunos motivos»). Usá códigos del catálogo de reserva.',
+        ],
+        'politica_opciones' => [
+            'NINGUNA' => [
+                'label' => 'Sin videollamada en reserva',
+                'description' => 'Solo presencial (y mensaje si el triage lo permite).',
+            ],
+            'TODAS' => [
+                'label' => 'Videollamada en todos los motivos elegibles',
+                'description' => 'Si el triage lo permite clínicamente, el paciente puede elegir video.',
+            ],
+            'ALGUNAS' => [
+                'label' => 'Videollamada solo en motivos seleccionados',
+                'description' => 'Permití video solo para los códigos de triage que indiques abajo.',
+            ],
+        ],
+        'kpi_efector' => [
+            'title' => 'Atención remota (efector)',
+            'label_presencial_remoto' => 'Presencial con potencial remoto (30 días)',
+            'label_servicios_con_video' => 'Servicios con videollamada habilitada',
+            'label_pct' => '% sobre turnos con triage',
+        ],
+    ];
+    }
+}

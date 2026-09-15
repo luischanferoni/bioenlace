@@ -2,15 +2,13 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
-use Symfony\Component\Yaml\Yaml;
+use common\components\Domain\Scheduling\Domain\AgendaAtencionRemotaCatalog;
 
 /**
- * Textos de capacitación para opt-in remoto en agenda ({@see metadata/agenda_atencion_remota.yaml}).
+ * Textos de capacitación para opt-in remoto en agenda ({@see AgendaAtencionRemotaCatalog}).
  */
 final class AgendaAtencionRemotaCatalogService
 {
-    private const CATALOG_FILE = 'agenda_atencion_remota.yaml';
-
     /** @var array<string, mixed>|null */
     private static ?array $cache = null;
 
@@ -74,14 +72,7 @@ final class AgendaAtencionRemotaCatalogService
             return self::$cache;
         }
 
-        $path = __DIR__ . '/../metadata/' . self::CATALOG_FILE;
-        if (!is_file($path)) {
-            self::$cache = [];
-
-            return self::$cache;
-        }
-
-        $parsed = Yaml::parseFile($path);
+        $parsed = AgendaAtencionRemotaCatalog::config();
         self::$cache = is_array($parsed) ? $parsed : [];
 
         return self::$cache;

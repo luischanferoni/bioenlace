@@ -2,15 +2,13 @@
 
 namespace common\components\Domain\Clinical\Service\EncounterJourney;
 
-use Symfony\Component\Yaml\Yaml;
+use common\components\Domain\Clinical\Domain\MotivosConsultaIntakeCatalog;
 
 /**
- * Catálogo de guía del chat de motivos ({@see metadata/motivos_consulta_intake.yaml}).
+ * Catálogo de guía del chat de motivos ({@see MotivosConsultaIntakeCatalog}).
  */
 final class EncounterMotivosIntakeCatalogService
 {
-    private const CATALOG_FILE = 'motivos_consulta_intake.yaml';
-
     /** @var array<string, mixed>|null */
     private static ?array $cache = null;
 
@@ -234,13 +232,7 @@ final class EncounterMotivosIntakeCatalogService
         if (self::$cache !== null) {
             return self::$cache;
         }
-        $path = dirname(__DIR__, 2) . '/metadata/' . self::CATALOG_FILE;
-        if (!is_file($path)) {
-            self::$cache = ['version' => 1, 'enabled' => false, 'questions' => []];
-
-            return self::$cache;
-        }
-        $data = Yaml::parseFile($path);
+        $data = MotivosConsultaIntakeCatalog::config();
         if (!is_array($data)) {
             throw new \RuntimeException('Catálogo motivos_consulta_intake inválido.');
         }

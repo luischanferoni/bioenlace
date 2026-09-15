@@ -31,7 +31,7 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 
 | Plan | Documentación estable |
 |------|------------------------|
-| Forma interna de Domain | [arquitectura/common-components.md](../arquitectura/common-components.md) + `common/components/Domain/README.md` + `Domain/Integrations/README.md` |
+| Forma interna de Domain | [arquitectura/common-components.md](../arquitectura/common-components.md) + `common/components/Domain/README.md` + [ddd-capas-y-metadata](./ddd-capas-y-metadata/) |
 | Asistente — catálogo inteligente | [decisions/asistente-catalogo-inteligente.md](../decisions/asistente-catalogo-inteligente.md) + [producto/asistente-y-chat.md](../producto/asistente-y-chat.md) + [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md) |
 | Árbol espejo por dominio | [arquitectura/arbol-espejo-dominios.md](../arquitectura/arbol-espejo-dominios.md) + [arquitectura/common-components.md](../arquitectura/common-components.md) |
 | Canal guide (fusión clinical + informational) | [asistente-y-chat.md](../producto/asistente-y-chat.md) + [decisions/asistente-canal-guide.md](../decisions/asistente-canal-guide.md) + QA [asistente-consultas.md](../qa/paciente/asistente-consultas.md) |

@@ -1,22 +1,26 @@
 # Fase 07 — Limpieza, docs estables y cierre
 
+**Estado: parcial** (docs principales de Integrations/Domain ya alineados en oleada 06).
+
 ## Objetivo
 
 Eliminar residuos, documentar la decisión y borrar el plan.
 
-## Tareas
+## Hecho (anticipado desde 06)
 
-1. Borrar `common/metadata/bioenlace/` si ya no tiene YAML canónicos (o dejar solo README que redirija a components — preferible borrar y actualizar `productMetadataDir`).
-2. Actualizar:
-   - `web/docs/arquitectura/common-components.md`
-   - `web/docs/arquitectura/arbol-espejo-dominios.md`
-   - `web/docs/arquitectura/metadata-yaml-uso.md`
-   - `web/docs/arquitectura/runtime-datos-y-metadata.md` (si aplica)
-   - `common/components/Domain/README.md`, `Platform/README.md`, `common/metadata` si queda algo
-   - reglas Cursor `common-components-organizacion`, `metadata-yaml-uso`, `capas-y-metadata-sin-hardcode` (paths)
-3. Publicar ADR en `web/docs/decisions/` (BC + capas + qué es YAML).
-4. Narrativa breve en `producto/` solo si cambia comportamiento visible (probable: no); si no, solo arquitectura/decisions.
-5. Quitar dual-root / fallbacks de paths.
+- `common-components.md`, `Domain/README.md`, `common/README.md`, READMEs producto/planes FHIR HC+agenda actualizados a `Infrastructure/External`
+- `Domain/Integrations/README.md` = redirección
+
+## Pendiente
+
+1. Borrar `common/metadata/bioenlace/` si ya no tiene YAML canónicos (o dejar solo README; actualizar `productMetadataDir`).
+2. Actualizar resto:
+   - `arbol-espejo-dominios.md`, `metadata-yaml-uso.md`, `runtime-datos-y-metadata.md`
+   - `Platform/README.md`
+   - reglas Cursor (`common-components-organizacion`, etc.)
+3. ADR ya existe (`ddd-bounded-contexts-capas-y-metadata.md`) — revisar que coincida con paths finales.
+4. Quitar dual-root / fallbacks de paths.
+5. Excluir carpeta `Integrations/` (solo README) de `ProductDomainCatalog` si aparece como BC fantasma.
 6. Entrada en `plans/README.md` → archivados; **borrar** `plans/ddd-capas-y-metadata/`.
 
 ## Criterio de done

@@ -14,38 +14,32 @@ Las carpetas de primer nivel **son** el conjunto de dominios del producto (`Prod
 | **`Scheduling/`** | Turnos, agenda, quirófano |
 | **`Person/`** | Personas, registro, representación (`Representation/`), ventanilla (`Ventanilla/Service/`) |
 | **`Organization/`** | Efectores, PES, sesión operativa |
-| **`Integrations/`** | SISSE, receta digital, **export HC FHIR**, MPI, laboratorio FHIR, identidad |
 | **`Terminology/`** | SNOMED, codificación clínica (`SnomedCategoryCatalog`, `SnomedSearchProfileCatalog`) |
 | **`Content/`** | Contenido institucional / novedades |
 | **`Geo/`** | Maestros geo y recursos provinciales |
 | **`Programs/`** | Programas de salud / SUMAR |
+| **`Integrations/`** | Solo README de redirección (ACL → `*/Infrastructure/External/`) |
 
-Metadata SNOMED: `common/metadata/bioenlace/terminology/snomed-terminology.yaml` (ECL canónicos + codificación + búsqueda).
+Catálogos de negocio: `Domain/<BC>/Domain/*Catalog` (PHP). Flows: `Application/Flows/intents/`. SNOMED knobs: `Terminology/Domain/SnomedTerminologyCatalog`.
 
-Árbol espejo en otras capas: [arbol-espejo-dominios.md](../../../docs/arquitectura/arbol-espejo-dominios.md).
+Árbol espejo en otras capas: [arbol-espejo-dominios.md](../../../docs/arquitectura/arbol-espejo-dominios.md). Plan DDD: [ddd-capas-y-metadata](../../../docs/plans/ddd-capas-y-metadata/).
 
 ## Forma interna (gramática)
 
-Orden fijo: **dominio → subdominio de negocio (opcional) → rol técnico → capacidad (opcional)**.
+Orden fijo: **dominio → capa DDD / subdominio → rol técnico**.
 
 ```text
-Domain/<Dominio>/
-  <Subdominio>/              # área real (Emergency, PedidoAtencion, Representation…)
-    Service/
-    Enum/ | Dto/             # opcionales
-  Service/                   # default del dominio
-    <Capacidad>/             # solo si el tema crece (≥ ~4–5 clases)
-  Assistant/ | Home/ | DataAccess/ | Presentation/
-  metadata/                  # knobs YAML del dominio (no maestros de request)
+Domain/<BC>/
+  Application/               # Flows, Agent, use cases de orquestación
+  Domain/                    # *Catalog, *Policy, *Enum (sin I/O externo)
+  Infrastructure/External/<Sistema>/   # ACL: Contract, Connector, Mapper, …
+  Presentation/              # copy / presenters del BC (si aplica)
+  <Subdominio>/Service/      # área real (Emergency, PedidoAtencion, …)
+  Service/                   # legacy / default del BC (en migración)
+  Assistant/ | Home/ | DataAccess/
 ```
 
-**Integrations** (excepción): el 2.º nivel es el **sistema externo**, no un subdominio clínico:
-
-```text
-Domain/Integrations/<Sistema>/{Contract,Connector,Mapper,Service,Dto,Exception}/
-```
-
-La orquestación de negocio que *usa* el connector vive en `Clinical/…`, `Scheduling/…`, etc. **No** crear `common/components/Integrations/` hermana de `Domain/`.
+Adapters externos viven en el **BC dueño** (`Person` ← MPI/Didit; `Clinical` ← lab/receta/HC; `Scheduling` ← FHIR agenda). Ver [Integrations/README.md](./Integrations/README.md).
 
 ### Sufijos de clase
 

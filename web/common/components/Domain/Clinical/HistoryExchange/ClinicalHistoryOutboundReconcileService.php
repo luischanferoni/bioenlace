@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Clinical\HistoryExchange;
 
-use common\components\Domain\Integrations\ClinicalHistory\ClinicalHistoryExchangeRegistry;
-use common\components\Domain\Integrations\ClinicalHistory\Contract\ClinicalHistorySubmissionStatusConnector;
+use common\components\Domain\Clinical\Infrastructure\External\ClinicalHistory\ClinicalHistoryExchangeRegistry;
+use common\components\Domain\Clinical\Infrastructure\External\ClinicalHistory\Contract\ClinicalHistorySubmissionStatusConnector;
 use common\models\Clinical\ClinicalHistoryOutboundAudit;
 use common\models\Clinical\ClinicalHistoryOutboundJob;
 use Yii;

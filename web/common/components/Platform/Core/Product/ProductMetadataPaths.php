@@ -5,7 +5,13 @@ namespace common\components\Platform\Core\Product;
 /**
  * Rutas de metadata declarativa del producto (intents, reglas NL, permisos de dominio).
  *
+ * Legacy: {@see baseDir()} → `common/metadata/bioenlace/`.
+ * Colocalizado (DDD): YAML bajo `components/Domain/<BC>/…` y `components/Platform/…`
+ * (p. ej. `Application/Flows/intents`). Discovery une ambas raíces durante la migración.
+ *
  * Para otro rubro: apuntar {@see \Yii::$app->params productMetadataDir} a otra carpeta bajo common/metadata/.
+ *
+ * @see web/docs/decisions/ddd-bounded-contexts-capas-y-metadata.md
  */
 final class ProductMetadataPaths
 {
@@ -26,9 +32,85 @@ final class ProductMetadataPaths
         return $resolved !== false ? $resolved : $default;
     }
 
+    /** `common/components` (padre de Domain/ y Platform/). */
+    public static function componentsRoot(): string
+    {
+        $default = dirname(__DIR__, 3);
+        $resolved = realpath($default);
+
+        return $resolved !== false ? $resolved : $default;
+    }
+
+    public static function componentsDomainRoot(): string
+    {
+        return self::componentsRoot() . DIRECTORY_SEPARATOR . 'Domain';
+    }
+
+    public static function componentsPlatformRoot(): string
+    {
+        return self::componentsRoot() . DIRECTORY_SEPARATOR . 'Platform';
+    }
+
+    /**
+     * Raíces de intents colocalizadas (DDD), si existen.
+     *
+     * - `Domain/<BC>/Application/Flows/intents`
+     * - `Platform/Assistant/Application/Flows/intents`
+     *
+     * @return list<string> rutas absolutas
+     */
+    public static function colocatedIntentRoots(): array
+    {
+        $roots = [];
+        $domainRoot = realpath(self::componentsDomainRoot());
+        if ($domainRoot !== false && is_dir($domainRoot)) {
+            foreach (glob($domainRoot . DIRECTORY_SEPARATOR . '*', GLOB_ONLYDIR) ?: [] as $bcDir) {
+                $intents = $bcDir
+                    . DIRECTORY_SEPARATOR . 'Application'
+                    . DIRECTORY_SEPARATOR . 'Flows'
+                    . DIRECTORY_SEPARATOR . 'intents';
+                if (is_dir($intents)) {
+                    $resolved = realpath($intents);
+                    $roots[] = $resolved !== false ? $resolved : $intents;
+                }
+            }
+        }
+
+        $platformFlows = self::componentsPlatformRoot()
+            . DIRECTORY_SEPARATOR . 'Assistant'
+            . DIRECTORY_SEPARATOR . 'Application'
+            . DIRECTORY_SEPARATOR . 'Flows'
+            . DIRECTORY_SEPARATOR . 'intents';
+        if (is_dir($platformFlows)) {
+            $resolved = realpath($platformFlows);
+            $roots[] = $resolved !== false ? $resolved : $platformFlows;
+        }
+
+        sort($roots);
+
+        return $roots;
+    }
+
+    /**
+     * Primero path nuevo si el archivo existe; si no, legacy.
+     * Útil en la migración archivo-a-archivo.
+     */
+    public static function preferExisting(string $preferredPath, string $fallbackPath): string
+    {
+        if (is_file($preferredPath)) {
+            return $preferredPath;
+        }
+
+        return $fallbackPath;
+    }
+
+    /**
+     * Metadata del asistente colocalizada en `components/Platform/Assistant/` (capas DDD).
+     * Legacy `metadata/bioenlace/platform/assistant` ya migrado (fase 01).
+     */
     public static function assistantDir(): string
     {
-        return self::platformDir() . DIRECTORY_SEPARATOR . 'assistant';
+        return self::componentsPlatformRoot() . DIRECTORY_SEPARATOR . 'Assistant';
     }
 
     public static function platformDir(): string
@@ -42,39 +124,39 @@ final class ProductMetadataPaths
     }
 
     /**
-     * @deprecated Los intents viven en `<dominio>/intents/`. Usar {@see IntentSchemaPaths::intentRoots()}.
+     * @deprecated Los intents viven en `<dominio>/intents/` o `Application/Flows/intents`. Usar {@see IntentSchemaPaths::intentRoots()}.
      */
     public static function intentsDir(): string
     {
-        return self::assistantDir() . DIRECTORY_SEPARATOR . 'intents';
+        return self::assistantDir() . DIRECTORY_SEPARATOR . 'Application' . DIRECTORY_SEPARATOR . 'Flows' . DIRECTORY_SEPARATOR . 'intents';
     }
 
     public static function globalsDir(): string
     {
-        return self::assistantDir() . DIRECTORY_SEPARATOR . 'globals';
+        return self::assistantDir() . DIRECTORY_SEPARATOR . 'Application' . DIRECTORY_SEPARATOR . 'globals';
     }
 
-    /** Espejo de Platform/Assistant/Chat/Channels/ */
+    /** YAML de canales (`prompt.yaml` / `ui-text.yaml`); PHP de canales vive en Chat/Channels/. */
     public static function assistantChannelsDir(): string
     {
-        return self::assistantDir() . DIRECTORY_SEPARATOR . 'channels';
+        return self::assistantDir() . DIRECTORY_SEPARATOR . 'Channels';
     }
 
-    /** Textos UX transversales (no de un canal concreto). */
+    /** Textos UX transversales (Presentation). */
     public static function assistantUiTextDir(): string
     {
-        return self::assistantDir() . DIRECTORY_SEPARATOR . 'ui-text';
+        return self::assistantDir() . DIRECTORY_SEPARATOR . 'Presentation';
     }
 
-    /** Espejo de Platform/Assistant/Chat/Preprocess/ */
+    /** Prompt preprocess (Application/Preprocess); loaders PHP en Assistant/Preprocess/. */
     public static function assistantPreprocessDir(): string
     {
-        return self::assistantDir() . DIRECTORY_SEPARATOR . 'preprocess';
+        return self::assistantDir() . DIRECTORY_SEPARATOR . 'Application' . DIRECTORY_SEPARATOR . 'Preprocess';
     }
 
     public static function assistantRoutingDir(): string
     {
-        return self::assistantDir() . DIRECTORY_SEPARATOR . 'routing';
+        return self::assistantDir() . DIRECTORY_SEPARATOR . 'Application' . DIRECTORY_SEPARATOR . 'Routing';
     }
 
     public static function assistantChannelDir(string $channelName): string
@@ -99,7 +181,7 @@ final class ProductMetadataPaths
 
     public static function assistantCatalogDir(): string
     {
-        return self::assistantDir() . DIRECTORY_SEPARATOR . 'catalog';
+        return self::assistantDir() . DIRECTORY_SEPARATOR . 'Application' . DIRECTORY_SEPARATOR . 'Catalog';
     }
 
     public static function contextHisAreasCatalogFile(): string
@@ -129,7 +211,7 @@ final class ProductMetadataPaths
 
     public static function assistantSchemasDir(): string
     {
-        return self::assistantDir() . DIRECTORY_SEPARATOR . 'schemas';
+        return self::assistantDir() . DIRECTORY_SEPARATOR . 'Application' . DIRECTORY_SEPARATOR . 'Schemas';
     }
 
     public static function assistantSchemaFile(string $basename): string
@@ -200,7 +282,7 @@ final class ProductMetadataPaths
             $file = 'assistant-shortcuts.yaml';
         }
 
-        return self::assistantDir() . DIRECTORY_SEPARATOR . $file;
+        return self::assistantDir() . DIRECTORY_SEPARATOR . 'Application' . DIRECTORY_SEPARATOR . $file;
     }
 
     public static function assistantUiTextByClientFile(): string

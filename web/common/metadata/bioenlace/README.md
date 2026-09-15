@@ -40,35 +40,37 @@ Maestros vs metadata (runtime + cognitivo): [`web/docs/arquitectura/runtime-dato
 # Catalog: solo id → texto (IA o UX); alias/mapas técnicos en el loader PHP
 ```
 
-## Estructura
+## Estructura (migración DDD en curso)
 
-El primer nivel es **dominio** o `platform` (misma posición). Los intents viven en el dominio que persiste el resultado (`IntentSchemaPaths` los descubre solos).
+ADR: [`ddd-bounded-contexts-capas-y-metadata.md`](../../../docs/decisions/ddd-bounded-contexts-capas-y-metadata.md).
+
+**Ya colocalizado en código (fase 01):**
+
+| Ruta canónica | Tipo |
+|---------------|------|
+| `components/Domain/<BC>/Application/Flows/intents/…` | flow (Scheduling migrado; resto en fase 02) |
+| `components/Platform/Assistant/Application/{Catalog,Routing,Schemas,Preprocess}/` | catalog / routing / schemas / prompt preprocess |
+| `components/Platform/Assistant/Channels/{Name}/` | prompt / ui-text de canal |
+| `components/Platform/Assistant/Presentation/` | ui-text by-client |
+| `components/Platform/Assistant/Application/Flows/intents/` | intents transversales (fase 02) |
+
+**Aún bajo esta carpeta (legacy hasta fases siguientes):**
 
 | Ruta | Tipo | Contenido |
 |------|------|-----------|
-| `<dominio>/intents/{create,read,update,delete}/` | flow | Flows por `intent_id` (métricas en `read/`; pantallas en `read/flows/`) |
-| `platform/intents/` | flow | DataAccess y flujos transversales (p. ej. queja) |
-| `platform/assistant/channels/{Name}/` | prompt / ui-text | Espejo de `Chat/Channels/{Name}/` |
-| `platform/assistant/preprocess/prompt.yaml` | prompt | Preprocess IA |
-| `platform/assistant/ui-text/by-client.yaml` | ui-text | Textos UX por perfil de cliente |
-| `platform/assistant/routing/` | routing / knob | `intent-families`, `booking-offer`, `thread-state` |
-| `platform/assistant/catalog/` | catalog | Vocabularios cerrados (`context-his-areas`, `preprocess-*`, `smart-catalog`) |
-| `platform/assistant/assistant-shortcut-group-labels.yaml` | manifest | Etiquetas/orden de grupos de atajos |
-| `platform/agents/` | knob | Política operativa por `agent_id` |
-| `platform/permission/` | auth | `domain-operation-policies`, `capabilities/` |
-| `platform/ui/` | manifest | home-panel, client-context, screen-params, paciente-contexto-offering |
-| `platform/ai/` | prompt + knob / catalog | clinical-text-ia, ai-cost-reference |
-| `terminology/` | catalog | SNOMED ECL, sinónimos de servicio institucional |
-| `clinical/` | catalog + intents | p. ej. `pedido-atencion.yaml` |
-| `organization/` | knob + intents | Agenda por encounter class, pricing PES, atributos efector |
-| `scheduling/` | catalog + intents | `turno-behavior-profile.yaml` |
-| `person/` | knob + intents | `ventanilla-sesion.yaml` |
-| `integrations/` | *(revisar)* | Si es lookup runtime → BD; si es mapa de motor → OK |
+| `<dominio>/intents/` | flow | Clinical, Person, Organization, platform (pendiente fase 02) |
+| `platform/agents/` | knob | → PHP Application (fase 04) |
+| `platform/permission/` | auth | → Platform/Core/Permission (fase 03) |
+| `platform/ui/` | manifest | → Platform/Ui/Presentation (fase 03) |
+| `platform/ai/` | prompt + knob | → Platform/Ai (fase 03) |
+| `terminology/` | catalog | → Terminology Domain (fase 05) |
+| `clinical/`, `organization/`, `scheduling/`, `person/` (YAML sueltos) | knob/catalog | → Domain PHP/BD (fase 05) |
+| `integrations/` | *(revisar)* | Si es lookup → BD |
 
 > Geo multi-país: tablas `geo_paises`, `geo_provincias`, `geo_provincia_vecinos`, `geo_recursos_*`. Seeds: `php yii clinical-seed/geo-multipais`.
 
 Contrato de pasos de intent: `common/components/Platform/Assistant/SubIntentEngine/schemas/SUBINTENT_CONTRACT.md`.
 
-Canal guide / trámite / menú: `ChatChannelPolicy` (PHP). Prompt guide: `platform/assistant/channels/Guide/prompt.yaml`.
+Canal guide / trámite / menú: `ChatChannelPolicy` (PHP). Prompt guide: `Platform/Assistant/Channels/Guide/prompt.yaml`.
 Prompts de canal: reglas transversales; huecos de datos en loaders (`null`), sin registro global de limitaciones (regla `asistente-prompts-sin-casos-particulares.mdc`).
-Booking CTA: `platform/assistant/routing/booking-offer.yaml`.
+Booking CTA: `Platform/Assistant/Application/Routing/booking-offer.yaml`.

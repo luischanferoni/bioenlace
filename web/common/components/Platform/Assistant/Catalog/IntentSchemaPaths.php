@@ -7,9 +7,13 @@ use common\components\Platform\Core\Product\ProductMetadataPaths;
 /**
  * Rutas y resolución de manifiestos YAML de intents.
  *
- * Layout: `metadata/bioenlace/<dominio|platform>/intents/{create|read|update|delete}/…`.
- * El dominio es la carpeta de primer nivel; la categoría CRUD es el primer segmento bajo `intents/`.
- * No hay mapa intent→dominio a mano: mover el YAML cambia el dominio.
+ * Layout legacy: `metadata/bioenlace/<dominio|platform>/intents/{create|read|update|delete}/…`.
+ * Layout DDD: `components/Domain/<BC>/Application/Flows/intents/…`
+ *            y `components/Platform/Assistant/Application/Flows/intents/…`.
+ *
+ * Discovery une ambas. Si el mismo `intent_id` aparece en legacy y colocalizado, gana el colocalizado.
+ *
+ * @see web/docs/decisions/ddd-bounded-contexts-capas-y-metadata.md
  */
 final class IntentSchemaPaths
 {
@@ -30,7 +34,7 @@ final class IntentSchemaPaths
     private static ?array $index = null;
 
     /**
-     * Raíz de metadata del producto (antes era `assistant/intents`).
+     * Raíz de metadata legacy del producto.
      * Preferir {@see discoverYamlFiles()} / {@see intentRoots()}.
      */
     public static function baseDir(): string
@@ -39,11 +43,23 @@ final class IntentSchemaPaths
     }
 
     /**
-     * Carpetas `…/<dominio>/intents` presentes bajo la metadata del producto.
+     * Carpetas `…/intents` (legacy + colocalizadas DDD).
      *
      * @return list<string> rutas absolutas
      */
     public static function intentRoots(): array
+    {
+        $roots = array_merge(self::legacyIntentRoots(), ProductMetadataPaths::colocatedIntentRoots());
+        $roots = array_values(array_unique($roots));
+        sort($roots);
+
+        return $roots;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function legacyIntentRoots(): array
     {
         $base = realpath(ProductMetadataPaths::baseDir());
         if ($base === false || !is_dir($base)) {
@@ -54,7 +70,8 @@ final class IntentSchemaPaths
         foreach (glob($base . DIRECTORY_SEPARATOR . '*', GLOB_ONLYDIR) ?: [] as $domainDir) {
             $intents = $domainDir . DIRECTORY_SEPARATOR . 'intents';
             if (is_dir($intents)) {
-                $roots[] = $intents;
+                $resolved = realpath($intents);
+                $roots[] = $resolved !== false ? $resolved : $intents;
             }
         }
         sort($roots);
@@ -118,7 +135,7 @@ final class IntentSchemaPaths
     }
 
     /**
-     * Dominio (o `platform`) del intent, leído de la carpeta bajo metadata.
+     * Dominio (o `platform`) del intent.
      */
     public static function domainForIntentId(string $intentId): ?string
     {
@@ -132,16 +149,63 @@ final class IntentSchemaPaths
 
     public static function domainFromPath(string $absolutePath): ?string
     {
-        $base = realpath(ProductMetadataPaths::baseDir());
-        if ($base === false) {
-            return null;
-        }
         $resolved = realpath($absolutePath);
         if ($resolved === false) {
             $resolved = $absolutePath;
         }
-        $baseNorm = rtrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $base), DIRECTORY_SEPARATOR);
         $pathNorm = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $resolved);
+
+        $colocatedBc = self::domainFromColocatedPath($pathNorm);
+        if ($colocatedBc !== null) {
+            return $colocatedBc;
+        }
+
+        return self::domainFromLegacyPath($pathNorm);
+    }
+
+    private static function domainFromColocatedPath(string $pathNorm): ?string
+    {
+        $platformMarker = DIRECTORY_SEPARATOR . 'Platform' . DIRECTORY_SEPARATOR . 'Assistant'
+            . DIRECTORY_SEPARATOR . 'Application' . DIRECTORY_SEPARATOR . 'Flows'
+            . DIRECTORY_SEPARATOR . 'intents';
+        if (stripos($pathNorm, $platformMarker) !== false) {
+            return 'platform';
+        }
+
+        $domainRoot = realpath(ProductMetadataPaths::componentsDomainRoot());
+        if ($domainRoot === false) {
+            return null;
+        }
+        $domainRootNorm = rtrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $domainRoot), DIRECTORY_SEPARATOR);
+        $prefix = $domainRootNorm . DIRECTORY_SEPARATOR;
+        if (stripos($pathNorm, $prefix) !== 0) {
+            return null;
+        }
+        $relative = substr($pathNorm, strlen($prefix));
+        $parts = explode(DIRECTORY_SEPARATOR, $relative);
+        $bc = $parts[0] ?? '';
+        if ($bc === '') {
+            return null;
+        }
+        // Esperado: <BC>/Application/Flows/intents/…
+        if (count($parts) < 4
+            || strcasecmp($parts[1] ?? '', 'Application') !== 0
+            || strcasecmp($parts[2] ?? '', 'Flows') !== 0
+            || strcasecmp($parts[3] ?? '', 'intents') !== 0
+        ) {
+            return null;
+        }
+
+        return strtolower($bc);
+    }
+
+    private static function domainFromLegacyPath(string $pathNorm): ?string
+    {
+        $base = realpath(ProductMetadataPaths::baseDir());
+        if ($base === false) {
+            return null;
+        }
+        $baseNorm = rtrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $base), DIRECTORY_SEPARATOR);
         $prefix = $baseNorm . DIRECTORY_SEPARATOR;
         if (stripos($pathNorm, $prefix) !== 0) {
             return null;
@@ -173,6 +237,17 @@ final class IntentSchemaPaths
         return $first;
     }
 
+    public static function isColocatedPath(string $absolutePath): bool
+    {
+        $resolved = realpath($absolutePath);
+        if ($resolved === false) {
+            $resolved = $absolutePath;
+        }
+        $pathNorm = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $resolved);
+
+        return self::domainFromColocatedPath($pathNorm) !== null;
+    }
+
     /**
      * @return array<string, string> intent_id => absolute path
      */
@@ -192,7 +267,17 @@ final class IntentSchemaPaths
                 self::$index[$intentId] = $path;
                 continue;
             }
-            $existingCategory = self::categoryFromPath(self::$index[$intentId]);
+            $existing = self::$index[$intentId];
+            $existingColocated = self::isColocatedPath($existing);
+            $newColocated = self::isColocatedPath($path);
+            if (!$existingColocated && $newColocated) {
+                self::$index[$intentId] = $path;
+                continue;
+            }
+            if ($existingColocated && !$newColocated) {
+                continue;
+            }
+            $existingCategory = self::categoryFromPath($existing);
             $newCategory = self::categoryFromPath($path);
             if ($existingCategory === null && $newCategory !== null) {
                 self::$index[$intentId] = $path;

@@ -13,7 +13,8 @@ Objetivo doble, **desde el día uno**:
 |---------|--------|
 | País / provincia / vecinos / recursos geo | Tablas `geo_*`, modelos y services Domain, seeds en `console` |
 | “¿Puede guardarse / emitirse?” | `*Input`, AR, services de dominio |
-| Flow del asistente, copy, knobs, panel | `common/metadata/bioenlace/` |
+| Flow del asistente, copy, manifests UI, auth motor | `Domain/<BC>/Application/Flows/`, `Platform/Assistant|Ui|Permission|Ai/…` |
+| Knobs de negocio / agents | PHP `Domain/<BC>/Domain/*Catalog`, `Application/Agent/*AgentPolicy` |
 | Cableado handler → PHP | `common/config/product-registries.php` |
 | Config de arranque (DB, secretos) | `common/config/` (Yii) |
 
@@ -43,13 +44,13 @@ Plantilla para el resto del proyecto:
 7. Seeds por país en console (`provincias-argentina`, `provincias-uruguay`, `geo-multipais`).
 8. MPI/RENAPER: resolución de provincia acotada a AR (`id_pais`); extender adapter por país cuando haya fuente.
 
-## Rollout al resto de YAML
+## Rollout al resto de metadata
 
-Misma regla, archivo por archivo bajo `metadata/bioenlace/`:
+Misma regla, archivo por archivo bajo la metadata **colocalizada**:
 
-- **Se queda en YAML:** flow, routing, copy, knob, manifest UI, auth declarativa (capabilities/policies como composición que synca a RBAC).
-- **Sale a BD (+ seed console):** cualquier “catalog” de hechos que hoy el runtime parsea con Yaml::parseFile para lookup (recursos, y revisiones futuras de terminology/integrations si el hot path las trata como maestro).
+- **Se queda en YAML:** flow, routing, copy, knob de motor, manifest UI, auth declarativa (capabilities/policies como composición que synca a RBAC).
+- **Sale a PHP Domain o BD (+ seed console):** knobs de negocio; cualquier “catalog” de hechos que el runtime parsearía con Yaml::parseFile para lookup.
 
-Al tocar un YAML: si la respuesta a “¿es lookup de hechos en request?” es sí → no agregar más datos ahí; migrar patrón geo.
+Al tocar metadata: si la respuesta a “¿es lookup de hechos en request?” es sí → no agregar más datos ahí; migrar patrón geo.
 
-Mapa actual de carpetas metadata: [`common/metadata/bioenlace/README.md`](../../common/metadata/bioenlace/README.md).
+Mapa: [`common/metadata/bioenlace/README.md`](../../common/metadata/bioenlace/README.md). ADR DDD: [ddd-bounded-contexts-capas-y-metadata.md](../decisions/ddd-bounded-contexts-capas-y-metadata.md).

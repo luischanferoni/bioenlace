@@ -149,12 +149,11 @@ web/common/components/Platform/Core/Permission/
   BioenlaceRbacRevision.php, CapabilityManifestIndex.php
   CapabilityPermissionSyncService.php, CatalogPermissionSyncService.php
   Domain/DomainOperationPolicyCatalog.php, PermissionCatalogService.php
+  metadata/capabilities/
+  metadata/domain-operation-policies.yaml
 
-web/common/metadata/bioenlace/
-  assistant/intents/
-  permission/capabilities/
-  permission/domain-operation-policies.yaml
-  ui/home-panel-manifest.yaml
+web/common/components/Domain/<BC>/Application/Flows/intents/
+web/common/components/Platform/Ui/Presentation/home-panel-manifest.yaml
 ```
 
 ## ADR relacionados

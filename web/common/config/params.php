@@ -281,7 +281,8 @@ return [
      * Para otro rubro: apuntar a otra carpeta bajo common/metadata/.
      * Default: @common/metadata/bioenlace (resuelto en {@see \common\components\Platform\Core\Product\ProductMetadataPaths}).
      */
-    // 'productMetadataDir' => dirname(__DIR__) . '/metadata/bioenlace',
+    // Metadata canónica colocalizada en components/Domain|Platform (ver ProductMetadataPaths).
+    // 'productMetadataDir' ya no se usa.
 
     /**
      * ISO 3166-1 alpha-2 del país por defecto (sugerencias geo / fallback IP).

@@ -29,11 +29,13 @@ final class YamlIntentCatalogService
         // Cache key debe cambiar cuando cambian los YAML (keywords/rules/etc.).
         $cacheKeyBase = 'yaml_intents_catalog_v9';
 
-        $base = IntentSchemaPaths::baseDir();
         $files = IntentSchemaPaths::discoverYamlFiles();
         if ($files === []) {
             // Usar categoría ya visible en producción (evitar filtros por categoría).
-            Yii::warning('YamlIntentCatalogService: no se encontraron YAML intents en ' . $base, 'asistente');
+            Yii::warning(
+                'YamlIntentCatalogService: no se encontraron YAML intents en Application/Flows/intents',
+                'asistente'
+            );
         }
         $globCount = is_array($files) ? count($files) : 0;
         $sigParts = [];

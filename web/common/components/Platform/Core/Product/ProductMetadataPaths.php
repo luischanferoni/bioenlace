@@ -3,35 +3,17 @@
 namespace common\components\Platform\Core\Product;
 
 /**
- * Rutas de metadata declarativa del producto (intents, reglas NL, permisos de dominio).
+ * Rutas de metadata declarativa del producto (intents, reglas NL, permisos, UI, AI).
  *
- * Legacy: {@see baseDir()} → `common/metadata/bioenlace/`.
- * Colocalizado (DDD): YAML bajo `components/Domain/<BC>/…` y `components/Platform/…`
- * (p. ej. `Application/Flows/intents`). Discovery une ambas raíces durante la migración.
+ * Canónico: YAML colocalizado bajo `components/Domain/<BC>/…` y `components/Platform/…`
+ * (p. ej. `Application/Flows/intents`). Knobs de negocio → PHP `*Catalog` / `*AgentPolicy`.
  *
- * Para otro rubro: apuntar {@see \Yii::$app->params productMetadataDir} a otra carpeta bajo common/metadata/.
+ * `common/metadata/bioenlace/` queda solo como README histórico (sin YAML).
  *
  * @see web/docs/decisions/ddd-bounded-contexts-capas-y-metadata.md
  */
 final class ProductMetadataPaths
 {
-    public static function baseDir(): string
-    {
-        if (class_exists(\Yii::class, false) && \Yii::$app !== null && \Yii::$app->has('params')) {
-            $configured = \Yii::$app->params['productMetadataDir'] ?? null;
-            if (is_string($configured) && trim($configured) !== '') {
-                $dir = realpath(trim($configured));
-
-                return $dir !== false ? $dir : rtrim(trim($configured), '/\\');
-            }
-        }
-
-        $default = dirname(__DIR__, 4) . DIRECTORY_SEPARATOR . 'metadata' . DIRECTORY_SEPARATOR . 'bioenlace';
-        $resolved = realpath($default);
-
-        return $resolved !== false ? $resolved : $default;
-    }
-
     /** `common/components` (padre de Domain/ y Platform/). */
     public static function componentsRoot(): string
     {
@@ -52,7 +34,7 @@ final class ProductMetadataPaths
     }
 
     /**
-     * Raíces de intents colocalizadas (DDD), si existen.
+     * Raíces de intents colocalizadas.
      *
      * - `Domain/<BC>/Application/Flows/intents`
      * - `Platform/Assistant/Application/Flows/intents`
@@ -91,35 +73,14 @@ final class ProductMetadataPaths
         return $roots;
     }
 
-    /**
-     * Primero path nuevo si el archivo existe; si no, legacy.
-     * Útil en la migración archivo-a-archivo.
-     */
-    public static function preferExisting(string $preferredPath, string $fallbackPath): string
-    {
-        if (is_file($preferredPath)) {
-            return $preferredPath;
-        }
-
-        return $fallbackPath;
-    }
-
-    /**
-     * Metadata del asistente colocalizada en `components/Platform/Assistant/` (capas DDD).
-     * Legacy `metadata/bioenlace/platform/assistant` ya migrado (fase 01).
-     */
+    /** Metadata del asistente en `components/Platform/Assistant/`. */
     public static function assistantDir(): string
     {
         return self::componentsPlatformRoot() . DIRECTORY_SEPARATOR . 'Assistant';
     }
 
-    public static function platformDir(): string
-    {
-        return self::baseDir() . DIRECTORY_SEPARATOR . 'platform';
-    }
-
     /**
-     * Auth composition YAML colocalizada en Permission/metadata/ (PHP del motor en Permission/).
+     * Auth composition YAML en Permission/metadata/.
      */
     public static function permissionDir(): string
     {
@@ -144,7 +105,7 @@ final class ProductMetadataPaths
     }
 
     /**
-     * @deprecated Los intents viven en `<dominio>/intents/` o `Application/Flows/intents`. Usar {@see IntentSchemaPaths::intentRoots()}.
+     * @deprecated Los intents viven en Application/Flows/intents. Usar {@see IntentSchemaPaths::intentRoots()}.
      */
     public static function intentsDir(): string
     {
@@ -240,7 +201,7 @@ final class ProductMetadataPaths
         if ($name === '') {
             return self::assistantSchemasDir();
         }
-        if (!str_ends_with($name, '.yaml')) {
+        if (substr($name, -5) !== '.yaml') {
             $name .= '.yaml';
         }
 
@@ -253,7 +214,7 @@ final class ProductMetadataPaths
         if ($name === '') {
             return self::assistantRoutingDir();
         }
-        if (!str_ends_with($name, '.yaml')) {
+        if (substr($name, -5) !== '.yaml') {
             $name .= '.yaml';
         }
 
@@ -348,86 +309,5 @@ final class ProductMetadataPaths
     public static function aiCostReferenceFile(): string
     {
         return self::aiApplicationDir() . DIRECTORY_SEPARATOR . 'ai-cost-reference.yaml';
-    }
-
-    /**
-     * @deprecated Agents ya no usan YAML; ver {@see AgentPolicyRegistry}.
-     */
-    public static function agentsDir(): string
-    {
-        return self::platformDir() . DIRECTORY_SEPARATOR . 'agents';
-    }
-
-    /**
-     * @deprecated Usar {@see AgentPolicyRegistry::config()}.
-     */
-    public static function agentFile(string $agentId): string
-    {
-        return self::agentsDir() . DIRECTORY_SEPARATOR . $agentId . '.yaml';
-    }
-
-    public static function snomedTerminologyFile(): string
-    {
-        return self::baseDir() . DIRECTORY_SEPARATOR . 'terminology' . DIRECTORY_SEPARATOR . 'snomed-terminology.yaml';
-    }
-
-    public static function servicioSynonymsFile(): string
-    {
-        return self::baseDir() . DIRECTORY_SEPARATOR . 'terminology' . DIRECTORY_SEPARATOR . 'servicio-synonyms.yaml';
-    }
-
-    public static function clinicalDir(): string
-    {
-        return self::baseDir() . DIRECTORY_SEPARATOR . 'clinical';
-    }
-
-    public static function pedidoAtencionFile(): string
-    {
-        return self::clinicalDir() . DIRECTORY_SEPARATOR . 'pedido-atencion.yaml';
-    }
-
-    public static function organizationDir(): string
-    {
-        return self::organizationDirPath();
-    }
-
-    private static function organizationDirPath(): string
-    {
-        return self::baseDir() . DIRECTORY_SEPARATOR . 'organization';
-    }
-
-    public static function agendaByEncounterClassFile(): string
-    {
-        return self::organizationDir() . DIRECTORY_SEPARATOR . 'agenda-by-encounter-class.yaml';
-    }
-
-    public static function pricingPesByEncounterClassFile(): string
-    {
-        return self::organizationDir() . DIRECTORY_SEPARATOR . 'pricing-pes-by-encounter-class.yaml';
-    }
-
-    public static function efectorAtributosFile(): string
-    {
-        return self::organizationDir() . DIRECTORY_SEPARATOR . 'efector-atributos.yaml';
-    }
-
-    public static function personDir(): string
-    {
-        return self::baseDir() . DIRECTORY_SEPARATOR . 'person';
-    }
-
-    public static function ventanillaSesionFile(): string
-    {
-        return self::personDir() . DIRECTORY_SEPARATOR . 'ventanilla-sesion.yaml';
-    }
-
-    public static function schedulingDir(): string
-    {
-        return self::baseDir() . DIRECTORY_SEPARATOR . 'scheduling';
-    }
-
-    public static function turnoBehaviorProfileFile(): string
-    {
-        return self::schedulingDir() . DIRECTORY_SEPARATOR . 'turno-behavior-profile.yaml';
     }
 }

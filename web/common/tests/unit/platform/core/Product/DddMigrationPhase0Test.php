@@ -10,7 +10,7 @@ use common\components\Platform\Core\Product\AutonomousAgentMetadata;
 use common\components\Platform\Core\Product\ProductMetadataPaths;
 
 /**
- * Fase 00 DDD: dual-root de intents + mapa agents→BC.
+ * Invariantes post-migración DDD: intents solo colocalizados + agents tipados.
  */
 final class DddMigrationPhase0Test extends Unit
 {
@@ -22,15 +22,6 @@ final class DddMigrationPhase0Test extends Unit
     protected function _after(): void
     {
         IntentSchemaPaths::resetIndexCache();
-    }
-
-    public function testLegacyIntentRootsVaciosTrasFase02(): void
-    {
-        $this->assertSame(
-            [],
-            IntentSchemaPaths::legacyIntentRoots(),
-            'Tras fase 02 no debe quedar metadata/bioenlace/*/intents'
-        );
     }
 
     public function testColocatedIntentRootsIncluyenTodosLosBcConFlows(): void
@@ -70,9 +61,10 @@ final class DddMigrationPhase0Test extends Unit
         $this->assertGreaterThanOrEqual(50, count($index), 'Debe descubrir intent_id desde YAML');
 
         foreach ($index as $intentId => $path) {
-            $this->assertTrue(
-                IntentSchemaPaths::isColocatedPath($path),
-                "intent '$intentId' aún en path legacy: $path"
+            $domain = IntentSchemaPaths::domainFromPath($path);
+            $this->assertNotNull(
+                $domain,
+                "intent '$intentId' fuera de Application/Flows/intents: $path"
             );
         }
     }
@@ -90,13 +82,7 @@ final class DddMigrationPhase0Test extends Unit
             $path = IntentSchemaPaths::resolveFileForIntentId($intentId);
             $this->assertNotNull($path, $intentId);
             $this->assertSame($domain, IntentSchemaPaths::domainFromPath($path), $intentId);
-            $this->assertTrue(IntentSchemaPaths::isColocatedPath($path), $intentId);
         }
-    }
-
-    public function testDomainFromPathLegacy(): void
-    {
-        $this->assertSame([], IntentSchemaPaths::legacyIntentRoots());
     }
 
     public function testDomainFromPathColocatedScheduling(): void
@@ -118,7 +104,6 @@ final class DddMigrationPhase0Test extends Unit
             }
             IntentSchemaPaths::resetIndexCache();
             $this->assertSame('scheduling', IntentSchemaPaths::domainFromPath($tmp));
-            $this->assertTrue(IntentSchemaPaths::isColocatedPath($tmp));
         } finally {
             if ($created && is_file($tmp)) {
                 unlink($tmp);

@@ -12,7 +12,7 @@ En cada capa del producto, el segmento que sigue a la capa es el **dominio** (o 
 | Modelos | `common/models/<Dominio>/…` · `common/models/Platform/…` |
 | Controllers API | `frontend/modules/api/v1/controllers/<dominio>/…` |
 | UI JSON | `frontend/modules/api/v1/views/json/<dominio>/<entidad>/…` |
-| Metadata | `common/metadata/bioenlace/<dominio>/…` · `…/platform/<área>/…` |
+| Metadata (flows) | `components/Domain/<BC>/Application/Flows/…` · `components/Platform/Assistant/Application/Flows/…` |
 | Tests unitarios | `common/tests/unit/<dominio>/…` · `…/platform/<área>/…` |
 
 ## Fuente de verdad del conjunto de dominios

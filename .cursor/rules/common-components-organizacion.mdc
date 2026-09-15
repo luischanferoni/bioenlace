@@ -20,9 +20,9 @@ alwaysApply: false
 | Capa | Ruta | Qué va |
 |------|------|--------|
 | **Motores** | `web/common/components/Platform/` | Assistant, Core, Ai, Ui, Infra — agnóstico del rubro |
-| **Rubro salud** | `web/common/components/Domain/` | Clinical, Scheduling, Person, Organization, Integrations, Terminology, Content, Geo, Programs |
+| **Rubro salud** | `web/common/components/Domain/` | Clinical, Scheduling, Person, Organization, Terminology, Content, Geo, Programs |
 
-Metadata producto: `web/common/metadata/bioenlace/`. Cableado: `web/common/config/product-registries.php`.
+Metadata YAML (flows, prompts, UI, auth motor): colocalizada en `Domain/<BC>/Application/Flows/` y `Platform/{Assistant,Ui,Core/Permission,Ai}/…`. Knobs de negocio: PHP `*Catalog` / `*AgentPolicy`. Cableado: `web/common/config/product-registries.php`.
 
 ## Invariante de forma (espejo)
 
@@ -30,16 +30,18 @@ Metadata producto: `web/common/metadata/bioenlace/`. Cableado: `web/common/confi
 <capa>/<dominio|platform>/<entidad>/…
 ```
 
-Misma palabra de dominio en `components/Domain/`, `models/`, `controllers/`, `views/json/`, `metadata/bioenlace/` y `tests/unit/`. Fuente del conjunto: carpetas en `Domain/` (`ProductDomainCatalog`). `platform` es eje paralelo, **no** carpeta bajo `Domain/`.
+Misma palabra de dominio en `components/Domain/`, `models/`, `controllers/`, `views/json/` y `tests/unit/`. Metadata de flows: `Domain/<BC>/Application/Flows/intents/`. Fuente del conjunto: carpetas en `Domain/` (`ProductDomainCatalog`). `platform` es eje paralelo, **no** carpeta bajo `Domain/`.
 
 ## Forma interna de Domain
 
 ```text
-Domain/<Dominio>/<Subdominio?>/{Service|Assistant|Home|DataAccess|Presentation}/…
-Domain/Integrations/<Sistema>/{Contract|Connector|Mapper|Service|…}/
+Domain/<BC>/
+  Application/ | Domain/ | Infrastructure/External/<Sistema>/ | Presentation/
+  <Subdominio?>/{Service|Assistant|Home|DataAccess}/…
 ```
 
-- **Negocio** bajo `…/Service/` (o subdominio + `Service/`). **No** `Services/`. **No** carpeta `Integrations/` hermana de `Domain/`.
+- **ACL externos:** `Infrastructure/External/<Sistema>/{Contract|Connector|Mapper|…}/` (no carpeta `Integrations/` como BC).
+- **Negocio** bajo `…/Service/` (o subdominio + `Service/`). **No** `Services/`.
 - **Clinical**: guardia → `Emergency/`; internación → `Inpatient/`; pedido atención → `PedidoAtencion/Service/` (no `Access/`).
 - **Quirófano** → `Domain/Scheduling/Service/Quirofano/`.
 - Roles técnicos (`Assistant/`, `Home/`, `DataAccess/`, `Presentation/`) al nivel del dominio/subdominio, no dentro de `Service/`.

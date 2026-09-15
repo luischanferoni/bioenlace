@@ -22,7 +22,7 @@ Las carpetas de primer nivel **son** el conjunto de dominios del producto (`Prod
 
 Catálogos de negocio: `Domain/<BC>/Domain/*Catalog` (PHP). Flows: `Application/Flows/intents/`. SNOMED knobs: `Terminology/Domain/SnomedTerminologyCatalog`.
 
-Árbol espejo en otras capas: [arbol-espejo-dominios.md](../../../docs/arquitectura/arbol-espejo-dominios.md). Plan DDD: [ddd-capas-y-metadata](../../../docs/plans/ddd-capas-y-metadata/).
+Árbol espejo en otras capas: [arbol-espejo-dominios.md](../../../docs/arquitectura/arbol-espejo-dominios.md). ADR DDD: [ddd-bounded-contexts-capas-y-metadata.md](../../../docs/decisions/ddd-bounded-contexts-capas-y-metadata.md).
 
 ## Forma interna (gramática)
 

@@ -25,4 +25,4 @@ Domain/<BC>/Infrastructure/External/<Sistema>/
   Exception/
 ```
 
-Plan: `web/docs/plans/ddd-capas-y-metadata/phases/06-capas-php-e-integrations.md`.
+ADR: [`ddd-bounded-contexts-capas-y-metadata.md`](../../../docs/decisions/ddd-bounded-contexts-capas-y-metadata.md).

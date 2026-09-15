@@ -23,8 +23,8 @@ flowchart LR
 
 | Carpeta | Uso |
 |---------|-----|
-| `assistant/intents/read/` | Métricas: `metric_id` + `open_ui` a `data-access.info` o `data-access.listar` |
-| `assistant/intents/read/flows/` | Consultas de producto que aún no son métrica (listados paciente, tableros, wizards) |
+| `Domain/<BC>/Application/Flows/intents/read/` (+ platform) | Métricas: `metric_id` + `open_ui` a `data-access.info` o `data-access.listar` |
+| `…/intents/read/flows/` | Consultas de producto que aún no son métrica (listados paciente, tableros, wizards) |
 
 El descubrimiento de manifiestos es **recursivo** bajo `create/`, `read/`, `update/`, `delete/` (`IntentSchemaPaths`). La categoría CRUD es el primer segmento (`read/flows/x.yaml` sigue siendo `read`).
 
@@ -52,4 +52,4 @@ El grant assignable es el **`intent_id` concreto**. QueryAuthorizationService au
 
 - `IntentSchemaPaths`, `IntentMetricIndex`, `QueryAuthorizationService`
 - `common/components/Platform/Core/DataAccess/README.md`
-- `common/metadata/bioenlace/assistant/intents/read/`
+- `Domain/<BC>/Application/Flows/intents/read/` (+ platform)

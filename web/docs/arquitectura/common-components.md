@@ -11,7 +11,7 @@ Código reutilizable por API v1, consola, jobs y (legacy) frontend Yii. La regla
 | **Plataforma / motores** | `components/Platform/` | `common\components\Platform\…` | IA, asistente, DataAccess, permisos genéricos, UI JSON, infra |
 | **Rubro Bioenlace** | `components/Domain/` | `common\components\Domain\…` | Clínico, turnos, personas, organización, integraciones, terminología |
 
-**Metadata del producto:** `common/metadata/bioenlace/` (intents, reglas NL, permisos, panel).
+**Metadata del producto:** YAML colocalizado en `Domain/<BC>/Application/Flows/` y `Platform/{Assistant,Ui,Core/Permission,Ai}/…`. Knobs de negocio en PHP (`*Catalog`, `*AgentPolicy`). Ver [metadata/bioenlace/README.md](../../common/metadata/bioenlace/README.md).
 
 **Cableado dominio → motor:** `common/config/product-registries.php` (`productRegistries` en `params.php`).
 
@@ -64,7 +64,7 @@ Domain/<Dominio>/
 - **ACL externos:** `Domain/<BC>/Infrastructure/External/<Sistema>/` (Contract, Connector, Mapper, …). No carpetas hermanas de `Domain/`.
 - Plugins para motores: registrar en `product-registries.php`, implementación en `Domain/…`.
 - Detalle y sufijos de clase: [Domain/README.md](../../common/components/Domain/README.md).
-- Migración DDD: [ddd-capas-y-metadata](../plans/ddd-capas-y-metadata/).
+- ADR DDD: [ddd-bounded-contexts-capas-y-metadata.md](../decisions/ddd-bounded-contexts-capas-y-metadata.md).
 
 ## Motores vs metadata vs negocio
 

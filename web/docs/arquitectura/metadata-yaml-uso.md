@@ -49,7 +49,7 @@ ADR: [captura-clinica-contratos-yii-vs-yaml.md](../decisions/captura-clinica-con
 ### Agentes y receta
 
 - Escenarios de bloqueo (p. ej. RDI) viven en el dominio / modelos de prescripción.
-- YAML de agente autónomo: política operativa (umbrales, flags), no «si no hay archivo, pasar vacío».
+- Knobs de agente autónomo: PHP `*AgentPolicy` + `AgentPolicyRegistry` (no YAML).
 
 ### Asistente
 
@@ -86,17 +86,17 @@ Ver [asistente-motores.md](./asistente-motores.md), [asistente-lectura-data-acce
 - `ClinicalCaptureIssueFactory` / `ClinicalCaptureResolutionApplier`
 - `EncounterCaptureExtractionPostProcessPolicy`
 - `PrescriptionRdiPreSubmitValidationService`
-- `common/metadata/bioenlace/` — tipología y mapa: [`metadata/bioenlace/README.md`](../../common/metadata/bioenlace/README.md)
+- `common/metadata/bioenlace/README.md` — mapa de dónde vive cada tipo de metadata (colocalizada)
 
 ## Tipología rápida (metadata vs Yii vs BD)
 
 | Tipo | Ejemplo | Dónde |
 |------|---------|-------|
-| flow / routing / prompt / ui-text | `assistant/intents`, `assistant/channels`, `assistant/ui-text` | Metadata; no sustituye `rules()` |
-| catalog (id → texto IA/UX) | `assistant/catalog/preprocess-*-*.yaml` | Metadata; mapas técnicos en el loader PHP |
-| knob | `agents/*.yaml`, overrides en `ai/` | Metadata; gates hard en dominio |
-| manifest | `ui/home-panel-manifest.yaml` | Metadata |
-| auth declarativa | `permission/` | Metadata → sync RBAC |
+| flow / routing / prompt / ui-text | `Application/Flows`, `Channels/`, `Presentation/` | Metadata colocalizada; no sustituye `rules()` |
+| catalog (id → texto IA/UX) | `Platform/Assistant/Application/Catalog/*.yaml` | Metadata; mapas técnicos en el loader PHP |
+| knob de negocio / agents | `*Catalog` / `*AgentPolicy` | PHP Domain/Application |
+| manifest | `Ui/Presentation/home-panel-manifest.yaml` | Metadata |
+| auth declarativa | `Core/Permission/metadata/` | Metadata → sync RBAC |
 | maestros / lookup de hechos | geo, recursos provinciales | **BD** + seed console (no YAML runtime) |
 
 La carpeta **no** es `common/config/`: ahí vive runtime de arranque (DB, components, secretos).

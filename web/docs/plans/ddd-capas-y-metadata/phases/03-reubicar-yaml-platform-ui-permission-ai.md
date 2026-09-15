@@ -1,25 +1,23 @@
 # Fase 03 — Reubicar YAML de Platform Ui, Permission, Ai
 
-## Objetivo
+**Estado: hecha.**
 
-Colocar manifests UI, auth composition y AI metadata bajo carpetas de capa en Platform.
-
-## Movimientos
+## Movido
 
 | Origen | Destino |
 |--------|---------|
-| `platform/ui/*` | `Platform/Ui/Presentation/` |
-| `platform/permission/**` | `Platform/Core/Permission/` (subcarpeta `metadata/` o archivos en raíz del módulo Permission, documentado) |
-| `platform/ai/*` | `Platform/Ai/` con subcarpeta clara (`Presentation` o `Application` según archivo) |
+| `metadata/bioenlace/platform/ui/*` | `Platform/Ui/Presentation/` |
+| `metadata/bioenlace/platform/permission/**` | `Platform/Core/Permission/metadata/` |
+| `metadata/bioenlace/platform/ai/*` | `Platform/Ai/Application/` |
 
-Actualizar todos los callers de `ProductMetadataPaths::homePanelManifestFile`, `domainOperationPoliciesFile`, etc.
+`ProductMetadataPaths` actualizado (`uiPresentationDir`, `permissionDir` → metadata, `aiApplicationDir`).
 
-## Criterio de done
+Regla prompts: glob de AI apunta a `Platform/Ai/Application/`.
 
-- Panel home, client-context, policies y clinical-text-ia cargan desde paths nuevos.
-- `metadata/bioenlace/platform/ui|permission|ai` eliminados.
+## Residual en `metadata/bioenlace/platform/`
 
-## No hacer
+Solo `agents/` (fase 04 → PHP).
 
-- Reescribir políticas RBAC ni cambiar semantics de operations.
-- Migrar implementaciones de policy PHP (solo path del YAML de composición).
+## Siguiente
+
+[Fase 04](./04-migrar-agents-a-php.md) — agents knobs → Application Policy PHP.

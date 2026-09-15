@@ -118,9 +118,29 @@ final class ProductMetadataPaths
         return self::baseDir() . DIRECTORY_SEPARATOR . 'platform';
     }
 
+    /**
+     * Auth composition YAML colocalizada en Permission/metadata/ (PHP del motor en Permission/).
+     */
     public static function permissionDir(): string
     {
-        return self::platformDir() . DIRECTORY_SEPARATOR . 'permission';
+        return self::componentsPlatformRoot()
+            . DIRECTORY_SEPARATOR . 'Core'
+            . DIRECTORY_SEPARATOR . 'Permission'
+            . DIRECTORY_SEPARATOR . 'metadata';
+    }
+
+    public static function uiPresentationDir(): string
+    {
+        return self::componentsPlatformRoot()
+            . DIRECTORY_SEPARATOR . 'Ui'
+            . DIRECTORY_SEPARATOR . 'Presentation';
+    }
+
+    public static function aiApplicationDir(): string
+    {
+        return self::componentsPlatformRoot()
+            . DIRECTORY_SEPARATOR . 'Ai'
+            . DIRECTORY_SEPARATOR . 'Application';
     }
 
     /**
@@ -302,32 +322,32 @@ final class ProductMetadataPaths
 
     public static function homePanelManifestFile(): string
     {
-        return self::platformDir() . DIRECTORY_SEPARATOR . 'ui' . DIRECTORY_SEPARATOR . 'home-panel-manifest.yaml';
+        return self::uiPresentationDir() . DIRECTORY_SEPARATOR . 'home-panel-manifest.yaml';
     }
 
     public static function clientContextFile(): string
     {
-        return self::platformDir() . DIRECTORY_SEPARATOR . 'ui' . DIRECTORY_SEPARATOR . 'client-context.yaml';
+        return self::uiPresentationDir() . DIRECTORY_SEPARATOR . 'client-context.yaml';
     }
 
     public static function pacienteContextoOfferingFile(): string
     {
-        return self::platformDir() . DIRECTORY_SEPARATOR . 'ui' . DIRECTORY_SEPARATOR . 'paciente-contexto-offering.yaml';
+        return self::uiPresentationDir() . DIRECTORY_SEPARATOR . 'paciente-contexto-offering.yaml';
     }
 
     public static function uiScreenParamsFile(): string
     {
-        return self::platformDir() . DIRECTORY_SEPARATOR . 'ui' . DIRECTORY_SEPARATOR . 'screen-params.yaml';
+        return self::uiPresentationDir() . DIRECTORY_SEPARATOR . 'screen-params.yaml';
     }
 
     public static function clinicalTextIaFile(): string
     {
-        return self::platformDir() . DIRECTORY_SEPARATOR . 'ai' . DIRECTORY_SEPARATOR . 'clinical-text-ia.yaml';
+        return self::aiApplicationDir() . DIRECTORY_SEPARATOR . 'clinical-text-ia.yaml';
     }
 
     public static function aiCostReferenceFile(): string
     {
-        return self::platformDir() . DIRECTORY_SEPARATOR . 'ai' . DIRECTORY_SEPARATOR . 'ai-cost-reference.yaml';
+        return self::aiApplicationDir() . DIRECTORY_SEPARATOR . 'ai-cost-reference.yaml';
     }
 
     /**

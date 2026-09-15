@@ -22,13 +22,16 @@ final class DddMigrationPhase0Test extends Unit
         IntentSchemaPaths::resetIndexCache();
     }
 
-    public function testLegacyIntentRootsSiguenExistiendo(): void
+    public function testLegacyIntentRootsVaciosTrasFase02(): void
     {
-        $legacy = IntentSchemaPaths::legacyIntentRoots();
-        $this->assertNotEmpty($legacy, 'Debe haber intents bajo metadata/bioenlace');
+        $this->assertSame(
+            [],
+            IntentSchemaPaths::legacyIntentRoots(),
+            'Tras fase 02 no debe quedar metadata/bioenlace/*/intents'
+        );
     }
 
-    public function testColocatedIntentRootsIncluyenEsqueletoSchedulingYPlatform(): void
+    public function testColocatedIntentRootsIncluyenTodosLosBcConFlows(): void
     {
         $colocated = ProductMetadataPaths::colocatedIntentRoots();
         $this->assertNotEmpty($colocated);
@@ -38,74 +41,60 @@ final class DddMigrationPhase0Test extends Unit
             $colocated
         );
         $joined = implode("\n", $norm);
-        $this->assertStringContainsString(
-            'Domain/Scheduling/Application/Flows/intents',
-            $joined
-        );
+        foreach (['Clinical', 'Scheduling', 'Person', 'Organization'] as $bc) {
+            $this->assertStringContainsString(
+                "Domain/{$bc}/Application/Flows/intents",
+                $joined
+            );
+        }
         $this->assertStringContainsString(
             'Platform/Assistant/Application/Flows/intents',
             $joined
         );
     }
 
-    public function testIntentRootsUneLegacyYColocalizado(): void
+    public function testIntentRootsSonSoloColocalizados(): void
     {
         $all = IntentSchemaPaths::intentRoots();
-        $legacy = IntentSchemaPaths::legacyIntentRoots();
         $colocated = ProductMetadataPaths::colocatedIntentRoots();
+        sort($all);
+        sort($colocated);
+        $this->assertSame($colocated, $all);
+    }
 
-        foreach ($legacy as $root) {
-            $this->assertContains($root, $all);
-        }
-        foreach ($colocated as $root) {
-            $this->assertContains($root, $all);
+    public function testDiscoverYamlFilesTodosColocalizados(): void
+    {
+        $index = IntentSchemaPaths::buildIndex();
+        $this->assertGreaterThanOrEqual(50, count($index), 'Debe descubrir intent_id desde YAML');
+
+        foreach ($index as $intentId => $path) {
+            $this->assertTrue(
+                IntentSchemaPaths::isColocatedPath($path),
+                "intent '$intentId' aún en path legacy: $path"
+            );
         }
     }
 
-    public function testDiscoverYamlFilesParidadConLegacy(): void
+    public function testDomainFromPathColocatedSamples(): void
     {
-        $index = IntentSchemaPaths::buildIndex();
-        $this->assertNotEmpty($index, 'Debe descubrir intent_id desde YAML');
-
-        $legacyFiles = [];
-        foreach (IntentSchemaPaths::legacyIntentRoots() as $root) {
-            foreach (['create', 'read', 'update', 'delete'] as $category) {
-                $subdir = $root . DIRECTORY_SEPARATOR . $category;
-                if (!is_dir($subdir)) {
-                    continue;
-                }
-                $it = new \RecursiveIteratorIterator(
-                    new \RecursiveDirectoryIterator($subdir, \FilesystemIterator::SKIP_DOTS)
-                );
-                foreach ($it as $file) {
-                    if ($file->isFile() && str_ends_with(strtolower($file->getFilename()), '.yaml')) {
-                        $legacyFiles[] = IntentSchemaPaths::intentIdFromPath($file->getPathname());
-                    }
-                }
-            }
-            foreach (glob($root . DIRECTORY_SEPARATOR . '*.yaml') ?: [] as $flat) {
-                $legacyFiles[] = IntentSchemaPaths::intentIdFromPath($flat);
-            }
-        }
-        $legacyIds = array_values(array_unique(array_filter($legacyFiles)));
-        sort($legacyIds);
-
-        foreach ($legacyIds as $intentId) {
-            $this->assertArrayHasKey(
-                $intentId,
-                $index,
-                "intent_id legacy '$intentId' debe estar en el índice dual-root"
-            );
+        $samples = [
+            'turnos.cancelar-como-paciente-flow' => 'scheduling',
+            'internacion.ingreso-flow' => 'clinical',
+            'personas.vincular-menor-flow' => 'person',
+            'profesional-efector-servicio.crear-flow' => 'organization',
+            'data-access.listar' => 'platform',
+        ];
+        foreach ($samples as $intentId => $domain) {
+            $path = IntentSchemaPaths::resolveFileForIntentId($intentId);
+            $this->assertNotNull($path, $intentId);
+            $this->assertSame($domain, IntentSchemaPaths::domainFromPath($path), $intentId);
+            $this->assertTrue(IntentSchemaPaths::isColocatedPath($path), $intentId);
         }
     }
 
     public function testDomainFromPathLegacy(): void
     {
-        $path = IntentSchemaPaths::resolveFileForIntentId('turnos.cancelar-como-paciente-flow');
-        $this->assertNotNull($path);
-        $this->assertSame('scheduling', IntentSchemaPaths::domainFromPath($path));
-        // Fase 01: intents Scheduling ya viven en Application/Flows.
-        $this->assertTrue(IntentSchemaPaths::isColocatedPath($path));
+        $this->assertSame([], IntentSchemaPaths::legacyIntentRoots());
     }
 
     public function testDomainFromPathColocatedScheduling(): void

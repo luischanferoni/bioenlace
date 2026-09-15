@@ -44,25 +44,25 @@ Maestros vs metadata (runtime + cognitivo): [`web/docs/arquitectura/runtime-dato
 
 ADR: [`ddd-bounded-contexts-capas-y-metadata.md`](../../../docs/decisions/ddd-bounded-contexts-capas-y-metadata.md).
 
-**Ya colocalizado en código (fase 01):**
+**Ya colocalizado en código (fases 01–02):**
 
 | Ruta canónica | Tipo |
 |---------------|------|
-| `components/Domain/<BC>/Application/Flows/intents/…` | flow (Scheduling migrado; resto en fase 02) |
+| `components/Domain/<BC>/Application/Flows/intents/…` | flow (Clinical, Scheduling, Person, Organization) |
+| `components/Platform/Assistant/Application/Flows/intents/…` | flow transversales (DataAccess, queja, …) |
 | `components/Platform/Assistant/Application/{Catalog,Routing,Schemas,Preprocess}/` | catalog / routing / schemas / prompt preprocess |
 | `components/Platform/Assistant/Channels/{Name}/` | prompt / ui-text de canal |
 | `components/Platform/Assistant/Presentation/` | ui-text by-client |
-| `components/Platform/Assistant/Application/Flows/intents/` | intents transversales (fase 02) |
+
+| `components/Platform/Ui/Presentation/` | manifests UI (home-panel, client-context, …) |
+| `components/Platform/Core/Permission/metadata/` | auth composition (policies + capabilities) |
+| `components/Platform/Ai/Application/` | clinical-text-ia, ai-cost-reference |
 
 **Aún bajo esta carpeta (legacy hasta fases siguientes):**
 
 | Ruta | Tipo | Contenido |
 |------|------|-----------|
-| `<dominio>/intents/` | flow | Clinical, Person, Organization, platform (pendiente fase 02) |
 | `platform/agents/` | knob | → PHP Application (fase 04) |
-| `platform/permission/` | auth | → Platform/Core/Permission (fase 03) |
-| `platform/ui/` | manifest | → Platform/Ui/Presentation (fase 03) |
-| `platform/ai/` | prompt + knob | → Platform/Ai (fase 03) |
 | `terminology/` | catalog | → Terminology Domain (fase 05) |
 | `clinical/`, `organization/`, `scheduling/`, `person/` (YAML sueltos) | knob/catalog | → Domain PHP/BD (fase 05) |
 | `integrations/` | *(revisar)* | Si es lookup → BD |

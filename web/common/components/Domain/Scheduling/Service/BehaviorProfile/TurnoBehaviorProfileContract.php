@@ -2,13 +2,10 @@
 
 namespace common\components\Domain\Scheduling\Service\BehaviorProfile;
 
-use common\components\Platform\Core\Product\ProductMetadataPaths;
 use common\models\Scheduling\TurnoEventoAudit;
-use Symfony\Component\Yaml\Yaml;
-use Yii;
 
 /**
- * Contrato versionado de eventos y métricas (metadata declarativa).
+ * Contrato versionado de eventos y métricas ({@see \common\components\Domain\Scheduling\Domain\TurnoBehaviorProfileCatalog}).
  */
 final class TurnoBehaviorProfileContract
 {
@@ -141,28 +138,8 @@ final class TurnoBehaviorProfileContract
             return self::$cache;
         }
 
-        $path = ProductMetadataPaths::turnoBehaviorProfileFile();
-        if (!is_file($path)) {
-            if (class_exists(\Yii::class, false)) {
-                Yii::warning('TurnoBehaviorProfileContract: falta ' . $path, __METHOD__);
-            }
-            self::$cache = self::fallback();
-
-            return self::$cache;
-        }
-
-        try {
-            $parsed = Yaml::parseFile($path);
-        } catch (\Throwable $e) {
-            if (class_exists(\Yii::class, false)) {
-                Yii::warning('TurnoBehaviorProfileContract: YAML inválido: ' . $e->getMessage(), __METHOD__);
-            }
-            self::$cache = self::fallback();
-
-            return self::$cache;
-        }
-
-        self::$cache = is_array($parsed) ? $parsed : self::fallback();
+        $data = \common\components\Domain\Scheduling\Domain\TurnoBehaviorProfileCatalog::config();
+        self::$cache = $data !== [] ? $data : self::fallback();
 
         return self::$cache;
     }

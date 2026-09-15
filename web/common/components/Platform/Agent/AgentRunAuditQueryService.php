@@ -2,7 +2,6 @@
 
 namespace common\components\Platform\Agent;
 
-use common\components\Platform\Core\Product\ProductMetadataPaths;
 use common\models\Platform\AgentRun;
 use yii\data\ActiveDataProvider;
 use yii\db\ActiveQuery;
@@ -44,13 +43,7 @@ final class AgentRunAuditQueryService
      */
     public function listAgentIds(): array
     {
-        $fromYaml = [];
-        $dir = ProductMetadataPaths::agentsDir();
-        if (is_dir($dir)) {
-            foreach (glob($dir . DIRECTORY_SEPARATOR . '*.yaml') ?: [] as $file) {
-                $fromYaml[] = basename((string) $file, '.yaml');
-            }
-        }
+        $fromPolicy = \common\components\Platform\Core\Product\AgentPolicyRegistry::agentIds();
 
         $fromDb = (new Query())
             ->select('agent_id')
@@ -58,7 +51,7 @@ final class AgentRunAuditQueryService
             ->distinct()
             ->column();
 
-        $ids = array_values(array_unique(array_merge($fromYaml, array_map('strval', $fromDb))));
+        $ids = array_values(array_unique(array_merge($fromPolicy, array_map('strval', $fromDb))));
         sort($ids);
 
         return $ids;

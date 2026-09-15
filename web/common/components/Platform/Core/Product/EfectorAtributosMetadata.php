@@ -2,11 +2,8 @@
 
 namespace common\components\Platform\Core\Product;
 
-use Symfony\Component\Yaml\Yaml;
-use Yii;
-
 /**
- * Catálogo declarativo de atributos de efector ({@see ProductMetadataPaths::efectorAtributosFile()}).
+ * Catálogo declarativo de atributos de efector ({@see \common\components\Domain\Organization\Domain\EfectorAtributosCatalog}).
  */
 final class EfectorAtributosMetadata
 {
@@ -62,20 +59,9 @@ final class EfectorAtributosMetadata
             return self::$config;
         }
 
-        $path = ProductMetadataPaths::efectorAtributosFile();
-        if (!is_file($path)) {
-            throw new \RuntimeException('No se encontró efector-atributos.yaml');
-        }
-
-        try {
-            $data = Yaml::parseFile($path);
-        } catch (\Throwable $e) {
-            Yii::error('EfectorAtributosMetadata: ' . $e->getMessage(), __METHOD__);
-            throw new \RuntimeException('efector-atributos.yaml inválido: ' . $e->getMessage(), 0, $e);
-        }
-
-        if (!is_array($data) || !isset($data['atributos']) || !is_array($data['atributos'])) {
-            throw new \RuntimeException('efector-atributos.yaml debe declarar atributos.');
+        $data = \common\components\Domain\Organization\Domain\EfectorAtributosCatalog::config();
+        if (!isset($data['atributos']) || !is_array($data['atributos'])) {
+            throw new \RuntimeException('EfectorAtributosCatalog debe declarar atributos.');
         }
 
         self::$config = $data;

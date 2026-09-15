@@ -2,11 +2,8 @@
 
 namespace common\components\Platform\Core\Product;
 
-use Symfony\Component\Yaml\Yaml;
-use Yii;
-
 /**
- * Metadata unificada SNOMED ({@see ProductMetadataPaths::snomedTerminologyFile()}).
+ * Metadata unificada SNOMED ({@see \common\components\Domain\Terminology\Domain\SnomedTerminologyCatalog}).
  */
 final class SnomedTerminologyMetadata
 {
@@ -80,23 +77,7 @@ final class SnomedTerminologyMetadata
             'search' => [],
         ];
 
-        $path = ProductMetadataPaths::snomedTerminologyFile();
-        if (!is_file($path)) {
-            return self::$config;
-        }
-
-        try {
-            $data = Yaml::parseFile($path);
-        } catch (\Throwable $e) {
-            Yii::warning('SnomedTerminologyMetadata: YAML inválido: ' . $e->getMessage(), __METHOD__);
-
-            return self::$config;
-        }
-
-        if (!is_array($data)) {
-            return self::$config;
-        }
-
+        $data = \common\components\Domain\Terminology\Domain\SnomedTerminologyCatalog::config();
         foreach (['ecl_definitions', 'semantic_matching', 'request_coding', 'codification', 'search'] as $key) {
             if (isset($data[$key]) && is_array($data[$key])) {
                 self::$config[$key] = $data[$key];

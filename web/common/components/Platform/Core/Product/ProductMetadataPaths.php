@@ -351,14 +351,16 @@ final class ProductMetadataPaths
     }
 
     /**
-     * Políticas operativas de agentes (`platform/agents/{agent_id}.yaml`).
-     * Knobs/umbrales; gates hard viven en dominio.
+     * @deprecated Agents ya no usan YAML; ver {@see AgentPolicyRegistry}.
      */
     public static function agentsDir(): string
     {
         return self::platformDir() . DIRECTORY_SEPARATOR . 'agents';
     }
 
+    /**
+     * @deprecated Usar {@see AgentPolicyRegistry::config()}.
+     */
     public static function agentFile(string $agentId): string
     {
         return self::agentsDir() . DIRECTORY_SEPARATOR . $agentId . '.yaml';

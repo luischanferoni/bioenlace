@@ -26,3 +26,14 @@ php yii fhir-scheduling-inbound/pull
 php yii fhir-scheduling-inbound/push-outbound
 php yii fhir-scheduling-inbound/reconcile-schedule-links
 ```
+
+## HealthcareService codes (referencia)
+
+Los mapeos operativos viven en `integration_fhir_service_code` (BD).
+Systems acordados con HAPI (semilla documental; cargar vía UI staff o seed):
+
+- source_system: `fhir-default`
+- SNOMED examples: General practice `394814009`, Psychiatry `394587001`
+- URI Practitioner CUIL: `http://www.afip.gob.ar/cuil`
+- URI DNI: `http://www.renaper.gob.ar/dni`
+

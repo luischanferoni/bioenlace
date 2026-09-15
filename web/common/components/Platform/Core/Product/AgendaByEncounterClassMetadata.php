@@ -3,11 +3,9 @@
 namespace common\components\Platform\Core\Product;
 
 use common\models\Clinical\Encounter;
-use Symfony\Component\Yaml\Yaml;
-use Yii;
 
 /**
- * Metadata de agendas tipadas por encounter_class ({@see ProductMetadataPaths::agendaByEncounterClassFile()}).
+ * Metadata de agendas tipadas por encounter_class ({@see \common\components\Domain\Organization\Domain\AgendaByEncounterClassCatalog}).
  */
 final class AgendaByEncounterClassMetadata
 {
@@ -28,16 +26,7 @@ final class AgendaByEncounterClassMetadata
             return self::$config;
         }
 
-        $path = ProductMetadataPaths::agendaByEncounterClassFile();
-        if (!is_file($path)) {
-            Yii::warning('Falta metadata agenda-by-encounter-class: ' . $path, __METHOD__);
-            self::$config = [];
-
-            return self::$config;
-        }
-
-        $data = Yaml::parseFile($path);
-        self::$config = is_array($data) ? $data : [];
+        self::$config = \common\components\Domain\Organization\Domain\AgendaByEncounterClassCatalog::config();
 
         return self::$config;
     }

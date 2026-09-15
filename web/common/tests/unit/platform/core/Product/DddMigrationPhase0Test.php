@@ -5,6 +5,8 @@ namespace common\tests\unit\platform\core\Product;
 use Codeception\Test\Unit;
 use common\components\Platform\Assistant\Catalog\IntentSchemaPaths;
 use common\components\Platform\Core\Product\AgentBoundedContextMap;
+use common\components\Platform\Core\Product\AgentPolicyRegistry;
+use common\components\Platform\Core\Product\AutonomousAgentMetadata;
 use common\components\Platform\Core\Product\ProductMetadataPaths;
 
 /**
@@ -125,24 +127,20 @@ final class DddMigrationPhase0Test extends Unit
         }
     }
 
-    public function testAgentMapCubreYamlDeAgents(): void
+    public function testAgentMapYRegistryAlineados(): void
     {
-        $agentsDir = ProductMetadataPaths::agentsDir();
-        $this->assertDirectoryExists($agentsDir);
+        $mapIds = array_keys(AgentBoundedContextMap::all());
+        sort($mapIds);
+        $registryIds = AgentPolicyRegistry::agentIds();
+        $this->assertSame($mapIds, $registryIds);
 
-        $missing = [];
-        foreach (glob($agentsDir . DIRECTORY_SEPARATOR . '*.yaml') ?: [] as $file) {
-            $agentId = basename($file, '.yaml');
-            if (!AgentBoundedContextMap::isKnown($agentId)) {
-                $missing[] = $agentId;
-            }
+        foreach ($registryIds as $agentId) {
+            $config = AgentPolicyRegistry::config($agentId);
+            $this->assertIsArray($config, $agentId);
+            $this->assertNotEmpty($config, $agentId);
+            $loaded = AutonomousAgentMetadata::loadAgent($agentId);
+            $this->assertSame($config, $loaded, $agentId);
         }
-
-        $this->assertSame(
-            [],
-            $missing,
-            'Agregar agent_id a AgentBoundedContextMap: ' . implode(', ', $missing)
-        );
     }
 
     public function testAgentMapOwnersSonDominiosOPlatform(): void

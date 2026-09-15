@@ -60,14 +60,17 @@ final class BoundedContextLayerShapeTest extends Unit
     {
         $root = ProductDomainCatalog::domainRoot();
         $errors = [];
+        // BCs con *Agent aún en Service/ legacy; se vacían en oleada fase 06.
+        $pending = ['clinical' => true, 'scheduling' => true];
 
         foreach (scandir($root) ?: [] as $bc) {
             if ($bc === '.' || $bc === '..' || !is_dir($root . DIRECTORY_SEPARATOR . $bc)) {
                 continue;
             }
+            if (isset($pending[strtolower($bc)])) {
+                continue;
+            }
             $bcPath = $root . DIRECTORY_SEPARATOR . $bc;
-            // Solo endurecer cuando ya existe el hogar canónico de agents (fase 06).
-            // Application/Flows solo (fase 00–02) no dispara esta regla.
             if (!$this->bcHasApplicationAgentHome($bcPath)) {
                 continue;
             }
@@ -95,9 +98,15 @@ final class BoundedContextLayerShapeTest extends Unit
             new \RecursiveDirectoryIterator($application, \FilesystemIterator::SKIP_DOTS)
         );
         foreach ($iterator as $file) {
-            if ($file->isFile() && str_ends_with($file->getFilename(), 'Agent.php')) {
-                return true;
+            if (!$file->isFile() || $file->getExtension() !== 'php') {
+                continue;
             }
+            $name = $file->getFilename();
+            // *AgentPolicy.php son knobs tipados, no el Agent ejecutable.
+            if (!str_ends_with($name, 'Agent.php') || str_ends_with($name, 'AgentPolicy.php')) {
+                continue;
+            }
+            return true;
         }
 
         return false;

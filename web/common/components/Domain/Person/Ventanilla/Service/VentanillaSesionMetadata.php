@@ -2,10 +2,6 @@
 
 namespace common\components\Domain\Person\Ventanilla\Service;
 
-use common\components\Platform\Core\Product\ProductMetadataPaths;
-use Symfony\Component\Yaml\Yaml;
-use Yii;
-
 final class VentanillaSesionMetadata
 {
     private const DEFAULT_TTL_MINUTES = 15;
@@ -61,23 +57,7 @@ final class VentanillaSesionMetadata
             return self::$config;
         }
 
-        $path = ProductMetadataPaths::ventanillaSesionFile();
-        if (!is_file($path)) {
-            self::$config = [];
-
-            return self::$config;
-        }
-
-        try {
-            $data = Yaml::parseFile($path);
-        } catch (\Throwable $e) {
-            Yii::warning('ventanilla-sesion.yaml: ' . $e->getMessage(), __METHOD__);
-            self::$config = [];
-
-            return self::$config;
-        }
-
-        self::$config = is_array($data) ? $data : [];
+        self::$config = \common\components\Domain\Person\Domain\VentanillaSesionCatalog::config();
 
         return self::$config;
     }

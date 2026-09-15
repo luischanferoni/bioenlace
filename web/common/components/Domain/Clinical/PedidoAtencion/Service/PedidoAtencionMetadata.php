@@ -2,12 +2,8 @@
 
 namespace common\components\Domain\Clinical\PedidoAtencion\Service;
 
-use common\components\Platform\Core\Product\ProductMetadataPaths;
-use Symfony\Component\Yaml\Yaml;
-use Yii;
-
 /**
- * Metadata de PedidoAtencion ({@see ProductMetadataPaths::pedidoAtencionFile()}).
+ * Metadata de PedidoAtencion ({@see \common\components\Domain\Clinical\Domain\PedidoAtencionCatalog}).
  */
 final class PedidoAtencionMetadata
 {
@@ -145,23 +141,7 @@ final class PedidoAtencionMetadata
             'acto_coding' => [],
         ];
 
-        $path = ProductMetadataPaths::pedidoAtencionFile();
-        if (!is_file($path)) {
-            return self::$config;
-        }
-
-        try {
-            $data = Yaml::parseFile($path);
-        } catch (\Throwable $e) {
-            Yii::warning('PedidoAtencionMetadata: YAML inválido: ' . $e->getMessage(), __METHOD__);
-
-            return self::$config;
-        }
-
-        if (!is_array($data)) {
-            return self::$config;
-        }
-
+        $data = \common\components\Domain\Clinical\Domain\PedidoAtencionCatalog::config();
         foreach ([
             'capacity_rules',
             'linea_nl_aliases',

@@ -2,12 +2,11 @@
 
 namespace common\components\Platform\Core\Product;
 
-use Symfony\Component\Yaml\Yaml;
-use Yii;
-
 /**
- * Carga políticas (knobs) de agentes desde {@see ProductMetadataPaths::agentsDir()}.
- * Gates hard e integridad siguen en el dominio; la ausencia del YAML no los desactiva.
+ * Carga políticas (knobs) de agentes desde {@see AgentPolicyRegistry} (PHP en Application del BC).
+ * Gates hard e integridad siguen en el dominio; la ausencia de policy no los desactiva.
+ *
+ * @see web/docs/decisions/ddd-bounded-contexts-capas-y-metadata.md
  */
 final class AutonomousAgentMetadata
 {
@@ -33,23 +32,8 @@ final class AutonomousAgentMetadata
             return $cached === [] ? null : $cached;
         }
 
-        $path = ProductMetadataPaths::agentFile($agentId);
-        if (!is_file($path)) {
-            self::$cache[$agentId] = [];
-
-            return null;
-        }
-
-        try {
-            $data = Yaml::parseFile($path);
-        } catch (\Throwable $e) {
-            Yii::warning('AutonomousAgentMetadata: YAML inválido (' . $agentId . '): ' . $e->getMessage(), __METHOD__);
-            self::$cache[$agentId] = [];
-
-            return null;
-        }
-
-        if (!is_array($data)) {
+        $data = AgentPolicyRegistry::config($agentId);
+        if ($data === null) {
             self::$cache[$agentId] = [];
 
             return null;

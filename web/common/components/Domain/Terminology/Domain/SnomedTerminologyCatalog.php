@@ -1,0 +1,159 @@
+<?php
+
+namespace common\components\Domain\Terminology\Domain;
+
+/**
+ * Catálogo de dominio (ex metadata/bioenlace/terminology/snomed-terminology.yaml).
+ */
+final class SnomedTerminologyCatalog
+{
+    /**
+     * @return array<string, mixed>
+     */
+    public static function config(): array
+    {
+        return [
+        'version' => 1,
+        'ecl_definitions' => [
+            'hallazgo_clinico_amplio' => [
+                'ecl' => '<<404684003 |hallazgo clinico (hallazgo)| OR <272379006 |Event (event)| OR <243796009 |Situation with explicit context (situation)|',
+            ],
+            'medicamentos_genericos' => [
+                'ecl' => '(<763158003 |producto medicinal (producto)|: 732943007 |tiene base de sustancia de la potencia (atributo)|=*, [0..0] 774159003 |tiene proveedor (atributo)|=*) OR (^ 425091000221109 |conjunto de referencias simples de fármacos de uso clínico sin unidad de presentación definida (metadato fundacional)|)',
+            ],
+            'procedimiento' => [
+                'ecl' => '< 71388002 | procedimiento (procedimiento) |',
+            ],
+            'hallazgo_clinico' => [
+                'ecl' => '<< 404684003 | hallazgo clínico (hallazgo)|',
+            ],
+            'medicamentos_anmat' => [
+                'ecl' => '^ 331101000221109 |conjunto de referencias simples de presentaciones farmacéuticas comerciales del Vademecum Nacional de Medicamentos en estado comercializado (metadato fundacional)|',
+            ],
+            'inmunizaciones' => [
+                'ecl' => '%5E 2281000221106',
+            ],
+            'antecedentes_personales' => [
+                'ecl' => '<< 417662000 |antecedente de hallazgo clínico en el sujeto (situación)|',
+            ],
+            'antecedentes_familiares' => [
+                'ecl' => '<< 57177007 |antecedente familiar con contexto explícito (situación)|',
+            ],
+            'alergias' => [
+                'ecl' => '< 420134006 | propensión a experimentar reacciones adversas (hallazgo) |',
+            ],
+            'motivos_consulta' => [
+                'ecl' => '(<< 71388002 OR << 243796009 OR << 272379006 OR << 404684003)',
+            ],
+            'hallazgo_diente' => [
+                'ecl' => '< 278544002 |hallazgo de diente (hallazgo)|',
+            ],
+            'practicas_odontologia' => [
+                'ecl' => '^399211000221109',
+            ],
+        ],
+        'semantic_matching' => [
+            'confidence_threshold' => 0.7,
+            'candidate_limit' => 20,
+        ],
+        'request_coding' => [
+            'resources' => [
+                'medication_request' => [
+                    'enabled' => true,
+                    'snomed_category' => 'medicamentos',
+                ],
+                'service_request' => [
+                    'enabled' => true,
+                    'snomed_category' => 'procedimientos',
+                    'allowed_categories' => [
+                        0 => 'observation',
+                        1 => 'procedure',
+                        2 => 'laboratory',
+                        3 => 'imaging',
+                    ],
+                ],
+            ],
+        ],
+        'codification' => [
+            'categories' => [
+                'diagnosticos' => [
+                    'ecl_ref' => 'hallazgo_clinico_amplio',
+                ],
+                'medicamentos' => [
+                    'ecl_ref' => 'medicamentos_genericos',
+                ],
+                'procedimientos' => [
+                    'ecl_ref' => 'procedimiento',
+                ],
+                'sintomas' => [
+                    'ecl_ref' => 'hallazgo_clinico',
+                ],
+            ],
+            'extraction_labels' => [
+                'Diagnóstico' => 'diagnosticos',
+                'Diagnósticos' => 'diagnosticos',
+                'Síntomas' => 'sintomas',
+                'Medicamentos' => 'medicamentos',
+                'Prácticas' => 'procedimientos',
+                'Procedimientos' => 'procedimientos',
+            ],
+        ],
+        'search' => [
+            'default_limit' => 10,
+            'profiles' => [
+                'problemas' => [
+                    'ecl_ref' => 'hallazgo_clinico_amplio',
+                ],
+                'medicamentos_genericos' => [
+                    'ecl_ref' => 'medicamentos_genericos',
+                ],
+                'medicamentos_anmat' => [
+                    'ecl_ref' => 'medicamentos_anmat',
+                ],
+                'procedimientos' => [
+                    'ecl_ref' => 'procedimiento',
+                ],
+                'inmunizaciones' => [
+                    'ecl_ref' => 'inmunizaciones',
+                    'return_format' => 'raw_api',
+                ],
+                'antecedentes_personales' => [
+                    'ecl_ref' => 'antecedentes_personales',
+                ],
+                'antecedentes_familiares' => [
+                    'ecl_ref' => 'antecedentes_familiares',
+                ],
+                'alergias' => [
+                    'ecl_ref' => 'alergias',
+                ],
+                'motivos_consulta' => [
+                    'ecl_ref' => 'motivos_consulta',
+                ],
+                'sintomas' => [
+                    'ecl_ref' => 'hallazgo_clinico',
+                ],
+                'diagnosticos_odontologia' => [
+                    'ecl_ref' => 'hallazgo_diente',
+                ],
+                'practicas_odontologia' => [
+                    'ecl_ref' => 'practicas_odontologia',
+                ],
+            ],
+            'client_methods' => [
+                'getProblemas' => 'problemas',
+                'getMedicamentosGenericos' => 'medicamentos_genericos',
+                'getMedicamentosAnmat' => 'medicamentos_anmat',
+                'getPracticas' => 'procedimientos',
+                'getInmunizaciones' => 'inmunizaciones',
+                'getAntecedentesPersonales' => 'antecedentes_personales',
+                'getAntecedentesFamiliares' => 'antecedentes_familiares',
+                'getAlergias' => 'alergias',
+                'getMotivosDeConsulta' => 'motivos_consulta',
+                'getSintomas' => 'sintomas',
+                'getDiagnosticosOdontologia' => 'diagnosticos_odontologia',
+                'getPracticasOdontologia' => 'practicas_odontologia',
+            ],
+        ],
+    ];
+    }
+}

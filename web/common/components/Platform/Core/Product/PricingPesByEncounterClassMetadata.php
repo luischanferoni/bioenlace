@@ -2,13 +2,10 @@
 
 namespace common\components\Platform\Core\Product;
 
-use Symfony\Component\Yaml\Yaml;
-use Yii;
-
 /**
  * Metadata comercial: precio por volumen de atenciones × encounter_class (COGS + margen + add-ons).
  *
- * @see ProductMetadataPaths::pricingPesByEncounterClassFile()
+ * @see \common\components\Domain\Organization\Domain\PricingPesByEncounterClassCatalog
  */
 final class PricingPesByEncounterClassMetadata
 {
@@ -29,16 +26,7 @@ final class PricingPesByEncounterClassMetadata
             return self::$config;
         }
 
-        $path = ProductMetadataPaths::pricingPesByEncounterClassFile();
-        if (!is_file($path)) {
-            Yii::warning('Falta metadata pricing-pes-by-encounter-class: ' . $path, __METHOD__);
-            self::$config = [];
-
-            return self::$config;
-        }
-
-        $data = Yaml::parseFile($path);
-        self::$config = is_array($data) ? $data : [];
+        self::$config = \common\components\Domain\Organization\Domain\PricingPesByEncounterClassCatalog::config();
 
         return self::$config;
     }

@@ -2,16 +2,13 @@
 
 namespace common\components\Platform\Assistant\Service;
 
-use common\components\Platform\Core\Product\ProductMetadataPaths;
-use Symfony\Component\Yaml\Yaml;
-
 /**
  * Mapa inverso de sinónimos coloquiales → nombres institucionales de servicios.
  *
  * Dado un term del usuario (ej. "dentista"), devuelve los nombres de servicio
  * que podrían matchear (ej. ["odontologia"]).
  *
- * @see servicio-synonyms.yaml
+ * @see \common\components\Domain\Terminology\Domain\ServicioSynonymsCatalog
  */
 final class HintServiceSynonyms
 {
@@ -68,18 +65,8 @@ final class HintServiceSynonyms
 
         self::$inverse = [];
 
-        $path = ProductMetadataPaths::servicioSynonymsFile();
-        if (!is_file($path)) {
-            return self::$inverse;
-        }
-
-        try {
-            $data = Yaml::parseFile($path);
-        } catch (\Throwable $e) {
-            return self::$inverse;
-        }
-
-        if (!is_array($data) || !isset($data['synonyms']) || !is_array($data['synonyms'])) {
+        $data = \common\components\Domain\Terminology\Domain\ServicioSynonymsCatalog::config();
+        if (!isset($data['synonyms']) || !is_array($data['synonyms'])) {
             return self::$inverse;
         }
 

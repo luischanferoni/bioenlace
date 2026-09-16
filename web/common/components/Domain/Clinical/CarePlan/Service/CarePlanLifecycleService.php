@@ -5,7 +5,7 @@ namespace common\components\Domain\Clinical\CarePlan\Service;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanCategory;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanStatus;
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
-use common\components\Domain\Clinical\CarePlan\Support\CarePlanProgramMeta;
+use common\components\Domain\Clinical\CarePlan\Domain\CarePlanProgramMeta;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EpisodeOfCare;

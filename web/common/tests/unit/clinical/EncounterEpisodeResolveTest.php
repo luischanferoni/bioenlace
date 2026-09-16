@@ -4,7 +4,7 @@ namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
-use common\components\Domain\Clinical\Capture\Workflow\EncounterDocumentationService;
+use common\components\Domain\Clinical\Capture\Service\EncounterDocumentationService;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
 use ReflectionMethod;

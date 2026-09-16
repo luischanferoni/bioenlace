@@ -4,10 +4,10 @@ namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\PedidoAtencion\Service\CodingSystems;
-use common\components\Domain\Clinical\PedidoAtencion\Service\CompositeLineaActoCatalog;
-use common\components\Domain\Clinical\PedidoAtencion\Service\EclCapacityCatalog;
+use common\components\Domain\Clinical\PedidoAtencion\Domain\CompositeLineaActoCatalog;
+use common\components\Domain\Clinical\PedidoAtencion\Domain\EclCapacityCatalog;
 use common\components\Domain\Clinical\PedidoAtencion\Service\InMemoryActoEclMembership;
-use common\components\Domain\Clinical\PedidoAtencion\Service\InMemoryLineaActoCatalog;
+use common\components\Domain\Clinical\PedidoAtencion\Domain\InMemoryLineaActoCatalog;
 use common\components\Domain\Clinical\PedidoAtencion\Service\PedidoAtencion;
 use common\components\Domain\Clinical\PedidoAtencion\Service\PedidoAtencionMetadata;
 use common\components\Domain\Clinical\PedidoAtencion\Service\PedidoAtencionService;

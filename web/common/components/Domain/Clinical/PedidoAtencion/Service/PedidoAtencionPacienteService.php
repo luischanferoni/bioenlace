@@ -2,6 +2,8 @@
 
 namespace common\components\Domain\Clinical\PedidoAtencion\Service;
 
+use common\components\Domain\Clinical\PedidoAtencion\Domain\CompositeLineaActoCatalog;
+
 /**
  * Pedido de atención desde el hub paciente (acto → línea agendable).
  */

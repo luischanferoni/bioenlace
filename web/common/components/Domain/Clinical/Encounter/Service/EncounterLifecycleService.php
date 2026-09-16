@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\Encounter\Service;
 
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Domain\Clinical\CareCohort\Service\CareEncounterOrchestrator;
-use common\components\Domain\Clinical\HistoryExchange\ClinicalHistoryOutboundEnqueueService;
+use common\components\Domain\Clinical\HistoryExchange\Service\ClinicalHistoryOutboundEnqueueService;
 use common\components\Domain\Clinical\Encounter\PatientSummary\PatientEncounterSummaryPublishService;
 use common\components\Domain\Clinical\Capture\Workflow\ClinicalOperationalContextResolver;
 use common\components\Domain\Scheduling\Infrastructure\External\Service\TurnoFhirOutboundNotifier;

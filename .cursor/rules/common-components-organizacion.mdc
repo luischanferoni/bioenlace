@@ -35,28 +35,29 @@ Misma palabra de dominio en `components/Domain/`, `models/`, `controllers/`, `vi
 
 ## Forma interna de Domain
 
-**Clinical (BC grande) — módulo primero** (sin Shared / Infrastructure en raíz del BC):
+**Clinical (BC grande) — módulo primero** (sin Shared / Infrastructure / PHP suelto en raíz del BC):
 
 ```text
-Domain/Clinical/<Modulo>/Application|Domain|Service|Infrastructure/External/…
+Domain/Clinical/<Modulo>/Application|Domain|Service|Presentation|Infrastructure/External/…
 ```
 
-ADR: [clinical-modulos-capacidad.md](web/docs/decisions/clinical-modulos-capacidad.md), [shared-top-level-infrastructure.md](web/docs/decisions/shared-top-level-infrastructure.md).
+ADR: [clinical-modulos-capacidad.md](web/docs/decisions/clinical-modulos-capacidad.md), [shared-top-level-infrastructure.md](web/docs/decisions/shared-top-level-infrastructure.md), [domain-folder-grammar.md](web/docs/decisions/domain-folder-grammar.md).
 
 **Otros BCs:**
 
 ```text
 Domain/<BC>/
-  Application/ | Domain/ | Infrastructure/External/<Sistema>/ | Presentation/
-  <Área?>/{Service|Assistant|Home|DataAccess}/…
+  Application/ | Domain/ | Service/ | Presentation/ | Infrastructure/External/<Sistema>/
+  Assistant/ | Home/ | DataAccess/
 ```
 
-- **ACL externos:** `Infrastructure/External/<Sistema>/` bajo el módulo Clinical o el BC dueño.
+- **ACL externos:** `Infrastructure/External/` bajo el módulo Clinical o el BC dueño.
+- **Sufijos:** `*Service`→`Service/`, `*Catalog`→`Domain/`, `*Presenter`→`Presentation/`, `*FlowDraftHydrator`→`Assistant/`. Sin `Support/` ni `Mapper/` fuera de External.
 - **Negocio** bajo módulo/`Service/`. **No** `Services/`. **No** `Enum/` / `Service/` / `Infrastructure/` catch-all en raíz de Clinical.
 - **Clinical**: `Emergency/`, `Inpatient/`, `Encounter/`, `Laboratory/`, `Capture/`, …
 - **Quirófano** → `Domain/Scheduling/Service/Quirofano/`.
 - **Scheduling / Terminology / Person** son BCs hermanos, no módulos de Clinical.
-- Sufijos: `*Service`, `*Policy`, `*Catalog`, `*Agent`, … — [Domain/README.md](web/common/components/Domain/README.md).
+- Sufijos: ver [Domain/README.md](web/common/components/Domain/README.md).
 - **`Platform/Assistant/`**: motores; rubro en metadata + registries.
 - **Services sin HTTP**: no `*HttpException`, HTML ni flash en `*/Service/`.
 

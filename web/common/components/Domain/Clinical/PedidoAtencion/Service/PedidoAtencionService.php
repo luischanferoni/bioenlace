@@ -2,6 +2,8 @@
 
 namespace common\components\Domain\Clinical\PedidoAtencion\Service;
 
+use common\components\Domain\Clinical\PedidoAtencion\Domain\CompositeLineaActoCatalog;
+
 /**
  * Completa y valida PedidoAtencion (línea × acto) vía catálogo y metadata.
  *

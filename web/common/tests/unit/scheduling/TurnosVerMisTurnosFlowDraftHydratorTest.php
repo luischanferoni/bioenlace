@@ -2,7 +2,7 @@
 
 namespace common\tests\unit\scheduling;
 
-use common\components\Domain\Scheduling\Service\TurnosVerMisTurnosFlowDraftHydrator;
+use common\components\Domain\Scheduling\Assistant\TurnosVerMisTurnosFlowDraftHydrator;
 
 class TurnosVerMisTurnosFlowDraftHydratorTest extends \Codeception\Test\Unit
 {

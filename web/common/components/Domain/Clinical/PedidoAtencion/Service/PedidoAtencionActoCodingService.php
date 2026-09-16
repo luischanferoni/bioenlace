@@ -2,6 +2,8 @@
 
 namespace common\components\Domain\Clinical\PedidoAtencion\Service;
 
+use common\components\Domain\Clinical\PedidoAtencion\Domain\CompositeLineaActoCatalog;
+use common\components\Domain\Clinical\PedidoAtencion\Domain\InMemoryLineaActoCatalog;
 use common\components\Domain\Terminology\Snomed\CodificadorSnomedIA;
 use common\components\Domain\Terminology\Snomed\SnowstormClient;
 use Yii;

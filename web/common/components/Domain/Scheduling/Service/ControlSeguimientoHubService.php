@@ -2,9 +2,9 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
-use common\components\Domain\Clinical\CarePlan\Service\CarePlanPresentationService;
+use common\components\Domain\Clinical\CarePlan\Presentation\CarePlanPresentationService;
 use common\components\Domain\Clinical\CarePlan\Service\CareProtocolMatcherService;
-use common\components\Domain\Clinical\Encounter\Service\ConditionPresentationService;
+use common\components\Domain\Clinical\Encounter\Presentation\ConditionPresentationService;
 use common\components\Domain\Clinical\CarePlan\Service\PatientActiveCarePlanQuery;
 use common\components\Domain\Person\Service\PacienteContextoService;
 use common\components\Domain\Scheduling\Domain\ControlSeguimientoHubCatalog;

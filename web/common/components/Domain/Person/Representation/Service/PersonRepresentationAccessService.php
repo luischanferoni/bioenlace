@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Person\Representation\Service;
 
+use common\components\Domain\Person\Domain\RepresentationPermissionsCatalog;
 use common\components\Domain\Person\Representation\Enum\DelegationConsentStatus;
 use common\components\Domain\Person\Representation\Enum\PersonRelatedStatus;
 use common\components\Domain\Person\Representation\Enum\PersonRelatedVerifiedBy;

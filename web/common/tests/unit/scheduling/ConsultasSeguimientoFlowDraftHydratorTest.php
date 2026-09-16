@@ -3,7 +3,7 @@
 namespace common\tests\unit\scheduling;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Scheduling\Service\ConsultasSeguimientoFlowDraftHydrator;
+use common\components\Domain\Scheduling\Assistant\ConsultasSeguimientoFlowDraftHydrator;
 use common\components\Domain\Scheduling\Service\ConsultasSeguimientoIntakeCatalogService;
 use common\components\Domain\Scheduling\Service\ConsultasSeguimientoIntakeService;
 

@@ -3,7 +3,7 @@
 namespace common\tests\unit\clinical;
 
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
-use common\components\Domain\Clinical\HistoryExchange\ClinicalHistoryOutboundEnqueueService;
+use common\components\Domain\Clinical\HistoryExchange\Service\ClinicalHistoryOutboundEnqueueService;
 use common\components\Domain\Clinical\HistoryExchange\Infrastructure\External\ClinicalHistoryExchangeRegistry;
 use common\components\Domain\Clinical\HistoryExchange\Infrastructure\External\Mapper\FhirClinicalHistoryBundleMapper;
 use common\models\Clinical\Encounter;

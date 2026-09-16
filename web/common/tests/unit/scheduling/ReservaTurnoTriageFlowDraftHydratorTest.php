@@ -3,7 +3,7 @@
 namespace common\tests\unit\scheduling;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Scheduling\Service\ReservaTurnoTriageFlowDraftHydrator;
+use common\components\Domain\Scheduling\Assistant\ReservaTurnoTriageFlowDraftHydrator;
 
 class ReservaTurnoTriageFlowDraftHydratorTest extends Unit
 {

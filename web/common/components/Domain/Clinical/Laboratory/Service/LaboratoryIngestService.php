@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\Laboratory\Service;
 
 use common\components\Domain\Clinical\Laboratory\Application\Agent\PostLabClassificationAgent;
 
-use common\components\Domain\Clinical\Laboratory\Mapper\FhirDiagnosticReportMapper;
+use common\components\Domain\Clinical\Laboratory\Infrastructure\External\Mapper\FhirDiagnosticReportMapper;
 use common\components\Domain\Clinical\Laboratory\Infrastructure\External\Contract\FhirLabResultsConnector;
 use common\components\Domain\Clinical\Laboratory\Infrastructure\External\LabConnectorRegistry;
 use common\models\Clinical\DiagnosticReport;

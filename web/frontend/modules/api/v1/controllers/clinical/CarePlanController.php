@@ -11,8 +11,8 @@ use common\components\Domain\Clinical\CarePlan\Reminder\CarePlanReminderSchedule
 use common\components\Domain\Clinical\CarePlan\Dto\CarePlanDto;
 use common\components\Domain\Clinical\CarePlan\Service\CarePlanLifecycleService;
 use common\components\Domain\Clinical\CarePlan\Service\CarePlanMedicationListService;
-use common\components\Domain\Clinical\CarePlan\Service\CarePlanPresentationService;
-use common\components\Domain\Clinical\CarePlan\CarePlanAdherenceStaffService;
+use common\components\Domain\Clinical\CarePlan\Presentation\CarePlanPresentationService;
+use common\components\Domain\Clinical\CarePlan\Service\CarePlanAdherenceStaffService;
 use common\components\Domain\Clinical\CarePlan\Service\PatientActiveCarePlanQuery;
 use common\components\Domain\Scheduling\Service\ConsultaAsyncSolicitudService;
 use common\components\Platform\Ui\UiScreenService;

@@ -2,6 +2,9 @@
 
 namespace common\components\Domain\Terminology\Snomed;
 
+use common\components\Domain\Terminology\Domain\SnomedCategoryCatalog;
+use common\components\Domain\Terminology\Domain\SnomedSearchProfileCatalog;
+
 use Yii;
 use common\components\Domain\Terminology\Snomed\SnowstormClient;
 use common\components\Platform\Ai\Embeddings\EmbeddingsManager;

@@ -5,7 +5,7 @@ namespace frontend\modules\api\v1\controllers\clinical;
 use common\components\Domain\Clinical\Prescription\Dto\ElectronicPrescriptionDto;
 use common\components\Domain\Clinical\Prescription\Domain\PrescriptionLegalStatus;
 use common\components\Domain\Clinical\Prescription\Service\ElectronicPrescriptionPdfService;
-use common\components\Domain\Clinical\Prescription\Service\ElectronicPrescriptionPresentationService;
+use common\components\Domain\Clinical\Prescription\Presentation\ElectronicPrescriptionPresentationService;
 use common\components\Domain\Clinical\Prescription\Service\ElectronicPrescriptionService;
 use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
 use common\components\Domain\Person\Representation\Service\PersonRepresentationSubjectService;

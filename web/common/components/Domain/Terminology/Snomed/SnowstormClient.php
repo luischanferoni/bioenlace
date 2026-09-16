@@ -2,6 +2,8 @@
 
 namespace common\components\Domain\Terminology\Snomed;
 
+use common\components\Domain\Terminology\Domain\SnomedSearchProfileCatalog;
+
 use RuntimeException;
 use Yii;
 use yii\base\Component;

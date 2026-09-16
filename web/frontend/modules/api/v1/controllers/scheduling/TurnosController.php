@@ -22,7 +22,7 @@ use common\components\Platform\Ui\UiDefinitionTemplateManager;
 use common\components\Platform\Ui\UiScreenService;
 use common\components\Domain\Scheduling\Service\TurnoSlotFinder;
 use common\components\Domain\Scheduling\Service\TurnoSlotOfferService;
-use common\components\Domain\Scheduling\Service\TurnoSlotOfferUiPresenter;
+use common\components\Domain\Scheduling\Presentation\TurnoSlotOfferUiPresenter;
 use common\components\Domain\Scheduling\Service\TurnoPersistService;
 use common\components\Domain\Scheduling\Service\TurnoCreacionContext;
 use common\components\Domain\Scheduling\Service\TurnoLifecycleService;

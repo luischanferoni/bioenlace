@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Prescription\Service;
 
-use common\components\Domain\Clinical\Prescription\Support\PrescriptionDocumentSupport;
+use common\components\Domain\Clinical\Prescription\Service\PrescriptionDocumentSupport;
 use common\models\Clinical\ElectronicPrescription;
 use common\models\Person\Persona;
 use kartik\mpdf\Pdf;

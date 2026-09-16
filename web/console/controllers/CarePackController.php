@@ -52,7 +52,7 @@ class CarePackController extends Controller
     /** Solo poll de jobs Vertex ya enviados. */
     public function actionPollVertex($limit = 20): int
     {
-        $n = (new \common\components\Domain\Clinical\CareCohort\Batch\CarePackVertexBatchPoller())->poll((int) $limit);
+        $n = (new \common\components\Domain\Clinical\CareCohort\Infrastructure\Batch\CarePackVertexBatchPoller())->poll((int) $limit);
         $this->stdout("care-pack poll-vertex: completed={$n}\n");
 
         return ExitCode::OK;

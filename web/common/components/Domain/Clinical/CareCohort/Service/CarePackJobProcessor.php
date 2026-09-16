@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Clinical\CareCohort\Service;
 
-use common\components\Domain\Clinical\CareCohort\Batch\CarePackVertexBatchSubmitter;
-use common\components\Domain\Clinical\CareCohort\Batch\CarePackVertexBatchPoller;
+use common\components\Domain\Clinical\CareCohort\Infrastructure\Batch\CarePackVertexBatchSubmitter;
+use common\components\Domain\Clinical\CareCohort\Infrastructure\Batch\CarePackVertexBatchPoller;
 use common\models\Clinical\CarePackJob;
 use common\models\Clinical\Encounter;
 

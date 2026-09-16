@@ -2,10 +2,11 @@
 
 namespace common\components\Domain\Clinical\Capture\Workflow;
 
+use common\components\Domain\Clinical\Capture\Domain\EncounterCaptureActorCatalog;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanActivityKind;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanCategory;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanStatus;
-use common\components\Domain\Clinical\CarePlan\Service\CarePlanPresentationService;
+use common\components\Domain\Clinical\CarePlan\Presentation\CarePlanPresentationService;
 use common\components\Domain\Clinical\Encounter\Service\EpisodeOfCareService;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\CarePlanActivity;

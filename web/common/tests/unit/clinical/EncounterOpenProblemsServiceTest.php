@@ -3,7 +3,7 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Encounter\Service\ConditionPresentationService;
+use common\components\Domain\Clinical\Encounter\Presentation\ConditionPresentationService;
 use common\components\Domain\Clinical\Encounter\Service\EncounterOpenProblemsService;
 
 class EncounterOpenProblemsServiceTest extends Unit

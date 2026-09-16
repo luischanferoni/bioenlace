@@ -6,7 +6,7 @@ use common\components\Domain\Clinical\CarePlan\Domain\CarePlanCategory;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanStatus;
 use common\components\Domain\Clinical\CarePlan\Service\CarePlanLifecycleService;
 use common\components\Domain\Clinical\CarePlan\Service\CarePlanService;
-use common\components\Domain\Clinical\CarePlan\Support\CarePlanProgramMeta;
+use common\components\Domain\Clinical\CarePlan\Domain\CarePlanProgramMeta;
 use common\models\Clinical\CarePlan;
 use Codeception\Test\Unit;
 

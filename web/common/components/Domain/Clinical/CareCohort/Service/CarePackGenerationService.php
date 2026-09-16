@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\CareCohort\Service;
 
 use common\components\Platform\Ai\IAManager;
-use common\components\Domain\Clinical\CareCohort\CarePackContentParser;
+use common\components\Domain\Clinical\CareCohort\Service\CarePackContentParser;
 use common\components\Domain\Clinical\CareCohort\Domain\CarePackType;
 use common\models\Clinical\CareCohortPack;
 use common\models\Clinical\CarePackJob;

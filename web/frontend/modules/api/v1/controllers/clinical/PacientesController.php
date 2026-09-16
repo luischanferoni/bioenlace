@@ -19,7 +19,7 @@ use common\models\Scheduling\Turno;
 use common\models\Clinical\AllergyIntolerance;
 use common\models\Clinical\PersonasAntecedente;
 use common\models\Clinical\ConsultaMotivosMessage;
-use common\components\Domain\Clinical\Encounter\Service\ConditionPresentationService;
+use common\components\Domain\Clinical\Encounter\Presentation\ConditionPresentationService;
 use common\components\Domain\Clinical\Encounter\Service\EpisodioHistoriaBannerService;
 use common\components\Domain\Clinical\Encounter\Service\EpisodioSignosVitalesService;
 use common\components\Domain\Clinical\Encounter\Service\EpisodioTimelineService;

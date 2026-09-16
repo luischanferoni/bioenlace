@@ -1,6 +1,6 @@
 <?php
 
-use common\components\Domain\Clinical\Capture\Workflow\EncounterDefinitionBootstrapService;
+use common\components\Domain\Clinical\Capture\Service\EncounterDefinitionBootstrapService;
 use common\models\Clinical\Encounter;
 use yii\db\Migration;
 use yii\db\Query;

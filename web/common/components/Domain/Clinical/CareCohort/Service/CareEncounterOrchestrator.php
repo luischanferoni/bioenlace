@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\CareCohort\Service;
 
-use common\components\Domain\Clinical\CareCohort\CohortKeyBuilder;
+use common\components\Domain\Clinical\CareCohort\Domain\CohortKeyBuilder;
 use common\components\Domain\Clinical\CareCohort\Domain\CarePackType;
 use common\models\Clinical\Encounter;
 

@@ -7,7 +7,7 @@ use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\MethodNotAllowedHttpException;
 use common\components\Domain\Person\Representation\Service\PatientDelegationService;
-use common\components\Domain\Person\Representation\Service\PersonRepresentationPresenter;
+use common\components\Domain\Person\Representation\Presentation\PersonRepresentationPresenter;
 use common\components\Domain\Person\Representation\Service\VerifiedGuardianshipService;
 use common\components\Platform\Ui\UiScreenService;
 

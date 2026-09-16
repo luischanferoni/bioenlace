@@ -3,7 +3,7 @@
 namespace common\tests\unit\terminology;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Terminology\Snomed\SnomedSearchProfileCatalog;
+use common\components\Domain\Terminology\Domain\SnomedSearchProfileCatalog;
 use common\components\Platform\Core\Product\SnomedSearchProfileMetadata;
 
 class SnomedSearchProfileMetadataTest extends Unit

@@ -172,6 +172,72 @@ final class BoundedContextLayerShapeTest extends Unit
         );
     }
 
+    public function testClinicalModulosSinPhpEnRaizNiCarpetasProhibidas(): void
+    {
+        $clinical = ProductDomainCatalog::domainRoot() . DIRECTORY_SEPARATOR . 'Clinical';
+        $this->assertDirectoryExists($clinical);
+
+        $pluginModules = ['Assistant' => true, 'Home' => true, 'DataAccess' => true];
+        $forbiddenL1 = ['Support' => true, 'Batch' => true, 'Mapper' => true];
+        $errors = [];
+
+        foreach (scandir($clinical) ?: [] as $module) {
+            if ($module === '.' || $module === '..' || $module === 'README.md') {
+                continue;
+            }
+            $modulePath = $clinical . DIRECTORY_SEPARATOR . $module;
+            if (!is_dir($modulePath)) {
+                continue;
+            }
+            if (!isset($pluginModules[$module])) {
+                foreach (scandir($modulePath) ?: [] as $name) {
+                    if ($name === '.' || $name === '..') {
+                        continue;
+                    }
+                    $child = $modulePath . DIRECTORY_SEPARATOR . $name;
+                    if (is_file($child) && str_ends_with($name, '.php')) {
+                        $errors[] = "PHP en raíz de módulo Clinical/$module/$name";
+                    }
+                    if (is_dir($child) && isset($forbiddenL1[$name])) {
+                        $errors[] = "Carpeta prohibida Clinical/$module/$name/";
+                    }
+                }
+            }
+        }
+
+        $this->assertSame(
+            [],
+            $errors,
+            "Gramática Clinical (domain-folder-grammar):\n" . implode("\n", $errors)
+        );
+    }
+
+    public function testClinicalMapperSoloBajoInfrastructureExternal(): void
+    {
+        $clinical = ProductDomainCatalog::domainRoot() . DIRECTORY_SEPARATOR . 'Clinical';
+        $errors = [];
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($clinical, \FilesystemIterator::SKIP_DOTS)
+        );
+        foreach ($iterator as $file) {
+            if (!$file->isFile() || $file->getExtension() !== 'php') {
+                continue;
+            }
+            if (!str_ends_with($file->getFilename(), 'Mapper.php')) {
+                continue;
+            }
+            $pathname = str_replace('\\', '/', $file->getPathname());
+            if (!str_contains($pathname, '/Infrastructure/External/')) {
+                $errors[] = $pathname;
+            }
+        }
+        $this->assertSame(
+            [],
+            $errors,
+            "*Mapper.php debe vivir bajo Infrastructure/External/:\n" . implode("\n", $errors)
+        );
+    }
+
     /**
      * @return list<string>
      */

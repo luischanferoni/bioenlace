@@ -21,44 +21,46 @@ Las carpetas de primer nivel **son** el conjunto de dominios del producto (`Prod
 | **`Integrations/`** | Solo README de redirección (ACL → `*/Infrastructure/External/`) |
 
 Flows: `Domain/<BC>/Application/Flows/intents` y/o `Domain/<BC>/<Modulo>/Application/Flows/intents`.  
-ADR: [ddd-bounded-contexts-capas-y-metadata.md](../../../docs/decisions/ddd-bounded-contexts-capas-y-metadata.md), [clinical-modulos-capacidad.md](../../../docs/decisions/clinical-modulos-capacidad.md), [shared-top-level-infrastructure.md](../../../docs/decisions/shared-top-level-infrastructure.md).
+ADR: [ddd-bounded-contexts-capas-y-metadata.md](../../../docs/decisions/ddd-bounded-contexts-capas-y-metadata.md), [clinical-modulos-capacidad.md](../../../docs/decisions/clinical-modulos-capacidad.md), [shared-top-level-infrastructure.md](../../../docs/decisions/shared-top-level-infrastructure.md), [domain-folder-grammar.md](../../../docs/decisions/domain-folder-grammar.md).
 
 ## Forma interna (gramática)
+
+Fuente de verdad: [domain-folder-grammar.md](../../../docs/decisions/domain-folder-grammar.md).
 
 ### BC grande (Clinical) — módulo primero
 
 ```text
 Domain/Clinical/<Modulo>/
   Application/{Flows,Agent}/
-  Domain/
-  Service/ | Dto | …
-  Infrastructure/External/   # ACL del módulo (LIS, receta, HC, …)
+  Domain/                    # *Catalog, enums
+  Service/                   # *Service; Authorization/ opcional
+  Dto/ | Presentation/       # opcional
+  Infrastructure/External/   # ACL (Mapper/Connector/…)
 ```
 
-Sin `Shared/`, sin `Enum/` / `Service/` / `Dto/` / `Infrastructure/` en la **raíz** del BC. Dueño explícito; dependencias hacia el núcleo (`Encounter`, `CarePlan`).
+Sin `Shared/`, sin `Enum/` / `Service/` / `Dto/` / `Infrastructure/` / PHP suelto en la **raíz** del BC o del módulo. Sin `Support/` ni `Mapper/` fuera de External.
 
 ### BC más chico / en migración
 
 ```text
 Domain/<BC>/
-  Application/ | Domain/ | Infrastructure/External/
-  <Área>/Service/
+  Application/ | Domain/ | Service/ | Presentation/ | Infrastructure/External/
   Assistant/ | Home/ | DataAccess/
 ```
 
-### Sufijos de clase
+### Sufijos de clase → carpeta
 
-| Sufijo | Uso |
-|--------|-----|
-| `*Service` | Caso de uso / dominio |
-| `*Policy` / `*Access` | Autorización de recurso |
-| `*Catalog` / `*CatalogService` | Vocabulario / knobs |
-| `*Agent` | Job / batch / side-effects |
-| `*FlowDraftHydrator` | Plugin flow asistente |
-| `*HintCandidateProvider` | Hints asistente |
-| `*SectionProvider` | Panel home |
-| `*Presenter` / `*Presentation` | Presentación sin HTTP |
-| `*Connector` / `*Mapper` / `*Registry` | ACL External |
+| Sufijo | Carpeta |
+|--------|---------|
+| `*Service` / `*Access` | `Service/` |
+| `*Catalog` | `Domain/` |
+| `*CatalogService` | `Service/` |
+| `*Agent` / `*AgentPolicy` | `Application/Agent/` |
+| `*Presenter` / `*PresentationService` | `Presentation/` |
+| `*FlowDraftHydrator` | `Assistant/` |
+| `*HintCandidateProvider` | `Assistant/` (hints) |
+| `*Connector` / `*Mapper` / `*Registry` (ACL) | `Infrastructure/External/` |
+| `*SectionProvider` | `Home/Sections/` |
 
 ## Cableado con motores
 

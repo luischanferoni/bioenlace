@@ -7,7 +7,7 @@ use common\components\Domain\Clinical\Laboratory\Service\LaboratoryDemoSeedServi
 use common\components\Domain\Clinical\Laboratory\Service\LaboratoryResultQueryService;
 use common\components\Domain\Clinical\CarePlan\Reminder\CarePlanReminderDemoTimingService;
 use common\components\Domain\Clinical\Prescription\Service\ElectronicPrescriptionDemoSeedService;
-use common\components\Domain\Clinical\Prescription\Support\PrescriptionDocumentSupport;
+use common\components\Domain\Clinical\Prescription\Service\PrescriptionDocumentSupport;
 use common\components\Domain\Organization\Service\Seed\EfectorDemoSeedService;
 use common\components\Domain\Organization\Service\Seed\MedicoMedGeneralEfectorSeedService;
 use yii\console\Controller;

@@ -2,7 +2,7 @@
 
 namespace common\tests\unit\clinical;
 
-use common\components\Domain\Clinical\CareCohort\CohortKeyBuilder;
+use common\components\Domain\Clinical\CareCohort\Domain\CohortKeyBuilder;
 use Codeception\Test\Unit;
 
 class CohortKeyBuilderTest extends Unit

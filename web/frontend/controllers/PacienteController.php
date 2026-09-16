@@ -12,7 +12,7 @@ use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterDefinition;
 use common\components\Domain\Clinical\Encounter\Service\EncounterCaptureContextService;
 use common\components\Domain\Clinical\Encounter\Service\EpisodioTimelineService;
-use common\components\Domain\Clinical\Capture\Workflow\EncounterDefinitionBootstrapService;
+use common\components\Domain\Clinical\Capture\Service\EncounterDefinitionBootstrapService;
 use frontend\components\Clinical\EncounterCaptureFormViewBuilder;
 use frontend\components\Clinical\EpisodioTimelineViewBuilder;
 use frontend\components\Clinical\PacienteHistoriaTimelinePageBuilder;

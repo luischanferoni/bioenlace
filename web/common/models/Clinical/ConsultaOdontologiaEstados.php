@@ -371,7 +371,7 @@ class ConsultaOdontologiaEstados extends \yii\db\ActiveRecord
     public static function getPorPaciente($idPersona)
     {
         if (!self::legacyTableExists()) {
-            return (new \common\components\Domain\Clinical\Specialty\Odontology\OdontologyEncounterService())
+            return (new \common\components\Domain\Clinical\Specialty\Odontology\Service\OdontologyEncounterService())
                 ->getCpoStatesForPerson((int) $idPersona);
         }
 
@@ -390,7 +390,7 @@ class ConsultaOdontologiaEstados extends \yii\db\ActiveRecord
     public static function getPorPacienteHastaEncounter($idPersona, $encounterId)
     {
         if (!self::legacyTableExists()) {
-            return (new \common\components\Domain\Clinical\Specialty\Odontology\OdontologyEncounterService())
+            return (new \common\components\Domain\Clinical\Specialty\Odontology\Service\OdontologyEncounterService())
                 ->getCpoStatesForPersonUntilEncounter((int) $idPersona, (int) $encounterId);
         }
 

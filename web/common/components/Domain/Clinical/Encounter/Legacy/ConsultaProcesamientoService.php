@@ -11,8 +11,8 @@ use common\components\Domain\Clinical\Encounter\Service\EncounterOpenProblemsSer
 use common\components\Domain\Clinical\Encounter\Service\EpisodeCaptureDedupService;
 use common\components\Domain\Clinical\Capture\Workflow\ClinicalOperationalContextResolver;
 use common\components\Domain\Clinical\Capture\Workflow\EncounterCaptureAnalysisCache;
-use common\components\Domain\Clinical\Capture\Workflow\EncounterDefinitionBootstrapService;
-use common\components\Domain\Clinical\Capture\Workflow\EncounterDocumentationService;
+use common\components\Domain\Clinical\Capture\Service\EncounterDefinitionBootstrapService;
+use common\components\Domain\Clinical\Capture\Service\EncounterDocumentationService;
 use common\components\Domain\Clinical\Capture\Text\EncounterCaptureExtractionPostProcessor;
 use common\components\Domain\Clinical\Capture\Text\ProcesadorTextoMedico;
 use common\components\Domain\Clinical\Capture\Workflow\EncounterCaptureCompletenessValidator;

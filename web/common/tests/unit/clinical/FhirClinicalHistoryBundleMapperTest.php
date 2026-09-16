@@ -3,7 +3,7 @@
 namespace common\tests\unit\clinical;
 
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
-use common\components\Domain\Clinical\Infrastructure\External\ClinicalHistory\Mapper\FhirClinicalHistoryBundleMapper;
+use common\components\Domain\Clinical\HistoryExchange\Infrastructure\External\Mapper\FhirClinicalHistoryBundleMapper;
 use common\models\Clinical\Encounter;
 
 class FhirClinicalHistoryBundleMapperTest extends \Codeception\Test\Unit

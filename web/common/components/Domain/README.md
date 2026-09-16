@@ -2,26 +2,26 @@
 
 Namespace base: `common\components\Domain\…`
 
-Todo lo **específico del rubro actual**. Para otro producto, esta carpeta se reemplaza o se empaqueta aparte; los motores en `../Platform/` permanecen.
+Todo lo **específico del rubro actual**. Para otro producto, esta carpeta se reemplaza o se empaqueta aparte; los motores en `../Platform/` y la infra en `../Shared/` permanecen.
 
-Las carpetas de primer nivel **son** el conjunto de dominios del producto (`ProductDomainCatalog`). No existe `Domain/Platform/`.
+Las carpetas de primer nivel **son** el conjunto de dominios del producto (`ProductDomainCatalog`). No existe `Domain/Platform/` ni `Domain/Shared/`.
 
-## Subcarpetas
+## Subcarpetas (BCs)
 
 | Carpeta | Contenido |
 |---------|-----------|
 | **`Clinical/`** | Módulos de capacidad (Encounter, Emergency, Lab, …) — ver [Clinical/README.md](./Clinical/README.md) |
-| **`Scheduling/`** | Turnos, agenda, quirófano |
+| **`Scheduling/`** | Turnos, agenda, quirófano (BC aparte; no es módulo de Clinical) |
 | **`Person/`** | Personas, registro, representación, ventanilla |
 | **`Organization/`** | Efectores, PES, sesión operativa |
-| **`Terminology/`** | SNOMED (`Terminology/Domain/*Catalog`) |
+| **`Terminology/`** | SNOMED (`Terminology/Domain/*Catalog`) — BC catálogo, no módulo Clinical |
 | **`Content/`** | Contenido institucional / novedades |
 | **`Geo/`** | Maestros geo y recursos provinciales |
 | **`Programs/`** | Programas de salud / SUMAR |
 | **`Integrations/`** | Solo README de redirección (ACL → `*/Infrastructure/External/`) |
 
 Flows: `Domain/<BC>/Application/Flows/intents` y/o `Domain/<BC>/<Modulo>/Application/Flows/intents`.  
-ADR: [ddd-bounded-contexts-capas-y-metadata.md](../../../docs/decisions/ddd-bounded-contexts-capas-y-metadata.md), [clinical-modulos-capacidad.md](../../../docs/decisions/clinical-modulos-capacidad.md).
+ADR: [ddd-bounded-contexts-capas-y-metadata.md](../../../docs/decisions/ddd-bounded-contexts-capas-y-metadata.md), [clinical-modulos-capacidad.md](../../../docs/decisions/clinical-modulos-capacidad.md), [shared-top-level-infrastructure.md](../../../docs/decisions/shared-top-level-infrastructure.md).
 
 ## Forma interna (gramática)
 
@@ -30,12 +30,12 @@ ADR: [ddd-bounded-contexts-capas-y-metadata.md](../../../docs/decisions/ddd-boun
 ```text
 Domain/Clinical/<Modulo>/
   Application/{Flows,Agent}/
-  Domain/                    # enums, catalogs del módulo
+  Domain/
   Service/ | Dto | …
-  Infrastructure/            # si el módulo tiene ACL propio
+  Infrastructure/External/   # ACL del módulo (LIS, receta, HC, …)
 ```
 
-Sin `Shared/`, sin `Enum/` / `Service/` / `Dto/` en la raíz del BC. Dueño explícito; dependencias hacia el núcleo (`Encounter`, `CarePlan`).
+Sin `Shared/`, sin `Enum/` / `Service/` / `Dto/` / `Infrastructure/` en la **raíz** del BC. Dueño explícito; dependencias hacia el núcleo (`Encounter`, `CarePlan`).
 
 ### BC más chico / en migración
 

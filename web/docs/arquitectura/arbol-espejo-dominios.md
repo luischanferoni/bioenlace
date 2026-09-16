@@ -3,23 +3,23 @@
 En cada capa del producto, el segmento que sigue a la capa es el **dominio** (o `platform`); el siguiente es la **entidad**.
 
 ```text
-<capa>/<dominio|platform>/<entidad>/<archivo>
+<capa>/<dominio|platform|shared>/<entidad>/<archivo>
 ```
 
 | Capa | Forma |
 |------|--------|
-| Servicios | `common/components/Domain/<Dominio>/…` · `common/components/Platform/<Área>/…` |
+| Servicios | `common/components/Domain/<Dominio>/…` · `common/components/Platform/<Área>/…` · `common/components/Shared/…` |
 | Modelos | `common/models/<Dominio>/…` · `common/models/Platform/…` |
 | Controllers API | `frontend/modules/api/v1/controllers/<dominio>/…` |
 | UI JSON | `frontend/modules/api/v1/views/json/<dominio>/<entidad>/…` |
 | Metadata (flows) | `components/Domain/<BC>/Application/Flows/…` · `components/Platform/Assistant/Application/Flows/…` |
-| Tests unitarios | `common/tests/unit/<dominio>/…` · `…/platform/<área>/…` |
+| Tests unitarios | `common/tests/unit/<dominio>/…` · `…/platform/<área>/…` · `…/shared/<área>/…` |
 
 ## Fuente de verdad del conjunto de dominios
 
 Las carpetas de primer nivel en `common/components/Domain/` (ids en minúsculas vía `ProductDomainCatalog`). Crear una carpeta ahí = declarar un dominio. No hay lista paralela que actualizar.
 
-`platform` ocupa la **misma posición** que un dominio en las capas espejo; **no** vive bajo `Domain/`.
+`platform` y `shared` ocupan la **misma posición** que un dominio en las capas espejo; **no** viven bajo `Domain/`.
 
 ## Dos reglas
 

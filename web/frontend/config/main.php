@@ -78,7 +78,7 @@ return [
                     'logFile' => '@runtime/logs/app-error.log',
                 ],
                 [
-                    'class' => \common\components\Platform\Infra\Log\ResilientDbTarget::class,
+                    'class' => \common\components\Shared\Infrastructure\Log\ResilientDbTarget::class,
                     'levels' => ['error'],
                 ],
             ],

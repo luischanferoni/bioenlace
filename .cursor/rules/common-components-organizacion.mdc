@@ -1,12 +1,12 @@
 ---
-description: Organización de web/common/components — Platform vs Domain
+description: Organización de web/common/components — Platform vs Shared vs Domain
 globs:
   - web/common/components/**
   - web/common/models/**
 alwaysApply: false
 ---
 
-# common/components: Platform vs Domain
+# common/components: Platform vs Shared vs Domain
 
 **Antes de crear, mover o refactorizar** cualquier archivo bajo `web/common/components/` o `web/common/models/`, leer:
 
@@ -15,11 +15,12 @@ alwaysApply: false
 - [web/common/components/README.md](web/common/components/README.md)
 - [web/common/README.md](web/common/README.md) (modelos AR)
 
-## Dos capas
+## Tres capas
 
 | Capa | Ruta | Qué va |
 |------|------|--------|
-| **Motores** | `web/common/components/Platform/` | Assistant, Core, Ai, Ui, Infra — agnóstico del rubro |
+| **Motores** | `web/common/components/Platform/` | Assistant, Core, Ai, Ui — agnóstico del rubro |
+| **Shared** | `web/common/components/Shared/` | Infrastructure técnica + Domain tipos transversales |
 | **Rubro salud** | `web/common/components/Domain/` | Clinical, Scheduling, Person, Organization, Terminology, Content, Geo, Programs |
 
 Metadata YAML (flows, prompts, UI, auth motor): colocalizada en `Domain/<BC>/[Modulo/]Application/Flows/` y `Platform/{Assistant,Ui,Core/Permission,Ai}/…`. Knobs de negocio: PHP `*Catalog` / `*AgentPolicy`. Cableado: `web/common/config/product-registries.php`.
@@ -27,20 +28,20 @@ Metadata YAML (flows, prompts, UI, auth motor): colocalizada en `Domain/<BC>/[Mo
 ## Invariante de forma (espejo)
 
 ```text
-<capa>/<dominio|platform>/<entidad>/…
+<capa>/<dominio|platform|shared>/…
 ```
 
-Misma palabra de dominio en `components/Domain/`, `models/`, `controllers/`, `views/json/` y `tests/unit/`. Flows: `Domain/<BC>/Application/Flows/intents` y/o `Domain/<BC>/<Modulo>/Application/Flows/intents`. Fuente: `ProductDomainCatalog`. `platform` es eje paralelo, **no** bajo `Domain/`.
+Misma palabra de dominio en `components/Domain/`, `models/`, `controllers/`, `views/json/` y `tests/unit/`. Flows: `Domain/<BC>/Application/Flows/intents` y/o `Domain/<BC>/<Modulo>/Application/Flows/intents`. Fuente: `ProductDomainCatalog`. `platform` y `shared` son ejes paralelos, **no** bajo `Domain/`.
 
 ## Forma interna de Domain
 
-**Clinical (BC grande) — módulo primero** (sin Shared):
+**Clinical (BC grande) — módulo primero** (sin Shared / Infrastructure en raíz del BC):
 
 ```text
-Domain/Clinical/<Modulo>/Application|Domain|Service/…
+Domain/Clinical/<Modulo>/Application|Domain|Service|Infrastructure/External/…
 ```
 
-ADR: [clinical-modulos-capacidad.md](web/docs/decisions/clinical-modulos-capacidad.md).
+ADR: [clinical-modulos-capacidad.md](web/docs/decisions/clinical-modulos-capacidad.md), [shared-top-level-infrastructure.md](web/docs/decisions/shared-top-level-infrastructure.md).
 
 **Otros BCs:**
 
@@ -50,10 +51,11 @@ Domain/<BC>/
   <Área?>/{Service|Assistant|Home|DataAccess}/…
 ```
 
-- **ACL externos:** `Infrastructure/External/<Sistema>/` (o módulo Clinical dueño).
-- **Negocio** bajo módulo/`Service/`. **No** `Services/`. **No** `Enum/` / `Service/` catch-all en raíz de Clinical.
+- **ACL externos:** `Infrastructure/External/<Sistema>/` bajo el módulo Clinical o el BC dueño.
+- **Negocio** bajo módulo/`Service/`. **No** `Services/`. **No** `Enum/` / `Service/` / `Infrastructure/` catch-all en raíz de Clinical.
 - **Clinical**: `Emergency/`, `Inpatient/`, `Encounter/`, `Laboratory/`, `Capture/`, …
 - **Quirófano** → `Domain/Scheduling/Service/Quirofano/`.
+- **Scheduling / Terminology / Person** son BCs hermanos, no módulos de Clinical.
 - Sufijos: `*Service`, `*Policy`, `*Catalog`, `*Agent`, … — [Domain/README.md](web/common/components/Domain/README.md).
 - **`Platform/Assistant/`**: motores; rubro en metadata + registries.
 - **Services sin HTTP**: no `*HttpException`, HTML ni flash en `*/Service/`.
@@ -67,5 +69,6 @@ Domain/<BC>/
 ## Regla práctica
 
 - Asistente (motor) → `Platform/Assistant/` + [Assistant/README.md](web/common/components/Platform/Assistant/README.md).
+- Helper HTTP / log / migración → `Shared/Infrastructure/`.
 - Guardia/triage → `Domain/Clinical/Emergency/`.
 - Mapa camas / ingreso → `Domain/Clinical/Inpatient/`.

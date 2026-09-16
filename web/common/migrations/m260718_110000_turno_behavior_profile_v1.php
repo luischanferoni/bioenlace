@@ -1,6 +1,6 @@
 <?php
 
-use common\components\Platform\Infra\Migration\MigrationEnumColumn;
+use common\components\Shared\Infrastructure\Migration\MigrationEnumColumn;
 use common\models\Scheduling\PersonaTurnosPerfil;
 use common\models\Scheduling\PersonaTurnosPerfilMaterializacion;
 use common\models\Scheduling\PersonaTurnosPerfilMetrica;

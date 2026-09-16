@@ -18,6 +18,12 @@ final class ProductDomainCatalog
     public const PLATFORM = 'platform';
 
     /**
+     * Shared top-level (`components/Shared/`): infra/tipos transversales.
+     * Misma posición que `platform` en capas espejo (tests/unit, etc.); no es BC.
+     */
+    public const SHARED = 'shared';
+
+    /**
      * Grafías prohibidas en el slot de dominio (lowercase → canónica).
      *
      * @var array<string, string>
@@ -91,6 +97,10 @@ final class ProductDomainCatalog
             if ($id === 'integrations') {
                 continue;
             }
+            // Shared no vive bajo Domain/; si aparece, no es BC.
+            if ($id === self::SHARED) {
+                continue;
+            }
             $ids[] = $id;
         }
         sort($ids);
@@ -110,7 +120,16 @@ final class ProductDomainCatalog
     {
         $segment = strtolower(trim($segment));
 
-        return $segment === self::PLATFORM || self::isDomain($segment);
+        return $segment === self::PLATFORM
+            || $segment === self::SHARED
+            || self::isDomain($segment);
+    }
+
+    public static function isTransversalSlot(string $segment): bool
+    {
+        $segment = strtolower(trim($segment));
+
+        return $segment === self::PLATFORM || $segment === self::SHARED;
     }
 
     /**

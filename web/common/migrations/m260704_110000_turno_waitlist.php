@@ -1,6 +1,6 @@
 <?php
 
-use common\components\Platform\Infra\Migration\MigrationEnumColumn;
+use common\components\Shared\Infrastructure\Migration\MigrationEnumColumn;
 use common\models\Scheduling\TurnoWaitlistEntry;
 use common\models\Scheduling\TurnoWaitlistSlotOffer;
 use yii\db\Migration;

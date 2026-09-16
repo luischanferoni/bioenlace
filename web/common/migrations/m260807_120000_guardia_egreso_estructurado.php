@@ -1,7 +1,7 @@
 <?php
 
 use common\components\Domain\Clinical\Emergency\Domain\GuardiaEgresoDestino;
-use common\components\Platform\Infra\Migration\MigrationEnumColumn;
+use common\components\Shared\Infrastructure\Migration\MigrationEnumColumn;
 use yii\db\Migration;
 use yii\db\Query;
 

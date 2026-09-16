@@ -4,8 +4,8 @@ namespace common\tests\unit\clinical;
 
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Domain\Clinical\HistoryExchange\ClinicalHistoryOutboundEnqueueService;
-use common\components\Domain\Clinical\Infrastructure\External\ClinicalHistory\ClinicalHistoryExchangeRegistry;
-use common\components\Domain\Clinical\Infrastructure\External\ClinicalHistory\Mapper\FhirClinicalHistoryBundleMapper;
+use common\components\Domain\Clinical\HistoryExchange\Infrastructure\External\ClinicalHistoryExchangeRegistry;
+use common\components\Domain\Clinical\HistoryExchange\Infrastructure\External\Mapper\FhirClinicalHistoryBundleMapper;
 use common\models\Clinical\Encounter;
 
 class ClinicalHistoryOutboundEnqueueServiceTest extends \Codeception\Test\Unit
@@ -20,7 +20,7 @@ class ClinicalHistoryOutboundEnqueueServiceTest extends \Codeception\Test\Unit
             'retry' => ['delay_after_finalize_seconds' => 0],
             'connectors' => [
                 'null' => [
-                    'class' => \common\components\Domain\Clinical\Infrastructure\External\ClinicalHistory\Connector\NullClinicalHistoryExchangeConnector::class,
+                    'class' => \common\components\Domain\Clinical\HistoryExchange\Infrastructure\External\Connector\NullClinicalHistoryExchangeConnector::class,
                 ],
             ],
         ];

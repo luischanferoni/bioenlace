@@ -1,7 +1,7 @@
 <?php
 
 use yii\db\Migration;
-use common\components\Platform\Infra\Migration\MigrationEnumColumn;
+use common\components\Shared\Infrastructure\Migration\MigrationEnumColumn;
 use common\models\Platform\QuejaPaciente;
 
 /**

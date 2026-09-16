@@ -1,28 +1,18 @@
-# Domain/Integrations (retirado)
+# Integrations (residual)
 
-Los adapters externos ya no viven aquí. Van bajo el BC dueño:
+No es un bounded context. Los ACL viven en el **módulo o BC dueño**:
 
-| Antes | Ahora |
-|-------|--------|
+| Antes (legado) | Ahora |
+|----------------|-------|
 | `Integrations/Identity` | `Person/Infrastructure/External/Identity/` |
 | `Integrations/Mpi` | `Person/Infrastructure/External/Mpi/` |
-| `Integrations/Laboratory` | `Clinical/Infrastructure/External/Laboratory/` |
-| `Integrations/Prescription` | `Clinical/Infrastructure/External/Prescription/` |
-| `Integrations/ClinicalHistory` | `Clinical/Infrastructure/External/ClinicalHistory/` |
+| `Integrations/Laboratory` | `Clinical/Laboratory/Infrastructure/External/` |
+| `Integrations/Prescription` | `Clinical/Prescription/Infrastructure/External/` |
+| `Integrations/ClinicalHistory` | `Clinical/HistoryExchange/Infrastructure/External/` |
 | `Integrations/Scheduling` | `Scheduling/Infrastructure/External/` |
-| `Integrations/Sisse` (widgets) | `Platform/Ui/Widgets/Sisse/` |
-| `Integrations/Service/IntegrationRetryAgent` | `Clinical/Application/Agent/` |
 
-Forma canónica:
+Infra técnica transversal (HTTP base, log, migraciones): `components/Shared/Infrastructure/`.
 
 ```text
-Domain/<BC>/Infrastructure/External/<Sistema>/
-  Contract/
-  Connector/
-  Mapper/
-  Service/   # sync / reconcile de borde (opcional)
-  Dto/
-  Exception/
+Domain/<BC>/<Modulo?>/Infrastructure/External/<Sistema>/
 ```
-
-ADR: [`ddd-bounded-contexts-capas-y-metadata.md`](../../../docs/decisions/ddd-bounded-contexts-capas-y-metadata.md).

@@ -12,7 +12,8 @@ Código **reutilizable en otro producto** cambiando metadata (`common/metadata/{
 | **`Assistant/`** | IntentEngine, SubIntentEngine, Chat — interpretan YAML de producto |
 | **`Core/`** | DataAccess, permisos de dominio (autorizadores genéricos), push, `Core/Product/` |
 | **`Ui/`** | UI JSON, panel home (motor), grid |
-| **`Infra/`** | Utilidades técnicas (migraciones, deduplicación) |
+
+La infra técnica transversal (`Log/`, `Migration/`, `Requests/`) vive en [`../Shared/Infrastructure/`](../Shared/Infrastructure/).
 
 ## Qué **no** va aquí
 

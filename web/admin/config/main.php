@@ -66,7 +66,7 @@ return [
                     'levels' => ['warning', 'trace'],
                 ],
                 [
-                    'class' => \common\components\Platform\Infra\Log\ResilientDbTarget::class,
+                    'class' => \common\components\Shared\Infrastructure\Log\ResilientDbTarget::class,
                     'levels' => ['error'],
                 ],
             ],

@@ -6,13 +6,14 @@ Código compartido por API v1, consola, jobs y (legacy) frontend Yii.
 
 | Dominio | `components/` | `models/` |
 |---------|---------------|-----------|
-| **Clinical** | `Domain/Clinical/` (Service, Workflow, `Emergency/`, `Inpatient/`, Prescription, Legacy, `Text/`, …) | `Clinical/` |
-| **Scheduling** | `Domain/Scheduling/Service/` (turnos, `Service/Quirofano/`) | `Scheduling/Turno.php` |
-| **Person** | `Domain/Person/Service/` | `Person/Persona.php` |
-| **Organization** | `Domain/Organization/Service/` (PES, sesión operativa, efectores) | `ProfesionalEfectorServicio`, … |
-| **Plataforma** | `Platform/Core/`, `Platform/Ui/`, `Platform/Assistant/`, `Platform/Ai/`, `Platform/Infra/` | — |
+| **Clinical** | `Domain/Clinical/` (módulos Encounter, Emergency, Laboratory, …) | `Clinical/` |
+| **Scheduling** | `Domain/Scheduling/` | `Scheduling/Turno.php` |
+| **Person** | `Domain/Person/` | `Person/Persona.php` |
+| **Organization** | `Domain/Organization/` | `ProfesionalEfectorServicio`, … |
+| **Plataforma** | `Platform/Core/`, `Platform/Ui/`, `Platform/Assistant/`, `Platform/Ai/` | — |
+| **Shared** | `Shared/Infrastructure/`, `Shared/Domain/` | — |
 | **Terminology** | `Domain/Terminology/` | `Terminology/Snomed/*` (modelos AR) |
-| **ACL externos** | `Domain/<BC>/Infrastructure/External/` | — |
+| **ACL externos** | `Domain/<BC>/<Modulo?>/Infrastructure/External/` | — |
 
 ## Reglas
 

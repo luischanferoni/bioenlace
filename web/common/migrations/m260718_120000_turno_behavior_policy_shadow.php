@@ -1,6 +1,6 @@
 <?php
 
-use common\components\Platform\Infra\Migration\MigrationEnumColumn;
+use common\components\Shared\Infrastructure\Migration\MigrationEnumColumn;
 use common\models\Platform\AgentRun;
 use yii\db\Migration;
 use yii\db\Query;

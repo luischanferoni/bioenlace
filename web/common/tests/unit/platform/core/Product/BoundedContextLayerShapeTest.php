@@ -161,6 +161,17 @@ final class BoundedContextLayerShapeTest extends Unit
         );
     }
 
+    public function testClinicalNoTieneInfrastructureEnRaizDelBc(): void
+    {
+        $path = ProductDomainCatalog::domainRoot()
+            . DIRECTORY_SEPARATOR . 'Clinical'
+            . DIRECTORY_SEPARATOR . 'Infrastructure';
+        $this->assertFalse(
+            is_dir($path),
+            'Clinical/Infrastructure/ en la raíz del BC está prohibido: ACL bajo <Modulo>/Infrastructure/'
+        );
+    }
+
     /**
      * @return list<string>
      */

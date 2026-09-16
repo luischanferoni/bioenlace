@@ -10,7 +10,7 @@ Tras colocalizar capas DDD a nivel BC (`Application/` / `Domain/` en la raíz de
 
 1. Dentro de `Domain/Clinical`, el **primer eje es el módulo de capacidad** (Encounter, Emergency, Inpatient, Laboratory, Prescription, CarePlan, CareCohort, PedidoAtencion, Capture, HistoryExchange, LegalRecord, Specialty).
 2. Las capas DDD viven **dentro** del módulo: `Application/{Flows,Agent}`, `Domain/`, `Service/`, `Infrastructure/` según haga falta.
-3. **No** hay `Shared/`, `Common/`, `Kernel/` ni `Enum/` / `Service/` / `Dto/` en la raíz del BC.
+3. **No** hay `Shared/` / `Common/` / `Kernel/` ni `Enum/` / `Service/` / `Dto/` / `Infrastructure/` en la **raíz** del BC Clinical. Shared de producto va en `components/Shared/` ([shared-top-level-infrastructure.md](./shared-top-level-infrastructure.md)). ACL externos van en `<Modulo>/Infrastructure/External/`.
 4. Todo tipo tiene **módulo dueño**. Lo “usado por muchos” pertenece al núcleo (`Encounter/` o `CarePlan/`); los periféricos dependen hacia el núcleo, no al revés.
 5. Discovery de intents: `Domain/<BC>/<Modulo>/Application/Flows/intents` (además del layout plano BC si queda en otros BCs). `domainFromPath` sigue devolviendo el BC (`clinical`).
 6. Adapters al motor Platform (`Assistant/`, `Home/`, `DataAccess/`) en la raíz del BC son plugins, no dominio compartido.
@@ -19,10 +19,11 @@ Tras colocalizar capas DDD a nivel BC (`Application/` / `Domain/` en la raíz de
 
 - Layer-first permanente en la raíz Clinical.
 - Partir Clinical en varios BCs (comparten Encounter/CarePlan).
-- Carpeta `Shared/` para enums “transversales”.
+- Carpeta `Shared/` **dentro** de Clinical para enums “transversales”.
+- `Clinical/Infrastructure/` catch-all (LIS + receta + HC).
 
 ## Consecuencias
 
 - Localidad: el flow/agent/enum de lab se busca bajo `Laboratory/`.
 - Otros BCs grandes pueden adoptar el mismo patrón módulo-primero cuando el layer-first deje de escalar.
-- Relacionado: [ddd-bounded-contexts-capas-y-metadata.md](./ddd-bounded-contexts-capas-y-metadata.md), `Domain/Clinical/README.md`.
+- Relacionado: [ddd-bounded-contexts-capas-y-metadata.md](./ddd-bounded-contexts-capas-y-metadata.md), [shared-top-level-infrastructure.md](./shared-top-level-infrastructure.md), `Domain/Clinical/README.md`.

@@ -158,7 +158,7 @@ return [
         'default' => 'sianlabs',
         'connectors' => [
             'sianlabs' => [
-                'class' => \common\components\Domain\Clinical\Infrastructure\External\Laboratory\Connector\SianlabsFhirConnector::class,
+                'class' => \common\components\Domain\Clinical\Laboratory\Infrastructure\External\Connector\SianlabsFhirConnector::class,
                 'baseUrl' => 'https://sianlabs.msalsgo.gob.ar/api/fhir/',
                 'tokenUrl' => 'https://sianlabs.msalsgo.gob.ar/oauth/token',
                 'clientId' => null,
@@ -177,10 +177,10 @@ return [
         'verificationPublicBaseUrl' => null,
         'connectors' => [
             'null' => [
-                'class' => \common\components\Domain\Clinical\Infrastructure\External\Prescription\Connector\NullRecetaDigitalRepositoryConnector::class,
+                'class' => \common\components\Domain\Clinical\Prescription\Infrastructure\External\Connector\NullRecetaDigitalRepositoryConnector::class,
             ],
             'msal-rdi' => [
-                'class' => \common\components\Domain\Clinical\Infrastructure\External\Prescription\Connector\HttpRecetaDigitalRepositoryConnector::class,
+                'class' => \common\components\Domain\Clinical\Prescription\Infrastructure\External\Connector\HttpRecetaDigitalRepositoryConnector::class,
                 'enabled' => false,
                 'baseUrl' => null,
                 'tokenUrl' => null,
@@ -213,10 +213,10 @@ return [
         ],
         'connectors' => [
             'null' => [
-                'class' => \common\components\Domain\Clinical\Infrastructure\External\ClinicalHistory\Connector\NullClinicalHistoryExchangeConnector::class,
+                'class' => \common\components\Domain\Clinical\HistoryExchange\Infrastructure\External\Connector\NullClinicalHistoryExchangeConnector::class,
             ],
             'nacional-fhir' => [
-                'class' => \common\components\Domain\Clinical\Infrastructure\External\ClinicalHistory\Connector\HttpNationalClinicalHistoryConnector::class,
+                'class' => \common\components\Domain\Clinical\HistoryExchange\Infrastructure\External\Connector\HttpNationalClinicalHistoryConnector::class,
                 'enabled' => false,
                 'baseUrl' => null,
                 'tokenUrl' => null,

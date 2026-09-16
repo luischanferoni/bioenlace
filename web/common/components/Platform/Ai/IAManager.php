@@ -6,7 +6,7 @@ use Yii;
 use common\components\Platform\Core\Db\BioenlaceDb;
 use yii\httpclient\Client;
 use common\components\Platform\Ai\HuggingFace\HuggingFaceRateLimiter;
-use common\components\Platform\Infra\Requests\RequestDeduplicator;
+use common\components\Shared\Infrastructure\Requests\RequestDeduplicator;
 use common\components\Platform\Ai\Providers\Google\GoogleAuth;
 use common\components\Platform\Ai\Providers\Google\GoogleCloudConfigResolver;
 

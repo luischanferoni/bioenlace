@@ -204,7 +204,7 @@ final class ProductDomainTreeShapeTest extends Unit
                 continue;
             }
             if (!$allowRootFiles) {
-                $errors[] = "$layerLabel/: archivo plano '$name' — mover bajo <dominio|platform>/";
+                $errors[] = "$layerLabel/: archivo plano '$name' — mover bajo <dominio|platform|shared>/";
             }
         }
 
@@ -221,6 +221,22 @@ final class ProductDomainTreeShapeTest extends Unit
             return "$layerLabel/: '$id' — usar '{$forbidden[$id]}'";
         }
 
-        return "$layerLabel/: carpeta '$id' no es un dominio de components/Domain/ ni 'platform'";
+        return "$layerLabel/: carpeta '$id' no es un dominio de components/Domain/ ni 'platform'/'shared'";
+    }
+
+    public function testDomainNoContieneCarpetaShared(): void
+    {
+        $path = ProductDomainCatalog::domainRoot() . DIRECTORY_SEPARATOR . 'Shared';
+        $this->assertFalse(
+            is_dir($path),
+            'components/Domain/Shared/ no puede existir: Shared va en components/Shared/'
+        );
+    }
+
+    public function testComponentsSharedExiste(): void
+    {
+        $root = dirname(ProductDomainCatalog::domainRoot()) . DIRECTORY_SEPARATOR . 'Shared';
+        $this->assertDirectoryExists($root);
+        $this->assertDirectoryExists($root . DIRECTORY_SEPARATOR . 'Infrastructure');
     }
 }

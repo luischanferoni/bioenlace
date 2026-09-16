@@ -1,6 +1,6 @@
 <?php
 
-use common\components\Platform\Infra\Migration\MigrationEnumColumn;
+use common\components\Shared\Infrastructure\Migration\MigrationEnumColumn;
 use common\models\Organization\BillingPayment;
 use common\models\Organization\BillingSignupRequest;
 use yii\db\Migration;

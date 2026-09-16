@@ -173,16 +173,6 @@ class Efector extends \yii\db\ActiveRecord
             );
     }
 
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getUserEfectors()
-    {
-        return $this->hasMany(UserEfector::className(), ['id_efector' => 'id_efector']);
-        
-        
-    }
-    
     public function getEfectoresImplementados()
     {
         $efectores = self::find()->asArray()->select(['id_efector' => 'id_efector', 'nombre' => 'nombre'])

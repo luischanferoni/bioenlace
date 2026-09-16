@@ -2,6 +2,10 @@
 
 namespace common\models\Clinical;
 
+use common\components\Domain\Clinical\Encounter\Domain\ConditionVerificationStatus;
+
+use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
+
 use Yii;
 use yii\db\Query;
 use yii\helpers\ArrayHelper;
@@ -23,53 +27,53 @@ class DiagnosticoConsultaRepository
     
     public static function getClinicalStatusDisplayLabel($state){
         return ArrayHelper::getValue(
-                DiagnosticoConsulta::ESTADOS_CLINICOS, 
+                ConditionClinicalStatus::LABELS, 
                 $state, 
                 'undefined');
     }
     
     public static function getVerificationStatusDisplayLabel($state){
         return ArrayHelper::getValue(
-                DiagnosticoConsulta::ESTADOS_DE_VERIFICACION, 
+                ConditionVerificationStatus::LABELS, 
                 $state, 
                 'undefined');
     }
     
     public static function getClinicalStatusForPrev() {
-        return DiagnosticoConsulta::ESTADOS_CLINICOS;
+        return ConditionClinicalStatus::LABELS;
     }
     
     public static function getVerificationStatusForPrev() {
         return self::getStatesSubset(
             [
-              DiagnosticoConsulta::VERIFICATION_STATUS_CONFIRMED,
-              DiagnosticoConsulta::VERIFICATION_STATUS_REFUTED,
-              DiagnosticoConsulta::VERIFICATION_STATUS_ENTERED_IN_ERROR
+              ConditionVerificationStatus::CONFIRMED,
+              ConditionVerificationStatus::REFUTED,
+              ConditionVerificationStatus::ENTERED_IN_ERROR
             ],
-            DiagnosticoConsulta::ESTADOS_DE_VERIFICACION
+            ConditionVerificationStatus::LABELS
             );
     }
     
     public static function getClinicalStatusForNew() {
       return self::getStatesSubset(
               [
-                DiagnosticoConsulta::CLINICAL_STATUS_ACTIVE,
-                DiagnosticoConsulta::CLINICAL_STATUS_RECURRENCE,
-                DiagnosticoConsulta::CLINICAL_STATUS_RELAPSE
+                ConditionClinicalStatus::ACTIVE,
+                ConditionClinicalStatus::RECURRENCE,
+                ConditionClinicalStatus::RELAPSE
               ],
-              DiagnosticoConsulta::ESTADOS_CLINICOS
+              ConditionClinicalStatus::LABELS
               );
     }
     
     public static function getVerificationStatusForNew() {
         return self::getStatesSubset(
             [
-              DiagnosticoConsulta::VERIFICATION_STATUS_UNCONFIRMED,
-              DiagnosticoConsulta::VERIFICATION_STATUS_PROVISIONAL,
-              DiagnosticoConsulta::VERIFICATION_STATUS_DIFFERENTIAL,
-              DiagnosticoConsulta::VERIFICATION_STATUS_CONFIRMED,
+              ConditionVerificationStatus::UNCONFIRMED,
+              ConditionVerificationStatus::PROVISIONAL,
+              ConditionVerificationStatus::DIFFERENTIAL,
+              ConditionVerificationStatus::CONFIRMED,
             ],
-            DiagnosticoConsulta::ESTADOS_DE_VERIFICACION
+            ConditionVerificationStatus::LABELS
             );
     }
     

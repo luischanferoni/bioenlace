@@ -2,6 +2,10 @@
 
 namespace common\components\Domain\Clinical\Capture\Service;
 
+use common\components\Domain\Clinical\Encounter\Domain\ConditionVerificationStatus;
+
+use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
+
 use common\components\Domain\Clinical\Emergency\Service\GuardiaEncounterOutcomeService;
 use common\components\Domain\Clinical\Capture\Service\ClinicalCaptureResolutionApplier;
 use common\components\Domain\Clinical\Capture\Workflow\EncounterCaptureCategoryResolver;
@@ -26,7 +30,6 @@ use common\models\Clinical\Condition;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterDefinition;
 use common\models\Clinical\ConsultaAtencionesEnfermeria;
-use common\models\Clinical\DiagnosticoConsulta;
 use common\models\Person\Persona;
 use common\models\Scheduling\Turno;
 use Yii;
@@ -1424,14 +1427,14 @@ class EncounterDocumentationService extends Component
                     ?? $row['display']
                     ?? null;
                 $condition->clinical_status = $row['condition_clinical_status']
-                    ?? DiagnosticoConsulta::CLINICAL_STATUS_ACTIVE;
+                    ?? ConditionClinicalStatus::ACTIVE;
                 $condition->verification_status = $row['condition_verification_status']
-                    ?? DiagnosticoConsulta::VERIFICATION_STATUS_CONFIRMED;
+                    ?? ConditionVerificationStatus::CONFIRMED;
             } else {
                 $condition->code = '';
                 $condition->display = trim((string) $row);
-                $condition->clinical_status = DiagnosticoConsulta::CLINICAL_STATUS_ACTIVE;
-                $condition->verification_status = DiagnosticoConsulta::VERIFICATION_STATUS_CONFIRMED;
+                $condition->clinical_status = ConditionClinicalStatus::ACTIVE;
+                $condition->verification_status = ConditionVerificationStatus::CONFIRMED;
             }
             // Sin código: la codificación automática completa Condition; no persistimos fila huérfana.
             if ($condition->code === '') {

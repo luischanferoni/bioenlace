@@ -2,14 +2,13 @@
 
 namespace common\components\Domain\Clinical\Specialty\Inpatient\Service;
 
+use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
+use common\components\Domain\Clinical\Encounter\Domain\ConditionVerificationStatus;
 use common\components\Domain\Clinical\CarePlan\Service\CarePlanService;
 use common\components\Domain\Clinical\CarePlan\Service\MedicationRequestService;
 use common\components\Domain\Clinical\CarePlan\Service\ServiceRequestService;
+use common\components\Domain\Clinical\Specialty\Inpatient\Domain\InpatientClinicalContext;
 use common\models\Clinical\Condition;
-use common\models\Clinical\DiagnosticoConsulta;
-use common\models\Clinical\SegNivelInternacionDiagnostico;
-use common\models\Clinical\SegNivelInternacionMedicamento;
-use common\models\Clinical\SegNivelInternacionPractica;
 
 /**
  * Órdenes clínicas de internación → recursos FHIR (sin tablas seg_nivel_internacion_* hijas).
@@ -31,22 +30,22 @@ final class InpatientOrderService
     }
 
     /**
-     * @param SegNivelInternacionMedicamento[] $rows
+     * @param list<array<string, mixed>|object> $rows
      */
     public function persistMedicationRows(InpatientClinicalContext $ctx, array $rows): void
     {
         foreach ($rows as $row) {
-            if (!$row instanceof SegNivelInternacionMedicamento) {
-                continue;
-            }
-            $code = trim((string) $row->conceptId);
+            $code = trim((string) $this->rowValue($row, 'conceptId'));
             if ($code === '') {
                 continue;
             }
+            $cantidad = $this->rowValue($row, 'cantidad');
+            $dosisDiaria = $this->rowValue($row, 'dosis_diaria');
+            $indicacion = $this->rowValue($row, 'indicacion');
             $parts = array_filter([
-                $row->cantidad !== null ? 'cant: ' . $row->cantidad : null,
-                $row->dosis_diaria ? 'dosis diaria: ' . $row->dosis_diaria : null,
-                $row->indicacion ? (string) $row->indicacion : null,
+                $cantidad !== null && $cantidad !== '' ? 'cant: ' . $cantidad : null,
+                $dosisDiaria ? 'dosis diaria: ' . $dosisDiaria : null,
+                $indicacion ? (string) $indicacion : null,
             ]);
             $this->medications->createFromApi($ctx->encounter, $ctx->carePlan, [
                 'medication_code' => $code,
@@ -57,21 +56,20 @@ final class InpatientOrderService
     }
 
     /**
-     * @param SegNivelInternacionPractica[] $rows
+     * @param list<array<string, mixed>|object> $rows
      */
     public function persistPracticeRows(InpatientClinicalContext $ctx, array $rows): void
     {
         foreach ($rows as $row) {
-            if (!$row instanceof SegNivelInternacionPractica) {
-                continue;
-            }
-            $code = trim((string) $row->conceptId);
+            $code = trim((string) $this->rowValue($row, 'conceptId'));
             if ($code === '') {
                 continue;
             }
+            $resultado = $this->rowValue($row, 'resultado');
+            $informe = $this->rowValue($row, 'informe');
             $note = array_filter([
-                $row->resultado ? 'resultado: ' . $row->resultado : null,
-                $row->informe ? 'informe: ' . $row->informe : null,
+                $resultado ? 'resultado: ' . $resultado : null,
+                $informe ? 'informe: ' . $informe : null,
             ]);
             $this->serviceRequests->createFromApi($ctx->encounter, $ctx->carePlan, [
                 'category' => 'inpatient',
@@ -83,15 +81,12 @@ final class InpatientOrderService
     }
 
     /**
-     * @param SegNivelInternacionDiagnostico[] $rows
+     * @param list<array<string, mixed>|object> $rows
      */
     public function persistDiagnosisRows(InpatientClinicalContext $ctx, array $rows): void
     {
         foreach ($rows as $row) {
-            if (!$row instanceof SegNivelInternacionDiagnostico) {
-                continue;
-            }
-            $code = trim((string) $row->conceptId);
+            $code = trim((string) $this->rowValue($row, 'conceptId'));
             if ($code === '') {
                 continue;
             }
@@ -100,14 +95,27 @@ final class InpatientOrderService
             $condition->subject_persona_id = $ctx->encounter->subject_persona_id;
             $condition->code = $code;
             $condition->display = $this->resolveSnomedTerm($code);
-            $condition->clinical_status = $row->condition_clinical_status
-                ?: DiagnosticoConsulta::CLINICAL_STATUS_ACTIVE;
-            $condition->verification_status = $row->condition_verification_status
-                ?: DiagnosticoConsulta::VERIFICATION_STATUS_CONFIRMED;
+            $clinical = $this->rowValue($row, 'condition_clinical_status');
+            $verification = $this->rowValue($row, 'condition_verification_status');
+            $condition->clinical_status = $clinical ?: ConditionClinicalStatus::ACTIVE;
+            $condition->verification_status = $verification ?: ConditionVerificationStatus::CONFIRMED;
             $condition->recorded_date = date('Y-m-d H:i:s');
-            $condition->note = 'inpatient:' . ($row->tipo_problema ?? 'diagnostico');
+            $tipo = $this->rowValue($row, 'tipo_problema');
+            $condition->note = 'inpatient:' . ($tipo ?? 'diagnostico');
             $condition->save(false);
         }
+    }
+
+    /**
+     * @param array<string, mixed>|object $row
+     */
+    private function rowValue(array|object $row, string $key): mixed
+    {
+        if (is_array($row)) {
+            return $row[$key] ?? null;
+        }
+
+        return $row->$key ?? null;
     }
 
     private function resolveSnomedTerm(string $conceptId): ?string

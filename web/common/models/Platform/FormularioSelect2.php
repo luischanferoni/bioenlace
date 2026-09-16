@@ -2,7 +2,6 @@
 
 namespace common\models\Platform;
 
-use common\models\Clinical\ConsultaPracticas;
 use Yii;
 use yii\helpers\ArrayHelper;
 

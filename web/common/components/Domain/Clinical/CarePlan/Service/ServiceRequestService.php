@@ -231,8 +231,15 @@ final class ServiceRequestService
         if ($legacyModelo === '' || !preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $legacyModelo)) {
             return [];
         }
-        $class = '\\common\\models\\' . $legacyModelo;
-        if (!class_exists($class)) {
+        $class = null;
+        foreach (['\\common\\models\\Clinical\\', '\\common\\models\\'] as $prefix) {
+            $candidate = $prefix . $legacyModelo;
+            if (class_exists($candidate)) {
+                $class = $candidate;
+                break;
+            }
+        }
+        if ($class === null) {
             return [];
         }
         $model = new $class();

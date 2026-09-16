@@ -4,7 +4,6 @@ namespace common\components\Domain\Clinical\Encounter\Service;
 
 use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
 use common\models\Clinical\Condition;
-use common\models\Clinical\DiagnosticoConsulta;
 
 /**
  * Ciclo de vida de Condition (diagnósticos / problemas activos).
@@ -179,7 +178,7 @@ final class ConditionLifecycleService
 
     public function statusLabel(string $status): string
     {
-        $map = DiagnosticoConsulta::ESTADOS_CLINICOS;
+        $map = ConditionClinicalStatus::LABELS;
 
         return $map[$status] ?? $status;
     }

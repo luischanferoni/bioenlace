@@ -5,7 +5,7 @@ namespace common\tests\unit\clinical;
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\CarePlan\Service\ServiceRequestService;
 use common\models\Clinical\ConsultaIndicaciones;
-use common\models\Clinical\ConsultaPracticas;
+use common\models\Clinical\Input\PracticaInput;
 
 /**
  * Separación tipológica: prácticas realizadas vs indicaciones (campos de prompt).
@@ -14,7 +14,7 @@ class PracticasIndicacionesPromptSplitTest extends Unit
 {
     public function testPracticasPromptFieldsIncludeResultado(): void
     {
-        $campos = (new ConsultaPracticas())->requeridosPrompt();
+        $campos = PracticaInput::promptFieldNames();
         $this->assertSame(['Practica', 'Resultado', 'Codigo'], $campos);
     }
 

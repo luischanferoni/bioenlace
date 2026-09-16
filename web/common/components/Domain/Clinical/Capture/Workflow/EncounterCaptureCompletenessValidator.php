@@ -155,9 +155,14 @@ final class EncounterCaptureCompletenessValidator
         if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $modelo)) {
             return null;
         }
-        $class = '\\common\\models\\' . $modelo;
+        foreach (['\\common\\models\\Clinical\\', '\\common\\models\\'] as $prefix) {
+            $class = $prefix . $modelo;
+            if (class_exists($class)) {
+                return $class;
+            }
+        }
 
-        return class_exists($class) ? $class : null;
+        return null;
     }
 
     /**

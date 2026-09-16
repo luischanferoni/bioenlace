@@ -42,11 +42,6 @@ use common\models\Clinical\DiagnosticoConsultaRepository as DCRepo;
  * @property-read SegNivelInternacionTipoIngreso|null $tipoIngreso
  * @property-read Encounter[] $encounters Encounters IMP vinculados al episodio
  * @property-read Consulta[] $atenciones @deprecated Usar {@see getEncounters()}
- * @property-read SegNivelInternacionDiagnostico[] $diagnosticos
- * @property-read SegNivelInternacionPractica[] $practicas
- * @property-read SegNivelInternacionMedicamento[] $medicamentos
- * @property-read SegNivelInternacionSuministroMedicamento[] $suministrosMedicamentos
- * @property-read SegNivelInternacionAtencionesEnfermeria[] $atencionesEnfermeria
  */
 
 
@@ -238,103 +233,6 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
     public function getAtenciones(): \yii\db\ActiveQuery
     {
         return $this->getEncounters();
-    }
-
-   
-
-    /**
-     * Diagnósticos de internación ({@see SegNivelInternacionDiagnostico}).
-     */
-    public function getDiagnosticos()
-    {
-        return $this->hasMany(SegNivelInternacionDiagnostico::className(), ['id_internacion' => 'id']);
-    }
-
-    /**
-     * Alias histórico (`segNivelInternacionDiagnosticos`).
-     */
-    public function getSegNivelInternacionDiagnosticos()
-    {
-        return $this->getDiagnosticos();
-    }
-
-    /**
-     * Prácticas registradas en la internación.
-     *
-     * @deprecated En greenfield use {@see InpatientClinicalQuery::bundleForInternacion()}.
-     */
-    public function getPracticas()
-    {
-        if (!self::legacyChildTableExists(SegNivelInternacionPractica::tableName())) {
-            return $this->hasMany(SegNivelInternacionPractica::className(), ['id_internacion' => 'id'])
-                ->where('0=1');
-        }
-
-        return $this->hasMany(SegNivelInternacionPractica::className(), ['id_internacion' => 'id']);
-    }
-
-    /**
-     * Alias histórico (`segNivelInternacionPracticas`).
-     */
-    public function getSegNivelInternacionPracticas()
-    {
-        return $this->getPracticas();
-    }
-
-    /**
-     * Plan / ítems de medicación de internación ({@see SegNivelInternacionMedicamento}).
-     *
-     * @deprecated En greenfield use {@see InpatientClinicalQuery::bundleForInternacion()}.
-     */
-    public function getMedicamentos()
-    {
-        if (!self::legacyChildTableExists(SegNivelInternacionMedicamento::tableName())) {
-            return $this->hasMany(SegNivelInternacionMedicamento::className(), ['id_internacion' => 'id'])
-                ->where('0=1');
-        }
-
-        return $this->hasMany(SegNivelInternacionMedicamento::className(), ['id_internacion' => 'id']);
-    }
-
-    /**
-     * Alias histórico (`segNivelInternacionMedicamentos`).
-     */
-    public function getSegNivelInternacionMedicamentos()
-    {
-        return $this->getMedicamentos();
-    }
-
-    /**
-     * Suministros de medicación administrados durante la internación.
-     */
-    public function getSuministrosMedicamentos()
-    {
-        return $this->hasMany(SegNivelInternacionSuministroMedicamento::className(), ['id_internacion' => 'id'])
-            ->orderBy(['fecha' => SORT_ASC, 'hora' => SORT_ASC]);
-    }
-
-    /**
-     * Alias histórico (`segNivelInternacionSuministroMedicamentos`).
-     */
-    public function getSegNivelInternacionSuministroMedicamentos()
-    {
-        return $this->getSuministrosMedicamentos();
-    }
-
-    /**
-     * Registros de enfermería asociados a la internación.
-     */
-    public function getAtencionesEnfermeria()
-    {
-        return $this->hasMany(SegNivelInternacionAtencionesEnfermeria::className(), ['id_internacion' => 'id']);
-    }
-
-    /**
-     * Alias histórico (`segNivelInternacionAtencionesEnfermeria`).
-     */
-    public function getSegNivelInternacionAtencionesEnfermeria()
-    {
-        return $this->getAtencionesEnfermeria();
     }
 
     /**
@@ -566,10 +464,5 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
         $footer = $a . $b;
 
         return $footer;
-    }
-
-    private static function legacyChildTableExists(string $table): bool
-    {
-        return Yii::$app->db->schema->getTableSchema($table, true) !== null;
     }
 }

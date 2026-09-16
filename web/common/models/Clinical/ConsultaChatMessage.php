@@ -2,7 +2,6 @@
 
 namespace common\models\Clinical;
 
-use common\models\Clinical\Mensajes;
 use common\models\Platform\User;
 use common\models\Clinical\Encounter;
 use Yii;

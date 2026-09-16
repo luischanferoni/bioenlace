@@ -2,6 +2,10 @@
 
 namespace common\components\Domain\Clinical\Specialty\Odontology\Service;
 
+use common\components\Domain\Clinical\Encounter\Domain\ConditionVerificationStatus;
+
+use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
+
 use common\components\Domain\Clinical\Encounter\Dto\ProcedureDto;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanCategory;
 use common\components\Domain\Clinical\Encounter\Domain\ProcedureStatus;
@@ -11,7 +15,6 @@ use common\models\Clinical\Condition;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\Procedure;
 use common\models\Clinical\ProcedureOdontologyExt;
-use common\models\Clinical\DiagnosticoConsulta;
 
 /**
  * Prácticas y diagnósticos odontológicos sobre {@see Encounter} (ex consultas_odontologia_*).
@@ -120,7 +123,7 @@ final class OdontologyEncounterService
             ->innerJoin(['enc' => Encounter::tableName()], 'enc.id = c.encounter_id')
             ->where([
                 'enc.subject_persona_id' => $personaId,
-                'c.clinical_status' => DiagnosticoConsulta::CLINICAL_STATUS_ACTIVE,
+                'c.clinical_status' => ConditionClinicalStatus::ACTIVE,
             ])
             ->andWhere(['<=', 'enc.id', $encounterId])
             ->andWhere(['enc.deleted_at' => null, 'c.deleted_at' => null])
@@ -182,8 +185,8 @@ final class OdontologyEncounterService
             $condition->subject_persona_id = $encounter->subject_persona_id;
             $condition->code = is_numeric($codigo) ? (string) $codigo : null;
             $condition->display = $row['termino'] ?? null;
-            $condition->clinical_status = DiagnosticoConsulta::CLINICAL_STATUS_ACTIVE;
-            $condition->verification_status = DiagnosticoConsulta::VERIFICATION_STATUS_CONFIRMED;
+            $condition->clinical_status = ConditionClinicalStatus::ACTIVE;
+            $condition->verification_status = ConditionVerificationStatus::CONFIRMED;
             $condition->recorded_date = date('Y-m-d H:i:s');
             $condition->note = $this->buildOdontologyStateNote($row);
             $condition->save(false);
@@ -207,8 +210,8 @@ final class OdontologyEncounterService
             $condition->subject_persona_id = $encounter->subject_persona_id;
             $condition->code = (string) ($row['codigo'] ?? $row['conceptId'] ?? '');
             $condition->display = $row['termino'] ?? null;
-            $condition->clinical_status = DiagnosticoConsulta::CLINICAL_STATUS_ACTIVE;
-            $condition->verification_status = DiagnosticoConsulta::VERIFICATION_STATUS_CONFIRMED;
+            $condition->clinical_status = ConditionClinicalStatus::ACTIVE;
+            $condition->verification_status = ConditionVerificationStatus::CONFIRMED;
             $condition->recorded_date = date('Y-m-d H:i:s');
             $condition->note = $this->buildOdontologyNote($row);
             if ($condition->code === '') {

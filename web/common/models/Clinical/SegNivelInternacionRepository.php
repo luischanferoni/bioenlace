@@ -5,7 +5,6 @@ namespace common\models\Clinical;
 use common\models\Organization\InfraestructuraCama;
 use common\components\Domain\Clinical\CarePlan\Service\CarePlanLifecycleService;
 use common\components\Domain\Clinical\Specialty\Inpatient\Service\InpatientEncounterAuxService;
-use common\models\Clinical\Encounter;
 use Yii;
 
 /*
@@ -16,42 +15,12 @@ class SegNivelInternacionRepository
 {
     public static function getBalancesHidricos(SegNivelInternacion $internacion)
     {
-        if (!self::legacyTableExists(ConsultaBalanceHidrico::tableName())) {
-            return (new InpatientEncounterAuxService())->listFluidBalancesForInternacion($internacion);
-        }
-
-        $query = ConsultaBalanceHidrico::find()
-            ->alias('bh')
-            ->leftJoin(
-                ['enc' => Encounter::tableName()],
-                'enc.id = bh.id_consulta'
-            )
-            ->where(['enc.parent_type' => Encounter::PARENT_INTERNACION])
-            ->andWhere(['enc.parent_id' => $internacion->id])
-            ->orderBy('bh.fecha')
-            ->addOrderBy('bh.hora_inicio');
-        return $query->all();
+        return (new InpatientEncounterAuxService())->listFluidBalancesForInternacion($internacion);
     }
-    
+
     public static function getRegimenes(SegNivelInternacion $internacion)
     {
-        if (!self::legacyTableExists(ConsultaRegimen::tableName())) {
-            return (new InpatientEncounterAuxService())->listRegimensForInternacion($internacion);
-        }
-
-        $query = ConsultaRegimen::find()
-            ->alias('r')
-            ->addSelect([
-                'r.*',
-                'DATE_FORMAT(enc.created_at, "%d/%m/%Y %H:%i") as consulta_fecha',
-            ])
-            ->leftJoin(
-                ['enc' => Encounter::tableName()],
-                'enc.id = r.id_consulta'
-            )
-            ->where(['enc.parent_type' => Encounter::PARENT_INTERNACION])
-            ->andWhere(['enc.parent_id' => $internacion->id]);
-        return $query->all();
+        return (new InpatientEncounterAuxService())->listRegimensForInternacion($internacion);
     }
     
     public static function doExternacion(SegNivelInternacion $model) {
@@ -137,8 +106,4 @@ class SegNivelInternacionRepository
         }
     }
 
-    private static function legacyTableExists(string $table): bool
-    {
-        return Yii::$app->db->schema->getTableSchema($table, true) !== null;
-    }
 }

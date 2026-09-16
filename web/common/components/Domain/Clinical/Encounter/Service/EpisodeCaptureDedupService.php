@@ -2,13 +2,14 @@
 
 namespace common\components\Domain\Clinical\Encounter\Service;
 
+use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
+
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Domain\Clinical\Encounter\Domain\RequestStatus;
 use common\models\Clinical\Condition;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\MedicationRequest;
 use common\models\Clinical\ServiceRequest;
-use common\models\Clinical\DiagnosticoConsulta;
 
 /**
  * Anti-duplicado de evoluciones en episodio (INTERNACION / GUARDIA):
@@ -241,7 +242,7 @@ final class EpisodeCaptureDedupService
         $q = Condition::find()
             ->andWhere(['subject_persona_id' => $subjectPersonaId])
             ->andWhere(['deleted_at' => null])
-            ->andWhere(['clinical_status' => DiagnosticoConsulta::CLINICAL_STATUS_ACTIVE]);
+            ->andWhere(['clinical_status' => ConditionClinicalStatus::ACTIVE]);
         if ($encounterIds !== []) {
             $q->andWhere(['encounter_id' => $encounterIds]);
         }

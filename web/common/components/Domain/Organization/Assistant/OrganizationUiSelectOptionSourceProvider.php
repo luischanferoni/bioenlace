@@ -4,8 +4,9 @@ namespace common\components\Domain\Organization\Assistant;
 
 use common\components\Platform\Ui\UiSelectOptionSourceProviderInterface;
 use common\models\Organization\Efector;
+use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Organization\Servicio;
-use common\models\Organization\UserEfector;
+use common\models\Person\Persona;
 use Yii;
 
 /**
@@ -49,9 +50,22 @@ final class OrganizationUiSelectOptionSourceProvider implements UiSelectOptionSo
         }
 
         if ($filter === 'user_efectores' && $userId) {
-            $q = UserEfector::find()
-                ->joinWith('efector')
-                ->where(['user_efector.id_user' => $userId])
+            $persona = Persona::findOne(['id_user' => (int) $userId]);
+            if ($persona === null) {
+                return [];
+            }
+            $sessionRows = ProfesionalEfectorServicio::getEfectoresParaSesion((int) $persona->id_persona);
+            $idEfectores = array_values(array_unique(array_map(
+                static fn(array $row): int => (int) ($row['id_efector'] ?? 0),
+                $sessionRows
+            )));
+            $idEfectores = array_values(array_filter($idEfectores, static fn(int $id): bool => $id > 0));
+            if ($idEfectores === []) {
+                return [];
+            }
+
+            $q = Efector::find()
+                ->where(['id_efector' => $idEfectores])
                 ->andWhere('efectores.deleted_at IS NULL');
 
             if ($idServicio) {
@@ -65,8 +79,8 @@ final class OrganizationUiSelectOptionSourceProvider implements UiSelectOptionSo
             $options = [];
             foreach ($efectores as $efector) {
                 $options[] = [
-                    'id' => $efector->efector->id_efector,
-                    'name' => $efector->efector->nombre,
+                    'id' => $efector->id_efector,
+                    'name' => $efector->nombre,
                 ];
             }
 

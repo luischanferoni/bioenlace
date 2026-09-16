@@ -7,7 +7,6 @@ use common\models\Person\Persona;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Organization\Efector;
 use common\models\Scheduling\Turno;
-use Yii;
 use yii\db\ActiveRecord;
 
 /**
@@ -212,59 +211,10 @@ class Encounter extends ActiveRecord
             ->all();
     }
 
-    /** @deprecated Tabla `consultas_motivos` retirada (03e-8). Usar {@see $reason_text}. */
-    public function getMotivoConsulta(): \yii\db\ActiveQuery
-    {
-        return $this->legacyChildRelation(\common\models\Clinical\ConsultaMotivos::class, ['id_consulta' => 'id']);
-    }
-
-    /** @deprecated Usar {@see getMedicamentosActivos()} o {@see getMedicationRequests()}. */
+    /** Medicación del encounter (FHIR MedicationRequest). */
     public function getMedicamentos(): \yii\db\ActiveQuery
     {
         return $this->getMedicationRequests();
-    }
-
-    /** @deprecated Usar {@see getConditions()} / {@see getDiagnosticos()}. */
-    public function getDiagnosticoConsultasLegacy(): \yii\db\ActiveQuery
-    {
-        return $this->legacyChildRelation(\common\models\Clinical\DiagnosticoConsulta::class, ['id_consulta' => 'id']);
-    }
-
-    /** @deprecated Odontología → {@see getConditions()} con nota odontology (03e-5). */
-    public function getOdontologiaDiagnosticos(): \yii\db\ActiveQuery
-    {
-        return $this->legacyChildRelation(
-            \common\models\Clinical\ConsultaOdontologiaDiagnosticos::class,
-            ['id_consulta' => 'id']
-        );
-    }
-
-    /** @deprecated Odontología → {@see getProcedures()} / Procedure ext (03e-5). */
-    public function getOdontologiaPracticas(): \yii\db\ActiveQuery
-    {
-        return $this->legacyChildRelation(
-            \common\models\Clinical\ConsultaOdontologiaPracticas::class,
-            ['id_consulta' => 'id']
-        );
-    }
-
-    /**
-     * @param class-string<\yii\db\ActiveRecord> $class
-     * @param array<string, string> $link
-     */
-    private function legacyChildRelation(string $class, array $link): \yii\db\ActiveQuery
-    {
-        $query = $this->hasMany($class, $link);
-        if (!self::legacyTableExists($class::tableName())) {
-            $query->where('0=1');
-        }
-
-        return $query;
-    }
-
-    private static function legacyTableExists(string $table): bool
-    {
-        return Yii::$app->db->schema->getTableSchema($table, true) !== null;
     }
 
     public function isInProgress(): bool

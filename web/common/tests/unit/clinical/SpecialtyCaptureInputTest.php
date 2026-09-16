@@ -6,8 +6,6 @@ use Codeception\Test\Unit;
 use common\components\Domain\Clinical\Capture\Workflow\EncounterCaptureCompletenessValidator;
 use common\models\Clinical\Input\OdontologiaItemInput;
 use common\models\Clinical\Input\OftalmologiaEstudioInput;
-use common\models\Clinical\ConsultaOdontologiaPracticas;
-use common\models\Clinical\ConsultaPracticasOftalmologiaEstudios;
 
 class SpecialtyCaptureInputTest extends Unit
 {
@@ -46,7 +44,7 @@ class SpecialtyCaptureInputTest extends Unit
                     'titulo' => 'Prácticas odontológicas',
                     'modelo' => 'ConsultaOdontologiaPracticas',
                     'requerido' => false,
-                    'campos_requeridos' => (new ConsultaOdontologiaPracticas())->requeridosPrompt(),
+                    'campos_requeridos' => OdontologiaItemInput::promptFieldNames(),
                 ],
             ]
         );
@@ -67,7 +65,7 @@ class SpecialtyCaptureInputTest extends Unit
                     'titulo' => 'Estudios oftalmológicos',
                     'modelo' => 'ConsultaPracticasOftalmologiaEstudios',
                     'requerido' => false,
-                    'campos_requeridos' => (new ConsultaPracticasOftalmologiaEstudios())->requeridosPrompt(),
+                    'campos_requeridos' => OftalmologiaEstudioInput::promptFieldNames(),
                 ],
             ]
         );

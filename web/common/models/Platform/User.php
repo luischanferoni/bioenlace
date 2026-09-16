@@ -459,13 +459,17 @@ class User extends ActiveRecord implements IdentityInterface
     {
         $query = new yii\db\Query();
         $query->select(['`user`.*'])
+            ->distinct()
             ->from('user')
-            ->where('auth_item.name', $rol)
-            ->andWhere('auth_item.type', 1)
-            ->andWhere('user_efector.id_efector', $id_efector)
-            ->leftJoin('user_efector', '`user_efector`.`id_user` = `user`.`id`')
+            ->innerJoin('personas', '`personas`.`id_user` = `user`.`id`')
+            ->innerJoin(
+                'profesional_efector_servicio pes',
+                '`pes`.`id_persona` = `personas`.`id_persona` AND `pes`.`deleted_at` IS NULL'
+            )
+            ->andWhere(['pes.id_efector' => (int) $id_efector])
+            ->leftJoin('auth_assignment', '`user`.`id` = `auth_assignment`.`user_id`')
             ->leftJoin('auth_item', '`auth_item`.`name` = `auth_assignment`.`item_name`')
-            ->leftJoin('auth_assignment', '`user`.`id` = `auth_assignment`.`user_id`');
+            ->andWhere(['auth_item.name' => $rol, 'auth_item.type' => 1]);
 
         return $query->createCommand()->queryAll();
     }

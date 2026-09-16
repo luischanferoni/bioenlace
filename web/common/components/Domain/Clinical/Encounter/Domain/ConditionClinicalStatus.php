@@ -2,20 +2,28 @@
 
 namespace common\components\Domain\Clinical\Encounter\Domain;
 
-use common\models\Clinical\DiagnosticoConsulta;
-
 /**
- * clinical_status FHIR Condition (valores alineados a DiagnosticoConsulta).
+ * clinical_status FHIR Condition.
  */
 final class ConditionClinicalStatus
 {
-    public const ACTIVE = DiagnosticoConsulta::CLINICAL_STATUS_ACTIVE;
-    public const RECURRENCE = DiagnosticoConsulta::CLINICAL_STATUS_RECURRENCE;
-    public const RELAPSE = DiagnosticoConsulta::CLINICAL_STATUS_RELAPSE;
-    public const INACTIVE = DiagnosticoConsulta::CLINICAL_STATUS_INACTIVE;
-    public const REMISSION = DiagnosticoConsulta::CLINICAL_STATUS_REMISSION;
-    public const RESOLVED = DiagnosticoConsulta::CLINICAL_STATUS_RESOLVED;
-    public const UNKNOWN = DiagnosticoConsulta::CLINICAL_STATUS_UNKNOWN;
+    public const ACTIVE = 'ACTIVE';
+    public const RECURRENCE = 'RECURRENCE';
+    public const RELAPSE = 'RELAPSE';
+    public const INACTIVE = 'INACTIVE';
+    public const REMISSION = 'REMISSION';
+    public const RESOLVED = 'RESOLVED';
+    public const UNKNOWN = 'UNKNOWN';
+
+    /** @var array<string, string> */
+    public const LABELS = [
+        self::ACTIVE => 'Activo',
+        self::RECURRENCE => 'Activo-Reaparición',
+        self::RELAPSE => 'Activo-Recaida',
+        self::INACTIVE => 'Inactivo',
+        self::REMISSION => 'Inactivo-Remisión',
+        self::RESOLVED => 'Inactivo-Resuelto',
+    ];
 
     /** @var list<string> */
     public const ACTIVE_LIKE = [
@@ -76,8 +84,6 @@ final class ConditionClinicalStatus
     }
 
     /**
-     * Opciones de cierre para UI (sin preselección).
-     *
      * @return list<array{value: string, label: string}>
      */
     public static function closureOptions(): array

@@ -124,8 +124,14 @@ class EncounterDefinition extends ActiveRecord
             return [];
         }
         try {
-            $claseModelo = "\\common\\models\\{$nombreModelo}";
-            if (!class_exists($claseModelo)) {
+            $claseModelo = null;
+            foreach (["\\common\\models\\Clinical\\{$nombreModelo}", "\\common\\models\\{$nombreModelo}"] as $candidate) {
+                if (class_exists($candidate)) {
+                    $claseModelo = $candidate;
+                    break;
+                }
+            }
+            if ($claseModelo === null) {
                 return [];
             }
             $modelo = new $claseModelo();

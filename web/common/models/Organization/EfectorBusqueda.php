@@ -157,15 +157,17 @@ class EfectorBusqueda extends Efector
     
     public function searchuserefector($params)
     {
-                
-        //variable con el usuario que inicio sesion
         $id_user = Yii::$app->user->id;
-        //consulta efectores correspondientes al usuario que inicio sesion
         $query = Efector::find()
-                        ->select('efectores.*')
-                        ->leftJoin('user_efector', '`user_efector`.`id_efector` = `efectores`.`id_efector`')
-                        ->where(['user_efector.id_user' => $id_user]);
-        
+            ->alias('efectores')
+            ->select('efectores.*')
+            ->distinct()
+            ->innerJoin('personas p', 'p.id_user = :id_user', [':id_user' => (int) $id_user])
+            ->innerJoin(
+                'profesional_efector_servicio pes',
+                'pes.id_persona = p.id_persona AND pes.id_efector = efectores.id_efector AND pes.deleted_at IS NULL'
+            );
+
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
         ]);
@@ -173,23 +175,21 @@ class EfectorBusqueda extends Efector
         $this->load($params);
 
         if (!$this->validate()) {
-            // uncomment the following line if you do not want to return any records when validation fails
-            // $query->where('0=1');
             return $dataProvider;
         }
 
         $query->andFilterWhere([
-            'id_efector' => $this->id_efector,
-            'id_localidad' => $this->id_localidad,
+            'efectores.id_efector' => $this->id_efector,
+            'efectores.id_localidad' => $this->id_localidad,
         ]);
 
-        $query->andFilterWhere(['like', 'codigo_sisa', $this->codigo_sisa])
-            ->andFilterWhere(['like', 'nombre', $this->nombre])
-            ->andFilterWhere(['like', 'dependencia', $this->dependencia])
-            ->andFilterWhere(['like', 'tipologia', $this->tipologia])
-            ->andFilterWhere(['like', 'domicilio', $this->domicilio])
-            ->andFilterWhere(['like', 'telefono', $this->telefono])
-            ->andFilterWhere(['like', 'origen_financiamiento', $this->origen_financiamiento]);
+        $query->andFilterWhere(['like', 'efectores.codigo_sisa', $this->codigo_sisa])
+            ->andFilterWhere(['like', 'efectores.nombre', $this->nombre])
+            ->andFilterWhere(['like', 'efectores.dependencia', $this->dependencia])
+            ->andFilterWhere(['like', 'efectores.tipologia', $this->tipologia])
+            ->andFilterWhere(['like', 'efectores.domicilio', $this->domicilio])
+            ->andFilterWhere(['like', 'efectores.telefono', $this->telefono])
+            ->andFilterWhere(['like', 'efectores.origen_financiamiento', $this->origen_financiamiento]);
 
         return $dataProvider;
     }

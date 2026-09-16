@@ -6,8 +6,8 @@ use common\models\Clinical\Encounter;
 use common\models\Clinical\MedicationAdministration;
 use common\models\Clinical\NutritionOrder;
 use common\models\Clinical\Observation;
-use common\models\Clinical\ConsultaBalanceHidrico;
-use common\models\Clinical\ConsultaRegimen;
+use common\components\Domain\Clinical\Specialty\Inpatient\Dto\InpatientFluidBalanceRow;
+use common\components\Domain\Clinical\Specialty\Inpatient\Dto\InpatientRegimenRow;
 use common\models\Clinical\SegNivelInternacion;
 
 /**
@@ -19,7 +19,7 @@ final class InpatientEncounterAuxService
     public const OBS_CODE_FLUID_BALANCE = 'fluid-balance-entry';
 
     /**
-     * @return ConsultaBalanceHidrico[]
+     * @return InpatientFluidBalanceRow[]
      */
     public function listFluidBalancesForInternacion(SegNivelInternacion $internacion): array
     {
@@ -50,7 +50,7 @@ final class InpatientEncounterAuxService
     }
 
     /**
-     * @return ConsultaRegimen[]
+     * @return InpatientRegimenRow[]
      */
     public function listRegimensForInternacion(SegNivelInternacion $internacion): array
     {
@@ -174,15 +174,14 @@ final class InpatientEncounterAuxService
         return $admin;
     }
 
-    private function mapObservationToBalanceHidrico(Observation $obs): ?ConsultaBalanceHidrico
+    private function mapObservationToBalanceHidrico(Observation $obs): ?InpatientFluidBalanceRow
     {
         $meta = $this->decodeJson($obs->value_json);
         if ($meta === []) {
             return null;
         }
 
-        $model = new ConsultaBalanceHidrico();
-        $model->setIsNewRecord(false);
+        $model = new InpatientFluidBalanceRow();
         $model->id = (int) $obs->id;
         $model->id_consulta = (int) $obs->encounter_id;
         $model->tipo_registro = (string) ($meta['tipo_registro'] ?? '');
@@ -202,12 +201,11 @@ final class InpatientEncounterAuxService
     /**
      * @param array<string, mixed> $row
      */
-    private function mapNutritionOrderRowToRegimen(array $row): ConsultaRegimen
+    private function mapNutritionOrderRowToRegimen(array $row): InpatientRegimenRow
     {
         $diet = $this->decodeJson($row['oral_diet_json'] ?? null);
 
-        $model = new ConsultaRegimen();
-        $model->setIsNewRecord(false);
+        $model = new InpatientRegimenRow();
         $model->id = (int) ($row['id'] ?? 0);
         $model->id_consulta = (int) ($row['encounter_id'] ?? 0);
         $model->concept_id = isset($diet['concept_id']) ? (string) $diet['concept_id'] : null;

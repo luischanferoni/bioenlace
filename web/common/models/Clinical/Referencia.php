@@ -166,58 +166,8 @@ class Referencia extends \yii\db\ActiveRecord
     public function afterSave($insert, $changedAttributes)
     {
         parent::afterSave($insert, $changedAttributes);
-        $mensajes = new \common\models\Clinical\Mensajes();
-        $model = new Referencia();
-        $model->load(Yii::$app->request->post());
-        
-            if ($insert){
-                if ($model->isNewRecord) {
-                    
-                    $persona = Referencia::getDatosPersona($model->getEncounter_id(), $this->id_referencia);
-                    
-                    $apeynom=$persona[0]['apellido'].', '.$persona[0]['nombre'];
-                    $efectororigen = \common\models\Organization\Efector::findOne(['id_efector' => $persona[0]['id_efector']]);
-                    $origen = $efectororigen->nombre;
-                    $efectordestino = \common\models\Organization\Efector::findOne(['id_efector' => $model->id_efector_referenciado]);
-                    $destino = $efectordestino->nombre;
-                    
-                    $derivacion = \common\models\Terminology\MotivoDerivacion::findOne($model->id_motivo_derivacion);
-                    $motivo_derivacion = $derivacion->nombre;
-                    
-                    if($model->id_motivo_derivacion == 3){
-                        // id_motivo_derivacion=3 corresponde a un estudio complementario
-                        $estudios_complementarios = $model->estudios_complementarios;
-                }else{
-                    $estudios_complementarios = "-";
-                }
-                    if($model->tratamiento_previo == 'SI'){
-                        $tratamiento = $model->tratamiento;
-                    }else{
-                        $tratamiento="-";
-                    }
-                    $serv = \common\models\Organization\Servicio::findOne($model->id_servicio);
-                    $servicio = $serv->nombre;
-                    
-                    
-                    $mensajes->id_emisor =  Yii::$app->user->id;
-                    $mensajes->id_receptor =  $model->id_efector_referenciado;
-                    $mensajes->asunto =  "Referencia";
-                    $mensajes->texto =  "Referencia generada para el encounter: ".$model->getEncounter_id()."<br>"
-                            . "<p>Establecimiento que deriva: ".$origen."</p>"
-                            . "<p>Establecimiento destino: ".$destino."</p>"
-                            . "<p>Paciente: ".$apeynom."</p>"
-                            . "<p>Motivo de Derivacion: ".$motivo_derivacion."</p>"
-                            . "<p>Estudio Complementario: ".$estudios_complementarios."</p>"
-                            . "<p>Tratamiento Previo: ".$model->tratamiento_previo."</p>"
-                            . "<p>Tratamiento: ".$tratamiento."</p>"
-                            . "<p>Servicio: ".$servicio."</p>";
-                    $mensajes->fecha = date("Y-m-d");
-                    $mensajes->estado = "No leído";
-                    $mensajes->save();
-                }
-            } 
-            return true;
-        }
+        // Notificación vía AR Mensajes retirada (tabla inexistente).
+    }
         
         
     public function getUsuarioPorIdEfectorIdServicio($idefector, $idservicio)

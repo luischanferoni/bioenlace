@@ -2,6 +2,8 @@
 
 namespace common\components\Domain\Clinical\Encounter\Service;
 
+use common\components\Domain\Clinical\Encounter\Domain\ConditionVerificationStatus;
+
 use common\components\Domain\Clinical\Encounter\AiContext\PatientAiContextBuilder;
 use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
 use common\components\Platform\Ai\IAManager;
@@ -9,7 +11,6 @@ use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
 use common\models\Clinical\Condition;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterDefinition;
-use common\models\Clinical\DiagnosticoConsulta;
 use Yii;
 
 /**
@@ -427,8 +428,8 @@ final class EncounterAutomaticCodingService
         $condition->code = $code;
         $condition->code_system = $codeSystem;
         $condition->display = $display;
-        $condition->clinical_status = DiagnosticoConsulta::CLINICAL_STATUS_ACTIVE;
-        $condition->verification_status = DiagnosticoConsulta::VERIFICATION_STATUS_PROVISIONAL;
+        $condition->clinical_status = ConditionClinicalStatus::ACTIVE;
+        $condition->verification_status = ConditionVerificationStatus::PROVISIONAL;
         $condition->diagnosis_role = $rol === 'principal' ? 'principal' : 'secondary';
         $condition->note = $note;
         $condition->recorded_date = date('Y-m-d H:i:s');

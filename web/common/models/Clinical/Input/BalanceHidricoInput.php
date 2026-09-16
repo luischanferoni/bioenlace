@@ -2,7 +2,7 @@
 
 namespace common\models\Clinical\Input;
 
-use common\models\Clinical\ConsultaBalanceHidrico;
+use common\components\Domain\Clinical\Specialty\Inpatient\Dto\InpatientFluidBalanceRow;
 use yii\base\Model;
 
 /**
@@ -81,7 +81,7 @@ final class BalanceHidricoInput extends Model
             [
                 ['tipoRegistro'],
                 'in',
-                'range' => [ConsultaBalanceHidrico::TREG_INGRESO, ConsultaBalanceHidrico::TREG_EGRESO],
+                'range' => [InpatientFluidBalanceRow::TREG_INGRESO, InpatientFluidBalanceRow::TREG_EGRESO],
                 'skipOnEmpty' => true,
                 'message' => 'El tipo de registro debe ser Ingreso o Egreso.',
             ],
@@ -120,8 +120,8 @@ final class BalanceHidricoInput extends Model
                     $index,
                     $field,
                     [
-                        ['value' => ConsultaBalanceHidrico::TREG_INGRESO, 'label' => 'Ingreso (fluidos que entran)'],
-                        ['value' => ConsultaBalanceHidrico::TREG_EGRESO, 'label' => 'Egreso (fluidos que salen)'],
+                        ['value' => InpatientFluidBalanceRow::TREG_INGRESO, 'label' => 'Ingreso (fluidos que entran)'],
+                        ['value' => InpatientFluidBalanceRow::TREG_EGRESO, 'label' => 'Egreso (fluidos que salen)'],
                     ],
                     false
                 );
@@ -210,9 +210,9 @@ final class BalanceHidricoInput extends Model
             $this->tipoRegistro = null;
         } elseif ($this->tipoRegistro === null || $this->tipoRegistro === '') {
             if ($hasIngresoWord || str_starts_with($lower, 'ingreso')) {
-                $this->tipoRegistro = ConsultaBalanceHidrico::TREG_INGRESO;
+                $this->tipoRegistro = InpatientFluidBalanceRow::TREG_INGRESO;
             } elseif ($hasEgresoWord || str_starts_with($lower, 'egreso')) {
-                $this->tipoRegistro = ConsultaBalanceHidrico::TREG_EGRESO;
+                $this->tipoRegistro = InpatientFluidBalanceRow::TREG_EGRESO;
             }
         }
 
@@ -235,12 +235,12 @@ final class BalanceHidricoInput extends Model
             return;
         }
         if ($raw === 'ingreso' || str_starts_with($raw, 'ingres')) {
-            $this->tipoRegistro = ConsultaBalanceHidrico::TREG_INGRESO;
+            $this->tipoRegistro = InpatientFluidBalanceRow::TREG_INGRESO;
 
             return;
         }
         if ($raw === 'egreso' || str_starts_with($raw, 'egres')) {
-            $this->tipoRegistro = ConsultaBalanceHidrico::TREG_EGRESO;
+            $this->tipoRegistro = InpatientFluidBalanceRow::TREG_EGRESO;
 
             return;
         }

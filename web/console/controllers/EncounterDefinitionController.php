@@ -2,7 +2,7 @@
 
 namespace console\controllers;
 
-use common\components\Domain\Clinical\EncounterDefinitionWorkflowSanitizer;
+use common\components\Domain\Clinical\Capture\Workflow\EncounterDefinitionWorkflowSanitizer;
 use yii\console\Controller;
 use yii\console\ExitCode;
 use yii\db\Query;

@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Clinical\Assistant;
 
-use common\components\Domain\Clinical\Workflow\EncounterCapturePipelineService;
-use common\components\Domain\Clinical\Workflow\EncounterDocumentationService;
+use common\components\Domain\Clinical\Capture\Workflow\EncounterCapturePipelineService;
+use common\components\Domain\Clinical\Capture\Workflow\EncounterDocumentationService;
 use yii\web\UploadedFile;
 
 /**

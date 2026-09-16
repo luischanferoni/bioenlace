@@ -6,7 +6,7 @@ use common\components\Domain\Clinical\CareCohort\Application\Agent\CareFollowupB
 
 use common\components\Domain\Clinical\CareCohort\Presentation\CareEducationModuleResolver;
 use common\components\Domain\Clinical\CareCohort\Presentation\CarePackFollowupPresenter;
-use common\components\Domain\Clinical\Service\Authorization\EncounterAccessService;
+use common\components\Domain\Clinical\Encounter\Service\Authorization\EncounterAccessService;
 use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
 use common\components\Domain\Person\Representation\Service\PersonRepresentationSubjectService;
 use common\models\Clinical\CareCohortPack;

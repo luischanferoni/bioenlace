@@ -3,7 +3,7 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Service\ServiceRequestService;
+use common\components\Domain\Clinical\CarePlan\Service\ServiceRequestService;
 use common\models\Clinical\ConsultaIndicaciones;
 use common\models\Clinical\ConsultaPracticas;
 

@@ -22,7 +22,7 @@ use common\components\Domain\Clinical\Home\Sections\PatientConditionsActiveSecti
 use common\components\Domain\Clinical\Home\Sections\StaffGuardiaKpiSectionProvider;
 use common\components\Domain\Clinical\Home\Sections\StaffInternacionKpiSectionProvider;
 use common\components\Domain\Clinical\Inpatient\Service\Authorization\ClinicalInternacionStaffAccessPolicy;
-use common\components\Domain\Clinical\Service\Authorization\ClinicalEncounterAccessPolicy;
+use common\components\Domain\Clinical\Encounter\Service\Authorization\ClinicalEncounterAccessPolicy;
 use common\components\Platform\Ui\Home\Service\Sections\StaffSessionContextSectionProvider;
 use common\components\Platform\Core\DataAccess\DataAccessEditFlowDraftHydrator;
 use common\components\Platform\Core\DataAccess\DataAccessFlowDraftHydrator;

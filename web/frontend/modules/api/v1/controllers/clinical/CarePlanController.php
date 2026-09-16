@@ -8,12 +8,12 @@ use common\components\Domain\Person\Representation\Service\PersonRepresentationS
 use common\models\Person\PersonRelatedAuditLog;
 use common\components\Domain\Clinical\CarePlan\Reminder\CarePlanReminderPreferenceService;
 use common\components\Domain\Clinical\CarePlan\Reminder\CarePlanReminderScheduleBuilder;
-use common\components\Domain\Clinical\Dto\CarePlanDto;
-use common\components\Domain\Clinical\Service\CarePlanLifecycleService;
-use common\components\Domain\Clinical\Service\CarePlanMedicationListService;
-use common\components\Domain\Clinical\Service\CarePlanPresentationService;
+use common\components\Domain\Clinical\CarePlan\Dto\CarePlanDto;
+use common\components\Domain\Clinical\CarePlan\Service\CarePlanLifecycleService;
+use common\components\Domain\Clinical\CarePlan\Service\CarePlanMedicationListService;
+use common\components\Domain\Clinical\CarePlan\Service\CarePlanPresentationService;
 use common\components\Domain\Clinical\CarePlan\CarePlanAdherenceStaffService;
-use common\components\Domain\Clinical\Service\PatientActiveCarePlanQuery;
+use common\components\Domain\Clinical\CarePlan\Service\PatientActiveCarePlanQuery;
 use common\components\Domain\Scheduling\Service\ConsultaAsyncSolicitudService;
 use common\components\Platform\Ui\UiScreenService;
 use frontend\modules\api\v1\controllers\BaseController;

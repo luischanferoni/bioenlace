@@ -9,7 +9,7 @@ use common\models\Scheduling\Turno;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\components\Platform\Core\Service\Push\FcmPushConfig;
 use common\components\Domain\Scheduling\Service\TurnoReminderContentBuilder;
-use common\components\Domain\Clinical\Service\AppointmentReasonBatchService;
+use common\components\Domain\Clinical\Encounter\Service\AppointmentReasonBatchService;
 
 /**
  * Procesa turno_notificacion_programada (cron cada N minutos).

@@ -2,7 +2,7 @@
 
 namespace common\tests\unit\platform\ai;
 
-use common\components\Domain\Clinical\SpeechToText\ClinicalSpeechInputResolver;
+use common\components\Domain\Clinical\Capture\SpeechToText\ClinicalSpeechInputResolver;
 use common\components\Platform\Ai\SpeechToText\SttConfigService;
 
 class SttConfigServiceTest extends \Codeception\Test\Unit

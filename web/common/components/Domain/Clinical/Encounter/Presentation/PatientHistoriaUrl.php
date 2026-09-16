@@ -1,0 +1,47 @@
+<?php
+
+namespace common\components\Domain\Clinical\Encounter\Presentation;
+
+use yii\helpers\Url;
+
+/**
+ * Enlaces a captura clínica vía timeline ({@see \frontend\controllers\PacienteController::actionHistoria})
+ * o a consulta documentada ({@see \frontend\controllers\PacienteController::actionVerConsulta}).
+ *
+ * Parent keys: {@see \common\models\Clinical\Encounter::PARENT_*}.
+ */
+final class PatientHistoriaUrl
+{
+    /**
+     * @param string $parent Clave {@see \common\models\Clinical\Encounter::PARENT_*} (TURNO, GUARDIA, …)
+     * @param array<string, scalar> $extraParams Query adicional (p. ej. id_servicio en pase previo)
+     */
+    public static function captura(int $idPersona, string $parent, int $parentId, array $extraParams = []): string
+    {
+        return Url::to(array_merge([
+            '/paciente/historia',
+            'id' => $idPersona,
+            'parent' => $parent,
+            'parent_id' => $parentId,
+        ], $extraParams));
+    }
+
+    /** Solo lectura de consulta ya cargada (turno atendido). */
+    public static function consultaCargada(int $turnoId, ?int $idPersona = null): string
+    {
+        $params = [
+            '/paciente/ver-consulta',
+            'turno_id' => $turnoId,
+        ];
+        if ($idPersona !== null && $idPersona > 0) {
+            $params['id'] = $idPersona;
+        }
+
+        return Url::to($params);
+    }
+}
+
+// Alias legacy: el archivo estuvo un tiempo con namespace sin Domain.
+if (!\class_exists('common\\components\\Clinical\\PatientHistoriaUrl', false)) {
+    \class_alias(PatientHistoriaUrl::class, 'common\\components\\Clinical\\PatientHistoriaUrl');
+}

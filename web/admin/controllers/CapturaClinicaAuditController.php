@@ -2,7 +2,7 @@
 
 namespace admin\controllers;
 
-use common\components\Domain\Clinical\Service\EncounterCaptureAuditQueryService;
+use common\components\Domain\Clinical\Encounter\Service\EncounterCaptureAuditQueryService;
 use common\models\Clinical\EncounterCapture;
 use Yii;
 use yii\filters\VerbFilter;

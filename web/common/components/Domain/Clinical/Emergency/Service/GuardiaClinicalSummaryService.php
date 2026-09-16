@@ -4,8 +4,8 @@ namespace common\components\Domain\Clinical\Emergency\Service;
 
 use common\components\Domain\Clinical\Encounter\Domain\RequestStatus;
 use common\components\Domain\Clinical\Laboratory\Service\LaboratoryResultQueryService;
-use common\components\Domain\Clinical\PatientHistoriaUrl;
-use common\components\Domain\Clinical\Service\ServiceRequestService;
+use common\components\Domain\Clinical\Encounter\Presentation\PatientHistoriaUrl;
+use common\components\Domain\Clinical\CarePlan\Service\ServiceRequestService;
 use common\models\Clinical\DiagnosticReport;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\ServiceRequest;

@@ -4,7 +4,7 @@ namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
-use common\components\Domain\Clinical\Service\ConditionLifecycleService;
+use common\components\Domain\Clinical\Encounter\Service\ConditionLifecycleService;
 use common\models\Clinical\Condition;
 
 class ConditionLifecycleServiceTest extends Unit

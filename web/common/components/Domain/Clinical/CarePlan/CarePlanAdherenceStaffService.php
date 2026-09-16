@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\CarePlan;
 
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanStatus;
-use common\components\Domain\Clinical\Service\CarePlanPresentationService;
+use common\components\Domain\Clinical\CarePlan\Service\CarePlanPresentationService;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\CarePlanActivity;
 use common\models\Clinical\Encounter;

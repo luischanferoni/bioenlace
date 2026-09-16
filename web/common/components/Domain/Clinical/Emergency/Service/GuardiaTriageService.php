@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\Emergency\Service;
 
 use common\components\Domain\Clinical\Emergency\Domain\CircuitoEstado;
 use common\components\Domain\Clinical\Emergency\Domain\CircuitoEventType;
-use common\components\Domain\Clinical\Presentation\EpisodioDateTimeFormatter;
+use common\components\Domain\Clinical\Encounter\Presentation\EpisodioDateTimeFormatter;
 use common\components\Domain\Clinical\Emergency\Domain\TriageScale;
 use common\models\Clinical\Emergency\GuardiaTriage;
 use common\models\Clinical\Guardia;

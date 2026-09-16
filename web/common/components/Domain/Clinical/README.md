@@ -1,34 +1,33 @@
 # Clinical (`common/components/Domain/Clinical`)
 
-Bounded context FHIR clínico. **Eje = módulo de capacidad** (sin `Shared/` ni `Enum/` basurero).
+Bounded context FHIR clínico. **Eje = módulo de capacidad** (sin Shared / Enum / Service catch-all).
 
-Plan: [`clinical-modulos-capacidad`](../../../docs/plans/clinical-modulos-capacidad/).
+Plan archivado. ADR: [`clinical-modulos-capacidad`](../../../docs/decisions/clinical-modulos-capacidad.md).
 
 ## Módulos
 
-| Módulo | Dueño |
-|--------|--------|
-| `Encounter/` | Status/enums núcleo, catalogs journey/motivos, services journey, flows `atencion.*` |
-| `Emergency/` | Guardia; Domain enums; flows `urgencias.*` |
-| `Inpatient/` | Internación; agents alta/cama; flows `internacion.*` |
-| `Laboratory/` | Lab + agents + flows `laboratorio.*` + ACL External |
-| `Prescription/` | Receta + RDI agent + flows `receta.*` |
-| `CarePlan/` | Enums/status care plan; flows `tratamiento.*` |
-| `CareCohort/` | Care packs + followup agent; flows `care-packs.*` |
-| `PedidoAtencion/` | Catálogo + servicios línea×acto |
-| `HistoryExchange/` | Cola HC + IntegrationRetry agent |
+| Módulo | Contenido |
+|--------|-----------|
+| `Encounter/` | Núcleo (Domain enums/catalogs, lifecycle, conditions, episodes, journey, summary, presenters, flows `atencion.*`) |
+| `Emergency/` | Guardia + flows `urgencias.*` |
+| `Inpatient/` | Internación + agents + flows `internacion.*` |
+| `Laboratory/` | Lab + agents + Dtos + flows `laboratorio.*` + External ACL |
+| `Prescription/` | Receta + RDI agent + Dtos + flows `receta.*` |
+| `CarePlan/` | Planes, órdenes, protocolos, Dtos, flows `tratamiento.*` |
+| `CareCohort/` | Care packs + followup agent + flows `care-packs.*` |
+| `PedidoAtencion/` | Catálogo + línea×acto |
+| `Capture/` | Documentación/captura (Workflow, Text, SpeechToText, issues) |
+| `HistoryExchange/` | Cola HC + IntegrationRetry |
+| `LegalRecord/` | Export registro legal |
 | `Specialty/` | Odontología / oftalmología |
-| `Infrastructure/External/` | ACL LIS / receta / HC nacional |
-| `Assistant/` `Home/` `DataAccess/` | Plugins motor Platform |
-| `Service/` `Workflow/` `Capture/` `Text/` … | Legacy a reclasificar |
-
-Forma por módulo:
+| `Infrastructure/External/` | ACL LIS / receta / HC |
+| `Assistant/` `Home/` `DataAccess/` | Plugins Platform |
 
 ```text
 <Modulo>/Application/{Flows,Agent}/
 <Modulo>/Domain/
-<Modulo>/Infrastructure/   # si aplica
-<Modulo>/Service/          # mientras migra
+<Modulo>/Service/
+<Modulo>/Dto|Presentation|…   # según necesidad
 ```
 
 Modelos AR: `common/models/Clinical/`.

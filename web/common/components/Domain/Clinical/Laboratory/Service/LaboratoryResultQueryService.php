@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Laboratory\Service;
 
-use common\components\Domain\Clinical\Dto\DiagnosticReportDto;
+use common\components\Domain\Clinical\Laboratory\Dto\DiagnosticReportDto;
 use common\models\Clinical\DiagnosticReport;
 use common\models\Clinical\Observation;
 

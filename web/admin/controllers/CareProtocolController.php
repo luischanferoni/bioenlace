@@ -2,7 +2,7 @@
 
 namespace admin\controllers;
 
-use common\components\Domain\Clinical\Service\CareProtocolAdminService;
+use common\components\Domain\Clinical\CarePlan\Service\CareProtocolAdminService;
 use common\models\Clinical\CareProtocol;
 use common\models\Geo\Provincia;
 use Yii;

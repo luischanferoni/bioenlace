@@ -4,11 +4,11 @@ namespace frontend\modules\api\v1\controllers\clinical;
 
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
-use common\components\Domain\Clinical\SpeechToText\ClinicalSpeechInputResolver;
+use common\components\Domain\Clinical\Capture\SpeechToText\ClinicalSpeechInputResolver;
 use common\components\Platform\Ai\SpeechToText\SpeechToTextManager;
 use common\components\Platform\Ai\SpeechToText\SttConfigService;
-use common\components\Domain\Clinical\Text\ProcesadorTextoMedico;
-use common\components\Domain\Clinical\Workflow\EncounterDocumentationService;
+use common\components\Domain\Clinical\Capture\Text\ProcesadorTextoMedico;
+use common\components\Domain\Clinical\Capture\Workflow\EncounterDocumentationService;
 
 class AudioController extends BaseController
 {

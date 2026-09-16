@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Home\Sections;
 
-use common\components\Domain\Clinical\Service\ConditionPresentationService;
+use common\components\Domain\Clinical\Encounter\Service\ConditionPresentationService;
 use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
 use common\components\Domain\Person\Representation\Service\PersonRepresentationSubjectService;
 use common\components\Domain\Scheduling\Service\ConsultaAsyncBandejaService;

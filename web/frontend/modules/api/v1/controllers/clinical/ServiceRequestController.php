@@ -2,9 +2,9 @@
 
 namespace frontend\modules\api\v1\controllers\clinical;
 
-use common\components\Domain\Clinical\Dto\ServiceRequestDto;
-use common\components\Domain\Clinical\Service\CarePlanService;
-use common\components\Domain\Clinical\Service\ServiceRequestService;
+use common\components\Domain\Clinical\CarePlan\Dto\ServiceRequestDto;
+use common\components\Domain\Clinical\CarePlan\Service\CarePlanService;
+use common\components\Domain\Clinical\CarePlan\Service\ServiceRequestService;
 use common\models\Clinical\CarePlan;
 use Yii;
 use frontend\modules\api\v1\controllers\BaseController;

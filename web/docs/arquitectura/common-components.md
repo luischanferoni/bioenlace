@@ -11,7 +11,7 @@ Código reutilizable por API v1, consola, jobs y (legacy) frontend Yii. La regla
 | **Plataforma / motores** | `components/Platform/` | `common\components\Platform\…` | IA, asistente, DataAccess, permisos genéricos, UI JSON, infra |
 | **Rubro Bioenlace** | `components/Domain/` | `common\components\Domain\…` | Clínico, turnos, personas, organización, integraciones, terminología |
 
-**Metadata del producto:** YAML colocalizado en `Domain/<BC>/Application/Flows/` y `Platform/{Assistant,Ui,Core/Permission,Ai}/…`. Knobs de negocio en PHP (`*Catalog`, `*AgentPolicy`). Ver [metadata/bioenlace/README.md](../../common/metadata/bioenlace/README.md).
+**Metadata del producto:** YAML colocalizado en `Domain/<BC>/[Modulo/]Application/Flows/` y `Platform/{Assistant,Ui,Core/Permission,Ai}/…`. Knobs de negocio en PHP (`*Catalog`, `*AgentPolicy`). Ver [metadata/bioenlace/README.md](../../common/metadata/bioenlace/README.md).
 
 **Cableado dominio → motor:** `common/config/product-registries.php` (`productRegistries` en `params.php`).
 
@@ -33,7 +33,7 @@ Para otro rubro: nuevo `Domain/`, metadata y registries; **`Platform/`** se mant
 
 | Carpeta | Contenido |
 |---------|-----------|
-| **`Domain/Clinical/`** | Encounters, guardia, internación, prescripción, lab, `Text/` |
+| **`Domain/Clinical/`** | Módulos: Encounter, Emergency, Inpatient, Laboratory, Prescription, CarePlan, Capture, … |
 | **`Domain/Scheduling/`** | Turnos, agenda, quirófano |
 | **`Domain/Person/`** | Personas, registro |
 | **`Domain/Organization/`** | Efectores, PES, sesión operativa |
@@ -51,19 +51,24 @@ La misma palabra de dominio se sigue en models, controllers API, `views/json`, m
 
 ## Patrones dentro de un dominio
 
-Gramática: **dominio → subdominio (opcional) → rol técnico → capacidad (opcional)**.
+**Clinical (BC grande):** módulo de capacidad primero — [clinical-modulos-capacidad.md](../decisions/clinical-modulos-capacidad.md).
+
+```text
+Domain/Clinical/<Modulo>/Application|Domain|Service/…
+```
+
+**Otros BCs / migración:**
 
 ```text
 Domain/<Dominio>/
-  <Subdominio>/Service/…     # p. ej. Clinical/Emergency, Clinical/PedidoAtencion
-  Service/<Capacidad>/…      # p. ej. Scheduling/Service/Quirofano
-  Application/ | Domain/ | Infrastructure/External/ | Presentation/
+  <Área>/Service/…
+  Application/ | Domain/ | Infrastructure/External/
   Assistant/ | Home/ | DataAccess/
 ```
 
-- **ACL externos:** `Domain/<BC>/Infrastructure/External/<Sistema>/` (Contract, Connector, Mapper, …). No carpetas hermanas de `Domain/`.
-- Plugins para motores: registrar en `product-registries.php`, implementación en `Domain/…`.
-- Detalle y sufijos de clase: [Domain/README.md](../../common/components/Domain/README.md).
+- **ACL externos:** `Domain/<BC>/Infrastructure/External/<Sistema>/` (o bajo el módulo dueño en Clinical).
+- Plugins: `product-registries.php` + clases en `Domain/…`.
+- Detalle: [Domain/README.md](../../common/components/Domain/README.md).
 - ADR DDD: [ddd-bounded-contexts-capas-y-metadata.md](../decisions/ddd-bounded-contexts-capas-y-metadata.md).
 
 ## Motores vs metadata vs negocio
@@ -71,7 +76,7 @@ Domain/<Dominio>/
 | Capa | Ubicación | Responsabilidad |
 |------|-----------|-----------------|
 | **Motores** | `Platform/Assistant/…`, `Platform/Core/DataAccess`, `Platform/Core/Product/` | Interpretar manifiestos; sin reglas por rubro en PHP |
-| **Metadata producto** | Colocalizada en Platform/BC (`Application/Flows`, prompts, ui-text); knobs de negocio en PHP `*Catalog` / `*AgentPolicy` | Composición de motores + políticas tipadas |
+| **Metadata producto** | Colocalizada en Platform/BC/módulo (`Application/Flows`, prompts, ui-text); knobs en PHP `*Catalog` / `*AgentPolicy` | Composición + políticas tipadas |
 | **Plugins dominio** | `product-registries.php` + clases en `Domain/` | Catálogos UI, scope, políticas, panel home |
 | **Negocio** | `Domain/Clinical/`, `Domain/Scheduling/`, … | Persistencia, reglas, autorización de recurso |
 
@@ -79,18 +84,19 @@ Domain/<Dominio>/
 
 | Necesidad | Ubicación |
 |-----------|-----------|
-| Guardia, triage | `Domain/Clinical/Emergency/Service/` |
-| Mapa camas, ingreso internación | `Domain/Clinical/Inpatient/Service/` |
-| Encounter, care plan | `Domain/Clinical/Service/` |
-| Persona, registro | `Domain/Person/Service/` · AR: `Person/Persona.php` |
-| Turno, agenda | `Domain/Scheduling/Service/` · AR: `Scheduling/Turno.php` |
-| Efector, PES | `Domain/Organization/Service/` |
-| Motor asistente / flow genérico | `Platform/Assistant/` |
-| Intent / YAML producto | `Domain/<BC>/Application/Flows/intents/` · Platform Assistant |
-| Proveedor IA | `Platform/Ai/` |
-| Cliente externo salud | `Domain/<BC>/Infrastructure/External/<Sistema>/` |
-| Pedido de atención (línea × acto) | `Domain/Clinical/PedidoAtencion/Service/` |
-| Texto clínico pre-IA | `Domain/Clinical/Text/` |
+| Guardia, triage | `Domain/Clinical/Emergency/` |
+| Internación | `Domain/Clinical/Inpatient/` |
+| Encounter / condiciones / journey | `Domain/Clinical/Encounter/` |
+| Care plan / órdenes | `Domain/Clinical/CarePlan/` |
+| Captura / documentación / texto clínico | `Domain/Clinical/Capture/` |
+| Laboratorio | `Domain/Clinical/Laboratory/` |
+| Receta | `Domain/Clinical/Prescription/` |
+| Pedido de atención | `Domain/Clinical/PedidoAtencion/` |
+| Persona, registro | `Domain/Person/` |
+| Turno, agenda | `Domain/Scheduling/` |
+| Intent Clinical | `Domain/Clinical/<Modulo>/Application/Flows/intents/` |
+| Intent otros BC | `Domain/<BC>/Application/Flows/intents/` |
+| Cliente externo | `Domain/<BC>/Infrastructure/External/<Sistema>/` (o módulo Clinical) |
 
 ## Referencias
 

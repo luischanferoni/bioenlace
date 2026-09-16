@@ -15,6 +15,7 @@ Registro de decisiones **cerradas** que afectan a más de un módulo o que convi
 | Catálogo inteligente asistente | 1ª IA etiqueta; PHP match + plan declarativo + log; 2ª IA guide; planificadora opcional | [asistente-catalogo-inteligente.md](./asistente-catalogo-inteligente.md) |
 | Pedido servicio × acto | `servicios` = oferta del centro; actos SNOMED; glosario anti-confusión | [pedido-atencion-linea-acto.md](./pedido-atencion-linea-acto.md) |
 | DDD BC + capas + metadata | En implementación: BC, YAML colocalizado, knobs→PHP/BD | [ddd-bounded-contexts-capas-y-metadata.md](./ddd-bounded-contexts-capas-y-metadata.md) |
+| Clinical módulos de capacidad | Módulo primero (Encounter, Emergency, Lab…); sin Shared; layers dentro del módulo | [clinical-modulos-capacidad.md](./clinical-modulos-capacidad.md) |
 
 Glosario producto (servicio / PES / acto): [producto/glosario-servicio-pes-acto.md](../producto/glosario-servicio-pes-acto.md).
 

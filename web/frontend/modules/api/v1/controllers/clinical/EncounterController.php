@@ -4,10 +4,10 @@ namespace frontend\modules\api\v1\controllers\clinical;
 
 use Yii;
 use common\components\Domain\Clinical\Assistant\ClinicalEncounterEntry;
-use common\components\Domain\Clinical\Dto\MedicationRequestDto;
-use common\components\Domain\Clinical\Dto\ServiceRequestDto;
-use common\components\Domain\Clinical\Service\MedicationRequestService;
-use common\components\Domain\Clinical\Service\ServiceRequestService;
+use common\components\Domain\Clinical\CarePlan\Dto\MedicationRequestDto;
+use common\components\Domain\Clinical\CarePlan\Dto\ServiceRequestDto;
+use common\components\Domain\Clinical\CarePlan\Service\MedicationRequestService;
+use common\components\Domain\Clinical\CarePlan\Service\ServiceRequestService;
 use common\components\Platform\Ui\UiScreenService;
 use frontend\modules\api\v1\controllers\BaseController;
 use yii\web\UploadedFile;

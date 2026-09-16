@@ -2,8 +2,8 @@
 
 namespace console\controllers;
 
-use common\components\Domain\Clinical\Service\AppointmentReasonBatchService;
-use common\components\Domain\Clinical\Service\AppointmentReasonWindowService;
+use common\components\Domain\Clinical\Encounter\Service\AppointmentReasonBatchService;
+use common\components\Domain\Clinical\Encounter\Service\AppointmentReasonWindowService;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\ConsultaMotivosMessage;
 use Yii;

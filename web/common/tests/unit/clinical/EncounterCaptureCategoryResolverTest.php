@@ -3,9 +3,9 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Workflow\EncounterCaptureActorCatalog;
-use common\components\Domain\Clinical\Workflow\EncounterCaptureCategoryResolver;
-use common\components\Domain\Clinical\Workflow\EncounterDefinitionWorkflowCatalog;
+use common\components\Domain\Clinical\Capture\Workflow\EncounterCaptureActorCatalog;
+use common\components\Domain\Clinical\Capture\Workflow\EncounterCaptureCategoryResolver;
+use common\components\Domain\Clinical\Capture\Workflow\EncounterDefinitionWorkflowCatalog;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterDefinition;
 

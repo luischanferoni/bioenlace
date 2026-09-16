@@ -5,8 +5,8 @@ namespace common\components\Domain\Scheduling\Service;
 use common\components\Domain\Scheduling\Application\Agent\ConsultaAsyncBandejaPrioridadAgent;
 
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
-use common\components\Domain\Clinical\Service\CarePlanMedicationListService;
-use common\components\Domain\Clinical\Service\EncounterLifecycleService;
+use common\components\Domain\Clinical\CarePlan\Service\CarePlanMedicationListService;
+use common\components\Domain\Clinical\Encounter\Service\EncounterLifecycleService;
 use common\models\Clinical\Encounter;
 use Yii;
 

@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\Inpatient\Service;
 
 use common\components\Domain\Clinical\Inpatient\Application\Agent\InternacionCamaSugerenciaAgent;
 
-use common\components\Domain\Clinical\Service\CarePlanLifecycleService;
+use common\components\Domain\Clinical\CarePlan\Service\CarePlanLifecycleService;
 use common\components\Domain\Clinical\Emergency\Service\GuardiaInternacionService;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Domain\Organization\Service\Authorization\EfectorAccessService;

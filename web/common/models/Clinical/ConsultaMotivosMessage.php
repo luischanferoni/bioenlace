@@ -4,7 +4,7 @@ namespace common\models\Clinical;
 
 use common\models\Clinical\Mensajes;
 use common\models\Platform\User;
-use common\components\Domain\Clinical\Service\SecureMediaService;
+use common\components\Domain\Clinical\Capture\Service\SecureMediaService;
 use common\models\Clinical\Encounter;
 use Yii;
 use yii\db\ActiveRecord;

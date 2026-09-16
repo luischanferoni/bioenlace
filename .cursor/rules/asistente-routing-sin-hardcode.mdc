@@ -1,6 +1,6 @@
 ---
 description: Routing del asistente — keywords en intents, desambiguación genérica, canal en PHP + texto UX YAML
-globs: web/common/components/Platform/Assistant/**/*.php,web/common/components/Platform/Assistant/Application/**/*.yaml,web/common/components/Platform/Assistant/Channels/**/*.yaml,web/common/components/Domain/*/Application/Flows/intents/**/*.yaml
+globs: web/common/components/Platform/Assistant/**/*.php,web/common/components/Platform/Assistant/Application/**/*.yaml,web/common/components/Platform/Assistant/Channels/**/*.yaml,web/common/components/Domain/*/Application/Flows/intents/**/*.yaml,web/common/components/Domain/*/*/Application/Flows/intents/**/*.yaml
 alwaysApply: false
 ---
 

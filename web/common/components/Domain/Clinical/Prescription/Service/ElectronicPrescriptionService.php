@@ -8,7 +8,7 @@ use common\components\Domain\Clinical\Prescription\Domain\PrescriptionLegalStatu
 use common\components\Domain\Clinical\Prescription\Mapper\FhirRecetaDigitalBundleMapper;
 use common\components\Domain\Clinical\Prescription\Support\PrescriptionDocumentSupport;
 use common\components\Domain\Clinical\Prescription\Application\Agent\PrescriptionRdiPreSubmitValidationAgent;
-use common\components\Domain\Clinical\Service\MedicationRequestService;
+use common\components\Domain\Clinical\CarePlan\Service\MedicationRequestService;
 use common\components\Domain\Terminology\Snomed\SnomedCodeSystem;
 use common\models\Clinical\ElectronicPrescription;
 use common\models\Clinical\ElectronicPrescriptionEvent;

@@ -2,10 +2,10 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
-use common\components\Domain\Clinical\Service\CarePlanPresentationService;
-use common\components\Domain\Clinical\Service\CareProtocolMatcherService;
-use common\components\Domain\Clinical\Service\ConditionPresentationService;
-use common\components\Domain\Clinical\Service\PatientActiveCarePlanQuery;
+use common\components\Domain\Clinical\CarePlan\Service\CarePlanPresentationService;
+use common\components\Domain\Clinical\CarePlan\Service\CareProtocolMatcherService;
+use common\components\Domain\Clinical\Encounter\Service\ConditionPresentationService;
+use common\components\Domain\Clinical\CarePlan\Service\PatientActiveCarePlanQuery;
 use common\components\Domain\Person\Service\PacienteContextoService;
 use common\components\Domain\Scheduling\Domain\ControlSeguimientoHubCatalog;
 use common\models\Person\Persona;

@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\CareCohort;
 
-use common\components\Domain\Clinical\AiContext\PatientAiContextBuilder;
+use common\components\Domain\Clinical\Encounter\AiContext\PatientAiContextBuilder;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\DiagnosticoConsultaRepository as DCRepo;
 use common\models\Organization\Efector;

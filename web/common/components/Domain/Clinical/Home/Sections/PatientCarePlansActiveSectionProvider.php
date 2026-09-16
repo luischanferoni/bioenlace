@@ -3,8 +3,8 @@
 namespace common\components\Domain\Clinical\Home\Sections;
 
 use common\components\Platform\Ui\Home\Service\Sections\HomePanelSectionProviderInterface;
-use common\components\Domain\Clinical\Service\CarePlanPresentationService;
-use common\components\Domain\Clinical\Service\PatientActiveCarePlanQuery;
+use common\components\Domain\Clinical\CarePlan\Service\CarePlanPresentationService;
+use common\components\Domain\Clinical\CarePlan\Service\PatientActiveCarePlanQuery;
 use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
 use common\components\Domain\Person\Representation\Service\PersonRepresentationSubjectService;
 use common\components\Domain\Scheduling\Service\ConsultaAsyncBandejaService;

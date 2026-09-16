@@ -2,8 +2,8 @@
 
 namespace frontend\modules\api\v1\controllers\clinical;
 
-use common\components\Domain\Clinical\Service\EncounterAppointmentReasonLookupService;
-use common\components\Domain\Clinical\Service\StaffEncounterConsultaViewService;
+use common\components\Domain\Clinical\Encounter\Service\EncounterAppointmentReasonLookupService;
+use common\components\Domain\Clinical\Encounter\Service\StaffEncounterConsultaViewService;
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 

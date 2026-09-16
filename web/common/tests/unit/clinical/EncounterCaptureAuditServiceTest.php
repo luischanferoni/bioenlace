@@ -3,7 +3,7 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Service\EncounterCaptureAuditService;
+use common\components\Domain\Clinical\Encounter\Service\EncounterCaptureAuditService;
 use common\models\Clinical\EncounterCaptureAudit;
 
 class EncounterCaptureAuditServiceTest extends Unit

@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Assistant;
 
-use common\components\Domain\Clinical\AiContext\PatientAiContextBuilder;
+use common\components\Domain\Clinical\Encounter\AiContext\PatientAiContextBuilder;
 use common\components\Platform\Assistant\Chat\Conversational\ConversationalChannelProviderInterface;
 use Yii;
 

@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\Encounter\Service\EncounterJourney;
 
 use common\components\Domain\Clinical\CareCohort\Service\CarePackConfig;
 use common\components\Domain\Clinical\CareCohort\Service\CarePackRepository;
-use common\components\Domain\Clinical\Service\AppointmentReasonWindowService;
+use common\components\Domain\Clinical\Encounter\Service\AppointmentReasonWindowService;
 use common\models\Clinical\CareAssistanceResponse;
 use common\models\Clinical\Encounter;
 use common\models\Scheduling\Turno;

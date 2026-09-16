@@ -3,7 +3,7 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Service\EpisodioSignosVitalesService;
+use common\components\Domain\Clinical\Encounter\Service\EpisodioSignosVitalesService;
 use ReflectionClass;
 
 class EpisodioSignosVitalesServiceTest extends Unit

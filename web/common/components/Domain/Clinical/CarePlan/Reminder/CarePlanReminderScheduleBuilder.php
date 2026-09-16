@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\CarePlan\Reminder;
 
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanActivityKind;
 use common\components\Domain\Clinical\Encounter\Domain\RequestStatus;
-use common\components\Domain\Clinical\Service\PatientActiveCarePlanQuery;
+use common\components\Domain\Clinical\CarePlan\Service\PatientActiveCarePlanQuery;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\CarePlanActivity;
 use common\models\Clinical\MedicationRequest;

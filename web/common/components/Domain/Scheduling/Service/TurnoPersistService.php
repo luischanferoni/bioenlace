@@ -4,13 +4,13 @@ namespace common\components\Domain\Scheduling\Service;
 
 use common\components\Domain\Scheduling\Application\Agent\TurnoAdvanceOfferAgent;
 
-use common\components\Domain\Clinical\Service\EncounterLifecycleService;
+use common\components\Domain\Clinical\Encounter\Service\EncounterLifecycleService;
 use common\models\Scheduling\Turno;
 use common\models\Clinical\Encounter;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Organization\ProfesionalEfectorServicioAgenda;
 use common\models\Organization\ServiciosEfector;
-use common\components\Domain\Clinical\Service\ReferralRequestService;
+use common\components\Domain\Clinical\CarePlan\Service\ReferralRequestService;
 use common\models\Clinical\ConsultaDerivaciones;
 use common\models\Scheduling\EfectorTurnosConfig;
 use common\models\Organization\Servicio;

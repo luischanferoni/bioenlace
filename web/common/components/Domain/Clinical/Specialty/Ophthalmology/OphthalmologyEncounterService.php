@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Clinical\Specialty\Ophthalmology;
 
-use common\components\Domain\Clinical\Dto\ObservationDto;
-use common\components\Domain\Clinical\Dto\VisionPrescriptionDto;
+use common\components\Domain\Clinical\Laboratory\Dto\ObservationDto;
+use common\components\Domain\Clinical\CarePlan\Dto\VisionPrescriptionDto;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\Observation;
 use common\models\Clinical\VisionPrescription;

@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Encounter\Service\EncounterJourney;
 
-use common\components\Domain\Clinical\Service\Authorization\EncounterAccessService;
+use common\components\Domain\Clinical\Encounter\Service\Authorization\EncounterAccessService;
 use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
 use common\components\Domain\Person\Representation\Service\PersonRepresentationSubjectService;
 use common\models\Clinical\Encounter;

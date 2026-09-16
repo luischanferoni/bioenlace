@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\LegalRecord;
 
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
-use common\components\Domain\Clinical\Service\Authorization\EncounterAccessService;
+use common\components\Domain\Clinical\Encounter\Service\Authorization\EncounterAccessService;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\LegalRecordExportRequest;
 use common\models\Person\Persona;

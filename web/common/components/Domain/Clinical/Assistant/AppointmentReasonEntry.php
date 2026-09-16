@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Clinical\Assistant;
 
-use common\components\Domain\Clinical\Service\AppointmentReasonWindowService;
-use common\components\Domain\Clinical\Service\Authorization\EncounterAccessService;
+use common\components\Domain\Clinical\Encounter\Service\AppointmentReasonWindowService;
+use common\components\Domain\Clinical\Encounter\Service\Authorization\EncounterAccessService;
 use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\ConsultaMotivosMessage;

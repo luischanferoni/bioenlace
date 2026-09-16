@@ -3,9 +3,9 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Service\CareProtocolAdminService;
-use common\components\Domain\Clinical\Service\CareProtocolCatalogService;
-use common\components\Domain\Clinical\Service\CareProtocolMatcherService;
+use common\components\Domain\Clinical\CarePlan\Service\CareProtocolAdminService;
+use common\components\Domain\Clinical\CarePlan\Service\CareProtocolCatalogService;
+use common\components\Domain\Clinical\CarePlan\Service\CareProtocolMatcherService;
 use common\models\Clinical\CareProtocol;
 
 class CareProtocolMatcherServiceTest extends Unit

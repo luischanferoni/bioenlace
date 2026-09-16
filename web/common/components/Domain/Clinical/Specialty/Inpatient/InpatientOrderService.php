@@ -2,9 +2,9 @@
 
 namespace common\components\Domain\Clinical\Specialty\Inpatient;
 
-use common\components\Domain\Clinical\Service\CarePlanService;
-use common\components\Domain\Clinical\Service\MedicationRequestService;
-use common\components\Domain\Clinical\Service\ServiceRequestService;
+use common\components\Domain\Clinical\CarePlan\Service\CarePlanService;
+use common\components\Domain\Clinical\CarePlan\Service\MedicationRequestService;
+use common\components\Domain\Clinical\CarePlan\Service\ServiceRequestService;
 use common\models\Clinical\Condition;
 use common\models\Clinical\DiagnosticoConsulta;
 use common\models\Clinical\SegNivelInternacionDiagnostico;

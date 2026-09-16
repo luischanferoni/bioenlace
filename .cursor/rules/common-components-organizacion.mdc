@@ -22,7 +22,7 @@ alwaysApply: false
 | **Motores** | `web/common/components/Platform/` | Assistant, Core, Ai, Ui, Infra — agnóstico del rubro |
 | **Rubro salud** | `web/common/components/Domain/` | Clinical, Scheduling, Person, Organization, Terminology, Content, Geo, Programs |
 
-Metadata YAML (flows, prompts, UI, auth motor): colocalizada en `Domain/<BC>/Application/Flows/` y `Platform/{Assistant,Ui,Core/Permission,Ai}/…`. Knobs de negocio: PHP `*Catalog` / `*AgentPolicy`. Cableado: `web/common/config/product-registries.php`.
+Metadata YAML (flows, prompts, UI, auth motor): colocalizada en `Domain/<BC>/[Modulo/]Application/Flows/` y `Platform/{Assistant,Ui,Core/Permission,Ai}/…`. Knobs de negocio: PHP `*Catalog` / `*AgentPolicy`. Cableado: `web/common/config/product-registries.php`.
 
 ## Invariante de forma (espejo)
 
@@ -30,23 +30,32 @@ Metadata YAML (flows, prompts, UI, auth motor): colocalizada en `Domain/<BC>/App
 <capa>/<dominio|platform>/<entidad>/…
 ```
 
-Misma palabra de dominio en `components/Domain/`, `models/`, `controllers/`, `views/json/` y `tests/unit/`. Metadata de flows: `Domain/<BC>/Application/Flows/intents/`. Fuente del conjunto: carpetas en `Domain/` (`ProductDomainCatalog`). `platform` es eje paralelo, **no** carpeta bajo `Domain/`.
+Misma palabra de dominio en `components/Domain/`, `models/`, `controllers/`, `views/json/` y `tests/unit/`. Flows: `Domain/<BC>/Application/Flows/intents` y/o `Domain/<BC>/<Modulo>/Application/Flows/intents`. Fuente: `ProductDomainCatalog`. `platform` es eje paralelo, **no** bajo `Domain/`.
 
 ## Forma interna de Domain
+
+**Clinical (BC grande) — módulo primero** (sin Shared):
+
+```text
+Domain/Clinical/<Modulo>/Application|Domain|Service/…
+```
+
+ADR: [clinical-modulos-capacidad.md](web/docs/decisions/clinical-modulos-capacidad.md).
+
+**Otros BCs:**
 
 ```text
 Domain/<BC>/
   Application/ | Domain/ | Infrastructure/External/<Sistema>/ | Presentation/
-  <Subdominio?>/{Service|Assistant|Home|DataAccess}/…
+  <Área?>/{Service|Assistant|Home|DataAccess}/…
 ```
 
-- **ACL externos:** `Infrastructure/External/<Sistema>/{Contract|Connector|Mapper|…}/` (no carpeta `Integrations/` como BC).
-- **Negocio** bajo `…/Service/` (o subdominio + `Service/`). **No** `Services/`.
-- **Clinical**: guardia → `Emergency/`; internación → `Inpatient/`; pedido atención → `PedidoAtencion/Service/` (no `Access/`).
+- **ACL externos:** `Infrastructure/External/<Sistema>/` (o módulo Clinical dueño).
+- **Negocio** bajo módulo/`Service/`. **No** `Services/`. **No** `Enum/` / `Service/` catch-all en raíz de Clinical.
+- **Clinical**: `Emergency/`, `Inpatient/`, `Encounter/`, `Laboratory/`, `Capture/`, …
 - **Quirófano** → `Domain/Scheduling/Service/Quirofano/`.
-- Roles técnicos (`Assistant/`, `Home/`, `DataAccess/`, `Presentation/`) al nivel del dominio/subdominio, no dentro de `Service/`.
-- Sufijos: `*Service`, `*Policy`, `*Catalog`, `*Agent`, `*FlowDraftHydrator`, `*SectionProvider`, `*Connector`, … — ver [Domain/README.md](web/common/components/Domain/README.md).
-- **`Platform/Assistant/`**: motores; el rubro en metadata + registries, no en switches PHP.
+- Sufijos: `*Service`, `*Policy`, `*Catalog`, `*Agent`, … — [Domain/README.md](web/common/components/Domain/README.md).
+- **`Platform/Assistant/`**: motores; rubro en metadata + registries.
 - **Services sin HTTP**: no `*HttpException`, HTML ni flash en `*/Service/`.
 
 ## Modelos AR (`web/common/models/`)

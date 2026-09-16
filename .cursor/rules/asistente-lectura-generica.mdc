@@ -1,6 +1,6 @@
 ---
 description: Lecturas del asistente — motor DataAccess + RBAC por intent; flows aparte
-globs: web/common/components/Domain/*/Application/Flows/intents/read/**,web/common/components/Platform/Assistant/Application/Flows/intents/read/**,web/common/components/Platform/Core/DataAccess/**,web/common/components/Platform/Assistant/Catalog/IntentSchemaPaths.php
+globs: web/common/components/Domain/*/Application/Flows/intents/read/**,web/common/components/Domain/*/*/Application/Flows/intents/read/**,web/common/components/Platform/Assistant/Application/Flows/intents/read/**,web/common/components/Platform/Core/DataAccess/**,web/common/components/Platform/Assistant/Catalog/IntentSchemaPaths.php
 alwaysApply: false
 ---
 

@@ -2,7 +2,7 @@
 
 namespace frontend\modules\api\v1\controllers\clinical;
 
-use common\components\Domain\Clinical\Dto\ElectronicPrescriptionDto;
+use common\components\Domain\Clinical\Prescription\Dto\ElectronicPrescriptionDto;
 use common\components\Domain\Clinical\Prescription\Domain\PrescriptionLegalStatus;
 use common\components\Domain\Clinical\Prescription\Service\ElectronicPrescriptionPdfService;
 use common\components\Domain\Clinical\Prescription\Service\ElectronicPrescriptionPresentationService;

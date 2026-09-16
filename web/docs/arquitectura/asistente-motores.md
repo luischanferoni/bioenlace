@@ -86,7 +86,7 @@ ADR: [decisions/asistente-catalogo-inteligente.md](../decisions/asistente-catalo
 | Pieza | Ubicación aproximada | Idea en una frase |
 |-------|----------------------|-------------------|
 | Motor | `SubIntentEngine/SubIntentEngine.php` | Lee el YAML del intent y avanza según sub-pasos (`subintents`) |
-| Definiciones | `Domain/<BC>/Application/Flows/intents/*.yaml` (+ platform) | Guion: textos del asistente, qué pantalla abrir, qué datos pedir |
+| Definiciones | `Domain/<BC>/[Modulo/]Application/Flows/intents/*.yaml` (+ platform) | Guion: textos del asistente, qué pantalla abrir, qué datos pedir |
 | Manifiesto de flujo | `FlowManifest/FlowManifest.php` | Describe en runtime qué pasos tiene el flujo (sin duplicar pantallas en otro sitio) |
 | Reglas de negocio | `SubIntentEngine/IntentBusinessRules.php` | Comprueba condiciones antes de entrar al flujo (por ejemplo “falta efector”) |
 | Pantallas embebibles | `frontend/modules/api/v1/views/json/…` | JSON que la interfaz renderiza como formularios y listas |
@@ -95,7 +95,7 @@ ADR: [decisions/asistente-catalogo-inteligente.md](../decisions/asistente-catalo
 
 **Qué NO hace:** no reemplaza la lógica de negocio de turnos, laboratorio o recetas; esas reglas viven en **servicios de dominio** detrás de la API. El SubIntentEngine **orquesta la conversación** y llama a esas APIs cuando el YAML indica `open_ui` o envío de formulario.
 
-Los YAML de flujo viven en `Domain/<BC>/Application/Flows/intents/` (y `Platform/Assistant/Application/Flows/intents/` para transversales). Contrato de pasos: `SubIntentEngine/schemas/SUBINTENT_CONTRACT.md`. Las **lecturas** (conteo, listado, último X) no son un YAML por pregunta: motor DataAccess + params hidratados + permiso del intent concreto — [asistente-lectura-data-access.md](./asistente-lectura-data-access.md).
+Los YAML de flujo viven en `Domain/<BC>/Application/Flows/intents/` y, en Clinical, `Domain/Clinical/<Modulo>/Application/Flows/intents/` (más `Platform/Assistant/Application/Flows/intents/` para transversales). Contrato de pasos: `SubIntentEngine/schemas/SUBINTENT_CONTRACT.md`. Las **lecturas** (conteo, listado, último X) no son un YAML por pregunta: motor DataAccess + params hidratados + permiso del intent concreto — [asistente-lectura-data-access.md](./asistente-lectura-data-access.md).
 
 **Enriquecimiento del borrador (`draft_hydrator`):** algunos pasos envían solo parte de los datos (p. ej. el cliente manda `id_servicio` pero no el PES). Eso **no** se resuelve con `if (intent_id)` en el orquestador: el YAML del intent declara un `handler` registrado; `FlowDraftHydratorService` lo ejecuta en la capa de dominio antes de avanzar el flow.
 

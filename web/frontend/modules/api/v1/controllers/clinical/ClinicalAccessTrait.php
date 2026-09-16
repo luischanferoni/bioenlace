@@ -3,7 +3,7 @@
 namespace frontend\modules\api\v1\controllers\clinical;
 
 use common\components\Domain\Clinical\Inpatient\Service\InternacionAccessService;
-use common\components\Domain\Clinical\Service\Authorization\EncounterAccessService;
+use common\components\Domain\Clinical\Encounter\Service\Authorization\EncounterAccessService;
 use common\components\Domain\Organization\Service\Authorization\EfectorAccessService;
 use common\components\Platform\Core\Permission\Domain\DomainOperationAuthorizer;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;

@@ -11,7 +11,7 @@ use common\components\Domain\Clinical\Service\AppointmentReasonBatchService;
 use common\components\Domain\Clinical\Service\AppointmentReasonClinicalInsightsService;
 use common\components\Domain\Clinical\Service\AppointmentReasonWindowService;
 use common\components\Domain\Clinical\Service\EncounterAppointmentReasonLookupService;
-use common\components\Domain\Clinical\Service\EncounterJourney\EncounterMotivosIntakeStaffViewService;
+use common\components\Domain\Clinical\Encounter\Service\EncounterJourney\EncounterMotivosIntakeStaffViewService;
 use common\components\Domain\Clinical\Home\StaffClinicalDayListService;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;

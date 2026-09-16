@@ -3,7 +3,7 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Enum\EncounterStatus;
+use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Domain\Clinical\Workflow\EncounterDocumentationService;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;

@@ -2,11 +2,11 @@
 
 namespace common\components\Domain\Clinical\Service;
 
-use common\components\Domain\Clinical\Enum\CarePlanActivityKind;
-use common\components\Domain\Clinical\Enum\CarePlanCategory;
-use common\components\Domain\Clinical\Enum\CarePlanIntent;
-use common\components\Domain\Clinical\Enum\CarePlanStatus;
-use common\components\Domain\Clinical\Enum\RequestStatus;
+use common\components\Domain\Clinical\CarePlan\Domain\CarePlanActivityKind;
+use common\components\Domain\Clinical\CarePlan\Domain\CarePlanCategory;
+use common\components\Domain\Clinical\CarePlan\Domain\CarePlanIntent;
+use common\components\Domain\Clinical\CarePlan\Domain\CarePlanStatus;
+use common\components\Domain\Clinical\Encounter\Domain\RequestStatus;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\CarePlanActivity;
 use common\models\Clinical\MedicationRequest;

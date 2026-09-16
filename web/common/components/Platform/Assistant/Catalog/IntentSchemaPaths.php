@@ -7,8 +7,10 @@ use common\components\Platform\Core\Product\ProductMetadataPaths;
 /**
  * Rutas y resolución de manifiestos YAML de intents.
  *
- * Layout canónico: `components/Domain/<BC>/Application/Flows/intents/…`
- *                 y `components/Platform/Assistant/Application/Flows/intents/…`.
+ * Layout canónico:
+ * - `components/Domain/<BC>/Application/Flows/intents/…` (plano BC; migración)
+ * - `components/Domain/<BC>/<Modulo>/Application/Flows/intents/…` (módulo de capacidad)
+ * - `components/Platform/Assistant/Application/Flows/intents/…`
  *
  * @see web/docs/decisions/ddd-bounded-contexts-capas-y-metadata.md
  */
@@ -143,16 +145,26 @@ final class IntentSchemaPaths
         if ($bc === '') {
             return null;
         }
-        // Esperado: <BC>/Application/Flows/intents/…
-        if (count($parts) < 4
-            || strcasecmp($parts[1] ?? '', 'Application') !== 0
-            || strcasecmp($parts[2] ?? '', 'Flows') !== 0
-            || strcasecmp($parts[3] ?? '', 'intents') !== 0
+
+        // <BC>/Application/Flows/intents/…
+        if (count($parts) >= 4
+            && strcasecmp($parts[1] ?? '', 'Application') === 0
+            && strcasecmp($parts[2] ?? '', 'Flows') === 0
+            && strcasecmp($parts[3] ?? '', 'intents') === 0
         ) {
-            return null;
+            return strtolower($bc);
         }
 
-        return strtolower($bc);
+        // <BC>/<Modulo>/Application/Flows/intents/…
+        if (count($parts) >= 5
+            && strcasecmp($parts[2] ?? '', 'Application') === 0
+            && strcasecmp($parts[3] ?? '', 'Flows') === 0
+            && strcasecmp($parts[4] ?? '', 'intents') === 0
+        ) {
+            return strtolower($bc);
+        }
+
+        return null;
     }
 
     public static function categoryFromPath(string $absolutePath): ?string

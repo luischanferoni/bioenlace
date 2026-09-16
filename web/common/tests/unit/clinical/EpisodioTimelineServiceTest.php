@@ -3,7 +3,7 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Emergency\Enum\CircuitoEventType;
+use common\components\Domain\Clinical\Emergency\Domain\CircuitoEventType;
 use common\components\Domain\Clinical\Service\EpisodioTimelineService;
 use common\models\Clinical\Encounter;
 

@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Laboratory\Service;
 
-use common\components\Domain\Clinical\Application\Agent\LaboratoryEncounterLinkAgent;
+use common\components\Domain\Clinical\Laboratory\Application\Agent\LaboratoryEncounterLinkAgent;
 
 use common\models\Clinical\Encounter;
 

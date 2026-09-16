@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Emergency\Service;
 
-use common\components\Domain\Clinical\Emergency\Enum\CircuitoEstado;
+use common\components\Domain\Clinical\Emergency\Domain\CircuitoEstado;
 use common\models\Clinical\DiagnosticReport;
 use common\models\Clinical\ServiceRequest;
 use common\models\Organization\Efector;

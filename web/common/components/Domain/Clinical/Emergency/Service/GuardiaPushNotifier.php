@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Emergency\Service;
 
-use common\components\Domain\Clinical\Emergency\Enum\TriageScale;
+use common\components\Domain\Clinical\Emergency\Domain\TriageScale;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\components\Platform\Core\Service\Push\PushNotificationTypes;
 use common\models\Clinical\Guardia;

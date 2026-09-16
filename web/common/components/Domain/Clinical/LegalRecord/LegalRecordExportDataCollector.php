@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\LegalRecord;
 
-use common\components\Domain\Clinical\Enum\EncounterStatus;
+use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Domain\Clinical\PatientSummary\PatientEncounterSummaryBuilder;
 use common\components\Domain\Person\Service\PersonaSignosVitalesService;
 use common\models\Clinical\AllergyIntolerance;

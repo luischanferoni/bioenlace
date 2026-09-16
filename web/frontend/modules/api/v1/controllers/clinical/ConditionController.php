@@ -2,7 +2,7 @@
 
 namespace frontend\modules\api\v1\controllers\clinical;
 
-use common\components\Domain\Clinical\Enum\ConditionClinicalStatus;
+use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
 use common\components\Domain\Clinical\Service\ConditionLifecycleService;
 use common\components\Domain\Clinical\Service\EncounterOpenProblemsService;
 use common\components\Domain\Person\Representation\Enum\RepresentationPermission;

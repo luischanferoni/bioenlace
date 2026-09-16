@@ -3,8 +3,8 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Service\EncounterJourney\EncounterMotivosIntakeCatalogService;
-use common\components\Domain\Clinical\Service\EncounterJourney\EncounterMotivosIntakeStaffViewService;
+use common\components\Domain\Clinical\Encounter\Service\EncounterJourney\EncounterMotivosIntakeCatalogService;
+use common\components\Domain\Clinical\Encounter\Service\EncounterJourney\EncounterMotivosIntakeStaffViewService;
 use common\models\Clinical\Encounter;
 
 final class EncounterMotivosIntakeStaffViewServiceTest extends Unit

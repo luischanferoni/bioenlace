@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\CareCohort\Service;
 
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\components\Platform\Core\Service\Push\PushNotificationTypes;
-use common\components\Domain\Clinical\Service\EncounterJourney\EncounterPhaseWindowsCatalogService;
+use common\components\Domain\Clinical\Encounter\Service\EncounterJourney\EncounterPhaseWindowsCatalogService;
 use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
 use common\components\Domain\Person\Representation\Service\PersonRepresentationNotifyRecipientService;
 use common\models\Clinical\CareFollowupTouchpointQueue;

@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Emergency\Service;
 
-use common\components\Domain\Clinical\Enum\RequestStatus;
+use common\components\Domain\Clinical\Encounter\Domain\RequestStatus;
 use common\components\Domain\Clinical\Laboratory\Service\LaboratoryResultQueryService;
 use common\components\Domain\Clinical\PatientHistoriaUrl;
 use common\components\Domain\Clinical\Service\ServiceRequestService;

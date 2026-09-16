@@ -87,12 +87,26 @@ final class BoundedContextLayerShapeTest extends Unit
 
     private function bcHasApplicationAgentHome(string $bcPath): bool
     {
+        // Layout BC: Application/Agent
         $application = $bcPath . DIRECTORY_SEPARATOR . 'Application';
-        if (!is_dir($application)) {
-            return false;
-        }
         if (is_dir($application . DIRECTORY_SEPARATOR . 'Agent')) {
             return true;
+        }
+        // Layout módulo de capacidad: <Modulo>/Application/Agent
+        foreach (scandir($bcPath) ?: [] as $child) {
+            if ($child === '.' || $child === '..') {
+                continue;
+            }
+            $moduleAgent = $bcPath
+                . DIRECTORY_SEPARATOR . $child
+                . DIRECTORY_SEPARATOR . 'Application'
+                . DIRECTORY_SEPARATOR . 'Agent';
+            if (is_dir($moduleAgent)) {
+                return true;
+            }
+        }
+        if (!is_dir($application)) {
+            return false;
         }
         $iterator = new \RecursiveIteratorIterator(
             new \RecursiveDirectoryIterator($application, \FilesystemIterator::SKIP_DOTS)
@@ -102,7 +116,6 @@ final class BoundedContextLayerShapeTest extends Unit
                 continue;
             }
             $name = $file->getFilename();
-            // *AgentPolicy.php son knobs tipados, no el Agent ejecutable.
             if (!str_ends_with($name, 'Agent.php') || str_ends_with($name, 'AgentPolicy.php')) {
                 continue;
             }

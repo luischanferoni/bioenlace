@@ -9,7 +9,7 @@ use common\models\Clinical\ElectronicPrescription;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\MedicationRequest;
 use common\models\Clinical\ServiceRequest;
-use common\components\Domain\Clinical\Prescription\Enum\PrescriptionLegalStatus;
+use common\components\Domain\Clinical\Prescription\Domain\PrescriptionLegalStatus;
 use common\models\Organization\Efector;
 use common\models\Person\Persona;
 use common\models\Organization\ProfesionalEfectorServicio;

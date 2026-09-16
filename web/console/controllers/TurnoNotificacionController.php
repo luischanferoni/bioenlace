@@ -87,7 +87,7 @@ class TurnoNotificacionController extends Controller
                     if (!is_array($meta)) {
                         $meta = [];
                     }
-                    $journeyScheduler = new \common\components\Domain\Clinical\Service\EncounterJourney\EncounterJourneyNotificationScheduler();
+                    $journeyScheduler = new \common\components\Domain\Clinical\Encounter\Service\EncounterJourney\EncounterJourneyNotificationScheduler();
                     if (!$journeyScheduler->shouldSendJourneyNotification($turno, $row->tipo, $meta)) {
                         $row->estado = TurnoNotificacionProgramada::ESTADO_CANCELADA;
                         $row->save(false);

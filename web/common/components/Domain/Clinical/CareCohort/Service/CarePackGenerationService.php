@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\CareCohort\Service;
 
 use common\components\Platform\Ai\IAManager;
 use common\components\Domain\Clinical\CareCohort\CarePackContentParser;
-use common\components\Domain\Clinical\CareCohort\Enum\CarePackType;
+use common\components\Domain\Clinical\CareCohort\Domain\CarePackType;
 use common\models\Clinical\CareCohortPack;
 use common\models\Clinical\CarePackJob;
 use common\models\Clinical\Encounter;

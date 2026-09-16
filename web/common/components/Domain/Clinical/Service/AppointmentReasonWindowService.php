@@ -2,9 +2,9 @@
 
 namespace common\components\Domain\Clinical\Service;
 
-use common\components\Domain\Clinical\Service\EncounterJourney\EncounterPhaseWindowService;
-use common\components\Domain\Clinical\Service\EncounterJourney\EncounterPhaseWindowsCatalogService;
-use common\components\Domain\Clinical\Service\EncounterJourney\EncounterJourneyContextBuilder;
+use common\components\Domain\Clinical\Encounter\Service\EncounterJourney\EncounterPhaseWindowService;
+use common\components\Domain\Clinical\Encounter\Service\EncounterJourney\EncounterPhaseWindowsCatalogService;
+use common\components\Domain\Clinical\Encounter\Service\EncounterJourney\EncounterJourneyContextBuilder;
 use common\models\Clinical\Encounter;
 use common\models\Scheduling\Turno;
 use Yii;

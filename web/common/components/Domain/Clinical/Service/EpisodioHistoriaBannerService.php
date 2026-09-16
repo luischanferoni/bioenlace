@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\Service;
 
 use common\components\Domain\Clinical\Presentation\EpisodioDateTimeFormatter;
-use common\components\Domain\Clinical\Emergency\Enum\CircuitoEstado;
+use common\components\Domain\Clinical\Emergency\Domain\CircuitoEstado;
 use common\components\Domain\Clinical\Emergency\Service\GuardiaCircuitoService;
 use common\components\Domain\Clinical\Emergency\Service\GuardiaTriageService;
 use common\models\Clinical\Encounter;

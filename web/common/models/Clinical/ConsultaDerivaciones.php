@@ -7,7 +7,7 @@ use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Organization\Servicio;
 use common\models\Person\Persona;
 
-use common\components\Domain\Clinical\Enum\RequestStatus;
+use common\components\Domain\Clinical\Encounter\Domain\RequestStatus;
 use common\components\Domain\Clinical\Service\ReferralRequestService;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\ServiceRequest;

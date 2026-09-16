@@ -3,13 +3,13 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Service\EncounterJourney\EncounterJourneyEligibilityService;
-use common\components\Domain\Clinical\Service\EncounterJourney\EncounterPhaseEligibilityCatalogService;
-use common\components\Domain\Clinical\Service\EncounterJourney\EncounterMotivosIntakeCatalogService;
-use common\components\Domain\Clinical\Service\EncounterJourney\EncounterPhaseWindowOverrideCatalogService;
-use common\components\Domain\Clinical\Service\EncounterJourney\EncounterPhaseWindowResolver;
-use common\components\Domain\Clinical\Service\EncounterJourney\EncounterPhaseWindowService;
-use common\components\Domain\Clinical\Service\EncounterJourney\EncounterPhaseWindowsCatalogService;
+use common\components\Domain\Clinical\Encounter\Service\EncounterJourney\EncounterJourneyEligibilityService;
+use common\components\Domain\Clinical\Encounter\Service\EncounterJourney\EncounterPhaseEligibilityCatalogService;
+use common\components\Domain\Clinical\Encounter\Service\EncounterJourney\EncounterMotivosIntakeCatalogService;
+use common\components\Domain\Clinical\Encounter\Service\EncounterJourney\EncounterPhaseWindowOverrideCatalogService;
+use common\components\Domain\Clinical\Encounter\Service\EncounterJourney\EncounterPhaseWindowResolver;
+use common\components\Domain\Clinical\Encounter\Service\EncounterJourney\EncounterPhaseWindowService;
+use common\components\Domain\Clinical\Encounter\Service\EncounterJourney\EncounterPhaseWindowsCatalogService;
 
 class EncounterJourneyServiceTest extends Unit
 {

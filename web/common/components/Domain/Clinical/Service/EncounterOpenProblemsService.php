@@ -2,9 +2,9 @@
 
 namespace common\components\Domain\Clinical\Service;
 
-use common\components\Domain\Clinical\Enum\CarePlanCategory;
-use common\components\Domain\Clinical\Enum\CarePlanStatus;
-use common\components\Domain\Clinical\Enum\ConditionClinicalStatus;
+use common\components\Domain\Clinical\CarePlan\Domain\CarePlanCategory;
+use common\components\Domain\Clinical\CarePlan\Domain\CarePlanStatus;
+use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
 use common\models\Clinical\CarePlan;
 
 /**

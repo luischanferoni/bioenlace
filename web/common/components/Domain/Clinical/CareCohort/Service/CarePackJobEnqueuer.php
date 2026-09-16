@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\CareCohort\Service;
 
-use common\components\Domain\Clinical\CareCohort\Enum\CarePackType;
+use common\components\Domain\Clinical\CareCohort\Domain\CarePackType;
 use common\models\Clinical\CarePackJob;
 use common\models\Clinical\Encounter;
 

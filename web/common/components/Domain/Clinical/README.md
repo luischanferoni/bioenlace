@@ -1,43 +1,34 @@
 # Clinical (`common/components/Domain/Clinical`)
 
-Dominio FHIR clínico (Encounter, CarePlan, órdenes).
+Bounded context FHIR clínico. **Eje = módulo de capacidad** (sin `Shared/` ni `Enum/` basurero).
 
-## Estructura
+Plan: [`clinical-modulos-capacidad`](../../../docs/plans/clinical-modulos-capacidad/).
 
-| Carpeta | Contenido |
-|---------|-----------|
-| `Enum/` | Vocabularios (`CarePlanStatus`, `CarePlanCategory`, `EncounterStatus`, …) |
-| `Support/` | Metadatos JSON (`CarePlanProgramMeta`) |
-| `AiContext/` | Extracto acotado de HC para prompts (`PatientAiContextBuilder`) |
-| `Service/` | Negocio sin HTTP (`CarePlanService`, `CarePlanLifecycleService`, `EncounterAccessService`, …) |
-| `PedidoAtencion/Service/` | Pedido de atención (línea × acto, coding, capacity ECL) |
-| `Emergency/` | Guardia, triage |
-| `Inpatient/` | Internación operativa |
-| `Workflow/` | Flujos compuestos (`EncounterDocumentationService`) |
-| `Specialty/` | Odontología, oftalmología (Fase 7); ver [Specialty/README.md](Specialty/README.md) |
-| `Laboratory/` | Ingesta pull LIS FHIR → `diagnostic_report` / `observation` |
-| `Prescription/` | Receta electrónica emitida (`electronic_prescription`) — ver `web/docs/receta-electronica/` |
+## Módulos
 
-Modelos AR: `common/models/Clinical/` (`Procedure`, `Observation`, `DiagnosticReport`, …).
+| Módulo | Dueño |
+|--------|--------|
+| `Encounter/` | Status/enums núcleo, catalogs journey/motivos, services journey, flows `atencion.*` |
+| `Emergency/` | Guardia; Domain enums; flows `urgencias.*` |
+| `Inpatient/` | Internación; agents alta/cama; flows `internacion.*` |
+| `Laboratory/` | Lab + agents + flows `laboratorio.*` + ACL External |
+| `Prescription/` | Receta + RDI agent + flows `receta.*` |
+| `CarePlan/` | Enums/status care plan; flows `tratamiento.*` |
+| `CareCohort/` | Care packs + followup agent; flows `care-packs.*` |
+| `PedidoAtencion/` | Catálogo + servicios línea×acto |
+| `HistoryExchange/` | Cola HC + IntegrationRetry agent |
+| `Specialty/` | Odontología / oftalmología |
+| `Infrastructure/External/` | ACL LIS / receta / HC nacional |
+| `Assistant/` `Home/` `DataAccess/` | Plugins motor Platform |
+| `Service/` `Workflow/` `Capture/` `Text/` … | Legacy a reclasificar |
 
-Integraciones HTTP: `common/components/Domain/Integrations/Laboratory/`. Docs: `web/docs/producto/laboratorio.md`.
+Forma por módulo:
 
-## Uso
-
-```php
-use common\components\Domain\Clinical\Workflow\EncounterDocumentationService;
-
-$result = (new EncounterDocumentationService())->guardar($body);
+```text
+<Modulo>/Application/{Flows,Agent}/
+<Modulo>/Domain/
+<Modulo>/Infrastructure/   # si aplica
+<Modulo>/Service/          # mientras migra
 ```
 
-API: `clinical/EncounterController`, `clinical/CarePlanController`, `clinical/ConditionController` (ciclo vía `CarePlanLifecycleService` / `ConditionLifecycleService`).
-
-Al guardar captura: `condition_resolutions` / `care_plan_resolutions`, `complete_acute` / `continue_treatment`; el análisis expone `capture_review.open_problems`.
-
-```php
-use common\components\Domain\Clinical\Service\CarePlanLifecycleService;
-
-// Cierre encounter ambulatorio + completar planes agudos
-$lifecycle = new CarePlanLifecycleService();
-$encounters->close($encounter, ['continue_treatment' => true]);
-```
+Modelos AR: `common/models/Clinical/`.

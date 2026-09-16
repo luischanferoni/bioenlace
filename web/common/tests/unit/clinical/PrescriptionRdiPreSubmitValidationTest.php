@@ -3,7 +3,7 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Prescription\Enum\PrescriptionLegalStatus;
+use common\components\Domain\Clinical\Prescription\Domain\PrescriptionLegalStatus;
 use common\components\Domain\Clinical\Prescription\Service\PrescriptionRdiPreSubmitValidationService;
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
 use common\models\Clinical\ElectronicPrescription;

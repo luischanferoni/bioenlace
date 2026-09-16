@@ -1,6 +1,6 @@
 <?php
 
-use common\components\Domain\Clinical\Emergency\Enum\TriageScale;
+use common\components\Domain\Clinical\Emergency\Domain\TriageScale;
 use yii\helpers\Html;
 
 /**

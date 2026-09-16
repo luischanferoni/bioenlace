@@ -2,9 +2,9 @@
 
 namespace common\components\Domain\Clinical\Workflow;
 
-use common\components\Domain\Clinical\Enum\CarePlanActivityKind;
-use common\components\Domain\Clinical\Enum\CarePlanCategory;
-use common\components\Domain\Clinical\Enum\CarePlanStatus;
+use common\components\Domain\Clinical\CarePlan\Domain\CarePlanActivityKind;
+use common\components\Domain\Clinical\CarePlan\Domain\CarePlanCategory;
+use common\components\Domain\Clinical\CarePlan\Domain\CarePlanStatus;
 use common\components\Domain\Clinical\Service\CarePlanPresentationService;
 use common\components\Domain\Clinical\Service\EpisodeOfCareService;
 use common\models\Clinical\CarePlan;

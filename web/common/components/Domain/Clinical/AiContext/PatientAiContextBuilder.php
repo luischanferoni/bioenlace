@@ -2,9 +2,9 @@
 
 namespace common\components\Domain\Clinical\AiContext;
 
-use common\components\Domain\Clinical\Enum\CarePlanCategory;
-use common\components\Domain\Clinical\Enum\CarePlanStatus;
-use common\components\Domain\Clinical\Enum\RequestStatus;
+use common\components\Domain\Clinical\CarePlan\Domain\CarePlanCategory;
+use common\components\Domain\Clinical\CarePlan\Domain\CarePlanStatus;
+use common\components\Domain\Clinical\Encounter\Domain\RequestStatus;
 use common\components\Domain\Clinical\Service\CarePlanPresentationService;
 use common\components\Domain\Clinical\Service\EncounterLifecycleService;
 use common\components\Domain\Clinical\Service\EpisodeOfCareService;
@@ -416,7 +416,7 @@ final class PatientAiContextBuilder
                 ['parent_type' => $parent],
                 ['parent_type' => Encounter::PARENT_CLASSES[$parent] ?? '__none__'],
             ])
-            ->andWhere(['<>', 'status', \common\components\Domain\Clinical\Enum\EncounterStatus::IN_PROGRESS])
+            ->andWhere(['<>', 'status', \common\components\Domain\Clinical\Encounter\Domain\EncounterStatus::IN_PROGRESS])
             ->orderBy(['id' => SORT_DESC])
             ->limit(3)
             ->asArray()

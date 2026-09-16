@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Service;
 
-use common\components\Domain\Clinical\Enum\EncounterStatus;
+use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Domain\Clinical\CareCohort\Service\CareEncounterOrchestrator;
 use common\components\Domain\Clinical\HistoryExchange\ClinicalHistoryOutboundEnqueueService;
 use common\components\Domain\Clinical\PatientSummary\PatientEncounterSummaryPublishService;
@@ -59,7 +59,7 @@ final class EncounterLifecycleService
             (new PatientEncounterSummaryPublishService())->schedulePublication($encounter);
             (new CareEncounterOrchestrator())->onEncounterFinalized($encounter);
             try {
-                (new \common\components\Domain\Clinical\Service\EncounterJourney\EncounterJourneyNotificationScheduler())
+                (new \common\components\Domain\Clinical\Encounter\Service\EncounterJourney\EncounterJourneyNotificationScheduler())
                     ->scheduleForEncounter($encounter);
             } catch (\Throwable $e) {
                 Yii::warning('EncounterJourney post notifications: ' . $e->getMessage(), 'encounter-journey');

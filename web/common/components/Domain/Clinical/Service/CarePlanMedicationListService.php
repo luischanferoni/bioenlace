@@ -3,8 +3,8 @@
 namespace common\components\Domain\Clinical\Service;
 
 use common\components\Domain\Clinical\Dto\MedicationRequestDto;
-use common\components\Domain\Clinical\Enum\CarePlanActivityKind;
-use common\components\Domain\Clinical\Enum\CarePlanStatus;
+use common\components\Domain\Clinical\CarePlan\Domain\CarePlanActivityKind;
+use common\components\Domain\Clinical\CarePlan\Domain\CarePlanStatus;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\CarePlanActivity;
 use common\models\Clinical\MedicationRequest;

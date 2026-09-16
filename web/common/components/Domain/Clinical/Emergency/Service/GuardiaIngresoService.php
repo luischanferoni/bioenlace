@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Clinical\Emergency\Service;
 
-use common\components\Domain\Clinical\Emergency\Enum\CircuitoEstado;
-use common\components\Domain\Clinical\Emergency\Enum\CircuitoEventType;
+use common\components\Domain\Clinical\Emergency\Domain\CircuitoEstado;
+use common\components\Domain\Clinical\Emergency\Domain\CircuitoEventType;
 use common\components\Domain\Person\Service\PersonaBusquedaAsistenteUiService;
 use common\components\Domain\Person\Service\PersonaIdentidadPendienteService;
 use common\components\Domain\Person\Service\PersonaIdentidadResolverService;

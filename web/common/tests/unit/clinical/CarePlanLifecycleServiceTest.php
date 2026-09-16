@@ -2,8 +2,8 @@
 
 namespace common\tests\unit\clinical;
 
-use common\components\Domain\Clinical\Enum\CarePlanCategory;
-use common\components\Domain\Clinical\Enum\CarePlanStatus;
+use common\components\Domain\Clinical\CarePlan\Domain\CarePlanCategory;
+use common\components\Domain\Clinical\CarePlan\Domain\CarePlanStatus;
 use common\components\Domain\Clinical\Service\CarePlanLifecycleService;
 use common\components\Domain\Clinical\Service\CarePlanService;
 use common\components\Domain\Clinical\Support\CarePlanProgramMeta;

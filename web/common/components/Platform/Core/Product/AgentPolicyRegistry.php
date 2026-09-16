@@ -2,13 +2,13 @@
 
 namespace common\components\Platform\Core\Product;
 
-use common\components\Domain\Clinical\Application\Agent\CareFollowupBranchingAgentPolicy;
-use common\components\Domain\Clinical\Application\Agent\IntegrationRetryAgentPolicy;
-use common\components\Domain\Clinical\Application\Agent\InternacionCamaSugerenciaAgentPolicy;
-use common\components\Domain\Clinical\Application\Agent\LabEncounterLinkAgentPolicy;
-use common\components\Domain\Clinical\Application\Agent\PostDischargeFollowupAgentPolicy;
-use common\components\Domain\Clinical\Application\Agent\PostLabClassificationAgentPolicy;
-use common\components\Domain\Clinical\Application\Agent\PrescriptionRdiPreSubmitAgentPolicy;
+use common\components\Domain\Clinical\CareCohort\Application\Agent\CareFollowupBranchingAgentPolicy;
+use common\components\Domain\Clinical\HistoryExchange\Application\Agent\IntegrationRetryAgentPolicy;
+use common\components\Domain\Clinical\Inpatient\Application\Agent\InternacionCamaSugerenciaAgentPolicy;
+use common\components\Domain\Clinical\Laboratory\Application\Agent\LabEncounterLinkAgentPolicy;
+use common\components\Domain\Clinical\Inpatient\Application\Agent\PostDischargeFollowupAgentPolicy;
+use common\components\Domain\Clinical\Laboratory\Application\Agent\PostLabClassificationAgentPolicy;
+use common\components\Domain\Clinical\Prescription\Application\Agent\PrescriptionRdiPreSubmitAgentPolicy;
 use common\components\Domain\Scheduling\Application\Agent\ConsultaAsyncBandejaPrioridadAgentPolicy;
 use common\components\Domain\Scheduling\Application\Agent\ReservaTriagePostCupoRoutingAgentPolicy;
 use common\components\Domain\Scheduling\Application\Agent\TurnoAdvanceOfferAgentPolicy;
@@ -19,7 +19,7 @@ use common\components\Domain\Scheduling\Application\Agent\TurnoResolucionMultica
 use common\components\Domain\Scheduling\Application\Agent\TurnoResolucionShortlistAgentPolicy;
 
 /**
- * Políticas de agentes autónomos en PHP (Application del BC).
+ * Políticas de agentes autónomos en PHP (`<BC>/<Modulo?>/Application/Agent/*AgentPolicy`).
  * Sustituye `metadata/bioenlace/platform/agents/*.yaml`.
  */
 final class AgentPolicyRegistry

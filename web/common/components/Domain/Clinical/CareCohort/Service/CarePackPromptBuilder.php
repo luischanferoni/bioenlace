@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\CareCohort\Service;
 
 use common\components\Domain\Clinical\CareCohort\CohortKeyBuilder;
-use common\components\Domain\Clinical\CareCohort\Enum\CarePackType;
+use common\components\Domain\Clinical\CareCohort\Domain\CarePackType;
 use common\models\Clinical\Encounter;
 
 final class CarePackPromptBuilder

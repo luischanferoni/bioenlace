@@ -114,7 +114,7 @@ class Guardia extends \yii\db\ActiveRecord
             [['id_persona', 'identidad_pendiente', 'id_profesional_efector_servicio', 'created_by', 'updated_by', 'deleted_by', 'id_efector_derivacion', 'notificar_internacion_id_efector', 'id_efector',], 'integer'],
             [['fecha', 'hora', 'fecha_fin', 'hora_fin', 'created_at', 'updated_at', 'deleted_at'], 'safe'],
             [['ingresa_con', 'ingresa_en', 'estado', 'situacion_al_ingresar', 'condiciones_derivacion', 'datos_contacto_tel', 'diagnostico_operativo', 'epicrisis', 'pautas_alarma', 'egreso_meta_json'], 'string'],
-            [['destino_egreso'], 'in', 'range' => \common\components\Domain\Clinical\Emergency\Enum\GuardiaEgresoDestino::values(), 'skipOnEmpty' => true],
+            [['destino_egreso'], 'in', 'range' => \common\components\Domain\Clinical\Emergency\Domain\GuardiaEgresoDestino::values(), 'skipOnEmpty' => true],
             [['cobertura'], 'string', 'max' => 100],
             [['id_persona'], 'validarCombinacionUnica', 'on' => self::INGRESO_PACIENTE],
             [['ingresa_en', 'ingresa_con', 'fecha'], 'required', 'on' => self::INGRESO_PACIENTE],

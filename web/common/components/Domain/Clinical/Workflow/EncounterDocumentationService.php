@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\Workflow;
 
 use common\components\Domain\Clinical\Emergency\Service\GuardiaEncounterOutcomeService;
 use common\components\Domain\Clinical\Capture\ClinicalCaptureResolutionApplier;
-use common\components\Domain\Clinical\Enum\EncounterStatus;
+use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Domain\Clinical\Service\CarePlanLifecycleService;
 use common\components\Domain\Clinical\Service\CarePlanService;
 use common\components\Domain\Clinical\Service\ConditionLifecycleService;

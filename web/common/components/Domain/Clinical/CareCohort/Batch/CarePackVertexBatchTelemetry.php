@@ -54,7 +54,7 @@ final class CarePackVertexBatchTelemetry
      */
     public static function syncContextForPackType(string $packType): string
     {
-        return \common\components\Domain\Clinical\CareCohort\Enum\CarePackType::iaContext($packType);
+        return \common\components\Domain\Clinical\CareCohort\Domain\CarePackType::iaContext($packType);
     }
 
     public static function vertexBatchConfigured(): bool

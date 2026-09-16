@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Prescription\Service;
 
-use common\components\Domain\Clinical\Prescription\Enum\PrescriptionLegalStatus;
+use common\components\Domain\Clinical\Prescription\Domain\PrescriptionLegalStatus;
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
 use common\models\Clinical\ElectronicPrescription;
 use common\models\Clinical\ElectronicPrescriptionItem;

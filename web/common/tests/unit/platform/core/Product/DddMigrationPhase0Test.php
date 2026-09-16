@@ -34,16 +34,54 @@ final class DddMigrationPhase0Test extends Unit
             $colocated
         );
         $joined = implode("\n", $norm);
-        foreach (['Clinical', 'Scheduling', 'Person', 'Organization'] as $bc) {
+        foreach (['Scheduling', 'Person', 'Organization'] as $bc) {
             $this->assertStringContainsString(
                 "Domain/{$bc}/Application/Flows/intents",
                 $joined
             );
         }
+        // Clinical: layout BC plano (migración) y/o módulos de capacidad.
+        $this->assertTrue(
+            str_contains($joined, 'Domain/Clinical/Application/Flows/intents')
+            || str_contains($joined, 'Domain/Clinical/'),
+            'Clinical debe aportar al menos una raíz de intents'
+        );
         $this->assertStringContainsString(
             'Platform/Assistant/Application/Flows/intents',
             $joined
         );
+    }
+
+    public function testClinicalModuleIntentRootsYDomain(): void
+    {
+        $colocated = ProductMetadataPaths::colocatedIntentRoots();
+        $norm = array_map(
+            static fn (string $p): string => str_replace('\\', '/', $p),
+            $colocated
+        );
+        $joined = implode("\n", $norm);
+        foreach (['Laboratory', 'Emergency', 'Inpatient', 'Encounter', 'CarePlan', 'Prescription', 'CareCohort'] as $mod) {
+            $this->assertStringContainsString(
+                "Domain/Clinical/{$mod}/Application/Flows/intents",
+                $joined,
+                $mod
+            );
+        }
+
+        IntentSchemaPaths::resetIndexCache();
+        $samples = [
+            'laboratorio.ver-resultados-como-paciente' => 'Laboratory',
+            'urgencias.triage-paciente-guardia' => 'Emergency',
+            'internacion.ingreso-flow' => 'Inpatient',
+            'atencion.necesito-atencion' => 'Encounter',
+            'tratamiento.recordatorios-como-paciente' => 'CarePlan',
+        ];
+        foreach ($samples as $intentId => $mod) {
+            $path = IntentSchemaPaths::resolveFileForIntentId($intentId);
+            $this->assertNotNull($path, $intentId);
+            $this->assertStringContainsString("/{$mod}/Application/Flows/", str_replace('\\', '/', $path), $intentId);
+            $this->assertSame('clinical', IntentSchemaPaths::domainFromPath($path), $intentId);
+        }
     }
 
     public function testIntentRootsSonSoloColocalizados(): void

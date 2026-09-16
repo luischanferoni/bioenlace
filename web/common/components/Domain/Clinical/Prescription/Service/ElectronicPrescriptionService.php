@@ -2,12 +2,12 @@
 
 namespace common\components\Domain\Clinical\Prescription\Service;
 
-use common\components\Domain\Clinical\Enum\RequestStatus;
-use common\components\Domain\Clinical\Prescription\Enum\PrescriptionEventType;
-use common\components\Domain\Clinical\Prescription\Enum\PrescriptionLegalStatus;
+use common\components\Domain\Clinical\Encounter\Domain\RequestStatus;
+use common\components\Domain\Clinical\Prescription\Domain\PrescriptionEventType;
+use common\components\Domain\Clinical\Prescription\Domain\PrescriptionLegalStatus;
 use common\components\Domain\Clinical\Prescription\Mapper\FhirRecetaDigitalBundleMapper;
 use common\components\Domain\Clinical\Prescription\Support\PrescriptionDocumentSupport;
-use common\components\Domain\Clinical\Application\Agent\PrescriptionRdiPreSubmitValidationAgent;
+use common\components\Domain\Clinical\Prescription\Application\Agent\PrescriptionRdiPreSubmitValidationAgent;
 use common\components\Domain\Clinical\Service\MedicationRequestService;
 use common\components\Domain\Terminology\Snomed\SnomedCodeSystem;
 use common\models\Clinical\ElectronicPrescription;

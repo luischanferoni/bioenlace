@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\PatientSummary;
 
 use common\components\Domain\Clinical\CareCohort\Service\CareFollowupSchedulerService;
-use common\components\Domain\Clinical\Enum\EncounterStatus;
+use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\components\Platform\Core\Service\Push\PushNotificationTypes;
 use common\components\Domain\Person\Representation\Enum\RepresentationPermission;

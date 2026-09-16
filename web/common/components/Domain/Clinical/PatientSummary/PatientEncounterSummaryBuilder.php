@@ -2,9 +2,9 @@
 
 namespace common\components\Domain\Clinical\PatientSummary;
 
-use common\components\Domain\Clinical\Enum\EncounterStatus;
-use common\components\Domain\Clinical\Prescription\Enum\PrescriptionLegalStatus;
-use common\components\Domain\Clinical\Enum\RequestStatus;
+use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
+use common\components\Domain\Clinical\Prescription\Domain\PrescriptionLegalStatus;
+use common\components\Domain\Clinical\Encounter\Domain\RequestStatus;
 use common\components\Domain\Clinical\Laboratory\Service\LaboratoryResultQueryService;
 use common\models\Clinical\DiagnosticReport;
 use common\models\Clinical\ElectronicPrescription;

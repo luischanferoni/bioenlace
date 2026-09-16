@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Laboratory\Service;
 
-use common\components\Domain\Clinical\Application\Agent\PostLabClassificationAgent;
+use common\components\Domain\Clinical\Laboratory\Application\Agent\PostLabClassificationAgent;
 
 use common\models\Clinical\DiagnosticReport;
 use common\models\Clinical\Observation;

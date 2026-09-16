@@ -3,8 +3,8 @@
 namespace common\components\Domain\Clinical\Specialty\Odontology;
 
 use common\components\Domain\Clinical\Dto\ProcedureDto;
-use common\components\Domain\Clinical\Enum\CarePlanCategory;
-use common\components\Domain\Clinical\Enum\ProcedureStatus;
+use common\components\Domain\Clinical\CarePlan\Domain\CarePlanCategory;
+use common\components\Domain\Clinical\Encounter\Domain\ProcedureStatus;
 use common\components\Domain\Clinical\Service\CarePlanService;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Condition;

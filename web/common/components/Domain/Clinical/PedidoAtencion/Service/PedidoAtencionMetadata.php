@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\PedidoAtencion\Service;
 
 /**
- * Metadata de PedidoAtencion ({@see \common\components\Domain\Clinical\Domain\PedidoAtencionCatalog}).
+ * Metadata de PedidoAtencion ({@see \common\components\Domain\Clinical\PedidoAtencion\Domain\PedidoAtencionCatalog}).
  */
 final class PedidoAtencionMetadata
 {
@@ -141,7 +141,7 @@ final class PedidoAtencionMetadata
             'acto_coding' => [],
         ];
 
-        $data = \common\components\Domain\Clinical\Domain\PedidoAtencionCatalog::config();
+        $data = \common\components\Domain\Clinical\PedidoAtencion\Domain\PedidoAtencionCatalog::config();
         foreach ([
             'capacity_rules',
             'linea_nl_aliases',

@@ -2,7 +2,7 @@
 
 namespace common\tests\unit\clinical;
 
-use common\components\Domain\Clinical\Enum\CarePlanStatus;
+use common\components\Domain\Clinical\CarePlan\Domain\CarePlanStatus;
 use common\components\Domain\Clinical\Service\CarePlanService;
 use Codeception\Test\Unit;
 

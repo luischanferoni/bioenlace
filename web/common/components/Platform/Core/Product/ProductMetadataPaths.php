@@ -36,7 +36,8 @@ final class ProductMetadataPaths
     /**
      * Raíces de intents colocalizadas.
      *
-     * - `Domain/<BC>/Application/Flows/intents`
+     * - `Domain/<BC>/Application/Flows/intents` (layout BC plano; migración)
+     * - `Domain/<BC>/<Modulo>/Application/Flows/intents` (módulo de capacidad)
      * - `Platform/Assistant/Application/Flows/intents`
      *
      * @return list<string> rutas absolutas
@@ -47,13 +48,9 @@ final class ProductMetadataPaths
         $domainRoot = realpath(self::componentsDomainRoot());
         if ($domainRoot !== false && is_dir($domainRoot)) {
             foreach (glob($domainRoot . DIRECTORY_SEPARATOR . '*', GLOB_ONLYDIR) ?: [] as $bcDir) {
-                $intents = $bcDir
-                    . DIRECTORY_SEPARATOR . 'Application'
-                    . DIRECTORY_SEPARATOR . 'Flows'
-                    . DIRECTORY_SEPARATOR . 'intents';
-                if (is_dir($intents)) {
-                    $resolved = realpath($intents);
-                    $roots[] = $resolved !== false ? $resolved : $intents;
+                self::collectIntentRoot($roots, $bcDir);
+                foreach (glob($bcDir . DIRECTORY_SEPARATOR . '*', GLOB_ONLYDIR) ?: [] as $moduleOrLayerDir) {
+                    self::collectIntentRoot($roots, $moduleOrLayerDir);
                 }
             }
         }
@@ -68,9 +65,26 @@ final class ProductMetadataPaths
             $roots[] = $resolved !== false ? $resolved : $platformFlows;
         }
 
+        $roots = array_values(array_unique($roots));
         sort($roots);
 
         return $roots;
+    }
+
+    /**
+     * @param list<string> $roots
+     */
+    private static function collectIntentRoot(array &$roots, string $baseDir): void
+    {
+        $intents = $baseDir
+            . DIRECTORY_SEPARATOR . 'Application'
+            . DIRECTORY_SEPARATOR . 'Flows'
+            . DIRECTORY_SEPARATOR . 'intents';
+        if (!is_dir($intents)) {
+            return;
+        }
+        $resolved = realpath($intents);
+        $roots[] = $resolved !== false ? $resolved : $intents;
     }
 
     /** Metadata del asistente en `components/Platform/Assistant/`. */

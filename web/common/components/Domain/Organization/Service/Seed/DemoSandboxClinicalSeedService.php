@@ -4,7 +4,7 @@ namespace common\components\Domain\Organization\Service\Seed;
 
 use common\components\Domain\Clinical\Emergency\Service\GuardiaCircuitoService;
 use common\components\Domain\Clinical\Emergency\Service\GuardiaTriageService;
-use common\components\Domain\Clinical\Enum\EncounterStatus;
+use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Domain\Clinical\Service\CarePlanLifecycleService;
 use common\components\Domain\Clinical\Service\EncounterLifecycleService;
 use common\components\Domain\Person\Service\CuilValidator;

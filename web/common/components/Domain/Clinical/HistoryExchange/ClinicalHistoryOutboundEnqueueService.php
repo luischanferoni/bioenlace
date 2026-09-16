@@ -20,7 +20,7 @@ final class ClinicalHistoryOutboundEnqueueService
             return null;
         }
 
-        if ($encounter->status !== \common\components\Domain\Clinical\Enum\EncounterStatus::FINISHED) {
+        if ($encounter->status !== \common\components\Domain\Clinical\Encounter\Domain\EncounterStatus::FINISHED) {
             return null;
         }
 

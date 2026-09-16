@@ -2,7 +2,7 @@
 
 namespace common\tests\unit\clinical;
 
-use common\components\Domain\Clinical\Enum\EncounterStatus;
+use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Domain\Clinical\Infrastructure\External\ClinicalHistory\Mapper\FhirClinicalHistoryBundleMapper;
 use common\models\Clinical\Encounter;
 

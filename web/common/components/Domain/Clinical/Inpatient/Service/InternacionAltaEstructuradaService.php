@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Inpatient\Service;
 
-use common\components\Domain\Clinical\Application\Agent\PostDischargeFollowupAgent;
+use common\components\Domain\Clinical\Inpatient\Application\Agent\PostDischargeFollowupAgent;
 
 use common\models\Clinical\SegNivelInternacion;
 use common\models\Clinical\SegNivelInternacionRepository;

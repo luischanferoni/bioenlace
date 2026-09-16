@@ -8,7 +8,7 @@ use yii\web\Response;
 use yii\web\UploadedFile;
 use common\components\Domain\Clinical\Assistant\AppointmentReasonEntry;
 use common\components\Domain\Clinical\Service\AppointmentReasonWindowService;
-use common\components\Domain\Clinical\Service\EncounterJourney\EncounterMotivosIntakeCatalogService;
+use common\components\Domain\Clinical\Encounter\Service\EncounterJourney\EncounterMotivosIntakeCatalogService;
 use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
 use common\components\Domain\Person\Representation\Service\PersonRepresentationSubjectService;
 use common\models\Person\PersonRelatedAuditLog;

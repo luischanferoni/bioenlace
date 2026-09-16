@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Service;
 
-use common\components\Domain\Clinical\Enum\EpisodeOfCareStatus;
+use common\components\Domain\Clinical\Encounter\Domain\EpisodeOfCareStatus;
 use common\models\Clinical\EpisodeOfCare;
 use common\models\Organization\InfraestructuraCama;
 use common\models\Clinical\SegNivelInternacion;

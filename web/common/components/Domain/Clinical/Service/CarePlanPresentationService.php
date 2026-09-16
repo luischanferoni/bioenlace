@@ -4,9 +4,9 @@ namespace common\components\Domain\Clinical\Service;
 
 use common\components\Domain\Clinical\Dto\CarePlanActivityDto;
 use common\components\Domain\Clinical\Dto\CarePlanDto;
-use common\components\Domain\Clinical\Enum\CarePlanActivityKind;
-use common\components\Domain\Clinical\Enum\CarePlanCategory;
-use common\components\Domain\Clinical\Enum\CarePlanStatus;
+use common\components\Domain\Clinical\CarePlan\Domain\CarePlanActivityKind;
+use common\components\Domain\Clinical\CarePlan\Domain\CarePlanCategory;
+use common\components\Domain\Clinical\CarePlan\Domain\CarePlanStatus;
 use common\components\Domain\Scheduling\Service\ConsultasSeguimientoIntakeCatalogService;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\CarePlanActivity;

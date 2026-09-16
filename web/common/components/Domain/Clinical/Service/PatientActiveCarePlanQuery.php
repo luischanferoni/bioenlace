@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Service;
 
-use common\components\Domain\Clinical\Enum\CarePlanStatus;
+use common\components\Domain\Clinical\CarePlan\Domain\CarePlanStatus;
 use common\models\Clinical\CarePlan;
 use yii\db\ActiveQuery;
 

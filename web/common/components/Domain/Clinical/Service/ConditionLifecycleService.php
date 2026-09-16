@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Service;
 
-use common\components\Domain\Clinical\Enum\ConditionClinicalStatus;
+use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
 use common\models\Clinical\Condition;
 use common\models\Clinical\DiagnosticoConsulta;
 

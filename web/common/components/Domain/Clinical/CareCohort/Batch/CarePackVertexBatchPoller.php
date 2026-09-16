@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\CareCohort\Batch;
 
 use common\components\Domain\Clinical\CareCohort\CarePackContentParser;
-use common\components\Domain\Clinical\CareCohort\Enum\CarePackType;
+use common\components\Domain\Clinical\CareCohort\Domain\CarePackType;
 use common\components\Domain\Clinical\CareCohort\Service\CarePackConfig;
 use common\components\Domain\Clinical\CareCohort\Service\CarePackRepository;
 use common\models\Clinical\CareCohortPack;

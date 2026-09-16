@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Inpatient\Service;
 
-use common\components\Domain\Clinical\Application\Agent\InternacionCamaSugerenciaAgent;
+use common\components\Domain\Clinical\Inpatient\Application\Agent\InternacionCamaSugerenciaAgent;
 
 use common\components\Domain\Clinical\Service\CarePlanLifecycleService;
 use common\components\Domain\Clinical\Emergency\Service\GuardiaInternacionService;

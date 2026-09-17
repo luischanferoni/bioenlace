@@ -3,12 +3,12 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\PedidoAtencion\Service\CodingSystems;
+use common\components\Domain\Clinical\PedidoAtencion\Domain\CodingSystems;
 use common\components\Domain\Clinical\PedidoAtencion\Domain\InMemoryLineaActoCatalog;
-use common\components\Domain\Clinical\PedidoAtencion\Service\PedidoAtencion;
-use common\components\Domain\Clinical\PedidoAtencion\Service\PedidoAtencionMetadata;
-use common\components\Domain\Clinical\PedidoAtencion\Service\PedidoAtencionPacienteService;
-use common\components\Domain\Clinical\PedidoAtencion\Service\PedidoAtencionService;
+use common\components\Domain\Clinical\PedidoAtencion\Domain\Model\PedidoAtencion;
+use common\components\Domain\Clinical\PedidoAtencion\Application\PedidoAtencionMetadata;
+use common\components\Domain\Clinical\PedidoAtencion\Application\PedidoAtencionPacienteService;
+use common\components\Domain\Clinical\PedidoAtencion\Application\PedidoAtencionService;
 use common\components\Domain\Scheduling\Service\ReservaTriageServicioSugeridoService;
 
 class PedidoAtencionPacienteServiceTest extends Unit

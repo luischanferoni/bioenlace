@@ -2,7 +2,7 @@
 
 namespace console\controllers;
 
-use common\components\Domain\Scheduling\Application\Agent\TurnoAdvanceOfferAgent;
+use common\components\Domain\Scheduling\Application\Agents\TurnoAdvanceOfferAgent;
 use yii\console\Controller;
 use yii\console\ExitCode;
 

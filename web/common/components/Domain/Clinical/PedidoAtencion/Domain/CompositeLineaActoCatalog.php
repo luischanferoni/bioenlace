@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Clinical\PedidoAtencion\Domain;
 
-use common\components\Domain\Clinical\PedidoAtencion\Service\LineaActoCatalogInterface;
-use common\components\Domain\Clinical\PedidoAtencion\Service\SnowstormActoEclMembership;
+use common\components\Domain\Clinical\PedidoAtencion\Domain\LineaActoCatalogInterface;
+use common\components\Domain\Clinical\PedidoAtencion\Infrastructure\External\SnowstormActoEclMembership;
 
 /**
  * Une puente explícito (`linea_acto`) + capacidad ECL.

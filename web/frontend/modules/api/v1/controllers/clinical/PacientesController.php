@@ -4,8 +4,8 @@ namespace frontend\modules\api\v1\controllers\clinical;
 
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
-use common\components\Domain\Clinical\CareCohort\Service\CarePackConfig;
-use common\components\Domain\Clinical\CareCohort\Service\CarePackEncounterStaffService;
+use common\components\Domain\Clinical\CareCohort\Application\CarePackConfig;
+use common\components\Domain\Clinical\CareCohort\Application\CarePackEncounterStaffService;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EncounterStaffDocumentationViewService;
 use common\components\Domain\Clinical\Encounter\Application\AppointmentReasonBatchService;
 use common\components\Domain\Clinical\Encounter\Application\AppointmentReasonClinicalInsightsService;

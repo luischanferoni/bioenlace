@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\Encounter\Application;
 
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EpisodioDateTimeFormatter;
 use common\components\Domain\Clinical\Emergency\Domain\CircuitoEventType;
-use common\components\Domain\Clinical\Emergency\Service\GuardiaTriageService;
+use common\components\Domain\Clinical\Emergency\Application\GuardiaTriageService;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\MedicationAdministration;
 use common\models\Clinical\MedicationRequest;
@@ -16,7 +16,7 @@ use common\models\Clinical\Guardia;
 use common\models\Person\Persona;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Clinical\SegNivelInternacion;
-use common\components\Domain\Clinical\Laboratory\Service\LaboratoryResultQueryService;
+use common\components\Domain\Clinical\Laboratory\Application\LaboratoryResultQueryService;
 
 /**
  * Feed cronológico unificado del episodio (guardia / internación) para HC.

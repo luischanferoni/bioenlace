@@ -3,11 +3,11 @@
 namespace console\controllers;
 
 use common\components\Domain\Person\Service\Seed\UsuarioDePruebaSeedService;
-use common\components\Domain\Clinical\Laboratory\Service\LaboratoryDemoSeedService;
-use common\components\Domain\Clinical\Laboratory\Service\LaboratoryResultQueryService;
-use common\components\Domain\Clinical\CarePlan\Reminder\CarePlanReminderDemoTimingService;
-use common\components\Domain\Clinical\Prescription\Service\ElectronicPrescriptionDemoSeedService;
-use common\components\Domain\Clinical\Prescription\Service\PrescriptionDocumentSupport;
+use common\components\Domain\Clinical\Laboratory\Application\LaboratoryDemoSeedService;
+use common\components\Domain\Clinical\Laboratory\Application\LaboratoryResultQueryService;
+use common\components\Domain\Clinical\CarePlan\Application\Reminder\CarePlanReminderDemoTimingService;
+use common\components\Domain\Clinical\Prescription\Application\ElectronicPrescriptionDemoSeedService;
+use common\components\Domain\Clinical\Prescription\Application\PrescriptionDocumentSupport;
 use common\components\Domain\Organization\Service\Seed\EfectorDemoSeedService;
 use common\components\Domain\Organization\Service\Seed\MedicoMedGeneralEfectorSeedService;
 use yii\console\Controller;

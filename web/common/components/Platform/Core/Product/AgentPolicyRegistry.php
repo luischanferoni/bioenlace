@@ -2,25 +2,24 @@
 
 namespace common\components\Platform\Core\Product;
 
-use common\components\Domain\Clinical\CareCohort\Application\Agent\CareFollowupBranchingAgentPolicy;
-use common\components\Domain\Clinical\HistoryExchange\Application\Agent\IntegrationRetryAgentPolicy;
-use common\components\Domain\Clinical\Inpatient\Application\Agent\InternacionCamaSugerenciaAgentPolicy;
-use common\components\Domain\Clinical\Laboratory\Application\Agent\LabEncounterLinkAgentPolicy;
-use common\components\Domain\Clinical\Inpatient\Application\Agent\PostDischargeFollowupAgentPolicy;
-use common\components\Domain\Clinical\Laboratory\Application\Agent\PostLabClassificationAgentPolicy;
-use common\components\Domain\Clinical\Prescription\Application\Agent\PrescriptionRdiPreSubmitAgentPolicy;
-use common\components\Domain\Scheduling\Application\Agent\ConsultaAsyncBandejaPrioridadAgentPolicy;
-use common\components\Domain\Scheduling\Application\Agent\ReservaTriagePostCupoRoutingAgentPolicy;
-use common\components\Domain\Scheduling\Application\Agent\TurnoAdvanceOfferAgentPolicy;
-use common\components\Domain\Scheduling\Application\Agent\TurnoAntinoshowAgentPolicy;
-use common\components\Domain\Scheduling\Application\Agent\TurnoResolucionAutoReservaAgentPolicy;
-use common\components\Domain\Scheduling\Application\Agent\TurnoResolucionLoopCloseAgentPolicy;
-use common\components\Domain\Scheduling\Application\Agent\TurnoResolucionMulticanalAgentPolicy;
-use common\components\Domain\Scheduling\Application\Agent\TurnoResolucionShortlistAgentPolicy;
+use common\components\Domain\Clinical\CareCohort\Application\Agents\CareFollowupBranchingAgentPolicy;
+use common\components\Domain\Clinical\HistoryExchange\Application\Agents\IntegrationRetryAgentPolicy;
+use common\components\Domain\Clinical\Inpatient\Application\Agents\InternacionCamaSugerenciaAgentPolicy;
+use common\components\Domain\Clinical\Laboratory\Application\Agents\LabEncounterLinkAgentPolicy;
+use common\components\Domain\Clinical\Inpatient\Application\Agents\PostDischargeFollowupAgentPolicy;
+use common\components\Domain\Clinical\Laboratory\Application\Agents\PostLabClassificationAgentPolicy;
+use common\components\Domain\Clinical\Prescription\Application\Agents\PrescriptionRdiPreSubmitAgentPolicy;
+use common\components\Domain\Scheduling\Application\Agents\ConsultaAsyncBandejaPrioridadAgentPolicy;
+use common\components\Domain\Scheduling\Application\Agents\ReservaTriagePostCupoRoutingAgentPolicy;
+use common\components\Domain\Scheduling\Application\Agents\TurnoAdvanceOfferAgentPolicy;
+use common\components\Domain\Scheduling\Application\Agents\TurnoAntinoshowAgentPolicy;
+use common\components\Domain\Scheduling\Application\Agents\TurnoResolucionAutoReservaAgentPolicy;
+use common\components\Domain\Scheduling\Application\Agents\TurnoResolucionLoopCloseAgentPolicy;
+use common\components\Domain\Scheduling\Application\Agents\TurnoResolucionMulticanalAgentPolicy;
+use common\components\Domain\Scheduling\Application\Agents\TurnoResolucionShortlistAgentPolicy;
 
 /**
- * Políticas de agentes autónomos en PHP (`<BC>/<Modulo?>/Application/Agents/*AgentPolicy`;
- * path histórico `Application/Agent/` aún presente en oleadas previas — migrar a `Agents/`).
+ * Políticas de agentes autónomos en PHP (`<BC>/<Modulo?>/Application/Agents/*AgentPolicy`).
  * Sustituye `metadata/bioenlace/platform/agents/*.yaml`.
  */
 final class AgentPolicyRegistry

@@ -61,7 +61,7 @@ Lenguaje ubicuo en español en **nombres de clase** se conserva. Carpetas técni
 
 ### Migración
 
-Plan: `docs/plans/clinical-ddd-folder-grammar/`. Piloto: módulo `Encounter/`. Oleadas siguientes: resto Clinical; `Application/Agent/` → `Agents/` en todos los BCs; aggregates reales.
+Plan: `docs/plans/clinical-ddd-folder-grammar/`. Piloto: módulo `Encounter/`. Fases 2–3 hechas: `Application/Agents/` en Clinical+Scheduling; resto de módulos Clinical en tríada Application/Domain/Infrastructure (sin `Service/` L1). Pendiente: BCs chicos (opc.) y aggregates reales.
 
 ## Relacionado
 

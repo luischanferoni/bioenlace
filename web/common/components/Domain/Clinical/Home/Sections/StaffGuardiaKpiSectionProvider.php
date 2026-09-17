@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Home\Sections;
 
-use common\components\Domain\Clinical\Emergency\Service\GuardiaIndicadoresService;
+use common\components\Domain\Clinical\Emergency\Application\GuardiaIndicadoresService;
 use common\components\Domain\Organization\Service\Authorization\EfectorAccessService;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Platform\Ui\Home\Service\Sections\HomePanelSectionProviderInterface;

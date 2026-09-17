@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\PedidoAtencion\Domain;
 
-use common\components\Domain\Clinical\PedidoAtencion\Service\LineaActoCatalogInterface;
+use common\components\Domain\Clinical\PedidoAtencion\Domain\LineaActoCatalogInterface;
 
 /**
  * Catálogo en memoria para tests unitarios.

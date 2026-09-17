@@ -3,7 +3,7 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Capture\Service\EncounterCapturePipelineService;
+use common\components\Domain\Clinical\Capture\Application\EncounterCapturePipelineService;
 use common\models\Clinical\EncounterCapture;
 
 class EncounterCaptureStageTest extends Unit

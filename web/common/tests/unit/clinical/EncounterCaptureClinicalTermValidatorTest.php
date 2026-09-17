@@ -3,9 +3,9 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Capture\Text\EncounterCaptureClinicalTermValidator;
-use common\components\Domain\Clinical\Capture\Text\EncounterCaptureExtractionPostProcessPolicy;
-use common\components\Domain\Clinical\Capture\Text\EncounterCaptureTerminologyLookup;
+use common\components\Domain\Clinical\Capture\Application\Text\EncounterCaptureClinicalTermValidator;
+use common\components\Domain\Clinical\Capture\Application\Text\EncounterCaptureExtractionPostProcessPolicy;
+use common\components\Domain\Clinical\Capture\Application\Text\EncounterCaptureTerminologyLookup;
 use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
 
 class EncounterCaptureClinicalTermValidatorTest extends Unit

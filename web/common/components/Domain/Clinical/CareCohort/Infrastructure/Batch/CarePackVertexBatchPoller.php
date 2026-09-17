@@ -2,10 +2,10 @@
 
 namespace common\components\Domain\Clinical\CareCohort\Infrastructure\Batch;
 
-use common\components\Domain\Clinical\CareCohort\Service\CarePackContentParser;
+use common\components\Domain\Clinical\CareCohort\Application\CarePackContentParser;
 use common\components\Domain\Clinical\CareCohort\Domain\CarePackType;
-use common\components\Domain\Clinical\CareCohort\Service\CarePackConfig;
-use common\components\Domain\Clinical\CareCohort\Service\CarePackRepository;
+use common\components\Domain\Clinical\CareCohort\Application\CarePackConfig;
+use common\components\Domain\Clinical\CareCohort\Application\CarePackRepository;
 use common\models\Clinical\CareCohortPack;
 use common\models\Clinical\CarePackJob;
 use Yii;

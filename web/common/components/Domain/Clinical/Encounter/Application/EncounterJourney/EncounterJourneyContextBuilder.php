@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Clinical\Encounter\Application\EncounterJourney;
 
-use common\components\Domain\Clinical\CareCohort\Service\CarePackConfig;
-use common\components\Domain\Clinical\CareCohort\Service\CarePackRepository;
+use common\components\Domain\Clinical\CareCohort\Application\CarePackConfig;
+use common\components\Domain\Clinical\CareCohort\Application\CarePackRepository;
 use common\components\Domain\Clinical\Encounter\Application\AppointmentReasonChatGuideCatalogService;
 use common\components\Domain\Clinical\Encounter\Application\AppointmentReasonWindowService;
 use common\components\Domain\Clinical\Encounter\Application\EncounterReasonService;

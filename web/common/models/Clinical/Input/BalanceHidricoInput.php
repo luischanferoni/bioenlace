@@ -2,7 +2,7 @@
 
 namespace common\models\Clinical\Input;
 
-use common\components\Domain\Clinical\Specialty\Inpatient\Dto\InpatientFluidBalanceRow;
+use common\components\Domain\Clinical\Specialty\Application\Dto\InpatientFluidBalanceRow;
 use yii\base\Model;
 
 /**
@@ -115,7 +115,7 @@ final class BalanceHidricoInput extends Model
         $issues = [];
         foreach ($this->missingFieldsForCompleteness() as $field) {
             if ($field === self::FIELD_TIPO) {
-                $issues[] = \common\components\Domain\Clinical\Capture\Service\ClinicalCaptureIssueFactory::make(
+                $issues[] = \common\components\Domain\Clinical\Capture\Application\ClinicalCaptureIssueFactory::make(
                     $category,
                     $index,
                     $field,
@@ -128,7 +128,7 @@ final class BalanceHidricoInput extends Model
                 continue;
             }
             if ($field === self::FIELD_CANTIDAD) {
-                $issues[] = \common\components\Domain\Clinical\Capture\Service\ClinicalCaptureIssueFactory::make(
+                $issues[] = \common\components\Domain\Clinical\Capture\Application\ClinicalCaptureIssueFactory::make(
                     $category,
                     $index,
                     $field,

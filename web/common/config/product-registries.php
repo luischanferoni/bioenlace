@@ -11,7 +11,7 @@
 use common\components\Platform\Assistant\Catalog\DataAccessUiActionCatalog;
 use common\components\Domain\Clinical\Assistant\ClinicalConversationalChannelProvider;
 use common\components\Domain\Clinical\Assistant\ClinicalUiActionCatalog;
-use common\components\Domain\Clinical\CareCohort\Assistant\CarePackUiActionCatalog;
+use common\components\Domain\Clinical\CareCohort\Application\CarePackUiActionCatalog;
 use common\components\Domain\Clinical\Home\InpatientHomePanelSliceResolver;
 use common\components\Domain\Clinical\Home\Sections\EmergencyBoardSectionProvider;
 use common\components\Domain\Clinical\Home\Sections\EmergencyIndicatorsSectionProvider;
@@ -21,7 +21,7 @@ use common\components\Domain\Clinical\Home\Sections\PatientCarePlansActiveSectio
 use common\components\Domain\Clinical\Home\Sections\PatientConditionsActiveSectionProvider;
 use common\components\Domain\Clinical\Home\Sections\StaffGuardiaKpiSectionProvider;
 use common\components\Domain\Clinical\Home\Sections\StaffInternacionKpiSectionProvider;
-use common\components\Domain\Clinical\Inpatient\Service\Authorization\ClinicalInternacionStaffAccessPolicy;
+use common\components\Domain\Clinical\Inpatient\Application\Authorization\ClinicalInternacionStaffAccessPolicy;
 use common\components\Domain\Clinical\Encounter\Application\Authorization\ClinicalEncounterAccessPolicy;
 use common\components\Platform\Ui\Home\Service\Sections\StaffSessionContextSectionProvider;
 use common\components\Platform\Core\DataAccess\DataAccessEditFlowDraftHydrator;

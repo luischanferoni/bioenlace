@@ -9,7 +9,7 @@ use common\components\Domain\Scheduling\Infrastructure\External\Service\FhirSche
 use common\components\Domain\Scheduling\Infrastructure\External\Mapper\FhirAppointmentInboundMapper;
 use common\components\Domain\Scheduling\Infrastructure\External\Mapper\FhirAppointmentStatusMapper;
 use common\components\Domain\Scheduling\Infrastructure\External\Service\FhirBundleHelper;
-use common\components\Domain\Scheduling\Application\Agent\TurnoAdvanceOfferAgent;
+use common\components\Domain\Scheduling\Application\Agents\TurnoAdvanceOfferAgent;
 use common\components\Domain\Scheduling\Service\TurnoLifecycleService;
 use common\components\Domain\Scheduling\Service\TurnoSlotClaimService;
 use common\models\Organization\ProfesionalEfectorServicio;

@@ -60,7 +60,7 @@ final class BoundedContextLayerShapeTest extends Unit
     {
         $root = ProductDomainCatalog::domainRoot();
         $errors = [];
-        // BCs con agents aún pendientes de migrar (ninguno tras oleada Application/Agent).
+        // BCs con agents aún pendientes de migrar (ninguno tras oleada Application/Agents).
         $pending = [];
 
         foreach (scandir($root) ?: [] as $bc) {
@@ -87,21 +87,22 @@ final class BoundedContextLayerShapeTest extends Unit
 
     private function bcHasApplicationAgentHome(string $bcPath): bool
     {
-        // Layout BC: Application/Agent
+        // Layout BC: Application/Agents (canónico; Agent singular ya no se usa)
         $application = $bcPath . DIRECTORY_SEPARATOR . 'Application';
-        if (is_dir($application . DIRECTORY_SEPARATOR . 'Agent')) {
+        if (is_dir($application . DIRECTORY_SEPARATOR . 'Agents')
+            || is_dir($application . DIRECTORY_SEPARATOR . 'Agent')) {
             return true;
         }
-        // Layout módulo de capacidad: <Modulo>/Application/Agent
+        // Layout módulo de capacidad: <Modulo>/Application/Agents
         foreach (scandir($bcPath) ?: [] as $child) {
             if ($child === '.' || $child === '..') {
                 continue;
             }
-            $moduleAgent = $bcPath
+            $moduleApp = $bcPath
                 . DIRECTORY_SEPARATOR . $child
-                . DIRECTORY_SEPARATOR . 'Application'
-                . DIRECTORY_SEPARATOR . 'Agent';
-            if (is_dir($moduleAgent)) {
+                . DIRECTORY_SEPARATOR . 'Application';
+            if (is_dir($moduleApp . DIRECTORY_SEPARATOR . 'Agents')
+                || is_dir($moduleApp . DIRECTORY_SEPARATOR . 'Agent')) {
                 return true;
             }
         }

@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\PedidoAtencion\Domain;
 
-use common\components\Domain\Clinical\PedidoAtencion\Service\LineaActoCatalogInterface;
+use common\components\Domain\Clinical\PedidoAtencion\Domain\LineaActoCatalogInterface;
 use common\models\Clinical\ActoClinico;
 use common\models\Clinical\LineaActo;
 use common\models\Organization\Servicio;

@@ -15,7 +15,7 @@ ADR: [`clinical-modulos-capacidad`](../../../docs/decisions/clinical-modulos-cap
 | `Prescription/` | Receta + External + flows `receta.*` |
 | `CarePlan/` | Planes, órdenes, protocolos, flows `tratamiento.*` |
 | `CareCohort/` | Care packs + agents + Infrastructure batch |
-| `PedidoAtencion/` | Catálogo línea×acto (`Domain/*Catalog`) |
+| `PedidoAtencion/` | Línea×acto: Domain (VO/ports/catálogos) + Application + External |
 | `Capture/` | Captura clínica |
 | `HistoryExchange/` | Cola HC + External |
 | `LegalRecord/` | Export registro legal |

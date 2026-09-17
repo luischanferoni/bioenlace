@@ -14,7 +14,7 @@ Objetivo doble, **desde el día uno**:
 | País / provincia / vecinos / recursos geo | Tablas `geo_*`, modelos y services Domain, seeds en `console` |
 | “¿Puede guardarse / emitirse?” | `*Input`, AR, services de dominio |
 | Flow del asistente, copy, manifests UI, auth motor | `Domain/<BC>/Application/Flows/`, `Platform/Assistant|Ui|Permission|Ai/…` |
-| Knobs de negocio / agents | PHP `Domain/<BC>/Domain/*Catalog`, `Application/Agent/*AgentPolicy` |
+| Knobs de negocio / agents | PHP `Domain/<BC>/Domain/*Catalog`, `Application/Agents/*AgentPolicy` |
 | Cableado handler → PHP | `common/config/product-registries.php` |
 | Config de arranque (DB, secretos) | `common/config/` (Yii) |
 

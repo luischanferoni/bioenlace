@@ -3,7 +3,7 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Emergency\Service\GuardiaTriageVitalsValidator;
+use common\components\Domain\Clinical\Emergency\Application\GuardiaTriageVitalsValidator;
 
 final class GuardiaTriageVitalsValidatorTest extends Unit
 {

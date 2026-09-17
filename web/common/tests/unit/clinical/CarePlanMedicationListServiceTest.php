@@ -3,7 +3,7 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\CarePlan\Service\CarePlanMedicationListService;
+use common\components\Domain\Clinical\CarePlan\Application\CarePlanMedicationListService;
 
 class CarePlanMedicationListServiceTest extends Unit
 {

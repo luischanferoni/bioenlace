@@ -2,8 +2,8 @@
 
 namespace frontend\modules\api\v1\controllers\clinical;
 
-use common\components\Domain\Clinical\LegalRecord\Service\LegalRecordExportAccessService;
-use common\components\Domain\Clinical\LegalRecord\Service\LegalRecordExportRequestService;
+use common\components\Domain\Clinical\LegalRecord\Application\Authorization\LegalRecordExportAccessService;
+use common\components\Domain\Clinical\LegalRecord\Application\LegalRecordExportRequestService;
 use common\models\Clinical\LegalRecordExportAudit;
 use common\models\Clinical\LegalRecordExportRequest;
 use common\models\Person\Persona;

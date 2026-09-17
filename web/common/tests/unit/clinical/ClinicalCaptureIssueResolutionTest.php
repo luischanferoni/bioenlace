@@ -3,8 +3,8 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Capture\Service\ClinicalCaptureIssueFactory;
-use common\components\Domain\Clinical\Capture\Service\ClinicalCaptureResolutionApplier;
+use common\components\Domain\Clinical\Capture\Application\ClinicalCaptureIssueFactory;
+use common\components\Domain\Clinical\Capture\Application\ClinicalCaptureResolutionApplier;
 use common\models\Clinical\Input\IndicacionInput;
 use common\models\Clinical\ConsultaIndicaciones;
 

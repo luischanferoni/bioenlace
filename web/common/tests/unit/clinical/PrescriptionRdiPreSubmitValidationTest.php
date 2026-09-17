@@ -4,7 +4,7 @@ namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\Prescription\Domain\PrescriptionLegalStatus;
-use common\components\Domain\Clinical\Prescription\Service\PrescriptionRdiPreSubmitValidationService;
+use common\components\Domain\Clinical\Prescription\Application\PrescriptionRdiPreSubmitValidationService;
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
 use common\models\Clinical\ElectronicPrescription;
 use common\models\Clinical\ElectronicPrescriptionItem;

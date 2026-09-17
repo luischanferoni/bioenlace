@@ -9,7 +9,7 @@ La metadata canónica **no** vive en este árbol. Solo queda este README como an
 | UI manifests | `components/Platform/Ui/Presentation/` |
 | Permission | `components/Platform/Core/Permission/metadata/` |
 | AI | `components/Platform/Ai/Application/` |
-| Agents knobs | PHP `Domain/<BC>/Application/Agents/*AgentPolicy` (+ `Application/Agent/` en migración) + `AgentPolicyRegistry` |
+| Agents knobs | PHP `Domain/<BC>/Application/Agents/*AgentPolicy` + `AgentPolicyRegistry` |
 | Catálogos de negocio | PHP `Domain/<BC>/Domain/*Catalog` |
 | ACL externos | `Domain/<BC>/Infrastructure/External/` |
 

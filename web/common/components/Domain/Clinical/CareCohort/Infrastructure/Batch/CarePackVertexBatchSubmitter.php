@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Clinical\CareCohort\Infrastructure\Batch;
 
-use common\components\Domain\Clinical\CareCohort\Service\CarePackConfig;
-use common\components\Domain\Clinical\CareCohort\Service\CarePackPromptBuilder;
+use common\components\Domain\Clinical\CareCohort\Application\CarePackConfig;
+use common\components\Domain\Clinical\CareCohort\Application\CarePackPromptBuilder;
 use common\models\Clinical\CarePackJob;
 use common\models\Clinical\Encounter;
 use Yii;

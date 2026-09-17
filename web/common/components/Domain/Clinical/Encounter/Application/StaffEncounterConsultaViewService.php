@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Clinical\Encounter\Application;
 
-use common\components\Domain\Clinical\CareCohort\Service\CarePackConfig;
-use common\components\Domain\Clinical\CareCohort\Service\CarePackEncounterStaffService;
+use common\components\Domain\Clinical\CareCohort\Application\CarePackConfig;
+use common\components\Domain\Clinical\CareCohort\Application\CarePackEncounterStaffService;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EncounterStaffDocumentationViewService;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\AppointmentReasonMessage;

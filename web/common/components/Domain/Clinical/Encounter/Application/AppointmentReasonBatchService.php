@@ -10,7 +10,7 @@ namespace common\components\Domain\Clinical\Encounter\Application;
 use common\components\Domain\Clinical\Encounter\Application\AiContext\PatientAiContextBuilder;
 use common\components\Platform\Ai\IAManager;
 use common\components\Platform\Ai\SpeechToText\SpeechToTextManager;
-use common\components\Domain\Clinical\Capture\Service\SecureMediaService;
+use common\components\Domain\Clinical\Capture\Application\SecureMediaService;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\AppointmentReasonMessage;
 use Yii;

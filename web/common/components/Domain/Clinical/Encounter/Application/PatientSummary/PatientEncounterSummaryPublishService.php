@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Encounter\Application\PatientSummary;
 
-use common\components\Domain\Clinical\CareCohort\Service\CareFollowupSchedulerService;
+use common\components\Domain\Clinical\CareCohort\Application\CareFollowupSchedulerService;
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\components\Platform\Core\Service\Push\PushNotificationTypes;

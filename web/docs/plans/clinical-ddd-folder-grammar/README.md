@@ -33,11 +33,20 @@ Plugins BC: `Clinical/Assistant|Home|DataAccess/` solo en raíz Clinical.
 |------|-----|--------|
 | 0 | Plan + ADR + README Domain/Clinical | hecho |
 | 1 | Piloto **Encounter**: moves + namespaces + Model stubs | hecho (piloto) |
-| 2 | `Agent/` → `Agents/` en resto Clinical + Scheduling + registry | pendiente |
-| 3 | Resto módulos Clinical (Emergency, Capture, …) | pendiente |
+| 2 | `Agent/` → `Agents/` en resto Clinical + Scheduling + registry | hecho |
+| 3 | Resto módulos Clinical (Emergency, Capture, …) | hecho |
 | 4 | BCs chicos (opcional, misma gramática sin módulo) | pendiente |
 | 5 | Aggregates reales (mover reglas desde Application Services) | pendiente |
 | Cierre | Borrar esta carpeta; dejar solo ADR + README | pendiente |
+
+### Notas fase 2–3 (ejecutado)
+
+- **Fase 2:** `Application/Agent/` → `Application/Agents/` en CareCohort, HistoryExchange, Inpatient, Laboratory, Prescription y Scheduling; `AgentPolicyRegistry` + consumers; test de forma acepta `Agents`.
+- **Fase 3:** todos los módulos Clinical (salvo plugins `Assistant/`/`Home/`) quedan en tríada `Application/` · `Domain/` · `Infrastructure/` con ancla `Infrastructure/Persistence/README.md`. Sin `Service/`/`Dto/`/`Presentation/`/`Reminder/`/`Workflow/`/`SpeechToText/`/`Text/` en L1.
+- **PedidoAtencion:** VO → `Domain/Model/`; ports/constantes → `Domain/`; adapters Snowstorm/InMemory → `Infrastructure/External/`; services → `Application/`.
+- **Specialty:** áreas Odontology/Ophthalmology/Inpatient aplanadas a `Application/` + `Domain/`.
+- **CareCohort:** `Assistant/CarePackUiActionCatalog` → `Application/` (plugins solo en raíz BC).
+- Sin aliases de retrocompatibilidad de path.
 
 ## Fuera de alcance de este plan
 

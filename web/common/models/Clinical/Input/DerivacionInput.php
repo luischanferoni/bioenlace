@@ -2,12 +2,12 @@
 
 namespace common\models\Clinical\Input;
 
-use common\components\Domain\Clinical\PedidoAtencion\Service\CodingSystems;
-use common\components\Domain\Clinical\PedidoAtencion\Service\PedidoAtencion;
-use common\components\Domain\Clinical\PedidoAtencion\Service\PedidoAtencionActoCoderInterface;
-use common\components\Domain\Clinical\PedidoAtencion\Service\PedidoAtencionActoCodingService;
-use common\components\Domain\Clinical\PedidoAtencion\Service\PedidoAtencionMetadata;
-use common\components\Domain\Clinical\PedidoAtencion\Service\PedidoAtencionService;
+use common\components\Domain\Clinical\PedidoAtencion\Domain\CodingSystems;
+use common\components\Domain\Clinical\PedidoAtencion\Domain\Model\PedidoAtencion;
+use common\components\Domain\Clinical\PedidoAtencion\Domain\PedidoAtencionActoCoderInterface;
+use common\components\Domain\Clinical\PedidoAtencion\Application\PedidoAtencionActoCodingService;
+use common\components\Domain\Clinical\PedidoAtencion\Application\PedidoAtencionMetadata;
+use common\components\Domain\Clinical\PedidoAtencion\Application\PedidoAtencionService;
 use common\models\Clinical\ConsultaDerivaciones;
 use common\models\Organization\Servicio;
 use yii\base\Model;
@@ -209,7 +209,7 @@ final class DerivacionInput extends Model
                 )
                 : self::optionsForServicio();
             if ($options !== []) {
-                $issues[] = \common\components\Domain\Clinical\Capture\Service\ClinicalCaptureIssueFactory::make(
+                $issues[] = \common\components\Domain\Clinical\Capture\Application\ClinicalCaptureIssueFactory::make(
                     $category,
                     $index,
                     self::FIELD_SERVICIO,
@@ -232,7 +232,7 @@ final class DerivacionInput extends Model
                 $actoCandidates
             );
             if ($options !== []) {
-                $issues[] = \common\components\Domain\Clinical\Capture\Service\ClinicalCaptureIssueFactory::make(
+                $issues[] = \common\components\Domain\Clinical\Capture\Application\ClinicalCaptureIssueFactory::make(
                     $category,
                     $index,
                     self::FIELD_ACTO_DISPLAY,

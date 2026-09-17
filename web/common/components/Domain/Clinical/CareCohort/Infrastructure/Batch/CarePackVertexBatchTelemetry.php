@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\CareCohort\Infrastructure\Batch;
 
 use common\components\Platform\Ai\Cost\AICostTracker;
-use common\components\Domain\Clinical\CareCohort\Service\CarePackConfig;
+use common\components\Domain\Clinical\CareCohort\Application\CarePackConfig;
 
 /**
  * Telemetría de inferencias Vertex batch → AICostTracker (contexto único de producción).

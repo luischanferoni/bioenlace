@@ -6,7 +6,7 @@ use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Domain\Clinical\Encounter\Application\EncounterReasonService;
 use common\components\Domain\Clinical\Prescription\Domain\PrescriptionLegalStatus;
 use common\components\Domain\Clinical\Encounter\Domain\RequestStatus;
-use common\components\Domain\Clinical\Laboratory\Service\LaboratoryResultQueryService;
+use common\components\Domain\Clinical\Laboratory\Application\LaboratoryResultQueryService;
 use common\models\Clinical\DiagnosticReport;
 use common\models\Clinical\ElectronicPrescription;
 use common\models\Clinical\Encounter;

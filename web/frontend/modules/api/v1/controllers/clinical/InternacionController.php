@@ -2,12 +2,12 @@
 
 namespace frontend\modules\api\v1\controllers\clinical;
 
-use common\components\Domain\Clinical\Inpatient\Service\InternacionAltaEstructuradaService;
-use common\components\Domain\Clinical\Inpatient\Service\InternacionCambioCamaService;
-use common\components\Domain\Clinical\Inpatient\Service\InternacionIngresoService;
-use common\components\Domain\Clinical\Inpatient\Service\InternacionCamaEstadoService;
-use common\components\Domain\Clinical\Inpatient\Service\InternacionIndicadoresService;
-use common\components\Domain\Clinical\Inpatient\Service\InternacionMapaCamasService;
+use common\components\Domain\Clinical\Inpatient\Application\InternacionAltaEstructuradaService;
+use common\components\Domain\Clinical\Inpatient\Application\InternacionCambioCamaService;
+use common\components\Domain\Clinical\Inpatient\Application\InternacionIngresoService;
+use common\components\Domain\Clinical\Inpatient\Application\InternacionCamaEstadoService;
+use common\components\Domain\Clinical\Inpatient\Application\InternacionIndicadoresService;
+use common\components\Domain\Clinical\Inpatient\Application\InternacionMapaCamasService;
 use common\components\Platform\Ui\UiScreenService;
 use common\models\Person\Persona;
 use common\models\Clinical\SegNivelInternacion;
@@ -486,7 +486,7 @@ class InternacionController extends BaseController
         $req = Yii::$app->request;
         try {
             $idEfector = $this->resolveIdEfectorForDomainOperation('Clinical.staff_efector');
-            $plantillas = (new \common\components\Domain\Clinical\Inpatient\Service\InternacionEpicrisisPlantillaService())
+            $plantillas = (new \common\components\Domain\Clinical\Inpatient\Application\InternacionEpicrisisPlantillaService())
                 ->listar($idEfector, (int) ($req->get('id_servicio') ?? 0) ?: null);
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);

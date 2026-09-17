@@ -3,7 +3,7 @@
 namespace common\tests\unit\platform\agent;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Laboratory\Service\LaboratoryEncounterLinkScoringService;
+use common\components\Domain\Clinical\Laboratory\Application\LaboratoryEncounterLinkScoringService;
 
 class LaboratoryEncounterLinkScoringTest extends Unit
 {

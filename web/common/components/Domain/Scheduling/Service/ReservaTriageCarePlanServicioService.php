@@ -4,7 +4,7 @@ namespace common\components\Domain\Scheduling\Service;
 
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanActivityKind;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanCategory;
-use common\components\Domain\Clinical\CarePlan\Service\PatientActiveCarePlanQuery;
+use common\components\Domain\Clinical\CarePlan\Application\PatientActiveCarePlanQuery;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\CarePlanActivity;
 use common\models\Clinical\ServiceRequest;

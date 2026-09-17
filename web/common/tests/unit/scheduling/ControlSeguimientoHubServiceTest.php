@@ -3,7 +3,7 @@
 namespace common\tests\unit\scheduling;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\CarePlan\Service\CareProtocolCatalogService;
+use common\components\Domain\Clinical\CarePlan\Application\CareProtocolCatalogService;
 use common\components\Domain\Scheduling\Service\ControlSeguimientoHubService;
 use common\models\Clinical\CareProtocol;
 

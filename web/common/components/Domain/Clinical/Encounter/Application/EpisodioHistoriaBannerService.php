@@ -4,8 +4,8 @@ namespace common\components\Domain\Clinical\Encounter\Application;
 
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EpisodioDateTimeFormatter;
 use common\components\Domain\Clinical\Emergency\Domain\CircuitoEstado;
-use common\components\Domain\Clinical\Emergency\Service\GuardiaCircuitoService;
-use common\components\Domain\Clinical\Emergency\Service\GuardiaTriageService;
+use common\components\Domain\Clinical\Emergency\Application\GuardiaCircuitoService;
+use common\components\Domain\Clinical\Emergency\Application\GuardiaTriageService;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\Emergency\GuardiaTriage;
 use common\models\Clinical\Guardia;

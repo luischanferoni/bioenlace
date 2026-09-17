@@ -388,7 +388,7 @@ final class ClinicalTextIaMetadata
     public static function resetCacheForTests(): void
     {
         self::$config = null;
-        \common\components\Domain\Clinical\Capture\Text\EncounterCaptureExtractionPostProcessPolicy::resetCacheForTests();
+        \common\components\Domain\Clinical\Capture\Application\Text\EncounterCaptureExtractionPostProcessPolicy::resetCacheForTests();
     }
 
     /**

@@ -3,10 +3,10 @@
 namespace common\components\Domain\Clinical\Encounter\Application;
 
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
-use common\components\Domain\Clinical\CareCohort\Service\CareEncounterOrchestrator;
-use common\components\Domain\Clinical\HistoryExchange\Service\ClinicalHistoryOutboundEnqueueService;
+use common\components\Domain\Clinical\CareCohort\Application\CareEncounterOrchestrator;
+use common\components\Domain\Clinical\HistoryExchange\Application\ClinicalHistoryOutboundEnqueueService;
 use common\components\Domain\Clinical\Encounter\Application\PatientSummary\PatientEncounterSummaryPublishService;
-use common\components\Domain\Clinical\Capture\Workflow\ClinicalOperationalContextResolver;
+use common\components\Domain\Clinical\Capture\Application\Workflow\ClinicalOperationalContextResolver;
 use common\components\Domain\Scheduling\Infrastructure\External\Service\TurnoFhirOutboundNotifier;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;

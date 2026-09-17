@@ -157,7 +157,7 @@ class TurnoLifecycleService
         }
 
         try {
-            (new \common\components\Domain\Scheduling\Application\Agent\TurnoAdvanceOfferAgent())->onTurnoCancelled($turno);
+            (new \common\components\Domain\Scheduling\Application\Agents\TurnoAdvanceOfferAgent())->onTurnoCancelled($turno);
         } catch (\Throwable $e) {
             Yii::warning('Advance offer: ' . $e->getMessage(), 'turno-advance');
         }

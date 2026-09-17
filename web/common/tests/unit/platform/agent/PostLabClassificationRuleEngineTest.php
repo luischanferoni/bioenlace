@@ -2,7 +2,7 @@
 
 namespace common\tests\unit\platform\agent;
 
-use common\components\Domain\Clinical\Laboratory\Service\PostLabClassificationRuleEngine;
+use common\components\Domain\Clinical\Laboratory\Application\PostLabClassificationRuleEngine;
 use common\tests\unit\DbTestCase;
 
 class PostLabClassificationRuleEngineTest extends DbTestCase

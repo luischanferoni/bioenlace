@@ -5,7 +5,7 @@ namespace common\components\Domain\Clinical\Encounter\Application\AiContext;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanCategory;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanStatus;
 use common\components\Domain\Clinical\Encounter\Domain\RequestStatus;
-use common\components\Domain\Clinical\CarePlan\Presentation\CarePlanPresentationService;
+use common\components\Domain\Clinical\CarePlan\Application\Presentation\CarePlanPresentationService;
 use common\components\Domain\Clinical\Encounter\Application\EncounterLifecycleService;
 use common\components\Domain\Clinical\Encounter\Application\EncounterReasonService;
 use common\components\Domain\Clinical\Encounter\Application\EpisodeOfCareService;

@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
-use common\components\Domain\Scheduling\Application\Agent\ConsultaAsyncBandejaPrioridadAgent;
+use common\components\Domain\Scheduling\Application\Agents\ConsultaAsyncBandejaPrioridadAgent;
 
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Domain\Clinical\Encounter\Application\EncounterReasonService;

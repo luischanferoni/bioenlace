@@ -3,8 +3,8 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Capture\Text\EncounterCaptureClinicalTermValidator;
-use common\components\Domain\Clinical\Capture\Text\EncounterCaptureExtractionPostProcessor;
+use common\components\Domain\Clinical\Capture\Application\Text\EncounterCaptureClinicalTermValidator;
+use common\components\Domain\Clinical\Capture\Application\Text\EncounterCaptureExtractionPostProcessor;
 use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
 
 class EncounterCaptureExtractionPostProcessorTest extends Unit

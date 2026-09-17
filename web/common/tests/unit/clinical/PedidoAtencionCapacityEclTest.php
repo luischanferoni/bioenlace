@@ -3,14 +3,14 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\PedidoAtencion\Service\CodingSystems;
+use common\components\Domain\Clinical\PedidoAtencion\Domain\CodingSystems;
 use common\components\Domain\Clinical\PedidoAtencion\Domain\CompositeLineaActoCatalog;
 use common\components\Domain\Clinical\PedidoAtencion\Domain\EclCapacityCatalog;
-use common\components\Domain\Clinical\PedidoAtencion\Service\InMemoryActoEclMembership;
+use common\components\Domain\Clinical\PedidoAtencion\Infrastructure\External\InMemoryActoEclMembership;
 use common\components\Domain\Clinical\PedidoAtencion\Domain\InMemoryLineaActoCatalog;
-use common\components\Domain\Clinical\PedidoAtencion\Service\PedidoAtencion;
-use common\components\Domain\Clinical\PedidoAtencion\Service\PedidoAtencionMetadata;
-use common\components\Domain\Clinical\PedidoAtencion\Service\PedidoAtencionService;
+use common\components\Domain\Clinical\PedidoAtencion\Domain\Model\PedidoAtencion;
+use common\components\Domain\Clinical\PedidoAtencion\Application\PedidoAtencionMetadata;
+use common\components\Domain\Clinical\PedidoAtencion\Application\PedidoAtencionService;
 use common\models\Organization\Servicio;
 
 class PedidoAtencionCapacityEclTest extends Unit

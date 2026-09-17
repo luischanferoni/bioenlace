@@ -4,18 +4,18 @@ namespace common\components\Domain\Clinical\Encounter\Application\Legacy;
 
 use Yii;
 use yii\base\Component;
-use common\components\Domain\Clinical\Capture\SpeechToText\ClinicalSpeechInputResolver;
+use common\components\Domain\Clinical\Capture\Application\SpeechToText\ClinicalSpeechInputResolver;
 use common\components\Domain\Clinical\Encounter\Application\AiContext\PatientAiContextBuilder;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EncounterCaptureReviewPresenter;
 use common\components\Domain\Clinical\Encounter\Application\EncounterOpenProblemsService;
 use common\components\Domain\Clinical\Encounter\Application\EpisodeCaptureDedupService;
-use common\components\Domain\Clinical\Capture\Workflow\ClinicalOperationalContextResolver;
-use common\components\Domain\Clinical\Capture\Workflow\EncounterCaptureAnalysisCache;
-use common\components\Domain\Clinical\Capture\Service\EncounterDefinitionBootstrapService;
-use common\components\Domain\Clinical\Capture\Service\EncounterDocumentationService;
-use common\components\Domain\Clinical\Capture\Text\EncounterCaptureExtractionPostProcessor;
-use common\components\Domain\Clinical\Capture\Text\ProcesadorTextoMedico;
-use common\components\Domain\Clinical\Capture\Workflow\EncounterCaptureCompletenessValidator;
+use common\components\Domain\Clinical\Capture\Application\Workflow\ClinicalOperationalContextResolver;
+use common\components\Domain\Clinical\Capture\Application\Workflow\EncounterCaptureAnalysisCache;
+use common\components\Domain\Clinical\Capture\Application\EncounterDefinitionBootstrapService;
+use common\components\Domain\Clinical\Capture\Application\EncounterDocumentationService;
+use common\components\Domain\Clinical\Capture\Application\Text\EncounterCaptureExtractionPostProcessor;
+use common\components\Domain\Clinical\Capture\Application\Text\ProcesadorTextoMedico;
+use common\components\Domain\Clinical\Capture\Application\Workflow\EncounterCaptureCompletenessValidator;
 use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
 
 /**
@@ -551,7 +551,7 @@ class ConsultaProcesamientoService extends Component
             return [];
         }
 
-        return (new \common\components\Domain\Clinical\Capture\Workflow\EncounterCaptureCategoryResolver())
+        return (new \common\components\Domain\Clinical\Capture\Application\Workflow\EncounterCaptureCategoryResolver())
             ->resolve($configuracion, $body);
     }
 

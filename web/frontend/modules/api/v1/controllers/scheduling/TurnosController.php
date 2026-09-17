@@ -8,7 +8,7 @@ use Yii;
 use yii\web\NotFoundHttpException;
 use yii\web\BadRequestHttpException;
 use yii\web\ServerErrorHttpException;
-use common\components\Domain\Clinical\CareCohort\Service\CarePackConfig;
+use common\components\Domain\Clinical\CareCohort\Application\CarePackConfig;
 use common\components\Domain\Clinical\Encounter\Application\AppointmentReasonWindowService;
 use common\components\Domain\Clinical\Encounter\Application\EncounterLifecycleService;
 use common\models\Clinical\Encounter;
@@ -42,7 +42,7 @@ use common\components\Domain\Scheduling\Service\ReservaModalidadAtencionService;
 use common\components\Domain\Scheduling\Service\ReservaTriageModalidadStepService;
 use common\components\Domain\Scheduling\Service\PedidoAtencionActoStepService;
 use common\components\Domain\Scheduling\Service\ReservaTurnoTriageCatalogService;
-use common\components\Domain\Scheduling\Application\Agent\ReservaTriagePostCupoRoutingAgent;
+use common\components\Domain\Scheduling\Application\Agents\ReservaTriagePostCupoRoutingAgent;
 use common\components\Domain\Scheduling\Service\ReservaTriageServicioSugeridoService;
 use common\components\Domain\Scheduling\Service\TeleconsultaElegibilidadService;
 use common\components\Domain\Scheduling\Service\TurnoPacienteListadoService;
@@ -50,7 +50,7 @@ use common\components\Domain\Scheduling\Service\TurnoResolucionService;
 use common\components\Domain\Scheduling\Service\TurnoResolucionElecciones;
 use common\components\Domain\Scheduling\Service\TurnoCalendarioOcupacionDiaService;
 use common\components\Domain\Scheduling\Service\TurnoAdvanceOfferAcceptService;
-use common\components\Domain\Scheduling\Application\Agent\TurnoResolucionShortlistAgent;
+use common\components\Domain\Scheduling\Application\Agents\TurnoResolucionShortlistAgent;
 use common\components\Domain\Scheduling\Service\PersonaAgendaPreferenciasService;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalContextResolver;
 use common\models\Scheduling\TurnoResolucion;
@@ -2145,7 +2145,7 @@ class TurnosController extends BaseController
         if (count($cps) > 0) {
             $parent_id = null;
             foreach ($cps as $cp) {
-                \common\components\Domain\Clinical\CarePlan\Service\ReferralRequestService::markBooked($cp);
+                \common\components\Domain\Clinical\CarePlan\Application\ReferralRequestService::markBooked($cp);
                 $parent_id = $cp->id;
             }
             $model->parent_class = Encounter::PARENT_DERIVACION;

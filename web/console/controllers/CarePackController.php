@@ -2,9 +2,9 @@
 
 namespace console\controllers;
 
-use common\components\Domain\Clinical\CareCohort\Service\CareFollowupTouchpointProcessor;
-use common\components\Domain\Clinical\CareCohort\Service\CarePackConfig;
-use common\components\Domain\Clinical\CareCohort\Service\CarePackJobProcessor;
+use common\components\Domain\Clinical\CareCohort\Application\CareFollowupTouchpointProcessor;
+use common\components\Domain\Clinical\CareCohort\Application\CarePackConfig;
+use common\components\Domain\Clinical\CareCohort\Application\CarePackJobProcessor;
 use common\models\Clinical\CarePackJob;
 use yii\console\Controller;
 use yii\console\ExitCode;

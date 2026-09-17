@@ -3,13 +3,13 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\PedidoAtencion\Service\CodingSystems;
+use common\components\Domain\Clinical\PedidoAtencion\Domain\CodingSystems;
 use common\components\Domain\Clinical\PedidoAtencion\Domain\InMemoryLineaActoCatalog;
-use common\components\Domain\Clinical\PedidoAtencion\Service\InMemoryPedidoAtencionActoCoder;
-use common\components\Domain\Clinical\PedidoAtencion\Service\PedidoAtencion;
-use common\components\Domain\Clinical\PedidoAtencion\Service\PedidoAtencionMetadata;
-use common\components\Domain\Clinical\PedidoAtencion\Service\PedidoAtencionPacienteService;
-use common\components\Domain\Clinical\PedidoAtencion\Service\PedidoAtencionService;
+use common\components\Domain\Clinical\PedidoAtencion\Infrastructure\External\InMemoryPedidoAtencionActoCoder;
+use common\components\Domain\Clinical\PedidoAtencion\Domain\Model\PedidoAtencion;
+use common\components\Domain\Clinical\PedidoAtencion\Application\PedidoAtencionMetadata;
+use common\components\Domain\Clinical\PedidoAtencion\Application\PedidoAtencionPacienteService;
+use common\components\Domain\Clinical\PedidoAtencion\Application\PedidoAtencionService;
 use common\models\Clinical\Input\DerivacionInput;
 
 class PedidoAtencionPipelineCanalesTest extends Unit

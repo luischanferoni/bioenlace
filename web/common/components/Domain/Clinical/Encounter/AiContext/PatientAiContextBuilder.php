@@ -7,6 +7,7 @@ use common\components\Domain\Clinical\CarePlan\Domain\CarePlanStatus;
 use common\components\Domain\Clinical\Encounter\Domain\RequestStatus;
 use common\components\Domain\Clinical\CarePlan\Presentation\CarePlanPresentationService;
 use common\components\Domain\Clinical\Encounter\Service\EncounterLifecycleService;
+use common\components\Domain\Clinical\Encounter\Service\EncounterReasonService;
 use common\components\Domain\Clinical\Encounter\Service\EpisodeOfCareService;
 use common\components\Domain\Person\Service\PersonaAsistentePreferenciasService;
 use common\models\Clinical\AllergyIntolerance;
@@ -405,7 +406,7 @@ final class PatientAiContextBuilder
         }
 
         $rows = Encounter::find()
-            ->select(['note', 'reason_text', 'period_start', 'created_at'])
+            ->select(['id', 'note', 'period_start', 'created_at'])
             ->where([
                 'parent_id' => $parentId,
                 'subject_persona_id' => $subjectPersonaId,
@@ -422,11 +423,13 @@ final class PatientAiContextBuilder
             ->asArray()
             ->all();
 
+        $reasonSvc = new EncounterReasonService();
         $out = [];
         foreach ($rows as $row) {
             $note = trim((string) ($row['note'] ?? ''));
             if ($note === '') {
-                $note = trim((string) ($row['reason_text'] ?? ''));
+                $enc = Encounter::findOne((int) ($row['id'] ?? 0));
+                $note = $enc !== null ? $reasonSvc->displayText($enc) : '';
             }
             if ($note === '') {
                 continue;

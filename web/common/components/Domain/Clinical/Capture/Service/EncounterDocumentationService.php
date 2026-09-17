@@ -24,6 +24,7 @@ use common\components\Domain\Clinical\Specialty\Domain\EncounterDefinitionSpecia
 use common\components\Domain\Clinical\Specialty\Inpatient\Service\InpatientEncounterAuxService;
 use common\components\Domain\Clinical\Specialty\Odontology\Service\OdontologyEncounterService;
 use common\components\Domain\Clinical\Specialty\Ophthalmology\Service\OphthalmologyEncounterService;
+use common\components\Domain\Clinical\Encounter\Service\EncounterReasonService;
 use common\components\Domain\Clinical\Encounter\Legacy\ConsultaProcesamientoService;
 use common\components\Domain\Clinical\Encounter\Presentation\EncounterCaptureReviewPresenter;
 use common\models\Clinical\Condition;
@@ -509,7 +510,7 @@ class EncounterDocumentationService extends Component
                         && !empty($diagnostico['final_counts']['Medicación'])
                     )
                     || (
-                        empty($persistido['reason_text'])
+                        empty($persistido['reasons'])
                         && !empty($diagnostico['final_counts']['Motivos de consulta'])
                     ),
             ];
@@ -940,9 +941,9 @@ class EncounterDocumentationService extends Component
             'id_profesional_efector_servicio' => $idPes > 0 ? $idPes : Yii::$app->user->getIdProfesionalEfectorServicio(),
             'parent_type' => $parentKey !== '' ? $parentKey : null,
             'parent_id' => $parentId > 0 ? $parentId : null,
-            'reason_text' => $body['motivo_consulta'] ?? $body['consulta_inicial'] ?? $body['texto_original'] ?? null,
             'note' => $body['texto_procesado'] ?? $body['observacion'] ?? null,
             'workflow_step' => 0,
+            'motivo_consulta' => $body['motivo_consulta'] ?? $body['consulta_inicial'] ?? null,
         ]);
     }
 
@@ -956,11 +957,9 @@ class EncounterDocumentationService extends Component
         if ($note !== null) {
             $encounter->note = $note;
         }
-        // Motivos: solo cuerpo tipado (motivo_consulta) o lo que persista ConsultaMotivos.
-        // No volcar el texto clínico completo en reason_text (confunde con Motivos).
         $motivo = $this->resolveNonEmptyBodyText($body, ['motivo_consulta']);
         if ($motivo !== null) {
-            $encounter->reason_text = $motivo;
+            (new EncounterReasonService())->replaceReasons($encounter, [$motivo]);
         }
     }
 
@@ -1109,8 +1108,8 @@ class EncounterDocumentationService extends Component
     /**
      * @return array{
      *   note: bool,
-     *   reason_text: bool,
-     *   reason_text_value: string,
+     *   reasons: bool,
+     *   reasons_value: string,
      *   conditions: int,
      *   medication_requests: int,
      *   service_requests: int,
@@ -1121,17 +1120,18 @@ class EncounterDocumentationService extends Component
     {
         $id = (int) $encounter->id;
         $row = Encounter::find()
-            ->select(['note', 'reason_text'])
+            ->select(['note'])
             ->where(['id' => $id])
             ->asArray()
             ->one();
         $note = is_array($row) ? trim((string) ($row['note'] ?? '')) : '';
-        $reason = is_array($row) ? trim((string) ($row['reason_text'] ?? '')) : '';
+        $reasonSvc = new EncounterReasonService();
+        $reasonText = $reasonSvc->displayText($encounter);
 
         return [
             'note' => $note !== '',
-            'reason_text' => $reason !== '',
-            'reason_text_value' => mb_substr($reason, 0, 120),
+            'reasons' => $reasonText !== '',
+            'reasons_value' => mb_substr($reasonText, 0, 120),
             'conditions' => (int) \common\models\Clinical\Condition::find()
                 ->where(['encounter_id' => $id, 'deleted_at' => null])
                 ->count(),
@@ -1208,7 +1208,11 @@ class EncounterDocumentationService extends Component
                 case 'ConsultaMotivos':
                     $this->persistMotivos($encounter, $payload);
                     $stat['accion'] = 'motivos';
-                    $stat['detalle'] = 'reason_text=' . mb_substr(trim((string) ($encounter->reason_text ?? '')), 0, 80);
+                    $stat['detalle'] = 'reasons=' . mb_substr(
+                        (new EncounterReasonService())->displayText($encounter),
+                        0,
+                        80
+                    );
                     break;
                 case 'DiagnosticoConsulta':
                     $this->persistConditions($encounter, $payload);
@@ -1374,33 +1378,16 @@ class EncounterDocumentationService extends Component
         if (!is_array($payload)) {
             return;
         }
-        $parts = [];
+        $rows = [];
         foreach ($payload as $row) {
-            if (is_string($row)) {
-                $text = trim($row);
-            } elseif (is_array($row)) {
-                $text = trim((string) (
-                    $row['texto']
-                    ?? $row['termino']
-                    ?? $row['descripcion']
-                    ?? $row['label']
-                    ?? $row['display']
-                    ?? ''
-                ));
-            } else {
-                continue;
-            }
-            if ($text !== '') {
-                $parts[] = $text;
+            if (is_string($row) || is_array($row)) {
+                $rows[] = $row;
             }
         }
-        if ($parts === []) {
+        if ($rows === []) {
             return;
         }
-        $joined = implode('; ', $parts);
-        $current = trim((string) ($encounter->reason_text ?? ''));
-        $encounter->reason_text = $current === '' ? $joined : ($current . "\n" . $joined);
-        $encounter->save(false, ['reason_text', 'updated_at', 'updated_by']);
+        (new EncounterReasonService())->replaceReasons($encounter, $rows);
     }
 
     /**

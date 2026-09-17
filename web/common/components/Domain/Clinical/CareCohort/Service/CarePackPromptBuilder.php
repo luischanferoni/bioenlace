@@ -4,6 +4,7 @@ namespace common\components\Domain\Clinical\CareCohort\Service;
 
 use common\components\Domain\Clinical\CareCohort\Domain\CohortKeyBuilder;
 use common\components\Domain\Clinical\CareCohort\Domain\CarePackType;
+use common\components\Domain\Clinical\Encounter\Service\EncounterReasonService;
 use common\models\Clinical\Encounter;
 
 final class CarePackPromptBuilder
@@ -28,8 +29,9 @@ final class CarePackPromptBuilder
         $profileJson = json_encode($profile, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
         $encounterHint = '';
         if ($encounter !== null) {
+            $motivo = (new EncounterReasonService())->displayText($encounter);
             $encounterHint = "\nEncounter id: " . (int) $encounter->id
-                . "\nMotivo/resumen: " . trim((string) $encounter->reason_text);
+                . "\nMotivo/resumen: " . $motivo;
         }
 
         $deltaHint = '';

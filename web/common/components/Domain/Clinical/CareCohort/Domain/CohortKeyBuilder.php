@@ -3,6 +3,7 @@
 namespace common\components\Domain\Clinical\CareCohort\Domain;
 
 use common\components\Domain\Clinical\Encounter\AiContext\PatientAiContextBuilder;
+use common\components\Domain\Clinical\Encounter\Service\EncounterReasonService;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\DiagnosticoConsultaRepository as DCRepo;
 use common\models\Organization\Efector;
@@ -129,7 +130,7 @@ final class CohortKeyBuilder
         if ($encounter === null) {
             return 'general';
         }
-        $reason = trim((string) $encounter->reason_text);
+        $reason = trim((new EncounterReasonService())->displayText($encounter));
         if ($reason === '') {
             return 'general';
         }

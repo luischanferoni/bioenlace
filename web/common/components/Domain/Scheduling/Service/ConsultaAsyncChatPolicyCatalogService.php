@@ -261,7 +261,7 @@ final class ConsultaAsyncChatPolicyCatalogService
     }
 
     /**
-     * Labels canónicos (para strip de prefijos históricos en reason_text).
+     * Labels canónicos (para strip de prefijos históricos en el texto de motivo).
      *
      * @return list<string>
      */

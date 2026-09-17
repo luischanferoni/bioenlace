@@ -74,8 +74,9 @@ final class EncounterAutomaticCodingService
         if (trim((string) ($encounter->note ?? '')) !== '') {
             $contexto[] = trim((string) $encounter->note);
         }
-        if (trim((string) ($encounter->reason_text ?? '')) !== '') {
-            $contexto[] = 'Motivo: ' . trim((string) $encounter->reason_text);
+        $motivo = (new EncounterReasonService())->displayText($encounter);
+        if ($motivo !== '') {
+            $contexto[] = 'Motivo: ' . $motivo;
         }
         if ($contexto !== []) {
             $parts[] = "Contexto clínico (no codificar motivos/síntomas como diagnóstico):\n"

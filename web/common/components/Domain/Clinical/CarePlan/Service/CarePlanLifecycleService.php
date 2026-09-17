@@ -83,7 +83,7 @@ final class CarePlanLifecycleService
             'efector_id' => $episode->efector_id,
             'service_id' => $this->resolveInpatientServiceId($internacion),
             'id_profesional_efector_servicio' => $internacion->id_profesional_efector_servicio,
-            'reason_text' => 'Internación #' . $internacion->id,
+            'motivo_consulta' => 'Internación #' . $internacion->id,
         ]);
     }
 

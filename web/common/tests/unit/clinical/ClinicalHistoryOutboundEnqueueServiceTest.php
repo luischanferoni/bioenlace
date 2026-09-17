@@ -36,7 +36,6 @@ class ClinicalHistoryOutboundEnqueueServiceTest extends \Codeception\Test\Unit
             'period_start' => '2026-06-18 10:00:00',
             'period_end' => '2026-06-18 10:30:00',
             'note' => 'Paciente estable.',
-            'reason_text' => 'Control',
         ]);
 
         $bundle = (new FhirClinicalHistoryBundleMapper())->buildForEncounter($encounter);

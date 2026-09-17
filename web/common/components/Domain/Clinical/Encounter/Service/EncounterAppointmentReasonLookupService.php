@@ -2,6 +2,8 @@
 
 namespace common\components\Domain\Clinical\Encounter\Service;
 
+use common\components\Domain\Clinical\Encounter\Domain\ConditionDiagnosisRole;
+use common\models\Clinical\Condition;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\ConsultaMotivosMessage;
 use common\models\Scheduling\Turno;
@@ -14,7 +16,7 @@ use yii\db\Query;
 final class EncounterAppointmentReasonLookupService
 {
     /**
-     * Último `reason_text` no vacío del encounter asociado al turno más reciente de la persona.
+     * Último motivo (Condition CC) no vacío del encounter asociado al turno más reciente de la persona.
      */
     public function ultimoMotivoTextoDesdeTurno(int $personaId, ?int $idEfector = null): ?string
     {
@@ -22,20 +24,32 @@ final class EncounterAppointmentReasonLookupService
             return null;
         }
 
-        $query = $this->baseTurnoEncounterQuery($personaId, $idEfector)
-            ->select([
-                'motivo' => new Expression('NULLIF(TRIM(enc.reason_text), "")'),
-            ])
-            ->andWhere(new Expression('NULLIF(TRIM(enc.reason_text), "") IS NOT NULL'))
-            ->limit(1);
+        $id = $this->baseTurnoEncounterQuery($personaId, $idEfector)
+            ->innerJoin(
+                ['cc' => Condition::tableName()],
+                'cc.encounter_id = enc.id AND cc.diagnosis_role = :cc_role AND cc.deleted_at IS NULL',
+                [':cc_role' => ConditionDiagnosisRole::CHIEF_COMPLAINT]
+            )
+            ->select(['enc.id'])
+            ->limit(1)
+            ->scalar();
 
-        $motivo = $query->scalar();
+        if ($id === false || $id === null) {
+            return null;
+        }
 
-        return is_string($motivo) ? trim($motivo) : null;
+        $encounter = Encounter::findOne((int) $id);
+        if ($encounter === null) {
+            return null;
+        }
+
+        $motivo = (new EncounterReasonService())->displayText($encounter);
+
+        return $motivo !== '' ? $motivo : null;
     }
 
     /**
-     * Id del encounter del turno más reciente (aunque `reason_text` esté vacío — p. ej. mensajes en app paciente).
+     * Id del encounter del turno más reciente (aunque aún no tenga motivos — p. ej. mensajes en app paciente).
      */
     public function ultimoEncounterIdDesdeTurno(int $personaId, ?int $idEfector = null): ?int
     {

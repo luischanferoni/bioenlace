@@ -2,6 +2,8 @@
 
 namespace common\components\Domain\Clinical\HistoryExchange\Infrastructure\External\Mapper;
 
+use common\components\Domain\Clinical\Encounter\Domain\ConditionDiagnosisRole;
+use common\components\Domain\Clinical\Encounter\Service\EncounterReasonService;
 use common\models\Clinical\AllergyIntolerance;
 use common\models\Clinical\Condition;
 use common\models\Clinical\DiagnosticReport;
@@ -58,13 +60,21 @@ final class FhirClinicalHistoryBundleMapper
             $entries[] = $this->entry('practitioner', $practitioner);
         }
 
+        $reasonSvc = new EncounterReasonService();
+        $reasonText = $reasonSvc->displayText($encounter);
+
         $compositionSections[] = $this->textSection(
             'Evolución',
-            (string) ($encounter->note ?? $encounter->reason_text ?? '')
+            (string) ($encounter->note ?? '')
         );
 
-        if ($encounter->reason_text) {
-            $compositionSections[] = $this->textSection('Motivo', (string) $encounter->reason_text);
+        if ($reasonText !== '') {
+            $compositionSections[] = $this->textSection('Motivo', $reasonText);
+        }
+
+        foreach ($reasonSvc->listForEncounter($encounter) as $reasonCondition) {
+            $resource = $this->mapCondition($reasonCondition, $patientRef, $encounterRef);
+            $entries[] = $this->entry('condition-reason-' . (int) $reasonCondition->id, $resource);
         }
 
         $conditionRefs = [];
@@ -227,6 +237,22 @@ final class FhirClinicalHistoryBundleMapper
      */
     private function mapEncounter(Encounter $encounter, string $patientRef): array
     {
+        $reasonCodes = [];
+        $reasonRefs = [];
+        foreach ((new EncounterReasonService())->listForEncounter($encounter) as $c) {
+            $coding = array_filter([
+                'system' => $c->code_system ?: null,
+                'code' => $c->code ?: null,
+                'display' => $c->display ?: null,
+            ]);
+            $text = trim((string) ($c->display ?: $c->note ?: $c->code));
+            $reasonCodes[] = array_filter([
+                'coding' => $coding !== [] ? [$coding] : null,
+                'text' => $text !== '' ? $text : null,
+            ]);
+            $reasonRefs[] = ['reference' => 'Condition/' . (int) $c->id];
+        }
+
         return array_filter([
             'resourceType' => 'Encounter',
             'id' => (string) (int) $encounter->id,
@@ -243,9 +269,8 @@ final class FhirClinicalHistoryBundleMapper
                 'start' => $encounter->period_start,
                 'end' => $encounter->period_end,
             ]),
-            'reasonCode' => $encounter->reason_text
-                ? [['text' => (string) $encounter->reason_text]]
-                : null,
+            'reasonCode' => $reasonCodes !== [] ? $reasonCodes : null,
+            'reasonReference' => $reasonRefs !== [] ? $reasonRefs : null,
         ]);
     }
 
@@ -529,10 +554,15 @@ final class FhirClinicalHistoryBundleMapper
      */
     private function loadConditions(int $encounterId): array
     {
-        return Condition::find()
+        $rows = Condition::find()
             ->andWhere(['encounter_id' => $encounterId, 'deleted_at' => null])
             ->orderBy(['id' => SORT_ASC])
             ->all();
+
+        return array_values(array_filter(
+            $rows,
+            static fn (Condition $c): bool => ConditionDiagnosisRole::isDiagnosisLike($c->diagnosis_role)
+        ));
     }
 
     /**

@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * Procesa en un solo lote todos los mensajes de motivos (texto, audio, imagen)
+ * y persiste resumen como Condition rol CC ({@see EncounterReasonService}).
+ */
+
 namespace common\components\Domain\Clinical\Encounter\Service;
 
 use common\components\Domain\Clinical\Encounter\AiContext\PatientAiContextBuilder;
@@ -10,13 +15,10 @@ use common\models\Clinical\Encounter;
 use common\models\Clinical\ConsultaMotivosMessage;
 use Yii;
 
-/**
- * Procesa en un solo lote todos los mensajes de motivos (texto, audio, imagen) y escribe {@see Encounter::$reason_text}.
- */
 final class AppointmentReasonBatchService
 {
     /**
-     * @return array{ok: bool, message: string, reason_text?: string}
+     * @return array{ok: bool, message: string, summary?: string}
      */
     public static function process(int $encounterId, bool $force = false): array
     {
@@ -25,13 +27,14 @@ final class AppointmentReasonBatchService
             return ['ok' => false, 'message' => 'Encounter no encontrado'];
         }
 
+        $reasonSvc = new EncounterReasonService();
         if (!$force && !empty($encounter->motivos_ia_processed_at)) {
-            $stored = trim((string) $encounter->reason_text);
+            $stored = $reasonSvc->displayText($encounter);
             if ($stored !== '' && !self::isLowQualitySummary($stored)) {
                 return [
                     'ok' => true,
                     'message' => 'Ya procesado',
-                    'reason_text' => $stored,
+                    'summary' => $stored,
                 ];
             }
         }
@@ -55,21 +58,22 @@ final class AppointmentReasonBatchService
             $summary = self::buildFallbackProseSummary($input);
         }
 
-        $encounter->reason_text = trim($summary);
+        $summary = trim($summary);
+        $reasonSvc->replaceReasons($encounter, [$summary]);
         $encounter->motivos_ia_processed_at = date('Y-m-d H:i:s');
         $encounter->motivos_ia_insights_json = null;
-        if (!$encounter->save(false, ['reason_text', 'motivos_ia_processed_at', 'motivos_ia_insights_json'])) {
-            return ['ok' => false, 'message' => 'No se pudo guardar el resumen en el encounter'];
+        if (!$encounter->save(false, ['motivos_ia_processed_at', 'motivos_ia_insights_json'])) {
+            return ['ok' => false, 'message' => 'No se pudo marcar el procesamiento IA del encounter'];
         }
 
-        AppointmentReasonClinicalInsightsService::generateAndPersist($encounterId, $encounter->reason_text);
+        AppointmentReasonClinicalInsightsService::generateAndPersist($encounterId, $summary);
 
         Yii::info("Motivos IA batch OK encounter={$encounterId}", 'motivos-consulta');
 
         return [
             'ok' => true,
             'message' => 'Resumen generado',
-            'reason_text' => $encounter->reason_text,
+            'summary' => $summary,
         ];
     }
 
@@ -89,7 +93,8 @@ final class AppointmentReasonBatchService
             return;
         }
 
-        $stored = trim((string) $encounter->reason_text);
+        $reasonSvc = new EncounterReasonService();
+        $stored = $reasonSvc->displayText($encounter);
         $needsBatch = empty($encounter->motivos_ia_processed_at)
             || $stored === ''
             || self::isLowQualitySummary($stored);
@@ -111,8 +116,6 @@ final class AppointmentReasonBatchService
     }
 
     /**
-     * Imágenes del chat de motivos para enlazar placeholders [imagenN] en la UI.
-     *
      * @param ConsultaMotivosMessage[] $messages
      * @return list<array{ref: string, url: string}>
      */
@@ -144,7 +147,6 @@ final class AppointmentReasonBatchService
 
         foreach ($messages as $msg) {
             if ($msg->message_type === ConsultaMotivosMessage::TYPE_TEXTO) {
-                // Texto escrito o transcript on-device ya persistido como mensaje de texto.
                 $t = trim((string) $msg->texto);
                 if ($t !== '') {
                     $textos[] = $t;
@@ -177,7 +179,6 @@ final class AppointmentReasonBatchService
         }
 
         if ($audioPaths !== [] && $audioPlaceholderIndex !== null) {
-            // Una sola llamada STT (Groq) con todos los audios del hilo concatenados.
             $stt = SpeechToTextManager::transcribirLote($audioPaths, 'economico');
             $texto = trim((string) ($stt['texto'] ?? ''));
             if ($texto !== '') {

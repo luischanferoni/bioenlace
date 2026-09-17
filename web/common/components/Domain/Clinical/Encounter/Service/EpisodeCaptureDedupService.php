@@ -313,7 +313,7 @@ final class EpisodeCaptureDedupService
     {
         $parent = strtoupper(trim($parent));
         $rows = Encounter::find()
-            ->select(['note', 'reason_text', 'status'])
+            ->select(['id', 'note', 'status'])
             ->where([
                 'parent_id' => $parentId,
                 'subject_persona_id' => $subjectPersonaId,
@@ -330,11 +330,13 @@ final class EpisodeCaptureDedupService
             ->asArray()
             ->all();
 
+        $reasonSvc = new EncounterReasonService();
         $out = [];
         foreach ($rows as $row) {
             $note = trim((string) ($row['note'] ?? ''));
             if ($note === '') {
-                $note = trim((string) ($row['reason_text'] ?? ''));
+                $enc = Encounter::findOne((int) ($row['id'] ?? 0));
+                $note = $enc !== null ? $reasonSvc->displayText($enc) : '';
             }
             if ($note !== '') {
                 $out[] = $note;

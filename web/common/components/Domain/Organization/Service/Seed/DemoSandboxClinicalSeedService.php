@@ -246,7 +246,7 @@ final class DemoSandboxClinicalSeedService
             'efector_id' => $idEfector,
             'parent_type' => Encounter::PARENT_SOLICITUD_ASYNC,
             'parent_id' => null,
-            'reason_text' => $mensaje,
+            'motivo_consulta' => $mensaje,
             'note' => json_encode($meta, JSON_UNESCAPED_UNICODE),
             'id_profesional_efector_servicio' => '',
         ]);

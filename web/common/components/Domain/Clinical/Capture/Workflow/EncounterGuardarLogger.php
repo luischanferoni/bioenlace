@@ -111,7 +111,7 @@ final class EncounterGuardarLogger
             $linea .= sprintf(
                 "Resumen persistido: note=%s reason=%s conditions=%s meds=%s srs=%s care_plans=%s\n",
                 !empty($p['note']) ? 'SI' : 'NO',
-                !empty($p['reason_text']) ? 'SI' : 'NO',
+                !empty($p['reasons']) ? 'SI' : 'NO',
                 (string) ($p['conditions'] ?? 0),
                 (string) ($p['medication_requests'] ?? 0),
                 (string) ($p['service_requests'] ?? 0),
@@ -120,7 +120,8 @@ final class EncounterGuardarLogger
             $linea .= "persistido:\n" . $this->format($p) . "\n";
             $incompleto = empty($p['note'])
                 || ((int) ($p['medication_requests'] ?? 0) <= 0 && !empty($resultado['diagnostico_guardar']['final_counts']['Medicación']))
-                || (empty($p['reason_text']) && !empty($resultado['diagnostico_guardar']['final_counts']['Motivos de consulta']));
+                || (empty($p['reasons']) && !empty($resultado['diagnostico_guardar']['final_counts']['Motivos de consulta']));
+
             if ($incompleto) {
                 $linea .= "⚠ PERSISTENCIA INCOMPLETA — revisar staged/final/por_modelo abajo\n";
             }

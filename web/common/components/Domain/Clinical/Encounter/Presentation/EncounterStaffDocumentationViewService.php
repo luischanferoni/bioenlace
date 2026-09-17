@@ -3,6 +3,7 @@
 namespace common\components\Domain\Clinical\Encounter\Presentation;
 
 use common\components\Domain\Clinical\Capture\Text\EncounterCaptureExtractionPostProcessPolicy;
+use common\components\Domain\Clinical\Encounter\Service\EncounterReasonService;
 use common\models\Clinical\Encounter;
 
 /**
@@ -30,13 +31,10 @@ final class EncounterStaffDocumentationViewService
         }
 
         $motivos = [];
-        $reason = trim((string) ($encounter->reason_text ?? ''));
-        if ($reason !== '') {
-            foreach (preg_split('/\n|;/u', $reason) ?: [] as $part) {
-                $part = trim((string) $part);
-                if ($part !== '' && !$this->isDuplicateLabel($motivos, $part)) {
-                    $motivos[] = $part;
-                }
+        foreach ((new EncounterReasonService())->listForEncounter($encounter) as $condition) {
+            $part = trim((string) ($condition->display ?: $condition->note ?: $condition->code));
+            if ($part !== '' && !$this->isDuplicateLabel($motivos, $part)) {
+                $motivos[] = $part;
             }
         }
 

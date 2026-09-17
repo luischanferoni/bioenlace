@@ -12,6 +12,7 @@ use common\components\Domain\Clinical\Encounter\Service\AppointmentReasonClinica
 use common\components\Domain\Clinical\Encounter\Service\AppointmentReasonWindowService;
 use common\components\Domain\Clinical\Encounter\Service\EncounterAppointmentReasonLookupService;
 use common\components\Domain\Clinical\Encounter\Service\EncounterJourney\EncounterMotivosIntakeStaffViewService;
+use common\components\Domain\Clinical\Encounter\Service\EncounterReasonService;
 use common\components\Domain\Clinical\Home\StaffClinicalDayListService;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
@@ -424,7 +425,7 @@ class PacientesController extends BaseController
         $encounter->refresh();
 
         $encounterId = (int) $encounter->id;
-        $reason = trim((string) $encounter->reason_text);
+        $reason = (new EncounterReasonService())->displayText($encounter);
         $mensajes = ConsultaMotivosMessage::find()
             ->where(['encounter_id' => $encounterId])
             ->orderBy(['created_at' => SORT_ASC])

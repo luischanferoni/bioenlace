@@ -3,6 +3,7 @@
 namespace common\components\Domain\Clinical\Emergency\Service;
 
 use common\components\Domain\Clinical\Emergency\Domain\CircuitoEstado;
+use common\components\Domain\Clinical\Encounter\Service\EncounterReasonService;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\ServiceRequest;
 use common\models\Clinical\Guardia;
@@ -209,7 +210,7 @@ final class GuardiaEncounterOutcomeService
             $blobs[] = $this->flattenToText($payload);
         }
 
-        $reason = trim((string) ($encounter->reason_text ?? ''));
+        $reason = (new EncounterReasonService())->displayText($encounter);
         if ($reason !== '') {
             $blobs[] = $reason;
         }

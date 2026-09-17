@@ -216,7 +216,7 @@ final class EpisodioTimelineService
     {
         $texto = trim((string) ($enc->note ?? ''));
         if ($texto === '') {
-            $texto = trim((string) ($enc->reason_text ?? ''));
+            $texto = (new EncounterReasonService())->displayText($enc);
         }
         if ($texto === '') {
             return;

@@ -214,7 +214,7 @@ final class EpisodioHistoriaBannerService
             }
             $texto = trim((string) ($enc->note ?? ''));
             if ($texto === '') {
-                $texto = trim((string) ($enc->reason_text ?? ''));
+                $texto = (new EncounterReasonService())->displayText($enc);
             }
             if ($texto === '' || stripos($texto, 'Internación #') === 0) {
                 continue;

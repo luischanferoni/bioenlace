@@ -31,7 +31,6 @@ final class EncounterLifecycleService
         $encounter->appointment_id = isset($params['appointment_id']) ? (int) $params['appointment_id'] : null;
         $encounter->parent_type = $params['parent_type'] ?? null;
         $encounter->parent_id = isset($params['parent_id']) ? (int) $params['parent_id'] : null;
-        $encounter->reason_text = $params['reason_text'] ?? null;
         $encounter->note = $params['note'] ?? null;
         $encounter->workflow_step = (int) ($params['workflow_step'] ?? 0);
 
@@ -42,6 +41,11 @@ final class EncounterLifecycleService
 
         if (!$encounter->save()) {
             throw new \RuntimeException('No se pudo crear el encounter: ' . json_encode($encounter->getErrors()));
+        }
+
+        $motivo = $params['motivo_consulta'] ?? null;
+        if (is_string($motivo) && trim($motivo) !== '') {
+            (new EncounterReasonService())->replaceReasons($encounter, [trim($motivo)]);
         }
 
         return $encounter;

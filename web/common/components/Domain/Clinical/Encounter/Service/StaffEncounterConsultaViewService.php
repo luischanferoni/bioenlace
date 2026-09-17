@@ -141,7 +141,7 @@ final class StaffEncounterConsultaViewService
     private function buildPreconsultaSiAporta(Encounter $encounter, array $documentacion): ?array
     {
         $encounterId = (int) $encounter->id;
-        $reason = trim((string) $encounter->reason_text);
+        $reason = (new EncounterReasonService())->displayText($encounter);
         $mensajes = ConsultaMotivosMessage::find()
             ->where(['encounter_id' => $encounterId])
             ->orderBy(['created_at' => SORT_ASC])

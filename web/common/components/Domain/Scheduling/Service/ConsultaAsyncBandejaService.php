@@ -5,6 +5,7 @@ namespace common\components\Domain\Scheduling\Service;
 use common\components\Domain\Scheduling\Application\Agent\ConsultaAsyncBandejaPrioridadAgent;
 
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
+use common\components\Domain\Clinical\Encounter\Service\EncounterReasonService;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\ConsultaChatMessage;
 use common\models\Person\Persona;
@@ -422,7 +423,7 @@ final class ConsultaAsyncBandejaService
             'created_at' => (string) $encounter->created_at,
             'reason_preview' => $this->previewText(
                 $this->stripSolicitudLabelPrefix(
-                    (string) ($encounter->reason_text ?? ''),
+                    (new EncounterReasonService())->displayText($encounter),
                     $policyCatalog
                 )
             ),
@@ -507,7 +508,7 @@ final class ConsultaAsyncBandejaService
     }
 
     /**
-     * Quita prefijos históricos de label en reason_text (filas creadas antes de separar label/cuerpo).
+     * Quita prefijos históricos de label en el texto de motivo (filas creadas antes de separar label/cuerpo).
      */
     private function stripSolicitudLabelPrefix(string $text, ConsultaAsyncChatPolicyCatalogService $catalog): string
     {

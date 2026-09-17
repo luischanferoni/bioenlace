@@ -20,14 +20,22 @@ class Condition extends ActiveRecord
     public function rules(): array
     {
         return [
-            [['encounter_id', 'subject_persona_id', 'code', 'clinical_status', 'verification_status'], 'required'],
+            [['encounter_id', 'subject_persona_id', 'clinical_status', 'verification_status'], 'required'],
             [['encounter_id', 'subject_persona_id'], 'integer'],
             [['code'], 'string', 'max' => 32],
+            [['code'], 'default', 'value' => null],
             [['code_system'], 'string', 'max' => 64],
             [['display'], 'string', 'max' => 512],
             [['clinical_status', 'verification_status', 'diagnosis_role'], 'string', 'max' => 32],
             [['recorded_date', 'onset_datetime'], 'safe'],
             [['note'], 'string'],
+            // Motivo CC puede ser solo texto (display); diagnóstico sigue exigiendo código en servicios.
+            [
+                ['display'],
+                'required',
+                'when' => static fn (self $m): bool => trim((string) ($m->code ?? '')) === '',
+                'message' => 'Indique código o texto (display).',
+            ],
         ];
     }
 

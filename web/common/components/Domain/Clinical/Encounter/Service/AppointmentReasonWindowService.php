@@ -217,7 +217,7 @@ final class AppointmentReasonWindowService
         $minutes = self::minutesBeforeClose();
         $closeAt = $turnoAt !== null ? $turnoAt - $minutes * 60 : null;
 
-        $reason = trim((string) $encounter->reason_text);
+        $reason = (new EncounterReasonService())->displayText($encounter);
 
         return [
             'input_abierto' => self::isInputOpenForEncounter($encounter),

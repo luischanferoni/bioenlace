@@ -25,7 +25,6 @@ use yii\db\ActiveRecord;
  * @property string|null $parent_type
  * @property int|null $parent_id
  * @property int|null $workflow_step
- * @property string|null $reason_text
  * @property string|null $motivos_intake_json
  * @property string|null $motivos_ia_processed_at
  * @property string|null $motivos_ia_insights_json
@@ -93,7 +92,7 @@ class Encounter extends ActiveRecord
             [['status'], 'string', 'max' => 32],
             [['parent_type'], 'string', 'max' => 128],
             [['period_start', 'period_end', 'created_at', 'updated_at', 'deleted_at', 'motivos_ia_processed_at'], 'safe'],
-            [['reason_text', 'note', 'motivos_ia_insights_json', 'motivos_intake_json'], 'string'],
+            [['note', 'motivos_ia_insights_json', 'motivos_intake_json'], 'string'],
         ];
     }
 
@@ -144,6 +143,34 @@ class Encounter extends ActiveRecord
         return $this->hasMany(Condition::class, ['encounter_id' => 'id']);
     }
 
+    /**
+     * Motivos de consulta (Condition rol CC / Encounter.reasonReference).
+     */
+    public function getReasons(): \yii\db\ActiveQuery
+    {
+        return $this->getConditions()
+            ->andWhere([
+                'diagnosis_role' => \common\components\Domain\Clinical\Encounter\Domain\ConditionDiagnosisRole::CHIEF_COMPLAINT,
+                'deleted_at' => null,
+            ]);
+    }
+
+    /**
+     * Diagnósticos del acto (excluye motivos CC).
+     */
+    public function getDiagnosisConditions(): \yii\db\ActiveQuery
+    {
+        return $this->getConditions()
+            ->andWhere(['deleted_at' => null])
+            ->andWhere([
+                'or',
+                ['diagnosis_role' => null],
+                ['diagnosis_role' => ''],
+                ['diagnosis_role' => \common\components\Domain\Clinical\Encounter\Domain\ConditionDiagnosisRole::PRINCIPAL],
+                ['diagnosis_role' => \common\components\Domain\Clinical\Encounter\Domain\ConditionDiagnosisRole::SECONDARY],
+            ]);
+    }
+
     public function getMedicationRequests(): \yii\db\ActiveQuery
     {
         return $this->hasMany(MedicationRequest::class, ['encounter_id' => 'id']);
@@ -191,7 +218,7 @@ class Encounter extends ActiveRecord
     /** @return Condition[] */
     public function getDiagnosticos(): array
     {
-        return $this->getConditions()->all();
+        return $this->getDiagnosisConditions()->all();
     }
 
     public function getAtencionEnfermeria(): \yii\db\ActiveQuery

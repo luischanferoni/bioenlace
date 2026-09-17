@@ -6,23 +6,23 @@ use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 use common\components\Domain\Clinical\CareCohort\Service\CarePackConfig;
 use common\components\Domain\Clinical\CareCohort\Service\CarePackEncounterStaffService;
-use common\components\Domain\Clinical\Encounter\Presentation\EncounterStaffDocumentationViewService;
-use common\components\Domain\Clinical\Encounter\Service\AppointmentReasonBatchService;
-use common\components\Domain\Clinical\Encounter\Service\AppointmentReasonClinicalInsightsService;
-use common\components\Domain\Clinical\Encounter\Service\AppointmentReasonWindowService;
-use common\components\Domain\Clinical\Encounter\Service\EncounterAppointmentReasonLookupService;
-use common\components\Domain\Clinical\Encounter\Service\EncounterReasonService;
+use common\components\Domain\Clinical\Encounter\Application\Presentation\EncounterStaffDocumentationViewService;
+use common\components\Domain\Clinical\Encounter\Application\AppointmentReasonBatchService;
+use common\components\Domain\Clinical\Encounter\Application\AppointmentReasonClinicalInsightsService;
+use common\components\Domain\Clinical\Encounter\Application\AppointmentReasonWindowService;
+use common\components\Domain\Clinical\Encounter\Application\EncounterAppointmentReasonLookupService;
+use common\components\Domain\Clinical\Encounter\Application\EncounterReasonService;
 use common\components\Domain\Clinical\Home\StaffClinicalDayListService;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
 use common\models\Scheduling\Turno;
 use common\models\Clinical\AllergyIntolerance;
 use common\models\Clinical\PersonasAntecedente;
-use common\models\Clinical\ConsultaMotivosMessage;
-use common\components\Domain\Clinical\Encounter\Presentation\ConditionPresentationService;
-use common\components\Domain\Clinical\Encounter\Service\EpisodioHistoriaBannerService;
-use common\components\Domain\Clinical\Encounter\Service\EpisodioSignosVitalesService;
-use common\components\Domain\Clinical\Encounter\Service\EpisodioTimelineService;
+use common\models\Clinical\AppointmentReasonMessage;
+use common\components\Domain\Clinical\Encounter\Application\Presentation\ConditionPresentationService;
+use common\components\Domain\Clinical\Encounter\Application\EpisodioHistoriaBannerService;
+use common\components\Domain\Clinical\Encounter\Application\EpisodioSignosVitalesService;
+use common\components\Domain\Clinical\Encounter\Application\EpisodioTimelineService;
 use common\components\Domain\Person\Service\PersonaSignosVitalesService;
 use frontend\modules\api\v1\controllers\clinical\ClinicalAccessTrait;
 /**
@@ -425,7 +425,7 @@ class PacientesController extends BaseController
 
         $encounterId = (int) $encounter->id;
         $reason = (new EncounterReasonService())->displayText($encounter);
-        $mensajes = ConsultaMotivosMessage::find()
+        $mensajes = AppointmentReasonMessage::find()
             ->where(['encounter_id' => $encounterId])
             ->orderBy(['created_at' => SORT_ASC])
             ->all();

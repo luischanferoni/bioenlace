@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\CareCohort\Service;
 
 use common\components\Domain\Clinical\CareCohort\Domain\CohortKeyBuilder;
 use common\components\Domain\Clinical\CareCohort\Domain\CarePackType;
-use common\components\Domain\Clinical\Encounter\Service\EncounterReasonService;
+use common\components\Domain\Clinical\Encounter\Application\EncounterReasonService;
 use common\models\Clinical\Encounter;
 
 final class CarePackPromptBuilder

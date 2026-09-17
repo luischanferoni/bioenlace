@@ -79,14 +79,14 @@ final class EncounterDefinitionBootstrapService
         $encounterClass = null;
 
         if ($subjectPersonaId !== null && $subjectPersonaId > 0) {
-            $paciente = (new \common\components\Domain\Clinical\Encounter\Service\EncounterLifecycleService())
+            $paciente = (new \common\components\Domain\Clinical\Encounter\Application\EncounterLifecycleService())
                 ->findSubject($subjectPersonaId);
             if (
                 $paciente !== null
                 && !empty($body['parent'])
                 && !empty($body['parent_id'])
             ) {
-                $ctx = \common\components\Domain\Clinical\Encounter\Service\EncounterCaptureContextService::validarPermisoAtencion(
+                $ctx = \common\components\Domain\Clinical\Encounter\Application\EncounterCaptureContextService::validarPermisoAtencion(
                     $body['parent'],
                     $body['parent_id'],
                     $paciente

@@ -12,11 +12,11 @@ Motivo de consulta es un **recurso clínico hijo** del Encounter (`Condition` co
 | Tipología / categoría captura | `EncounterReason` (+ `EncounterReasonInput`) |
 | Diagnóstico | `clinical_condition` con `principal` / `secondary` |
 | Nota narrativa | `encounter.note` |
-| Chat pre-consulta | `interaccion_motivos_consulta` (`ConsultaMotivosMessage`; no es el motivo clínico) |
+| Chat pre-consulta | `interaccion_motivos_consulta` (`AppointmentReasonMessage`; no es el motivo clínico) |
 | Sugerencias IA (hipótesis/prácticas) | `encounter.ia_clinical_suggestions` |
 | Marca de batch IA | `encounter.motivos_ia_processed_at` (proceso; no es el motivo) |
 
-Intake estructurado (`motivos_intake_json`) eliminado: el camino vivo es chat → Condition CC. La guía YAML del chat (`EncounterMotivosIntakeCatalogService`) sigue como metadata, sin persistir respuestas en encounter.
+Intake estructurado (`motivos_intake_json`) eliminado: el camino vivo es chat → Condition CC. La guía del chat (`AppointmentReasonChatGuideCatalogService`) sigue como metadata, sin persistir respuestas en encounter.
 
 ## Estado
 

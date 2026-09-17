@@ -60,5 +60,7 @@ return [
             'class' => 'yii\console\controllers\MigrateController',
             'migrationPath' => '@common/migrations',
         ],
+        // CLI histórica motivos-consulta/* (clase AppointmentReasonController).
+        'motivos-consulta' => \console\controllers\AppointmentReasonController::class,
     ],
 ];

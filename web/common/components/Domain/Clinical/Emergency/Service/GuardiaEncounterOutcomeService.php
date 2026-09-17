@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\Emergency\Service;
 
 use common\components\Domain\Clinical\Emergency\Domain\CircuitoEstado;
-use common\components\Domain\Clinical\Encounter\Service\EncounterReasonService;
+use common\components\Domain\Clinical\Encounter\Application\EncounterReasonService;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\ServiceRequest;
 use common\models\Clinical\Guardia;

@@ -3,7 +3,7 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Encounter\Presentation\EncounterCaptureReviewPresenter;
+use common\components\Domain\Clinical\Encounter\Application\Presentation\EncounterCaptureReviewPresenter;
 
 class EncounterCaptureReviewPresenterTest extends Unit
 {

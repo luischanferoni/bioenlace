@@ -167,7 +167,7 @@ No todo pasa por el chat genérico:
 
 | Canal | Entry | Uso |
 |-------|-------|-----|
-| Motivos de consulta | `Clinical/Assistant/AppointmentReasonEntry` | Conversación previa al turno |
+| Motivos de consulta | `Encounter/Application/AppointmentReasonMessageService` (`motivos-consulta/*`) | Conversación previa al turno |
 | Captura clínica | `Clinical/Assistant/ClinicalEncounterEntry` | Analizar/guardar texto o audio del encuentro |
 
 Comparten ideas de draft y permisos, pero **no siempre** pasan por el clasificador de intents del chat operativo.

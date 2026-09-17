@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
-use common\components\Domain\Clinical\Encounter\PatientSummary\PatientEncounterSummaryQueryService;
+use common\components\Domain\Clinical\Encounter\Application\PatientSummary\PatientEncounterSummaryQueryService;
 use common\components\Domain\Clinical\CarePlan\Service\CarePlanMedicationListService;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;

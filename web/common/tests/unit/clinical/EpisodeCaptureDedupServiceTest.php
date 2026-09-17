@@ -3,7 +3,7 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Encounter\Service\EpisodeCaptureDedupService;
+use common\components\Domain\Clinical\Encounter\Application\EpisodeCaptureDedupService;
 use common\models\Clinical\Encounter;
 
 class EpisodeCaptureDedupServiceTest extends Unit

@@ -6,7 +6,7 @@ use common\components\Domain\Scheduling\Application\Agent\ConsultaAsyncBandejaPr
 
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Domain\Clinical\CarePlan\Service\CarePlanMedicationListService;
-use common\components\Domain\Clinical\Encounter\Service\EncounterLifecycleService;
+use common\components\Domain\Clinical\Encounter\Application\EncounterLifecycleService;
 use common\models\Clinical\Encounter;
 use Yii;
 

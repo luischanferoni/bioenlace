@@ -2,10 +2,10 @@
 
 namespace common\components\Domain\Clinical\Capture\Service;
 
-use common\components\Domain\Clinical\Encounter\Service\Authorization\EncounterAccessService;
+use common\components\Domain\Clinical\Encounter\Application\Authorization\EncounterAccessService;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\ConsultaChatMessage;
-use common\models\Clinical\ConsultaMotivosMessage;
+use common\models\Clinical\AppointmentReasonMessage;
 use Yii;
 use yii\web\NotFoundHttpException;
 use yii\web\ForbiddenHttpException;
@@ -22,7 +22,7 @@ final class SecureMediaService
     private const SCOPES = [
         self::SCOPE_MOTIVOS_CONSULTA => [
             'dir' => 'motivos_consulta',
-            'messageClass' => ConsultaMotivosMessage::class,
+            'messageClass' => AppointmentReasonMessage::class,
             'mediaTypes' => ['imagen', 'audio'],
         ],
         self::SCOPE_CONSULTA_CHAT => [

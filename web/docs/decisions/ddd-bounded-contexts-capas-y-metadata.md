@@ -13,7 +13,7 @@
 3. **YAML que permanece** (composición / copy / prompt / auth de motor / manifests UI) se **colocaliza** bajo la capa correspondiente del módulo o de Platform (p. ej. `<Modulo>/Application/Flows/intents`, `Presentation/`, `Platform/Assistant/…`).
 4. **YAML que no permanece:** knobs de agents, contratos/catálogos de negocio, aliases de lookup → PHP Domain/Application o BD + seed.
 5. **`Integrations` no es BC:** Anti-Corruption Layer en `Infrastructure/External` del módulo/BC dueño; UI Widget fuera de Domain (`Platform/Ui/Widgets/…`). Infra técnica compartida → [`Shared/Infrastructure`](../arquitectura/common-components.md). Ver [shared-top-level-infrastructure.md](./shared-top-level-infrastructure.md).
-6. **Active Record** en `common/models/<BC>/` se trata como persistencia del BC (Infrastructure), sin exigir Entities/Aggregates puros en esta etapa.
+6. **Active Record** en `common/models/<BC>/` se trata como persistencia del BC (Infrastructure/Persistence ancla README en el módulo); sin exigir Entities/Aggregates puros en runtime hasta Fase C del plan de gramática.
 7. **Discovery de intents:** `ProductMetadataPaths::colocatedIntentRoots()` incluye `Domain/<BC>/Application/Flows/intents` y `Domain/<BC>/<Modulo>/Application/Flows/intents` (+ Platform).
 8. **Varios BCs:** Scheduling, Person, Organization, Terminology, etc. **no** se fusionan en Clinical (lenguaje y dueño de modelo distintos).
 

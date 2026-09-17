@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\Home;
 
 use Yii;
-use common\components\Domain\Clinical\Encounter\Service\EncounterAppointmentReasonLookupService;
+use common\components\Domain\Clinical\Encounter\Application\EncounterAppointmentReasonLookupService;
 use common\models\Scheduling\Cirugia;
 use common\models\Organization\InfraestructuraPiso;
 use common\models\Person\Persona;

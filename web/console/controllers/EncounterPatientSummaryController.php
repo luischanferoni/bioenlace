@@ -2,7 +2,7 @@
 
 namespace console\controllers;
 
-use common\components\Domain\Clinical\Encounter\PatientSummary\PatientEncounterSummaryPublishService;
+use common\components\Domain\Clinical\Encounter\Application\PatientSummary\PatientEncounterSummaryPublishService;
 use yii\console\Controller;
 use yii\console\ExitCode;
 

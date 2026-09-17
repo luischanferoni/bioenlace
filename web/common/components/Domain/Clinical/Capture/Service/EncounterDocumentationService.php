@@ -13,10 +13,10 @@ use common\components\Domain\Clinical\Capture\Workflow\EncounterCaptureCompleten
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Domain\Clinical\CarePlan\Service\CarePlanLifecycleService;
 use common\components\Domain\Clinical\CarePlan\Service\CarePlanService;
-use common\components\Domain\Clinical\Encounter\Service\ConditionLifecycleService;
-use common\components\Domain\Clinical\Encounter\Service\EncounterAutomaticCodingService;
-use common\components\Domain\Clinical\Encounter\Service\EncounterLifecycleService;
-use common\components\Domain\Clinical\Encounter\Service\EpisodeCaptureDedupService;
+use common\components\Domain\Clinical\Encounter\Application\ConditionLifecycleService;
+use common\components\Domain\Clinical\Encounter\Application\EncounterAutomaticCodingService;
+use common\components\Domain\Clinical\Encounter\Application\EncounterLifecycleService;
+use common\components\Domain\Clinical\Encounter\Application\EpisodeCaptureDedupService;
 use common\components\Domain\Clinical\CarePlan\Service\MedicationRequestService;
 use common\components\Domain\Clinical\CarePlan\Service\ServiceRequestService;
 use common\components\Domain\Clinical\CarePlan\Service\TreatmentRequestSnomedCodingService;
@@ -24,9 +24,9 @@ use common\components\Domain\Clinical\Specialty\Domain\EncounterDefinitionSpecia
 use common\components\Domain\Clinical\Specialty\Inpatient\Service\InpatientEncounterAuxService;
 use common\components\Domain\Clinical\Specialty\Odontology\Service\OdontologyEncounterService;
 use common\components\Domain\Clinical\Specialty\Ophthalmology\Service\OphthalmologyEncounterService;
-use common\components\Domain\Clinical\Encounter\Service\EncounterReasonService;
-use common\components\Domain\Clinical\Encounter\Legacy\ConsultaProcesamientoService;
-use common\components\Domain\Clinical\Encounter\Presentation\EncounterCaptureReviewPresenter;
+use common\components\Domain\Clinical\Encounter\Application\EncounterReasonService;
+use common\components\Domain\Clinical\Encounter\Application\Legacy\ConsultaProcesamientoService;
+use common\components\Domain\Clinical\Encounter\Application\Presentation\EncounterCaptureReviewPresenter;
 use common\models\Clinical\Condition;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterDefinition;
@@ -1398,8 +1398,8 @@ class EncounterDocumentationService extends Component
         if (!is_array($payload)) {
             return;
         }
-        $dedup = new \common\components\Domain\Clinical\Encounter\Service\EpisodeCaptureDedupService();
-        $presentation = new \common\components\Domain\Clinical\Encounter\Presentation\ConditionPresentationService();
+        $dedup = new \common\components\Domain\Clinical\Encounter\Application\EpisodeCaptureDedupService();
+        $presentation = new \common\components\Domain\Clinical\Encounter\Application\Presentation\ConditionPresentationService();
         $episodeIds = $this->episodeEncounterIdsFor($encounter);
         foreach ($payload as $row) {
             $condition = new Condition();
@@ -1456,7 +1456,7 @@ class EncounterDocumentationService extends Component
     private function persistMedications(Encounter $encounter, ?\common\models\Clinical\CarePlan $carePlan, $payload): void
     {
         $rows = MedicationRequestService::normalizeExtractedMedicationPayload($payload);
-        $dedup = new \common\components\Domain\Clinical\Encounter\Service\EpisodeCaptureDedupService();
+        $dedup = new \common\components\Domain\Clinical\Encounter\Application\EpisodeCaptureDedupService();
         $episodeIds = $this->episodeEncounterIdsFor($encounter);
         foreach ($rows as $row) {
             $display = MedicationRequestService::resolveMedicationDisplay($row);
@@ -1500,7 +1500,7 @@ class EncounterDocumentationService extends Component
             return [(int) $encounter->id];
         }
 
-        return (new \common\components\Domain\Clinical\Encounter\Service\EpisodeCaptureDedupService())
+        return (new \common\components\Domain\Clinical\Encounter\Application\EpisodeCaptureDedupService())
             ->listEpisodeEncounterIds($parent, $parentId, $subjectId);
     }
 
@@ -1564,7 +1564,7 @@ class EncounterDocumentationService extends Component
         if (!is_array($payload)) {
             return;
         }
-        $dedup = new \common\components\Domain\Clinical\Encounter\Service\EpisodeCaptureDedupService();
+        $dedup = new \common\components\Domain\Clinical\Encounter\Application\EpisodeCaptureDedupService();
         $episodeIds = $this->episodeEncounterIdsFor($encounter);
         foreach ($payload as $row) {
             if ($modelo === 'ConsultaIndicaciones' && is_array($row) && $episodeIds !== []) {

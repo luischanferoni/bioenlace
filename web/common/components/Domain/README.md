@@ -31,20 +31,18 @@ Fuente de verdad: [domain-folder-grammar.md](../../../docs/decisions/domain-fold
 
 ```text
 Domain/Clinical/<Modulo>/
-  Application/{Flows,Agent}/
-  Domain/                    # *Catalog, enums
-  Service/                   # *Service; Authorization/ opcional
-  Dto/ | Presentation/       # opcional
-  Infrastructure/External/   # ACL (Mapper/Connector/…)
+  Application/               # casos de uso; Authorization/; Flows/; Agents/; Presentation/
+  Domain/                    # *Catalog, enums; Model/ (aggregates)
+  Infrastructure/            # External/; Persistence/README → models/
 ```
 
-Sin `Shared/`, sin `Enum/` / `Service/` / `Dto/` / `Infrastructure/` / PHP suelto en la **raíz** del BC o del módulo. Sin `Support/` ni `Mapper/` fuera de External.
+Sin `Service/` L1. Sin `Shared/`, sin PHP suelto en la **raíz** del BC o del módulo. Sin `Support/` ni `Mapper/` fuera de External.
 
 ### BC más chico / en migración
 
 ```text
 Domain/<BC>/
-  Application/ | Domain/ | Service/ | Presentation/ | Infrastructure/External/
+  Application/ | Domain/ | Infrastructure/
   Assistant/ | Home/ | DataAccess/
 ```
 
@@ -52,11 +50,12 @@ Domain/<BC>/
 
 | Sufijo | Carpeta |
 |--------|---------|
-| `*Service` / `*Access` | `Service/` |
+| `*Service` (caso de uso) / `*Access` | `Application/` · `Application/Authorization/` |
 | `*Catalog` | `Domain/` |
-| `*CatalogService` | `Service/` |
-| `*Agent` / `*AgentPolicy` | `Application/Agent/` |
-| `*Presenter` / `*PresentationService` | `Presentation/` |
+| `*CatalogService` | `Application/` |
+| `*Agent` / `*AgentPolicy` | `Application/Agents/` |
+| `*Presenter` / `*PresentationService` | `Application/Presentation/` |
+| Aggregate / entity rica | `Domain/Model/` |
 | `*FlowDraftHydrator` | `Assistant/` |
 | `*HintCandidateProvider` | `Assistant/` (hints) |
 | `*Connector` / `*Mapper` / `*Registry` (ACL) | `Infrastructure/External/` |

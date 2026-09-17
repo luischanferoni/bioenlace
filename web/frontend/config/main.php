@@ -836,6 +836,8 @@ return [
                 'whatsapp' => \frontend\modules\api\v1\controllers\integrations\WhatsAppWebhookController::class,
                 // URL pública histórica del chat del encounter (clase renombrada a EncounterChatController).
                 'consulta-chat' => \frontend\modules\api\v1\controllers\clinical\EncounterChatController::class,
+                // URL/RBAC pública motivos-consulta (clase AppointmentReasonController).
+                'motivos-consulta' => \frontend\modules\api\v1\controllers\clinical\AppointmentReasonController::class,
             ],
         ],           
     ],

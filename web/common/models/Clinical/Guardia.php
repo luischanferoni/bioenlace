@@ -7,7 +7,7 @@ use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Person\Telefono;
 use common\models\Person\Persona;
 
-use common\components\Domain\Clinical\Encounter\Presentation\PatientHistoriaUrl;
+use common\components\Domain\Clinical\Encounter\Application\Presentation\PatientHistoriaUrl;
 use common\models\Clinical\Encounter;
 use Yii;
 use yii\helpers\Console;

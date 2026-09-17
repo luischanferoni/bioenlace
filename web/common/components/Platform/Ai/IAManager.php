@@ -23,7 +23,7 @@ class IAManager
      */
     private static function clinicalLogger(): ?object
     {
-        $class = 'common\\components\\Domain\\Clinical\\Legacy\\ConsultaLogger';
+        $class = 'common\\components\\Domain\\Clinical\\Encounter\\Application\\Legacy\\ConsultaLogger';
         if (!class_exists($class)) {
             return null;
         }

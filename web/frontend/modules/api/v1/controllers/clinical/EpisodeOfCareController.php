@@ -2,7 +2,7 @@
 
 namespace frontend\modules\api\v1\controllers\clinical;
 
-use common\components\Domain\Clinical\Encounter\Service\EpisodeOfCareService;
+use common\components\Domain\Clinical\Encounter\Application\EpisodeOfCareService;
 use common\components\Domain\Clinical\Specialty\Inpatient\Domain\InpatientClinicalContext;
 use common\components\Domain\Clinical\Specialty\Inpatient\Domain\InpatientClinicalQuery;
 use common\models\Clinical\EpisodeOfCare;

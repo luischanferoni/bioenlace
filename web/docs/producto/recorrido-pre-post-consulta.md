@@ -19,7 +19,7 @@ El paciente opera desde la **app móvil**; el **personal de salud** consume moti
 
 ## Principios
 
-1. **Metadata YAML** — ventanas en `encounter_phase_windows.yaml`, overrides en `encounter_phase_window_overrides.yaml`, elegibilidad en `encounter_phase_eligibility.yaml`, preguntas previas en `motivos_consulta_intake.yaml`.
+1. **Metadata / catálogos** — ventanas en `encounter_phase_windows.yaml`, overrides en `encounter_phase_window_overrides.yaml`, elegibilidad en `encounter_phase_eligibility.yaml`, guía del chat en `AppointmentReasonChatGuideCatalog`.
 2. **Servicio de dominio** — `EncounterJourneyService` compone ventana + elegibilidad + `enabled` por fase.
 3. **Sin hardcode en listados ni Flutter** — el listado de turnos y `GET /api/v1/encounter-journey/estado` exponen `journey` y flags legacy (`motivos_input_abierto`, `asistencia_cohorte_disponible`).
 4. **Motivos siguen siendo conversacionales** — la IA corre en lote al cierre de ventana (`motivos-consulta-batch`), no por pregunta del wizard.
@@ -37,7 +37,7 @@ Offsets en `encounter_phase_windows.yaml` (`param:encounter_journey_preparar_min
 
 ## Guía del chat de motivos
 
-Catálogo `motivos_consulta_intake.yaml` (`enabled: true/false`). API paciente `GET /api/v1/encounter-journey/motivos-intake` entrega la guía declarativa del chat (`chat_guide`). No persiste respuestas en el encounter: el motivo clínico canónico sale del chat → Condition rol CC.
+Catálogo `AppointmentReasonChatGuideCatalog` (`enabled: true/false`). API paciente `GET /api/v1/encounter-journey/motivos-intake` entrega la guía declarativa del chat (`chat_guide`). No persiste respuestas en el encounter: el motivo clínico canónico sale del chat → Condition rol CC.
 
 **Sin IA en la guía:** textos declarativos. Ver [catalogo-usos-ia.md](./catalogo-usos-ia.md) §2.
 
@@ -90,7 +90,7 @@ Los touchpoints del pack followup (`care-pack process-followups`) incluyen `id_t
 | Pieza | Ubicación |
 |-------|-----------|
 | Ventanas / elegibilidad | `encounter_phase_windows.yaml`, `encounter_phase_eligibility.yaml`, `EncounterJourneyService` |
-| Guía chat motivos | `EncounterMotivosIntakeService`, `EncounterMotivosIntakeCatalogService`, `motivos_consulta_intake.yaml` |
+| Guía chat motivos | `AppointmentReasonChatGuideService`, `AppointmentReasonChatGuideCatalogService` |
 | Motivo clínico (staff) | Condition CC vía `EncounterReasonService`; sugerencias en `ia_clinical_suggestions` |
 | UI web timeline | `frontend/views/paciente/timeline/timeline.php` |
 | UI móvil staff | `mobile/personalsalud/…/patient_timeline_screen.dart` |

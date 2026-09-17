@@ -3,7 +3,7 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Encounter\Presentation\EpisodioDateTimeFormatter;
+use common\components\Domain\Clinical\Encounter\Application\Presentation\EpisodioDateTimeFormatter;
 
 class EpisodioDateTimeFormatterTest extends Unit
 {

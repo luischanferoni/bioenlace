@@ -2,7 +2,7 @@
 
 namespace common\components\Platform\Assistant\Chat\Channels\Guide;
 
-use common\components\Domain\Clinical\Encounter\AiContext\PatientAiContextBuilder;
+use common\components\Domain\Clinical\Encounter\Application\AiContext\PatientAiContextBuilder;
 use common\components\Platform\Assistant\Catalog\IntentSemanticsPromptFormatter;
 use common\components\Platform\Assistant\Catalog\SmartCatalogRegistry;
 use common\components\Platform\Assistant\Context\AssistantContextAssemblyService;

@@ -19,7 +19,8 @@ use common\components\Domain\Scheduling\Application\Agent\TurnoResolucionMultica
 use common\components\Domain\Scheduling\Application\Agent\TurnoResolucionShortlistAgentPolicy;
 
 /**
- * Políticas de agentes autónomos en PHP (`<BC>/<Modulo?>/Application/Agent/*AgentPolicy`).
+ * Políticas de agentes autónomos en PHP (`<BC>/<Modulo?>/Application/Agents/*AgentPolicy`;
+ * path histórico `Application/Agent/` aún presente en oleadas previas — migrar a `Agents/`).
  * Sustituye `metadata/bioenlace/platform/agents/*.yaml`.
  */
 final class AgentPolicyRegistry

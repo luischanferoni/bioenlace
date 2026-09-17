@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\LegalRecord\Service;
 
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
-use common\components\Domain\Clinical\Encounter\PatientSummary\PatientEncounterSummaryBuilder;
+use common\components\Domain\Clinical\Encounter\Application\PatientSummary\PatientEncounterSummaryBuilder;
 use common\components\Domain\Person\Service\PersonaSignosVitalesService;
 use common\models\Clinical\AllergyIntolerance;
 use common\models\Clinical\Encounter;

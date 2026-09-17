@@ -75,7 +75,7 @@ Detalle de producto: [asistente-y-chat.md](./asistente-y-chat.md) · Motor: [arq
 
 | Paso | Tecnología | Contexto / notas |
 |------|------------|------------------|
-| Guía del chat de motivos (`motivos_consulta_intake.yaml`) | **Sin IA** | Metadata de orientación al chat; no persiste respuestas en encounter |
+| Guía del chat de motivos (`AppointmentReasonChatGuideCatalog`) | **Sin IA** | Metadata de orientación al chat; no persiste respuestas en encounter |
 | Mensajes del paciente (texto) | Sin IA por mensaje | El chat de motivos no resume en cada nota |
 | Audio en el hilo | STT en servidor (lote) o **futuro** STT en dispositivo | `SpeechToTextManager` en batch; ver [stt.md](../costos/estrategias-reduccion/stt.md) |
 | Cierre de ventana → resumen | IA | `motivos-consulta-batch` + `PatientAiContextBuilder` (perfil `motivos`) |
@@ -132,7 +132,7 @@ Operación y cron: [asistencia-cohortes.md](./asistencia-cohortes.md).
 - Pasos de **flujos guiados** del asistente (`SubIntentEngine`) salvo preprocess al reingresar texto.
 - **Match operativo** de intents por keywords (`classifyAmongItems`).
 - Validaciones de negocio, RBAC, persistencia FHIR.
-- Guía de motivos (`motivos_consulta_intake.yaml`) — metadata del chat; sin persistencia en encounter.
+- Guía de motivos (`AppointmentReasonChatGuideCatalog`) — metadata del chat; sin persistencia en encounter.
 - Gran parte de **corrección ortográfica** previa al análisis de consulta (diccionario local).
 
 ---

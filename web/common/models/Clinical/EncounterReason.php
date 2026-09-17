@@ -6,7 +6,7 @@ use common\models\Clinical\Input\EncounterReasonInput;
 
 /**
  * Tipología de captura — Encounter.reason / chief complaint (categoría `EncounterReason`).
- * Persistencia: {@see \common\components\Domain\Clinical\Encounter\Service\EncounterReasonService}
+ * Persistencia: {@see \common\components\Domain\Clinical\Encounter\Application\EncounterReasonService}
  * → Condition con rol CC.
  */
 final class EncounterReason extends \yii\base\Model

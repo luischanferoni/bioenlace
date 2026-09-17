@@ -6,7 +6,7 @@ use common\components\Domain\Clinical\Emergency\Service\GuardiaCircuitoService;
 use common\components\Domain\Clinical\Emergency\Service\GuardiaTriageService;
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Domain\Clinical\CarePlan\Service\CarePlanLifecycleService;
-use common\components\Domain\Clinical\Encounter\Service\EncounterLifecycleService;
+use common\components\Domain\Clinical\Encounter\Application\EncounterLifecycleService;
 use common\components\Domain\Person\Service\CuilValidator;
 use common\components\Domain\Scheduling\Service\ConsultaAsyncInitialChatService;
 use common\components\Domain\Scheduling\Service\TurnoSlotClaimService;

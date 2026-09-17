@@ -6,7 +6,7 @@ use common\components\Domain\Clinical\Encounter\Domain\ConditionVerificationStat
 
 use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
 
-use common\components\Domain\Clinical\Encounter\Dto\ProcedureDto;
+use common\components\Domain\Clinical\Encounter\Application\Dto\ProcedureDto;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanCategory;
 use common\components\Domain\Clinical\Encounter\Domain\ProcedureStatus;
 use common\components\Domain\Clinical\CarePlan\Service\CarePlanService;

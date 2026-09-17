@@ -9,7 +9,7 @@ use common\models\Scheduling\Turno;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\components\Platform\Core\Service\Push\FcmPushConfig;
 use common\components\Domain\Scheduling\Service\TurnoReminderContentBuilder;
-use common\components\Domain\Clinical\Encounter\Service\AppointmentReasonBatchService;
+use common\components\Domain\Clinical\Encounter\Application\AppointmentReasonBatchService;
 
 /**
  * Procesa turno_notificacion_programada (cron cada N minutos).
@@ -87,7 +87,7 @@ class TurnoNotificacionController extends Controller
                     if (!is_array($meta)) {
                         $meta = [];
                     }
-                    $journeyScheduler = new \common\components\Domain\Clinical\Encounter\Service\EncounterJourney\EncounterJourneyNotificationScheduler();
+                    $journeyScheduler = new \common\components\Domain\Clinical\Encounter\Application\EncounterJourney\EncounterJourneyNotificationScheduler();
                     if (!$journeyScheduler->shouldSendJourneyNotification($turno, $row->tipo, $meta)) {
                         $row->estado = TurnoNotificacionProgramada::ESTADO_CANCELADA;
                         $row->save(false);

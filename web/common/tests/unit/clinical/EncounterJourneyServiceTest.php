@@ -3,13 +3,13 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Encounter\Service\EncounterJourney\EncounterJourneyEligibilityService;
-use common\components\Domain\Clinical\Encounter\Service\EncounterJourney\EncounterPhaseEligibilityCatalogService;
-use common\components\Domain\Clinical\Encounter\Service\EncounterJourney\EncounterMotivosIntakeCatalogService;
-use common\components\Domain\Clinical\Encounter\Service\EncounterJourney\EncounterPhaseWindowOverrideCatalogService;
-use common\components\Domain\Clinical\Encounter\Service\EncounterJourney\EncounterPhaseWindowResolver;
-use common\components\Domain\Clinical\Encounter\Service\EncounterJourney\EncounterPhaseWindowService;
-use common\components\Domain\Clinical\Encounter\Service\EncounterJourney\EncounterPhaseWindowsCatalogService;
+use common\components\Domain\Clinical\Encounter\Application\EncounterJourney\EncounterJourneyEligibilityService;
+use common\components\Domain\Clinical\Encounter\Application\EncounterJourney\EncounterPhaseEligibilityCatalogService;
+use common\components\Domain\Clinical\Encounter\Application\AppointmentReasonChatGuideCatalogService;
+use common\components\Domain\Clinical\Encounter\Application\EncounterJourney\EncounterPhaseWindowOverrideCatalogService;
+use common\components\Domain\Clinical\Encounter\Application\EncounterJourney\EncounterPhaseWindowResolver;
+use common\components\Domain\Clinical\Encounter\Application\EncounterJourney\EncounterPhaseWindowService;
+use common\components\Domain\Clinical\Encounter\Application\EncounterJourney\EncounterPhaseWindowsCatalogService;
 
 class EncounterJourneyServiceTest extends Unit
 {
@@ -26,7 +26,7 @@ class EncounterJourneyServiceTest extends Unit
         EncounterPhaseWindowsCatalogService::resetCacheForTests();
         EncounterPhaseEligibilityCatalogService::resetCacheForTests();
         EncounterPhaseWindowOverrideCatalogService::resetCacheForTests();
-        EncounterMotivosIntakeCatalogService::resetCacheForTests();
+        AppointmentReasonChatGuideCatalogService::resetCacheForTests();
     }
 
     public function testMotivosSkipWhenEncounterAsync(): void

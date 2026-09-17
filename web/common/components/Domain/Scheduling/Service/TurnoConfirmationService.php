@@ -7,8 +7,8 @@ use common\models\Scheduling\Turno;
 use common\models\Scheduling\TurnoNotificacionProgramada;
 use common\models\Scheduling\EfectorTurnosConfig;
 use common\models\Scheduling\TurnoEventoAudit;
-use common\components\Domain\Clinical\Encounter\Service\AppointmentReasonWindowService;
-use common\components\Domain\Clinical\Encounter\Service\EncounterJourney\EncounterJourneyNotificationScheduler;
+use common\components\Domain\Clinical\Encounter\Application\AppointmentReasonWindowService;
+use common\components\Domain\Clinical\Encounter\Application\EncounterJourney\EncounterJourneyNotificationScheduler;
 
 class TurnoConfirmationService
 {

@@ -5,6 +5,7 @@ Orquestación delgada expuesta por la API (sin preprocess del chat).
 | Clase | API |
 |-------|-----|
 | `ClinicalEncounterEntry` | `POST /api/v1/clinical/encounter/analizar\|guardar` |
-| `AppointmentReasonEntry` | `POST /api/v1/motivos-consulta/enviar` |
 
-La lógica de negocio vive en `Clinical/Workflow/`, `Clinical/Service/`, etc.
+Chat pre-consulta (AppointmentReason): API `motivos-consulta/*` → `AppointmentReasonController` → `Encounter/Application/AppointmentReasonMessageService` (no Entry en Assistant).
+
+La lógica de negocio vive en `Clinical/Encounter/Application/`, etc.

@@ -63,22 +63,23 @@ La misma palabra de dominio se sigue en models, controllers API, `views/json`, m
 **Clinical (BC grande):** módulo de capacidad primero — [clinical-modulos-capacidad.md](../decisions/clinical-modulos-capacidad.md). Gramática de sufijos: [domain-folder-grammar.md](../decisions/domain-folder-grammar.md).
 
 ```text
-Domain/Clinical/<Modulo>/Application|Domain|Service|Presentation|Infrastructure/…
+Domain/Clinical/<Modulo>/Application|Domain|Infrastructure/…
 ```
 
 **Otros BCs / migración:**
 
 ```text
 Domain/<Dominio>/
-  Application/ | Domain/ | Service/ | Presentation/ | Infrastructure/External/
+  Application/ | Domain/ | Infrastructure/External/
   Assistant/ | Home/ | DataAccess/
 ```
 
 - **ACL externos:** `Domain/<BC>/<Modulo?>/Infrastructure/External/<Sistema>/`.
-- **Sufijos:** `*Service`→`Service/`, `*Catalog`→`Domain/`, `*Presenter`→`Presentation/`, `*FlowDraftHydrator`→`Assistant/`.
+- **Sufijos:** `*Service`→`Application/`, `*Access`→`Application/Authorization/`, `*Catalog`→`Domain/`, `*Presenter`→`Application/Presentation/`, `*Agent*`→`Application/Agents/`, `*FlowDraftHydrator`→`Assistant/`. Sin `Service/` L1.
 - Plugins: `product-registries.php` + clases en `Domain/…`.
 - Detalle: [Domain/README.md](../../common/components/Domain/README.md).
 - ADR DDD: [ddd-bounded-contexts-capas-y-metadata.md](../decisions/ddd-bounded-contexts-capas-y-metadata.md).
+- Gramática: [domain-folder-grammar.md](../decisions/domain-folder-grammar.md).
 
 ## Motores vs metadata vs negocio
 

@@ -5,7 +5,7 @@ namespace common\components\Domain\Clinical\Capture\Text;
 use Yii;
 use common\helpers\TextoMedicoHelper;
 use common\models\Clinical\DiccionarioOrtografico;
-use common\components\Domain\Clinical\Encounter\Legacy\ConsultaLogger;
+use common\components\Domain\Clinical\Encounter\Application\Legacy\ConsultaLogger;
 
 /**
  * Implementación de SymSpell para corrección ortográfica rápida

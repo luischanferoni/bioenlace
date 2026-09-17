@@ -1,64 +1,67 @@
 # Gramática de carpetas y sufijos en Domain/
 
-**Estado:** aceptado.
+**Estado:** aceptado (oleada Clinical Application/Domain/Infrastructure).
 
 ## Contexto
 
-Tras módulo-primero en Clinical y Shared top-level, la forma **dentro** de módulos y BCs seguía heterogénea: PHP en raíz de módulo, `Support/`/`Mapper/`/`Batch/` ad-hoc, Presenter/Hydrator/Catalog fuera de la carpeta del sufijo.
+La gramática previa mezclaba `Service/` (casos de uso) con capas DDD de libro y admitía L1 opcionales (`Dto/`, `Presentation/`) más carpetas ad-hoc (`Legacy/`, `PatientSummary/`, …). Eso producía módulos con carpetas de más y de menos.
+
+Referencia: capas Vernon / eShop (`application` · `domain` · `infrastructure`). En Bioenlace, `Service/` L1 equivale a **Application Services**, no a Domain Services de Evans.
 
 ## Decisión
 
-### Clinical — módulo de capacidad
+### Clinical — módulo de capacidad (esqueleto exacto)
 
 ```text
 Domain/Clinical/<Modulo>/
-  Application/{Flows,Agent}/
-  Domain/                         # *Catalog, enums, policies tipadas
-  Service/                        # *Service, *Access; Authorization/ opcional
-  Dto/                            # opcional
-  Presentation/                   # *Presenter / *PresentationService
-  Infrastructure/External/…       # Connector|Contract|Dto|Exception|Mapper|Registry
+  Application/
+    Authorization/              # *Access
+    Flows/intents/…             # metadata asistente (Bioenlace)
+    Agents/                     # *Agent / *AgentPolicy
+    Presentation/               # *Presenter / *PresentationService (no HTTP Yii)
+    …                           # *Service de caso de uso; Dto/; subáreas
+  Domain/
+    Model/                      # Aggregates (stubs permitidos durante migración)
+    …                           # *Catalog, enums, policies tipadas
+  Infrastructure/
+    External/<Sistema>/…        # Connector|Contract|Dto|Exception|Mapper|Registry
+    Persistence/
+      README.md                 # AR Yii → common/models/Clinical/ (no duplicar)
 ```
 
-Plugins del BC solo en raíz Clinical: `Assistant/`, `Home/`, `DataAccess/`.
+Plugins del BC **solo** en raíz Clinical: `Assistant/`, `Home/`, `DataAccess/`.
 
-**Prohibido:** PHP de negocio en raíz del módulo o del BC; `Support/`; `Mapper/` fuera de `Infrastructure/External/`; `Batch/` en L1 (usar `Infrastructure/` o `Application/Agent`); `Assistant/` bajo un módulo; `Clinical/Infrastructure/` en raíz del BC.
+Controllers API y `views/json`: `frontend/modules/api/v1/…` (borde Presentation del deploy; **fuera** de `components/Domain`).
+
+**Prohibido en L1 del módulo:** `Service/`, `Dto/`, `Presentation/`, `Legacy/`, `Support/`, `Mapper/`, `Batch/`, `PatientSummary/`, `AiContext/`, `Workflow/`, PHP suelto en raíz del módulo o del BC; `Clinical/Infrastructure/` en raíz del BC.
+
+Todo L1 ad-hoc se reubica bajo `Application/`, `Domain/` o `Infrastructure/`.
 
 ### BC chico / mediano
 
-```text
-Domain/<BC>/
-  Application/{Flows,Agent}/
-  Domain/
-  Service/                        # o Service/<Área>/ si crece
-  Presentation/
-  Infrastructure/External/…
-  Assistant/ | Home/ | DataAccess/
-```
-
-Áreas de lenguaje (`Ventanilla`, `Quirofano`, `Representation`) permitidas si tienen capas internas.
+Misma tríada `Application/` · `Domain/` · `Infrastructure/` en la raíz del BC (sin módulo), más plugins `Assistant/` | `Home/` | `DataAccess/` si aplican. Áreas de lenguaje (`Ventanilla`, `Quirofano`, …) con las mismas tres capas internas.
 
 ### Sufijos → carpeta
 
 | Sufijo | Carpeta |
 |--------|---------|
-| `*Service`, `*Access` | `Service/` |
-| `*Catalog` | `Domain/` |
-| `*CatalogService` | `Service/` |
-| `*Agent`, `*AgentPolicy` | `Application/Agent/` |
-| `*Presenter`, `*PresentationService` | `Presentation/` |
-| `*FlowDraftHydrator` | `Assistant/` |
+| `*Service` (caso de uso) | `Application/` |
+| `*Access` | `Application/Authorization/` |
+| `*Catalog`, enums, policies | `Domain/` |
+| `*CatalogService` | `Application/` |
+| `*Agent`, `*AgentPolicy` | `Application/Agents/` |
+| `*Presenter`, `*PresentationService` | `Application/Presentation/` |
+| Aggregate / entity rica | `Domain/Model/…` |
+| `*FlowDraftHydrator` | `Assistant/` (plugin BC) |
 | `*Connector` / `*Mapper` / `*Registry` (ACL) | `Infrastructure/External/…` |
 | `*SectionProvider` | `Home/Sections/` |
+| ActiveRecord Yii | `common/models/<BC>/` (ancla: `Infrastructure/Persistence/README`) |
 
-Lenguaje ubicuo en español en **nombres de clase** (`Turno*`, `Guardia*`, `PedidoAtencion`) se conserva. Carpetas técnicas en inglés.
+Lenguaje ubicuo en español en **nombres de clase** se conserva. Carpetas técnicas en inglés.
 
-### Deferido (oleadas aparte)
+### Migración
 
-- Partir `Scheduling/Service/` (~100 PHP) en `Service/<Área>/` o módulo-primero.
-- Fusionar `Specialty/Inpatient` vs `Inpatient/`.
-- Eliminar o reubicar `Encounter/Legacy/` → `Encounter/Service/Legacy/` cuando se retire el puente legacy.
-- Interfaces de catálogo (`*CatalogInterface`) pueden vivir en `Domain/` en una pasada posterior; hoy varias siguen en `Service/`.
+Plan: `docs/plans/clinical-ddd-folder-grammar/`. Piloto: módulo `Encounter/`. Oleadas siguientes: resto Clinical; `Application/Agent/` → `Agents/` en todos los BCs; aggregates reales.
 
 ## Relacionado
 

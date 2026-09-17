@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\Prescription\Service;
 
 use common\components\Domain\Clinical\Encounter\Domain\RequestStatus;
-use common\components\Domain\Clinical\Encounter\Service\EncounterReasonService;
+use common\components\Domain\Clinical\Encounter\Application\EncounterReasonService;
 use common\components\Domain\Clinical\Prescription\Domain\PrescriptionEventType;
 use common\components\Domain\Clinical\Prescription\Domain\PrescriptionLegalStatus;
 use common\components\Domain\Clinical\Prescription\Infrastructure\External\Mapper\FhirRecetaDigitalBundleMapper;

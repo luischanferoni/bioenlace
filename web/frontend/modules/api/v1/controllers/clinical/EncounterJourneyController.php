@@ -7,8 +7,8 @@ use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
-use common\components\Domain\Clinical\Encounter\Service\EncounterJourney\EncounterJourneyService;
-use common\components\Domain\Clinical\Encounter\Service\EncounterJourney\EncounterMotivosIntakeService;
+use common\components\Domain\Clinical\Encounter\Application\EncounterJourney\EncounterJourneyService;
+use common\components\Domain\Clinical\Encounter\Application\AppointmentReasonChatGuideService;
 use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
 use common\components\Domain\Person\Representation\Service\PersonRepresentationSubjectService;
 use common\models\Clinical\Encounter;
@@ -74,7 +74,7 @@ class EncounterJourneyController extends BaseController
     {
         $req = Yii::$app->request;
         $params = array_merge($req->get(), $req->post());
-        $service = new EncounterMotivosIntakeService();
+        $service = new AppointmentReasonChatGuideService();
 
         try {
             if ($req->isPost) {

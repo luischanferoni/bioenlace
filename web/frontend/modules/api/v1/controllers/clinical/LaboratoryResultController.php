@@ -6,7 +6,7 @@ use common\components\Domain\Clinical\Laboratory\Application\Agent\LaboratoryEnc
 use common\components\Domain\Clinical\Laboratory\Service\LaboratoryEncounterLinkPendingService;
 use common\components\Domain\Clinical\Laboratory\Service\LaboratoryReportPdfService;
 use common\components\Domain\Clinical\Laboratory\Service\LaboratoryResultQueryService;
-use common\components\Domain\Clinical\Encounter\PatientSummary\PatientEncounterSummaryQueryService;
+use common\components\Domain\Clinical\Encounter\Application\PatientSummary\PatientEncounterSummaryQueryService;
 use common\components\Platform\Ui\UiScreenService;
 use common\models\Clinical\DiagnosticReport;
 use common\models\Person\Persona;

@@ -2,7 +2,7 @@
 
 namespace common\models\Scheduling;
 
-use common\components\Domain\Clinical\Encounter\Presentation\PatientHistoriaUrl;
+use common\components\Domain\Clinical\Encounter\Application\Presentation\PatientHistoriaUrl;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\ConsultaAtencionesEnfermeria;
 use common\models\Organization\Efector;

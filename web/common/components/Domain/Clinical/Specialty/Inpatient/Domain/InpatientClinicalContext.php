@@ -6,7 +6,7 @@ use common\components\Domain\Clinical\CarePlan\Domain\CarePlanCategory;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanStatus;
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Domain\Clinical\CarePlan\Service\CarePlanLifecycleService;
-use common\components\Domain\Clinical\Encounter\Service\EpisodeOfCareService;
+use common\components\Domain\Clinical\Encounter\Application\EpisodeOfCareService;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EpisodeOfCare;

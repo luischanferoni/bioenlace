@@ -18,7 +18,7 @@ class EncounterCaptureBackfillMotivosTest extends Unit
             ],
         ];
         $categorias = [
-            ['titulo' => 'Motivos de consulta', 'modelo' => 'ConsultaMotivos'],
+            ['titulo' => 'Motivos de consulta', 'modelo' => 'EncounterReason'],
             ['titulo' => 'Diagnóstico', 'modelo' => 'DiagnosticoConsulta'],
         ];
 
@@ -38,7 +38,7 @@ class EncounterCaptureBackfillMotivosTest extends Unit
             ],
         ];
         $categorias = [
-            ['titulo' => 'Motivos de consulta', 'modelo' => 'ConsultaMotivos'],
+            ['titulo' => 'Motivos de consulta', 'modelo' => 'EncounterReason'],
         ];
 
         $out = $processor->apply($resultado, $categorias, $text);

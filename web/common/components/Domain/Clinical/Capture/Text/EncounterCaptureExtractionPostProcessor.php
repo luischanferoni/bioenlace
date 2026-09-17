@@ -73,7 +73,7 @@ final class EncounterCaptureExtractionPostProcessor
             return $resultadoIA;
         }
 
-        $motivoModel = EncounterCaptureExtractionPostProcessPolicy::motivoModel();
+        $motivoModel = EncounterCaptureExtractionPostProcessPolicy::reasonModel();
 
         $motivoTitle = null;
         foreach ($categorias as $categoria) {
@@ -171,9 +171,9 @@ final class EncounterCaptureExtractionPostProcessor
             return $extraidos;
         }
 
-        $strictModels = $config['strict_category_models'] ?? $config['category_models'] ?? ['ConsultaMotivos'];
+        $strictModels = $config['strict_category_models'] ?? $config['category_models'] ?? [EncounterCaptureExtractionPostProcessPolicy::REASON_MODEL];
         if (!is_array($strictModels)) {
-            $strictModels = ['ConsultaMotivos'];
+            $strictModels = [EncounterCaptureExtractionPostProcessPolicy::REASON_MODEL];
         }
 
         $terminologyGuardModels = $config['terminology_guard_category_models'] ?? ['DiagnosticoConsulta'];
@@ -229,7 +229,7 @@ final class EncounterCaptureExtractionPostProcessor
             return $resultadoIA;
         }
 
-        $motivoModel = (string) ($config['motivo_model'] ?? 'ConsultaMotivos');
+        $motivoModel = (string) ($config['reason_model'] ?? EncounterCaptureExtractionPostProcessPolicy::REASON_MODEL);
         $diagnosisModels = $config['diagnosis_models'] ?? ['DiagnosticoConsulta'];
         if (!is_array($diagnosisModels)) {
             $diagnosisModels = ['DiagnosticoConsulta'];

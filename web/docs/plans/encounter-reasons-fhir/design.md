@@ -23,7 +23,7 @@ Listados de “diagnósticos” deben excluir `CC`. Listados de “motivos” so
 
 ## Captura
 
-Categoría `ConsultaMotivos` → `MotivoInput` (texto requerido; código opcional) → `replaceFromTexts` / filas tipadas.
+Categoría `EncounterReason` → `EncounterReasonInput` (texto requerido; código opcional) → `replaceFromTexts` / filas tipadas.
 
 ## Batch paciente
 

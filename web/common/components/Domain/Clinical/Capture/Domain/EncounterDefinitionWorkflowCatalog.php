@@ -25,7 +25,7 @@ final class EncounterDefinitionWorkflowCatalog
     {
         return [
             self::TEMPLATE_AMB_STANDARD => [
-                self::step('Motivos de consulta', 'ConsultaMotivos', false),
+                self::step('Motivos de consulta', 'EncounterReason', false),
                 self::step('Diagnóstico', 'DiagnosticoConsulta', false),
                 self::step('Medicación', 'ConsultaMedicamentos', false),
                 self::step('Prácticas realizadas', 'ConsultaPracticas', false),
@@ -33,7 +33,7 @@ final class EncounterDefinitionWorkflowCatalog
                 self::step('Derivaciones', 'ConsultaDerivaciones', false),
             ],
             self::TEMPLATE_AMB_OPHTHALMOLOGY => [
-                self::step('Motivos de consulta', 'ConsultaMotivos', false),
+                self::step('Motivos de consulta', 'EncounterReason', false),
                 self::step('Diagnóstico', 'DiagnosticoConsulta', false),
                 self::step('Medicación', 'ConsultaMedicamentos', false),
                 self::step('Prácticas oftalmológicas', 'ConsultaPracticasOftalmologia', false),
@@ -41,7 +41,7 @@ final class EncounterDefinitionWorkflowCatalog
                 self::step('Receta de lentes', 'ConsultasRecetaLentes', false),
             ],
             self::TEMPLATE_AMB_ODONTOLOGY => [
-                self::step('Motivos de consulta', 'ConsultaMotivos', false),
+                self::step('Motivos de consulta', 'EncounterReason', false),
                 self::step('Diagnóstico', 'DiagnosticoConsulta', false),
                 self::step('Prácticas odontológicas', 'ConsultaOdontologiaPracticas', false),
                 self::step('Diagnósticos odontológicos', 'ConsultaOdontologiaDiagnosticos', false),
@@ -49,7 +49,7 @@ final class EncounterDefinitionWorkflowCatalog
                 self::step('Medicación', 'ConsultaMedicamentos', false),
             ],
             self::TEMPLATE_EMER_STANDARD => [
-                self::step('Motivos de consulta', 'ConsultaMotivos', false),
+                self::step('Motivos de consulta', 'EncounterReason', false),
                 self::step('Signos vitales', 'ConsultaAtencionesEnfermeria', false),
                 self::step('Diagnóstico', 'DiagnosticoConsulta', false),
                 self::step('Medicación', 'ConsultaMedicamentos', false),
@@ -65,13 +65,13 @@ final class EncounterDefinitionWorkflowCatalog
                 self::step('Balance hídrico', 'ConsultaBalanceHidrico', false),
             ],
             self::TEMPLATE_AMB_NURSING => [
-                self::step('Motivos de consulta', 'ConsultaMotivos', false),
+                self::step('Motivos de consulta', 'EncounterReason', false),
                 self::step('Signos vitales', 'ConsultaAtencionesEnfermeria', false),
                 self::step('Medicación', 'ConsultaMedicamentos', false),
                 self::step('Indicaciones', 'ConsultaIndicaciones', false),
             ],
             self::TEMPLATE_EMER_NURSING => [
-                self::step('Motivos de consulta', 'ConsultaMotivos', false),
+                self::step('Motivos de consulta', 'EncounterReason', false),
                 self::step('Signos vitales', 'ConsultaAtencionesEnfermeria', false),
                 self::step('Medicación', 'ConsultaMedicamentos', false),
                 self::step('Indicaciones', 'ConsultaIndicaciones', false),

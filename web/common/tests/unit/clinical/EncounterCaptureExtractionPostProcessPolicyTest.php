@@ -17,14 +17,14 @@ class EncounterCaptureExtractionPostProcessPolicyTest extends Unit
     {
         $filter = EncounterCaptureExtractionPostProcessPolicy::filterConfig();
         $this->assertTrue($filter['enabled']);
-        $this->assertContains('ConsultaMotivos', $filter['strict_category_models']);
+        $this->assertContains('EncounterReason', $filter['strict_category_models']);
 
         $backfill = EncounterCaptureExtractionPostProcessPolicy::backfillConfig();
         $this->assertTrue($backfill['enabled']);
         $this->assertSame(140, $backfill['max_chars']);
         $this->assertNotEmpty($backfill['split_before_patterns']);
 
-        $this->assertSame('ConsultaMotivos', EncounterCaptureExtractionPostProcessPolicy::motivoModel());
+        $this->assertSame('EncounterReason', EncounterCaptureExtractionPostProcessPolicy::reasonModel());
     }
 
     public function testDefaultLexiconMatchesWithoutRelyingOnYamlAlone(): void

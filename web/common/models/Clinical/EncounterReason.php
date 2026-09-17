@@ -2,30 +2,30 @@
 
 namespace common\models\Clinical;
 
-use common\models\Clinical\Input\MotivoInput;
+use common\models\Clinical\Input\EncounterReasonInput;
 
 /**
- * Tipología de captura — motivos de consulta (categoría `ConsultaMotivos`).
+ * Tipología de captura — Encounter.reason / chief complaint (categoría `EncounterReason`).
  * Persistencia: {@see \common\components\Domain\Clinical\Encounter\Service\EncounterReasonService}
- * → Condition con rol CC. Sin columna `reason_text`.
+ * → Condition con rol CC.
  */
-final class ConsultaMotivos extends \yii\base\Model
+final class EncounterReason extends \yii\base\Model
 {
     /**
      * @return list<string>
      */
     public function requeridosPrompt(): array
     {
-        return MotivoInput::promptFieldNames();
+        return EncounterReasonInput::promptFieldNames();
     }
 
     /**
      * @param array<string, mixed>|string $row
-     * @return array{missing_fields: list<string>, label: string, input: MotivoInput}
+     * @return array{missing_fields: list<string>, label: string, input: EncounterReasonInput}
      */
     public static function completenessForExtractedRow($row): array
     {
-        $input = MotivoInput::fromExtractedRow($row);
+        $input = EncounterReasonInput::fromExtractedRow($row);
 
         return [
             'missing_fields' => $input->missingFieldsForCompleteness(),
@@ -40,6 +40,6 @@ final class ConsultaMotivos extends \yii\base\Model
      */
     public static function applyResolutionToRow(array $row, string $field, mixed $value): array
     {
-        return MotivoInput::applyResolutionToRow($row, $field, $value);
+        return EncounterReasonInput::applyResolutionToRow($row, $field, $value);
     }
 }

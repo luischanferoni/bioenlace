@@ -37,7 +37,7 @@ class ClinicalTextIaMetadataTest extends Unit
     public function testEncounterCapturePromptUsesDynamicCategorySemantics(): void
     {
         $categorias = [
-            ['titulo' => 'Motivos de consulta', 'modelo' => 'ConsultaMotivos'],
+            ['titulo' => 'Motivos de consulta', 'modelo' => 'EncounterReason'],
             ['titulo' => 'Diagnóstico', 'modelo' => 'DiagnosticoConsulta'],
         ];
 

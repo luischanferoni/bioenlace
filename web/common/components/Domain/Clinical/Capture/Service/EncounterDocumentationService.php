@@ -1205,9 +1205,9 @@ class EncounterDocumentationService extends Component
             // Allow-list = categorías resueltas (definición + overlay actor/CarePlan).
 
             switch ($modelo) {
-                case 'ConsultaMotivos':
-                    $this->persistMotivos($encounter, $payload);
-                    $stat['accion'] = 'motivos';
+                case 'EncounterReason':
+                    $this->persistReasons($encounter, $payload);
+                    $stat['accion'] = 'reasons';
                     $stat['detalle'] = 'reasons=' . mb_substr(
                         (new EncounterReasonService())->displayText($encounter),
                         0,
@@ -1373,7 +1373,7 @@ class EncounterDocumentationService extends Component
     /**
      * @param mixed $payload
      */
-    private function persistMotivos(Encounter $encounter, $payload): void
+    private function persistReasons(Encounter $encounter, $payload): void
     {
         if (!is_array($payload)) {
             return;

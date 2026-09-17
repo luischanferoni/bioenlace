@@ -127,7 +127,7 @@ encounter_capture_extraction:
     - Un término aislado que nombra una enfermedad o condición médica va en diagnóstico, no en motivos de consulta.
     - Si el texto narra un síntoma o queja (dolor, cefalea, tos, etc.) y además un diagnóstico, el síntoma va en Motivos y el diagnóstico en Diagnóstico (no omitas el Motivo).
   category_hints:
-    ConsultaMotivos: queja o síntoma referido (cefalea, dolor, malestar, etc.); no lo dejes vacío si el texto lo menciona
+    EncounterReason: queja o síntoma referido (cefalea, dolor, malestar, etc.); no lo dejes vacío si el texto lo menciona
     DiagnosticoConsulta: diagnóstico, evolución o enfermedad nombrada por el profesional
     ConsultaMedicamentos: medicación mencionada o indicada; objetos Nombre+Tipo(mentioned|ordered)+Cantidad+Via+Frecuencia+tipos/duración — si Tipo=ordered exigir Cantidad y Frecuencia; mentioned basta el nombre
     ConsultaPracticas: mediciones o prácticas realizadas en la consulta (ECG, etc.); objetos Practica+Resultado+Codigo — Resultado y Codigo opcionales; nunca reposo/dieta/control; las cifras de signos vitales (TA, FC, FR, SatO2, temp) van en ConsultaAtencionesEnfermeria
@@ -145,13 +145,13 @@ encounter_capture_extraction:
   # Overrides de política de post-proceso (defaults en EncounterCaptureExtractionPostProcessPolicy).
   # No es fuente de verdad de integridad clínica: solo knobs operativos.
   post_process:
-    motivo_model: ConsultaMotivos
+    reason_model: EncounterReason
     diagnosis_models:
       - DiagnosticoConsulta
     filter_non_clinical_extractions:
       enabled: true
       strict_category_models:
-        - ConsultaMotivos
+        - EncounterReason
       terminology_guard_category_models: []
       retain_if_lexicon_keys:
         - narrative_framing

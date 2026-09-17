@@ -5,9 +5,9 @@ namespace common\models\Clinical\Input;
 use yii\base\Model;
 
 /**
- * Motivo de consulta en captura (→ Condition rol CC).
+ * Encounter.reason (chief complaint) en captura → Condition rol CC.
  */
-final class MotivoInput extends Model
+final class EncounterReasonInput extends Model
 {
     public const FIELD_MOTIVO = 'Motivo';
     public const FIELD_CODIGO = 'Codigo';

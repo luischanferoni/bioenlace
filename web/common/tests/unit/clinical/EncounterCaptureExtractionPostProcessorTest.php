@@ -10,7 +10,7 @@ use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
 class EncounterCaptureExtractionPostProcessorTest extends Unit
 {
     private const CATEGORIAS_AMB = [
-        ['titulo' => 'Motivos de consulta', 'modelo' => 'ConsultaMotivos', 'requerido' => false],
+        ['titulo' => 'Motivos de consulta', 'modelo' => 'EncounterReason', 'requerido' => false],
         ['titulo' => 'Diagnóstico', 'modelo' => 'DiagnosticoConsulta', 'requerido' => false],
     ];
 
@@ -178,7 +178,7 @@ class EncounterCaptureExtractionPostProcessorTest extends Unit
         $validator = $this->validatorMock(true, true, false);
         $processor = new EncounterCaptureExtractionPostProcessor($validator);
         $categorias = [
-            ['titulo' => 'Motivos de consulta', 'modelo' => 'ConsultaMotivos', 'requerido' => false],
+            ['titulo' => 'Motivos de consulta', 'modelo' => 'EncounterReason', 'requerido' => false],
             ['titulo' => 'Derivaciones', 'modelo' => 'ConsultaDerivaciones', 'requerido' => false],
         ];
         $input = [

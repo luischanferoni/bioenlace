@@ -12,7 +12,7 @@ use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
  */
 final class EncounterCaptureExtractionPostProcessPolicy
 {
-    public const MOTIVO_MODEL = 'ConsultaMotivos';
+    public const REASON_MODEL = 'EncounterReason';
 
     /** @var list<string> */
     public const DIAGNOSIS_MODELS = ['DiagnosticoConsulta'];
@@ -67,7 +67,7 @@ final class EncounterCaptureExtractionPostProcessPolicy
 
         $defaults = [
             'enabled' => true,
-            'strict_category_models' => [self::MOTIVO_MODEL],
+            'strict_category_models' => [self::REASON_MODEL],
             'terminology_guard_category_models' => [],
             'retain_if_lexicon_keys' => ['narrative_framing', 'subjective_complaint'],
             'validate_terminology' => false,
@@ -116,7 +116,7 @@ final class EncounterCaptureExtractionPostProcessPolicy
         $yaml = ClinicalTextIaMetadata::rawEncounterCapturePostProcess();
         $defaults = [
             'enabled' => false,
-            'motivo_model' => (string) ($yaml['motivo_model'] ?? self::MOTIVO_MODEL),
+            'reason_model' => (string) ($yaml['reason_model'] ?? self::REASON_MODEL),
             'diagnosis_models' => $yaml['diagnosis_models'] ?? self::DIAGNOSIS_MODELS,
             'max_words' => 5,
         ];
@@ -130,12 +130,12 @@ final class EncounterCaptureExtractionPostProcessPolicy
         return self::$relocateCache = array_merge($defaults, $relocate);
     }
 
-    public static function motivoModel(): string
+    public static function reasonModel(): string
     {
         $yaml = ClinicalTextIaMetadata::rawEncounterCapturePostProcess();
-        $fromYaml = trim((string) ($yaml['motivo_model'] ?? ''));
+        $fromYaml = trim((string) ($yaml['reason_model'] ?? ''));
 
-        return $fromYaml !== '' ? $fromYaml : self::MOTIVO_MODEL;
+        return $fromYaml !== '' ? $fromYaml : self::REASON_MODEL;
     }
 
     /**

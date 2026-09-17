@@ -17,3 +17,4 @@
 - Diagnósticos y motivos se listan por separado (rol).
 - Export FHIR emite `reasonCode`/`reasonReference` y Conditions CC en el Bundle.
 - Sin capa de compatibilidad: lectores/escritores usan solo el servicio de motivos.
+- Categoría de captura / tipología PHP: `EncounterReason` (antes `ConsultaMotivos`).

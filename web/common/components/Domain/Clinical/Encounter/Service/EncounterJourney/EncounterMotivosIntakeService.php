@@ -28,11 +28,6 @@ final class EncounterMotivosIntakeService
         return false;
     }
 
-    public function isCompleted(Encounter $encounter): bool
-    {
-        return trim((string) ($encounter->motivos_intake_json ?? '')) !== '';
-    }
-
     /**
      * @param array<string, mixed> $params
      * @return array<string, mixed>

@@ -5,7 +5,6 @@ namespace common\components\Domain\Clinical\Encounter\Service;
 use common\components\Domain\Clinical\CareCohort\Service\CarePackConfig;
 use common\components\Domain\Clinical\CareCohort\Service\CarePackEncounterStaffService;
 use common\components\Domain\Clinical\Encounter\Presentation\EncounterStaffDocumentationViewService;
-use common\components\Domain\Clinical\Encounter\Service\EncounterJourney\EncounterMotivosIntakeStaffViewService;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\ConsultaMotivosMessage;
 use common\models\Person\Persona;
@@ -150,8 +149,6 @@ final class StaffEncounterConsultaViewService
             $mensajes,
             $encounterId
         );
-        $motivosIntake = (new EncounterMotivosIntakeStaffViewService())->buildForEncounter($encounter);
-        $intakeUtil = is_array($motivosIntake) && $this->intakeTieneContenido($motivosIntake);
         $resumen = $reason !== '' ? $reason : null;
         $resumenYaEnDoc = $resumen !== null && $this->textoYaEnDocumentacion($resumen, $documentacion);
 
@@ -159,7 +156,7 @@ final class StaffEncounterConsultaViewService
             $resumen = null;
         }
 
-        if ($resumen === null && $imagenesAdjuntas === [] && !$intakeUtil) {
+        if ($resumen === null && $imagenesAdjuntas === []) {
             return null;
         }
 
@@ -169,9 +166,6 @@ final class StaffEncounterConsultaViewService
         }
         if ($imagenesAdjuntas !== []) {
             $out['imagenes_adjuntas'] = $imagenesAdjuntas;
-        }
-        if ($intakeUtil) {
-            $out['motivos_intake'] = $motivosIntake;
         }
 
         return $out;
@@ -195,20 +189,6 @@ final class StaffEncounterConsultaViewService
         }
 
         return false;
-    }
-
-    /**
-     * @param array<string, mixed> $intake
-     */
-    private function intakeTieneContenido(array $intake): bool
-    {
-        foreach (['respuestas', 'answers', 'items', 'preguntas'] as $key) {
-            if (!empty($intake[$key]) && is_array($intake[$key])) {
-                return true;
-            }
-        }
-
-        return !empty($intake['tiene_contenido']) || !empty($intake['tieneContenido']);
     }
 
     /**

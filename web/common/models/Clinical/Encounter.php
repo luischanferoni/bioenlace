@@ -25,9 +25,8 @@ use yii\db\ActiveRecord;
  * @property string|null $parent_type
  * @property int|null $parent_id
  * @property int|null $workflow_step
- * @property string|null $motivos_intake_json
  * @property string|null $motivos_ia_processed_at
- * @property string|null $motivos_ia_insights_json
+ * @property string|null $ia_clinical_suggestions
  * @property string|null $note
  */
 class Encounter extends ActiveRecord
@@ -92,7 +91,7 @@ class Encounter extends ActiveRecord
             [['status'], 'string', 'max' => 32],
             [['parent_type'], 'string', 'max' => 128],
             [['period_start', 'period_end', 'created_at', 'updated_at', 'deleted_at', 'motivos_ia_processed_at'], 'safe'],
-            [['note', 'motivos_ia_insights_json', 'motivos_intake_json'], 'string'],
+            [['note', 'ia_clinical_suggestions'], 'string'],
         ];
     }
 

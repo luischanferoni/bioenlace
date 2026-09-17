@@ -144,11 +144,6 @@ $tlConfigAttr = Json::htmlEncode($page['jsConfig']);
                         </div>
                         <?php endif; ?>
 
-                        <div class="mb-3 pb-2 border-bottom border-2" id="tl_motivos_intake_section" style="display:none;">
-                            <h6 class="mb-2 text-primary"><b>PREGUNTAS PREVIAS AL CHAT DE MOTIVOS</b></h6>
-                            <div id="tl_motivos_intake" class="text-body"></div>
-                        </div>
-
                         <?php if ($mostrarMotivosAmbulatorios): ?>
                         <div class="mb-3 pb-2 border-bottom border-2" id="tl_motivos_ambulatorio_wrap">
                             <h6 class="mb-2 text-primary"><b>MOTIVOS DE ESTA CONSULTA</b></h6>

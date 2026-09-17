@@ -26,8 +26,8 @@ Este documento cubre sobre todo la **IA generativa** y enlaza STT donde comparte
 | `asistente-guide` | Paciente (chat) | 2ª IA: charla, incompletas (HIS), artículos | Cuando guide / incompletas | `GuideChannel`, `InfoContentAssistantService` |
 | `asistente-planner` | Sistema (incompletas) | Elige tools del shortlist si `needs_planner` | Raro | `PlannerRoutingStep` |
 | `intent-engine-classification` | Paciente o staff | Elegir intent del catálogo cuando las reglas no alcanzan confianza | Ocasional (fallback del motor de intents) | `IntentClassifier` → `IntentEngine` |
-| `motivos-consulta-batch` | Sistema (cron/lote) | Resumir el hilo de motivos en `encounter.reason_text` | **1× por consulta** al cerrar ventana de motivos | `AppointmentReasonBatchService` |
-| `motivos-consulta-insights` | Sistema (tras el lote) | Sugerencias orientativas: hipótesis diagnósticas y prácticas (máx. 5 c/u) | **1× por consulta** si hay resumen de motivos | `AppointmentReasonClinicalInsightsService` |
+| `motivos-consulta-batch` | Sistema (cron/lote) | Resumir el hilo de motivos como Condition rol CC | **1× por consulta** al cerrar ventana de motivos | `AppointmentReasonBatchService` |
+| `motivos-consulta-insights` | Sistema (tras el lote) | Sugerencias orientativas en `encounter.ia_clinical_suggestions` | **1× por consulta** si hay resumen de motivos | `AppointmentReasonClinicalInsightsService` |
 | `care-pack-assistance-batch` | Sistema (cola sync) | Pack JSON de preguntas pre-consulta por cohorte | **1× por cohort_key** cuando falta pack vigente | `CarePackGenerationService` |
 | `care-pack-followup-batch` | Sistema (cola sync) | Calendario touchpoints + formularios post-consulta | **1× por cohort_key** | `CarePackGenerationService` |
 | `care-pack-education-batch` | Sistema (cola sync) | Módulos educativos reutilizables | **1× por cohort_key** | `CarePackGenerationService` |
@@ -75,7 +75,7 @@ Detalle de producto: [asistente-y-chat.md](./asistente-y-chat.md) · Motor: [arq
 
 | Paso | Tecnología | Contexto / notas |
 |------|------------|------------------|
-| Preguntas previas al chat (`motivos_intake`) | **Sin IA** | Formulario YAML (`motivos_consulta_intake.yaml`); persiste en `motivos_intake_json`; staff ve respuestas en historia clínica |
+| Guía del chat de motivos (`motivos_consulta_intake.yaml`) | **Sin IA** | Metadata de orientación al chat; no persiste respuestas en encounter |
 | Mensajes del paciente (texto) | Sin IA por mensaje | El chat de motivos no resume en cada nota |
 | Audio en el hilo | STT en servidor (lote) o **futuro** STT en dispositivo | `SpeechToTextManager` en batch; ver [stt.md](../costos/estrategias-reduccion/stt.md) |
 | Cierre de ventana → resumen | IA | `motivos-consulta-batch` + `PatientAiContextBuilder` (perfil `motivos`) |
@@ -132,7 +132,7 @@ Operación y cron: [asistencia-cohortes.md](./asistencia-cohortes.md).
 - Pasos de **flujos guiados** del asistente (`SubIntentEngine`) salvo preprocess al reingresar texto.
 - **Match operativo** de intents por keywords (`classifyAmongItems`).
 - Validaciones de negocio, RBAC, persistencia FHIR.
-- **Intake previo a motivos** (`motivos_consulta_intake.yaml`, `encounter.motivos_intake_json`).
+- Guía de motivos (`motivos_consulta_intake.yaml`) — metadata del chat; sin persistencia en encounter.
 - Gran parte de **corrección ortográfica** previa al análisis de consulta (diccionario local).
 
 ---

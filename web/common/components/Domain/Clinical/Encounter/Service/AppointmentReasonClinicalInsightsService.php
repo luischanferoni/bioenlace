@@ -26,7 +26,7 @@ final class AppointmentReasonClinicalInsightsService
             return null;
         }
 
-        $existing = self::decodeInsights($encounter->motivos_ia_insights_json ?? null);
+        $existing = self::decodeInsights($encounter->ia_clinical_suggestions ?? null);
         if ($existing !== null) {
             return $existing;
         }
@@ -36,8 +36,8 @@ final class AppointmentReasonClinicalInsightsService
             return null;
         }
 
-        $encounter->motivos_ia_insights_json = json_encode($insights, JSON_UNESCAPED_UNICODE);
-        $encounter->save(false, ['motivos_ia_insights_json']);
+        $encounter->ia_clinical_suggestions = json_encode($insights, JSON_UNESCAPED_UNICODE);
+        $encounter->save(false, ['ia_clinical_suggestions']);
 
         return $insights;
     }

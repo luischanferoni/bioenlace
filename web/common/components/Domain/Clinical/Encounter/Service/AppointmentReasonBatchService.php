@@ -61,8 +61,8 @@ final class AppointmentReasonBatchService
         $summary = trim($summary);
         $reasonSvc->replaceReasons($encounter, [$summary]);
         $encounter->motivos_ia_processed_at = date('Y-m-d H:i:s');
-        $encounter->motivos_ia_insights_json = null;
-        if (!$encounter->save(false, ['motivos_ia_processed_at', 'motivos_ia_insights_json'])) {
+        $encounter->ia_clinical_suggestions = null;
+        if (!$encounter->save(false, ['motivos_ia_processed_at', 'ia_clinical_suggestions'])) {
             return ['ok' => false, 'message' => 'No se pudo marcar el procesamiento IA del encounter'];
         }
 
@@ -106,7 +106,7 @@ final class AppointmentReasonBatchService
             return;
         }
 
-        if ($stored !== '' && empty($encounter->motivos_ia_insights_json)) {
+        if ($stored !== '' && empty($encounter->ia_clinical_suggestions)) {
             AppointmentReasonClinicalInsightsService::generateAndPersist(
                 (int) $encounter->id,
                 $stored

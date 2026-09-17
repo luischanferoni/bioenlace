@@ -64,26 +64,6 @@
     <li data-field="text"></li>
 </template>
 
-<template id="tpl-tl-intake-root">
-    <div>
-        <div class="small text-muted mb-2 d-none" data-slot="title" data-field="title"></div>
-        <div class="d-none" data-slot="notes-wrap">
-            <div class="small text-uppercase text-muted">Orientación</div>
-            <p class="mb-2 text-break" style="white-space:pre-wrap" data-field="notes"></p>
-        </div>
-        <p class="text-muted mb-0 d-none" data-slot="empty-answers">El paciente aún no completó las preguntas previas.</p>
-        <div class="d-none" data-slot="answers-wrap">
-            <div class="small text-uppercase text-muted">Respuestas del paciente</div>
-            <dl class="mb-0 mt-2" data-slot="answers"></dl>
-        </div>
-    </div>
-</template>
-
-<template id="tpl-tl-intake-answer">
-    <dt class="fw-semibold" data-field="question"></dt>
-    <dd class="mb-2 text-break" style="white-space:pre-wrap" data-field="answer"></dd>
-</template>
-
 <template id="tpl-tl-care-pack-root">
     <div>
         <div class="small text-muted mb-2 d-none" data-slot="cohort" data-field="cohort"></div>

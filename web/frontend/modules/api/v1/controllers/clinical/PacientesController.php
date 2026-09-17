@@ -11,7 +11,6 @@ use common\components\Domain\Clinical\Encounter\Service\AppointmentReasonBatchSe
 use common\components\Domain\Clinical\Encounter\Service\AppointmentReasonClinicalInsightsService;
 use common\components\Domain\Clinical\Encounter\Service\AppointmentReasonWindowService;
 use common\components\Domain\Clinical\Encounter\Service\EncounterAppointmentReasonLookupService;
-use common\components\Domain\Clinical\Encounter\Service\EncounterJourney\EncounterMotivosIntakeStaffViewService;
 use common\components\Domain\Clinical\Encounter\Service\EncounterReasonService;
 use common\components\Domain\Clinical\Home\StaffClinicalDayListService;
 use common\models\Clinical\Encounter;
@@ -432,14 +431,13 @@ class PacientesController extends BaseController
             ->all();
 
         $insights = AppointmentReasonClinicalInsightsService::decodeInsights(
-            $encounter->motivos_ia_insights_json ?? null
+            $encounter->ia_clinical_suggestions ?? null
         );
         $imagenesAdjuntas = AppointmentReasonBatchService::imagenesAdjuntasFromMessages(
             $mensajes,
             $encounterId
         );
         $resumen = $reason !== '' ? $reason : null;
-        $motivosIntake = (new EncounterMotivosIntakeStaffViewService())->buildForEncounter($encounter);
 
         $motivosPaciente = [
             'encounter_id' => $encounterId,
@@ -454,7 +452,6 @@ class PacientesController extends BaseController
             'resumen_ia_pendiente' => $mensajes !== [] && $resumen === null,
             'imagenes_adjuntas' => $imagenesAdjuntas,
             'sugerencias_clinicas' => $insights,
-            'motivos_intake' => $motivosIntake,
             'messages' => [],
         ];
 

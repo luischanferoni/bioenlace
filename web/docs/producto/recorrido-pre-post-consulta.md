@@ -35,41 +35,21 @@ Offsets en `encounter_phase_windows.yaml` (`param:encounter_journey_preparar_min
 
 **Overrides por efector/servicio** (`encounter_phase_window_overrides.yaml`): reglas con `match.id_efector` y/o `match.id_servicio`; gana la regla más específica (más claves en `match`).
 
-## Preguntas previas al chat de motivos
+## Guía del chat de motivos
 
-Catálogo `motivos_consulta_intake.yaml` (`enabled: true/false`). API paciente `GET|POST /api/v1/encounter-journey/motivos-intake`. Respuestas en `encounter.motivos_intake_json`. El chat de motivos queda bloqueado hasta completar el intake si está habilitado (`EncounterMotivosIntakeService::blocksMotivosChat`).
+Catálogo `motivos_consulta_intake.yaml` (`enabled: true/false`). API paciente `GET /api/v1/encounter-journey/motivos-intake` entrega la guía declarativa del chat (`chat_guide`). No persiste respuestas en el encounter: el motivo clínico canónico sale del chat → Condition rol CC.
 
-**Sin IA:** formulario declarativo (select/texto); no hay inferencia por respuesta. Ver [catalogo-usos-ia.md](./catalogo-usos-ia.md) §2.
+**Sin IA en la guía:** textos declarativos. Ver [catalogo-usos-ia.md](./catalogo-usos-ia.md) §2.
 
 ### Vista staff (historia clínica)
 
-El equipo ve las respuestas **antes del resumen del chat**, en el mismo bloque de motivos del turno:
+El equipo ve el **resumen de motivos** (Condition CC) y sugerencias clínicas (`ia_clinical_suggestions`) en el bloque de motivos del turno. No hay sección de “preguntas previas” persistidas.
 
-| Superficie | Ubicación |
-|------------|-----------|
-| Web | Timeline paciente — sección «Preguntas previas al chat de motivos» (`paciente/timeline`) |
-| App Personal de Salud | Tarjeta «Preguntas previas al chat» en `patient_timeline_screen` |
+**API:** `GET /api/v1/personas/{id}/historia-clinica?turno_id=` (o `encounter_id=`) incluye `motivos_consulta_paciente` con `resumen`, `sugerencias_clinicas`, `imagenes_adjuntas`, etc.
 
-**API:** `GET /api/v1/personas/{id}/historia-clinica?turno_id=` (o `encounter_id=`) incluye en `motivos_consulta_paciente.motivos_intake`:
+**Orden en timeline (staff):** resumen motivos (chat → Condition CC) → asistencia pre-consulta cohorte (`care_pack_cohorte`) → signos vitales y captura.
 
-```json
-{
-  "status": "submitted",
-  "title": "Antes de contarnos tus motivos",
-  "notes_for_staff": "",
-  "answers": [
-    { "id": "motivo_principal", "question": "¿Cuál es el principal motivo…?", "answer": "Control o chequeo" }
-  ]
-}
-```
-
-- `status`: `pending` (intake habilitado, paciente aún no completó) o `submitted`.
-- Las etiquetas de opciones (`control` → «Control o chequeo») las resuelve dominio: `EncounterMotivosIntakeStaffViewService` + catálogo YAML (no en clientes).
-- Si el catálogo está deshabilitado pero el encounter tiene JSON histórico, igual se muestran las respuestas guardadas.
-
-**Orden en timeline (staff):** intake previo → resumen motivos (chat/IA) → asistencia pre-consulta cohorte (`care_pack_cohorte`) → signos vitales y captura.
-
-**Ventana médico:** la historia clínica (incluido intake) sigue la regla de `AppointmentReasonWindowService::isHistoriaClinicaVisibleForEncounter` (p. ej. 1 min antes del turno en ambulatorio).
+**Ventana médico:** la historia clínica sigue la regla de `AppointmentReasonWindowService::isHistoriaClinicaVisibleForEncounter` (p. ej. 1 min antes del turno en ambulatorio).
 
 ## Elegibilidad (ejemplos)
 
@@ -84,12 +64,12 @@ Reglas en `encounter_phase_eligibility.yaml`; evaluación en `EncounterJourneyEl
 ### Paciente (app móvil)
 
 - `GET|POST /api/v1/encounter-journey/estado?turno_id=` — estado completo + flags legacy.
-- `GET|POST /api/v1/encounter-journey/motivos-intake?turno_id=` — formulario previo al chat.
+- `GET /api/v1/encounter-journey/motivos-intake?turno_id=` — guía declarativa del chat de motivos (`chat_guide`).
 - El listado `turnos/listar-como-paciente` incluye `journey` en cada fila.
 
 ### Staff (historia clínica)
 
-- `GET /api/v1/personas/{id}/historia-clinica?turno_id=` — resumen clínico del turno; `motivos_consulta_paciente.motivos_intake` + `care_pack_cohorte` cuando aplica.
+- `GET /api/v1/personas/{id}/historia-clinica?turno_id=` — resumen clínico del turno; `motivos_consulta_paciente` + `care_pack_cohorte` cuando aplica.
 - Sin `turno_id` / `encounter_id`: motivos del turno con mensajes más reciente en el efector (comportamiento legacy del endpoint).
 
 RBAC journey paciente: hereda de `listar-como-paciente` (migración `m260703_120000_api_encounter_journey_estado_rbac`). Historia clínica: `/api/pacientes/historia-clinica`.
@@ -110,9 +90,9 @@ Los touchpoints del pack followup (`care-pack process-followups`) incluyen `id_t
 | Pieza | Ubicación |
 |-------|-----------|
 | Ventanas / elegibilidad | `encounter_phase_windows.yaml`, `encounter_phase_eligibility.yaml`, `EncounterJourneyService` |
-| Intake paciente | `EncounterMotivosIntakeService`, `motivos_consulta_intake.yaml` |
-| Intake staff | `EncounterMotivosIntakeStaffViewService` → `PacientesController::buildMotivosHistoriaClinicaContext` |
-| UI web timeline | `frontend/views/paciente/timeline/timeline.php` (`renderMotivosIntake`) |
+| Guía chat motivos | `EncounterMotivosIntakeService`, `EncounterMotivosIntakeCatalogService`, `motivos_consulta_intake.yaml` |
+| Motivo clínico (staff) | Condition CC vía `EncounterReasonService`; sugerencias en `ia_clinical_suggestions` |
+| UI web timeline | `frontend/views/paciente/timeline/timeline.php` |
 | UI móvil staff | `mobile/personalsalud/…/patient_timeline_screen.dart` |
 | UI móvil paciente | `mobile/packages/shared/lib/clinical/encounter_journey_*` |
 
@@ -127,6 +107,5 @@ Los touchpoints del pack followup (`care-pack process-followups`) incluyen `id_t
 
 ## Próximos pasos (producto)
 
-- Activar `motivos_consulta_intake.yaml` (`enabled: true`) cuando el equipo quiera preguntas previas en producción.
-- Ejecutar migraciones pendientes: `m260703_140000_encounter_motivos_intake_json`, `m260703_140001_api_encounter_journey_motivos_intake_rbac` (y RBAC journey/estado si aún no corrieron).
-- Resumen compacto del journey (fases completadas) en timeline staff — hoy el médico ve intake, motivos y cohorte por separado.
+- Resumen compacto del journey (fases completadas) en timeline staff.
+- Si se reintroduce intake estructurado: QuestionnaireResponse (tabla propia), no columnas en `encounter`.

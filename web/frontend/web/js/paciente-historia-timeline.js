@@ -792,55 +792,6 @@
         }
     }
 
-    function renderMotivosIntake(intake) {
-        var section = document.getElementById('tl_motivos_intake_section');
-        var el = document.getElementById('tl_motivos_intake');
-        if (!section || !el) return;
-        tlClear(el);
-        if (!intake || typeof intake !== 'object') {
-            section.style.display = 'none';
-            return;
-        }
-        var answers = intake.answers || [];
-        var notes = intake.notes_for_staff ? String(intake.notes_for_staff).trim() : '';
-        var status = intake.status ? String(intake.status) : '';
-        if (!notes && (!answers || !answers.length) && status !== 'pending') {
-            section.style.display = 'none';
-            return;
-        }
-        section.style.display = '';
-        var root = tlTpl('tpl-tl-intake-root');
-        if (!root) return;
-        if (intake.title) {
-            var titleEl = root.querySelector('[data-slot="title"]');
-            tlShow(titleEl, true);
-            tlSet(root, '[data-field="title"]', intake.title);
-        }
-        if (notes !== '') {
-            tlShow(root.querySelector('[data-slot="notes-wrap"]'), true);
-            tlSet(root, '[data-field="notes"]', notes);
-        }
-        if (!answers || !answers.length) {
-            tlShow(root.querySelector('[data-slot="empty-answers"]'), true);
-        } else {
-            var ansWrap = root.querySelector('[data-slot="answers-wrap"]');
-            var ansSlot = root.querySelector('[data-slot="answers"]');
-            tlShow(ansWrap, true);
-            answers.forEach(function (a) {
-                if (!a) return;
-                var row = tlTpl('tpl-tl-intake-answer');
-                if (!row) return;
-                tlSet(row, '[data-field="question"]', a.question || a.id || '');
-                tlSet(row, '[data-field="answer"]', a.answer || '');
-                // template wraps dt/dd in div — append children into dl
-                while (row.firstChild) {
-                    ansSlot.appendChild(row.firstChild);
-                }
-            });
-        }
-        el.appendChild(root);
-    }
-
     function renderCarePackCohorte(cohorte) {
         var section = document.getElementById('tl_care_pack_section');
         var el = document.getElementById('tl_care_pack_cohorte');
@@ -1006,7 +957,6 @@
         renderBadges('tl_antecedentes', [], 'border border-gray text-gray');
         var mp = data.motivos_consulta_paciente || {};
         renderMotivos(null, mp);
-        renderMotivosIntake(mp.motivos_intake || null);
         renderCarePackCohorte(data.care_pack_cohorte || null);
         renderDocumentacionMedico(data.documentacion_medico || null);
         var boxMsgs = document.getElementById('tl_motivos_consulta_mensajes');
@@ -1080,7 +1030,6 @@
             var esEpisodio = timelineConfig.modoCaptura === 'imp' || timelineConfig.modoCaptura === 'emer';
             if (esEpisodio) {
                 renderMotivos(null, null);
-                renderMotivosIntake(null);
                 renderCarePackCohorte(null);
                 renderEpisodioBanner(payload.data.contexto_episodio || null);
                 if (timelineConfig.modoCaptura === 'imp') {
@@ -1097,7 +1046,6 @@
                 } catch (eEg) {}
             } else {
                 renderMotivos(info.motivos_consulta || null, mp);
-                renderMotivosIntake(mp.motivos_intake || null);
                 renderCarePackCohorte(payload.data.care_pack_cohorte || null);
             }
             renderDocumentacionMedico(null);
@@ -1124,7 +1072,6 @@
             renderBadges('tl_hallazgos', [], 'border border-warning text-warning');
             renderBadges('tl_antecedentes', [], 'border border-gray text-gray');
             renderMotivos(null, null);
-            renderMotivosIntake(null);
             renderCarePackCohorte(null);
             renderDocumentacionMedico(null);
             var boxMsgsErr = document.getElementById('tl_motivos_consulta_mensajes');

@@ -38,7 +38,7 @@ Domain/Clinical/<Modulo>/
 
 Sin `Service/` L1. Sin `Shared/`, sin PHP suelto en la **raíz** del BC o del módulo. Sin `Support/` ni `Mapper/` fuera de External.
 
-### BC más chico / en migración
+### BC más chico
 
 ```text
 Domain/<BC>/
@@ -46,6 +46,7 @@ Domain/<BC>/
   Assistant/ | Home/ | DataAccess/
 ```
 
+Áreas de lenguaje (`Representation/`, `Ventanilla/`, `Quirofano/`, …): misma tríada interna. Sin `Service/` L1.
 ### Sufijos de clase → carpeta
 
 | Sufijo | Carpeta |

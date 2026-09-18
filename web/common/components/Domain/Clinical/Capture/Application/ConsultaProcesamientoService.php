@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Encounter\Application\Legacy;
+namespace common\components\Domain\Clinical\Capture\Application;
 
 use Yii;
 use yii\base\Component;

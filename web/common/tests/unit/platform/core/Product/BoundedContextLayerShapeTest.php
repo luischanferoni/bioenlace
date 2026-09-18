@@ -179,7 +179,19 @@ final class BoundedContextLayerShapeTest extends Unit
         $this->assertDirectoryExists($clinical);
 
         $pluginModules = ['Assistant' => true, 'Home' => true, 'DataAccess' => true];
-        $forbiddenL1 = ['Support' => true, 'Batch' => true, 'Mapper' => true];
+        $forbiddenL1 = [
+            'Support' => true,
+            'Batch' => true,
+            'Mapper' => true,
+            'Service' => true,
+            'Dto' => true,
+            'Presentation' => true,
+            'Legacy' => true,
+            'Reminder' => true,
+            'Workflow' => true,
+            'SpeechToText' => true,
+            'Text' => true,
+        ];
         $errors = [];
 
         foreach (scandir($clinical) ?: [] as $module) {
@@ -203,6 +215,10 @@ final class BoundedContextLayerShapeTest extends Unit
                         $errors[] = "Carpeta prohibida Clinical/$module/$name/";
                     }
                 }
+                $legacyApp = $modulePath . DIRECTORY_SEPARATOR . 'Application' . DIRECTORY_SEPARATOR . 'Legacy';
+                if (is_dir($legacyApp)) {
+                    $errors[] = "Application/Legacy prohibido: Clinical/$module/Application/Legacy/";
+                }
             }
         }
 
@@ -210,6 +226,57 @@ final class BoundedContextLayerShapeTest extends Unit
             [],
             $errors,
             "Gramática Clinical (domain-folder-grammar):\n" . implode("\n", $errors)
+        );
+    }
+
+    public function testDomainBcSinServiceNiPresentationL1(): void
+    {
+        $root = ProductDomainCatalog::domainRoot();
+        $forbidden = ['Service' => true, 'Presentation' => true, 'Dto' => true, 'Legacy' => true];
+        $pluginOk = ['Assistant' => true, 'Home' => true, 'DataAccess' => true];
+        $errors = [];
+
+        foreach (scandir($root) ?: [] as $bc) {
+            if ($bc === '.' || $bc === '..' || !is_dir($root . DIRECTORY_SEPARATOR . $bc)) {
+                continue;
+            }
+            if ($bc === 'Clinical') {
+                continue; // cubierto por testClinicalModulosSinPhpEnRaizNiCarpetasProhibidas
+            }
+            $bcPath = $root . DIRECTORY_SEPARATOR . $bc;
+            foreach (scandir($bcPath) ?: [] as $name) {
+                if ($name === '.' || $name === '..') {
+                    continue;
+                }
+                $child = $bcPath . DIRECTORY_SEPARATOR . $name;
+                if (is_dir($child) && isset($forbidden[$name])) {
+                    $errors[] = "Domain/$bc/$name/ (usar Application/…)";
+                }
+            }
+            // Áreas de lenguaje (Representation, Ventanilla, Quirofano, …): sin Service L1 interno
+            foreach (scandir($bcPath) ?: [] as $area) {
+                if ($area === '.' || $area === '..' || isset($pluginOk[$area])) {
+                    continue;
+                }
+                if (in_array($area, ['Application', 'Domain', 'Infrastructure'], true)) {
+                    continue;
+                }
+                $areaPath = $bcPath . DIRECTORY_SEPARATOR . $area;
+                if (!is_dir($areaPath)) {
+                    continue;
+                }
+                foreach (['Service', 'Presentation', 'Dto', 'Legacy', 'Enum'] as $bad) {
+                    if (is_dir($areaPath . DIRECTORY_SEPARATOR . $bad)) {
+                        $errors[] = "Domain/$bc/$area/$bad/ (tríada interna Application|Domain|Infrastructure)";
+                    }
+                }
+            }
+        }
+
+        $this->assertSame(
+            [],
+            $errors,
+            "Gramática BC (domain-folder-grammar):\n" . implode("\n", $errors)
         );
     }
 

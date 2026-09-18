@@ -8,7 +8,7 @@ ADR: [`clinical-modulos-capacidad`](../../../docs/decisions/clinical-modulos-cap
 
 | Módulo | Contenido |
 |--------|-----------|
-| `Encounter/` | Núcleo (Application/Domain/Infrastructure; flows `atencion.*`) |
+| `Encounter/` | Núcleo + aggregates `Domain/Model` (ciclo de vida, Condition, motivos CC) |
 | `Emergency/` | Guardia + flows `urgencias.*` |
 | `Inpatient/` | Internación + agents + flows `internacion.*` |
 | `Laboratory/` | Lab + External LIS + flows `laboratorio.*` |
@@ -16,7 +16,7 @@ ADR: [`clinical-modulos-capacidad`](../../../docs/decisions/clinical-modulos-cap
 | `CarePlan/` | Planes, órdenes, protocolos, flows `tratamiento.*` |
 | `CareCohort/` | Care packs + agents + Infrastructure batch |
 | `PedidoAtencion/` | Línea×acto: Domain (VO/ports/catálogos) + Application + External |
-| `Capture/` | Captura clínica |
+| `Capture/` | Pipeline captura + `ConsultaProcesamientoService` / logger |
 | `HistoryExchange/` | Cola HC + External |
 | `LegalRecord/` | Export registro legal |
 | `Specialty/` | Odontología / oftalmología / inpatient aux |

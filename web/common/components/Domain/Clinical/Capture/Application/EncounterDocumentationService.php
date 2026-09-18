@@ -25,7 +25,7 @@ use common\components\Domain\Clinical\Specialty\Application\InpatientEncounterAu
 use common\components\Domain\Clinical\Specialty\Application\OdontologyEncounterService;
 use common\components\Domain\Clinical\Specialty\Application\OphthalmologyEncounterService;
 use common\components\Domain\Clinical\Encounter\Application\EncounterReasonService;
-use common\components\Domain\Clinical\Encounter\Application\Legacy\ConsultaProcesamientoService;
+use common\components\Domain\Clinical\Capture\Application\ConsultaProcesamientoService;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EncounterCaptureReviewPresenter;
 use common\models\Clinical\Condition;
 use common\models\Clinical\Encounter;

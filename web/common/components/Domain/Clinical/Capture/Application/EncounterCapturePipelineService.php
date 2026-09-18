@@ -5,7 +5,7 @@ namespace common\components\Domain\Clinical\Capture\Application;
 use common\components\Domain\Clinical\Capture\Application\ClinicalCaptureResolutionApplier;
 use common\components\Domain\Clinical\Capture\Application\Workflow\EncounterCaptureCategoryResolver;
 use common\components\Domain\Clinical\Capture\Application\Workflow\EncounterCaptureCompletenessValidator;
-use common\components\Domain\Clinical\Encounter\Application\Legacy\ConsultaProcesamientoService;
+use common\components\Domain\Clinical\Capture\Application\ConsultaProcesamientoService;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EncounterCaptureReviewPresenter;
 use common\models\Clinical\Input\DerivacionInput;
 use common\components\Domain\Clinical\Encounter\Application\EncounterCaptureAuditService;

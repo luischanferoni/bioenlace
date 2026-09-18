@@ -26,12 +26,12 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Admisión: identidad + ventanilla | `admision-identidad-ventanilla/` | Ingreso DNI (sin alta libre); Didit; NN; sesión de mostrador |
 | RBAC capabilities UI nativa | `rbac-capabilities-ui-nativa/` | Permisos assignables fuera de intents; guardia + encounter + panel |
 | Motivos encounter → FHIR Condition | `encounter-reasons-fhir/` | Chief complaint como Condition (`CC`); drop `reason_text` |
-| Clinical gramática DDD Application/Domain/Infrastructure | `clinical-ddd-folder-grammar/` | Piloto Encounter; sin L1 `Service/` |
 
 ## Planes archivados (carpeta eliminada)
 
 | Plan | Documentación estable |
 |------|------------------------|
+| Clinical gramática DDD Application/Domain/Infrastructure | [decisions/domain-folder-grammar.md](../decisions/domain-folder-grammar.md) + `Domain/README.md` + `Domain/Clinical/README.md` + `BoundedContextLayerShapeTest` |
 | Clinical módulos de capacidad | [decisions/clinical-modulos-capacidad.md](../decisions/clinical-modulos-capacidad.md) + `Domain/Clinical/README.md` + [common-components.md](../arquitectura/common-components.md) |
 | DDD capas + metadata | [decisions/ddd-bounded-contexts-capas-y-metadata.md](../decisions/ddd-bounded-contexts-capas-y-metadata.md) + [arquitectura/common-components.md](../arquitectura/common-components.md) + `Domain/README.md` + `metadata/bioenlace/README.md` |
 | Forma interna de Domain | [arquitectura/common-components.md](../arquitectura/common-components.md) + `common/components/Domain/README.md` + [decisions/ddd-bounded-contexts-capas-y-metadata.md](../decisions/ddd-bounded-contexts-capas-y-metadata.md) |

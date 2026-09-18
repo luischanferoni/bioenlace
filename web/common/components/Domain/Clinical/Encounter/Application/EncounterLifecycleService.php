@@ -2,15 +2,18 @@
 
 namespace common\components\Domain\Clinical\Encounter\Application;
 
-use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Domain\Clinical\CareCohort\Application\CareEncounterOrchestrator;
-use common\components\Domain\Clinical\HistoryExchange\Application\ClinicalHistoryOutboundEnqueueService;
-use common\components\Domain\Clinical\Encounter\Application\PatientSummary\PatientEncounterSummaryPublishService;
+use common\components\Domain\Clinical\CarePlan\Application\CarePlanLifecycleService;
 use common\components\Domain\Clinical\Capture\Application\Workflow\ClinicalOperationalContextResolver;
+use common\components\Domain\Clinical\Encounter\Application\PatientSummary\PatientEncounterSummaryPublishService;
+use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
+use common\components\Domain\Clinical\Encounter\Domain\Model\Encounter as EncounterAggregate;
+use common\components\Domain\Clinical\Encounter\Domain\Model\EncounterId;
+use common\components\Domain\Clinical\HistoryExchange\Application\ClinicalHistoryOutboundEnqueueService;
 use common\components\Domain\Scheduling\Infrastructure\External\Service\TurnoFhirOutboundNotifier;
 use common\models\Clinical\Encounter;
-use common\models\Person\Persona;
 use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Person\Persona;
 use common\models\Scheduling\Turno;
 use Yii;
 
@@ -21,11 +24,15 @@ final class EncounterLifecycleService
      */
     public function start(array $params): Encounter
     {
+        $opened = EncounterAggregate::open(new \DateTimeImmutable('now'));
+
         $encounter = new Encounter();
         $encounter->subject_persona_id = (int) $params['subject_persona_id'];
         $encounter->encounter_class = (string) ($params['encounter_class'] ?? Encounter::ENCOUNTER_CLASS_AMB);
-        $encounter->status = EncounterStatus::IN_PROGRESS;
-        $encounter->period_start = date('Y-m-d H:i:s');
+        $encounter->status = $opened->status();
+        $encounter->period_start = $opened->periodStart() !== null
+            ? $opened->periodStart()->format('Y-m-d H:i:s')
+            : date('Y-m-d H:i:s');
         $encounter->service_id = isset($params['service_id']) ? (int) $params['service_id'] : null;
         $encounter->efector_id = isset($params['efector_id']) ? (int) $params['efector_id'] : null;
         $encounter->appointment_id = isset($params['appointment_id']) ? (int) $params['appointment_id'] : null;
@@ -53,8 +60,12 @@ final class EncounterLifecycleService
 
     public function finalize(Encounter $encounter): Encounter
     {
-        $encounter->status = EncounterStatus::FINISHED;
-        $encounter->period_end = date('Y-m-d H:i:s');
+        $domain = $this->reconstituteAggregate($encounter);
+        $domain->finish(new \DateTimeImmutable('now'));
+        $encounter->status = $domain->status();
+        $encounter->period_end = $domain->periodEnd() !== null
+            ? $domain->periodEnd()->format('Y-m-d H:i:s')
+            : date('Y-m-d H:i:s');
         if (!$encounter->save(false, ['status', 'period_end', 'updated_at', 'updated_by'])) {
             throw new \RuntimeException('No se pudo finalizar el encounter.');
         }
@@ -104,6 +115,37 @@ final class EncounterLifecycleService
         (new CarePlanLifecycleService(null, $this))->onEncounterClose($encounter, $carePlanOptions);
 
         return $encounter;
+    }
+
+    private function reconstituteAggregate(Encounter $ar): EncounterAggregate
+    {
+        $id = (int) ($ar->id ?? 0);
+        if ($id <= 0) {
+            throw new \InvalidArgumentException('Encounter AR sin id no se puede reconstituir.');
+        }
+
+        return EncounterAggregate::reconstitute(
+            new EncounterId($id),
+            (string) ($ar->status ?? EncounterStatus::UNKNOWN),
+            $this->parseDateTime($ar->period_start ?? null),
+            $this->parseDateTime($ar->period_end ?? null)
+        );
+    }
+
+    private function parseDateTime($value): ?\DateTimeImmutable
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        $dt = \DateTimeImmutable::createFromFormat('Y-m-d H:i:s', (string) $value);
+        if ($dt instanceof \DateTimeImmutable) {
+            return $dt;
+        }
+        try {
+            return new \DateTimeImmutable((string) $value);
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     private function syncAppointmentAttendedFromEncounter(Encounter $encounter): void

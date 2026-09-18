@@ -61,7 +61,7 @@ Lenguaje ubicuo en español en **nombres de clase** se conserva. Carpetas técni
 
 ### Migración
 
-Plan: `docs/plans/clinical-ddd-folder-grammar/`. Piloto: módulo `Encounter/`. Fases 2–4 hechas: `Application/Agents/`; Clinical completo en tríada; BCs Content/Geo/Terminology/Organization/Person/Scheduling (+ área Quirofano) sin `Service/` L1. Pendiente: aggregates reales (fase 5).
+Plan: `docs/plans/clinical-ddd-folder-grammar/`. Piloto carpetas: módulo `Encounter/`. Fases 2–4 hechas (Agents + tríada Clinical + BCs). Fase 5 piloto: aggregates Encounter/Condition + VO ChiefComplaintReason wired desde Application. Pendiente: extender aggregates a más módulos y cerrar el plan.
 
 ## Relacionado
 

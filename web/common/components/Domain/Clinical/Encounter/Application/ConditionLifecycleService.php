@@ -3,6 +3,7 @@
 namespace common\components\Domain\Clinical\Encounter\Application;
 
 use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
+use common\components\Domain\Clinical\Encounter\Domain\Model\Condition as ConditionAggregate;
 use common\models\Clinical\Condition;
 
 /**
@@ -32,30 +33,25 @@ final class ConditionLifecycleService
 
     public function transition(Condition $condition, string $toStatus, ?string $note = null): Condition
     {
-        $toStatus = strtoupper(trim($toStatus));
-        if (!ConditionClinicalStatus::isValid($toStatus)) {
-            throw new \InvalidArgumentException("Estado clínico no válido: {$toStatus}");
-        }
         $from = strtoupper(trim((string) ($condition->clinical_status ?? '')));
         if ($from === '') {
             $from = ConditionClinicalStatus::UNKNOWN;
         }
-        if (!ConditionClinicalStatus::canTransition($from, $toStatus)) {
-            throw new \InvalidArgumentException(
-                "No se puede pasar la condición #{$condition->id} de «{$from}» a «{$toStatus}»."
-            );
-        }
-        if ($from === $toStatus) {
+        $domain = ConditionAggregate::reconstitute(
+            isset($condition->id) ? (int) $condition->id : null,
+            $from,
+            $condition->note ?? null
+        );
+        $domain->transitionTo($toStatus, $note, new \DateTimeImmutable('now'));
+
+        if ($from === $domain->clinicalStatus()) {
             return $condition;
         }
 
-        $condition->clinical_status = $toStatus;
+        $condition->clinical_status = $domain->clinicalStatus();
         $attrs = ['clinical_status', 'updated_at', 'updated_by'];
-        $note = $note !== null ? trim($note) : '';
-        if ($note !== '') {
-            $prefix = '[' . date('Y-m-d H:i') . ' estado→' . $toStatus . '] ';
-            $existing = trim((string) ($condition->note ?? ''));
-            $condition->note = $existing === '' ? $prefix . $note : $existing . "\n" . $prefix . $note;
+        if ($domain->note() !== ($condition->note ?? null)) {
+            $condition->note = $domain->note();
             $attrs[] = 'note';
         }
         if (!$condition->save(false, $attrs)) {

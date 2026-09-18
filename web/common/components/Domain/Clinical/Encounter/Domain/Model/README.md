@@ -1,10 +1,12 @@
 # Domain/Model
 
-Aggregates del módulo Encounter (Fase C).
+Aggregates del módulo Encounter (fase 5 piloto).
 
 | Clase | Estado |
 |-------|--------|
-| `Encounter` / `EncounterId` | Stub — reglas aún en Application services |
-| `AppointmentReason` | Stub — chat pre-consulta → Condition CC |
+| `Encounter` / `EncounterId` | Activo — `open` / `finish` / `cancel`; wired en `EncounterLifecycleService` |
+| `ChiefComplaintReason` | Activo — normalización motivos CC; wired en `EncounterReasonService` |
+| `Condition` | Activo — `transitionTo`; wired en `ConditionLifecycleService` |
+| `AppointmentReason` | Stub — chat pre-consulta aún en Application |
 
-No introducir I/O ni Yii aquí. Cuando una regla migre del Application Service al aggregate, actualizar esta tabla.
+Sin I/O ni Yii aquí. Application reconstituye desde AR, aplica mutaciones y persiste.

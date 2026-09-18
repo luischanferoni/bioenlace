@@ -5,6 +5,7 @@ namespace common\components\Domain\Clinical\Encounter\Application;
 use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
 use common\components\Domain\Clinical\Encounter\Domain\ConditionDiagnosisRole;
 use common\components\Domain\Clinical\Encounter\Domain\ConditionVerificationStatus;
+use common\components\Domain\Clinical\Encounter\Domain\Model\ChiefComplaintReason;
 use common\models\Clinical\Condition;
 use common\models\Clinical\Encounter;
 use Yii;
@@ -14,7 +15,8 @@ use Yii;
  */
 final class EncounterReasonService
 {
-    public const UNCODED_SYSTEM = 'https://bioenlace.local/CodeSystem/encounter-reason-text';
+    /** @deprecated Usar {@see ChiefComplaintReason::UNCODED_SYSTEM} */
+    public const UNCODED_SYSTEM = ChiefComplaintReason::UNCODED_SYSTEM;
 
     /**
      * @return Condition[]
@@ -68,10 +70,11 @@ final class EncounterReasonService
         $this->softDeleteExisting((int) $encounter->id);
 
         foreach ($rows as $row) {
-            $normalized = $this->normalizeRow($row);
-            if ($normalized === null) {
+            $reason = ChiefComplaintReason::fromInput($row);
+            if ($reason === null) {
                 continue;
             }
+            $normalized = $reason->toPersistenceArray();
             $condition = new Condition();
             $condition->encounter_id = (int) $encounter->id;
             $condition->subject_persona_id = (int) $encounter->subject_persona_id;
@@ -90,66 +93,6 @@ final class EncounterReasonService
                 );
             }
         }
-    }
-
-    /**
-     * @param string|array<string, mixed> $row
-     * @return array{code: ?string, code_system: string, display: string, note: ?string}|null
-     */
-    private function normalizeRow($row): ?array
-    {
-        if (is_string($row)) {
-            $text = trim($row);
-            if ($text === '') {
-                return null;
-            }
-
-            return [
-                'code' => null,
-                'code_system' => self::UNCODED_SYSTEM,
-                'display' => $text,
-                'note' => null,
-            ];
-        }
-        if (!is_array($row)) {
-            return null;
-        }
-
-        $display = trim((string) (
-            $row['texto']
-            ?? $row['termino']
-            ?? $row['descripcion']
-            ?? $row['label']
-            ?? $row['display']
-            ?? $row['Motivo']
-            ?? ''
-        ));
-        $code = trim((string) ($row['codigo'] ?? $row['code'] ?? $row['Codigo'] ?? ''));
-        if ($display === '' && $code === '') {
-            return null;
-        }
-        if ($display === '') {
-            $display = $code;
-        }
-        $system = trim((string) ($row['code_system'] ?? $row['sistema'] ?? ''));
-        if ($code === '') {
-            return [
-                'code' => null,
-                'code_system' => self::UNCODED_SYSTEM,
-                'display' => $display,
-                'note' => null,
-            ];
-        }
-        if ($system === '') {
-            $system = 'http://snomed.info/sct';
-        }
-
-        return [
-            'code' => $code,
-            'code_system' => $system,
-            'display' => $display,
-            'note' => null,
-        ];
     }
 
     private function softDeleteExisting(int $encounterId): void

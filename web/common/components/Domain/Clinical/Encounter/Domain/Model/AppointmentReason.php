@@ -5,9 +5,10 @@ namespace common\components\Domain\Clinical\Encounter\Domain\Model;
 /**
  * Aggregate de narrativa pre-consulta (chat) que alimenta Condition CC.
  *
- * Persistencia actual: {@see \common\models\Clinical\AppointmentReasonMessage}.
+ * Persistencia: {@see \common\models\Clinical\AppointmentReasonMessage}.
  * Orquestación: {@see \common\components\Domain\Clinical\Encounter\Application\AppointmentReasonMessageService}.
- * Stub — no usar en runtime hasta migrar reglas.
+ *
+ * Stub — reglas de ventana/media siguen en Application; no hidratar mensajes aquí aún.
  */
 final class AppointmentReason
 {

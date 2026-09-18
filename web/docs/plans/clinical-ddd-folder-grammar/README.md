@@ -36,7 +36,7 @@ Plugins BC: `Clinical/Assistant|Home|DataAccess/` solo en raíz Clinical.
 | 2 | `Agent/` → `Agents/` en resto Clinical + Scheduling + registry | hecho |
 | 3 | Resto módulos Clinical (Emergency, Capture, …) | hecho |
 | 4 | BCs chicos (opcional, misma gramática sin módulo) | hecho |
-| 5 | Aggregates reales (mover reglas desde Application Services) | pendiente |
+| 5 | Aggregates reales (mover reglas desde Application Services) | hecho (piloto Encounter) |
 | Cierre | Borrar esta carpeta; dejar solo ADR + README | pendiente |
 
 ### Notas fase 2–3 (ejecutado)
@@ -55,6 +55,15 @@ Plugins BC: `Clinical/Assistant|Home|DataAccess/` solo en raíz Clinical.
 - **Person:** `Service/` → `Application/`; áreas **Representation** y **Ventanilla** con tríada interna; enums Representation → `Representation/Domain/`.
 - **Scheduling:** `Service/` (~97) → `Application/`; `Presentation/` → `Application/Presentation/`; **Quirofano** elevado a área `Scheduling/Quirofano/{Application,Domain,Infrastructure}/`.
 - **Integrations / Programs:** sin PHP en Domain — no-op.
+
+### Notas fase 5 (piloto Encounter)
+
+- `EncounterStatus::canTransition` / `isTerminal` / `isOpen`.
+- Aggregate `Domain/Model/Encounter`: `open` / `finish` / `cancel` (idempotente); wired en `EncounterLifecycleService::{start,finalize}`.
+- VO `ChiefComplaintReason` (normalización motivos); wired en `EncounterReasonService`.
+- Aggregate `Domain/Model/Condition::transitionTo`; wired en `ConditionLifecycleService`.
+- Tests puros: `EncounterDomainModelTest`.
+- Queda fuera del piloto: ventanas AppointmentReason, side-effects CarePlan/journey/history, async cancel consumer, resto de módulos.
 
 ## Fuera de alcance de este plan
 

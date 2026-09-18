@@ -7,7 +7,7 @@ use common\components\Domain\Clinical\Inpatient\Application\Agents\InternacionCa
 use common\components\Domain\Clinical\CarePlan\Application\CarePlanLifecycleService;
 use common\components\Domain\Clinical\Emergency\Application\GuardiaInternacionService;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
-use common\components\Domain\Organization\Service\Authorization\EfectorAccessService;
+use common\components\Domain\Organization\Application\Authorization\EfectorAccessService;
 use common\models\Person\CoberturaMedica;
 use common\models\Organization\Efector;
 use common\models\Clinical\Guardia;

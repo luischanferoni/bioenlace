@@ -11,7 +11,7 @@ use common\components\Domain\Clinical\Encounter\Domain\RequestStatus;
 use common\components\Domain\Clinical\CarePlan\Application\ReferralRequestService;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\ServiceRequest;
-use common\models\Terminology\Snomed\SnomedProcedimientos;
+use common\models\Terminology\Application\SnomedProcedimientos;
 use yii\data\ActiveDataProvider;
 use Yii;
 

@@ -3,7 +3,7 @@
 namespace common\components\Platform\Assistant\Catalog;
 
 use common\components\Platform\Core\Service\ClientContextService;
-use common\components\Domain\Person\Service\PacienteContextoOfferingService;
+use common\components\Domain\Person\Application\PacienteContextoOfferingService;
 use Yii;
 
 /**

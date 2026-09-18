@@ -3,7 +3,7 @@
 namespace common\components\Domain\Organization\Assistant;
 
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
-use common\components\Domain\Organization\Service\Authorization\ProfesionalEfectorServicioDomainAuthorizationService;
+use common\components\Domain\Organization\Application\Authorization\ProfesionalEfectorServicioDomainAuthorizationService;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Organization\Servicio;
 use Yii;

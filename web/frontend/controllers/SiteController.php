@@ -26,7 +26,7 @@ use common\models\Organization\Servicio;
 use frontend\components\Clinical\PacientesListadoPageBuilder;
 use frontend\assets\GuardiaTableroAsset;
 use frontend\assets\PacientesListadoAsset;
-use common\components\Domain\Organization\Service\SesionOperativa\SesionOperativaService;
+use common\components\Domain\Organization\Application\SesionOperativa\SesionOperativaService;
 
 class SiteController extends Controller
 {    

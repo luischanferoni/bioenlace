@@ -53,7 +53,7 @@ return [
             'class' => \common\components\Domain\Person\Infrastructure\External\Mpi\MpiApiClient::class,
         ],
         'snowstorm' => [
-            'class' => \common\components\Domain\Terminology\Snomed\SnowstormClient::class,
+            'class' => \common\components\Domain\Terminology\Infrastructure\External\Snowstorm\SnowstormClient::class,
         ],
         'mailer' => require __DIR__ . '/mailer.php',
     ],

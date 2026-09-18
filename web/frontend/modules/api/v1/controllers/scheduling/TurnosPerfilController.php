@@ -3,13 +3,13 @@
 namespace frontend\modules\api\v1\controllers\scheduling;
 
 use frontend\modules\api\v1\controllers\BaseController;
-use common\components\Domain\Organization\Service\Authorization\EfectorAccessService;
-use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
-use common\components\Domain\Person\Representation\Service\PersonRepresentationSubjectService;
-use common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoAgentActionExplanationService;
-use common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoBehaviorAggregateService;
-use common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoBehaviorCorrectionService;
-use common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoBehaviorProfileViewService;
+use common\components\Domain\Organization\Application\Authorization\EfectorAccessService;
+use common\components\Domain\Person\Representation\Domain\RepresentationPermission;
+use common\components\Domain\Person\Representation\Application\PersonRepresentationSubjectService;
+use common\components\Domain\Scheduling\Application\BehaviorProfile\TurnoAgentActionExplanationService;
+use common\components\Domain\Scheduling\Application\BehaviorProfile\TurnoBehaviorAggregateService;
+use common\components\Domain\Scheduling\Application\BehaviorProfile\TurnoBehaviorCorrectionService;
+use common\components\Domain\Scheduling\Application\BehaviorProfile\TurnoBehaviorProfileViewService;
 use common\components\Platform\Ui\UiScreenService;
 use common\models\Platform\AgentRun;
 use common\models\Scheduling\Turno;

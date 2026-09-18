@@ -3,8 +3,8 @@
 namespace common\components\Domain\Clinical\Encounter\Application;
 
 use common\components\Domain\Clinical\Encounter\Application\Authorization\EncounterAccessService;
-use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
-use common\components\Domain\Person\Representation\Service\PersonRepresentationSubjectService;
+use common\components\Domain\Person\Representation\Domain\RepresentationPermission;
+use common\components\Domain\Person\Representation\Application\PersonRepresentationSubjectService;
 use common\models\Clinical\Encounter;
 use common\models\Scheduling\Turno;
 use yii\web\BadRequestHttpException;

@@ -6,7 +6,7 @@ use Codeception\Test\Unit;
 use common\components\Platform\Core\Permission\Domain\DomainOperationContext;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Platform\Core\Permission\Domain\DomainOperationPolicyRegistry;
-use common\components\Domain\Organization\Service\Authorization\OrganizationPesOwnPolicy;
+use common\components\Domain\Organization\Application\Authorization\OrganizationPesOwnPolicy;
 use common\models\Organization\ProfesionalEfectorServicio;
 
 class OrganizationPesDomainPolicyTest extends Unit

@@ -3,8 +3,8 @@
 namespace frontend\modules\api\v1\controllers\organization;
 
 use frontend\modules\api\v1\controllers\BaseController;
-use common\components\Domain\Scheduling\Service\ServicioTeleconsultaPoliticaService;
-use common\components\Domain\Scheduling\Presentation\ServicioTeleconsultaPoliticaUiPresenter;
+use common\components\Domain\Scheduling\Application\ServicioTeleconsultaPoliticaService;
+use common\components\Domain\Scheduling\Application\Presentation\ServicioTeleconsultaPoliticaUiPresenter;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Platform\Ui\UiScreenService;
 use Yii;

@@ -8,7 +8,7 @@ use common\models\Scheduling\TurnoNotificacionProgramada;
 use common\models\Scheduling\Turno;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\components\Platform\Core\Service\Push\FcmPushConfig;
-use common\components\Domain\Scheduling\Service\TurnoReminderContentBuilder;
+use common\components\Domain\Scheduling\Application\TurnoReminderContentBuilder;
 use common\components\Domain\Clinical\Encounter\Application\AppointmentReasonBatchService;
 
 /**
@@ -46,7 +46,7 @@ class TurnoNotificacionController extends Controller
                         $push->sendToPersona((int) $turno->id_persona, $content['data'], $content['title'], $content['body']);
                     }
                 } elseif ($row->tipo === TurnoNotificacionProgramada::TIPO_CONFIRM_REQUEST) {
-                    $confirmation = new \common\components\Domain\Scheduling\Service\TurnoConfirmationService();
+                    $confirmation = new \common\components\Domain\Scheduling\Application\TurnoConfirmationService();
                     $token = $confirmation->ensureConfirmacionToken($turno);
                     $push->sendToPersona(
                         (int) $turno->id_persona,
@@ -62,7 +62,7 @@ class TurnoNotificacionController extends Controller
                         true,
                         [
                             'idempotency_key' => 'turno-confirmation:' . (int) $row->id,
-                            'context_handler_id' => \common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoConfirmationPushReceiptProjector::HANDLER_ID,
+                            'context_handler_id' => \common\components\Domain\Scheduling\Application\BehaviorProfile\TurnoConfirmationPushReceiptProjector::HANDLER_ID,
                             'context' => [
                                 'id_turno' => (int) $turno->id_turnos,
                                 'id_notificacion_programada' => (int) $row->id,

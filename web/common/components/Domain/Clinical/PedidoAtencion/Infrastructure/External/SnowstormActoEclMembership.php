@@ -6,7 +6,7 @@ use common\components\Domain\Clinical\PedidoAtencion\Domain\CodingSystems;
 
 use common\components\Domain\Clinical\PedidoAtencion\Domain\ActoEclMembershipInterface;
 
-use common\components\Domain\Terminology\Snomed\SnowstormClient;
+use common\components\Domain\Terminology\Infrastructure\External\Snowstorm\SnowstormClient;
 use Yii;
 
 /**

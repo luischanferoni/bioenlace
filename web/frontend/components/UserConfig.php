@@ -8,7 +8,7 @@ use yii\web\NotFoundHttpException;
 use common\models\Person\Persona;
 use common\models\Platform\User;
 use common\models\Organization\ProfesionalEfectorServicio;
-use common\components\Domain\Organization\Service\SesionOperativa\SesionOperativaService;
+use common\components\Domain\Organization\Application\SesionOperativa\SesionOperativaService;
 
 /**
  * Componente user para la aplicación web (sesión, cookie, login por formulario).

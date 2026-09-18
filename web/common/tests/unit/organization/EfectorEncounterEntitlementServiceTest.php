@@ -3,7 +3,7 @@
 namespace common\tests\unit\organization;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Organization\Service\Entitlement\EfectorEncounterEntitlementService;
+use common\components\Domain\Organization\Application\Entitlement\EfectorEncounterEntitlementService;
 
 class EfectorEncounterEntitlementServiceTest extends Unit
 {

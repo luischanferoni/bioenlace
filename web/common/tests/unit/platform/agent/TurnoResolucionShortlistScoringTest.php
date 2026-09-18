@@ -3,7 +3,7 @@
 namespace common\tests\unit\platform\agent;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Scheduling\Service\TurnoResolucionShortlistService;
+use common\components\Domain\Scheduling\Application\TurnoResolucionShortlistService;
 use common\models\Scheduling\Turno;
 
 class TurnoResolucionShortlistScoringTest extends Unit

@@ -6,9 +6,9 @@ use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\MethodNotAllowedHttpException;
-use common\components\Domain\Person\Representation\Service\PatientDelegationService;
-use common\components\Domain\Person\Representation\Presentation\PersonRepresentationPresenter;
-use common\components\Domain\Person\Representation\Service\VerifiedGuardianshipService;
+use common\components\Domain\Person\Representation\Application\PatientDelegationService;
+use common\components\Domain\Person\Representation\Application\Presentation\PersonRepresentationPresenter;
+use common\components\Domain\Person\Representation\Application\VerifiedGuardianshipService;
 use common\components\Platform\Ui\UiScreenService;
 
 /**
@@ -317,7 +317,7 @@ class PersonRepresentationController extends BaseController
 
         $params = $this->mergedParams();
         $subjectRaw = $params['subject_persona_id'] ?? $params['id_persona_sujeto'] ?? null;
-        $svc = new \common\components\Domain\Person\Representation\Service\PersonRepresentationSubjectService();
+        $svc = new \common\components\Domain\Person\Representation\Application\PersonRepresentationSubjectService();
 
         if ($subjectRaw === null || $subjectRaw === '' || (int) $subjectRaw <= 0) {
             $svc->establecerSujetoEnSesion(null);

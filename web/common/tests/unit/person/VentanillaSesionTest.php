@@ -3,8 +3,8 @@
 namespace common\tests\unit\person;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Person\Service\PersonaIdentidadResolverService;
-use common\components\Domain\Person\Ventanilla\Service\VentanillaSesionMetadata;
+use common\components\Domain\Person\Application\PersonaIdentidadResolverService;
+use common\components\Domain\Person\Ventanilla\Application\VentanillaSesionMetadata;
 use common\models\Person\VentanillaSesion;
 
 class VentanillaSesionTest extends Unit

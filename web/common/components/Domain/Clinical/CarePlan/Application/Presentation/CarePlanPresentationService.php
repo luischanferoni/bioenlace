@@ -7,7 +7,7 @@ use common\components\Domain\Clinical\CarePlan\Application\Dto\CarePlanDto;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanActivityKind;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanCategory;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanStatus;
-use common\components\Domain\Scheduling\Service\ConsultasSeguimientoIntakeCatalogService;
+use common\components\Domain\Scheduling\Application\ConsultasSeguimientoIntakeCatalogService;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\CarePlanActivity;
 use common\models\Clinical\MedicationRequest;

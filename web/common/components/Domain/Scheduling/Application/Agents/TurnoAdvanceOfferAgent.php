@@ -2,9 +2,9 @@
 
 namespace common\components\Domain\Scheduling\Application\Agents;
 
-use common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoAdvancePushReceiptProjector;
-use common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoCanonicalEventCommand;
-use common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoCanonicalEventService;
+use common\components\Domain\Scheduling\Application\BehaviorProfile\TurnoAdvancePushReceiptProjector;
+use common\components\Domain\Scheduling\Application\BehaviorProfile\TurnoCanonicalEventCommand;
+use common\components\Domain\Scheduling\Application\BehaviorProfile\TurnoCanonicalEventService;
 use common\components\Platform\Agent\AgentRunRecorder;
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;

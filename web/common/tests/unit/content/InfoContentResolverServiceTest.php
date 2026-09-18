@@ -3,8 +3,8 @@
 namespace common\tests\unit\content;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Content\Service\InfoContentAssistantService;
-use common\components\Domain\Content\Service\InfoContentResolverService;
+use common\components\Domain\Content\Application\InfoContentAssistantService;
+use common\components\Domain\Content\Application\InfoContentResolverService;
 use common\models\Content\InfoContentArticle;
 
 class InfoContentResolverServiceTest extends Unit

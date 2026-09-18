@@ -3,7 +3,7 @@
 namespace common\tests\unit\organization;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Organization\Service\Seed\MedicoMedGeneralEfectorSeedService;
+use common\components\Domain\Organization\Application\Seed\MedicoMedGeneralEfectorSeedService;
 
 class MedicoMedGeneralEfectorSeedServiceTest extends Unit
 {

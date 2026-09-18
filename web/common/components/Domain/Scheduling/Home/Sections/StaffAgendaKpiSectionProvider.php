@@ -2,10 +2,10 @@
 
 namespace common\components\Domain\Scheduling\Home\Sections;
 
-use common\components\Domain\Organization\Service\Authorization\EfectorAccessService;
-use common\components\Domain\Scheduling\Service\AgendaAtencionRemotaCatalogService;
-use common\components\Domain\Scheduling\Service\StaffModalidadInsightMetricsService;
-use common\components\Domain\Scheduling\Service\TurnoAgendaMetricsService;
+use common\components\Domain\Organization\Application\Authorization\EfectorAccessService;
+use common\components\Domain\Scheduling\Application\AgendaAtencionRemotaCatalogService;
+use common\components\Domain\Scheduling\Application\StaffModalidadInsightMetricsService;
+use common\components\Domain\Scheduling\Application\TurnoAgendaMetricsService;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Platform\Ui\Home\Service\Sections\HomePanelSectionProviderInterface;
 

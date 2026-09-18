@@ -3,7 +3,7 @@
 namespace common\tests\unit\person;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Person\Service\PacienteContextoOfferingService;
+use common\components\Domain\Person\Application\PacienteContextoOfferingService;
 use common\models\Organization\Efector;
 use common\models\Person\PersonaPacienteContexto;
 

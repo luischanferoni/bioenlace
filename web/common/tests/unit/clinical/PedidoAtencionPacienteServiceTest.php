@@ -9,7 +9,7 @@ use common\components\Domain\Clinical\PedidoAtencion\Domain\Model\PedidoAtencion
 use common\components\Domain\Clinical\PedidoAtencion\Application\PedidoAtencionMetadata;
 use common\components\Domain\Clinical\PedidoAtencion\Application\PedidoAtencionPacienteService;
 use common\components\Domain\Clinical\PedidoAtencion\Application\PedidoAtencionService;
-use common\components\Domain\Scheduling\Service\ReservaTriageServicioSugeridoService;
+use common\components\Domain\Scheduling\Application\ReservaTriageServicioSugeridoService;
 
 class PedidoAtencionPacienteServiceTest extends Unit
 {

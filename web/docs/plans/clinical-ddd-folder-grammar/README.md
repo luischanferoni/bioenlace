@@ -35,7 +35,7 @@ Plugins BC: `Clinical/Assistant|Home|DataAccess/` solo en raíz Clinical.
 | 1 | Piloto **Encounter**: moves + namespaces + Model stubs | hecho (piloto) |
 | 2 | `Agent/` → `Agents/` en resto Clinical + Scheduling + registry | hecho |
 | 3 | Resto módulos Clinical (Emergency, Capture, …) | hecho |
-| 4 | BCs chicos (opcional, misma gramática sin módulo) | pendiente |
+| 4 | BCs chicos (opcional, misma gramática sin módulo) | hecho |
 | 5 | Aggregates reales (mover reglas desde Application Services) | pendiente |
 | Cierre | Borrar esta carpeta; dejar solo ADR + README | pendiente |
 
@@ -47,6 +47,14 @@ Plugins BC: `Clinical/Assistant|Home|DataAccess/` solo en raíz Clinical.
 - **Specialty:** áreas Odontology/Ophthalmology/Inpatient aplanadas a `Application/` + `Domain/`.
 - **CareCohort:** `Assistant/CarePackUiActionCatalog` → `Application/` (plugins solo en raíz BC).
 - Sin aliases de retrocompatibilidad de path.
+
+### Notas fase 4 (ejecutado)
+
+- **Content, Geo, Terminology:** tríada completa; Terminology parte `Snomed/` → Application + Domain + `Infrastructure/External/Snowstorm`.
+- **Organization:** `Service/` → `Application/` (subáreas Billing/Efectores/…); `Presentation/` → `Application/Presentation/`; `SimulatedPaymentGateway` → `Infrastructure/External/Billing/`.
+- **Person:** `Service/` → `Application/`; áreas **Representation** y **Ventanilla** con tríada interna; enums Representation → `Representation/Domain/`.
+- **Scheduling:** `Service/` (~97) → `Application/`; `Presentation/` → `Application/Presentation/`; **Quirofano** elevado a área `Scheduling/Quirofano/{Application,Domain,Infrastructure}/`.
+- **Integrations / Programs:** sin PHP en Domain — no-op.
 
 ## Fuera de alcance de este plan
 

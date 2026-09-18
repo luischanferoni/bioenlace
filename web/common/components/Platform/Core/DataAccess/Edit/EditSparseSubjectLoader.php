@@ -5,8 +5,8 @@ namespace common\components\Platform\Core\DataAccess\Edit;
 use common\components\Platform\Core\DataAccess\AttributeGroupCatalog;
 use common\components\Platform\Core\DataAccess\EditSurfaceAuthorizationService;
 use common\components\Platform\Core\DataAccess\PermissionContext;
-use common\components\Domain\Organization\Service\Efectores\OrganizationEfectorAccess;
-use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaUiService;
+use common\components\Domain\Organization\Application\Efectores\OrganizationEfectorAccess;
+use common\components\Domain\Organization\Application\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaUiService;
 use common\models\Person\Persona;
 use common\models\Organization\ProfesionalEfectorServicio;
 

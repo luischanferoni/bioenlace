@@ -10,8 +10,8 @@ use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use common\models\Scheduling\Cirugia;
 use common\models\Scheduling\QuirofanoSala;
-use common\components\Domain\Scheduling\Service\Quirofano\CirugiaAgendaService;
-use common\components\Domain\Scheduling\Service\Quirofano\UserEfectorAccess;
+use common\components\Domain\Scheduling\Quirofano\Application\CirugiaAgendaService;
+use common\components\Domain\Scheduling\Quirofano\Application\Authorization\UserEfectorAccess;
 
 /**
  * API agenda quirúrgica: salas (CRUD) y cirugías (alta/edición de agenda).

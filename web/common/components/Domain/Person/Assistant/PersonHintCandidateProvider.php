@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Person\Assistant;
 
-use common\components\Domain\Person\Service\PersonaBusquedaAsistenteUiService;
+use common\components\Domain\Person\Application\PersonaBusquedaAsistenteUiService;
 use common\components\Platform\Assistant\Service\HintCandidateMapper;
 use common\components\Platform\Assistant\Service\HintCandidateProviderInterface;
 use common\components\Platform\Assistant\Service\HintResolutionContext;

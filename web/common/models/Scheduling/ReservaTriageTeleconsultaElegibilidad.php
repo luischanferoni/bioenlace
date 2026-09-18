@@ -2,7 +2,7 @@
 
 namespace common\models\Scheduling;
 
-use common\components\Domain\Scheduling\Service\TeleconsultaElegibilidadService;
+use common\components\Domain\Scheduling\Application\TeleconsultaElegibilidadService;
 use common\models\Scheduling\Turno;
 use yii\db\ActiveRecord;
 

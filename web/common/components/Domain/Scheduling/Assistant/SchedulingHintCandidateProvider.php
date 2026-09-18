@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Scheduling\Assistant;
 
-use common\components\Domain\Organization\Service\Servicios\ServiciosEfectorAutogestionListadoService;
-use common\components\Domain\Scheduling\Service\ReservaTriageServicioSugeridoService;
+use common\components\Domain\Organization\Application\Servicios\ServiciosEfectorAutogestionListadoService;
+use common\components\Domain\Scheduling\Application\ReservaTriageServicioSugeridoService;
 use common\components\Platform\Assistant\Service\HintCandidateMapper;
 use common\components\Platform\Assistant\Service\HintCandidateProviderInterface;
 use common\components\Platform\Assistant\Service\HintResolutionContext;

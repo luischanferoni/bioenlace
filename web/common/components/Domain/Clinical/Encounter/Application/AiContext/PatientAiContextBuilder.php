@@ -9,7 +9,7 @@ use common\components\Domain\Clinical\CarePlan\Application\Presentation\CarePlan
 use common\components\Domain\Clinical\Encounter\Application\EncounterLifecycleService;
 use common\components\Domain\Clinical\Encounter\Application\EncounterReasonService;
 use common\components\Domain\Clinical\Encounter\Application\EpisodeOfCareService;
-use common\components\Domain\Person\Service\PersonaAsistentePreferenciasService;
+use common\components\Domain\Person\Application\PersonaAsistentePreferenciasService;
 use common\models\Clinical\AllergyIntolerance;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;

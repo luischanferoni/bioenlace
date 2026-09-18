@@ -2,7 +2,7 @@
 
 namespace common\components\Platform\Assistant\Context;
 
-use common\components\Domain\Scheduling\Service\TurnoPacienteListadoService;
+use common\components\Domain\Scheduling\Application\TurnoPacienteListadoService;
 use common\models\Scheduling\Turno;
 use Yii;
 

@@ -7,9 +7,9 @@ use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
-use common\components\Domain\Organization\Service\ProfesionalHorario\ProfesionalHorarioActivaService;
-use common\components\Domain\Organization\Service\ProfesionalHorario\ProfesionalHorarioService;
-use common\components\Domain\Organization\Service\ProfesionalHorario\ProfesionalHorarioUiFlowService;
+use common\components\Domain\Organization\Application\ProfesionalHorario\ProfesionalHorarioActivaService;
+use common\components\Domain\Organization\Application\ProfesionalHorario\ProfesionalHorarioService;
+use common\components\Domain\Organization\Application\ProfesionalHorario\ProfesionalHorarioUiFlowService;
 use common\models\Organization\ProfesionalHorario;
 use common\models\Organization\ProfesionalEfectorServicio;
 

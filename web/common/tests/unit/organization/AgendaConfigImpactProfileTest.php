@@ -3,7 +3,7 @@
 namespace common\tests\unit\organization;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\AgendaConfigImpactProfile;
+use common\components\Domain\Organization\Application\ProfesionalEfectorServicio\AgendaConfigImpactProfile;
 
 class AgendaConfigImpactProfileTest extends Unit
 {

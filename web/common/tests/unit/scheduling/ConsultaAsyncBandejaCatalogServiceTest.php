@@ -3,7 +3,7 @@
 namespace common\tests\unit\scheduling;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Scheduling\Service\ConsultaAsyncBandejaCatalogService;
+use common\components\Domain\Scheduling\Application\ConsultaAsyncBandejaCatalogService;
 
 class ConsultaAsyncBandejaCatalogServiceTest extends Unit
 {

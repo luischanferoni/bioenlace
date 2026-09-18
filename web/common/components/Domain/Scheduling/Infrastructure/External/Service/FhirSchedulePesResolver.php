@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Infrastructure\External\Service;
 
-use common\components\Domain\Person\Service\PersonCuilService;
+use common\components\Domain\Person\Application\PersonCuilService;
 use common\models\Organization\Efector;
 use common\models\Integrations\IntegrationScheduleLink;
 use common\models\Organization\ProfesionalEfectorServicio;

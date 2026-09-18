@@ -46,7 +46,7 @@ class ProfesionalEfectorServicio extends ActiveRecord
     {
         $idEfector = (int) $this->id_efector;
         if ($idEfector > 0) {
-            \common\components\Domain\Organization\Service\Entitlement\EfectorEncounterEntitlementService::syncPendingDowngradeForEfector(
+            \common\components\Domain\Organization\Application\Entitlement\EfectorEncounterEntitlementService::syncPendingDowngradeForEfector(
                 $idEfector
             );
         }

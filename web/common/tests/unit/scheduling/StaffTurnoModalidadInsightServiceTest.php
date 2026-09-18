@@ -3,9 +3,9 @@
 namespace common\tests\unit\scheduling;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Scheduling\Service\StaffModalidadInsightCatalogService;
-use common\components\Domain\Scheduling\Service\StaffTurnoModalidadInsightService;
-use common\components\Domain\Scheduling\Service\TurnoReservaTriageDraftBuilder;
+use common\components\Domain\Scheduling\Application\StaffModalidadInsightCatalogService;
+use common\components\Domain\Scheduling\Application\StaffTurnoModalidadInsightService;
+use common\components\Domain\Scheduling\Application\TurnoReservaTriageDraftBuilder;
 use common\models\Scheduling\Turno;
 
 class StaffTurnoModalidadInsightServiceTest extends Unit

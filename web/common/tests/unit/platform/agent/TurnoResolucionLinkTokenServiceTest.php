@@ -3,7 +3,7 @@
 namespace common\tests\unit\platform\agent;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Scheduling\Service\TurnoResolucionLinkTokenService;
+use common\components\Domain\Scheduling\Application\TurnoResolucionLinkTokenService;
 use Yii;
 
 class TurnoResolucionLinkTokenServiceTest extends Unit

@@ -3,9 +3,9 @@
 namespace frontend\modules\api\v1\controllers\organization;
 
 use frontend\modules\api\v1\controllers\BaseController;
-use common\components\Domain\Geo\Service\GeografiaDepdropService;
-use common\components\Domain\Organization\Service\InfraestructuraDepdropService;
-use common\components\Domain\Organization\Service\ProfesionalDepdropService;
+use common\components\Domain\Geo\Application\GeografiaDepdropService;
+use common\components\Domain\Organization\Application\InfraestructuraDepdropService;
+use common\components\Domain\Organization\Application\ProfesionalDepdropService;
 use common\models\Clinical\EncounterDefinition;
 use Yii;
 

@@ -465,17 +465,17 @@ class Persona extends \yii\db\ActiveRecord
     }
 
     // funcion para consultar los departamentos segun un id de provincia
-    /** @deprecated use {@see \common\components\Domain\Geo\Service\GeografiaDepdropService::departamentosPorProvincia} */
+    /** @deprecated use {@see \common\components\Domain\Geo\Application\GeografiaDepdropService::departamentosPorProvincia} */
     public function getDepartamentoxidprovincia($id)
     {
-        return \common\components\Domain\Geo\Service\GeografiaDepdropService::departamentosPorProvincia((int) $id);
+        return \common\components\Domain\Geo\Application\GeografiaDepdropService::departamentosPorProvincia((int) $id);
     }
 
     // funcion para consultar las localidades segun el id de departamento
-    /** @deprecated use {@see \common\components\Domain\Geo\Service\GeografiaDepdropService::localidadesPorDepartamento} */
+    /** @deprecated use {@see \common\components\Domain\Geo\Application\GeografiaDepdropService::localidadesPorDepartamento} */
     public function getLocalidadxiddepartamento($idd)
     {
-        return \common\components\Domain\Geo\Service\GeografiaDepdropService::localidadesPorDepartamento((int) $idd);
+        return \common\components\Domain\Geo\Application\GeografiaDepdropService::localidadesPorDepartamento((int) $idd);
     }
 
     public function getDatosPersonaXDni($dni, $nombre)
@@ -635,13 +635,13 @@ class Persona extends \yii\db\ActiveRecord
 
     public function validateCuilAttribute(string $attribute): void
     {
-        $value = \common\components\Domain\Person\Service\CuilValidator::normalize((string) ($this->$attribute ?? ''));
+        $value = \common\components\Domain\Person\Application\CuilValidator::normalize((string) ($this->$attribute ?? ''));
         if ($value === '') {
             $this->$attribute = null;
 
             return;
         }
-        if (!\common\components\Domain\Person\Service\CuilValidator::isValid($value)) {
+        if (!\common\components\Domain\Person\Application\CuilValidator::isValid($value)) {
             $this->addError($attribute, 'CUIL inválido.');
 
             return;

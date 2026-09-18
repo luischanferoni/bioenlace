@@ -4,9 +4,9 @@ namespace common\components\Domain\Clinical\Emergency\Application;
 
 use common\components\Domain\Clinical\Emergency\Domain\CircuitoEstado;
 use common\components\Domain\Clinical\Emergency\Domain\CircuitoEventType;
-use common\components\Domain\Person\Service\PersonaBusquedaAsistenteUiService;
-use common\components\Domain\Person\Service\PersonaIdentidadPendienteService;
-use common\components\Domain\Person\Service\PersonaIdentidadResolverService;
+use common\components\Domain\Person\Application\PersonaBusquedaAsistenteUiService;
+use common\components\Domain\Person\Application\PersonaIdentidadPendienteService;
+use common\components\Domain\Person\Application\PersonaIdentidadResolverService;
 use common\components\Platform\Ui\Home\Service\HomePanelManifest;
 use common\models\Clinical\Guardia;
 use common\models\Organization\InfraestructuraCama;

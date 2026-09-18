@@ -10,8 +10,8 @@ use common\components\Domain\Clinical\PedidoAtencion\Domain\PedidoAtencionActoCo
 
 use common\components\Domain\Clinical\PedidoAtencion\Domain\CompositeLineaActoCatalog;
 use common\components\Domain\Clinical\PedidoAtencion\Domain\InMemoryLineaActoCatalog;
-use common\components\Domain\Terminology\Snomed\CodificadorSnomedIA;
-use common\components\Domain\Terminology\Snomed\SnowstormClient;
+use common\components\Domain\Terminology\Application\CodificadorSnomedIA;
+use common\components\Domain\Terminology\Infrastructure\External\Snowstorm\SnowstormClient;
 use Yii;
 
 /**

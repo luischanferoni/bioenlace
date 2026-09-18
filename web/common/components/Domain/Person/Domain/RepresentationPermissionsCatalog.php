@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Person\Domain;
 
-use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
+use common\components\Domain\Person\Representation\Domain\RepresentationPermission;
 use common\components\Domain\Person\Domain\RepresentationPermissionsV1Catalog;
 use common\models\Person\PersonDelegationConsent;
 use common\models\Person\PersonRelated;

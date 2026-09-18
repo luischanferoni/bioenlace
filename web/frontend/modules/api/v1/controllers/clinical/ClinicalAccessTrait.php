@@ -4,10 +4,10 @@ namespace frontend\modules\api\v1\controllers\clinical;
 
 use common\components\Domain\Clinical\Inpatient\Application\InternacionAccessService;
 use common\components\Domain\Clinical\Encounter\Application\Authorization\EncounterAccessService;
-use common\components\Domain\Organization\Service\Authorization\EfectorAccessService;
+use common\components\Domain\Organization\Application\Authorization\EfectorAccessService;
 use common\components\Platform\Core\Permission\Domain\DomainOperationAuthorizer;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
-use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
+use common\components\Domain\Person\Representation\Domain\RepresentationPermission;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\SegNivelInternacion;

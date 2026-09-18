@@ -2,7 +2,7 @@
 
 namespace admin\controllers;
 
-use common\components\Domain\Scheduling\Service\TurnoAdvanceOfferAuditQueryService;
+use common\components\Domain\Scheduling\Application\TurnoAdvanceOfferAuditQueryService;
 use common\models\Scheduling\TurnoAdvanceCampaign;
 use Yii;
 use yii\filters\VerbFilter;

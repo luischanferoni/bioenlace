@@ -3,7 +3,7 @@
 namespace common\tests\unit\organization;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Organization\Service\AgendaWeeklyOccupancyService;
+use common\components\Domain\Organization\Application\AgendaWeeklyOccupancyService;
 
 class AgendaWeeklyOccupancyServiceTest extends Unit
 {

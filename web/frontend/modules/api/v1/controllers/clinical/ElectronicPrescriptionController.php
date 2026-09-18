@@ -7,8 +7,8 @@ use common\components\Domain\Clinical\Prescription\Domain\PrescriptionLegalStatu
 use common\components\Domain\Clinical\Prescription\Application\ElectronicPrescriptionPdfService;
 use common\components\Domain\Clinical\Prescription\Application\Presentation\ElectronicPrescriptionPresentationService;
 use common\components\Domain\Clinical\Prescription\Application\ElectronicPrescriptionService;
-use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
-use common\components\Domain\Person\Representation\Service\PersonRepresentationSubjectService;
+use common\components\Domain\Person\Representation\Domain\RepresentationPermission;
+use common\components\Domain\Person\Representation\Application\PersonRepresentationSubjectService;
 use common\models\Person\PersonRelatedAuditLog;
 use common\components\Platform\Ui\UiScreenService;
 use common\models\Clinical\ElectronicPrescription;

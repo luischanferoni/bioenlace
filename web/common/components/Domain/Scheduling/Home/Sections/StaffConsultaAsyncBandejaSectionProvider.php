@@ -3,7 +3,7 @@
 namespace common\components\Domain\Scheduling\Home\Sections;
 
 use common\components\Platform\Ui\Home\Service\Sections\HomePanelSectionProviderInterface;
-use common\components\Domain\Scheduling\Service\ConsultaAsyncBandejaService;
+use common\components\Domain\Scheduling\Application\ConsultaAsyncBandejaService;
 
 final class StaffConsultaAsyncBandejaSectionProvider implements HomePanelSectionProviderInterface
 {

@@ -10,8 +10,8 @@ use common\models\Person\Persona;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Scheduling\QuirofanoSala;
 use common\models\Organization\ServiciosEfector;
-use common\components\Domain\Scheduling\Service\ReservaModalidadAtencionCatalogService;
-use common\components\Domain\Scheduling\Service\StaffTurnoModalidadInsightService;
+use common\components\Domain\Scheduling\Application\ReservaModalidadAtencionCatalogService;
+use common\components\Domain\Scheduling\Application\StaffTurnoModalidadInsightService;
 use common\models\Scheduling\Turno;
 
 /**

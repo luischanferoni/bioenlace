@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Clinical\Encounter\Application;
 
-use common\components\Domain\Person\Representation\Service\PersonRepresentationAccessService;
-use common\components\Domain\Scheduling\Service\ConsultaAsyncAccessService;
+use common\components\Domain\Person\Representation\Application\PersonRepresentationAccessService;
+use common\components\Domain\Scheduling\Application\ConsultaAsyncAccessService;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
 use common\models\Organization\ProfesionalEfectorServicio;

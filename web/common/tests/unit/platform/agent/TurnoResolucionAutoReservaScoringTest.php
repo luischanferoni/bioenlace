@@ -3,7 +3,7 @@
 namespace common\tests\unit\platform\agent;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Scheduling\Service\TurnoResolucionAutoReservaService;
+use common\components\Domain\Scheduling\Application\TurnoResolucionAutoReservaService;
 use common\models\Scheduling\Turno;
 
 class TurnoResolucionAutoReservaScoringTest extends Unit

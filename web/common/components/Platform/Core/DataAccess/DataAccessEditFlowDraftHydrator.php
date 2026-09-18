@@ -6,7 +6,7 @@ use common\components\Platform\Assistant\Chat\ChatPreprocessContext;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
 use common\components\Platform\Assistant\Service\AssistantDraftNormalizer;
 use common\components\Platform\Core\DataAccess\Edit\EditSparseAspectIds;
-use common\components\Domain\Organization\Service\Efectores\OrganizationEfectorAccess;
+use common\components\Domain\Organization\Application\Efectores\OrganizationEfectorAccess;
 
 /**
  * Enriquece draft para intent genérico data-access.editar.

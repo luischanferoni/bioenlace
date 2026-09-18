@@ -5,7 +5,7 @@ namespace common\tests\unit\platform\ai;
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\Capture\Application\Text\EncounterCaptureExtractionPostProcessPolicy;
 use common\components\Domain\Clinical\Capture\Application\MedicalLlmConfidenceService;
-use common\components\Domain\Terminology\Snomed\SnomedContextualPromptBuilder;
+use common\components\Domain\Terminology\Application\SnomedContextualPromptBuilder;
 use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
 
 class ClinicalTextIaMetadataTest extends Unit

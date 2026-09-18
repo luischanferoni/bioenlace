@@ -2,7 +2,7 @@
 
 namespace common\components\Platform\Assistant\Planning;
 
-use common\components\Domain\Content\Service\InfoContentResolverService;
+use common\components\Domain\Content\Application\InfoContentResolverService;
 use common\components\Platform\Assistant\Chat\Channels\Guide\GuideChannelConfig;
 use common\components\Platform\Assistant\Context\AssistantContextAnchorResolver;
 use common\components\Platform\Assistant\Context\AssistantContextAspectLoaderRegistry;

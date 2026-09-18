@@ -4,8 +4,8 @@ namespace frontend\modules\api\v1\controllers\clinical;
 
 use common\components\Domain\Clinical\Encounter\Application\PatientSummary\PatientEncounterSummaryQueryService;
 use common\components\Domain\Clinical\Encounter\Application\PatientSummary\PatientEncounterSummaryUiFormatter;
-use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
-use common\components\Domain\Person\Representation\Service\PersonRepresentationSubjectService;
+use common\components\Domain\Person\Representation\Domain\RepresentationPermission;
+use common\components\Domain\Person\Representation\Application\PersonRepresentationSubjectService;
 use common\components\Platform\Ui\UiScreenService;
 use common\models\Person\PersonRelatedAuditLog;
 use Yii;

@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Clinical\CarePlan\Application;
 
-use common\components\Domain\Terminology\Snomed\CodificadorSnomedIA;
-use common\components\Domain\Terminology\Snomed\SnomedCodeSystem;
+use common\components\Domain\Terminology\Application\CodificadorSnomedIA;
+use common\components\Domain\Terminology\Domain\SnomedCodeSystem;
 use common\components\Platform\Core\Product\SnomedTerminologyMetadata;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\MedicationRequest;

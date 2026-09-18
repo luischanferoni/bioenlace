@@ -3,8 +3,8 @@
 namespace common\tests\unit\scheduling;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Scheduling\Service\ConsultaAsyncIntakeContextService;
-use common\components\Domain\Scheduling\Service\ConsultasSeguimientoIntakeCatalogService;
+use common\components\Domain\Scheduling\Application\ConsultaAsyncIntakeContextService;
+use common\components\Domain\Scheduling\Application\ConsultasSeguimientoIntakeCatalogService;
 
 class ConsultaAsyncIntakeContextServiceTest extends Unit
 {

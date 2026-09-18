@@ -97,7 +97,7 @@ class EfectoresController extends Controller
     public function actionLicencia($id)
     {
         $model = $this->findModel($id);
-        $svc = \common\components\Domain\Organization\Service\Entitlement\EfectorEncounterEntitlementService::class;
+        $svc = \common\components\Domain\Organization\Application\Entitlement\EfectorEncounterEntitlementService::class;
         $accountId = $svc::resolveAccountIdForEfector((int) $id);
         $account = $accountId
             ? \common\models\Organization\BillingAccount::findOne(['id' => $accountId, 'deleted_at' => null])

@@ -2,8 +2,8 @@
 
 namespace common\tests\unit\organization;
 
-use common\components\Domain\Organization\Service\Billing\InstitutionalEfectorSignupService;
-use common\components\Domain\Organization\Service\Billing\SimulatedPaymentGateway;
+use common\components\Domain\Organization\Application\Billing\InstitutionalEfectorSignupService;
+use common\components\Domain\Organization\Infrastructure\External\Billing\SimulatedPaymentGateway;
 use Codeception\Test\Unit;
 
 class InstitutionalSignupBillingTest extends Unit

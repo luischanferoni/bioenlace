@@ -2,14 +2,14 @@
 
 namespace console\controllers;
 
-use common\components\Domain\Person\Service\Seed\UsuarioDePruebaSeedService;
+use common\components\Domain\Person\Application\Seed\UsuarioDePruebaSeedService;
 use common\components\Domain\Clinical\Laboratory\Application\LaboratoryDemoSeedService;
 use common\components\Domain\Clinical\Laboratory\Application\LaboratoryResultQueryService;
 use common\components\Domain\Clinical\CarePlan\Application\Reminder\CarePlanReminderDemoTimingService;
 use common\components\Domain\Clinical\Prescription\Application\ElectronicPrescriptionDemoSeedService;
 use common\components\Domain\Clinical\Prescription\Application\PrescriptionDocumentSupport;
-use common\components\Domain\Organization\Service\Seed\EfectorDemoSeedService;
-use common\components\Domain\Organization\Service\Seed\MedicoMedGeneralEfectorSeedService;
+use common\components\Domain\Organization\Application\Seed\EfectorDemoSeedService;
+use common\components\Domain\Organization\Application\Seed\MedicoMedGeneralEfectorSeedService;
 use yii\console\Controller;
 use yii\console\ExitCode;
 use yii\db\Query;
@@ -220,7 +220,7 @@ class ClinicalSeedController extends Controller
      */
     public function actionPlayReviewPaciente(): int
     {
-        $service = new \common\components\Domain\Person\Service\Seed\PlayReviewPacienteSeedService();
+        $service = new \common\components\Domain\Person\Application\Seed\PlayReviewPacienteSeedService();
         $plain = trim((string) $this->playPassword) !== '' ? (string) $this->playPassword : null;
 
         try {
@@ -246,8 +246,8 @@ class ClinicalSeedController extends Controller
     public function actionProvinciasArgentina(): int
     {
         try {
-            $result = (new \common\components\Domain\Geo\Service\Seed\ProvinciasArgentinaSeedService())->upsertAll();
-            $vecinos = (new \common\components\Domain\Geo\Service\Seed\ProvinciaVecinosSeedService())
+            $result = (new \common\components\Domain\Geo\Application\Seed\ProvinciasArgentinaSeedService())->upsertAll();
+            $vecinos = (new \common\components\Domain\Geo\Application\Seed\ProvinciaVecinosSeedService())
                 ->upsertForIso2('AR');
         } catch (\Throwable $e) {
             $this->stderr($e->getMessage() . "\n", Console::FG_RED);
@@ -277,8 +277,8 @@ class ClinicalSeedController extends Controller
     public function actionProvinciasUruguay(): int
     {
         try {
-            $result = (new \common\components\Domain\Geo\Service\Seed\ProvinciasUruguaySeedService())->upsertAll();
-            $vecinos = (new \common\components\Domain\Geo\Service\Seed\ProvinciaVecinosSeedService())
+            $result = (new \common\components\Domain\Geo\Application\Seed\ProvinciasUruguaySeedService())->upsertAll();
+            $vecinos = (new \common\components\Domain\Geo\Application\Seed\ProvinciaVecinosSeedService())
                 ->upsertForIso2('UY');
         } catch (\Throwable $e) {
             $this->stderr($e->getMessage() . "\n", Console::FG_RED);
@@ -316,7 +316,7 @@ class ClinicalSeedController extends Controller
             return $uy;
         }
         try {
-            $rec = (new \common\components\Domain\Geo\Service\Seed\GeoRecursosInstitucionalesSeedService())->upsertDefaults();
+            $rec = (new \common\components\Domain\Geo\Application\Seed\GeoRecursosInstitucionalesSeedService())->upsertDefaults();
         } catch (\Throwable $e) {
             $this->stderr($e->getMessage() . "\n", Console::FG_RED);
 
@@ -344,7 +344,7 @@ class ClinicalSeedController extends Controller
     public function actionDepartamentosLocalidadesArgentina(int $reasignarEfectores = 1): int
     {
         try {
-            $provincias = (new \common\components\Domain\Geo\Service\Seed\ProvinciasArgentinaSeedService())->upsertAll();
+            $provincias = (new \common\components\Domain\Geo\Application\Seed\ProvinciasArgentinaSeedService())->upsertAll();
             $this->stdout(
                 sprintf(
                     "Provincias: %d catálogo, %d insertadas, %d actualizadas.\n",
@@ -355,7 +355,7 @@ class ClinicalSeedController extends Controller
                 Console::FG_GREEN
             );
 
-            $geo = new \common\components\Domain\Geo\Service\Seed\DepartamentosLocalidadesArgentinaSeedService();
+            $geo = new \common\components\Domain\Geo\Application\Seed\DepartamentosLocalidadesArgentinaSeedService();
             $result = $geo->upsertAll();
             $this->stdout(
                 sprintf(

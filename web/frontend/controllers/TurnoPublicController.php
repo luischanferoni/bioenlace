@@ -2,7 +2,7 @@
 
 namespace frontend\controllers;
 
-use common\components\Domain\Scheduling\Service\TurnoResolucionLinkTokenService;
+use common\components\Domain\Scheduling\Application\TurnoResolucionLinkTokenService;
 use common\models\Scheduling\Turno;
 use common\models\Scheduling\TurnoResolucion;
 use Yii;

@@ -9,8 +9,8 @@ use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use common\components\Domain\Clinical\Encounter\Application\EncounterJourney\EncounterJourneyService;
 use common\components\Domain\Clinical\Encounter\Application\AppointmentReasonChatGuideService;
-use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
-use common\components\Domain\Person\Representation\Service\PersonRepresentationSubjectService;
+use common\components\Domain\Person\Representation\Domain\RepresentationPermission;
+use common\components\Domain\Person\Representation\Application\PersonRepresentationSubjectService;
 use common\models\Clinical\Encounter;
 use common\models\Scheduling\Turno;
 

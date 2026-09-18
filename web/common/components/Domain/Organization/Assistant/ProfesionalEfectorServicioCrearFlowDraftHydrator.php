@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Organization\Assistant;
 
-use common\components\Domain\Person\Service\PersonCuilService;
+use common\components\Domain\Person\Application\PersonCuilService;
 use common\models\Person\Persona;
 use common\models\Organization\ProfesionalEfectorServicio as ProfesionalEfectorServicioModel;
 use common\models\Organization\Servicio;

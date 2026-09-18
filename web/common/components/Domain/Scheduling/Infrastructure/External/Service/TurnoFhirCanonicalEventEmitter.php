@@ -3,9 +3,9 @@
 namespace common\components\Domain\Scheduling\Infrastructure\External\Service;
 
 use common\components\Domain\Scheduling\Infrastructure\External\Dto\FhirAppointmentInboundDto;
-use common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoCanonicalEventCommand;
-use common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoCanonicalEventService;
-use common\components\Domain\Scheduling\Service\TurnoLifecycleService;
+use common\components\Domain\Scheduling\Application\BehaviorProfile\TurnoCanonicalEventCommand;
+use common\components\Domain\Scheduling\Application\BehaviorProfile\TurnoCanonicalEventService;
+use common\components\Domain\Scheduling\Application\TurnoLifecycleService;
 use common\models\Scheduling\Turno;
 use common\models\Scheduling\TurnoEventoAudit;
 

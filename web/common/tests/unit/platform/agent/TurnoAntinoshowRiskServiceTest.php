@@ -3,7 +3,7 @@
 namespace common\tests\unit\platform\agent;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Scheduling\Service\TurnoAntinoshowRiskService;
+use common\components\Domain\Scheduling\Application\TurnoAntinoshowRiskService;
 
 class TurnoAntinoshowRiskServiceTest extends Unit
 {

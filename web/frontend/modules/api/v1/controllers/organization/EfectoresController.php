@@ -4,8 +4,8 @@ namespace frontend\modules\api\v1\controllers\organization;
 
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
-use common\components\Domain\Organization\Service\Efectores\EfectoresListadosService;
-use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEnEfectorListadoUiService;
+use common\components\Domain\Organization\Application\Efectores\EfectoresListadosService;
+use common\components\Domain\Organization\Application\ProfesionalEfectorServicio\ProfesionalEnEfectorListadoUiService;
 use common\components\Platform\Ui\UiScreenService;
 use yii\web\BadRequestHttpException;
 

@@ -4,7 +4,7 @@ namespace common\components\Domain\Scheduling\Infrastructure\External\Mapper;
 
 use common\components\Domain\Scheduling\Infrastructure\External\Dto\FhirAppointmentInboundDto;
 use common\components\Domain\Scheduling\Infrastructure\External\Service\FhirBundleHelper;
-use common\components\Domain\Person\Service\PersonCuilService;
+use common\components\Domain\Person\Application\PersonCuilService;
 
 final class FhirAppointmentInboundMapper
 {

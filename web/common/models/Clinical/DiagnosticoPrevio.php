@@ -3,7 +3,7 @@
 namespace common\models\Clinical;
 
 use yii\db\ActiveRecord;
-use common\models\Terminology\Snomed\SnomedHallazgos;
+use common\models\Terminology\Application\SnomedHallazgos;
 use common\models\Clinical\DiagnosticoConsultaRepository as DiagnosticoRepo;
 use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
 use common\components\Domain\Clinical\Encounter\Domain\ConditionVerificationStatus;

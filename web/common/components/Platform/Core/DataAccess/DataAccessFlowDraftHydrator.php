@@ -3,8 +3,8 @@
 namespace common\components\Platform\Core\DataAccess;
 
 use common\components\Platform\Assistant\Chat\ChatPreprocessContext;
-use common\components\Domain\Organization\Service\Efectores\OrganizationEfectorAccess;
-use common\components\Domain\Organization\Service\Servicios\ServicioMencionLookupService;
+use common\components\Domain\Organization\Application\Efectores\OrganizationEfectorAccess;
+use common\components\Domain\Organization\Application\Servicios\ServicioMencionLookupService;
 
 /**
  * Enriquece draft para intents genéricos data-access.info / data-access.listar.

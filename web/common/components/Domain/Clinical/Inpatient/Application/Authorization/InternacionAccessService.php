@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\Inpatient\Application\Authorization;
 
 use common\components\Domain\Clinical\Specialty\Domain\InpatientClinicalContext;
 use common\components\Domain\Clinical\Encounter\Application\Authorization\EncounterAccessService;
-use common\components\Domain\Organization\Service\Efectores\OrganizationEfectorAccess;
+use common\components\Domain\Organization\Application\Efectores\OrganizationEfectorAccess;
 use common\models\Clinical\SegNivelInternacion;
 use Yii;
 

@@ -115,7 +115,7 @@ class PersonasController extends Controller
      */
     public function actionListaCandidatos()
     {
-        \common\components\Domain\Person\Service\PersonasMpiLegacyGate::deny();
+        \common\components\Domain\Person\Application\PersonasMpiLegacyGate::deny();
     }
 
     /**
@@ -124,7 +124,7 @@ class PersonasController extends Controller
      */
     public function actionSeleccionarPersona($id = null, $tipo = null)
     {
-        \common\components\Domain\Person\Service\PersonasMpiLegacyGate::deny();
+        \common\components\Domain\Person\Application\PersonasMpiLegacyGate::deny();
     }
 
     /**
@@ -610,7 +610,7 @@ class PersonasController extends Controller
         Yii::$app->response->format = Response::FORMAT_JSON;
         try {
             $body = $this->mergedJsonBodyStaffRegistro();
-            $data = (new \common\components\Domain\Person\Service\RegistroStaffPacienteService())->previewRenaper($body);
+            $data = (new \common\components\Domain\Person\Application\RegistroStaffPacienteService())->previewRenaper($body);
 
             return ['success' => true, 'data' => $data];
         } catch (\InvalidArgumentException $e) {
@@ -628,7 +628,7 @@ class PersonasController extends Controller
         Yii::$app->response->format = Response::FORMAT_JSON;
         try {
             $body = $this->mergedJsonBodyStaffRegistro();
-            $data = (new \common\components\Domain\Person\Service\RegistroStaffPacienteService())->registrar($body);
+            $data = (new \common\components\Domain\Person\Application\RegistroStaffPacienteService())->registrar($body);
 
             return ['success' => true, 'data' => $data, 'persona' => $data['persona'] ?? null];
         } catch (\InvalidArgumentException $e) {

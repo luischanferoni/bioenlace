@@ -42,7 +42,7 @@ class DemoSandboxController extends Controller
      */
     public function actionHardDeletePurged(): int
     {
-        $result = (new \common\components\Domain\Organization\Service\Seed\DemoSandboxPurgeService())
+        $result = (new \common\components\Domain\Organization\Application\Seed\DemoSandboxPurgeService())
             ->hardDeletePurgedResidues();
         $this->stdout(
             sprintf(

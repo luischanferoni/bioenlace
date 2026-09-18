@@ -3,8 +3,8 @@
 namespace frontend\modules\api\v1\controllers\clinical;
 
 use Yii;
-use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
-use common\components\Domain\Person\Representation\Service\PersonRepresentationSubjectService;
+use common\components\Domain\Person\Representation\Domain\RepresentationPermission;
+use common\components\Domain\Person\Representation\Application\PersonRepresentationSubjectService;
 use common\models\Person\PersonRelatedAuditLog;
 use common\components\Domain\Clinical\CarePlan\Application\Reminder\CarePlanReminderPreferenceService;
 use common\components\Domain\Clinical\CarePlan\Application\Reminder\CarePlanReminderScheduleBuilder;
@@ -14,7 +14,7 @@ use common\components\Domain\Clinical\CarePlan\Application\CarePlanMedicationLis
 use common\components\Domain\Clinical\CarePlan\Application\Presentation\CarePlanPresentationService;
 use common\components\Domain\Clinical\CarePlan\Application\CarePlanAdherenceStaffService;
 use common\components\Domain\Clinical\CarePlan\Application\PatientActiveCarePlanQuery;
-use common\components\Domain\Scheduling\Service\ConsultaAsyncSolicitudService;
+use common\components\Domain\Scheduling\Application\ConsultaAsyncSolicitudService;
 use common\components\Platform\Ui\UiScreenService;
 use frontend\modules\api\v1\controllers\BaseController;
 

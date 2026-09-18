@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Scheduling\Assistant;
 
-use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEnEfectorListadoUiService;
-use common\components\Domain\Scheduling\Service\TurnoSlotOfferService;
+use common\components\Domain\Organization\Application\ProfesionalEfectorServicio\ProfesionalEnEfectorListadoUiService;
+use common\components\Domain\Scheduling\Application\TurnoSlotOfferService;
 
 /**
  * Opciones estáticas de selects UI JSON de turnos (preload sin endpoint).

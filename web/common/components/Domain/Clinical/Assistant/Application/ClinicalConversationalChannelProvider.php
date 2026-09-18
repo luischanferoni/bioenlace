@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Assistant;
+namespace common\components\Domain\Clinical\Assistant\Application;
 
 use common\components\Domain\Clinical\Encounter\Application\AiContext\PatientAiContextBuilder;
 use common\components\Platform\Assistant\Chat\Conversational\ConversationalChannelProviderInterface;

@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Home;
+namespace common\components\Domain\Clinical\Home\Application;
 
 use Yii;
 use common\components\Domain\Clinical\Encounter\Application\EncounterAppointmentReasonLookupService;

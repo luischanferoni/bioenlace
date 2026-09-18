@@ -4,7 +4,7 @@ Orquestación delgada expuesta por la API (sin preprocess del chat).
 
 | Clase | API |
 |-------|-----|
-| `ClinicalEncounterEntry` | `POST /api/v1/clinical/encounter/analizar\|guardar` |
+| `Application/ClinicalEncounterEntry` | `POST /api/v1/clinical/encounter/analizar\|guardar` |
 
 Chat pre-consulta (AppointmentReason): API `motivos-consulta/*` → `AppointmentReasonController` → `Encounter/Application/AppointmentReasonMessageService` (no Entry en Assistant).
 

@@ -3,7 +3,7 @@
 namespace frontend\modules\api\v1\controllers\clinical;
 
 use Yii;
-use common\components\Domain\Clinical\Assistant\ClinicalEncounterEntry;
+use common\components\Domain\Clinical\Assistant\Application\ClinicalEncounterEntry;
 use common\components\Domain\Clinical\CarePlan\Application\Dto\MedicationRequestDto;
 use common\components\Domain\Clinical\CarePlan\Application\Dto\ServiceRequestDto;
 use common\components\Domain\Clinical\CarePlan\Application\MedicationRequestService;

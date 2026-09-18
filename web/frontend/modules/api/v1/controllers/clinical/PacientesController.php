@@ -12,7 +12,7 @@ use common\components\Domain\Clinical\Encounter\Application\AppointmentReasonCli
 use common\components\Domain\Clinical\Encounter\Application\AppointmentReasonWindowService;
 use common\components\Domain\Clinical\Encounter\Application\EncounterAppointmentReasonLookupService;
 use common\components\Domain\Clinical\Encounter\Application\EncounterReasonService;
-use common\components\Domain\Clinical\Home\StaffClinicalDayListService;
+use common\components\Domain\Clinical\Home\Application\StaffClinicalDayListService;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
 use common\models\Scheduling\Turno;

@@ -9,10 +9,10 @@
  */
 
 use common\components\Platform\Assistant\Catalog\DataAccessUiActionCatalog;
-use common\components\Domain\Clinical\Assistant\ClinicalConversationalChannelProvider;
-use common\components\Domain\Clinical\Assistant\ClinicalUiActionCatalog;
+use common\components\Domain\Clinical\Assistant\Application\ClinicalConversationalChannelProvider;
+use common\components\Domain\Clinical\Assistant\Application\ClinicalUiActionCatalog;
 use common\components\Domain\Clinical\CareCohort\Application\CarePackUiActionCatalog;
-use common\components\Domain\Clinical\Home\InpatientHomePanelSliceResolver;
+use common\components\Domain\Clinical\Home\Application\InpatientHomePanelSliceResolver;
 use common\components\Domain\Clinical\Home\Sections\EmergencyBoardSectionProvider;
 use common\components\Domain\Clinical\Home\Sections\EmergencyIndicatorsSectionProvider;
 use common\components\Domain\Clinical\Home\Sections\StaffHorarioActivoSectionProvider;

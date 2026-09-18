@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Home;
+namespace common\components\Domain\Clinical\Home\Application;
 
 use common\components\Platform\Ui\Home\Service\HomePanelStaffPanelSliceResolverInterface;
 use common\models\Clinical\Encounter;

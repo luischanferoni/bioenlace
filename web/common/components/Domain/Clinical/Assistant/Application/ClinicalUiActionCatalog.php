@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Assistant;
+namespace common\components\Domain\Clinical\Assistant\Application;
 
 use common\components\Platform\Assistant\Catalog\UiActionCatalogProviderInterface;
 use common\components\Platform\Assistant\Catalog\YamlIntentCatalogService;

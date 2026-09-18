@@ -3,7 +3,7 @@
 namespace common\tests\unit\clinical\Assistant;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Assistant\ClinicalUiActionCatalog;
+use common\components\Domain\Clinical\Assistant\Application\ClinicalUiActionCatalog;
 use common\components\Platform\Assistant\Catalog\UiActionCatalogProviderRegistry;
 
 class ClinicalUiActionCatalogTest extends Unit

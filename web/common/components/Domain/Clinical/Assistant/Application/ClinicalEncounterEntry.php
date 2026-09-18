@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Assistant;
+namespace common\components\Domain\Clinical\Assistant\Application;
 
 use common\components\Domain\Clinical\Capture\Application\EncounterCapturePipelineService;
 use common\components\Domain\Clinical\Capture\Application\EncounterDocumentationService;

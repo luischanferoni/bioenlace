@@ -29,7 +29,7 @@ Domain/Clinical/<Modulo>/
       README.md                 # AR Yii → common/models/Clinical/ (no duplicar)
 ```
 
-Plugins del BC **solo** en raíz Clinical: `Assistant/`, `Home/`, `DataAccess/`.
+Plugins del BC **solo** en raíz Clinical: `Assistant/`, `Home/`, `DataAccess/`. Misma tríada `Application/` · `Domain/` · `Infrastructure/`; además `Home/Sections/` para `*SectionProvider` (no es L1 de módulo de capacidad).
 
 Controllers API y `views/json`: `frontend/modules/api/v1/…` (borde Presentation del deploy; **fuera** de `components/Domain`).
 

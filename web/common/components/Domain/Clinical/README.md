@@ -20,7 +20,7 @@ ADR: [`clinical-modulos-capacidad`](../../../docs/decisions/clinical-modulos-cap
 | `HistoryExchange/` | Cola HC + External |
 | `LegalRecord/` | Export registro legal |
 | `Specialty/` | Odontología / oftalmología / inpatient aux |
-| `Assistant/` `Home/` | Plugins Platform (solo en raíz BC) |
+| `Assistant/` `Home/` | Plugins BC: tríada + `Home/Sections/` (`*SectionProvider`) |
 
 ```text
 <Modulo>/Application/{Authorization,Flows,Agents,Presentation}/

@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Encounter\Application;
 
-use common\components\Domain\Clinical\Specialty\Domain\InpatientClinicalContext;
+use common\components\Domain\Clinical\Inpatient\Domain\InpatientClinicalContext;
 use common\models\Scheduling\Cirugia;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\ConsultaDerivaciones;

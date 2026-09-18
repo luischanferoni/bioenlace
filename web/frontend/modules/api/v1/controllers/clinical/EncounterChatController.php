@@ -4,7 +4,7 @@ namespace frontend\modules\api\v1\controllers\clinical;
 
 use frontend\modules\api\v1\controllers\BaseController;
 use common\models\Clinical\ConsultaChatMessage;
-use common\components\Domain\Clinical\Capture\Application\SecureMediaService;
+use common\components\Domain\Clinical\Encounter\Application\SecureMediaService;
 use common\components\Domain\Scheduling\Application\ConsultaAsyncChatUploadService;
 use common\components\Domain\Scheduling\Application\ConsultaAsyncPushNotifier;
 use common\components\Domain\Scheduling\Application\Agents\ConsultaAsyncBandejaPrioridadAgent;

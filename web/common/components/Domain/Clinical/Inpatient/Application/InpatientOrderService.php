@@ -1,13 +1,13 @@
 <?php
 
-namespace common\components\Domain\Clinical\Specialty\Application;
+namespace common\components\Domain\Clinical\Inpatient\Application;
 
 use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
 use common\components\Domain\Clinical\Encounter\Domain\ConditionVerificationStatus;
 use common\components\Domain\Clinical\CarePlan\Application\CarePlanService;
 use common\components\Domain\Clinical\CarePlan\Application\MedicationRequestService;
 use common\components\Domain\Clinical\CarePlan\Application\ServiceRequestService;
-use common\components\Domain\Clinical\Specialty\Domain\InpatientClinicalContext;
+use common\components\Domain\Clinical\Inpatient\Domain\InpatientClinicalContext;
 use common\models\Clinical\Condition;
 
 /**

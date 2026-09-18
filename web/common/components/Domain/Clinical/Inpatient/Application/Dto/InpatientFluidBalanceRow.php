@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Specialty\Application\Dto;
+namespace common\components\Domain\Clinical\Inpatient\Application\Dto;
 
 /**
  * Vista de balance hídrico (Observation FHIR → shape legacy para UI).

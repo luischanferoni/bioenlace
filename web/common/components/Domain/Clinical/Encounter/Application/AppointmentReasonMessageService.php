@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Encounter\Application;
 
-use common\components\Domain\Clinical\Capture\Application\SecureMediaService;
+use common\components\Domain\Clinical\Encounter\Application\SecureMediaService;
 use common\models\Clinical\AppointmentReasonMessage;
 use Yii;
 

@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Home\Sections;
 
-use common\components\Domain\Clinical\Home\Application\StaffClinicalDayListService;
+use common\components\Domain\Clinical\Home\Application\StaffInpatientsDayListService;
 use common\components\Domain\Organization\Application\ProfesionalHorario\ProfesionalHorarioActivaService;
 use common\components\Platform\Core\Product\AgendaByEncounterClassMetadata;
 use common\components\Platform\Ui\Home\Service\Sections\HomePanelSectionProviderInterface;
@@ -51,7 +51,7 @@ final class InpatientsSectionProvider implements HomePanelSectionProviderInterfa
             ];
         }
 
-        $items = (new StaffClinicalDayListService())->internadosPorEfector();
+        $items = (new StaffInpatientsDayListService())->internadosPorEfector();
 
         return [
             'items' => $items,

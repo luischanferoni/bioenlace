@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Specialty\Domain;
+namespace common\components\Domain\Clinical\Inpatient\Domain;
 
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanCategory;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanStatus;

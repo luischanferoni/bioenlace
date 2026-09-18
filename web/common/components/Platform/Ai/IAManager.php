@@ -1759,7 +1759,7 @@ Texto: {$texto}";
         $similitud = 1 - (levenshtein($original, $suggestion) / max(strlen($original), strlen($suggestion)));
         $confianza += $similitud * 0.3;
 
-        $confidenceClass = 'common\\components\\Domain\\Clinical\\Text\\MedicalLlmConfidenceService';
+        $confidenceClass = 'common\\components\\Domain\\Clinical\\Capture\\Application\\MedicalLlmConfidenceService';
         if (class_exists($confidenceClass)) {
             $confianza += $confidenceClass::contextBoost($contexto);
         }

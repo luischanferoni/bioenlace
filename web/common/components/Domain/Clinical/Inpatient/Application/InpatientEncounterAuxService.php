@@ -1,13 +1,13 @@
 <?php
 
-namespace common\components\Domain\Clinical\Specialty\Application;
+namespace common\components\Domain\Clinical\Inpatient\Application;
 
 use common\models\Clinical\Encounter;
 use common\models\Clinical\MedicationAdministration;
 use common\models\Clinical\NutritionOrder;
 use common\models\Clinical\Observation;
-use common\components\Domain\Clinical\Specialty\Application\Dto\InpatientFluidBalanceRow;
-use common\components\Domain\Clinical\Specialty\Application\Dto\InpatientRegimenRow;
+use common\components\Domain\Clinical\Inpatient\Application\Dto\InpatientFluidBalanceRow;
+use common\components\Domain\Clinical\Inpatient\Application\Dto\InpatientRegimenRow;
 use common\models\Clinical\SegNivelInternacion;
 
 /**

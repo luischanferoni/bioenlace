@@ -1,11 +1,10 @@
 <?php
 
-namespace common\components\Domain\Clinical\Home\Application;
+namespace common\components\Domain\Scheduling\Home\Application;
 
 use Yii;
 use common\components\Domain\Clinical\Encounter\Application\EncounterAppointmentReasonLookupService;
 use common\models\Scheduling\Cirugia;
-use common\models\Organization\InfraestructuraPiso;
 use common\models\Person\Persona;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Scheduling\QuirofanoSala;
@@ -15,9 +14,9 @@ use common\components\Domain\Scheduling\Application\StaffTurnoModalidadInsightSe
 use common\models\Scheduling\Turno;
 
 /**
- * Listados clínicos del día para staff (AMB / IMP piso / IMP quirófano).
+ * Listados de agenda del día para staff (AMB turnos / quirófano).
  */
-final class StaffClinicalDayListService
+final class StaffSchedulingDayListService
 {
     /**
      * Turnos del día para agenda ambulatoria del profesional: pendientes y ya atendidos/en atención.
@@ -150,18 +149,6 @@ final class StaffClinicalDayListService
         ];
     }
 
-    /**
-     * @return array<int, array<string, mixed>>
-     */
-    public function internadosPorEfector(): array
-    {
-        $idEfector = Yii::$app->user->getIdEfector();
-        if (!$idEfector) {
-            return [];
-        }
-
-        return InfraestructuraPiso::getInternadosPorEfector($idEfector);
-    }
 
     /**
      * @return array<int, array<string, mixed>>

@@ -3,7 +3,7 @@
 namespace common\components\Domain\Scheduling\Home\Sections;
 
 use common\components\Platform\Ui\Home\Service\Sections\HomePanelSectionProviderInterface;
-use common\components\Domain\Clinical\Home\Application\StaffClinicalDayListService;
+use common\components\Domain\Scheduling\Home\Application\StaffSchedulingDayListService;
 
 final class AppointmentsDaySectionProvider implements HomePanelSectionProviderInterface
 {
@@ -11,7 +11,7 @@ final class AppointmentsDaySectionProvider implements HomePanelSectionProviderIn
     {
         $fecha = (string) ($context['fecha'] ?? date('Y-m-d'));
         $conPrueba = !empty($context['prueba']);
-        $payload = (new StaffClinicalDayListService())->turnosAmbulatorioMedico($fecha, null, $conPrueba);
+        $payload = (new StaffSchedulingDayListService())->turnosAmbulatorioMedico($fecha, null, $conPrueba);
 
         return [
             'items' => $payload['turnos'],

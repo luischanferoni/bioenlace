@@ -2,7 +2,7 @@
 
 namespace common\models\Clinical\Input;
 
-use common\components\Domain\Clinical\Specialty\Application\Dto\InpatientFluidBalanceRow;
+use common\components\Domain\Clinical\Inpatient\Application\Dto\InpatientFluidBalanceRow;
 use yii\base\Model;
 
 /**

@@ -21,7 +21,7 @@ use common\components\Domain\Clinical\CarePlan\Application\MedicationRequestServ
 use common\components\Domain\Clinical\CarePlan\Application\ServiceRequestService;
 use common\components\Domain\Clinical\CarePlan\Application\TreatmentRequestSnomedCodingService;
 use common\components\Domain\Clinical\Specialty\Domain\EncounterDefinitionSpecialtyRegistry;
-use common\components\Domain\Clinical\Specialty\Application\InpatientEncounterAuxService;
+use common\components\Domain\Clinical\Inpatient\Application\InpatientEncounterAuxService;
 use common\components\Domain\Clinical\Specialty\Application\OdontologyEncounterService;
 use common\components\Domain\Clinical\Specialty\Application\OphthalmologyEncounterService;
 use common\components\Domain\Clinical\Encounter\Application\EncounterReasonService;

@@ -12,7 +12,7 @@ use common\components\Domain\Clinical\Encounter\Application\AppointmentReasonCli
 use common\components\Domain\Clinical\Encounter\Application\AppointmentReasonWindowService;
 use common\components\Domain\Clinical\Encounter\Application\EncounterAppointmentReasonLookupService;
 use common\components\Domain\Clinical\Encounter\Application\EncounterReasonService;
-use common\components\Domain\Clinical\Home\Application\StaffClinicalDayListService;
+use common\components\Domain\Scheduling\Home\Application\StaffSchedulingDayListService;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
 use common\models\Scheduling\Turno;
@@ -248,7 +248,7 @@ class PacientesController extends BaseController
      */
     public static function agendaAmbulatorioJson(string $fecha, int $idContextoProfesional, bool $conTurnoPrueba, ?int $pesId = null): array
     {
-        return (new StaffClinicalDayListService())->turnosAmbulatorioMedico(
+        return (new StaffSchedulingDayListService())->turnosAmbulatorioMedico(
             $fecha,
             $idContextoProfesional,
             $conTurnoPrueba,

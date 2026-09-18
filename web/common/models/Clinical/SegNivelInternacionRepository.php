@@ -4,7 +4,7 @@ namespace common\models\Clinical;
 
 use common\models\Organization\InfraestructuraCama;
 use common\components\Domain\Clinical\CarePlan\Application\CarePlanLifecycleService;
-use common\components\Domain\Clinical\Specialty\Application\InpatientEncounterAuxService;
+use common\components\Domain\Clinical\Inpatient\Application\InpatientEncounterAuxService;
 use Yii;
 
 /*

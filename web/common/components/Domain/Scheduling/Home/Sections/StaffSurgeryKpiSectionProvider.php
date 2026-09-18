@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Home\Sections;
 
-use common\components\Domain\Clinical\Home\Application\StaffClinicalDayListService;
+use common\components\Domain\Scheduling\Home\Application\StaffSchedulingDayListService;
 use common\components\Platform\Ui\Home\Service\Sections\HomePanelSectionProviderInterface;
 use common\models\Scheduling\Cirugia;
 use Yii;
@@ -20,7 +20,7 @@ final class StaffSurgeryKpiSectionProvider implements HomePanelSectionProviderIn
         }
 
         $fecha = (string) ($context['fecha'] ?? date('Y-m-d'));
-        $items = (new StaffClinicalDayListService())->cirugiasAgendadasPorEfectorYFecha($fecha);
+        $items = (new StaffSchedulingDayListService())->cirugiasAgendadasPorEfectorYFecha($fecha);
 
         $pendientes = 0;
         $enCurso = 0;

@@ -1,8 +1,7 @@
 <?php
 
-namespace common\components\Domain\Clinical\Assistant\Application;
+namespace common\components\Domain\Clinical\Encounter\Application\AiContext;
 
-use common\components\Domain\Clinical\Encounter\Application\AiContext\PatientAiContextBuilder;
 use common\components\Platform\Assistant\Chat\Conversational\ConversationalChannelProviderInterface;
 use Yii;
 

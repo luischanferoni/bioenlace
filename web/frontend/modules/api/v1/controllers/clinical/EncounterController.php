@@ -3,7 +3,8 @@
 namespace frontend\modules\api\v1\controllers\clinical;
 
 use Yii;
-use common\components\Domain\Clinical\Assistant\Application\ClinicalEncounterEntry;
+use common\components\Domain\Clinical\Capture\Application\EncounterCapturePipelineService;
+use common\components\Domain\Clinical\Capture\Application\EncounterDocumentationService;
 use common\components\Domain\Clinical\CarePlan\Application\Dto\MedicationRequestDto;
 use common\components\Domain\Clinical\CarePlan\Application\Dto\ServiceRequestDto;
 use common\components\Domain\Clinical\CarePlan\Application\MedicationRequestService;
@@ -40,14 +41,14 @@ class EncounterController extends BaseController
 
     public function actionAnalizar()
     {
-        $out = ClinicalEncounterEntry::analizar($this->mergeRequestBody());
+        $out = (new EncounterDocumentationService())->analizar($this->mergeRequestBody());
 
         return $this->applyServiceHttpStatus($out);
     }
 
     public function actionGuardar()
     {
-        $out = ClinicalEncounterEntry::guardar($this->mergeRequestBody());
+        $out = (new EncounterDocumentationService())->guardar($this->mergeRequestBody());
 
         return $this->applyServiceHttpStatus($out);
     }
@@ -59,7 +60,7 @@ class EncounterController extends BaseController
     {
         $body = $this->mergeRequestBody();
         $file = UploadedFile::getInstanceByName('file');
-        $out = ClinicalEncounterEntry::capturaCrearOSubir($body, $file);
+        $out = (new EncounterCapturePipelineService())->crearOSubir($body, $file);
 
         return $this->applyServiceHttpStatus($out);
     }
@@ -67,7 +68,7 @@ class EncounterController extends BaseController
     /** POST: STT síncrono desde audio ya subido. */
     public function actionCapturaTranscribir()
     {
-        $out = ClinicalEncounterEntry::capturaTranscribir($this->mergeRequestBody());
+        $out = (new EncounterCapturePipelineService())->transcribir($this->mergeRequestBody());
 
         return $this->applyServiceHttpStatus($out);
     }
@@ -75,7 +76,7 @@ class EncounterController extends BaseController
     /** POST: análisis IA síncrono desde transcript persistido. */
     public function actionCapturaAnalizar()
     {
-        $out = ClinicalEncounterEntry::capturaAnalizar($this->mergeRequestBody());
+        $out = (new EncounterCapturePipelineService())->analizar($this->mergeRequestBody());
 
         return $this->applyServiceHttpStatus($out);
     }
@@ -83,7 +84,7 @@ class EncounterController extends BaseController
     /** POST: guardar clínico síncrono desde draft de análisis. */
     public function actionCapturaGuardar()
     {
-        $out = ClinicalEncounterEntry::capturaGuardar($this->mergeRequestBody());
+        $out = (new EncounterCapturePipelineService())->guardar($this->mergeRequestBody());
 
         return $this->applyServiceHttpStatus($out);
     }
@@ -91,7 +92,7 @@ class EncounterController extends BaseController
     /** GET: listar capturas abiertas (meta liviana; análisis en captura/ver). */
     public function actionCapturaListar()
     {
-        $out = ClinicalEncounterEntry::capturaListar(Yii::$app->request->get());
+        $out = (new EncounterCapturePipelineService())->listar(Yii::$app->request->get());
 
         return $this->applyServiceHttpStatus($out);
     }
@@ -100,7 +101,7 @@ class EncounterController extends BaseController
     public function actionCapturaVer()
     {
         $params = array_merge(Yii::$app->request->get(), $this->mergeRequestBody());
-        $out = ClinicalEncounterEntry::capturaVer($params);
+        $out = (new EncounterCapturePipelineService())->ver($params);
 
         return $this->applyServiceHttpStatus($out);
     }
@@ -108,7 +109,7 @@ class EncounterController extends BaseController
     /** POST: aplicar resoluciones de issues pendientes y regenerar review. */
     public function actionCapturaAplicarResoluciones()
     {
-        $out = ClinicalEncounterEntry::capturaAplicarResoluciones($this->mergeRequestBody());
+        $out = (new EncounterCapturePipelineService())->aplicarResoluciones($this->mergeRequestBody());
 
         return $this->applyServiceHttpStatus($out);
     }
@@ -116,7 +117,7 @@ class EncounterController extends BaseController
     /** POST: descartar captura y borrar audio. */
     public function actionCapturaDescartar()
     {
-        $out = ClinicalEncounterEntry::capturaDescartar($this->mergeRequestBody());
+        $out = (new EncounterCapturePipelineService())->descartar($this->mergeRequestBody());
 
         return $this->applyServiceHttpStatus($out);
     }
@@ -124,7 +125,7 @@ class EncounterController extends BaseController
     /** GET: descargar audio de una captura abierta. */
     public function actionCapturaAudio()
     {
-        $out = ClinicalEncounterEntry::capturaAudio(Yii::$app->request->get());
+        $out = (new EncounterCapturePipelineService())->resolveAudioDownload(Yii::$app->request->get());
         if (isset($out['success']) && $out['success'] === false) {
             return $this->applyServiceHttpStatus($out);
         }

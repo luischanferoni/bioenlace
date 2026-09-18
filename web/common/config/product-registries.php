@@ -9,9 +9,12 @@
  */
 
 use common\components\Platform\Assistant\Catalog\DataAccessUiActionCatalog;
-use common\components\Domain\Clinical\Assistant\Application\ClinicalConversationalChannelProvider;
-use common\components\Domain\Clinical\Assistant\Application\ClinicalUiActionCatalog;
 use common\components\Domain\Clinical\CareCohort\Application\CarePackUiActionCatalog;
+use common\components\Domain\Clinical\CarePlan\Application\CarePlanUiActionCatalog;
+use common\components\Domain\Clinical\Emergency\Application\EmergencyUiActionCatalog;
+use common\components\Domain\Clinical\Encounter\Application\AiContext\ClinicalConversationalChannelProvider;
+use common\components\Domain\Clinical\Encounter\Application\EncounterUiActionCatalog;
+use common\components\Domain\Clinical\Home\Application\HomeUiActionCatalog;
 use common\components\Domain\Clinical\Home\Application\InpatientHomePanelSliceResolver;
 use common\components\Domain\Clinical\Home\Sections\EmergencyBoardSectionProvider;
 use common\components\Domain\Clinical\Home\Sections\EmergencyIndicatorsSectionProvider;
@@ -22,7 +25,10 @@ use common\components\Domain\Clinical\Home\Sections\PatientConditionsActiveSecti
 use common\components\Domain\Clinical\Home\Sections\StaffGuardiaKpiSectionProvider;
 use common\components\Domain\Clinical\Home\Sections\StaffInternacionKpiSectionProvider;
 use common\components\Domain\Clinical\Inpatient\Application\Authorization\ClinicalInternacionStaffAccessPolicy;
+use common\components\Domain\Clinical\Inpatient\Application\InpatientUiActionCatalog;
+use common\components\Domain\Clinical\Laboratory\Application\LaboratoryUiActionCatalog;
 use common\components\Domain\Clinical\Encounter\Application\Authorization\ClinicalEncounterAccessPolicy;
+use common\components\Domain\Clinical\Prescription\Application\PrescriptionUiActionCatalog;
 use common\components\Platform\Ui\Home\Service\Sections\StaffSessionContextSectionProvider;
 use common\components\Platform\Core\DataAccess\DataAccessEditFlowDraftHydrator;
 use common\components\Platform\Core\DataAccess\DataAccessFlowDraftHydrator;
@@ -134,7 +140,13 @@ return [
     ],
 
     'uiActionCatalogProviders' => [
-        ClinicalUiActionCatalog::class,
+        EncounterUiActionCatalog::class,
+        CarePlanUiActionCatalog::class,
+        LaboratoryUiActionCatalog::class,
+        PrescriptionUiActionCatalog::class,
+        EmergencyUiActionCatalog::class,
+        InpatientUiActionCatalog::class,
+        HomeUiActionCatalog::class,
         CarePackUiActionCatalog::class,
         PersonRepresentationUiActionCatalog::class,
         DataAccessUiActionCatalog::class,

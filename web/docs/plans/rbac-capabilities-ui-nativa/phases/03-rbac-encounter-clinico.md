@@ -14,7 +14,7 @@ Migración + sync:
 |---------------|---------------|-------|
 | `encounter.ver_como_staff` | `front_ver_historial_paciente` | `ver-consulta-como-staff`, ghost staff-summary, alternos en `ApiRoutePermissionResolver` |
 | `encounter.capturar` | `analisis` | `captura-*`, `guardar`, `analizar` |
-| `encounter.documentar_nota` | nuevo | Subconjunto TBD en `ClinicalEncounterEntry` / policy |
+| `encounter.documentar_nota` | nuevo | Subconjunto TBD en Capture / EncounterAccess policy |
 
 ### 3.2 Grants por rol
 

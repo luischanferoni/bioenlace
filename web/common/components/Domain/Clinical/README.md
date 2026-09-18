@@ -20,7 +20,9 @@ ADR: [`clinical-modulos-capacidad`](../../../docs/decisions/clinical-modulos-cap
 | `HistoryExchange/` | Cola HC + External |
 | `LegalRecord/` | Export registro legal |
 | `Specialty/` | Odontología / oftalmología / inpatient aux |
-| `Assistant/` `Home/` | Plugins BC: tríada + `Home/Sections/` (`*SectionProvider`) |
+| `Home/` | Plugin BC: panel + `Sections/` (`*SectionProvider`) |
+
+Catálogos UI del asistente: `*/Application/*UiActionCatalog` por módulo (Encounter, CarePlan, Lab, …), registrados en `product-registries.php`.
 
 ```text
 <Modulo>/Application/{Authorization,Flows,Agents,Presentation}/

@@ -16,4 +16,4 @@ Estado del módulo: [../README.md](../README.md).
 ## Próximo
 
 - Tipar documentación extraída (filas por categoría) y resoluciones como VO.
-- Adelgazar `EncounterCapturePipelineService` en use cases por etapa.
+- Mover cuerpos de etapa desde `Pipeline/ClinicalCapturePipelineSupport` a cada use case.

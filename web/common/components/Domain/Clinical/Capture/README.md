@@ -2,50 +2,44 @@
 
 Capacidad: **intake de documentación clínica** — texto/audio → normalización → extracción → issues resolubles → checkpoint de captura.
 
-Norte de diseño: [ddd-norte-modelo-rico.md](../../../../../docs/decisions/ddd-norte-modelo-rico.md).
+Norte: [ddd-norte-modelo-rico.md](../../../../../docs/decisions/ddd-norte-modelo-rico.md).
 
-## Límites del módulo
+## Límites
 
-| Sí (Capture) | No (otro dueño) |
-|--------------|-----------------|
-| STT clínico, texto, post-proceso de extracción | Ciclo de vida Encounter (`Encounter/`) |
-| Completitud vs definition + issues | Cola/triage de guardia (`Emergency/`) |
-| Pipeline por etapas `/captura/*` | Persistencia multi-módulo de “guardar nota” → `Encounter/Application/Documentation/` |
-| Catálogos de actor / plantillas de workflow de definition | Care plan / órdenes (`CarePlan/`) |
-
-**Nombre:** se mantiene `Capture`. El guardar nota vive en Encounter (`EncounterDocumentationService`).
+| Sí (Capture) | No |
+|--------------|-----|
+| Pipeline `/captura/*`, STT, post-proceso, issues | Guardar nota FHIR → `Encounter/Application/Documentation/` |
 
 ## Forma
 
 ```text
-Capture/
-  Application/           # AnalyzeClinicalNote; EncounterCapturePipelineService (facade etapas)
-  Domain/
-    Model/               # ClinicalCapture + Stage + Id; IssueFactory
-    Policy/
-    Port/                # SpeechToText, Terminology, ClinicalCaptureRepository
-    *Catalog
-  Infrastructure/
-    Logging/ Persistence/ SpeechToText/ Terminology/
+Application/
+  CreateOrUploadClinicalCapture, TranscribeClinicalCapture,
+  AnalyzeClinicalCaptureDraft, SaveClinicalCapture,
+  ApplyClinicalCaptureResolutions, DiscardClinicalCapture,
+  ListClinicalCaptures, ViewClinicalCapture, ResolveClinicalCaptureAudio
+  AnalyzeClinicalNote          # análisis suelto (sin checkpoint)
+  EncounterCapturePipelineService  # facade compat
+  Pipeline/ClinicalCapturePipelineSupport  # helpers + orquestación
+Domain/Model|Policy|Port
+Infrastructure/Logging|Persistence|SpeechToText|Terminology
 ```
 
 ## Oleadas
 
-| Oleada | Estado | Contenido |
-|--------|--------|-----------|
-| 1 | hecha | Policies/IssueFactory → Domain; adapters Infrastructure; ports; ADR norte |
-| 2 | hecha | Aggregate + repo; pipeline etapas vía aggregate; `AnalyzeClinicalNote` |
-| 3 | hecha | DocumentationService → Encounter; API analizar → Capture, guardar → Encounter |
-| 3b | hecha | `crearOSubir` / `aplicarResoluciones` vía aggregate; sin `analizar*` en Documentation |
+| Oleada | Estado |
+|--------|--------|
+| 1–3b | hechas (Domain rico, Documentation en Encounter, pipeline vía aggregate) |
+| 4 | hecha — use cases por etapa; controller apunta a ellos; Support interno |
 
 ## Deuda restante
 
-- Policies aún leen knobs Platform (`ClinicalTextIaMetadata`).
-- Completitud resuelve `*Input` en models/.
-- `ConsultaProcesamientoService` legacy; pipeline sigue siendo facade HTTP ancha.
-- VO tipados para filas extraídas / resoluciones.
+- Policies aún leen knobs Platform.
+- Completitud vía `*Input` en models/.
+- VO tipados para filas/resoluciones.
+- Mover cuerpos de etapa desde Support a cada use case (hoy delegan).
 
 ## Referencias
 
-- Producto: [captura-clinica.md](../../../../../docs/producto/captura-clinica.md)
 - Persistencia: `Encounter/Application/Documentation/EncounterDocumentationService`
+- Producto: [captura-clinica.md](../../../../../docs/producto/captura-clinica.md)

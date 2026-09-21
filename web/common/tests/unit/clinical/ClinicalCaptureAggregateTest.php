@@ -73,11 +73,35 @@ class ClinicalCaptureAggregateTest extends Unit
         $done->discard();
     }
 
-    public function testCannotMutateWhenNotOpen(): void
+    public function testAcceptInitialTranscriptDoesNotCountSttAttempt(): void
     {
-        $c = ClinicalCapture::start('client-5', 1, 2);
-        $c->discard();
-        $this->expectException(\InvalidArgumentException::class);
-        $c->markTranscribed('x');
+        $c = ClinicalCapture::start('client-6', 1, 2);
+        $c->acceptInitialTranscript('texto device', ['provenance' => 'device']);
+        verify($c->stage())->equals(ClinicalCaptureStage::TRANSCRIBED);
+        verify($c->attemptsStt())->equals(0);
+    }
+
+    public function testApplyResolutionSnapshot(): void
+    {
+        $c = ClinicalCapture::start('client-7', 1, 2);
+        $c->acceptInitialTranscript('nota');
+        $c->markReadyForReview('nota', ['X' => []], ['ok' => true]);
+        $c->applyResolutionSnapshot(['X' => [['a' => 1]]], ['ok' => true, 'datosExtraidos' => ['X' => [['a' => 1]]]]);
+        verify($c->stage())->equals(ClinicalCaptureStage::READY_FOR_REVIEW);
+        verify($c->attemptsAnalysis())->equals(1);
+        verify($c->datosExtraidos()['X'][0]['a'])->equals(1);
+    }
+
+    public function testResetAfterAudioReplace(): void
+    {
+        $c = ClinicalCapture::start('client-8', 1, 2);
+        $c->acceptInitialTranscript('viejo');
+        $c->markReadyForReview('viejo', ['A' => []], ['x' => 1], 'tok', ['id1']);
+        $c->attachAudio('uploads/encounter_capture/x/a.m4a', 'audio/mp4');
+        $c->resetAfterAudioReplace();
+        verify($c->stage())->equals(ClinicalCaptureStage::UPLOADED);
+        verify($c->hasTranscript())->false();
+        verify($c->datosExtraidos())->equals([]);
+        verify($c->hasAudio())->true();
     }
 }

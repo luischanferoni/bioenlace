@@ -4,7 +4,6 @@ namespace common\components\Domain\Clinical\Capture\Application;
 
 /**
  * Caso de uso: análisis IA de nota clínica (intake Capture).
- * Entry point preferido frente a {@see EncounterDocumentationService::analizar}.
  */
 final class AnalyzeClinicalNote
 {

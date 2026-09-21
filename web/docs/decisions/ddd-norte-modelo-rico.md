@@ -72,6 +72,6 @@ Guía operativa del módulo: `web/common/components/Domain/Clinical/Capture/READ
 
 ## Consecuencias
 
-- Capture piloto: policies/VO/ports (oleada 1); aggregate `ClinicalCapture` + repo (oleada 2); persistencia de nota en `Encounter/Application/Documentation/` (oleada 3).
+- Capture piloto: policies/ports (1); aggregate + repo (2); Documentation en Encounter + pipeline vía aggregate (3/3b).
 - Tests de forma de carpetas siguen; no reemplazan revisión de capa.
 - Documentación de arquitectura apunta aquí como norte de diseño.

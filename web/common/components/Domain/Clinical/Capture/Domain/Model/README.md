@@ -9,11 +9,11 @@ Estado del módulo: [../README.md](../README.md).
 
 | Tipo | Clase |
 |------|--------|
-| Aggregate | `ClinicalCapture` — etapas, transcript, extracción, completar/descartar |
+| Aggregate | `ClinicalCapture` — etapas, transcript, extracción, audio, resoluciones, completar/descartar |
 | VO / id | `ClinicalCaptureId`, `ClinicalCaptureStage` |
 | Factory issues | `ClinicalCaptureIssueFactory` |
 
 ## Próximo
 
 - Tipar documentación extraída (filas por categoría) y resoluciones como VO.
-- Más mutaciones del pipeline vía aggregate (crear/subir audio, guardar completo).
+- Adelgazar `EncounterCapturePipelineService` en use cases por etapa.

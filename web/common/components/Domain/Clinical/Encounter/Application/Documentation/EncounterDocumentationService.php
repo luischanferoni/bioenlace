@@ -7,7 +7,6 @@ use common\components\Domain\Clinical\Encounter\Domain\ConditionVerificationStat
 use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
 
 use common\components\Domain\Clinical\Emergency\Application\GuardiaEncounterOutcomeService;
-use common\components\Domain\Clinical\Capture\Application\AnalyzeClinicalNote;
 use common\components\Domain\Clinical\Capture\Application\ClinicalCaptureResolutionApplier;
 use common\components\Domain\Clinical\Capture\Application\Workflow\EncounterCaptureCategoryResolver;
 use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureCompletenessValidator;
@@ -41,8 +40,7 @@ use yii\base\Component;
 /**
  * Persistencia de documentación clínica sobre Encounter (conditions, care plan, especialidades, …).
  *
- * Análisis IA (intake) sigue en Capture (`ConsultaProcesamientoService`).
- * Este servicio es el borde Encounter del “guardar nota”.
+ * Intake / análisis IA: Capture (`AnalyzeClinicalNote`, pipeline). Este servicio solo persiste al guardar.
  */
 class EncounterDocumentationService extends Component
 {
@@ -75,32 +73,6 @@ class EncounterDocumentationService extends Component
         $this->inpatientAux = $inpatientAux ?? new InpatientEncounterAuxService();
         $this->specialtyRegistry = $specialtyRegistry ?? new EncounterDefinitionSpecialtyRegistry();
         parent::__construct($config);
-    }
-
-    /**
-     * Análisis IA — delega al intake Capture ({@see AnalyzeClinicalNote} / ConsultaProcesamientoService).
-     *
-     * @param array<string, mixed> $body
-     * @return array<string, mixed>
-     */
-    public function analizar(array $body): array
-    {
-        return (new AnalyzeClinicalNote())->execute($body);
-    }
-
-    /**
-     * Análisis IA sobre texto ya transcrito/procesado (sin resolver STT).
-     *
-     * @return array<string, mixed>
-     */
-    public function analizarTextoProcesado(
-        string $textoProcesado,
-        ?string $nombreServicio,
-        $idConfiguracion,
-        ?int $subjectPersonaId = null
-    ): array {
-        return (new AnalyzeClinicalNote())
-            ->executeOnProcessedText($textoProcesado, $nombreServicio, $idConfiguracion, $subjectPersonaId);
     }
 
     /**

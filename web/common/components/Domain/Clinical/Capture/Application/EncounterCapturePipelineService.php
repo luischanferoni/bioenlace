@@ -92,56 +92,43 @@ final class EncounterCapturePipelineService
             $parentId = null;
         }
 
-        $now = date('Y-m-d H:i:s');
-        $capture = EncounterCapture::findOne(['client_capture_id' => $clientId]);
-        if ($capture === null) {
-            $capture = new EncounterCapture();
-            $capture->client_capture_id = $clientId;
-            $capture->subject_persona_id = $subjectPersonaId;
-            $capture->parent_type = $parent;
-            $capture->parent_id = $parentId;
-            $capture->created_by_user_id = $userId;
-            $capture->stage = EncounterCapture::STAGE_UPLOADED;
-            $capture->created_at = $now;
-            $capture->attempts_stt = 0;
-            $capture->attempts_analysis = 0;
-            $capture->attempts_save = 0;
+        $existing = $this->captures->findByClientCaptureId($clientId);
+        if ($existing === null) {
+            $domain = ClinicalCapture::start($clientId, $subjectPersonaId, $userId, $parent, $parentId);
         } else {
-            if ((int) $capture->subject_persona_id !== $subjectPersonaId) {
+            if ($existing->subjectPersonaId() !== $subjectPersonaId) {
                 return $this->fail(409, 'client_capture_id ya existe para otra persona.');
             }
-            if ($capture->stage === EncounterCapture::STAGE_COMPLETED) {
+            if ($existing->stage() === ClinicalCaptureStage::COMPLETED) {
                 return $this->fail(409, 'La captura ya fue completada.');
             }
-            if ($capture->stage === EncounterCapture::STAGE_DISCARDED) {
+            if ($existing->stage() === ClinicalCaptureStage::DISCARDED) {
                 return $this->fail(409, 'La captura fue descartada. Use un nuevo client_capture_id.');
             }
+            $domain = $existing;
         }
 
-        $capture->updated_at = $now;
-        $capture->last_error = null;
-
         if ($file !== null) {
-            $saved = $this->persistUploadedAudio($capture, $file);
-            if ($saved !== null) {
-                return $saved;
+            $stored = $this->storeUploadedAudioFile(
+                $domain->clientCaptureId(),
+                $domain->audioRelativePath(),
+                $file
+            );
+            if (isset($stored['__fail'])) {
+                return $stored['__fail'];
             }
-            if ($capture->stage === EncounterCapture::STAGE_STT_FAILED
-                || $capture->stage === EncounterCapture::STAGE_ANALYSIS_FAILED
-                || $capture->stage === EncounterCapture::STAGE_SAVE_FAILED
-                || $capture->stage === EncounterCapture::STAGE_TRANSCRIBED
-                || $capture->stage === EncounterCapture::STAGE_READY_FOR_REVIEW
-            ) {
-                // Reemplazo de audio: vuelve a checkpoint de upload.
-                $capture->stage = EncounterCapture::STAGE_UPLOADED;
-                $capture->transcript = null;
-                $capture->texto_procesado = null;
-                $capture->setDatosExtraidos(null);
-                $capture->setAnalysisResponse(null);
-                $capture->analysis_cache_token = null;
-                $capture->setStagedItemIds(null);
-            } elseif ($capture->isNewRecord || $capture->stage === EncounterCapture::STAGE_UPLOADED) {
-                $capture->stage = EncounterCapture::STAGE_UPLOADED;
+            $hadProgress = in_array($domain->stage(), [
+                ClinicalCaptureStage::STT_FAILED,
+                ClinicalCaptureStage::ANALYSIS_FAILED,
+                ClinicalCaptureStage::SAVE_FAILED,
+                ClinicalCaptureStage::TRANSCRIBED,
+                ClinicalCaptureStage::READY_FOR_REVIEW,
+            ], true);
+            $domain->attachAudio($stored['relative'], $stored['mime']);
+            if ($hadProgress) {
+                $domain->resetAfterAudioReplace();
+            } else {
+                $domain->markUploaded();
             }
         }
 
@@ -160,45 +147,35 @@ final class EncounterCapturePipelineService
             }
             $acceptDevice = $quality === null || !empty($quality['ok']);
             if ($acceptDevice) {
-                $capture->transcript = $texto;
-                $capture->setSttMeta(array_merge($stt, [
+                $domain->acceptInitialTranscript($texto, array_merge($stt, [
                     'provenance' => ClinicalSpeechInputResolver::PROVENANCE_DEVICE,
                     'quality' => $quality,
                 ]));
-                $capture->stage = EncounterCapture::STAGE_TRANSCRIBED;
-            } elseif ($capture->hasAudio()) {
-                // Texto de dispositivo no confiable: queda UPLOADED para STT servidor.
-                $capture->setSttMeta(array_merge($stt, [
+            } elseif ($domain->hasAudio()) {
+                $domain->markUploaded(array_merge($stt, [
                     'quality' => $quality,
                     'pending_server_stt' => true,
                 ]));
-                $capture->stage = EncounterCapture::STAGE_UPLOADED;
             } else {
-                // Sin audio y texto malo: igual aceptamos como transcript editable.
-                $capture->transcript = $texto;
-                $capture->setSttMeta(array_merge($stt, [
+                $domain->acceptInitialTranscript($texto, array_merge($stt, [
                     'provenance' => ClinicalSpeechInputResolver::PROVENANCE_TEXT_ONLY,
                     'quality' => $quality,
                 ]));
-                $capture->stage = EncounterCapture::STAGE_TRANSCRIBED;
             }
-        } elseif ($texto !== '' && $forceServer && !$capture->hasAudio()) {
-            $capture->transcript = $texto;
-            $capture->setSttMeta(array_merge($stt, [
+        } elseif ($texto !== '' && $forceServer && !$domain->hasAudio()) {
+            $domain->acceptInitialTranscript($texto, array_merge($stt, [
                 'provenance' => ClinicalSpeechInputResolver::PROVENANCE_TEXT_ONLY,
             ]));
-            $capture->stage = EncounterCapture::STAGE_TRANSCRIBED;
-        } elseif (!$capture->hasAudio() && $texto === '') {
+        } elseif (!$domain->hasAudio() && $texto === '') {
             return $this->fail(400, 'Envíe audio (file) y/o texto de la consulta.');
-        } elseif ($capture->hasAudio() && $texto === '') {
-            $capture->stage = EncounterCapture::STAGE_UPLOADED;
-            if ($stt !== []) {
-                $capture->setSttMeta($stt);
-            }
+        } elseif ($domain->hasAudio() && $texto === '') {
+            $domain->markUploaded($stt !== [] ? $stt : null);
         }
 
-        if (!$capture->save()) {
-            return $this->fail(500, 'No se pudo persistir la captura: ' . implode(', ', $capture->getFirstErrors()));
+        try {
+            $capture = $this->persistDomain($domain);
+        } catch (\Throwable $e) {
+            return $this->fail(500, 'No se pudo persistir la captura: ' . $e->getMessage());
         }
 
         $sttMeta = $capture->getSttMeta();
@@ -662,9 +639,10 @@ final class EncounterCapturePipelineService
             return $capture;
         }
 
-        if (!in_array($capture->stage, [
-            EncounterCapture::STAGE_READY_FOR_REVIEW,
-            EncounterCapture::STAGE_SAVE_FAILED,
+        $domain = $this->captureRows->toAggregate($capture);
+        if (!in_array($domain->stage(), [
+            ClinicalCaptureStage::READY_FOR_REVIEW,
+            ClinicalCaptureStage::SAVE_FAILED,
         ], true)) {
             return $this->fail(409, 'La captura no tiene análisis para resolver.', $capture);
         }
@@ -674,10 +652,9 @@ final class EncounterCapturePipelineService
             return $this->fail(400, 'resolutions es obligatorio.', $capture);
         }
 
-        $datos = $capture->getDatosExtraidos();
+        $datos = $domain->datosExtraidos();
         if ($datos === []) {
-            $analysis = $capture->getAnalysisResponse();
-            $datos = $this->extractDatosExtraidosFromAnalizar($analysis);
+            $datos = $this->extractDatosExtraidosFromAnalizar($domain->analysisResponse());
         }
         if ($datos === []) {
             return $this->fail(400, 'No hay datos extraídos para resolver.', $capture);
@@ -687,11 +664,11 @@ final class EncounterCapturePipelineService
         $datos = (new ClinicalCaptureResolutionApplier())->apply($datos, $resolutions, $categorias);
 
         $completeness = (new EncounterCaptureCompletenessValidator())->validate($datos, $categorias);
-        $analysis = $capture->getAnalysisResponse();
-        $textoOriginal = trim((string) ($analysis['texto_original'] ?? $capture->transcript ?? ''));
+        $analysis = $domain->analysisResponse();
+        $textoOriginal = trim((string) ($analysis['texto_original'] ?? $domain->transcript() ?? ''));
         $textoProcesado = isset($analysis['texto_procesado'])
             ? (string) $analysis['texto_procesado']
-            : ($capture->texto_procesado !== null ? (string) $capture->texto_procesado : null);
+            : ($domain->textoProcesado() !== null ? (string) $domain->textoProcesado() : null);
         $review = (new EncounterCaptureReviewPresenter())->build(
             $datos,
             $categorias,
@@ -702,7 +679,6 @@ final class EncounterCapturePipelineService
         );
         $review = $this->applyEpisodeDedupToReview($capture, $review, $textoOriginal);
 
-        $capture->setDatosExtraidos($datos);
         if ($analysis === []) {
             $analysis = ['success' => true];
         }
@@ -719,11 +695,13 @@ final class EncounterCapturePipelineService
             'issues' => $completeness['issues'] ?? [],
             'message' => $completeness['message'] ?? '',
         ];
-        $capture->setAnalysisResponse($analysis);
-        $capture->stage = EncounterCapture::STAGE_READY_FOR_REVIEW;
-        $capture->last_error = null;
-        $capture->updated_at = date('Y-m-d H:i:s');
-        if (!$capture->save(false)) {
+
+        try {
+            $domain->applyResolutionSnapshot($datos, $analysis);
+            $capture = $this->persistDomain($domain);
+        } catch (\InvalidArgumentException $e) {
+            return $this->fail(409, $e->getMessage(), $capture);
+        } catch (\Throwable $e) {
             return $this->fail(500, 'No se pudieron guardar las resoluciones.', $capture);
         }
 
@@ -846,10 +824,15 @@ final class EncounterCapturePipelineService
     /**
      * @return array<string, mixed>|null error response
      */
-    private function persistUploadedAudio(EncounterCapture $capture, UploadedFile $file): ?array
+    /**
+     * Guarda el archivo en disco; no muta el aggregate.
+     *
+     * @return array{relative: string, mime: string|null}|array{__fail: array<string, mixed>}
+     */
+    private function storeUploadedAudioFile(string $clientCaptureId, ?string $previousRelativePath, UploadedFile $file): array
     {
         if (!$file->tempName) {
-            return $this->fail(400, 'Archivo de audio inválido.');
+            return ['__fail' => $this->fail(400, 'Archivo de audio inválido.')];
         }
 
         $ext = strtolower((string) ($file->getExtension() ?: pathinfo((string) $file->name, PATHINFO_EXTENSION)));
@@ -857,31 +840,33 @@ final class EncounterCapturePipelineService
             $ext = 'm4a';
         }
         if (!preg_match('/^[a-z0-9]+$/', $ext)) {
-            return $this->fail(400, 'Extensión de audio no permitida.');
+            return ['__fail' => $this->fail(400, 'Extensión de audio no permitida.')];
         }
 
-        $dirRelative = self::AUDIO_DIR . '/' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $capture->client_capture_id);
+        $dirRelative = self::AUDIO_DIR . '/' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $clientCaptureId);
         $basePath = Yii::getAlias('@frontend/web') . '/' . $dirRelative;
         if (!is_dir($basePath) && !@mkdir($basePath, 0755, true)) {
-            return $this->fail(500, 'No se pudo crear el directorio de audio.');
+            return ['__fail' => $this->fail(500, 'No se pudo crear el directorio de audio.')];
         }
 
         $filename = 'audio_' . date('YmdHis') . '_' . uniqid() . '.' . $ext;
         $relative = $dirRelative . '/' . $filename;
         $fullPath = Yii::getAlias('@frontend/web') . '/' . $relative;
 
-        if ($capture->hasAudio()) {
-            $this->deleteAudioFile($capture);
+        if (is_string($previousRelativePath) && trim($previousRelativePath) !== '') {
+            $stub = new EncounterCapture();
+            $stub->audio_relative_path = $previousRelativePath;
+            $this->deleteAudioFile($stub);
         }
 
         if (!$file->saveAs($fullPath)) {
-            return $this->fail(500, 'Error al guardar el archivo de audio.');
+            return ['__fail' => $this->fail(500, 'Error al guardar el archivo de audio.')];
         }
 
-        $capture->audio_relative_path = $relative;
-        $capture->audio_mime = $file->type ?: $this->guessMime($ext);
-
-        return null;
+        return [
+            'relative' => $relative,
+            'mime' => $file->type ?: $this->guessMime($ext),
+        ];
     }
 
     private function absoluteAudioPath(EncounterCapture $capture): ?string

@@ -237,6 +237,78 @@ final class ClinicalCapture
     }
 
     /**
+     * Tras reemplazar audio: vuelve a UPLOADED y limpia transcript/análisis.
+     */
+    public function resetAfterAudioReplace(): void
+    {
+        $this->assertOpen();
+        $this->stage = ClinicalCaptureStage::UPLOADED;
+        $this->transcript = null;
+        $this->textoProcesado = null;
+        $this->datosExtraidos = [];
+        $this->analysisResponse = [];
+        $this->analysisCacheToken = null;
+        $this->stagedItemIds = [];
+        $this->lastError = null;
+    }
+
+    /**
+     * Checkpoint UPLOADED (p. ej. audio sin texto, o pending server STT).
+     *
+     * @param array<string, mixed>|null $sttMeta
+     */
+    public function markUploaded(?array $sttMeta = null): void
+    {
+        $this->assertOpen();
+        $this->stage = ClinicalCaptureStage::UPLOADED;
+        if ($sttMeta !== null) {
+            $this->sttMeta = $sttMeta;
+        }
+        $this->lastError = null;
+    }
+
+    /**
+     * Transcript inicial (device / texto) sin contar attempt de STT servidor.
+     *
+     * @param array<string, mixed> $sttMeta
+     */
+    public function acceptInitialTranscript(string $transcript, array $sttMeta = []): void
+    {
+        $this->assertOpen();
+        $text = trim($transcript);
+        if ($text === '') {
+            throw new \InvalidArgumentException('Transcripción vacía.');
+        }
+        $this->transcript = $text;
+        if ($sttMeta !== []) {
+            $this->sttMeta = array_merge($this->sttMeta, $sttMeta);
+        }
+        $this->stage = ClinicalCaptureStage::TRANSCRIBED;
+        $this->lastError = null;
+    }
+
+    /**
+     * Tras aplicar resoluciones del profesional: refresca snapshot sin contar analysis attempt.
+     *
+     * @param array<string, mixed> $datosExtraidos
+     * @param array<string, mixed> $analysisResponse
+     */
+    public function applyResolutionSnapshot(array $datosExtraidos, array $analysisResponse): void
+    {
+        $this->assertOpen();
+        if (!in_array($this->stage, [
+            ClinicalCaptureStage::READY_FOR_REVIEW,
+            ClinicalCaptureStage::SAVE_FAILED,
+        ], true)) {
+            throw new \InvalidArgumentException('La captura no tiene análisis para resolver.');
+        }
+        $this->datosExtraidos = $datosExtraidos;
+        $this->analysisResponse = $analysisResponse;
+        $this->stage = ClinicalCaptureStage::READY_FOR_REVIEW;
+        $this->lastError = null;
+    }
+
+    /**
      * @param array<string, mixed> $sttMeta
      */
     public function markTranscribed(string $transcript, array $sttMeta = []): void

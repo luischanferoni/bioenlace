@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\Capture\Application;
 
 use common\components\Domain\Clinical\Capture\Application\Pipeline\ClinicalCapturePipelineSupport;
 
-/** Caso de uso: ver captura con review / datosExtraidos. */
+/** Caso de uso: ver captura con review. */
 final class ViewClinicalCapture
 {
     private ClinicalCapturePipelineSupport $pipeline;
@@ -20,6 +20,12 @@ final class ViewClinicalCapture
      */
     public function execute(array $body): array
     {
-        return $this->pipeline->ver($body);
+
+        $capture = $this->pipeline->findCapture($body, false);
+        if (is_array($capture)) {
+            return $capture;
+        }
+
+        return $this->pipeline->ok($capture, 'OK', true);
     }
 }

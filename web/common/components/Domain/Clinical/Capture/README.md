@@ -19,8 +19,8 @@ Application/
   ApplyClinicalCaptureResolutions, DiscardClinicalCapture,
   ListClinicalCaptures, ViewClinicalCapture, ResolveClinicalCaptureAudio
   AnalyzeClinicalNote          # análisis suelto (sin checkpoint)
-  EncounterCapturePipelineService  # facade compat
-  Pipeline/ClinicalCapturePipelineSupport  # helpers + orquestación
+  EncounterCapturePipelineService  # facade compat → use cases
+  Pipeline/ClinicalCapturePipelineSupport  # helpers compartidos
 Domain/Model|Policy|Port
 Infrastructure/Logging|Persistence|SpeechToText|Terminology
 ```
@@ -31,13 +31,13 @@ Infrastructure/Logging|Persistence|SpeechToText|Terminology
 |--------|--------|
 | 1–3b | hechas (Domain rico, Documentation en Encounter, pipeline vía aggregate) |
 | 4 | hecha — use cases por etapa; controller apunta a ellos; Support interno |
+| 4b | hecha — cuerpos de etapa en cada use case; Support solo helpers |
 
 ## Deuda restante
 
 - Policies aún leen knobs Platform.
 - Completitud vía `*Input` en models/.
 - VO tipados para filas/resoluciones.
-- Mover cuerpos de etapa desde Support a cada use case (hoy delegan).
 
 ## Referencias
 

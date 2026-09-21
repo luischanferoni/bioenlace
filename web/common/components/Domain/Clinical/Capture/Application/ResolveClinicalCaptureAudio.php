@@ -20,6 +20,23 @@ final class ResolveClinicalCaptureAudio
      */
     public function execute(array $query): array
     {
-        return $this->pipeline->resolveAudioDownload($query);
+        $capture = $this->pipeline->findCapture($query, false);
+        if (is_array($capture)) {
+            return $capture;
+        }
+        if (!$capture->hasAudio()) {
+            return $this->pipeline->fail(404, 'La captura no tiene audio.', $capture);
+        }
+        $absolute = $this->pipeline->absoluteAudioPath($capture);
+        if ($absolute === null || !is_file($absolute)) {
+            return $this->pipeline->fail(404, 'Archivo de audio no encontrado.', $capture);
+        }
+
+        return [
+            'path' => $absolute,
+            'mime' => $capture->audio_mime ?: 'audio/mp4',
+            'filename' => basename($absolute),
+            'capture' => $capture,
+        ];
     }
 }

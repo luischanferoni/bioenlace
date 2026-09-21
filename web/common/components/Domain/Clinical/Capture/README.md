@@ -14,14 +14,13 @@ Norte: [ddd-norte-modelo-rico.md](../../../../../docs/decisions/ddd-norte-modelo
 
 ```text
 Application/
-  ClinicalCaptureRowContracts              # wiring registry/validator/applier
+  ClinicalCaptureRowContracts, CompositeClinicalCaptureRowContractRegistry
   Text/EncounterCapturePostProcessKnobs
-  Pipeline/ClinicalCapturePipelineSupport
-  use cases + facade…
+  Pipeline/…, use cases…
 Domain/Catalog|Model|Policy|Port
-  Catalog/EncounterCaptureActorCatalog, EncounterDefinitionWorkflowCatalog, EncounterClassCodes
+  Policy/EncounterReasonRowContract   # piloto tipología en Domain
   Port/ClinicalCaptureRowContractRegistry
-Infrastructure/…/YiiModelClinicalCaptureRowContractRegistry
+Infrastructure/…/YiiModelClinicalCaptureRowContractRegistry  # resto de tipologías
 ```
 
 ## Oleadas
@@ -35,11 +34,12 @@ Infrastructure/…/YiiModelClinicalCaptureRowContractRegistry
 | 5b | hecha — VO `ClinicalCaptureResolution` en Applier |
 | 6 | hecha — completitud/resoluciones vía port `ClinicalCaptureRowContractRegistry` (adapter Yii/`*Input`) |
 | 6b | hecha — Domain Policy sin default Infra; factory Application; catálogos en `Domain/Catalog` |
+| 7 | hecha — `templateForOffering(itemName, serviceName, class)`; Domain Catalog sin AR |
+| 7b | parcial — piloto `EncounterReasonRowContract` + registry compuesto Domain→Yii |
 
 ## Deuda restante
 
-- Semántica de fila aún en `*Input` / tipologías `models/Clinical` (mover a Domain VO cuando se toque cada tipología).
-- `EncounterDefinitionWorkflowCatalog::templateForServicio` aún tipa AR `Servicio` (param de Application).
+- Semántica de fila de tipologías restantes aún en `*Input` / models (mismo patrón que EncounterReason).
 
 ## Referencias
 

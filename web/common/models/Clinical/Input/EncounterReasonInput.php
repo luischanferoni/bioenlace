@@ -2,15 +2,17 @@
 
 namespace common\models\Clinical\Input;
 
+use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterReasonRowContract;
 use yii\base\Model;
 
 /**
  * Encounter.reason (chief complaint) en captura → Condition rol CC.
+ * Completitud/resoluciones: {@see EncounterReasonRowContract}.
  */
 final class EncounterReasonInput extends Model
 {
-    public const FIELD_MOTIVO = 'Motivo';
-    public const FIELD_CODIGO = 'Codigo';
+    public const FIELD_MOTIVO = EncounterReasonRowContract::FIELD_MOTIVO;
+    public const FIELD_CODIGO = EncounterReasonRowContract::FIELD_CODIGO;
 
     /** @var string|null */
     public $motivo;
@@ -32,24 +34,8 @@ final class EncounterReasonInput extends Model
     public static function fromExtractedRow($row): self
     {
         $model = new self();
-        if (is_string($row)) {
-            $model->motivo = trim($row);
-
-            return $model;
-        }
-        if (!is_array($row)) {
-            return $model;
-        }
-        $model->motivo = self::firstNonEmpty($row, [
-            self::FIELD_MOTIVO,
-            'texto',
-            'termino',
-            'descripcion',
-            'label',
-            'display',
-            'motivo',
-        ]);
-        $model->codigo = self::firstNonEmpty($row, [self::FIELD_CODIGO, 'codigo', 'code']);
+        $model->motivo = EncounterReasonRowContract::extractMotivo($row) ?: null;
+        $model->codigo = EncounterReasonRowContract::extractCodigo($row) ?: null;
 
         return $model;
     }
@@ -83,34 +69,6 @@ final class EncounterReasonInput extends Model
      */
     public static function applyResolutionToRow(array $row, string $field, mixed $value): array
     {
-        $row[$field] = $value;
-        if ($field === self::FIELD_MOTIVO) {
-            $row['texto'] = $value;
-            $row['display'] = $value;
-        }
-        if ($field === self::FIELD_CODIGO) {
-            $row['codigo'] = $value;
-        }
-
-        return $row;
-    }
-
-    /**
-     * @param array<string, mixed> $row
-     * @param list<string> $keys
-     */
-    private static function firstNonEmpty(array $row, array $keys): ?string
-    {
-        foreach ($keys as $key) {
-            if (!array_key_exists($key, $row)) {
-                continue;
-            }
-            $v = trim((string) $row[$key]);
-            if ($v !== '') {
-                return $v;
-            }
-        }
-
-        return null;
+        return EncounterReasonRowContract::applyResolution($row, $field, $value);
     }
 }

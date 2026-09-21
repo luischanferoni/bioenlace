@@ -4,17 +4,16 @@ namespace common\components\Domain\Clinical\Capture\Application;
 
 use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureCompletenessValidator;
 use common\components\Domain\Clinical\Capture\Domain\Port\ClinicalCaptureRowContractRegistry;
-use common\components\Domain\Clinical\Capture\Infrastructure\Persistence\YiiModelClinicalCaptureRowContractRegistry;
 
 /**
- * Wiring Application → Infrastructure para contratos de fila de captura.
+ * Wiring Application → Domain contratos + Infrastructure fallback.
  * El Domain Policy no instancia adapters.
  */
 final class ClinicalCaptureRowContracts
 {
     public static function registry(): ClinicalCaptureRowContractRegistry
     {
-        return new YiiModelClinicalCaptureRowContractRegistry();
+        return new CompositeClinicalCaptureRowContractRegistry();
     }
 
     public static function completenessValidator(

@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Clinical\Capture\Application;
 
+use common\components\Domain\Clinical\Capture\Application\Workflow\ClinicalOperationalContextResolver;
 use common\components\Domain\Clinical\Capture\Domain\Catalog\EncounterDefinitionWorkflowCatalog;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterDefinition;
@@ -29,7 +30,11 @@ final class EncounterDefinitionBootstrapService
         }
 
         $servicio = Servicio::findOne($serviceId);
-        $template = EncounterDefinitionWorkflowCatalog::templateForServicio($servicio, $encounterClass);
+        $template = EncounterDefinitionWorkflowCatalog::templateForOffering(
+            $servicio !== null ? (string) $servicio->item_name : '',
+            $servicio !== null ? (string) $servicio->nombre : '',
+            $encounterClass
+        );
 
         $model = new EncounterDefinition();
         $model->service_id = $serviceId;

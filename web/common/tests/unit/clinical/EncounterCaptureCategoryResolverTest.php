@@ -56,19 +56,15 @@ class EncounterCaptureCategoryResolverTest extends Unit
         $this->assertCount(1, $sv);
     }
 
-    public function testTemplateForServicioEnfermeria(): void
+    public function testTemplateForOfferingEnfermeria(): void
     {
-        $servicio = new \common\models\Organization\Servicio();
-        $servicio->item_name = 'enfermeria';
-        $servicio->nombre = 'ENFERMERIA';
-
         $this->assertSame(
             EncounterDefinitionWorkflowCatalog::TEMPLATE_IMP_NURSING,
-            EncounterDefinitionWorkflowCatalog::templateForServicio($servicio, Encounter::ENCOUNTER_CLASS_IMP)
+            EncounterDefinitionWorkflowCatalog::templateForOffering('enfermeria', 'ENFERMERIA', Encounter::ENCOUNTER_CLASS_IMP)
         );
         $this->assertSame(
             EncounterDefinitionWorkflowCatalog::TEMPLATE_EMER_NURSING,
-            EncounterDefinitionWorkflowCatalog::templateForServicio($servicio, Encounter::ENCOUNTER_CLASS_EMER)
+            EncounterDefinitionWorkflowCatalog::templateForOffering('enfermeria', 'ENFERMERIA', Encounter::ENCOUNTER_CLASS_EMER)
         );
     }
 

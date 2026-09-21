@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\Capture\Domain\Catalog;
 
 /**
- * Plantillas declarativas de workflow_json para {@see \common\models\Clinical\EncounterDefinition}.
+ * Plantillas declarativas de workflow_json para definiciones de captura por oferta/clase.
  */
 final class EncounterDefinitionWorkflowCatalog
 {
@@ -94,15 +94,11 @@ final class EncounterDefinitionWorkflowCatalog
 
     /**
      * Plantilla según oferta del centro (`item_name` + nombre) y clase FHIR.
+     * Application extrae esos strings del AR Servicio; Domain no tipa persistencia.
      */
-    public static function templateForServicio(?\common\models\Organization\Servicio $servicio, string $encounterClass): string
+    public static function templateForOffering(string $itemName, string $serviceName, string $encounterClass): string
     {
-        $itemName = '';
-        $nombre = '';
-        if ($servicio !== null) {
-            $itemName = mb_strtolower(trim((string) $servicio->item_name));
-            $nombre = (string) $servicio->nombre;
-        }
+        $itemName = mb_strtolower(trim($itemName));
         if ($itemName === 'enfermeria') {
             if ($encounterClass === EncounterClassCodes::IMP) {
                 return self::TEMPLATE_IMP_NURSING;
@@ -114,7 +110,7 @@ final class EncounterDefinitionWorkflowCatalog
             return self::TEMPLATE_AMB_NURSING;
         }
 
-        return self::templateForServiceName($nombre, $encounterClass);
+        return self::templateForServiceName($serviceName, $encounterClass);
     }
 
     public static function templateForServiceName(string $serviceName, string $encounterClass): string

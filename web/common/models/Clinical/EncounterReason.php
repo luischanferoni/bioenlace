@@ -2,12 +2,15 @@
 
 namespace common\models\Clinical;
 
+use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterReasonRowContract;
 use common\models\Clinical\Input\EncounterReasonInput;
 
 /**
  * Tipología de captura — Encounter.reason / chief complaint (categoría `EncounterReason`).
  * Persistencia: {@see \common\components\Domain\Clinical\Encounter\Application\EncounterReasonService}
  * → Condition con rol CC.
+ *
+ * Contrato Domain: {@see EncounterReasonRowContract}.
  */
 final class EncounterReason extends \yii\base\Model
 {
@@ -25,11 +28,12 @@ final class EncounterReason extends \yii\base\Model
      */
     public static function completenessForExtractedRow($row): array
     {
+        $assessment = EncounterReasonRowContract::assess($row);
         $input = EncounterReasonInput::fromExtractedRow($row);
 
         return [
-            'missing_fields' => $input->missingFieldsForCompleteness(),
-            'label' => $input->rowLabel(),
+            'missing_fields' => $assessment->missingFields(),
+            'label' => $assessment->label(),
             'input' => $input,
         ];
     }
@@ -40,6 +44,6 @@ final class EncounterReason extends \yii\base\Model
      */
     public static function applyResolutionToRow(array $row, string $field, mixed $value): array
     {
-        return EncounterReasonInput::applyResolutionToRow($row, $field, $value);
+        return EncounterReasonRowContract::applyResolution($row, $field, $value);
     }
 }

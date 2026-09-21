@@ -4,6 +4,8 @@ namespace common\components\Domain\Clinical\Capture\Application;
 
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureIssueFactory;
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureResolution;
+use common\components\Domain\Clinical\Capture\Domain\Port\ClinicalCaptureRowContractRegistry;
+use common\components\Domain\Clinical\Capture\Infrastructure\Persistence\YiiModelClinicalCaptureRowContractRegistry;
 
 /**
  * Aplica resoluciones del profesional sobre datosExtraidos (mapa categoría → filas).
@@ -13,6 +15,13 @@ use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureResolu
  */
 final class ClinicalCaptureResolutionApplier
 {
+    private ClinicalCaptureRowContractRegistry $rowContracts;
+
+    public function __construct(?ClinicalCaptureRowContractRegistry $rowContracts = null)
+    {
+        $this->rowContracts = $rowContracts ?? new YiiModelClinicalCaptureRowContractRegistry();
+    }
+
     /**
      * @param array<string, mixed> $extraidos
      * @param array<string, mixed> $resolutions mapa issue_id → value
@@ -244,9 +253,12 @@ final class ClinicalCaptureResolutionApplier
             $row[$field] = $value;
         }
 
-        $modelo = $this->modeloForCategory($category, $categorias);
-        if ($modelo !== null && method_exists($modelo, 'applyResolutionToRow')) {
-            $row = $modelo::applyResolutionToRow($row, $field, $value);
+        $modelo = $this->modeloKeyForCategory($category, $categorias);
+        if ($modelo !== null) {
+            $applied = $this->rowContracts->applyResolution($modelo, $row, $field, $value);
+            if ($applied !== null) {
+                $row = $applied;
+            }
         }
 
         $rows[$index] = $row;
@@ -264,9 +276,9 @@ final class ClinicalCaptureResolutionApplier
         if (array_key_exists($category, $extraidos)) {
             return $category;
         }
-        $modelo = $this->modeloForCategory($category, $categorias);
+        $modelo = $this->modeloKeyForCategory($category, $categorias);
         if ($modelo !== null) {
-            $short = $this->shortClassName($modelo);
+            $short = $this->shortModeloName($modelo);
             if ($short !== '' && array_key_exists($short, $extraidos)) {
                 return $short;
             }
@@ -282,9 +294,11 @@ final class ClinicalCaptureResolutionApplier
     }
 
     /**
+     * Clave `modelo` de la categoría (short name o FQCN), sin resolver clase.
+     *
      * @param list<array<string, mixed>> $categorias
      */
-    private function modeloForCategory(string $category, array $categorias): ?string
+    private function modeloKeyForCategory(string $category, array $categorias): ?string
     {
         $want = $this->fold($category);
         foreach ($categorias as $cat) {
@@ -294,20 +308,8 @@ final class ClinicalCaptureResolutionApplier
             $title = trim((string) ($cat['titulo'] ?? ''));
             if ($title !== '' && $this->fold($title) === $want) {
                 $modelo = trim((string) ($cat['modelo'] ?? ''));
-                if ($modelo === '') {
-                    return null;
-                }
-                if (str_contains($modelo, '\\')) {
-                    return class_exists($modelo) ? $modelo : null;
-                }
-                foreach (['\\common\\models\\Clinical\\', '\\common\\models\\'] as $prefix) {
-                    $class = $prefix . $modelo;
-                    if (class_exists($class)) {
-                        return $class;
-                    }
-                }
 
-                return null;
+                return $modelo !== '' ? $modelo : null;
             }
         }
 
@@ -355,11 +357,11 @@ final class ClinicalCaptureResolutionApplier
         return false;
     }
 
-    private function shortClassName(string $class): string
+    private function shortModeloName(string $modelo): string
     {
-        $pos = strrpos($class, '\\');
+        $pos = strrpos($modelo, '\\');
 
-        return $pos === false ? $class : substr($class, $pos + 1);
+        return $pos === false ? $modelo : substr($modelo, $pos + 1);
     }
 
     private function fold(string $key): string

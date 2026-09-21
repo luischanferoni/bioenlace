@@ -14,15 +14,13 @@ Norte: [ddd-norte-modelo-rico.md](../../../../../docs/decisions/ddd-norte-modelo
 
 ```text
 Application/
-  CreateOrUploadClinicalCapture, TranscribeClinicalCapture,
-  AnalyzeClinicalCaptureDraft, SaveClinicalCapture,
-  ApplyClinicalCaptureResolutions, DiscardClinicalCapture,
-  ListClinicalCaptures, ViewClinicalCapture, ResolveClinicalCaptureAudio
-  AnalyzeClinicalNote          # análisis suelto (sin checkpoint)
+  CreateOrUploadClinicalCapture, TranscribeClinicalCapture, …
   EncounterCapturePipelineService  # facade compat → use cases
   Pipeline/ClinicalCapturePipelineSupport  # helpers compartidos
+  Text/EncounterCapturePostProcessKnobs    # inyecta knobs Platform → Domain Policy
 Domain/Model|Policy|Port
-Infrastructure/Logging|Persistence|SpeechToText|Terminology
+  Port/ClinicalCaptureRowContractRegistry  # completitud/resoluciones sin *Input en Policy
+Infrastructure/…/YiiModelClinicalCaptureRowContractRegistry  # adapter *Input/models
 ```
 
 ## Oleadas
@@ -33,12 +31,13 @@ Infrastructure/Logging|Persistence|SpeechToText|Terminology
 | 4 | hecha — use cases por etapa; controller apunta a ellos; Support interno |
 | 4b | hecha — cuerpos de etapa en cada use case; Support solo helpers |
 | 5 | hecha — Domain Policy sin Platform; knobs vía `EncounterCapturePostProcessKnobs` |
-| 5b | parcial — VO `ClinicalCaptureResolution` en Applier; filas/`*Input` pendientes |
+| 5b | hecha — VO `ClinicalCaptureResolution` en Applier |
+| 6 | hecha — completitud/resoluciones vía port `ClinicalCaptureRowContractRegistry` (adapter Yii/`*Input`) |
 
 ## Deuda restante
 
-- Completitud vía `*Input` en models/ (sustituir por contratos/VO de fila).
-- VO tipados para filas extraídas (resoluciones: hecho el VO base).
+- Semántica de fila aún en `*Input` / tipologías `models/Clinical` (mover a Domain VO cuando se toque cada tipología).
+- Default del registry en Domain Policy apunta a Infrastructure (transitorio).
 
 ## Referencias
 

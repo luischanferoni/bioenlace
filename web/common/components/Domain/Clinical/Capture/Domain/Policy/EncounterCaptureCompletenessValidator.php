@@ -2,17 +2,24 @@
 
 namespace common\components\Domain\Clinical\Capture\Domain\Policy;
 
+use common\components\Domain\Clinical\Capture\Domain\Port\ClinicalCaptureRowContractRegistry;
+use common\components\Domain\Clinical\Capture\Infrastructure\Persistence\YiiModelClinicalCaptureRowContractRegistry;
+
 /**
  * Completitud de captura clínica vs categorías del EncounterDefinition
- * (`requerido` + contrato de dominio por modelo / `campos_requeridos` legacy).
+ * (`requerido` + contrato de fila vía {@see ClinicalCaptureRowContractRegistry} / `campos_requeridos` legacy).
  *
- * Si el modelo declara `completenessForExtractedRow`, se usa ese contrato;
- * si no, se aplica la lista plana `campos_requeridos`.
- *
- * Deuda: resolución de clases `*Input` en models/ (transitoria hasta VO/ports de fila).
+ * Default del registry: adapter Yii/`*Input` (Infrastructure). Inyectar en tests o al migrar VO.
  */
 final class EncounterCaptureCompletenessValidator
 {
+    private ClinicalCaptureRowContractRegistry $rowContracts;
+
+    public function __construct(?ClinicalCaptureRowContractRegistry $rowContracts = null)
+    {
+        $this->rowContracts = $rowContracts ?? new YiiModelClinicalCaptureRowContractRegistry();
+    }
+
     /**
      * @param array<string, mixed> $extraidos mapa categoría → filas (datosExtraidos)
      * @param list<array<string, mixed>> $categorias de {@see EncounterDefinition::getCategoriasParaPrompt}
@@ -52,27 +59,21 @@ final class EncounterCaptureCompletenessValidator
                 continue;
             }
 
-            if ($this->usesDomainRowContract($modelo)) {
+            if ($modelo !== '' && $this->rowContracts->supports($modelo)) {
                 foreach ($rows as $index => $row) {
-                    $check = $this->domainCompletenessForRow($modelo, $row);
-                    if ($check['missing_fields'] === []) {
+                    $assessment = $this->rowContracts->assess($modelo, $row, $title, (int) $index);
+                    if ($assessment === null || $assessment->isComplete()) {
                         continue;
                     }
                     $incompleteItems[] = [
                         'category' => $title,
                         'index' => (int) $index,
-                        'label' => $check['label'],
-                        'missing_fields' => $check['missing_fields'],
+                        'label' => $assessment->label(),
+                        'missing_fields' => $assessment->missingFields(),
                     ];
-                    $input = $check['input'] ?? null;
-                    if (is_object($input) && method_exists($input, 'buildIssues')) {
-                        foreach ($input->buildIssues($title, (int) $index) as $issue) {
-                            if (is_array($issue)) {
-                                $issues[] = $issue;
-                            }
-                        }
+                    foreach ($assessment->issues() as $issue) {
+                        $issues[] = $issue;
                     }
-                    // Sin buildIssues / sin catálogo: incomplete_items alcanza; no texto libre.
                 }
                 continue;
             }
@@ -92,7 +93,6 @@ final class EncounterCaptureCompletenessValidator
                     'label' => $this->rowLabel($row, $campos),
                     'missing_fields' => $missingFields,
                 ];
-                // Campos legacy sin Input.buildIssues: no emitir issues de texto libre.
             }
         }
 
@@ -106,65 +106,6 @@ final class EncounterCaptureCompletenessValidator
             'issues' => $issues,
             'message' => $this->buildMessage($missingCategories, $incompleteItems),
         ];
-    }
-
-    private function usesDomainRowContract(string $modelo): bool
-    {
-        return $this->domainCompletenessHandler($modelo) !== null;
-    }
-
-    /**
-     * @param array<string, mixed>|string $row
-     * @return array{missing_fields: list<string>, label: string, input?: object}
-     */
-    private function domainCompletenessForRow(string $modelo, $row): array
-    {
-        $handler = $this->domainCompletenessHandler($modelo);
-        if ($handler === null) {
-            return ['missing_fields' => [], 'label' => 'ítem'];
-        }
-        $check = $handler($row);
-
-        return [
-            'missing_fields' => $check['missing_fields'] ?? [],
-            'label' => $check['label'] ?? 'ítem',
-            'input' => $check['input'] ?? null,
-        ];
-    }
-
-    /**
-     * @return (callable(array<string, mixed>|string): array{missing_fields: list<string>, label: string, input?: object})|null
-     */
-    private function domainCompletenessHandler(string $modelo): ?callable
-    {
-        $class = $this->resolveModeloClass($modelo);
-        if ($class === null || !method_exists($class, 'completenessForExtractedRow')) {
-            return null;
-        }
-
-        return [$class, 'completenessForExtractedRow'];
-    }
-
-    private function resolveModeloClass(string $modelo): ?string
-    {
-        $modelo = trim($modelo);
-        if ($modelo === '') {
-            return null;
-        }
-        if (str_contains($modelo, '\\')) {
-            return class_exists($modelo) ? $modelo : null;
-        }
-        if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $modelo)) {
-            return null;
-        }
-        foreach (['\\common\\models\\Clinical\\', '\\common\\models\\'] as $prefix) {
-            $class = $prefix . $modelo;
-            if (class_exists($class)) {
-                return $class;
-            }
-        }
-
-        return null;
     }
 
     /**
@@ -232,7 +173,6 @@ final class EncounterCaptureCompletenessValidator
         if ($raw === []) {
             return [];
         }
-        // Mapa asociativo único (IA a veces no envuelve en []).
         if ($this->isAssocMap($raw)) {
             return [$raw];
         }
@@ -275,10 +215,10 @@ final class EncounterCaptureCompletenessValidator
     private function missingFieldsForRow($row, array $campos): array
     {
         if (is_string($row)) {
-            // String suelto solo cubre el primer campo de etiqueta; el resto falta.
             if (count($campos) <= 1) {
                 return [];
             }
+
             return array_slice($campos, 1);
         }
         if (!is_array($row)) {

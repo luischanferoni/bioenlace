@@ -1,7 +1,8 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application;
+namespace common\components\Domain\Clinical\Capture\Application\UseCase;
 
+use common\components\Domain\Clinical\Capture\Application\RowContract\ClinicalCaptureRowContracts;
 use common\components\Domain\Clinical\Capture\Application\Pipeline\ClinicalCapturePipelineSupport;
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureStage;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EncounterCaptureReviewPresenter;

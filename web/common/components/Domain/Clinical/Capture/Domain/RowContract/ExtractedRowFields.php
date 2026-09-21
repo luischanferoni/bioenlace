@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Domain\Policy;
+namespace common\components\Domain\Clinical\Capture\Domain\RowContract;
 
 /**
  * Helpers compartidos para contratos de fila extraída (sin Yii).

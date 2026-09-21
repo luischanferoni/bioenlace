@@ -8,7 +8,7 @@ use common\components\Domain\Clinical\Capture\Infrastructure\SpeechToText\Clinic
 use common\components\Platform\Ai\SpeechToText\SpeechToTextManager;
 use common\components\Platform\Ai\SpeechToText\SttConfigService;
 use common\components\Domain\Clinical\Capture\Application\Text\ProcesadorTextoMedico;
-use common\components\Domain\Clinical\Capture\Application\AnalyzeClinicalNote;
+use common\components\Domain\Clinical\Capture\Application\UseCase\AnalyzeClinicalNote;
 
 class AudioController extends BaseController
 {

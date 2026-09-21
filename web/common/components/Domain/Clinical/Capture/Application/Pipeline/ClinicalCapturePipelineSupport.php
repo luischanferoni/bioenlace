@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Capture\Application\Pipeline;
 
-use common\components\Domain\Clinical\Capture\Application\ClinicalCaptureRowContracts;
+use common\components\Domain\Clinical\Capture\Application\RowContract\ClinicalCaptureRowContracts;
 use common\components\Domain\Clinical\Capture\Application\Workflow\EncounterCaptureCategoryResolver;
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCapture;
 use common\components\Domain\Clinical\Capture\Domain\Port\ClinicalCaptureRepository;

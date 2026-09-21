@@ -13,10 +13,22 @@ Norte: [ddd-norte-modelo-rico.md](../../../../../docs/decisions/ddd-norte-modelo
 ## Forma
 
 ```text
-Application/ CompositeClinicalCaptureRowContractRegistry, ClinicalCaptureRowContracts
-Domain/Policy/ *RowContract (todas las tipologías de captura con integridad)
-Domain/Port/ DerivacionRowSupportPort (+ RowContractRegistry, …)
-Infrastructure/ YiiModel…, YiiDerivacionRowSupportAdapter
+Application/
+  UseCase/          etapas HTTP (Analyze*, Save*, Transcribe*, …)
+  RowContract/      wiring + registry compuesto + ResolutionApplier
+  Pipeline/         helpers compartidos (no entrypoint)
+  Text/             post-proceso / knobs / validator de términos
+  Workflow/         resolvers / sanitizer de definición
+  *Service.php      orquestadores Application (raíz)
+
+Domain/
+  Catalog/          *Catalog (actor, workflow, medicación, encounter class)
+  Model/            aggregate, VO, stages, issue factory
+  RowContract/      *RowContract + ExtractedRowFields (integridad por tipología)
+  Policy/           CompletenessValidator, ExtractionPostProcessPolicy
+  Port/             Repository, RowContractRegistry, DerivacionRowSupport, STT, Terminology
+
+Infrastructure/     adapters Yii / STT / terminology / logging
 ```
 
 ## Oleadas
@@ -35,6 +47,7 @@ Infrastructure/ YiiModel…, YiiDerivacionRowSupportAdapter
 | 8 | parcial — Domain contracts: Practica, Regimen, Oftalmología estudio, Odontología ítem |
 | 9 | hecha — Indicación, Medicación, Balance hídrico en Domain (+ `MedicacionCaptureCatalog`) |
 | 10 | hecha — Derivación vía `DerivacionRowContract` + port `DerivacionRowSupportPort` |
+| 11 | hecha — reorganización por sufijo/carpeta (`UseCase/`, `RowContract/`, `EncounterClassCatalog`) |
 
 ## Deuda restante
 

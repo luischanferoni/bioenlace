@@ -34,7 +34,7 @@ final class EncounterCaptureActorCatalog
         if ($actor !== self::ACTOR_ENFERMERIA) {
             return [];
         }
-        if ($encounterClass === EncounterClassCodes::IMP) {
+        if ($encounterClass === EncounterClassCatalog::IMP) {
             return [[
                 'titulo' => 'Signos vitales',
                 'modelo' => 'ConsultaAtencionesEnfermeria',
@@ -54,10 +54,10 @@ final class EncounterCaptureActorCatalog
         if ($actor !== self::ACTOR_ENFERMERIA) {
             return [];
         }
-        if ($encounterClass === EncounterClassCodes::IMP) {
+        if ($encounterClass === EncounterClassCatalog::IMP) {
             return ['ConsultaAtencionesEnfermeria', 'ConsultaBalanceHidrico'];
         }
-        if ($encounterClass === EncounterClassCodes::EMER) {
+        if ($encounterClass === EncounterClassCatalog::EMER) {
             return ['ConsultaAtencionesEnfermeria'];
         }
 

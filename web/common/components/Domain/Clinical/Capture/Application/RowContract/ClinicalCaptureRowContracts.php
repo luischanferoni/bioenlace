@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application;
+namespace common\components\Domain\Clinical\Capture\Application\RowContract;
 
 use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureCompletenessValidator;
 use common\components\Domain\Clinical\Capture\Domain\Port\ClinicalCaptureRowContractRegistry;
@@ -29,7 +29,7 @@ final class ClinicalCaptureRowContracts
      */
     public static function refineDerivaciones(array $extraidos, array $categorias): array
     {
-        return \common\components\Domain\Clinical\Capture\Domain\Policy\DerivacionRowContract::refineDatosExtraidos(
+        return \common\components\Domain\Clinical\Capture\Domain\RowContract\DerivacionRowContract::refineDatosExtraidos(
             $extraidos,
             $categorias,
             self::derivacionSupport()

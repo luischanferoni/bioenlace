@@ -3,10 +3,10 @@
 namespace common\components\Domain\Clinical\Capture\Domain\Catalog;
 
 /**
- * Códigos FHIR de clase de encounter usados por catálogos de captura.
+ * Catálogo de códigos FHIR de clase de encounter usados por captura.
  * Alineados con {@see \common\models\Clinical\Encounter} (sin depender del AR).
  */
-final class EncounterClassCodes
+final class EncounterClassCatalog
 {
     public const AMB = 'AMB';
     public const IMP = 'IMP';

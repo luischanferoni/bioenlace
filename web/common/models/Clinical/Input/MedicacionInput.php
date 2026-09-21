@@ -3,7 +3,7 @@
 namespace common\models\Clinical\Input;
 
 use common\components\Domain\Clinical\Capture\Domain\Catalog\MedicacionCaptureCatalog;
-use common\components\Domain\Clinical\Capture\Domain\Policy\MedicacionRowContract;
+use common\components\Domain\Clinical\Capture\Domain\RowContract\MedicacionRowContract;
 use yii\base\Model;
 
 /**

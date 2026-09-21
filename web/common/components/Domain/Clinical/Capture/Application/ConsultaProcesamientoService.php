@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Capture\Application;
 
-use common\components\Domain\Clinical\Capture\Application\ClinicalCaptureRowContracts;
+use common\components\Domain\Clinical\Capture\Application\RowContract\ClinicalCaptureRowContracts;
 
 use Yii;
 use yii\base\Component;

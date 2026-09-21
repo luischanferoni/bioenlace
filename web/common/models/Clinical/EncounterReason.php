@@ -2,7 +2,7 @@
 
 namespace common\models\Clinical;
 
-use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterReasonRowContract;
+use common\components\Domain\Clinical\Capture\Domain\RowContract\EncounterReasonRowContract;
 use common\models\Clinical\Input\EncounterReasonInput;
 
 /**

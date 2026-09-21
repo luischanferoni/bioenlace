@@ -2,7 +2,7 @@
 
 namespace common\models\Clinical;
 
-use common\components\Domain\Clinical\Capture\Domain\Policy\OdontologiaItemRowContract;
+use common\components\Domain\Clinical\Capture\Domain\RowContract\OdontologiaItemRowContract;
 use common\models\Clinical\Input\OdontologiaItemInput;
 
 /**

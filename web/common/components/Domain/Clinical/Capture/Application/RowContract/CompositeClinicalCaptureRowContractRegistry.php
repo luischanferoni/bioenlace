@@ -1,18 +1,18 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application;
+namespace common\components\Domain\Clinical\Capture\Application\RowContract;
 
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureRowCompleteness;
-use common\components\Domain\Clinical\Capture\Domain\Policy\BalanceHidricoRowContract;
-use common\components\Domain\Clinical\Capture\Domain\Policy\DerivacionRowContract;
-use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterReasonRowContract;
-use common\components\Domain\Clinical\Capture\Domain\Policy\ExtractedRowFields;
-use common\components\Domain\Clinical\Capture\Domain\Policy\IndicacionRowContract;
-use common\components\Domain\Clinical\Capture\Domain\Policy\MedicacionRowContract;
-use common\components\Domain\Clinical\Capture\Domain\Policy\OdontologiaItemRowContract;
-use common\components\Domain\Clinical\Capture\Domain\Policy\OftalmologiaEstudioRowContract;
-use common\components\Domain\Clinical\Capture\Domain\Policy\PracticaRowContract;
-use common\components\Domain\Clinical\Capture\Domain\Policy\RegimenRowContract;
+use common\components\Domain\Clinical\Capture\Domain\RowContract\BalanceHidricoRowContract;
+use common\components\Domain\Clinical\Capture\Domain\RowContract\DerivacionRowContract;
+use common\components\Domain\Clinical\Capture\Domain\RowContract\EncounterReasonRowContract;
+use common\components\Domain\Clinical\Capture\Domain\RowContract\ExtractedRowFields;
+use common\components\Domain\Clinical\Capture\Domain\RowContract\IndicacionRowContract;
+use common\components\Domain\Clinical\Capture\Domain\RowContract\MedicacionRowContract;
+use common\components\Domain\Clinical\Capture\Domain\RowContract\OdontologiaItemRowContract;
+use common\components\Domain\Clinical\Capture\Domain\RowContract\OftalmologiaEstudioRowContract;
+use common\components\Domain\Clinical\Capture\Domain\RowContract\PracticaRowContract;
+use common\components\Domain\Clinical\Capture\Domain\RowContract\RegimenRowContract;
 use common\components\Domain\Clinical\Capture\Domain\Port\ClinicalCaptureRowContractRegistry;
 use common\components\Domain\Clinical\Capture\Domain\Port\DerivacionRowSupportPort;
 use common\components\Domain\Clinical\Capture\Infrastructure\PedidoAtencion\YiiDerivacionRowSupportAdapter;

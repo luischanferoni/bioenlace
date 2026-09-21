@@ -2,7 +2,7 @@
 
 namespace common\models\Clinical\Input;
 
-use common\components\Domain\Clinical\Capture\Domain\Policy\DerivacionRowContract;
+use common\components\Domain\Clinical\Capture\Domain\RowContract\DerivacionRowContract;
 use common\components\Domain\Clinical\Capture\Domain\Port\DerivacionRowSupportPort;
 use common\components\Domain\Clinical\Capture\Infrastructure\PedidoAtencion\YiiDerivacionRowSupportAdapter;
 use common\components\Domain\Clinical\PedidoAtencion\Domain\CodingSystems;

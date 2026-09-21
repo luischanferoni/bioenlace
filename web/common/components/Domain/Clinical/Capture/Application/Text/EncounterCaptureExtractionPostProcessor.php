@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Capture\Application\Text;
 
-use common\components\Domain\Clinical\Capture\Application\ClinicalCaptureRowContracts;
+use common\components\Domain\Clinical\Capture\Application\RowContract\ClinicalCaptureRowContracts;
 use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureExtractionPostProcessPolicy;
 
 /**

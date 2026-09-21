@@ -2,7 +2,7 @@
 
 namespace common\models\Clinical;
 
-use common\components\Domain\Clinical\Capture\Domain\Policy\BalanceHidricoRowContract;
+use common\components\Domain\Clinical\Capture\Domain\RowContract\BalanceHidricoRowContract;
 use common\models\Clinical\Input\BalanceHidricoInput;
 
 /**

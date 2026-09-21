@@ -4,7 +4,7 @@ namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureIssueFactory;
-use common\components\Domain\Clinical\Capture\Application\ClinicalCaptureResolutionApplier;
+use common\components\Domain\Clinical\Capture\Application\RowContract\ClinicalCaptureResolutionApplier;
 use common\models\Clinical\Input\IndicacionInput;
 use common\models\Clinical\ConsultaIndicaciones;
 

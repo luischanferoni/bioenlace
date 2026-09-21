@@ -1,14 +1,14 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application;
+namespace common\components\Domain\Clinical\Capture\Application\UseCase;
 
 use common\components\Domain\Clinical\Capture\Application\Pipeline\ClinicalCapturePipelineSupport;
-use common\components\Domain\Clinical\Capture\Application\AnalyzeClinicalNote;
+use common\components\Domain\Clinical\Capture\Application\UseCase\AnalyzeClinicalNote;
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureStage;
 use common\models\Clinical\EncounterCaptureAudit;
 use common\components\Domain\Clinical\Encounter\Application\EncounterCaptureAuditService;
 
-/** Caso de uso: an�lisis IA del transcript del checkpoint. */
+/** Caso de uso: análisis IA del transcript del checkpoint. */
 final class AnalyzeClinicalCaptureDraft
 {
     private ClinicalCapturePipelineSupport $pipeline;
@@ -38,14 +38,14 @@ final class AnalyzeClinicalCaptureDraft
         }
 
         if (!$domain->hasTranscript()) {
-            return $this->pipeline->fail(400, 'No hay transcripción. Ejecute captura-transcribir o envíe texto.', $capture);
+            return $this->pipeline->fail(400, 'No hay transcripciÃ³n. Ejecute captura-transcribir o envÃ­e texto.', $capture);
         }
 
         if ($domain->stage() === ClinicalCaptureStage::READY_FOR_REVIEW
             && $domain->analysisResponse() !== []
             && empty($body['force'])
         ) {
-            return $this->pipeline->ok($capture, 'Análisis ya disponible.', true);
+            return $this->pipeline->ok($capture, 'AnÃ¡lisis ya disponible.', true);
         }
 
         $analyzeBody = $body;
@@ -113,6 +113,6 @@ final class AnalyzeClinicalCaptureDraft
             )
         );
 
-        return $this->pipeline->ok($capture, 'Análisis listo.', true);
+        return $this->pipeline->ok($capture, 'AnÃ¡lisis listo.', true);
     }
 }

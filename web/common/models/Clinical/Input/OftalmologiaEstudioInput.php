@@ -2,7 +2,7 @@
 
 namespace common\models\Clinical\Input;
 
-use common\components\Domain\Clinical\Capture\Domain\Policy\OftalmologiaEstudioRowContract;
+use common\components\Domain\Clinical\Capture\Domain\RowContract\OftalmologiaEstudioRowContract;
 use yii\base\Model;
 
 /**

@@ -2,7 +2,7 @@
 
 namespace common\models\Clinical;
 
-use common\components\Domain\Clinical\Capture\Domain\Policy\RegimenRowContract;
+use common\components\Domain\Clinical\Capture\Domain\RowContract\RegimenRowContract;
 use common\models\Clinical\Input\RegimenInput;
 
 /**

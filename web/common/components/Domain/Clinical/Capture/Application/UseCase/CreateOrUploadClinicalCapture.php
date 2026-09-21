@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application;
+namespace common\components\Domain\Clinical\Capture\Application\UseCase;
 
 use common\components\Domain\Clinical\Capture\Application\Pipeline\ClinicalCapturePipelineSupport;
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCapture;

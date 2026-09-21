@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Domain\Policy;
+namespace common\components\Domain\Clinical\Capture\Domain\RowContract;
 
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureIssueFactory;
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureRowCompleteness;

@@ -2,7 +2,7 @@
 
 namespace common\models\Clinical\Input;
 
-use common\components\Domain\Clinical\Capture\Domain\Policy\OdontologiaItemRowContract;
+use common\components\Domain\Clinical\Capture\Domain\RowContract\OdontologiaItemRowContract;
 use yii\base\Model;
 
 /**

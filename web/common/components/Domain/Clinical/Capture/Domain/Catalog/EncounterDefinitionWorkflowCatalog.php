@@ -100,10 +100,10 @@ final class EncounterDefinitionWorkflowCatalog
     {
         $itemName = mb_strtolower(trim($itemName));
         if ($itemName === 'enfermeria') {
-            if ($encounterClass === EncounterClassCodes::IMP) {
+            if ($encounterClass === EncounterClassCatalog::IMP) {
                 return self::TEMPLATE_IMP_NURSING;
             }
-            if ($encounterClass === EncounterClassCodes::EMER) {
+            if ($encounterClass === EncounterClassCatalog::EMER) {
                 return self::TEMPLATE_EMER_NURSING;
             }
 
@@ -117,10 +117,10 @@ final class EncounterDefinitionWorkflowCatalog
     {
         $name = mb_strtoupper(trim($serviceName));
 
-        if ($encounterClass === EncounterClassCodes::IMP) {
+        if ($encounterClass === EncounterClassCatalog::IMP) {
             return self::TEMPLATE_IMP_STANDARD;
         }
-        if ($encounterClass === EncounterClassCodes::EMER) {
+        if ($encounterClass === EncounterClassCatalog::EMER) {
             return self::TEMPLATE_EMER_STANDARD;
         }
 

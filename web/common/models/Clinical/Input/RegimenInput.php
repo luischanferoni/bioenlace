@@ -2,7 +2,7 @@
 
 namespace common\models\Clinical\Input;
 
-use common\components\Domain\Clinical\Capture\Domain\Policy\RegimenRowContract;
+use common\components\Domain\Clinical\Capture\Domain\RowContract\RegimenRowContract;
 use yii\base\Model;
 
 /**

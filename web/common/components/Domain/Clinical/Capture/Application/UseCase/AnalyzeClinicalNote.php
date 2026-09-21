@@ -1,6 +1,8 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application;
+namespace common\components\Domain\Clinical\Capture\Application\UseCase;
+
+use common\components\Domain\Clinical\Capture\Application\ConsultaProcesamientoService;
 
 /**
  * Caso de uso: análisis IA de nota clínica (intake Capture).

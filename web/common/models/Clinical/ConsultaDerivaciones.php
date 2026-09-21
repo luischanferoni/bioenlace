@@ -80,7 +80,7 @@ class ConsultaDerivaciones extends ServiceRequest
      */
     public static function completenessForExtractedRow($row): array
     {
-        $assessment = \common\components\Domain\Clinical\Capture\Domain\Policy\DerivacionRowContract::assess(
+        $assessment = \common\components\Domain\Clinical\Capture\Domain\RowContract\DerivacionRowContract::assess(
             $row,
             'Derivaciones',
             0,
@@ -100,7 +100,7 @@ class ConsultaDerivaciones extends ServiceRequest
      */
     public static function applyResolutionToRow(array $row, string $field, mixed $value): array
     {
-        return \common\components\Domain\Clinical\Capture\Domain\Policy\DerivacionRowContract::applyResolution(
+        return \common\components\Domain\Clinical\Capture\Domain\RowContract\DerivacionRowContract::applyResolution(
             $row,
             $field,
             $value,

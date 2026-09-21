@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Encounter\Application\Documentation;
 
-use common\components\Domain\Clinical\Capture\Application\ClinicalCaptureRowContracts;
+use common\components\Domain\Clinical\Capture\Application\RowContract\ClinicalCaptureRowContracts;
 use common\components\Domain\Clinical\Encounter\Domain\ConditionVerificationStatus;
 use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
 use common\components\Domain\Clinical\Emergency\Application\GuardiaEncounterOutcomeService;

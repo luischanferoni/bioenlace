@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application\Definition;
+namespace common\components\Domain\Clinical\Capture\Application;
 
 use yii\helpers\Json;
 use yii\helpers\Url;

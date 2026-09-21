@@ -1,83 +1,67 @@
 # Gramática de carpetas y sufijos en Domain/
 
 **Estado:** aceptado.  
-**Norte (contenido de capas + un eje por nivel):** [ddd-norte-modelo-rico.md](./ddd-norte-modelo-rico.md).
+**Norte (cero ambigüedad de ejes):** [ddd-norte-modelo-rico.md](./ddd-norte-modelo-rico.md).
 
-## Contexto
+## Regla de empaquetado
 
-Referencia: Vernon / eShop / Clean Architecture (`application` · `domain` · `infrastructure`).  
-Empaquetar **un solo eje por nivel**: no hermanos `UseCase/` + `Checkpoint/`.
+1. **Módulo** = capacidad de producto (`Capture/`, `Encounter/`).
+2. **L1 del módulo** = capas `Application/` · `Domain/` · `Infrastructure/`.
+3. **`Application/*`** = **solo roles Clean Architecture / plugins** (técnico):  
+   `UseCase/`, `Presentation/`, `Authorization/`, `Flows/`, `Agents/`.  
+   El dominio va en el **nombre de la clase**.
+4. **`Domain/*`** = building blocks (`Model/`, `Catalog/`, `Policy/`, `Port/`, `RowContract/`).
+5. **`Infrastructure/*`** = adapters.
 
-## Decisión
+**Prohibido bajo `Application/`:** carpetas con nombre de capacidad/dominio (`Checkpoint/`, `Extraction/`, `Definition/`, `RowContract/`, `Support/`, …).
 
-### Clinical — módulo
+## Esqueleto Clinical
 
 ```text
 Domain/Clinical/<Modulo>/
   Application/
-    <Capacidad>/                # eje: lenguaje ubicuo
-      UseCase/                  # rol CA (anidado)
-      Presentation/             # rol CA (anidado), si aplica
-      …                         # services/resolvers de esa capacidad
-    Flows/ | Agents/ | Authorization/   # plugins producto (nombre propio)
+    UseCase/                    # interactors (* nombre de dominio en la clase)
+    Presentation/               # *Presenter / *PresentationService
+    Authorization/ | Flows/ | Agents/   # plugins si aplican
+    *.php                       # services/resolvers de aplicación (dominio en el nombre)
   Domain/
     Model/ | Catalog/ | Policy/ | Port/ | RowContract/ | …
   Infrastructure/
     External/ | Persistence/ | <Adapter>/…
 ```
 
-**Prohibido L1 del módulo:** `Service/`, `Support/`, `Legacy/`, `Workflow/`, `Checkpoint/` (como hermano de Application), PHP suelto en raíz.
-
-**Prohibido bajo Application:** `UseCase/` o `Presentation/` como **hermanos** de carpetas de capacidad. Van **dentro** de la capacidad dueña.
-
-### Eje por nivel (resumen)
-
-| Nivel | Eje |
-|-------|-----|
-| `Application/*` | Capacidad / lenguaje |
-| `Application/<Capacidad>/*` | Rol CA (`UseCase/`, `Presentation/`) o clases de esa capacidad |
-| `Domain/*` | Building block (`Model/`, `Catalog/`, …) |
-| `Infrastructure/*` | Adapter / tech |
-
-### Referencia — Capture
+## Referencia — Capture
 
 ```text
 Capture/Application/
-  Checkpoint/
-    UseCase/            # CreateOrUpload, Transcribe, Save, …
-    Presentation/       # ClinicalCapturePresenter
-    ClinicalCaptureCheckpoint.php
-  Extraction/
-    UseCase/            # AnalyzeClinicalNote, AnalyzeClinicalCaptureDraft
-    ConsultaProcesamientoService.php, post-proceso, …
-  Definition/           # categorías, bootstrap, contexto, sanitizer
-  RowContract/          # wiring + ResolutionApplier
+  UseCase/                 # CreateOrUpload, Transcribe, Analyze*, Save, …
+  Presentation/            # ClinicalCapturePresenter
+  ClinicalCaptureCheckpoint.php
+  ConsultaProcesamientoService.php
+  ClinicalCaptureRowContracts.php
+  EncounterCaptureCategoryResolver.php
+  …
+Capture/Domain/
+  Model/ | Catalog/ | RowContract/ | Policy/ | Port/
 ```
 
-### Sufijos → carpeta
+## Sufijos → carpeta
 
 | Sufijo | Carpeta |
 |--------|---------|
-| Interactor | `Application/<Capacidad>/UseCase/` |
-| `*Presenter` / `*PresentationService` | `Application/<Capacidad>/Presentation/` (o Presentation del módulo dueño) |
-| `*Service` de una capacidad | `Application/<Capacidad>/` |
+| Interactor | `Application/UseCase/` |
+| `*Presenter`, `*PresentationService` | `Application/Presentation/` |
+| `*Service` / resolvers Application | `Application/` (raíz) |
 | `*Access` | `Application/Authorization/` |
-| `*Catalog`, policies | `Domain/Catalog/`, `Domain/Policy/`, … |
-| `*RowContract` | `Domain/RowContract/` (+ `Application/RowContract/` wiring) |
+| `*Agent`, `*AgentPolicy` | `Application/Agents/` |
 | Aggregate | `Domain/Model/` |
+| `*Catalog`, policies | `Domain/Catalog/`, `Domain/Policy/` |
+| `*RowContract` | `Domain/RowContract/` (wiring Application en raíz `Application/`, no carpeta `RowContract/`) |
 | ACL | `Infrastructure/External/…` |
 | AR Yii | `common/models/<BC>/` |
-
-### Forma implantada
-
-| Ámbito | Resultado |
-|--------|-----------|
-| Capture | Capacidades Application + UseCase/Presentation anidados; sin facade legacy |
-| Resto Clinical | Tríada; migrar al mismo eje al tocar el módulo |
 
 ## Relacionado
 
 - [ddd-norte-modelo-rico.md](./ddd-norte-modelo-rico.md)
 - [clinical-modulos-capacidad.md](./clinical-modulos-capacidad.md)
-- `Capture/README.md`, `Domain/README.md`, `Clinical/README.md`
-- Test: `BoundedContextLayerShapeTest`
+- `Capture/README.md`

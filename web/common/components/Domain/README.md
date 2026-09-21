@@ -10,65 +10,47 @@ Las carpetas de primer nivel **son** el conjunto de dominios del producto (`Prod
 
 | Carpeta | Contenido |
 |---------|-----------|
-| **`Clinical/`** | Módulos de capacidad (Encounter, Emergency, Lab, …) — ver [Clinical/README.md](./Clinical/README.md) |
-| **`Scheduling/`** | Turnos, agenda, quirófano (BC aparte; no es módulo de Clinical) |
+| **`Clinical/`** | Módulos de capacidad — [Clinical/README.md](./Clinical/README.md) |
+| **`Scheduling/`** | Turnos, agenda, quirófano |
 | **`Person/`** | Personas, registro, representación, ventanilla |
 | **`Organization/`** | Efectores, PES, sesión operativa |
-| **`Terminology/`** | SNOMED (`Terminology/Domain/*Catalog`) — BC catálogo, no módulo Clinical |
-| **`Content/`** | Contenido institucional / novedades |
-| **`Geo/`** | Maestros geo y recursos provinciales |
-| **`Programs/`** | Programas de salud / SUMAR |
-| **`Integrations/`** | Solo README de redirección (ACL → `*/Infrastructure/External/`) |
+| **`Terminology/`** | SNOMED |
+| **`Content/`** | Contenido institucional |
+| **`Geo/`** | Maestros geo |
+| **`Programs/`** | Programas / SUMAR |
+| **`Integrations/`** | Solo README (ACL → `*/Infrastructure/External/`) |
 
-Flows: `Domain/<BC>/Application/Flows/intents` y/o `Domain/<BC>/<Modulo>/Application/Flows/intents`.  
-ADR: [ddd-bounded-contexts-capas-y-metadata.md](../../../docs/decisions/ddd-bounded-contexts-capas-y-metadata.md), [clinical-modulos-capacidad.md](../../../docs/decisions/clinical-modulos-capacidad.md), [shared-top-level-infrastructure.md](../../../docs/decisions/shared-top-level-infrastructure.md), [domain-folder-grammar.md](../../../docs/decisions/domain-folder-grammar.md).
+ADR: [ddd-norte-modelo-rico.md](../../../docs/decisions/ddd-norte-modelo-rico.md) (**cero ambigüedad de ejes**), [domain-folder-grammar.md](../../../docs/decisions/domain-folder-grammar.md), [clinical-modulos-capacidad.md](../../../docs/decisions/clinical-modulos-capacidad.md), [ddd-bounded-contexts-capas-y-metadata.md](../../../docs/decisions/ddd-bounded-contexts-capas-y-metadata.md).
 
-## Forma interna (gramática)
-
-Fuente de verdad: [domain-folder-grammar.md](../../../docs/decisions/domain-folder-grammar.md).  
-Norte de diseño (modelo rico): [ddd-norte-modelo-rico.md](../../../docs/decisions/ddd-norte-modelo-rico.md).
-
-### BC grande (Clinical) — módulo primero
+## Forma interna
 
 ```text
 Domain/Clinical/<Modulo>/
-  Application/               # <Capacidad>/{UseCase,Presentation,…}; plugins Flows/Agents/Authorization
-  Domain/                    # Model/; Catalog/; Policy/; Port/; …
-  Infrastructure/            # External/; Persistence/; adapters temáticos
+  Application/
+    UseCase/ | Presentation/ | Authorization/ | Flows/ | Agents/
+    *.php                    # services Application; dominio en el nombre de clase
+  Domain/
+    Model/ | Catalog/ | Policy/ | Port/ | RowContract/ | …
+  Infrastructure/
+    External/ | Persistence/ | <Adapter>/…
 ```
 
-Sin `Service/` L1. Sin `Shared/`, sin PHP suelto en la **raíz** del BC o del módulo.  
-**Un eje por nivel:** bajo `Application/` solo capacidades; `UseCase/` / `Presentation/` anidados (no hermanos).  
-Norte: [ddd-norte-modelo-rico](../../../docs/decisions/ddd-norte-modelo-rico.md). Piloto: [Capture/README.md](./Clinical/Capture/README.md).
+**`Application/*` = solo rol CA (técnico).** Prohibido: `Checkpoint/`, `Extraction/`, `Support/`, etc.  
+Dominio de producto = nombre de **módulo** + nombre de **clase** + carpetas bajo `Domain/`.
 
-### BC más chico
-
-```text
-Domain/<BC>/
-  Application/ | Domain/ | Infrastructure/
-  Assistant/ | Home/ | DataAccess/
-```
-
-Áreas de lenguaje (`Representation/`, `Ventanilla/`, `Quirofano/`, …): misma tríada interna. Sin `Service/` L1.
-
-### Sufijos de clase → carpeta
+### Sufijos
 
 | Sufijo | Carpeta |
 |--------|---------|
-| Interactor | `Application/<Capacidad>/UseCase/` |
-| `*Presenter` / `*PresentationService` | `Application/<Capacidad>/Presentation/` |
-| `*Service` de capacidad | `Application/<Capacidad>/` |
+| Interactor | `Application/UseCase/` |
+| `*Presenter` | `Application/Presentation/` |
+| `*Service` Application | `Application/` (raíz) |
 | `*Access` | `Application/Authorization/` |
-| `*Catalog` | `Domain/` (`Catalog/`, …) |
-| `*CatalogService` | `Application/` |
-| `*Agent` / `*AgentPolicy` | `Application/Agents/` |
-| Aggregate / entity rica | `Domain/Model/` |
-| `*RowContract` | `Domain/RowContract/` (+ wiring `Application/RowContract/`) |
-| `*FlowDraftHydrator` | `Assistant/` |
-| `*HintCandidateProvider` | `Assistant/` (hints) |
-| `*Connector` / `*Mapper` / `*Registry` (ACL) | `Infrastructure/External/` |
-| `*SectionProvider` | `Home/Sections/` |
+| Aggregate | `Domain/Model/` |
+| `*Catalog` / policies | `Domain/…` |
+| `*RowContract` | `Domain/RowContract/` |
+| ACL | `Infrastructure/External/` |
 
 ## Cableado con motores
 
-Handlers dominio → motor: **`common/config/product-registries.php`**, no dentro de `Platform/Assistant/`.
+Handlers dominio → motor: **`common/config/product-registries.php`**.

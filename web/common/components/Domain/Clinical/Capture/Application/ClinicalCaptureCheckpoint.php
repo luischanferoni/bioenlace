@@ -1,8 +1,8 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application\Checkpoint;
+namespace common\components\Domain\Clinical\Capture\Application;
 
-use common\components\Domain\Clinical\Capture\Application\Checkpoint\Presentation\ClinicalCapturePresenter;
+use common\components\Domain\Clinical\Capture\Application\Presentation\ClinicalCapturePresenter;
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCapture;
 use common\components\Domain\Clinical\Capture\Domain\Port\ClinicalCaptureRepository;
 use common\components\Domain\Clinical\Capture\Infrastructure\Persistence\ActiveRecordClinicalCaptureRepository;

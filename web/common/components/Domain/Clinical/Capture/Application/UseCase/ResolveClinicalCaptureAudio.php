@@ -1,8 +1,8 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application\Checkpoint\UseCase;
+namespace common\components\Domain\Clinical\Capture\Application\UseCase;
 
-use common\components\Domain\Clinical\Capture\Application\Checkpoint\ClinicalCaptureCheckpoint;
+use common\components\Domain\Clinical\Capture\Application\ClinicalCaptureCheckpoint;
 
 /** Caso de uso: resolver path de audio para descarga. */
 final class ResolveClinicalCaptureAudio

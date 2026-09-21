@@ -1,57 +1,48 @@
 # Capture (`Domain/Clinical/Capture`)
 
-Capacidad: **intake de documentación clínica** — texto/audio → extracción → issues → checkpoint.
+Capacidad de producto: **intake de documentación clínica**.
 
-**Norte:** [ddd-norte-modelo-rico.md](../../../../../docs/decisions/ddd-norte-modelo-rico.md) — **un eje por nivel**.  
-**Gramática:** [domain-folder-grammar.md](../../../../../docs/decisions/domain-folder-grammar.md).
+**Norte (cero ambigüedad):** [ddd-norte-modelo-rico.md](../../../../../docs/decisions/ddd-norte-modelo-rico.md)  
+**Gramática:** [domain-folder-grammar.md](../../../../../docs/decisions/domain-folder-grammar.md)
 
-## Límites
+## Eje bajo `Application/` (no negociable)
 
-| Sí | No |
-|----|-----|
-| Flujo `/captura/*`, STT, post-proceso, issues | Guardar nota FHIR → Encounter Documentation |
+**Técnico = rol Clean Architecture.** Dominio = nombre de clase / `Domain/`.
 
-## Eje (no desviarse)
-
-| Nivel | Eje | En Capture |
-|-------|-----|------------|
-| `Application/*` | Capacidad / lenguaje | `Checkpoint/`, `Extraction/`, `Definition/`, `RowContract/` |
-| `Application/<Capacidad>/*` | Rol CA o clases de la capacidad | `UseCase/`, `Presentation/` **dentro** de la capacidad |
-| `Domain/*` | Building block | `Model/`, `Catalog/`, `Policy/`, `Port/`, `RowContract/` |
-| `Infrastructure/*` | Adapter | `Persistence/`, `SpeechToText/`, … |
-
-**Prohibido:** `Application/UseCase/` o `Application/Presentation/` hermanos de `Checkpoint/`.  
-**Prohibido:** `Support/`, `Helpers/`, facades legacy.
+| Permitido bajo `Application/` | Prohibido bajo `Application/` |
+|-------------------------------|-------------------------------|
+| `UseCase/` | `Checkpoint/`, `Extraction/`, `Definition/` |
+| `Presentation/` | `RowContract/`, `Support/`, `Helpers/` |
+| `*.php` en raíz (services/resolvers; dominio en el nombre) | Cualquier carpeta con nombre de capacidad de negocio |
 
 ## Forma
 
 ```text
 Application/
-  Checkpoint/
-    UseCase/              # CreateOrUpload, Transcribe, Save, Discard, List, View, ResolveAudio, ApplyResolutions
-    Presentation/         # ClinicalCapturePresenter
-    ClinicalCaptureCheckpoint.php
-  Extraction/
-    UseCase/              # AnalyzeClinicalNote, AnalyzeClinicalCaptureDraft
-    ConsultaProcesamientoService.php, post-proceso, knobs, …
-  Definition/
-  RowContract/
+  UseCase/                 # intenciones HTTP (dominio en el nombre de clase)
+  Presentation/            # ClinicalCapturePresenter
+  ClinicalCaptureCheckpoint.php
+  ConsultaProcesamientoService.php
+  ClinicalCaptureRowContracts.php
+  EncounterCaptureCategoryResolver.php
+  …
 
 Domain/
-  Catalog/ | Model/ | RowContract/ | Policy/ | Port/
+  Model/ | Catalog/ | RowContract/ | Policy/ | Port/
 
 Infrastructure/
-  Persistence/ | SpeechToText/ | Terminology/ | Logging/ | PedidoAtencion/
+  Persistence/ | SpeechToText/ | Terminology/ | Logging/ | …
 ```
 
-Controller API → `Application/<Capacidad>/UseCase/*` (sin facade intermedia).
+Controller API → `Application/UseCase/*`.
+
+## Límites
+
+| Sí | No |
+|----|-----|
+| `/captura/*`, STT, extracción, issues | Guardar nota FHIR → Encounter Documentation |
 
 ## Deuda
 
 - Tipologías Domain residuales si aparecen.
 - Adapter derivación ↔ AR `Servicio` (Infrastructure).
-
-## Referencias
-
-- Encounter Documentation: `Encounter/Application/Documentation/`
-- Producto: [captura-clinica.md](../../../../../docs/producto/captura-clinica.md)

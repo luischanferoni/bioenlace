@@ -9,12 +9,12 @@ Tras colocalizar capas DDD a nivel BC (`Application/` / `Domain/` en la raíz de
 ## Decisión
 
 1. Dentro de `Domain/Clinical`, el **primer eje es el módulo de capacidad** (Encounter, Emergency, Inpatient, Laboratory, Prescription, CarePlan, CareCohort, PedidoAtencion, Capture, HistoryExchange, LegalRecord, Specialty).
-2. Las capas DDD viven **dentro** del módulo: `Application/` · `Domain/` · `Infrastructure/`. Bajo `Application/`: **solo capacidades**; `UseCase/` / `Presentation/` anidados ([ddd-norte-modelo-rico.md](./ddd-norte-modelo-rico.md) §2).
-3. **No** hay `Shared/` / `Common/` / `Kernel/` ni `Enum/` / `Service/` / `Dto/` / `Infrastructure/` / `Support/` en la **raíz** del BC Clinical. Shared de producto va en `components/Shared/` ([shared-top-level-infrastructure.md](./shared-top-level-infrastructure.md)). ACL externos van en `<Modulo>/Infrastructure/External/`.
-4. Todo tipo tiene **módulo dueño**. Lo “usado por muchos” pertenece al núcleo (`Encounter/` o `CarePlan/`); los periféricos dependen hacia el núcleo, no al revés.
-5. Discovery de intents: `Domain/<BC>/<Modulo>/Application/Flows/intents` (además del layout plano BC si queda en otros BCs). `domainFromPath` sigue devolviendo el BC (`clinical`).
-6. Adapters al motor Platform (`Assistant/`, `Home/`, `DataAccess/`) en la raíz del BC son plugins, no dominio compartido.
-7. Piloto de un eje por nivel: `Clinical/Capture` ([Capture/README.md](../../common/components/Domain/Clinical/Capture/README.md)).
+2. Las capas DDD viven **dentro** del módulo. Bajo `Application/`: **solo roles CA** (`UseCase/`, `Presentation/`, …); el dominio va en **nombres de clase** y en `Domain/` ([ddd-norte-modelo-rico.md](./ddd-norte-modelo-rico.md)).
+3. **No** hay `Shared/` / `Support/` / `Checkpoint/` (etc.) en la raíz del BC ni carpetas de capacidad bajo `Application/`. Shared de producto: `components/Shared/`.
+4. Todo tipo tiene **módulo dueño**.
+5. Discovery de intents: `Domain/<BC>/<Modulo>/Application/Flows/intents`.
+6. Plugins BC: `Assistant/`, `Home/`, `DataAccess/`.
+7. Piloto packaging: `Clinical/Capture`.
 
 ## Alternativas descartadas
 

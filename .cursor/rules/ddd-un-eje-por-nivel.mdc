@@ -1,5 +1,5 @@
 ---
-description: Empaquetado DDD/CA — un eje por nivel (anti híbrido UseCase+Capacidad)
+description: Application = solo roles CA; dominio en nombres de clase (cero ambigüedad)
 globs:
   - web/common/components/Domain/**/*
   - web/docs/decisions/ddd-norte*.md
@@ -7,33 +7,35 @@ globs:
 alwaysApply: false
 ---
 
-# Un eje por nivel (Domain / Clinical)
+# Empaquetado Domain — cero ambigüedad
 
-Fuente: [`ddd-norte-modelo-rico.md`](../../web/docs/decisions/ddd-norte-modelo-rico.md), [`domain-folder-grammar.md`](../../web/docs/decisions/domain-folder-grammar.md).
+Fuente: [`ddd-norte-modelo-rico.md`](../../web/docs/decisions/ddd-norte-modelo-rico.md).
 
-## Regla
-
-En **cada nivel** del árbol, una sola pregunta de empaquetado. **No** hermanos con taxonomías distintas.
+## Obligatorio
 
 | Nivel | Eje |
 |-------|-----|
-| `Application/*` | Capacidad / lenguaje ubicuo (`Checkpoint/`, `Extraction/`, …) |
-| Dentro de una capacidad | Rol CA (`UseCase/`, `Presentation/`) o clases de esa capacidad |
-| `Domain/*` | Building block (`Model/`, `Catalog/`, `Policy/`, `Port/`) |
-| `Infrastructure/*` | Adapter / tech |
+| `Clinical/<Modulo>/` | Capacidad de **producto** |
+| `Application/*` | **Solo rol CA (técnico):** `UseCase/`, `Presentation/`, `Authorization/`, `Flows/`, `Agents/` |
+| `Domain/*` | Building block |
+| Nombre de **clase** | Dominio / producto (`SaveClinicalCapture`, `ClinicalCaptureCheckpoint`) |
 
-## Prohibido
+## Prohibido bajo `Application/`
 
-- `Application/UseCase/` o `Application/Presentation/` **al lado** de `Application/Checkpoint/` (u otra capacidad).
-- `Support/`, `Helpers/`, `Shared/`, `Pipeline/` genérico, facades legacy multi-use-case.
-- Meter reglas de Domain en Application “porque es más fácil”.
+Carpetas con nombre de capacidad o dominio:
 
-## Permitido
+- `Checkpoint/`, `Extraction/`, `Definition/`, `RowContract/`
+- `Support/`, `Helpers/`, `Shared/`, `Pipeline/`
+
+Esas ideas van en **nombres de clase** o en `Domain/` (p. ej. `Domain/RowContract/`).
+
+## Correcto (piloto Capture)
 
 ```text
-Application/Checkpoint/UseCase/SaveClinicalCapture.php
-Application/Checkpoint/Presentation/ClinicalCapturePresenter.php
-Application/Extraction/UseCase/AnalyzeClinicalNote.php
+Application/UseCase/SaveClinicalCapture.php
+Application/Presentation/ClinicalCapturePresenter.php
+Application/ClinicalCaptureCheckpoint.php
+Domain/RowContract/MedicacionRowContract.php
 ```
 
-Piloto: `Clinical/Capture`. Al tocar otro módulo, adoptar el mismo eje; no reintroducir el híbrido.
+Si estás por crear `Application/<NombreDeNegocio>/`, **parar**: viola el norte.

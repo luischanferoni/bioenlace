@@ -1,8 +1,8 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application\Definition;
+namespace common\components\Domain\Clinical\Capture\Application;
 
-use common\components\Domain\Clinical\Capture\Application\Definition\ClinicalOperationalContextResolver;
+use common\components\Domain\Clinical\Capture\Application\ClinicalOperationalContextResolver;
 use common\components\Domain\Clinical\Capture\Domain\Catalog\EncounterDefinitionWorkflowCatalog;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterDefinition;

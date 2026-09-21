@@ -3,7 +3,7 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Capture\Application\Extraction\EncounterCaptureExtractionPostProcessor;
+use common\components\Domain\Clinical\Capture\Application\EncounterCaptureExtractionPostProcessor;
 
 class EncounterCaptureBackfillMotivosTest extends Unit
 {

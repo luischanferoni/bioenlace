@@ -8,7 +8,7 @@ use common\components\Domain\Clinical\Capture\Domain\Port\ClinicalCaptureRowCont
  * Completitud de captura clínica vs categorías del EncounterDefinition
  * (`requerido` + contrato de fila vía {@see ClinicalCaptureRowContractRegistry} / `campos_requeridos` legacy).
  *
- * Inyectar el registry desde Application ({@see \common\components\Domain\Clinical\Capture\Application\RowContract\ClinicalCaptureRowContracts}).
+ * Inyectar el registry desde Application ({@see \common\components\Domain\Clinical\Capture\Application\ClinicalCaptureRowContracts}).
  */
 final class EncounterCaptureCompletenessValidator
 {

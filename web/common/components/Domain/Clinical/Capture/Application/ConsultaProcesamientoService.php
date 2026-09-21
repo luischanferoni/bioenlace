@@ -1,8 +1,8 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application\Extraction;
+namespace common\components\Domain\Clinical\Capture\Application;
 
-use common\components\Domain\Clinical\Capture\Application\RowContract\ClinicalCaptureRowContracts;
+use common\components\Domain\Clinical\Capture\Application\ClinicalCaptureRowContracts;
 
 use Yii;
 use yii\base\Component;
@@ -11,13 +11,13 @@ use common\components\Domain\Clinical\Encounter\Application\AiContext\PatientAiC
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EncounterCaptureReviewPresenter;
 use common\components\Domain\Clinical\Encounter\Application\EncounterOpenProblemsService;
 use common\components\Domain\Clinical\Encounter\Application\EpisodeCaptureDedupService;
-use common\components\Domain\Clinical\Capture\Application\Definition\ClinicalOperationalContextResolver;
+use common\components\Domain\Clinical\Capture\Application\ClinicalOperationalContextResolver;
 use common\components\Domain\Clinical\Capture\Infrastructure\Logging\ConsultaLogger;
 use common\components\Domain\Clinical\Capture\Infrastructure\Persistence\EncounterCaptureAnalysisCache;
-use common\components\Domain\Clinical\Capture\Application\Definition\EncounterDefinitionBootstrapService;
+use common\components\Domain\Clinical\Capture\Application\EncounterDefinitionBootstrapService;
 use common\components\Domain\Clinical\Encounter\Application\Documentation\EncounterDocumentationService;
-use common\components\Domain\Clinical\Capture\Application\Extraction\EncounterCaptureExtractionPostProcessor;
-use common\components\Domain\Clinical\Capture\Application\Extraction\ProcesadorTextoMedico;
+use common\components\Domain\Clinical\Capture\Application\EncounterCaptureExtractionPostProcessor;
+use common\components\Domain\Clinical\Capture\Application\ProcesadorTextoMedico;
 use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureCompletenessValidator;
 use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
 
@@ -554,7 +554,7 @@ class ConsultaProcesamientoService extends Component
             return [];
         }
 
-        return (new \common\components\Domain\Clinical\Capture\Application\Definition\EncounterCaptureCategoryResolver())
+        return (new \common\components\Domain\Clinical\Capture\Application\EncounterCaptureCategoryResolver())
             ->resolve($configuracion, $body);
     }
 

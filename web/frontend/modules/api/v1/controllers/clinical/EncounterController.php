@@ -3,16 +3,16 @@
 namespace frontend\modules\api\v1\controllers\clinical;
 
 use Yii;
-use common\components\Domain\Clinical\Capture\Application\Extraction\UseCase\AnalyzeClinicalCaptureDraft;
-use common\components\Domain\Clinical\Capture\Application\Extraction\UseCase\AnalyzeClinicalNote;
-use common\components\Domain\Clinical\Capture\Application\Checkpoint\UseCase\ApplyClinicalCaptureResolutions;
-use common\components\Domain\Clinical\Capture\Application\Checkpoint\UseCase\CreateOrUploadClinicalCapture;
-use common\components\Domain\Clinical\Capture\Application\Checkpoint\UseCase\DiscardClinicalCapture;
-use common\components\Domain\Clinical\Capture\Application\Checkpoint\UseCase\ListClinicalCaptures;
-use common\components\Domain\Clinical\Capture\Application\Checkpoint\UseCase\ResolveClinicalCaptureAudio;
-use common\components\Domain\Clinical\Capture\Application\Checkpoint\UseCase\SaveClinicalCapture;
-use common\components\Domain\Clinical\Capture\Application\Checkpoint\UseCase\TranscribeClinicalCapture;
-use common\components\Domain\Clinical\Capture\Application\Checkpoint\UseCase\ViewClinicalCapture;
+use common\components\Domain\Clinical\Capture\Application\UseCase\AnalyzeClinicalCaptureDraft;
+use common\components\Domain\Clinical\Capture\Application\UseCase\AnalyzeClinicalNote;
+use common\components\Domain\Clinical\Capture\Application\UseCase\ApplyClinicalCaptureResolutions;
+use common\components\Domain\Clinical\Capture\Application\UseCase\CreateOrUploadClinicalCapture;
+use common\components\Domain\Clinical\Capture\Application\UseCase\DiscardClinicalCapture;
+use common\components\Domain\Clinical\Capture\Application\UseCase\ListClinicalCaptures;
+use common\components\Domain\Clinical\Capture\Application\UseCase\ResolveClinicalCaptureAudio;
+use common\components\Domain\Clinical\Capture\Application\UseCase\SaveClinicalCapture;
+use common\components\Domain\Clinical\Capture\Application\UseCase\TranscribeClinicalCapture;
+use common\components\Domain\Clinical\Capture\Application\UseCase\ViewClinicalCapture;
 use common\components\Domain\Clinical\Encounter\Application\Documentation\EncounterDocumentationService;
 use common\components\Domain\Clinical\CarePlan\Application\Dto\MedicationRequestDto;
 use common\components\Domain\Clinical\CarePlan\Application\Dto\ServiceRequestDto;

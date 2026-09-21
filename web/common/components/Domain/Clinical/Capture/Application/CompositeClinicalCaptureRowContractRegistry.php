@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application\RowContract;
+namespace common\components\Domain\Clinical\Capture\Application;
 
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureRowCompleteness;
 use common\components\Domain\Clinical\Capture\Domain\RowContract\BalanceHidricoRowContract;

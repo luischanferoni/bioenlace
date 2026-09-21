@@ -1,9 +1,9 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application\Checkpoint\Presentation;
+namespace common\components\Domain\Clinical\Capture\Application\Presentation;
 
-use common\components\Domain\Clinical\Capture\Application\Definition\EncounterCaptureCategoryResolver;
-use common\components\Domain\Clinical\Capture\Application\RowContract\ClinicalCaptureRowContracts;
+use common\components\Domain\Clinical\Capture\Application\EncounterCaptureCategoryResolver;
+use common\components\Domain\Clinical\Capture\Application\ClinicalCaptureRowContracts;
 use common\components\Domain\Clinical\Encounter\Application\EncounterOpenProblemsService;
 use common\components\Domain\Clinical\Encounter\Application\EpisodeCaptureDedupService;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EncounterCaptureReviewPresenter;
@@ -12,7 +12,7 @@ use common\models\Clinical\EncounterDefinition;
 
 /**
  * Forma de respuesta API del checkpoint de captura (ok/fail/toApiArray).
- * Forma API del checkpoint. Rol CA anidado: `Application/Checkpoint/Presentation/` (*Presenter).
+ * Forma API del checkpoint. Rol CA anidado: `Application/Presentation/` (*Presenter).
  */
 final class ClinicalCapturePresenter
 {

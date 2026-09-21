@@ -25,12 +25,13 @@ ADR: [`clinical-modulos-capacidad`](../../../docs/decisions/clinical-modulos-cap
 Catálogos UI del asistente: `*/Application/*UiActionCatalog` por módulo (Encounter, CarePlan, Lab, …), registrados en `product-registries.php`.
 
 ```text
-<Modulo>/Application/{UseCase,Authorization,Flows,Agents,Presentation,<Capacidad>}/
+<Modulo>/Application/<Capacidad>/{UseCase,Presentation,…}/
 <Modulo>/Domain/{Model,Catalog,Policy,Port,…}/
 <Modulo>/Infrastructure/{External,Persistence,<Adapter>}/
 ```
 
-Eje de subcarpetas: **lenguaje ubicuo / capacidad** (no `Support/` / `Helpers/`). Norte: [ddd-norte-modelo-rico](../../../docs/decisions/ddd-norte-modelo-rico.md) §4.
+**Un eje por nivel:** `Application/*` = capacidad; roles CA anidados. Norte: [ddd-norte-modelo-rico](../../../docs/decisions/ddd-norte-modelo-rico.md) §2.
+
 Infra técnica compartida: `components/Shared/`. Scheduling / Terminology / Person son **otros BCs**.
 
 Modelos AR: `common/models/Clinical/` (ancla en cada módulo: `Infrastructure/Persistence/README.md`).

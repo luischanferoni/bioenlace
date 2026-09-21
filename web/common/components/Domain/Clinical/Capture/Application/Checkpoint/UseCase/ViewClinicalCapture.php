@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application\UseCase;
+namespace common\components\Domain\Clinical\Capture\Application\Checkpoint\UseCase;
 
 use common\components\Domain\Clinical\Capture\Application\Checkpoint\ClinicalCaptureCheckpoint;
 

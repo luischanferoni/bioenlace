@@ -1,103 +1,105 @@
 # Norte DDD: modelo rico (Domain primero)
 
 **Estado:** aceptado (norte de diseño).  
-**Piloto de aplicación:** módulo `Clinical/Capture` (oleadas).  
-**Relación con ADRs previos:** [ddd-bounded-contexts-capas-y-metadata.md](./ddd-bounded-contexts-capas-y-metadata.md), [clinical-modulos-capacidad.md](./clinical-modulos-capacidad.md) y [domain-folder-grammar.md](./domain-folder-grammar.md) siguen vigentes para **BC / módulo de capacidad / espejo de capas**. Este ADR **prioriza el contenido de las capas** sobre la gramática de carpetas: si hay conflicto entre “dónde quedó el archivo” y “dónde vive la regla”, gana este norte.
+**Piloto:** módulo `Clinical/Capture`.  
+**Relación:** [ddd-bounded-contexts-capas-y-metadata.md](./ddd-bounded-contexts-capas-y-metadata.md), [clinical-modulos-capacidad.md](./clinical-modulos-capacidad.md), [domain-folder-grammar.md](./domain-folder-grammar.md).  
+Si packaging y responsabilidad chocan, **gana este norte**.
 
 ## Contexto
 
-La migración a `Application/` · `Domain/` · `Infrastructure/` ordenó el árbol, pero en varios módulos (p. ej. Capture) el **Domain quedó delgado** y Application acumula policies, validators, loggers y orquestadores gordos. Eso es *service layer* con packaging DDD, no DDD serio.
-
-Referencias vivas en el repo: aggregates en `Encounter/Domain/Model` y ports + modelo en `PedidoAtencion/Domain`. Piloto Application por capacidad: `Capture/Application/` (ver [Capture/README.md](../../common/components/Domain/Clinical/Capture/README.md)).
+La tríada `Application/` · `Domain/` · `Infrastructure/` ordenó el árbol, pero mezclar **roles CA** (`UseCase/`, `Presentation/`) con **capacidades de lenguaje** (`Checkpoint/`, `Extraction/`) **como hermanos** introduce dos ejes al mismo nivel. DDD y Clean Architecture no empaquetan así: eligen **un eje primario por nivel**.
 
 ## Decisión
 
-### 1. Capas por responsabilidad (no por tamaño de carpeta)
+### 1. Capas por responsabilidad
 
 | Capa | Qué va | Qué no va |
 |------|--------|-----------|
-| **Domain** | Aggregates, VO, policies tipadas, catálogos de negocio, **ports** (interfaces que el dominio necesita) | Yii, HTTP, filesystem, cache, clientes externos, AR |
-| **Application** | Casos de uso finos: cargar → mutar Domain → persistir → side effects; DTO/commands; Authorization de aplicación; presenters de forma API | Reglas de completitud, léxico clínico, invariantes de estado |
-| **Infrastructure** | Adapters de ports (STT, terminología, repos sobre AR), logging a disco, cache | Semántica clínica |
+| **Domain** | Aggregates, VO, policies, catálogos, **ports** | Yii, HTTP, filesystem, cache, AR |
+| **Application** | Casos de uso, presenters, wiring de aplicación | Reglas de completitud / invariantes de Domain |
+| **Infrastructure** | Adapters de ports, logging, cache | Semántica clínica |
 
-ActiveRecord en `common/models/<BC>/` es **detalle de persistencia**. Application/Infrastructure reconstituyen aggregates; el Domain no conoce columnas ni `save()`.
+### 2. Un eje por nivel (obligatorio)
 
-### 2. Application fino (Clean Architecture: interactors)
+| Nivel | Eje único | Ejemplo |
+|-------|-----------|---------|
+| Bajo `Domain/` (producto) | Bounded context | `Clinical/`, `Scheduling/` |
+| Bajo `Clinical/` | Módulo de capacidad | `Capture/`, `Encounter/` |
+| Bajo el módulo | Capa DDD/CA | `Application/`, `Domain/`, `Infrastructure/` |
+| Bajo `Application/` | **Capacidad / lenguaje ubicuo** | `Checkpoint/`, `Extraction/`, `Definition/`, `RowContract/` |
+| Bajo una capacidad Application | **Rol CA** (si hace falta subdividir) | `UseCase/`, `Presentation/` |
+| Bajo `Domain/` (del módulo) | **Lenguaje / tipo de building block** | `Model/`, `Catalog/`, `Policy/`, `Port/`, `RowContract/` |
+| Bajo `Infrastructure/` | **Adapter / tecnología** | `Persistence/`, `SpeechToText/`, `Logging/` |
 
-Un **caso de uso** orquesta una intención. Preferir `Application/UseCase/*` (una clase = una intención) frente a un `*Service` multi-método que concentra pipeline + reglas + I/O.
+**Prohibido:** dos ejes como hermanos. Ejemplos inválidos:
 
-Si un `*Service` mezcla etapas, reglas de Domain e I/O a varios módulos: partir use cases y bajar reglas a Domain. **No** reintroducir facades “legacy” que vuelvan a envolver todos los use cases.
+- `Application/UseCase/` al lado de `Application/Checkpoint/`
+- `Application/Presentation/` al lado de `Application/Extraction/`
+- `Application/Support/`, `Helpers/`, `Shared/`, `Pipeline/` genérico
+- Facades legacy que re-envuelven todos los use cases
 
-### 3. Ports en Domain, adapters en Infrastructure
+**Permitido:** anidar el segundo eje **debajo** del primero:
 
-Ejemplo Capture: el dominio pide “texto a partir de audio/device”; no instancia `SpeechToTextManager`. El adapter vive bajo `Infrastructure/` y puede delegar a `Platform/Ai`.
+```text
+Application/
+  Checkpoint/                 ← capacidad (eje de este nivel)
+    UseCase/                  ← rol CA (eje del nivel inferior)
+    Presentation/
+    ClinicalCaptureCheckpoint.php
+  Extraction/
+    UseCase/
+    …
+```
 
-### 4. Eje de subcarpetas (mismo criterio en Domain, Application e Infrastructure)
+### 3. Application fino (interactors)
 
-**Eje único:** lenguaje ubicuo / **capacidad de negocio** del módulo.  
-**No** cajones técnicos por rol vago: `Support/`, `Helpers/`, `Shared/`, `Utils/`, `Common/`, `Pipeline/` (como orquestador genérico).
+Una clase = una intención, bajo `Application/<Capacidad>/UseCase/`.  
+Colaboradores de esa capacidad (lookup, audio, wiring) viven en la misma capacidad, no en un cajón técnico transversal.
 
-| Capa | Ejemplos válidos (lenguaje) | Ejemplos inválidos (cajón técnico) |
-|------|-----------------------------|-------------------------------------|
-| **Domain** | `Model/`, `Catalog/`, `Policy/`, `RowContract/`, `Port/` | `Support/`, `Shared/` |
-| **Application** | `Checkpoint/`, `Extraction/`, `Definition/`, `RowContract/` | `Support/`, `Helpers/`, `Workflow/` genérico |
-| **Infrastructure** | `Persistence/`, `SpeechToText/`, `Terminology/`, `Logging/` | PHP suelto sin tema |
+### 4. Ports en Domain, adapters en Infrastructure
 
-**Excepciones de Clean Architecture / gramática Bioenlace** (no son “cajones helper”; son roles CA estables):
-
-| Carpeta bajo `Application/` | Rol |
-|-----------------------------|-----|
-| `UseCase/` | Interactors / entrypoints (una intención) |
-| `Presentation/` | `*Presenter` / `*PresentationService` — forma de respuesta para API/UI JSON (no HTTP Yii) |
-| `Authorization/`, `Flows/`, `Agents/` | Plugins de producto (RBAC app, asistente, agents) |
-
-Agrupar por tema **no sustituye** bajar reglas a Domain.  
-**Prohibido** inventar esas carpetas técnicas como L1 del módulo (hermanas de `Application/` / `Domain/` / `Infrastructure/`). Detalle de packaging: [domain-folder-grammar.md](./domain-folder-grammar.md).
+Sin cambios: Domain declara ports; Infrastructure adapta (STT, AR, terminología).
 
 ### 5. Plugins de producto (Bioenlace)
 
-`Application/Flows`, `Agents`, y a veces `Presentation` como adapter de pantallas del motor, más `Assistant/` / `Home/` en el BC, son **adapters al motor Platform**, no el núcleo DDD. Pueden coexistir en el módulo; no se usan para meter reglas de negocio.
+`Flows/`, `Agents/`, `Authorization/` son adapters al motor Platform. Van:
 
-`Presentation/` también aloja presenters de **forma API del propio módulo** (piloto Capture: `ClinicalCapturePresenter`). Sigue sin ser Domain.
+- como **capacidades/plugins con nombre de producto** bajo `Application/` cuando el módulo los necesita, **o**
+- en la raíz del BC (`Assistant/`, `Home/`) según gramática,
 
-### 6. Módulo Capture (límites)
+sin mezclarlos como “eje rol” enfrentado a capacidades del language del módulo. Si un módulo tiene a la vez `Checkpoint/` y `Flows/`, ambos son **áreas con nombre propio** del producto/módulo, no `UseCase/` genérico hermano de `Checkpoint/`.
 
-- **Se mantiene el nombre** `Capture`: capacidad = intake clínico (texto/audio → extracción → issues → checkpoint).
-- **No** se renombra a Documentation: mezclaría intake con lifecycle multi-módulo.
-- Application implantada por capacidad: `UseCase/`, `Checkpoint/`, `Presentation/`, `Extraction/`, `RowContract/`, `Definition/` — sin facades legacy en raíz.
-- Deuda explícita: orquestación gorda de persistencia hacia Encounter / CarePlan / Emergency / Specialty / Inpatient debe **acercarse a Encounter** (o use cases de Encounter) en oleadas posteriores; Capture no es fachada del HIS completo.
+`Presentation/` de forma API del módulo: **dentro** de la capacidad dueña (piloto: `Checkpoint/Presentation/`).
 
-Guía operativa: `web/common/components/Domain/Clinical/Capture/README.md`.
+### 6. Capture (límites)
 
-### 7. Cómo construir un módulo o BC nuevo
+- Capacidad = intake (texto/audio → extracción → issues → checkpoint).
+- No es fachada del HIS; persistir nota → Encounter Documentation.
+- Forma Application: ver [Capture/README.md](../../common/components/Domain/Clinical/Capture/README.md).
 
-1. Definir lenguaje y **aggregate raíz** (aunque empiece mínimo).
-2. Poner invariantes y policies en `Domain/` (sin I/O).
-3. Declarar **ports** que el Domain/Application necesiten.
-4. Application: un entrypoint por caso de uso (`UseCase/` o `*Service` fino); subcarpetas solo por **capacidad** del lenguaje.
-5. Infrastructure: adapters + ancla Persistence → `models/`.
-6. Solo después: Flows/Agents/Presentation de producto si hace falta.
-7. Tests de Domain sin bootstrap Yii cuando sea posible.
+### 7. Módulo nuevo — checklist
 
-### 8. Checklist al tocar código existente
+1. Aggregate + policies en `Domain/` (sin I/O).
+2. Ports en `Domain/Port/`.
+3. `Application/<Capacidad>/…` solo por lenguaje; use cases anidados.
+4. Infrastructure = adapters.
+5. ¿Esta carpeta hermana responde la **misma pregunta**? Si no → mal eje.
 
-- ¿Esta regla sigue válida sin DB/HTTP? → Domain.
-- ¿Es “llamar A luego B y persistir”? → Application (`UseCase/`).
-- ¿Habla con disco, cache, API externa, AR? → Infrastructure (detrás de port si el Domain la necesita).
-- ¿La subcarpeta nombra **capacidad del lenguaje** o un cajón técnico? → solo lenguaje, en la capa correcta.
-- ¿Estoy creando `Support/` / `Helpers/` / facade “por compatibilidad”? → **no**; repartir en UseCase + capacidad + Presenter.
+### 8. Checklist al tocar código
+
+- ¿Regla sin DB/HTTP? → Domain.
+- ¿Orquestación de una intención? → `Application/<Capacidad>/UseCase/`.
+- ¿I/O? → Infrastructure.
+- ¿Estoy creando un hermano con otro criterio (rol vs dominio vs tech)? → **parar**; anidar o renombrar.
 
 ## Alternativas descartadas
 
-- Tratar [domain-folder-grammar.md](./domain-folder-grammar.md) como norte suficiente (solo packaging).
-- Renombrar Capture o partir ya en dos BCs sin mover reglas (cosmética).
-- Domain model puro sin AR en un solo big-bang (arriesgado en Yii2; oleadas + reconstitución).
-- Carpeta `Shared/` dentro de Clinical para policies “usadas por muchos”.
-- `Application/Support` o `Application/Pipeline` como cajón de helpers transversales.
-- Mantener facades legacy que re-envuelven todos los use cases.
+- Empaquetar Application solo por rol CA con capacidades como nombres de clase (válido en CA puro, pero pierde localidad del language en Capture).
+- Híbrido hermanos `UseCase/` + `Checkpoint/` (dos ejes).
+- `Support/` / facades legacy.
+- `Shared/` dentro de Clinical.
 
 ## Consecuencias
 
-- Capture piloto: Domain rico + Documentation en Encounter + use cases por etapa + Application por capacidad (oleadas).
-- Tests de forma de carpetas siguen; no reemplazan revisión de capa.
-- Documentación de arquitectura apunta aquí como norte de diseño; la gramática de carpetas lo operacionaliza.
+- Capture piloto implementa **capacidad → (UseCase|Presentation)**.
+- Gramática de carpetas operacionaliza este norte: [domain-folder-grammar.md](./domain-folder-grammar.md).

@@ -1,6 +1,7 @@
 # Checkpoint (`Application/Checkpoint`)
 
-Lookup, persistencia del aggregate y audio del checkpoint de captura.
+Capacidad: checkpoint de captura (lookup, persist, audio).
 
-Forma API: `Application/Presentation/ClinicalCapturePresenter`.
-Entrypoints: `Application/UseCase/*`.
+- `UseCase/` — intenciones sobre el checkpoint
+- `Presentation/` — `ClinicalCapturePresenter` (forma API)
+- `ClinicalCaptureCheckpoint.php` — colaboradores de la capacidad

@@ -1,113 +1,83 @@
 # Gramática de carpetas y sufijos en Domain/
 
-**Estado:** aceptado e implantado (Clinical + BCs Content/Geo/Terminology/Organization/Person/Scheduling).  
-**Norte de contenido de capas:** [ddd-norte-modelo-rico.md](./ddd-norte-modelo-rico.md) — si packaging y responsabilidad chocan, gana el norte.
+**Estado:** aceptado.  
+**Norte (contenido de capas + un eje por nivel):** [ddd-norte-modelo-rico.md](./ddd-norte-modelo-rico.md).
 
 ## Contexto
 
-La gramática previa mezclaba `Service/` (casos de uso) con capas DDD de libro y admitía L1 opcionales (`Dto/`, `Presentation/`) más carpetas ad-hoc (`Legacy/`, `PatientSummary/`, …). Eso producía módulos con carpetas de más y de menos.
-
-Referencia: capas Vernon / eShop / Clean Architecture (`application` · `domain` · `infrastructure`). En Bioenlace, `Service/` L1 equivale a **Application Services**, no a Domain Services de Evans. Preferir `Application/UseCase/` cuando el módulo tiene varias intenciones (piloto Capture).
+Referencia: Vernon / eShop / Clean Architecture (`application` · `domain` · `infrastructure`).  
+Empaquetar **un solo eje por nivel**: no hermanos `UseCase/` + `Checkpoint/`.
 
 ## Decisión
 
-### Clinical — módulo de capacidad (esqueleto exacto)
+### Clinical — módulo
 
 ```text
 Domain/Clinical/<Modulo>/
   Application/
-    UseCase/                    # opcional; interactors (piloto Capture)
-    Authorization/              # *Access
-    Flows/intents/…             # metadata asistente (Bioenlace)
-    Agents/                     # *Agent / *AgentPolicy
-    Presentation/               # *Presenter / *PresentationService (no HTTP Yii)
-    <Capacidad>/…               # subáreas por lenguaje ubicuo (ver eje abajo)
+    <Capacidad>/                # eje: lenguaje ubicuo
+      UseCase/                  # rol CA (anidado)
+      Presentation/             # rol CA (anidado), si aplica
+      …                         # services/resolvers de esa capacidad
+    Flows/ | Agents/ | Authorization/   # plugins producto (nombre propio)
   Domain/
-    Model/                      # Aggregates (reglas puras; sin Yii/DB)
-    Catalog/ | Policy/ | Port/ | RowContract/ | …   # lenguaje del módulo
+    Model/ | Catalog/ | Policy/ | Port/ | RowContract/ | …
   Infrastructure/
-    External/<Sistema>/…        # Connector|Contract|Dto|Exception|Mapper|Registry
-    Persistence/
-      README.md                 # AR Yii → common/models/Clinical/ (no duplicar)
-    <Adapter>/…                 # p.ej. SpeechToText/, Terminology/, Logging/
+    External/ | Persistence/ | <Adapter>/…
 ```
 
-Plugins del BC en raíz Clinical cuando aplican: `Home/`, `DataAccess/` (y `Assistant/` solo si hay hydrators/hints del motor). Misma tríada `Application/` · `Domain/` · `Infrastructure/`; además `Home/Sections/` para `*SectionProvider`. Catálogos UI del asistente: `*/Application/*UiActionCatalog` por módulo de capacidad (no un cajón Clinical/Assistant).
+**Prohibido L1 del módulo:** `Service/`, `Support/`, `Legacy/`, `Workflow/`, `Checkpoint/` (como hermano de Application), PHP suelto en raíz.
 
-Controllers API y `views/json`: `frontend/modules/api/v1/…` (borde Presentation del deploy; **fuera** de `components/Domain`).
+**Prohibido bajo Application:** `UseCase/` o `Presentation/` como **hermanos** de carpetas de capacidad. Van **dentro** de la capacidad dueña.
 
-**Prohibido en L1 del módulo:** `Service/`, `Dto/`, `Presentation/`, `Legacy/`, `Support/`, `Mapper/`, `Batch/`, `PatientSummary/`, `AiContext/`, `Workflow/`, `Checkpoint/` (como L1), PHP suelto en raíz del módulo o del BC; `Clinical/Infrastructure/` en raíz del BC; `Application/Legacy/`.
+### Eje por nivel (resumen)
 
-Todo L1 ad-hoc se reubica bajo `Application/`, `Domain/` o `Infrastructure/`.  
-`Checkpoint/`, `Extraction/`, `Definition/`, etc. **sí** pueden vivir **dentro** de `Application/` cuando son lenguaje ubicuo del módulo (no L1).
+| Nivel | Eje |
+|-------|-----|
+| `Application/*` | Capacidad / lenguaje |
+| `Application/<Capacidad>/*` | Rol CA (`UseCase/`, `Presentation/`) o clases de esa capacidad |
+| `Domain/*` | Building block (`Model/`, `Catalog/`, …) |
+| `Infrastructure/*` | Adapter / tech |
 
-### Eje de subcarpetas dentro de cada capa
-
-Mismo criterio que el norte ([§4 ddd-norte-modelo-rico](./ddd-norte-modelo-rico.md)):
-
-1. **Capacidad / lenguaje ubicuo** del módulo.
-2. **No** cajones técnicos: `Support/`, `Helpers/`, `Shared/`, `Utils/`, `Pipeline/` genérico.
-3. Roles CA estables bajo `Application/`: `UseCase/`, `Presentation/`, `Authorization/`, `Flows/`, `Agents/`.
-
-**Referencia implantada — Capture:**
+### Referencia — Capture
 
 ```text
 Capture/Application/
-  UseCase/          # CreateOrUpload, Transcribe, Analyze, Save, …
-  Checkpoint/       # lookup / persist / audio del checkpoint
-  Presentation/     # ClinicalCapturePresenter (ok/fail/toApiArray)
-  Extraction/       # texto + post-proceso + ConsultaProcesamientoService
-  RowContract/      # wiring Domain RowContract + ResolutionApplier
-  Definition/       # EncounterDefinition / categorías / bootstrap
+  Checkpoint/
+    UseCase/            # CreateOrUpload, Transcribe, Save, …
+    Presentation/       # ClinicalCapturePresenter
+    ClinicalCaptureCheckpoint.php
+  Extraction/
+    UseCase/            # AnalyzeClinicalNote, AnalyzeClinicalCaptureDraft
+    ConsultaProcesamientoService.php, post-proceso, …
+  Definition/           # categorías, bootstrap, contexto, sanitizer
+  RowContract/          # wiring + ResolutionApplier
 ```
-
-### BC chico / mediano
-
-Misma tríada `Application/` · `Domain/` · `Infrastructure/` en la raíz del BC (sin módulo), más plugins `Assistant/` | `Home/` | `DataAccess/` si aplican. Áreas de lenguaje (`Ventanilla`, `Quirofano`, `Representation`, …) con las mismas tres capas internas.
 
 ### Sufijos → carpeta
 
 | Sufijo | Carpeta |
 |--------|---------|
-| Caso de uso (interactor) | `Application/UseCase/` (preferido) o `Application/` como `*Service` fino |
-| `*Service` (orquestación Application, no multi-pipeline) | `Application/` o subcarpeta de **capacidad** |
+| Interactor | `Application/<Capacidad>/UseCase/` |
+| `*Presenter` / `*PresentationService` | `Application/<Capacidad>/Presentation/` (o Presentation del módulo dueño) |
+| `*Service` de una capacidad | `Application/<Capacidad>/` |
 | `*Access` | `Application/Authorization/` |
-| `*Catalog`, enums, policies | `Domain/` (`Catalog/`, `Policy/`, …) |
-| `*CatalogService` | `Application/` |
-| `*Agent`, `*AgentPolicy` | `Application/Agents/` |
-| `*Presenter`, `*PresentationService` | `Application/Presentation/` |
-| Aggregate / entity rica | `Domain/Model/…` |
-| `*RowContract` (integridad de fila) | `Domain/RowContract/` (+ wiring en `Application/RowContract/` si aplica) |
-| `*FlowDraftHydrator` | `Assistant/` (plugin BC) |
-| `*Connector` / `*Mapper` / `*Registry` (ACL) | `Infrastructure/External/…` |
-| `*SectionProvider` | `Home/Sections/` |
-| ActiveRecord Yii | `common/models/<BC>/` (ancla: `Infrastructure/Persistence/README`) |
+| `*Catalog`, policies | `Domain/Catalog/`, `Domain/Policy/`, … |
+| `*RowContract` | `Domain/RowContract/` (+ `Application/RowContract/` wiring) |
+| Aggregate | `Domain/Model/` |
+| ACL | `Infrastructure/External/…` |
+| AR Yii | `common/models/<BC>/` |
 
-Lenguaje ubicuo en español en **nombres de clase** se conserva. Carpetas técnicas en inglés.
-
-### Aggregates (`Domain/Model`)
-
-- Sin I/O ni Yii: Application reconstituye desde AR, aplica mutaciones y persiste.
-- Piloto vivo en **Encounter**: `Encounter` (`open`/`finish`/`cancel`), `Condition` (`transitionTo`), VO `ChiefComplaintReason`.
-- Piloto **Capture**: aggregate `ClinicalCapture` + ports; use cases por etapa.
-- Extender reglas a más módulos es trabajo continuo: mover invariantes desde Application al aggregate correspondiente.
-
-### Forma implantada (resumen)
+### Forma implantada
 
 | Ámbito | Resultado |
 |--------|-----------|
-| Clinical (módulos) | Tríada + `Application/Agents/`; sin `Service/` L1 |
-| Capture (piloto Application) | `UseCase/` + capacidades (`Checkpoint/`, `Extraction/`, `Definition/`, `RowContract/`) + `Presentation/`; sin facade legacy |
-| Content, Geo, Terminology | Tríada; Terminology ACL Snowstorm bajo External |
-| Organization, Person, Scheduling | Tríada; Person Representation/Ventanilla y Scheduling Quirofano como áreas |
-| Captura IA | `ConsultaProcesamientoService` en `Capture/Application/Extraction/`; logger en `Capture/Infrastructure/Logging/` |
+| Capture | Capacidades Application + UseCase/Presentation anidados; sin facade legacy |
+| Resto Clinical | Tríada; migrar al mismo eje al tocar el módulo |
 
 ## Relacionado
 
+- [ddd-norte-modelo-rico.md](./ddd-norte-modelo-rico.md)
 - [clinical-modulos-capacidad.md](./clinical-modulos-capacidad.md)
-- [shared-top-level-infrastructure.md](./shared-top-level-infrastructure.md)
-- [ddd-bounded-contexts-capas-y-metadata.md](./ddd-bounded-contexts-capas-y-metadata.md)
-- **Norte de diseño (modelo rico):** [ddd-norte-modelo-rico.md](./ddd-norte-modelo-rico.md)
-- Guía Capture: `web/common/components/Domain/Clinical/Capture/README.md`
-- `Domain/README.md`, `Clinical/README.md`
-- Test de forma: `BoundedContextLayerShapeTest`
+- `Capture/README.md`, `Domain/README.md`, `Clinical/README.md`
+- Test: `BoundedContextLayerShapeTest`

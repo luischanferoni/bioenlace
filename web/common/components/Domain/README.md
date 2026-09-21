@@ -32,14 +32,14 @@ Norte de diseño (modelo rico): [ddd-norte-modelo-rico.md](../../../docs/decisio
 
 ```text
 Domain/Clinical/<Modulo>/
-  Application/               # UseCase/; Authorization/; Flows/; Agents/; Presentation/; <Capacidad>/
+  Application/               # <Capacidad>/{UseCase,Presentation,…}; plugins Flows/Agents/Authorization
   Domain/                    # Model/; Catalog/; Policy/; Port/; …
-  Infrastructure/            # External/; Persistence/README → models/; adapters temáticos
+  Infrastructure/            # External/; Persistence/; adapters temáticos
 ```
 
 Sin `Service/` L1. Sin `Shared/`, sin PHP suelto en la **raíz** del BC o del módulo.  
-Sin cajones técnicos L1 (`Support/`, `Helpers/`, `Workflow/`, `Checkpoint/` como hermano de Application).  
-Dentro de `Application/`, las subcarpetas son **capacidad / lenguaje** (piloto: [Capture/README.md](./Clinical/Capture/README.md)).
+**Un eje por nivel:** bajo `Application/` solo capacidades; `UseCase/` / `Presentation/` anidados (no hermanos).  
+Norte: [ddd-norte-modelo-rico](../../../docs/decisions/ddd-norte-modelo-rico.md). Piloto: [Capture/README.md](./Clinical/Capture/README.md).
 
 ### BC más chico
 
@@ -55,14 +55,15 @@ Domain/<BC>/
 
 | Sufijo | Carpeta |
 |--------|---------|
-| Interactor / caso de uso | `Application/UseCase/` (preferido) o `*Service` fino en `Application/` / capacidad |
+| Interactor | `Application/<Capacidad>/UseCase/` |
+| `*Presenter` / `*PresentationService` | `Application/<Capacidad>/Presentation/` |
+| `*Service` de capacidad | `Application/<Capacidad>/` |
 | `*Access` | `Application/Authorization/` |
 | `*Catalog` | `Domain/` (`Catalog/`, …) |
 | `*CatalogService` | `Application/` |
 | `*Agent` / `*AgentPolicy` | `Application/Agents/` |
-| `*Presenter` / `*PresentationService` | `Application/Presentation/` |
 | Aggregate / entity rica | `Domain/Model/` |
-| `*RowContract` | `Domain/RowContract/` (+ wiring `Application/RowContract/` si aplica) |
+| `*RowContract` | `Domain/RowContract/` (+ wiring `Application/RowContract/`) |
 | `*FlowDraftHydrator` | `Assistant/` |
 | `*HintCandidateProvider` | `Assistant/` (hints) |
 | `*Connector` / `*Mapper` / `*Registry` (ACL) | `Infrastructure/External/` |

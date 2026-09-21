@@ -1,9 +1,9 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application\UseCase;
+namespace common\components\Domain\Clinical\Capture\Application\Extraction\UseCase;
 
 use common\components\Domain\Clinical\Capture\Application\Checkpoint\ClinicalCaptureCheckpoint;
-use common\components\Domain\Clinical\Capture\Application\UseCase\AnalyzeClinicalNote;
+use common\components\Domain\Clinical\Capture\Application\Extraction\UseCase\AnalyzeClinicalNote;
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureStage;
 use common\models\Clinical\EncounterCaptureAudit;
 use common\components\Domain\Clinical\Encounter\Application\EncounterCaptureAuditService;

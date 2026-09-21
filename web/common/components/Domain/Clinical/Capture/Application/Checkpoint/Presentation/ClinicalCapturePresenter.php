@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application\Presentation;
+namespace common\components\Domain\Clinical\Capture\Application\Checkpoint\Presentation;
 
 use common\components\Domain\Clinical\Capture\Application\Definition\EncounterCaptureCategoryResolver;
 use common\components\Domain\Clinical\Capture\Application\RowContract\ClinicalCaptureRowContracts;
@@ -12,7 +12,7 @@ use common\models\Clinical\EncounterDefinition;
 
 /**
  * Forma de respuesta API del checkpoint de captura (ok/fail/toApiArray).
- * Gramática CA del repo: Application/Presentation (*Presenter).
+ * Forma API del checkpoint. Rol CA anidado: `Application/Checkpoint/Presentation/` (*Presenter).
  */
 final class ClinicalCapturePresenter
 {

@@ -2,7 +2,7 @@
 
 namespace common\tests\unit\platform\ai;
 
-use common\components\Domain\Clinical\Capture\Application\SpeechToText\ClinicalSpeechInputResolver;
+use common\components\Domain\Clinical\Capture\Infrastructure\SpeechToText\ClinicalSpeechInputResolver;
 use common\components\Platform\Ai\SpeechToText\SttConfigService;
 
 class SttConfigServiceTest extends \Codeception\Test\Unit
@@ -57,7 +57,7 @@ class SttConfigServiceTest extends \Codeception\Test\Unit
     {
         \Yii::$app->params['stt_device'] = ['enabled' => false];
 
-        $r = ClinicalSpeechInputResolver::resolveFromBody([
+        $r = (new ClinicalSpeechInputResolver())->resolveFromBody([
             'consulta' => 'Paciente con dolor torácico desde ayer.',
             'stt' => [
                 'provenance' => 'device',
@@ -76,7 +76,7 @@ class SttConfigServiceTest extends \Codeception\Test\Unit
     {
         \Yii::$app->params['stt']['server_enabled'] = false;
 
-        $r = ClinicalSpeechInputResolver::resolveFromBody([
+        $r = (new ClinicalSpeechInputResolver())->resolveFromBody([
             'audio' => base64_encode('fake-audio'),
             'stt_force_server' => true,
         ]);

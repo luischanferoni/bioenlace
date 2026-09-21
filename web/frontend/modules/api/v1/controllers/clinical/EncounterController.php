@@ -3,8 +3,9 @@
 namespace frontend\modules\api\v1\controllers\clinical;
 
 use Yii;
+use common\components\Domain\Clinical\Capture\Application\AnalyzeClinicalNote;
 use common\components\Domain\Clinical\Capture\Application\EncounterCapturePipelineService;
-use common\components\Domain\Clinical\Capture\Application\EncounterDocumentationService;
+use common\components\Domain\Clinical\Encounter\Application\Documentation\EncounterDocumentationService;
 use common\components\Domain\Clinical\CarePlan\Application\Dto\MedicationRequestDto;
 use common\components\Domain\Clinical\CarePlan\Application\Dto\ServiceRequestDto;
 use common\components\Domain\Clinical\CarePlan\Application\MedicationRequestService;
@@ -41,7 +42,7 @@ class EncounterController extends BaseController
 
     public function actionAnalizar()
     {
-        $out = (new EncounterDocumentationService())->analizar($this->mergeRequestBody());
+        $out = (new AnalyzeClinicalNote())->execute($this->mergeRequestBody());
 
         return $this->applyServiceHttpStatus($out);
     }

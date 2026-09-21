@@ -2,16 +2,21 @@
 
 namespace common\components\Domain\Clinical\Capture\Application;
 
+use common\components\Domain\Clinical\Capture\Application\AnalyzeClinicalNote;
 use common\components\Domain\Clinical\Capture\Application\ClinicalCaptureResolutionApplier;
 use common\components\Domain\Clinical\Capture\Application\Workflow\EncounterCaptureCategoryResolver;
-use common\components\Domain\Clinical\Capture\Application\Workflow\EncounterCaptureCompletenessValidator;
-use common\components\Domain\Clinical\Capture\Application\ConsultaProcesamientoService;
+use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCapture;
+use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureStage;
+use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureCompletenessValidator;
+use common\components\Domain\Clinical\Capture\Domain\Port\ClinicalCaptureRepository;
+use common\components\Domain\Clinical\Capture\Infrastructure\Persistence\ActiveRecordClinicalCaptureRepository;
+use common\components\Domain\Clinical\Encounter\Application\Documentation\EncounterDocumentationService;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EncounterCaptureReviewPresenter;
 use common\models\Clinical\Input\DerivacionInput;
 use common\components\Domain\Clinical\Encounter\Application\EncounterCaptureAuditService;
 use common\components\Domain\Clinical\Encounter\Application\EncounterOpenProblemsService;
 use common\components\Domain\Clinical\Encounter\Application\EpisodeCaptureDedupService;
-use common\components\Domain\Clinical\Capture\Application\SpeechToText\ClinicalSpeechInputResolver;
+use common\components\Domain\Clinical\Capture\Infrastructure\SpeechToText\ClinicalSpeechInputResolver;
 use common\components\Platform\Ai\SpeechToText\DeviceSttQualityAssessor;
 use common\components\Platform\Ai\SpeechToText\SpeechToTextManager;
 use common\components\Platform\Ai\SpeechToText\SttConfigService;
@@ -22,8 +27,8 @@ use Yii;
 use yii\web\UploadedFile;
 
 /**
- * Pipeline síncrono de captura clínica por etapas.
- * Cada método HTTP avanza y persiste el checkpoint (sin jobs / pull-push).
+ * Pipeline síncrono de captura clínica por etapas (Application facade).
+ * Mutaciones de etapa vía aggregate {@see ClinicalCapture} + {@see ClinicalCaptureRepository}.
  */
 final class EncounterCapturePipelineService
 {
@@ -33,12 +38,22 @@ final class EncounterCapturePipelineService
 
     private EncounterCaptureAuditService $audit;
 
+    private ClinicalCaptureRepository $captures;
+
+    private ActiveRecordClinicalCaptureRepository $captureRows;
+
     public function __construct(
         ?EncounterDocumentationService $documentation = null,
-        ?EncounterCaptureAuditService $audit = null
+        ?EncounterCaptureAuditService $audit = null,
+        ?ClinicalCaptureRepository $captures = null
     ) {
         $this->documentation = $documentation ?? new EncounterDocumentationService();
         $this->audit = $audit ?? new EncounterCaptureAuditService();
+        $repo = $captures ?? new ActiveRecordClinicalCaptureRepository();
+        $this->captures = $repo;
+        $this->captureRows = $repo instanceof ActiveRecordClinicalCaptureRepository
+            ? $repo
+            : new ActiveRecordClinicalCaptureRepository();
     }
 
     /**
@@ -211,46 +226,42 @@ final class EncounterCapturePipelineService
             return $capture;
         }
 
-        if ($capture->hasTranscript()
-            && in_array($capture->stage, [
-                EncounterCapture::STAGE_TRANSCRIBED,
-                EncounterCapture::STAGE_ANALYSIS_FAILED,
-                EncounterCapture::STAGE_READY_FOR_REVIEW,
-                EncounterCapture::STAGE_SAVE_FAILED,
+        $domain = $this->captureRows->toAggregate($capture);
+
+        if ($domain->hasTranscript()
+            && in_array($domain->stage(), [
+                ClinicalCaptureStage::TRANSCRIBED,
+                ClinicalCaptureStage::ANALYSIS_FAILED,
+                ClinicalCaptureStage::READY_FOR_REVIEW,
+                ClinicalCaptureStage::SAVE_FAILED,
             ], true)
             && empty($body['force'])
         ) {
             return $this->ok($capture, 'Ya hay transcripción; no se reejecutó STT.');
         }
 
-        if (!$capture->hasAudio()) {
+        if (!$domain->hasAudio()) {
             return $this->fail(400, 'La captura no tiene audio en servidor para transcribir.', $capture);
         }
 
         $absolute = $this->absoluteAudioPath($capture);
         if ($absolute === null || !is_file($absolute)) {
-            $capture->stage = EncounterCapture::STAGE_STT_FAILED;
-            $capture->last_error = 'Archivo de audio no encontrado en servidor.';
-            $capture->attempts_stt = (int) $capture->attempts_stt + 1;
-            $capture->updated_at = date('Y-m-d H:i:s');
-            $capture->save(false);
+            $domain->markSttFailed('Archivo de audio no encontrado en servidor.');
+            $capture = $this->persistDomain($domain);
             $this->audit->record($capture, EncounterCaptureAudit::EVENT_STT_FAILED, [
                 'error_code' => 'audio_missing',
-                'attempts_stt' => (int) $capture->attempts_stt,
+                'attempts_stt' => $domain->attemptsStt(),
             ]);
 
             return $this->fail(404, $capture->last_error, $capture);
         }
 
         if (!SttConfigService::isServerEnabled()) {
-            $capture->stage = EncounterCapture::STAGE_STT_FAILED;
-            $capture->last_error = 'La transcripción en servidor está deshabilitada.';
-            $capture->attempts_stt = (int) $capture->attempts_stt + 1;
-            $capture->updated_at = date('Y-m-d H:i:s');
-            $capture->save(false);
+            $domain->markSttFailed('La transcripción en servidor está deshabilitada.');
+            $capture = $this->persistDomain($domain);
             $this->audit->record($capture, EncounterCaptureAudit::EVENT_STT_FAILED, [
                 'error_code' => 'server_stt_disabled',
-                'attempts_stt' => (int) $capture->attempts_stt,
+                'attempts_stt' => $domain->attemptsStt(),
             ]);
 
             return $this->fail(400, $capture->last_error, $capture);
@@ -260,36 +271,29 @@ final class EncounterCapturePipelineService
         $result = SpeechToTextManager::transcribir($absolute, $modelo);
         $texto = trim((string) ($result['texto'] ?? ''));
 
-        $capture->attempts_stt = (int) $capture->attempts_stt + 1;
-        $capture->updated_at = date('Y-m-d H:i:s');
-
         if ($texto === '') {
             $err = trim((string) ($result['error'] ?? 'No se pudo transcribir el audio.'));
-            $capture->stage = EncounterCapture::STAGE_STT_FAILED;
-            $capture->last_error = $err !== '' ? $err : 'No se pudo transcribir el audio.';
-            $capture->save(false);
+            $domain->markSttFailed($err !== '' ? $err : 'No se pudo transcribir el audio.');
+            $capture = $this->persistDomain($domain);
             $this->audit->record($capture, EncounterCaptureAudit::EVENT_STT_FAILED, [
                 'error_code' => 'empty_transcript',
-                'attempts_stt' => (int) $capture->attempts_stt,
+                'attempts_stt' => $domain->attemptsStt(),
                 'modelo' => $modelo,
             ]);
 
             return $this->fail(502, $capture->last_error, $capture);
         }
 
-        $capture->transcript = $texto;
-        $meta = $capture->getSttMeta();
+        $meta = $domain->sttMeta();
         $meta['provenance'] = ClinicalSpeechInputResolver::PROVENANCE_SERVER;
         $meta['server_stt'] = [
             'confidence' => $result['confidence'] ?? null,
             'modelo_usado' => $result['modelo_usado'] ?? null,
         ];
-        $capture->setSttMeta($meta);
-        $capture->stage = EncounterCapture::STAGE_TRANSCRIBED;
-        $capture->last_error = null;
-        $capture->save(false);
+        $domain->markTranscribed($texto, $meta);
+        $capture = $this->persistDomain($domain);
         $this->audit->record($capture, EncounterCaptureAudit::EVENT_STT_OK, [
-            'attempts_stt' => (int) $capture->attempts_stt,
+            'attempts_stt' => $domain->attemptsStt(),
             'provenance' => ClinicalSpeechInputResolver::PROVENANCE_SERVER,
             'modelo_usado' => $result['modelo_usado'] ?? null,
             'transcript_length' => mb_strlen($texto),
@@ -311,50 +315,48 @@ final class EncounterCapturePipelineService
             return $capture;
         }
 
+        $domain = $this->captureRows->toAggregate($capture);
+
         $textoOverride = trim((string) ($body['consulta'] ?? $body['texto'] ?? ''));
         if ($textoOverride !== '') {
-            $capture->transcript = $textoOverride;
+            $domain->setTranscriptOverride($textoOverride);
         }
 
-        if (!$capture->hasTranscript()) {
+        if (!$domain->hasTranscript()) {
             return $this->fail(400, 'No hay transcripción. Ejecute captura-transcribir o envíe texto.', $capture);
         }
 
-        if ($capture->stage === EncounterCapture::STAGE_READY_FOR_REVIEW
-            && $capture->getAnalysisResponse() !== []
+        if ($domain->stage() === ClinicalCaptureStage::READY_FOR_REVIEW
+            && $domain->analysisResponse() !== []
             && empty($body['force'])
         ) {
             return $this->ok($capture, 'Análisis ya disponible.', true);
         }
 
         $analyzeBody = $body;
-        $analyzeBody['consulta'] = $capture->transcript;
-        $analyzeBody['id_persona'] = $capture->subject_persona_id;
-        $analyzeBody['subject_persona_id'] = $capture->subject_persona_id;
-        if ($capture->parent_type !== null) {
-            $analyzeBody['parent'] = $capture->parent_type;
+        $analyzeBody['consulta'] = $domain->transcript();
+        $analyzeBody['id_persona'] = $domain->subjectPersonaId();
+        $analyzeBody['subject_persona_id'] = $domain->subjectPersonaId();
+        if ($domain->parentType() !== null) {
+            $analyzeBody['parent'] = $domain->parentType();
         }
-        if ($capture->parent_id !== null) {
-            $analyzeBody['parent_id'] = $capture->parent_id;
+        if ($domain->parentId() !== null) {
+            $analyzeBody['parent_id'] = $domain->parentId();
         }
-        // No reenviar audio: el checkpoint es el transcript.
         unset($analyzeBody['audio'], $analyzeBody['audio_data'], $analyzeBody['file']);
-        $analyzeBody['stt'] = array_merge($capture->getSttMeta(), [
-            'text' => $capture->transcript,
+        $analyzeBody['stt'] = array_merge($domain->sttMeta(), [
+            'text' => $domain->transcript(),
             'force_server' => false,
         ]);
 
-        $out = (new ConsultaProcesamientoService())->analizar($analyzeBody);
-        $capture->attempts_analysis = (int) $capture->attempts_analysis + 1;
-        $capture->updated_at = date('Y-m-d H:i:s');
+        $out = (new AnalyzeClinicalNote())->execute($analyzeBody);
 
         if (empty($out['success'])) {
             $msg = trim((string) ($out['message'] ?? 'Error al analizar la consulta.'));
-            $capture->stage = EncounterCapture::STAGE_ANALYSIS_FAILED;
-            $capture->last_error = $msg !== '' ? $msg : 'Error al analizar la consulta.';
-            $capture->save(false);
+            $domain->markAnalysisFailed($msg !== '' ? $msg : 'Error al analizar la consulta.');
+            $capture = $this->persistDomain($domain);
             $this->audit->record($capture, EncounterCaptureAudit::EVENT_ANALYSIS_FAILED, [
-                'attempts_analysis' => (int) $capture->attempts_analysis,
+                'attempts_analysis' => $domain->attemptsAnalysis(),
                 'error_code' => 'analysis_failed',
             ]);
             $status = (int) ($out['__statusCode'] ?? 500);
@@ -362,36 +364,36 @@ final class EncounterCapturePipelineService
             return $this->fail($status > 0 ? $status : 500, $capture->last_error, $capture);
         }
 
-        $capture->texto_procesado = isset($out['texto_procesado'])
+        $textoProcesado = isset($out['texto_procesado'])
             ? (string) $out['texto_procesado']
-            : $capture->transcript;
+            : (string) $domain->transcript();
         $extraidos = $this->extractDatosExtraidosFromAnalizar($out);
-        $capture->setDatosExtraidos($extraidos);
-        $capture->analysis_cache_token = isset($out['analysis_cache_token'])
-            ? (string) $out['analysis_cache_token']
-            : null;
-        // El HTML del analizador legacy no es contrato del pipeline: los clientes
-        // renderizan `capture_review`. Evita inflar el snapshot y las respuestas.
         $snapshot = $out;
         unset($snapshot['html']);
-        $capture->setAnalysisResponse($snapshot);
-        $capture->encounter_id = isset($out['encounter_id'])
+        $encounterId = isset($out['encounter_id'])
             ? (int) $out['encounter_id']
-            : (isset($out['id_consulta']) ? (int) $out['id_consulta'] : $capture->encounter_id);
-
+            : (isset($out['id_consulta']) ? (int) $out['id_consulta'] : null);
+        $staged = null;
         $review = $out['capture_review'] ?? null;
         if (is_array($review) && isset($review['default_staged_item_ids']) && is_array($review['default_staged_item_ids'])) {
-            $capture->setStagedItemIds(array_map('strval', $review['default_staged_item_ids']));
+            $staged = array_map('strval', $review['default_staged_item_ids']);
         }
+        $token = isset($out['analysis_cache_token']) ? (string) $out['analysis_cache_token'] : null;
 
-        $capture->stage = EncounterCapture::STAGE_READY_FOR_REVIEW;
-        $capture->last_error = null;
-        $capture->save(false);
+        $domain->markReadyForReview(
+            $textoProcesado,
+            $extraidos,
+            $snapshot,
+            $token,
+            $staged,
+            $encounterId
+        );
+        $capture = $this->persistDomain($domain);
         $this->audit->record(
             $capture,
             EncounterCaptureAudit::EVENT_ANALYZED,
             array_merge(
-                ['attempts_analysis' => (int) $capture->attempts_analysis],
+                ['attempts_analysis' => $domain->attemptsAnalysis()],
                 is_array($review) ? EncounterCaptureAuditService::buildAnalyzedMeta($review) : []
             )
         );
@@ -506,14 +508,12 @@ final class EncounterCapturePipelineService
 
         $out = $this->documentation->guardar($saveBody);
         // Si el dominio devolvió checkpoint resuelto, persistirlo para el próximo intento.
+        $domain = $this->captureRows->toAggregate($capture);
         if (isset($out['analisis_datos_extraidos']) && is_array($out['analisis_datos_extraidos'])) {
-            $capture->setDatosExtraidos($out['analisis_datos_extraidos']);
+            $domain->replaceDatosExtraidos($out['analisis_datos_extraidos']);
         } elseif (empty($out['success']) && $fullCheckpoint !== []) {
-            $capture->setDatosExtraidos($fullCheckpoint);
+            $domain->replaceDatosExtraidos($fullCheckpoint);
         }
-        $capture->attempts_save = (int) $capture->attempts_save + 1;
-        $capture->updated_at = date('Y-m-d H:i:s');
-        $capture->setStagedItemIds($capture->getStagedItemIds());
 
         $reviewForAudit = is_array($analysis['capture_review'] ?? null) ? $analysis['capture_review'] : [];
         $acceptanceMeta = EncounterCaptureAuditService::buildAcceptanceMeta(
@@ -524,12 +524,11 @@ final class EncounterCapturePipelineService
 
         if (empty($out['success'])) {
             $msg = trim((string) ($out['message'] ?? 'Error al guardar.'));
-            $capture->stage = EncounterCapture::STAGE_SAVE_FAILED;
-            $capture->last_error = $msg !== '' ? $msg : 'Error al guardar.';
-            $capture->save(false);
+            $domain->markSaveFailed($msg !== '' ? $msg : 'Error al guardar.');
+            $capture = $this->persistDomain($domain);
             $this->audit->record($capture, EncounterCaptureAudit::EVENT_SAVE_FAILED, array_merge(
                 [
-                    'attempts_save' => (int) $capture->attempts_save,
+                    'attempts_save' => $domain->attemptsSave(),
                     'error_code' => 'save_failed',
                 ],
                 $acceptanceMeta
@@ -541,14 +540,11 @@ final class EncounterCapturePipelineService
             ]);
         }
 
-        $capture->stage = EncounterCapture::STAGE_COMPLETED;
-        $capture->last_error = null;
-        if (isset($out['encounter_id'])) {
-            $capture->encounter_id = (int) $out['encounter_id'];
-        }
-        $capture->save(false);
+        $encounterId = isset($out['encounter_id']) ? (int) $out['encounter_id'] : null;
+        $domain->complete($encounterId);
+        $capture = $this->persistDomain($domain);
         $this->audit->record($capture, EncounterCaptureAudit::EVENT_SAVED, array_merge(
-            ['attempts_save' => (int) $capture->attempts_save],
+            ['attempts_save' => $domain->attemptsSave()],
             $acceptanceMeta
         ));
 
@@ -629,18 +625,20 @@ final class EncounterCapturePipelineService
             return $capture;
         }
 
-        if ($capture->stage === EncounterCapture::STAGE_COMPLETED) {
+        $domain = $this->captureRows->toAggregate($capture);
+        if ($domain->stage() === ClinicalCaptureStage::COMPLETED) {
             return $this->fail(409, 'No se puede descartar una captura ya completada.', $capture);
         }
 
         $this->deleteAudioFile($capture);
         $hadAnalysis = $capture->getAnalysisResponse() !== [];
         $previousStage = $capture->stage;
-        $capture->stage = EncounterCapture::STAGE_DISCARDED;
-        $capture->last_error = null;
-        $capture->audio_relative_path = null;
-        $capture->updated_at = date('Y-m-d H:i:s');
-        $capture->save(false);
+        try {
+            $domain->discard();
+        } catch (\InvalidArgumentException $e) {
+            return $this->fail(409, $e->getMessage(), $capture);
+        }
+        $capture = $this->persistDomain($domain);
         $this->audit->record($capture, EncounterCaptureAudit::EVENT_DISCARDED, [
             'previous_stage' => $previousStage,
             'previous_had_analysis' => $hadAnalysis,
@@ -783,6 +781,20 @@ final class EncounterCapturePipelineService
             'filename' => basename($absolute),
             'capture' => $capture,
         ];
+    }
+
+    /**
+     * Persiste el aggregate y devuelve el AR para audit / respuesta API.
+     */
+    private function persistDomain(ClinicalCapture $domain): EncounterCapture
+    {
+        $this->captures->save($domain);
+        $row = $this->captureRows->findActiveRecordByAggregate($domain);
+        if (!$row instanceof EncounterCapture) {
+            throw new \RuntimeException('ClinicalCapture persistido pero AR no encontrado.');
+        }
+
+        return $row;
     }
 
     /**

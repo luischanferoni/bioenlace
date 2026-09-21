@@ -4,7 +4,7 @@ namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EncounterCaptureReviewPresenter;
-use common\components\Domain\Clinical\Capture\Application\Workflow\EncounterCaptureCompletenessValidator;
+use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureCompletenessValidator;
 
 class EncounterCaptureCompletenessValidatorTest extends Unit
 {

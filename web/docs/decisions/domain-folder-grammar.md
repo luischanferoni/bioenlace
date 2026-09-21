@@ -72,12 +72,13 @@ Lenguaje ubicuo en español en **nombres de clase** se conserva. Carpetas técni
 | Clinical (módulos) | Tríada + `Application/Agents/`; sin `Service/` L1 |
 | Content, Geo, Terminology | Tríada; Terminology ACL Snowstorm bajo External |
 | Organization, Person, Scheduling | Tríada; Person Representation/Ventanilla y Scheduling Quirofano como áreas |
-| Captura IA legacy | `ConsultaProcesamientoService` / `ConsultaLogger` en `Capture/Application/` (no `Legacy/`) |
+| Captura IA legacy | `ConsultaProcesamientoService` en `Capture/Application/`; logger en `Capture/Infrastructure/Logging/` |
 
 ## Relacionado
 
 - [clinical-modulos-capacidad.md](./clinical-modulos-capacidad.md)
 - [shared-top-level-infrastructure.md](./shared-top-level-infrastructure.md)
 - [ddd-bounded-contexts-capas-y-metadata.md](./ddd-bounded-contexts-capas-y-metadata.md)
+- **Norte de diseño (modelo rico):** [ddd-norte-modelo-rico.md](./ddd-norte-modelo-rico.md) — prioriza contenido de capas sobre packaging
 - `Domain/README.md`, `Clinical/README.md`
 - Test de forma: `BoundedContextLayerShapeTest`

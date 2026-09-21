@@ -60,7 +60,7 @@ La misma palabra de dominio se sigue en models, controllers API, `views/json`, m
 
 ## Patrones dentro de un dominio
 
-**Clinical (BC grande):** módulo de capacidad primero — [clinical-modulos-capacidad.md](../decisions/clinical-modulos-capacidad.md). Gramática de sufijos: [domain-folder-grammar.md](../decisions/domain-folder-grammar.md).
+**Clinical (BC grande):** módulo de capacidad primero — [clinical-modulos-capacidad.md](../decisions/clinical-modulos-capacidad.md). Gramática de sufijos: [domain-folder-grammar.md](../decisions/domain-folder-grammar.md). **Norte de diseño (modelo rico):** [ddd-norte-modelo-rico.md](../decisions/ddd-norte-modelo-rico.md) (piloto `Capture/`).
 
 ```text
 Domain/Clinical/<Modulo>/Application|Domain|Infrastructure/…
@@ -99,7 +99,7 @@ Domain/<Dominio>/
 | Internación | `Domain/Clinical/Inpatient/` |
 | Encounter / condiciones / journey | `Domain/Clinical/Encounter/` |
 | Care plan / órdenes | `Domain/Clinical/CarePlan/` |
-| Captura / documentación / texto clínico | `Domain/Clinical/Capture/` |
+| Captura / documentación / texto clínico | `Domain/Clinical/Capture/` ([README del módulo](../../common/components/Domain/Clinical/Capture/README.md); norte DDD) |
 | Laboratorio + LIS | `Domain/Clinical/Laboratory/` (+ `Infrastructure/External`) |
 | Receta + repositorio digital | `Domain/Clinical/Prescription/` (+ `Infrastructure/External`) |
 | HC nacional | `Domain/Clinical/HistoryExchange/` (+ `Infrastructure/External`) |

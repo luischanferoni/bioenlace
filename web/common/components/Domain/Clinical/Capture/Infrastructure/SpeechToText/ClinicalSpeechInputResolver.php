@@ -1,20 +1,22 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application\SpeechToText;
+namespace common\components\Domain\Clinical\Capture\Infrastructure\SpeechToText;
 
+use common\components\Domain\Clinical\Capture\Domain\Port\SpeechToTextPort;
 use common\components\Platform\Ai\SpeechToText\DeviceSttQualityAssessor;
 use common\components\Platform\Ai\SpeechToText\SpeechToTextManager;
 use common\components\Platform\Ai\SpeechToText\SttConfigService;
 use Yii;
 
 /**
- * Resuelve texto de captura clínica: dispositivo primero, STT servidor si hace falta.
+ * Adapter Infrastructure: texto de captura clínica (device primero, STT servidor si hace falta).
+ * Delega motores genéricos a Platform/Ai.
  */
-final class ClinicalSpeechInputResolver
+final class ClinicalSpeechInputResolver implements SpeechToTextPort
 {
-    public const PROVENANCE_DEVICE = 'device';
-    public const PROVENANCE_SERVER = 'server';
-    public const PROVENANCE_TEXT_ONLY = 'text_only';
+    public const PROVENANCE_DEVICE = SpeechToTextPort::PROVENANCE_DEVICE;
+    public const PROVENANCE_SERVER = SpeechToTextPort::PROVENANCE_SERVER;
+    public const PROVENANCE_TEXT_ONLY = SpeechToTextPort::PROVENANCE_TEXT_ONLY;
 
     /**
      * @param array<string, mixed> $body Request analizar / transcribir
@@ -27,7 +29,7 @@ final class ClinicalSpeechInputResolver
      *   message: string|null
      * }
      */
-    public static function resolveFromBody(array $body, string $flowProfile = 'captura_clinica'): array
+    public function resolveFromBody(array $body, string $flowProfile = 'captura_clinica'): array
     {
         $consulta = trim((string) ($body['consulta'] ?? $body['consulta_texto'] ?? ''));
         $stt = self::normalizeSttBlock($body['stt'] ?? null);

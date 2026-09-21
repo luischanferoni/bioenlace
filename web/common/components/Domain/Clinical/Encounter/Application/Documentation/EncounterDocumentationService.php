@@ -1,15 +1,18 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application;
+namespace common\components\Domain\Clinical\Encounter\Application\Documentation;
 
 use common\components\Domain\Clinical\Encounter\Domain\ConditionVerificationStatus;
 
 use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
 
 use common\components\Domain\Clinical\Emergency\Application\GuardiaEncounterOutcomeService;
+use common\components\Domain\Clinical\Capture\Application\AnalyzeClinicalNote;
 use common\components\Domain\Clinical\Capture\Application\ClinicalCaptureResolutionApplier;
 use common\components\Domain\Clinical\Capture\Application\Workflow\EncounterCaptureCategoryResolver;
-use common\components\Domain\Clinical\Capture\Application\Workflow\EncounterCaptureCompletenessValidator;
+use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureCompletenessValidator;
+use common\components\Domain\Clinical\Capture\Infrastructure\Logging\EncounterGuardarLogger;
+use common\components\Domain\Clinical\Capture\Infrastructure\Persistence\EncounterCaptureAnalysisCache;
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Domain\Clinical\CarePlan\Application\CarePlanLifecycleService;
 use common\components\Domain\Clinical\CarePlan\Application\CarePlanService;
@@ -25,7 +28,6 @@ use common\components\Domain\Clinical\Inpatient\Application\InpatientEncounterAu
 use common\components\Domain\Clinical\Specialty\Application\OdontologyEncounterService;
 use common\components\Domain\Clinical\Specialty\Application\OphthalmologyEncounterService;
 use common\components\Domain\Clinical\Encounter\Application\EncounterReasonService;
-use common\components\Domain\Clinical\Capture\Application\ConsultaProcesamientoService;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EncounterCaptureReviewPresenter;
 use common\models\Clinical\Condition;
 use common\models\Clinical\Encounter;
@@ -37,7 +39,10 @@ use Yii;
 use yii\base\Component;
 
 /**
- * Captura y persistencia clínica sobre {@see Encounter} (reemplazo progresivo de ConsultaProcesamientoService).
+ * Persistencia de documentación clínica sobre Encounter (conditions, care plan, especialidades, …).
+ *
+ * Análisis IA (intake) sigue en Capture (`ConsultaProcesamientoService`).
+ * Este servicio es el borde Encounter del “guardar nota”.
  */
 class EncounterDocumentationService extends Component
 {
@@ -73,14 +78,14 @@ class EncounterDocumentationService extends Component
     }
 
     /**
-     * Análisis IA — delega al pipeline existente (sin persistir en tablas legacy).
+     * Análisis IA — delega al intake Capture ({@see AnalyzeClinicalNote} / ConsultaProcesamientoService).
      *
      * @param array<string, mixed> $body
      * @return array<string, mixed>
      */
     public function analizar(array $body): array
     {
-        return (new ConsultaProcesamientoService())->analizar($body);
+        return (new AnalyzeClinicalNote())->execute($body);
     }
 
     /**
@@ -94,14 +99,8 @@ class EncounterDocumentationService extends Component
         $idConfiguracion,
         ?int $subjectPersonaId = null
     ): array {
-        $legacy = new ConsultaProcesamientoService();
-
-        return $legacy->analizarConsultaConIA(
-            $textoProcesado,
-            $nombreServicio,
-            $legacy->getModelosPorConfiguracion($idConfiguracion),
-            $subjectPersonaId
-        );
+        return (new AnalyzeClinicalNote())
+            ->executeOnProcessedText($textoProcesado, $nombreServicio, $idConfiguracion, $subjectPersonaId);
     }
 
     /**

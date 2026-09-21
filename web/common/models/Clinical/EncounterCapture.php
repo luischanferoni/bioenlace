@@ -2,11 +2,14 @@
 
 namespace common\models\Clinical;
 
+use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureStage;
 use yii\db\ActiveRecord;
 
 /**
  * Borrador de captura clínica por etapas (audio → STT → análisis → guardado).
  * Procesamiento síncrono: cada request avanza y persiste el checkpoint.
+ *
+ * Etapas: {@see ClinicalCaptureStage} (Domain). Este AR es detalle de persistencia.
  *
  * @property int $id
  * @property string $client_capture_id
@@ -34,14 +37,14 @@ use yii\db\ActiveRecord;
  */
 class EncounterCapture extends ActiveRecord
 {
-    public const STAGE_UPLOADED = 'UPLOADED';
-    public const STAGE_STT_FAILED = 'STT_FAILED';
-    public const STAGE_TRANSCRIBED = 'TRANSCRIBED';
-    public const STAGE_ANALYSIS_FAILED = 'ANALYSIS_FAILED';
-    public const STAGE_READY_FOR_REVIEW = 'READY_FOR_REVIEW';
-    public const STAGE_SAVE_FAILED = 'SAVE_FAILED';
-    public const STAGE_COMPLETED = 'COMPLETED';
-    public const STAGE_DISCARDED = 'DISCARDED';
+    public const STAGE_UPLOADED = ClinicalCaptureStage::UPLOADED;
+    public const STAGE_STT_FAILED = ClinicalCaptureStage::STT_FAILED;
+    public const STAGE_TRANSCRIBED = ClinicalCaptureStage::TRANSCRIBED;
+    public const STAGE_ANALYSIS_FAILED = ClinicalCaptureStage::ANALYSIS_FAILED;
+    public const STAGE_READY_FOR_REVIEW = ClinicalCaptureStage::READY_FOR_REVIEW;
+    public const STAGE_SAVE_FAILED = ClinicalCaptureStage::SAVE_FAILED;
+    public const STAGE_COMPLETED = ClinicalCaptureStage::COMPLETED;
+    public const STAGE_DISCARDED = ClinicalCaptureStage::DISCARDED;
 
     public static function tableName(): string
     {
@@ -53,16 +56,7 @@ class EncounterCapture extends ActiveRecord
      */
     public static function stageValues(): array
     {
-        return [
-            self::STAGE_UPLOADED,
-            self::STAGE_STT_FAILED,
-            self::STAGE_TRANSCRIBED,
-            self::STAGE_ANALYSIS_FAILED,
-            self::STAGE_READY_FOR_REVIEW,
-            self::STAGE_SAVE_FAILED,
-            self::STAGE_COMPLETED,
-            self::STAGE_DISCARDED,
-        ];
+        return ClinicalCaptureStage::all();
     }
 
     /**
@@ -72,14 +66,7 @@ class EncounterCapture extends ActiveRecord
      */
     public static function openStageValues(): array
     {
-        return [
-            self::STAGE_UPLOADED,
-            self::STAGE_STT_FAILED,
-            self::STAGE_TRANSCRIBED,
-            self::STAGE_ANALYSIS_FAILED,
-            self::STAGE_READY_FOR_REVIEW,
-            self::STAGE_SAVE_FAILED,
-        ];
+        return ClinicalCaptureStage::open();
     }
 
     public function rules(): array

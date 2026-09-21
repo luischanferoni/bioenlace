@@ -37,7 +37,7 @@ Eso produjo hard-stops incorrectos (p. ej. exigir «Plazo dias» en toda indicac
 
 - Guía transversal: [arquitectura/metadata-yaml-uso.md](../arquitectura/metadata-yaml-uso.md)
 - `common/models/Clinical/Input/`
-- `EncounterCaptureCompletenessValidator`
+- `EncounterCaptureCompletenessValidator` (`Capture/Domain/Policy`)
 - `ClinicalCaptureIssueFactory` / `ClinicalCaptureResolutionApplier`
-- `EncounterCaptureExtractionPostProcessPolicy`
+- `EncounterCaptureExtractionPostProcessPolicy` (`Capture/Domain/Policy`)
 - `PrescriptionRdiPreSubmitValidationService`

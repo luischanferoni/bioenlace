@@ -82,9 +82,9 @@ Ver [asistente-motores.md](./asistente-motores.md), [asistente-lectura-data-acce
 ## Referencias de código (anclas)
 
 - `common/models/Clinical/Input/`
-- `EncounterCaptureCompletenessValidator`
+- `EncounterCaptureCompletenessValidator` (`Capture/Domain/Policy`)
 - `ClinicalCaptureIssueFactory` / `ClinicalCaptureResolutionApplier`
-- `EncounterCaptureExtractionPostProcessPolicy`
+- `EncounterCaptureExtractionPostProcessPolicy` (`Capture/Domain/Policy`)
 - `PrescriptionRdiPreSubmitValidationService`
 - `common/metadata/bioenlace/README.md` — mapa de dónde vive cada tipo de metadata (colocalizada)
 

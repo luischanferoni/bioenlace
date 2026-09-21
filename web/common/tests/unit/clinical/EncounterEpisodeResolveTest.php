@@ -4,7 +4,7 @@ namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
-use common\components\Domain\Clinical\Capture\Application\EncounterDocumentationService;
+use common\components\Domain\Clinical\Encounter\Application\Documentation\EncounterDocumentationService;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
 use ReflectionMethod;
@@ -45,7 +45,7 @@ class EncounterEpisodeResolveTest extends Unit
         ]);
 
         $src = (string) file_get_contents(
-            dirname(__DIR__, 3) . '/components/Domain/Clinical/Workflow/EncounterDocumentationService.php'
+            dirname(__DIR__, 3) . '/components/Domain/Clinical/Encounter/Application/Documentation/EncounterDocumentationService.php'
         );
         $this->assertStringContainsString("['status' => EncounterStatus::IN_PROGRESS]", $src);
         $this->assertStringContainsString('PARENT_INTERNACION, Encounter::PARENT_GUARDIA', $src);

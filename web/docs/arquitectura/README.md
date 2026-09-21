@@ -12,6 +12,8 @@ Explica piezas que atraviesan varios módulos del producto. Hoy el foco principa
 | [asistente-lectura-data-access.md](./asistente-lectura-data-access.md) | Lecturas: motor DataAccess + RBAC por intent (no YAML one-off) |
 | [rbac-catalogo-permisos.md](./rbac-catalogo-permisos.md) | RBAC Yii, permisos por `intent_id`, catálogo admin, identidad sin webvimark |
 
+Norte DDD (modelo rico, Application fino): [decisions/ddd-norte-modelo-rico.md](../decisions/ddd-norte-modelo-rico.md).
+
 ## Relacionado
 
 - Narrativa de producto del chat: [producto/asistente-y-chat.md](../producto/asistente-y-chat.md)

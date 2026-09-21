@@ -209,7 +209,7 @@ final class DerivacionInput extends Model
                 )
                 : self::optionsForServicio();
             if ($options !== []) {
-                $issues[] = \common\components\Domain\Clinical\Capture\Application\ClinicalCaptureIssueFactory::make(
+                $issues[] = \common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureIssueFactory::make(
                     $category,
                     $index,
                     self::FIELD_SERVICIO,
@@ -232,7 +232,7 @@ final class DerivacionInput extends Model
                 $actoCandidates
             );
             if ($options !== []) {
-                $issues[] = \common\components\Domain\Clinical\Capture\Application\ClinicalCaptureIssueFactory::make(
+                $issues[] = \common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureIssueFactory::make(
                     $category,
                     $index,
                     self::FIELD_ACTO_DISPLAY,

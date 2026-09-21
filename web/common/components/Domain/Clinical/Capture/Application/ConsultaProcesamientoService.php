@@ -4,18 +4,19 @@ namespace common\components\Domain\Clinical\Capture\Application;
 
 use Yii;
 use yii\base\Component;
-use common\components\Domain\Clinical\Capture\Application\SpeechToText\ClinicalSpeechInputResolver;
+use common\components\Domain\Clinical\Capture\Infrastructure\SpeechToText\ClinicalSpeechInputResolver;
 use common\components\Domain\Clinical\Encounter\Application\AiContext\PatientAiContextBuilder;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EncounterCaptureReviewPresenter;
 use common\components\Domain\Clinical\Encounter\Application\EncounterOpenProblemsService;
 use common\components\Domain\Clinical\Encounter\Application\EpisodeCaptureDedupService;
 use common\components\Domain\Clinical\Capture\Application\Workflow\ClinicalOperationalContextResolver;
-use common\components\Domain\Clinical\Capture\Application\Workflow\EncounterCaptureAnalysisCache;
+use common\components\Domain\Clinical\Capture\Infrastructure\Logging\ConsultaLogger;
+use common\components\Domain\Clinical\Capture\Infrastructure\Persistence\EncounterCaptureAnalysisCache;
 use common\components\Domain\Clinical\Capture\Application\EncounterDefinitionBootstrapService;
-use common\components\Domain\Clinical\Capture\Application\EncounterDocumentationService;
+use common\components\Domain\Clinical\Encounter\Application\Documentation\EncounterDocumentationService;
 use common\components\Domain\Clinical\Capture\Application\Text\EncounterCaptureExtractionPostProcessor;
 use common\components\Domain\Clinical\Capture\Application\Text\ProcesadorTextoMedico;
-use common\components\Domain\Clinical\Capture\Application\Workflow\EncounterCaptureCompletenessValidator;
+use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureCompletenessValidator;
 use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
 
 /**
@@ -43,7 +44,7 @@ class ConsultaProcesamientoService extends Component
                 }
             }
 
-            $speech = ClinicalSpeechInputResolver::resolveFromBody($body, 'captura_clinica');
+            $speech = (new ClinicalSpeechInputResolver())->resolveFromBody($body, 'captura_clinica');
             if (empty($speech['ok'])) {
                 return [
                     '__statusCode' => 400,

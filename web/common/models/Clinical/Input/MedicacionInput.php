@@ -207,7 +207,7 @@ final class MedicacionInput extends Model
             if ($options === []) {
                 continue;
             }
-            $issues[] = \common\components\Domain\Clinical\Capture\Application\ClinicalCaptureIssueFactory::make(
+            $issues[] = \common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureIssueFactory::make(
                 $category,
                 $index,
                 $field,

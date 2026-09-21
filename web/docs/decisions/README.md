@@ -18,6 +18,7 @@ Registro de decisiones **cerradas** que afectan a más de un módulo o que convi
 | Clinical módulos de capacidad | Módulo primero (Encounter, Emergency, Lab…); sin Shared en el BC; layers dentro del módulo | [clinical-modulos-capacidad.md](./clinical-modulos-capacidad.md) |
 | Shared top-level + Infra por módulo | `components/Shared/`; ACL en módulo/BC dueño; varios BCs | [shared-top-level-infrastructure.md](./shared-top-level-infrastructure.md) |
 | Gramática carpetas/sufijos Domain | Sufijo→carpeta; prohibidos Support/Mapper sueltos; PHP no en raíz de módulo | [domain-folder-grammar.md](./domain-folder-grammar.md) |
+| Norte DDD modelo rico | Domain primero (aggregates, policies, ports); Application fino; Capture piloto | [ddd-norte-modelo-rico.md](./ddd-norte-modelo-rico.md) |
 
 Glosario producto (servicio / PES / acto): [producto/glosario-servicio-pes-acto.md](../producto/glosario-servicio-pes-acto.md).
 

@@ -41,7 +41,8 @@ Misma palabra de dominio en `components/Domain/`, `models/`, `controllers/`, `vi
 Domain/Clinical/<Modulo>/Application|Domain|Infrastructure/…
 ```
 
-ADR: [clinical-modulos-capacidad.md](web/docs/decisions/clinical-modulos-capacidad.md), [shared-top-level-infrastructure.md](web/docs/decisions/shared-top-level-infrastructure.md), [domain-folder-grammar.md](web/docs/decisions/domain-folder-grammar.md).
+ADR: [clinical-modulos-capacidad.md](web/docs/decisions/clinical-modulos-capacidad.md), [shared-top-level-infrastructure.md](web/docs/decisions/shared-top-level-infrastructure.md), [domain-folder-grammar.md](web/docs/decisions/domain-folder-grammar.md).  
+**Norte DDD (modelo rico):** [ddd-norte-modelo-rico.md](web/docs/decisions/ddd-norte-modelo-rico.md) — Domain primero; Application fino; piloto `Capture/`.
 
 **Otros BCs:**
 

@@ -3,7 +3,7 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Capture\Application\Workflow\EncounterCaptureAnalysisCache;
+use common\components\Domain\Clinical\Capture\Infrastructure\Persistence\EncounterCaptureAnalysisCache;
 use Yii;
 
 class EncounterCaptureAnalysisCacheTest extends Unit

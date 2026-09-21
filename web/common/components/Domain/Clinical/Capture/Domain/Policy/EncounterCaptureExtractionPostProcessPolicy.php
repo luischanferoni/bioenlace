@@ -1,14 +1,14 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application\Text;
+namespace common\components\Domain\Clinical\Capture\Domain\Policy;
 
 use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
 
 /**
- * Política de post-proceso de extracción clínica.
+ * Política de post-proceso de extracción clínica (capa Domain).
  *
- * La semántica y los defaults viven aquí (dominio). El YAML de IA solo aporta
- * overrides operativos (enabled, umbrales, patrones tuneables).
+ * Defaults y semántica aquí. Overrides operativos vía metadata Platform
+ * (`ClinicalTextIaMetadata`) — deuda transitoria; idealmente Application inyecta knobs.
  */
 final class EncounterCaptureExtractionPostProcessPolicy
 {

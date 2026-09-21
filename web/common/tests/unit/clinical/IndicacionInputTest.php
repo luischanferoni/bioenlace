@@ -3,7 +3,7 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Capture\Application\Workflow\EncounterCaptureCompletenessValidator;
+use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureCompletenessValidator;
 use common\models\Clinical\Input\IndicacionInput;
 use common\models\Clinical\ConsultaIndicaciones;
 

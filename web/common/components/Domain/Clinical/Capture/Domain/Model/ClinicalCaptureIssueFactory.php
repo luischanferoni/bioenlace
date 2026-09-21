@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application;
+namespace common\components\Domain\Clinical\Capture\Domain\Model;
 
 /**
  * Issues de completitud con opciones sugeridas (contrato resumido para clientes).

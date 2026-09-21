@@ -4,11 +4,11 @@ namespace frontend\modules\api\v1\controllers\clinical;
 
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
-use common\components\Domain\Clinical\Capture\Application\SpeechToText\ClinicalSpeechInputResolver;
+use common\components\Domain\Clinical\Capture\Infrastructure\SpeechToText\ClinicalSpeechInputResolver;
 use common\components\Platform\Ai\SpeechToText\SpeechToTextManager;
 use common\components\Platform\Ai\SpeechToText\SttConfigService;
 use common\components\Domain\Clinical\Capture\Application\Text\ProcesadorTextoMedico;
-use common\components\Domain\Clinical\Capture\Application\EncounterDocumentationService;
+use common\components\Domain\Clinical\Capture\Application\AnalyzeClinicalNote;
 
 class AudioController extends BaseController
 {
@@ -40,7 +40,7 @@ class AudioController extends BaseController
             $modelo = $body['modelo'] ?? 'economico';
             $procesarInmediatamente = !empty($body['procesar']);
 
-            $speech = ClinicalSpeechInputResolver::resolveFromBody($body, 'captura_clinica');
+            $speech = (new ClinicalSpeechInputResolver())->resolveFromBody($body, 'captura_clinica');
             if (!empty($speech['ok'])) {
                 $textoTranscrito = (string) $speech['text'];
                 $resultado = [
@@ -96,8 +96,7 @@ class AudioController extends BaseController
                         ? $resultadoProcesamiento['texto_procesado'] 
                         : $resultadoProcesamiento;
 
-                    $docSvc = new EncounterDocumentationService();
-                    $resultadoIA = $docSvc->analizarTextoProcesado(
+                    $resultadoIA = (new AnalyzeClinicalNote())->executeOnProcessedText(
                         $textoProcesado,
                         $servicio ? $servicio->nombre : null,
                         $idConfiguracion

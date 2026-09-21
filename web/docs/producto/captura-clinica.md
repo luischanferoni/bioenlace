@@ -56,7 +56,7 @@ flowchart TB
 1. **Entrada:** audio transcrito o texto libre.
 2. **Configuración:** `EncounterCaptureContextService::validarPermisoAtencion(parent, parent_id)` + lookup de `EncounterDefinition` (`service_id` + clase). Las categorías del prompt/completitud las resuelve `EncounterCaptureCategoryResolver`: workflow de la oferta + overlay del **actor** (PES `servicios.item_name` de sesión) + actividades del **CarePlan inpatient** (sugerido, no gate).
 3. **Análisis:** extracción de conceptos a campos del workflow (el médico revisa el HTML antes de guardar).
-4. **Guardado:** `EncounterDocumentationService` persiste FHIR; **codificación CIE-10/SNOMED** vía `encounter-codificacion-automatica` (IA elige códigos y los guarda en `clinical_condition`).
+4. **Guardado:** `Encounter/Application/Documentation/EncounterDocumentationService` persiste FHIR; **codificación CIE-10/SNOMED** vía `encounter-codificacion-automatica` (IA elige códigos y los guarda en `clinical_condition`).
 
 ## Contratos vs metadata
 

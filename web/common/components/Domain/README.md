@@ -25,7 +25,8 @@ ADR: [ddd-bounded-contexts-capas-y-metadata.md](../../../docs/decisions/ddd-boun
 
 ## Forma interna (gramática)
 
-Fuente de verdad: [domain-folder-grammar.md](../../../docs/decisions/domain-folder-grammar.md).
+Fuente de verdad: [domain-folder-grammar.md](../../../docs/decisions/domain-folder-grammar.md).  
+Norte de diseño (modelo rico): [ddd-norte-modelo-rico.md](../../../docs/decisions/ddd-norte-modelo-rico.md).
 
 ### BC grande (Clinical) — módulo primero
 

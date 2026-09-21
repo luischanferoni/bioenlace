@@ -143,7 +143,7 @@ final class IndicacionInput extends Model
         $issues = [];
         foreach ($this->missingFieldsForCompleteness() as $field) {
             if ($field === self::FIELD_PLAZO_DIAS) {
-                $issues[] = \common\components\Domain\Clinical\Capture\Application\ClinicalCaptureIssueFactory::make(
+                $issues[] = \common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureIssueFactory::make(
                     $category,
                     $index,
                     $field,
@@ -158,7 +158,7 @@ final class IndicacionInput extends Model
                 continue;
             }
             if ($field === self::FIELD_TIPO) {
-                $issues[] = \common\components\Domain\Clinical\Capture\Application\ClinicalCaptureIssueFactory::make(
+                $issues[] = \common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureIssueFactory::make(
                     $category,
                     $index,
                     $field,

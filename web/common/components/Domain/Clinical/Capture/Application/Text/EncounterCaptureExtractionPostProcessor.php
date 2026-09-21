@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Clinical\Capture\Application\Text;
 
+use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureExtractionPostProcessPolicy;
 use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
 use common\models\Clinical\Input\DerivacionInput;
 

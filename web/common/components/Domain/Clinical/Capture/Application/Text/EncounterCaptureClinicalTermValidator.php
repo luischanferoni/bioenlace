@@ -2,6 +2,9 @@
 
 namespace common\components\Domain\Clinical\Capture\Application\Text;
 
+use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureExtractionPostProcessPolicy;
+use common\components\Domain\Clinical\Capture\Infrastructure\Terminology\EncounterCaptureTerminologyLookup;
+
 /**
  * Valida si un término extraído por IA es clínicamente plausible.
  */

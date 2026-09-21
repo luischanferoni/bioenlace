@@ -2,6 +2,8 @@
 
 namespace common\components\Domain\Clinical\Capture\Application;
 
+use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureIssueFactory;
+
 /**
  * Aplica resoluciones del profesional sobre datosExtraidos (mapa categoría → filas).
  *

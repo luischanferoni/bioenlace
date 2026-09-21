@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Encounter\Application\Presentation;
 
-use common\components\Domain\Clinical\Capture\Application\Workflow\EncounterCaptureCompletenessValidator;
+use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureCompletenessValidator;
 
 /**
  * Construye el bloque declarativo `capture_review` para clientes móvil / JSON

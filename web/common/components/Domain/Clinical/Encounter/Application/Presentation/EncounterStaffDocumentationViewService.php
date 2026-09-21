@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Encounter\Application\Presentation;
 
-use common\components\Domain\Clinical\Capture\Application\Text\EncounterCaptureExtractionPostProcessPolicy;
+use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureExtractionPostProcessPolicy;
 use common\components\Domain\Clinical\Encounter\Application\EncounterReasonService;
 use common\models\Clinical\Encounter;
 

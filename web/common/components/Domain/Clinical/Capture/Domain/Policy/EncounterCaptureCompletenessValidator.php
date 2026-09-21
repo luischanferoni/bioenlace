@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application\Workflow;
+namespace common\components\Domain\Clinical\Capture\Domain\Policy;
 
 /**
  * Completitud de captura clínica vs categorías del EncounterDefinition
@@ -8,6 +8,8 @@ namespace common\components\Domain\Clinical\Capture\Application\Workflow;
  *
  * Si el modelo declara `completenessForExtractedRow`, se usa ese contrato;
  * si no, se aplica la lista plana `campos_requeridos`.
+ *
+ * Deuda: resolución de clases `*Input` en models/ (transitoria hasta VO/ports de fila).
  */
 final class EncounterCaptureCompletenessValidator
 {

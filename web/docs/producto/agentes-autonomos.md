@@ -38,7 +38,7 @@ El YAML aporta **knobs** (umbrales, flags). Los **gates hard** (p. ej. no emitir
 | Campo | Valor |
 |-------|--------|
 | **Tipo** | Agente IA |
-| **Trigger** | `EncounterDocumentationService::guardar` |
+| **Trigger** | `Encounter/Application/Documentation/EncounterDocumentationService::guardar` |
 | **Contexto IA** | `encounter-codificacion-automatica` |
 | **Servicio** | `EncounterAutomaticCodingService` |
 | **Efecto** | `clinical_condition` con CIE-10 y/o SNOMED (`verification_status` PROVISIONAL) |

@@ -3,18 +3,18 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Capture\Application\EncounterCaptureCategoryResolver;
+use common\components\Domain\Clinical\Capture\Application\Service\ClinicalCaptureCategoryResolver;
 use common\components\Domain\Clinical\Capture\Domain\Catalog\EncounterCaptureActorCatalog;
 use common\components\Domain\Clinical\Capture\Domain\Catalog\EncounterDefinitionWorkflowCatalog;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterDefinition;
 
-class EncounterCaptureCategoryResolverTest extends Unit
+class ClinicalCaptureCategoryResolverTest extends Unit
 {
     public function testMedicoImpNoAgregaSignosVitales(): void
     {
         $def = $this->definition(Encounter::ENCOUNTER_CLASS_IMP, EncounterDefinitionWorkflowCatalog::TEMPLATE_IMP_STANDARD);
-        $cats = (new EncounterCaptureCategoryResolver())->resolve($def, [], EncounterCaptureActorCatalog::ACTOR_MEDICO);
+        $cats = (new ClinicalCaptureCategoryResolver())->resolve($def, [], EncounterCaptureActorCatalog::ACTOR_MEDICO);
         $modelos = array_column($cats, 'modelo');
 
         $this->assertNotContains('ConsultaAtencionesEnfermeria', $modelos);
@@ -24,7 +24,7 @@ class EncounterCaptureCategoryResolverTest extends Unit
     public function testEnfermeriaImpAgregaSignosVitalesSugeridos(): void
     {
         $def = $this->definition(Encounter::ENCOUNTER_CLASS_IMP, EncounterDefinitionWorkflowCatalog::TEMPLATE_IMP_STANDARD);
-        $cats = (new EncounterCaptureCategoryResolver())->resolve(
+        $cats = (new ClinicalCaptureCategoryResolver())->resolve(
             $def,
             [],
             EncounterCaptureActorCatalog::ACTOR_ENFERMERIA
@@ -44,7 +44,7 @@ class EncounterCaptureCategoryResolverTest extends Unit
     public function testPlantillaNursingImpYaIncluyeSv(): void
     {
         $def = $this->definition(Encounter::ENCOUNTER_CLASS_IMP, EncounterDefinitionWorkflowCatalog::TEMPLATE_IMP_NURSING);
-        $cats = (new EncounterCaptureCategoryResolver())->resolve(
+        $cats = (new ClinicalCaptureCategoryResolver())->resolve(
             $def,
             [],
             EncounterCaptureActorCatalog::ACTOR_ENFERMERIA

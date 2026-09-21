@@ -3,11 +3,11 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Capture\Application\EncounterCaptureClinicalTermValidator;
-use common\components\Domain\Clinical\Capture\Application\EncounterCaptureExtractionPostProcessor;
+use common\components\Domain\Clinical\Capture\Application\Service\ClinicalCaptureClinicalTermValidator;
+use common\components\Domain\Clinical\Capture\Application\Service\ClinicalCaptureExtractionPostProcessor;
 use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
 
-class EncounterCaptureExtractionPostProcessorTest extends Unit
+class ClinicalCaptureExtractionPostProcessorTest extends Unit
 {
     private const CATEGORIAS_AMB = [
         ['titulo' => 'Motivos de consulta', 'modelo' => 'EncounterReason', 'requerido' => false],
@@ -27,7 +27,7 @@ class EncounterCaptureExtractionPostProcessorTest extends Unit
             isolatedDiagnosis: false
         );
 
-        $processor = new EncounterCaptureExtractionPostProcessor($validator);
+        $processor = new ClinicalCaptureExtractionPostProcessor($validator);
         $input = [
             'datosExtraidos' => [
                 'Motivos de consulta' => ['pelota'],
@@ -49,7 +49,7 @@ class EncounterCaptureExtractionPostProcessorTest extends Unit
             isolatedDiagnosis: false
         );
 
-        $processor = new EncounterCaptureExtractionPostProcessor($validator);
+        $processor = new ClinicalCaptureExtractionPostProcessor($validator);
         $input = [
             'datosExtraidos' => [
                 'Motivos de consulta' => [],
@@ -67,7 +67,7 @@ class EncounterCaptureExtractionPostProcessorTest extends Unit
     {
         $validator = $this->validatorMock(true, true, false);
 
-        $processor = new EncounterCaptureExtractionPostProcessor($validator);
+        $processor = new ClinicalCaptureExtractionPostProcessor($validator);
         $input = [
             'datosExtraidos' => [
                 'Motivos de consulta' => ['fiebre'],
@@ -88,7 +88,7 @@ class EncounterCaptureExtractionPostProcessorTest extends Unit
     {
         $validator = $this->validatorMock(true, true, false);
 
-        $processor = new EncounterCaptureExtractionPostProcessor($validator);
+        $processor = new ClinicalCaptureExtractionPostProcessor($validator);
         $input = [
             'datosExtraidos' => [
                 'Motivos de consulta' => ['fiebre'],
@@ -106,7 +106,7 @@ class EncounterCaptureExtractionPostProcessorTest extends Unit
     {
         $validator = $this->validatorMock(true, true, false);
 
-        $processor = new EncounterCaptureExtractionPostProcessor($validator);
+        $processor = new ClinicalCaptureExtractionPostProcessor($validator);
         $clinicalText = 'cuadro compatible con gripe estacional sin complicaciones respiratorias';
         $input = [
             'datosExtraidos' => [
@@ -125,7 +125,7 @@ class EncounterCaptureExtractionPostProcessorTest extends Unit
     {
         $validator = $this->validatorMock(true, true, true);
 
-        $processor = new EncounterCaptureExtractionPostProcessor($validator);
+        $processor = new ClinicalCaptureExtractionPostProcessor($validator);
         $input = [
             'datosExtraidos' => [
                 'Motivos de consulta' => ['gripe'],
@@ -143,7 +143,7 @@ class EncounterCaptureExtractionPostProcessorTest extends Unit
     {
         $validator = $this->validatorMock(true, true, true);
 
-        $processor = new EncounterCaptureExtractionPostProcessor($validator);
+        $processor = new ClinicalCaptureExtractionPostProcessor($validator);
         $input = [
             'datosExtraidos' => [
                 'Motivos de consulta' => ['gripe', 'fiebre'],
@@ -158,14 +158,14 @@ class EncounterCaptureExtractionPostProcessorTest extends Unit
     }
 
     /**
-     * @return EncounterCaptureClinicalTermValidator&\PHPUnit\Framework\MockObject\MockObject
+     * @return ClinicalCaptureClinicalTermValidator&\PHPUnit\Framework\MockObject\MockObject
      */
     private function validatorMock(
         bool $plausibleExtraction,
         bool $plausibleDiagnosis,
         bool $isolatedDiagnosis
     ) {
-        $validator = $this->createMock(EncounterCaptureClinicalTermValidator::class);
+        $validator = $this->createMock(ClinicalCaptureClinicalTermValidator::class);
         $validator->method('isPlausibleExtraction')->willReturn($plausibleExtraction);
         $validator->method('isPlausibleDiagnosisExtraction')->willReturn($plausibleDiagnosis);
         $validator->method('isPlausibleIsolatedDiagnosisCandidate')->willReturn($isolatedDiagnosis);
@@ -176,7 +176,7 @@ class EncounterCaptureExtractionPostProcessorTest extends Unit
     public function testDropsUnresolvedDerivacionStub(): void
     {
         $validator = $this->validatorMock(true, true, false);
-        $processor = new EncounterCaptureExtractionPostProcessor($validator);
+        $processor = new ClinicalCaptureExtractionPostProcessor($validator);
         $categorias = [
             ['titulo' => 'Motivos de consulta', 'modelo' => 'EncounterReason', 'requerido' => false],
             ['titulo' => 'Derivaciones', 'modelo' => 'ConsultaDerivaciones', 'requerido' => false],

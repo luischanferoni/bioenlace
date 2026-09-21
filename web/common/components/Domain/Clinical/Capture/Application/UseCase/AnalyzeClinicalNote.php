@@ -2,18 +2,18 @@
 
 namespace common\components\Domain\Clinical\Capture\Application\UseCase;
 
-use common\components\Domain\Clinical\Capture\Application\ConsultaProcesamientoService;
+use common\components\Domain\Clinical\Capture\Application\Service\ClinicalCaptureAnalysisService;
 
 /**
  * Caso de uso: análisis IA de nota clínica (intake Capture).
  */
 final class AnalyzeClinicalNote
 {
-    private ConsultaProcesamientoService $analisis;
+    private ClinicalCaptureAnalysisService $analisis;
 
-    public function __construct(?ConsultaProcesamientoService $analisis = null)
+    public function __construct(?ClinicalCaptureAnalysisService $analisis = null)
     {
-        $this->analisis = $analisis ?? new ConsultaProcesamientoService();
+        $this->analisis = $analisis ?? new ClinicalCaptureAnalysisService();
     }
 
     /**

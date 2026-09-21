@@ -4,7 +4,7 @@ namespace common\tests\unit\platform\ai;
 
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureExtractionPostProcessPolicy;
-use common\components\Domain\Clinical\Capture\Application\MedicalLlmConfidenceService;
+use common\components\Domain\Clinical\Capture\Application\Service\ClinicalCaptureLlmConfidenceService;
 use common\components\Domain\Terminology\Application\SnomedContextualPromptBuilder;
 use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
 
@@ -25,13 +25,13 @@ class ClinicalTextIaMetadataTest extends Unit
 
     public function testMedicalContextBoostWhenTermPresent(): void
     {
-        $boost = MedicalLlmConfidenceService::contextBoost('El paciente refiere dolor');
+        $boost = ClinicalCaptureLlmConfidenceService::contextBoost('El paciente refiere dolor');
         $this->assertGreaterThan(0.0, $boost);
     }
 
     public function testMedicalContextBoostZeroWhenNoTerms(): void
     {
-        $this->assertSame(0.0, MedicalLlmConfidenceService::contextBoost('texto neutro sin vocabulario'));
+        $this->assertSame(0.0, ClinicalCaptureLlmConfidenceService::contextBoost('texto neutro sin vocabulario'));
     }
 
     public function testEncounterCapturePromptUsesDynamicCategorySemantics(): void

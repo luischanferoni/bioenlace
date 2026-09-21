@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\Encounter\Application;
 
 use common\components\Domain\Clinical\CareCohort\Application\CareEncounterOrchestrator;
 use common\components\Domain\Clinical\CarePlan\Application\CarePlanLifecycleService;
-use common\components\Domain\Clinical\Capture\Application\ClinicalOperationalContextResolver;
+use common\components\Domain\Clinical\Capture\Application\Service\ClinicalCaptureOperationalContextResolver;
 use common\components\Domain\Clinical\Encounter\Application\PatientSummary\PatientEncounterSummaryPublishService;
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Domain\Clinical\Encounter\Domain\Model\Encounter as EncounterAggregate;
@@ -197,7 +197,7 @@ final class EncounterLifecycleService
             }
         }
 
-        $fromParent = ClinicalOperationalContextResolver::resolveSubjectPersonaIdFromParent($body);
+        $fromParent = ClinicalCaptureOperationalContextResolver::resolveSubjectPersonaIdFromParent($body);
         if ($fromParent !== null && $fromParent > 0) {
             return $fromParent;
         }

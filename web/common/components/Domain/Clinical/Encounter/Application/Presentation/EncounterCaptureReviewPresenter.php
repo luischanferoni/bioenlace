@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Encounter\Application\Presentation;
 
-use common\components\Domain\Clinical\Capture\Application\ClinicalCaptureRowContracts;
+use common\components\Domain\Clinical\Capture\Application\Service\ClinicalCaptureRowContracts;
 
 use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureCompletenessValidator;
 

@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Capture\Application\UseCase;
 
-use common\components\Domain\Clinical\Capture\Application\ClinicalCaptureCheckpoint;
+use common\components\Domain\Clinical\Capture\Application\Service\ClinicalCaptureCheckpoint;
 
 /** Caso de uso: ver captura con review. */
 final class ViewClinicalCapture

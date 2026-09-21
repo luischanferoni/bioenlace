@@ -1,15 +1,15 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application;
+namespace common\components\Domain\Clinical\Capture\Application\Service;
 
-use common\components\Domain\Clinical\Capture\Application\EncounterCapturePostProcessKnobs;
+use common\components\Domain\Clinical\Capture\Application\Service\ClinicalCapturePostProcessKnobs;
 use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureExtractionPostProcessPolicy;
 use common\components\Domain\Clinical\Capture\Infrastructure\Terminology\EncounterCaptureTerminologyLookup;
 
 /**
  * Valida si un término extraído por IA es clínicamente plausible.
  */
-final class EncounterCaptureClinicalTermValidator
+final class ClinicalCaptureClinicalTermValidator
 {
     private EncounterCaptureTerminologyLookup $terminologyLookup;
 
@@ -24,7 +24,7 @@ final class EncounterCaptureClinicalTermValidator
      */
     public function isPlausibleExtraction($item, string $clinicalText, array $config = []): bool
     {
-        EncounterCapturePostProcessKnobs::applyFromPlatformMetadata();
+        ClinicalCapturePostProcessKnobs::applyFromPlatformMetadata();
 
         if (is_array($item) && $this->itemHasClinicalCode($item)) {
             return true;

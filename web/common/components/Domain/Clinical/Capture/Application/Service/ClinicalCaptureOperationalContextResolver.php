@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application;
+namespace common\components\Domain\Clinical\Capture\Application\Service;
 
 use common\models\Clinical\Encounter;
 use Yii;
@@ -8,7 +8,7 @@ use Yii;
 /**
  * PES, servicio y encounter_class desde userPerTabConfig, body o sesión (web/móvil).
  */
-final class ClinicalOperationalContextResolver
+final class ClinicalCaptureOperationalContextResolver
 {
     /**
      * @param array<string, mixed> $body

@@ -1,21 +1,21 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application;
+namespace common\components\Domain\Clinical\Capture\Application\Service;
 
-use common\components\Domain\Clinical\Capture\Application\ClinicalCaptureRowContracts;
+use common\components\Domain\Clinical\Capture\Application\Service\ClinicalCaptureRowContracts;
 use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureExtractionPostProcessPolicy;
 
 /**
  * Ajusta la clasificación IA de captura clínica según política de dominio
  * ({@see EncounterCaptureExtractionPostProcessPolicy}; YAML solo overrides).
  */
-final class EncounterCaptureExtractionPostProcessor
+final class ClinicalCaptureExtractionPostProcessor
 {
-    private EncounterCaptureClinicalTermValidator $termValidator;
+    private ClinicalCaptureClinicalTermValidator $termValidator;
 
-    public function __construct(?EncounterCaptureClinicalTermValidator $termValidator = null)
+    public function __construct(?ClinicalCaptureClinicalTermValidator $termValidator = null)
     {
-        $this->termValidator = $termValidator ?? new EncounterCaptureClinicalTermValidator();
+        $this->termValidator = $termValidator ?? new ClinicalCaptureClinicalTermValidator();
     }
 
     /**
@@ -25,7 +25,7 @@ final class EncounterCaptureExtractionPostProcessor
      */
     public function apply(array $resultadoIA, array $categorias, string $clinicalText): array
     {
-        EncounterCapturePostProcessKnobs::applyFromPlatformMetadata();
+        ClinicalCapturePostProcessKnobs::applyFromPlatformMetadata();
 
         $extraidos = $resultadoIA['datosExtraidos'] ?? null;
         if (!is_array($extraidos)) {

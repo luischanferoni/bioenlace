@@ -288,7 +288,7 @@ Misma [escalera de proveedores](#escalera-de-proveedores-servidor): Groq es el f
 
 | Capa | Componente |
 |------|------------|
-| Servidor | `DeviceSttQualityAssessor`, `ClinicalSpeechInputResolver`; integrado en `ConsultaProcesamientoService::analizar` y `AudioController::actionTranscribir` |
+| Servidor | `DeviceSttQualityAssessor`, `ClinicalSpeechInputResolver`; integrado en `ClinicalCaptureAnalysisService::analizar` y `AudioController::actionTranscribir` |
 | Config | `stt_device` en `frontend/config/params.php` (perfiles `captura_clinica`, `motivos_consulta`) |
 | Web | `frontend/web/js/encounter-capture-form.js`, `_formulario_consulta.php` (dictado + analizar + fallback) |
 | Móvil médico | `shared`: `DeviceSpeechDictation`, `EncounterCaptureApi`; `PatientTimelineScreen` |

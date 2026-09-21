@@ -12,7 +12,7 @@ Lookup al capturar: encounter vinculado o internación/guardia → `service_id` 
 
 No es columna de `encounter_definition`. Se toma del **PES de sesión** (`getServicioActual()` → `servicios.item_name`: `Medico`, `enfermeria`, …), no del `service_id` del episodio (clínica médica).
 
-`EncounterCaptureCategoryResolver`:
+`ClinicalCaptureCategoryResolver`:
 
 1. Categorías base: `EncounterDefinition::getCategoriasParaPrompt`.
 2. Overlay de actor (`EncounterCaptureActorCatalog`): puede **agregar** secciones (p. ej. signos vitales en IMP) y marcar `sugerido`.

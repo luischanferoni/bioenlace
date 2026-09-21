@@ -133,7 +133,7 @@ Código: [`ChatRouter.php`](../../common/components/Platform/Assistant/Chat/Rout
 
 ### Corrección / preparación de texto
 
-`ProcesadorTextoMedico::prepararParaIAConFormato` → **SymSpell** + diccionario de abreviaturas **en CPU**, antes de `ConsultaProcesamientoService::analizar`.
+`ClinicalCaptureTextNormalizer::prepararParaIAConFormato` → **SymSpell** + diccionario de abreviaturas **en CPU**, antes de `ClinicalCaptureAnalysisService::analizar`.
 
 ### Análisis (`analisis-consulta`)
 

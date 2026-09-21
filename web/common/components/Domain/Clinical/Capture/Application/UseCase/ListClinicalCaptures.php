@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Capture\Application\UseCase;
 
-use common\components\Domain\Clinical\Capture\Application\ClinicalCaptureCheckpoint;
+use common\components\Domain\Clinical\Capture\Application\Service\ClinicalCaptureCheckpoint;
 use common\models\Clinical\EncounterCapture;
 
 /** Caso de uso: listar capturas abiertas. */

@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Clinical\Capture\Application\Presentation;
 
-use common\components\Domain\Clinical\Capture\Application\EncounterCaptureCategoryResolver;
-use common\components\Domain\Clinical\Capture\Application\ClinicalCaptureRowContracts;
+use common\components\Domain\Clinical\Capture\Application\Service\ClinicalCaptureCategoryResolver;
+use common\components\Domain\Clinical\Capture\Application\Service\ClinicalCaptureRowContracts;
 use common\components\Domain\Clinical\Encounter\Application\EncounterOpenProblemsService;
 use common\components\Domain\Clinical\Encounter\Application\EpisodeCaptureDedupService;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EncounterCaptureReviewPresenter;
@@ -11,8 +11,8 @@ use common\models\Clinical\EncounterCapture;
 use common\models\Clinical\EncounterDefinition;
 
 /**
- * Forma de respuesta API del checkpoint de captura (ok/fail/toApiArray).
- * Forma API del checkpoint. Rol CA anidado: `Application/Presentation/` (*Presenter).
+ * Forma el payload del checkpoint (ok / fail / toApiArray) para que el controller HTTP lo serialice.
+ * No es controller ni vista Yii — rol CA Presentation (*Presenter).
  */
 final class ClinicalCapturePresenter
 {
@@ -35,7 +35,7 @@ final class ClinicalCapturePresenter
         $def = EncounterDefinition::findOne($idConfig);
 
         return $def !== null
-            ? (new EncounterCaptureCategoryResolver())->resolve($def, $body)
+            ? (new ClinicalCaptureCategoryResolver())->resolve($def, $body)
             : [];
     }
 

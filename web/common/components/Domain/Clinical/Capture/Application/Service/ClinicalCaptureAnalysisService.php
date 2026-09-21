@@ -1,8 +1,8 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application;
+namespace common\components\Domain\Clinical\Capture\Application\Service;
 
-use common\components\Domain\Clinical\Capture\Application\ClinicalCaptureRowContracts;
+use common\components\Domain\Clinical\Capture\Application\Service\ClinicalCaptureRowContracts;
 
 use Yii;
 use yii\base\Component;
@@ -11,13 +11,13 @@ use common\components\Domain\Clinical\Encounter\Application\AiContext\PatientAiC
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EncounterCaptureReviewPresenter;
 use common\components\Domain\Clinical\Encounter\Application\EncounterOpenProblemsService;
 use common\components\Domain\Clinical\Encounter\Application\EpisodeCaptureDedupService;
-use common\components\Domain\Clinical\Capture\Application\ClinicalOperationalContextResolver;
+use common\components\Domain\Clinical\Capture\Application\Service\ClinicalCaptureOperationalContextResolver;
 use common\components\Domain\Clinical\Capture\Infrastructure\Logging\ConsultaLogger;
 use common\components\Domain\Clinical\Capture\Infrastructure\Persistence\EncounterCaptureAnalysisCache;
-use common\components\Domain\Clinical\Capture\Application\EncounterDefinitionBootstrapService;
+use common\components\Domain\Clinical\Capture\Application\Service\EncounterDefinitionBootstrapService;
 use common\components\Domain\Clinical\Encounter\Application\Documentation\EncounterDocumentationService;
-use common\components\Domain\Clinical\Capture\Application\EncounterCaptureExtractionPostProcessor;
-use common\components\Domain\Clinical\Capture\Application\ProcesadorTextoMedico;
+use common\components\Domain\Clinical\Capture\Application\Service\ClinicalCaptureExtractionPostProcessor;
+use common\components\Domain\Clinical\Capture\Application\Service\ClinicalCaptureTextNormalizer;
 use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureCompletenessValidator;
 use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
 
@@ -25,13 +25,13 @@ use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
  * Análisis IA y persistencia de consultas (agnóstico de capa HTTP).
  * El controller API arma el body, llama aquí y aplica statusCode según __statusCode en la respuesta.
  */
-class ConsultaProcesamientoService extends Component
+class ClinicalCaptureAnalysisService extends Component
 {
     public function analizar(array $body): array
     {
         try {
             [$idProfesionalEfectorServicio, $idServicio] = array_slice(
-                ClinicalOperationalContextResolver::resolve($body),
+                ClinicalCaptureOperationalContextResolver::resolve($body),
                 0,
                 2
             );
@@ -88,7 +88,7 @@ class ConsultaProcesamientoService extends Component
             ];
             $logger = ConsultaLogger::iniciar($textoConsulta, $contextoLogger);
 
-            $resultadoFormato = ProcesadorTextoMedico::prepararParaIAConFormato(
+            $resultadoFormato = ClinicalCaptureTextNormalizer::prepararParaIAConFormato(
                 $textoConsulta,
                 $servicio->nombre,
                 $tabId,
@@ -100,7 +100,7 @@ class ConsultaProcesamientoService extends Component
                     'PRE-IA',
                     null,
                     $textoLimpio,
-                    ['metodo' => 'ProcesadorTextoMedico::limpiarTexto']
+                    ['metodo' => 'ClinicalCaptureTextNormalizer::limpiarTexto']
                 );
             }
 
@@ -128,7 +128,7 @@ class ConsultaProcesamientoService extends Component
                 ];
             }
 
-            $logger->registrarJsonIa($datos, 'ConsultaProcesamientoService::analizarConsultaConIA');
+            $logger->registrarJsonIa($datos, 'ClinicalCaptureAnalysisService::analizarConsultaConIA');
 
             $textoProcesado = self::resolveTextoProcesadoFromIa($datos, $textoLimpio);
             $textoFormateado = htmlspecialchars($textoProcesado, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
@@ -271,7 +271,7 @@ class ConsultaProcesamientoService extends Component
 
             return $resultado;
         } catch (\Exception $e) {
-            Yii::error('Error en ConsultaProcesamientoService::analizar: ' . $e->getMessage() . "\n" . $e->getTraceAsString(), 'consulta-ia');
+            Yii::error('Error en ClinicalCaptureAnalysisService::analizar: ' . $e->getMessage() . "\n" . $e->getTraceAsString(), 'consulta-ia');
 
             if (isset($logger)) {
                 try {
@@ -352,7 +352,7 @@ class ConsultaProcesamientoService extends Component
             if ($resultado && !isset($resultado['error'])) {
                 $normalizado = self::normalizeResultadoIa($resultado);
 
-                return (new EncounterCaptureExtractionPostProcessor())->apply(
+                return (new ClinicalCaptureExtractionPostProcessor())->apply(
                     $normalizado,
                     is_array($categorias) ? $categorias : [],
                     (string) $texto
@@ -554,7 +554,7 @@ class ConsultaProcesamientoService extends Component
             return [];
         }
 
-        return (new \common\components\Domain\Clinical\Capture\Application\EncounterCaptureCategoryResolver())
+        return (new \common\components\Domain\Clinical\Capture\Application\Service\ClinicalCaptureCategoryResolver())
             ->resolve($configuracion, $body);
     }
 

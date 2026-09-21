@@ -10,7 +10,7 @@ use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
 use yii\data\Pagination;
 use common\models\Clinical\AbreviaturasMedicas;
-use common\components\Domain\Clinical\Capture\Application\ProcesadorTextoMedico;
+use common\components\Domain\Clinical\Capture\Application\Service\ClinicalCaptureTextNormalizer;
 
 /**
  * Controlador para administración de abreviaturas médicas

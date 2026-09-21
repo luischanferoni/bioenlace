@@ -3,13 +3,13 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Capture\Application\EncounterCaptureExtractionPostProcessor;
+use common\components\Domain\Clinical\Capture\Application\Service\ClinicalCaptureExtractionPostProcessor;
 
 class EncounterCaptureBackfillMotivosTest extends Unit
 {
     public function testBackfillsMotivosWhenEmptyAndLexiconMatches(): void
     {
-        $processor = new EncounterCaptureExtractionPostProcessor();
+        $processor = new ClinicalCaptureExtractionPostProcessor();
         $text = 'Cefalea tensional de una semana, sin signos de alarma. Diagnóstico: hipertensión arterial esencial.';
         $resultado = [
             'datosExtraidos' => [
@@ -30,7 +30,7 @@ class EncounterCaptureBackfillMotivosTest extends Unit
 
     public function testDoesNotOverwriteExistingMotivos(): void
     {
-        $processor = new EncounterCaptureExtractionPostProcessor();
+        $processor = new ClinicalCaptureExtractionPostProcessor();
         $text = 'Cefalea tensional. Diagnóstico: migraña.';
         $resultado = [
             'datosExtraidos' => [

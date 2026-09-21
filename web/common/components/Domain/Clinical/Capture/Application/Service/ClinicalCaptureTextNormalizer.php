@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application;
+namespace common\components\Domain\Clinical\Capture\Application\Service;
 
 use common\helpers\TextoMedicoHelper;
 
@@ -9,7 +9,7 @@ use common\helpers\TextoMedicoHelper;
  * Ortografía, abreviaturas y formato fino los devuelve la IA en `texto_procesado`
  * (ver clinical-text-ia.yaml → encounter_capture_extraction). SymSpell no se usa.
  */
-class ProcesadorTextoMedico
+class ClinicalCaptureTextNormalizer
 {
     /**
      * Solo limpieza local; la corrección de la nota la entrega la extracción IA.

@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application;
+namespace common\components\Domain\Clinical\Capture\Application\Service;
 
 use common\components\Domain\Clinical\Capture\Domain\Catalog\EncounterCaptureActorCatalog;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanActivityKind;
@@ -19,7 +19,7 @@ use Yii;
 /**
  * Categorías de captura: definición (service_id + class) + actor de sesión + CarePlan inpatient.
  */
-final class EncounterCaptureCategoryResolver
+final class ClinicalCaptureCategoryResolver
 {
     /** @var array<string, string> */
     private const CARE_PLAN_KIND_TO_MODELO = [

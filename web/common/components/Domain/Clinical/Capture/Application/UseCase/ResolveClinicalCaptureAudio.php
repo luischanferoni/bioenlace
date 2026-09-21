@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Capture\Application\UseCase;
 
-use common\components\Domain\Clinical\Capture\Application\ClinicalCaptureCheckpoint;
+use common\components\Domain\Clinical\Capture\Application\Service\ClinicalCaptureCheckpoint;
 
 /** Caso de uso: resolver path de audio para descarga. */
 final class ResolveClinicalCaptureAudio

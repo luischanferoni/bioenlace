@@ -32,7 +32,7 @@ Este documento cubre sobre todo la **IA generativa** y enlaza STT donde comparte
 | `care-pack-followup-batch` | Sistema (cola sync) | Calendario touchpoints + formularios post-consulta | **1× por cohort_key** | `CarePackGenerationService` |
 | `care-pack-education-batch` | Sistema (cola sync) | Módulos educativos reutilizables | **1× por cohort_key** | `CarePackGenerationService` |
 | `care-pack-vertex-batch` | Sistema (Vertex batch) | Misma generación que arriba, vía `batchPredictionJobs` | **1 inferencia / job** en lote GCS | `CarePackVertexBatchPoller` + `AICostTracker` |
-| `analisis-consulta` | Médico (captura) | Extraer JSON estructurado del dictado según categorías del servicio | **1× por análisis** de encounter | `ConsultaProcesamientoService` |
+| `analisis-consulta` | Médico (captura) | Extraer JSON estructurado del dictado según categorías del servicio | **1× por análisis** de encounter | `ClinicalCaptureAnalysisService` |
 | `encounter-codificacion-automatica` | Sistema (al guardar) | Elegir códigos CIE-10 y/o SNOMED desde texto clínico y persistir `Condition` | **1× por guardado** de encounter con texto suficiente | `EncounterAutomaticCodingService` |
 | `terminos-contextuales` | — | Reservado en `IAManager`; sin llamadas activas en el repo | — | `IAManager::obtenerTerminosContextuales` |
 
@@ -88,7 +88,7 @@ Detalle de producto: [asistente-y-chat.md](./asistente-y-chat.md) · Motor: [arq
 | Paso | Tecnología | Contexto / notas |
 |------|------------|------------------|
 | Dictado / audio | STT dispositivo o servidor | Política `captura_clinica`; contexto telemetría STT, no Gemini |
-| Preparación de texto | **CPU** (SymSpell, abreviaturas) | `ProcesadorTextoMedico` — no es llamada a Gemini |
+| Preparación de texto | **CPU** (SymSpell, abreviaturas) | `ClinicalCaptureTextNormalizer` — no es llamada a Gemini |
 | Análisis → campos del formulario | IA | `analisis-consulta` + contexto clínico (`PatientAiContextBuilder`, perfil `encounter`) |
 | Guardado → codificación diagnóstica | IA | `encounter-codificacion-automatica` — decide CIE-10/SNOMED y persiste (sin UI de sugerencias) |
 

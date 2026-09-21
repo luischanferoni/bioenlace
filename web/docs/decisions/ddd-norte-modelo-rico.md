@@ -17,7 +17,7 @@ Si hay conflicto entre packaging y responsabilidad de capa, **gana este norte**.
 | `Domain/<BC>/` | Bounded context | `Clinical/` |
 | `Clinical/<Modulo>/` | Capacidad de producto | `Capture/`, `Encounter/` |
 | `<Modulo>/` L1 | Capa DDD/CA | `Application/`, `Domain/`, `Infrastructure/` |
-| `Application/*` | **Rol CA (técnico)** | `UseCase/`, `Presentation/`, `Authorization/`, `Flows/`, `Agents/` |
+| `Application/*` | **Rol CA (técnico)** | `UseCase/`, `Presentation/`, `Service/`, `Authorization/`, `Flows/`, `Agents/` |
 | `Domain/*` | Building block | `Model/`, `Catalog/`, `Policy/`, `Port/`, `RowContract/` |
 | `Infrastructure/*` | Adapter / tech | `Persistence/`, `SpeechToText/`, `Logging/` |
 | **Clases / archivos** | Lenguaje de dominio | `SaveClinicalCapture`, `ClinicalCaptureCheckpoint`, `MedicacionRowContract` |
@@ -36,8 +36,8 @@ Clinical/Capture/
   Application/
     UseCase/SaveClinicalCapture.php          ← rol técnico; dominio en el nombre de clase
     Presentation/ClinicalCapturePresenter.php
-    ClinicalCaptureCheckpoint.php            ← colaborador Application; dominio en el nombre
-    ConsultaProcesamientoService.php
+    Service/ClinicalCaptureCheckpoint.php    ← colaborador Application; dominio en el nombre
+    Service/ClinicalCaptureAnalysisService.php
   Domain/
     Model/ClinicalCapture.php
     RowContract/MedicacionRowContract.php    ← dominio/building block aquí, no bajo Application
@@ -58,7 +58,7 @@ Clinical/Capture/
 ## Application fino
 
 Una intención = una clase en `Application/UseCase/`.  
-Colaboradores (`*Checkpoint`, `*Service`, resolvers) en la **raíz** de `Application/` o, si el gramática lo define, solo bajo roles CA (`Presentation/`, …) — **nunca** bajo carpetas con nombre de capacidad de producto.
+Colaboradores (`*Checkpoint`, `*Service`, resolvers) en `Application/Service/` — rol CA técnico; dominio en el nombre de clase — **nunca** bajo carpetas con nombre de capacidad de producto.
 
 ## Ports / adapters
 
@@ -76,7 +76,7 @@ Forma: [Capture/README.md](../../common/components/Domain/Clinical/Capture/READM
 
 ## Checklist
 
-1. ¿Esta carpeta bajo `Application/` es un **rol CA** (`UseCase`, `Presentation`, …)? Si es nombre de negocio (`Checkpoint`, `Extraction`) → **mover**: carpeta fuera; dominio al nombre de clase o a `Domain/`.
+1. ¿Esta carpeta bajo `Application/` es un **rol CA** (`UseCase`, `Presentation`, `Service`, …)? Si es nombre de negocio (`Checkpoint`, `Extraction`) → **mover**: carpeta fuera; dominio al nombre de clase o a `Domain/`.
 2. ¿Regla sin I/O? → Domain.
 3. ¿Orquestación de intención? → `UseCase/`.
 4. ¿I/O? → Infrastructure.

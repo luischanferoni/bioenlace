@@ -1,8 +1,8 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application;
+namespace common\components\Domain\Clinical\Capture\Application\Service;
 
-use common\components\Domain\Clinical\Capture\Application\ClinicalOperationalContextResolver;
+use common\components\Domain\Clinical\Capture\Application\Service\ClinicalCaptureOperationalContextResolver;
 use common\components\Domain\Clinical\Capture\Domain\Catalog\EncounterDefinitionWorkflowCatalog;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterDefinition;
@@ -104,7 +104,7 @@ final class EncounterDefinitionBootstrapService
         }
 
         if ($idServicio === null || $idServicio <= 0 || $encounterClass === null || $encounterClass === '') {
-            [, $idServicio, $encounterClass] = ClinicalOperationalContextResolver::resolve($body);
+            [, $idServicio, $encounterClass] = ClinicalCaptureOperationalContextResolver::resolve($body);
         }
 
         if ($idServicio === null || $idServicio <= 0 || $encounterClass === null || $encounterClass === '') {

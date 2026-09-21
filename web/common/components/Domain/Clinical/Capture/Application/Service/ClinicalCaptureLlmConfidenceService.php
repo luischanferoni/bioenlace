@@ -1,13 +1,13 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application;
+namespace common\components\Domain\Clinical\Capture\Application\Service;
 
 use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
 
 /**
  * Heurísticas de confianza para corrección ortográfica clínica vía LLM.
  */
-final class MedicalLlmConfidenceService
+final class ClinicalCaptureLlmConfidenceService
 {
     public static function contextBoost(string $contexto): float
     {

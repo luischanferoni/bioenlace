@@ -8,7 +8,7 @@
 1. **Módulo** = capacidad de producto (`Capture/`, `Encounter/`).
 2. **L1 del módulo** = capas `Application/` · `Domain/` · `Infrastructure/`.
 3. **`Application/*`** = **solo roles Clean Architecture / plugins** (técnico):  
-   `UseCase/`, `Presentation/`, `Authorization/`, `Flows/`, `Agents/`.  
+   `UseCase/`, `Presentation/`, `Service/`, `Authorization/`, `Flows/`, `Agents/`.  
    El dominio va en el **nombre de la clase**.
 4. **`Domain/*`** = building blocks (`Model/`, `Catalog/`, `Policy/`, `Port/`, `RowContract/`).
 5. **`Infrastructure/*`** = adapters.
@@ -22,8 +22,8 @@ Domain/Clinical/<Modulo>/
   Application/
     UseCase/                    # interactors (* nombre de dominio en la clase)
     Presentation/               # *Presenter / *PresentationService
+    Service/                    # *Service / *Resolver / *Applier / Checkpoint / wiring
     Authorization/ | Flows/ | Agents/   # plugins si aplican
-    *.php                       # services/resolvers de aplicación (dominio en el nombre)
   Domain/
     Model/ | Catalog/ | Policy/ | Port/ | RowContract/ | …
   Infrastructure/
@@ -36,11 +36,7 @@ Domain/Clinical/<Modulo>/
 Capture/Application/
   UseCase/                 # CreateOrUpload, Transcribe, Analyze*, Save, …
   Presentation/            # ClinicalCapturePresenter
-  ClinicalCaptureCheckpoint.php
-  ConsultaProcesamientoService.php
-  ClinicalCaptureRowContracts.php
-  EncounterCaptureCategoryResolver.php
-  …
+  Service/                 # ClinicalCaptureCheckpoint, *AnalysisService, *RowContracts, …
 Capture/Domain/
   Model/ | Catalog/ | RowContract/ | Policy/ | Port/
 ```
@@ -51,12 +47,12 @@ Capture/Domain/
 |--------|---------|
 | Interactor | `Application/UseCase/` |
 | `*Presenter`, `*PresentationService` | `Application/Presentation/` |
-| `*Service` / resolvers Application | `Application/` (raíz) |
+| `*Service` / resolvers / appliers Application | `Application/Service/` |
 | `*Access` | `Application/Authorization/` |
 | `*Agent`, `*AgentPolicy` | `Application/Agents/` |
 | Aggregate | `Domain/Model/` |
 | `*Catalog`, policies | `Domain/Catalog/`, `Domain/Policy/` |
-| `*RowContract` | `Domain/RowContract/` (wiring Application en raíz `Application/`, no carpeta `RowContract/`) |
+| `*RowContract` | `Domain/RowContract/` (wiring Application en `Application/Service/`, no carpeta `RowContract/` bajo Application) |
 | ACL | `Infrastructure/External/…` |
 | AR Yii | `common/models/<BC>/` |
 

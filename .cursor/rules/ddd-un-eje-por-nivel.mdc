@@ -1,5 +1,5 @@
 ---
-description: Application = solo roles CA; dominio en nombres de clase (cero ambigüedad)
+description: Empaquetado fijo DDD/CA — carpetas técnicas vs dominio en clases
 globs:
   - web/common/components/Domain/**/*
   - web/docs/decisions/ddd-norte*.md
@@ -7,35 +7,68 @@ globs:
 alwaysApply: false
 ---
 
-# Empaquetado Domain — cero ambigüedad
+# Empaquetado Domain (estructura fija)
 
-Fuente: [`ddd-norte-modelo-rico.md`](../../web/docs/decisions/ddd-norte-modelo-rico.md).
+Fuente: [`ddd-norte-modelo-rico.md`](../../web/docs/decisions/ddd-norte-modelo-rico.md), [`domain-folder-grammar.md`](../../web/docs/decisions/domain-folder-grammar.md).
 
-## Obligatorio
+La estructura de carpetas **no cambia** al crear un módulo nuevo. Cambia el **nombre del módulo** y el de las **clases**.
 
-| Nivel | Eje |
-|-------|-----|
-| `Clinical/<Modulo>/` | Capacidad de **producto** |
-| `Application/*` | **Solo rol CA (técnico):** `UseCase/`, `Presentation/`, `Authorization/`, `Flows/`, `Agents/` |
-| `Domain/*` | Building block |
-| Nombre de **clase** | Dominio / producto (`SaveClinicalCapture`, `ClinicalCaptureCheckpoint`) |
+## Qué es técnico vs dominio
 
-## Prohibido bajo `Application/`
+| Qué | Dónde |
+|-----|--------|
+| Capacidad de producto | Nombre del **módulo** (`Capture/`, `Encounter/`, …) |
+| Rol arquitectónico (CA/DDD) | **Carpetas** bajo el módulo (`Application/`, `UseCase/`, `Model/`, …) |
+| Concepto de negocio | **Nombre de clase/archivo** (`SaveClinicalCapture`, `MedicacionRowContract`) |
 
-Carpetas con nombre de capacidad o dominio:
+## Estructura exacta (por módulo)
 
-- `Checkpoint/`, `Extraction/`, `Definition/`, `RowContract/`
-- `Support/`, `Helpers/`, `Shared/`, `Pipeline/`
+```text
+Domain/<BC>/<Modulo>/                 # <Modulo> = capacidad de producto
+  Application/                        # capa CA: orquesta casos de uso
+    UseCase/                          # una intención = una clase
+    Presentation/                     # *Presenter: forma del payload (NO controllers HTTP)
+    Service/                          # *Service / *Resolver / wiring (colaboradores de Application)
+    Authorization/                    # *Access (si aplica)
+    Flows/                            # intents/metadata asistente (si aplica)
+    Agents/                           # *Agent / *AgentPolicy (si aplica)
+  Domain/                             # capa DDD: reglas sin I/O
+    Model/                            # aggregates / entidades ricas
+    Catalog/                          # catálogos de negocio (*Catalog)
+    Policy/                           # policies / validators de dominio
+    Port/                             # interfaces que el dominio necesita
+    RowContract/                      # contratos de integridad de fila (si aplica)
+  Infrastructure/                     # adapters
+    Persistence/                      # ancla AR → common/models/<BC>/
+    External/<Sistema>/               # ACL (Connector, Mapper, …)
+    <Adapter>/                        # STT, Logging, Terminology, …
+```
 
-Esas ideas van en **nombres de clase** o en `Domain/` (p. ej. `Domain/RowContract/`).
+Solo crear las subcarpetas que el módulo use; **no inventar otras** bajo `Application/` o `Domain/`.
 
-## Correcto (piloto Capture)
+## Sufijos → carpeta
+
+| Sufijo / tipo | Carpeta |
+|---------------|---------|
+| Interactor (caso de uso) | `Application/UseCase/` |
+| `*Presenter`, `*PresentationService` | `Application/Presentation/` (payload; controllers viven en `frontend/modules/api`) |
+| `*Service`, `*Resolver`, `*Applier`, wiring Application | `Application/Service/` |
+| `*Access` | `Application/Authorization/` |
+| `*Agent`, `*AgentPolicy` | `Application/Agents/` |
+| Aggregate / entity rica | `Domain/Model/` |
+| `*Catalog` | `Domain/Catalog/` |
+| `*Policy`, validators de dominio | `Domain/Policy/` |
+| Port (interface) | `Domain/Port/` |
+| `*RowContract` | `Domain/RowContract/` |
+| `*Connector`, `*Mapper`, `*Registry` (ACL) | `Infrastructure/External/<Sistema>/` |
+| ActiveRecord Yii | `common/models/<BC>/` (no duplicar bajo Infrastructure) |
+
+## Ejemplo
 
 ```text
 Application/UseCase/SaveClinicalCapture.php
 Application/Presentation/ClinicalCapturePresenter.php
-Application/ClinicalCaptureCheckpoint.php
+Application/Service/ClinicalCaptureCheckpoint.php
+Domain/Model/ClinicalCapture.php
 Domain/RowContract/MedicacionRowContract.php
 ```
-
-Si estás por crear `Application/<NombreDeNegocio>/`, **parar**: viola el norte.

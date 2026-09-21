@@ -7,7 +7,7 @@ use Yii;
 use common\components\Domain\Clinical\Capture\Infrastructure\SpeechToText\ClinicalSpeechInputResolver;
 use common\components\Platform\Ai\SpeechToText\SpeechToTextManager;
 use common\components\Platform\Ai\SpeechToText\SttConfigService;
-use common\components\Domain\Clinical\Capture\Application\ProcesadorTextoMedico;
+use common\components\Domain\Clinical\Capture\Application\Service\ClinicalCaptureTextNormalizer;
 use common\components\Domain\Clinical\Capture\Application\UseCase\AnalyzeClinicalNote;
 
 class AudioController extends BaseController
@@ -86,7 +86,7 @@ class AudioController extends BaseController
                     $tabId = $request->post('tab_id') ?? 'tab_' . uniqid() . '_' . time();
 
                     // Procesar el texto transcrito
-                    $resultadoProcesamiento = ProcesadorTextoMedico::prepararParaIA(
+                    $resultadoProcesamiento = ClinicalCaptureTextNormalizer::prepararParaIA(
                         $textoTranscrito,
                         $servicio ? $servicio->nombre : null,
                         $tabId

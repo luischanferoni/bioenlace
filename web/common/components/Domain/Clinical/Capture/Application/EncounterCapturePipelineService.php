@@ -2,21 +2,30 @@
 
 namespace common\components\Domain\Clinical\Capture\Application;
 
-use common\components\Domain\Clinical\Capture\Application\Pipeline\ClinicalCapturePipelineSupport;
+use common\components\Domain\Clinical\Capture\Application\Support\ClinicalCaptureSupport;
+use common\components\Domain\Clinical\Capture\Application\UseCase\AnalyzeClinicalCaptureDraft;
+use common\components\Domain\Clinical\Capture\Application\UseCase\ApplyClinicalCaptureResolutions;
+use common\components\Domain\Clinical\Capture\Application\UseCase\CreateOrUploadClinicalCapture;
+use common\components\Domain\Clinical\Capture\Application\UseCase\DiscardClinicalCapture;
+use common\components\Domain\Clinical\Capture\Application\UseCase\ListClinicalCaptures;
+use common\components\Domain\Clinical\Capture\Application\UseCase\ResolveClinicalCaptureAudio;
+use common\components\Domain\Clinical\Capture\Application\UseCase\SaveClinicalCapture;
+use common\components\Domain\Clinical\Capture\Application\UseCase\TranscribeClinicalCapture;
+use common\components\Domain\Clinical\Capture\Application\UseCase\ViewClinicalCapture;
 use common\models\Clinical\EncounterCapture;
 use yii\web\UploadedFile;
 
 /**
- * Facade de compatibilidad del pipeline de captura.
+ * Facade de compatibilidad hacia los use cases de captura.
  * Preferir los casos de uso (`CreateOrUploadClinicalCapture`, `TranscribeClinicalCapture`, …).
  */
 final class EncounterCapturePipelineService
 {
-    private ClinicalCapturePipelineSupport $support;
+    private ClinicalCaptureSupport $support;
 
-    public function __construct(?ClinicalCapturePipelineSupport $support = null)
+    public function __construct(?ClinicalCaptureSupport $support = null)
     {
-        $this->support = $support ?? new ClinicalCapturePipelineSupport();
+        $this->support = $support ?? new ClinicalCaptureSupport();
     }
 
     /**

@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\Capture\Application\UseCase;
 
 use common\components\Domain\Clinical\Capture\Application\RowContract\ClinicalCaptureRowContracts;
-use common\components\Domain\Clinical\Capture\Application\Pipeline\ClinicalCapturePipelineSupport;
+use common\components\Domain\Clinical\Capture\Application\Support\ClinicalCaptureSupport;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EncounterCaptureReviewPresenter;
 use common\models\Clinical\EncounterCaptureAudit;
 use common\components\Domain\Clinical\Encounter\Application\EncounterCaptureAuditService;
@@ -12,11 +12,11 @@ use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureStage;
 /** Caso de uso: guardar draft de captura → persistencia Encounter. */
 final class SaveClinicalCapture
 {
-    private ClinicalCapturePipelineSupport $pipeline;
+    private ClinicalCaptureSupport $support;
 
-    public function __construct(?ClinicalCapturePipelineSupport $pipeline = null)
+    public function __construct(?ClinicalCaptureSupport $support = null)
     {
-        $this->pipeline = $pipeline ?? new ClinicalCapturePipelineSupport();
+        $this->support = $support ?? new ClinicalCaptureSupport();
     }
 
     /**
@@ -26,14 +26,14 @@ final class SaveClinicalCapture
     public function execute(array $body): array
     {
 
-        $capture = $this->pipeline->findOpenCapture($body);
+        $capture = $this->support->findOpenCapture($body);
         if (is_array($capture)) {
             return $capture;
         }
 
         $analysis = $capture->getAnalysisResponse();
         if ($analysis === [] && $capture->getDatosExtraidos() === []) {
-            return $this->pipeline->fail(400, 'No hay análisis para guardar. Ejecute captura-analizar.', $capture);
+            return $this->support->fail(400, 'No hay análisis para guardar. Ejecute captura-analizar.', $capture);
         }
 
         $stagedFromBody = $body['staged_item_ids'] ?? $body['stagedItemIds'] ?? null;
@@ -45,7 +45,7 @@ final class SaveClinicalCapture
         if (!is_array($datosExtraidos) || $datosExtraidos === []) {
             $datosExtraidos = $capture->getDatosExtraidos();
             if ($datosExtraidos === [] && $analysis !== []) {
-                $datosExtraidos = $this->pipeline->extractDatosExtraidosFromAnalizar($analysis);
+                $datosExtraidos = $this->support->extractDatosExtraidosFromAnalizar($analysis);
             }
         }
 
@@ -62,10 +62,10 @@ final class SaveClinicalCapture
 
         $fullCheckpoint = $capture->getDatosExtraidos();
         if ($fullCheckpoint === [] && $analysisLocal !== []) {
-            $fullCheckpoint = $this->pipeline->extractDatosExtraidosFromAnalizar($analysisLocal);
+            $fullCheckpoint = $this->support->extractDatosExtraidosFromAnalizar($analysisLocal);
         }
         if ($mergedResolutions !== [] && $fullCheckpoint !== []) {
-            $categorias = $this->pipeline->resolveCategoriasForCapture($capture, $body);
+            $categorias = $this->support->resolveCategoriasForCapture($capture, $body);
             $fullCheckpoint = ClinicalCaptureRowContracts::resolutionApplier()->apply(
                 $fullCheckpoint,
                 $mergedResolutions,
@@ -88,7 +88,7 @@ final class SaveClinicalCapture
         if ($blocking !== null) {
             $msg = trim((string) ($blocking['texto'] ?? 'No se puede guardar: el análisis tiene errores.'));
 
-            return $this->pipeline->fail(400, $msg !== '' ? $msg : 'No se puede guardar.', $capture);
+            return $this->support->fail(400, $msg !== '' ? $msg : 'No se puede guardar.', $capture);
         }
 
         $saveBody = $body;
@@ -123,9 +123,9 @@ final class SaveClinicalCapture
             $saveBody['id_configuracion'] = $analysis['id_configuracion'];
         }
 
-        $out = $this->pipeline->documentation()->guardar($saveBody);
+        $out = $this->support->documentation()->guardar($saveBody);
         // Si el dominio devolvió checkpoint resuelto, persistirlo para el próximo intento.
-        $domain = $this->pipeline->captureRows()->toAggregate($capture);
+        $domain = $this->support->captureRows()->toAggregate($capture);
         if (isset($out['analisis_datos_extraidos']) && is_array($out['analisis_datos_extraidos'])) {
             $domain->replaceDatosExtraidos($out['analisis_datos_extraidos']);
         } elseif (empty($out['success']) && $fullCheckpoint !== []) {
@@ -142,8 +142,8 @@ final class SaveClinicalCapture
         if (empty($out['success'])) {
             $msg = trim((string) ($out['message'] ?? 'Error al guardar.'));
             $domain->markSaveFailed($msg !== '' ? $msg : 'Error al guardar.');
-            $capture = $this->pipeline->persistDomain($domain);
-            $this->pipeline->audit()->record($capture, EncounterCaptureAudit::EVENT_SAVE_FAILED, array_merge(
+            $capture = $this->support->persistDomain($domain);
+            $this->support->audit()->record($capture, EncounterCaptureAudit::EVENT_SAVE_FAILED, array_merge(
                 [
                     'attempts_save' => $domain->attemptsSave(),
                     'error_code' => 'save_failed',
@@ -152,23 +152,23 @@ final class SaveClinicalCapture
             ));
             $status = (int) ($out['__statusCode'] ?? 500);
 
-            return $this->pipeline->fail($status > 0 ? $status : 500, $capture->last_error, $capture, [
+            return $this->support->fail($status > 0 ? $status : 500, $capture->last_error, $capture, [
                 'guardar' => $out,
             ]);
         }
 
         $encounterId = isset($out['encounter_id']) ? (int) $out['encounter_id'] : null;
         $domain->complete($encounterId);
-        $capture = $this->pipeline->persistDomain($domain);
-        $this->pipeline->audit()->record($capture, EncounterCaptureAudit::EVENT_SAVED, array_merge(
+        $capture = $this->support->persistDomain($domain);
+        $this->support->audit()->record($capture, EncounterCaptureAudit::EVENT_SAVED, array_merge(
             ['attempts_save' => $domain->attemptsSave()],
             $acceptanceMeta
         ));
 
         // Tras completar, el audio crudo ya no es necesario para el pipeline.
-        $this->pipeline->deleteAudioFile($capture);
+        $this->support->deleteAudioFile($capture);
 
-        $payload = $this->pipeline->toApiArray($capture);
+        $payload = $this->support->toApiArray($capture);
         $payload['guardar'] = $out;
 
         return [

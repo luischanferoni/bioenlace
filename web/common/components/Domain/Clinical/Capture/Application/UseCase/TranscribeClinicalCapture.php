@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Capture\Application\UseCase;
 
-use common\components\Domain\Clinical\Capture\Application\Pipeline\ClinicalCapturePipelineSupport;
+use common\components\Domain\Clinical\Capture\Application\Support\ClinicalCaptureSupport;
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureStage;
 use common\components\Domain\Clinical\Capture\Infrastructure\SpeechToText\ClinicalSpeechInputResolver;
 use common\components\Platform\Ai\SpeechToText\SpeechToTextManager;
@@ -12,11 +12,11 @@ use common\models\Clinical\EncounterCaptureAudit;
 /** Caso de uso: STT servidor sobre audio ya subido. */
 final class TranscribeClinicalCapture
 {
-    private ClinicalCapturePipelineSupport $pipeline;
+    private ClinicalCaptureSupport $support;
 
-    public function __construct(?ClinicalCapturePipelineSupport $pipeline = null)
+    public function __construct(?ClinicalCaptureSupport $support = null)
     {
-        $this->pipeline = $pipeline ?? new ClinicalCapturePipelineSupport();
+        $this->support = $support ?? new ClinicalCaptureSupport();
     }
 
     /**
@@ -26,12 +26,12 @@ final class TranscribeClinicalCapture
     public function execute(array $body): array
     {
 
-        $capture = $this->pipeline->findOpenCapture($body);
+        $capture = $this->support->findOpenCapture($body);
         if (is_array($capture)) {
             return $capture;
         }
 
-        $domain = $this->pipeline->captureRows()->toAggregate($capture);
+        $domain = $this->support->captureRows()->toAggregate($capture);
 
         if ($domain->hasTranscript()
             && in_array($domain->stage(), [
@@ -42,34 +42,34 @@ final class TranscribeClinicalCapture
             ], true)
             && empty($body['force'])
         ) {
-            return $this->pipeline->ok($capture, 'Ya hay transcripción; no se reejecutó STT.');
+            return $this->support->ok($capture, 'Ya hay transcripción; no se reejecutó STT.');
         }
 
         if (!$domain->hasAudio()) {
-            return $this->pipeline->fail(400, 'La captura no tiene audio en servidor para transcribir.', $capture);
+            return $this->support->fail(400, 'La captura no tiene audio en servidor para transcribir.', $capture);
         }
 
-        $absolute = $this->pipeline->absoluteAudioPath($capture);
+        $absolute = $this->support->absoluteAudioPath($capture);
         if ($absolute === null || !is_file($absolute)) {
             $domain->markSttFailed('Archivo de audio no encontrado en servidor.');
-            $capture = $this->pipeline->persistDomain($domain);
-            $this->pipeline->audit()->record($capture, EncounterCaptureAudit::EVENT_STT_FAILED, [
+            $capture = $this->support->persistDomain($domain);
+            $this->support->audit()->record($capture, EncounterCaptureAudit::EVENT_STT_FAILED, [
                 'error_code' => 'audio_missing',
                 'attempts_stt' => $domain->attemptsStt(),
             ]);
 
-            return $this->pipeline->fail(404, $capture->last_error, $capture);
+            return $this->support->fail(404, $capture->last_error, $capture);
         }
 
         if (!SttConfigService::isServerEnabled()) {
             $domain->markSttFailed('La transcripción en servidor está deshabilitada.');
-            $capture = $this->pipeline->persistDomain($domain);
-            $this->pipeline->audit()->record($capture, EncounterCaptureAudit::EVENT_STT_FAILED, [
+            $capture = $this->support->persistDomain($domain);
+            $this->support->audit()->record($capture, EncounterCaptureAudit::EVENT_STT_FAILED, [
                 'error_code' => 'server_stt_disabled',
                 'attempts_stt' => $domain->attemptsStt(),
             ]);
 
-            return $this->pipeline->fail(400, $capture->last_error, $capture);
+            return $this->support->fail(400, $capture->last_error, $capture);
         }
 
         $modelo = (string) ($body['modelo'] ?? 'economico');
@@ -79,14 +79,14 @@ final class TranscribeClinicalCapture
         if ($texto === '') {
             $err = trim((string) ($result['error'] ?? 'No se pudo transcribir el audio.'));
             $domain->markSttFailed($err !== '' ? $err : 'No se pudo transcribir el audio.');
-            $capture = $this->pipeline->persistDomain($domain);
-            $this->pipeline->audit()->record($capture, EncounterCaptureAudit::EVENT_STT_FAILED, [
+            $capture = $this->support->persistDomain($domain);
+            $this->support->audit()->record($capture, EncounterCaptureAudit::EVENT_STT_FAILED, [
                 'error_code' => 'empty_transcript',
                 'attempts_stt' => $domain->attemptsStt(),
                 'modelo' => $modelo,
             ]);
 
-            return $this->pipeline->fail(502, $capture->last_error, $capture);
+            return $this->support->fail(502, $capture->last_error, $capture);
         }
 
         $meta = $domain->sttMeta();
@@ -96,14 +96,14 @@ final class TranscribeClinicalCapture
             'modelo_usado' => $result['modelo_usado'] ?? null,
         ];
         $domain->markTranscribed($texto, $meta);
-        $capture = $this->pipeline->persistDomain($domain);
-        $this->pipeline->audit()->record($capture, EncounterCaptureAudit::EVENT_STT_OK, [
+        $capture = $this->support->persistDomain($domain);
+        $this->support->audit()->record($capture, EncounterCaptureAudit::EVENT_STT_OK, [
             'attempts_stt' => $domain->attemptsStt(),
             'provenance' => ClinicalSpeechInputResolver::PROVENANCE_SERVER,
             'modelo_usado' => $result['modelo_usado'] ?? null,
             'transcript_length' => mb_strlen($texto),
         ]);
 
-        return $this->pipeline->ok($capture, 'Transcripción lista.');
+        return $this->support->ok($capture, 'Transcripción lista.');
     }
 }

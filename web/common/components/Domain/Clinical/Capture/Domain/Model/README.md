@@ -16,4 +16,4 @@ Estado del módulo: [../README.md](../README.md).
 ## Próximo
 
 - Tipar documentación extraída (filas por categoría) y resoluciones como VO.
-- Mover cuerpos de etapa desde `Pipeline/ClinicalCapturePipelineSupport` a cada use case.
+- Mover cuerpos de etapa desde `Support/ClinicalCaptureSupport` a cada use case.

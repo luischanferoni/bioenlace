@@ -2,16 +2,16 @@
 
 namespace common\components\Domain\Clinical\Capture\Application\UseCase;
 
-use common\components\Domain\Clinical\Capture\Application\Pipeline\ClinicalCapturePipelineSupport;
+use common\components\Domain\Clinical\Capture\Application\Support\ClinicalCaptureSupport;
 
 /** Caso de uso: resolver path de audio para descarga. */
 final class ResolveClinicalCaptureAudio
 {
-    private ClinicalCapturePipelineSupport $pipeline;
+    private ClinicalCaptureSupport $support;
 
-    public function __construct(?ClinicalCapturePipelineSupport $pipeline = null)
+    public function __construct(?ClinicalCaptureSupport $support = null)
     {
-        $this->pipeline = $pipeline ?? new ClinicalCapturePipelineSupport();
+        $this->support = $support ?? new ClinicalCaptureSupport();
     }
 
     /**
@@ -20,16 +20,16 @@ final class ResolveClinicalCaptureAudio
      */
     public function execute(array $query): array
     {
-        $capture = $this->pipeline->findCapture($query, false);
+        $capture = $this->support->findCapture($query, false);
         if (is_array($capture)) {
             return $capture;
         }
         if (!$capture->hasAudio()) {
-            return $this->pipeline->fail(404, 'La captura no tiene audio.', $capture);
+            return $this->support->fail(404, 'La captura no tiene audio.', $capture);
         }
-        $absolute = $this->pipeline->absoluteAudioPath($capture);
+        $absolute = $this->support->absoluteAudioPath($capture);
         if ($absolute === null || !is_file($absolute)) {
-            return $this->pipeline->fail(404, 'Archivo de audio no encontrado.', $capture);
+            return $this->support->fail(404, 'Archivo de audio no encontrado.', $capture);
         }
 
         return [

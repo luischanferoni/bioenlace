@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application\Pipeline;
+namespace common\components\Domain\Clinical\Capture\Application\Support;
 
 use common\components\Domain\Clinical\Capture\Application\RowContract\ClinicalCaptureRowContracts;
 use common\components\Domain\Clinical\Capture\Application\Workflow\EncounterCaptureCategoryResolver;
@@ -20,12 +20,12 @@ use Yii;
 use yii\web\UploadedFile;
 
 /**
- * Helpers compartidos del pipeline de captura (lookup, audio, API shape, persist).
+ * Helpers compartidos de captura (lookup, audio, API shape, persist).
  * La orquestación por etapa vive en los use cases de Application; no es entrypoint HTTP.
  *
  * Mutaciones vía aggregate {@see ClinicalCapture} + {@see ClinicalCaptureRepository}.
  */
-final class ClinicalCapturePipelineSupport
+final class ClinicalCaptureSupport
 {
     private const AUDIO_DIR = 'uploads/encounter_capture';
 

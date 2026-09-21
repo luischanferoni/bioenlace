@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\Capture\Application\UseCase;
 
 use common\components\Domain\Clinical\Capture\Application\RowContract\ClinicalCaptureRowContracts;
-use common\components\Domain\Clinical\Capture\Application\Pipeline\ClinicalCapturePipelineSupport;
+use common\components\Domain\Clinical\Capture\Application\Support\ClinicalCaptureSupport;
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureStage;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EncounterCaptureReviewPresenter;
 use common\models\Clinical\EncounterCaptureAudit;
@@ -11,11 +11,11 @@ use common\models\Clinical\EncounterCaptureAudit;
 /** Caso de uso: aplicar resoluciones de issues sobre datosExtraidos. */
 final class ApplyClinicalCaptureResolutions
 {
-    private ClinicalCapturePipelineSupport $pipeline;
+    private ClinicalCaptureSupport $support;
 
-    public function __construct(?ClinicalCapturePipelineSupport $pipeline = null)
+    public function __construct(?ClinicalCaptureSupport $support = null)
     {
-        $this->pipeline = $pipeline ?? new ClinicalCapturePipelineSupport();
+        $this->support = $support ?? new ClinicalCaptureSupport();
     }
 
     /**
@@ -24,33 +24,33 @@ final class ApplyClinicalCaptureResolutions
      */
     public function execute(array $body): array
     {
-        $capture = $this->pipeline->findOpenCapture($body);
+        $capture = $this->support->findOpenCapture($body);
         if (is_array($capture)) {
             return $capture;
         }
 
-        $domain = $this->pipeline->captureRows()->toAggregate($capture);
+        $domain = $this->support->captureRows()->toAggregate($capture);
         if (!in_array($domain->stage(), [
             ClinicalCaptureStage::READY_FOR_REVIEW,
             ClinicalCaptureStage::SAVE_FAILED,
         ], true)) {
-            return $this->pipeline->fail(409, 'La captura no tiene análisis para resolver.', $capture);
+            return $this->support->fail(409, 'La captura no tiene análisis para resolver.', $capture);
         }
 
         $resolutions = $body['resolutions'] ?? $body['resoluciones'] ?? null;
         if (!is_array($resolutions) || $resolutions === []) {
-            return $this->pipeline->fail(400, 'resolutions es obligatorio.', $capture);
+            return $this->support->fail(400, 'resolutions es obligatorio.', $capture);
         }
 
         $datos = $domain->datosExtraidos();
         if ($datos === []) {
-            $datos = $this->pipeline->extractDatosExtraidosFromAnalizar($domain->analysisResponse());
+            $datos = $this->support->extractDatosExtraidosFromAnalizar($domain->analysisResponse());
         }
         if ($datos === []) {
-            return $this->pipeline->fail(400, 'No hay datos extraídos para resolver.', $capture);
+            return $this->support->fail(400, 'No hay datos extraídos para resolver.', $capture);
         }
 
-        $categorias = $this->pipeline->resolveCategoriasForCapture($capture, $body);
+        $categorias = $this->support->resolveCategoriasForCapture($capture, $body);
         $rows = ClinicalCaptureRowContracts::registry();
         $datos = ClinicalCaptureRowContracts::resolutionApplier($rows)->apply($datos, $resolutions, $categorias);
 
@@ -68,7 +68,7 @@ final class ApplyClinicalCaptureResolutions
             ($completeness['tiene_datos_faltantes'] ?? false) === true,
             $completeness
         );
-        $review = $this->pipeline->applyEpisodeDedupToReview($capture, $review, $textoOriginal);
+        $review = $this->support->applyEpisodeDedupToReview($capture, $review, $textoOriginal);
 
         if ($analysis === []) {
             $analysis = ['success' => true];
@@ -89,18 +89,18 @@ final class ApplyClinicalCaptureResolutions
 
         try {
             $domain->applyResolutionSnapshot($datos, $analysis);
-            $capture = $this->pipeline->persistDomain($domain);
+            $capture = $this->support->persistDomain($domain);
         } catch (\InvalidArgumentException $e) {
-            return $this->pipeline->fail(409, $e->getMessage(), $capture);
+            return $this->support->fail(409, $e->getMessage(), $capture);
         } catch (\Throwable $e) {
-            return $this->pipeline->fail(500, 'No se pudieron guardar las resoluciones.', $capture);
+            return $this->support->fail(500, 'No se pudieron guardar las resoluciones.', $capture);
         }
 
-        $this->pipeline->audit()->record($capture, EncounterCaptureAudit::EVENT_RESOLUTIONS_APPLIED, [
+        $this->support->audit()->record($capture, EncounterCaptureAudit::EVENT_RESOLUTIONS_APPLIED, [
             'issue_ids' => array_values(array_map('strval', array_keys($resolutions))),
             'puede_confirmar' => ($review['puede_confirmar'] ?? false) === true,
         ]);
 
-        return $this->pipeline->ok($capture, 'Resoluciones aplicadas.', true);
+        return $this->support->ok($capture, 'Resoluciones aplicadas.', true);
     }
 }

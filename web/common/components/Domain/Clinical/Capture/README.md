@@ -16,7 +16,7 @@ Norte: [ddd-norte-modelo-rico.md](../../../../../docs/decisions/ddd-norte-modelo
 Application/
   UseCase/          etapas HTTP (Analyze*, Save*, Transcribe*, …)
   RowContract/      wiring + registry compuesto + ResolutionApplier
-  Pipeline/         helpers compartidos (no entrypoint)
+  Support/          helpers compartidos (no entrypoint)
   Text/             post-proceso / knobs / validator de términos
   Workflow/         resolvers / sanitizer de definición
   *Service.php      orquestadores Application (raíz)

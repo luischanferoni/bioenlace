@@ -2,17 +2,17 @@
 
 namespace common\components\Domain\Clinical\Capture\Application\UseCase;
 
-use common\components\Domain\Clinical\Capture\Application\Pipeline\ClinicalCapturePipelineSupport;
+use common\components\Domain\Clinical\Capture\Application\Support\ClinicalCaptureSupport;
 use common\models\Clinical\EncounterCapture;
 
 /** Caso de uso: listar capturas abiertas. */
 final class ListClinicalCaptures
 {
-    private ClinicalCapturePipelineSupport $pipeline;
+    private ClinicalCaptureSupport $support;
 
-    public function __construct(?ClinicalCapturePipelineSupport $pipeline = null)
+    public function __construct(?ClinicalCaptureSupport $support = null)
     {
-        $this->pipeline = $pipeline ?? new ClinicalCapturePipelineSupport();
+        $this->support = $support ?? new ClinicalCaptureSupport();
     }
 
     /**
@@ -24,7 +24,7 @@ final class ListClinicalCaptures
 
         $subjectPersonaId = (int) ($query['id_persona'] ?? $query['subject_persona_id'] ?? 0);
         if ($subjectPersonaId <= 0) {
-            return $this->pipeline->fail(400, 'Se requiere id_persona.');
+            return $this->support->fail(400, 'Se requiere id_persona.');
         }
 
         $q = EncounterCapture::find()
@@ -44,7 +44,7 @@ final class ListClinicalCaptures
         foreach ($q->limit(50)->all() as $row) {
             /** @var EncounterCapture $row */
             // Listado liviano: el análisis completo va en captura/ver.
-            $items[] = $this->pipeline->toApiArray($row, false);
+            $items[] = $this->support->toApiArray($row, false);
         }
 
         return [

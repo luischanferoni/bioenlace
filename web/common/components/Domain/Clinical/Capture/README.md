@@ -30,8 +30,6 @@ El resto son **capacidades** del language de captura:
 | `RowContract/` | Wiring Application ↔ `Domain/RowContract` + resoluciones |
 | `Definition/` | EncounterDefinition: categorías, bootstrap, contexto operativo, sanitizer |
 
-Facade legacy en raíz: `EncounterCapturePipelineService` (preferir `UseCase/`).
-
 ## Forma
 
 ```text
@@ -42,7 +40,6 @@ Application/
   Extraction/       texto + post-proceso + análisis IA
   RowContract/      factory, registry compuesto, ResolutionApplier
   Definition/       definición de encounter / categorías / bootstrap
-  EncounterCapturePipelineService.php   # facade legacy
 
 Domain/
   Catalog/          *Catalog
@@ -70,7 +67,6 @@ Infrastructure/     adapters Yii / STT / terminology / logging
 
 - Tipologías residuales sin contrato Domain si aparecen (p. ej. DiagnosticoConsulta / signos vitales).
 - Adapter de derivación aún habla con AR `Servicio` (esperado en Infrastructure).
-- Facade `EncounterCapturePipelineService` (nombre histórico) aún en raíz.
 
 ## Referencias
 

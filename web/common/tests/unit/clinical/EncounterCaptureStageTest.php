@@ -3,7 +3,7 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Capture\Application\EncounterCapturePipelineService;
+use common\components\Domain\Clinical\Capture\Application\Presentation\ClinicalCapturePresenter;
 use common\models\Clinical\EncounterCapture;
 
 class EncounterCaptureStageTest extends Unit
@@ -78,15 +78,15 @@ class EncounterCaptureStageTest extends Unit
             'id_configuracion' => 3,
         ]);
 
-        $svc = new EncounterCapturePipelineService();
-        $listItem = $svc->toApiArray($capture, false);
+        $presenter = new ClinicalCapturePresenter();
+        $listItem = $presenter->toApiArray($capture, false);
         $this->assertTrue($listItem['has_analysis']);
         $this->assertArrayNotHasKey('analysis', $listItem);
         $this->assertArrayNotHasKey('datosExtraidos', $listItem);
         $this->assertArrayNotHasKey('capture_review', $listItem);
         $this->assertSame('Control en 7 días', $listItem['transcript']);
 
-        $detail = $svc->toApiArray($capture, true);
+        $detail = $presenter->toApiArray($capture, true);
         $this->assertTrue($detail['has_analysis']);
         $this->assertArrayHasKey('capture_review', $detail);
         $this->assertArrayNotHasKey('datosExtraidos', $detail);

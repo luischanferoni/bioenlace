@@ -15,7 +15,7 @@
 
 | Área | Ubicación |
 |------|-----------|
-| Pipeline sync | `EncounterCapturePipelineService` |
+| Pipeline sync | `Capture/Application/UseCase/*` + `Checkpoint/` |
 | Draft | tabla / AR `encounter_capture` |
 | Review / source clinical\|ai | `EncounterCaptureReviewPresenter` |
 | Trail de referencia | `ClinicalHistoryOutboundAudit` |

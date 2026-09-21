@@ -3,7 +3,7 @@
 namespace common\tests\unit\integrations\scheduling;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Scheduling\Infrastructure\External\Mapper\FhirAppointmentStatusMapper;
+use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Mapper\FhirAppointmentStatusMapper;
 use common\models\Scheduling\Turno;
 
 class FhirAppointmentStatusMapperTest extends Unit

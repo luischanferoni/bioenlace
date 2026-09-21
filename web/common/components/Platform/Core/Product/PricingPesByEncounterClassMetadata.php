@@ -5,7 +5,7 @@ namespace common\components\Platform\Core\Product;
 /**
  * Metadata comercial: precio por volumen de atenciones × encounter_class (COGS + margen + add-ons).
  *
- * @see \common\components\Domain\Organization\Domain\PricingPesByEncounterClassCatalog
+ * @see \common\components\Domain\Organization\Pes\Domain\Catalog\PricingPesByEncounterClassCatalog
  */
 final class PricingPesByEncounterClassMetadata
 {
@@ -26,7 +26,7 @@ final class PricingPesByEncounterClassMetadata
             return self::$config;
         }
 
-        self::$config = \common\components\Domain\Organization\Domain\PricingPesByEncounterClassCatalog::config();
+        self::$config = \common\components\Domain\Organization\Pes\Domain\Catalog\PricingPesByEncounterClassCatalog::config();
 
         return self::$config;
     }

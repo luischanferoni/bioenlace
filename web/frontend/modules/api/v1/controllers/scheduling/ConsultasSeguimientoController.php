@@ -6,8 +6,8 @@ use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 use yii\web\BadRequestHttpException;
 use common\components\Domain\Clinical\CarePlan\Application\Service\CareProtocolMatcherService;
-use common\components\Domain\Scheduling\Application\ConsultasSeguimientoIntakeStepService;
-use common\components\Domain\Scheduling\Application\ControlSeguimientoHubService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultasSeguimientoIntakeStepService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ControlSeguimientoHubService;
 use common\components\Platform\Ui\UiScreenService;
 
 /**

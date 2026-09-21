@@ -4,9 +4,9 @@ namespace frontend\modules\api\v1\controllers\person;
 
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
-use common\components\Domain\Person\Application\RegistroService;
-use common\components\Domain\Person\Application\RegistroStaffPacienteService;
-use common\components\Domain\Person\Infrastructure\External\Identity\Connector\DiditClient;
+use common\components\Domain\Person\Identidad\Application\Service\RegistroService;
+use common\components\Domain\Person\Identidad\Application\Service\RegistroStaffPacienteService;
+use common\components\Domain\Person\Ventanilla\Infrastructure\External\Identity\Connector\DiditClient;
 
 /**
  * Controlador de registro unificado para pacientes y médicos.

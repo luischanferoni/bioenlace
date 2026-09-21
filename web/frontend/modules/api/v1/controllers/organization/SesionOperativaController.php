@@ -6,8 +6,8 @@ use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 use frontend\components\WebApiJwtSessionService;
 use common\components\Platform\Core\Auth\StaffMobileAccessService;
-use common\components\Domain\Organization\Application\SesionOperativa\SesionOperativaProfesionalHabilitacionService;
-use common\components\Domain\Organization\Application\SesionOperativa\SesionOperativaService;
+use common\components\Domain\Organization\SesionOperativa\Application\Service\SesionOperativaProfesionalHabilitacionService;
+use common\components\Domain\Organization\SesionOperativa\Application\Service\SesionOperativaService;
 
 /**
  * API Sesión Operativa: contexto operativo en sesión y opciones validadas para el wizard.

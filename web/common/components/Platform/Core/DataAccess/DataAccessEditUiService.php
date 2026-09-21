@@ -11,8 +11,8 @@ use common\components\Platform\Core\DataAccess\Edit\EditSparseSubjectLoader;
 use common\components\Platform\Core\DataAccess\Edit\EditMutationResult;
 use common\components\Platform\Core\DataAccess\Edit\MutationExecutor;
 use common\components\Platform\Core\DataAccess\Edit\OpenUiEditMutationDelegate;
-use common\components\Domain\Organization\Application\ProfesionalEfectorServicio\AgendaConfigUiFlowService;
-use common\components\Domain\Organization\Application\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaUiService;
+use common\components\Domain\Organization\Pes\Application\Service\AgendaConfigUiFlowService;
+use common\components\Domain\Organization\Pes\Application\Service\ProfesionalEfectorServicioAgendaUiService;
 use common\components\Platform\Ui\UiScreenService;
 use yii\web\ForbiddenHttpException;
 

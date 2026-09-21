@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Clinical\Home\Sections;
 
-use common\components\Domain\Organization\Application\Authorization\EfectorAccessService;
-use common\components\Domain\Organization\Application\ProfesionalHorario\ProfesionalHorarioActivaService;
+use common\components\Domain\Organization\Efector\Application\Authorization\EfectorAccessService;
+use common\components\Domain\Organization\Pes\Application\Service\ProfesionalHorarioActivaService;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Platform\Ui\Home\Service\Sections\HomePanelSectionProviderInterface;
 use common\models\Clinical\Encounter;

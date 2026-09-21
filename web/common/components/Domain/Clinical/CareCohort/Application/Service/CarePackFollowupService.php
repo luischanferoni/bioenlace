@@ -8,7 +8,7 @@ use common\components\Domain\Clinical\CareCohort\Application\Presentation\CareEd
 use common\components\Domain\Clinical\CareCohort\Application\Presentation\CarePackFollowupPresenter;
 use common\components\Domain\Clinical\Encounter\Application\Authorization\EncounterAccessService;
 use common\components\Domain\Person\Representation\Domain\RepresentationPermission;
-use common\components\Domain\Person\Representation\Application\PersonRepresentationSubjectService;
+use common\components\Domain\Person\Representation\Application\Service\PersonRepresentationSubjectService;
 use common\models\Clinical\CareCohortPack;
 use common\models\Person\PersonRelatedAuditLog;
 use common\models\Clinical\CareFollowupResponse;

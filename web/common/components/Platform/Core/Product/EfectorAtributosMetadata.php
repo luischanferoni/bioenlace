@@ -3,7 +3,7 @@
 namespace common\components\Platform\Core\Product;
 
 /**
- * Catálogo declarativo de atributos de efector ({@see \common\components\Domain\Organization\Domain\EfectorAtributosCatalog}).
+ * Catálogo declarativo de atributos de efector ({@see \common\components\Domain\Organization\Efector\Domain\Catalog\EfectorAtributosCatalog}).
  */
 final class EfectorAtributosMetadata
 {
@@ -59,7 +59,7 @@ final class EfectorAtributosMetadata
             return self::$config;
         }
 
-        $data = \common\components\Domain\Organization\Domain\EfectorAtributosCatalog::config();
+        $data = \common\components\Domain\Organization\Efector\Domain\Catalog\EfectorAtributosCatalog::config();
         if (!isset($data['atributos']) || !is_array($data['atributos'])) {
             throw new \RuntimeException('EfectorAtributosCatalog debe declarar atributos.');
         }

@@ -3,7 +3,7 @@
 namespace common\tests\unit\platform\agent;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Scheduling\Application\ConsultaAsyncBandejaPrioridadService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncBandejaPrioridadService;
 
 class ConsultaAsyncBandejaPrioridadScoringTest extends Unit
 {

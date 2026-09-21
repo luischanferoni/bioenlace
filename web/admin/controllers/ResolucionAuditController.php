@@ -2,7 +2,7 @@
 
 namespace admin\controllers;
 
-use common\components\Domain\Scheduling\Application\TurnoResolucionAuditQueryService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoResolucionAuditQueryService;
 use common\models\Platform\AgentRun;
 use Yii;
 use yii\filters\VerbFilter;

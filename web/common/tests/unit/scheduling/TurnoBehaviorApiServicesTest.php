@@ -3,9 +3,9 @@
 namespace common\tests\unit\scheduling;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Scheduling\Application\BehaviorProfile\TurnoAgentActionExplanationService;
-use common\components\Domain\Scheduling\Application\BehaviorProfile\TurnoBehaviorAggregateService;
-use common\components\Domain\Scheduling\Application\BehaviorProfile\TurnoBehaviorProfileContract;
+use common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoAgentActionExplanationService;
+use common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoBehaviorAggregateService;
+use common\components\Domain\Scheduling\BehaviorProfile\Domain\Port\TurnoBehaviorProfileContract;
 
 class TurnoBehaviorApiServicesTest extends Unit
 {

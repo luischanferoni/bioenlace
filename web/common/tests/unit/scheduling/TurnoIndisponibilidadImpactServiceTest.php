@@ -3,7 +3,7 @@
 namespace common\tests\unit\scheduling;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Scheduling\Application\TurnoIndisponibilidadImpactService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoIndisponibilidadImpactService;
 
 class TurnoIndisponibilidadImpactServiceTest extends Unit
 {

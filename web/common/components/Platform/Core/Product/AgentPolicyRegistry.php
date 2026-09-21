@@ -9,14 +9,14 @@ use common\components\Domain\Clinical\Laboratory\Application\Agents\LabEncounter
 use common\components\Domain\Clinical\Inpatient\Application\Agents\PostDischargeFollowupAgentPolicy;
 use common\components\Domain\Clinical\Laboratory\Application\Agents\PostLabClassificationAgentPolicy;
 use common\components\Domain\Clinical\Prescription\Application\Agents\PrescriptionRdiPreSubmitAgentPolicy;
-use common\components\Domain\Scheduling\Application\Agents\ConsultaAsyncBandejaPrioridadAgentPolicy;
-use common\components\Domain\Scheduling\Application\Agents\ReservaTriagePostCupoRoutingAgentPolicy;
-use common\components\Domain\Scheduling\Application\Agents\TurnoAdvanceOfferAgentPolicy;
-use common\components\Domain\Scheduling\Application\Agents\TurnoAntinoshowAgentPolicy;
-use common\components\Domain\Scheduling\Application\Agents\TurnoResolucionAutoReservaAgentPolicy;
-use common\components\Domain\Scheduling\Application\Agents\TurnoResolucionLoopCloseAgentPolicy;
-use common\components\Domain\Scheduling\Application\Agents\TurnoResolucionMulticanalAgentPolicy;
-use common\components\Domain\Scheduling\Application\Agents\TurnoResolucionShortlistAgentPolicy;
+use common\components\Domain\Scheduling\Agenda\Application\Agents\ConsultaAsyncBandejaPrioridadAgentPolicy;
+use common\components\Domain\Scheduling\Agenda\Application\Agents\ReservaTriagePostCupoRoutingAgentPolicy;
+use common\components\Domain\Scheduling\Agenda\Application\Agents\TurnoAdvanceOfferAgentPolicy;
+use common\components\Domain\Scheduling\Agenda\Application\Agents\TurnoAntinoshowAgentPolicy;
+use common\components\Domain\Scheduling\Agenda\Application\Agents\TurnoResolucionAutoReservaAgentPolicy;
+use common\components\Domain\Scheduling\Agenda\Application\Agents\TurnoResolucionLoopCloseAgentPolicy;
+use common\components\Domain\Scheduling\Agenda\Application\Agents\TurnoResolucionMulticanalAgentPolicy;
+use common\components\Domain\Scheduling\Agenda\Application\Agents\TurnoResolucionShortlistAgentPolicy;
 
 /**
  * Políticas de agentes autónomos en PHP (`<BC>/<Modulo?>/Application/Agents/*AgentPolicy`).

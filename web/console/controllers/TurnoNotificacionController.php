@@ -8,7 +8,7 @@ use common\models\Scheduling\TurnoNotificacionProgramada;
 use common\models\Scheduling\Turno;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\components\Platform\Core\Service\Push\FcmPushConfig;
-use common\components\Domain\Scheduling\Application\TurnoReminderContentBuilder;
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoReminderContentService;
 use common\components\Domain\Clinical\Encounter\Application\Service\AppointmentReasonBatchService;
 
 /**
@@ -26,7 +26,7 @@ class TurnoNotificacionController extends Controller
             ->limit($limit);
 
         $push = new PushNotificationSender();
-        $builder = new TurnoReminderContentBuilder();
+        $builder = new TurnoReminderContentService();
         $n = 0;
         foreach ($q->each() as $row) {
             /** @var TurnoNotificacionProgramada $row */
@@ -46,7 +46,7 @@ class TurnoNotificacionController extends Controller
                         $push->sendToPersona((int) $turno->id_persona, $content['data'], $content['title'], $content['body']);
                     }
                 } elseif ($row->tipo === TurnoNotificacionProgramada::TIPO_CONFIRM_REQUEST) {
-                    $confirmation = new \common\components\Domain\Scheduling\Application\TurnoConfirmationService();
+                    $confirmation = new \common\components\Domain\Scheduling\Agenda\Application\Service\TurnoConfirmationService();
                     $token = $confirmation->ensureConfirmacionToken($turno);
                     $push->sendToPersona(
                         (int) $turno->id_persona,
@@ -62,7 +62,7 @@ class TurnoNotificacionController extends Controller
                         true,
                         [
                             'idempotency_key' => 'turno-confirmation:' . (int) $row->id,
-                            'context_handler_id' => \common\components\Domain\Scheduling\Application\BehaviorProfile\TurnoConfirmationPushReceiptProjector::HANDLER_ID,
+                            'context_handler_id' => \common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoConfirmationPushReceiptProjector::HANDLER_ID,
                             'context' => [
                                 'id_turno' => (int) $turno->id_turnos,
                                 'id_notificacion_programada' => (int) $row->id,
@@ -71,7 +71,7 @@ class TurnoNotificacionController extends Controller
                     );
                     $confirmation->recordConfirmationRequested($turno, (int) $row->id);
                     try {
-                        (new \common\components\Domain\Scheduling\Application\Agents\TurnoAntinoshowAgent())
+                        (new \common\components\Domain\Scheduling\Agenda\Application\Agents\TurnoAntinoshowAgent())
                             ->evaluateSharedConfirmationCheckpoint($turno, 48);
                     } catch (\Throwable $e) {
                         Yii::warning('Antinoshow shared checkpoint: ' . $e->getMessage(), 'turno-antinoshow');
@@ -135,7 +135,7 @@ class TurnoNotificacionController extends Controller
                         );
                     }
                 } elseif ($row->tipo === TurnoNotificacionProgramada::TIPO_RESOLUCION_MULTICANAL) {
-                    $result = (new \common\components\Domain\Scheduling\Application\Agents\TurnoResolucionMulticanalAgent())
+                    $result = (new \common\components\Domain\Scheduling\Agenda\Application\Agents\TurnoResolucionMulticanalAgent())
                         ->processScheduled($row, $turno);
                     if ($result === 'cancelled') {
                         $row->estado = TurnoNotificacionProgramada::ESTADO_CANCELADA;
@@ -146,7 +146,7 @@ class TurnoNotificacionController extends Controller
                         continue;
                     }
                 } elseif ($row->tipo === TurnoNotificacionProgramada::TIPO_RESOLUCION_LOOP_CLOSE) {
-                    $result = (new \common\components\Domain\Scheduling\Application\Agents\TurnoResolucionLoopCloseAgent())
+                    $result = (new \common\components\Domain\Scheduling\Agenda\Application\Agents\TurnoResolucionLoopCloseAgent())
                         ->processScheduled($row, $turno);
                     if ($result === 'cancelled') {
                         $row->estado = TurnoNotificacionProgramada::ESTADO_CANCELADA;
@@ -154,7 +154,7 @@ class TurnoNotificacionController extends Controller
                         continue;
                     }
                 } elseif ($row->tipo === TurnoNotificacionProgramada::TIPO_ANTINOSHOW_CHECKPOINT) {
-                    $result = (new \common\components\Domain\Scheduling\Application\Agents\TurnoAntinoshowAgent())
+                    $result = (new \common\components\Domain\Scheduling\Agenda\Application\Agents\TurnoAntinoshowAgent())
                         ->processCheckpoint($row, $turno);
                     if ($result === 'cancelled') {
                         $row->estado = TurnoNotificacionProgramada::ESTADO_CANCELADA;
@@ -162,7 +162,7 @@ class TurnoNotificacionController extends Controller
                         continue;
                     }
                 } elseif ($row->tipo === TurnoNotificacionProgramada::TIPO_ANTINOSHOW_RELEASE) {
-                    $result = (new \common\components\Domain\Scheduling\Application\Agents\TurnoAntinoshowAgent())
+                    $result = (new \common\components\Domain\Scheduling\Agenda\Application\Agents\TurnoAntinoshowAgent())
                         ->processRelease($row, $turno);
                     if ($result === 'cancelled') {
                         $row->estado = TurnoNotificacionProgramada::ESTADO_CANCELADA;

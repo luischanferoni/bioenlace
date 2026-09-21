@@ -43,7 +43,7 @@ return [
     ],
     /**
      * Didit — KYC (registro paciente/médico) y login biométrico.
-     * API key en params-local.php. Cliente: {@see \common\components\Domain\Person\Infrastructure\External\Identity\Connector\DiditClient}.
+     * API key en params-local.php. Cliente: {@see \common\components\Domain\Person\Ventanilla\Infrastructure\External\Identity\Connector\DiditClient}.
      */
     'didit_base_url' => 'https://api.didit.me',
     'didit_verification_base_url' => 'https://verification.didit.me',
@@ -247,7 +247,7 @@ return [
         ],
         'connectors' => [
             'msal-nis' => [
-                'class' => \common\components\Domain\Scheduling\Infrastructure\External\Connector\MsalNisFhirSchedulingConnector::class,
+                'class' => \common\components\Domain\Scheduling\Agenda\Infrastructure\External\Connector\MsalNisFhirSchedulingConnector::class,
                 'baseUrl' => 'https://nis.msalsgo.gob.ar/fhir',
                 'tokenUrl' => null,
                 'clientId' => null,
@@ -305,7 +305,7 @@ return [
 
     /**
      * Capacidades MPI/SEIPA habilitadas. renaper (identidad), coberturas y domicilio por defecto.
-     * {@see \common\components\Domain\Person\Infrastructure\External\Mpi\MpiCapability}
+     * {@see \common\components\Domain\Person\Identidad\Infrastructure\External\Mpi\MpiCapability}
      */
     'mpiCapabilities' => ['renaper', 'coberturas', 'domicilio'],
 

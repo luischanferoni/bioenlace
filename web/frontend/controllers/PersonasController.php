@@ -27,7 +27,7 @@ use common\models\Person\PersonaRepository;
 use common\models\Clinical\Percentilos;
 
 use common\components\Platform\Core\Form\NestedFormModels;
-use common\components\Domain\Person\Infrastructure\External\Mpi\MpiApiClient;
+use common\components\Domain\Person\Identidad\Infrastructure\External\Mpi\MpiApiClient;
 use frontend\filters\SisseActionFilter;
 use common\components\Platform\Core\Http\UserRequest;
 
@@ -115,7 +115,7 @@ class PersonasController extends Controller
      */
     public function actionListaCandidatos()
     {
-        \common\components\Domain\Person\Application\PersonasMpiLegacyGate::deny();
+        \common\components\Domain\Person\Identidad\Application\Service\PersonasMpiLegacyGate::deny();
     }
 
     /**
@@ -124,7 +124,7 @@ class PersonasController extends Controller
      */
     public function actionSeleccionarPersona($id = null, $tipo = null)
     {
-        \common\components\Domain\Person\Application\PersonasMpiLegacyGate::deny();
+        \common\components\Domain\Person\Identidad\Application\Service\PersonasMpiLegacyGate::deny();
     }
 
     /**
@@ -299,7 +299,7 @@ class PersonasController extends Controller
         $dni = Yii::$app->getRequest()->getQueryParam('dni');
         $sexo = Yii::$app->getRequest()->getQueryParam('sexo');
 
-        $dniLong = \common\components\Domain\Person\Infrastructure\External\Mpi\MpiSeipaDni::toLongQueryParam(
+        $dniLong = \common\components\Domain\Person\Identidad\Infrastructure\External\Mpi\MpiSeipaDni::toLongQueryParam(
             is_scalar($dni) ? (string) $dni : null
         );
         if ($dniLong === null) {
@@ -610,7 +610,7 @@ class PersonasController extends Controller
         Yii::$app->response->format = Response::FORMAT_JSON;
         try {
             $body = $this->mergedJsonBodyStaffRegistro();
-            $data = (new \common\components\Domain\Person\Application\RegistroStaffPacienteService())->previewRenaper($body);
+            $data = (new \common\components\Domain\Person\Identidad\Application\Service\RegistroStaffPacienteService())->previewRenaper($body);
 
             return ['success' => true, 'data' => $data];
         } catch (\InvalidArgumentException $e) {
@@ -628,7 +628,7 @@ class PersonasController extends Controller
         Yii::$app->response->format = Response::FORMAT_JSON;
         try {
             $body = $this->mergedJsonBodyStaffRegistro();
-            $data = (new \common\components\Domain\Person\Application\RegistroStaffPacienteService())->registrar($body);
+            $data = (new \common\components\Domain\Person\Identidad\Application\Service\RegistroStaffPacienteService())->registrar($body);
 
             return ['success' => true, 'data' => $data, 'persona' => $data['persona'] ?? null];
         } catch (\InvalidArgumentException $e) {
@@ -652,9 +652,9 @@ class PersonasController extends Controller
             $callback = Url::to(['personas/registrar-paciente'], true);
         }
 
-        $didit = Yii::$container->has(\common\components\Domain\Person\Infrastructure\External\Identity\Connector\DiditClient::class)
-            ? Yii::$container->get(\common\components\Domain\Person\Infrastructure\External\Identity\Connector\DiditClient::class)
-            : new \common\components\Domain\Person\Infrastructure\External\Identity\Connector\DiditClient();
+        $didit = Yii::$container->has(\common\components\Domain\Person\Ventanilla\Infrastructure\External\Identity\Connector\DiditClient::class)
+            ? Yii::$container->get(\common\components\Domain\Person\Ventanilla\Infrastructure\External\Identity\Connector\DiditClient::class)
+            : new \common\components\Domain\Person\Ventanilla\Infrastructure\External\Identity\Connector\DiditClient();
 
         $session = $didit->createVerificationSession([
             'callback' => $callback,

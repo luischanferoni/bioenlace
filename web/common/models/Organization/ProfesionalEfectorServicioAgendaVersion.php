@@ -52,14 +52,14 @@ class ProfesionalEfectorServicioAgendaVersion extends ActiveRecord
 
     public function validateIntervalo(): void
     {
-        if (!\common\components\Domain\Organization\Application\ProfesionalEfectorServicio\AgendaIntervaloMinutos::isAllowed((int) $this->intervalo_minutos)) {
+        if (!\common\components\Domain\Organization\Pes\Domain\Model\AgendaIntervaloMinutos::isAllowed((int) $this->intervalo_minutos)) {
             $this->addError('intervalo_minutos', 'Intervalo no permitido. Use 15, 20, 30, 45 o 60 minutos.');
         }
     }
 
     public function getIntervaloMinutosEfectivo(): int
     {
-        return \common\components\Domain\Organization\Application\ProfesionalEfectorServicio\AgendaIntervaloMinutos::normalize($this->intervalo_minutos);
+        return \common\components\Domain\Organization\Pes\Domain\Model\AgendaIntervaloMinutos::normalize($this->intervalo_minutos);
     }
 
     /**

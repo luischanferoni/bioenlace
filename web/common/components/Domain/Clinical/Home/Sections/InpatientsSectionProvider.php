@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\Home\Sections;
 
 use common\components\Domain\Clinical\Home\Application\Service\StaffInpatientsDayListService;
-use common\components\Domain\Organization\Application\ProfesionalHorario\ProfesionalHorarioActivaService;
+use common\components\Domain\Organization\Pes\Application\Service\ProfesionalHorarioActivaService;
 use common\components\Platform\Core\Product\AgendaByEncounterClassMetadata;
 use common\components\Platform\Ui\Home\Service\Sections\HomePanelSectionProviderInterface;
 use common\models\Clinical\Encounter;

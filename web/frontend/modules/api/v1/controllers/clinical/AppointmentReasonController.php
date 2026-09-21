@@ -9,7 +9,7 @@ use common\components\Domain\Clinical\Encounter\Application\Service\AppointmentR
 use common\components\Domain\Clinical\Encounter\Application\Service\AppointmentReasonWindowService;
 use common\components\Domain\Clinical\Encounter\Application\Service\AppointmentReasonChatGuideCatalogService;
 use common\components\Domain\Person\Representation\Domain\RepresentationPermission;
-use common\components\Domain\Person\Representation\Application\PersonRepresentationSubjectService;
+use common\components\Domain\Person\Representation\Application\Service\PersonRepresentationSubjectService;
 use common\models\Person\PersonRelatedAuditLog;
 use common\models\Clinical\AppointmentReasonMessage;
 use common\models\Clinical\Encounter;

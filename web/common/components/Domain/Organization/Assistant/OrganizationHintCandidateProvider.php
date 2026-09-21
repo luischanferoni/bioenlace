@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Organization\Assistant;
 
-use common\components\Domain\Organization\Application\Efectores\EfectoresListadosService;
-use common\components\Domain\Organization\Application\ProfesionalEfectorServicio\ProfesionalEnEfectorListadoUiService;
+use common\components\Domain\Organization\Efector\Application\Service\EfectoresListadosService;
+use common\components\Domain\Organization\Pes\Application\Service\ProfesionalEnEfectorListadoUiService;
 use common\components\Platform\Assistant\Service\HintCandidateMapper;
 use common\components\Platform\Assistant\Service\HintCandidateProviderInterface;
 use common\components\Platform\Assistant\Service\HintResolutionContext;

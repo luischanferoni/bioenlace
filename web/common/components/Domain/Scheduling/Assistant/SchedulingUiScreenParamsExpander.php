@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Assistant;
 
-use common\components\Domain\Scheduling\Application\TurnoReservaSlotService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoReservaSlotService;
 use common\components\Platform\Ui\UiScreenParamsExpanderInterface;
 use common\models\Organization\ProfesionalEfectorServicio;
 

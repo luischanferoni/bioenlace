@@ -5,7 +5,7 @@ namespace common\components\Domain\Clinical\Emergency\Application\Service;
 use common\components\Domain\Clinical\Emergency\Domain\CircuitoEstado;
 use common\components\Domain\Clinical\Emergency\Domain\CircuitoEventType;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\PatientHistoriaUrl;
-use common\components\Domain\Organization\Application\ProfesionalHorario\ProfesionalHorarioActivaService;
+use common\components\Domain\Organization\Pes\Application\Service\ProfesionalHorarioActivaService;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\Guardia;
 use Yii;

@@ -6,7 +6,7 @@ use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\MethodNotAllowedHttpException;
-use common\components\Domain\Person\Application\PacienteContextoService;
+use common\components\Domain\Person\Identidad\Application\Service\PacienteContextoService;
 use common\components\Domain\Geo\Application\ProvinciaSuggestionService;
 use common\components\Domain\Geo\Application\ProvincialResourceLookupService;
 

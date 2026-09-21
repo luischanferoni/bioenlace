@@ -2,8 +2,8 @@
 
 namespace admin\controllers;
 
-use common\components\Domain\Organization\Application\Billing\BillingMembershipSwitchService;
-use common\components\Domain\Organization\Application\Billing\MinistrySignupRequestService;
+use common\components\Domain\Organization\Efector\Application\Service\BillingMembershipSwitchService;
+use common\components\Domain\Organization\Efector\Application\Service\MinistrySignupRequestService;
 use common\models\Organization\BillingAccount;
 use common\models\Organization\BillingSignupRequest;
 use Yii;

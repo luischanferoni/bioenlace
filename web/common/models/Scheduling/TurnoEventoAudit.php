@@ -168,7 +168,7 @@ class TurnoEventoAudit extends ActiveRecord
      */
     public static function registrar($idTurno, $tipo, $idUser = null, array $meta = [])
     {
-        return (new \common\components\Domain\Scheduling\Application\BehaviorProfile\TurnoCanonicalEventService())
+        return (new \common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoCanonicalEventService())
             ->recordFromLegacy((int) $idTurno, (string) $tipo, $idUser !== null ? (int) $idUser : null, $meta);
     }
 

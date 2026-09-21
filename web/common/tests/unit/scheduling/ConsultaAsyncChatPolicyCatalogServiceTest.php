@@ -3,7 +3,7 @@
 namespace common\tests\unit\scheduling;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Scheduling\Application\ConsultaAsyncChatPolicyCatalogService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncChatPolicyCatalogService;
 
 class ConsultaAsyncChatPolicyCatalogServiceTest extends Unit
 {

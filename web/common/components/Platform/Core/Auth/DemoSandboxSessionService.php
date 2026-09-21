@@ -2,10 +2,10 @@
 
 namespace common\components\Platform\Core\Auth;
 
-use common\components\Domain\Organization\Application\Seed\DemoSandboxClinicalSeedService;
-use common\components\Domain\Organization\Application\Seed\DemoSandboxPurgeService;
-use common\components\Domain\Organization\Application\Seed\DemoSandboxStaffProvisionService;
-use common\components\Domain\Organization\Application\Seed\EfectorDemoSeedService;
+use common\components\Domain\Organization\Efector\Application\Seed\DemoSandboxClinicalSeedService;
+use common\components\Domain\Organization\Efector\Application\Seed\DemoSandboxPurgeService;
+use common\components\Domain\Organization\Efector\Application\Seed\DemoSandboxStaffProvisionService;
+use common\components\Domain\Organization\Efector\Application\Seed\EfectorDemoSeedService;
 use common\models\Organization\Efector;
 use common\models\Platform\DemoSandboxAccess;
 use common\models\Platform\DemoSandboxSession;

@@ -5,7 +5,7 @@ namespace common\components\Platform\Core\Product;
 use common\models\Clinical\Encounter;
 
 /**
- * Metadata de agendas tipadas por encounter_class ({@see \common\components\Domain\Organization\Domain\AgendaByEncounterClassCatalog}).
+ * Metadata de agendas tipadas por encounter_class ({@see \common\components\Domain\Organization\Pes\Domain\Catalog\AgendaByEncounterClassCatalog}).
  */
 final class AgendaByEncounterClassMetadata
 {
@@ -26,7 +26,7 @@ final class AgendaByEncounterClassMetadata
             return self::$config;
         }
 
-        self::$config = \common\components\Domain\Organization\Domain\AgendaByEncounterClassCatalog::config();
+        self::$config = \common\components\Domain\Organization\Pes\Domain\Catalog\AgendaByEncounterClassCatalog::config();
 
         return self::$config;
     }

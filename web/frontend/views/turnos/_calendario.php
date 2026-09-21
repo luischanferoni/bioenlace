@@ -1,6 +1,6 @@
 <?php
 
-use common\components\Domain\Scheduling\Application\TurnoCancelacionRazones;
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoCancelacionRazones;
 use frontend\assets\TurnosCalendarioAsset;
 use frontend\components\Scheduling\TurnosCalendarioPageBuilder;
 use yii\bootstrap5\Modal;

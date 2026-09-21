@@ -3,7 +3,7 @@
 namespace common\tests\unit\scheduling;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Scheduling\Application\ServicioTeleconsultaPoliticaCatalogService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ServicioTeleconsultaPoliticaCatalogService;
 
 class ServicioTeleconsultaPoliticaCatalogServiceTest extends Unit
 {

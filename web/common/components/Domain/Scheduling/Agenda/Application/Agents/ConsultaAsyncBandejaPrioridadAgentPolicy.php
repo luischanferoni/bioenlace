@@ -1,0 +1,64 @@
+<?php
+
+namespace common\components\Domain\Scheduling\Agenda\Application\Agents;
+
+/**
+ * Política operativa del agente `consulta-async-bandeja-prioridad` (ex YAML platform/agents).
+ */
+final class ConsultaAsyncBandejaPrioridadAgentPolicy
+{
+    public const AGENT_ID = 'consulta-async-bandeja-prioridad';
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function config(): array
+    {
+        return [
+        'version' => 1,
+        'agent_id' => 'consulta-async-bandeja-prioridad',
+        'scoring' => [
+            'urgency_band' => [
+                'A' => 100,
+                'B' => 70,
+                'C' => 40,
+                'D' => 20,
+                'default' => 10,
+            ],
+            'sla_incumplido' => 50,
+            'waiting_points_per_hour' => 3,
+            'waiting_points_cap' => 36,
+            'paciente_sin_respuesta_staff' => 15,
+            'in_progress_asignado' => 8,
+        ],
+        'ui_rank_levels' => [
+            1 => [
+                'nivel' => 'alta',
+                'label' => 'Prioridad alta',
+                'intent' => 'danger',
+            ],
+            2 => [
+                'nivel' => 'media',
+                'label' => 'Prioridad media',
+                'intent' => 'warning',
+            ],
+            3 => [
+                'nivel' => 'baja',
+                'label' => 'Prioridad baja',
+                'intent' => 'secondary',
+            ],
+        ],
+        'sla_escalation' => [
+            'enabled' => true,
+            'urgency_bands' => [
+                0 => 'A',
+                1 => 'B',
+            ],
+            'staff_push' => [
+                'title' => 'Plazo vencido — consulta clínica por mensaje',
+                'body' => '{{paciente}} · {{servicio}}. Responder cuanto antes.',
+            ],
+        ],
+    ];
+    }
+}

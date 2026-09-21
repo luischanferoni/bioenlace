@@ -3,9 +3,9 @@
 namespace common\tests\unit\scheduling;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Scheduling\Application\StaffModalidadInsightCatalogService;
-use common\components\Domain\Scheduling\Application\StaffTurnoModalidadInsightService;
-use common\components\Domain\Scheduling\Application\TurnoReservaTriageDraftBuilder;
+use common\components\Domain\Scheduling\Agenda\Application\Service\StaffModalidadInsightCatalogService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\StaffTurnoModalidadInsightService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoReservaTriageDraftService;
 use common\models\Scheduling\Turno;
 
 class StaffTurnoModalidadInsightServiceTest extends Unit
@@ -26,7 +26,7 @@ class StaffTurnoModalidadInsightServiceTest extends Unit
             ],
         ], JSON_UNESCAPED_UNICODE);
 
-        $draft = (new TurnoReservaTriageDraftBuilder())->buildFromTurno($turno);
+        $draft = (new TurnoReservaTriageDraftService())->buildFromTurno($turno);
 
         $this->assertSame('seguimiento_cronico', $draft['triage_raiz']);
         $this->assertSame('evolucion_estable', $draft['triage_evolucion']);

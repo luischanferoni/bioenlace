@@ -3,7 +3,7 @@
 namespace common\tests\unit\organization;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Organization\Application\Presentation\ProfesionalesDistribucionInfoPresentation;
+use common\components\Domain\Organization\Pes\Application\Presentation\ProfesionalesDistribucionInfoPresentation;
 use common\components\Platform\Core\DataAccess\MetricExecutionResult;
 use common\components\Platform\Core\DataAccess\QueryOutputMode;
 

@@ -20,39 +20,39 @@ use common\models\Clinical\ConsultaDerivaciones;
 use common\models\Person\Persona;
 use common\components\Platform\Ui\UiDefinitionTemplateManager;
 use common\components\Platform\Ui\UiScreenService;
-use common\components\Domain\Scheduling\Application\TurnoSlotFinder;
-use common\components\Domain\Scheduling\Application\TurnoSlotOfferService;
-use common\components\Domain\Scheduling\Application\Presentation\TurnoSlotOfferUiPresenter;
-use common\components\Domain\Scheduling\Application\TurnoPersistService;
-use common\components\Domain\Scheduling\Application\TurnoCreacionContext;
-use common\components\Domain\Scheduling\Application\TurnoLifecycleService;
-use common\components\Domain\Scheduling\Application\TurnoConfirmationService;
-use common\components\Domain\Scheduling\Application\PolicyModeradaException;
-use common\components\Domain\Scheduling\Application\AutogestionAnticipacionException;
-use common\components\Domain\Scheduling\Application\TurnoAutogestionAnticipacionService;
-use common\components\Domain\Scheduling\Application\TurnoCancellationPolicyService;
-use common\components\Domain\Scheduling\Application\TurnoCancelacionRazones;
-use common\components\Domain\Scheduling\Application\BulkCancelDayService;
-use common\components\Domain\Scheduling\Application\SobreturnoService;
-use common\components\Domain\Scheduling\Application\TurnoReservaSlotService;
-use common\components\Domain\Organization\Application\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaVersionService;
-use common\components\Domain\Scheduling\Application\TurnoAgendaMetricsService;
-use common\components\Domain\Scheduling\Application\ReservaModalidadAtencionCatalogService;
-use common\components\Domain\Scheduling\Application\ReservaModalidadAtencionService;
-use common\components\Domain\Scheduling\Application\ReservaTriageModalidadStepService;
-use common\components\Domain\Scheduling\Application\PedidoAtencionActoStepService;
-use common\components\Domain\Scheduling\Application\ReservaTurnoTriageCatalogService;
-use common\components\Domain\Scheduling\Application\Agents\ReservaTriagePostCupoRoutingAgent;
-use common\components\Domain\Scheduling\Application\ReservaTriageServicioSugeridoService;
-use common\components\Domain\Scheduling\Application\TeleconsultaElegibilidadService;
-use common\components\Domain\Scheduling\Application\TurnoPacienteListadoService;
-use common\components\Domain\Scheduling\Application\TurnoResolucionService;
-use common\components\Domain\Scheduling\Application\TurnoResolucionElecciones;
-use common\components\Domain\Scheduling\Application\TurnoCalendarioOcupacionDiaService;
-use common\components\Domain\Scheduling\Application\TurnoAdvanceOfferAcceptService;
-use common\components\Domain\Scheduling\Application\Agents\TurnoResolucionShortlistAgent;
-use common\components\Domain\Scheduling\Application\PersonaAgendaPreferenciasService;
-use common\components\Domain\Organization\Application\ProfesionalEfectorServicio\ProfesionalContextResolver;
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoSlotFinder;
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoSlotOfferService;
+use common\components\Domain\Scheduling\Agenda\Application\Presentation\TurnoSlotOfferUiPresenter;
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoPersistService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoCreacionContext;
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoLifecycleService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoConfirmationService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\PolicyModeradaException;
+use common\components\Domain\Scheduling\Agenda\Application\Service\AutogestionAnticipacionException;
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoAutogestionAnticipacionService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoCancellationPolicyService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoCancelacionRazones;
+use common\components\Domain\Scheduling\Agenda\Application\Service\BulkCancelDayService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\SobreturnoService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoReservaSlotService;
+use common\components\Domain\Organization\Pes\Application\Service\ProfesionalEfectorServicioAgendaVersionService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoAgendaMetricsService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaModalidadAtencionCatalogService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaModalidadAtencionService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaTriageModalidadStepService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\PedidoAtencionActoStepService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaTurnoTriageCatalogService;
+use common\components\Domain\Scheduling\Agenda\Application\Agents\ReservaTriagePostCupoRoutingAgent;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaTriageServicioSugeridoService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\TeleconsultaElegibilidadService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoPacienteListadoService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoResolucionService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoResolucionElecciones;
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoCalendarioOcupacionDiaService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoAdvanceOfferAcceptService;
+use common\components\Domain\Scheduling\Agenda\Application\Agents\TurnoResolucionShortlistAgent;
+use common\components\Domain\Scheduling\Agenda\Application\Service\PersonaAgendaPreferenciasService;
+use common\components\Domain\Organization\Pes\Application\Service\ProfesionalContextResolver;
 use common\models\Scheduling\TurnoResolucion;
 use yii\web\ForbiddenHttpException;
 use yii\web\ConflictHttpException;
@@ -60,8 +60,8 @@ use yii\web\MethodNotAllowedHttpException;
 use yii\db\Expression;
 use common\components\Domain\Person\Representation\Domain\RepresentationPermission;
 use common\components\Platform\Core\Permission\Domain\ApiDomainOperationBridge;
-use common\components\Domain\Person\Application\PacienteContextoOfferingService;
-use common\components\Domain\Person\Representation\Application\PersonRepresentationSubjectService;
+use common\components\Domain\Person\Identidad\Application\Service\PacienteContextoOfferingService;
+use common\components\Domain\Person\Representation\Application\Service\PersonRepresentationSubjectService;
 use common\models\Person\PersonRelatedAuditLog;
 
 /**
@@ -916,7 +916,7 @@ class TurnosController extends BaseController
                 }
                 $params = array_merge($req->get(), $post);
                 $idPersona = $this->resolveSubjectTurnos($params);
-                $svc = new \common\components\Domain\Scheduling\Application\TurnoCancellationPolicyService();
+                $svc = new \common\components\Domain\Scheduling\Agenda\Application\Service\TurnoCancellationPolicyService();
 
                 return ['data' => array_merge(['success' => true], $svc->evaluarAutogestion($idPersona, (int) $idEfector))];
             }
@@ -1993,7 +1993,7 @@ class TurnosController extends BaseController
         if ($turno->estado === Turno::ESTADO_EN_RESOLUCION) {
             throw new BadRequestHttpException('Este turno está en resolución: usá el flujo de reubicación.');
         }
-        $policy = new \common\components\Domain\Scheduling\Application\TurnoCancellationPolicyService();
+        $policy = new \common\components\Domain\Scheduling\Agenda\Application\Service\TurnoCancellationPolicyService();
         if ($policy->autogestionBloqueada($idPersona, (int) $turno->id_efector)) {
             if ($forUiSubmit) {
                 throw new PolicyModeradaException('Reprogramación por app no disponible: acercate al efector o llamá.');
@@ -2262,7 +2262,7 @@ class TurnosController extends BaseController
         if ($req->isPost) {
             try {
                 $params = array_merge($req->get(), $req->post());
-                $idEfector = \common\components\Domain\Organization\Application\Authorization\EfectorAccessService::assertAndResolveIdEfector(
+                $idEfector = \common\components\Domain\Organization\Efector\Application\Authorization\EfectorAccessService::assertAndResolveIdEfector(
                     'turnos.indicadores-agenda-flow',
                     $params
                 );

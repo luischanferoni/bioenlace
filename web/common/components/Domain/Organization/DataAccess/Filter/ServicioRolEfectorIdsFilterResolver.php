@@ -5,7 +5,7 @@ namespace common\components\Domain\Organization\DataAccess\Filter;
 use common\components\Platform\Core\DataAccess\Filter\FilterResolvedValue;
 use common\components\Platform\Core\DataAccess\Filter\FilterValueResolverContext;
 use common\components\Platform\Core\DataAccess\Filter\FilterValueResolverInterface;
-use common\components\Domain\Organization\Application\Servicios\ServicioMencionLookupService;
+use common\components\Domain\Organization\Servicio\Application\Service\ServicioMencionLookupService;
 use common\models\Organization\ServiciosEfector;
 
 /**

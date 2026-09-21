@@ -3,7 +3,7 @@
 namespace common\tests\unit\integrations\scheduling;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Scheduling\Infrastructure\External\Service\FhirHealthcareServiceCodeCatalog;
+use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Service\FhirHealthcareServiceCodeCatalog;
 use common\models\Integrations\IntegrationFhirServiceCode;
 
 /**

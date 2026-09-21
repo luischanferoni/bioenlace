@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Home\Sections;
 
-use common\components\Domain\Scheduling\Home\Application\StaffSchedulingDayListService;
+use common\components\Domain\Scheduling\Home\Application\Service\StaffSchedulingDayListService;
 use common\components\Platform\Ui\Home\Service\Sections\HomePanelSectionProviderInterface;
 use common\models\Scheduling\Cirugia;
 use Yii;

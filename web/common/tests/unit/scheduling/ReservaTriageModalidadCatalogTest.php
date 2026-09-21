@@ -3,9 +3,9 @@
 namespace common\tests\unit\scheduling;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Scheduling\Application\ReservaTriageModalidadStepService;
-use common\components\Domain\Scheduling\Application\ReservaTurnoTriageCatalogService;
-use common\components\Domain\Scheduling\Application\TeleconsultaElegibilidadService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaTriageModalidadStepService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaTurnoTriageCatalogService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\TeleconsultaElegibilidadService;
 
 class ReservaTriageModalidadCatalogTest extends Unit
 {

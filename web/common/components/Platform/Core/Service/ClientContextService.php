@@ -2,8 +2,8 @@
 
 namespace common\components\Platform\Core\Service;
 
-use common\components\Domain\Person\Ventanilla\Application\VentanillaSesionMetadata;
-use common\components\Domain\Person\Ventanilla\Application\VentanillaSesionService;
+use common\components\Domain\Person\Ventanilla\Application\Service\VentanillaSesionMetadata;
+use common\components\Domain\Person\Ventanilla\Application\Service\VentanillaSesionService;
 use common\components\Platform\Core\Product\ClientContextMetadata;
 use Yii;
 

@@ -2,7 +2,7 @@
 
 namespace common\tests\unit\platform\agent;
 
-use common\components\Domain\Scheduling\Application\ReservaTriagePostCupoRoutingService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaTriagePostCupoRoutingService;
 use common\tests\unit\DbTestCase;
 
 class ReservaTriagePostCupoRoutingServiceTest extends DbTestCase

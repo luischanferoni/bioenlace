@@ -8,8 +8,8 @@ use common\components\Domain\Person\Representation\Domain\PersonRelatedStatus;
 use common\components\Domain\Person\Representation\Domain\PersonRelatedVerifiedBy;
 use common\components\Domain\Person\Representation\Domain\RepresentationPermission;
 use common\components\Domain\Person\Representation\Domain\RepresentationRegime;
-use common\components\Domain\Person\Representation\Application\PersonRepresentationAccessService;
-use common\components\Domain\Person\Domain\RepresentationPermissionsCatalog;
+use common\components\Domain\Person\Representation\Application\Authorization\PersonRepresentationAccessService;
+use common\components\Domain\Person\Representation\Domain\Catalog\RepresentationPermissionsCatalog;
 use common\models\Person\PersonDelegationConsent;
 use common\models\Person\PersonRelated;
 

@@ -6,7 +6,7 @@ use common\components\Platform\Core\DataAccess\PermissionContext;
 use common\components\Platform\Core\DataAccess\QuerySpec;
 use common\components\Platform\Core\DataAccess\ScopeCheckerInterface;
 use common\components\Platform\Core\DataAccess\ScopeConstraint;
-use common\components\Domain\Organization\Application\Efectores\OrganizationEfectorAccess;
+use common\components\Domain\Organization\Efector\Application\Authorization\OrganizationEfectorAccess;
 use Yii;
 
 /**

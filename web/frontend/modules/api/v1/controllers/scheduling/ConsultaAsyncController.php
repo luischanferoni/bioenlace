@@ -5,9 +5,9 @@ namespace frontend\modules\api\v1\controllers\scheduling;
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 use yii\web\BadRequestHttpException;
-use common\components\Domain\Scheduling\Application\ConsultaAsyncBandejaService;
-use common\components\Domain\Scheduling\Application\ConsultaAsyncLifecycleService;
-use common\components\Domain\Scheduling\Application\ConsultaAsyncSolicitudService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncBandejaService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncLifecycleService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncSolicitudService;
 use common\components\Platform\Ui\UiScreenService;
 
 /**

@@ -12,7 +12,7 @@ use common\components\Domain\Clinical\Encounter\Application\Service\AppointmentR
 use common\components\Domain\Clinical\Encounter\Application\Service\AppointmentReasonWindowService;
 use common\components\Domain\Clinical\Encounter\Application\Service\EncounterAppointmentReasonLookupService;
 use common\components\Domain\Clinical\Encounter\Application\Service\EncounterReasonService;
-use common\components\Domain\Scheduling\Home\Application\StaffSchedulingDayListService;
+use common\components\Domain\Scheduling\Home\Application\Service\StaffSchedulingDayListService;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
 use common\models\Scheduling\Turno;
@@ -23,7 +23,7 @@ use common\components\Domain\Clinical\Encounter\Application\Presentation\Conditi
 use common\components\Domain\Clinical\Encounter\Application\Service\EpisodioHistoriaBannerService;
 use common\components\Domain\Clinical\Encounter\Application\Service\EpisodioSignosVitalesService;
 use common\components\Domain\Clinical\Encounter\Application\Service\EpisodioTimelineService;
-use common\components\Domain\Person\Application\PersonaSignosVitalesService;
+use common\components\Domain\Person\Identidad\Application\Service\PersonaSignosVitalesService;
 use frontend\modules\api\v1\controllers\clinical\ClinicalAccessTrait;
 /**
  * Historia clínica staff (listado del día: GET /api/v1/home/panel).

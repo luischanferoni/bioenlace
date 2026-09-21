@@ -1,6 +1,6 @@
 # Fase 02 — Organization: módulo-primero
 
-**Estado:** pendiente  
+**Estado:** hecho (reshape mecánico + FQCN; Billing/Entitlement bajo Efector)  
 **Depende de:** fase 01 (opcional en paralelo si no hay solapamiento de FQCN)
 
 ## Objetivo
@@ -11,16 +11,15 @@ Pasar de layer-first + capacidades bajo `Application/` a **módulos de capacidad
 
 ```text
 Organization/
-  Efector/
+  Efector/             # + Billing + Entitlement + Seed
   Servicio/
-  Pes/                 # ProfesionalEfectorServicio + ProfesionalHorario
+  Pes/                 # ProfesionalEfectorServicio + ProfesionalHorario + Presentation
   SesionOperativa/
-  # Billing / Entitlement: ver design.md (default bajo Efector/)
   Assistant/
   DataAccess/
 ```
 
-Cada módulo nuevo:
+Cada módulo:
 
 ```text
 <Modulo>/
@@ -31,12 +30,12 @@ Cada módulo nuevo:
 
 ## Checklist
 
-- [ ] Cerrar decisión Billing/Entitlement (módulo propio vs bajo Efector)
-- [ ] Matriz move: `Application/Efectores/*` → `Efector/Application/…`
-- [ ] Idem Servicios, PES, SesionOperativa, Authorization/Flows/Presentation (repartir por dueño)
-- [ ] Sufijos transversales en clases movidas
-- [ ] Console seeds / `ProductMetadataPaths` / permisos API
-- [ ] README `Organization/` + test de forma del BC
+- [x] Cerrar decisión Billing/Entitlement → bajo `Efector/`
+- [x] Matriz move: `Application/Efectores/*` → `Efector/Application/…`
+- [x] Idem Servicios, PES, SesionOperativa, Authorization/Flows/Presentation (repartir por dueño)
+- [x] Sufijos transversales en clases movidas (`*Formatter`→`*Presenter`, `AgendaSlotEngine`→`AgendaSlotService`)
+- [x] Console seeds / `ProductMetadataPaths` (discovery módulo-primero ya soportado) / registries
+- [x] README `Organization/` + test de forma del BC
 
 ## Riesgo alto
 

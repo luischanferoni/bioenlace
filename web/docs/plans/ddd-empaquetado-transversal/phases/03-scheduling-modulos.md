@@ -1,6 +1,6 @@
 # Fase 03 — Scheduling: módulos + BehaviorProfile
 
-**Estado:** pendiente  
+**Estado:** hecho (Agenda + BehaviorProfile + Quirofano alineado; módulo `Agenda/` como lenguaje del plan)  
 **Depende de:** design.md (nombres Agenda / BehaviorProfile)
 
 ## Objetivo
@@ -11,22 +11,18 @@ Eliminar capacidades bajo `Application/` y alinear `Quirofano/` / nuevo `Agenda/
 
 ```text
 Scheduling/
-  Agenda/              # turnos, agents, authorization de agenda, presentation
-  Quirofano/           # ya existe — Application solo roles CA
-  BehaviorProfile/     # sacar de Application/BehaviorProfile
+  Agenda/              # turnos, agents, authorization de agenda, presentation, infra FHIR
+  Quirofano/           # Application solo roles CA
+  BehaviorProfile/     # ex Application/BehaviorProfile
   Home/
   Assistant/
 ```
 
 ## Checklist
 
-- [ ] Inventario `Scheduling/Application/*` (Agents, Authorization, Flows, Presentation, BehaviorProfile)
-- [ ] Mover BehaviorProfile a módulo L1 del BC
-- [ ] Agrupar el resto en `Agenda/` (o nombre de producto acordado: `Turno/` si el lenguaje lo pide)
-- [ ] Alinear Quirofano Application
-- [ ] Sufijos: agents ya `*Agent` OK; renombrar outliers
-- [ ] README + intents discovery
-
-## Nota de naming
-
-Si el lenguaje ubícuo es “turno” más que “agenda”, el módulo puede llamarse `Turno/` — decidir antes del primer move y no dejar alias.
+- [x] Inventario `Scheduling/Application/*` (Agents, Authorization, Flows, Presentation, BehaviorProfile)
+- [x] Mover BehaviorProfile a módulo L1 del BC
+- [x] Agrupar el resto en `Agenda/`
+- [x] Alinear Quirofano Application (`Service/`)
+- [x] Sufijos outliers (`*Notifier`/`*Builder`/`*Scheduler`/`*Finder`/`*Calculator`/`*Reader`)
+- [x] README + intents discovery (`Agenda/Application/Flows/intents`) + shape tests

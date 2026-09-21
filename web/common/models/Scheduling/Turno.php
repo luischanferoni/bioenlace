@@ -630,7 +630,7 @@ class Turno extends \yii\db\ActiveRecord
         if ($turno === null) {
             throw new \InvalidArgumentException('Turno inexistente');
         }
-        (new \common\components\Domain\Scheduling\Application\TurnoLifecycleService())
+        (new \common\components\Domain\Scheduling\Agenda\Application\Service\TurnoLifecycleService())
             ->registrarNoShow($turno, Yii::$app->user->id ?? null);
     }
 
@@ -640,7 +640,7 @@ class Turno extends \yii\db\ActiveRecord
         if ($turno === null) {
             throw new \InvalidArgumentException('Turno inexistente');
         }
-        (new \common\components\Domain\Scheduling\Application\TurnoLifecycleService())
+        (new \common\components\Domain\Scheduling\Agenda\Application\Service\TurnoLifecycleService())
             ->marcarAtendido($turno, Yii::$app->user->id ?? null);
     }
 
@@ -906,7 +906,7 @@ class Turno extends \yii\db\ActiveRecord
             return false;
         }
 
-        return !\common\components\Domain\Scheduling\Application\TurnoSlotOccupancyService::estaDisponibleSlot($idPes, $fecha, $hora, null);
+        return !\common\components\Domain\Scheduling\Agenda\Application\Service\TurnoSlotOccupancyService::estaDisponibleSlot($idPes, $fecha, $hora, null);
     }
 
 

@@ -3,7 +3,7 @@
 namespace common\tests\unit\organization;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Organization\Application\Entitlement\EfectorEncounterEntitlementService;
+use common\components\Domain\Organization\Efector\Application\Service\EfectorEncounterEntitlementService;
 use common\models\Organization\BillingAccount;
 use common\models\Organization\BillingAccountEfector;
 

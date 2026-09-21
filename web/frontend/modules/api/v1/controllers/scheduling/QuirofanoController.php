@@ -10,7 +10,7 @@ use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use common\models\Scheduling\Cirugia;
 use common\models\Scheduling\QuirofanoSala;
-use common\components\Domain\Scheduling\Quirofano\Application\CirugiaAgendaService;
+use common\components\Domain\Scheduling\Quirofano\Application\Service\CirugiaAgendaService;
 use common\components\Domain\Scheduling\Quirofano\Application\Authorization\UserEfectorAccess;
 
 /**

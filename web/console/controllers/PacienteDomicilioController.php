@@ -3,7 +3,7 @@
 namespace console\controllers;
 
 use yii\console\Controller;
-use common\components\Domain\Person\Application\PacienteDomicilioVerificacionService;
+use common\components\Domain\Person\Identidad\Application\Service\PacienteDomicilioVerificacionService;
 
 /**
  * Reintentos de verificación de domicilio vía MPI (cron cada ~30 min).

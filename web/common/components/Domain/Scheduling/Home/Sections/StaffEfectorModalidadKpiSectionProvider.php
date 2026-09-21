@@ -2,10 +2,10 @@
 
 namespace common\components\Domain\Scheduling\Home\Sections;
 
-use common\components\Domain\Organization\Application\Authorization\EfectorAccessService;
-use common\components\Domain\Scheduling\Application\ServicioTeleconsultaPoliticaCatalogService;
-use common\components\Domain\Scheduling\Application\ServicioTeleconsultaPoliticaService;
-use common\components\Domain\Scheduling\Application\StaffModalidadInsightMetricsService;
+use common\components\Domain\Organization\Efector\Application\Authorization\EfectorAccessService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ServicioTeleconsultaPoliticaCatalogService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ServicioTeleconsultaPoliticaService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\StaffModalidadInsightMetricsService;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Platform\Ui\Home\Service\Sections\HomePanelSectionProviderInterface;
 

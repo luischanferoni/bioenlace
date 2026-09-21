@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\LegalRecord\Application\Service;
 
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Domain\Clinical\Encounter\Application\Service\PatientEncounterSummaryService;
-use common\components\Domain\Person\Application\PersonaSignosVitalesService;
+use common\components\Domain\Person\Identidad\Application\Service\PersonaSignosVitalesService;
 use common\models\Clinical\AllergyIntolerance;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterPatientSummary;

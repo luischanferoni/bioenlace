@@ -7,7 +7,7 @@ use common\components\Domain\Clinical\Inpatient\Application\Agents\InternacionCa
 use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanLifecycleService;
 use common\components\Domain\Clinical\Emergency\Application\Service\GuardiaInternacionService;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
-use common\components\Domain\Organization\Application\Authorization\EfectorAccessService;
+use common\components\Domain\Organization\Efector\Application\Authorization\EfectorAccessService;
 use common\models\Person\CoberturaMedica;
 use common\models\Organization\Efector;
 use common\models\Clinical\Guardia;
@@ -17,7 +17,7 @@ use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Clinical\SegNivelInternacion;
 use common\models\Clinical\SegNivelInternacionHcama;
 use common\models\Clinical\SegNivelInternacionRepository;
-use common\components\Domain\Person\Infrastructure\External\Mpi\MpiApiClient;
+use common\components\Domain\Person\Identidad\Infrastructure\External\Mpi\MpiApiClient;
 use Yii;
 use yii\helpers\ArrayHelper;
 

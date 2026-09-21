@@ -2,8 +2,8 @@
 
 namespace common\traits;
 
-use common\components\Domain\Organization\Application\ProfesionalEfectorServicio\AgendaIntervaloMinutos;
-use common\components\Domain\Organization\Application\ProfesionalEfectorServicio\AgendaSlotEngine;
+use common\components\Domain\Organization\Pes\Domain\Model\AgendaIntervaloMinutos;
+use common\components\Domain\Organization\Pes\Application\Service\AgendaSlotService;
 
 /**
  * Cálculo de slots HH:MM y validación de solapamiento entre agendas (columnas *_2).
@@ -22,7 +22,7 @@ trait AgendaHorarioSlotsTrait
      */
     public function getSlotsParaDia($dia): array
     {
-        return AgendaSlotEngine::slotsParaDia($this, (string) $dia, $this->resolveIntervaloMinutosParaSlots());
+        return AgendaSlotService::slotsParaDia($this, (string) $dia, $this->resolveIntervaloMinutosParaSlots());
     }
 
     public function resolveIntervaloMinutosParaSlots(): int

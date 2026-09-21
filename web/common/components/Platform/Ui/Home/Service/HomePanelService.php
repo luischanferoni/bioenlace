@@ -2,7 +2,7 @@
 
 namespace common\components\Platform\Ui\Home\Service;
 
-use common\components\Domain\Person\Application\PacienteContextoOfferingService;
+use common\components\Domain\Person\Identidad\Application\Service\PacienteContextoOfferingService;
 use Yii;
 
 /**

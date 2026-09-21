@@ -2,8 +2,8 @@
 
 namespace admin\controllers;
 
-use common\components\Domain\Organization\Application\Billing\BillingAccountService;
-use common\components\Domain\Organization\Application\Entitlement\EfectorEncounterEntitlementService;
+use common\components\Domain\Organization\Efector\Application\Service\BillingAccountService;
+use common\components\Domain\Organization\Efector\Application\Service\EfectorEncounterEntitlementService;
 use common\models\Organization\BillingAccount;
 use common\models\Organization\BillingAccountEncounterEntitlement;
 use common\models\Organization\BillingAccountEfector;

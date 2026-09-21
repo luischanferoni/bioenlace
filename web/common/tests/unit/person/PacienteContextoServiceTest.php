@@ -3,7 +3,7 @@
 namespace common\tests\unit\person;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Person\Application\PacienteContextoService;
+use common\components\Domain\Person\Identidad\Application\Service\PacienteContextoService;
 use common\models\Person\PersonaPacienteContexto;
 
 class PacienteContextoServiceTest extends Unit

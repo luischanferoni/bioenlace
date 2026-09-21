@@ -2,7 +2,7 @@
 
 namespace admin\controllers;
 
-use common\components\Domain\Scheduling\Application\TurnoAntinoshowAuditQueryService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoAntinoshowAuditQueryService;
 use common\models\Scheduling\TurnoNotificacionProgramada;
 use Yii;
 use yii\filters\VerbFilter;

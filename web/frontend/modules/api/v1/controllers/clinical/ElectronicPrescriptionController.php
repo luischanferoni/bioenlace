@@ -8,7 +8,7 @@ use common\components\Domain\Clinical\Prescription\Application\Service\Electroni
 use common\components\Domain\Clinical\Prescription\Application\Presentation\ElectronicPrescriptionPresentationService;
 use common\components\Domain\Clinical\Prescription\Application\Service\ElectronicPrescriptionService;
 use common\components\Domain\Person\Representation\Domain\RepresentationPermission;
-use common\components\Domain\Person\Representation\Application\PersonRepresentationSubjectService;
+use common\components\Domain\Person\Representation\Application\Service\PersonRepresentationSubjectService;
 use common\models\Person\PersonRelatedAuditLog;
 use common\components\Platform\Ui\UiScreenService;
 use common\models\Clinical\ElectronicPrescription;

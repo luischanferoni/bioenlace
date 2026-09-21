@@ -2,7 +2,7 @@
 
 namespace console\controllers;
 
-use common\components\Domain\Organization\Application\Entitlement\EfectorEncounterEntitlementService;
+use common\components\Domain\Organization\Efector\Application\Service\EfectorEncounterEntitlementService;
 use yii\console\Controller;
 
 /**

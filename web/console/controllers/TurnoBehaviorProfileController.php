@@ -2,7 +2,7 @@
 
 namespace console\controllers;
 
-use common\components\Domain\Scheduling\Application\BehaviorProfile\TurnoBehaviorProfileMaterializerService;
+use common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoBehaviorProfileMaterializerService;
 use yii\console\Controller;
 use yii\console\ExitCode;
 

@@ -3,7 +3,7 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
-use common\components\Domain\Person\Application\PersonaAsistentePreferenciasService;
+use common\components\Domain\Person\Identidad\Application\Service\PersonaAsistentePreferenciasService;
 use common\components\Platform\Assistant\Chat\ChatOrchestrator;
 use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
 use common\components\Platform\Assistant\Chat\Thread\AssistantThreadContext;

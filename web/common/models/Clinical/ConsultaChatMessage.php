@@ -50,7 +50,7 @@ class ConsultaChatMessage extends ActiveRecord
             ]],
             [['solicitud_categoria'], 'string', 'max' => 40],
             [['solicitud_categoria'], 'default', 'value' => null],
-            [['solicitud_categoria'], 'in', 'range' => \common\components\Domain\Scheduling\Application\ConsultaAsyncChatPolicyCatalogService::SOLICITUD_CATEGORIA_CODES, 'skipOnEmpty' => true],
+            [['solicitud_categoria'], 'in', 'range' => \common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncChatPolicyCatalogService::SOLICITUD_CATEGORIA_CODES, 'skipOnEmpty' => true],
             [['user_role'], 'in', 'range' => ['medico', 'paciente', 'enfermeria', 'administrador', 'sistema']],
             [['encounter_id'], 'exist', 'skipOnError' => true, 'targetClass' => Encounter::class, 'targetAttribute' => ['encounter_id' => 'id']],
             [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['user_id' => 'id']],

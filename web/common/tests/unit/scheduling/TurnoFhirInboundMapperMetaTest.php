@@ -3,8 +3,8 @@
 namespace common\tests\unit\scheduling;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Scheduling\Infrastructure\External\Dto\FhirAppointmentInboundDto;
-use common\components\Domain\Scheduling\Infrastructure\External\Mapper\FhirAppointmentInboundMapper;
+use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Dto\FhirAppointmentInboundDto;
+use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Mapper\FhirAppointmentInboundMapper;
 
 class TurnoFhirInboundMapperMetaTest extends Unit
 {

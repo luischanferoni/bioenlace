@@ -1,6 +1,6 @@
-# Fase 04 — Person: Registry + módulos existentes
+# Fase 04 — Person: Identidad + módulos existentes
 
-**Estado:** pendiente
+**Estado:** hecho (módulo `Identidad/` en lugar de Registry; Representation/Ventanilla alineados)  
 
 ## Objetivo
 
@@ -10,21 +10,17 @@ Dejar de tener un `Application/` catch-all en la raíz de Person; consolidar cap
 
 ```text
 Person/
-  Registry/            # o Identidad/ — ex Application raíz (Flows, Seed, services)
-  Representation/      # alinear Application a roles CA
-  Ventanilla/          # alinear
+  Identidad/           # ex Application raíz (Flows, Seed, services) + MPI infra
+  Representation/      # Application roles CA + Domain/Catalog
+  Ventanilla/          # Application/Service + Didit infra
   Assistant/
   DataAccess/
 ```
 
 ## Checklist
 
-- [ ] Decidir nombre del módulo raíz (`Registry` vs `Identidad`) con dueño de admisión/ventanilla
-- [ ] Mover `Person/Application/*` → módulo elegido
-- [ ] Aplanar Application en Representation y Ventanilla
-- [ ] Sufijos transversales
-- [ ] Enlace con plan `admision-identidad-ventanilla` (no duplicar producto; solo packaging)
-
-## Cuidado
-
-Cross-deps Representation ↔ Registry: dueño de cada tipo; sin `Person/Shared/`.
+- [x] Decidir nombre del módulo raíz → **Identidad** (producto admisión)
+- [x] Mover `Person/Application/*` → `Identidad/`
+- [x] Aplanar Application en Representation y Ventanilla
+- [x] Sufijos (`CuilValidator`→`CuilPolicy`, `*Notifier`→`*Service`)
+- [x] Shape tests + README; enlace packaging vs plan `admision-identidad-ventanilla`

@@ -5,7 +5,7 @@ namespace common\components\Domain\Scheduling\Assistant\Context;
 use common\components\Platform\Assistant\Context\AssistantContextAspectLoaderInterface;
 use common\components\Platform\Assistant\Context\AssistantContextHISAreaAspect;
 use common\components\Platform\Assistant\Context\AssistantContextLoadContext;
-use common\components\Domain\Scheduling\Application\TurnoPacienteListadoService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoPacienteListadoService;
 use common\models\Scheduling\Turno;
 
 final class AppointmentCurrentAspectLoader implements AssistantContextAspectLoaderInterface

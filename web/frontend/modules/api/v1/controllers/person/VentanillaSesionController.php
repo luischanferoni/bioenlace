@@ -3,8 +3,8 @@
 namespace frontend\modules\api\v1\controllers\person;
 
 use frontend\modules\api\v1\controllers\BaseController;
-use common\components\Domain\Person\Application\PersonaBusquedaAsistenteUiService;
-use common\components\Domain\Person\Ventanilla\Application\VentanillaSesionService;
+use common\components\Domain\Person\Identidad\Application\Service\PersonaBusquedaAsistenteUiService;
+use common\components\Domain\Person\Ventanilla\Application\Service\VentanillaSesionService;
 use Yii;
 
 /**

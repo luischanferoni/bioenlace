@@ -5,7 +5,7 @@ namespace common\components\Platform\Core\DataAccess\Edit;
 use common\components\Platform\Core\DataAccess\AttributeGroupCatalog;
 use common\components\Platform\Core\DataAccess\EditSurfaceAuthorizationService;
 use common\components\Platform\Core\DataAccess\PermissionContext;
-use common\components\Domain\Organization\Application\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaUiService;
+use common\components\Domain\Organization\Pes\Application\Service\ProfesionalEfectorServicioAgendaUiService;
 use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;

@@ -3,9 +3,9 @@
 namespace frontend\modules\api\v1\controllers\organization;
 
 use frontend\modules\api\v1\controllers\BaseController;
-use common\components\Domain\Organization\Application\Billing\BillingMembershipSwitchService;
-use common\components\Domain\Organization\Application\Billing\InstitutionalEfectorSignupService;
-use common\components\Domain\Organization\Application\Billing\MinistrySignupRequestService;
+use common\components\Domain\Organization\Efector\Application\Service\BillingMembershipSwitchService;
+use common\components\Domain\Organization\Efector\Application\Service\InstitutionalEfectorSignupService;
+use common\components\Domain\Organization\Efector\Application\Service\MinistrySignupRequestService;
 use common\components\Platform\Core\Auth\DemoSandboxAccessService;
 use common\components\Platform\Core\Auth\DemoSandboxCaptchaService;
 use common\models\Platform\User;
@@ -324,7 +324,7 @@ class LicenciaController extends BaseController
             // Fallback: PES AdminEfector en sesión (API sin roles de sesión web)
             $idServicio = (int) (Yii::$app->user->getServicioActual() ?? 0);
             if ($idServicio > 0
-                && \common\components\Domain\Organization\Application\SesionOperativa\SesionOperativaService::isServicioAdminEfector($idServicio)
+                && \common\components\Domain\Organization\SesionOperativa\Application\Service\SesionOperativaService::isServicioAdminEfector($idServicio)
             ) {
                 return;
             }

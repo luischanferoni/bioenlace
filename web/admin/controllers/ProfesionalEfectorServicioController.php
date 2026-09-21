@@ -14,7 +14,7 @@ use yii\web\Response;
 use common\models\Organization\ProfesionalEfectorServicioBusqueda;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Person\Persona;
-use common\components\Domain\Organization\Application\ProfesionalEfectorServicio\AdminEfectorAsignacionService;
+use common\components\Domain\Organization\Pes\Application\Service\AdminEfectorAsignacionService;
 
 /**
  * Gestión backend de filas PES (`profesional_efector_servicio`): listados, admin efector, live search.

@@ -32,12 +32,13 @@ Infrastructure/Logging|Persistence|SpeechToText|Terminology
 | 1–3b | hechas (Domain rico, Documentation en Encounter, pipeline vía aggregate) |
 | 4 | hecha — use cases por etapa; controller apunta a ellos; Support interno |
 | 4b | hecha — cuerpos de etapa en cada use case; Support solo helpers |
+| 5 | hecha — Domain Policy sin Platform; knobs vía `EncounterCapturePostProcessKnobs` |
+| 5b | parcial — VO `ClinicalCaptureResolution` en Applier; filas/`*Input` pendientes |
 
 ## Deuda restante
 
-- Policies aún leen knobs Platform.
-- Completitud vía `*Input` en models/.
-- VO tipados para filas/resoluciones.
+- Completitud vía `*Input` en models/ (sustituir por contratos/VO de fila).
+- VO tipados para filas extraídas (resoluciones: hecho el VO base).
 
 ## Referencias
 

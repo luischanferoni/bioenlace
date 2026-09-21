@@ -2,13 +2,11 @@
 
 namespace common\components\Domain\Clinical\Capture\Domain\Policy;
 
-use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
-
 /**
  * Política de post-proceso de extracción clínica (capa Domain).
  *
- * Defaults y semántica aquí. Overrides operativos vía metadata Platform
- * (`ClinicalTextIaMetadata`) — deuda transitoria; idealmente Application inyecta knobs.
+ * Defaults y semántica aquí. Overrides operativos: Application llama
+ * {@see configure()} con knobs leídos de metadata Platform (no se lee YAML aquí).
  */
 final class EncounterCaptureExtractionPostProcessPolicy
 {
@@ -36,6 +34,12 @@ final class EncounterCaptureExtractionPostProcessPolicy
         '/\bcontrol\b/iu',
     ];
 
+    /** @var array<string, mixed> */
+    private static array $postProcessOverrides = [];
+
+    /** @var array<string, mixed> */
+    private static array $lexiconOverrides = [];
+
     /** @var array<string, mixed>|null */
     private static ?array $filterCache = null;
 
@@ -48,12 +52,65 @@ final class EncounterCaptureExtractionPostProcessPolicy
     /** @var array<string, string>|null */
     private static ?array $lexiconCache = null;
 
+    /**
+     * Inyecta overrides operativos (típicamente desde metadata Platform vía Application).
+     *
+     * @param array<string, mixed> $postProcess sección `post_process` cruda
+     * @param array<string, mixed> $lexicon overrides de léxico (clave → patrón)
+     */
+    public static function configure(array $postProcess = [], array $lexicon = []): void
+    {
+        self::$postProcessOverrides = $postProcess;
+        self::$lexiconOverrides = $lexicon;
+        self::resetCacheForTests();
+    }
+
     public static function resetCacheForTests(): void
     {
         self::$filterCache = null;
         self::$backfillCache = null;
         self::$relocateCache = null;
         self::$lexiconCache = null;
+    }
+
+    /**
+     * Limpia overrides y caches (tests / reinicio de metadata).
+     */
+    public static function resetAllForTests(): void
+    {
+        self::$postProcessOverrides = [];
+        self::$lexiconOverrides = [];
+        self::resetCacheForTests();
+    }
+
+    /**
+     * Normaliza patrones PCRE. Rechaza el inline inválido `(?iu)` (en PCRE `u` no es opción inline; usar `/…/iu`).
+     */
+    public static function normalizePregPattern(?string $pattern): ?string
+    {
+        if ($pattern === null) {
+            return null;
+        }
+        $pattern = trim($pattern);
+        if ($pattern === '') {
+            return null;
+        }
+
+        if ($pattern[0] === '/') {
+            return $pattern;
+        }
+
+        if (preg_match('/^\(\?([a-zA-Z]+)\)(.*)$/s', $pattern, $m) === 1) {
+            $flags = strtolower(str_replace('u', '', $m[1]));
+            if (strpos($flags, 'i') === false) {
+                $flags .= 'i';
+            }
+            $body = $m[2];
+
+            return '/' . str_replace('/', '\\/', $body) . '/' . $flags . 'u';
+        }
+
+        return '/' . str_replace('/', '\\/', $pattern) . '/iu';
     }
 
     /**
@@ -73,7 +130,7 @@ final class EncounterCaptureExtractionPostProcessPolicy
             'validate_terminology' => false,
             'snowstorm_fallback' => false,
         ];
-        $yaml = ClinicalTextIaMetadata::rawEncounterCapturePostProcess();
+        $yaml = self::$postProcessOverrides;
         $filter = is_array($yaml['filter_non_clinical_extractions'] ?? null)
             ? $yaml['filter_non_clinical_extractions']
             : [];
@@ -96,7 +153,7 @@ final class EncounterCaptureExtractionPostProcessPolicy
             'max_chars' => 140,
             'split_before_patterns' => self::DEFAULT_BACKFILL_SPLIT_BEFORE,
         ];
-        $yaml = ClinicalTextIaMetadata::rawEncounterCapturePostProcess();
+        $yaml = self::$postProcessOverrides;
         $backfill = is_array($yaml['backfill_empty_motivos'] ?? null)
             ? $yaml['backfill_empty_motivos']
             : [];
@@ -113,7 +170,7 @@ final class EncounterCaptureExtractionPostProcessPolicy
             return self::$relocateCache;
         }
 
-        $yaml = ClinicalTextIaMetadata::rawEncounterCapturePostProcess();
+        $yaml = self::$postProcessOverrides;
         $defaults = [
             'enabled' => false,
             'reason_model' => (string) ($yaml['reason_model'] ?? self::REASON_MODEL),
@@ -132,8 +189,7 @@ final class EncounterCaptureExtractionPostProcessPolicy
 
     public static function reasonModel(): string
     {
-        $yaml = ClinicalTextIaMetadata::rawEncounterCapturePostProcess();
-        $fromYaml = trim((string) ($yaml['reason_model'] ?? ''));
+        $fromYaml = trim((string) (self::$postProcessOverrides['reason_model'] ?? ''));
 
         return $fromYaml !== '' ? $fromYaml : self::REASON_MODEL;
     }
@@ -148,7 +204,7 @@ final class EncounterCaptureExtractionPostProcessPolicy
         }
 
         $out = self::DEFAULT_LEXICON;
-        foreach (ClinicalTextIaMetadata::rawClinicalLexicon() as $key => $pattern) {
+        foreach (self::$lexiconOverrides as $key => $pattern) {
             if (!is_string($key) || $key === '' || !is_string($pattern) || trim($pattern) === '') {
                 continue;
             }
@@ -168,7 +224,7 @@ final class EncounterCaptureExtractionPostProcessPolicy
 
     public static function textMatchesClinicalLexiconPattern(string $text, string $key): bool
     {
-        $pattern = ClinicalTextIaMetadata::normalizePregPattern(self::clinicalLexiconPattern($key));
+        $pattern = self::normalizePregPattern(self::clinicalLexiconPattern($key));
         if ($pattern === null || trim($text) === '') {
             return false;
         }

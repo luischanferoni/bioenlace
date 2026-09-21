@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Clinical\Capture\Application\Text;
 
+use common\components\Domain\Clinical\Capture\Application\Text\EncounterCapturePostProcessKnobs;
 use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureExtractionPostProcessPolicy;
-use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
 use common\models\Clinical\Input\DerivacionInput;
 
 /**
@@ -26,6 +26,8 @@ final class EncounterCaptureExtractionPostProcessor
      */
     public function apply(array $resultadoIA, array $categorias, string $clinicalText): array
     {
+        EncounterCapturePostProcessKnobs::applyFromPlatformMetadata();
+
         $extraidos = $resultadoIA['datosExtraidos'] ?? null;
         if (!is_array($extraidos)) {
             return $resultadoIA;
@@ -131,7 +133,7 @@ final class EncounterCaptureExtractionPostProcessor
             if (!is_string($pattern) || $pattern === '') {
                 continue;
             }
-            $normalized = ClinicalTextIaMetadata::normalizePregPattern($pattern);
+            $normalized = EncounterCaptureExtractionPostProcessPolicy::normalizePregPattern($pattern);
             if ($normalized === null) {
                 continue;
             }

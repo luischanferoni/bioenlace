@@ -15,6 +15,8 @@ class EncounterCaptureExtractionPostProcessPolicyTest extends Unit
 
     public function testDomainDefaultsArePresent(): void
     {
+        EncounterCaptureExtractionPostProcessPolicy::resetAllForTests();
+
         $filter = EncounterCaptureExtractionPostProcessPolicy::filterConfig();
         $this->assertTrue($filter['enabled']);
         $this->assertContains('EncounterReason', $filter['strict_category_models']);
@@ -29,6 +31,8 @@ class EncounterCaptureExtractionPostProcessPolicyTest extends Unit
 
     public function testDefaultLexiconMatchesWithoutRelyingOnYamlAlone(): void
     {
+        EncounterCaptureExtractionPostProcessPolicy::resetAllForTests();
+
         $this->assertTrue(
             EncounterCaptureExtractionPostProcessPolicy::textMatchesClinicalLexiconPattern(
                 'Paciente refiere fiebre',
@@ -41,5 +45,19 @@ class EncounterCaptureExtractionPostProcessPolicyTest extends Unit
                 'subjective_complaint'
             )
         );
+    }
+
+    public function testConfigureInjectsOverridesWithoutPlatformImport(): void
+    {
+        EncounterCaptureExtractionPostProcessPolicy::configure(
+            [
+                'reason_model' => 'CustomReason',
+                'filter_non_clinical_extractions' => ['enabled' => false],
+            ],
+            []
+        );
+
+        $this->assertSame('CustomReason', EncounterCaptureExtractionPostProcessPolicy::reasonModel());
+        $this->assertFalse(EncounterCaptureExtractionPostProcessPolicy::filterConfig()['enabled']);
     }
 }

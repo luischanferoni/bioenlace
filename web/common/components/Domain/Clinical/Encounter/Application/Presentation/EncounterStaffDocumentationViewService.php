@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Clinical\Encounter\Application\Presentation;
 
+use common\components\Domain\Clinical\Capture\Application\Text\EncounterCapturePostProcessKnobs;
 use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureExtractionPostProcessPolicy;
 use common\components\Domain\Clinical\Encounter\Application\EncounterReasonService;
 use common\models\Clinical\Encounter;
@@ -20,6 +21,8 @@ final class EncounterStaffDocumentationViewService
      */
     public function buildForEncounter(Encounter $encounter): array
     {
+        EncounterCapturePostProcessKnobs::applyFromPlatformMetadata();
+
         $secciones = [];
 
         $nota = trim((string) ($encounter->note ?? ''));

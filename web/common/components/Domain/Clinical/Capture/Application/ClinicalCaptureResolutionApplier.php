@@ -3,11 +3,13 @@
 namespace common\components\Domain\Clinical\Capture\Application;
 
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureIssueFactory;
+use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureResolution;
 
 /**
  * Aplica resoluciones del profesional sobre datosExtraidos (mapa categoría → filas).
  *
  * @see ClinicalCaptureIssueFactory
+ * @see ClinicalCaptureResolution
  */
 final class ClinicalCaptureResolutionApplier
 {
@@ -23,20 +25,13 @@ final class ClinicalCaptureResolutionApplier
             return $extraidos;
         }
 
-        foreach ($resolutions as $issueId => $value) {
-            if (!is_string($issueId) || $issueId === '') {
-                continue;
-            }
-            $parsed = ClinicalCaptureIssueFactory::parseIssueId($issueId);
-            if ($parsed === null) {
-                continue;
-            }
+        foreach (ClinicalCaptureResolution::listFromMap($resolutions) as $resolution) {
             $extraidos = $this->applyOne(
                 $extraidos,
-                $parsed['category'],
-                $parsed['index'],
-                $parsed['field'],
-                $value,
+                $resolution->category(),
+                $resolution->index(),
+                $resolution->field(),
+                $resolution->value(),
                 $categorias
             );
         }

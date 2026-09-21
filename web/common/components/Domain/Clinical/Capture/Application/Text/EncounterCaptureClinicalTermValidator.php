@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Clinical\Capture\Application\Text;
 
+use common\components\Domain\Clinical\Capture\Application\Text\EncounterCapturePostProcessKnobs;
 use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureExtractionPostProcessPolicy;
 use common\components\Domain\Clinical\Capture\Infrastructure\Terminology\EncounterCaptureTerminologyLookup;
 
@@ -23,6 +24,8 @@ final class EncounterCaptureClinicalTermValidator
      */
     public function isPlausibleExtraction($item, string $clinicalText, array $config = []): bool
     {
+        EncounterCapturePostProcessKnobs::applyFromPlatformMetadata();
+
         if (is_array($item) && $this->itemHasClinicalCode($item)) {
             return true;
         }

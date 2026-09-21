@@ -330,30 +330,7 @@ final class ClinicalTextIaMetadata
      */
     public static function normalizePregPattern(?string $pattern): ?string
     {
-        if ($pattern === null) {
-            return null;
-        }
-        $pattern = trim($pattern);
-        if ($pattern === '') {
-            return null;
-        }
-
-        if ($pattern[0] === '/') {
-            return $pattern;
-        }
-
-        // Legacy: (?iu)body o (?i)body → /body/iu
-        if (preg_match('/^\(\?([a-zA-Z]+)\)(.*)$/s', $pattern, $m) === 1) {
-            $flags = strtolower(str_replace('u', '', $m[1]));
-            if (strpos($flags, 'i') === false) {
-                $flags .= 'i';
-            }
-            $body = $m[2];
-
-            return '/' . str_replace('/', '\\/', $body) . '/' . $flags . 'u';
-        }
-
-        return '/' . str_replace('/', '\\/', $pattern) . '/iu';
+        return \common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureExtractionPostProcessPolicy::normalizePregPattern($pattern);
     }
 
     public static function llmConfidenceContextTerms(): array
@@ -388,7 +365,7 @@ final class ClinicalTextIaMetadata
     public static function resetCacheForTests(): void
     {
         self::$config = null;
-        \common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureExtractionPostProcessPolicy::resetCacheForTests();
+        \common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureExtractionPostProcessPolicy::resetAllForTests();
     }
 
     /**

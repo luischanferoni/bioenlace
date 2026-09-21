@@ -3,7 +3,7 @@
 namespace frontend\modules\api\v1\controllers\clinical;
 
 use common\components\Domain\Clinical\Specialty\Domain\EncounterDefinitionSpecialtyRegistry;
-use common\components\Domain\Clinical\Specialty\Application\OdontologyEncounterService;
+use common\components\Domain\Clinical\Specialty\Application\Service\OdontologyEncounterService;
 use common\models\Clinical\EncounterDefinition;
 use frontend\modules\api\v1\controllers\BaseController;
 

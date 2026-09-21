@@ -2,8 +2,8 @@
 
 namespace console\controllers;
 
-use common\components\Domain\Clinical\Laboratory\Application\LaboratoryIngestService;
-use common\components\Domain\Clinical\Laboratory\Application\LaboratorySyncBatchService;
+use common\components\Domain\Clinical\Laboratory\Application\Service\LaboratoryIngestService;
+use common\components\Domain\Clinical\Laboratory\Application\Service\LaboratorySyncBatchService;
 use common\models\Person\Persona;
 use yii\console\Controller;
 use yii\console\ExitCode;

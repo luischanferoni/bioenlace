@@ -2,7 +2,7 @@
 
 namespace common\tests\unit\clinical;
 
-use common\components\Domain\Clinical\HistoryExchange\Application\ClinicalHistoryOutboundRetryPolicy;
+use common\components\Domain\Clinical\HistoryExchange\Domain\Policy\ClinicalHistoryOutboundRetryPolicy;
 
 class ClinicalHistoryOutboundRetryPolicyTest extends \Codeception\Test\Unit
 {

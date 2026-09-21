@@ -1,6 +1,6 @@
 # Motivos de consulta (lote)
 
-Una **sola IA por consulta** al cerrar la ventana (`AppointmentReasonBatchService`), tras el chat del asistente (§1). El prompt incluye **contexto clínico acotado** del paciente (`PatientAiContextBuilder`). Ver [costos-api.md §2](../costos-api.md#2-motivos-de-consulta-chat-dedicado-antes-de-la-atención).
+Una **sola IA por consulta** al cerrar la ventana (`AppointmentReasonBatchService`), tras el chat del asistente (§1). El prompt incluye **contexto clínico acotado** del paciente (`PatientAiContextService`). Ver [costos-api.md §2](../costos-api.md#2-motivos-de-consulta-chat-dedicado-antes-de-la-atención).
 
 Cierre de captura: **`motivos_consulta_cierre_minutos` = 10** (params). En ese momento el cron `MOTIVOS_IA_BATCH` junta el hilo.
 

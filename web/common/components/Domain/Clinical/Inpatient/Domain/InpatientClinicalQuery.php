@@ -2,10 +2,10 @@
 
 namespace common\components\Domain\Clinical\Inpatient\Domain;
 
-use common\components\Domain\Clinical\CarePlan\Application\Dto\CarePlanDto;
-use common\components\Domain\Clinical\CarePlan\Application\Dto\MedicationRequestDto;
-use common\components\Domain\Clinical\CarePlan\Application\Dto\ServiceRequestDto;
-use common\components\Domain\Clinical\Encounter\Application\EpisodeOfCareService;
+use common\components\Domain\Clinical\CarePlan\Domain\Model\CarePlanDto;
+use common\components\Domain\Clinical\CarePlan\Domain\Model\MedicationRequestDto;
+use common\components\Domain\Clinical\CarePlan\Domain\Model\ServiceRequestDto;
+use common\components\Domain\Clinical\Encounter\Application\Service\EpisodeOfCareService;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Condition;
 use common\models\Clinical\EpisodeOfCare;

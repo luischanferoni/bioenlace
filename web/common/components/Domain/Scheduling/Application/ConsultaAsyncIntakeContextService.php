@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Application;
 
-use common\components\Domain\Clinical\Encounter\Application\PatientSummary\PatientEncounterSummaryQueryService;
+use common\components\Domain\Clinical\Encounter\Application\Service\PatientEncounterSummaryQueryService;
 
 /**
  * Contexto declarativo de intake consultas/seguimiento para bandeja y chat async (staff).

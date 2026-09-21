@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Application;
 
-use common\components\Domain\Clinical\Encounter\Application\EncounterJourney\EncounterJourneyService;
+use common\components\Domain\Clinical\Encounter\Application\Service\EncounterJourneyService;
 use common\components\Domain\Person\Representation\Domain\RepresentationPermission;
 use common\components\Domain\Person\Representation\Application\PersonRepresentationSubjectService;
 use common\models\Clinical\Encounter;

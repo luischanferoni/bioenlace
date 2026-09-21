@@ -8,7 +8,7 @@ use common\components\Domain\Clinical\Capture\Infrastructure\PedidoAtencion\YiiD
 use common\components\Domain\Clinical\PedidoAtencion\Domain\CodingSystems;
 use common\components\Domain\Clinical\PedidoAtencion\Domain\Model\PedidoAtencion;
 use common\components\Domain\Clinical\PedidoAtencion\Domain\PedidoAtencionActoCoderInterface;
-use common\components\Domain\Clinical\PedidoAtencion\Application\PedidoAtencionService;
+use common\components\Domain\Clinical\PedidoAtencion\Application\Service\PedidoAtencionService;
 use common\models\Clinical\ConsultaDerivaciones;
 use yii\base\Model;
 

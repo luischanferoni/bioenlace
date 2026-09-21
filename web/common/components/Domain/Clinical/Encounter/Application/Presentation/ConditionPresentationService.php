@@ -22,8 +22,8 @@ final class ConditionPresentationService
         if ($subjectPersonaId <= 0) {
             return [];
         }
-        $cap = $limit ?? PatientActiveConditionQuery::DEDUPE_LIMIT;
-        $rows = (new PatientActiveConditionQuery())->listActive($subjectPersonaId);
+        $cap = $limit ?? PatientActiveConditionQueryService::DEDUPE_LIMIT;
+        $rows = (new PatientActiveConditionQueryService())->listActive($subjectPersonaId);
         $matcher = new CareProtocolMatcherService();
         $idProvincia = $this->resolveIdProvincia($subjectPersonaId);
         /** @var array<string, array{score: int, summary: array<string, mixed>}> $byDedupe */

@@ -7,8 +7,8 @@ use common\models\Scheduling\Turno;
 use common\models\Scheduling\TurnoNotificacionProgramada;
 use common\models\Scheduling\EfectorTurnosConfig;
 use common\models\Scheduling\TurnoEventoAudit;
-use common\components\Domain\Clinical\Encounter\Application\AppointmentReasonWindowService;
-use common\components\Domain\Clinical\Encounter\Application\EncounterJourney\EncounterJourneyNotificationScheduler;
+use common\components\Domain\Clinical\Encounter\Application\Service\AppointmentReasonWindowService;
+use common\components\Domain\Clinical\Encounter\Application\Service\EncounterJourneyNotificationService;
 
 class TurnoConfirmationService
 {
@@ -52,7 +52,7 @@ class TurnoConfirmationService
         $this->programarMotivosIaBatch($turno, $dt);
 
         try {
-            (new EncounterJourneyNotificationScheduler())->scheduleForTurno($turno, $dt);
+            (new EncounterJourneyNotificationService())->scheduleForTurno($turno, $dt);
         } catch (\Throwable $e) {
             \Yii::warning('EncounterJourney notifications: ' . $e->getMessage(), 'encounter-journey');
         }

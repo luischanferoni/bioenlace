@@ -229,6 +229,67 @@ final class BoundedContextLayerShapeTest extends Unit
         );
     }
 
+    /**
+     * Módulos Clinical ya alineados al eje Capture: Application/* solo roles CA.
+     * Ampliar la lista al cerrar cada módulo de fase 01.
+     */
+    public function testClinicalAdoptedModulesApplicationSoloRolesCa(): void
+    {
+        $clinical = ProductDomainCatalog::domainRoot() . DIRECTORY_SEPARATOR . 'Clinical';
+        $adopted = [
+            'Capture' => true,
+            'Encounter' => true,
+            'CarePlan' => true,
+            'CareCohort' => true,
+            'Emergency' => true,
+            'HistoryExchange' => true,
+            'Home' => true,
+            'Inpatient' => true,
+            'Laboratory' => true,
+            'LegalRecord' => true,
+            'PedidoAtencion' => true,
+            'Prescription' => true,
+            'Specialty' => true,
+        ];
+        $allowedAppDirs = [
+            'UseCase' => true,
+            'Presentation' => true,
+            'Service' => true,
+            'Authorization' => true,
+            'Flows' => true,
+            'Agents' => true,
+            'Seed' => true,
+        ];
+        $errors = [];
+
+        foreach (array_keys($adopted) as $module) {
+            $app = $clinical . DIRECTORY_SEPARATOR . $module . DIRECTORY_SEPARATOR . 'Application';
+            if (!is_dir($app)) {
+                $errors[] = "Clinical/$module/Application/ ausente";
+                continue;
+            }
+            foreach (scandir($app) ?: [] as $name) {
+                if ($name === '.' || $name === '..' || $name === 'README.md') {
+                    continue;
+                }
+                $child = $app . DIRECTORY_SEPARATOR . $name;
+                if (is_file($child) && str_ends_with($name, '.php')) {
+                    $errors[] = "PHP suelto en Clinical/$module/Application/$name (mover a rol CA)";
+                    continue;
+                }
+                if (is_dir($child) && !isset($allowedAppDirs[$name])) {
+                    $errors[] = "Carpeta no-CA Clinical/$module/Application/$name/";
+                }
+            }
+        }
+
+        $this->assertSame(
+            [],
+            $errors,
+            "Application solo roles CA (domain-folder-grammar):\n" . implode("\n", $errors)
+        );
+    }
+
     public function testDomainBcSinServiceNiPresentationL1(): void
     {
         $root = ProductDomainCatalog::domainRoot();

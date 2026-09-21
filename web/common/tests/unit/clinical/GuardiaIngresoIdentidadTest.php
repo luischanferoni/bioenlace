@@ -3,7 +3,7 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Emergency\Application\GuardiaIngresoService;
+use common\components\Domain\Clinical\Emergency\Application\Service\GuardiaIngresoService;
 
 class GuardiaIngresoIdentidadTest extends Unit
 {

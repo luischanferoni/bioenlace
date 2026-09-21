@@ -3,10 +3,10 @@
 namespace frontend\modules\api\v1\controllers\clinical;
 
 use common\components\Domain\Clinical\Laboratory\Application\Agents\LaboratoryEncounterLinkAgent;
-use common\components\Domain\Clinical\Laboratory\Application\LaboratoryEncounterLinkPendingService;
-use common\components\Domain\Clinical\Laboratory\Application\LaboratoryReportPdfService;
-use common\components\Domain\Clinical\Laboratory\Application\LaboratoryResultQueryService;
-use common\components\Domain\Clinical\Encounter\Application\PatientSummary\PatientEncounterSummaryQueryService;
+use common\components\Domain\Clinical\Laboratory\Application\Service\LaboratoryEncounterLinkPendingService;
+use common\components\Domain\Clinical\Laboratory\Application\Service\LaboratoryReportPdfService;
+use common\components\Domain\Clinical\Laboratory\Application\Service\LaboratoryResultQueryService;
+use common\components\Domain\Clinical\Encounter\Application\Service\PatientEncounterSummaryQueryService;
 use common\components\Platform\Ui\UiScreenService;
 use common\models\Clinical\DiagnosticReport;
 use common\models\Person\Persona;

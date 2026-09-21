@@ -3,9 +3,9 @@
 namespace common\components\Domain\Scheduling\Application;
 
 use common\components\Domain\Clinical\CarePlan\Application\Presentation\CarePlanPresentationService;
-use common\components\Domain\Clinical\CarePlan\Application\CareProtocolMatcherService;
+use common\components\Domain\Clinical\CarePlan\Application\Service\CareProtocolMatcherService;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\ConditionPresentationService;
-use common\components\Domain\Clinical\CarePlan\Application\PatientActiveCarePlanQuery;
+use common\components\Domain\Clinical\CarePlan\Application\Service\PatientActiveCarePlanQueryService;
 use common\components\Domain\Person\Application\PacienteContextoService;
 use common\components\Domain\Scheduling\Domain\ControlSeguimientoHubCatalog;
 use common\models\Person\Persona;
@@ -52,7 +52,7 @@ final class ControlSeguimientoHubService
         $items = [];
         if ($idPersona > 0) {
             $presenter = new CarePlanPresentationService();
-            foreach ((new PatientActiveCarePlanQuery())->listActive($idPersona) as $plan) {
+            foreach ((new PatientActiveCarePlanQueryService())->listActive($idPersona) as $plan) {
                 $pick = $presenter->toPatientListPickItem($plan);
                 $planId = (int) ($plan->id ?? 0);
                 if ($planId <= 0) {

@@ -2,7 +2,7 @@
 
 namespace frontend\components\Clinical;
 
-use common\components\Domain\Clinical\Emergency\Application\GuardiaBoardCapabilityService;
+use common\components\Domain\Clinical\Emergency\Application\Service\GuardiaBoardCapabilityService;
 use common\models\Clinical\Encounter;
 use common\models\Organization\Servicio;
 use yii\helpers\Url;

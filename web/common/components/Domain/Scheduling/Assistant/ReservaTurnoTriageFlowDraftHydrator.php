@@ -33,7 +33,7 @@ final class ReservaTurnoTriageFlowDraftHydrator
             $draft['tipo_atencion_sugerido'] = $compiled['suggests_tipo_atencion'];
         }
 
-        (new \common\components\Domain\Clinical\PedidoAtencion\Application\PedidoAtencionPacienteService())
+        (new \common\components\Domain\Clinical\PedidoAtencion\Application\Service\PedidoAtencionPacienteService())
             ->hidratarDesdeMensaje($draft, $content);
         (new TeleconsultaElegibilidadService())->aplicarFlagsEnDraft($draft);
         (new ReservaModalidadAtencionService())->aplicarFlagsEnDraft($draft);

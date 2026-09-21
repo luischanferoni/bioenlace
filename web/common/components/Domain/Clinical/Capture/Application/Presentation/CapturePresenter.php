@@ -4,8 +4,8 @@ namespace common\components\Domain\Clinical\Capture\Application\Presentation;
 
 use common\components\Domain\Clinical\Capture\Application\Service\CaptureCategoryResolver;
 use common\components\Domain\Clinical\Capture\Application\Service\RowContractService;
-use common\components\Domain\Clinical\Encounter\Application\EncounterOpenProblemsService;
-use common\components\Domain\Clinical\Encounter\Application\EpisodeCaptureDedupService;
+use common\components\Domain\Clinical\Encounter\Application\Service\EncounterOpenProblemsService;
+use common\components\Domain\Clinical\Encounter\Application\Service\EpisodeCaptureDedupService;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EncounterCaptureReviewPresenter;
 use common\models\Clinical\EncounterCapture;
 use common\models\Clinical\EncounterDefinition;

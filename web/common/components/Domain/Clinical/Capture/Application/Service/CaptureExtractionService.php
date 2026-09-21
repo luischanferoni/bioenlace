@@ -5,10 +5,10 @@ namespace common\components\Domain\Clinical\Capture\Application\Service;
 use Yii;
 use yii\base\Component;
 use common\components\Domain\Clinical\Capture\Infrastructure\SpeechToText\CaptureSpeechInputResolver;
-use common\components\Domain\Clinical\Encounter\Application\AiContext\PatientAiContextBuilder;
+use common\components\Domain\Clinical\Encounter\Application\Service\PatientAiContextService;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EncounterCaptureReviewPresenter;
-use common\components\Domain\Clinical\Encounter\Application\EncounterOpenProblemsService;
-use common\components\Domain\Clinical\Encounter\Application\EpisodeCaptureDedupService;
+use common\components\Domain\Clinical\Encounter\Application\Service\EncounterOpenProblemsService;
+use common\components\Domain\Clinical\Encounter\Application\Service\EpisodeCaptureDedupService;
 use common\components\Domain\Clinical\Capture\Infrastructure\Logging\ConsultaLogger;
 use common\components\Domain\Clinical\Capture\Infrastructure\Persistence\CaptureAnalysisCache;
 use common\components\Domain\Clinical\Capture\Domain\Policy\CaptureCompletenessPolicy;
@@ -16,7 +16,7 @@ use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
 
 /**
  * Application Service: extracción IA de la nota clínica (STT → normalizar → LLM → post-proceso).
- * No persiste Encounter; eso vive en {@see \common\components\Domain\Clinical\Encounter\Application\Documentation\EncounterDocumentationService}
+ * No persiste Encounter; eso vive en {@see \common\components\Domain\Clinical\Encounter\Application\Service\EncounterDocumentationService}
  * vía el use case {@see \common\components\Domain\Clinical\Capture\Application\UseCase\SaveCapture}.
  */
 class CaptureExtractionService extends Component
@@ -33,7 +33,7 @@ class CaptureExtractionService extends Component
             if (!$idConfiguracion) {
                 $bootstrapped = (new EncounterDefinitionBootstrapService())->resolveFromCaptureBody(
                     $body,
-                    PatientAiContextBuilder::resolveSubjectPersonaIdFromBody($body)
+                    PatientAiContextService::resolveSubjectPersonaIdFromBody($body)
                 );
                 if ($bootstrapped !== null) {
                     $idConfiguracion = $bootstrapped->id;
@@ -104,7 +104,7 @@ class CaptureExtractionService extends Component
                 $textoLimpio,
                 $servicio->nombre,
                 $categorias,
-                PatientAiContextBuilder::resolveSubjectPersonaIdFromBody($body),
+                PatientAiContextService::resolveSubjectPersonaIdFromBody($body),
                 $body
             );
 
@@ -149,7 +149,7 @@ class CaptureExtractionService extends Component
                 $tieneDatosFaltantes = true;
             }
 
-            $subjectPersonaId = PatientAiContextBuilder::resolveSubjectPersonaIdFromBody($body);
+            $subjectPersonaId = PatientAiContextService::resolveSubjectPersonaIdFromBody($body);
             $openProblems = null;
             if ($subjectPersonaId !== null && (int) $subjectPersonaId > 0) {
                 $openProblems = (new EncounterOpenProblemsService())->forCaptureReview(
@@ -545,9 +545,9 @@ class CaptureExtractionService extends Component
 
         $patientBlock = '';
         if ($subjectPersonaId !== null && $subjectPersonaId > 0) {
-            $patientBlock = (new PatientAiContextBuilder())->build(
+            $patientBlock = (new PatientAiContextService())->build(
                 $subjectPersonaId,
-                PatientAiContextBuilder::PROFILE_ENCOUNTER,
+                PatientAiContextService::PROFILE_ENCOUNTER,
                 isset($body['parent']) ? (string) $body['parent'] : null,
                 isset($body['parent_id']) ? (int) $body['parent_id'] : null
             );

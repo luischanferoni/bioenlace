@@ -3,7 +3,7 @@
 namespace frontend\modules\api\v1\controllers\clinical;
 
 use common\components\Domain\Clinical\Specialty\Domain\EncounterDefinitionSpecialtyRegistry;
-use common\components\Domain\Clinical\Specialty\Application\OphthalmologyEncounterService;
+use common\components\Domain\Clinical\Specialty\Application\Service\OphthalmologyEncounterService;
 use common\models\Clinical\EncounterDefinition;
 use frontend\modules\api\v1\controllers\BaseController;
 

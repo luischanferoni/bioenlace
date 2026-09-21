@@ -2,9 +2,9 @@
 
 namespace console\controllers;
 
-use common\components\Domain\Clinical\CareCohort\Application\CareFollowupTouchpointProcessor;
-use common\components\Domain\Clinical\CareCohort\Application\CarePackConfig;
-use common\components\Domain\Clinical\CareCohort\Application\CarePackJobProcessor;
+use common\components\Domain\Clinical\CareCohort\Application\Service\CareFollowupTouchpointService;
+use common\components\Domain\Clinical\CareCohort\Application\Service\CarePackConfig;
+use common\components\Domain\Clinical\CareCohort\Application\Service\CarePackJobService;
 use common\models\Clinical\CarePackJob;
 use yii\console\Controller;
 use yii\console\ExitCode;
@@ -23,8 +23,8 @@ class CarePackController extends Controller
      */
     public function actionRunJobs($limit = 30): int
     {
-        $result = (new CarePackJobProcessor())->run((int) $limit);
-        $followups = (new CareFollowupTouchpointProcessor())->processDue((int) $limit);
+        $result = (new CarePackJobService())->run((int) $limit);
+        $followups = (new CareFollowupTouchpointService())->processDue((int) $limit);
         $this->stdout(sprintf(
             "care-pack: sync=%d vertex_submitted=%d vertex_completed=%d followup_notified=%d\n",
             $result['sync'],
@@ -43,7 +43,7 @@ class CarePackController extends Controller
      */
     public function actionProcessFollowups($limit = 50): int
     {
-        $n = (new CareFollowupTouchpointProcessor())->processDue((int) $limit);
+        $n = (new CareFollowupTouchpointService())->processDue((int) $limit);
         $this->stdout("care-pack process-followups: notified={$n}\n");
 
         return ExitCode::OK;

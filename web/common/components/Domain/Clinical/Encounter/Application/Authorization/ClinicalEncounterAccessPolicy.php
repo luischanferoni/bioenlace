@@ -2,7 +2,6 @@
 
 namespace common\components\Domain\Clinical\Encounter\Application\Authorization;
 
-use common\components\Domain\Clinical\Encounter\Application\EncounterAccessService;
 use common\components\Platform\Core\Permission\Domain\DomainOperationContext;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Platform\Core\Permission\Domain\DomainOperationPolicyInterface;
@@ -22,7 +21,7 @@ final class ClinicalEncounterAccessPolicy implements DomainOperationPolicyInterf
         $perm = trim((string) ($ctx->params['representation_permission'] ?? ''));
         $representationPermission = $perm !== '' ? $perm : null;
 
-        if (!EncounterAccessService::userCanAccessEncounterApi($resource, $representationPermission)) {
+        if (!EncounterOwnershipAccess::userCanAccessEncounterApi($resource, $representationPermission)) {
             throw new DomainOperationForbiddenException('No tiene permiso para acceder a este encounter.');
         }
     }

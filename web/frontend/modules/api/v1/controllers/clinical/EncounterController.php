@@ -13,11 +13,11 @@ use common\components\Domain\Clinical\Capture\Application\UseCase\ResolveCapture
 use common\components\Domain\Clinical\Capture\Application\UseCase\SaveCapture;
 use common\components\Domain\Clinical\Capture\Application\UseCase\TranscribeCapture;
 use common\components\Domain\Clinical\Capture\Application\UseCase\ViewCapture;
-use common\components\Domain\Clinical\Encounter\Application\Documentation\EncounterDocumentationService;
-use common\components\Domain\Clinical\CarePlan\Application\Dto\MedicationRequestDto;
-use common\components\Domain\Clinical\CarePlan\Application\Dto\ServiceRequestDto;
-use common\components\Domain\Clinical\CarePlan\Application\MedicationRequestService;
-use common\components\Domain\Clinical\CarePlan\Application\ServiceRequestService;
+use common\components\Domain\Clinical\Encounter\Application\Service\EncounterDocumentationService;
+use common\components\Domain\Clinical\CarePlan\Domain\Model\MedicationRequestDto;
+use common\components\Domain\Clinical\CarePlan\Domain\Model\ServiceRequestDto;
+use common\components\Domain\Clinical\CarePlan\Application\Service\MedicationRequestService;
+use common\components\Domain\Clinical\CarePlan\Application\Service\ServiceRequestService;
 use common\components\Platform\Ui\UiScreenService;
 use frontend\modules\api\v1\controllers\BaseController;
 use yii\web\UploadedFile;

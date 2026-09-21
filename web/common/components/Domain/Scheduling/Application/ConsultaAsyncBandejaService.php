@@ -5,7 +5,7 @@ namespace common\components\Domain\Scheduling\Application;
 use common\components\Domain\Scheduling\Application\Agents\ConsultaAsyncBandejaPrioridadAgent;
 
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
-use common\components\Domain\Clinical\Encounter\Application\EncounterReasonService;
+use common\components\Domain\Clinical\Encounter\Application\Service\EncounterReasonService;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\ConsultaChatMessage;
 use common\models\Person\Persona;

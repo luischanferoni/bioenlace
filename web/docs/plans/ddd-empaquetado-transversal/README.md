@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|--------|
 | Slug | `ddd-empaquetado-transversal` |
-| Estado | Pendiente de ejecución |
+| Estado | En curso — fase 01 Clinical Application alineada (roles CA); sigue naming fino + fases 02+ |
 | Superficie | `common/components/Domain/**`, rules/ADRs de gramática, tests de forma |
 | Piloto hecho | `Clinical/Capture` (UseCase / Presentation / Service + sufijos transversales) |
 

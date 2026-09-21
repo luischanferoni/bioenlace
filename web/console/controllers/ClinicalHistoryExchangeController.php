@@ -2,8 +2,8 @@
 
 namespace console\controllers;
 
-use common\components\Domain\Clinical\HistoryExchange\Application\ClinicalHistoryOutboundProcessorService;
-use common\components\Domain\Clinical\HistoryExchange\Application\ClinicalHistoryOutboundReconcileService;
+use common\components\Domain\Clinical\HistoryExchange\Application\Service\ClinicalHistoryOutboundProcessorService;
+use common\components\Domain\Clinical\HistoryExchange\Application\Service\ClinicalHistoryOutboundReconcileService;
 use common\models\Clinical\ClinicalHistoryOutboundJob;
 use yii\console\Controller;
 

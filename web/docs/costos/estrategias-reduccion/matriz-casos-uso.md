@@ -116,7 +116,7 @@ Código: [`ChatRouter.php`](../../common/components/Platform/Assistant/Chat/Rout
 
 ## Caso 2 — Motivos de consulta (lote)
 
-`AppointmentReasonBatchService`: 1× `motivos-consulta-batch` por encounter; transcript único + **contexto clínico acotado** (`PatientAiContextBuilder`, perfil `motivos`).
+`AppointmentReasonBatchService`: 1× `motivos-consulta-batch` por encounter; transcript único + **contexto clínico acotado** (`PatientAiContextService`, perfil `motivos`).
 
 | Estrategia | Aplica |
 |------------|--------|
@@ -137,7 +137,7 @@ Código: [`ChatRouter.php`](../../common/components/Platform/Assistant/Chat/Rout
 
 ### Análisis (`analisis-consulta`)
 
-Prompt: categorías del servicio + **contexto clínico acotado** + texto de consulta (`PatientAiContextBuilder` + `generarPromptEspecializado`).
+Prompt: categorías del servicio + **contexto clínico acotado** + texto de consulta (`PatientAiContextService` + `generarPromptEspecializado`).
 
 | Estrategia | Aplica |
 |------------|--------|

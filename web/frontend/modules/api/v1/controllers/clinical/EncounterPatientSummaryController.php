@@ -2,8 +2,8 @@
 
 namespace frontend\modules\api\v1\controllers\clinical;
 
-use common\components\Domain\Clinical\Encounter\Application\PatientSummary\PatientEncounterSummaryQueryService;
-use common\components\Domain\Clinical\Encounter\Application\PatientSummary\PatientEncounterSummaryUiFormatter;
+use common\components\Domain\Clinical\Encounter\Application\Service\PatientEncounterSummaryQueryService;
+use common\components\Domain\Clinical\Encounter\Application\Service\PatientEncounterSummaryPresenter;
 use common\components\Domain\Person\Representation\Domain\RepresentationPermission;
 use common\components\Domain\Person\Representation\Application\PersonRepresentationSubjectService;
 use common\components\Platform\Ui\UiScreenService;
@@ -28,13 +28,13 @@ class EncounterPatientSummaryController extends BaseController
     use ClinicalAccessTrait;
 
     private PatientEncounterSummaryQueryService $query;
-    private PatientEncounterSummaryUiFormatter $uiFormatter;
+    private PatientEncounterSummaryPresenter $uiFormatter;
 
     public function init()
     {
         parent::init();
         $this->query = new PatientEncounterSummaryQueryService();
-        $this->uiFormatter = new PatientEncounterSummaryUiFormatter();
+        $this->uiFormatter = new PatientEncounterSummaryPresenter();
     }
 
     /**

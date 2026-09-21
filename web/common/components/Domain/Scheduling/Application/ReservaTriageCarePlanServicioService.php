@@ -4,7 +4,7 @@ namespace common\components\Domain\Scheduling\Application;
 
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanActivityKind;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanCategory;
-use common\components\Domain\Clinical\CarePlan\Application\PatientActiveCarePlanQuery;
+use common\components\Domain\Clinical\CarePlan\Application\Service\PatientActiveCarePlanQueryService;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\CarePlanActivity;
 use common\models\Clinical\ServiceRequest;
@@ -32,7 +32,7 @@ final class ReservaTriageCarePlanServicioService
         if ($carePlanId <= 0 || $idPersona <= 0) {
             return null;
         }
-        foreach ((new PatientActiveCarePlanQuery())->listActive($idPersona) as $plan) {
+        foreach ((new PatientActiveCarePlanQueryService())->listActive($idPersona) as $plan) {
             if ((int) $plan->id === $carePlanId) {
                 return $plan;
             }

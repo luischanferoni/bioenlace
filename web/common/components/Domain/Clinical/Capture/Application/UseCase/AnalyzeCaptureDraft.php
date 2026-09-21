@@ -6,7 +6,7 @@ use common\components\Domain\Clinical\Capture\Application\Service\CaptureDraftSe
 use common\components\Domain\Clinical\Capture\Application\UseCase\AnalyzeClinicalNote;
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureStage;
 use common\models\Clinical\EncounterCaptureAudit;
-use common\components\Domain\Clinical\Encounter\Application\EncounterCaptureAuditService;
+use common\components\Domain\Clinical\Encounter\Application\Service\EncounterCaptureAuditService;
 
 /** Caso de uso: análisis IA del transcript del checkpoint. */
 final class AnalyzeCaptureDraft

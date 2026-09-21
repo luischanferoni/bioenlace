@@ -3,7 +3,7 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Encounter\Application\AppointmentReasonChatGuideCatalogService;
+use common\components\Domain\Clinical\Encounter\Application\Service\AppointmentReasonChatGuideCatalogService;
 
 final class AppointmentReasonChatGuideCatalogServiceTest extends Unit
 {

@@ -18,7 +18,7 @@ Cuando un doc dice «fuera del COGS» o «no en COGS base», significa que **aú
 ---
 - **IA:** Google **Vertex / Gemini** con modelo **`gemini-2.5-flash-lite`** (`vertex_ai_model` en `params.php`). Columna **DeepSeek** = comparativa con **`deepseek-v4-flash`** (API directa); no es producción hoy.
 - **Columnas Google:** **sin context caching** = **COGS base seguro**; **con context caching** = **escenario favorable**, no costo esperado (tokens repetidos a tarifa reducida de Vertex; ver abajo). No incluyen caché de aplicación ni otras tácticas de producto.
-- **Contexto clínico del paciente:** bloque acotado (`PatientAiContextBuilder`) en §1 conversacional, §2 motivos y §4 captura — ver [§ Contexto clínico en prompts](#contexto-clínico-en-prompts-ia).
+- **Contexto clínico del paciente:** bloque acotado (`PatientAiContextService`) en §1 conversacional, §2 motivos y §4 captura — ver [§ Contexto clínico en prompts](#contexto-clínico-en-prompts-ia).
 - **Escenario intensivo (COGS):** volumen de STT según supuestos §2 y §4 (paciente ~**4 min**, médico ~**5 min** de voz por encounter).
 
 Otras reducciones (caché Yii, STT en dispositivo, context caching explícito, etc.) están en [estrategias-reduccion/](./estrategias-reduccion/README.md) y **no** se suman a las tablas de [impuestos-argentina.md](./impuestos-argentina.md) hasta validarlas. Precios unitarios de proveedores: [Precios de referencia](#precios-de-referencia-mayo-2026).
@@ -157,7 +157,7 @@ A **5.000 profesionales**, solo los seis contextos del Apartado 1 (sin §3 ni in
 
 ### Contexto clínico en prompts IA
 
-Implementación: `PatientAiContextBuilder` (`patient_ai_context` en `params.php`). Perfiles **guide** y **conversational** respetan el interruptor del paciente y solo arman el bloque para la persona de sesión — [ia-datos-y-privacidad.md](../producto/ia-datos-y-privacidad.md).
+Implementación: `PatientAiContextService` (`patient_ai_context` en `params.php`). Perfiles **guide** y **conversational** respetan el interruptor del paciente y solo arman el bloque para la persona de sesión — [ia-datos-y-privacidad.md](../producto/ia-datos-y-privacidad.md).
 
 | Flujo | Perfil | Qué incluye | Tokens input extra (ref.) |
 |-------|--------|-------------|---------------------------|

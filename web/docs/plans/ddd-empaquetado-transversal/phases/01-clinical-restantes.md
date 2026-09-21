@@ -1,6 +1,6 @@
 # Fase 01 — Clinical: resto de módulos
 
-**Estado:** pendiente  
+**Estado:** en curso (Application de todos los módulos Clinical alineada a roles CA; quedan naming puntual y Domain building blocks)  
 **Depende de:** piloto `Capture` (hecho)
 
 ## Objetivo
@@ -11,10 +11,17 @@ Alinear todos los módulos bajo `Domain/Clinical/*` al mismo eje que Capture: `A
 
 Orden sugerido (mayor deuda primero):
 
-- [ ] **Encounter** — aplanar `Documentation/`, `AiContext/`, `EncounterJourney/`, `PatientSummary/`, `Dto/`; classes → `*Service` / UseCase / Presenter; quitar metáforas (`*Orchestrator`, `*Formatter`, …)
-- [ ] **CarePlan** — `Dto/`, `Reminder/` → Service/UseCase; revisar `*Processor` / `*Enqueuer`
-- [ ] **Laboratory** / **Prescription** / **Inpatient** — `Dto/` + naming
-- [ ] **Emergency**, **PedidoAtencion**, **Specialty**, **HistoryExchange**, **LegalRecord**, **CareCohort**, **Home** — inventario + fixes puntuales
+- [x] **Encounter** — aplanar `Documentation/`, `AiContext/`, `EncounterJourney/`, `PatientSummary/`, `Dto/`; classes → `*Service` / UseCase / Presenter; quitar metáforas (`*Orchestrator`, `*Formatter`, …)
+- [x] **CarePlan** — `Dto/`, `Reminder/` → Service/UseCase; revisar `*Processor` / `*Enqueuer`
+- [x] **Laboratory** / **Prescription** / **Inpatient** — `Dto/` + naming
+- [x] **Emergency**, **PedidoAtencion**, **Specialty**, **HistoryExchange**, **LegalRecord**, **CareCohort**, **Home** — inventario + fixes puntuales
+
+## Pendiente fino (misma fase)
+
+- [ ] Revisar nombres aún metafóricos embebidos (`*ProcessorService`, `*SchedulerService`, parsers internos)
+- [ ] Completar building blocks Domain (`Catalog/` / `Policy/` / `Port/`) donde sigan enums planos
+- [ ] UseCase/ explícitos donde hoy hay solo `*Service` de orquestación de entrada
+- [ ] Tests unitarios con PHP ≥ 8.1
 
 ## Por cada módulo
 

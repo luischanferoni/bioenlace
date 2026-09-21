@@ -2,7 +2,7 @@
 
 namespace frontend\modules\api\v1\controllers\clinical;
 
-use common\components\Domain\Clinical\HistoryExchange\Application\ClinicalHistoryOutboundQueryService;
+use common\components\Domain\Clinical\HistoryExchange\Application\Service\ClinicalHistoryOutboundQueryService;
 use common\models\Clinical\ClinicalHistoryOutboundJob;
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;

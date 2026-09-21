@@ -3,8 +3,8 @@
 namespace common\models\Clinical;
 
 use common\models\Organization\InfraestructuraCama;
-use common\components\Domain\Clinical\CarePlan\Application\CarePlanLifecycleService;
-use common\components\Domain\Clinical\Inpatient\Application\InpatientEncounterAuxService;
+use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanLifecycleService;
+use common\components\Domain\Clinical\Inpatient\Application\Service\InpatientEncounterAuxService;
 use Yii;
 
 /*
@@ -48,7 +48,7 @@ class SegNivelInternacionRepository
             $transaction->commit();
 
             try {
-                (new \common\components\Domain\Clinical\CarePlan\Application\CarePlanLifecycleService())
+                (new \common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanLifecycleService())
                     ->completeOnDischarge($model);
             } catch (\Throwable $e) {
                 Yii::error(

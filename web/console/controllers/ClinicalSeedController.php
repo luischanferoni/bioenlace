@@ -3,11 +3,11 @@
 namespace console\controllers;
 
 use common\components\Domain\Person\Application\Seed\UsuarioDePruebaSeedService;
-use common\components\Domain\Clinical\Laboratory\Application\LaboratoryDemoSeedService;
-use common\components\Domain\Clinical\Laboratory\Application\LaboratoryResultQueryService;
-use common\components\Domain\Clinical\CarePlan\Application\Reminder\CarePlanReminderDemoTimingService;
-use common\components\Domain\Clinical\Prescription\Application\ElectronicPrescriptionDemoSeedService;
-use common\components\Domain\Clinical\Prescription\Application\PrescriptionDocumentSupport;
+use common\components\Domain\Clinical\Laboratory\Application\Service\LaboratoryDemoSeedService;
+use common\components\Domain\Clinical\Laboratory\Application\Service\LaboratoryResultQueryService;
+use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanReminderDemoTimingService;
+use common\components\Domain\Clinical\Prescription\Application\Service\ElectronicPrescriptionDemoSeedService;
+use common\components\Domain\Clinical\Prescription\Application\Service\PrescriptionDocumentService;
 use common\components\Domain\Organization\Application\Seed\EfectorDemoSeedService;
 use common\components\Domain\Organization\Application\Seed\MedicoMedGeneralEfectorSeedService;
 use yii\console\Controller;
@@ -710,7 +710,7 @@ class ClinicalSeedController extends Controller
             . "para id_persona={$persona}.\n",
             Console::FG_GREEN
         );
-        $verifyBase = PrescriptionDocumentSupport::resolveVerificationPublicBaseUrl();
+        $verifyBase = PrescriptionDocumentService::resolveVerificationPublicBaseUrl();
         if ($verifyBase === null) {
             $this->stdout(
                 "QR en PDF: definí recetaDigitalRepository.verificationPublicBaseUrl en params-local.php "

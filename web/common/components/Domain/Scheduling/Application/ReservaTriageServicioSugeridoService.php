@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Application;
 
-use common\components\Domain\Clinical\PedidoAtencion\Application\PedidoAtencionPacienteService;
+use common\components\Domain\Clinical\PedidoAtencion\Application\Service\PedidoAtencionPacienteService;
 use common\components\Domain\Organization\Application\Servicios\ServicioMencionLookupService;
 use common\components\Domain\Organization\Application\Servicios\ServiciosEfectorAutogestionListadoService;
 use common\models\Clinical\ConsultaDerivaciones;

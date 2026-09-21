@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\Encounter\Application\Presentation;
 
 use common\components\Domain\Clinical\Capture\Application\Service\ExtractionPostProcessService;
 use common\components\Domain\Clinical\Capture\Domain\Policy\ExtractionPostProcessPolicy;
-use common\components\Domain\Clinical\Encounter\Application\EncounterReasonService;
+use common\components\Domain\Clinical\Encounter\Application\Service\EncounterReasonService;
 use common\models\Clinical\Encounter;
 
 /**

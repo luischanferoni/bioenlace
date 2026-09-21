@@ -2,11 +2,11 @@
 
 namespace common\components\Domain\Organization\Application\Seed;
 
-use common\components\Domain\Clinical\Emergency\Application\GuardiaCircuitoService;
-use common\components\Domain\Clinical\Emergency\Application\GuardiaTriageService;
+use common\components\Domain\Clinical\Emergency\Application\Service\GuardiaCircuitoService;
+use common\components\Domain\Clinical\Emergency\Application\Service\GuardiaTriageService;
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
-use common\components\Domain\Clinical\CarePlan\Application\CarePlanLifecycleService;
-use common\components\Domain\Clinical\Encounter\Application\EncounterLifecycleService;
+use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanLifecycleService;
+use common\components\Domain\Clinical\Encounter\Application\Service\EncounterLifecycleService;
 use common\components\Domain\Person\Application\CuilValidator;
 use common\components\Domain\Scheduling\Application\ConsultaAsyncInitialChatService;
 use common\components\Domain\Scheduling\Application\TurnoSlotClaimService;

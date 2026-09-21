@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\PedidoAtencion\Domain;
 
 use common\components\Domain\Clinical\PedidoAtencion\Domain\ActoEclMembershipInterface;
 use common\components\Domain\Clinical\PedidoAtencion\Domain\CodingSystems;
-use common\components\Domain\Clinical\PedidoAtencion\Application\PedidoAtencionMetadata;
+use common\components\Domain\Clinical\PedidoAtencion\Application\Service\PedidoAtencionMetadata;
 use common\components\Domain\Clinical\PedidoAtencion\Infrastructure\External\SnowstormActoEclMembership;
 use common\models\Organization\Servicio;
 use yii\db\Query;

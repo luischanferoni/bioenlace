@@ -2,11 +2,11 @@
 
 namespace frontend\modules\api\v1\controllers\clinical;
 
-use common\components\Domain\Clinical\Prescription\Application\Dto\ElectronicPrescriptionDto;
+use common\components\Domain\Clinical\Prescription\Domain\Model\ElectronicPrescriptionDto;
 use common\components\Domain\Clinical\Prescription\Domain\PrescriptionLegalStatus;
-use common\components\Domain\Clinical\Prescription\Application\ElectronicPrescriptionPdfService;
+use common\components\Domain\Clinical\Prescription\Application\Service\ElectronicPrescriptionPdfService;
 use common\components\Domain\Clinical\Prescription\Application\Presentation\ElectronicPrescriptionPresentationService;
-use common\components\Domain\Clinical\Prescription\Application\ElectronicPrescriptionService;
+use common\components\Domain\Clinical\Prescription\Application\Service\ElectronicPrescriptionService;
 use common\components\Domain\Person\Representation\Domain\RepresentationPermission;
 use common\components\Domain\Person\Representation\Application\PersonRepresentationSubjectService;
 use common\models\Person\PersonRelatedAuditLog;

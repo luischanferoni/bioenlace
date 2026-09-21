@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Home\Sections;
 
-use common\components\Domain\Clinical\Inpatient\Application\InternacionIndicadoresService;
+use common\components\Domain\Clinical\Inpatient\Application\Service\InternacionIndicadoresService;
 use common\components\Domain\Organization\Application\Authorization\EfectorAccessService;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Platform\Ui\Home\Service\Sections\HomePanelSectionProviderInterface;

@@ -3,7 +3,7 @@
 namespace common\models\Clinical\Input;
 
 use common\components\Domain\Clinical\Capture\Domain\RowContract\BalanceHidricoRowContract;
-use common\components\Domain\Clinical\Inpatient\Application\Dto\InpatientFluidBalanceRow;
+use common\components\Domain\Clinical\Inpatient\Domain\Model\InpatientFluidBalanceRow;
 use yii\base\Model;
 
 /**

@@ -3,7 +3,7 @@
 namespace common\models\Clinical;
 
 use common\models\Platform\User;
-use common\components\Domain\Clinical\Encounter\Application\SecureMediaService;
+use common\components\Domain\Clinical\Encounter\Application\Service\SecureMediaService;
 use common\models\Clinical\Encounter;
 use yii\db\ActiveRecord;
 

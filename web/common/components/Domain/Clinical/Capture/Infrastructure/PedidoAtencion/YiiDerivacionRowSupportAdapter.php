@@ -3,9 +3,9 @@
 namespace common\components\Domain\Clinical\Capture\Infrastructure\PedidoAtencion;
 
 use common\components\Domain\Clinical\Capture\Domain\Port\DerivacionRowSupportPort;
-use common\components\Domain\Clinical\PedidoAtencion\Application\PedidoAtencionActoCodingService;
-use common\components\Domain\Clinical\PedidoAtencion\Application\PedidoAtencionMetadata;
-use common\components\Domain\Clinical\PedidoAtencion\Application\PedidoAtencionService;
+use common\components\Domain\Clinical\PedidoAtencion\Application\Service\PedidoAtencionActoCodingService;
+use common\components\Domain\Clinical\PedidoAtencion\Application\Service\PedidoAtencionMetadata;
+use common\components\Domain\Clinical\PedidoAtencion\Application\Service\PedidoAtencionService;
 use common\components\Domain\Clinical\PedidoAtencion\Domain\Model\PedidoAtencion;
 use common\components\Domain\Clinical\PedidoAtencion\Domain\PedidoAtencionActoCoderInterface;
 use common\models\Organization\Servicio;

@@ -2,17 +2,17 @@
 
 namespace frontend\modules\api\v1\controllers\clinical;
 
-use common\components\Domain\Clinical\Emergency\Application\GuardiaClinicalSummaryService;
+use common\components\Domain\Clinical\Emergency\Application\Service\GuardiaClinicalSummaryService;
 use common\components\Domain\Clinical\Emergency\Application\Authorization\GuardiaEfectorAccess;
-use common\components\Domain\Clinical\Emergency\Application\GuardiaEgresoEstructuradoService;
-use common\components\Domain\Clinical\Emergency\Application\GuardiaIndicadoresExportService;
-use common\components\Domain\Clinical\Emergency\Application\GuardiaIndicadoresService;
-use common\components\Domain\Clinical\Emergency\Application\GuardiaIngresoService;
-use common\components\Domain\Clinical\Emergency\Application\GuardiaInternacionService;
-use common\components\Domain\Clinical\Emergency\Application\GuardiaOperacionService;
-use common\components\Domain\Clinical\Emergency\Application\GuardiaQueueService;
-use common\components\Domain\Clinical\Emergency\Application\GuardiaSlaService;
-use common\components\Domain\Clinical\Emergency\Application\GuardiaTriageService;
+use common\components\Domain\Clinical\Emergency\Application\Service\GuardiaEgresoEstructuradoService;
+use common\components\Domain\Clinical\Emergency\Application\Service\GuardiaIndicadoresExportService;
+use common\components\Domain\Clinical\Emergency\Application\Service\GuardiaIndicadoresService;
+use common\components\Domain\Clinical\Emergency\Application\Service\GuardiaIngresoService;
+use common\components\Domain\Clinical\Emergency\Application\Service\GuardiaInternacionService;
+use common\components\Domain\Clinical\Emergency\Application\Service\GuardiaOperacionService;
+use common\components\Domain\Clinical\Emergency\Application\Service\GuardiaQueueService;
+use common\components\Domain\Clinical\Emergency\Application\Service\GuardiaSlaService;
+use common\components\Domain\Clinical\Emergency\Application\Service\GuardiaTriageService;
 use common\components\Platform\Ui\UiScreenService;
 use common\models\Clinical\Emergency\GuardiaTriage;
 use frontend\modules\api\v1\controllers\BaseController;

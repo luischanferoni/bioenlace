@@ -6,8 +6,8 @@ use Codeception\Test\Unit;
 use common\components\Domain\Clinical\PedidoAtencion\Domain\CodingSystems;
 use common\components\Domain\Clinical\PedidoAtencion\Domain\InMemoryLineaActoCatalog;
 use common\components\Domain\Clinical\PedidoAtencion\Domain\Model\PedidoAtencion;
-use common\components\Domain\Clinical\PedidoAtencion\Application\PedidoAtencionMetadata;
-use common\components\Domain\Clinical\PedidoAtencion\Application\PedidoAtencionService;
+use common\components\Domain\Clinical\PedidoAtencion\Application\Service\PedidoAtencionMetadata;
+use common\components\Domain\Clinical\PedidoAtencion\Application\Service\PedidoAtencionService;
 use common\models\Clinical\Input\DerivacionInput;
 use common\models\Clinical\ConsultaDerivaciones;
 

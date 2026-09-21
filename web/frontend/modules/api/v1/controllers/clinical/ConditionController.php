@@ -3,8 +3,8 @@
 namespace frontend\modules\api\v1\controllers\clinical;
 
 use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
-use common\components\Domain\Clinical\Encounter\Application\ConditionLifecycleService;
-use common\components\Domain\Clinical\Encounter\Application\EncounterOpenProblemsService;
+use common\components\Domain\Clinical\Encounter\Application\Service\ConditionLifecycleService;
+use common\components\Domain\Clinical\Encounter\Application\Service\EncounterOpenProblemsService;
 use common\components\Domain\Person\Representation\Domain\RepresentationPermission;
 use common\models\Clinical\Condition;
 use common\models\Clinical\Encounter;

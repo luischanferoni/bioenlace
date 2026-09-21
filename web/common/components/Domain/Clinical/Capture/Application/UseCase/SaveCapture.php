@@ -6,7 +6,7 @@ use common\components\Domain\Clinical\Capture\Application\Service\RowContractSer
 use common\components\Domain\Clinical\Capture\Application\Service\CaptureDraftService;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EncounterCaptureReviewPresenter;
 use common\models\Clinical\EncounterCaptureAudit;
-use common\components\Domain\Clinical\Encounter\Application\EncounterCaptureAuditService;
+use common\components\Domain\Clinical\Encounter\Application\Service\EncounterCaptureAuditService;
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureStage;
 
 /** Caso de uso: guardar draft de captura → persistencia Encounter. */

@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\HistoryExchange\Infrastructure\External\Mapper;
 
 use common\components\Domain\Clinical\Encounter\Domain\ConditionDiagnosisRole;
-use common\components\Domain\Clinical\Encounter\Application\EncounterReasonService;
+use common\components\Domain\Clinical\Encounter\Application\Service\EncounterReasonService;
 use common\models\Clinical\AllergyIntolerance;
 use common\models\Clinical\Condition;
 use common\models\Clinical\DiagnosticReport;

@@ -63,7 +63,7 @@ En **Configuración** de la app paciente hay un interruptor **Resumen de histori
 
 La política de privacidad pública debe decir que el chat puede usar un extracto de HC y que se puede desactivar ahí.
 
-## Candado del extracto (`PatientAiContextBuilder`)
+## Candado del extracto (`PatientAiContextService`)
 
 El builder es quien **arma el texto corto** a partir del id de persona. No es un segundo cerebro clínico: no inventa diagnósticos ni sustituye al médico.
 

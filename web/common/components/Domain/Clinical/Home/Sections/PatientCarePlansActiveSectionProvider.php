@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\Home\Sections;
 
 use common\components\Platform\Ui\Home\Service\Sections\HomePanelSectionProviderInterface;
 use common\components\Domain\Clinical\CarePlan\Application\Presentation\CarePlanPresentationService;
-use common\components\Domain\Clinical\CarePlan\Application\PatientActiveCarePlanQuery;
+use common\components\Domain\Clinical\CarePlan\Application\Service\PatientActiveCarePlanQueryService;
 use common\components\Domain\Person\Representation\Domain\RepresentationPermission;
 use common\components\Domain\Person\Representation\Application\PersonRepresentationSubjectService;
 use common\components\Domain\Scheduling\Application\ConsultaAsyncBandejaService;
@@ -23,7 +23,7 @@ final class PatientCarePlansActiveSectionProvider implements HomePanelSectionPro
             RepresentationPermission::CLINICAL_CARE_PLAN
         );
 
-        $plans = (new PatientActiveCarePlanQuery())->listActive($idPersona);
+        $plans = (new PatientActiveCarePlanQueryService())->listActive($idPersona);
         $presentation = new CarePlanPresentationService();
         $bandejaTratamiento = (new ConsultaAsyncBandejaService())->listForPaciente($idPersona, [
             'ui_group' => 'tratamiento',

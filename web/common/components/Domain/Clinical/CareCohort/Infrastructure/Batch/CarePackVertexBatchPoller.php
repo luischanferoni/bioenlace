@@ -2,10 +2,10 @@
 
 namespace common\components\Domain\Clinical\CareCohort\Infrastructure\Batch;
 
-use common\components\Domain\Clinical\CareCohort\Application\CarePackContentParser;
+use common\components\Domain\Clinical\CareCohort\Application\Service\CarePackContentService;
 use common\components\Domain\Clinical\CareCohort\Domain\CarePackType;
-use common\components\Domain\Clinical\CareCohort\Application\CarePackConfig;
-use common\components\Domain\Clinical\CareCohort\Application\CarePackRepository;
+use common\components\Domain\Clinical\CareCohort\Application\Service\CarePackConfig;
+use common\components\Domain\Clinical\CareCohort\Domain\Port\CarePackRepository;
 use common\models\Clinical\CareCohortPack;
 use common\models\Clinical\CarePackJob;
 use Yii;
@@ -19,16 +19,16 @@ use Yii;
 final class CarePackVertexBatchPoller
 {
     private VertexBatchPredictionClient $vertex;
-    private CarePackContentParser $parser;
+    private CarePackContentService $parser;
     private CarePackRepository $repository;
 
     public function __construct(
         ?VertexBatchPredictionClient $vertex = null,
-        ?CarePackContentParser $parser = null,
+        ?CarePackContentService $parser = null,
         ?CarePackRepository $repository = null
     ) {
         $this->vertex = $vertex ?? new VertexBatchPredictionClient();
-        $this->parser = $parser ?? new CarePackContentParser();
+        $this->parser = $parser ?? new CarePackContentService();
         $this->repository = $repository ?? new CarePackRepository();
     }
 

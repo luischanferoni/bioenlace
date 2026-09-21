@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Clinical\CarePlan\Application\Presentation;
 
-use common\components\Domain\Clinical\CarePlan\Application\Dto\CarePlanActivityDto;
-use common\components\Domain\Clinical\CarePlan\Application\Dto\CarePlanDto;
+use common\components\Domain\Clinical\CarePlan\Domain\Model\CarePlanActivityDto;
+use common\components\Domain\Clinical\CarePlan\Domain\Model\CarePlanDto;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanActivityKind;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanCategory;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanStatus;

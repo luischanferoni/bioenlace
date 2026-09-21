@@ -6,14 +6,14 @@ use Yii;
 use common\components\Domain\Person\Representation\Domain\RepresentationPermission;
 use common\components\Domain\Person\Representation\Application\PersonRepresentationSubjectService;
 use common\models\Person\PersonRelatedAuditLog;
-use common\components\Domain\Clinical\CarePlan\Application\Reminder\CarePlanReminderPreferenceService;
-use common\components\Domain\Clinical\CarePlan\Application\Reminder\CarePlanReminderScheduleBuilder;
-use common\components\Domain\Clinical\CarePlan\Application\Dto\CarePlanDto;
-use common\components\Domain\Clinical\CarePlan\Application\CarePlanLifecycleService;
-use common\components\Domain\Clinical\CarePlan\Application\CarePlanMedicationListService;
+use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanReminderPreferenceService;
+use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanReminderScheduleService;
+use common\components\Domain\Clinical\CarePlan\Domain\Model\CarePlanDto;
+use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanLifecycleService;
+use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanMedicationListService;
 use common\components\Domain\Clinical\CarePlan\Application\Presentation\CarePlanPresentationService;
-use common\components\Domain\Clinical\CarePlan\Application\CarePlanAdherenceStaffService;
-use common\components\Domain\Clinical\CarePlan\Application\PatientActiveCarePlanQuery;
+use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanAdherenceStaffService;
+use common\components\Domain\Clinical\CarePlan\Application\Service\PatientActiveCarePlanQueryService;
 use common\components\Domain\Scheduling\Application\ConsultaAsyncSolicitudService;
 use common\components\Platform\Ui\UiScreenService;
 use frontend\modules\api\v1\controllers\BaseController;
@@ -40,18 +40,18 @@ class CarePlanController extends BaseController
     use ClinicalAccessTrait;
 
     private CarePlanLifecycleService $lifecycle;
-    private PatientActiveCarePlanQuery $activeQuery;
+    private PatientActiveCarePlanQueryService $activeQuery;
     private CarePlanPresentationService $presentation;
-    private CarePlanReminderScheduleBuilder $reminderSchedule;
+    private CarePlanReminderScheduleService $reminderSchedule;
     private CarePlanReminderPreferenceService $reminderPreferences;
 
     public function init()
     {
         parent::init();
         $this->lifecycle = new CarePlanLifecycleService();
-        $this->activeQuery = new PatientActiveCarePlanQuery();
+        $this->activeQuery = new PatientActiveCarePlanQueryService();
         $this->presentation = new CarePlanPresentationService();
-        $this->reminderSchedule = new CarePlanReminderScheduleBuilder($this->activeQuery);
+        $this->reminderSchedule = new CarePlanReminderScheduleService($this->activeQuery);
         $this->reminderPreferences = new CarePlanReminderPreferenceService();
     }
 

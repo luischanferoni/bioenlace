@@ -60,7 +60,7 @@ class ServiciosController extends BaseController
                     if ($items === []) {
                         $ui = self::withListEmptyMessage($ui, $sugerido->mensajeListaVaciaParaDraft($draftCompleto, false));
                     }
-                } elseif ((new \common\components\Domain\Clinical\PedidoAtencion\Application\PedidoAtencionPacienteService())->esPedidoEstudio($draftCompleto)) {
+                } elseif ((new \common\components\Domain\Clinical\PedidoAtencion\Application\Service\PedidoAtencionPacienteService())->esPedidoEstudio($draftCompleto)) {
                     $items = $sugerido->filtrarItemsUiJson($items, $draftCompleto, false);
                     $intro = $sugerido->mensajeIntroListaParaDraft($draftCompleto, false);
                     if ($items === []) {

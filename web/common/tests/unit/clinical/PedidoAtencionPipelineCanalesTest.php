@@ -7,9 +7,9 @@ use common\components\Domain\Clinical\PedidoAtencion\Domain\CodingSystems;
 use common\components\Domain\Clinical\PedidoAtencion\Domain\InMemoryLineaActoCatalog;
 use common\components\Domain\Clinical\PedidoAtencion\Infrastructure\External\InMemoryPedidoAtencionActoCoder;
 use common\components\Domain\Clinical\PedidoAtencion\Domain\Model\PedidoAtencion;
-use common\components\Domain\Clinical\PedidoAtencion\Application\PedidoAtencionMetadata;
-use common\components\Domain\Clinical\PedidoAtencion\Application\PedidoAtencionPacienteService;
-use common\components\Domain\Clinical\PedidoAtencion\Application\PedidoAtencionService;
+use common\components\Domain\Clinical\PedidoAtencion\Application\Service\PedidoAtencionMetadata;
+use common\components\Domain\Clinical\PedidoAtencion\Application\Service\PedidoAtencionPacienteService;
+use common\components\Domain\Clinical\PedidoAtencion\Application\Service\PedidoAtencionService;
 use common\models\Clinical\Input\DerivacionInput;
 
 class PedidoAtencionPipelineCanalesTest extends Unit

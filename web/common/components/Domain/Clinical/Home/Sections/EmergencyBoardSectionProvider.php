@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Clinical\Home\Sections;
 
-use common\components\Domain\Clinical\Emergency\Application\GuardiaBoardCapabilityService;
-use common\components\Domain\Clinical\Emergency\Application\GuardiaQueueService;
+use common\components\Domain\Clinical\Emergency\Application\Service\GuardiaBoardCapabilityService;
+use common\components\Domain\Clinical\Emergency\Application\Service\GuardiaQueueService;
 use common\components\Domain\Organization\Application\Authorization\EfectorAccessService;
 use common\components\Domain\Organization\Application\ProfesionalHorario\ProfesionalHorarioActivaService;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;

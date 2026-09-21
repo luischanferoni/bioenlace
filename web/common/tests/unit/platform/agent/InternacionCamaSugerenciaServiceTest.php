@@ -2,7 +2,7 @@
 
 namespace common\tests\unit\platform\agent;
 
-use common\components\Domain\Clinical\Inpatient\Application\InternacionCamaSugerenciaService;
+use common\components\Domain\Clinical\Inpatient\Application\Service\InternacionCamaSugerenciaService;
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
 use common\tests\unit\DbTestCase;
 

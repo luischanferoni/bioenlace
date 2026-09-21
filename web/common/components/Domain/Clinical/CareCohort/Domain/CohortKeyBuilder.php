@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Clinical\CareCohort\Domain;
 
-use common\components\Domain\Clinical\Encounter\Application\AiContext\PatientAiContextBuilder;
-use common\components\Domain\Clinical\Encounter\Application\EncounterReasonService;
+use common\components\Domain\Clinical\Encounter\Application\Service\PatientAiContextService;
+use common\components\Domain\Clinical\Encounter\Application\Service\EncounterReasonService;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\DiagnosticoConsultaRepository as DCRepo;
 use common\models\Organization\Efector;
@@ -183,8 +183,8 @@ final class CohortKeyBuilder
     /**
      * Bloque clínico acotado para prompts de generación de pack.
      */
-    public function patientContextBlock(int $subjectPersonaId, string $profile = PatientAiContextBuilder::PROFILE_MOTIVOS): string
+    public function patientContextBlock(int $subjectPersonaId, string $profile = PatientAiContextService::PROFILE_MOTIVOS): string
     {
-        return (new PatientAiContextBuilder())->build($subjectPersonaId, $profile);
+        return (new PatientAiContextService())->build($subjectPersonaId, $profile);
     }
 }

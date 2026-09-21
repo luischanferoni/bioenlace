@@ -9,8 +9,8 @@ use common\components\Domain\Clinical\PedidoAtencion\Domain\EclCapacityCatalog;
 use common\components\Domain\Clinical\PedidoAtencion\Infrastructure\External\InMemoryActoEclMembership;
 use common\components\Domain\Clinical\PedidoAtencion\Domain\InMemoryLineaActoCatalog;
 use common\components\Domain\Clinical\PedidoAtencion\Domain\Model\PedidoAtencion;
-use common\components\Domain\Clinical\PedidoAtencion\Application\PedidoAtencionMetadata;
-use common\components\Domain\Clinical\PedidoAtencion\Application\PedidoAtencionService;
+use common\components\Domain\Clinical\PedidoAtencion\Application\Service\PedidoAtencionMetadata;
+use common\components\Domain\Clinical\PedidoAtencion\Application\Service\PedidoAtencionService;
 use common\models\Organization\Servicio;
 
 class PedidoAtencionCapacityEclTest extends Unit

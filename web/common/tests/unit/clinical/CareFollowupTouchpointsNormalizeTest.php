@@ -3,8 +3,8 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\CareCohort\Application\CareFollowupSchedulerService;
-use common\components\Domain\Clinical\CarePlan\Application\ServiceRequestService;
+use common\components\Domain\Clinical\CareCohort\Application\Service\CareFollowupSchedulerService;
+use common\components\Domain\Clinical\CarePlan\Application\Service\ServiceRequestService;
 use common\models\Clinical\ConsultaIndicaciones;
 
 class CareFollowupTouchpointsNormalizeTest extends Unit

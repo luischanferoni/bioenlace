@@ -10,4 +10,4 @@ Existe como dominio porque las tres piezas tienen dueño común y no encajan en 
 
 ## Límite con Clinical
 
-`Domain/Clinical/Service/EncounterSumarAutofacturacionContext` se queda en `Clinical`: su sujeto es el encounter y solo consulta si corresponde autofacturar. La regla del programa (padrón, nomenclador, elegibilidad) es de este dominio.
+`Domain/Clinical/Service/EncounterSumarAutofacturacionContextService` se queda en `Clinical`: su sujeto es el encounter y solo consulta si corresponde autofacturar. La regla del programa (padrón, nomenclador, elegibilidad) es de este dominio.

@@ -8,9 +8,9 @@ use Yii;
 use yii\web\NotFoundHttpException;
 use yii\web\BadRequestHttpException;
 use yii\web\ServerErrorHttpException;
-use common\components\Domain\Clinical\CareCohort\Application\CarePackConfig;
-use common\components\Domain\Clinical\Encounter\Application\AppointmentReasonWindowService;
-use common\components\Domain\Clinical\Encounter\Application\EncounterLifecycleService;
+use common\components\Domain\Clinical\CareCohort\Application\Service\CarePackConfig;
+use common\components\Domain\Clinical\Encounter\Application\Service\AppointmentReasonWindowService;
+use common\components\Domain\Clinical\Encounter\Application\Service\EncounterLifecycleService;
 use common\models\Clinical\Encounter;
 use common\models\Scheduling\Turno;
 use common\models\Scheduling\AgendaFeriados;
@@ -2145,7 +2145,7 @@ class TurnosController extends BaseController
         if (count($cps) > 0) {
             $parent_id = null;
             foreach ($cps as $cp) {
-                \common\components\Domain\Clinical\CarePlan\Application\ReferralRequestService::markBooked($cp);
+                \common\components\Domain\Clinical\CarePlan\Application\Service\ReferralRequestService::markBooked($cp);
                 $parent_id = $cp->id;
             }
             $model->parent_class = Encounter::PARENT_DERIVACION;

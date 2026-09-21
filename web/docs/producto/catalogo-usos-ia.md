@@ -78,7 +78,7 @@ Detalle de producto: [asistente-y-chat.md](./asistente-y-chat.md) · Motor: [arq
 | Guía del chat de motivos (`AppointmentReasonChatGuideCatalog`) | **Sin IA** | Metadata de orientación al chat; no persiste respuestas en encounter |
 | Mensajes del paciente (texto) | Sin IA por mensaje | El chat de motivos no resume en cada nota |
 | Audio en el hilo | STT en servidor (lote) o **futuro** STT en dispositivo | `SpeechToTextManager` en batch; ver [stt.md](../costos/estrategias-reduccion/stt.md) |
-| Cierre de ventana → resumen | IA | `motivos-consulta-batch` + `PatientAiContextBuilder` (perfil `motivos`) |
+| Cierre de ventana → resumen | IA | `motivos-consulta-batch` + `PatientAiContextService` (perfil `motivos`) |
 | Sugerencias para el médico | IA | `motivos-consulta-insights` (diagnósticos/prácticas preliminares) |
 
 ---
@@ -89,7 +89,7 @@ Detalle de producto: [asistente-y-chat.md](./asistente-y-chat.md) · Motor: [arq
 |------|------------|------------------|
 | Dictado / audio | STT dispositivo o servidor | Política `captura_clinica`; contexto telemetría STT, no Gemini |
 | Preparación de texto | **CPU** (SymSpell, abreviaturas) | `CaptureTextService` — no es llamada a Gemini |
-| Análisis → campos del formulario | IA | `analisis-consulta` + contexto clínico (`PatientAiContextBuilder`, perfil `encounter`) |
+| Análisis → campos del formulario | IA | `analisis-consulta` + contexto clínico (`PatientAiContextService`, perfil `encounter`) |
 | Guardado → codificación diagnóstica | IA | `encounter-codificacion-automatica` — decide CIE-10/SNOMED y persiste (sin UI de sugerencias) |
 
 Detalle: [captura-clinica.md](./captura-clinica.md) · API: `clinical/encounter/analizar|guardar`.

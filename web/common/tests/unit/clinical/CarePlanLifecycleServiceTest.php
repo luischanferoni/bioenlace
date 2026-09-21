@@ -4,8 +4,8 @@ namespace common\tests\unit\clinical;
 
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanCategory;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanStatus;
-use common\components\Domain\Clinical\CarePlan\Application\CarePlanLifecycleService;
-use common\components\Domain\Clinical\CarePlan\Application\CarePlanService;
+use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanLifecycleService;
+use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanService;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanProgramMeta;
 use common\models\Clinical\CarePlan;
 use Codeception\Test\Unit;

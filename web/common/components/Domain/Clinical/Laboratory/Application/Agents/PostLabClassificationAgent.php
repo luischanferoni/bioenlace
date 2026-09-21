@@ -42,9 +42,9 @@ final class PostLabClassificationAgent
         }
 
         $observations = $this->loadObservationFacts((int) $report->id);
-        $classification = PostLabClassificationRuleEngine::classify($observations, $config);
+        $classification = PostLabClassificationRuleService::classify($observations, $config);
         $severity = (string) $classification['severity'];
-        $outcome = PostLabClassificationRuleEngine::outcomeConfig($config, $severity);
+        $outcome = PostLabClassificationRuleService::outcomeConfig($config, $severity);
         if ($outcome === null) {
             return;
         }

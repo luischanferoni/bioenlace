@@ -4,7 +4,7 @@ namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\Emergency\Domain\CircuitoEventType;
-use common\components\Domain\Clinical\Encounter\Application\EpisodioTimelineService;
+use common\components\Domain\Clinical\Encounter\Application\Service\EpisodioTimelineService;
 use common\models\Clinical\Encounter;
 
 /**

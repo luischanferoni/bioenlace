@@ -2,7 +2,7 @@
 
 namespace common\components\Platform\Assistant\Chat\Channels\Guide;
 
-use common\components\Domain\Clinical\Encounter\Application\AiContext\PatientAiContextBuilder;
+use common\components\Domain\Clinical\Encounter\Application\Service\PatientAiContextService;
 use common\components\Platform\Assistant\Catalog\IntentSemanticsPromptFormatter;
 use common\components\Platform\Assistant\Catalog\SmartCatalogRegistry;
 use common\components\Platform\Assistant\Context\AssistantContextAssemblyService;
@@ -219,9 +219,9 @@ final class GuidePromptAssembler
       return '';
     }
 
-    $clinicalBlock = (new PatientAiContextBuilder())->build(
+    $clinicalBlock = (new PatientAiContextService())->build(
       $idPersona,
-      PatientAiContextBuilder::PROFILE_GUIDE
+      PatientAiContextService::PROFILE_GUIDE
     );
     if ($clinicalBlock === '') {
       return '';

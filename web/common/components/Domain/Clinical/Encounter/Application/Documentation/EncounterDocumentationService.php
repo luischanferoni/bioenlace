@@ -2,12 +2,10 @@
 
 namespace common\components\Domain\Clinical\Encounter\Application\Documentation;
 
+use common\components\Domain\Clinical\Capture\Application\ClinicalCaptureRowContracts;
 use common\components\Domain\Clinical\Encounter\Domain\ConditionVerificationStatus;
-
 use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
-
 use common\components\Domain\Clinical\Emergency\Application\GuardiaEncounterOutcomeService;
-use common\components\Domain\Clinical\Capture\Application\ClinicalCaptureResolutionApplier;
 use common\components\Domain\Clinical\Capture\Application\Workflow\EncounterCaptureCategoryResolver;
 use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureCompletenessValidator;
 use common\components\Domain\Clinical\Capture\Infrastructure\Logging\EncounterGuardarLogger;
@@ -179,7 +177,7 @@ class EncounterDocumentationService extends Component
                 }
             }
 
-            $applier = new ClinicalCaptureResolutionApplier();
+            $applier = ClinicalCaptureRowContracts::resolutionApplier();
             // Resolutions usan índices del análisis completo (Medicación::1). Si el cliente
             // ya filtró filas, aplicar sobre el full y luego recortar por staged_item_ids.
             // Preferir checkpoint del capture (analisis_datos_extraidos) sobre cache inmutable:
@@ -289,7 +287,7 @@ class EncounterDocumentationService extends Component
                     );
                 $body['datosExtraidos'] = $datosExtraidos;
             }
-            $completeness = (new EncounterCaptureCompletenessValidator())->validate(
+            $completeness = ClinicalCaptureRowContracts::completenessValidator()->validate(
                 $datosExtraidos,
                 $categorias
             );

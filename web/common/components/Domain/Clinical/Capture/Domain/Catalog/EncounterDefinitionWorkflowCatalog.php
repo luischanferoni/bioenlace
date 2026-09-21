@@ -1,8 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Domain;
-
-use common\models\Clinical\Encounter;
+namespace common\components\Domain\Clinical\Capture\Domain\Catalog;
 
 /**
  * Plantillas declarativas de workflow_json para {@see \common\models\Clinical\EncounterDefinition}.
@@ -106,10 +104,10 @@ final class EncounterDefinitionWorkflowCatalog
             $nombre = (string) $servicio->nombre;
         }
         if ($itemName === 'enfermeria') {
-            if ($encounterClass === Encounter::ENCOUNTER_CLASS_IMP) {
+            if ($encounterClass === EncounterClassCodes::IMP) {
                 return self::TEMPLATE_IMP_NURSING;
             }
-            if ($encounterClass === Encounter::ENCOUNTER_CLASS_EMER) {
+            if ($encounterClass === EncounterClassCodes::EMER) {
                 return self::TEMPLATE_EMER_NURSING;
             }
 
@@ -123,10 +121,10 @@ final class EncounterDefinitionWorkflowCatalog
     {
         $name = mb_strtoupper(trim($serviceName));
 
-        if ($encounterClass === Encounter::ENCOUNTER_CLASS_IMP) {
+        if ($encounterClass === EncounterClassCodes::IMP) {
             return self::TEMPLATE_IMP_STANDARD;
         }
-        if ($encounterClass === Encounter::ENCOUNTER_CLASS_EMER) {
+        if ($encounterClass === EncounterClassCodes::EMER) {
             return self::TEMPLATE_EMER_STANDARD;
         }
 

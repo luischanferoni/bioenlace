@@ -14,13 +14,14 @@ Norte: [ddd-norte-modelo-rico.md](../../../../../docs/decisions/ddd-norte-modelo
 
 ```text
 Application/
-  CreateOrUploadClinicalCapture, TranscribeClinicalCapture, …
-  EncounterCapturePipelineService  # facade compat → use cases
-  Pipeline/ClinicalCapturePipelineSupport  # helpers compartidos
-  Text/EncounterCapturePostProcessKnobs    # inyecta knobs Platform → Domain Policy
-Domain/Model|Policy|Port
-  Port/ClinicalCaptureRowContractRegistry  # completitud/resoluciones sin *Input en Policy
-Infrastructure/…/YiiModelClinicalCaptureRowContractRegistry  # adapter *Input/models
+  ClinicalCaptureRowContracts              # wiring registry/validator/applier
+  Text/EncounterCapturePostProcessKnobs
+  Pipeline/ClinicalCapturePipelineSupport
+  use cases + facade…
+Domain/Catalog|Model|Policy|Port
+  Catalog/EncounterCaptureActorCatalog, EncounterDefinitionWorkflowCatalog, EncounterClassCodes
+  Port/ClinicalCaptureRowContractRegistry
+Infrastructure/…/YiiModelClinicalCaptureRowContractRegistry
 ```
 
 ## Oleadas
@@ -33,11 +34,12 @@ Infrastructure/…/YiiModelClinicalCaptureRowContractRegistry  # adapter *Input/
 | 5 | hecha — Domain Policy sin Platform; knobs vía `EncounterCapturePostProcessKnobs` |
 | 5b | hecha — VO `ClinicalCaptureResolution` en Applier |
 | 6 | hecha — completitud/resoluciones vía port `ClinicalCaptureRowContractRegistry` (adapter Yii/`*Input`) |
+| 6b | hecha — Domain Policy sin default Infra; factory Application; catálogos en `Domain/Catalog` |
 
 ## Deuda restante
 
 - Semántica de fila aún en `*Input` / tipologías `models/Clinical` (mover a Domain VO cuando se toque cada tipología).
-- Default del registry en Domain Policy apunta a Infrastructure (transitorio).
+- `EncounterDefinitionWorkflowCatalog::templateForServicio` aún tipa AR `Servicio` (param de Application).
 
 ## Referencias
 

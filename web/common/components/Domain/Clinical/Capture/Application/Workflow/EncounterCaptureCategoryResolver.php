@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Capture\Application\Workflow;
 
-use common\components\Domain\Clinical\Capture\Domain\EncounterCaptureActorCatalog;
+use common\components\Domain\Clinical\Capture\Domain\Catalog\EncounterCaptureActorCatalog;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanActivityKind;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanCategory;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanStatus;

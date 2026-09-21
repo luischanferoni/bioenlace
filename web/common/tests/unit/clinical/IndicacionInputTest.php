@@ -2,6 +2,8 @@
 
 namespace common\tests\unit\clinical;
 
+use common\components\Domain\Clinical\Capture\Application\ClinicalCaptureRowContracts;
+
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureCompletenessValidator;
 use common\models\Clinical\Input\IndicacionInput;
@@ -55,7 +57,7 @@ class IndicacionInputTest extends Unit
 
     public function testCompletenessAllowsViralIndicationsWithoutPlazo(): void
     {
-        $svc = new EncounterCaptureCompletenessValidator();
+        $svc = ClinicalCaptureRowContracts::completenessValidator();
         $result = $svc->validate(
             [
                 'Indicaciones' => [
@@ -80,7 +82,7 @@ class IndicacionInputTest extends Unit
 
     public function testCompletenessBlocksFollowUpWithoutPlazo(): void
     {
-        $svc = new EncounterCaptureCompletenessValidator();
+        $svc = ClinicalCaptureRowContracts::completenessValidator();
         $result = $svc->validate(
             [
                 'Indicaciones' => [

@@ -4,7 +4,6 @@ namespace common\components\Domain\Clinical\Capture\Application;
 
 use common\components\Domain\Clinical\Capture\Application\Pipeline\ClinicalCapturePipelineSupport;
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureStage;
-use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureCompletenessValidator;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EncounterCaptureReviewPresenter;
 use common\models\Clinical\EncounterCaptureAudit;
 
@@ -51,9 +50,10 @@ final class ApplyClinicalCaptureResolutions
         }
 
         $categorias = $this->pipeline->resolveCategoriasForCapture($capture, $body);
-        $datos = (new ClinicalCaptureResolutionApplier())->apply($datos, $resolutions, $categorias);
+        $rows = ClinicalCaptureRowContracts::registry();
+        $datos = ClinicalCaptureRowContracts::resolutionApplier($rows)->apply($datos, $resolutions, $categorias);
 
-        $completeness = (new EncounterCaptureCompletenessValidator())->validate($datos, $categorias);
+        $completeness = ClinicalCaptureRowContracts::completenessValidator($rows)->validate($datos, $categorias);
         $analysis = $domain->analysisResponse();
         $textoOriginal = trim((string) ($analysis['texto_original'] ?? $domain->transcript() ?? ''));
         $textoProcesado = isset($analysis['texto_procesado'])

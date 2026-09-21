@@ -3,7 +3,6 @@
 namespace common\components\Domain\Clinical\Capture\Application;
 
 use common\components\Domain\Clinical\Capture\Application\Pipeline\ClinicalCapturePipelineSupport;
-use common\components\Domain\Clinical\Capture\Application\ClinicalCaptureResolutionApplier;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EncounterCaptureReviewPresenter;
 use common\models\Clinical\EncounterCaptureAudit;
 use common\components\Domain\Clinical\Encounter\Application\EncounterCaptureAuditService;
@@ -66,7 +65,7 @@ final class SaveClinicalCapture
         }
         if ($mergedResolutions !== [] && $fullCheckpoint !== []) {
             $categorias = $this->pipeline->resolveCategoriasForCapture($capture, $body);
-            $fullCheckpoint = (new ClinicalCaptureResolutionApplier())->apply(
+            $fullCheckpoint = ClinicalCaptureRowContracts::resolutionApplier()->apply(
                 $fullCheckpoint,
                 $mergedResolutions,
                 $categorias

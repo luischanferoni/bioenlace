@@ -2,6 +2,8 @@
 
 namespace common\tests\unit\clinical;
 
+use common\components\Domain\Clinical\Capture\Application\ClinicalCaptureRowContracts;
+
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EncounterCaptureReviewPresenter;
 use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureCompletenessValidator;
@@ -10,7 +12,7 @@ class EncounterCaptureCompletenessValidatorTest extends Unit
 {
     public function testCategoriaRequeridaVacia(): void
     {
-        $svc = new EncounterCaptureCompletenessValidator();
+        $svc = ClinicalCaptureRowContracts::completenessValidator();
         $result = $svc->validate(
             ['Motivos de Consulta' => ['Dolor']],
             [
@@ -27,7 +29,7 @@ class EncounterCaptureCompletenessValidatorTest extends Unit
 
     public function testCategoriaSugeridaVaciaNoBloquea(): void
     {
-        $svc = new EncounterCaptureCompletenessValidator();
+        $svc = ClinicalCaptureRowContracts::completenessValidator();
         $result = $svc->validate(
             [],
             [
@@ -48,7 +50,7 @@ class EncounterCaptureCompletenessValidatorTest extends Unit
 
     public function testMedicacionSinDosisNiFrecuencia(): void
     {
-        $svc = new EncounterCaptureCompletenessValidator();
+        $svc = ClinicalCaptureRowContracts::completenessValidator();
         // Sin modelo de dominio: lista plana legacy sigue exigiendo todos los campos.
         $campos = [
             'Nombre del medicamento',
@@ -82,7 +84,7 @@ class EncounterCaptureCompletenessValidatorTest extends Unit
 
     public function testMedicacionMencionSoloNombreConContratoDominio(): void
     {
-        $svc = new EncounterCaptureCompletenessValidator();
+        $svc = ClinicalCaptureRowContracts::completenessValidator();
         $result = $svc->validate(
             [
                 'Medicación' => [
@@ -105,7 +107,7 @@ class EncounterCaptureCompletenessValidatorTest extends Unit
 
     public function testMedicacionOrderedSinFrecuenciaConContratoDominio(): void
     {
-        $svc = new EncounterCaptureCompletenessValidator();
+        $svc = ClinicalCaptureRowContracts::completenessValidator();
         $result = $svc->validate(
             [
                 'Medicación' => [
@@ -135,7 +137,7 @@ class EncounterCaptureCompletenessValidatorTest extends Unit
 
     public function testMedicacionCompleta(): void
     {
-        $svc = new EncounterCaptureCompletenessValidator();
+        $svc = ClinicalCaptureRowContracts::completenessValidator();
         $campos = [
             'Nombre del medicamento',
             'Cantidad',
@@ -172,7 +174,7 @@ class EncounterCaptureCompletenessValidatorTest extends Unit
 
     public function testStringSoloNoCumpleCamposMultiples(): void
     {
-        $svc = new EncounterCaptureCompletenessValidator();
+        $svc = ClinicalCaptureRowContracts::completenessValidator();
         $result = $svc->validate(
             ['Medicación' => ['Enalapril 10 mg']],
             [

@@ -2,6 +2,8 @@
 
 namespace common\tests\unit\clinical;
 
+use common\components\Domain\Clinical\Capture\Application\ClinicalCaptureRowContracts;
+
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureCompletenessValidator;
 use common\models\Clinical\Input\OdontologiaItemInput;
@@ -32,7 +34,7 @@ class SpecialtyCaptureInputTest extends Unit
 
     public function testCompletenessDiscoversOdontologiaContractByModelName(): void
     {
-        $svc = new EncounterCaptureCompletenessValidator();
+        $svc = ClinicalCaptureRowContracts::completenessValidator();
         $result = $svc->validate(
             [
                 'Prácticas odontológicas' => [
@@ -53,7 +55,7 @@ class SpecialtyCaptureInputTest extends Unit
 
     public function testCompletenessDiscoversOftalmologiaContractByModelName(): void
     {
-        $svc = new EncounterCaptureCompletenessValidator();
+        $svc = ClinicalCaptureRowContracts::completenessValidator();
         $result = $svc->validate(
             [
                 'Estudios oftalmológicos' => [

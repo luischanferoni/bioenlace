@@ -1,8 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Domain;
-
-use common\models\Clinical\Encounter;
+namespace common\components\Domain\Clinical\Capture\Domain\Catalog;
 
 /**
  * Composición de categorías de captura según actor (PES `servicios.item_name`).
@@ -36,7 +34,7 @@ final class EncounterCaptureActorCatalog
         if ($actor !== self::ACTOR_ENFERMERIA) {
             return [];
         }
-        if ($encounterClass === Encounter::ENCOUNTER_CLASS_IMP) {
+        if ($encounterClass === EncounterClassCodes::IMP) {
             return [[
                 'titulo' => 'Signos vitales',
                 'modelo' => 'ConsultaAtencionesEnfermeria',
@@ -56,10 +54,10 @@ final class EncounterCaptureActorCatalog
         if ($actor !== self::ACTOR_ENFERMERIA) {
             return [];
         }
-        if ($encounterClass === Encounter::ENCOUNTER_CLASS_IMP) {
+        if ($encounterClass === EncounterClassCodes::IMP) {
             return ['ConsultaAtencionesEnfermeria', 'ConsultaBalanceHidrico'];
         }
-        if ($encounterClass === Encounter::ENCOUNTER_CLASS_EMER) {
+        if ($encounterClass === EncounterClassCodes::EMER) {
             return ['ConsultaAtencionesEnfermeria'];
         }
 

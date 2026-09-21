@@ -2,6 +2,8 @@
 
 namespace common\tests\unit\clinical;
 
+use common\components\Domain\Clinical\Capture\Application\ClinicalCaptureRowContracts;
+
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureCompletenessValidator;
 use common\models\Clinical\Input\PracticaInput;
@@ -24,7 +26,7 @@ class PracticaInputTest extends Unit
 
     public function testCompletenessAllowsPracticaWithoutCodigo(): void
     {
-        $svc = new EncounterCaptureCompletenessValidator();
+        $svc = ClinicalCaptureRowContracts::completenessValidator();
         $result = $svc->validate(
             [
                 'Prácticas realizadas' => [

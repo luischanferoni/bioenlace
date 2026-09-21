@@ -3,21 +3,20 @@
 namespace common\components\Domain\Clinical\Capture\Domain\Policy;
 
 use common\components\Domain\Clinical\Capture\Domain\Port\ClinicalCaptureRowContractRegistry;
-use common\components\Domain\Clinical\Capture\Infrastructure\Persistence\YiiModelClinicalCaptureRowContractRegistry;
 
 /**
  * Completitud de captura clínica vs categorías del EncounterDefinition
  * (`requerido` + contrato de fila vía {@see ClinicalCaptureRowContractRegistry} / `campos_requeridos` legacy).
  *
- * Default del registry: adapter Yii/`*Input` (Infrastructure). Inyectar en tests o al migrar VO.
+ * Inyectar el registry desde Application ({@see \common\components\Domain\Clinical\Capture\Application\ClinicalCaptureRowContracts}).
  */
 final class EncounterCaptureCompletenessValidator
 {
     private ClinicalCaptureRowContractRegistry $rowContracts;
 
-    public function __construct(?ClinicalCaptureRowContractRegistry $rowContracts = null)
+    public function __construct(ClinicalCaptureRowContractRegistry $rowContracts)
     {
-        $this->rowContracts = $rowContracts ?? new YiiModelClinicalCaptureRowContractRegistry();
+        $this->rowContracts = $rowContracts;
     }
 
     /**

@@ -2,6 +2,8 @@
 
 namespace common\components\Domain\Clinical\Encounter\Application\Presentation;
 
+use common\components\Domain\Clinical\Capture\Application\ClinicalCaptureRowContracts;
+
 use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureCompletenessValidator;
 
 /**
@@ -40,7 +42,7 @@ final class EncounterCaptureReviewPresenter
         }
 
         if ($completenessResult === null && $categorias !== []) {
-            $completenessResult = (new EncounterCaptureCompletenessValidator())->validate($extraidos, $categorias);
+            $completenessResult = ClinicalCaptureRowContracts::completenessValidator()->validate($extraidos, $categorias);
         }
         if (is_array($completenessResult)) {
             $tieneDatosFaltantes = ($completenessResult['tiene_datos_faltantes'] ?? false) === true
@@ -174,7 +176,7 @@ final class EncounterCaptureReviewPresenter
             return $review;
         }
 
-        $completeness = (new EncounterCaptureCompletenessValidator())->validate($extraidos, $categorias);
+        $completeness = ClinicalCaptureRowContracts::completenessValidator()->validate($extraidos, $categorias);
         $tieneDatosFaltantes = ($completeness['tiene_datos_faltantes'] ?? false) === true;
         $systemError = $review['system_error'] ?? null;
         $textoOriginal = trim((string) ($review['texto_original'] ?? ''));

@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Capture\Application;
 
-use common\components\Domain\Clinical\Capture\Domain\EncounterDefinitionWorkflowCatalog;
+use common\components\Domain\Clinical\Capture\Domain\Catalog\EncounterDefinitionWorkflowCatalog;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterDefinition;
 use common\models\Organization\Servicio;

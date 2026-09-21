@@ -2,6 +2,8 @@
 
 namespace common\components\Domain\Clinical\Capture\Application;
 
+use common\components\Domain\Clinical\Capture\Application\ClinicalCaptureRowContracts;
+
 use Yii;
 use yii\base\Component;
 use common\components\Domain\Clinical\Capture\Infrastructure\SpeechToText\ClinicalSpeechInputResolver;
@@ -139,7 +141,7 @@ class ConsultaProcesamientoService extends Component
             $html = $htmlResult['html'];
             $tieneDatosFaltantesHTML = $htmlResult['tieneDatosFaltantes'];
 
-            $completeness = (new EncounterCaptureCompletenessValidator())->validate(
+            $completeness = ClinicalCaptureRowContracts::completenessValidator()->validate(
                 $extraidos,
                 is_array($categorias) ? $categorias : []
             );

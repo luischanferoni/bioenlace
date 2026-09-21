@@ -2,7 +2,9 @@
 
 Capacidad: **intake de documentación clínica** — texto/audio → normalización → extracción → issues resolubles → checkpoint de captura.
 
-Norte: [ddd-norte-modelo-rico.md](../../../../../docs/decisions/ddd-norte-modelo-rico.md), [domain-folder-grammar.md](../../../../../docs/decisions/domain-folder-grammar.md).
+**Norte DDD / CA:** [ddd-norte-modelo-rico.md](../../../../../docs/decisions/ddd-norte-modelo-rico.md) (capas + eje de subcarpetas §4).  
+**Gramática de carpetas:** [domain-folder-grammar.md](../../../../../docs/decisions/domain-folder-grammar.md).  
+**Módulo en Clinical:** [clinical-modulos-capacidad.md](../../../../../docs/decisions/clinical-modulos-capacidad.md).
 
 ## Límites
 
@@ -10,58 +12,63 @@ Norte: [ddd-norte-modelo-rico.md](../../../../../docs/decisions/ddd-norte-modelo
 |--------------|-----|
 | Flujo `/captura/*`, STT, post-proceso, issues | Guardar nota FHIR → `Encounter/Application/Documentation/` |
 
-## Eje de carpetas en `Application/`
+## Eje de carpetas (no desviarse)
 
-**Eje único: lenguaje ubicuo / capacidad** (preocupación de negocio del intake), no cajones técnicos (`Support/`, `Helpers/`, `Shared/`).
+En **todo** el módulo el eje es el mismo:
 
-Excepciones de gramática CA del repo ([domain-folder-grammar.md](../../../../../docs/decisions/domain-folder-grammar.md)):
+> **Capacidad / lenguaje ubicuo** — no cajones técnicos (`Support/`, `Helpers/`, `Shared/`, `Pipeline/` genérico, facades legacy).
+
+| Capa | Cómo se aplica aquí |
+|------|---------------------|
+| **Domain** | `Model/`, `Catalog/`, `Policy/`, `RowContract/`, `Port/` |
+| **Application** | Capacidades abajo + roles CA `UseCase/` y `Presentation/` |
+| **Infrastructure** | Adapters temáticos (`Persistence/`, `SpeechToText/`, `Terminology/`, `Logging/`, …) |
+
+Roles CA bajo `Application/` (excepciones estables, no “helpers”):
 
 | Carpeta | Rol |
 |---------|-----|
-| `UseCase/` | Entrypoints / interactors (una intención = una clase) |
-| `Presentation/` | `*Presenter` — forma API del checkpoint |
+| `UseCase/` | Interactors: una intención = una clase (entrypoints del controller API) |
+| `Presentation/` | `ClinicalCapturePresenter` — forma API (ok / fail / toApiArray) |
 
-El resto son **capacidades** del language de captura:
+Capacidades Application (lenguaje del intake):
 
 | Carpeta | Capacidad |
 |---------|-----------|
 | `Checkpoint/` | Lookup, persistencia del aggregate, audio del checkpoint |
-| `Extraction/` | Texto clínico, post-proceso IA, análisis (`ConsultaProcesamientoService`, …) |
-| `RowContract/` | Wiring Application ↔ `Domain/RowContract` + resoluciones |
+| `Extraction/` | Texto clínico, post-proceso IA, análisis |
+| `RowContract/` | Wiring ↔ `Domain/RowContract` + resoluciones |
 | `Definition/` | EncounterDefinition: categorías, bootstrap, contexto operativo, sanitizer |
+
+Entrypoint HTTP: `frontend/.../EncounterController` → `UseCase/*` (no hay facade intermedia).
 
 ## Forma
 
 ```text
 Application/
-  UseCase/          etapas HTTP (Analyze*, Save*, Transcribe*, …)
-  Checkpoint/       ClinicalCaptureCheckpoint (lookup / persist / audio)
-  Presentation/     ClinicalCapturePresenter (ok / fail / toApiArray)
-  Extraction/       texto + post-proceso + análisis IA
-  RowContract/      factory, registry compuesto, ResolutionApplier
-  Definition/       definición de encounter / categorías / bootstrap
+  UseCase/
+  Checkpoint/       ClinicalCaptureCheckpoint
+  Presentation/     ClinicalCapturePresenter
+  Extraction/
+  RowContract/
+  Definition/
 
 Domain/
-  Catalog/          *Catalog
-  Model/            aggregate, VO, stages, issue factory
+  Catalog/          *Catalog (incl. EncounterClassCatalog)
+  Model/            ClinicalCapture, stages, VO, issue factory
   RowContract/      *RowContract + ExtractedRowFields
   Policy/           CompletenessValidator, ExtractionPostProcessPolicy
-  Port/             Repository, RowContractRegistry, DerivacionRowSupport, STT, Terminology
+  Port/
 
-Infrastructure/     adapters Yii / STT / terminology / logging
+Infrastructure/     Persistence, SpeechToText, Terminology, Logging, PedidoAtencion adapter
 ```
 
-## Oleadas
+## Oleadas (resumen)
 
 | Oleada | Estado |
 |--------|--------|
-| 1–3b | hechas (Domain rico, Documentation en Encounter, pipeline vía aggregate) |
-| 4–4b | hechas — use cases por etapa; Support/helpers internos |
-| 5–5b | hechas — Domain Policy sin Platform; VO Resolution |
-| 6–6b | hechas — port RowContractRegistry; catálogos Domain |
-| 7–10 | tipologías Domain + Derivacion port (parcial en 7b–8) |
-| 11 | hecha — carpeta/sufijo (`UseCase/`, `RowContract/`, `EncounterClassCatalog`) |
-| 12 | hecha — eje Application por capacidad (`Checkpoint/`, `Extraction/`, `Definition/`, `Presentation/`) |
+| 1–10 | Domain rico, ports, tipologías RowContract, use cases por etapa |
+| 11–12 | Empaquetado Application por capacidad + Presenter; sin facade legacy |
 
 ## Deuda restante
 
@@ -70,5 +77,5 @@ Infrastructure/     adapters Yii / STT / terminology / logging
 
 ## Referencias
 
-- Persistencia: `Encounter/Application/Documentation/EncounterDocumentationService`
+- Persistencia nota: `Encounter/Application/Documentation/EncounterDocumentationService`
 - Producto: [captura-clinica.md](../../../../../docs/producto/captura-clinica.md)

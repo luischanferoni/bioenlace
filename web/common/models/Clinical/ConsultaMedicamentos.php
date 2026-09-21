@@ -2,11 +2,15 @@
 
 namespace common\models\Clinical;
 
+use common\components\Domain\Clinical\Capture\Domain\Catalog\MedicacionCaptureCatalog;
+use common\components\Domain\Clinical\Capture\Domain\Policy\MedicacionRowContract;
+use common\models\Clinical\Input\MedicacionInput;
+
 /**
  * Constantes y helpers de extracción de medicación (legacy name `ConsultaMedicamentos`).
  *
  * La tabla `consultas_medicamentos` ya no existe; la persistencia va a {@see MedicationRequest}.
- * El string de categoría de captura sigue siendo `ConsultaMedicamentos`.
+ * Contrato Domain: {@see MedicacionRowContract}.
  */
 final class ConsultaMedicamentos
 {
@@ -20,47 +24,37 @@ final class ConsultaMedicamentos
         self::ESTADO_INGRESADO_POR_ERROR => 'Ingresado por Error',
     ];
 
-    public const FRECUENCIA_TIPO_MINUTO = 'MINUTO';
-    public const FRECUENCIA_TIPO_HORA = 'HORA';
-    public const FRECUENCIA_TIPO_DIA = 'DIA';
-    public const FRECUENCIAS = [
-        self::FRECUENCIA_TIPO_MINUTO => 'Minuto',
-        self::FRECUENCIA_TIPO_HORA => 'Hora',
-        self::FRECUENCIA_TIPO_DIA => 'Día',
-    ];
+    public const FRECUENCIA_TIPO_MINUTO = MedicacionCaptureCatalog::FRECUENCIA_TIPO_MINUTO;
+    public const FRECUENCIA_TIPO_HORA = MedicacionCaptureCatalog::FRECUENCIA_TIPO_HORA;
+    public const FRECUENCIA_TIPO_DIA = MedicacionCaptureCatalog::FRECUENCIA_TIPO_DIA;
+    public const FRECUENCIAS = MedicacionCaptureCatalog::FRECUENCIAS;
 
-    public const DURANTE_TIPO_DIA = 'DIA';
-    public const DURANTE_TIPO_SEMANA = 'SEMANA';
-    public const DURANTE_TIPO_MES = 'MES';
-    public const DURANTE_TIPO_CRONICO = 'CRONICO';
-    public const DURANTES = [
-        self::DURANTE_TIPO_DIA => 'Día',
-        self::DURANTE_TIPO_SEMANA => 'Semana',
-        self::DURANTE_TIPO_MES => 'Mes',
-        self::DURANTE_TIPO_CRONICO => 'Crónico',
-    ];
+    public const DURANTE_TIPO_DIA = MedicacionCaptureCatalog::DURANTE_TIPO_DIA;
+    public const DURANTE_TIPO_SEMANA = MedicacionCaptureCatalog::DURANTE_TIPO_SEMANA;
+    public const DURANTE_TIPO_MES = MedicacionCaptureCatalog::DURANTE_TIPO_MES;
+    public const DURANTE_TIPO_CRONICO = MedicacionCaptureCatalog::DURANTE_TIPO_CRONICO;
+    public const DURANTES = MedicacionCaptureCatalog::DURANTES;
 
     /**
      * @return list<string>
      */
     public static function requeridosPrompt(): array
     {
-        return Input\MedicacionInput::promptFieldNames();
+        return MedicacionInput::promptFieldNames();
     }
 
     /**
      * @param array<string, mixed>|string $row
-     * @return array{missing_fields: list<string>, label: string, input: Input\MedicacionInput}
+     * @return array{missing_fields: list<string>, label: string, input: MedicacionInput}
      */
     public static function completenessForExtractedRow($row): array
     {
-        $input = Input\MedicacionInput::fromExtractedRow($row);
-        $label = trim((string) ($input->nombre ?? ''));
+        $assessment = MedicacionRowContract::assess($row);
 
         return [
-            'missing_fields' => $input->missingFieldsForCompleteness(),
-            'label' => $label !== '' ? $label : 'ítem',
-            'input' => $input,
+            'missing_fields' => $assessment->missingFields(),
+            'label' => $assessment->label(),
+            'input' => MedicacionInput::fromExtractedRow($row),
         ];
     }
 
@@ -70,7 +64,7 @@ final class ConsultaMedicamentos
      */
     public static function applyResolutionToRow(array $row, string $field, mixed $value): array
     {
-        return Input\MedicacionInput::applyResolutionToRow($row, $field, $value);
+        return MedicacionRowContract::applyResolution($row, $field, $value);
     }
 
     /**

@@ -2,10 +2,12 @@
 
 namespace common\models\Clinical;
 
+use common\components\Domain\Clinical\Capture\Domain\Policy\OdontologiaItemRowContract;
 use common\models\Clinical\Input\OdontologiaItemInput;
 
 /**
  * Tipología de captura odontológica — diagnósticos. Sin tabla legacy.
+ * Contrato Domain: {@see OdontologiaItemRowContract}.
  */
 final class ConsultaOdontologiaDiagnosticos extends \yii\base\Model
 {
@@ -23,12 +25,12 @@ final class ConsultaOdontologiaDiagnosticos extends \yii\base\Model
      */
     public static function completenessForExtractedRow($row): array
     {
-        $input = OdontologiaItemInput::fromExtractedRow($row);
+        $assessment = OdontologiaItemRowContract::assess($row);
 
         return [
-            'missing_fields' => $input->missingFieldsForCompleteness(),
-            'label' => $input->rowLabel(),
-            'input' => $input,
+            'missing_fields' => $assessment->missingFields(),
+            'label' => $assessment->label(),
+            'input' => OdontologiaItemInput::fromExtractedRow($row),
         ];
     }
 }

@@ -2,10 +2,12 @@
 
 namespace common\models\Clinical;
 
+use common\components\Domain\Clinical\Capture\Domain\Policy\OftalmologiaEstudioRowContract;
 use common\models\Clinical\Input\OftalmologiaEstudioInput;
 
 /**
  * Tipología de captura — estudios oftalmológicos. Sin tabla legacy.
+ * Contrato Domain: {@see OftalmologiaEstudioRowContract}.
  */
 final class ConsultaPracticasOftalmologiaEstudios extends \yii\base\Model
 {
@@ -23,12 +25,12 @@ final class ConsultaPracticasOftalmologiaEstudios extends \yii\base\Model
      */
     public static function completenessForExtractedRow($row): array
     {
-        $input = OftalmologiaEstudioInput::fromExtractedRow($row);
+        $assessment = OftalmologiaEstudioRowContract::assess($row);
 
         return [
-            'missing_fields' => $input->missingFieldsForCompleteness(),
-            'label' => $input->rowLabel(),
-            'input' => $input,
+            'missing_fields' => $assessment->missingFields(),
+            'label' => $assessment->label(),
+            'input' => OftalmologiaEstudioInput::fromExtractedRow($row),
         ];
     }
 }

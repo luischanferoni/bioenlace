@@ -2,11 +2,13 @@
 
 namespace common\models\Clinical;
 
+use common\components\Domain\Clinical\Capture\Domain\Policy\RegimenRowContract;
 use common\models\Clinical\Input\RegimenInput;
 
 /**
  * Tipología de captura de régimen/dieta (legacy name `ConsultaRegimen`).
  * Persistencia: NutritionOrder FHIR. Sin tabla `consultas_regimen`.
+ * Contrato Domain: {@see RegimenRowContract}.
  */
 final class ConsultaRegimen extends \yii\base\Model
 {
@@ -24,12 +26,12 @@ final class ConsultaRegimen extends \yii\base\Model
      */
     public static function completenessForExtractedRow($row): array
     {
-        $input = RegimenInput::fromExtractedRow($row);
+        $assessment = RegimenRowContract::assess($row);
 
         return [
-            'missing_fields' => $input->missingFieldsForCompleteness(),
-            'label' => $input->rowLabel(),
-            'input' => $input,
+            'missing_fields' => $assessment->missingFields(),
+            'label' => $assessment->label(),
+            'input' => RegimenInput::fromExtractedRow($row),
         ];
     }
 }

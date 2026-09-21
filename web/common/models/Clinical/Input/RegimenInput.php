@@ -2,15 +2,16 @@
 
 namespace common\models\Clinical\Input;
 
+use common\components\Domain\Clinical\Capture\Domain\Policy\RegimenRowContract;
 use yii\base\Model;
 
 /**
  * Régimen / dieta en captura IMP.
- * Integridad: texto de indicaciones; el concept_id puede codificarse después.
+ * Completitud: {@see RegimenRowContract}.
  */
 final class RegimenInput extends Model
 {
-    public const FIELD_INDICACIONES = 'Indicaciones';
+    public const FIELD_INDICACIONES = RegimenRowContract::FIELD_INDICACIONES;
 
     /** @var string|null */
     public $indicaciones;
@@ -29,25 +30,7 @@ final class RegimenInput extends Model
     public static function fromExtractedRow($row): self
     {
         $model = new self();
-        if (is_string($row)) {
-            $model->indicaciones = trim($row);
-
-            return $model;
-        }
-        if (!is_array($row)) {
-            return $model;
-        }
-
-        foreach ([self::FIELD_INDICACIONES, 'indicaciones', 'texto', 'display', 'termino'] as $key) {
-            if (!array_key_exists($key, $row)) {
-                continue;
-            }
-            $v = trim((string) $row[$key]);
-            if ($v !== '') {
-                $model->indicaciones = $v;
-                break;
-            }
-        }
+        $model->indicaciones = RegimenRowContract::extractIndicaciones($row) ?: null;
 
         return $model;
     }
@@ -65,11 +48,7 @@ final class RegimenInput extends Model
      */
     public function missingFieldsForCompleteness(): array
     {
-        if ($this->validate()) {
-            return [];
-        }
-
-        return $this->hasErrors('indicaciones') ? [self::FIELD_INDICACIONES] : [];
+        return trim((string) ($this->indicaciones ?? '')) === '' ? [self::FIELD_INDICACIONES] : [];
     }
 
     public function rowLabel(): string

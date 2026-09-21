@@ -2,11 +2,13 @@
 
 namespace common\models\Clinical;
 
+use common\components\Domain\Clinical\Capture\Domain\Policy\PracticaRowContract;
 use common\models\Clinical\Input\PracticaInput;
 
 /**
  * Tipología de captura de prácticas (legacy name `ConsultaPracticas`).
  * Persistencia: ServiceRequest / Procedure. Sin tabla `consultas_practicas`.
+ * Contrato Domain: {@see PracticaRowContract}.
  */
 final class ConsultaPracticas extends \yii\base\Model
 {
@@ -24,13 +26,12 @@ final class ConsultaPracticas extends \yii\base\Model
      */
     public static function completenessForExtractedRow($row): array
     {
-        $input = PracticaInput::fromExtractedRow($row);
-        $label = trim((string) ($input->practica ?? ''));
+        $assessment = PracticaRowContract::assess($row);
 
         return [
-            'missing_fields' => $input->missingFieldsForCompleteness(),
-            'label' => $label !== '' ? $label : 'ítem',
-            'input' => $input,
+            'missing_fields' => $assessment->missingFields(),
+            'label' => $assessment->label(),
+            'input' => PracticaInput::fromExtractedRow($row),
         ];
     }
 }

@@ -2,18 +2,17 @@
 
 namespace common\models\Clinical;
 
+use common\components\Domain\Clinical\Capture\Domain\Policy\IndicacionRowContract;
 use common\models\Clinical\Input\IndicacionInput;
 
 /**
- * Tipología de extracción/prompt para indicaciones clínicas (no es práctica realizada).
- * Contrato de integridad: {@see IndicacionInput}.
- * Persistencia: ServiceRequest / care plan (mismo canal que prácticas).
+ * Tipología de extracción/prompt para indicaciones clínicas.
+ * Contrato Domain: {@see IndicacionRowContract}.
+ * Persistencia: ServiceRequest / care plan.
  */
 class ConsultaIndicaciones extends \yii\base\Model
 {
     /**
-     * Esquema NL para prompts de extracción (incluye opcionales condicionales).
-     *
      * @return list<string>
      */
     public function requeridosPrompt()
@@ -27,13 +26,12 @@ class ConsultaIndicaciones extends \yii\base\Model
      */
     public static function completenessForExtractedRow($row): array
     {
-        $input = IndicacionInput::fromExtractedRow($row);
-        $label = trim((string) ($input->indicacion ?? ''));
+        $assessment = IndicacionRowContract::assess($row);
 
         return [
-            'missing_fields' => $input->missingFieldsForCompleteness(),
-            'label' => $label !== '' ? $label : 'ítem',
-            'input' => $input,
+            'missing_fields' => $assessment->missingFields(),
+            'label' => $assessment->label(),
+            'input' => IndicacionInput::fromExtractedRow($row),
         ];
     }
 
@@ -43,6 +41,6 @@ class ConsultaIndicaciones extends \yii\base\Model
      */
     public static function applyResolutionToRow(array $row, string $field, mixed $value): array
     {
-        return IndicacionInput::applyResolutionToRow($row, $field, $value);
+        return IndicacionRowContract::applyResolution($row, $field, $value);
     }
 }

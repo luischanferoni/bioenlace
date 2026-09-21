@@ -2,11 +2,12 @@
 
 namespace common\models\Clinical;
 
+use common\components\Domain\Clinical\Capture\Domain\Policy\BalanceHidricoRowContract;
 use common\models\Clinical\Input\BalanceHidricoInput;
 
 /**
- * Tipología de captura de balance hídrico (legacy name `ConsultaBalanceHidrico`).
- * Persistencia: Observation FHIR. Sin tabla `consultas_balancehidrico`.
+ * Tipología de captura de balance hídrico.
+ * Contrato Domain: {@see BalanceHidricoRowContract}.
  */
 final class ConsultaBalanceHidrico extends \yii\base\Model
 {
@@ -24,12 +25,12 @@ final class ConsultaBalanceHidrico extends \yii\base\Model
      */
     public static function completenessForExtractedRow($row): array
     {
-        $input = BalanceHidricoInput::fromExtractedRow($row);
+        $assessment = BalanceHidricoRowContract::assess($row);
 
         return [
-            'missing_fields' => $input->missingFieldsForCompleteness(),
-            'label' => $input->rowLabel(),
-            'input' => $input,
+            'missing_fields' => $assessment->missingFields(),
+            'label' => $assessment->label(),
+            'input' => BalanceHidricoInput::fromExtractedRow($row),
         ];
     }
 
@@ -39,6 +40,6 @@ final class ConsultaBalanceHidrico extends \yii\base\Model
      */
     public static function applyResolutionToRow(array $row, string $field, mixed $value): array
     {
-        return BalanceHidricoInput::applyResolutionToRow($row, $field, $value);
+        return BalanceHidricoRowContract::applyResolution($row, $field, $value);
     }
 }

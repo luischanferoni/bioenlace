@@ -13,14 +13,10 @@ Norte: [ddd-norte-modelo-rico.md](../../../../../docs/decisions/ddd-norte-modelo
 ## Forma
 
 ```text
-Application/
-  ClinicalCaptureRowContracts, CompositeClinicalCaptureRowContractRegistry
-  Text/EncounterCapturePostProcessKnobs
-  Pipeline/…, use cases…
-Domain/Catalog|Model|Policy|Port
-  Policy/EncounterReasonRowContract   # piloto tipología en Domain
-  Port/ClinicalCaptureRowContractRegistry
-Infrastructure/…/YiiModelClinicalCaptureRowContractRegistry  # resto de tipologías
+Application/ CompositeClinicalCaptureRowContractRegistry
+Domain/Policy/ *RowContract (casi todas las tipologías de captura)
+Domain/Catalog/ MedicacionCaptureCatalog, Encounter*Catalog
+Infrastructure/ YiiModel…  # fallback: Derivación (+ tipologías sin contrato)
 ```
 
 ## Oleadas
@@ -36,10 +32,13 @@ Infrastructure/…/YiiModelClinicalCaptureRowContractRegistry  # resto de tipolo
 | 6b | hecha — Domain Policy sin default Infra; factory Application; catálogos en `Domain/Catalog` |
 | 7 | hecha — `templateForOffering(itemName, serviceName, class)`; Domain Catalog sin AR |
 | 7b | parcial — piloto `EncounterReasonRowContract` + registry compuesto Domain→Yii |
+| 8 | parcial — Domain contracts: Practica, Regimen, Oftalmología estudio, Odontología ítem |
+| 9 | hecha — Indicación, Medicación, Balance hídrico en Domain (+ `MedicacionCaptureCatalog`) |
 
 ## Deuda restante
 
-- Semántica de fila de tipologías restantes aún en `*Input` / models (mismo patrón que EncounterReason).
+- Derivación (`DerivacionInput`) aún vía Yii/`PedidoAtencion` (port de resolución pendiente).
+- Tipologías residuales sin contrato Domain si aparecen (p. ej. DiagnosticoConsulta / signos vitales).
 
 ## Referencias
 

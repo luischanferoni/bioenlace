@@ -21,7 +21,7 @@ Código compartido por API v1, consola, jobs y (legacy) frontend Yii.
 2. **No** crear código bajo `components/Services/` ni carpetas top-level clínicas sueltas (`Emergency/`, `Inpatient/` → van bajo `Clinical/`).
 3. **No** lógica de negocio en controllers API; usar `*/Service/` del dominio.
 4. Código nuevo de modelos: usar `models/{Dominio}/` (p. ej. `Person/Persona`, `Scheduling/Turno`); no crear alias en raíz de `models/`.
-5. Legacy consulta (IA): `components/Domain/Clinical/Capture/Application/ClinicalCaptureAnalysisService.php`.
+5. Legacy consulta (IA): `components/Domain/Clinical/Capture/Application/CaptureExtractionService.php`.
 6. API clínica: `/api/v1/clinical/...`.
 
 ## Migración Clinical

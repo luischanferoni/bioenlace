@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Capture\Domain\RowContract;
 
-use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureIssueFactory;
+use common\components\Domain\Clinical\Capture\Domain\Model\CaptureIssueFactory;
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureRowCompleteness;
 
 /**
@@ -216,14 +216,14 @@ final class BalanceHidricoRowContract
         $issues = [];
         foreach ($missing as $field) {
             if ($field === self::FIELD_TIPO) {
-                $issues[] = ClinicalCaptureIssueFactory::make($category, $index, $field, [
+                $issues[] = CaptureIssueFactory::make($category, $index, $field, [
                     ['value' => self::TREG_INGRESO, 'label' => 'Ingreso (fluidos que entran)'],
                     ['value' => self::TREG_EGRESO, 'label' => 'Egreso (fluidos que salen)'],
                 ], false);
                 continue;
             }
             if ($field === self::FIELD_CANTIDAD) {
-                $issues[] = ClinicalCaptureIssueFactory::make($category, $index, $field, [
+                $issues[] = CaptureIssueFactory::make($category, $index, $field, [
                     ['value' => '500', 'label' => '500 ml'],
                     ['value' => '1000', 'label' => '1000 ml'],
                     ['value' => '1500', 'label' => '1500 ml'],

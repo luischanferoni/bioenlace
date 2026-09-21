@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Capture\Domain\RowContract;
 
-use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureIssueFactory;
+use common\components\Domain\Clinical\Capture\Domain\Model\CaptureIssueFactory;
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureRowCompleteness;
 use common\components\Domain\Clinical\Capture\Domain\Port\DerivacionRowSupportPort;
 use common\components\Domain\Clinical\PedidoAtencion\Domain\CodingSystems;
@@ -166,7 +166,7 @@ final class DerivacionRowContract
                 )
                 : $support->servicioOptions();
             if ($options !== []) {
-                $issues[] = ClinicalCaptureIssueFactory::make(
+                $issues[] = CaptureIssueFactory::make(
                     $categoryTitle,
                     $index,
                     self::FIELD_SERVICIO,
@@ -188,7 +188,7 @@ final class DerivacionRowContract
                 $actoCandidates
             );
             if ($options !== []) {
-                $issues[] = ClinicalCaptureIssueFactory::make(
+                $issues[] = CaptureIssueFactory::make(
                     $categoryTitle,
                     $index,
                     self::FIELD_ACTO_DISPLAY,

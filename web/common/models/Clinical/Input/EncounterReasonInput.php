@@ -2,17 +2,17 @@
 
 namespace common\models\Clinical\Input;
 
-use common\components\Domain\Clinical\Capture\Domain\RowContract\EncounterReasonRowContract;
+use common\components\Domain\Clinical\Capture\Domain\RowContract\ReasonRowContract;
 use yii\base\Model;
 
 /**
  * Encounter.reason (chief complaint) en captura → Condition rol CC.
- * Completitud/resoluciones: {@see EncounterReasonRowContract}.
+ * Completitud/resoluciones: {@see ReasonRowContract}.
  */
 final class EncounterReasonInput extends Model
 {
-    public const FIELD_MOTIVO = EncounterReasonRowContract::FIELD_MOTIVO;
-    public const FIELD_CODIGO = EncounterReasonRowContract::FIELD_CODIGO;
+    public const FIELD_MOTIVO = ReasonRowContract::FIELD_MOTIVO;
+    public const FIELD_CODIGO = ReasonRowContract::FIELD_CODIGO;
 
     /** @var string|null */
     public $motivo;
@@ -34,8 +34,8 @@ final class EncounterReasonInput extends Model
     public static function fromExtractedRow($row): self
     {
         $model = new self();
-        $model->motivo = EncounterReasonRowContract::extractMotivo($row) ?: null;
-        $model->codigo = EncounterReasonRowContract::extractCodigo($row) ?: null;
+        $model->motivo = ReasonRowContract::extractMotivo($row) ?: null;
+        $model->codigo = ReasonRowContract::extractCodigo($row) ?: null;
 
         return $model;
     }
@@ -69,6 +69,6 @@ final class EncounterReasonInput extends Model
      */
     public static function applyResolutionToRow(array $row, string $field, mixed $value): array
     {
-        return EncounterReasonRowContract::applyResolution($row, $field, $value);
+        return ReasonRowContract::applyResolution($row, $field, $value);
     }
 }

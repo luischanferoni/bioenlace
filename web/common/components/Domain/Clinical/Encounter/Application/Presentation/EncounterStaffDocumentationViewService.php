@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Clinical\Encounter\Application\Presentation;
 
-use common\components\Domain\Clinical\Capture\Application\Service\ClinicalCapturePostProcessKnobs;
-use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureExtractionPostProcessPolicy;
+use common\components\Domain\Clinical\Capture\Application\Service\ExtractionPostProcessService;
+use common\components\Domain\Clinical\Capture\Domain\Policy\ExtractionPostProcessPolicy;
 use common\components\Domain\Clinical\Encounter\Application\EncounterReasonService;
 use common\models\Clinical\Encounter;
 
@@ -21,7 +21,7 @@ final class EncounterStaffDocumentationViewService
      */
     public function buildForEncounter(Encounter $encounter): array
     {
-        ClinicalCapturePostProcessKnobs::applyFromPlatformMetadata();
+        ExtractionPostProcessService::applyPlatformOverrides();
 
         $secciones = [];
 
@@ -58,7 +58,7 @@ final class EncounterStaffDocumentationViewService
             $role = mb_strtolower(trim((string) ($condition->diagnosis_role ?? '')));
             if (
                 $role === 'secondary'
-                && EncounterCaptureExtractionPostProcessPolicy::textMatchesClinicalLexiconPattern($label, 'subjective_complaint')
+                && ExtractionPostProcessPolicy::textMatchesClinicalLexiconPattern($label, 'subjective_complaint')
             ) {
                 if (!$this->isDuplicateLabel($motivos, $label)) {
                     $motivos[] = $label;

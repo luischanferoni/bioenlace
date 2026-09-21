@@ -2,7 +2,7 @@
 
 namespace console\controllers;
 
-use common\components\Domain\Clinical\Capture\Application\Service\EncounterDefinitionWorkflowSanitizer;
+use common\components\Domain\Clinical\Capture\Application\Service\EncounterDefinitionWorkflowService;
 use yii\console\Controller;
 use yii\console\ExitCode;
 use yii\db\Query;
@@ -44,7 +44,7 @@ class EncounterDefinitionController extends Controller
             ->where(['deleted_at' => null])
             ->all();
 
-        $report = EncounterDefinitionWorkflowSanitizer::auditRows($rows);
+        $report = EncounterDefinitionWorkflowService::auditRows($rows);
         if ($report === []) {
             $this->stdout("OK: ninguna fila con URL legacy consulta*/consultas/*.\n", Console::FG_GREEN);
 
@@ -91,7 +91,7 @@ class EncounterDefinitionController extends Controller
 
         $wouldUpdate = 0;
         foreach ($rows as $row) {
-            $result = EncounterDefinitionWorkflowSanitizer::sanitizeWorkflowJson((string) $row['workflow_json']);
+            $result = EncounterDefinitionWorkflowService::sanitizeWorkflowJson((string) $row['workflow_json']);
             if ($result['error'] !== null) {
                 $this->stderr("id={$row['id']}: {$result['error']}\n", Console::FG_RED);
                 continue;

@@ -3,7 +3,7 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Capture\Application\Presentation\ClinicalCapturePresenter;
+use common\components\Domain\Clinical\Capture\Application\Presentation\CapturePresenter;
 use common\models\Clinical\EncounterCapture;
 
 class EncounterCaptureStageTest extends Unit
@@ -78,7 +78,7 @@ class EncounterCaptureStageTest extends Unit
             'id_configuracion' => 3,
         ]);
 
-        $presenter = new ClinicalCapturePresenter();
+        $presenter = new CapturePresenter();
         $listItem = $presenter->toApiArray($capture, false);
         $this->assertTrue($listItem['has_analysis']);
         $this->assertArrayNotHasKey('analysis', $listItem);

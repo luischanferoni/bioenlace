@@ -2,7 +2,7 @@
 
 namespace common\models\Clinical;
 
-use common\components\Domain\Clinical\Capture\Domain\Catalog\MedicacionCaptureCatalog;
+use common\components\Domain\Clinical\Capture\Domain\Catalog\MedicacionCatalog;
 use common\components\Domain\Clinical\Capture\Domain\RowContract\MedicacionRowContract;
 use common\models\Clinical\Input\MedicacionInput;
 
@@ -24,16 +24,16 @@ final class ConsultaMedicamentos
         self::ESTADO_INGRESADO_POR_ERROR => 'Ingresado por Error',
     ];
 
-    public const FRECUENCIA_TIPO_MINUTO = MedicacionCaptureCatalog::FRECUENCIA_TIPO_MINUTO;
-    public const FRECUENCIA_TIPO_HORA = MedicacionCaptureCatalog::FRECUENCIA_TIPO_HORA;
-    public const FRECUENCIA_TIPO_DIA = MedicacionCaptureCatalog::FRECUENCIA_TIPO_DIA;
-    public const FRECUENCIAS = MedicacionCaptureCatalog::FRECUENCIAS;
+    public const FRECUENCIA_TIPO_MINUTO = MedicacionCatalog::FRECUENCIA_TIPO_MINUTO;
+    public const FRECUENCIA_TIPO_HORA = MedicacionCatalog::FRECUENCIA_TIPO_HORA;
+    public const FRECUENCIA_TIPO_DIA = MedicacionCatalog::FRECUENCIA_TIPO_DIA;
+    public const FRECUENCIAS = MedicacionCatalog::FRECUENCIAS;
 
-    public const DURANTE_TIPO_DIA = MedicacionCaptureCatalog::DURANTE_TIPO_DIA;
-    public const DURANTE_TIPO_SEMANA = MedicacionCaptureCatalog::DURANTE_TIPO_SEMANA;
-    public const DURANTE_TIPO_MES = MedicacionCaptureCatalog::DURANTE_TIPO_MES;
-    public const DURANTE_TIPO_CRONICO = MedicacionCaptureCatalog::DURANTE_TIPO_CRONICO;
-    public const DURANTES = MedicacionCaptureCatalog::DURANTES;
+    public const DURANTE_TIPO_DIA = MedicacionCatalog::DURANTE_TIPO_DIA;
+    public const DURANTE_TIPO_SEMANA = MedicacionCatalog::DURANTE_TIPO_SEMANA;
+    public const DURANTE_TIPO_MES = MedicacionCatalog::DURANTE_TIPO_MES;
+    public const DURANTE_TIPO_CRONICO = MedicacionCatalog::DURANTE_TIPO_CRONICO;
+    public const DURANTES = MedicacionCatalog::DURANTES;
 
     /**
      * @return list<string>

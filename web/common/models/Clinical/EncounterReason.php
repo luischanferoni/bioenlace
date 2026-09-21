@@ -2,7 +2,7 @@
 
 namespace common\models\Clinical;
 
-use common\components\Domain\Clinical\Capture\Domain\RowContract\EncounterReasonRowContract;
+use common\components\Domain\Clinical\Capture\Domain\RowContract\ReasonRowContract;
 use common\models\Clinical\Input\EncounterReasonInput;
 
 /**
@@ -10,7 +10,7 @@ use common\models\Clinical\Input\EncounterReasonInput;
  * Persistencia: {@see \common\components\Domain\Clinical\Encounter\Application\EncounterReasonService}
  * → Condition con rol CC.
  *
- * Contrato Domain: {@see EncounterReasonRowContract}.
+ * Contrato Domain: {@see ReasonRowContract}.
  */
 final class EncounterReason extends \yii\base\Model
 {
@@ -28,7 +28,7 @@ final class EncounterReason extends \yii\base\Model
      */
     public static function completenessForExtractedRow($row): array
     {
-        $assessment = EncounterReasonRowContract::assess($row);
+        $assessment = ReasonRowContract::assess($row);
         $input = EncounterReasonInput::fromExtractedRow($row);
 
         return [
@@ -44,6 +44,6 @@ final class EncounterReason extends \yii\base\Model
      */
     public static function applyResolutionToRow(array $row, string $field, mixed $value): array
     {
-        return EncounterReasonRowContract::applyResolution($row, $field, $value);
+        return ReasonRowContract::applyResolution($row, $field, $value);
     }
 }

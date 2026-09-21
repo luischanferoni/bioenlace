@@ -75,7 +75,7 @@ Domain/<Dominio>/
 ```
 
 - **ACL externos:** `Domain/<BC>/<Modulo?>/Infrastructure/External/<Sistema>/`.
-- **Sufijos:** `*Service`→`Application/`, `*Access`→`Application/Authorization/`, `*Catalog`→`Domain/`, `*Presenter`→`Checkpoint/Presentation/`, `*Agent*`→`Application/Agents/`, `*FlowDraftHydrator`→`Assistant/`. Sin `Service/` L1.
+- Sufijos: `*Service`/`*Resolver`/`*Applier`→`Application/Service/`, `*Access`→`Application/Authorization/`, `*Catalog`→`Domain/Catalog/`, `*Presenter`→`Application/Presentation/`, `*Policy`→`Domain/Policy/`, `*Agent*`→`Application/Agents/`. Verb phrase → `Application/UseCase/`. Catálogo cerrado (sin `Normalizer`/`Sanitizer`/`PostProcessor`/`Checkpoint`/`Pipeline`).
 - Plugins: `product-registries.php` + clases en `Domain/…`.
 - Detalle: [Domain/README.md](../../common/components/Domain/README.md).
 - ADR DDD: [ddd-bounded-contexts-capas-y-metadata.md](../decisions/ddd-bounded-contexts-capas-y-metadata.md).

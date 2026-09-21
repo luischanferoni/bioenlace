@@ -253,7 +253,7 @@ final class ClinicalCapture
     }
 
     /**
-     * Checkpoint UPLOADED (p. ej. audio sin texto, o pending server STT).
+     * Stage UPLOADED (p. ej. audio sin texto, o pending server STT).
      *
      * @param array<string, mixed>|null $sttMeta
      */

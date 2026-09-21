@@ -78,7 +78,7 @@ class EncounterDefinition extends ActiveRecord
 
     /**
      * Categorías crudas del workflow (oferta + clase). Overlay de actor/CarePlan:
-     * {@see \common\components\Domain\Clinical\Capture\Application\Service\ClinicalCaptureCategoryResolver}.
+     * {@see \common\components\Domain\Clinical\Capture\Application\Service\CaptureCategoryResolver}.
      *
      * @return list<array{titulo: string, modelo: string, requerido: bool, sugerido: bool, campos_requeridos: array}>
      */

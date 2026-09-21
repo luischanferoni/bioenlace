@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Capture\Application\Service;
 
-use common\components\Domain\Clinical\Capture\Application\Service\ClinicalCaptureOperationalContextResolver;
+use common\components\Domain\Clinical\Capture\Application\Service\OperationalContextResolver;
 use common\components\Domain\Clinical\Capture\Domain\Catalog\EncounterDefinitionWorkflowCatalog;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterDefinition;
@@ -104,7 +104,7 @@ final class EncounterDefinitionBootstrapService
         }
 
         if ($idServicio === null || $idServicio <= 0 || $encounterClass === null || $encounterClass === '') {
-            [, $idServicio, $encounterClass] = ClinicalCaptureOperationalContextResolver::resolve($body);
+            [, $idServicio, $encounterClass] = OperationalContextResolver::resolve($body);
         }
 
         if ($idServicio === null || $idServicio <= 0 || $encounterClass === null || $encounterClass === '') {

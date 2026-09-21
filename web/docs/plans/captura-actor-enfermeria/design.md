@@ -12,10 +12,10 @@ Lookup al capturar: encounter vinculado o internación/guardia → `service_id` 
 
 No es columna de `encounter_definition`. Se toma del **PES de sesión** (`getServicioActual()` → `servicios.item_name`: `Medico`, `enfermeria`, …), no del `service_id` del episodio (clínica médica).
 
-`ClinicalCaptureCategoryResolver`:
+`CaptureCategoryResolver`:
 
 1. Categorías base: `EncounterDefinition::getCategoriasParaPrompt`.
-2. Overlay de actor (`EncounterCaptureActorCatalog`): puede **agregar** secciones (p. ej. signos vitales en IMP) y marcar `sugerido`.
+2. Overlay de actor (`CaptureActorCatalog`): puede **agregar** secciones (p. ej. signos vitales en IMP) y marcar `sugerido`.
 3. Overlay CarePlan inpatient: actividades → `sugerido` + `plan_hints` (medicación, indicaciones, régimen).
 
 Completitud: `requerido` vacío bloquea; `sugerido` vacío no. Filas extraídas siguen `*Input::rules()`. Persistencia recorre las categorías **resueltas** (incluye SV agregado al overlay).

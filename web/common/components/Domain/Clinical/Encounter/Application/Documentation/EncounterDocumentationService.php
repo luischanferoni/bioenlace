@@ -2,14 +2,14 @@
 
 namespace common\components\Domain\Clinical\Encounter\Application\Documentation;
 
-use common\components\Domain\Clinical\Capture\Application\Service\ClinicalCaptureRowContracts;
+use common\components\Domain\Clinical\Capture\Application\Service\RowContractService;
 use common\components\Domain\Clinical\Encounter\Domain\ConditionVerificationStatus;
 use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
 use common\components\Domain\Clinical\Emergency\Application\GuardiaEncounterOutcomeService;
-use common\components\Domain\Clinical\Capture\Application\Service\ClinicalCaptureCategoryResolver;
-use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureCompletenessValidator;
+use common\components\Domain\Clinical\Capture\Application\Service\CaptureCategoryResolver;
+use common\components\Domain\Clinical\Capture\Domain\Policy\CaptureCompletenessPolicy;
 use common\components\Domain\Clinical\Capture\Infrastructure\Logging\EncounterGuardarLogger;
-use common\components\Domain\Clinical\Capture\Infrastructure\Persistence\EncounterCaptureAnalysisCache;
+use common\components\Domain\Clinical\Capture\Infrastructure\Persistence\CaptureAnalysisCache;
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Domain\Clinical\CarePlan\Application\CarePlanLifecycleService;
 use common\components\Domain\Clinical\CarePlan\Application\CarePlanService;
@@ -177,7 +177,7 @@ class EncounterDocumentationService extends Component
                 }
             }
 
-            $applier = ClinicalCaptureRowContracts::resolutionApplier();
+            $applier = RowContractService::resolutionApplier();
             // Resolutions usan índices del análisis completo (Medicación::1). Si el cliente
             // ya filtró filas, aplicar sobre el full y luego recortar por staged_item_ids.
             // Preferir checkpoint del capture (analisis_datos_extraidos) sobre cache inmutable:
@@ -287,7 +287,7 @@ class EncounterDocumentationService extends Component
                     );
                 $body['datosExtraidos'] = $datosExtraidos;
             }
-            $completeness = ClinicalCaptureRowContracts::completenessValidator()->validate(
+            $completeness = RowContractService::completenessValidator()->validate(
                 $datosExtraidos,
                 $categorias
             );
@@ -592,7 +592,7 @@ class EncounterDocumentationService extends Component
         }
 
         $note = $this->resolveCaptureNote($body) ?? '';
-        $cacheHit = EncounterCaptureAnalysisCache::recallWithMeta($body, $note !== '' ? $note : null);
+        $cacheHit = CaptureAnalysisCache::recallWithMeta($body, $note !== '' ? $note : null);
         $cacheMeta = [
             'fuente' => $cacheHit['fuente'] ?? 'none',
             'token' => $cacheHit['token'] ?? null,
@@ -884,8 +884,8 @@ class EncounterDocumentationService extends Component
      */
     private function createEncounterForCapture(array $body, Persona $paciente): Encounter
     {
-        $encounterClass = ClinicalCaptureOperationalContextResolver::resolveEncounterClass($body);
-        [$idPes, $idServicio] = array_slice(ClinicalCaptureOperationalContextResolver::resolve($body), 0, 2);
+        $encounterClass = OperationalContextResolver::resolveEncounterClass($body);
+        [$idPes, $idServicio] = array_slice(OperationalContextResolver::resolve($body), 0, 2);
         $efectorId = Yii::$app->user->getIdEfector();
         if (($efectorId === null || $efectorId === '' || (int) $efectorId <= 0) && $idPes > 0) {
             $pes = \common\models\Organization\ProfesionalEfectorServicio::findOne($idPes);
@@ -1126,7 +1126,7 @@ class EncounterDocumentationService extends Component
      */
     private function categoriasForCapture(EncounterDefinition $definition, array $body = []): array
     {
-        return (new ClinicalCaptureCategoryResolver())->resolve($definition, $body);
+        return (new CaptureCategoryResolver())->resolve($definition, $body);
     }
 
     private function persistExtractedData(

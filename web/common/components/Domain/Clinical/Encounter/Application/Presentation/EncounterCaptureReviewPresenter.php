@@ -2,9 +2,9 @@
 
 namespace common\components\Domain\Clinical\Encounter\Application\Presentation;
 
-use common\components\Domain\Clinical\Capture\Application\Service\ClinicalCaptureRowContracts;
+use common\components\Domain\Clinical\Capture\Application\Service\RowContractService;
 
-use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureCompletenessValidator;
+use common\components\Domain\Clinical\Capture\Domain\Policy\CaptureCompletenessPolicy;
 
 /**
  * Construye el bloque declarativo `capture_review` para clientes móvil / JSON
@@ -15,7 +15,7 @@ final class EncounterCaptureReviewPresenter
     /**
      * @param array<string, mixed> $datosResultado Respuesta IA (`datosExtraidos`, etc.) o mapa plano de extraídos
      * @param list<array<string, mixed>> $categorias Configuración de categorías del encounter
-     * @param array<string, mixed>|null $completenessResult salida de {@see EncounterCaptureCompletenessValidator::validate}
+     * @param array<string, mixed>|null $completenessResult salida de {@see CaptureCompletenessPolicy::validate}
      */
     public function build(
         array $datosResultado,
@@ -42,7 +42,7 @@ final class EncounterCaptureReviewPresenter
         }
 
         if ($completenessResult === null && $categorias !== []) {
-            $completenessResult = ClinicalCaptureRowContracts::completenessValidator()->validate($extraidos, $categorias);
+            $completenessResult = RowContractService::completenessValidator()->validate($extraidos, $categorias);
         }
         if (is_array($completenessResult)) {
             $tieneDatosFaltantes = ($completenessResult['tiene_datos_faltantes'] ?? false) === true
@@ -176,7 +176,7 @@ final class EncounterCaptureReviewPresenter
             return $review;
         }
 
-        $completeness = ClinicalCaptureRowContracts::completenessValidator()->validate($extraidos, $categorias);
+        $completeness = RowContractService::completenessValidator()->validate($extraidos, $categorias);
         $tieneDatosFaltantes = ($completeness['tiene_datos_faltantes'] ?? false) === true;
         $systemError = $review['system_error'] ?? null;
         $textoOriginal = trim((string) ($review['texto_original'] ?? ''));

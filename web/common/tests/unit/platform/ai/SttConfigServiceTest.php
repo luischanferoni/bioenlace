@@ -2,7 +2,7 @@
 
 namespace common\tests\unit\platform\ai;
 
-use common\components\Domain\Clinical\Capture\Infrastructure\SpeechToText\ClinicalSpeechInputResolver;
+use common\components\Domain\Clinical\Capture\Infrastructure\SpeechToText\CaptureSpeechInputResolver;
 use common\components\Platform\Ai\SpeechToText\SttConfigService;
 
 class SttConfigServiceTest extends \Codeception\Test\Unit
@@ -57,7 +57,7 @@ class SttConfigServiceTest extends \Codeception\Test\Unit
     {
         \Yii::$app->params['stt_device'] = ['enabled' => false];
 
-        $r = (new ClinicalSpeechInputResolver())->resolveFromBody([
+        $r = (new CaptureSpeechInputResolver())->resolveFromBody([
             'consulta' => 'Paciente con dolor torácico desde ayer.',
             'stt' => [
                 'provenance' => 'device',
@@ -68,7 +68,7 @@ class SttConfigServiceTest extends \Codeception\Test\Unit
         ]);
 
         verify($r['ok'])->true();
-        verify($r['provenance'])->equals(ClinicalSpeechInputResolver::PROVENANCE_TEXT_ONLY);
+        verify($r['provenance'])->equals(CaptureSpeechInputResolver::PROVENANCE_TEXT_ONLY);
         verify($r['used_server_stt'])->false();
     }
 
@@ -76,7 +76,7 @@ class SttConfigServiceTest extends \Codeception\Test\Unit
     {
         \Yii::$app->params['stt']['server_enabled'] = false;
 
-        $r = (new ClinicalSpeechInputResolver())->resolveFromBody([
+        $r = (new CaptureSpeechInputResolver())->resolveFromBody([
             'audio' => base64_encode('fake-audio'),
             'stt_force_server' => true,
         ]);

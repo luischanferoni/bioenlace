@@ -2,18 +2,18 @@
 
 namespace common\components\Domain\Clinical\Capture\Application\UseCase;
 
-use common\components\Domain\Clinical\Capture\Application\Service\ClinicalCaptureAnalysisService;
+use common\components\Domain\Clinical\Capture\Application\Service\CaptureExtractionService;
 
 /**
  * Caso de uso: análisis IA de nota clínica (intake Capture).
  */
 final class AnalyzeClinicalNote
 {
-    private ClinicalCaptureAnalysisService $analisis;
+    private CaptureExtractionService $extraction;
 
-    public function __construct(?ClinicalCaptureAnalysisService $analisis = null)
+    public function __construct(?CaptureExtractionService $extraction = null)
     {
-        $this->analisis = $analisis ?? new ClinicalCaptureAnalysisService();
+        $this->extraction = $extraction ?? new CaptureExtractionService();
     }
 
     /**
@@ -22,7 +22,7 @@ final class AnalyzeClinicalNote
      */
     public function execute(array $body): array
     {
-        return $this->analisis->analizar($body);
+        return $this->extraction->extract($body);
     }
 
     /**
@@ -34,10 +34,10 @@ final class AnalyzeClinicalNote
         $idConfiguracion,
         ?int $subjectPersonaId = null
     ): array {
-        return $this->analisis->analizarConsultaConIA(
+        return $this->extraction->extractFromProcessedText(
             $textoProcesado,
             $nombreServicio,
-            $this->analisis->getModelosPorConfiguracion($idConfiguracion),
+            $this->extraction->categoriesForConfig($idConfiguracion),
             $subjectPersonaId
         );
     }

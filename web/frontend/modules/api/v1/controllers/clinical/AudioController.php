@@ -4,10 +4,10 @@ namespace frontend\modules\api\v1\controllers\clinical;
 
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
-use common\components\Domain\Clinical\Capture\Infrastructure\SpeechToText\ClinicalSpeechInputResolver;
+use common\components\Domain\Clinical\Capture\Infrastructure\SpeechToText\CaptureSpeechInputResolver;
 use common\components\Platform\Ai\SpeechToText\SpeechToTextManager;
 use common\components\Platform\Ai\SpeechToText\SttConfigService;
-use common\components\Domain\Clinical\Capture\Application\Service\ClinicalCaptureTextNormalizer;
+use common\components\Domain\Clinical\Capture\Application\Service\CaptureTextService;
 use common\components\Domain\Clinical\Capture\Application\UseCase\AnalyzeClinicalNote;
 
 class AudioController extends BaseController
@@ -40,7 +40,7 @@ class AudioController extends BaseController
             $modelo = $body['modelo'] ?? 'economico';
             $procesarInmediatamente = !empty($body['procesar']);
 
-            $speech = (new ClinicalSpeechInputResolver())->resolveFromBody($body, 'captura_clinica');
+            $speech = (new CaptureSpeechInputResolver())->resolveFromBody($body, 'captura_clinica');
             if (!empty($speech['ok'])) {
                 $textoTranscrito = (string) $speech['text'];
                 $resultado = [
@@ -67,7 +67,7 @@ class AudioController extends BaseController
                 $textoTranscrito = $resultado['texto'];
                 $speech = [
                     'ok' => true,
-                    'provenance' => ClinicalSpeechInputResolver::PROVENANCE_SERVER,
+                    'provenance' => CaptureSpeechInputResolver::PROVENANCE_SERVER,
                     'used_server_stt' => true,
                 ];
             }
@@ -86,7 +86,7 @@ class AudioController extends BaseController
                     $tabId = $request->post('tab_id') ?? 'tab_' . uniqid() . '_' . time();
 
                     // Procesar el texto transcrito
-                    $resultadoProcesamiento = ClinicalCaptureTextNormalizer::prepararParaIA(
+                    $resultadoProcesamiento = CaptureTextService::prepararParaIA(
                         $textoTranscrito,
                         $servicio ? $servicio->nombre : null,
                         $tabId
@@ -117,7 +117,7 @@ class AudioController extends BaseController
             return [
                 'success' => true,
                 'texto_transcrito' => $textoTranscrito,
-                'stt_provenance' => $speech['provenance'] ?? ClinicalSpeechInputResolver::PROVENANCE_SERVER,
+                'stt_provenance' => $speech['provenance'] ?? CaptureSpeechInputResolver::PROVENANCE_SERVER,
                 'stt_used_server' => !empty($speech['used_server_stt']) || empty($speech['ok']),
                 'confidence' => $resultado['confidence'] ?? 0.8,
                 'modelo_usado' => $resultado['modelo_usado'] ?? $modelo,

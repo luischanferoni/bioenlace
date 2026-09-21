@@ -2,10 +2,10 @@
 
 namespace common\tests\unit\clinical;
 
-use common\components\Domain\Clinical\Capture\Application\Service\ClinicalCaptureRowContracts;
+use common\components\Domain\Clinical\Capture\Application\Service\RowContractService;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureCompletenessValidator;
+use common\components\Domain\Clinical\Capture\Domain\Policy\CaptureCompletenessPolicy;
 use common\models\Clinical\Input\PracticaInput;
 
 class PracticaInputTest extends Unit
@@ -26,7 +26,7 @@ class PracticaInputTest extends Unit
 
     public function testCompletenessAllowsPracticaWithoutCodigo(): void
     {
-        $svc = ClinicalCaptureRowContracts::completenessValidator();
+        $svc = RowContractService::completenessValidator();
         $result = $svc->validate(
             [
                 'Prácticas realizadas' => [

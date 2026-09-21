@@ -11,9 +11,9 @@ Estado del módulo: [../README.md](../README.md).
 |------|--------|
 | Aggregate | `ClinicalCapture` — etapas, transcript, extracción, audio, resoluciones, completar/descartar |
 | VO / id | `ClinicalCaptureId`, `ClinicalCaptureStage` |
-| Factory issues | `ClinicalCaptureIssueFactory` |
+| Factory issues | `CaptureIssueFactory` |
 
 ## Próximo
 
 - Tipar documentación extraída (filas por categoría) y resoluciones como VO.
-- Mover cuerpos de etapa desde `Checkpoint/ClinicalCaptureCheckpoint` a cada use case.
+- Seguir adelgazando `CaptureDraftService` (audio/lookup) vs use cases.

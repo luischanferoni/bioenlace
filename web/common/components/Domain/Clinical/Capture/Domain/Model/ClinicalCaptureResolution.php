@@ -32,7 +32,7 @@ final class ClinicalCaptureResolution
      */
     public static function tryFromIssueId(string $issueId, $value): ?self
     {
-        $parsed = ClinicalCaptureIssueFactory::parseIssueId($issueId);
+        $parsed = CaptureIssueFactory::parseIssueId($issueId);
         if ($parsed === null) {
             return null;
         }
@@ -85,6 +85,6 @@ final class ClinicalCaptureResolution
 
     public function issueId(): string
     {
-        return ClinicalCaptureIssueFactory::issueId($this->category, $this->index, $this->field);
+        return CaptureIssueFactory::issueId($this->category, $this->index, $this->field);
     }
 }

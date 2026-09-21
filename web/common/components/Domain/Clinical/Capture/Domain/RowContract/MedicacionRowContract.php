@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Clinical\Capture\Domain\RowContract;
 
-use common\components\Domain\Clinical\Capture\Domain\Catalog\MedicacionCaptureCatalog;
-use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureIssueFactory;
+use common\components\Domain\Clinical\Capture\Domain\Catalog\MedicacionCatalog;
+use common\components\Domain\Clinical\Capture\Domain\Model\CaptureIssueFactory;
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureRowCompleteness;
 
 /** Contrato Domain: medicación (`ConsultaMedicamentos`). */
@@ -117,13 +117,13 @@ final class MedicacionRowContract
         if ($field === self::FIELD_FRECUENCIA && is_numeric($value)) {
             $row[$field] = (string) (int) $value;
             if (empty($row[self::FIELD_TIPO_FRECUENCIA])) {
-                $row[self::FIELD_TIPO_FRECUENCIA] = MedicacionCaptureCatalog::FRECUENCIA_TIPO_HORA;
+                $row[self::FIELD_TIPO_FRECUENCIA] = MedicacionCatalog::FRECUENCIA_TIPO_HORA;
             }
         }
         if ($field === self::FIELD_DURACION && is_numeric($value)) {
             $row[$field] = (string) (int) $value;
             if (empty($row[self::FIELD_TIPO_DURACION])) {
-                $row[self::FIELD_TIPO_DURACION] = MedicacionCaptureCatalog::DURANTE_TIPO_DIA;
+                $row[self::FIELD_TIPO_DURACION] = MedicacionCatalog::DURANTE_TIPO_DIA;
             }
         }
 
@@ -161,13 +161,13 @@ final class MedicacionRowContract
                 $missing[] = self::FIELD_FRECUENCIA;
             } elseif (trim((string) ($p['tipoFrecuencia'] ?? '')) === '') {
                 $missing[] = self::FIELD_TIPO_FRECUENCIA;
-            } elseif (!isset(MedicacionCaptureCatalog::FRECUENCIAS[(string) $p['tipoFrecuencia']])) {
+            } elseif (!isset(MedicacionCatalog::FRECUENCIAS[(string) $p['tipoFrecuencia']])) {
                 $missing[] = self::FIELD_TIPO_FRECUENCIA;
             }
         }
         if (trim((string) ($p['duracion'] ?? '')) !== '') {
             $td = trim((string) ($p['tipoDuracion'] ?? ''));
-            if ($td === '' || !isset(MedicacionCaptureCatalog::DURANTES[$td])) {
+            if ($td === '' || !isset(MedicacionCatalog::DURANTES[$td])) {
                 $missing[] = self::FIELD_TIPO_DURACION;
             }
         }
@@ -187,10 +187,10 @@ final class MedicacionRowContract
             ];
         }
         if ($field === self::FIELD_TIPO_FRECUENCIA) {
-            return self::mapToOptions(MedicacionCaptureCatalog::FRECUENCIAS);
+            return self::mapToOptions(MedicacionCatalog::FRECUENCIAS);
         }
         if ($field === self::FIELD_TIPO_DURACION) {
-            return self::mapToOptions(MedicacionCaptureCatalog::DURANTES);
+            return self::mapToOptions(MedicacionCatalog::DURANTES);
         }
         if ($field === self::FIELD_FRECUENCIA) {
             $out = [];
@@ -290,15 +290,15 @@ final class MedicacionRowContract
         if ($p['tipo'] === self::TYPE_ORDERED
             && trim((string) ($p['frecuencia'] ?? '')) !== ''
             && trim((string) ($p['tipoFrecuencia'] ?? '')) === '') {
-            $p['tipoFrecuencia'] = MedicacionCaptureCatalog::FRECUENCIA_TIPO_DIA;
+            $p['tipoFrecuencia'] = MedicacionCatalog::FRECUENCIA_TIPO_DIA;
         }
         if (trim((string) ($p['duracion'] ?? '')) !== ''
             && trim((string) ($p['tipoDuracion'] ?? '')) === '') {
             $folded = mb_strtolower((string) $p['duracion'], 'UTF-8');
             if (str_contains($folded, 'cronic') || str_contains($folded, 'crónic')) {
-                $p['tipoDuracion'] = MedicacionCaptureCatalog::DURANTE_TIPO_CRONICO;
+                $p['tipoDuracion'] = MedicacionCatalog::DURANTE_TIPO_CRONICO;
             } else {
-                $p['tipoDuracion'] = MedicacionCaptureCatalog::DURANTE_TIPO_DIA;
+                $p['tipoDuracion'] = MedicacionCatalog::DURANTE_TIPO_DIA;
             }
         }
 
@@ -320,7 +320,7 @@ final class MedicacionRowContract
             if ($options === []) {
                 continue;
             }
-            $issues[] = ClinicalCaptureIssueFactory::make($category, $index, $field, $options, false);
+            $issues[] = CaptureIssueFactory::make($category, $index, $field, $options, false);
         }
 
         return $issues;

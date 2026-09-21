@@ -2,7 +2,7 @@
 
 namespace common\models\Clinical\Input;
 
-use common\components\Domain\Clinical\Capture\Domain\Catalog\MedicacionCaptureCatalog;
+use common\components\Domain\Clinical\Capture\Domain\Catalog\MedicacionCatalog;
 use common\components\Domain\Clinical\Capture\Domain\RowContract\MedicacionRowContract;
 use yii\base\Model;
 
@@ -94,8 +94,8 @@ final class MedicacionInput extends Model
 
     public function rules(): array
     {
-        $freqTypes = array_keys(MedicacionCaptureCatalog::FRECUENCIAS);
-        $durTypes = array_keys(MedicacionCaptureCatalog::DURANTES);
+        $freqTypes = array_keys(MedicacionCatalog::FRECUENCIAS);
+        $durTypes = array_keys(MedicacionCatalog::DURANTES);
 
         return [
             [['nombre'], 'trim'],

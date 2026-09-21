@@ -29,7 +29,7 @@ Patrón de enrutado **edge → cloud** para voz clínica: el **edge** (teléfono
 | Capa | Rol |
 |------|-----|
 | **Edge** | Micrófono → motor local (SO, Web Speech, futuro modelo fit) → `texto` + `stt_provenance=device` |
-| **Cloud** | `ClinicalSpeechInputResolver` + `DeviceSttQualityAssessor` deciden si transcribir en servidor; IA (Gemini) siempre en cloud sobre el texto final |
+| **Cloud** | `CaptureSpeechInputResolver` + `DeviceSttQualityAssessor` deciden si transcribir en servidor; IA (Gemini) siempre en cloud sobre el texto final |
 
 No es un producto aparte: es la política de costo y UX de STT. El diagrama y reglas están en [§ Cuándo usar la API de STT en servidor](#cuándo-usar-la-api-de-stt-en-servidor); la escalera [§ Escalera de proveedores](#escalera-de-proveedores-servidor) pone al dispositivo en el **orden 0**.
 
@@ -288,7 +288,7 @@ Misma [escalera de proveedores](#escalera-de-proveedores-servidor): Groq es el f
 
 | Capa | Componente |
 |------|------------|
-| Servidor | `DeviceSttQualityAssessor`, `ClinicalSpeechInputResolver`; integrado en `ClinicalCaptureAnalysisService::analizar` y `AudioController::actionTranscribir` |
+| Servidor | `DeviceSttQualityAssessor`, `CaptureSpeechInputResolver`; integrado en `CaptureExtractionService::analizar` y `AudioController::actionTranscribir` |
 | Config | `stt_device` en `frontend/config/params.php` (perfiles `captura_clinica`, `motivos_consulta`) |
 | Web | `frontend/web/js/encounter-capture-form.js`, `_formulario_consulta.php` (dictado + analizar + fallback) |
 | Móvil médico | `shared`: `DeviceSpeechDictation`, `EncounterCaptureApi`; `PatientTimelineScreen` |

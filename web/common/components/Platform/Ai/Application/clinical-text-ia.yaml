@@ -68,7 +68,7 @@ llm_correction_confidence:
   context_term_boost: 0.1
 
 # Léxico clínico: overrides opcionales. Defaults de dominio en
-# EncounterCaptureExtractionPostProcessPolicy::DEFAULT_LEXICON.
+# ExtractionPostProcessPolicy::DEFAULT_LEXICON.
 clinical_lexicon:
   # Delimitadores PCRE `/…/iu` (no usar `(?iu)`: en PCRE `u` no es opción inline).
   narrative_framing: '/\b(refiere|vengo\s+por|consulta\s+por|desde\s+hace|presenta|paciente\s+con|me\s+siento|hace\s+\d+|desde\s+ayer|desde\s+hoy)\b/iu'
@@ -76,7 +76,7 @@ clinical_lexicon:
 
 # Extracción IA en captura clínica (analizar encounter).
 # {@see ClinicalTextIaMetadata::buildEncounterCaptureExtractionPrompt}
-# {@see EncounterCaptureExtractionPostProcessor}
+# {@see EncounterCaptureExtractionPostProcessService}
 encounter_capture_extraction:
   prompt_template: |
     Extraé datos clínicos en JSON válido y completo (cerrá todas las llaves, corchetes y comillas).
@@ -142,7 +142,7 @@ encounter_capture_extraction:
     ConsultaOdontologiaEstados: estado dental o pieza
     ConsultaRegimen: régimen o indicación de internación
     ConsultaBalanceHidrico: balance hídrico
-  # Overrides de política de post-proceso (defaults en EncounterCaptureExtractionPostProcessPolicy).
+  # Overrides de política de post-proceso (defaults en ExtractionPostProcessPolicy).
   # No es fuente de verdad de integridad clínica: solo knobs operativos.
   post_process:
     reason_model: EncounterReason

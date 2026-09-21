@@ -1019,7 +1019,7 @@ class IAManager
     }
     
     /**
-     * Corregir una palabra usando LLM (mismo comportamiento que en ClinicalCaptureTextNormalizer)
+     * Corregir una palabra usando LLM (mismo comportamiento que en CaptureTextService)
      * @param string $palabra
      * @param string $contexto
      * @param string|null $especialidad
@@ -1746,7 +1746,7 @@ Texto: {$texto}";
     }
 
     /**
-     * Calcular confianza de la corrección del LLM (mismo algoritmo que ClinicalCaptureTextNormalizer)
+     * Calcular confianza de la corrección del LLM (mismo algoritmo que CaptureTextService)
      * @param string $original
      * @param string $suggestion
      * @param string $contexto
@@ -1759,7 +1759,7 @@ Texto: {$texto}";
         $similitud = 1 - (levenshtein($original, $suggestion) / max(strlen($original), strlen($suggestion)));
         $confianza += $similitud * 0.3;
 
-        $confidenceClass = 'common\\components\\Domain\\Clinical\\Capture\\Application\\ClinicalCaptureLlmConfidenceService';
+        $confidenceClass = 'common\\components\\Domain\\Clinical\\Capture\\Application\\LlmConfidenceService';
         if (class_exists($confidenceClass)) {
             $confianza += $confidenceClass::contextBoost($contexto);
         }

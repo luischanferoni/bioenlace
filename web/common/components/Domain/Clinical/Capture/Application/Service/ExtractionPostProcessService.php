@@ -1,0 +1,407 @@
+<?php
+
+namespace common\components\Domain\Clinical\Capture\Application\Service;
+
+use common\components\Domain\Clinical\Capture\Domain\Policy\ExtractedTermPolicy;
+use common\components\Domain\Clinical\Capture\Domain\Policy\ExtractionPostProcessPolicy;
+use common\components\Domain\Clinical\Capture\Infrastructure\Terminology\CaptureTerminologyLookup;
+use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
+
+/**
+ * Application Service: post-proceso de extracción IA según {@see ExtractionPostProcessPolicy}.
+ * Inyecta knobs Platform → Domain sin acoplar Domain a Platform.
+ */
+final class ExtractionPostProcessService
+{
+    private ExtractedTermPolicy $termPolicy;
+
+    public function __construct(?ExtractedTermPolicy $termPolicy = null)
+    {
+        $this->termPolicy = $termPolicy ?? new ExtractedTermPolicy(new CaptureTerminologyLookup());
+    }
+
+    /**
+     * Knobs YAML Platform → {@see ExtractionPostProcessPolicy} (sin acoplar Domain a Platform).
+     */
+    public static function applyPlatformOverrides(): void
+    {
+        ExtractionPostProcessPolicy::configure(
+            ClinicalTextIaMetadata::rawEncounterCapturePostProcess(),
+            ClinicalTextIaMetadata::rawClinicalLexicon()
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $resultadoIA Respuesta normalizada con clave datosExtraidos
+     * @param list<array<string, mixed>> $categorias
+     * @return array<string, mixed>
+     */
+    public function apply(array $resultadoIA, array $categorias, string $clinicalText): array
+    {
+        self::applyPlatformOverrides();
+
+        $extraidos = $resultadoIA['datosExtraidos'] ?? null;
+        if (!is_array($extraidos)) {
+            return $resultadoIA;
+        }
+
+        $relocateConfig = ExtractionPostProcessPolicy::relocateConfig();
+        if (($relocateConfig['enabled'] ?? false) === true) {
+            $resultadoIA = $this->relocateIsolatedDiagnosisTerms(
+                $resultadoIA,
+                $categorias,
+                $clinicalText,
+                $relocateConfig
+            );
+        }
+
+        $resultadoIA['datosExtraidos'] = $this->filterNonClinicalExtractions(
+            $resultadoIA['datosExtraidos'] ?? [],
+            $categorias,
+            $clinicalText
+        );
+
+        $extraidos = $resultadoIA['datosExtraidos'] ?? [];
+        if (is_array($extraidos)) {
+            $resultadoIA['datosExtraidos'] = RowContractService::refineDerivaciones($extraidos, $categorias);
+        }
+
+        return $this->backfillEmptyMotivos($resultadoIA, $categorias, $clinicalText);
+    }
+
+    /**
+     * Si Motivos quedó vacío pero el texto clínico tiene queja/síntoma (léxico), lo completa.
+     *
+     * @param array<string, mixed> $resultadoIA
+     * @param list<array<string, mixed>> $categorias
+     * @return array<string, mixed>
+     */
+    private function backfillEmptyMotivos(array $resultadoIA, array $categorias, string $clinicalText): array
+    {
+        $config = ExtractionPostProcessPolicy::backfillConfig();
+        if (($config['enabled'] ?? false) !== true) {
+            return $resultadoIA;
+        }
+
+        $extraidos = $resultadoIA['datosExtraidos'] ?? null;
+        if (!is_array($extraidos)) {
+            return $resultadoIA;
+        }
+
+        $motivoModel = ExtractionPostProcessPolicy::reasonModel();
+
+        $motivoTitle = null;
+        foreach ($categorias as $categoria) {
+            if (!is_array($categoria)) {
+                continue;
+            }
+            if ((string) ($categoria['modelo'] ?? '') === $motivoModel) {
+                $motivoTitle = trim((string) ($categoria['titulo'] ?? ''));
+                break;
+            }
+        }
+        if ($motivoTitle === null || $motivoTitle === '') {
+            return $resultadoIA;
+        }
+
+        $current = $extraidos[$motivoTitle] ?? [];
+        if (is_array($current) && $current !== []) {
+            return $resultadoIA;
+        }
+
+        $lexiconKey = (string) ($config['require_lexicon_key'] ?? 'subjective_complaint');
+        if ($lexiconKey !== ''
+            && !ExtractionPostProcessPolicy::textMatchesClinicalLexiconPattern($clinicalText, $lexiconKey)) {
+            return $resultadoIA;
+        }
+
+        $candidate = $this->extractMotivoCandidateFromText($clinicalText, $config);
+        if ($candidate === '') {
+            return $resultadoIA;
+        }
+
+        $extraidos[$motivoTitle] = [$candidate];
+        $resultadoIA['datosExtraidos'] = $extraidos;
+
+        return $resultadoIA;
+    }
+
+    /**
+     * @param array<string, mixed> $config
+     */
+    private function extractMotivoCandidateFromText(string $clinicalText, array $config): string
+    {
+        $text = trim(preg_replace('/\s+/u', ' ', $clinicalText) ?? $clinicalText);
+        if ($text === '') {
+            return '';
+        }
+
+        $patterns = $config['split_before_patterns'] ?? [];
+        if (!is_array($patterns)) {
+            $patterns = [];
+        }
+        $cutAt = null;
+        foreach ($patterns as $pattern) {
+            if (!is_string($pattern) || $pattern === '') {
+                continue;
+            }
+            $normalized = ExtractionPostProcessPolicy::normalizePregPattern($pattern);
+            if ($normalized === null) {
+                continue;
+            }
+            if (@preg_match($normalized, $text, $m, PREG_OFFSET_CAPTURE) === 1) {
+                $pos = (int) ($m[0][1] ?? -1);
+                if ($pos > 0 && ($cutAt === null || $pos < $cutAt)) {
+                    $cutAt = $pos;
+                }
+            }
+        }
+        if ($cutAt !== null) {
+            $text = trim(substr($text, 0, $cutAt));
+        }
+
+        // Primera oración / cláusula.
+        if (preg_match('/^(.+?[.!?])(?:\s|$)/u', $text, $m)) {
+            $text = trim($m[1]);
+        }
+
+        $text = rtrim($text, " \t\n\r\0\x0B.,;");
+        $max = max(20, (int) ($config['max_chars'] ?? 140));
+        if (mb_strlen($text) > $max) {
+            $text = rtrim(mb_substr($text, 0, $max), " \t.,;") . '…';
+        }
+
+        return $text;
+    }
+
+    /**
+     * @param array<string, mixed> $extraidos
+     * @param list<array<string, mixed>> $categorias
+     * @return array<string, mixed>
+     */
+    private function filterNonClinicalExtractions(array $extraidos, array $categorias, string $clinicalText): array
+    {
+        $config = ExtractionPostProcessPolicy::filterConfig();
+        if (($config['enabled'] ?? false) !== true) {
+            return $extraidos;
+        }
+
+        $strictModels = $config['strict_category_models'] ?? $config['category_models'] ?? [ExtractionPostProcessPolicy::REASON_MODEL];
+        if (!is_array($strictModels)) {
+            $strictModels = [ExtractionPostProcessPolicy::REASON_MODEL];
+        }
+
+        $terminologyGuardModels = $config['terminology_guard_category_models'] ?? ['DiagnosticoConsulta'];
+        if (!is_array($terminologyGuardModels)) {
+            $terminologyGuardModels = ['DiagnosticoConsulta'];
+        }
+
+        foreach ($categorias as $categoria) {
+            if (!is_array($categoria)) {
+                continue;
+            }
+            $modelo = (string) ($categoria['modelo'] ?? '');
+            $titulo = trim((string) ($categoria['titulo'] ?? ''));
+            if ($modelo === '' || $titulo === '' || !isset($extraidos[$titulo]) || !is_array($extraidos[$titulo])) {
+                continue;
+            }
+
+            $filtered = [];
+            foreach ($extraidos[$titulo] as $item) {
+                $keep = false;
+                if (in_array($modelo, $strictModels, true)) {
+                    $keep = $this->termPolicy->isPlausibleExtraction($item, $clinicalText, $config);
+                } elseif (in_array($modelo, $terminologyGuardModels, true)) {
+                    $keep = $this->termPolicy->isPlausibleDiagnosisExtraction($item, $clinicalText, $config);
+                } else {
+                    $keep = true;
+                }
+
+                if ($keep) {
+                    $filtered[] = $item;
+                }
+            }
+            $extraidos[$titulo] = $filtered;
+        }
+
+        return $extraidos;
+    }
+
+    /**
+     * @param array<string, mixed> $resultadoIA
+     * @param list<array<string, mixed>> $categorias
+     * @param array<string, mixed> $config
+     * @return array<string, mixed>
+     */
+    private function relocateIsolatedDiagnosisTerms(
+        array $resultadoIA,
+        array $categorias,
+        string $clinicalText,
+        array $config
+    ): array {
+        $extraidos = $resultadoIA['datosExtraidos'] ?? null;
+        if (!is_array($extraidos)) {
+            return $resultadoIA;
+        }
+
+        $motivoModel = (string) ($config['reason_model'] ?? ExtractionPostProcessPolicy::REASON_MODEL);
+        $diagnosisModels = $config['diagnosis_models'] ?? ['DiagnosticoConsulta'];
+        if (!is_array($diagnosisModels)) {
+            $diagnosisModels = ['DiagnosticoConsulta'];
+        }
+
+        $motivoTitulo = $this->resolveTitulo($categorias, $motivoModel);
+        $diagnosisTitulo = $this->resolveFirstTitulo($categorias, $diagnosisModels);
+        if ($motivoTitulo === null || $diagnosisTitulo === null) {
+            return $resultadoIA;
+        }
+
+        $motivoItems = $this->normalizeItems($extraidos[$motivoTitulo] ?? null);
+        if ($motivoItems === []) {
+            return $resultadoIA;
+        }
+
+        $diagnosisItems = $this->normalizeItems($extraidos[$diagnosisTitulo] ?? null);
+        if ($diagnosisItems !== []) {
+            return $resultadoIA;
+        }
+
+        if (!$this->shouldRelocateIsolatedTerm($clinicalText, $motivoItems, $config)) {
+            return $resultadoIA;
+        }
+
+        $resultadoIA['datosExtraidos'][$diagnosisTitulo] = $motivoItems;
+        $resultadoIA['datosExtraidos'][$motivoTitulo] = [];
+
+        return $resultadoIA;
+    }
+
+    /**
+     * @param list<string|array<string, mixed>> $motivoItems
+     * @param array<string, mixed> $config
+     */
+    private function shouldRelocateIsolatedTerm(string $clinicalText, array $motivoItems, array $config): bool
+    {
+        if (count($motivoItems) !== 1) {
+            return false;
+        }
+
+        $item = $motivoItems[0];
+        $label = $this->itemLabel($item);
+        if ($label === '' || $this->normalizeText($clinicalText) !== $this->normalizeText($label)) {
+            return false;
+        }
+
+        $maxWords = (int) ($config['max_words'] ?? 5);
+        if ($maxWords > 0 && $this->wordCount($clinicalText) > $maxWords) {
+            return false;
+        }
+
+        $filterConfig = ExtractionPostProcessPolicy::filterConfig();
+
+        return $this->termPolicy->isPlausibleIsolatedDiagnosisCandidate($item, $clinicalText, $filterConfig);
+    }
+
+    private function normalizeText(string $text): string
+    {
+        $normalized = mb_strtolower(trim($text));
+        if ($normalized === '') {
+            return '';
+        }
+
+        return (string) preg_replace('/\s+/u', ' ', $normalized);
+    }
+
+    private function wordCount(string $text): int
+    {
+        $words = preg_split('/\s+/u', trim($text), -1, PREG_SPLIT_NO_EMPTY);
+
+        return is_array($words) ? count($words) : 0;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $categorias
+     */
+    private function resolveTitulo(array $categorias, string $modelo): ?string
+    {
+        foreach ($categorias as $categoria) {
+            if (!is_array($categoria)) {
+                continue;
+            }
+            if (($categoria['modelo'] ?? '') === $modelo) {
+                $titulo = trim((string) ($categoria['titulo'] ?? ''));
+                if ($titulo !== '') {
+                    return $titulo;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $categorias
+     * @param list<string> $modelos
+     */
+    private function resolveFirstTitulo(array $categorias, array $modelos): ?string
+    {
+        foreach ($modelos as $modelo) {
+            $titulo = $this->resolveTitulo($categorias, (string) $modelo);
+            if ($titulo !== null) {
+                return $titulo;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return list<string|array<string, mixed>>
+     */
+    private function normalizeItems(mixed $raw): array
+    {
+        if ($raw === null) {
+            return [];
+        }
+        if (is_string($raw) && trim($raw) !== '') {
+            return [trim($raw)];
+        }
+        if (!is_array($raw)) {
+            return [];
+        }
+
+        $out = [];
+        foreach ($raw as $row) {
+            if (is_string($row) && trim($row) !== '') {
+                $out[] = trim($row);
+                continue;
+            }
+            if (is_array($row) && $row !== []) {
+                $out[] = $row;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param string|array<string, mixed> $item
+     */
+    private function itemLabel(mixed $item): string
+    {
+        if (is_string($item)) {
+            return trim($item);
+        }
+        if (!is_array($item)) {
+            return '';
+        }
+        foreach (['termino', 'descripcion', 'texto', 'nombre'] as $key) {
+            $value = trim((string) ($item[$key] ?? ''));
+            if ($value !== '') {
+                return $value;
+            }
+        }
+
+        return '';
+    }
+}

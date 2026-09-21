@@ -1,6 +1,6 @@
 <?php
 
-use common\components\Domain\Clinical\Capture\Application\Service\EncounterDefinitionWorkflowSanitizer;
+use common\components\Domain\Clinical\Capture\Application\Service\EncounterDefinitionWorkflowService;
 use yii\db\Migration;
 use yii\db\Query;
 
@@ -27,7 +27,7 @@ class m260521_100008_encounter_definition_sanitize_legacy_workflow_urls extends 
             ->all($this->db);
 
         foreach ($rows as $row) {
-            $result = EncounterDefinitionWorkflowSanitizer::sanitizeWorkflowJson((string) $row['workflow_json']);
+            $result = EncounterDefinitionWorkflowService::sanitizeWorkflowJson((string) $row['workflow_json']);
             if ($result['error'] !== null) {
                 echo "    > id={$row['id']}: omitido ({$result['error']})\n";
                 continue;
@@ -68,7 +68,7 @@ class m260521_100008_encounter_definition_sanitize_legacy_workflow_urls extends 
         $updated = 0;
         $rows = (new Query())->from($table)->select(['id', $col])->all($this->db);
         foreach ($rows as $row) {
-            $result = EncounterDefinitionWorkflowSanitizer::sanitizeWorkflowJson((string) $row[$col]);
+            $result = EncounterDefinitionWorkflowService::sanitizeWorkflowJson((string) $row[$col]);
             if ($result['changed']) {
                 $this->db->createCommand()->update($table, [$col => $result['json']], ['id' => $row['id']])->execute();
                 $updated++;

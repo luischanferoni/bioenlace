@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Capture\Domain\RowContract;
 
-use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureIssueFactory;
+use common\components\Domain\Clinical\Capture\Domain\Model\CaptureIssueFactory;
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureRowCompleteness;
 
 /** Contrato Domain: indicación clínica (`ConsultaIndicaciones`). */
@@ -135,7 +135,7 @@ final class IndicacionRowContract
         $issues = [];
         foreach ($missing as $field) {
             if ($field === self::FIELD_PLAZO_DIAS) {
-                $issues[] = ClinicalCaptureIssueFactory::make($category, $index, $field, [
+                $issues[] = CaptureIssueFactory::make($category, $index, $field, [
                     ['value' => 3, 'label' => '3 días'],
                     ['value' => 7, 'label' => '7 días'],
                     ['value' => 15, 'label' => '15 días'],
@@ -144,7 +144,7 @@ final class IndicacionRowContract
                 continue;
             }
             if ($field === self::FIELD_TIPO) {
-                $issues[] = ClinicalCaptureIssueFactory::make($category, $index, $field, [
+                $issues[] = CaptureIssueFactory::make($category, $index, $field, [
                     ['value' => self::TYPE_COUNSELING, 'label' => 'Consejo / instrucción'],
                     ['value' => self::TYPE_CONDITIONAL, 'label' => 'Condicionado a síntomas'],
                     ['value' => self::TYPE_FOLLOW_UP, 'label' => 'Control programado'],

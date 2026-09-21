@@ -330,7 +330,7 @@ final class ClinicalTextIaMetadata
      */
     public static function normalizePregPattern(?string $pattern): ?string
     {
-        return \common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureExtractionPostProcessPolicy::normalizePregPattern($pattern);
+        return \common\components\Domain\Clinical\Capture\Domain\Policy\ExtractionPostProcessPolicy::normalizePregPattern($pattern);
     }
 
     public static function llmConfidenceContextTerms(): array
@@ -365,7 +365,7 @@ final class ClinicalTextIaMetadata
     public static function resetCacheForTests(): void
     {
         self::$config = null;
-        \common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureExtractionPostProcessPolicy::resetAllForTests();
+        \common\components\Domain\Clinical\Capture\Domain\Policy\ExtractionPostProcessPolicy::resetAllForTests();
     }
 
     /**

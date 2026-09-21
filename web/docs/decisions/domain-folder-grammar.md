@@ -1,31 +1,49 @@
 # Gramática de carpetas y sufijos en Domain/
 
 **Estado:** aceptado.  
-**Norte (cero ambigüedad de ejes):** [ddd-norte-modelo-rico.md](./ddd-norte-modelo-rico.md).
+**Norte:** [ddd-norte-modelo-rico.md](./ddd-norte-modelo-rico.md).
 
 ## Regla de empaquetado
 
 1. **Módulo** = capacidad de producto (`Capture/`, `Encounter/`).
-2. **L1 del módulo** = capas `Application/` · `Domain/` · `Infrastructure/`.
-3. **`Application/*`** = **solo roles Clean Architecture / plugins** (técnico):  
-   `UseCase/`, `Presentation/`, `Service/`, `Authorization/`, `Flows/`, `Agents/`.  
-   El dominio va en el **nombre de la clase**.
+2. **L1** = `Application/` · `Domain/` · `Infrastructure/`.
+3. **`Application/*`** = solo roles CA: `UseCase/`, `Presentation/`, `Service/`, `Authorization/`, `Flows/`, `Agents/`.
 4. **`Domain/*`** = building blocks (`Model/`, `Catalog/`, `Policy/`, `Port/`, `RowContract/`).
 5. **`Infrastructure/*`** = adapters.
 
-**Prohibido bajo `Application/`:** carpetas con nombre de capacidad/dominio (`Checkpoint/`, `Extraction/`, `Definition/`, `RowContract/`, `Support/`, …).
+**Prohibido bajo `Application/`:** carpetas de capacidad/dominio (`Checkpoint/`, `Extraction/`, …).
+
+## Sufijos = solo técnicos transversales
+
+Patrón de clase: `[<Contexto>]<Concepto><SufijoTécnico>`.
+
+El **sufijo** pertenece a un **catálogo cerrado** (CA/DDD) y se reutiliza en todo el proyecto. No inventar metáforas locales (`Normalizer`, `Sanitizer`, `PostProcessor`, `Overrides`, `Checkpoint`, `Validator` en Application).
+
+| Sufijo | Carpeta |
+|--------|---------|
+| Verb phrase | `Application/UseCase/` |
+| `*Presenter` | `Application/Presentation/` |
+| `*Service` | `Application/Service/` |
+| `*Resolver` | `Application/Service/` |
+| `*Applier` | `Application/Service/` |
+| `*Access` | `Application/Authorization/` |
+| `*Agent`, `*AgentPolicy` | `Application/Agents/` |
+| Aggregate / VO | `Domain/Model/` |
+| `*Catalog` | `Domain/Catalog/` |
+| `*Policy` | `Domain/Policy/` |
+| `*Repository` / `*Port` / `*Registry` | `Domain/Port/` |
+| `*RowContract` | `Domain/RowContract/` |
+| ACL `*Connector` / `*Mapper` | `Infrastructure/External/…` |
+| AR Yii | `common/models/<BC>/` |
 
 ## Esqueleto Clinical
 
 ```text
 Domain/Clinical/<Modulo>/
   Application/
-    UseCase/                    # interactors (* nombre de dominio en la clase)
-    Presentation/               # *Presenter / *PresentationService
-    Service/                    # *Service / *Resolver / *Applier / Checkpoint / wiring
-    Authorization/ | Flows/ | Agents/   # plugins si aplican
+    UseCase/ | Presentation/ | Service/
   Domain/
-    Model/ | Catalog/ | Policy/ | Port/ | RowContract/ | …
+    Model/ | Catalog/ | Policy/ | Port/ | RowContract/
   Infrastructure/
     External/ | Persistence/ | <Adapter>/…
 ```
@@ -34,30 +52,17 @@ Domain/Clinical/<Modulo>/
 
 ```text
 Capture/Application/
-  UseCase/                 # CreateOrUpload, Transcribe, Analyze*, Save, …
-  Presentation/            # ClinicalCapturePresenter
-  Service/                 # ClinicalCaptureCheckpoint, *AnalysisService, *RowContracts, …
+  UseCase/SaveCapture.php
+  Presentation/CapturePresenter.php
+  Service/CaptureDraftService.php
+  Service/ExtractionPostProcessService.php
 Capture/Domain/
-  Model/ | Catalog/ | RowContract/ | Policy/ | Port/
+  Model/ClinicalCapture.php
+  Policy/ExtractedTermPolicy.php
+  Policy/CaptureCompletenessPolicy.php
 ```
-
-## Sufijos → carpeta
-
-| Sufijo | Carpeta |
-|--------|---------|
-| Interactor | `Application/UseCase/` |
-| `*Presenter`, `*PresentationService` | `Application/Presentation/` |
-| `*Service` / resolvers / appliers Application | `Application/Service/` |
-| `*Access` | `Application/Authorization/` |
-| `*Agent`, `*AgentPolicy` | `Application/Agents/` |
-| Aggregate | `Domain/Model/` |
-| `*Catalog`, policies | `Domain/Catalog/`, `Domain/Policy/` |
-| `*RowContract` | `Domain/RowContract/` (wiring Application en `Application/Service/`, no carpeta `RowContract/` bajo Application) |
-| ACL | `Infrastructure/External/…` |
-| AR Yii | `common/models/<BC>/` |
 
 ## Relacionado
 
 - [ddd-norte-modelo-rico.md](./ddd-norte-modelo-rico.md)
-- [clinical-modulos-capacidad.md](./clinical-modulos-capacidad.md)
 - `Capture/README.md`

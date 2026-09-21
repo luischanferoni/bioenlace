@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Clinical\Capture\Application\Pipeline;
 
+use common\components\Domain\Clinical\Capture\Application\ClinicalCaptureRowContracts;
 use common\components\Domain\Clinical\Capture\Application\Workflow\EncounterCaptureCategoryResolver;
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCapture;
 use common\components\Domain\Clinical\Capture\Domain\Port\ClinicalCaptureRepository;
@@ -15,7 +16,6 @@ use common\components\Domain\Clinical\Encounter\Application\Presentation\Encount
 use common\components\Platform\Ai\SpeechToText\SttConfigService;
 use common\models\Clinical\EncounterCapture;
 use common\models\Clinical\EncounterDefinition;
-use common\models\Clinical\Input\DerivacionInput;
 use Yii;
 use yii\web\UploadedFile;
 
@@ -374,7 +374,7 @@ final class ClinicalCapturePipelineSupport
             // Issues/completitud frescos desde el contrato de dominio (no el blob cacheado del analizar).
             $categorias = $this->resolveCategoriasForCapture($capture, []);
             if ($extraidos !== [] && $categorias !== []) {
-                $refined = DerivacionInput::refineDatosExtraidos($extraidos, $categorias);
+                $refined = ClinicalCaptureRowContracts::refineDerivaciones($extraidos, $categorias);
                 if ($refined !== $extraidos) {
                     $extraidos = $refined;
                     $textoOriginal = trim((string) ($analysisStored['texto_original'] ?? $capture->transcript ?? ''));

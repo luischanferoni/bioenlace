@@ -2,9 +2,8 @@
 
 namespace common\components\Domain\Clinical\Capture\Application\Text;
 
-use common\components\Domain\Clinical\Capture\Application\Text\EncounterCapturePostProcessKnobs;
+use common\components\Domain\Clinical\Capture\Application\ClinicalCaptureRowContracts;
 use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureExtractionPostProcessPolicy;
-use common\models\Clinical\Input\DerivacionInput;
 
 /**
  * Ajusta la clasificación IA de captura clínica según política de dominio
@@ -51,7 +50,7 @@ final class EncounterCaptureExtractionPostProcessor
 
         $extraidos = $resultadoIA['datosExtraidos'] ?? [];
         if (is_array($extraidos)) {
-            $resultadoIA['datosExtraidos'] = DerivacionInput::refineDatosExtraidos($extraidos, $categorias);
+            $resultadoIA['datosExtraidos'] = ClinicalCaptureRowContracts::refineDerivaciones($extraidos, $categorias);
         }
 
         return $this->backfillEmptyMotivos($resultadoIA, $categorias, $clinicalText);

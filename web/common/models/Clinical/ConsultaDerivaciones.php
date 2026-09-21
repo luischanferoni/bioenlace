@@ -80,13 +80,17 @@ class ConsultaDerivaciones extends ServiceRequest
      */
     public static function completenessForExtractedRow($row): array
     {
-        $input = \common\models\Clinical\Input\DerivacionInput::fromExtractedRow($row);
-        $label = trim((string) ($input->servicio ?? ''));
+        $assessment = \common\components\Domain\Clinical\Capture\Domain\Policy\DerivacionRowContract::assess(
+            $row,
+            'Derivaciones',
+            0,
+            new \common\components\Domain\Clinical\Capture\Infrastructure\PedidoAtencion\YiiDerivacionRowSupportAdapter()
+        );
 
         return [
-            'missing_fields' => $input->missingFieldsForCompleteness(),
-            'label' => $label !== '' ? $label : 'ítem',
-            'input' => $input,
+            'missing_fields' => $assessment->missingFields(),
+            'label' => $assessment->label(),
+            'input' => \common\models\Clinical\Input\DerivacionInput::fromExtractedRow($row),
         ];
     }
 
@@ -96,7 +100,12 @@ class ConsultaDerivaciones extends ServiceRequest
      */
     public static function applyResolutionToRow(array $row, string $field, mixed $value): array
     {
-        return \common\models\Clinical\Input\DerivacionInput::applyResolutionToRow($row, $field, $value);
+        return \common\components\Domain\Clinical\Capture\Domain\Policy\DerivacionRowContract::applyResolution(
+            $row,
+            $field,
+            $value,
+            new \common\components\Domain\Clinical\Capture\Infrastructure\PedidoAtencion\YiiDerivacionRowSupportAdapter()
+        );
     }
 
     /** @deprecated Alias de {@see $encounter_id} */

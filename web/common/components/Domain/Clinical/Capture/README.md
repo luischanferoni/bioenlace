@@ -13,10 +13,10 @@ Norte: [ddd-norte-modelo-rico.md](../../../../../docs/decisions/ddd-norte-modelo
 ## Forma
 
 ```text
-Application/ CompositeClinicalCaptureRowContractRegistry
-Domain/Policy/ *RowContract (casi todas las tipologías de captura)
-Domain/Catalog/ MedicacionCaptureCatalog, Encounter*Catalog
-Infrastructure/ YiiModel…  # fallback: Derivación (+ tipologías sin contrato)
+Application/ CompositeClinicalCaptureRowContractRegistry, ClinicalCaptureRowContracts
+Domain/Policy/ *RowContract (todas las tipologías de captura con integridad)
+Domain/Port/ DerivacionRowSupportPort (+ RowContractRegistry, …)
+Infrastructure/ YiiModel…, YiiDerivacionRowSupportAdapter
 ```
 
 ## Oleadas
@@ -34,11 +34,12 @@ Infrastructure/ YiiModel…  # fallback: Derivación (+ tipologías sin contrato
 | 7b | parcial — piloto `EncounterReasonRowContract` + registry compuesto Domain→Yii |
 | 8 | parcial — Domain contracts: Practica, Regimen, Oftalmología estudio, Odontología ítem |
 | 9 | hecha — Indicación, Medicación, Balance hídrico en Domain (+ `MedicacionCaptureCatalog`) |
+| 10 | hecha — Derivación vía `DerivacionRowContract` + port `DerivacionRowSupportPort` |
 
 ## Deuda restante
 
-- Derivación (`DerivacionInput`) aún vía Yii/`PedidoAtencion` (port de resolución pendiente).
 - Tipologías residuales sin contrato Domain si aparecen (p. ej. DiagnosticoConsulta / signos vitales).
+- Adapter de derivación aún habla con AR `Servicio` (esperado en Infrastructure).
 
 ## Referencias
 

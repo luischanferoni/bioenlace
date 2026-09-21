@@ -4,6 +4,7 @@ namespace common\components\Domain\Clinical\Capture\Application;
 
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureRowCompleteness;
 use common\components\Domain\Clinical\Capture\Domain\Policy\BalanceHidricoRowContract;
+use common\components\Domain\Clinical\Capture\Domain\Policy\DerivacionRowContract;
 use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterReasonRowContract;
 use common\components\Domain\Clinical\Capture\Domain\Policy\ExtractedRowFields;
 use common\components\Domain\Clinical\Capture\Domain\Policy\IndicacionRowContract;
@@ -13,10 +14,12 @@ use common\components\Domain\Clinical\Capture\Domain\Policy\OftalmologiaEstudioR
 use common\components\Domain\Clinical\Capture\Domain\Policy\PracticaRowContract;
 use common\components\Domain\Clinical\Capture\Domain\Policy\RegimenRowContract;
 use common\components\Domain\Clinical\Capture\Domain\Port\ClinicalCaptureRowContractRegistry;
+use common\components\Domain\Clinical\Capture\Domain\Port\DerivacionRowSupportPort;
+use common\components\Domain\Clinical\Capture\Infrastructure\PedidoAtencion\YiiDerivacionRowSupportAdapter;
 use common\components\Domain\Clinical\Capture\Infrastructure\Persistence\YiiModelClinicalCaptureRowContractRegistry;
 
 /**
- * Registry compuesto: contratos Domain + fallback Yii/`*Input` (p. ej. Derivación).
+ * Registry compuesto: contratos Domain + fallback Yii/`*Input`.
  */
 final class CompositeClinicalCaptureRowContractRegistry implements ClinicalCaptureRowContractRegistry
 {
@@ -31,6 +34,7 @@ final class CompositeClinicalCaptureRowContractRegistry implements ClinicalCaptu
         IndicacionRowContract::MODELO => IndicacionRowContract::class,
         MedicacionRowContract::MODELO => MedicacionRowContract::class,
         BalanceHidricoRowContract::MODELO => BalanceHidricoRowContract::class,
+        DerivacionRowContract::MODELO => DerivacionRowContract::class,
         'ConsultaOdontologiaPracticas' => OdontologiaItemRowContract::class,
         'ConsultaOdontologiaDiagnosticos' => OdontologiaItemRowContract::class,
         'ConsultaOdontologiaEstados' => OdontologiaItemRowContract::class,
@@ -38,9 +42,14 @@ final class CompositeClinicalCaptureRowContractRegistry implements ClinicalCaptu
 
     private ClinicalCaptureRowContractRegistry $fallback;
 
-    public function __construct(?ClinicalCaptureRowContractRegistry $fallback = null)
-    {
+    private DerivacionRowSupportPort $derivacionSupport;
+
+    public function __construct(
+        ?ClinicalCaptureRowContractRegistry $fallback = null,
+        ?DerivacionRowSupportPort $derivacionSupport = null
+    ) {
         $this->fallback = $fallback ?? new YiiModelClinicalCaptureRowContractRegistry();
+        $this->derivacionSupport = $derivacionSupport ?? new YiiDerivacionRowSupportAdapter();
     }
 
     public function supports(string $modelo): bool
@@ -51,6 +60,9 @@ final class CompositeClinicalCaptureRowContractRegistry implements ClinicalCaptu
     public function assess(string $modelo, $row, string $categoryTitle, int $index): ?ClinicalCaptureRowCompleteness
     {
         $class = $this->domainClass($modelo);
+        if ($class === DerivacionRowContract::class) {
+            return DerivacionRowContract::assess($row, $categoryTitle, $index, $this->derivacionSupport);
+        }
         if ($class !== null) {
             return $class::assess($row, $categoryTitle, $index);
         }
@@ -61,11 +73,19 @@ final class CompositeClinicalCaptureRowContractRegistry implements ClinicalCaptu
     public function applyResolution(string $modelo, array $row, string $field, mixed $value): ?array
     {
         $class = $this->domainClass($modelo);
+        if ($class === DerivacionRowContract::class) {
+            return DerivacionRowContract::applyResolution($row, $field, $value, $this->derivacionSupport);
+        }
         if ($class !== null) {
             return $class::applyResolution($row, $field, $value);
         }
 
         return $this->fallback->applyResolution($modelo, $row, $field, $value);
+    }
+
+    public function derivacionSupport(): DerivacionRowSupportPort
+    {
+        return $this->derivacionSupport;
     }
 
     /**

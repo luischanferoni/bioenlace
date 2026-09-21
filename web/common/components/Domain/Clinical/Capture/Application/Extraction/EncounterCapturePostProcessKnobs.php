@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application\Text;
+namespace common\components\Domain\Clinical\Capture\Application\Extraction;
 
 use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureExtractionPostProcessPolicy;
 use common\components\Platform\Core\Product\ClinicalTextIaMetadata;

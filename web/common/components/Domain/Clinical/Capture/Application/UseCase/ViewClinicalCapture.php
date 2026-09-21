@@ -2,16 +2,16 @@
 
 namespace common\components\Domain\Clinical\Capture\Application\UseCase;
 
-use common\components\Domain\Clinical\Capture\Application\Support\ClinicalCaptureSupport;
+use common\components\Domain\Clinical\Capture\Application\Checkpoint\ClinicalCaptureCheckpoint;
 
 /** Caso de uso: ver captura con review. */
 final class ViewClinicalCapture
 {
-    private ClinicalCaptureSupport $support;
+    private ClinicalCaptureCheckpoint $checkpoint;
 
-    public function __construct(?ClinicalCaptureSupport $support = null)
+    public function __construct(?ClinicalCaptureCheckpoint $checkpoint = null)
     {
-        $this->support = $support ?? new ClinicalCaptureSupport();
+        $this->checkpoint = $checkpoint ?? new ClinicalCaptureCheckpoint();
     }
 
     /**
@@ -21,11 +21,11 @@ final class ViewClinicalCapture
     public function execute(array $body): array
     {
 
-        $capture = $this->support->findCapture($body, false);
+        $capture = $this->checkpoint->findCapture($body, false);
         if (is_array($capture)) {
             return $capture;
         }
 
-        return $this->support->ok($capture, 'OK', true);
+        return $this->checkpoint->ok($capture, 'OK', true);
     }
 }

@@ -3,7 +3,7 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Capture\Application\Text\EncounterCaptureClinicalTermValidator;
+use common\components\Domain\Clinical\Capture\Application\Extraction\EncounterCaptureClinicalTermValidator;
 use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureExtractionPostProcessPolicy;
 use common\components\Domain\Clinical\Capture\Infrastructure\Terminology\EncounterCaptureTerminologyLookup;
 use common\components\Platform\Core\Product\ClinicalTextIaMetadata;

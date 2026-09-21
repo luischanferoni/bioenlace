@@ -37,7 +37,7 @@ Domain/Clinical/<Modulo>/
   Infrastructure/            # External/; Persistence/README → models/
 ```
 
-Sin `Service/` L1. Sin `Shared/`, sin PHP suelto en la **raíz** del BC o del módulo. Sin `Support/` ni `Mapper/` fuera de External.
+Sin `Service/` L1. Sin `Shared/`, sin PHP suelto en la **raíz** del BC o del módulo. Sin `Checkpoint/` ni `Mapper/` fuera de External.
 
 ### BC más chico
 

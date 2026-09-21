@@ -6,7 +6,7 @@ use common\components\Domain\Clinical\Capture\Application\RowContract\ClinicalCa
 use common\components\Domain\Clinical\Encounter\Domain\ConditionVerificationStatus;
 use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
 use common\components\Domain\Clinical\Emergency\Application\GuardiaEncounterOutcomeService;
-use common\components\Domain\Clinical\Capture\Application\Workflow\EncounterCaptureCategoryResolver;
+use common\components\Domain\Clinical\Capture\Application\Definition\EncounterCaptureCategoryResolver;
 use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureCompletenessValidator;
 use common\components\Domain\Clinical\Capture\Infrastructure\Logging\EncounterGuardarLogger;
 use common\components\Domain\Clinical\Capture\Infrastructure\Persistence\EncounterCaptureAnalysisCache;

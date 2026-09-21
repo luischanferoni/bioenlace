@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application\Text;
+namespace common\components\Domain\Clinical\Capture\Application\Extraction;
 
 use common\helpers\TextoMedicoHelper;
 

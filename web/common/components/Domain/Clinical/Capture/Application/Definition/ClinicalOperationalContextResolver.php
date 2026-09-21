@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application\Workflow;
+namespace common\components\Domain\Clinical\Capture\Application\Definition;
 
 use common\models\Clinical\Encounter;
 use Yii;

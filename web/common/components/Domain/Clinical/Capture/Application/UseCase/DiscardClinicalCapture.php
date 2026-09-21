@@ -2,18 +2,18 @@
 
 namespace common\components\Domain\Clinical\Capture\Application\UseCase;
 
-use common\components\Domain\Clinical\Capture\Application\Support\ClinicalCaptureSupport;
+use common\components\Domain\Clinical\Capture\Application\Checkpoint\ClinicalCaptureCheckpoint;
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureStage;
 use common\models\Clinical\EncounterCaptureAudit;
 
 /** Caso de uso: descartar captura abierta. */
 final class DiscardClinicalCapture
 {
-    private ClinicalCaptureSupport $support;
+    private ClinicalCaptureCheckpoint $checkpoint;
 
-    public function __construct(?ClinicalCaptureSupport $support = null)
+    public function __construct(?ClinicalCaptureCheckpoint $checkpoint = null)
     {
-        $this->support = $support ?? new ClinicalCaptureSupport();
+        $this->checkpoint = $checkpoint ?? new ClinicalCaptureCheckpoint();
     }
 
     /**
@@ -23,30 +23,30 @@ final class DiscardClinicalCapture
     public function execute(array $body): array
     {
 
-        $capture = $this->support->findCapture($body, false);
+        $capture = $this->checkpoint->findCapture($body, false);
         if (is_array($capture)) {
             return $capture;
         }
 
-        $domain = $this->support->captureRows()->toAggregate($capture);
+        $domain = $this->checkpoint->captureRows()->toAggregate($capture);
         if ($domain->stage() === ClinicalCaptureStage::COMPLETED) {
-            return $this->support->fail(409, 'No se puede descartar una captura ya completada.', $capture);
+            return $this->checkpoint->fail(409, 'No se puede descartar una captura ya completada.', $capture);
         }
 
-        $this->support->deleteAudioFile($capture);
+        $this->checkpoint->deleteAudioFile($capture);
         $hadAnalysis = $capture->getAnalysisResponse() !== [];
         $previousStage = $capture->stage;
         try {
             $domain->discard();
         } catch (\InvalidArgumentException $e) {
-            return $this->support->fail(409, $e->getMessage(), $capture);
+            return $this->checkpoint->fail(409, $e->getMessage(), $capture);
         }
-        $capture = $this->support->persistDomain($domain);
-        $this->support->audit()->record($capture, EncounterCaptureAudit::EVENT_DISCARDED, [
+        $capture = $this->checkpoint->persistDomain($domain);
+        $this->checkpoint->audit()->record($capture, EncounterCaptureAudit::EVENT_DISCARDED, [
             'previous_stage' => $previousStage,
             'previous_had_analysis' => $hadAnalysis,
         ]);
 
-        return $this->support->ok($capture, 'Captura descartada.');
+        return $this->checkpoint->ok($capture, 'Captura descartada.');
     }
 }

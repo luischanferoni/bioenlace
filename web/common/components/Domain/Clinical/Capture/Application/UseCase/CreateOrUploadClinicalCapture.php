@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Capture\Application\UseCase;
 
-use common\components\Domain\Clinical\Capture\Application\Support\ClinicalCaptureSupport;
+use common\components\Domain\Clinical\Capture\Application\Checkpoint\ClinicalCaptureCheckpoint;
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCapture;
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureStage;
 use common\components\Domain\Clinical\Capture\Infrastructure\SpeechToText\ClinicalSpeechInputResolver;
@@ -14,11 +14,11 @@ use yii\web\UploadedFile;
 /** Caso de uso: crear/actualizar captura + audio/transcript inicial. */
 final class CreateOrUploadClinicalCapture
 {
-    private ClinicalCaptureSupport $support;
+    private ClinicalCaptureCheckpoint $checkpoint;
 
-    public function __construct(?ClinicalCaptureSupport $support = null)
+    public function __construct(?ClinicalCaptureCheckpoint $checkpoint = null)
     {
-        $this->support = $support ?? new ClinicalCaptureSupport();
+        $this->checkpoint = $checkpoint ?? new ClinicalCaptureCheckpoint();
     }
 
     /**
@@ -28,23 +28,23 @@ final class CreateOrUploadClinicalCapture
     public function execute(array $body, ?UploadedFile $file = null): array
     {
 
-        $body = $this->support->normalizeMultipartJsonFields($body);
+        $body = $this->checkpoint->normalizeMultipartJsonFields($body);
         $clientId = trim((string) ($body['client_capture_id'] ?? $body['clientCaptureId'] ?? ''));
         if ($clientId === '') {
-            return $this->support->fail(400, 'Se requiere client_capture_id.');
+            return $this->checkpoint->fail(400, 'Se requiere client_capture_id.');
         }
         if (strlen($clientId) > 64) {
-            return $this->support->fail(400, 'client_capture_id demasiado largo.');
+            return $this->checkpoint->fail(400, 'client_capture_id demasiado largo.');
         }
 
         $subjectPersonaId = (int) ($body['id_persona'] ?? $body['subject_persona_id'] ?? 0);
         if ($subjectPersonaId <= 0) {
-            return $this->support->fail(400, 'Se requiere id_persona.');
+            return $this->checkpoint->fail(400, 'Se requiere id_persona.');
         }
 
         $userId = (int) (Yii::$app->user->id ?? 0);
         if ($userId <= 0) {
-            return $this->support->fail(401, 'Usuario no autenticado.');
+            return $this->checkpoint->fail(401, 'Usuario no autenticado.');
         }
 
         $parent = isset($body['parent']) ? trim((string) $body['parent']) : null;
@@ -56,24 +56,24 @@ final class CreateOrUploadClinicalCapture
             $parentId = null;
         }
 
-        $existing = $this->support->captures()->findByClientCaptureId($clientId);
+        $existing = $this->checkpoint->captures()->findByClientCaptureId($clientId);
         if ($existing === null) {
             $domain = ClinicalCapture::start($clientId, $subjectPersonaId, $userId, $parent, $parentId);
         } else {
             if ($existing->subjectPersonaId() !== $subjectPersonaId) {
-                return $this->support->fail(409, 'client_capture_id ya existe para otra persona.');
+                return $this->checkpoint->fail(409, 'client_capture_id ya existe para otra persona.');
             }
             if ($existing->stage() === ClinicalCaptureStage::COMPLETED) {
-                return $this->support->fail(409, 'La captura ya fue completada.');
+                return $this->checkpoint->fail(409, 'La captura ya fue completada.');
             }
             if ($existing->stage() === ClinicalCaptureStage::DISCARDED) {
-                return $this->support->fail(409, 'La captura fue descartada. Use un nuevo client_capture_id.');
+                return $this->checkpoint->fail(409, 'La captura fue descartada. Use un nuevo client_capture_id.');
             }
             $domain = $existing;
         }
 
         if ($file !== null) {
-            $stored = $this->support->storeUploadedAudioFile(
+            $stored = $this->checkpoint->storeUploadedAudioFile(
                 $domain->clientCaptureId(),
                 $domain->audioRelativePath(),
                 $file
@@ -106,7 +106,7 @@ final class CreateOrUploadClinicalCapture
 
         if ($texto !== '' && !$forceServer) {
             $quality = null;
-            if ($this->support->shouldEvaluateDeviceStt($stt)) {
+            if ($this->checkpoint->shouldEvaluateDeviceStt($stt)) {
                 $quality = DeviceSttQualityAssessor::assess($texto, $stt, 'captura_clinica');
             }
             $acceptDevice = $quality === null || !empty($quality['ok']);
@@ -131,19 +131,19 @@ final class CreateOrUploadClinicalCapture
                 'provenance' => ClinicalSpeechInputResolver::PROVENANCE_TEXT_ONLY,
             ]));
         } elseif (!$domain->hasAudio() && $texto === '') {
-            return $this->support->fail(400, 'Envíe audio (file) y/o texto de la consulta.');
+            return $this->checkpoint->fail(400, 'Envíe audio (file) y/o texto de la consulta.');
         } elseif ($domain->hasAudio() && $texto === '') {
             $domain->markUploaded($stt !== [] ? $stt : null);
         }
 
         try {
-            $capture = $this->support->persistDomain($domain);
+            $capture = $this->checkpoint->persistDomain($domain);
         } catch (\Throwable $e) {
-            return $this->support->fail(500, 'No se pudo persistir la captura: ' . $e->getMessage());
+            return $this->checkpoint->fail(500, 'No se pudo persistir la captura: ' . $e->getMessage());
         }
 
         $sttMeta = $capture->getSttMeta();
-        $this->support->audit()->record($capture, EncounterCaptureAudit::EVENT_UPLOADED, [
+        $this->checkpoint->audit()->record($capture, EncounterCaptureAudit::EVENT_UPLOADED, [
             'stage' => $capture->stage,
             'has_audio' => $capture->hasAudio(),
             'has_transcript' => $capture->hasTranscript(),
@@ -151,6 +151,6 @@ final class CreateOrUploadClinicalCapture
             'pending_server_stt' => !empty($sttMeta['pending_server_stt']),
         ]);
 
-        return $this->support->ok($capture, 'Captura registrada.');
+        return $this->checkpoint->ok($capture, 'Captura registrada.');
     }
 }

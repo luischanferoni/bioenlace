@@ -2,17 +2,17 @@
 
 namespace common\components\Domain\Clinical\Capture\Application\UseCase;
 
-use common\components\Domain\Clinical\Capture\Application\Support\ClinicalCaptureSupport;
+use common\components\Domain\Clinical\Capture\Application\Checkpoint\ClinicalCaptureCheckpoint;
 use common\models\Clinical\EncounterCapture;
 
 /** Caso de uso: listar capturas abiertas. */
 final class ListClinicalCaptures
 {
-    private ClinicalCaptureSupport $support;
+    private ClinicalCaptureCheckpoint $checkpoint;
 
-    public function __construct(?ClinicalCaptureSupport $support = null)
+    public function __construct(?ClinicalCaptureCheckpoint $checkpoint = null)
     {
-        $this->support = $support ?? new ClinicalCaptureSupport();
+        $this->checkpoint = $checkpoint ?? new ClinicalCaptureCheckpoint();
     }
 
     /**
@@ -24,7 +24,7 @@ final class ListClinicalCaptures
 
         $subjectPersonaId = (int) ($query['id_persona'] ?? $query['subject_persona_id'] ?? 0);
         if ($subjectPersonaId <= 0) {
-            return $this->support->fail(400, 'Se requiere id_persona.');
+            return $this->checkpoint->fail(400, 'Se requiere id_persona.');
         }
 
         $q = EncounterCapture::find()
@@ -44,7 +44,7 @@ final class ListClinicalCaptures
         foreach ($q->limit(50)->all() as $row) {
             /** @var EncounterCapture $row */
             // Listado liviano: el análisis completo va en captura/ver.
-            $items[] = $this->support->toApiArray($row, false);
+            $items[] = $this->checkpoint->toApiArray($row, false);
         }
 
         return [

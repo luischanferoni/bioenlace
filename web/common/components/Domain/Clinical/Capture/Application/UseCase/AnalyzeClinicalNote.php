@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Capture\Application\UseCase;
 
-use common\components\Domain\Clinical\Capture\Application\ConsultaProcesamientoService;
+use common\components\Domain\Clinical\Capture\Application\Extraction\ConsultaProcesamientoService;
 
 /**
  * Caso de uso: análisis IA de nota clínica (intake Capture).

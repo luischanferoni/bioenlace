@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Capture\Application;
 
-use common\components\Domain\Clinical\Capture\Application\Support\ClinicalCaptureSupport;
+use common\components\Domain\Clinical\Capture\Application\Checkpoint\ClinicalCaptureCheckpoint;
 use common\components\Domain\Clinical\Capture\Application\UseCase\AnalyzeClinicalCaptureDraft;
 use common\components\Domain\Clinical\Capture\Application\UseCase\ApplyClinicalCaptureResolutions;
 use common\components\Domain\Clinical\Capture\Application\UseCase\CreateOrUploadClinicalCapture;
@@ -21,11 +21,11 @@ use yii\web\UploadedFile;
  */
 final class EncounterCapturePipelineService
 {
-    private ClinicalCaptureSupport $support;
+    private ClinicalCaptureCheckpoint $checkpoint;
 
-    public function __construct(?ClinicalCaptureSupport $support = null)
+    public function __construct(?ClinicalCaptureCheckpoint $checkpoint = null)
     {
-        $this->support = $support ?? new ClinicalCaptureSupport();
+        $this->checkpoint = $checkpoint ?? new ClinicalCaptureCheckpoint();
     }
 
     /**
@@ -34,7 +34,7 @@ final class EncounterCapturePipelineService
      */
     public function crearOSubir(array $body, ?UploadedFile $file = null): array
     {
-        return (new CreateOrUploadClinicalCapture($this->support))->execute($body, $file);
+        return (new CreateOrUploadClinicalCapture($this->checkpoint))->execute($body, $file);
     }
 
     /**
@@ -43,7 +43,7 @@ final class EncounterCapturePipelineService
      */
     public function transcribir(array $body): array
     {
-        return (new TranscribeClinicalCapture($this->support))->execute($body);
+        return (new TranscribeClinicalCapture($this->checkpoint))->execute($body);
     }
 
     /**
@@ -52,7 +52,7 @@ final class EncounterCapturePipelineService
      */
     public function analizar(array $body): array
     {
-        return (new AnalyzeClinicalCaptureDraft($this->support))->execute($body);
+        return (new AnalyzeClinicalCaptureDraft($this->checkpoint))->execute($body);
     }
 
     /**
@@ -61,7 +61,7 @@ final class EncounterCapturePipelineService
      */
     public function guardar(array $body): array
     {
-        return (new SaveClinicalCapture($this->support))->execute($body);
+        return (new SaveClinicalCapture($this->checkpoint))->execute($body);
     }
 
     /**
@@ -70,7 +70,7 @@ final class EncounterCapturePipelineService
      */
     public function listar(array $query): array
     {
-        return (new ListClinicalCaptures($this->support))->execute($query);
+        return (new ListClinicalCaptures($this->checkpoint))->execute($query);
     }
 
     /**
@@ -79,7 +79,7 @@ final class EncounterCapturePipelineService
      */
     public function ver(array $body): array
     {
-        return (new ViewClinicalCapture($this->support))->execute($body);
+        return (new ViewClinicalCapture($this->checkpoint))->execute($body);
     }
 
     /**
@@ -88,7 +88,7 @@ final class EncounterCapturePipelineService
      */
     public function descartar(array $body): array
     {
-        return (new DiscardClinicalCapture($this->support))->execute($body);
+        return (new DiscardClinicalCapture($this->checkpoint))->execute($body);
     }
 
     /**
@@ -97,7 +97,7 @@ final class EncounterCapturePipelineService
      */
     public function aplicarResoluciones(array $body): array
     {
-        return (new ApplyClinicalCaptureResolutions($this->support))->execute($body);
+        return (new ApplyClinicalCaptureResolutions($this->checkpoint))->execute($body);
     }
 
     /**
@@ -106,7 +106,7 @@ final class EncounterCapturePipelineService
      */
     public function resolveAudioDownload(array $query): array
     {
-        return (new ResolveClinicalCaptureAudio($this->support))->execute($query);
+        return (new ResolveClinicalCaptureAudio($this->checkpoint))->execute($query);
     }
 
     /**
@@ -114,6 +114,6 @@ final class EncounterCapturePipelineService
      */
     public function toApiArray(EncounterCapture $capture, bool $includeAnalysis = false): array
     {
-        return $this->support->toApiArray($capture, $includeAnalysis);
+        return $this->checkpoint->toApiArray($capture, $includeAnalysis);
     }
 }

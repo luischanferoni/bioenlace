@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Capture\Application\UseCase;
 
-use common\components\Domain\Clinical\Capture\Application\Support\ClinicalCaptureSupport;
+use common\components\Domain\Clinical\Capture\Application\Checkpoint\ClinicalCaptureCheckpoint;
 use common\components\Domain\Clinical\Capture\Application\UseCase\AnalyzeClinicalNote;
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureStage;
 use common\models\Clinical\EncounterCaptureAudit;
@@ -11,11 +11,11 @@ use common\components\Domain\Clinical\Encounter\Application\EncounterCaptureAudi
 /** Caso de uso: análisis IA del transcript del checkpoint. */
 final class AnalyzeClinicalCaptureDraft
 {
-    private ClinicalCaptureSupport $support;
+    private ClinicalCaptureCheckpoint $checkpoint;
 
-    public function __construct(?ClinicalCaptureSupport $support = null)
+    public function __construct(?ClinicalCaptureCheckpoint $checkpoint = null)
     {
-        $this->support = $support ?? new ClinicalCaptureSupport();
+        $this->checkpoint = $checkpoint ?? new ClinicalCaptureCheckpoint();
     }
 
     /**
@@ -25,12 +25,12 @@ final class AnalyzeClinicalCaptureDraft
     public function execute(array $body): array
     {
 
-        $capture = $this->support->findOpenCapture($body);
+        $capture = $this->checkpoint->findOpenCapture($body);
         if (is_array($capture)) {
             return $capture;
         }
 
-        $domain = $this->support->captureRows()->toAggregate($capture);
+        $domain = $this->checkpoint->captureRows()->toAggregate($capture);
 
         $textoOverride = trim((string) ($body['consulta'] ?? $body['texto'] ?? ''));
         if ($textoOverride !== '') {
@@ -38,14 +38,14 @@ final class AnalyzeClinicalCaptureDraft
         }
 
         if (!$domain->hasTranscript()) {
-            return $this->support->fail(400, 'No hay transcripciÃ³n. Ejecute captura-transcribir o envÃ­e texto.', $capture);
+            return $this->checkpoint->fail(400, 'No hay transcripciÃ³n. Ejecute captura-transcribir o envÃ­e texto.', $capture);
         }
 
         if ($domain->stage() === ClinicalCaptureStage::READY_FOR_REVIEW
             && $domain->analysisResponse() !== []
             && empty($body['force'])
         ) {
-            return $this->support->ok($capture, 'AnÃ¡lisis ya disponible.', true);
+            return $this->checkpoint->ok($capture, 'AnÃ¡lisis ya disponible.', true);
         }
 
         $analyzeBody = $body;
@@ -69,20 +69,20 @@ final class AnalyzeClinicalCaptureDraft
         if (empty($out['success'])) {
             $msg = trim((string) ($out['message'] ?? 'Error al analizar la consulta.'));
             $domain->markAnalysisFailed($msg !== '' ? $msg : 'Error al analizar la consulta.');
-            $capture = $this->support->persistDomain($domain);
-            $this->support->audit()->record($capture, EncounterCaptureAudit::EVENT_ANALYSIS_FAILED, [
+            $capture = $this->checkpoint->persistDomain($domain);
+            $this->checkpoint->audit()->record($capture, EncounterCaptureAudit::EVENT_ANALYSIS_FAILED, [
                 'attempts_analysis' => $domain->attemptsAnalysis(),
                 'error_code' => 'analysis_failed',
             ]);
             $status = (int) ($out['__statusCode'] ?? 500);
 
-            return $this->support->fail($status > 0 ? $status : 500, $capture->last_error, $capture);
+            return $this->checkpoint->fail($status > 0 ? $status : 500, $capture->last_error, $capture);
         }
 
         $textoProcesado = isset($out['texto_procesado'])
             ? (string) $out['texto_procesado']
             : (string) $domain->transcript();
-        $extraidos = $this->support->extractDatosExtraidosFromAnalizar($out);
+        $extraidos = $this->checkpoint->extractDatosExtraidosFromAnalizar($out);
         $snapshot = $out;
         unset($snapshot['html']);
         $encounterId = isset($out['encounter_id'])
@@ -103,8 +103,8 @@ final class AnalyzeClinicalCaptureDraft
             $staged,
             $encounterId
         );
-        $capture = $this->support->persistDomain($domain);
-        $this->support->audit()->record(
+        $capture = $this->checkpoint->persistDomain($domain);
+        $this->checkpoint->audit()->record(
             $capture,
             EncounterCaptureAudit::EVENT_ANALYZED,
             array_merge(
@@ -113,6 +113,6 @@ final class AnalyzeClinicalCaptureDraft
             )
         );
 
-        return $this->support->ok($capture, 'AnÃ¡lisis listo.', true);
+        return $this->checkpoint->ok($capture, 'AnÃ¡lisis listo.', true);
     }
 }

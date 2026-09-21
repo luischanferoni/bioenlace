@@ -1,8 +1,8 @@
 <?php
 
-namespace common\components\Domain\Clinical\Capture\Application\Text;
+namespace common\components\Domain\Clinical\Capture\Application\Extraction;
 
-use common\components\Domain\Clinical\Capture\Application\Text\EncounterCapturePostProcessKnobs;
+use common\components\Domain\Clinical\Capture\Application\Extraction\EncounterCapturePostProcessKnobs;
 use common\components\Domain\Clinical\Capture\Domain\Policy\EncounterCaptureExtractionPostProcessPolicy;
 use common\components\Domain\Clinical\Capture\Infrastructure\Terminology\EncounterCaptureTerminologyLookup;
 

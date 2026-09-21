@@ -2,29 +2,52 @@
 
 Capacidad: **intake de documentación clínica** — texto/audio → normalización → extracción → issues resolubles → checkpoint de captura.
 
-Norte: [ddd-norte-modelo-rico.md](../../../../../docs/decisions/ddd-norte-modelo-rico.md).
+Norte: [ddd-norte-modelo-rico.md](../../../../../docs/decisions/ddd-norte-modelo-rico.md), [domain-folder-grammar.md](../../../../../docs/decisions/domain-folder-grammar.md).
 
 ## Límites
 
 | Sí (Capture) | No |
 |--------------|-----|
-| Pipeline `/captura/*`, STT, post-proceso, issues | Guardar nota FHIR → `Encounter/Application/Documentation/` |
+| Flujo `/captura/*`, STT, post-proceso, issues | Guardar nota FHIR → `Encounter/Application/Documentation/` |
+
+## Eje de carpetas en `Application/`
+
+**Eje único: lenguaje ubicuo / capacidad** (preocupación de negocio del intake), no cajones técnicos (`Support/`, `Helpers/`, `Shared/`).
+
+Excepciones de gramática CA del repo ([domain-folder-grammar.md](../../../../../docs/decisions/domain-folder-grammar.md)):
+
+| Carpeta | Rol |
+|---------|-----|
+| `UseCase/` | Entrypoints / interactors (una intención = una clase) |
+| `Presentation/` | `*Presenter` — forma API del checkpoint |
+
+El resto son **capacidades** del language de captura:
+
+| Carpeta | Capacidad |
+|---------|-----------|
+| `Checkpoint/` | Lookup, persistencia del aggregate, audio del checkpoint |
+| `Extraction/` | Texto clínico, post-proceso IA, análisis (`ConsultaProcesamientoService`, …) |
+| `RowContract/` | Wiring Application ↔ `Domain/RowContract` + resoluciones |
+| `Definition/` | EncounterDefinition: categorías, bootstrap, contexto operativo, sanitizer |
+
+Facade legacy en raíz: `EncounterCapturePipelineService` (preferir `UseCase/`).
 
 ## Forma
 
 ```text
 Application/
   UseCase/          etapas HTTP (Analyze*, Save*, Transcribe*, …)
-  RowContract/      wiring + registry compuesto + ResolutionApplier
-  Support/          helpers compartidos (no entrypoint)
-  Text/             post-proceso / knobs / validator de términos
-  Workflow/         resolvers / sanitizer de definición
-  *Service.php      orquestadores Application (raíz)
+  Checkpoint/       ClinicalCaptureCheckpoint (lookup / persist / audio)
+  Presentation/     ClinicalCapturePresenter (ok / fail / toApiArray)
+  Extraction/       texto + post-proceso + análisis IA
+  RowContract/      factory, registry compuesto, ResolutionApplier
+  Definition/       definición de encounter / categorías / bootstrap
+  EncounterCapturePipelineService.php   # facade legacy
 
 Domain/
-  Catalog/          *Catalog (actor, workflow, medicación, encounter class)
+  Catalog/          *Catalog
   Model/            aggregate, VO, stages, issue factory
-  RowContract/      *RowContract + ExtractedRowFields (integridad por tipología)
+  RowContract/      *RowContract + ExtractedRowFields
   Policy/           CompletenessValidator, ExtractionPostProcessPolicy
   Port/             Repository, RowContractRegistry, DerivacionRowSupport, STT, Terminology
 
@@ -36,23 +59,18 @@ Infrastructure/     adapters Yii / STT / terminology / logging
 | Oleada | Estado |
 |--------|--------|
 | 1–3b | hechas (Domain rico, Documentation en Encounter, pipeline vía aggregate) |
-| 4 | hecha — use cases por etapa; controller apunta a ellos; Support interno |
-| 4b | hecha — cuerpos de etapa en cada use case; Support solo helpers |
-| 5 | hecha — Domain Policy sin Platform; knobs vía `EncounterCapturePostProcessKnobs` |
-| 5b | hecha — VO `ClinicalCaptureResolution` en Applier |
-| 6 | hecha — completitud/resoluciones vía port `ClinicalCaptureRowContractRegistry` (adapter Yii/`*Input`) |
-| 6b | hecha — Domain Policy sin default Infra; factory Application; catálogos en `Domain/Catalog` |
-| 7 | hecha — `templateForOffering(itemName, serviceName, class)`; Domain Catalog sin AR |
-| 7b | parcial — piloto `EncounterReasonRowContract` + registry compuesto Domain→Yii |
-| 8 | parcial — Domain contracts: Practica, Regimen, Oftalmología estudio, Odontología ítem |
-| 9 | hecha — Indicación, Medicación, Balance hídrico en Domain (+ `MedicacionCaptureCatalog`) |
-| 10 | hecha — Derivación vía `DerivacionRowContract` + port `DerivacionRowSupportPort` |
-| 11 | hecha — reorganización por sufijo/carpeta (`UseCase/`, `RowContract/`, `EncounterClassCatalog`) |
+| 4–4b | hechas — use cases por etapa; Support/helpers internos |
+| 5–5b | hechas — Domain Policy sin Platform; VO Resolution |
+| 6–6b | hechas — port RowContractRegistry; catálogos Domain |
+| 7–10 | tipologías Domain + Derivacion port (parcial en 7b–8) |
+| 11 | hecha — carpeta/sufijo (`UseCase/`, `RowContract/`, `EncounterClassCatalog`) |
+| 12 | hecha — eje Application por capacidad (`Checkpoint/`, `Extraction/`, `Definition/`, `Presentation/`) |
 
 ## Deuda restante
 
 - Tipologías residuales sin contrato Domain si aparecen (p. ej. DiagnosticoConsulta / signos vitales).
 - Adapter de derivación aún habla con AR `Servicio` (esperado en Infrastructure).
+- Facade `EncounterCapturePipelineService` (nombre histórico) aún en raíz.
 
 ## Referencias
 

@@ -102,6 +102,10 @@ El **egreso** es el cierre final del episodio: destino, diagnóstico operativo y
 
 El paciente **no** ve el dictado crudo ni el expediente legal completo; ve el **resumen en lenguaje claro** descrito en [resumen-atencion-paciente.md](./resumen-atencion-paciente.md).
 
+## Auditoría del pipeline (superadmin)
+
+Cada borrador de captura deja un **trail** de etapas (subida, STT, análisis IA, resoluciones, guardado o descarte). Lo escribe el dominio al pasar por el pipeline; solo se consulta en la app **admin** (listado, fallos y detalle con timeline). En el evento de guardado se registra qué sugerencias de IA se aceptaron o rechazaron frente a lo que el profesional confirmó. El audio completado sigue borrándose; el detalle de auditoría puede incluir transcript y extracción. Fuera de alcance actual: tablero KPIs, coding audit y diff FHIR.
+
 ## Conversación clínica
 
 La captura puede iniciarse desde la conversación integrada o desde el timeline; arquitectura en [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md).

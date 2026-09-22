@@ -15,12 +15,12 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Receta electrónica (AR) | `receta-electronica/` | Fases 1–2 en producción; repositorio nacional pendiente |
 | Interoperabilidad HC FHIR | `interoperabilidad-historia-clinica/` | Código + reconcile listos; homologación / credenciales pendientes |
 | Perfil de comportamiento en turnos | `perfil-comportamiento-turnos/` | V1 + shadow; piloto fase 5 pendiente |
-| Auditoría captura clínica | `auditoria-captura-clinica/` | Trail pipeline + admin superadmin (Fase 1); volcar a producto y cerrar |
 
 ## Planes archivados (carpeta eliminada)
 
 | Plan | Documentación estable |
 |------|------------------------|
+| Auditoría captura clínica | [captura-clinica.md](../producto/captura-clinica.md) (sección auditoría del pipeline) |
 | Alta cuenta institucional | [alta-cuenta-licencia.md](../producto/alta-cuenta-licencia.md) + [onboarding-comercial-self-service.md](../decisions/onboarding-comercial-self-service.md) |
 | Urgencias — triage + tablero | [urgencias-guardia.md](../producto/urgencias-guardia.md) + [his-completo/02-urgencias.md](../his-completo/02-urgencias.md) |
 | Admisión: identidad + ventanilla | [registro-paciente.md](../producto/registro-paciente.md) + [representacion-paciente.md](../producto/representacion-paciente.md) |

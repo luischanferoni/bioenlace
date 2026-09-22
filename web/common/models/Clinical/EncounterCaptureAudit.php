@@ -15,7 +15,7 @@ use yii\db\ActiveRecord;
  * @property string|null $meta_json
  * @property string $created_at
  *
- * @see web/docs/plans/auditoria-captura-clinica/design.md
+ * @see web/docs/producto/captura-clinica.md
  */
 class EncounterCaptureAudit extends ActiveRecord
 {

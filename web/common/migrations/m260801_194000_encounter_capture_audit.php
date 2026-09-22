@@ -7,7 +7,7 @@ use yii\db\Migration;
 /**
  * Trail de auditoría del pipeline de captura clínica.
  *
- * @see web/docs/plans/auditoria-captura-clinica/design.md
+ * @see web/docs/producto/captura-clinica.md
  */
 class m260801_194000_encounter_capture_audit extends Migration
 {

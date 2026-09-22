@@ -13,7 +13,7 @@ use yii\web\NotFoundHttpException;
 /**
  * Auditoría del pipeline de captura clínica (solo superadmin).
  *
- * @see web/docs/plans/auditoria-captura-clinica/design.md
+ * @see web/docs/producto/captura-clinica.md
  */
 class CapturaClinicaAuditController extends Controller
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Organization\Efector\Application\Service;
+namespace common\components\Domain\Organization\Efector\Application\UseCase;
 
 use common\components\Domain\Organization\Efector\Application\Service\EfectorEncounterEntitlementService;
 use common\components\Domain\Organization\Efector\Application\UseCase\SignUpInstitutionalEfector;
@@ -13,7 +13,7 @@ use Yii;
 /**
  * Cambios de membresía de pago (POOL) vs afiliación (AFILIADO) para un efector.
  */
-final class BillingMembershipSwitchService
+final class SwitchBillingMembership
 {
     /**
      * @return array<string, mixed>

@@ -8,7 +8,7 @@ use yii\web\NotFoundHttpException;
 use common\models\Person\Persona;
 use common\models\Platform\User;
 use common\models\Organization\ProfesionalEfectorServicio;
-use common\components\Domain\Organization\SesionOperativa\Application\Service\SesionOperativaService;
+use common\components\Domain\Organization\SesionOperativa\Application\UseCase\EstablishOperativeSession;
 
 /**
  * Componente user para la aplicación web (sesión, cookie, login por formulario).
@@ -94,6 +94,6 @@ class UserConfig extends BaseUserConfig
         ));
         Yii::$app->user->setEfectores(ArrayHelper::map($efectores, 'id_efector', 'nombre'));
 
-        SesionOperativaService::aplicarAgendaDisponibleDesdeContextoUsuario();
+        EstablishOperativeSession::aplicarAgendaDisponibleDesdeContextoUsuario();
     }
 }

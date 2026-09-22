@@ -2,7 +2,7 @@
 
 ## Identidad (quién es)
 
-Un solo núcleo: `RegistroStaffPacienteService` + `RegistroService`.
+Un solo núcleo: `RegisterPatientByStaff` + `RegisterPerson`.
 
 | Camino | Entrada | Resultado |
 |--------|---------|-----------|
@@ -20,7 +20,7 @@ Domicilio: igual que la app (cron / gateway), no edición en ventanilla.
 `EmergencyIntakeService::ingresar`:
 
 1. `id_persona` conocido, **o**
-2. Identidad DNI → `RegistroStaffPacienteService::registrar(modo=dni_lector)` → `id_persona`, **o**
+2. Identidad DNI → `RegisterPatientByStaff::registrar(modo=dni_lector)` → `id_persona`, **o**
 3. (fase 2) Didit.
 4. (fase 3) `identidad_pendiente` → placeholder por episodio (sin documento); luego `vincularIdentidad`.
 

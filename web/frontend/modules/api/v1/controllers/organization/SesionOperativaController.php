@@ -7,7 +7,7 @@ use Yii;
 use frontend\components\WebApiJwtSessionService;
 use common\components\Platform\Core\Auth\StaffMobileAccessService;
 use common\components\Domain\Organization\SesionOperativa\Application\Service\SesionOperativaProfesionalHabilitacionService;
-use common\components\Domain\Organization\SesionOperativa\Application\Service\SesionOperativaService;
+use common\components\Domain\Organization\SesionOperativa\Application\UseCase\EstablishOperativeSession;
 
 /**
  * API Sesión Operativa: contexto operativo en sesión y opciones validadas para el wizard.
@@ -19,7 +19,7 @@ use common\components\Domain\Organization\SesionOperativa\Application\Service\Se
  *   respuesta con encounter_classes, efectores (con servicios validados), efectores_con_problemas.
  *
  * Con body completo: { "efector_id": 123, "servicio_id": 456, "encounter_class": "AMB" }
- *   mismo comportamiento que SesionOperativaService::establecer (sesión + redirect_url + context_token).
+ *   mismo comportamiento que EstablishOperativeSession::establecer (sesión + redirect_url + context_token).
  */
 class SesionOperativaController extends BaseController
 {
@@ -66,10 +66,10 @@ class SesionOperativaController extends BaseController
                 return $this->success($data, $msg);
             }
 
-            /** @var SesionOperativaService $service */
-            $service = Yii::$container->has(SesionOperativaService::class)
-                ? Yii::$container->get(SesionOperativaService::class)
-                : new SesionOperativaService();
+            /** @var EstablishOperativeSession $service */
+            $service = Yii::$container->has(EstablishOperativeSession::class)
+                ? Yii::$container->get(EstablishOperativeSession::class)
+                : new EstablishOperativeSession();
 
             $data = $service->establecer($body);
 
@@ -128,7 +128,7 @@ class SesionOperativaController extends BaseController
             return false;
         }
 
-        return !SesionOperativaService::isServicioAdminEfector((int) $sv);
+        return !EstablishOperativeSession::isServicioAdminEfector((int) $sv);
     }
 
     /**

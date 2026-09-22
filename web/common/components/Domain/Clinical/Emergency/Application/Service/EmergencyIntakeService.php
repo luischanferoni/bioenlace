@@ -5,8 +5,8 @@ namespace common\components\Domain\Clinical\Emergency\Application\Service;
 use common\components\Domain\Clinical\Emergency\Domain\BoardState;
 use common\components\Domain\Clinical\Emergency\Domain\BoardEventType;
 use common\components\Domain\Person\Identity\Application\Service\PersonaBusquedaAsistenteUiService;
-use common\components\Domain\Person\Identity\Application\Service\PersonaIdentidadPendienteService;
-use common\components\Domain\Person\Identity\Application\Service\PersonaIdentidadResolverService;
+use common\components\Domain\Person\Identity\Application\UseCase\CreatePendingIdentity;
+use common\components\Domain\Person\Identity\Application\UseCase\ResolvePersonIdentity;
 use common\components\Platform\Ui\Home\Service\HomePanelManifest;
 use common\models\Clinical\Emergency\EmergencyEpisode;
 use common\models\Organization\InfraestructuraCama;
@@ -37,7 +37,7 @@ final class EmergencyIntakeService
         $this->assertIdentidadDniPermitida($body);
         $pendiente = $this->usarIdentidadPendiente($body);
         $idPersona = $pendiente
-            ? (int) (new PersonaIdentidadPendienteService())->crearPlaceholder()->id_persona
+            ? (int) (new CreatePendingIdentity())->crearPlaceholder()->id_persona
             : $this->resolverIdPersona($body);
 
         $ingresaEn = (string) ($body['ingresa_en'] ?? 'deambula');
@@ -115,7 +115,7 @@ final class EmergencyIntakeService
         }
 
         $idPlaceholder = (int) $guardia->id_persona;
-        $idDefinitiva = (new PersonaIdentidadResolverService())->resolver($body);
+        $idDefinitiva = (new ResolvePersonIdentity())->resolver($body);
         if ($idDefinitiva <= 0) {
             throw new \InvalidArgumentException('No se pudo resolver la persona definitiva.');
         }
@@ -133,7 +133,7 @@ final class EmergencyIntakeService
         }
 
         if ($idDefinitiva !== $idPlaceholder) {
-            (new PersonaIdentidadPendienteService())->retargetEpisodioGuardia(
+            (new CreatePendingIdentity())->retargetEpisodioGuardia(
                 (int) $guardia->id,
                 $idPlaceholder,
                 $idDefinitiva
@@ -167,7 +167,7 @@ final class EmergencyIntakeService
     private function resolverIdPersona(array $body): int
     {
         try {
-            return (new PersonaIdentidadResolverService())->resolver($body);
+            return (new ResolvePersonIdentity())->resolver($body);
         } catch (\InvalidArgumentException $e) {
             throw new \InvalidArgumentException(
                 'Elegí un paciente de la búsqueda, identificá uno con DNI (documento y sexo, o código de barras), con foto del DNI (Didit) o como identidad pendiente (NN).',
@@ -227,7 +227,7 @@ final class EmergencyIntakeService
      */
     public static function looksLikeDiditIdentity(array $body): bool
     {
-        return PersonaIdentidadResolverService::looksLikeDiditIdentity($body);
+        return ResolvePersonIdentity::looksLikeDiditIdentity($body);
     }
 
     /**
@@ -235,7 +235,7 @@ final class EmergencyIntakeService
      */
     public static function looksLikeDniIdentity(array $body): bool
     {
-        return PersonaIdentidadResolverService::looksLikeDniIdentity($body);
+        return ResolvePersonIdentity::looksLikeDniIdentity($body);
     }
 
     /**
@@ -307,7 +307,7 @@ final class EmergencyIntakeService
 
         $out = [];
         foreach ($personas as $persona) {
-            if (PersonaIdentidadPendienteService::esPlaceholder($persona)) {
+            if (CreatePendingIdentity::esPlaceholder($persona)) {
                 continue;
             }
             $out[] = [

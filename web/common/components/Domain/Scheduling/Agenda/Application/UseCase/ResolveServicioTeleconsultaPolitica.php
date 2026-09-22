@@ -3,7 +3,7 @@
 namespace common\components\Domain\Scheduling\Agenda\Application\UseCase;
 
 use common\components\Domain\Organization\Efector\Application\Authorization\EfectorOperationAccess;
-use common\components\Domain\Organization\SesionOperativa\Application\Service\SesionOperativaService;
+use common\components\Domain\Organization\SesionOperativa\Application\UseCase\EstablishOperativeSession;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\models\Scheduling\ReservaTriageTeleconsultaElegibilidad;
 use common\models\Organization\Servicio;
@@ -191,7 +191,7 @@ final class ResolveServicioTeleconsultaPolitica
         }
         $idServicio = (int) Yii::$app->user->getServicioActual();
 
-        return $idServicio > 0 && SesionOperativaService::isServicioAdminEfector($idServicio);
+        return $idServicio > 0 && EstablishOperativeSession::isServicioAdminEfector($idServicio);
     }
 
     private function assertAdminEfectorOperativo(): void

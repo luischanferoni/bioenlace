@@ -1,6 +1,6 @@
 # DDD norte — Org / Person / Scheduling (post-empaquetado)
 
-**Estado:** en curso  
+**Estado:** fases 01–05 hechas (pendiente commit deploy + opcional Representation)  
 **Precondición:** empaquetado módulo-primero ya hecho ([`ddd-empaquetado-transversal`](../ddd-empaquetado-transversal/) archivado en decisions).  
 **Norte:** [`ddd-norte-modelo-rico.md`](../../decisions/ddd-norte-modelo-rico.md), [`ddd-un-eje-por-nivel`](../../../.cursor/rules/ddd-un-eje-por-nivel.mdc).
 
@@ -25,12 +25,12 @@ Pasar de “carpetas bien” a **modelo rico**: UseCases verb phrase, Domain con
 | **02** | Person UseCases (registro, update identidad básica, staff alta paciente, front-desk session) | Idem |
 | **03** | Agenda Infra: Port `use` + stubs fuera de raíz; External → `NisFhir/` | Sin PHP suelto en `Infrastructure/`; FQCN params OK |
 | **04** | Docs Identity vs Identidad; Integrations/fhir-scheduling paths | Sin menciones stale a `Identidad/` ni `Scheduling/Infrastructure/` |
-| **05** | (Opcional) Domain thin → Catalog/Policy desde Services gordos | Solo si sobra ciclo |
+| **05** | Más UseCases (AdminEfector, billing switch, sesión operativa, identidad pendiente/resolver) + CuilPolicy wiring | Callers OK; `PersonCuilService` → `CuilPolicy` |
 
 ## No hacer en este plan
 
 - Mover frontera Agenda-PES (ownership explícito → ADR aparte).
-- Extraer UseCase de `SesionOperativaService` completo (Component + muchos statics): dejar Service; si hace falta, UseCase fino solo para `establecer` en fase posterior.
+- Partir Representation (`PatientDelegation` / `VerifiedGuardianship`) en UseCases por método — ciclo aparte.
 - Programs / Integrations código nuevo.
 
 ## Criterio de naming UseCase

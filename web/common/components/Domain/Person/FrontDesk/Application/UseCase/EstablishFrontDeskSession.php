@@ -3,7 +3,7 @@
 namespace common\components\Domain\Person\FrontDesk\Application\UseCase;
 
 use common\components\Domain\Person\Representation\Domain\Model\RepresentationPermission;
-use common\components\Domain\Person\Identity\Application\Service\PersonaIdentidadResolverService;
+use common\components\Domain\Person\Identity\Application\UseCase\ResolvePersonIdentity;
 use common\models\Person\Persona;
 use common\models\Person\FrontDeskSession;
 use Yii;
@@ -31,7 +31,7 @@ final class EstablishFrontDeskSession
             throw new \InvalidArgumentException('Sesión de staff incompleta.');
         }
 
-        $subjectId = (new PersonaIdentidadResolverService())->resolver($body);
+        $subjectId = (new ResolvePersonIdentity())->resolver($body);
         if ($subjectId === $staffPersonaId) {
             throw new \InvalidArgumentException('La ventanilla es para un paciente, no para tu propia persona.');
         }
@@ -149,10 +149,10 @@ final class EstablishFrontDeskSession
      */
     private function identityMethod(array $body): string
     {
-        if (PersonaIdentidadResolverService::looksLikeDiditIdentity($body)) {
+        if (ResolvePersonIdentity::looksLikeDiditIdentity($body)) {
             return FrontDeskSession::METHOD_DIDIT;
         }
-        if (PersonaIdentidadResolverService::looksLikeDniIdentity($body)) {
+        if (ResolvePersonIdentity::looksLikeDniIdentity($body)) {
             return FrontDeskSession::METHOD_DNI_LECTOR;
         }
 

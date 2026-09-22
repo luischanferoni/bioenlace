@@ -66,7 +66,7 @@ Base: `/api/v1/clinical/emergency-guardia`
 | Acción | Método | Notas |
 |--------|--------|-------|
 | Panel inicio (tablero) | `GET /api/v1/home/panel` | Sección `emergency_board` (+ `emergency_indicators`); flags `puede_triage` / `puede_ingresar` / `puede_ingresar_dni` / `puede_atender` / `puede_documentar` |
-| Ingreso | `POST …/ingresar` | Web: `id_persona` o `identidad_pendiente` (NN). App: además DNI (`codigo_barras` **o** `documento` + `sexo_biologico`) o Didit (`verification_id`). Vincular después: `POST …/{id}/vincular-identidad` (web: paciente conocido; app: también DNI/Didit). Núcleo: `RegistroStaffPacienteService`. `ingresa_en`, `ingresa_con`. Búsqueda: `GET …/buscar-persona-ingreso` |
+| Ingreso | `POST …/ingresar` | Web: `id_persona` o `identidad_pendiente` (NN). App: además DNI (`codigo_barras` **o** `documento` + `sexo_biologico`) o Didit (`verification_id`). Vincular después: `POST …/{id}/vincular-identidad` (web: paciente conocido; app: también DNI/Didit). Núcleo: `RegisterPatientByStaff`. `ingresa_en`, `ingresa_con`. Búsqueda: `GET …/buscar-persona-ingreso` |
 | Triage | `POST …/{id}/registrar-triage` | Manchester 1–5 + motivo + vitales opcionales (staff) |
 | Asignar | `POST …/{id}/asignar` | Uso interno / legado; el flujo médico usa `iniciar-atencion` |
 | Atender | `POST …/{id}/iniciar-atencion` | Asigna PES de sesión si falta; devuelve `captura_url` |

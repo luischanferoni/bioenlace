@@ -4,7 +4,7 @@
 |-------|--------|
 | Slug | `admision-identidad-ventanilla` |
 | Estado | En ejecución |
-| Superficie | Ingreso guardia (web + app Personal de Salud), `RegistroStaffPacienteService`, rol `Administrativo` |
+| Superficie | Ingreso guardia (web + app Personal de Salud), `RegisterPatientByStaff`, rol `Administrativo` |
 
 ## Índice
 

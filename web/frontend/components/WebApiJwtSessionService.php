@@ -146,7 +146,7 @@ final class WebApiJwtSessionService
             'exp' => $now + self::TTL_SECONDS,
         ];
 
-        // Preservar contexto operativo de sesión al renovar (mismo criterio que SesionOperativaService).
+        // Preservar contexto operativo de sesión al renovar (mismo criterio que EstablishOperativeSession).
         $idEfector = (int) Yii::$app->user->getIdEfector();
         if ($idEfector > 0) {
             $payload['id_efector'] = $idEfector;

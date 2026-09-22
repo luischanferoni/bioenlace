@@ -3,7 +3,7 @@
 namespace frontend\modules\api\v1\controllers\organization;
 
 use frontend\modules\api\v1\controllers\BaseController;
-use common\components\Domain\Organization\Efector\Application\Service\BillingMembershipSwitchService;
+use common\components\Domain\Organization\Efector\Application\UseCase\SwitchBillingMembership;
 use common\components\Domain\Organization\Efector\Application\UseCase\SignUpInstitutionalEfector;
 use common\components\Domain\Organization\Efector\Application\UseCase\RequestMinistrySignup;
 use common\components\Platform\Core\Auth\DemoSandboxAccessService;
@@ -252,7 +252,7 @@ class LicenciaController extends BaseController
             throw new BadRequestHttpException('Establecé el efector en la sesión operativa.');
         }
 
-        return $this->success(BillingMembershipSwitchService::summaryForEfector($idEfector));
+        return $this->success(SwitchBillingMembership::summaryForEfector($idEfector));
     }
 
     /**
@@ -272,7 +272,7 @@ class LicenciaController extends BaseController
         }
 
         try {
-            $data = BillingMembershipSwitchService::desvincularPagoMinisterio(
+            $data = SwitchBillingMembership::desvincularPagoMinisterio(
                 $idEfector,
                 (int) Yii::$app->user->id,
                 is_array($body['plan'] ?? null) ? $body['plan'] : [],
@@ -303,7 +303,7 @@ class LicenciaController extends BaseController
         }
 
         try {
-            $req = BillingMembershipSwitchService::solicitarAsociarPagoMinisterio(
+            $req = SwitchBillingMembership::solicitarAsociarPagoMinisterio(
                 $idEfector,
                 (int) Yii::$app->user->id,
                 $idMinisterio
@@ -324,7 +324,7 @@ class LicenciaController extends BaseController
             // Fallback: PES AdminEfector en sesión (API sin roles de sesión web)
             $idServicio = (int) (Yii::$app->user->getServicioActual() ?? 0);
             if ($idServicio > 0
-                && \common\components\Domain\Organization\SesionOperativa\Application\Service\SesionOperativaService::isServicioAdminEfector($idServicio)
+                && \common\components\Domain\Organization\SesionOperativa\Application\UseCase\EstablishOperativeSession::isServicioAdminEfector($idServicio)
             ) {
                 return;
             }

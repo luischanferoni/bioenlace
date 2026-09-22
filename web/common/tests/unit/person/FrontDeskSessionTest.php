@@ -3,7 +3,7 @@
 namespace common\tests\unit\person;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Person\Identity\Application\Service\PersonaIdentidadResolverService;
+use common\components\Domain\Person\Identity\Application\UseCase\ResolvePersonIdentity;
 use common\components\Domain\Person\FrontDesk\Application\Service\FrontDeskSessionConfigService;
 use common\models\Person\FrontDeskSession;
 
@@ -48,12 +48,12 @@ class FrontDeskSessionTest extends Unit
 
     public function testResolverPareceIdentidadIgualQueGuardia(): void
     {
-        $this->assertFalse(PersonaIdentidadResolverService::looksLikeDniIdentity([]));
-        $this->assertTrue(PersonaIdentidadResolverService::looksLikeDniIdentity([
+        $this->assertFalse(ResolvePersonIdentity::looksLikeDniIdentity([]));
+        $this->assertTrue(ResolvePersonIdentity::looksLikeDniIdentity([
             'documento' => '37.123.456',
             'sexo_biologico' => 1,
         ]));
-        $this->assertTrue(PersonaIdentidadResolverService::looksLikeDiditIdentity([
+        $this->assertTrue(ResolvePersonIdentity::looksLikeDiditIdentity([
             'verification_id' => 'sess_abc',
         ]));
     }

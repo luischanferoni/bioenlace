@@ -14,7 +14,7 @@ use yii\web\Response;
 use common\models\Organization\ProfesionalEfectorServicioBusqueda;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Person\Persona;
-use common\components\Domain\Organization\Pes\Application\Service\AdminEfectorAsignacionService;
+use common\components\Domain\Organization\Pes\Application\UseCase\EnsureAdminEfectorAssignment;
 
 /**
  * Gestión backend de filas PES (`profesional_efector_servicio`): listados, admin efector, live search.
@@ -85,7 +85,7 @@ class ProfesionalEfectorServicioController extends Controller
         }
         $error = false;
         try {
-            $admin_efector_servicio = AdminEfectorAsignacionService::requireSistemaServicio();
+            $admin_efector_servicio = EnsureAdminEfectorAssignment::requireSistemaServicio();
         } catch (\RuntimeException $e) {
             throw new NotFoundHttpException($e->getMessage());
         }
@@ -110,7 +110,7 @@ class ProfesionalEfectorServicioController extends Controller
 
                 foreach ($id_efectores_a_crear as $id_efector_a_crear) {
                     try {
-                        AdminEfectorAsignacionService::ensurePersonaEnEfector(
+                        EnsureAdminEfectorAssignment::ensurePersonaEnEfector(
                             (int) $persona->id_persona,
                             (int) $id_efector_a_crear
                         );
@@ -151,7 +151,7 @@ class ProfesionalEfectorServicioController extends Controller
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
-        if (AdminEfectorAsignacionService::findSistemaServicio() === null) {
+        if (EnsureAdminEfectorAssignment::findSistemaServicio() === null) {
             return ['error' => true, 'message' => 'Servicio AdminEfector no configurado.'];
         }
 
@@ -166,7 +166,7 @@ class ProfesionalEfectorServicioController extends Controller
         }
         try {
             // Solo el efector del PES clickeado (no propagar a DEV/otros centros de la misma persona).
-            AdminEfectorAsignacionService::ensurePersonaEnEfector($idPersona, $idEfector);
+            EnsureAdminEfectorAssignment::ensurePersonaEnEfector($idPersona, $idEfector);
         } catch (\Throwable $e) {
             return ['error' => true, 'message' => $e->getMessage()];
         }
@@ -185,7 +185,7 @@ class ProfesionalEfectorServicioController extends Controller
         $idPersona = (int) $pes->id_persona;
         $idEfector = (int) $pes->id_efector;
         if ($idPersona > 0 && $idEfector > 0) {
-            AdminEfectorAsignacionService::removePersonaEnEfector($idPersona, $idEfector);
+            EnsureAdminEfectorAssignment::removePersonaEnEfector($idPersona, $idEfector);
         }
 
         return ['ok' => true];

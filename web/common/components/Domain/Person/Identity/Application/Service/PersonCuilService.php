@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Person\Identity\Application\Service;
 
+use common\components\Domain\Person\Identity\Domain\Policy\CuilPolicy;
 use common\models\Person\Persona;
 
 /**

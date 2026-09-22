@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Person\Identity\Application\Service;
+namespace common\components\Domain\Person\Identity\Application\UseCase;
 
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Condition;
@@ -20,7 +20,7 @@ use common\models\Clinical\InpatientStay;
 /**
  * Placeholder de Persona por episodio NN (sin documento). No es padrón ni MPI.
  */
-final class PersonaIdentidadPendienteService
+final class CreatePendingIdentity
 {
     public function crearPlaceholder(): Persona
     {

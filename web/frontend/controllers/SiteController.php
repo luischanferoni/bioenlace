@@ -26,7 +26,7 @@ use common\models\Organization\Servicio;
 use frontend\components\Clinical\PacientesListadoPageBuilder;
 use frontend\assets\EmergencyBoardAsset;
 use frontend\assets\PacientesListadoAsset;
-use common\components\Domain\Organization\SesionOperativa\Application\Service\SesionOperativaService;
+use common\components\Domain\Organization\SesionOperativa\Application\UseCase\EstablishOperativeSession;
 
 class SiteController extends Controller
 {    
@@ -134,7 +134,7 @@ class SiteController extends Controller
 
     private function sesionOperativaCompleta(): bool
     {
-        return SesionOperativaService::isSesionOperativaCompleta();
+        return EstablishOperativeSession::isSesionOperativaCompleta();
     }
 
     /**
@@ -197,7 +197,7 @@ class SiteController extends Controller
                 'Área de trabajo no disponible.'
             );
 
-            return $this->redirect(SesionOperativaService::redirectRouteForCurrentUser());
+            return $this->redirect(EstablishOperativeSession::redirectRouteForCurrentUser());
         }
 
         return $this->reestablecerContextoOperativoYRedirigir([
@@ -222,7 +222,7 @@ class SiteController extends Controller
     }
 
     /**
-     * Reaplica efector/servicio/encounter vía SesionOperativaService y renueva el JWT
+     * Reaplica efector/servicio/encounter vía EstablishOperativeSession y renueva el JWT
      * de API (evita que JsonHttpBearerAuth pise el contexto con claims viejos).
      *
      * @param array{efector_id:int, servicio_id:int, encounter_class:string} $body
@@ -233,22 +233,22 @@ class SiteController extends Controller
         $body = $this->pinDemoSandboxOperativeBody($body);
 
         try {
-            $data = (new SesionOperativaService())->establecer($body);
+            $data = (new EstablishOperativeSession())->establecer($body);
         } catch (\InvalidArgumentException $e) {
             Yii::$app->session->setFlash('error', $e->getMessage());
 
-            return $this->redirect(SesionOperativaService::redirectRouteForCurrentUser());
+            return $this->redirect(EstablishOperativeSession::redirectRouteForCurrentUser());
         } catch (\RuntimeException $e) {
             Yii::$app->session->setFlash('error', $e->getMessage());
 
-            return $this->redirect(SesionOperativaService::redirectRouteForCurrentUser());
+            return $this->redirect(EstablishOperativeSession::redirectRouteForCurrentUser());
         }
 
         if (!empty($data['context_token'])) {
             WebApiJwtSessionService::storeRawToken((string) $data['context_token']);
         }
 
-        return $this->redirect($data['redirect_url'] ?? SesionOperativaService::redirectRouteForCurrentUser());
+        return $this->redirect($data['redirect_url'] ?? EstablishOperativeSession::redirectRouteForCurrentUser());
     }
 
     /**
@@ -324,7 +324,7 @@ class SiteController extends Controller
     {
         $req = Yii::$app->request;
         try {
-            $data = (new SesionOperativaService())->establecer($this->pinDemoSandboxOperativeBody([
+            $data = (new EstablishOperativeSession())->establecer($this->pinDemoSandboxOperativeBody([
                 'efector_id' => (int) $req->post('idEfector'),
                 'servicio_id' => (int) $req->post('servicio'),
                 'encounter_class' => (string) $req->post('encounterClass'),
@@ -487,7 +487,7 @@ class SiteController extends Controller
                 try {
                     DemoSandboxSessionService::assertIdEfectorEsPlantillaDev((int) $demoSession->id_efector);
                     try {
-                        $established = (new SesionOperativaService())->establecer([
+                        $established = (new EstablishOperativeSession())->establecer([
                             'efector_id' => (int) $demoSession->id_efector,
                             'servicio_id' => (int) $demoSession->id_servicio,
                             'encounter_class' => DemoSandboxAccess::defaultEncounterClassForRole(
@@ -628,9 +628,9 @@ class SiteController extends Controller
 
         BioenlaceAccessChecker::refreshForIdentity(Yii::$app->user->identity);
         \common\components\Platform\Assistant\UiActions\AllowedRoutesResolver::markSessionRoutesOwner((int) Yii::$app->user->id);
-        SesionOperativaService::aplicarAgendaDisponibleDesdeContextoUsuario();
+        EstablishOperativeSession::aplicarAgendaDisponibleDesdeContextoUsuario();
 
-        $redirect = Yii::$app->urlManager->createUrl(SesionOperativaService::redirectRouteForCurrentUser());
+        $redirect = Yii::$app->urlManager->createUrl(EstablishOperativeSession::redirectRouteForCurrentUser());
 
         return [
             'efector' => ['id' => $idEfector, 'nombre' => $nombre],

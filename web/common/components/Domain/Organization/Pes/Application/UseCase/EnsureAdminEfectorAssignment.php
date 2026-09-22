@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Organization\Pes\Application\Service;
+namespace common\components\Domain\Organization\Pes\Application\UseCase;
 
 use common\components\Domain\Organization\Pes\Application\UseCase\EnsurePesAssignment;
 use common\models\Organization\ProfesionalEfectorServicio;
@@ -14,7 +14,7 @@ use Yii;
  * Excepción al glosario «no admin en servicios»: una sola fila canónica con
  * {@see self::ITEM_NAME} tipificada como soporte; no es oferta clínica.
  */
-final class AdminEfectorAsignacionService
+final class EnsureAdminEfectorAssignment
 {
     public const ITEM_NAME = 'AdminEfector';
 

@@ -1,11 +1,11 @@
 <?php
 
-namespace common\components\Domain\Person\Identity\Application\Service;
+namespace common\components\Domain\Person\Identity\Application\UseCase;
 
 /**
  * Identidad definitiva (conocido / DNI / Didit). Sin NN ni ficha tipeada.
  */
-final class PersonaIdentidadResolverService
+final class ResolvePersonIdentity
 {
     /**
      * @param array<string, mixed> $body

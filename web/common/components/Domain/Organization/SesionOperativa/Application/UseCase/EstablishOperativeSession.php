@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Organization\SesionOperativa\Application\Service;
+namespace common\components\Domain\Organization\SesionOperativa\Application\UseCase;
 
 use Yii;
 use yii\base\Component;
@@ -22,7 +22,7 @@ use Firebase\JWT\JWT;
  *
  * La asignación operativa canónica es {@see ProfesionalEfectorServicio}; el JWT puede repetir el id PES en campos alias.
  */
-class SesionOperativaService extends Component
+class EstablishOperativeSession extends Component
 {
     private const ITEM_NAME_SERVICIO_ADMIN_EFECTOR = 'AdminEfector';
 

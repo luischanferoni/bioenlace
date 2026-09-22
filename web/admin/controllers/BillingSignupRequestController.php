@@ -2,7 +2,7 @@
 
 namespace admin\controllers;
 
-use common\components\Domain\Organization\Efector\Application\Service\BillingMembershipSwitchService;
+use common\components\Domain\Organization\Efector\Application\UseCase\SwitchBillingMembership;
 use common\components\Domain\Organization\Efector\Application\UseCase\RequestMinistrySignup;
 use common\models\Organization\BillingAccount;
 use common\models\Organization\BillingSignupRequest;
@@ -105,7 +105,7 @@ class BillingSignupRequestController extends Controller
         }
 
         try {
-            BillingMembershipSwitchService::approvePoolMoveToMinisterio(
+            SwitchBillingMembership::approvePoolMoveToMinisterio(
                 (int) $model->id_efector,
                 (int) $model->id_billing_account_ministerio
             );

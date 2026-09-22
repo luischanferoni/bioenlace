@@ -10,7 +10,7 @@ use common\models\Organization\Efector;
 use common\models\Geo\Localidad;
 use common\models\Person\Persona;
 use common\models\Platform\User;
-use common\components\Domain\Organization\Pes\Application\Service\AdminEfectorAsignacionService;
+use common\components\Domain\Organization\Pes\Application\UseCase\EnsureAdminEfectorAssignment;
 use common\components\Platform\Core\Product\PricingPesByEncounterClassMetadata;
 use Yii;
 
@@ -29,8 +29,8 @@ final class SignUpInstitutionalEfector
     /** Profesional independiente = efector unipersonal (mismo modelo, default max_pes=1). */
     public const PERFIL_CONSULTORIO = 'CONSULTORIO';
 
-    /** @deprecated usar {@see AdminEfectorAsignacionService::ITEM_NAME} */
-    public const ITEM_NAME_ADMIN_EFECTOR = AdminEfectorAsignacionService::ITEM_NAME;
+    /** @deprecated usar {@see EnsureAdminEfectorAssignment::ITEM_NAME} */
+    public const ITEM_NAME_ADMIN_EFECTOR = EnsureAdminEfectorAssignment::ITEM_NAME;
 
     /**
      * @param array<string, mixed> $payload
@@ -484,7 +484,7 @@ final class SignUpInstitutionalEfector
 
     private static function ensureAdminEfectorPes(int $idPersona, int $idEfector, int $actingUserId): void
     {
-        AdminEfectorAsignacionService::ensurePersonaEnEfector($idPersona, $idEfector, $actingUserId);
+        EnsureAdminEfectorAssignment::ensurePersonaEnEfector($idPersona, $idEfector, $actingUserId);
     }
 
     private static function generateCodigoSisa(): string

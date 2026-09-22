@@ -12,6 +12,11 @@
 | `RegistroStaffPacienteService` | `RegisterPatientByStaff` ✅ |
 | `PersonaIdentidadBasicaUpdateService` | `UpdateBasicIdentity` ✅ |
 | `FrontDeskSessionService` | `EstablishFrontDeskSession` ✅ |
+| `AdminEfectorAsignacionService` | `EnsureAdminEfectorAssignment` ✅ |
+| `BillingMembershipSwitchService` | `SwitchBillingMembership` ✅ |
+| `SesionOperativaService` | `EstablishOperativeSession` ✅ |
+| `PersonaIdentidadPendienteService` | `CreatePendingIdentity` ✅ |
+| `PersonaIdentidadResolverService` | `ResolvePersonIdentity` ✅ |
 
 Métodos públicos se mantienen cuando es posible (`ensurePersonaServicioEnEfector`, `registrar`, `update`, …) para no reescribir el cuerpo; solo cambia FQCN + carpeta.
 

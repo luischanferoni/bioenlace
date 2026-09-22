@@ -1,6 +1,6 @@
 # Fase 2 — Didit en ventanilla
 
-Cuando no hay PDF417 o el DNI es ilegible: mismo KYC que la app (documento + selfie + liveness) vía `RegistroStaffPacienteService` modo `didit`. Un solo POST `ingresar` con `verification_id` (no alta + ingreso en dos cerebros).
+Cuando no hay PDF417 o el DNI es ilegible: mismo KYC que la app (documento + selfie + liveness) vía `RegisterPatientByStaff` modo `didit`. Un solo POST `ingresar` con `verification_id` (no alta + ingreso en dos cerebros).
 
 Opcional (no en este corte): re-identificar a alguien ya enrolado con workflow biométrico (selfie 1:1), no KYC completo.
 

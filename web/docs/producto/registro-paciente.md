@@ -4,7 +4,7 @@
 
 Bioenlace da de alta **personas paciente** con identidad validada (RENAPER / Didit), persiste el registro en la base local y encadena verificación de domicilio y **contexto operativo** (sector de salud, provincia) sin depender del flujo MPI histórico de candidatos y empadronamiento.
 
-Hay **dos circuitos** con el mismo núcleo de dominio (`RegistroService`, gateway MPI):
+Hay **dos circuitos** con el mismo núcleo de dominio (`RegisterPerson`, gateway MPI):
 
 | Circuito | Quién | Superficie |
 |----------|-------|------------|
@@ -43,7 +43,7 @@ El **login del personal** (web y app Personal de Salud) usa un **usuario Yii** q
 - **Cambio de efector**: AdminEfector del nuevo centro **vincula** la misma persona/usuario; no se crea otro login.
 - La **app móvil Personal de Salud no registra** personal; solo login + sesión operativa.
 
-El endpoint `registrar-como-staff` y flujos Didit/RENAPER del asistente sirven para **dar de alta personas paciente** desde el staff, no para autoregistro del personal. El ingreso a guardia reutiliza el mismo núcleo (`RegistroStaffPacienteService`: `dni_lector` o `didit`) **en la app**; en web el ingreso es paciente conocido o NN (sin DNI/Didit). Un episodio NN usa un placeholder **sin documento** (`identidad_pendiente`); al vincular no se fusiona MPI. Detalle operativo: [admin_efector/gestion-efector.md](../qa/admin_efector/gestion-efector.md) § Usuarios del efector.
+El endpoint `registrar-como-staff` y flujos Didit/RENAPER del asistente sirven para **dar de alta personas paciente** desde el staff, no para autoregistro del personal. El ingreso a guardia reutiliza el mismo núcleo (`RegisterPatientByStaff`: `dni_lector` o `didit`) **en la app**; en web el ingreso es paciente conocido o NN (sin DNI/Didit). Un episodio NN usa un placeholder **sin documento** (`identidad_pendiente`); al vincular no se fusiona MPI. Detalle operativo: [admin_efector/gestion-efector.md](../qa/admin_efector/gestion-efector.md) § Usuarios del efector.
 
 ## Autoregistro (app paciente)
 
@@ -64,7 +64,7 @@ flowchart LR
 ```
 
 1. El paciente valida identidad (Didit u otro modo configurado en app).
-2. Se crea `Persona`, usuario y rol paciente (`RegistroService`).
+2. Se crea `Persona`, usuario y rol paciente (`RegisterPerson`).
 3. Se inicializa **contexto paciente** (`sector_salud`, `id_provincia_contexto`, estado de verificación de domicilio).
 4. El domicilio MPI se persiste en **segundo plano** (reintentos ~30 min, ventana 24 h).
 5. La app muestra banner/scope de contexto y ofrece recursos provinciales según metadata (`paciente-contexto-offering.yaml`).

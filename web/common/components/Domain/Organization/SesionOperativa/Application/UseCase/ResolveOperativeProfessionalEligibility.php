@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Organization\SesionOperativa\Application\Service;
+namespace common\components\Domain\Organization\SesionOperativa\Application\UseCase;
 
 use common\models\Clinical\EncounterDefinition;
 use common\models\Organization\ProfesionalEfectorServicio;
@@ -17,7 +17,7 @@ use yii\base\Component;
 /**
  * Valida completitud del profesional por efector y arma el árbol efectores → servicios para el wizard de sesión operativa.
  */
-class SesionOperativaProfesionalHabilitacionService extends Component
+class ResolveOperativeProfessionalEligibility extends Component
 {
     /** {@see Servicio::item_name} del servicio que otorga rol AdminEfector (excluido del listado clínico del wizard). */
     private const ITEM_NAME_SERVICIO_ADMIN_EFECTOR = 'AdminEfector';

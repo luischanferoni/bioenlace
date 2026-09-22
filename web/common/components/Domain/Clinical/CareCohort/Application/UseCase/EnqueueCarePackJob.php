@@ -1,12 +1,13 @@
 <?php
 
-namespace common\components\Domain\Clinical\CareCohort\Application\Service;
+namespace common\components\Domain\Clinical\CareCohort\Application\UseCase;
 
 use common\components\Domain\Clinical\CareCohort\Domain\CarePackType;
+use common\components\Domain\Clinical\CareCohort\Domain\Port\CarePackRepository;
 use common\models\Clinical\CarePackJob;
 use common\models\Clinical\Encounter;
 
-final class CarePackJobEnqueueService
+final class EnqueueCarePackJob
 {
     private CarePackRepository $repository;
 

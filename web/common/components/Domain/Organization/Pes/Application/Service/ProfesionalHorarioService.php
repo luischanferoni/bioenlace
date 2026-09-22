@@ -112,7 +112,7 @@ final class ProfesionalHorarioService
             }
         }
 
-        foreach (ProfesionalHorarioActivaService::detectAmbSlotConflicts($model) as $amb) {
+        foreach (ActivateProfesionalHorario::detectAmbSlotConflicts($model) as $amb) {
             $out[] = $amb;
         }
 

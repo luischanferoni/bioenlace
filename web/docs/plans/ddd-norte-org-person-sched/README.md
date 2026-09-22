@@ -1,6 +1,6 @@
 # DDD norte — Org / Person / Scheduling (post-empaquetado)
 
-**Estado:** fases 01–05 hechas (pendiente commit deploy + opcional Representation)  
+**Estado:** fases 01–06 hechas (pendiente commit; opcional Encounter/CarePlan UseCases)  
 **Precondición:** empaquetado módulo-primero ya hecho ([`ddd-empaquetado-transversal`](../ddd-empaquetado-transversal/) archivado en decisions).  
 **Norte:** [`ddd-norte-modelo-rico.md`](../../decisions/ddd-norte-modelo-rico.md), [`ddd-un-eje-por-nivel`](../../../.cursor/rules/ddd-un-eje-por-nivel.mdc).
 
@@ -26,12 +26,13 @@ Pasar de “carpetas bien” a **modelo rico**: UseCases verb phrase, Domain con
 | **03** | Agenda Infra: Port `use` + stubs fuera de raíz; External → `NisFhir/` | Sin PHP suelto en `Infrastructure/`; FQCN params OK |
 | **04** | Docs Identity vs Identidad; Integrations/fhir-scheduling paths | Sin menciones stale a `Identidad/` ni `Scheduling/Infrastructure/` |
 | **05** | Más UseCases (AdminEfector, billing switch, sesión operativa, identidad pendiente/resolver) + CuilPolicy wiring | Callers OK; `PersonCuilService` → `CuilPolicy` |
+| **06** | Representation + horario PES + CareCohort Generate/Enqueue | UseCases + callers API |
 
 ## No hacer en este plan
 
 - Mover frontera Agenda-PES (ownership explícito → ADR aparte).
-- Partir Representation (`PatientDelegation` / `VerifiedGuardianship`) en UseCases por método — ciclo aparte.
 - Programs / Integrations código nuevo.
+- Oleada completa Encounter/CarePlan Services → UseCase (siguiente plan o fase 07).
 
 ## Criterio de naming UseCase
 

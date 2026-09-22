@@ -1,16 +1,18 @@
 <?php
 
-namespace common\components\Domain\Clinical\CareCohort\Application\Service;
+namespace common\components\Domain\Clinical\CareCohort\Application\UseCase;
 
 use common\components\Platform\Ai\IAManager;
 use common\components\Domain\Clinical\CareCohort\Application\Service\CarePackContentService;
+use common\components\Domain\Clinical\CareCohort\Application\Service\CarePackPromptService;
 use common\components\Domain\Clinical\CareCohort\Domain\CarePackType;
+use common\components\Domain\Clinical\CareCohort\Domain\Port\CarePackRepository;
 use common\models\Clinical\CareCohortPack;
 use common\models\Clinical\CarePackJob;
 use common\models\Clinical\Encounter;
 use Yii;
 
-final class CarePackGenerationService
+final class GenerateCarePack
 {
     private CarePackPromptService $prompts;
     private CarePackContentService $parser;

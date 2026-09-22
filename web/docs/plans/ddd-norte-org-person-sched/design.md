@@ -17,6 +17,12 @@
 | `SesionOperativaService` | `EstablishOperativeSession` ✅ |
 | `PersonaIdentidadPendienteService` | `CreatePendingIdentity` ✅ |
 | `PersonaIdentidadResolverService` | `ResolvePersonIdentity` ✅ |
+| `PatientDelegationService` | `DesignatePatientDelegation` ✅ |
+| `VerifiedGuardianshipService` | `EstablishVerifiedGuardianship` ✅ |
+| `ProfesionalHorarioActivaService` | `ActivateProfesionalHorario` ✅ |
+| `SesionOperativaProfesionalHabilitacionService` | `ResolveOperativeProfessionalEligibility` ✅ |
+| `CarePackGenerationService` | `GenerateCarePack` ✅ |
+| `CarePackJobEnqueueService` | `EnqueueCarePackJob` ✅ |
 
 Métodos públicos se mantienen cuando es posible (`ensurePersonaServicioEnEfector`, `registrar`, `update`, …) para no reescribir el cuerpo; solo cambia FQCN + carpeta.
 

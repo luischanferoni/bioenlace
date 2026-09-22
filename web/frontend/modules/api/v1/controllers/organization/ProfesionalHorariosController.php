@@ -7,7 +7,7 @@ use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
-use common\components\Domain\Organization\Pes\Application\Service\ProfesionalHorarioActivaService;
+use common\components\Domain\Organization\Pes\Application\UseCase\ActivateProfesionalHorario;
 use common\components\Domain\Organization\Pes\Application\Service\ProfesionalHorarioService;
 use common\components\Domain\Organization\Pes\Application\Service\ProfesionalHorarioUiFlowService;
 use common\models\Organization\ProfesionalHorario;
@@ -189,7 +189,7 @@ class ProfesionalHorariosController extends BaseController
 
         return [
             'success' => true,
-            'data' => ProfesionalHorarioActivaService::panelPayload($idEfector, $class, $at),
+            'data' => ActivateProfesionalHorario::panelPayload($idEfector, $class, $at),
         ];
     }
 

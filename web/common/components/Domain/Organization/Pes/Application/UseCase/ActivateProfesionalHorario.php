@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Organization\Pes\Application\Service;
+namespace common\components\Domain\Organization\Pes\Application\UseCase;
 
 use common\components\Domain\Organization\Pes\Application\Service\AgendaWeeklyOccupancyService;
 use common\components\Platform\Core\Product\AgendaByEncounterClassMetadata;
@@ -13,7 +13,7 @@ use common\models\Organization\Servicio;
 /**
  * Consultas de horario activo y conflictos vs grilla AMB.
  */
-final class ProfesionalHorarioActivaService
+final class ActivateProfesionalHorario
 {
     /**
      * Horarios vigentes en un instante (default: ahora) para un efector y clase.

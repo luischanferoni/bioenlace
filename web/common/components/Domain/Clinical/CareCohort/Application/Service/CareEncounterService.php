@@ -2,8 +2,10 @@
 
 namespace common\components\Domain\Clinical\CareCohort\Application\Service;
 
+use common\components\Domain\Clinical\CareCohort\Application\UseCase\EnqueueCarePackJob;
 use common\components\Domain\Clinical\CareCohort\Domain\CohortKeyBuilder;
 use common\components\Domain\Clinical\CareCohort\Domain\CarePackType;
+use common\components\Domain\Clinical\CareCohort\Domain\Port\CarePackRepository;
 use common\models\Clinical\Encounter;
 
 /**
@@ -13,16 +15,16 @@ final class CareEncounterService
 {
     private CohortKeyBuilder $cohortBuilder;
     private CarePackRepository $repository;
-    private CarePackJobEnqueueService $enqueuer;
+    private EnqueueCarePackJob $enqueuer;
 
     public function __construct(
         ?CohortKeyBuilder $cohortBuilder = null,
         ?CarePackRepository $repository = null,
-        ?CarePackJobEnqueueService $enqueuer = null
+        ?EnqueueCarePackJob $enqueuer = null
     ) {
         $this->cohortBuilder = $cohortBuilder ?? new CohortKeyBuilder();
         $this->repository = $repository ?? new CarePackRepository();
-        $this->enqueuer = $enqueuer ?? new CarePackJobEnqueueService($this->repository);
+        $this->enqueuer = $enqueuer ?? new EnqueueCarePackJob($this->repository);
     }
 
     public function onEncounterEnsured(Encounter $encounter): void

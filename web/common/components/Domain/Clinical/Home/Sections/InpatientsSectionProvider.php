@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\Home\Sections;
 
 use common\components\Domain\Clinical\Home\Application\Service\StaffInpatientsDayListService;
-use common\components\Domain\Organization\Pes\Application\Service\ProfesionalHorarioActivaService;
+use common\components\Domain\Organization\Pes\Application\UseCase\ActivateProfesionalHorario;
 use common\components\Platform\Core\Product\AgendaByEncounterClassMetadata;
 use common\components\Platform\Ui\Home\Service\Sections\HomePanelSectionProviderInterface;
 use common\models\Clinical\Encounter;
@@ -26,14 +26,14 @@ final class InpatientsSectionProvider implements HomePanelSectionProviderInterfa
         if (AgendaByEncounterClassMetadata::impViewRequiresHorario()
             && ($idPersona <= 0
                 || $idEfector <= 0
-                || !ProfesionalHorarioActivaService::personaTieneHorarioActivo(
+                || !ActivateProfesionalHorario::personaTieneHorarioActivo(
                     $idPersona,
                     $idEfector,
                     Encounter::ENCOUNTER_CLASS_IMP
                 ))
         ) {
             $proxima = ($idPersona > 0 && $idEfector > 0)
-                ? ProfesionalHorarioActivaService::proximoHorarioInicio(
+                ? ActivateProfesionalHorario::proximoHorarioInicio(
                     $idPersona,
                     $idEfector,
                     Encounter::ENCOUNTER_CLASS_IMP
@@ -44,7 +44,7 @@ final class InpatientsSectionProvider implements HomePanelSectionProviderInterfa
                 'items' => [],
                 'total' => 0,
                 'requires_cobertura' => true,
-                'empty_message' => ProfesionalHorarioActivaService::mensajeSinHorarioParaSesion(
+                'empty_message' => ActivateProfesionalHorario::mensajeSinHorarioParaSesion(
                     Encounter::ENCOUNTER_CLASS_IMP,
                     ['proxima_inicio' => $proxima]
                 ),

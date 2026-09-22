@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Clinical\CareCohort\Application\Service;
 
+use common\components\Domain\Clinical\CareCohort\Application\UseCase\GenerateCarePack;
 use common\components\Domain\Clinical\CareCohort\Infrastructure\Batch\CarePackVertexBatchSubmitter;
 use common\components\Domain\Clinical\CareCohort\Infrastructure\Batch\CarePackVertexBatchPoller;
 use common\models\Clinical\CarePackJob;
@@ -9,16 +10,16 @@ use common\models\Clinical\Encounter;
 
 final class CarePackJobService
 {
-    private CarePackGenerationService $generator;
+    private GenerateCarePack $generator;
     private CarePackVertexBatchSubmitter $vertexSubmitter;
     private CarePackVertexBatchPoller $vertexPoller;
 
     public function __construct(
-        ?CarePackGenerationService $generator = null,
+        ?GenerateCarePack $generator = null,
         ?CarePackVertexBatchSubmitter $vertexSubmitter = null,
         ?CarePackVertexBatchPoller $vertexPoller = null
     ) {
-        $this->generator = $generator ?? new CarePackGenerationService();
+        $this->generator = $generator ?? new GenerateCarePack();
         $this->vertexSubmitter = $vertexSubmitter ?? new CarePackVertexBatchSubmitter();
         $this->vertexPoller = $vertexPoller ?? new CarePackVertexBatchPoller();
     }

@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Person\Representation\Application\Service;
+namespace common\components\Domain\Person\Representation\Application\UseCase;
 
 use common\components\Domain\Person\Representation\Domain\Catalog\RepresentationPermissionsCatalog;
 use common\components\Domain\Person\Representation\Domain\Model\DelegationConsentStatus;
@@ -8,6 +8,7 @@ use common\components\Domain\Person\Representation\Domain\Model\PersonRelatedSta
 use common\components\Domain\Person\Representation\Domain\Model\PersonRelatedVerifiedBy;
 use common\components\Domain\Person\Representation\Domain\Model\RepresentationRegime;
 use common\components\Domain\Person\Representation\Application\Presentation\PersonRepresentationPresenter;
+use common\components\Domain\Person\Representation\Application\Service\PersonRepresentationPreferenceService;
 use common\models\Person\PersonDelegationConsent;
 use common\models\Person\PersonRelated;
 use common\models\Person\PersonRelatedAuditLog;
@@ -18,7 +19,7 @@ use Yii;
 /**
  * Régimen B: delegación paciente → representante (sin aceptación; Consent activo al designar).
  */
-final class PatientDelegationService
+final class DesignatePatientDelegation
 {
     private RepresentationPermissionsCatalog $permissionsCatalog;
     private PersonRepresentationPresenter $presenter;

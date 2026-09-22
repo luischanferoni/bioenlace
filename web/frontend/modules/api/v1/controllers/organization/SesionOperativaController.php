@@ -6,7 +6,7 @@ use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 use frontend\components\WebApiJwtSessionService;
 use common\components\Platform\Core\Auth\StaffMobileAccessService;
-use common\components\Domain\Organization\SesionOperativa\Application\Service\SesionOperativaProfesionalHabilitacionService;
+use common\components\Domain\Organization\SesionOperativa\Application\UseCase\ResolveOperativeProfessionalEligibility;
 use common\components\Domain\Organization\SesionOperativa\Application\UseCase\EstablishOperativeSession;
 
 /**
@@ -49,10 +49,10 @@ class SesionOperativaController extends BaseController
             }
 
             if ($this->isModoOpciones($body)) {
-                /** @var SesionOperativaProfesionalHabilitacionService $hab */
-                $hab = Yii::$container->has(SesionOperativaProfesionalHabilitacionService::class)
-                    ? Yii::$container->get(SesionOperativaProfesionalHabilitacionService::class)
-                    : new SesionOperativaProfesionalHabilitacionService();
+                /** @var ResolveOperativeProfessionalEligibility $hab */
+                $hab = Yii::$container->has(ResolveOperativeProfessionalEligibility::class)
+                    ? Yii::$container->get(ResolveOperativeProfessionalEligibility::class)
+                    : new ResolveOperativeProfessionalEligibility();
 
                 $idPersona = (int) Yii::$app->user->getIdPersona();
                 $data = $hab->buildOpcionesIniciales($idPersona);
@@ -146,10 +146,10 @@ class SesionOperativaController extends BaseController
             return null;
         }
 
-        /** @var SesionOperativaProfesionalHabilitacionService $hab */
-        $hab = Yii::$container->has(SesionOperativaProfesionalHabilitacionService::class)
-            ? Yii::$container->get(SesionOperativaProfesionalHabilitacionService::class)
-            : new SesionOperativaProfesionalHabilitacionService();
+        /** @var ResolveOperativeProfessionalEligibility $hab */
+        $hab = Yii::$container->has(ResolveOperativeProfessionalEligibility::class)
+            ? Yii::$container->get(ResolveOperativeProfessionalEligibility::class)
+            : new ResolveOperativeProfessionalEligibility();
 
         return $hab->contactForEfectorPayload($idEfector);
     }

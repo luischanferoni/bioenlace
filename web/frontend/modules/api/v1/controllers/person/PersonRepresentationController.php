@@ -6,9 +6,9 @@ use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\MethodNotAllowedHttpException;
-use common\components\Domain\Person\Representation\Application\Service\PatientDelegationService;
+use common\components\Domain\Person\Representation\Application\UseCase\DesignatePatientDelegation;
 use common\components\Domain\Person\Representation\Application\Presentation\PersonRepresentationPresenter;
-use common\components\Domain\Person\Representation\Application\Service\VerifiedGuardianshipService;
+use common\components\Domain\Person\Representation\Application\UseCase\EstablishVerifiedGuardianship;
 use common\components\Platform\Ui\UiScreenService;
 
 /**
@@ -36,7 +36,7 @@ class PersonRepresentationController extends BaseController
         }
 
         try {
-            return (new VerifiedGuardianshipService())->solicitarMenorComoTutor(
+            return (new EstablishVerifiedGuardianship())->solicitarMenorComoTutor(
                 $idPersona,
                 $this->mergedParams()
             );
@@ -64,7 +64,7 @@ class PersonRepresentationController extends BaseController
         $params = $this->mergedParams();
         $status = isset($params['status']) ? trim((string) $params['status']) : null;
 
-        return (new VerifiedGuardianshipService())->listarMisVinculosComoTutor($idPersona, $status);
+        return (new EstablishVerifiedGuardianship())->listarMisVinculosComoTutor($idPersona, $status);
     }
 
     /**
@@ -82,7 +82,7 @@ class PersonRepresentationController extends BaseController
         $staffUserId = (int) Yii::$app->user->id;
 
         try {
-            return (new VerifiedGuardianshipService())->verificarVinculoParaStaff(
+            return (new EstablishVerifiedGuardianship())->verificarVinculoParaStaff(
                 $staffUserId,
                 $this->mergedParams()
             );
@@ -106,7 +106,7 @@ class PersonRepresentationController extends BaseController
         $staffUserId = (int) Yii::$app->user->id;
 
         try {
-            return (new VerifiedGuardianshipService())->bloquearParaStaff(
+            return (new EstablishVerifiedGuardianship())->bloquearParaStaff(
                 $staffUserId,
                 $this->mergedParams()
             );
@@ -130,7 +130,7 @@ class PersonRepresentationController extends BaseController
         $staffUserId = (int) Yii::$app->user->id;
 
         try {
-            return (new VerifiedGuardianshipService())->revocarParaStaff(
+            return (new EstablishVerifiedGuardianship())->revocarParaStaff(
                 $staffUserId,
                 $this->mergedParams()
             );
@@ -154,7 +154,7 @@ class PersonRepresentationController extends BaseController
         $subjectPersonaId = (int) ($params['id_persona'] ?? $params['subject_persona_id'] ?? 0);
 
         try {
-            return (new VerifiedGuardianshipService())->listarVinculosPacienteParaStaff($subjectPersonaId);
+            return (new EstablishVerifiedGuardianship())->listarVinculosPacienteParaStaff($subjectPersonaId);
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         }
@@ -171,7 +171,7 @@ class PersonRepresentationController extends BaseController
      */
     public function actionSolicitudesTutelaPendientesParaStaff(): array
     {
-        $payload = (new VerifiedGuardianshipService())->listarSolicitudesTutelaPendientesParaStaff();
+        $payload = (new EstablishVerifiedGuardianship())->listarSolicitudesTutelaPendientesParaStaff();
         $solicitudes = is_array($payload['data']['solicitudes'] ?? null) ? $payload['data']['solicitudes'] : [];
         $total = (int) ($payload['data']['total'] ?? count($solicitudes));
 
@@ -225,7 +225,7 @@ class PersonRepresentationController extends BaseController
         }
 
         try {
-            return (new PatientDelegationService())->designarRepresentante($idPersona, $this->mergedParams());
+            return (new DesignatePatientDelegation())->designarRepresentante($idPersona, $this->mergedParams());
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         }
@@ -249,7 +249,7 @@ class PersonRepresentationController extends BaseController
         }
 
         try {
-            return (new PatientDelegationService())->revocarRepresentante($idPersona, $this->mergedParams());
+            return (new DesignatePatientDelegation())->revocarRepresentante($idPersona, $this->mergedParams());
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         }
@@ -269,7 +269,7 @@ class PersonRepresentationController extends BaseController
             throw new BadRequestHttpException('Sesión sin persona.');
         }
 
-        return (new PatientDelegationService())->listarMisRepresentantes($idPersona);
+        return (new DesignatePatientDelegation())->listarMisRepresentantes($idPersona);
     }
 
     /**
@@ -286,7 +286,7 @@ class PersonRepresentationController extends BaseController
             throw new BadRequestHttpException('Sesión sin persona.');
         }
 
-        return (new PatientDelegationService())->listarPacientesACargo($idPersona);
+        return (new DesignatePatientDelegation())->listarPacientesACargo($idPersona);
     }
 
     /**
@@ -354,7 +354,7 @@ class PersonRepresentationController extends BaseController
             throw new BadRequestHttpException('Sesión sin persona.');
         }
 
-        $service = new PatientDelegationService();
+        $service = new DesignatePatientDelegation();
         if (Yii::$app->request->isPost) {
             $params = $this->mergedParams();
             if (array_key_exists('notify_on_representative_action', $params)) {

@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\Home\Sections;
 
 use common\components\Domain\Organization\Efector\Application\Authorization\EfectorOperationAccess;
-use common\components\Domain\Organization\Pes\Application\Service\ProfesionalHorarioActivaService;
+use common\components\Domain\Organization\Pes\Application\UseCase\ActivateProfesionalHorario;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Platform\Ui\Home\Service\Sections\HomePanelSectionProviderInterface;
 use common\models\Clinical\Encounter;
@@ -29,7 +29,7 @@ final class StaffHorarioActivoSectionProvider implements HomePanelSectionProvide
             $at = trim((string) $context['fecha']) . ' ' . date('H:i:s');
         }
 
-        return ProfesionalHorarioActivaService::homePanelGatePayload($idEfector, $encounterClass, $at);
+        return ActivateProfesionalHorario::homePanelGatePayload($idEfector, $encounterClass, $at);
     }
 
     /**

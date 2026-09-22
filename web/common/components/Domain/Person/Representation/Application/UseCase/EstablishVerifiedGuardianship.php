@@ -1,12 +1,15 @@
 <?php
 
-namespace common\components\Domain\Person\Representation\Application\Service;
+namespace common\components\Domain\Person\Representation\Application\UseCase;
 
+use common\components\Domain\Person\Representation\Domain\Catalog\RepresentationPermissionsCatalog;
 use common\components\Domain\Person\Representation\Domain\Model\DelegationConsentStatus;
 use common\components\Domain\Person\Representation\Domain\Model\PersonRelatedBlockedReason;
 use common\components\Domain\Person\Representation\Domain\Model\PersonRelatedStatus;
 use common\components\Domain\Person\Representation\Domain\Model\PersonRelatedVerifiedBy;
 use common\components\Domain\Person\Representation\Domain\Model\RepresentationRegime;
+use common\components\Domain\Person\Representation\Application\Presentation\PersonRepresentationPresenter;
+use common\components\Domain\Person\Representation\Application\Service\PersonRepresentationMpiService;
 use common\models\Person\PersonDelegationConsent;
 use common\models\Person\PersonRelated;
 use common\models\Person\PersonRelatedAuditLog;
@@ -17,7 +20,7 @@ use Yii;
 /**
  * Régimen A: tutela verificada (padre/madre/tutor legal opera por menor sin cuenta).
  */
-final class VerifiedGuardianshipService
+final class EstablishVerifiedGuardianship
 {
     private PersonRepresentationMpiService $mpiService;
     private RepresentationPermissionsCatalog $permissionsCatalog;

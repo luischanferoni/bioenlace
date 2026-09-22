@@ -13,23 +13,23 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Plan | Carpeta | Notas |
 |------|---------|--------|
 | Receta electrónica (AR) | `receta-electronica/` | Fases 1–2 en producción; repositorio nacional pendiente |
-| Interoperabilidad HC FHIR | `interoperabilidad-historia-clinica/` | Fases 1–2 + reconcile; homologación nacional pendiente |
-| Urgencias — triage + tablero | `urgencias-triage-tablero/` | Fase 1 (API dominio) en curso; fases 2–5 pendientes |
-| Agendamiento FHIR entrante | `fhir-scheduling-inbound/` | Doc producto: [interoperabilidad-agendamiento-fhir.md](../producto/interoperabilidad-agendamiento-fhir.md) |
-| Alta cuenta institucional | `alta-cuenta-institucional/` | Self-service AdminEfector + solicitud ministerio + pasarela simulada |
-| Perfil de comportamiento en turnos | `perfil-comportamiento-turnos/` | Perfil factual persistido; eventos, materialización, políticas y transparencia |
-| Auditoría captura clínica | `auditoria-captura-clinica/` | Trail pipeline + admin superadmin (Fase 1) |
-| Auditoría adelantamiento turnos (A03) | `auditoria-adelantamiento-turnos/` | Campañas/ofertas + admin superadmin (Fase 0) |
-| Auditoría agentes autónomos | `auditoria-agentes-autonomos/` | agent_run genérico + A04 + resolución |
-| Demo sandbox institucional | `demo-sandbox-institucional/` | CTA Probar demo → código un solo uso |
-| Captura actor + enfermería | `captura-actor-enfermeria/` | Quitar alias ConsultasConfiguracion; overlay PES + CarePlan; app triage |
-| Admisión: identidad + ventanilla | `admision-identidad-ventanilla/` | Ingreso DNI (sin alta libre); Didit; NN; sesión de mostrador |
-| RBAC capabilities UI nativa | `rbac-capabilities-ui-nativa/` | Permisos assignables fuera de intents; guardia + encounter + panel |
+| Interoperabilidad HC FHIR | `interoperabilidad-historia-clinica/` | Código + reconcile listos; homologación / credenciales pendientes |
+| Perfil de comportamiento en turnos | `perfil-comportamiento-turnos/` | V1 + shadow; piloto fase 5 pendiente |
+| Auditoría captura clínica | `auditoria-captura-clinica/` | Trail pipeline + admin superadmin (Fase 1); volcar a producto y cerrar |
 
 ## Planes archivados (carpeta eliminada)
 
 | Plan | Documentación estable |
 |------|------------------------|
+| Alta cuenta institucional | [alta-cuenta-licencia.md](../producto/alta-cuenta-licencia.md) + [onboarding-comercial-self-service.md](../decisions/onboarding-comercial-self-service.md) |
+| Urgencias — triage + tablero | [urgencias-guardia.md](../producto/urgencias-guardia.md) + [his-completo/02-urgencias.md](../his-completo/02-urgencias.md) |
+| Admisión: identidad + ventanilla | [registro-paciente.md](../producto/registro-paciente.md) + [representacion-paciente.md](../producto/representacion-paciente.md) |
+| RBAC capabilities UI nativa | [autorizacion-capabilities-ui-nativa.md](../decisions/autorizacion-capabilities-ui-nativa.md) + [rbac-catalogo-permisos.md](../arquitectura/rbac-catalogo-permisos.md) |
+| Captura actor + enfermería | [captura-clinica.md](../producto/captura-clinica.md) |
+| Auditoría adelantamiento turnos (A03) | [agentes-autonomos.md](../producto/agentes-autonomos.md) + [turnos.md](../producto/turnos.md) |
+| Auditoría agentes autónomos | [agentes-autonomos.md](../producto/agentes-autonomos.md) |
+| Demo sandbox institucional | [alta-cuenta-licencia.md](../producto/alta-cuenta-licencia.md) |
+| Agendamiento FHIR entrante | [interoperabilidad-agendamiento-fhir.md](../producto/interoperabilidad-agendamiento-fhir.md) |
 | Motivos encounter → FHIR Condition | [encounter-reasons-condition-cc.md](../decisions/encounter-reasons-condition-cc.md) + captura clínica |
 | DDD norte Org/Person/Sched | [ddd-norte-modelo-rico.md](../decisions/ddd-norte-modelo-rico.md) + [domain-folder-grammar.md](../decisions/domain-folder-grammar.md) + `Domain/README.md` |
 | DDD/CA empaquetado transversal | [ddd-modulo-primero-vs-bc-compacto.md](../decisions/ddd-modulo-primero-vs-bc-compacto.md) + [domain-folder-grammar.md](../decisions/domain-folder-grammar.md) + `Domain/README.md` + [common-components.md](../arquitectura/common-components.md) + `BoundedContextLayerShapeTest` |

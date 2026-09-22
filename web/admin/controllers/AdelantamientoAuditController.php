@@ -13,7 +13,7 @@ use yii\web\NotFoundHttpException;
 /**
  * Auditoría del agente A03 de adelantamiento por cancelación (solo superadmin).
  *
- * @see web/docs/plans/auditoria-adelantamiento-turnos/design.md
+ * @see web/docs/producto/agentes-autonomos.md
  */
 class AdelantamientoAuditController extends Controller
 {

@@ -20,7 +20,7 @@ use yii\db\Query;
  * Staff: siempre efímero. El médico + seed se crean en issue() (POST demo-acceso),
  * no en la cuenta legacy medico_med_general_*.
  *
- * @see web/docs/plans/demo-sandbox-institucional/design.md
+ * @see web/docs/producto/alta-cuenta-licencia.md
  */
 final class DemoSandboxAccessService
 {

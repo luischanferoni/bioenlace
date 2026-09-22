@@ -232,7 +232,7 @@ return [
      * Agendamiento FHIR entrante (HAPI NIS → espejo turnos).
      * Habilitar en params-local cuando el efector use pull de citas.
      *
-     * @see web/docs/plans/fhir-scheduling-inbound/
+     * @see web/docs/producto/interoperabilidad-agendamiento-fhir.md
      * @see https://nis.msalsgo.gob.ar/fhir
      */
     'fhirSchedulingInbound' => [

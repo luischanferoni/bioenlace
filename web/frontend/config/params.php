@@ -148,7 +148,7 @@ return [
      * Acceso demo sandbox desde el sitio institucional (código de un solo uso → /site/demo-entrar).
      * Habilitar en staging/prod controlado; mode ephemeral provisiona médico + seed por visita.
      *
-     * @see web/docs/plans/demo-sandbox-institucional/design.md
+     * @see web/docs/producto/alta-cuenta-licencia.md
      */
     'demo_sandbox_habilitado' => true,
     'demo_sandbox' => [

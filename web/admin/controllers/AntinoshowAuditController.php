@@ -13,7 +13,7 @@ use yii\web\NotFoundHttpException;
 /**
  * Auditoría del agente A04 anti no-show (solo superadmin).
  *
- * @see web/docs/plans/auditoria-agentes-autonomos/design.md
+ * @see web/docs/producto/agentes-autonomos.md
  */
 class AntinoshowAuditController extends Controller
 {

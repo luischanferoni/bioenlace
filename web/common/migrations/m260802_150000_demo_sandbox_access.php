@@ -5,7 +5,7 @@ use yii\db\Migration;
 /**
  * Códigos de un solo uso para acceso demo sandbox desde el sitio institucional.
  *
- * @see web/docs/plans/demo-sandbox-institucional/design.md
+ * @see web/docs/producto/alta-cuenta-licencia.md
  */
 class m260802_150000_demo_sandbox_access extends Migration
 {

@@ -5,7 +5,7 @@ use yii\db\Migration;
 /**
  * Sesiones efímeras del sandbox demo (PES temporal + seed por visitante).
  *
- * @see web/docs/plans/demo-sandbox-institucional/design.md
+ * @see web/docs/producto/alta-cuenta-licencia.md
  */
 class m260803_150000_demo_sandbox_session extends Migration
 {

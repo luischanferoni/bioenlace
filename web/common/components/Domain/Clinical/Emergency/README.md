@@ -9,4 +9,4 @@ Modelos AR: `common/models/Clinical/Emergency/` (`EmergencyEpisode`, `EmergencyT
 
 API: `EmergencyController` — id público `emergency-guardia` (`/api/v1/clinical/emergency-guardia/...`).
 
-Documentación: [urgencias-triage-tablero](../../../../docs/plans/urgencias-triage-tablero/design.md).
+Documentación: [urgencias-guardia](../../../../docs/producto/urgencias-guardia.md).

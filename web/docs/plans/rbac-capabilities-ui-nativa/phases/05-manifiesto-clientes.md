@@ -17,7 +17,7 @@ Una sola fuente para «quién ve qué CTA» alineada con RBAC; reducir lógica d
     documentar: encounter.documentar_nota
   atender_exclude_roles: [Administrativo, AdminEfector]
   ```
-- [ ] `GuardiaBoardCapabilityService`: resolver `puede_*` vía `CapabilityAccessService` + exclude del manifiesto.
+- [ ] `EmergencyBoardCapabilityService`: resolver `puede_*` vía `CapabilityAccessService` + exclude del manifiesto.
 - [ ] `HomePanelService` / providers: incluir en respuesta `capabilities` resueltas (opcional, para clientes).
 
 ### 5.2 `/api/home/panel`

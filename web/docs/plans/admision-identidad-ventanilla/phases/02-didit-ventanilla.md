@@ -6,7 +6,7 @@ Opcional (no en este corte): re-identificar a alguien ya enrolado con workflow b
 
 ## Checklist
 
-- [x] `GuardiaIngresoService` acepta `verification_id` → `registrar(modo=didit)`.
+- [x] `EmergencyIntakeService` acepta `verification_id` → `registrar(modo=didit)`.
 - [x] Modal web: **Foto del DNI (Didit)** → `crear-sesion-didit-como-staff` + callback al tablero; al volver, confirmar ingreso.
 - [x] App Personal de Salud: SDK nativo (`DiditSdk` + mismo workflow KYC que la app paciente).
 - [x] RBAC: preview RENAPER y sesión Didit heredan de `emergency-guardia/ingresar`.

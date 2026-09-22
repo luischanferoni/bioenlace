@@ -1,6 +1,6 @@
 <?php
 
-use frontend\assets\InternacionIngresoAsset;
+use frontend\assets\InpatientAdmissionAsset;
 use yii\helpers\Html;
 
 /** @var yii\web\View $this */
@@ -11,7 +11,7 @@ $this->title = 'Ingreso a internación';
 $this->params['breadcrumbs'][] = ['label' => 'Internaciones', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 
-InternacionIngresoAsset::register($this);
+InpatientAdmissionAsset::register($this);
 ?>
 <div class="seg-nivel-internacion-ingreso">
     <div class="card mb-3">

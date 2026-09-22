@@ -2,7 +2,7 @@
 
 namespace frontend\components\Clinical;
 
-use common\components\Domain\Clinical\Emergency\Application\Service\GuardiaBoardCapabilityService;
+use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyBoardCapabilityService;
 use common\models\Clinical\Encounter;
 use common\models\Organization\Servicio;
 use yii\helpers\Url;
@@ -33,7 +33,7 @@ final class PacientesListadoPageBuilder
             && Servicio::esServicioAgendaQuirurgica($idServicioActual);
         $esPacienteHome = $ec === '';
 
-        $guardiaCaps = new GuardiaBoardCapabilityService();
+        $guardiaCaps = new EmergencyBoardCapabilityService();
         $puedeTriageGuardia = $esGuardia && $guardiaCaps->canTriage();
         $puedeIngresarGuardia = $esGuardia && $guardiaCaps->canIngresar();
         $puedeIngresarDniGuardia = $puedeIngresarGuardia && $guardiaCaps->canIngresarConDni();

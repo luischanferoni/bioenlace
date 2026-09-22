@@ -99,13 +99,13 @@ class m260625_100000_fix_rbac_route_pollution_and_staff_clinical_grants extends 
         foreach (self::EPICRISIS_ADMIN_ROLES as $role) {
             if ((new Query())->from($childTable)->where([
                 'parent' => $role,
-                'child' => 'InternacionEpicrisisPlantilla.admin',
+                'child' => 'InpatientEpicrisisTemplate.admin',
             ])->exists($this->db)) {
                 continue;
             }
             $this->db->createCommand()->insert($childTable, [
                 'parent' => $role,
-                'child' => 'InternacionEpicrisisPlantilla.admin',
+                'child' => 'InpatientEpicrisisTemplate.admin',
             ])->execute();
             $epicrisisGrants++;
         }

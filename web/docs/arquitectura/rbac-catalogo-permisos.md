@@ -25,7 +25,7 @@ Documentación estable del modelo de autorización Bioenlace: motor Yii, **permi
 | Capability UI | `CapabilityManifestIndex`, `CapabilityAccessService`, `CapabilityPermissionSyncService` | Clave = `capability_id`; UIs nativas + rutas API enlazadas |
 | Flow step | `FlowStepAccessService`, header `X-Flow-Intent-Id` | Pasos `open_ui` heredan intent padre |
 | Dominio recurso | `DomainOperationAuthorizer`, políticas en `domain-operation-policies.yaml` | ¿Sobre **este** PES/turno/encounter/efector? |
-| Manifiesto UX | `home-panel-manifest.yaml`, `GuardiaBoardCapabilityService` | Visibilidad CTAs (complementa RBAC; no lo sustituye) |
+| Manifiesto UX | `home-panel-manifest.yaml`, `EmergencyBoardCapabilityService` | Visibilidad CTAs (complementa RBAC; no lo sustituye) |
 | Admin catálogo | `PermissionCatalogController` | Intents, capabilities, integridad, roles |
 | Identidad | `common\models\Platform\User`, `AuthController` | Login, contraseña, confirmación e-mail |
 

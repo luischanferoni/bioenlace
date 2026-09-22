@@ -4,11 +4,11 @@ namespace common\models\Clinical\Input;
 
 use common\components\Domain\Clinical\Capture\Domain\RowContract\DerivacionRowContract;
 use common\components\Domain\Clinical\Capture\Domain\Port\DerivacionRowSupportPort;
-use common\components\Domain\Clinical\Capture\Infrastructure\PedidoAtencion\YiiDerivacionRowSupportAdapter;
-use common\components\Domain\Clinical\PedidoAtencion\Domain\CodingSystems;
-use common\components\Domain\Clinical\PedidoAtencion\Domain\Model\PedidoAtencion;
-use common\components\Domain\Clinical\PedidoAtencion\Domain\PedidoAtencionActoCoderInterface;
-use common\components\Domain\Clinical\PedidoAtencion\Application\Service\PedidoAtencionService;
+use common\components\Domain\Clinical\Capture\Infrastructure\CareRequest\YiiDerivacionRowSupportAdapter;
+use common\components\Domain\Clinical\CareRequest\Domain\CodingSystems;
+use common\components\Domain\Clinical\CareRequest\Domain\Model\CareRequest;
+use common\components\Domain\Clinical\CareRequest\Domain\CareRequestActCoderInterface;
+use common\components\Domain\Clinical\CareRequest\Application\Service\CareRequestService;
 use common\models\Clinical\ConsultaDerivaciones;
 use yii\base\Model;
 
@@ -49,12 +49,12 @@ final class DerivacionInput extends Model
     public $actoDisplay;
 
     /** @var string */
-    public $modo = PedidoAtencion::MODO_INTERCONSULTA;
+    public $modo = CareRequest::MODO_INTERCONSULTA;
 
     /** @var list<array{code: string, system: string, display: string}> */
     private array $actoCodingCandidates = [];
 
-    private static ?PedidoAtencionActoCoderInterface $actoCoderOverride = null;
+    private static ?CareRequestActCoderInterface $actoCoderOverride = null;
 
     private static ?DerivacionRowSupportPort $supportOverride = null;
 
@@ -66,7 +66,7 @@ final class DerivacionInput extends Model
         return [self::FIELD_SERVICIO, self::FIELD_ACTO_DISPLAY, self::FIELD_MODO];
     }
 
-    public static function setActoCoderForTests(?PedidoAtencionActoCoderInterface $coder): void
+    public static function setActoCoderForTests(?CareRequestActCoderInterface $coder): void
     {
         self::$actoCoderOverride = $coder;
     }
@@ -116,9 +116,9 @@ final class DerivacionInput extends Model
         ];
     }
 
-    public function toPedido(): PedidoAtencion
+    public function toPedido(): CareRequest
     {
-        return new PedidoAtencion(
+        return new CareRequest(
             $this->idServicio,
             $this->actoCode,
             $this->actoSystem ?? ($this->actoCode !== null ? CodingSystems::SNOMED : null),
@@ -191,7 +191,7 @@ final class DerivacionInput extends Model
             $this->idEfector = $defaultEfectorId;
         }
 
-        $resolved = (new PedidoAtencionService())->resolve($this->toPedido());
+        $resolved = (new CareRequestService())->resolve($this->toPedido());
         $pedido = $resolved['pedido'];
 
         $display = $this->servicio;

@@ -22,11 +22,11 @@ $this->params['breadcrumbs'][] = $this->title;
 
 <?php
 
-use frontend\assets\InternacionAltaAsset;
-use frontend\assets\InternacionCambioCamaAsset;
+use frontend\assets\InpatientDischargeAsset;
+use frontend\assets\InpatientBedTransferAsset;
 
-InternacionAltaAsset::register($this);
-InternacionCambioCamaAsset::register($this);
+InpatientDischargeAsset::register($this);
+InpatientBedTransferAsset::register($this);
 ?>
 
 <?= $this->render('_modal_alta.php', ['model' => $model]); ?>

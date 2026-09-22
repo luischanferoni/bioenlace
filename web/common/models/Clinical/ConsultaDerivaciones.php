@@ -84,7 +84,7 @@ class ConsultaDerivaciones extends ServiceRequest
             $row,
             'Derivaciones',
             0,
-            new \common\components\Domain\Clinical\Capture\Infrastructure\PedidoAtencion\YiiDerivacionRowSupportAdapter()
+            new \common\components\Domain\Clinical\Capture\Infrastructure\CareRequest\YiiDerivacionRowSupportAdapter()
         );
 
         return [
@@ -104,7 +104,7 @@ class ConsultaDerivaciones extends ServiceRequest
             $row,
             $field,
             $value,
-            new \common\components\Domain\Clinical\Capture\Infrastructure\PedidoAtencion\YiiDerivacionRowSupportAdapter()
+            new \common\components\Domain\Clinical\Capture\Infrastructure\CareRequest\YiiDerivacionRowSupportAdapter()
         );
     }
 

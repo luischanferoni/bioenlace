@@ -3,12 +3,12 @@
 namespace common\components\Domain\Clinical\Encounter\Application\Service;
 
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EpisodioDateTimePresenter;
-use common\components\Domain\Clinical\Emergency\Domain\CircuitoEstado;
-use common\components\Domain\Clinical\Emergency\Application\Service\GuardiaCircuitoService;
-use common\components\Domain\Clinical\Emergency\Application\Service\GuardiaTriageService;
+use common\components\Domain\Clinical\Emergency\Domain\BoardState;
+use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyBoardService;
+use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyTriageService;
 use common\models\Clinical\Encounter;
-use common\models\Clinical\Emergency\GuardiaTriage;
-use common\models\Clinical\Guardia;
+use common\models\Clinical\Emergency\EmergencyTriage;
+use common\models\Clinical\Emergency\EmergencyEpisode;
 use common\models\Clinical\SegNivelInternacion;
 
 /**
@@ -18,18 +18,18 @@ use common\models\Clinical\SegNivelInternacion;
  */
 final class EpisodioHistoriaBannerService
 {
-    /** @var GuardiaCircuitoService */
+    /** @var EmergencyBoardService */
     private $circuito;
 
-    /** @var GuardiaTriageService */
+    /** @var EmergencyTriageService */
     private $triageSerializer;
 
     public function __construct(
-        ?GuardiaCircuitoService $circuito = null,
-        ?GuardiaTriageService $triageSerializer = null
+        ?EmergencyBoardService $circuito = null,
+        ?EmergencyTriageService $triageSerializer = null
     ) {
-        $this->circuito = $circuito ?? new GuardiaCircuitoService();
-        $this->triageSerializer = $triageSerializer ?? new GuardiaTriageService();
+        $this->circuito = $circuito ?? new EmergencyBoardService();
+        $this->triageSerializer = $triageSerializer ?? new EmergencyTriageService();
     }
 
     /**
@@ -40,7 +40,7 @@ final class EpisodioHistoriaBannerService
      */
     public function buildForGuardia(int $personaId, int $guardiaId, int $idEfector): ?array
     {
-        $guardia = Guardia::find()
+        $guardia = EmergencyEpisode::find()
             ->where(['id' => $guardiaId, 'id_efector' => $idEfector])
             ->one();
         if ($guardia === null || (int) $guardia->id_persona !== $personaId) {
@@ -48,7 +48,7 @@ final class EpisodioHistoriaBannerService
         }
 
         $estado = $this->circuito->effectiveEstado($guardia);
-        $triageRow = GuardiaTriage::findOne(['guardia_id' => $guardiaId]);
+        $triageRow = EmergencyTriage::findOne(['guardia_id' => $guardiaId]);
         $triage = $triageRow !== null ? $this->triageSerializer->serializeTriage($triageRow) : null;
 
         $motivo = null;
@@ -77,7 +77,7 @@ final class EpisodioHistoriaBannerService
             Encounter::PARENT_GUARDIA,
             $guardiaId,
             $estado,
-            CircuitoEstado::label($estado),
+            BoardState::label($estado),
             $motivo,
             $ingresoAt !== '' ? $ingresoAt : null
         );
@@ -89,8 +89,8 @@ final class EpisodioHistoriaBannerService
         }
 
         $cerrado = in_array($estado, [
-            CircuitoEstado::FINALIZADO,
-            CircuitoEstado::DERIVADO,
+            BoardState::FINALIZADO,
+            BoardState::DERIVADO,
         ], true);
         // Triage en tablero = staff; el médico edita desde HC (esta acción).
         $banner['acciones'] = $cerrado

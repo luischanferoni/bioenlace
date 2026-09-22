@@ -6,7 +6,7 @@ use common\components\Domain\Clinical\Inpatient\Domain\InpatientClinicalContext;
 use common\models\Scheduling\Cirugia;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\ConsultaDerivaciones;
-use common\models\Clinical\Guardia;
+use common\models\Clinical\Emergency\EmergencyEpisode;
 use common\models\Person\Persona;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Scheduling\Turno;
@@ -28,7 +28,7 @@ final class EncounterCaptureContextService
     public static function validarPermisoAtencion($parent, $parentId, Persona $paciente): array
     {
         $internacionActiva = SegNivelInternacion::personaInternada($paciente->id_persona);
-        $guardiaActiva = Guardia::pacienteIngresado($paciente->id_persona);
+        $guardiaActiva = EmergencyEpisode::pacienteIngresado($paciente->id_persona);
 
         if ($internacionActiva || $guardiaActiva) {
             $efectorActual = Yii::$app->user->getIdEfector();
@@ -210,7 +210,7 @@ final class EncounterCaptureContextService
         }
 
         if ($parent == Encounter::PARENT_GUARDIA) {
-            $guardia = Guardia::findOne($parentId);
+            $guardia = EmergencyEpisode::findOne($parentId);
 
             if (!$guardia) {
                 Yii::warning('Llamada a getModeloConsulta parentId a una Guardia que no existe, parentId: ' . $parentId);

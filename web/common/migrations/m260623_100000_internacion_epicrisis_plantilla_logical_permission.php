@@ -5,11 +5,11 @@ use yii\db\Migration;
 use yii\db\Query;
 
 /**
- * RBAC: permiso lógico InternacionEpicrisisPlantilla.admin + enlaces ruta y roles con listado_pacientes.
+ * RBAC: permiso lógico InpatientEpicrisisTemplate.admin + enlaces ruta y roles con listado_pacientes.
  */
 class m260623_100000_internacion_epicrisis_plantilla_logical_permission extends Migration
 {
-    private const PERMISSION = 'InternacionEpicrisisPlantilla.admin';
+    private const PERMISSION = 'InpatientEpicrisisTemplate.admin';
 
     private const ROUTE_TYPE = 3;
 

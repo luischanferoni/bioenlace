@@ -92,7 +92,7 @@ operations:
     policies:
       - clinical.internacion_staff_access
 
-  InternacionEpicrisisPlantilla.admin:
+  InpatientEpicrisisTemplate.admin:
     policies:
       - organization.efector_sesion
 

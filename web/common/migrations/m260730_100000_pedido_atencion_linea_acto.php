@@ -5,7 +5,7 @@ use yii\db\Query;
 
 /**
  * Tipifica `servicios` como línea asistencial; catálogo `actos_clinicos` (SNOMED/LOINC)
- * y puente `linea_acto` para PedidoAtencion.
+ * y puente `linea_acto` para CareRequest.
  */
 class m260730_100000_pedido_atencion_linea_acto extends Migration
 {

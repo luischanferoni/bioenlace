@@ -5,8 +5,8 @@ namespace common\components\Domain\Clinical\Capture\Domain\RowContract;
 use common\components\Domain\Clinical\Capture\Domain\Model\CaptureIssueFactory;
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureRowCompleteness;
 use common\components\Domain\Clinical\Capture\Domain\Port\DerivacionRowSupportPort;
-use common\components\Domain\Clinical\PedidoAtencion\Domain\CodingSystems;
-use common\components\Domain\Clinical\PedidoAtencion\Domain\Model\PedidoAtencion;
+use common\components\Domain\Clinical\CareRequest\Domain\CodingSystems;
+use common\components\Domain\Clinical\CareRequest\Domain\Model\CareRequest;
 
 /**
  * Contrato Domain: derivación/interconsulta (`ConsultaDerivaciones`).
@@ -57,7 +57,7 @@ final class DerivacionRowContract
             'actoCode' => null,
             'actoSystem' => null,
             'actoDisplay' => null,
-            'modo' => PedidoAtencion::MODO_INTERCONSULTA,
+            'modo' => CareRequest::MODO_INTERCONSULTA,
             'actoCodingCandidates' => [],
         ];
 
@@ -319,9 +319,9 @@ final class DerivacionRowContract
     {
         $raw = strtolower(trim((string) $modo));
         if ($raw === '') {
-            return PedidoAtencion::MODO_INTERCONSULTA;
+            return CareRequest::MODO_INTERCONSULTA;
         }
-        if (in_array($raw, PedidoAtencion::modos(), true)) {
+        if (in_array($raw, CareRequest::modos(), true)) {
             return $raw;
         }
         if (in_array($raw, ['practica', 'práctica', self::REFERRAL_PRACTICA], true)
@@ -329,19 +329,19 @@ final class DerivacionRowContract
             || str_contains($raw, 'estudio')
             || str_contains($raw, 'imaging')
         ) {
-            return PedidoAtencion::MODO_PRACTICA;
+            return CareRequest::MODO_PRACTICA;
         }
         if (str_contains($raw, 'consult') || $raw === self::REFERRAL_INTERCONSULTA) {
-            return PedidoAtencion::MODO_INTERCONSULTA;
+            return CareRequest::MODO_INTERCONSULTA;
         }
 
-        return PedidoAtencion::MODO_INTERCONSULTA;
+        return CareRequest::MODO_INTERCONSULTA;
     }
 
     public static function referralKindForModo(string $modo): string
     {
         $modo = strtolower(trim($modo));
-        if (in_array($modo, [PedidoAtencion::MODO_PRACTICA, PedidoAtencion::MODO_ESTUDIO], true)) {
+        if (in_array($modo, [CareRequest::MODO_PRACTICA, CareRequest::MODO_ESTUDIO], true)) {
             return self::REFERRAL_PRACTICA;
         }
 

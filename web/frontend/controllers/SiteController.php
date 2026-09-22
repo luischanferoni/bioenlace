@@ -24,7 +24,7 @@ use frontend\components\WebApiJwtSessionService;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Organization\Servicio;
 use frontend\components\Clinical\PacientesListadoPageBuilder;
-use frontend\assets\GuardiaTableroAsset;
+use frontend\assets\EmergencyBoardAsset;
 use frontend\assets\PacientesListadoAsset;
 use common\components\Domain\Organization\SesionOperativa\Application\Service\SesionOperativaService;
 
@@ -159,8 +159,8 @@ class SiteController extends Controller
         $this->view->title = $page['pageTitle'];
         $panelJsDepends = [];
         if (!empty($page['registerGuardiaAssets'])) {
-            GuardiaTableroAsset::register($this->view);
-            $panelJsDepends[] = GuardiaTableroAsset::class;
+            EmergencyBoardAsset::register($this->view);
+            $panelJsDepends[] = EmergencyBoardAsset::class;
         }
         PacientesListadoAsset::registerWithDepends($this->view, $panelJsDepends);
 

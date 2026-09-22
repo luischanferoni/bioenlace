@@ -6,7 +6,7 @@ use Yii;
 use common\models\Clinical\ConsultaAtencionesEnfermeria;
 use common\models\Clinical\EncuestaParchesMamarios;
 use common\models\Person\EstadoCivil;
-use common\models\Clinical\Guardia;
+use common\models\Clinical\Emergency\EmergencyEpisode;
 use common\models\Person\Persona_domicilio;
 use common\models\Person\Persona_mails;
 use common\models\Person\PersonaTelefono;
@@ -282,7 +282,7 @@ class Persona extends \yii\db\ActiveRecord
      */
     public function getEncuentrosGuardia()
     {
-        return $this->hasMany(Guardia::className(), ['id_persona' => 'id_persona']);
+        return $this->hasMany(EmergencyEpisode::className(), ['id_persona' => 'id_persona']);
     }
 
     public function getTurnos()

@@ -1,4 +1,4 @@
-﻿# Internación — producto
+# Internación — producto
 
 Gestión del **episodio de internación** en el efector: camas, indicadores operativos y **administración de plantillas** de epicrisis por institución. La fuente de verdad es la API v1 `clinical/internacion` y `clinical/internacion-epicrisis-plantilla`; web y app Personal de Salud consumen la misma capa.
 
@@ -44,7 +44,7 @@ No hay pantalla `/internacion/ronda`. La ronda es el listado del inicio IMP (`ho
 
 El médico **documenta el encounter** y, al establecer el diagnóstico de egreso, **indica el alta**. No hay intent de asistente ni segundo formulario en el tablero para que otro rol dé el alta.
 
-Completar el care plan “Internación” **no** es el alta del episodio. El cierre de cama / `fecha_fin` (`doExternacion`) sigue en dominio; la ficha administrativa puede mostrar el formulario de externación de forma transitoria hasta cablear el outcome IMP al guardar la captura (equivalente a `GuardiaEncounterOutcomeService`).
+Completar el care plan “Internación” **no** es el alta del episodio. El cierre de cama / `fecha_fin` (`doExternacion`) sigue en dominio; la ficha administrativa puede mostrar el formulario de externación de forma transitoria hasta cablear el outcome IMP al guardar la captura (equivalente a `EmergencyEncounterOutcomeService`).
 
 Plantillas de epicrisis: ABM institucional (placeholders `{paciente}`, `{fecha_ingreso}`, `{dias_internacion}`, `{documento}`).
 

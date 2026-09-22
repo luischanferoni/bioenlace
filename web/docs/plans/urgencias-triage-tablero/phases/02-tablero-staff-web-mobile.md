@@ -6,7 +6,7 @@ Pantalla de **sala de guardia** para admisión, enfermería y coordinación: ver
 
 ## Checklist implementación
 
-- [x] Tablero en **inicio web** (`site/pacientes` con EMER): `pacientes-listado.js` + plantillas + `guardia-tablero.css`
+- [x] Tablero en **inicio web** (`site/pacientes` con EMER): `pacientes-listado.js` + plantillas + `emergency-board.css`
 - [x] Polling 30 s en web (EMER)
 - [x] Tarjetas: nivel/color, minutos, circuito, motivo triage, profesional, Atender / Triage
 - [x] Sin vista dedicada (decisión producto): solo inicio `site/pacientes` EMER
@@ -16,7 +16,7 @@ Pantalla de **sala de guardia** para admisión, enfermería y coordinación: ver
 - [ ] Filtros query en UI
 - [ ] Sonido SLA superado
 - [x] App móvil: tablero en **Inicio** cuando `encounter_class == EMER` (misma API)
-- [x] `PacientesController` EMER → `GuardiaQueueService::listadoCompacto` (compat); inicio EMER usa endpoint `tablero`
+- [x] `PacientesController` EMER → `EmergencyQueueService::listadoCompacto` (compat); inicio EMER usa endpoint `tablero`
 
 ## UX web (referencia)
 

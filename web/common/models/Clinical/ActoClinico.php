@@ -41,8 +41,8 @@ class ActoClinico extends ActiveRecord
         ];
     }
 
-    public function getLineaActos(): \yii\db\ActiveQuery
+    public function getServiceLineActs(): \yii\db\ActiveQuery
     {
-        return $this->hasMany(LineaActo::class, ['id_acto' => 'id']);
+        return $this->hasMany(ServiceLineAct::class, ['id_acto' => 'id']);
     }
 }

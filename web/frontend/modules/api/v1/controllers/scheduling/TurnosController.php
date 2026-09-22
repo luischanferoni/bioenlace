@@ -40,7 +40,7 @@ use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoAgendaMe
 use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaModalidadAtencionCatalogService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaModalidadAtencionService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaTriageModalidadStepService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\PedidoAtencionActoStepService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\CareRequestActStepService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaTurnoTriageCatalogService;
 use common\components\Domain\Scheduling\Agenda\Application\Agents\ReservaTriagePostCupoRoutingAgent;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaTriageServicioSugeridoService;
@@ -198,8 +198,8 @@ class TurnosController extends BaseController
             }
         }
 
-        if (PedidoAtencionActoStepService::isPedidoActoStep($step)) {
-            $options = (new PedidoAtencionActoStepService())->opciones();
+        if (CareRequestActStepService::isPedidoActoStep($step)) {
+            $options = (new CareRequestActStepService())->opciones();
         }
 
         $out = UiScreenService::handleScreen(

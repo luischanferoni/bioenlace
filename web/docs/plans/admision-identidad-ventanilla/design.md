@@ -17,7 +17,7 @@ Domicilio: igual que la app (cron / gateway), no edición en ventanilla.
 
 ## Ingreso a guardia
 
-`GuardiaIngresoService::ingresar`:
+`EmergencyIntakeService::ingresar`:
 
 1. `id_persona` conocido, **o**
 2. Identidad DNI → `RegistroStaffPacienteService::registrar(modo=dni_lector)` → `id_persona`, **o**

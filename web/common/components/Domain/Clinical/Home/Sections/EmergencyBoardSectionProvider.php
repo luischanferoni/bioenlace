@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Clinical\Home\Sections;
 
-use common\components\Domain\Clinical\Emergency\Application\Service\GuardiaBoardCapabilityService;
-use common\components\Domain\Clinical\Emergency\Application\Service\GuardiaQueueService;
+use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyBoardCapabilityService;
+use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyQueueService;
 use common\components\Domain\Organization\Efector\Application\Authorization\EfectorAccessService;
 use common\components\Domain\Organization\Pes\Application\Service\ProfesionalHorarioActivaService;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
@@ -45,7 +45,7 @@ final class EmergencyBoardSectionProvider implements HomePanelSectionProviderInt
                 )
                 : null;
 
-            $caps = new GuardiaBoardCapabilityService();
+            $caps = new EmergencyBoardCapabilityService();
 
             return [
                 'items' => [],
@@ -63,8 +63,8 @@ final class EmergencyBoardSectionProvider implements HomePanelSectionProviderInt
             ];
         }
 
-        $tablero = (new GuardiaQueueService())->tablero($idEfector, ['solo_activos' => true]);
-        $caps = new GuardiaBoardCapabilityService();
+        $tablero = (new EmergencyQueueService())->tablero($idEfector, ['solo_activos' => true]);
+        $caps = new EmergencyBoardCapabilityService();
 
         return [
             'items' => is_array($tablero['items'] ?? null) ? $tablero['items'] : [],

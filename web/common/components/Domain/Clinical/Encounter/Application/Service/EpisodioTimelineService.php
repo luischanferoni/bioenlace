@@ -3,16 +3,16 @@
 namespace common\components\Domain\Clinical\Encounter\Application\Service;
 
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EpisodioDateTimePresenter;
-use common\components\Domain\Clinical\Emergency\Domain\CircuitoEventType;
-use common\components\Domain\Clinical\Emergency\Application\Service\GuardiaTriageService;
+use common\components\Domain\Clinical\Emergency\Domain\BoardEventType;
+use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyTriageService;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\MedicationAdministration;
 use common\models\Clinical\MedicationRequest;
 use common\models\Clinical\ServiceRequest;
 use common\models\Clinical\ConsultaAtencionesEnfermeria;
-use common\models\Clinical\Emergency\GuardiaCircuitoEvent;
-use common\models\Clinical\Emergency\GuardiaTriage;
-use common\models\Clinical\Guardia;
+use common\models\Clinical\Emergency\EmergencyBoardEvent;
+use common\models\Clinical\Emergency\EmergencyTriage;
+use common\models\Clinical\Emergency\EmergencyEpisode;
 use common\models\Person\Persona;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Clinical\SegNivelInternacion;
@@ -26,7 +26,7 @@ final class EpisodioTimelineService
 {
     private const LIMIT_ITEMS = 120;
 
-    /** @var GuardiaTriageService */
+    /** @var EmergencyTriageService */
     private $triageSerializer;
 
     /** @var LaboratoryResultQueryService */
@@ -36,10 +36,10 @@ final class EpisodioTimelineService
     private $pesNombreCache = [];
 
     public function __construct(
-        ?GuardiaTriageService $triageSerializer = null,
+        ?EmergencyTriageService $triageSerializer = null,
         ?LaboratoryResultQueryService $labQuery = null
     ) {
-        $this->triageSerializer = $triageSerializer ?? new GuardiaTriageService();
+        $this->triageSerializer = $triageSerializer ?? new EmergencyTriageService();
         $this->labQuery = $labQuery ?? new LaboratoryResultQueryService();
     }
 
@@ -48,7 +48,7 @@ final class EpisodioTimelineService
      */
     public function buildForGuardia(int $personaId, int $guardiaId, int $idEfector): ?array
     {
-        $guardia = Guardia::findOne(['id' => $guardiaId, 'id_efector' => $idEfector]);
+        $guardia = EmergencyEpisode::findOne(['id' => $guardiaId, 'id_efector' => $idEfector]);
         if ($guardia === null || (int) $guardia->id_persona !== $personaId) {
             return null;
         }
@@ -140,19 +140,19 @@ final class EpisodioTimelineService
      */
     private function appendCircuitoItems(array &$items, int $guardiaId): void
     {
-        $rows = GuardiaCircuitoEvent::find()
+        $rows = EmergencyBoardEvent::find()
             ->where(['guardia_id' => $guardiaId])
             ->orderBy(['occurred_at' => SORT_DESC, 'id' => SORT_DESC])
             ->limit(60)
             ->all();
 
         foreach ($rows as $row) {
-            if (!$row instanceof GuardiaCircuitoEvent) {
+            if (!$row instanceof EmergencyBoardEvent) {
                 continue;
             }
             $tipo = (string) $row->tipo;
             // El triage clínico se muestra como ítem `triage` (más rico); el evento queda implícito.
-            if ($tipo === CircuitoEventType::TRIAGE || $tipo === CircuitoEventType::RE_TRIAGE) {
+            if ($tipo === BoardEventType::TRIAGE || $tipo === BoardEventType::RE_TRIAGE) {
                 continue;
             }
             $payload = [];
@@ -166,7 +166,7 @@ final class EpisodioTimelineService
                 'circuito',
                 'circuito:' . (int) $row->id,
                 (string) $row->occurred_at,
-                CircuitoEventType::label($tipo),
+                BoardEventType::label($tipo),
                 [
                     'event_type' => $tipo,
                     'payload' => $payload,
@@ -184,7 +184,7 @@ final class EpisodioTimelineService
      */
     private function appendTriageItem(array &$items, int $guardiaId): void
     {
-        $triage = GuardiaTriage::findOne(['guardia_id' => $guardiaId]);
+        $triage = EmergencyTriage::findOne(['guardia_id' => $guardiaId]);
         if ($triage === null) {
             return;
         }

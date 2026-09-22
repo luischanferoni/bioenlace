@@ -76,7 +76,7 @@ class m260731_120000_servicios_legacy_acto_capacidad extends Migration
                 $fromIds[] = $byName[$name];
             }
         }
-        $this->remapLineaActo($fromIds, $containerId);
+        $this->remapServiceLineAct($fromIds, $containerId);
     }
 
     public function safeDown(): void
@@ -87,7 +87,7 @@ class m260731_120000_servicios_legacy_acto_capacidad extends Migration
     /**
      * @param list<int> $fromIds
      */
-    private function remapLineaActo(array $fromIds, int $containerId): void
+    private function remapServiceLineAct(array $fromIds, int $containerId): void
     {
         $lineaActo = '{{%linea_acto}}';
         if ($this->db->schema->getTableSchema($lineaActo, true) === null || $fromIds === []) {

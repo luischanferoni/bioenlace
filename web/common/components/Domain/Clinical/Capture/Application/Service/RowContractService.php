@@ -5,7 +5,7 @@ namespace common\components\Domain\Clinical\Capture\Application\Service;
 use common\components\Domain\Clinical\Capture\Domain\Policy\CaptureCompletenessPolicy;
 use common\components\Domain\Clinical\Capture\Domain\Port\RowContractRegistry;
 use common\components\Domain\Clinical\Capture\Domain\Port\DerivacionRowSupportPort;
-use common\components\Domain\Clinical\Capture\Infrastructure\PedidoAtencion\YiiDerivacionRowSupportAdapter;
+use common\components\Domain\Clinical\Capture\Infrastructure\CareRequest\YiiDerivacionRowSupportAdapter;
 
 /**
  * Wiring Application → Domain contratos + Infrastructure adapters.

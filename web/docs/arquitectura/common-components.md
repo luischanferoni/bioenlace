@@ -105,7 +105,7 @@ Domain/<BC>/
 | Laboratorio + LIS | `Domain/Clinical/Laboratory/` (+ `Infrastructure/External`) |
 | Receta + repositorio digital | `Domain/Clinical/Prescription/` (+ `Infrastructure/External`) |
 | HC nacional | `Domain/Clinical/HistoryExchange/` (+ `Infrastructure/External`) |
-| Pedido de atención | `Domain/Clinical/PedidoAtencion/` |
+| Pedido de atención | `Domain/Clinical/CareRequest/` |
 | Persona, registro | `Domain/Person/` |
 | Turno, agenda | `Domain/Scheduling/` |
 | Helper HTTP / log / migración | `Shared/Infrastructure/` |

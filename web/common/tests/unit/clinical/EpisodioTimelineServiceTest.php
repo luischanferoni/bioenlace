@@ -3,7 +3,7 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\Emergency\Domain\CircuitoEventType;
+use common\components\Domain\Clinical\Emergency\Domain\BoardEventType;
 use common\components\Domain\Clinical\Encounter\Application\Service\EpisodioTimelineService;
 use common\models\Clinical\Encounter;
 
@@ -12,12 +12,12 @@ use common\models\Clinical\Encounter;
  */
 class EpisodioTimelineServiceTest extends Unit
 {
-    public function testCircuitoEventTypeLabels(): void
+    public function testBoardEventTypeLabels(): void
     {
-        $this->assertSame('Ingreso a guardia', CircuitoEventType::label(CircuitoEventType::INGRESO));
-        $this->assertSame('Asignación de médico', CircuitoEventType::label(CircuitoEventType::ASIGNACION));
-        $this->assertSame('Evento de circuito', CircuitoEventType::label(null));
-        $this->assertSame('custom', CircuitoEventType::label('custom'));
+        $this->assertSame('Ingreso a guardia', BoardEventType::label(BoardEventType::INGRESO));
+        $this->assertSame('Asignación de médico', BoardEventType::label(BoardEventType::ASIGNACION));
+        $this->assertSame('Evento de circuito', BoardEventType::label(null));
+        $this->assertSame('custom', BoardEventType::label('custom'));
     }
 
     public function testListEncountersForParentAcceptsEmpty(): void

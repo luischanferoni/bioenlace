@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Organization\Efector\Application\Seed;
 
-use common\components\Domain\Clinical\Emergency\Application\Service\GuardiaCircuitoService;
-use common\components\Domain\Clinical\Emergency\Application\Service\GuardiaTriageService;
+use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyBoardService;
+use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyTriageService;
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanLifecycleService;
 use common\components\Domain\Clinical\Encounter\Application\Service\EncounterLifecycleService;
@@ -11,7 +11,7 @@ use common\components\Domain\Person\Identidad\Domain\Policy\CuilPolicy;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncInitialChatService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoSlotClaimService;
 use common\models\Clinical\Encounter;
-use common\models\Clinical\Guardia;
+use common\models\Clinical\Emergency\EmergencyEpisode;
 use common\models\Organization\InfraestructuraCama;
 use common\models\Organization\InfraestructuraPiso;
 use common\models\Organization\InfraestructuraSala;
@@ -310,8 +310,8 @@ final class DemoSandboxClinicalSeedService
      */
     private function createGuardia(int $idPersona, int $idEfector, int $idPes, int $actingUserId): int
     {
-        $model = new Guardia();
-        $model->scenario = Guardia::INGRESO_PACIENTE;
+        $model = new EmergencyEpisode();
+        $model->scenario = EmergencyEpisode::INGRESO_PACIENTE;
         $model->id_persona = $idPersona;
         $model->id_efector = $idEfector;
         $model->id_profesional_efector_servicio = $idPes;
@@ -333,10 +333,10 @@ final class DemoSandboxClinicalSeedService
             throw new \RuntimeException('No se pudo registrar guardia demo.');
         }
 
-        (new GuardiaCircuitoService())->afterIngreso($model);
+        (new EmergencyBoardService())->afterIngreso($model);
 
         // Demo = médico: dejar el episodio listo para Atender (triaje inicial).
-        (new GuardiaTriageService())->registrar(
+        (new EmergencyTriageService())->registrar(
             (int) $model->id,
             [
                 'level' => 3,

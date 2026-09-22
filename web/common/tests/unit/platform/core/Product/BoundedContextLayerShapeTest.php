@@ -247,8 +247,8 @@ final class BoundedContextLayerShapeTest extends Unit
             'Home' => true,
             'Inpatient' => true,
             'Laboratory' => true,
-            'LegalRecord' => true,
-            'PedidoAtencion' => true,
+            'LegalExport' => true,
+            'CareRequest' => true,
             'Prescription' => true,
             'Specialty' => true,
         ];

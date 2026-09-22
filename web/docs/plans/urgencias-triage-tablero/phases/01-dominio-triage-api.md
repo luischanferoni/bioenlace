@@ -8,12 +8,12 @@ Persistir triage estructurado y estados de circuito detrás de la API, sin depen
 
 - [x] Migración: `guardia_triage`, `guardia_circuito_event`, columnas `circuito_estado` / `prioridad_triage` / `ingreso_at` en `guardia`
 - [ ] Seed opcional: `emergency_triage_reason` (catálogo motivos)
-- [x] Modelos AR + constantes (`CircuitoEstado`, `CircuitoEventType`, `TriageScale`)
-- [x] `GuardiaTriageService`, `GuardiaCircuitoService`, `GuardiaIngresoService`, `GuardiaQueueService`
-- [x] `EmergencyGuardiaController` + rutas en `main.php`
+- [x] Modelos AR + constantes (`BoardState`, `BoardEventType`, `TriageScale`)
+- [x] `EmergencyTriageService`, `EmergencyBoardService`, `EmergencyIntakeService`, `EmergencyQueueService`
+- [x] `EmergencyController` + rutas en `main.php`
 - [x] RBAC ApiGhost + migración `m260603_100001`
 - [ ] Tests unitarios servicios (transiciones inválidas, 1 triage activo por guardia)
-- [x] Endpoint tablero (`GET tablero`) + listado EMER vía `GuardiaQueueService`
+- [x] Endpoint tablero (`GET tablero`) + listado EMER vía `EmergencyQueueService`
 
 ## Reglas de negocio
 

@@ -38,7 +38,7 @@ class m260630_100000_intent_id_permission_keys extends Migration
         'Internacion.change_bed' => 'internacion.cambio-cama-flow',
         'Internacion.create' => 'internacion.ingreso-flow',
         'Internacion.view_map' => 'internacion.mapa-camas-flow',
-        'InternacionEpicrisisPlantilla.admin' => 'internacion.epicrisis-plantilla-admin',
+        'InpatientEpicrisisTemplate.admin' => 'internacion.epicrisis-plantilla-admin',
         'GuardiaEpisode.triage' => 'urgencias.triage-paciente-guardia',
         'GuardiaEpisode.view_board' => 'urgencias.ver-tablero-guardia',
         'Licencia.create' => [

@@ -32,7 +32,7 @@ No hay pantalla web dedicada `guardia/tablero`: el tablero vive en **inicio** se
 
 El médico **documenta encounters** según la configuración del efector (`encounter_definition.workflow_json`: secciones y campos requeridos por clase/servicio). En guardia (`emer_standard`) eso incluye motivos, SV, diagnóstico, medicación, prácticas, indicaciones y derivaciones.
 
-Al guardar la captura, `GuardiaEncounterOutcomeService`:
+Al guardar la captura, `EmergencyEncounterOutcomeService`:
 
 - **Internación:** si queda explícito el pase a internación/UCI → pedido de cama; el staff completa **Ingresar cama**. El circuito **no** pasa a `atendido` mientras haya pedido pendiente / resuelto por internación.
 - **Derivación institucional:** señales de derivación a otro efector → `circuito_estado = derivado`.

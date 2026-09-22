@@ -39,6 +39,6 @@ Solo servicios que coinciden con rol `medicina_clinica` y tienen turnos habilita
 
 - Intent/flujo dedicado **“Tengo una derivación”** para reservar especialista con teleconsulta.
 - UI staff: distinguir en PES quién opera como hub (generalista) vs otras áreas (hoy se infiere por servicio del centro).
-- **Estudio o práctica** en Solicitar Atención: acto SNOMED → servicios institucionales vía `PedidoAtencionPacienteService`.
+- **Estudio o práctica** en Solicitar Atención: acto SNOMED → servicios institucionales vía `CareRequestPatientService`.
 
 Ver también: [glosario-servicio-pes-acto.md](./glosario-servicio-pes-acto.md), [triage-reserva-turno.md](./triage-reserva-turno.md), [teleconsulta-elegibilidad.md](./teleconsulta-elegibilidad.md), [solicitar-atencion.md](./solicitar-atencion.md), [../decisions/pedido-atencion-linea-acto.md](../decisions/pedido-atencion-linea-acto.md).

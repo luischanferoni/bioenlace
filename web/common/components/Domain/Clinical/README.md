@@ -15,10 +15,10 @@ ADR: [clinical-modulos-capacidad](../../../docs/decisions/clinical-modulos-capac
 | `Prescription/` | Receta |
 | `CarePlan/` | Planes / órdenes |
 | `CareCohort/` | Care packs |
-| `PedidoAtencion/` | Línea×acto |
+| `CareRequest/` | Línea×acto |
 | `Capture/` | Intake — piloto de packaging Application ([README](./Capture/README.md)) |
 | `HistoryExchange/` | Cola HC |
-| `LegalRecord/` | Export legal |
+| `LegalExport/` | Export legal |
 | `Specialty/` | Odontología / oftalmología / aux |
 | `Home/` | Plugin panel |
 

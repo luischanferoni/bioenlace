@@ -37,9 +37,9 @@ Síntomas observados en producción/staging:
 | RBAC API | `BioenlaceApiAccessControl`, `ApiRoutePermissionResolver`, `FlowStepAccessService` |
 | Sync intents | `CatalogPermissionSyncService`, `php yii catalog-permission/sync` |
 | Catálogo admin | `/admin/permission-catalog/index` |
-| Capabilities UI EMER | `home-panel-manifest.yaml`, `GuardiaBoardCapabilityService` |
+| Capabilities UI EMER | `home-panel-manifest.yaml`, `EmergencyBoardCapabilityService` |
 | Panel + tablero | `HomeController`, `EmergencyBoardSectionProvider` |
-| Guardia API | `EmergencyGuardiaController`, migraciones `*emergency*rbac*` |
+| Guardia API | `EmergencyController`, migraciones `*emergency*rbac*` |
 | Encounter API | `EncounterController`, `EncounterStaffSummaryController` |
 | Doc estable RBAC | [rbac-catalogo-permisos.md](../../arquitectura/rbac-catalogo-permisos.md), [autorizacion-solo-por-intents.md](../../decisions/autorizacion-solo-por-intents.md), [autorizacion-capabilities-ui-nativa.md](../../decisions/autorizacion-capabilities-ui-nativa.md) |
 

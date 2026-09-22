@@ -47,13 +47,13 @@ stateDiagram-v2
 
 ```
 web/common/components/Domain/Clinical/Emergency/Service/
-  GuardiaCircuitoService.php      # transiciones de estado, validación
-  GuardiaTriageService.php        # alta/actualización triage
-  GuardiaQueueService.php         # listado tablero, orden, filtros
+  EmergencyBoardService.php      # transiciones de estado, validación
+  EmergencyTriageService.php        # alta/actualización triage
+  EmergencyQueueService.php         # listado tablero, orden, filtros
   GuardiaTimingService.php        # cálculo tiempos para tablero/KPI
 ```
 
-Controllers API delgados en `frontend/modules/api/v1/controllers/` (prefijo sugerido: `EmergencyGuardiaController` o `clinical/GuardiaController` según convención del módulo).
+Controllers API delgados en `frontend/modules/api/v1/controllers/` (prefijo sugerido: `EmergencyController` o `clinical/GuardiaController` según convención del módulo).
 
 ## API (borrador Fase 1–2)
 
@@ -92,6 +92,6 @@ Rutas y permisos ApiGhost: nombres explícitos (`triage-para-guardia`, `tablero-
 | Riesgo | Mitigación |
 |--------|------------|
 | Romper flujos web actuales de ingreso | Mantener escenarios Yii; API en paralelo; feature flag por efector |
-| Dos listas (PacientesController vs tablero) | Unificar payload en `GuardiaQueueService`; deprecar campos sueltos |
+| Dos listas (PacientesController vs tablero) | Unificar payload en `EmergencyQueueService`; deprecar campos sueltos |
 | Triage sin conectividad | UI móvil offline-lite fuera de MVP; mensaje claro |
 | Sobrecarga de campos en formulario web | Triage en paso separado; móvil formulario corto |

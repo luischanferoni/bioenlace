@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\Home\Sections;
 
 use common\components\Platform\Ui\Home\Service\Sections\HomePanelSectionProviderInterface;
-use common\components\Domain\Clinical\Emergency\Application\Service\GuardiaIndicadoresService;
+use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyIndicatorsService;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Domain\Organization\Efector\Application\Authorization\EfectorAccessService;
 
@@ -22,6 +22,6 @@ final class EmergencyIndicatorsSectionProvider implements HomePanelSectionProvid
             throw new \InvalidArgumentException($e->getMessage() !== '' ? $e->getMessage() : 'No autorizado.', 0, $e);
         }
 
-        return (new GuardiaIndicadoresService())->resumen($idEfector);
+        return (new EmergencyIndicatorsService())->resumen($idEfector);
     }
 }

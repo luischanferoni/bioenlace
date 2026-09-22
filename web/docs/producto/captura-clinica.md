@@ -81,7 +81,7 @@ En **internación / guardia**, cada evolución es un encounter nuevo (salvo edit
 
 En guardia el workflow (`emer_standard` en `EncounterDefinition`) incluye motivos, diagnóstico, medicación, prácticas, indicaciones, **signos vitales** y **derivaciones**. Las cards de SV del timeline son **solo lectura**.
 
-**Conducta (alta, internación, derivación a otra área/institución)** se documenta en esa captura. Tras guardar, el dominio puede marcar pedido de cama si la captura indica pase a internación (`GuardiaEncounterOutcomeService`); el staff **ingresa la cama** en el tablero. El médico no tiene CTA “Solicitar cama”.
+**Conducta (alta, internación, derivación a otra área/institución)** se documenta en esa captura. Tras guardar, el dominio puede marcar pedido de cama si la captura indica pase a internación (`EmergencyEncounterOutcomeService`); el staff **ingresa la cama** en el tablero. El médico no tiene CTA “Solicitar cama”.
 
 **Paciente se retiró** no se ofrece en la HC: solo en el tablero (menú ⋮ / CTA web).
 

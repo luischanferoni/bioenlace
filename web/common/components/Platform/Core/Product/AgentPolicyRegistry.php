@@ -4,7 +4,7 @@ namespace common\components\Platform\Core\Product;
 
 use common\components\Domain\Clinical\CareCohort\Application\Agents\CareFollowupBranchingAgentPolicy;
 use common\components\Domain\Clinical\HistoryExchange\Application\Agents\IntegrationRetryAgentPolicy;
-use common\components\Domain\Clinical\Inpatient\Application\Agents\InternacionCamaSugerenciaAgentPolicy;
+use common\components\Domain\Clinical\Inpatient\Application\Agents\InpatientBedSuggestionAgentPolicy;
 use common\components\Domain\Clinical\Laboratory\Application\Agents\LabEncounterLinkAgentPolicy;
 use common\components\Domain\Clinical\Inpatient\Application\Agents\PostDischargeFollowupAgentPolicy;
 use common\components\Domain\Clinical\Laboratory\Application\Agents\PostLabClassificationAgentPolicy;
@@ -41,7 +41,7 @@ final class AgentPolicyRegistry
         'prescription-rdi-pre-submit' => PrescriptionRdiPreSubmitAgentPolicy::class,
         'care-followup-branching' => CareFollowupBranchingAgentPolicy::class,
         'post-discharge-followup' => PostDischargeFollowupAgentPolicy::class,
-        'internacion-cama-sugerencia' => InternacionCamaSugerenciaAgentPolicy::class,
+        'internacion-cama-sugerencia' => InpatientBedSuggestionAgentPolicy::class,
         'integration-retry' => IntegrationRetryAgentPolicy::class,
     ];
 

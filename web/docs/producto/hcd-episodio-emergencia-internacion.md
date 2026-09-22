@@ -55,7 +55,7 @@ Compatibilidad: `contexto_internacion` se mantiene (fecha/motivo/evoluciones). L
 | `type` | Fuente |
 |--------|--------|
 | `circuito` | Eventos de `guardia_circuito_event` (ingreso, asignación, egreso, …) |
-| `triage` | `GuardiaTriage` (nivel, motivo, vitales) |
+| `triage` | `EmergencyTriage` (nivel, motivo, vitales) |
 | `evolucion_medica` | Notes de encounters del episodio |
 | `atencion_enfermeria` | `atenciones_enfermeria` por encounter |
 | `pedido` / `interconsulta` | `ServiceRequest` |

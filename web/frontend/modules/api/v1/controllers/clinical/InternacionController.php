@@ -2,12 +2,12 @@
 
 namespace frontend\modules\api\v1\controllers\clinical;
 
-use common\components\Domain\Clinical\Inpatient\Application\Service\InternacionAltaEstructuradaService;
-use common\components\Domain\Clinical\Inpatient\Application\Service\InternacionCambioCamaService;
-use common\components\Domain\Clinical\Inpatient\Application\Service\InternacionIngresoService;
-use common\components\Domain\Clinical\Inpatient\Application\Service\InternacionCamaEstadoService;
-use common\components\Domain\Clinical\Inpatient\Application\Service\InternacionIndicadoresService;
-use common\components\Domain\Clinical\Inpatient\Application\Service\InternacionMapaCamasService;
+use common\components\Domain\Clinical\Inpatient\Application\Service\InpatientDischargeStructuredService;
+use common\components\Domain\Clinical\Inpatient\Application\Service\InpatientBedTransferService;
+use common\components\Domain\Clinical\Inpatient\Application\Service\InpatientAdmissionService;
+use common\components\Domain\Clinical\Inpatient\Application\Service\InpatientBedStatusService;
+use common\components\Domain\Clinical\Inpatient\Application\Service\InpatientIndicatorsService;
+use common\components\Domain\Clinical\Inpatient\Application\Service\InpatientBedMapService;
 use common\components\Platform\Ui\UiScreenService;
 use common\models\Person\Persona;
 use common\models\Clinical\SegNivelInternacion;
@@ -32,22 +32,22 @@ class InternacionController extends BaseController
 {
     use ClinicalAccessTrait;
 
-    private InternacionMapaCamasService $mapa;
-    private InternacionIndicadoresService $indicadores;
-    private InternacionCamaEstadoService $camaEstado;
-    private InternacionAltaEstructuradaService $alta;
-    private InternacionCambioCamaService $cambioCama;
-    private InternacionIngresoService $ingreso;
+    private InpatientBedMapService $mapa;
+    private InpatientIndicatorsService $indicadores;
+    private InpatientBedStatusService $camaEstado;
+    private InpatientDischargeStructuredService $alta;
+    private InpatientBedTransferService $cambioCama;
+    private InpatientAdmissionService $ingreso;
 
     public function init(): void
     {
         parent::init();
-        $this->mapa = new InternacionMapaCamasService();
-        $this->indicadores = new InternacionIndicadoresService();
-        $this->camaEstado = new InternacionCamaEstadoService();
-        $this->alta = new InternacionAltaEstructuradaService();
-        $this->cambioCama = new InternacionCambioCamaService();
-        $this->ingreso = new InternacionIngresoService();
+        $this->mapa = new InpatientBedMapService();
+        $this->indicadores = new InpatientIndicatorsService();
+        $this->camaEstado = new InpatientBedStatusService();
+        $this->alta = new InpatientDischargeStructuredService();
+        $this->cambioCama = new InpatientBedTransferService();
+        $this->ingreso = new InpatientAdmissionService();
     }
 
     public function actionMapaCamas(): array
@@ -335,14 +335,14 @@ class InternacionController extends BaseController
         ) {
             $out['blocks'] = $this->blocksIngresoSinCamas(
                 is_array($out['blocks'] ?? null) ? $out['blocks'] : [],
-                InternacionIngresoService::MSG_SIN_CAMAS_DISPONIBLES
+                InpatientAdmissionService::MSG_SIN_CAMAS_DISPONIBLES
             );
             $out['data'] = array_merge(
                 is_array($out['data'] ?? null) ? $out['data'] : [],
                 [
                     'puede_ingresar' => false,
                     'camas_disponibles' => [],
-                    'camas_aviso' => InternacionIngresoService::MSG_SIN_CAMAS_DISPONIBLES,
+                    'camas_aviso' => InpatientAdmissionService::MSG_SIN_CAMAS_DISPONIBLES,
                 ]
             );
 
@@ -389,7 +389,7 @@ class InternacionController extends BaseController
             if (!$puedeIngresar) {
                 $out['blocks'] = $this->blocksIngresoSinCamas(
                     is_array($out['blocks'] ?? null) ? $out['blocks'] : [],
-                    (string) ($ctx['camas_aviso'] ?? InternacionIngresoService::MSG_SIN_CAMAS_DISPONIBLES)
+                    (string) ($ctx['camas_aviso'] ?? InpatientAdmissionService::MSG_SIN_CAMAS_DISPONIBLES)
                 );
 
                 return $out;
@@ -486,7 +486,7 @@ class InternacionController extends BaseController
         $req = Yii::$app->request;
         try {
             $idEfector = $this->resolveIdEfectorForDomainOperation('Clinical.staff_efector');
-            $plantillas = (new \common\components\Domain\Clinical\Inpatient\Application\Service\InternacionEpicrisisPlantillaService())
+            $plantillas = (new \common\components\Domain\Clinical\Inpatient\Application\Service\InpatientEpicrisisTemplateService())
                 ->listar($idEfector, (int) ($req->get('id_servicio') ?? 0) ?: null);
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);

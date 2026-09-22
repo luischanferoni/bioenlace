@@ -31,7 +31,7 @@ CTA **Probar demo** en el sitio institucional → código de un solo uso → log
 | Turnos | 2 (día hábil, PES propio); el 1.º con encounter AMB |
 | Consulta AMB | 1 encounter `in-progress` vía `EncounterLifecycleService::ensureFromTurno` (captura clínica) |
 | Virtual (VR) | 2 solicitudes `SOLICITUD_ASYNC` en `planned` (bandeja «Por tomar» + mensaje inicial) |
-| Guardia | 1 episodio (`GuardiaIngresoService`, best-effort) |
+| Guardia | 1 episodio (`EmergencyIntakeService`, best-effort) |
 | Internación | 1 ingreso + piso/sala/cama **efímeros** (sin assert HTTP; lifecycle care plan best-effort) |
 
 Pacientes distintos para turnos / async / guardia / internación.

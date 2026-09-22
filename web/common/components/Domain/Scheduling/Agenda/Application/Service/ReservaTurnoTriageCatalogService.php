@@ -19,9 +19,9 @@ final class ReservaTurnoTriageCatalogService
             'title' => ReservaTriageModalidadStepService::TITLE,
             'draft_field' => ReservaTriageModalidadStepService::DRAFT_FIELD,
         ],
-        PedidoAtencionActoStepService::STEP_ID => [
-            'title' => PedidoAtencionActoStepService::TITLE,
-            'draft_field' => PedidoAtencionActoStepService::DRAFT_FIELD,
+        CareRequestActStepService::STEP_ID => [
+            'title' => CareRequestActStepService::TITLE,
+            'draft_field' => CareRequestActStepService::DRAFT_FIELD,
         ],
     ];
 

@@ -8,7 +8,7 @@ Tras colocalizar capas DDD a nivel BC (`Application/` / `Domain/` en la raíz de
 
 ## Decisión
 
-1. Dentro de `Domain/Clinical`, el **primer eje es el módulo de capacidad** (Encounter, Emergency, Inpatient, Laboratory, Prescription, CarePlan, CareCohort, PedidoAtencion, Capture, HistoryExchange, LegalRecord, Specialty).
+1. Dentro de `Domain/Clinical`, el **primer eje es el módulo de capacidad** (Encounter, Emergency, Inpatient, Laboratory, Prescription, CarePlan, CareCohort, CareRequest, Capture, HistoryExchange, LegalExport, Specialty).
 2. Las capas DDD viven **dentro** del módulo. Bajo `Application/`: **solo roles CA** (`UseCase/`, `Presentation/`, …); el dominio va en **nombres de clase** y en `Domain/` ([ddd-norte-modelo-rico.md](./ddd-norte-modelo-rico.md)).
 3. **No** hay `Shared/` / `Support/` / `Checkpoint/` (etc.) en la raíz del BC ni carpetas de capacidad bajo `Application/`. Shared de producto: `components/Shared/`.
 4. Todo tipo tiene **módulo dueño**.

@@ -1,6 +1,6 @@
 /**
  * Máscara y validación cliente de SV de triage (TA / FC).
- * Rangos alineados con GuardiaTriageVitalsValidator (PHP).
+ * Rangos alineados con EmergencyTriageVitalsValidator (PHP).
  */
 (function (global) {
   'use strict';

@@ -15,7 +15,7 @@ use common\components\Domain\Clinical\Capture\Domain\RowContract\PracticaRowCont
 use common\components\Domain\Clinical\Capture\Domain\RowContract\RegimenRowContract;
 use common\components\Domain\Clinical\Capture\Domain\Port\RowContractRegistry;
 use common\components\Domain\Clinical\Capture\Domain\Port\DerivacionRowSupportPort;
-use common\components\Domain\Clinical\Capture\Infrastructure\PedidoAtencion\YiiDerivacionRowSupportAdapter;
+use common\components\Domain\Clinical\Capture\Infrastructure\CareRequest\YiiDerivacionRowSupportAdapter;
 use common\components\Domain\Clinical\Capture\Infrastructure\Persistence\YiiModelRowContractRegistry;
 
 /**

@@ -22,9 +22,9 @@ use common\components\Domain\Clinical\Home\Sections\StaffHorarioActivoSectionPro
 use common\components\Domain\Clinical\Home\Sections\InpatientsSectionProvider;
 use common\components\Domain\Clinical\Home\Sections\PatientCarePlansActiveSectionProvider;
 use common\components\Domain\Clinical\Home\Sections\PatientConditionsActiveSectionProvider;
-use common\components\Domain\Clinical\Home\Sections\StaffGuardiaKpiSectionProvider;
-use common\components\Domain\Clinical\Home\Sections\StaffInternacionKpiSectionProvider;
-use common\components\Domain\Clinical\Inpatient\Application\Authorization\ClinicalInternacionStaffAccessPolicy;
+use common\components\Domain\Clinical\Home\Sections\StaffEmergencyKpiSectionProvider;
+use common\components\Domain\Clinical\Home\Sections\StaffInpatientKpiSectionProvider;
+use common\components\Domain\Clinical\Inpatient\Application\Authorization\ClinicalInpatientStaffAccessPolicy;
 use common\components\Domain\Clinical\Inpatient\Domain\Catalog\InpatientUiActionCatalog;
 use common\components\Domain\Clinical\Laboratory\Domain\Catalog\LaboratoryUiActionCatalog;
 use common\components\Domain\Clinical\Encounter\Application\Authorization\ClinicalEncounterAccessPolicy;
@@ -106,7 +106,7 @@ return [
         'organization.pes_efector' => OrganizationPesEfectorPolicy::class,
         'organization.pes_own' => OrganizationPesOwnPolicy::class,
         'clinical.encounter_participant' => ClinicalEncounterAccessPolicy::class,
-        'clinical.internacion_staff_access' => ClinicalInternacionStaffAccessPolicy::class,
+        'clinical.internacion_staff_access' => ClinicalInpatientStaffAccessPolicy::class,
     ],
 
     'dataAccessScopeCheckers' => [
@@ -208,8 +208,8 @@ return [
         'staff_session_context' => StaffSessionContextSectionProvider::class,
         'staff_agenda_kpis' => StaffAgendaKpiSectionProvider::class,
         'staff_efector_modalidad_kpis' => StaffEfectorModalidadKpiSectionProvider::class,
-        'staff_guardia_kpis' => StaffGuardiaKpiSectionProvider::class,
-        'staff_internacion_kpis' => StaffInternacionKpiSectionProvider::class,
+        'staff_guardia_kpis' => StaffEmergencyKpiSectionProvider::class,
+        'staff_internacion_kpis' => StaffInpatientKpiSectionProvider::class,
         'staff_surgery_kpis' => StaffSurgeryKpiSectionProvider::class,
     ],
 ];

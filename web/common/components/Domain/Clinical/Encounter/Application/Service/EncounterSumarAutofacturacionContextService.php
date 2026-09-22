@@ -5,7 +5,7 @@ namespace common\components\Domain\Clinical\Encounter\Application\Service;
 use common\models\Clinical\Condition;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\ServiceRequest;
-use common\models\Clinical\Guardia;
+use common\models\Clinical\Emergency\EmergencyEpisode;
 use common\models\Person\Persona;
 use common\models\Clinical\SegNivelInternacion;
 use common\models\Scheduling\Turno;
@@ -69,7 +69,7 @@ final class EncounterSumarAutofacturacionContextService
         if ($parentType === SegNivelInternacion::class || $parentType === Encounter::PARENT_CLASSES[Encounter::PARENT_INTERNACION]) {
             return 'INTERNACION';
         }
-        if ($parentType === Guardia::class || $parentType === Encounter::PARENT_CLASSES[Encounter::PARENT_GUARDIA]) {
+        if ($parentType === EmergencyEpisode::class || $parentType === Encounter::PARENT_CLASSES[Encounter::PARENT_GUARDIA]) {
             return 'GUARDIA';
         }
         if ($parentType === Turno::class || $parentType === Encounter::PARENT_CLASSES[Encounter::PARENT_TURNO]

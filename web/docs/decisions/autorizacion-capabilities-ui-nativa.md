@@ -41,7 +41,7 @@ RBAC ruta (rol → capability → /api/...)
 
 ### Principios heredados
 
-- Sin hardcode de pantalla/rol en orquestadores: reglas en YAML + servicios genéricos (`CapabilityAccessService`, `GuardiaBoardCapabilityService`).
+- Sin hardcode de pantalla/rol en orquestadores: reglas en YAML + servicios genéricos (`CapabilityAccessService`, `EmergencyBoardCapabilityService`).
 - YAML = composición y knobs; «¿puede persistirse sobre este encounter?» sigue en dominio Yii.
 
 ## Alternativas descartadas

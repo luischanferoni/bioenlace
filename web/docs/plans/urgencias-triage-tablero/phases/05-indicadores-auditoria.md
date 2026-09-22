@@ -6,7 +6,7 @@ Dar visibilidad a **dirección y calidad**: tiempos door-to-triage y door-to-doc
 
 ## Checklist implementación
 
-- [x] Medianas desde eventos en `GuardiaIndicadoresService` (ingreso → triage → médico, día actual)
+- [x] Medianas desde eventos en `EmergencyIndicatorsService` (ingreso → triage → médico, día actual)
 - [x] API `GET /api/v1/clinical/emergency-guardia/indicadores-resumen`
 - [x] API export CSV (`GET indicadores-export-csv`)
 - [x] Resumen en cabecera del tablero (inicio web EMER)

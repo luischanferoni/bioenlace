@@ -373,7 +373,7 @@ class Turno extends \yii\db\ActiveRecord
     }
 
     /**
-     * Paciente asociado al turno (alineado con {@see Encounter::getPaciente()} / {@see \common\models\Clinical\Guardia::getPaciente()}).
+     * Paciente asociado al turno (alineado con {@see Encounter::getPaciente()} / {@see \common\models\Clinical\Emergency\EmergencyEpisode::getPaciente()}).
      */
     public function getPaciente()
     {

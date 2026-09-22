@@ -26,7 +26,7 @@ Fijar vocabulario, capas y matriz acordada antes de migraciones. Entregable: rev
 | Captura clínica | `encounter.capturar` | — | — | ✓ | — |
 | Nota enfermería sin tomar caso | `encounter.documentar_nota` | — | ✓ | — | — |
 
-\* Médico usa egreso clínico o retiro según modo; ver dominio en `GuardiaEgresoEstructuradoService`.  
+\* Médico usa egreso clínico o retiro según modo; ver dominio en `EmergencyDischargeStructuredService`.  
 \** Lectura; dominio puede restringir si no es participante — documentar caso admisión.
 
 ## Endpoints a auditar (inventario)

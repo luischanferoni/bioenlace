@@ -10,7 +10,7 @@ use common\traits\ParameterQuestionsTrait;
  * No es ActiveRecord: se usa únicamente por `ParameterQuestionRegistry`
  * para construir preguntas cuando faltan parámetros en intents operativos.
  */
-final class ChatbotInternacionParams
+final class ChatbotInpatientParams
 {
     use ParameterQuestionsTrait;
 

@@ -60,7 +60,7 @@ class Encounter extends ActiveRecord
         self::PARENT_INTERNACION => '\common\models\Clinical\SegNivelInternacion',
         self::PARENT_GENERICO_AMB => '\common\models\GenericoAMB',
         self::PARENT_GENERICO_EMER => '\common\models\GenericoEMER',
-        self::PARENT_GUARDIA => '\common\models\Clinical\Guardia',
+        self::PARENT_GUARDIA => '\common\models\Clinical\Emergency\EmergencyEpisode',
         self::PARENT_PASE_PREVIO => '\common\models\Organization\ServiciosEfector',
         self::PARENT_ENCUESTA_PARCHES => '\common\models\Clinical\EncuestaParchesMamarios',
         self::PARENT_CIRUGIA => '\common\models\Scheduling\Cirugia',

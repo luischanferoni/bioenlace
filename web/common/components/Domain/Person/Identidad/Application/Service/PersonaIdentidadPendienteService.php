@@ -13,7 +13,7 @@ use common\models\Clinical\MedicationRequest;
 use common\models\Clinical\Procedure;
 use common\models\Clinical\ServiceRequest;
 use common\models\Clinical\VisionPrescription;
-use common\models\Clinical\Guardia;
+use common\models\Clinical\Emergency\EmergencyEpisode;
 use common\models\Person\Persona;
 use common\models\Clinical\SegNivelInternacion;
 
@@ -62,7 +62,7 @@ final class PersonaIdentidadPendienteService
             return;
         }
 
-        $parentTypes = [Encounter::PARENT_GUARDIA, Guardia::class];
+        $parentTypes = [Encounter::PARENT_GUARDIA, EmergencyEpisode::class];
         $encounterIds = Encounter::find()
             ->select('id')
             ->where(['parent_id' => $guardiaId, 'subject_persona_id' => $fromPersonaId])

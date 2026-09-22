@@ -5,8 +5,8 @@ namespace common\components\Domain\Clinical\Encounter\Application\Service;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EpisodioDateTimePresenter;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\ConsultaAtencionesEnfermeria;
-use common\models\Clinical\Emergency\GuardiaTriage;
-use common\models\Clinical\Guardia;
+use common\models\Clinical\Emergency\EmergencyTriage;
+use common\models\Clinical\Emergency\EmergencyEpisode;
 use common\models\Clinical\SegNivelInternacion;
 
 /**
@@ -43,7 +43,7 @@ final class EpisodioSignosVitalesService
      */
     public function buildForGuardia(int $personaId, int $guardiaId, int $idEfector): ?array
     {
-        $guardia = Guardia::findOne(['id' => $guardiaId, 'id_efector' => $idEfector]);
+        $guardia = EmergencyEpisode::findOne(['id' => $guardiaId, 'id_efector' => $idEfector]);
         if ($guardia === null || (int) $guardia->id_persona !== $personaId) {
             return null;
         }
@@ -95,7 +95,7 @@ final class EpisodioSignosVitalesService
      */
     private function appendTriagePoints(array &$points, int $guardiaId): void
     {
-        $triage = GuardiaTriage::findOne(['guardia_id' => $guardiaId]);
+        $triage = EmergencyTriage::findOne(['guardia_id' => $guardiaId]);
         if ($triage === null) {
             return;
         }

@@ -5,7 +5,7 @@ namespace common\components\Domain\Clinical\Encounter\Application\Service;
 use common\components\Domain\Clinical\Capture\Application\Service\RowContractService;
 use common\components\Domain\Clinical\Encounter\Domain\ConditionVerificationStatus;
 use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
-use common\components\Domain\Clinical\Emergency\Application\Service\GuardiaEncounterOutcomeService;
+use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyEncounterOutcomeService;
 use common\components\Domain\Clinical\Capture\Application\Service\CaptureCategoryResolver;
 use common\components\Domain\Clinical\Capture\Domain\Policy\CaptureCompletenessPolicy;
 use common\components\Domain\Clinical\Capture\Infrastructure\Logging\EncounterGuardarLogger;
@@ -411,7 +411,7 @@ class EncounterDocumentationService extends Component
             ]);
 
             try {
-                $diagnostico['guardia_outcome'] = (new GuardiaEncounterOutcomeService())
+                $diagnostico['guardia_outcome'] = (new EmergencyEncounterOutcomeService())
                     ->applyAfterDocumentation($encounter, is_array($datosExtraidos) ? $datosExtraidos : []);
             } catch (\Throwable $e) {
                 Yii::warning(

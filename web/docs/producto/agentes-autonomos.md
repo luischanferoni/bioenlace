@@ -219,7 +219,7 @@ Ver [turnos.md](./turnos.md), [triage-reserva-turno.md](./triage-reserva-turno.m
 | Campo | Valor |
 |-------|--------|
 | **Tipo** | Agente (reglas + touchpoints programados) |
-| **Trigger** | Alta hospitalaria (`InternacionAltaEstructuradaService::registrarAlta`) |
+| **Trigger** | Alta hospitalaria (`InpatientDischargeStructuredService::registrarAlta`) |
 | **Política** | `agents/post-discharge-followup.yaml` |
 | **Decisiones** | Programa default o cirugía; touchpoints días 1, 7, 30 |
 | **Efecto** | Cola `care_followup_touchpoint_queue`; rama B01 en respuestas |
@@ -247,7 +247,7 @@ Ver [receta-electronica.md](./receta-electronica.md).
 | Campo | Valor |
 |-------|--------|
 | **Tipo** | Agente (score sobre mapa de camas) |
-| **Trigger** | Contexto de ingreso (`InternacionIngresoService::contextoIngreso`) |
+| **Trigger** | Contexto de ingreso (`InpatientAdmissionService::contextoIngreso`) |
 | **Política** | `agents/internacion-cama-sugerencia.yaml` |
 | **Decisiones** | Top N camas por O2, aislamiento, pediatría, servicio |
 | **Efecto** | Campo `cama_sugerencias` en API ingreso; humano confirma |

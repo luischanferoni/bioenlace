@@ -32,7 +32,7 @@ class m260704_100000_paciente_role_rbac_cleanup extends Migration
         'Internacion.change_bed',
         'Internacion.discharge',
         'internacion.epicrisis-plantilla-admin',
-        'InternacionEpicrisisPlantilla.admin',
+        'InpatientEpicrisisTemplate.admin',
         'data-access.editar',
         'data-access.info',
         'data-access.listar',

@@ -138,7 +138,7 @@ php yii catalog-integrity/check                # ampliar reglas
 
 Reglas CI nuevas:
 
-- Toda ruta en `EmergencyGuardiaController` / `EncounterController` (acciones staff) tiene padre intent **o** capability.
+- Toda ruta en `EmergencyController` / `EncounterController` (acciones staff) tiene padre intent **o** capability.
 - Toda capability assignable tiene ≥1 ruta.
 - Ninguna ruta guardia admin cuelga solo de `listado_pacientes`.
 
@@ -174,7 +174,7 @@ capabilities:
 atender_exclude_roles: [Administrativo, AdminEfector]  # sigue en manifiesto (UX)
 ```
 
-`GuardiaBoardCapabilityService` resuelve: rol del usuario ∩ `default_roles` de capability (desde índice en memoria) ∩ exclude del manifiesto.
+`EmergencyBoardCapabilityService` resuelve: rol del usuario ∩ `default_roles` de capability (desde índice en memoria) ∩ exclude del manifiesto.
 
 Alternativa mínima (fase 2 parche): mantener listas de roles en manifiesto hasta Fase 5; **solo** arreglar RBAC HTTP.
 
@@ -193,7 +193,7 @@ Acciones concretas Fase 2:
 |------------|---------|
 | API access | `web/frontend/modules/api/v1/components/BioenlaceApiAccessControl.php` |
 | Flow steps | `web/common/components/Platform/Core/Permission/FlowStepAccessService.php` |
-| Capabilities UI | `web/common/components/Domain/Clinical/Emergency/Service/GuardiaBoardCapabilityService.php` |
+| Capabilities UI | `web/common/components/Domain/Clinical/Emergency/Service/EmergencyBoardCapabilityService.php` |
 | Manifiesto panel | `web/common/metadata/bioenlace/ui/home-panel-manifest.yaml` |
 | Ghost inheritance | `web/common/components/Platform/Core/Permission/RbacRouteGhostInheritanceService.php` |
 

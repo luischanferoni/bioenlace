@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\Capture\Domain\Port;
 
 /**
  * Soporte de I/O para completitud/resoluciones de derivación (línea × acto).
- * Domain no conoce AR Servicio ni PedidoAtencionService.
+ * Domain no conoce AR Servicio ni CareRequestService.
  */
 interface DerivacionRowSupportPort
 {

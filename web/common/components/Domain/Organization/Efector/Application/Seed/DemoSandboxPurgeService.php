@@ -8,9 +8,9 @@ use common\models\Integrations\AsistenteWhatsappMensaje;
 use common\models\Integrations\AsistenteWhatsappVinculo;
 use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoSlotClaimService;
 use common\models\Clinical\Encounter;
-use common\models\Clinical\Emergency\GuardiaCircuitoEvent;
-use common\models\Clinical\Emergency\GuardiaTriage;
-use common\models\Clinical\Guardia;
+use common\models\Clinical\Emergency\EmergencyBoardEvent;
+use common\models\Clinical\Emergency\EmergencyTriage;
+use common\models\Clinical\Emergency\EmergencyEpisode;
 use common\models\Organization\InfraestructuraCama;
 use common\models\Organization\InfraestructuraPiso;
 use common\models\Organization\InfraestructuraSala;
@@ -247,13 +247,13 @@ final class DemoSandboxPurgeService
             if ($pacienteIds !== []) {
                 $extraGuardias = (new Query())
                     ->select('id')
-                    ->from(Guardia::tableName())
+                    ->from(EmergencyEpisode::tableName())
                     ->where(['id_persona' => $pacienteIds])
                     ->column($db);
                 $guardiaIds = $this->normalizeIds(array_merge($guardiaIds, $extraGuardias));
             }
             foreach ($guardiaIds as $idGuardia) {
-                $g = Guardia::findIncludingDeleted()->where(['id' => $idGuardia])->one();
+                $g = EmergencyEpisode::findIncludingDeleted()->where(['id' => $idGuardia])->one();
                 if ($g !== null && $g->hasAttribute('deleted_at') && $g->deleted_at === null) {
                     $g->deleted_at = $now;
                     $g->save(false);
@@ -464,14 +464,14 @@ final class DemoSandboxPurgeService
             // 1) Guardias (todas, no solo soft-deleted)
             $guardiaIds = (new Query())
                 ->select('id')
-                ->from(Guardia::tableName())
+                ->from(EmergencyEpisode::tableName())
                 ->where(['id_persona' => $personaIds])
                 ->column($db);
             $guardiaIds = $this->normalizeIds($guardiaIds);
             if ($guardiaIds !== []) {
-                $this->safeDelete($db, GuardiaCircuitoEvent::tableName(), ['guardia_id' => $guardiaIds], $errors);
-                $this->safeDelete($db, GuardiaTriage::tableName(), ['guardia_id' => $guardiaIds], $errors);
-                $counts['guardias'] = $this->safeDelete($db, Guardia::tableName(), ['id' => $guardiaIds], $errors);
+                $this->safeDelete($db, EmergencyBoardEvent::tableName(), ['guardia_id' => $guardiaIds], $errors);
+                $this->safeDelete($db, EmergencyTriage::tableName(), ['guardia_id' => $guardiaIds], $errors);
+                $counts['guardias'] = $this->safeDelete($db, EmergencyEpisode::tableName(), ['id' => $guardiaIds], $errors);
             }
 
             // 2) Encounters + hijos (incl. async y los de atención sin soft-delete previo)
@@ -539,7 +539,7 @@ final class DemoSandboxPurgeService
             $personasToDelete = [];
             foreach ($personaIds as $idPersona) {
                 $stillHasGuardia = (new Query())
-                    ->from(Guardia::tableName())
+                    ->from(EmergencyEpisode::tableName())
                     ->where(['id_persona' => $idPersona])
                     ->exists($db);
                 $stillHasEncounter = (new Query())
@@ -943,7 +943,7 @@ final class DemoSandboxPurgeService
         }
 
         foreach ([
-            [Guardia::tableName(), 'id_profesional_efector_servicio'],
+            [EmergencyEpisode::tableName(), 'id_profesional_efector_servicio'],
             [Encounter::tableName(), 'id_profesional_efector_servicio'],
             [Turno::tableName(), 'id_profesional_efector_servicio'],
         ] as [$table, $col]) {

@@ -17,7 +17,7 @@ use common\components\Domain\Clinical\Capture\Application\Service\EncounterDefin
 use frontend\components\Clinical\EncounterCaptureFormViewBuilder;
 use frontend\components\Clinical\EpisodioTimelineViewBuilder;
 use frontend\components\Clinical\PacienteHistoriaTimelinePageBuilder;
-use frontend\assets\GuardiaTableroAsset;
+use frontend\assets\EmergencyBoardAsset;
 use frontend\assets\PacienteHistoriaTimelineAsset;
 use frontend\assets\VerConsultaAsset;
 use frontend\filters\SisseActionFilter;
@@ -94,7 +94,7 @@ class PacienteController extends Controller
         $this->view->title = $page['pageTitle'];
         PacienteHistoriaTimelineAsset::registerWithPlotly($this->view);
         if (!empty($page['registerGuardiaAssets'])) {
-            GuardiaTableroAsset::register($this->view);
+            EmergencyBoardAsset::register($this->view);
         }
 
         return $this->render('timeline/timeline', [

@@ -2,7 +2,7 @@
 
 namespace frontend\modules\api\v1\controllers\clinical;
 
-use common\components\Domain\Clinical\Inpatient\Application\Service\InternacionEpicrisisPlantillaAdminService;
+use common\components\Domain\Clinical\Inpatient\Application\Service\InpatientEpicrisisTemplateAdminService;
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 use yii\web\ForbiddenHttpException;
@@ -17,23 +17,23 @@ use yii\web\ForbiddenHttpException;
  * POST   /api/v1/clinical/internacion-epicrisis-plantilla/desactivar/<id>
  * POST   /api/v1/clinical/internacion-epicrisis-plantilla/activar/<id>
  */
-class InternacionEpicrisisPlantillaController extends BaseController
+class InpatientEpicrisisTemplateController extends BaseController
 {
     use ClinicalAccessTrait;
 
-    private InternacionEpicrisisPlantillaAdminService $admin;
+    private InpatientEpicrisisTemplateAdminService $admin;
 
     public function init(): void
     {
         parent::init();
-        $this->admin = new InternacionEpicrisisPlantillaAdminService();
+        $this->admin = new InpatientEpicrisisTemplateAdminService();
     }
 
     public function actionListarAdmin(): array
     {
         $req = Yii::$app->request;
         try {
-            $idEfector = $this->resolveIdEfectorForDomainOperation('InternacionEpicrisisPlantilla.admin');
+            $idEfector = $this->resolveIdEfectorForDomainOperation('InpatientEpicrisisTemplate.admin');
             $incluirInactivas = filter_var(
                 $req->get('incluir_inactivas', '1'),
                 FILTER_VALIDATE_BOOLEAN
@@ -47,14 +47,14 @@ class InternacionEpicrisisPlantillaController extends BaseController
 
         return $this->success([
             'plantillas' => $plantillas,
-            'placeholders' => InternacionEpicrisisPlantillaAdminService::PLACEHOLDERS,
+            'placeholders' => InpatientEpicrisisTemplateAdminService::PLACEHOLDERS,
         ], 'Plantillas de epicrisis (administración)');
     }
 
     public function actionVer(int $id): array
     {
         try {
-            $idEfector = $this->resolveIdEfectorForDomainOperation('InternacionEpicrisisPlantilla.admin');
+            $idEfector = $this->resolveIdEfectorForDomainOperation('InpatientEpicrisisTemplate.admin');
             $plantilla = $this->admin->obtener($id, $idEfector);
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
@@ -68,7 +68,7 @@ class InternacionEpicrisisPlantillaController extends BaseController
     public function actionCrear(): array
     {
         try {
-            $idEfector = $this->resolveIdEfectorForDomainOperation('InternacionEpicrisisPlantilla.admin');
+            $idEfector = $this->resolveIdEfectorForDomainOperation('InpatientEpicrisisTemplate.admin');
             $plantilla = $this->admin->crear(
                 $this->body(),
                 $idEfector,
@@ -86,7 +86,7 @@ class InternacionEpicrisisPlantillaController extends BaseController
     public function actionActualizar(int $id): array
     {
         try {
-            $idEfector = $this->resolveIdEfectorForDomainOperation('InternacionEpicrisisPlantilla.admin');
+            $idEfector = $this->resolveIdEfectorForDomainOperation('InpatientEpicrisisTemplate.admin');
             $plantilla = $this->admin->actualizar(
                 $id,
                 $this->body(),
@@ -115,7 +115,7 @@ class InternacionEpicrisisPlantillaController extends BaseController
     private function toggleActivo(int $id, bool $activo): array
     {
         try {
-            $idEfector = $this->resolveIdEfectorForDomainOperation('InternacionEpicrisisPlantilla.admin');
+            $idEfector = $this->resolveIdEfectorForDomainOperation('InpatientEpicrisisTemplate.admin');
             if ($activo) {
                 $this->admin->activar($id, $idEfector, (bool) (Yii::$app->user->isSuperadmin ?? false));
             } else {

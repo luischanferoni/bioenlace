@@ -4,7 +4,7 @@ namespace frontend\controllers;
 
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Domain\Organization\Efector\Application\Authorization\EfectorAccessService;
-use common\components\Domain\Clinical\Inpatient\Application\Service\InternacionEpicrisisPlantillaAdminService;
+use common\components\Domain\Clinical\Inpatient\Application\Service\InpatientEpicrisisTemplateAdminService;
 use common\models\Organization\ServiciosEfector;
 use frontend\filters\SisseActionFilter;
 use Yii;
@@ -17,14 +17,14 @@ use yii\web\NotFoundHttpException;
  *
  * @no_intent_catalog
  */
-class InternacionEpicrisisPlantillaController extends Controller
+class InpatientEpicrisisTemplateController extends Controller
 {
-    private InternacionEpicrisisPlantillaAdminService $admin;
+    private InpatientEpicrisisTemplateAdminService $admin;
 
     public function init(): void
     {
         parent::init();
-        $this->admin = new InternacionEpicrisisPlantillaAdminService();
+        $this->admin = new InpatientEpicrisisTemplateAdminService();
     }
 
     public function behaviors(): array
@@ -54,7 +54,7 @@ class InternacionEpicrisisPlantillaController extends Controller
             'plantillas' => $plantillas,
             'idEfector' => $idEfector,
             'incluirInactivas' => $incluirInactivas,
-            'placeholders' => InternacionEpicrisisPlantillaAdminService::PLACEHOLDERS,
+            'placeholders' => InpatientEpicrisisTemplateAdminService::PLACEHOLDERS,
         ]);
     }
 
@@ -88,7 +88,7 @@ class InternacionEpicrisisPlantillaController extends Controller
         return $this->render('create', [
             'model' => $model,
             'servicios' => $this->serviciosOptions($idEfector),
-            'placeholders' => InternacionEpicrisisPlantillaAdminService::PLACEHOLDERS,
+            'placeholders' => InpatientEpicrisisTemplateAdminService::PLACEHOLDERS,
         ]);
     }
 
@@ -125,7 +125,7 @@ class InternacionEpicrisisPlantillaController extends Controller
         return $this->render('update', [
             'plantilla' => $plantilla,
             'servicios' => $this->serviciosOptions($idEfector),
-            'placeholders' => InternacionEpicrisisPlantillaAdminService::PLACEHOLDERS,
+            'placeholders' => InpatientEpicrisisTemplateAdminService::PLACEHOLDERS,
         ]);
     }
 
@@ -153,7 +153,7 @@ class InternacionEpicrisisPlantillaController extends Controller
     private function requireIdEfector(): int
     {
         try {
-            return EfectorAccessService::assertAndResolveIdEfector('InternacionEpicrisisPlantilla.admin', []);
+            return EfectorAccessService::assertAndResolveIdEfector('InpatientEpicrisisTemplate.admin', []);
         } catch (DomainOperationForbiddenException $e) {
             throw new NotFoundHttpException($e->getMessage() !== '' ? $e->getMessage() : 'No autorizado.');
         }

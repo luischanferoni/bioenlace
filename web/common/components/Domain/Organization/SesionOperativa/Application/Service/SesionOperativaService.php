@@ -9,7 +9,7 @@ use common\models\Clinical\EncounterDefinition;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Organization\ProfesionalEfectorServicioAgenda;
 use common\components\Domain\Organization\Efector\Application\Service\EfectorEncounterEntitlementService;
-use common\components\Domain\Organization\Pes\Application\Service\ProfesionalEfectorServicioAltaService;
+use common\components\Domain\Organization\Pes\Application\UseCase\EnsurePesAssignment;
 use common\models\Organization\Servicio;
 use common\models\Platform\User;
 use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
@@ -110,7 +110,7 @@ class SesionOperativaService extends Component
         $pes = ProfesionalEfectorServicio::findOneActivoPorPersonaEfectorServicio($idPersona, $efectorId, $servicioId);
         if ($pes === null) {
             try {
-                $out = ProfesionalEfectorServicioAltaService::ensurePersonaServicioEnEfector(
+                $out = EnsurePesAssignment::ensurePersonaServicioEnEfector(
                     $idPersona,
                     $efectorId,
                     $servicioId

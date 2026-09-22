@@ -66,7 +66,7 @@ final class PersonaIdentidadResolverService
     private function idPersonaDesdeRegistro(array $params, string $emptyMsg): int
     {
         try {
-            $result = (new RegistroStaffPacienteService())->registrar($params);
+            $result = (new RegisterPatientByStaff())->registrar($params);
         } catch (\RuntimeException $e) {
             throw new \InvalidArgumentException($e->getMessage(), 0, $e);
         }

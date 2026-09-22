@@ -4,8 +4,8 @@ namespace frontend\modules\api\v1\controllers\person;
 
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
-use common\components\Domain\Person\Identity\Application\Service\RegistroService;
-use common\components\Domain\Person\Identity\Application\Service\RegistroStaffPacienteService;
+use common\components\Domain\Person\Identity\Application\UseCase\RegisterPerson;
+use common\components\Domain\Person\Identity\Application\UseCase\RegisterPatientByStaff;
 use common\components\Domain\Person\FrontDesk\Infrastructure\External\Identity\Connector\DiditClient;
 
 /**
@@ -124,7 +124,7 @@ class RegistroController extends BaseController
      *
      * - Valida parámetros mínimos del request.
      * - Delegará la lógica de orquestación a un servicio de registro
-     *   (por ejemplo, common\components\RegistroService), que se encargará de:
+     *   (por ejemplo, common\components\RegisterPerson), que se encargará de:
      *      * llamar a Verifik,
      *      * crear/actualizar Persona en la base,
      *      * sincronizar con MPI,
@@ -151,10 +151,10 @@ class RegistroController extends BaseController
             return $this->error('El campo "verification_id" (Didit) es requerido.', null, 400);
         }
 
-        /** @var RegistroService $service */
-        $service = Yii::$container->has(RegistroService::class)
-            ? Yii::$container->get(RegistroService::class)
-            : new RegistroService();
+        /** @var RegisterPerson $service */
+        $service = Yii::$container->has(RegisterPerson::class)
+            ? Yii::$container->get(RegisterPerson::class)
+            : new RegisterPerson();
 
         try {
             $result = $service->registrar($bodyParams);
@@ -162,7 +162,7 @@ class RegistroController extends BaseController
             $errors = $this->extractPersonaValidationErrors($e->getMessage());
             return $this->error($e->getMessage(), $errors, 422);
         } catch (\Throwable $e) {
-            Yii::error('Error inesperado en RegistroService: ' . $e->getMessage(), 'registro');
+            Yii::error('Error inesperado en RegisterPerson: ' . $e->getMessage(), 'registro');
             return $this->error('Error interno al procesar el registro', null, 500);
         }
 
@@ -216,7 +216,7 @@ class RegistroController extends BaseController
         }
 
         try {
-            $result = (new RegistroStaffPacienteService())->registrar($bodyParams);
+            $result = (new RegisterPatientByStaff())->registrar($bodyParams);
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
         } catch (\RuntimeException $e) {
@@ -238,7 +238,7 @@ class RegistroController extends BaseController
     public function actionPreviewRenaperComoStaff(): array
     {
         try {
-            $result = (new RegistroStaffPacienteService())->previewRenaper(Yii::$app->request->getBodyParams());
+            $result = (new RegisterPatientByStaff())->previewRenaper(Yii::$app->request->getBodyParams());
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
         } catch (\Throwable $e) {

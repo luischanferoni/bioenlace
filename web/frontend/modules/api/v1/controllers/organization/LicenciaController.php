@@ -4,8 +4,8 @@ namespace frontend\modules\api\v1\controllers\organization;
 
 use frontend\modules\api\v1\controllers\BaseController;
 use common\components\Domain\Organization\Efector\Application\Service\BillingMembershipSwitchService;
-use common\components\Domain\Organization\Efector\Application\Service\InstitutionalEfectorSignupService;
-use common\components\Domain\Organization\Efector\Application\Service\MinistrySignupRequestService;
+use common\components\Domain\Organization\Efector\Application\UseCase\SignUpInstitutionalEfector;
+use common\components\Domain\Organization\Efector\Application\UseCase\RequestMinistrySignup;
 use common\components\Platform\Core\Auth\DemoSandboxAccessService;
 use common\components\Platform\Core\Auth\DemoSandboxCaptchaService;
 use common\models\Platform\User;
@@ -65,7 +65,7 @@ class LicenciaController extends BaseController
     public function actionCatalogoMinisterios()
     {
         return $this->success([
-            'items' => InstitutionalEfectorSignupService::listMinisteriosActivos(),
+            'items' => SignUpInstitutionalEfector::listMinisteriosActivos(),
         ]);
     }
 
@@ -74,7 +74,7 @@ class LicenciaController extends BaseController
      */
     public function actionPlanes()
     {
-        return $this->success(InstitutionalEfectorSignupService::planesCatalog());
+        return $this->success(SignUpInstitutionalEfector::planesCatalog());
     }
 
     /**
@@ -88,7 +88,7 @@ class LicenciaController extends BaseController
         }
 
         try {
-            $data = InstitutionalEfectorSignupService::register($body);
+            $data = SignUpInstitutionalEfector::register($body);
 
             return $this->success($data, 'Cuenta creada. Ya podés ingresar a la plataforma.');
         } catch (\InvalidArgumentException $e) {
@@ -111,7 +111,7 @@ class LicenciaController extends BaseController
         }
 
         try {
-            $req = MinistrySignupRequestService::createRequest($body);
+            $req = RequestMinistrySignup::createRequest($body);
 
             return $this->success([
                 'id' => (int) $req->id,

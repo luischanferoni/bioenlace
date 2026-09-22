@@ -3,7 +3,7 @@
 namespace common\components\Domain\Person\Representation\Application\Service;
 
 use common\components\Domain\Person\Representation\Domain\Model\RepresentationPermission;
-use common\components\Domain\Person\FrontDesk\Application\Service\FrontDeskSessionService;
+use common\components\Domain\Person\FrontDesk\Application\UseCase\EstablishFrontDeskSession;
 use common\models\Person\PersonRelatedAuditLog;
 use common\models\Scheduling\Turno;
 use Yii;
@@ -38,7 +38,7 @@ final class PersonRepresentationSubjectService
             return $fromRequest;
         }
 
-        $fromFrontDesk = (new FrontDeskSessionService())->sujetoActivo();
+        $fromFrontDesk = (new EstablishFrontDeskSession())->sujetoActivo();
         if ($fromFrontDesk !== null && $fromFrontDesk > 0) {
             return $fromFrontDesk;
         }
@@ -60,7 +60,7 @@ final class PersonRepresentationSubjectService
         if ($subjectPersonaId <= 0) {
             throw new ForbiddenHttpException('Sujeto de atención inválido.');
         }
-        $ventanilla = new FrontDeskSessionService();
+        $ventanilla = new EstablishFrontDeskSession();
         $ventanillaSujeto = $ventanilla->sujetoActivo();
         if ($subjectPersonaId === $actor) {
             if ($ventanillaSujeto !== null && $ventanillaSujeto !== $actor) {

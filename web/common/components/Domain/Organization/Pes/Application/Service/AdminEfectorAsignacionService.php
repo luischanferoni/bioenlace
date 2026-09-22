@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Organization\Pes\Application\Service;
 
+use common\components\Domain\Organization\Pes\Application\UseCase\EnsurePesAssignment;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Organization\Servicio;
 use common\models\Organization\ServiciosEfector;
@@ -70,7 +71,7 @@ final class AdminEfectorAsignacionService
             ])->execute();
         }
 
-        ProfesionalEfectorServicioAltaService::ensurePersonaServicioEnEfector(
+        EnsurePesAssignment::ensurePersonaServicioEnEfector(
             $idPersona,
             $idEfector,
             $idServicio,

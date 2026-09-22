@@ -5,7 +5,7 @@ namespace common\components\Domain\Scheduling\Agenda\Application\UseCase;
 use common\components\Domain\Scheduling\Agenda\Application\Agents\TurnoResolucionAutoReservaAgent;
 use common\components\Domain\Scheduling\Agenda\Application\Agents\TurnoResolucionShortlistAgent;
 
-use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Sync\TurnoFhirOutboundNotifier;
+use common\components\Domain\Scheduling\Agenda\Infrastructure\External\NisFhir\Sync\TurnoFhirOutboundNotifier;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\components\Platform\Core\Service\Push\PushNotificationTypes;
 use common\components\Domain\Organization\Pes\Domain\Model\AgendaIntervaloMinutos;

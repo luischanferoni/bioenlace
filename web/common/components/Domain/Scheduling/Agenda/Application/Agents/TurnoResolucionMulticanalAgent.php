@@ -2,6 +2,9 @@
 
 namespace common\components\Domain\Scheduling\Agenda\Application\Agents;
 
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoResolucionLinkTokenService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\SendTurnoResolutionMultichannel;
+use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Outbound\TurnoOutboundChannel;
 use common\components\Platform\Agent\AgentRunRecorder;
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
 use common\models\Person\Persona;

@@ -13,7 +13,7 @@ use yii\web\MethodNotAllowedHttpException;
 use common\components\Domain\Organization\Pes\Application\Service\FhirScheduleOnboardingUiService;
 use common\components\Domain\Organization\Pes\Application\Service\FhirServiceCodeCatalogUiService;
 use common\components\Domain\Organization\Pes\Application\Service\LicenciaUiFlowService;
-use common\components\Domain\Organization\Pes\Application\Service\ProfesionalEfectorServicioBajaService;
+use common\components\Domain\Organization\Pes\Application\UseCase\DeactivatePesAssignment;
 use common\components\Domain\Organization\Pes\Application\Service\ProfesionalEfectorServicioCuilUiService;
 use common\components\Domain\Organization\Pes\Application\Service\ProfesionalEnEfectorListadoUiService;
 use common\components\Domain\Organization\Pes\Application\Service\ProfesionalEfectorServicioAgendaUiService;
@@ -691,7 +691,7 @@ class ProfesionalEfectorServicioController extends BaseController
         }
 
         try {
-            $result = ProfesionalEfectorServicioBajaService::bajaDesdeParams($idEfector, $post);
+            $result = DeactivatePesAssignment::bajaDesdeParams($idEfector, $post);
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         }
@@ -753,7 +753,7 @@ class ProfesionalEfectorServicioController extends BaseController
         }
 
         try {
-            $preview = ProfesionalEfectorServicioBajaService::previewImpacto($idEfector, $params);
+            $preview = DeactivatePesAssignment::previewImpacto($idEfector, $params);
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         }

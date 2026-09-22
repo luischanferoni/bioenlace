@@ -247,7 +247,7 @@ return [
         ],
         'connectors' => [
             'msal-nis' => [
-                'class' => \common\components\Domain\Scheduling\Agenda\Infrastructure\External\Connector\MsalNisFhirSchedulingConnector::class,
+                'class' => \common\components\Domain\Scheduling\Agenda\Infrastructure\External\NisFhir\Connector\MsalNisFhirSchedulingConnector::class,
                 'baseUrl' => 'https://nis.msalsgo.gob.ar/fhir',
                 'tokenUrl' => null,
                 'clientId' => null,

@@ -119,4 +119,4 @@ Comandos de consola: `fhir-scheduling-inbound/pull`, `push-outbound`, `reconcile
 | CUIL y alta de profesional (PES) | Flujo asistente `profesional-efector-servicio.crear-flow` |
 | Madurez agenda | [his-completo/11-agenda-turnos.md](../his-completo/11-agenda-turnos.md) |
 
-Referencia técnica del módulo: `common/components/Domain/Scheduling/Infrastructure/External/README.md`.
+Referencia técnica del módulo: `common/components/Domain/Scheduling/Agenda/Infrastructure/External/NisFhir/`.

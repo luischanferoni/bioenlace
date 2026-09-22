@@ -2,7 +2,7 @@
 
 namespace common\tests\unit\organization;
 
-use common\components\Domain\Organization\Efector\Application\Service\InstitutionalEfectorSignupService;
+use common\components\Domain\Organization\Efector\Application\UseCase\SignUpInstitutionalEfector;
 use common\components\Domain\Organization\Efector\Infrastructure\External\Billing\SimulatedPaymentGateway;
 use Codeception\Test\Unit;
 
@@ -10,7 +10,7 @@ class InstitutionalSignupBillingTest extends Unit
 {
     public function testEstimateMonthlyUsdAmbWithDictadoIncluded(): void
     {
-        $usd = InstitutionalEfectorSignupService::estimateMonthlyUsd([
+        $usd = SignUpInstitutionalEfector::estimateMonthlyUsd([
             'classes' => [
                 'AMB' => [
                     'attentions_per_month' => 5000,
@@ -31,7 +31,7 @@ class InstitutionalSignupBillingTest extends Unit
 
     public function testPlanesCatalogHasSellableClasses(): void
     {
-        $catalog = InstitutionalEfectorSignupService::planesCatalog();
+        $catalog = SignUpInstitutionalEfector::planesCatalog();
         $this->assertArrayHasKey('sellable_classes', $catalog);
         $this->assertArrayHasKey('AMB', $catalog['sellable_classes']);
         $this->assertArrayHasKey('cogs_usd_per_encounter', $catalog);

@@ -22,14 +22,14 @@
 
 | Área | Ubicación |
 |------|-----------|
-| Conector NIS | `common/components/Domain/Scheduling/Infrastructure/External/Connector/MsalNisFhirSchedulingConnector.php` |
-| Contrato HTTP | `…/Contract/FhirSchedulingInboundConnector.php` |
+| Conector NIS | `common/components/Domain/Scheduling/Agenda/Infrastructure/External/NisFhir/Connector/MsalNisFhirSchedulingConnector.php` |
+| Contrato HTTP | `…/NisFhir/Contract/FhirSchedulingInboundConnector.php` |
 | Pull | `FhirSchedulingInboundPullService`, `TurnoInboundSyncService` |
 | Push estados | `FhirAppointmentOutboundSyncService`, `TurnoFhirOutboundNotifier` |
 | Resolver PES | `FhirSchedulePesResolver`, `FhirScheduleActorExtractor` |
 | Catálogos | `FhirHealthcareServiceCodeCatalog`, `IntegrationScheduleLinkService` |
-| Onboarding UI | `Organization/Service/ProfesionalEfectorServicio/FhirScheduleOnboardingUiService.php` |
-| Mapper estados | `Mapper/FhirAppointmentStatusMapper.php` |
+| Onboarding UI | `Organization/Pes/Application/Service/FhirScheduleOnboardingUiService.php` |
+| Mapper estados | `NisFhir/Mapper/FhirAppointmentStatusMapper.php` |
 | Consola | `console/controllers/FhirSchedulingInboundController.php` |
 | Params | `common/config/params.php` → `fhirSchedulingInbound` |
 | Tests unitarios | `common/tests/unit/integrations/scheduling/` |

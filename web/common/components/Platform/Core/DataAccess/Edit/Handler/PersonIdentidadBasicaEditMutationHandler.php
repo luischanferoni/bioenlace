@@ -4,7 +4,7 @@ namespace common\components\Platform\Core\DataAccess\Edit\Handler;
 
 use common\components\Platform\Core\DataAccess\Edit\EditMutationHandlerInterface;
 use common\components\Platform\Core\DataAccess\PermissionContext;
-use common\components\Domain\Person\Identity\Application\Service\PersonaIdentidadBasicaUpdateService;
+use common\components\Domain\Person\Identity\Application\UseCase\UpdateBasicIdentity;
 
 final class PersonIdentidadBasicaEditMutationHandler implements EditMutationHandlerInterface
 {
@@ -17,11 +17,11 @@ final class PersonIdentidadBasicaEditMutationHandler implements EditMutationHand
         'otro_apellido' => 'Otro apellido',
     ];
 
-    private PersonaIdentidadBasicaUpdateService $updateService;
+    private UpdateBasicIdentity $updateService;
 
-    public function __construct(?PersonaIdentidadBasicaUpdateService $updateService = null)
+    public function __construct(?UpdateBasicIdentity $updateService = null)
     {
-        $this->updateService = $updateService ?? new PersonaIdentidadBasicaUpdateService();
+        $this->updateService = $updateService ?? new UpdateBasicIdentity();
     }
 
     public function supports(string $attributeGroup): bool

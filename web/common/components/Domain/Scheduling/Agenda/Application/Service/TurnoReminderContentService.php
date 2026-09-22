@@ -2,6 +2,8 @@
 
 namespace common\components\Domain\Scheduling\Agenda\Application\Service;
 
+use common\components\Domain\Scheduling\Agenda\Domain\Port\EfectorDirectionsProvider;
+use common\components\Domain\Scheduling\Agenda\Infrastructure\Persistence\NullEfectorDirectionsProvider;
 use common\models\Scheduling\Turno;
 use common\models\Organization\Efector;
 

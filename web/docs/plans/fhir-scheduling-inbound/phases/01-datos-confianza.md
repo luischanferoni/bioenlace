@@ -3,7 +3,7 @@
 ## Hecho
 
 - [x] `personas.cuil` (11 dígitos, único), `CuilValidator`, `PersonCuilService`
-- [x] Alta PES exige CUIL (excepto servicio `AdminEfector`) — `ProfesionalEfectorServicioAltaService`
+- [x] Alta PES exige CUIL (excepto servicio `AdminEfector`) — `EnsurePesAssignment`
 - [x] Flujo asistente `profesional-efector-servicio.crear-flow`: paso `capture_cuil` + API `cargar-cuil-profesional`
 - [x] `integration_fhir_service_code` + `FhirHealthcareServiceCodeCatalog`
 - [x] APIs `listar-codigos-servicio-fhir`, `guardar-codigo-servicio-fhir`

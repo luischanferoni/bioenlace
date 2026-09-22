@@ -3,7 +3,7 @@
 namespace admin\controllers;
 
 use common\components\Domain\Organization\Efector\Application\Service\BillingMembershipSwitchService;
-use common\components\Domain\Organization\Efector\Application\Service\MinistrySignupRequestService;
+use common\components\Domain\Organization\Efector\Application\UseCase\RequestMinistrySignup;
 use common\models\Organization\BillingAccount;
 use common\models\Organization\BillingSignupRequest;
 use Yii;
@@ -63,7 +63,7 @@ class BillingSignupRequestController extends Controller
     {
         $idAccount = (int) Yii::$app->request->post('id_billing_account', 0);
         try {
-            MinistrySignupRequestService::approve(
+            RequestMinistrySignup::approve(
                 (int) $id,
                 (int) Yii::$app->user->id,
                 $idAccount > 0 ? $idAccount : null
@@ -79,7 +79,7 @@ class BillingSignupRequestController extends Controller
     public function actionReject($id)
     {
         try {
-            MinistrySignupRequestService::reject(
+            RequestMinistrySignup::reject(
                 (int) $id,
                 (int) Yii::$app->user->id,
                 Yii::$app->request->post('notas')

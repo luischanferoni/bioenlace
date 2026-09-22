@@ -3,6 +3,7 @@
 namespace common\components\Domain\Organization\Efector\Application\Service;
 
 use common\components\Domain\Organization\Efector\Application\Service\EfectorEncounterEntitlementService;
+use common\components\Domain\Organization\Efector\Application\UseCase\SignUpInstitutionalEfector;
 use common\models\Organization\BillingAccount;
 use common\models\Organization\BillingAccountEfector;
 use common\models\Organization\BillingSignupRequest;
@@ -109,7 +110,7 @@ final class BillingMembershipSwitchService
             $account->owner_user_id = $ownerUserId;
             $account->save(false, ['owner_user_id', 'updated_at']);
 
-            $amountUsd = InstitutionalEfectorSignupService::estimateMonthlyUsd(['classes' => $normalizedPlan]);
+            $amountUsd = SignUpInstitutionalEfector::estimateMonthlyUsd(['classes' => $normalizedPlan]);
 
             $payment = SimulatedPaymentGateway::charge([
                 'id_billing_account' => (int) $account->id,

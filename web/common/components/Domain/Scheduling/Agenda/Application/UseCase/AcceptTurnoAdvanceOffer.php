@@ -213,7 +213,7 @@ final class AcceptTurnoAdvanceOffer
             throw $e;
         }
 
-        \common\components\Domain\Scheduling\Agenda\Infrastructure\External\Sync\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
+        \common\components\Domain\Scheduling\Agenda\Infrastructure\External\NisFhir\Sync\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
 
         return [
             'id_turno' => (int) $turno->id_turnos,

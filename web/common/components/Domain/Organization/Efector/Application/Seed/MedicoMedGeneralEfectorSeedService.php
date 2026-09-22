@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Organization\Efector\Application\Seed;
 
-use common\components\Domain\Organization\Pes\Application\Service\ProfesionalEfectorServicioAltaService;
+use common\components\Domain\Organization\Pes\Application\UseCase\EnsurePesAssignment;
 use common\components\Domain\Person\Identity\Application\Service\PersonCuilService;
 use common\components\Domain\Person\Identity\Domain\Policy\CuilPolicy;
 use common\models\Organization\Efector;
@@ -107,7 +107,7 @@ final class MedicoMedGeneralEfectorSeedService
             $idEfector,
             $idServicio
         );
-        $pesResult = ProfesionalEfectorServicioAltaService::ensurePersonaServicioEnEfector(
+        $pesResult = EnsurePesAssignment::ensurePersonaServicioEnEfector(
             (int) $persona->id_persona,
             $idEfector,
             $idServicio,

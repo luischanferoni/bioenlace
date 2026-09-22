@@ -162,7 +162,7 @@ class AdvanceTurnoLifecycle
             Yii::warning('Advance offer: ' . $e->getMessage(), 'turno-advance');
         }
 
-        \common\components\Domain\Scheduling\Agenda\Infrastructure\External\Sync\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
+        \common\components\Domain\Scheduling\Agenda\Infrastructure\External\NisFhir\Sync\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
 
         return true;
     }
@@ -198,7 +198,7 @@ class AdvanceTurnoLifecycle
             }
             throw $e;
         }
-        \common\components\Domain\Scheduling\Agenda\Infrastructure\External\Sync\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
+        \common\components\Domain\Scheduling\Agenda\Infrastructure\External\NisFhir\Sync\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
     }
 
     public function marcarAtendido(Turno $turno, ?int $idUser = null): void
@@ -229,7 +229,7 @@ class AdvanceTurnoLifecycle
             }
             throw $e;
         }
-        \common\components\Domain\Scheduling\Agenda\Infrastructure\External\Sync\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
+        \common\components\Domain\Scheduling\Agenda\Infrastructure\External\NisFhir\Sync\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
     }
 
     public function corregirNoShow(
@@ -293,7 +293,7 @@ class AdvanceTurnoLifecycle
             }
             throw $e;
         }
-        \common\components\Domain\Scheduling\Agenda\Infrastructure\External\Sync\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
+        \common\components\Domain\Scheduling\Agenda\Infrastructure\External\NisFhir\Sync\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
     }
 
     /**
@@ -350,7 +350,7 @@ class AdvanceTurnoLifecycle
             throw $e;
         }
         if ($notifyOutbound) {
-            \common\components\Domain\Scheduling\Agenda\Infrastructure\External\Sync\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
+            \common\components\Domain\Scheduling\Agenda\Infrastructure\External\NisFhir\Sync\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
         }
     }
 

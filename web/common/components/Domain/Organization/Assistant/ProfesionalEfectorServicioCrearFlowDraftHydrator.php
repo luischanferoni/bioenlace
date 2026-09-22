@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Organization\Assistant;
 
+use common\components\Domain\Organization\Pes\Application\UseCase\EnsurePesAssignment;
 use common\components\Domain\Person\Identity\Application\Service\PersonCuilService;
 use common\models\Person\Persona;
 use common\models\Organization\ProfesionalEfectorServicio as ProfesionalEfectorServicioModel;
@@ -11,7 +12,7 @@ use Yii;
 /**
  * Completa el draft del intent `profesional-efector-servicio.crear-flow` antes de {@see \common\components\Platform\Assistant\SubIntentEngine\SubIntentEngine::process}:
  * - `servicio_acepta_turnos` desde catálogo si hay `id_servicio`
- * - Alta idempotente del vínculo persona–efector–servicio vía {@see ProfesionalEfectorServicioAltaService} al tener
+ * - Alta idempotente del vínculo persona–efector–servicio vía {@see EnsurePesAssignment} al tener
  *   persona + servicio + efector en sesión y aún sin `id_profesional_efector_servicio` (mismo criterio con o sin agenda de turnos).
  */
 final class ProfesionalEfectorServicioCrearFlowDraftHydrator
@@ -54,7 +55,7 @@ final class ProfesionalEfectorServicioCrearFlowDraftHydrator
             if (ProfesionalEfectorServicioModel::existePersonaActivaEnEfector($idPersona, $idEfector)) {
                 throw new \InvalidArgumentException('Esa persona ya está asignada a este efector.');
             }
-            $out = ProfesionalEfectorServicioAltaService::ensurePersonaServicioEnEfector(
+            $out = EnsurePesAssignment::ensurePersonaServicioEnEfector(
                 $idPersona,
                 $idEfector,
                 $idServicio,

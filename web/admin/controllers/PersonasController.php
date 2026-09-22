@@ -950,7 +950,7 @@ public function actionListaCandidatos(){
         Yii::$app->response->format = Response::FORMAT_JSON;
         try {
             $body = $this->mergedJsonBody();
-            $data = (new \common\components\Domain\Person\Identity\Application\Service\RegistroStaffPacienteService())->previewRenaper($body);
+            $data = (new \common\components\Domain\Person\Identity\Application\UseCase\RegisterPatientByStaff())->previewRenaper($body);
 
             return ['success' => true, 'data' => $data];
         } catch (\InvalidArgumentException $e) {
@@ -970,7 +970,7 @@ public function actionListaCandidatos(){
         Yii::$app->response->format = Response::FORMAT_JSON;
         try {
             $body = $this->mergedJsonBody();
-            $data = (new \common\components\Domain\Person\Identity\Application\Service\RegistroStaffPacienteService())->registrar($body);
+            $data = (new \common\components\Domain\Person\Identity\Application\UseCase\RegisterPatientByStaff())->registrar($body);
 
             return ['success' => true, 'data' => $data, 'persona' => $data['persona'] ?? null];
         } catch (\InvalidArgumentException $e) {

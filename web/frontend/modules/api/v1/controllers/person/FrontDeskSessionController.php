@@ -4,7 +4,7 @@ namespace frontend\modules\api\v1\controllers\person;
 
 use frontend\modules\api\v1\controllers\BaseController;
 use common\components\Domain\Person\Identity\Application\Service\PersonaBusquedaAsistenteUiService;
-use common\components\Domain\Person\FrontDesk\Application\Service\FrontDeskSessionService;
+use common\components\Domain\Person\FrontDesk\Application\UseCase\EstablishFrontDeskSession;
 use Yii;
 
 /**
@@ -38,7 +38,7 @@ class FrontDeskSessionController extends BaseController
         }
 
         try {
-            $data = (new FrontDeskSessionService())->iniciar($body, $idEfector);
+            $data = (new EstablishFrontDeskSession())->iniciar($body, $idEfector);
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
         } catch (\RuntimeException $e) {
@@ -55,7 +55,7 @@ class FrontDeskSessionController extends BaseController
      */
     public function actionEstado(): array
     {
-        $data = (new FrontDeskSessionService())->estado();
+        $data = (new EstablishFrontDeskSession())->estado();
 
         return $this->success($data, $data === null ? 'Sin ventanilla activa' : 'FrontDesk activa');
     }
@@ -67,7 +67,7 @@ class FrontDeskSessionController extends BaseController
      */
     public function actionCerrar(): array
     {
-        (new FrontDeskSessionService())->cerrar();
+        (new EstablishFrontDeskSession())->cerrar();
 
         return $this->success(null, 'FrontDesk cerrada');
     }

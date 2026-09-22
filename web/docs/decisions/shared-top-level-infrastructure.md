@@ -14,7 +14,7 @@
 2. **`Platform/`** sigue siendo solo **motores** (Assistant, Ai, Ui, Core). Lo que vivía en `Platform/Infra/` pasa a `Shared/Infrastructure/`.
 3. **ACL de sistemas de negocio** (LIS, receta, HC, MPI, agenda FHIR) viven en **`Infrastructure/External` del módulo o BC dueño**, no en Shared:
    - `Clinical/Laboratory|Prescription|HistoryExchange/Infrastructure/External/`
-   - `Person/Infrastructure/External/`, `Scheduling/Infrastructure/External/`
+   - `Person/Identity/Infrastructure/External/`, `Scheduling/Agenda/Infrastructure/External/NisFhir/`
 4. **Prohibido** `Clinical/Infrastructure/` en la raíz del BC clínico.
 5. **Prohibido** `Shared/` *dentro* de un BC (catch-all de enums/services). Shared solo top-level.
 6. **Varios BCs** bajo `Domain/` (`Clinical`, `Scheduling`, `Person`, `Organization`, `Terminology`, `Geo`, `Content`, `Programs`). Scheduling y Terminology **no** son módulos de Clinical.

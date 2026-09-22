@@ -44,24 +44,24 @@ final class ConsultasSeguimientoFlowDraftHydrator
             }
         }
 
-        (new ControlSeguimientoHubService())->applyAnchorToDraft($draft);
+        (new BuildControlSeguimientoHub())->applyAnchorToDraft($draft);
 
         if (
-            trim((string) ($draft[ConsultasSeguimientoIntakeService::DRAFT_INTAKE_TIPO] ?? '')) === ''
+            trim((string) ($draft[SubmitConsultasSeguimientoIntake::DRAFT_INTAKE_TIPO] ?? '')) === ''
             && (int) ($draft['encounter_id'] ?? 0) > 0
         ) {
-            $draft[ConsultasSeguimientoIntakeService::DRAFT_INTAKE_TIPO]
+            $draft[SubmitConsultasSeguimientoIntake::DRAFT_INTAKE_TIPO]
                 = ConsultasSeguimientoIntakeCatalogService::INTAKE_SEGUIMIENTO_CONSULTA_PREVIA;
         }
 
         if (
-            trim((string) ($draft[ConsultasSeguimientoIntakeService::DRAFT_INTAKE_TIPO] ?? '')) === ''
+            trim((string) ($draft[SubmitConsultasSeguimientoIntake::DRAFT_INTAKE_TIPO] ?? '')) === ''
             && (
-                trim((string) ($draft[ConsultasSeguimientoIntakeService::DRAFT_SEGUIMIENTO_NECESIDAD] ?? '')) !== ''
+                trim((string) ($draft[SubmitConsultasSeguimientoIntake::DRAFT_SEGUIMIENTO_NECESIDAD] ?? '')) !== ''
                 || (int) ($draft['care_plan_id'] ?? 0) > 0
             )
         ) {
-            $draft[ConsultasSeguimientoIntakeService::DRAFT_INTAKE_TIPO]
+            $draft[SubmitConsultasSeguimientoIntake::DRAFT_INTAKE_TIPO]
                 = ConsultasSeguimientoIntakeCatalogService::INTAKE_SEGUIMIENTO;
         }
 
@@ -70,7 +70,7 @@ final class ConsultasSeguimientoFlowDraftHydrator
         if ($condAccion !== '') {
             $codigo = trim((string) ($draft['condition_codigo'] ?? $draft['condition_ref'] ?? ''));
             $protocolId = trim((string) ($draft['protocol_id'] ?? ''));
-            $resolved = (new ControlSeguimientoHubService())->resolveConditionAction(
+            $resolved = (new BuildControlSeguimientoHub())->resolveConditionAction(
                 $codigo !== '' ? $codigo : null,
                 $condAccion,
                 $protocolId !== '' ? $protocolId : null
@@ -88,13 +88,13 @@ final class ConsultasSeguimientoFlowDraftHydrator
             }
         }
 
-        (new ConsultasSeguimientoIntakeService())->prepararDraft($draft, $idPersona);
+        (new SubmitConsultasSeguimientoIntake())->prepararDraft($draft, $idPersona);
 
         if (
-            trim((string) ($draft[ConsultasSeguimientoIntakeService::DRAFT_INTAKE_TIPO] ?? ''))
+            trim((string) ($draft[SubmitConsultasSeguimientoIntake::DRAFT_INTAKE_TIPO] ?? ''))
             === ConsultasSeguimientoIntakeCatalogService::INTAKE_SEGUIMIENTO
             && (int) ($draft['care_plan_id'] ?? 0) > 0
-            && trim((string) ($draft[ConsultasSeguimientoIntakeService::DRAFT_SEGUIMIENTO_NECESIDAD] ?? '')) === ''
+            && trim((string) ($draft[SubmitConsultasSeguimientoIntake::DRAFT_SEGUIMIENTO_NECESIDAD] ?? '')) === ''
         ) {
             // care_plan sin necesidad: el paso select_necesidad sigue pendiente.
         }

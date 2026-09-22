@@ -77,7 +77,7 @@ Ver [laboratorio.md](./laboratorio.md).
 | Campo | Valor |
 |-------|--------|
 | **Tipo** | Agente (reglas) |
-| **Trigger** | Cancelación con slot libre ≥ T−24 h (`TurnoLifecycleService::cancelar`, masiva, FHIR inbound) |
+| **Trigger** | Cancelación con slot libre ≥ T−24 h (`AdvanceTurnoLifecycle::cancelar`, masiva, FHIR inbound) |
 | **Política** | `agents/turno-advance-offer.yaml` (D+2→D+1 misma franja, step 2 h, corte T−6 h, sin hold) |
 | **Decisiones** | Oferta secuencial a turnos posteriores compatibles con push activo; una aceptación y fin |
 | **Efecto** | Push `TURNO_ADVANCE_OFFER`; al aceptar, **reprograma** el turno existente bajo lock de slot |

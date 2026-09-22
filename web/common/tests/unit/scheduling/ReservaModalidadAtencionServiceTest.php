@@ -4,10 +4,10 @@ namespace common\tests\unit\scheduling;
 
 use Codeception\Test\Unit;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaModalidadAtencionCatalogService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaModalidadAtencionService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\TeleconsultaElegibilidadService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\ResolveReservaModalidadAtencion;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\EvaluateTeleconsultaEligibility;
 
-class ReservaModalidadAtencionServiceTest extends Unit
+class ResolveReservaModalidadAtencionTest extends Unit
 {
     protected function _before(): void
     {
@@ -16,7 +16,7 @@ class ReservaModalidadAtencionServiceTest extends Unit
 
     public function testOpcionesIncluyenPresencialYAsyncParaSeguimiento(): void
     {
-        $svc = new ReservaModalidadAtencionService();
+        $svc = new ResolveReservaModalidadAtencion();
         $opts = $svc->opcionesParaDraft([
             'triage_raiz' => 'seguimiento_cronico',
             'triage_evolucion' => 'evolucion_estable',
@@ -29,7 +29,7 @@ class ReservaModalidadAtencionServiceTest extends Unit
 
     public function testAsyncNoSeOfreceFueraDeControlSeguimiento(): void
     {
-        $svc = new ReservaModalidadAtencionService();
+        $svc = new ResolveReservaModalidadAtencion();
         $opts = $svc->opcionesParaDraft([
             'triage_raiz' => 'malestar_nuevo',
             'triage_zona' => 'zona_sistemas',
@@ -46,7 +46,7 @@ class ReservaModalidadAtencionServiceTest extends Unit
             'triage_raiz' => 'seguimiento_cronico',
             'triage_evolucion' => 'evolucion_estable',
         ];
-        (new ReservaModalidadAtencionService())->aplicarFlagsEnDraft($draft);
+        (new ResolveReservaModalidadAtencion())->aplicarFlagsEnDraft($draft);
 
         $this->assertSame('1', $draft['modalidad_paso_requerido'] ?? null);
         $this->assertSame('1', $draft['async_ofrecible'] ?? null);
@@ -56,16 +56,16 @@ class ReservaModalidadAtencionServiceTest extends Unit
     {
         $catalog = new ReservaModalidadAtencionCatalogService();
         $eleg = $catalog->elegibilidadesParaAsync();
-        $this->assertContains(TeleconsultaElegibilidadService::ELEG_SUGERIDO, $eleg);
-        $this->assertContains(TeleconsultaElegibilidadService::ELEG_PERMITIDO, $eleg);
+        $this->assertContains(EvaluateTeleconsultaEligibility::ELEG_SUGERIDO, $eleg);
+        $this->assertContains(EvaluateTeleconsultaEligibility::ELEG_PERMITIDO, $eleg);
         $this->assertContains('seguimiento_cronico', $catalog->triageRaicesParaAsync());
     }
 
     public function testEstudioPedidoSoloPresencialCuandoTeleconsultaExcluida(): void
     {
-        $this->seedTeleconsultaElegibilidad('estudio_pedido', TeleconsultaElegibilidadService::ELEG_EXCLUIDO);
+        $this->seedTeleconsultaElegibilidad('estudio_pedido', EvaluateTeleconsultaEligibility::ELEG_EXCLUIDO);
 
-        $svc = new ReservaModalidadAtencionService();
+        $svc = new ResolveReservaModalidadAtencion();
         $opts = $svc->opcionesParaDraft([
             'triage_raiz' => 'estudio_pedido',
             'pedido_acto' => 'http://snomed.info/sct|16310003',

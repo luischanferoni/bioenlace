@@ -17,11 +17,11 @@ final class TurnoResolucionShortlistAgent
 
     public const TRIGGER_TYPE = 'turno_en_resolucion';
 
-    private TurnoResolucionShortlistService $shortlist;
+    private BuildTurnoResolutionShortlist $shortlist;
 
-    public function __construct(?TurnoResolucionShortlistService $shortlist = null)
+    public function __construct(?BuildTurnoResolutionShortlist $shortlist = null)
     {
-        $this->shortlist = $shortlist ?? new TurnoResolucionShortlistService();
+        $this->shortlist = $shortlist ?? new BuildTurnoResolutionShortlist();
     }
 
     /**
@@ -88,13 +88,13 @@ final class TurnoResolucionShortlistAgent
         }
 
         if (($option['kind'] ?? '') === 'neighbor' && !empty($option['eleccion'])) {
-            $result = TurnoResolucionService::resolverEleccionVecina(
+            $result = ResolveTurno::resolverEleccionVecina(
                 (int) $turno->id_turnos,
                 $idPersona,
                 (string) $option['eleccion']
             );
         } else {
-            $result = TurnoResolucionService::reubicarComoPaciente(
+            $result = ResolveTurno::reubicarComoPaciente(
                 (int) $turno->id_turnos,
                 $idPersona,
                 [

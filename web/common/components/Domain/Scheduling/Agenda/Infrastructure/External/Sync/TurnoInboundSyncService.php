@@ -10,7 +10,7 @@ use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Mapper\Fh
 use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Mapper\FhirAppointmentStatusMapper;
 use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Mapper\FhirBundleMapper;
 use common\components\Domain\Scheduling\Agenda\Application\Agents\TurnoAdvanceOfferAgent;
-use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoLifecycleService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\AdvanceTurnoLifecycle;
 use common\components\Domain\Scheduling\Agenda\Application\UseCase\ClaimTurnoSlot;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Scheduling\Turno;
@@ -78,7 +78,7 @@ final class TurnoInboundSyncService
         $isNew = $turno === null;
         $beforeEstado = $turno !== null ? (string) $turno->estado : null;
         $beforeFhirStatus = $turno !== null ? (string) ($turno->fhir_status ?? '') : null;
-        $beforeSnapshot = $turno !== null ? TurnoLifecycleService::scheduleSnapshot($turno) : null;
+        $beforeSnapshot = $turno !== null ? AdvanceTurnoLifecycle::scheduleSnapshot($turno) : null;
 
         if ($turno === null) {
             $turno = new Turno();

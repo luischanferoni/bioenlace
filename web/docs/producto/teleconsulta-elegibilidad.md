@@ -1,4 +1,4 @@
-﻿# Elegibilidad de teleconsulta al reservar turno
+# Elegibilidad de teleconsulta al reservar turno
 
 ## Objetivo
 
@@ -15,7 +15,7 @@ Ver [glosario-servicio-pes-acto.md](./glosario-servicio-pes-acto.md).
 | Catálogo triage (`reserva_triage_catalog_v1.yaml`) | `teleconsulta_elegibilidad` por nodo (`excluido`, `presencial_preferido`, `permitido`, `sugerido`) y bandas A/B |
 | Servicio (`servicios.teleconsulta_politica`) | `ninguna` (default), `todas`, `algunas` |
 | Allowlist (`servicio_teleconsulta_caso`) | Códigos de triage permitidos cuando política = `algunas` |
-| `TeleconsultaElegibilidadService` | Compila triage + servicio → `teleconsulta_ofrecible`, `tipo_atencion` forzado o sugerido |
+| `EvaluateTeleconsultaEligibility` | Compila triage + servicio → `teleconsulta_ofrecible`, `tipo_atencion` forzado o sugerido |
 | Draft hydrator (`scheduling.reserva_triage`) | Escribe flags en el draft del asistente tras cada paso |
 | Agenda PES (`acepta_consultas_online`) | El profesional indica si atiende teleconsulta en su agenda |
 | Listado profesionales | Con `tipo_atencion=teleconsulta` solo PES con agenda que acepta online |

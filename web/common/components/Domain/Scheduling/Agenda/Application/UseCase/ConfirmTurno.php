@@ -58,7 +58,7 @@ class ConfirmTurno
         }
 
         try {
-            (new TurnoAntinoshowService())->scheduleForTurno($turno, $dt);
+            (new ApplyTurnoAntinoshow())->scheduleForTurno($turno, $dt);
         } catch (\Throwable $e) {
             \Yii::warning('Antinoshow schedule: ' . $e->getMessage(), 'turno-antinoshow');
         }
@@ -140,7 +140,7 @@ class ConfirmTurno
             return;
         }
         (new \common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoCanonicalEventService())
-            ->record(\common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoCanonicalEventCommand::create(
+            ->record(\common\components\Domain\Scheduling\BehaviorProfile\Domain\Model\TurnoCanonicalEventCommand::create(
                 (int) $turno->id_turnos,
                 (int) $turno->id_persona,
                 TurnoEventoAudit::EVENT_CONFIRMATION_REQUESTED,
@@ -172,7 +172,7 @@ class ConfirmTurno
             return;
         }
         (new \common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoCanonicalEventService())
-            ->record(\common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoCanonicalEventCommand::create(
+            ->record(\common\components\Domain\Scheduling\BehaviorProfile\Domain\Model\TurnoCanonicalEventCommand::create(
                 (int) $turno->id_turnos,
                 (int) $turno->id_persona,
                 TurnoEventoAudit::EVENT_CONFIRMATION_DELIVERY_CONFIRMED,
@@ -209,7 +209,7 @@ class ConfirmTurno
             ? $actorType
             : TurnoEventoAudit::ACTOR_PACIENTE;
         (new \common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoCanonicalEventService())
-            ->record(\common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoCanonicalEventCommand::create(
+            ->record(\common\components\Domain\Scheduling\BehaviorProfile\Domain\Model\TurnoCanonicalEventCommand::create(
                 (int) $turno->id_turnos,
                 (int) $turno->id_persona,
                 TurnoEventoAudit::EVENT_CONFIRMATION_OPENED,

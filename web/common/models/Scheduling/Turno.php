@@ -630,7 +630,7 @@ class Turno extends \yii\db\ActiveRecord
         if ($turno === null) {
             throw new \InvalidArgumentException('Turno inexistente');
         }
-        (new \common\components\Domain\Scheduling\Agenda\Application\Service\TurnoLifecycleService())
+        (new \common\components\Domain\Scheduling\Agenda\Application\UseCase\AdvanceTurnoLifecycle())
             ->registrarNoShow($turno, Yii::$app->user->id ?? null);
     }
 
@@ -640,7 +640,7 @@ class Turno extends \yii\db\ActiveRecord
         if ($turno === null) {
             throw new \InvalidArgumentException('Turno inexistente');
         }
-        (new \common\components\Domain\Scheduling\Agenda\Application\Service\TurnoLifecycleService())
+        (new \common\components\Domain\Scheduling\Agenda\Application\UseCase\AdvanceTurnoLifecycle())
             ->marcarAtendido($turno, Yii::$app->user->id ?? null);
     }
 

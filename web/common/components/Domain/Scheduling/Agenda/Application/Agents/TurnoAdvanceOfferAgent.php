@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Scheduling\Agenda\Application\Agents;
 
-use common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoAdvancePushReceiptProjector;
-use common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoCanonicalEventCommand;
+use common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoAdvancePushReceiptService;
+use common\components\Domain\Scheduling\BehaviorProfile\Domain\Model\TurnoCanonicalEventCommand;
 use common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoCanonicalEventService;
 use common\components\Platform\Agent\AgentRunRecorder;
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
@@ -26,11 +26,11 @@ final class TurnoAdvanceOfferAgent
     public const AGENT_ID = 'turno-advance-offer';
     public const TRIGGER_TYPE = 'turno_cancelled_advance';
 
-    private TurnoAdvanceOfferCandidateService $finder;
+    private ListTurnoAdvanceOfferCandidates $finder;
 
-    public function __construct(?TurnoAdvanceOfferCandidateService $finder = null)
+    public function __construct(?ListTurnoAdvanceOfferCandidates $finder = null)
     {
-        $this->finder = $finder ?? new TurnoAdvanceOfferCandidateService();
+        $this->finder = $finder ?? new ListTurnoAdvanceOfferCandidates();
     }
 
     public function onTurnoCancelled(Turno $cancelled): void
@@ -359,7 +359,7 @@ final class TurnoAdvanceOfferAgent
             true,
             [
                 'idempotency_key' => 'turno-advance:' . (int) $offer->id,
-                'context_handler_id' => TurnoAdvancePushReceiptProjector::HANDLER_ID,
+                'context_handler_id' => TurnoAdvancePushReceiptService::HANDLER_ID,
                 'context' => [
                     'id_turno' => (int) $candidate->id_turnos,
                     'offer_id' => (int) $offer->id,

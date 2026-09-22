@@ -14,7 +14,7 @@ final class ServicioTeleconsultaPoliticaUiPresenter
      */
     public function apply(array $ui, array $params, int $idEfector): array
     {
-        $svc = new ServicioTeleconsultaPoliticaService();
+        $svc = new ResolveServicioTeleconsultaPolitica();
         $catalog = new ServicioTeleconsultaPoliticaCatalogService();
         $resumen = $svc->resumenEfector($idEfector);
 

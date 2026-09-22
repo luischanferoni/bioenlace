@@ -7,7 +7,7 @@ use Yii;
 use yii\web\BadRequestHttpException;
 use common\components\Domain\Clinical\CarePlan\Application\Service\CareProtocolMatcherService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultasSeguimientoIntakeStepService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\ControlSeguimientoHubService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\BuildControlSeguimientoHub;
 use common\components\Platform\Ui\UiScreenService;
 
 /**
@@ -28,7 +28,7 @@ class ConsultasSeguimientoController extends BaseController
     {
         $req = Yii::$app->request;
         $idPersona = (int) (Yii::$app->user->getIdPersona() ?? 0);
-        $hub = new ControlSeguimientoHubService();
+        $hub = new BuildControlSeguimientoHub();
         $items = $hub->listHubItems($idPersona);
 
         $out = UiScreenService::handleScreen(
@@ -62,7 +62,7 @@ class ConsultasSeguimientoController extends BaseController
         $params = array_merge($req->get(), $req->post());
         $codigo = trim((string) ($params['condition_codigo'] ?? $params['condition_ref'] ?? ''));
         $protocolId = trim((string) ($params['protocol_id'] ?? ''));
-        $hub = new ControlSeguimientoHubService();
+        $hub = new BuildControlSeguimientoHub();
         $items = $hub->listConditionActionItems(
             $codigo !== '' ? $codigo : null,
             $protocolId !== '' ? $protocolId : null

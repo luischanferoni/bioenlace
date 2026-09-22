@@ -510,7 +510,7 @@ final class ProfesionalEfectorServicioAgendaUiService
     }
 
     /**
-     * Payload de cierre para UI / asistente (patrón {@see \common\components\Domain\Scheduling\Agenda\Application\Service\TurnoPersistService::crear}).
+     * Payload de cierre para UI / asistente (patrón {@see \common\components\Domain\Scheduling\Agenda\Application\UseCase\PersistTurno::crear}).
      *
      * @return array{
      *   message: string,

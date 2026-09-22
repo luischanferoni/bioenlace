@@ -56,7 +56,7 @@ final class ConsultaAsyncBandejaPrioridadAgent
         );
 
         try {
-            (new ConsultaAsyncPushService())->notifyNuevaSolicitudStaff($encounter);
+            (new PushConsultaAsyncNotification())->notifyNuevaSolicitudStaff($encounter);
         } catch (\Throwable $e) {
             Yii::warning('Push async nueva solicitud: ' . $e->getMessage(), 'consulta-async-push');
         }
@@ -87,7 +87,7 @@ final class ConsultaAsyncBandejaPrioridadAgent
 
         if ($this->prioridad->pacienteTieneMensajeSinRespuestaStaff((int) $encounter->id)) {
             try {
-                (new ConsultaAsyncPushService())->notifyMensajePacienteStaff($encounter);
+                (new PushConsultaAsyncNotification())->notifyMensajePacienteStaff($encounter);
             } catch (\Throwable $e) {
                 Yii::warning('Push async mensaje paciente: ' . $e->getMessage(), 'consulta-async-push');
             }

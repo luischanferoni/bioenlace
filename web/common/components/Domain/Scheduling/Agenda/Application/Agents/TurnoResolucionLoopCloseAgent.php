@@ -23,11 +23,11 @@ final class TurnoResolucionLoopCloseAgent
 
     public const TRIGGER_TYPE = 'turno_resolucion_timeout';
 
-    private TurnoResolucionLoopCloseService $scheduler;
+    private CloseTurnoResolutionLoop $scheduler;
 
-    public function __construct(?TurnoResolucionLoopCloseService $scheduler = null)
+    public function __construct(?CloseTurnoResolutionLoop $scheduler = null)
     {
-        $this->scheduler = $scheduler ?? new TurnoResolucionLoopCloseService();
+        $this->scheduler = $scheduler ?? new CloseTurnoResolutionLoop();
     }
 
     public function processScheduled(TurnoNotificacionProgramada $row, Turno $turno): string
@@ -114,7 +114,7 @@ final class TurnoResolucionLoopCloseAgent
      */
     private function cancelTurno(Turno $turno, TurnoResolucion $res, array $config, array $facts, string $ruleId): void
     {
-        $life = new TurnoLifecycleService();
+        $life = new AdvanceTurnoLifecycle();
         $life->cancelar(
             $turno,
             Turno::ESTADO_MOTIVO_CANCELADO_SISTEMA,

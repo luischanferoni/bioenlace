@@ -5,7 +5,7 @@ namespace common\components\Domain\Scheduling\Assistant\Context;
 use common\components\Platform\Assistant\Context\AssistantContextAspectLoaderInterface;
 use common\components\Platform\Assistant\Context\AssistantContextHISAreaAspect;
 use common\components\Platform\Assistant\Context\AssistantContextLoadContext;
-use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoPacienteListadoService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\ListTurnosPaciente;
 use common\models\Scheduling\Turno;
 
 final class AppointmentCurrentAspectLoader implements AssistantContextAspectLoaderInterface
@@ -27,7 +27,7 @@ final class AppointmentCurrentAspectLoader implements AssistantContextAspectLoad
             $turno = Turno::findOne($ctx->anchors->appointmentId);
         }
         if ($turno === null) {
-            $list = (new TurnoPacienteListadoService())->list([
+            $list = (new ListTurnosPaciente())->list([
                 'subject_persona_id' => $idPersona,
                 'alcance' => 'pendientes',
                 'limit' => 1,

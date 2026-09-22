@@ -3,7 +3,7 @@
 namespace common\components\Domain\Scheduling\Home\Sections;
 
 use common\components\Platform\Ui\Home\Service\Sections\HomePanelSectionProviderInterface;
-use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoPacienteListadoService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\ListTurnosPaciente;
 
 final class PatientUpcomingAppointmentsSectionProvider implements HomePanelSectionProviderInterface
 {
@@ -14,6 +14,6 @@ final class PatientUpcomingAppointmentsSectionProvider implements HomePanelSecti
             $params['subject_persona_id'] = (int) $context['subject_persona_id'];
         }
 
-        return (new TurnoPacienteListadoService())->listForHomePanel($params);
+        return (new ListTurnosPaciente())->listForHomePanel($params);
     }
 }

@@ -2,14 +2,14 @@
 
 namespace common\tests\unit\platform\agent;
 
-use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaTriagePostCupoRoutingService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\RouteReservaTriagePostCupo;
 use common\tests\unit\DbTestCase;
 
-class ReservaTriagePostCupoRoutingServiceTest extends DbTestCase
+class RouteReservaTriagePostCupoTest extends DbTestCase
 {
     public function testRecommendsAsyncForCronicoSinCupo(): void
     {
-        $svc = new ReservaTriagePostCupoRoutingService();
+        $svc = new RouteReservaTriagePostCupo();
         $facts = [
             'urgency_band' => 'C',
             'reserva_triage_code' => 'control_cronico',
@@ -30,7 +30,7 @@ class ReservaTriagePostCupoRoutingServiceTest extends DbTestCase
 
     public function testHaltsOnBandA(): void
     {
-        $svc = new ReservaTriagePostCupoRoutingService();
+        $svc = new RouteReservaTriagePostCupo();
         $facts = [
             'urgency_band' => 'A',
             'reserva_triage_code' => 'dolor_pecho',

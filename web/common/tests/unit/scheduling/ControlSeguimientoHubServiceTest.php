@@ -4,14 +4,14 @@ namespace common\tests\unit\scheduling;
 
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\CarePlan\Application\Service\CareProtocolCatalogService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\ControlSeguimientoHubService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\BuildControlSeguimientoHub;
 use common\models\Clinical\CareProtocol;
 
-class ControlSeguimientoHubServiceTest extends Unit
+class BuildControlSeguimientoHubTest extends Unit
 {
     protected function _before(): void
     {
-        ControlSeguimientoHubService::resetCacheForTests();
+        BuildControlSeguimientoHub::resetCacheForTests();
         CareProtocolCatalogService::resetCacheForTests();
         CareProtocolCatalogService::setOverrideForTests($this->fixtureProtocols());
     }
@@ -23,18 +23,18 @@ class ControlSeguimientoHubServiceTest extends Unit
 
     public function testHubSoloDominioSinExtrasNiTurno(): void
     {
-        $svc = new ControlSeguimientoHubService();
+        $svc = new BuildControlSeguimientoHub();
         $items = $svc->listHubItems(0);
         $ids = array_column($items, 'id');
-        $this->assertNotContains(ControlSeguimientoHubService::ANCHOR_GENERAL, $ids);
-        $this->assertNotContains(ControlSeguimientoHubService::ANCHOR_CONSULTA_GENERAL, $ids);
-        $this->assertNotContains(ControlSeguimientoHubService::ANCHOR_CONSULTA_PREVIA, $ids);
+        $this->assertNotContains(BuildControlSeguimientoHub::ANCHOR_GENERAL, $ids);
+        $this->assertNotContains(BuildControlSeguimientoHub::ANCHOR_CONSULTA_GENERAL, $ids);
+        $this->assertNotContains(BuildControlSeguimientoHub::ANCHOR_CONSULTA_PREVIA, $ids);
         $this->assertSame([], $items);
     }
 
     public function testApplyAnchorCarePlan(): void
     {
-        $svc = new ControlSeguimientoHubService();
+        $svc = new BuildControlSeguimientoHub();
         $draft = ['control_hub_anchor' => 'cp:42'];
         $svc->applyAnchorToDraft($draft);
         $this->assertSame('42', $draft['care_plan_id'] ?? null);
@@ -45,7 +45,7 @@ class ControlSeguimientoHubServiceTest extends Unit
 
     public function testApplyAnchorPrefillsFromCarePlanId(): void
     {
-        $svc = new ControlSeguimientoHubService();
+        $svc = new BuildControlSeguimientoHub();
         $draft = [
             'care_plan_id' => '7',
             'seguimiento_necesidad' => 'renovar_medicacion',
@@ -57,7 +57,7 @@ class ControlSeguimientoHubServiceTest extends Unit
 
     public function testApplyAnchorNoSaltaHubConSoloCarePlanId(): void
     {
-        $svc = new ControlSeguimientoHubService();
+        $svc = new BuildControlSeguimientoHub();
         $draft = ['care_plan_id' => '7'];
         $svc->applyAnchorToDraft($draft);
         $this->assertArrayNotHasKey('control_hub_anchor', $draft);
@@ -66,7 +66,7 @@ class ControlSeguimientoHubServiceTest extends Unit
 
     public function testConditionDefaultActionsDesdeMetadata(): void
     {
-        $svc = new ControlSeguimientoHubService();
+        $svc = new BuildControlSeguimientoHub();
         $actions = $svc->conditionDefaultActions();
         $codes = array_column($actions, 'code');
         $this->assertContains('consulta_mensaje', $codes);
@@ -75,7 +75,7 @@ class ControlSeguimientoHubServiceTest extends Unit
 
     public function testConditionActionsPrefierenProtocoloCuandoHayCodigo(): void
     {
-        $svc = new ControlSeguimientoHubService();
+        $svc = new BuildControlSeguimientoHub();
         $items = $svc->listConditionActionItems('I10');
         $this->assertNotEmpty($items);
         $this->assertSame('protocol', $items[0]['meta']['source'] ?? null);
@@ -84,7 +84,7 @@ class ControlSeguimientoHubServiceTest extends Unit
 
     public function testResolveConditionActionModalidad(): void
     {
-        $svc = new ControlSeguimientoHubService();
+        $svc = new BuildControlSeguimientoHub();
         $resolved = $svc->resolveConditionAction('E11', 'solicitar_turno');
         $this->assertNotNull($resolved);
         $this->assertSame('modalidad', $resolved['outcome']);
@@ -93,7 +93,7 @@ class ControlSeguimientoHubServiceTest extends Unit
 
     public function testApplyAnchorProtocol(): void
     {
-        $svc = new ControlSeguimientoHubService();
+        $svc = new BuildControlSeguimientoHub();
         $draft = ['control_hub_anchor' => 'prot:control_preventivo_adulto'];
         $svc->applyAnchorToDraft($draft);
         $this->assertSame('control_preventivo_adulto', $draft['protocol_id'] ?? null);
@@ -103,7 +103,7 @@ class ControlSeguimientoHubServiceTest extends Unit
 
     public function testConditionActionsPorProtocolId(): void
     {
-        $svc = new ControlSeguimientoHubService();
+        $svc = new BuildControlSeguimientoHub();
         $items = $svc->listConditionActionItems(null, 'control_preventivo_adulto');
         $this->assertNotEmpty($items);
         $this->assertSame('protocol', $items[0]['meta']['source'] ?? null);
@@ -112,7 +112,7 @@ class ControlSeguimientoHubServiceTest extends Unit
 
     public function testResolveConditionActionPorProtocolId(): void
     {
-        $svc = new ControlSeguimientoHubService();
+        $svc = new BuildControlSeguimientoHub();
         $resolved = $svc->resolveConditionAction(null, 'consulta_mensaje', 'vacunas_pediatricas_orientacion');
         $this->assertNotNull($resolved);
         $this->assertSame('captura_mensaje', $resolved['outcome']);

@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Assistant\Context;
 
-use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoAutogestionAnticipacionService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\ApplyTurnoAutogestionAnticipacion;
 use common\components\Platform\Assistant\Context\AssistantContextAspectLoaderInterface;
 use common\components\Platform\Assistant\Context\AssistantContextHISAreaAspect;
 use common\components\Platform\Assistant\Context\AssistantContextLoadContext;
@@ -26,7 +26,7 @@ final class SiteAppointmentPoliciesAspectLoader implements AssistantContextAspec
         }
 
         $cfg = EfectorTurnosConfig::getOrCreateForEfector($siteId);
-        $anticip = new TurnoAutogestionAnticipacionService();
+        $anticip = new ApplyTurnoAutogestionAnticipacion();
 
         return [
             'scope' => ['site_id' => $siteId],

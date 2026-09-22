@@ -4,25 +4,25 @@ namespace common\tests\unit\scheduling;
 
 use Codeception\Test\Unit;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultasSeguimientoIntakeCatalogService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultasSeguimientoIntakeService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\SubmitConsultasSeguimientoIntake;
 
-class ConsultasSeguimientoIntakeServiceTest extends Unit
+class SubmitConsultasSeguimientoIntakeTest extends Unit
 {
     public function testEsIntakeIncluyeSeguimientoConsultaPrevia(): void
     {
         $draft = [
-            ConsultasSeguimientoIntakeService::DRAFT_INTAKE_TIPO =>
+            SubmitConsultasSeguimientoIntake::DRAFT_INTAKE_TIPO =>
                 ConsultasSeguimientoIntakeCatalogService::INTAKE_SEGUIMIENTO_CONSULTA_PREVIA,
         ];
 
-        $this->assertTrue(ConsultasSeguimientoIntakeService::esIntakeConsultasSeguimiento($draft));
+        $this->assertTrue(SubmitConsultasSeguimientoIntake::esIntakeConsultasSeguimiento($draft));
     }
 
     public function testCompilarMetaAsyncIncluyeReferenceEncounterId(): void
     {
-        $svc = new ConsultasSeguimientoIntakeService();
+        $svc = new SubmitConsultasSeguimientoIntake();
         $meta = $svc->compilarMetaAsync([
-            ConsultasSeguimientoIntakeService::DRAFT_INTAKE_TIPO =>
+            SubmitConsultasSeguimientoIntake::DRAFT_INTAKE_TIPO =>
                 ConsultasSeguimientoIntakeCatalogService::INTAKE_SEGUIMIENTO_CONSULTA_PREVIA,
             'encounter_id' => '99',
             'triage_raiz' => 'seguimiento_cronico',
@@ -35,33 +35,33 @@ class ConsultasSeguimientoIntakeServiceTest extends Unit
 
     public function testPrepararDraftSeteaOperacionRenovacion(): void
     {
-        $svc = new ConsultasSeguimientoIntakeService();
+        $svc = new SubmitConsultasSeguimientoIntake();
         $draft = [
-            ConsultasSeguimientoIntakeService::DRAFT_INTAKE_TIPO =>
+            SubmitConsultasSeguimientoIntake::DRAFT_INTAKE_TIPO =>
                 ConsultasSeguimientoIntakeCatalogService::INTAKE_SEGUIMIENTO,
-            ConsultasSeguimientoIntakeService::DRAFT_SEGUIMIENTO_NECESIDAD => 'renovar_medicacion',
+            SubmitConsultasSeguimientoIntake::DRAFT_SEGUIMIENTO_NECESIDAD => 'renovar_medicacion',
             'medication_request_ids' => '10, 20',
         ];
         $svc->prepararDraft($draft, 0);
 
         $this->assertSame(
-            ConsultasSeguimientoIntakeService::MEDICACION_OP_RENOVACION,
-            $draft[ConsultasSeguimientoIntakeService::DRAFT_MEDICACION_OPERACION] ?? null
+            SubmitConsultasSeguimientoIntake::MEDICACION_OP_RENOVACION,
+            $draft[SubmitConsultasSeguimientoIntake::DRAFT_MEDICACION_OPERACION] ?? null
         );
-        $this->assertSame('10,20', $draft[ConsultasSeguimientoIntakeService::DRAFT_MEDICATION_REQUEST_IDS] ?? null);
+        $this->assertSame('10,20', $draft[SubmitConsultasSeguimientoIntake::DRAFT_MEDICATION_REQUEST_IDS] ?? null);
     }
 
     public function testCompilarMetaAsyncIncluyeMedicacionEstructurada(): void
     {
-        $svc = new ConsultasSeguimientoIntakeService();
+        $svc = new SubmitConsultasSeguimientoIntake();
         $meta = $svc->compilarMetaAsync([
-            ConsultasSeguimientoIntakeService::DRAFT_INTAKE_TIPO =>
+            SubmitConsultasSeguimientoIntake::DRAFT_INTAKE_TIPO =>
                 ConsultasSeguimientoIntakeCatalogService::INTAKE_SEGUIMIENTO,
-            ConsultasSeguimientoIntakeService::DRAFT_SEGUIMIENTO_NECESIDAD => 'solicitar_ajuste',
-            ConsultasSeguimientoIntakeService::DRAFT_MEDICACION_OPERACION =>
-                ConsultasSeguimientoIntakeService::MEDICACION_OP_AJUSTE,
-            ConsultasSeguimientoIntakeService::DRAFT_MEDICATION_REQUEST_IDS => '7,8',
-            ConsultasSeguimientoIntakeService::DRAFT_AJUSTE_MOTIVO => 'Me genera mareos a la mañana',
+            SubmitConsultasSeguimientoIntake::DRAFT_SEGUIMIENTO_NECESIDAD => 'solicitar_ajuste',
+            SubmitConsultasSeguimientoIntake::DRAFT_MEDICACION_OPERACION =>
+                SubmitConsultasSeguimientoIntake::MEDICACION_OP_AJUSTE,
+            SubmitConsultasSeguimientoIntake::DRAFT_MEDICATION_REQUEST_IDS => '7,8',
+            SubmitConsultasSeguimientoIntake::DRAFT_AJUSTE_MOTIVO => 'Me genera mareos a la mañana',
             'care_plan_id' => '3',
             'triage_raiz' => 'seguimiento_cronico',
         ]);
@@ -74,9 +74,9 @@ class ConsultasSeguimientoIntakeServiceTest extends Unit
 
     public function testCompilarMetaAsyncIncluyeConditionAncla(): void
     {
-        $svc = new ConsultasSeguimientoIntakeService();
+        $svc = new SubmitConsultasSeguimientoIntake();
         $meta = $svc->compilarMetaAsync([
-            ConsultasSeguimientoIntakeService::DRAFT_INTAKE_TIPO =>
+            SubmitConsultasSeguimientoIntake::DRAFT_INTAKE_TIPO =>
                 ConsultasSeguimientoIntakeCatalogService::INTAKE_CONSULTA_GENERAL,
             'condition_ref' => '8',
             'condition_codigo' => 'J11.1',
@@ -92,9 +92,9 @@ class ConsultasSeguimientoIntakeServiceTest extends Unit
 
     public function testCompilarMetaAsyncNoUsaRefNumericoComoCodigo(): void
     {
-        $svc = new ConsultasSeguimientoIntakeService();
+        $svc = new SubmitConsultasSeguimientoIntake();
         $meta = $svc->compilarMetaAsync([
-            ConsultasSeguimientoIntakeService::DRAFT_INTAKE_TIPO =>
+            SubmitConsultasSeguimientoIntake::DRAFT_INTAKE_TIPO =>
                 ConsultasSeguimientoIntakeCatalogService::INTAKE_CONSULTA_GENERAL,
             'condition_ref' => '8',
             'triage_raiz' => 'seguimiento_cronico',
@@ -106,17 +106,17 @@ class ConsultasSeguimientoIntakeServiceTest extends Unit
 
     public function testPrepararDraftUnificaDudaEnContarEvolucion(): void
     {
-        $svc = new ConsultasSeguimientoIntakeService();
+        $svc = new SubmitConsultasSeguimientoIntake();
         $draft = [
-            ConsultasSeguimientoIntakeService::DRAFT_INTAKE_TIPO =>
+            SubmitConsultasSeguimientoIntake::DRAFT_INTAKE_TIPO =>
                 ConsultasSeguimientoIntakeCatalogService::INTAKE_SEGUIMIENTO,
-            ConsultasSeguimientoIntakeService::DRAFT_SEGUIMIENTO_NECESIDAD => 'duda',
+            SubmitConsultasSeguimientoIntake::DRAFT_SEGUIMIENTO_NECESIDAD => 'duda',
         ];
         $svc->prepararDraft($draft, 0);
 
         $this->assertSame(
             'contar_evolucion',
-            $draft[ConsultasSeguimientoIntakeService::DRAFT_SEGUIMIENTO_NECESIDAD] ?? null
+            $draft[SubmitConsultasSeguimientoIntake::DRAFT_SEGUIMIENTO_NECESIDAD] ?? null
         );
     }
 }

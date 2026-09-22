@@ -57,7 +57,7 @@ class BulkCancelDayTurnos
         }
 
         $models = $q->all();
-        $lifecycle = new TurnoLifecycleService();
+        $lifecycle = new AdvanceTurnoLifecycle();
         $n = 0;
         foreach ($models as $turno) {
             try {

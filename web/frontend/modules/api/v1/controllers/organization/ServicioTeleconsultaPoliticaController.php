@@ -3,7 +3,7 @@
 namespace frontend\modules\api\v1\controllers\organization;
 
 use frontend\modules\api\v1\controllers\BaseController;
-use common\components\Domain\Scheduling\Agenda\Application\Service\ServicioTeleconsultaPoliticaService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\ResolveServicioTeleconsultaPolitica;
 use common\components\Domain\Scheduling\Agenda\Application\Presentation\ServicioTeleconsultaPoliticaUiPresenter;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Platform\Ui\UiScreenService;
@@ -27,7 +27,7 @@ class ServicioTeleconsultaPoliticaController extends BaseController
     public function actionConfigurar(): array
     {
         $req = Yii::$app->request;
-        $domain = new ServicioTeleconsultaPoliticaService();
+        $domain = new ResolveServicioTeleconsultaPolitica();
         $presenter = new ServicioTeleconsultaPoliticaUiPresenter();
 
         try {

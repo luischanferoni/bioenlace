@@ -3,7 +3,7 @@
 namespace common\components\Domain\Scheduling\Assistant;
 
 use common\components\Domain\Organization\Pes\Application\Service\ProfesionalEnEfectorListadoUiService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoSlotOfferService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\OfferTurnoSlot;
 
 /**
  * Opciones estáticas de selects UI JSON de turnos (preload sin endpoint).
@@ -76,7 +76,7 @@ final class SchedulingUiSelectOptionsService
             return [];
         }
 
-        $defaults = TurnoSlotOfferService::leerDefaultsTurnosPaciente();
+        $defaults = OfferTurnoSlot::leerDefaultsTurnosPaciente();
         $criteria = [
             'id_servicio' => $idServicio,
             'id_efector' => $idEfector,
@@ -90,7 +90,7 @@ final class SchedulingUiSelectOptionsService
             $criteria['fecha_desde'] = $fecha;
         }
 
-        $grouped = TurnoSlotOfferService::buildGrouped(
+        $grouped = OfferTurnoSlot::buildGrouped(
             $criteria,
             $defaults['limite'],
             $defaults['max_dias'],

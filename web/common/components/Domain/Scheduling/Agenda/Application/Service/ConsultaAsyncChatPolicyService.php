@@ -164,7 +164,7 @@ final class ConsultaAsyncChatPolicyService
         $limits = (new ConsultaAsyncChatPolicyCatalogService())->limitsConversational();
         $code = trim((string) ($limits['auto_close_resolution'] ?? 'limite_conversacion'));
 
-        (new ConsultaAsyncLifecycleService())->cerrarInterno(
+        (new AdvanceConsultaAsyncLifecycle())->cerrarInterno(
             $encounter,
             $code,
             null,
@@ -229,9 +229,9 @@ final class ConsultaAsyncChatPolicyService
     {
         $codes = [];
         $op = trim((string) ($meta['medicacion_operacion'] ?? ''));
-        if ($op === ConsultasSeguimientoIntakeService::MEDICACION_OP_RENOVACION) {
+        if ($op === SubmitConsultasSeguimientoIntake::MEDICACION_OP_RENOVACION) {
             $codes = ['medicacion_renovada', 'medicacion_no_indicada', 'requiere_control_presencial'];
-        } elseif ($op === ConsultasSeguimientoIntakeService::MEDICACION_OP_AJUSTE) {
+        } elseif ($op === SubmitConsultasSeguimientoIntake::MEDICACION_OP_AJUSTE) {
             $codes = ['medicacion_ajustada', 'medicacion_no_indicada', 'requiere_control_presencial'];
         } else {
             $codes = ['consulta_resuelta', 'requiere_control_presencial'];

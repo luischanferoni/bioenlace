@@ -19,20 +19,20 @@ final class TurnoResolucionMulticanalAgent
 
     public const TRIGGER_TYPE = 'turno_resolucion_pending';
 
-    private TurnoOutboundChannelStub $outbound;
+    private TurnoOutboundChannel $outbound;
 
     private TurnoResolucionLinkTokenService $linkTokens;
 
-    private TurnoResolucionMulticanalService $scheduler;
+    private SendTurnoResolutionMultichannel $scheduler;
 
     public function __construct(
-        ?TurnoOutboundChannelStub $outbound = null,
+        ?TurnoOutboundChannel $outbound = null,
         ?TurnoResolucionLinkTokenService $linkTokens = null,
-        ?TurnoResolucionMulticanalService $scheduler = null
+        ?SendTurnoResolutionMultichannel $scheduler = null
     ) {
-        $this->outbound = $outbound ?? new TurnoOutboundChannelStub();
+        $this->outbound = $outbound ?? new TurnoOutboundChannel();
         $this->linkTokens = $linkTokens ?? new TurnoResolucionLinkTokenService();
-        $this->scheduler = $scheduler ?? new TurnoResolucionMulticanalService();
+        $this->scheduler = $scheduler ?? new SendTurnoResolutionMultichannel();
     }
 
     public function processScheduled(TurnoNotificacionProgramada $row, Turno $turno): string

@@ -62,7 +62,7 @@ class TurnoNotificacionController extends Controller
                         true,
                         [
                             'idempotency_key' => 'turno-confirmation:' . (int) $row->id,
-                            'context_handler_id' => \common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoConfirmationPushReceiptProjector::HANDLER_ID,
+                            'context_handler_id' => \common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoConfirmationPushReceiptService::HANDLER_ID,
                             'context' => [
                                 'id_turno' => (int) $turno->id_turnos,
                                 'id_notificacion_programada' => (int) $row->id,

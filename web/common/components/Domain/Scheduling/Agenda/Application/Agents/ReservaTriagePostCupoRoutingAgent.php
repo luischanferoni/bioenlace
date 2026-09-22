@@ -13,15 +13,15 @@ use Yii;
  */
 final class ReservaTriagePostCupoRoutingAgent
 {
-    public const AGENT_ID = ReservaTriagePostCupoRoutingService::AGENT_ID;
+    public const AGENT_ID = RouteReservaTriagePostCupo::AGENT_ID;
 
     public const TRIGGER_TYPE = 'reserva_triage_sin_cupos';
 
-    private ReservaTriagePostCupoRoutingService $routing;
+    private RouteReservaTriagePostCupo $routing;
 
-    public function __construct(?ReservaTriagePostCupoRoutingService $routing = null)
+    public function __construct(?RouteReservaTriagePostCupo $routing = null)
     {
-        $this->routing = $routing ?? new ReservaTriagePostCupoRoutingService();
+        $this->routing = $routing ?? new RouteReservaTriagePostCupo();
     }
 
     public function isEnabled(): bool

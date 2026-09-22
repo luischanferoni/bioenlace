@@ -13,19 +13,19 @@ use Yii;
  */
 final class TurnoResolucionAutoReservaAgent
 {
-    public const AGENT_ID = TurnoResolucionAutoReservaService::AGENT_ID;
+    public const AGENT_ID = AutoReserveTurnoResolution::AGENT_ID;
 
     public const TRIGGER_TYPE = 'turno_en_resolucion';
 
-    private TurnoResolucionAutoReservaService $autoReserva;
+    private AutoReserveTurnoResolution $autoReserva;
 
     private PersonaAgendaPreferenciasService $preferencias;
 
     public function __construct(
-        ?TurnoResolucionAutoReservaService $autoReserva = null,
+        ?AutoReserveTurnoResolution $autoReserva = null,
         ?PersonaAgendaPreferenciasService $preferencias = null
     ) {
-        $this->autoReserva = $autoReserva ?? new TurnoResolucionAutoReservaService();
+        $this->autoReserva = $autoReserva ?? new AutoReserveTurnoResolution();
         $this->preferencias = $preferencias ?? new PersonaAgendaPreferenciasService();
     }
 
@@ -140,14 +140,14 @@ final class TurnoResolucionAutoReservaAgent
     private function applyWinner(Turno $turno, int $idPersona, array $winner): array
     {
         if (($winner['kind'] ?? '') === 'neighbor' && !empty($winner['eleccion'])) {
-            return TurnoResolucionService::resolverEleccionVecina(
+            return ResolveTurno::resolverEleccionVecina(
                 (int) $turno->id_turnos,
                 $idPersona,
                 (string) $winner['eleccion']
             );
         }
 
-        return TurnoResolucionService::reubicarComoPaciente(
+        return ResolveTurno::reubicarComoPaciente(
             (int) $turno->id_turnos,
             $idPersona,
             [

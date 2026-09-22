@@ -44,7 +44,7 @@ final class TurnosVerMisTurnosFlowDraftHydrator
         ];
 
         try {
-            $data = (new TurnoPacienteListadoService())->list($params);
+            $data = (new ListTurnosPaciente())->list($params);
         } catch (\Throwable $e) {
             Yii::warning(
                 'TurnosVerMisTurnosFlowDraftHydrator: ' . $e->getMessage(),

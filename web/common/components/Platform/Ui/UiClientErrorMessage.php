@@ -2,7 +2,7 @@
 
 namespace common\components\Platform\Ui;
 
-use common\components\Domain\Scheduling\Agenda\Application\Service\PolicyModeradaException;
+use common\components\Domain\Scheduling\Agenda\Domain\Model\PolicyModeradaException;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use Yii;
 use yii\base\UnknownPropertyException;

@@ -2,7 +2,7 @@
 
 namespace common\models\Scheduling;
 
-use common\components\Domain\Scheduling\Agenda\Application\Service\TeleconsultaElegibilidadService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\EvaluateTeleconsultaEligibility;
 use common\models\Scheduling\Turno;
 use yii\db\ActiveRecord;
 
@@ -34,10 +34,10 @@ class ReservaTriageTeleconsultaElegibilidad extends ActiveRecord
             [['triage_codigo'], 'string', 'max' => 64],
             [['elegibilidad'], 'string', 'max' => 32],
             [['elegibilidad'], 'in', 'range' => [
-                TeleconsultaElegibilidadService::ELEG_EXCLUIDO,
-                TeleconsultaElegibilidadService::ELEG_PRESENCIAL_PREFERIDO,
-                TeleconsultaElegibilidadService::ELEG_PERMITIDO,
-                TeleconsultaElegibilidadService::ELEG_SUGERIDO,
+                EvaluateTeleconsultaEligibility::ELEG_EXCLUIDO,
+                EvaluateTeleconsultaEligibility::ELEG_PRESENCIAL_PREFERIDO,
+                EvaluateTeleconsultaEligibility::ELEG_PERMITIDO,
+                EvaluateTeleconsultaEligibility::ELEG_SUGERIDO,
             ]],
             [['triage_codigo'], 'unique'],
         ];
@@ -80,7 +80,7 @@ class ReservaTriageTeleconsultaElegibilidad extends ActiveRecord
     public static function suggestTipoAtencionParaCodigos(array $codigos): ?string
     {
         $eleg = self::elegibilidadParaCodigos($codigos);
-        if ($eleg === TeleconsultaElegibilidadService::ELEG_SUGERIDO) {
+        if ($eleg === EvaluateTeleconsultaEligibility::ELEG_SUGERIDO) {
             return Turno::TIPO_ATENCION_TELECONSULTA;
         }
 

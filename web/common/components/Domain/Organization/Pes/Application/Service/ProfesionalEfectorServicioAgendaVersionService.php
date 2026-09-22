@@ -9,7 +9,7 @@ use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Organization\ProfesionalEfectorServicioAgenda;
 use common\models\Organization\ProfesionalEfectorServicioAgendaVersion;
 use common\models\Scheduling\Turno;
-use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoResolucionService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\ResolveTurno;
 use Yii;
 use yii\web\BadRequestHttpException;
 
@@ -131,7 +131,7 @@ final class ProfesionalEfectorServicioAgendaVersionService
         }
 
         self::sincronizarAgendaEspejo($idPes, $idEfector, $version);
-        TurnoResolucionService::crearDesdeCambioAgenda((int) $version->id, $preview['conflictos'] ?? []);
+        ResolveTurno::crearDesdeCambioAgenda((int) $version->id, $preview['conflictos'] ?? []);
 
         return [
             'message' => 'Agenda guardada. Vigente desde ' . $vigenteDesde . '.',

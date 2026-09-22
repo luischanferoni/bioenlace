@@ -28,11 +28,11 @@ final class SubmitConsultaAsyncSolicitud
         $draft = $this->draftDesdeInput($input);
         $draft['tipo_atencion'] = ReservaModalidadAtencionCatalogService::CODE_ASYNC;
 
-        $intakeSvc = new ConsultasSeguimientoIntakeService();
-        if (ConsultasSeguimientoIntakeService::esIntakeConsultasSeguimiento($draft)) {
+        $intakeSvc = new SubmitConsultasSeguimientoIntake();
+        if (SubmitConsultasSeguimientoIntake::esIntakeConsultasSeguimiento($draft)) {
             $intakeSvc->prepararDraft($draft, $idPersona);
             $intakeSvc->assertPuedeSolicitarAsync($draft, $idPersona);
-            (new ConsultaAsyncSolicitudGuardService())->assertPuedeCrear($idPersona, $draft);
+            (new AssertConsultaAsyncSolicitudAllowed())->assertPuedeCrear($idPersona, $draft);
             $meta = $intakeSvc->compilarMetaAsync($draft);
         } else {
             $triageCatalog = new ReservaTurnoTriageCatalogService();
@@ -49,7 +49,7 @@ final class SubmitConsultaAsyncSolicitud
 
         $mensaje = $this->resolverMensajeSolicitud($input, $draft);
 
-        $modalidadService = new ReservaModalidadAtencionService();
+        $modalidadService = new ResolveReservaModalidadAtencion();
         $opciones = $modalidadService->opcionesParaDraft($draft);
         $codes = array_column($opciones, 'code');
         if (!in_array(ReservaModalidadAtencionCatalogService::CODE_ASYNC, $codes, true)) {
@@ -78,7 +78,7 @@ final class SubmitConsultaAsyncSolicitud
         $encounter->status = EncounterStatus::PLANNED;
         $encounter->save(false, ['status', 'updated_at', 'updated_by']);
 
-        (new ConsultaAsyncInitialChatService())->seedMensajePaciente($encounter, $idPersona, $mensaje, $meta);
+        (new StartConsultaAsyncChat())->seedMensajePaciente($encounter, $idPersona, $mensaje, $meta);
 
         try {
             (new ConsultaAsyncBandejaPrioridadAgent())->onNuevaSolicitud($encounter);
@@ -131,7 +131,7 @@ final class SubmitConsultaAsyncSolicitud
     {
         $catalog = new ConsultaAsyncBandejaCatalogService();
         $operacion = trim((string) ($meta['medicacion_operacion'] ?? ''));
-        if ($operacion === ConsultasSeguimientoIntakeService::MEDICACION_OP_RENOVACION) {
+        if ($operacion === SubmitConsultasSeguimientoIntake::MEDICACION_OP_RENOVACION) {
             $lines = [];
             $intro = $catalog->mensajeExitoRenovacion();
             if ($intro !== '') {
@@ -170,14 +170,14 @@ final class SubmitConsultaAsyncSolicitud
     private function resolverMensajeSolicitud(array $input, array $draft): string
     {
         $mensajeLibre = trim((string) ($input['mensaje'] ?? $input['async_mensaje'] ?? $draft['mensaje'] ?? ''));
-        $operacion = trim((string) ($draft[ConsultasSeguimientoIntakeService::DRAFT_MEDICACION_OPERACION] ?? ''));
+        $operacion = trim((string) ($draft[SubmitConsultasSeguimientoIntake::DRAFT_MEDICACION_OPERACION] ?? ''));
         $ids = CarePlanMedicationListService::parseIds(
-            $draft[ConsultasSeguimientoIntakeService::DRAFT_MEDICATION_REQUEST_IDS]
+            $draft[SubmitConsultasSeguimientoIntake::DRAFT_MEDICATION_REQUEST_IDS]
                 ?? $input['medication_request_ids']
                 ?? ''
         );
 
-        if ($operacion === ConsultasSeguimientoIntakeService::MEDICACION_OP_RENOVACION) {
+        if ($operacion === SubmitConsultasSeguimientoIntake::MEDICACION_OP_RENOVACION) {
             if ($ids === []) {
                 throw new \InvalidArgumentException('Seleccioná al menos un medicamento para renovar.');
             }
@@ -187,13 +187,13 @@ final class SubmitConsultaAsyncSolicitud
             return implode("\n", array_map(static fn (string $l): string => '- ' . $l, $lines));
         }
 
-        if ($operacion === ConsultasSeguimientoIntakeService::MEDICACION_OP_AJUSTE) {
+        if ($operacion === SubmitConsultasSeguimientoIntake::MEDICACION_OP_AJUSTE) {
             if ($ids === []) {
                 throw new \InvalidArgumentException('Seleccioná al menos un medicamento para ajustar.');
             }
             $motivo = trim((string) (
-                $input[ConsultasSeguimientoIntakeService::DRAFT_AJUSTE_MOTIVO]
-                    ?? $draft[ConsultasSeguimientoIntakeService::DRAFT_AJUSTE_MOTIVO]
+                $input[SubmitConsultasSeguimientoIntake::DRAFT_AJUSTE_MOTIVO]
+                    ?? $draft[SubmitConsultasSeguimientoIntake::DRAFT_AJUSTE_MOTIVO]
                     ?? $mensajeLibre
             ));
             if (mb_strlen($motivo) < 10) {
@@ -245,7 +245,7 @@ final class SubmitConsultaAsyncSolicitud
         if ($mrRaw !== null && $mrRaw !== '') {
             $ids = CarePlanMedicationListService::parseIds($mrRaw);
             if ($ids !== []) {
-                $draft[ConsultasSeguimientoIntakeService::DRAFT_MEDICATION_REQUEST_IDS] = implode(',', $ids);
+                $draft[SubmitConsultasSeguimientoIntake::DRAFT_MEDICATION_REQUEST_IDS] = implode(',', $ids);
             }
         }
 

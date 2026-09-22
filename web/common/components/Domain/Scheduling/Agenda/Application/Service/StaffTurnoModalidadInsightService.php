@@ -12,7 +12,7 @@ final class StaffTurnoModalidadInsightService
 {
     public function __construct(
         private readonly TurnoReservaTriageDraftService $draftBuilder = new TurnoReservaTriageDraftService(),
-        private readonly TeleconsultaElegibilidadService $elegibilidadService = new TeleconsultaElegibilidadService(),
+        private readonly EvaluateTeleconsultaEligibility $elegibilidadService = new EvaluateTeleconsultaEligibility(),
         private readonly StaffModalidadInsightCatalogService $catalog = new StaffModalidadInsightCatalogService(),
     ) {
     }

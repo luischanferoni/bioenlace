@@ -4,7 +4,7 @@ namespace common\components\Domain\Scheduling\Home\Sections;
 
 use common\components\Domain\Organization\Efector\Application\Authorization\EfectorOperationAccess;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ServicioTeleconsultaPoliticaCatalogService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\ServicioTeleconsultaPoliticaService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\ResolveServicioTeleconsultaPolitica;
 use common\components\Domain\Scheduling\Agenda\Application\Service\StaffModalidadInsightMetricsService;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Platform\Ui\Home\Service\Sections\HomePanelSectionProviderInterface;
@@ -16,7 +16,7 @@ final class StaffEfectorModalidadKpiSectionProvider implements HomePanelSectionP
 {
     public function build(array $context): array
     {
-        if (!ServicioTeleconsultaPoliticaService::usuarioEsAdminEfectorOperativo()) {
+        if (!ResolveServicioTeleconsultaPolitica::usuarioEsAdminEfectorOperativo()) {
             return ['title' => '', 'items' => []];
         }
 
@@ -27,7 +27,7 @@ final class StaffEfectorModalidadKpiSectionProvider implements HomePanelSectionP
 
         try {
             $idEfector = EfectorOperationAccess::assertAndResolveIdEfector(
-                ServicioTeleconsultaPoliticaService::DOMAIN_OPERATION_CONFIGURAR,
+                ResolveServicioTeleconsultaPolitica::DOMAIN_OPERATION_CONFIGURAR,
                 $params
             );
         } catch (DomainOperationForbiddenException $e) {
@@ -43,7 +43,7 @@ final class StaffEfectorModalidadKpiSectionProvider implements HomePanelSectionP
             'fecha_hasta' => $fechaHasta,
         ]);
 
-        $resumen = (new ServicioTeleconsultaPoliticaService())->resumenEfector($idEfector);
+        $resumen = (new ResolveServicioTeleconsultaPolitica())->resumenEfector($idEfector);
 
         $items = [];
         $sugerido = (int) ($insight['presencial_insight_sugerido'] ?? 0);

@@ -5,8 +5,8 @@ namespace frontend\modules\api\v1\controllers\scheduling;
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 use yii\web\BadRequestHttpException;
-use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncBandejaService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncLifecycleService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\ListConsultaAsyncInbox;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\AdvanceConsultaAsyncLifecycle;
 use common\components\Domain\Scheduling\Agenda\Application\UseCase\SubmitConsultaAsyncSolicitud;
 use common\components\Platform\Ui\UiScreenService;
 
@@ -65,7 +65,7 @@ class ConsultaAsyncController extends BaseController
         }
 
         try {
-            return (new ConsultaAsyncBandejaService())->tomarComoStaff($encounterId);
+            return (new ListConsultaAsyncInbox())->tomarComoStaff($encounterId);
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         }
@@ -89,7 +89,7 @@ class ConsultaAsyncController extends BaseController
         }
 
         try {
-            return (new ConsultaAsyncLifecycleService())->cancelarComoPaciente($encounterId, $idPersona);
+            return (new AdvanceConsultaAsyncLifecycle())->cancelarComoPaciente($encounterId, $idPersona);
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         }
@@ -114,7 +114,7 @@ class ConsultaAsyncController extends BaseController
         }
 
         try {
-            return (new ConsultaAsyncLifecycleService())->cerrarComoStaff($encounterId, $resolution, $note);
+            return (new AdvanceConsultaAsyncLifecycle())->cerrarComoStaff($encounterId, $resolution, $note);
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         } catch (\RuntimeException $e) {

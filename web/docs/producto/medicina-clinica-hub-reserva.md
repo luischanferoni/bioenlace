@@ -26,8 +26,8 @@ Urgencias (banda A / alarmas halt) siguen sin completar reserva en la app.
 |----------|-----------------|
 | `ReservaTriageServicioMapService` | Hub, roles, match servicio ↔ rol |
 | `ReservaTriageServicioSugeridoService` | Filtra listado hub; valida reserva paciente |
-| `TeleconsultaElegibilidadService` | Especialista + derivación → solo teleconsulta |
-| `TurnoPersistService` | Rechaza especialista sin derivación; fuerza teleconsulta si derivación |
+| `EvaluateTeleconsultaEligibility` | Especialista + derivación → solo teleconsulta |
+| `PersistTurno` | Rechaza especialista sin derivación; fuerza teleconsulta si derivación |
 
 ## Flujo asistente
 

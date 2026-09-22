@@ -2,7 +2,7 @@
 
 namespace console\controllers;
 
-use common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoBehaviorProfileMaterializerService;
+use common\components\Domain\Scheduling\BehaviorProfile\Application\UseCase\MaterializeTurnoBehaviorProfile;
 use yii\console\Controller;
 use yii\console\ExitCode;
 
@@ -37,7 +37,7 @@ class TurnoBehaviorProfileController extends Controller
 
     public function actionMaterialize(): int
     {
-        $svc = new TurnoBehaviorProfileMaterializerService();
+        $svc = new MaterializeTurnoBehaviorProfile();
         $result = $svc->materializeIncremental(
             $this->limitPersonas !== null && $this->limitPersonas !== '' ? (int) $this->limitPersonas : null
         );
@@ -53,7 +53,7 @@ class TurnoBehaviorProfileController extends Controller
 
     public function actionRebuild(): int
     {
-        $svc = new TurnoBehaviorProfileMaterializerService();
+        $svc = new MaterializeTurnoBehaviorProfile();
         $result = $svc->rebuild(
             $this->idPersona !== null && $this->idPersona !== '' ? (int) $this->idPersona : null,
             $this->limitPersonas !== null && $this->limitPersonas !== '' ? (int) $this->limitPersonas : null

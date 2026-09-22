@@ -3,7 +3,7 @@
 namespace common\tests\unit\platform\agent;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoResolucionAutoReservaService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\AutoReserveTurnoResolution;
 use common\models\Scheduling\Turno;
 
 class TurnoResolucionAutoReservaScoringTest extends Unit
@@ -16,10 +16,10 @@ class TurnoResolucionAutoReservaScoringTest extends Unit
             ['score' => 45, 'fecha' => '2026-07-02', 'hora' => '11:00'],
         ];
 
-        $this->assertNull(TurnoResolucionAutoReservaService::pickUnambiguousWinner($scored, $config));
+        $this->assertNull(AutoReserveTurnoResolution::pickUnambiguousWinner($scored, $config));
 
         $scored[0]['score'] = 55;
-        $winner = TurnoResolucionAutoReservaService::pickUnambiguousWinner($scored, $config);
+        $winner = AutoReserveTurnoResolution::pickUnambiguousWinner($scored, $config);
         $this->assertNotNull($winner);
         $this->assertSame(55, $winner['score']);
     }
@@ -40,7 +40,7 @@ class TurnoResolucionAutoReservaScoringTest extends Unit
             'mismo_pes_prioritario' => true,
         ];
 
-        $filtered = TurnoResolucionAutoReservaService::applyHardPreferenceFilters($candidates, $turno, $prefs);
+        $filtered = AutoReserveTurnoResolution::applyHardPreferenceFilters($candidates, $turno, $prefs);
         $this->assertCount(1, $filtered);
         $this->assertSame('15:00', $filtered[0]['hora']);
     }
@@ -56,7 +56,7 @@ class TurnoResolucionAutoReservaScoringTest extends Unit
         ];
         $prefs = ['mismo_pes_prioritario' => true];
 
-        $filtered = TurnoResolucionAutoReservaService::applyHardPreferenceFilters($candidates, $turno, $prefs);
+        $filtered = AutoReserveTurnoResolution::applyHardPreferenceFilters($candidates, $turno, $prefs);
         $this->assertCount(1, $filtered);
         $this->assertSame(10, $filtered[0]['id_profesional_efector_servicio']);
     }

@@ -61,8 +61,8 @@ Solo turnos con `external_appointment_id` y `appointment_source_system` particip
 
 Se invoca `TurnoFhirOutboundNotifier::afterEstadoChanged()` desde:
 
-- `TurnoLifecycleService::cancelar`
-- `TurnoResolucionService` (`EN_RESOLUCION`, vuelta a `PENDIENTE` tras reubicación)
+- `AdvanceTurnoLifecycle::cancelar`
+- `ResolveTurno` (`EN_RESOLUCION`, vuelta a `PENDIENTE` tras reubicación)
 - `BulkCancelDayTurnos`
 - `Turno::NoSePresento`, `Turno::cambiarCampoAtendido`
 

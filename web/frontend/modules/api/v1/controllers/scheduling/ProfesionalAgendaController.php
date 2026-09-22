@@ -14,7 +14,7 @@ use common\components\Domain\Organization\Pes\Application\Service\AgendaConfigUi
 use common\components\Domain\Organization\Pes\Application\Service\ProfesionalEfectorServicioAgendaApiService;
 use common\components\Domain\Organization\Pes\Application\Service\ProfesionalEfectorServicioAgendaUiService;
 use common\components\Domain\Scheduling\Agenda\Domain\Catalog\TurnoResolutionChoicesCatalog;
-use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoResolucionService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\ResolveTurno;
 use common\components\Platform\Ui\UiScreenService;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Organization\ProfesionalEfectorServicioAgenda;
@@ -458,10 +458,10 @@ class ProfesionalAgendaController extends BaseController
             $idPes = isset($params['id_profesional_efector_servicio']) && $params['id_profesional_efector_servicio'] !== ''
                 ? (int) $params['id_profesional_efector_servicio']
                 : null;
-            $rows = TurnoResolucionService::listarEnResolucionStaff($idEfector, $idPes);
+            $rows = ResolveTurno::listarEnResolucionStaff($idEfector, $idPes);
             $items = [];
             foreach ($rows as $row) {
-                $items[] = TurnoResolucionService::toListPickerItem($row);
+                $items[] = ResolveTurno::toListPickerItem($row);
             }
             $out = UiScreenService::withListBlockItems($out, $items);
         }
@@ -561,7 +561,7 @@ class ProfesionalAgendaController extends BaseController
             'success' => true,
             'kind' => 'ui_submit_result',
             'action_id' => 'profesional-agenda.resolver-conflictos-flow',
-            'data' => TurnoResolucionService::resolverConflictoStaff($tid, $idEfector, $eleccion),
+            'data' => ResolveTurno::resolverConflictoStaff($tid, $idEfector, $eleccion),
             'errors' => null,
         ];
     }

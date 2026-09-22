@@ -21,14 +21,14 @@ Renovación, ajuste y evolución (paciente): [consultas-seguimiento.md](./consul
 
 ## Cómo funciona (etapa 0 — observación staff)
 
-Cuando un turno es **presencial** pero el triage persistido tiene elegibilidad **sugerida** o **permitida** para remoto, el listado **Pacientes del día** muestra un aviso informativo (videollamada y/o mensaje). Textos en `staff_modalidad_insight.yaml`; reglas clínicas vía `TeleconsultaElegibilidadService`.
+Cuando un turno es **presencial** pero el triage persistido tiene elegibilidad **sugerida** o **permitida** para remoto, el listado **Pacientes del día** muestra un aviso informativo (videollamada y/o mensaje). Textos en `staff_modalidad_insight.yaml`; reglas clínicas vía `EvaluateTeleconsultaEligibility`.
 
 ## Cómo funciona (etapa 1 — oferta al paciente)
 
 Tras el triage, el paciente puede ver el paso **Modalidad** con hasta tres opciones (catálogo `reserva_modalidad_atencion.yaml`):
 
 - **Presencial** — siempre que el caso no sea de urgencia bloqueada.
-- **Videollamada con turno** — si `TeleconsultaElegibilidadService` y la política del servicio lo permiten; slots vía hub teleconsulta sin elegir profesional.
+- **Videollamada con turno** — si `EvaluateTeleconsultaEligibility` y la política del servicio lo permiten; slots vía hub teleconsulta sin elegir profesional.
 - **Consulta clínica por mensaje** — si la elegibilidad clínica es `sugerido` o `permitido`; crea un encounter virtual planificado (`SOLICITUD_ASYNC`) sin turno.
 
 Si solo aplica presencial, el asistente **omite** el paso modalidad y fija `tipo_atencion=presencial`. Si no hay cupos de videollamada en el hub, la UI de días muestra un mensaje orientando a mensaje o presencial.

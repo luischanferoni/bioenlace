@@ -8,7 +8,7 @@ use common\components\Domain\Person\Representation\Domain\Model\RepresentationPe
 use common\components\Domain\Person\Representation\Application\Service\PersonRepresentationSubjectService;
 use common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoAgentActionExplanationService;
 use common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoBehaviorAggregateService;
-use common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoBehaviorCorrectionService;
+use common\components\Domain\Scheduling\BehaviorProfile\Application\UseCase\CorrectTurnoBehaviorEvent;
 use common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoBehaviorProfileViewService;
 use common\components\Platform\Ui\UiScreenService;
 use common\models\Platform\AgentRun;
@@ -172,7 +172,7 @@ final class TurnosPerfilController extends BaseController
                 $correctedEventId = isset($post['corrected_event_id'])
                     ? (int) $post['corrected_event_id']
                     : null;
-                $data = (new TurnoBehaviorCorrectionService())->request(
+                $data = (new CorrectTurnoBehaviorEvent())->request(
                     (int) Yii::$app->user->getIdPersona(),
                     $idTurno,
                     $claim,
@@ -206,7 +206,7 @@ final class TurnosPerfilController extends BaseController
                 (new PersonRepresentationSubjectService())
                     ->assertCanAct($subjectPersonaId, RepresentationPermission::SCHEDULING_TURNO);
 
-                $data = (new TurnoBehaviorCorrectionService())->request(
+                $data = (new CorrectTurnoBehaviorEvent())->request(
                     $subjectPersonaId,
                     (int) ($post['id_turno'] ?? 0),
                     (string) ($post['claim_code'] ?? ''),
@@ -227,7 +227,7 @@ final class TurnosPerfilController extends BaseController
             'turnos.indicadores-agenda-flow',
             $params
         );
-        $data = (new TurnoBehaviorCorrectionService())->listPendingForEfector($idEfector);
+        $data = (new CorrectTurnoBehaviorEvent())->listPendingForEfector($idEfector);
         $ui = UiScreenService::renderUiDefinition(
             'turnos-perfil',
             'listar-correcciones-efector-para-staff',
@@ -262,7 +262,7 @@ final class TurnosPerfilController extends BaseController
                 /** @var AgentRun|null $request */
                 $request = AgentRun::findOne([
                     'id' => $correctionRef,
-                    'agent_id' => TurnoBehaviorCorrectionService::AGENT_ID,
+                    'agent_id' => CorrectTurnoBehaviorEvent::AGENT_ID,
                 ]);
                 if ($request === null) {
                     throw new BadRequestHttpException('Solicitud no encontrada');
@@ -276,7 +276,7 @@ final class TurnosPerfilController extends BaseController
                     ['id_efector' => (int) $turno->id_efector]
                 );
 
-                $data = (new TurnoBehaviorCorrectionService())->resolve(
+                $data = (new CorrectTurnoBehaviorEvent())->resolve(
                     $correctionRef,
                     $decision,
                     $replacement,

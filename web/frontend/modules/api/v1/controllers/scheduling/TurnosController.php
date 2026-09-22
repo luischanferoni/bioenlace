@@ -21,15 +21,15 @@ use common\models\Person\Persona;
 use common\components\Platform\Ui\UiDefinitionTemplateManager;
 use common\components\Platform\Ui\UiScreenService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoSlotQueryService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoSlotOfferService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\OfferTurnoSlot;
 use common\components\Domain\Scheduling\Agenda\Application\Presentation\TurnoSlotOfferUiPresenter;
-use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoPersistService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\PersistTurno;
 use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoCreationContextResolver;
-use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoLifecycleService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\AdvanceTurnoLifecycle;
 use common\components\Domain\Scheduling\Agenda\Application\UseCase\ConfirmTurno;
-use common\components\Domain\Scheduling\Agenda\Application\Service\PolicyModeradaException;
-use common\components\Domain\Scheduling\Agenda\Application\Service\AutogestionAnticipacionException;
-use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoAutogestionAnticipacionService;
+use common\components\Domain\Scheduling\Agenda\Domain\Model\PolicyModeradaException;
+use common\components\Domain\Scheduling\Agenda\Domain\Model\AutogestionAnticipacionException;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\ApplyTurnoAutogestionAnticipacion;
 use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoCancellationPolicyService;
 use common\components\Domain\Scheduling\Agenda\Domain\Catalog\TurnoCancellationReasonsCatalog;
 use common\components\Domain\Scheduling\Agenda\Application\UseCase\BulkCancelDayTurnos;
@@ -38,15 +38,15 @@ use common\components\Domain\Scheduling\Agenda\Application\UseCase\ReserveTurnoS
 use common\components\Domain\Organization\Pes\Application\Service\ProfesionalEfectorServicioAgendaVersionService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoAgendaMetricsService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaModalidadAtencionCatalogService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaModalidadAtencionService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\ResolveReservaModalidadAtencion;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaTriageModalidadStepService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\CareRequestActStepService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaTurnoTriageCatalogService;
 use common\components\Domain\Scheduling\Agenda\Application\Agents\ReservaTriagePostCupoRoutingAgent;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaTriageServicioSugeridoService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\TeleconsultaElegibilidadService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoPacienteListadoService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoResolucionService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\EvaluateTeleconsultaEligibility;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\ListTurnosPaciente;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\ResolveTurno;
 use common\components\Domain\Scheduling\Agenda\Domain\Catalog\TurnoResolutionChoicesCatalog;
 use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoCalendarioOcupacionDiaService;
 use common\components\Domain\Scheduling\Agenda\Application\UseCase\AcceptTurnoAdvanceOffer;
@@ -185,8 +185,8 @@ class TurnosController extends BaseController
         if (ReservaTriageModalidadStepService::isModalidadStep($step)) {
             $draft = $this->draftDesdeParamsReservaTriage($params);
             (new ReservaTriageServicioSugeridoService())->aplicarFlagsEnDraft($draft);
-            $eleg = new TeleconsultaElegibilidadService();
-            $modalOpts = (new ReservaModalidadAtencionService())->opcionesParaDraft($draft);
+            $eleg = new EvaluateTeleconsultaEligibility();
+            $modalOpts = (new ResolveReservaModalidadAtencion())->opcionesParaDraft($draft);
             $options = [];
             foreach ($modalOpts as $row) {
                 $options[] = [
@@ -514,13 +514,13 @@ class TurnosController extends BaseController
         if (isset($out['kind']) && $out['kind'] === 'ui_definition' && ($out['ui_type'] ?? '') === 'ui_json') {
             $params = array_merge($req->get(), $req->post());
             $idPersona = $this->resolveSubjectTurnos($params);
-            $rows = TurnoResolucionService::listarEnResolucionParaPaciente(
+            $rows = ResolveTurno::listarEnResolucionParaPaciente(
                 $idPersona,
                 TurnoResolucion::ORIGEN_CAMBIO_AGENDA
             );
             $items = [];
             foreach ($rows as $row) {
-                $items[] = TurnoResolucionService::toListPickerItem($row);
+                $items[] = ResolveTurno::toListPickerItem($row);
             }
             $out = UiScreenService::withListBlockItems($out, $items);
         }
@@ -615,10 +615,10 @@ class TurnosController extends BaseController
         if (isset($out['kind']) && $out['kind'] === 'ui_definition' && ($out['ui_type'] ?? '') === 'ui_json') {
             $params = array_merge($req->get(), $req->post());
             $idPersona = $this->resolveSubjectTurnos($params);
-            $rows = TurnoResolucionService::listarEnResolucionParaPaciente($idPersona);
+            $rows = ResolveTurno::listarEnResolucionParaPaciente($idPersona);
             $items = [];
             foreach ($rows as $row) {
-                $items[] = TurnoResolucionService::toListPickerItem($row);
+                $items[] = ResolveTurno::toListPickerItem($row);
             }
             $out = UiScreenService::withListBlockItems($out, $items);
         }
@@ -716,7 +716,7 @@ class TurnosController extends BaseController
             }
             $turno = Turno::findOne($tid);
             $idServicio = $turno ? (int) ($turno->id_servicio_asignado ?? 0) : 0;
-            $defaults = TurnoSlotOfferService::leerDefaultsTurnosPaciente();
+            $defaults = OfferTurnoSlot::leerDefaultsTurnosPaciente();
             $p = Yii::$app->params['turnosPaciente'] ?? [];
             $maxCliente = max(1, (int) ($p['slots_oferta_max_cliente'] ?? 60));
             $limiteRaw = $req->get('limite') ?: $req->post('limite');
@@ -728,7 +728,7 @@ class TurnosController extends BaseController
                 $franja = $defaults['franja_tarde_desde'];
             }
             $plano = isset($payload['slots']) && is_array($payload['slots']) ? $payload['slots'] : [];
-            $grouped = TurnoSlotOfferService::buildOfferFromPlano($plano, $franja, $limite, (int) $defaults['max_dias']);
+            $grouped = OfferTurnoSlot::buildOfferFromPlano($plano, $franja, $limite, (int) $defaults['max_dias']);
             $blocks = TurnoSlotOfferUiPresenter::buildSlotListBlocks($grouped, $idServicio, TurnoSlotOfferUiPresenter::extractListTemplateFromUi($out));
             if ($blocks !== []) {
                 $out['blocks'] = $blocks;
@@ -833,14 +833,14 @@ class TurnosController extends BaseController
     }
 
     /**
-     * Delega en {@see TurnoPersistService}; traduce excepciones de dominio a HTTP.
+     * Delega en {@see PersistTurno}; traduce excepciones de dominio a HTTP.
      *
-     * @return array<string, mixed> ver {@see TurnoPersistService::crear}
+     * @return array<string, mixed> ver {@see PersistTurno::crear}
      */
     protected function ejecutarCreacionTurno(Turno $model): array
     {
         try {
-            return (new TurnoPersistService())->crear($model, TurnoCreationContextResolver::fromCurrentUser());
+            return (new PersistTurno())->crear($model, TurnoCreationContextResolver::fromCurrentUser());
         } catch (PolicyModeradaException $e) {
             throw new ConflictHttpException($e->getMessage());
         } catch (\InvalidArgumentException $e) {
@@ -871,7 +871,7 @@ class TurnosController extends BaseController
                 $oldTipo = $turno->tipo_atencion;
                 $turno->load($post, '');
                 try {
-                    (new TurnoPersistService())->validateUpdateTeleconsultaTransition($turno, $oldTipo);
+                    (new PersistTurno())->validateUpdateTeleconsultaTransition($turno, $oldTipo);
                 } catch (\InvalidArgumentException $e) {
                     throw new BadRequestHttpException($e->getMessage());
                 }
@@ -996,7 +996,7 @@ class TurnosController extends BaseController
                     throw new BadRequestHttpException('razon_cancelacion requerida.');
                 }
                 $canal = $post['canal'] ?? 'web';
-                $result = TurnoResolucionService::gestionarCancelacionStaff(
+                $result = ResolveTurno::gestionarCancelacionStaff(
                     $turno,
                     $razon,
                     (string) $canal,
@@ -1109,7 +1109,7 @@ class TurnosController extends BaseController
 
         return [
             'success' => true,
-            'data' => TurnoResolucionService::resolverEleccionVecina(
+            'data' => ResolveTurno::resolverEleccionVecina(
                 (int) $tid,
                 (int) $turno->id_persona,
                 $eleccion
@@ -1198,7 +1198,7 @@ class TurnosController extends BaseController
             $idServicio = isset($params['id_servicio_asignado']) && (int) $params['id_servicio_asignado'] > 0
                 ? (int) $params['id_servicio_asignado']
                 : ($turno ? (int) ($turno->id_servicio_asignado ?? 0) : 0);
-            $defaults = TurnoSlotOfferService::leerDefaultsTurnosPaciente();
+            $defaults = OfferTurnoSlot::leerDefaultsTurnosPaciente();
             $p = Yii::$app->params['turnosPaciente'] ?? [];
             $maxCliente = max(1, (int) ($p['slots_oferta_max_cliente'] ?? 60));
             $limiteRaw = $req->get('limite') ?: $req->post('limite');
@@ -1213,7 +1213,7 @@ class TurnosController extends BaseController
                 $franja = $defaults['franja_tarde_desde'];
             }
             $plano = isset($payload['slots']) && is_array($payload['slots']) ? $payload['slots'] : [];
-            $grouped = TurnoSlotOfferService::buildOfferFromPlano($plano, $franja, $limite, (int) $defaults['max_dias']);
+            $grouped = OfferTurnoSlot::buildOfferFromPlano($plano, $franja, $limite, (int) $defaults['max_dias']);
             if ($soloDias) {
                 $dayItems = TurnoSlotOfferUiPresenter::buildDayPickerItems($grouped);
                 $out = UiScreenService::withListBlockItems($out, $dayItems, 'dias-disponibles');
@@ -1260,7 +1260,7 @@ class TurnosController extends BaseController
                 $this->assertTurnoDomain('Turno.reprogramar', $turno);
 
                 return [
-                    'data' => TurnoResolucionService::reubicarComoPaciente(
+                    'data' => ResolveTurno::reubicarComoPaciente(
                         (int) $tid,
                         (int) $turno->id_persona,
                         $post
@@ -1369,7 +1369,7 @@ class TurnosController extends BaseController
      * @entity Turnos
      * @tags views, ui, slot, horario, turnos, paciente
      * @keywords horarios disponibles, slots libres, próximo turno disponible, elegir horario
-     * {@see TurnoSlotOfferService}
+     * {@see OfferTurnoSlot}
      */
     public function actionSlotsDisponiblesComoPaciente()
     {
@@ -1501,7 +1501,7 @@ class TurnosController extends BaseController
 
         $this->assertPacienteOfferingForTurnos((int) $idEfector);
 
-        $defaults = TurnoSlotOfferService::leerDefaultsTurnosPaciente();
+        $defaults = OfferTurnoSlot::leerDefaultsTurnosPaciente();
         $criteria = [
             'id_servicio' => (int) $idServicio,
             'id_efector' => (int) $idEfector,
@@ -1553,7 +1553,7 @@ class TurnosController extends BaseController
         }
 
         try {
-            $grouped = TurnoSlotOfferService::buildGrouped($criteria, $limite, $maxDias, $franja);
+            $grouped = OfferTurnoSlot::buildGrouped($criteria, $limite, $maxDias, $franja);
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         } catch (\RuntimeException $e) {
@@ -1585,7 +1585,7 @@ class TurnosController extends BaseController
         );
         $draft['tipo_atencion'] = Turno::TIPO_ATENCION_TELECONSULTA;
 
-        $eleg = new TeleconsultaElegibilidadService();
+        $eleg = new EvaluateTeleconsultaEligibility();
         if (!$eleg->modalidadTeleconsultaVisibleParaDraft($draft)) {
             throw new BadRequestHttpException(
                 'Teleconsulta no disponible para este caso. Elegí atención presencial.'
@@ -1599,7 +1599,7 @@ class TurnosController extends BaseController
             );
         }
 
-        $defaults = TurnoSlotOfferService::leerDefaultsTurnosPaciente();
+        $defaults = OfferTurnoSlot::leerDefaultsTurnosPaciente();
         $criteria = [
             'hub_teleconsulta' => true,
             'id_servicios' => $hub['id_servicios'],
@@ -1646,7 +1646,7 @@ class TurnosController extends BaseController
         }
 
         try {
-            $grouped = TurnoSlotOfferService::buildGrouped($criteria, $limite, $maxDias, $franja);
+            $grouped = OfferTurnoSlot::buildGrouped($criteria, $limite, $maxDias, $franja);
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         }
@@ -1674,7 +1674,7 @@ class TurnosController extends BaseController
     /** @return array<string, mixed> */
     private function bloqueLeyendaPoliticaAutogestionPaciente(int $idEfector): array
     {
-        $anticipSvc = new TurnoAutogestionAnticipacionService();
+        $anticipSvc = new ApplyTurnoAutogestionAnticipacion();
         $leyenda = $anticipSvc->textoLeyendaPoliticaAutogestionApp($idEfector);
 
         return [
@@ -1774,7 +1774,7 @@ class TurnosController extends BaseController
      */
     protected function listarComoPacienteData(array $params): array
     {
-        return (new TurnoPacienteListadoService())->list($params);
+        return (new ListTurnosPaciente())->list($params);
     }
 
     /**
@@ -1881,12 +1881,12 @@ class TurnosController extends BaseController
         $enResolucion = $estadoActual === Turno::ESTADO_EN_RESOLUCION;
         if (!$enResolucion) {
             try {
-                (new TurnoAutogestionAnticipacionService())->assertPuedeReprogramarPorApp($turno);
+                (new ApplyTurnoAutogestionAnticipacion())->assertPuedeReprogramarPorApp($turno);
             } catch (AutogestionAnticipacionException $e) {
                 throw new ConflictHttpException($e->getMessage());
             }
         }
-        $defaultsSlots = TurnoSlotOfferService::leerDefaultsTurnosPaciente();
+        $defaultsSlots = OfferTurnoSlot::leerDefaultsTurnosPaciente();
         $limit = isset($params['limit']) && $params['limit'] !== '' ? (int) $params['limit'] : $defaultsSlots['limite'];
         $mismoDefault = $enResolucion ? '0' : '1';
         $mismoRaw = $params['mismo_profesional'] ?? $mismoDefault;
@@ -1948,10 +1948,10 @@ class TurnosController extends BaseController
             throw new BadRequestHttpException('Indicá un motivo de cancelación válido (razon_cancelacion).');
         }
         $canal = $post['canal'] ?? 'app';
-        $life = new TurnoLifecycleService();
+        $life = new AdvanceTurnoLifecycle();
         try {
             if ($turno->estado !== Turno::ESTADO_EN_RESOLUCION) {
-                (new TurnoAutogestionAnticipacionService())->assertPuedeCancelarPorApp($turno);
+                (new ApplyTurnoAutogestionAnticipacion())->assertPuedeCancelarPorApp($turno);
             }
             $life->cancelar(
                 $turno,
@@ -2006,7 +2006,7 @@ class TurnosController extends BaseController
             ];
         }
         try {
-            (new TurnoAutogestionAnticipacionService())->assertPuedeReprogramarPorApp($turno);
+            (new ApplyTurnoAutogestionAnticipacion())->assertPuedeReprogramarPorApp($turno);
         } catch (AutogestionAnticipacionException $e) {
             if ($forUiSubmit) {
                 throw new ConflictHttpException($e->getMessage());
@@ -2038,7 +2038,7 @@ class TurnosController extends BaseController
         ) {
             throw new BadRequestHttpException('id_profesional_efector_servicio inválido para este turno');
         }
-        $before = TurnoLifecycleService::scheduleSnapshot($turno);
+        $before = AdvanceTurnoLifecycle::scheduleSnapshot($turno);
         $turno->id_profesional_efector_servicio = $idPesPost;
         $turno->fecha = $fecha;
         $turno->hora = $hora;
@@ -2048,7 +2048,7 @@ class TurnosController extends BaseController
             throw new BadRequestHttpException($e->getMessage());
         }
         try {
-            (new TurnoLifecycleService())->reprogramar(
+            (new AdvanceTurnoLifecycle())->reprogramar(
                 $turno,
                 $before,
                 \common\models\Scheduling\TurnoEventoAudit::ACTOR_PACIENTE,
@@ -2174,7 +2174,7 @@ class TurnosController extends BaseController
         (new EncounterLifecycleService())->ensureFromTurno($model);
         try {
             (new CreateSobreturno())->notificarRetrasoPorSobreturno($model);
-            (new TurnoLifecycleService())->afterTurnoCreado($model);
+            (new AdvanceTurnoLifecycle())->afterTurnoCreado($model);
         } catch (\Throwable $e) {
             Yii::warning('sobreturno post: ' . $e->getMessage(), 'api-turnos');
         }

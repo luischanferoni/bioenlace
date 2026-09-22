@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Agenda\Application\UseCase;
 
-use common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoCanonicalEventCommand;
+use common\components\Domain\Scheduling\BehaviorProfile\Domain\Model\TurnoCanonicalEventCommand;
 use common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoCanonicalEventService;
 use common\components\Platform\Agent\AgentRunRecorder;
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
@@ -122,7 +122,7 @@ final class AcceptTurnoAdvanceOffer
                 throw new \InvalidArgumentException('El horario ya no está disponible.');
             }
 
-            $before = TurnoLifecycleService::scheduleSnapshot($turno);
+            $before = AdvanceTurnoLifecycle::scheduleSnapshot($turno);
             $turno->fecha = (string) $campaign->fecha;
             $turno->hora = $horaDest . ':00';
             $turno->id_profesional_efector_servicio = (int) $campaign->id_profesional_efector_servicio;
@@ -131,7 +131,7 @@ final class AcceptTurnoAdvanceOffer
             $turno->tipo_atencion = (string) $campaign->modalidad;
             ReserveTurnoSlot::aplicarCamposReserva($turno, (int) $turno->id_turnos);
 
-            (new TurnoLifecycleService())->reprogramar(
+            (new AdvanceTurnoLifecycle())->reprogramar(
                 $turno,
                 $before,
                 $actorType,
@@ -186,7 +186,7 @@ final class AcceptTurnoAdvanceOffer
                     'campaign_id' => (int) $campaign->id,
                     'id_cancelled_turno' => (int) $campaign->id_cancelled_turno,
                     'before' => $before,
-                    'after' => TurnoLifecycleService::scheduleSnapshot($turno),
+                    'after' => AdvanceTurnoLifecycle::scheduleSnapshot($turno),
                 ]
             ));
 

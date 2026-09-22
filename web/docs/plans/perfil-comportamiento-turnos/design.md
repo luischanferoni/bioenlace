@@ -151,7 +151,7 @@ La metadata ejecutable conserva umbrales, checkpoints, acciones, salvaguardas y 
 | `TurnoAntinoshowRiskService` | Consumir perfil y producir decisión de política |
 | `TurnoCancellationPolicyService` | Consumir cancelaciones correctamente atribuidas |
 | `TurnoAgendaMetricsService` | Reutilizar definiciones canónicas y agregados |
-| `TurnoLifecycleService` | Emitir todas las transiciones relevantes |
+| `AdvanceTurnoLifecycle` | Emitir todas las transiciones relevantes |
 | `TurnoAntinoshowAgent` | Ejecutar y auditar; sin recalcular historial |
 
 Durante la migración se ejecutan servicio viejo y nuevo en shadow mode. Ninguna diferencia cambia el turno hasta ser explicada.

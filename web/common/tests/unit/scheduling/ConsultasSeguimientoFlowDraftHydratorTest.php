@@ -5,7 +5,7 @@ namespace common\tests\unit\scheduling;
 use Codeception\Test\Unit;
 use common\components\Domain\Scheduling\Assistant\ConsultasSeguimientoFlowDraftHydrator;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultasSeguimientoIntakeCatalogService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultasSeguimientoIntakeService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\SubmitConsultasSeguimientoIntake;
 
 class ConsultasSeguimientoFlowDraftHydratorTest extends Unit
 {
@@ -21,7 +21,7 @@ class ConsultasSeguimientoFlowDraftHydratorTest extends Unit
 
         $this->assertSame(
             ConsultasSeguimientoIntakeCatalogService::INTAKE_SEGUIMIENTO_CONSULTA_PREVIA,
-            $body['draft'][ConsultasSeguimientoIntakeService::DRAFT_INTAKE_TIPO] ?? null
+            $body['draft'][SubmitConsultasSeguimientoIntake::DRAFT_INTAKE_TIPO] ?? null
         );
         $this->assertSame('42', $body['draft']['encounter_id'] ?? null);
     }
@@ -38,7 +38,7 @@ class ConsultasSeguimientoFlowDraftHydratorTest extends Unit
 
         $this->assertSame(
             ConsultasSeguimientoIntakeCatalogService::INTAKE_SEGUIMIENTO,
-            $body['draft'][ConsultasSeguimientoIntakeService::DRAFT_INTAKE_TIPO] ?? null
+            $body['draft'][SubmitConsultasSeguimientoIntake::DRAFT_INTAKE_TIPO] ?? null
         );
     }
 }

@@ -76,8 +76,8 @@ use common\components\Domain\Scheduling\Assistant\Context\AppointmentCurrentAspe
 use common\components\Domain\Scheduling\Assistant\Context\AppointmentHistorySubjectAtSiteAspectLoader;
 use common\components\Domain\Scheduling\Assistant\Context\AppointmentSchedulingSetupAspectLoader;
 use common\components\Domain\Scheduling\Assistant\Context\SiteAppointmentPoliciesAspectLoader;
-use common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoConfirmationPushReceiptProjector;
-use common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoAdvancePushReceiptProjector;
+use common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoConfirmationPushReceiptService;
+use common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoAdvancePushReceiptService;
 use common\components\Platform\Ui\Home\Service\Sections\ActionCardsSectionProvider;
 
 return [
@@ -188,8 +188,8 @@ return [
     ],
 
     'pushNotificationReceiptProjectors' => [
-        TurnoConfirmationPushReceiptProjector::HANDLER_ID => TurnoConfirmationPushReceiptProjector::class,
-        TurnoAdvancePushReceiptProjector::HANDLER_ID => TurnoAdvancePushReceiptProjector::class,
+        TurnoConfirmationPushReceiptService::HANDLER_ID => TurnoConfirmationPushReceiptService::class,
+        TurnoAdvancePushReceiptService::HANDLER_ID => TurnoAdvancePushReceiptService::class,
     ],
 
     'homePanelSectionProviders' => [

@@ -35,8 +35,8 @@ final class ReservaTurnoTriageFlowDraftHydrator
 
         (new \common\components\Domain\Clinical\CareRequest\Application\Service\CareRequestPatientService())
             ->hidratarDesdeMensaje($draft, $content);
-        (new TeleconsultaElegibilidadService())->aplicarFlagsEnDraft($draft);
-        (new ReservaModalidadAtencionService())->aplicarFlagsEnDraft($draft);
+        (new EvaluateTeleconsultaEligibility())->aplicarFlagsEnDraft($draft);
+        (new ResolveReservaModalidadAtencion())->aplicarFlagsEnDraft($draft);
         (new ReservaTriageServicioSugeridoService())->aplicarFlagsEnDraft($draft);
 
         $body['draft'] = $draft;

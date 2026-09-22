@@ -25,14 +25,14 @@ final class TurnoAntinoshowAgent
 
     private TurnoAntinoshowRiskService $risk;
 
-    private TurnoAntinoshowService $scheduler;
+    private ApplyTurnoAntinoshow $scheduler;
 
     public function __construct(
         ?TurnoAntinoshowRiskService $risk = null,
-        ?TurnoAntinoshowService $scheduler = null
+        ?ApplyTurnoAntinoshow $scheduler = null
     ) {
         $this->risk = $risk ?? new TurnoAntinoshowRiskService();
-        $this->scheduler = $scheduler ?? new TurnoAntinoshowService();
+        $this->scheduler = $scheduler ?? new ApplyTurnoAntinoshow();
     }
 
     public function processCheckpoint(TurnoNotificacionProgramada $row, Turno $turno): string
@@ -214,7 +214,7 @@ final class TurnoAntinoshowAgent
             return 'cancelled';
         }
 
-        $life = new TurnoLifecycleService();
+        $life = new AdvanceTurnoLifecycle();
         $life->cancelar(
             $turno,
             Turno::ESTADO_MOTIVO_CANCELADO_SISTEMA,

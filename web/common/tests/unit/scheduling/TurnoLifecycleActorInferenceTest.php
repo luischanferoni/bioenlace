@@ -3,7 +3,7 @@
 namespace common\tests\unit\scheduling;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoLifecycleService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\AdvanceTurnoLifecycle;
 use common\models\Scheduling\Turno;
 use common\models\Scheduling\TurnoEventoAudit;
 
@@ -11,7 +11,7 @@ class TurnoLifecycleActorInferenceTest extends Unit
 {
     public function testInferActorForCancelUsesNewMotivos(): void
     {
-        $life = new TurnoLifecycleService();
+        $life = new AdvanceTurnoLifecycle();
         $ref = new \ReflectionClass($life);
         $m = $ref->getMethod('inferActorForCancel');
         $m->setAccessible(true);
@@ -38,7 +38,7 @@ class TurnoLifecycleActorInferenceTest extends Unit
 
     public function testInferActorForCreate(): void
     {
-        $life = new TurnoLifecycleService();
+        $life = new AdvanceTurnoLifecycle();
         $ref = new \ReflectionClass($life);
         $m = $ref->getMethod('inferActorForCreate');
         $m->setAccessible(true);

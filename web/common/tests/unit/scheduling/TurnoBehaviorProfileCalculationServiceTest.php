@@ -4,7 +4,7 @@ namespace common\tests\unit\scheduling;
 
 use Codeception\Test\Unit;
 use common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoBehaviorProfileCalculationService;
-use common\components\Domain\Scheduling\BehaviorProfile\Domain\Port\TurnoBehaviorProfileContract;
+use common\components\Domain\Scheduling\BehaviorProfile\Domain\Catalog\TurnoBehaviorProfileContract;
 use common\models\Scheduling\PersonaTurnosPerfil;
 use common\models\Scheduling\PersonaTurnosPerfilMetrica;
 use common\models\Scheduling\TurnoEventoAudit;

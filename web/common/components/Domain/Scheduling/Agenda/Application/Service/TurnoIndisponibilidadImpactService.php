@@ -67,7 +67,7 @@ final class TurnoIndisponibilidadImpactService
             return 0;
         }
 
-        TurnoResolucionService::crearDesdeLicencia($turnos, array_merge($meta, [
+        ResolveTurno::crearDesdeLicencia($turnos, array_merge($meta, [
             'fecha_inicio' => $fi,
             'fecha_fin' => $ff !== '' ? $ff : null,
             'id_profesional_efector_servicio' => $idPes,
@@ -92,7 +92,7 @@ final class TurnoIndisponibilidadImpactService
             return 0;
         }
 
-        TurnoResolucionService::crearDesdeBajaPes($turnos, array_merge($meta, [
+        ResolveTurno::crearDesdeBajaPes($turnos, array_merge($meta, [
             'id_profesional_efector_servicio' => $idPes,
         ]));
 

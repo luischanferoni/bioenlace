@@ -5,7 +5,7 @@ namespace common\components\Domain\Clinical\Home\Sections;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\ConditionPresentationService;
 use common\components\Domain\Person\Representation\Domain\Model\RepresentationPermission;
 use common\components\Domain\Person\Representation\Application\Service\PersonRepresentationSubjectService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncBandejaService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\ListConsultaAsyncInbox;
 use common\components\Platform\Ui\Home\Service\Sections\HomePanelSectionProviderInterface;
 
 /**
@@ -26,7 +26,7 @@ final class PatientConditionsActiveSectionProvider implements HomePanelSectionPr
         );
 
         $summaries = (new ConditionPresentationService())->listPatientSummaries($idPersona);
-        $bandeja = (new ConsultaAsyncBandejaService())->listForPaciente($idPersona, [
+        $bandeja = (new ListConsultaAsyncInbox())->listForPaciente($idPersona, [
             'ui_group' => 'condicion',
         ]);
         $activasByCodigo = $this->indexByConditionCodigo($bandeja['items'] ?? []);

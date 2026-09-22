@@ -3,9 +3,9 @@
 namespace common\components\Domain\Scheduling\Agenda\Infrastructure\External\Sync;
 
 use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Mapper\FhirAppointmentInbound;
-use common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoCanonicalEventCommand;
+use common\components\Domain\Scheduling\BehaviorProfile\Domain\Model\TurnoCanonicalEventCommand;
 use common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoCanonicalEventService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoLifecycleService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\AdvanceTurnoLifecycle;
 use common\models\Scheduling\Turno;
 use common\models\Scheduling\TurnoEventoAudit;
 
@@ -57,7 +57,7 @@ final class TurnoFhirCanonicalEventEmitter
             );
         }
 
-        $afterSnapshot = TurnoLifecycleService::scheduleSnapshot($turno);
+        $afterSnapshot = AdvanceTurnoLifecycle::scheduleSnapshot($turno);
         if (!$isNew && $beforeSnapshot !== null && $beforeSnapshot !== $afterSnapshot) {
             $this->record(
                 $turno,

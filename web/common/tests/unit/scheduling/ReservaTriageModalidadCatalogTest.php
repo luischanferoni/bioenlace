@@ -5,7 +5,7 @@ namespace common\tests\unit\scheduling;
 use Codeception\Test\Unit;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaTriageModalidadStepService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaTurnoTriageCatalogService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\TeleconsultaElegibilidadService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\EvaluateTeleconsultaEligibility;
 
 class ReservaTriageModalidadCatalogTest extends Unit
 {
@@ -30,11 +30,11 @@ class ReservaTriageModalidadCatalogTest extends Unit
 
     public function testElegibilidadClinicaDefaultPermitido(): void
     {
-        $svc = new TeleconsultaElegibilidadService();
+        $svc = new EvaluateTeleconsultaEligibility();
         $res = $svc->resolverParaDraft([
             'triage_raiz' => 'malestar_nuevo',
             'triage_zona' => 'zona_sistemas',
         ]);
-        $this->assertSame(TeleconsultaElegibilidadService::ELEG_PERMITIDO, $res['elegibilidad_clinica']);
+        $this->assertSame(EvaluateTeleconsultaEligibility::ELEG_PERMITIDO, $res['elegibilidad_clinica']);
     }
 }

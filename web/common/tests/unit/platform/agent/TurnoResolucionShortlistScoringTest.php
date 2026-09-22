@@ -3,7 +3,7 @@
 namespace common\tests\unit\platform\agent;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoResolucionShortlistService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\BuildTurnoResolutionShortlist;
 use common\models\Scheduling\Turno;
 
 class TurnoResolucionShortlistScoringTest extends Unit
@@ -35,8 +35,8 @@ class TurnoResolucionShortlistScoringTest extends Unit
             ],
         ];
 
-        $neighborScore = TurnoResolucionShortlistService::scoreCandidate($turno, $neighbor, $config);
-        $otherScore = TurnoResolucionShortlistService::scoreCandidate($turno, $otherPes, $config);
+        $neighborScore = BuildTurnoResolutionShortlist::scoreCandidate($turno, $neighbor, $config);
+        $otherScore = BuildTurnoResolutionShortlist::scoreCandidate($turno, $otherPes, $config);
 
         $this->assertGreaterThan($otherScore, $neighborScore);
     }

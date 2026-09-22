@@ -5,8 +5,8 @@ namespace frontend\modules\api\v1\controllers\clinical;
 use frontend\modules\api\v1\controllers\BaseController;
 use common\models\Clinical\ConsultaChatMessage;
 use common\components\Domain\Clinical\Encounter\Application\Service\SecureMediaService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncChatUploadService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncPushService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\UploadConsultaAsyncChat;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\PushConsultaAsyncNotification;
 use common\components\Domain\Scheduling\Agenda\Application\Agents\ConsultaAsyncBandejaPrioridadAgent;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncChatPolicyCatalogService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncChatPolicyService;
@@ -233,7 +233,7 @@ class EncounterChatController extends BaseController
                 ->count();
             if ($prevStaffCount === 0) {
                 try {
-                    (new ConsultaAsyncPushService())->notifyRespuestaStaffPatient($encounter);
+                    (new PushConsultaAsyncNotification())->notifyRespuestaStaffPatient($encounter);
                 } catch (\Throwable $e) {
                     Yii::warning('Push async respuesta staff: ' . $e->getMessage(), 'consulta-async-push');
                 }
@@ -295,7 +295,7 @@ class EncounterChatController extends BaseController
                 } else {
                     $policySvc->assertStaffCanSend($encounter);
                 }
-                (new ConsultaAsyncChatUploadService())->assertUploadAllowed(
+                (new UploadConsultaAsyncChat())->assertUploadAllowed(
                     $encounter,
                     $messageType,
                     $file,

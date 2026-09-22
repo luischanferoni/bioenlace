@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Organization\Pes\Application\Service;
 
-use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Service\FhirHealthcareServiceCodeCatalog;
+use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Mapper\FhirHealthcareServiceCodeCatalog;
 use common\models\Organization\Servicio;
 use Yii;
 

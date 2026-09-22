@@ -254,7 +254,7 @@ final class TeleconsultaElegibilidadService
      */
     private function resolverAccesoHubEspecialista(int $idServicio, array $draft, string $elegClinica): ?array
     {
-        if (!ReservaTriageAccesoConfig::especialistaSoloTeleconsultaConDerivacion()) {
+        if (!ReservaTriageAccessCatalog::especialistaSoloTeleconsultaConDerivacion()) {
             return null;
         }
 

@@ -111,7 +111,7 @@ final class ReservaTriagePostCupoRoutingAgent
         }
 
         try {
-            (new ConsultaAsyncSolicitudService())->solicitarComoPaciente($idPersona, array_merge($params, [
+            (new SubmitConsultaAsyncSolicitud())->solicitarComoPaciente($idPersona, array_merge($params, [
                 'mensaje' => $mensaje,
             ]));
         } catch (\Throwable $e) {

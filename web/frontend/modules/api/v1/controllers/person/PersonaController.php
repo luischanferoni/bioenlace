@@ -5,8 +5,8 @@ namespace frontend\modules\api\v1\controllers\person;
 use frontend\modules\api\v1\controllers\BaseController;
 use frontend\modules\api\v1\controllers\clinical\PacientesController;
 use Yii;
-use common\components\Domain\Person\Identidad\Application\Service\PersonaBusquedaAsistenteUiService;
-use common\components\Domain\Person\Identidad\Application\Service\PersonaSignosVitalesService;
+use common\components\Domain\Person\Identity\Application\Service\PersonaBusquedaAsistenteUiService;
+use common\components\Domain\Person\Identity\Application\Service\PersonaSignosVitalesService;
 use common\components\Platform\Ui\UiScreenService;
 use common\models\Person\Persona;
 // Nota: la historia clínica agregada vive en PacientesController (persona en rol paciente).

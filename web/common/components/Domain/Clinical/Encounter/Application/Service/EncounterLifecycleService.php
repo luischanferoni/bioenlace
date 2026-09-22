@@ -10,7 +10,7 @@ use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Domain\Clinical\Encounter\Domain\Model\Encounter as EncounterAggregate;
 use common\components\Domain\Clinical\Encounter\Domain\Model\EncounterId;
 use common\components\Domain\Clinical\HistoryExchange\Application\Service\ClinicalHistoryOutboundEnqueueService;
-use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Service\TurnoFhirOutboundNotifier;
+use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Sync\TurnoFhirOutboundNotifier;
 use common\models\Clinical\Encounter;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Person\Persona;

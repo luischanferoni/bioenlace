@@ -13,7 +13,7 @@ use yii\web\NotFoundHttpException;
 use common\components\Domain\Organization\Pes\Application\Service\AgendaConfigUiFlowService;
 use common\components\Domain\Organization\Pes\Application\Service\ProfesionalEfectorServicioAgendaApiService;
 use common\components\Domain\Organization\Pes\Application\Service\ProfesionalEfectorServicioAgendaUiService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoResolucionElecciones;
+use common\components\Domain\Scheduling\Agenda\Domain\Catalog\TurnoResolutionChoicesCatalog;
 use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoResolucionService;
 use common\components\Platform\Ui\UiScreenService;
 use common\models\Organization\ProfesionalEfectorServicio;
@@ -491,7 +491,7 @@ class ProfesionalAgendaController extends BaseController
             if ($idEfector <= 0) {
                 throw new BadRequestHttpException('Se requiere efector en sesión.');
             }
-            $res = TurnoResolucionElecciones::requireResolucionPendienteParaTurno($tid, null, $idEfector);
+            $res = TurnoResolutionChoicesCatalog::requireResolucionPendienteParaTurno($tid, null, $idEfector);
             $def = UiScreenService::renderUiDefinition(
                 'profesional-agenda',
                 'elegir-resolucion-conflicto-agenda-para-paciente',
@@ -499,7 +499,7 @@ class ProfesionalAgendaController extends BaseController
                 null
             );
 
-            return TurnoResolucionElecciones::aplicarOpcionesEleccionEnDefinicionUiJson($def, $res);
+            return TurnoResolutionChoicesCatalog::aplicarOpcionesEleccionEnDefinicionUiJson($def, $res);
         }
 
         return UiScreenService::handleScreen(
@@ -513,14 +513,14 @@ class ProfesionalAgendaController extends BaseController
                     throw new BadRequestHttpException('id del turno requerido');
                 }
                 $eleccion = trim((string) ($post['eleccion'] ?? ''));
-                if ($eleccion === '' || !TurnoResolucionElecciones::esEleccionValida($eleccion)) {
+                if ($eleccion === '' || !TurnoResolutionChoicesCatalog::esEleccionValida($eleccion)) {
                     throw new BadRequestHttpException('eleccion requerida (antes, despues o cancelar).');
                 }
                 $idEfector = (int) Yii::$app->user->getIdEfector();
                 if ($idEfector <= 0) {
                     throw new BadRequestHttpException('Se requiere efector en sesión.');
                 }
-                TurnoResolucionElecciones::requireResolucionPendienteParaTurno($tid, null, $idEfector);
+                TurnoResolutionChoicesCatalog::requireResolucionPendienteParaTurno($tid, null, $idEfector);
 
                 return ['data' => ['ok' => true, 'id' => $tid, 'eleccion' => strtolower($eleccion)]];
             }

@@ -5,12 +5,12 @@ namespace common\components\Domain\Scheduling\Agenda\Application\Service;
 use Yii;
 
 /**
- * Oferta de slots libres: lista desde {@see TurnoSlotFinder} y, si hace falta, agrupación por día y franja mañana/tarde.
+ * Oferta de slots libres: lista desde {@see TurnoSlotQueryService} y, si hace falta, agrupación por día y franja mañana/tarde.
  */
 class TurnoSlotOfferService
 {
     /**
-     * @param array<string, mixed> $criteria mismo contrato que {@see TurnoSlotFinder::findAvailableSlots}
+     * @param array<string, mixed> $criteria mismo contrato que {@see TurnoSlotQueryService::findAvailableSlots}
      * @param int $limite máximo de slots a devolver
      * @param int $maxDias días a explorar en la búsqueda
      * @param string $franjaTardeDesde hora "HH:MM"; horas &lt; este valor van a `manana`, el resto a `tarde`
@@ -29,18 +29,18 @@ class TurnoSlotOfferService
         $criteria['max_dias'] = $maxDias;
 
         if (!empty($criteria['hub_teleconsulta'])) {
-            $plano = TurnoSlotFinder::findAvailableSlotsHubTeleconsulta($criteria, $limite);
+            $plano = TurnoSlotQueryService::findAvailableSlotsHubTeleconsulta($criteria, $limite);
 
             return self::buildOfferFromPlano($plano, $franjaTardeDesde, $limite, $maxDias);
         }
 
-        $plano = TurnoSlotFinder::findAvailableSlots($criteria, $limite);
+        $plano = TurnoSlotQueryService::findAvailableSlots($criteria, $limite);
 
         return self::buildOfferFromPlano($plano, $franjaTardeDesde, $limite, $maxDias);
     }
 
     /**
-     * Agrupa una lista plana de slots (mismo shape que {@see TurnoSlotFinder::findAvailableSlots}) por día y franja.
+     * Agrupa una lista plana de slots (mismo shape que {@see TurnoSlotQueryService::findAvailableSlots}) por día y franja.
      * Útil cuando los slots ya vienen de otra fuente (p. ej. reprogramación).
      *
      * @param list<array<string, mixed>> $plano

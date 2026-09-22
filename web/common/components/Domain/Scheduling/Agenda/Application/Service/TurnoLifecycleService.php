@@ -14,17 +14,17 @@ use common\models\Scheduling\TurnoResolucion;
 
 class TurnoLifecycleService
 {
-    /** @var TurnoConfirmationService */
+    /** @var ConfirmTurno */
     private $confirmation;
 
     /** @var TurnoCanonicalEventService */
     private $canonicalEvents;
 
     public function __construct(
-        TurnoConfirmationService $confirmation = null,
+        ConfirmTurno $confirmation = null,
         ?TurnoCanonicalEventService $canonicalEvents = null
     ) {
-        $this->confirmation = $confirmation ?: new TurnoConfirmationService();
+        $this->confirmation = $confirmation ?: new ConfirmTurno();
         $this->canonicalEvents = $canonicalEvents ?: new TurnoCanonicalEventService();
     }
 
@@ -101,7 +101,7 @@ class TurnoLifecycleService
                 return false;
             }
 
-            TurnoSlotClaimService::releaseForTurno((int) $turno->id_turnos);
+            ClaimTurnoSlot::releaseForTurno((int) $turno->id_turnos);
 
             TurnoNotificacionProgramada::cancelarPendientesPorTurno($turno->id_turnos);
 
@@ -162,7 +162,7 @@ class TurnoLifecycleService
             Yii::warning('Advance offer: ' . $e->getMessage(), 'turno-advance');
         }
 
-        \common\components\Domain\Scheduling\Agenda\Infrastructure\External\Service\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
+        \common\components\Domain\Scheduling\Agenda\Infrastructure\External\Sync\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
 
         return true;
     }
@@ -198,7 +198,7 @@ class TurnoLifecycleService
             }
             throw $e;
         }
-        \common\components\Domain\Scheduling\Agenda\Infrastructure\External\Service\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
+        \common\components\Domain\Scheduling\Agenda\Infrastructure\External\Sync\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
     }
 
     public function marcarAtendido(Turno $turno, ?int $idUser = null): void
@@ -229,7 +229,7 @@ class TurnoLifecycleService
             }
             throw $e;
         }
-        \common\components\Domain\Scheduling\Agenda\Infrastructure\External\Service\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
+        \common\components\Domain\Scheduling\Agenda\Infrastructure\External\Sync\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
     }
 
     public function corregirNoShow(
@@ -293,7 +293,7 @@ class TurnoLifecycleService
             }
             throw $e;
         }
-        \common\components\Domain\Scheduling\Agenda\Infrastructure\External\Service\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
+        \common\components\Domain\Scheduling\Agenda\Infrastructure\External\Sync\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
     }
 
     /**
@@ -350,7 +350,7 @@ class TurnoLifecycleService
             throw $e;
         }
         if ($notifyOutbound) {
-            \common\components\Domain\Scheduling\Agenda\Infrastructure\External\Service\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
+            \common\components\Domain\Scheduling\Agenda\Infrastructure\External\Sync\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
         }
     }
 
@@ -371,12 +371,12 @@ class TurnoLifecycleService
             return;
         }
         if ($afterPes > 0 && $afterFecha !== '' && $afterHora !== '') {
-            if (!TurnoSlotClaimService::moveClaim($idTurno, $afterPes, $afterFecha, $afterHora)) {
+            if (!ClaimTurnoSlot::moveClaim($idTurno, $afterPes, $afterFecha, $afterHora)) {
                 throw new \InvalidArgumentException('El horario ya no está disponible.');
             }
             return;
         }
-        TurnoSlotClaimService::releaseForTurno($idTurno);
+        ClaimTurnoSlot::releaseForTurno($idTurno);
     }
 
     public function entrarEnResolucion(

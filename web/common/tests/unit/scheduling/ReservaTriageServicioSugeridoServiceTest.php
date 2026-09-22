@@ -3,7 +3,7 @@
 namespace common\tests\unit\scheduling;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaTriageAccesoConfig;
+use common\components\Domain\Scheduling\Agenda\Domain\Catalog\ReservaTriageAccessCatalog;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaTriageServicioRolResolver;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaTriageServicioSugeridoService;
 
@@ -139,6 +139,6 @@ class ReservaTriageServicioSugeridoServiceTest extends Unit
 
     public function testAccesoConfigEspecialistaConDerivacion(): void
     {
-        $this->assertTrue(ReservaTriageAccesoConfig::especialistaSoloTeleconsultaConDerivacion());
+        $this->assertTrue(ReservaTriageAccessCatalog::especialistaSoloTeleconsultaConDerivacion());
     }
 }

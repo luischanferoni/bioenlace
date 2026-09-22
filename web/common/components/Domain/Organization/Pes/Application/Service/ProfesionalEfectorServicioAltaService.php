@@ -4,7 +4,7 @@ namespace common\components\Domain\Organization\Pes\Application\Service;
 
 use common\components\Domain\Organization\Efector\Application\Service\EfectorEncounterEntitlementService;
 use common\components\Domain\Organization\Efector\Application\Seed\ActiveRecordConsoleBlame;
-use common\components\Domain\Person\Identidad\Application\Service\PersonCuilService;
+use common\components\Domain\Person\Identity\Application\Service\PersonCuilService;
 use common\models\Person\Persona;
 use common\models\Organization\ProfesionalEfectorServicio as ProfesionalEfectorServicioModel;
 use common\models\Organization\Servicio;

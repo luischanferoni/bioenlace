@@ -3,7 +3,7 @@
 namespace common\tests\unit\person;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Person\Identidad\Domain\Policy\CuilPolicy;
+use common\components\Domain\Person\Identity\Domain\Policy\CuilPolicy;
 
 class CuilPolicyTest extends Unit
 {

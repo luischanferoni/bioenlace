@@ -2,7 +2,7 @@
 
 namespace common\tests\unit\person;
 
-use common\components\Domain\Person\Identidad\Application\Service\PersonaAsistentePreferenciasService;
+use common\components\Domain\Person\Identity\Application\Service\PersonaAsistentePreferenciasService;
 
 class PersonaAsistentePreferenciasServiceTest extends \Codeception\Test\Unit
 {

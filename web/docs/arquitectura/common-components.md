@@ -44,7 +44,7 @@ ACL de sistemas de negocio **no** van aquí. ADR: [shared-top-level-infrastructu
 |---------|-----------|
 | **`Domain/Clinical/`** | Módulos: Encounter, Emergency, Inpatient, Laboratory, Prescription, CarePlan, Capture, … |
 | **`Domain/Scheduling/`** | Agenda, BehaviorProfile, Quirofano, Home |
-| **`Domain/Person/`** | Identidad, Representation, Ventanilla |
+| **`Domain/Person/`** | Identidad, Representation, FrontDesk |
 | **`Domain/Organization/`** | Efector, Servicio, Pes, SesionOperativa |
 | **`Domain/<BC|Modulo>/Infrastructure/External/`** | ACL sistemas externos (MPI, LIS, receta, HC FHIR, agenda FHIR) |
 | **`Domain/Terminology/`** | SNOMED (BC compacto) |
@@ -66,7 +66,7 @@ La misma palabra de dominio se sigue en models, controllers API, `views/json`, m
 Domain/<BC>/<Modulo>/Application|Domain|Infrastructure/…
 ```
 
-Ejemplos L1: `Organization/{Efector,Servicio,Pes,SesionOperativa}/`, `Scheduling/{Agenda,BehaviorProfile,Quirofano,Home}/`, `Person/{Identidad,Representation,Ventanilla}/`.
+Ejemplos L1: `Organization/{Efector,Servicio,Pes,SesionOperativa}/`, `Scheduling/{Agenda,BehaviorProfile,Quirofano,Home}/`, `Person/{Identidad,Representation,FrontDesk}/`.
 
 **BC compacto** (Geo, Content, Terminology, Programs) — una sola capacidad:
 

@@ -6,7 +6,7 @@ Tras identificar (DNI/Didit): contexto temporal para turnos de autogestión, TTL
 
 - [x] Tabla `ventanilla_sesion` + knob YAML `ttl_minutes` (default 15).
 - [x] `PersonaIdentidadResolverService` compartido con ingreso de guardia (sin NN).
-- [x] `VentanillaSesionService` iniciar / estado / cerrar; allowlist `scheduling.turno`.
+- [x] `FrontDeskSessionService` iniciar / estado / cerrar; allowlist `scheduling.turno`.
 - [x] Enganche en `PersonRepresentationSubjectService` (no en sesión operativa).
 - [x] API `POST/GET …/ventanilla-sesion/{iniciar,estado,cerrar,buscar-persona}`.
 - [x] RBAC: rutas de ventanilla heredan de `/personas/buscar-persona`; `crear/listar-como-paciente` al rol `Administrativo`.

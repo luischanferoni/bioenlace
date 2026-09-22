@@ -10,10 +10,10 @@ use common\models\Organization\Efector;
  */
 class TurnoReminderContentService
 {
-    /** @var EfectorDirectionsProviderInterface */
+    /** @var EfectorDirectionsProvider */
     private $directions;
 
-    public function __construct(EfectorDirectionsProviderInterface $directions = null)
+    public function __construct(EfectorDirectionsProvider $directions = null)
     {
         $this->directions = $directions ?: new NullEfectorDirectionsProvider();
     }

@@ -492,9 +492,9 @@ final class BoundedContextLayerShapeTest extends Unit
     {
         $person = ProductDomainCatalog::domainRoot() . DIRECTORY_SEPARATOR . 'Person';
         $modules = [
-            'Identidad' => true,
+            'Identity' => true,
             'Representation' => true,
-            'Ventanilla' => true,
+            'FrontDesk' => true,
         ];
         $pluginOk = ['Assistant' => true, 'DataAccess' => true];
         $allowedAppDirs = [
@@ -639,7 +639,7 @@ final class BoundedContextLayerShapeTest extends Unit
                     $errors[] = "Domain/$bc/$name/ (usar Application/…)";
                 }
             }
-            // Áreas de lenguaje (Representation, Ventanilla, Quirofano, …): sin Service L1 interno
+            // Áreas de lenguaje (Representation, FrontDesk, Quirofano, …): sin Service L1 interno
             foreach (scandir($bcPath) ?: [] as $area) {
                 if ($area === '.' || $area === '..' || isset($pluginOk[$area])) {
                     continue;

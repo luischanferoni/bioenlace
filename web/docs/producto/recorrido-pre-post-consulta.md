@@ -76,7 +76,7 @@ RBAC journey paciente: hereda de `listar-como-paciente` (migración `m260703_120
 
 ## Notificaciones
 
-Al programar turno (`TurnoConfirmationService`), se encolan recordatorios de fases con anchor `turno_start`. Al finalizar encounter (`EncounterLifecycleService`), se encolan los de `post_consulta` (anchor `encounter_finished`). El cron `turno-notificacion/run` envía push con deep link (`id_turno`, `phase`, opcional `touchpoint_id`).
+Al programar turno (`ConfirmTurno`), se encolan recordatorios de fases con anchor `turno_start`. Al finalizar encounter (`EncounterLifecycleService`), se encolan los de `post_consulta` (anchor `encounter_finished`). El cron `turno-notificacion/run` envía push con deep link (`id_turno`, `phase`, opcional `touchpoint_id`).
 
 Los touchpoints del pack followup (`care-pack process-followups`) incluyen `id_turno` y `phase=post_consulta` para abrir el hub o el formulario directamente en la app.
 

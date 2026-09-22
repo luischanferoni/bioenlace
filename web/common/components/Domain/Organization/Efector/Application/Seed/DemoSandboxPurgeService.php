@@ -6,7 +6,7 @@ use common\models\Platform\AsistenteConversacion;
 use common\models\Platform\AsistenteInteraccion;
 use common\models\Integrations\AsistenteWhatsappMensaje;
 use common\models\Integrations\AsistenteWhatsappVinculo;
-use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoSlotClaimService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\ClaimTurnoSlot;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\Emergency\EmergencyBoardEvent;
 use common\models\Clinical\Emergency\EmergencyTriage;
@@ -163,7 +163,7 @@ final class DemoSandboxPurgeService
             }
             foreach ($turnoIds as $idTurno) {
                 try {
-                    TurnoSlotClaimService::releaseForTurno($idTurno);
+                    ClaimTurnoSlot::releaseForTurno($idTurno);
                 } catch (\Throwable $e) {
                     $errors[] = 'slot ' . $idTurno . ': ' . $e->getMessage();
                 }

@@ -3,7 +3,7 @@
 namespace common\tests\unit\integrations;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Person\Identidad\Infrastructure\External\Mpi\MpiDomicilioMapper;
+use common\components\Domain\Person\Identity\Infrastructure\External\Mpi\MpiDomicilioMapper;
 
 class MpiDomicilioMapperTest extends Unit
 {

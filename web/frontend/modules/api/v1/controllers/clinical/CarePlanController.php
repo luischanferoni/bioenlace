@@ -14,7 +14,7 @@ use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanMedic
 use common\components\Domain\Clinical\CarePlan\Application\Presentation\CarePlanPresentationService;
 use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanAdherenceStaffService;
 use common\components\Domain\Clinical\CarePlan\Application\Service\PatientActiveCarePlanQueryService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncSolicitudService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\SubmitConsultaAsyncSolicitud;
 use common\components\Platform\Ui\UiScreenService;
 use frontend\modules\api\v1\controllers\BaseController;
 
@@ -251,7 +251,7 @@ class CarePlanController extends BaseController
                     'medicacion_operacion' => 'renovacion',
                 ]);
 
-                return (new ConsultaAsyncSolicitudService())
+                return (new SubmitConsultaAsyncSolicitud())
                     ->solicitarComoPaciente($idPersona, $merged);
             }
         );

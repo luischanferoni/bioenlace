@@ -846,6 +846,8 @@ return [
                 'internacion' => \frontend\modules\api\v1\controllers\clinical\InpatientController::class,
                 // URL/RBAC pública internacion-epicrisis-plantilla (clase InpatientEpicrisisTemplateController).
                 'internacion-epicrisis-plantilla' => \frontend\modules\api\v1\controllers\clinical\InpatientEpicrisisTemplateController::class,
+                // URL/RBAC pública ventanilla-sesion (clase FrontDeskSessionController).
+                'ventanilla-sesion' => \frontend\modules\api\v1\controllers\person\FrontDeskSessionController::class,
             ],
         ],           
     ],

@@ -13,7 +13,7 @@ Las carpetas de primer nivel **son** el conjunto de dominios del producto (`Prod
 | **`Clinical/`** | Módulo-primero | Encounter, Emergency, Capture, … |
 | **`Organization/`** | Módulo-primero | Efector, Servicio, Pes, SesionOperativa |
 | **`Scheduling/`** | Módulo-primero | Agenda, BehaviorProfile, Quirofano, Home |
-| **`Person/`** | Módulo-primero | Identidad, Representation, Ventanilla |
+| **`Person/`** | Módulo-primero | Identidad, Representation, FrontDesk |
 | **`Terminology/`** | BC compacto | SNOMED |
 | **`Content/`** | BC compacto | Contenido institucional |
 | **`Geo/`** | BC compacto | Maestros geo |

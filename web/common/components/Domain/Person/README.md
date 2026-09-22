@@ -6,5 +6,5 @@ Módulo-primero (fase 04). Nombre del módulo de registro: **Identidad** (alinea
 |--------|-----------|
 | `Identidad/` | Alta/MPI/CUIL/DNI, seeds, flows de persona |
 | `Representation/` | Representación / tutela |
-| `Ventanilla/` | Sesión de mostrador + Didit |
+| `FrontDesk/` | Sesión de mostrador + Didit |
 | `Assistant/` · `DataAccess/` | Plugins del BC |

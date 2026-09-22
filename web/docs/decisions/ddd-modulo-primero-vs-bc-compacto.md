@@ -9,7 +9,7 @@
    - `Clinical/` (ya)
    - `Organization/` (`Efector/`, `Servicio/`, `Pes/`, `SesionOperativa/`)
    - `Scheduling/` (`Agenda/`, `BehaviorProfile/`, `Quirofano/`, `Home/`)
-   - `Person/` (`Identidad/`, `Representation/`, `Ventanilla/`)
+   - `Person/` (`Identidad/`, `Representation/`, `FrontDesk/`)
 2. **BC compacto** (layer-first en la raíz) queda permitido mientras el BC sea mono-capacidad: `Geo/`, `Content/`, `Terminology/`, `Programs/`.
 3. En **ambos** casos, `Application/*` solo admite roles CA (`UseCase/`, `Service/`, `Presentation/`, `Authorization/`, `Flows/`, `Agents/`, `Seed/`). Sin carpetas de capacidad ni PHP suelto en la raíz de `Application/`.
 4. Si un BC compacto gana una segunda capacidad clara → promover a módulo-primero (sin inventar módulos “por simetría”).

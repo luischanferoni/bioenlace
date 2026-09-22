@@ -7,7 +7,7 @@ use Yii;
 use yii\web\BadRequestHttpException;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncBandejaService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncLifecycleService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncSolicitudService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\SubmitConsultaAsyncSolicitud;
 use common\components\Platform\Ui\UiScreenService;
 
 /**
@@ -42,7 +42,7 @@ class ConsultaAsyncController extends BaseController
                 $merged = array_merge(Yii::$app->request->get(), $post);
 
                 try {
-                    return (new ConsultaAsyncSolicitudService())->solicitarComoPaciente($idPersona, $merged);
+                    return (new SubmitConsultaAsyncSolicitud())->solicitarComoPaciente($idPersona, $merged);
                 } catch (\InvalidArgumentException $e) {
                     throw new BadRequestHttpException($e->getMessage());
                 }

@@ -3,7 +3,7 @@
 namespace common\components\Domain\Person\Representation\Application\Service;
 
 use common\components\Domain\Person\Representation\Domain\Model\RepresentationPermission;
-use common\components\Domain\Person\Ventanilla\Application\Service\VentanillaSesionService;
+use common\components\Domain\Person\FrontDesk\Application\Service\FrontDeskSessionService;
 use common\models\Person\PersonRelatedAuditLog;
 use common\models\Scheduling\Turno;
 use Yii;
@@ -38,9 +38,9 @@ final class PersonRepresentationSubjectService
             return $fromRequest;
         }
 
-        $fromVentanilla = (new VentanillaSesionService())->sujetoActivo();
-        if ($fromVentanilla !== null && $fromVentanilla > 0) {
-            return $fromVentanilla;
+        $fromFrontDesk = (new FrontDeskSessionService())->sujetoActivo();
+        if ($fromFrontDesk !== null && $fromFrontDesk > 0) {
+            return $fromFrontDesk;
         }
 
         $fromSession = (int) (Yii::$app->session->get(self::SESSION_KEY) ?? 0);
@@ -60,7 +60,7 @@ final class PersonRepresentationSubjectService
         if ($subjectPersonaId <= 0) {
             throw new ForbiddenHttpException('Sujeto de atención inválido.');
         }
-        $ventanilla = new VentanillaSesionService();
+        $ventanilla = new FrontDeskSessionService();
         $ventanillaSujeto = $ventanilla->sujetoActivo();
         if ($subjectPersonaId === $actor) {
             if ($ventanillaSujeto !== null && $ventanillaSujeto !== $actor) {

@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Organization\Pes\Application\Service;
 
-use common\components\Domain\Person\Identidad\Application\Service\PersonCuilService;
+use common\components\Domain\Person\Identity\Application\Service\PersonCuilService;
 use common\models\Person\Persona;
 
 /**

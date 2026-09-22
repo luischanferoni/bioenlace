@@ -3,7 +3,7 @@
 namespace common\tests\unit\integrations;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Person\Identidad\Infrastructure\External\Mpi\MpiSeipaDni;
+use common\components\Domain\Person\Identity\Infrastructure\External\Mpi\MpiSeipaDni;
 
 class MpiSeipaDniTest extends Unit
 {

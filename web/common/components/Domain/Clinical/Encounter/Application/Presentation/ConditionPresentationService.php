@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Encounter\Application\Presentation;
 
-use common\components\Domain\Person\Identidad\Application\Service\PacienteContextoService;
+use common\components\Domain\Person\Identity\Application\Service\PacienteContextoService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ControlSeguimientoHubService;
 use common\models\Clinical\Condition;
 use common\models\Terminology\Application\SnomedHallazgos;

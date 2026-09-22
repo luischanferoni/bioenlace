@@ -3,7 +3,7 @@
 namespace common\tests\unit\scheduling;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Dto\FhirAppointmentInboundDto;
+use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Mapper\FhirAppointmentInbound;
 use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Mapper\FhirAppointmentInboundMapper;
 
 class TurnoFhirInboundMapperMetaTest extends Unit
@@ -23,7 +23,7 @@ class TurnoFhirInboundMapperMetaTest extends Unit
             'participant' => [],
         ], 'sis');
 
-        $this->assertInstanceOf(FhirAppointmentInboundDto::class, $dto);
+        $this->assertInstanceOf(FhirAppointmentInbound::class, $dto);
         $this->assertSame('ext-1', $dto->externalId);
         $this->assertSame('7', $dto->versionId);
         $this->assertSame('2026-07-18T12:00:00Z', $dto->lastUpdated);

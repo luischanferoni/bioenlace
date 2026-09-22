@@ -43,7 +43,7 @@ return [
     ],
     /**
      * Didit — KYC (registro paciente/médico) y login biométrico.
-     * API key en params-local.php. Cliente: {@see \common\components\Domain\Person\Ventanilla\Infrastructure\External\Identity\Connector\DiditClient}.
+     * API key en params-local.php. Cliente: {@see \common\components\Domain\Person\FrontDesk\Infrastructure\External\Identity\Connector\DiditClient}.
      */
     'didit_base_url' => 'https://api.didit.me',
     'didit_verification_base_url' => 'https://verification.didit.me',
@@ -76,7 +76,7 @@ return [
     'turnosPaciente' => [
         /** Máximo de slots devueltos en una respuesta agrupada */
         'slots_oferta_max' => 400,
-        /** Días hacia adelante que puede explorar TurnoSlotFinder */
+        /** Días hacia adelante que puede explorar TurnoSlotQueryService */
         'slots_busqueda_max_dias' => 10,
         /** Hora límite inclusive: &lt; este HH:MM → franja `manana`, ≥ → `tarde` */
         'franja_tarde_desde' => '13:00',
@@ -305,7 +305,7 @@ return [
 
     /**
      * Capacidades MPI/SEIPA habilitadas. renaper (identidad), coberturas y domicilio por defecto.
-     * {@see \common\components\Domain\Person\Identidad\Infrastructure\External\Mpi\MpiCapability}
+     * {@see \common\components\Domain\Person\Identity\Infrastructure\External\Mpi\MpiCapability}
      */
     'mpiCapabilities' => ['renaper', 'coberturas', 'domicilio'],
 

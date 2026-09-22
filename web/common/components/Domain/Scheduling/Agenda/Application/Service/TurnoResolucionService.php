@@ -5,7 +5,7 @@ namespace common\components\Domain\Scheduling\Agenda\Application\Service;
 use common\components\Domain\Scheduling\Agenda\Application\Agents\TurnoResolucionAutoReservaAgent;
 use common\components\Domain\Scheduling\Agenda\Application\Agents\TurnoResolucionShortlistAgent;
 
-use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Service\TurnoFhirOutboundNotifier;
+use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Sync\TurnoFhirOutboundNotifier;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\components\Platform\Core\Service\Push\PushNotificationTypes;
 use common\components\Domain\Organization\Pes\Domain\Model\AgendaIntervaloMinutos;
@@ -102,11 +102,11 @@ final class TurnoResolucionService
         string $canal,
         ?int $idUser
     ): array {
-        if ($razonCodigo === '' || !TurnoCancelacionRazones::esCodigoMedicoAppValido($razonCodigo)) {
+        if ($razonCodigo === '' || !TurnoCancellationReasonsCatalog::esCodigoMedicoAppValido($razonCodigo)) {
             throw new BadRequestHttpException('razon_cancelacion médica inválida.');
         }
 
-        if (TurnoCancelacionRazones::staffCancelacionDirecta($razonCodigo)) {
+        if (TurnoCancellationReasonsCatalog::staffCancelacionDirecta($razonCodigo)) {
             $life = new TurnoLifecycleService();
             $life->cancelar(
                 $turno,
@@ -115,7 +115,7 @@ final class TurnoResolucionService
                 $idUser,
                 [
                     'razon_cancelacion' => $razonCodigo,
-                    'razon_cancelacion_label' => TurnoCancelacionRazones::etiquetaMedicoApp($razonCodigo),
+                    'razon_cancelacion_label' => TurnoCancellationReasonsCatalog::etiquetaMedicoApp($razonCodigo),
                 ],
                 false
             );
@@ -474,7 +474,7 @@ final class TurnoResolucionService
         $turno->fecha = $fecha;
         $turno->hora = $hora;
         try {
-            TurnoReservaSlotService::aplicarCamposReserva($turno, (int) $turno->id_turnos);
+            ReserveTurnoSlot::aplicarCamposReserva($turno, (int) $turno->id_turnos);
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         }
@@ -665,7 +665,7 @@ final class TurnoResolucionService
     {
         TurnoNotificacionProgramada::cancelarPendientesPorTurno($turno->id_turnos);
         try {
-            $conf = new TurnoConfirmationService();
+            $conf = new ConfirmTurno();
             $conf->ensureConfirmacionToken($turno);
             $conf->programarNotificaciones($turno);
         } catch (\Throwable $e) {

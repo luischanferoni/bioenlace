@@ -20,21 +20,21 @@ use common\models\Clinical\ConsultaDerivaciones;
 use common\models\Person\Persona;
 use common\components\Platform\Ui\UiDefinitionTemplateManager;
 use common\components\Platform\Ui\UiScreenService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoSlotFinder;
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoSlotQueryService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoSlotOfferService;
 use common\components\Domain\Scheduling\Agenda\Application\Presentation\TurnoSlotOfferUiPresenter;
 use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoPersistService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoCreacionContext;
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoCreationContextResolver;
 use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoLifecycleService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoConfirmationService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\ConfirmTurno;
 use common\components\Domain\Scheduling\Agenda\Application\Service\PolicyModeradaException;
 use common\components\Domain\Scheduling\Agenda\Application\Service\AutogestionAnticipacionException;
 use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoAutogestionAnticipacionService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoCancellationPolicyService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoCancelacionRazones;
-use common\components\Domain\Scheduling\Agenda\Application\Service\BulkCancelDayService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\SobreturnoService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoReservaSlotService;
+use common\components\Domain\Scheduling\Agenda\Domain\Catalog\TurnoCancellationReasonsCatalog;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\BulkCancelDayTurnos;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\CreateSobreturno;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\ReserveTurnoSlot;
 use common\components\Domain\Organization\Pes\Application\Service\ProfesionalEfectorServicioAgendaVersionService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoAgendaMetricsService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaModalidadAtencionCatalogService;
@@ -47,9 +47,9 @@ use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaTriage
 use common\components\Domain\Scheduling\Agenda\Application\Service\TeleconsultaElegibilidadService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoPacienteListadoService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoResolucionService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoResolucionElecciones;
+use common\components\Domain\Scheduling\Agenda\Domain\Catalog\TurnoResolutionChoicesCatalog;
 use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoCalendarioOcupacionDiaService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoAdvanceOfferAcceptService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\AcceptTurnoAdvanceOffer;
 use common\components\Domain\Scheduling\Agenda\Application\Agents\TurnoResolucionShortlistAgent;
 use common\components\Domain\Scheduling\Agenda\Application\Service\PersonaAgendaPreferenciasService;
 use common\components\Domain\Organization\Pes\Application\Service\ProfesionalContextResolver;
@@ -60,7 +60,7 @@ use yii\web\MethodNotAllowedHttpException;
 use yii\db\Expression;
 use common\components\Domain\Person\Representation\Domain\Model\RepresentationPermission;
 use common\components\Platform\Core\Permission\Domain\ApiDomainOperationBridge;
-use common\components\Domain\Person\Identidad\Application\Service\PacienteContextoOfferingService;
+use common\components\Domain\Person\Identity\Application\Service\PacienteContextoOfferingService;
 use common\components\Domain\Person\Representation\Application\Service\PersonRepresentationSubjectService;
 use common\models\Person\PersonRelatedAuditLog;
 
@@ -552,7 +552,7 @@ class TurnosController extends BaseController
                 throw new NotFoundHttpException('Turno no encontrado');
             }
             $this->assertTurnoDomain('Turno.view_conflicts', $turno);
-            $res = TurnoResolucionElecciones::requireResolucionPendienteParaTurno(
+            $res = TurnoResolutionChoicesCatalog::requireResolucionPendienteParaTurno(
                 (int) $tid,
                 (int) $turno->id_persona
             );
@@ -563,7 +563,7 @@ class TurnosController extends BaseController
                 null
             );
 
-            return TurnoResolucionElecciones::aplicarOpcionesEleccionEnDefinicionUiJson($def, $res);
+            return TurnoResolutionChoicesCatalog::aplicarOpcionesEleccionEnDefinicionUiJson($def, $res);
         }
 
         return UiScreenService::handleScreen(
@@ -577,7 +577,7 @@ class TurnosController extends BaseController
                     throw new BadRequestHttpException('id del turno requerido');
                 }
                 $eleccion = trim((string) ($post['eleccion'] ?? ''));
-                if ($eleccion === '' || !TurnoResolucionElecciones::esEleccionValida($eleccion)) {
+                if ($eleccion === '' || !TurnoResolutionChoicesCatalog::esEleccionValida($eleccion)) {
                     throw new BadRequestHttpException('eleccion requerida (antes, despues o cancelar).');
                 }
                 $turno = Turno::findActive()->andWhere(['id_turnos' => $tid])->one();
@@ -585,7 +585,7 @@ class TurnosController extends BaseController
                     throw new NotFoundHttpException('Turno no encontrado');
                 }
                 $this->assertTurnoDomain('Turno.view_conflicts', $turno);
-                TurnoResolucionElecciones::requireResolucionPendienteParaTurno(
+                TurnoResolutionChoicesCatalog::requireResolucionPendienteParaTurno(
                     (int) $tid,
                     (int) $turno->id_persona
                 );
@@ -643,7 +643,7 @@ class TurnosController extends BaseController
             $params = array_merge($req->get(), $req->post());
             $def = UiScreenService::renderUiDefinition('turnos', 'elegir-motivo-cancelacion-como-paciente', $params, null);
 
-            return TurnoCancelacionRazones::aplicarOpcionesRazonEnDefinicionUiJson($def);
+            return TurnoCancellationReasonsCatalog::aplicarOpcionesRazonEnDefinicionUiJson($def);
         }
 
         return UiScreenService::handleScreen(
@@ -662,7 +662,7 @@ class TurnosController extends BaseController
                 }
                 $this->assertTurnoDomain('Turno.cancel', $turno);
                 $razon = isset($post['razon_cancelacion']) ? trim((string) $post['razon_cancelacion']) : '';
-                if ($razon === '' || !TurnoCancelacionRazones::esCodigoPacienteAppValido($razon)) {
+                if ($razon === '' || !TurnoCancellationReasonsCatalog::esCodigoPacienteAppValido($razon)) {
                     throw new BadRequestHttpException('Indicá un motivo de cancelación válido (razon_cancelacion).');
                 }
 
@@ -840,7 +840,7 @@ class TurnosController extends BaseController
     protected function ejecutarCreacionTurno(Turno $model): array
     {
         try {
-            return (new TurnoPersistService())->crear($model, TurnoCreacionContext::fromCurrentUser());
+            return (new TurnoPersistService())->crear($model, TurnoCreationContextResolver::fromCurrentUser());
         } catch (PolicyModeradaException $e) {
             throw new ConflictHttpException($e->getMessage());
         } catch (\InvalidArgumentException $e) {
@@ -951,7 +951,7 @@ class TurnosController extends BaseController
             }
         );
         if (isset($out['kind']) && $out['kind'] === 'ui_definition' && ($out['success'] ?? true) === false) {
-            return TurnoCancelacionRazones::aplicarOpcionesRazonEnDefinicionUiJson($out);
+            return TurnoCancellationReasonsCatalog::aplicarOpcionesRazonEnDefinicionUiJson($out);
         }
 
         return $out;
@@ -973,7 +973,7 @@ class TurnosController extends BaseController
                 null
             );
 
-            return TurnoCancelacionRazones::aplicarOpcionesRazonMedicoEnDefinicionUiJson($def);
+            return TurnoCancellationReasonsCatalog::aplicarOpcionesRazonMedicoEnDefinicionUiJson($def);
         }
 
         return UiScreenService::handleScreen(
@@ -1062,7 +1062,7 @@ class TurnosController extends BaseController
                 $actorType = $actorPersonaId > 0 && $actorPersonaId !== (int) $turno->id_persona
                     ? \common\models\Scheduling\TurnoEventoAudit::ACTOR_REPRESENTANTE
                     : \common\models\Scheduling\TurnoEventoAudit::ACTOR_PACIENTE;
-                (new TurnoConfirmationService())->confirmarAsistencia(
+                (new ConfirmTurno())->confirmarAsistencia(
                     $turno,
                     Yii::$app->user->id ?? null,
                     $actorType
@@ -1321,7 +1321,7 @@ class TurnosController extends BaseController
                     $idPes = null;
                 }
                 try {
-                    $n = (new BulkCancelDayService())->cancelarDia($idEfector, $fecha, null, Yii::$app->user->id, $idPes);
+                    $n = (new BulkCancelDayTurnos())->cancelarDia($idEfector, $fecha, null, Yii::$app->user->id, $idPes);
                 } catch (\InvalidArgumentException $e) {
                     throw new BadRequestHttpException($e->getMessage());
                 }
@@ -1361,7 +1361,7 @@ class TurnosController extends BaseController
      * - id_profesional_efector_servicio (opcional)
      * - limite, franja_tarde_desde (opcionales; defaults `turnosPaciente`)
      * - fecha (opcional, `Y-m-d`): solo horarios de ese día (paso 2 del flujo asistente)
-     * - restricciones (JSON array; mismo formato que {@see TurnoSlotFinder::findAvailableSlots})
+     * - restricciones (JSON array; mismo formato que {@see TurnoSlotQueryService::findAvailableSlots})
      *
      * Sin `fecha`: búsqueda desde hoy y `max_dias` de configuración. Con `fecha`: un solo día.
      *
@@ -1924,7 +1924,7 @@ class TurnosController extends BaseController
             $maxDias = max(1, (int) $criteria['max_dias']);
             $limit = min($maxCliente, max($limit, $maxDias * 24));
         }
-        $slots = TurnoSlotFinder::findAvailableSlots($criteria, $limit);
+        $slots = TurnoSlotQueryService::findAvailableSlots($criteria, $limit);
         return ['success' => true, 'slots' => $slots];
     }
 
@@ -1942,9 +1942,9 @@ class TurnosController extends BaseController
         $subjectSvc = new PersonRepresentationSubjectService();
         $razon = isset($post['razon_cancelacion']) ? trim((string) $post['razon_cancelacion']) : '';
         if ($razon === '' && (($post['estado_motivo'] ?? '') === Turno::ESTADO_MOTIVO_CANCELADO_PACIENTE)) {
-            $razon = TurnoCancelacionRazones::COD_PAC_OTRO;
+            $razon = TurnoCancellationReasonsCatalog::COD_PAC_OTRO;
         }
-        if ($razon === '' || !TurnoCancelacionRazones::esCodigoPacienteAppValido($razon)) {
+        if ($razon === '' || !TurnoCancellationReasonsCatalog::esCodigoPacienteAppValido($razon)) {
             throw new BadRequestHttpException('Indicá un motivo de cancelación válido (razon_cancelacion).');
         }
         $canal = $post['canal'] ?? 'app';
@@ -1960,7 +1960,7 @@ class TurnosController extends BaseController
                 Yii::$app->user->id ?? null,
                 [
                     'razon_cancelacion' => $razon,
-                    'razon_cancelacion_label' => TurnoCancelacionRazones::etiquetaPacienteApp($razon),
+                    'razon_cancelacion_label' => TurnoCancellationReasonsCatalog::etiquetaPacienteApp($razon),
                 ],
                 false
             );
@@ -2043,7 +2043,7 @@ class TurnosController extends BaseController
         $turno->fecha = $fecha;
         $turno->hora = $hora;
         try {
-            TurnoReservaSlotService::aplicarCamposReserva($turno, (int) $turno->id_turnos);
+            ReserveTurnoSlot::aplicarCamposReserva($turno, (int) $turno->id_turnos);
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         }
@@ -2060,7 +2060,7 @@ class TurnosController extends BaseController
         }
         \common\models\Scheduling\TurnoNotificacionProgramada::cancelarPendientesPorTurno($turno->id_turnos);
         try {
-            $conf = new TurnoConfirmationService();
+            $conf = new ConfirmTurno();
             $conf->ensureConfirmacionToken($turno);
             $conf->programarNotificaciones($turno);
         } catch (\Throwable $e) {
@@ -2173,7 +2173,7 @@ class TurnosController extends BaseController
         }
         (new EncounterLifecycleService())->ensureFromTurno($model);
         try {
-            (new SobreturnoService())->notificarRetrasoPorSobreturno($model);
+            (new CreateSobreturno())->notificarRetrasoPorSobreturno($model);
             (new TurnoLifecycleService())->afterTurnoCreado($model);
         } catch (\Throwable $e) {
             Yii::warning('sobreturno post: ' . $e->getMessage(), 'api-turnos');
@@ -2328,7 +2328,7 @@ class TurnosController extends BaseController
             : \common\models\Scheduling\TurnoEventoAudit::ACTOR_PACIENTE;
 
         try {
-            $data = (new TurnoAdvanceOfferAcceptService())->accept($token, $idPersona, $actorType);
+            $data = (new AcceptTurnoAdvanceOffer())->accept($token, $idPersona, $actorType);
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         }

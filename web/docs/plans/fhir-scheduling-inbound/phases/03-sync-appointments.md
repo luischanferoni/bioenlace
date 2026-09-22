@@ -63,7 +63,7 @@ Se invoca `TurnoFhirOutboundNotifier::afterEstadoChanged()` desde:
 
 - `TurnoLifecycleService::cancelar`
 - `TurnoResolucionService` (`EN_RESOLUCION`, vuelta a `PENDIENTE` tras reubicación)
-- `BulkCancelDayService`
+- `BulkCancelDayTurnos`
 - `Turno::NoSePresento`, `Turno::cambiarCampoAtendido`
 
 Errores de red hacia NIS se registran en log (`fhir-scheduling-outbound`); no revierten el cambio local.

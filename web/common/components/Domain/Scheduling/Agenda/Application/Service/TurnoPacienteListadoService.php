@@ -241,7 +241,7 @@ final class TurnoPacienteListadoService
         $legacy = $journeySvc->legacyFlagsForTurno($turno, $encounter);
         $journey = $journeySvc->buildForTurno($turno, $encounter);
         $confirmado = !empty($turno->confirmado_en) || (string) ($turno->confirmado ?? '') === 'SI';
-        $puedeConfirmar = (new TurnoConfirmationService())->puedeConfirmarAsistencia($turno);
+        $puedeConfirmar = (new ConfirmTurno())->puedeConfirmarAsistencia($turno);
         $tipoAtencion = isset($turno->tipo_atencion) && trim((string) $turno->tipo_atencion) !== ''
             ? trim((string) $turno->tipo_atencion)
             : Turno::TIPO_ATENCION_PRESENCIAL;

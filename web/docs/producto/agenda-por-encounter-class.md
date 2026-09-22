@@ -18,7 +18,7 @@ Metadata: [`agenda-by-encounter-class.yaml`](../../common/metadata/bioenlace/org
 ## AMB (sin cambio de idea)
 
 - Configuración propia: intent `profesional-horarios.gestionar-propio` (servicio → AMB|EMER|IMP → agenda o horario). API agenda AMB `/api/v1/profesional-agenda/*`.
-- Reserva paciente: `TurnoSlotFinder` + `turnos.*-como-paciente` solo sobre agendas `encounter_class = AMB`.
+- Reserva paciente: `TurnoSlotQueryService` + `turnos.*-como-paciente` solo sobre agendas `encounter_class = AMB`.
 - Encounter desde turno: sigue siendo AMB.
 
 ## EMER / IMP — horario de presencia

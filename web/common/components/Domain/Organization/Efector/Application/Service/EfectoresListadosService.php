@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Organization\Efector\Application\Service;
 
-use common\components\Domain\Person\Identidad\Application\Service\PacienteContextoOfferingService;
+use common\components\Domain\Person\Identity\Application\Service\PacienteContextoOfferingService;
 use common\models\Organization\Efector;
 use yii\web\Request;
 

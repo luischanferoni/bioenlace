@@ -2,8 +2,8 @@
 
 namespace common\components\Platform\Core\Service;
 
-use common\components\Domain\Person\Ventanilla\Application\Service\VentanillaSesionConfigService;
-use common\components\Domain\Person\Ventanilla\Application\Service\VentanillaSesionService;
+use common\components\Domain\Person\FrontDesk\Application\Service\FrontDeskSessionConfigService;
+use common\components\Domain\Person\FrontDesk\Application\Service\FrontDeskSessionService;
 use common\components\Platform\Core\Product\ClientContextMetadata;
 use Yii;
 
@@ -116,7 +116,7 @@ final class ClientContextService
     private static function ventanillaUnhideIntentMap(): array
     {
         try {
-            $subject = (new VentanillaSesionService())->sujetoActivo();
+            $subject = (new FrontDeskSessionService())->sujetoActivo();
         } catch (\Throwable $e) {
             return [];
         }
@@ -124,7 +124,7 @@ final class ClientContextService
             return [];
         }
         $map = [];
-        foreach (VentanillaSesionConfigService::unhidePacienteIntentIds() as $id) {
+        foreach (FrontDeskSessionConfigService::unhidePacienteIntentIds() as $id) {
             $map[$id] = true;
         }
 

@@ -16,7 +16,7 @@ final class ReservaTriageServicioRolResolver
     /**
      * @param array<string, mixed> $draft
      */
-    public function resolveDesdeDraft(array $draft): ReservaTriageServicioResolucion
+    public function resolveDesdeDraft(array $draft): ReservaTriageServicioResolver
     {
         $codigos = $this->codigosTriageEnDraft($draft);
         $codigoResolutor = $this->codigoResolutorDesdeDraft($draft, $codigos);
@@ -63,7 +63,7 @@ final class ReservaTriageServicioRolResolver
 
         $rolIdeal = $idsSugeridos !== [] ? (string) $idsSugeridos[0] : (string) ($idsReservables[0] ?? '');
 
-        return new ReservaTriageServicioResolucion(
+        return new ReservaTriageServicioResolver(
             $rolIdeal,
             $labelSugerido !== '' ? $labelSugerido : $labelReservable,
             $codigoResolutor,

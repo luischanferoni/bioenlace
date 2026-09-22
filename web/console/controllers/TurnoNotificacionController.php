@@ -46,7 +46,7 @@ class TurnoNotificacionController extends Controller
                         $push->sendToPersona((int) $turno->id_persona, $content['data'], $content['title'], $content['body']);
                     }
                 } elseif ($row->tipo === TurnoNotificacionProgramada::TIPO_CONFIRM_REQUEST) {
-                    $confirmation = new \common\components\Domain\Scheduling\Agenda\Application\Service\TurnoConfirmationService();
+                    $confirmation = new \common\components\Domain\Scheduling\Agenda\Application\UseCase\ConfirmTurno();
                     $token = $confirmation->ensureConfirmacionToken($turno);
                     $push->sendToPersona(
                         (int) $turno->id_persona,

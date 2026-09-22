@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Assistant;
 
-use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoReservaSlotService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\ReserveTurnoSlot;
 use common\components\Platform\Ui\UiScreenParamsExpanderInterface;
 use common\models\Organization\ProfesionalEfectorServicio;
 
@@ -24,7 +24,7 @@ final class SchedulingUiScreenParamsExpander implements UiScreenParamsExpanderIn
     {
         $slotId = $params['slot_id'] ?? null;
         if (is_string($slotId) && trim($slotId) !== '') {
-            $parsed = TurnoReservaSlotService::parseSlotId($slotId);
+            $parsed = ReserveTurnoSlot::parseSlotId($slotId);
             if ($parsed !== null) {
                 $pesId = (int) $parsed['id_profesional_efector_servicio'];
                 if ($pesId > 0) {

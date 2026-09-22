@@ -139,7 +139,7 @@ final class TurnoResolucionShortlistService
         }
 
         try {
-            $slots = TurnoSlotFinder::findAvailableSlots($criteria, $poolMax);
+            $slots = TurnoSlotQueryService::findAvailableSlots($criteria, $poolMax);
         } catch (\Throwable $e) {
             Yii::warning('Shortlist slot search: ' . $e->getMessage(), 'turno-resolucion-shortlist');
 

@@ -2,7 +2,7 @@
 
 namespace console\controllers;
 
-use common\components\Domain\Person\Identidad\Application\Seed\UsuarioDePruebaSeedService;
+use common\components\Domain\Person\Identity\Application\Seed\UsuarioDePruebaSeedService;
 use common\components\Domain\Clinical\Laboratory\Application\Service\LaboratoryDemoSeedService;
 use common\components\Domain\Clinical\Laboratory\Application\Service\LaboratoryResultQueryService;
 use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanReminderDemoTimingService;
@@ -220,7 +220,7 @@ class ClinicalSeedController extends Controller
      */
     public function actionPlayReviewPaciente(): int
     {
-        $service = new \common\components\Domain\Person\Identidad\Application\Seed\PlayReviewPacienteSeedService();
+        $service = new \common\components\Domain\Person\Identity\Application\Seed\PlayReviewPacienteSeedService();
         $plain = trim((string) $this->playPassword) !== '' ? (string) $this->playPassword : null;
 
         try {

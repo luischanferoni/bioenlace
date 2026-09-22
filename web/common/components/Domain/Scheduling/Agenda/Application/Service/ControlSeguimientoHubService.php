@@ -6,7 +6,7 @@ use common\components\Domain\Clinical\CarePlan\Application\Presentation\CarePlan
 use common\components\Domain\Clinical\CarePlan\Application\Service\CareProtocolMatcherService;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\ConditionPresentationService;
 use common\components\Domain\Clinical\CarePlan\Application\Service\PatientActiveCarePlanQueryService;
-use common\components\Domain\Person\Identidad\Application\Service\PacienteContextoService;
+use common\components\Domain\Person\Identity\Application\Service\PacienteContextoService;
 use common\components\Domain\Scheduling\Agenda\Domain\Catalog\ControlSeguimientoHubCatalog;
 use common\models\Person\Persona;
 

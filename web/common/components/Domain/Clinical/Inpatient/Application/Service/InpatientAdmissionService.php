@@ -17,7 +17,7 @@ use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Clinical\InpatientStay;
 use common\models\Clinical\InpatientBedStay;
 use common\models\Clinical\InpatientStayRepository;
-use common\components\Domain\Person\Identidad\Infrastructure\External\Mpi\MpiApiClient;
+use common\components\Domain\Person\Identity\Infrastructure\External\Mpi\MpiApiClient;
 use Yii;
 use yii\helpers\ArrayHelper;
 

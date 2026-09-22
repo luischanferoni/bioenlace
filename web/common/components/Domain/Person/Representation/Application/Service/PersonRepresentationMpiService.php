@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Person\Representation\Application\Service;
 
-use common\components\Domain\Person\Identidad\Infrastructure\External\Mpi\RenaperGatewayService;
+use common\components\Domain\Person\Identity\Infrastructure\External\Mpi\RenaperGatewayService;
 use common\models\Person\Persona;
 
 /**

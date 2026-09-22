@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Scheduling\BehaviorProfile\Application\Service;
 
-use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoConfirmationService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\ConfirmTurno;
 use common\components\Platform\Core\Service\Notificaciones\PushNotificationReceiptProjectorInterface;
 use common\models\Platform\PersonaNotificacion;
 use common\models\Platform\PersonaNotificacionInteraccion;
@@ -50,7 +50,7 @@ final class TurnoConfirmationPushReceiptProjector implements PushNotificationRec
         }
 
         if ($type === PersonaNotificacionInteraccion::TYPE_DELIVERED) {
-            (new TurnoConfirmationService())->recordConfirmationDeliveryConfirmed(
+            (new ConfirmTurno())->recordConfirmationDeliveryConfirmed(
                 $turno,
                 $ref,
                 [
@@ -69,7 +69,7 @@ final class TurnoConfirmationPushReceiptProjector implements PushNotificationRec
             $actor = $actorHint !== null && in_array($actorHint, TurnoEventoAudit::actorTypeValues(), true)
                 ? $actorHint
                 : TurnoEventoAudit::ACTOR_PACIENTE;
-            (new TurnoConfirmationService())->recordConfirmationOpened(
+            (new ConfirmTurno())->recordConfirmationOpened(
                 $turno,
                 $ref,
                 $actor,

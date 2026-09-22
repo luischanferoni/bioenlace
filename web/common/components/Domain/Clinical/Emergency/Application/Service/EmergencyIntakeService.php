@@ -4,9 +4,9 @@ namespace common\components\Domain\Clinical\Emergency\Application\Service;
 
 use common\components\Domain\Clinical\Emergency\Domain\BoardState;
 use common\components\Domain\Clinical\Emergency\Domain\BoardEventType;
-use common\components\Domain\Person\Identidad\Application\Service\PersonaBusquedaAsistenteUiService;
-use common\components\Domain\Person\Identidad\Application\Service\PersonaIdentidadPendienteService;
-use common\components\Domain\Person\Identidad\Application\Service\PersonaIdentidadResolverService;
+use common\components\Domain\Person\Identity\Application\Service\PersonaBusquedaAsistenteUiService;
+use common\components\Domain\Person\Identity\Application\Service\PersonaIdentidadPendienteService;
+use common\components\Domain\Person\Identity\Application\Service\PersonaIdentidadResolverService;
 use common\components\Platform\Ui\Home\Service\HomePanelManifest;
 use common\models\Clinical\Emergency\EmergencyEpisode;
 use common\models\Organization\InfraestructuraCama;

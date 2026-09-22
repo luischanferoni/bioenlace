@@ -314,7 +314,7 @@ final class TurnoAntinoshowAgent
      */
     private function sendExtraConfirm(Turno $turno, array $config, array $facts, string $ruleId): void
     {
-        $token = (new TurnoConfirmationService())->ensureConfirmacionToken($turno);
+        $token = (new ConfirmTurno())->ensureConfirmacionToken($turno);
         $msgs = is_array($config['patient_messages'] ?? null) ? $config['patient_messages'] : [];
         $tpl = is_array($msgs['extra_confirm'] ?? null) ? $msgs['extra_confirm'] : [];
         $title = $this->interpolate((string) ($tpl['title'] ?? 'Confirmá tu turno'), $turno);

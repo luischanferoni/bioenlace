@@ -1,6 +1,6 @@
 <?php
 
-use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoCancelacionRazones;
+use common\components\Domain\Scheduling\Agenda\Domain\Catalog\TurnoCancellationReasonsCatalog;
 use frontend\assets\TurnosCalendarioAsset;
 use frontend\components\Scheduling\TurnosCalendarioPageBuilder;
 use yii\bootstrap5\Modal;
@@ -72,7 +72,7 @@ Modal::begin([
                     <?= Html::dropDownList(
                         'motivos_cancelacion',
                         [],
-                        TurnoCancelacionRazones::medicoAppOpcionesDropdown(),
+                        TurnoCancellationReasonsCatalog::medicoAppOpcionesDropdown(),
                         [
                             'prompt' => 'Motivo de Cancelación',
                             'class' => 'form-control',

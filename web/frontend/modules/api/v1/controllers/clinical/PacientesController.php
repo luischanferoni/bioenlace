@@ -23,7 +23,7 @@ use common\components\Domain\Clinical\Encounter\Application\Presentation\Conditi
 use common\components\Domain\Clinical\Encounter\Application\Service\EpisodioHistoriaBannerService;
 use common\components\Domain\Clinical\Encounter\Application\Service\EpisodioSignosVitalesService;
 use common\components\Domain\Clinical\Encounter\Application\Service\EpisodioTimelineService;
-use common\components\Domain\Person\Identidad\Application\Service\PersonaSignosVitalesService;
+use common\components\Domain\Person\Identity\Application\Service\PersonaSignosVitalesService;
 use frontend\modules\api\v1\controllers\clinical\ClinicalAccessTrait;
 /**
  * Historia clínica staff (listado del día: GET /api/v1/home/panel).

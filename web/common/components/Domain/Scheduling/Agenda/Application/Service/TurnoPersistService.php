@@ -37,7 +37,7 @@ class TurnoPersistService
      * @throws PolicyModeradaException reserva autogestion bloqueada
      * @throws \InvalidArgumentException validación de negocio o errores del AR
      */
-    public function crear(Turno $model, TurnoCreacionContext $ctx): array
+    public function crear(Turno $model, TurnoCreationContextResolver $ctx): array
     {
         if (empty($model->tipo_atencion)) {
             $model->tipo_atencion = Turno::TIPO_ATENCION_PRESENCIAL;
@@ -51,7 +51,7 @@ class TurnoPersistService
         }
 
         try {
-            TurnoReservaSlotService::aplicarCamposReserva($model);
+            ReserveTurnoSlot::aplicarCamposReserva($model);
         } catch (\InvalidArgumentException $e) {
             if (str_contains($e->getMessage(), 'ya no está disponible')) {
                 $existing = $this->findReservaIdempotente($model);
@@ -129,7 +129,7 @@ class TurnoPersistService
             $fecha = (string) ($model->fecha ?? '');
             $hora = substr(\common\models\Scheduling\TurnoResolucion::normalizarHora((string) ($model->hora ?? '')), 0, 5);
             if ($idPes > 0 && $fecha !== '' && $hora !== ''
-                && !TurnoSlotClaimService::tryClaim($idPes, $fecha, $hora, (int) $model->id_turnos)
+                && !ClaimTurnoSlot::tryClaim($idPes, $fecha, $hora, (int) $model->id_turnos)
             ) {
                 throw new \InvalidArgumentException('El horario ya no está disponible.');
             }
@@ -310,7 +310,7 @@ class TurnoPersistService
             return;
         }
 
-        if (!ReservaTriageAccesoConfig::especialistaSoloTeleconsultaConDerivacion()) {
+        if (!ReservaTriageAccessCatalog::especialistaSoloTeleconsultaConDerivacion()) {
             return;
         }
 

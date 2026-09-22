@@ -4,7 +4,7 @@ namespace common\components\Domain\Organization\Efector\Application\Seed;
 
 use common\components\Domain\Organization\Pes\Application\Service\ProfesionalHorarioService;
 use common\components\Domain\Organization\Pes\Application\Service\ProfesionalEfectorServicioAltaService;
-use common\components\Domain\Person\Identidad\Domain\Policy\CuilPolicy;
+use common\components\Domain\Person\Identity\Domain\Policy\CuilPolicy;
 use common\models\Organization\Efector;
 use common\models\Person\Persona;
 use common\models\Organization\ProfesionalEfectorServicioAgenda;

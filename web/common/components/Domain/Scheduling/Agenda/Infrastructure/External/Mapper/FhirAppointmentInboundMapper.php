@@ -2,13 +2,13 @@
 
 namespace common\components\Domain\Scheduling\Agenda\Infrastructure\External\Mapper;
 
-use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Dto\FhirAppointmentInboundDto;
+use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Mapper\FhirAppointmentInbound;
 use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Mapper\FhirBundleMapper;
-use common\components\Domain\Person\Identidad\Application\Service\PersonCuilService;
+use common\components\Domain\Person\Identity\Application\Service\PersonCuilService;
 
 final class FhirAppointmentInboundMapper
 {
-    public function map(array $appointment, string $sourceSystem, ?string $scheduleId = null): FhirAppointmentInboundDto
+    public function map(array $appointment, string $sourceSystem, ?string $scheduleId = null): FhirAppointmentInbound
     {
         $externalId = FhirBundleMapper::resourceId($appointment);
         $status = strtolower(trim((string) ($appointment['status'] ?? 'unknown')));
@@ -66,7 +66,7 @@ final class FhirAppointmentInboundMapper
         $versionId = trim((string) ($meta['versionId'] ?? ''));
         $lastUpdated = trim((string) ($meta['lastUpdated'] ?? ''));
 
-        return new FhirAppointmentInboundDto(
+        return new FhirAppointmentInbound(
             $externalId,
             $sourceSystem,
             $status,

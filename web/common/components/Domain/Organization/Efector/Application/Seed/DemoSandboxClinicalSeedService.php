@@ -7,9 +7,9 @@ use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyTri
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanLifecycleService;
 use common\components\Domain\Clinical\Encounter\Application\Service\EncounterLifecycleService;
-use common\components\Domain\Person\Identidad\Domain\Policy\CuilPolicy;
+use common\components\Domain\Person\Identity\Domain\Policy\CuilPolicy;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncInitialChatService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoSlotClaimService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\ClaimTurnoSlot;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\Emergency\EmergencyEpisode;
 use common\models\Organization\InfraestructuraCama;
@@ -585,7 +585,7 @@ final class DemoSandboxClinicalSeedService
         if ($idTurno <= 0) {
             throw new \RuntimeException('Turno demo sin id_turnos tras save.');
         }
-        TurnoSlotClaimService::tryClaim($idPes, $fecha, substr($horaNorm, 0, 5), $idTurno);
+        ClaimTurnoSlot::tryClaim($idPes, $fecha, substr($horaNorm, 0, 5), $idTurno);
 
         return $idTurno;
     }

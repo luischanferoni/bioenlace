@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Organization\Pes\Application\Service;
 
-use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Service\FhirSchedulingConnectorRegistry;
-use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Service\IntegrationScheduleLinkService;
+use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Registry\FhirSchedulingConnectorRegistry;
+use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Sync\IntegrationScheduleLinkService;
 use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Mapper\FhirBundleMapper;
 use Yii;
 
@@ -63,7 +63,7 @@ final class FhirScheduleOnboardingUiService
         $bundle = $connector->readSchedule($scheduleId, ['Schedule:actor']);
         $linkService = new IntegrationScheduleLinkService();
         $preview = $linkService->previewFromScheduleBundle($source, $bundle);
-        $actors = (new \common\components\Domain\Scheduling\Agenda\Infrastructure\External\Service\FhirScheduleActorExtractor())
+        $actors = (new \common\components\Domain\Scheduling\Agenda\Infrastructure\External\Mapper\FhirScheduleActorExtractor())
             ->extractFromBundle($bundle);
 
         $userId = Yii::$app->has('user', true) && !Yii::$app->user->isGuest ? (int) Yii::$app->user->id : 0;

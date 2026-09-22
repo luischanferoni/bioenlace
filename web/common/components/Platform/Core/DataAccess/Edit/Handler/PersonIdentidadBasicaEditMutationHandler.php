@@ -4,7 +4,7 @@ namespace common\components\Platform\Core\DataAccess\Edit\Handler;
 
 use common\components\Platform\Core\DataAccess\Edit\EditMutationHandlerInterface;
 use common\components\Platform\Core\DataAccess\PermissionContext;
-use common\components\Domain\Person\Identidad\Application\Service\PersonaIdentidadBasicaUpdateService;
+use common\components\Domain\Person\Identity\Application\Service\PersonaIdentidadBasicaUpdateService;
 
 final class PersonIdentidadBasicaEditMutationHandler implements EditMutationHandlerInterface
 {

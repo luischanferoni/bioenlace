@@ -2,7 +2,7 @@
 
 namespace console\controllers;
 
-use common\components\Domain\Clinical\LegalExport\Application\Service\LegalExportProcessorService;
+use common\components\Domain\Clinical\LegalExport\Application\UseCase\ProcessLegalExport;
 use common\models\Clinical\LegalExportRequest;
 use yii\console\Controller;
 use yii\console\ExitCode;
@@ -17,7 +17,7 @@ class LegalExportController extends Controller
 {
     public function actionRun(int $limit = 10): int
     {
-        $n = (new LegalExportProcessorService())->processDueQueue($limit);
+        $n = (new ProcessLegalExport())->processDueQueue($limit);
         $this->stdout("Expedientes generados: {$n}\n");
 
         return ExitCode::OK;
@@ -45,12 +45,12 @@ class LegalExportController extends Controller
         }
 
         try {
-            (new LegalExportProcessorService())->processOne($row);
+            (new ProcessLegalExport())->processOne($row);
             $this->stdout("OK solicitud {$requestId}\n");
 
             return ExitCode::OK;
         } catch (\Throwable $e) {
-            (new LegalExportProcessorService())->markFailed($row, $e->getMessage());
+            (new ProcessLegalExport())->markFailed($row, $e->getMessage());
             $this->stderr($e->getMessage() . "\n");
 
             return ExitCode::UNSPECIFIED_ERROR;

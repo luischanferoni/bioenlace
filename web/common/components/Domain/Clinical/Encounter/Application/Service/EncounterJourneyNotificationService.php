@@ -14,18 +14,18 @@ final class EncounterJourneyNotificationService
     private EncounterPhaseWindowsCatalogService $catalog;
     private EncounterPhaseWindowResolver $resolver;
     private EncounterJourneyContextService $contextBuilder;
-    private EncounterJourneyService $journeyService;
+    private OrchestrateEncounterJourney $journeyService;
 
     public function __construct(
         ?EncounterPhaseWindowsCatalogService $catalog = null,
         ?EncounterPhaseWindowResolver $resolver = null,
         ?EncounterJourneyContextService $contextBuilder = null,
-        ?EncounterJourneyService $journeyService = null
+        ?OrchestrateEncounterJourney $journeyService = null
     ) {
         $this->catalog = $catalog ?? new EncounterPhaseWindowsCatalogService();
         $this->resolver = $resolver ?? new EncounterPhaseWindowResolver($this->catalog);
         $this->contextBuilder = $contextBuilder ?? new EncounterJourneyContextService();
-        $this->journeyService = $journeyService ?? new EncounterJourneyService();
+        $this->journeyService = $journeyService ?? new OrchestrateEncounterJourney();
     }
 
     public function scheduleForTurno(Turno $turno, int $turnoTimestamp): void

@@ -120,7 +120,7 @@ final class ElectronicPrescriptionDemoSeedService
     public function listIssuedForPersona(int $idPersona): array
     {
         $rows = [];
-        foreach ((new ElectronicPrescriptionService())->listIssuedForPersona($idPersona) as $rx) {
+        foreach ((new IssueElectronicPrescription())->listIssuedForPersona($idPersona) as $rx) {
             $rows[] = [
                 'id' => (int) $rx->id,
                 'prescription_number' => $rx->prescription_number,

@@ -4,7 +4,7 @@ namespace frontend\modules\api\v1\controllers\clinical;
 
 use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyClinicalSummaryService;
 use common\components\Domain\Clinical\Emergency\Application\Authorization\EmergencyEfectorAccess;
-use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyDischargeStructuredService;
+use common\components\Domain\Clinical\Emergency\Application\UseCase\DischargeEmergencyEpisode;
 use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyIndicatorsExportService;
 use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyIndicatorsService;
 use common\components\Domain\Clinical\Emergency\Application\UseCase\IntakeEmergencyEpisode;
@@ -57,7 +57,7 @@ class EmergencyController extends BaseController
     private EmergencyClinicalSummaryService $clinical;
     private TransferEmergencyToInpatient $internacion;
     private EmergencyIndicatorsExportService $export;
-    private EmergencyDischargeStructuredService $egreso;
+    private DischargeEmergencyEpisode $egreso;
 
     public function init(): void
     {
@@ -70,7 +70,7 @@ class EmergencyController extends BaseController
         $this->clinical = new EmergencyClinicalSummaryService();
         $this->internacion = new TransferEmergencyToInpatient();
         $this->export = new EmergencyIndicatorsExportService();
-        $this->egreso = new EmergencyDischargeStructuredService();
+        $this->egreso = new DischargeEmergencyEpisode();
     }
 
     public function actionIngresar(): array

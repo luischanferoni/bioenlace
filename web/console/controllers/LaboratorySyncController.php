@@ -2,7 +2,7 @@
 
 namespace console\controllers;
 
-use common\components\Domain\Clinical\Laboratory\Application\Service\LaboratoryIngestService;
+use common\components\Domain\Clinical\Laboratory\Application\UseCase\IngestLaboratoryResults;
 use common\components\Domain\Clinical\Laboratory\Application\Service\LaboratorySyncBatchService;
 use common\models\Person\Persona;
 use yii\console\Controller;
@@ -36,7 +36,7 @@ class LaboratorySyncController extends Controller
             return ExitCode::DATAERR;
         }
 
-        $result = (new LaboratoryIngestService())->syncForPersona((int) $idPersona, $connector);
+        $result = (new IngestLaboratoryResults())->syncForPersona((int) $idPersona, $connector);
         $this->stdout(json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "\n");
 
         return empty($result['errors']) ? ExitCode::OK : ExitCode::UNSPECIFIED_ERROR;

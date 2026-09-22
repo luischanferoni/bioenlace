@@ -8,7 +8,7 @@ use common\components\Domain\Clinical\Capture\Infrastructure\CareRequest\YiiDeri
 use common\components\Domain\Clinical\CareRequest\Domain\CodingSystems;
 use common\components\Domain\Clinical\CareRequest\Domain\Model\CareRequest;
 use common\components\Domain\Clinical\CareRequest\Domain\CareRequestActCoderInterface;
-use common\components\Domain\Clinical\CareRequest\Application\Service\CareRequestService;
+use common\components\Domain\Clinical\CareRequest\Application\UseCase\ResolveCareRequest;
 use common\models\Clinical\ConsultaDerivaciones;
 use yii\base\Model;
 
@@ -191,7 +191,7 @@ final class DerivacionInput extends Model
             $this->idEfector = $defaultEfectorId;
         }
 
-        $resolved = (new CareRequestService())->resolve($this->toPedido());
+        $resolved = (new ResolveCareRequest())->resolve($this->toPedido());
         $pedido = $resolved['pedido'];
 
         $display = $this->servicio;

@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Inpatient\Application\Service;
+namespace common\components\Domain\Clinical\Inpatient\Application\UseCase;
 
 use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
 use common\components\Domain\Clinical\Encounter\Domain\ConditionVerificationStatus;
@@ -13,7 +13,7 @@ use common\models\Clinical\Condition;
 /**
  * Órdenes clínicas de internación → recursos FHIR (sin tablas seg_nivel_internacion_* hijas).
  */
-final class InpatientOrderService
+final class ManageInpatientOrder
 {
     private ManageMedicationRequest $medications;
     private ManageServiceRequest $serviceRequests;

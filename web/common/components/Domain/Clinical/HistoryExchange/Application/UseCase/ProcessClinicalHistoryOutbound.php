@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\HistoryExchange\Application\Service;
+namespace common\components\Domain\Clinical\HistoryExchange\Application\UseCase;
 
 use common\components\Domain\Clinical\HistoryExchange\Infrastructure\External\ClinicalHistoryExchangeRegistry;
 use common\components\Domain\Clinical\HistoryExchange\Infrastructure\External\Mapper\FhirClinicalHistoryBundleMapper;
@@ -13,7 +13,7 @@ use Yii;
 /**
  * Procesa la cola de export FHIR (cron / consola).
  */
-final class ClinicalHistoryOutboundProcessorService
+final class ProcessClinicalHistoryOutbound
 {
     private FhirClinicalHistoryBundleMapper $mapper;
 

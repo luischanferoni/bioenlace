@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Encounter\Application\Service;
+namespace common\components\Domain\Clinical\Encounter\Application\UseCase;
 
 use common\components\Domain\Clinical\Encounter\Domain\ConditionVerificationStatus;
 
@@ -16,7 +16,7 @@ use Yii;
 /**
  * Codificación automática CIE-10 / SNOMED desde texto clínico (IA decide y persiste; sin UI de sugerencias).
  */
-final class EncounterAutomaticCodingService
+final class ApplyEncounterAutomaticCoding
 {
     public const IA_CONTEXT = 'encounter-codificacion-automatica';
 
@@ -396,7 +396,7 @@ final class EncounterAutomaticCodingService
 
         if ($encounter->id <= 0 || !Encounter::find()->where(['id' => $encounter->id])->exists()) {
             Yii::warning(
-                'EncounterAutomaticCodingService: encounter inexistente id=' . ($encounter->id ?? 'null'),
+                'ApplyEncounterAutomaticCoding: encounter inexistente id=' . ($encounter->id ?? 'null'),
                 'encounter-codificacion-automatica'
             );
 

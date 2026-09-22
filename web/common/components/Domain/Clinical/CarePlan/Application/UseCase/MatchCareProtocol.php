@@ -1,14 +1,15 @@
 <?php
 
-namespace common\components\Domain\Clinical\CarePlan\Application\Service;
+namespace common\components\Domain\Clinical\CarePlan\Application\UseCase;
 
+use common\components\Domain\Clinical\CarePlan\Application\Service\CareProtocolCatalogService;
 use common\models\Clinical\CareProtocol;
 use common\models\Clinical\Condition;
 
 /**
  * Resuelve protocolos por jurisdicción, código de condición y/o perfil (edad, sexo).
  */
-final class CareProtocolMatcherService
+final class MatchCareProtocol
 {
     private const ACTIVE_STATUSES = ['ACTIVE', 'RECURRENCE', 'RELAPSE'];
 

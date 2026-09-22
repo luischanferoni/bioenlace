@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\HistoryExchange\Application\Service;
+namespace common\components\Domain\Clinical\HistoryExchange\Application\UseCase;
 
 use common\components\Domain\Clinical\HistoryExchange\Infrastructure\External\ClinicalHistoryExchangeRegistry;
 use common\components\Domain\Clinical\HistoryExchange\Infrastructure\External\Mapper\FhirClinicalHistoryBundleMapper;
@@ -12,7 +12,7 @@ use Yii;
 /**
  * Encola export FHIR al finalizar encounter (si params lo permiten).
  */
-final class ClinicalHistoryOutboundEnqueueService
+final class EnqueueClinicalHistoryOutbound
 {
     public function scheduleIfApplicable(Encounter $encounter): ?ClinicalHistoryOutboundJob
     {

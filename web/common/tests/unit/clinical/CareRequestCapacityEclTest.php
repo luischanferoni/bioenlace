@@ -10,7 +10,7 @@ use common\components\Domain\Clinical\CareRequest\Infrastructure\External\InMemo
 use common\components\Domain\Clinical\CareRequest\Domain\InMemoryServiceLineActCatalog;
 use common\components\Domain\Clinical\CareRequest\Domain\Model\CareRequest;
 use common\components\Domain\Clinical\CareRequest\Application\Service\CareRequestMetadata;
-use common\components\Domain\Clinical\CareRequest\Application\Service\CareRequestService;
+use common\components\Domain\Clinical\CareRequest\Application\UseCase\ResolveCareRequest;
 use common\models\Organization\Servicio;
 
 class CareRequestCapacityEclTest extends Unit
@@ -102,7 +102,7 @@ class CareRequestCapacityEclTest extends Unit
             ]
         );
         $composite = new CompositeServiceLineActCatalog($explicit, $ecl);
-        $svc = new CareRequestService($composite);
+        $svc = new ResolveCareRequest($composite);
         $result = $svc->resolve(new CareRequest(
             null,
             '16310003',
@@ -139,7 +139,7 @@ class CareRequestCapacityEclTest extends Unit
             []
         );
         $composite = new CompositeServiceLineActCatalog($explicit, $ecl);
-        $svc = new CareRequestService($composite);
+        $svc = new ResolveCareRequest($composite);
         $result = $svc->resolve(new CareRequest(
             null,
             '16310003',

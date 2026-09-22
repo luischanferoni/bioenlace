@@ -6,7 +6,7 @@ use common\components\Domain\Clinical\Prescription\Domain\Model\ElectronicPrescr
 use common\components\Domain\Clinical\Prescription\Domain\PrescriptionLegalStatus;
 use common\components\Domain\Clinical\Prescription\Application\Service\ElectronicPrescriptionPdfService;
 use common\components\Domain\Clinical\Prescription\Application\Presentation\ElectronicPrescriptionPresentationService;
-use common\components\Domain\Clinical\Prescription\Application\Service\ElectronicPrescriptionService;
+use common\components\Domain\Clinical\Prescription\Application\UseCase\IssueElectronicPrescription;
 use common\components\Domain\Person\Representation\Domain\Model\RepresentationPermission;
 use common\components\Domain\Person\Representation\Application\Service\PersonRepresentationSubjectService;
 use common\models\Person\PersonRelatedAuditLog;
@@ -29,14 +29,14 @@ class ElectronicPrescriptionController extends BaseController
 {
     use ClinicalAccessTrait;
 
-    private ElectronicPrescriptionService $service;
+    private IssueElectronicPrescription $service;
     private ElectronicPrescriptionPresentationService $presentation;
     private ElectronicPrescriptionPdfService $pdf;
 
     public function init()
     {
         parent::init();
-        $this->service = new ElectronicPrescriptionService();
+        $this->service = new IssueElectronicPrescription();
         $this->presentation = new ElectronicPrescriptionPresentationService();
         $this->pdf = new ElectronicPrescriptionPdfService($this->presentation);
     }
@@ -185,7 +185,7 @@ class ElectronicPrescriptionController extends BaseController
 
         if (($out['kind'] ?? '') === 'ui_definition' && $req->isGet) {
             $items = [];
-            foreach ((new ElectronicPrescriptionService())->listIssuedForPersona($idPersona) as $rx) {
+            foreach ((new IssueElectronicPrescription())->listIssuedForPersona($idPersona) as $rx) {
                 $label = (string) ($rx->prescription_number ?? 'Receta');
                 $issued = (string) ($rx->issued_at ?? '');
                 if ($issued !== '') {

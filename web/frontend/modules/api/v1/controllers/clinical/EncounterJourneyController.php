@@ -7,7 +7,7 @@ use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
-use common\components\Domain\Clinical\Encounter\Application\Service\EncounterJourneyService;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\OrchestrateEncounterJourney;
 use common\components\Domain\Clinical\Encounter\Application\Service\AppointmentReasonChatGuideService;
 use common\components\Domain\Person\Representation\Domain\Model\RepresentationPermission;
 use common\components\Domain\Person\Representation\Application\Service\PersonRepresentationSubjectService;
@@ -46,7 +46,7 @@ class EncounterJourneyController extends BaseController
             throw new ForbiddenHttpException('No tenés permiso para ver este turno.');
         }
 
-        $journeySvc = new EncounterJourneyService();
+        $journeySvc = new OrchestrateEncounterJourney();
         $journey = $journeySvc->buildForTurno($turno, $encounter);
         $legacy = $journeySvc->legacyFlagsForTurno($turno, $encounter);
 

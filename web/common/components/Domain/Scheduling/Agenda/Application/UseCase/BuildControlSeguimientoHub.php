@@ -3,7 +3,7 @@
 namespace common\components\Domain\Scheduling\Agenda\Application\UseCase;
 
 use common\components\Domain\Clinical\CarePlan\Application\Presentation\CarePlanPresentationService;
-use common\components\Domain\Clinical\CarePlan\Application\Service\CareProtocolMatcherService;
+use common\components\Domain\Clinical\CarePlan\Application\UseCase\MatchCareProtocol;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\ConditionPresentationService;
 use common\components\Domain\Clinical\CarePlan\Application\Service\PatientActiveCarePlanQueryService;
 use common\components\Domain\Person\Identity\Application\Service\PacienteContextoService;
@@ -77,7 +77,7 @@ final class BuildControlSeguimientoHub
 
             $idProvincia = $this->resolveIdProvinciaContexto($idPersona);
             $profile = $this->resolvePersonaProfile($idPersona);
-            foreach ((new CareProtocolMatcherService())->matchByProfile(
+            foreach ((new MatchCareProtocol())->matchByProfile(
                 $profile['age_years'],
                 $profile['sex'],
                 $idProvincia
@@ -175,7 +175,7 @@ final class BuildControlSeguimientoHub
             $draft['triage_raiz'] = 'seguimiento_cronico';
             $idPersona = (int) ($draft['id_persona'] ?? 0);
             $idProvincia = $idPersona > 0 ? $this->resolveIdProvinciaContexto($idPersona) : null;
-            $protocol = (new CareProtocolMatcherService())
+            $protocol = (new MatchCareProtocol())
                 ->matchByConditionCode($ref, $idProvincia, null, $idPersona > 0 ? $idPersona : null);
             if ($protocol !== null) {
                 $draft['protocol_id'] = $protocol['id'];
@@ -224,7 +224,7 @@ final class BuildControlSeguimientoHub
     {
         $protocolId = trim((string) $protocolId);
         if ($protocolId !== '') {
-            $protocolActions = (new CareProtocolMatcherService())->actionsForProtocolId($protocolId);
+            $protocolActions = (new MatchCareProtocol())->actionsForProtocolId($protocolId);
             if ($protocolActions !== []) {
                 return $this->mapProtocolActionsToItems($protocolActions);
             }
@@ -232,7 +232,7 @@ final class BuildControlSeguimientoHub
 
         $codigo = trim((string) $conditionCodigo);
         if ($codigo !== '') {
-            $protocolActions = (new CareProtocolMatcherService())
+            $protocolActions = (new MatchCareProtocol())
                 ->actionsForConditionCode($codigo);
             if ($protocolActions !== []) {
                 return $this->mapProtocolActionsToItems($protocolActions);
@@ -300,7 +300,7 @@ final class BuildControlSeguimientoHub
         if ($actionCode === '') {
             return null;
         }
-        $matcher = new CareProtocolMatcherService();
+        $matcher = new MatchCareProtocol();
         $protocolId = trim((string) $protocolId);
         if ($protocolId !== '') {
             $found = $matcher->findAction($protocolId, $actionCode);

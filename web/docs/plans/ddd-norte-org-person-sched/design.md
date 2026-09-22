@@ -38,6 +38,24 @@
 | `InpatientAdmissionService` | `AdmitInpatient` ✅ |
 | `InpatientBedTransferService` | `TransferInpatientBed` ✅ |
 | `InpatientDischargeStructuredService` | `DischargeInpatient` ✅ |
+| `EncounterAutomaticCodingService` | `ApplyEncounterAutomaticCoding` ✅ |
+| `EncounterJourneyService` | `OrchestrateEncounterJourney` ✅ |
+| `EncounterDocumentationService` | `DocumentEncounter` ✅ |
+| `CarePlanReminderScheduleService` | `ScheduleCarePlanReminders` ✅ |
+| `CareProtocolMatcherService` | `MatchCareProtocol` ✅ |
+| `EmergencyDischargeStructuredService` | `DischargeEmergencyEpisode` ✅ |
+| `EmergencyEncounterOutcomeService` | `RecordEmergencyEncounterOutcome` ✅ |
+| `PostDischargeFollowupSchedulerService` | `SchedulePostDischargeFollowup` ✅ |
+| `InpatientOrderService` | `ManageInpatientOrder` ✅ |
+| `ElectronicPrescriptionService` | `IssueElectronicPrescription` ✅ |
+| `LaboratoryIngestService` | `IngestLaboratoryResults` ✅ |
+| `LaboratoryEncounterLinkService` | `LinkLaboratoryToEncounter` ✅ |
+| `LegalExportRequestService` | `RequestLegalExport` ✅ |
+| `LegalExportProcessorService` | `ProcessLegalExport` ✅ |
+| `ClinicalHistoryOutboundEnqueueService` | `EnqueueClinicalHistoryOutbound` ✅ |
+| `ClinicalHistoryOutboundProcessorService` | `ProcessClinicalHistoryOutbound` ✅ |
+| `CareRequestService` | `ResolveCareRequest` ✅ |
+| `CareRequestPatientService` | `SubmitPatientCareRequest` ✅ |
 
 Métodos públicos se mantienen cuando es posible (`ensurePersonaServicioEnEfector`, `registrar`, `update`, …) para no reescribir el cuerpo; solo cambia FQCN + carpeta.
 

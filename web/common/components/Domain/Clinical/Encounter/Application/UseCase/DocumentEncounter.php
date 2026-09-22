@@ -1,11 +1,11 @@
 <?php
 
-namespace common\components\Domain\Clinical\Encounter\Application\Service;
+namespace common\components\Domain\Clinical\Encounter\Application\UseCase;
 
 use common\components\Domain\Clinical\Capture\Application\Service\RowContractService;
 use common\components\Domain\Clinical\Encounter\Domain\ConditionVerificationStatus;
 use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
-use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyEncounterOutcomeService;
+use common\components\Domain\Clinical\Emergency\Application\UseCase\RecordEmergencyEncounterOutcome;
 use common\components\Domain\Clinical\Capture\Application\Service\CaptureCategoryResolver;
 use common\components\Domain\Clinical\Capture\Domain\Policy\CaptureCompletenessPolicy;
 use common\components\Domain\Clinical\Capture\Infrastructure\Logging\EncounterGuardarLogger;
@@ -14,7 +14,7 @@ use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Domain\Clinical\CarePlan\Application\UseCase\AdvanceCarePlanLifecycle;
 use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanService;
 use common\components\Domain\Clinical\Encounter\Application\UseCase\AdvanceConditionLifecycle;
-use common\components\Domain\Clinical\Encounter\Application\Service\EncounterAutomaticCodingService;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\ApplyEncounterAutomaticCoding;
 use common\components\Domain\Clinical\Encounter\Application\UseCase\AdvanceEncounterLifecycle;
 use common\components\Domain\Clinical\Encounter\Application\Service\EpisodeCaptureDedupService;
 use common\components\Domain\Clinical\CarePlan\Application\UseCase\ManageMedicationRequest;
@@ -40,7 +40,7 @@ use yii\base\Component;
  *
  * Intake / análisis IA: Capture (`AnalyzeClinicalNote`, pipeline). Este servicio solo persiste al guardar.
  */
-class EncounterDocumentationService extends Component
+class DocumentEncounter extends Component
 {
     private AdvanceEncounterLifecycle $lifecycle;
     private CarePlanService $carePlans;
@@ -127,7 +127,7 @@ class EncounterDocumentationService extends Component
                 'datosExtraidos_type' => gettype($body['datosExtraidos'] ?? null),
                 'staged_item_ids_count' => count($stagedItemIds),
                 'resolutions_count' => count($resolutions),
-            ], ['metodo' => 'EncounterDocumentationService::guardar']);
+            ], ['metodo' => 'DocumentEncounter::guardar']);
 
             $blockingError = EncounterCaptureReviewPresenter::blockingErrorFromExtraidos($datosExtraidos);
             if ($blockingError !== null) {
@@ -411,7 +411,7 @@ class EncounterDocumentationService extends Component
             ]);
 
             try {
-                $diagnostico['guardia_outcome'] = (new EmergencyEncounterOutcomeService())
+                $diagnostico['guardia_outcome'] = (new RecordEmergencyEncounterOutcome())
                     ->applyAfterDocumentation($encounter, is_array($datosExtraidos) ? $datosExtraidos : []);
             } catch (\Throwable $e) {
                 Yii::warning(
@@ -430,7 +430,7 @@ class EncounterDocumentationService extends Component
 
             $diagnostico['coding'] = ['ok' => true, 'saved' => 0, 'error' => null];
             try {
-                $savedCoding = EncounterAutomaticCodingService::codeAndPersistForEncounter(
+                $savedCoding = ApplyEncounterAutomaticCoding::codeAndPersistForEncounter(
                     $encounter,
                     $datosExtraidos,
                     $configuracion

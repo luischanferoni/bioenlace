@@ -7,7 +7,7 @@ use common\components\Domain\Person\Representation\Domain\Model\RepresentationPe
 use common\components\Domain\Person\Representation\Application\Service\PersonRepresentationSubjectService;
 use common\models\Person\PersonRelatedAuditLog;
 use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanReminderPreferenceService;
-use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanReminderScheduleService;
+use common\components\Domain\Clinical\CarePlan\Application\UseCase\ScheduleCarePlanReminders;
 use common\components\Domain\Clinical\CarePlan\Domain\Model\CarePlanDto;
 use common\components\Domain\Clinical\CarePlan\Application\UseCase\AdvanceCarePlanLifecycle;
 use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanMedicationListService;
@@ -42,7 +42,7 @@ class CarePlanController extends BaseController
     private AdvanceCarePlanLifecycle $lifecycle;
     private PatientActiveCarePlanQueryService $activeQuery;
     private CarePlanPresentationService $presentation;
-    private CarePlanReminderScheduleService $reminderSchedule;
+    private ScheduleCarePlanReminders $reminderSchedule;
     private CarePlanReminderPreferenceService $reminderPreferences;
 
     public function init()
@@ -51,7 +51,7 @@ class CarePlanController extends BaseController
         $this->lifecycle = new AdvanceCarePlanLifecycle();
         $this->activeQuery = new PatientActiveCarePlanQueryService();
         $this->presentation = new CarePlanPresentationService();
-        $this->reminderSchedule = new CarePlanReminderScheduleService($this->activeQuery);
+        $this->reminderSchedule = new ScheduleCarePlanReminders($this->activeQuery);
         $this->reminderPreferences = new CarePlanReminderPreferenceService();
     }
 

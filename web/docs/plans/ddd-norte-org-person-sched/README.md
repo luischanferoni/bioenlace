@@ -1,6 +1,6 @@
 # DDD norte — Org / Person / Scheduling (post-empaquetado)
 
-**Estado:** fases 01–07 hechas (pendiente commit)  
+**Estado:** fases 01–08 hechas (pendiente commit + deploy)  
 **Precondición:** empaquetado módulo-primero ya hecho ([`ddd-empaquetado-transversal`](../ddd-empaquetado-transversal/) archivado en decisions).  
 **Norte:** [`ddd-norte-modelo-rico.md`](../../decisions/ddd-norte-modelo-rico.md), [`ddd-un-eje-por-nivel`](../../../.cursor/rules/ddd-un-eje-por-nivel.mdc).
 
@@ -28,12 +28,13 @@ Pasar de “carpetas bien” a **modelo rico**: UseCases verb phrase, Domain con
 | **05** | Más UseCases (AdminEfector, billing switch, sesión operativa, identidad pendiente/resolver) + CuilPolicy wiring | Callers OK; `PersonCuilService` → `CuilPolicy` |
 | **06** | Representation + horario PES + CareCohort Generate/Enqueue | UseCases + callers API |
 | **07** | Encounter/CarePlan/Emergency/Inpatient lifecycle UseCases | 15 UseCases + callers |
+| **08** | Journey/docs/coding + reminders + Rx/Lab/Legal/History/CareRequest | 18 UseCases + callers |
 
 ## No hacer en este plan
 
 - Mover frontera Agenda-PES (ownership explícito → ADR aparte).
 - Programs / Integrations código nuevo.
-- Restantes Services UI/query de Encounter/CarePlan (catalogs, journey windows, reminders) — fase 08 si hace falta.
+- Catalogs/query/UI restantes en `Application/Service` (fase/ventana, listados, seeds) — no son intenciones de dominio.
 
 ## Criterio de naming UseCase
 

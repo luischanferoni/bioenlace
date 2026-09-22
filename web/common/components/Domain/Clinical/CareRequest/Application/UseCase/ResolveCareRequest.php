@@ -1,12 +1,11 @@
 <?php
 
-namespace common\components\Domain\Clinical\CareRequest\Application\Service;
+namespace common\components\Domain\Clinical\CareRequest\Application\UseCase;
 
 use common\components\Domain\Clinical\CareRequest\Domain\Model\CareRequest;
-
 use common\components\Domain\Clinical\CareRequest\Domain\CodingSystems;
-
 use common\components\Domain\Clinical\CareRequest\Domain\CompositeServiceLineActCatalog;
+use common\components\Domain\Clinical\CareRequest\Domain\ServiceLineActCatalogInterface;
 
 /**
  * Completa y valida CareRequest (línea × acto) vía catálogo y metadata.
@@ -20,7 +19,7 @@ use common\components\Domain\Clinical\CareRequest\Domain\CompositeServiceLineAct
  *   candidates: array{lineas: list<CandidateLinea>, actos: list<CandidateActo>}
  * }
  */
-final class CareRequestService
+final class ResolveCareRequest
 {
     private ServiceLineActCatalogInterface $catalog;
 

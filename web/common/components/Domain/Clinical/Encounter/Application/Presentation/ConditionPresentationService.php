@@ -24,7 +24,7 @@ final class ConditionPresentationService
         }
         $cap = $limit ?? PatientActiveConditionQueryService::DEDUPE_LIMIT;
         $rows = (new PatientActiveConditionQueryService())->listActive($subjectPersonaId);
-        $matcher = new CareProtocolMatcherService();
+        $matcher = new MatchCareProtocol();
         $idProvincia = $this->resolveIdProvincia($subjectPersonaId);
         /** @var array<string, array{score: int, summary: array<string, mixed>}> $byDedupe */
         $byDedupe = [];
@@ -147,10 +147,10 @@ final class ConditionPresentationService
     }
 
     /**
-     * @param CareProtocolMatcherService $matcher
+     * @param MatchCareProtocol $matcher
      * @return array<string, mixed>|null
      */
-    private function buildCandidate(Condition $cond, CareProtocolMatcherService $matcher, ?int $idProvincia): ?array
+    private function buildCandidate(Condition $cond, MatchCareProtocol $matcher, ?int $idProvincia): ?array
     {
         $resolved = $this->resolveCodeAndDisplay($cond);
         $code = $resolved['code'];

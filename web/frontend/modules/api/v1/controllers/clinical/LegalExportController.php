@@ -3,7 +3,7 @@
 namespace frontend\modules\api\v1\controllers\clinical;
 
 use common\components\Domain\Clinical\LegalExport\Application\Authorization\LegalExportAccessService;
-use common\components\Domain\Clinical\LegalExport\Application\Service\LegalExportRequestService;
+use common\components\Domain\Clinical\LegalExport\Application\UseCase\RequestLegalExport;
 use common\models\Clinical\LegalExportAudit;
 use common\models\Clinical\LegalExportRequest;
 use common\models\Person\Persona;
@@ -24,13 +24,13 @@ use yii\web\Response;
  */
 class LegalExportController extends BaseController
 {
-    private LegalExportRequestService $requests;
+    private RequestLegalExport $requests;
     private LegalExportAccessService $access;
 
     public function init()
     {
         parent::init();
-        $this->requests = new LegalExportRequestService();
+        $this->requests = new RequestLegalExport();
         $this->access = new LegalExportAccessService();
     }
 

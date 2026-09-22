@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Agenda\Application\UseCase;
 
-use common\components\Domain\Clinical\Encounter\Application\Service\EncounterJourneyService;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\OrchestrateEncounterJourney;
 use common\components\Domain\Person\Representation\Domain\Model\RepresentationPermission;
 use common\components\Domain\Person\Representation\Application\Service\PersonRepresentationSubjectService;
 use common\models\Clinical\Encounter;
@@ -237,7 +237,7 @@ final class ListTurnosPaciente
 
         $resolucion = TurnoResolucion::findPendientePorTurno((int) $turno->id_turnos);
 
-        $journeySvc = new EncounterJourneyService();
+        $journeySvc = new OrchestrateEncounterJourney();
         $legacy = $journeySvc->legacyFlagsForTurno($turno, $encounter);
         $journey = $journeySvc->buildForTurno($turno, $encounter);
         $confirmado = !empty($turno->confirmado_en) || (string) ($turno->confirmado ?? '') === 'SI';

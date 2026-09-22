@@ -2,7 +2,7 @@
 
 namespace console\controllers;
 
-use common\components\Domain\Clinical\HistoryExchange\Application\Service\ClinicalHistoryOutboundProcessorService;
+use common\components\Domain\Clinical\HistoryExchange\Application\UseCase\ProcessClinicalHistoryOutbound;
 use common\components\Domain\Clinical\HistoryExchange\Application\Service\ClinicalHistoryOutboundReconcileService;
 use common\models\Clinical\ClinicalHistoryOutboundJob;
 use yii\console\Controller;
@@ -22,7 +22,7 @@ class ClinicalHistoryExchangeController extends Controller
 {
     public function actionProcessOutbound(int $limit = 20): int
     {
-        $n = (new ClinicalHistoryOutboundProcessorService())->processDueQueue($limit);
+        $n = (new ProcessClinicalHistoryOutbound())->processDueQueue($limit);
         $this->stdout("Jobs procesados: {$n}\n");
 
         return 0;
@@ -37,7 +37,7 @@ class ClinicalHistoryExchangeController extends Controller
             return 1;
         }
 
-        $ok = (new ClinicalHistoryOutboundProcessorService())->processOne($row);
+        $ok = (new ProcessClinicalHistoryOutbound())->processOne($row);
         $this->stdout($ok ? "Job {$jobId} procesado.\n" : "Job {$jobId} falló.\n");
 
         return $ok ? 0 : 1;

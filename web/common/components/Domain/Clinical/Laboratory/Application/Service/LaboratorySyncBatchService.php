@@ -9,11 +9,11 @@ use common\models\Person\Persona;
  */
 final class LaboratorySyncBatchService
 {
-    private LaboratoryIngestService $ingest;
+    private IngestLaboratoryResults $ingest;
 
-    public function __construct(?LaboratoryIngestService $ingest = null)
+    public function __construct(?IngestLaboratoryResults $ingest = null)
     {
-        $this->ingest = $ingest ?? new LaboratoryIngestService();
+        $this->ingest = $ingest ?? new IngestLaboratoryResults();
     }
 
     /**

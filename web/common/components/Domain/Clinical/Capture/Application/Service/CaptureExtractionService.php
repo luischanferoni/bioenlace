@@ -16,7 +16,7 @@ use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
 
 /**
  * Application Service: extracción IA de la nota clínica (STT → normalizar → LLM → post-proceso).
- * No persiste Encounter; eso vive en {@see \common\components\Domain\Clinical\Encounter\Application\Service\EncounterDocumentationService}
+ * No persiste Encounter; eso vive en {@see \common\components\Domain\Clinical\Encounter\Application\UseCase\DocumentEncounter}
  * vía el use case {@see \common\components\Domain\Clinical\Capture\Application\UseCase\SaveCapture}.
  */
 class CaptureExtractionService extends Component

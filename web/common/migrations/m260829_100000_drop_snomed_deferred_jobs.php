@@ -5,7 +5,7 @@ use yii\db\Migration;
 /**
  * Retiro pipeline SNOMED diferido (DeferredSnomedProcessor / SnomedDeferredJob).
  *
- * La codificación persiste vía EncounterAutomaticCodingService; la tabla quedó sin invocador.
+ * La codificación persiste vía ApplyEncounterAutomaticCoding; la tabla quedó sin invocador.
  */
 class m260829_100000_drop_snomed_deferred_jobs extends Migration
 {

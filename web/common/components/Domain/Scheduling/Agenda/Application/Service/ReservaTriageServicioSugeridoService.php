@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Agenda\Application\Service;
 
-use common\components\Domain\Clinical\CareRequest\Application\Service\CareRequestPatientService;
+use common\components\Domain\Clinical\CareRequest\Application\UseCase\SubmitPatientCareRequest;
 use common\components\Domain\Organization\Servicio\Application\Service\ServicioMencionLookupService;
 use common\components\Domain\Organization\Servicio\Application\Service\ServiciosEfectorAutogestionListadoService;
 use common\models\Clinical\ConsultaDerivaciones;
@@ -40,15 +40,15 @@ final class ReservaTriageServicioSugeridoService
      */
     public function resolverParaDraft(array $draft, bool $soloHubPaciente = false): array
     {
-        $pedido = new CareRequestPatientService();
+        $pedido = new SubmitPatientCareRequest();
         if ($pedido->esPedidoEstudio($draft)) {
             if ($pedido->lineaIdsDesdeDraft($draft) === []
-                && trim((string) ($draft[CareRequestPatientService::DRAFT_ACTO] ?? '')) !== ''
+                && trim((string) ($draft[SubmitPatientCareRequest::DRAFT_ACTO] ?? '')) !== ''
             ) {
                 $pedido->aplicarFlagsEnDraft($draft);
             }
             $ids = $pedido->lineaIdsDesdeDraft($draft);
-            $msg = trim((string) ($draft[CareRequestPatientService::DRAFT_MENSAJE] ?? ''));
+            $msg = trim((string) ($draft[SubmitPatientCareRequest::DRAFT_MENSAJE] ?? ''));
 
             return [
                 'rol' => 'estudio',
@@ -56,7 +56,7 @@ final class ReservaTriageServicioSugeridoService
                 'id_servicios' => $ids,
                 'filtrado_aplicado' => true,
                 'autogestion_disponible' => $ids !== [],
-                'triage_codigo_resolutor' => CareRequestPatientService::TRIAGE_RAIZ_ESTUDIO,
+                'triage_codigo_resolutor' => SubmitPatientCareRequest::TRIAGE_RAIZ_ESTUDIO,
                 'mensaje_orientacion' => $msg !== '' ? $msg : null,
                 'mensaje_lista' => $ids === []
                     ? ($msg !== '' ? $msg : 'No hay servicios con agenda para ese estudio.')
@@ -113,10 +113,10 @@ final class ReservaTriageServicioSugeridoService
         if ($items === []) {
             return $items;
         }
-        $pedido = new CareRequestPatientService();
+        $pedido = new SubmitPatientCareRequest();
         if ($pedido->esPedidoEstudio($draft)) {
             if ($pedido->lineaIdsDesdeDraft($draft) === []
-                && trim((string) ($draft[CareRequestPatientService::DRAFT_ACTO] ?? '')) !== ''
+                && trim((string) ($draft[SubmitPatientCareRequest::DRAFT_ACTO] ?? '')) !== ''
             ) {
                 $pedido->aplicarFlagsEnDraft($draft);
             }
@@ -232,7 +232,7 @@ final class ReservaTriageServicioSugeridoService
      */
     public function aplicarFlagsEnDraft(array &$draft): void
     {
-        $pedido = new CareRequestPatientService();
+        $pedido = new SubmitPatientCareRequest();
         if ($pedido->esPedidoEstudio($draft)) {
             $pedido->aplicarFlagsEnDraft($draft);
             $res = $this->resolverParaDraft($draft, false);
@@ -329,10 +329,10 @@ final class ReservaTriageServicioSugeridoService
             'triage_raiz',
             'triage_alarmas',
             'triage_zona',
-            CareRequestPatientService::DRAFT_ACTO,
-            CareRequestPatientService::DRAFT_MODO,
-            CareRequestPatientService::DRAFT_LINEA_IDS,
-            CareRequestPatientService::DRAFT_SERVICIO_RESUELTO,
+            SubmitPatientCareRequest::DRAFT_ACTO,
+            SubmitPatientCareRequest::DRAFT_MODO,
+            SubmitPatientCareRequest::DRAFT_LINEA_IDS,
+            SubmitPatientCareRequest::DRAFT_SERVICIO_RESUELTO,
         ];
         $draft = [];
         foreach ($keys as $key) {

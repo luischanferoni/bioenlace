@@ -1,11 +1,12 @@
 <?php
 
-namespace common\components\Domain\Clinical\Prescription\Application\Service;
+namespace common\components\Domain\Clinical\Prescription\Application\UseCase;
 
 use common\components\Domain\Clinical\Encounter\Domain\RequestStatus;
 use common\components\Domain\Clinical\Prescription\Domain\PrescriptionEventType;
 use common\components\Domain\Clinical\Prescription\Domain\PrescriptionLegalStatus;
 use common\components\Domain\Clinical\Prescription\Infrastructure\External\Mapper\FhirRecetaDigitalBundleMapper;
+use common\components\Domain\Clinical\Prescription\Application\Service\ElectronicPrescriptionRepositoryService;
 use common\components\Domain\Clinical\Prescription\Application\Service\PrescriptionDocumentService;
 use common\components\Domain\Clinical\Prescription\Application\Agents\PrescriptionRdiPreSubmitValidationAgent;
 use common\components\Domain\Clinical\CarePlan\Application\UseCase\ManageMedicationRequest;
@@ -19,7 +20,7 @@ use common\models\Person\Persona;
 use Yii;
 use yii\db\Transaction;
 
-final class ElectronicPrescriptionService
+final class IssueElectronicPrescription
 {
     private ManageMedicationRequest $medicationRequests;
     private FhirRecetaDigitalBundleMapper $bundleMapper;

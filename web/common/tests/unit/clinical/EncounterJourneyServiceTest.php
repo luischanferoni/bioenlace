@@ -11,7 +11,7 @@ use common\components\Domain\Clinical\Encounter\Application\Service\EncounterPha
 use common\components\Domain\Clinical\Encounter\Application\Service\EncounterPhaseWindowService;
 use common\components\Domain\Clinical\Encounter\Application\Service\EncounterPhaseWindowsCatalogService;
 
-class EncounterJourneyServiceTest extends Unit
+class OrchestrateEncounterJourneyTest extends Unit
 {
     protected function _before(): void
     {

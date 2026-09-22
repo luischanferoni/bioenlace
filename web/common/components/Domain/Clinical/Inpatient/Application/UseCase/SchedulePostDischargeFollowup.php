@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Inpatient\Application\Service;
+namespace common\components\Domain\Clinical\Inpatient\Application\UseCase;
 
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
 use common\models\Clinical\CareFollowupTouchpointQueue;
@@ -12,7 +12,7 @@ use Yii;
 /**
  * Programa touchpoints post-alta desde metadata del agente B02.
  */
-final class PostDischargeFollowupSchedulerService
+final class SchedulePostDischargeFollowup
 {
     public const AGENT_ID = 'post-discharge-followup';
 

@@ -11,15 +11,15 @@ use Yii;
  */
 final class PostDischargeFollowupAgent
 {
-    public const AGENT_ID = PostDischargeFollowupSchedulerService::AGENT_ID;
+    public const AGENT_ID = SchedulePostDischargeFollowup::AGENT_ID;
 
     public const TRIGGER_TYPE = 'internacion_alta';
 
-    private PostDischargeFollowupSchedulerService $scheduler;
+    private SchedulePostDischargeFollowup $scheduler;
 
-    public function __construct(?PostDischargeFollowupSchedulerService $scheduler = null)
+    public function __construct(?SchedulePostDischargeFollowup $scheduler = null)
     {
-        $this->scheduler = $scheduler ?? new PostDischargeFollowupSchedulerService();
+        $this->scheduler = $scheduler ?? new SchedulePostDischargeFollowup();
     }
 
     public function isEnabled(): bool

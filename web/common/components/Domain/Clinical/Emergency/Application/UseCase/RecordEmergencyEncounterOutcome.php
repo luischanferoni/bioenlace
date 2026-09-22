@@ -1,7 +1,8 @@
 <?php
 
-namespace common\components\Domain\Clinical\Emergency\Application\Service;
+namespace common\components\Domain\Clinical\Emergency\Application\UseCase;
 
+use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyBoardService;
 use common\components\Domain\Clinical\Emergency\Domain\BoardState;
 use common\components\Domain\Clinical\Encounter\Application\UseCase\RecordEncounterReason;
 use common\models\Clinical\Encounter;
@@ -16,7 +17,7 @@ use Yii;
  * - Derivación institucional → circuito derivado.
  * - Resto (alta, control, documentación clínica) → circuito atendido.
  */
-final class EmergencyEncounterOutcomeService
+final class RecordEmergencyEncounterOutcome
 {
     /** @var TransferEmergencyToInpatient */
     private $internacion;

@@ -1,15 +1,18 @@
 <?php
 
-namespace common\components\Domain\Clinical\CarePlan\Application\Service;
+namespace common\components\Domain\Clinical\CarePlan\Application\UseCase;
 
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanActivityKind;
 use common\components\Domain\Clinical\Encounter\Domain\RequestStatus;
+use common\components\Domain\Clinical\CarePlan\Application\Service\ActivityReminderTimingService;
+use common\components\Domain\Clinical\CarePlan\Application\Service\MedicationDosageTimingService;
+use common\components\Domain\Clinical\CarePlan\Application\Service\MedicationReminderFrequencyResolver;
 use common\components\Domain\Clinical\CarePlan\Application\Service\PatientActiveCarePlanQueryService;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\CarePlanActivity;
 use common\models\Clinical\MedicationRequest;
 
-final class CarePlanReminderScheduleService
+final class ScheduleCarePlanReminders
 {
     private PatientActiveCarePlanQueryService $activeQuery;
     private MedicationDosageTimingService $medicationTimingParser;

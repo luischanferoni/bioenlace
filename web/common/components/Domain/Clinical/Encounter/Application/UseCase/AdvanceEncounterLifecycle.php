@@ -9,7 +9,7 @@ use common\components\Domain\Clinical\Encounter\Application\UseCase\PublishPatie
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Domain\Clinical\Encounter\Domain\Model\Encounter as EncounterAggregate;
 use common\components\Domain\Clinical\Encounter\Domain\Model\EncounterId;
-use common\components\Domain\Clinical\HistoryExchange\Application\Service\ClinicalHistoryOutboundEnqueueService;
+use common\components\Domain\Clinical\HistoryExchange\Application\UseCase\EnqueueClinicalHistoryOutbound;
 use common\components\Domain\Scheduling\Agenda\Infrastructure\External\NisFhir\Sync\TurnoFhirOutboundNotifier;
 use common\models\Clinical\Encounter;
 use common\models\Organization\ProfesionalEfectorServicio;
@@ -81,7 +81,7 @@ final class AdvanceEncounterLifecycle
             }
         }
 
-        (new ClinicalHistoryOutboundEnqueueService())->scheduleIfApplicable($encounter);
+        (new EnqueueClinicalHistoryOutbound())->scheduleIfApplicable($encounter);
 
         return $encounter;
     }

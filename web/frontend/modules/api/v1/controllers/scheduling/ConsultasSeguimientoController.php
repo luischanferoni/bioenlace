@@ -5,7 +5,7 @@ namespace frontend\modules\api\v1\controllers\scheduling;
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 use yii\web\BadRequestHttpException;
-use common\components\Domain\Clinical\CarePlan\Application\Service\CareProtocolMatcherService;
+use common\components\Domain\Clinical\CarePlan\Application\UseCase\MatchCareProtocol;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultasSeguimientoIntakeStepService;
 use common\components\Domain\Scheduling\Agenda\Application\UseCase\BuildControlSeguimientoHub;
 use common\components\Platform\Ui\UiScreenService;
@@ -80,7 +80,7 @@ class ConsultasSeguimientoController extends BaseController
 
         if (isset($out['kind'], $out['ui_type']) && $out['kind'] === 'ui_definition' && $out['ui_type'] === 'ui_json') {
             $title = '¿Qué necesitás?';
-            $matcher = new CareProtocolMatcherService();
+            $matcher = new MatchCareProtocol();
             if ($protocolId !== '') {
                 $actions = $matcher->actionsForProtocolId($protocolId);
                 if ($actions !== []) {

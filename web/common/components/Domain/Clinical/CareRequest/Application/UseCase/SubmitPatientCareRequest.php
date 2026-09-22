@@ -1,15 +1,15 @@
 <?php
 
-namespace common\components\Domain\Clinical\CareRequest\Application\Service;
+namespace common\components\Domain\Clinical\CareRequest\Application\UseCase;
 
 use common\components\Domain\Clinical\CareRequest\Domain\CodingSystems;
-
 use common\components\Domain\Clinical\CareRequest\Domain\CompositeServiceLineActCatalog;
+use common\components\Domain\Clinical\CareRequest\Domain\ServiceLineActCatalogInterface;
 
 /**
  * Pedido de atención desde el hub paciente (acto → línea agendable).
  */
-final class CareRequestPatientService
+final class SubmitPatientCareRequest
 {
     public const TRIAGE_RAIZ_ESTUDIO = 'estudio_pedido';
 
@@ -19,15 +19,15 @@ final class CareRequestPatientService
     public const DRAFT_SERVICIO_RESUELTO = 'pedido_servicio_resuelto';
     public const DRAFT_MENSAJE = 'pedido_mensaje';
 
-    private CareRequestService $resolver;
+    private ResolveCareRequest $resolver;
     private ServiceLineActCatalogInterface $catalog;
 
     public function __construct(
-        ?CareRequestService $resolver = null,
+        ?ResolveCareRequest $resolver = null,
         ?ServiceLineActCatalogInterface $catalog = null
     ) {
         $this->catalog = $catalog ?? CompositeServiceLineActCatalog::defaultCatalog();
-        $this->resolver = $resolver ?? new CareRequestService($this->catalog);
+        $this->resolver = $resolver ?? new ResolveCareRequest($this->catalog);
     }
 
     /**

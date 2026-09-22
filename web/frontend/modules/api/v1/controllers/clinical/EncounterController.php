@@ -13,7 +13,7 @@ use common\components\Domain\Clinical\Capture\Application\UseCase\ResolveCapture
 use common\components\Domain\Clinical\Capture\Application\UseCase\SaveCapture;
 use common\components\Domain\Clinical\Capture\Application\UseCase\TranscribeCapture;
 use common\components\Domain\Clinical\Capture\Application\UseCase\ViewCapture;
-use common\components\Domain\Clinical\Encounter\Application\Service\EncounterDocumentationService;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\DocumentEncounter;
 use common\components\Domain\Clinical\CarePlan\Domain\Model\MedicationRequestDto;
 use common\components\Domain\Clinical\CarePlan\Domain\Model\ServiceRequestDto;
 use common\components\Domain\Clinical\CarePlan\Application\UseCase\ManageMedicationRequest;
@@ -57,7 +57,7 @@ class EncounterController extends BaseController
 
     public function actionGuardar()
     {
-        $out = (new EncounterDocumentationService())->guardar($this->mergeRequestBody());
+        $out = (new DocumentEncounter())->guardar($this->mergeRequestBody());
 
         return $this->applyServiceHttpStatus($out);
     }

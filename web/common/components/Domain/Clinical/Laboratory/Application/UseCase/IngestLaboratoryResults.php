@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Laboratory\Application\Service;
+namespace common\components\Domain\Clinical\Laboratory\Application\UseCase;
 
 use common\components\Domain\Clinical\Laboratory\Application\Agents\PostLabClassificationAgent;
 
@@ -12,17 +12,17 @@ use common\models\Clinical\Observation;
 use common\models\Person\Persona;
 use Yii;
 
-final class LaboratoryIngestService
+final class IngestLaboratoryResults
 {
     private FhirDiagnosticReportMapper $mapper;
-    private LaboratoryEncounterLinkService $encounterLink;
+    private LinkLaboratoryToEncounter $encounterLink;
 
     public function __construct(
         ?FhirDiagnosticReportMapper $mapper = null,
-        ?LaboratoryEncounterLinkService $encounterLink = null
+        ?LinkLaboratoryToEncounter $encounterLink = null
     ) {
         $this->mapper = $mapper ?? new FhirDiagnosticReportMapper();
-        $this->encounterLink = $encounterLink ?? new LaboratoryEncounterLinkService();
+        $this->encounterLink = $encounterLink ?? new LinkLaboratoryToEncounter();
     }
 
     /**

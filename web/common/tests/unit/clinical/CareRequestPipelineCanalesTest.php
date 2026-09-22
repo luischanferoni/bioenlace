@@ -8,8 +8,8 @@ use common\components\Domain\Clinical\CareRequest\Domain\InMemoryServiceLineActC
 use common\components\Domain\Clinical\CareRequest\Infrastructure\External\InMemoryCareRequestActCoder;
 use common\components\Domain\Clinical\CareRequest\Domain\Model\CareRequest;
 use common\components\Domain\Clinical\CareRequest\Application\Service\CareRequestMetadata;
-use common\components\Domain\Clinical\CareRequest\Application\Service\CareRequestPatientService;
-use common\components\Domain\Clinical\CareRequest\Application\Service\CareRequestService;
+use common\components\Domain\Clinical\CareRequest\Application\UseCase\SubmitPatientCareRequest;
+use common\components\Domain\Clinical\CareRequest\Application\UseCase\ResolveCareRequest;
 use common\models\Clinical\Input\DerivacionInput;
 
 class CareRequestPipelineCanalesTest extends Unit
@@ -45,7 +45,7 @@ class CareRequestPipelineCanalesTest extends Unit
                 ],
             ]
         );
-        $svc = new CareRequestService($catalog);
+        $svc = new ResolveCareRequest($catalog);
         $result = $svc->resolve(new CareRequest(
             11,
             null,
@@ -152,9 +152,9 @@ class CareRequestPipelineCanalesTest extends Unit
                 ],
             ]
         );
-        $svc = new CareRequestPatientService(new CareRequestService($catalog), $catalog);
+        $svc = new SubmitPatientCareRequest(new ResolveCareRequest($catalog), $catalog);
         $draft = [
-            'triage_raiz' => CareRequestPatientService::TRIAGE_RAIZ_ESTUDIO,
+            'triage_raiz' => SubmitPatientCareRequest::TRIAGE_RAIZ_ESTUDIO,
             'pedido_acto' => 'ultrasonography',
         ];
         $svc->aplicarFlagsEnDraft($draft);

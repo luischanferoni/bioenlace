@@ -5,7 +5,7 @@ namespace common\components\Domain\Clinical\Capture\Infrastructure\CareRequest;
 use common\components\Domain\Clinical\Capture\Domain\Port\DerivacionRowSupportPort;
 use common\components\Domain\Clinical\CareRequest\Application\Service\CareRequestActCodingService;
 use common\components\Domain\Clinical\CareRequest\Application\Service\CareRequestMetadata;
-use common\components\Domain\Clinical\CareRequest\Application\Service\CareRequestService;
+use common\components\Domain\Clinical\CareRequest\Application\UseCase\ResolveCareRequest;
 use common\components\Domain\Clinical\CareRequest\Domain\Model\CareRequest;
 use common\components\Domain\Clinical\CareRequest\Domain\CareRequestActCoderInterface;
 use common\models\Organization\Servicio;
@@ -15,15 +15,15 @@ use common\models\Organization\Servicio;
  */
 final class YiiDerivacionRowSupportAdapter implements DerivacionRowSupportPort
 {
-    private CareRequestService $pedidos;
+    private ResolveCareRequest $pedidos;
 
     private CareRequestActCoderInterface $actoCoder;
 
     public function __construct(
-        ?CareRequestService $pedidos = null,
+        ?ResolveCareRequest $pedidos = null,
         ?CareRequestActCoderInterface $actoCoder = null
     ) {
-        $this->pedidos = $pedidos ?? new CareRequestService();
+        $this->pedidos = $pedidos ?? new ResolveCareRequest();
         $this->actoCoder = $actoCoder ?? CareRequestActCodingService::defaultService();
     }
 

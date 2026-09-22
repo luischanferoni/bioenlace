@@ -1,7 +1,8 @@
 <?php
 
-namespace common\components\Domain\Clinical\LegalExport\Application\Service;
+namespace common\components\Domain\Clinical\LegalExport\Application\UseCase;
 
+use common\components\Domain\Clinical\LegalExport\Application\Authorization\LegalExportAccessService;
 use common\models\Clinical\LegalExportAudit;
 use common\models\Clinical\LegalExportRequest;
 use Yii;
@@ -9,7 +10,7 @@ use Yii;
 /**
  * Alta y consulta de solicitudes de expediente legal (staff).
  */
-final class LegalExportRequestService
+final class RequestLegalExport
 {
     private LegalExportAccessService $access;
 

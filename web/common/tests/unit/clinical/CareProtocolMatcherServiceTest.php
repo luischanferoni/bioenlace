@@ -5,10 +5,10 @@ namespace common\tests\unit\clinical;
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\CarePlan\Application\Service\CareProtocolAdminService;
 use common\components\Domain\Clinical\CarePlan\Application\Service\CareProtocolCatalogService;
-use common\components\Domain\Clinical\CarePlan\Application\Service\CareProtocolMatcherService;
+use common\components\Domain\Clinical\CarePlan\Application\UseCase\MatchCareProtocol;
 use common\models\Clinical\CareProtocol;
 
-class CareProtocolMatcherServiceTest extends Unit
+class MatchCareProtocolTest extends Unit
 {
     protected function _before(): void
     {
@@ -49,7 +49,7 @@ class CareProtocolMatcherServiceTest extends Unit
 
     public function testMatchI10Exacto(): void
     {
-        $m = new CareProtocolMatcherService();
+        $m = new MatchCareProtocol();
         $p = $m->matchByConditionCode('I10');
         $this->assertNotNull($p);
         $this->assertSame('hta_control_periodico', $p['id']);
@@ -57,7 +57,7 @@ class CareProtocolMatcherServiceTest extends Unit
 
     public function testMatchE11ConSubcodigo(): void
     {
-        $m = new CareProtocolMatcherService();
+        $m = new MatchCareProtocol();
         $p = $m->matchByConditionCode('E11.9');
         $this->assertNotNull($p);
         $this->assertSame('diabetes_control_periodico', $p['id']);
@@ -65,13 +65,13 @@ class CareProtocolMatcherServiceTest extends Unit
 
     public function testSinMatchDevuelveNull(): void
     {
-        $m = new CareProtocolMatcherService();
+        $m = new MatchCareProtocol();
         $this->assertNull($m->matchByConditionCode('Z99.9'));
     }
 
     public function testConditionMatchChronicRequiereMarcador(): void
     {
-        $m = new CareProtocolMatcherService();
+        $m = new MatchCareProtocol();
         $this->assertNull($m->matchByConditionCode('J45', null, [
             'clinical_status' => 'ACTIVE',
             'note' => null,
@@ -86,7 +86,7 @@ class CareProtocolMatcherServiceTest extends Unit
 
     public function testActionsIncluyenOutcomeYDraft(): void
     {
-        $m = new CareProtocolMatcherService();
+        $m = new MatchCareProtocol();
         $actions = $m->actionsForConditionCode('I10');
         $this->assertNotEmpty($actions);
         $codes = array_column($actions, 'code');
@@ -105,7 +105,7 @@ class CareProtocolMatcherServiceTest extends Unit
 
     public function testMatchByProfileAdulto(): void
     {
-        $m = new CareProtocolMatcherService();
+        $m = new MatchCareProtocol();
         $matched = $m->matchByProfile(45, 'M');
         $ids = array_column($matched, 'id');
         $this->assertContains('control_preventivo_adulto', $ids);
@@ -115,7 +115,7 @@ class CareProtocolMatcherServiceTest extends Unit
 
     public function testMatchByProfileGinecologico(): void
     {
-        $m = new CareProtocolMatcherService();
+        $m = new MatchCareProtocol();
         $matched = $m->matchByProfile(30, 'F');
         $ids = array_column($matched, 'id');
         $this->assertContains('control_ginecologico_edad', $ids);
@@ -124,7 +124,7 @@ class CareProtocolMatcherServiceTest extends Unit
 
     public function testMatchByProfilePediatricoConJurisdiccion(): void
     {
-        $m = new CareProtocolMatcherService();
+        $m = new MatchCareProtocol();
         $matched = $m->matchByProfile(10, null, 14);
         $ids = array_column($matched, 'id');
         $this->assertContains('vacunas_cba', $ids);
@@ -136,7 +136,7 @@ class CareProtocolMatcherServiceTest extends Unit
 
     public function testActionsForProtocolId(): void
     {
-        $m = new CareProtocolMatcherService();
+        $m = new MatchCareProtocol();
         $actions = $m->actionsForProtocolId('control_preventivo_adulto');
         $this->assertNotEmpty($actions);
         $this->assertSame('control_preventivo_adulto', $actions[0]['protocol_id']);

@@ -1,14 +1,19 @@
 <?php
 
-namespace common\components\Domain\Clinical\Encounter\Application\Service;
+namespace common\components\Domain\Clinical\Encounter\Application\UseCase;
 
+use common\components\Domain\Clinical\Encounter\Application\Service\EncounterJourneyContextService;
+use common\components\Domain\Clinical\Encounter\Application\Service\EncounterJourneyEligibilityService;
+use common\components\Domain\Clinical\Encounter\Application\Service\EncounterJourneyFollowupStateService;
+use common\components\Domain\Clinical\Encounter\Application\Service\EncounterPhaseWindowsCatalogService;
+use common\components\Domain\Clinical\Encounter\Application\Service\EncounterPhaseWindowService;
 use common\models\Clinical\Encounter;
 use common\models\Scheduling\Turno;
 
 /**
  * Orquesta ventanas, elegibilidad y acciones del recorrido pre/post consulta.
  */
-final class EncounterJourneyService
+final class OrchestrateEncounterJourney
 {
     private EncounterJourneyContextService $contextBuilder;
     private EncounterPhaseWindowsCatalogService $windowsCatalog;

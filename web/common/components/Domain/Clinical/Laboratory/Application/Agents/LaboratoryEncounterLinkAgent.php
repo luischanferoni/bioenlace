@@ -37,12 +37,12 @@ final class LaboratoryEncounterLinkAgent
     public function resolveEncounterIdForIngest(int $subjectPersonaId, array $fhirReport, array $reportMeta): ?int
     {
         if (!$this->isEnabled()) {
-            return (new LaboratoryEncounterLinkService())->resolveEncounterIdLegacy($subjectPersonaId, $fhirReport);
+            return (new LinkLaboratoryToEncounter())->resolveEncounterIdLegacy($subjectPersonaId, $fhirReport);
         }
 
         $config = AutonomousAgentMetadata::loadAgent(self::AGENT_ID);
         if ($config === null) {
-            return (new LaboratoryEncounterLinkService())->resolveEncounterIdLegacy($subjectPersonaId, $fhirReport);
+            return (new LinkLaboratoryToEncounter())->resolveEncounterIdLegacy($subjectPersonaId, $fhirReport);
         }
 
         $result = $this->scoring->resolve($subjectPersonaId, $fhirReport, $reportMeta, $config);

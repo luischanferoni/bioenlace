@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Laboratory\Application\Service;
+namespace common\components\Domain\Clinical\Laboratory\Application\UseCase;
 
 use common\components\Domain\Clinical\Laboratory\Application\Agents\LaboratoryEncounterLinkAgent;
 
@@ -10,7 +10,7 @@ use common\models\Clinical\Encounter;
  * Resuelve encounter_id para un DiagnosticReport FHIR.
  * Delega en {@see LaboratoryEncounterLinkAgent} cuando el flag está activo.
  */
-final class LaboratoryEncounterLinkService
+final class LinkLaboratoryToEncounter
 {
     /**
      * @param array<string, mixed> $fhirResource DiagnosticReport

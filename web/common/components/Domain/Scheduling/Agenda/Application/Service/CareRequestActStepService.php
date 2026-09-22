@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Agenda\Application\Service;
 
-use common\components\Domain\Clinical\CareRequest\Application\Service\CareRequestPatientService;
+use common\components\Domain\Clinical\CareRequest\Application\UseCase\SubmitPatientCareRequest;
 
 /**
  * Paso flow-only: elección de acto clínico (estudio/práctica) en Solicitar Atención.
@@ -11,7 +11,7 @@ final class CareRequestActStepService
 {
     public const STEP_ID = 'pedido_acto';
     public const TITLE = '¿Qué estudio o práctica necesitás?';
-    public const DRAFT_FIELD = CareRequestPatientService::DRAFT_ACTO;
+    public const DRAFT_FIELD = SubmitPatientCareRequest::DRAFT_ACTO;
 
     public static function isPedidoActoStep(string $step): bool
     {
@@ -23,6 +23,6 @@ final class CareRequestActStepService
      */
     public function opciones(): array
     {
-        return (new CareRequestPatientService())->opcionesActoParaTriagePaso();
+        return (new SubmitPatientCareRequest())->opcionesActoParaTriagePaso();
     }
 }

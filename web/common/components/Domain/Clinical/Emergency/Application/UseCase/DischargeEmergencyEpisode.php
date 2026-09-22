@@ -1,7 +1,9 @@
 <?php
 
-namespace common\components\Domain\Clinical\Emergency\Application\Service;
+namespace common\components\Domain\Clinical\Emergency\Application\UseCase;
 
+use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyBoardService;
+use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyOperationService;
 use common\components\Domain\Clinical\Emergency\Domain\BoardState;
 use common\components\Domain\Clinical\Emergency\Domain\EmergencyDischargeDestination;
 use common\models\Clinical\Emergency\EmergencyEpisode;
@@ -14,7 +16,7 @@ use Yii;
  * El médico documenta el encounter (captura); este formulario solo confirma retiro.
  * guardia_id viene de la URL; el motivo no se elige — está asociado a esta acción.
  */
-final class EmergencyDischargeStructuredService
+final class DischargeEmergencyEpisode
 {
     /** @var EmergencyOperationService */
     private $operacion;

@@ -7,7 +7,7 @@ use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCapture;
 use common\components\Domain\Clinical\Capture\Domain\Port\ClinicalCaptureRepository;
 use common\components\Domain\Clinical\Capture\Infrastructure\Persistence\ActiveRecordClinicalCaptureRepository;
 use common\components\Domain\Clinical\Capture\Infrastructure\SpeechToText\CaptureSpeechInputResolver;
-use common\components\Domain\Clinical\Encounter\Application\Service\EncounterDocumentationService;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\DocumentEncounter;
 use common\components\Domain\Clinical\Encounter\Application\Service\EncounterCaptureAuditService;
 use common\components\Platform\Ai\SpeechToText\SttConfigService;
 use common\models\Clinical\EncounterCapture;
@@ -24,7 +24,7 @@ final class CaptureDraftService
 {
     private const AUDIO_DIR = 'uploads/encounter_capture';
 
-    private EncounterDocumentationService $documentation;
+    private DocumentEncounter $documentation;
 
     private EncounterCaptureAuditService $audit;
 
@@ -35,12 +35,12 @@ final class CaptureDraftService
     private CapturePresenter $presenter;
 
     public function __construct(
-        ?EncounterDocumentationService $documentation = null,
+        ?DocumentEncounter $documentation = null,
         ?EncounterCaptureAuditService $audit = null,
         ?ClinicalCaptureRepository $captures = null,
         ?CapturePresenter $presenter = null
     ) {
-        $this->documentation = $documentation ?? new EncounterDocumentationService();
+        $this->documentation = $documentation ?? new DocumentEncounter();
         $this->audit = $audit ?? new EncounterCaptureAuditService();
         $repo = $captures ?? new ActiveRecordClinicalCaptureRepository();
         $this->captures = $repo;
@@ -70,7 +70,7 @@ final class CaptureDraftService
         return $this->audit;
     }
 
-    public function documentation(): EncounterDocumentationService
+    public function documentation(): DocumentEncounter
     {
         return $this->documentation;
     }

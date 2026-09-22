@@ -1,7 +1,9 @@
 <?php
 
-namespace common\components\Domain\Clinical\LegalExport\Application\Service;
+namespace common\components\Domain\Clinical\LegalExport\Application\UseCase;
 
+use common\components\Domain\Clinical\LegalExport\Application\Service\LegalExportDataService;
+use common\components\Domain\Clinical\LegalExport\Application\Service\LegalExportPdfService;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\components\Platform\Core\Service\Push\PushNotificationTypes;
 use common\models\Clinical\LegalExportAudit;
@@ -12,7 +14,7 @@ use Yii;
 /**
  * Procesa la cola de expedientes legales (cron / consola).
  */
-final class LegalExportProcessorService
+final class ProcessLegalExport
 {
     private LegalExportDataService $collector;
     private LegalExportPdfService $pdf;

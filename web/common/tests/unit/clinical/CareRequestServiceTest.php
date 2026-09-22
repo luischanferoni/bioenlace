@@ -7,11 +7,11 @@ use common\components\Domain\Clinical\CareRequest\Domain\CodingSystems;
 use common\components\Domain\Clinical\CareRequest\Domain\InMemoryServiceLineActCatalog;
 use common\components\Domain\Clinical\CareRequest\Domain\Model\CareRequest;
 use common\components\Domain\Clinical\CareRequest\Application\Service\CareRequestMetadata;
-use common\components\Domain\Clinical\CareRequest\Application\Service\CareRequestService;
+use common\components\Domain\Clinical\CareRequest\Application\UseCase\ResolveCareRequest;
 use common\models\Clinical\Input\DerivacionInput;
 use common\models\Clinical\ConsultaDerivaciones;
 
-class CareRequestServiceTest extends Unit
+class ResolveCareRequestTest extends Unit
 {
     protected function _before(): void
     {
@@ -58,7 +58,7 @@ class CareRequestServiceTest extends Unit
                 ],
             ]
         );
-        $svc = new CareRequestService($catalog);
+        $svc = new ResolveCareRequest($catalog);
         $result = $svc->resolve(new CareRequest(10, null, null, CareRequest::MODO_INTERCONSULTA));
 
         $this->assertTrue($result['complete']);
@@ -87,7 +87,7 @@ class CareRequestServiceTest extends Unit
                 ],
             ]
         );
-        $svc = new CareRequestService($catalog);
+        $svc = new ResolveCareRequest($catalog);
         $result = $svc->resolve(new CareRequest(
             null,
             '16310003',
@@ -127,7 +127,7 @@ class CareRequestServiceTest extends Unit
                 ],
             ]
         );
-        $svc = new CareRequestService($catalog);
+        $svc = new ResolveCareRequest($catalog);
         $result = $svc->resolve(new CareRequest(
             null,
             '16310003',
@@ -152,7 +152,7 @@ class CareRequestServiceTest extends Unit
             ],
             []
         );
-        $svc = new CareRequestService($catalog);
+        $svc = new ResolveCareRequest($catalog);
         $result = $svc->resolve(new CareRequest(
             10,
             '91251008',
@@ -169,7 +169,7 @@ class CareRequestServiceTest extends Unit
 
     public function testDescartaCodeSystemLocal(): void
     {
-        $svc = new CareRequestService(new InMemoryServiceLineActCatalog());
+        $svc = new ResolveCareRequest(new InMemoryServiceLineActCatalog());
         $result = $svc->resolve(new CareRequest(
             null,
             'eco_abdominal',

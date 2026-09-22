@@ -4,7 +4,7 @@ namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
-use common\components\Domain\Clinical\Encounter\Application\Service\EncounterDocumentationService;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\DocumentEncounter;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
 use ReflectionMethod;
@@ -16,8 +16,8 @@ class EncounterEpisodeResolveTest extends Unit
 {
     public function testResolveReturnsNullWhenParentIdMissing(): void
     {
-        $svc = new EncounterDocumentationService();
-        $method = new ReflectionMethod(EncounterDocumentationService::class, 'resolveEncounterForParent');
+        $svc = new DocumentEncounter();
+        $method = new ReflectionMethod(DocumentEncounter::class, 'resolveEncounterForParent');
         $method->setAccessible(true);
 
         $persona = new Persona();
@@ -45,7 +45,7 @@ class EncounterEpisodeResolveTest extends Unit
         ]);
 
         $src = (string) file_get_contents(
-            dirname(__DIR__, 3) . '/components/Domain/Clinical/Encounter/Application/Documentation/EncounterDocumentationService.php'
+            dirname(__DIR__, 3) . '/components/Domain/Clinical/Encounter/Application/Documentation/DocumentEncounter.php'
         );
         $this->assertStringContainsString("['status' => EncounterStatus::IN_PROGRESS]", $src);
         $this->assertStringContainsString('PARENT_INTERNACION, Encounter::PARENT_GUARDIA', $src);

@@ -90,7 +90,7 @@ final class ProfesionalEfectorServicioAgendaVersionService
         $confirmar = !empty($post['confirmar_cambios']) && (string) $post['confirmar_cambios'] !== '0';
 
         if (!empty($post['forzar_sin_confirmacion'])
-            || AgendaConfigImpactProfile::isModalityOnlySubmit($post)) {
+            || AgendaConfigImpactCatalog::isModalityOnlySubmit($post)) {
             $confirmar = true;
         }
 
@@ -105,14 +105,14 @@ final class ProfesionalEfectorServicioAgendaVersionService
             }
         }
 
-        $needsConfirm = AgendaConfigImpactProfile::previewRequiresUserConfirmation($preview, $post);
+        $needsConfirm = AgendaConfigImpactCatalog::previewRequiresUserConfirmation($preview, $post);
         if ($needsConfirm && !$confirmar) {
             throw new BadRequestHttpException(
                 'Confirme el cambio de agenda tras revisar el impacto en turnos futuros.'
             );
         }
 
-        if (!AgendaConfigImpactProfile::isModalityOnlySubmit($post)) {
+        if (!AgendaConfigImpactCatalog::isModalityOnlySubmit($post)) {
             self::assertWeeklyOccupancy($idPes, $idEfector, $post);
         }
 

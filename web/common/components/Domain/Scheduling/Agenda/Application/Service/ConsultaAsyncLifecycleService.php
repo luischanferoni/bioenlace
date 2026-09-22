@@ -44,7 +44,7 @@ final class ConsultaAsyncLifecycleService
     public function cerrarComoStaff(int $encounterId, string $resolutionCode, ?string $note = null): array
     {
         $encounter = $this->requireAsyncEncounter($encounterId);
-        if (!ConsultaAsyncAccessService::staffCanAccessAsyncEncounter($encounter)) {
+        if (!ConsultaAsyncAccess::staffCanAccessAsyncEncounter($encounter)) {
             throw new \InvalidArgumentException('No tenés permiso para cerrar esta solicitud.');
         }
 

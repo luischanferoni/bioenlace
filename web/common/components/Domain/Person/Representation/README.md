@@ -8,7 +8,7 @@ Documentación de producto: [web/docs/producto/representacion-paciente.md](../..
 
 | Servicio | Responsabilidad |
 |----------|-----------------|
-| `PersonRepresentationAccessService` | `canAct(actor, subject, permission)` |
+| `PersonRepresentationAccess` | `canAct(actor, subject, permission)` |
 | `PersonRepresentationSubjectService` | Resolver sujeto, sesión `subjectPersonaPaciente`, auditoría delegada |
 | `VerifiedGuardianshipService` | Régimen A: solicitar, listar, staff verificar/bloquear/revocar |
 | `PatientDelegationService` | Régimen B: designar, revocar, listar representantes / pacientes a cargo |

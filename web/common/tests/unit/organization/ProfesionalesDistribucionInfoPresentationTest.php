@@ -3,11 +3,11 @@
 namespace common\tests\unit\organization;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Organization\Pes\Application\Presentation\ProfesionalesDistribucionInfoPresentation;
+use common\components\Domain\Organization\Pes\Application\Presentation\ProfesionalesDistribucionInfoPresenter;
 use common\components\Platform\Core\DataAccess\MetricExecutionResult;
 use common\components\Platform\Core\DataAccess\QueryOutputMode;
 
-class ProfesionalesDistribucionInfoPresentationTest extends Unit
+class ProfesionalesDistribucionInfoPresenterTest extends Unit
 {
     public function testSingleServiceSentence(): void
     {
@@ -15,7 +15,7 @@ class ProfesionalesDistribucionInfoPresentationTest extends Unit
             ['total' => 6, 'id_servicio' => 7, 'servicio_nombre' => 'MED GENERAL'],
         ]);
 
-        $params = (new ProfesionalesDistribucionInfoPresentation())->buildRenderParams($result);
+        $params = (new ProfesionalesDistribucionInfoPresenter())->buildRenderParams($result);
 
         $this->assertSame('Profesionales por servicio', $params['info_title']);
         $this->assertSame('En Hospital Demo hay 6 profesionales en MED GENERAL.', $params['info_texto']);
@@ -28,7 +28,7 @@ class ProfesionalesDistribucionInfoPresentationTest extends Unit
             ['total' => 6, 'id_servicio' => 7, 'servicio_nombre' => 'MED GENERAL'],
         ]);
 
-        $texto = (new ProfesionalesDistribucionInfoPresentation())->buildResumenTexto($result);
+        $texto = (new ProfesionalesDistribucionInfoPresenter())->buildResumenTexto($result);
 
         $this->assertStringContainsString('En Hospital Demo hay profesionales en 2 servicios:', $texto);
         $this->assertStringContainsString('• MED GENERAL: 6 profesionales', $texto);
@@ -42,7 +42,7 @@ class ProfesionalesDistribucionInfoPresentationTest extends Unit
 
     public function testEmptyGroups(): void
     {
-        $texto = (new ProfesionalesDistribucionInfoPresentation())->buildResumenTexto($this->result([]));
+        $texto = (new ProfesionalesDistribucionInfoPresenter())->buildResumenTexto($this->result([]));
 
         $this->assertSame('En Hospital Demo no hay profesionales asignados a servicios.', $texto);
     }

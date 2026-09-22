@@ -8,7 +8,7 @@ use common\models\Clinical\InpatientStay;
 
 /**
  * Pertinencia geográfica internación ↔ efector (camas, pisos).
- * Autorización por efector: políticas `Internacion.*` + {@see EfectorAccessService}.
+ * Autorización por efector: políticas `Internacion.*` + {@see EfectorOperationAccess}.
  */
 final class InpatientEfectorAccess
 {

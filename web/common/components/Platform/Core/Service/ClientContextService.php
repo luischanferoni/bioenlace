@@ -2,7 +2,7 @@
 
 namespace common\components\Platform\Core\Service;
 
-use common\components\Domain\Person\Ventanilla\Application\Service\VentanillaSesionMetadata;
+use common\components\Domain\Person\Ventanilla\Application\Service\VentanillaSesionConfigService;
 use common\components\Domain\Person\Ventanilla\Application\Service\VentanillaSesionService;
 use common\components\Platform\Core\Product\ClientContextMetadata;
 use Yii;
@@ -124,7 +124,7 @@ final class ClientContextService
             return [];
         }
         $map = [];
-        foreach (VentanillaSesionMetadata::unhidePacienteIntentIds() as $id) {
+        foreach (VentanillaSesionConfigService::unhidePacienteIntentIds() as $id) {
             $map[$id] = true;
         }
 

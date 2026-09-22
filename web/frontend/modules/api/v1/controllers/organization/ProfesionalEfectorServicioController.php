@@ -7,7 +7,7 @@ use Yii;
 use yii\web\BadRequestHttpException;
 use common\components\Platform\Core\Permission\Domain\ApiDomainOperationBridge;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
-use common\components\Domain\Organization\Pes\Application\Authorization\ProfesionalEfectorServicioDomainAuthorizationService;
+use common\components\Domain\Organization\Pes\Application\Authorization\ProfesionalEfectorServicioAccess;
 use yii\web\ForbiddenHttpException;
 use yii\web\MethodNotAllowedHttpException;
 use common\components\Domain\Organization\Pes\Application\Service\FhirScheduleOnboardingUiService;

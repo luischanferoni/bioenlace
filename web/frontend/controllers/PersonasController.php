@@ -115,7 +115,7 @@ class PersonasController extends Controller
      */
     public function actionListaCandidatos()
     {
-        \common\components\Domain\Person\Identidad\Application\Service\PersonasMpiLegacyGate::deny();
+        \common\components\Domain\Person\Identidad\Application\Authorization\PersonasMpiLegacyAccess::deny();
     }
 
     /**
@@ -124,7 +124,7 @@ class PersonasController extends Controller
      */
     public function actionSeleccionarPersona($id = null, $tipo = null)
     {
-        \common\components\Domain\Person\Identidad\Application\Service\PersonasMpiLegacyGate::deny();
+        \common\components\Domain\Person\Identidad\Application\Authorization\PersonasMpiLegacyAccess::deny();
     }
 
     /**

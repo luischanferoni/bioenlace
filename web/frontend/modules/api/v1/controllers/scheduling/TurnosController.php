@@ -58,7 +58,7 @@ use yii\web\ForbiddenHttpException;
 use yii\web\ConflictHttpException;
 use yii\web\MethodNotAllowedHttpException;
 use yii\db\Expression;
-use common\components\Domain\Person\Representation\Domain\RepresentationPermission;
+use common\components\Domain\Person\Representation\Domain\Model\RepresentationPermission;
 use common\components\Platform\Core\Permission\Domain\ApiDomainOperationBridge;
 use common\components\Domain\Person\Identidad\Application\Service\PacienteContextoOfferingService;
 use common\components\Domain\Person\Representation\Application\Service\PersonRepresentationSubjectService;
@@ -2262,7 +2262,7 @@ class TurnosController extends BaseController
         if ($req->isPost) {
             try {
                 $params = array_merge($req->get(), $req->post());
-                $idEfector = \common\components\Domain\Organization\Efector\Application\Authorization\EfectorAccessService::assertAndResolveIdEfector(
+                $idEfector = \common\components\Domain\Organization\Efector\Application\Authorization\EfectorOperationAccess::assertAndResolveIdEfector(
                     'turnos.indicadores-agenda-flow',
                     $params
                 );

@@ -3,9 +3,9 @@
 namespace common\tests\unit\integrations;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Person\Identidad\Infrastructure\External\Mpi\MpiDomicilioNormalizer;
+use common\components\Domain\Person\Identidad\Infrastructure\External\Mpi\MpiDomicilioMapper;
 
-class MpiDomicilioNormalizerTest extends Unit
+class MpiDomicilioMapperTest extends Unit
 {
     public function testNormalizeFlatRow(): void
     {
@@ -23,7 +23,7 @@ class MpiDomicilioNormalizerTest extends Unit
             ],
         ];
 
-        $row = MpiDomicilioNormalizer::normalizeResponse($response);
+        $row = MpiDomicilioMapper::normalizeResponse($response);
         $this->assertIsArray($row);
         $this->assertSame('06', $row['id_provincia']);
         $this->assertSame('CALLE 7', $row['calle']);
@@ -49,7 +49,7 @@ class MpiDomicilioNormalizerTest extends Unit
             ],
         ];
 
-        $row = MpiDomicilioNormalizer::normalizeResponse($response);
+        $row = MpiDomicilioMapper::normalizeResponse($response);
         $this->assertIsArray($row);
         $this->assertSame('82', $row['id_provincia']);
         $this->assertSame('SANTA FE', $row['provincia']);
@@ -59,8 +59,8 @@ class MpiDomicilioNormalizerTest extends Unit
 
     public function testReturnsNullWhenNoDomicilioData(): void
     {
-        $this->assertNull(MpiDomicilioNormalizer::normalizeResponse(null));
-        $this->assertNull(MpiDomicilioNormalizer::normalizeResponse([
+        $this->assertNull(MpiDomicilioMapper::normalizeResponse(null));
+        $this->assertNull(MpiDomicilioMapper::normalizeResponse([
             'successful' => 0,
             'statusCode' => 404,
             'data' => [],

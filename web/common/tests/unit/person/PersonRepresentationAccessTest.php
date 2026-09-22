@@ -3,17 +3,17 @@
 namespace common\tests\unit\person;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Person\Representation\Domain\DelegationConsentStatus;
-use common\components\Domain\Person\Representation\Domain\PersonRelatedStatus;
-use common\components\Domain\Person\Representation\Domain\PersonRelatedVerifiedBy;
-use common\components\Domain\Person\Representation\Domain\RepresentationPermission;
-use common\components\Domain\Person\Representation\Domain\RepresentationRegime;
-use common\components\Domain\Person\Representation\Application\Authorization\PersonRepresentationAccessService;
+use common\components\Domain\Person\Representation\Domain\Model\DelegationConsentStatus;
+use common\components\Domain\Person\Representation\Domain\Model\PersonRelatedStatus;
+use common\components\Domain\Person\Representation\Domain\Model\PersonRelatedVerifiedBy;
+use common\components\Domain\Person\Representation\Domain\Model\RepresentationPermission;
+use common\components\Domain\Person\Representation\Domain\Model\RepresentationRegime;
+use common\components\Domain\Person\Representation\Application\Authorization\PersonRepresentationAccess;
 use common\components\Domain\Person\Representation\Domain\Catalog\RepresentationPermissionsCatalog;
 use common\models\Person\PersonDelegationConsent;
 use common\models\Person\PersonRelated;
 
-class PersonRepresentationAccessServiceTest extends Unit
+class PersonRepresentationAccessTest extends Unit
 {
     protected function _before(): void
     {
@@ -28,7 +28,7 @@ class PersonRepresentationAccessServiceTest extends Unit
             PersonRelatedVerifiedBy::STAFF
         );
 
-        verify(PersonRepresentationAccessService::evaluateAccess(
+        verify(PersonRepresentationAccess::evaluateAccess(
             $link,
             null,
             RepresentationPermission::SCHEDULING_TURNO
@@ -52,12 +52,12 @@ class PersonRepresentationAccessServiceTest extends Unit
             100
         );
 
-        verify(PersonRepresentationAccessService::evaluateAccess(
+        verify(PersonRepresentationAccess::evaluateAccess(
             $father1,
             null,
             RepresentationPermission::SCHEDULING_TURNO
         ))->true();
-        verify(PersonRepresentationAccessService::evaluateAccess(
+        verify(PersonRepresentationAccess::evaluateAccess(
             $father2,
             null,
             RepresentationPermission::CLINICAL_MOTIVOS
@@ -72,7 +72,7 @@ class PersonRepresentationAccessServiceTest extends Unit
             PersonRelatedVerifiedBy::STAFF
         );
 
-        verify(PersonRepresentationAccessService::evaluateAccess(
+        verify(PersonRepresentationAccess::evaluateAccess(
             $link,
             null,
             RepresentationPermission::SCHEDULING_TURNO
@@ -87,7 +87,7 @@ class PersonRepresentationAccessServiceTest extends Unit
             PersonRelatedVerifiedBy::NONE
         );
 
-        verify(PersonRepresentationAccessService::evaluateAccess(
+        verify(PersonRepresentationAccess::evaluateAccess(
             $link,
             null,
             RepresentationPermission::SCHEDULING_TURNO
@@ -96,7 +96,7 @@ class PersonRepresentationAccessServiceTest extends Unit
         $revokedConsent = new PersonDelegationConsent();
         $revokedConsent->status = DelegationConsentStatus::REVOKED;
 
-        verify(PersonRepresentationAccessService::evaluateAccess(
+        verify(PersonRepresentationAccess::evaluateAccess(
             $link,
             $revokedConsent,
             RepresentationPermission::SCHEDULING_TURNO
@@ -113,7 +113,7 @@ class PersonRepresentationAccessServiceTest extends Unit
         $consent = new PersonDelegationConsent();
         $consent->status = DelegationConsentStatus::ACTIVE;
 
-        verify(PersonRepresentationAccessService::evaluateAccess(
+        verify(PersonRepresentationAccess::evaluateAccess(
             $link,
             $consent,
             RepresentationPermission::CLINICAL_HISTORIA_RESUMEN
@@ -128,7 +128,7 @@ class PersonRepresentationAccessServiceTest extends Unit
             PersonRelatedVerifiedBy::NONE
         );
 
-        verify(PersonRepresentationAccessService::evaluateAccess(
+        verify(PersonRepresentationAccess::evaluateAccess(
             $link,
             null,
             RepresentationPermission::SCHEDULING_TURNO
@@ -148,12 +148,12 @@ class PersonRepresentationAccessServiceTest extends Unit
         $consent = new PersonDelegationConsent();
         $consent->status = DelegationConsentStatus::ACTIVE;
 
-        verify(PersonRepresentationAccessService::evaluateAccess(
+        verify(PersonRepresentationAccess::evaluateAccess(
             $link,
             $consent,
             RepresentationPermission::CLINICAL_MOTIVOS
         ))->true();
-        verify(PersonRepresentationAccessService::evaluateAccess(
+        verify(PersonRepresentationAccess::evaluateAccess(
             $link,
             $consent,
             RepresentationPermission::SCHEDULING_TURNO

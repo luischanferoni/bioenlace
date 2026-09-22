@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Home\Sections;
 
-use common\components\Domain\Organization\Efector\Application\Authorization\EfectorAccessService;
+use common\components\Domain\Organization\Efector\Application\Authorization\EfectorOperationAccess;
 use common\components\Domain\Organization\Pes\Application\Service\ProfesionalHorarioActivaService;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Platform\Ui\Home\Service\Sections\HomePanelSectionProviderInterface;
@@ -41,7 +41,7 @@ final class StaffHorarioActivoSectionProvider implements HomePanelSectionProvide
         if ($encounterClass === Encounter::ENCOUNTER_CLASS_EMER) {
             $params = $fromContext > 0 ? ['id_efector' => $fromContext] : [];
             try {
-                return EfectorAccessService::assertAndResolveIdEfector('GuardiaEpisode.view_board', $params);
+                return EfectorOperationAccess::assertAndResolveIdEfector('GuardiaEpisode.view_board', $params);
             } catch (DomainOperationForbiddenException $e) {
                 throw new \InvalidArgumentException(
                     $e->getMessage() !== '' ? $e->getMessage() : 'No autorizado.',

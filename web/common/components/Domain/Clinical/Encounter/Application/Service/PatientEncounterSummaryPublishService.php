@@ -6,7 +6,7 @@ use common\components\Domain\Clinical\CareCohort\Application\Service\CareFollowu
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\components\Platform\Core\Service\Push\PushNotificationTypes;
-use common\components\Domain\Person\Representation\Domain\RepresentationPermission;
+use common\components\Domain\Person\Representation\Domain\Model\RepresentationPermission;
 use common\components\Domain\Person\Representation\Application\Service\PersonRepresentationNotifyRecipientService;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterPatientSummary;

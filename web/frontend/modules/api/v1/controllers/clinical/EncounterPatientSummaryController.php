@@ -4,7 +4,7 @@ namespace frontend\modules\api\v1\controllers\clinical;
 
 use common\components\Domain\Clinical\Encounter\Application\Service\PatientEncounterSummaryQueryService;
 use common\components\Domain\Clinical\Encounter\Application\Service\PatientEncounterSummaryPresenter;
-use common\components\Domain\Person\Representation\Domain\RepresentationPermission;
+use common\components\Domain\Person\Representation\Domain\Model\RepresentationPermission;
 use common\components\Domain\Person\Representation\Application\Service\PersonRepresentationSubjectService;
 use common\components\Platform\Ui\UiScreenService;
 use common\models\Person\PersonRelatedAuditLog;

@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Clinical\Encounter\Application\Authorization;
 
-use common\components\Domain\Person\Representation\Application\Authorization\PersonRepresentationAccessService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncAccessService;
+use common\components\Domain\Person\Representation\Application\Authorization\PersonRepresentationAccess;
+use common\components\Domain\Scheduling\Agenda\Application\Authorization\ConsultaAsyncAccess;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
 use common\models\Organization\ProfesionalEfectorServicio;
@@ -25,7 +25,7 @@ final class EncounterOwnershipAccess
         }
 
         if ($representationPermission !== null && $actorId > 0 && $subjectId > 0) {
-            if ((new PersonRepresentationAccessService())->canAct($actorId, $subjectId, $representationPermission)) {
+            if ((new PersonRepresentationAccess())->canAct($actorId, $subjectId, $representationPermission)) {
                 return true;
             }
         }
@@ -45,7 +45,7 @@ final class EncounterOwnershipAccess
             }
         }
 
-        if (ConsultaAsyncAccessService::staffCanAccessAsyncEncounter($encounter)) {
+        if (ConsultaAsyncAccess::staffCanAccessAsyncEncounter($encounter)) {
             return true;
         }
 

@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Organization\Pes\Application\Service;
 
-use common\components\Domain\Organization\Pes\Application\Authorization\ProfesionalEfectorServicioDomainAuthorizationService;
+use common\components\Domain\Organization\Pes\Application\Authorization\ProfesionalEfectorServicioAccess;
 use common\components\Platform\Core\Permission\IntentRequestContextService;
 use common\components\Platform\Core\Permission\IntentSubmitFieldFilter;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
@@ -416,7 +416,7 @@ final class ProfesionalEfectorServicioAgendaUiService
         }
 
         try {
-            (new ProfesionalEfectorServicioDomainAuthorizationService())->assertCondicionLaboralForIntent(
+            (new ProfesionalEfectorServicioAccess())->assertCondicionLaboralForIntent(
                 array_merge($post, [
                     'id_profesional_efector_servicio' => $idPes,
                     'id_efector' => $idEfector,

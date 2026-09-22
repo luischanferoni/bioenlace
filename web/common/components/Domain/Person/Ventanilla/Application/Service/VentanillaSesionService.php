@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Person\Ventanilla\Application\Service;
 
-use common\components\Domain\Person\Representation\Domain\RepresentationPermission;
+use common\components\Domain\Person\Representation\Domain\Model\RepresentationPermission;
 use common\components\Domain\Person\Identidad\Application\Service\PersonaIdentidadResolverService;
 use common\models\Person\Persona;
 use common\models\Person\VentanillaSesion;
@@ -50,7 +50,7 @@ final class VentanillaSesionService
         $row->id_efector = $idEfector;
         $row->identity_method = $this->identityMethod($body);
         $row->started_at = $now;
-        $row->expires_at = date('Y-m-d H:i:s', time() + VentanillaSesionMetadata::ttlMinutes() * 60);
+        $row->expires_at = date('Y-m-d H:i:s', time() + VentanillaSesionConfigService::ttlMinutes() * 60);
         $row->created_at = $now;
         if (!$row->save()) {
             throw new \RuntimeException(

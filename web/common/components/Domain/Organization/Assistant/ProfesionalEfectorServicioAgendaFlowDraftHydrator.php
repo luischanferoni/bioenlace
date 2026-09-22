@@ -3,7 +3,7 @@
 namespace common\components\Domain\Organization\Assistant;
 
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
-use common\components\Domain\Organization\Pes\Application\Authorization\ProfesionalEfectorServicioDomainAuthorizationService;
+use common\components\Domain\Organization\Pes\Application\Authorization\ProfesionalEfectorServicioAccess;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Organization\Servicio;
 use Yii;
@@ -66,7 +66,7 @@ final class ProfesionalEfectorServicioAgendaFlowDraftHydrator
         }
 
         try {
-            (new ProfesionalEfectorServicioDomainAuthorizationService())->assertPesOperation(
+            (new ProfesionalEfectorServicioAccess())->assertPesOperation(
                 [
                     'id_profesional_efector_servicio' => $idPes,
                     'id_efector' => $idEfector,

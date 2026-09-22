@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\Encounter\Application\Service;
 
 use common\components\Domain\Clinical\Encounter\Application\Authorization\EncounterAccessService;
-use common\components\Domain\Person\Representation\Domain\RepresentationPermission;
+use common\components\Domain\Person\Representation\Domain\Model\RepresentationPermission;
 use common\components\Domain\Person\Representation\Application\Service\PersonRepresentationSubjectService;
 use common\models\Clinical\Encounter;
 use common\models\Scheduling\Turno;

@@ -4,20 +4,20 @@ namespace common\tests\unit\person;
 
 use Codeception\Test\Unit;
 use common\components\Domain\Person\Identidad\Application\Service\PersonaIdentidadResolverService;
-use common\components\Domain\Person\Ventanilla\Application\Service\VentanillaSesionMetadata;
+use common\components\Domain\Person\Ventanilla\Application\Service\VentanillaSesionConfigService;
 use common\models\Person\VentanillaSesion;
 
 class VentanillaSesionTest extends Unit
 {
     protected function _after(): void
     {
-        VentanillaSesionMetadata::reset();
+        VentanillaSesionConfigService::reset();
     }
 
     public function testTtlMinutesDefaultFromYaml(): void
     {
-        VentanillaSesionMetadata::reset();
-        $ttl = VentanillaSesionMetadata::ttlMinutes();
+        VentanillaSesionConfigService::reset();
+        $ttl = VentanillaSesionConfigService::ttlMinutes();
         $this->assertGreaterThanOrEqual(1, $ttl);
         $this->assertLessThanOrEqual(120, $ttl);
         $this->assertSame(15, $ttl);
@@ -25,8 +25,8 @@ class VentanillaSesionTest extends Unit
 
     public function testUnhidePacienteIntentIdsFromYaml(): void
     {
-        VentanillaSesionMetadata::reset();
-        $ids = VentanillaSesionMetadata::unhidePacienteIntentIds();
+        VentanillaSesionConfigService::reset();
+        $ids = VentanillaSesionConfigService::unhidePacienteIntentIds();
         $this->assertContains('turnos.crear-como-paciente', $ids);
         $this->assertContains('turnos.ver-mis-turnos-como-paciente', $ids);
     }

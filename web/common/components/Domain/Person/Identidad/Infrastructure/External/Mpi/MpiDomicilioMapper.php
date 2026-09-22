@@ -5,7 +5,7 @@ namespace common\components\Domain\Person\Identidad\Infrastructure\External\Mpi;
 /**
  * Normaliza respuestas del endpoint MPI domicilio a fila plana para persistencia local.
  */
-final class MpiDomicilioNormalizer
+final class MpiDomicilioMapper
 {
     /**
      * @param array<string, mixed>|null $response

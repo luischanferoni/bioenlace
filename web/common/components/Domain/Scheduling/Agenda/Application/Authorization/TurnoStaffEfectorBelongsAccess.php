@@ -10,7 +10,7 @@ use common\models\Scheduling\Turno;
 /**
  * Staff: el turno pertenece al efector de la sesión operativa.
  */
-final class TurnoStaffEfectorBelongsPolicy implements DomainOperationPolicyInterface
+final class TurnoStaffEfectorBelongsAccess implements DomainOperationPolicyInterface
 {
     public function assert(DomainOperationContext $ctx, $resource): void
     {

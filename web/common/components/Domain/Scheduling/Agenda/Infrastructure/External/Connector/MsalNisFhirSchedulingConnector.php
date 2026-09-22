@@ -4,7 +4,7 @@ namespace common\components\Domain\Scheduling\Agenda\Infrastructure\External\Con
 
 use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Contract\FhirSchedulingInboundConnector;
 use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Exception\FhirSchedulingConnectorException;
-use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Service\FhirBundleHelper;
+use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Mapper\FhirBundleMapper;
 use Yii;
 use yii\base\Component;
 use yii\httpclient\Client;
@@ -77,7 +77,7 @@ class MsalNisFhirSchedulingConnector extends Component implements FhirScheduling
         }
 
         $raw = $this->readAppointment($appointmentId);
-        $resources = FhirBundleHelper::collectResources($raw, 'Appointment');
+        $resources = FhirBundleMapper::collectResources($raw, 'Appointment');
         $appointment = $resources[0] ?? null;
         if ($appointment === null || ($appointment['resourceType'] ?? '') !== 'Appointment') {
             throw new FhirSchedulingConnectorException("Appointment {$appointmentId} no encontrado en NIS FHIR.");

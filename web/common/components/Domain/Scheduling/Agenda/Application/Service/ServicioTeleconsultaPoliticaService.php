@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Agenda\Application\Service;
 
-use common\components\Domain\Organization\Efector\Application\Authorization\EfectorAccessService;
+use common\components\Domain\Organization\Efector\Application\Authorization\EfectorOperationAccess;
 use common\components\Domain\Organization\SesionOperativa\Application\Service\SesionOperativaService;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\models\Scheduling\ReservaTriageTeleconsultaElegibilidad;
@@ -283,7 +283,7 @@ final class ServicioTeleconsultaPoliticaService
      */
     public function resolveIdEfector(array $params): int
     {
-        return EfectorAccessService::assertAndResolveIdEfector(
+        return EfectorOperationAccess::assertAndResolveIdEfector(
             self::DOMAIN_OPERATION_CONFIGURAR,
             $params
         );

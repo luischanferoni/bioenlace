@@ -37,13 +37,13 @@ use common\components\Domain\Organization\DataAccess\Filter\ServicioRolEfectorId
 use common\components\Domain\Organization\DataAccess\Filter\ServicioRolFromMentionFilterResolver;
 use common\components\Domain\Organization\DataAccess\Scope\EfectorSesionScopeChecker;
 use common\components\Domain\Organization\DataAccess\Scope\EfectorSesionViaPesScopeChecker;
-use common\components\Domain\Organization\Pes\Application\Presentation\ProfesionalesConteoInfoPresentation;
-use common\components\Domain\Organization\Pes\Application\Presentation\ProfesionalesDistribucionInfoPresentation;
-use common\components\Domain\Organization\Pes\Application\Presentation\ProfesionalesListadoRowsPresentation;
-use common\components\Domain\Organization\Efector\Application\Authorization\OrganizationEfectorSesionPolicy;
-use common\components\Domain\Organization\Pes\Application\Authorization\OrganizationPesEfectorPolicy;
-use common\components\Domain\Organization\Pes\Application\Authorization\OrganizationPesOwnPolicy;
-use common\components\Domain\Organization\Pes\Application\Service\OrganizationIntentSubjectResolvers;
+use common\components\Domain\Organization\Pes\Application\Presentation\ProfesionalesConteoInfoPresenter;
+use common\components\Domain\Organization\Pes\Application\Presentation\ProfesionalesDistribucionInfoPresenter;
+use common\components\Domain\Organization\Pes\Application\Presentation\ProfesionalesListadoRowsPresenter;
+use common\components\Domain\Organization\Efector\Application\Authorization\OrganizationEfectorSesionAccess;
+use common\components\Domain\Organization\Pes\Application\Authorization\OrganizationPesEfectorAccess;
+use common\components\Domain\Organization\Pes\Application\Authorization\OrganizationPesOwnAccess;
+use common\components\Domain\Organization\Pes\Application\Service\OrganizationIntentSubjectResolver;
 use common\components\Domain\Person\Assistant\PacienteRecursoProvincialFlowDraftHydrator;
 use common\components\Domain\Organization\Assistant\ProfesionalEfectorServicioAgendaFlowDraftHydrator;
 use common\components\Domain\Organization\Assistant\ProfesionalEfectorServicioCrearFlowDraftHydrator;
@@ -58,9 +58,9 @@ use common\components\Domain\Scheduling\Home\Sections\StaffEfectorModalidadKpiSe
 use common\components\Domain\Scheduling\Home\Sections\StaffAgendaKpiSectionProvider;
 use common\components\Domain\Scheduling\Home\Sections\StaffSurgeryKpiSectionProvider;
 use common\components\Domain\Scheduling\Home\Sections\SurgeriesDaySectionProvider;
-use common\components\Domain\Scheduling\Agenda\Application\Authorization\TurnoCreateSubjectPolicy;
-use common\components\Domain\Scheduling\Agenda\Application\Authorization\TurnoStaffEfectorBelongsPolicy;
-use common\components\Domain\Scheduling\Agenda\Application\Authorization\TurnoSubjectOrRepresentativePolicy;
+use common\components\Domain\Scheduling\Agenda\Application\Authorization\TurnoCreateSubjectAccess;
+use common\components\Domain\Scheduling\Agenda\Application\Authorization\TurnoStaffEfectorBelongsAccess;
+use common\components\Domain\Scheduling\Agenda\Application\Authorization\TurnoSubjectOrRepresentativeAccess;
 use common\models\Organization\Condiciones_laborales;
 use common\components\Domain\Organization\Assistant\OrganizationHintCandidateProvider;
 use common\components\Domain\Organization\Assistant\OrganizationUiSelectOptionSourceProvider;
@@ -94,17 +94,17 @@ return [
     ],
 
     'intentSubjectResolvers' => [
-        'organization.pes_own_in_efector' => [OrganizationIntentSubjectResolvers::class, 'hydratePesOwnInEfector'],
-        'organization.pes_staff_in_efector' => [OrganizationIntentSubjectResolvers::class, 'hydratePesStaffInEfector'],
+        'organization.pes_own_in_efector' => [OrganizationIntentSubjectResolver::class, 'hydratePesOwnInEfector'],
+        'organization.pes_staff_in_efector' => [OrganizationIntentSubjectResolver::class, 'hydratePesStaffInEfector'],
     ],
 
     'domainOperationPolicies' => [
-        'turno.subject_or_representative' => TurnoSubjectOrRepresentativePolicy::class,
-        'turno.staff_efector_belongs' => TurnoStaffEfectorBelongsPolicy::class,
-        'turno.create_subject_or_representative' => TurnoCreateSubjectPolicy::class,
-        'organization.efector_sesion' => OrganizationEfectorSesionPolicy::class,
-        'organization.pes_efector' => OrganizationPesEfectorPolicy::class,
-        'organization.pes_own' => OrganizationPesOwnPolicy::class,
+        'turno.subject_or_representative' => TurnoSubjectOrRepresentativeAccess::class,
+        'turno.staff_efector_belongs' => TurnoStaffEfectorBelongsAccess::class,
+        'turno.create_subject_or_representative' => TurnoCreateSubjectAccess::class,
+        'organization.efector_sesion' => OrganizationEfectorSesionAccess::class,
+        'organization.pes_efector' => OrganizationPesEfectorAccess::class,
+        'organization.pes_own' => OrganizationPesOwnAccess::class,
         'clinical.encounter_participant' => ClinicalEncounterAccessPolicy::class,
         'clinical.internacion_staff_access' => ClinicalInpatientStaffAccessPolicy::class,
     ],
@@ -123,11 +123,11 @@ return [
 
     'metricPresentationHandlers' => [
         'info' => [
-            'organization.profesionales_conteo_info' => ProfesionalesConteoInfoPresentation::class,
-            'organization.profesionales_distribucion_info' => ProfesionalesDistribucionInfoPresentation::class,
+            'organization.profesionales_conteo_info' => ProfesionalesConteoInfoPresenter::class,
+            'organization.profesionales_distribucion_info' => ProfesionalesDistribucionInfoPresenter::class,
         ],
         'list' => [
-            'organization.profesionales_listado_rows' => ProfesionalesListadoRowsPresentation::class,
+            'organization.profesionales_listado_rows' => ProfesionalesListadoRowsPresenter::class,
         ],
     ],
 

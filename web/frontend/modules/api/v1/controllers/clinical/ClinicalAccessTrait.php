@@ -4,10 +4,10 @@ namespace frontend\modules\api\v1\controllers\clinical;
 
 use common\components\Domain\Clinical\Inpatient\Application\InpatientAccessService;
 use common\components\Domain\Clinical\Encounter\Application\Authorization\EncounterAccessService;
-use common\components\Domain\Organization\Efector\Application\Authorization\EfectorAccessService;
+use common\components\Domain\Organization\Efector\Application\Authorization\EfectorOperationAccess;
 use common\components\Platform\Core\Permission\Domain\DomainOperationAuthorizer;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
-use common\components\Domain\Person\Representation\Domain\RepresentationPermission;
+use common\components\Domain\Person\Representation\Domain\Model\RepresentationPermission;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\InpatientStay;
@@ -146,7 +146,7 @@ trait ClinicalAccessTrait
         $req = Yii::$app->request;
         $params = array_merge($req->get(), $req->post());
         try {
-            return EfectorAccessService::assertAndResolveIdEfector($operationKey, $params);
+            return EfectorOperationAccess::assertAndResolveIdEfector($operationKey, $params);
         } catch (DomainOperationForbiddenException $e) {
             throw new ForbiddenHttpException($e->getMessage() !== '' ? $e->getMessage() : 'No autorizado.');
         }

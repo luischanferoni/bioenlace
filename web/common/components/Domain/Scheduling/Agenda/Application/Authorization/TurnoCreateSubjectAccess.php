@@ -5,25 +5,25 @@ namespace common\components\Domain\Scheduling\Agenda\Application\Authorization;
 use common\components\Platform\Core\Permission\Domain\DomainOperationContext;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Platform\Core\Permission\Domain\DomainOperationPolicyInterface;
-use common\components\Domain\Person\Representation\Domain\RepresentationPermission;
+use common\components\Domain\Person\Representation\Domain\Model\RepresentationPermission;
 use common\components\Domain\Person\Representation\Application\Service\PersonRepresentationSubjectService;
-use common\models\Scheduling\Turno;
 use yii\web\ForbiddenHttpException;
 
 /**
- * Paciente titular, representante o ventanilla con permiso de agenda sobre el turno.
+ * Alta de turno: sujeto del turno (yo, representado o ventanilla) con permiso SCHEDULING_TURNO.
  */
-final class TurnoSubjectOrRepresentativePolicy implements DomainOperationPolicyInterface
+final class TurnoCreateSubjectAccess implements DomainOperationPolicyInterface
 {
     public function assert(DomainOperationContext $ctx, $resource): void
     {
-        if (!$resource instanceof Turno) {
-            throw new \InvalidArgumentException('Se requiere un Turno.');
+        $params = is_array($resource) ? $resource : $ctx->params;
+        if (!is_array($params)) {
+            throw new \InvalidArgumentException('Se requieren parámetros de alta.');
         }
 
         try {
-            (new PersonRepresentationSubjectService())->assertCanAct(
-                (int) $resource->id_persona,
+            (new PersonRepresentationSubjectService())->resolveAndAuthorize(
+                $params,
                 RepresentationPermission::SCHEDULING_TURNO
             );
         } catch (ForbiddenHttpException $e) {

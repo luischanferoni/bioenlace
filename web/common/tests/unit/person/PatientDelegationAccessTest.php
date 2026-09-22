@@ -3,12 +3,12 @@
 namespace common\tests\unit\person;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Person\Representation\Domain\DelegationConsentStatus;
-use common\components\Domain\Person\Representation\Domain\PersonRelatedStatus;
-use common\components\Domain\Person\Representation\Domain\PersonRelatedVerifiedBy;
-use common\components\Domain\Person\Representation\Domain\RepresentationPermission;
-use common\components\Domain\Person\Representation\Domain\RepresentationRegime;
-use common\components\Domain\Person\Representation\Application\Authorization\PersonRepresentationAccessService;
+use common\components\Domain\Person\Representation\Domain\Model\DelegationConsentStatus;
+use common\components\Domain\Person\Representation\Domain\Model\PersonRelatedStatus;
+use common\components\Domain\Person\Representation\Domain\Model\PersonRelatedVerifiedBy;
+use common\components\Domain\Person\Representation\Domain\Model\RepresentationPermission;
+use common\components\Domain\Person\Representation\Domain\Model\RepresentationRegime;
+use common\components\Domain\Person\Representation\Application\Authorization\PersonRepresentationAccess;
 use common\components\Domain\Person\Representation\Domain\Catalog\RepresentationPermissionsCatalog;
 use common\models\Person\PersonDelegationConsent;
 use common\models\Person\PersonRelated;
@@ -27,7 +27,7 @@ class PatientDelegationAccessTest extends Unit
     {
         [$link, $consent] = $this->activeDelegation();
 
-        verify(PersonRepresentationAccessService::evaluateAccess(
+        verify(PersonRepresentationAccess::evaluateAccess(
             $link,
             $consent,
             RepresentationPermission::SCHEDULING_TURNO
@@ -39,7 +39,7 @@ class PatientDelegationAccessTest extends Unit
         [$link, $consent] = $this->activeDelegation();
         $link->status = PersonRelatedStatus::REVOKED;
 
-        verify(PersonRepresentationAccessService::evaluateAccess(
+        verify(PersonRepresentationAccess::evaluateAccess(
             $link,
             $consent,
             RepresentationPermission::SCHEDULING_TURNO
@@ -51,7 +51,7 @@ class PatientDelegationAccessTest extends Unit
         [$link, $consent] = $this->activeDelegation();
         $consent->status = DelegationConsentStatus::REVOKED;
 
-        verify(PersonRepresentationAccessService::evaluateAccess(
+        verify(PersonRepresentationAccess::evaluateAccess(
             $link,
             $consent,
             RepresentationPermission::CLINICAL_MOTIVOS
@@ -62,7 +62,7 @@ class PatientDelegationAccessTest extends Unit
     {
         [$link] = $this->activeDelegation();
 
-        verify(PersonRepresentationAccessService::evaluateAccess(
+        verify(PersonRepresentationAccess::evaluateAccess(
             $link,
             null,
             RepresentationPermission::SCHEDULING_TURNO

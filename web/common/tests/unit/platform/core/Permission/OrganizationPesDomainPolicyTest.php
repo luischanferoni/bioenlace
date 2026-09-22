@@ -6,7 +6,7 @@ use Codeception\Test\Unit;
 use common\components\Platform\Core\Permission\Domain\DomainOperationContext;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Platform\Core\Permission\Domain\DomainOperationPolicyRegistry;
-use common\components\Domain\Organization\Pes\Application\Authorization\OrganizationPesOwnPolicy;
+use common\components\Domain\Organization\Pes\Application\Authorization\OrganizationPesOwnAccess;
 use common\models\Organization\ProfesionalEfectorServicio;
 
 class OrganizationPesDomainPolicyTest extends Unit
@@ -25,7 +25,7 @@ class OrganizationPesDomainPolicyTest extends Unit
 
         $ctx = new DomainOperationContext(1, 42, 5, false, []);
 
-        (new OrganizationPesOwnPolicy())->assert($ctx, $pes);
+        (new OrganizationPesOwnAccess())->assert($ctx, $pes);
         $this->assertTrue(true);
     }
 
@@ -39,7 +39,7 @@ class OrganizationPesDomainPolicyTest extends Unit
         $ctx = new DomainOperationContext(1, 42, 5, false, []);
 
         $this->expectException(DomainOperationForbiddenException::class);
-        (new OrganizationPesOwnPolicy())->assert($ctx, $pes);
+        (new OrganizationPesOwnAccess())->assert($ctx, $pes);
     }
 
     public function testPesOwnSkipsCheckForSuperadmin(): void
@@ -51,7 +51,7 @@ class OrganizationPesDomainPolicyTest extends Unit
 
         $ctx = new DomainOperationContext(1, 42, 5, true, []);
 
-        (new OrganizationPesOwnPolicy())->assert($ctx, $pes);
+        (new OrganizationPesOwnAccess())->assert($ctx, $pes);
         $this->assertTrue(true);
     }
 }

@@ -3,19 +3,19 @@
 namespace common\components\Domain\Scheduling\Agenda\Infrastructure\External\Mapper;
 
 use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Dto\FhirAppointmentInboundDto;
-use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Service\FhirBundleHelper;
+use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Mapper\FhirBundleMapper;
 use common\components\Domain\Person\Identidad\Application\Service\PersonCuilService;
 
 final class FhirAppointmentInboundMapper
 {
     public function map(array $appointment, string $sourceSystem, ?string $scheduleId = null): FhirAppointmentInboundDto
     {
-        $externalId = FhirBundleHelper::resourceId($appointment);
+        $externalId = FhirBundleMapper::resourceId($appointment);
         $status = strtolower(trim((string) ($appointment['status'] ?? 'unknown')));
         $start = (string) ($appointment['start'] ?? '');
         $end = (string) ($appointment['end'] ?? '');
 
-        $scheduleId = $scheduleId ?? FhirBundleHelper::extractScheduleIdFromAppointment($appointment);
+        $scheduleId = $scheduleId ?? FhirBundleMapper::extractScheduleIdFromAppointment($appointment);
 
         $patientCuil = '';
         $patientDni = '';
@@ -49,8 +49,8 @@ final class FhirAppointmentInboundMapper
                 $patientResource = $participant['actor']['resource'];
             }
             if ($patientResource !== null) {
-                $patientCuil = FhirBundleHelper::identifierValue($patientResource, FhirBundleHelper::SYSTEM_CUIL);
-                $patientDni = FhirBundleHelper::identifierValue($patientResource, FhirBundleHelper::SYSTEM_DNI);
+                $patientCuil = FhirBundleMapper::identifierValue($patientResource, FhirBundleMapper::SYSTEM_CUIL);
+                $patientDni = FhirBundleMapper::identifierValue($patientResource, FhirBundleMapper::SYSTEM_DNI);
             }
             break;
         }

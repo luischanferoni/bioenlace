@@ -3,17 +3,17 @@
 namespace common\components\Domain\Person\Representation\Application\Authorization;
 
 use common\components\Domain\Person\Representation\Domain\Catalog\RepresentationPermissionsCatalog;
-use common\components\Domain\Person\Representation\Domain\DelegationConsentStatus;
-use common\components\Domain\Person\Representation\Domain\PersonRelatedStatus;
-use common\components\Domain\Person\Representation\Domain\PersonRelatedVerifiedBy;
-use common\components\Domain\Person\Representation\Domain\RepresentationRegime;
+use common\components\Domain\Person\Representation\Domain\Model\DelegationConsentStatus;
+use common\components\Domain\Person\Representation\Domain\Model\PersonRelatedStatus;
+use common\components\Domain\Person\Representation\Domain\Model\PersonRelatedVerifiedBy;
+use common\components\Domain\Person\Representation\Domain\Model\RepresentationRegime;
 use common\models\Person\PersonDelegationConsent;
 use common\models\Person\PersonRelated;
 
 /**
  * Autorización única para actuar en nombre de otro paciente (tutela A o delegación B).
  */
-final class PersonRepresentationAccessService
+final class PersonRepresentationAccess
 {
     private RepresentationPermissionsCatalog $permissionsCatalog;
 

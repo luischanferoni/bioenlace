@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\Home\Sections;
 
 use common\components\Domain\Clinical\Inpatient\Application\Service\InpatientIndicatorsService;
-use common\components\Domain\Organization\Efector\Application\Authorization\EfectorAccessService;
+use common\components\Domain\Organization\Efector\Application\Authorization\EfectorOperationAccess;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Platform\Ui\Home\Service\Sections\HomePanelSectionProviderInterface;
 
@@ -17,7 +17,7 @@ final class StaffInpatientKpiSectionProvider implements HomePanelSectionProvider
         }
 
         try {
-            $idEfector = EfectorAccessService::assertAndResolveIdEfector('Internacion.view_map', $params);
+            $idEfector = EfectorOperationAccess::assertAndResolveIdEfector('Internacion.view_map', $params);
         } catch (DomainOperationForbiddenException $e) {
             throw new \InvalidArgumentException($e->getMessage() !== '' ? $e->getMessage() : 'No autorizado.', 0, $e);
         }

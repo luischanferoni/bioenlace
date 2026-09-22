@@ -86,13 +86,13 @@ final class IntegrationScheduleLinkService
      */
     public function previewFromScheduleBundle(string $sourceSystem, array $scheduleBundle): array
     {
-        $schedules = \common\components\Domain\Scheduling\Agenda\Infrastructure\External\Service\FhirBundleHelper::collectResources($scheduleBundle, 'Schedule');
+        $schedules = \common\components\Domain\Scheduling\Agenda\Infrastructure\External\Mapper\FhirBundleMapper::collectResources($scheduleBundle, 'Schedule');
         $schedule = $schedules[0] ?? null;
         if ($schedule === null) {
             throw new \InvalidArgumentException('Bundle sin Schedule.');
         }
 
-        $scheduleId = \common\components\Domain\Scheduling\Agenda\Infrastructure\External\Service\FhirBundleHelper::resourceId($schedule);
+        $scheduleId = \common\components\Domain\Scheduling\Agenda\Infrastructure\External\Mapper\FhirBundleMapper::resourceId($schedule);
         $actors = (new FhirScheduleActorExtractor())->extractFromBundle($scheduleBundle);
         $resolution = $this->resolver->resolve($sourceSystem, $scheduleId, $actors);
 

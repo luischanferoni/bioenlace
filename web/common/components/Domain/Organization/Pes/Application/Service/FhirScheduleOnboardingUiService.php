@@ -4,7 +4,7 @@ namespace common\components\Domain\Organization\Pes\Application\Service;
 
 use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Service\FhirSchedulingConnectorRegistry;
 use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Service\IntegrationScheduleLinkService;
-use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Service\FhirBundleHelper;
+use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Mapper\FhirBundleMapper;
 use Yii;
 
 /**
@@ -84,9 +84,9 @@ final class FhirScheduleOnboardingUiService
         $connector = FhirSchedulingConnectorRegistry::get($source);
         $bundle = $connector->searchSchedules(['_count' => $count]);
         $items = [];
-        foreach (FhirBundleHelper::collectResources($bundle, 'Schedule') as $schedule) {
+        foreach (FhirBundleMapper::collectResources($bundle, 'Schedule') as $schedule) {
             $items[] = [
-                'id' => FhirBundleHelper::resourceId($schedule),
+                'id' => FhirBundleMapper::resourceId($schedule),
                 'label' => (string) ($schedule['id'] ?? ''),
                 'meta' => [
                     'active' => $schedule['active'] ?? null,

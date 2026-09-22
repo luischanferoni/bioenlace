@@ -13,7 +13,7 @@ RBAC (¿tiene la operación?) → Dominio (¿sobre ESTE recurso?) → Servicio
 ```
 
 - **RBAC** responde «¿este rol puede invocar esta operación?».
-- **Dominio** (`EncounterAccessService`, `EfectorAccessService`, …) responde «¿sobre este encounter/efector/PES?».
+- **Dominio** (`EncounterAccessService`, `EfectorOperationAccess`, …) responde «¿sobre este encounter/efector/PES?».
 - **Manifiesto UI** (`home-panel-manifest`, `client_open`) responde «¿mostramos el CTA en este cliente?» — **no sustituye RBAC**.
 
 ## Alcance

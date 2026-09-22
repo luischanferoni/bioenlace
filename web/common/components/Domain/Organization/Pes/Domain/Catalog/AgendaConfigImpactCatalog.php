@@ -1,11 +1,11 @@
 <?php
 
-namespace common\components\Domain\Organization\Pes\Application\Service;
+namespace common\components\Domain\Organization\Pes\Domain\Catalog;
 
 /**
  * Clasificación de campos de configuración de agenda vs impacto en turnos (grilla).
  */
-final class AgendaConfigImpactProfile
+final class AgendaConfigImpactCatalog
 {
     /** Campos que alteran slots / conflictos con turnos futuros. */
     private const GRID_FIELD_NAMES = [

@@ -7,7 +7,7 @@ use Yii;
 
 /**
  * Contexto operativo guardia: PES de sesión y pertenencia episodio ↔ efector.
- * Autorización por efector: políticas `GuardiaEpisode.*` + {@see EfectorAccessService}.
+ * Autorización por efector: políticas `GuardiaEpisode.*` + {@see EfectorOperationAccess}.
  */
 final class EmergencyEfectorAccess
 {

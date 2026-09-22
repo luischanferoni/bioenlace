@@ -5,26 +5,35 @@ namespace common\components\Domain\Organization\Pes\Application\Authorization;
 use common\components\Platform\Core\Permission\Domain\DomainOperationContext;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Platform\Core\Permission\Domain\DomainOperationPolicyInterface;
+use common\components\Domain\Organization\Efector\Application\Authorization\OrganizationEfectorAccess;
 use common\models\Organization\ProfesionalEfectorServicio;
 
 /**
- * El PES pertenece al profesional autenticado (id_persona de sesión).
+ * PES existente y perteneciente al efector de sesión/request; usuario con acceso al efector.
  */
-final class OrganizationPesOwnPolicy implements DomainOperationPolicyInterface
+final class OrganizationPesEfectorAccess implements DomainOperationPolicyInterface
 {
     public function assert(DomainOperationContext $ctx, $resource): void
     {
-        if ($ctx->isSuperadmin) {
-            return;
-        }
-
         $pes = $this->resolvePes($ctx, $resource);
         if ($pes === null) {
             throw new DomainOperationForbiddenException('Asignación profesional no encontrada.');
         }
 
-        if ($ctx->idPersona <= 0 || (int) $pes->id_persona !== $ctx->idPersona) {
-            throw new DomainOperationForbiddenException('Solo podés operar sobre tus propias asignaciones.');
+        $idEfector = OrganizationEfectorAccess::resolveIdEfector($ctx->idEfector);
+        try {
+            OrganizationEfectorAccess::assertCanAccessEfector($idEfector);
+        } catch (\InvalidArgumentException $e) {
+            throw new DomainOperationForbiddenException($e->getMessage(), 0, $e);
+        }
+
+        if ((int) $pes->id_efector !== $idEfector) {
+            throw new DomainOperationForbiddenException('Asignación inválida para este efector.');
+        }
+
+        $idServicio = isset($ctx->params['id_servicio']) ? (int) $ctx->params['id_servicio'] : 0;
+        if ($idServicio > 0 && (int) $pes->id_servicio !== $idServicio) {
+            throw new DomainOperationForbiddenException('id_servicio no coincide con la asignación profesional.');
         }
     }
 

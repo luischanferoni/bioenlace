@@ -5,7 +5,7 @@ namespace common\components\Domain\Clinical\Home\Sections;
 use common\components\Platform\Ui\Home\Service\Sections\HomePanelSectionProviderInterface;
 use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyIndicatorsService;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
-use common\components\Domain\Organization\Efector\Application\Authorization\EfectorAccessService;
+use common\components\Domain\Organization\Efector\Application\Authorization\EfectorOperationAccess;
 
 final class EmergencyIndicatorsSectionProvider implements HomePanelSectionProviderInterface
 {
@@ -17,7 +17,7 @@ final class EmergencyIndicatorsSectionProvider implements HomePanelSectionProvid
         }
 
         try {
-            $idEfector = EfectorAccessService::assertAndResolveIdEfector('GuardiaEpisode.view_board', $params);
+            $idEfector = EfectorOperationAccess::assertAndResolveIdEfector('GuardiaEpisode.view_board', $params);
         } catch (DomainOperationForbiddenException $e) {
             throw new \InvalidArgumentException($e->getMessage() !== '' ? $e->getMessage() : 'No autorizado.', 0, $e);
         }

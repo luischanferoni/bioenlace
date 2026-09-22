@@ -9,7 +9,7 @@ use common\models\Organization\Servicio;
 /**
  * Items de lista para métrica profesionales_listado_efector.
  */
-final class ProfesionalesListadoRowsPresentation implements MetricListPresentationHandlerInterface
+final class ProfesionalesListadoRowsPresenter implements MetricListPresentationHandlerInterface
 {
     public function buildRenderParams(MetricExecutionResult $result): array
     {

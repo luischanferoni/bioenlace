@@ -282,11 +282,11 @@ final class ConsultaAsyncBandejaService
         }
 
         $idPesAsignado = (int) ($encounter->id_profesional_efector_servicio ?? 0);
-        if ($idPesAsignado > 0 && !ConsultaAsyncAccessService::pesPerteneceAlUsuarioActual($idPesAsignado)) {
+        if ($idPesAsignado > 0 && !ConsultaAsyncAccess::pesPerteneceAlUsuarioActual($idPesAsignado)) {
             throw new \InvalidArgumentException('La solicitud está asignada a otro profesional.');
         }
 
-        if (!ConsultaAsyncAccessService::staffCanAccessAsyncEncounter($encounter)) {
+        if (!ConsultaAsyncAccess::staffCanAccessAsyncEncounter($encounter)) {
             throw new \InvalidArgumentException('No tenés permiso para atender esta solicitud.');
         }
 
@@ -355,12 +355,12 @@ final class ConsultaAsyncBandejaService
      */
     private function buildItem(Encounter $encounter, bool $staffView): ?array
     {
-        if ($staffView && !ConsultaAsyncAccessService::staffCanAccessAsyncEncounter($encounter)) {
+        if ($staffView && !ConsultaAsyncAccess::staffCanAccessAsyncEncounter($encounter)) {
             return null;
         }
 
         $idPes = (int) ($encounter->id_profesional_efector_servicio ?? 0);
-        $esMio = $idPes > 0 && ConsultaAsyncAccessService::pesPerteneceAlUsuarioActual($idPes);
+        $esMio = $idPes > 0 && ConsultaAsyncAccess::pesPerteneceAlUsuarioActual($idPes);
         if (
             $staffView
             && $encounter->status !== EncounterStatus::PLANNED
@@ -391,7 +391,7 @@ final class ConsultaAsyncBandejaService
         $puedeTomar = $staffView
             && $encounter->status === EncounterStatus::PLANNED
             && $idPes === 0
-            && ConsultaAsyncAccessService::staffPuedeTomar($encounter);
+            && ConsultaAsyncAccess::staffPuedeTomar($encounter);
 
         // Paciente: chat solo en modo conversacional (renovación/ajuste structured no escriben ni abren chat).
         // Staff: abrir tras tomar / cuando ya no está planned sin asignación.

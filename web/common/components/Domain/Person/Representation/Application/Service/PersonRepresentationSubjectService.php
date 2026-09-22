@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Person\Representation\Application\Service;
 
-use common\components\Domain\Person\Representation\Domain\RepresentationPermission;
+use common\components\Domain\Person\Representation\Domain\Model\RepresentationPermission;
 use common\components\Domain\Person\Ventanilla\Application\Service\VentanillaSesionService;
 use common\models\Person\PersonRelatedAuditLog;
 use common\models\Scheduling\Turno;
@@ -16,11 +16,11 @@ final class PersonRepresentationSubjectService
 {
     public const SESSION_KEY = 'subjectPersonaPaciente';
 
-    private PersonRepresentationAccessService $accessService;
+    private PersonRepresentationAccess $accessService;
 
-    public function __construct(?PersonRepresentationAccessService $accessService = null)
+    public function __construct(?PersonRepresentationAccess $accessService = null)
     {
-        $this->accessService = $accessService ?? new PersonRepresentationAccessService();
+        $this->accessService = $accessService ?? new PersonRepresentationAccess();
     }
 
     /**

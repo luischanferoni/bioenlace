@@ -3,9 +3,9 @@
 namespace common\tests\unit\organization;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Organization\Pes\Application\Service\AgendaConfigImpactProfile;
+use common\components\Domain\Organization\Pes\Domain\Catalog\AgendaConfigImpactCatalog;
 
-class AgendaConfigImpactProfileTest extends Unit
+class AgendaConfigImpactCatalogTest extends Unit
 {
     public function testModalityOnlySubmitSkipsConfirmation(): void
     {
@@ -14,8 +14,8 @@ class AgendaConfigImpactProfileTest extends Unit
             'id_profesional_efector_servicio' => '42',
         ];
 
-        $this->assertTrue(AgendaConfigImpactProfile::isModalityOnlySubmit($post));
-        $this->assertFalse(AgendaConfigImpactProfile::previewRequiresUserConfirmation([
+        $this->assertTrue(AgendaConfigImpactCatalog::isModalityOnlySubmit($post));
+        $this->assertFalse(AgendaConfigImpactCatalog::previewRequiresUserConfirmation([
             'requiere_confirmacion' => true,
             'turnos_en_conflicto' => 5,
         ], $post));
@@ -28,9 +28,9 @@ class AgendaConfigImpactProfileTest extends Unit
             'vigente_desde' => '2026-06-15',
         ];
 
-        $this->assertFalse(AgendaConfigImpactProfile::isModalityOnlySubmit($post));
-        $this->assertTrue(AgendaConfigImpactProfile::postTouchesGridFields($post));
-        $this->assertTrue(AgendaConfigImpactProfile::previewRequiresUserConfirmation([
+        $this->assertFalse(AgendaConfigImpactCatalog::isModalityOnlySubmit($post));
+        $this->assertTrue(AgendaConfigImpactCatalog::postTouchesGridFields($post));
+        $this->assertTrue(AgendaConfigImpactCatalog::previewRequiresUserConfirmation([
             'requiere_confirmacion' => true,
             'turnos_en_conflicto' => 0,
         ], $post));
@@ -40,8 +40,8 @@ class AgendaConfigImpactProfileTest extends Unit
     {
         $post = ['lunes_2' => '08:00-12:00'];
 
-        $this->assertTrue(AgendaConfigImpactProfile::postTouchesGridFields($post));
-        $this->assertFalse(AgendaConfigImpactProfile::previewRequiresUserConfirmation([
+        $this->assertTrue(AgendaConfigImpactCatalog::postTouchesGridFields($post));
+        $this->assertFalse(AgendaConfigImpactCatalog::previewRequiresUserConfirmation([
             'requiere_confirmacion' => false,
             'turnos_en_conflicto' => 0,
         ], $post));
@@ -49,7 +49,7 @@ class AgendaConfigImpactProfileTest extends Unit
 
     public function testFilterPostForFieldsKeepsContextKeys(): void
     {
-        $filtered = AgendaConfigImpactProfile::filterPostForFields([
+        $filtered = AgendaConfigImpactCatalog::filterPostForFields([
             'acepta_consultas_online' => '1',
             'intervalo_minutos' => '30',
             'id_servicio' => '7',
@@ -64,7 +64,7 @@ class AgendaConfigImpactProfileTest extends Unit
 
     public function testEmptyDayKeyCountsAsGridTouch(): void
     {
-        $this->assertTrue(AgendaConfigImpactProfile::postTouchesGridFields([
+        $this->assertTrue(AgendaConfigImpactCatalog::postTouchesGridFields([
             'lunes_2' => '',
         ]));
     }
@@ -78,7 +78,7 @@ class AgendaConfigImpactProfileTest extends Unit
             'viernes_2' => '8',
             'sabado_2' => '10,11',
         ];
-        $merged = AgendaConfigImpactProfile::mergePostWithAgendaDefaults([
+        $merged = AgendaConfigImpactCatalog::mergePostWithAgendaDefaults([
             'viernes_2' => '10',
             'intervalo_minutos' => '15',
         ], $defaults);
@@ -97,7 +97,7 @@ class AgendaConfigImpactProfileTest extends Unit
             'sabado_2' => '10,11',
             'formas_atencion' => 'TURNO',
         ];
-        $merged = AgendaConfigImpactProfile::mergePostWithAgendaDefaults([
+        $merged = AgendaConfigImpactCatalog::mergePostWithAgendaDefaults([
             'acepta_consultas_online' => '1',
         ], $defaults);
 

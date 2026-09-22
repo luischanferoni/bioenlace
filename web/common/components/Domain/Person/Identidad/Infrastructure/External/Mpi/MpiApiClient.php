@@ -349,7 +349,7 @@ class MpiApiClient extends Component
         try {
             $response = $this->call($cmd, '{}');
 
-            return MpiDomicilioNormalizer::normalizeResponse($response);
+            return MpiDomicilioMapper::normalizeResponse($response);
         } catch (\Throwable $e) {
             Yii::error('MPI domicilio: ' . $e->getMessage(), 'mpi');
 

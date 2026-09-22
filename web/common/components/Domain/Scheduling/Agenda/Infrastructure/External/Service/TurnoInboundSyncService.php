@@ -8,7 +8,7 @@ use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Service\F
 use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Service\FhirSchedulePesResolver;
 use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Mapper\FhirAppointmentInboundMapper;
 use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Mapper\FhirAppointmentStatusMapper;
-use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Service\FhirBundleHelper;
+use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Mapper\FhirBundleMapper;
 use common\components\Domain\Scheduling\Agenda\Application\Agents\TurnoAdvanceOfferAgent;
 use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoLifecycleService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoSlotClaimService;
@@ -224,6 +224,6 @@ final class TurnoInboundSyncService
             }
         }
 
-        return FhirBundleHelper::extractScheduleIdFromAppointment($appointment);
+        return FhirBundleMapper::extractScheduleIdFromAppointment($appointment);
     }
 }

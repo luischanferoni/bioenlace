@@ -44,7 +44,7 @@ final class AgendaConfigUiFlowService
     {
         $step = self::normalizeStep((string) ($post['ui_step'] ?? self::STEP_DATOS));
         // Clasificar intención con el POST crudo: el merge no debe convertir un submit de modalidad en "tocó grilla".
-        $modalityOnly = AgendaConfigImpactProfile::isModalityOnlySubmit($post);
+        $modalityOnly = AgendaConfigImpactCatalog::isModalityOnlySubmit($post);
         $post = self::mergeWithAgendaDefaults($idEfector, $post);
 
         if ($step === self::STEP_IMPACTO) {
@@ -68,7 +68,7 @@ final class AgendaConfigUiFlowService
         $idPes = ProfesionalEfectorServicioAgendaUiService::resolvePesIdForAgendaSubmitPublic($idEfector, $post);
         $preview = ProfesionalEfectorServicioAgendaVersionService::previewImpacto($idPes, $idEfector, $post);
         $needsConfirm = !$modalityOnly
-            && AgendaConfigImpactProfile::previewRequiresUserConfirmation($preview, $post);
+            && AgendaConfigImpactCatalog::previewRequiresUserConfirmation($preview, $post);
 
         if (self::mustRouteThroughImpactStep($idPes, $post) || $needsConfirm) {
             $impactParams = array_merge($post, [
@@ -188,7 +188,7 @@ final class AgendaConfigUiFlowService
     {
         $defaults = ProfesionalEfectorServicioAgendaUiService::buildFieldValuesForGet($idEfector, $post);
 
-        return AgendaConfigImpactProfile::mergePostWithAgendaDefaults(
+        return AgendaConfigImpactCatalog::mergePostWithAgendaDefaults(
             $post,
             $defaults,
             self::parseFieldsFilter($post)
@@ -235,7 +235,7 @@ final class AgendaConfigUiFlowService
             return false;
         }
 
-        return AgendaConfigImpactProfile::postTouchesGridFields($post);
+        return AgendaConfigImpactCatalog::postTouchesGridFields($post);
     }
 
     /**

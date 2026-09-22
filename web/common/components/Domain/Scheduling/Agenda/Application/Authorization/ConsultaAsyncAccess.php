@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Scheduling\Agenda\Application\Service;
+namespace common\components\Domain\Scheduling\Agenda\Application\Authorization;
 
 use common\models\Clinical\Encounter;
 use common\models\Organization\ProfesionalEfectorServicio;
@@ -9,7 +9,7 @@ use Yii;
 /**
  * Acceso staff a encounters async (reparto por servicio en efector de sesión).
  */
-final class ConsultaAsyncAccessService
+final class ConsultaAsyncAccess
 {
     public static function staffCanAccessAsyncEncounter(Encounter $encounter): bool
     {

@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Person\Representation\Domain;
+namespace common\components\Domain\Person\Representation\Domain\Model;
 
 final class DelegationConsentStatus
 {

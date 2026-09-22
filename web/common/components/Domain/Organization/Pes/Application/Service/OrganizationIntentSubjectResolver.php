@@ -8,7 +8,7 @@ use Yii;
 /**
  * Resolución de sujeto PES para intents condición laboral / organización.
  */
-final class OrganizationIntentSubjectResolvers
+final class OrganizationIntentSubjectResolver
 {
     /**
      * @param array<string, mixed> $body

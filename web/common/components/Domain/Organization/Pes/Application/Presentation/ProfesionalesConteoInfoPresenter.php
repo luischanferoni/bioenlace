@@ -9,7 +9,7 @@ use common\models\Organization\Efector;
 /**
  * Texto de resumen para métrica profesionales_conteo_efector.
  */
-final class ProfesionalesConteoInfoPresentation implements MetricInfoPresentationHandlerInterface
+final class ProfesionalesConteoInfoPresenter implements MetricInfoPresentationHandlerInterface
 {
     public function buildRenderParams(MetricExecutionResult $result): array
     {

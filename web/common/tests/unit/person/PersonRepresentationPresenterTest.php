@@ -3,8 +3,8 @@
 namespace common\tests\unit\person;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Person\Representation\Domain\PersonRelatedStatus;
-use common\components\Domain\Person\Representation\Domain\RepresentationRegime;
+use common\components\Domain\Person\Representation\Domain\Model\PersonRelatedStatus;
+use common\components\Domain\Person\Representation\Domain\Model\RepresentationRegime;
 use common\components\Domain\Person\Representation\Application\Presentation\PersonRepresentationPresenter;
 use common\models\Person\PersonRelated;
 use common\models\Person\RelationshipType;

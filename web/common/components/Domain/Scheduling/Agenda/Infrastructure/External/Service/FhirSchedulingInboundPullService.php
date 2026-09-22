@@ -3,7 +3,7 @@
 namespace common\components\Domain\Scheduling\Agenda\Infrastructure\External\Service;
 
 use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Service\FhirSchedulingConnectorRegistry;
-use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Service\FhirBundleHelper;
+use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Mapper\FhirBundleMapper;
 use common\models\Integrations\IntegrationFhirSyncState;
 use Yii;
 
@@ -38,7 +38,7 @@ final class FhirSchedulingInboundPullService
         }
 
         $bundle = $connector->searchAppointments($params);
-        $appointments = FhirBundleHelper::collectResources($bundle, 'Appointment');
+        $appointments = FhirBundleMapper::collectResources($bundle, 'Appointment');
 
         $created = 0;
         $updated = 0;
@@ -61,7 +61,7 @@ final class FhirSchedulingInboundPullService
                 $errors++;
                 Yii::error([
                     'source' => $source,
-                    'appointment_id' => FhirBundleHelper::resourceId($appointment),
+                    'appointment_id' => FhirBundleMapper::resourceId($appointment),
                     'error' => $e->getMessage(),
                 ], 'fhir-scheduling-inbound');
             }

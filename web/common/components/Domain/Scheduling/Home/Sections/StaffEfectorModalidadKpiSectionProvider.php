@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Home\Sections;
 
-use common\components\Domain\Organization\Efector\Application\Authorization\EfectorAccessService;
+use common\components\Domain\Organization\Efector\Application\Authorization\EfectorOperationAccess;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ServicioTeleconsultaPoliticaCatalogService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ServicioTeleconsultaPoliticaService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\StaffModalidadInsightMetricsService;
@@ -26,7 +26,7 @@ final class StaffEfectorModalidadKpiSectionProvider implements HomePanelSectionP
         }
 
         try {
-            $idEfector = EfectorAccessService::assertAndResolveIdEfector(
+            $idEfector = EfectorOperationAccess::assertAndResolveIdEfector(
                 ServicioTeleconsultaPoliticaService::DOMAIN_OPERATION_CONFIGURAR,
                 $params
             );

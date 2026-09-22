@@ -7,7 +7,7 @@ use common\components\Domain\Clinical\CareCohort\Domain\CarePackType;
 use common\components\Domain\Clinical\CareCohort\Application\Presentation\CarePackAssistancePresenter;
 use common\components\Domain\Clinical\Encounter\Application\Authorization\EncounterAccessService;
 use common\components\Domain\Clinical\Encounter\Application\Service\EncounterAppointmentReasonLookupService;
-use common\components\Domain\Person\Representation\Domain\RepresentationPermission;
+use common\components\Domain\Person\Representation\Domain\Model\RepresentationPermission;
 use common\components\Domain\Person\Representation\Application\Service\PersonRepresentationSubjectService;
 use common\models\Person\PersonRelatedAuditLog;
 use common\models\Clinical\CareAssistanceResponse;

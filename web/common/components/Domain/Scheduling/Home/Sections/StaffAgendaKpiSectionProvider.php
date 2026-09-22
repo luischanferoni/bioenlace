@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Home\Sections;
 
-use common\components\Domain\Organization\Efector\Application\Authorization\EfectorAccessService;
+use common\components\Domain\Organization\Efector\Application\Authorization\EfectorOperationAccess;
 use common\components\Domain\Scheduling\Agenda\Application\Service\AgendaAtencionRemotaCatalogService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\StaffModalidadInsightMetricsService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoAgendaMetricsService;
@@ -19,7 +19,7 @@ final class StaffAgendaKpiSectionProvider implements HomePanelSectionProviderInt
         }
 
         try {
-            $idEfector = EfectorAccessService::assertAndResolveIdEfector('turnos.indicadores-agenda-flow', $params);
+            $idEfector = EfectorOperationAccess::assertAndResolveIdEfector('turnos.indicadores-agenda-flow', $params);
         } catch (DomainOperationForbiddenException $e) {
             throw new \InvalidArgumentException($e->getMessage() !== '' ? $e->getMessage() : 'No autorizado.', 0, $e);
         }

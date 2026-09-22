@@ -10,7 +10,7 @@ use common\components\Domain\Organization\Efector\Application\Authorization\Orga
 /**
  * Resolución de id_efector vía políticas de dominio (API, home panel, servicios).
  */
-final class EfectorAccessService
+final class EfectorOperationAccess
 {
     /**
      * @param array<string, mixed> $params

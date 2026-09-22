@@ -3,7 +3,7 @@
 namespace frontend\controllers;
 
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
-use common\components\Domain\Organization\Efector\Application\Authorization\EfectorAccessService;
+use common\components\Domain\Organization\Efector\Application\Authorization\EfectorOperationAccess;
 use common\components\Domain\Clinical\Inpatient\Application\Service\InpatientEpicrisisTemplateAdminService;
 use common\models\Organization\ServiciosEfector;
 use frontend\filters\SisseActionFilter;
@@ -158,7 +158,7 @@ class InpatientEpicrisisTemplateController extends Controller
     private function requireIdEfector(): int
     {
         try {
-            return EfectorAccessService::assertAndResolveIdEfector('InpatientEpicrisisTemplate.admin', []);
+            return EfectorOperationAccess::assertAndResolveIdEfector('InpatientEpicrisisTemplate.admin', []);
         } catch (DomainOperationForbiddenException $e) {
             throw new NotFoundHttpException($e->getMessage() !== '' ? $e->getMessage() : 'No autorizado.');
         }

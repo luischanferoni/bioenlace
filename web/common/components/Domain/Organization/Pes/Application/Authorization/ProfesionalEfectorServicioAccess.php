@@ -11,7 +11,7 @@ use common\models\Organization\ProfesionalEfectorServicio;
 /**
  * Autorización de dominio sobre PES (flujos asistente, condición laboral, draft hydrator).
  */
-final class ProfesionalEfectorServicioDomainAuthorizationService
+final class ProfesionalEfectorServicioAccess
 {
     /**
      * @param array<string, mixed> $params

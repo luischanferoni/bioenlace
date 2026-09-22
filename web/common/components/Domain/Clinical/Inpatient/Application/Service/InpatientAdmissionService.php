@@ -7,7 +7,7 @@ use common\components\Domain\Clinical\Inpatient\Application\Agents\InpatientBedS
 use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanLifecycleService;
 use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyInpatientTransferService;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
-use common\components\Domain\Organization\Efector\Application\Authorization\EfectorAccessService;
+use common\components\Domain\Organization\Efector\Application\Authorization\EfectorOperationAccess;
 use common\models\Person\CoberturaMedica;
 use common\models\Organization\Efector;
 use common\models\Clinical\Emergency\EmergencyEpisode;
@@ -468,7 +468,7 @@ final class InpatientAdmissionService
     private function assertIngresoEfector(int $idEfector): void
     {
         try {
-            EfectorAccessService::assertAndResolveIdEfector('Internacion.create', ['id_efector' => $idEfector]);
+            EfectorOperationAccess::assertAndResolveIdEfector('Internacion.create', ['id_efector' => $idEfector]);
         } catch (DomainOperationForbiddenException $e) {
             throw new \InvalidArgumentException($e->getMessage() !== '' ? $e->getMessage() : 'No autorizado.', 0, $e);
         }

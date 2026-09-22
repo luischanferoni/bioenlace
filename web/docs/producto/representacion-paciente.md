@@ -37,7 +37,7 @@ El JWT sigue siendo del **actor**. El sujeto de atención va en `subject_persona
 flowchart LR
   ACT[Actor autenticado]
   CTX[subject_persona_id o sesión]
-  AUTH[PersonRepresentationAccessService]
+  AUTH[PersonRepresentationAccess]
   API[Turnos / motivos / clínica]
   AUD[Auditoría + push N9]
   ACT --> CTX --> AUTH --> API --> AUD

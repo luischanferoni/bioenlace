@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Person\Ventanilla\Application\Service;
 
-final class VentanillaSesionMetadata
+final class VentanillaSesionConfigService
 {
     private const DEFAULT_TTL_MINUTES = 15;
 

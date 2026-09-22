@@ -215,7 +215,7 @@ final class ConsultaAsyncChatPolicyService
     private function puedeCerrarStaff(Encounter $encounter): bool
     {
         return $encounter->parent_type === Encounter::PARENT_SOLICITUD_ASYNC
-            && ConsultaAsyncAccessService::staffCanAccessAsyncEncounter($encounter);
+            && ConsultaAsyncAccess::staffCanAccessAsyncEncounter($encounter);
     }
 
     /**

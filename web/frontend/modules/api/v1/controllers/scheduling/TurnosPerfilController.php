@@ -3,8 +3,8 @@
 namespace frontend\modules\api\v1\controllers\scheduling;
 
 use frontend\modules\api\v1\controllers\BaseController;
-use common\components\Domain\Organization\Efector\Application\Authorization\EfectorAccessService;
-use common\components\Domain\Person\Representation\Domain\RepresentationPermission;
+use common\components\Domain\Organization\Efector\Application\Authorization\EfectorOperationAccess;
+use common\components\Domain\Person\Representation\Domain\Model\RepresentationPermission;
 use common\components\Domain\Person\Representation\Application\Service\PersonRepresentationSubjectService;
 use common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoAgentActionExplanationService;
 use common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoBehaviorAggregateService;
@@ -110,7 +110,7 @@ final class TurnosPerfilController extends BaseController
         $params = array_merge($req->get(), $req->post());
         if ($req->isPost) {
             try {
-                $idEfector = EfectorAccessService::assertAndResolveIdEfector(
+                $idEfector = EfectorOperationAccess::assertAndResolveIdEfector(
                     'turnos.indicadores-agenda-flow',
                     $params
                 );
@@ -223,7 +223,7 @@ final class TurnosPerfilController extends BaseController
     {
         $req = Yii::$app->request;
         $params = array_merge($req->get(), $req->post());
-        $idEfector = EfectorAccessService::assertAndResolveIdEfector(
+        $idEfector = EfectorOperationAccess::assertAndResolveIdEfector(
             'turnos.indicadores-agenda-flow',
             $params
         );
@@ -271,7 +271,7 @@ final class TurnosPerfilController extends BaseController
                 if ($turno === null) {
                     throw new BadRequestHttpException('Turno asociado no encontrado');
                 }
-                EfectorAccessService::assertAndResolveIdEfector(
+                EfectorOperationAccess::assertAndResolveIdEfector(
                     'turnos.indicadores-agenda-flow',
                     ['id_efector' => (int) $turno->id_efector]
                 );

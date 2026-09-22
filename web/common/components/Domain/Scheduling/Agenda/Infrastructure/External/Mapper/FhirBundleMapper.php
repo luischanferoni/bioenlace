@@ -1,11 +1,11 @@
 <?php
 
-namespace common\components\Domain\Scheduling\Agenda\Infrastructure\External\Service;
+namespace common\components\Domain\Scheduling\Agenda\Infrastructure\External\Mapper;
 
 /**
  * Utilidades sobre Bundles y recursos FHIR R4.
  */
-final class FhirBundleHelper
+final class FhirBundleMapper
 {
     public const SYSTEM_CUIL = 'http://www.afip.gob.ar/cuil';
     public const SYSTEM_DNI = 'http://www.renaper.gob.ar/dni';

@@ -11,7 +11,7 @@ use common\models\Organization\ProfesionalEfectorServicio;
 /**
  * Staff: operación acotada al efector de sesión o al indicado en request.
  */
-final class OrganizationEfectorSesionPolicy implements DomainOperationPolicyInterface
+final class OrganizationEfectorSesionAccess implements DomainOperationPolicyInterface
 {
     public function assert(DomainOperationContext $ctx, $resource): void
     {

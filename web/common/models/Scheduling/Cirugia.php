@@ -3,7 +3,7 @@
 namespace common\models\Scheduling;
 
 use common\models\Terminology\Practica;
-use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\InpatientStay;
 use common\models\Person\Persona;
 
 use Yii;
@@ -28,7 +28,7 @@ use yii\db\ActiveRecord;
  *
  * @property QuirofanoSala $sala
  * @property Persona $persona
- * @property SegNivelInternacion|null $internacion
+ * @property InpatientStay|null $internacion
  * @property Practica|null $practica
  */
 class Cirugia extends ActiveRecord
@@ -89,7 +89,7 @@ class Cirugia extends ActiveRecord
             [['estado'], 'in', 'range' => array_keys(self::ESTADOS)],
             [['id_quirofano_sala'], 'exist', 'skipOnError' => true, 'targetClass' => QuirofanoSala::class, 'targetAttribute' => ['id_quirofano_sala' => 'id']],
             [['id_persona'], 'exist', 'skipOnError' => true, 'targetClass' => Persona::class, 'targetAttribute' => ['id_persona' => 'id_persona']],
-            [['id_seg_nivel_internacion'], 'exist', 'skipOnError' => true, 'targetClass' => SegNivelInternacion::class, 'targetAttribute' => ['id_seg_nivel_internacion' => 'id']],
+            [['id_seg_nivel_internacion'], 'exist', 'skipOnError' => true, 'targetClass' => InpatientStay::class, 'targetAttribute' => ['id_seg_nivel_internacion' => 'id']],
             [['id_practica'], 'exist', 'skipOnError' => true, 'targetClass' => Practica::class, 'targetAttribute' => ['id_practica' => 'id_practica']],
             [['fecha_hora_fin_estimada'], 'validateVentanaTemporal'],
         ];
@@ -134,7 +134,7 @@ class Cirugia extends ActiveRecord
 
     public function getInternacion()
     {
-        return $this->hasOne(SegNivelInternacion::class, ['id' => 'id_seg_nivel_internacion']);
+        return $this->hasOne(InpatientStay::class, ['id' => 'id_seg_nivel_internacion']);
     }
 
     public function getPractica()

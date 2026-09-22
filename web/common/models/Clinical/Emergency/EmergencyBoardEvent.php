@@ -33,7 +33,7 @@ class EmergencyBoardEvent extends ActiveRecord
         ];
     }
 
-    public function getGuardia()
+    public function getEpisode()
     {
         return $this->hasOne(EmergencyEpisode::class, ['id' => 'guardia_id']);
     }

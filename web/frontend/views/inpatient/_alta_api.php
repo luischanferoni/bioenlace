@@ -3,14 +3,14 @@
 use yii\helpers\Html;
 use yii\helpers\Url;
 
-/** @var common\models\Clinical\SegNivelInternacion $model */
+/** @var common\models\Clinical\InpatientStay $model */
 /** @var array<string, mixed> $ctx */
 
 $tipos = $ctx['tipos_alta'] ?? [];
 $plantillas = $ctx['plantillas'] ?? [];
 $responsable = (string) ($ctx['responsable_nombre'] ?? '');
 ?>
-<div id="internacion-alta-api"
+<div id="inpatient-discharge-api"
      class="card border-primary mb-3"
      data-internacion-id="<?= (int) $model->id ?>"
      data-redirect-url="<?= Html::encode(Url::to(['site/index'])) ?>">

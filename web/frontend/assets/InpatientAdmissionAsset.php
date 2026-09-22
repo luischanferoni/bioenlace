@@ -12,7 +12,7 @@ class InpatientAdmissionAsset extends AssetBundle
     public $sourcePath = '@frontend/web';
 
     public $js = [
-        'js/widgets/internacion-ingreso.js',
+        'js/widgets/inpatient-admission.js',
     ];
 
     public $depends = [

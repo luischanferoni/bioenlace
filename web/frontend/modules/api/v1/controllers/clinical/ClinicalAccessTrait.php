@@ -10,7 +10,7 @@ use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenEx
 use common\components\Domain\Person\Representation\Domain\RepresentationPermission;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;
-use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\InpatientStay;
 use Yii;
 use yii\web\ForbiddenHttpException;
 
@@ -55,17 +55,17 @@ trait ClinicalAccessTrait
         );
     }
 
-    protected function staffCanAccessInternacion(SegNivelInternacion $internacion): bool
+    protected function staffCanAccessInternacion(InpatientStay $internacion): bool
     {
         return InpatientAccessService::staffCanAccess($internacion);
     }
 
     /**
-     * @return array{0: SegNivelInternacion|null, 1: array<string, mixed>|null}
+     * @return array{0: InpatientStay|null, 1: array<string, mixed>|null}
      */
     protected function requireInternacionStaffAccess(int $internacionId, string $operationKey = 'Internacion.staff_access'): array
     {
-        $internacion = SegNivelInternacion::findOne($internacionId);
+        $internacion = InpatientStay::findOne($internacionId);
         if ($internacion === null) {
             Yii::$app->response->statusCode = 404;
 

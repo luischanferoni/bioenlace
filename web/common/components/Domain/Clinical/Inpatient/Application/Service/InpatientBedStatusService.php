@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\Inpatient\Application\Service;
 
 use common\models\Organization\InfraestructuraCama;
-use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\InpatientStay;
 
 /**
  * Bloqueo / aislamiento / liberación operativa de camas.
@@ -63,7 +63,7 @@ final class InpatientBedStatusService
 
     private function tieneInternacionActiva(int $idCama): bool
     {
-        return SegNivelInternacion::find()
+        return InpatientStay::find()
             ->where(['id_cama' => $idCama, 'fecha_fin' => null])
             ->exists();
     }

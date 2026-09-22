@@ -15,7 +15,7 @@ use common\models\Clinical\ServiceRequest;
 use common\models\Clinical\VisionPrescription;
 use common\models\Clinical\Emergency\EmergencyEpisode;
 use common\models\Person\Persona;
-use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\InpatientStay;
 
 /**
  * Placeholder de Persona por episodio NN (sin documento). No es padrón ni MPI.
@@ -82,7 +82,7 @@ final class PersonaIdentidadPendienteService
             }
         }
 
-        SegNivelInternacion::updateAll(
+        InpatientStay::updateAll(
             ['id_persona' => $toPersonaId],
             ['id_guardia' => $guardiaId, 'id_persona' => $fromPersonaId]
         );

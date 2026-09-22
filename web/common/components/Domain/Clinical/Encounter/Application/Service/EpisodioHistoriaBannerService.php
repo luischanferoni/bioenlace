@@ -9,7 +9,7 @@ use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyTri
 use common\models\Clinical\Encounter;
 use common\models\Clinical\Emergency\EmergencyTriage;
 use common\models\Clinical\Emergency\EmergencyEpisode;
-use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\InpatientStay;
 
 /**
  * Banner de episodio para HC / captura EMER e IMP (triaje, estado, motivo, ingreso).
@@ -122,11 +122,11 @@ final class EpisodioHistoriaBannerService
      */
     public function buildForInternacion(int $personaId, int $internacionId): ?array
     {
-        $internacion = SegNivelInternacion::find()
+        $internacion = InpatientStay::find()
             ->where(['id' => $internacionId])
             ->one();
         if (
-            !$internacion instanceof SegNivelInternacion
+            !$internacion instanceof InpatientStay
             || (int) $internacion->id_persona !== $personaId
         ) {
             return null;

@@ -17,14 +17,14 @@ final class PersonaIdentidadResolverService
             return $idPersona;
         }
 
-        if (self::pareceIdentidadDidit($body)) {
+        if (self::looksLikeDiditIdentity($body)) {
             return $this->idPersonaDesdeRegistro([
                 'modo' => 'didit',
                 'verification_id' => trim((string) ($body['verification_id'] ?? '')),
             ], 'No se pudo resolver la persona desde Didit.');
         }
 
-        if (self::pareceIdentidadDni($body)) {
+        if (self::looksLikeDniIdentity($body)) {
             return $this->idPersonaDesdeRegistro([
                 'modo' => 'dni_lector',
                 'codigo_barras' => trim((string) ($body['codigo_barras'] ?? '')),
@@ -41,7 +41,7 @@ final class PersonaIdentidadResolverService
     /**
      * @param array<string, mixed> $body
      */
-    public static function pareceIdentidadDidit(array $body): bool
+    public static function looksLikeDiditIdentity(array $body): bool
     {
         return trim((string) ($body['verification_id'] ?? '')) !== '';
     }
@@ -49,7 +49,7 @@ final class PersonaIdentidadResolverService
     /**
      * @param array<string, mixed> $body
      */
-    public static function pareceIdentidadDni(array $body): bool
+    public static function looksLikeDniIdentity(array $body): bool
     {
         if (trim((string) ($body['codigo_barras'] ?? '')) !== '') {
             return true;

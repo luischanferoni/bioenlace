@@ -149,10 +149,10 @@ final class VentanillaSesionService
      */
     private function identityMethod(array $body): string
     {
-        if (PersonaIdentidadResolverService::pareceIdentidadDidit($body)) {
+        if (PersonaIdentidadResolverService::looksLikeDiditIdentity($body)) {
             return VentanillaSesion::METHOD_DIDIT;
         }
-        if (PersonaIdentidadResolverService::pareceIdentidadDni($body)) {
+        if (PersonaIdentidadResolverService::looksLikeDniIdentity($body)) {
             return VentanillaSesion::METHOD_DNI_LECTOR;
         }
 

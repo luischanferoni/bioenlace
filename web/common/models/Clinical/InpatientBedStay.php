@@ -17,9 +17,9 @@ use Yii;
  * @property string|null $motivo
  *
  * @property InfraestructuraCama $cama
- * @property SegNivelInternacion $internacion
+ * @property InpatientStay $internacion
  */
-class SegNivelInternacionHcama extends \yii\db\ActiveRecord
+class InpatientBedStay extends \yii\db\ActiveRecord
 {
     /**
      * {@inheritdoc}
@@ -40,7 +40,7 @@ class SegNivelInternacionHcama extends \yii\db\ActiveRecord
             [['fecha_ingreso'], 'safe'],
             [['motivo'], 'string', 'max' => 128],
             [['id_cama'], 'exist', 'skipOnError' => true, 'targetClass' => InfraestructuraCama::className(), 'targetAttribute' => ['id_cama' => 'id']],
-            [['id_internacion'], 'exist', 'skipOnError' => true, 'targetClass' => SegNivelInternacion::className(), 'targetAttribute' => ['id_internacion' => 'id']],
+            [['id_internacion'], 'exist', 'skipOnError' => true, 'targetClass' => InpatientStay::className(), 'targetAttribute' => ['id_internacion' => 'id']],
         ];
     }
 
@@ -75,7 +75,7 @@ class SegNivelInternacionHcama extends \yii\db\ActiveRecord
      */
     public function getInternacion()
     {
-        return $this->hasOne(SegNivelInternacion::className(), ['id' => 'id_internacion']);
+        return $this->hasOne(InpatientStay::className(), ['id' => 'id_internacion']);
     }
     
     public static function findByInternacionId($id) {

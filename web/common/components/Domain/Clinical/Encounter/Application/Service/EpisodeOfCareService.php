@@ -5,11 +5,11 @@ namespace common\components\Domain\Clinical\Encounter\Application\Service;
 use common\components\Domain\Clinical\Encounter\Domain\EpisodeOfCareStatus;
 use common\models\Clinical\EpisodeOfCare;
 use common\models\Organization\InfraestructuraCama;
-use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\InpatientStay;
 
 final class EpisodeOfCareService
 {
-    public function findActiveForInternacion(int $internacionId): ?EpisodeOfCare
+    public function findActiveForInpatientStay(int $internacionId): ?EpisodeOfCare
     {
         return EpisodeOfCare::find()
             ->andWhere(['internacion_id' => $internacionId])
@@ -19,9 +19,9 @@ final class EpisodeOfCareService
             ->one();
     }
 
-    public function startInpatient(SegNivelInternacion $internacion): EpisodeOfCare
+    public function startInpatient(InpatientStay $internacion): EpisodeOfCare
     {
-        $existing = $this->findActiveForInternacion((int) $internacion->id);
+        $existing = $this->findActiveForInpatientStay((int) $internacion->id);
         if ($existing !== null) {
             return $existing;
         }
@@ -52,7 +52,7 @@ final class EpisodeOfCareService
         return $episode;
     }
 
-    private function resolveEfectorId(SegNivelInternacion $internacion): ?int
+    private function resolveEfectorId(InpatientStay $internacion): ?int
     {
         if (!$internacion->id_cama) {
             return null;
@@ -68,7 +68,7 @@ final class EpisodeOfCareService
         return (int) $cama->sala->piso->id_efector;
     }
 
-    private function internacionStartDatetime(SegNivelInternacion $internacion): string
+    private function internacionStartDatetime(InpatientStay $internacion): string
     {
         $fecha = (string) ($internacion->fecha_inicio ?? '');
         $hora = (string) ($internacion->hora_inicio ?? '00:00:00');

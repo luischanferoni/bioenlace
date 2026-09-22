@@ -96,7 +96,7 @@ No hay intent de alta: el egreso lo indica el médico en la captura.
 
 **Eliminado / 410:** captura por pestañas (`InternacionDiagnostico*`, `InternacionMedicamento*`, `InternacionPractica*`, `InternacionAtencionesEnfermeria*`, partials `internacion/v2/_view_*`).
 
-**Mantenido temporalmente:** `InternacionController` (index, view administrativo, create ingreso; `ronda` redirige al inicio), historial `InternacionHcamaController` (index), ABM plantillas. Cambio de cama vía API + `#cambio-cama` en view.
+**Mantenido temporalmente:** `InpatientController` (index, view administrativo, create ingreso; `ronda` redirige al inicio), historial `InternacionHcamaController` (index), ABM plantillas. Cambio de cama vía API + `#cambio-cama` en view.
 
 ## Horario de presencia (agenda IMP)
 

@@ -5,8 +5,8 @@ namespace common\components\Domain\Clinical\Inpatient\Application\Service;
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
 use common\models\Clinical\CareFollowupTouchpointQueue;
 use common\models\Clinical\Encounter;
-use common\models\Clinical\SegNivelInternacion;
-use common\models\Clinical\SegNivelInternacionTipoIngreso;
+use common\models\Clinical\InpatientStay;
+use common\models\Clinical\InpatientAdmissionType;
 use Yii;
 
 /**
@@ -21,7 +21,7 @@ final class PostDischargeFollowupSchedulerService
     /**
      * @return array{program: string, scheduled: int, encounter_id: int|null}
      */
-    public function scheduleForInternacion(SegNivelInternacion $internacion, string $programId, string $anchorAt): array
+    public function scheduleForInternacion(InpatientStay $internacion, string $programId, string $anchorAt): array
     {
         $config = AutonomousAgentMetadata::loadAgent(self::AGENT_ID);
         if ($config === null) {
@@ -91,11 +91,11 @@ final class PostDischargeFollowupSchedulerService
     /**
      * @return array<string, mixed>
      */
-    public function buildFacts(SegNivelInternacion $internacion): array
+    public function buildFacts(InpatientStay $internacion): array
     {
         $tipoCodigo = '';
         if ((int) ($internacion->id_tipo_ingreso ?? 0) > 0) {
-            $tipo = SegNivelInternacionTipoIngreso::findOne((int) $internacion->id_tipo_ingreso);
+            $tipo = InpatientAdmissionType::findOne((int) $internacion->id_tipo_ingreso);
             if ($tipo !== null) {
                 $tipoCodigo = strtolower(trim((string) ($tipo->tipo_ingreso ?? '')));
                 $tipoCodigo = preg_replace('/[^a-z0-9_]+/', '_', $tipoCodigo) ?? $tipoCodigo;
@@ -129,7 +129,7 @@ final class PostDischargeFollowupSchedulerService
         return 'default';
     }
 
-    private function resolveEncounter(SegNivelInternacion $internacion): ?Encounter
+    private function resolveEncounter(InpatientStay $internacion): ?Encounter
     {
         $encounter = Encounter::find()
             ->andWhere([

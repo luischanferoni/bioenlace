@@ -5,21 +5,24 @@ namespace common\models\Clinical;
 use Yii;
 
 /**
- * This is the model class for table "seg_nivel_internacion_tipo_alta".
+ * This is the model class for table "seg_nivel_internacion_tipo_ingreso".
  *
  * @property int $id
- * @property string $tipo_alta
+ * @property string $tipo_ingreso
  *
- * @property-read SegNivelInternacion[] $internaciones
+ * @property-read InpatientStay[] $internaciones
  */
-class SegNivelInternacionTipoAlta extends \yii\db\ActiveRecord
+class InpatientAdmissionType extends \yii\db\ActiveRecord
 {
+
+    
+
     /**
      * {@inheritdoc}
      */
     public static function tableName()
     {
-        return 'seg_nivel_internacion_tipo_alta';
+        return 'seg_nivel_internacion_tipo_ingreso';
     }
 
     /**
@@ -28,8 +31,8 @@ class SegNivelInternacionTipoAlta extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['tipo_alta'], 'required'],
-            [['tipo_alta'], 'string', 'max' => 80],
+            [['tipo_ingreso'], 'required'],
+            [['tipo_ingreso'], 'string', 'max' => 80],
         ];
     }
 
@@ -40,22 +43,22 @@ class SegNivelInternacionTipoAlta extends \yii\db\ActiveRecord
     {
         return [
             'id' => 'ID',
-            'tipo_alta' => 'Tipo Alta',
+            'tipo_ingreso' => 'Tipo Ingreso',
         ];
     }
 
     /**
-     * Internaciones con este tipo de alta.
+     * Internaciones con este tipo de ingreso.
      */
     public function getInternaciones()
     {
-        return $this->hasMany(SegNivelInternacion::className(), ['id_tipo_alta' => 'id']);
+        return $this->hasMany(InpatientStay::className(), ['id_tipo_ingreso' => 'id']);
     }
 
     /**
      * Alias histórico (`segNivelInternacions`).
      */
-    public function getSegNivelInternacions()
+    public function getInpatientStays()
     {
         return $this->getInternaciones();
     }

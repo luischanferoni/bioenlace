@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\Inpatient\Application\Authorization;
 
 use common\models\Organization\InfraestructuraCama;
 use common\models\Organization\InfraestructuraPiso;
-use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\InpatientStay;
 
 /**
  * Pertinencia geográfica internación ↔ efector (camas, pisos).
@@ -12,7 +12,7 @@ use common\models\Clinical\SegNivelInternacion;
  */
 final class InpatientEfectorAccess
 {
-    public static function assertInternacionEnEfector(SegNivelInternacion $internacion, int $idEfector): void
+    public static function assertStayInEfector(InpatientStay $internacion, int $idEfector): void
     {
         if (!self::internacionPerteneceEfector($internacion, $idEfector)) {
             throw new \InvalidArgumentException('La internación no pertenece al efector indicado.');
@@ -27,7 +27,7 @@ final class InpatientEfectorAccess
         }
     }
 
-    public static function internacionPerteneceEfector(SegNivelInternacion $internacion, int $idEfector): bool
+    public static function internacionPerteneceEfector(InpatientStay $internacion, int $idEfector): bool
     {
         $cama = $internacion->cama;
         if ($cama === null) {

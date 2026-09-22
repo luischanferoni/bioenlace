@@ -7,7 +7,7 @@ use common\models\Clinical\Encounter;
 use common\models\Clinical\ConsultaAtencionesEnfermeria;
 use common\models\Clinical\Emergency\EmergencyTriage;
 use common\models\Clinical\Emergency\EmergencyEpisode;
-use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\InpatientStay;
 
 /**
  * Serie de signos vitales del episodio (triage + enfermería de encounters).
@@ -71,9 +71,9 @@ final class EpisodioSignosVitalesService
      */
     public function buildForInternacion(int $personaId, int $internacionId): ?array
     {
-        $internacion = SegNivelInternacion::findOne($internacionId);
+        $internacion = InpatientStay::findOne($internacionId);
         if (
-            !$internacion instanceof SegNivelInternacion
+            !$internacion instanceof InpatientStay
             || (int) $internacion->id_persona !== $personaId
         ) {
             return null;

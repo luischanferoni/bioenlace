@@ -2,7 +2,7 @@
 
 namespace common\models\Organization;
 
-use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\InpatientStay;
 use Yii;
 
 /**
@@ -16,7 +16,7 @@ use Yii;
  * @property string|null $estado
  *
  * @property InfraestructuraSala $sala
- * @property-read SegNivelInternacion[] $internaciones
+ * @property-read InpatientStay[] $internaciones
  */
 class InfraestructuraCama extends \yii\db\ActiveRecord
 {
@@ -76,7 +76,7 @@ class InfraestructuraCama extends \yii\db\ActiveRecord
      */
     public function getInternaciones()
     {
-        return $this->hasMany(SegNivelInternacion::className(), ['id_cama' => 'id']);
+        return $this->hasMany(InpatientStay::className(), ['id_cama' => 'id']);
     }
     
     /**
@@ -86,7 +86,7 @@ class InfraestructuraCama extends \yii\db\ActiveRecord
      */
     public function getInternacionActual()
     {
-        return $this->hasOne(SegNivelInternacion::className(), ['id_cama' => 'id'])
+        return $this->hasOne(InpatientStay::className(), ['id_cama' => 'id'])
         ->onCondition(['<=', 'fecha_inicio', date('Y-m-d')])
         ->andOnCondition(['is', 'fecha_fin', NULL]);
     }
@@ -97,7 +97,7 @@ class InfraestructuraCama extends \yii\db\ActiveRecord
     */
     // public function getInternacionActual()
     // {
-    //     return SegNivelInternacion::find()->where(['id_cama' => $this->id])
+    //     return InpatientStay::find()->where(['id_cama' => $this->id])
     //     ->andWhere(['<=', 'fecha_inicio', date('Y-m-d')])
     //     ->andWhere(['is', 'fecha_fin', NULL]);
         

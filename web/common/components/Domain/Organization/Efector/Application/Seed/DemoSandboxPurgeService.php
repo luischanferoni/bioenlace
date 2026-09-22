@@ -20,8 +20,8 @@ use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Organization\ProfesionalEfectorServicioAgenda;
 use common\models\Organization\ProfesionalEfectorServicioAgendaVersion;
 use common\models\Scheduling\Turno;
-use common\models\Clinical\SegNivelInternacion;
-use common\models\Clinical\SegNivelInternacionHcama;
+use common\models\Clinical\InpatientStay;
+use common\models\Clinical\InpatientBedStay;
 use common\models\Platform\User;
 use Yii;
 use yii\db\Connection;
@@ -198,7 +198,7 @@ final class DemoSandboxPurgeService
                 if ($idInternacion <= 0) {
                     continue;
                 }
-                $internacion = SegNivelInternacion::findOne($idInternacion);
+                $internacion = InpatientStay::findOne($idInternacion);
                 if ($internacion === null) {
                     continue;
                 }
@@ -207,7 +207,7 @@ final class DemoSandboxPurgeService
                     $internacion->hora_fin = date('H:i');
                     $internacion->save(false);
                 }
-                SegNivelInternacionHcama::deleteAll(['id_internacion' => $idInternacion]);
+                InpatientBedStay::deleteAll(['id_internacion' => $idInternacion]);
             }
 
             foreach ((array) ($payload['cama_ids'] ?? []) as $idCama) {
@@ -491,15 +491,15 @@ final class DemoSandboxPurgeService
 
             $internacionIds = (new Query())
                 ->select('id')
-                ->from(SegNivelInternacion::tableName())
+                ->from(InpatientStay::tableName())
                 ->where(['id_persona' => $personaIds])
                 ->column($db);
             $internacionIds = $this->normalizeIds($internacionIds);
             if ($internacionIds !== []) {
-                $this->safeDelete($db, SegNivelInternacionHcama::tableName(), ['id_internacion' => $internacionIds], $errors);
+                $this->safeDelete($db, InpatientBedStay::tableName(), ['id_internacion' => $internacionIds], $errors);
                 $counts['internaciones'] = $this->safeDelete(
                     $db,
-                    SegNivelInternacion::tableName(),
+                    InpatientStay::tableName(),
                     ['id' => $internacionIds],
                     $errors
                 );

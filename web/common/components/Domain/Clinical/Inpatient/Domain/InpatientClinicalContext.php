@@ -10,7 +10,7 @@ use common\components\Domain\Clinical\Encounter\Application\Service\EpisodeOfCar
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EpisodeOfCare;
-use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\InpatientStay;
 
 /**
  * Contexto clínico activo de una internación (episode + care plan inpatient + encounter IMP).
@@ -18,19 +18,19 @@ use common\models\Clinical\SegNivelInternacion;
 final class InpatientClinicalContext
 {
     public function __construct(
-        public readonly SegNivelInternacion $internacion,
+        public readonly InpatientStay $internacion,
         public readonly EpisodeOfCare $episode,
         public readonly CarePlan $carePlan,
         public readonly Encounter $encounter
     ) {
     }
 
-    public static function ensure(SegNivelInternacion $internacion): self
+    public static function ensure(InpatientStay $internacion): self
     {
         $episodes = new EpisodeOfCareService();
-        $episode = $episodes->findActiveForInternacion((int) $internacion->id);
+        $episode = $episodes->findActiveForInpatientStay((int) $internacion->id);
         if ($episode === null) {
-            $episode = (new CarePlanLifecycleService())->onInternacionAdmission($internacion);
+            $episode = (new CarePlanLifecycleService())->onInpatientAdmission($internacion);
         }
 
         $carePlan = CarePlan::find()

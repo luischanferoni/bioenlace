@@ -4,12 +4,12 @@ namespace common\models\Clinical;
 use Yii;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
-use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\InpatientStay;
 
 /**
- * SegNivelInternacionBusqueda represents the model behind the search form of `common\models\Clinical\SegNivelInternacion`.
+ * InpatientStaySearch represents the model behind the search form of `common\models\Clinical\InpatientStay`.
  */
-class SegNivelInternacionBusqueda extends SegNivelInternacion
+class InpatientStaySearch extends InpatientStay
 {
     /**
      * {@inheritdoc}
@@ -40,7 +40,7 @@ class SegNivelInternacionBusqueda extends SegNivelInternacion
      */
     public function search($params)
     {
-        $query = SegNivelInternacion::find();
+        $query = InpatientStay::find();
 
         // add conditions that should always apply here
 
@@ -84,7 +84,7 @@ class SegNivelInternacionBusqueda extends SegNivelInternacion
         $id_user = Yii::$app->user->id;
         $id_efector = Yii::$app->user->getIdEfector();
 
-        $query = SegNivelInternacion::find()
+        $query = InpatientStay::find()
         ->select('seg_nivel_internacion.*')
         ->leftJoin('infraestructura_cama', '`infraestructura_cama`.`id` = `seg_nivel_internacion`.`id_cama`')
         ->leftJoin('infraestructura_sala', '`infraestructura_sala`.`id` = `infraestructura_cama`.`id_sala`')
@@ -132,7 +132,7 @@ class SegNivelInternacionBusqueda extends SegNivelInternacion
         $id_user = Yii::$app->user->id;
         $id_efector = Yii::$app->user->getIdEfector();
 
-        $query = SegNivelInternacion::find();
+        $query = InpatientStay::find();
         /*->select('seg_nivel_internacion.*')
         ->leftJoin('infraestructura_cama', '`infraestructura_cama`.`id` = `seg_nivel_internacion`.`id_cama`')
         ->leftJoin('infraestructura_sala', '`infraestructura_sala`.`id` = `infraestructura_cama`.`id_sala`')

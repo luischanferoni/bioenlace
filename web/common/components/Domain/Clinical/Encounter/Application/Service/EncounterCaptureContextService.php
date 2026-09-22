@@ -10,7 +10,7 @@ use common\models\Clinical\Emergency\EmergencyEpisode;
 use common\models\Person\Persona;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Scheduling\Turno;
-use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\InpatientStay;
 use common\models\Organization\ServiciosEfector;
 use Yii;
 
@@ -27,7 +27,7 @@ final class EncounterCaptureContextService
      */
     public static function validarPermisoAtencion($parent, $parentId, Persona $paciente): array
     {
-        $internacionActiva = SegNivelInternacion::personaInternada($paciente->id_persona);
+        $internacionActiva = InpatientStay::personaInternada($paciente->id_persona);
         $guardiaActiva = EmergencyEpisode::pacienteIngresado($paciente->id_persona);
 
         if ($internacionActiva || $guardiaActiva) {
@@ -136,7 +136,7 @@ final class EncounterCaptureContextService
                 InpatientClinicalContext::ensure($internacion);
             } catch (\Throwable $e) {
                 try {
-                    (new CarePlanLifecycleService())->onInternacionAdmission($internacion);
+                    (new CarePlanLifecycleService())->onInpatientAdmission($internacion);
                 } catch (\Throwable $e2) {
                     Yii::warning(
                         'No se pudo asegurar contexto clínico de internación #' . $internacion->id
@@ -246,12 +246,12 @@ final class EncounterCaptureContextService
                     ];
                 }
 
-                $idSegNivelInternacion = SegNivelInternacion::personaInternadaEnEfector(
+                $idInpatientStay = InpatientStay::personaInternadaEnEfector(
                     $paciente->id_persona,
                     Yii::$app->user->getIdEfector()
                 );
 
-                if ($idSegNivelInternacion) {
+                if ($idInpatientStay) {
                     return [
                         'success' => false,
                         'msg' => 'El paciente se encuentra actualmente internado. En su historia clínica verifique los detalles de la internación y comuníquese con el personal indicado para solicitar el alta de ser necesario',
@@ -417,12 +417,12 @@ final class EncounterCaptureContextService
         Persona $paciente,
         $parentId,
         int $idEfector
-    ): ?SegNivelInternacion {
+    ): ?InpatientStay {
         $parentIdInt = (int) $parentId;
         if ($parentIdInt > 0) {
-            $internacion = SegNivelInternacion::findOne($parentIdInt);
+            $internacion = InpatientStay::findOne($parentIdInt);
             if (
-                !$internacion instanceof SegNivelInternacion
+                !$internacion instanceof InpatientStay
                 || (int) $internacion->id_persona !== (int) $paciente->id_persona
             ) {
                 return null;
@@ -438,22 +438,22 @@ final class EncounterCaptureContextService
             return $internacion;
         }
 
-        $idSeg = SegNivelInternacion::personaInternadaEnEfector(
+        $idSeg = InpatientStay::personaInternadaEnEfector(
             $paciente->id_persona,
             $idEfector
         );
         if (!$idSeg) {
             return null;
         }
-        $internacion = SegNivelInternacion::findOne((int) $idSeg);
+        $internacion = InpatientStay::findOne((int) $idSeg);
 
-        return $internacion instanceof SegNivelInternacion ? $internacion : null;
+        return $internacion instanceof InpatientStay ? $internacion : null;
     }
 
     /**
      * Servicio institucional para documentar IMP: sesión → PES del episodio → encounter abierto.
      */
-    private static function resolveServicioParaInternacion(SegNivelInternacion $internacion): int
+    private static function resolveServicioParaInternacion(InpatientStay $internacion): int
     {
         $idServicio = (int) (Yii::$app->user->getServicioActual() ?? 0);
         if ($idServicio > 0) {

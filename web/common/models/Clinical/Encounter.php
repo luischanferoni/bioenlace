@@ -57,7 +57,7 @@ class Encounter extends ActiveRecord
     const PARENT_CLASSES = [
         self::PARENT_TURNO => '\common\models\Scheduling\Turno',
         self::PARENT_DERIVACION => '\common\models\Clinical\ConsultaDerivaciones',
-        self::PARENT_INTERNACION => '\common\models\Clinical\SegNivelInternacion',
+        self::PARENT_INTERNACION => '\common\models\Clinical\InpatientStay',
         self::PARENT_GENERICO_AMB => '\common\models\GenericoAMB',
         self::PARENT_GENERICO_EMER => '\common\models\GenericoEMER',
         self::PARENT_GUARDIA => '\common\models\Clinical\Emergency\EmergencyEpisode',

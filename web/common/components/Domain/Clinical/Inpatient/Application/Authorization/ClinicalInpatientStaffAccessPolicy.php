@@ -6,7 +6,7 @@ use common\components\Domain\Clinical\Inpatient\Application\InpatientAccessServi
 use common\components\Platform\Core\Permission\Domain\DomainOperationContext;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Platform\Core\Permission\Domain\DomainOperationPolicyInterface;
-use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\InpatientStay;
 
 /**
  * Staff o paciente con acceso clínico a la internación (efector, encounter abierto, titular).
@@ -15,8 +15,8 @@ final class ClinicalInpatientStaffAccessPolicy implements DomainOperationPolicyI
 {
     public function assert(DomainOperationContext $ctx, $resource): void
     {
-        if (!$resource instanceof SegNivelInternacion) {
-            throw new \InvalidArgumentException('Se requiere una internación (SegNivelInternacion).');
+        if (!$resource instanceof InpatientStay) {
+            throw new \InvalidArgumentException('Se requiere una internación (InpatientStay).');
         }
 
         if (!InpatientAccessService::staffCanAccess($resource)) {

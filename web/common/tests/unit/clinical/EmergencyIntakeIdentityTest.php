@@ -9,46 +9,46 @@ class EmergencyIntakeIdentityTest extends Unit
 {
     public function testPareceIdentidadDniRequiereDocumentoYSexo(): void
     {
-        $this->assertFalse(EmergencyIntakeService::pareceIdentidadDni([]));
-        $this->assertFalse(EmergencyIntakeService::pareceIdentidadDni([
+        $this->assertFalse(EmergencyIntakeService::looksLikeDniIdentity([]));
+        $this->assertFalse(EmergencyIntakeService::looksLikeDniIdentity([
             'apellido' => 'Alonso',
             'nombre' => 'Ana',
             'documento' => '37123456',
             'fecha_nacimiento' => '1990-01-01',
         ]));
-        $this->assertFalse(EmergencyIntakeService::pareceIdentidadDni([
+        $this->assertFalse(EmergencyIntakeService::looksLikeDniIdentity([
             'documento' => '37123456',
         ]));
-        $this->assertTrue(EmergencyIntakeService::pareceIdentidadDni([
+        $this->assertTrue(EmergencyIntakeService::looksLikeDniIdentity([
             'documento' => '37.123.456',
             'sexo_biologico' => 1,
         ]));
-        $this->assertTrue(EmergencyIntakeService::pareceIdentidadDni([
+        $this->assertTrue(EmergencyIntakeService::looksLikeDniIdentity([
             'codigo_barras' => 'PDF417…',
         ]));
     }
 
     public function testPareceIdentidadDiditRequiereVerificationId(): void
     {
-        $this->assertFalse(EmergencyIntakeService::pareceIdentidadDidit([]));
-        $this->assertFalse(EmergencyIntakeService::pareceIdentidadDidit([
+        $this->assertFalse(EmergencyIntakeService::looksLikeDiditIdentity([]));
+        $this->assertFalse(EmergencyIntakeService::looksLikeDiditIdentity([
             'verification_id' => '   ',
         ]));
-        $this->assertTrue(EmergencyIntakeService::pareceIdentidadDidit([
+        $this->assertTrue(EmergencyIntakeService::looksLikeDiditIdentity([
             'verification_id' => 'sess_abc',
         ]));
     }
 
     public function testPareceIdentidadPendiente(): void
     {
-        $this->assertFalse(EmergencyIntakeService::pareceIdentidadPendiente([]));
-        $this->assertTrue(EmergencyIntakeService::pareceIdentidadPendiente([
+        $this->assertFalse(EmergencyIntakeService::looksLikePendingIdentity([]));
+        $this->assertTrue(EmergencyIntakeService::looksLikePendingIdentity([
             'identidad_pendiente' => true,
         ]));
-        $this->assertTrue(EmergencyIntakeService::pareceIdentidadPendiente([
+        $this->assertTrue(EmergencyIntakeService::looksLikePendingIdentity([
             'identidad_pendiente' => '1',
         ]));
-        $this->assertFalse(EmergencyIntakeService::pareceIdentidadPendiente([
+        $this->assertFalse(EmergencyIntakeService::looksLikePendingIdentity([
             'identidad_pendiente' => '0',
         ]));
     }

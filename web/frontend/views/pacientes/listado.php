@@ -363,7 +363,7 @@ $messages = $page['messages'];
 <?php endif; ?>
 
 <?php if ($esImpPiso): ?>
-<div class="modal fade" id="internacion-cambio-cama-modal" tabindex="-1" aria-labelledby="internacionCambioCamaModalLabel" aria-hidden="true">
+<div class="modal fade" id="inpatient-bed-transfer-modal" tabindex="-1" aria-labelledby="internacionCambioCamaModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -371,24 +371,24 @@ $messages = $page['messages'];
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body">
-                <p class="text-muted small mb-2" id="internacion-cambio-cama-paciente"></p>
-                <div id="internacion-cambio-cama-loading" class="text-muted small">Cargando…</div>
-                <div id="internacion-cambio-cama-form" class="d-none">
-                    <p class="small text-muted mb-2" id="internacion-cambio-cama-actual"></p>
+                <p class="text-muted small mb-2" id="inpatient-bed-transfer-patient"></p>
+                <div id="inpatient-bed-transfer-loading" class="text-muted small">Cargando…</div>
+                <div id="inpatient-bed-transfer-form" class="d-none">
+                    <p class="small text-muted mb-2" id="inpatient-bed-transfer-current"></p>
                     <div class="mb-2">
-                        <label class="form-label" for="internacion-cambio-cama-id-cama">Cama destino</label>
-                        <select class="form-select form-select-sm" id="internacion-cambio-cama-id-cama" required></select>
+                        <label class="form-label" for="inpatient-bed-transfer-bed-id">Cama destino</label>
+                        <select class="form-select form-select-sm" id="inpatient-bed-transfer-bed-id" required></select>
                     </div>
                     <div class="mb-0">
-                        <label class="form-label" for="internacion-cambio-cama-motivo">Motivo</label>
-                        <input type="text" class="form-control form-control-sm" id="internacion-cambio-cama-motivo" maxlength="128" required>
+                        <label class="form-label" for="inpatient-bed-transfer-reason">Motivo</label>
+                        <input type="text" class="form-control form-control-sm" id="inpatient-bed-transfer-reason" maxlength="128" required>
                     </div>
                 </div>
-                <div id="internacion-cambio-cama-error" class="alert alert-danger d-none mt-3 mb-0"></div>
+                <div id="inpatient-bed-transfer-error" class="alert alert-danger d-none mt-3 mb-0"></div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-info" id="internacion-cambio-cama-submit" disabled>Confirmar cambio</button>
+                <button type="button" class="btn btn-info" id="inpatient-bed-transfer-submit" disabled>Confirmar cambio</button>
             </div>
         </div>
     </div>

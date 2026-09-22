@@ -5,7 +5,7 @@ namespace common\components\Domain\Clinical\Inpatient\Application\Authorization;
 use common\components\Domain\Clinical\Inpatient\Domain\InpatientClinicalContext;
 use common\components\Domain\Clinical\Encounter\Application\Authorization\EncounterAccessService;
 use common\components\Domain\Organization\Efector\Application\Authorization\OrganizationEfectorAccess;
-use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\InpatientStay;
 use Yii;
 
 /**
@@ -13,7 +13,7 @@ use Yii;
  */
 final class InpatientAccessService
 {
-    public static function staffCanAccess(SegNivelInternacion $internacion): bool
+    public static function staffCanAccess(InpatientStay $internacion): bool
     {
         if (Yii::$app->user->isSuperadmin) {
             return true;

@@ -6,13 +6,13 @@ use kartik\select2\Select2;
 use yii\helpers\ArrayHelper;
 use kartik\date\DatePicker;
 use kartik\time\TimePicker;
-use common\models\Clinical\SegNivelInternacion;
-use common\models\Clinical\SegNivelInternacionTipoAlta;
+use common\models\Clinical\InpatientStay;
+use common\models\Clinical\InpatientDischargeType;
 use common\models\Organization\Efector;
 use yii\web\JsExpression;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\Clinical\SegNivelInternacion */
+/* @var $model common\models\Clinical\InpatientStay */
 /* @var $form yii\widgets\ActiveForm */
 ?>
 <div class="seg-nivel-internacion-form">
@@ -40,7 +40,7 @@ use yii\web\JsExpression;
     ]); ?>
 
     <?php
-    $tipos_alta = SegNivelInternacionTipoAlta::find()->all();
+    $tipos_alta = InpatientDischargeType::find()->all();
 
     echo $form->field($model, 'id_tipo_alta')->widget(Select2::classname(), [
         'data' => ArrayHelper::map($tipos_alta, 'id', 'tipo_alta'),
@@ -91,7 +91,7 @@ use yii\web\JsExpression;
 </div>
 
 <?php
-$const_tipo_alta_derivacion = SegNivelInternacion::TIPO_ALTA_DERIVACION_CMC;
+$const_tipo_alta_derivacion = InpatientStay::TIPO_ALTA_DERIVACION_CMC;
 $js = <<<EOJS
 $( document ).ready(function() {
     var tipo_alta_derivacion = $const_tipo_alta_derivacion;

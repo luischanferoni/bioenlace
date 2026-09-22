@@ -15,7 +15,7 @@ use common\models\Clinical\Emergency\EmergencyTriage;
 use common\models\Clinical\Emergency\EmergencyEpisode;
 use common\models\Person\Persona;
 use common\models\Organization\ProfesionalEfectorServicio;
-use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\InpatientStay;
 use common\components\Domain\Clinical\Laboratory\Application\Service\LaboratoryResultQueryService;
 
 /**
@@ -67,9 +67,9 @@ final class EpisodioTimelineService
      */
     public function buildForInternacion(int $personaId, int $internacionId): ?array
     {
-        $internacion = SegNivelInternacion::findOne($internacionId);
+        $internacion = InpatientStay::findOne($internacionId);
         if (
-            !$internacion instanceof SegNivelInternacion
+            !$internacion instanceof InpatientStay
             || (int) $internacion->id_persona !== $personaId
         ) {
             return null;

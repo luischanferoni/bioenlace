@@ -3,12 +3,12 @@
 use yii\helpers\Html;
 use yii\helpers\Url;
 
-/** @var common\models\Clinical\SegNivelInternacion $model */
+/** @var common\models\Clinical\InpatientStay $model */
 /** @var array<string, mixed> $ctx */
 
 $camas = $ctx['camas_disponibles'] ?? [];
 ?>
-<div id="internacion-cambio-cama-api"
+<div id="inpatient-bed-transfer-api"
      class="card border-info mb-3"
      data-internacion-id="<?= (int) $model->id ?>"
      data-redirect-url="<?= Html::encode(Url::to(['internacion/view', 'id' => $model->id])) ?>">

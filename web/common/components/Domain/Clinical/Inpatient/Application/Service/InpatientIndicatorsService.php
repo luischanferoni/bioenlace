@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Inpatient\Application\Service;
 
-use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\InpatientStay;
 use yii\db\ActiveQuery;
 
 /**
@@ -54,7 +54,7 @@ final class InpatientIndicatorsService
 
     private function queryActivasEfector(int $idEfector): ActiveQuery
     {
-        return SegNivelInternacion::find()
+        return InpatientStay::find()
             ->alias('i')
             ->innerJoinWith([
                 'cama.sala.piso' => static function (ActiveQuery $q) use ($idEfector): void {
@@ -64,7 +64,7 @@ final class InpatientIndicatorsService
             ->andWhere(['i.fecha_fin' => null]);
     }
 
-    private function diasDesdeIngreso(SegNivelInternacion $internacion): ?int
+    private function diasDesdeIngreso(InpatientStay $internacion): ?int
     {
         $fecha = trim((string) ($internacion->fecha_inicio ?? ''));
         if ($fecha === '') {

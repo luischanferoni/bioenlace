@@ -69,7 +69,7 @@
   }
 
   document.addEventListener('DOMContentLoaded', function () {
-    var root = document.getElementById('internacion-alta-api');
+    var root = document.getElementById('inpatient-discharge-api');
     if (root) initAlta(root);
   });
 })();

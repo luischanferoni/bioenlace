@@ -13,7 +13,7 @@ $this->params['breadcrumbs'][] = $this->title;
 
 InpatientAdmissionAsset::register($this);
 ?>
-<div class="seg-nivel-internacion-ingreso">
+<div class="inpatient-admission">
     <div class="card mb-3">
         <div class="card-header bg-soft-info">
             <h1 class="h4 mb-0"><?= Html::encode($this->title) ?></h1>

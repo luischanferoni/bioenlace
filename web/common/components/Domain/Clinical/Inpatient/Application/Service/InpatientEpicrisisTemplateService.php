@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\Inpatient\Application\Service;
 
 use common\models\Clinical\InpatientEpicrisisTemplate;
 use common\models\Person\Persona;
-use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\InpatientStay;
 use yii\db\Query;
 
 /**
@@ -49,7 +49,7 @@ final class InpatientEpicrisisTemplateService
         return $out;
     }
 
-    public function render(int $plantillaId, SegNivelInternacion $internacion): string
+    public function render(int $plantillaId, InpatientStay $internacion): string
     {
         $plantilla = InpatientEpicrisisTemplate::findOne([
             'id' => $plantillaId,

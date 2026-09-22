@@ -11,7 +11,7 @@ use common\models\Clinical\Condition;
 use common\models\Clinical\EpisodeOfCare;
 use common\models\Clinical\MedicationRequest;
 use common\models\Clinical\ServiceRequest;
-use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\InpatientStay;
 
 /**
  * Lectura del bundle clínico de internación (staff / API).
@@ -21,14 +21,14 @@ final class InpatientClinicalQuery
     /**
      * @return array<string, mixed>|null null si no hay episodio
      */
-    public function bundleForInternacion(int $internacionId): ?array
+    public function bundleForInpatientStay(int $internacionId): ?array
     {
-        $internacion = SegNivelInternacion::findOne($internacionId);
+        $internacion = InpatientStay::findOne($internacionId);
         if ($internacion === null) {
             return null;
         }
 
-        $episode = (new EpisodeOfCareService())->findActiveForInternacion($internacionId);
+        $episode = (new EpisodeOfCareService())->findActiveForInpatientStay($internacionId);
         if ($episode === null) {
             $episode = EpisodeOfCare::find()
                 ->andWhere(['internacion_id' => $internacionId, 'deleted_at' => null])
@@ -45,7 +45,7 @@ final class InpatientClinicalQuery
     /**
      * @return array<string, mixed>
      */
-    public function bundleForEpisode(EpisodeOfCare $episode, ?SegNivelInternacion $internacion = null): array
+    public function bundleForEpisode(EpisodeOfCare $episode, ?InpatientStay $internacion = null): array
     {
         $encounter = InpatientClinicalContext::findOpenInpatientEncounter((int) $episode->internacion_id)
             ?? null;
@@ -67,7 +67,7 @@ final class InpatientClinicalQuery
         $conditions = $this->listConditions($encounterIds);
         $aux = new InpatientEncounterAuxService();
         $internacionId = $internacion ? (int) $internacion->id : (int) $episode->internacion_id;
-        $internacionModel = $internacion ?? SegNivelInternacion::findOne($internacionId);
+        $internacionModel = $internacion ?? InpatientStay::findOne($internacionId);
 
         $planDtos = [];
         foreach ($carePlans as $plan) {
@@ -90,7 +90,7 @@ final class InpatientClinicalQuery
                     'tipoRegistro' => $row->tipo_registro,
                     'cantidad' => $row->cantidad,
                     'descripcion' => $row->getCodigoRegistroDescription(),
-                ], $aux->listFluidBalancesForInternacion($internacionModel))
+                ], $aux->listFluidBalancesForInpatientStay($internacionModel))
                 : [],
             'nutritionOrders' => $internacionModel
                 ? array_map(static fn ($row) => [
@@ -99,7 +99,7 @@ final class InpatientClinicalQuery
                     'conceptId' => $row->concept_id,
                     'indicaciones' => $row->indicaciones,
                     'consultaFecha' => $row->getQueryExtraData('consulta_fecha'),
-                ], $aux->listRegimensForInternacion($internacionModel))
+                ], $aux->listRegimensForInpatientStay($internacionModel))
                 : [],
             'isActive' => $episode->status === 'active',
         ];

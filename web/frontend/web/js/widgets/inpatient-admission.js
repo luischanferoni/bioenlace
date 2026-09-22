@@ -64,7 +64,7 @@
   }
 
   document.addEventListener('DOMContentLoaded', function () {
-    var root = document.getElementById('internacion-ingreso-api');
+    var root = document.getElementById('inpatient-admission-api');
     if (root) initIngreso(root);
   });
 })();

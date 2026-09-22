@@ -48,12 +48,12 @@ class VentanillaSesionTest extends Unit
 
     public function testResolverPareceIdentidadIgualQueGuardia(): void
     {
-        $this->assertFalse(PersonaIdentidadResolverService::pareceIdentidadDni([]));
-        $this->assertTrue(PersonaIdentidadResolverService::pareceIdentidadDni([
+        $this->assertFalse(PersonaIdentidadResolverService::looksLikeDniIdentity([]));
+        $this->assertTrue(PersonaIdentidadResolverService::looksLikeDniIdentity([
             'documento' => '37.123.456',
             'sexo_biologico' => 1,
         ]));
-        $this->assertTrue(PersonaIdentidadResolverService::pareceIdentidadDidit([
+        $this->assertTrue(PersonaIdentidadResolverService::looksLikeDiditIdentity([
             'verification_id' => 'sess_abc',
         ]));
     }

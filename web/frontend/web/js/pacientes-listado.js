@@ -1136,7 +1136,7 @@
 
     function getCambioCamaModal() {
       if (!cambioCamaModal) {
-        var el = document.getElementById('internacion-cambio-cama-modal');
+        var el = document.getElementById('inpatient-bed-transfer-modal');
         if (el && window.bootstrap && window.bootstrap.Modal) {
           cambioCamaModal = new window.bootstrap.Modal(el);
         }
@@ -1145,7 +1145,7 @@
     }
 
     function showCambioCamaError(msg) {
-      var errEl = document.getElementById('internacion-cambio-cama-error');
+      var errEl = document.getElementById('inpatient-bed-transfer-error');
       if (!errEl) return;
       if (msg) {
         errEl.textContent = msg;
@@ -1162,11 +1162,11 @@
       if (!api || !modal || !item || !item.id) return;
 
       cambioCamaInternacionId = item.id;
-      var nameEl = document.getElementById('internacion-cambio-cama-paciente');
+      var nameEl = document.getElementById('inpatient-bed-transfer-patient');
       if (nameEl) nameEl.textContent = item.nombre || ('Internación #' + item.id);
-      var loadingEl = document.getElementById('internacion-cambio-cama-loading');
-      var formEl = document.getElementById('internacion-cambio-cama-form');
-      var submitBtn = document.getElementById('internacion-cambio-cama-submit');
+      var loadingEl = document.getElementById('inpatient-bed-transfer-loading');
+      var formEl = document.getElementById('inpatient-bed-transfer-form');
+      var submitBtn = document.getElementById('inpatient-bed-transfer-submit');
       if (loadingEl) loadingEl.classList.remove('d-none');
       if (formEl) formEl.classList.add('d-none');
       if (submitBtn) submitBtn.disabled = true;
@@ -1185,18 +1185,18 @@
         if (!Array.isArray(camas)) {
           throw new Error((json && json.message) || 'No se pudo cargar el cambio de cama.');
         }
-        var camaActualEl = document.getElementById('internacion-cambio-cama-actual');
+        var camaActualEl = document.getElementById('inpatient-bed-transfer-current');
         if (camaActualEl) {
           camaActualEl.textContent = ctx.cama_actual_label
             ? ('Cama actual: ' + ctx.cama_actual_label)
             : '';
         }
         fillSelectOptions(
-          document.getElementById('internacion-cambio-cama-id-cama'),
+          document.getElementById('inpatient-bed-transfer-bed-id'),
           camas,
           '— Elegir cama —'
         );
-        var motivoEl = document.getElementById('internacion-cambio-cama-motivo');
+        var motivoEl = document.getElementById('inpatient-bed-transfer-reason');
         if (motivoEl) motivoEl.value = '';
         if (loadingEl) loadingEl.classList.add('d-none');
         if (formEl) formEl.classList.remove('d-none');
@@ -1213,13 +1213,13 @@
     async function submitCambioCamaModal() {
       var api = window.BioenlaceNativePage;
       if (!api || !cambioCamaInternacionId) return;
-      var idCama = (document.getElementById('internacion-cambio-cama-id-cama') || {}).value || '';
-      var motivo = (document.getElementById('internacion-cambio-cama-motivo') || {}).value || '';
+      var idCama = (document.getElementById('inpatient-bed-transfer-bed-id') || {}).value || '';
+      var motivo = (document.getElementById('inpatient-bed-transfer-reason') || {}).value || '';
       if (!idCama || !motivo.trim()) {
         showCambioCamaError('Completá cama destino y motivo.');
         return;
       }
-      var submitBtn = document.getElementById('internacion-cambio-cama-submit');
+      var submitBtn = document.getElementById('inpatient-bed-transfer-submit');
       if (submitBtn) submitBtn.disabled = true;
       showCambioCamaError(null);
       try {
@@ -4074,7 +4074,7 @@
     if (ingresoCamaSubmit) {
       ingresoCamaSubmit.addEventListener('click', submitIngresoCamaModal);
     }
-    var cambioCamaSubmit = document.getElementById('internacion-cambio-cama-submit');
+    var cambioCamaSubmit = document.getElementById('inpatient-bed-transfer-submit');
     if (cambioCamaSubmit) {
       cambioCamaSubmit.addEventListener('click', submitCambioCamaModal);
     }

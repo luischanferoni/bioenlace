@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\Inpatient\Application\Service;
 
 use common\models\Organization\InfraestructuraCama;
 use common\models\Person\Persona;
-use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\InpatientStay;
 use yii\db\ActiveQuery;
 
 /**
@@ -26,7 +26,7 @@ final class InpatientBedMapService
             throw new \InvalidArgumentException('Se requiere id_efector.');
         }
 
-        $internacionesActivas = $this->loadInternacionesActivasPorEfector($idEfector);
+        $internacionesActivas = $this->loadActiveStaysByEfector($idEfector);
         $porCama = [];
         foreach ($internacionesActivas as $int) {
             $porCama[(int) $int->id_cama] = $int;
@@ -123,10 +123,10 @@ final class InpatientBedMapService
     }
 
     /**
-     * @param array<int, SegNivelInternacion> $porCama
+     * @param array<int, InpatientStay> $porCama
      * @return array<string, mixed>
      */
-    private function serializeCama(InfraestructuraCama $cama, ?SegNivelInternacion $internacion): array
+    private function serializeCama(InfraestructuraCama $cama, ?InpatientStay $internacion): array
     {
         $estadoMapa = $this->resolveEstadoMapa($cama, $internacion);
         $paciente = $internacion?->paciente;
@@ -156,7 +156,7 @@ final class InpatientBedMapService
         ];
     }
 
-    private function resolveEstadoMapa(InfraestructuraCama $cama, ?SegNivelInternacion $internacion): string
+    private function resolveEstadoMapa(InfraestructuraCama $cama, ?InpatientStay $internacion): string
     {
         if ($internacion !== null) {
             return self::ESTADO_OCUPADA;
@@ -175,7 +175,7 @@ final class InpatientBedMapService
         return self::ESTADO_LIBRE;
     }
 
-    private function diasDesdeIngreso(SegNivelInternacion $internacion): ?int
+    private function diasDesdeIngreso(InpatientStay $internacion): ?int
     {
         $fecha = trim((string) ($internacion->fecha_inicio ?? ''));
         if ($fecha === '') {
@@ -194,11 +194,11 @@ final class InpatientBedMapService
     }
 
     /**
-     * @return SegNivelInternacion[]
+     * @return InpatientStay[]
      */
-    private function loadInternacionesActivasPorEfector(int $idEfector): array
+    private function loadActiveStaysByEfector(int $idEfector): array
     {
-        return SegNivelInternacion::find()
+        return InpatientStay::find()
             ->alias('i')
             ->innerJoinWith([
                 'cama.sala.piso' => static function (ActiveQuery $q) use ($idEfector): void {

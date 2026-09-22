@@ -4,9 +4,9 @@ namespace common\components\Domain\Clinical\Inpatient\Application\Service;
 
 use common\components\Domain\Clinical\Inpatient\Application\Agents\PostDischargeFollowupAgent;
 
-use common\models\Clinical\SegNivelInternacion;
-use common\models\Clinical\SegNivelInternacionRepository;
-use common\models\Clinical\SegNivelInternacionTipoAlta;
+use common\models\Clinical\InpatientStay;
+use common\models\Clinical\InpatientStayRepository;
+use common\models\Clinical\InpatientDischargeType;
 
 /**
  * Alta hospitalaria con epicrisis y checklist mínimo (staff).
@@ -23,7 +23,7 @@ final class InpatientDischargeStructuredService
     /**
      * @return array<string, mixed>
      */
-    public function contextoAlta(SegNivelInternacion $internacion, int $idEfector): array
+    public function contextoAlta(InpatientStay $internacion, int $idEfector): array
     {
         $paciente = $internacion->paciente;
         $nombre = $paciente && method_exists($paciente, 'getNombreCompleto')
@@ -45,11 +45,11 @@ final class InpatientDischargeStructuredService
 
     public function previewPlantilla(int $plantillaId, int $internacionId, int $idEfector): string
     {
-        $internacion = SegNivelInternacion::findOne($internacionId);
+        $internacion = InpatientStay::findOne($internacionId);
         if ($internacion === null) {
             throw new \InvalidArgumentException('Internación no encontrada.');
         }
-        InpatientEfectorAccess::assertInternacionEnEfector($internacion, $idEfector);
+        InpatientEfectorAccess::assertStayInEfector($internacion, $idEfector);
 
         return $this->plantillas->render($plantillaId, $internacion);
     }
@@ -59,7 +59,7 @@ final class InpatientDischargeStructuredService
     public function tiposAltaOptions(): array
     {
         $out = [];
-        foreach (SegNivelInternacionTipoAlta::find()->orderBy(['tipo_alta' => SORT_ASC])->all() as $row) {
+        foreach (InpatientDischargeType::find()->orderBy(['tipo_alta' => SORT_ASC])->all() as $row) {
             $out[] = [
                 'id' => (int) $row->id,
                 'label' => (string) $row->tipo_alta,
@@ -75,14 +75,14 @@ final class InpatientDischargeStructuredService
      */
     public function registrarAlta(int $internacionId, int $idEfector, array $post): array
     {
-        $internacion = SegNivelInternacion::findOne($internacionId);
+        $internacion = InpatientStay::findOne($internacionId);
         if ($internacion === null) {
             throw new \InvalidArgumentException('Internación no encontrada.');
         }
         if ($internacion->fecha_fin !== null && $internacion->fecha_fin !== '') {
             throw new \InvalidArgumentException('La internación ya tiene alta registrada.');
         }
-        InpatientEfectorAccess::assertInternacionEnEfector($internacion, $idEfector);
+        InpatientEfectorAccess::assertStayInEfector($internacion, $idEfector);
 
         $plantillaId = (int) ($post['plantilla_id'] ?? 0);
         $epicrisis = trim((string) ($post['epicrisis'] ?? $post['observaciones_alta'] ?? ''));
@@ -107,7 +107,7 @@ final class InpatientDischargeStructuredService
             }
         }
 
-        $internacion->scenario = SegNivelInternacion::EGRESO_PACIENTE;
+        $internacion->scenario = InpatientStay::EGRESO_PACIENTE;
         $internacion->fecha_fin = trim((string) ($post['fecha_fin'] ?? '')) ?: date('d/m/Y');
         $internacion->hora_fin = trim((string) ($post['hora_fin'] ?? '')) ?: date('H:i');
         $internacion->id_tipo_alta = (int) ($post['id_tipo_alta'] ?? 0);
@@ -133,7 +133,7 @@ final class InpatientDischargeStructuredService
             throw new \InvalidArgumentException($first !== false ? (string) $first : 'Datos de alta inválidos.');
         }
 
-        SegNivelInternacionRepository::doExternacion($internacion);
+        InpatientStayRepository::doExternacion($internacion);
 
         try {
             (new PostDischargeFollowupAgent())->onDischarge($internacion);

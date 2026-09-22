@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\Emergency\Application\Service;
 
 use common\models\Clinical\Emergency\EmergencyEpisode;
-use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\InpatientStay;
 use yii\helpers\Url;
 
 /**
@@ -26,7 +26,7 @@ final class EmergencyInpatientTransferService
 
     public function internacionResuelta(int $guardiaId): bool
     {
-        return SegNivelInternacion::find()
+        return InpatientStay::find()
             ->where(['id_guardia' => $guardiaId])
             ->andWhere(['fecha_fin' => null])
             ->exists();
@@ -67,7 +67,7 @@ final class EmergencyInpatientTransferService
         if ($guardia === null) {
             return;
         }
-        $internacion = SegNivelInternacion::findOne($idInternacion);
+        $internacion = InpatientStay::findOne($idInternacion);
         if ($internacion === null) {
             return;
         }
@@ -79,7 +79,7 @@ final class EmergencyInpatientTransferService
 
     private function findInternacionActivaId(int $guardiaId): ?int
     {
-        $row = SegNivelInternacion::find()
+        $row = InpatientStay::find()
             ->select('id')
             ->where(['id_guardia' => $guardiaId])
             ->andWhere(['fecha_fin' => null])

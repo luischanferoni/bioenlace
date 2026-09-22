@@ -13,7 +13,7 @@ use Yii;
  * @property float|null $cantidad
  * @property int|null $unidad
  */
-class SegNivelInternacionConsumo extends \yii\db\ActiveRecord
+class InpatientConsumption extends \yii\db\ActiveRecord
 {
     /**
      * {@inheritdoc}

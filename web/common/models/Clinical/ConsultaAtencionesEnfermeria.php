@@ -469,7 +469,7 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
 
         $persona = Persona::findOne($this->id_persona);
         $edadPersona = $persona->edad;
-        $parentInternacion = Encounter::PARENT_CLASSES[Encounter::PARENT_INTERNACION] ?? SegNivelInternacion::class;
+        $parentInternacion = Encounter::PARENT_CLASSES[Encounter::PARENT_INTERNACION] ?? InpatientStay::class;
         $esInternacion = $this->parent_class === $parentInternacion
             || ($this->encounter && $this->encounter->parent_type === $parentInternacion);
 

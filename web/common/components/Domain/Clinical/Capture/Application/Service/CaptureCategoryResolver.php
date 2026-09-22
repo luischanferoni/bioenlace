@@ -153,7 +153,7 @@ final class CaptureCategoryResolver
         if ($parent !== Encounter::PARENT_INTERNACION || $parentId <= 0) {
             return null;
         }
-        $episode = (new EpisodeOfCareService())->findActiveForInternacion($parentId);
+        $episode = (new EpisodeOfCareService())->findActiveForInpatientStay($parentId);
         if ($episode === null) {
             return null;
         }

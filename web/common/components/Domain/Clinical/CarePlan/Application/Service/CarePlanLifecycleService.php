@@ -10,7 +10,7 @@ use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EpisodeOfCare;
 use common\models\Organization\ProfesionalEfectorServicio;
-use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\InpatientStay;
 use Yii;
 
 /**
@@ -32,7 +32,7 @@ final class CarePlanLifecycleService
         $this->episodes = $episodes ?? new EpisodeOfCareService();
     }
 
-    public function onInternacionAdmission(SegNivelInternacion $internacion): EpisodeOfCare
+    public function onInpatientAdmission(InpatientStay $internacion): EpisodeOfCare
     {
         $episode = $this->episodes->startInpatient($internacion);
         $existing = CarePlan::find()
@@ -58,7 +58,7 @@ final class CarePlanLifecycleService
         return $episode;
     }
 
-    private function ensureInpatientEncounter(SegNivelInternacion $internacion, EpisodeOfCare $episode): Encounter
+    private function ensureInpatientEncounter(InpatientStay $internacion, EpisodeOfCare $episode): Encounter
     {
         $parentType = Encounter::PARENT_CLASSES[Encounter::PARENT_INTERNACION];
         $existing = Encounter::find()
@@ -87,7 +87,7 @@ final class CarePlanLifecycleService
         ]);
     }
 
-    private function resolveInpatientServiceId(SegNivelInternacion $internacion): ?int
+    private function resolveInpatientServiceId(InpatientStay $internacion): ?int
     {
         $pesId = (int) ($internacion->id_profesional_efector_servicio ?? 0);
         if ($pesId > 0) {
@@ -110,12 +110,12 @@ final class CarePlanLifecycleService
      * @param bool $createAmbulatoryContinuity Si true, crea plan `chronic` (continuidad ambulatoria).
      */
     public function completeOnDischarge(
-        SegNivelInternacion $internacion,
+        InpatientStay $internacion,
         ?string $dischargeAt = null,
         bool $createAmbulatoryContinuity = false
     ): void {
         $dischargeAt = $dischargeAt ?? $this->internacionDischargeDatetime($internacion);
-        $episode = $this->episodes->findActiveForInternacion((int) $internacion->id);
+        $episode = $this->episodes->findActiveForInpatientStay((int) $internacion->id);
         if ($episode !== null) {
             $this->episodes->finish($episode, $dischargeAt);
             $this->completeInpatientPlansForEpisode($episode, $dischargeAt);
@@ -389,7 +389,7 @@ final class CarePlanLifecycleService
         }
     }
 
-    private function internacionDischargeDatetime(SegNivelInternacion $internacion): string
+    private function internacionDischargeDatetime(InpatientStay $internacion): string
     {
         $fecha = (string) ($internacion->fecha_fin ?? '');
         $hora = (string) ($internacion->hora_fin ?? '00:00:00');

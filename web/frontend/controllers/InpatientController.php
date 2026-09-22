@@ -8,9 +8,9 @@ use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 
-use common\models\Clinical\SegNivelInternacion;
-use common\models\Clinical\SegNivelInternacionRepository;
-use common\models\Clinical\SegNivelInternacionBusqueda;
+use common\models\Clinical\InpatientStay;
+use common\models\Clinical\InpatientStayRepository;
+use common\models\Clinical\InpatientStaySearch;
 use common\models\Person\Persona;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Organization\Servicio;
@@ -20,10 +20,15 @@ use common\components\Domain\Clinical\Encounter\Application\Presentation\Patient
 use frontend\filters\SisseActionFilter;
 
 /**
- * InternacionController implements the CRUD actions for SegNivelInternacion model.
+ * InpatientController implements the CRUD actions for InpatientStay model.
  */
-class InternacionController extends Controller
+class InpatientController extends Controller
 {
+    public function getViewPath()
+    {
+        return Yii::getAlias('@frontend/views/inpatient');
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -43,7 +48,7 @@ class InternacionController extends Controller
     }
 
     /**
-     * Lists all SegNivelInternacion models.
+     * Lists all InpatientStay models.
      * @return mixed
      * @no_intent_catalog
     */
@@ -82,7 +87,7 @@ class InternacionController extends Controller
     }
 
     /**
-     * Displays a single SegNivelInternacion model.
+     * Displays a single InpatientStay model.
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
@@ -217,7 +222,7 @@ class InternacionController extends Controller
     }
 
     /**
-     * Updates an existing SegNivelInternacion model.
+     * Updates an existing InpatientStay model.
      * If update is successful, the browser will be redirected to the 'view' page.
      * @param integer $id
      * @return mixed
@@ -240,11 +245,11 @@ class InternacionController extends Controller
 
         if ($this->request->isPost) {
             $model->load($this->request->post());
-            $model->scenario = SegNivelInternacion::EGRESO_PACIENTE;
+            $model->scenario = InpatientStay::EGRESO_PACIENTE;
             $validar = $model->validate();
             if ($validar) {
                 try {
-                    SegNivelInternacionRepository::doExternacion($model);
+                    InpatientStayRepository::doExternacion($model);
                     return $this->redirect(['porpersona', 'idpersona' => $model->id_persona]);
                 } catch (Exception $e) {
                     $model->addError('hora_fin', 'Ocurrió un error inesperado');
@@ -263,15 +268,15 @@ class InternacionController extends Controller
     }
 
     /**
-     * Finds the SegNivelInternacion model based on its primary key value.
+     * Finds the InpatientStay model based on its primary key value.
      * If the model is not found, a 404 HTTP exception will be thrown.
      * @param integer $id
-     * @return SegNivelInternacion the loaded model
+     * @return InpatientStay the loaded model
      * @throws NotFoundHttpException if the model cannot be found
      */
     protected function findModel($id)
     {
-        if (($model = SegNivelInternacion::findOne($id)) !== null) {
+        if (($model = InpatientStay::findOne($id)) !== null) {
             return $model;
         }
 
@@ -279,7 +284,7 @@ class InternacionController extends Controller
     }
 
     /**
-     * Lists SegNivelInternacion por persona models.
+     * Lists InpatientStay por persona models.
      * @return mixed
      * @no_intent_catalog
     */
@@ -288,7 +293,7 @@ class InternacionController extends Controller
         if (!$idpersona) return $this->redirect(['/personas/view', 'id' => $idpersona]);
         $model_persona = Persona::findOne($idpersona);
         if (!$model_persona)  return $this->redirect(['/personas/view', 'id' => $idpersona]);
-        $searchModel = new SegNivelInternacionBusqueda();
+        $searchModel = new InpatientStaySearch();
         $dataProvider = $searchModel->searchPorPersona(Yii::$app->request->queryParams, $idpersona);
         $efector = Yii::$app->user->getIdEfector();
 

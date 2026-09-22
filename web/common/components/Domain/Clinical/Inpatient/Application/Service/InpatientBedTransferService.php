@@ -4,9 +4,9 @@ namespace common\components\Domain\Clinical\Inpatient\Application\Service;
 
 use common\models\Organization\InfraestructuraCama;
 use common\models\Person\Persona;
-use common\models\Clinical\SegNivelInternacion;
-use common\models\Clinical\SegNivelInternacionHcama;
-use common\models\Clinical\SegNivelInternacionRepository;
+use common\models\Clinical\InpatientStay;
+use common\models\Clinical\InpatientBedStay;
+use common\models\Clinical\InpatientStayRepository;
 
 /**
  * Cambio de cama durante un episodio de internación activo (staff).
@@ -16,20 +16,20 @@ final class InpatientBedTransferService
     /**
      * @return array<string, mixed>
      */
-    public function contextoCambioCama(SegNivelInternacion $internacion, int $idEfector): array
+    public function contextoCambioCama(InpatientStay $internacion, int $idEfector): array
     {
         if (!$internacion->enableCambioCama()) {
             throw new \InvalidArgumentException('La internación no admite cambio de cama (egreso registrado).');
         }
-        InpatientEfectorAccess::assertInternacionEnEfector($internacion, $idEfector);
+        InpatientEfectorAccess::assertStayInEfector($internacion, $idEfector);
 
         $paciente = $internacion->paciente;
         $nombre = $paciente && method_exists($paciente, 'getNombreCompleto')
             ? $paciente->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N)
             : 'Paciente';
 
-        $camaActual = SegNivelInternacionHcama::getCamaActualLabel((int) $internacion->id_cama);
-        $camas = SegNivelInternacionHcama::getCamasDisponiblesForSelect($idEfector);
+        $camaActual = InpatientBedStay::getCamaActualLabel((int) $internacion->id_cama);
+        $camas = InpatientBedStay::getCamasDisponiblesForSelect($idEfector);
 
         return [
             'internacion_id' => (int) $internacion->id,
@@ -49,14 +49,14 @@ final class InpatientBedTransferService
      */
     public function registrarCambioCama(int $internacionId, int $idEfector, array $post): array
     {
-        $internacion = SegNivelInternacion::findOne($internacionId);
+        $internacion = InpatientStay::findOne($internacionId);
         if ($internacion === null) {
             throw new \InvalidArgumentException('Internación no encontrada.');
         }
         if (!$internacion->enableCambioCama()) {
             throw new \InvalidArgumentException('La internación no admite cambio de cama.');
         }
-        InpatientEfectorAccess::assertInternacionEnEfector($internacion, $idEfector);
+        InpatientEfectorAccess::assertStayInEfector($internacion, $idEfector);
 
         $idCamaNueva = (int) ($post['id_cama'] ?? 0);
         $motivo = trim((string) ($post['motivo'] ?? ''));
@@ -76,7 +76,7 @@ final class InpatientBedTransferService
         }
         InpatientEfectorAccess::assertCamaEnEfector($cama, $idEfector);
 
-        $hcama = new SegNivelInternacionHcama();
+        $hcama = new InpatientBedStay();
         $hcama->id_internacion = (int) $internacion->id;
         $hcama->id_cama = $idCamaNueva;
         $hcama->motivo = $motivo;
@@ -86,9 +86,9 @@ final class InpatientBedTransferService
             throw new \InvalidArgumentException($first !== false ? (string) $first : 'Datos de cambio de cama inválidos.');
         }
 
-        SegNivelInternacionRepository::doCambioCama($internacion, $hcama);
+        InpatientStayRepository::doCambioCama($internacion, $hcama);
 
-        $nuevaLabel = SegNivelInternacionHcama::getCamaActualLabel($idCamaNueva);
+        $nuevaLabel = InpatientBedStay::getCamaActualLabel($idCamaNueva);
 
         return [
             'internacion_id' => (int) $internacion->id,

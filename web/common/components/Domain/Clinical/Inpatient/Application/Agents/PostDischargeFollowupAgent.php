@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\Inpatient\Application\Agents;
 
 use common\components\Platform\Agent\AgentRunRecorder;
-use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\InpatientStay;
 use Yii;
 
 /**
@@ -27,7 +27,7 @@ final class PostDischargeFollowupAgent
         return (bool) (Yii::$app->params['autonomous_agent_post_discharge_followup_enabled'] ?? true);
     }
 
-    public function onDischarge(SegNivelInternacion $internacion): void
+    public function onDischarge(InpatientStay $internacion): void
     {
         if (!$this->isEnabled()) {
             return;
@@ -55,7 +55,7 @@ final class PostDischargeFollowupAgent
         );
     }
 
-    private function resolveAnchorAt(SegNivelInternacion $internacion): string
+    private function resolveAnchorAt(InpatientStay $internacion): string
     {
         $fecha = trim((string) ($internacion->fecha_fin ?? ''));
         $hora = trim((string) ($internacion->hora_fin ?? '00:00'));

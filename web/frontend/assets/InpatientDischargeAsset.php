@@ -12,7 +12,7 @@ class InpatientDischargeAsset extends AssetBundle
     public $sourcePath = '@frontend/web';
 
     public $js = [
-        'js/widgets/internacion-alta.js',
+        'js/widgets/inpatient-discharge.js',
     ];
 
     public $depends = [

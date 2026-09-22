@@ -9,27 +9,27 @@ use Yii;
 
 /*
   Logica de Negocio de procesos que involucra actualizacion de varias
-  tablas relacionadas con SegNivelInternacion.
+  tablas relacionadas con InpatientStay.
  */
-class SegNivelInternacionRepository
+class InpatientStayRepository
 {
-    public static function getBalancesHidricos(SegNivelInternacion $internacion)
+    public static function getBalancesHidricos(InpatientStay $internacion)
     {
-        return (new InpatientEncounterAuxService())->listFluidBalancesForInternacion($internacion);
+        return (new InpatientEncounterAuxService())->listFluidBalancesForInpatientStay($internacion);
     }
 
-    public static function getRegimenes(SegNivelInternacion $internacion)
+    public static function getRegimenes(InpatientStay $internacion)
     {
-        return (new InpatientEncounterAuxService())->listRegimensForInternacion($internacion);
+        return (new InpatientEncounterAuxService())->listRegimensForInpatientStay($internacion);
     }
     
-    public static function doExternacion(SegNivelInternacion $model) {
+    public static function doExternacion(InpatientStay $model) {
         $model->fecha_fin = date("d/m/Y");
 
         $transaction = \Yii::$app->db->beginTransaction();
         try {
             if (!$model->save())
-                throw new Exception('Error saving SegNivelInternacion.');
+                throw new Exception('Error saving InpatientStay.');
 
             $model_cama = InfraestructuraCama::findOne($model->id_cama);
             $model_cama->estado = 'desocupada';
@@ -63,8 +63,8 @@ class SegNivelInternacionRepository
     }
 
     public static function doCambioCama(
-            SegNivelInternacion $internacion,
-            SegNivelInternacionHcama $hcama
+            InpatientStay $internacion,
+            InpatientBedStay $hcama
             ) {
         $transaction = \Yii::$app->db->beginTransaction();
         try {
@@ -92,9 +92,9 @@ class SegNivelInternacionRepository
     }
     
     public static function doAgregarHistoriaCama(
-            SegNivelInternacion $internacion,
+            InpatientStay $internacion,
             $throw=True) {
-        $hcama = new SegNivelInternacionHcama();
+        $hcama = new InpatientBedStay();
         $hcama->id_internacion = $internacion->id;
         $hcama->id_cama = $internacion->id_cama;
         $hcama->fecha_ingreso = date('Y-m-d H:i:s');

@@ -4,14 +4,14 @@ use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\widgets\DetailView;
 
-use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\InpatientStay;
 use common\models\Organization\Servicio;
 use yii\bootstrap5\Modal;
 
 use common\models\Platform\User;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\Clinical\SegNivelInternacion */
+/* @var $model common\models\Clinical\InpatientStay */
 
 $this->title = "Internación";
 $this->params['breadcrumbs'][] = ['label' => 'Internaciones', 'url' => ['index']];
@@ -198,7 +198,7 @@ InpatientBedTransferAsset::register($this);
                     $efector_origen = $model->efectorOrigen;
                     if (
                         $efector_origen &&
-                        $model->id_tipo_ingreso == SegNivelInternacion::TIPO_INGRESO_DERIVACION
+                        $model->id_tipo_ingreso == InpatientStay::TIPO_INGRESO_DERIVACION
                     ) {
                         $extra_attrs[] = [
                             'label' => 'Origen',

@@ -12,7 +12,7 @@ class InpatientBedTransferAsset extends AssetBundle
     public $sourcePath = '@frontend/web';
 
     public $js = [
-        'js/widgets/internacion-cambio-cama.js',
+        'js/widgets/inpatient-bed-transfer.js',
     ];
 
     public $depends = [

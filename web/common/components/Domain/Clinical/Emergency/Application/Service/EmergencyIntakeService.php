@@ -14,7 +14,7 @@ use common\models\Organization\InfraestructuraPiso;
 use common\models\Organization\InfraestructuraSala;
 use common\models\Person\Persona;
 use common\models\Scheduling\Turno;
-use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\InpatientStay;
 use Yii;
 use yii\db\Query;
 
@@ -187,7 +187,7 @@ final class EmergencyIntakeService
         if ((new HomePanelManifest())->allowsEmergencyIngresoDniForCurrentClient()) {
             return;
         }
-        if (self::pareceIdentidadDidit($body) || self::pareceIdentidadDni($body)) {
+        if (self::looksLikeDiditIdentity($body) || self::looksLikeDniIdentity($body)) {
             throw new \InvalidArgumentException(
                 'Para identificar con DNI usá la app Personal de Salud.'
             );
@@ -199,13 +199,13 @@ final class EmergencyIntakeService
      */
     private function usarIdentidadPendiente(array $body): bool
     {
-        if (!self::pareceIdentidadPendiente($body)) {
+        if (!self::looksLikePendingIdentity($body)) {
             return false;
         }
         if ((int) ($body['id_persona'] ?? 0) > 0) {
             return false;
         }
-        if (self::pareceIdentidadDidit($body) || self::pareceIdentidadDni($body)) {
+        if (self::looksLikeDiditIdentity($body) || self::looksLikeDniIdentity($body)) {
             return false;
         }
 
@@ -215,7 +215,7 @@ final class EmergencyIntakeService
     /**
      * @param array<string, mixed> $body
      */
-    public static function pareceIdentidadPendiente(array $body): bool
+    public static function looksLikePendingIdentity(array $body): bool
     {
         $v = $body['identidad_pendiente'] ?? false;
 
@@ -225,17 +225,17 @@ final class EmergencyIntakeService
     /**
      * @param array<string, mixed> $body
      */
-    public static function pareceIdentidadDidit(array $body): bool
+    public static function looksLikeDiditIdentity(array $body): bool
     {
-        return PersonaIdentidadResolverService::pareceIdentidadDidit($body);
+        return PersonaIdentidadResolverService::looksLikeDiditIdentity($body);
     }
 
     /**
      * @param array<string, mixed> $body
      */
-    public static function pareceIdentidadDni(array $body): bool
+    public static function looksLikeDniIdentity(array $body): bool
     {
-        return PersonaIdentidadResolverService::pareceIdentidadDni($body);
+        return PersonaIdentidadResolverService::looksLikeDniIdentity($body);
     }
 
     /**
@@ -403,7 +403,7 @@ final class EmergencyIntakeService
             ->column();
         $internacionIds = (new Query())
             ->select('i.id_persona')
-            ->from(['i' => SegNivelInternacion::tableName()])
+            ->from(['i' => InpatientStay::tableName()])
             ->innerJoin(['cama' => InfraestructuraCama::tableName()], 'cama.id = i.id_cama')
             ->innerJoin(['sala' => InfraestructuraSala::tableName()], 'sala.id = cama.id_sala')
             ->innerJoin(['piso' => InfraestructuraPiso::tableName()], 'piso.id = sala.id_piso')

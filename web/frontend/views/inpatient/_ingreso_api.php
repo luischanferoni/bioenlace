@@ -15,7 +15,7 @@ $ingresaCon = $ctx['ingresa_con'] ?? [];
 $idCama = (int) ($ctx['id_cama'] ?? 0);
 $idGuardia = (int) ($ctx['id_guardia'] ?? 0);
 ?>
-<div id="internacion-ingreso-api"
+<div id="inpatient-admission-api"
      class="card border-success mb-3"
      data-id-persona="<?= (int) $persona->id_persona ?>"
      data-id-guardia="<?= $idGuardia ?>">

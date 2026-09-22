@@ -14,9 +14,9 @@ use common\models\Clinical\Emergency\EmergencyEpisode;
 use common\models\Organization\InfraestructuraCama;
 use common\models\Person\Persona;
 use common\models\Organization\ProfesionalEfectorServicio;
-use common\models\Clinical\SegNivelInternacion;
-use common\models\Clinical\SegNivelInternacionHcama;
-use common\models\Clinical\SegNivelInternacionRepository;
+use common\models\Clinical\InpatientStay;
+use common\models\Clinical\InpatientBedStay;
+use common\models\Clinical\InpatientStayRepository;
 use common\components\Domain\Person\Identidad\Infrastructure\External\Mpi\MpiApiClient;
 use Yii;
 use yii\helpers\ArrayHelper;
@@ -43,7 +43,7 @@ final class InpatientAdmissionService
         }
         $this->assertIngresoEfector($idEfector);
 
-        if (SegNivelInternacion::personaInternada($idPersona)) {
+        if (InpatientStay::personaInternada($idPersona)) {
             throw new \InvalidArgumentException('El paciente ya tiene una internación activa.');
         }
 
@@ -63,7 +63,7 @@ final class InpatientAdmissionService
             if (strtolower((string) $cama->estado) !== 'desocupada') {
                 throw new \InvalidArgumentException('La cama seleccionada no está disponible.');
             }
-            $label = SegNivelInternacionHcama::getCamaActualLabel($idCamaResolved);
+            $label = InpatientBedStay::getCamaActualLabel($idCamaResolved);
             $camaLabel = (string) ($label['label'] ?? '');
         }
 
@@ -110,8 +110,8 @@ final class InpatientAdmissionService
             // Derivación: no volcar el catálogo provincial en el flujo desde guardia.
             'efectores_origen' => $fromGuardia ? [] : $this->efectoresOptions(),
             'tipos_ingreso' => $this->tiposIngresoOptions(),
-            'ingresa_en' => $this->enumOptions(SegNivelInternacion::INGRESO_EN),
-            'ingresa_con' => $this->enumOptions(SegNivelInternacion::INGRESO_CON),
+            'ingresa_en' => $this->enumOptions(InpatientStay::INGRESO_EN),
+            'ingresa_con' => $this->enumOptions(InpatientStay::INGRESO_CON),
             'desde_guardia' => $fromGuardia,
         ];
     }
@@ -139,8 +139,8 @@ final class InpatientAdmissionService
             (int) ($post['id_guardia'] ?? 0) ?: null
         );
 
-        $model = new SegNivelInternacion();
-        $model->scenario = SegNivelInternacion::INGRESO_PACIENTE;
+        $model = new InpatientStay();
+        $model->scenario = InpatientStay::INGRESO_PACIENTE;
         $model->id_persona = $idPersona;
         $model->id_cama = $idCama;
         $idGuardia = (int) ($post['id_guardia'] ?? 0);
@@ -202,7 +202,7 @@ final class InpatientAdmissionService
             if (!$cama->save(false)) {
                 throw new \RuntimeException('No se pudo actualizar el estado de la cama.');
             }
-            SegNivelInternacionRepository::doAgregarHistoriaCama($model);
+            InpatientStayRepository::doAgregarHistoriaCama($model);
             $transaction->commit();
         } catch (\Throwable $e) {
             $transaction->rollBack();
@@ -210,7 +210,7 @@ final class InpatientAdmissionService
         }
 
         try {
-            (new CarePlanLifecycleService())->onInternacionAdmission($model);
+            (new CarePlanLifecycleService())->onInpatientAdmission($model);
         } catch (\Throwable $e) {
             Yii::error(
                 'CarePlanLifecycle tras ingreso internación #' . $model->id . ': ' . $e->getMessage(),
@@ -392,7 +392,7 @@ final class InpatientAdmissionService
      */
     private function camasOptions(int $idEfector): array
     {
-        $camas = SegNivelInternacionHcama::getCamasDisponiblesForSelect($idEfector);
+        $camas = InpatientBedStay::getCamasDisponiblesForSelect($idEfector);
 
         return array_map(static fn (array $row): array => [
             'value' => (string) ($row['code'] ?? ''),
@@ -444,7 +444,7 @@ final class InpatientAdmissionService
     private function tiposIngresoOptions(): array
     {
         $options = [];
-        foreach (SegNivelInternacion::TIPO_INGRESO as $id => $label) {
+        foreach (InpatientStay::TIPO_INGRESO as $id => $label) {
             $options[] = ['value' => (string) $id, 'label' => (string) $label];
         }
 

@@ -6,7 +6,7 @@ use common\components\Domain\Clinical\Encounter\Application\Service\EpisodeOfCar
 use common\components\Domain\Clinical\Inpatient\Domain\InpatientClinicalContext;
 use common\components\Domain\Clinical\Inpatient\Domain\InpatientClinicalQuery;
 use common\models\Clinical\EpisodeOfCare;
-use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\InpatientStay;
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 
@@ -40,7 +40,7 @@ class EpisodeOfCareController extends BaseController
 
     public function actionByInternacion($internacionId)
     {
-        $internacion = SegNivelInternacion::findOne((int) $internacionId);
+        $internacion = InpatientStay::findOne((int) $internacionId);
         if ($internacion === null) {
             Yii::$app->response->statusCode = 404;
 
@@ -52,7 +52,7 @@ class EpisodeOfCareController extends BaseController
             return $this->clinicalError('No tiene permiso para acceder a esta internación', null, 403);
         }
 
-        $episode = $this->episodes->findActiveForInternacion((int) $internacion->id);
+        $episode = $this->episodes->findActiveForInpatientStay((int) $internacion->id);
         if ($episode === null) {
             $episode = EpisodeOfCare::find()
                 ->andWhere(['internacion_id' => (int) $internacion->id, 'deleted_at' => null])
@@ -89,7 +89,7 @@ class EpisodeOfCareController extends BaseController
         }
 
         $internacion = $episode->internacion_id
-            ? SegNivelInternacion::findOne((int) $episode->internacion_id)
+            ? InpatientStay::findOne((int) $episode->internacion_id)
             : null;
 
         return [
@@ -99,7 +99,7 @@ class EpisodeOfCareController extends BaseController
         ];
     }
 
-    private function canAccessInternacion(SegNivelInternacion $internacion): bool
+    private function canAccessInternacion(InpatientStay $internacion): bool
     {
         return $this->staffCanAccessInternacion($internacion);
     }
@@ -111,7 +111,7 @@ class EpisodeOfCareController extends BaseController
             return true;
         }
         if ($episode->internacion_id) {
-            $internacion = SegNivelInternacion::findOne((int) $episode->internacion_id);
+            $internacion = InpatientStay::findOne((int) $episode->internacion_id);
             if ($internacion !== null) {
                 return $this->canAccessInternacion($internacion);
             }

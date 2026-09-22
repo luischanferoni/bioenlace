@@ -10,7 +10,7 @@ use common\components\Domain\Clinical\Inpatient\Application\Service\InpatientInd
 use common\components\Domain\Clinical\Inpatient\Application\Service\InpatientBedMapService;
 use common\components\Platform\Ui\UiScreenService;
 use common\models\Person\Persona;
-use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\InpatientStay;
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 use yii\web\ForbiddenHttpException;
@@ -18,6 +18,8 @@ use yii\web\ForbiddenHttpException;
 /**
  * Internación: mapa de camas, indicadores, cambio de cama e ingreso (staff).
  * El alta la indica el médico en la captura del encounter; alta-formulario es transitorio (ficha).
+ *
+ * Id público RBAC/URL: `internacion` (alias en Module controllerMap).
  *
  * GET  /api/v1/clinical/internacion/mapa-camas
  * GET  /api/v1/clinical/internacion/indicadores-resumen
@@ -28,7 +30,7 @@ use yii\web\ForbiddenHttpException;
  * GET  /api/v1/clinical/internacion/plantillas-epicrisis
  * GET  /api/v1/clinical/internacion/<internacionId>/preview-plantilla-epicrisis
  */
-class InternacionController extends BaseController
+class InpatientController extends BaseController
 {
     use ClinicalAccessTrait;
 

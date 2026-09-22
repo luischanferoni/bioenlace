@@ -7,7 +7,7 @@ use common\models\Clinical\Encounter;
 use common\models\Clinical\ServiceRequest;
 use common\models\Clinical\Emergency\EmergencyEpisode;
 use common\models\Person\Persona;
-use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\InpatientStay;
 use common\models\Scheduling\Turno;
 use common\models\Programs\Autofacturacion;
 use Yii;
@@ -66,7 +66,7 @@ final class EncounterSumarAutofacturacionContextService
     public function ambitoSumar()
     {
         $parentType = (string) ($this->encounter->parent_type ?? '');
-        if ($parentType === SegNivelInternacion::class || $parentType === Encounter::PARENT_CLASSES[Encounter::PARENT_INTERNACION]) {
+        if ($parentType === InpatientStay::class || $parentType === Encounter::PARENT_CLASSES[Encounter::PARENT_INTERNACION]) {
             return 'INTERNACION';
         }
         if ($parentType === EmergencyEpisode::class || $parentType === Encounter::PARENT_CLASSES[Encounter::PARENT_GUARDIA]) {

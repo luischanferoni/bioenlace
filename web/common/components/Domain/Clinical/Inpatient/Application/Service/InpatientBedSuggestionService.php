@@ -6,7 +6,7 @@ use common\components\Platform\Core\Product\AutonomousAgentMetadata;
 use common\models\Clinical\Emergency\EmergencyEpisode;
 use common\models\Organization\InfraestructuraCama;
 use common\models\Person\Persona;
-use common\models\Clinical\SegNivelInternacionHcama;
+use common\models\Clinical\InpatientBedStay;
 
 /**
  * Score de camas libres según requisitos clínicos declarados (agente F02).
@@ -29,7 +29,7 @@ final class InpatientBedSuggestionService
         $scoring = is_array($config['scoring'] ?? null) ? $config['scoring'] : [];
         $topN = max(1, (int) ($config['top_n'] ?? 5));
 
-        $rows = SegNivelInternacionHcama::getCamasDisponiblesForSelect($idEfector);
+        $rows = InpatientBedStay::getCamasDisponiblesForSelect($idEfector);
         $ranked = [];
 
         foreach ($rows as $row) {

@@ -12,7 +12,7 @@ use common\models\Person\Persona_mails;
 use common\models\Person\PersonaTelefono;
 use common\models\Clinical\PersonasAntecedente;
 use common\models\Person\ProfesionalSalud;
-use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\InpatientStay;
 use common\models\Person\Tipo_documento;
 use common\models\Scheduling\Turno;
 use common\models\Platform\User;
@@ -274,7 +274,7 @@ class Persona extends \yii\db\ActiveRecord
      */
     public function getInternaciones()
     {
-        return $this->hasMany(SegNivelInternacion::className(), ['id_persona' => 'id_persona']);
+        return $this->hasMany(InpatientStay::className(), ['id_persona' => 'id_persona']);
     }
 
     /**
@@ -842,11 +842,11 @@ class Persona extends \yii\db\ActiveRecord
 
     public function establecerEstadoPaciente()
     {
-        $idSegNivelInternacion = SegNivelInternacion::personaInternada($this->id_persona);
-        if ($idSegNivelInternacion) {
+        $idInpatientStay = InpatientStay::personaInternada($this->id_persona);
+        if ($idInpatientStay) {
             $this->estadoPaciente = [
                 'estado' => Persona::ESTADO_INTERNADA,
-                'id' => $idSegNivelInternacion
+                'id' => $idInpatientStay
             ];
         }
     }

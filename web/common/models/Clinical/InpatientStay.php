@@ -36,17 +36,17 @@ use common\models\Clinical\DiagnosticoConsultaRepository as DCRepo;
  * @property int|null $update_user 
  *
  * @property-read InfraestructuraCama|null $cama
- * @property-read SegNivelInternacionTipoAlta|null $tipoAlta
+ * @property-read InpatientDischargeType|null $tipoAlta
  * @property-read Efector|null $efectorOrigen
  * @property-read Efector|null $efectorDerivacion
- * @property-read SegNivelInternacionTipoIngreso|null $tipoIngreso
+ * @property-read InpatientAdmissionType|null $tipoIngreso
  * @property-read Encounter[] $encounters Encounters IMP vinculados al episodio
  * @property-read Consulta[] $atenciones @deprecated Usar {@see getEncounters()}
  */
 
 
 
-class SegNivelInternacion extends \yii\db\ActiveRecord
+class InpatientStay extends \yii\db\ActiveRecord
 {
 
     const INGRESO_EN = ['deambula' => 'Deambulando (Caminando)', 'silla_de_rueda' => 'Silla de Rueda', 'camilla' => 'Camilla'];
@@ -99,9 +99,9 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
                 [['observaciones_alta', 'condiciones_derivacion', 'situacion_al_ingresar', 'ingresa_en', 'ingresa_con', 'datos_contacto_nombre', 'datos_contacto_tel'], 'string'],
                 [['id_tipo_alta', 'id_efector_derivacion', 'id_cama', 'id_persona', 'id_profesional_efector_servicio', 'id_guardia', 'created_by', 'updated_by', 'obra_social'], 'integer'],
                 [['id_cama'], 'exist', 'skipOnError' => true, 'targetClass' => InfraestructuraCama::className(), 'targetAttribute' => ['id_cama' => 'id']],
-                [['id_tipo_alta'], 'exist', 'skipOnError' => true, 'targetClass' => SegNivelInternacionTipoAlta::className(), 'targetAttribute' => ['id_tipo_alta' => 'id']],
+                [['id_tipo_alta'], 'exist', 'skipOnError' => true, 'targetClass' => InpatientDischargeType::className(), 'targetAttribute' => ['id_tipo_alta' => 'id']],
                 [['id_efector_derivacion'], 'exist', 'skipOnError' => true, 'targetClass' => Efector::className(), 'targetAttribute' => ['id_efector_derivacion' => 'id_efector']],
-                [['id_tipo_ingreso'], 'exist', 'skipOnError' => true, 'targetClass' => SegNivelInternacionTipoIngreso::className(), 'targetAttribute' => ['id_tipo_ingreso' => 'id']],
+                [['id_tipo_ingreso'], 'exist', 'skipOnError' => true, 'targetClass' => InpatientAdmissionType::className(), 'targetAttribute' => ['id_tipo_ingreso' => 'id']],
                 
                 ['fecha_inicio', 'date', 'max' => time(), 'tooBig' => 'Fecha futura no esta permitida', 'on' => self::INGRESO_PACIENTE],
                 [['fecha_inicio', 'hora_inicio', 'id_profesional_efector_servicio', 'id_tipo_ingreso'], 'required', 'on' => self::INGRESO_PACIENTE],
@@ -134,7 +134,7 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
                     }
                     return false;
                 }, 'whenClient' => "function (attribute, value) {
-            var radioVal = $('input[name=\'SegNivelInternacion[ingresa_con]\']:checked').val();
+            var radioVal = $('input[name=\'InpatientStay[ingresa_con]\']:checked').val();
             if (radioVal == 'familiar'|| radioVal == 'otro' || radioVal == 'policia') {
                 return true;
             }
@@ -146,7 +146,7 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
                     }
                     return false;
                 }, 'whenClient' => "function (attribute, value) {
-            var radioVal = $('input[name=\'SegNivelInternacion[ingresa_con]\']:checked').val();
+            var radioVal = $('input[name=\'InpatientStay[ingresa_con]\']:checked').val();
             if (radioVal == 'familiar'|| radioVal == 'otro' || radioVal == 'policia') {
                 return true;
             }
@@ -242,7 +242,7 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
      */
     public function getTipoAlta()
     {
-        return $this->hasOne(SegNivelInternacionTipoAlta::className(), ['id' => 'id_tipo_alta']);
+        return $this->hasOne(InpatientDischargeType::className(), ['id' => 'id_tipo_alta']);
     }
 
     /**
@@ -272,7 +272,7 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
      */
     public function getTipoIngreso()
     {
-        return $this->hasOne(SegNivelInternacionTipoIngreso::className(), ['id' => 'id_tipo_ingreso']);
+        return $this->hasOne(InpatientAdmissionType::className(), ['id' => 'id_tipo_ingreso']);
     }
 
     /**
@@ -315,7 +315,7 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
     {
         //Todo: para que sirve este metodo? no esta filtrado por efector
         $efector = Yii::$app->user->getIdEfector();
-        return SegNivelInternacion::find()
+        return InpatientStay::find()
                 ->where(['<=', 'fecha_inicio', date('Y-m-d')])
                 ->andWhere(['is', 'fecha_fin', NULL])
                 ->one();

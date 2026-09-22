@@ -21,6 +21,11 @@ class InpatientEpicrisisTemplateController extends Controller
 {
     private InpatientEpicrisisTemplateAdminService $admin;
 
+    public function getViewPath()
+    {
+        return Yii::getAlias('@frontend/views/inpatient-epicrisis-template');
+    }
+
     public function init(): void
     {
         parent::init();

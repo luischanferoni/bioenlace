@@ -17,9 +17,9 @@ use common\models\Organization\InfraestructuraPiso;
 use common\models\Organization\InfraestructuraSala;
 use common\models\Person\Persona;
 use common\models\Scheduling\Turno;
-use common\models\Clinical\SegNivelInternacion;
-use common\models\Clinical\SegNivelInternacionRepository;
-use common\models\Clinical\SegNivelInternacionTipoIngreso;
+use common\models\Clinical\InpatientStay;
+use common\models\Clinical\InpatientStayRepository;
+use common\models\Clinical\InpatientAdmissionType;
 use common\models\Platform\User;
 use Yii;
 
@@ -400,7 +400,7 @@ final class DemoSandboxClinicalSeedService
         int $idPes,
         int $actingUserId
     ): int {
-        if (SegNivelInternacion::personaInternada($idPersona)) {
+        if (InpatientStay::personaInternada($idPersona)) {
             throw new \InvalidArgumentException('Paciente ya internado.');
         }
 
@@ -409,8 +409,8 @@ final class DemoSandboxClinicalSeedService
             throw new \InvalidArgumentException('Cama demo inexistente.');
         }
 
-        $model = new SegNivelInternacion();
-        $model->scenario = SegNivelInternacion::INGRESO_PACIENTE;
+        $model = new InpatientStay();
+        $model->scenario = InpatientStay::INGRESO_PACIENTE;
         $model->id_persona = $idPersona;
         $model->id_cama = $idCama;
         $model->id_profesional_efector_servicio = $idPes;
@@ -439,10 +439,10 @@ final class DemoSandboxClinicalSeedService
             throw new \RuntimeException('No se pudo ocupar cama demo.');
         }
 
-        SegNivelInternacionRepository::doAgregarHistoriaCama($model);
+        InpatientStayRepository::doAgregarHistoriaCama($model);
 
         try {
-            (new CarePlanLifecycleService())->onInternacionAdmission($model);
+            (new CarePlanLifecycleService())->onInpatientAdmission($model);
         } catch (\Throwable $e) {
             Yii::warning('demo sandbox care plan internacion: ' . $e->getMessage(), __METHOD__);
         }
@@ -457,7 +457,7 @@ final class DemoSandboxClinicalSeedService
     {
         $preferLabels = ['Consultorio', 'Programada', 'Programado', 'Guardia'];
         foreach ($preferLabels as $label) {
-            $row = SegNivelInternacionTipoIngreso::find()
+            $row = InpatientAdmissionType::find()
                 ->where(['tipo_ingreso' => $label])
                 ->orderBy(['id' => SORT_ASC])
                 ->one();
@@ -466,13 +466,13 @@ final class DemoSandboxClinicalSeedService
             }
         }
 
-        $any = SegNivelInternacionTipoIngreso::find()->orderBy(['id' => SORT_ASC])->one();
+        $any = InpatientAdmissionType::find()->orderBy(['id' => SORT_ASC])->one();
         if ($any !== null) {
             return (int) $any->id;
         }
 
         // Catálogo vacío: una fila mínima para pasar el exist validator.
-        $row = new SegNivelInternacionTipoIngreso();
+        $row = new InpatientAdmissionType();
         $row->tipo_ingreso = 'Consultorio';
         if (!$row->save(false)) {
             throw new \RuntimeException(

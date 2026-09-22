@@ -46,7 +46,7 @@
   }
 
   document.addEventListener('DOMContentLoaded', function () {
-    var root = document.getElementById('internacion-cambio-cama-api');
+    var root = document.getElementById('inpatient-bed-transfer-api');
     if (root) initCambioCama(root);
   });
 })();

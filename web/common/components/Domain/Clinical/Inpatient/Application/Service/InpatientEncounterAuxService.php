@@ -8,7 +8,7 @@ use common\models\Clinical\NutritionOrder;
 use common\models\Clinical\Observation;
 use common\components\Domain\Clinical\Inpatient\Domain\Model\InpatientFluidBalanceRow;
 use common\components\Domain\Clinical\Inpatient\Domain\Model\InpatientRegimenRow;
-use common\models\Clinical\SegNivelInternacion;
+use common\models\Clinical\InpatientStay;
 
 /**
  * Balance hídrico, régimen y suministro de medicación en internación (FHIR).
@@ -21,7 +21,7 @@ final class InpatientEncounterAuxService
     /**
      * @return InpatientFluidBalanceRow[]
      */
-    public function listFluidBalancesForInternacion(SegNivelInternacion $internacion): array
+    public function listFluidBalancesForInpatientStay(InpatientStay $internacion): array
     {
         $rows = Observation::find()
             ->alias('o')
@@ -52,7 +52,7 @@ final class InpatientEncounterAuxService
     /**
      * @return InpatientRegimenRow[]
      */
-    public function listRegimensForInternacion(SegNivelInternacion $internacion): array
+    public function listRegimensForInpatientStay(InpatientStay $internacion): array
     {
         $rows = NutritionOrder::find()
             ->alias('n')

@@ -105,14 +105,56 @@ Flag: `autonomous_agent_resolucion_loop_close_enabled`.
 
 ## Anti no-show basado en reglas (agente A04, v1)
 
-Al crear o reprogramar un turno pendiente, el agente `turno-antinoshow` calcula el riesgo con reglas sobre historial en BD y, en paralelo, adjunta un **candidato factual** desde el perfil persistido (shadow: no cambia el desenlace).
+Un no-show deja un hueco que otro paciente podría haber usado. A04 intenta **anticiparse**: no espera a la ausencia, sino que, según el historial reciente, pide confirmación o recuerda el turno a quienes concentran más riesgo.
 
-1. **T−48 h:** riesgo alto → push de confirmación explícita (`TURNO_ANTINOSHOW_CONFIRM`), unificado con la solicitud de confirmación base.
-2. **Liberación de cupo (T−24 h):** deshabilitada por defecto (`execution_mode: shadow`, `release_slot.enabled: false`). Si se activara enforce, cancela como sistema y emite `SYSTEM_SLOT_RELEASED`.
-3. **T−2 h:** recordatorio adicional para riesgo medio/alto.
-4. Entrega/apertura de confirmación se acreditan solo con ACK autenticado de la app paciente.
+Qué **sí** hace:
 
-Flag: `autonomous_agent_antinoshow_enabled`. Política: `TurnoAntinoshowAgentPolicy` (PHP). Ver sección de perfil factual arriba.
+- Clasifica el turno en `low` / `medium` / `high` con reglas fijas (ausencias previas, anticipación de la reserva, primera visita).
+- Programa puntos de contacto antes de la cita (confirmación ~48 h antes si es high; recordatorio ~2 h antes si es medium o high).
+- Deja rastro auditable de la decisión y, en paralelo, un candidato calculado desde el [perfil factual](#perfil-histórico-de-turnos) para comparar —sin que ese candidato mande todavía.
+
+Qué **no** hace:
+
+- No usa machine learning ni un “score de reputación” que etiquete a la persona.
+- No bloquea el derecho a atenderse ni baja prioridad clínica.
+- No libera el cupo de forma automática en la configuración actual (esa acción existe en la política pero está apagada; ver línea de tiempo abajo).
+
+El agente `turno-antinoshow` se engancha al **crear o reprogramar** un turno pendiente: calcula el nivel, agenda los checkpoints y deja que el cron de notificaciones los ejecute cuando llegue la hora.
+
+### Cómo se estima el riesgo (v1)
+
+Reglas fijas sobre el historial en BD (ventana típica ~6 meses), no sobre un modelo entrenado:
+
+| Señal | Efecto típico |
+|-------|----------------|
+| Dos o más no-shows atribuibles al paciente | **high** |
+| Un no-show, o mucha anticipación reserva→cita (≥ ~21 días) | **medium** (o high si ya hay más ausencias) |
+| Primera visita en ese efector | **medium** por defecto |
+| Resto | **low** |
+
+En paralelo, el sistema lee el **perfil factual** persistido (si hay snapshot) y arma un *candidato* con el mismo tipo de riesgo. Hoy ese candidato **no cambia** la acción: solo se guarda en auditoría (`diff_reason`: coincide o no con el cálculo legacy). Ver [perfil histórico](#perfil-histórico-de-turnos).
+
+### Línea de tiempo del turno
+
+Al programar el turno se encolan notificaciones (`turno_notificacion_programada`). El cron `yii turno-notificacion/run` las dispara:
+
+1. **T−48 h (solo riesgo high).** Se evalúa la confirmación compartida con el flujo base de “confirmá asistencia”: un push de confirmación explícita (`TURNO_ANTINOSHOW_CONFIRM`), no un segundo mensaje distinto al de confirmación ordinaria. Si la política prevé liberación, también deja programado un chequeo a T−24 h (hoy ese chequeo no libera; ver abajo).
+2. **T−24 h — liberación de cupo (apagada).** Pensada solo para **high** y sin confirmación: cancelar el turno como **sistema**, avisar al paciente y emitir el evento `SYSTEM_SLOT_RELEASED` (para que el perfil no lo cuente como cancelación del paciente). Hoy hace falta **las dos** condiciones y ambas están en no: `execution_mode: shadow` y `release_slot.enabled: false` en `TurnoAntinoshowAgentPolicy`. Aunque el agente esté encendido, **no** libera cupos.
+3. **T−2 h (riesgo medium o high).** Recordatorio (“tu turno es pronto”) si aún no confirmó / sigue pendiente.
+4. **Confirmación entregada / abierta.** Solo cuenta ACK autenticado de la app paciente. Aceptar el HTTP de FCM o mirar la bandeja **no** acredita entrega ni apertura; sin ACK no se interpreta “no confirmó” como culpa del paciente.
+
+### Ejemplo breve
+
+Ana tiene dos ausencias recientes → **high**. Reserva un turno para el viernes 10:00. El miércoles (~T−48) recibe el push de confirmación. El jueves (~T−24) **no** se cancela el turno (liberación deshabilitada). El viernes temprano (~T−2) puede recibir el recordatorio si sigue sin confirmar. Todo queda en `agent_run` con el riesgo legacy y el candidato del perfil.
+
+Bruno sin ausencias pero con reserva a 30 días → **medium**: puede recibir recordatorio T−2; no entra en la rama de confirmación extra ni en liberación.
+
+### Operación
+
+- Encendido global: `autonomous_agent_antinoshow_enabled` en params.
+- Umbrales, checkpoints y textos: `TurnoAntinoshowAgentPolicy` (PHP de plataforma; no hay switch por efector).
+- Ficha técnica: [agentes-autonomos.md](./agentes-autonomos.md) (A04).
+
 
 ## Notificaciones: push y WhatsApp
 

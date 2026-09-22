@@ -3,6 +3,7 @@
 namespace common\components\Domain\Scheduling\Agenda\Application\Service;
 
 use common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoBehaviorProfileReadService;
+use common\components\Domain\Scheduling\BehaviorProfile\Domain\Catalog\TurnoBehaviorProfileContract;
 use common\models\Scheduling\Turno;
 use common\models\Scheduling\PersonaTurnosPerfilMetrica;
 use common\models\Scheduling\EfectorTurnosConfig;
@@ -66,23 +67,45 @@ class TurnoCancellationPolicyService
         ];
 
         $reader = new TurnoBehaviorProfileReadService();
+        $contract = new TurnoBehaviorProfileContract();
+        $windowProfile = $contract->nearestWindowDays($ventana);
         $metric = $reader->metric(
             (int) $idPersona,
             'CANCEL_PATIENT',
             PersonaTurnosPerfilMetrica::SCOPE_EFECTOR,
             (string) $idEfector,
-            $ventana
+            $windowProfile
         );
         $profile = $reader->currentProfile((int) $idPersona);
+        $candidateCount = $metric !== null ? (int) $metric->numerator : null;
+        $candidateNivel = null;
+        if ($candidateCount !== null && !$liberacionVigente) {
+            if ($candidateCount >= $mod) {
+                $candidateNivel = self::NIVEL_MODERADA;
+            } elseif ($candidateCount >= $suave) {
+                $candidateNivel = self::NIVEL_SUAVE;
+            } else {
+                $candidateNivel = self::NIVEL_OK;
+            }
+        }
+        $diffReason = 'candidate_unavailable';
+        if ($candidateNivel !== null) {
+            $diffReason = $candidateNivel === $nivel ? 'match' : 'nivel_mismatch';
+        } elseif ($profile === null) {
+            $diffReason = 'profile_missing';
+        }
         $result['profile_candidate'] = [
             'mode' => 'shadow',
-            'status' => $metric === null ? 'unavailable_or_unsupported_window' : 'available',
+            'status' => $metric === null ? 'profile_missing_or_metric_absent' : 'available',
             'profile_id' => $profile !== null ? (int) $profile->id : null,
             'profile_contract_version' => $profile !== null ? (int) $profile->profile_contract_version : null,
-            'cancelaciones_en_ventana' => $metric !== null ? (int) $metric->numerator : null,
-            'window_days' => $ventana,
+            'cancelaciones_en_ventana' => $candidateCount,
+            'window_days' => $windowProfile,
+            'legacy_window_days' => $ventana,
             'scope_type' => PersonaTurnosPerfilMetrica::SCOPE_EFECTOR,
             'scope_id' => (string) $idEfector,
+            'nivel' => $candidateNivel,
+            'diff_reason' => $diffReason,
         ];
 
         return $result;

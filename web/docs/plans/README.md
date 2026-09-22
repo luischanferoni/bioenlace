@@ -12,9 +12,9 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 
 | Plan | Carpeta | Notas |
 |------|---------|--------|
+| Perfil de comportamiento en turnos | `perfil-comportamiento-turnos/` | V1 + shadow comparable; piloto fase 5 / enforce pendiente |
 | Receta electrónica (AR) | `receta-electronica/` | Fases 1–2 en producción; repositorio nacional pendiente |
 | Interoperabilidad HC FHIR | `interoperabilidad-historia-clinica/` | Código + reconcile listos; homologación / credenciales pendientes |
-| Perfil de comportamiento en turnos | `perfil-comportamiento-turnos/` | V1 + shadow; piloto fase 5 pendiente |
 
 ## Planes archivados (carpeta eliminada)
 

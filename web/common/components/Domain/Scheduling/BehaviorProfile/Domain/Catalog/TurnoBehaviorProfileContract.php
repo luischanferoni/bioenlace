@@ -46,6 +46,26 @@ final class TurnoBehaviorProfileContract
         return array_values(array_map('intval', $w));
     }
 
+    /**
+     * Ventana del contrato más cercana a un horizonte operativo (p. ej. días del efector).
+     * No inventa ventanas: siempre devuelve un valor de {@see windowsDays()}.
+     */
+    public function nearestWindowDays(int $requestedDays): int
+    {
+        $windows = $this->windowsDays();
+        $best = $windows[0];
+        $bestDist = abs($best - $requestedDays);
+        foreach ($windows as $w) {
+            $dist = abs($w - $requestedDays);
+            if ($dist < $bestDist) {
+                $best = $w;
+                $bestDist = $dist;
+            }
+        }
+
+        return $best;
+    }
+
     /** @return list<string> */
     public function scopes(): array
     {

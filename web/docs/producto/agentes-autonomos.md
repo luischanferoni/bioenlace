@@ -122,18 +122,16 @@ Ver [turnos.md](./turnos.md).
 
 | Campo | Valor |
 |-------|--------|
-| **Tipo** | Agente (reglas fijas sobre historial BD; no es ML) |
+| **Tipo** | Agente (reglas fijas sobre historial BD + candidato de perfil factual en shadow; no es ML) |
 | **Trigger** | Checkpoints T−48 h y T−2 h (`programarNotificaciones` al crear/reprogramar turno) |
-| **Política** | `agents/turno-antinoshow.yaml` |
-| **Decisiones** | Nivel low/medium/high calculado al vuelo; confirmación extra; liberar cupo T−24 h si alto riesgo sin confirmar |
-| **Efecto** | Push `TURNO_ANTINOSHOW_CONFIRM` / recordatorio; `TURNO_ANTINOSHOW_LIBERADO` + adelantamiento A03 si aplica |
+| **Política** | `TurnoAntinoshowAgentPolicy` (PHP; knobs en params / policy class) |
+| **Decisiones** | Nivel low/medium/high al vuelo; confirmación extra; liberación de cupo solo si enforce + `release_slot.enabled` |
+| **Efecto** | Push `TURNO_ANTINOSHOW_CONFIRM` / recordatorio; liberación (si enforce) + `SYSTEM_SLOT_RELEASED` |
 | **Cron** | `yii turno-notificacion/run` |
-| **Auditoría** | `agent_run` (`agent_id`: `turno-antinoshow`) |
+| **Auditoría** | `agent_run` con `profile_candidate`, `legacy_risk` / `candidate_risk`, `diff_reason` |
 | **Flag** | `autonomous_agent_antinoshow_enabled` |
 
-La v1 no materializa un perfil longitudinal ni prueba por sí sola la entrega del push. La evolución planificada separa eventos, perfil factual persistido y política; una acción automática debe registrar las versiones y evidencias consumidas.
-
-Ver [turnos.md](./turnos.md).
+El perfil factual ya está materializado; A04 aún **no** decide con él (shadow). La entrega de confirmación se mide con ACK de app. Ver [turnos.md](./turnos.md).
 
 ### A01 — Shortlist scoreado en resolución (agente D1, v1)
 

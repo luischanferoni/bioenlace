@@ -263,4 +263,73 @@ class TurnoBehaviorProfileCalculationServiceTest extends Unit
 
         return $out;
     }
+
+    public function testNearestWindowDaysSnapsToContract(): void
+    {
+        $contract = new TurnoBehaviorProfileContract([
+            'version' => 1,
+            'windows_days' => [90, 180, 365],
+            'scopes' => ['GLOBAL'],
+            'min_sample_size' => 1,
+            'late_cancellation' => ['hours_before_appointment' => 24],
+            'patient_attributed_actors' => ['PACIENTE'],
+            'events' => [],
+            'metrics' => [],
+        ]);
+
+        $this->assertSame(90, $contract->nearestWindowDays(30));
+        $this->assertSame(90, $contract->nearestWindowDays(90));
+        $this->assertSame(180, $contract->nearestWindowDays(120));
+        $this->assertSame(365, $contract->nearestWindowDays(400));
+    }
+
+    public function testCalculateIsDeterministicForSameEvents(): void
+    {
+        $calc = new TurnoBehaviorProfileCalculationService(new TurnoBehaviorProfileContract([
+            'version' => 1,
+            'windows_days' => [90],
+            'scopes' => ['GLOBAL'],
+            'min_sample_size' => 1,
+            'late_cancellation' => ['hours_before_appointment' => 24],
+            'patient_attributed_actors' => ['PACIENTE', 'REPRESENTANTE'],
+            'events' => [],
+            'metrics' => [
+                ['code' => 'CLOSED_ELIGIBLE', 'kind' => 'count'],
+                ['code' => 'ATTENDED', 'kind' => 'count'],
+                ['code' => 'NO_SHOW_ATTRIBUTABLE', 'kind' => 'count'],
+                ['code' => 'NO_SHOW_RATE', 'kind' => 'rate', 'numerator' => 'NO_SHOW_ATTRIBUTABLE', 'denominator' => 'CLOSED_ELIGIBLE'],
+            ],
+        ]));
+        $asOf = '2026-09-22 12:00:00';
+        $events = [
+            [
+                'id' => 1,
+                'id_turno' => 10,
+                'event_code' => TurnoEventoAudit::EVENT_ATTENDED,
+                'actor_type' => TurnoEventoAudit::ACTOR_STAFF,
+                'attribution_quality' => TurnoEventoAudit::QUALITY_NATIVE,
+                'occurred_at' => '2026-08-01 10:00:00',
+                'cita_at' => '2026-08-01 10:00:00',
+                'id_efector' => 1,
+                'id_servicio' => 1,
+                'modalidad' => 'presencial',
+            ],
+            [
+                'id' => 2,
+                'id_turno' => 11,
+                'event_code' => TurnoEventoAudit::EVENT_NO_SHOW_RECORDED,
+                'actor_type' => TurnoEventoAudit::ACTOR_PACIENTE,
+                'attribution_quality' => TurnoEventoAudit::QUALITY_NATIVE,
+                'occurred_at' => '2026-08-10 10:00:00',
+                'cita_at' => '2026-08-10 10:00:00',
+                'id_efector' => 1,
+                'id_servicio' => 1,
+                'modalidad' => 'presencial',
+            ],
+        ];
+
+        $a = $calc->calculate($events, $asOf);
+        $b = $calc->calculate($events, $asOf);
+        $this->assertSame($a, $b);
+    }
 }

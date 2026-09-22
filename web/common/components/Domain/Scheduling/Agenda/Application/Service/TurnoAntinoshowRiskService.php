@@ -4,6 +4,7 @@ namespace common\components\Domain\Scheduling\Agenda\Application\Service;
 
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
 use common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoBehaviorProfileReadService;
+use common\components\Domain\Scheduling\BehaviorProfile\Domain\Catalog\TurnoBehaviorProfileContract;
 use common\models\Scheduling\PersonaTurnosPerfilMetrica;
 use common\models\Scheduling\Turno;
 use yii\db\Query;
@@ -55,14 +56,17 @@ final class TurnoAntinoshowRiskService
         $firstVisit = $attendedCount === 0;
 
         $riskLevel = self::computeRiskLevel($noShowCount, $leadDays, $firstVisit, $riskCfg);
-        $profileReader = new TurnoBehaviorProfileReadService();
+        $contract = new TurnoBehaviorProfileContract();
+        $profileReader = new TurnoBehaviorProfileReadService($contract);
         $profile = $profileReader->currentProfile($idPersona);
+        $requestedWindow = (int) ($riskCfg['profile_window_days'] ?? 180);
+        $profileWindow = $contract->nearestWindowDays($requestedWindow);
         $profileNoShows = $profileReader->metric(
             $idPersona,
             'NO_SHOW_ATTRIBUTABLE',
             PersonaTurnosPerfilMetrica::SCOPE_GLOBAL,
             '',
-            (int) ($riskCfg['profile_window_days'] ?? 180)
+            $profileWindow
         );
         $profileAttended = $profileReader->metric(
             $idPersona,
@@ -72,6 +76,20 @@ final class TurnoAntinoshowRiskService
             365
         );
         $candidateAvailable = $profileNoShows !== null && $profileAttended !== null;
+        $candidateRisk = $candidateAvailable
+            ? self::computeRiskLevel(
+                (int) $profileNoShows->numerator,
+                $leadDays,
+                (int) $profileAttended->numerator === 0,
+                $riskCfg
+            )
+            : null;
+        $diffReason = 'candidate_unavailable';
+        if ($candidateRisk !== null) {
+            $diffReason = $candidateRisk === $riskLevel ? 'match' : 'risk_level_mismatch';
+        } elseif ($profile === null) {
+            $diffReason = 'profile_missing';
+        }
 
         return [
             'risk_level' => $riskLevel,
@@ -81,19 +99,15 @@ final class TurnoAntinoshowRiskService
             'confirmed' => $turno->confirmado_en !== null && $turno->confirmado_en !== '',
             'profile_candidate' => [
                 'mode' => 'shadow',
-                'status' => $candidateAvailable ? 'available' : 'profile_missing_or_window_unsupported',
+                'status' => $candidateAvailable ? 'available' : 'profile_missing_or_metric_absent',
                 'profile_id' => $profile !== null ? (int) $profile->id : null,
                 'profile_contract_version' => $profile !== null ? (int) $profile->profile_contract_version : null,
+                'window_days' => $profileWindow,
+                'requested_window_days' => $requestedWindow,
                 'no_show_count' => $profileNoShows !== null ? (int) $profileNoShows->numerator : null,
                 'attended_count_efector' => $profileAttended !== null ? (int) $profileAttended->numerator : null,
-                'risk_level' => $candidateAvailable
-                    ? self::computeRiskLevel(
-                        (int) $profileNoShows->numerator,
-                        $leadDays,
-                        (int) $profileAttended->numerator === 0,
-                        $riskCfg
-                    )
-                    : null,
+                'risk_level' => $candidateRisk,
+                'diff_reason' => $diffReason,
             ],
         ];
     }

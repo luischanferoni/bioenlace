@@ -2,6 +2,7 @@
 
 namespace console\controllers;
 
+use common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoBehaviorStreamCoverageService;
 use common\components\Domain\Scheduling\BehaviorProfile\Application\UseCase\MaterializeTurnoBehaviorProfile;
 use yii\console\Controller;
 use yii\console\ExitCode;
@@ -14,17 +15,20 @@ use yii\console\ExitCode;
  * Uso:
  *   php yii turno-behavior-profile/materialize [--limitPersonas=]
  *   php yii turno-behavior-profile/rebuild [--idPersona=] [--limitPersonas=]
+ *   php yii turno-behavior-profile/coverage [--since=YYYY-MM-DD]
  */
 class TurnoBehaviorProfileController extends Controller
 {
     public $idPersona;
     public $limitPersonas;
+    public $since;
 
     public function options($actionID)
     {
         return array_merge(parent::options($actionID), [
             'idPersona',
             'limitPersonas',
+            'since',
         ]);
     }
 
@@ -64,6 +68,17 @@ class TurnoBehaviorProfileController extends Controller
             $result['perfiles'],
             $result['watermark'] === null ? 'null' : (string) $result['watermark']
         ));
+
+        return ExitCode::OK;
+    }
+
+    public function actionCoverage(): int
+    {
+        $svc = new TurnoBehaviorStreamCoverageService();
+        $report = $svc->summarize(
+            $this->since !== null && $this->since !== '' ? (string) $this->since : null
+        );
+        $this->stdout(json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "\n");
 
         return ExitCode::OK;
     }

@@ -7,8 +7,14 @@ use common\components\Platform\Agent\AutonomousAgentRuleEngine;
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\components\Platform\Core\Service\Push\PushNotificationTypes;
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoAntinoshowRiskService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\AdvanceTurnoLifecycle;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\ApplyTurnoAntinoshow;
+use common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoCanonicalEventService;
+use common\components\Domain\Scheduling\BehaviorProfile\Domain\Model\TurnoCanonicalEventCommand;
 use common\models\Person\Persona;
 use common\models\Scheduling\Turno;
+use common\models\Scheduling\TurnoEventoAudit;
 use common\models\Scheduling\TurnoNotificacionProgramada;
 use Yii;
 
@@ -226,8 +232,26 @@ final class TurnoAntinoshowAgent
                 'agent_id' => self::AGENT_ID,
             ],
             false,
-            \common\models\Scheduling\TurnoEventoAudit::ACTOR_SISTEMA
+            TurnoEventoAudit::ACTOR_SISTEMA
         );
+
+        (new TurnoCanonicalEventService())->record(TurnoCanonicalEventCommand::create(
+            (int) $turno->id_turnos,
+            (int) $turno->id_persona,
+            TurnoEventoAudit::EVENT_SYSTEM_SLOT_RELEASED,
+            TurnoEventoAudit::ACTOR_SISTEMA,
+            'native:' . TurnoEventoAudit::EVENT_SYSTEM_SLOT_RELEASED . ':' . (int) $turno->id_turnos . ':A04',
+            TurnoEventoAudit::QUALITY_NATIVE,
+            null,
+            'agent',
+            self::AGENT_ID,
+            'A04_SIN_CONFIRMACION',
+            null,
+            [
+                'policy_id' => self::AGENT_ID,
+                'legacy_risk' => $facts['risk_level'] ?? null,
+            ]
+        ));
 
         $msgs = is_array($config['patient_messages'] ?? null) ? $config['patient_messages'] : [];
         $tpl = is_array($msgs['slot_released'] ?? null) ? $msgs['slot_released'] : [];
@@ -397,6 +421,18 @@ final class TurnoAntinoshowAgent
         if (!in_array($mode, ['SHADOW', 'LOW_IMPACT', 'ENFORCE'], true)) {
             $mode = 'SHADOW';
         }
+        $legacyRisk = (string) ($facts['risk_level'] ?? '');
+        $candidateRisk = array_key_exists('risk_level', $candidate) && $candidate['risk_level'] !== null
+            ? (string) $candidate['risk_level']
+            : null;
+        $diffReason = (string) ($candidate['diff_reason'] ?? '');
+        if ($diffReason === '') {
+            if ($candidateRisk === null) {
+                $diffReason = (string) ($candidate['status'] ?? 'candidate_unavailable');
+            } else {
+                $diffReason = $candidateRisk === $legacyRisk ? 'match' : 'risk_level_mismatch';
+            }
+        }
 
         return [
             'profile_id' => $candidate['profile_id'] ?? null,
@@ -407,7 +443,13 @@ final class TurnoAntinoshowAgent
             'execution_mode' => $mode,
             'evidence' => $candidate,
             'action' => ['code' => $action],
-            'result' => ['legacy_outcome' => $action, 'candidate_mode' => strtolower($mode)],
+            'result' => [
+                'legacy_outcome' => $action,
+                'legacy_risk' => $legacyRisk !== '' ? $legacyRisk : null,
+                'candidate_risk' => $candidateRisk,
+                'diff_reason' => $diffReason,
+                'candidate_mode' => strtolower($mode),
+            ],
         ];
     }
 

@@ -62,16 +62,15 @@ Superficies: API `GET /api/v1/turnos/indicadores-agenda` (filtros por período y
 
 ## Perfil histórico de turnos
 
-Hoy Bioenlace utiliza señales históricas en capacidades separadas:
+Bioenlace materializa un **perfil factual** longitudinal a partir del stream canónico de eventos de turno (asistencia, no-show, cancelación, reprogramación, confirmación). No es una reputación ni un score comercial: describe hechos versionados, por ventanas (90/180/365 días) y alcances (global, efector, servicio, modalidad).
 
-- anti no-show calcula riesgo al programar checkpoints;
-- la política de cancelaciones cuenta cancelaciones atribuibles al paciente;
-- los indicadores de agenda producen métricas agregadas;
-- las preferencias de agenda registran elecciones explícitas.
+- Preferencias declaradas (`persona_agenda_preferencias`) permanecen separadas del comportamiento observado.
+- Las políticas (anti no-show A04, autogestión de cancelaciones) siguen decidiendo con reglas propias; en **shadow** adjuntan un candidato factual comparable (`diff_reason`) sin cambiar el desenlace.
+- Liberación automática de cupos permanece **deshabilitada** (`execution_mode: shadow`, `release_slot.enabled: false`) hasta evaluación operativa.
+- La persona puede consultar historial/explicación y solicitar corrección; el staff ve agregados y resuelve correcciones.
+- Operación: `php yii turno-behavior-profile/materialize`, `rebuild`, `coverage`.
 
-Todavía no existe un perfil longitudinal persistido que unifique esas definiciones. La evolución prevista materializa hechos explicables por persona, período y alcance —asistencia, no-show, cancelación, reprogramación y confirmación— y mantiene separadas las preferencias declaradas.
-
-El perfil describe hechos; las políticas deciden recordatorios o intervenciones. No representa reputación, prioridad clínica ni autorización para atenderse. La falta de historial se considera información insuficiente, no una conducta de riesgo.
+La falta de historial se trata como información insuficiente, no como conducta de riesgo.
 
 ## Adelantamiento por cancelación (agente A03)
 
@@ -106,15 +105,14 @@ Flag: `autonomous_agent_resolucion_loop_close_enabled`.
 
 ## Anti no-show basado en reglas (agente A04, v1)
 
-Al crear o reprogramar un turno pendiente, el agente `turno-antinoshow` calcula el riesgo en ese momento mediante reglas sobre BD —ausencias previas, anticipación reserva→cita y primera visita—. El resultado no es todavía un perfil persistido:
+Al crear o reprogramar un turno pendiente, el agente `turno-antinoshow` calcula el riesgo con reglas sobre historial en BD y, en paralelo, adjunta un **candidato factual** desde el perfil persistido (shadow: no cambia el desenlace).
 
-1. **T−48 h:** riesgo alto → push de confirmación explícita (`TURNO_ANTINOSHOW_CONFIRM`).
-2. **Alto riesgo sin confirmar:** a **T−24 h** cancela el turno y libera el cupo (`TURNO_ANTINOSHOW_LIBERADO` → adelantamiento A03 si el slot aún cumple T−24 h de lead).
+1. **T−48 h:** riesgo alto → push de confirmación explícita (`TURNO_ANTINOSHOW_CONFIRM`), unificado con la solicitud de confirmación base.
+2. **Liberación de cupo (T−24 h):** deshabilitada por defecto (`execution_mode: shadow`, `release_slot.enabled: false`). Si se activara enforce, cancela como sistema y emite `SYSTEM_SLOT_RELEASED`.
 3. **T−2 h:** recordatorio adicional para riesgo medio/alto.
+4. Entrega/apertura de confirmación se acreditan solo con ACK autenticado de la app paciente.
 
-Flag: `autonomous_agent_antinoshow_enabled`. Desactivar liberación automática: `release_slot.enabled: false` en el YAML.
-
-La liberación automática es una acción de alto impacto: debe diferenciar cancelación del sistema de cancelación del paciente, comprobar entrega de la confirmación y evitar que esa acción alimente restricciones posteriores de autogestión.
+Flag: `autonomous_agent_antinoshow_enabled`. Política: `TurnoAntinoshowAgentPolicy` (PHP). Ver sección de perfil factual arriba.
 
 ## Notificaciones: push y WhatsApp
 

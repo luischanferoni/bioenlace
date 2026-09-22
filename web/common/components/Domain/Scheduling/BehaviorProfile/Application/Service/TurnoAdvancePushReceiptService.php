@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Scheduling\BehaviorProfile\Application\Service;
 
+use common\components\Domain\Scheduling\BehaviorProfile\Domain\Model\TurnoCanonicalEventCommand;
 use common\components\Platform\Core\Service\Notificaciones\PushNotificationReceiptProjectorInterface;
 use common\models\Platform\PersonaNotificacion;
 use common\models\Platform\PersonaNotificacionInteraccion;

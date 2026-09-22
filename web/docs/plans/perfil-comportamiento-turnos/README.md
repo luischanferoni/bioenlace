@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|-------|
 | Slug | `perfil-comportamiento-turnos` |
-| Estado | **En implementación — base V1 y shadow mode** |
+| Estado | **Construcción V1 cerrada — shadow operativo; piloto fase 5 pendiente** |
 | Dominio | Scheduling |
 | Objetivo | Materializar un perfil factual, explicable, corregible y versionado a partir de eventos de turnos |
 
@@ -41,23 +41,23 @@ Las preferencias declaradas por la persona permanecen separadas del comportamien
 
 Las fases 0 y 1 son bloqueantes. No se habilita ninguna decisión nueva sobre pacientes hasta completar eventos nativos, atribución y evaluación en shadow mode. Las fases 2 y 3 pueden avanzar parcialmente en paralelo una vez cerrado el contrato de eventos. No hay backfill ni evidencia `LEGACY_INFERRED`.
 
-## Estado de implementación (2026-07-18)
+## Estado de implementación (2026-09-22)
 
-- Implementado: contrato V1 (sólo `NATIVE`), stream canónico, materializador, create/cancel/reprogram/resolución/attended/no-show/corrección/FHIR/confirmación (solicitada/entregada/abierta)/adelantamiento (`APPOINTMENT_ADVANCE_*`). El perfil no prioriza reocupación; sólo puede mejorar notificaciones.
+- Implementado: contrato V1 (sólo `NATIVE`), stream canónico, materializador, create/cancel/reprogram/resolución/attended/no-show/corrección/FHIR/confirmación (solicitada/entregada/abierta)/adelantamiento (`APPOINTMENT_ADVANCE_*`) / `SYSTEM_SLOT_RELEASED` en path de release A04.
 - Sin backfill histórico: el perfil empieza en el corte de eventos nativos.
 - Cancelación tardía: definición **global** del contrato (`hours_before_appointment`), no por efector.
 - KPIs de agenda desde eventos canónicos nativos.
-- Checkpoints: T−48 unificado con `CONFIRM_REQUEST` (`shared_confirmation_request`); T−2 sigue como checkpoint propio.
-- Shadow A04/cancelación; liberación deshabilitada.
-- API + UI JSON: historial propio/representado, explicación, agregado staff, solicitud y resolución de corrección.
-- Entrega/apertura de confirmación: ACK autenticado de app paciente; no se infiere desde HTTP FCM ni desde lectura de bandeja.
-- Fuera de alcance operativo: piloto formal de fase 5.
+- Shadow comparable: A04/cancelación adjuntan candidato con ventana del contrato (`nearestWindowDays`) y `diff_reason` en `agent_run`.
+- Liberación deshabilitada (`execution_mode: shadow`, `release_slot.enabled: false`).
+- API + UI JSON: historial propio/representado, explicación, agregado staff, solicitud y resolución de corrección (RBAC de corrección en migración `m260922_120000_*`).
+- Reportes: `php yii turno-behavior-profile/coverage`.
+- Fuera de alcance operativo: piloto formal de fase 5 (calibración con datos reales / enforce).
 
 ## Cierre del plan
 
-Al completar el programa:
+Al completar el piloto (fase 5):
 
-1. Consolidar la narrativa vigente en `producto/turnos.md`.
+1. Consolidar la narrativa vigente en `producto/turnos.md` (ya actualizada para V1+shadow).
 2. Registrar decisiones transversales estables en `decisions/` si corresponde.
 3. Actualizar la madurez en `his-completo/11-agenda-turnos.md`.
 4. Eliminar esta carpeta temporal.

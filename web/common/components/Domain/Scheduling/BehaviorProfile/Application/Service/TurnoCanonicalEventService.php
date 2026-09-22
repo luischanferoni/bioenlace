@@ -2,6 +2,8 @@
 
 namespace common\components\Domain\Scheduling\BehaviorProfile\Application\Service;
 
+use common\components\Domain\Scheduling\BehaviorProfile\Domain\Catalog\TurnoBehaviorProfileContract;
+use common\components\Domain\Scheduling\BehaviorProfile\Domain\Model\TurnoCanonicalEventCommand;
 use common\models\Scheduling\Turno;
 use common\models\Scheduling\TurnoEventoAudit;
 use Yii;

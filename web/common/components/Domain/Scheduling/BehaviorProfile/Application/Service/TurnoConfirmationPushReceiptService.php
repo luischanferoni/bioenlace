@@ -3,7 +3,7 @@
 namespace common\components\Domain\Scheduling\BehaviorProfile\Application\Service;
 
 use common\components\Domain\Scheduling\Agenda\Application\UseCase\ConfirmTurno;
-use common\components\Platform\Core\Service\Notificaciones\PushNotificationReceiptServiceInterface;
+use common\components\Platform\Core\Service\Notificaciones\PushNotificationReceiptProjectorInterface;
 use common\models\Platform\PersonaNotificacion;
 use common\models\Platform\PersonaNotificacionInteraccion;
 use common\models\Scheduling\Turno;
@@ -12,7 +12,7 @@ use common\models\Scheduling\TurnoEventoAudit;
 /**
  * Proyecta DELIVERED/OPENED de notificaciones de confirmación al stream canónico.
  */
-final class TurnoConfirmationPushReceiptService implements PushNotificationReceiptServiceInterface
+final class TurnoConfirmationPushReceiptService implements PushNotificationReceiptProjectorInterface
 {
     public const HANDLER_ID = 'scheduling.turno_confirmation_push';
 

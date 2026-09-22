@@ -96,15 +96,15 @@ SELECT
     cc.subject_persona_id AS id_persona,
     enc.parent_id AS c_parent_id,
     CASE enc.parent_type
-        WHEN 'TURNO' THEN '\\common\\models\\Turno'
-        WHEN 'DERIVACION' THEN '\\common\\models\\ConsultaDerivaciones'
-        WHEN 'INTERNACION' THEN '\\common\\models\\SegNivelInternacion'
+        WHEN 'TURNO' THEN '\\common\\models\\Scheduling\\Turno'
+        WHEN 'DERIVACION' THEN '\\common\\models\\Clinical\\ConsultaDerivaciones'
+        WHEN 'INTERNACION' THEN '\\common\\models\\Clinical\\InpatientStay'
         WHEN 'GENERICO_AMB' THEN '\\common\\models\\GenericoAMB'
         WHEN 'GENERICO_EMER' THEN '\\common\\models\\GenericoEMER'
-        WHEN 'GUARDIA' THEN '\\common\\models\\Guardia'
-        WHEN 'PASE_PREVIO' THEN '\\common\\models\\ServiciosEfector'
-        WHEN 'ENCUESTA_PARCHES' THEN '\\common\\models\\EncuestaParchesMamarios'
-        WHEN 'CIRUGIA' THEN '\\common\\models\\Cirugia'
+        WHEN 'GUARDIA' THEN '\\common\\models\\Clinical\\Emergency\\EmergencyEpisode'
+        WHEN 'PASE_PREVIO' THEN '\\common\\models\\Organization\\ServiciosEfector'
+        WHEN 'ENCUESTA_PARCHES' THEN '\\common\\models\\Clinical\\EncuestaParchesMamarios'
+        WHEN 'CIRUGIA' THEN '\\common\\models\\Scheduling\\Cirugia'
         ELSE NULL
     END AS c_parent_class,
     enc.created_at AS c_created_at

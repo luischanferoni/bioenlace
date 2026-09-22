@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Scheduling\BehaviorProfile\Application\Service;
 
-use common\components\Platform\Core\Service\Notificaciones\PushNotificationReceiptServiceInterface;
+use common\components\Platform\Core\Service\Notificaciones\PushNotificationReceiptProjectorInterface;
 use common\models\Platform\PersonaNotificacion;
 use common\models\Platform\PersonaNotificacionInteraccion;
 use common\models\Scheduling\Turno;
@@ -11,7 +11,7 @@ use common\models\Scheduling\TurnoEventoAudit;
 /**
  * Proyecta DELIVERED/OPENED de ofertas de adelantamiento al stream canónico.
  */
-final class TurnoAdvancePushReceiptService implements PushNotificationReceiptServiceInterface
+final class TurnoAdvancePushReceiptService implements PushNotificationReceiptProjectorInterface
 {
     public const HANDLER_ID = 'scheduling.turno_advance_push';
 

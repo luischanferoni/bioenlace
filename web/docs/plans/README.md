@@ -25,13 +25,13 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Captura actor + enfermería | `captura-actor-enfermeria/` | Quitar alias ConsultasConfiguracion; overlay PES + CarePlan; app triage |
 | Admisión: identidad + ventanilla | `admision-identidad-ventanilla/` | Ingreso DNI (sin alta libre); Didit; NN; sesión de mostrador |
 | RBAC capabilities UI nativa | `rbac-capabilities-ui-nativa/` | Permisos assignables fuera de intents; guardia + encounter + panel |
-| Motivos encounter → FHIR Condition | `encounter-reasons-fhir/` | Chief complaint como Condition (`CC`); drop `reason_text` |
-| DDD norte Org/Person/Sched | `ddd-norte-org-person-sched/` | Fases 01–09 cerradas; UseCases + Infra NisFhir |
 
 ## Planes archivados (carpeta eliminada)
 
 | Plan | Documentación estable |
 |------|------------------------|
+| Motivos encounter → FHIR Condition | [encounter-reasons-condition-cc.md](../decisions/encounter-reasons-condition-cc.md) + captura clínica |
+| DDD norte Org/Person/Sched | [ddd-norte-modelo-rico.md](../decisions/ddd-norte-modelo-rico.md) + [domain-folder-grammar.md](../decisions/domain-folder-grammar.md) + `Domain/README.md` |
 | DDD/CA empaquetado transversal | [ddd-modulo-primero-vs-bc-compacto.md](../decisions/ddd-modulo-primero-vs-bc-compacto.md) + [domain-folder-grammar.md](../decisions/domain-folder-grammar.md) + `Domain/README.md` + [common-components.md](../arquitectura/common-components.md) + `BoundedContextLayerShapeTest` |
 | Clinical gramática DDD Application/Domain/Infrastructure | [decisions/domain-folder-grammar.md](../decisions/domain-folder-grammar.md) + `Domain/README.md` + `Domain/Clinical/README.md` + `BoundedContextLayerShapeTest` |
 | Clinical módulos de capacidad | [decisions/clinical-modulos-capacidad.md](../decisions/clinical-modulos-capacidad.md) + `Domain/Clinical/README.md` + [common-components.md](../arquitectura/common-components.md) |

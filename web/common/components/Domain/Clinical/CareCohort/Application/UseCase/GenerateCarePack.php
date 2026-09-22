@@ -103,7 +103,7 @@ final class GenerateCarePack
         }
 
         if ($job->pack_type === CarePackType::FOLLOWUP_PROGRAM) {
-            $scheduler = new CareFollowupSchedulerService($this->repository);
+            $scheduler = new ScheduleCareFollowup($this->repository);
             if ((int) $job->encounter_id > 0) {
                 $scheduler->tryScheduleForEncounter((int) $job->encounter_id);
             } else {

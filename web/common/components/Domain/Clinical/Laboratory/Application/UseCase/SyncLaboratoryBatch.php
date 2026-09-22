@@ -1,13 +1,13 @@
 <?php
 
-namespace common\components\Domain\Clinical\Laboratory\Application\Service;
+namespace common\components\Domain\Clinical\Laboratory\Application\UseCase;
 
 use common\models\Person\Persona;
 
 /**
  * Sincronización pull por lotes (cron / consola).
  */
-final class LaboratorySyncBatchService
+final class SyncLaboratoryBatch
 {
     private IngestLaboratoryResults $ingest;
 

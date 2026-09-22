@@ -8,19 +8,19 @@ use Yii;
 
 /**
  * Agente E03 v1: bloquea emisión si la receta no cumple integridad RDI + política.
- * Gates hard en modelos/servicio; YAML solo umbrales ({@see PrescriptionRdiPreSubmitValidationService}).
+ * Gates hard en modelos/servicio; YAML solo umbrales ({@see ValidatePrescriptionRdiPreSubmit}).
  */
 final class PrescriptionRdiPreSubmitValidationAgent
 {
-    public const AGENT_ID = PrescriptionRdiPreSubmitValidationService::AGENT_ID;
+    public const AGENT_ID = ValidatePrescriptionRdiPreSubmit::AGENT_ID;
 
     public const TRIGGER_TYPE = 'electronic_prescription_issue';
 
-    private PrescriptionRdiPreSubmitValidationService $validation;
+    private ValidatePrescriptionRdiPreSubmit $validation;
 
-    public function __construct(?PrescriptionRdiPreSubmitValidationService $validation = null)
+    public function __construct(?ValidatePrescriptionRdiPreSubmit $validation = null)
     {
-        $this->validation = $validation ?? new PrescriptionRdiPreSubmitValidationService();
+        $this->validation = $validation ?? new ValidatePrescriptionRdiPreSubmit();
     }
 
     public function isEnabled(): bool

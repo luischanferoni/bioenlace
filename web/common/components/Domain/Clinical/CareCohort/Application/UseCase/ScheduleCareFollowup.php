@@ -1,8 +1,10 @@
 <?php
 
-namespace common\components\Domain\Clinical\CareCohort\Application\Service;
+namespace common\components\Domain\Clinical\CareCohort\Application\UseCase;
 
+use common\components\Domain\Clinical\CareCohort\Application\Service\CarePackConfig;
 use common\components\Domain\Clinical\CareCohort\Domain\CarePackType;
+use common\components\Domain\Clinical\CareCohort\Domain\Port\CarePackRepository;
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\models\Clinical\CareCohortPack;
 use common\models\Clinical\CareEncounterPack;
@@ -16,7 +18,7 @@ use Yii;
  * Programa touchpoints de followup_program al publicar resumen o al completar el pack.
  * Garantiza mínimo de touchpoints (pregunta/recordatorio) vía params care_cohort.followup.
  */
-final class CareFollowupSchedulerService
+final class ScheduleCareFollowup
 {
     private CarePackRepository $repository;
 

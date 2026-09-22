@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\CareRequest\Application\Service;
+namespace common\components\Domain\Clinical\CareRequest\Application\UseCase;
 
 use common\components\Domain\Clinical\CareRequest\Domain\CodingSystems;
 
@@ -18,7 +18,7 @@ use Yii;
  * Codifica Acto display → SNOMED (caché local → SnomedIaCodingService → Snowstorm profile).
  * Fail-soft: sin tumbar el pedido si terminología no responde.
  */
-final class CareRequestActCodingService implements CareRequestActCoderInterface
+final class CodeCareRequestAct implements CareRequestActCoderInterface
 {
     private ?SnomedIaCodingService $codificador;
     private ?SnowstormClient $snowstorm;
@@ -79,7 +79,7 @@ final class CareRequestActCodingService implements CareRequestActCoderInterface
                 }
             }
         } catch (\Throwable $e) {
-            Yii::warning('CareRequestActCodingService codificador: ' . $e->getMessage(), __METHOD__);
+            Yii::warning('CodeCareRequestAct codificador: ' . $e->getMessage(), __METHOD__);
         }
 
         $candidates = $this->searchSnowstormCandidates($display, $cfg['snowstorm_profile'], $cfg['candidate_limit']);
@@ -169,7 +169,7 @@ final class CareRequestActCodingService implements CareRequestActCoderInterface
 
             return $out;
         } catch (\Throwable $e) {
-            Yii::warning('CareRequestActCodingService snowstorm: ' . $e->getMessage(), __METHOD__);
+            Yii::warning('CodeCareRequestAct snowstorm: ' . $e->getMessage(), __METHOD__);
 
             return [];
         }

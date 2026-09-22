@@ -2,7 +2,7 @@
 
 namespace console\controllers;
 
-use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyMetricsMaterializeService;
+use common\components\Domain\Clinical\Emergency\Application\UseCase\MaterializeEmergencyMetrics;
 use yii\console\Controller;
 use yii\console\ExitCode;
 
@@ -19,7 +19,7 @@ class EmergencyController extends Controller
     public function actionMaterializeMetrics($fecha = null): int
     {
         $fecha = $fecha ?: date('Y-m-d');
-        $n = (new EmergencyMetricsMaterializeService())->materializeAllEfectores($fecha);
+        $n = (new MaterializeEmergencyMetrics())->materializeAllEfectores($fecha);
         $this->stdout("Materializado métricas de guardia para {$n} efector(es), fecha {$fecha}.\n");
 
         return ExitCode::OK;

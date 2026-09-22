@@ -1,6 +1,6 @@
 # DDD norte — Org / Person / Scheduling (post-empaquetado)
 
-**Estado:** fases 01–08 hechas (pendiente commit + deploy)  
+**Estado:** cerrado (fases 01–09). Commit del usuario; redeploy cuando corresponda.  
 **Precondición:** empaquetado módulo-primero ya hecho ([`ddd-empaquetado-transversal`](../ddd-empaquetado-transversal/) archivado en decisions).  
 **Norte:** [`ddd-norte-modelo-rico.md`](../../decisions/ddd-norte-modelo-rico.md), [`ddd-un-eje-por-nivel`](../../../.cursor/rules/ddd-un-eje-por-nivel.mdc).
 
@@ -8,34 +8,24 @@
 
 Pasar de “carpetas bien” a **modelo rico**: UseCases verb phrase, Domain con invariantes, Infra `External/<Sistema>/`. Sin inventar carpetas de capacidad bajo `Application/`.
 
-## Veredicto de partida
-
-| BC | Empaquetado | Hueco principal |
-|----|-------------|-----------------|
-| Organization | OK | 0 UseCases; Domain fino |
-| Person | OK (`Identity`/`FrontDesk`) | 0 UseCases; docs `Identidad` stale |
-| Scheduling/Agenda | Cerca | Port roto; External por rol ACL |
-| Geo/Content/Terminology | Forma OK | Fuera de alcance salvo docs |
-
 ## Fases
 
-| Fase | Contenido | Done when |
-|------|-----------|-----------|
-| **01** | Org UseCases (alta/baja PES, signup institucional/ministerio) | Clases verb phrase en `*/UseCase/`; callers actualizados |
-| **02** | Person UseCases (registro, update identidad básica, staff alta paciente, front-desk session) | Idem |
-| **03** | Agenda Infra: Port `use` + stubs fuera de raíz; External → `NisFhir/` | Sin PHP suelto en `Infrastructure/`; FQCN params OK |
-| **04** | Docs Identity vs Identidad; Integrations/fhir-scheduling paths | Sin menciones stale a `Identidad/` ni `Scheduling/Infrastructure/` |
-| **05** | Más UseCases (AdminEfector, billing switch, sesión operativa, identidad pendiente/resolver) + CuilPolicy wiring | Callers OK; `PersonCuilService` → `CuilPolicy` |
-| **06** | Representation + horario PES + CareCohort Generate/Enqueue | UseCases + callers API |
-| **07** | Encounter/CarePlan/Emergency/Inpatient lifecycle UseCases | 15 UseCases + callers |
-| **08** | Journey/docs/coding + reminders + Rx/Lab/Legal/History/CareRequest | 18 UseCases + callers |
+| Fase | Contenido | Estado |
+|------|-----------|--------|
+| **01** | Org UseCases (PES, signup) | ✅ |
+| **02** | Person UseCases (registro, identidad, front-desk) | ✅ |
+| **03** | Agenda Infra Port + `External/NisFhir/` | ✅ |
+| **04** | Docs Identity / Integrations / FHIR paths | ✅ |
+| **05** | Más Org/Person + CuilPolicy | ✅ |
+| **06** | Representation + horario + CareCohort Generate/Enqueue | ✅ |
+| **07** | Encounter/CarePlan/Emergency/Inpatient lifecycle | ✅ |
+| **08** | Journey/docs/Rx/Lab/Legal/History/CareRequest | ✅ |
+| **09** | Residuos (followup, reconcile, sync, coding, RDI) | ✅ |
 
-## No hacer en este plan
+## Fuera de alcance (ok en Service)
 
-- Mover frontera Agenda-PES (ownership explícito → ADR aparte).
-- Programs / Integrations código nuevo.
-- Catalogs/query/UI restantes en `Application/Service` (fase/ventana, listados, seeds) — no son intenciones de dominio.
+Catalogs, query/listados, UI flows, seeds, depdrops, resolvers de fase/ventana, `CarePackConfig` (params Yii).
 
 ## Criterio de naming UseCase
 
-`[<Contexto>]VerbObject` sin sufijo `Service` — p. ej. `EnsurePesAssignment`, `RegisterPerson`, `UpdateBasicIdentity`.
+`[<Contexto>]VerbObject` sin sufijo `Service`.

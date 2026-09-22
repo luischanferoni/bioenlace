@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Laboratory\Application\Service;
+namespace common\components\Domain\Clinical\Laboratory\Application\UseCase;
 
 use common\models\Clinical\DiagnosticReport;
 use common\models\Clinical\DiagnosticReportEncounterLinkPending;
@@ -10,7 +10,7 @@ use common\models\Person\Persona;
 /**
  * Bandeja staff: informes de lab pendientes de vincular a encounter (agente E01).
  */
-final class LaboratoryEncounterLinkPendingService
+final class ResolvePendingLaboratoryEncounterLink
 {
     /**
      * @return array<string, mixed>

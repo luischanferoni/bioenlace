@@ -56,6 +56,14 @@
 | `ClinicalHistoryOutboundProcessorService` | `ProcessClinicalHistoryOutbound` ✅ |
 | `CareRequestService` | `ResolveCareRequest` ✅ |
 | `CareRequestPatientService` | `SubmitPatientCareRequest` ✅ |
+| `CareFollowupSchedulerService` | `ScheduleCareFollowup` ✅ |
+| `ClinicalHistoryOutboundReconcileService` | `ReconcileClinicalHistoryOutbound` ✅ |
+| `LaboratorySyncBatchService` | `SyncLaboratoryBatch` ✅ |
+| `EmergencyMetricsMaterializeService` | `MaterializeEmergencyMetrics` ✅ |
+| `CareRequestActCodingService` | `CodeCareRequestAct` ✅ |
+| `PrescriptionRdiPreSubmitValidationService` | `ValidatePrescriptionRdiPreSubmit` ✅ |
+| `TreatmentRequestSnomedCodingService` | `CodeTreatmentRequestSnomed` ✅ |
+| `LaboratoryEncounterLinkPendingService` | `ResolvePendingLaboratoryEncounterLink` ✅ |
 
 Métodos públicos se mantienen cuando es posible (`ensurePersonaServicioEnEfector`, `registrar`, `update`, …) para no reescribir el cuerpo; solo cambia FQCN + carpeta.
 

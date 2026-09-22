@@ -4,7 +4,7 @@ namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\Prescription\Domain\PrescriptionLegalStatus;
-use common\components\Domain\Clinical\Prescription\Application\Service\PrescriptionRdiPreSubmitValidationService;
+use common\components\Domain\Clinical\Prescription\Application\UseCase\ValidatePrescriptionRdiPreSubmit;
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
 use common\models\Clinical\ElectronicPrescription;
 use common\models\Clinical\ElectronicPrescriptionItem;
@@ -61,7 +61,7 @@ class PrescriptionRdiPreSubmitValidationTest extends Unit
         ]);
         $rx->populateRelation('items', [$item]);
 
-        $errors = (new PrescriptionRdiPreSubmitValidationService())->validate($rx);
+        $errors = (new ValidatePrescriptionRdiPreSubmit())->validate($rx);
         $joined = implode(' ', $errors);
         $this->assertStringContainsString('diagnóstico codificado', $joined);
         $this->assertStringContainsString('código de medicamento', $joined);
@@ -86,13 +86,13 @@ class PrescriptionRdiPreSubmitValidationTest extends Unit
         ]);
         $rx->populateRelation('items', [$item]);
 
-        $errors = (new PrescriptionRdiPreSubmitValidationService())->validate($rx);
+        $errors = (new ValidatePrescriptionRdiPreSubmit())->validate($rx);
         $this->assertSame([], $errors);
     }
 
     public function testPolicyKnobsHaveDomainDefaults(): void
     {
-        $knobs = (new PrescriptionRdiPreSubmitValidationService())->loadPolicyKnobs();
+        $knobs = (new ValidatePrescriptionRdiPreSubmit())->loadPolicyKnobs();
         $this->assertSame(24, $knobs['block_duplicate_medication_hours']);
         $this->assertSame(3, $knobs['min_diagnosis_display_length']);
     }

@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Encounter\Application\UseCase;
 
-use common\components\Domain\Clinical\CareCohort\Application\Service\CareFollowupSchedulerService;
+use common\components\Domain\Clinical\CareCohort\Application\UseCase\ScheduleCareFollowup;
 use common\components\Domain\Clinical\Encounter\Application\Service\PatientEncounterSummaryService;
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
@@ -103,7 +103,7 @@ final class PublishPatientEncounterSummary
             $this->sendPush((int) $encounter->subject_persona_id, $encounterId);
         }
 
-        (new CareFollowupSchedulerService())->tryScheduleForEncounter($encounterId, $now);
+        (new ScheduleCareFollowup())->tryScheduleForEncounter($encounterId, $now);
 
         return true;
     }

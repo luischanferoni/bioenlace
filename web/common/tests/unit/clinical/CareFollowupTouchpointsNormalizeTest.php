@@ -3,7 +3,7 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\CareCohort\Application\Service\CareFollowupSchedulerService;
+use common\components\Domain\Clinical\CareCohort\Application\UseCase\ScheduleCareFollowup;
 use common\components\Domain\Clinical\CarePlan\Application\UseCase\ManageServiceRequest;
 use common\models\Clinical\ConsultaIndicaciones;
 
@@ -11,7 +11,7 @@ class CareFollowupTouchpointsNormalizeTest extends Unit
 {
     public function testEnsureMinTouchpointsFillsDefaults(): void
     {
-        $svc = new CareFollowupSchedulerService();
+        $svc = new ScheduleCareFollowup();
         $out = $svc->ensureMinTouchpoints([]);
         $this->assertGreaterThanOrEqual(2, count($out));
         $this->assertArrayHasKey('delay_days', $out[0]);
@@ -20,7 +20,7 @@ class CareFollowupTouchpointsNormalizeTest extends Unit
 
     public function testEnsureMinTouchpointsAppliesControlDelay(): void
     {
-        $svc = new CareFollowupSchedulerService();
+        $svc = new ScheduleCareFollowup();
         $out = $svc->ensureMinTouchpoints([
             ['delay_days' => 2, 'title' => 'Temp', 'form_kind' => 'evolution_short'],
         ], 15);

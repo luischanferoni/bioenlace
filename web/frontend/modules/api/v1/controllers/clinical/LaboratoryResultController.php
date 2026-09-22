@@ -3,7 +3,7 @@
 namespace frontend\modules\api\v1\controllers\clinical;
 
 use common\components\Domain\Clinical\Laboratory\Application\Agents\LaboratoryEncounterLinkAgent;
-use common\components\Domain\Clinical\Laboratory\Application\Service\LaboratoryEncounterLinkPendingService;
+use common\components\Domain\Clinical\Laboratory\Application\UseCase\ResolvePendingLaboratoryEncounterLink;
 use common\components\Domain\Clinical\Laboratory\Application\Service\LaboratoryReportPdfService;
 use common\components\Domain\Clinical\Laboratory\Application\Service\LaboratoryResultQueryService;
 use common\components\Domain\Clinical\Encounter\Application\Service\PatientEncounterSummaryQueryService;
@@ -245,7 +245,7 @@ class LaboratoryResultController extends BaseController
 
         return [
             'success' => true,
-            'data' => (new LaboratoryEncounterLinkPendingService())->listPending(
+            'data' => (new ResolvePendingLaboratoryEncounterLink())->listPending(
                 (int) ($req->get('limit') ?? 50)
             ),
         ];

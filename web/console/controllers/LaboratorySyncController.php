@@ -3,7 +3,7 @@
 namespace console\controllers;
 
 use common\components\Domain\Clinical\Laboratory\Application\UseCase\IngestLaboratoryResults;
-use common\components\Domain\Clinical\Laboratory\Application\Service\LaboratorySyncBatchService;
+use common\components\Domain\Clinical\Laboratory\Application\UseCase\SyncLaboratoryBatch;
 use common\models\Person\Persona;
 use yii\console\Controller;
 use yii\console\ExitCode;
@@ -55,7 +55,7 @@ class LaboratorySyncController extends Controller
         $connectorKey = is_string($connector) && trim($connector) !== '' ? trim($connector) : null;
         $onlyWithUser = (int) $soloConUsuario !== 0;
 
-        $summary = (new LaboratorySyncBatchService())->syncBatch(
+        $summary = (new SyncLaboratoryBatch())->syncBatch(
             (int) $limit,
             (int) $offset,
             $connectorKey,

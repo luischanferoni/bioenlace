@@ -3,7 +3,7 @@
 namespace console\controllers;
 
 use common\components\Domain\Clinical\HistoryExchange\Application\UseCase\ProcessClinicalHistoryOutbound;
-use common\components\Domain\Clinical\HistoryExchange\Application\Service\ClinicalHistoryOutboundReconcileService;
+use common\components\Domain\Clinical\HistoryExchange\Application\UseCase\ReconcileClinicalHistoryOutbound;
 use common\models\Clinical\ClinicalHistoryOutboundJob;
 use yii\console\Controller;
 
@@ -81,7 +81,7 @@ class ClinicalHistoryExchangeController extends Controller
      */
     public function actionReconcile(int $limit = 50): int
     {
-        $n = (new ClinicalHistoryOutboundReconcileService())->reconcileDue($limit);
+        $n = (new ReconcileClinicalHistoryOutbound())->reconcileDue($limit);
         $this->stdout("Jobs reconciliados: {$n}\n");
 
         return 0;

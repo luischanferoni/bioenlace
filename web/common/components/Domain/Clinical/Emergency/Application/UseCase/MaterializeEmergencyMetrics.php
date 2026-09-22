@@ -1,13 +1,14 @@
 <?php
 
-namespace common\components\Domain\Clinical\Emergency\Application\Service;
+namespace common\components\Domain\Clinical\Emergency\Application\UseCase;
 
+use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyIndicatorsService;
 use Yii;
 
 /**
  * Persiste resumen diario en guardia_metrics_daily.
  */
-final class EmergencyMetricsMaterializeService
+final class MaterializeEmergencyMetrics
 {
     public function materializeForDate(int $idEfector, ?string $fechaYmd = null): void
     {

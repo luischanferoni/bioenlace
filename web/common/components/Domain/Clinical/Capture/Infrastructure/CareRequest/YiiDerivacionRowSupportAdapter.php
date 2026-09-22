@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\Capture\Infrastructure\CareRequest;
 
 use common\components\Domain\Clinical\Capture\Domain\Port\DerivacionRowSupportPort;
-use common\components\Domain\Clinical\CareRequest\Application\Service\CareRequestActCodingService;
+use common\components\Domain\Clinical\CareRequest\Application\UseCase\CodeCareRequestAct;
 use common\components\Domain\Clinical\CareRequest\Application\Service\CareRequestMetadata;
 use common\components\Domain\Clinical\CareRequest\Application\UseCase\ResolveCareRequest;
 use common\components\Domain\Clinical\CareRequest\Domain\Model\CareRequest;
@@ -24,7 +24,7 @@ final class YiiDerivacionRowSupportAdapter implements DerivacionRowSupportPort
         ?CareRequestActCoderInterface $actoCoder = null
     ) {
         $this->pedidos = $pedidos ?? new ResolveCareRequest();
-        $this->actoCoder = $actoCoder ?? CareRequestActCodingService::defaultService();
+        $this->actoCoder = $actoCoder ?? CodeCareRequestAct::defaultService();
     }
 
     public function resolveLineaIdByName(string $servicioNombre): ?int

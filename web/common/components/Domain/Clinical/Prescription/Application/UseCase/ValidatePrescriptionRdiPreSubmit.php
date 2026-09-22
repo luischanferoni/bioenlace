@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Prescription\Application\Service;
+namespace common\components\Domain\Clinical\Prescription\Application\UseCase;
 
 use common\components\Domain\Clinical\Prescription\Domain\PrescriptionLegalStatus;
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
@@ -16,7 +16,7 @@ use yii\base\Model;
  * / {@see ElectronicPrescriptionItem::SCENARIO_RDI_ISSUE} + chequeos de dominio.
  * YAML solo knobs de política (ventana anti-duplicado, largo mínimo de display).
  */
-final class PrescriptionRdiPreSubmitValidationService
+final class ValidatePrescriptionRdiPreSubmit
 {
     public const AGENT_ID = 'prescription-rdi-pre-submit';
 

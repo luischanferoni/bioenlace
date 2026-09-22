@@ -19,7 +19,7 @@ use common\components\Domain\Clinical\Encounter\Application\UseCase\AdvanceEncou
 use common\components\Domain\Clinical\Encounter\Application\Service\EpisodeCaptureDedupService;
 use common\components\Domain\Clinical\CarePlan\Application\UseCase\ManageMedicationRequest;
 use common\components\Domain\Clinical\CarePlan\Application\UseCase\ManageServiceRequest;
-use common\components\Domain\Clinical\CarePlan\Application\Service\TreatmentRequestSnomedCodingService;
+use common\components\Domain\Clinical\CarePlan\Application\UseCase\CodeTreatmentRequestSnomed;
 use common\components\Domain\Clinical\Specialty\Domain\EncounterDefinitionSpecialtyRegistry;
 use common\components\Domain\Clinical\Inpatient\Application\Service\InpatientEncounterAuxService;
 use common\components\Domain\Clinical\Specialty\Application\Service\OdontologyEncounterService;
@@ -435,7 +435,7 @@ class DocumentEncounter extends Component
                     $datosExtraidos,
                     $configuracion
                 );
-                $savedTreatmentCoding = (new TreatmentRequestSnomedCodingService())
+                $savedTreatmentCoding = (new CodeTreatmentRequestSnomed())
                     ->codeAndPersistForEncounter($encounter);
                 $diagnostico['coding']['diagnosis_saved'] = (int) $savedCoding;
                 $diagnostico['coding']['treatment_request_saved'] = (int) $savedTreatmentCoding;

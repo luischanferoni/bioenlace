@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\CarePlan\Application\Service;
+namespace common\components\Domain\Clinical\CarePlan\Application\UseCase;
 
 use common\components\Domain\Terminology\Application\Service\SnomedIaCodingService;
 use common\components\Domain\Terminology\Domain\Model\SnomedCodeSystem;
@@ -16,7 +16,7 @@ use Yii;
  * Se ejecuta después del commit de documentación: una indisponibilidad terminológica
  * nunca revierte ni invalida la indicación registrada por el profesional.
  */
-final class TreatmentRequestSnomedCodingService
+final class CodeTreatmentRequestSnomed
 {
     private SnomedIaCodingService $codificador;
 

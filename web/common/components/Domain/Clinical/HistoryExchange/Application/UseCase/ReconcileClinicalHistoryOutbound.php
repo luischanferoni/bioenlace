@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\HistoryExchange\Application\Service;
+namespace common\components\Domain\Clinical\HistoryExchange\Application\UseCase;
 
 use common\components\Domain\Clinical\HistoryExchange\Infrastructure\External\ClinicalHistoryExchangeRegistry;
 use common\components\Domain\Clinical\HistoryExchange\Infrastructure\External\Contract\ClinicalHistorySubmissionStatusConnector;
@@ -11,7 +11,7 @@ use Yii;
 /**
  * Concilia jobs ENVIADO sin acuse definitivo (Fase 4).
  */
-final class ClinicalHistoryOutboundReconcileService
+final class ReconcileClinicalHistoryOutbound
 {
     public function reconcileDue(int $limit = 50): int
     {

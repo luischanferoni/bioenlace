@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Content\Application;
+namespace common\components\Domain\Content\Application\Service;
 
 use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
 use common\components\Platform\Core\Permission\IntentAccessService;

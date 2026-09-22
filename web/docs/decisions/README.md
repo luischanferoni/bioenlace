@@ -16,6 +16,7 @@ Registro de decisiones **cerradas** que afectan a más de un módulo o que convi
 | Pedido servicio × acto | `servicios` = oferta del centro; actos SNOMED; glosario anti-confusión | [pedido-atencion-linea-acto.md](./pedido-atencion-linea-acto.md) |
 | DDD BC + capas + metadata | En implementación: BC, YAML colocalizado, knobs→PHP/BD | [ddd-bounded-contexts-capas-y-metadata.md](./ddd-bounded-contexts-capas-y-metadata.md) |
 | Clinical módulos de capacidad | Módulo primero (Encounter, Emergency, Lab…); sin Shared en el BC; layers dentro del módulo | [clinical-modulos-capacidad.md](./clinical-modulos-capacidad.md) |
+| Módulo-primero vs BC compacto | Organization/Scheduling/Person módulo-primero; Geo/Content/Terminology compactos | [ddd-modulo-primero-vs-bc-compacto.md](./ddd-modulo-primero-vs-bc-compacto.md) |
 | Shared top-level + Infra por módulo | `components/Shared/`; ACL en módulo/BC dueño; varios BCs | [shared-top-level-infrastructure.md](./shared-top-level-infrastructure.md) |
 | Gramática carpetas/sufijos Domain | Sufijo→carpeta; prohibidos Support/Mapper sueltos; PHP no en raíz de módulo | [domain-folder-grammar.md](./domain-folder-grammar.md) |
 | Norte DDD modelo rico | Domain primero (aggregates, policies, ports); Application fino; Capture piloto | [ddd-norte-modelo-rico.md](./ddd-norte-modelo-rico.md) |

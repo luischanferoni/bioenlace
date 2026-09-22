@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Terminology\Domain;
+namespace common\components\Domain\Terminology\Domain\Catalog;
 
 use common\components\Platform\Core\Product\SnomedSearchProfileMetadata;
 

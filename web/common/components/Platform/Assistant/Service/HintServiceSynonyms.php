@@ -8,7 +8,7 @@ namespace common\components\Platform\Assistant\Service;
  * Dado un term del usuario (ej. "dentista"), devuelve los nombres de servicio
  * que podrían matchear (ej. ["odontologia"]).
  *
- * @see \common\components\Domain\Terminology\Domain\ServicioSynonymsCatalog
+ * @see \common\components\Domain\Terminology\Domain\Catalog\ServicioSynonymsCatalog
  */
 final class HintServiceSynonyms
 {
@@ -65,7 +65,7 @@ final class HintServiceSynonyms
 
         self::$inverse = [];
 
-        $data = \common\components\Domain\Terminology\Domain\ServicioSynonymsCatalog::config();
+        $data = \common\components\Domain\Terminology\Domain\Catalog\ServicioSynonymsCatalog::config();
         if (!isset($data['synonyms']) || !is_array($data['synonyms'])) {
             return self::$inverse;
         }

@@ -3,7 +3,7 @@
 namespace common\tests\unit\platform\assistant;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Content\Application\InfoContentAssistantService;
+use common\components\Domain\Content\Application\Service\InfoContentAssistantService;
 use common\components\Platform\Assistant\Chat\Channels\Guide\GuideChannelConfig;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
 use common\components\Platform\Core\Product\ProductMetadataPaths;

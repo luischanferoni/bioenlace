@@ -567,6 +567,51 @@ final class BoundedContextLayerShapeTest extends Unit
         );
     }
 
+    public function testCompactBcsApplicationSoloRolesCa(): void
+    {
+        $root = ProductDomainCatalog::domainRoot();
+        $compact = ['Geo' => true, 'Content' => true, 'Terminology' => true, 'Programs' => true];
+        $allowedAppDirs = [
+            'UseCase' => true,
+            'Presentation' => true,
+            'Service' => true,
+            'Authorization' => true,
+            'Flows' => true,
+            'Agents' => true,
+            'Seed' => true,
+        ];
+        $errors = [];
+
+        foreach (array_keys($compact) as $bc) {
+            $bcPath = $root . DIRECTORY_SEPARATOR . $bc;
+            if (!is_dir($bcPath)) {
+                continue;
+            }
+            $app = $bcPath . DIRECTORY_SEPARATOR . 'Application';
+            if (!is_dir($app)) {
+                continue; // Programs puede ser solo README
+            }
+            foreach (scandir($app) ?: [] as $name) {
+                if ($name === '.' || $name === '..' || $name === 'README.md') {
+                    continue;
+                }
+                $child = $app . DIRECTORY_SEPARATOR . $name;
+                if (is_file($child) && str_ends_with($name, '.php')) {
+                    $errors[] = "PHP suelto Domain/$bc/Application/$name";
+                }
+                if (is_dir($child) && !isset($allowedAppDirs[$name])) {
+                    $errors[] = "Carpeta no-CA Domain/$bc/Application/$name/";
+                }
+            }
+        }
+
+        $this->assertSame(
+            [],
+            $errors,
+            "BCs compactos Application solo roles CA:\n" . implode("\n", $errors)
+        );
+    }
+
     public function testDomainBcSinServiceNiPresentationL1(): void
     {
         $root = ProductDomainCatalog::domainRoot();

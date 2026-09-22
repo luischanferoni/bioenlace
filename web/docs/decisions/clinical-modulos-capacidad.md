@@ -14,7 +14,7 @@ Tras colocalizar capas DDD a nivel BC (`Application/` / `Domain/` en la raíz de
 4. Todo tipo tiene **módulo dueño**.
 5. Discovery de intents: `Domain/<BC>/<Modulo>/Application/Flows/intents`.
 6. Plugins BC: `Assistant/`, `Home/`, `DataAccess/`.
-7. Piloto packaging: `Clinical/Capture`.
+7. Piloto packaging: `Clinical/Capture`. Rollout módulo-primero a Organization / Scheduling / Person y BCs compactos: [ddd-modulo-primero-vs-bc-compacto.md](./ddd-modulo-primero-vs-bc-compacto.md).
 
 ## Alternativas descartadas
 
@@ -26,5 +26,5 @@ Tras colocalizar capas DDD a nivel BC (`Application/` / `Domain/` en la raíz de
 ## Consecuencias
 
 - Localidad: el flow/agent/enum de lab se busca bajo `Laboratory/`.
-- Otros BCs grandes pueden adoptar el mismo patrón módulo-primero cuando el layer-first deje de escalar.
+- Otros BCs grandes adoptaron el mismo patrón módulo-primero (`Organization`, `Scheduling`, `Person`). BCs mono-capacidad permanecen compactos: [ddd-modulo-primero-vs-bc-compacto.md](./ddd-modulo-primero-vs-bc-compacto.md).
 - Relacionado: [ddd-bounded-contexts-capas-y-metadata.md](./ddd-bounded-contexts-capas-y-metadata.md), [shared-top-level-infrastructure.md](./shared-top-level-infrastructure.md), [ddd-norte-modelo-rico.md](./ddd-norte-modelo-rico.md), [domain-folder-grammar.md](./domain-folder-grammar.md), `Domain/Clinical/README.md`.

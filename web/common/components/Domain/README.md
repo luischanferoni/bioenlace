@@ -8,48 +8,66 @@ Las carpetas de primer nivel **son** el conjunto de dominios del producto (`Prod
 
 ## Subcarpetas (BCs)
 
-| Carpeta | Contenido |
-|---------|-----------|
-| **`Clinical/`** | Módulos de capacidad — [Clinical/README.md](./Clinical/README.md) |
-| **`Scheduling/`** | Turnos, agenda, quirófano |
-| **`Person/`** | Personas, registro, representación, ventanilla |
-| **`Organization/`** | Efectores, PES, sesión operativa |
-| **`Terminology/`** | SNOMED |
-| **`Content/`** | Contenido institucional |
-| **`Geo/`** | Maestros geo |
-| **`Programs/`** | Programas / SUMAR |
-| **`Integrations/`** | Solo README (ACL → `*/Infrastructure/External/`) |
+| Carpeta | Forma | Contenido |
+|---------|-------|-----------|
+| **`Clinical/`** | Módulo-primero | Encounter, Emergency, Capture, … |
+| **`Organization/`** | Módulo-primero | Efector, Servicio, Pes, SesionOperativa |
+| **`Scheduling/`** | Módulo-primero | Agenda, BehaviorProfile, Quirofano, Home |
+| **`Person/`** | Módulo-primero | Identidad, Representation, Ventanilla |
+| **`Terminology/`** | BC compacto | SNOMED |
+| **`Content/`** | BC compacto | Contenido institucional |
+| **`Geo/`** | BC compacto | Maestros geo |
+| **`Programs/`** | BC compacto | Programas / SUMAR (esqueleto) |
+| **`Integrations/`** | Solo README | ACL → `*/Infrastructure/External/` |
 
-ADR: [ddd-norte-modelo-rico.md](../../../docs/decisions/ddd-norte-modelo-rico.md) (**cero ambigüedad de ejes**), [domain-folder-grammar.md](../../../docs/decisions/domain-folder-grammar.md), [clinical-modulos-capacidad.md](../../../docs/decisions/clinical-modulos-capacidad.md), [ddd-bounded-contexts-capas-y-metadata.md](../../../docs/decisions/ddd-bounded-contexts-capas-y-metadata.md).
+ADRs: [ddd-norte-modelo-rico.md](../../../docs/decisions/ddd-norte-modelo-rico.md), [domain-folder-grammar.md](../../../docs/decisions/domain-folder-grammar.md), [clinical-modulos-capacidad.md](../../../docs/decisions/clinical-modulos-capacidad.md), [ddd-modulo-primero-vs-bc-compacto.md](../../../docs/decisions/ddd-modulo-primero-vs-bc-compacto.md), [ddd-bounded-contexts-capas-y-metadata.md](../../../docs/decisions/ddd-bounded-contexts-capas-y-metadata.md).
 
 ## Forma interna
 
+### Módulo-primero (Clinical, Organization, Scheduling, Person)
+
 ```text
-Domain/Clinical/<Modulo>/
+Domain/<BC>/<Modulo>/
   Application/
-    UseCase/ | Presentation/ | Authorization/ | Flows/ | Agents/
-    *.php                    # services Application; dominio en el nombre de clase
+    UseCase/ | Presentation/ | Service/ | Authorization/ | Flows/ | Agents/ | Seed/
   Domain/
     Model/ | Catalog/ | Policy/ | Port/ | RowContract/ | …
   Infrastructure/
     External/ | Persistence/ | <Adapter>/…
 ```
 
-**`Application/*` = solo rol CA (técnico).** Prohibido: `Checkpoint/`, `Extraction/`, `Support/`, etc.  
-Dominio de producto = nombre de **módulo** + nombre de **clase** + carpetas bajo `Domain/`.
+Plugins del BC (no módulos de capacidad): `Assistant/`, `Home/`, `DataAccess/` en la raíz del BC.
 
-### Sufijos
+### BC compacto (Geo, Content, Terminology, …)
+
+Layer-first en la raíz del BC **mientras** hay una sola capacidad:
+
+```text
+Domain/<BC>/
+  Application/{UseCase,Service,Seed,…}
+  Domain/{Model,Catalog,…}
+  Infrastructure/{External,Persistence,…}
+```
+
+Si aparece una segunda capacidad → promover a módulo-primero (misma gramática).
+
+**`Application/*` = solo rol CA.** Prohibido: carpetas de capacidad (`Efectores/`, `Dto/`, `Reminder/`, …) y PHP suelto en la raíz de `Application/`.
+
+### Sufijos (catálogo cerrado)
 
 | Sufijo | Carpeta |
 |--------|---------|
-| Interactor | `Application/UseCase/` |
+| Verb phrase | `Application/UseCase/` |
 | `*Presenter` | `Application/Presentation/` |
-| `*Service` Application | `Application/` (raíz) |
+| `*Service` / `*Resolver` / `*Applier` | `Application/Service/` |
 | `*Access` | `Application/Authorization/` |
-| Aggregate | `Domain/Model/` |
-| `*Catalog` / policies | `Domain/…` |
+| `*Agent` / `*AgentPolicy` | `Application/Agents/` |
+| Aggregate / VO | `Domain/Model/` |
+| `*Catalog` | `Domain/Catalog/` |
+| `*Policy` | `Domain/Policy/` |
+| `*Repository` / `*Port` / `*Registry` | `Domain/Port/` |
 | `*RowContract` | `Domain/RowContract/` |
-| ACL | `Infrastructure/External/` |
+| ACL `*Connector` / `*Mapper` | `Infrastructure/External/…` |
 
 ## Cableado con motores
 

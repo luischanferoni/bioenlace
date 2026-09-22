@@ -10,7 +10,7 @@ use yii\helpers\Url;
 use common\models\Geo\Provincia;
 use common\models\Geo\Departamento;
 use common\models\Geo\Barrios;
-use common\components\Domain\Geo\Application\GeografiaDepdropService;
+use common\components\Domain\Geo\Application\Service\GeografiaDepdropService;
 use kartik\depdrop\DepDrop;
 use wbraganca\dynamicform\DynamicFormWidget;
 use kartik\select2\Select2;

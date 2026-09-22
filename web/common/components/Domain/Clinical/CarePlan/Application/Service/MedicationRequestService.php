@@ -5,7 +5,7 @@ namespace common\components\Domain\Clinical\CarePlan\Application\Service;
 use common\components\Domain\Clinical\CarePlan\Application\Service\ActivityReminderTimingService;
 use common\components\Domain\Clinical\CarePlan\Application\Service\ReminderTimingJsonService;
 use common\components\Domain\Clinical\Encounter\Domain\RequestStatus;
-use common\components\Domain\Terminology\Domain\SnomedCodeSystem;
+use common\components\Domain\Terminology\Domain\Model\SnomedCodeSystem;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\MedicationRequest;

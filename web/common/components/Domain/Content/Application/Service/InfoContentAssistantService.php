@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Content\Application;
+namespace common\components\Domain\Content\Application\Service;
 
 use common\components\Platform\Ai\IAManager;
 use common\components\Platform\Assistant\Context\AssistantContextAssemblyService;

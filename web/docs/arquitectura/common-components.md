@@ -42,12 +42,12 @@ ACL de sistemas de negocio **no** van aquí. ADR: [shared-top-level-infrastructu
 
 | Carpeta | Contenido |
 |---------|-----------|
-| **`Domain/Clinical/`** | Módulos: Encounter, Emergency, Inpatient, Laboratory, Prescription, CarePlan, Capture, HistoryExchange, … |
-| **`Domain/Scheduling/`** | Turnos, agenda, quirófano (BC aparte) |
-| **`Domain/Person/`** | Personas, registro |
-| **`Domain/Organization/`** | Efectores, PES, sesión operativa |
+| **`Domain/Clinical/`** | Módulos: Encounter, Emergency, Inpatient, Laboratory, Prescription, CarePlan, Capture, … |
+| **`Domain/Scheduling/`** | Agenda, BehaviorProfile, Quirofano, Home |
+| **`Domain/Person/`** | Identidad, Representation, Ventanilla |
+| **`Domain/Organization/`** | Efector, Servicio, Pes, SesionOperativa |
 | **`Domain/<BC|Modulo>/Infrastructure/External/`** | ACL sistemas externos (MPI, LIS, receta, HC FHIR, agenda FHIR) |
-| **`Domain/Terminology/`** | SNOMED (BC catálogo) |
+| **`Domain/Terminology/`** | SNOMED (BC compacto) |
 | **`Domain/Content/`** | Contenido institucional (`InfoContent`, novedades) |
 | **`Domain/Geo/`** | Maestros geo (provincias, recursos provinciales) |
 | **`Domain/Programs/`** | Programas de salud / SUMAR |
@@ -60,18 +60,20 @@ La misma palabra de dominio se sigue en models, controllers API, `views/json`, m
 
 ## Patrones dentro de un dominio
 
-**Clinical (BC grande):** módulo de capacidad primero — [clinical-modulos-capacidad.md](../decisions/clinical-modulos-capacidad.md). Gramática de sufijos: [domain-folder-grammar.md](../decisions/domain-folder-grammar.md). **Norte de diseño (modelo rico):** [ddd-norte-modelo-rico.md](../decisions/ddd-norte-modelo-rico.md) (piloto `Capture/`).
+**Módulo-primero** (Clinical, Organization, Scheduling, Person): [clinical-modulos-capacidad.md](../decisions/clinical-modulos-capacidad.md), [ddd-modulo-primero-vs-bc-compacto.md](../decisions/ddd-modulo-primero-vs-bc-compacto.md). Gramática: [domain-folder-grammar.md](../decisions/domain-folder-grammar.md). Norte: [ddd-norte-modelo-rico.md](../decisions/ddd-norte-modelo-rico.md).
 
 ```text
-Domain/Clinical/<Modulo>/Application|Domain|Infrastructure/…
+Domain/<BC>/<Modulo>/Application|Domain|Infrastructure/…
 ```
 
-**Otros BCs / migración:**
+Ejemplos L1: `Organization/{Efector,Servicio,Pes,SesionOperativa}/`, `Scheduling/{Agenda,BehaviorProfile,Quirofano,Home}/`, `Person/{Identidad,Representation,Ventanilla}/`.
+
+**BC compacto** (Geo, Content, Terminology, Programs) — una sola capacidad:
 
 ```text
-Domain/<Dominio>/
-  Application/ | Domain/ | Infrastructure/External/
-  Assistant/ | Home/ | DataAccess/
+Domain/<BC>/
+  Application/{UseCase,Service,Seed,…}
+  Domain/ | Infrastructure/External/
 ```
 
 - **ACL externos:** `Domain/<BC>/<Modulo?>/Infrastructure/External/<Sistema>/`.

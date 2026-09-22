@@ -23,11 +23,11 @@ ADR: [clinical-modulos-capacidad](../../../docs/decisions/clinical-modulos-capac
 | `Home/` | Plugin panel |
 
 ```text
-<Modulo>/Application/{UseCase,Presentation,Authorization,Flows,Agents}/ + *.php
+<Modulo>/Application/{UseCase,Presentation,Service,Authorization,Flows,Agents,Seed}/
 <Modulo>/Domain/{Model,Catalog,Policy,Port,RowContract,…}/
 <Modulo>/Infrastructure/{External,Persistence,<Adapter>}/
 ```
 
-Bajo `Application/`: **prohibido** carpetas de capacidad (`Checkpoint/`, `Extraction/`, …). Dominio en el nombre de clase.
+Bajo `Application/`: **prohibido** carpetas de capacidad (`Checkpoint/`, `Extraction/`, …) y PHP suelto. Dominio en el nombre de clase.
 
 Infra compartida: `components/Shared/`. AR: `common/models/Clinical/`.

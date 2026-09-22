@@ -2,7 +2,7 @@
 
 namespace admin\controllers;
 
-use common\components\Domain\Geo\Application\GeografiaDepdropService;
+use common\components\Domain\Geo\Application\Service\GeografiaDepdropService;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;

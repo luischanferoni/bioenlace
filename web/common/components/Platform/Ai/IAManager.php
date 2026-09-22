@@ -979,7 +979,7 @@ class IAManager
      */
     public static function crearPromptContextual($texto, $categoria)
     {
-        $class = 'common\\components\\Domain\\Terminology\\Snomed\\SnomedContextualPromptBuilder';
+        $class = 'common\\components\\Domain\\Terminology\\Snomed\\SnomedContextualPromptService';
         if (!class_exists($class)) {
             return $texto;
         }

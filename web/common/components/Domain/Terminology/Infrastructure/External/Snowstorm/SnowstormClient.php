@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Terminology\Infrastructure\External\Snowstorm;
 
-use common\components\Domain\Terminology\Domain\SnomedSearchProfileCatalog;
+use common\components\Domain\Terminology\Domain\Catalog\SnomedSearchProfileCatalog;
 
 use RuntimeException;
 use Yii;

@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Clinical\CarePlan\Application\Service;
 
-use common\components\Domain\Terminology\Application\CodificadorSnomedIA;
-use common\components\Domain\Terminology\Domain\SnomedCodeSystem;
+use common\components\Domain\Terminology\Application\Service\SnomedIaCodingService;
+use common\components\Domain\Terminology\Domain\Model\SnomedCodeSystem;
 use common\components\Platform\Core\Product\SnomedTerminologyMetadata;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\MedicationRequest;
@@ -18,11 +18,11 @@ use Yii;
  */
 final class TreatmentRequestSnomedCodingService
 {
-    private CodificadorSnomedIA $codificador;
+    private SnomedIaCodingService $codificador;
 
-    public function __construct(?CodificadorSnomedIA $codificador = null)
+    public function __construct(?SnomedIaCodingService $codificador = null)
     {
-        $this->codificador = $codificador ?? new CodificadorSnomedIA();
+        $this->codificador = $codificador ?? new SnomedIaCodingService();
     }
 
     public function codeAndPersistForEncounter(Encounter $encounter): int

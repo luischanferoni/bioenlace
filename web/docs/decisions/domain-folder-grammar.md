@@ -36,10 +36,12 @@ El **sufijo** pertenece a un **catálogo cerrado** (CA/DDD) y se reutiliza en to
 | ACL `*Connector` / `*Mapper` | `Infrastructure/External/…` |
 | AR Yii | `common/models/<BC>/` |
 
-## Esqueleto Clinical
+## Esqueleto
+
+**Módulo-primero** (`Clinical`, `Organization`, `Scheduling`, `Person`):
 
 ```text
-Domain/Clinical/<Modulo>/
+Domain/<BC>/<Modulo>/
   Application/
     UseCase/ | Presentation/ | Service/
   Domain/
@@ -47,6 +49,8 @@ Domain/Clinical/<Modulo>/
   Infrastructure/
     External/ | Persistence/ | <Adapter>/…
 ```
+
+**BC compacto** (`Geo`, `Content`, `Terminology`, …): misma tríada en la raíz del BC. Detalle: [ddd-modulo-primero-vs-bc-compacto.md](./ddd-modulo-primero-vs-bc-compacto.md).
 
 ## Referencia — Capture
 

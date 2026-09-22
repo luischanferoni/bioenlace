@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Geo\Application;
+namespace common\components\Domain\Geo\Application\Service;
 
 use common\models\Geo\GeoRecursoInstitucional;
 use common\models\Geo\GeoRecursoTipoAlias;

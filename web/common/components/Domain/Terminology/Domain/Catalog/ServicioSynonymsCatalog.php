@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Terminology\Domain;
+namespace common\components\Domain\Terminology\Domain\Catalog;
 
 /**
  * Catálogo de dominio (ex metadata/bioenlace/terminology/servicio-synonyms.yaml).

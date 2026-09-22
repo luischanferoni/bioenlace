@@ -9,7 +9,7 @@ use common\components\Domain\Clinical\Prescription\Infrastructure\External\Mappe
 use common\components\Domain\Clinical\Prescription\Application\Service\PrescriptionDocumentService;
 use common\components\Domain\Clinical\Prescription\Application\Agents\PrescriptionRdiPreSubmitValidationAgent;
 use common\components\Domain\Clinical\CarePlan\Application\Service\MedicationRequestService;
-use common\components\Domain\Terminology\Domain\SnomedCodeSystem;
+use common\components\Domain\Terminology\Domain\Model\SnomedCodeSystem;
 use common\models\Clinical\ElectronicPrescription;
 use common\models\Clinical\ElectronicPrescriptionEvent;
 use common\models\Clinical\ElectronicPrescriptionItem;

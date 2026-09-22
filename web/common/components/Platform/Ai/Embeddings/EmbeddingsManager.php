@@ -32,8 +32,8 @@ class EmbeddingsManager
         }
 
         // OPTIMIZACIÓN: Verificar cache de términos SNOMED comunes primero (más rápido)
-        if (class_exists('\common\components\Domain\Terminology\Domain\SnomedCommonTermsCache')) {
-            $embeddingComun = \common\components\Domain\Terminology\Domain\SnomedCommonTermsCache::obtenerEmbedding($texto);
+        if (class_exists('\common\components\Domain\Terminology\Application\Service\SnomedCommonTermsCacheService')) {
+            $embeddingComun = \common\components\Domain\Terminology\Application\Service\SnomedCommonTermsCacheService::obtenerEmbedding($texto);
             if ($embeddingComun !== null) {
                 return $embeddingComun;
             }
@@ -54,8 +54,8 @@ class EmbeddingsManager
                 self::$cache[$cacheKey] = $cached;
 
                 // Si es término común, guardar en cache permanente también
-                if (class_exists('\common\components\Domain\Terminology\Domain\SnomedCommonTermsCache')) {
-                    \common\components\Domain\Terminology\Domain\SnomedCommonTermsCache::guardarEmbedding($texto, $cached);
+                if (class_exists('\common\components\Domain\Terminology\Application\Service\SnomedCommonTermsCacheService')) {
+                    \common\components\Domain\Terminology\Application\Service\SnomedCommonTermsCacheService::guardarEmbedding($texto, $cached);
                 }
 
                 return $cached;
@@ -90,8 +90,8 @@ class EmbeddingsManager
                 }
 
                 // Si es término SNOMED común, guardar en cache permanente
-                if (class_exists('\common\components\Domain\Terminology\Domain\SnomedCommonTermsCache')) {
-                    \common\components\Domain\Terminology\Domain\SnomedCommonTermsCache::guardarEmbedding($texto, $embedding);
+                if (class_exists('\common\components\Domain\Terminology\Application\Service\SnomedCommonTermsCacheService')) {
+                    \common\components\Domain\Terminology\Application\Service\SnomedCommonTermsCacheService::guardarEmbedding($texto, $embedding);
                 }
 
                 \Yii::info("Embedding generado para: " . substr($texto, 0, 50), 'embeddings');

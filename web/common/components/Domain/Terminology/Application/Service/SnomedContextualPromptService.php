@@ -1,13 +1,13 @@
 <?php
 
-namespace common\components\Domain\Terminology\Application;
+namespace common\components\Domain\Terminology\Application\Service;
 
 use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
 
 /**
  * Prompts contextuales para embeddings / matching SNOMED CT.
  */
-final class SnomedContextualPromptBuilder
+final class SnomedContextualPromptService
 {
     public static function build(string $texto, string $categoria): string
     {

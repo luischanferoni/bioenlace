@@ -3,7 +3,7 @@
 namespace common\components\Platform\Core\Product;
 
 /**
- * Metadata unificada SNOMED ({@see \common\components\Domain\Terminology\Domain\SnomedTerminologyCatalog}).
+ * Metadata unificada SNOMED ({@see \common\components\Domain\Terminology\Domain\Catalog\SnomedTerminologyCatalog}).
  */
 final class SnomedTerminologyMetadata
 {
@@ -77,7 +77,7 @@ final class SnomedTerminologyMetadata
             'search' => [],
         ];
 
-        $data = \common\components\Domain\Terminology\Domain\SnomedTerminologyCatalog::config();
+        $data = \common\components\Domain\Terminology\Domain\Catalog\SnomedTerminologyCatalog::config();
         foreach (['ecl_definitions', 'semantic_matching', 'request_coding', 'codification', 'search'] as $key) {
             if (isset($data[$key]) && is_array($data[$key])) {
                 self::$config[$key] = $data[$key];

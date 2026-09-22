@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Terminology\Domain;
+namespace common\components\Domain\Terminology\Application\Service;
 
 use Yii;
 
@@ -8,7 +8,7 @@ use Yii;
  * Cache de términos SNOMED más comunes para evitar generar embeddings repetidamente
  * Pre-genera embeddings de los términos más usados y los cachea permanentemente
  */
-class SnomedCommonTermsCache
+class SnomedCommonTermsCacheService
 {
     private const CACHE_KEY_PREFIX = 'snomed_common_';
     private const CACHE_TTL_PERMANENT = 0; // Sin expiración (permanente hasta limpieza manual)

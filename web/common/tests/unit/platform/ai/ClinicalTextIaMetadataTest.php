@@ -5,7 +5,7 @@ namespace common\tests\unit\platform\ai;
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\Capture\Domain\Policy\ExtractionPostProcessPolicy;
 use common\components\Domain\Clinical\Capture\Application\Service\LlmConfidenceService;
-use common\components\Domain\Terminology\Application\SnomedContextualPromptBuilder;
+use common\components\Domain\Terminology\Application\Service\SnomedContextualPromptService;
 use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
 
 class ClinicalTextIaMetadataTest extends Unit
@@ -17,7 +17,7 @@ class ClinicalTextIaMetadataTest extends Unit
 
     public function testSnomedPromptIncludesCategoryContext(): void
     {
-        $prompt = SnomedContextualPromptBuilder::build('fiebre', 'sintomas');
+        $prompt = SnomedContextualPromptService::build('fiebre', 'sintomas');
         $this->assertStringContainsString('fiebre', $prompt);
         $this->assertStringContainsString('síntomas', $prompt);
         $this->assertStringContainsString('SNOMED', $prompt);

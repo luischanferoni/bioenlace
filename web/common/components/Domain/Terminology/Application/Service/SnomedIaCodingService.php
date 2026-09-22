@@ -1,9 +1,9 @@
 <?php
 
-namespace common\components\Domain\Terminology\Application;
+namespace common\components\Domain\Terminology\Application\Service;
 
-use common\components\Domain\Terminology\Domain\SnomedCategoryCatalog;
-use common\components\Domain\Terminology\Domain\SnomedSearchProfileCatalog;
+use common\components\Domain\Terminology\Domain\Catalog\SnomedCategoryCatalog;
+use common\components\Domain\Terminology\Domain\Catalog\SnomedSearchProfileCatalog;
 
 use Yii;
 use common\components\Domain\Terminology\Infrastructure\External\Snowstorm\SnowstormClient;
@@ -13,7 +13,7 @@ use common\components\Platform\Ai\Embeddings\EmbeddingsManager;
  * Componente para codificación automática de conceptos médicos con SNOMED CT
  * Utiliza matching directo, fuzzy y semántico para asociar términos con códigos SNOMED
  */
-class CodificadorSnomedIA
+class SnomedIaCodingService
 {
     private SnowstormClient $snowstorm;
     private $cache;

@@ -3,7 +3,7 @@
 namespace frontend\modules\api\v1\controllers\organization;
 
 use frontend\modules\api\v1\controllers\BaseController;
-use common\components\Domain\Geo\Application\GeografiaDepdropService;
+use common\components\Domain\Geo\Application\Service\GeografiaDepdropService;
 use common\components\Domain\Organization\Efector\Application\Service\InfraestructuraDepdropService;
 use common\components\Domain\Organization\Pes\Application\Service\ProfesionalDepdropService;
 use common\models\Clinical\EncounterDefinition;

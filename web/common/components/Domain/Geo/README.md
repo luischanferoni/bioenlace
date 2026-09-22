@@ -7,11 +7,11 @@ Existe como dominio porque tiene **dueño propio**: nadie más persiste estas fi
 | Qué | Dónde |
 |-----|-------|
 | Modelos (AR) | `common/models/Geo/` |
-| Lookup y sugerencia en request | `Service/` |
-| Carga del maestro | `Service/Seed/` (consola; el request no lee archivos) |
+| Lookup y sugerencia en request | `Application/Service/` |
+| Carga del maestro | `Application/Seed/` (consola; el request no lee archivos) |
 
 La separación runtime/seed la pide [`runtime-datos-vs-metadata.mdc`](../../../../../.cursor/rules/runtime-datos-vs-metadata.mdc): el maestro se consulta en **BD** con cache, y se puebla desde consola.
 
 ## Quién entra por servicio
 
-Los flujos de otros dominios no leen el AR de geo directamente: piden por servicio. Ejemplo: el hidratador de recurso provincial del asistente vive en `Domain/Person/Assistant/` porque el sujeto es el paciente, y consume `Service/ProvincialResourceLookupService`.
+Los flujos de otros dominios no leen el AR de geo directamente: piden por servicio. Ejemplo: el hidratador de recurso provincial del asistente vive en `Domain/Person/Assistant/` porque el sujeto es el paciente, y consume `Application/Service/ProvincialResourceLookupService`.

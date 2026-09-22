@@ -10,22 +10,22 @@ use common\components\Domain\Clinical\PedidoAtencion\Domain\PedidoAtencionActoCo
 
 use common\components\Domain\Clinical\PedidoAtencion\Domain\CompositeLineaActoCatalog;
 use common\components\Domain\Clinical\PedidoAtencion\Domain\InMemoryLineaActoCatalog;
-use common\components\Domain\Terminology\Application\CodificadorSnomedIA;
+use common\components\Domain\Terminology\Application\Service\SnomedIaCodingService;
 use common\components\Domain\Terminology\Infrastructure\External\Snowstorm\SnowstormClient;
 use Yii;
 
 /**
- * Codifica Acto display → SNOMED (caché local → CodificadorSnomedIA → Snowstorm profile).
+ * Codifica Acto display → SNOMED (caché local → SnomedIaCodingService → Snowstorm profile).
  * Fail-soft: sin tumbar el pedido si terminología no responde.
  */
 final class PedidoAtencionActoCodingService implements PedidoAtencionActoCoderInterface
 {
-    private ?CodificadorSnomedIA $codificador;
+    private ?SnomedIaCodingService $codificador;
     private ?SnowstormClient $snowstorm;
     private LineaActoCatalogInterface $catalog;
 
     public function __construct(
-        ?CodificadorSnomedIA $codificador = null,
+        ?SnomedIaCodingService $codificador = null,
         ?SnowstormClient $snowstorm = null,
         ?LineaActoCatalogInterface $catalog = null
     ) {
@@ -175,10 +175,10 @@ final class PedidoAtencionActoCodingService implements PedidoAtencionActoCoderIn
         }
     }
 
-    private function resolveCodificador(): ?CodificadorSnomedIA
+    private function resolveCodificador(): ?SnomedIaCodingService
     {
         try {
-            return new CodificadorSnomedIA();
+            return new SnomedIaCodingService();
         } catch (\Throwable $e) {
             return null;
         }

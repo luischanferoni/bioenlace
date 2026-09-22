@@ -3,7 +3,7 @@
 namespace common\tests\unit\terminology;
 
 use common\components\Domain\Terminology\Infrastructure\External\Snowstorm\SnowstormClient;
-use common\components\Domain\Terminology\Domain\SnomedCodeSystem;
+use common\components\Domain\Terminology\Domain\Model\SnomedCodeSystem;
 use common\components\Platform\Core\Product\SnomedTerminologyMetadata;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;

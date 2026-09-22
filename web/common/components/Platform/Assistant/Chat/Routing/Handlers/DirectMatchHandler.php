@@ -2,7 +2,7 @@
 
 namespace common\components\Platform\Assistant\Chat\Routing\Handlers;
 
-use common\components\Domain\Content\Application\InfoContentAssistantService;
+use common\components\Domain\Content\Application\Service\InfoContentAssistantService;
 use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
 use common\components\Platform\Assistant\Context\AssistantContextAssemblyService;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalog;

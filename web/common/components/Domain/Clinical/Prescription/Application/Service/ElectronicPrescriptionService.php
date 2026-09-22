@@ -8,7 +8,7 @@ use common\components\Domain\Clinical\Prescription\Domain\PrescriptionLegalStatu
 use common\components\Domain\Clinical\Prescription\Infrastructure\External\Mapper\FhirRecetaDigitalBundleMapper;
 use common\components\Domain\Clinical\Prescription\Application\Service\PrescriptionDocumentService;
 use common\components\Domain\Clinical\Prescription\Application\Agents\PrescriptionRdiPreSubmitValidationAgent;
-use common\components\Domain\Clinical\CarePlan\Application\Service\MedicationRequestService;
+use common\components\Domain\Clinical\CarePlan\Application\UseCase\ManageMedicationRequest;
 use common\components\Domain\Terminology\Domain\Model\SnomedCodeSystem;
 use common\models\Clinical\ElectronicPrescription;
 use common\models\Clinical\ElectronicPrescriptionEvent;
@@ -21,16 +21,16 @@ use yii\db\Transaction;
 
 final class ElectronicPrescriptionService
 {
-    private MedicationRequestService $medicationRequests;
+    private ManageMedicationRequest $medicationRequests;
     private FhirRecetaDigitalBundleMapper $bundleMapper;
     private ElectronicPrescriptionRepositoryService $repository;
 
     public function __construct(
-        ?MedicationRequestService $medicationRequests = null,
+        ?ManageMedicationRequest $medicationRequests = null,
         ?FhirRecetaDigitalBundleMapper $bundleMapper = null,
         ?ElectronicPrescriptionRepositoryService $repository = null
     ) {
-        $this->medicationRequests = $medicationRequests ?? new MedicationRequestService();
+        $this->medicationRequests = $medicationRequests ?? new ManageMedicationRequest();
         $this->bundleMapper = $bundleMapper ?? new FhirRecetaDigitalBundleMapper();
         $this->repository = $repository ?? new ElectronicPrescriptionRepositoryService();
     }

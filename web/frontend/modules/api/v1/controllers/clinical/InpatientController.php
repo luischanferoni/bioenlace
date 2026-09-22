@@ -2,9 +2,9 @@
 
 namespace frontend\modules\api\v1\controllers\clinical;
 
-use common\components\Domain\Clinical\Inpatient\Application\Service\InpatientDischargeStructuredService;
-use common\components\Domain\Clinical\Inpatient\Application\Service\InpatientBedTransferService;
-use common\components\Domain\Clinical\Inpatient\Application\Service\InpatientAdmissionService;
+use common\components\Domain\Clinical\Inpatient\Application\UseCase\DischargeInpatient;
+use common\components\Domain\Clinical\Inpatient\Application\UseCase\TransferInpatientBed;
+use common\components\Domain\Clinical\Inpatient\Application\UseCase\AdmitInpatient;
 use common\components\Domain\Clinical\Inpatient\Application\Service\InpatientBedStatusService;
 use common\components\Domain\Clinical\Inpatient\Application\Service\InpatientIndicatorsService;
 use common\components\Domain\Clinical\Inpatient\Application\Service\InpatientBedMapService;
@@ -37,9 +37,9 @@ class InpatientController extends BaseController
     private InpatientBedMapService $mapa;
     private InpatientIndicatorsService $indicadores;
     private InpatientBedStatusService $camaEstado;
-    private InpatientDischargeStructuredService $alta;
-    private InpatientBedTransferService $cambioCama;
-    private InpatientAdmissionService $ingreso;
+    private DischargeInpatient $alta;
+    private TransferInpatientBed $cambioCama;
+    private AdmitInpatient $ingreso;
 
     public function init(): void
     {
@@ -47,9 +47,9 @@ class InpatientController extends BaseController
         $this->mapa = new InpatientBedMapService();
         $this->indicadores = new InpatientIndicatorsService();
         $this->camaEstado = new InpatientBedStatusService();
-        $this->alta = new InpatientDischargeStructuredService();
-        $this->cambioCama = new InpatientBedTransferService();
-        $this->ingreso = new InpatientAdmissionService();
+        $this->alta = new DischargeInpatient();
+        $this->cambioCama = new TransferInpatientBed();
+        $this->ingreso = new AdmitInpatient();
     }
 
     public function actionMapaCamas(): array
@@ -337,14 +337,14 @@ class InpatientController extends BaseController
         ) {
             $out['blocks'] = $this->blocksIngresoSinCamas(
                 is_array($out['blocks'] ?? null) ? $out['blocks'] : [],
-                InpatientAdmissionService::MSG_SIN_CAMAS_DISPONIBLES
+                AdmitInpatient::MSG_SIN_CAMAS_DISPONIBLES
             );
             $out['data'] = array_merge(
                 is_array($out['data'] ?? null) ? $out['data'] : [],
                 [
                     'puede_ingresar' => false,
                     'camas_disponibles' => [],
-                    'camas_aviso' => InpatientAdmissionService::MSG_SIN_CAMAS_DISPONIBLES,
+                    'camas_aviso' => AdmitInpatient::MSG_SIN_CAMAS_DISPONIBLES,
                 ]
             );
 
@@ -391,7 +391,7 @@ class InpatientController extends BaseController
             if (!$puedeIngresar) {
                 $out['blocks'] = $this->blocksIngresoSinCamas(
                     is_array($out['blocks'] ?? null) ? $out['blocks'] : [],
-                    (string) ($ctx['camas_aviso'] ?? InpatientAdmissionService::MSG_SIN_CAMAS_DISPONIBLES)
+                    (string) ($ctx['camas_aviso'] ?? AdmitInpatient::MSG_SIN_CAMAS_DISPONIBLES)
                 );
 
                 return $out;

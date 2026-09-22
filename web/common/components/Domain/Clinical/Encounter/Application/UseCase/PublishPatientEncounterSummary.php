@@ -1,8 +1,9 @@
 <?php
 
-namespace common\components\Domain\Clinical\Encounter\Application\Service;
+namespace common\components\Domain\Clinical\Encounter\Application\UseCase;
 
 use common\components\Domain\Clinical\CareCohort\Application\Service\CareFollowupSchedulerService;
+use common\components\Domain\Clinical\Encounter\Application\Service\PatientEncounterSummaryService;
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\components\Platform\Core\Service\Push\PushNotificationTypes;
@@ -16,7 +17,7 @@ use Yii;
 /**
  * Programa y ejecuta la publicación del resumen paciente (T+Δ tras finalizar).
  */
-final class PatientEncounterSummaryPublishService
+final class PublishPatientEncounterSummary
 {
     public const DELAY_MINUTES = 3;
 

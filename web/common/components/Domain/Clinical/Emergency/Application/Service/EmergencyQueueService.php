@@ -16,13 +16,13 @@ final class EmergencyQueueService
     /** @var EmergencyBoardService */
     private $circuito;
 
-    /** @var EmergencyTriageService */
+    /** @var TriageEmergencyEpisode */
     private $triageSerializer;
 
     /** @var EmergencySlaService */
     private $sla;
 
-    /** @var EmergencyInpatientTransferService */
+    /** @var TransferEmergencyToInpatient */
     private $internacion;
 
     /** @var EmergencyEncounterResolver */
@@ -30,15 +30,15 @@ final class EmergencyQueueService
 
     public function __construct(
         ?EmergencyBoardService $circuito = null,
-        ?EmergencyTriageService $triageSerializer = null,
+        ?TriageEmergencyEpisode $triageSerializer = null,
         ?EmergencySlaService $sla = null,
-        ?EmergencyInpatientTransferService $internacion = null,
+        ?TransferEmergencyToInpatient $internacion = null,
         ?EmergencyEncounterResolver $encounterResolver = null
     ) {
         $this->circuito = $circuito ?? new EmergencyBoardService();
-        $this->triageSerializer = $triageSerializer ?? new EmergencyTriageService();
+        $this->triageSerializer = $triageSerializer ?? new TriageEmergencyEpisode();
         $this->sla = $sla ?? new EmergencySlaService();
-        $this->internacion = $internacion ?? new EmergencyInpatientTransferService();
+        $this->internacion = $internacion ?? new TransferEmergencyToInpatient();
         $this->encounterResolver = $encounterResolver ?? new EmergencyEncounterResolver();
     }
 

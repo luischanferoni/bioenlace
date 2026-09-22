@@ -1,9 +1,9 @@
 <?php
 
-namespace common\components\Domain\Clinical\CarePlan\Application\Service;
+namespace common\components\Domain\Clinical\CarePlan\Application\UseCase;
 
 use common\components\Domain\Clinical\CarePlan\Application\Service\ActivityReminderTimingService;
-use common\components\Domain\Clinical\CarePlan\Application\Service\ReferralRequestService;
+use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanService;
 use common\components\Domain\Clinical\CarePlan\Application\Service\ReminderTimingJsonService;
 use common\components\Domain\Clinical\Encounter\Domain\RequestStatus;
 use common\components\Domain\Terminology\Domain\Model\SnomedCodeSystem;
@@ -13,7 +13,7 @@ use common\models\Clinical\Input\IndicacionInput;
 use common\models\Clinical\Input\PracticaInput;
 use common\models\Clinical\ServiceRequest;
 
-final class ServiceRequestService
+final class ManageServiceRequest
 {
     private CarePlanService $carePlans;
 
@@ -44,7 +44,7 @@ final class ServiceRequestService
         ?CarePlan $carePlan = null
     ): ServiceRequest {
         if ($legacyModelo === 'ConsultaDerivaciones' && is_array($row)) {
-            return ReferralRequestService::createFromExtractedRow($encounter, $row);
+            return CreateReferralRequest::createFromExtractedRow($encounter, $row);
         }
 
         if (is_string($row)) {

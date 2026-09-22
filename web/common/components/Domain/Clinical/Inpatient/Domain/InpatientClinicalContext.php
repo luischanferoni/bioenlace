@@ -5,8 +5,8 @@ namespace common\components\Domain\Clinical\Inpatient\Domain;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanCategory;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanStatus;
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
-use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanLifecycleService;
-use common\components\Domain\Clinical\Encounter\Application\Service\EpisodeOfCareService;
+use common\components\Domain\Clinical\CarePlan\Application\UseCase\AdvanceCarePlanLifecycle;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\ManageEpisodeOfCare;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EpisodeOfCare;
@@ -27,10 +27,10 @@ final class InpatientClinicalContext
 
     public static function ensure(InpatientStay $internacion): self
     {
-        $episodes = new EpisodeOfCareService();
+        $episodes = new ManageEpisodeOfCare();
         $episode = $episodes->findActiveForInpatientStay((int) $internacion->id);
         if ($episode === null) {
-            $episode = (new CarePlanLifecycleService())->onInpatientAdmission($internacion);
+            $episode = (new AdvanceCarePlanLifecycle())->onInpatientAdmission($internacion);
         }
 
         $carePlan = CarePlan::find()

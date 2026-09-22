@@ -16,8 +16,8 @@ use common\components\Domain\Clinical\Capture\Application\UseCase\ViewCapture;
 use common\components\Domain\Clinical\Encounter\Application\Service\EncounterDocumentationService;
 use common\components\Domain\Clinical\CarePlan\Domain\Model\MedicationRequestDto;
 use common\components\Domain\Clinical\CarePlan\Domain\Model\ServiceRequestDto;
-use common\components\Domain\Clinical\CarePlan\Application\Service\MedicationRequestService;
-use common\components\Domain\Clinical\CarePlan\Application\Service\ServiceRequestService;
+use common\components\Domain\Clinical\CarePlan\Application\UseCase\ManageMedicationRequest;
+use common\components\Domain\Clinical\CarePlan\Application\UseCase\ManageServiceRequest;
 use common\components\Platform\Ui\UiScreenService;
 use frontend\modules\api\v1\controllers\BaseController;
 use yii\web\UploadedFile;
@@ -190,7 +190,7 @@ class EncounterController extends BaseController
         }
 
         $medItems = [];
-        foreach ((new MedicationRequestService())->listForEncounter($encounter->id) as $mr) {
+        foreach ((new ManageMedicationRequest())->listForEncounter($encounter->id) as $mr) {
             $dto = MedicationRequestDto::fromModel($mr)->toArray();
             $medItems[] = [
                 'id' => (string) $mr->id,
@@ -201,7 +201,7 @@ class EncounterController extends BaseController
 
         $practItems = [];
         $indicacionItems = [];
-        foreach ((new ServiceRequestService())->listForEncounter($encounter->id) as $sr) {
+        foreach ((new ManageServiceRequest())->listForEncounter($encounter->id) as $sr) {
             $dto = ServiceRequestDto::fromModel($sr)->toArray();
             $category = mb_strtolower(trim((string) ($dto['category'] ?? '')));
             $item = [

@@ -4,13 +4,13 @@ namespace common\tests\unit\clinical;
 
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanCategory;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanStatus;
-use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanLifecycleService;
+use common\components\Domain\Clinical\CarePlan\Application\UseCase\AdvanceCarePlanLifecycle;
 use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanService;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanProgramMeta;
 use common\models\Clinical\CarePlan;
 use Codeception\Test\Unit;
 
-class CarePlanLifecycleServiceTest extends Unit
+class AdvanceCarePlanLifecycleTest extends Unit
 {
     public function testPersistentCategoriesDoNotCompleteOnEncounterClose(): void
     {

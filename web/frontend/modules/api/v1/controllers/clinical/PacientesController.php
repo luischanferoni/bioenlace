@@ -11,7 +11,7 @@ use common\components\Domain\Clinical\Encounter\Application\Service\AppointmentR
 use common\components\Domain\Clinical\Encounter\Application\Service\AppointmentReasonClinicalInsightsService;
 use common\components\Domain\Clinical\Encounter\Application\Service\AppointmentReasonWindowService;
 use common\components\Domain\Clinical\Encounter\Application\Service\EncounterAppointmentReasonLookupService;
-use common\components\Domain\Clinical\Encounter\Application\Service\EncounterReasonService;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\RecordEncounterReason;
 use common\components\Domain\Scheduling\Home\Application\Service\StaffSchedulingDayListService;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
@@ -424,7 +424,7 @@ class PacientesController extends BaseController
         $encounter->refresh();
 
         $encounterId = (int) $encounter->id;
-        $reason = (new EncounterReasonService())->displayText($encounter);
+        $reason = (new RecordEncounterReason())->displayText($encounter);
         $mensajes = AppointmentReasonMessage::find()
             ->where(['encounter_id' => $encounterId])
             ->orderBy(['created_at' => SORT_ASC])

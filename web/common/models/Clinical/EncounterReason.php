@@ -7,7 +7,7 @@ use common\models\Clinical\Input\EncounterReasonInput;
 
 /**
  * Tipología de captura — Encounter.reason / chief complaint (categoría `EncounterReason`).
- * Persistencia: {@see \common\components\Domain\Clinical\Encounter\Application\Service\EncounterReasonService}
+ * Persistencia: {@see \common\components\Domain\Clinical\Encounter\Application\UseCase\RecordEncounterReason}
  * → Condition con rol CC.
  *
  * Contrato Domain: {@see ReasonRowContract}.

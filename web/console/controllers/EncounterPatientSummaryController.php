@@ -2,7 +2,7 @@
 
 namespace console\controllers;
 
-use common\components\Domain\Clinical\Encounter\Application\Service\PatientEncounterSummaryPublishService;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\PublishPatientEncounterSummary;
 use yii\console\Controller;
 use yii\console\ExitCode;
 
@@ -19,7 +19,7 @@ class EncounterPatientSummaryController extends Controller
      */
     public function actionRun(int $limit = 50): int
     {
-        $n = (new PatientEncounterSummaryPublishService())->processDueQueue($limit);
+        $n = (new PublishPatientEncounterSummary())->processDueQueue($limit);
         $this->stdout("Publicados: {$n}\n");
 
         return ExitCode::OK;
@@ -35,7 +35,7 @@ class EncounterPatientSummaryController extends Controller
 
             return ExitCode::USAGE;
         }
-        $ok = (new PatientEncounterSummaryPublishService())->publishEncounter($encounterId, true);
+        $ok = (new PublishPatientEncounterSummary())->publishEncounter($encounterId, true);
         if (!$ok) {
             $this->stderr("No se pudo publicar encounter {$encounterId}\n");
 

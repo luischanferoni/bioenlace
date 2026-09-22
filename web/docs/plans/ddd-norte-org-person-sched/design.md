@@ -23,6 +23,21 @@
 | `SesionOperativaProfesionalHabilitacionService` | `ResolveOperativeProfessionalEligibility` ✅ |
 | `CarePackGenerationService` | `GenerateCarePack` ✅ |
 | `CarePackJobEnqueueService` | `EnqueueCarePackJob` ✅ |
+| `EncounterLifecycleService` | `AdvanceEncounterLifecycle` ✅ |
+| `ConditionLifecycleService` | `AdvanceConditionLifecycle` ✅ |
+| `PatientEncounterSummaryPublishService` | `PublishPatientEncounterSummary` ✅ |
+| `EncounterReasonService` | `RecordEncounterReason` ✅ |
+| `EpisodeOfCareService` | `ManageEpisodeOfCare` ✅ |
+| `CarePlanLifecycleService` | `AdvanceCarePlanLifecycle` ✅ |
+| `ReferralRequestService` | `CreateReferralRequest` ✅ |
+| `MedicationRequestService` | `ManageMedicationRequest` ✅ |
+| `ServiceRequestService` | `ManageServiceRequest` ✅ |
+| `EmergencyIntakeService` | `IntakeEmergencyEpisode` ✅ |
+| `EmergencyTriageService` | `TriageEmergencyEpisode` ✅ |
+| `EmergencyInpatientTransferService` | `TransferEmergencyToInpatient` ✅ |
+| `InpatientAdmissionService` | `AdmitInpatient` ✅ |
+| `InpatientBedTransferService` | `TransferInpatientBed` ✅ |
+| `InpatientDischargeStructuredService` | `DischargeInpatient` ✅ |
 
 Métodos públicos se mantienen cuando es posible (`ensurePersonaServicioEnEfector`, `registrar`, `update`, …) para no reescribir el cuerpo; solo cambia FQCN + carpeta.
 

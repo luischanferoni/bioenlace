@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\Encounter\Application\Presentation;
 
 use common\components\Domain\Clinical\Capture\Application\Service\ExtractionPostProcessService;
 use common\components\Domain\Clinical\Capture\Domain\Policy\ExtractionPostProcessPolicy;
-use common\components\Domain\Clinical\Encounter\Application\Service\EncounterReasonService;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\RecordEncounterReason;
 use common\models\Clinical\Encounter;
 
 /**
@@ -34,7 +34,7 @@ final class EncounterStaffDocumentationViewService
         }
 
         $motivos = [];
-        foreach ((new EncounterReasonService())->listForEncounter($encounter) as $condition) {
+        foreach ((new RecordEncounterReason())->listForEncounter($encounter) as $condition) {
             $part = trim((string) ($condition->display ?: $condition->note ?: $condition->code));
             if ($part !== '' && !$this->isDuplicateLabel($motivos, $part)) {
                 $motivos[] = $part;

@@ -5,7 +5,7 @@ namespace common\components\Domain\Clinical\Inpatient\Domain;
 use common\components\Domain\Clinical\CarePlan\Domain\Model\CarePlanDto;
 use common\components\Domain\Clinical\CarePlan\Domain\Model\MedicationRequestDto;
 use common\components\Domain\Clinical\CarePlan\Domain\Model\ServiceRequestDto;
-use common\components\Domain\Clinical\Encounter\Application\Service\EpisodeOfCareService;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\ManageEpisodeOfCare;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Condition;
 use common\models\Clinical\EpisodeOfCare;
@@ -28,7 +28,7 @@ final class InpatientClinicalQuery
             return null;
         }
 
-        $episode = (new EpisodeOfCareService())->findActiveForInpatientStay($internacionId);
+        $episode = (new ManageEpisodeOfCare())->findActiveForInpatientStay($internacionId);
         if ($episode === null) {
             $episode = EpisodeOfCare::find()
                 ->andWhere(['internacion_id' => $internacionId, 'deleted_at' => null])

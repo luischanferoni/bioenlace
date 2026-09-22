@@ -3,10 +3,10 @@
 namespace common\components\Domain\Organization\Efector\Application\Seed;
 
 use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyBoardService;
-use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyTriageService;
+use common\components\Domain\Clinical\Emergency\Application\UseCase\TriageEmergencyEpisode;
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
-use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanLifecycleService;
-use common\components\Domain\Clinical\Encounter\Application\Service\EncounterLifecycleService;
+use common\components\Domain\Clinical\CarePlan\Application\UseCase\AdvanceCarePlanLifecycle;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\AdvanceEncounterLifecycle;
 use common\components\Domain\Person\Identity\Domain\Policy\CuilPolicy;
 use common\components\Domain\Scheduling\Agenda\Application\UseCase\StartConsultaAsyncChat;
 use common\components\Domain\Scheduling\Agenda\Application\UseCase\ClaimTurnoSlot;
@@ -239,7 +239,7 @@ final class DemoSandboxClinicalSeedService
         ];
 
         // Sin PES: queda en «Por tomar». id vacío evita que start() tome el PES de sesión Yii.
-        $encounter = (new EncounterLifecycleService())->start([
+        $encounter = (new AdvanceEncounterLifecycle())->start([
             'subject_persona_id' => $idPersona,
             'encounter_class' => Encounter::ENCOUNTER_CLASS_VR,
             'service_id' => $idServicio,
@@ -289,7 +289,7 @@ final class DemoSandboxClinicalSeedService
             ActiveRecordConsoleBlame::prepareForSave($turno, $actingUserId);
             $turno->save(false);
 
-            $encounter = (new EncounterLifecycleService())->ensureFromTurno($turno);
+            $encounter = (new AdvanceEncounterLifecycle())->ensureFromTurno($turno);
             if ($encounter !== null) {
                 return [(int) $encounter->id];
             }
@@ -336,7 +336,7 @@ final class DemoSandboxClinicalSeedService
         (new EmergencyBoardService())->afterIngreso($model);
 
         // Demo = médico: dejar el episodio listo para Atender (triaje inicial).
-        (new EmergencyTriageService())->registrar(
+        (new TriageEmergencyEpisode())->registrar(
             (int) $model->id,
             [
                 'level' => 3,
@@ -442,7 +442,7 @@ final class DemoSandboxClinicalSeedService
         InpatientStayRepository::doAgregarHistoriaCama($model);
 
         try {
-            (new CarePlanLifecycleService())->onInpatientAdmission($model);
+            (new AdvanceCarePlanLifecycle())->onInpatientAdmission($model);
         } catch (\Throwable $e) {
             Yii::warning('demo sandbox care plan internacion: ' . $e->getMessage(), __METHOD__);
         }

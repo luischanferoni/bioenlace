@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Encounter\Application\Service;
+namespace common\components\Domain\Clinical\Encounter\Application\UseCase;
 
 use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
 use common\components\Domain\Clinical\Encounter\Domain\ConditionDiagnosisRole;
@@ -13,7 +13,7 @@ use Yii;
 /**
  * Motivos de consulta del Encounter → Condition con rol {@see ConditionDiagnosisRole::CHIEF_COMPLAINT}.
  */
-final class EncounterReasonService
+final class RecordEncounterReason
 {
     /** @deprecated Usar {@see ChiefComplaintReason::UNCODED_SYSTEM} */
     public const UNCODED_SYSTEM = ChiefComplaintReason::UNCODED_SYSTEM;
@@ -88,7 +88,7 @@ final class EncounterReasonService
             $condition->recorded_date = date('Y-m-d H:i:s');
             if (!$condition->save(false)) {
                 Yii::error(
-                    'EncounterReasonService: no se pudo guardar motivo encounter=' . $encounter->id,
+                    'RecordEncounterReason: no se pudo guardar motivo encounter=' . $encounter->id,
                     'encounter-reason'
                 );
             }

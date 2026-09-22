@@ -5,8 +5,8 @@ namespace common\components\Domain\Clinical\Inpatient\Application\Service;
 use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
 use common\components\Domain\Clinical\Encounter\Domain\ConditionVerificationStatus;
 use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanService;
-use common\components\Domain\Clinical\CarePlan\Application\Service\MedicationRequestService;
-use common\components\Domain\Clinical\CarePlan\Application\Service\ServiceRequestService;
+use common\components\Domain\Clinical\CarePlan\Application\UseCase\ManageMedicationRequest;
+use common\components\Domain\Clinical\CarePlan\Application\UseCase\ManageServiceRequest;
 use common\components\Domain\Clinical\Inpatient\Domain\InpatientClinicalContext;
 use common\models\Clinical\Condition;
 
@@ -15,18 +15,18 @@ use common\models\Clinical\Condition;
  */
 final class InpatientOrderService
 {
-    private MedicationRequestService $medications;
-    private ServiceRequestService $serviceRequests;
+    private ManageMedicationRequest $medications;
+    private ManageServiceRequest $serviceRequests;
     private CarePlanService $carePlans;
 
     public function __construct(
-        ?MedicationRequestService $medications = null,
-        ?ServiceRequestService $serviceRequests = null,
+        ?ManageMedicationRequest $medications = null,
+        ?ManageServiceRequest $serviceRequests = null,
         ?CarePlanService $carePlans = null
     ) {
         $this->carePlans = $carePlans ?? new CarePlanService();
-        $this->medications = $medications ?? new MedicationRequestService($this->carePlans);
-        $this->serviceRequests = $serviceRequests ?? new ServiceRequestService($this->carePlans);
+        $this->medications = $medications ?? new ManageMedicationRequest($this->carePlans);
+        $this->serviceRequests = $serviceRequests ?? new ManageServiceRequest($this->carePlans);
     }
 
     /**

@@ -6,7 +6,7 @@ use common\components\Domain\Scheduling\Agenda\Application\Agents\ConsultaAsyncB
 
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanMedicationListService;
-use common\components\Domain\Clinical\Encounter\Application\Service\EncounterLifecycleService;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\AdvanceEncounterLifecycle;
 use common\models\Clinical\Encounter;
 use Yii;
 
@@ -65,7 +65,7 @@ final class SubmitConsultaAsyncSolicitud
             );
         }
 
-        $encounters = new EncounterLifecycleService();
+        $encounters = new AdvanceEncounterLifecycle();
         $encounter = $encounters->start([
             'subject_persona_id' => $idPersona,
             'encounter_class' => Encounter::ENCOUNTER_CLASS_VR,

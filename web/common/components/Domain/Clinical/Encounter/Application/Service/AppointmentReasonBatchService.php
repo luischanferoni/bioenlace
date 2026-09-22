@@ -2,7 +2,7 @@
 
 /**
  * Procesa en un solo lote todos los mensajes de motivos (texto, audio, imagen)
- * y persiste resumen como Condition rol CC ({@see EncounterReasonService}).
+ * y persiste resumen como Condition rol CC ({@see RecordEncounterReason}).
  */
 
 namespace common\components\Domain\Clinical\Encounter\Application\Service;
@@ -27,7 +27,7 @@ final class AppointmentReasonBatchService
             return ['ok' => false, 'message' => 'Encounter no encontrado'];
         }
 
-        $reasonSvc = new EncounterReasonService();
+        $reasonSvc = new RecordEncounterReason();
         if (!$force && !empty($encounter->motivos_ia_processed_at)) {
             $stored = $reasonSvc->displayText($encounter);
             if ($stored !== '' && !self::isLowQualitySummary($stored)) {
@@ -93,7 +93,7 @@ final class AppointmentReasonBatchService
             return;
         }
 
-        $reasonSvc = new EncounterReasonService();
+        $reasonSvc = new RecordEncounterReason();
         $stored = $reasonSvc->displayText($encounter);
         $needsBatch = empty($encounter->motivos_ia_processed_at)
             || $stored === ''

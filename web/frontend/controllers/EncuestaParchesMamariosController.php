@@ -11,7 +11,7 @@ use yii\filters\VerbFilter;
 use frontend\filters\SisseActionFilter;
 use common\models\Clinical\EncuestaParchesMamarios;
 use common\models\Clinical\PersonasAntecedente;
-use common\components\Domain\Clinical\Encounter\Application\Service\EncounterLifecycleService;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\AdvanceEncounterLifecycle;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\ConsultaAtencionesEnfermeria;
 
@@ -125,7 +125,7 @@ class EncuestaParchesMamariosController extends Controller
                     $idEfector = $model->profesionalEfectorServicio
                         ? (int) $model->profesionalEfectorServicio->id_efector
                         : (int) $model->id_efector;
-                    $lifecycle = new EncounterLifecycleService();
+                    $lifecycle = new AdvanceEncounterLifecycle();
                     $encounter = $lifecycle->start([
                         'subject_persona_id' => (int) $persona->id_persona,
                         'encounter_class' => Encounter::ENCOUNTER_CLASS_AMB,

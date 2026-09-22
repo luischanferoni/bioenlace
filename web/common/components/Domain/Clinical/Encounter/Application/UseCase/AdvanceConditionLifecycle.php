@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Encounter\Application\Service;
+namespace common\components\Domain\Clinical\Encounter\Application\UseCase;
 
 use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
 use common\components\Domain\Clinical\Encounter\Domain\Model\Condition as ConditionAggregate;
@@ -9,7 +9,7 @@ use common\models\Clinical\Condition;
 /**
  * Ciclo de vida de Condition (diagnósticos / problemas activos).
  */
-final class ConditionLifecycleService
+final class AdvanceConditionLifecycle
 {
     public function resolve(Condition $condition, ?string $note = null): Condition
     {

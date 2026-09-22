@@ -5,7 +5,7 @@ namespace common\components\Domain\Clinical\Emergency\Application\Service;
 use common\components\Domain\Clinical\Encounter\Domain\RequestStatus;
 use common\components\Domain\Clinical\Laboratory\Application\Service\LaboratoryResultQueryService;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\PatientHistoriaUrl;
-use common\components\Domain\Clinical\CarePlan\Application\Service\ServiceRequestService;
+use common\components\Domain\Clinical\CarePlan\Application\UseCase\ManageServiceRequest;
 use common\models\Clinical\DiagnosticReport;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\ServiceRequest;
@@ -52,7 +52,7 @@ final class EmergencyClinicalSummaryService
                 ->where(['encounter_id' => $encounterId, 'deleted_at' => null])
                 ->exists();
 
-            foreach ((new ServiceRequestService())->listForEncounter($encounterId) as $sr) {
+            foreach ((new ManageServiceRequest())->listForEncounter($encounterId) as $sr) {
                 $category = (string) $sr->category;
                 $isLabLike = in_array($category, ['procedure', 'laboratory', 'lab'], true);
                 $resultStatus = $isLabLike && $hasLabReport ? 'available' : ($isLabLike ? 'pending' : 'n/a');
@@ -122,7 +122,7 @@ final class EmergencyClinicalSummaryService
         }
 
         $category = (string) ($body['category'] ?? 'laboratory');
-        $sr = (new ServiceRequestService())->createFromApi($encounter, null, [
+        $sr = (new ManageServiceRequest())->createFromApi($encounter, null, [
             'display' => $display,
             'code' => $body['code'] ?? null,
             'category' => $category,

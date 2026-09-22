@@ -4,10 +4,10 @@ namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
-use common\components\Domain\Clinical\Encounter\Application\Service\ConditionLifecycleService;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\AdvanceConditionLifecycle;
 use common\models\Clinical\Condition;
 
-class ConditionLifecycleServiceTest extends Unit
+class AdvanceConditionLifecycleTest extends Unit
 {
     public function testActiveCanResolveAndInactivate(): void
     {
@@ -62,7 +62,7 @@ class ConditionLifecycleServiceTest extends Unit
 
     public function testTransitionThrowsOnInvalidPath(): void
     {
-        $svc = new ConditionLifecycleService();
+        $svc = new AdvanceConditionLifecycle();
         $cond = new Condition();
         $cond->id = 1;
         $cond->clinical_status = ConditionClinicalStatus::RESOLVED;
@@ -73,7 +73,7 @@ class ConditionLifecycleServiceTest extends Unit
 
     public function testNormalizeMapResolutionsViaApplyRejectsWrongSubject(): void
     {
-        $svc = new ConditionLifecycleService();
+        $svc = new AdvanceConditionLifecycle();
         // Sin fila en BD: applyResolutions lanza not found.
         $this->expectException(\InvalidArgumentException::class);
         $svc->applyResolutions(['999999' => ConditionClinicalStatus::RESOLVED], 1);

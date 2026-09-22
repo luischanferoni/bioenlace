@@ -1,7 +1,8 @@
 <?php
 
-namespace common\components\Domain\Clinical\Inpatient\Application\Service;
+namespace common\components\Domain\Clinical\Inpatient\Application\UseCase;
 
+use common\components\Domain\Clinical\Inpatient\Application\Authorization\InpatientEfectorAccess;
 use common\models\Organization\InfraestructuraCama;
 use common\models\Person\Persona;
 use common\models\Clinical\InpatientStay;
@@ -11,7 +12,7 @@ use common\models\Clinical\InpatientStayRepository;
 /**
  * Cambio de cama durante un episodio de internación activo (staff).
  */
-final class InpatientBedTransferService
+final class TransferInpatientBed
 {
     /**
      * @return array<string, mixed>

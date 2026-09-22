@@ -4,13 +4,13 @@ namespace common\components\Domain\Scheduling\Agenda\Application\UseCase;
 
 use common\components\Domain\Scheduling\Agenda\Application\Agents\TurnoAdvanceOfferAgent;
 
-use common\components\Domain\Clinical\Encounter\Application\Service\EncounterLifecycleService;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\AdvanceEncounterLifecycle;
 use common\models\Scheduling\Turno;
 use common\models\Clinical\Encounter;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Organization\ProfesionalEfectorServicioAgenda;
 use common\models\Organization\ServiciosEfector;
-use common\components\Domain\Clinical\CarePlan\Application\Service\ReferralRequestService;
+use common\components\Domain\Clinical\CarePlan\Application\UseCase\CreateReferralRequest;
 use common\models\Clinical\ConsultaDerivaciones;
 use common\models\Scheduling\EfectorTurnosConfig;
 use common\models\Organization\Servicio;
@@ -100,7 +100,7 @@ class PersistTurno
             if (count($cps) > 0) {
                 $parent_id = null;
                 foreach ($cps as $cp) {
-                    ReferralRequestService::markBooked($cp);
+                    CreateReferralRequest::markBooked($cp);
                     $parent_id = $cp->id;
                 }
                 $model->parent_class = Encounter::PARENT_DERIVACION;
@@ -156,7 +156,7 @@ class PersistTurno
         }
 
         try {
-            (new EncounterLifecycleService())->ensureFromTurno($model);
+            (new AdvanceEncounterLifecycle())->ensureFromTurno($model);
         } catch (\Throwable $e) {
             Yii::warning('ensureFromTurno: ' . $e->getMessage(), 'api-turnos');
         }

@@ -8,7 +8,7 @@ use common\models\Organization\Servicio;
 use common\models\Person\Persona;
 
 use common\components\Domain\Clinical\Encounter\Domain\RequestStatus;
-use common\components\Domain\Clinical\CarePlan\Application\Service\ReferralRequestService;
+use common\components\Domain\Clinical\CarePlan\Application\UseCase\CreateReferralRequest;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\ServiceRequest;
 use common\models\Terminology\Application\SnomedProcedimientos;
@@ -363,6 +363,6 @@ class ConsultaDerivaciones extends ServiceRequest
         array $serviceIds,
         int $efectorId
     ): array {
-        return ReferralRequestService::findPendingForPersonEfectorServices($personaId, $serviceIds, $efectorId);
+        return CreateReferralRequest::findPendingForPersonEfectorServices($personaId, $serviceIds, $efectorId);
     }
 }

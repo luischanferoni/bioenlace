@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\Emergency\Application\Service;
+namespace common\components\Domain\Clinical\Emergency\Application\UseCase;
 
 use common\models\Clinical\Emergency\EmergencyEpisode;
 use common\models\Clinical\InpatientStay;
@@ -9,7 +9,7 @@ use yii\helpers\Url;
 /**
  * Solicitud y trazabilidad guardia → internación (cama).
  */
-final class EmergencyInpatientTransferService
+final class TransferEmergencyToInpatient
 {
     public function solicitarInternacion(int $guardiaId, int $idEfector, int $idEfectorInternacion): array
     {

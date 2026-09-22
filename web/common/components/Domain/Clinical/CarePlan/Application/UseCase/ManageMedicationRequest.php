@@ -1,8 +1,9 @@
 <?php
 
-namespace common\components\Domain\Clinical\CarePlan\Application\Service;
+namespace common\components\Domain\Clinical\CarePlan\Application\UseCase;
 
 use common\components\Domain\Clinical\CarePlan\Application\Service\ActivityReminderTimingService;
+use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanService;
 use common\components\Domain\Clinical\CarePlan\Application\Service\ReminderTimingJsonService;
 use common\components\Domain\Clinical\Encounter\Domain\RequestStatus;
 use common\components\Domain\Terminology\Domain\Model\SnomedCodeSystem;
@@ -11,7 +12,7 @@ use common\models\Clinical\Encounter;
 use common\models\Clinical\MedicationRequest;
 use common\models\Clinical\ConsultaMedicamentos;
 
-final class MedicationRequestService
+final class ManageMedicationRequest
 {
     private CarePlanService $carePlans;
 

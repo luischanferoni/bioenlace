@@ -6,9 +6,9 @@ use common\components\Domain\Clinical\CarePlan\Domain\CarePlanCategory;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanStatus;
 use common\components\Domain\Clinical\Encounter\Domain\RequestStatus;
 use common\components\Domain\Clinical\CarePlan\Application\Presentation\CarePlanPresentationService;
-use common\components\Domain\Clinical\Encounter\Application\Service\EncounterLifecycleService;
-use common\components\Domain\Clinical\Encounter\Application\Service\EncounterReasonService;
-use common\components\Domain\Clinical\Encounter\Application\Service\EpisodeOfCareService;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\AdvanceEncounterLifecycle;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\RecordEncounterReason;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\ManageEpisodeOfCare;
 use common\components\Domain\Person\Identity\Application\Service\PersonaAsistentePreferenciasService;
 use common\models\Clinical\AllergyIntolerance;
 use common\models\Clinical\CarePlan;
@@ -64,7 +64,7 @@ final class PatientAiContextService
      */
     public static function resolveSubjectPersonaIdFromBody(array $body): ?int
     {
-        $id = (new EncounterLifecycleService())->resolveSubjectPersonaId($body);
+        $id = (new AdvanceEncounterLifecycle())->resolveSubjectPersonaId($body);
         if ($id !== null && $id > 0) {
             return $id;
         }
@@ -423,7 +423,7 @@ final class PatientAiContextService
             ->asArray()
             ->all();
 
-        $reasonSvc = new EncounterReasonService();
+        $reasonSvc = new RecordEncounterReason();
         $out = [];
         foreach ($rows as $row) {
             $note = trim((string) ($row['note'] ?? ''));
@@ -454,7 +454,7 @@ final class PatientAiContextService
         if ($parent !== Encounter::PARENT_INTERNACION || $parentId <= 0) {
             return [];
         }
-        $episode = (new EpisodeOfCareService())->findActiveForInpatientStay($parentId);
+        $episode = (new ManageEpisodeOfCare())->findActiveForInpatientStay($parentId);
         if ($episode === null) {
             return [];
         }

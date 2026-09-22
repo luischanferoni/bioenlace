@@ -4,7 +4,7 @@ namespace frontend\modules\api\v1\controllers\clinical;
 
 use common\components\Domain\Clinical\CarePlan\Domain\Model\ServiceRequestDto;
 use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanService;
-use common\components\Domain\Clinical\CarePlan\Application\Service\ServiceRequestService;
+use common\components\Domain\Clinical\CarePlan\Application\UseCase\ManageServiceRequest;
 use common\models\Clinical\CarePlan;
 use Yii;
 use frontend\modules\api\v1\controllers\BaseController;
@@ -19,14 +19,14 @@ class ServiceRequestController extends BaseController
 {
     use ClinicalAccessTrait;
 
-    private ServiceRequestService $service;
+    private ManageServiceRequest $service;
     private CarePlanService $carePlans;
 
     public function init()
     {
         parent::init();
         $this->carePlans = new CarePlanService();
-        $this->service = new ServiceRequestService($this->carePlans);
+        $this->service = new ManageServiceRequest($this->carePlans);
     }
 
     public function actionIndex($encounterId)

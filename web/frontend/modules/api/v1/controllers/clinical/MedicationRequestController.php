@@ -4,7 +4,7 @@ namespace frontend\modules\api\v1\controllers\clinical;
 
 use common\components\Domain\Clinical\CarePlan\Domain\Model\MedicationRequestDto;
 use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanService;
-use common\components\Domain\Clinical\CarePlan\Application\Service\MedicationRequestService;
+use common\components\Domain\Clinical\CarePlan\Application\UseCase\ManageMedicationRequest;
 use common\models\Clinical\CarePlan;
 use Yii;
 use frontend\modules\api\v1\controllers\BaseController;
@@ -19,14 +19,14 @@ class MedicationRequestController extends BaseController
 {
     use ClinicalAccessTrait;
 
-    private MedicationRequestService $service;
+    private ManageMedicationRequest $service;
     private CarePlanService $carePlans;
 
     public function init()
     {
         parent::init();
         $this->carePlans = new CarePlanService();
-        $this->service = new MedicationRequestService($this->carePlans);
+        $this->service = new ManageMedicationRequest($this->carePlans);
     }
 
     public function actionIndex($encounterId)

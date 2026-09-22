@@ -3,7 +3,7 @@
 namespace frontend\modules\api\v1\controllers\clinical;
 
 use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
-use common\components\Domain\Clinical\Encounter\Application\Service\ConditionLifecycleService;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\AdvanceConditionLifecycle;
 use common\components\Domain\Clinical\Encounter\Application\Service\EncounterOpenProblemsService;
 use common\components\Domain\Person\Representation\Domain\Model\RepresentationPermission;
 use common\models\Clinical\Condition;
@@ -24,12 +24,12 @@ class ConditionController extends BaseController
 {
     use ClinicalAccessTrait;
 
-    private ConditionLifecycleService $lifecycle;
+    private AdvanceConditionLifecycle $lifecycle;
 
     public function __construct($id, $module, $config = [])
     {
         parent::__construct($id, $module, $config);
-        $this->lifecycle = new ConditionLifecycleService();
+        $this->lifecycle = new AdvanceConditionLifecycle();
     }
 
     public function actionIndex($encounterId)

@@ -9,7 +9,7 @@ use common\models\Person\PersonRelatedAuditLog;
 use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanReminderPreferenceService;
 use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanReminderScheduleService;
 use common\components\Domain\Clinical\CarePlan\Domain\Model\CarePlanDto;
-use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanLifecycleService;
+use common\components\Domain\Clinical\CarePlan\Application\UseCase\AdvanceCarePlanLifecycle;
 use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanMedicationListService;
 use common\components\Domain\Clinical\CarePlan\Application\Presentation\CarePlanPresentationService;
 use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanAdherenceStaffService;
@@ -39,7 +39,7 @@ class CarePlanController extends BaseController
 {
     use ClinicalAccessTrait;
 
-    private CarePlanLifecycleService $lifecycle;
+    private AdvanceCarePlanLifecycle $lifecycle;
     private PatientActiveCarePlanQueryService $activeQuery;
     private CarePlanPresentationService $presentation;
     private CarePlanReminderScheduleService $reminderSchedule;
@@ -48,7 +48,7 @@ class CarePlanController extends BaseController
     public function init()
     {
         parent::init();
-        $this->lifecycle = new CarePlanLifecycleService();
+        $this->lifecycle = new AdvanceCarePlanLifecycle();
         $this->activeQuery = new PatientActiveCarePlanQueryService();
         $this->presentation = new CarePlanPresentationService();
         $this->reminderSchedule = new CarePlanReminderScheduleService($this->activeQuery);

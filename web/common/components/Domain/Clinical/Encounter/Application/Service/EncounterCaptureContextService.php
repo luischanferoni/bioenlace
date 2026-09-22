@@ -136,7 +136,7 @@ final class EncounterCaptureContextService
                 InpatientClinicalContext::ensure($internacion);
             } catch (\Throwable $e) {
                 try {
-                    (new CarePlanLifecycleService())->onInpatientAdmission($internacion);
+                    (new AdvanceCarePlanLifecycle())->onInpatientAdmission($internacion);
                 } catch (\Throwable $e2) {
                     Yii::warning(
                         'No se pudo asegurar contexto clínico de internación #' . $internacion->id

@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Clinical\CarePlan\Application\Service;
+namespace common\components\Domain\Clinical\CarePlan\Application\UseCase;
 
 use common\components\Domain\Clinical\Encounter\Domain\RequestStatus;
 use common\models\Clinical\Encounter;
@@ -11,7 +11,7 @@ use common\models\Clinical\ConsultaDerivaciones;
 /**
  * Derivaciones clínicas (antes `consultas_derivaciones`) como ServiceRequest referral.
  */
-final class ReferralRequestService
+final class CreateReferralRequest
 {
     public static function findPendingForPersonEfectorService(
         int $personaId,

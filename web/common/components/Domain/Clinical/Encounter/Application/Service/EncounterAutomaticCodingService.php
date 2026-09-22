@@ -74,7 +74,7 @@ final class EncounterAutomaticCodingService
         if (trim((string) ($encounter->note ?? '')) !== '') {
             $contexto[] = trim((string) $encounter->note);
         }
-        $motivo = (new EncounterReasonService())->displayText($encounter);
+        $motivo = (new RecordEncounterReason())->displayText($encounter);
         if ($motivo !== '') {
             $contexto[] = 'Motivo: ' . $motivo;
         }

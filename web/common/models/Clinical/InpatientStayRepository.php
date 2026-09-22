@@ -3,7 +3,7 @@
 namespace common\models\Clinical;
 
 use common\models\Organization\InfraestructuraCama;
-use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanLifecycleService;
+use common\components\Domain\Clinical\CarePlan\Application\UseCase\AdvanceCarePlanLifecycle;
 use common\components\Domain\Clinical\Inpatient\Application\Service\InpatientEncounterAuxService;
 use Yii;
 
@@ -48,7 +48,7 @@ class InpatientStayRepository
             $transaction->commit();
 
             try {
-                (new \common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanLifecycleService())
+                (new \common\components\Domain\Clinical\CarePlan\Application\UseCase\AdvanceCarePlanLifecycle())
                     ->completeOnDischarge($model);
             } catch (\Throwable $e) {
                 Yii::error(

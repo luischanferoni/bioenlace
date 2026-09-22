@@ -1,13 +1,13 @@
 <?php
 
-namespace common\components\Domain\Clinical\Encounter\Application\Service;
+namespace common\components\Domain\Clinical\Encounter\Application\UseCase;
 
 use common\components\Domain\Clinical\Encounter\Domain\EpisodeOfCareStatus;
 use common\models\Clinical\EpisodeOfCare;
 use common\models\Organization\InfraestructuraCama;
 use common\models\Clinical\InpatientStay;
 
-final class EpisodeOfCareService
+final class ManageEpisodeOfCare
 {
     public function findActiveForInpatientStay(int $internacionId): ?EpisodeOfCare
     {

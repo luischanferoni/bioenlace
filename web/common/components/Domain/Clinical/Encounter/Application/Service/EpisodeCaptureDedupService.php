@@ -330,7 +330,7 @@ final class EpisodeCaptureDedupService
             ->asArray()
             ->all();
 
-        $reasonSvc = new EncounterReasonService();
+        $reasonSvc = new RecordEncounterReason();
         $out = [];
         foreach ($rows as $row) {
             $note = trim((string) ($row['note'] ?? ''));

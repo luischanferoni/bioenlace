@@ -5,7 +5,7 @@ namespace common\components\Domain\Clinical\Encounter\Application\Service;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EpisodioDateTimePresenter;
 use common\components\Domain\Clinical\Emergency\Domain\BoardState;
 use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyBoardService;
-use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyTriageService;
+use common\components\Domain\Clinical\Emergency\Application\UseCase\TriageEmergencyEpisode;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\Emergency\EmergencyTriage;
 use common\models\Clinical\Emergency\EmergencyEpisode;
@@ -21,15 +21,15 @@ final class EpisodioHistoriaBannerService
     /** @var EmergencyBoardService */
     private $circuito;
 
-    /** @var EmergencyTriageService */
+    /** @var TriageEmergencyEpisode */
     private $triageSerializer;
 
     public function __construct(
         ?EmergencyBoardService $circuito = null,
-        ?EmergencyTriageService $triageSerializer = null
+        ?TriageEmergencyEpisode $triageSerializer = null
     ) {
         $this->circuito = $circuito ?? new EmergencyBoardService();
-        $this->triageSerializer = $triageSerializer ?? new EmergencyTriageService();
+        $this->triageSerializer = $triageSerializer ?? new TriageEmergencyEpisode();
     }
 
     /**
@@ -214,7 +214,7 @@ final class EpisodioHistoriaBannerService
             }
             $texto = trim((string) ($enc->note ?? ''));
             if ($texto === '') {
-                $texto = (new EncounterReasonService())->displayText($enc);
+                $texto = (new RecordEncounterReason())->displayText($enc);
             }
             if ($texto === '' || stripos($texto, 'Internación #') === 0) {
                 continue;

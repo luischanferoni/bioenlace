@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\Encounter\Application\Service;
 
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EpisodioDateTimePresenter;
 use common\components\Domain\Clinical\Emergency\Domain\BoardEventType;
-use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyTriageService;
+use common\components\Domain\Clinical\Emergency\Application\UseCase\TriageEmergencyEpisode;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\MedicationAdministration;
 use common\models\Clinical\MedicationRequest;
@@ -26,7 +26,7 @@ final class EpisodioTimelineService
 {
     private const LIMIT_ITEMS = 120;
 
-    /** @var EmergencyTriageService */
+    /** @var TriageEmergencyEpisode */
     private $triageSerializer;
 
     /** @var LaboratoryResultQueryService */
@@ -36,10 +36,10 @@ final class EpisodioTimelineService
     private $pesNombreCache = [];
 
     public function __construct(
-        ?EmergencyTriageService $triageSerializer = null,
+        ?TriageEmergencyEpisode $triageSerializer = null,
         ?LaboratoryResultQueryService $labQuery = null
     ) {
-        $this->triageSerializer = $triageSerializer ?? new EmergencyTriageService();
+        $this->triageSerializer = $triageSerializer ?? new TriageEmergencyEpisode();
         $this->labQuery = $labQuery ?? new LaboratoryResultQueryService();
     }
 
@@ -216,7 +216,7 @@ final class EpisodioTimelineService
     {
         $texto = trim((string) ($enc->note ?? ''));
         if ($texto === '') {
-            $texto = (new EncounterReasonService())->displayText($enc);
+            $texto = (new RecordEncounterReason())->displayText($enc);
         }
         if ($texto === '') {
             return;

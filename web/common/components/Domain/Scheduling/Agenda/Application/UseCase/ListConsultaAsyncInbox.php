@@ -5,7 +5,7 @@ namespace common\components\Domain\Scheduling\Agenda\Application\UseCase;
 use common\components\Domain\Scheduling\Agenda\Application\Agents\ConsultaAsyncBandejaPrioridadAgent;
 
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
-use common\components\Domain\Clinical\Encounter\Application\Service\EncounterReasonService;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\RecordEncounterReason;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\ConsultaChatMessage;
 use common\models\Person\Persona;
@@ -423,7 +423,7 @@ final class ListConsultaAsyncInbox
             'created_at' => (string) $encounter->created_at,
             'reason_preview' => $this->previewText(
                 $this->stripSolicitudLabelPrefix(
-                    (new EncounterReasonService())->displayText($encounter),
+                    (new RecordEncounterReason())->displayText($encounter),
                     $policyCatalog
                 )
             ),

@@ -1,11 +1,11 @@
 <?php
 
-namespace common\components\Domain\Clinical\Inpatient\Application\Service;
+namespace common\components\Domain\Clinical\Inpatient\Application\UseCase;
 
 use common\components\Domain\Clinical\Inpatient\Application\Agents\InpatientBedSuggestionAgent;
 
-use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanLifecycleService;
-use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyInpatientTransferService;
+use common\components\Domain\Clinical\CarePlan\Application\UseCase\AdvanceCarePlanLifecycle;
+use common\components\Domain\Clinical\Emergency\Application\UseCase\TransferEmergencyToInpatient;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Domain\Organization\Efector\Application\Authorization\EfectorOperationAccess;
 use common\models\Person\CoberturaMedica;
@@ -24,7 +24,7 @@ use yii\helpers\ArrayHelper;
 /**
  * Ingreso de paciente a internación (cama + episodio).
  */
-final class InpatientAdmissionService
+final class AdmitInpatient
 {
     public const MSG_SIN_CAMAS_DISPONIBLES =
         'No hay camas desocupadas en este efector. Configure infraestructura (piso/sala/cama) o libere una cama.';
@@ -210,7 +210,7 @@ final class InpatientAdmissionService
         }
 
         try {
-            (new CarePlanLifecycleService())->onInpatientAdmission($model);
+            (new AdvanceCarePlanLifecycle())->onInpatientAdmission($model);
         } catch (\Throwable $e) {
             Yii::error(
                 'CarePlanLifecycle tras ingreso internación #' . $model->id . ': ' . $e->getMessage(),
@@ -219,7 +219,7 @@ final class InpatientAdmissionService
         }
 
         if ($idGuardia > 0) {
-            (new EmergencyInpatientTransferService())->marcarInternacionDesdeGuardia($idGuardia, (int) $model->id);
+            (new TransferEmergencyToInpatient())->marcarInternacionDesdeGuardia($idGuardia, (int) $model->id);
         }
 
         return [

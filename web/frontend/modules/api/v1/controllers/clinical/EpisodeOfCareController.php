@@ -2,7 +2,7 @@
 
 namespace frontend\modules\api\v1\controllers\clinical;
 
-use common\components\Domain\Clinical\Encounter\Application\Service\EpisodeOfCareService;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\ManageEpisodeOfCare;
 use common\components\Domain\Clinical\Inpatient\Domain\InpatientClinicalContext;
 use common\components\Domain\Clinical\Inpatient\Domain\InpatientClinicalQuery;
 use common\models\Clinical\EpisodeOfCare;
@@ -21,13 +21,13 @@ class EpisodeOfCareController extends BaseController
     use ClinicalAccessTrait;
 
     private InpatientClinicalQuery $query;
-    private EpisodeOfCareService $episodes;
+    private ManageEpisodeOfCare $episodes;
 
     public function init()
     {
         parent::init();
         $this->query = new InpatientClinicalQuery();
-        $this->episodes = new EpisodeOfCareService();
+        $this->episodes = new ManageEpisodeOfCare();
     }
 
     public function actions()

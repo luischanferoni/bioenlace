@@ -1,11 +1,14 @@
 <?php
 
-namespace common\components\Domain\Clinical\CarePlan\Application\Service;
+namespace common\components\Domain\Clinical\CarePlan\Application\UseCase;
 
+use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanService;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanCategory;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanStatus;
-use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanProgramMeta;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\AdvanceEncounterLifecycle;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\ManageEpisodeOfCare;
+use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EpisodeOfCare;
@@ -16,20 +19,20 @@ use Yii;
 /**
  * Reglas de ciclo de vida CarePlan (internación, ambulatorio, crónico, programa).
  */
-final class CarePlanLifecycleService
+final class AdvanceCarePlanLifecycle
 {
     private CarePlanService $carePlans;
-    private EncounterLifecycleService $encounters;
-    private EpisodeOfCareService $episodes;
+    private AdvanceEncounterLifecycle $encounters;
+    private ManageEpisodeOfCare $episodes;
 
     public function __construct(
         ?CarePlanService $carePlans = null,
-        ?EncounterLifecycleService $encounters = null,
-        ?EpisodeOfCareService $episodes = null
+        ?AdvanceEncounterLifecycle $encounters = null,
+        ?ManageEpisodeOfCare $episodes = null
     ) {
         $this->carePlans = $carePlans ?? new CarePlanService();
-        $this->encounters = $encounters ?? new EncounterLifecycleService();
-        $this->episodes = $episodes ?? new EpisodeOfCareService();
+        $this->encounters = $encounters ?? new AdvanceEncounterLifecycle();
+        $this->episodes = $episodes ?? new ManageEpisodeOfCare();
     }
 
     public function onInpatientAdmission(InpatientStay $internacion): EpisodeOfCare

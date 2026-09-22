@@ -140,7 +140,7 @@ final class StaffEncounterConsultaViewService
     private function buildPreconsultaSiAporta(Encounter $encounter, array $documentacion): ?array
     {
         $encounterId = (int) $encounter->id;
-        $reason = (new EncounterReasonService())->displayText($encounter);
+        $reason = (new RecordEncounterReason())->displayText($encounter);
         $mensajes = AppointmentReasonMessage::find()
             ->where(['encounter_id' => $encounterId])
             ->orderBy(['created_at' => SORT_ASC])

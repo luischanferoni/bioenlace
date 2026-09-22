@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\HistoryExchange\Infrastructure\External\Mapper;
 
 use common\components\Domain\Clinical\Encounter\Domain\ConditionDiagnosisRole;
-use common\components\Domain\Clinical\Encounter\Application\Service\EncounterReasonService;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\RecordEncounterReason;
 use common\models\Clinical\AllergyIntolerance;
 use common\models\Clinical\Condition;
 use common\models\Clinical\DiagnosticReport;
@@ -60,7 +60,7 @@ final class FhirClinicalHistoryBundleMapper
             $entries[] = $this->entry('practitioner', $practitioner);
         }
 
-        $reasonSvc = new EncounterReasonService();
+        $reasonSvc = new RecordEncounterReason();
         $reasonText = $reasonSvc->displayText($encounter);
 
         $compositionSections[] = $this->textSection(
@@ -239,7 +239,7 @@ final class FhirClinicalHistoryBundleMapper
     {
         $reasonCodes = [];
         $reasonRefs = [];
-        foreach ((new EncounterReasonService())->listForEncounter($encounter) as $c) {
+        foreach ((new RecordEncounterReason())->listForEncounter($encounter) as $c) {
             $coding = array_filter([
                 'system' => $c->code_system ?: null,
                 'code' => $c->code ?: null,

@@ -10,7 +10,7 @@ use yii\web\BadRequestHttpException;
 use yii\web\ServerErrorHttpException;
 use common\components\Domain\Clinical\CareCohort\Application\Service\CarePackConfig;
 use common\components\Domain\Clinical\Encounter\Application\Service\AppointmentReasonWindowService;
-use common\components\Domain\Clinical\Encounter\Application\Service\EncounterLifecycleService;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\AdvanceEncounterLifecycle;
 use common\models\Clinical\Encounter;
 use common\models\Scheduling\Turno;
 use common\models\Scheduling\AgendaFeriados;
@@ -2145,7 +2145,7 @@ class TurnosController extends BaseController
         if (count($cps) > 0) {
             $parent_id = null;
             foreach ($cps as $cp) {
-                \common\components\Domain\Clinical\CarePlan\Application\Service\ReferralRequestService::markBooked($cp);
+                \common\components\Domain\Clinical\CarePlan\Application\UseCase\CreateReferralRequest::markBooked($cp);
                 $parent_id = $cp->id;
             }
             $model->parent_class = Encounter::PARENT_DERIVACION;
@@ -2171,7 +2171,7 @@ class TurnosController extends BaseController
         if (!$model->save()) {
             throw new BadRequestHttpException('No se pudo guardar el turno.');
         }
-        (new EncounterLifecycleService())->ensureFromTurno($model);
+        (new AdvanceEncounterLifecycle())->ensureFromTurno($model);
         try {
             (new CreateSobreturno())->notificarRetrasoPorSobreturno($model);
             (new AdvanceTurnoLifecycle())->afterTurnoCreado($model);

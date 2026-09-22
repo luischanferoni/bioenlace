@@ -125,7 +125,7 @@ class InpatientController extends Controller
             try {
                 $idEfector = (int) Yii::$app->user->getIdEfector();
                 if ($idEfector > 0) {
-                    $altaCtx = (new \common\components\Domain\Clinical\Inpatient\Application\Service\InpatientDischargeStructuredService())
+                    $altaCtx = (new \common\components\Domain\Clinical\Inpatient\Application\UseCase\DischargeInpatient())
                         ->contextoAlta($model, $idEfector);
                 }
             } catch (\Throwable $e) {
@@ -138,7 +138,7 @@ class InpatientController extends Controller
             try {
                 $idEfector = (int) Yii::$app->user->getIdEfector();
                 if ($idEfector > 0) {
-                    $cambioCtx = (new \common\components\Domain\Clinical\Inpatient\Application\Service\InpatientBedTransferService())
+                    $cambioCtx = (new \common\components\Domain\Clinical\Inpatient\Application\UseCase\TransferInpatientBed())
                         ->contextoCambioCama($model, $idEfector);
                 }
             } catch (\Throwable $e) {
@@ -193,7 +193,7 @@ class InpatientController extends Controller
         $idGuardia = isset($get['id_guardia']) ? (int) $get['id_guardia'] : null;
 
         try {
-            $ctx = (new \common\components\Domain\Clinical\Inpatient\Application\Service\InpatientAdmissionService())->contextoIngreso(
+            $ctx = (new \common\components\Domain\Clinical\Inpatient\Application\UseCase\AdmitInpatient())->contextoIngreso(
                 (int) $persona->id_persona,
                 $idEfector,
                 $idCama > 0 ? $idCama : null,

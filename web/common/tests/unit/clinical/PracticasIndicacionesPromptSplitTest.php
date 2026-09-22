@@ -3,7 +3,7 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
-use common\components\Domain\Clinical\CarePlan\Application\Service\ServiceRequestService;
+use common\components\Domain\Clinical\CarePlan\Application\UseCase\ManageServiceRequest;
 use common\models\Clinical\ConsultaIndicaciones;
 use common\models\Clinical\Input\PracticaInput;
 
@@ -28,7 +28,7 @@ class PracticasIndicacionesPromptSplitTest extends Unit
     {
         $this->assertSame(
             15,
-            ServiceRequestService::resolvePlazoDias(['Indicacion' => 'Control', 'Plazo dias' => '15'])
+            ManageServiceRequest::resolvePlazoDias(['Indicacion' => 'Control', 'Plazo dias' => '15'])
         );
     }
 }

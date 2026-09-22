@@ -7,12 +7,12 @@ use common\components\Domain\Clinical\Emergency\Application\Authorization\Emerge
 use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyDischargeStructuredService;
 use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyIndicatorsExportService;
 use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyIndicatorsService;
-use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyIntakeService;
-use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyInpatientTransferService;
+use common\components\Domain\Clinical\Emergency\Application\UseCase\IntakeEmergencyEpisode;
+use common\components\Domain\Clinical\Emergency\Application\UseCase\TransferEmergencyToInpatient;
 use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyOperationService;
 use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyQueueService;
 use common\components\Domain\Clinical\Emergency\Application\Service\EmergencySlaService;
-use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyTriageService;
+use common\components\Domain\Clinical\Emergency\Application\UseCase\TriageEmergencyEpisode;
 use common\components\Platform\Ui\UiScreenService;
 use common\models\Clinical\Emergency\EmergencyTriage;
 use frontend\modules\api\v1\controllers\BaseController;
@@ -49,26 +49,26 @@ class EmergencyController extends BaseController
 {
     use ClinicalAccessTrait;
 
-    private EmergencyIntakeService $ingreso;
-    private EmergencyTriageService $triage;
+    private IntakeEmergencyEpisode $ingreso;
+    private TriageEmergencyEpisode $triage;
     private EmergencyQueueService $queue;
     private EmergencyOperationService $operacion;
     private EmergencyIndicatorsService $indicadores;
     private EmergencyClinicalSummaryService $clinical;
-    private EmergencyInpatientTransferService $internacion;
+    private TransferEmergencyToInpatient $internacion;
     private EmergencyIndicatorsExportService $export;
     private EmergencyDischargeStructuredService $egreso;
 
     public function init(): void
     {
         parent::init();
-        $this->ingreso = new EmergencyIntakeService();
-        $this->triage = new EmergencyTriageService();
+        $this->ingreso = new IntakeEmergencyEpisode();
+        $this->triage = new TriageEmergencyEpisode();
         $this->queue = new EmergencyQueueService();
         $this->operacion = new EmergencyOperationService();
         $this->indicadores = new EmergencyIndicatorsService();
         $this->clinical = new EmergencyClinicalSummaryService();
-        $this->internacion = new EmergencyInpatientTransferService();
+        $this->internacion = new TransferEmergencyToInpatient();
         $this->export = new EmergencyIndicatorsExportService();
         $this->egreso = new EmergencyDischargeStructuredService();
     }

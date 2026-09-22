@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\Prescription\Application\Service;
 
 use common\components\Domain\Clinical\Encounter\Domain\RequestStatus;
-use common\components\Domain\Clinical\Encounter\Application\Service\EncounterReasonService;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\RecordEncounterReason;
 use common\components\Domain\Clinical\Prescription\Domain\PrescriptionEventType;
 use common\components\Domain\Clinical\Prescription\Domain\PrescriptionLegalStatus;
 use common\components\Domain\Clinical\Prescription\Infrastructure\External\Mapper\FhirRecetaDigitalBundleMapper;
@@ -169,7 +169,7 @@ final class ElectronicPrescriptionDemoSeedService
         if (!$enc->save()) {
             throw new \RuntimeException('Encounter: ' . json_encode($enc->getErrors()));
         }
-        (new EncounterReasonService())
+        (new RecordEncounterReason())
             ->replaceReasons($enc, ['Encounter demo para seed de receta']);
 
         return $enc;

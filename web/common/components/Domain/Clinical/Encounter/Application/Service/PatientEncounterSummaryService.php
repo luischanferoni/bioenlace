@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\Encounter\Application\Service;
 
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
-use common\components\Domain\Clinical\Encounter\Application\Service\EncounterReasonService;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\RecordEncounterReason;
 use common\components\Domain\Clinical\Prescription\Domain\PrescriptionLegalStatus;
 use common\components\Domain\Clinical\Encounter\Domain\RequestStatus;
 use common\components\Domain\Clinical\Laboratory\Application\Service\LaboratoryResultQueryService;
@@ -45,7 +45,7 @@ final class PatientEncounterSummaryService
             'encounterId' => (int) $encounter->id,
             'periodStart' => $encounter->period_start,
             'periodEnd' => $encounter->period_end,
-            'reasonText' => (new EncounterReasonService())->displayText($encounter),
+            'reasonText' => (new RecordEncounterReason())->displayText($encounter),
             'narrativeText' => $narrative,
             'efector' => [
                 'id' => $encounter->efector_id ? (int) $encounter->efector_id : null,

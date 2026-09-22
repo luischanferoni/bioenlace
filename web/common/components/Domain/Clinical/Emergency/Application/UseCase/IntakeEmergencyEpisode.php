@@ -1,9 +1,10 @@
 <?php
 
-namespace common\components\Domain\Clinical\Emergency\Application\Service;
+namespace common\components\Domain\Clinical\Emergency\Application\UseCase;
 
 use common\components\Domain\Clinical\Emergency\Domain\BoardState;
 use common\components\Domain\Clinical\Emergency\Domain\BoardEventType;
+use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyBoardService;
 use common\components\Domain\Person\Identity\Application\Service\PersonaBusquedaAsistenteUiService;
 use common\components\Domain\Person\Identity\Application\UseCase\CreatePendingIdentity;
 use common\components\Domain\Person\Identity\Application\UseCase\ResolvePersonIdentity;
@@ -18,7 +19,7 @@ use common\models\Clinical\InpatientStay;
 use Yii;
 use yii\db\Query;
 
-final class EmergencyIntakeService
+final class IntakeEmergencyEpisode
 {
     /** @var EmergencyBoardService */
     private $circuito;

@@ -11,7 +11,7 @@ use common\models\Person\Persona;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterDefinition;
 use common\components\Domain\Clinical\Encounter\Application\Service\EncounterCaptureContextService;
-use common\components\Domain\Clinical\Encounter\Application\Service\EncounterReasonService;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\RecordEncounterReason;
 use common\components\Domain\Clinical\Encounter\Application\Service\EpisodioTimelineService;
 use common\components\Domain\Clinical\Capture\Application\Service\EncounterDefinitionBootstrapService;
 use frontend\components\Clinical\EncounterCaptureFormViewBuilder;
@@ -281,7 +281,7 @@ class PacienteController extends Controller
                 if ($idConsulta !== null && $idConsulta !== '' && (int) $idConsulta > 0) {
                     $encMotivos = Encounter::findOne((int) $idConsulta);
                     if ($encMotivos) {
-                        $motivoPacientePrefill = (new EncounterReasonService())
+                        $motivoPacientePrefill = (new RecordEncounterReason())
                             ->displayText($encMotivos);
                     }
                 }

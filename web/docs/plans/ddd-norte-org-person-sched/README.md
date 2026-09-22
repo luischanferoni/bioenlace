@@ -1,6 +1,6 @@
 # DDD norte — Org / Person / Scheduling (post-empaquetado)
 
-**Estado:** fases 01–06 hechas (pendiente commit; opcional Encounter/CarePlan UseCases)  
+**Estado:** fases 01–07 hechas (pendiente commit)  
 **Precondición:** empaquetado módulo-primero ya hecho ([`ddd-empaquetado-transversal`](../ddd-empaquetado-transversal/) archivado en decisions).  
 **Norte:** [`ddd-norte-modelo-rico.md`](../../decisions/ddd-norte-modelo-rico.md), [`ddd-un-eje-por-nivel`](../../../.cursor/rules/ddd-un-eje-por-nivel.mdc).
 
@@ -27,12 +27,13 @@ Pasar de “carpetas bien” a **modelo rico**: UseCases verb phrase, Domain con
 | **04** | Docs Identity vs Identidad; Integrations/fhir-scheduling paths | Sin menciones stale a `Identidad/` ni `Scheduling/Infrastructure/` |
 | **05** | Más UseCases (AdminEfector, billing switch, sesión operativa, identidad pendiente/resolver) + CuilPolicy wiring | Callers OK; `PersonCuilService` → `CuilPolicy` |
 | **06** | Representation + horario PES + CareCohort Generate/Enqueue | UseCases + callers API |
+| **07** | Encounter/CarePlan/Emergency/Inpatient lifecycle UseCases | 15 UseCases + callers |
 
 ## No hacer en este plan
 
 - Mover frontera Agenda-PES (ownership explícito → ADR aparte).
 - Programs / Integrations código nuevo.
-- Oleada completa Encounter/CarePlan Services → UseCase (siguiente plan o fase 07).
+- Restantes Services UI/query de Encounter/CarePlan (catalogs, journey windows, reminders) — fase 08 si hace falta.
 
 ## Criterio de naming UseCase
 

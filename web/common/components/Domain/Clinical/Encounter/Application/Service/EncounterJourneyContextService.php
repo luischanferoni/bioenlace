@@ -6,7 +6,7 @@ use common\components\Domain\Clinical\CareCohort\Application\Service\CarePackCon
 use common\components\Domain\Clinical\CareCohort\Domain\Port\CarePackRepository;
 use common\components\Domain\Clinical\Encounter\Application\Service\AppointmentReasonChatGuideCatalogService;
 use common\components\Domain\Clinical\Encounter\Application\Service\AppointmentReasonWindowService;
-use common\components\Domain\Clinical\Encounter\Application\Service\EncounterReasonService;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\RecordEncounterReason;
 use common\models\Clinical\CareAssistanceResponse;
 use common\models\Clinical\Encounter;
 use common\models\Scheduling\Turno;
@@ -66,7 +66,7 @@ final class EncounterJourneyContextService
             'sin_pack_followup' => $followupPackId <= 0,
             'asistencia_completada' => $asistenciaCompletada,
             'motivos_resumen_present' => $encounter !== null
-                && (new EncounterReasonService())->hasReasons($encounter),
+                && (new RecordEncounterReason())->hasReasons($encounter),
             'motivos_guia_habilitada' => $motivosGuiaHabilitada,
             'turno_starts_at' => $encounter !== null ? AppointmentReasonWindowService::turnoStartsAt($encounter) : null,
         ];

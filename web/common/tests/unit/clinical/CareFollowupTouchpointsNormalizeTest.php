@@ -4,7 +4,7 @@ namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\CareCohort\Application\Service\CareFollowupSchedulerService;
-use common\components\Domain\Clinical\CarePlan\Application\Service\ServiceRequestService;
+use common\components\Domain\Clinical\CarePlan\Application\UseCase\ManageServiceRequest;
 use common\models\Clinical\ConsultaIndicaciones;
 
 class CareFollowupTouchpointsNormalizeTest extends Unit
@@ -38,6 +38,6 @@ class CareFollowupTouchpointsNormalizeTest extends Unit
             'Indicacion' => 'Control en consultorio',
             'Plazo dias' => '15',
         ];
-        $this->assertSame(15, ServiceRequestService::resolvePlazoDias($row, 'Plazo dias'));
+        $this->assertSame(15, ManageServiceRequest::resolvePlazoDias($row, 'Plazo dias'));
     }
 }

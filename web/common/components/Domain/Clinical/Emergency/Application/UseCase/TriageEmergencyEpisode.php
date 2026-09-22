@@ -1,7 +1,9 @@
 <?php
 
-namespace common\components\Domain\Clinical\Emergency\Application\Service;
+namespace common\components\Domain\Clinical\Emergency\Application\UseCase;
 
+use common\components\Domain\Clinical\Emergency\Application\Authorization\EmergencyEfectorAccess;
+use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyBoardService;
 use common\components\Domain\Clinical\Emergency\Domain\BoardState;
 use common\components\Domain\Clinical\Emergency\Domain\BoardEventType;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EpisodioDateTimePresenter;
@@ -10,7 +12,7 @@ use common\models\Clinical\Emergency\EmergencyTriage;
 use common\models\Clinical\Emergency\EmergencyEpisode;
 use Yii;
 
-final class EmergencyTriageService
+final class TriageEmergencyEpisode
 {
     /** @var EmergencyBoardService */
     private $circuito;

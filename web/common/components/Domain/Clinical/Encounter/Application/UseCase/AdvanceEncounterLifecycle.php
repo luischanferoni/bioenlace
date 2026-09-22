@@ -1,11 +1,11 @@
 <?php
 
-namespace common\components\Domain\Clinical\Encounter\Application\Service;
+namespace common\components\Domain\Clinical\Encounter\Application\UseCase;
 
 use common\components\Domain\Clinical\CareCohort\Application\Service\CareEncounterService;
-use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanLifecycleService;
+use common\components\Domain\Clinical\CarePlan\Application\UseCase\AdvanceCarePlanLifecycle;
 use common\components\Domain\Clinical\Capture\Application\Service\OperationalContextResolver;
-use common\components\Domain\Clinical\Encounter\Application\Service\PatientEncounterSummaryPublishService;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\PublishPatientEncounterSummary;
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Domain\Clinical\Encounter\Domain\Model\Encounter as EncounterAggregate;
 use common\components\Domain\Clinical\Encounter\Domain\Model\EncounterId;
@@ -17,7 +17,7 @@ use common\models\Person\Persona;
 use common\models\Scheduling\Turno;
 use Yii;
 
-final class EncounterLifecycleService
+final class AdvanceEncounterLifecycle
 {
     /**
      * @param array<string, mixed> $params subject_persona_id, encounter_class, service_id, efector_id, parent_type, parent_id, …
@@ -52,7 +52,7 @@ final class EncounterLifecycleService
 
         $motivo = $params['motivo_consulta'] ?? null;
         if (is_string($motivo) && trim($motivo) !== '') {
-            (new EncounterReasonService())->replaceReasons($encounter, [trim($motivo)]);
+            (new RecordEncounterReason())->replaceReasons($encounter, [trim($motivo)]);
         }
 
         return $encounter;
@@ -71,7 +71,7 @@ final class EncounterLifecycleService
         }
 
         if ($encounter->encounter_class === Encounter::ENCOUNTER_CLASS_AMB) {
-            (new PatientEncounterSummaryPublishService())->schedulePublication($encounter);
+            (new PublishPatientEncounterSummary())->schedulePublication($encounter);
             (new CareEncounterService())->onEncounterFinalized($encounter);
             try {
                 (new \common\components\Domain\Clinical\Encounter\Application\Service\EncounterJourneyNotificationService())
@@ -89,12 +89,12 @@ final class EncounterLifecycleService
     /**
      * Cierra encounter y aplica reglas CarePlan asociadas.
      *
-     * @param array<string, mixed> $carePlanOptions Ver {@see CarePlanLifecycleService::onEncounterClose}
+     * @param array<string, mixed> $carePlanOptions Ver {@see AdvanceCarePlanLifecycle::onEncounterClose}
      */
     public function close(Encounter $encounter, array $carePlanOptions = []): Encounter
     {
         $encounter = $this->finalize($encounter);
-        (new CarePlanLifecycleService(null, $this))->onEncounterClose($encounter, $carePlanOptions);
+        (new AdvanceCarePlanLifecycle(null, $this))->onEncounterClose($encounter, $carePlanOptions);
 
         return $encounter;
     }
@@ -103,7 +103,7 @@ final class EncounterLifecycleService
      * Tras guardar documentación clínica: finaliza encounter, marca turno atendido
      * y aplica ciclo de vida CarePlan (agudos / continuidad).
      *
-     * @param array<string, mixed> $carePlanOptions Ver {@see CarePlanLifecycleService::onEncounterClose}
+     * @param array<string, mixed> $carePlanOptions Ver {@see AdvanceCarePlanLifecycle::onEncounterClose}
      */
     public function onCaptureDocumented(Encounter $encounter, array $carePlanOptions = []): Encounter
     {
@@ -112,7 +112,7 @@ final class EncounterLifecycleService
         }
 
         $this->syncAppointmentAttendedFromEncounter($encounter);
-        (new CarePlanLifecycleService(null, $this))->onEncounterClose($encounter, $carePlanOptions);
+        (new AdvanceCarePlanLifecycle(null, $this))->onEncounterClose($encounter, $carePlanOptions);
 
         return $encounter;
     }

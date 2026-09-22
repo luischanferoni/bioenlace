@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\Emergency\Application\Service;
 
 use common\components\Domain\Clinical\Emergency\Domain\BoardState;
-use common\components\Domain\Clinical\Encounter\Application\Service\EncounterReasonService;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\RecordEncounterReason;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\ServiceRequest;
 use common\models\Clinical\Emergency\EmergencyEpisode;
@@ -18,17 +18,17 @@ use Yii;
  */
 final class EmergencyEncounterOutcomeService
 {
-    /** @var EmergencyInpatientTransferService */
+    /** @var TransferEmergencyToInpatient */
     private $internacion;
 
     /** @var EmergencyBoardService */
     private $circuito;
 
     public function __construct(
-        ?EmergencyInpatientTransferService $internacion = null,
+        ?TransferEmergencyToInpatient $internacion = null,
         ?EmergencyBoardService $circuito = null
     ) {
-        $this->internacion = $internacion ?? new EmergencyInpatientTransferService();
+        $this->internacion = $internacion ?? new TransferEmergencyToInpatient();
         $this->circuito = $circuito ?? new EmergencyBoardService();
     }
 
@@ -210,7 +210,7 @@ final class EmergencyEncounterOutcomeService
             $blobs[] = $this->flattenToText($payload);
         }
 
-        $reason = (new EncounterReasonService())->displayText($encounter);
+        $reason = (new RecordEncounterReason())->displayText($encounter);
         if ($reason !== '') {
             $blobs[] = $reason;
         }

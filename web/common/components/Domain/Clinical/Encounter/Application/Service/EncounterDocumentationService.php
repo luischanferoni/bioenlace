@@ -11,20 +11,20 @@ use common\components\Domain\Clinical\Capture\Domain\Policy\CaptureCompletenessP
 use common\components\Domain\Clinical\Capture\Infrastructure\Logging\EncounterGuardarLogger;
 use common\components\Domain\Clinical\Capture\Infrastructure\Persistence\CaptureAnalysisCache;
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
-use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanLifecycleService;
+use common\components\Domain\Clinical\CarePlan\Application\UseCase\AdvanceCarePlanLifecycle;
 use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanService;
-use common\components\Domain\Clinical\Encounter\Application\Service\ConditionLifecycleService;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\AdvanceConditionLifecycle;
 use common\components\Domain\Clinical\Encounter\Application\Service\EncounterAutomaticCodingService;
-use common\components\Domain\Clinical\Encounter\Application\Service\EncounterLifecycleService;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\AdvanceEncounterLifecycle;
 use common\components\Domain\Clinical\Encounter\Application\Service\EpisodeCaptureDedupService;
-use common\components\Domain\Clinical\CarePlan\Application\Service\MedicationRequestService;
-use common\components\Domain\Clinical\CarePlan\Application\Service\ServiceRequestService;
+use common\components\Domain\Clinical\CarePlan\Application\UseCase\ManageMedicationRequest;
+use common\components\Domain\Clinical\CarePlan\Application\UseCase\ManageServiceRequest;
 use common\components\Domain\Clinical\CarePlan\Application\Service\TreatmentRequestSnomedCodingService;
 use common\components\Domain\Clinical\Specialty\Domain\EncounterDefinitionSpecialtyRegistry;
 use common\components\Domain\Clinical\Inpatient\Application\Service\InpatientEncounterAuxService;
 use common\components\Domain\Clinical\Specialty\Application\Service\OdontologyEncounterService;
 use common\components\Domain\Clinical\Specialty\Application\Service\OphthalmologyEncounterService;
-use common\components\Domain\Clinical\Encounter\Application\Service\EncounterReasonService;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\RecordEncounterReason;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EncounterCaptureReviewPresenter;
 use common\models\Clinical\Condition;
 use common\models\Clinical\Encounter;
@@ -42,10 +42,10 @@ use yii\base\Component;
  */
 class EncounterDocumentationService extends Component
 {
-    private EncounterLifecycleService $lifecycle;
+    private AdvanceEncounterLifecycle $lifecycle;
     private CarePlanService $carePlans;
-    private MedicationRequestService $medications;
-    private ServiceRequestService $serviceRequests;
+    private ManageMedicationRequest $medications;
+    private ManageServiceRequest $serviceRequests;
     private OdontologyEncounterService $odontology;
     private OphthalmologyEncounterService $ophthalmology;
     private InpatientEncounterAuxService $inpatientAux;
@@ -53,19 +53,19 @@ class EncounterDocumentationService extends Component
 
     public function __construct(
         $config = [],
-        EncounterLifecycleService $lifecycle = null,
+        AdvanceEncounterLifecycle $lifecycle = null,
         CarePlanService $carePlans = null,
-        MedicationRequestService $medications = null,
-        ServiceRequestService $serviceRequests = null,
+        ManageMedicationRequest $medications = null,
+        ManageServiceRequest $serviceRequests = null,
         OdontologyEncounterService $odontology = null,
         OphthalmologyEncounterService $ophthalmology = null,
         InpatientEncounterAuxService $inpatientAux = null,
         EncounterDefinitionSpecialtyRegistry $specialtyRegistry = null
     ) {
-        $this->lifecycle = $lifecycle ?? new EncounterLifecycleService();
+        $this->lifecycle = $lifecycle ?? new AdvanceEncounterLifecycle();
         $this->carePlans = $carePlans ?? new CarePlanService();
-        $this->medications = $medications ?? new MedicationRequestService($this->carePlans);
-        $this->serviceRequests = $serviceRequests ?? new ServiceRequestService($this->carePlans);
+        $this->medications = $medications ?? new ManageMedicationRequest($this->carePlans);
+        $this->serviceRequests = $serviceRequests ?? new ManageServiceRequest($this->carePlans);
         $this->odontology = $odontology ?? new OdontologyEncounterService($this->carePlans);
         $this->ophthalmology = $ophthalmology ?? new OphthalmologyEncounterService();
         $this->inpatientAux = $inpatientAux ?? new InpatientEncounterAuxService();
@@ -392,12 +392,12 @@ class EncounterDocumentationService extends Component
                 $subjectId = (int) ($encounter->subject_persona_id ?: $idPersona);
                 if ($conditionResolutions !== []) {
                     $diagnostico['condition_resolutions'] = count(
-                        (new ConditionLifecycleService())->applyResolutions($conditionResolutions, $subjectId)
+                        (new AdvanceConditionLifecycle())->applyResolutions($conditionResolutions, $subjectId)
                     );
                 }
                 if ($carePlanResolutions !== []) {
                     $diagnostico['care_plan_resolutions'] = count(
-                        (new CarePlanLifecycleService())->applyResolutions($carePlanResolutions, $subjectId)
+                        (new AdvanceCarePlanLifecycle())->applyResolutions($carePlanResolutions, $subjectId)
                     );
                 }
                 $encounter = $this->lifecycle->onCaptureDocumented($encounter, $carePlanOptions);
@@ -928,7 +928,7 @@ class EncounterDocumentationService extends Component
         }
         $motivo = $this->resolveNonEmptyBodyText($body, ['motivo_consulta']);
         if ($motivo !== null) {
-            (new EncounterReasonService())->replaceReasons($encounter, [$motivo]);
+            (new RecordEncounterReason())->replaceReasons($encounter, [$motivo]);
         }
     }
 
@@ -1094,7 +1094,7 @@ class EncounterDocumentationService extends Component
             ->asArray()
             ->one();
         $note = is_array($row) ? trim((string) ($row['note'] ?? '')) : '';
-        $reasonSvc = new EncounterReasonService();
+        $reasonSvc = new RecordEncounterReason();
         $reasonText = $reasonSvc->displayText($encounter);
 
         return [
@@ -1178,7 +1178,7 @@ class EncounterDocumentationService extends Component
                     $this->persistReasons($encounter, $payload);
                     $stat['accion'] = 'reasons';
                     $stat['detalle'] = 'reasons=' . mb_substr(
-                        (new EncounterReasonService())->displayText($encounter),
+                        (new RecordEncounterReason())->displayText($encounter),
                         0,
                         80
                     );
@@ -1188,7 +1188,7 @@ class EncounterDocumentationService extends Component
                     $stat['accion'] = 'conditions_sin_codigo_omitidas_coding_auto';
                     break;
                 case 'ConsultaMedicamentos':
-                    $medicationRows = MedicationRequestService::normalizeExtractedMedicationPayload($payload);
+                    $medicationRows = ManageMedicationRequest::normalizeExtractedMedicationPayload($payload);
                     $stat['rows'] = count($medicationRows);
                     if ($medicationRows === []) {
                         $stat['accion'] = 'medicacion_sin_filas';
@@ -1356,7 +1356,7 @@ class EncounterDocumentationService extends Component
         if ($rows === []) {
             return;
         }
-        (new EncounterReasonService())->replaceReasons($encounter, $rows);
+        (new RecordEncounterReason())->replaceReasons($encounter, $rows);
     }
 
     /**
@@ -1424,11 +1424,11 @@ class EncounterDocumentationService extends Component
      */
     private function persistMedications(Encounter $encounter, ?\common\models\Clinical\CarePlan $carePlan, $payload): void
     {
-        $rows = MedicationRequestService::normalizeExtractedMedicationPayload($payload);
+        $rows = ManageMedicationRequest::normalizeExtractedMedicationPayload($payload);
         $dedup = new \common\components\Domain\Clinical\Encounter\Application\Service\EpisodeCaptureDedupService();
         $episodeIds = $this->episodeEncounterIdsFor($encounter);
         foreach ($rows as $row) {
-            $display = MedicationRequestService::resolveMedicationDisplay($row);
+            $display = ManageMedicationRequest::resolveMedicationDisplay($row);
             $displayKey = $dedup->normalizeKey($display);
             if (
                 $displayKey !== ''

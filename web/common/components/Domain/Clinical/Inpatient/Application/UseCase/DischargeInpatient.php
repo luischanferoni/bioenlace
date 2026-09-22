@@ -1,9 +1,9 @@
 <?php
 
-namespace common\components\Domain\Clinical\Inpatient\Application\Service;
+namespace common\components\Domain\Clinical\Inpatient\Application\UseCase;
 
 use common\components\Domain\Clinical\Inpatient\Application\Agents\PostDischargeFollowupAgent;
-
+use common\components\Domain\Clinical\Inpatient\Application\Service\InpatientEpicrisisTemplateService;
 use common\models\Clinical\InpatientStay;
 use common\models\Clinical\InpatientStayRepository;
 use common\models\Clinical\InpatientDischargeType;
@@ -11,7 +11,7 @@ use common\models\Clinical\InpatientDischargeType;
 /**
  * Alta hospitalaria con epicrisis y checklist mínimo (staff).
  */
-final class InpatientDischargeStructuredService
+final class DischargeInpatient
 {
     private InpatientEpicrisisTemplateService $plantillas;
 

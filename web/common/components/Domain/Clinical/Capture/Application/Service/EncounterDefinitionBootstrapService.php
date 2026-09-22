@@ -84,7 +84,7 @@ final class EncounterDefinitionBootstrapService
         $encounterClass = null;
 
         if ($subjectPersonaId !== null && $subjectPersonaId > 0) {
-            $paciente = (new \common\components\Domain\Clinical\Encounter\Application\Service\EncounterLifecycleService())
+            $paciente = (new \common\components\Domain\Clinical\Encounter\Application\UseCase\AdvanceEncounterLifecycle())
                 ->findSubject($subjectPersonaId);
             if (
                 $paciente !== null

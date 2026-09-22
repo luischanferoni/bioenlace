@@ -43,7 +43,7 @@ final class EncounterAppointmentReasonLookupService
             return null;
         }
 
-        $motivo = (new EncounterReasonService())->displayText($encounter);
+        $motivo = (new RecordEncounterReason())->displayText($encounter);
 
         return $motivo !== '' ? $motivo : null;
     }

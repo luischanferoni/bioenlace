@@ -7,7 +7,7 @@ use common\components\Domain\Clinical\CarePlan\Domain\CarePlanActivityKind;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanCategory;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanStatus;
 use common\components\Domain\Clinical\CarePlan\Application\Presentation\CarePlanPresentationService;
-use common\components\Domain\Clinical\Encounter\Application\Service\EpisodeOfCareService;
+use common\components\Domain\Clinical\Encounter\Application\UseCase\ManageEpisodeOfCare;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\CarePlanActivity;
 use common\models\Clinical\Encounter;
@@ -153,7 +153,7 @@ final class CaptureCategoryResolver
         if ($parent !== Encounter::PARENT_INTERNACION || $parentId <= 0) {
             return null;
         }
-        $episode = (new EpisodeOfCareService())->findActiveForInpatientStay($parentId);
+        $episode = (new ManageEpisodeOfCare())->findActiveForInpatientStay($parentId);
         if ($episode === null) {
             return null;
         }

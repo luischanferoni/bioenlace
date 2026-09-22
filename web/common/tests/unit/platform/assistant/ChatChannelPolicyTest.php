@@ -75,9 +75,9 @@ class ChatChannelPolicyTest extends Unit
         $this->assertFalse(ChatChannelPolicy::namedPredicate('unknown_rule', 'hola'));
     }
 
-    public function testCargarMiCoberturaIsStaffOperationalQuery(): void
+    public function testCargarMisHorariosIsStaffOperationalQuery(): void
     {
-        $msg = 'Cargar mi cobertura';
+        $msg = 'Cargar mis horarios';
         $this->assertTrue(ChatChannelPolicy::isStaffDataAccessOperationalQuery($msg));
     }
 

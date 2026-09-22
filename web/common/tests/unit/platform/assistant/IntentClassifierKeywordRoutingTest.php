@@ -90,13 +90,13 @@ class IntentClassifierKeywordRoutingTest extends Unit
         $this->assertCount(2, $out['disambiguation']['remediation']);
     }
 
-    public function testCargarMiCoberturaPrefersHorariosHub(): void
+    public function testCargarMisHorariosPrefersHorariosHub(): void
     {
         $catalog = $this->catalog([
             [
                 'profesional-horarios.gestionar-propio',
                 'Configurar mis horarios',
-                ['cargar mi cobertura', 'mis horarios', 'modificar mi agenda'],
+                ['cargar mis horarios', 'mis horarios', 'modificar mi agenda'],
             ],
             [
                 'profesional-agenda.configurar-staff',
@@ -110,7 +110,7 @@ class IntentClassifierKeywordRoutingTest extends Unit
             ],
         ]);
 
-        $out = IntentClassifier::classifyAmongItems('Cargar mi cobertura', $catalog->items, $catalog, 0);
+        $out = IntentClassifier::classifyAmongItems('Cargar mis horarios', $catalog->items, $catalog, 0);
         $this->assertNotNull($out);
         $this->assertSame('profesional-horarios.gestionar-propio', $out['item']->action_id);
     }

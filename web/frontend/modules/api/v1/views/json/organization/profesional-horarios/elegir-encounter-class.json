@@ -30,7 +30,7 @@
         },
         {
           "id": "IMP",
-          "name": "Internación (cobertura de piso)",
+          "name": "Internación (horario de piso)",
           "meta": { "encounter_class": "IMP" }
         }
       ]

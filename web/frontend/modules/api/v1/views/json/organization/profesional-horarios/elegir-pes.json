@@ -11,7 +11,7 @@
     {
       "kind": "list",
       "id": "default",
-      "title": "Asignación para la cobertura",
+      "title": "Asignación para el horario",
       "empty_message": "No tenés asignaciones PES en este efector.",
       "selection": { "mode": "single" },
       "draft_field": "id_profesional_efector_servicio",

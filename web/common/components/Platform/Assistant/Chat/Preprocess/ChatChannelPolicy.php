@@ -206,7 +206,7 @@ final class ChatChannelPolicy
             || self::isStaffDataAccessEditQuery($message)
             || self::suggestsOwnAgendaEdit($message)
             || self::suggestsStaffAgendaEdit($message)
-            || self::looksLikeOwnCoberturaOrPlantel($message)
+            || self::looksLikeOwnHorariosOrPlantel($message)
             || self::looksLikeStaffPlantel($message);
     }
 
@@ -297,7 +297,7 @@ final class ChatChannelPolicy
             || (bool) preg_match('/^(hola|buenas|buen dia|buen día)\b.{0,24}$/u', $f);
     }
 
-    private static function looksLikeOwnCoberturaOrPlantel(string $message): bool
+    private static function looksLikeOwnHorariosOrPlantel(string $message): bool
     {
         $f = self::fold($message);
         if ($f === '') {
@@ -307,11 +307,12 @@ final class ChatChannelPolicy
             return false;
         }
 
-        return str_contains($f, 'mi cobertura')
-            || str_contains($f, 'cargar mi cobertura')
-            || str_contains($f, 'mis horarios')
+        return str_contains($f, 'mis horarios')
+            || str_contains($f, 'cargar mis horarios')
+            || str_contains($f, 'configurar mis horarios')
             || str_contains($f, 'plantel de guardia')
-            || str_contains($f, 'horario de guardia');
+            || str_contains($f, 'horario de guardia')
+            || str_contains($f, 'horario de piso');
     }
 
     private static function looksLikeStaffPlantel(string $message): bool
@@ -324,7 +325,8 @@ final class ChatChannelPolicy
         return str_contains($f, 'asignar guardia')
             || str_contains($f, 'plantel guardia')
             || str_contains($f, 'horarios de plantel')
-            || str_contains($f, 'cobertura de un profesional')
+            || str_contains($f, 'horarios de un profesional')
+            || str_contains($f, 'cargar horarios de')
             || str_contains($f, 'horarios de guardia de un');
     }
 }

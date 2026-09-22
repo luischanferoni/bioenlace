@@ -99,7 +99,7 @@ description: "Presentación comercial centrada en el recorrido integral de turno
   </div>
 </div>
 
-<p class="small">Ambulatorio usa cupos y turnos. Guardia e internación usan cobertura de personal: Bioenlace no fuerza la misma agenda para procesos diferentes.</p>
+<p class="small">Ambulatorio usa cupos y turnos. Guardia e internación usan horario de presencia del plantel: Bioenlace no fuerza la misma agenda para procesos diferentes.</p>
 
 ---
 

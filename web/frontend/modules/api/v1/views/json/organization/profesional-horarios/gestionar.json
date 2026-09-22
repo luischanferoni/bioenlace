@@ -62,7 +62,7 @@
         },
         {
           "name": "weekly_scheduler_widget",
-          "label": "Horarios de cobertura por día",
+          "label": "Horarios por día",
           "type": "custom_widget",
           "widget_id": "weekly_scheduler",
           "required": false,

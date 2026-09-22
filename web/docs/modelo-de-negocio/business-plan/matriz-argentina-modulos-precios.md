@@ -93,7 +93,7 @@ Ejemplo CIS: **20.000** atenciones ambulatorio (dictado incluido) → tramo Gran
 |------|----------------|
 | Wizard / opciones sesión | Solo clases contratadas en la **cuenta** del efector (`billing_account_encounter_entitlement`; si no hay cuenta/filas: `default_when_empty: allow_all`) |
 | `set-session` | Rechaza `encounter_class` no contratada |
-| Agenda AMB / cobertura EMER·IMP | Operan solo si la clase está contratada (vía sesión) |
+| Agenda AMB / horario EMER·IMP | Operan solo si la clase está contratada (vía sesión) |
 | Alta PES | Tope `max_pes` del **pool de la cuenta de facturación** (personas distintas en efectores con rol **POOL**; excluye AdminEfector) |
 | Baja PES | Operativa inmediata; el mes en curso se cobra con el `max_pes` vigente. Pending a nivel cuenta, efectivo el **1º del mes siguiente** (`php yii entitlement/apply-pending-downgrades`). |
 | Admin | [`/billing-account`](../../../../admin/) — cuentas Ministerio/Red/Efector, miembros con rol, editar `max_pes` / dictado / videollamada por clase. Tab **Licencia** en ficha de efector. |

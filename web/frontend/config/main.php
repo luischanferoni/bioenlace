@@ -535,7 +535,7 @@ return [
                 'POST api/<version:\w+>/profesional-agenda/ver-agenda-dia' => '<version>/profesional-agenda/ver-agenda-dia',
                 'OPTIONS api/<version:\w+>/profesional-agenda/ver-agenda-dia' => '<version>/profesional-agenda/ver-agenda-dia',
 
-                // Cobertura EMER/IMP (roster entrada/salida); no cupos paciente
+                // Horarios EMER/IMP (presencia entrada/salida); no cupos paciente
                 'GET api/<version:\w+>/profesional-horarios/gestionar' => '<version>/profesional-horarios/gestionar',
                 'POST api/<version:\w+>/profesional-horarios/gestionar' => '<version>/profesional-horarios/gestionar',
                 'OPTIONS api/<version:\w+>/profesional-horarios/gestionar' => '<version>/profesional-horarios/gestionar',

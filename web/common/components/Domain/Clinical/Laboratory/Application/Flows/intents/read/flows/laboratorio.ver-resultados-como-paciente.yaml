@@ -1,7 +1,7 @@
 intent_id: laboratorio.ver-resultados-como-paciente
 version: 1
 action_name: 'Ver resultados de laboratorio'
-rbac_route: /api/clinical/laboratory-results/mis-resultados
+rbac_route: /api/clinical/laboratory-result/mis-resultados-como-paciente
 keywords:
   # Evitar tokens sueltos laboratorio/estudios/análisis (pelean con pedir estudio).
   - 'mis resultados'

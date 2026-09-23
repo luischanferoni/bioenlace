@@ -116,7 +116,7 @@ class SmartCatalogConversationalQaTest extends Unit
                     'tags' => [],
                     'context_areas' => [],
                 ],
-                ['dudosa'],
+                ['incompletas'],
             ],
             'listar_profesionales' => [
                 'listar profesionales del centro',

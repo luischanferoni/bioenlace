@@ -3,6 +3,7 @@
 namespace common\components\Platform\Assistant\Chat\Routing\Handlers;
 
 use common\components\Platform\Assistant\Chat\Channels\Guide\GuideChannel;
+use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
 use common\components\Platform\Assistant\Planning\AssistantPlanningLogService;
 use common\components\Platform\Assistant\Planning\CatalogCtaResolver;
 use common\components\Platform\Assistant\Planning\DeclarativePlanExecutionResult;
@@ -87,7 +88,7 @@ final class IncompleteRoutingHandler
         int $userId,
         DeclarativePlanExecutionResult $declarativeExecution
     ): ?array {
-        if (!self::canGuide($evaluation, $declarativeExecution)) {
+        if (!self::canGuide($evaluation, $declarativeExecution, $content)) {
             return null;
         }
 
@@ -110,7 +111,7 @@ final class IncompleteRoutingHandler
         DeclarativePlanExecutionResult $execution,
         string $finalPath
     ): ?array {
-        if (!self::canGuide($evaluation, $execution)) {
+        if (!self::canGuide($evaluation, $execution, $content)) {
             Yii::info(['incomplete_no_useful_data' => true], 'asistente-planning');
 
             return null;
@@ -133,12 +134,17 @@ final class IncompleteRoutingHandler
     }
 
     /**
-     * Guide incompletas con datos HIS, o solo con puertas CTA (zona C / orientación).
+     * Guide incompletas con datos HIS, puertas CTA, o un saludo solo (sin CTA clínico).
      */
     private static function canGuide(
         SmartCatalogRoutingEvaluation $evaluation,
-        DeclarativePlanExecutionResult $execution
+        DeclarativePlanExecutionResult $execution,
+        string $content
     ): bool {
+        if (ChatChannelPolicy::isGreetingOnly($content)) {
+            return true;
+        }
+
         if (
             $execution->hasUsefulData
             || $execution->scopedSystemRecords !== ''

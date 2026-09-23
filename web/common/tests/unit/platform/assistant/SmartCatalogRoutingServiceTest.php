@@ -148,7 +148,7 @@ class SmartCatalogRoutingServiceTest extends Unit
     public function testDudosaWhenNoMatch(): void
     {
         $evaluation = SmartCatalogRoutingService::evaluate([
-            'normalized_text' => 'hola',
+            'normalized_text' => 'xyzzy',
             'routing_hint' => 'sin_pedido',
             'tags' => [],
             'context_areas' => [],
@@ -156,6 +156,21 @@ class SmartCatalogRoutingServiceTest extends Unit
         ], 0);
 
         $this->assertTrue($evaluation->decision->isDudosa());
+    }
+
+    public function testGreetingOnlyRoutesToGuideWithoutCatalog(): void
+    {
+        $evaluation = SmartCatalogRoutingService::evaluate([
+            'normalized_text' => 'hola',
+            'routing_hint' => 'sin_pedido',
+            'tags' => [],
+            'context_areas' => [],
+            'extractions' => [],
+        ], 0, 'Hola');
+
+        $this->assertTrue($evaluation->decision->isIncompletas());
+        $this->assertSame('guide', $evaluation->decision->legacyUserGoal);
+        $this->assertNull($evaluation->decision->catalogEntry);
     }
 
     public function testLlegarTardeRoutesIncompletas(): void

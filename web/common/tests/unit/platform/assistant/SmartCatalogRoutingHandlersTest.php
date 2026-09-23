@@ -41,14 +41,14 @@ class SmartCatalogRoutingHandlersTest extends Unit
     public function testDudosaHandlerReturnsInteractiveEnvelope(): void
     {
         $evaluation = SmartCatalogRoutingService::evaluate([
-            'normalized_text' => 'hola',
+            'normalized_text' => 'xyzzy',
             'routing_hint' => 'sin_pedido',
             'tags' => [],
             'context_areas' => [],
             'extractions' => [],
         ], 0);
 
-        $envelope = SmartCatalogRoutingHandlers::tryHandle($evaluation, 'hola', 0);
+        $envelope = SmartCatalogRoutingHandlers::tryHandle($evaluation, 'xyzzy', 0);
 
         $this->assertIsArray($envelope);
         $this->assertSame('interactive', $envelope['kind'] ?? null);

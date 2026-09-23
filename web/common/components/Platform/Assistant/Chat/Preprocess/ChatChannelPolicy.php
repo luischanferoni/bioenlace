@@ -49,7 +49,13 @@ final class ChatChannelPolicy
 
     private const HELP_MENU = '/\b(ayuda|menu|menú|que puedo hacer|qué puedo hacer|opciones|capacidades)\b/u';
 
-    private const GREETING = '/\b(hola|buenas|buen dia|buen día|hey|ola)\b/u';
+    private const GREETING = '/\b(hola|buenas|buen dia|hey|ola)\b/u';
+
+    /** Sujeto de la consulta que no es el paciente ni un menor a su cargo. */
+    private const THIRD_PARTY_SUBJECT = '/\b(amigo|amiga|conocido|conocida|vecino|vecina|companero|companera|colega)\b/u';
+
+    /** Menor propio (tutor): la consulta sigue en el perímetro del paciente. */
+    private const OWN_DEPENDENT = '/\b(nene|nena|hijo|hija|bebe)\b/u';
 
     private const CONDICION_LABORAL = '/\b(condicion laboral|condición laboral|planta permanente|contratado|monotribut)\b/u';
 
@@ -261,6 +267,10 @@ final class ChatChannelPolicy
         string $patientHistory = '',
         bool $threadOffersCta = false
     ): bool {
+        if (self::isCareAboutThirdParty($content)) {
+            return false;
+        }
+
         $hasSymptomNow = self::isClinicalSymptomContent($content);
         $hasSymptomInThread = self::lastLineMatchingClinicalSymptom($patientHistory) !== '';
 
@@ -293,8 +303,22 @@ final class ChatChannelPolicy
         $f = self::fold($message);
 
         // Saludo + poco más (hola, buenas, hey…).
-        return (bool) preg_match('/^(hola|buenas|buen dia|buen día|hey|ola)([!.\s]*)?$/u', $f)
-            || (bool) preg_match('/^(hola|buenas|buen dia|buen día)\b.{0,24}$/u', $f);
+        return (bool) preg_match('/^(hola|buenas|buen dia|hey|ola)([!.\s]*)?$/u', $f)
+            || (bool) preg_match('/^(hola|buenas|buen dia)\b.{0,24}$/u', $f);
+    }
+
+    /**
+     * Síntoma o consejo sobre un tercero que no está a cargo del paciente (amigo, vecino).
+     * Un menor propio (nene, hijo) sigue dentro del perímetro.
+     */
+    public static function isCareAboutThirdParty(string $message): bool
+    {
+        $f = self::fold($message);
+        if ($f === '' || preg_match(self::OWN_DEPENDENT, $f)) {
+            return false;
+        }
+
+        return (bool) preg_match(self::THIRD_PARTY_SUBJECT, $f);
     }
 
     private static function looksLikeOwnHorariosOrPlantel(string $message): bool

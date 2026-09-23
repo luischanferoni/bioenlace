@@ -111,6 +111,20 @@ final class GuideChannelConfig
         );
     }
 
+    public static function isBookingOfferIntent(string $intentId): bool
+    {
+        $intentId = trim($intentId);
+        if ($intentId === '') {
+            return false;
+        }
+        if (in_array($intentId, self::bookingOfferIntentPriority(), true)) {
+            return true;
+        }
+        $prefix = self::bookingOfferIntentPrefixFallback();
+
+        return $prefix !== '' && str_starts_with($intentId, $prefix);
+    }
+
     /**
      * @param array<string, string> $vars
      */

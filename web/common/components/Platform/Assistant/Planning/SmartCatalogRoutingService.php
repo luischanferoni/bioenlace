@@ -5,6 +5,7 @@ namespace common\components\Platform\Assistant\Planning;
 use common\components\Platform\Assistant\Catalog\SmartCatalogEntry;
 use common\components\Platform\Assistant\Catalog\SmartCatalogMatchResult;
 use common\components\Platform\Assistant\Catalog\SmartCatalogMatchService;
+use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
 use common\components\Platform\Assistant\Context\AssistantContextAreaDerivation;
 use common\components\Platform\Assistant\Context\AssistantContextAnchorResolver;
 use common\components\Platform\Assistant\Context\AssistantContextHISArea;
@@ -41,7 +42,7 @@ final class SmartCatalogRoutingService
             $declarative->needsPlanner
         );
 
-        $decision = self::resolveRouting($firstIa, $match);
+        $decision = self::resolveRouting($firstIa, $match, $rawContent);
         AssistantPlanningLogService::setRoutingResult($decision->routingResult);
 
         return new SmartCatalogRoutingEvaluation($firstIa, $match, $decision, $declarative);
@@ -52,8 +53,17 @@ final class SmartCatalogRoutingService
      */
     private static function resolveRouting(
         array $firstIa,
-        SmartCatalogMatchResult $match
+        SmartCatalogMatchResult $match,
+        string $rawContent = ''
     ): SmartCatalogRoutingDecision {
+        $message = trim($rawContent);
+        if ($message === '') {
+            $message = trim((string) ($firstIa['normalized_text'] ?? ''));
+        }
+        if (ChatChannelPolicy::isGreetingOnly($message)) {
+            return self::guideWithoutCatalogDecision();
+        }
+
         $best = $match->best;
         $hint = PreprocessRoutingHintCatalog::applyAlias(
             (string) ($firstIa['routing_hint'] ?? PreprocessRoutingHintCatalog::SIN_PEDIDO)
@@ -122,6 +132,23 @@ final class SmartCatalogRoutingService
             '',
             '',
             $best,
+        );
+    }
+
+    /**
+     * Saludo solo: charla guide, sin fila de catálogo ni CTA clínico.
+     */
+    private static function guideWithoutCatalogDecision(): SmartCatalogRoutingDecision
+    {
+        return new SmartCatalogRoutingDecision(
+            PreprocessRoutingHintCatalog::PATH_NEEDS_CONTEXT,
+            PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint(
+                PreprocessRoutingHintCatalog::PATH_NEEDS_CONTEXT
+            ),
+            [],
+            '',
+            '',
+            null,
         );
     }
 

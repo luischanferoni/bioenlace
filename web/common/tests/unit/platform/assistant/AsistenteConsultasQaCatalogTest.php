@@ -126,6 +126,7 @@ class AsistenteConsultasQaCatalogTest extends Unit
                             ['label' => 'Charla', 'intent_id' => 'assistant.channel.guide'],
                         ],
                         'user_goal' => 'guide',
+                        'necesidad_usuario' => 'Atención por un pinchazo en el pecho al respirar.',
                         'planning_applied' => [
                             'final_path' => '2ia_guide',
                             'routing_result' => 'incompletas',
@@ -141,5 +142,9 @@ class AsistenteConsultasQaCatalogTest extends Unit
         $this->assertStringContainsString('Asistente: Indicame el servicio.', $txt);
         $this->assertStringContainsString('"Charla" → assistant.channel.guide', $txt);
         $this->assertStringContainsString('preprocess + 2 IA', $txt);
+        $this->assertStringContainsString(
+            'necesidad_usuario: Atención por un pinchazo en el pecho al respirar.',
+            $txt
+        );
     }
 }

@@ -298,6 +298,7 @@ final class AsistenteConsultasQaService
             'preprocess_user_goal' => $preprocessGoal,
             'routing_hint' => ChatPreprocessContext::routingHint(),
             'normalized_text' => ChatPreprocessContext::normalizedText(),
+            'necesidad_usuario' => ChatPreprocessContext::necesidadUsuario(),
             'tags' => ChatPreprocessContext::tags(),
             'context_areas' => ChatPreprocessContext::contextAreas(),
             'intent_ids_hint' => ChatPreprocessContext::intentIdsHint(),
@@ -877,6 +878,11 @@ final class AsistenteConsultasQaService
         $tags = is_array($observation['tags'] ?? null) ? $observation['tags'] : [];
         $areas = is_array($observation['context_areas'] ?? null) ? $observation['context_areas'] : [];
         $normalized = trim((string) ($observation['normalized_text'] ?? ''));
+        $necesidad = trim((string) ($observation['necesidad_usuario'] ?? ''));
+        if ($necesidad === '' && is_array($planning)) {
+            $firstIa = is_array($planning['first_ia'] ?? null) ? $planning['first_ia'] : [];
+            $necesidad = trim((string) ($firstIa['necesidad_usuario'] ?? ''));
+        }
 
         if ($planning === null || $finalPath === '') {
             $lines[] = '  preprocess + PHP (sin telemetría de planning / path vacío)';
@@ -890,7 +896,7 @@ final class AsistenteConsultasQaService
             if ($flowIntent !== '') {
                 $lines[] = '  intent: ' . $flowIntent;
             }
-            self::appendPreprocessContextLines($lines, $normalized, $tags, $areas, $hint);
+            self::appendPreprocessContextLines($lines, $normalized, $necesidad, $tags, $areas, $hint);
 
             return $lines;
         }
@@ -924,7 +930,7 @@ final class AsistenteConsultasQaService
                         ? ' (' . trim((string) $planning['planner_reason']) . ')'
                         : '');
             }
-            self::appendPreprocessContextLines($lines, $normalized, $tags, $areas, $hint);
+            self::appendPreprocessContextLines($lines, $normalized, $necesidad, $tags, $areas, $hint);
 
             return $lines;
         }
@@ -957,7 +963,7 @@ final class AsistenteConsultasQaService
         if ($kind !== '') {
             $lines[] = '  kind: ' . $kind;
         }
-        self::appendPreprocessContextLines($lines, $normalized, $tags, $areas, $hint);
+        self::appendPreprocessContextLines($lines, $normalized, $necesidad, $tags, $areas, $hint);
 
         return $lines;
     }
@@ -970,6 +976,7 @@ final class AsistenteConsultasQaService
     private static function appendPreprocessContextLines(
         array &$lines,
         string $normalized,
+        string $necesidad,
         array $tags,
         array $areas,
         string $hint
@@ -977,6 +984,7 @@ final class AsistenteConsultasQaService
         if ($normalized !== '') {
             $lines[] = '  normalized: ' . $normalized;
         }
+        $lines[] = '  necesidad_usuario: ' . ($necesidad !== '' ? $necesidad : '(vacía)');
         if ($hint !== '') {
             $lines[] = '  hint preprocess: ' . $hint;
         }

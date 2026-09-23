@@ -16,7 +16,7 @@ Fuente de verdad para las claves que **`SubIntentEngine`** lee y combina con el 
 | `draft_keys_extra` | Opcional: claves de draft adicionales reconocidas por el producto. |
 | `business_rules` | Opcional: reglas `pre_flow` (vía `IntentBusinessRules`). |
 | `draft_hydrator` | Opcional: enriquecimiento del `draft` **antes** de `SubIntentEngine::process` (ver abajo). |
-| `subintents` | **Obligatorio**: lista ordenada de pasos. |
+| `subintents` | Lista ordenada de pasos. **Vocabulario en retirada.** Los intents nuevos se escriben como statechart (`states`). |
 | `flow_submit` | **Opcional.** Cierre predeterminado del flujo. El motor detecta automáticamente el **paso terminal** (subintent sin `next` ni `next_routing`) y, cuando ese paso emite `open_ui`, adjunta el descriptor `flow_submit` al envelope (ver más abajo). Si el último paso no tiene `open_ui`, el envelope se emite **solo** con `flow_submit` (texto + botón de envío). Una rama terminal puede sobrescribirlo con `subintents[].flow_submit`. |
 
 ### `intent_semantics` (raíz del intent)
@@ -96,7 +96,27 @@ Si el hydrator escribe `draft.assistant_text`, el motor lo usa como texto del pa
 
 Las claves escalares que el hydrator **agrega o cambia** (salvo `assistant_text`) vuelven al cliente en `session.draft_delta`, para preseleccionar chips y no perder el dato en el turno siguiente.
 
+## Manifiesto statechart (vocabulario vigente)
+
+Un intent migrado declara la máquina en la raíz y **no** escribe `subintents`. Al cargar, `StatechartManifest` arma en memoria el recorrido que el motor todavía ejecuta. Ese compilador se retira cuando los lectores lean `states` directo.
+
+| Clave | Uso |
+|--------|-----|
+| `initial` | Id del estado de entrada. |
+| `context` | Claves del contexto (lista, o mapa cuyas claves cuentan). Equivale a `draft_keys_extra`. |
+| `states` | Mapa id → estado. |
+| `states.*.description` | Texto del paso (lo que era `assistant_text`). |
+| `states.*.type` | `final` cierra la rama: sin transición. |
+| `states.*.always` | Transiciones sin evento. String = un solo destino. Lista = rombo. |
+| `states.*.always[].guard` | Mapa campo → valor; todas las igualdades deben cumplirse. |
+| `states.*.always[].target` | Id del estado siguiente. Sin `guard`, es el comodín (último). |
+| `states.*.meta` | Extensiones de producto: `open_ui`, `open_ui_routing`, `chooser`, `provides`, `requires`, `review_prefilled`, `hint`, `flow_submit`, `composer_capture`, `terminal_without_submit`. |
+
+`flow_submit` de la raíz no se mueve: sigue cerrando el intent.
+
 ## Nodo `subintents[]` — claves soportadas
+
+Sigue vigente hasta migrar cada archivo. No usarlo en intents nuevos.
 
 Solo deben usarse las siguientes propiedades en cada ítem. Cualquier otra clave es **no portátil** (el motor la ignora hoy).
 

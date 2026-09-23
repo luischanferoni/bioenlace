@@ -13,14 +13,14 @@ intent_semantics:
   objective: 'Registrá una queja operativa sobre la app, turnos o atención administrativa (no para síntomas clínicos).'
   capabilities:
     - enviar_queja
-subintents:
-  -
-    id: completar
-    assistant_text: 'Completá el formulario'
-    provides: {  }
-    next: ''
-    open_ui:
-      action_id: queja-paciente.enviar-como-paciente
+initial: completar
+states:
+  completar:
+    description: 'Completá el formulario'
+    type: final
+    meta:
+      open_ui:
+        action_id: queja-paciente.enviar-como-paciente
 flow_submit:
   action_id: queja-paciente.enviar-como-paciente
   params:

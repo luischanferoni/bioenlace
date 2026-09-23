@@ -681,7 +681,7 @@ final class SubIntentEngine
             Yii::error('YAML inválido intent ' . $intentId . ': ' . $e->getMessage(), 'subintent_engine');
             return null;
         }
-        return is_array($data) ? $data : null;
+        return is_array($data) ? StatechartManifest::apply($data) : null;
     }
 
     /**

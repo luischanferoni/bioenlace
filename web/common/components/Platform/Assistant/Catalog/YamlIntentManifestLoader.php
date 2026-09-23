@@ -2,6 +2,7 @@
 
 namespace common\components\Platform\Assistant\Catalog;
 
+use common\components\Platform\Assistant\SubIntentEngine\StatechartManifest;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
 
@@ -33,6 +34,6 @@ final class YamlIntentManifestLoader
             return null;
         }
 
-        return is_array($data) ? $data : null;
+        return is_array($data) ? StatechartManifest::apply($data) : null;
     }
 }

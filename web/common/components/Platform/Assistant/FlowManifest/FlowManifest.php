@@ -6,6 +6,7 @@ use common\components\Platform\Assistant\Catalog\DataAccessCatalogIntentSupport;
 use common\components\Platform\Assistant\Catalog\IntentSchemaPaths;
 use common\components\Platform\Assistant\Copy\AssistantChannelCopy;
 use common\components\Platform\Assistant\Service\AssistantDraftNormalizer;
+use common\components\Platform\Assistant\SubIntentEngine\StatechartManifest;
 use common\components\Platform\Core\Permission\IntentManifestIndex;
 use common\components\Platform\Core\Permission\IntentManifestMetadata;
 use Symfony\Component\Yaml\Yaml;
@@ -186,7 +187,7 @@ final class FlowManifest
             return null;
         }
 
-        return is_array($data) ? $data : null;
+        return is_array($data) ? StatechartManifest::apply($data) : null;
     }
 
     /**

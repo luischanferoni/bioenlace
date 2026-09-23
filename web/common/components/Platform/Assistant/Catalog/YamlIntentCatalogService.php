@@ -5,6 +5,7 @@ namespace common\components\Platform\Assistant\Catalog;
 use common\components\Platform\Assistant\UiActions\ActionMappingService;
 use common\components\Platform\Assistant\Catalog\DataAccessCatalogIntentSupport;
 use common\components\Platform\Assistant\Service\AssistantDraftNormalizer;
+use common\components\Platform\Assistant\SubIntentEngine\StatechartManifest;
 use common\components\Platform\Core\Permission\IntentAccessService;
 use common\components\Platform\Assistant\Catalog\IntentShortcutMetadata;
 use common\components\Platform\Core\Permission\IntentManifestMetadata;
@@ -86,6 +87,7 @@ final class YamlIntentCatalogService
                 }
                 continue;
             }
+            $data = StatechartManifest::apply($data);
             $intentId = AssistantDraftNormalizer::scalarString($data['intent_id'] ?? '');
             if ($intentId === '') {
                 // fallback: nombre de archivo
@@ -366,6 +368,7 @@ final class YamlIntentCatalogService
             if (!is_array($data)) {
                 continue;
             }
+            $data = StatechartManifest::apply($data);
             $flowSubmit = $data['flow_submit'] ?? null;
             if (!is_array($flowSubmit)) {
                 continue;

@@ -3,6 +3,7 @@
 namespace common\components\Platform\Assistant\Service;
 
 use common\components\Platform\Assistant\Catalog\IntentSchemaPaths;
+use common\components\Platform\Assistant\SubIntentEngine\StatechartManifest;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -210,7 +211,7 @@ final class FlowHintService
 
         try {
             $data = Yaml::parseFile($path);
-            return is_array($data) ? $data : null;
+            return is_array($data) ? StatechartManifest::apply($data) : null;
         } catch (\Throwable $e) {
             return null;
         }

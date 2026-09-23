@@ -3,6 +3,7 @@
 namespace common\components\Platform\Core\Permission;
 
 use common\components\Platform\Assistant\Catalog\IntentSchemaPaths;
+use common\components\Platform\Assistant\SubIntentEngine\StatechartManifest;
 use common\components\Platform\Core\Permission\IntentPermissionResolver;
 use Symfony\Component\Yaml\Yaml;
 
@@ -114,6 +115,7 @@ final class IntentManifestIndex
             if (!is_array($data)) {
                 continue;
             }
+            $data = StatechartManifest::apply($data);
 
             $intentId = trim((string) ($data['intent_id'] ?? $fileIntentId));
             if ($intentId === '') {

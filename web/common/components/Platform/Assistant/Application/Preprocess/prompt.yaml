@@ -11,7 +11,7 @@ stable_prompt: |
   Analizá el historial y respondé únicamente con JSON:
   {
     "normalized_text": "solo el mensaje actual limpio, ortografía corregida, abreviaturas abiertas",    
-    "necesidades_usuario": ["describí qué necesita el usuario analizando el historial pero de acuerdo al ultimo mensaje, una oración por pedido"],
+    "necesidades_usuario": ["describí lo que expresa el usuario analizando el historial pero de acuerdo al ultimo mensaje. Conservá los hechos: dónde, cómo, desde cuándo, para quién, etc. El usuario puede expresar varias cosas diferentes, agrupa una oración por expresión"],
     "routing_hint": "<ver routing_hint abajo>",
     "tags": ["señales finas para el catálogo, snake_case; vocabulario: {preprocess_tags_vocabulary}"],
     "context_areas": ["áreas, apectos o ámbitos de un sistema de información para la salud o []"],

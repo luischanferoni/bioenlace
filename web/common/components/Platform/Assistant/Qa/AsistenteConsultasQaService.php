@@ -413,13 +413,40 @@ final class AsistenteConsultasQaService
                     continue;
                 }
                 $n = mb_strtolower(trim($needle));
-                if ($n !== '' && str_contains($reply, $n)) {
-                    $failures[] = "respuesta contiene texto prohibido: '{$needle}'";
+                $excerpt = $n === '' ? null : self::forbiddenReplyExcerpt($reply, $n);
+                if ($excerpt !== null) {
+                    $failures[] = "respuesta contiene texto prohibido: '{$needle}' («{$excerpt}»)";
                 }
             }
         }
 
         return $failures;
+    }
+
+    /**
+     * Coincidencia del texto prohibido, salvo cuando es el complemento de «qué es» / «que es».
+     *
+     * @return string|null recorte alrededor del match
+     */
+    private static function forbiddenReplyExcerpt(string $replyLower, string $needleLower): ?string
+    {
+        $offset = 0;
+        $needleLen = mb_strlen($needleLower);
+        while (true) {
+            $pos = mb_strpos($replyLower, $needleLower, $offset);
+            if ($pos === false) {
+                return null;
+            }
+            $beforeLen = min(4, $pos);
+            $before = $beforeLen === 0 ? '' : mb_substr($replyLower, $pos - $beforeLen, $beforeLen);
+            if (preg_match('/(?:qué|que) $/u', $before) === 1) {
+                $offset = $pos + 1;
+                continue;
+            }
+            $start = max(0, $pos - 24);
+
+            return trim(mb_substr($replyLower, $start, $needleLen + 48));
+        }
     }
 
     /**

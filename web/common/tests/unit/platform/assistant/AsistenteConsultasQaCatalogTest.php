@@ -54,6 +54,20 @@ class AsistenteConsultasQaCatalogTest extends Unit
         $this->assertNotEmpty($failures);
     }
 
+    public function testReplyMustNotContainIgnoresQueEsDefinition(): void
+    {
+        $reply = 'Si deseas más detalles sobre qué es un infarto, puedo indicarte dónde buscar.';
+        $this->assertSame([], AsistenteConsultasQaService::evaluateExpect([
+            'reply_must_not_contain' => ['es un infarto', 'tenés un infarto'],
+        ], ['reply_text' => $reply]));
+
+        $failures = AsistenteConsultasQaService::evaluateExpect([
+            'reply_must_not_contain' => ['es un infarto'],
+        ], ['reply_text' => 'Eso es un infarto.']);
+        $this->assertNotEmpty($failures);
+        $this->assertStringContainsString('es un infarto', $failures[0]);
+    }
+
     public function testReadableFlowLegendFor2iaAnd1ia(): void
     {
         $twoIa = AsistenteConsultasQaService::formatFlowLegendLines([

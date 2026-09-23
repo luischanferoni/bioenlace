@@ -30,6 +30,7 @@ final class YamlIntentCatalogService
         $cacheKeyBase = 'yaml_intents_catalog_v9';
 
         $files = IntentSchemaPaths::discoverYamlFiles();
+        $roots = IntentSchemaPaths::intentRoots();
         if ($files === []) {
             // Usar categoría ya visible en producción (evitar filtros por categoría).
             Yii::warning(
@@ -163,7 +164,7 @@ final class YamlIntentCatalogService
         if ($globCount > 0 && $loadedIds === []) {
             $sampleFiles = array_slice(array_map('basename', array_values($files)), 0, 10);
             $detail = [
-                'base' => $base,
+                'roots' => $roots,
                 'glob_count' => $globCount,
                 'parse_errors' => $parseErrors,
                 'sample_files' => $sampleFiles,
@@ -184,7 +185,7 @@ final class YamlIntentCatalogService
             . ' glob_count=' . $globCount
             . ' parse_errors=' . $parseErrors
             . ' sample=' . json_encode($sample, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
-            . ' base=' . $base,
+            . ' roots=' . implode('|', $roots),
             'asistente'
         );
 

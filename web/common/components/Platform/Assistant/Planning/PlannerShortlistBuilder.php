@@ -177,7 +177,7 @@ final class PlannerShortlistBuilder
         if ($item instanceof UiActionCatalogItem) {
             $name = $item->display_name !== '' ? $item->display_name : $entry->toolRef;
             $sem = is_array($item->intent_semantics) ? $item->intent_semantics : [];
-            $objective = trim((string) ($sem['objective'] ?? $sem['summary'] ?? ''));
+            $objective = trim((string) ($sem['objective'] ?? ''));
 
             return $objective !== '' ? $name . ' — ' . $objective : $name;
         }

@@ -11,7 +11,6 @@ use common\components\Platform\Assistant\SubIntentEngine\FlowStatechart;
  * Solo lo que la IA necesita: objetivo + pasos.
  * Un statechart grande muestra el estado inicial, sus transiciones y los cierres.
  * `capabilities` quedan en YAML para gates PHP; no van al prompt.
- * `kind` no se emite: se infiere de steps/outline.
  */
 final class IntentSemanticsPromptFormatter
 {
@@ -64,7 +63,7 @@ final class IntentSemanticsPromptFormatter
         $manifest = YamlIntentManifestLoader::load($intentId);
         $sem = self::semanticsFrom($manifest, $item);
         $label = self::label($manifest, $item, $intentId);
-        $objective = trim((string) ($sem['objective'] ?? $sem['summary'] ?? ''));
+        $objective = trim((string) ($sem['objective'] ?? ''));
         if ($objective === '') {
             $objective = $label;
         }

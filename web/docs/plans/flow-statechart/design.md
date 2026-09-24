@@ -11,7 +11,7 @@
 | Destino lineal | `always` como string: un solo estado siguiente, sin rombo |
 | Cierre | `type: final`. No declara `always` |
 | Contexto | `context` es la lista de claves (o un mapa cuyas claves son el contexto). Reemplaza `draft_keys_extra` cuando el archivo ya migró. Los valores iniciales los sigue poniendo el hidratador |
-| Extensiones | `meta`: `open_ui`, `open_ui_routing`, `chooser`, `provides`, `requires`, `review_prefilled`, `hint`, `flow_submit`, `composer_capture`, `terminal_without_submit` |
+| Extensiones | `meta`: `open_ui`, `chooser`, `provides`, `requires`, `review_prefilled`, `hint`, `flow_submit`, `composer_capture`, `terminal_without_submit`, `flow_dismiss`, `flow_actions` |
 | Raíz que no es la máquina | Siguen `intent_id`, `action_name`, `keywords`, `rbac_route`, `flow_submit`, `draft_hydrator`, `intent_semantics.objective`, `capabilities` |
 | Guía | En la fase 3 el prompt recibe el statechart (corte de la raíz y sumideros en grafos grandes), no un `outline` redactado |
 | Un archivo, un vocabulario | Un intent migrado no conserva `subintents` |

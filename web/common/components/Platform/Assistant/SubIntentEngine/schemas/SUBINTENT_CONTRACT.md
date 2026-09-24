@@ -28,8 +28,6 @@ Fuente de verdad para las claves que **`SubIntentEngine`** lee y combina con el 
 | Clave | Uso |
 |--------|-----|
 | `objective` | Objetivo del flow (qué logra al completarlo). Obligatorio si hay bloque. |
-| `outline` | **Retirado** en flows con `states`. El formatter arma el recorrido desde el statechart. |
-| `summary` / `steps` | **Legacy.** `summary` → alias de `objective`. No usar `steps`. |
 
 El formatter (`IntentSemanticsPromptFormatter`) arma **nombre humano + objetivo**. Si el statechart tiene muchos estados, muestra el estado inicial, sus `always` y los `type: final`. Si es chico, lista `description` de cada estado. Sin `kind` ni `capabilities` en el prompt.
 
@@ -110,7 +108,7 @@ Un flow declara la máquina en la raíz. `SubIntentEngine`, `FlowManifest`, hint
 | `states.*.always` | Transiciones sin evento. String = un solo destino. Lista = rombo. |
 | `states.*.always[].guard` | Mapa campo → valor; todas las igualdades deben cumplirse. |
 | `states.*.always[].target` | Id del estado siguiente. Sin `guard`, es el comodín (último). Cadena vacía con `guard`: la rama termina ahí. |
-| `states.*.meta` | Extensiones de producto: `open_ui`, `open_ui_routing`, `chooser`, `provides`, `requires`, `review_prefilled`, `hint`, `flow_submit`, `composer_capture`, `terminal_without_submit`, `flow_dismiss`, `flow_actions`. |
+| `states.*.meta` | Extensiones de producto: `open_ui`, `chooser`, `provides`, `requires`, `review_prefilled`, `hint`, `flow_submit`, `composer_capture`, `terminal_without_submit`, `flow_dismiss`, `flow_actions`. |
 
 `flow_submit` de la raíz no se mueve: sigue cerrando el intent.
 
@@ -124,7 +122,6 @@ Un flow declara la máquina en la raíz. `SubIntentEngine`, `FlowManifest`, hint
 | `provides` | Lista de claves que completa la mini-UI de este paso al confirmar selección (o que el POST de una pantalla previa escribe en `draft` vía `data` del cliente). |
 | `review_prefilled` | Si es `true`, un paso con `open_ui` se muestra aunque `provides` ya venga completo por enlace o hydrator. El valor se presenta preseleccionado y la confirmación del mismo estado permite avanzar. Al confirmar, el cliente debe reenviar ese `subintent_id`; si va vacío, el motor re-muestra el paso. |
 | `open_ui` | Objeto **picker / pantalla embebible** vía catálogo: `action_id`, `params` (valores `draft.*`), `pass_content_as_query` opcional. |
-| `open_ui_routing` | Alternativa a `open_ui`: lista de ramas `{ when, open_ui }` (`draft_equals`, `default`). Un solo paso, mini-UI distinta según el draft. |
 | `chooser` | Objeto con `when_user_says_nearby` / `otherwise`, cada uno con su propio `open_ui` (elección de lista vs cercanía). |
 | `hint` | Opcional: `{ entity, match_property }` para resolver menciones del preprocess → `hints[]` en el envelope (`id`, `value`, `draft_field` inferido de `provides`). |
 | `flow_submit` | Opcional en una rama terminal. Usa la misma forma que el cierre raíz y lo sobrescribe sólo para ese subintent. |
@@ -141,28 +138,7 @@ open_ui:
 
 **Query del mini-UI:** `SubIntentEngine::buildOpenUiResponse` arma `client_open.api.query`: `draft.<campo>` desde el borrador; literales (p. ej. `step: raiz`) tal cual. Los clientes (`spa-home.js`, `chat_screen.dart`) deben repetir la misma regla al resolver `flow_manifest.active_step.ui.tabs[].params` si cargan la URL sin pasar por `open_ui`.
 
-### Forma de `open_ui_routing`
-
-Elige la mini-UI del mismo estado (evita estados hermanos en el plan visual). La guarda sigue siendo `when.draft_equals` o `when.default`.
-
-```yaml
-open_ui_routing:
-  - when:
-      draft_equals:
-        encounter_class: "AMB"
-    open_ui:
-      action_id: profesional-agenda.configurar-agenda
-      params:
-        id_servicio: "draft.id_servicio"
-  - when:
-      default: true
-    open_ui:
-      action_id: profesional-horarios.gestionar
-      params:
-        encounter_class: "draft.encounter_class"
-```
-
-Prioridad de resolución en el motor: `open_ui_routing` → `chooser` → `open_ui`.
+Prioridad de resolución en el motor: `chooser` → `open_ui`.
 
 ### Forma de `flow_submit` (raíz del intent)
 

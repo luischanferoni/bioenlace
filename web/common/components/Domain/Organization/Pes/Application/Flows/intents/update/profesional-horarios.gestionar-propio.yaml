@@ -48,7 +48,28 @@ states:
         - draft.id_profesional_efector_servicio
       open_ui:
         action_id: profesional-horarios.elegir-encounter-class
-    always: configurar_horario
+    always:
+      -
+        guard:
+          encounter_class: AMB
+        target: configurar_agenda
+      -
+        target: configurar_horario
+  configurar_agenda:
+    description: 'Configurá tu agenda ambulatoria'
+    meta:
+      provides:
+        - draft.horario_ui_completed
+      requires:
+        - draft.id_profesional_efector_servicio
+        - draft.encounter_class
+      open_ui:
+        action_id: profesional-agenda.configurar-agenda
+        params:
+          id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+          id_servicio: draft.id_servicio
+          ui_step: datos
+    type: final
   configurar_horario:
     description: 'Configurá tus horarios'
     meta:
@@ -57,25 +78,11 @@ states:
       requires:
         - draft.id_profesional_efector_servicio
         - draft.encounter_class
-      open_ui_routing:
-        -
-          when:
-            draft_equals:
-              encounter_class: AMB
-          open_ui:
-            action_id: profesional-agenda.configurar-agenda
-            params:
-              id_profesional_efector_servicio: draft.id_profesional_efector_servicio
-              id_servicio: draft.id_servicio
-              ui_step: datos
-        -
-          when:
-            default: true
-          open_ui:
-            action_id: profesional-horarios.gestionar
-            params:
-              modo: propio
-              id_profesional_efector_servicio: draft.id_profesional_efector_servicio
-              id_servicio: draft.id_servicio
-              encounter_class: draft.encounter_class
+      open_ui:
+        action_id: profesional-horarios.gestionar
+        params:
+          modo: propio
+          id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+          id_servicio: draft.id_servicio
+          encounter_class: draft.encounter_class
     type: final

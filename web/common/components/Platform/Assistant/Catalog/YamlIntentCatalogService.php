@@ -152,7 +152,7 @@ final class YamlIntentCatalogService
                 'intent_semantics' => $sem,
                 'shortcut_placements' => IntentShortcutMetadata::explicitPlacements($data),
                 'shortcut_hidden' => IntentShortcutMetadata::isHidden($data),
-                'has_subintents' => self::manifestHasSubintents($data),
+                'has_states' => self::manifestHasStates($data),
                 // Hint interno: intent ejecutable como flow YAML (no es `kind` del sobre HTTP).
                 'flow_capable' => true,
             ];
@@ -263,8 +263,6 @@ final class YamlIntentCatalogService
      * @param array<string, mixed> $sem
      * @return array{
      *   objective?: string,
-     *   summary?: string,
-     *   outline?: string,
      *   capabilities?: list<string>
      * }
      */
@@ -277,8 +275,6 @@ final class YamlIntentCatalogService
      * @param array<string, mixed> $sem
      * @return array{
      *   objective?: string,
-     *   summary?: string,
-     *   outline?: string,
      *   capabilities?: list<string>
      * }
      */
@@ -287,18 +283,8 @@ final class YamlIntentCatalogService
         $out = [];
 
         $objective = trim((string) ($sem['objective'] ?? ''));
-        if ($objective === '') {
-            $objective = trim((string) ($sem['summary'] ?? ''));
-        }
         if ($objective !== '') {
             $out['objective'] = $objective;
-            // Compat lectores legacy (oferta guide / familias) que aún leen summary.
-            $out['summary'] = $objective;
-        }
-
-        $outline = trim((string) ($sem['outline'] ?? ''));
-        if ($outline !== '') {
-            $out['outline'] = $outline;
         }
 
         $capabilities = [];
@@ -317,7 +303,7 @@ final class YamlIntentCatalogService
     /**
      * @param array<string, mixed> $data
      */
-    private static function manifestHasSubintents(array $data): bool
+    private static function manifestHasStates(array $data): bool
     {
         $states = $data['states'] ?? null;
         if (!is_array($states) || $states === []) {

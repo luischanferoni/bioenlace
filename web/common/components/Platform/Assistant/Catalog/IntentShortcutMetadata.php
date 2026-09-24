@@ -86,7 +86,7 @@ final class IntentShortcutMetadata
     }
 
     /**
-     * Atajo de inicio: flow YAML embebible, no nativo, no interno sin pasos.
+     * Atajo de inicio: flow con `states`, embebible, y sin `shortcut.hidden`.
      *
      * @param array<string, mixed> $flow fila de {@see YamlIntentCatalogService::discoverAll}
      */
@@ -99,7 +99,7 @@ final class IntentShortcutMetadata
         if ($intentId !== '' && self::opensNativeUi($intentId)) {
             return false;
         }
-        if (array_key_exists('has_subintents', $flow) && $flow['has_subintents'] !== true) {
+        if (array_key_exists('has_states', $flow) && $flow['has_states'] !== true) {
             return false;
         }
 

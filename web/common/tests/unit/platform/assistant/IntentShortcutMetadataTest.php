@@ -32,16 +32,16 @@ class IntentShortcutMetadataTest extends Unit
         $this->assertFalse(IntentShortcutMetadata::isEligibleCatalogShortcut([
             'action_id' => 'internacion.cambio-cama-flow',
             'shortcut_hidden' => true,
-            'has_subintents' => true,
+            'has_states' => true,
         ]));
     }
 
-    public function testIntentWithoutSubintentsIsNotEligibleShortcut(): void
+    public function testIntentWithoutStatesIsNotEligibleShortcut(): void
     {
         $this->assertFalse(IntentShortcutMetadata::isEligibleCatalogShortcut([
             'action_id' => 'internacion.epicrisis-plantilla-admin',
             'shortcut_hidden' => false,
-            'has_subintents' => false,
+            'has_states' => false,
         ]));
     }
 
@@ -50,7 +50,7 @@ class IntentShortcutMetadataTest extends Unit
         $this->assertTrue(IntentShortcutMetadata::isEligibleCatalogShortcut([
             'action_id' => 'internacion.mapa-camas-flow',
             'shortcut_hidden' => false,
-            'has_subintents' => true,
+            'has_states' => true,
         ]));
     }
 

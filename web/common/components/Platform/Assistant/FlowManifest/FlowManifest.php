@@ -303,9 +303,6 @@ final class FlowManifest
         }
 
         $direct = isset($sub['open_ui']) && is_array($sub['open_ui']) ? $sub['open_ui'] : null;
-        if (!is_array($direct) || empty($direct['action_id'])) {
-            $direct = self::defaultOpenUiFromRouting($sub);
-        }
         if (is_array($direct) && !empty($direct['action_id'])) {
             $aid = strtolower(AssistantDraftNormalizer::scalarString($direct['action_id'] ?? ''));
             $clientOpen = isset($direct['client_open']) && is_array($direct['client_open'])
@@ -372,42 +369,6 @@ final class FlowManifest
     private static function compileStepNextField(array $sub): string
     {
         return FlowStatechart::linearTarget($sub);
-    }
-
-    /**
-     * `open_ui` de la regla `default` (o la primera) en `open_ui_routing`, para el slice estático.
-     * El motor resuelve la rama real con el draft en runtime.
-     *
-     * @param array<string, mixed> $sub
-     * @return array<string, mixed>|null
-     */
-    private static function defaultOpenUiFromRouting(array $sub): ?array
-    {
-        $routing = isset($sub['open_ui_routing']) && is_array($sub['open_ui_routing'])
-            ? $sub['open_ui_routing']
-            : null;
-        if ($routing === null) {
-            return null;
-        }
-        $first = null;
-        foreach ($routing as $rule) {
-            if (!is_array($rule)) {
-                continue;
-            }
-            $open = isset($rule['open_ui']) && is_array($rule['open_ui']) ? $rule['open_ui'] : null;
-            if ($open === null || AssistantDraftNormalizer::scalarString($open['action_id'] ?? '') === '') {
-                continue;
-            }
-            if ($first === null) {
-                $first = $open;
-            }
-            $when = isset($rule['when']) && is_array($rule['when']) ? $rule['when'] : null;
-            if ($when !== null && isset($when['default']) && $when['default'] === true) {
-                return $open;
-            }
-        }
-
-        return $first;
     }
 
     /**
@@ -617,9 +578,6 @@ final class FlowManifest
                 continue;
             }
             $direct = isset($sub['open_ui']) && is_array($sub['open_ui']) ? $sub['open_ui'] : null;
-            if (!is_array($direct) || empty($direct['action_id'])) {
-                $direct = self::defaultOpenUiFromRouting($sub);
-            }
             if (is_array($direct) && !empty($direct['action_id'])) {
                 $hints[$sid] = ['action_id' => strtolower(AssistantDraftNormalizer::scalarString($direct['action_id'] ?? ''))];
             }

@@ -429,7 +429,7 @@ final class GuideChannel
   {
     $label = $item->display_name !== '' ? $item->display_name : $item->action_id;
     $sem = is_array($item->intent_semantics) ? $item->intent_semantics : [];
-    $summary = trim((string) ($sem['objective'] ?? $sem['summary'] ?? ''));
+    $summary = trim((string) ($sem['objective'] ?? ''));
     $capabilities = [];
     foreach ($sem['capabilities'] ?? [] as $cap) {
       if (is_string($cap) && trim($cap) !== '') {

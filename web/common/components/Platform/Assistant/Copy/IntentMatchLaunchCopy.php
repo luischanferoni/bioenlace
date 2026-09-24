@@ -83,7 +83,7 @@ final class IntentMatchLaunchCopy
     {
         $sem = $item->intent_semantics;
         if (is_array($sem)) {
-            $objective = trim((string) ($sem['objective'] ?? $sem['summary'] ?? ''));
+            $objective = trim((string) ($sem['objective'] ?? ''));
             if ($objective !== '') {
                 return $objective;
             }

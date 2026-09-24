@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Agenda\Application\Service;
 
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\EvaluateTeleconsultaEligibility;
 use common\models\Organization\ProfesionalEfectorServicioAgenda;
 use common\models\Scheduling\Turno;
 

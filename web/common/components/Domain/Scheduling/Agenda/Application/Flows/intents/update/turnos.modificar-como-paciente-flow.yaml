@@ -10,10 +10,6 @@ keywords:
   - 'otro horario'
 intent_semantics:
   objective: 'Cambiá la fecha u horario de un turno pendiente propio eligiendo un nuevo slot disponible.'
-  capabilities:
-    - ver_turnos_propios
-    - elige_horario
-    - reprogramar_turno_propio
 initial: select_turno
 states:
   select_turno:

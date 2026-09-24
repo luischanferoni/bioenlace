@@ -10,8 +10,6 @@ keywords:
   - 'tomar medicamento'
 intent_semantics:
   objective: 'Activá o ajustá recordatorios locales de medicación y preparación de estudios de tu tratamiento.'
-  capabilities:
-    - recordatorios_tratamiento
 initial: abrir_configuracion
 states:
   abrir_configuracion:

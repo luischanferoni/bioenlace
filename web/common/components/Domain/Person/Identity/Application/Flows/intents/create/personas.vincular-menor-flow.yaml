@@ -11,8 +11,6 @@ keywords:
   - 'agregar hijo'
 intent_semantics:
   objective: 'Solicitá tutela sobre un menor sin cuenta; el centro debe verificarla antes de activarla.'
-  capabilities:
-    - vincular_menor
 initial: gestionar_tutela
 states:
   gestionar_tutela:

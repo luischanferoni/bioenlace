@@ -9,9 +9,6 @@ keywords:
   - 'asistiré al turno'
 intent_semantics:
   objective: 'Confirmá que vas a asistir a un turno pendiente propio.'
-  capabilities:
-    - ver_turnos_propios
-    - confirmar_asistencia
 initial: select_turno
 states:
   select_turno:

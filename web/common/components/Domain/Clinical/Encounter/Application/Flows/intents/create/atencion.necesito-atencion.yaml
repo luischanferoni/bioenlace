@@ -29,20 +29,6 @@ keywords:
   - kinesio
 intent_semantics:
   objective: 'Guiar según lo que necesita el paciente (malestar, estudio/acto, control/seguimiento u urgencia) hasta turno, teleconsulta, consulta por mensaje u orientación a guardia.'
-  capabilities:
-    - triage_malestar
-    - pedido_estudio_acto
-    - control_seguimiento
-    - urgencia_guardia_info
-    - elige_servicio
-    - elige_modalidad
-    - elige_centro
-    - mapa_centros_cercanos
-    - elige_profesional
-    - elige_horario
-    - reserva_turno
-    - consulta_por_mensaje
-    - teleconsulta
 draft_hydrator:
   handler: scheduling.solicitar_atencion
 initial: triage_raiz

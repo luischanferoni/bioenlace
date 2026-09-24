@@ -10,7 +10,6 @@ use common\components\Platform\Assistant\SubIntentEngine\FlowStatechart;
  *
  * Solo lo que la IA necesita: objetivo + pasos.
  * Un statechart grande muestra el estado inicial, sus transiciones y los cierres.
- * `capabilities` quedan en YAML para gates PHP; no van al prompt.
  */
 final class IntentSemanticsPromptFormatter
 {

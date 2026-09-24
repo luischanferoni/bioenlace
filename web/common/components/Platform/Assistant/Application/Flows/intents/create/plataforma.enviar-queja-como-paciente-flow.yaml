@@ -11,8 +11,6 @@ keywords:
   - 'mal servicio'
 intent_semantics:
   objective: 'Registrá una queja operativa sobre la app, turnos o atención administrativa (no para síntomas clínicos).'
-  capabilities:
-    - enviar_queja
 initial: completar
 states:
   completar:

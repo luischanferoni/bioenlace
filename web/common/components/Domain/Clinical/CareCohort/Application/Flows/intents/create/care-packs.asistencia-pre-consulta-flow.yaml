@@ -12,9 +12,6 @@ keywords:
   - preconsulta
 intent_semantics:
   objective: 'Completá el cuestionario de asistencia antes de un turno pendiente propio.'
-  capabilities:
-    - asistencia_pre_consulta
-    - ver_turnos_propios
 initial: select_turno
 states:
   select_turno:

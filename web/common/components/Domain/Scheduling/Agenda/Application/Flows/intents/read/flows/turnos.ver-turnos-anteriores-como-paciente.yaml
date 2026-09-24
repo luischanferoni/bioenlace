@@ -14,8 +14,6 @@ keywords:
   - 'mostrame los turnos que ya tuve'
 intent_semantics:
   objective: 'Consultá un resumen corto de tus turnos anteriores (fecha, servicio y profesional).'
-  capabilities:
-    - ver_turnos_propios
 draft_hydrator:
   handler: scheduling.turnos_listar_como_paciente
   alcance: pasados

@@ -12,8 +12,6 @@ keywords:
   - 'última vez en odontología'
 intent_semantics:
   objective: 'Consultá cuándo fue tu último turno en un área del centro (la que nombraste o, si no se cruza, tus últimos turnos).'
-  capabilities:
-    - ver_turnos_propios
 draft_hydrator:
   handler: scheduling.turnos_listar_como_paciente
   alcance: pasados

@@ -25,7 +25,6 @@ class IntentSemanticsPromptFormatterTest extends Unit
         $this->assertStringNotContainsString('turnos.crear-como-paciente', $block);
         $this->assertStringNotContainsString('objective:', $block);
         $this->assertStringNotContainsString('context:intent_semantics', $block);
-        $this->assertStringNotContainsString('capabilities:', $block);
     }
 
     public function testAtencionUsesRecorridoWithoutStepsDump(): void

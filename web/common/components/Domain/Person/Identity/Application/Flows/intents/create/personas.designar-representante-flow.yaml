@@ -12,8 +12,6 @@ keywords:
   - 'designar quién opera por mí'
 intent_semantics:
   objective: 'Autorizá a otra persona con cuenta para gestionar turnos y gestiones en tu nombre.'
-  capabilities:
-    - designar_representante
 initial: gestionar_delegacion
 states:
   gestionar_delegacion:

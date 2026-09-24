@@ -262,8 +262,7 @@ final class YamlIntentCatalogService
     /**
      * @param array<string, mixed> $sem
      * @return array{
-     *   objective?: string,
-     *   capabilities?: list<string>
+     *   objective?: string
      * }
      */
     public static function normalizeIntentSemanticsPublic(array $sem): array
@@ -274,8 +273,7 @@ final class YamlIntentCatalogService
     /**
      * @param array<string, mixed> $sem
      * @return array{
-     *   objective?: string,
-     *   capabilities?: list<string>
+     *   objective?: string
      * }
      */
     private static function normalizeIntentSemantics(array $sem): array
@@ -285,16 +283,6 @@ final class YamlIntentCatalogService
         $objective = trim((string) ($sem['objective'] ?? ''));
         if ($objective !== '') {
             $out['objective'] = $objective;
-        }
-
-        $capabilities = [];
-        foreach ($sem['capabilities'] ?? [] as $cap) {
-            if (is_string($cap) && trim($cap) !== '') {
-                $capabilities[] = trim($cap);
-            }
-        }
-        if ($capabilities !== []) {
-            $out['capabilities'] = array_values(array_unique($capabilities));
         }
 
         return $out;

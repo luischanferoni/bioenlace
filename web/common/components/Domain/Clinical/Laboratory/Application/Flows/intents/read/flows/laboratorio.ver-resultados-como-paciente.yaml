@@ -11,8 +11,6 @@ keywords:
   - 'ver mis estudios'
 intent_semantics:
   objective: 'Consultá tus informes de laboratorio sincronizados, con detalle y descarga PDF.'
-  capabilities:
-    - ver_resultados_lab
 initial: ver_listado
 states:
   ver_listado:

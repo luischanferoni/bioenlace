@@ -23,13 +23,13 @@ Fuente de verdad para las claves que **`SubIntentEngine`** lee y combina con el 
 ### `intent_semantics` (raíz del intent)
 
 **Función:** adjuntar contexto al prompt de la **2ª IA** (guide) para que entienda el flow: objetivo, que es multi-paso, y qué hace cada paso.  
-**No** es texto UX al paciente (`action_name`, `ui-text/by-client`, `capability_labels`).
+**No** es texto UX al paciente (`action_name`, `ui-text/by-client`).
 
 | Clave | Uso |
 |--------|-----|
 | `objective` | Objetivo del flow (qué logra al completarlo). Obligatorio si hay bloque. |
 
-El formatter (`IntentSemanticsPromptFormatter`) arma **nombre humano + objetivo**. Si el statechart tiene muchos estados, muestra el estado inicial, sus `always` y los `type: final`. Si es chico, lista `description` de cada estado. Sin `kind` ni `capabilities` en el prompt.
+El formatter (`IntentSemanticsPromptFormatter`) arma **nombre humano + objetivo**. Si el statechart tiene muchos estados, muestra el estado inicial, sus `always` y los `type: final`. Si es chico, lista `description` de cada estado.
 
 | Campo raíz | Audiencia |
 |------------|-----------|
@@ -39,38 +39,6 @@ El formatter (`IntentSemanticsPromptFormatter`) arma **nombre humano + objetivo*
 No campo `description` en intents.
 
 Omitir `intent_semantics` en intents staff/ocultos que no entran a guide (p. ej. `data-access.*` genéricos). Descubrimiento NL = `keywords` / smart-catalog.
-
-Vocabulario inicial de `capabilities` (ampliar solo documentando acá):
-
-| ID | Significado |
-|----|-------------|
-| `triage_malestar` | Guía por síntoma/zona hacia un servicio adecuado. |
-| `control_seguimiento` | Camino de control, tratamiento o consulta previa. |
-| `urgencia_guardia_info` | Orientación a guardia/urgencia sin completar reserva ambulatoria. |
-| `elige_servicio` | Elegir servicio clínico. |
-| `elige_modalidad` | Presencial / teleconsulta / async cuando aplica. |
-| `elige_centro` | Elegir efector/centro. |
-| `mapa_centros_cercanos` | Listar centros cercanos (mapa/geo) para un servicio. |
-| `elige_profesional` | Elegir profesional/PES. |
-| `elige_horario` | Elegir día/slot. |
-| `reserva_turno` | Confirmar creación de turno. |
-| `consulta_por_mensaje` | Consulta clínica asíncrona por mensaje. |
-| `teleconsulta` | Modalidad teleconsulta en el flow. |
-| `ver_turnos_propios` | Listar turnos del paciente. |
-| `cancelar_turno_propio` | Cancelar turno propio. |
-| `reprogramar_turno_propio` | Cambiar fecha/hora de turno propio. |
-| `reubicar_turno_propio` | Reubicar turno en resolución. |
-| `confirmar_asistencia` | Confirmar asistencia a turno. |
-| `ver_atenciones` | Listar/ver atenciones finalizadas. |
-| `ver_ultima_atencion` | Resumen de la última atención. |
-| `ver_resultados_lab` | Informes de laboratorio. |
-| `ver_recetas` | Recetas electrónicas. |
-| `recordatorios_tratamiento` | Configurar recordatorios de medicación/estudios. |
-| `recurso_provincial_contacto` | Datos de contacto de recursos provinciales. |
-| `enviar_queja` | Queja operativa (no clínica). |
-| `asistencia_pre_consulta` | Cuestionario pre-consulta. |
-| `designar_representante` | Delegar gestión a otra persona con cuenta. |
-| `vincular_menor` | Solicitud de tutela sobre menor. |
 
 ### `draft_hydrator` (raíz del intent)
 

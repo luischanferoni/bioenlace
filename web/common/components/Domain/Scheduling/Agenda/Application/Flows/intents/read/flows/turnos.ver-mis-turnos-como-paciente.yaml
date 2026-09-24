@@ -12,8 +12,6 @@ keywords:
   - 'decime mis turnos'
 intent_semantics:
   objective: 'Consultá tus próximos turnos pendientes (fecha, servicio y profesional).'
-  capabilities:
-    - ver_turnos_propios
 draft_hydrator:
   handler: scheduling.turnos_listar_como_paciente
   limit: 10

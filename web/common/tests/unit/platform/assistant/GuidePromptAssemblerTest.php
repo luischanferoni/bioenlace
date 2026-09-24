@@ -37,7 +37,7 @@ class GuidePromptAssemblerTest extends Unit
                 '/api/turnos/crear-como-paciente',
                 ['turno'],
                 ['expected' => [], 'provided' => []],
-                ['objective' => 'Reservá turno', 'capabilities' => ['reserva_turno']],
+                ['objective' => 'Reservá turno'],
                 null,
                 null,
                 null,

@@ -13,13 +13,6 @@ keywords:
 intent_semantics:
   # Contexto 2ª IA. El recorrido es states; no duplicar los pasos acá.
   objective: 'Reservar un turno ambulatorio eligiendo oferta del centro, efector, profesional y horario, sin triage de motivo clínico.'
-  capabilities:
-    - elige_servicio
-    - elige_centro
-    - mapa_centros_cercanos
-    - elige_profesional
-    - elige_horario
-    - reserva_turno
 context:
   - tipo_atencion
   - fecha_turno

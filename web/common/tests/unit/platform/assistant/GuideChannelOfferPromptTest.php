@@ -26,16 +26,15 @@ class GuideChannelOfferPromptTest extends Unit
         verify(GuideChannel::formatCtaDetailsForPrompt(null))->equals('');
     }
 
-    public function testFormatCtaDetailsWithCapabilities(): void
+    public function testFormatCtaDetailsWithLabelAndSummary(): void
     {
         $block = GuideChannel::formatCtaDetailsForPrompt([
             'label' => 'Solicitar Atención',
             'intent_id' => 'atencion.necesito-atencion',
             'summary' => 'Pedir atención',
-            'capabilities' => ['confirmar'],
         ]);
         verify($block)->stringContainsString('Solicitar Atención');
-        verify($block)->stringContainsString('confirmar');
+        verify($block)->stringContainsString('Pedir atención');
     }
 
     public function testBookingOfferOriginFromHistory(): void

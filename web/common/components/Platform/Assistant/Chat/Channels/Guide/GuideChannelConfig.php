@@ -77,25 +77,6 @@ final class GuideChannelConfig
     }
 
     /**
-     * @return array<string, string>
-     */
-    public static function capabilityLabels(): array
-    {
-        $raw = self::loadBooking()['capability_labels'] ?? [];
-        if (!is_array($raw)) {
-            return [];
-        }
-        $out = [];
-        foreach ($raw as $k => $v) {
-            if (is_string($k) && is_string($v) && trim($k) !== '' && trim($v) !== '') {
-                $out[trim($k)] = trim($v);
-            }
-        }
-
-        return $out;
-    }
-
-    /**
      * @return list<string>
      */
     public static function bookingOfferIntentPriority(): array

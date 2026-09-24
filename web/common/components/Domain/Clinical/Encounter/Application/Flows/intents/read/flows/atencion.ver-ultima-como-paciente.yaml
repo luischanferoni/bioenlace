@@ -12,8 +12,6 @@ keywords:
   - 'mi última consulta'
 intent_semantics:
   objective: 'Abrí el resumen de tu última atención ambulatoria finalizada.'
-  capabilities:
-    - ver_ultima_atencion
 initial: ver_ultima
 states:
   ver_ultima:

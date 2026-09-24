@@ -10,8 +10,6 @@ keywords:
   - 'ver recetas'
 intent_semantics:
   objective: 'Consultá tus recetas electrónicas emitidas, con detalle y descarga PDF.'
-  capabilities:
-    - ver_recetas
 initial: ver_listado
 states:
   ver_listado:

@@ -11,8 +11,6 @@ keywords:
   - 'resumen de atención'
 intent_semantics:
   objective: 'Revisá tus atenciones ambulatorias finalizadas y el resumen de cada una.'
-  capabilities:
-    - ver_atenciones
 initial: ver_listado
 states:
   ver_listado:

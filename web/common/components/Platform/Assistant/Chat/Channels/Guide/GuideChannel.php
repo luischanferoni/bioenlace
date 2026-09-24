@@ -213,7 +213,7 @@ final class GuideChannel
   }
 
   /**
-   * @param array{label?: string, intent_id?: string, summary?: string, capabilities?: list<string>}|null $offer
+   * @param array{label?: string, intent_id?: string, summary?: string}|null $offer
    */
   public static function formatCtaDetailsForPrompt(?array $offer, bool $continuingConversation = false): string
   {
@@ -223,13 +223,6 @@ final class GuideChannel
 
     $label = trim((string) ($offer['label'] ?? ''));
     $summary = trim((string) ($offer['summary'] ?? ''));
-    $capabilities = $offer['capabilities'] ?? [];
-    if (!is_array($capabilities)) {
-      $capabilities = [];
-    }
-    if (count($capabilities) > 4) {
-      $capabilities = array_slice($capabilities, 0, 4);
-    }
 
     $lines = [];
     if ($label !== '') {
@@ -237,16 +230,6 @@ final class GuideChannel
     }
     if ($summary !== '') {
       $lines[] = '- Qué hace: ' . $summary;
-    }
-
-    $capLines = self::formatCapabilityLines($capabilities);
-    if ($capLines !== []) {
-      $lines[] = '- Capacidades (solo podés mencionar estas):';
-      foreach ($capLines as $capLine) {
-        $lines[] = '  - ' . $capLine;
-      }
-    } elseif ($summary === '') {
-      $lines[] = '- Capacidades: no declaradas; no prometas pasos del flow.';
     }
 
     if ($continuingConversation) {
@@ -324,7 +307,7 @@ final class GuideChannel
   }
 
   /**
-   * @param array{label: string, intent_id: string, summary: string, capabilities: list<string>}|null $offer
+   * @param array{label: string, intent_id: string, summary: string}|null $offer
    * @return array<string, mixed>
    */
   private static function finalizeResponse(string $text, ?array $offer, string $originContent = ''): array
@@ -396,7 +379,7 @@ final class GuideChannel
   }
 
   /**
-   * @return array{label: string, intent_id: string, summary: string, capabilities: list<string>}|null
+   * @return array{label: string, intent_id: string, summary: string}|null
    */
   private static function resolveBookingOffer(int $userId): ?array
   {
@@ -423,45 +406,17 @@ final class GuideChannel
   }
 
   /**
-   * @return array{label: string, intent_id: string, summary: string, capabilities: list<string>}
+   * @return array{label: string, intent_id: string, summary: string}
    */
   private static function offerFromCatalogItem(UiActionCatalogItem $item): array
   {
     $label = $item->display_name !== '' ? $item->display_name : $item->action_id;
     $sem = is_array($item->intent_semantics) ? $item->intent_semantics : [];
-    $summary = trim((string) ($sem['objective'] ?? ''));
-    $capabilities = [];
-    foreach ($sem['capabilities'] ?? [] as $cap) {
-      if (is_string($cap) && trim($cap) !== '') {
-        $capabilities[] = trim($cap);
-      }
-    }
 
     return [
       'label' => $label,
       'intent_id' => $item->action_id,
-      'summary' => $summary,
-      'capabilities' => array_values(array_unique($capabilities)),
+      'summary' => trim((string) ($sem['objective'] ?? '')),
     ];
-  }
-
-  /**
-   * @param list<mixed> $capabilities
-   * @return list<string>
-   */
-  private static function formatCapabilityLines(array $capabilities): array
-  {
-    $labelMap = GuideChannelConfig::capabilityLabels();
-    $lines = [];
-    foreach ($capabilities as $cap) {
-      if (!is_string($cap) || trim($cap) === '') {
-        continue;
-      }
-      $id = trim($cap);
-      $human = trim((string) ($labelMap[$id] ?? ''));
-      $lines[] = $human !== '' ? $id . ': ' . $human : $id;
-    }
-
-    return $lines;
   }
 }

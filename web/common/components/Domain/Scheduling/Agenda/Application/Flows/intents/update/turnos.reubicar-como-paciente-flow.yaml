@@ -9,12 +9,6 @@ keywords:
   - 'nuevo turno en consultorio'
 intent_semantics:
   objective: 'Si tu turno quedó en reubicación, elegí de nuevo servicio, centro, profesional y horario.'
-  capabilities:
-    - reubicar_turno_propio
-    - elige_servicio
-    - elige_centro
-    - elige_profesional
-    - elige_horario
 context:
   - id_servicio_asignado
   - id_efector

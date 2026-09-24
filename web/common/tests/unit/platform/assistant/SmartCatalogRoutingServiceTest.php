@@ -49,9 +49,14 @@ class SmartCatalogRoutingServiceTest extends Unit
         ], 0);
 
         $decision = $evaluation->decision;
-        $this->assertSame('clara', $decision->routingResult);
-        $this->assertTrue($decision->shouldRouteIntentDirectly());
-        $this->assertSame('turnos.crear-como-paciente', $decision->primaryIntentId());
+        $this->assertTrue($decision->isIncompletas());
+        $this->assertFalse($decision->shouldRouteIntentDirectly());
+        $ids = $decision->intentIds;
+        sort($ids);
+        $this->assertSame(
+            ['atencion.necesito-atencion', 'turnos.crear-como-paciente'],
+            $ids
+        );
     }
 
     public function testBareQuieroUnTurnoGoesIncompletas(): void
@@ -67,9 +72,14 @@ class SmartCatalogRoutingServiceTest extends Unit
         ], 0);
 
         $decision = $evaluation->decision;
-        $this->assertSame('clara', $decision->routingResult);
-        $this->assertTrue($decision->shouldRouteIntentDirectly());
-        $this->assertSame('turnos.crear-como-paciente', $decision->primaryIntentId());
+        $this->assertTrue($decision->isIncompletas());
+        $this->assertFalse($decision->shouldRouteIntentDirectly());
+        $ids = $decision->intentIds;
+        sort($ids);
+        $this->assertSame(
+            ['atencion.necesito-atencion', 'turnos.crear-como-paciente'],
+            $ids
+        );
     }
 
     public function testEstudioRoutesAtencionNotAgendaPura(): void

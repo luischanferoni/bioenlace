@@ -62,7 +62,7 @@ class SmartCatalogConversationalQaTest extends Unit
                         ['span' => 'cardiólogo', 'synonyms' => []],
                     ],
                 ],
-                ['clara'],
+                ['incompletas'],
             ],
             'turno_bare' => [
                 'quiero un turno',
@@ -74,7 +74,7 @@ class SmartCatalogConversationalQaTest extends Unit
                         ['span' => 'turno', 'synonyms' => []],
                     ],
                 ],
-                ['clara'],
+                ['incompletas'],
             ],
             'estudio_ecografia' => [
                 'necesito una ecografia',

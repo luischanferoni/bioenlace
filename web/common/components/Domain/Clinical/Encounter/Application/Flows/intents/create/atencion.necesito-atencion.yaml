@@ -61,6 +61,9 @@ states:
         - dolor
         - malestar
         - condiciones
+        - atencion
+        - turno
+        - solicitud
       review_prefilled: true
       provides:
         - draft.triage_raiz
@@ -96,6 +99,7 @@ states:
     meta:
       tags:
         - estudio
+        - practica
       review_prefilled: true
       provides:
         - draft.pedido_acto
@@ -126,6 +130,9 @@ states:
   cs_hub:
     description: '¿Sobre qué es el control o seguimiento?'
     meta:
+      tags:
+        - control
+        - seguimiento
       provides:
         - draft.control_hub_anchor
         - draft.control_hub_kind
@@ -513,6 +520,7 @@ states:
     meta:
       tags:
         - medicacion
+        - medicamento
       provides:
         - draft.medication_request_ids
       requires:

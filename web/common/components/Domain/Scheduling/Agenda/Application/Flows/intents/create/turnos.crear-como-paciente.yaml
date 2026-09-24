@@ -16,6 +16,7 @@ states:
     meta:
       tags:
         - turno
+        - solicitud
       provides:
         - draft.id_servicio_asignado
       open_ui:

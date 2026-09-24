@@ -35,7 +35,7 @@ class StateTagIndexTest extends Unit
         $this->assertStringNotContainsString('Urgencia', $block);
     }
 
-    public function testTurnoNoArrastraAtencion(): void
+    public function testTurnoEmpataAtencionYAgenda(): void
     {
         $hits = StateTagIndex::match(['turno']);
         $ids = [];
@@ -43,7 +43,10 @@ class StateTagIndexTest extends Unit
             $ids[] = $hit['intent_id'];
         }
 
-        $this->assertSame(['turnos.crear-como-paciente'], $ids);
+        $this->assertSame(
+            ['atencion.necesito-atencion', 'turnos.crear-como-paciente'],
+            $ids
+        );
     }
 
     public function testFraseDePedidoNoEsCategoria(): void

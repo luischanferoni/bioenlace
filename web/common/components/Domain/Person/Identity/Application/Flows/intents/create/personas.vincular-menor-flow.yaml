@@ -13,17 +13,17 @@ intent_semantics:
   objective: 'Solicitá tutela sobre un menor sin cuenta; el centro debe verificarla antes de activarla.'
   capabilities:
     - vincular_menor
-subintents:
-  -
-    id: gestionar_tutela
-    assistant_text: 'Solicitud de tutela'
-    provides: {  }
-    next: ''
-    open_ui:
-      action_id: person-representation.hub
-      client_open:
-        kind: native
-        mobile:
-          screen_id: person_representation_hub
+initial: gestionar_tutela
+states:
+  gestionar_tutela:
+    description: 'Solicitud de tutela'
+    meta:
+      open_ui:
+        action_id: person-representation.hub
+        client_open:
+          kind: native
+          mobile:
+            screen_id: person_representation_hub
+    type: final
 flow_submit:
   action_id: person-representation.solicitar-menor-como-tutor

@@ -8,27 +8,28 @@ keywords:
   - 'turno desalineado'
   - 'reprogramar por agenda'
   - 'horario anterior siguiente'
-subintents:
-  -
-    id: select_turno
-    assistant_text: 'Turno afectado'
-    provides:
-      - draft.id
-    next: select_eleccion
-    open_ui:
-      action_id: turnos.elegir-conflicto-agenda-como-paciente
-  -
-    id: select_eleccion
-    assistant_text: 'Nueva opción'
-    requires:
-      - draft.id
-    provides:
-      - draft.eleccion
-    next: ''
-    open_ui:
-      action_id: turnos.elegir-resolucion-conflicto-agenda-como-paciente
-      params:
-        id: draft.id
+initial: select_turno
+states:
+  select_turno:
+    description: 'Turno afectado'
+    meta:
+      provides:
+        - draft.id
+      open_ui:
+        action_id: turnos.elegir-conflicto-agenda-como-paciente
+    always: select_eleccion
+  select_eleccion:
+    description: 'Nueva opción'
+    meta:
+      provides:
+        - draft.eleccion
+      requires:
+        - draft.id
+      open_ui:
+        action_id: turnos.elegir-resolucion-conflicto-agenda-como-paciente
+        params:
+          id: draft.id
+    type: final
 flow_submit:
   action_id: turnos.resolver-conflicto-agenda-como-paciente
   params:

@@ -85,6 +85,45 @@ class StatechartManifestTest extends Unit
         $this->assertArrayNotHasKey('next', $out['subintents'][0]);
     }
 
+    public function testGuardaConDestinoVacioTerminaLaRama(): void
+    {
+        $out = StatechartManifest::apply([
+            'states' => [
+                'cs_select_medicamentos' => [
+                    'always' => [
+                        ['guard' => ['seguimiento_necesidad' => 'solicitar_ajuste'], 'target' => 'cs_captura_ajuste_motivo'],
+                        ['guard' => ['seguimiento_necesidad' => 'renovar_medicacion'], 'target' => ''],
+                    ],
+                ],
+            ],
+        ]);
+
+        $routing = $out['subintents'][0]['next_routing'];
+        $this->assertSame('', $routing[1]['next']);
+        $this->assertSame(
+            ['seguimiento_necesidad' => 'renovar_medicacion'],
+            $routing[1]['when']['draft_equals']
+        );
+    }
+
+    public function testComodinConDestinoVacioTerminaLaRama(): void
+    {
+        $out = StatechartManifest::apply([
+            'states' => [
+                'select_servicio' => [
+                    'always' => [
+                        ['guard' => ['servicio_acepta_turnos' => 'SI'], 'target' => 'configurar_agenda_datos'],
+                        ['target' => ''],
+                    ],
+                ],
+            ],
+        ]);
+
+        $routing = $out['subintents'][0]['next_routing'];
+        $this->assertTrue($routing[1]['when']['default']);
+        $this->assertSame('', $routing[1]['next']);
+    }
+
     public function testSinStatesNoTocaElManifiesto(): void
     {
         $raw = ['subintents' => [['id' => 'a', 'next' => '']]];

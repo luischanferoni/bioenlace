@@ -7,15 +7,16 @@ keywords:
   - inasistencia
   - 'ausente turno'
   - 'paciente no vino'
-subintents:
-  -
-    id: registrar
-    assistant_text: Turno
-    provides:
-      - draft.id
-    next: ''
-    open_ui:
-      action_id: turnos.no-se-presento
+initial: registrar
+states:
+  registrar:
+    description: Turno
+    meta:
+      provides:
+        - draft.id
+      open_ui:
+        action_id: turnos.no-se-presento
+    type: final
 flow_submit:
   action_id: turnos.no-se-presento
   params:

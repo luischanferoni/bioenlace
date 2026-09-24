@@ -6,20 +6,21 @@ keywords:
   - sobreturno
   - 'turno urgente'
   - 'encaje urgente'
-subintents:
-  -
-    id: crear
-    assistant_text: Sobreturno
-    provides:
-      - draft.id_persona
-      - draft.fecha
-      - draft.hora
-      - draft.id_servicio_asignado
-      - draft.id_efector
-      - draft.id_profesional_efector_servicio
-    next: ''
-    open_ui:
-      action_id: turnos.crear-sobreturno
+initial: crear
+states:
+  crear:
+    description: Sobreturno
+    meta:
+      provides:
+        - draft.id_persona
+        - draft.fecha
+        - draft.hora
+        - draft.id_servicio_asignado
+        - draft.id_efector
+        - draft.id_profesional_efector_servicio
+      open_ui:
+        action_id: turnos.crear-sobreturno
+    type: final
 flow_submit:
   action_id: turnos.crear-sobreturno
   params:

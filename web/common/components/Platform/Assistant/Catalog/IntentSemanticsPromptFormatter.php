@@ -7,7 +7,8 @@ use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
 /**
  * Formatea {@see intent_semantics} + subintents para prompts de 2ª IA (guide).
  *
- * Solo lo que la IA necesita: objetivo + pasos (o outline si hay ramas).
+ * Solo lo que la IA necesita: objetivo + pasos.
+ * Un statechart grande muestra el estado inicial, sus transiciones y los cierres.
  * `capabilities` quedan en YAML para gates PHP; no van al prompt.
  * `kind` no se emite: se infiere de steps/outline.
  */
@@ -70,9 +71,11 @@ final class IntentSemanticsPromptFormatter
         $lines = [];
         $lines[] = '- ' . $label . ': ' . $objective;
 
-        $outline = trim((string) ($sem['outline'] ?? ''));
-        if ($outline !== '') {
-            $lines[] = '  Recorrido: ' . $outline;
+        $slice = self::statechartSlice($manifest);
+        if ($slice !== []) {
+            foreach ($slice as $line) {
+                $lines[] = $line;
+            }
         } else {
             foreach (self::stepLines($manifest) as $stepLine) {
                 $lines[] = $stepLine;
@@ -157,5 +160,109 @@ final class IntentSemanticsPromptFormatter
         }
 
         return $count > 0 ? $lines : [];
+    }
+
+    /**
+     * Statechart con más estados que el tope de pasos: solo la raíz y los cierres.
+     *
+     * @param array<string, mixed>|null $manifest
+     * @return list<string>
+     */
+    private static function statechartSlice(?array $manifest): array
+    {
+        if ($manifest === null) {
+            return [];
+        }
+        $states = $manifest['states'] ?? null;
+        if (!is_array($states) || count($states) <= self::MAX_STEPS) {
+            return [];
+        }
+
+        $initial = trim((string) ($manifest['initial'] ?? ''));
+        if ($initial === '' || !isset($states[$initial]) || !is_array($states[$initial])) {
+            $initial = '';
+            foreach ($states as $id => $state) {
+                if (is_string($id) && is_array($state)) {
+                    $initial = $id;
+                    break;
+                }
+            }
+        }
+        if ($initial === '' || !is_array($states[$initial])) {
+            return [];
+        }
+
+        $lines = ['  Recorrido:'];
+        $lines[] = '    ' . self::stateLabel($initial, $states[$initial]);
+        foreach (self::alwaysRows($states[$initial]['always'] ?? null) as $row) {
+            $target = $row['target'];
+            $targetState = isset($states[$target]) && is_array($states[$target]) ? $states[$target] : [];
+            $dest = $target === '' ? 'fin' : self::stateLabel($target, $targetState);
+            $guard = $row['guard'] === '' ? 'en otro caso' : $row['guard'];
+            $lines[] = '    - ' . $guard . ' → ' . $dest;
+        }
+
+        $finals = [];
+        foreach ($states as $id => $state) {
+            if (!is_string($id) || !is_array($state)) {
+                continue;
+            }
+            if (trim((string) ($state['type'] ?? '')) !== 'final') {
+                continue;
+            }
+            $finals[] = self::stateLabel($id, $state);
+        }
+        if ($finals !== []) {
+            $lines[] = '    Cierres: ' . implode('; ', $finals);
+        }
+
+        return $lines;
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     */
+    private static function stateLabel(string $id, array $state): string
+    {
+        $description = trim((string) ($state['description'] ?? ''));
+
+        return $description !== '' ? $description : $id;
+    }
+
+    /**
+     * @param mixed $always
+     * @return list<array{guard: string, target: string}>
+     */
+    private static function alwaysRows($always): array
+    {
+        if (is_string($always)) {
+            $target = trim($always);
+
+            return $target === '' ? [] : [['guard' => '', 'target' => $target]];
+        }
+        if (!is_array($always)) {
+            return [];
+        }
+        if (array_key_exists('target', $always) || array_key_exists('guard', $always)) {
+            $always = [$always];
+        }
+        $rows = [];
+        foreach ($always as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $target = array_key_exists('target', $row) ? trim((string) $row['target']) : '';
+            $guard = isset($row['guard']) && is_array($row['guard']) ? $row['guard'] : [];
+            $parts = [];
+            foreach ($guard as $field => $value) {
+                $parts[] = trim((string) $field) . '=' . trim((string) $value);
+            }
+            $rows[] = [
+                'guard' => implode(', ', $parts),
+                'target' => $target,
+            ];
+        }
+
+        return $rows;
     }
 }

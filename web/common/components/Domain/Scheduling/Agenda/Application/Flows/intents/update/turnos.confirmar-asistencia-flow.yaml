@@ -12,27 +12,28 @@ intent_semantics:
   capabilities:
     - ver_turnos_propios
     - confirmar_asistencia
-subintents:
-  -
-    id: select_turno
-    assistant_text: 'Turno a confirmar'
-    provides:
-      - draft.id
-    next: confirmar
-    open_ui:
-      action_id: turnos.elegir-pendiente-como-paciente
-  -
-    id: confirmar
-    assistant_text: Confirmación
-    requires:
-      - draft.id
-    provides:
-      - draft.token
-    next: ''
-    open_ui:
-      action_id: turnos.confirmar-asistencia-como-paciente
-      params:
-        id: draft.id
+initial: select_turno
+states:
+  select_turno:
+    description: 'Turno a confirmar'
+    meta:
+      provides:
+        - draft.id
+      open_ui:
+        action_id: turnos.elegir-pendiente-como-paciente
+    always: confirmar
+  confirmar:
+    description: Confirmación
+    meta:
+      provides:
+        - draft.token
+      requires:
+        - draft.id
+      open_ui:
+        action_id: turnos.confirmar-asistencia-como-paciente
+        params:
+          id: draft.id
+    type: final
 flow_submit:
   action_id: turnos.confirmar-asistencia-como-paciente
   params:

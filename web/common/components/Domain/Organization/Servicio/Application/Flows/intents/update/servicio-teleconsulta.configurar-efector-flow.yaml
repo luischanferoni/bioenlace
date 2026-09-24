@@ -8,17 +8,18 @@ keywords:
   - 'videollamada servicio'
   - 'atención remota efector'
   - 'configurar teleconsulta'
-subintents:
-  -
-    id: configurar_politica
-    assistant_text: 'Elegí servicio y política de videollamada'
-    provides:
-      - draft.id_servicio
-      - draft.teleconsulta_politica
-      - draft.caso_codigos_text
-    next: ''
-    open_ui:
-      action_id: servicio-teleconsulta.configurar
+initial: configurar_politica
+states:
+  configurar_politica:
+    description: 'Elegí servicio y política de videollamada'
+    meta:
+      provides:
+        - draft.id_servicio
+        - draft.teleconsulta_politica
+        - draft.caso_codigos_text
+      open_ui:
+        action_id: servicio-teleconsulta.configurar
+    type: final
 flow_submit:
   action_id: servicio-teleconsulta.configurar
   params:

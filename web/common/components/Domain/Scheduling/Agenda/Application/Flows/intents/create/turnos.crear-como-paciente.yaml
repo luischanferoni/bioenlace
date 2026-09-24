@@ -2,8 +2,6 @@ intent_id: turnos.crear-como-paciente
 version: 4
 action_name: 'Turno con un especialista'
 rbac_route: /api/turnos/crear-como-paciente
-# Descubrimiento NL: solo anclas de destino (zona A). Pedido bare ("quiero un turno") → smart-catalog incompletas.
-# No enumerar conjugaciones de verbo; no keyword suelta `turno`.
 keywords:
   - 'turno con'
   - 'turno en'
@@ -13,7 +11,7 @@ keywords:
   - 'agendar con'
   - 'reservar con'
 intent_semantics:
-  # Contexto 2ª IA. Pasos = subintents (assistant_text); no duplicar acá.
+  # Contexto 2ª IA. El recorrido es states; no duplicar los pasos acá.
   objective: 'Reservar un turno ambulatorio eligiendo oferta del centro, efector, profesional y horario, sin triage de motivo clínico.'
   capabilities:
     - elige_servicio
@@ -22,88 +20,91 @@ intent_semantics:
     - elige_profesional
     - elige_horario
     - reserva_turno
-draft_keys_extra:
+context:
   - tipo_atencion
   - fecha_turno
-subintents:
-  -
-    id: select_servicio
-    assistant_text: 'Elegir oferta del centro (servicio con agenda)'
-    provides:
-      - draft.id_servicio_asignado
-    next: select_efector
-    hint:
-      entity: servicio
-      match_property: nombre
-    open_ui:
-      action_id: servicios.elegir-acepta-turnos
-  -
-    id: select_efector
-    assistant_text: 'Elegir centro de salud (incluye cercanos en mapa)'
-    requires:
-      - draft.id_servicio_asignado
-    provides:
-      - draft.id_efector
-    next: select_profesional
-    hint:
-      entity: efector
-      match_property: nombre
-    chooser:
-      when_user_says_nearby:
-        open_ui:
-          action_id: efectores.listar-por-servicio-cercano
-          params: { id_servicio: draft.id_servicio_asignado }
-      otherwise:
-        open_ui:
-          action_id: efectores.listar-por-servicio
-          params: { id_servicio: draft.id_servicio_asignado }
-  -
-    id: select_profesional
-    assistant_text: 'Elegir profesional (PES) de esa oferta en ese centro'
-    requires:
-      - draft.id_efector
-      - draft.id_servicio_asignado
-    provides:
-      - draft.id_profesional_efector_servicio
-    next: select_dia
-    hint:
-      entity: profesional
-      match_property: nombre
-    open_ui:
-      action_id: profesional-efector-servicio.listar-por-efector-servicio-acepta-turnos
-      params:
-        id_efector: draft.id_efector
-        id_servicio: draft.id_servicio_asignado
-  -
-    id: select_dia
-    assistant_text: 'Elegir día con cupos disponibles'
-    requires:
-      - draft.id_profesional_efector_servicio
-    provides:
-      - draft.fecha_turno
-    next: select_slot
-    open_ui:
-      action_id: turnos.slots-dias-disponibles-como-paciente
-      params:
-        id_servicio: draft.id_servicio_asignado
-        id_efector: draft.id_efector
-        id_profesional_efector_servicio: draft.id_profesional_efector_servicio
-  -
-    id: select_slot
-    assistant_text: 'Elegir horario (slot) para cerrar la reserva'
-    requires:
-      - draft.id_profesional_efector_servicio
-      - draft.fecha_turno
-    provides:
-      - draft.slot_id
-    next: ''
-    open_ui:
-      action_id: turnos.slots-disponibles-como-paciente
-      params:
-        id_servicio: draft.id_servicio_asignado
-        id_efector: draft.id_efector
-        id_profesional_efector_servicio: draft.id_profesional_efector_servicio
-        fecha: draft.fecha_turno
+initial: select_servicio
+states:
+  select_servicio:
+    description: 'Elegir oferta del centro (servicio con agenda)'
+    meta:
+      provides:
+        - draft.id_servicio_asignado
+      open_ui:
+        action_id: servicios.elegir-acepta-turnos
+      hint:
+        entity: servicio
+        match_property: nombre
+    always: select_efector
+  select_efector:
+    description: 'Elegir centro de salud (incluye cercanos en mapa)'
+    meta:
+      provides:
+        - draft.id_efector
+      requires:
+        - draft.id_servicio_asignado
+      chooser:
+        when_user_says_nearby:
+          open_ui:
+            action_id: efectores.listar-por-servicio-cercano
+            params:
+              id_servicio: draft.id_servicio_asignado
+        otherwise:
+          open_ui:
+            action_id: efectores.listar-por-servicio
+            params:
+              id_servicio: draft.id_servicio_asignado
+      hint:
+        entity: efector
+        match_property: nombre
+    always: select_profesional
+  select_profesional:
+    description: 'Elegir profesional (PES) de esa oferta en ese centro'
+    meta:
+      provides:
+        - draft.id_profesional_efector_servicio
+      requires:
+        - draft.id_efector
+        - draft.id_servicio_asignado
+      open_ui:
+        action_id: profesional-efector-servicio.listar-por-efector-servicio-acepta-turnos
+        params:
+          id_efector: draft.id_efector
+          id_servicio: draft.id_servicio_asignado
+      hint:
+        entity: profesional
+        match_property: nombre
+    always: select_dia
+  select_dia:
+    description: 'Elegir día con cupos disponibles'
+    meta:
+      provides:
+        - draft.fecha_turno
+      requires:
+        - draft.id_profesional_efector_servicio
+      open_ui:
+        action_id: turnos.slots-dias-disponibles-como-paciente
+        params:
+          id_servicio: draft.id_servicio_asignado
+          id_efector: draft.id_efector
+          id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+    always: select_slot
+  select_slot:
+    description: 'Elegir horario (slot) para cerrar la reserva'
+    meta:
+      provides:
+        - draft.slot_id
+      requires:
+        - draft.id_profesional_efector_servicio
+        - draft.fecha_turno
+      open_ui:
+        action_id: turnos.slots-disponibles-como-paciente
+        params:
+          id_servicio: draft.id_servicio_asignado
+          id_efector: draft.id_efector
+          id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+          fecha: draft.fecha_turno
+    type: final
 flow_submit:
   action_id: turnos.crear-como-paciente
   params:

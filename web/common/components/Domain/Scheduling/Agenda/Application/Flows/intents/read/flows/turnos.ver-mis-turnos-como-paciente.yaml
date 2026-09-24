@@ -17,11 +17,11 @@ intent_semantics:
 draft_hydrator:
   handler: scheduling.turnos_listar_como_paciente
   limit: 10
-subintents:
-  -
-    id: ver_listado
-    assistant_text: 'Tus próximos turnos'
-    provides: {  }
-    next: ''
-    open_ui:
-      action_id: turnos.listar-como-paciente
+initial: ver_listado
+states:
+  ver_listado:
+    description: 'Tus próximos turnos'
+    meta:
+      open_ui:
+        action_id: turnos.listar-como-paciente
+    type: final

@@ -20,14 +20,14 @@ draft_hydrator:
   handler: scheduling.turnos_listar_como_paciente
   alcance: pasados
   limit: 5
-subintents:
-  -
-    id: ver_listado
-    assistant_text: 'Tus turnos anteriores'
-    provides: {  }
-    next: ''
-    open_ui:
-      action_id: turnos.listar-como-paciente
-      params:
-        alcance: pasados
-        limit: '5'
+initial: ver_listado
+states:
+  ver_listado:
+    description: 'Tus turnos anteriores'
+    meta:
+      open_ui:
+        action_id: turnos.listar-como-paciente
+        params:
+          alcance: pasados
+          limit: '5'
+    type: final

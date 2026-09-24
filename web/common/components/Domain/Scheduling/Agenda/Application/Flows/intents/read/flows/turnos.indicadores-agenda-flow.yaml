@@ -9,17 +9,18 @@ keywords:
   - 'tiempo hasta cita'
   - 'métricas turnos'
   - 'kpi agenda'
-subintents:
-  -
-    id: consultar_indicadores
-    assistant_text: 'Período y filtros de agenda'
-    provides:
-      - draft.fecha_desde
-      - draft.fecha_hasta
-      - draft.id_profesional_efector_servicio
-    next: ''
-    open_ui:
-      action_id: turnos.indicadores-agenda
+initial: consultar_indicadores
+states:
+  consultar_indicadores:
+    description: 'Período y filtros de agenda'
+    meta:
+      provides:
+        - draft.fecha_desde
+        - draft.fecha_hasta
+        - draft.id_profesional_efector_servicio
+      open_ui:
+        action_id: turnos.indicadores-agenda
+    type: final
 flow_submit:
   action_id: turnos.indicadores-agenda
   params:

@@ -20,7 +20,7 @@ Cada intent con `subintents` pasa a `states`. Se empieza por Solicitar Atención
 
 ## Checklist
 
-- [ ] Solicitar Atención
-- [ ] Resto de intents paciente
-- [ ] Intents staff y plataforma
-- [ ] Ningún YAML de intent declara `subintents`
+- [x] Solicitar Atención
+- [x] Resto de intents paciente
+- [x] Intents staff y plataforma
+- [x] Ningún YAML de intent declara `subintents`

@@ -9,11 +9,11 @@ keywords:
   - 'sala de espera'
   - 'pacientes en guardia'
   - 'cola de emergencia'
-subintents:
-  -
-    id: abrir_tablero
-    assistant_text: 'Abro el tablero de guardia'
-    provides: {  }
-    next: ''
-    open_ui:
-      action_id: clinical.home.panel
+initial: abrir_tablero
+states:
+  abrir_tablero:
+    description: 'Abro el tablero de guardia'
+    meta:
+      open_ui:
+        action_id: clinical.home.panel
+    type: final

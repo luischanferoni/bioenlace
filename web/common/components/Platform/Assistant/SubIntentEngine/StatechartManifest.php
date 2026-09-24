@@ -23,6 +23,8 @@ final class StatechartManifest
         'flow_submit',
         'composer_capture',
         'terminal_without_submit',
+        'flow_dismiss',
+        'flow_actions',
     ];
 
     /**
@@ -149,16 +151,17 @@ final class StatechartManifest
             if (!is_array($row)) {
                 continue;
             }
-            $target = trim((string) ($row['target'] ?? ''));
-            if ($target === '') {
-                continue;
-            }
-            $guard = $row['guard'] ?? null;
-            if (is_array($guard) && $guard !== []) {
+            $guard = isset($row['guard']) && is_array($row['guard']) ? $row['guard'] : [];
+            $hasTarget = array_key_exists('target', $row);
+            $target = $hasTarget ? trim((string) $row['target']) : '';
+            if ($guard !== []) {
                 $routing[] = [
                     'when' => ['draft_equals' => $guard],
                     'next' => $target,
                 ];
+                continue;
+            }
+            if (!$hasTarget) {
                 continue;
             }
             $routing[] = [

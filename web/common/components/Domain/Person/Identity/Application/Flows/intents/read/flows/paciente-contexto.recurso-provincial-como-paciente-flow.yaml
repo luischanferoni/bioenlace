@@ -16,12 +16,11 @@ intent_semantics:
   objective: 'Obtené nombre, dirección y teléfono de recursos de salud de tu provincia (p. ej. ministerio).'
   capabilities:
     - recurso_provincial_contacto
-subintents:
-  -
-    id: buscar
-    assistant_text: 'Busco el recurso en tu provincia de contexto.'
-    provides: {  }
-    next: ''
+initial: buscar
+states:
+  buscar:
+    description: 'Busco el recurso en tu provincia de contexto.'
+    type: final
 flow_submit:
   action_id: paciente-contexto.buscar-recurso-provincial-como-paciente
   params:

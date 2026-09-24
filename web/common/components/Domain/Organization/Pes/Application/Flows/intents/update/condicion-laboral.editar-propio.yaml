@@ -47,22 +47,22 @@ field_resolution:
     - nombre
     - documento
     - dni
-subintents:
-  -
-    id: elegir_servicio
-    assistant_text: Servicio
-    provides:
-      - draft.id_profesional_efector_servicio
-      - draft.id_servicio
-    next: editar_vigencia
-    open_ui:
-      action_id: profesional-efector-servicio.listar-mis-servicios-en-efector
-      params:
-        incluir_sin_agenda: '1'
-  -
-    id: editar_vigencia
-    assistant_text: 'Tipo y fechas de vigencia'
-    provides: {  }
-    next: ''
-    open_ui:
-      action_id: profesional-efector-servicio.editar-condicion-laboral
+initial: elegir_servicio
+states:
+  elegir_servicio:
+    description: Servicio
+    meta:
+      provides:
+        - draft.id_profesional_efector_servicio
+        - draft.id_servicio
+      open_ui:
+        action_id: profesional-efector-servicio.listar-mis-servicios-en-efector
+        params:
+          incluir_sin_agenda: '1'
+    always: editar_vigencia
+  editar_vigencia:
+    description: 'Tipo y fechas de vigencia'
+    meta:
+      open_ui:
+        action_id: profesional-efector-servicio.editar-condicion-laboral
+    type: final

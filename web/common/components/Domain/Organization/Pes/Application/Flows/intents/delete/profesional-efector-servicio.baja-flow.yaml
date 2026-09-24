@@ -13,44 +13,45 @@ keywords:
   - 'quitar profesional de un servicio'
   - 'desasignar médico del servicio'
   - 'dar de baja asignación en el efector'
-draft_keys_extra:
+context:
   - impacto_baja_revisado
-subintents:
-  -
-    id: select_profesional
-    assistant_text: 'Profesional a dar de baja'
-    provides:
-      - draft.id_profesional_efector_servicio
-    next: select_servicio
-    open_ui:
-      action_id: profesional-efector-servicio.listar-por-efector
-  -
-    id: select_servicio
-    assistant_text: 'Servicio a desasignar'
-    requires:
-      - draft.id_profesional_efector_servicio
-    provides:
-      - draft.id_servicio
-    next: revisar_impacto
-    open_ui:
-      action_id: profesional-efector-servicio.listar-servicios-en-efector
-      params:
-        id_profesional_efector_servicio: draft.id_profesional_efector_servicio
-        incluir_sin_agenda: '1'
-  -
-    id: revisar_impacto
-    assistant_text: 'Impacto en turnos'
-    requires:
-      - draft.id_profesional_efector_servicio
-      - draft.id_servicio
-    provides:
-      - draft.impacto_baja_revisado
-    next: ''
-    open_ui:
-      action_id: profesional-efector-servicio.preview-impacto-baja
-      params:
-        id_profesional_efector_servicio: draft.id_profesional_efector_servicio
-        id_servicio: draft.id_servicio
+initial: select_profesional
+states:
+  select_profesional:
+    description: 'Profesional a dar de baja'
+    meta:
+      provides:
+        - draft.id_profesional_efector_servicio
+      open_ui:
+        action_id: profesional-efector-servicio.listar-por-efector
+    always: select_servicio
+  select_servicio:
+    description: 'Servicio a desasignar'
+    meta:
+      provides:
+        - draft.id_servicio
+      requires:
+        - draft.id_profesional_efector_servicio
+      open_ui:
+        action_id: profesional-efector-servicio.listar-servicios-en-efector
+        params:
+          id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+          incluir_sin_agenda: '1'
+    always: revisar_impacto
+  revisar_impacto:
+    description: 'Impacto en turnos'
+    meta:
+      provides:
+        - draft.impacto_baja_revisado
+      requires:
+        - draft.id_profesional_efector_servicio
+        - draft.id_servicio
+      open_ui:
+        action_id: profesional-efector-servicio.preview-impacto-baja
+        params:
+          id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+          id_servicio: draft.id_servicio
+    type: final
 flow_submit:
   action_id: profesional-efector-servicio.baja-flow
   params:

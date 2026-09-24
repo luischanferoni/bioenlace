@@ -14,7 +14,7 @@ keywords:
   - 'alta de profesional en efector y servicio'
   - 'asociar persona a servicio del efector'
   - 'configurar disponibilidad si el servicio tiene turnos'
-draft_keys_extra:
+context:
   - servicio_acepta_turnos
   - id_persona
   - persona_requiere_cuil
@@ -50,67 +50,64 @@ business_rules:
         label: 'Mis horarios (agenda o guardia/piso)'
         intent_id: profesional-horarios.gestionar-propio
         reset_flow: true
-subintents:
-  -
-    id: select_persona
-    assistant_text: Persona
-    provides:
-      - draft.id_persona
-    next_routing:
+initial: select_persona
+states:
+  select_persona:
+    description: Persona
+    meta:
+      provides:
+        - draft.id_persona
+      open_ui:
+        action_id: persona.buscar-para-asistente
+        pass_content_as_query: q
+        params:
+          excluir_en_efector: '1'
+    always:
       -
-        when:
-          draft_equals: { persona_requiere_cuil: SI }
-        next: capture_cuil
+        guard:
+          persona_requiere_cuil: SI
+        target: capture_cuil
       -
-        when:
-          default: true
-        next: select_servicio
-    open_ui:
-      action_id: persona.buscar-para-asistente
-      pass_content_as_query: q
-      params:
-        excluir_en_efector: '1'
-  -
-    id: capture_cuil
-    assistant_text: 'CUIL del profesional'
-    provides:
-      - draft.cuil
-    next: select_servicio
-    open_ui:
-      action_id: profesional-efector-servicio.cargar-cuil-profesional
-      params:
-        id_persona: draft.id_persona
-  -
-    id: select_servicio
-    assistant_text: Servicio
-    provides:
-      - draft.id_servicio
-    next_routing:
+        target: select_servicio
+  capture_cuil:
+    description: 'CUIL del profesional'
+    meta:
+      provides:
+        - draft.cuil
+      open_ui:
+        action_id: profesional-efector-servicio.cargar-cuil-profesional
+        params:
+          id_persona: draft.id_persona
+    always: select_servicio
+  select_servicio:
+    description: Servicio
+    meta:
+      provides:
+        - draft.id_servicio
+      open_ui:
+        action_id: efectores.listar-servicios-habilitados
+    always:
       -
-        when:
-          draft_equals: { servicio_acepta_turnos: SI }
-        next: configurar_agenda_datos
+        guard:
+          servicio_acepta_turnos: SI
+        target: configurar_agenda_datos
       -
-        when:
-          default: true
-        next: ''
-    open_ui:
-      action_id: efectores.listar-servicios-habilitados
-  -
-    id: configurar_agenda_datos
-    assistant_text: Agenda
-    provides:
-      - draft.agenda_ui_completed
-    requires:
-      - draft.id_profesional_efector_servicio
-      - draft.id_servicio
-    next: ''
-    open_ui:
-      action_id: profesional-agenda.configurar-agenda
-      params:
-        id_profesional_efector_servicio: draft.id_profesional_efector_servicio
-        id_servicio: draft.id_servicio
-        ui_step: datos
+        target: ''
+  configurar_agenda_datos:
+    description: Agenda
+    meta:
+      provides:
+        - draft.agenda_ui_completed
+      requires:
+        - draft.id_profesional_efector_servicio
+        - draft.id_servicio
+      open_ui:
+        action_id: profesional-agenda.configurar-agenda
+        params:
+          id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+          id_servicio: draft.id_servicio
+          ui_step: datos
+    type: final
 flow_submit:
   action_id: profesional-efector-servicio.crear-flow
   params:

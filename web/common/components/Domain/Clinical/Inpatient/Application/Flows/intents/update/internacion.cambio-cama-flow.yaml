@@ -9,18 +9,18 @@ keywords:
   - 'traslado de cama'
   - 'mover paciente internado'
   - 'reubicar internación'
-subintents:
-  -
-    id: cambiar_cama
-    assistant_text: 'Seleccioná la cama destino y el motivo'
-    requires:
-      - draft.internacion_id
-    provides: {  }
-    next: ''
-    open_ui:
-      action_id: clinical.internacion.cambio-cama-formulario
-      params:
-        internacion_id: draft.internacion_id
+initial: cambiar_cama
+states:
+  cambiar_cama:
+    description: 'Seleccioná la cama destino y el motivo'
+    meta:
+      requires:
+        - draft.internacion_id
+      open_ui:
+        action_id: clinical.internacion.cambio-cama-formulario
+        params:
+          internacion_id: draft.internacion_id
+    type: final
 flow_submit:
   action_id: clinical.internacion.cambio-cama-formulario
   params:

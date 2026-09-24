@@ -12,15 +12,16 @@ keywords:
   - 'vinculo pendiente menor'
   - 'aprobar solicitudes de tutela pendientes'
   - 'solicitudes de tutela pendientes'
-subintents:
-  -
-    id: seleccionar_solicitud
-    assistant_text: 'Solicitudes de tutela pendientes'
-    provides:
-      - draft.person_related_id
-    next: ''
-    open_ui:
-      action_id: person-representation.solicitudes-tutela-pendientes-para-staff
+initial: seleccionar_solicitud
+states:
+  seleccionar_solicitud:
+    description: 'Solicitudes de tutela pendientes'
+    meta:
+      provides:
+        - draft.person_related_id
+      open_ui:
+        action_id: person-representation.solicitudes-tutela-pendientes-para-staff
+    type: final
 flow_submit:
   action_id: person-representation.verificar-vinculo-para-staff
   params:

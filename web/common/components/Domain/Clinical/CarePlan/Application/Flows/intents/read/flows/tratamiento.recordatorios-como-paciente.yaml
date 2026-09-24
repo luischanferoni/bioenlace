@@ -12,11 +12,11 @@ intent_semantics:
   objective: 'Activá o ajustá recordatorios locales de medicación y preparación de estudios de tu tratamiento.'
   capabilities:
     - recordatorios_tratamiento
-subintents:
-  -
-    id: abrir_configuracion
-    assistant_text: 'Configurá tus recordatorios de tratamiento'
-    provides: {  }
-    next: ''
-    open_ui:
-      action_id: clinical.care-plan.gestionar-recordatorios-como-paciente
+initial: abrir_configuracion
+states:
+  abrir_configuracion:
+    description: 'Configurá tus recordatorios de tratamiento'
+    meta:
+      open_ui:
+        action_id: clinical.care-plan.gestionar-recordatorios-como-paciente
+    type: final

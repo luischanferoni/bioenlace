@@ -34,7 +34,10 @@ class IntentSemanticsPromptFormatterTest extends Unit
 
         $this->assertStringContainsString('Solicitar Atención:', $block);
         $this->assertStringContainsString('Recorrido:', $block);
+        $this->assertStringContainsString('triage_raiz=urgencia → Urgencia', $block);
+        $this->assertStringContainsString('Cierres:', $block);
         $this->assertStringNotContainsString('Pasos:', $block);
+        $this->assertStringNotContainsString('Motivo raíz →', $block);
         $this->assertStringNotContainsString('atencion.necesito-atencion', $block);
     }
 

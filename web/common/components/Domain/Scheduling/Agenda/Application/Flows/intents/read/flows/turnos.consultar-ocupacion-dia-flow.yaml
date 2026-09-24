@@ -7,18 +7,19 @@ keywords:
   - 'disponibilidad día'
   - 'slots del día'
   - 'agenda ocupación'
-subintents:
-  -
-    id: consultar
-    assistant_text: 'Día y agenda'
-    provides:
-      - draft.dia
-      - draft.id_servicio
-      - draft.id_profesional_efector_servicio
-      - draft.formato
-    next: ''
-    open_ui:
-      action_id: turnos.consultar-ocupacion-dia
+initial: consultar
+states:
+  consultar:
+    description: 'Día y agenda'
+    meta:
+      provides:
+        - draft.dia
+        - draft.id_servicio
+        - draft.id_profesional_efector_servicio
+        - draft.formato
+      open_ui:
+        action_id: turnos.consultar-ocupacion-dia
+    type: final
 flow_submit:
   action_id: turnos.consultar-ocupacion-dia
   params:

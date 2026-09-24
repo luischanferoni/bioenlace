@@ -36,14 +36,14 @@ fields:
     name: otro_apellido
     keywords:
       - 'otro apellido'
-subintents:
-  -
-    id: editar_identidad
-    assistant_text: 'Editar identidad del profesional'
-    provides: {  }
-    next: ''
-    open_ui:
-      action_id: data-access.editar
-      params:
-        surface_id: ProfesionalEfectorServicio
-        step: surfaces
+initial: editar_identidad
+states:
+  editar_identidad:
+    description: 'Editar identidad del profesional'
+    meta:
+      open_ui:
+        action_id: data-access.editar
+        params:
+          surface_id: ProfesionalEfectorServicio
+          step: surfaces
+    type: final

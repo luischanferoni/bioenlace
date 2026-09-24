@@ -8,26 +8,26 @@ keywords:
   - 'prioridad guardia'
   - manchester
   - 'enfermería triage'
-subintents:
-  -
-    id: elegir_paciente
-    assistant_text: 'Elegí el paciente en guardia pendiente de triage'
-    provides:
-      - draft.guardia_id
-    next: registrar_triage
-    open_ui:
-      action_id: clinical.emergency-guardia.elegir-paciente-triage
-  -
-    id: registrar_triage
-    assistant_text: 'Completá nivel (1–5), motivo y signos vitales si corresponde'
-    requires:
-      - draft.guardia_id
-    provides: {  }
-    next: ''
-    open_ui:
-      action_id: clinical.emergency-guardia.registrar-triage-formulario
-      params:
-        guardia_id: draft.guardia_id
+initial: elegir_paciente
+states:
+  elegir_paciente:
+    description: 'Elegí el paciente en guardia pendiente de triage'
+    meta:
+      provides:
+        - draft.guardia_id
+      open_ui:
+        action_id: clinical.emergency-guardia.elegir-paciente-triage
+    always: registrar_triage
+  registrar_triage:
+    description: 'Completá nivel (1–5), motivo y signos vitales si corresponde'
+    meta:
+      requires:
+        - draft.guardia_id
+      open_ui:
+        action_id: clinical.emergency-guardia.registrar-triage-formulario
+        params:
+          guardia_id: draft.guardia_id
+    type: final
 flow_submit:
   action_id: clinical.emergency-guardia.registrar-triage-formulario
   params:

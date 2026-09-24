@@ -7,27 +7,28 @@ keywords:
   - 'resolver conflicto paciente'
   - 'turnos desalineados'
   - 'cambio horario profesional'
-subintents:
-  -
-    id: select_turno
-    assistant_text: 'Turno con conflicto'
-    provides:
-      - draft.id
-    next: select_eleccion
-    open_ui:
-      action_id: profesional-agenda.elegir-conflicto-agenda
-  -
-    id: select_eleccion
-    assistant_text: Resolución
-    requires:
-      - draft.id
-    provides:
-      - draft.eleccion
-    next: ''
-    open_ui:
-      action_id: profesional-agenda.elegir-resolucion-conflicto-agenda-para-paciente
-      params:
-        id: draft.id
+initial: select_turno
+states:
+  select_turno:
+    description: 'Turno con conflicto'
+    meta:
+      provides:
+        - draft.id
+      open_ui:
+        action_id: profesional-agenda.elegir-conflicto-agenda
+    always: select_eleccion
+  select_eleccion:
+    description: Resolución
+    meta:
+      provides:
+        - draft.eleccion
+      requires:
+        - draft.id
+      open_ui:
+        action_id: profesional-agenda.elegir-resolucion-conflicto-agenda-para-paciente
+        params:
+          id: draft.id
+    type: final
 flow_submit:
   action_id: profesional-agenda.resolver-conflictos-flow
   params:

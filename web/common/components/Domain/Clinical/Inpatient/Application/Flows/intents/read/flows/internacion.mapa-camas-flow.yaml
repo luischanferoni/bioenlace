@@ -8,12 +8,13 @@ keywords:
   - 'ocupación internación'
   - 'plano de piso'
   - 'disponibilidad camas'
-subintents:
-  -
-    id: ver_mapa
-    assistant_text: 'Mapa de camas del efector'
-    provides:
-      - draft.id_cama
-    next: ''
-    open_ui:
-      action_id: clinical.internacion.mapa-camas
+initial: ver_mapa
+states:
+  ver_mapa:
+    description: 'Mapa de camas del efector'
+    meta:
+      provides:
+        - draft.id_cama
+      open_ui:
+        action_id: clinical.internacion.mapa-camas
+    type: final

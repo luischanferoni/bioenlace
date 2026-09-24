@@ -20,17 +20,17 @@ draft_hydrator:
   limit: 10
   solo_ultimo: true
   filtro_oferta_desde_mensaje: true
-subintents:
-  -
-    id: ver_ultimo
-    assistant_text: 'Tu último turno en esa oferta'
-    provides: {  }
-    next: ''
-    hint:
-      entity: servicio
-      match_property: nombre
-    open_ui:
-      action_id: turnos.listar-como-paciente
-      params:
-        alcance: pasados
-        limit: '5'
+initial: ver_ultimo
+states:
+  ver_ultimo:
+    description: 'Tu último turno en esa oferta'
+    meta:
+      open_ui:
+        action_id: turnos.listar-como-paciente
+        params:
+          alcance: pasados
+          limit: '5'
+      hint:
+        entity: servicio
+        match_property: nombre
+    type: final

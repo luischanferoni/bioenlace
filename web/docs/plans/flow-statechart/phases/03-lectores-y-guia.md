@@ -14,6 +14,6 @@ El texto del prompt de canal lo pega una persona si hace falta una frase que nom
 
 - [ ] Lectores usan `states` sin compilar a `subintents`
 - [ ] Borrar `StatechartManifest`
-- [ ] Formatter de la guía
+- [x] Formatter de la guía: statechart grande → estado inicial, transiciones y cierres (sin `outline`)
 - [ ] Contrato sin el vocabulario viejo
 - [ ] Tests de regresión de Solicitar Atención y de un flow lineal

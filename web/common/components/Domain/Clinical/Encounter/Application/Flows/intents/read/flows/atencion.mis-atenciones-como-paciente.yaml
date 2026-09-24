@@ -13,23 +13,23 @@ intent_semantics:
   objective: 'Revisá tus atenciones ambulatorias finalizadas y el resumen de cada una.'
   capabilities:
     - ver_atenciones
-subintents:
-  -
-    id: ver_listado
-    assistant_text: 'Elegí una atención'
-    provides:
-      - draft.encounter_id
-    next: ver_detalle
-    open_ui:
-      action_id: clinical.encounter.mis-atenciones-como-paciente
-  -
-    id: ver_detalle
-    assistant_text: 'Resumen de la atención'
-    requires:
-      - draft.encounter_id
-    provides: {  }
-    next: ''
-    open_ui:
-      action_id: clinical.encounter.ver-resumen-atencion-como-paciente
-      params:
-        encounter_id: draft.encounter_id
+initial: ver_listado
+states:
+  ver_listado:
+    description: 'Elegí una atención'
+    meta:
+      provides:
+        - draft.encounter_id
+      open_ui:
+        action_id: clinical.encounter.mis-atenciones-como-paciente
+    always: ver_detalle
+  ver_detalle:
+    description: 'Resumen de la atención'
+    meta:
+      requires:
+        - draft.encounter_id
+      open_ui:
+        action_id: clinical.encounter.ver-resumen-atencion-como-paciente
+        params:
+          encounter_id: draft.encounter_id
+    type: final

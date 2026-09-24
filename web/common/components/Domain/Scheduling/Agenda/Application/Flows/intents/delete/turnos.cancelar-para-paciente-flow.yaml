@@ -6,17 +6,18 @@ keywords:
   - 'cancelar turno paciente'
   - 'baja operativa turno'
   - 'anular cita gestión'
-subintents:
-  -
-    id: cancelar
-    assistant_text: 'Turno a cancelar'
-    provides:
-      - draft.id
-      - draft.razon_cancelacion
-      - draft.canal
-    next: ''
-    open_ui:
-      action_id: turnos.cancelar-operativo
+initial: cancelar
+states:
+  cancelar:
+    description: 'Turno a cancelar'
+    meta:
+      provides:
+        - draft.id
+        - draft.razon_cancelacion
+        - draft.canal
+      open_ui:
+        action_id: turnos.cancelar-operativo
+    type: final
 flow_submit:
   action_id: turnos.cancelar-operativo
   params:

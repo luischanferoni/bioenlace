@@ -109,8 +109,8 @@ Un intent migrado declara la máquina en la raíz y **no** escribe `subintents`.
 | `states.*.type` | `final` cierra la rama: sin transición. |
 | `states.*.always` | Transiciones sin evento. String = un solo destino. Lista = rombo. |
 | `states.*.always[].guard` | Mapa campo → valor; todas las igualdades deben cumplirse. |
-| `states.*.always[].target` | Id del estado siguiente. Sin `guard`, es el comodín (último). |
-| `states.*.meta` | Extensiones de producto: `open_ui`, `open_ui_routing`, `chooser`, `provides`, `requires`, `review_prefilled`, `hint`, `flow_submit`, `composer_capture`, `terminal_without_submit`. |
+| `states.*.always[].target` | Id del estado siguiente. Sin `guard`, es el comodín (último). Cadena vacía con `guard`: la rama termina ahí. |
+| `states.*.meta` | Extensiones de producto: `open_ui`, `open_ui_routing`, `chooser`, `provides`, `requires`, `review_prefilled`, `hint`, `flow_submit`, `composer_capture`, `terminal_without_submit`, `flow_dismiss`, `flow_actions`. |
 
 `flow_submit` de la raíz no se mueve: sigue cerrando el intent.
 

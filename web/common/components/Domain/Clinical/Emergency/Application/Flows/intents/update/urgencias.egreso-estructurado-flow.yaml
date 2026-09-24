@@ -10,18 +10,18 @@ keywords:
   - 'abandono guardia'
   - 'egreso guardia'
   - 'retiro sin atención'
-subintents:
-  -
-    id: completar_egreso
-    assistant_text: 'Confirmá fecha/hora del retiro'
-    requires:
-      - draft.guardia_id
-    provides: {  }
-    next: ''
-    open_ui:
-      action_id: clinical.emergency-guardia.egreso-formulario
-      params:
-        guardia_id: draft.guardia_id
+initial: completar_egreso
+states:
+  completar_egreso:
+    description: 'Confirmá fecha/hora del retiro'
+    meta:
+      requires:
+        - draft.guardia_id
+      open_ui:
+        action_id: clinical.emergency-guardia.egreso-formulario
+        params:
+          guardia_id: draft.guardia_id
+    type: final
 flow_submit:
   action_id: clinical.emergency-guardia.egreso-formulario
   params:

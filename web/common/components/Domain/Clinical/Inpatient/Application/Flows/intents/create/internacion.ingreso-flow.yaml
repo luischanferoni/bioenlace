@@ -10,21 +10,22 @@ keywords:
   - 'admitir paciente'
   - 'asignar cama'
   - 'nuevo ingreso piso'
-subintents:
-  -
-    id: ingresar
-    assistant_text: 'Completá los datos del ingreso'
-    requires:
-      - draft.id_persona
-    provides:
-      - draft.internacion_id
-    next: ''
-    open_ui:
-      action_id: clinical.internacion.ingreso-formulario
-      params:
-        id_persona: draft.id_persona
-        id_cama: draft.id_cama
-        id_guardia: draft.id_guardia
+initial: ingresar
+states:
+  ingresar:
+    description: 'Completá los datos del ingreso'
+    meta:
+      provides:
+        - draft.internacion_id
+      requires:
+        - draft.id_persona
+      open_ui:
+        action_id: clinical.internacion.ingreso-formulario
+        params:
+          id_persona: draft.id_persona
+          id_cama: draft.id_cama
+          id_guardia: draft.id_guardia
+    type: final
 flow_submit:
   action_id: clinical.internacion.ingreso-formulario
   params:

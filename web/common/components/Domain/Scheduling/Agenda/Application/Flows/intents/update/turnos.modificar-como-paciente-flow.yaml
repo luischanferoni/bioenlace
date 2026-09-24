@@ -14,27 +14,28 @@ intent_semantics:
     - ver_turnos_propios
     - elige_horario
     - reprogramar_turno_propio
-subintents:
-  -
-    id: select_turno
-    assistant_text: 'Turno a modificar'
-    provides:
-      - draft.id
-    next: select_slot
-    open_ui:
-      action_id: turnos.elegir-pendiente-como-paciente
-  -
-    id: select_slot
-    assistant_text: 'Nuevo horario'
-    requires:
-      - draft.id
-    provides:
-      - draft.slot_id
-    next: ''
-    open_ui:
-      action_id: turnos.slots-reprogramar-como-paciente
-      params:
-        id: draft.id
+initial: select_turno
+states:
+  select_turno:
+    description: 'Turno a modificar'
+    meta:
+      provides:
+        - draft.id
+      open_ui:
+        action_id: turnos.elegir-pendiente-como-paciente
+    always: select_slot
+  select_slot:
+    description: 'Nuevo horario'
+    meta:
+      provides:
+        - draft.slot_id
+      requires:
+        - draft.id
+      open_ui:
+        action_id: turnos.slots-reprogramar-como-paciente
+        params:
+          id: draft.id
+    type: final
 flow_submit:
   action_id: turnos.reprogramar-como-paciente
   params:

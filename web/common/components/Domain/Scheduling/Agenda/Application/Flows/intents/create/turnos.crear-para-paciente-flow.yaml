@@ -7,19 +7,20 @@ keywords:
   - 'agendar para paciente'
   - 'turno operativo'
   - 'dar turno a paciente'
-subintents:
-  -
-    id: crear
-    assistant_text: 'Datos del turno'
-    provides:
-      - draft.id_persona
-      - draft.slot_id
-      - draft.id_servicio_asignado
-      - draft.id_efector
-      - draft.id_profesional_efector_servicio
-    next: ''
-    open_ui:
-      action_id: turnos.crear-para-paciente
+initial: crear
+states:
+  crear:
+    description: 'Datos del turno'
+    meta:
+      provides:
+        - draft.id_persona
+        - draft.slot_id
+        - draft.id_servicio_asignado
+        - draft.id_efector
+        - draft.id_profesional_efector_servicio
+      open_ui:
+        action_id: turnos.crear-para-paciente
+    type: final
 flow_submit:
   action_id: turnos.crear-para-paciente
   params:

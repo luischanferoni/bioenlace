@@ -14,11 +14,11 @@ intent_semantics:
   objective: 'Abrí el resumen de tu última atención ambulatoria finalizada.'
   capabilities:
     - ver_ultima_atencion
-subintents:
-  -
-    id: ver_ultima
-    assistant_text: 'Tu última atención'
-    provides: {  }
-    next: ''
-    open_ui:
-      action_id: clinical.encounter.ultima-atencion-ui-como-paciente
+initial: ver_ultima
+states:
+  ver_ultima:
+    description: 'Tu última atención'
+    meta:
+      open_ui:
+        action_id: clinical.encounter.ultima-atencion-ui-como-paciente
+    type: final

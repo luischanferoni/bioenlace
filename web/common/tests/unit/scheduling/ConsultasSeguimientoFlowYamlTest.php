@@ -3,6 +3,7 @@
 namespace common\tests\unit\scheduling;
 
 use Codeception\Test\Unit;
+use common\components\Platform\Assistant\SubIntentEngine\StatechartManifest;
 use common\components\Platform\Assistant\SubIntentEngine\SubIntentEngine;
 use Symfony\Component\Yaml\Yaml;
 
@@ -16,13 +17,16 @@ class ConsultasSeguimientoFlowYamlTest extends Unit
     public function testRoutingPorNecesidadYDraftKeys(): void
     {
         $path = dirname(__DIR__, 3)
-            . '/metadata/bioenlace/clinical/intents/create/atencion.necesito-atencion.yaml';
+            . '/components/Domain/Clinical/Encounter/Application/Flows/intents/create/atencion.necesito-atencion.yaml';
         $this->assertFileExists($path);
-        $yaml = Yaml::parseFile($path);
-        $this->assertIsArray($yaml);
-        $this->assertSame('scheduling.solicitar_atencion', $yaml['draft_hydrator']['handler'] ?? null);
+        $raw = Yaml::parseFile($path);
+        $this->assertIsArray($raw);
+        $this->assertArrayNotHasKey('subintents', $raw);
+        $this->assertSame('scheduling.solicitar_atencion', $raw['draft_hydrator']['handler'] ?? null);
+        $this->assertSame('triage_raiz', $raw['initial'] ?? null);
 
-        $extra = $yaml['draft_keys_extra'] ?? [];
+        $extra = $raw['context'] ?? [];
+        $yaml = StatechartManifest::apply($raw);
         $this->assertContains('medication_request_ids', $extra);
         $this->assertContains('medicacion_operacion', $extra);
         $this->assertContains('ajuste_motivo', $extra);

@@ -8,12 +8,13 @@ keywords:
   - 'cumplimiento terapia'
   - 'care plan staff'
   - 'seguimiento tratamiento'
-subintents:
-  -
-    id: ver_dashboard
-    assistant_text: 'Resumen de adherencia en el efector'
-    provides:
-      - draft.care_plan_id
-    next: ''
-    open_ui:
-      action_id: clinical.care-plan.adherencia-resumen-staff
+initial: ver_dashboard
+states:
+  ver_dashboard:
+    description: 'Resumen de adherencia en el efector'
+    meta:
+      provides:
+        - draft.care_plan_id
+      open_ui:
+        action_id: clinical.care-plan.adherencia-resumen-staff
+    type: final

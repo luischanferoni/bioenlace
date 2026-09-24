@@ -16,13 +16,13 @@ keywords:
   - 'plantilla del centro'
 intent_semantics:
   objective: 'Ver el listado de profesionales con asignación en el efector de sesión.'
-subintents:
-  -
-    id: mostrar_listado
-    assistant_text: 'Listando profesionales del efector'
-    provides: {  }
-    next: ''
-    open_ui:
-      action_id: data-access.listar
-      params:
-        metric_id: profesionales_listado_efector
+initial: mostrar_listado
+states:
+  mostrar_listado:
+    description: 'Listando profesionales del efector'
+    meta:
+      open_ui:
+        action_id: data-access.listar
+        params:
+          metric_id: profesionales_listado_efector
+    type: final

@@ -12,23 +12,23 @@ intent_semantics:
   objective: 'Consultá tus recetas electrónicas emitidas, con detalle y descarga PDF.'
   capabilities:
     - ver_recetas
-subintents:
-  -
-    id: ver_listado
-    assistant_text: 'Elegí una receta electrónica'
-    provides:
-      - draft.prescription_id
-    next: ver_detalle
-    open_ui:
-      action_id: clinical.electronic-prescription.mis-recetas-como-paciente
-  -
-    id: ver_detalle
-    assistant_text: 'Detalle de la receta'
-    requires:
-      - draft.prescription_id
-    provides: {  }
-    next: ''
-    open_ui:
-      action_id: clinical.electronic-prescription.ver-receta-como-paciente
-      params:
-        prescription_id: draft.prescription_id
+initial: ver_listado
+states:
+  ver_listado:
+    description: 'Elegí una receta electrónica'
+    meta:
+      provides:
+        - draft.prescription_id
+      open_ui:
+        action_id: clinical.electronic-prescription.mis-recetas-como-paciente
+    always: ver_detalle
+  ver_detalle:
+    description: 'Detalle de la receta'
+    meta:
+      requires:
+        - draft.prescription_id
+      open_ui:
+        action_id: clinical.electronic-prescription.ver-receta-como-paciente
+        params:
+          prescription_id: draft.prescription_id
+    type: final

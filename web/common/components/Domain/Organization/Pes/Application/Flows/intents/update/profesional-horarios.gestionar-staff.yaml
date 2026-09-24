@@ -22,38 +22,39 @@ keywords:
   - 'plantel de guardia de un profesional'
 intent_semantics:
   objective: 'Cargar horarios EMER/IMP de un profesional del efector.'
-subintents:
-  -
-    id: select_profesional
-    assistant_text: 'Elegí el profesional'
-    provides:
-      - draft.id_profesional_efector_servicio
-    next: select_pes
-    open_ui:
-      action_id: profesional-efector-servicio.listar-por-efector
-  -
-    id: select_pes
-    assistant_text: 'Elegí el servicio / asignación'
-    requires:
-      - draft.id_profesional_efector_servicio
-    provides:
-      - draft.id_profesional_efector_servicio
-    next: gestionar_horario
-    open_ui:
-      action_id: profesional-horarios.elegir-pes
-      params:
-        modo: staff
-        id_profesional_efector_servicio: draft.id_profesional_efector_servicio
-  -
-    id: gestionar_horario
-    assistant_text: 'Completá los horarios'
-    requires:
-      - draft.id_profesional_efector_servicio
-    provides:
-      - draft.horario_ui_completed
-    next: ''
-    open_ui:
-      action_id: profesional-horarios.gestionar
-      params:
-        modo: staff
-        id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+initial: select_profesional
+states:
+  select_profesional:
+    description: 'Elegí el profesional'
+    meta:
+      provides:
+        - draft.id_profesional_efector_servicio
+      open_ui:
+        action_id: profesional-efector-servicio.listar-por-efector
+    always: select_pes
+  select_pes:
+    description: 'Elegí el servicio / asignación'
+    meta:
+      provides:
+        - draft.id_profesional_efector_servicio
+      requires:
+        - draft.id_profesional_efector_servicio
+      open_ui:
+        action_id: profesional-horarios.elegir-pes
+        params:
+          modo: staff
+          id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+    always: gestionar_horario
+  gestionar_horario:
+    description: 'Completá los horarios'
+    meta:
+      provides:
+        - draft.horario_ui_completed
+      requires:
+        - draft.id_profesional_efector_servicio
+      open_ui:
+        action_id: profesional-horarios.gestionar
+        params:
+          modo: staff
+          id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+    type: final

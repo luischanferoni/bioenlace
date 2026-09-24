@@ -13,23 +13,23 @@ intent_semantics:
   objective: 'Consultá tus informes de laboratorio sincronizados, con detalle y descarga PDF.'
   capabilities:
     - ver_resultados_lab
-subintents:
-  -
-    id: ver_listado
-    assistant_text: 'Elegí un informe de laboratorio'
-    provides:
-      - draft.report_id
-    next: ver_detalle
-    open_ui:
-      action_id: clinical.laboratory-result.mis-resultados-como-paciente
-  -
-    id: ver_detalle
-    assistant_text: 'Detalle del informe'
-    requires:
-      - draft.report_id
-    provides: {  }
-    next: ''
-    open_ui:
-      action_id: clinical.laboratory-result.ver-informe-como-paciente
-      params:
-        report_id: draft.report_id
+initial: ver_listado
+states:
+  ver_listado:
+    description: 'Elegí un informe de laboratorio'
+    meta:
+      provides:
+        - draft.report_id
+      open_ui:
+        action_id: clinical.laboratory-result.mis-resultados-como-paciente
+    always: ver_detalle
+  ver_detalle:
+    description: 'Detalle del informe'
+    meta:
+      requires:
+        - draft.report_id
+      open_ui:
+        action_id: clinical.laboratory-result.ver-informe-como-paciente
+        params:
+          report_id: draft.report_id
+    type: final

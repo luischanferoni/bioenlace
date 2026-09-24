@@ -11,15 +11,16 @@ keywords:
   - 'reglas de cancelación'
   - 'me multan'
   - 'multa si no voy'
-subintents:
-  -
-    id: consultar
-    assistant_text: 'Centro de salud'
-    provides:
-      - draft.id_efector
-    next: ''
-    open_ui:
-      action_id: turnos.politica-como-paciente
+initial: consultar
+states:
+  consultar:
+    description: 'Centro de salud'
+    meta:
+      provides:
+        - draft.id_efector
+      open_ui:
+        action_id: turnos.politica-como-paciente
+    type: final
 flow_submit:
   action_id: turnos.politica-como-paciente
   params:

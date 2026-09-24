@@ -46,23 +46,23 @@ field_resolution:
     - nombre
     - documento
     - dni
-subintents:
-  -
-    id: elegir_profesional
-    assistant_text: 'Elegí el profesional del efector'
-    provides:
-      - draft.id_profesional_efector_servicio
-    next: cargar_vigencia
-    open_ui:
-      action_id: profesional-efector-servicio.listar-por-efector
-      params:
-        excluir_id_persona_sesion: '1'
-  -
-    id: cargar_vigencia
-    assistant_text: 'Completá la condición laboral del profesional'
-    provides: {  }
-    next: ''
-    open_ui:
-      action_id: profesional-efector-servicio.crear-condicion-laboral
-      params:
-        id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+initial: elegir_profesional
+states:
+  elegir_profesional:
+    description: 'Elegí el profesional del efector'
+    meta:
+      provides:
+        - draft.id_profesional_efector_servicio
+      open_ui:
+        action_id: profesional-efector-servicio.listar-por-efector
+        params:
+          excluir_id_persona_sesion: '1'
+    always: cargar_vigencia
+  cargar_vigencia:
+    description: 'Completá la condición laboral del profesional'
+    meta:
+      open_ui:
+        action_id: profesional-efector-servicio.crear-condicion-laboral
+        params:
+          id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+    type: final

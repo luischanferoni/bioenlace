@@ -14,17 +14,17 @@ intent_semantics:
   objective: 'Autorizá a otra persona con cuenta para gestionar turnos y gestiones en tu nombre.'
   capabilities:
     - designar_representante
-subintents:
-  -
-    id: gestionar_delegacion
-    assistant_text: 'Designar representante'
-    provides: {  }
-    next: ''
-    open_ui:
-      action_id: person-representation.hub
-      client_open:
-        kind: native
-        mobile:
-          screen_id: person_representation_hub
+initial: gestionar_delegacion
+states:
+  gestionar_delegacion:
+    description: 'Designar representante'
+    meta:
+      open_ui:
+        action_id: person-representation.hub
+        client_open:
+          kind: native
+          mobile:
+            screen_id: person_representation_hub
+    type: final
 flow_submit:
   action_id: person-representation.designar-representante

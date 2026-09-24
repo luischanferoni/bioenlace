@@ -26,47 +26,56 @@ intent_semantics:
 draft_hydrator:
   handler: organization.pes_from_servicio
   require_own_pes: true
-subintents:
-  -
-    id: select_servicio
-    assistant_text: 'Elegí el servicio'
-    provides:
-      - draft.id_servicio
-      - draft.id_profesional_efector_servicio
-    next: select_encounter_class
-    open_ui:
-      action_id: profesional-efector-servicio.listar-mis-servicios-en-efector
-      params:
-        incluir_sin_agenda: '1'
-  -
-    id: select_encounter_class
-    assistant_text: '¿Ambulatorio, guardia o internación?'
-    requires:
-      - draft.id_profesional_efector_servicio
-    provides:
-      - draft.encounter_class
-    next: configurar_horario
-    open_ui:
-      action_id: profesional-horarios.elegir-encounter-class
-  -
-    id: configurar_horario
-    assistant_text: 'Configurá tus horarios'
-    requires:
-      - draft.id_profesional_efector_servicio
-      - draft.encounter_class
-    provides:
-      - draft.horario_ui_completed
-    next: ''
-    open_ui_routing:
-      -
-        when:
-          draft_equals: { encounter_class: AMB }
-        open_ui:
-          action_id: profesional-agenda.configurar-agenda
-          params: { id_profesional_efector_servicio: draft.id_profesional_efector_servicio, id_servicio: draft.id_servicio, ui_step: datos }
-      -
-        when:
-          default: true
-        open_ui:
-          action_id: profesional-horarios.gestionar
-          params: { modo: propio, id_profesional_efector_servicio: draft.id_profesional_efector_servicio, id_servicio: draft.id_servicio, encounter_class: draft.encounter_class }
+initial: select_servicio
+states:
+  select_servicio:
+    description: 'Elegí el servicio'
+    meta:
+      provides:
+        - draft.id_servicio
+        - draft.id_profesional_efector_servicio
+      open_ui:
+        action_id: profesional-efector-servicio.listar-mis-servicios-en-efector
+        params:
+          incluir_sin_agenda: '1'
+    always: select_encounter_class
+  select_encounter_class:
+    description: '¿Ambulatorio, guardia o internación?'
+    meta:
+      provides:
+        - draft.encounter_class
+      requires:
+        - draft.id_profesional_efector_servicio
+      open_ui:
+        action_id: profesional-horarios.elegir-encounter-class
+    always: configurar_horario
+  configurar_horario:
+    description: 'Configurá tus horarios'
+    meta:
+      provides:
+        - draft.horario_ui_completed
+      requires:
+        - draft.id_profesional_efector_servicio
+        - draft.encounter_class
+      open_ui_routing:
+        -
+          when:
+            draft_equals:
+              encounter_class: AMB
+          open_ui:
+            action_id: profesional-agenda.configurar-agenda
+            params:
+              id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+              id_servicio: draft.id_servicio
+              ui_step: datos
+        -
+          when:
+            default: true
+          open_ui:
+            action_id: profesional-horarios.gestionar
+            params:
+              modo: propio
+              id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+              id_servicio: draft.id_servicio
+              encounter_class: draft.encounter_class
+    type: final

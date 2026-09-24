@@ -12,7 +12,8 @@ use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
 use common\components\Platform\Core\Permission\IntentAccessService;
 
 /**
- * Match claro a un intent: ofrece el botón. El flow arranca cuando la persona lo toca.
+ * Botón de un intent ya elegido (atajo del clasificador). El flow arranca cuando la persona lo toca.
+ * El match claro del catálogo no pasa por acá: va a la guía.
  */
 final class ClaraRoutingHandler
 {

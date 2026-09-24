@@ -39,7 +39,10 @@ final class SmartCatalogRoutingHandlers
             }
 
             if ($decision->shouldRouteIntentDirectly()) {
-                AssistantPlanningLogService::setFinalPath('1ia_clara');
+                $envelope = IncompleteRoutingHandler::handle($evaluation, $content, $userId);
+                if ($envelope !== null) {
+                    return $envelope;
+                }
 
                 return ClaraRoutingHandler::handleSingle($content, $decision->primaryIntentId(), $userId);
             }

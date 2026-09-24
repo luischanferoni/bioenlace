@@ -13,8 +13,8 @@ Orquestación del chat: preprocess → router → canales.
 
 | `routing_result` | Destino típico |
 |------------------|----------------|
-| `clara` | Botón del intent (el flow abre al tocarlo). Artículo o plantilla siguen en la misma respuesta |
-| `incompletas` | Guide + plan HIS (2ª IA) |
+| `clara` | Guía (2ª IA) y botón del intent. Artículo o plantilla siguen en la misma respuesta, sin guía |
+| `incompletas` | La misma guía + plan HIS |
 | `dudosa` | Encauzamiento ambiguous |
 | `fuera_de_his` | Texto fijo |
 

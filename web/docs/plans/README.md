@@ -16,7 +16,7 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Receta electrónica (AR) | `receta-electronica/` | Fases 1–2 en producción; repositorio nacional pendiente |
 | Interoperabilidad HC FHIR | `interoperabilidad-historia-clinica/` | Código + reconcile listos; homologación / credenciales pendientes |
 | Flows como statechart | `flow-statechart/` | Fases 1–3: lectores y guía usan `states`; compilador retirado |
-| Guía siempre | `guia-siempre/` | `clara` e `incompleta` pasan por la guía; necesidades y tags de estado pendientes |
+| Guía siempre | `guia-siempre/` | Fase 1: `clara` e `incompleta` van a la guía. Fases 2–3 (necesidades y tags de estado) pendientes |
 
 ## Planes archivados (carpeta eliminada)
 

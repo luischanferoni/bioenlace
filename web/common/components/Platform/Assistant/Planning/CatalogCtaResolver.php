@@ -8,9 +8,10 @@ use common\components\Platform\Assistant\IntentEngine\UiActionCatalog;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
 
 /**
- * CTA(s) post-2ª IA (incompletas) desde catálogo inteligente (sin regex).
+ * CTA(s) que la guía ofrece como botones.
  *
- * El smart-catalog declara qué ofrecer; el label sale de action_name / catálogo.
+ * Un match claro aporta el intent del `tool_ref`. Una fila sin intent
+ * ejecutable aporta `cta_intent_ids`. El label sale de action_name / catálogo.
  * La autorización de ejecución sigue en ChatOrchestrator al lanzar el intent.
  */
 final class CatalogCtaResolver
@@ -62,23 +63,39 @@ final class CatalogCtaResolver
      */
     public static function declaredIntentIds(SmartCatalogRoutingEvaluation $evaluation): array
     {
+        $ids = [];
+        foreach ($evaluation->decision->intentIds as $intentId) {
+            $intentId = trim((string) $intentId);
+            if ($intentId !== '' && !in_array($intentId, $ids, true)) {
+                $ids[] = $intentId;
+            }
+        }
+        if ($ids !== []) {
+            return $ids;
+        }
+
         $fromEntry = $evaluation->decision->catalogEntry?->ctaIntentIds ?? [];
-        if ($fromEntry !== []) {
-            return $fromEntry;
+        if ($fromEntry === []) {
+            foreach ($evaluation->match->ranked as $row) {
+                $catalogId = trim((string) ($row['catalog_id'] ?? ''));
+                if ($catalogId === '') {
+                    continue;
+                }
+                $entry = SmartCatalogRegistry::findById($catalogId);
+                if ($entry !== null && $entry->ctaIntentIds !== []) {
+                    $fromEntry = $entry->ctaIntentIds;
+                    break;
+                }
+            }
+        }
+        foreach ($fromEntry as $intentId) {
+            $intentId = trim((string) $intentId);
+            if ($intentId !== '' && !in_array($intentId, $ids, true)) {
+                $ids[] = $intentId;
+            }
         }
 
-        foreach ($evaluation->match->ranked as $row) {
-            $catalogId = trim((string) ($row['catalog_id'] ?? ''));
-            if ($catalogId === '') {
-                continue;
-            }
-            $entry = SmartCatalogRegistry::findById($catalogId);
-            if ($entry !== null && $entry->ctaIntentIds !== []) {
-                return $entry->ctaIntentIds;
-            }
-        }
-
-        return [];
+        return $ids;
     }
 
     private static function labelForIntent(string $intentId, UiActionCatalog $catalog): string

@@ -8,7 +8,9 @@ use common\components\Platform\Assistant\Catalog\SmartCatalogRegistry;
 use common\components\Platform\Assistant\Context\AssistantContextAreaAspectCatalog;
 use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
 use common\components\Platform\Assistant\Planning\AssistantPlanningLogService;
+use common\components\Platform\Assistant\Planning\CatalogCtaResolver;
 use common\components\Platform\Assistant\Planning\SmartCatalogRoutingService;
+use common\components\Platform\Ai\Cost\AICostTracker;
 
 class SmartCatalogRoutingHandlersTest extends Unit
 {
@@ -18,6 +20,9 @@ class SmartCatalogRoutingHandlersTest extends Unit
         AssistantMetadataLoader::resetCacheForTests();
         AssistantContextAreaAspectCatalog::resetCacheForTests();
         AssistantPlanningLogService::resetForTests();
+        if (class_exists(AICostTracker::class)) {
+            AICostTracker::finalizarEjecucionPrueba();
+        }
     }
 
     public function testFueraDeHisHandlerReturnsMessageEnvelope(): void
@@ -70,5 +75,44 @@ class SmartCatalogRoutingHandlersTest extends Unit
 
         $this->assertTrue($evaluation->decision->isIncompletas());
         $this->assertFalse($evaluation->decision->shouldRouteIntentDirectly());
+    }
+
+    public function testClaraIntentGoesToGuideNotFlow(): void
+    {
+        if (class_exists(AICostTracker::class)) {
+            AICostTracker::iniciarEjecucionPrueba();
+        }
+
+        $evaluation = SmartCatalogRoutingService::evaluate([
+            'normalized_text' => 'necesito una ecografia',
+            'routing_hint' => 'pedido_claro',
+            'tags' => ['estudio'],
+            'context_areas' => [],
+            'extractions' => [],
+        ], 0);
+
+        $this->assertTrue($evaluation->decision->shouldRouteIntentDirectly());
+        $this->assertSame('atencion.necesito-atencion', $evaluation->decision->primaryIntentId());
+        $this->assertContains(
+            'atencion.necesito-atencion',
+            CatalogCtaResolver::declaredIntentIds($evaluation)
+        );
+
+        AssistantPlanningLogService::begin($evaluation->firstIa, $evaluation->match->ranked);
+        $envelope = SmartCatalogRoutingHandlers::tryHandle(
+            $evaluation,
+            'necesito una ecografia',
+            0
+        );
+
+        $this->assertNotSame('flow', is_array($envelope) ? ($envelope['kind'] ?? null) : null);
+        if (is_array($envelope)) {
+            $this->assertContains($envelope['kind'] ?? null, ['message', 'interactive']);
+        }
+        $final = AssistantPlanningLogService::snapshot()['final_path'] ?? null;
+        $this->assertNotContains($final, ['1ia_clara', 'legacy_operational_intent_classifier']);
+        if (is_string($final) && $final !== '') {
+            $this->assertContains($final, ['2ia_guide', '3ia_planner_guide']);
+        }
     }
 }

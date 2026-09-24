@@ -13,7 +13,7 @@ use common\components\Platform\Assistant\Planning\SmartCatalogRoutingEvaluation;
 use Yii;
 
 /**
- * Routing incompletas: plan declarativo ± planificadora + 2ª IA guide.
+ * Routing que llama a la guía: match claro de un intent, o incompletas.
  */
 final class IncompleteRoutingHandler
 {

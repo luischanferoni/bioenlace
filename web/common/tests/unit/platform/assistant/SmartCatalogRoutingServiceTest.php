@@ -158,7 +158,7 @@ class SmartCatalogRoutingServiceTest extends Unit
         $this->assertTrue($evaluation->decision->isDudosa());
     }
 
-    public function testGreetingOnlyRoutesToGuideWithoutCatalog(): void
+    public function testGreetingOnlyRoutesToDudosaWithoutGuide(): void
     {
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'hola',
@@ -168,8 +168,8 @@ class SmartCatalogRoutingServiceTest extends Unit
             'extractions' => [],
         ], 0, 'Hola');
 
-        $this->assertTrue($evaluation->decision->isIncompletas());
-        $this->assertSame('guide', $evaluation->decision->legacyUserGoal);
+        $this->assertTrue($evaluation->decision->isDudosa());
+        $this->assertSame('ambiguous', $evaluation->decision->legacyUserGoal);
         $this->assertNull($evaluation->decision->catalogEntry);
     }
 

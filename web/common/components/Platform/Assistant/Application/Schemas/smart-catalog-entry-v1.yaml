@@ -44,8 +44,8 @@ fields:
     type: string
     optional: true
     notes: >
-      Copy UX opcional para match 100% (artículo/dato fijo). El intent usa
-      ui-text/by-client.yaml (full_match_intent*). No hay un camino de routing aparte.
+      Copy UX de artículo o dato fijo en la misma respuesta. Un intent claro
+      no usa este texto: pasa por la guía y el botón.
   cta_intent_id:
     type: string
     optional: true
@@ -53,7 +53,7 @@ fields:
   cta_intent_ids:
     type: list<string>
     optional: true
-    notes: Uno o más intent_id ofrecidos como botones tras routing incompletas.
+    notes: Botones tras la guía cuando la fila no trae un intent ejecutable. Si hay tool_ref de intent, el botón es ese intent.
   priority:
     type: integer
     default: 50

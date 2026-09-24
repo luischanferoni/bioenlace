@@ -61,7 +61,7 @@ final class SmartCatalogRoutingService
             $message = trim((string) ($firstIa['normalized_text'] ?? ''));
         }
         if (ChatChannelPolicy::isGreetingOnly($message)) {
-            return self::guideWithoutCatalogDecision();
+            return self::greetingDecision();
         }
 
         $best = $match->best;
@@ -136,14 +136,14 @@ final class SmartCatalogRoutingService
     }
 
     /**
-     * Saludo solo: charla guide, sin fila de catálogo ni CTA clínico.
+     * Saludo solo: preguntas fijas, sin guía ni fila de catálogo.
      */
-    private static function guideWithoutCatalogDecision(): SmartCatalogRoutingDecision
+    private static function greetingDecision(): SmartCatalogRoutingDecision
     {
         return new SmartCatalogRoutingDecision(
-            PreprocessRoutingHintCatalog::PATH_NEEDS_CONTEXT,
+            PreprocessRoutingHintCatalog::PATH_NO_ACTION,
             PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint(
-                PreprocessRoutingHintCatalog::PATH_NEEDS_CONTEXT
+                PreprocessRoutingHintCatalog::PATH_NO_ACTION
             ),
             [],
             '',

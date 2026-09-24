@@ -4,11 +4,7 @@ shortcut:
   hidden: true
 action_name: 'Cambio de cama'
 rbac_route: /api/clinical/episode-of-care/by-internacion
-keywords:
-  - 'cambio de cama'
-  - 'traslado de cama'
-  - 'mover paciente internado'
-  - 'reubicar internación'
+
 initial: cambiar_cama
 states:
   cambiar_cama:
@@ -27,3 +23,4 @@ flow_submit:
     internacion_id: draft.internacion_id
     id_cama: draft.id_cama
     motivo: draft.motivo
+

@@ -2,13 +2,7 @@ intent_id: plataforma.enviar-queja-como-paciente-flow
 version: 1
 action_name: 'Enviar queja'
 rbac_route: /api/queja-paciente/enviar-como-paciente
-keywords:
-  - 'enviar queja'
-  - reclamo
-  - 'problema con la app'
-  - 'reportar problema'
-  - 'sugerencia de mejora'
-  - 'mal servicio'
+
 intent_semantics:
   objective: 'Registrá una queja operativa sobre la app, turnos o atención administrativa (no para síntomas clínicos).'
 initial: completar
@@ -24,3 +18,4 @@ flow_submit:
   params:
     categoria: draft.categoria
     descripcion: draft.descripcion
+

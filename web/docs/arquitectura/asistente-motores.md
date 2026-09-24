@@ -60,11 +60,12 @@ flowchart LR
 
 ## Catálogo inteligente y router unificado
 
-Tras preprocess, el mensaje **no** se reparte por `user_goal: guide|operational`. PHP matchea contra `assistant/catalog/smart-catalog.yaml` y elige camino:
+Tras preprocess, el mensaje **no** se reparte por `user_goal: guide|operational`. PHP cruza los tags con `meta.tags` de los estados y elige el intent. Artículo, tema ajeno al HIS y aspectos de datos siguen en `assistant/catalog/direct-doors.yaml`.
 
 | Pieza | Ubicación | Rol |
 |-------|-----------|-----|
-| Match | `Catalog/SmartCatalogMatchService` | Score tags + áreas + hints → tools |
+| Match | `Catalog/SmartCatalogMatchService` | Artículo, fuera de HIS y aspectos de datos |
+| Estados | `Catalog/StateTagIndex` | Tags del preprocess contra `meta.tags`; elige el intent |
 | Plan | `Planning/DeclarativePlanService` | Área → aspect loaders + artículos |
 | Handlers | `Chat/Routing/Handlers/*` | Envelope 1 IA o encadena guide |
 | Log | `Planning/AssistantPlanningLogService` | `planning_applied` por mensaje |

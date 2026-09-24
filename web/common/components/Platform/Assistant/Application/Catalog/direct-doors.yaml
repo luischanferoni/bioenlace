@@ -1,0 +1,43 @@
+# Puertas que no son un flow: artículo, tema ajeno al HIS y aspectos de datos.
+# El intent lo elige el cruce de tags del preprocess con meta.tags de cada estado.
+version: 1
+
+entries:
+  - id: llegar-tarde-politicas
+    tool_type: aspect
+    tool_ref: site.appointment.policies
+    routing_result: incompletas
+    priority: 75
+    triggers:
+      tags: [llegar_tarde, tolerancia]
+      phrases: [llego tarde, llegar tarde, me esperan, voy tarde, minutos tarde]
+      context_areas: [scheduling]
+
+  - id: llegar-tarde-cita-actual
+    tool_type: aspect
+    tool_ref: appointment.current
+    routing_result: incompletas
+    priority: 70
+    triggers:
+      tags: [llegar_tarde]
+      phrases: [llego tarde, llegar tarde, voy tarde, mi turno, mi cita]
+      context_areas: [scheduling]
+    required_anchors: [subject_persona]
+
+  - id: articulo-representacion
+    tool_type: article
+    tool_ref: representacion
+    routing_result: clara
+    priority: 85
+    triggers:
+      tags: [representacion, tutela, representante]
+      phrases: [representación, operar por mi hijo, vincular menor, designar representante, tutor]
+      context_areas: [person]
+
+  - id: fuera-his-servicios-inexistentes
+    match_only: true
+    routing_result: fuera_de_his
+    priority: 10
+    triggers:
+      tags: [fuera_his]
+      phrases: [medium, sesión con una medium, clima, chiste, horóscopo]

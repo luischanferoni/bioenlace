@@ -2,11 +2,7 @@ intent_id: turnos.reubicar-como-paciente-flow
 version: 1
 action_name: 'Reubicar turno'
 rbac_route: /api/turnos/reubicar-como-paciente
-keywords:
-  - 'reubicar turno'
-  - 'turno en resolución'
-  - 'cambiar profesional del turno'
-  - 'nuevo turno en consultorio'
+
 intent_semantics:
   objective: 'Si tu turno quedó en reubicación, elegí de nuevo servicio, centro, profesional y horario.'
 context:
@@ -108,3 +104,4 @@ flow_submit:
     slot_id: draft.slot_id
     id_efector: draft.id_efector
     id_servicio_asignado: draft.id_servicio_asignado
+

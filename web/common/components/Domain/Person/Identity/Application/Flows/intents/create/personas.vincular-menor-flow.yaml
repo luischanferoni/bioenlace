@@ -2,13 +2,7 @@ intent_id: personas.vincular-menor-flow
 version: 1
 action_name: 'Solicitar tutela de menor'
 rbac_route: /api/person-representation/solicitar-menor-como-tutor
-keywords:
-  - 'vincular menor'
-  - 'vincular hijo'
-  - 'tutela de menor'
-  - 'menor a cargo'
-  - 'solicitar tutela'
-  - 'agregar hijo'
+
 intent_semantics:
   objective: 'Solicitá tutela sobre un menor sin cuenta; el centro debe verificarla antes de activarla.'
 initial: gestionar_tutela
@@ -25,3 +19,4 @@ states:
     type: final
 flow_submit:
   action_id: person-representation.solicitar-menor-como-tutor
+

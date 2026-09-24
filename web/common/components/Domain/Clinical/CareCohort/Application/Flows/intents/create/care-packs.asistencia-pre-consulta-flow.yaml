@@ -4,12 +4,7 @@ shortcut:
   hidden: true
 action_name: 'Cuestionario pre-consulta'
 rbac_route: /api/care-packs/assistance
-keywords:
-  - 'asistencia preconsulta'
-  - 'cuestionario pre consulta'
-  - 'preguntas antes de la consulta'
-  - 'cuestionario antes de la consulta'
-  - preconsulta
+
 intent_semantics:
   objective: 'Completá el cuestionario de asistencia antes de un turno pendiente propio.'
 initial: select_turno
@@ -36,3 +31,4 @@ flow_submit:
   action_id: care-packs.assistance
   params:
     turno_id: draft.id
+

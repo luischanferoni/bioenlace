@@ -43,7 +43,10 @@ class SmartCatalogRoutingServiceTest extends Unit
             'routing_hint' => 'pedido_claro',
             'tags' => ['sacar_turno'],
             'context_areas' => ['scheduling'],
-            'extractions' => [],
+            'extractions' => [
+                ['span' => 'cardiólogo', 'category' => 'profesional', 'synonyms' => []],
+                ['span' => 'turno', 'category' => 'turno', 'synonyms' => []],
+            ],
         ], 0);
 
         $decision = $evaluation->decision;
@@ -59,17 +62,15 @@ class SmartCatalogRoutingServiceTest extends Unit
             'routing_hint' => 'pedido_claro',
             'tags' => ['pedido_turno_sin_destino'],
             'context_areas' => ['scheduling'],
-            'extractions' => [],
+            'extractions' => [
+                ['span' => 'turno', 'category' => 'turno', 'synonyms' => []],
+            ],
         ], 0);
 
         $decision = $evaluation->decision;
-        $this->assertTrue($decision->isIncompletas());
-        $this->assertFalse($decision->shouldRouteIntentDirectly());
-        $this->assertSame('agenda-pedido-sin-destino', $decision->catalogEntry?->id);
-        $this->assertSame(
-            ['turnos.crear-como-paciente', 'atencion.necesito-atencion'],
-            $decision->catalogEntry?->ctaIntentIds
-        );
+        $this->assertSame('clara', $decision->routingResult);
+        $this->assertTrue($decision->shouldRouteIntentDirectly());
+        $this->assertSame('turnos.crear-como-paciente', $decision->primaryIntentId());
     }
 
     public function testEstudioRoutesAtencionNotAgendaPura(): void
@@ -95,7 +96,9 @@ class SmartCatalogRoutingServiceTest extends Unit
             'routing_hint' => 'pedido_claro',
             'tags' => ['mis_turnos'],
             'context_areas' => ['scheduling'],
-            'extractions' => [],
+            'extractions' => [
+                ['span' => 'turnos', 'category' => 'turnos', 'synonyms' => []],
+            ],
         ], 0);
 
         $decision = $evaluation->decision;
@@ -135,7 +138,7 @@ class SmartCatalogRoutingServiceTest extends Unit
                 'turnos.ver-ultimo-en-oferta-como-paciente',
             ],
             'extractions' => [
-                ['span' => 'medicación', 'category' => 'servicio', 'synonyms' => []],
+                ['span' => 'medicación', 'category' => 'sintomas', 'synonyms' => []],
             ],
         ], 0);
 

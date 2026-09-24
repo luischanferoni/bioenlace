@@ -2,14 +2,7 @@ intent_id: turnos.ver-ultimo-en-oferta-como-paciente
 version: 1
 action_name: 'Última vez en un servicio'
 rbac_route: /api/turnos/listar-como-paciente
-keywords:
-  - 'última vez que fui'
-  - 'cuándo fui al'
-  - 'última cita en'
-  - 'última vez al dentista'
-  - 'última vez al kinesiólogo'
-  - 'cuándo fue la última vez'
-  - 'última vez en odontología'
+
 intent_semantics:
   objective: 'Consultá cuándo fue tu último turno en un área del centro (la que nombraste o, si no se cruza, tus últimos turnos).'
 draft_hydrator:
@@ -23,6 +16,8 @@ states:
   ver_ultimo:
     description: 'Tu último turno en esa oferta'
     meta:
+      tags:
+        - ultima_vez
       open_ui:
         action_id: turnos.listar-como-paciente
         params:
@@ -32,3 +27,4 @@ states:
         entity: servicio
         match_property: nombre
     type: final
+

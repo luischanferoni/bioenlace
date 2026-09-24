@@ -2,11 +2,7 @@ intent_id: profesional-agenda.resolver-conflictos-flow
 version: 1
 action_name: 'Resolver conflictos de agenda (staff)'
 rbac_route: /api/profesional-agenda/resolver-conflictos-flow
-keywords:
-  - 'conflictos agenda'
-  - 'resolver conflicto paciente'
-  - 'turnos desalineados'
-  - 'cambio horario profesional'
+
 initial: select_turno
 states:
   select_turno:
@@ -34,3 +30,4 @@ flow_submit:
   params:
     id: draft.id
     eleccion: draft.eleccion
+

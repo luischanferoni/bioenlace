@@ -2,13 +2,7 @@ intent_id: turnos.indicadores-agenda-flow
 version: 1
 action_name: 'Indicadores de agenda'
 rbac_route: /api/home/panel
-keywords:
-  - 'indicadores agenda'
-  - 'no show'
-  - 'ausentismo turnos'
-  - 'tiempo hasta cita'
-  - 'métricas turnos'
-  - 'kpi agenda'
+
 initial: consultar_indicadores
 states:
   consultar_indicadores:
@@ -27,3 +21,4 @@ flow_submit:
     fecha_desde: draft.fecha_desde
     fecha_hasta: draft.fecha_hasta
     id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+

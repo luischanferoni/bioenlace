@@ -2,11 +2,7 @@ intent_id: turnos.crear-para-paciente-flow
 version: 1
 action_name: 'Crear turno para paciente'
 rbac_route: /api/turnos/crear-para-paciente
-keywords:
-  - 'crear turno paciente'
-  - 'agendar para paciente'
-  - 'turno operativo'
-  - 'dar turno a paciente'
+
 initial: crear
 states:
   crear:
@@ -29,3 +25,4 @@ flow_submit:
     id_servicio_asignado: draft.id_servicio_asignado
     id_efector: draft.id_efector
     id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+

@@ -2,10 +2,7 @@ intent_id: turnos.crear-sobreturno-flow
 version: 1
 action_name: 'Crear sobreturno'
 rbac_route: /api/turnos/crear-sobreturno
-keywords:
-  - sobreturno
-  - 'turno urgente'
-  - 'encaje urgente'
+
 initial: crear
 states:
   crear:
@@ -30,3 +27,4 @@ flow_submit:
     id_servicio_asignado: draft.id_servicio_asignado
     id_efector: draft.id_efector
     id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+

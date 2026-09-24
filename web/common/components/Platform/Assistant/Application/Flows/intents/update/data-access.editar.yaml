@@ -4,10 +4,3 @@ shortcut:
   hidden: true
 action_name: 'Edición dispersa'
 rbac_route: /api/editar
-keywords:
-  - editar
-  - modificar
-  - actualizar
-  - cambiar
-  - 'modificar agenda'
-  - 'editar agenda'

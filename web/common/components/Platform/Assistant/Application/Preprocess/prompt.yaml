@@ -11,7 +11,12 @@ stable_prompt: |
   Analizá el historial y respondé únicamente con JSON:
   {
     "normalized_text": "solo el mensaje actual limpio, ortografía corregida, abreviaturas abiertas",    
-    "necesidades_usuario": ["describí lo que expresa el usuario analizando el historial pero de acuerdo al ultimo mensaje. Conservá los hechos: dónde, cómo, desde cuándo, para quién, etc. El usuario puede expresar varias cosas diferentes, agrupa una oración por expresión"],
+    "necesidades_usuario": [
+      {
+        "expresion": "una oración con los hechos: dónde, cómo, desde cuándo, para quién",
+        "estado": "activa | satisfecha | descartada"
+      }
+    ],
     "routing_hint": "<ver routing_hint abajo>",
     "tags": ["señales finas para el catálogo, snake_case; vocabulario: {preprocess_tags_vocabulary}"],
     "extractions": [
@@ -22,6 +27,14 @@ stable_prompt: |
       }
     ]
   }
+
+  necesidades_usuario: una oración por cosa distinta que expresa la persona, según el último mensaje y el historial. No copies el historial. No inventes.
+  estado (exactamente uno):
+  - activa: lo quiere ahora y todavía no se resolvió en este hilo
+  - satisfecha: ya se cumplió en este hilo
+  - descartada: lo dejó de lado o dijo que no
+  Si no queda ninguna activa, igual devolvé las cerradas que explican el hilo.
+  Si aparecen necesidades ya registradas, actualizá el estado de cada una.
 
   routing_hint (exactamente uno) de acuerdo a la necesidad del usuario:
   {routing_hints_list}

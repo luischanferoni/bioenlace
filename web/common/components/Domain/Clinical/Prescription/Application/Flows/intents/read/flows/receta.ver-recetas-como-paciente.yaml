@@ -2,12 +2,7 @@ intent_id: receta.ver-recetas-como-paciente
 version: 1
 action_name: 'Ver mis recetas electrónicas'
 rbac_route: /api/clinical/electronic-prescription/mis-recetas-como-paciente
-keywords:
-  - 'mis recetas'
-  - 'receta electrónica'
-  - 'receta digital'
-  - 'medicación prescrita'
-  - 'ver recetas'
+
 intent_semantics:
   objective: 'Consultá tus recetas electrónicas emitidas, con detalle y descarga PDF.'
 initial: ver_listado
@@ -30,3 +25,4 @@ states:
         params:
           prescription_id: draft.prescription_id
     type: final
+

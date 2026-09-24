@@ -4,8 +4,3 @@ shortcut:
   hidden: true
 action_name: 'Listado staff'
 rbac_route: /api/listar
-keywords:
-  - listar
-  - listado
-  - 'mostrar listado'
-  - 'ver listado'

@@ -3,11 +3,7 @@ version: 1
 domain_operation: ServicioTeleconsultaPolitica.configurar
 action_name: 'Política de teleconsulta por servicio'
 rbac_route: /api/home/panel
-keywords:
-  - 'teleconsulta política'
-  - 'videollamada servicio'
-  - 'atención remota efector'
-  - 'configurar teleconsulta'
+
 initial: configurar_politica
 states:
   configurar_politica:
@@ -26,3 +22,4 @@ flow_submit:
     id_servicio: draft.id_servicio
     teleconsulta_politica: draft.teleconsulta_politica
     caso_codigos_text: draft.caso_codigos_text
+

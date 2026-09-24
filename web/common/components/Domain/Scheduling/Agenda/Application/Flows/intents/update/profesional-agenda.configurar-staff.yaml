@@ -8,19 +8,7 @@ domain_operation: DataAccess.edit
 edit_surface_id: ProfesionalEfectorServicioAgenda
 action_name: 'Agenda ambulatoria de un profesional'
 rbac_route: /api/profesional-agenda/configurar-agenda
-keywords:
-  - 'modificar agenda de un profesional'
-  - 'modificar la agenda de un profesional'
-  - 'editar agenda del personal'
-  - 'editar agenda de un profesional'
-  - 'modificar horarios del medico'
-  - 'editar horarios del profesional'
-  - 'configurar agenda profesional'
-  - 'agenda ambulatoria profesional'
-  - 'formas de atencion de un profesional'
-  - 'modificar las formas de atencion'
-  - 'modificar formas de atencion'
-  - 'horarios ambulatorios de un profesional'
+
 intent_semantics:
   objective: 'Configurar agenda AMB (cupos) de un profesional del efector (staff).'
 fields:
@@ -71,3 +59,4 @@ states:
           id_servicio: draft.id_servicio
           ui_step: datos
     type: final
+

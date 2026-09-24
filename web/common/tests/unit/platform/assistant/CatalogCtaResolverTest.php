@@ -21,36 +21,35 @@ class CatalogCtaResolverTest extends Unit
     public function testBareTurnoDeclaresDualCtasWithHumanLabels(): void
     {
         $evaluation = SmartCatalogRoutingService::evaluate([
-            'normalized_text' => 'Quiero un turno',
+            'normalized_text' => 'necesito una ecografia',
             'user_goal' => 'guide',
             'routing_hint' => 'pedido_claro',
-            'tags' => ['pedido_turno_sin_destino', 'scheduling'],
-            'context_areas' => ['scheduling'],
+            'tags' => ['estudio'],
+            'context_areas' => [],
             'extractions' => [],
         ], 1);
 
         $ids = CatalogCtaResolver::declaredIntentIds($evaluation);
         $this->assertSame(
-            ['turnos.crear-como-paciente', 'atencion.necesito-atencion'],
+            ['atencion.necesito-atencion'],
             $ids
         );
 
         $buttons = CatalogCtaResolver::resolveAll($evaluation, 1);
-        $this->assertCount(2, $buttons);
-        $this->assertSame('turnos.crear-como-paciente', $buttons[0]['intent_id']);
+        $this->assertCount(1, $buttons);
+        $this->assertSame('atencion.necesito-atencion', $buttons[0]['intent_id']);
         $this->assertNotSame('', $buttons[0]['label']);
-        $this->assertSame('atencion.necesito-atencion', $buttons[1]['intent_id']);
-        $this->assertNotSame('', $buttons[1]['label']);
+        $this->assertCount(1, $buttons);
     }
 
     public function testResolveAllRequiresPositiveUserId(): void
     {
         $evaluation = SmartCatalogRoutingService::evaluate([
-            'normalized_text' => 'Quiero un turno',
+            'normalized_text' => 'necesito una ecografia',
             'user_goal' => 'guide',
             'routing_hint' => 'pedido_claro',
-            'tags' => ['pedido_turno_sin_destino', 'scheduling'],
-            'context_areas' => ['scheduling'],
+            'tags' => ['estudio'],
+            'context_areas' => [],
             'extractions' => [],
         ], 1);
 

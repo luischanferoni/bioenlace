@@ -5,6 +5,7 @@ namespace common\components\Platform\Assistant\Chat\Channels\Guide;
 use common\components\Domain\Clinical\Encounter\Application\Service\PatientAiContextService;
 use common\components\Platform\Assistant\Catalog\IntentSemanticsPromptFormatter;
 use common\components\Platform\Assistant\Catalog\SmartCatalogRegistry;
+use common\components\Platform\Assistant\Catalog\StateTagIndex;
 use common\components\Platform\Assistant\Context\AssistantContextAssemblyService;
 use common\components\Platform\Assistant\Context\AssistantContextHISArea;
 use common\components\Platform\Assistant\Chat\ChatPreprocessContext;
@@ -157,6 +158,11 @@ final class GuidePromptAssembler
   ): string {
     if ($evaluation === null) {
       return '';
+    }
+
+    $hits = StateTagIndex::match(StateTagIndex::needles($evaluation->firstIa));
+    if ($hits !== []) {
+      return IntentSemanticsPromptFormatter::formatStateHits($hits);
     }
 
     $ids = [];

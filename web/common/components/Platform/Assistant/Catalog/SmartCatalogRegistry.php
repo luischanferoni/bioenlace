@@ -7,7 +7,8 @@ use common\components\Platform\Assistant\Preprocess\PreprocessRoutingHintCatalog
 use common\components\Platform\Core\Product\ProductMetadataPaths;
 
 /**
- * Carga {@see assistant/catalog/smart-catalog.yaml}.
+ * Carga las puertas que no son un flow ({@see direct-doors.yaml}).
+ * El intent lo elige {@see StateTagIndex}.
  */
 final class SmartCatalogRegistry
 {
@@ -49,7 +50,7 @@ final class SmartCatalogRegistry
     }
 
     /**
-     * Tags únicos declarados en triggers del smart-catalog.
+     * Tags únicos declarados en las puertas que no son un flow.
      *
      * @return list<string>
      */

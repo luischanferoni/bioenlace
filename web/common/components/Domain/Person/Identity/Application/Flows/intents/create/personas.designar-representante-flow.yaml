@@ -2,14 +2,7 @@ intent_id: personas.designar-representante-flow
 version: 1
 action_name: 'Designar representante'
 rbac_route: /api/person-representation/designar-representante
-keywords:
-  - 'designar representante'
-  - 'delegar cuenta'
-  - 'delegar gestión de turnos'
-  - 'autorizar familiar'
-  - 'quién opera por mí'
-  - 'paciente a cargo'
-  - 'designar quién opera por mí'
+
 intent_semantics:
   objective: 'Autorizá a otra persona con cuenta para gestionar turnos y gestiones en tu nombre.'
 initial: gestionar_delegacion
@@ -26,3 +19,4 @@ states:
     type: final
 flow_submit:
   action_id: person-representation.designar-representante
+

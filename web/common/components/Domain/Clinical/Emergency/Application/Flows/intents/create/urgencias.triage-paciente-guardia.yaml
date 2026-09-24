@@ -2,12 +2,7 @@ intent_id: urgencias.triage-paciente-guardia
 version: 1
 action_name: 'Triage en guardia'
 rbac_route: /api/home/panel
-keywords:
-  - triage
-  - 'clasificar urgencia'
-  - 'prioridad guardia'
-  - manchester
-  - 'enfermería triage'
+
 initial: elegir_paciente
 states:
   elegir_paciente:
@@ -37,3 +32,4 @@ flow_submit:
     bp_sys: draft.bp_sys
     bp_dia: draft.bp_dia
     hr: draft.hr
+

@@ -4,8 +4,3 @@ shortcut:
   hidden: true
 action_name: 'Consulta informativa staff'
 rbac_route: /api/info
-keywords:
-  - 'info staff'
-  - conteo
-  - métrica
-  - 'resumen datos'

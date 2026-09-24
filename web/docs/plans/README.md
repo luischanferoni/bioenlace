@@ -16,12 +16,12 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Receta electrónica (AR) | `receta-electronica/` | Fases 1–2 en producción; repositorio nacional pendiente |
 | Interoperabilidad HC FHIR | `interoperabilidad-historia-clinica/` | Código + reconcile listos; homologación / credenciales pendientes |
 | Flows como statechart | `flow-statechart/` | Fases 1–3: lectores y guía usan `states`; compilador retirado |
-| Guía siempre | `guia-siempre/` | Fases 1–2 en código. El prompt de necesidades lo pega una persona. Fase 3 (tags de estado) pendiente |
 
 ## Planes archivados (carpeta eliminada)
 
 | Plan | Documentación estable |
 |------|------------------------|
+| Guía siempre | [asistente-y-chat.md](../producto/asistente-y-chat.md) |
 | Auditoría captura clínica | [captura-clinica.md](../producto/captura-clinica.md) (sección auditoría del pipeline) |
 | Alta cuenta institucional | [alta-cuenta-licencia.md](../producto/alta-cuenta-licencia.md) + [onboarding-comercial-self-service.md](../decisions/onboarding-comercial-self-service.md) |
 | Urgencias — triage + tablero | [urgencias-guardia.md](../producto/urgencias-guardia.md) + [his-completo/02-urgencias.md](../his-completo/02-urgencias.md) |

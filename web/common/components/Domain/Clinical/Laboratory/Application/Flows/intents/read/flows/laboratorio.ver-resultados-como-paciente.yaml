@@ -2,13 +2,7 @@ intent_id: laboratorio.ver-resultados-como-paciente
 version: 1
 action_name: 'Ver resultados de laboratorio'
 rbac_route: /api/clinical/laboratory-result/mis-resultados-como-paciente
-keywords:
-  # Evitar tokens sueltos laboratorio/estudios/análisis (pelean con pedir estudio).
-  - 'mis resultados'
-  - 'mis análisis'
-  - 'informes de laboratorio'
-  - 'resultados de laboratorio'
-  - 'ver mis estudios'
+
 intent_semantics:
   objective: 'Consultá tus informes de laboratorio sincronizados, con detalle y descarga PDF.'
 initial: ver_listado
@@ -16,6 +10,8 @@ states:
   ver_listado:
     description: 'Elegí un informe de laboratorio'
     meta:
+      tags:
+        - laboratorio
       provides:
         - draft.report_id
       open_ui:
@@ -31,3 +27,4 @@ states:
         params:
           report_id: draft.report_id
     type: final
+

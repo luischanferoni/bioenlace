@@ -7,19 +7,7 @@ intent_family: profesional-horarios.gestionar
 domain_operation: DataAccess.edit
 action_name: 'Horarios de guardia / internación de un profesional'
 rbac_route: /api/profesional-horarios/gestionar
-keywords:
-  - 'horarios de guardia de un profesional'
-  - 'horarios de internación de un profesional'
-  - 'horarios de piso'
-  - 'cargar horarios de plantel'
-  - 'horario de guardia de un colega'
-  - 'asignar guardia'
-  - 'plantel guardia'
-  - 'roster internación'
-  - 'horarios de un profesional'
-  - 'cargar horarios de'
-  - 'horarios de plantel de un profesional'
-  - 'plantel de guardia de un profesional'
+
 intent_semantics:
   objective: 'Cargar horarios EMER/IMP de un profesional del efector.'
 initial: select_profesional
@@ -58,3 +46,4 @@ states:
           modo: staff
           id_profesional_efector_servicio: draft.id_profesional_efector_servicio
     type: final
+

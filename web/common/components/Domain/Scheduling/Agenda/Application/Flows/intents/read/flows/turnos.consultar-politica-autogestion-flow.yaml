@@ -2,20 +2,14 @@ intent_id: turnos.consultar-politica-autogestion-flow
 version: 1
 action_name: 'Consultar política de autogestión'
 rbac_route: /api/turnos/politica-como-paciente
-keywords:
-  - 'hasta cuándo puedo cancelar'
-  - 'política de cancelación'
-  - 'política turnos'
-  - 'puedo cancelar por app'
-  - 'autogestión turnos'
-  - 'reglas de cancelación'
-  - 'me multan'
-  - 'multa si no voy'
+
 initial: consultar
 states:
   consultar:
     description: 'Centro de salud'
     meta:
+      tags:
+        - politica
       provides:
         - draft.id_efector
       open_ui:
@@ -25,3 +19,4 @@ flow_submit:
   action_id: turnos.politica-como-paciente
   params:
     id_efector: draft.id_efector
+

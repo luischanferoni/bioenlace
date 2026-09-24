@@ -2,6 +2,7 @@
 
 namespace common\components\Platform\Assistant\Chat\Preprocess;
 
+use common\components\Platform\Assistant\Catalog\StateTagIndex;
 use common\components\Platform\Assistant\Chat\Channels\Guide\GuideHistoryWindow;
 use common\components\Platform\Assistant\Chat\Thread\AssistantThreadStateService;
 use common\components\Platform\Assistant\Chat\Thread\ThreadNeedList;
@@ -187,6 +188,7 @@ final class ChatPreprocessService
             'routing_hints_list' => PreprocessRoutingHintCatalog::listForPrompt(),
             'preprocess_tags_vocabulary' => PreprocessTagVocabularyCatalog::listForPrompt(),
             'extraction_categories_list' => PreprocessExtractionCategoryCatalog::listForPrompt(),
+            'state_tags_list' => StateTagIndex::listForPrompt(),
             'conversation_history' => '(sin historial previo)',
         ]);
     }
@@ -340,7 +342,10 @@ final class ChatPreprocessService
             }
             $span = isset($ex['span']) ? trim((string) $ex['span']) : '';
             $cat = isset($ex['category']) ? trim((string) $ex['category']) : '';
-            if ($span === '' || $cat === '' || !isset($allowedCat[$cat])) {
+            if ($span === '' || $cat === '') {
+                continue;
+            }
+            if (!isset($allowedCat[$cat]) && !StateTagIndex::hasTag($cat)) {
                 continue;
             }
             $syns = [];

@@ -2,13 +2,7 @@ intent_id: atencion.mis-atenciones-como-paciente
 version: 1
 action_name: 'Ver mis atenciones'
 rbac_route: /api/clinical/encounter-patient-summary/listar-atenciones-como-paciente
-keywords:
-  - 'mis atenciones'
-  - 'mis consultas'
-  - 'historial de consultas'
-  - 'atenciones anteriores'
-  - 'consultas anteriores'
-  - 'resumen de atención'
+
 intent_semantics:
   objective: 'Revisá tus atenciones ambulatorias finalizadas y el resumen de cada una.'
 initial: ver_listado
@@ -16,6 +10,8 @@ states:
   ver_listado:
     description: 'Elegí una atención'
     meta:
+      tags:
+        - atenciones
       provides:
         - draft.encounter_id
       open_ui:
@@ -31,3 +27,4 @@ states:
         params:
           encounter_id: draft.encounter_id
     type: final
+

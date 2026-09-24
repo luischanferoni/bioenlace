@@ -2,17 +2,7 @@ intent_id: profesional-efector-servicio.baja-flow
 version: 1
 action_name: 'Quitar profesional de un servicio'
 rbac_route: /api/profesional-efector-servicio/baja-flow
-keywords:
-  - 'quitar profesional del servicio'
-  - 'dar de baja profesional'
-  - 'desasignar profesional'
-  - 'sacar profesional del efector'
-  - 'eliminar asignación profesional'
-  - 'quitar PES'
-  - 'baja de profesional en servicio'
-  - 'quitar profesional de un servicio'
-  - 'desasignar médico del servicio'
-  - 'dar de baja asignación en el efector'
+
 context:
   - impacto_baja_revisado
 initial: select_profesional
@@ -58,3 +48,4 @@ flow_submit:
     id_profesional_efector_servicio: draft.id_profesional_efector_servicio
     id_servicio: draft.id_servicio
     impacto_baja_revisado: draft.impacto_baja_revisado
+

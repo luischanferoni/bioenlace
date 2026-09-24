@@ -2,10 +2,7 @@ intent_id: turnos.cancelar-para-paciente-flow
 version: 1
 action_name: 'Cancelar turno (gestión)'
 rbac_route: /api/turnos/cancelar-operativo
-keywords:
-  - 'cancelar turno paciente'
-  - 'baja operativa turno'
-  - 'anular cita gestión'
+
 initial: cancelar
 states:
   cancelar:
@@ -24,3 +21,4 @@ flow_submit:
     id: draft.id
     razon_cancelacion: draft.razon_cancelacion
     canal: draft.canal
+

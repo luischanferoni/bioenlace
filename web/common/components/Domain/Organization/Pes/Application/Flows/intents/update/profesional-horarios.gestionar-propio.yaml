@@ -5,22 +5,7 @@ intent_family: profesional-horarios.gestionar
 domain_operation: DataAccess.edit
 action_name: 'Configurar mis horarios (ambulatorio / guardia / internación)'
 rbac_route: /api/profesional-horarios/gestionar
-keywords:
-  - 'mis horarios'
-  - 'configurar mis horarios'
-  - 'mi agenda'
-  - 'modificar mi agenda'
-  - 'editar mi agenda'
-  - 'configurar mi agenda'
-  - 'configurar mi agenda ambulatoria'
-  - 'modificar horarios propios'
-  - 'horario de piso'
-  - 'horario de internación'
-  - 'cargar horario de guardia'
-  - 'horario de guardia'
-  - 'plantel de guardia'
-  - 'agenda ambulatoria'
-  - 'configurar agenda'
+
 intent_semantics:
   objective: 'Configurar horarios propios según la clase de encuentro (AMB cupos, EMER/IMP horario semanal).'
 draft_hydrator:
@@ -86,3 +71,4 @@ states:
           id_servicio: draft.id_servicio
           encounter_class: draft.encounter_class
     type: final
+

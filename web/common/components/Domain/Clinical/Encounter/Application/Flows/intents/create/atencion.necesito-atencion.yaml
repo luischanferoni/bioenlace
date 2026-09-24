@@ -2,31 +2,7 @@ intent_id: atencion.necesito-atencion
 version: 1
 action_name: 'Solicitar Atención'
 rbac_route: /api/turnos/crear-como-paciente
-keywords:
-  # Anclas discriminadoras (español con acentos). Match con fold; no duplicar sin acento.
-  - 'necesito atención'
-  - 'solicitar atención'
-  - 'me siento mal'
-  - 'me duele'
-  - 'consulta médica'
-  - 'atención médica'
-  - 'control de seguimiento'
-  - 'renovar medicación'
-  - 'consulta por mensaje'
-  - 'consulta clínica por mensaje'
-  - 'pedir un control'
-  - 'necesito un estudio'
-  - 'sacar turno para estudio'
-  - 'necesito una ecografía'
-  - 'necesito una mamografía'
-  - 'turno para laboratorio'
-  - 'turno para ecografía'
-  - 'análisis de sangre'
-  - ecografía
-  - mamografía
-  - radiografía
-  - kinesiología
-  - kinesio
+
 intent_semantics:
   objective: 'Guiar según lo que necesita el paciente (malestar, estudio/acto, control/seguimiento u urgencia) hasta turno, teleconsulta, consulta por mensaje u orientación a guardia.'
 draft_hydrator:
@@ -79,6 +55,9 @@ states:
   triage_raiz:
     description: Motivo
     meta:
+      tags:
+        - sintomas
+        - condiciones
       review_prefilled: true
       provides:
         - draft.triage_raiz
@@ -112,6 +91,8 @@ states:
   select_pedido_acto:
     description: 'Estudio o práctica'
     meta:
+      tags:
+        - estudio
       review_prefilled: true
       provides:
         - draft.pedido_acto
@@ -195,6 +176,8 @@ states:
   triage_zona:
     description: Zona
     meta:
+      tags:
+        - sintomas
       review_prefilled: true
       provides:
         - draft.triage_zona
@@ -215,6 +198,8 @@ states:
   triage_urgencia:
     description: Urgencia
     meta:
+      tags:
+        - urgencia
       requires:
         - draft.reserva_triage_halt
       open_ui:
@@ -518,6 +503,8 @@ states:
   cs_select_medicamentos:
     description: Medicación
     meta:
+      tags:
+        - medicacion
       provides:
         - draft.medication_request_ids
       requires:
@@ -731,3 +718,4 @@ flow_submit:
     triage_nota: 'draft.triage_nota?'
     intake_tipo: 'draft.intake_tipo?'
     seguimiento_necesidad: 'draft.seguimiento_necesidad?'
+

@@ -38,7 +38,7 @@ El formatter (`IntentSemanticsPromptFormatter`) arma **nombre humano + objetivo*
 
 No campo `description` en intents.
 
-Omitir `intent_semantics` en intents staff/ocultos que no entran a guide (p. ej. `data-access.*` genéricos). Descubrimiento NL = `keywords` / smart-catalog.
+Omitir `intent_semantics` en intents staff/ocultos que no entran a guide (p. ej. `data-access.*` genéricos). El descubrimiento en lenguaje natural es `meta.tags` de cada estado.
 
 ### `draft_hydrator` (raíz del intent)
 
@@ -76,7 +76,7 @@ Un flow declara la máquina en la raíz. `SubIntentEngine`, `FlowManifest`, hint
 | `states.*.always` | Transiciones sin evento. String = un solo destino. Lista = rombo. |
 | `states.*.always[].guard` | Mapa campo → valor; todas las igualdades deben cumplirse. |
 | `states.*.always[].target` | Id del estado siguiente. Sin `guard`, es el comodín (último). Cadena vacía con `guard`: la rama termina ahí. |
-| `states.*.meta` | Extensiones de producto: `open_ui`, `chooser`, `provides`, `requires`, `review_prefilled`, `hint`, `flow_submit`, `composer_capture`, `terminal_without_submit`, `flow_dismiss`, `flow_actions`. |
+| `states.*.meta` | Extensiones de producto: `tags`, `open_ui`, `chooser`, `provides`, `requires`, `review_prefilled`, `hint`, `flow_submit`, `composer_capture`, `terminal_without_submit`, `flow_dismiss`, `flow_actions`. |
 
 `flow_submit` de la raíz no se mueve: sigue cerrando el intent.
 
@@ -88,6 +88,7 @@ Un flow declara la máquina en la raíz. `SubIntentEngine`, `FlowManifest`, hint
 |--------|-------------|
 | `requires` | Lista de campos requeridos en el draft, forma `draft.<clave>`. |
 | `provides` | Lista de claves que completa la mini-UI de este paso al confirmar selección (o que el POST de una pantalla previa escribe en `draft` vía `data` del cliente). |
+| `tags` | Frases en español. El preprocess cruza las suyas con estas para elegir el intent y recortar los estados que ve la guía. |
 | `review_prefilled` | Si es `true`, un paso con `open_ui` se muestra aunque `provides` ya venga completo por enlace o hydrator. El valor se presenta preseleccionado y la confirmación del mismo estado permite avanzar. Al confirmar, el cliente debe reenviar ese `subintent_id`; si va vacío, el motor re-muestra el paso. |
 | `open_ui` | Objeto **picker / pantalla embebible** vía catálogo: `action_id`, `params` (valores `draft.*`), `pass_content_as_query` opcional. |
 | `chooser` | Objeto con `when_user_says_nearby` / `otherwise`, cada uno con su propio `open_ui` (elección de lista vs cercanía). |

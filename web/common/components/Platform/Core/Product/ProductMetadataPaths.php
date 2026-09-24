@@ -186,7 +186,7 @@ final class ProductMetadataPaths
 
     public static function smartCatalogFile(): string
     {
-        return self::assistantCatalogDir() . DIRECTORY_SEPARATOR . 'smart-catalog.yaml';
+        return self::assistantCatalogDir() . DIRECTORY_SEPARATOR . 'direct-doors.yaml';
     }
 
     public static function preprocessExtractionCategoriesFile(): string

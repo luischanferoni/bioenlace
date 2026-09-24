@@ -2,11 +2,7 @@ intent_id: turnos.ver-agenda-dia-profesional-flow
 version: 1
 action_name: 'Ver agenda del día'
 rbac_route: /api/profesional-agenda/ver-agenda-dia
-keywords:
-  - 'agenda del día'
-  - 'mis citas hoy'
-  - 'turnos de hoy'
-  - 'pacientes hoy'
+
 initial: ver
 states:
   ver:
@@ -23,3 +19,4 @@ flow_submit:
   params:
     fecha: draft.fecha
     id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+

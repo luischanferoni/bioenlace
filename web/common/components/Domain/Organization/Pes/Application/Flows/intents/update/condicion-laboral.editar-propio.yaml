@@ -5,12 +5,7 @@ intent_family: condicion-laboral.edit
 domain_operation: ProfesionalEfectorServicio.condicion_laboral_own
 action_name: 'Mi condición laboral'
 rbac_route: /api/profesional-efector-servicio/editar-condicion-laboral
-keywords:
-  - 'mi condición laboral'
-  - 'mi licencia'
-  - 'editar mi vigencia'
-  - 'cambiar mi licencia'
-  - 'actualizar mi ausencia'
+
 intent_semantics:
   objective: 'Editar la condición laboral vigente sobre una asignación propia en el efector de sesión.'
 subject_resolution:
@@ -66,3 +61,4 @@ states:
       open_ui:
         action_id: profesional-efector-servicio.editar-condicion-laboral
     type: final
+

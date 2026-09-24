@@ -34,6 +34,9 @@ class SmartCatalogConversationalQaTest extends Unit
                     'routing_hint' => 'pedido_claro',
                     'tags' => ['sintoma', 'medicamento', 'necesito_atencion'],
                     'context_areas' => ['medication'],
+                    'extractions' => [
+                        ['span' => 'efecto adverso', 'category' => 'sintomas', 'synonyms' => []],
+                    ],
                 ],
                 ['clara'],
             ],
@@ -43,6 +46,9 @@ class SmartCatalogConversationalQaTest extends Unit
                     'routing_hint' => 'pedido_claro',
                     'tags' => ['sintoma', 'dolor', 'necesito_atencion'],
                     'context_areas' => [],
+                    'extractions' => [
+                        ['span' => 'panza', 'category' => 'sintomas', 'synonyms' => []],
+                    ],
                 ],
                 ['clara'],
             ],
@@ -52,6 +58,10 @@ class SmartCatalogConversationalQaTest extends Unit
                     'routing_hint' => 'pedido_claro',
                     'tags' => ['sacar_turno'],
                     'context_areas' => ['scheduling'],
+                    'extractions' => [
+                        ['span' => 'cardiólogo', 'category' => 'profesional', 'synonyms' => []],
+                        ['span' => 'turno', 'category' => 'turno', 'synonyms' => []],
+                    ],
                 ],
                 ['clara'],
             ],
@@ -61,8 +71,11 @@ class SmartCatalogConversationalQaTest extends Unit
                     'routing_hint' => 'pedido_claro',
                     'tags' => ['pedido_turno_sin_destino'],
                     'context_areas' => ['scheduling'],
+                    'extractions' => [
+                        ['span' => 'turno', 'category' => 'turno', 'synonyms' => []],
+                    ],
                 ],
-                ['incompletas'],
+                ['clara'],
             ],
             'estudio_ecografia' => [
                 'necesito una ecografia',
@@ -70,6 +83,9 @@ class SmartCatalogConversationalQaTest extends Unit
                     'routing_hint' => 'pedido_claro',
                     'tags' => ['estudio'],
                     'context_areas' => [],
+                    'extractions' => [
+                        ['span' => 'ecografía', 'category' => 'estudio', 'synonyms' => []],
+                    ],
                 ],
                 ['clara'],
             ],
@@ -79,6 +95,9 @@ class SmartCatalogConversationalQaTest extends Unit
                     'routing_hint' => 'pedido_claro',
                     'tags' => ['mis_turnos', 'scheduling'],
                     'context_areas' => ['scheduling'],
+                    'extractions' => [
+                        ['span' => 'turnos', 'category' => 'turnos', 'synonyms' => []],
+                    ],
                 ],
                 ['clara'],
             ],
@@ -124,6 +143,9 @@ class SmartCatalogConversationalQaTest extends Unit
                     'routing_hint' => 'pedido_claro',
                     'tags' => ['listar_profesionales', 'staff'],
                     'context_areas' => ['geo_resources'],
+                    'extractions' => [
+                        ['span' => 'profesionales', 'category' => 'profesionales', 'synonyms' => []],
+                    ],
                 ],
                 ['clara'],
             ],

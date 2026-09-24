@@ -47,6 +47,53 @@ final class IntentSemanticsPromptFormatter
         return implode("\n\n", $blocks);
     }
 
+    /**
+     * Recorte: solo los estados cuyo meta.tags cruzó con el preprocess.
+     *
+     * @param list<array{intent_id: string, score: int, states: list<array{id: string, description: string}>}> $hits
+     */
+    public static function formatStateHits(array $hits, int $maxIntents = 4): string
+    {
+        $blocks = [];
+        foreach ($hits as $hit) {
+            if (!is_array($hit)) {
+                continue;
+            }
+            $intentId = trim((string) ($hit['intent_id'] ?? ''));
+            $states = $hit['states'] ?? [];
+            if ($intentId === '' || !is_array($states) || $states === []) {
+                continue;
+            }
+            $manifest = YamlIntentManifestLoader::load($intentId);
+            $sem = self::semanticsFrom($manifest, null);
+            $label = self::label($manifest, null, $intentId);
+            $objective = trim((string) ($sem['objective'] ?? ''));
+            if ($objective === '') {
+                $objective = $label;
+            }
+            $lines = ['- ' . $label . ': ' . $objective, '  Estados:'];
+            foreach ($states as $state) {
+                if (!is_array($state)) {
+                    continue;
+                }
+                $description = trim((string) ($state['description'] ?? ''));
+                if ($description === '') {
+                    continue;
+                }
+                $lines[] = '    - ' . $description;
+            }
+            if (count($lines) <= 2) {
+                continue;
+            }
+            $blocks[] = implode("\n", $lines);
+            if (count($blocks) >= max(1, $maxIntents)) {
+                break;
+            }
+        }
+
+        return implode("\n\n", $blocks);
+    }
+
     public static function formatCatalogItem(UiActionCatalogItem $item): string
     {
         return self::formatIntentId($item->action_id, $item);

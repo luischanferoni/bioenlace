@@ -3,7 +3,7 @@
 namespace common\components\Platform\Assistant\Catalog;
 
 /**
- * Fila del catálogo inteligente ({@see smart-catalog.yaml}).
+ * Fila de una puerta que no es un flow ({@see direct-doors.yaml}).
  */
 final class SmartCatalogEntry
 {

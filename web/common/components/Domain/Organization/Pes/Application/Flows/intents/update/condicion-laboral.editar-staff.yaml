@@ -5,12 +5,7 @@ intent_family: condicion-laboral.edit
 domain_operation: ProfesionalEfectorServicio.condicion_laboral_staff
 action_name: 'Condición laboral de un profesional'
 rbac_route: /api/profesional-efector-servicio/crear-condicion-laboral
-keywords:
-  - 'condición laboral de un profesional'
-  - 'licencia de otro médico'
-  - 'cargar licencia staff'
-  - 'vigencia de un profesional'
-  - 'ausencia de un colega'
+
 intent_semantics:
   objective: 'Registrar o editar condición laboral de un profesional del efector en sesión (staff).'
 subject_resolution:
@@ -66,3 +61,4 @@ states:
         params:
           id_profesional_efector_servicio: draft.id_profesional_efector_servicio
     type: final
+

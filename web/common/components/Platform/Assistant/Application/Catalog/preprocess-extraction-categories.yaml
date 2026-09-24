@@ -2,7 +2,7 @@
 # Propósito: textos para el prompt de categorías de extractions resolubles (id → descripción).
 # Consumidor: PreprocessExtractionCategoryCatalog.
 # Ids: los declara cada dominio vía HintCandidateProviderInterface::declaredEntities().
-# No poner aquí: tags (van en smart-catalog / PreprocessTagVocabularyCatalog) ni mapas técnicos.
+# No poner aquí: tags de estado (van en meta.tags del intent) ni mapas técnicos.
 version: 1
 
 categories:

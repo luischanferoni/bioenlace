@@ -18,14 +18,7 @@ fields:
     name: confirmar_impacto_turnos
 action_name: 'Licencia de un profesional'
 rbac_route: /api/profesional-efector-servicio/cargar-licencia-para-profesional-flow
-keywords:
-  - 'licencia profesional'
-  - 'cargar licencia'
-  - 'registrar licencia'
-  - 'licencia médico'
-  - 'permiso profesional'
-  - 'vacaciones médico'
-  - 'ausencia profesional'
+
 intent_semantics:
   objective: 'Registrar licencia, permiso o ausencia (solo fechas) de un profesional del efector (staff / RRHH).'
 context:
@@ -77,3 +70,4 @@ flow_submit:
     id_servicio: draft.id_servicio
     fecha_inicio: draft.fecha_inicio
     fecha_fin: draft.fecha_fin
+

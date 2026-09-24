@@ -2,14 +2,7 @@ intent_id: turnos.crear-como-paciente
 version: 4
 action_name: 'Turno con un especialista'
 rbac_route: /api/turnos/crear-como-paciente
-keywords:
-  - 'turno con'
-  - 'turno en'
-  - 'cita con'
-  - 'cita en'
-  - 'turno para mí'
-  - 'agendar con'
-  - 'reservar con'
+
 intent_semantics:
   # Contexto 2ª IA. El recorrido es states; no duplicar los pasos acá.
   objective: 'Reservar un turno ambulatorio eligiendo oferta del centro, efector, profesional y horario, sin triage de motivo clínico.'
@@ -21,6 +14,8 @@ states:
   select_servicio:
     description: 'Elegir oferta del centro (servicio con agenda)'
     meta:
+      tags:
+        - turno
       provides:
         - draft.id_servicio_asignado
       open_ui:
@@ -105,3 +100,4 @@ flow_submit:
     id_servicio_asignado: draft.id_servicio_asignado
     id_efector: draft.id_efector
     tipo_atencion: draft.tipo_atencion
+

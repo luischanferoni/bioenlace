@@ -243,7 +243,9 @@ class DeclarativePlanServiceTest extends Unit
             'routing_hint' => 'pedido_claro',
             'tags' => ['mis_analisis'],
             'context_areas' => ['clinical'],
-            'extractions' => [],
+            'extractions' => [
+                ['span' => 'análisis', 'category' => 'laboratorio', 'synonyms' => []],
+            ],
         ], 1);
 
         $this->assertTrue($evaluation->decision->isMatch100());
@@ -290,9 +292,6 @@ class DeclarativePlanServiceTest extends Unit
         ], 1);
 
         $this->assertTrue($evaluation->decision->isIncompletas());
-        $this->assertSame('agenda-pedido-sin-destino', $evaluation->decision->catalogEntry?->id);
-        $this->assertSame([], $evaluation->declarativePlan->toolIds);
-        $this->assertFalse($evaluation->declarativePlan->needsPlanner);
-        $this->assertStringContainsString('cta_orientation', $evaluation->declarativePlan->reason);
+        $this->assertNull($evaluation->decision->catalogEntry);
     }
 }

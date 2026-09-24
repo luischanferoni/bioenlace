@@ -2,13 +2,7 @@ intent_id: urgencias.ver-tablero-guardia
 version: 1
 action_name: 'Ver tablero de guardia'
 rbac_route: /api/home/panel
-keywords:
-  - 'tablero guardia'
-  - urgencias
-  - guardia
-  - 'sala de espera'
-  - 'pacientes en guardia'
-  - 'cola de emergencia'
+
 initial: abrir_tablero
 states:
   abrir_tablero:
@@ -17,3 +11,4 @@ states:
       open_ui:
         action_id: clinical.home.panel
     type: final
+

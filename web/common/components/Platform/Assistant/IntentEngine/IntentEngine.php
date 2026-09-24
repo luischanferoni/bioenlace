@@ -41,7 +41,7 @@ final class IntentEngine
         $catalog = UiActionCatalog::forUser($userId);
         $actionId = $actionId !== null ? trim($actionId) : '';
 
-        // Ejecución directa por action_id (CTA / match clara del smart-catalog).
+        // Ejecución directa por action_id (atajo o botón). El flow abre al tocarlo.
         // No exige que el intent figure en el listado de atajos del usuario.
         if ($actionId !== '') {
             $item = self::resolveActionItemForExecution($actionId, $userId, $catalog);

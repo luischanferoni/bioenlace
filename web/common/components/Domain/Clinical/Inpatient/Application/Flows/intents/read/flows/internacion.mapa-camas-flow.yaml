@@ -2,12 +2,7 @@ intent_id: internacion.mapa-camas-flow
 version: 1
 action_name: 'Mapa de camas'
 rbac_route: /api/home/panel
-keywords:
-  - 'mapa de camas'
-  - 'camas libres'
-  - 'ocupación internación'
-  - 'plano de piso'
-  - 'disponibilidad camas'
+
 initial: ver_mapa
 states:
   ver_mapa:
@@ -18,3 +13,4 @@ states:
       open_ui:
         action_id: clinical.internacion.mapa-camas
     type: final
+

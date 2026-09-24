@@ -6,14 +6,7 @@ domain_operation: DataAccess.info
 metric_id: profesionales_conteo_efector
 action_name: 'Conteo de profesionales del efector'
 rbac_route: /api/info
-keywords:
-  - 'cuantos profesionales'
-  - 'cuantos medicos hay'
-  - 'cantidad de profesionales'
-  - 'total de profesionales'
-  - 'planta profesional'
-  - 'personal del centro'
-  - 'conteo profesionales'
+
 intent_semantics:
   objective: 'Consultar cuántos profesionales distintos hay en el efector de sesión.'
 initial: mostrar_conteo
@@ -26,3 +19,4 @@ states:
         params:
           metric_id: profesionales_conteo_efector
     type: final
+

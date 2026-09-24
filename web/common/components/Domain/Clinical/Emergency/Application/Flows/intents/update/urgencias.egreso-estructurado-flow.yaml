@@ -4,12 +4,7 @@ shortcut:
   hidden: true
 action_name: 'Paciente se retiró'
 rbac_route: /api/clinical/emergency-guardia/egreso-formulario
-keywords:
-  - 'paciente se retiró'
-  - 'fuga guardia'
-  - 'abandono guardia'
-  - 'egreso guardia'
-  - 'retiro sin atención'
+
 initial: completar_egreso
 states:
   completar_egreso:
@@ -30,3 +25,4 @@ flow_submit:
     hora_fin: draft.hora_fin
     nota_administrativa: draft.nota_administrativa
     modo_egreso: administrativo
+

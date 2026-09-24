@@ -67,14 +67,9 @@ class SmartCatalogMatchServiceTest extends Unit
             'extractions' => [],
         ], 0);
 
-        $this->assertSame('agenda-pedido-sin-destino', $result->best?->id);
-        $this->assertTrue($result->isClearWinner);
+        $this->assertTrue($result->isEmpty());
         $ids = array_column($result->ranked, 'catalog_id');
         $this->assertNotContains('articulo-representacion', $ids);
-        $this->assertSame(
-            ['turnos.crear-como-paciente', 'atencion.necesito-atencion'],
-            $result->best?->ctaIntentIds
-        );
     }
 
     public function testNoBaseScoreLeakWithoutTriggerHit(): void
@@ -98,8 +93,7 @@ class SmartCatalogMatchServiceTest extends Unit
             'context_areas' => ['scheduling'],
         ], 0);
 
-        $this->assertSame('turnos-historial-paciente', $result->best?->id);
-        $this->assertSame('turnos.ver-turnos-anteriores-como-paciente', $result->best?->toolRef);
+        $this->assertNull($result->best);
     }
 
     public function testPoliticaCancelacionBeatsCancelarFlow(): void
@@ -110,8 +104,7 @@ class SmartCatalogMatchServiceTest extends Unit
             'context_areas' => ['scheduling'],
         ], 0);
 
-        $this->assertSame('turnos-politica-autogestion', $result->best?->id);
-        $this->assertSame('turnos.consultar-politica-autogestion-flow', $result->best?->toolRef);
+        $this->assertNull($result->best);
     }
 
     public function testUltimaAtencionResumenBeatsHistorialTurnosNoise(): void
@@ -122,7 +115,6 @@ class SmartCatalogMatchServiceTest extends Unit
             'context_areas' => ['clinical'],
         ], 0);
 
-        $this->assertSame('atencion-ultima-resumen', $result->best?->id);
-        $this->assertSame('atencion.ver-ultima-como-paciente', $result->best?->toolRef);
+        $this->assertNull($result->best);
     }
 }

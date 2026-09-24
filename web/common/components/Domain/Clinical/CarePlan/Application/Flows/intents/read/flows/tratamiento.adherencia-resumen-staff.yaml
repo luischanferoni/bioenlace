@@ -2,12 +2,7 @@ intent_id: tratamiento.adherencia-resumen-staff
 version: 1
 action_name: 'Adherencia a tratamientos'
 rbac_route: /api/clinical/care-plan/active
-keywords:
-  - 'adherencia tratamiento'
-  - 'planes de tratamiento'
-  - 'cumplimiento terapia'
-  - 'care plan staff'
-  - 'seguimiento tratamiento'
+
 initial: ver_dashboard
 states:
   ver_dashboard:
@@ -18,3 +13,4 @@ states:
       open_ui:
         action_id: clinical.care-plan.adherencia-resumen-staff
     type: final
+

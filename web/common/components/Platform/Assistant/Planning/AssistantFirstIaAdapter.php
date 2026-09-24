@@ -101,7 +101,7 @@ final class AssistantFirstIaAdapter
     }
 
     /**
-     * Tags que separan puertas del smart-catalog (A/B/C vs ver-turnos). Siempre.
+     * Tags que el texto del mensaje aporta además de los que devolvió la 1ª IA.
      *
      * @param list<string> $areas
      * @return list<string>

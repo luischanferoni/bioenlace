@@ -2,12 +2,7 @@ intent_id: turnos.conflicto-agenda-flow
 version: 1
 action_name: 'Resolver cambio de horario por agenda'
 rbac_route: /api/turnos/resolver-conflicto-agenda-como-paciente
-keywords:
-  - 'conflicto agenda'
-  - 'cambio de horario'
-  - 'turno desalineado'
-  - 'reprogramar por agenda'
-  - 'horario anterior siguiente'
+
 initial: select_turno
 states:
   select_turno:
@@ -35,3 +30,4 @@ flow_submit:
   params:
     id: draft.id
     eleccion: draft.eleccion
+

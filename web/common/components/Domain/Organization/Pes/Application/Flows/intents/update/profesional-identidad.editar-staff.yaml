@@ -6,13 +6,7 @@ domain_operation: DataAccess.edit
 edit_surface_id: ProfesionalEfectorServicio
 action_name: 'Editar datos de un profesional'
 rbac_route: /api/editar
-keywords:
-  - 'editar personal'
-  - 'modificar profesional'
-  - 'cambiar datos del medico'
-  - 'editar medico del centro'
-  - 'cambiar nombre del medico'
-  - 'corregir apellido profesional'
+
 intent_semantics:
   objective: 'Editar datos de identidad básica de un profesional del efector.'
 fields:
@@ -47,3 +41,4 @@ states:
           surface_id: ProfesionalEfectorServicio
           step: surfaces
     type: final
+

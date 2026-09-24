@@ -2,11 +2,7 @@ intent_id: turnos.consultar-ocupacion-dia-flow
 version: 1
 action_name: 'Consultar ocupación del día'
 rbac_route: /api/turnos/consultar-ocupacion-dia
-keywords:
-  - 'ocupación del día'
-  - 'disponibilidad día'
-  - 'slots del día'
-  - 'agenda ocupación'
+
 initial: consultar
 states:
   consultar:
@@ -27,3 +23,4 @@ flow_submit:
     id_servicio: draft.id_servicio
     id_profesional_efector_servicio: draft.id_profesional_efector_servicio
     formato: draft.formato
+

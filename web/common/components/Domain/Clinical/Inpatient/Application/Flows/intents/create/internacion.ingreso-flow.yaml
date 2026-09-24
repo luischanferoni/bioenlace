@@ -4,12 +4,7 @@ shortcut:
   hidden: true
 action_name: 'Ingreso a internación'
 rbac_route: /api/home/panel
-keywords:
-  - 'ingreso internación'
-  - 'internar paciente'
-  - 'admitir paciente'
-  - 'asignar cama'
-  - 'nuevo ingreso piso'
+
 initial: ingresar
 states:
   ingresar:
@@ -44,3 +39,4 @@ flow_submit:
     situacion_al_ingresar: draft.situacion_al_ingresar
     obra_social: draft.obra_social
     condiciones_derivacion: draft.condiciones_derivacion
+

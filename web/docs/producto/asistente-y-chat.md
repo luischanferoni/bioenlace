@@ -35,18 +35,18 @@ flowchart TB
 
 Los YAML de flujo viven en `common/metadata/bioenlace/assistant/intents/`.
 
-Clasificación de acción: catálogo inteligente (triggers en metadata). Empate o sin ganador claro, con tema HIS → **incompletas**; no hay botones de desambiguación entre intents.
+Clasificación: el preprocess devuelve necesidades y extracciones. La `category` de cada extracción (sintomas, condiciones, estudio, turno) se cruza con `meta.tags` del estado. El `span` es el dato, no el selector. servicio, efector, profesional y persona no eligen estado. Si gana un solo intent, o un artículo, el resultado es **clara**. Si empatan varios intents, o la pregunta necesita datos del sistema, es **incompletas**. En los dos casos de un flow, la guía responde y el flow se abre cuando la persona toca el botón.
 
-**Routing** (1ª IA preprocess → catálogo inteligente PHP):
+**Routing** (1ª IA preprocess → category de la extracción):
 
 | Resultado | Rol | IAs totales (típico) |
 |-----------|-----|----------------------|
-| **clara** | Match 100%: flow, artículo o template | 1 |
+| **clara** | Un intent, o un artículo. El intent pasa por la guía; el artículo sale en la misma respuesta | 2 (artículo: 1) |
 | **dudosa** | Saludo o dominio poco claro → preguntas fijas | 1 |
 | **fuera_de_his** | Tema ajeno al HIS → mensaje límite | 1 |
-| **incompletas** | Pregunta HIS con loaders, o sin ganador claro → 2ª IA guide | 2 (± planificadora = 3) |
+| **incompletas** | Varios intents empatados, o pregunta HIS con datos → guía | 2 (± planificadora = 3) |
 
-El alias legacy `user_goal: guide` en hilo equivale a **incompletas** o canal guide según el camino. Hilos: foco persistido (`guide_focus`, `thread_tag`); desvío fuerte → **dudosa**. Metadata: `assistant/catalog/smart-catalog.yaml`, prompts `preprocess`, `channels/Guide`, `planner`. ADR: [decisions/asistente-catalogo-inteligente.md](../decisions/asistente-catalogo-inteligente.md).
+El alias legacy `user_goal: guide` en hilo equivale a **incompletas** o canal guide según el camino. Hilos: foco persistido (`guide_focus`, `thread_tag`); desvío fuerte → **dudosa**. Las necesidades del hilo (activa, satisfecha, descartada) viven en el estado de la conversación; la guía lee solo las activas. Artículo, tema ajeno al HIS y datos de «llego tarde»: `assistant/catalog/direct-doors.yaml`.
 
 Contenido editorial: [contenido-informativo.md](./contenido-informativo.md).
 
@@ -57,7 +57,7 @@ Cuando el paciente pregunta algo que **necesita datos del sistema** (próximo tu
 ```mermaid
 flowchart LR
   P[Preprocess IA]
-  M[Match catálogo PHP]
+  M[Cruce de tags]
   PL[Plan declarativo]
   L[Loaders → JSON HIS]
   G[IA guide]

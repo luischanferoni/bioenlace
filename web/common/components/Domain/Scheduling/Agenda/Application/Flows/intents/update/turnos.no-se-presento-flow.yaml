@@ -2,11 +2,7 @@ intent_id: turnos.no-se-presento-flow
 version: 1
 action_name: 'Marcar no se presentó'
 rbac_route: /api/turnos/no-se-presento
-keywords:
-  - 'no se presentó'
-  - inasistencia
-  - 'ausente turno'
-  - 'paciente no vino'
+
 initial: registrar
 states:
   registrar:
@@ -21,3 +17,4 @@ flow_submit:
   action_id: turnos.no-se-presento
   params:
     id: draft.id
+

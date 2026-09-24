@@ -4,7 +4,3 @@ shortcut:
   hidden: true
 action_name: 'ABM plantillas epicrisis'
 rbac_route: /api/clinical/internacion-epicrisis-plantilla/listar-admin
-keywords:
-  - 'plantillas epicrisis'
-  - 'epicrisis internación'
-  - 'plantilla alta hospitalaria'

@@ -2,18 +2,7 @@ intent_id: profesional-efector-servicio.crear-flow
 version: 1
 action_name: 'Alta profesional en efector y agenda'
 rbac_route: /api/profesional-efector-servicio/crear-flow
-keywords:
-  - agenda
-  - 'cargar agenda'
-  - 'cargar la agenda'
-  - 'agregar profesional'
-  - 'agenda médico'
-  - 'agenda medico'
-  - 'horarios médico'
-  - 'horarios medico'
-  - 'alta de profesional en efector y servicio'
-  - 'asociar persona a servicio del efector'
-  - 'configurar disponibilidad si el servicio tiene turnos'
+
 context:
   - servicio_acepta_turnos
   - id_persona
@@ -114,3 +103,4 @@ flow_submit:
     id_profesional_efector_servicio: draft.id_profesional_efector_servicio
     id_servicio: draft.id_servicio
     id_persona: draft.id_persona
+

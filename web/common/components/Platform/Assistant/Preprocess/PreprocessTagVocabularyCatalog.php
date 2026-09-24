@@ -5,7 +5,7 @@ namespace common\components\Platform\Assistant\Preprocess;
 use common\components\Platform\Assistant\Catalog\SmartCatalogRegistry;
 
 /**
- * Vocabulario de tags del preprocess: unión de triggers del smart-catalog + extras del loader PHP.
+ * Vocabulario de tags del preprocess: triggers de las puertas que no son un flow, más extras del loader PHP.
  */
 final class PreprocessTagVocabularyCatalog
 {

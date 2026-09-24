@@ -4,6 +4,7 @@ namespace common\components\Platform\Assistant\Planning;
 
 use common\components\Platform\Assistant\Catalog\SmartCatalogEntry;
 use common\components\Platform\Assistant\Catalog\SmartCatalogMatchResult;
+use common\components\Platform\Assistant\Catalog\StateTagIndex;
 use common\components\Platform\Assistant\Catalog\SmartCatalogMatchService;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
 use common\components\Platform\Assistant\Context\AssistantContextAreaDerivation;
@@ -91,6 +92,11 @@ final class SmartCatalogRoutingService
             return self::fueraDeHisDecision($best);
         }
 
+        $fromStates = self::stateTagDecision($firstIa, $message, $best);
+        if ($fromStates !== null) {
+            return $fromStates;
+        }
+
         if ($hint === PreprocessRoutingHintCatalog::SIN_PEDIDO && $areas === []) {
             return new SmartCatalogRoutingDecision(
                 PreprocessRoutingHintCatalog::PATH_NO_ACTION,
@@ -129,6 +135,45 @@ final class SmartCatalogRoutingService
                 PreprocessRoutingHintCatalog::PATH_NO_ACTION
             ),
             [],
+            '',
+            '',
+            $best,
+        );
+    }
+
+    private static function stateTagDecision(
+        array $firstIa,
+        string $message,
+        ?SmartCatalogEntry $best
+    ): ?SmartCatalogRoutingDecision {
+        $hits = StateTagIndex::match(StateTagIndex::needles($firstIa, $message));
+        if ($hits === []) {
+            return null;
+        }
+
+        $ids = [];
+        foreach ($hits as $hit) {
+            $intentId = trim((string) ($hit['intent_id'] ?? ''));
+            if ($intentId === '' || in_array($intentId, $ids, true)) {
+                continue;
+            }
+            $ids[] = $intentId;
+            if (count($ids) >= 4) {
+                break;
+            }
+        }
+        if ($ids === []) {
+            return null;
+        }
+
+        $path = count($ids) === 1
+            ? PreprocessRoutingHintCatalog::PATH_MATCH_DIRECT
+            : PreprocessRoutingHintCatalog::PATH_NEEDS_CONTEXT;
+
+        return new SmartCatalogRoutingDecision(
+            $path,
+            PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint($path),
+            $ids,
             '',
             '',
             $best,

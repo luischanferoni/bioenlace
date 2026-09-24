@@ -12,6 +12,9 @@ states:
     meta:
       tags:
         - laboratorio
+        - analisis
+        - resultados
+        - mis_analisis
       provides:
         - draft.report_id
       open_ui:

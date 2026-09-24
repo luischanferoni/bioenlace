@@ -93,7 +93,7 @@ class SmartCatalogRoutingServiceTest extends Unit
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'cuales son mis turnos',
             'routing_hint' => 'pedido_claro',
-            'tags' => ['turnos'],
+            'tags' => ['mis_turnos'],
             'context_areas' => ['scheduling'],
             'extractions' => [
                 ['span' => 'turnos', 'synonyms' => []],

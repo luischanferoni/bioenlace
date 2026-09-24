@@ -92,7 +92,7 @@ class SmartCatalogConversationalQaTest extends Unit
                 'cuales son mis turnos',
                 [
                     'routing_hint' => 'pedido_claro',
-                    'tags' => ['turnos'],
+                    'tags' => ['mis_turnos'],
                     'context_areas' => ['scheduling'],
                     'extractions' => [
                         ['span' => 'turnos', 'synonyms' => []],

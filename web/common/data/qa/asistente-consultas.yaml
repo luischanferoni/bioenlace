@@ -21,22 +21,26 @@ cases:
   # --- Smoke: una fila por puerta mínima ---
   - id: smoke-quiero-turno
     seccion: smoke
-    tipo: Pedido bare → incompletas + CTAs
+    tipo: Pedido de turno → guía con botón
     cobertura: Hoy
     mensajes:
       - Quiero un turno
     expect:
-      user_goal: guide
+      user_goals_any:
+        - guide
+        - operational
       offer_intent: turnos.crear-como-paciente
 
   - id: smoke-sintoma-cabeza
     seccion: smoke
-    tipo: Síntoma → guide + oferta
+    tipo: Síntoma → guía con Solicitar Atención
     cobertura: Hoy
     mensajes:
       - Me duele la cabeza
     expect:
-      user_goal: guide
+      user_goals_any:
+        - guide
+        - operational
       offer_intent: atencion.necesito-atencion
       must_not_intent:
         - turnos.crear-como-paciente

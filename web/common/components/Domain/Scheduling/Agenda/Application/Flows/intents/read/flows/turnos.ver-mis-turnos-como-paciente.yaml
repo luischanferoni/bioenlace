@@ -14,7 +14,7 @@ states:
     description: 'Tus próximos turnos'
     meta:
       tags:
-        - turnos
+        - mis_turnos
       open_ui:
         action_id: turnos.listar-como-paciente
     type: final

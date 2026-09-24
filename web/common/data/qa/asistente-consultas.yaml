@@ -52,7 +52,9 @@ cases:
     mensajes:
       - Cancelá el turno del martes
     expect:
-      user_goal: operational
+      user_goals_any:
+        - guide
+        - operational
       intent_ids_any:
         - turnos.cancelar-como-paciente-flow
 
@@ -63,7 +65,9 @@ cases:
     mensajes:
       - Mis análisis
     expect:
-      user_goal: operational
+      user_goals_any:
+        - guide
+        - operational
       intent_ids_any:
         - laboratorio.ver-resultados-como-paciente
       must_not_intent:

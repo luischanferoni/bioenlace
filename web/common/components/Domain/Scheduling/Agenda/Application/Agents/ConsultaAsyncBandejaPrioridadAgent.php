@@ -2,6 +2,8 @@
 
 namespace common\components\Domain\Scheduling\Agenda\Application\Agents;
 
+use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncBandejaPrioridadService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\PushConsultaAsyncNotification;
 use common\components\Platform\Agent\AgentRunRecorder;
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;

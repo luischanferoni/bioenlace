@@ -3,9 +3,7 @@
 namespace common\components\Platform\Assistant\Chat\Routing\Handlers;
 
 use common\components\Platform\Assistant\Chat\Channels\Guide\GuideChannel;
-use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
 use common\components\Platform\Assistant\Planning\AssistantPlanningLogService;
-use common\components\Platform\Assistant\Planning\CatalogCtaResolver;
 use common\components\Platform\Assistant\Planning\DeclarativePlanExecutionResult;
 use common\components\Platform\Assistant\Planning\DeclarativePlanExecutor;
 use common\components\Platform\Assistant\Planning\PlannerRoutingStep;
@@ -134,25 +132,13 @@ final class IncompleteRoutingHandler
     }
 
     /**
-     * Guide incompletas con datos HIS, puertas CTA, o un saludo solo (sin CTA clínico).
+     * El handler ya decidió llamar a la guía. Sin este paso, un pedido sin botón cae en el mensaje de error.
      */
     private static function canGuide(
         SmartCatalogRoutingEvaluation $evaluation,
         DeclarativePlanExecutionResult $execution,
         string $content
     ): bool {
-        if (ChatChannelPolicy::isGreetingOnly($content)) {
-            return true;
-        }
-
-        if (
-            $execution->hasUsefulData
-            || $execution->scopedSystemRecords !== ''
-            || $execution->articleBlock !== ''
-        ) {
-            return true;
-        }
-
-        return CatalogCtaResolver::declaredIntentIds($evaluation) !== [];
+        return true;
     }
 }

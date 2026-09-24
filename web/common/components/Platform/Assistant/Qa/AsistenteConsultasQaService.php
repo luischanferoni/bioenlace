@@ -289,6 +289,13 @@ final class AsistenteConsultasQaService
         $kind = AssistantDraftNormalizer::scalarString($envelope['kind'] ?? '');
         if ($kind === 'flow') {
             $effectiveGoal = 'operational';
+        } else {
+            $finalPath = is_string($planning['final_path'] ?? null)
+                ? trim((string) $planning['final_path'])
+                : '';
+            if ($finalPath === '2ia_guide' || $finalPath === '3ia_planner_guide') {
+                $effectiveGoal = 'guide';
+            }
         }
 
         return [

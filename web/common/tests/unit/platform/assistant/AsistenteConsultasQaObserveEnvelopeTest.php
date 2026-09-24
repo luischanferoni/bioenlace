@@ -89,4 +89,39 @@ class AsistenteConsultasQaObserveEnvelopeTest extends Unit
         $this->assertSame('guide', $obs['user_goal']);
         $this->assertSame('operational', $obs['preprocess_user_goal']);
     }
+
+    public function testClaraAnsweredByGuideCountsAsGuide(): void
+    {
+        AssistantPlanningLogService::resetForTests();
+        AssistantPlanningLogService::begin([
+            'normalized_text' => 'es una urgencia',
+            'necesidad_usuario' => '',
+            'routing_hint' => 'pedido_claro',
+            'tags' => ['urgencia'],
+            'context_areas' => [],
+            'extractions' => [],
+            'intent_ids_hint' => [],
+        ], []);
+        AssistantPlanningLogService::setRoutingResult('clara');
+        AssistantPlanningLogService::setFinalPath('2ia_guide');
+
+        ChatPreprocessContext::set([
+            'ok' => true,
+            'user_goal' => 'operational',
+            'routing_hint' => 'pedido_claro',
+            'normalized_text' => 'es una urgencia',
+            'tags' => ['urgencia'],
+            'context_areas' => [],
+        ]);
+
+        $obs = AsistenteConsultasQaService::observeEnvelope([
+            'kind' => 'interactive',
+            'text' => 'Si es una urgencia, andá a la guardia.',
+            'buttons' => [
+                ['label' => 'Solicitar Atención', 'intent_id' => 'atencion.necesito-atencion'],
+            ],
+        ]);
+
+        $this->assertSame('guide', $obs['user_goal']);
+    }
 }

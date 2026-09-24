@@ -57,6 +57,9 @@ states:
     meta:
       tags:
         - sintomas
+        - sintoma
+        - dolor
+        - malestar
         - condiciones
       review_prefilled: true
       provides:
@@ -178,6 +181,9 @@ states:
     meta:
       tags:
         - sintomas
+        - sintoma
+        - dolor
+        - malestar
       review_prefilled: true
       provides:
         - draft.triage_zona
@@ -200,6 +206,8 @@ states:
     meta:
       tags:
         - urgencia
+        - emergencia
+        - alarma
       requires:
         - draft.reserva_triage_halt
       open_ui:

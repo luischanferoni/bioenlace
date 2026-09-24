@@ -98,7 +98,7 @@ final class StateTagIndex
                 $hits = 0;
                 foreach ($state['tags'] as $tag) {
                     foreach ($foldedNeedles as $needle) {
-                        if ($needle === $tag) {
+                        if (self::sameConcept($needle, $tag)) {
                             $hits++;
                             break;
                         }
@@ -222,5 +222,17 @@ final class StateTagIndex
         self::$vocabulary = $vocabulary;
 
         return self::$index = $out;
+    }
+
+    private static function sameConcept(string $needle, string $tag): bool
+    {
+        if ($needle === $tag) {
+            return true;
+        }
+
+        return $needle . 's' === $tag
+            || $tag . 's' === $needle
+            || $needle . 'es' === $tag
+            || $tag . 'es' === $needle;
     }
 }

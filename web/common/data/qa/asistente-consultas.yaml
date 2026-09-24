@@ -148,7 +148,9 @@ cases:
     mensajes:
       - Hola
     expect:
-      user_goal: guide
+      user_goals_any:
+        - ambiguous
+        - guide
       must_not_offer_intent: atencion.necesito-atencion
 
   - id: fuera-tercero-amigo

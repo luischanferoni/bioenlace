@@ -23,7 +23,7 @@ Modal::begin([
     'size' => 'modal-xl',
 ]);
 ?>
-<div id="turnos-calendario-root" data-turnos-config="<?= Json::htmlEncode($page['jsConfig']) ?>">
+<div id="turnos-calendario-root" data-turnos-config="<?= Html::encode(Json::encode($page['jsConfig'])) ?>">
 <div class="row mb-1">
     <div class="col-12 d-flex justify-content-center controls" id="controles-personalizados">
         <button type="button" class="btn btn-sm btn-soft-primary me-1 prev" data-controls="prev">Días anteriores</button>

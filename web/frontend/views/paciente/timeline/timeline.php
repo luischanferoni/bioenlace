@@ -18,7 +18,7 @@ $timelineEpisodioGroups = $page['timelineEpisodioGroups'];
 $timelineEpisodioItemCount = $page['timelineEpisodioItemCount'];
 $episodioBannerAccent = (string) $page['episodioBannerAccent'];
 $episodioTipoData = (string) $page['episodioTipoData'];
-$tlConfigAttr = Json::htmlEncode($page['jsConfig']);
+$tlConfigAttr = Html::encode(Json::encode($page['jsConfig']));
 
 ?>
 

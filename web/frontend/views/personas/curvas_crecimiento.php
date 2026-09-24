@@ -11,7 +11,7 @@ use yii\helpers\Json;
 $this->title = 'Persona - Curvas Crecimiento';
 $this->params['breadcrumbs'][] = $this->title;
 ?>
-<div class="persona-curvas" id="curvas-crecimiento-root" data-curvas-config="<?= Json::htmlEncode($page) ?>">
+<div class="persona-curvas" id="curvas-crecimiento-root" data-curvas-config="<?= Html::encode(Json::encode($page)) ?>">
   <div class="card">
     <div class="card-header">
         Peso para la edad

@@ -9,7 +9,7 @@ description: >
 
 required:
   - normalized_text
-  - necesidad_usuario
+  - necesidades_usuario
   - routing_hint
   - tags
   - extractions
@@ -20,13 +20,21 @@ fields:
     notes: Ortografía corregida; sentido conservado.
   necesidad_usuario:
     type: string
-    notes: Una frase operativa (primer pedido si hay varios); obligatoria siempre.
-  necesidades_usuario:
-    type: list<string>
     optional: true
     notes: >
-      Si routing_hint = pedido_claro_multiple, lista de pedidos claros (2+).
-      Si viene vacío y hay necesidad_usuario, PHP lo normaliza a [necesidad_usuario].
+      La deriva PHP: solo las oraciones con estado activa, una por línea.
+      La 1ª IA no tiene que mandarla.
+  necesidades_usuario:
+    type: list<object>
+    item_fields:
+      expresion: string
+      estado: enum
+      estado_values: [activa, satisfecha, descartada]
+    notes: >
+      Una oración por necesidad (dónde, cómo, desde cuándo, para quién) y su estado.
+      activa = lo quiere ahora y no se resolvió. satisfecha = ya se cumplió en el hilo.
+      descartada = la dejó de lado o dijo que no. Un estado desconocido se descarta.
+      Una oración suelta (sin objeto) cuenta como activa.
   routing_hint:
     type: enum
     values: catalog/preprocess-routing-hints.yaml
@@ -60,11 +68,13 @@ fields:
       No pedir al modelo.
 
 example:
-  normalized_text: "¿Voy a tener problemas si llego 10 minutos tarde?"
-  necesidad_usuario: "Saber consecuencias de llegar 10 minutos tarde a su cita."
+  normalized_text: "la ecografía sí, el turno de clínica ya lo saqué"
   necesidades_usuario:
-    - "Saber consecuencias de llegar 10 minutos tarde a su cita."
+    - expresion: "Ya sacó el turno de clínica."
+      estado: satisfecha
+    - expresion: "Quiere una ecografía."
+      estado: activa
   routing_hint: pedido_claro
-  tags: [llegar_tarde, scheduling]
+  tags: [estudio]
   extractions: []
   intent_ids_hint: []

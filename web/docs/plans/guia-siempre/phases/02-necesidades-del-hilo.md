@@ -18,11 +18,11 @@ El texto del prompt lo pega una persona. El agente no edita ese archivo.
 
 ## Checklist
 
-- [ ] Normalizar la lista (oración + estado). Descartar estados desconocidos
-- [ ] Guardarla en el estado del hilo y volver a leerla en el turno siguiente
-- [ ] Pasar al preprocess la lista guardada junto con los mensajes, para que pueda actualizarla
-- [ ] La guía arma `{necesidad_usuario}` solo con las oraciones activas
-- [ ] Test: una satisfecha y una activa; la guía ve únicamente la activa
+- [x] Normalizar la lista (oración + estado). Descartar estados desconocidos
+- [x] Guardarla en el estado del hilo y volver a leerla en el turno siguiente
+- [x] Pasar al preprocess la lista guardada junto con los mensajes, para que pueda actualizarla
+- [x] La guía arma `{necesidad_usuario}` solo con las oraciones activas
+- [x] Test: una satisfecha y una activa; la guía ve únicamente la activa
 
 ## Qué no entra
 

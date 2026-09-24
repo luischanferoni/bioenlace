@@ -4,6 +4,8 @@ namespace common\tests\unit\platform\assistant;
 
 use Codeception\Test\Unit;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
+use common\components\Platform\Assistant\Chat\Thread\AssistantThreadStateService;
+use common\components\Platform\Assistant\Chat\Thread\ThreadNeedList;
 
 class ChatPreprocessPromptTest extends Unit
 {
@@ -28,5 +30,24 @@ class ChatPreprocessPromptTest extends Unit
 
         $this->assertStringContainsString('¿Cuáles son mis turnos?', $full);
         $this->assertStringContainsString('(sin historial previo)', $full);
+    }
+
+    public function testBuildFullPromptIncludesStoredNeeds(): void
+    {
+        AssistantThreadStateService::resetCacheForTests();
+        AssistantThreadStateService::saveNecesidades(0, [
+            ['expresion' => 'Ya sacó el turno de clínica.', 'estado' => ThreadNeedList::SATISFECHA],
+            ['expresion' => 'Quiere una ecografía.', 'estado' => ThreadNeedList::ACTIVA],
+        ]);
+
+        $full = ChatPreprocessService::buildFullPrompt('la ecografía', 0);
+
+        $this->assertStringContainsString('- satisfecha: Ya sacó el turno de clínica.', $full);
+        $this->assertStringContainsString('- activa: Quiere una ecografía.', $full);
+        $reloaded = AssistantThreadStateService::loadNecesidades(0);
+        $this->assertSame('Quiere una ecografía.', ThreadNeedList::activeText($reloaded));
+        $this->assertCount(2, $reloaded);
+
+        AssistantThreadStateService::resetCacheForTests();
     }
 }

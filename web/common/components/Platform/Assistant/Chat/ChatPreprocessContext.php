@@ -2,6 +2,7 @@
 
 namespace common\components\Platform\Assistant\Chat;
 
+use common\components\Platform\Assistant\Chat\Thread\ThreadNeedList;
 use Yii;
 
 /**
@@ -103,6 +104,20 @@ final class ChatPreprocessContext
         $d = self::get();
 
         return isset($d['necesidad_usuario']) ? trim((string) $d['necesidad_usuario']) : '';
+    }
+
+    /**
+     * @return list<array{expresion: string, estado: string}>
+     */
+    public static function necesidadesUsuario(): array
+    {
+        $d = self::get();
+        $raw = $d['necesidades_usuario'] ?? [];
+        if (!is_array($raw)) {
+            return [];
+        }
+
+        return ThreadNeedList::normalize($raw);
     }
 
     /**

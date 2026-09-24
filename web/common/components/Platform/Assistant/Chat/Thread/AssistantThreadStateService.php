@@ -40,10 +40,14 @@ final class AssistantThreadStateService
     /** @var array<int, array{active_tag: string, confidence: float, hypothesis: string, updated_at?: string}> */
     private static array $memoryStates = [];
 
+    /** @var array<int, list<array{expresion: string, estado: string}>> */
+    private static array $memoryNeeds = [];
+
     public static function resetCacheForTests(): void
     {
         self::$config = null;
         self::$memoryStates = [];
+        self::$memoryNeeds = [];
         AssistantMetadataLoader::resetCacheForTests();
         AssistantThreadContext::clear();
     }
@@ -54,7 +58,7 @@ final class AssistantThreadStateService
      */
     public static function clearPersistedStateForUser(int $userId): void
     {
-        unset(self::$memoryStates[$userId]);
+        unset(self::$memoryStates[$userId], self::$memoryNeeds[$userId]);
         AssistantThreadContext::clear();
         if ($userId <= 0) {
             return;
@@ -73,11 +77,74 @@ final class AssistantThreadStateService
         }
 
         $ctx = self::decodeContexto($conv->contexto_json);
-        unset($ctx['thread'], $ctx['guide_focus']);
+        unset($ctx['thread'], $ctx['guide_focus'], $ctx['necesidades_usuario']);
         $conv->contexto_json = json_encode($ctx, JSON_UNESCAPED_UNICODE);
         $conv->updated_at = date('Y-m-d H:i:s');
         if (!$conv->save(false)) {
             Yii::warning('AssistantThreadStateService: no se pudo limpiar contexto_json', __METHOD__);
+        }
+    }
+
+    /**
+     * @return list<array{expresion: string, estado: string}>
+     */
+    public static function loadNecesidades(int $userId): array
+    {
+        if (isset(self::$memoryNeeds[$userId])) {
+            return self::$memoryNeeds[$userId];
+        }
+        if ($userId <= 0) {
+            return [];
+        }
+
+        try {
+            $conv = AsistenteConversacion::findOne([
+                'usuario_id' => (string) $userId,
+                'bot_id' => self::BOT_ID,
+            ]);
+        } catch (\Throwable $e) {
+            return [];
+        }
+        if ($conv === null) {
+            return [];
+        }
+
+        $ctx = self::decodeContexto($conv->contexto_json);
+        $needs = ThreadNeedList::normalize($ctx['necesidades_usuario'] ?? []);
+        self::$memoryNeeds[$userId] = $needs;
+
+        return $needs;
+    }
+
+    /**
+     * @param list<array{expresion: string, estado: string}> $needs
+     */
+    public static function saveNecesidades(int $userId, array $needs): void
+    {
+        $needs = ThreadNeedList::normalize($needs);
+        self::$memoryNeeds[$userId] = $needs;
+        if ($userId <= 0) {
+            return;
+        }
+
+        try {
+            $conv = AsistenteConversacion::findOne([
+                'usuario_id' => (string) $userId,
+                'bot_id' => self::BOT_ID,
+            ]);
+        } catch (\Throwable $e) {
+            return;
+        }
+        if ($conv === null) {
+            return;
+        }
+
+        $ctx = self::decodeContexto($conv->contexto_json);
+        $ctx['necesidades_usuario'] = $needs;
+        $conv->contexto_json = json_encode($ctx, JSON_UNESCAPED_UNICODE);
+        $conv->updated_at = date('Y-m-d H:i:s');
+        if (!$conv->save(false)) {
+            Yii::warning('AssistantThreadStateService: no se pudieron guardar las necesidades', __METHOD__);
         }
     }
 

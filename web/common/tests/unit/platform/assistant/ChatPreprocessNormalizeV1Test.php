@@ -25,7 +25,10 @@ class ChatPreprocessNormalizeV1Test extends Unit
         $this->assertSame('operational', $out['user_goal']);
         $this->assertSame(['llegar_tarde', 'scheduling'], $out['tags']);
         $this->assertSame([], $out['context_areas']);
-        $this->assertSame(['Saber si hay problema por llegar tarde.'], $out['necesidades_usuario']);
+        $this->assertSame(
+            [['expresion' => 'Saber si hay problema por llegar tarde.', 'estado' => 'activa']],
+            $out['necesidades_usuario']
+        );
         $this->assertCount(1, $out['extractions']);
     }
 
@@ -47,10 +50,13 @@ class ChatPreprocessNormalizeV1Test extends Unit
         $this->assertSame('pedido_claro_multiple', $out['routing_hint']);
         $this->assertSame('guide', $out['user_goal']);
         $this->assertSame(
-            ['Cancelar el turno.', 'Ver mis análisis.'],
+            [
+                ['expresion' => 'Cancelar el turno.', 'estado' => 'activa'],
+                ['expresion' => 'Ver mis análisis.', 'estado' => 'activa'],
+            ],
             $out['necesidades_usuario']
         );
-        $this->assertSame('Cancelar el turno.', $out['necesidad_usuario']);
+        $this->assertSame("Cancelar el turno.\nVer mis análisis.", $out['necesidad_usuario']);
     }
 
     public function testNormalizeTagsSanitizesCaseAndSpaces(): void
@@ -115,5 +121,29 @@ class ChatPreprocessNormalizeV1Test extends Unit
 
         $this->assertSame([], $out['context_areas']);
         $this->assertSame(['dolor', 'sintoma'], $out['tags']);
+    }
+
+    public function testNormalizeKeepsActiveAndDropsUnknownState(): void
+    {
+        $out = ChatPreprocessService::normalizeFromAi([
+            'normalized_text' => 'la ecografía sí, el turno de clínica ya lo saqué',
+            'necesidades_usuario' => [
+                ['expresion' => 'Ya sacó el turno de clínica.', 'estado' => 'satisfecha'],
+                ['expresion' => 'Quiere una ecografía.', 'estado' => 'activa'],
+                ['expresion' => 'No debería entrar.', 'estado' => 'pendiente'],
+            ],
+            'routing_hint' => 'pedido_claro',
+            'tags' => [],
+            'extractions' => [],
+        ], 'fallback');
+
+        $this->assertSame(
+            [
+                ['expresion' => 'Ya sacó el turno de clínica.', 'estado' => 'satisfecha'],
+                ['expresion' => 'Quiere una ecografía.', 'estado' => 'activa'],
+            ],
+            $out['necesidades_usuario']
+        );
+        $this->assertSame('Quiere una ecografía.', $out['necesidad_usuario']);
     }
 }

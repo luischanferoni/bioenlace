@@ -4,6 +4,7 @@ namespace common\components\Platform\Assistant\Planning;
 
 use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
+use common\components\Platform\Assistant\Chat\Thread\ThreadNeedList;
 use common\components\Platform\Assistant\Context\AssistantContextHISArea;
 use common\components\Platform\Assistant\Preprocess\PreprocessRoutingHintCatalog;
 
@@ -59,9 +60,16 @@ final class AssistantFirstIaAdapter
         $tags = self::reconcileAgendaTags($tags, $normalized);
 
         $actionText = trim((string) ($preprocess['action_text'] ?? ''));
-        $necesidad = trim((string) ($preprocess['necesidad_usuario'] ?? ''));
-        if ($necesidad === '') {
-            $necesidad = $actionText !== '' ? $actionText : $normalized;
+        $needs = isset($preprocess['necesidades_usuario']) && is_array($preprocess['necesidades_usuario'])
+            ? ThreadNeedList::normalize($preprocess['necesidades_usuario'])
+            : [];
+        if ($needs !== []) {
+            $necesidad = ThreadNeedList::activeText($needs);
+        } else {
+            $necesidad = trim((string) ($preprocess['necesidad_usuario'] ?? ''));
+            if ($necesidad === '') {
+                $necesidad = $actionText !== '' ? $actionText : $normalized;
+            }
         }
 
         $routingHint = ChatPreprocessService::canonicalizeRoutingHint((string) ($preprocess['routing_hint'] ?? ''));
@@ -83,6 +91,7 @@ final class AssistantFirstIaAdapter
         return [
             'normalized_text' => $normalized,
             'necesidad_usuario' => $necesidad,
+            'necesidades_usuario' => $needs,
             'routing_hint' => $routingHint,
             'tags' => $tags,
             'context_areas' => $areas,

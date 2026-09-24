@@ -3,6 +3,8 @@
 namespace common\components\Platform\Assistant\Chat\Preprocess;
 
 use common\components\Platform\Assistant\Chat\Channels\Guide\GuideHistoryWindow;
+use common\components\Platform\Assistant\Chat\Thread\AssistantThreadStateService;
+use common\components\Platform\Assistant\Chat\Thread\ThreadNeedList;
 use common\components\Platform\Assistant\Context\AssistantContextHISArea;
 use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
 use common\components\Platform\Assistant\Preprocess\PreprocessExtractionCategoryCatalog;
@@ -201,6 +203,16 @@ final class ChatPreprocessService
         if ($history !== '') {
             $prefix = str_replace('(sin historial previo)', $history, $prefix);
         }
+        $stored = ThreadNeedList::formatForPreprocess(AssistantThreadStateService::loadNecesidades($userId));
+        if ($stored !== '') {
+            $section = "Necesidades ya registradas en este hilo (actualizá el estado de cada una; no las copies como mensajes):\n"
+                . $stored . "\n\n";
+            if (strpos($prefix, 'Mensaje actual:') !== false) {
+                $prefix = str_replace('Mensaje actual:', $section . 'Mensaje actual:', $prefix);
+            } else {
+                $prefix .= "\n" . $section;
+            }
+        }
 
         return $prefix . self::userMessagePart($content);
     }
@@ -236,8 +248,9 @@ final class ChatPreprocessService
             $normalized = trim($fallbackContent);
         }
 
-        $necesidades = self::normalizeNecesidadesUsuario($raw, $normalized);
-        $necesidad = $necesidades[0] ?? $normalized;
+        $needs = self::normalizeNecesidadesUsuario($raw, $normalized);
+        $active = ThreadNeedList::activeText($needs);
+        $necesidad = $active !== '' ? $active : ($needs === [] ? $normalized : '');
 
         $actionText = isset($raw['action_text']) ? trim((string) $raw['action_text']) : '';
         // Áreas: las deriva el match (carpeta del intent), no la 1ª IA.
@@ -247,7 +260,7 @@ final class ChatPreprocessService
             'ok' => true,
             'normalized_text' => $normalized,
             'necesidad_usuario' => $necesidad,
-            'necesidades_usuario' => $necesidades,
+            'necesidades_usuario' => $needs,
             'routing_hint' => $routingHint,
             'tags' => $tags,
             'user_goal' => $goal,
@@ -260,34 +273,26 @@ final class ChatPreprocessService
 
     /**
      * @param array<string, mixed> $raw
-     * @return list<string>
+     * @return list<array{expresion: string, estado: string}>
      */
     private static function normalizeNecesidadesUsuario(array $raw, string $fallback): array
     {
-        $out = [];
-        if (isset($raw['necesidades_usuario']) && is_array($raw['necesidades_usuario'])) {
-            foreach ($raw['necesidades_usuario'] as $item) {
-                if (!is_string($item)) {
-                    continue;
-                }
-                $t = trim($item);
-                if ($t !== '') {
-                    $out[] = $t;
-                }
-            }
-        }
-        if ($out === []) {
-            $single = isset($raw['necesidad_usuario']) ? trim((string) $raw['necesidad_usuario']) : '';
-            if ($single === '') {
-                $actionText = isset($raw['action_text']) ? trim((string) $raw['action_text']) : '';
-                $single = $actionText !== '' ? $actionText : $fallback;
-            }
-            if ($single !== '') {
-                $out[] = $single;
-            }
+        $hadList = array_key_exists('necesidades_usuario', $raw) && is_array($raw['necesidades_usuario']);
+        $needs = $hadList ? ThreadNeedList::normalize($raw['necesidades_usuario']) : [];
+        if ($needs !== [] || $hadList) {
+            return $needs;
         }
 
-        return array_values(array_unique($out));
+        $single = isset($raw['necesidad_usuario']) ? trim((string) $raw['necesidad_usuario']) : '';
+        if ($single === '') {
+            $actionText = isset($raw['action_text']) ? trim((string) $raw['action_text']) : '';
+            $single = $actionText !== '' ? $actionText : $fallback;
+        }
+        if ($single === '') {
+            return [];
+        }
+
+        return ThreadNeedList::normalize([$single]);
     }
 
     /**
@@ -303,7 +308,13 @@ final class ChatPreprocessService
                 return null;
             }
 
-            return self::normalizeFromAi($raw, $content);
+            $normalized = self::normalizeFromAi($raw, $content);
+            AssistantThreadStateService::saveNecesidades(
+                $userId,
+                is_array($normalized['necesidades_usuario'] ?? null) ? $normalized['necesidades_usuario'] : []
+            );
+
+            return $normalized;
         } catch (\Throwable $e) {
             Yii::warning('ChatPreprocessService IA: ' . $e->getMessage(), 'asistente');
 
@@ -426,7 +437,9 @@ final class ChatPreprocessService
             'ok' => true,
             'normalized_text' => $content,
             'necesidad_usuario' => $content,
-            'necesidades_usuario' => $content !== '' ? [$content] : [],
+            'necesidades_usuario' => $content !== ''
+                ? [['expresion' => $content, 'estado' => ThreadNeedList::ACTIVA]]
+                : [],
             'routing_hint' => PreprocessRoutingHintCatalog::SIN_PEDIDO,
             'tags' => [],
             'user_goal' => 'ambiguous',

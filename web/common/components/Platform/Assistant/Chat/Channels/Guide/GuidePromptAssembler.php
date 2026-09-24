@@ -8,6 +8,7 @@ use common\components\Platform\Assistant\Catalog\SmartCatalogRegistry;
 use common\components\Platform\Assistant\Context\AssistantContextAssemblyService;
 use common\components\Platform\Assistant\Context\AssistantContextHISArea;
 use common\components\Platform\Assistant\Chat\ChatPreprocessContext;
+use common\components\Platform\Assistant\Chat\Thread\ThreadNeedList;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalog;
 use common\components\Platform\Assistant\Planning\SmartCatalogRoutingEvaluation;
 use Yii;
@@ -123,6 +124,20 @@ final class GuidePromptAssembler
    */
   private static function resolveNecesidadUsuario(string $fallbackMessage, ?array $firstIa = null): string
   {
+    $needs = null;
+    if ($firstIa !== null && isset($firstIa['necesidades_usuario']) && is_array($firstIa['necesidades_usuario'])) {
+      $needs = $firstIa['necesidades_usuario'];
+    }
+    if ($needs === null) {
+      $fromContext = ChatPreprocessContext::necesidadesUsuario();
+      if ($fromContext !== []) {
+        $needs = $fromContext;
+      }
+    }
+    if (is_array($needs) && $needs !== []) {
+      return ThreadNeedList::activeText(ThreadNeedList::normalize($needs));
+    }
+
     $fromIa = '';
     if ($firstIa !== null) {
       $fromIa = trim((string) ($firstIa['necesidad_usuario'] ?? ''));

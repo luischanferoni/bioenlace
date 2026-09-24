@@ -37,4 +37,26 @@ class GuidePromptAssemblerIncompleteTest extends Unit
         $this->assertStringNotContainsString('scheduling —', $prompt);
         $this->assertStringNotContainsString('{necesidad_usuario}', $prompt);
     }
+
+    public function testGuideSeesOnlyActiveNeed(): void
+    {
+        $prompt = GuidePromptAssembler::buildForIncomplete(
+            [
+                'necesidad_usuario' => 'Ya tiene el turno de clínica.',
+                'necesidades_usuario' => [
+                    ['expresion' => 'Ya tiene el turno de clínica.', 'estado' => 'satisfecha'],
+                    ['expresion' => 'Quiere una ecografía.', 'estado' => 'activa'],
+                ],
+                'normalized_text' => 'la ecografía',
+                'context_areas' => ['scheduling'],
+            ],
+            'la ecografía',
+            0,
+            '',
+            ''
+        );
+
+        $this->assertStringContainsString('Quiere una ecografía.', $prompt);
+        $this->assertStringNotContainsString('Ya tiene el turno de clínica.', $prompt);
+    }
 }

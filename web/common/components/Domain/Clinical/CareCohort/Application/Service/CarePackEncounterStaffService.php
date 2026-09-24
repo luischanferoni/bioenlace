@@ -3,6 +3,7 @@
 namespace common\components\Domain\Clinical\CareCohort\Application\Service;
 
 use common\components\Domain\Clinical\CareCohort\Domain\CarePackType;
+use common\components\Domain\Clinical\CareCohort\Domain\Port\CarePackRepository;
 use common\models\Clinical\CareAssistanceResponse;
 use common\models\Clinical\CareCohortPack;
 use common\models\Clinical\CareEncounterPack;

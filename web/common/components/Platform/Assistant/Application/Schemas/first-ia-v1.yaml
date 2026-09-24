@@ -41,15 +41,15 @@ fields:
     notes: Lectura del mensaje (capa IA); PHP adjudica el path de decisión.
   tags:
     type: list<string>
-    notes: Etiquetas cerradas o extendidas; usadas por triggers del catálogo inteligente.
+    notes: >
+      Las inventa la 1ª IA. PHP las cruza con meta.tags del estado.
+      El estado que cruza dice, con hint.entity, qué padrón hidratar con el span.
   extractions:
     type: list<object>
     item_fields:
       span: string
-      category: enum
-      category_values: catalog/preprocess-extraction-categories.yaml
       synonyms: list<string>
-    notes: Máximo 2 synonyms por extracción. category de entidad (servicio, efector, profesional, persona) hidrata el draft. category de estado (meta.tags del intent) elige el flow. El span es el dato, no el selector.
+    notes: Máximo 2 synonyms por extracción. El span es el fragmento literal a buscar en el hint del estado.
   intent_ids_hint:
     type: list<string>
     optional: true

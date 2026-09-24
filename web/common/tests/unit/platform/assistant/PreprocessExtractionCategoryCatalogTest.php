@@ -35,32 +35,31 @@ class PreprocessExtractionCategoryCatalogTest extends Unit
         $this->assertNotContains('tiempo', $all);
     }
 
-    public function testInvalidCategoryIsDroppedOnNormalize(): void
+    public function testNormalizeKeepsSpansWithoutCategory(): void
     {
         $out = ChatPreprocessService::normalizeFromAi([
             'routing_hint' => 'pedido_claro',
             'normalized_text' => 'turno con cardiólogo',
+            'tags' => ['turno'],
             'extractions' => [
-                ['span' => 'cardiólogo', 'category' => 'profesional', 'synonyms' => []],
-                ['span' => 'invalida', 'category' => 'categoria_inventada', 'synonyms' => []],
-                ['span' => 'dolor', 'category' => 'sintoma', 'synonyms' => []],
+                ['span' => 'cardiólogo', 'synonyms' => ['cardio']],
+                ['span' => '', 'synonyms' => []],
             ],
         ], 'turno con cardiólogo');
 
-        $this->assertCount(1, $out['extractions']);
-        $this->assertSame('profesional', $out['extractions'][0]['category']);
+        $this->assertSame([
+            ['span' => 'cardiólogo', 'synonyms' => ['cardio']],
+        ], $out['extractions']);
+        $this->assertSame(['turno'], $out['tags']);
     }
 
-    public function testStablePromptIncludesResolvableCategoryList(): void
+    public function testStablePromptAsksRoutingHintNotClosedCategories(): void
     {
         $prefix = ChatPreprocessService::stablePromptPrefix();
 
-        $this->assertStringContainsString('- servicio —', $prefix);
-        $this->assertStringContainsString('- efector —', $prefix);
-        $this->assertStringNotContainsString('- acto —', $prefix);
-        $this->assertStringNotContainsString('- sintoma —', $prefix);
-        $this->assertStringContainsString('- incompletas —', $prefix);
-        $this->assertStringContainsString('llegar_tarde', $prefix);
+        $this->assertStringContainsString('- pedido_claro —', $prefix);
+        $this->assertStringNotContainsString('- servicio —', $prefix);
+        $this->assertStringNotContainsString('- efector —', $prefix);
         $this->assertStringNotContainsString('categories_json', $prefix);
         $this->assertStringNotContainsString('categories_human', $prefix);
     }

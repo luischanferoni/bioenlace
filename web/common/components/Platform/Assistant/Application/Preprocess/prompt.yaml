@@ -13,34 +13,22 @@ stable_prompt: |
     "normalized_text": "solo el mensaje actual limpio, ortografía corregida, abreviaturas abiertas",    
     "necesidades_usuario": [
       {
-        "expresion": "una oración con los hechos: dónde, cómo, desde cuándo, para quién",
-        "estado": "activa | satisfecha | descartada"
+        "expresion": "una oración con los hechos: dónde, cómo, desde cuándo, para quién. Una por cosa distinta que expresa el usuario de acuerdo al historial.",
+        "estado": "activa (lo quiere ahora y todavía no se resolvió en este hilo) | satisfecha (ya se cumplió en este hilo) | descartada (lo dejó de lado o dijo que no)"
       }
     ],
     "routing_hint": "<ver routing_hint abajo>",
-    "tags": ["señales finas para el catálogo, snake_case; vocabulario: {preprocess_tags_vocabulary}"],
+    "tags": ["arma un grupo de tags, etiquetas o categorías para todas las necesidades del usuario"],
     "extractions": [
       {
-        "span": "fragmentos literales del mensaje",
-        "category": "<ver categorías extracción>",
+        "span": "fragmentos literales del mensaje",        
         "synonyms": ["0-2 variantes ortográficas o abreviaturas"]
       }
     ]
   }
 
-  necesidades_usuario: una oración por cosa distinta que expresa la persona, según el último mensaje y el historial. No copies el historial. No inventes.
-  estado (exactamente uno):
-  - activa: lo quiere ahora y todavía no se resolvió en este hilo
-  - satisfecha: ya se cumplió en este hilo
-  - descartada: lo dejó de lado o dijo que no
-  Si no queda ninguna activa, igual devolvé las cerradas que explican el hilo.
-  Si aparecen necesidades ya registradas, actualizá el estado de cada una.
-
   routing_hint (exactamente uno) de acuerdo a la necesidad del usuario:
   {routing_hints_list}
-
-  Categorías extracción (category en extractions; solo claves de la lista):
-  {extraction_categories_list}
 
   Historial reciente (más antiguo → más reciente):
   {conversation_history}

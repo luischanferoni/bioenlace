@@ -41,11 +41,10 @@ class SmartCatalogRoutingServiceTest extends Unit
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'quiero un turno con el cardiologo',
             'routing_hint' => 'pedido_claro',
-            'tags' => ['sacar_turno'],
+            'tags' => ['turno'],
             'context_areas' => ['scheduling'],
             'extractions' => [
-                ['span' => 'cardiólogo', 'category' => 'profesional', 'synonyms' => []],
-                ['span' => 'turno', 'category' => 'turno', 'synonyms' => []],
+                ['span' => 'cardiólogo', 'synonyms' => []],
             ],
         ], 0);
 
@@ -60,10 +59,10 @@ class SmartCatalogRoutingServiceTest extends Unit
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'quiero un turno',
             'routing_hint' => 'pedido_claro',
-            'tags' => ['pedido_turno_sin_destino'],
+            'tags' => ['turno'],
             'context_areas' => ['scheduling'],
             'extractions' => [
-                ['span' => 'turno', 'category' => 'turno', 'synonyms' => []],
+                ['span' => 'turno', 'synonyms' => []],
             ],
         ], 0);
 
@@ -94,10 +93,10 @@ class SmartCatalogRoutingServiceTest extends Unit
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'cuales son mis turnos',
             'routing_hint' => 'pedido_claro',
-            'tags' => ['mis_turnos'],
+            'tags' => ['turnos'],
             'context_areas' => ['scheduling'],
             'extractions' => [
-                ['span' => 'turnos', 'category' => 'turnos', 'synonyms' => []],
+                ['span' => 'turnos', 'synonyms' => []],
             ],
         ], 0);
 
@@ -130,7 +129,7 @@ class SmartCatalogRoutingServiceTest extends Unit
             'normalized_text' => 'quiero informar un efecto adverso de una medicacion',
             'necesidad_usuario' => 'Informar un efecto adverso de una medicación.',
             'routing_hint' => 'pedido_claro',
-            'tags' => ['sintoma', 'medicamento', 'necesito_atencion', 'scheduling'],
+            'tags' => ['sintomas'],
             'context_areas' => ['scheduling', 'medication'],
             'intent_ids_hint' => [
                 'atencion.necesito-atencion',
@@ -138,7 +137,7 @@ class SmartCatalogRoutingServiceTest extends Unit
                 'turnos.ver-ultimo-en-oferta-como-paciente',
             ],
             'extractions' => [
-                ['span' => 'medicación', 'category' => 'sintomas', 'synonyms' => []],
+                ['span' => 'medicación', 'synonyms' => []],
             ],
         ], 0);
 
@@ -184,7 +183,7 @@ class SmartCatalogRoutingServiceTest extends Unit
             'tags' => ['llegar_tarde', 'scheduling'],
             'context_areas' => ['scheduling'],
             'extractions' => [
-                ['span' => '10 minutos', 'category' => 'servicio', 'synonyms' => []],
+                ['span' => '10 minutos', 'synonyms' => []],
             ],
         ], 0);
 

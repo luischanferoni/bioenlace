@@ -35,9 +35,9 @@ flowchart TB
 
 Los YAML de flujo viven en `common/metadata/bioenlace/assistant/intents/`.
 
-Clasificación: el preprocess devuelve necesidades y extracciones. La `category` de cada extracción (sintomas, condiciones, estudio, turno) se cruza con `meta.tags` del estado. El `span` es el dato, no el selector. servicio, efector, profesional y persona no eligen estado. Si gana un solo intent, o un artículo, el resultado es **clara**. Si empatan varios intents, o la pregunta necesita datos del sistema, es **incompletas**. En los dos casos de un flow, la guía responde y el flow se abre cuando la persona toca el botón.
+Clasificación: el preprocess devuelve necesidades y tags que inventa. PHP cruza esos tags con `meta.tags` del estado. El estado que cruza hidrata el `span` con su `hint`. Si gana un solo intent, o un artículo, el resultado es **clara**. Si empatan varios intents, o la pregunta necesita datos del sistema, es **incompletas**. En los dos casos de un flow, la guía responde y el flow se abre cuando la persona toca el botón.
 
-**Routing** (1ª IA preprocess → category de la extracción):
+**Routing** (1ª IA preprocess → tags del mensaje):
 
 | Resultado | Rol | IAs totales (típico) |
 |-----------|-----|----------------------|

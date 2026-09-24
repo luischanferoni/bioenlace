@@ -32,10 +32,10 @@ class SmartCatalogConversationalQaTest extends Unit
                 'quiero informar un efecto adverso de una medicacion',
                 [
                     'routing_hint' => 'pedido_claro',
-                    'tags' => ['sintoma', 'medicamento', 'necesito_atencion'],
+                    'tags' => ['sintomas'],
                     'context_areas' => ['medication'],
                     'extractions' => [
-                        ['span' => 'efecto adverso', 'category' => 'sintomas', 'synonyms' => []],
+                        ['span' => 'efecto adverso', 'synonyms' => []],
                     ],
                 ],
                 ['clara'],
@@ -44,10 +44,10 @@ class SmartCatalogConversationalQaTest extends Unit
                 'me duele la panza',
                 [
                     'routing_hint' => 'pedido_claro',
-                    'tags' => ['sintoma', 'dolor', 'necesito_atencion'],
+                    'tags' => ['sintomas'],
                     'context_areas' => [],
                     'extractions' => [
-                        ['span' => 'panza', 'category' => 'sintomas', 'synonyms' => []],
+                        ['span' => 'panza', 'synonyms' => []],
                     ],
                 ],
                 ['clara'],
@@ -56,11 +56,10 @@ class SmartCatalogConversationalQaTest extends Unit
                 'quiero un turno con el cardiologo',
                 [
                     'routing_hint' => 'pedido_claro',
-                    'tags' => ['sacar_turno'],
+                    'tags' => ['turno'],
                     'context_areas' => ['scheduling'],
                     'extractions' => [
-                        ['span' => 'cardiólogo', 'category' => 'profesional', 'synonyms' => []],
-                        ['span' => 'turno', 'category' => 'turno', 'synonyms' => []],
+                        ['span' => 'cardiólogo', 'synonyms' => []],
                     ],
                 ],
                 ['clara'],
@@ -69,10 +68,10 @@ class SmartCatalogConversationalQaTest extends Unit
                 'quiero un turno',
                 [
                     'routing_hint' => 'pedido_claro',
-                    'tags' => ['pedido_turno_sin_destino'],
+                    'tags' => ['turno'],
                     'context_areas' => ['scheduling'],
                     'extractions' => [
-                        ['span' => 'turno', 'category' => 'turno', 'synonyms' => []],
+                        ['span' => 'turno', 'synonyms' => []],
                     ],
                 ],
                 ['clara'],
@@ -84,7 +83,7 @@ class SmartCatalogConversationalQaTest extends Unit
                     'tags' => ['estudio'],
                     'context_areas' => [],
                     'extractions' => [
-                        ['span' => 'ecografía', 'category' => 'estudio', 'synonyms' => []],
+                        ['span' => 'ecografía', 'synonyms' => []],
                     ],
                 ],
                 ['clara'],
@@ -93,10 +92,10 @@ class SmartCatalogConversationalQaTest extends Unit
                 'cuales son mis turnos',
                 [
                     'routing_hint' => 'pedido_claro',
-                    'tags' => ['mis_turnos', 'scheduling'],
+                    'tags' => ['turnos'],
                     'context_areas' => ['scheduling'],
                     'extractions' => [
-                        ['span' => 'turnos', 'category' => 'turnos', 'synonyms' => []],
+                        ['span' => 'turnos', 'synonyms' => []],
                     ],
                 ],
                 ['clara'],
@@ -141,10 +140,10 @@ class SmartCatalogConversationalQaTest extends Unit
                 'listar profesionales del centro',
                 [
                     'routing_hint' => 'pedido_claro',
-                    'tags' => ['listar_profesionales', 'staff'],
+                    'tags' => ['profesionales'],
                     'context_areas' => ['geo_resources'],
                     'extractions' => [
-                        ['span' => 'profesionales', 'category' => 'profesionales', 'synonyms' => []],
+                        ['span' => 'profesionales', 'synonyms' => []],
                     ],
                 ],
                 ['clara'],

@@ -3,6 +3,8 @@
 namespace common\components\Platform\Assistant\Service;
 
 use common\components\Platform\Assistant\Catalog\IntentSchemaPaths;
+use common\components\Platform\Assistant\Catalog\StateTagIndex;
+use common\components\Platform\Assistant\Chat\ChatPreprocessContext;
 use common\components\Platform\Assistant\SubIntentEngine\FlowStatechart;
 use Symfony\Component\Yaml\Yaml;
 
@@ -27,10 +29,24 @@ final class FlowHintService
             return [];
         }
 
+        $matchedStateIds = self::matchedStateIds($intentId);
+        if ($matchedStateIds === []) {
+            return [];
+        }
+
+        $terms = self::termsFromExtractions($extractions);
+        if ($terms === []) {
+            return [];
+        }
+
         $hints = [];
         $workingDraft = $draft;
         foreach (FlowStatechart::ordered($intent) as $sub) {
             if (!is_array($sub) || empty($sub['hint']) || !is_array($sub['hint'])) {
+                continue;
+            }
+            $stateId = trim((string) ($sub['id'] ?? ''));
+            if (!in_array($stateId, $matchedStateIds, true)) {
                 continue;
             }
             $hintCfg = $sub['hint'];
@@ -39,13 +55,6 @@ final class FlowHintService
             if ($entity === '') {
                 continue;
             }
-
-            $extraction = self::findExtractionForEntity($extractions, $entity);
-            if ($extraction === null) {
-                continue;
-            }
-
-            $terms = self::termsFromExtraction($extraction);
             $ctx = new HintResolutionContext($intentId, $userId, $workingDraft);
             $match = HintResolutionService::resolve($entity, $matchProperty, $terms, $ctx);
             if ($match === null) {
@@ -158,21 +167,50 @@ final class FlowHintService
     }
 
     /**
-     * @param list<array<string, mixed>> $extractions
-     * @return array<string, mixed>|null
+     * Estados de este intent cuyo meta.tags cruzó con los tags del preprocess.
+     *
+     * @return list<string>
      */
-    private static function findExtractionForEntity(array $extractions, string $entity): ?array
+    private static function matchedStateIds(string $intentId): array
     {
-        foreach ($extractions as $ex) {
-            if (!is_array($ex)) {
+        $hits = StateTagIndex::match(StateTagIndex::needles([
+            'tags' => ChatPreprocessContext::tags(),
+        ]));
+        $ids = [];
+        foreach ($hits as $hit) {
+            if (trim((string) ($hit['intent_id'] ?? '')) !== $intentId) {
                 continue;
             }
-            if (trim((string) ($ex['category'] ?? '')) === $entity) {
-                return $ex;
+            foreach ($hit['states'] as $state) {
+                $id = trim((string) ($state['id'] ?? ''));
+                if ($id !== '' && !in_array($id, $ids, true)) {
+                    $ids[] = $id;
+                }
             }
         }
 
-        return null;
+        return $ids;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $extractions
+     * @return list<string>
+     */
+    private static function termsFromExtractions(array $extractions): array
+    {
+        $terms = [];
+        foreach ($extractions as $extraction) {
+            if (!is_array($extraction)) {
+                continue;
+            }
+            foreach (self::termsFromExtraction($extraction) as $term) {
+                if (!in_array($term, $terms, true)) {
+                    $terms[] = $term;
+                }
+            }
+        }
+
+        return $terms;
     }
 
     /**

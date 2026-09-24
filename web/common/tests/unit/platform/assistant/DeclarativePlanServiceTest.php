@@ -241,10 +241,10 @@ class DeclarativePlanServiceTest extends Unit
             'normalized_text' => 'Mis análisis',
             'user_goal' => 'operational',
             'routing_hint' => 'pedido_claro',
-            'tags' => ['mis_analisis'],
+            'tags' => ['laboratorio'],
             'context_areas' => ['clinical'],
             'extractions' => [
-                ['span' => 'análisis', 'category' => 'laboratorio', 'synonyms' => []],
+                ['span' => 'análisis', 'synonyms' => []],
             ],
         ], 1);
 

@@ -3,13 +3,11 @@
 namespace common\components\Platform\Assistant\Catalog;
 
 use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
-use common\components\Platform\Assistant\Preprocess\PreprocessExtractionCategoryCatalog;
 use Symfony\Component\Yaml\Yaml;
 
 /**
- * Cruza `extractions.category` (y un tag igual, si la IA lo mandó) con `meta.tags`.
- * El tag del estado es una categoría (sintomas, condiciones, estudio). No es una frase.
- * servicio, efector, profesional y persona hidratan el draft y no eligen estado.
+ * Cruza los tags que inventa el preprocess con `meta.tags` de cada estado.
+ * El tag del estado es una palabra (sintomas, condiciones, estudio, turno). No es una frase.
  */
 final class StateTagIndex
 {
@@ -62,25 +60,7 @@ final class StateTagIndex
      */
     public static function needles(array $firstIa, string $message = ''): array
     {
-        $entities = [];
-        foreach (PreprocessExtractionCategoryCatalog::all() as $id) {
-            $entities[ChatChannelPolicy::fold($id)] = true;
-        }
-
         $parts = [];
-        $extractions = $firstIa['extractions'] ?? [];
-        if (is_array($extractions)) {
-            foreach ($extractions as $extraction) {
-                if (!is_array($extraction)) {
-                    continue;
-                }
-                $category = trim((string) ($extraction['category'] ?? ''));
-                if ($category === '' || isset($entities[ChatChannelPolicy::fold($category)])) {
-                    continue;
-                }
-                $parts[] = $category;
-            }
-        }
         $tags = $firstIa['tags'] ?? [];
         if (is_array($tags)) {
             foreach ($tags as $tag) {

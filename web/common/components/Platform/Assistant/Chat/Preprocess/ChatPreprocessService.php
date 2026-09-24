@@ -2,7 +2,6 @@
 
 namespace common\components\Platform\Assistant\Chat\Preprocess;
 
-use common\components\Platform\Assistant\Catalog\StateTagIndex;
 use common\components\Platform\Assistant\Chat\Channels\Guide\GuideHistoryWindow;
 use common\components\Platform\Assistant\Chat\Thread\AssistantThreadStateService;
 use common\components\Platform\Assistant\Chat\Thread\ThreadNeedList;
@@ -119,8 +118,8 @@ final class ChatPreprocessService
             if (!is_string($tag)) {
                 continue;
             }
-            $tag = mb_strtolower(trim($tag), 'UTF-8');
-            $tag = (string) preg_replace('/[^a-z0-9_]+/u', '_', $tag);
+            $tag = ChatChannelPolicy::fold($tag);
+            $tag = (string) preg_replace('/[^a-z0-9_]+/', '_', $tag);
             $tag = trim($tag, '_');
             if ($tag !== '' && !in_array($tag, $out, true)) {
                 $out[] = $tag;
@@ -159,7 +158,7 @@ final class ChatPreprocessService
      *   tags: list<string>,
      *   user_goal: string,
      *   action_text: string,
-     *   extractions: list<array{span: string, category: string, synonyms: list<string>}>,
+     *   extractions: list<array{span: string, synonyms: list<string>}>,
      *   context_areas: list<string>,
      *   intent_ids_hint: list<string>
      * }|null null = falló la IA
@@ -186,9 +185,6 @@ final class ChatPreprocessService
 
         return AssistantMetadataLoader::applyPlaceholders($template, [
             'routing_hints_list' => PreprocessRoutingHintCatalog::listForPrompt(),
-            'preprocess_tags_vocabulary' => PreprocessTagVocabularyCatalog::listForPrompt(),
-            'extraction_categories_list' => PreprocessExtractionCategoryCatalog::listForPrompt(),
-            'state_tags_list' => StateTagIndex::listForPrompt(),
             'conversation_history' => '(sin historial previo)',
         ]);
     }
@@ -229,7 +225,7 @@ final class ChatPreprocessService
      *   tags: list<string>,
      *   user_goal: string,
      *   action_text: string,
-     *   extractions: list<array{span: string, category: string, synonyms: list<string>}>,
+     *   extractions: list<array{span: string, synonyms: list<string>}>,
      *   context_areas: list<string>,
      *   intent_ids_hint: list<string>
      * }
@@ -326,7 +322,7 @@ final class ChatPreprocessService
 
     /**
      * @param mixed $raw
-     * @return list<array{span: string, category: string, synonyms: list<string>}>
+     * @return list<array{span: string, synonyms: list<string>}>
      */
     private static function normalizeExtractions($raw): array
     {
@@ -334,18 +330,13 @@ final class ChatPreprocessService
             return [];
         }
 
-        $allowedCat = array_flip(self::allowedEntityCategories());
         $extractions = [];
         foreach ($raw as $ex) {
             if (!is_array($ex)) {
                 continue;
             }
             $span = isset($ex['span']) ? trim((string) $ex['span']) : '';
-            $cat = isset($ex['category']) ? trim((string) $ex['category']) : '';
-            if ($span === '' || $cat === '') {
-                continue;
-            }
-            if (!isset($allowedCat[$cat]) && !StateTagIndex::hasTag($cat)) {
+            if ($span === '') {
                 continue;
             }
             $syns = [];
@@ -361,7 +352,6 @@ final class ChatPreprocessService
             }
             $extractions[] = [
                 'span' => $span,
-                'category' => $cat,
                 'synonyms' => $syns,
             ];
         }
@@ -431,7 +421,7 @@ final class ChatPreprocessService
      *   tags: list<string>,
      *   user_goal: string,
      *   action_text: string,
-     *   extractions: list<array{span: string, category: string, synonyms: list<string>}>,
+     *   extractions: list<array{span: string, synonyms: list<string>}>,
      *   context_areas: list<string>,
      *   intent_ids_hint: list<string>
      * }

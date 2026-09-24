@@ -85,7 +85,7 @@ ADR: [decisions/asistente-catalogo-inteligente.md](../decisions/asistente-catalo
 
 | Pieza | Ubicación aproximada | Idea en una frase |
 |-------|----------------------|-------------------|
-| Motor | `SubIntentEngine/SubIntentEngine.php` | Lee el YAML del intent y avanza según sub-pasos (`subintents`) |
+| Motor | `SubIntentEngine/SubIntentEngine.php` | Lee el YAML del intent y avanza según el statechart (`states`) |
 | Definiciones | `Domain/<BC>/[Modulo/]Application/Flows/intents/*.yaml` (+ platform) | Guion: textos del asistente, qué pantalla abrir, qué datos pedir |
 | Manifiesto de flujo | `FlowManifest/FlowManifest.php` | Describe en runtime qué pasos tiene el flujo (sin duplicar pantallas en otro sitio) |
 | Reglas de negocio | `SubIntentEngine/IntentBusinessRules.php` | Comprueba condiciones antes de entrar al flujo (por ejemplo “falta efector”) |

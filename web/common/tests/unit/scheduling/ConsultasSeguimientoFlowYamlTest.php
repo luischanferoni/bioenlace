@@ -3,12 +3,11 @@
 namespace common\tests\unit\scheduling;
 
 use Codeception\Test\Unit;
-use common\components\Platform\Assistant\SubIntentEngine\StatechartManifest;
 use common\components\Platform\Assistant\SubIntentEngine\SubIntentEngine;
 use Symfony\Component\Yaml\Yaml;
 
 /**
- * Contrato Control/Seguimiento dentro de Solicitar Atención (pasos cs_* absorbidos).
+ * Contrato Control/Seguimiento dentro de Solicitar AtenciÃ³n (pasos cs_* absorbidos).
  */
 class ConsultasSeguimientoFlowYamlTest extends Unit
 {
@@ -26,52 +25,28 @@ class ConsultasSeguimientoFlowYamlTest extends Unit
         $this->assertSame('triage_raiz', $raw['initial'] ?? null);
 
         $extra = $raw['context'] ?? [];
-        $yaml = StatechartManifest::apply($raw);
         $this->assertContains('medication_request_ids', $extra);
         $this->assertContains('medicacion_operacion', $extra);
         $this->assertContains('ajuste_motivo', $extra);
 
-        $byId = [];
-        foreach ($yaml['subintents'] ?? [] as $si) {
-            if (is_array($si) && isset($si['id'])) {
-                $byId[(string) $si['id']] = $si;
-            }
-        }
+        $byId = is_array($raw['states'] ?? null) ? $raw['states'] : [];
 
-        $raizRoutes = [];
-        foreach ($byId['triage_raiz']['next_routing'] ?? [] as $row) {
-            if (!is_array($row)) {
-                continue;
-            }
-            $when = $row['when']['draft_equals']['triage_raiz'] ?? null;
-            if (is_string($when) && $when !== '') {
-                $raizRoutes[$when] = (string) ($row['next'] ?? '');
-            }
-        }
+        $raizRoutes = self::targetsByGuard($byId['triage_raiz']['always'] ?? [], 'triage_raiz');
         $this->assertSame('cs_hub', $raizRoutes['seguimiento_cronico'] ?? null);
 
         $this->assertArrayHasKey('cs_hub', $byId);
-        $this->assertSame('consultas-seguimiento.hub', $byId['cs_hub']['open_ui']['action_id'] ?? null);
+        $this->assertSame('consultas-seguimiento.hub', $byId['cs_hub']['meta']['open_ui']['action_id'] ?? null);
         $this->assertArrayHasKey('cs_condition_acciones', $byId);
         $this->assertSame(
             'consultas-seguimiento.condicion-acciones',
-            $byId['cs_condition_acciones']['open_ui']['action_id'] ?? null
+            $byId['cs_condition_acciones']['meta']['open_ui']['action_id'] ?? null
         );
         $this->assertSame(
             'draft.protocol_id',
-            $byId['cs_condition_acciones']['open_ui']['params']['protocol_id'] ?? null
+            $byId['cs_condition_acciones']['meta']['open_ui']['params']['protocol_id'] ?? null
         );
 
-        $hubKindRoutes = [];
-        foreach ($byId['cs_hub']['next_routing'] ?? [] as $row) {
-            if (!is_array($row)) {
-                continue;
-            }
-            $when = $row['when']['draft_equals']['control_hub_kind'] ?? null;
-            if (is_string($when) && $when !== '') {
-                $hubKindRoutes[$when] = (string) ($row['next'] ?? '');
-            }
-        }
+        $hubKindRoutes = self::targetsByGuard($byId['cs_hub']['always'] ?? [], 'control_hub_kind');
         $this->assertSame('cs_condition_acciones', $hubKindRoutes['condition'] ?? null);
         $this->assertSame('cs_condition_acciones', $hubKindRoutes['protocol'] ?? null);
         $this->assertSame('cs_select_necesidad', $hubKindRoutes['care_plan'] ?? null);
@@ -80,101 +55,106 @@ class ConsultasSeguimientoFlowYamlTest extends Unit
         $this->assertArrayNotHasKey('general', $hubKindRoutes);
 
         $this->assertArrayHasKey('cs_select_necesidad', $byId);
-        $routes = [];
-        foreach ($byId['cs_select_necesidad']['next_routing'] ?? [] as $row) {
-            if (!is_array($row)) {
-                continue;
-            }
-            $when = $row['when']['draft_equals']['seguimiento_necesidad'] ?? null;
-            if (is_string($when) && $when !== '') {
-                $routes[$when] = (string) ($row['next'] ?? '');
-            }
-        }
+        $routes = self::targetsByGuard($byId['cs_select_necesidad']['always'] ?? [], 'seguimiento_necesidad');
         $this->assertSame('cs_select_medicamentos', $routes['renovar_medicacion'] ?? null);
         $this->assertSame('cs_select_medicamentos', $routes['solicitar_ajuste'] ?? null);
-        // Última rama con solo seguimiento_necesidad=solicitar_turno (sin flag de skip).
         $this->assertSame('select_tipo_atencion', $routes['solicitar_turno'] ?? null);
 
         $necesidadSkipModalidad = null;
-        foreach ($byId['cs_select_necesidad']['next_routing'] ?? [] as $row) {
+        foreach ($byId['cs_select_necesidad']['always'] ?? [] as $row) {
             if (!is_array($row)) {
                 continue;
             }
-            $eq = $row['when']['draft_equals'] ?? null;
-            if (is_array($eq)
-                && ($eq['seguimiento_necesidad'] ?? null) === 'solicitar_turno'
-                && ($eq['modalidad_paso_requerido'] ?? null) === '0') {
-                $necesidadSkipModalidad = (string) ($row['next'] ?? '');
+            $guard = $row['guard'] ?? null;
+            if (is_array($guard)
+                && ($guard['seguimiento_necesidad'] ?? null) === 'solicitar_turno'
+                && ($guard['modalidad_paso_requerido'] ?? null) === '0') {
+                $necesidadSkipModalidad = (string) ($row['target'] ?? '');
                 break;
             }
         }
         $this->assertSame('cs_select_preferencia_turno', $necesidadSkipModalidad);
 
         $modalidadRoutes = [];
-        foreach ($byId['select_tipo_atencion']['next_routing'] ?? [] as $row) {
+        foreach ($byId['select_tipo_atencion']['always'] ?? [] as $row) {
             if (!is_array($row)) {
                 continue;
             }
-            $eq = $row['when']['draft_equals'] ?? null;
-            if (!is_array($eq)) {
+            $guard = $row['guard'] ?? null;
+            if (!is_array($guard)) {
                 continue;
             }
-            if (($eq['seguimiento_necesidad'] ?? null) === 'solicitar_turno'
-                && ($eq['tipo_atencion'] ?? null) === 'teleconsulta') {
-                $modalidadRoutes['teleconsulta_cp'] = (string) ($row['next'] ?? '');
-            } elseif (($eq['seguimiento_necesidad'] ?? null) === 'solicitar_turno'
-                && !isset($eq['tipo_atencion'])) {
-                $modalidadRoutes['presencial_cp'] = (string) ($row['next'] ?? '');
+            if (($guard['seguimiento_necesidad'] ?? null) === 'solicitar_turno'
+                && ($guard['tipo_atencion'] ?? null) === 'teleconsulta') {
+                $modalidadRoutes['teleconsulta_cp'] = (string) ($row['target'] ?? '');
+            } elseif (($guard['seguimiento_necesidad'] ?? null) === 'solicitar_turno'
+                && !isset($guard['tipo_atencion'])) {
+                $modalidadRoutes['presencial_cp'] = (string) ($row['target'] ?? '');
             }
         }
         $this->assertSame('cs_select_dia_teleconsulta', $modalidadRoutes['teleconsulta_cp'] ?? null);
         $this->assertSame('cs_select_preferencia_turno', $modalidadRoutes['presencial_cp'] ?? null);
 
         $this->assertArrayHasKey('cs_select_care_plan', $byId);
-        $this->assertTrue($byId['cs_select_care_plan']['review_prefilled'] ?? false);
+        $this->assertTrue($byId['cs_select_care_plan']['meta']['review_prefilled'] ?? false);
         $this->assertArrayHasKey('triage_raiz', $byId);
-        $this->assertTrue($byId['triage_raiz']['review_prefilled'] ?? false);
-        $this->assertTrue($byId['select_pedido_acto']['review_prefilled'] ?? false);
+        $this->assertTrue($byId['triage_raiz']['meta']['review_prefilled'] ?? false);
+        $this->assertTrue($byId['select_pedido_acto']['meta']['review_prefilled'] ?? false);
         $this->assertArrayHasKey('cs_select_medicamentos', $byId);
         $this->assertArrayHasKey('cs_captura_ajuste_motivo', $byId);
 
-        $medRoutes = [];
-        foreach ($byId['cs_select_medicamentos']['next_routing'] ?? [] as $row) {
-            if (!is_array($row)) {
-                continue;
-            }
-            $when = $row['when']['draft_equals']['seguimiento_necesidad'] ?? null;
-            if (is_string($when) && $when !== '') {
-                $medRoutes[$when] = (string) ($row['next'] ?? '');
-            }
-        }
+        $medRoutes = self::targetsByGuard($byId['cs_select_medicamentos']['always'] ?? [], 'seguimiento_necesidad');
         $this->assertSame('cs_captura_ajuste_motivo', $medRoutes['solicitar_ajuste'] ?? null);
         $this->assertSame('', $medRoutes['renovar_medicacion'] ?? null);
 
         $this->assertSame(
             'clinical.care-plan.medicamentos-como-paciente',
-            $byId['cs_select_medicamentos']['open_ui']['action_id'] ?? null
+            $byId['cs_select_medicamentos']['meta']['open_ui']['action_id'] ?? null
         );
         $this->assertSame(
             'clinical.care-plan.confirmar-renovacion-como-paciente',
-            $byId['cs_select_medicamentos']['flow_submit']['action_id'] ?? null
+            $byId['cs_select_medicamentos']['meta']['flow_submit']['action_id'] ?? null
         );
         $this->assertSame(
-            'Solicitar renovación',
-            $byId['cs_select_medicamentos']['flow_submit']['label'] ?? null
+            'Solicitar renovaciÃ³n',
+            $byId['cs_select_medicamentos']['meta']['flow_submit']['label'] ?? null
         );
         $this->assertSame(
             'renovacion',
-            $byId['cs_select_medicamentos']['flow_submit']['params']['medicacion_operacion'] ?? null
+            $byId['cs_select_medicamentos']['meta']['flow_submit']['params']['medicacion_operacion'] ?? null
         );
         $this->assertSame(
             'ajuste',
-            $byId['cs_captura_ajuste_motivo']['composer_capture']['params']['medicacion_operacion'] ?? null
+            $byId['cs_captura_ajuste_motivo']['meta']['composer_capture']['params']['medicacion_operacion'] ?? null
         );
         $this->assertSame(
             'ajuste_motivo',
-            $byId['cs_captura_ajuste_motivo']['composer_capture']['draft_field'] ?? null
+            $byId['cs_captura_ajuste_motivo']['meta']['composer_capture']['draft_field'] ?? null
         );
+    }
+
+    /**
+     * @param mixed $always
+     * @return array<string, string>
+     */
+    private static function targetsByGuard($always, string $field): array
+    {
+        $out = [];
+        if (!is_array($always)) {
+            return $out;
+        }
+        foreach ($always as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $guard = $row['guard'] ?? null;
+            $value = is_array($guard) ? ($guard[$field] ?? null) : null;
+            if (is_string($value) && $value !== '') {
+                $out[$value] = (string) ($row['target'] ?? '');
+            }
+        }
+
+        return $out;
     }
 
     public function testSeguimientoCronicoAbreHubSinAncla(): void
@@ -263,7 +243,7 @@ class ConsultasSeguimientoFlowYamlTest extends Unit
             'clinical.care-plan.confirmar-renovacion-como-paciente',
             $medicationStep['flow_submit']['action_id'] ?? null
         );
-        $this->assertSame('Solicitar renovación', $medicationStep['flow_submit']['label'] ?? null);
+        $this->assertSame('Solicitar renovaciÃ³n', $medicationStep['flow_submit']['label'] ?? null);
         $this->assertSame(
             'renovacion',
             $medicationStep['flow_submit']['body_template']['medicacion_operacion'] ?? null

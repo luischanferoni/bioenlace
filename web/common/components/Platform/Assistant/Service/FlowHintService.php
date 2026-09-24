@@ -3,11 +3,11 @@
 namespace common\components\Platform\Assistant\Service;
 
 use common\components\Platform\Assistant\Catalog\IntentSchemaPaths;
-use common\components\Platform\Assistant\SubIntentEngine\StatechartManifest;
+use common\components\Platform\Assistant\SubIntentEngine\FlowStatechart;
 use Symfony\Component\Yaml\Yaml;
 
 /**
- * Resuelve hints (id + value) desde extracciones del preprocess y bloques hint en subintents YAML.
+ * Resuelve hints (id + value) desde extracciones del preprocess y `meta.hint` de cada estado.
  */
 final class FlowHintService
 {
@@ -27,11 +27,9 @@ final class FlowHintService
             return [];
         }
 
-        $subintents = isset($intent['subintents']) && is_array($intent['subintents']) ? $intent['subintents'] : [];
         $hints = [];
         $workingDraft = $draft;
-
-        foreach ($subintents as $sub) {
+        foreach (FlowStatechart::ordered($intent) as $sub) {
             if (!is_array($sub) || empty($sub['hint']) || !is_array($sub['hint'])) {
                 continue;
             }
@@ -211,7 +209,7 @@ final class FlowHintService
 
         try {
             $data = Yaml::parseFile($path);
-            return is_array($data) ? StatechartManifest::apply($data) : null;
+            return is_array($data) ? $data : null;
         } catch (\Throwable $e) {
             return null;
         }

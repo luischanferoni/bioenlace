@@ -3,9 +3,10 @@
 namespace common\components\Platform\Assistant\Catalog;
 
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
+use common\components\Platform\Assistant\SubIntentEngine\FlowStatechart;
 
 /**
- * Formatea {@see intent_semantics} + subintents para prompts de 2ª IA (guide).
+ * Formatea {@see intent_semantics} y el statechart para prompts de 2ª IA (guide).
  *
  * Solo lo que la IA necesita: objetivo + pasos.
  * Un statechart grande muestra el estado inicial, sus transiciones y los cierres.
@@ -128,8 +129,8 @@ final class IntentSemanticsPromptFormatter
         if ($manifest === null) {
             return [];
         }
-        $subs = $manifest['subintents'] ?? null;
-        if (!is_array($subs) || $subs === []) {
+        $subs = FlowStatechart::ordered($manifest);
+        if ($subs === []) {
             return [];
         }
 

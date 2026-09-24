@@ -90,7 +90,7 @@ final class IntentBusinessRules
             return null;
         }
 
-        return is_array($data) ? StatechartManifest::apply($data) : null;
+        return is_array($data) ? $data : null;
     }
 
     /**

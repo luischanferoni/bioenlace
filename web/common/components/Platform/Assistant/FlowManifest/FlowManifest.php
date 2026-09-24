@@ -6,7 +6,7 @@ use common\components\Platform\Assistant\Catalog\DataAccessCatalogIntentSupport;
 use common\components\Platform\Assistant\Catalog\IntentSchemaPaths;
 use common\components\Platform\Assistant\Copy\AssistantChannelCopy;
 use common\components\Platform\Assistant\Service\AssistantDraftNormalizer;
-use common\components\Platform\Assistant\SubIntentEngine\StatechartManifest;
+use common\components\Platform\Assistant\SubIntentEngine\FlowStatechart;
 use common\components\Platform\Core\Permission\IntentManifestIndex;
 use common\components\Platform\Core\Permission\IntentManifestMetadata;
 use Symfony\Component\Yaml\Yaml;
@@ -187,7 +187,7 @@ final class FlowManifest
             return null;
         }
 
-        return is_array($data) ? StatechartManifest::apply($data) : null;
+        return is_array($data) ? $data : null;
     }
 
     /**
@@ -196,30 +196,27 @@ final class FlowManifest
      */
     private static function buildRootArrayFromIntentYaml(array $yaml, string $intentId): array
     {
-        $subintents = isset($yaml['subintents']) && is_array($yaml['subintents']) ? $yaml['subintents'] : [];
-        if ($subintents === []) {
-            throw new \InvalidArgumentException('Intent sin subintents');
+        $stepsIn = FlowStatechart::ordered($yaml);
+        if ($stepsIn === []) {
+            throw new \InvalidArgumentException('Intent sin states');
         }
-        $entry = '';
-        if (isset($subintents[0]) && is_array($subintents[0]) && !empty($subintents[0]['id'])) {
-            $entry = AssistantDraftNormalizer::scalarString($subintents[0]['id'] ?? '');
-        }
+        $entry = AssistantDraftNormalizer::scalarString($stepsIn[0]['id'] ?? '');
 
         $steps = [];
-        foreach ($subintents as $sub) {
+        foreach ($stepsIn as $sub) {
             if (!is_array($sub) || empty($sub['id'])) {
                 continue;
             }
             $steps[] = self::compileStep($sub);
         }
 
-        $draftKeys = self::collectDraftKeys($subintents);
-        foreach (self::stringList($yaml['draft_keys_extra'] ?? null) as $k) {
+        $draftKeys = self::collectDraftKeys($stepsIn);
+        foreach (FlowStatechart::contextKeys($yaml) as $k) {
             if ($k !== '' && !in_array($k, $draftKeys, true)) {
                 $draftKeys[] = $k;
             }
         }
-        $openUiHints = self::compileOpenUiHints($subintents);
+        $openUiHints = self::compileOpenUiHints($stepsIn);
 
         return [
             'ui_type' => 'flow',
@@ -368,50 +365,13 @@ final class FlowManifest
     }
 
     /**
-     * Campo `next` en el manifiesto: `next` explícito del YAML o, si solo hay `next_routing`,
-     * el `next` de la regla `when.default: true` (fallback) o la primera regla con `next`.
+     * Campo `next` del manifiesto de UI: destino lineal de `always`.
      *
      * @param array<string, mixed> $sub
      */
     private static function compileStepNextField(array $sub): string
     {
-        if (isset($sub['next'])) {
-            $n = AssistantDraftNormalizer::scalarString($sub['next'] ?? '');
-            if ($n !== '') {
-                return $n;
-            }
-        }
-        $routing = isset($sub['next_routing']) && is_array($sub['next_routing']) ? $sub['next_routing'] : null;
-        if ($routing === null) {
-            return '';
-        }
-        $defaultNext = '';
-        foreach ($routing as $rule) {
-            if (!is_array($rule)) {
-                continue;
-            }
-            $when = isset($rule['when']) && is_array($rule['when']) ? $rule['when'] : null;
-            if ($when !== null && isset($when['default']) && $when['default'] === true) {
-                $nn = AssistantDraftNormalizer::scalarString($rule['next'] ?? '');
-                if ($nn !== '') {
-                    $defaultNext = $nn;
-                }
-            }
-        }
-        if ($defaultNext !== '') {
-            return $defaultNext;
-        }
-        foreach ($routing as $rule) {
-            if (!is_array($rule)) {
-                continue;
-            }
-            $nn = AssistantDraftNormalizer::scalarString($rule['next'] ?? '');
-            if ($nn !== '') {
-                return $nn;
-            }
-        }
-
-        return '';
+        return FlowStatechart::linearTarget($sub);
     }
 
     /**

@@ -13,11 +13,12 @@ Fuente de verdad para las claves que **`SubIntentEngine`** lee y combina con el 
 | ~~`description`~~ | **Retirado** de intents YAML. No usar. |
 | `rbac_route` | Ruta HTTP del **permiso API base** que se asigna al rol (sin `v1`), no una ruta UI/ghost heredada por migración. Ej.: `listar-atenciones-como-paciente`, no `mis-atenciones-como-paciente`. Las rutas hijas se heredan vía `auth_item_child` al migrate; si el rol recibe el padre después, ejecutar la migración de resync correspondiente. |
 | `intent_semantics` | Opcional: **contexto para 2ª IA** (objetivo del flow + pasos). Ver abajo. |
-| `draft_keys_extra` | Opcional: claves de draft adicionales reconocidas por el producto. |
 | `business_rules` | Opcional: reglas `pre_flow` (vía `IntentBusinessRules`). |
 | `draft_hydrator` | Opcional: enriquecimiento del `draft` **antes** de `SubIntentEngine::process` (ver abajo). |
-| `subintents` | Lista ordenada de pasos. **Vocabulario en retirada.** Los intents nuevos se escriben como statechart (`states`). |
-| `flow_submit` | **Opcional.** Cierre predeterminado del flujo. El motor detecta automáticamente el **paso terminal** (subintent sin `next` ni `next_routing`) y, cuando ese paso emite `open_ui`, adjunta el descriptor `flow_submit` al envelope (ver más abajo). Si el último paso no tiene `open_ui`, el envelope se emite **solo** con `flow_submit` (texto + botón de envío). Una rama terminal puede sobrescribirlo con `subintents[].flow_submit`. |
+| `context` | Claves de contexto del statechart (lista, o mapa). El motor las suma a las de `provides` / `requires`. |
+| `initial` | Estado de entrada. |
+| `states` | **Obligatorio** en un flow: mapa id → estado (`description`, `always`, `type`, `meta`). |
+| `flow_submit` | **Opcional.** Cierre predeterminado. Un estado es terminal si es `type: final` o no tiene `always`. Al emitir `open_ui`, el motor adjunta `flow_submit`. Una rama puede sobrescribirlo con `meta.flow_submit`. |
 
 ### `intent_semantics` (raíz del intent)
 
@@ -27,11 +28,10 @@ Fuente de verdad para las claves que **`SubIntentEngine`** lee y combina con el 
 | Clave | Uso |
 |--------|-----|
 | `objective` | Objetivo del flow (qué logra al completarlo). Obligatorio si hay bloque. |
-| `outline` | Opcional. Solo flows con muchas ramas; evita volcar decenas de subintents al prompt. |
-| `capabilities` | IDs estables de lo que el flow **sí** ofrece (gates de oferta). |
-| `summary` / `steps` | **Legacy.** `summary` → alias de `objective`. `steps` mapa paralelo a subintents: **no usar**; el formatter deriva pasos de `subintents[].assistant_text`. |
+| `outline` | **Retirado** en flows con `states`. El formatter arma el recorrido desde el statechart. |
+| `summary` / `steps` | **Legacy.** `summary` → alias de `objective`. No usar `steps`. |
 
-El formatter (`IntentSemanticsPromptFormatter`) arma texto para la 2ª IA: **nombre humano + objetivo** y **Pasos** (desde `subintents[].assistant_text`) o **Recorrido** (`outline`) si hay muchas ramas. Sin ids técnicos, sin `kind`/`capabilities` en el prompt.
+El formatter (`IntentSemanticsPromptFormatter`) arma **nombre humano + objetivo**. Si el statechart tiene muchos estados, muestra el estado inicial, sus `always` y los `type: final`. Si es chico, lista `description` de cada estado. Sin `kind` ni `capabilities` en el prompt.
 
 | Campo raíz | Audiencia |
 |------------|-----------|
@@ -98,14 +98,14 @@ Las claves escalares que el hydrator **agrega o cambia** (salvo `assistant_text`
 
 ## Manifiesto statechart (vocabulario vigente)
 
-Un intent migrado declara la máquina en la raíz y **no** escribe `subintents`. Al cargar, `StatechartManifest` arma en memoria el recorrido que el motor todavía ejecuta. Ese compilador se retira cuando los lectores lean `states` directo.
+Un flow declara la máquina en la raíz. `SubIntentEngine`, `FlowManifest`, hints, catálogo e índice de permisos leen `states` directo.
 
 | Clave | Uso |
 |--------|-----|
 | `initial` | Id del estado de entrada. |
-| `context` | Claves del contexto (lista, o mapa cuyas claves cuentan). Equivale a `draft_keys_extra`. |
+| `context` | Claves del contexto (lista, o mapa cuyas claves cuentan). |
 | `states` | Mapa id → estado. |
-| `states.*.description` | Texto del paso (lo que era `assistant_text`). |
+| `states.*.description` | Texto del paso. |
 | `states.*.type` | `final` cierra la rama: sin transición. |
 | `states.*.always` | Transiciones sin evento. String = un solo destino. Lista = rombo. |
 | `states.*.always[].guard` | Mapa campo → valor; todas las igualdades deben cumplirse. |
@@ -114,23 +114,17 @@ Un intent migrado declara la máquina en la raíz y **no** escribe `subintents`.
 
 `flow_submit` de la raíz no se mueve: sigue cerrando el intent.
 
-## Nodo `subintents[]` — claves soportadas
+## Claves de `meta` y transiciones
 
-Sigue vigente hasta migrar cada archivo. No usarlo en intents nuevos.
+`description` es el texto del paso. `always` es la transición (string = un destino; lista de `guard` + `target` = rombo; ítem sin `guard` = comodín). `type: final` no tiene salida. El resto vive en `meta`.
 
-Solo deben usarse las siguientes propiedades en cada ítem. Cualquier otra clave es **no portátil** (el motor la ignora hoy).
-
-| Clave | Descripción |
+| Clave en `meta` | Descripción |
 |--------|-------------|
-| `id` | **Obligatorio.** Identificador del paso (estable). |
-| `assistant_text` | Texto guía para prompt / UI de pasos. |
-| `requires` | Lista de campos requeridos en el draft, forma `draft.<clave>` o `<clave>` según el YAML (el motor normaliza internamente). |
+| `requires` | Lista de campos requeridos en el draft, forma `draft.<clave>`. |
 | `provides` | Lista de claves que completa la mini-UI de este paso al confirmar selección (o que el POST de una pantalla previa escribe en `draft` vía `data` del cliente). |
-| `review_prefilled` | Si es `true`, un paso con `open_ui` se muestra aunque `provides` ya venga completo por enlace o hydrator. El valor se presenta preseleccionado y la confirmación del mismo `subintent_id` permite avanzar. Al confirmar, el cliente debe reenviar ese `subintent_id`; si va vacío, el motor re-muestra el paso. |
-| `next` | Id del siguiente subintent, o cadena vacía `""` si no hay siguiente paso lineal. |
-| `next_routing` | Alternativa a `next`: lista de ramas `{ when, next }` (ver motor: `draft_equals`, `default`). |
+| `review_prefilled` | Si es `true`, un paso con `open_ui` se muestra aunque `provides` ya venga completo por enlace o hydrator. El valor se presenta preseleccionado y la confirmación del mismo estado permite avanzar. Al confirmar, el cliente debe reenviar ese `subintent_id`; si va vacío, el motor re-muestra el paso. |
 | `open_ui` | Objeto **picker / pantalla embebible** vía catálogo: `action_id`, `params` (valores `draft.*`), `pass_content_as_query` opcional. |
-| `open_ui_routing` | Alternativa a `open_ui`: lista de ramas `{ when, open_ui }` con la misma semántica que `next_routing` (`draft_equals`, `default`). Un solo paso de plan, mini-UI distinta según el draft. |
+| `open_ui_routing` | Alternativa a `open_ui`: lista de ramas `{ when, open_ui }` (`draft_equals`, `default`). Un solo paso, mini-UI distinta según el draft. |
 | `chooser` | Objeto con `when_user_says_nearby` / `otherwise`, cada uno con su propio `open_ui` (elección de lista vs cercanía). |
 | `hint` | Opcional: `{ entity, match_property }` para resolver menciones del preprocess → `hints[]` en el envelope (`id`, `value`, `draft_field` inferido de `provides`). |
 | `flow_submit` | Opcional en una rama terminal. Usa la misma forma que el cierre raíz y lo sobrescribe sólo para ese subintent. |
@@ -149,7 +143,7 @@ open_ui:
 
 ### Forma de `open_ui_routing`
 
-Misma idea que `next_routing`, pero elige la mini-UI del **mismo** subintent (evita pasos hermanos en el plan visual).
+Elige la mini-UI del mismo estado (evita estados hermanos en el plan visual). La guarda sigue siendo `when.draft_equals` o `when.default`.
 
 ```yaml
 open_ui_routing:
@@ -214,10 +208,10 @@ El cliente, al presionar "Confirmar y enviar", resuelve `body_template` (cualqui
 
 ## Semántica de "paso terminal" (Cambio 2)
 
-Un subintent es **terminal** si:
+Un estado es **terminal** si:
 
-1. No declara `next` ni `next_routing` (el YAML dice "después de este paso no hay otro paso interactivo"), y
-2. El intent o el propio subintent tiene `flow_submit` con `action_id` válido.
+1. Es `type: final` o no tiene `always`, y
+2. El intent o el propio estado (`meta.flow_submit`) tiene `flow_submit` con `action_id` válido.
 
 Cuando el motor va a emitir el `open_ui` de un paso terminal, adjunta `flow_submit` al **mismo** envelope. El cliente entonces:
 
@@ -228,12 +222,13 @@ Cuando el motor va a emitir el `open_ui` de un paso terminal, adjunta `flow_subm
 
 ### Caso "cierre sin UI previa"
 
-Si el último paso no tiene `open_ui` (subintent vacío conectado por `next`), el motor emite un envelope **sólo con `flow_submit`** (sin `open_ui`). El cliente renderiza un mensaje del bot con texto + botón "Confirmar y enviar", sin mini-UI.
+Si el estado terminal no tiene `open_ui`, el motor emite un envelope **sólo con `flow_submit`** (sin `open_ui`). El cliente renderiza un mensaje del bot con texto + botón "Confirmar y enviar", sin mini-UI.
 
 ### Cuándo NO se marca terminal
 
-- El subintent declara `next_routing`. El motor no puede saber cuál rama tomará sin el valor del draft del paso actual; por seguridad lo deja como **no terminal**. Si una rama de routing es un cierre, modelarla como subintent **sin** `next` (que el motor detecte el cierre cuando salte allí).
-- No hay `flow_submit` en la raíz: no hay nada que cerrar.
+- El estado tiene `always`. Aunque una guarda tenga `target` vacío, el paso no es cierre: esa rama se resuelve al evaluar el draft. El cierre de una rama se modela como otro estado `type: final`.
+- `meta.terminal_without_submit` está presente: hay UI de cierre, sin botón de envío.
+- No hay `flow_submit` en la raíz ni en el estado: no hay nada que cerrar.
 
 ## Edición hacia atrás (Cambio 1)
 

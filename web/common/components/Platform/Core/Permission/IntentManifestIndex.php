@@ -3,7 +3,7 @@
 namespace common\components\Platform\Core\Permission;
 
 use common\components\Platform\Assistant\Catalog\IntentSchemaPaths;
-use common\components\Platform\Assistant\SubIntentEngine\StatechartManifest;
+use common\components\Platform\Assistant\SubIntentEngine\FlowStatechart;
 use common\components\Platform\Core\Permission\IntentPermissionResolver;
 use Symfony\Component\Yaml\Yaml;
 
@@ -115,7 +115,6 @@ final class IntentManifestIndex
             if (!is_array($data)) {
                 continue;
             }
-            $data = StatechartManifest::apply($data);
 
             $intentId = trim((string) ($data['intent_id'] ?? $fileIntentId));
             if ($intentId === '') {
@@ -197,12 +196,7 @@ final class IntentManifestIndex
     private static function extractOpenUiSteps(array $data): array
     {
         $out = [];
-        $subintents = $data['subintents'] ?? null;
-        if (!is_array($subintents)) {
-            return $out;
-        }
-
-        foreach ($subintents as $sub) {
+        foreach (FlowStatechart::ordered($data) as $sub) {
             if (!is_array($sub)) {
                 continue;
             }

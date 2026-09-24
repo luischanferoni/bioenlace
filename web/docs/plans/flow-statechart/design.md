@@ -16,25 +16,11 @@
 | Guía | En la fase 3 el prompt recibe el statechart (corte de la raíz y sumideros en grafos grandes), no un `outline` redactado |
 | Un archivo, un vocabulario | Un intent migrado no conserva `subintents` |
 
-## Compilador (solo durante la migración)
+## Lectura
 
-Los lectores actuales recorren pasos con `id`, `next` y `next_routing`. Hasta la fase 3, `StatechartManifest` traduce `states` a ese recorrido **en memoria, al cargar**. El YAML migrado no escribe esas claves. Al cerrar la fase 3 el compilador se borra y los lectores leen `states`.
+`FlowStatechart` presenta cada estado con `id`, copia `description` a texto de paso y sube las claves de `meta` al primer nivel. Las transiciones se resuelven con `always` (`resolveNext`, `hasOutgoing`, `linearTarget`). No hay un segundo manifiesto en memoria.
 
-Eso no es un segundo manifiesto. Es el puente para no reescribir cada lector el mismo día que cambia el piloto.
-
-## Correspondencia
-
-| Statechart | Recorrido actual (solo en memoria) |
-|------------|-------------------------------------|
-| clave de `states` | `id` |
-| `description` | `assistant_text` |
-| `initial` | primer paso |
-| `always: otro` | `next` |
-| `always[].guard` + `target` | `when.draft_equals` + `next` |
-| `always` sin `guard` | `when.default` |
-| `type: final` | paso sin `next` ni `next_routing` |
-| `meta.*` | la misma clave en el paso |
-| `context` | `draft_keys_extra` |
+`meta` incluye también `flow_dismiss` y `flow_actions`.
 
 ## Alternativa descartada
 

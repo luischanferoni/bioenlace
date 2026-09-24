@@ -12,8 +12,8 @@ El texto del prompt de canal lo pega una persona si hace falta una frase que nom
 
 ## Checklist
 
-- [ ] Lectores usan `states` sin compilar a `subintents`
-- [ ] Borrar `StatechartManifest`
+- [x] Lectores usan `states` sin compilar a `subintents`
+- [x] Borrar `StatechartManifest`
 - [x] Formatter de la guía: statechart grande → estado inicial, transiciones y cierres (sin `outline`)
-- [ ] Contrato sin el vocabulario viejo
-- [ ] Tests de regresión de Solicitar Atención y de un flow lineal
+- [x] Contrato sin el vocabulario viejo
+- [x] Tests de regresión de Solicitar Atención y de un flow lineal

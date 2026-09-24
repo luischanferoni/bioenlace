@@ -15,7 +15,7 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Perfil de comportamiento en turnos | `perfil-comportamiento-turnos/` | V1 + shadow comparable; piloto fase 5 / enforce pendiente |
 | Receta electrónica (AR) | `receta-electronica/` | Fases 1–2 en producción; repositorio nacional pendiente |
 | Interoperabilidad HC FHIR | `interoperabilidad-historia-clinica/` | Código + reconcile listos; homologación / credenciales pendientes |
-| Flows como statechart | `flow-statechart/` | Fases 1–2: intents en `states`; falta que los lectores y la guía dejen el compilador |
+| Flows como statechart | `flow-statechart/` | Fases 1–3: lectores y guía usan `states`; compilador retirado |
 
 ## Planes archivados (carpeta eliminada)
 

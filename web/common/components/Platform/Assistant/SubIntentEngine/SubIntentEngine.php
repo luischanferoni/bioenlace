@@ -21,7 +21,7 @@ use Yii;
  * SubIntentEngine: motor conversacional dentro de un intent_id (stateless).
  *
  * Consume metadata de producto vía {@see \common\components\Platform\Core\Product\ProductMetadataPaths} e {@see \common\components\Platform\Assistant\Catalog\IntentSchemaPaths}.
- * Contrato de intents (`flow_submit`, subintents): `schemas/SUBINTENT_CONTRACT.md`.
+ * Contrato de intents (`flow_submit`, `states`): `schemas/SUBINTENT_CONTRACT.md`.
  *
  * Nota: este motor NO implementa IA aquí; expone `prompt_context` para que el caller
  * (cuando integre LLM) sepa qué adjuntar al prompt.
@@ -94,12 +94,12 @@ final class SubIntentEngine
             return ['success' => false, 'error' => 'Intent no soportado', 'intent_id' => $intentId];
         }
 
-        $subintents = isset($intent['subintents']) && is_array($intent['subintents']) ? $intent['subintents'] : [];
-        if ($subintents === []) {
-            return ['success' => false, 'error' => 'Intent sin subintents', 'intent_id' => $intentId];
+        $steps = FlowStatechart::ordered($intent);
+        if ($steps === []) {
+            return ['success' => false, 'error' => 'Intent sin states', 'intent_id' => $intentId];
         }
 
-        $current = $subintentId !== '' ? self::findSubintent($subintents, $subintentId) : $subintents[0];
+        $current = $subintentId !== '' ? FlowStatechart::find($intent, $subintentId) : $steps[0];
         if (!is_array($current) || empty($current['id'])) {
             return ['success' => false, 'error' => 'subintent_id inválido', 'intent_id' => $intentId];
         }
@@ -124,9 +124,9 @@ final class SubIntentEngine
         // cliente reenvía el draft sin `subintent_id` y el motor debe saltar los pasos cuya
         // selección ya esté presente hasta llegar al primer paso pendiente.
         //
-        // Guard contra YAMLs mal formados (loop en `next_routing`).
+        // Guard contra un statechart con ciclo.
         $visited = [];
-        $maxHops = max(8, count($subintents) + 2);
+        $maxHops = max(8, count($steps) + 2);
         $hops = 0;
         while ($hops++ < $maxHops) {
             if (isset($visited[$currentId])) {
@@ -228,7 +228,7 @@ final class SubIntentEngine
                 }
                 break;
             }
-            $nextSub = self::findSubintent($subintents, $nextId);
+            $nextSub = FlowStatechart::find($intent, $nextId);
             if (!is_array($nextSub)) {
                 break;
             }
@@ -315,47 +315,14 @@ final class SubIntentEngine
     }
 
     /**
-     * Resuelve el siguiente subintent: `next_routing` (primera regla que coincide) o `next`.
-     *
-     * Regla soportada:
-     * - `when.draft_equals`: mapa campo draft (sin prefijo) => valor esperado (string).
-     * - `when.default: true`: comodín (convención: declararlo último en el YAML).
+     * Resuelve el siguiente estado: `always` (primera guarda que coincide, o el comodín).
      *
      * @param array<string, mixed> $subintent
      * @param array<string, mixed> $draft
      */
     private static function resolveNextSubintentId(array $subintent, array $draft): string
     {
-        $routing = isset($subintent['next_routing']) && is_array($subintent['next_routing']) ? $subintent['next_routing'] : null;
-        if ($routing !== null) {
-            $fallback = '';
-            foreach ($routing as $rule) {
-                if (!is_array($rule)) {
-                    continue;
-                }
-                $when = isset($rule['when']) && is_array($rule['when']) ? $rule['when'] : null;
-                if ($when === null) {
-                    continue;
-                }
-                if (isset($when['default']) && $when['default'] === true) {
-                    $n = isset($rule['next']) ? trim((string) $rule['next']) : '';
-                    if ($n !== '') {
-                        $fallback = $n;
-                    }
-                    continue;
-                }
-                if (isset($when['draft_equals']) && is_array($when['draft_equals'])) {
-                    if (self::draftMatchesEquals($draft, $when['draft_equals'])) {
-                    return isset($rule['next']) ? trim((string) $rule['next']) : '';
-                }
-                }
-            }
-            if ($fallback !== '') {
-                return $fallback;
-            }
-        }
-
-        return AssistantDraftNormalizer::scalarString($subintent['next'] ?? '');
+        return FlowStatechart::resolveNext($subintent, $draft);
     }
 
     /**
@@ -422,32 +389,25 @@ final class SubIntentEngine
     }
 
     /**
-     * Un subintent es "terminal" si después de él el flow ya no espera otro paso interactivo:
-     * no declara `next` ni `next_routing`, y el intent expone `flow_submit` con `action_id`.
+     * Un estado es terminal si no tiene `always` (o es `type: final`) y el intent
+     * expone `flow_submit` con `action_id`.
      *
-     * El cálculo es **declarativo** (no depende del draft del usuario) para no marcar terminal
-     * un paso cuyo `next_routing` aún no se puede resolver (p. ej. hub con listas que recién
-     * van a completar `provides`). Si un YAML quiere "rama de cierre" dentro de routing, debe
-     * modelar el cierre como un subintent sin `next`/`next_routing`.
+     * El cálculo es declarativo: un estado con `always` no es cierre, aunque una
+     * guarda tenga target vacío. Esa rama se resuelve al evaluar el draft.
      *
      * @param array<string, mixed> $subintent
      * @param array<string, mixed>|null $flowSubmitBlock
      */
     private static function isTerminalSubintent(array $subintent, ?array $flowSubmitBlock, array $draft = []): bool
     {
+        unset($draft);
         if ($flowSubmitBlock === null || !self::flowSubmitHasActionId($flowSubmitBlock)) {
             return false;
         }
         if (!empty($subintent['terminal_without_submit'])) {
             return false;
         }
-        $hasNext = isset($subintent['next']) && trim((string) $subintent['next']) !== '';
-        $hasRouting = isset($subintent['next_routing'])
-            && is_array($subintent['next_routing'])
-            && $subintent['next_routing'] !== [];
-
-        // Con next o next_routing el paso sigue el flow; no es cierre.
-        if ($hasNext || $hasRouting) {
+        if (FlowStatechart::hasOutgoing($subintent)) {
             return false;
         }
 
@@ -681,24 +641,7 @@ final class SubIntentEngine
             Yii::error('YAML inválido intent ' . $intentId . ': ' . $e->getMessage(), 'subintent_engine');
             return null;
         }
-        return is_array($data) ? StatechartManifest::apply($data) : null;
-    }
-
-    /**
-     * @param list<mixed> $subintents
-     * @return array<string, mixed>|null
-     */
-    private static function findSubintent(array $subintents, string $id)
-    {
-        foreach ($subintents as $s) {
-            if (!is_array($s)) {
-                continue;
-            }
-            if (AssistantDraftNormalizer::scalarString($s['id'] ?? '') === $id) {
-                return $s;
-            }
-        }
-        return null;
+        return is_array($data) ? $data : null;
     }
 
     /**
@@ -793,7 +736,7 @@ final class SubIntentEngine
                 $sidStr = trim((string) $selId);
                 if ($sidStr !== '') {
                     $intent = self::loadIntentYaml($intentId);
-                    $sub = is_array($intent) ? self::findSubintent($intent['subintents'] ?? [], $subintentId) : null;
+                    $sub = is_array($intent) ? FlowStatechart::find($intent, $subintentId) : null;
                     $provides = is_array($sub) && isset($sub['provides']) && is_array($sub['provides']) ? $sub['provides'] : [];
                     foreach ($provides as $p) {
                         $p = is_string($p) ? trim($p) : '';

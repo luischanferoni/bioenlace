@@ -2,6 +2,8 @@
 
 namespace common\components\Domain\Clinical\Emergency\Application\Service;
 
+use common\components\Domain\Clinical\Emergency\Application\UseCase\TransferEmergencyToInpatient;
+use common\components\Domain\Clinical\Emergency\Application\UseCase\TriageEmergencyEpisode;
 use common\components\Domain\Clinical\Emergency\Domain\BoardState;
 use common\models\Clinical\DiagnosticReport;
 use common\models\Clinical\ServiceRequest;

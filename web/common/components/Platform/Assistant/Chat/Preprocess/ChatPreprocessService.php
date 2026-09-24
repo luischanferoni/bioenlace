@@ -185,7 +185,6 @@ final class ChatPreprocessService
             'routing_hints_list' => PreprocessRoutingHintCatalog::listForPrompt(),
             'preprocess_tags_vocabulary' => PreprocessTagVocabularyCatalog::listForPrompt(),
             'extraction_categories_list' => PreprocessExtractionCategoryCatalog::listForPrompt(),
-            'context_his_areas_list' => AssistantContextHISArea::listForPrompt(),
             'conversation_history' => '(sin historial previo)',
         ]);
     }

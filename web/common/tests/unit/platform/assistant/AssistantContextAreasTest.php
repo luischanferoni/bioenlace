@@ -12,13 +12,12 @@ use common\components\Platform\Assistant\Context\AssistantContextHISAreaAspect;
 
 class AssistantContextAreasTest extends Unit
 {
-    public function testStablePromptIncludesAreasCatalog(): void
+    public function testAreaCatalogStillListsSchedulingForDerivedContext(): void
     {
-        $prompt = ChatPreprocessService::stablePromptPrefix();
+        $list = AssistantContextHISArea::listForPrompt();
 
-        $this->assertStringContainsString('context_areas', $prompt);
-        $this->assertStringContainsString('scheduling', $prompt);
-        $this->assertStringContainsString('Citas, agenda y turnos', $prompt);
+        $this->assertStringContainsString('scheduling', $list);
+        $this->assertStringContainsString('Citas, agenda y turnos', $list);
     }
 
     public function testNormalizeContextAreasFiltersInvalid(): void

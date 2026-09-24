@@ -14,7 +14,6 @@ stable_prompt: |
     "necesidades_usuario": ["describí lo que expresa el usuario analizando el historial pero de acuerdo al ultimo mensaje. Conservá los hechos: dónde, cómo, desde cuándo, para quién, etc. El usuario puede expresar varias cosas diferentes, agrupa una oración por expresión"],
     "routing_hint": "<ver routing_hint abajo>",
     "tags": ["señales finas para el catálogo, snake_case; vocabulario: {preprocess_tags_vocabulary}"],
-    "context_areas": ["áreas, apectos o ámbitos de un sistema de información para la salud o []"],
     "extractions": [
       {
         "span": "fragmentos literales del mensaje",
@@ -26,9 +25,6 @@ stable_prompt: |
 
   routing_hint (exactamente uno) de acuerdo a la necesidad del usuario:
   {routing_hints_list}
-
-  Áreas HIS válidas:
-  {context_his_areas_list}
 
   Categorías extracción (category en extractions; solo claves de la lista):
   {extraction_categories_list}

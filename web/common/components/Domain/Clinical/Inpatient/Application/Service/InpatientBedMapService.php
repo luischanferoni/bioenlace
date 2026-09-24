@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Clinical\Inpatient\Application\Service;
 
+use common\components\Domain\Clinical\Inpatient\Application\Authorization\InpatientEfectorAccess;
 use common\models\Organization\InfraestructuraCama;
 use common\models\Person\Persona;
 use common\models\Clinical\InpatientStay;

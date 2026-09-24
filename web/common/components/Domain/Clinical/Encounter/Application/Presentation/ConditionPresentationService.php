@@ -2,6 +2,8 @@
 
 namespace common\components\Domain\Clinical\Encounter\Application\Presentation;
 
+use common\components\Domain\Clinical\CarePlan\Application\UseCase\MatchCareProtocol;
+use common\components\Domain\Clinical\Encounter\Application\Service\PatientActiveConditionQueryService;
 use common\components\Domain\Person\Identity\Application\Service\PacienteContextoService;
 use common\components\Domain\Scheduling\Agenda\Application\UseCase\BuildControlSeguimientoHub;
 use common\models\Clinical\Condition;

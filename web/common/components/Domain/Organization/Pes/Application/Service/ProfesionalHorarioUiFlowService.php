@@ -68,7 +68,7 @@ final class ProfesionalHorarioUiFlowService
             $params = array_merge(self::defaults($idEfector, $post, $allowOwnPesFallback), $post);
             $ui = UiScreenService::renderUiDefinition('profesional-horarios', 'gestionar', $params, $params);
             $ui['success'] = false;
-            $ui['errors'] = ['_error' => [$e->getMessage()]];
+            $ui['errors'] = ['_error' => [ProfesionalHorarioPlantillaService::mensajeParaCliente($e)]];
             $ui['action_id'] = 'profesional-horarios.gestionar';
 
             return self::withWeeklyOccupancy($ui, $params);

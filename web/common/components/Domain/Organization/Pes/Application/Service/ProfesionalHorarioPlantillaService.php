@@ -148,8 +148,25 @@ final class ProfesionalHorarioPlantillaService
         } catch (\Throwable $e) {
             $tx->rollBack();
 
-            return ['ok' => false, 'errors' => ['_error' => [$e->getMessage()]]];
+            return ['ok' => false, 'errors' => ['_error' => [self::mensajeParaCliente($e)]]];
         }
+    }
+
+    /**
+     * Texto de validación para la pantalla. Un fallo interno se registra y no se muestra.
+     */
+    public static function mensajeParaCliente(\Throwable $e): string
+    {
+        if ($e instanceof \InvalidArgumentException || $e instanceof \yii\web\HttpException) {
+            $message = trim($e->getMessage());
+            if ($message !== '') {
+                return $message;
+            }
+        }
+
+        Yii::error($e->getMessage(), __METHOD__);
+
+        return 'No se pudo guardar el horario. Probá de nuevo.';
     }
 
     public static function findActivaForContext(

@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Organization\Pes\Application\Service;
 
+use common\components\Domain\Organization\Pes\Application\UseCase\ActivateProfesionalHorario;
 use common\components\Platform\Core\Product\AgendaByEncounterClassMetadata;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Organization\ProfesionalHorario;

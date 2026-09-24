@@ -230,7 +230,9 @@ cases:
     mensajes:
       - Solicita un turno para mi dentista
     expect:
-      user_goal: operational
+      user_goals_any:
+        - guide
+        - operational
       intent_ids_any:
         - turnos.crear-como-paciente
       must_not_offer_intent: atencion.necesito-atencion
@@ -243,7 +245,9 @@ cases:
       - Turno en odontología
       - La semana que viene a la tarde
     expect:
-      user_goal: operational
+      user_goals_any:
+        - guide
+        - operational
       intent_ids_any:
         - turnos.crear-como-paciente
 

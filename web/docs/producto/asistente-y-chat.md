@@ -101,7 +101,7 @@ flowchart LR
 | Turno / cancelar / ver lo mío | Intent operativo; hidrata el **draft** con lo que ya dijo | Completar la reserva sin que confirme |
 | “Mi {oferta}” (*dentista*, *kinesiólogo*…) | Misma reserva; intenta cruzar la mención con la **oferta del centro** (no con una especialidad suelta) | Un intent por profesión |
 | “Última vez en {oferta}” | Lectura de turnos pasados, filtrada si se puede cruzar la oferta | Preguntarle la fecha a Gemini con la HC |
-| “Sacalo vos / elegí y confirmá” | Abre el flow; la persona elige y confirma | Agendar a ciegas en su nombre |
+| “Sacalo vos / elegí y confirmá” | Muestra el botón del flow; al tocarlo la persona elige y confirma | Agendar a ciegas en su nombre |
 
 Si el flow tiene muchos pasos, la palanca es **hidratar el borrador** (servicio, centro, “el mío”), no alargar el prompt. El conversacional queda para lo que todavía no es una acción.
 

@@ -39,7 +39,7 @@ messages:
     default: ""
     whatsapp_paciente: ""
 
-  # Match PHP 100% → flow (sin 2ª IA). No usar necesidad_usuario (etiqueta interna).
+  # Match claro → botón (sin abrir el flow). No usar necesidad_usuario (etiqueta interna).
   # Placeholders: {label} {summary} {spans}
   full_match_intent:
     default: "Te ayudo con {label}."

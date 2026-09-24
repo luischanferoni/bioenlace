@@ -937,7 +937,7 @@ final class AsistenteConsultasQaService
 
         // 1ia_* y demás: preprocess + decisión PHP (sin 2ª IA guide)
         $pathLabels = [
-            '1ia_clara' => 'match claro → intent directo',
+            '1ia_clara' => 'match claro → botón del intent',
             '1ia_dudosa' => 'dudosa → desambiguación',
             '1ia_direct' => 'match directo (artículo/plantilla)',
             '1ia_fuera' => 'fuera de HIS',

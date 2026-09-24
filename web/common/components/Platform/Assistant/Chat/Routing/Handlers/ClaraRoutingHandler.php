@@ -2,13 +2,17 @@
 
 namespace common\components\Platform\Assistant\Chat\Routing\Handlers;
 
-use common\components\Platform\Assistant\Chat\Channels\Operational\OperationalChannel;
+use common\components\Platform\Assistant\Catalog\YamlIntentManifestLoader;
 use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
+use common\components\Platform\Assistant\Context\AssistantContextAssemblyService;
 use common\components\Platform\Assistant\Copy\AssistantChannelCopy;
-use common\components\Platform\Assistant\Service\AssistantDraftNormalizer;
+use common\components\Platform\Assistant\Copy\IntentMatchLaunchCopy;
+use common\components\Platform\Assistant\IntentEngine\UiActionCatalog;
+use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
+use common\components\Platform\Core\Permission\IntentAccessService;
 
 /**
- * Match 100% a un intent: abre el flow (1 IA).
+ * Match claro a un intent: ofrece el botón. El flow arranca cuando la persona lo toca.
  */
 final class ClaraRoutingHandler
 {
@@ -17,61 +21,62 @@ final class ClaraRoutingHandler
      */
     public static function handleSingle(string $content, string $intentId, int $userId): array
     {
-        $intentId = trim($intentId);
-        $out = OperationalChannel::handle($content, $intentId, $userId);
-
-        return self::ensureIntentVisible($out, $intentId);
+        return self::offerButton($intentId, $content, $userId);
     }
 
     /**
-     * Garantiza que el intent decidido por smart-catalog quede en el envelope
-     * (QA / clientes leen session.intent_id o intent_id).
-     *
-     * @param array<string, mixed> $out
      * @return array<string, mixed>
      */
-    private static function ensureIntentVisible(array $out, string $intentId): array
+    public static function offerButton(string $intentId, string $content, int $userId): array
     {
-        if ($intentId === '') {
-            return $out;
+        $intentId = trim($intentId);
+        if ($intentId === '' || $userId <= 0 || !IntentAccessService::userCanExecuteIntent($userId, $intentId)) {
+            $msg = AssistantChannelCopy::t('intent_not_allowed');
+
+            return [
+                'kind' => 'message',
+                'text' => $msg,
+                'success' => false,
+                'error' => $msg,
+            ];
         }
 
-        if (AssistantEnvelope::isPublicEnvelope($out)) {
-            if (($out['kind'] ?? '') === 'flow') {
-                $session = isset($out['session']) && is_array($out['session']) ? $out['session'] : [];
-                if (AssistantDraftNormalizer::scalarString($session['intent_id'] ?? '') === '') {
-                    $session['intent_id'] = $intentId;
-                }
-                $out['session'] = $session;
-            }
-            if (AssistantDraftNormalizer::scalarString($out['intent_id'] ?? '') === '') {
-                $out['intent_id'] = $intentId;
-            }
-
-            return $out;
+        $catalog = UiActionCatalog::forUser($userId);
+        $item = $catalog->byActionId[$intentId] ?? null;
+        $label = self::labelFor($intentId, $item);
+        $text = $item instanceof UiActionCatalogItem
+            ? IntentMatchLaunchCopy::forOpenAction($item)
+            : $label;
+        if ($text === '') {
+            $text = $label;
         }
 
-        if (!empty($out['success'])) {
-            if (AssistantDraftNormalizer::scalarString($out['intent_id'] ?? '') === '') {
-                $out['intent_id'] = $intentId;
-            }
-            if (AssistantDraftNormalizer::scalarString($out['flow_action_id'] ?? '') === '') {
-                $out['flow_action_id'] = $intentId;
-            }
-
-            return $out;
-        }
-
-        $error = AssistantDraftNormalizer::scalarString($out['error'] ?? '');
-        if ($error === '') {
-            $error = AssistantChannelCopy::t('intent_not_allowed');
-        }
-
-        return [
-            'kind' => 'message',
-            'text' => $error,
-            'success' => false,
-            'error' => $error,
+        $button = [
+            'label' => $label,
+            'intent_id' => $intentId,
         ];
+        $origin = trim($content);
+        if ($origin !== '') {
+            $button['content'] = $origin;
+        }
+
+        return AssistantContextAssemblyService::attachDebugIfEnabled(
+            AssistantEnvelope::interactive($text, [$button])
+        );
+    }
+
+    /**
+     * @param UiActionCatalogItem|null $item
+     */
+    private static function labelFor(string $intentId, $item): string
+    {
+        if ($item instanceof UiActionCatalogItem && trim($item->display_name) !== '') {
+            return trim($item->display_name);
+        }
+
+        $manifest = YamlIntentManifestLoader::load($intentId);
+        $name = is_array($manifest) ? trim((string) ($manifest['action_name'] ?? '')) : '';
+
+        return $name !== '' ? $name : $intentId;
     }
 }

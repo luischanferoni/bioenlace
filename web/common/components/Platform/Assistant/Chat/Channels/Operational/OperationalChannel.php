@@ -4,6 +4,7 @@ namespace common\components\Platform\Assistant\Chat\Channels\Operational;
 
 use common\components\Platform\Assistant\Chat\ChatPreprocessContext;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
+use common\components\Platform\Assistant\Chat\Routing\Handlers\ClaraRoutingHandler;
 use common\components\Platform\Assistant\Chat\Routing\Handlers\SmartCatalogRoutingHandlers;
 use common\components\Platform\Assistant\IntentEngine\IntentClassifier;
 use common\components\Platform\Assistant\IntentEngine\IntentEngine;
@@ -118,13 +119,7 @@ final class OperationalChannel
             }
         }
 
-        return self::finalize(IntentEngine::buildSingleActionResponsePublic(
-            $item,
-            (string) ($classification['method'] ?? 'unknown'),
-            (float) ($classification['confidence'] ?? 0.0),
-            $content,
-            $userId
-        ));
+        return ClaraRoutingHandler::offerButton($item->action_id, $content, $userId);
     }
 
     /**

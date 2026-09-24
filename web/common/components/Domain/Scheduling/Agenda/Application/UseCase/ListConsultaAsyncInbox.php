@@ -3,6 +3,13 @@
 namespace common\components\Domain\Scheduling\Agenda\Application\UseCase;
 
 use common\components\Domain\Scheduling\Agenda\Application\Agents\ConsultaAsyncBandejaPrioridadAgent;
+use common\components\Domain\Scheduling\Agenda\Application\Authorization\ConsultaAsyncAccess;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncBandejaCatalogService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncChatPolicyCatalogService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncChatPolicyService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncEncounterMetaService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncStaffScopeService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncSystemMessageService;
 
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Domain\Clinical\Encounter\Application\UseCase\RecordEncounterReason;

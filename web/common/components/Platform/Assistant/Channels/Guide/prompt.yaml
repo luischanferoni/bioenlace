@@ -35,9 +35,9 @@ stable_prompt: |
 
   {clinical_record_block}
 
-  -- Funcionalidades que el sistema ofrece, estas ya se muestran como botones. Cada boton abre su propio
-  recorrido, y ese recorrido hace las preguntas. De los recorridos que crees que ayudarían al usuario, 
-  explica brevemente porque:
+  -- Funcionalidades que el sistema ofrece. Ya se muestran como botones; no pidas que las seleccionen.
+  Por cada una, en una frase: cuándo conviene y qué recorre la persona al abrirla (la pregunta o el paso que hace ese recorrido). 
+  No hagas vos esas preguntas:
   {intent_semantics}
 
   {article_block}

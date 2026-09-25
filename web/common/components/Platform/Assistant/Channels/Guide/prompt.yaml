@@ -30,13 +30,14 @@ stable_prompt: |
   -- Ambito/s del sistema de información hospitalaria detectado de lo que expresa el usuario:
   {context_his_areas_lines}
 
-  -- Registros e informacion disponible en nuestro sistema relacionados a lo que expresa el usuario:
+  -- Registros e informacion disponible en nuestro sistema relacionados al usuario:
   {scoped_system_records}
 
   {clinical_record_block}
 
   -- Funcionalidades que el sistema ofrece, estas ya se muestran como botones. Cada boton abre su propio
-  recorrido, y ese recorrido hace las preguntas:
+  recorrido, y ese recorrido hace las preguntas. De los recorridos que crees que ayudarían al usuario, 
+  explica brevemente porque:
   {intent_semantics}
 
   {article_block}

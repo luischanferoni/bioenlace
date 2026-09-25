@@ -5,7 +5,7 @@ namespace common\components\Platform\Assistant\SubIntentEngine;
 /**
  * Lee un intent statechart (`states`, `always`, `context`, `meta`).
  *
- * Cada estado se presenta con `id`, `description` como texto del paso y las
+ * Cada estado se presenta con `id`, `label` como texto del paso y las
  * claves de `meta` en el primer nivel, para el motor y el manifiesto de UI.
  */
 final class FlowStatechart
@@ -227,9 +227,13 @@ final class FlowStatechart
     {
         $view = $state;
         $view['id'] = $id;
-        $description = trim((string) ($state['description'] ?? ''));
-        if ($description !== '') {
-            $view['assistant_text'] = $description;
+        $label = trim((string) ($state['label'] ?? ''));
+        if ($label === '') {
+            $label = trim((string) ($state['description'] ?? ''));
+        }
+        if ($label !== '') {
+            $view['label'] = $label;
+            $view['assistant_text'] = $label;
         }
         $meta = isset($state['meta']) && is_array($state['meta']) ? $state['meta'] : [];
         foreach ($meta as $key => $value) {

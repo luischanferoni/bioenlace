@@ -5,12 +5,11 @@ shortcut:
 action_name: 'Cuestionario pre-consulta'
 rbac_route: /api/care-packs/assistance
 
-intent_semantics:
-  objective: 'Completá el cuestionario de asistencia antes de un turno pendiente propio.'
 initial: select_turno
 states:
   select_turno:
-    description: Turno
+    label: Turno
+    description: 'Turno con cuestionario de asistencia'
     meta:
       provides:
         - draft.id
@@ -18,7 +17,8 @@ states:
         action_id: turnos.elegir-pendiente-como-paciente
     always: completar
   completar:
-    description: Cuestionario
+    label: Cuestionario
+    description: 'Respuestas del cuestionario de asistencia'
     meta:
       requires:
         - draft.id

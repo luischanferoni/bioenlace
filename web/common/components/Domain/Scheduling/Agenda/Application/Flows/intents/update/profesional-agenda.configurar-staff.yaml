@@ -9,8 +9,6 @@ edit_surface_id: ProfesionalEfectorServicioAgenda
 action_name: 'Agenda ambulatoria de un profesional'
 rbac_route: /api/profesional-agenda/configurar-agenda
 
-intent_semantics:
-  objective: 'Configurar agenda AMB (cupos) de un profesional del efector (staff).'
 fields:
   -
     name: vigente_desde
@@ -25,7 +23,8 @@ fields:
 initial: select_profesional
 states:
   select_profesional:
-    description: Profesional
+    label: Profesional
+    description: 'Profesional cuya agenda se configura'
     meta:
       provides:
         - draft.id_profesional_efector_servicio
@@ -33,7 +32,8 @@ states:
         action_id: profesional-efector-servicio.listar-por-efector
     always: select_servicio
   select_servicio:
-    description: Servicio
+    label: Servicio
+    description: 'Servicio de esa agenda'
     meta:
       provides:
         - draft.id_servicio
@@ -45,7 +45,8 @@ states:
           id_profesional_efector_servicio: draft.id_profesional_efector_servicio
     always: configurar_agenda
   configurar_agenda:
-    description: 'Configurá horarios e intervalo'
+    label: 'Configurá horarios e intervalo'
+    description: 'Horarios e intervalo de la agenda'
     meta:
       provides:
         - draft.agenda_ui_completed

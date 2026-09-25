@@ -3,8 +3,6 @@ version: 1
 action_name: 'Última vez en un servicio'
 rbac_route: /api/turnos/listar-como-paciente
 
-intent_semantics:
-  objective: 'Consultá cuándo fue tu último turno en un área del centro (la que nombraste o, si no se cruza, tus últimos turnos).'
 draft_hydrator:
   handler: scheduling.turnos_listar_como_paciente
   alcance: pasados
@@ -14,7 +12,8 @@ draft_hydrator:
 initial: ver_ultimo
 states:
   ver_ultimo:
-    description: 'Tu último turno en esa oferta'
+    label: Tu último turno en esa oferta
+    description: 'Último turno de la persona en esa oferta'
     meta:
       tags:
         - ultima_vez

@@ -6,7 +6,8 @@ rbac_route: /api/turnos/cancelar-operativo
 initial: cancelar
 states:
   cancelar:
-    description: 'Turno a cancelar'
+    label: Turno a cancelar
+    description: 'Turno pendiente que se cancela'
     meta:
       provides:
         - draft.id

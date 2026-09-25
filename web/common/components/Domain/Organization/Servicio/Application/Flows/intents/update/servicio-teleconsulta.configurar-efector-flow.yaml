@@ -7,7 +7,8 @@ rbac_route: /api/home/panel
 initial: configurar_politica
 states:
   configurar_politica:
-    description: 'Elegí servicio y política de videollamada'
+    label: Elegí servicio y política de videollamada
+    description: 'Servicio y política de videollamada'
     meta:
       provides:
         - draft.id_servicio

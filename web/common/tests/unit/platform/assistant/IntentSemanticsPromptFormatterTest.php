@@ -15,28 +15,29 @@ class IntentSemanticsPromptFormatterTest extends Unit
         AssistantMetadataLoader::resetCacheForTests();
     }
 
-    public function testTurnosCrearIsHumanReadableWithoutIdsOrMarkers(): void
+    public function testTurnosCrearIsAPathWithoutObjective(): void
     {
         $block = IntentSemanticsPromptFormatter::formatIntentId('turnos.crear-como-paciente');
 
-        $this->assertStringContainsString('Turno con un especialista:', $block);
-        $this->assertStringContainsString('Pasos:', $block);
+        $this->assertStringContainsString('- Turno con un especialista', $block);
         $this->assertStringContainsString('Elegir oferta del centro', $block);
+        $this->assertStringContainsString('→ Horario para reservar el turno', $block);
+        $this->assertStringNotContainsString('objective', $block);
+        $this->assertStringNotContainsString('Pasos:', $block);
         $this->assertStringNotContainsString('turnos.crear-como-paciente', $block);
-        $this->assertStringNotContainsString('objective:', $block);
-        $this->assertStringNotContainsString('context:intent_semantics', $block);
     }
 
-    public function testAtencionUsesRecorridoWithoutStepsDump(): void
+    public function testAtencionPathReachesHorarioWithoutGuards(): void
     {
         $block = IntentSemanticsPromptFormatter::formatIntentId('atencion.necesito-atencion');
 
-        $this->assertStringContainsString('Solicitar Atención:', $block);
-        $this->assertStringContainsString('Recorrido:', $block);
-        $this->assertStringContainsString('triage_raiz=urgencia → Urgencia', $block);
-        $this->assertStringContainsString('Cierres:', $block);
-        $this->assertStringNotContainsString('Pasos:', $block);
-        $this->assertStringNotContainsString('Motivo raíz →', $block);
+        $this->assertStringContainsString('- Solicitar Atención', $block);
+        $this->assertStringContainsString('Posibles motivos de consulta de la persona (opciones)', $block);
+        $this->assertStringContainsString('→ Orientación por urgencia (opciones)', $block);
+        $this->assertStringContainsString('→ Horario disponible para el turno (opciones)', $block);
+        $this->assertStringNotContainsString('triage_raiz', $block);
+        $this->assertStringNotContainsString('Cierres:', $block);
+        $this->assertStringNotContainsString('objective', $block);
         $this->assertStringNotContainsString('atencion.necesito-atencion', $block);
     }
 
@@ -47,8 +48,8 @@ class IntentSemanticsPromptFormatterTest extends Unit
             'atencion.necesito-atencion',
         ], 4);
 
-        $this->assertStringContainsString('Turno con un especialista:', $wrapped);
-        $this->assertStringContainsString('Solicitar Atención:', $wrapped);
+        $this->assertStringContainsString('- Turno con un especialista', $wrapped);
+        $this->assertStringContainsString('- Solicitar Atención', $wrapped);
         $this->assertStringNotContainsString('---', $wrapped);
     }
 }

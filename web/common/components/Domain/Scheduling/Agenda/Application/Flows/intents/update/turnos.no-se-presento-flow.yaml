@@ -6,7 +6,8 @@ rbac_route: /api/turnos/no-se-presento
 initial: registrar
 states:
   registrar:
-    description: Turno
+    label: Turno
+    description: 'Turno al que la persona no asistió'
     meta:
       provides:
         - draft.id

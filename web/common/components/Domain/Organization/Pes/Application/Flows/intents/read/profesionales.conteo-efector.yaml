@@ -7,12 +7,11 @@ metric_id: profesionales_conteo_efector
 action_name: 'Conteo de profesionales del efector'
 rbac_route: /api/info
 
-intent_semantics:
-  objective: 'Consultar cuántos profesionales distintos hay en el efector de sesión.'
 initial: mostrar_conteo
 states:
   mostrar_conteo:
-    description: 'Consultando plantilla profesional del efector'
+    label: Consultando plantilla profesional del efector
+    description: 'Cantidad de profesionales del centro'
     meta:
       open_ui:
         action_id: data-access.info

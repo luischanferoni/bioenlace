@@ -8,7 +8,8 @@ rbac_route: /api/clinical/emergency-guardia/egreso-formulario
 initial: completar_egreso
 states:
   completar_egreso:
-    description: 'Confirmá fecha/hora del retiro'
+    label: 'Confirmá fecha/hora del retiro'
+    description: 'Fecha y hora del retiro de guardia'
     meta:
       requires:
         - draft.guardia_id

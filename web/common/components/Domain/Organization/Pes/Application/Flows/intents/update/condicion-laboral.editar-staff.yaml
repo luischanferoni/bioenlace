@@ -6,8 +6,6 @@ domain_operation: ProfesionalEfectorServicio.condicion_laboral_staff
 action_name: 'Condición laboral de un profesional'
 rbac_route: /api/profesional-efector-servicio/crear-condicion-laboral
 
-intent_semantics:
-  objective: 'Registrar o editar condición laboral de un profesional del efector en sesión (staff).'
 subject_resolution:
   handler: organization.pes_staff_in_efector
   open_ui:
@@ -44,7 +42,8 @@ field_resolution:
 initial: elegir_profesional
 states:
   elegir_profesional:
-    description: 'Elegí el profesional del efector'
+    label: Elegí el profesional del efector
+    description: 'Profesional del centro'
     meta:
       provides:
         - draft.id_profesional_efector_servicio
@@ -54,7 +53,8 @@ states:
           excluir_id_persona_sesion: '1'
     always: cargar_vigencia
   cargar_vigencia:
-    description: 'Completá la condición laboral del profesional'
+    label: 'Completá la condición laboral del profesional'
+    description: 'Condición laboral del profesional'
     meta:
       open_ui:
         action_id: profesional-efector-servicio.crear-condicion-laboral

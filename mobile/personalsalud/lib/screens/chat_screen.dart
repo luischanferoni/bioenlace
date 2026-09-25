@@ -977,7 +977,22 @@ class ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  /// Texto del paso (`assistant_text` / `content`), alineado a la izquierda sin línea inferior.
+  /// Título del paso. `label` del manifiesto; si no viene, el texto del mensaje.
+  String _flowStepLabel(Map message, String content) {
+    final fm = message['flow_manifest'];
+    if (fm is Map) {
+      final step = fm['active_step'];
+      if (step is Map) {
+        final label = step['label']?.toString().trim() ?? '';
+        if (label.isNotEmpty) {
+          return label;
+        }
+      }
+    }
+    return content;
+  }
+
+  /// Texto del paso (`label` / contenido del mensaje), alineado a la izquierda sin línea inferior.
   Widget _buildFlowStepTitle(
     BuildContext context,
     String stepText, {
@@ -2353,7 +2368,7 @@ class ChatScreenState extends State<ChatScreen> {
                       if (showFlowStepText)
                         _buildFlowStepTitle(
                           context,
-                          content,
+                          _flowStepLabel(message, content),
                           muted: flowUiDisabled,
                         ),
                     ],

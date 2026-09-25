@@ -3,12 +3,11 @@ version: 1
 action_name: 'Enviar queja'
 rbac_route: /api/queja-paciente/enviar-como-paciente
 
-intent_semantics:
-  objective: 'Registrá una queja operativa sobre la app, turnos o atención administrativa (no para síntomas clínicos).'
 initial: completar
 states:
   completar:
-    description: 'Completá el formulario'
+    label: 'Completá el formulario'
+    description: 'Queja sobre la app, los turnos o la atención administrativa'
     type: final
     meta:
       open_ui:

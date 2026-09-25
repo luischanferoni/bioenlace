@@ -19,8 +19,6 @@ fields:
 action_name: 'Mi licencia'
 rbac_route: /api/profesional-efector-servicio/cargar-licencia-como-profesional-flow
 
-intent_semantics:
-  objective: 'Registrar una licencia, permiso o ausencia (solo fechas de inicio y fin) sobre una asignación propia PES en el efector.'
 context:
   - condicion_laboral_ui_completed
 draft_hydrator:
@@ -51,7 +49,8 @@ business_rules:
 initial: select_servicio
 states:
   select_servicio:
-    description: Servicio
+    label: Servicio
+    description: 'Asignación propia sobre la que se carga la licencia'
     meta:
       provides:
         - draft.id_servicio
@@ -62,7 +61,8 @@ states:
           incluir_sin_agenda: '1'
     always: cargar_licencia
   cargar_licencia:
-    description: Licencia
+    label: Licencia
+    description: 'Fechas de la licencia, permiso o ausencia'
     meta:
       provides:
         - draft.condicion_laboral_ui_completed

@@ -35,8 +35,9 @@ stable_prompt: |
 
   {clinical_record_block}
 
-  -- Funcionalidades que el sistema ofrece. Ya se muestran como botones; no pidas que las seleccionen.
-  Por cada una, en una frase: cuándo conviene y qué recorre la persona al abrirla (la pregunta o el paso que hace ese recorrido). 
+  -- Funcionalidades que el sistema ofrece. Cada bloque es el recorrido de un botón.
+  Detecta cual/es son los recorridos que ayudan al usuario. Contá en una frase cuándo le conviene cada recorrido 
+  y qué recorre al abrirlo. 
   No hagas vos esas preguntas:
   {intent_semantics}
 

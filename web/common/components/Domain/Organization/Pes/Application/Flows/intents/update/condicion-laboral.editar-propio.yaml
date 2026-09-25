@@ -6,8 +6,6 @@ domain_operation: ProfesionalEfectorServicio.condicion_laboral_own
 action_name: 'Mi condición laboral'
 rbac_route: /api/profesional-efector-servicio/editar-condicion-laboral
 
-intent_semantics:
-  objective: 'Editar la condición laboral vigente sobre una asignación propia en el efector de sesión.'
 subject_resolution:
   handler: organization.pes_own_in_efector
 field_groups:
@@ -45,7 +43,8 @@ field_resolution:
 initial: elegir_servicio
 states:
   elegir_servicio:
-    description: Servicio
+    label: Servicio
+    description: 'Asignación propia en el centro'
     meta:
       provides:
         - draft.id_profesional_efector_servicio
@@ -56,7 +55,8 @@ states:
           incluir_sin_agenda: '1'
     always: editar_vigencia
   editar_vigencia:
-    description: 'Tipo y fechas de vigencia'
+    label: Tipo y fechas de vigencia
+    description: 'Tipo de condición laboral y fechas de vigencia'
     meta:
       open_ui:
         action_id: profesional-efector-servicio.editar-condicion-laboral

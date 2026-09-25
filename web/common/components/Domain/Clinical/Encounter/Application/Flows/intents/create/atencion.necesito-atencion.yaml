@@ -3,8 +3,6 @@ version: 1
 action_name: 'Solicitar Atención'
 rbac_route: /api/turnos/crear-como-paciente
 
-intent_semantics:
-  objective: 'Guiar según lo que necesita el paciente (malestar, estudio/acto, control/seguimiento u urgencia) hasta turno, teleconsulta, consulta por mensaje u orientación a guardia.'
 draft_hydrator:
   handler: scheduling.solicitar_atencion
 initial: triage_raiz
@@ -53,7 +51,8 @@ context:
   - pedido_mensaje
 states:
   triage_raiz:
-    description: Motivo
+    label: Motivo
+    description: 'Posibles motivos de consulta de la persona'
     meta:
       tags:
         - sintomas
@@ -95,7 +94,8 @@ states:
       -
         target: select_tipo_atencion
   select_pedido_acto:
-    description: 'Estudio o práctica'
+    label: 'Estudio o práctica'
+    description: 'Estudio o práctica que la persona necesita'
     meta:
       tags:
         - estudio
@@ -128,7 +128,8 @@ states:
       -
         target: select_tipo_atencion
   cs_hub:
-    description: '¿Sobre qué es el control o seguimiento?'
+    label: '¿Sobre qué es el control o seguimiento?'
+    description: 'Tema del control o seguimiento'
     meta:
       tags:
         - control
@@ -152,7 +153,8 @@ states:
           control_hub_kind: protocol
         target: cs_condition_acciones
   cs_condition_acciones:
-    description: '¿Qué necesitás?'
+    label: '¿Qué necesitás?'
+    description: 'Qué necesita sobre ese control'
     meta:
       provides:
         - draft.condition_accion
@@ -184,7 +186,8 @@ states:
       -
         target: cs_captura_consulta_general
   triage_zona:
-    description: Zona
+    label: Zona
+    description: 'Zona del cuerpo del malestar'
     meta:
       tags:
         - sintomas
@@ -209,7 +212,8 @@ states:
       -
         target: select_tipo_atencion
   triage_urgencia:
-    description: Urgencia
+    label: Urgencia
+    description: 'Orientación por urgencia'
     meta:
       tags:
         - urgencia
@@ -229,7 +233,8 @@ states:
           variant: danger
     type: final
   select_tipo_atencion:
-    description: Modalidad
+    label: Modalidad
+    description: 'Formas de atenderse'
     meta:
       provides:
         - draft.tipo_atencion
@@ -271,7 +276,8 @@ states:
       -
         target: select_servicio
   solicitud_async:
-    description: 'Describí tu consulta en el campo de texto de abajo'
+    label: Describí tu consulta en el campo de texto de abajo
+    description: 'Consulta que la persona escribe para un profesional'
     meta:
       provides:
         - draft.mensaje
@@ -294,7 +300,8 @@ states:
       terminal_without_submit: true
     type: final
   select_servicio:
-    description: Servicio
+    label: Servicio
+    description: 'Servicio del centro para la atención'
     meta:
       provides:
         - draft.id_servicio_asignado
@@ -317,7 +324,8 @@ states:
         match_property: nombre
     always: select_efector
   select_efector:
-    description: 'Centro de salud'
+    label: Centro de salud
+    description: 'Centro donde atenderse'
     meta:
       provides:
         - draft.id_efector
@@ -340,7 +348,8 @@ states:
         match_property: nombre
     always: select_profesional
   select_profesional:
-    description: Profesional
+    label: Profesional
+    description: 'Profesional de ese servicio en ese centro'
     meta:
       provides:
         - draft.id_profesional_efector_servicio
@@ -358,7 +367,8 @@ states:
         match_property: nombre
     always: select_dia
   select_dia:
-    description: Día
+    label: Día
+    description: 'Día con lugar'
     meta:
       provides:
         - draft.fecha_turno
@@ -372,7 +382,8 @@ states:
           id_profesional_efector_servicio: draft.id_profesional_efector_servicio
     always: select_slot
   select_slot:
-    description: Horario
+    label: Horario
+    description: 'Horario disponible para el turno'
     meta:
       provides:
         - draft.slot_id
@@ -388,7 +399,8 @@ states:
           fecha: draft.fecha_turno
     type: final
   select_dia_teleconsulta:
-    description: 'Día (teleconsulta con Medicina General)'
+    label: Día (teleconsulta con Medicina General)
+    description: 'Día de teleconsulta con Medicina General'
     meta:
       provides:
         - draft.fecha_turno
@@ -403,7 +415,8 @@ states:
           care_plan_id: draft.care_plan_id
     always: select_slot_teleconsulta
   select_slot_teleconsulta:
-    description: 'Horario (teleconsulta con Medicina General)'
+    label: Horario (teleconsulta con Medicina General)
+    description: 'Horario de teleconsulta con Medicina General'
     meta:
       provides:
         - draft.slot_id
@@ -420,7 +433,8 @@ states:
           fecha: draft.fecha_turno
     type: final
   cs_select_tipo:
-    description: '¿Sobre qué es el control o seguimiento?'
+    label: '¿Sobre qué es el control o seguimiento?'
+    description: 'Tema del control o seguimiento'
     meta:
       provides:
         - draft.intake_tipo
@@ -444,7 +458,8 @@ states:
       -
         target: cs_select_care_plan
   cs_select_encounter_previa:
-    description: '¿Sobre qué atención?'
+    label: '¿Sobre qué atención?'
+    description: 'Atención anterior del control'
     meta:
       provides:
         - draft.encounter_id
@@ -454,7 +469,8 @@ states:
         action_id: clinical.encounter.mis-atenciones-como-paciente
     always: cs_captura_consulta_previa
   cs_captura_consulta_previa:
-    description: 'Contanos en el campo de abajo'
+    label: Contanos en el campo de abajo
+    description: 'Consulta sobre una atención anterior'
     meta:
       provides:
         - draft.mensaje
@@ -474,7 +490,8 @@ states:
       terminal_without_submit: true
     type: final
   cs_select_care_plan:
-    description: 'Tu tratamiento'
+    label: Tu tratamiento
+    description: 'Tratamiento del control'
     meta:
       review_prefilled: true
       provides:
@@ -485,7 +502,8 @@ states:
         action_id: clinical.care-plan.ver-tratamiento-paciente
     always: cs_select_necesidad
   cs_select_necesidad:
-    description: '¿Qué necesitás?'
+    label: '¿Qué necesitás?'
+    description: 'Qué necesita sobre el tratamiento'
     meta:
       provides:
         - draft.seguimiento_necesidad
@@ -516,7 +534,8 @@ states:
       -
         target: cs_captura_seguimiento_mensaje
   cs_select_medicamentos:
-    description: Medicación
+    label: Medicación
+    description: 'Medicación del tratamiento'
     meta:
       tags:
         - medicacion
@@ -550,7 +569,8 @@ states:
           seguimiento_necesidad: renovar_medicacion
         target: ''
   cs_captura_ajuste_motivo:
-    description: '¿Qué cambio necesitás?'
+    label: '¿Qué cambio necesitás?'
+    description: 'Cambio que pide en la medicación'
     meta:
       provides:
         - draft.ajuste_motivo
@@ -574,7 +594,8 @@ states:
       terminal_without_submit: true
     type: final
   cs_captura_consulta_general:
-    description: 'Escribí tu consulta en el campo de abajo'
+    label: Escribí tu consulta en el campo de abajo
+    description: 'Consulta del control'
     meta:
       provides:
         - draft.mensaje
@@ -592,7 +613,8 @@ states:
       terminal_without_submit: true
     type: final
   cs_captura_seguimiento_mensaje:
-    description: 'Contanos en el campo de abajo'
+    label: Contanos en el campo de abajo
+    description: 'Mensaje de seguimiento'
     meta:
       provides:
         - draft.mensaje
@@ -613,7 +635,8 @@ states:
       terminal_without_submit: true
     type: final
   cs_select_preferencia_turno:
-    description: '¿Con quién querés el control?'
+    label: '¿Con quién querés el control?'
+    description: 'Con quién quiere el control'
     meta:
       provides:
         - draft.preferencia_profesional_turno
@@ -634,7 +657,8 @@ states:
       -
         target: cs_select_efector
   cs_select_efector:
-    description: 'Centro de salud'
+    label: Centro de salud
+    description: 'Centro para el control'
     meta:
       provides:
         - draft.id_efector
@@ -647,7 +671,8 @@ states:
           id_servicio: draft.id_servicio_asignado
     always: cs_select_profesional
   cs_select_profesional:
-    description: Profesional
+    label: Profesional
+    description: 'Profesional para el control'
     meta:
       provides:
         - draft.id_profesional_efector_servicio
@@ -662,7 +687,8 @@ states:
           tipo_atencion: draft.tipo_atencion
     always: cs_select_dia
   cs_select_dia:
-    description: Día
+    label: Día
+    description: 'Día del control'
     meta:
       provides:
         - draft.fecha_turno
@@ -676,7 +702,8 @@ states:
           id_profesional_efector_servicio: draft.id_profesional_efector_servicio
     always: cs_select_slot
   cs_select_slot:
-    description: Horario
+    label: Horario
+    description: 'Horario del control'
     meta:
       provides:
         - draft.slot_id
@@ -692,7 +719,8 @@ states:
           fecha: draft.fecha_turno
     type: final
   cs_select_dia_teleconsulta:
-    description: 'Día (teleconsulta con Medicina General)'
+    label: Día (teleconsulta con Medicina General)
+    description: 'Día de teleconsulta del control'
     meta:
       provides:
         - draft.fecha_turno
@@ -706,7 +734,8 @@ states:
           care_plan_id: draft.care_plan_id
     always: cs_select_slot_teleconsulta
   cs_select_slot_teleconsulta:
-    description: 'Horario (teleconsulta con Medicina General)'
+    label: Horario (teleconsulta con Medicina General)
+    description: 'Horario de teleconsulta del control'
     meta:
       provides:
         - draft.slot_id

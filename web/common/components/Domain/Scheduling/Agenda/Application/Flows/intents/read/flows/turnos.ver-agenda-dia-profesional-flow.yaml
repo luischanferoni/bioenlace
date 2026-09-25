@@ -6,7 +6,8 @@ rbac_route: /api/profesional-agenda/ver-agenda-dia
 initial: ver
 states:
   ver:
-    description: Fecha
+    label: Fecha
+    description: 'Fecha de la agenda del profesional'
     meta:
       provides:
         - draft.fecha

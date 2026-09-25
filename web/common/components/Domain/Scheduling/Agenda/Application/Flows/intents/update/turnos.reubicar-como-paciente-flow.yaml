@@ -3,8 +3,6 @@ version: 1
 action_name: 'Reubicar turno'
 rbac_route: /api/turnos/reubicar-como-paciente
 
-intent_semantics:
-  objective: 'Si tu turno quedó en reubicación, elegí de nuevo servicio, centro, profesional y horario.'
 context:
   - id_servicio_asignado
   - id_efector
@@ -13,7 +11,8 @@ context:
 initial: select_turno
 states:
   select_turno:
-    description: 'Turno a reubicar'
+    label: Turno a reubicar
+    description: 'Turno que hay que reubicar'
     meta:
       provides:
         - draft.id
@@ -21,7 +20,8 @@ states:
         action_id: turnos.elegir-en-resolucion-como-paciente
     always: select_servicio
   select_servicio:
-    description: Servicio
+    label: Servicio
+    description: 'Servicio para el nuevo turno'
     meta:
       provides:
         - draft.id_servicio_asignado
@@ -29,7 +29,8 @@ states:
         action_id: servicios.elegir-acepta-turnos
     always: select_efector
   select_efector:
-    description: 'Centro de salud'
+    label: Centro de salud
+    description: 'Centro para el nuevo turno'
     meta:
       provides:
         - draft.id_efector
@@ -48,7 +49,8 @@ states:
               id_servicio: draft.id_servicio_asignado
     always: select_profesional
   select_profesional:
-    description: Profesional
+    label: Profesional
+    description: 'Profesional para el nuevo turno'
     meta:
       provides:
         - draft.id_profesional_efector_servicio
@@ -62,7 +64,8 @@ states:
           id_servicio: draft.id_servicio_asignado
     always: select_dia
   select_dia:
-    description: Día
+    label: Día
+    description: 'Día con lugar para el nuevo turno'
     meta:
       provides:
         - draft.fecha_turno
@@ -79,7 +82,8 @@ states:
           mismo_profesional: '0'
     always: select_slot
   select_slot:
-    description: Horario
+    label: Horario
+    description: 'Horario para el nuevo turno'
     meta:
       provides:
         - draft.slot_id

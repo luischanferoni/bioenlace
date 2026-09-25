@@ -7,8 +7,6 @@ edit_surface_id: ProfesionalEfectorServicio
 action_name: 'Editar datos de un profesional'
 rbac_route: /api/editar
 
-intent_semantics:
-  objective: 'Editar datos de identidad básica de un profesional del efector.'
 fields:
   -
     name: nombre
@@ -33,7 +31,8 @@ fields:
 initial: editar_identidad
 states:
   editar_identidad:
-    description: 'Editar identidad del profesional'
+    label: Editar identidad del profesional
+    description: 'Datos de identidad del profesional'
     meta:
       open_ui:
         action_id: data-access.editar

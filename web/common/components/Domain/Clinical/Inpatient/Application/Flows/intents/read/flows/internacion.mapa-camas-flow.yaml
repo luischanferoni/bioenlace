@@ -6,7 +6,8 @@ rbac_route: /api/home/panel
 initial: ver_mapa
 states:
   ver_mapa:
-    description: 'Mapa de camas del efector'
+    label: Mapa de camas del efector
+    description: 'Mapa de camas del centro'
     meta:
       provides:
         - draft.id_cama

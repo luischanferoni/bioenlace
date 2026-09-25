@@ -8,7 +8,8 @@ rbac_route: /api/clinical/episode-of-care/by-internacion
 initial: cambiar_cama
 states:
   cambiar_cama:
-    description: 'Seleccioná la cama destino y el motivo'
+    label: 'Seleccioná la cama destino y el motivo'
+    description: 'Cama destino y motivo del cambio'
     meta:
       requires:
         - draft.internacion_id

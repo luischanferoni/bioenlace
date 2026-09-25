@@ -3,15 +3,14 @@ version: 1
 action_name: 'Ver mis turnos'
 rbac_route: /api/turnos/listar-como-paciente
 
-intent_semantics:
-  objective: 'Consultá tus próximos turnos pendientes (fecha, servicio y profesional).'
 draft_hydrator:
   handler: scheduling.turnos_listar_como_paciente
   limit: 10
 initial: ver_listado
 states:
   ver_listado:
-    description: 'Tus próximos turnos'
+    label: Tus próximos turnos
+    description: 'Próximos turnos de la persona'
     meta:
       tags:
         - mis_turnos

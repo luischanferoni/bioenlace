@@ -6,7 +6,8 @@ rbac_route: /api/person-representation/verificar-vinculo-para-staff
 initial: seleccionar_solicitud
 states:
   seleccionar_solicitud:
-    description: 'Solicitudes de tutela pendientes'
+    label: Solicitudes de tutela pendientes
+    description: 'Solicitudes de tutela pendientes de verificación'
     meta:
       provides:
         - draft.person_related_id

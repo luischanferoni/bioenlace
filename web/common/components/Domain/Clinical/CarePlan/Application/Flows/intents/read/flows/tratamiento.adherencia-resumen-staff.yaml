@@ -6,7 +6,8 @@ rbac_route: /api/clinical/care-plan/active
 initial: ver_dashboard
 states:
   ver_dashboard:
-    description: 'Resumen de adherencia en el efector'
+    label: Resumen de adherencia en el efector
+    description: 'Adherencia al tratamiento en el centro'
     meta:
       provides:
         - draft.care_plan_id

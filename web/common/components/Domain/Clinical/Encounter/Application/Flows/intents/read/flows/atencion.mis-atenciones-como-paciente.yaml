@@ -3,12 +3,11 @@ version: 1
 action_name: 'Ver mis atenciones'
 rbac_route: /api/clinical/encounter-patient-summary/listar-atenciones-como-paciente
 
-intent_semantics:
-  objective: 'Revisá tus atenciones ambulatorias finalizadas y el resumen de cada una.'
 initial: ver_listado
 states:
   ver_listado:
-    description: 'Elegí una atención'
+    label: Elegí una atención
+    description: 'Atenciones finalizadas de la persona'
     meta:
       tags:
         - atenciones
@@ -18,7 +17,8 @@ states:
         action_id: clinical.encounter.mis-atenciones-como-paciente
     always: ver_detalle
   ver_detalle:
-    description: 'Resumen de la atención'
+    label: Resumen de la atención
+    description: 'Resumen de esa atención'
     meta:
       requires:
         - draft.encounter_id

@@ -3,16 +3,14 @@ version: 4
 action_name: 'Turno con un especialista'
 rbac_route: /api/turnos/crear-como-paciente
 
-intent_semantics:
-  # Contexto 2ª IA. El recorrido es states; no duplicar los pasos acá.
-  objective: 'Reservar un turno ambulatorio eligiendo oferta del centro, efector, profesional y horario, sin triage de motivo clínico.'
 context:
   - tipo_atencion
   - fecha_turno
 initial: select_servicio
 states:
   select_servicio:
-    description: 'Elegir oferta del centro (servicio con agenda)'
+    label: Elegir oferta del centro (servicio con agenda)
+    description: 'Oferta del centro con agenda'
     meta:
       tags:
         - turno
@@ -26,7 +24,8 @@ states:
         match_property: nombre
     always: select_efector
   select_efector:
-    description: 'Elegir centro de salud (incluye cercanos en mapa)'
+    label: Elegir centro de salud (incluye cercanos en mapa)
+    description: 'Centros de salud, incluidos los cercanos'
     meta:
       provides:
         - draft.id_efector
@@ -48,7 +47,8 @@ states:
         match_property: nombre
     always: select_profesional
   select_profesional:
-    description: 'Elegir profesional (PES) de esa oferta en ese centro'
+    label: Elegir profesional (PES) de esa oferta en ese centro
+    description: 'Profesional de esa oferta en ese centro'
     meta:
       provides:
         - draft.id_profesional_efector_servicio
@@ -65,7 +65,8 @@ states:
         match_property: nombre
     always: select_dia
   select_dia:
-    description: 'Elegir día con cupos disponibles'
+    label: Elegir día con cupos disponibles
+    description: 'Día con cupos'
     meta:
       provides:
         - draft.fecha_turno
@@ -79,7 +80,8 @@ states:
           id_profesional_efector_servicio: draft.id_profesional_efector_servicio
     always: select_slot
   select_slot:
-    description: 'Elegir horario (slot) para cerrar la reserva'
+    label: Elegir horario (slot) para cerrar la reserva
+    description: 'Horario para reservar el turno'
     meta:
       provides:
         - draft.slot_id

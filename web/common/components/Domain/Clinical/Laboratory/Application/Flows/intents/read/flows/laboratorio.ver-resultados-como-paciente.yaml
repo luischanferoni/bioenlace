@@ -3,12 +3,11 @@ version: 1
 action_name: 'Ver resultados de laboratorio'
 rbac_route: /api/clinical/laboratory-result/mis-resultados-como-paciente
 
-intent_semantics:
-  objective: 'Consultá tus informes de laboratorio sincronizados, con detalle y descarga PDF.'
 initial: ver_listado
 states:
   ver_listado:
-    description: 'Elegí un informe de laboratorio'
+    label: Elegí un informe de laboratorio
+    description: 'Informes de laboratorio de la persona'
     meta:
       tags:
         - laboratorio
@@ -21,7 +20,8 @@ states:
         action_id: clinical.laboratory-result.mis-resultados-como-paciente
     always: ver_detalle
   ver_detalle:
-    description: 'Detalle del informe'
+    label: Detalle del informe
+    description: 'Detalle del informe de laboratorio'
     meta:
       requires:
         - draft.report_id

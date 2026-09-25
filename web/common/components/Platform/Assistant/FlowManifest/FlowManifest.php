@@ -46,9 +46,14 @@ final class FlowManifest
             if (!is_array($step) || empty($step['id'])) {
                 continue;
             }
+            $label = AssistantDraftNormalizer::scalarString($step['label'] ?? '');
+            if ($label === '') {
+                $label = AssistantDraftNormalizer::scalarString($step['assistant_text'] ?? '');
+            }
             $row = [
                 'id' => AssistantDraftNormalizer::scalarString($step['id'] ?? ''),
-                'assistant_text' => AssistantDraftNormalizer::scalarString($step['assistant_text'] ?? ''),
+                'label' => $label,
+                'assistant_text' => $label,
                 'next' => AssistantDraftNormalizer::scalarString($step['next'] ?? ''),
             ];
             $provides = isset($step['provides']) && is_array($step['provides']) ? $step['provides'] : [];
@@ -247,9 +252,14 @@ final class FlowManifest
         if ($id === '') {
             throw new \InvalidArgumentException('Subintent sin id');
         }
+        $label = AssistantDraftNormalizer::scalarString($sub['label'] ?? '');
+        if ($label === '') {
+            $label = AssistantDraftNormalizer::scalarString($sub['assistant_text'] ?? '');
+        }
         $step = [
             'id' => $id,
-            'assistant_text' => AssistantDraftNormalizer::scalarString($sub['assistant_text'] ?? ''),
+            'label' => $label,
+            'assistant_text' => $label,
             'requires' => self::stringList($sub['requires'] ?? null),
             'provides' => self::stringList($sub['provides'] ?? null),
             'next' => self::compileStepNextField($sub),

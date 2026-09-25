@@ -6,7 +6,8 @@ rbac_route: /api/turnos/crear-para-paciente
 initial: crear
 states:
   crear:
-    description: 'Datos del turno'
+    label: Datos del turno
+    description: 'Datos del turno a crear'
     meta:
       provides:
         - draft.id_persona

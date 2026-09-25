@@ -3,12 +3,11 @@ version: 1
 action_name: 'Ver mi última atención'
 rbac_route: /api/clinical/encounter-patient-summary/ultima-atencion-como-paciente
 
-intent_semantics:
-  objective: 'Abrí el resumen de tu última atención ambulatoria finalizada.'
 initial: ver_ultima
 states:
   ver_ultima:
-    description: 'Tu última atención'
+    label: Tu última atención
+    description: 'Última atención de la persona'
     meta:
       tags:
         - ultima_atencion

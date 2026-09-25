@@ -8,12 +8,11 @@ domain_operation: DataAccess.edit
 action_name: 'Horarios de guardia / internación de un profesional'
 rbac_route: /api/profesional-horarios/gestionar
 
-intent_semantics:
-  objective: 'Cargar horarios EMER/IMP de un profesional del efector.'
 initial: select_profesional
 states:
   select_profesional:
-    description: 'Elegí el profesional'
+    label: Elegí el profesional
+    description: 'Profesional al que se le cargan horarios'
     meta:
       provides:
         - draft.id_profesional_efector_servicio
@@ -21,7 +20,8 @@ states:
         action_id: profesional-efector-servicio.listar-por-efector
     always: select_pes
   select_pes:
-    description: 'Elegí el servicio / asignación'
+    label: Elegí el servicio / asignación
+    description: 'Asignación del profesional'
     meta:
       provides:
         - draft.id_profesional_efector_servicio
@@ -34,7 +34,8 @@ states:
           id_profesional_efector_servicio: draft.id_profesional_efector_servicio
     always: gestionar_horario
   gestionar_horario:
-    description: 'Completá los horarios'
+    label: 'Completá los horarios'
+    description: 'Horarios de guardia o internación'
     meta:
       provides:
         - draft.horario_ui_completed

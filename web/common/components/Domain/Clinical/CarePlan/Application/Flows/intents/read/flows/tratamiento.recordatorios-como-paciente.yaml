@@ -3,12 +3,11 @@ version: 1
 action_name: 'Recordatorios de tratamiento'
 rbac_route: /api/clinical/care-plans/preferencias-recordatorios-como-paciente
 
-intent_semantics:
-  objective: 'Activá o ajustá recordatorios locales de medicación y preparación de estudios de tu tratamiento.'
 initial: abrir_configuracion
 states:
   abrir_configuracion:
-    description: 'Configurá tus recordatorios de tratamiento'
+    label: 'Configurá tus recordatorios de tratamiento'
+    description: 'Recordatorios del tratamiento'
     meta:
       open_ui:
         action_id: clinical.care-plan.gestionar-recordatorios-como-paciente

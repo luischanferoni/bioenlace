@@ -6,7 +6,8 @@ rbac_route: /api/turnos/politica-como-paciente
 initial: consultar
 states:
   consultar:
-    description: 'Centro de salud'
+    label: Centro de salud
+    description: 'Centro cuya política de turnos se consulta'
     meta:
       tags:
         - politica

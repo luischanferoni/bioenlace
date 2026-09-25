@@ -6,7 +6,8 @@ rbac_route: /api/home/panel
 initial: abrir_tablero
 states:
   abrir_tablero:
-    description: 'Abro el tablero de guardia'
+    label: Abro el tablero de guardia
+    description: 'Tablero de guardia'
     meta:
       open_ui:
         action_id: clinical.home.panel

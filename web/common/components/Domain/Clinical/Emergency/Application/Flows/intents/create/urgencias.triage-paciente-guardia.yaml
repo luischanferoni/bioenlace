@@ -6,7 +6,8 @@ rbac_route: /api/home/panel
 initial: elegir_paciente
 states:
   elegir_paciente:
-    description: 'Elegí el paciente en guardia pendiente de triage'
+    label: Elegí el paciente en guardia pendiente de triage
+    description: 'Paciente en guardia pendiente de triage'
     meta:
       provides:
         - draft.guardia_id
@@ -14,7 +15,8 @@ states:
         action_id: clinical.emergency-guardia.elegir-paciente-triage
     always: registrar_triage
   registrar_triage:
-    description: 'Completá nivel (1–5), motivo y signos vitales si corresponde'
+    label: 'Completá nivel (1–5), motivo y signos vitales si corresponde'
+    description: 'Nivel de triage, motivo y signos vitales'
     meta:
       requires:
         - draft.guardia_id

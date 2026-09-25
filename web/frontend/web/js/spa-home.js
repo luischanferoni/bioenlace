@@ -1607,7 +1607,10 @@
      * @returns {string}
      */
     function flowStepDisplayText(st, idx) {
-        const stepTitle = st && st.assistant_text ? String(st.assistant_text).trim() : '';
+        const fromLabel = st && st.label ? String(st.label).trim() : '';
+        const stepTitle = fromLabel !== ''
+            ? fromLabel
+            : (st && st.assistant_text ? String(st.assistant_text).trim() : '');
         const sid = st && st.id != null ? String(st.id) : '';
         if (stepTitle !== '') {
             return stepTitle;

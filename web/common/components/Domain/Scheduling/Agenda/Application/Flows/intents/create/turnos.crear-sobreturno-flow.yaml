@@ -6,7 +6,8 @@ rbac_route: /api/turnos/crear-sobreturno
 initial: crear
 states:
   crear:
-    description: Sobreturno
+    label: Sobreturno
+    description: 'Datos del sobreturno'
     meta:
       provides:
         - draft.id_persona

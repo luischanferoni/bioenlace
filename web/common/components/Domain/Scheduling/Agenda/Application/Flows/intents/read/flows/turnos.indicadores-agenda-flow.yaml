@@ -6,7 +6,8 @@ rbac_route: /api/home/panel
 initial: consultar_indicadores
 states:
   consultar_indicadores:
-    description: 'Período y filtros de agenda'
+    label: Período y filtros de agenda
+    description: 'Período y filtros de la agenda'
     meta:
       provides:
         - draft.fecha_desde

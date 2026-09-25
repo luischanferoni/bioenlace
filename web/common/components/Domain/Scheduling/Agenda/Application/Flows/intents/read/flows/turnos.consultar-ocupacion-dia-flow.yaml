@@ -6,7 +6,8 @@ rbac_route: /api/turnos/consultar-ocupacion-dia
 initial: consultar
 states:
   consultar:
-    description: 'Día y agenda'
+    label: Día y agenda
+    description: 'Día y agenda consultados'
     meta:
       provides:
         - draft.dia

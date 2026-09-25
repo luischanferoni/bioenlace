@@ -3,8 +3,6 @@ version: 1
 action_name: 'Ver turnos anteriores'
 rbac_route: /api/turnos/listar-como-paciente
 
-intent_semantics:
-  objective: 'Consultá un resumen corto de tus turnos anteriores (fecha, servicio y profesional).'
 draft_hydrator:
   handler: scheduling.turnos_listar_como_paciente
   alcance: pasados
@@ -12,7 +10,8 @@ draft_hydrator:
 initial: ver_listado
 states:
   ver_listado:
-    description: 'Tus turnos anteriores'
+    label: Tus turnos anteriores
+    description: 'Turnos anteriores de la persona'
     meta:
       tags:
         - historial

@@ -19,8 +19,6 @@ fields:
 action_name: 'Licencia de un profesional'
 rbac_route: /api/profesional-efector-servicio/cargar-licencia-para-profesional-flow
 
-intent_semantics:
-  objective: 'Registrar licencia, permiso o ausencia (solo fechas) de un profesional del efector (staff / RRHH).'
 context:
   - condicion_laboral_ui_completed
 draft_hydrator:
@@ -28,7 +26,8 @@ draft_hydrator:
 initial: select_profesional
 states:
   select_profesional:
-    description: Profesional
+    label: Profesional
+    description: 'Profesional al que corresponde la licencia'
     meta:
       provides:
         - draft.id_profesional_efector_servicio
@@ -36,7 +35,8 @@ states:
         action_id: profesional-efector-servicio.listar-por-efector
     always: select_servicio
   select_servicio:
-    description: Servicio
+    label: Servicio
+    description: 'Asignación sobre la que se carga la licencia'
     meta:
       provides:
         - draft.id_servicio
@@ -48,7 +48,8 @@ states:
           id_profesional_efector_servicio: draft.id_profesional_efector_servicio
     always: cargar_licencia
   cargar_licencia:
-    description: Licencia
+    label: Licencia
+    description: 'Fechas de la licencia, permiso o ausencia'
     meta:
       provides:
         - draft.condicion_laboral_ui_completed

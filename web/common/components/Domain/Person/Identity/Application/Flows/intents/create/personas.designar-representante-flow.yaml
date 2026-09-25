@@ -3,12 +3,11 @@ version: 1
 action_name: 'Designar representante'
 rbac_route: /api/person-representation/designar-representante
 
-intent_semantics:
-  objective: 'Autorizá a otra persona con cuenta para gestionar turnos y gestiones en tu nombre.'
 initial: gestionar_delegacion
 states:
   gestionar_delegacion:
-    description: 'Designar representante'
+    label: Designar representante
+    description: 'Persona que va a representar a quien consulta'
     meta:
       open_ui:
         action_id: person-representation.hub

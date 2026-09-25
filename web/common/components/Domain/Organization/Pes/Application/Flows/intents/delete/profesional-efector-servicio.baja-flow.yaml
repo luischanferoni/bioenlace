@@ -8,7 +8,8 @@ context:
 initial: select_profesional
 states:
   select_profesional:
-    description: 'Profesional a dar de baja'
+    label: Profesional a dar de baja
+    description: 'Profesional que se da de baja'
     meta:
       provides:
         - draft.id_profesional_efector_servicio
@@ -16,7 +17,8 @@ states:
         action_id: profesional-efector-servicio.listar-por-efector
     always: select_servicio
   select_servicio:
-    description: 'Servicio a desasignar'
+    label: Servicio a desasignar
+    description: 'Servicio que se desasigna'
     meta:
       provides:
         - draft.id_servicio
@@ -29,7 +31,8 @@ states:
           incluir_sin_agenda: '1'
     always: revisar_impacto
   revisar_impacto:
-    description: 'Impacto en turnos'
+    label: Impacto en turnos
+    description: 'Turnos afectados por la baja'
     meta:
       provides:
         - draft.impacto_baja_revisado

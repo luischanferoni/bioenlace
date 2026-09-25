@@ -3,12 +3,11 @@ version: 1
 action_name: 'Cambiar horario de turno'
 rbac_route: /api/turnos/reprogramar-como-paciente
 
-intent_semantics:
-  objective: 'Cambiá la fecha u horario de un turno pendiente propio eligiendo un nuevo slot disponible.'
 initial: select_turno
 states:
   select_turno:
-    description: 'Turno a modificar'
+    label: Turno a modificar
+    description: 'Turno pendiente que se cambia'
     meta:
       provides:
         - draft.id
@@ -16,7 +15,8 @@ states:
         action_id: turnos.elegir-pendiente-como-paciente
     always: select_slot
   select_slot:
-    description: 'Nuevo horario'
+    label: Nuevo horario
+    description: 'Nuevo horario del turno'
     meta:
       provides:
         - draft.slot_id

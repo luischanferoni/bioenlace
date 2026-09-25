@@ -3,17 +3,19 @@
 namespace common\components\Platform\Assistant\Catalog;
 
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
-use common\components\Platform\Assistant\SubIntentEngine\FlowStatechart;
 
 /**
- * Formatea {@see intent_semantics} y el statechart para prompts de 2ª IA (guide).
+ * Arma el recorrido de un flow para el prompt de la guía.
  *
- * Solo lo que la IA necesita: objetivo + pasos.
- * Un statechart grande muestra el estado inicial, sus transiciones y los cierres.
+ * Parte del estado inicial y sigue `always` por las descripciones hasta un
+ * cierre. Cada paso indica si es un campo de texto o una lista de opciones.
+ * No adjunta `objective` ni guards.
  */
 final class IntentSemanticsPromptFormatter
 {
-    private const MAX_STEPS = 12;
+    private const MAX_CHAIN = 8;
+
+    private const MAX_BRANCHES = 6;
 
     /**
      * @param list<string> $intentIds
@@ -48,7 +50,7 @@ final class IntentSemanticsPromptFormatter
     }
 
     /**
-     * Recorte: solo los estados cuyo meta.tags cruzó con el preprocess.
+     * Intents cuyo tag cruzó. El bloque es el recorrido del flow, no la lista de estados que matchearon.
      *
      * @param list<array{intent_id: string, score: int, states: list<array{id: string, description: string}>}> $hits
      */
@@ -65,27 +67,11 @@ final class IntentSemanticsPromptFormatter
                 continue;
             }
             $manifest = YamlIntentManifestLoader::load($intentId);
-            $sem = self::semanticsFrom($manifest, null);
-            $label = self::label($manifest, null, $intentId);
-            $objective = trim((string) ($sem['objective'] ?? ''));
-            if ($objective === '') {
-                $objective = $label;
-            }
-            $lines = ['- ' . $label . ': ' . $objective, '  Estados:'];
-            foreach ($states as $state) {
-                if (!is_array($state)) {
-                    continue;
-                }
-                $description = trim((string) ($state['description'] ?? ''));
-                if ($description === '') {
-                    continue;
-                }
-                $lines[] = '    - ' . $description;
-            }
-            if (count($lines) <= 2) {
+            $block = self::formatManifest($manifest, self::label($manifest, null, $intentId));
+            if ($block === '') {
                 continue;
             }
-            $blocks[] = implode("\n", $lines);
+            $blocks[] = $block;
             if (count($blocks) >= max(1, $maxIntents)) {
                 break;
             }
@@ -107,44 +93,21 @@ final class IntentSemanticsPromptFormatter
         }
 
         $manifest = YamlIntentManifestLoader::load($intentId);
-        $sem = self::semanticsFrom($manifest, $item);
-        $label = self::label($manifest, $item, $intentId);
-        $objective = trim((string) ($sem['objective'] ?? ''));
-        if ($objective === '') {
-            $objective = $label;
-        }
 
-        $lines = [];
-        $lines[] = '- ' . $label . ': ' . $objective;
-
-        $slice = self::statechartSlice($manifest);
-        if ($slice !== []) {
-            foreach ($slice as $line) {
-                $lines[] = $line;
-            }
-        } else {
-            foreach (self::stepLines($manifest) as $stepLine) {
-                $lines[] = $stepLine;
-            }
-        }
-
-        return implode("\n", $lines);
+        return self::formatManifest($manifest, self::label($manifest, $item, $intentId));
     }
 
     /**
      * @param array<string, mixed>|null $manifest
-     * @return array<string, mixed>
      */
-    private static function semanticsFrom(?array $manifest, ?UiActionCatalogItem $item): array
+    private static function formatManifest(?array $manifest, string $label): string
     {
-        if ($item !== null && is_array($item->intent_semantics)) {
-            return $item->intent_semantics;
-        }
-        if ($manifest !== null && isset($manifest['intent_semantics']) && is_array($manifest['intent_semantics'])) {
-            return YamlIntentCatalogService::normalizeIntentSemanticsPublic($manifest['intent_semantics']);
+        $label = trim($label);
+        if ($label === '') {
+            return '';
         }
 
-        return [];
+        return implode("\n", self::recorridoLines($manifest, $label));
     }
 
     /**
@@ -169,100 +132,170 @@ final class IntentSemanticsPromptFormatter
      * @param array<string, mixed>|null $manifest
      * @return list<string>
      */
-    private static function stepLines(?array $manifest): array
+    private static function recorridoLines(?array $manifest, string $label): array
     {
+        $lines = ['- ' . $label];
         if ($manifest === null) {
-            return [];
-        }
-        $subs = FlowStatechart::ordered($manifest);
-        if ($subs === []) {
-            return [];
-        }
-
-        $lines = ['  Pasos:'];
-        $count = 0;
-        $total = 0;
-        foreach ($subs as $sub) {
-            if (!is_array($sub)) {
-                continue;
-            }
-            $id = trim((string) ($sub['id'] ?? ''));
-            if ($id === '') {
-                continue;
-            }
-            $total++;
-            if ($count >= self::MAX_STEPS) {
-                continue;
-            }
-            $does = trim((string) ($sub['assistant_text'] ?? ''));
-            if ($does === '') {
-                $does = $id;
-            }
-            $lines[] = '    ' . ($count + 1) . '. ' . $does;
-            $count++;
-        }
-        if ($total > self::MAX_STEPS) {
-            $lines[] = '    … (+' . ($total - self::MAX_STEPS) . ' pasos más)';
-        }
-
-        return $count > 0 ? $lines : [];
-    }
-
-    /**
-     * Statechart con más estados que el tope de pasos: solo la raíz y los cierres.
-     *
-     * @param array<string, mixed>|null $manifest
-     * @return list<string>
-     */
-    private static function statechartSlice(?array $manifest): array
-    {
-        if ($manifest === null) {
-            return [];
+            return $lines;
         }
         $states = $manifest['states'] ?? null;
-        if (!is_array($states) || count($states) <= self::MAX_STEPS) {
-            return [];
+        if (!is_array($states) || $states === []) {
+            return $lines;
         }
-
-        $initial = trim((string) ($manifest['initial'] ?? ''));
+        $initial = self::initialId($manifest, $states);
         if ($initial === '' || !isset($states[$initial]) || !is_array($states[$initial])) {
-            $initial = '';
-            foreach ($states as $id => $state) {
-                if (is_string($id) && is_array($state)) {
-                    $initial = $id;
-                    break;
-                }
-            }
-        }
-        if ($initial === '' || !is_array($states[$initial])) {
-            return [];
+            return $lines;
         }
 
-        $lines = ['  Recorrido:'];
-        $lines[] = '    ' . self::stateLabel($initial, $states[$initial]);
-        foreach (self::alwaysRows($states[$initial]['always'] ?? null) as $row) {
-            $target = $row['target'];
-            $targetState = isset($states[$target]) && is_array($states[$target]) ? $states[$target] : [];
-            $dest = $target === '' ? 'fin' : self::stateLabel($target, $targetState);
-            $guard = $row['guard'] === '' ? 'en otro caso' : $row['guard'];
-            $lines[] = '    - ' . $guard . ' → ' . $dest;
-        }
-
-        $finals = [];
-        foreach ($states as $id => $state) {
-            if (!is_string($id) || !is_array($state)) {
+        $lines[] = '  ' . self::stateLabel($initial, $states[$initial]);
+        $rows = self::pickBranches(self::alwaysRows($states[$initial]['always'] ?? null));
+        foreach ($rows as $row) {
+            $chain = self::chainFrom($states, $row['target']);
+            if ($chain['labels'] === []) {
                 continue;
             }
-            if (trim((string) ($state['type'] ?? '')) !== 'final') {
-                continue;
+            $text = '    → ' . implode(' → ', $chain['labels']);
+            if ($chain['cut']) {
+                $text .= ' → …';
             }
-            $finals[] = self::stateLabel($id, $state);
-        }
-        if ($finals !== []) {
-            $lines[] = '    Cierres: ' . implode('; ', $finals);
+            $lines[] = $text;
         }
 
         return $lines;
+    }
+
+    /**
+     * @param array<string, mixed> $manifest
+     * @param array<string, mixed> $states
+     */
+    private static function initialId(array $manifest, array $states): string
+    {
+        $initial = trim((string) ($manifest['initial'] ?? ''));
+        if ($initial !== '' && isset($states[$initial]) && is_array($states[$initial])) {
+            return $initial;
+        }
+        foreach ($states as $id => $state) {
+            if (is_string($id) && is_array($state)) {
+                return $id;
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * @param array<string, array<string, mixed>> $states
+     * @return array{labels: list<string>, cut: bool}
+     */
+    private static function chainFrom(array $states, string $startId): array
+    {
+        $labels = [];
+        $id = $startId;
+        $seen = [];
+        $cut = false;
+
+        for ($n = 0; $n < self::MAX_CHAIN; $n++) {
+            if ($id === '' || isset($seen[$id]) || !isset($states[$id]) || !is_array($states[$id])) {
+                break;
+            }
+            $seen[$id] = true;
+            $state = $states[$id];
+            $labels[] = self::stateLabel($id, $state);
+            if (self::isFinal($state)) {
+                break;
+            }
+            $next = self::defaultTarget(self::alwaysRows($state['always'] ?? null));
+            if ($next === '' || $next === $id) {
+                break;
+            }
+            if ($n === self::MAX_CHAIN - 1) {
+                $cut = true;
+                break;
+            }
+            $id = $next;
+        }
+
+        return ['labels' => $labels, 'cut' => $cut];
+    }
+
+    /**
+     * @param list<array{guard: string, target: string}> $rows
+     * @return list<array{guard: string, target: string}>
+     */
+    private static function pickBranches(array $rows): array
+    {
+        if (count($rows) <= self::MAX_BRANCHES) {
+            return $rows;
+        }
+
+        $defaultAt = count($rows) - 1;
+        foreach ($rows as $i => $row) {
+            if ($row['guard'] === '' && $row['target'] !== '') {
+                $defaultAt = $i;
+                break;
+            }
+        }
+
+        $out = [];
+        foreach ($rows as $i => $row) {
+            if ($i === $defaultAt) {
+                continue;
+            }
+            if (count($out) >= self::MAX_BRANCHES - 1) {
+                break;
+            }
+            $out[] = $row;
+        }
+        $out[] = $rows[$defaultAt];
+
+        return $out;
+    }
+
+    /**
+     * @param list<array{guard: string, target: string}> $rows
+     */
+    private static function defaultTarget(array $rows): string
+    {
+        $fallback = '';
+        foreach ($rows as $row) {
+            if ($row['target'] !== '') {
+                $fallback = $row['target'];
+            }
+            if ($row['guard'] === '' && $row['target'] !== '') {
+                return $row['target'];
+            }
+        }
+
+        return $fallback;
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     */
+    private static function inputKind(array $state): string
+    {
+        $meta = isset($state['meta']) && is_array($state['meta']) ? $state['meta'] : [];
+        if (isset($meta['composer_capture'])) {
+            return 'campo de texto';
+        }
+        if (isset($meta['open_ui']) || isset($meta['chooser'])) {
+            return 'opciones';
+        }
+
+        return '';
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     */
+    private static function isFinal(array $state): bool
+    {
+        if (trim((string) ($state['type'] ?? '')) === 'final') {
+            return true;
+        }
+        $always = $state['always'] ?? null;
+
+        return $always === null || $always === [] || $always === '';
     }
 
     /**
@@ -271,8 +304,18 @@ final class IntentSemanticsPromptFormatter
     private static function stateLabel(string $id, array $state): string
     {
         $description = trim((string) ($state['description'] ?? ''));
+        if ($description === '') {
+            $description = trim((string) ($state['label'] ?? ''));
+        }
+        if ($description === '') {
+            $description = $id;
+        }
+        $kind = self::inputKind($state);
+        if ($kind !== '') {
+            $description .= ' (' . $kind . ')';
+        }
 
-        return $description !== '' ? $description : $id;
+        return $description;
     }
 
     /**
@@ -298,6 +341,9 @@ final class IntentSemanticsPromptFormatter
                 continue;
             }
             $target = array_key_exists('target', $row) ? trim((string) $row['target']) : '';
+            if ($target === '') {
+                continue;
+            }
             $guard = isset($row['guard']) && is_array($row['guard']) ? $row['guard'] : [];
             $parts = [];
             foreach ($guard as $field => $value) {

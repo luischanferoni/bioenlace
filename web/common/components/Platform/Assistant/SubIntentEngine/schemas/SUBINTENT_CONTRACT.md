@@ -12,7 +12,7 @@ Fuente de verdad para las claves que **`SubIntentEngine`** lee y combina con el 
 | `action_name`, `keywords` | Metadatos / descubrimiento. `action_name` = label UX. |
 | ~~`description`~~ | **Retirado** de intents YAML. No usar. |
 | `rbac_route` | Ruta HTTP del **permiso API base** que se asigna al rol (sin `v1`), no una ruta UI/ghost heredada por migración. Ej.: `listar-atenciones-como-paciente`, no `mis-atenciones-como-paciente`. Las rutas hijas se heredan vía `auth_item_child` al migrate; si el rol recibe el padre después, ejecutar la migración de resync correspondiente. |
-| `intent_semantics` | Opcional: **contexto para 2ª IA** (objetivo del flow + pasos). Ver abajo. |
+| `intent_semantics` | Retirado. La guía arma el recorrido desde `states` (`description` + `always`). |
 | `business_rules` | Opcional: reglas `pre_flow` (vía `IntentBusinessRules`). |
 | `draft_hydrator` | Opcional: enriquecimiento del `draft` **antes** de `SubIntentEngine::process` (ver abajo). |
 | `context` | Claves de contexto del statechart (lista, o mapa). El motor las suma a las de `provides` / `requires`. |
@@ -20,25 +20,19 @@ Fuente de verdad para las claves que **`SubIntentEngine`** lee y combina con el 
 | `states` | **Obligatorio** en un flow: mapa id → estado (`description`, `always`, `type`, `meta`). |
 | `flow_submit` | **Opcional.** Cierre predeterminado. Un estado es terminal si es `type: final` o no tiene `always`. Al emitir `open_ui`, el motor adjunta `flow_submit`. Una rama puede sobrescribirlo con `meta.flow_submit`. |
 
-### `intent_semantics` (raíz del intent)
+### Recorrido para la guía
 
-**Función:** adjuntar contexto al prompt de la **2ª IA** (guide) para que entienda el flow: objetivo, que es multi-paso, y qué hace cada paso.  
-**No** es texto UX al paciente (`action_name`, `ui-text/by-client`).
-
-| Clave | Uso |
-|--------|-----|
-| `objective` | Objetivo del flow (qué logra al completarlo). Obligatorio si hay bloque. |
-
-El formatter (`IntentSemanticsPromptFormatter`) arma **nombre humano + objetivo**. Si el statechart tiene muchos estados, muestra el estado inicial, sus `always` y los `type: final`. Si es chico, lista `description` de cada estado.
+La 2ª IA no lee un objetivo escrito aparte. `IntentSemanticsPromptFormatter` toma `action_name`, el estado `initial` y sigue `always` por `description` hasta un `type: final` (o un estado sin `always`). No incluye guards ni ids.
 
 | Campo raíz | Audiencia |
 |------------|-----------|
 | `action_name` | Usuario (atajo, botón, label). |
-| `intent_semantics` | 2ª IA (guide). |
+| `states.*.label` | Usuario (título del paso en web y móvil). |
+| `states.*.description` | 2ª IA (guide): texto del paso en el recorrido. |
 
-No campo `description` en intents.
+No campo `description` ni `intent_semantics.objective` en intents.
 
-Omitir `intent_semantics` en intents staff/ocultos que no entran a guide (p. ej. `data-access.*` genéricos). El descubrimiento en lenguaje natural es `meta.tags` de cada estado.
+El descubrimiento en lenguaje natural es `meta.tags` de cada estado.
 
 ### `draft_hydrator` (raíz del intent)
 

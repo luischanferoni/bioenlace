@@ -3,12 +3,11 @@ version: 1
 action_name: 'Solicitar tutela de menor'
 rbac_route: /api/person-representation/solicitar-menor-como-tutor
 
-intent_semantics:
-  objective: 'Solicitá tutela sobre un menor sin cuenta; el centro debe verificarla antes de activarla.'
 initial: gestionar_tutela
 states:
   gestionar_tutela:
-    description: 'Solicitud de tutela'
+    label: Solicitud de tutela
+    description: 'Solicitud de tutela de un menor'
     meta:
       open_ui:
         action_id: person-representation.hub

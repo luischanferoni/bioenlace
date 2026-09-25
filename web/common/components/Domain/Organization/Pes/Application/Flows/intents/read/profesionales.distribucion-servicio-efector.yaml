@@ -7,12 +7,11 @@ metric_id: profesionales_conteo_por_servicio_efector
 action_name: 'Distribución de profesionales por servicio'
 rbac_route: /api/info
 
-intent_semantics:
-  objective: 'Consultar la distribución de profesionales por servicio en el efector de sesión.'
 initial: mostrar_distribucion
 states:
   mostrar_distribucion:
-    description: 'Consultando distribución de profesionales por servicio'
+    label: Consultando distribución de profesionales por servicio
+    description: 'Distribución de profesionales por servicio'
     meta:
       open_ui:
         action_id: data-access.info

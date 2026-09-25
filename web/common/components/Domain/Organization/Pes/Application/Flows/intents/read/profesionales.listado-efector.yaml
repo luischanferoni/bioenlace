@@ -7,12 +7,11 @@ metric_id: profesionales_listado_efector
 action_name: 'Listado de profesionales del efector'
 rbac_route: /api/listar
 
-intent_semantics:
-  objective: 'Ver el listado de profesionales con asignación en el efector de sesión.'
 initial: mostrar_listado
 states:
   mostrar_listado:
-    description: 'Listando profesionales del efector'
+    label: Listando profesionales del efector
+    description: 'Profesionales del centro'
     meta:
       tags:
         - profesionales

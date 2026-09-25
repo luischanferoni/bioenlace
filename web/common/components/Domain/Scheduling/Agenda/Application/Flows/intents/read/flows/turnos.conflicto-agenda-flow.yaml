@@ -6,7 +6,8 @@ rbac_route: /api/turnos/resolver-conflicto-agenda-como-paciente
 initial: select_turno
 states:
   select_turno:
-    description: 'Turno afectado'
+    label: Turno afectado
+    description: 'Turno afectado por un conflicto de agenda'
     meta:
       provides:
         - draft.id
@@ -14,7 +15,8 @@ states:
         action_id: turnos.elegir-conflicto-agenda-como-paciente
     always: select_eleccion
   select_eleccion:
-    description: 'Nueva opción'
+    label: Nueva opción
+    description: 'Nueva opción para ese turno'
     meta:
       provides:
         - draft.eleccion

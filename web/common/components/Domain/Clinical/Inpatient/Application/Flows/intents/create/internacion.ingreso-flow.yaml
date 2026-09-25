@@ -8,7 +8,8 @@ rbac_route: /api/home/panel
 initial: ingresar
 states:
   ingresar:
-    description: 'Completá los datos del ingreso'
+    label: 'Completá los datos del ingreso'
+    description: 'Datos del ingreso a internación'
     meta:
       provides:
         - draft.internacion_id

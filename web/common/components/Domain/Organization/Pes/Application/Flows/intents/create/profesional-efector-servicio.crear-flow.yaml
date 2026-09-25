@@ -42,7 +42,8 @@ business_rules:
 initial: select_persona
 states:
   select_persona:
-    description: Persona
+    label: Persona
+    description: 'Persona que se asigna como profesional'
     meta:
       provides:
         - draft.id_persona
@@ -59,6 +60,7 @@ states:
       -
         target: select_servicio
   capture_cuil:
+    label: CUIL del profesional
     description: 'CUIL del profesional'
     meta:
       provides:
@@ -69,7 +71,8 @@ states:
           id_persona: draft.id_persona
     always: select_servicio
   select_servicio:
-    description: Servicio
+    label: Servicio
+    description: 'Servicio de la asignación'
     meta:
       provides:
         - draft.id_servicio
@@ -83,7 +86,8 @@ states:
       -
         target: ''
   configurar_agenda_datos:
-    description: Agenda
+    label: Agenda
+    description: 'Tipo de agenda de la asignación'
     meta:
       provides:
         - draft.agenda_ui_completed

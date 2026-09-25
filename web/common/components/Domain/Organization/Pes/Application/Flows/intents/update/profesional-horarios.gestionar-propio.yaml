@@ -6,15 +6,14 @@ domain_operation: DataAccess.edit
 action_name: 'Configurar mis horarios (ambulatorio / guardia / internación)'
 rbac_route: /api/profesional-horarios/gestionar
 
-intent_semantics:
-  objective: 'Configurar horarios propios según la clase de encuentro (AMB cupos, EMER/IMP horario semanal).'
 draft_hydrator:
   handler: organization.pes_from_servicio
   require_own_pes: true
 initial: select_servicio
 states:
   select_servicio:
-    description: 'Elegí el servicio'
+    label: Elegí el servicio
+    description: 'Servicio de la agenda propia'
     meta:
       provides:
         - draft.id_servicio
@@ -25,7 +24,8 @@ states:
           incluir_sin_agenda: '1'
     always: select_encounter_class
   select_encounter_class:
-    description: '¿Ambulatorio, guardia o internación?'
+    label: '¿Ambulatorio, guardia o internación?'
+    description: 'Tipo de agenda: ambulatorio, guardia o internación'
     meta:
       provides:
         - draft.encounter_class
@@ -41,7 +41,8 @@ states:
       -
         target: configurar_horario
   configurar_agenda:
-    description: 'Configurá tu agenda ambulatoria'
+    label: 'Configurá tu agenda ambulatoria'
+    description: 'Agenda ambulatoria propia'
     meta:
       provides:
         - draft.horario_ui_completed
@@ -56,7 +57,8 @@ states:
           ui_step: datos
     type: final
   configurar_horario:
-    description: 'Configurá tus horarios'
+    label: 'Configurá tus horarios'
+    description: 'Horarios propios de guardia o internación'
     meta:
       provides:
         - draft.horario_ui_completed

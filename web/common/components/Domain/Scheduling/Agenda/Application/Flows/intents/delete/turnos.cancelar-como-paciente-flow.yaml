@@ -3,12 +3,11 @@ version: 1
 action_name: 'Cancelar turno'
 rbac_route: /api/turnos/cancelar-como-paciente
 
-intent_semantics:
-  objective: 'Cancelá un turno pendiente propio eligiendo el turno y el motivo.'
 initial: select_turno
 states:
   select_turno:
-    description: 'Turno a cancelar'
+    label: Turno a cancelar
+    description: 'Turno pendiente que se cancela'
     meta:
       tags:
         - cancelacion
@@ -18,7 +17,8 @@ states:
         action_id: turnos.elegir-pendiente-como-paciente
     always: select_motivo
   select_motivo:
-    description: 'Motivo de la cancelación'
+    label: Motivo de la cancelación
+    description: 'Motivo para cancelar el turno'
     meta:
       provides:
         - draft.razon_cancelacion

@@ -6,7 +6,8 @@ rbac_route: /api/profesional-agenda/resolver-conflictos-flow
 initial: select_turno
 states:
   select_turno:
-    description: 'Turno con conflicto'
+    label: Turno con conflicto
+    description: 'Turno con conflicto de agenda'
     meta:
       provides:
         - draft.id
@@ -14,7 +15,8 @@ states:
         action_id: profesional-agenda.elegir-conflicto-agenda
     always: select_eleccion
   select_eleccion:
-    description: Resolución
+    label: Resolución
+    description: 'Forma de resolver el conflicto'
     meta:
       provides:
         - draft.eleccion

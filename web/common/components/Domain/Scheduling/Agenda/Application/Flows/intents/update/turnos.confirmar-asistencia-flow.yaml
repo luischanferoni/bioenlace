@@ -3,12 +3,11 @@ version: 1
 action_name: 'Confirmar asistencia al turno'
 rbac_route: /api/turnos/confirmar-asistencia-como-paciente
 
-intent_semantics:
-  objective: 'Confirmá que vas a asistir a un turno pendiente propio.'
 initial: select_turno
 states:
   select_turno:
-    description: 'Turno a confirmar'
+    label: Turno a confirmar
+    description: 'Turno pendiente por confirmar'
     meta:
       provides:
         - draft.id
@@ -16,7 +15,8 @@ states:
         action_id: turnos.elegir-pendiente-como-paciente
     always: confirmar
   confirmar:
-    description: Confirmación
+    label: Confirmación
+    description: 'Confirmación de asistencia al turno'
     meta:
       provides:
         - draft.token

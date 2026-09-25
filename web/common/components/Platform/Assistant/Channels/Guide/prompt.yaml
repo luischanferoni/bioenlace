@@ -25,7 +25,7 @@ stable_prompt: |
   Lo que expresa el usuario es lo siguiente. Respondé a esto:
   {necesidad_usuario}  
 
-  Todo lo que sigue es contexto interno para vos, para que te ayude a responder lo que pidió el usuario.
+  Todo lo que sigue es contexto interno para vos, para que te ayude a responder lo que expresó el usuario.
 
   -- Ambito/s del sistema de información hospitalaria detectado de lo que expresa el usuario:
   {context_his_areas_lines}
@@ -35,7 +35,8 @@ stable_prompt: |
 
   {clinical_record_block}
 
-  -- Funcionalidades que el sistema puede ofrecer ahora relacionadas a lo que expresa el usuario:
+  -- Funcionalidades que el sistema ofrece, estas ya se muestran como botones. Cada boton abre su propio
+  recorrido, y ese recorrido hace las preguntas:
   {intent_semantics}
 
   {article_block}

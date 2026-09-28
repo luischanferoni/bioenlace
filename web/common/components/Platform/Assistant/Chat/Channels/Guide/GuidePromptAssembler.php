@@ -49,7 +49,10 @@ final class GuidePromptAssembler
     return GuideChannelConfig::assemblePrompt([
       'necesidad_usuario' => self::resolveNecesidadUsuario($messageForPrompt),
       'context_his_areas_lines' => self::formatContextHisAreasLines($activeAreas),
-      'scoped_system_records' => trim($assembled->promptSection),
+      'scoped_system_records' => GuideChannelConfig::formatOptionalAttachment(
+        'scoped_system_records',
+        trim($assembled->promptSection)
+      ),
       'clinical_record_block' => GuideChannelConfig::formatOptionalAttachment(
         'clinical_record',
         self::formatClinicalRecordData()
@@ -108,7 +111,10 @@ final class GuidePromptAssembler
         is_array($firstIa) ? $firstIa : null
       ),
       'context_his_areas_lines' => self::formatContextHisAreasLines($areas),
-      'scoped_system_records' => trim($scopedSystemRecords),
+      'scoped_system_records' => GuideChannelConfig::formatOptionalAttachment(
+        'scoped_system_records',
+        trim($scopedSystemRecords)
+      ),
       'clinical_record_block' => GuideChannelConfig::formatOptionalAttachment(
         'clinical_record',
         self::formatClinicalRecordData()

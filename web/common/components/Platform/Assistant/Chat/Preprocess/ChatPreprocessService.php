@@ -203,7 +203,9 @@ final class ChatPreprocessService
         }
         $stored = ThreadNeedList::formatForPreprocess(AssistantThreadStateService::loadNecesidades($userId));
         if ($stored !== '') {
-            $section = "Necesidades ya registradas en este hilo (actualizá el estado de cada una; no las copies como mensajes):\n"
+            $section = "Necesidades ya registradas en este hilo. Devolvé la lista completa.\n"
+                . "Si el mensaje actual suma hechos a una necesidad que ya está (desde cuándo, cómo, dónde, para quién), reescribí esa expresión con los hechos anteriores y los nuevos.\n"
+                . "Cambiá el estado solo si ya se cumplió o la dejó de lado.\n"
                 . $stored . "\n\n";
             if (strpos($prefix, 'Mensaje actual:') !== false) {
                 $prefix = str_replace('Mensaje actual:', $section . 'Mensaje actual:', $prefix);
@@ -307,6 +309,7 @@ final class ChatPreprocessService
             }
 
             $normalized = self::normalizeFromAi($raw, $content);
+            $normalized['conversation_history'] = self::formatHistoryForPrompt($userId, $content);
             AssistantThreadStateService::saveNecesidades(
                 $userId,
                 is_array($normalized['necesidades_usuario'] ?? null) ? $normalized['necesidades_usuario'] : []

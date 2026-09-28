@@ -124,6 +124,7 @@ final class GuideChannelConfig
                 'Datos del sistema (usá solo lo que esté presente; si falta un dato, no lo inventes):',
                 'Registros e informacion disponible en nuestro sistema:',
                 'Registros e información disponible en nuestro sistema:',
+                '-- Datos de esta persona ya cargados en el sistema. Si no hay nada debajo, no lo tomes en cuenta:',
             ],
             'intent_semantics' => [
                 'Gestiones que el sistema puede ofrecer ahora (orientá con estas opciones; no inventes pasos):',

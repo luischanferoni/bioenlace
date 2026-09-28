@@ -7,8 +7,11 @@
 version: 1
 
 optional_attachments:
+  scoped_system_records: |-
+    Datos de esta persona ya cargados en el sistema:
+    {data}
   clinical_record: |-
-    Resumen clínico del sujeto de la consulta:
+    Resumen clínico de esta persona:
     {data}
   article: |-
     Texto de ayuda del sistema:
@@ -30,7 +33,6 @@ stable_prompt: |
   -- Ambito/s del sistema de información hospitalaria detectado de lo que expresa el usuario:
   {context_his_areas_lines}
 
-  -- Datos de esta persona ya cargados en el sistema. Si no hay nada debajo, no lo tomes en cuenta:
   {scoped_system_records}
 
   {clinical_record_block}

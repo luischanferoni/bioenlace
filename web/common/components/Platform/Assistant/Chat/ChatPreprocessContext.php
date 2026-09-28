@@ -106,6 +106,13 @@ final class ChatPreprocessContext
         return isset($d['necesidad_usuario']) ? trim((string) $d['necesidad_usuario']) : '';
     }
 
+    public static function conversationHistory(): string
+    {
+        $d = self::get();
+
+        return isset($d['conversation_history']) ? trim((string) $d['conversation_history']) : '';
+    }
+
     /**
      * @return list<array{expresion: string, estado: string}>
      */

@@ -31,8 +31,9 @@ stable_prompt: |
   Las funcionalidades (UI) que el sistema ofrece, agrupadas en bloques y expresadas en texto plano 
   para que vos entiendas, son las siguientes:
   {intent_semantics}
-  Detecta cual/es son las funcionalidades que ayudan al usuario. Contá en una frase el o los recorridos 
-  que le convienen y cuándo le conviene cada uno.
+  Detecta cual/es son las funcionalidades que ayudan al usuario. Cada nombre de bloque es un botón 
+  que el usuario puede presionar. Contá en una frase el o los recorridos que le convienen y cuándo 
+  le conviene cada uno.
   
   Todo lo que sigue es contexto interno para vos, para que te ayude a responder lo que expresó el usuario.
 

@@ -19,9 +19,9 @@ class IntentSemanticsPromptFormatterTest extends Unit
     {
         $block = IntentSemanticsPromptFormatter::formatIntentId('turnos.crear-como-paciente');
 
-        $this->assertStringContainsString('- Turno con un especialista', $block);
-        $this->assertStringContainsString('La persona elige la oferta del centro que tiene agenda.', $block);
-        $this->assertStringContainsString('Después: profesional de esa oferta en ese centro, día con cupos, horario para reservar el turno.', $block);
+        $this->assertStringContainsString('- Botón: Turno con un especialista', $block);
+        $this->assertStringContainsString('Al presionarlo se abre una pantalla donde la persona elige la oferta del centro que tiene agenda.', $block);
+        $this->assertStringContainsString('Las pantallas que siguen: profesional de esa oferta en ese centro, día con cupos, horario para reservar el turno.', $block);
         $this->assertStringNotContainsString('objective', $block);
         $this->assertStringNotContainsString('Pasos:', $block);
         $this->assertStringNotContainsString('turnos.crear-como-paciente', $block);
@@ -31,12 +31,13 @@ class IntentSemanticsPromptFormatterTest extends Unit
     {
         $block = IntentSemanticsPromptFormatter::formatIntentId('atencion.necesito-atencion');
 
-        $this->assertStringContainsString('- Solicitar Atención', $block);
-        $this->assertStringContainsString('La persona elige qué pedido de atención hace.', $block);
-        $this->assertStringContainsString('Opciones: Malestar nuevo, Estudio o práctica, Control/Seguimiento, Urgencia.', $block);
-        $this->assertStringContainsString('→ Urgencia. Orientación por urgencia. El recorrido se detiene.', $block);
+        $this->assertStringContainsString('- Botón: Solicitar Atención', $block);
+        $this->assertStringContainsString('Al presionarlo se abre una pantalla donde la persona elige qué pedido de atención hace.', $block);
+        $this->assertStringContainsString('En esa pantalla: Malestar nuevo, Estudio o práctica, Control/Seguimiento, Urgencia.', $block);
+        $this->assertStringContainsString('Si elige Urgencia, se abre otra pantalla: Orientación por urgencia. El recorrido se detiene.', $block);
+        $this->assertStringContainsString('Si elige Malestar nuevo, se abre otra pantalla: La persona elige la zona del malestar.', $block);
         $this->assertStringContainsString('Síntoma general (fiebre, cansancio u otro)', $block);
-        $this->assertStringContainsString('Después: formas de atenderse, servicio del centro para la atención', $block);
+        $this->assertStringContainsString('Las pantallas que siguen: modalidad, servicio, centro de salud, profesional, día, horario.', $block);
         $this->assertStringNotContainsString('triage_raiz', $block);
         $this->assertStringNotContainsString('Cierres:', $block);
         $this->assertStringNotContainsString('objective', $block);
@@ -50,8 +51,8 @@ class IntentSemanticsPromptFormatterTest extends Unit
             'atencion.necesito-atencion',
         ], 4);
 
-        $this->assertStringContainsString('- Turno con un especialista', $wrapped);
-        $this->assertStringContainsString('- Solicitar Atención', $wrapped);
+        $this->assertStringContainsString('- Botón: Turno con un especialista', $wrapped);
+        $this->assertStringContainsString('- Botón: Solicitar Atención', $wrapped);
         $this->assertStringNotContainsString('---', $wrapped);
     }
 }

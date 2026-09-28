@@ -28,8 +28,7 @@ stable_prompt: |
   Lo que expresa el usuario es lo siguiente:
   {necesidad_usuario}  
 
-  Las funcionalidades que el sistema ofrece, agrupadas en bloques y expresadas en texto plano 
-  para que vos entiendas, son las siguientes:
+  Las funcionalidades que el sistema ofrece. Cada bloque empieza por el botón:
   {intent_semantics}
   La primera línea de cada bloque es el nombre del botón. El resto es lo que la persona encuentra después de presionarlo.
   Detecta cual/es son las funcionalidades que ayudan al usuario, contá en una frase la o las que le convienen 

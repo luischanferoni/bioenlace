@@ -7,9 +7,10 @@ use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
 /**
  * Arma el recorrido de un flow para el prompt de la guía.
  *
- * Parte del estado inicial. Cada paso usa `explanation` y, si declara
- * `meta.guide_options`, las opciones cerradas de ese catálogo. El resto del
- * recorrido se resume en «Después». No adjunta `objective` ni ids.
+ * La primera línea es el botón. La explanation del estado inicial es la pantalla
+ * que se abre al presionarlo. Las opciones de `meta.guide_options` son de esa
+ * pantalla, no del chat. El resto de la rama son pantallas siguientes.
+ * No adjunta `objective` ni ids.
  */
 final class IntentSemanticsPromptFormatter
 {
@@ -134,7 +135,7 @@ final class IntentSemanticsPromptFormatter
      */
     private static function recorridoLines(?array $manifest, string $label): array
     {
-        $lines = ['- ' . $label];
+        $lines = ['- Botón: ' . $label];
         if ($manifest === null) {
             return $lines;
         }
@@ -148,7 +149,10 @@ final class IntentSemanticsPromptFormatter
         }
 
         $initialState = $states[$initial];
-        $lines[] = '  ' . self::explanation($initialState);
+        $opened = self::lowerFirst(self::explanation($initialState));
+        if ($opened !== '') {
+            $lines[] = '  Al presionarlo se abre una pantalla donde ' . $opened;
+        }
         foreach (self::optionLines(self::options($initialState), '  ') as $optionLine) {
             $lines[] = $optionLine;
         }
@@ -197,17 +201,24 @@ final class IntentSemanticsPromptFormatter
 
         $first = $steps[0];
         $option = self::optionLabelFromGuard($sourceState, $row['guard']);
-        $head = self::explanation($first);
+        $screen = self::explanation($first);
         if ($option !== '') {
-            $head = $option . '. ' . $head;
+            $head = 'Si elige ' . $option . ', se abre otra pantalla';
+        } else {
+            $head = 'Se abre otra pantalla';
+        }
+        if ($screen !== '') {
+            $head .= ': ' . $screen;
+        } else {
+            $head .= '.';
         }
         $rest = array_slice($steps, 1);
         if (self::isFinal($first) && $rest === []) {
             $head .= ' El recorrido se detiene.';
         }
 
-        $lines = ['    → ' . $head];
-        foreach (self::optionLines(self::options($first), '      ') as $optionLine) {
+        $lines = ['  ' . $head];
+        foreach (self::optionLines(self::options($first), '    ') as $optionLine) {
             $lines[] = $optionLine;
         }
         if ($rest !== [] || $chain['cut']) {
@@ -219,7 +230,7 @@ final class IntentSemanticsPromptFormatter
                 $bits[] = '…';
             }
             if ($bits !== []) {
-                $lines[] = '      Después: ' . implode(', ', $bits) . '.';
+                $lines[] = '    Las pantallas que siguen: ' . implode(', ', $bits) . '.';
             }
         }
 
@@ -328,6 +339,20 @@ final class IntentSemanticsPromptFormatter
         return $text;
     }
 
+    private static function lowerFirst(string $text): string
+    {
+        $text = trim($text);
+        if ($text === '') {
+            return '';
+        }
+        $len = function_exists('mb_strlen') ? mb_strlen($text, 'UTF-8') : strlen($text);
+        $first = function_exists('mb_substr') ? mb_substr($text, 0, 1, 'UTF-8') : substr($text, 0, 1);
+        $rest = function_exists('mb_substr') ? mb_substr($text, 1, $len, 'UTF-8') : substr($text, 1);
+        $lower = function_exists('mb_strtolower') ? mb_strtolower($first, 'UTF-8') : strtolower($first);
+
+        return $lower . $rest;
+    }
+
     /**
      * @param array<string, mixed> $state
      */
@@ -373,7 +398,7 @@ final class IntentSemanticsPromptFormatter
             return [];
         }
 
-        return [$indent . 'Opciones: ' . implode(', ', $labels) . '.'];
+        return [$indent . 'En esa pantalla: ' . implode(', ', $labels) . '.'];
     }
 
     /**

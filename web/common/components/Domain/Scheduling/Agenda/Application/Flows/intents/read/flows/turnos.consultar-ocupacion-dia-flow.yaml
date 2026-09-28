@@ -17,6 +17,7 @@ states:
         - draft.formato
       open_ui:
         action_id: turnos.consultar-ocupacion-dia
+    outcome: 'Termina cuando la persona ve la ocupación de ese día.'
     type: final
 flow_submit:
   action_id: turnos.consultar-ocupacion-dia

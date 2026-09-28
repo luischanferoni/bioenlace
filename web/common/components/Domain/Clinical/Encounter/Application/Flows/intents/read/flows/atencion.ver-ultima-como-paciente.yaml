@@ -14,5 +14,6 @@ states:
         - ultima_atencion
       open_ui:
         action_id: clinical.encounter.ultima-atencion-ui-como-paciente
+    outcome: 'Termina cuando la persona ve su última atención.'
     type: final
 

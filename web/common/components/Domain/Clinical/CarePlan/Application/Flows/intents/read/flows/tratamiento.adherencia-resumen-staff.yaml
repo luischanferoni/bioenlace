@@ -14,5 +14,6 @@ states:
         - draft.care_plan_id
       open_ui:
         action_id: clinical.care-plan.adherencia-resumen-staff
+    outcome: 'Termina cuando la persona ve la adherencia a los tratamientos del centro.'
     type: final
 

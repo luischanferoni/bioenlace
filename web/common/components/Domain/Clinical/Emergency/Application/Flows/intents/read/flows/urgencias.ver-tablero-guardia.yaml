@@ -12,5 +12,6 @@ states:
     meta:
       open_ui:
         action_id: clinical.home.panel
+    outcome: 'Termina cuando la persona ve el tablero de guardia.'
     type: final
 

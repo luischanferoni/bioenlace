@@ -18,5 +18,6 @@ states:
         action_id: data-access.info
         params:
           metric_id: profesionales_conteo_efector
+    outcome: 'Termina cuando la persona ve cuántos profesionales hay en el centro.'
     type: final
 

@@ -18,6 +18,7 @@ states:
         action_id: clinical.emergency-guardia.egreso-formulario
         params:
           guardia_id: draft.guardia_id
+    outcome: 'Termina cuando la persona registra el retiro de guardia.'
     type: final
 flow_submit:
   action_id: clinical.emergency-guardia.egreso-formulario

@@ -11,6 +11,7 @@ states:
     label: Busco el recurso en tu provincia de contexto.
     description: 'Recurso de salud de la provincia de la persona'
     explanation: 'La persona consulta un recurso de salud de la provincia.'
+    outcome: 'Termina cuando la persona ve el recurso de salud.'
     type: final
 flow_submit:
   action_id: paciente-contexto.buscar-recurso-provincial-como-paciente

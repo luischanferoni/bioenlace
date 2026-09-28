@@ -26,5 +26,6 @@ states:
       hint:
         entity: servicio
         match_property: nombre
+    outcome: 'Termina cuando la persona ve su último turno en esa oferta.'
     type: final
 

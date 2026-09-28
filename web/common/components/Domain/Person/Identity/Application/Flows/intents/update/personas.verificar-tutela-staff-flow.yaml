@@ -14,6 +14,7 @@ states:
         - draft.person_related_id
       open_ui:
         action_id: person-representation.solicitudes-tutela-pendientes-para-staff
+    outcome: 'Termina cuando la persona verifica la tutela.'
     type: final
 flow_submit:
   action_id: person-representation.verificar-vinculo-para-staff

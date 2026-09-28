@@ -16,6 +16,7 @@ states:
         - draft.id_efector
       open_ui:
         action_id: turnos.politica-como-paciente
+    outcome: 'Termina cuando la persona ve la política de turnos del centro.'
     type: final
 flow_submit:
   action_id: turnos.politica-como-paciente

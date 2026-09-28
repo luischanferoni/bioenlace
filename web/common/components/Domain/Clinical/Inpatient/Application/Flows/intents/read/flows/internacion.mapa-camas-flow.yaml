@@ -14,5 +14,6 @@ states:
         - draft.id_cama
       open_ui:
         action_id: clinical.internacion.mapa-camas
+    outcome: 'Termina cuando la persona ve el mapa de camas.'
     type: final
 

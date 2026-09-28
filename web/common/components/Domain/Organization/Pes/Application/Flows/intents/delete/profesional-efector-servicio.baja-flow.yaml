@@ -47,6 +47,7 @@ states:
         params:
           id_profesional_efector_servicio: draft.id_profesional_efector_servicio
           id_servicio: draft.id_servicio
+    outcome: 'Termina cuando la persona quita al profesional del servicio.'
     type: final
 flow_submit:
   action_id: profesional-efector-servicio.baja-flow

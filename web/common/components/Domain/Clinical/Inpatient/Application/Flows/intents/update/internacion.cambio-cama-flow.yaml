@@ -18,6 +18,7 @@ states:
         action_id: clinical.internacion.cambio-cama-formulario
         params:
           internacion_id: draft.internacion_id
+    outcome: 'Termina cuando la persona cambia la cama.'
     type: final
 flow_submit:
   action_id: clinical.internacion.cambio-cama-formulario

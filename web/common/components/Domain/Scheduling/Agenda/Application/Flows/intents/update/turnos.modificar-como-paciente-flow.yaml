@@ -28,6 +28,7 @@ states:
         action_id: turnos.slots-reprogramar-como-paciente
         params:
           id: draft.id
+    outcome: 'Termina cuando la persona cambia el horario del turno.'
     type: final
 flow_submit:
   action_id: turnos.reprogramar-como-paciente

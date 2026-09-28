@@ -31,5 +31,6 @@ states:
         action_id: clinical.laboratory-result.ver-informe-como-paciente
         params:
           report_id: draft.report_id
+    outcome: 'Termina cuando la persona ve el informe de laboratorio.'
     type: final
 

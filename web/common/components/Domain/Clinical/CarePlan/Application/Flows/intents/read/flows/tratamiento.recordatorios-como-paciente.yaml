@@ -12,5 +12,6 @@ states:
     meta:
       open_ui:
         action_id: clinical.care-plan.gestionar-recordatorios-como-paciente
+    outcome: 'Termina cuando la persona configura los recordatorios del tratamiento.'
     type: final
 

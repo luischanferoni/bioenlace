@@ -18,6 +18,7 @@ states:
         - draft.id_profesional_efector_servicio
       open_ui:
         action_id: turnos.crear-para-paciente
+    outcome: 'Termina cuando la persona crea el turno.'
     type: final
 flow_submit:
   action_id: turnos.crear-para-paciente

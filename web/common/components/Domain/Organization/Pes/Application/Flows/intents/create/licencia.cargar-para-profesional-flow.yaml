@@ -66,6 +66,7 @@ states:
         params:
           id_profesional_efector_servicio: draft.id_profesional_efector_servicio
           id_servicio: draft.id_servicio
+    outcome: 'Termina cuando la persona carga la licencia del profesional.'
     type: final
 flow_submit:
   action_id: profesional-efector-servicio.cargar-licencia-para-profesional-flow

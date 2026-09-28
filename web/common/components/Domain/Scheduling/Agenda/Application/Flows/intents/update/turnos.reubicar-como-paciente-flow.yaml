@@ -106,6 +106,7 @@ states:
           id_profesional_efector_servicio: draft.id_profesional_efector_servicio
           fecha: draft.fecha_turno
           mismo_profesional: '0'
+    outcome: 'Termina cuando la persona reubica el turno.'
     type: final
 flow_submit:
   action_id: turnos.reubicar-como-paciente

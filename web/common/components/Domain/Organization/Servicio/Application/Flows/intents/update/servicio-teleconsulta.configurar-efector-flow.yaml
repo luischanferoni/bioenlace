@@ -17,6 +17,7 @@ states:
         - draft.caso_codigos_text
       open_ui:
         action_id: servicio-teleconsulta.configurar
+    outcome: 'Termina cuando la persona define la política de videollamada del servicio.'
     type: final
 flow_submit:
   action_id: servicio-teleconsulta.configurar

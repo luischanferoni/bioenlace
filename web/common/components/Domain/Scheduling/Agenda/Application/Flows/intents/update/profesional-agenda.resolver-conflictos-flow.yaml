@@ -28,6 +28,7 @@ states:
         action_id: profesional-agenda.elegir-resolucion-conflicto-agenda-para-paciente
         params:
           id: draft.id
+    outcome: 'Termina cuando la persona resuelve el conflicto de agenda.'
     type: final
 flow_submit:
   action_id: profesional-agenda.resolver-conflictos-flow

@@ -62,5 +62,6 @@ states:
           id_profesional_efector_servicio: draft.id_profesional_efector_servicio
           id_servicio: draft.id_servicio
           ui_step: datos
+    outcome: 'Termina cuando la persona configura la agenda del profesional.'
     type: final
 

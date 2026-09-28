@@ -9,6 +9,7 @@ states:
     label: 'Completá el formulario'
     description: 'Queja sobre la app, los turnos o la atención administrativa'
     explanation: 'La persona elige queja sobre la app, los turnos o la atención administrativa.'
+    outcome: 'Termina cuando la persona envía la queja.'
     type: final
     meta:
       open_ui:

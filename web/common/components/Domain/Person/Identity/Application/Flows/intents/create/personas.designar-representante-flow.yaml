@@ -16,6 +16,7 @@ states:
           kind: native
           mobile:
             screen_id: person_representation_hub
+    outcome: 'Termina cuando la persona designa un representante.'
     type: final
 flow_submit:
   action_id: person-representation.designar-representante

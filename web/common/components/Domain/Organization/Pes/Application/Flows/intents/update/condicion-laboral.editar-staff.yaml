@@ -62,5 +62,6 @@ states:
         action_id: profesional-efector-servicio.crear-condicion-laboral
         params:
           id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+    outcome: 'Termina cuando la persona actualiza la condición laboral del profesional.'
     type: final
 

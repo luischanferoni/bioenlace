@@ -28,6 +28,7 @@ states:
         action_id: turnos.confirmar-asistencia-como-paciente
         params:
           id: draft.id
+    outcome: 'Termina cuando la persona confirma la asistencia.'
     type: final
 flow_submit:
   action_id: turnos.confirmar-asistencia-como-paciente

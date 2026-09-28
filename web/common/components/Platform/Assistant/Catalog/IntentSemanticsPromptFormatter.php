@@ -220,7 +220,7 @@ final class IntentSemanticsPromptFormatter
         $rest = array_slice($steps, 1);
         $stops = self::isFinal($first) && $rest === [] && !$chain['cut'];
         if ($stops) {
-            $head .= ' El recorrido se detiene.';
+            $head .= ' ' . self::closingSentence($first);
         }
 
         $lines = ['  ' . $head];
@@ -273,7 +273,7 @@ final class IntentSemanticsPromptFormatter
 
         $line = $indent . 'Después, en este orden: ' . implode(', ', $bits) . '.';
         if ($stops) {
-            $line .= ' Ahí el recorrido se detiene.';
+            $line .= ' ' . self::closingSentence($steps[count($steps) - 1]);
         }
 
         return [$line];
@@ -289,6 +289,21 @@ final class IntentSemanticsPromptFormatter
         }
 
         return self::isFinal($steps[count($steps) - 1]);
+    }
+
+    /**
+     * Frase de resultado del estado que cierra el camino (`outcome` en el YAML).
+     *
+     * @param array<string, mixed> $state
+     */
+    private static function closingSentence(array $state): string
+    {
+        $text = trim((string) ($state['outcome'] ?? ''));
+        if ($text === '') {
+            return 'Ahí el recorrido se detiene.';
+        }
+
+        return rtrim($text, '.') . '.';
     }
 
     /**

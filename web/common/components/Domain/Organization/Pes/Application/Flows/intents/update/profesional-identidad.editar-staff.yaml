@@ -40,5 +40,6 @@ states:
         params:
           surface_id: ProfesionalEfectorServicio
           step: surfaces
+    outcome: 'Termina cuando la persona actualiza los datos del profesional.'
     type: final
 

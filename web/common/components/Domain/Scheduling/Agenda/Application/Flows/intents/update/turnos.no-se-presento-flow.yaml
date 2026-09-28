@@ -14,6 +14,7 @@ states:
         - draft.id
       open_ui:
         action_id: turnos.no-se-presento
+    outcome: 'Termina cuando la persona marca que no asistió al turno.'
     type: final
 flow_submit:
   action_id: turnos.no-se-presento

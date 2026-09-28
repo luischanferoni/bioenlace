@@ -16,6 +16,7 @@ states:
         - draft.canal
       open_ui:
         action_id: turnos.cancelar-operativo
+    outcome: 'Termina cuando la persona cancela el turno.'
     type: final
 flow_submit:
   action_id: turnos.cancelar-operativo

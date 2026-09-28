@@ -104,6 +104,7 @@ states:
           id_profesional_efector_servicio: draft.id_profesional_efector_servicio
           id_servicio: draft.id_servicio
           ui_step: datos
+    outcome: 'Termina cuando la persona da de alta la asignación.'
     type: final
 flow_submit:
   action_id: profesional-efector-servicio.crear-flow

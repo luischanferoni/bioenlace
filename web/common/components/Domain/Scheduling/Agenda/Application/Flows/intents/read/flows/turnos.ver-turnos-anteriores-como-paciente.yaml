@@ -21,5 +21,6 @@ states:
         params:
           alcance: pasados
           limit: '5'
+    outcome: 'Termina cuando la persona ve un turno anterior.'
     type: final
 

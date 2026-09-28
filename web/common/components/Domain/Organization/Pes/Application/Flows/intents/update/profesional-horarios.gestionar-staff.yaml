@@ -49,5 +49,6 @@ states:
         params:
           modo: staff
           id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+    outcome: 'Termina cuando la persona configura los horarios del profesional.'
     type: final
 

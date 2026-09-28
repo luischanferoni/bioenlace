@@ -16,6 +16,7 @@ states:
         - draft.id_profesional_efector_servicio
       open_ui:
         action_id: turnos.indicadores-agenda
+    outcome: 'Termina cuando la persona ve los indicadores de la agenda.'
     type: final
 flow_submit:
   action_id: turnos.indicadores-agenda

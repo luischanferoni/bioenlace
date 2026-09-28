@@ -28,6 +28,7 @@ states:
         action_id: turnos.elegir-resolucion-conflicto-agenda-como-paciente
         params:
           id: draft.id
+    outcome: 'Termina cuando la persona resuelve el cambio de horario.'
     type: final
 flow_submit:
   action_id: turnos.resolver-conflicto-agenda-como-paciente

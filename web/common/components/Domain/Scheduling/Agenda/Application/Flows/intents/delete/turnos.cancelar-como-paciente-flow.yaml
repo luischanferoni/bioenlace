@@ -30,6 +30,7 @@ states:
         action_id: turnos.elegir-motivo-cancelacion-como-paciente
         params:
           id: draft.id
+    outcome: 'Termina cuando la persona cancela el turno.'
     type: final
 flow_submit:
   action_id: turnos.cancelar-como-paciente

@@ -19,6 +19,7 @@ states:
         - draft.id_profesional_efector_servicio
       open_ui:
         action_id: turnos.crear-sobreturno
+    outcome: 'Termina cuando la persona crea el sobreturno.'
     type: final
 flow_submit:
   action_id: turnos.crear-sobreturno

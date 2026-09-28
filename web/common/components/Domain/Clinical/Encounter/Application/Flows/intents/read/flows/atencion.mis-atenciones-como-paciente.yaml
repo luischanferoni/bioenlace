@@ -28,5 +28,6 @@ states:
         action_id: clinical.encounter.ver-resumen-atencion-como-paciente
         params:
           encounter_id: draft.encounter_id
+    outcome: 'Termina cuando la persona ve esa atención.'
     type: final
 

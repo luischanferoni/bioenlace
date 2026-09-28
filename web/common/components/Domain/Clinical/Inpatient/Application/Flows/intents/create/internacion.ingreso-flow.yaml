@@ -22,6 +22,7 @@ states:
           id_persona: draft.id_persona
           id_cama: draft.id_cama
           id_guardia: draft.id_guardia
+    outcome: 'Termina cuando la persona registra el ingreso.'
     type: final
 flow_submit:
   action_id: clinical.internacion.ingreso-formulario

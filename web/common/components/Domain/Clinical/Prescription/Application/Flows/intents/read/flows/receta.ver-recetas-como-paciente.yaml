@@ -26,5 +26,6 @@ states:
         action_id: clinical.electronic-prescription.ver-receta-como-paciente
         params:
           prescription_id: draft.prescription_id
+    outcome: 'Termina cuando la persona ve la receta.'
     type: final
 

@@ -17,5 +17,6 @@ states:
         - mis_turnos
       open_ui:
         action_id: turnos.listar-como-paciente
+    outcome: 'Termina cuando la persona ve sus próximos turnos.'
     type: final
 

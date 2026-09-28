@@ -15,6 +15,7 @@ states:
         - draft.id_profesional_efector_servicio
       open_ui:
         action_id: profesional-agenda.ver-agenda-dia
+    outcome: 'Termina cuando la persona ve la agenda de esa fecha.'
     type: final
 flow_submit:
   action_id: profesional-agenda.ver-agenda-dia

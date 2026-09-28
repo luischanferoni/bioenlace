@@ -16,6 +16,7 @@ states:
           kind: native
           mobile:
             screen_id: person_representation_hub
+    outcome: 'Termina cuando la persona solicita la tutela.'
     type: final
 flow_submit:
   action_id: person-representation.solicitar-menor-como-tutor

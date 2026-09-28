@@ -62,5 +62,6 @@ states:
     meta:
       open_ui:
         action_id: profesional-efector-servicio.editar-condicion-laboral
+    outcome: 'Termina cuando la persona actualiza su condición laboral.'
     type: final
 

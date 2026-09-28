@@ -58,6 +58,7 @@ states:
           id_profesional_efector_servicio: draft.id_profesional_efector_servicio
           id_servicio: draft.id_servicio
           ui_step: datos
+    outcome: 'Termina cuando la persona configura su agenda.'
     type: final
   configurar_horario:
     label: 'Configurá tus horarios'
@@ -76,5 +77,6 @@ states:
           id_profesional_efector_servicio: draft.id_profesional_efector_servicio
           id_servicio: draft.id_servicio
           encounter_class: draft.encounter_class
+    outcome: 'Termina cuando la persona configura sus horarios.'
     type: final
 

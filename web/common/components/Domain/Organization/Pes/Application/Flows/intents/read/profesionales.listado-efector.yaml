@@ -20,5 +20,6 @@ states:
         action_id: data-access.listar
         params:
           metric_id: profesionales_listado_efector
+    outcome: 'Termina cuando la persona ve los profesionales del centro.'
     type: final
 

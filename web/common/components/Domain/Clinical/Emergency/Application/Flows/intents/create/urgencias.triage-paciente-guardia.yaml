@@ -26,6 +26,7 @@ states:
         action_id: clinical.emergency-guardia.registrar-triage-formulario
         params:
           guardia_id: draft.guardia_id
+    outcome: 'Termina cuando la persona registra el triage.'
     type: final
 flow_submit:
   action_id: clinical.emergency-guardia.registrar-triage-formulario

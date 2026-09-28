@@ -8,6 +8,7 @@ states:
   select_turno:
     label: Turno con conflicto
     description: 'Turno con conflicto de agenda'
+    explanation: 'La persona elige turno con conflicto de agenda.'
     meta:
       provides:
         - draft.id
@@ -17,6 +18,7 @@ states:
   select_eleccion:
     label: Resolución
     description: 'Forma de resolver el conflicto'
+    explanation: 'La persona elige forma de resolver el conflicto.'
     meta:
       provides:
         - draft.eleccion

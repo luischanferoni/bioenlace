@@ -8,6 +8,7 @@ states:
   elegir_paciente:
     label: Elegí el paciente en guardia pendiente de triage
     description: 'Paciente en guardia pendiente de triage'
+    explanation: 'La persona elige paciente en guardia pendiente de triage.'
     meta:
       provides:
         - draft.guardia_id
@@ -17,6 +18,7 @@ states:
   registrar_triage:
     label: 'Completá nivel (1–5), motivo y signos vitales si corresponde'
     description: 'Nivel de triage, motivo y signos vitales'
+    explanation: 'La persona elige nivel de triage, motivo y signos vitales.'
     meta:
       requires:
         - draft.guardia_id

@@ -12,6 +12,7 @@ states:
   mostrar_distribucion:
     label: Consultando distribución de profesionales por servicio
     description: 'Distribución de profesionales por servicio'
+    explanation: 'La persona elige distribución de profesionales por servicio.'
     meta:
       open_ui:
         action_id: data-access.info

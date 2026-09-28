@@ -10,6 +10,7 @@ states:
   select_turno:
     label: Turno
     description: 'Turno con cuestionario de asistencia'
+    explanation: 'La persona elige turno con cuestionario de asistencia.'
     meta:
       provides:
         - draft.id
@@ -19,6 +20,7 @@ states:
   completar:
     label: Cuestionario
     description: 'Respuestas del cuestionario de asistencia'
+    explanation: 'La persona elige respuestas del cuestionario de asistencia.'
     meta:
       requires:
         - draft.id

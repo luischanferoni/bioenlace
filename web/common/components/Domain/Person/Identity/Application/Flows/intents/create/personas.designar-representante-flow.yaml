@@ -8,6 +8,7 @@ states:
   gestionar_delegacion:
     label: Designar representante
     description: 'Persona que va a representar a quien consulta'
+    explanation: 'La persona elige a quién designa como representante.'
     meta:
       open_ui:
         action_id: person-representation.hub

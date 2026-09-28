@@ -8,6 +8,7 @@ states:
   ver_listado:
     label: Elegí un informe de laboratorio
     description: 'Informes de laboratorio de la persona'
+    explanation: 'La persona elige un informe de laboratorio.'
     meta:
       tags:
         - laboratorio
@@ -22,6 +23,7 @@ states:
   ver_detalle:
     label: Detalle del informe
     description: 'Detalle del informe de laboratorio'
+    explanation: 'La persona elige detalle del informe de laboratorio.'
     meta:
       requires:
         - draft.report_id

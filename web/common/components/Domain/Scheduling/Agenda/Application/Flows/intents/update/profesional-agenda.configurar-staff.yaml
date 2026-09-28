@@ -25,6 +25,7 @@ states:
   select_profesional:
     label: Profesional
     description: 'Profesional cuya agenda se configura'
+    explanation: 'La persona elige profesional cuya agenda se configura.'
     meta:
       provides:
         - draft.id_profesional_efector_servicio
@@ -34,6 +35,7 @@ states:
   select_servicio:
     label: Servicio
     description: 'Servicio de esa agenda'
+    explanation: 'La persona elige servicio de esa agenda.'
     meta:
       provides:
         - draft.id_servicio
@@ -47,6 +49,7 @@ states:
   configurar_agenda:
     label: 'Configurá horarios e intervalo'
     description: 'Horarios e intervalo de la agenda'
+    explanation: 'La persona elige horarios e intervalo de la agenda.'
     meta:
       provides:
         - draft.agenda_ui_completed

@@ -11,6 +11,7 @@ states:
   ver_listado:
     label: Tus próximos turnos
     description: 'Próximos turnos de la persona'
+    explanation: 'La persona elige uno de los próximos turnos.'
     meta:
       tags:
         - mis_turnos

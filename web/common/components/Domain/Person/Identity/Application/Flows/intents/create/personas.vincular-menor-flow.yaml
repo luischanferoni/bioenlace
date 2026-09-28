@@ -8,6 +8,7 @@ states:
   gestionar_tutela:
     label: Solicitud de tutela
     description: 'Solicitud de tutela de un menor'
+    explanation: 'La persona elige solicitud de tutela de un menor.'
     meta:
       open_ui:
         action_id: person-representation.hub

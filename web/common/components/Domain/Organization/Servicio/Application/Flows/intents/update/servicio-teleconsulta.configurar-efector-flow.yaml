@@ -9,6 +9,7 @@ states:
   configurar_politica:
     label: Elegí servicio y política de videollamada
     description: 'Servicio y política de videollamada'
+    explanation: 'La persona elige servicio y política de videollamada.'
     meta:
       provides:
         - draft.id_servicio

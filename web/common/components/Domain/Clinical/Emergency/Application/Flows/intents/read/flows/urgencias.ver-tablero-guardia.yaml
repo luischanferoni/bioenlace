@@ -8,6 +8,7 @@ states:
   abrir_tablero:
     label: Abro el tablero de guardia
     description: 'Tablero de guardia'
+    explanation: 'La persona elige tablero de guardia.'
     meta:
       open_ui:
         action_id: clinical.home.panel

@@ -44,6 +44,7 @@ states:
   select_persona:
     label: Persona
     description: 'Persona que se asigna como profesional'
+    explanation: 'La persona elige a quién se asigna como profesional.'
     meta:
       provides:
         - draft.id_persona
@@ -62,6 +63,7 @@ states:
   capture_cuil:
     label: CUIL del profesional
     description: 'CUIL del profesional'
+    explanation: 'La persona elige cUIL del profesional.'
     meta:
       provides:
         - draft.cuil
@@ -73,6 +75,7 @@ states:
   select_servicio:
     label: Servicio
     description: 'Servicio de la asignación'
+    explanation: 'La persona elige servicio de la asignación.'
     meta:
       provides:
         - draft.id_servicio
@@ -88,6 +91,7 @@ states:
   configurar_agenda_datos:
     label: Agenda
     description: 'Tipo de agenda de la asignación'
+    explanation: 'La persona elige tipo de agenda de la asignación.'
     meta:
       provides:
         - draft.agenda_ui_completed

@@ -8,6 +8,7 @@ states:
   consultar:
     label: Centro de salud
     description: 'Centro cuya política de turnos se consulta'
+    explanation: 'La persona elige centro cuya política de turnos se consulta.'
     meta:
       tags:
         - politica

@@ -33,6 +33,7 @@ states:
   editar_identidad:
     label: Editar identidad del profesional
     description: 'Datos de identidad del profesional'
+    explanation: 'La persona elige datos de identidad del profesional.'
     meta:
       open_ui:
         action_id: data-access.editar

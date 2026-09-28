@@ -8,6 +8,7 @@ states:
   consultar:
     label: Día y agenda
     description: 'Día y agenda consultados'
+    explanation: 'La persona elige día y agenda consultados.'
     meta:
       provides:
         - draft.dia

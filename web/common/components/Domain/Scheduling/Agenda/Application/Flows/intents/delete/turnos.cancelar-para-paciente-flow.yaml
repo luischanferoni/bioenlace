@@ -8,6 +8,7 @@ states:
   cancelar:
     label: Turno a cancelar
     description: 'Turno pendiente que se cancela'
+    explanation: 'La persona elige turno pendiente que se cancela.'
     meta:
       provides:
         - draft.id

@@ -12,6 +12,7 @@ states:
   ver_listado:
     label: Tus turnos anteriores
     description: 'Turnos anteriores de la persona'
+    explanation: 'La persona elige un turno anterior.'
     meta:
       tags:
         - historial

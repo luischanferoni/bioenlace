@@ -8,6 +8,7 @@ states:
   ver_listado:
     label: Elegí una atención
     description: 'Atenciones finalizadas de la persona'
+    explanation: 'La persona elige una atención finalizada.'
     meta:
       tags:
         - atenciones
@@ -19,6 +20,7 @@ states:
   ver_detalle:
     label: Resumen de la atención
     description: 'Resumen de esa atención'
+    explanation: 'La persona elige resumen de esa atención.'
     meta:
       requires:
         - draft.encounter_id

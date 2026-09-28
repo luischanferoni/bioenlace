@@ -7,9 +7,9 @@ use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
 /**
  * Arma el recorrido de un flow para el prompt de la guía.
  *
- * Parte del estado inicial y sigue `always` por las descripciones hasta un
- * cierre. Cada paso indica si es un campo de texto o una lista de opciones.
- * No adjunta `objective` ni guards.
+ * Parte del estado inicial. Cada paso usa `explanation` y, si declara
+ * `meta.guide_options`, las opciones cerradas de ese catálogo. El resto del
+ * recorrido se resume en «Después». No adjunta `objective` ni ids.
  */
 final class IntentSemanticsPromptFormatter
 {
@@ -147,18 +147,16 @@ final class IntentSemanticsPromptFormatter
             return $lines;
         }
 
-        $lines[] = '  ' . self::stateLabel($initial, $states[$initial]);
-        $rows = self::pickBranches(self::alwaysRows($states[$initial]['always'] ?? null));
+        $initialState = $states[$initial];
+        $lines[] = '  ' . self::explanation($initialState);
+        foreach (self::optionLines(self::options($initialState), '  ') as $optionLine) {
+            $lines[] = $optionLine;
+        }
+        $rows = self::pickBranches(self::alwaysRows($initialState['always'] ?? null));
         foreach ($rows as $row) {
-            $chain = self::chainFrom($states, $row['target']);
-            if ($chain['labels'] === []) {
-                continue;
+            foreach (self::branchLines($initialState, $row, $states) as $branchLine) {
+                $lines[] = $branchLine;
             }
-            $text = '    → ' . implode(' → ', $chain['labels']);
-            if ($chain['cut']) {
-                $text .= ' → …';
-            }
-            $lines[] = $text;
         }
 
         return $lines;
@@ -184,12 +182,57 @@ final class IntentSemanticsPromptFormatter
     }
 
     /**
+     * @param array<string, mixed> $sourceState
+     * @param array{guard: string, target: string} $row
      * @param array<string, array<string, mixed>> $states
-     * @return array{labels: list<string>, cut: bool}
+     * @return list<string>
      */
-    private static function chainFrom(array $states, string $startId): array
+    private static function branchLines(array $sourceState, array $row, array $states): array
     {
-        $labels = [];
+        $chain = self::chainStates($states, $row['target']);
+        $steps = $chain['states'];
+        if ($steps === []) {
+            return [];
+        }
+
+        $first = $steps[0];
+        $option = self::optionLabelFromGuard($sourceState, $row['guard']);
+        $head = self::explanation($first);
+        if ($option !== '') {
+            $head = $option . '. ' . $head;
+        }
+        $rest = array_slice($steps, 1);
+        if (self::isFinal($first) && $rest === []) {
+            $head .= ' El recorrido se detiene.';
+        }
+
+        $lines = ['    → ' . $head];
+        foreach (self::optionLines(self::options($first), '      ') as $optionLine) {
+            $lines[] = $optionLine;
+        }
+        if ($rest !== [] || $chain['cut']) {
+            $bits = [];
+            foreach ($rest as $step) {
+                $bits[] = self::shortName($step);
+            }
+            if ($chain['cut']) {
+                $bits[] = '…';
+            }
+            if ($bits !== []) {
+                $lines[] = '      Después: ' . implode(', ', $bits) . '.';
+            }
+        }
+
+        return $lines;
+    }
+
+    /**
+     * @param array<string, array<string, mixed>> $states
+     * @return array{states: list<array<string, mixed>>, cut: bool}
+     */
+    private static function chainStates(array $states, string $startId): array
+    {
+        $steps = [];
         $id = $startId;
         $seen = [];
         $cut = false;
@@ -200,7 +243,7 @@ final class IntentSemanticsPromptFormatter
             }
             $seen[$id] = true;
             $state = $states[$id];
-            $labels[] = self::stateLabel($id, $state);
+            $steps[] = $state;
             if (self::isFinal($state)) {
                 break;
             }
@@ -215,7 +258,7 @@ final class IntentSemanticsPromptFormatter
             $id = $next;
         }
 
-        return ['labels' => $labels, 'cut' => $cut];
+        return ['states' => $steps, 'cut' => $cut];
     }
 
     /**
@@ -272,14 +315,88 @@ final class IntentSemanticsPromptFormatter
     /**
      * @param array<string, mixed> $state
      */
-    private static function inputKind(array $state): string
+    private static function explanation(array $state): string
+    {
+        $text = trim((string) ($state['explanation'] ?? ''));
+        if ($text === '') {
+            $text = trim((string) ($state['description'] ?? ''));
+        }
+        if ($text === '') {
+            $text = trim((string) ($state['label'] ?? ''));
+        }
+
+        return $text;
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     */
+    private static function shortName(array $state): string
+    {
+        $text = trim((string) ($state['description'] ?? ''));
+        if ($text === '') {
+            $text = trim((string) ($state['label'] ?? ''));
+        }
+        if ($text === '') {
+            return '';
+        }
+        $len = function_exists('mb_strlen') ? mb_strlen($text, 'UTF-8') : strlen($text);
+        $first = function_exists('mb_substr') ? mb_substr($text, 0, 1, 'UTF-8') : substr($text, 0, 1);
+        $rest = function_exists('mb_substr') ? mb_substr($text, 1, $len, 'UTF-8') : substr($text, 1);
+        $lower = function_exists('mb_strtolower') ? mb_strtolower($first, 'UTF-8') : strtolower($first);
+
+        return $lower . $rest;
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     * @return list<string>
+     */
+    private static function options(array $state): array
     {
         $meta = isset($state['meta']) && is_array($state['meta']) ? $state['meta'] : [];
-        if (isset($meta['composer_capture'])) {
-            return 'campo de texto';
+        $ref = trim((string) ($meta['guide_options'] ?? ''));
+        if ($ref === '') {
+            return [];
         }
-        if (isset($meta['open_ui']) || isset($meta['chooser'])) {
-            return 'opciones';
+
+        return GuideStepOptionCatalog::labels($ref);
+    }
+
+    /**
+     * @param list<string> $labels
+     * @return list<string>
+     */
+    private static function optionLines(array $labels, string $indent): array
+    {
+        if ($labels === []) {
+            return [];
+        }
+
+        return [$indent . 'Opciones: ' . implode(', ', $labels) . '.'];
+    }
+
+    /**
+     * @param array<string, mixed> $sourceState
+     */
+    private static function optionLabelFromGuard(array $sourceState, string $guard): string
+    {
+        $guard = trim($guard);
+        $meta = isset($sourceState['meta']) && is_array($sourceState['meta']) ? $sourceState['meta'] : [];
+        $ref = trim((string) ($meta['guide_options'] ?? ''));
+        if ($guard === '' || $ref === '') {
+            return '';
+        }
+
+        foreach (explode(', ', $guard) as $part) {
+            $eq = strpos($part, '=');
+            if ($eq === false) {
+                continue;
+            }
+            $label = GuideStepOptionCatalog::labelForCode($ref, trim(substr($part, $eq + 1)));
+            if ($label !== '') {
+                return $label;
+            }
         }
 
         return '';
@@ -296,26 +413,6 @@ final class IntentSemanticsPromptFormatter
         $always = $state['always'] ?? null;
 
         return $always === null || $always === [] || $always === '';
-    }
-
-    /**
-     * @param array<string, mixed> $state
-     */
-    private static function stateLabel(string $id, array $state): string
-    {
-        $description = trim((string) ($state['description'] ?? ''));
-        if ($description === '') {
-            $description = trim((string) ($state['label'] ?? ''));
-        }
-        if ($description === '') {
-            $description = $id;
-        }
-        $kind = self::inputKind($state);
-        if ($kind !== '') {
-            $description .= ' (' . $kind . ')';
-        }
-
-        return $description;
     }
 
     /**

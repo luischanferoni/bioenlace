@@ -8,6 +8,7 @@ states:
   ver_ultima:
     label: Tu última atención
     description: 'Última atención de la persona'
+    explanation: 'La persona elige la última atención.'
     meta:
       tags:
         - ultima_atencion

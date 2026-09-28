@@ -10,6 +10,7 @@ states:
   select_profesional:
     label: Profesional a dar de baja
     description: 'Profesional que se da de baja'
+    explanation: 'La persona elige profesional que se da de baja.'
     meta:
       provides:
         - draft.id_profesional_efector_servicio
@@ -19,6 +20,7 @@ states:
   select_servicio:
     label: Servicio a desasignar
     description: 'Servicio que se desasigna'
+    explanation: 'La persona elige servicio que se desasigna.'
     meta:
       provides:
         - draft.id_servicio
@@ -33,6 +35,7 @@ states:
   revisar_impacto:
     label: Impacto en turnos
     description: 'Turnos afectados por la baja'
+    explanation: 'La persona elige turnos afectados por la baja.'
     meta:
       provides:
         - draft.impacto_baja_revisado

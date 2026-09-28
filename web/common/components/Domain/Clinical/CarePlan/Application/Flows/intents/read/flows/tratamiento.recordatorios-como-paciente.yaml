@@ -8,6 +8,7 @@ states:
   abrir_configuracion:
     label: 'Configurá tus recordatorios de tratamiento'
     description: 'Recordatorios del tratamiento'
+    explanation: 'La persona elige recordatorios del tratamiento.'
     meta:
       open_ui:
         action_id: clinical.care-plan.gestionar-recordatorios-como-paciente

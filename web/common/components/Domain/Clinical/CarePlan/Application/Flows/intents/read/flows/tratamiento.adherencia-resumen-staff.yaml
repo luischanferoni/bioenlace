@@ -8,6 +8,7 @@ states:
   ver_dashboard:
     label: Resumen de adherencia en el efector
     description: 'Adherencia al tratamiento en el centro'
+    explanation: 'La persona elige adherencia al tratamiento en el centro.'
     meta:
       provides:
         - draft.care_plan_id

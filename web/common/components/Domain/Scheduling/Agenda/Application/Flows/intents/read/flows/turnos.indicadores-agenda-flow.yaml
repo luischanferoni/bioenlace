@@ -8,6 +8,7 @@ states:
   consultar_indicadores:
     label: Período y filtros de agenda
     description: 'Período y filtros de la agenda'
+    explanation: 'La persona elige período y filtros de la agenda.'
     meta:
       provides:
         - draft.fecha_desde

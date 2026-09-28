@@ -8,6 +8,60 @@ namespace common\components\Domain\Scheduling\Agenda\Domain\Catalog;
 final class ReservaTriageCatalog
 {
     /**
+     * @return list<string>
+     */
+    public static function labelsForStep(string $step): array
+    {
+        $step = trim($step);
+        $labels = [];
+        foreach (self::nodes() as $node) {
+            if (($node['step'] ?? '') !== $step) {
+                continue;
+            }
+            $label = trim((string) ($node['label'] ?? ''));
+            if ($label !== '') {
+                $labels[] = $label;
+            }
+        }
+
+        return $labels;
+    }
+
+    public static function labelForCode(string $code): string
+    {
+        $code = trim($code);
+        if ($code === '') {
+            return '';
+        }
+        foreach (self::nodes() as $node) {
+            if (($node['code'] ?? '') === $code) {
+                return trim((string) ($node['label'] ?? ''));
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private static function nodes(): array
+    {
+        $nodes = self::config()['nodes'] ?? [];
+        if (!is_array($nodes)) {
+            return [];
+        }
+        $out = [];
+        foreach ($nodes as $node) {
+            if (is_array($node)) {
+                $out[] = $node;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public static function config(): array

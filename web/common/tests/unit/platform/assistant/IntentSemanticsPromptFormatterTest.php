@@ -20,8 +20,8 @@ class IntentSemanticsPromptFormatterTest extends Unit
         $block = IntentSemanticsPromptFormatter::formatIntentId('turnos.crear-como-paciente');
 
         $this->assertStringContainsString('- Turno con un especialista', $block);
-        $this->assertStringContainsString('Elegir oferta del centro', $block);
-        $this->assertStringContainsString('→ Horario para reservar el turno', $block);
+        $this->assertStringContainsString('La persona elige la oferta del centro que tiene agenda.', $block);
+        $this->assertStringContainsString('Después: profesional de esa oferta en ese centro, día con cupos, horario para reservar el turno.', $block);
         $this->assertStringNotContainsString('objective', $block);
         $this->assertStringNotContainsString('Pasos:', $block);
         $this->assertStringNotContainsString('turnos.crear-como-paciente', $block);
@@ -32,9 +32,11 @@ class IntentSemanticsPromptFormatterTest extends Unit
         $block = IntentSemanticsPromptFormatter::formatIntentId('atencion.necesito-atencion');
 
         $this->assertStringContainsString('- Solicitar Atención', $block);
-        $this->assertStringContainsString('Posibles motivos de consulta de la persona (opciones)', $block);
-        $this->assertStringContainsString('→ Orientación por urgencia (opciones)', $block);
-        $this->assertStringContainsString('→ Horario disponible para el turno (opciones)', $block);
+        $this->assertStringContainsString('La persona elige qué pedido de atención hace.', $block);
+        $this->assertStringContainsString('Opciones: Malestar nuevo, Estudio o práctica, Control/Seguimiento, Urgencia.', $block);
+        $this->assertStringContainsString('→ Urgencia. Orientación por urgencia. El recorrido se detiene.', $block);
+        $this->assertStringContainsString('Síntoma general (fiebre, cansancio u otro)', $block);
+        $this->assertStringContainsString('Después: formas de atenderse, servicio del centro para la atención', $block);
         $this->assertStringNotContainsString('triage_raiz', $block);
         $this->assertStringNotContainsString('Cierres:', $block);
         $this->assertStringNotContainsString('objective', $block);

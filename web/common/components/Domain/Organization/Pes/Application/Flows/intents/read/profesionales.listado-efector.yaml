@@ -12,6 +12,7 @@ states:
   mostrar_listado:
     label: Listando profesionales del efector
     description: 'Profesionales del centro'
+    explanation: 'La persona elige profesionales del centro.'
     meta:
       tags:
         - profesionales

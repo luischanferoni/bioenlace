@@ -12,23 +12,25 @@ Fuente de verdad para las claves que **`SubIntentEngine`** lee y combina con el 
 | `action_name`, `keywords` | Metadatos / descubrimiento. `action_name` = label UX. |
 | ~~`description`~~ | **Retirado** de intents YAML. No usar. |
 | `rbac_route` | Ruta HTTP del **permiso API base** que se asigna al rol (sin `v1`), no una ruta UI/ghost heredada por migración. Ej.: `listar-atenciones-como-paciente`, no `mis-atenciones-como-paciente`. Las rutas hijas se heredan vía `auth_item_child` al migrate; si el rol recibe el padre después, ejecutar la migración de resync correspondiente. |
-| `intent_semantics` | Retirado. La guía arma el recorrido desde `states` (`description` + `always`). |
+| `intent_semantics` | Retirado. La guía arma el recorrido desde `states` (`explanation`, opciones cerradas y `always`). |
 | `business_rules` | Opcional: reglas `pre_flow` (vía `IntentBusinessRules`). |
 | `draft_hydrator` | Opcional: enriquecimiento del `draft` **antes** de `SubIntentEngine::process` (ver abajo). |
 | `context` | Claves de contexto del statechart (lista, o mapa). El motor las suma a las de `provides` / `requires`. |
 | `initial` | Estado de entrada. |
-| `states` | **Obligatorio** en un flow: mapa id → estado (`description`, `always`, `type`, `meta`). |
+| `states` | **Obligatorio** en un flow: mapa id → estado (`explanation`, `description`, `always`, `type`, `meta`). |
 | `flow_submit` | **Opcional.** Cierre predeterminado. Un estado es terminal si es `type: final` o no tiene `always`. Al emitir `open_ui`, el motor adjunta `flow_submit`. Una rama puede sobrescribirlo con `meta.flow_submit`. |
 
 ### Recorrido para la guía
 
-La 2ª IA no lee un objetivo escrito aparte. `IntentSemanticsPromptFormatter` toma `action_name`, el estado `initial` y sigue `always` por `description` hasta un `type: final` (o un estado sin `always`). No incluye guards ni ids.
+La 2ª IA no lee un objetivo escrito aparte. `IntentSemanticsPromptFormatter` toma `action_name`, el estado `initial` y sigue `always`. El paso enfocado usa `explanation`. Si `meta.guide_options` apunta a un catálogo cerrado, se listan esas opciones. El resto de la rama se resume como «Después» con `description`. No incluye guards ni ids.
 
 | Campo raíz | Audiencia |
 |------------|-----------|
 | `action_name` | Usuario (atajo, botón, label). |
 | `states.*.label` | Usuario (título del paso en web y móvil). |
-| `states.*.description` | 2ª IA (guide): texto del paso en el recorrido. |
+| `states.*.description` | Nombre corto del paso. La guía lo usa en el resumen «Después». |
+| `states.*.explanation` | 2ª IA (guide): qué hace la persona en ese paso. |
+| `states.*.meta.guide_options` | Id de catálogo cerrado (`reserva_triage.raiz`, `reserva_triage.zona`). Las etiquetas no se copian al YAML. |
 
 No campo `description` ni `intent_semantics.objective` en intents.
 
@@ -65,12 +67,13 @@ Un flow declara la máquina en la raíz. `SubIntentEngine`, `FlowManifest`, hint
 | `initial` | Id del estado de entrada. |
 | `context` | Claves del contexto (lista, o mapa cuyas claves cuentan). |
 | `states` | Mapa id → estado. |
-| `states.*.description` | Texto del paso. |
+| `states.*.description` | Nombre corto del paso. |
+| `states.*.explanation` | Qué hace la persona en ese paso. Lo lee la guía. |
 | `states.*.type` | `final` cierra la rama: sin transición. |
 | `states.*.always` | Transiciones sin evento. String = un solo destino. Lista = rombo. |
 | `states.*.always[].guard` | Mapa campo → valor; todas las igualdades deben cumplirse. |
 | `states.*.always[].target` | Id del estado siguiente. Sin `guard`, es el comodín (último). Cadena vacía con `guard`: la rama termina ahí. |
-| `states.*.meta` | Extensiones de producto: `tags`, `open_ui`, `chooser`, `provides`, `requires`, `review_prefilled`, `hint`, `flow_submit`, `composer_capture`, `terminal_without_submit`, `flow_dismiss`, `flow_actions`. |
+| `states.*.meta` | Extensiones de producto: `tags`, `guide_options`, `open_ui`, `chooser`, `provides`, `requires`, `review_prefilled`, `hint`, `flow_submit`, `composer_capture`, `terminal_without_submit`, `flow_dismiss`, `flow_actions`. |
 
 `flow_submit` de la raíz no se mueve: sigue cerrando el intent.
 

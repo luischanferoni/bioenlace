@@ -52,8 +52,10 @@ context:
 states:
   triage_raiz:
     label: Motivo
-    description: 'Posibles motivos de consulta de la persona'
+    description: 'Pedido de atención de la persona'
+    explanation: 'La persona elige qué pedido de atención hace.'
     meta:
+      guide_options: reserva_triage.raiz
       tags:
         - sintomas
         - sintoma
@@ -96,6 +98,7 @@ states:
   select_pedido_acto:
     label: 'Estudio o práctica'
     description: 'Estudio o práctica que la persona necesita'
+    explanation: 'La persona elige el estudio o la práctica que necesita.'
     meta:
       tags:
         - estudio
@@ -130,6 +133,7 @@ states:
   cs_hub:
     label: '¿Sobre qué es el control o seguimiento?'
     description: 'Tema del control o seguimiento'
+    explanation: 'La persona elige el tema del control o seguimiento.'
     meta:
       tags:
         - control
@@ -155,6 +159,7 @@ states:
   cs_condition_acciones:
     label: '¿Qué necesitás?'
     description: 'Qué necesita sobre ese control'
+    explanation: 'La persona elige qué necesita sobre ese control.'
     meta:
       provides:
         - draft.condition_accion
@@ -188,7 +193,9 @@ states:
   triage_zona:
     label: Zona
     description: 'Zona del cuerpo del malestar'
+    explanation: 'La persona elige la zona del malestar.'
     meta:
+      guide_options: reserva_triage.zona
       tags:
         - sintomas
         - sintoma
@@ -214,6 +221,7 @@ states:
   triage_urgencia:
     label: Urgencia
     description: 'Orientación por urgencia'
+    explanation: 'Orientación por urgencia.'
     meta:
       tags:
         - urgencia
@@ -235,6 +243,7 @@ states:
   select_tipo_atencion:
     label: Modalidad
     description: 'Formas de atenderse'
+    explanation: 'La persona elige la forma de atenderse.'
     meta:
       provides:
         - draft.tipo_atencion
@@ -278,6 +287,7 @@ states:
   solicitud_async:
     label: Describí tu consulta en el campo de texto de abajo
     description: 'Consulta que la persona escribe para un profesional'
+    explanation: 'La persona escribe la consulta para un profesional.'
     meta:
       provides:
         - draft.mensaje
@@ -302,6 +312,7 @@ states:
   select_servicio:
     label: Servicio
     description: 'Servicio del centro para la atención'
+    explanation: 'La persona elige el servicio del centro.'
     meta:
       provides:
         - draft.id_servicio_asignado
@@ -326,6 +337,7 @@ states:
   select_efector:
     label: Centro de salud
     description: 'Centro donde atenderse'
+    explanation: 'La persona elige centro donde atenderse.'
     meta:
       provides:
         - draft.id_efector
@@ -350,6 +362,7 @@ states:
   select_profesional:
     label: Profesional
     description: 'Profesional de ese servicio en ese centro'
+    explanation: 'La persona elige profesional de ese servicio en ese centro.'
     meta:
       provides:
         - draft.id_profesional_efector_servicio
@@ -369,6 +382,7 @@ states:
   select_dia:
     label: Día
     description: 'Día con lugar'
+    explanation: 'La persona elige día con lugar.'
     meta:
       provides:
         - draft.fecha_turno
@@ -384,6 +398,7 @@ states:
   select_slot:
     label: Horario
     description: 'Horario disponible para el turno'
+    explanation: 'La persona elige horario disponible para el turno.'
     meta:
       provides:
         - draft.slot_id
@@ -401,6 +416,7 @@ states:
   select_dia_teleconsulta:
     label: Día (teleconsulta con Medicina General)
     description: 'Día de teleconsulta con Medicina General'
+    explanation: 'La persona elige día de teleconsulta con Medicina General.'
     meta:
       provides:
         - draft.fecha_turno
@@ -417,6 +433,7 @@ states:
   select_slot_teleconsulta:
     label: Horario (teleconsulta con Medicina General)
     description: 'Horario de teleconsulta con Medicina General'
+    explanation: 'La persona elige horario de teleconsulta con Medicina General.'
     meta:
       provides:
         - draft.slot_id
@@ -435,6 +452,7 @@ states:
   cs_select_tipo:
     label: '¿Sobre qué es el control o seguimiento?'
     description: 'Tema del control o seguimiento'
+    explanation: 'La persona elige tema del control o seguimiento.'
     meta:
       provides:
         - draft.intake_tipo
@@ -460,6 +478,7 @@ states:
   cs_select_encounter_previa:
     label: '¿Sobre qué atención?'
     description: 'Atención anterior del control'
+    explanation: 'La persona elige atención anterior del control.'
     meta:
       provides:
         - draft.encounter_id
@@ -471,6 +490,7 @@ states:
   cs_captura_consulta_previa:
     label: Contanos en el campo de abajo
     description: 'Consulta sobre una atención anterior'
+    explanation: 'La persona escribe la consulta sobre una atención anterior.'
     meta:
       provides:
         - draft.mensaje
@@ -492,6 +512,7 @@ states:
   cs_select_care_plan:
     label: Tu tratamiento
     description: 'Tratamiento del control'
+    explanation: 'La persona elige tratamiento del control.'
     meta:
       review_prefilled: true
       provides:
@@ -504,6 +525,7 @@ states:
   cs_select_necesidad:
     label: '¿Qué necesitás?'
     description: 'Qué necesita sobre el tratamiento'
+    explanation: 'La persona elige qué necesita sobre el tratamiento.'
     meta:
       provides:
         - draft.seguimiento_necesidad
@@ -536,6 +558,7 @@ states:
   cs_select_medicamentos:
     label: Medicación
     description: 'Medicación del tratamiento'
+    explanation: 'La persona elige medicación del tratamiento.'
     meta:
       tags:
         - medicacion
@@ -571,6 +594,7 @@ states:
   cs_captura_ajuste_motivo:
     label: '¿Qué cambio necesitás?'
     description: 'Cambio que pide en la medicación'
+    explanation: 'La persona escribe el cambio que pide en la medicación.'
     meta:
       provides:
         - draft.ajuste_motivo
@@ -596,6 +620,7 @@ states:
   cs_captura_consulta_general:
     label: Escribí tu consulta en el campo de abajo
     description: 'Consulta del control'
+    explanation: 'La persona escribe la consulta del control.'
     meta:
       provides:
         - draft.mensaje
@@ -615,6 +640,7 @@ states:
   cs_captura_seguimiento_mensaje:
     label: Contanos en el campo de abajo
     description: 'Mensaje de seguimiento'
+    explanation: 'La persona escribe el mensaje de seguimiento.'
     meta:
       provides:
         - draft.mensaje
@@ -637,6 +663,7 @@ states:
   cs_select_preferencia_turno:
     label: '¿Con quién querés el control?'
     description: 'Con quién quiere el control'
+    explanation: 'La persona elige con quién quiere el control.'
     meta:
       provides:
         - draft.preferencia_profesional_turno
@@ -659,6 +686,7 @@ states:
   cs_select_efector:
     label: Centro de salud
     description: 'Centro para el control'
+    explanation: 'La persona elige centro para el control.'
     meta:
       provides:
         - draft.id_efector
@@ -673,6 +701,7 @@ states:
   cs_select_profesional:
     label: Profesional
     description: 'Profesional para el control'
+    explanation: 'La persona elige profesional para el control.'
     meta:
       provides:
         - draft.id_profesional_efector_servicio
@@ -689,6 +718,7 @@ states:
   cs_select_dia:
     label: Día
     description: 'Día del control'
+    explanation: 'La persona elige día del control.'
     meta:
       provides:
         - draft.fecha_turno
@@ -704,6 +734,7 @@ states:
   cs_select_slot:
     label: Horario
     description: 'Horario del control'
+    explanation: 'La persona elige horario del control.'
     meta:
       provides:
         - draft.slot_id
@@ -721,6 +752,7 @@ states:
   cs_select_dia_teleconsulta:
     label: Día (teleconsulta con Medicina General)
     description: 'Día de teleconsulta del control'
+    explanation: 'La persona elige día de teleconsulta del control.'
     meta:
       provides:
         - draft.fecha_turno
@@ -736,6 +768,7 @@ states:
   cs_select_slot_teleconsulta:
     label: Horario (teleconsulta con Medicina General)
     description: 'Horario de teleconsulta del control'
+    explanation: 'La persona elige horario de teleconsulta del control.'
     meta:
       provides:
         - draft.slot_id

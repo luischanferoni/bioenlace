@@ -10,6 +10,7 @@ states:
   ingresar:
     label: 'Completá los datos del ingreso'
     description: 'Datos del ingreso a internación'
+    explanation: 'La persona elige datos del ingreso a internación.'
     meta:
       provides:
         - draft.internacion_id

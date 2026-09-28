@@ -8,6 +8,7 @@ states:
   ver_listado:
     label: Elegí una receta electrónica
     description: 'Recetas electrónicas de la persona'
+    explanation: 'La persona elige una receta electrónica.'
     meta:
       provides:
         - draft.prescription_id
@@ -17,6 +18,7 @@ states:
   ver_detalle:
     label: Detalle de la receta
     description: 'Detalle de la receta'
+    explanation: 'La persona elige detalle de la receta.'
     meta:
       requires:
         - draft.prescription_id

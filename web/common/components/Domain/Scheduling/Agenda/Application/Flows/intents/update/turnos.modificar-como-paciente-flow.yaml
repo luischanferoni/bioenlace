@@ -8,6 +8,7 @@ states:
   select_turno:
     label: Turno a modificar
     description: 'Turno pendiente que se cambia'
+    explanation: 'La persona elige turno pendiente que se cambia.'
     meta:
       provides:
         - draft.id
@@ -17,6 +18,7 @@ states:
   select_slot:
     label: Nuevo horario
     description: 'Nuevo horario del turno'
+    explanation: 'La persona elige nuevo horario del turno.'
     meta:
       provides:
         - draft.slot_id

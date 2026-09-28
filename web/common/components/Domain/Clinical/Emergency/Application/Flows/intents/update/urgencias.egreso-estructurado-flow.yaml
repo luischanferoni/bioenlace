@@ -10,6 +10,7 @@ states:
   completar_egreso:
     label: 'Confirmá fecha/hora del retiro'
     description: 'Fecha y hora del retiro de guardia'
+    explanation: 'La persona elige fecha y hora del retiro de guardia.'
     meta:
       requires:
         - draft.guardia_id

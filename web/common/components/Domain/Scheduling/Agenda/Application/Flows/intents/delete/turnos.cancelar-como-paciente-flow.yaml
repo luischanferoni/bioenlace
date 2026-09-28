@@ -8,6 +8,7 @@ states:
   select_turno:
     label: Turno a cancelar
     description: 'Turno pendiente que se cancela'
+    explanation: 'La persona elige turno pendiente que se cancela.'
     meta:
       tags:
         - cancelacion
@@ -19,6 +20,7 @@ states:
   select_motivo:
     label: Motivo de la cancelación
     description: 'Motivo para cancelar el turno'
+    explanation: 'La persona elige motivo para cancelar el turno.'
     meta:
       provides:
         - draft.razon_cancelacion

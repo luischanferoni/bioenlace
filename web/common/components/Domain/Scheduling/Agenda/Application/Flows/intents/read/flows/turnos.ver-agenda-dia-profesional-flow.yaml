@@ -8,6 +8,7 @@ states:
   ver:
     label: Fecha
     description: 'Fecha de la agenda del profesional'
+    explanation: 'La persona elige fecha de la agenda del profesional.'
     meta:
       provides:
         - draft.fecha

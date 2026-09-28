@@ -8,6 +8,7 @@ states:
   registrar:
     label: Turno
     description: 'Turno al que la persona no asistió'
+    explanation: 'La persona elige el turno al que no asistió.'
     meta:
       provides:
         - draft.id

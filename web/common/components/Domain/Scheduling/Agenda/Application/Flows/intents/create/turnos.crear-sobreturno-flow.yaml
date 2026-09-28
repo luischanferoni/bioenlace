@@ -8,6 +8,7 @@ states:
   crear:
     label: Sobreturno
     description: 'Datos del sobreturno'
+    explanation: 'La persona elige datos del sobreturno.'
     meta:
       provides:
         - draft.id_persona

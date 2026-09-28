@@ -8,6 +8,7 @@ states:
   ver_mapa:
     label: Mapa de camas del efector
     description: 'Mapa de camas del centro'
+    explanation: 'La persona elige mapa de camas del centro.'
     meta:
       provides:
         - draft.id_cama

@@ -13,6 +13,7 @@ states:
   select_turno:
     label: Turno a reubicar
     description: 'Turno que hay que reubicar'
+    explanation: 'La persona elige turno que hay que reubicar.'
     meta:
       provides:
         - draft.id
@@ -22,6 +23,7 @@ states:
   select_servicio:
     label: Servicio
     description: 'Servicio para el nuevo turno'
+    explanation: 'La persona elige servicio para el nuevo turno.'
     meta:
       provides:
         - draft.id_servicio_asignado
@@ -31,6 +33,7 @@ states:
   select_efector:
     label: Centro de salud
     description: 'Centro para el nuevo turno'
+    explanation: 'La persona elige centro para el nuevo turno.'
     meta:
       provides:
         - draft.id_efector
@@ -51,6 +54,7 @@ states:
   select_profesional:
     label: Profesional
     description: 'Profesional para el nuevo turno'
+    explanation: 'La persona elige profesional para el nuevo turno.'
     meta:
       provides:
         - draft.id_profesional_efector_servicio
@@ -66,6 +70,7 @@ states:
   select_dia:
     label: Día
     description: 'Día con lugar para el nuevo turno'
+    explanation: 'La persona elige día con lugar para el nuevo turno.'
     meta:
       provides:
         - draft.fecha_turno
@@ -84,6 +89,7 @@ states:
   select_slot:
     label: Horario
     description: 'Horario para el nuevo turno'
+    explanation: 'La persona elige horario para el nuevo turno.'
     meta:
       provides:
         - draft.slot_id

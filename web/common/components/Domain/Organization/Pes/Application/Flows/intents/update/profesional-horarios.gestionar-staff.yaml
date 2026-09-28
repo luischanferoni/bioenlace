@@ -13,6 +13,7 @@ states:
   select_profesional:
     label: Elegí el profesional
     description: 'Profesional al que se le cargan horarios'
+    explanation: 'La persona elige profesional al que se le cargan horarios.'
     meta:
       provides:
         - draft.id_profesional_efector_servicio
@@ -22,6 +23,7 @@ states:
   select_pes:
     label: Elegí el servicio / asignación
     description: 'Asignación del profesional'
+    explanation: 'La persona elige asignación del profesional.'
     meta:
       provides:
         - draft.id_profesional_efector_servicio
@@ -36,6 +38,7 @@ states:
   gestionar_horario:
     label: 'Completá los horarios'
     description: 'Horarios de guardia o internación'
+    explanation: 'La persona elige horarios de guardia o internación.'
     meta:
       provides:
         - draft.horario_ui_completed

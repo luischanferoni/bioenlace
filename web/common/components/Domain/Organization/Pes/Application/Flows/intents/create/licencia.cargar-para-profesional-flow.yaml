@@ -28,6 +28,7 @@ states:
   select_profesional:
     label: Profesional
     description: 'Profesional al que corresponde la licencia'
+    explanation: 'La persona elige profesional al que corresponde la licencia.'
     meta:
       provides:
         - draft.id_profesional_efector_servicio
@@ -37,6 +38,7 @@ states:
   select_servicio:
     label: Servicio
     description: 'Asignación sobre la que se carga la licencia'
+    explanation: 'La persona elige asignación sobre la que se carga la licencia.'
     meta:
       provides:
         - draft.id_servicio
@@ -50,6 +52,7 @@ states:
   cargar_licencia:
     label: Licencia
     description: 'Fechas de la licencia, permiso o ausencia'
+    explanation: 'La persona elige fechas de la licencia, permiso o ausencia.'
     meta:
       provides:
         - draft.condicion_laboral_ui_completed

@@ -45,6 +45,7 @@ states:
   elegir_servicio:
     label: Servicio
     description: 'Asignación propia en el centro'
+    explanation: 'La persona elige asignación propia en el centro.'
     meta:
       provides:
         - draft.id_profesional_efector_servicio
@@ -57,6 +58,7 @@ states:
   editar_vigencia:
     label: Tipo y fechas de vigencia
     description: 'Tipo de condición laboral y fechas de vigencia'
+    explanation: 'La persona elige tipo de condición laboral y fechas de vigencia.'
     meta:
       open_ui:
         action_id: profesional-efector-servicio.editar-condicion-laboral

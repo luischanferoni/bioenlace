@@ -8,6 +8,7 @@ states:
   crear:
     label: Datos del turno
     description: 'Datos del turno a crear'
+    explanation: 'La persona elige datos del turno a crear.'
     meta:
       provides:
         - draft.id_persona

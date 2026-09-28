@@ -8,6 +8,7 @@ states:
   seleccionar_solicitud:
     label: Solicitudes de tutela pendientes
     description: 'Solicitudes de tutela pendientes de verificación'
+    explanation: 'La persona elige solicitudes de tutela pendientes de verificación.'
     meta:
       provides:
         - draft.person_related_id

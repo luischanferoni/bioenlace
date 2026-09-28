@@ -5,11 +5,12 @@ namespace common\components\Platform\Assistant\Catalog;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
 
 /**
- * Arma el recorrido de un flow como caso de uso para el prompt de la guía.
+ * Arma el recorrido de un flow en formato HTA para el prompt de la guía.
  *
- * Botón, objetivo de cada opción, pasos numerados y éxito (`outcome`).
+ * Cada botón del chat es una tarea raíz (`1`, `2`, …). Sus subtareas (`1.n`, `2.n`)
+ * existen solo después de presionar ese botón.
  * Si un paso declara `meta.guide_options`, lista esas opciones.
- * Si la opción trae el texto de ayuda del catálogo, ese texto es lo que el sistema indica.
+ * Si la opción frena la reserva, resume la ayuda sin pegar el texto al usuario.
  * Si el paso declara `flow_actions`, lista lo que ofrece.
  * No adjunta ids técnicos.
  */
@@ -26,6 +27,7 @@ final class IntentSemanticsPromptFormatter
     {
         $blocks = [];
         $seen = [];
+        $root = 0;
         foreach ($intentIds as $intentId) {
             if (!is_string($intentId)) {
                 continue;
@@ -35,9 +37,12 @@ final class IntentSemanticsPromptFormatter
                 continue;
             }
             $seen[$intentId] = true;
-            $block = self::formatIntentId($intentId);
+            $root++;
+            $block = self::formatIntentId($intentId, null, $root);
             if ($block !== '') {
                 $blocks[] = $block;
+            } else {
+                $root--;
             }
             if (count($blocks) >= max(1, $maxIntents)) {
                 break;
@@ -59,6 +64,7 @@ final class IntentSemanticsPromptFormatter
     public static function formatStateHits(array $hits, int $maxIntents = 4): string
     {
         $blocks = [];
+        $root = 0;
         foreach ($hits as $hit) {
             if (!is_array($hit)) {
                 continue;
@@ -69,8 +75,10 @@ final class IntentSemanticsPromptFormatter
                 continue;
             }
             $manifest = YamlIntentManifestLoader::load($intentId);
-            $block = self::formatManifest($manifest, self::label($manifest, null, $intentId));
+            $root++;
+            $block = self::formatManifest($manifest, self::label($manifest, null, $intentId), $root);
             if ($block === '') {
+                $root--;
                 continue;
             }
             $blocks[] = $block;
@@ -87,7 +95,7 @@ final class IntentSemanticsPromptFormatter
         return self::formatIntentId($item->action_id, $item);
     }
 
-    public static function formatIntentId(string $intentId, ?UiActionCatalogItem $item = null): string
+    public static function formatIntentId(string $intentId, ?UiActionCatalogItem $item = null, int $root = 1): string
     {
         $intentId = trim($intentId);
         if ($intentId === '') {
@@ -96,20 +104,21 @@ final class IntentSemanticsPromptFormatter
 
         $manifest = YamlIntentManifestLoader::load($intentId);
 
-        return self::formatManifest($manifest, self::label($manifest, $item, $intentId));
+        return self::formatManifest($manifest, self::label($manifest, $item, $intentId), $root);
     }
 
     /**
      * @param array<string, mixed>|null $manifest
      */
-    private static function formatManifest(?array $manifest, string $label): string
+    private static function formatManifest(?array $manifest, string $label, int $root = 1): string
     {
         $label = trim($label);
         if ($label === '') {
             return '';
         }
+        $root = max(1, $root);
 
-        return implode("\n", self::recorridoLines($manifest, $label));
+        return implode("\n", self::recorridoLines($manifest, $label, $root));
     }
 
     /**
@@ -134,9 +143,10 @@ final class IntentSemanticsPromptFormatter
      * @param array<string, mixed>|null $manifest
      * @return list<string>
      */
-    private static function recorridoLines(?array $manifest, string $label): array
+    private static function recorridoLines(?array $manifest, string $label, int $root): array
     {
-        $lines = ['Botón: ' . $label];
+        $rootId = (string) $root;
+        $lines = [$rootId . '. Botón del chat: ' . $label];
         if ($manifest === null) {
             return $lines;
         }
@@ -150,9 +160,11 @@ final class IntentSemanticsPromptFormatter
         }
 
         $initialState = $states[$initial];
+        $child = 0;
         $intro = self::explanation($initialState);
         if ($intro !== '') {
-            $lines[] = $intro;
+            $child++;
+            $lines[] = $rootId . '.' . $child . ' Al presionarlo: ' . $intro;
         }
         $rows = self::pickBranches(self::alwaysRows($initialState['always'] ?? null));
         $menuChoices = self::rowsAreMenuChoices($initialState, $rows);
@@ -160,8 +172,11 @@ final class IntentSemanticsPromptFormatter
             if ($menuChoices && self::optionLabelFromGuard($initialState, $row['guard']) === '') {
                 continue;
             }
-            $case = self::branchLines($initialState, $row, $states);
+            $child++;
+            $nodeId = $rootId . '.' . $child;
+            $case = self::branchLines($initialState, $row, $states, $nodeId);
             if ($case === []) {
+                $child--;
                 continue;
             }
             $lines[] = '';
@@ -198,7 +213,7 @@ final class IntentSemanticsPromptFormatter
      * @param array<string, array<string, mixed>> $states
      * @return list<string>
      */
-    private static function branchLines(array $sourceState, array $row, array $states): array
+    private static function branchLines(array $sourceState, array $row, array $states, string $nodeId): array
     {
         $chain = self::chainStates($states, $row['target']);
         $steps = $chain['states'];
@@ -212,15 +227,93 @@ final class IntentSemanticsPromptFormatter
         $stops = self::chainStops($steps, $chain['cut']);
         $goal = self::objectiveClause($last);
 
-        $lines = [];
         if ($option !== '') {
-            $lines[] = $option;
-        }
-        if ($goal !== '') {
-            $lines[] = 'Objetivo: ' . $goal . '.';
+            return self::htaNamedPath($nodeId, $option, $goal, $steps, $help, $chain['cut'], $stops, $last);
         }
 
-        $n = 1;
+        return self::htaFlatPath($nodeId, $goal, $steps, $help, $chain['cut'], $stops, $last);
+    }
+
+    /**
+     * @param list<array<string, mixed>> $steps
+     * @param array<string, mixed> $last
+     * @return list<string>
+     */
+    private static function htaNamedPath(
+        string $nodeId,
+        string $option,
+        string $goal,
+        array $steps,
+        string $help,
+        bool $cut,
+        bool $stops,
+        array $last
+    ): array {
+        $lines = [$nodeId . ' ' . $option];
+        $sub = 0;
+        $add = static function (string $text) use (&$lines, &$sub, $nodeId): string {
+            $sub++;
+            $id = $nodeId . '.' . $sub;
+            $lines[] = $id . ' ' . $text;
+
+            return $id;
+        };
+        if ($goal !== '') {
+            $add('Objetivo: ' . $goal . '.');
+        }
+        self::htaAppendSteps($add, $lines, $steps, $help, $cut);
+        if ($stops && self::outcomeText($last) !== '') {
+            $add('Éxito: ' . self::closingSentence($last));
+        }
+
+        return $lines;
+    }
+
+    /**
+     * Camino único (sin menú): hermanos bajo el botón, a partir de `$nodeId`.
+     *
+     * @param list<array<string, mixed>> $steps
+     * @param array<string, mixed> $last
+     * @return list<string>
+     */
+    private static function htaFlatPath(
+        string $nodeId,
+        string $goal,
+        array $steps,
+        string $help,
+        bool $cut,
+        bool $stops,
+        array $last
+    ): array {
+        $parts = explode('.', $nodeId);
+        $seq = (int) array_pop($parts) - 1;
+        $parent = implode('.', $parts);
+        $lines = [];
+        $add = static function (string $text) use (&$lines, &$seq, $parent): string {
+            $seq++;
+            $id = $parent === '' ? (string) $seq : $parent . '.' . $seq;
+            $lines[] = $id . ' ' . $text;
+
+            return $id;
+        };
+        if ($goal !== '') {
+            $add('Objetivo: ' . $goal . '.');
+        }
+        self::htaAppendSteps($add, $lines, $steps, $help, $cut);
+        if ($stops && self::outcomeText($last) !== '') {
+            $add('Éxito: ' . self::closingSentence($last));
+        }
+
+        return $lines;
+    }
+
+    /**
+     * @param callable(string): string $add
+     * @param list<string> $lines
+     * @param list<array<string, mixed>> $steps
+     */
+    private static function htaAppendSteps(callable $add, array &$lines, array $steps, string $help, bool $cut): void
+    {
         $lastIndex = count($steps) - 1;
         foreach ($steps as $index => $step) {
             $text = self::explanation($step);
@@ -230,25 +323,22 @@ final class IntentSemanticsPromptFormatter
             if ($text === '') {
                 continue;
             }
-            $lines[] = $n . '. ' . $text;
-            $n++;
+            $stepId = $add($text);
+            $nest = 0;
             $labels = self::options($step);
             if ($labels !== []) {
-                $lines[] = '   Opciones: ' . implode(', ', $labels) . '.';
+                $nest++;
+                $lines[] = $stepId . '.' . $nest . ' Opciones: ' . implode(', ', $labels) . '.';
             }
             $offers = self::actionLabels($step);
             if ($offers !== []) {
-                $lines[] = '   Ofrece: ' . implode(', ', $offers) . '.';
+                $nest++;
+                $lines[] = $stepId . '.' . $nest . ' Ofrece: ' . implode(', ', $offers) . '.';
             }
         }
-        if ($chain['cut']) {
-            $lines[] = $n . '. …';
+        if ($cut) {
+            $add('…');
         }
-        if ($stops && self::outcomeText($last) !== '') {
-            $lines[] = 'Éxito: ' . self::closingSentence($last);
-        }
-
-        return $lines;
     }
 
     /**

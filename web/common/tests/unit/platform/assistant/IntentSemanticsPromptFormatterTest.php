@@ -19,12 +19,12 @@ class IntentSemanticsPromptFormatterTest extends Unit
     {
         $block = IntentSemanticsPromptFormatter::formatIntentId('turnos.crear-como-paciente');
 
-        $this->assertStringContainsString('Botón: Turno con un especialista', $block);
-        $this->assertStringContainsString('La persona elige la oferta del centro que tiene agenda.', $block);
-        $this->assertStringContainsString('Objetivo: la persona reserva un turno.', $block);
-        $this->assertStringContainsString('1. La persona elige el centro de salud.', $block);
-        $this->assertStringContainsString('4. La persona elige horario para reservar el turno.', $block);
-        $this->assertStringContainsString('Éxito: Termina cuando la persona reserva un turno.', $block);
+        $this->assertStringContainsString('1. Botón del chat: Turno con un especialista', $block);
+        $this->assertStringContainsString('1.1 Al presionarlo: La persona elige la oferta del centro que tiene agenda.', $block);
+        $this->assertStringContainsString('1.2 Objetivo: la persona reserva un turno.', $block);
+        $this->assertStringContainsString('1.3 La persona elige el centro de salud.', $block);
+        $this->assertStringContainsString('1.6 La persona elige horario para reservar el turno.', $block);
+        $this->assertStringContainsString('1.7 Éxito: Termina cuando la persona reserva un turno.', $block);
         $this->assertStringNotContainsString('objective', $block);
         $this->assertStringNotContainsString('Pasos:', $block);
         $this->assertStringNotContainsString('turnos.crear-como-paciente', $block);
@@ -34,21 +34,21 @@ class IntentSemanticsPromptFormatterTest extends Unit
     {
         $block = IntentSemanticsPromptFormatter::formatIntentId('atencion.necesito-atencion');
 
-        $this->assertStringContainsString('Botón: Solicitar Atención', $block);
-        $this->assertStringContainsString('La persona elige qué pedido de atención hace.', $block);
-        $this->assertStringContainsString("Urgencia\nObjetivo: la persona recibe orientación por urgencia.", $block);
-        $this->assertStringContainsString('El sistema muestra orientación por urgencia y frena la reserva en la app.', $block);
-        $this->assertStringContainsString('Ofrece: Llamar al 107.', $block);
+        $this->assertStringContainsString('1. Botón del chat: Solicitar Atención', $block);
+        $this->assertStringContainsString('1.1 Al presionarlo: La persona elige qué pedido de atención hace.', $block);
+        $this->assertStringContainsString("1.2 Urgencia\n1.2.1 Objetivo: la persona recibe orientación por urgencia.", $block);
+        $this->assertStringContainsString('1.2.2 El sistema muestra orientación por urgencia y frena la reserva en la app.', $block);
+        $this->assertStringContainsString('1.2.2.1 Ofrece: Llamar al 107.', $block);
         $this->assertStringNotContainsString('Por lo que indicaste', $block);
-        $this->assertStringContainsString('Éxito: Termina cuando la persona recibe orientación por urgencia.', $block);
-        $this->assertStringContainsString("Malestar nuevo\nObjetivo: la persona reserva un turno.\n1. La persona elige la zona del malestar.", $block);
-        $this->assertStringContainsString('Opciones: Cabeza, cuello o mareos, Pecho, corazón o respiración', $block);
+        $this->assertStringContainsString('1.2.3 Éxito: Termina cuando la persona recibe orientación por urgencia.', $block);
+        $this->assertStringContainsString("1.3 Malestar nuevo\n1.3.1 Objetivo: la persona reserva un turno.\n1.3.2 La persona elige la zona del malestar.", $block);
+        $this->assertStringContainsString('1.3.2.1 Opciones: Cabeza, cuello o mareos, Pecho, corazón o respiración', $block);
         $this->assertStringContainsString('Síntoma general (fiebre, cansancio u otro)', $block);
-        $this->assertStringContainsString('7. La persona elige horario disponible para el turno.', $block);
-        $this->assertStringContainsString('Éxito: Termina cuando la persona reserva un turno.', $block);
-        $this->assertStringContainsString("Control/Seguimiento\nObjetivo: la persona envía la consulta.", $block);
-        $this->assertStringContainsString('3. La persona escribe la consulta del control.', $block);
-        $this->assertStringContainsString('Éxito: Termina cuando la persona envía la consulta.', $block);
+        $this->assertStringContainsString('1.3.8 La persona elige horario disponible para el turno.', $block);
+        $this->assertStringContainsString('1.3.9 Éxito: Termina cuando la persona reserva un turno.', $block);
+        $this->assertStringContainsString("1.5 Control/Seguimiento\n1.5.1 Objetivo: la persona envía la consulta.", $block);
+        $this->assertStringContainsString('1.5.4 La persona escribe la consulta del control.', $block);
+        $this->assertStringContainsString('1.5.5 Éxito: Termina cuando la persona envía la consulta.', $block);
         $this->assertStringNotContainsString('Si elige', $block);
         $this->assertStringNotContainsString('En esa pantalla:', $block);
         $this->assertStringNotContainsString('triage_raiz', $block);
@@ -64,8 +64,9 @@ class IntentSemanticsPromptFormatterTest extends Unit
             'atencion.necesito-atencion',
         ], 4);
 
-        $this->assertStringContainsString('Botón: Turno con un especialista', $wrapped);
-        $this->assertStringContainsString('Botón: Solicitar Atención', $wrapped);
+        $this->assertStringContainsString('1. Botón del chat: Turno con un especialista', $wrapped);
+        $this->assertStringContainsString('2. Botón del chat: Solicitar Atención', $wrapped);
+        $this->assertStringContainsString('2.1 Al presionarlo:', $wrapped);
         $this->assertStringNotContainsString('---', $wrapped);
     }
 }

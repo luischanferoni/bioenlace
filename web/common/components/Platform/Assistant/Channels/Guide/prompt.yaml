@@ -28,8 +28,10 @@ stable_prompt: |
   Lo que expresa el usuario es lo siguiente:
   {necesidad_usuario}  
 
-  Los botones (funcionalidades) que el sistema ofrece junto con el paso a paso dentro de cada uno. 
-  Estan expresadas como casos de uso para que vos entiendas:
+  Te adjunto las funcionalidades del sistema en numeración jerárquica (HTA).
+  Cada número entero (1, 2, 3…) es un botón distinto del chat (funcionalidad).
+  Todo lo que cuelga de ese número (1.1, 1.2… / 2.1, 2.2…) ocurre solo después de presionar ese botón.
+  Al orientar, nombrá primero el botón (la tarea raíz) y, si hace falta, el camino hijo que encaja.
   {intent_semantics}
   Detectá cual/es son las funcionalidades que ayudan al usuario, contá en una frase la o las que le convienen 
   y cuándo le conviene cada una.

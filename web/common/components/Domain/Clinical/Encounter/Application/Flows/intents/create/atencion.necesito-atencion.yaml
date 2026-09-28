@@ -52,7 +52,6 @@ context:
 states:
   triage_raiz:
     label: Motivo
-    description: 'Pedido de atención de la persona'
     explanation: 'La persona elige qué pedido de atención hace.'
     meta:
       guide_options: reserva_triage.raiz
@@ -97,7 +96,6 @@ states:
         target: select_tipo_atencion
   select_pedido_acto:
     label: 'Estudio o práctica'
-    description: 'Estudio o práctica que la persona necesita'
     explanation: 'La persona elige el estudio o la práctica que necesita.'
     meta:
       tags:
@@ -132,7 +130,6 @@ states:
         target: select_tipo_atencion
   cs_hub:
     label: '¿Sobre qué es el control o seguimiento?'
-    description: 'Tema del control o seguimiento'
     explanation: 'La persona elige el tema del control o seguimiento.'
     meta:
       tags:
@@ -158,7 +155,6 @@ states:
         target: cs_condition_acciones
   cs_condition_acciones:
     label: '¿Qué necesitás?'
-    description: 'Qué necesita sobre ese control'
     explanation: 'La persona elige qué necesita sobre ese control.'
     meta:
       provides:
@@ -192,7 +188,6 @@ states:
         target: cs_captura_consulta_general
   triage_zona:
     label: Zona
-    description: 'Zona del cuerpo del malestar'
     explanation: 'La persona elige la zona del malestar.'
     meta:
       guide_options: reserva_triage.zona
@@ -220,7 +215,6 @@ states:
         target: select_tipo_atencion
   triage_urgencia:
     label: Urgencia
-    description: 'Orientación por urgencia'
     explanation: 'Orientación por urgencia.'
     meta:
       tags:
@@ -242,7 +236,6 @@ states:
     type: final
   select_tipo_atencion:
     label: Modalidad
-    description: 'Formas de atenderse'
     explanation: 'La persona elige la forma de atenderse.'
     meta:
       provides:
@@ -286,7 +279,6 @@ states:
         target: select_servicio
   solicitud_async:
     label: Describí tu consulta en el campo de texto de abajo
-    description: 'Consulta que la persona escribe para un profesional'
     explanation: 'La persona escribe la consulta para un profesional.'
     meta:
       provides:
@@ -311,7 +303,6 @@ states:
     type: final
   select_servicio:
     label: Servicio
-    description: 'Servicio del centro para la atención'
     explanation: 'La persona elige el servicio del centro.'
     meta:
       provides:
@@ -336,7 +327,6 @@ states:
     always: select_efector
   select_efector:
     label: Centro de salud
-    description: 'Centro donde atenderse'
     explanation: 'La persona elige centro donde atenderse.'
     meta:
       provides:
@@ -361,7 +351,6 @@ states:
     always: select_profesional
   select_profesional:
     label: Profesional
-    description: 'Profesional de ese servicio en ese centro'
     explanation: 'La persona elige profesional de ese servicio en ese centro.'
     meta:
       provides:
@@ -381,7 +370,6 @@ states:
     always: select_dia
   select_dia:
     label: Día
-    description: 'Día con lugar'
     explanation: 'La persona elige día con lugar.'
     meta:
       provides:
@@ -397,7 +385,6 @@ states:
     always: select_slot
   select_slot:
     label: Horario
-    description: 'Horario disponible para el turno'
     explanation: 'La persona elige horario disponible para el turno.'
     meta:
       provides:
@@ -415,7 +402,6 @@ states:
     type: final
   select_dia_teleconsulta:
     label: Día (teleconsulta con Medicina General)
-    description: 'Día de teleconsulta con Medicina General'
     explanation: 'La persona elige día de teleconsulta con Medicina General.'
     meta:
       provides:
@@ -432,7 +418,6 @@ states:
     always: select_slot_teleconsulta
   select_slot_teleconsulta:
     label: Horario (teleconsulta con Medicina General)
-    description: 'Horario de teleconsulta con Medicina General'
     explanation: 'La persona elige horario de teleconsulta con Medicina General.'
     meta:
       provides:
@@ -451,7 +436,6 @@ states:
     type: final
   cs_select_tipo:
     label: '¿Sobre qué es el control o seguimiento?'
-    description: 'Tema del control o seguimiento'
     explanation: 'La persona elige tema del control o seguimiento.'
     meta:
       provides:
@@ -477,7 +461,6 @@ states:
         target: cs_select_care_plan
   cs_select_encounter_previa:
     label: '¿Sobre qué atención?'
-    description: 'Atención anterior del control'
     explanation: 'La persona elige atención anterior del control.'
     meta:
       provides:
@@ -489,7 +472,6 @@ states:
     always: cs_captura_consulta_previa
   cs_captura_consulta_previa:
     label: Contanos en el campo de abajo
-    description: 'Consulta sobre una atención anterior'
     explanation: 'La persona escribe la consulta sobre una atención anterior.'
     meta:
       provides:
@@ -511,7 +493,6 @@ states:
     type: final
   cs_select_care_plan:
     label: Tu tratamiento
-    description: 'Tratamiento del control'
     explanation: 'La persona elige tratamiento del control.'
     meta:
       review_prefilled: true
@@ -524,7 +505,6 @@ states:
     always: cs_select_necesidad
   cs_select_necesidad:
     label: '¿Qué necesitás?'
-    description: 'Qué necesita sobre el tratamiento'
     explanation: 'La persona elige qué necesita sobre el tratamiento.'
     meta:
       provides:
@@ -557,7 +537,6 @@ states:
         target: cs_captura_seguimiento_mensaje
   cs_select_medicamentos:
     label: Medicación
-    description: 'Medicación del tratamiento'
     explanation: 'La persona elige medicación del tratamiento.'
     meta:
       tags:
@@ -593,7 +572,6 @@ states:
         target: ''
   cs_captura_ajuste_motivo:
     label: '¿Qué cambio necesitás?'
-    description: 'Cambio que pide en la medicación'
     explanation: 'La persona escribe el cambio que pide en la medicación.'
     meta:
       provides:
@@ -619,7 +597,6 @@ states:
     type: final
   cs_captura_consulta_general:
     label: Escribí tu consulta en el campo de abajo
-    description: 'Consulta del control'
     explanation: 'La persona escribe la consulta del control.'
     meta:
       provides:
@@ -639,7 +616,6 @@ states:
     type: final
   cs_captura_seguimiento_mensaje:
     label: Contanos en el campo de abajo
-    description: 'Mensaje de seguimiento'
     explanation: 'La persona escribe el mensaje de seguimiento.'
     meta:
       provides:
@@ -662,7 +638,6 @@ states:
     type: final
   cs_select_preferencia_turno:
     label: '¿Con quién querés el control?'
-    description: 'Con quién quiere el control'
     explanation: 'La persona elige con quién quiere el control.'
     meta:
       provides:
@@ -685,7 +660,6 @@ states:
         target: cs_select_efector
   cs_select_efector:
     label: Centro de salud
-    description: 'Centro para el control'
     explanation: 'La persona elige centro para el control.'
     meta:
       provides:
@@ -700,7 +674,6 @@ states:
     always: cs_select_profesional
   cs_select_profesional:
     label: Profesional
-    description: 'Profesional para el control'
     explanation: 'La persona elige profesional para el control.'
     meta:
       provides:
@@ -717,7 +690,6 @@ states:
     always: cs_select_dia
   cs_select_dia:
     label: Día
-    description: 'Día del control'
     explanation: 'La persona elige día del control.'
     meta:
       provides:
@@ -733,7 +705,6 @@ states:
     always: cs_select_slot
   cs_select_slot:
     label: Horario
-    description: 'Horario del control'
     explanation: 'La persona elige horario del control.'
     meta:
       provides:
@@ -751,7 +722,6 @@ states:
     type: final
   cs_select_dia_teleconsulta:
     label: Día (teleconsulta con Medicina General)
-    description: 'Día de teleconsulta del control'
     explanation: 'La persona elige día de teleconsulta del control.'
     meta:
       provides:
@@ -767,7 +737,6 @@ states:
     always: cs_select_slot_teleconsulta
   cs_select_slot_teleconsulta:
     label: Horario (teleconsulta con Medicina General)
-    description: 'Horario de teleconsulta del control'
     explanation: 'La persona elige horario de teleconsulta del control.'
     meta:
       provides:

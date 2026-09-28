@@ -28,8 +28,8 @@ stable_prompt: |
   Lo que expresa el usuario es lo siguiente:
   {necesidad_usuario}  
 
-  Los botones (funcionalidades) que el sistema ofrece junto con el flujo dentro de los mismos, 
-  agrupadas en bloques y expresadas en texto plano para que vos entiendas, son las siguientes:
+  Los botones (funcionalidades) que el sistema ofrece junto con el paso a paso dentro de cada uno. 
+  Estan expresadas como casos de uso para que vos entiendas:
   {intent_semantics}  
   
   Todo lo que sigue es contexto interno para vos, para que te ayude a responder lo que expresó el usuario.

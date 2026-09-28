@@ -5,13 +5,13 @@ namespace common\components\Platform\Assistant\Catalog;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
 
 /**
- * Arma el recorrido de un flow para el prompt de la guía.
+ * Arma el recorrido de un flow como caso de uso para el prompt de la guía.
  *
- * La primera línea es el botón. La explanation del estado inicial es la pantalla
- * que se abre al presionarlo. Las opciones de `meta.guide_options` son de esa
- * pantalla, no del chat. Lo que sigue es una secuencia de pasos, no un menú.
- * Una rama que termina no continúa en otra pantalla.
- * No adjunta `objective` ni ids.
+ * Botón, objetivo de cada opción, pasos numerados y éxito (`outcome`).
+ * Si un paso declara `meta.guide_options`, lista esas opciones.
+ * Si la opción trae el texto de ayuda del catálogo, ese texto es lo que el sistema indica.
+ * Si el paso declara `flow_actions`, lista lo que ofrece.
+ * No adjunta ids técnicos.
  */
 final class IntentSemanticsPromptFormatter
 {
@@ -136,7 +136,7 @@ final class IntentSemanticsPromptFormatter
      */
     private static function recorridoLines(?array $manifest, string $label): array
     {
-        $lines = ['- Botón: ' . $label];
+        $lines = ['Botón: ' . $label];
         if ($manifest === null) {
             return $lines;
         }
@@ -150,12 +150,9 @@ final class IntentSemanticsPromptFormatter
         }
 
         $initialState = $states[$initial];
-        $opened = self::lowerFirst(self::explanation($initialState));
-        if ($opened !== '') {
-            $lines[] = '  Al presionarlo se abre una pantalla donde ' . $opened;
-        }
-        foreach (self::optionLines(self::options($initialState), '  ') as $optionLine) {
-            $lines[] = $optionLine;
+        $intro = self::explanation($initialState);
+        if ($intro !== '') {
+            $lines[] = $intro;
         }
         $rows = self::pickBranches(self::alwaysRows($initialState['always'] ?? null));
         $menuChoices = self::rowsAreMenuChoices($initialState, $rows);
@@ -163,8 +160,13 @@ final class IntentSemanticsPromptFormatter
             if ($menuChoices && self::optionLabelFromGuard($initialState, $row['guard']) === '') {
                 continue;
             }
-            foreach (self::branchLines($initialState, $row, $states) as $branchLine) {
-                $lines[] = $branchLine;
+            $case = self::branchLines($initialState, $row, $states);
+            if ($case === []) {
+                continue;
+            }
+            $lines[] = '';
+            foreach ($case as $caseLine) {
+                $lines[] = $caseLine;
             }
         }
 
@@ -204,31 +206,46 @@ final class IntentSemanticsPromptFormatter
             return [];
         }
 
-        $first = $steps[0];
         $option = self::optionLabelFromGuard($sourceState, $row['guard']);
-        if ($option === '') {
-            return self::orderedStepLines($steps, $chain['cut'], '  ', self::chainStops($steps, $chain['cut']));
+        $help = self::helpFromGuard($sourceState, $row['guard']);
+        $last = $steps[count($steps) - 1];
+        $stops = self::chainStops($steps, $chain['cut']);
+        $goal = self::objectiveClause($last);
+
+        $lines = [];
+        if ($option !== '') {
+            $lines[] = $option;
+        }
+        if ($goal !== '') {
+            $lines[] = 'Objetivo: ' . $goal . '.';
         }
 
-        $screen = self::explanation($first);
-        $head = 'Si elige ' . $option . ', se abre otra pantalla';
-        if ($screen !== '') {
-            $head .= ': ' . $screen;
-        } else {
-            $head .= '.';
+        $n = 1;
+        $lastIndex = count($steps) - 1;
+        foreach ($steps as $index => $step) {
+            $text = self::explanation($step);
+            if ($help !== '' && $index === 0 && $lastIndex === 0) {
+                $text = 'El sistema indica: ' . $help;
+            }
+            if ($text === '') {
+                continue;
+            }
+            $lines[] = $n . '. ' . $text;
+            $n++;
+            $labels = self::options($step);
+            if ($labels !== []) {
+                $lines[] = '   Opciones: ' . implode(', ', $labels) . '.';
+            }
+            $offers = self::actionLabels($step);
+            if ($offers !== []) {
+                $lines[] = '   Ofrece: ' . implode(', ', $offers) . '.';
+            }
         }
-        $rest = array_slice($steps, 1);
-        $stops = self::isFinal($first) && $rest === [] && !$chain['cut'];
-        if ($stops) {
-            $head .= ' ' . self::closingSentence($first);
+        if ($chain['cut']) {
+            $lines[] = $n . '. …';
         }
-
-        $lines = ['  ' . $head];
-        foreach (self::optionLines(self::options($first), '    ') as $optionLine) {
-            $lines[] = $optionLine;
-        }
-        foreach (self::orderedStepLines($rest, $chain['cut'], '    ', self::chainStops($steps, $chain['cut'])) as $stepLine) {
-            $lines[] = $stepLine;
+        if ($stops && self::outcomeText($last) !== '') {
+            $lines[] = 'Éxito: ' . self::closingSentence($last);
         }
 
         return $lines;
@@ -249,34 +266,6 @@ final class IntentSemanticsPromptFormatter
         }
 
         return false;
-    }
-
-    /**
-     * @param list<array<string, mixed>> $steps
-     * @return list<string>
-     */
-    private static function orderedStepLines(array $steps, bool $cut, string $indent, bool $stops = false): array
-    {
-        $bits = [];
-        foreach ($steps as $step) {
-            $name = self::shortName($step);
-            if ($name !== '') {
-                $bits[] = $name;
-            }
-        }
-        if ($cut) {
-            $bits[] = '…';
-        }
-        if ($bits === []) {
-            return [];
-        }
-
-        $line = $indent . 'Después, en este orden: ' . implode(', ', $bits) . '.';
-        if ($stops) {
-            $line .= ' ' . self::closingSentence($steps[count($steps) - 1]);
-        }
-
-        return [$line];
     }
 
     /**
@@ -304,6 +293,28 @@ final class IntentSemanticsPromptFormatter
         }
 
         return rtrim($text, '.') . '.';
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     */
+    private static function outcomeText(array $state): string
+    {
+        return trim((string) ($state['outcome'] ?? ''));
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     */
+    private static function objectiveClause(array $state): string
+    {
+        $text = self::outcomeText($state);
+        $prefix = 'Termina cuando ';
+        if ($text !== '' && strncasecmp($text, $prefix, strlen($prefix)) === 0) {
+            $text = substr($text, strlen($prefix));
+        }
+
+        return rtrim($text, '.');
     }
 
     /**
@@ -408,40 +419,6 @@ final class IntentSemanticsPromptFormatter
         return $text;
     }
 
-    private static function lowerFirst(string $text): string
-    {
-        $text = trim($text);
-        if ($text === '') {
-            return '';
-        }
-        $len = function_exists('mb_strlen') ? mb_strlen($text, 'UTF-8') : strlen($text);
-        $first = function_exists('mb_substr') ? mb_substr($text, 0, 1, 'UTF-8') : substr($text, 0, 1);
-        $rest = function_exists('mb_substr') ? mb_substr($text, 1, $len, 'UTF-8') : substr($text, 1);
-        $lower = function_exists('mb_strtolower') ? mb_strtolower($first, 'UTF-8') : strtolower($first);
-
-        return $lower . $rest;
-    }
-
-    /**
-     * @param array<string, mixed> $state
-     */
-    private static function shortName(array $state): string
-    {
-        $text = trim((string) ($state['description'] ?? ''));
-        if ($text === '') {
-            $text = trim((string) ($state['label'] ?? ''));
-        }
-        if ($text === '') {
-            return '';
-        }
-        $len = function_exists('mb_strlen') ? mb_strlen($text, 'UTF-8') : strlen($text);
-        $first = function_exists('mb_substr') ? mb_substr($text, 0, 1, 'UTF-8') : substr($text, 0, 1);
-        $rest = function_exists('mb_substr') ? mb_substr($text, 1, $len, 'UTF-8') : substr($text, 1);
-        $lower = function_exists('mb_strtolower') ? mb_strtolower($first, 'UTF-8') : strtolower($first);
-
-        return $lower . $rest;
-    }
-
     /**
      * @param array<string, mixed> $state
      * @return list<string>
@@ -455,19 +432,6 @@ final class IntentSemanticsPromptFormatter
         }
 
         return GuideStepOptionCatalog::labels($ref);
-    }
-
-    /**
-     * @param list<string> $labels
-     * @return list<string>
-     */
-    private static function optionLines(array $labels, string $indent): array
-    {
-        if ($labels === []) {
-            return [];
-        }
-
-        return [$indent . 'En esa pantalla: ' . implode(', ', $labels) . '.'];
     }
 
     /**
@@ -494,6 +458,57 @@ final class IntentSemanticsPromptFormatter
         }
 
         return '';
+    }
+
+    /**
+     * @param array<string, mixed> $sourceState
+     */
+    private static function helpFromGuard(array $sourceState, string $guard): string
+    {
+        $guard = trim($guard);
+        $meta = isset($sourceState['meta']) && is_array($sourceState['meta']) ? $sourceState['meta'] : [];
+        $ref = trim((string) ($meta['guide_options'] ?? ''));
+        if ($guard === '' || $ref === '') {
+            return '';
+        }
+
+        foreach (explode(', ', $guard) as $part) {
+            $eq = strpos($part, '=');
+            if ($eq === false) {
+                continue;
+            }
+            $help = GuideStepOptionCatalog::helpForCode($ref, trim(substr($part, $eq + 1)));
+            if ($help !== '') {
+                return $help;
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     * @return list<string>
+     */
+    private static function actionLabels(array $state): array
+    {
+        $meta = isset($state['meta']) && is_array($state['meta']) ? $state['meta'] : [];
+        $actions = $meta['flow_actions'] ?? null;
+        if (!is_array($actions)) {
+            return [];
+        }
+        $labels = [];
+        foreach ($actions as $action) {
+            if (!is_array($action)) {
+                continue;
+            }
+            $label = trim((string) ($action['label'] ?? ''));
+            if ($label !== '') {
+                $labels[] = $label;
+            }
+        }
+
+        return $labels;
     }
 
     /**

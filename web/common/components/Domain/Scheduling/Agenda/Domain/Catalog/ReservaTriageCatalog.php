@@ -43,6 +43,26 @@ final class ReservaTriageCatalog
     }
 
     /**
+     * Texto que muestra el sistema cuando esa opción frena la reserva.
+     */
+    public static function haltMessageForCode(string $code): string
+    {
+        $code = trim($code);
+        if ($code === '') {
+            return '';
+        }
+        foreach (self::nodes() as $node) {
+            if (($node['code'] ?? '') !== $code || empty($node['halts_booking'])) {
+                continue;
+            }
+
+            return trim((string) (self::config()['halt_message_band_a'] ?? ''));
+        }
+
+        return '';
+    }
+
+    /**
      * @return list<array<string, mixed>>
      */
     private static function nodes(): array

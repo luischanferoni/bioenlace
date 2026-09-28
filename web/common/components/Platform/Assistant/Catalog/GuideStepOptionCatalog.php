@@ -33,6 +33,18 @@ final class GuideStepOptionCatalog
         return ReservaTriageCatalog::labelForCode($code);
     }
 
+    /**
+     * Qué muestra el sistema al elegir ese código, cuando el catálogo lo declara.
+     */
+    public static function helpForCode(string $ref, string $code): string
+    {
+        if (self::triageStep($ref) === '') {
+            return '';
+        }
+
+        return ReservaTriageCatalog::haltMessageForCode($code);
+    }
+
     private static function triageStep(string $ref): string
     {
         $ref = trim($ref);

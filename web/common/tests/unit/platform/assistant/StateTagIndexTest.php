@@ -13,26 +13,26 @@ class StateTagIndexTest extends Unit
         StateTagIndex::resetCacheForTests();
     }
 
-    public function testMedicacionNoIncluyeUrgencia(): void
+    public function testMedicacionIncluyeElRecorridoCompleto(): void
     {
         $block = IntentSemanticsPromptFormatter::formatStateHits(
             StateTagIndex::match(['medicacion'])
         );
 
-        $this->assertStringContainsString('Medicación', $block);
-        $this->assertStringNotContainsString('Urgencia', $block);
-        $this->assertStringNotContainsString('Estudio o práctica', $block);
+        $this->assertStringContainsString('Botón: Solicitar Atención', $block);
+        $this->assertStringContainsString('Urgencia', $block);
+        $this->assertStringContainsString('Estudio o práctica', $block);
     }
 
-    public function testEstudioNoIncluyeRenovacion(): void
+    public function testEstudioIncluyeElRecorridoCompleto(): void
     {
         $block = IntentSemanticsPromptFormatter::formatStateHits(
             StateTagIndex::match(['estudio'])
         );
 
         $this->assertStringContainsString('Estudio o práctica', $block);
-        $this->assertStringNotContainsString('Medicación', $block);
-        $this->assertStringNotContainsString('Urgencia', $block);
+        $this->assertStringContainsString('Urgencia', $block);
+        $this->assertStringContainsString('Malestar nuevo', $block);
     }
 
     public function testTurnoEmpataAtencionYAgenda(): void

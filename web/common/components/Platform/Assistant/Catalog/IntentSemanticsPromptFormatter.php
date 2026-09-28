@@ -9,7 +9,8 @@ use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
  *
  * La primera línea es el botón. La explanation del estado inicial es la pantalla
  * que se abre al presionarlo. Las opciones de `meta.guide_options` son de esa
- * pantalla, no del chat. El resto de la rama son pantallas siguientes.
+ * pantalla, no del chat. Lo que sigue es una secuencia de pasos, no un menú.
+ * Una rama que termina no continúa en otra pantalla.
  * No adjunta `objective` ni ids.
  */
 final class IntentSemanticsPromptFormatter
@@ -157,7 +158,11 @@ final class IntentSemanticsPromptFormatter
             $lines[] = $optionLine;
         }
         $rows = self::pickBranches(self::alwaysRows($initialState['always'] ?? null));
+        $menuChoices = self::rowsAreMenuChoices($initialState, $rows);
         foreach ($rows as $row) {
+            if ($menuChoices && self::optionLabelFromGuard($initialState, $row['guard']) === '') {
+                continue;
+            }
             foreach (self::branchLines($initialState, $row, $states) as $branchLine) {
                 $lines[] = $branchLine;
             }
@@ -201,19 +206,20 @@ final class IntentSemanticsPromptFormatter
 
         $first = $steps[0];
         $option = self::optionLabelFromGuard($sourceState, $row['guard']);
-        $screen = self::explanation($first);
-        if ($option !== '') {
-            $head = 'Si elige ' . $option . ', se abre otra pantalla';
-        } else {
-            $head = 'Se abre otra pantalla';
+        if ($option === '') {
+            return self::orderedStepLines($steps, $chain['cut'], '  ', self::chainStops($steps, $chain['cut']));
         }
+
+        $screen = self::explanation($first);
+        $head = 'Si elige ' . $option . ', se abre otra pantalla';
         if ($screen !== '') {
             $head .= ': ' . $screen;
         } else {
             $head .= '.';
         }
         $rest = array_slice($steps, 1);
-        if (self::isFinal($first) && $rest === []) {
+        $stops = self::isFinal($first) && $rest === [] && !$chain['cut'];
+        if ($stops) {
             $head .= ' El recorrido se detiene.';
         }
 
@@ -221,20 +227,68 @@ final class IntentSemanticsPromptFormatter
         foreach (self::optionLines(self::options($first), '    ') as $optionLine) {
             $lines[] = $optionLine;
         }
-        if ($rest !== [] || $chain['cut']) {
-            $bits = [];
-            foreach ($rest as $step) {
-                $bits[] = self::shortName($step);
-            }
-            if ($chain['cut']) {
-                $bits[] = '…';
-            }
-            if ($bits !== []) {
-                $lines[] = '    Las pantallas que siguen: ' . implode(', ', $bits) . '.';
-            }
+        foreach (self::orderedStepLines($rest, $chain['cut'], '    ', self::chainStops($steps, $chain['cut'])) as $stepLine) {
+            $lines[] = $stepLine;
         }
 
         return $lines;
+    }
+
+    /**
+     * Un guard que no es una opción de la pantalla es un paso del sistema, no una elección.
+     *
+     * @param array<string, mixed> $sourceState
+     * @param list<array{guard: string, target: string}> $rows
+     */
+    private static function rowsAreMenuChoices(array $sourceState, array $rows): bool
+    {
+        foreach ($rows as $row) {
+            if (self::optionLabelFromGuard($sourceState, $row['guard']) !== '') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $steps
+     * @return list<string>
+     */
+    private static function orderedStepLines(array $steps, bool $cut, string $indent, bool $stops = false): array
+    {
+        $bits = [];
+        foreach ($steps as $step) {
+            $name = self::shortName($step);
+            if ($name !== '') {
+                $bits[] = $name;
+            }
+        }
+        if ($cut) {
+            $bits[] = '…';
+        }
+        if ($bits === []) {
+            return [];
+        }
+
+        $line = $indent . 'Después, en este orden: ' . implode(', ', $bits) . '.';
+        if ($stops) {
+            $line .= ' Ahí el recorrido se detiene.';
+        }
+
+        return [$line];
+    }
+
+    /**
+     * @param list<array<string, mixed>> $steps
+     */
+    private static function chainStops(array $steps, bool $cut): bool
+    {
+        if ($cut || $steps === []) {
+            return false;
+        }
+
+        return self::isFinal($steps[count($steps) - 1]);
     }
 
     /**

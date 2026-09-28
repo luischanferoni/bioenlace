@@ -37,8 +37,9 @@ class IntentSemanticsPromptFormatterTest extends Unit
         $this->assertStringContainsString('Botón: Solicitar Atención', $block);
         $this->assertStringContainsString('La persona elige qué pedido de atención hace.', $block);
         $this->assertStringContainsString("Urgencia\nObjetivo: la persona recibe orientación por urgencia.", $block);
-        $this->assertStringContainsString('El sistema indica: Por lo que indicaste, conviene atención urgente ahora (guardia o emergencias). No sigas con la reserva en la app. Si empeorás, llamá al 107.', $block);
+        $this->assertStringContainsString('El sistema muestra orientación por urgencia y frena la reserva en la app.', $block);
         $this->assertStringContainsString('Ofrece: Llamar al 107.', $block);
+        $this->assertStringNotContainsString('Por lo que indicaste', $block);
         $this->assertStringContainsString('Éxito: Termina cuando la persona recibe orientación por urgencia.', $block);
         $this->assertStringContainsString("Malestar nuevo\nObjetivo: la persona reserva un turno.\n1. La persona elige la zona del malestar.", $block);
         $this->assertStringContainsString('Opciones: Cabeza, cuello o mareos, Pecho, corazón o respiración', $block);

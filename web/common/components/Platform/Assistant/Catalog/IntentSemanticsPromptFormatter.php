@@ -225,7 +225,7 @@ final class IntentSemanticsPromptFormatter
         foreach ($steps as $index => $step) {
             $text = self::explanation($step);
             if ($help !== '' && $index === 0 && $lastIndex === 0) {
-                $text = 'El sistema indica: ' . $help;
+                $text = 'El sistema muestra orientación por urgencia y frena la reserva en la app.';
             }
             if ($text === '') {
                 continue;

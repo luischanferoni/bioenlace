@@ -925,7 +925,7 @@ final class AsistenteConsultasQaService
                 $lines[] = '  preprocess_user_goal: ' . $preprocessGoal;
             }
             $tools = self::attachedContextToolIds($planning);
-            $lines[] = '  Contextos adjuntos:';
+            $lines[] = '  Datos cargados:';
             if ($tools === []) {
                 $lines[] = '    (ninguno)';
             } else {
@@ -1022,7 +1022,7 @@ final class AsistenteConsultasQaService
             }
         }
         $lines[] = '  tags: ' . ($tagStr === [] ? '(ninguno)' : implode(', ', $tagStr));
-        $lines[] = '  context_areas: ' . ($areaStr === [] ? '(ninguno)' : implode(', ', $areaStr));
+        $lines[] = '  Ámbitos HIS: ' . ($areaStr === [] ? '(ninguno)' : implode(', ', $areaStr));
     }
 
     /**

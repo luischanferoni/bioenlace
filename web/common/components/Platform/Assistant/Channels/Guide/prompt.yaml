@@ -28,6 +28,11 @@ stable_prompt: |
   Lo que expresa el usuario es lo siguiente. Respondé a esto:
   {necesidad_usuario}  
 
+  -- Funcionalidades que el sistema ofrece. Cada bloque es el recorrido de un botón.
+  Detecta cual/es son los recorridos que ayudan al usuario. Contá en una frase el o los recorridos 
+  que le convienen y cuándo le conviene cada uno:
+  {intent_semantics}
+  
   Todo lo que sigue es contexto interno para vos, para que te ayude a responder lo que expresó el usuario.
 
   -- Ambito/s del sistema de información hospitalaria detectado de lo que expresa el usuario:
@@ -36,10 +41,5 @@ stable_prompt: |
   {scoped_system_records}
 
   {clinical_record_block}
-
-  -- Funcionalidades que el sistema ofrece. Cada bloque es el recorrido de un botón.
-  Detecta cual/es son los recorridos que ayudan al usuario. 
-  Contá en una frase el o los recorridos que le convienen y cuándo le conviene cada uno:
-  {intent_semantics}
 
   {article_block}

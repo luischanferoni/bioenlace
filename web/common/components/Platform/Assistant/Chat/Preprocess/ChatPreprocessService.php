@@ -73,8 +73,8 @@ final class ChatPreprocessService
             return 'ambiguous';
         }
         if ($goal === PreprocessRoutingHintCatalog::PATH_NEEDS_CONTEXT
-            || $goal === PreprocessRoutingHintCatalog::PEDIDO_CLARO
-            || $goal === PreprocessRoutingHintCatalog::PEDIDO_CLARO_MULTIPLE
+            || $goal === PreprocessRoutingHintCatalog::GUIDE
+            || $goal === PreprocessRoutingHintCatalog::PATH_MATCH_DIRECT
         ) {
             return 'guide';
         }

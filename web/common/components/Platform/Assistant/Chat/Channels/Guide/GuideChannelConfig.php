@@ -115,11 +115,6 @@ final class GuideChannelConfig
             'necesidad_usuario' => [
                 'Qué necesita la persona:',
             ],
-            'context_his_areas_lines' => [
-                'Tema de la consulta (ámbito; NO es un formulario a completar):',
-                'Ambito/s del sistema de información hospitalaria detectado de la necesidad del usuario:',
-                'Ámbito/s del sistema de información hospitalaria detectado de la necesidad del usuario:',
-            ],
             'scoped_system_records' => [
                 'Datos del sistema (usá solo lo que esté presente; si falta un dato, no lo inventes):',
                 'Registros e informacion disponible en nuestro sistema:',

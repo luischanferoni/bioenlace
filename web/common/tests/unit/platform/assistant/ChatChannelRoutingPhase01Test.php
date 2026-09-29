@@ -37,14 +37,14 @@ class ChatChannelRoutingPhase01Test extends Unit
     public function testGoalsIncludeGuideLegacyAliasForThread(): void
     {
         $this->assertContains('guide', ChatPreprocessService::legacyGoals());
-        $this->assertSame('pedido_claro', ChatPreprocessService::routingHintFromLegacyGoal('guide'));
-        $this->assertContains('pedido_claro', PreprocessRoutingHintCatalog::all());
+        $this->assertSame('guide', ChatPreprocessService::routingHintFromLegacyGoal('guide'));
+        $this->assertContains('guide', PreprocessRoutingHintCatalog::all());
     }
 
     public function testStablePromptListsRoutingHints(): void
     {
         $prompt = ChatPreprocessService::stablePromptPrefix();
-        $this->assertStringContainsString('- pedido_claro —', $prompt);
+        $this->assertStringContainsString('- guide —', $prompt);
         $this->assertStringContainsString('routing_hint', $prompt);
     }
 
@@ -95,7 +95,7 @@ class ChatChannelRoutingPhase01Test extends Unit
         \common\components\Platform\Assistant\Chat\ChatPreprocessContext::set([
             'ok' => true,
             'normalized_text' => $msg,
-            'routing_hint' => 'pedido_claro',
+            'routing_hint' => 'guide',
             'tags' => ['llegar_tarde', 'scheduling'],
             'context_areas' => ['scheduling'],
             'extractions' => [],

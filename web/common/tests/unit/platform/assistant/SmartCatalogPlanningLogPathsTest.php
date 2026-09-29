@@ -19,7 +19,7 @@ use common\components\Platform\Ai\Cost\AICostTracker;
 use Yii;
 
 /**
- * Verifica planning_applied en caminos 1ia_direct, 2ia_guide y 3ia_planner_guide.
+ * Verifica planning_applied en caminos clara→Guide, 2ia_guide y 3ia_planner_guide.
  */
 class SmartCatalogPlanningLogPathsTest extends Unit
 {
@@ -38,7 +38,7 @@ class SmartCatalogPlanningLogPathsTest extends Unit
     {
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'contame representacion',
-            'routing_hint' => 'pedido_claro',
+            'routing_hint' => 'guide',
             'tags' => ['representacion'],
             'context_areas' => ['person'],
             'extractions' => [],
@@ -67,7 +67,7 @@ class SmartCatalogPlanningLogPathsTest extends Unit
 
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'llego 10 min tarde hay problema',
-            'routing_hint' => 'pedido_claro',
+            'routing_hint' => 'guide',
             'necesidad_usuario' => 'Saber tolerancia llegada tarde.',
             'tags' => ['llegar_tarde', 'scheduling'],
             'context_areas' => ['scheduling'],
@@ -105,7 +105,7 @@ class SmartCatalogPlanningLogPathsTest extends Unit
 
         $base = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'consulta vaga turnos',
-            'routing_hint' => 'pedido_claro',
+            'routing_hint' => 'guide',
             'necesidad_usuario' => 'Entender algo sobre turnos.',
             'tags' => ['scheduling'],
             'context_areas' => ['scheduling'],

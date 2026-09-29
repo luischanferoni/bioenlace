@@ -86,7 +86,7 @@ final class SmartCatalogRoutingService
         }
 
         if (
-            $hint === PreprocessRoutingHintCatalog::PEDIDO_FUERA_HIS
+            $hint === PreprocessRoutingHintCatalog::FUERA_HIS
             || ($best !== null && $best->routingResult === PreprocessRoutingHintCatalog::PATH_OUTSIDE)
         ) {
             return self::fueraDeHisDecision($best);
@@ -110,10 +110,9 @@ final class SmartCatalogRoutingService
             );
         }
 
-        // Pedido claro (uno o varios) sin match 100 %, o fila/área HIS → contexto + Guide.
+        // Pedido (guide) sin match 100 %, o fila/área HIS → Guide.
         if (
-            $hint === PreprocessRoutingHintCatalog::PEDIDO_CLARO
-            || $hint === PreprocessRoutingHintCatalog::PEDIDO_CLARO_MULTIPLE
+            $hint === PreprocessRoutingHintCatalog::GUIDE
             || ($best !== null && $best->routingResult === PreprocessRoutingHintCatalog::PATH_NEEDS_CONTEXT)
             || ($areas !== [] && !$match->isClearWinner)
         ) {

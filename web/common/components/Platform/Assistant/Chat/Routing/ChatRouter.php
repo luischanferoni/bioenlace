@@ -83,9 +83,8 @@ final class ChatRouter
             'user_goal' => ChatPreprocessService::userGoalFromRoutingHint($routingHint, []),
             'action_text' => '',
             'extractions' => [],
-            'context_areas' => $routingHint === PreprocessRoutingHintCatalog::PATH_NEEDS_CONTEXT
-                || $routingHint === PreprocessRoutingHintCatalog::PEDIDO_CLARO
-                || $routingHint === PreprocessRoutingHintCatalog::PEDIDO_CLARO_MULTIPLE
+            'context_areas' => $routingHint === PreprocessRoutingHintCatalog::GUIDE
+                || $routingHint === PreprocessRoutingHintCatalog::PATH_NEEDS_CONTEXT
                 ? [AssistantContextHISArea::PRODUCT]
                 : [],
             'intent_ids_hint' => [],
@@ -187,9 +186,9 @@ final class ChatRouter
             $preprocess['context_areas'] = $areas;
 
             if (!ChatChannelPolicy::requestsOperationalTramiteExecution($content)) {
-                $preprocess['routing_hint'] = PreprocessRoutingHintCatalog::PEDIDO_CLARO;
+                $preprocess['routing_hint'] = PreprocessRoutingHintCatalog::GUIDE;
                 $preprocess['user_goal'] = ChatPreprocessService::userGoalFromRoutingHint(
-                    PreprocessRoutingHintCatalog::PEDIDO_CLARO,
+                    PreprocessRoutingHintCatalog::GUIDE,
                     is_array($preprocess['tags'] ?? null) ? $preprocess['tags'] : []
                 );
             }

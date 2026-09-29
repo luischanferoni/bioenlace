@@ -60,7 +60,7 @@ class AsistenteConsultasQaObserveEnvelopeTest extends Unit
         AssistantPlanningLogService::begin([
             'normalized_text' => 'pinchazo',
             'necesidad_usuario' => '',
-            'routing_hint' => 'pedido_claro',
+            'routing_hint' => 'guide',
             'tags' => [],
             'context_areas' => [],
             'extractions' => [],
@@ -72,7 +72,7 @@ class AsistenteConsultasQaObserveEnvelopeTest extends Unit
         ChatPreprocessContext::set([
             'ok' => true,
             'user_goal' => 'operational',
-            'routing_hint' => 'pedido_claro',
+            'routing_hint' => 'guide',
             'normalized_text' => 'pinchazo',
             'tags' => [],
             'context_areas' => [],
@@ -96,7 +96,7 @@ class AsistenteConsultasQaObserveEnvelopeTest extends Unit
         AssistantPlanningLogService::begin([
             'normalized_text' => 'es una urgencia',
             'necesidad_usuario' => '',
-            'routing_hint' => 'pedido_claro',
+            'routing_hint' => 'guide',
             'tags' => ['urgencia'],
             'context_areas' => [],
             'extractions' => [],
@@ -108,7 +108,7 @@ class AsistenteConsultasQaObserveEnvelopeTest extends Unit
         ChatPreprocessContext::set([
             'ok' => true,
             'user_goal' => 'operational',
-            'routing_hint' => 'pedido_claro',
+            'routing_hint' => 'guide',
             'normalized_text' => 'es una urgencia',
             'tags' => ['urgencia'],
             'context_areas' => [],

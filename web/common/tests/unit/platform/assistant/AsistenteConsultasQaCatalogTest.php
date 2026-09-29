@@ -72,7 +72,7 @@ class AsistenteConsultasQaCatalogTest extends Unit
     {
         $twoIa = AsistenteConsultasQaService::formatFlowLegendLines([
             'user_goal' => 'guide',
-            'routing_hint' => 'pedido_claro',
+            'routing_hint' => 'guide',
             'flow_intent_id' => '',
             'planning_applied' => [
                 'final_path' => '2ia_guide',
@@ -89,7 +89,7 @@ class AsistenteConsultasQaCatalogTest extends Unit
 
         $oneIa = AsistenteConsultasQaService::formatFlowLegendLines([
             'user_goal' => 'operational',
-            'routing_hint' => 'pedido_claro',
+            'routing_hint' => 'guide',
             'flow_intent_id' => '',
             'planning_applied' => [
                 'final_path' => '1ia_dudosa',

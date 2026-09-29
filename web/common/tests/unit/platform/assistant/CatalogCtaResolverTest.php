@@ -23,7 +23,7 @@ class CatalogCtaResolverTest extends Unit
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'necesito una ecografia',
             'user_goal' => 'guide',
-            'routing_hint' => 'pedido_claro',
+            'routing_hint' => 'guide',
             'tags' => ['estudio'],
             'context_areas' => [],
             'extractions' => [],
@@ -47,7 +47,7 @@ class CatalogCtaResolverTest extends Unit
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'necesito una ecografia',
             'user_goal' => 'guide',
-            'routing_hint' => 'pedido_claro',
+            'routing_hint' => 'guide',
             'tags' => ['estudio'],
             'context_areas' => [],
             'extractions' => [],

@@ -18,8 +18,8 @@ class ChatPreprocessPromptTest extends Unit
         $this->assertStringContainsString('tags', $prompt);
         $this->assertStringNotContainsString('context_areas', $prompt);
         $this->assertStringNotContainsString('Áreas HIS', $prompt);
-        $this->assertStringContainsString('pedido_claro', $prompt);
-        $this->assertStringContainsString('pedido_fuera_his', $prompt);
+        $this->assertStringContainsString('guide', $prompt);
+        $this->assertStringContainsString('fuera_his', $prompt);
         $this->assertStringContainsString('sin_pedido', $prompt);
         $this->assertStringContainsString('Historial reciente', $prompt);
     }

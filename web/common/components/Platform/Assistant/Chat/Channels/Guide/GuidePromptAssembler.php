@@ -9,7 +9,9 @@ use common\components\Platform\Assistant\Catalog\StateTagIndex;
 use common\components\Platform\Assistant\Context\AssistantContextAssemblyService;
 use common\components\Platform\Assistant\Context\AssistantContextHISArea;
 use common\components\Platform\Assistant\Chat\ChatPreprocessContext;
+use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
 use common\components\Platform\Assistant\Chat\Thread\ThreadNeedList;
+use common\components\Platform\Assistant\Copy\AssistantChannelCopy;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalog;
 use common\components\Platform\Assistant\Planning\SmartCatalogRoutingEvaluation;
 use Yii;
@@ -46,9 +48,11 @@ final class GuidePromptAssembler
       $messageForPrompt = $content;
     }
 
+    $intentSemantics = GuideIntentSemanticsFilter::formatPromptSection($catalog, $activeAreas);
+    $intentSemantics = self::applyPerimeterToIntentSemantics($messageForPrompt, $intentSemantics);
+
     return GuideChannelConfig::assemblePrompt([
       'necesidad_usuario' => self::resolveNecesidadUsuario($messageForPrompt),
-      'context_his_areas_lines' => self::formatContextHisAreasLines($activeAreas),
       'scoped_system_records' => GuideChannelConfig::formatOptionalAttachment(
         'scoped_system_records',
         trim($assembled->promptSection)
@@ -57,7 +61,7 @@ final class GuidePromptAssembler
         'clinical_record',
         self::formatClinicalRecordData()
       ),
-      'intent_semantics' => GuideIntentSemanticsFilter::formatPromptSection($catalog, $activeAreas),
+      'intent_semantics' => $intentSemantics,
       'article_block' => GuideChannelConfig::formatOptionalAttachment(
         'article',
         trim((string) $articleData)
@@ -104,13 +108,13 @@ final class GuidePromptAssembler
     if ($intentSemantics === '') {
       $intentSemantics = GuideIntentSemanticsFilter::formatPromptSection($catalog, $areas);
     }
+    $intentSemantics = self::applyPerimeterToIntentSemantics($messageForPrompt, $intentSemantics);
 
     return GuideChannelConfig::assemblePrompt([
       'necesidad_usuario' => self::resolveNecesidadUsuario(
         $messageForPrompt,
         is_array($firstIa) ? $firstIa : null
       ),
-      'context_his_areas_lines' => self::formatContextHisAreasLines($areas),
       'scoped_system_records' => GuideChannelConfig::formatOptionalAttachment(
         'scoped_system_records',
         trim($scopedSystemRecords)
@@ -124,6 +128,18 @@ final class GuidePromptAssembler
       'conversation_history' => trim($history),
       'current_message' => $messageForPrompt,
     ]);
+  }
+
+  /**
+   * Pedido sobre tercero: sin funcionalidades de turno/atención; con límites de producto.
+   */
+  private static function applyPerimeterToIntentSemantics(string $content, string $intentSemantics): string
+  {
+    if (!ChatChannelPolicy::isCareAboutThirdParty($content)) {
+      return $intentSemantics;
+    }
+
+    return trim(AssistantChannelCopy::t('guide_perimeter_third_party'));
   }
 
   /**
@@ -209,27 +225,6 @@ final class GuidePromptAssembler
     }
 
     return AssistantContextHISArea::sortByProductPriority($areas);
-  }
-
-  /**
-   * @param list<string> $activeAreas
-   */
-  private static function formatContextHisAreasLines(array $activeAreas): string
-  {
-    if ($activeAreas === []) {
-      return '';
-    }
-
-    $lines = [];
-    foreach ($activeAreas as $area) {
-      $desc = trim(AssistantContextHISArea::description($area));
-      if ($desc === '') {
-        continue;
-      }
-      $lines[] = '- ' . $desc;
-    }
-
-    return implode("\n", $lines);
   }
 
   /**

@@ -31,7 +31,7 @@ class SmartCatalogConversationalQaTest extends Unit
             'efecto_adverso' => [
                 'quiero informar un efecto adverso de una medicacion',
                 [
-                    'routing_hint' => 'pedido_claro',
+                    'routing_hint' => 'guide',
                     'tags' => ['sintomas'],
                     'context_areas' => ['medication'],
                     'extractions' => [
@@ -43,7 +43,7 @@ class SmartCatalogConversationalQaTest extends Unit
             'sintoma_panza' => [
                 'me duele la panza',
                 [
-                    'routing_hint' => 'pedido_claro',
+                    'routing_hint' => 'guide',
                     'tags' => ['sintomas'],
                     'context_areas' => [],
                     'extractions' => [
@@ -55,7 +55,7 @@ class SmartCatalogConversationalQaTest extends Unit
             'turno_cardiologo' => [
                 'quiero un turno con el cardiologo',
                 [
-                    'routing_hint' => 'pedido_claro',
+                    'routing_hint' => 'guide',
                     'tags' => ['turno'],
                     'context_areas' => ['scheduling'],
                     'extractions' => [
@@ -67,7 +67,7 @@ class SmartCatalogConversationalQaTest extends Unit
             'turno_bare' => [
                 'quiero un turno',
                 [
-                    'routing_hint' => 'pedido_claro',
+                    'routing_hint' => 'guide',
                     'tags' => ['turno'],
                     'context_areas' => ['scheduling'],
                     'extractions' => [
@@ -79,7 +79,7 @@ class SmartCatalogConversationalQaTest extends Unit
             'estudio_ecografia' => [
                 'necesito una ecografia',
                 [
-                    'routing_hint' => 'pedido_claro',
+                    'routing_hint' => 'guide',
                     'tags' => ['estudio'],
                     'context_areas' => [],
                     'extractions' => [
@@ -91,7 +91,7 @@ class SmartCatalogConversationalQaTest extends Unit
             'mis_turnos' => [
                 'cuales son mis turnos',
                 [
-                    'routing_hint' => 'pedido_claro',
+                    'routing_hint' => 'guide',
                     'tags' => ['mis_turnos'],
                     'context_areas' => ['scheduling'],
                     'extractions' => [
@@ -103,7 +103,7 @@ class SmartCatalogConversationalQaTest extends Unit
             'llegar_tarde' => [
                 'llego 10 min tarde hay problema',
                 [
-                    'routing_hint' => 'pedido_claro',
+                    'routing_hint' => 'guide',
                     'tags' => ['llegar_tarde', 'scheduling'],
                     'context_areas' => ['scheduling'],
                 ],
@@ -112,7 +112,7 @@ class SmartCatalogConversationalQaTest extends Unit
             'representacion' => [
                 'contame representacion puedo operar por mi sobrino',
                 [
-                    'routing_hint' => 'pedido_claro',
+                    'routing_hint' => 'guide',
                     'tags' => ['representacion', 'tutela'],
                     'context_areas' => ['person'],
                 ],
@@ -121,7 +121,7 @@ class SmartCatalogConversationalQaTest extends Unit
             'fuera_his_medium' => [
                 'necesito una sesion con una medium',
                 [
-                    'routing_hint' => 'pedido_fuera_his',
+                    'routing_hint' => 'fuera_his',
                     'tags' => ['fuera_his'],
                     'context_areas' => [],
                 ],
@@ -139,7 +139,7 @@ class SmartCatalogConversationalQaTest extends Unit
             'listar_profesionales' => [
                 'listar profesionales del centro',
                 [
-                    'routing_hint' => 'pedido_claro',
+                    'routing_hint' => 'guide',
                     'tags' => ['profesionales'],
                     'context_areas' => ['geo_resources'],
                     'extractions' => [

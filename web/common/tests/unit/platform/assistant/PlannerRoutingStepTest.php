@@ -76,7 +76,7 @@ class PlannerRoutingStepTest extends Unit
 
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'consulta vaga sobre turnos',
-            'routing_hint' => 'pedido_claro',
+            'routing_hint' => 'guide',
             'necesidad_usuario' => 'Entender algo sobre mis turnos.',
             'tags' => ['scheduling'],
             'context_areas' => ['scheduling'],
@@ -132,7 +132,7 @@ class PlannerRoutingStepTest extends Unit
         AssistantPlanningLogService::begin([
             'normalized_text' => 'test',
             'necesidad_usuario' => 'test',
-            'routing_hint' => 'pedido_claro',
+            'routing_hint' => 'guide',
             'tags' => [],
             'context_areas' => [],
             'extractions' => [],

@@ -165,7 +165,7 @@ class AssistantCatalogSourceOfTruthTest extends Unit
     public function testRoutingHintTechnicalMapsLiveInPhp(): void
     {
         $this->assertSame(
-            PreprocessRoutingHintCatalog::PEDIDO_CLARO,
+            PreprocessRoutingHintCatalog::GUIDE,
             PreprocessRoutingHintCatalog::routingHintFromLegacyGoal('guide')
         );
         $this->assertContains(
@@ -174,7 +174,7 @@ class AssistantCatalogSourceOfTruthTest extends Unit
         );
     }
 
-    public function testLegacyUserGoalDoesNotAliasPhpPathsAsHints(): void
+    public function testLegacyUserGoalMapsHintsAndPathsToThreadGoals(): void
     {
         $this->assertSame(
             'guide',
@@ -183,20 +183,26 @@ class AssistantCatalogSourceOfTruthTest extends Unit
             )
         );
         $this->assertSame(
-            'operational',
+            'guide',
             PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint(
                 PreprocessRoutingHintCatalog::PATH_MATCH_DIRECT
             )
         );
         $this->assertSame(
-            'operational',
+            'guide',
             PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint(
-                PreprocessRoutingHintCatalog::PEDIDO_CLARO
+                PreprocessRoutingHintCatalog::GUIDE
             )
         );
         $this->assertSame(
             'guide',
             PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint('incompletas')
+        );
+        $this->assertSame(
+            'ambiguous',
+            PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint(
+                PreprocessRoutingHintCatalog::SIN_PEDIDO
+            )
         );
     }
 }

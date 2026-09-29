@@ -65,7 +65,7 @@ class DeclarativePlanServiceTest extends Unit
         $first = AssistantFirstIaAdapter::fromPreprocess([
             'normalized_text' => 'Quiero un turno con el dentista',
             'user_goal' => 'guide',
-            'routing_hint' => 'pedido_claro',
+            'routing_hint' => 'guide',
             'tags' => ['scheduling'],
             'context_areas' => ['scheduling'],
             'extractions' => [],
@@ -80,7 +80,7 @@ class DeclarativePlanServiceTest extends Unit
         $first = AssistantFirstIaAdapter::fromPreprocess([
             'normalized_text' => 'Quiero un turno',
             'user_goal' => 'guide',
-            'routing_hint' => 'pedido_claro',
+            'routing_hint' => 'guide',
             'tags' => ['scheduling'],
             'context_areas' => ['scheduling'],
             'extractions' => [],
@@ -181,7 +181,7 @@ class DeclarativePlanServiceTest extends Unit
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'Me duele la cabeza',
             'user_goal' => 'guide',
-            'routing_hint' => 'pedido_claro',
+            'routing_hint' => 'guide',
             'tags' => ['sintoma', 'necesito_atencion'],
             'context_areas' => [],
             'extractions' => [],
@@ -208,7 +208,7 @@ class DeclarativePlanServiceTest extends Unit
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'Cancelá el turno del martes',
             'user_goal' => 'operational',
-            'routing_hint' => 'pedido_claro',
+            'routing_hint' => 'guide',
             'tags' => ['cancelar_turno', 'scheduling'],
             'context_areas' => ['scheduling'],
             'extractions' => [],
@@ -223,7 +223,7 @@ class DeclarativePlanServiceTest extends Unit
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'Me duele la cabeza',
             'user_goal' => 'guide',
-            'routing_hint' => 'pedido_claro',
+            'routing_hint' => 'guide',
             'tags' => ['sintoma', 'necesito_atencion'],
             'context_areas' => [],
             'extractions' => [],
@@ -240,7 +240,7 @@ class DeclarativePlanServiceTest extends Unit
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'Mis análisis',
             'user_goal' => 'operational',
-            'routing_hint' => 'pedido_claro',
+            'routing_hint' => 'guide',
             'tags' => ['laboratorio'],
             'context_areas' => ['clinical'],
             'extractions' => [
@@ -285,7 +285,7 @@ class DeclarativePlanServiceTest extends Unit
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'Quiero un turno',
             'user_goal' => 'guide',
-            'routing_hint' => 'pedido_claro',
+            'routing_hint' => 'guide',
             'tags' => ['pedido_turno_sin_destino', 'scheduling'],
             'context_areas' => ['scheduling'],
             'extractions' => [],

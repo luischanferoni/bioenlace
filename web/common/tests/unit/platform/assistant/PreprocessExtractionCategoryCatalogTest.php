@@ -38,7 +38,7 @@ class PreprocessExtractionCategoryCatalogTest extends Unit
     public function testNormalizeKeepsSpansWithoutCategory(): void
     {
         $out = ChatPreprocessService::normalizeFromAi([
-            'routing_hint' => 'pedido_claro',
+            'routing_hint' => 'guide',
             'normalized_text' => 'turno con cardiólogo',
             'tags' => ['turno'],
             'extractions' => [
@@ -57,7 +57,7 @@ class PreprocessExtractionCategoryCatalogTest extends Unit
     {
         $prefix = ChatPreprocessService::stablePromptPrefix();
 
-        $this->assertStringContainsString('- pedido_claro —', $prefix);
+        $this->assertStringContainsString('- guide —', $prefix);
         $this->assertStringNotContainsString('- servicio —', $prefix);
         $this->assertStringNotContainsString('- efector —', $prefix);
         $this->assertStringNotContainsString('categories_json', $prefix);

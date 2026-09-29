@@ -1,7 +1,7 @@
 # Tipo: catalog
 # Propósito: áreas de contexto del asistente — id → texto para prompts.
 # Ids = carpetas de dominio (metadata/bioenlace/<dominio>/intents) o solo-contexto.
-# Consumidor: AssistantContextHISArea / Guide (líneas de ámbito).
+# Consumidor: AssistantContextHISArea (filtros de focus / intent semantics).
 # No poner aquí: mapas técnicos (van en PHP). HC Guide se adjunta siempre (no es un área).
 version: 2
 

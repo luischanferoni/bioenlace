@@ -154,7 +154,7 @@ final class OperationalChannel
             'ok' => true,
             'normalized_text' => $queryText,
             'necesidad_usuario' => $queryText,
-            'routing_hint' => PreprocessRoutingHintCatalog::PEDIDO_CLARO,
+            'routing_hint' => PreprocessRoutingHintCatalog::GUIDE,
             'tags' => [],
             'user_goal' => 'guide',
             'action_text' => '',

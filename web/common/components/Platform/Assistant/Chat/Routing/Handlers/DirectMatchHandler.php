@@ -11,7 +11,8 @@ use common\components\Platform\Assistant\Planning\SmartCatalogRoutingDecision;
 use common\components\Platform\Core\Permission\IntentAccessService;
 
 /**
- * Match directo: template de catálogo o artículo informativo sin 2ª IA.
+ * @deprecated El match a artículo/template ya no saltea Guide
+ * ({@see SmartCatalogRoutingHandlers}). Se mantiene por compat tests puntuales.
  */
 final class DirectMatchHandler
 {

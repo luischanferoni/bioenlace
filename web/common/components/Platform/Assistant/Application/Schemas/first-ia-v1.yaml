@@ -74,7 +74,7 @@ example:
       estado: satisfecha
     - expresion: "Quiere una ecografía."
       estado: activa
-  routing_hint: pedido_claro
+  routing_hint: guide
   tags: [estudio]
   extractions: []
   intent_ids_hint: []

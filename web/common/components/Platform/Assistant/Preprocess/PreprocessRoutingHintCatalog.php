@@ -9,19 +9,35 @@ use common\components\Platform\Core\Product\ProductMetadataPaths;
  * Catálogo cerrado de routing_hint del preprocess (capa IA).
  *
  * Textos para la IA: {@see catalog/preprocess-routing-hints.yaml}.
- * Paths de decisión PHP ({@see PATH_*}) son vocabulario interno del router/match;
- * no se piden al modelo ni viven en el YAML de hints.
+ * Paths de decisión PHP ({@see PATH_*}) son vocabulario interno de handlers
+ * mientras dura la migración a discovery unificado; no se piden al modelo.
+ *
+ * Hints canónicos: {@see GUIDE}, {@see FUERA_HIS}, {@see SIN_PEDIDO}.
  */
 final class PreprocessRoutingHintCatalog
 {
     /** Hints 1ª IA (lectura del mensaje). */
-    public const PEDIDO_CLARO = 'pedido_claro';
-    public const PEDIDO_CLARO_MULTIPLE = 'pedido_claro_multiple';
+    public const GUIDE = 'guide';
+    public const FUERA_HIS = 'fuera_his';
     public const SIN_PEDIDO = 'sin_pedido';
-    public const PEDIDO_FUERA_HIS = 'pedido_fuera_his';
 
     /**
-     * Paths de decisión PHP / routing_result (smart-catalog + handlers).
+     * @deprecated Usar {@see GUIDE}.
+     */
+    public const PEDIDO_CLARO = self::GUIDE;
+
+    /**
+     * @deprecated Usar {@see GUIDE}.
+     */
+    public const PEDIDO_CLARO_MULTIPLE = self::GUIDE;
+
+    /**
+     * @deprecated Usar {@see FUERA_HIS}.
+     */
+    public const PEDIDO_FUERA_HIS = self::FUERA_HIS;
+
+    /**
+     * Paths de decisión PHP / routing_result (handlers).
      * No son hints de IA.
      */
     public const PATH_MATCH_DIRECT = 'clara';
@@ -32,25 +48,31 @@ final class PreprocessRoutingHintCatalog
     public const TAG_IN_FLOW_QUESTION = 'in_flow_question';
 
     /**
-     * Alias de hints IA (respuestas viejas / tests).
+     * Alias → hint canónico (YAML viejo, respuestas IA, tests).
      *
      * @var array<string, string>
      */
     private const HINT_ALIASES = [
-        'clara' => self::PEDIDO_CLARO,
-        'incompletas' => self::PEDIDO_CLARO,
+        'pedido_claro' => self::GUIDE,
+        'pedido_claro_multiple' => self::GUIDE,
+        'pedido_fuera_his' => self::FUERA_HIS,
+        'clara' => self::GUIDE,
+        'incompletas' => self::GUIDE,
         'dudosa' => self::SIN_PEDIDO,
-        'fuera_de_his' => self::PEDIDO_FUERA_HIS,
-        'directo' => self::PEDIDO_CLARO,
+        'fuera_de_his' => self::FUERA_HIS,
+        'directo' => self::GUIDE,
+        'operational' => self::GUIDE,
+        'in_flow_question' => self::GUIDE,
+        'ambiguous' => self::SIN_PEDIDO,
     ];
 
     /**
      * @var array<string, string>
      */
     private const LEGACY_USER_GOAL_TO_HINT = [
-        'guide' => self::PEDIDO_CLARO,
-        'operational' => self::PEDIDO_CLARO,
-        'in_flow_question' => self::PEDIDO_CLARO,
+        'guide' => self::GUIDE,
+        'operational' => self::GUIDE,
+        'in_flow_question' => self::GUIDE,
         'ambiguous' => self::SIN_PEDIDO,
     ];
 
@@ -137,17 +159,16 @@ final class PreprocessRoutingHintCatalog
     }
 
     /**
-     * Hint IA → path PHP cuando no hay match 100 % que mande.
+     * Hint IA → path PHP de handler.
      */
     public static function decisionPathFromHint(string $routingHint): string
     {
         $routingHint = self::applyAlias($routingHint);
 
         return match ($routingHint) {
-            self::PEDIDO_FUERA_HIS => self::PATH_OUTSIDE,
+            self::FUERA_HIS => self::PATH_OUTSIDE,
             self::SIN_PEDIDO => self::PATH_NO_ACTION,
-            self::PEDIDO_CLARO_MULTIPLE => self::PATH_NEEDS_CONTEXT,
-            self::PEDIDO_CLARO => self::PATH_NEEDS_CONTEXT,
+            self::GUIDE => self::PATH_NEEDS_CONTEXT,
             default => self::PATH_NO_ACTION,
         };
     }
@@ -170,17 +191,16 @@ final class PreprocessRoutingHintCatalog
         return self::LEGACY_USER_GOAL_TO_HINT[$goal] ?? self::SIN_PEDIDO;
     }
 
+    /**
+     * Hint o path → user_goal de hilo (guide | ambiguous | in_flow_question).
+     */
     public static function legacyUserGoalFromRoutingHint(string $routingHintOrPath, bool $inFlowQuestion = false): string
     {
         if ($inFlowQuestion) {
             return self::TAG_IN_FLOW_QUESTION;
         }
         $raw = trim($routingHintOrPath);
-        // Paths PHP primero: no aplicar HINT_ALIASES (p. ej. incompletas ≠ pedido_claro).
-        if ($raw === self::PATH_MATCH_DIRECT) {
-            return 'operational';
-        }
-        if ($raw === self::PATH_NEEDS_CONTEXT) {
+        if ($raw === self::PATH_MATCH_DIRECT || $raw === self::PATH_NEEDS_CONTEXT) {
             return 'guide';
         }
         if ($raw === self::PATH_NO_ACTION || $raw === self::PATH_OUTSIDE) {
@@ -188,10 +208,7 @@ final class PreprocessRoutingHintCatalog
         }
 
         $id = self::applyAlias($raw);
-        if ($id === self::PEDIDO_CLARO) {
-            return 'operational';
-        }
-        if ($id === self::PEDIDO_CLARO_MULTIPLE) {
+        if ($id === self::GUIDE) {
             return 'guide';
         }
 
@@ -230,15 +247,27 @@ final class PreprocessRoutingHintCatalog
         $ids = [];
         $descriptions = [];
         foreach ($rawHints as $id => $desc) {
-            $id = trim((string) $id);
-            if ($id === '') {
+            $id = self::applyAlias(trim((string) $id));
+            if ($id === '' || !self::isCanonicalHint($id)) {
                 continue;
             }
-            $ids[] = $id;
-            $descriptions[$id] = trim((string) $desc);
+            if (!in_array($id, $ids, true)) {
+                $ids[] = $id;
+            }
+            $text = trim((string) $desc);
+            if ($text !== '' && !isset($descriptions[$id])) {
+                $descriptions[$id] = $text;
+            }
         }
 
         self::$idsCache = $ids;
         self::$descriptionCache = $descriptions;
+    }
+
+    private static function isCanonicalHint(string $id): bool
+    {
+        return $id === self::GUIDE
+            || $id === self::FUERA_HIS
+            || $id === self::SIN_PEDIDO;
     }
 }

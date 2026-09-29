@@ -27,24 +27,22 @@ final class SmartCatalogRoutingHandlers
         }
 
         if ($decision->isMatch100()) {
-            if ($decision->isDirectArticle() || $decision->isDirectTemplate()) {
-                $envelope = DirectMatchHandler::handle($decision, $content, $userId);
-                if ($envelope !== null) {
-                    AssistantPlanningLogService::setFinalPath('1ia_direct');
-
-                    return $envelope;
-                }
-
-                return null;
-            }
-
-            if ($decision->shouldRouteIntentDirectly()) {
+            // Artículo / template / intent: siempre Guide (2ª IA). Sin DirectMatch.
+            if (
+                $decision->isDirectArticle()
+                || $decision->isDirectTemplate()
+                || $decision->shouldRouteIntentDirectly()
+            ) {
                 $envelope = IncompleteRoutingHandler::handle($evaluation, $content, $userId);
                 if ($envelope !== null) {
                     return $envelope;
                 }
 
-                return ClaraRoutingHandler::handleSingle($content, $decision->primaryIntentId(), $userId);
+                if ($decision->shouldRouteIntentDirectly()) {
+                    return ClaraRoutingHandler::handleSingle($content, $decision->primaryIntentId(), $userId);
+                }
+
+                return null;
             }
         }
 

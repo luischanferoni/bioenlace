@@ -23,7 +23,7 @@ class GuidePromptAssemblerFocusLineTest extends Unit
         ChatPreprocessContext::clear();
     }
 
-    public function testIncludesDynamicFocusAreasFromPreprocess(): void
+    public function testDoesNotDumpHisAreaLinesIntoPrompt(): void
     {
         ChatPreprocessContext::set([
             'ok' => true,
@@ -42,10 +42,8 @@ class GuidePromptAssemblerFocusLineTest extends Unit
             null
         );
 
-        $this->assertStringContainsString('Citas y turnos', $prompt);
-        $this->assertStringContainsString('Ambito/s del sistema de información hospitalaria', $prompt);
-        $this->assertStringNotContainsString('scheduling', $prompt);
-        $this->assertStringNotContainsString('turnos, estudios, controles', $prompt);
+        $this->assertStringNotContainsString('Ambito/s del sistema de información hospitalaria', $prompt);
+        $this->assertStringNotContainsString('{context_his_areas_lines}', $prompt);
         $this->assertStringNotContainsString('Tema de la consulta', $prompt);
         $this->assertStringNotContainsString('Ámbito de esta consulta', $prompt);
     }

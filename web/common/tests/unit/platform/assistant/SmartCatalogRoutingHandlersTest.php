@@ -66,7 +66,7 @@ class SmartCatalogRoutingHandlersTest extends Unit
     {
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'turnos',
-            'routing_hint' => 'pedido_claro',
+            'routing_hint' => 'guide',
             'tags' => ['scheduling'],
             'context_areas' => ['scheduling'],
             'intent_ids_hint' => [],
@@ -85,7 +85,7 @@ class SmartCatalogRoutingHandlersTest extends Unit
 
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'necesito una ecografia',
-            'routing_hint' => 'pedido_claro',
+            'routing_hint' => 'guide',
             'tags' => ['estudio'],
             'context_areas' => [],
             'extractions' => [],

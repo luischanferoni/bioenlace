@@ -15,7 +15,7 @@ class GuidePromptAssemblerIncompleteTest extends Unit
         AssistantMetadataLoader::resetCacheForTests();
     }
 
-    public function testIncompletePromptIncludesScopedRecordsAndAreas(): void
+    public function testIncompletePromptIncludesScopedRecordsAndNecesidad(): void
     {
         $prompt = GuidePromptAssembler::buildForIncomplete(
             [
@@ -32,9 +32,8 @@ class GuidePromptAssemblerIncompleteTest extends Unit
         $this->assertStringContainsString('site.appointment.policies', $prompt);
         $this->assertStringContainsString('Qué necesita la persona', $prompt);
         $this->assertStringContainsString('Saber si hay problema por llegar 10 minutos tarde.', $prompt);
-        $this->assertStringContainsString('Ambito/s del sistema de información hospitalaria', $prompt);
-        $this->assertStringContainsString('Citas y turnos', $prompt);
-        $this->assertStringNotContainsString('scheduling —', $prompt);
+        $this->assertStringNotContainsString('Ambito/s del sistema de información hospitalaria', $prompt);
+        $this->assertStringNotContainsString('{context_his_areas_lines}', $prompt);
         $this->assertStringNotContainsString('{necesidad_usuario}', $prompt);
     }
 

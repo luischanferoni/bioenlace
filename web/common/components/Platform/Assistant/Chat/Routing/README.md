@@ -1,17 +1,25 @@
 # Routing
 
-Post-preprocess unificado (`ChatRouter`):
+Post-preprocess unificado (`ChatRouter`).
+
+## Hints IA (canónicos)
+
+`guide` | `fuera_his` | `sin_pedido` — ver plan `docs/plans/asistente-discovery-unificado/`.
+
+## `routing_result` → handler (transición)
 
 | `routing_result` | Handler |
 |------------------|---------|
-| `clara` (match 100 % artículo/template) | `DirectMatchHandler` |
-| `clara` (match 100 % intent) | `ClaraRoutingHandler` |
+| `clara` (intent / artículo / template) | `IncompleteRoutingHandler` → Guide (2ª IA). Fallback botón: `ClaraRoutingHandler` |
 | `dudosa` | `DudosaRoutingHandler` |
 | `fuera_de_his` | `FueraDeHisHandler` |
 | `incompletas` | `IncompleteRoutingHandler` (+ opcional `PlannerRoutingStep`) |
 
-Fallback sin match handler: `LegacyRoutingFallback` (operational / dudosa / mensaje guide).
+`DirectMatchHandler` está deprecado (ya no se usa en el hot path).
 
-Eje de la 1ª IA / catálogo: `routing_hint` → `routing_result` (PHP). El `user_goal` del hilo (`guide` / `operational` / `ambiguous`) se deriva en `PreprocessRoutingHintCatalog` para thread-state y callers de canal; `guide` en hilo ≈ camino **incompletas**.
+Fallback sin match handler: `LegacyRoutingFallback`.
 
-ADR: `web/docs/decisions/asistente-catalogo-inteligente.md`
+El `user_goal` del hilo (`guide` / `ambiguous`) se deriva en `PreprocessRoutingHintCatalog`.
+
+Plan activo: `web/docs/plans/asistente-discovery-unificado/`.
+ADR vigente hasta cierre: `web/docs/decisions/asistente-catalogo-inteligente.md`.

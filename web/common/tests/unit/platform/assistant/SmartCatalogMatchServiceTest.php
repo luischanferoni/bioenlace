@@ -3,12 +3,18 @@
 namespace common\tests\unit\platform\assistant;
 
 use Codeception\Test\Unit;
+use common\components\Platform\Assistant\Catalog\DiscoveryIndex;
+use common\components\Platform\Assistant\Catalog\IntentSchemaPaths;
 use common\components\Platform\Assistant\Catalog\SmartCatalogMatchService;
 use common\components\Platform\Assistant\Catalog\SmartCatalogRegistry;
+use common\components\Platform\Assistant\Catalog\StateTagIndex;
 use common\components\Platform\Assistant\Context\AssistantContextAreaAspectCatalog;
 use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
 use common\components\Platform\Assistant\Planning\AssistantPlanningLogService;
 
+/**
+ * direct-doors vacío: el match legacy no rankea; discovery cubre intents.
+ */
 class SmartCatalogMatchServiceTest extends Unit
 {
     protected function _after(): void
@@ -17,36 +23,43 @@ class SmartCatalogMatchServiceTest extends Unit
         AssistantMetadataLoader::resetCacheForTests();
         AssistantContextAreaAspectCatalog::resetCacheForTests();
         AssistantPlanningLogService::resetForTests();
+        StateTagIndex::resetCacheForTests();
+        IntentSchemaPaths::resetIndexCache();
     }
 
-    public function testRegistryLoadsSeedEntries(): void
+    public function testRegistryHasNoDoorEntries(): void
     {
-        $entries = SmartCatalogRegistry::entries();
-
-        $this->assertNotEmpty($entries);
-        $this->assertNotNull(SmartCatalogRegistry::findById('llegar-tarde-politicas'));
+        $this->assertSame([], SmartCatalogRegistry::entries());
+        $this->assertNull(SmartCatalogRegistry::findById('llegar-tarde-politicas'));
     }
 
-    public function testMatchLlegarTardeScoresAppointmentsAspects(): void
+    public function testLegacyMatchIsEmptyWithoutDoors(): void
     {
         $result = SmartCatalogMatchService::match([
             'normalized_text' => '¿Voy a tener problemas si llego 10 minutos tarde?',
             'tags' => ['llegar_tarde', 'scheduling'],
             'context_areas' => ['scheduling'],
-            'extractions' => [
-                ['span' => '10 minutos', 'category' => 'servicio', 'synonyms' => []],
-            ],
         ], 0);
 
-        $this->assertFalse($result->isEmpty());
-        $this->assertSame('llegar-tarde-politicas', $result->best?->id);
-        $this->assertGreaterThanOrEqual(30, $result->bestScore);
-
-        $ids = array_column($result->ranked, 'catalog_id');
-        $this->assertContains('llegar-tarde-cita-actual', $ids);
+        $this->assertTrue($result->isEmpty());
+        $this->assertSame([], $result->ranked);
     }
 
-    public function testMatchFueraHisMedium(): void
+    public function testDiscoveryFindsPoliticaOnLlegarTardeTags(): void
+    {
+        $result = DiscoveryIndex::match([
+            'normalized_text' => '¿Voy a tener problemas si llego 10 minutos tarde?',
+            'tags' => ['llegar_tarde', 'tolerancia'],
+            'routing_hint' => 'guide',
+        ]);
+
+        $this->assertContains(
+            'turnos.consultar-politica-autogestion-flow',
+            $result->intentIds()
+        );
+    }
+
+    public function testFueraHisTagDoesNotNeedDoorEntry(): void
     {
         $result = SmartCatalogMatchService::match([
             'normalized_text' => 'necesito una sesion con una medium',
@@ -54,67 +67,6 @@ class SmartCatalogMatchServiceTest extends Unit
             'context_areas' => [],
         ], 0);
 
-        $this->assertSame('fuera-his-servicios-inexistentes', $result->best?->id);
-        $this->assertSame('fuera_de_his', $result->best?->routingResult);
-    }
-
-    public function testBareTurnoDoesNotRankArticleWithoutTrigger(): void
-    {
-        $result = SmartCatalogMatchService::match([
-            'normalized_text' => 'quiero un turno',
-            'tags' => ['pedido_turno_sin_destino', 'scheduling'],
-            'context_areas' => ['scheduling'],
-            'extractions' => [],
-        ], 0);
-
         $this->assertTrue($result->isEmpty());
-        $ids = array_column($result->ranked, 'catalog_id');
-        $this->assertNotContains('articulo-representacion', $ids);
-    }
-
-    public function testNoBaseScoreLeakWithoutTriggerHit(): void
-    {
-        $result = SmartCatalogMatchService::match([
-            'normalized_text' => 'hola',
-            'tags' => [],
-            'context_areas' => [],
-            'extractions' => [],
-        ], 0);
-
-        $this->assertTrue($result->isEmpty());
-        $this->assertSame([], $result->ranked);
-    }
-
-    public function testHistorialTurnosBeatsMisTurnosProximos(): void
-    {
-        $result = SmartCatalogMatchService::match([
-            'normalized_text' => 'Mostrame los turnos que ya tuve',
-            'tags' => ['historial_turnos', 'scheduling'],
-            'context_areas' => ['scheduling'],
-        ], 0);
-
-        $this->assertNull($result->best);
-    }
-
-    public function testPoliticaCancelacionBeatsCancelarFlow(): void
-    {
-        $result = SmartCatalogMatchService::match([
-            'normalized_text' => '¿Hasta cuándo puedo cancelar?',
-            'tags' => ['politica_turnos', 'scheduling'],
-            'context_areas' => ['scheduling'],
-        ], 0);
-
-        $this->assertNull($result->best);
-    }
-
-    public function testUltimaAtencionResumenBeatsHistorialTurnosNoise(): void
-    {
-        $result = SmartCatalogMatchService::match([
-            'normalized_text' => '¿Qué me dijo el médico ayer?',
-            'tags' => ['ultima_atencion', 'clinical'],
-            'context_areas' => ['clinical'],
-        ], 0);
-
-        $this->assertNull($result->best);
     }
 }

@@ -3,7 +3,9 @@
 namespace common\tests\unit\platform\assistant;
 
 use Codeception\Test\Unit;
+use common\components\Platform\Assistant\Catalog\IntentSchemaPaths;
 use common\components\Platform\Assistant\Catalog\SmartCatalogRegistry;
+use common\components\Platform\Assistant\Catalog\StateTagIndex;
 use common\components\Platform\Assistant\Context\AssistantContextAreaAspectCatalog;
 use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
 use common\components\Platform\Assistant\Planning\AssistantPlanningLogService;
@@ -11,15 +13,23 @@ use common\components\Platform\Assistant\Planning\SmartCatalogRoutingService;
 
 class SmartCatalogRoutingServiceTest extends Unit
 {
+    protected function _before(): void
+    {
+        StateTagIndex::resetCacheForTests();
+        IntentSchemaPaths::resetIndexCache();
+    }
+
     protected function _after(): void
     {
         SmartCatalogRegistry::resetCacheForTests();
         AssistantMetadataLoader::resetCacheForTests();
         AssistantContextAreaAspectCatalog::resetCacheForTests();
         AssistantPlanningLogService::resetForTests();
+        StateTagIndex::resetCacheForTests();
+        IntentSchemaPaths::resetIndexCache();
     }
 
-    public function testDirectArticleRepresentacion(): void
+    public function testRepresentacionGoesToGuideNotDirectDoor(): void
     {
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'contame sobre representacion de mi hijo',
@@ -30,10 +40,10 @@ class SmartCatalogRoutingServiceTest extends Unit
         ], 0);
 
         $decision = $evaluation->decision;
-        $this->assertSame('clara', $decision->routingResult);
-        $this->assertTrue($decision->isDirectArticle());
-        $this->assertSame('representacion', $decision->articleTopic);
-        $this->assertSame('articulo-representacion', $decision->catalogEntry?->id);
+        $this->assertFalse($decision->isFueraDeHis());
+        $this->assertFalse($decision->isDudosa());
+        $this->assertContains($decision->routingResult, ['incompletas', 'clara']);
+        $this->assertNull($decision->catalogEntry);
     }
 
     public function testClaraSingleIntentTurnosConDestino(): void
@@ -185,20 +195,23 @@ class SmartCatalogRoutingServiceTest extends Unit
         $this->assertNull($evaluation->decision->catalogEntry);
     }
 
-    public function testLlegarTardeRoutesIncompletas(): void
+    public function testLlegarTardeLoadsPoliciesViaDiscoveryIntent(): void
     {
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => '¿Voy a tener problemas si llego 10 minutos tarde?',
             'routing_hint' => 'guide',
-            'tags' => ['llegar_tarde', 'scheduling'],
-            'context_areas' => ['scheduling'],
+            'tags' => ['llegar_tarde', 'tolerancia'],
+            'context_areas' => [],
             'extractions' => [
                 ['span' => '10 minutos', 'synonyms' => []],
             ],
         ], 0);
 
-        $this->assertTrue($evaluation->decision->isIncompletas());
-        $this->assertFalse($evaluation->declarativePlan->needsPlanner);
+        $this->assertTrue($evaluation->decision->shouldRouteIntentDirectly());
+        $this->assertSame(
+            'turnos.consultar-politica-autogestion-flow',
+            $evaluation->decision->primaryIntentId()
+        );
         $this->assertContains(
             'aspect:site.appointment.policies',
             $evaluation->declarativePlan->toolIds

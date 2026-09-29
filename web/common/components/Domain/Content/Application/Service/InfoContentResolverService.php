@@ -169,6 +169,131 @@ final class InfoContentResolverService
         return $q->one();
     }
 
+    /**
+     * Rankea artículos activos por tags del preprocess y/o texto normalizado.
+     *
+     * @param list<string> $tags
+     * @return list<array{topic: string, score: int, title: string, article: InfoContentArticle}>
+     */
+    public static function rankByTagsAndText(
+        array $tags,
+        string $text,
+        ?int $idEfector = null,
+        ?int $idProvincia = null,
+        int $userId = 0,
+        int $max = 3
+    ): array {
+        $foldedText = ChatChannelPolicy::fold(trim($text));
+        $foldedTags = [];
+        foreach ($tags as $tag) {
+            if (!is_string($tag)) {
+                continue;
+            }
+            $folded = ChatChannelPolicy::fold(trim($tag));
+            if ($folded !== '' && !in_array($folded, $foldedTags, true)) {
+                $foldedTags[] = $folded;
+            }
+        }
+        if ($foldedText === '' && $foldedTags === []) {
+            return [];
+        }
+
+        try {
+            $candidates = InfoContentArticle::find()
+                ->where(['activo' => true])
+                ->orderBy(['priority' => SORT_DESC])
+                ->all();
+        } catch (\Throwable $e) {
+            return [];
+        }
+
+        /** @var list<array{article: InfoContentArticle, score: int}> $ranked */
+        $ranked = [];
+        foreach ($candidates as $article) {
+            $score = 0;
+            if ($foldedText !== '') {
+                $score += self::scoreArticleAgainstText($article, $foldedText);
+            }
+            $score += self::scoreArticleAgainstTags($article, $foldedTags);
+            if ($score > 0) {
+                $ranked[] = ['article' => $article, 'score' => $score];
+            }
+        }
+
+        usort($ranked, static fn (array $a, array $b): int => $b['score'] <=> $a['score']);
+
+        $out = [];
+        $seenTopics = [];
+        foreach ($ranked as $row) {
+            $topic = trim((string) $row['article']->topic);
+            if ($topic === '' || isset($seenTopics[$topic])) {
+                continue;
+            }
+            $seenTopics[$topic] = true;
+
+            $resolved = self::resolve($topic, $idEfector, $idProvincia);
+            if ($resolved === null) {
+                continue;
+            }
+            if ($userId > 0 && !self::isVisibleToUser($resolved, $userId)) {
+                continue;
+            }
+
+            $out[] = [
+                'topic' => $topic,
+                'score' => (int) $row['score'],
+                'title' => trim((string) $resolved->title),
+                'article' => $resolved,
+            ];
+            if (count($out) >= max(1, $max)) {
+                break;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param list<string> $foldedTags
+     */
+    private static function scoreArticleAgainstTags(InfoContentArticle $article, array $foldedTags): int
+    {
+        if ($foldedTags === []) {
+            return 0;
+        }
+
+        $score = 0;
+        $topicNorm = ChatChannelPolicy::fold((string) $article->topic);
+        foreach ($foldedTags as $tag) {
+            if ($topicNorm !== '' && self::sameTagConcept($tag, $topicNorm)) {
+                $score += 25;
+            }
+            foreach ($article->getKeywordList() as $kw) {
+                $kwNorm = ChatChannelPolicy::fold($kw);
+                if ($kwNorm !== '' && self::sameTagConcept($tag, $kwNorm)) {
+                    $score += 20;
+                }
+            }
+        }
+
+        return $score;
+    }
+
+    private static function sameTagConcept(string $a, string $b): bool
+    {
+        if ($a === $b) {
+            return true;
+        }
+        if (self::looseStem($a) === self::looseStem($b) && mb_strlen(self::looseStem($a)) >= 4) {
+            return true;
+        }
+
+        return $a . 's' === $b
+            || $b . 's' === $a
+            || $a . 'es' === $b
+            || $b . 'es' === $a;
+    }
+
     private static function provinciaFromEfector(int $idEfector): ?int
     {
         try {

@@ -2,17 +2,28 @@
 
 ## Objetivo
 
-Eliminar `direct-doors.yaml` y el uso de aspectos como puerta NL. Cobrir casos actuales con intent rico o artículo.
+Eliminar el uso de `direct-doors` como índice NL. Cobrir casos con intent rico o artículo BD.
 
-## Migraciones de contenido
+## Hecho
 
-| Hoy en direct-doors | Destino |
-|---------------------|---------|
-| `llegar-tarde-*` (aspect) | Intent Domain (tags + qué contexto cargar) **o** artículo BD |
-| `articulo-representacion` | Solo artículo BD (keywords/tags) |
-| `fuera-his-servicios-inexistentes` | Solo hint `fuera_his` (sin lista de frases en Platform) |
+| Antes (direct-doors) | Destino |
+|----------------------|---------|
+| `llegar-tarde-*` | Tags en `turnos.consultar-politica-autogestion-flow` + aspectos vía área `scheduling` |
+| `articulo-representacion` | Artículo BD `representacion` vía `DiscoveryIndex` |
+| `fuera-his-*` | Hint/tag `fuera_his` → `FueraDeHisHandler` (copy en `smart-catalog-routing.yaml`) |
+
+- `direct-doors.yaml` → `entries: []`
+- `SmartCatalogRoutingService` ya no llama a `SmartCatalogMatchService`; usa `DiscoveryIndex`
+- `PreprocessTagVocabularyCatalog` deriva tags de `StateTagIndex` + extras PHP (no del catálogo de puertas)
+- Tests de match/routing/QA conversacional actualizados
 
 ## Criterio de hecho
 
-- No hay referencias a `direct-doors` / `SmartCatalogRegistry` en el hot path de routing.
-- QA “llego tarde” / representación / fuera HIS siguen pasando por el modelo nuevo.
+- [x] Hot path de routing sin entradas de puertas
+- [x] Llegar tarde → intent política + `aspect:site.appointment.policies`
+- [x] Fuera HIS por hint/tag
+- [ ] Smoke QA manual representación con BD seed
+
+## Siguiente
+
+Fase 04: docs producto/ADR y cierre del plan.

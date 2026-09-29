@@ -3,9 +3,8 @@
 namespace common\components\Platform\Assistant\Chat\Channels\Guide;
 
 use common\components\Domain\Clinical\Encounter\Application\Service\PatientAiContextService;
+use common\components\Platform\Assistant\Catalog\DiscoveryIndex;
 use common\components\Platform\Assistant\Catalog\IntentSemanticsPromptFormatter;
-use common\components\Platform\Assistant\Catalog\SmartCatalogRegistry;
-use common\components\Platform\Assistant\Catalog\StateTagIndex;
 use common\components\Platform\Assistant\Context\AssistantContextAssemblyService;
 use common\components\Platform\Assistant\Context\AssistantContextHISArea;
 use common\components\Platform\Assistant\Chat\ChatPreprocessContext;
@@ -104,11 +103,16 @@ final class GuidePromptAssembler
     }
 
     $catalog = UiActionCatalog::forUser($userId);
-    $intentSemantics = self::formatIncompleteIntentSemantics($evaluation);
+    $intentSemantics = self::formatIncompleteIntentSemantics($firstIa, $evaluation);
     if ($intentSemantics === '') {
       $intentSemantics = GuideIntentSemanticsFilter::formatPromptSection($catalog, $areas);
     }
     $intentSemantics = self::applyPerimeterToIntentSemantics($messageForPrompt, $intentSemantics);
+
+    $articleBlock = trim($articleBlock);
+    if ($articleBlock === '') {
+      $articleBlock = DiscoveryIndex::formatTopArticleBlock($firstIa, $content, $userId);
+    }
 
     return GuideChannelConfig::assemblePrompt([
       'necesidad_usuario' => self::resolveNecesidadUsuario(
@@ -124,7 +128,7 @@ final class GuidePromptAssembler
         self::formatClinicalRecordData()
       ),
       'intent_semantics' => $intentSemantics,
-      'article_block' => trim($articleBlock),
+      'article_block' => $articleBlock,
       'conversation_history' => trim($history),
       'current_message' => $messageForPrompt,
     ]);
@@ -176,42 +180,17 @@ final class GuidePromptAssembler
   }
 
   private static function formatIncompleteIntentSemantics(
+    array $firstIa,
     ?SmartCatalogRoutingEvaluation $evaluation
   ): string {
-    if ($evaluation === null) {
+    $fromEval = is_array($evaluation?->firstIa) ? $evaluation->firstIa : [];
+    $payload = $fromEval !== [] ? $fromEval : $firstIa;
+    $discovery = DiscoveryIndex::match($payload, '', 0);
+    if ($discovery->intentHits === []) {
       return '';
     }
 
-    $hits = StateTagIndex::match(StateTagIndex::needles($evaluation->firstIa));
-    if ($hits !== []) {
-      return IntentSemanticsPromptFormatter::formatStateHits($hits);
-    }
-
-    $ids = [];
-    $entry = $evaluation->decision->catalogEntry;
-    if ($entry !== null) {
-      foreach ($entry->ctaIntentIds as $id) {
-        $ids[] = $id;
-      }
-    }
-    foreach ($evaluation->match->ranked as $row) {
-      $catalogId = trim((string) ($row['catalog_id'] ?? ''));
-      if ($catalogId === '') {
-        continue;
-      }
-      $rankedEntry = SmartCatalogRegistry::findById($catalogId);
-      if ($rankedEntry === null) {
-        continue;
-      }
-      foreach ($rankedEntry->ctaIntentIds as $id) {
-        $ids[] = $id;
-      }
-      if ($rankedEntry->toolType === 'intent' && $rankedEntry->toolRef !== '') {
-        $ids[] = $rankedEntry->toolRef;
-      }
-    }
-
-    return IntentSemanticsPromptFormatter::formatForIntentIds($ids, 4);
+    return IntentSemanticsPromptFormatter::formatStateHits($discovery->intentHits);
   }
 
   /**

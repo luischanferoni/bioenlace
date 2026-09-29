@@ -2,10 +2,9 @@
 
 namespace common\components\Platform\Assistant\Planning;
 
-use common\components\Platform\Assistant\Catalog\SmartCatalogEntry;
+use common\components\Platform\Assistant\Catalog\DiscoveryIndex;
+use common\components\Platform\Assistant\Catalog\DiscoveryResult;
 use common\components\Platform\Assistant\Catalog\SmartCatalogMatchResult;
-use common\components\Platform\Assistant\Catalog\StateTagIndex;
-use common\components\Platform\Assistant\Catalog\SmartCatalogMatchService;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
 use common\components\Platform\Assistant\Context\AssistantContextAreaDerivation;
 use common\components\Platform\Assistant\Context\AssistantContextAnchorResolver;
@@ -15,7 +14,9 @@ use common\components\Platform\Assistant\Preprocess\PreprocessRoutingHintCatalog
 use common\components\Platform\Core\Product\ProductMetadataPaths;
 
 /**
- * Orquesta match + plan declarativo + log de planificación.
+ * Orquesta discovery (tags) + plan declarativo + decisión de canal.
+ *
+ * Ya no usa smart-catalog / direct-doors en el hot path.
  */
 final class SmartCatalogRoutingService
 {
@@ -25,25 +26,41 @@ final class SmartCatalogRoutingService
     public static function evaluate(array $preprocess, int $userId, string $rawContent = ''): SmartCatalogRoutingEvaluation
     {
         $firstIa = AssistantFirstIaAdapter::fromPreprocess($preprocess, $rawContent);
-        $match = SmartCatalogMatchService::match($firstIa, $userId);
+        $message = trim($rawContent);
+        if ($message === '') {
+            $message = trim((string) ($firstIa['normalized_text'] ?? ''));
+        }
+
+        $discovery = DiscoveryIndex::match($firstIa, $message, $userId);
+        $match = self::emptyMatch();
+
         $firstIa['context_areas'] = self::mergeDerivedAreas(
             is_array($firstIa['context_areas']) ? $firstIa['context_areas'] : [],
-            AssistantContextAreaDerivation::fromMatch($match)
+            AssistantContextAreaDerivation::fromIntentIds($discovery->intentIds(8))
         );
+        // Artículo discovery: área person si el hit es representación-like y no hay intent.
+        if ($discovery->primaryArticleTopic() !== '' && $firstIa['context_areas'] === []) {
+            $topic = $discovery->primaryArticleTopic();
+            if ($topic === 'representacion' || str_contains($topic, 'represent')) {
+                $firstIa['context_areas'] = [AssistantContextHISArea::PERSON];
+            }
+        }
+
         $extractions = is_array($firstIa['extractions']) ? $firstIa['extractions'] : [];
         $anchors = AssistantContextAnchorResolver::resolve($userId, $extractions);
         $areas = is_array($firstIa['context_areas']) ? $firstIa['context_areas'] : [];
 
-        $declarative = DeclarativePlanService::plan($areas, $extractions, $anchors, $match);
+        $declarative = DeclarativePlanService::plan($areas, $extractions, $anchors, null);
+        $declarative = self::mergeDiscoveryArticles($declarative, $discovery);
 
-        AssistantPlanningLogService::begin($firstIa, $match->ranked);
+        AssistantPlanningLogService::begin($firstIa, []);
         AssistantPlanningLogService::setDeclarativePlan(
             $declarative->toolIds,
             $declarative->reason,
             $declarative->needsPlanner
         );
 
-        $decision = self::resolveRouting($firstIa, $match, $rawContent);
+        $decision = self::resolveRouting($firstIa, $discovery, $message);
         AssistantPlanningLogService::setRoutingResult($decision->routingResult);
 
         return new SmartCatalogRoutingEvaluation($firstIa, $match, $decision, $declarative);
@@ -54,50 +71,29 @@ final class SmartCatalogRoutingService
      */
     private static function resolveRouting(
         array $firstIa,
-        SmartCatalogMatchResult $match,
-        string $rawContent = ''
+        DiscoveryResult $discovery,
+        string $message
     ): SmartCatalogRoutingDecision {
-        $message = trim($rawContent);
-        if ($message === '') {
-            $message = trim((string) ($firstIa['normalized_text'] ?? ''));
-        }
         if (ChatChannelPolicy::isGreetingOnly($message)) {
             return self::greetingDecision();
         }
 
-        $best = $match->best;
         $hint = PreprocessRoutingHintCatalog::applyAlias(
             (string) ($firstIa['routing_hint'] ?? PreprocessRoutingHintCatalog::SIN_PEDIDO)
         );
         $areas = is_array($firstIa['context_areas']) ? $firstIa['context_areas'] : [];
+        $tags = is_array($firstIa['tags'] ?? null) ? $firstIa['tags'] : [];
 
-        if ($best !== null && $match->isClearWinner) {
-            if (
-                $best->matchOnly
-                && $best->routingResult === PreprocessRoutingHintCatalog::PATH_OUTSIDE
-            ) {
-                return self::fueraDeHisDecision($best);
-            }
-
-            $full = self::match100Decision($best);
-            if ($full !== null) {
-                return $full;
-            }
+        if ($hint === PreprocessRoutingHintCatalog::FUERA_HIS || self::hasFueraHisTag($tags)) {
+            return self::fueraDeHisDecision();
         }
 
-        if (
-            $hint === PreprocessRoutingHintCatalog::FUERA_HIS
-            || ($best !== null && $best->routingResult === PreprocessRoutingHintCatalog::PATH_OUTSIDE)
-        ) {
-            return self::fueraDeHisDecision($best);
-        }
-
-        $fromStates = self::stateTagDecision($firstIa, $message, $best);
+        $fromStates = self::stateTagDecision($discovery);
         if ($fromStates !== null) {
             return $fromStates;
         }
 
-        if ($hint === PreprocessRoutingHintCatalog::SIN_PEDIDO && $areas === []) {
+        if ($hint === PreprocessRoutingHintCatalog::SIN_PEDIDO && $areas === [] && $discovery->isEmpty()) {
             return new SmartCatalogRoutingDecision(
                 PreprocessRoutingHintCatalog::PATH_NO_ACTION,
                 PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint(
@@ -106,25 +102,24 @@ final class SmartCatalogRoutingService
                 [],
                 '',
                 '',
-                $best,
+                null,
             );
         }
 
-        // Pedido (guide) sin match 100 %, o fila/área HIS → Guide.
         if (
             $hint === PreprocessRoutingHintCatalog::GUIDE
-            || ($best !== null && $best->routingResult === PreprocessRoutingHintCatalog::PATH_NEEDS_CONTEXT)
-            || ($areas !== [] && !$match->isClearWinner)
+            || !$discovery->isEmpty()
+            || $areas !== []
         ) {
             return new SmartCatalogRoutingDecision(
                 PreprocessRoutingHintCatalog::PATH_NEEDS_CONTEXT,
                 PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint(
                     PreprocessRoutingHintCatalog::PATH_NEEDS_CONTEXT
                 ),
-                [],
+                $discovery->intentIds(4),
                 '',
-                '',
-                $best,
+                $discovery->primaryArticleTopic(),
+                null,
             );
         }
 
@@ -136,31 +131,13 @@ final class SmartCatalogRoutingService
             [],
             '',
             '',
-            $best,
+            null,
         );
     }
 
-    private static function stateTagDecision(
-        array $firstIa,
-        string $message,
-        ?SmartCatalogEntry $best
-    ): ?SmartCatalogRoutingDecision {
-        $hits = StateTagIndex::match(StateTagIndex::needles($firstIa, $message));
-        if ($hits === []) {
-            return null;
-        }
-
-        $ids = [];
-        foreach ($hits as $hit) {
-            $intentId = trim((string) ($hit['intent_id'] ?? ''));
-            if ($intentId === '' || in_array($intentId, $ids, true)) {
-                continue;
-            }
-            $ids[] = $intentId;
-            if (count($ids) >= 4) {
-                break;
-            }
-        }
+    private static function stateTagDecision(DiscoveryResult $discovery): ?SmartCatalogRoutingDecision
+    {
+        $ids = $discovery->intentIds(4);
         if ($ids === []) {
             return null;
         }
@@ -174,14 +151,11 @@ final class SmartCatalogRoutingService
             PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint($path),
             $ids,
             '',
-            '',
-            $best,
+            $discovery->primaryArticleTopic(),
+            null,
         );
     }
 
-    /**
-     * Saludo solo: preguntas fijas, sin guía ni fila de catálogo.
-     */
     private static function greetingDecision(): SmartCatalogRoutingDecision
     {
         return new SmartCatalogRoutingDecision(
@@ -196,49 +170,7 @@ final class SmartCatalogRoutingService
         );
     }
 
-    private static function match100Decision(SmartCatalogEntry $best): ?SmartCatalogRoutingDecision
-    {
-        $goal = PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint(
-            PreprocessRoutingHintCatalog::PATH_MATCH_DIRECT
-        );
-
-        if ($best->toolType === 'article' && $best->toolRef !== '') {
-            return new SmartCatalogRoutingDecision(
-                PreprocessRoutingHintCatalog::PATH_MATCH_DIRECT,
-                $goal,
-                [],
-                '',
-                $best->toolRef,
-                $best,
-            );
-        }
-
-        if ($best->responseTemplate !== '') {
-            return new SmartCatalogRoutingDecision(
-                PreprocessRoutingHintCatalog::PATH_MATCH_DIRECT,
-                $goal,
-                [],
-                $best->responseTemplate,
-                '',
-                $best,
-            );
-        }
-
-        if ($best->toolType === 'intent' && $best->toolRef !== '') {
-            return new SmartCatalogRoutingDecision(
-                PreprocessRoutingHintCatalog::PATH_MATCH_DIRECT,
-                $goal,
-                [$best->toolRef],
-                '',
-                '',
-                $best,
-            );
-        }
-
-        return null;
-    }
-
-    private static function fueraDeHisDecision(?SmartCatalogEntry $entry): SmartCatalogRoutingDecision
+    private static function fueraDeHisDecision(): SmartCatalogRoutingDecision
     {
         return new SmartCatalogRoutingDecision(
             PreprocessRoutingHintCatalog::PATH_OUTSIDE,
@@ -248,7 +180,7 @@ final class SmartCatalogRoutingService
             [],
             self::fueraDeHisText(),
             '',
-            $entry,
+            null,
         );
     }
 
@@ -257,12 +189,12 @@ final class SmartCatalogRoutingService
         $config = AssistantMetadataLoader::load(ProductMetadataPaths::smartCatalogRoutingFile());
         $text = AssistantMetadataLoader::dotString($config, 'fuera_de_his_text');
 
-        return $text !== '' ? $text : 'No puedo ayudarte con esa consulta desde el asistente del sistema de salud.';
+        return $text !== ''
+            ? $text
+            : 'No puedo ayudarte con esa consulta desde el asistente del sistema de salud.';
     }
 
     /**
-     * Conserva áreas solo-contexto forzadas por PHP y suma dominios del match.
-     *
      * @param list<string> $existing
      * @param list<string> $derived
      * @return list<string>
@@ -281,5 +213,62 @@ final class SmartCatalogRoutingService
         }
 
         return AssistantContextHISArea::sortByProductPriority(array_merge($kept, $derived));
+    }
+
+    private static function mergeDiscoveryArticles(
+        DeclarativePlanResult $plan,
+        DiscoveryResult $discovery
+    ): DeclarativePlanResult {
+        $toolIds = $plan->toolIds;
+        $reasons = $plan->reason !== '' ? [$plan->reason] : [];
+        foreach ($discovery->articleHits as $hit) {
+            $topic = trim((string) ($hit['topic'] ?? ''));
+            if ($topic === '') {
+                continue;
+            }
+            $toolId = 'article:' . $topic;
+            if (!in_array($toolId, $toolIds, true)) {
+                $toolIds[] = $toolId;
+                $reasons[] = 'discovery:article:' . $topic;
+            }
+        }
+        $toolIds = array_values(array_unique($toolIds));
+        $needsPlanner = $plan->needsPlanner;
+        $plannerReason = $plan->plannerReason;
+        if ($toolIds !== [] && $plannerReason === 'empty_plan') {
+            $needsPlanner = false;
+            $plannerReason = null;
+        }
+
+        return new DeclarativePlanResult(
+            $toolIds,
+            implode('; ', array_filter($reasons)),
+            $needsPlanner,
+            $plannerReason,
+        );
+    }
+
+    /**
+     * @param list<mixed> $tags
+     */
+    private static function hasFueraHisTag(array $tags): bool
+    {
+        foreach ($tags as $tag) {
+            if (!is_string($tag)) {
+                continue;
+            }
+            if (PreprocessRoutingHintCatalog::applyAlias(trim($tag)) === PreprocessRoutingHintCatalog::FUERA_HIS
+                || trim($tag) === 'fuera_his'
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function emptyMatch(): SmartCatalogMatchResult
+    {
+        return new SmartCatalogMatchResult([], null, 0, false);
     }
 }

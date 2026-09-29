@@ -133,11 +133,12 @@ class AssistantCatalogSourceOfTruthTest extends Unit
         }
     }
 
-    public function testPreprocessTagsDerivedFromSmartCatalog(): void
+    public function testPreprocessTagsDerivedFromIntentMetaAndExtras(): void
     {
         $tags = PreprocessTagVocabularyCatalog::all();
         $this->assertContains('llegar_tarde', $tags);
         $this->assertContains('in_flow_question', $tags);
+        $this->assertContains('representacion', $tags);
     }
 
     public function testRoutingHintsLoadedFromCatalog(): void

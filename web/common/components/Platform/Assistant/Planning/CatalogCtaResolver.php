@@ -2,6 +2,7 @@
 
 namespace common\components\Platform\Assistant\Planning;
 
+use common\components\Platform\Assistant\Catalog\DiscoveryIndex;
 use common\components\Platform\Assistant\Catalog\SmartCatalogRegistry;
 use common\components\Platform\Assistant\Catalog\YamlIntentManifestLoader;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalog;
@@ -10,9 +11,8 @@ use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
 /**
  * CTA(s) que la guía ofrece como botones.
  *
- * Un match claro aporta el intent del `tool_ref`. Una fila sin intent
- * ejecutable aporta `cta_intent_ids`. El label sale de action_name / catálogo.
- * La autorización de ejecución sigue en ChatOrchestrator al lanzar el intent.
+ * Preferencia: intents del índice de discovery (tags → YAML/BD).
+ * Fallback: intentIds de la decisión / cta del smart-catalog (transición).
  */
 final class CatalogCtaResolver
 {
@@ -66,6 +66,15 @@ final class CatalogCtaResolver
         $ids = [];
         foreach ($evaluation->decision->intentIds as $intentId) {
             $intentId = trim((string) $intentId);
+            if ($intentId !== '' && !in_array($intentId, $ids, true)) {
+                $ids[] = $intentId;
+            }
+        }
+        if ($ids !== []) {
+            return $ids;
+        }
+
+        foreach (DiscoveryIndex::intentIdsForCta($evaluation->firstIa) as $intentId) {
             if ($intentId !== '' && !in_array($intentId, $ids, true)) {
                 $ids[] = $intentId;
             }

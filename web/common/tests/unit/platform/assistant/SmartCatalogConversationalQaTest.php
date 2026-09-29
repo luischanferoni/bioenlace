@@ -104,10 +104,10 @@ class SmartCatalogConversationalQaTest extends Unit
                 'llego 10 min tarde hay problema',
                 [
                     'routing_hint' => 'guide',
-                    'tags' => ['llegar_tarde', 'scheduling'],
-                    'context_areas' => ['scheduling'],
+                    'tags' => ['llegar_tarde', 'tolerancia'],
+                    'context_areas' => [],
                 ],
-                ['incompletas'],
+                ['clara', 'incompletas'],
             ],
             'representacion' => [
                 'contame representacion puedo operar por mi sobrino',
@@ -116,7 +116,7 @@ class SmartCatalogConversationalQaTest extends Unit
                     'tags' => ['representacion', 'tutela'],
                     'context_areas' => ['person'],
                 ],
-                ['clara', 'dudosa', 'incompletas'],
+                ['incompletas', 'clara'],
             ],
             'fuera_his_medium' => [
                 'necesito una sesion con una medium',

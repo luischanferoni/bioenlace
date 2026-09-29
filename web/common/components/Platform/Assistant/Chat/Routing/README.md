@@ -1,25 +1,24 @@
 # Routing
 
-Post-preprocess unificado (`ChatRouter`).
+Post-preprocess unificado (`ChatRouter`) — discovery unificado (plan activo).
 
-## Hints IA (canónicos)
+## Hints IA
 
-`guide` | `fuera_his` | `sin_pedido` — ver plan `docs/plans/asistente-discovery-unificado/`.
+`guide` | `fuera_his` | `sin_pedido`
 
-## `routing_result` → handler (transición)
+## Flujo
+
+1. Preprocess → hint + tags
+2. `DiscoveryIndex` → intents (`meta.tags`) + artículos BD
+3. Áreas derivadas de intents → plan declarativo (aspectos HIS, no puertas NL)
+4. Handlers:
 
 | `routing_result` | Handler |
 |------------------|---------|
-| `clara` (intent / artículo / template) | `IncompleteRoutingHandler` → Guide (2ª IA). Fallback botón: `ClaraRoutingHandler` |
+| `clara` / `incompletas` | `IncompleteRoutingHandler` → Guide |
 | `dudosa` | `DudosaRoutingHandler` |
 | `fuera_de_his` | `FueraDeHisHandler` |
-| `incompletas` | `IncompleteRoutingHandler` (+ opcional `PlannerRoutingStep`) |
 
-`DirectMatchHandler` está deprecado (ya no se usa en el hot path).
+`direct-doors.yaml` está vacío. `SmartCatalogMatchService` / `DirectMatchHandler` son legacy.
 
-Fallback sin match handler: `LegacyRoutingFallback`.
-
-El `user_goal` del hilo (`guide` / `ambiguous`) se deriva en `PreprocessRoutingHintCatalog`.
-
-Plan activo: `web/docs/plans/asistente-discovery-unificado/`.
-ADR vigente hasta cierre: `web/docs/decisions/asistente-catalogo-inteligente.md`.
+Plan: `web/docs/plans/asistente-discovery-unificado/`.

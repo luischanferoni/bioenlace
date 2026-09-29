@@ -7,8 +7,8 @@ use common\components\Platform\Assistant\Preprocess\PreprocessRoutingHintCatalog
 use common\components\Platform\Core\Product\ProductMetadataPaths;
 
 /**
- * Carga las puertas que no son un flow ({@see direct-doors.yaml}).
- * El intent lo elige {@see StateTagIndex}.
+ * Carga las puertas legacy ({@see direct-doors.yaml}, vacío en discovery unificado).
+ * El intent lo elige {@see DiscoveryIndex} / {@see StateTagIndex}.
  */
 final class SmartCatalogRegistry
 {

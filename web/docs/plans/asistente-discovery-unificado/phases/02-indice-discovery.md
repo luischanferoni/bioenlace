@@ -4,14 +4,19 @@
 
 Un matcher que, dados `tags` (+ texto), devuelve hits `intent` y `article` con la misma forma, y el ensamblador de Guide los adjunta (`intent_semantics`, `article_block`).
 
-## Alcance
+## Hecho
 
-- Extender o reemplazar `StateTagIndex` como fachada de discovery.
-- Artículos: discovery por keywords/tags de BD sin pasar por smart-catalog.
-- Intents: seguir leyendo `meta.tags` de YAML Domain.
-- Retirar dependencia de score smart-catalog para armar adjuntos de Guide.
+- `Catalog/DiscoveryIndex` + `DiscoveryResult`: intents vía `StateTagIndex`; artículos vía `InfoContentResolverService::rankByTagsAndText`.
+- `GuidePromptAssembler::buildForIncomplete`: `intent_semantics` solo desde discovery (sin fallback smart-catalog); si falta `article_block`, lo completa desde discovery.
+- `CatalogCtaResolver`: prioriza intent ids del discovery antes del catálogo legacy.
+- Test: `DiscoveryIndexTest`.
 
 ## Criterio de hecho
 
-- Guide incompletas arma adjuntos solo desde el índice unificado.
-- Tests de match intent + artículo por tags.
+- [x] Guide incompletas arma adjuntos desde el índice unificado.
+- [x] Tests de match intent por tags.
+- [ ] Test artículo por tags (requiere BD/fixtures; diferido o smoke manual).
+
+## Siguiente
+
+Fase 03: retirar `direct-doors` / aspectos-puerta.

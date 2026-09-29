@@ -19,7 +19,7 @@ use common\components\Platform\Ai\Cost\AICostTracker;
 use Yii;
 
 /**
- * Verifica planning_applied en caminos clara→Guide, 2ia_guide y 3ia_planner_guide.
+ * Verifica planning_applied en caminos discovery→Guide y planner.
  */
 class SmartCatalogPlanningLogPathsTest extends Unit
 {
@@ -34,7 +34,7 @@ class SmartCatalogPlanningLogPathsTest extends Unit
         AICostTracker::finalizarEjecucionPrueba();
     }
 
-    public function testDirectPathLogsRouting(): void
+    public function testRepresentacionLogsGuidePathNotDoor(): void
     {
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'contame representacion',
@@ -45,9 +45,8 @@ class SmartCatalogPlanningLogPathsTest extends Unit
         ], 0);
 
         $snap = AssistantPlanningLogService::snapshot();
-        $this->assertSame('clara', $snap['routing_result'] ?? null);
-        $this->assertNotEmpty($snap['catalog_matches'] ?? []);
-        $this->assertSame('clara', $evaluation->decision->routingResult);
+        $this->assertContains($snap['routing_result'] ?? null, ['incompletas', 'clara']);
+        $this->assertContains($evaluation->decision->routingResult, ['incompletas', 'clara']);
     }
 
     public function testTwoIaGuideFinalPathWithSimulatedIa(): void

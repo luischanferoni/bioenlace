@@ -12,6 +12,9 @@ states:
     meta:
       tags:
         - politica
+        - politica_turnos
+        - llegar_tarde
+        - tolerancia
       provides:
         - draft.id_efector
       open_ui:

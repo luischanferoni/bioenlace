@@ -2,13 +2,27 @@
 
 namespace common\components\Platform\Assistant\Preprocess;
 
-use common\components\Platform\Assistant\Catalog\SmartCatalogRegistry;
+use common\components\Platform\Assistant\Catalog\StateTagIndex;
 
 /**
- * Vocabulario de tags del preprocess: triggers de las puertas que no son un flow, más extras del loader PHP.
+ * Vocabulario de tags del preprocess: meta.tags de intents + extras PHP (artículos / soft tags).
  */
 final class PreprocessTagVocabularyCatalog
 {
+    /**
+     * Tags que no viven en YAML de flow (artículos BD, señales soft del adapter).
+     *
+     * @var list<string>
+     */
+    private const EXTRA_DISCOVERY_TAGS = [
+        'representacion',
+        'tutela',
+        'representante',
+        'fuera_his',
+        'llegar_tarde',
+        'tolerancia',
+    ];
+
     /** @var list<string>|null */
     private static ?array $tagsCache = null;
 
@@ -21,7 +35,12 @@ final class PreprocessTagVocabularyCatalog
             return self::$tagsCache;
         }
 
-        $tags = SmartCatalogRegistry::allTriggerTags();
+        $tags = StateTagIndex::allTags();
+        foreach (self::EXTRA_DISCOVERY_TAGS as $tag) {
+            if (!in_array($tag, $tags, true)) {
+                $tags[] = $tag;
+            }
+        }
         foreach (PreprocessRoutingHintCatalog::extraPreprocessTags() as $tag) {
             if (!in_array($tag, $tags, true)) {
                 $tags[] = $tag;
@@ -43,7 +62,7 @@ final class PreprocessTagVocabularyCatalog
     public static function resetCacheForTests(): void
     {
         self::$tagsCache = null;
-        SmartCatalogRegistry::resetCacheForTests();
+        StateTagIndex::resetCacheForTests();
         PreprocessRoutingHintCatalog::resetCacheForTests();
     }
 }

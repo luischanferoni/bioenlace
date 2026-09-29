@@ -23,6 +23,18 @@ final class StateTagIndex
         self::$vocabulary = null;
     }
 
+    /**
+     * Todos los tags declarados en estados (vocabulario preprocess / discovery).
+     *
+     * @return list<string>
+     */
+    public static function allTags(): array
+    {
+        self::index();
+
+        return self::$vocabulary ?? [];
+    }
+
     public static function hasTag(string $tag): bool
     {
         $folded = ChatChannelPolicy::fold(trim($tag));

@@ -3,7 +3,6 @@
 namespace common\tests\unit\platform\assistant;
 
 use Codeception\Test\Unit;
-use common\components\Platform\Assistant\Catalog\SmartCatalogRegistry;
 use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
 use common\components\Platform\Assistant\Planning\AssistantPlanningLogService;
 use common\components\Platform\Assistant\Planning\CatalogCtaResolver;
@@ -13,7 +12,6 @@ class CatalogCtaResolverTest extends Unit
 {
     protected function _after(): void
     {
-        SmartCatalogRegistry::resetCacheForTests();
         AssistantMetadataLoader::resetCacheForTests();
         AssistantPlanningLogService::resetForTests();
     }

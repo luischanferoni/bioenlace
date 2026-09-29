@@ -21,21 +21,21 @@ Incluye preprocess, canal operativo, conversacional, informativo.
 
 ### Flujo real (`ChatOrchestrator` → `ChatRouter`)
 
-En **cada mensaje raíz** (sin `intent_id` en curso), **siempre** corre preprocess (1ª IA); después el **catálogo inteligente** decide el camino (`routing_result`) y cuántas IAs más hacen falta.
+En **cada mensaje raíz** (sin `intent_id` en curso), **siempre** corre preprocess (1ª IA); después **discovery + decisión de canal** eligen el camino (`routing_result`) y cuántas IAs más hacen falta.
 
 ```mermaid
 flowchart TB
   M[Mensaje POST asistente/enviar]
   P[IA: asistente-preprocess]
-  MCH[SmartCatalogMatchService PHP]
+  MCH[DiscoveryIndex + SmartCatalogRoutingService PHP]
   H{routing_result}
-  D[1 IA clara / dudosa / fuera]
-  INC[incompletas]
+  D[1 IA dudosa / fuera]
+  INC[clara / incompletas]
   G[IA: asistente-guide]
   PLN[IA: asistente-planner opcional]
   M --> P --> MCH --> H
-  H -->|clara dudosa fuera| D
-  H -->|incompletas| INC --> G
+  H -->|dudosa fuera| D
+  H -->|clara incompletas| INC --> G
   INC -->|needs_planner| PLN --> G
 ```
 
@@ -43,10 +43,10 @@ Código: [`ChatRouter.php`](../../common/components/Platform/Assistant/Chat/Rout
 
 | `routing_result` | Llamadas IA adicionales | Contexto `IAManager` | Producto |
 |------------------|-------------------------|----------------------|----------|
-| *(siempre)* | **1ª** preprocess | `asistente-preprocess` | tags, context_areas, necesidad_usuario |
-| `clara` / `dudosa` / `fuera_de_his` | **0** | — | flow, artículo, template, interactive o mensaje límite |
-| `incompletas` | **+1** guide | `asistente-guide` | plan declarativo + loaders + redacción |
-| `incompletas` + `needs_planner` | **+2** (planner + guide) | `asistente-planner`, `asistente-guide` | shortlist RBAC; `final_path: 3ia_planner_guide` |
+| *(siempre)* | **1ª** preprocess | `asistente-preprocess` | tags, necesidad_usuario, routing_hint |
+| `dudosa` / `fuera_de_his` | **0** | — | mensaje límite / aclaración |
+| `clara` / `incompletas` | **+1** guide | `asistente-guide` | discovery + plan declarativo + Guide |
+| `clara` / `incompletas` + `needs_planner` | **+2** (planner + guide) | `asistente-planner`, `asistente-guide` | shortlist RBAC; `final_path: 3ia_planner_guide` |
 
 **Nota:** incompletas y charla usan el mismo contexto `asistente-guide` (`GuideChannel` / `GuidePromptAssembler`).
 

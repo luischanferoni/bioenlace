@@ -2,7 +2,6 @@
 
 namespace common\components\Platform\Assistant\Planning;
 
-use common\components\Platform\Assistant\Catalog\SmartCatalogEntry;
 use common\components\Platform\Assistant\Catalog\SmartCatalogMatchResult;
 
 /**
@@ -19,10 +18,5 @@ final class SmartCatalogRoutingEvaluation
         public readonly SmartCatalogRoutingDecision $decision,
         public readonly DeclarativePlanResult $declarativePlan,
     ) {
-    }
-
-    public function bestEntry(): ?SmartCatalogEntry
-    {
-        return $this->decision->catalogEntry;
     }
 }

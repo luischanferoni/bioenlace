@@ -53,28 +53,28 @@ flowchart LR
 
 - Texto del usuario y permisos (rutas API del catálogo).
 - `keywords` e `intent_semantics` del YAML de cada intent.
-- Si dos intents empatan de cerca y hay tema HIS → **incompletas** (guide); no botones entre `intent_id`.
-- **Routing raíz:** 1ª IA preprocess → `SmartCatalogMatchService` (PHP, RBAC) → handlers (`clara` = match 100 % flow o artículo, `dudosa`, `incompletas`, `fuera_de_his`). `IntentClassifier` queda como fallback en `OperationalChannel` (staff / sin match con `context_areas`).
+- Si dos intents empatan de cerca y hay tema HIS → **guide** (incompletas); no botones entre `intent_id`.
+- **Routing raíz:** 1ª IA preprocess (hint `guide` \| `fuera_his` \| `sin_pedido` + tags) → `DiscoveryIndex` → handlers. Guide siempre cuando hay pedido HIS (intent y/o artículo). `IntentClassifier` queda como fallback en `OperationalChannel` (staff).
 
 ---
 
-## Catálogo inteligente y router unificado
+## Discovery unificado y router
 
-Tras preprocess, el mensaje **no** se reparte por `user_goal: guide|operational`. PHP cruza los tags con `meta.tags` de los estados y elige el intent. Artículo, tema ajeno al HIS y aspectos de datos siguen en `assistant/catalog/direct-doors.yaml`.
+Tras preprocess, el mensaje **no** se reparte por un catálogo de puertas Platform. PHP cruza tags con `meta.tags` de estados (YAML Domain) y keywords de artículos BD (`Catalog/DiscoveryIndex`). Aspectos HIS se cargan por **área derivada del intent**, no como puerta NL.
 
 | Pieza | Ubicación | Rol |
 |-------|-----------|-----|
-| Match | `Catalog/SmartCatalogMatchService` | Artículo, fuera de HIS y aspectos de datos |
-| Estados | `Catalog/StateTagIndex` | Tags del preprocess contra `meta.tags`; elige el intent |
-| Plan | `Planning/DeclarativePlanService` | Área → aspect loaders + artículos |
-| Handlers | `Chat/Routing/Handlers/*` | Envelope 1 IA o encadena guide |
+| Discovery | `Catalog/DiscoveryIndex` | Intents + artículos por tags/texto |
+| Estados | `Catalog/StateTagIndex` | Índice de `meta.tags` de flows |
+| Plan | `Planning/DeclarativePlanService` | Área → aspect loaders + `article:topic` |
+| Handlers | `Chat/Routing/Handlers/*` | Guide / dudosa / fuera HIS |
 | Log | `Planning/AssistantPlanningLogService` | `planning_applied` por mensaje |
-| Guide (2ª IA) | `Channels/Guide/` + `asistente-guide` | Charla e incompletas |
+| Guide (2ª IA) | `Channels/Guide/` + `asistente-guide` | Charla con adjuntos |
 | Planificadora | `Planning/PlannerRoutingStep` + `asistente-planner` | Opcional si `needs_planner` |
 
-Entrypoint: `Chat/Routing/ChatRouter.php` → `SmartCatalogRoutingHandlers`. Incompletas → `GuideChannel::handleIncomplete`.
+Entrypoint: `Chat/Routing/ChatRouter.php` → `SmartCatalogRoutingHandlers`. Pedido HIS → `GuideChannel::handleIncomplete`.
 
-ADR: [decisions/asistente-catalogo-inteligente.md](../decisions/asistente-catalogo-inteligente.md).
+ADR: [decisions/asistente-discovery-unificado.md](../decisions/asistente-discovery-unificado.md).
 
 ---
 
@@ -131,28 +131,28 @@ sequenceDiagram
 
 ## Contenido informativo (InfoContentResolverService)
 
-Cuando el paciente pregunta "¿qué es X?" o "¿cómo funciona X?", antes de caer a la IA conversacional o al menú de capacidades, el asistente busca en la tabla `info_content_article` un artículo editorial que matchee por keywords.
+Cuando el paciente pregunta "¿qué es X?" o "¿cómo funciona X?", el discovery rankea artículos por tags/keywords; el cuerpo se **adjunta** al prompt Guide (2ª IA).
 
 **Resolución jerárquica:** efector → provincia → producto (global). Si el centro tiene un artículo específico sobre el topic, ese prevalece.
 
-**Integración:** match **clara** (100 %) a un artículo del catálogo → envelope sin 2ª IA. Otros casos informativos → routing **incompletas** + guide, o artículo vía plan declarativo.
+**Integración:** siempre Guide + adjunto; no hay envelope de artículo sin 2ª IA.
 
 **Administración:** CRUD en `/admin/info-content-article`. Producto: [contenido-informativo.md](../producto/contenido-informativo.md).
 
 ## Contexto HIS (áreas + aspectos)
 
-Capa de datos para routing **incompletas** (2ª IA `asistente-guide`). Complementa extracto de HC cuando aplica; no reemplaza intents de lectura ni DataAccess.
+Capa de datos para Guide cuando el plan declarativo pide aspectos. Complementa extracto de HC cuando aplica; no reemplaza intents de lectura ni DataAccess.
 
 | Pieza | Ubicación | Rol |
 |-------|-----------|-----|
-| Áreas | `AssistantContextHISArea` | Catálogo en preprocess → `context_areas` |
+| Áreas | `AssistantContextHISArea` | Derivadas del intent matcheado |
 | Aspectos | `AssistantContextHISAreaAspect` | Claves JSON del volcado (`appointment.current`, …) |
 | Anclas | `AssistantContextAnchorResolver` | Sujeto, cita referencia, `site_id`, PES |
-| Plan | `DeclarativePlanService` + `AssistantContextAreaAspectResolver` | Áreas + match → `tool_ids` |
-| Loaders | `Domain/*/Assistant/Context/*AspectLoader` | Un aspecto → JSON HIS desde AR/servicios |
-| Ensamblaje | `DeclarativePlanExecutor` + `GuidePromptAssembler::buildForIncomplete` | Volcado en prompt guide |
+| Plan | `DeclarativePlanService` + `AssistantContextAreaAspectResolver` | Áreas → `tool_ids` |
+| Loaders | `Domain/*/Assistant/Context/*AspectLoader` | Un aspecto → JSON HIS |
+| Ensamblaje | `DeclarativePlanExecutor` + `GuidePromptAssembler` | Volcado + artículo en prompt guide |
 
-Flujo: preprocess → match catálogo → plan declarativo → loaders → guide. Parámetros: `asistente_plan_max_tools`, `asistente_planner_enabled`, `asistente_context_max_aspects`, `asistente_planning_debug`.
+Flujo: preprocess → discovery → plan declarativo → loaders → guide. Parámetros: `asistente_plan_max_tools`, `asistente_planner_enabled`, `asistente_context_max_aspects`, `asistente_planning_debug`.
 
 ## Sinónimos de servicios (HintServiceSynonyms)
 

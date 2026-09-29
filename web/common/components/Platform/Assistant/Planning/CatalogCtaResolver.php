@@ -3,16 +3,12 @@
 namespace common\components\Platform\Assistant\Planning;
 
 use common\components\Platform\Assistant\Catalog\DiscoveryIndex;
-use common\components\Platform\Assistant\Catalog\SmartCatalogRegistry;
 use common\components\Platform\Assistant\Catalog\YamlIntentManifestLoader;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalog;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
 
 /**
- * CTA(s) que la guía ofrece como botones.
- *
- * Preferencia: intents del índice de discovery (tags → YAML/BD).
- * Fallback: intentIds de la decisión / cta del smart-catalog (transición).
+ * CTA(s) que la guía ofrece como botones (discovery + decisión).
  */
 final class CatalogCtaResolver
 {
@@ -57,8 +53,6 @@ final class CatalogCtaResolver
     }
 
     /**
-     * Intent ids declarados por el match (sin filtrar por usuario).
-     *
      * @return list<string>
      */
     public static function declaredIntentIds(SmartCatalogRoutingEvaluation $evaluation): array
@@ -75,30 +69,6 @@ final class CatalogCtaResolver
         }
 
         foreach (DiscoveryIndex::intentIdsForCta($evaluation->firstIa) as $intentId) {
-            if ($intentId !== '' && !in_array($intentId, $ids, true)) {
-                $ids[] = $intentId;
-            }
-        }
-        if ($ids !== []) {
-            return $ids;
-        }
-
-        $fromEntry = $evaluation->decision->catalogEntry?->ctaIntentIds ?? [];
-        if ($fromEntry === []) {
-            foreach ($evaluation->match->ranked as $row) {
-                $catalogId = trim((string) ($row['catalog_id'] ?? ''));
-                if ($catalogId === '') {
-                    continue;
-                }
-                $entry = SmartCatalogRegistry::findById($catalogId);
-                if ($entry !== null && $entry->ctaIntentIds !== []) {
-                    $fromEntry = $entry->ctaIntentIds;
-                    break;
-                }
-            }
-        }
-        foreach ($fromEntry as $intentId) {
-            $intentId = trim((string) $intentId);
             if ($intentId !== '' && !in_array($intentId, $ids, true)) {
                 $ids[] = $intentId;
             }

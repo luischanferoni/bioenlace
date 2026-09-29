@@ -16,12 +16,12 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Receta electrónica (AR) | `receta-electronica/` | Fases 1–2 en producción; repositorio nacional pendiente |
 | Interoperabilidad HC FHIR | `interoperabilidad-historia-clinica/` | Código + reconcile listos; homologación / credenciales pendientes |
 | Flows como statechart | `flow-statechart/` | Fases 1–3: lectores y guía usan `states`; compilador retirado |
-| Asistente — discovery unificado | `asistente-discovery-unificado/` | Hints 3 valores; tags → Guide; retirar direct-doors |
 
 ## Planes archivados (carpeta eliminada)
 
 | Plan | Documentación estable |
 |------|------------------------|
+| Asistente — discovery unificado | [asistente-discovery-unificado.md](../decisions/asistente-discovery-unificado.md) + [asistente-y-chat.md](../producto/asistente-y-chat.md) + [contenido-informativo.md](../producto/contenido-informativo.md) + [asistente-motores.md](../arquitectura/asistente-motores.md) |
 | Guía siempre | [asistente-y-chat.md](../producto/asistente-y-chat.md) |
 | Auditoría captura clínica | [captura-clinica.md](../producto/captura-clinica.md) (sección auditoría del pipeline) |
 | Alta cuenta institucional | [alta-cuenta-licencia.md](../producto/alta-cuenta-licencia.md) + [onboarding-comercial-self-service.md](../decisions/onboarding-comercial-self-service.md) |

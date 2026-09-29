@@ -1,5 +1,7 @@
 # Asistente: catálogo inteligente + orquestación IA
 
+> **Obsoleto.** Reemplazado por [asistente-discovery-unificado.md](./asistente-discovery-unificado.md) (hints `guide` / `fuera_his` / `sin_pedido`, `DiscoveryIndex`, sin puertas `direct-doors`, artículos siempre vía Guide).
+
 ## Contexto
 
 El chat del HIS mezcla preprocess (`user_goal`), canal **guide** (2ª IA con volcado amplio), `IntentClassifier` por keywords y regex en `ChatChannelPolicy`. Eso duplica interpretación, gasta tokens y no hay un catálogo unificado que relacione lenguaje natural con intents, artículos editoriales, aspect loaders y métricas DataAccess.

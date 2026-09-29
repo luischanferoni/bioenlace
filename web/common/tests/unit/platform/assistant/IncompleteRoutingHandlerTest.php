@@ -10,7 +10,6 @@ use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
 use common\components\Platform\Assistant\Planning\AssistantPlanningLogService;
 use common\components\Platform\Assistant\Planning\DeclarativePlanExecutor;
 use common\components\Platform\Assistant\Planning\SmartCatalogRoutingService;
-use common\components\Platform\Assistant\Catalog\SmartCatalogRegistry;
 use common\components\Platform\Ai\Cost\AICostTracker;
 
 class IncompleteRoutingHandlerTest extends Unit
@@ -30,7 +29,6 @@ class IncompleteRoutingHandlerTest extends Unit
 
     protected function _after(): void
     {
-        SmartCatalogRegistry::resetCacheForTests();
         AssistantMetadataLoader::resetCacheForTests();
         AssistantContextAreaAspectCatalog::resetCacheForTests();
         AssistantPlanningLogService::resetForTests();

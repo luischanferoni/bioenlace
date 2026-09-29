@@ -3,7 +3,6 @@
 namespace common\tests\unit\platform\assistant;
 
 use Codeception\Test\Unit;
-use common\components\Platform\Assistant\Catalog\SmartCatalogRegistry;
 use common\components\Platform\Assistant\Context\AssistantContextAreaAspectCatalog;
 use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
 use common\components\Platform\Assistant\Planning\AssistantPlanningLogService;
@@ -16,7 +15,6 @@ class SmartCatalogConversationalQaTest extends Unit
 {
     protected function _after(): void
     {
-        SmartCatalogRegistry::resetCacheForTests();
         AssistantMetadataLoader::resetCacheForTests();
         AssistantContextAreaAspectCatalog::resetCacheForTests();
         AssistantPlanningLogService::resetForTests();

@@ -2,9 +2,8 @@
 
 namespace common\components\Platform\Assistant\Planning;
 
-use common\components\Platform\Assistant\Catalog\SmartCatalogEntry;
 use common\components\Platform\Assistant\Catalog\SmartCatalogMatchResult;
-use common\components\Platform\Assistant\Catalog\SmartCatalogRegistry;
+use common\components\Platform\Assistant\Catalog\YamlIntentManifestLoader;
 use common\components\Platform\Assistant\Context\AssistantContextAreaAspectCatalog;
 use common\components\Platform\Assistant\Context\AssistantContextHISArea;
 use common\components\Platform\Assistant\Context\AssistantContextHISAreaAspect;
@@ -13,22 +12,19 @@ use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
 use Yii;
 
 /**
- * Shortlist RBAC para la IA planificadora.
+ * Shortlist RBAC para la IA planificadora (aspectos por área + intents del usuario).
  */
 final class PlannerShortlistBuilder
 {
-    private const MIN_MATCH_SCORE = 30;
-
     /**
      * @param array<string, mixed> $firstIa
      * @return list<array{tool_id: string, tool_type: string, description: string, param_schema: \stdClass}>
      */
     public static function build(array $firstIa, SmartCatalogMatchResult $match, int $userId): array
     {
-        $areas = self::expandedAreas($firstIa, $match);
-        $tags = self::normalizeTags($firstIa['tags'] ?? []);
+        unset($match);
+        $areas = self::expandedAreas($firstIa);
         $extractions = is_array($firstIa['extractions'] ?? null) ? $firstIa['extractions'] : [];
-        $allowedIntents = self::allowedIntentIdsForUser($userId);
 
         $items = [];
         $seen = [];
@@ -64,33 +60,29 @@ final class PlannerShortlistBuilder
             }
         }
 
-        foreach (SmartCatalogRegistry::entries() as $entry) {
-            if ($entry->matchOnly || !$entry->isExecutable() || $entry->toolId === '') {
-                continue;
-            }
-            if (!self::entryRelevant($entry, $areas, $tags, $match)) {
-                continue;
-            }
-            if ($entry->toolType === 'intent') {
-                if (!isset($allowedIntents[$entry->toolRef])) {
+        if ($userId > 0) {
+            $catalog = UiActionCatalog::forUser($userId);
+            foreach ($catalog->items as $item) {
+                $intentId = trim($item->action_id);
+                if ($intentId === '') {
                     continue;
                 }
-                $add($entry->toolId, 'intent', self::describeIntent($entry, $userId));
-                continue;
+                $add(
+                    'intent:' . $intentId,
+                    'intent',
+                    self::describeIntentItem($item)
+                );
             }
-            $add($entry->toolId, $entry->toolType, self::describeCatalogEntry($entry));
         }
 
-        $max = self::maxShortlist();
-
-        return array_slice($items, 0, $max);
+        return array_slice($items, 0, self::maxShortlist());
     }
 
     /**
      * @param array<string, mixed> $firstIa
      * @return list<string>
      */
-    private static function expandedAreas(array $firstIa, SmartCatalogMatchResult $match): array
+    private static function expandedAreas(array $firstIa): array
     {
         $raw = is_array($firstIa['context_areas'] ?? null) ? $firstIa['context_areas'] : [];
         $areas = [];
@@ -100,129 +92,26 @@ final class PlannerShortlistBuilder
             }
         }
 
-        foreach ($match->ranked as $row) {
-            $catalogId = trim((string) ($row['catalog_id'] ?? ''));
-            if ($catalogId === '') {
-                continue;
-            }
-            $entry = SmartCatalogRegistry::findById($catalogId);
-            if ($entry === null) {
-                continue;
-            }
-            foreach ($entry->triggerContextAreas as $triggerArea) {
-                if (AssistantContextHISArea::isValid($triggerArea)) {
-                    $areas[] = $triggerArea;
-                }
-            }
-        }
-
         return AssistantContextHISArea::sortByProductPriority(array_values(array_unique($areas)));
     }
 
-    /**
-     * @param list<string> $areas
-     * @param list<string> $tags
-     */
-    private static function entryRelevant(
-        SmartCatalogEntry $entry,
-        array $areas,
-        array $tags,
-        SmartCatalogMatchResult $match
-    ): bool {
-        foreach ($match->ranked as $row) {
-            if (($row['catalog_id'] ?? '') === $entry->id && (int) ($row['score'] ?? 0) >= self::MIN_MATCH_SCORE) {
-                return true;
-            }
-        }
-
-        if ($areas !== [] && $entry->triggerContextAreas !== []) {
-            foreach ($entry->triggerContextAreas as $triggerArea) {
-                if (in_array($triggerArea, $areas, true)) {
-                    return true;
-                }
-            }
-        }
-
-        if ($tags !== [] && $entry->triggerTags !== []) {
-            foreach ($entry->triggerTags as $triggerTag) {
-                if (in_array($triggerTag, $tags, true)) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    private static function describeCatalogEntry(SmartCatalogEntry $entry): string
+    private static function describeIntentItem(UiActionCatalogItem $item): string
     {
-        if ($entry->toolType === 'article') {
-            return 'Artículo informativo: ' . $entry->toolRef;
+        $name = $item->display_name !== '' ? $item->display_name : $item->action_id;
+        $sem = is_array($item->intent_semantics) ? $item->intent_semantics : [];
+        $objective = trim((string) ($sem['objective'] ?? ''));
+        if ($objective !== '') {
+            return $name . ' — ' . $objective;
         }
-        if ($entry->toolType === 'aspect') {
-            return 'Aspecto HIS: ' . $entry->toolRef;
-        }
-
-        return 'Tool catálogo ' . $entry->id;
-    }
-
-    private static function describeIntent(SmartCatalogEntry $entry, int $userId): string
-    {
-        if ($userId <= 0) {
-            return 'Intent trámite: ' . $entry->toolRef;
-        }
-
-        $catalog = UiActionCatalog::forUser($userId);
-        $item = $catalog->byActionId[$entry->toolRef] ?? null;
-        if ($item instanceof UiActionCatalogItem) {
-            $name = $item->display_name !== '' ? $item->display_name : $entry->toolRef;
-            $sem = is_array($item->intent_semantics) ? $item->intent_semantics : [];
-            $objective = trim((string) ($sem['objective'] ?? ''));
-
-            return $objective !== '' ? $name . ' — ' . $objective : $name;
-        }
-
-        return 'Intent trámite: ' . $entry->toolRef;
-    }
-
-    /**
-     * @return array<string, true>
-     */
-    private static function allowedIntentIdsForUser(int $userId): array
-    {
-        $catalog = UiActionCatalog::forUser($userId);
-        $out = [];
-        foreach ($catalog->items as $item) {
-            $id = trim($item->action_id);
-            if ($id !== '') {
-                $out[$id] = true;
+        $manifest = YamlIntentManifestLoader::load($item->action_id);
+        if (is_array($manifest)) {
+            $actionName = trim((string) ($manifest['action_name'] ?? ''));
+            if ($actionName !== '') {
+                return $actionName;
             }
         }
 
-        return $out;
-    }
-
-    /**
-     * @param mixed $raw
-     * @return list<string>
-     */
-    private static function normalizeTags(mixed $raw): array
-    {
-        if (!is_array($raw)) {
-            return [];
-        }
-        $out = [];
-        foreach ($raw as $tag) {
-            if (!is_string($tag)) {
-                continue;
-            }
-            $tag = mb_strtolower(trim($tag), 'UTF-8');
-            if ($tag !== '' && !in_array($tag, $out, true)) {
-                $out[] = $tag;
-            }
-        }
-
-        return $out;
+        return 'Intent trámite: ' . $item->action_id;
     }
 
     public static function maxShortlist(): int

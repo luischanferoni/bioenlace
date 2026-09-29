@@ -15,8 +15,6 @@ use common\components\Platform\Core\Product\ProductMetadataPaths;
 
 /**
  * Orquesta discovery (tags) + plan declarativo + decisión de canal.
- *
- * Ya no usa smart-catalog / direct-doors en el hot path.
  */
 final class SmartCatalogRoutingService
 {
@@ -32,13 +30,12 @@ final class SmartCatalogRoutingService
         }
 
         $discovery = DiscoveryIndex::match($firstIa, $message, $userId);
-        $match = self::emptyMatch();
+        $match = new SmartCatalogMatchResult();
 
         $firstIa['context_areas'] = self::mergeDerivedAreas(
             is_array($firstIa['context_areas']) ? $firstIa['context_areas'] : [],
             AssistantContextAreaDerivation::fromIntentIds($discovery->intentIds(8))
         );
-        // Artículo discovery: área person si el hit es representación-like y no hay intent.
         if ($discovery->primaryArticleTopic() !== '' && $firstIa['context_areas'] === []) {
             $topic = $discovery->primaryArticleTopic();
             if ($topic === 'representacion' || str_contains($topic, 'represent')) {
@@ -50,7 +47,7 @@ final class SmartCatalogRoutingService
         $anchors = AssistantContextAnchorResolver::resolve($userId, $extractions);
         $areas = is_array($firstIa['context_areas']) ? $firstIa['context_areas'] : [];
 
-        $declarative = DeclarativePlanService::plan($areas, $extractions, $anchors, null);
+        $declarative = DeclarativePlanService::plan($areas, $extractions, $anchors);
         $declarative = self::mergeDiscoveryArticles($declarative, $discovery);
 
         AssistantPlanningLogService::begin($firstIa, []);
@@ -94,16 +91,7 @@ final class SmartCatalogRoutingService
         }
 
         if ($hint === PreprocessRoutingHintCatalog::SIN_PEDIDO && $areas === [] && $discovery->isEmpty()) {
-            return new SmartCatalogRoutingDecision(
-                PreprocessRoutingHintCatalog::PATH_NO_ACTION,
-                PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint(
-                    PreprocessRoutingHintCatalog::PATH_NO_ACTION
-                ),
-                [],
-                '',
-                '',
-                null,
-            );
+            return self::dudosaDecision();
         }
 
         if (
@@ -119,20 +107,10 @@ final class SmartCatalogRoutingService
                 $discovery->intentIds(4),
                 '',
                 $discovery->primaryArticleTopic(),
-                null,
             );
         }
 
-        return new SmartCatalogRoutingDecision(
-            PreprocessRoutingHintCatalog::PATH_NO_ACTION,
-            PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint(
-                PreprocessRoutingHintCatalog::PATH_NO_ACTION
-            ),
-            [],
-            '',
-            '',
-            null,
-        );
+        return self::dudosaDecision();
     }
 
     private static function stateTagDecision(DiscoveryResult $discovery): ?SmartCatalogRoutingDecision
@@ -152,11 +130,15 @@ final class SmartCatalogRoutingService
             $ids,
             '',
             $discovery->primaryArticleTopic(),
-            null,
         );
     }
 
     private static function greetingDecision(): SmartCatalogRoutingDecision
+    {
+        return self::dudosaDecision();
+    }
+
+    private static function dudosaDecision(): SmartCatalogRoutingDecision
     {
         return new SmartCatalogRoutingDecision(
             PreprocessRoutingHintCatalog::PATH_NO_ACTION,
@@ -166,7 +148,6 @@ final class SmartCatalogRoutingService
             [],
             '',
             '',
-            null,
         );
     }
 
@@ -180,13 +161,12 @@ final class SmartCatalogRoutingService
             [],
             self::fueraDeHisText(),
             '',
-            null,
         );
     }
 
     private static function fueraDeHisText(): string
     {
-        $config = AssistantMetadataLoader::load(ProductMetadataPaths::smartCatalogRoutingFile());
+        $config = AssistantMetadataLoader::load(ProductMetadataPaths::channelLimitsFile());
         $text = AssistantMetadataLoader::dotString($config, 'fuera_de_his_text');
 
         return $text !== ''
@@ -257,18 +237,11 @@ final class SmartCatalogRoutingService
             if (!is_string($tag)) {
                 continue;
             }
-            if (PreprocessRoutingHintCatalog::applyAlias(trim($tag)) === PreprocessRoutingHintCatalog::FUERA_HIS
-                || trim($tag) === 'fuera_his'
-            ) {
+            if (trim($tag) === 'fuera_his') {
                 return true;
             }
         }
 
         return false;
-    }
-
-    private static function emptyMatch(): SmartCatalogMatchResult
-    {
-        return new SmartCatalogMatchResult([], null, 0, false);
     }
 }

@@ -12,7 +12,8 @@ Registro de decisiones **cerradas** que afectan a más de un módulo o que convi
 | Runtime datos vs metadata | Maestros/catálogos en BD + seed console; YAML = composición | [runtime-datos-vs-metadata.md](./runtime-datos-vs-metadata.md) |
 | Contexto HIS asistente | Preprocess `context_areas`; aspectos + loaders PHP; volcado 2ª IA | [asistente-contexto-his-areas-aspectos.md](./asistente-contexto-his-areas-aspectos.md) |
 | Canal guide asistente | Fusión clinical + informational; 2ª IA unificada | [asistente-canal-guide.md](./asistente-canal-guide.md) |
-| Catálogo inteligente asistente | 1ª IA etiqueta; PHP match + plan declarativo + log; 2ª IA guide; planificadora opcional | [asistente-catalogo-inteligente.md](./asistente-catalogo-inteligente.md) |
+| Asistente — discovery unificado | Hints guide/fuera_his/sin_pedido; DiscoveryIndex; Guide siempre; sin puertas direct-doors | [asistente-discovery-unificado.md](./asistente-discovery-unificado.md) |
+| Catálogo inteligente asistente (obsoleto) | Reemplazado por discovery unificado | [asistente-catalogo-inteligente.md](./asistente-catalogo-inteligente.md) |
 | Pedido servicio × acto | `servicios` = oferta del centro; actos SNOMED; glosario anti-confusión | [pedido-atencion-linea-acto.md](./pedido-atencion-linea-acto.md) |
 | DDD BC + capas + metadata | En implementación: BC, YAML colocalizado, knobs→PHP/BD | [ddd-bounded-contexts-capas-y-metadata.md](./ddd-bounded-contexts-capas-y-metadata.md) |
 | Clinical módulos de capacidad | Módulo primero (Encounter, Emergency, Lab…); sin Shared en el BC; layers dentro del módulo | [clinical-modulos-capacidad.md](./clinical-modulos-capacidad.md) |

@@ -4,7 +4,6 @@ namespace common\tests\unit\platform\assistant;
 
 use Codeception\Test\Unit;
 use common\components\Platform\Assistant\Catalog\IntentSchemaPaths;
-use common\components\Platform\Assistant\Catalog\SmartCatalogRegistry;
 use common\components\Platform\Assistant\Catalog\StateTagIndex;
 use common\components\Platform\Assistant\Context\AssistantContextAreaAspectCatalog;
 use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
@@ -21,7 +20,6 @@ class SmartCatalogRoutingServiceTest extends Unit
 
     protected function _after(): void
     {
-        SmartCatalogRegistry::resetCacheForTests();
         AssistantMetadataLoader::resetCacheForTests();
         AssistantContextAreaAspectCatalog::resetCacheForTests();
         AssistantPlanningLogService::resetForTests();
@@ -43,7 +41,6 @@ class SmartCatalogRoutingServiceTest extends Unit
         $this->assertFalse($decision->isFueraDeHis());
         $this->assertFalse($decision->isDudosa());
         $this->assertContains($decision->routingResult, ['incompletas', 'clara']);
-        $this->assertNull($decision->catalogEntry);
     }
 
     public function testClaraSingleIntentTurnosConDestino(): void
@@ -192,7 +189,6 @@ class SmartCatalogRoutingServiceTest extends Unit
 
         $this->assertTrue($evaluation->decision->isDudosa());
         $this->assertSame('ambiguous', $evaluation->decision->legacyUserGoal);
-        $this->assertNull($evaluation->decision->catalogEntry);
     }
 
     public function testLlegarTardeLoadsPoliciesViaDiscoveryIntent(): void

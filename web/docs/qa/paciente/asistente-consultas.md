@@ -475,7 +475,7 @@ Smoke WhatsApp: [asistente-whatsapp.md](./asistente-whatsapp.md).
 
 La queja **no** es para síntomas ni urgencias. Saludo solo: ver §1 casos borde.
 
-**Contenido informativo:** artículos en `info_content_article` (topic, keywords, scope efector→provincia→producto). Destino: respuesta anclada al artículo + CTA a intent(s) con RBAC. Sin artículo pero con datos HIS: volcado `context:his` en la 2ª IA (ver casos tardanza / cancelar arriba). Ver [contenido-informativo.md](../../producto/contenido-informativo.md).
+**Contenido informativo:** artículos en `info_content_article` (topic, keywords, scope efector→provincia→producto). Destino: **Guide** con artículo adjunto + CTA a intent(s) con RBAC. Sin artículo pero con datos HIS: volcado `context:his` en la 2ª IA (ver casos tardanza / cancelar arriba). Ver [contenido-informativo.md](../../producto/contenido-informativo.md).
 
 ---
 

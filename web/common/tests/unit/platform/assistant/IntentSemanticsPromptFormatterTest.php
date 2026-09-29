@@ -4,14 +4,12 @@ namespace common\tests\unit\platform\assistant;
 
 use Codeception\Test\Unit;
 use common\components\Platform\Assistant\Catalog\IntentSemanticsPromptFormatter;
-use common\components\Platform\Assistant\Catalog\SmartCatalogRegistry;
 use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
 
 class IntentSemanticsPromptFormatterTest extends Unit
 {
     protected function _after(): void
     {
-        SmartCatalogRegistry::resetCacheForTests();
         AssistantMetadataLoader::resetCacheForTests();
     }
 

@@ -184,11 +184,6 @@ final class ProductMetadataPaths
         return self::assistantCatalogDir() . DIRECTORY_SEPARATOR . 'context-his-areas.yaml';
     }
 
-    public static function smartCatalogFile(): string
-    {
-        return self::assistantCatalogDir() . DIRECTORY_SEPARATOR . 'direct-doors.yaml';
-    }
-
     public static function preprocessExtractionCategoriesFile(): string
     {
         return self::assistantCatalogDir() . DIRECTORY_SEPARATOR . 'preprocess-extraction-categories.yaml';
@@ -199,9 +194,17 @@ final class ProductMetadataPaths
         return self::assistantCatalogDir() . DIRECTORY_SEPARATOR . 'preprocess-routing-hints.yaml';
     }
 
+    public static function channelLimitsFile(): string
+    {
+        return self::assistantRoutingFile('channel-limits');
+    }
+
+    /**
+     * @deprecated Usar {@see channelLimitsFile()}.
+     */
     public static function smartCatalogRoutingFile(): string
     {
-        return self::assistantRoutingFile('smart-catalog-routing');
+        return self::channelLimitsFile();
     }
 
     public static function assistantSchemasDir(): string

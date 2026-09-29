@@ -2,10 +2,8 @@
 
 namespace common\components\Platform\Assistant\Planning;
 
-use common\components\Platform\Assistant\Catalog\SmartCatalogEntry;
-
 /**
- * Decisión de routing post catálogo inteligente.
+ * Decisión de routing post discovery.
  */
 final class SmartCatalogRoutingDecision
 {
@@ -18,7 +16,6 @@ final class SmartCatalogRoutingDecision
         public readonly array $intentIds,
         public readonly string $responseText,
         public readonly string $articleTopic,
-        public readonly ?SmartCatalogEntry $catalogEntry = null,
     ) {
     }
 

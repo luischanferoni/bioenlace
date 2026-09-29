@@ -3,7 +3,6 @@
 namespace common\tests\unit\platform\assistant;
 
 use Codeception\Test\Unit;
-use common\components\Platform\Assistant\Catalog\SmartCatalogRegistry;
 use common\components\Platform\Assistant\Chat\ChatPreprocessContext;
 use common\components\Platform\Assistant\Chat\Channels\Planner\PlannerChannelConfig;
 use common\components\Platform\Assistant\Chat\Routing\Handlers\IncompleteRoutingHandler;
@@ -20,7 +19,6 @@ class PlannerRoutingStepTest extends Unit
 {
     protected function _after(): void
     {
-        SmartCatalogRegistry::resetCacheForTests();
         AssistantMetadataLoader::resetCacheForTests();
         AssistantContextAreaAspectCatalog::resetCacheForTests();
         AssistantPlanningLogService::resetForTests();

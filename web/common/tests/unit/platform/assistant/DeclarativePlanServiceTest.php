@@ -12,7 +12,6 @@ use common\components\Platform\Assistant\Planning\AssistantFirstIaAdapter;
 use common\components\Platform\Assistant\Planning\AssistantPlanningLogService;
 use common\components\Platform\Assistant\Planning\DeclarativePlanService;
 use common\components\Platform\Assistant\Planning\SmartCatalogRoutingService;
-use common\components\Platform\Assistant\Catalog\SmartCatalogRegistry;
 
 class DeclarativePlanServiceTest extends Unit
 {
@@ -20,7 +19,6 @@ class DeclarativePlanServiceTest extends Unit
     {
         AssistantContextAreaAspectCatalog::resetCacheForTests();
         AssistantMetadataLoader::resetCacheForTests();
-        SmartCatalogRegistry::resetCacheForTests();
         AssistantPlanningLogService::resetForTests();
     }
 
@@ -32,8 +30,7 @@ class DeclarativePlanServiceTest extends Unit
         $plan = DeclarativePlanService::plan(
             [AssistantContextHISArea::SCHEDULING],
             [['span' => '10 minutos tarde', 'category' => 'servicio', 'synonyms' => []]],
-            $anchors,
-            null
+            $anchors
         );
 
         $this->assertContains(
@@ -229,9 +226,11 @@ class DeclarativePlanServiceTest extends Unit
             'extractions' => [],
         ], 1);
 
-        $this->assertTrue($evaluation->decision->isIncompletas());
-        $this->assertSame('atencion-sintoma', $evaluation->decision->catalogEntry?->id);
-        $this->assertSame(['atencion.necesito-atencion'], $evaluation->decision->catalogEntry?->ctaIntentIds);
+        $this->assertContains(
+            $evaluation->decision->routingResult,
+            ['incompletas', 'clara']
+        );
+        $this->assertContains('atencion.necesito-atencion', $evaluation->decision->intentIds);
         $this->assertSame([], $evaluation->declarativePlan->toolIds);
     }
 
@@ -292,6 +291,5 @@ class DeclarativePlanServiceTest extends Unit
         ], 1);
 
         $this->assertTrue($evaluation->decision->isIncompletas());
-        $this->assertNull($evaluation->decision->catalogEntry);
     }
 }

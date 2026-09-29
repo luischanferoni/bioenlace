@@ -5,7 +5,6 @@
 version: 1
 
 hints:
-  pedido_claro: oraciones que expresan una sola necesidad, situación o problema entendible dentro del ámbito de la salud.
-  pedido_claro_multiple: dos o más necesidades/situaciones claras y distintas en el mismo mensaje dentro del ámbito de la salud.
-  sin_pedido: oracion u oraciones unimembres que no expresa una necesidad, situación o problema entendible
-  pedido_fuera_his: oraciones que expresan un tema ajeno al ámbito de la salud.
+  guide: oraciones que expresan una o más necesidades, situaciones o problemas entendibles dentro del ámbito de la salud.
+  fuera_his: oraciones que expresan un tema ajeno al ámbito de la salud.
+  sin_pedido: oración u oraciones que no expresan una necesidad, situación o problema entendible.

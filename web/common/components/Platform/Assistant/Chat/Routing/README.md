@@ -1,6 +1,6 @@
 # Routing
 
-Post-preprocess unificado (`ChatRouter`) — discovery unificado (plan activo).
+Post-preprocess unificado (`ChatRouter`) — discovery unificado.
 
 ## Hints IA
 
@@ -10,7 +10,7 @@ Post-preprocess unificado (`ChatRouter`) — discovery unificado (plan activo).
 
 1. Preprocess → hint + tags
 2. `DiscoveryIndex` → intents (`meta.tags`) + artículos BD
-3. Áreas derivadas de intents → plan declarativo (aspectos HIS, no puertas NL)
+3. Áreas derivadas de intents → plan declarativo (aspectos HIS)
 4. Handlers:
 
 | `routing_result` | Handler |
@@ -19,6 +19,5 @@ Post-preprocess unificado (`ChatRouter`) — discovery unificado (plan activo).
 | `dudosa` | `DudosaRoutingHandler` |
 | `fuera_de_his` | `FueraDeHisHandler` |
 
-`direct-doors.yaml` está vacío. `SmartCatalogMatchService` / `DirectMatchHandler` son legacy.
-
-Plan: `web/docs/plans/asistente-discovery-unificado/`.
+Copy de límites de canal: `Application/Routing/channel-limits.yaml`.
+No hay catálogo de puertas (`direct-doors` eliminado).

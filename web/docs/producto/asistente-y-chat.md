@@ -35,49 +35,48 @@ flowchart TB
 
 Los YAML de flujo viven en `common/metadata/bioenlace/assistant/intents/`.
 
-Clasificación: el preprocess devuelve necesidades y tags que inventa. PHP cruza esos tags con `meta.tags` del estado. El estado que cruza hidrata el `span` con su `hint`. Si gana un solo intent, o un artículo, el resultado es **clara**. Si empatan varios intents, o la pregunta necesita datos del sistema, es **incompletas**. En los dos casos de un flow, la guía responde y el flow se abre cuando la persona toca el botón.
+Clasificación: el preprocess inventa **tags** y un **hint** de canal (`guide`, `fuera_his`, `sin_pedido`). PHP cruza los tags con `meta.tags` de los estados de cada intent (YAML Domain) y con keywords de artículos en BD (`DiscoveryIndex`). Lo que matchea se **adjunta** a la guía (2ª IA): semántica del flow y, si hay, cuerpo del artículo. El flow se abre cuando la persona toca el botón.
 
-**Routing** (1ª IA preprocess → tags del mensaje):
+**Routing** (1ª IA preprocess → hint + tags):
 
-| Resultado | Rol | IAs totales (típico) |
-|-----------|-----|----------------------|
-| **clara** | Un intent, o un artículo. El intent pasa por la guía; el artículo sale en la misma respuesta | 2 (artículo: 1) |
-| **dudosa** | Saludo o dominio poco claro → preguntas fijas | 1 |
-| **fuera_de_his** | Tema ajeno al HIS → mensaje límite | 1 |
-| **incompletas** | Varios intents empatados, o pregunta HIS con datos → guía | 2 (± planificadora = 3) |
+| Hint / resultado | Rol | IAs totales (típico) |
+|------------------|-----|----------------------|
+| **guide** (paths internos `clara` / `incompletas`) | Pedido en el HIS: Guide con adjuntos (intents y/o artículo) | 2 (± planificadora = 3) |
+| **sin_pedido** (`dudosa`) | Saludo o sin necesidad clara → preguntas fijas | 1 |
+| **fuera_his** | Tema ajeno al HIS → mensaje límite | 1 |
 
-El alias legacy `user_goal: guide` en hilo equivale a **incompletas** o canal guide según el camino. Hilos: foco persistido (`guide_focus`, `thread_tag`); desvío fuerte → **dudosa**. Las necesidades del hilo (activa, satisfecha, descartada) viven en el estado de la conversación; la guía lee solo las activas. Artículo, tema ajeno al HIS y datos de «llego tarde»: `assistant/catalog/direct-doors.yaml`.
+El hilo persiste `user_goal` derivado (`guide` / `ambiguous`). Foco (`guide_focus`, `thread_tag`); desvío fuerte → **sin_pedido**. Las necesidades del hilo (activa, satisfecha, descartada) viven en el estado; la guía lee solo las activas. No hay catálogo paralelo de “puertas” (`direct-doors`): llegar tarde vive en tags del intent de política de turnos + datos HIS por área; representación, en artículo BD.
 
 Contenido editorial: [contenido-informativo.md](./contenido-informativo.md).
 
-## Contexto HIS en la 2ª IA (incompletas)
+## Contexto HIS en la 2ª IA (guide)
 
-Cuando el paciente pregunta algo que **necesita datos del sistema** (próximo turno, reglas del centro, llegar tarde) pero no hay match al 100 %, Bioenlace entra en **incompletas**: plan declarativo (áreas → aspect loaders), opcionalmente planificadora, y **guide** (`asistente-guide`) con volcado acotado del HIS.
+Cuando hace falta **dato del sistema** (próximo turno, reglas del centro, llegar tarde), PHP arma un plan declarativo (áreas derivadas del intent → aspect loaders) y la **guía** (`asistente-guide`) recibe el volcado acotado junto con `intent_semantics` / artículo.
 
 ```mermaid
 flowchart LR
   P[Preprocess IA]
-  M[Cruce de tags]
+  D[Discovery tags]
   PL[Plan declarativo]
   L[Loaders → JSON HIS]
   G[IA guide]
-  P --> M --> PL --> L --> G
+  P --> D --> PL --> L --> G
 ```
 
 | Concepto | Quién lo ve | Qué es |
 |----------|-------------|--------|
-| **Área HIS** | Preprocess (`context_areas`) | Tema top-level: `appointments`, `representation`, … |
+| **Área HIS** | PHP (derivada del intent) | Dominio espejo: `scheduling`, `clinical`, … |
 | **Aspecto** | Guide (clave JSON en volcado) | Unidad de carga: `appointment.current`, `site.appointment.policies`, … |
 | **Entidad** | Solo PHP (loaders) | Modelos de dominio — **no** aparece en prompts |
 
 Reglas de producto:
 
-- Saludo solo → routing **dudosa** → sin loaders.
-- El preprocess **no** elige aspectos; PHP resuelve anclas y aspectos tras el match.
-- Volcado `--- context:his ---` con JSON; valores `null` si el dato no existe (p. ej. tolerancia de llegada tarde no configurada) → guide responde con honestidad.
-- Artículo editorial con match **clara** (100 %) → body + CTA sin 2ª IA.
+- Saludo solo → **sin_pedido** → sin loaders.
+- El preprocess **no** elige aspectos; PHP los resuelve tras el discovery.
+- Volcado `--- context:his ---` con JSON; valores `null` si el dato no existe → guide responde con honestidad.
+- Artículo editorial → siempre vía Guide (adjunto), nunca envelope sin 2ª IA.
 
-Detalle técnico: [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md) · ADR: [decisions/asistente-catalogo-inteligente.md](../decisions/asistente-catalogo-inteligente.md).
+Detalle técnico: [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md) · ADR: [decisions/asistente-discovery-unificado.md](../decisions/asistente-discovery-unificado.md).
 
 ## Qué interpreta y qué no resuelve el modelo
 

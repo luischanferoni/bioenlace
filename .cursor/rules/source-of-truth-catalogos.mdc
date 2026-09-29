@@ -24,7 +24,7 @@ Cada **lista cerrada** que el runtime valida o inyecta en prompts tiene **exacta
 | Tags preprocess (vocabulario IA) | tags de `smart-catalog.yaml` + `extraPreprocessTags()` PHP | `PreprocessTagVocabularyCatalog` |
 | Aspectos HIS / plan declarativo | constantes `ASPECTS` en `AssistantContextHISAreaAspect` | `AssistantContextHISAreaAspect`, `AssistantContextAreaAspectCatalog` |
 | Entidades hint (flows) | `declaredEntities()` en cada `*HintCandidateProvider` (ownership compuesto) | `HintCandidateProviderRegistry`, `HintResolutionMetadata` |
-| Copy routing catálogo | `Platform/Assistant/Application/Routing/smart-catalog-routing.yaml` | metadata loader |
+| Copy límites de canal (fuera HIS) | `Platform/Assistant/Application/Routing/channel-limits.yaml` | metadata loader |
 | Maestros consultados en request (geo, recursos) | **BD** + seed console | servicio dominio + cache |
 
 ## Reglas PHP

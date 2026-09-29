@@ -5,55 +5,27 @@ namespace common\tests\unit\platform\assistant;
 use Codeception\Test\Unit;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
 use common\components\Platform\Assistant\Context\AssistantContextAreaAspectCatalog;
-use common\components\Platform\Assistant\Context\AssistantContextHISArea;
 use common\components\Platform\Assistant\Context\AssistantContextAreaAspectResolver;
 use common\components\Platform\Assistant\Context\AssistantContextAnchorBag;
 use common\components\Platform\Assistant\Context\AssistantContextHISAreaAspect;
 
 class AssistantContextAreasTest extends Unit
 {
-    public function testAreaCatalogStillListsSchedulingForDerivedContext(): void
-    {
-        $list = AssistantContextHISArea::listForPrompt();
-
-        $this->assertStringContainsString('scheduling', $list);
-        $this->assertStringContainsString('Citas, agenda y turnos', $list);
-    }
-
-    public function testNormalizeContextAreasFiltersInvalid(): void
-    {
-        $areas = ChatPreprocessService::normalizeContextAreas([
-            'scheduling',
-            'invalid_area',
-            'product',
-            'scheduling',
-        ]);
-
-        $this->assertSame(['scheduling', 'product'], $areas);
-    }
-
-    public function testNormalizeContextAreasEmptyForNonArray(): void
-    {
-        $this->assertSame([], ChatPreprocessService::normalizeContextAreas(null));
-    }
-
-    public function testNormalizeContextAreasEmptyForGreetingScenario(): void
-    {
-        $this->assertSame([], ChatPreprocessService::normalizeContextAreas([]));
-    }
-
-    public function testCatalogListsDomainAndContextOnlyAreas(): void
-    {
-        $this->assertCount(7, AssistantContextHISArea::all());
-        $this->assertTrue(AssistantContextHISArea::isContextOnly(AssistantContextHISArea::PRODUCT));
-        $this->assertTrue(AssistantContextHISArea::isContextOnly(AssistantContextHISArea::GEO_RESOURCES));
-        $this->assertFalse(AssistantContextHISArea::isContextOnly(AssistantContextHISArea::SCHEDULING));
-    }
-
     protected function _after(): void
     {
         ChatPreprocessService::resetCacheForTests();
         AssistantContextAreaAspectCatalog::resetCacheForTests();
+    }
+
+    public function testNormalizeContextAreasAlwaysEmpty(): void
+    {
+        $this->assertSame([], ChatPreprocessService::normalizeContextAreas([
+            'scheduling',
+            'invalid_area',
+            'product',
+        ]));
+        $this->assertSame([], ChatPreprocessService::normalizeContextAreas(null));
+        $this->assertSame([], ChatPreprocessService::normalizeContextAreas([]));
     }
 
     public function testAreaAspectPlanForAppointmentsWithoutHistory(): void
@@ -63,7 +35,7 @@ class AssistantContextAreasTest extends Unit
         $anchors->siteId = 7;
 
         $plan = AssistantContextAreaAspectResolver::plan(
-            [AssistantContextHISArea::SCHEDULING],
+            ['scheduling'],
             [
                 ['span' => '10 minutos tarde', 'category' => 'servicio', 'synonyms' => []],
             ],
@@ -82,7 +54,7 @@ class AssistantContextAreasTest extends Unit
         $anchors->subjectPersonaId = 1;
 
         $plan = AssistantContextAreaAspectResolver::plan(
-            [AssistantContextHISArea::SCHEDULING],
+            ['scheduling'],
             [
                 ['span' => 'última vez que fui', 'category' => 'servicio', 'synonyms' => []],
             ],

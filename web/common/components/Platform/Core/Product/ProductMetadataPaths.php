@@ -179,11 +179,6 @@ final class ProductMetadataPaths
         return self::assistantDir() . DIRECTORY_SEPARATOR . 'Application' . DIRECTORY_SEPARATOR . 'Catalog';
     }
 
-    public static function contextHisAreasCatalogFile(): string
-    {
-        return self::assistantCatalogDir() . DIRECTORY_SEPARATOR . 'context-his-areas.yaml';
-    }
-
     public static function preprocessExtractionCategoriesFile(): string
     {
         return self::assistantCatalogDir() . DIRECTORY_SEPARATOR . 'preprocess-extraction-categories.yaml';

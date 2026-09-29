@@ -5,7 +5,6 @@ namespace common\tests\unit\platform\assistant;
 use Codeception\Test\Unit;
 use common\components\Platform\Assistant\Context\AssistantContextAnchorBag;
 use common\components\Platform\Assistant\Context\AssistantContextAreaAspectCatalog;
-use common\components\Platform\Assistant\Context\AssistantContextHISArea;
 use common\components\Platform\Assistant\Context\AssistantContextHISAreaAspect;
 use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
 use common\components\Platform\Assistant\Planning\AssistantFirstIaAdapter;
@@ -28,7 +27,7 @@ class DeclarativePlanServiceTest extends Unit
         $anchors->subjectPersonaId = 1;
 
         $plan = DeclarativePlanService::plan(
-            [AssistantContextHISArea::SCHEDULING],
+            ['scheduling'],
             [['span' => '10 minutos tarde', 'category' => 'servicio', 'synonyms' => []]],
             $anchors
         );
@@ -173,7 +172,7 @@ class DeclarativePlanServiceTest extends Unit
         $this->assertContains('necesito_atencion', $first['tags']);
     }
 
-    public function testRoutingDerivesClinicalAreaFromSintomaMatch(): void
+    public function testRoutingDerivesNoContextAreasFromDiscovery(): void
     {
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'Me duele la cabeza',
@@ -184,7 +183,7 @@ class DeclarativePlanServiceTest extends Unit
             'extractions' => [],
         ], 1);
 
-        $this->assertContains('clinical', $evaluation->firstIa['context_areas']);
+        $this->assertSame([], $evaluation->firstIa['context_areas']);
     }
 
     public function testFirstIaAdapterInfersMisAnalisis(): void

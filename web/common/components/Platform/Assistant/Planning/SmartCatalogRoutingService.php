@@ -6,9 +6,7 @@ use common\components\Platform\Assistant\Catalog\DiscoveryIndex;
 use common\components\Platform\Assistant\Catalog\DiscoveryResult;
 use common\components\Platform\Assistant\Catalog\SmartCatalogMatchResult;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
-use common\components\Platform\Assistant\Context\AssistantContextAreaDerivation;
 use common\components\Platform\Assistant\Context\AssistantContextAnchorResolver;
-use common\components\Platform\Assistant\Context\AssistantContextHISArea;
 use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
 use common\components\Platform\Assistant\Preprocess\PreprocessRoutingHintCatalog;
 use common\components\Platform\Core\Product\ProductMetadataPaths;
@@ -32,22 +30,13 @@ final class SmartCatalogRoutingService
         $discovery = DiscoveryIndex::match($firstIa, $message, $userId);
         $match = new SmartCatalogMatchResult();
 
-        $firstIa['context_areas'] = self::mergeDerivedAreas(
-            is_array($firstIa['context_areas']) ? $firstIa['context_areas'] : [],
-            AssistantContextAreaDerivation::fromIntentIds($discovery->intentIds(8))
-        );
-        if ($discovery->primaryArticleTopic() !== '' && $firstIa['context_areas'] === []) {
-            $topic = $discovery->primaryArticleTopic();
-            if ($topic === 'representacion' || str_contains($topic, 'represent')) {
-                $firstIa['context_areas'] = [AssistantContextHISArea::PERSON];
-            }
-        }
+        // Áreas HIS deprecadas: discovery adjunta intents/artículos; plan solo por tools discovery.
+        $firstIa['context_areas'] = [];
 
         $extractions = is_array($firstIa['extractions']) ? $firstIa['extractions'] : [];
         $anchors = AssistantContextAnchorResolver::resolve($userId, $extractions);
-        $areas = is_array($firstIa['context_areas']) ? $firstIa['context_areas'] : [];
 
-        $declarative = DeclarativePlanService::plan($areas, $extractions, $anchors);
+        $declarative = DeclarativePlanService::plan([], $extractions, $anchors);
         $declarative = self::mergeDiscoveryArticles($declarative, $discovery);
 
         AssistantPlanningLogService::begin($firstIa, []);
@@ -78,7 +67,6 @@ final class SmartCatalogRoutingService
         $hint = PreprocessRoutingHintCatalog::applyAlias(
             (string) ($firstIa['routing_hint'] ?? PreprocessRoutingHintCatalog::SIN_PEDIDO)
         );
-        $areas = is_array($firstIa['context_areas']) ? $firstIa['context_areas'] : [];
         $tags = is_array($firstIa['tags'] ?? null) ? $firstIa['tags'] : [];
 
         if ($hint === PreprocessRoutingHintCatalog::FUERA_HIS || self::hasFueraHisTag($tags)) {
@@ -90,15 +78,11 @@ final class SmartCatalogRoutingService
             return $fromStates;
         }
 
-        if ($hint === PreprocessRoutingHintCatalog::SIN_PEDIDO && $areas === [] && $discovery->isEmpty()) {
+        if ($hint === PreprocessRoutingHintCatalog::SIN_PEDIDO && $discovery->isEmpty()) {
             return self::dudosaDecision();
         }
 
-        if (
-            $hint === PreprocessRoutingHintCatalog::GUIDE
-            || !$discovery->isEmpty()
-            || $areas !== []
-        ) {
+        if ($hint === PreprocessRoutingHintCatalog::GUIDE || !$discovery->isEmpty()) {
             return new SmartCatalogRoutingDecision(
                 PreprocessRoutingHintCatalog::PATH_NEEDS_CONTEXT,
                 PreprocessRoutingHintCatalog::legacyUserGoalFromRoutingHint(
@@ -172,27 +156,6 @@ final class SmartCatalogRoutingService
         return $text !== ''
             ? $text
             : 'No puedo ayudarte con esa consulta desde el asistente del sistema de salud.';
-    }
-
-    /**
-     * @param list<string> $existing
-     * @param list<string> $derived
-     * @return list<string>
-     */
-    private static function mergeDerivedAreas(array $existing, array $derived): array
-    {
-        $kept = [];
-        foreach ($existing as $area) {
-            if (!is_string($area)) {
-                continue;
-            }
-            $area = trim($area);
-            if ($area !== '' && AssistantContextHISArea::isContextOnly($area)) {
-                $kept[] = $area;
-            }
-        }
-
-        return AssistantContextHISArea::sortByProductPriority(array_merge($kept, $derived));
     }
 
     private static function mergeDiscoveryArticles(

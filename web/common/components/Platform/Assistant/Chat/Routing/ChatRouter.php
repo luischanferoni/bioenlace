@@ -7,7 +7,6 @@ use common\components\Platform\Assistant\Chat\Channels\Operational\OperationalCh
 use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
-use common\components\Platform\Assistant\Context\AssistantContextHISArea;
 use common\components\Platform\Assistant\Chat\Thread\AssistantThreadStateService;
 use common\components\Platform\Assistant\Chat\Routing\Handlers\LegacyRoutingFallback;
 use common\components\Platform\Assistant\Chat\Routing\Handlers\SmartCatalogRoutingHandlers;
@@ -83,10 +82,7 @@ final class ChatRouter
             'user_goal' => ChatPreprocessService::userGoalFromRoutingHint($routingHint, []),
             'action_text' => '',
             'extractions' => [],
-            'context_areas' => $routingHint === PreprocessRoutingHintCatalog::GUIDE
-                || $routingHint === PreprocessRoutingHintCatalog::PATH_NEEDS_CONTEXT
-                ? [AssistantContextHISArea::PRODUCT]
-                : [],
+            'context_areas' => [],
             'intent_ids_hint' => [],
         ];
 
@@ -116,9 +112,7 @@ final class ChatRouter
             'user_goal' => $goal,
             'action_text' => '',
             'extractions' => [],
-            'context_areas' => ChatPreprocessService::normalizeContextAreas(
-                $goal === 'guide' ? [AssistantContextHISArea::SCHEDULING] : []
-            ),
+            'context_areas' => [],
             'intent_ids_hint' => [],
         ];
 
@@ -173,25 +167,22 @@ final class ChatRouter
     }
 
     /**
-     * Enriquece context_areas / routing_hint; no fuerza GuideChannel.
+     * Ajusta routing_hint para preguntas de política de turnos; no fuerza áreas HIS.
      *
      * @param array<string, mixed> $preprocess
      */
     private static function enrichPreprocessHisContext(string $content, array &$preprocess): void
     {
-        $areas = ChatPreprocessService::normalizeContextAreas($preprocess['context_areas'] ?? []);
+        if (!ChatChannelPolicy::isAppointmentPolicyQuestion($content)) {
+            return;
+        }
 
-        if (ChatChannelPolicy::isAppointmentPolicyQuestion($content)) {
-            $areas = array_values(array_unique(array_merge($areas, [AssistantContextHISArea::SCHEDULING])));
-            $preprocess['context_areas'] = $areas;
-
-            if (!ChatChannelPolicy::requestsOperationalTramiteExecution($content)) {
-                $preprocess['routing_hint'] = PreprocessRoutingHintCatalog::GUIDE;
-                $preprocess['user_goal'] = ChatPreprocessService::userGoalFromRoutingHint(
-                    PreprocessRoutingHintCatalog::GUIDE,
-                    is_array($preprocess['tags'] ?? null) ? $preprocess['tags'] : []
-                );
-            }
+        if (!ChatChannelPolicy::requestsOperationalTramiteExecution($content)) {
+            $preprocess['routing_hint'] = PreprocessRoutingHintCatalog::GUIDE;
+            $preprocess['user_goal'] = ChatPreprocessService::userGoalFromRoutingHint(
+                PreprocessRoutingHintCatalog::GUIDE,
+                is_array($preprocess['tags'] ?? null) ? $preprocess['tags'] : []
+            );
         }
     }
 }

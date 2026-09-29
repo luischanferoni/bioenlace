@@ -8,7 +8,6 @@ use common\components\Platform\Assistant\Chat\Channels\Guide\GuideFocusState;
 use common\components\Platform\Assistant\Chat\Channels\Guide\GuideIntentSemanticsFilter;
 use common\components\Platform\Assistant\Chat\Channels\Guide\GuidePromptAssembler;
 use common\components\Platform\Assistant\Chat\ChatPreprocessContext;
-use common\components\Platform\Assistant\Context\AssistantContextHISArea;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalog;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
 
@@ -41,13 +40,13 @@ class GuidePromptAssemblerTest extends Unit
                 null,
                 null,
                 null,
-                [AssistantContextHISArea::SCHEDULING]
+                ['scheduling']
             ),
         ], []);
 
         $section = GuideIntentSemanticsFilter::formatPromptSection(
             $catalog,
-            [AssistantContextHISArea::SCHEDULING]
+            ['scheduling']
         );
 
         $this->assertStringContainsString('Turno con un especialista:', $section);
@@ -64,14 +63,14 @@ class GuidePromptAssemblerTest extends Unit
             'necesidad_usuario' => 'Saber consecuencias de llegar tarde.',
             'user_goal' => 'guide',
             'action_text' => '',
-            'context_areas' => [AssistantContextHISArea::SCHEDULING],
+            'context_areas' => [],
             'extractions' => [],
         ]);
 
         $prompt = GuidePromptAssembler::build(
             'llego tarde',
             0,
-            new GuideFocusState(AssistantContextHISArea::SCHEDULING, [AssistantContextHISArea::SCHEDULING]),
+            new GuideFocusState(),
             null,
             null
         );

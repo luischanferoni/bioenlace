@@ -3,7 +3,8 @@
 namespace common\components\Platform\Assistant\Context;
 
 /**
- * Aspectos por área HIS ({@see AssistantContextHISAreaAspect}).
+ * Aspectos por clave de área en metadata de {@see AssistantContextHISAreaAspect}.
+ * (Sin catálogo de áreas HIS.)
  */
 final class AssistantContextAreaAspectCatalog
 {
@@ -23,12 +24,12 @@ final class AssistantContextAreaAspectCatalog
     public static function aspectsForArea(string $areaId, array $extractions): array
     {
         $areaId = trim($areaId);
-        if ($areaId === '' || !AssistantContextHISArea::isValid($areaId)) {
+        if ($areaId === '') {
             return [];
         }
 
         $aspects = self::aspectsByArea()[$areaId] ?? [];
-        if ($areaId === AssistantContextHISArea::SCHEDULING && self::wantsAppointmentHistory($extractions)) {
+        if ($areaId === 'scheduling' && self::wantsAppointmentHistory($extractions)) {
             $aspects[] = AssistantContextHISAreaAspect::APPOINTMENT_HISTORY_SUBJECT_AT_SITE;
         }
 
@@ -52,7 +53,7 @@ final class AssistantContextAreaAspectCatalog
         }
 
         $out = [];
-        foreach (AssistantContextHISArea::all() as $areaId) {
+        foreach (AssistantContextHISAreaAspect::areaIds() as $areaId) {
             $out[$areaId] = AssistantContextHISAreaAspect::allForArea($areaId);
         }
 

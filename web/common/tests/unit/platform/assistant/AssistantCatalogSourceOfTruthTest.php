@@ -5,7 +5,6 @@ namespace common\tests\unit\platform\assistant;
 use Codeception\Test\Unit;
 use common\components\Platform\Assistant\Catalog\IntentSchemaPaths;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
-use common\components\Platform\Assistant\Context\AssistantContextHISArea;
 use common\components\Platform\Assistant\Context\AssistantContextHISAreaAspect;
 use common\components\Platform\Assistant\Preprocess\PreprocessExtractionCategoryCatalog;
 use common\components\Platform\Assistant\Preprocess\PreprocessRoutingHintCatalog;
@@ -23,20 +22,6 @@ class AssistantCatalogSourceOfTruthTest extends Unit
         PreprocessExtractionCategoryCatalog::resetCacheForTests();
         HintCandidateProviderRegistry::resetForTests();
         IntentSchemaPaths::resetIndexCache();
-    }
-
-    public function testHisAreaConstantsExistInCatalog(): void
-    {
-        $ref = new ReflectionClass(AssistantContextHISArea::class);
-        foreach ($ref->getConstants() as $id) {
-            if (!is_string($id)) {
-                continue;
-            }
-            $this->assertTrue(
-                AssistantContextHISArea::isValid($id),
-                'Constante HIS sin entrada en context-his-areas.yaml: ' . $id
-            );
-        }
     }
 
     public function testAspectConstantsExistInCatalog(): void

@@ -17,19 +17,18 @@ Cada **lista cerrada** que el runtime valida o inyecta en prompts tiene **exacta
 
 | Tipo de dato | Source of truth | Loader / validación |
 |---|---|---|
-| Áreas HIS (`context_areas`) | `Platform/Assistant/Application/Catalog/context-his-areas.yaml` | `AssistantContextHISArea` |
 | Categorías extracción preprocess | textos: `Platform/Assistant/Application/Catalog/preprocess-extraction-categories.yaml`; **ids**: `HintCandidateProviderInterface::declaredEntities()` | `PreprocessExtractionCategoryCatalog` |
 | `routing_hint` preprocess (id → texto IA) | `Platform/Assistant/Application/Catalog/preprocess-routing-hints.yaml` | `PreprocessRoutingHintCatalog` |
 | Alias / mapas técnicos preprocess (`user_goal`, tags extra) | constantes en `PreprocessRoutingHintCatalog` | mismo loader |
-| Tags preprocess (vocabulario IA) | tags de `smart-catalog.yaml` + `extraPreprocessTags()` PHP | `PreprocessTagVocabularyCatalog` |
-| Aspectos HIS / plan declarativo | constantes `ASPECTS` en `AssistantContextHISAreaAspect` | `AssistantContextHISAreaAspect`, `AssistantContextAreaAspectCatalog` |
+| Tags preprocess (vocabulario IA) | tags de intents Domain + `extraPreprocessTags()` PHP | `PreprocessTagVocabularyCatalog` |
+| Aspectos HIS / plan declarativo (legado; planner off) | constantes `ASPECTS` en `AssistantContextHISAreaAspect` | `AssistantContextHISAreaAspect`, `AssistantContextAreaAspectCatalog` |
 | Entidades hint (flows) | `declaredEntities()` en cada `*HintCandidateProvider` (ownership compuesto) | `HintCandidateProviderRegistry`, `HintResolutionMetadata` |
 | Copy límites de canal (fuera HIS) | `Platform/Assistant/Application/Routing/channel-limits.yaml` | metadata loader |
 | Maestros consultados en request (geo, recursos) | **BD** + seed console | servicio dominio + cache |
 
 ## Reglas PHP
 
-- **Constantes nombradas** (`AssistantContextHISArea::SCHEDULING`, `PreprocessRoutingHintCatalog::CLARA`) solo como alias del id string; la lista `all()` / `isValid()` sale del YAML (cuando el catálogo es vocabulario+texto).
+- **Constantes nombradas** (`PreprocessRoutingHintCatalog::CLARA`, etc.) solo como alias del id string; la lista `all()` / `isValid()` sale del YAML (cuando el catálogo es vocabulario+texto).
 - **Mapas técnicos** viven en el loader; no en un segundo YAML ni en otro service.
 - **Prompts**: placeholders `{…_list}` generados por el loader; no repetir enums en el cuerpo del prompt si ya se inyectan.
 - **Schemas** (`assistant/schemas/*.yaml`): referenciar path del catálogo en `category_values` / notas; no duplicar arrays completos salvo ejemplo ilustrativo.
@@ -45,7 +44,6 @@ Cada **lista cerrada** que el runtime valida o inyecta en prompts tiene **exacta
 
 ## Anti-patrones
 
-- `private const AREA_IDS = [...]` paralelo a `context-his-areas.yaml`.
 - `ROUTING_HINTS` en PHP distinto del YAML de routing hints.
 - `aliases:` / `legacy_user_goal:` / listas de ids sin texto en el YAML de hints.
 - Mismo vocabulario en preprocess.yaml y en smart-catalog sin derivación.

@@ -7,7 +7,6 @@ use common\components\Platform\Assistant\Chat\Channels\Guide\GuideChannelConfig;
 use common\components\Platform\Assistant\Chat\Channels\Guide\GuideFocusState;
 use common\components\Platform\Assistant\Chat\Channels\Guide\GuidePromptAssembler;
 use common\components\Platform\Assistant\Chat\ChatPreprocessContext;
-use common\components\Platform\Assistant\Context\AssistantContextHISArea;
 
 class GuidePromptAssemblerFocusLineTest extends Unit
 {
@@ -30,14 +29,14 @@ class GuidePromptAssemblerFocusLineTest extends Unit
             'normalized_text' => 'llego tarde',
             'user_goal' => 'guide',
             'action_text' => '',
-            'context_areas' => [AssistantContextHISArea::SCHEDULING],
+            'context_areas' => [],
             'extractions' => [],
         ]);
 
         $prompt = GuidePromptAssembler::build(
             'llego tarde',
             0,
-            new GuideFocusState(AssistantContextHISArea::SCHEDULING, [AssistantContextHISArea::SCHEDULING]),
+            new GuideFocusState(),
             null,
             null
         );

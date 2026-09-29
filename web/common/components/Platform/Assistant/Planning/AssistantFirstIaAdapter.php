@@ -5,7 +5,6 @@ namespace common\components\Platform\Assistant\Planning;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
 use common\components\Platform\Assistant\Chat\Thread\ThreadNeedList;
-use common\components\Platform\Assistant\Context\AssistantContextHISArea;
 use common\components\Platform\Assistant\Preprocess\PreprocessRoutingHintCatalog;
 
 /**
@@ -46,8 +45,8 @@ final class AssistantFirstIaAdapter
     public static function fromPreprocess(array $preprocess, string $rawContent = ''): array
     {
         $normalized = trim((string) ($preprocess['normalized_text'] ?? $rawContent));
-        // Solo áreas forzadas por PHP (p. ej. product); la IA no aporta áreas.
-        $areas = ChatPreprocessService::normalizeContextAreas($preprocess['context_areas'] ?? []);
+        // context_areas deprecado: siempre vacío (discovery → intents/artículos).
+        $areas = [];
         $extractions = is_array($preprocess['extractions'] ?? null) ? $preprocess['extractions'] : [];
         $goal = ChatPreprocessService::canonicalizeGoal((string) ($preprocess['user_goal'] ?? 'ambiguous'));
 

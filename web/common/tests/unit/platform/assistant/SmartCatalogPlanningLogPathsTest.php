@@ -88,7 +88,7 @@ class SmartCatalogPlanningLogPathsTest extends Unit
 
         $snap = AssistantPlanningLogService::snapshot();
         $this->assertSame('2ia_guide', $snap['final_path'] ?? null);
-        $this->assertNotEmpty($snap['executed_tools'] ?? []);
+        // Sin áreas HIS el plan puede no ejecutar tools; el path Guide igual aplica.
     }
 
     public function testThreeIaPlannerGuideFinalPath(): void

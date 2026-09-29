@@ -5,7 +5,6 @@ namespace common\components\Platform\Assistant\Chat\Preprocess;
 use common\components\Platform\Assistant\Chat\Channels\Guide\GuideHistoryWindow;
 use common\components\Platform\Assistant\Chat\Thread\AssistantThreadStateService;
 use common\components\Platform\Assistant\Chat\Thread\ThreadNeedList;
-use common\components\Platform\Assistant\Context\AssistantContextHISArea;
 use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
 use common\components\Platform\Assistant\Preprocess\PreprocessExtractionCategoryCatalog;
 use common\components\Platform\Assistant\Preprocess\PreprocessRoutingHintCatalog;
@@ -143,7 +142,6 @@ final class ChatPreprocessService
     public static function resetCacheForTests(): void
     {
         AssistantMetadataLoader::resetCacheForTests();
-        AssistantContextHISArea::resetCacheForTests();
         PreprocessExtractionCategoryCatalog::resetCacheForTests();
         PreprocessRoutingHintCatalog::resetCacheForTests();
         PreprocessTagVocabularyCatalog::resetCacheForTests();
@@ -365,22 +363,13 @@ final class ChatPreprocessService
     /**
      * @param mixed $rawAreas
      * @return list<string>
+     * @deprecated Áreas HIS eliminadas; siempre [].
      */
     public static function normalizeContextAreas($rawAreas): array
     {
-        if (!is_array($rawAreas)) {
-            return [];
-        }
-        $out = [];
-        foreach ($rawAreas as $row) {
-            $id = trim((string) $row);
-            if ($id === '' || !AssistantContextHISArea::isValid($id)) {
-                continue;
-            }
-            $out[] = $id;
-        }
+        unset($rawAreas);
 
-        return array_values(array_unique($out));
+        return [];
     }
 
     /**

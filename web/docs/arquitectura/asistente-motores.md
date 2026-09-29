@@ -139,20 +139,19 @@ Cuando el paciente pregunta "¿qué es X?" o "¿cómo funciona X?", el discovery
 
 **Administración:** CRUD en `/admin/info-content-article`. Producto: [contenido-informativo.md](../producto/contenido-informativo.md).
 
-## Contexto HIS (áreas + aspectos)
+## Contexto HIS (aspectos legado)
 
-Capa de datos para Guide cuando el plan declarativo pide aspectos. Complementa extracto de HC cuando aplica; no reemplaza intents de lectura ni DataAccess.
+Capa de loaders HIS aún registrada (aspectos). **Áreas HIS retiradas:** el plan declarativo ya no se arma por `context_areas`; Guide se alimenta de discovery (`intent_semantics` + artículos). Planner suele estar off.
 
 | Pieza | Ubicación | Rol |
 |-------|-----------|-----|
-| Áreas | `AssistantContextHISArea` | Derivadas del intent matcheado |
 | Aspectos | `AssistantContextHISAreaAspect` | Claves JSON del volcado (`appointment.current`, …) |
 | Anclas | `AssistantContextAnchorResolver` | Sujeto, cita referencia, `site_id`, PES |
-| Plan | `DeclarativePlanService` + `AssistantContextAreaAspectResolver` | Áreas → `tool_ids` |
+| Plan | `DeclarativePlanService` | Hoy: vacío salvo `article:*` de discovery |
 | Loaders | `Domain/*/Assistant/Context/*AspectLoader` | Un aspecto → JSON HIS |
 | Ensamblaje | `DeclarativePlanExecutor` + `GuidePromptAssembler` | Volcado + artículo en prompt guide |
 
-Flujo: preprocess → discovery → plan declarativo → loaders → guide. Parámetros: `asistente_plan_max_tools`, `asistente_planner_enabled`, `asistente_context_max_aspects`, `asistente_planning_debug`.
+Flujo: preprocess → discovery → Guide. Parámetros: `asistente_plan_max_tools`, `asistente_planner_enabled`, `asistente_context_max_aspects`, `asistente_planning_debug`.
 
 ## Sinónimos de servicios (HintServiceSynonyms)
 

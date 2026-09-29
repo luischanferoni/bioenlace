@@ -10,7 +10,7 @@ Registro de decisiones **cerradas** que afectan a más de un módulo o que convi
 | Capabilities UI nativa | RBAC assignable guardia/encounter/panel fuera de intents NL | [autorizacion-capabilities-ui-nativa.md](./autorizacion-capabilities-ui-nativa.md) |
 | Captura clínica: Yii vs YAML | Integridad en `*Input` / servicios; YAML = prompts y knobs | [captura-clinica-contratos-yii-vs-yaml.md](./captura-clinica-contratos-yii-vs-yaml.md) |
 | Runtime datos vs metadata | Maestros/catálogos en BD + seed console; YAML = composición | [runtime-datos-vs-metadata.md](./runtime-datos-vs-metadata.md) |
-| Contexto HIS asistente | Preprocess `context_areas`; aspectos + loaders PHP; volcado 2ª IA | [asistente-contexto-his-areas-aspectos.md](./asistente-contexto-his-areas-aspectos.md) |
+| Contexto HIS asistente (áreas obsoletas) | Sin `context_areas`; aspectos/loaders legado; discovery → Guide | [asistente-contexto-his-areas-aspectos.md](./asistente-contexto-his-areas-aspectos.md) |
 | Canal guide asistente | Fusión clinical + informational; 2ª IA unificada | [asistente-canal-guide.md](./asistente-canal-guide.md) |
 | Asistente — discovery unificado | Hints guide/fuera_his/sin_pedido; DiscoveryIndex; Guide siempre; sin puertas direct-doors | [asistente-discovery-unificado.md](./asistente-discovery-unificado.md) |
 | Catálogo inteligente asistente (obsoleto) | Reemplazado por discovery unificado | [asistente-catalogo-inteligente.md](./asistente-catalogo-inteligente.md) |

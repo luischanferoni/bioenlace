@@ -18,7 +18,8 @@ final class AssistantContextAreaAspectResolver
     ): AssistantContextLoadPlan {
         $aspectKeys = [];
         foreach ($areaIds as $areaId) {
-            if (!AssistantContextHISArea::isValid($areaId)) {
+            $areaId = is_string($areaId) ? trim($areaId) : '';
+            if ($areaId === '') {
                 continue;
             }
             foreach (AssistantContextAreaAspectCatalog::aspectsForArea($areaId, $extractions) as $aspect) {

@@ -6,19 +6,17 @@ use common\components\Domain\Clinical\Encounter\Application\Service\PatientAiCon
 use common\components\Platform\Assistant\Catalog\DiscoveryIndex;
 use common\components\Platform\Assistant\Catalog\IntentSemanticsPromptFormatter;
 use common\components\Platform\Assistant\Context\AssistantContextAssemblyService;
-use common\components\Platform\Assistant\Context\AssistantContextHISArea;
 use common\components\Platform\Assistant\Chat\ChatPreprocessContext;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
 use common\components\Platform\Assistant\Chat\Thread\ThreadNeedList;
 use common\components\Platform\Assistant\Copy\AssistantChannelCopy;
-use common\components\Platform\Assistant\IntentEngine\UiActionCatalog;
 use common\components\Platform\Assistant\Planning\SmartCatalogRoutingEvaluation;
 use Yii;
 
 /**
  * Ensambla el prompt de la 2ª IA del canal guide.
  *
- * Adjuntos opcionales (HC, artículo): solo si preprocess/áreas y datos lo justifican.
+ * Adjuntos opcionales (HC, artículo): discovery + datos de sesión.
  * CTA: no va en el prompt; se adjunta en la respuesta HTTP (GuideChannel::finalizeResponse).
  */
 final class GuidePromptAssembler
@@ -37,18 +35,18 @@ final class GuidePromptAssembler
       $content,
       $focus->primaryArea
     );
-    $activeAreas = self::resolvedActiveAreas($focus);
 
     $assembled = AssistantContextAssemblyService::assembleForChannel('guide', $userId);
-    $catalog = UiActionCatalog::forUser($userId);
 
     $messageForPrompt = ChatPreprocessContext::normalizedText();
     if ($messageForPrompt === '') {
       $messageForPrompt = $content;
     }
 
-    $intentSemantics = GuideIntentSemanticsFilter::formatPromptSection($catalog, $activeAreas);
-    $intentSemantics = self::applyPerimeterToIntentSemantics($messageForPrompt, $intentSemantics);
+    $intentSemantics = self::formatDiscoveryIntentSemantics([
+      'tags' => ChatPreprocessContext::tags(),
+      'normalized_text' => $messageForPrompt,
+    ], $messageForPrompt, $userId);
 
     return GuideChannelConfig::assemblePrompt([
       'necesidad_usuario' => self::resolveNecesidadUsuario($messageForPrompt),
@@ -60,7 +58,7 @@ final class GuidePromptAssembler
         'clinical_record',
         self::formatClinicalRecordData()
       ),
-      'intent_semantics' => $intentSemantics,
+      'intent_semantics' => self::applyPerimeterToIntentSemantics($messageForPrompt, $intentSemantics),
       'article_block' => GuideChannelConfig::formatOptionalAttachment(
         'article',
         trim((string) $articleData)
@@ -86,10 +84,7 @@ final class GuidePromptAssembler
     ?string $formattedHistory = null
   ): string {
     $content = trim($content);
-    $areas = is_array($firstIa['context_areas'] ?? null)
-      ? AssistantContextHISArea::sortByProductPriority($firstIa['context_areas'])
-      : ChatPreprocessContext::contextAreas();
-    $focus = GuideFocusResolver::resolve($areas, null, false);
+    $focus = GuideFocusResolver::resolve([], null, false);
 
     $history = $formattedHistory ?? GuideHistoryWindow::formatForPrompt(
       $userId,
@@ -102,10 +97,9 @@ final class GuidePromptAssembler
       $messageForPrompt = $content;
     }
 
-    $catalog = UiActionCatalog::forUser($userId);
     $intentSemantics = self::formatIncompleteIntentSemantics($firstIa, $evaluation);
     if ($intentSemantics === '') {
-      $intentSemantics = GuideIntentSemanticsFilter::formatPromptSection($catalog, $areas);
+      $intentSemantics = self::formatDiscoveryIntentSemantics($firstIa, $messageForPrompt, $userId);
     }
     $intentSemantics = self::applyPerimeterToIntentSemantics($messageForPrompt, $intentSemantics);
 
@@ -183,7 +177,7 @@ final class GuidePromptAssembler
     array $firstIa,
     ?SmartCatalogRoutingEvaluation $evaluation
   ): string {
-    $fromEval = is_array($evaluation?->firstIa) ? $evaluation->firstIa : [];
+    $fromEval = ($evaluation !== null && is_array($evaluation->firstIa)) ? $evaluation->firstIa : [];
     $payload = $fromEval !== [] ? $fromEval : $firstIa;
     $discovery = DiscoveryIndex::match($payload, '', 0);
     if ($discovery->intentHits === []) {
@@ -194,16 +188,16 @@ final class GuidePromptAssembler
   }
 
   /**
-   * @return list<string>
+   * @param array<string, mixed> $firstIa
    */
-  private static function resolvedActiveAreas(GuideFocusState $focus): array
+  private static function formatDiscoveryIntentSemantics(array $firstIa, string $message, int $userId): string
   {
-    $areas = $focus->activeAreas;
-    if ($areas === []) {
-      $areas = ChatPreprocessContext::contextAreas();
+    $discovery = DiscoveryIndex::match($firstIa, $message, $userId);
+    if ($discovery->intentHits === []) {
+      return '';
     }
 
-    return AssistantContextHISArea::sortByProductPriority($areas);
+    return IntentSemanticsPromptFormatter::formatStateHits($discovery->intentHits);
   }
 
   /**

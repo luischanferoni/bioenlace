@@ -208,9 +208,6 @@ class SmartCatalogRoutingServiceTest extends Unit
             'turnos.consultar-politica-autogestion-flow',
             $evaluation->decision->primaryIntentId()
         );
-        $this->assertContains(
-            'aspect:site.appointment.policies',
-            $evaluation->declarativePlan->toolIds
-        );
+        $this->assertSame([], $evaluation->firstIa['context_areas']);
     }
 }

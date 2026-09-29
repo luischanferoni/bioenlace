@@ -5,7 +5,6 @@ namespace common\components\Platform\Assistant\Planning;
 use common\components\Platform\Assistant\Catalog\SmartCatalogMatchResult;
 use common\components\Platform\Assistant\Catalog\YamlIntentManifestLoader;
 use common\components\Platform\Assistant\Context\AssistantContextAreaAspectCatalog;
-use common\components\Platform\Assistant\Context\AssistantContextHISArea;
 use common\components\Platform\Assistant\Context\AssistantContextHISAreaAspect;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalog;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
@@ -87,12 +86,16 @@ final class PlannerShortlistBuilder
         $raw = is_array($firstIa['context_areas'] ?? null) ? $firstIa['context_areas'] : [];
         $areas = [];
         foreach ($raw as $area) {
-            if (is_string($area) && AssistantContextHISArea::isValid(trim($area))) {
-                $areas[] = trim($area);
+            if (!is_string($area)) {
+                continue;
+            }
+            $area = trim($area);
+            if ($area !== '' && !in_array($area, $areas, true)) {
+                $areas[] = $area;
             }
         }
 
-        return AssistantContextHISArea::sortByProductPriority(array_values(array_unique($areas)));
+        return $areas;
     }
 
     private static function describeIntentItem(UiActionCatalogItem $item): string

@@ -22,8 +22,9 @@ preprocess → hint ∈ { guide | fuera_his | sin_pedido }
 1. **Hints IA** — solo tres valores en `preprocess-routing-hints.yaml` (loader PHP remapea ids legacy).
 2. **Discovery** — `Catalog/DiscoveryIndex`: misma forma de hit para intent y artículo; no elige canal.
 3. **Canal** — lo decide el hint (y tag `fuera_his`); paths internos `clara` / `incompletas` / `dudosa` / `fuera_de_his` son vocabulario de handlers en transición.
-4. **Aspectos HIS** — loaders por área derivada del intent; **no** puertas NL en Platform.
-5. **Sin `direct-doors`** — eliminado; el índice de producto son tags de intents + artículos BD.
+4. **Aspectos HIS** — loaders legado (planner off); ya no se activan vía áreas.
+5. **Sin catálogo de áreas HIS** — retirado `context-his-areas.yaml`; `context_areas` vacío; Guide usa discovery.
+6. **Sin `direct-doors`** — eliminado; índice de producto = tags de intents + artículos BD.
 
 ## Alternativas descartadas
 
@@ -35,7 +36,7 @@ preprocess → hint ∈ { guide | fuera_his | sin_pedido }
 
 - Intents Domain deben ser ricos en `meta.tags` (y en lo que Guide necesita saber del recorrido).
 - Artículos: keywords en BD alineados a la misma noción de tag.
-- Eliminado: `SmartCatalogRegistry` / `SmartCatalogMatchService` / `DirectMatchHandler` / `direct-doors.yaml`.
+- Eliminado: `SmartCatalogRegistry` / `SmartCatalogMatchService` / `DirectMatchHandler` / `direct-doors.yaml` / `context-his-areas.yaml`.
 - Docs: [producto/asistente-y-chat.md](../producto/asistente-y-chat.md), [contenido-informativo.md](../producto/contenido-informativo.md), [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md).
 - Reemplaza: [asistente-catalogo-inteligente.md](./asistente-catalogo-inteligente.md) (obsoleto).
 

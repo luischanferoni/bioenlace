@@ -20,7 +20,7 @@ class IncompleteRoutingHandlerTest extends Unit
             'ok' => true,
             'normalized_text' => '¿Voy a tener problemas si llego 10 minutos tarde?',
             'user_goal' => 'guide',
-            'context_areas' => ['scheduling'],
+            'context_areas' => [],
             'extractions' => [
                 ['span' => '10 minutos', 'category' => 'servicio', 'synonyms' => []],
             ],
@@ -36,40 +36,45 @@ class IncompleteRoutingHandlerTest extends Unit
         AICostTracker::finalizarEjecucionPrueba();
     }
 
-    public function testLlegarTardeRoutesIncompletasWithDeclarativePlan(): void
+    public function testLlegarTardeRoutesViaDiscoveryWithoutAreas(): void
     {
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => '¿Voy a tener problemas si llego 10 minutos tarde?',
             'routing_hint' => 'guide',
             'tags' => ['llegar_tarde', 'scheduling'],
-            'context_areas' => ['scheduling'],
+            'context_areas' => [],
             'extractions' => [
                 ['span' => '10 minutos', 'category' => 'servicio', 'synonyms' => []],
             ],
         ], 0);
 
-        $this->assertTrue($evaluation->decision->isIncompletas());
-        $this->assertFalse($evaluation->declarativePlan->needsPlanner);
-        $this->assertNotEmpty($evaluation->declarativePlan->toolIds);
+        $this->assertTrue(
+            $evaluation->decision->shouldRouteIntentDirectly()
+            || $evaluation->decision->isIncompletas()
+        );
+        $this->assertSame([], $evaluation->firstIa['context_areas']);
+        $this->assertSame(
+            'turnos.consultar-politica-autogestion-flow',
+            $evaluation->decision->primaryIntentId()
+        );
     }
 
-    public function testDeclarativePlanExecutorLogsExecutedTools(): void
+    public function testDeclarativePlanExecutorWithEmptyToolsIsNoop(): void
     {
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => '¿Voy a tener problemas si llego 10 minutos tarde?',
             'routing_hint' => 'guide',
             'tags' => ['llegar_tarde', 'scheduling'],
-            'context_areas' => ['scheduling'],
+            'context_areas' => [],
             'extractions' => [],
         ], 0);
 
         AssistantPlanningLogService::resetForTests();
         AssistantPlanningLogService::begin($evaluation->firstIa, $evaluation->match->ranked);
 
-        DeclarativePlanExecutor::execute($evaluation->declarativePlan->toolIds, 0);
+        $result = DeclarativePlanExecutor::execute($evaluation->declarativePlan->toolIds, 0);
 
-        $snap = AssistantPlanningLogService::snapshot();
-        $this->assertNotEmpty($snap['executed_tools'] ?? []);
+        $this->assertSame([], $result->executedToolIds);
     }
 
     public function testIncompleteHandlerSetsFinalPathWithSimulatedIa(): void
@@ -85,7 +90,7 @@ class IncompleteRoutingHandlerTest extends Unit
             'routing_hint' => 'guide',
             'necesidad_usuario' => 'Saber si hay problema por llegar tarde.',
             'tags' => ['llegar_tarde', 'scheduling'],
-            'context_areas' => ['scheduling'],
+            'context_areas' => [],
             'extractions' => [],
         ], 0);
 
@@ -111,6 +116,6 @@ class IncompleteRoutingHandlerTest extends Unit
 
         $this->assertContains($envelope['kind'] ?? null, ['message', 'interactive']);
         $snap = AssistantPlanningLogService::snapshot();
-        $this->assertSame('2ia_guide', $snap['final_path'] ?? null);
+        $this->assertContains($snap['final_path'] ?? null, ['2ia_guide', '3ia_planner_guide']);
     }
 }

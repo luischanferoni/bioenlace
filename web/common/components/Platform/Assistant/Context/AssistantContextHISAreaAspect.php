@@ -94,6 +94,25 @@ final class AssistantContextHISAreaAspect
         return $out;
     }
 
+    /**
+     * Ids de área referenciados por aspectos (metadata interna, no catálogo de producto).
+     *
+     * @return list<string>
+     */
+    public static function areaIds(): array
+    {
+        self::loadCatalog();
+        $ids = [];
+        foreach (self::$metaCache ?? [] as $meta) {
+            $area = trim((string) ($meta['area'] ?? ''));
+            if ($area !== '' && !in_array($area, $ids, true)) {
+                $ids[] = $area;
+            }
+        }
+
+        return $ids;
+    }
+
     public static function resetCacheForTests(): void
     {
         self::$metaCache = null;

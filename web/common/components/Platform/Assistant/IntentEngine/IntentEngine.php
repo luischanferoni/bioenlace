@@ -11,7 +11,6 @@ use common\components\Platform\Assistant\Catalog\DataAccessCatalogIntentSupport;
 use common\components\Platform\Assistant\Catalog\IntentSchemaPaths;
 use common\components\Platform\Assistant\Catalog\YamlIntentCatalogService;
 use common\components\Platform\Assistant\Catalog\YamlIntentManifestLoader;
-use common\components\Platform\Assistant\Context\AssistantContextHISArea;
 use common\components\Platform\Assistant\Service\AssistantDraftNormalizer;
 use common\components\Platform\Assistant\UiActions\AssistantClientOpenEnricher;
 use common\components\Platform\Core\Permission\IntentFieldResolutionService;
@@ -350,12 +349,7 @@ final class IntentEngine
             : null;
         $his = [];
         $domain = IntentSchemaPaths::domainForIntentId($actionId);
-        if (
-            $domain !== null
-            && $domain !== ''
-            && AssistantContextHISArea::isValid($domain)
-            && !AssistantContextHISArea::isContextOnly($domain)
-        ) {
+        if ($domain !== null && $domain !== '') {
             $his[] = $domain;
         }
 

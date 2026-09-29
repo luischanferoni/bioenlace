@@ -28,13 +28,31 @@ stable_prompt: |
   Lo que expresa el usuario es lo siguiente:
   {necesidad_usuario}  
 
-  Te adjunto las funcionalidades del sistema en numeración jerárquica (HTA).
-  Cada número entero (1, 2, 3…) es un botón distinto del chat (funcionalidad).
-  Todo lo que cuelga de ese número (1.1, 1.2… / 2.1, 2.2…) ocurre solo después de presionar ese botón.
-  Al orientar, nombrá primero el botón (la tarea raíz) y, si hace falta, el camino hijo que encaja.
+  Te adjunto las funcionalidades del sistema en JSON. Cómo leerlo:
+  {
+    "funcionalidades": [
+      {
+        "boton": "único control del chat",
+        "al_presionar": "qué se abre al tocarlo",
+        "objetivo": "si no hay recorridos: para qué sirve el botón",
+        "pasos": [{ "hace": "…", "elige_entre": ["lista de un paso"], "ofrece": ["acciones"] }],
+        "exito": "cómo termina bien",
+        "recorridos": [
+          {
+            "nombre": "opción de pantalla tras el botón (no es botón del chat)",
+            "objetivo": "…",
+            "pasos": [{ "hace": "…", "elige_entre": ["…"], "ofrece": ["…"] }],
+            "exito": "…"
+          }
+        ]
+      }
+    ]
+  }
+  Si hay "recorridos", objetivo/pasos/éxito viven ahí. Si no, viven en el botón.
+  "elige_entre" es lista de un paso, no otro botón.
+  Al orientar usá los nombres (boton, nombre, elige_entre); no digas las claves JSON.
   {intent_semantics}
-  Detectá cual/es son las funcionalidades que ayudan al usuario, contá en una frase la o las que le convienen 
-  y cuándo le conviene cada una.
+  Detectá cuáles ayudan al usuario y contá en una frase las que le convienen y cuándo.
   
   Todo lo que sigue es contexto interno para vos, para que te ayude a responder lo que expresó el usuario.
 

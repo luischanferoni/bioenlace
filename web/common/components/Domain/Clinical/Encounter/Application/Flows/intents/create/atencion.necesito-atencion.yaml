@@ -237,8 +237,9 @@ states:
     type: final
   select_tipo_atencion:
     label: Modalidad
-    explanation: 'La persona elige la forma de atenderse.'
+    explanation: 'La persona elige cómo atenderse.'
     meta:
+      guide_options: reserva_modalidad
       provides:
         - draft.tipo_atencion
       requires:
@@ -305,7 +306,7 @@ states:
     type: final
   select_servicio:
     label: Servicio
-    explanation: 'La persona elige el servicio del centro.'
+    explanation: 'La persona elige un servicio entre los filtrados por la forma de atenderse.'
     meta:
       provides:
         - draft.id_servicio_asignado
@@ -329,7 +330,7 @@ states:
     always: select_efector
   select_efector:
     label: Centro de salud
-    explanation: 'La persona elige centro donde atenderse.'
+    explanation: 'La persona elige un centro que ofrece el servicio elegido.'
     meta:
       provides:
         - draft.id_efector
@@ -668,7 +669,7 @@ states:
         target: cs_select_efector
   cs_select_efector:
     label: Centro de salud
-    explanation: 'La persona elige centro para el control.'
+    explanation: 'La persona elige un centro que ofrece el servicio elegido.'
     meta:
       provides:
         - draft.id_efector

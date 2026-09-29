@@ -2,6 +2,7 @@
 
 namespace common\components\Platform\Assistant\Catalog;
 
+use common\components\Domain\Scheduling\Agenda\Domain\Catalog\ReservaModalidadAtencionCatalog;
 use common\components\Domain\Scheduling\Agenda\Domain\Catalog\ReservaTriageCatalog;
 
 /**
@@ -16,6 +17,10 @@ final class GuideStepOptionCatalog
      */
     public static function labels(string $ref): array
     {
+        $ref = trim($ref);
+        if ($ref === 'reserva_modalidad') {
+            return ReservaModalidadAtencionCatalog::labelsShortForGuide();
+        }
         $step = self::triageStep($ref);
         if ($step === '') {
             return [];
@@ -26,6 +31,10 @@ final class GuideStepOptionCatalog
 
     public static function labelForCode(string $ref, string $code): string
     {
+        $ref = trim($ref);
+        if ($ref === 'reserva_modalidad') {
+            return ReservaModalidadAtencionCatalog::labelShortForCode($code);
+        }
         if (self::triageStep($ref) === '') {
             return '';
         }

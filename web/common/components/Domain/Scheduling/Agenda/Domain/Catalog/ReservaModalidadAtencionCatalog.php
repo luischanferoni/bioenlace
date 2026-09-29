@@ -46,4 +46,50 @@ final class ReservaModalidadAtencionCatalog
         ],
     ];
     }
+
+    /**
+     * Etiquetas cortas para la guía (elige_entre).
+     *
+     * @return list<string>
+     */
+    public static function labelsShortForGuide(): array
+    {
+        $out = [];
+        $opciones = self::config()['opciones'] ?? [];
+        if (!is_array($opciones)) {
+            return [];
+        }
+        foreach ($opciones as $def) {
+            if (!is_array($def)) {
+                continue;
+            }
+            $short = trim((string) ($def['label_short'] ?? ''));
+            if ($short === '') {
+                $short = trim((string) ($def['label'] ?? ''));
+            }
+            if ($short !== '') {
+                $out[] = $short;
+            }
+        }
+
+        return $out;
+    }
+
+    public static function labelShortForCode(string $code): string
+    {
+        $code = trim($code);
+        if ($code === '') {
+            return '';
+        }
+        $def = self::config()['opciones'][$code] ?? null;
+        if (!is_array($def)) {
+            return '';
+        }
+        $short = trim((string) ($def['label_short'] ?? ''));
+        if ($short !== '') {
+            return $short;
+        }
+
+        return trim((string) ($def['label'] ?? ''));
+    }
 }

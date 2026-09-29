@@ -19,9 +19,10 @@ class StateTagIndexTest extends Unit
             StateTagIndex::match(['medicacion'])
         );
 
-        $this->assertStringContainsString('1. Botón del chat: Solicitar Atención', $block);
+        $this->assertStringContainsString('Solicitar Atención', $block);
         $this->assertStringContainsString('Urgencia', $block);
         $this->assertStringContainsString('Estudio o práctica', $block);
+        $this->assertStringContainsString('"boton"', $block);
     }
 
     public function testEstudioIncluyeElRecorridoCompleto(): void

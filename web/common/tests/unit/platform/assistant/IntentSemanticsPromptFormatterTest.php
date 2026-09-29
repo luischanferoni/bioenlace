@@ -15,58 +15,83 @@ class IntentSemanticsPromptFormatterTest extends Unit
         AssistantMetadataLoader::resetCacheForTests();
     }
 
-    public function testTurnosCrearIsAPathWithoutObjective(): void
+    public function testTurnosCrearIsFlatUnderBoton(): void
     {
         $block = IntentSemanticsPromptFormatter::formatIntentId('turnos.crear-como-paciente');
+        $data = json_decode($block, true);
 
-        $this->assertStringContainsString('1. Botón del chat: Turno con un especialista', $block);
-        $this->assertStringContainsString('1.1 Al presionarlo: La persona elige la oferta del centro que tiene agenda.', $block);
-        $this->assertStringContainsString('1.2 Objetivo: la persona reserva un turno.', $block);
-        $this->assertStringContainsString('1.3 La persona elige el centro de salud.', $block);
-        $this->assertStringContainsString('1.6 La persona elige horario para reservar el turno.', $block);
-        $this->assertStringContainsString('1.7 Éxito: Termina cuando la persona reserva un turno.', $block);
-        $this->assertStringNotContainsString('objective', $block);
-        $this->assertStringNotContainsString('Pasos:', $block);
+        $this->assertIsArray($data);
+        $this->assertArrayHasKey('funcionalidades', $data);
+        $item = $data['funcionalidades'][0];
+        $this->assertSame('Turno con un especialista', $item['boton']);
+        $this->assertSame('La persona elige la oferta del centro que tiene agenda.', $item['al_presionar']);
+        $this->assertSame('la persona reserva un turno', $item['objetivo']);
+        $this->assertArrayNotHasKey('recorridos', $item);
+        $this->assertSame('La persona elige el centro de salud.', $item['pasos'][0]['hace']);
+        $this->assertStringContainsString('horario para reservar el turno', $item['pasos'][3]['hace']);
+        $this->assertSame('Termina cuando la persona reserva un turno.', $item['exito']);
         $this->assertStringNotContainsString('turnos.crear-como-paciente', $block);
     }
 
-    public function testAtencionPathReachesHorarioWithoutGuards(): void
+    public function testAtencionUsaRecorridosYEligeEntre(): void
     {
         $block = IntentSemanticsPromptFormatter::formatIntentId('atencion.necesito-atencion');
+        $data = json_decode($block, true);
 
-        $this->assertStringContainsString('1. Botón del chat: Solicitar Atención', $block);
-        $this->assertStringContainsString('1.1 Al presionarlo: La persona elige qué pedido de atención hace.', $block);
-        $this->assertStringContainsString("1.2 Urgencia\n1.2.1 Objetivo: la persona recibe orientación por urgencia.", $block);
-        $this->assertStringContainsString('1.2.2 El sistema muestra orientación por urgencia y frena la reserva en la app.', $block);
-        $this->assertStringContainsString('1.2.2.1 Ofrece: Llamar al 107.', $block);
-        $this->assertStringNotContainsString('Por lo que indicaste', $block);
-        $this->assertStringContainsString('1.2.3 Éxito: Termina cuando la persona recibe orientación por urgencia.', $block);
-        $this->assertStringContainsString("1.3 Malestar nuevo\n1.3.1 Objetivo: la persona reserva un turno.\n1.3.2 La persona elige la zona del malestar.", $block);
-        $this->assertStringContainsString('1.3.2.1 Opciones: Cabeza, cuello o mareos, Pecho, corazón o respiración', $block);
-        $this->assertStringContainsString('Síntoma general (fiebre, cansancio u otro)', $block);
-        $this->assertStringContainsString('1.3.8 La persona elige horario disponible para el turno.', $block);
-        $this->assertStringContainsString('1.3.9 Éxito: Termina cuando la persona reserva un turno.', $block);
-        $this->assertStringContainsString("1.5 Control/Seguimiento\n1.5.1 Objetivo: la persona envía la consulta.", $block);
-        $this->assertStringContainsString('1.5.4 La persona escribe la consulta del control.', $block);
-        $this->assertStringContainsString('1.5.5 Éxito: Termina cuando la persona envía la consulta.', $block);
-        $this->assertStringNotContainsString('Si elige', $block);
-        $this->assertStringNotContainsString('En esa pantalla:', $block);
+        $this->assertIsArray($data);
+        $item = $data['funcionalidades'][0];
+        $this->assertSame('Solicitar Atención', $item['boton']);
+        $this->assertSame('La persona elige qué pedido de atención hace.', $item['al_presionar']);
+        $this->assertArrayHasKey('recorridos', $item);
+
+        $byName = [];
+        foreach ($item['recorridos'] as $r) {
+            $byName[$r['nombre']] = $r;
+        }
+
+        $this->assertArrayHasKey('Urgencia', $byName);
+        $this->assertSame('la persona recibe orientación por urgencia', $byName['Urgencia']['objetivo']);
+        $this->assertSame(
+            'El sistema muestra orientación por urgencia y frena la reserva en la app.',
+            $byName['Urgencia']['pasos'][0]['hace']
+        );
+        $this->assertSame(['Llamar al 107'], $byName['Urgencia']['pasos'][0]['ofrece']);
+        $this->assertSame('Termina cuando la persona recibe orientación por urgencia.', $byName['Urgencia']['exito']);
+
+        $this->assertArrayHasKey('Malestar nuevo', $byName);
+        $malestar = $byName['Malestar nuevo'];
+        $this->assertSame('la persona reserva un turno', $malestar['objetivo']);
+        $this->assertSame('La persona elige la zona del malestar.', $malestar['pasos'][0]['hace']);
+        $this->assertContains('Síntoma general (fiebre, cansancio u otro)', $malestar['pasos'][0]['elige_entre']);
+        $this->assertSame('La persona elige cómo atenderse.', $malestar['pasos'][1]['hace']);
+        $this->assertSame(['Presencial', 'Videollamada', 'Por mensaje'], $malestar['pasos'][1]['elige_entre']);
+        $this->assertSame(
+            'La persona elige un servicio entre los filtrados por la forma de atenderse.',
+            $malestar['pasos'][2]['hace']
+        );
+        $this->assertSame(
+            'La persona elige un centro que ofrece el servicio elegido.',
+            $malestar['pasos'][3]['hace']
+        );
+        $this->assertSame('Termina cuando la persona reserva un turno.', $malestar['exito']);
+
+        $this->assertArrayHasKey('Control/Seguimiento', $byName);
+        $this->assertSame('la persona envía la consulta', $byName['Control/Seguimiento']['objetivo']);
         $this->assertStringNotContainsString('triage_raiz', $block);
-        $this->assertStringNotContainsString('Cierres:', $block);
-        $this->assertStringNotContainsString('objective', $block);
-        $this->assertStringNotContainsString('atencion.necesito-atencion', $block);
+        $this->assertStringNotContainsString('Por lo que indicaste', $block);
     }
 
-    public function testFormatForIntentIdsJoinsWithoutTechnicalFence(): void
+    public function testFormatForIntentIdsJoinsMultipleBotones(): void
     {
         $wrapped = IntentSemanticsPromptFormatter::formatForIntentIds([
             'turnos.crear-como-paciente',
             'atencion.necesito-atencion',
         ], 4);
+        $data = json_decode($wrapped, true);
 
-        $this->assertStringContainsString('1. Botón del chat: Turno con un especialista', $wrapped);
-        $this->assertStringContainsString('2. Botón del chat: Solicitar Atención', $wrapped);
-        $this->assertStringContainsString('2.1 Al presionarlo:', $wrapped);
-        $this->assertStringNotContainsString('---', $wrapped);
+        $this->assertCount(2, $data['funcionalidades']);
+        $this->assertSame('Turno con un especialista', $data['funcionalidades'][0]['boton']);
+        $this->assertSame('Solicitar Atención', $data['funcionalidades'][1]['boton']);
+        $this->assertArrayHasKey('recorridos', $data['funcionalidades'][1]);
     }
 }

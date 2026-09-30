@@ -1,6 +1,6 @@
 # Contexto HIS del asistente: áreas + aspectos
 
-> **Obsoleto (áreas).** El catálogo `context-his-areas.yaml` / `AssistantContextHISArea` fue retirado. Discovery adjunta `intent_semantics` + artículos; `context_areas` queda vacío. Los aspectos/loaders siguen como legado (plan declarativo / planner off).
+> **Obsoleto (áreas).** El catálogo `context-his-areas.yaml` / `AssistantContextHISArea` fue retirado. Discovery adjunta `intent_semantics` + artículos; `context_areas` queda vacío. Los aspectos/loaders siguen como legado del plan declarativo. La 3ª IA planificadora fue retirada.
 
 ## Contexto
 
@@ -11,7 +11,7 @@ La 2ª IA del canal **guide** necesita datos del HIS sin pegar la historia clín
 | Nivel | Código | Estado |
 |-------|--------|--------|
 | **Área HIS** | ~~`AssistantContextHISArea`~~ | Retirado |
-| **Aspecto** | `AssistantContextHISAreaAspect` | Legado (planner off) |
+| **Aspecto** | `AssistantContextHISAreaAspect` | Legado |
 
 Ver [asistente-discovery-unificado.md](./asistente-discovery-unificado.md).
 

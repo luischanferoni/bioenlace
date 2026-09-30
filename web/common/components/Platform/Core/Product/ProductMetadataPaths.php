@@ -238,11 +238,6 @@ final class ProductMetadataPaths
         return self::assistantChannelPromptFile('Guide');
     }
 
-    public static function plannerPromptFile(): string
-    {
-        return self::assistantChannelPromptFile('Planner');
-    }
-
     public static function preprocessPromptFile(): string
     {
         return self::assistantPreprocessDir() . DIRECTORY_SEPARATOR . 'prompt.yaml';

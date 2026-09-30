@@ -41,7 +41,7 @@ Clasificación: el preprocess inventa **tags** y un **hint** de canal (`guide`, 
 
 | Hint / resultado | Rol | IAs totales (típico) |
 |------------------|-----|----------------------|
-| **guide** (paths internos `clara` / `incompletas`) | Pedido en el HIS: Guide con adjuntos (intents y/o artículo) | 2 (± planificadora = 3) |
+| **guide** (paths internos `clara` / `incompletas`) | Pedido en el HIS: Guide con adjuntos (intents y/o artículo) | 2 |
 | **sin_pedido** (`dudosa`) | Saludo o sin necesidad clara → preguntas fijas | 1 |
 | **fuera_his** | Tema ajeno al HIS → mensaje límite | 1 |
 

@@ -36,12 +36,8 @@ final class AssistantPlanningLogService
             'catalog_matches' => array_slice($catalogMatches, 0, 8),
             'routing_result' => '',
             'declarative_plan' => null,
-            'planner_invoked' => false,
-            'planner_reason' => null,
-            'planner_plan' => null,
             'executed_tools' => [],
             'final_path' => '',
-            'gaps' => [],
         ];
     }
 
@@ -54,29 +50,13 @@ final class AssistantPlanningLogService
     /**
      * @param list<string> $toolIds
      */
-    public static function setDeclarativePlan(array $toolIds, string $reason, bool $needsPlanner): void
+    public static function setDeclarativePlan(array $toolIds, string $reason): void
     {
         self::ensure();
         self::$current['declarative_plan'] = [
             'tool_ids' => array_values($toolIds),
             'reason' => trim($reason),
-            'needs_planner' => $needsPlanner,
         ];
-    }
-
-    /**
-     * @param list<string> $toolIdsOrdered
-     */
-    public static function setPlannerPlan(array $toolIdsOrdered, string $rationale, string $reason): void
-    {
-        self::ensure();
-        self::$current['planner_invoked'] = true;
-        self::$current['planner_reason'] = trim($reason);
-        self::$current['planner_plan'] = [
-            'tool_ids_ordered' => array_values($toolIdsOrdered),
-            'rationale' => trim($rationale),
-        ];
-        self::computeGaps();
     }
 
     /**
@@ -138,41 +118,9 @@ final class AssistantPlanningLogService
                 'catalog_matches' => [],
                 'routing_result' => '',
                 'declarative_plan' => null,
-                'planner_invoked' => false,
-                'planner_reason' => null,
-                'planner_plan' => null,
                 'executed_tools' => [],
                 'final_path' => '',
-                'gaps' => [],
             ];
         }
-    }
-
-    private static function computeGaps(): void
-    {
-        if (self::$current === null) {
-            return;
-        }
-        $decl = self::$current['declarative_plan']['tool_ids'] ?? [];
-        if (!is_array($decl)) {
-            $decl = [];
-        }
-        $declSet = array_fill_keys(array_map('strval', $decl), true);
-        $ordered = self::$current['planner_plan']['tool_ids_ordered'] ?? [];
-        if (!is_array($ordered)) {
-            self::$current['gaps'] = [];
-
-            return;
-        }
-        $gaps = [];
-        foreach ($ordered as $toolId) {
-            if (!is_string($toolId)) {
-                continue;
-            }
-            if (!isset($declSet[$toolId])) {
-                $gaps[] = $toolId;
-            }
-        }
-        self::$current['gaps'] = $gaps;
     }
 }

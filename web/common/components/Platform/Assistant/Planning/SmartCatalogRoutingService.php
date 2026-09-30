@@ -42,8 +42,7 @@ final class SmartCatalogRoutingService
         AssistantPlanningLogService::begin($firstIa, []);
         AssistantPlanningLogService::setDeclarativePlan(
             $declarative->toolIds,
-            $declarative->reason,
-            $declarative->needsPlanner
+            $declarative->reason
         );
 
         $decision = self::resolveRouting($firstIa, $discovery, $message);
@@ -175,19 +174,9 @@ final class SmartCatalogRoutingService
                 $reasons[] = 'discovery:article:' . $topic;
             }
         }
-        $toolIds = array_values(array_unique($toolIds));
-        $needsPlanner = $plan->needsPlanner;
-        $plannerReason = $plan->plannerReason;
-        if ($toolIds !== [] && $plannerReason === 'empty_plan') {
-            $needsPlanner = false;
-            $plannerReason = null;
-        }
-
         return new DeclarativePlanResult(
-            $toolIds,
+            array_values(array_unique($toolIds)),
             implode('; ', array_filter($reasons)),
-            $needsPlanner,
-            $plannerReason,
         );
     }
 

@@ -70,7 +70,6 @@ Tras preprocess, el mensaje **no** se reparte por un catálogo de puertas Platfo
 | Handlers | `Chat/Routing/Handlers/*` | Guide / dudosa / fuera HIS |
 | Log | `Planning/AssistantPlanningLogService` | `planning_applied` por mensaje |
 | Guide (2ª IA) | `Channels/Guide/` + `asistente-guide` | Charla con adjuntos |
-| Planificadora | `Planning/PlannerRoutingStep` + `asistente-planner` | Opcional si `needs_planner` |
 
 Entrypoint: `Chat/Routing/ChatRouter.php` → `SmartCatalogRoutingHandlers`. Pedido HIS → `GuideChannel::handleIncomplete`.
 
@@ -141,7 +140,7 @@ Cuando el paciente pregunta "¿qué es X?" o "¿cómo funciona X?", el discovery
 
 ## Contexto HIS (aspectos legado)
 
-Capa de loaders HIS aún registrada (aspectos). **Áreas HIS retiradas:** el plan declarativo ya no se arma por `context_areas`; Guide se alimenta de discovery (`intent_semantics` + artículos). Planner suele estar off.
+Capa de loaders HIS aún registrada (aspectos). **Áreas HIS retiradas:** el plan declarativo ya no se arma por `context_areas`; Guide se alimenta de discovery (`intent_semantics` + artículos).
 
 | Pieza | Ubicación | Rol |
 |-------|-----------|-----|
@@ -151,7 +150,7 @@ Capa de loaders HIS aún registrada (aspectos). **Áreas HIS retiradas:** el pla
 | Loaders | `Domain/*/Assistant/Context/*AspectLoader` | Un aspecto → JSON HIS |
 | Ensamblaje | `DeclarativePlanExecutor` + `GuidePromptAssembler` | Volcado + artículo en prompt guide |
 
-Flujo: preprocess → discovery → Guide. Parámetros: `asistente_plan_max_tools`, `asistente_planner_enabled`, `asistente_context_max_aspects`, `asistente_planning_debug`.
+Flujo: preprocess → discovery → Guide. Parámetro: `asistente_planning_debug`. `asistente_context_max_aspects` limita aspectos legado.
 
 ## Sinónimos de servicios (HintServiceSynonyms)
 

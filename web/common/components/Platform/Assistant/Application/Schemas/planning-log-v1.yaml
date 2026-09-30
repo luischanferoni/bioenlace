@@ -1,5 +1,5 @@
 # Estructura planning_applied — telemetría por mensaje raíz del asistente.
-# ADR: web/docs/decisions/asistente-catalogo-inteligente.md
+# ADR: web/docs/decisions/asistente-discovery-unificado.md
 version: 1
 
 envelope_key: planning_applied
@@ -17,23 +17,10 @@ fields:
     values: [clara, dudosa, incompletas, fuera_de_his]
   declarative_plan:
     type: object
-    subfields: [tool_ids, reason, needs_planner]
-  planner_invoked:
-    type: boolean
-  planner_reason:
-    type: enum
-    optional: true
-    values: [empty_plan, too_many_tools, no_useful_data]
-  planner_plan:
-    type: object
-    optional: true
-    subfields: [tool_ids_ordered, rationale]
+    subfields: [tool_ids, reason]
   executed_tools:
     type: list<object>
     item_subfields: [tool_id, ms, chars, had_null_fields]
   final_path:
     type: enum
-    values: [1ia_direct, 1ia_clara, 1ia_dudosa, 1ia_fuera, 2ia_guide, 3ia_planner_guide]
-  gaps:
-    type: list<string>
-    notes: tool_ids en planner_plan ausentes en declarative_plan; candidatos a nuevos triggers.
+    values: [1ia_direct, 1ia_clara, 1ia_dudosa, 1ia_fuera, 2ia_guide]

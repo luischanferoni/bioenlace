@@ -110,7 +110,7 @@ class SmartCatalogRoutingHandlersTest extends Unit
         $final = AssistantPlanningLogService::snapshot()['final_path'] ?? null;
         $this->assertNotContains($final, ['1ia_clara', 'legacy_operational_intent_classifier']);
         if (is_string($final) && $final !== '') {
-            $this->assertContains($final, ['2ia_guide', '3ia_planner_guide']);
+            $this->assertSame('2ia_guide', $final);
         }
     }
 }

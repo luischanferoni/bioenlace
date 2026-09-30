@@ -5,10 +5,9 @@ namespace common\components\Platform\Assistant\Planning;
 use common\components\Platform\Assistant\Context\AssistantContextAnchorBag;
 use common\components\Platform\Assistant\Context\AssistantContextAreaAspectResolver;
 use common\components\Platform\Assistant\Context\AssistantContextHISAreaAspect;
-use Yii;
 
 /**
- * Plan de herramientas HIS. Un plan vacío no llama al planner: Guide sigue con lo que descubrió.
+ * Plan de herramientas HIS. Guide responde con lo que discovery adjuntó.
  */
 final class DeclarativePlanService
 {
@@ -37,30 +36,14 @@ final class DeclarativePlanService
             $reasons[] = 'areas:' . implode(',', $contextAreas);
         }
 
-        $toolIds = array_values(array_unique($toolIds));
-        $needsPlanner = false;
-        $plannerReason = null;
-
-        if (count($toolIds) > self::maxTools()) {
-            $needsPlanner = true;
-            $plannerReason = 'too_many_tools';
-        }
-
         return new DeclarativePlanResult(
-            $toolIds,
+            array_values(array_unique($toolIds)),
             implode('; ', $reasons),
-            $needsPlanner,
-            $plannerReason,
         );
     }
 
     public static function aspectToolId(string $aspectKey): string
     {
         return 'aspect:' . AssistantContextHISAreaAspect::aspectKey($aspectKey);
-    }
-
-    public static function maxTools(): int
-    {
-        return max(1, (int) (Yii::$app->params['asistente_plan_max_tools'] ?? 6));
     }
 }

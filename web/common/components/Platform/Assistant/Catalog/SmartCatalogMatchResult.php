@@ -3,7 +3,7 @@
 namespace common\components\Platform\Assistant\Catalog;
 
 /**
- * Resultado vacío de match legacy (compat evaluación / planificadora).
+ * Resultado vacío de match legacy (compat de evaluación).
  * El discovery real vive en {@see DiscoveryIndex}.
  */
 final class SmartCatalogMatchResult

@@ -32,11 +32,9 @@ flowchart TB
   D[1 IA dudosa / fuera]
   INC[clara / incompletas]
   G[IA: asistente-guide]
-  PLN[IA: asistente-planner opcional]
   M --> P --> MCH --> H
   H -->|dudosa fuera| D
   H -->|clara incompletas| INC --> G
-  INC -->|needs_planner| PLN --> G
 ```
 
 Código: [`ChatRouter.php`](../../common/components/Platform/Assistant/Chat/Routing/ChatRouter.php).
@@ -46,7 +44,6 @@ Código: [`ChatRouter.php`](../../common/components/Platform/Assistant/Chat/Rout
 | *(siempre)* | **1ª** preprocess | `asistente-preprocess` | tags, necesidad_usuario, routing_hint |
 | `dudosa` / `fuera_de_his` | **0** | — | mensaje límite / aclaración |
 | `clara` / `incompletas` | **+1** guide | `asistente-guide` | discovery + plan declarativo + Guide |
-| `clara` / `incompletas` + `needs_planner` | **+2** (planner + guide) | `asistente-planner`, `asistente-guide` | shortlist RBAC; `final_path: 3ia_planner_guide` |
 
 **Nota:** incompletas y charla usan el mismo contexto `asistente-guide` (`GuideChannel` / `GuidePromptAssembler`).
 

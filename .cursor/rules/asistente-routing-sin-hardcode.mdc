@@ -27,7 +27,7 @@ No enumerar `intent_id` en orquestadores ni en prompts de IA para “elegir la a
 | Necesidad | Dónde |
 |-----------|--------|
 | Frases NL del intent, flow, `when`/`next` sobre draft | `assistant/intents/**/*.yaml` |
-| Prompt por canal (2ª/3ª IA) | `assistant/channels/{Name}/prompt.yaml` (espejo `Chat/Channels/{Name}/`) |
+| Prompt de Guide | `assistant/channels/Guide/prompt.yaml` (espejo `Chat/Channels/Guide/`) |
 | Prompt preprocess | `assistant/preprocess/prompt.yaml` |
 | Texto UX + botones de encauzamiento ambiguous | `assistant/channels/Ambiguous/ui-text.yaml` |
 | Prioridad CTA booking + capability_labels | `assistant/routing/booking-offer.yaml` |

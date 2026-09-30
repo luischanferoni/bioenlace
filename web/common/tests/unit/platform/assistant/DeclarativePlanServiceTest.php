@@ -40,16 +40,14 @@ class DeclarativePlanServiceTest extends Unit
             'aspect:' . AssistantContextHISAreaAspect::APPOINTMENT_CURRENT,
             $plan->toolIds
         );
-        $this->assertFalse($plan->needsPlanner);
     }
 
-    public function testEmptyPlanDoesNotRequestPlanner(): void
+    public function testEmptyPlanHasNoTools(): void
     {
         $plan = DeclarativePlanService::plan([], [], new AssistantContextAnchorBag());
 
         $this->assertSame([], $plan->toolIds);
-        $this->assertFalse($plan->needsPlanner);
-        $this->assertNull($plan->plannerReason);
+        $this->assertSame('', $plan->reason);
     }
 
     public function testFirstIaAdapterKeepsOnlyIaTags(): void

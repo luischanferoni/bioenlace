@@ -24,7 +24,6 @@ Este documento cubre sobre todo la **IA generativa** y enlaza STT donde comparte
 |----------|-------|----------|-------------------|------------------|
 | `asistente-preprocess` | Paciente o staff en chat | Normalizar mensaje, fijar `user_goal`, **`context_areas`**, extracciones ligeras | **Cada mensaje raíz** del asistente | `ChatPreprocessService` |
 | `asistente-guide` | Paciente (chat) | 2ª IA: charla, incompletas (HIS), artículos | Cuando guide / incompletas | `GuideChannel`, `InfoContentAssistantService` |
-| `asistente-planner` | Sistema (incompletas) | Elige tools del shortlist si `needs_planner` | Raro | `PlannerRoutingStep` |
 | `intent-engine-classification` | Paciente o staff | Elegir intent del catálogo cuando las reglas no alcanzan confianza | Ocasional (fallback del motor de intents) | `IntentClassifier` → `IntentEngine` |
 | `motivos-consulta-batch` | Sistema (cron/lote) | Resumir el hilo de motivos como Condition rol CC | **1× por consulta** al cerrar ventana de motivos | `AppointmentReasonBatchService` |
 | `motivos-consulta-insights` | Sistema (tras el lote) | Sugerencias orientativas en `encounter.ia_clinical_suggestions` | **1× por consulta** si hay resumen de motivos | `AppointmentReasonClinicalInsightsService` |

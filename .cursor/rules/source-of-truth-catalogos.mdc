@@ -21,7 +21,7 @@ Cada **lista cerrada** que el runtime valida o inyecta en prompts tiene **exacta
 | `routing_hint` preprocess (id → texto IA) | `Platform/Assistant/Application/Catalog/preprocess-routing-hints.yaml` | `PreprocessRoutingHintCatalog` |
 | Alias / mapas técnicos preprocess (`user_goal`, tags extra) | constantes en `PreprocessRoutingHintCatalog` | mismo loader |
 | Tags preprocess (vocabulario IA) | tags de intents Domain + `extraPreprocessTags()` PHP | `PreprocessTagVocabularyCatalog` |
-| Aspectos HIS / plan declarativo (legado; planner off) | constantes `ASPECTS` en `AssistantContextHISAreaAspect` | `AssistantContextHISAreaAspect`, `AssistantContextAreaAspectCatalog` |
+| Aspectos HIS / plan declarativo (legado) | constantes `ASPECTS` en `AssistantContextHISAreaAspect` | `AssistantContextHISAreaAspect`, `AssistantContextAreaAspectCatalog` |
 | Entidades hint (flows) | `declaredEntities()` en cada `*HintCandidateProvider` (ownership compuesto) | `HintCandidateProviderRegistry`, `HintResolutionMetadata` |
 | Copy límites de canal (fuera HIS) | `Platform/Assistant/Application/Routing/channel-limits.yaml` | metadata loader |
 | Maestros consultados en request (geo, recursos) | **BD** + seed console | servicio dominio + cache |

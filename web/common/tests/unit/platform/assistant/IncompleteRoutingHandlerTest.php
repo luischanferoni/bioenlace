@@ -98,8 +98,7 @@ class IncompleteRoutingHandlerTest extends Unit
         AssistantPlanningLogService::begin($evaluation->firstIa, $evaluation->match->ranked);
         AssistantPlanningLogService::setDeclarativePlan(
             $evaluation->declarativePlan->toolIds,
-            $evaluation->declarativePlan->reason,
-            $evaluation->declarativePlan->needsPlanner
+            $evaluation->declarativePlan->reason
         );
 
         $envelope = IncompleteRoutingHandler::handle(
@@ -116,6 +115,6 @@ class IncompleteRoutingHandlerTest extends Unit
 
         $this->assertContains($envelope['kind'] ?? null, ['message', 'interactive']);
         $snap = AssistantPlanningLogService::snapshot();
-        $this->assertContains($snap['final_path'] ?? null, ['2ia_guide', '3ia_planner_guide']);
+        $this->assertSame('2ia_guide', $snap['final_path'] ?? null);
     }
 }

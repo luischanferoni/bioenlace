@@ -293,7 +293,7 @@ final class AsistenteConsultasQaService
             $finalPath = is_string($planning['final_path'] ?? null)
                 ? trim((string) $planning['final_path'])
                 : '';
-            if ($finalPath === '2ia_guide' || $finalPath === '3ia_planner_guide') {
+            if ($finalPath === '2ia_guide') {
                 $effectiveGoal = 'guide';
             }
         }
@@ -911,10 +911,8 @@ final class AsistenteConsultasQaService
             return $lines;
         }
 
-        if (str_starts_with($finalPath, '2ia') || str_starts_with($finalPath, '3ia')) {
-            $lines[] = str_starts_with($finalPath, '3ia')
-                ? '  preprocess + planner + 2 IA (guide)'
-                : '  preprocess + 2 IA (guide)';
+        if ($finalPath === '2ia_guide') {
+            $lines[] = '  preprocess + 2 IA (guide)';
             if ($routing !== '') {
                 $lines[] = '  routing: ' . $routing;
             }
@@ -933,12 +931,6 @@ final class AsistenteConsultasQaService
                 foreach ($tools as $toolId) {
                     $lines[] = '    - ' . $toolId;
                 }
-            }
-            if (!empty($planning['planner_invoked'])) {
-                $lines[] = '  planner: sí'
-                    . (($planning['planner_reason'] ?? '') !== ''
-                        ? ' (' . trim((string) $planning['planner_reason']) . ')'
-                        : '');
             }
             self::appendPreprocessContextLines($lines, $normalized, $necesidad, $tags, $extractions, $hint, $history);
 

@@ -3,7 +3,7 @@
 namespace common\components\Platform\Assistant\Planning;
 
 /**
- * Plan declarativo área → tools ({@see DeclarativePlanService}).
+ * Plan declarativo de tools ({@see DeclarativePlanService}).
  */
 final class DeclarativePlanResult
 {
@@ -13,8 +13,6 @@ final class DeclarativePlanResult
     public function __construct(
         public readonly array $toolIds,
         public readonly string $reason,
-        public readonly bool $needsPlanner,
-        public readonly ?string $plannerReason,
     ) {
     }
 }

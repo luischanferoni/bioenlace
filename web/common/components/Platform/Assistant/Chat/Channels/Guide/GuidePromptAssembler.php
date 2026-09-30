@@ -7,9 +7,7 @@ use common\components\Platform\Assistant\Catalog\DiscoveryIndex;
 use common\components\Platform\Assistant\Catalog\IntentSemanticsPromptFormatter;
 use common\components\Platform\Assistant\Context\AssistantContextAssemblyService;
 use common\components\Platform\Assistant\Chat\ChatPreprocessContext;
-use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
 use common\components\Platform\Assistant\Chat\Thread\ThreadNeedList;
-use common\components\Platform\Assistant\Copy\AssistantChannelCopy;
 use common\components\Platform\Assistant\Planning\SmartCatalogRoutingEvaluation;
 use Yii;
 
@@ -58,7 +56,7 @@ final class GuidePromptAssembler
         'clinical_record',
         self::formatClinicalRecordData()
       ),
-      'intent_semantics' => self::applyPerimeterToIntentSemantics($messageForPrompt, $intentSemantics),
+      'intent_semantics' => $intentSemantics,
       'article_block' => GuideChannelConfig::formatOptionalAttachment(
         'article',
         trim((string) $articleData)
@@ -101,8 +99,6 @@ final class GuidePromptAssembler
     if ($intentSemantics === '') {
       $intentSemantics = self::formatDiscoveryIntentSemantics($firstIa, $messageForPrompt, $userId);
     }
-    $intentSemantics = self::applyPerimeterToIntentSemantics($messageForPrompt, $intentSemantics);
-
     $articleBlock = trim($articleBlock);
     if ($articleBlock === '') {
       $articleBlock = DiscoveryIndex::formatTopArticleBlock($firstIa, $content, $userId);
@@ -126,18 +122,6 @@ final class GuidePromptAssembler
       'conversation_history' => trim($history),
       'current_message' => $messageForPrompt,
     ]);
-  }
-
-  /**
-   * Pedido sobre tercero: sin funcionalidades de turno/atención; con límites de producto.
-   */
-  private static function applyPerimeterToIntentSemantics(string $content, string $intentSemantics): string
-  {
-    if (!ChatChannelPolicy::isCareAboutThirdParty($content)) {
-      return $intentSemantics;
-    }
-
-    return trim(AssistantChannelCopy::t('guide_perimeter_third_party'));
   }
 
   /**

@@ -65,4 +65,16 @@ class StateTagIndexTest extends Unit
 
         $this->assertSame(['atencion.necesito-atencion'], $ids);
     }
+
+    public function testNeedlesIncludeExtractionSpanAndSynonyms(): void
+    {
+        $needles = StateTagIndex::needles([
+            'tags' => ['fiebre'],
+            'extractions' => [
+                ['span' => 'mi amigo', 'synonyms' => ['otra persona']],
+            ],
+        ]);
+
+        $this->assertSame(['fiebre', 'mi', 'amigo', 'otra', 'persona'], $needles);
+    }
 }

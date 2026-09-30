@@ -43,118 +43,29 @@ class DeclarativePlanServiceTest extends Unit
         $this->assertFalse($plan->needsPlanner);
     }
 
-    public function testFirstIaAdapterInfersLateArrivalTags(): void
-    {
-        $first = AssistantFirstIaAdapter::fromPreprocess([
-            'normalized_text' => '¿Voy a tener problemas si llego 10 minutos tarde?',
-            'user_goal' => 'guide',
-            'context_areas' => ['scheduling'],
-            'extractions' => [],
-        ]);
-
-        $this->assertContains('llegar_tarde', $first['tags']);
-        $this->assertSame('incompletas', $first['routing_hint']);
-    }
-
-    public function testFirstIaAdapterAlwaysInfersSacarTurnoEvenIfIaTaggedArea(): void
-    {
-        $first = AssistantFirstIaAdapter::fromPreprocess([
-            'normalized_text' => 'Quiero un turno con el dentista',
-            'user_goal' => 'guide',
-            'routing_hint' => 'guide',
-            'tags' => ['scheduling'],
-            'context_areas' => ['scheduling'],
-            'extractions' => [],
-        ]);
-
-        $this->assertContains('sacar_turno', $first['tags']);
-        $this->assertNotContains('pedido_turno_sin_destino', $first['tags']);
-    }
-
-    public function testFirstIaAdapterInfersPedidoSinDestinoForBareTurno(): void
-    {
-        $first = AssistantFirstIaAdapter::fromPreprocess([
-            'normalized_text' => 'Quiero un turno',
-            'user_goal' => 'guide',
-            'routing_hint' => 'guide',
-            'tags' => ['scheduling'],
-            'context_areas' => ['scheduling'],
-            'extractions' => [],
-        ]);
-
-        $this->assertContains('pedido_turno_sin_destino', $first['tags']);
-        $this->assertNotContains('sacar_turno', $first['tags']);
-    }
-
-    public function testFirstIaAdapterCancelDoesNotGetPedidoTurno(): void
-    {
-        $first = AssistantFirstIaAdapter::fromPreprocess([
-            'normalized_text' => 'Cancelá el turno del martes',
-            'user_goal' => 'operational',
-            'tags' => ['scheduling'],
-            'context_areas' => ['scheduling'],
-            'extractions' => [],
-        ]);
-
-        $this->assertContains('cancelar_turno', $first['tags']);
-        $this->assertNotContains('pedido_turno_sin_destino', $first['tags']);
-        $this->assertNotContains('sacar_turno', $first['tags']);
-    }
-
-    public function testFirstIaAdapterHistorialNotMisTurnos(): void
-    {
-        $first = AssistantFirstIaAdapter::fromPreprocess([
-            'normalized_text' => 'Mostrame los turnos que ya tuve',
-            'user_goal' => 'operational',
-            'tags' => ['mis_turnos', 'scheduling'],
-            'context_areas' => ['scheduling'],
-            'extractions' => [],
-        ]);
-
-        $this->assertContains('historial_turnos', $first['tags']);
-        $this->assertNotContains('mis_turnos', $first['tags']);
-    }
-
-    public function testFirstIaAdapterPoliticaNotCancelar(): void
-    {
-        $first = AssistantFirstIaAdapter::fromPreprocess([
-            'normalized_text' => '¿Hasta cuándo puedo cancelar?',
-            'user_goal' => 'guide',
-            'tags' => ['cancelar_turno', 'scheduling'],
-            'context_areas' => ['scheduling'],
-            'extractions' => [],
-        ]);
-
-        $this->assertContains('politica_turnos', $first['tags']);
-        $this->assertNotContains('cancelar_turno', $first['tags']);
-    }
-
-    public function testFirstIaAdapterUltimaAtencionStripsHistorialTurnosNoise(): void
-    {
-        $first = AssistantFirstIaAdapter::fromPreprocess([
-            'normalized_text' => '¿Qué me dijo el médico ayer?',
-            'user_goal' => 'guide',
-            'tags' => ['historial_turnos', 'staff', 'clinical'],
-            'context_areas' => ['clinical'],
-            'extractions' => [],
-        ]);
-
-        $this->assertContains('ultima_atencion', $first['tags']);
-        $this->assertNotContains('historial_turnos', $first['tags']);
-    }
-
-    public function testFirstIaAdapterAlwaysInfersSintomaEvenIfIaTagged(): void
+    public function testFirstIaAdapterKeepsOnlyIaTags(): void
     {
         $first = AssistantFirstIaAdapter::fromPreprocess([
             'normalized_text' => 'Me duele la cabeza',
             'user_goal' => 'guide',
+            'routing_hint' => 'guide',
             'tags' => ['scheduling'],
-            'context_areas' => ['scheduling'],
             'extractions' => [],
         ]);
 
-        $this->assertContains('sintoma', $first['tags']);
-        $this->assertContains('necesito_atencion', $first['tags']);
+        $this->assertSame(['scheduling'], $first['tags']);
+    }
+
+    public function testFirstIaAdapterDoesNotInventTagsWhenIaReturnsNone(): void
+    {
+        $first = AssistantFirstIaAdapter::fromPreprocess([
+            'normalized_text' => '¿Voy a tener problemas si llego 10 minutos tarde?',
+            'user_goal' => 'guide',
+            'tags' => [],
+            'extractions' => [],
+        ]);
+
+        $this->assertSame([], $first['tags']);
     }
 
     public function testAdapterIgnoresInvalidAiContextAreas(): void
@@ -168,8 +79,7 @@ class DeclarativePlanServiceTest extends Unit
         ]);
 
         $this->assertSame([], $first['context_areas']);
-        $this->assertContains('sintoma', $first['tags']);
-        $this->assertContains('necesito_atencion', $first['tags']);
+        $this->assertSame(['sintoma'], $first['tags']);
     }
 
     public function testRoutingDerivesNoContextAreasFromDiscovery(): void
@@ -186,7 +96,7 @@ class DeclarativePlanServiceTest extends Unit
         $this->assertSame([], $evaluation->firstIa['context_areas']);
     }
 
-    public function testFirstIaAdapterInfersMisAnalisis(): void
+    public function testFirstIaAdapterDoesNotInferMisAnalisis(): void
     {
         $first = AssistantFirstIaAdapter::fromPreprocess([
             'normalized_text' => 'Mis análisis',
@@ -196,7 +106,7 @@ class DeclarativePlanServiceTest extends Unit
             'extractions' => [],
         ]);
 
-        $this->assertContains('mis_analisis', $first['tags']);
+        $this->assertSame([], $first['tags']);
     }
 
     public function testRoutingCancelIsClaraNotAgendaCtas(): void
@@ -250,7 +160,7 @@ class DeclarativePlanServiceTest extends Unit
         $this->assertSame('laboratorio.ver-resultados-como-paciente', $evaluation->decision->primaryIntentId());
     }
 
-    public function testFirstIaAdapterInfersEstudioNotSacarTurno(): void
+    public function testFirstIaAdapterDoesNotInferEstudio(): void
     {
         $first = AssistantFirstIaAdapter::fromPreprocess([
             'normalized_text' => 'necesito una ecografia',
@@ -259,16 +169,16 @@ class DeclarativePlanServiceTest extends Unit
             'extractions' => [],
         ]);
 
-        $this->assertContains('estudio', $first['tags']);
-        $this->assertNotContains('sacar_turno', $first['tags']);
-        $this->assertNotContains('pedido_turno_sin_destino', $first['tags']);
+        $this->assertSame([], $first['tags']);
     }
 
-    public function testRoutingFueraDeHisForMedium(): void
+    public function testRoutingFueraDeHisWhenIaTagsIt(): void
     {
         $evaluation = SmartCatalogRoutingService::evaluate([
             'normalized_text' => 'necesito una sesion con una medium',
             'user_goal' => 'ambiguous',
+            'routing_hint' => 'fuera_his',
+            'tags' => ['fuera_his'],
             'context_areas' => [],
             'extractions' => [],
         ], 0);

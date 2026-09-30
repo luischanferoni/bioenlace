@@ -76,13 +76,55 @@ final class StateTagIndex
         $tags = $firstIa['tags'] ?? [];
         if (is_array($tags)) {
             foreach ($tags as $tag) {
-                if (is_string($tag) && trim($tag) !== '') {
-                    $parts[] = trim($tag);
+                if (is_string($tag)) {
+                    self::pushNeedleTokens($parts, $tag);
+                }
+            }
+        }
+
+        $extractions = $firstIa['extractions'] ?? [];
+        if (is_array($extractions)) {
+            foreach ($extractions as $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+                if (isset($row['span']) && is_string($row['span'])) {
+                    self::pushNeedleTokens($parts, $row['span']);
+                }
+                $synonyms = $row['synonyms'] ?? [];
+                if (!is_array($synonyms)) {
+                    continue;
+                }
+                foreach ($synonyms as $synonym) {
+                    if (is_string($synonym)) {
+                        self::pushNeedleTokens($parts, $synonym);
+                    }
                 }
             }
         }
 
         return $parts;
+    }
+
+    /**
+     * Parte el texto en tokens (el span puede ser más de una palabra).
+     *
+     * @param list<string> $parts
+     */
+    private static function pushNeedleTokens(array &$parts, string $raw): void
+    {
+        $folded = ChatChannelPolicy::fold($raw);
+        if ($folded === '') {
+            return;
+        }
+        $tokens = preg_split('/[^a-z0-9_]+/u', $folded) ?: [];
+        foreach ($tokens as $token) {
+            $token = trim((string) $token, '_');
+            if ($token === '' || in_array($token, $parts, true)) {
+                continue;
+            }
+            $parts[] = $token;
+        }
     }
 
     /**

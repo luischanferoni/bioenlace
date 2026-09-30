@@ -2,6 +2,8 @@
 
 namespace common\components\Domain\Scheduling\Agenda\Application\Agents;
 
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoSlotOccupancyService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\ListTurnoAdvanceOfferCandidates;
 use common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoAdvancePushReceiptService;
 use common\components\Domain\Scheduling\BehaviorProfile\Domain\Model\TurnoCanonicalEventCommand;
 use common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoCanonicalEventService;

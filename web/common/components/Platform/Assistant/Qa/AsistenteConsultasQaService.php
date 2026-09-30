@@ -308,6 +308,7 @@ final class AsistenteConsultasQaService
             'necesidad_usuario' => ChatPreprocessContext::necesidadUsuario(),
             'conversation_history' => ChatPreprocessContext::conversationHistory(),
             'tags' => ChatPreprocessContext::tags(),
+            'extractions' => ChatPreprocessContext::extractions(),
             'context_areas' => ChatPreprocessContext::contextAreas(),
             'intent_ids_hint' => ChatPreprocessContext::intentIdsHint(),
             'thread_tag' => AssistantThreadContext::threadTag(),
@@ -884,7 +885,7 @@ final class AsistenteConsultasQaService
         $lines[] = 'Flujo:';
 
         $tags = is_array($observation['tags'] ?? null) ? $observation['tags'] : [];
-        $areas = is_array($observation['context_areas'] ?? null) ? $observation['context_areas'] : [];
+        $extractions = is_array($observation['extractions'] ?? null) ? $observation['extractions'] : [];
         $normalized = trim((string) ($observation['normalized_text'] ?? ''));
         $necesidad = trim((string) ($observation['necesidad_usuario'] ?? ''));
         $history = trim((string) ($observation['conversation_history'] ?? ''));
@@ -905,7 +906,7 @@ final class AsistenteConsultasQaService
             if ($flowIntent !== '') {
                 $lines[] = '  intent: ' . $flowIntent;
             }
-            self::appendPreprocessContextLines($lines, $normalized, $necesidad, $tags, $areas, $hint, $history);
+            self::appendPreprocessContextLines($lines, $normalized, $necesidad, $tags, $extractions, $hint, $history);
 
             return $lines;
         }
@@ -939,7 +940,7 @@ final class AsistenteConsultasQaService
                         ? ' (' . trim((string) $planning['planner_reason']) . ')'
                         : '');
             }
-            self::appendPreprocessContextLines($lines, $normalized, $necesidad, $tags, $areas, $hint, $history);
+            self::appendPreprocessContextLines($lines, $normalized, $necesidad, $tags, $extractions, $hint, $history);
 
             return $lines;
         }
@@ -972,7 +973,7 @@ final class AsistenteConsultasQaService
         if ($kind !== '') {
             $lines[] = '  kind: ' . $kind;
         }
-        self::appendPreprocessContextLines($lines, $normalized, $necesidad, $tags, $areas, $hint, $history);
+        self::appendPreprocessContextLines($lines, $normalized, $necesidad, $tags, $extractions, $hint, $history);
 
         return $lines;
     }
@@ -980,14 +981,14 @@ final class AsistenteConsultasQaService
     /**
      * @param list<string> $lines
      * @param list<mixed> $tags
-     * @param list<mixed> $areas
+     * @param list<mixed> $extractions
      */
     private static function appendPreprocessContextLines(
         array &$lines,
         string $normalized,
         string $necesidad,
         array $tags,
-        array $areas,
+        array $extractions,
         string $hint,
         string $history = ''
     ): void {
@@ -1015,14 +1016,51 @@ final class AsistenteConsultasQaService
                 $tagStr[] = trim($t);
             }
         }
-        $areaStr = [];
-        foreach ($areas as $a) {
-            if (is_string($a) && trim($a) !== '') {
-                $areaStr[] = trim($a);
+        $lines[] = '  tags: ' . ($tagStr === [] ? '(ninguno)' : implode(', ', $tagStr));
+        $lines[] = '  extractions:';
+        $extractionLines = self::formatExtractionLines($extractions);
+        if ($extractionLines === []) {
+            $lines[] = '    (ninguna)';
+        } else {
+            foreach ($extractionLines as $extractionLine) {
+                $lines[] = '    ' . $extractionLine;
             }
         }
-        $lines[] = '  tags: ' . ($tagStr === [] ? '(ninguno)' : implode(', ', $tagStr));
-        $lines[] = '  Ámbitos HIS: ' . ($areaStr === [] ? '(ninguno)' : implode(', ', $areaStr));
+    }
+
+    /**
+     * @param list<mixed> $extractions
+     * @return list<string>
+     */
+    private static function formatExtractionLines(array $extractions): array
+    {
+        $lines = [];
+        foreach ($extractions as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $span = trim((string) ($row['span'] ?? ''));
+            $synonyms = [];
+            if (isset($row['synonyms']) && is_array($row['synonyms'])) {
+                foreach ($row['synonyms'] as $synonym) {
+                    if (is_string($synonym) && trim($synonym) !== '') {
+                        $synonyms[] = trim($synonym);
+                    }
+                }
+            }
+            if ($span === '' && $synonyms === []) {
+                continue;
+            }
+            if ($span === '') {
+                $lines[] = implode(', ', $synonyms);
+                continue;
+            }
+            $lines[] = $synonyms === []
+                ? $span
+                : $span . ' (syn: ' . implode(', ', $synonyms) . ')';
+        }
+
+        return $lines;
     }
 
     /**

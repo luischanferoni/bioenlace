@@ -13,7 +13,7 @@ stable_prompt: |
     "normalized_text": "solo el mensaje actual limpio, ortografía corregida, abreviaturas abiertas",    
     "necesidades_usuario": [
       {
-        "expresion": "una oración con los hechos: dónde, cómo, desde cuándo, para quién. Una por cosa distinta que expresa el usuario de acuerdo al historial.",
+        "expresion": "una oración para cada necesidad/situación/problema/pedido/pregunta/etc. con los hechos: dónde, cómo, desde cuándo, para quién. Para cada situación distinta, un elemento del array.",
         "estado": "activa (lo quiere ahora y todavía no se resolvió en este hilo) | satisfecha (ya se cumplió en este hilo) | descartada (lo dejó de lado o dijo que no)"
       }
     ],

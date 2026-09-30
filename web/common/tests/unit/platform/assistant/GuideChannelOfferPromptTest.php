@@ -78,4 +78,17 @@ class GuideChannelOfferPromptTest extends Unit
         verify($template)->stringContainsString('{current_message}');
         verify($template)->stringContainsString('Mensaje actual del usuario');
     }
+
+    public function testPlainTextFromIaStripsMarkdown(): void
+    {
+        $text = GuideChannel::plainTextFromIa("**Urgencia**\n- Malestar nuevo\n# Título\nUsá `Solicitar Atención`.");
+
+        $this->assertStringNotContainsString('*', $text);
+        $this->assertStringNotContainsString('#', $text);
+        $this->assertStringNotContainsString('`', $text);
+        $this->assertStringContainsString('Urgencia', $text);
+        $this->assertStringContainsString('Malestar nuevo', $text);
+        $this->assertStringContainsString('Solicitar Atención', $text);
+        $this->assertStringContainsString('Título', $text);
+    }
 }

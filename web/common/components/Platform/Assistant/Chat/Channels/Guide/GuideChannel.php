@@ -139,10 +139,10 @@ final class GuideChannel
     try {
       $raw = IAManager::consultarIA($prompt, 'asistente-guide', 'text-generation');
       if (is_string($raw) && trim($raw) !== '') {
-        return trim($raw);
+        return self::plainTextFromIa($raw);
       }
       if (is_array($raw) && isset($raw['text'])) {
-        $text = trim((string) $raw['text']);
+        $text = self::plainTextFromIa((string) $raw['text']);
 
         return $text !== '' ? $text : null;
       }
@@ -151,6 +151,31 @@ final class GuideChannel
     }
 
     return null;
+  }
+
+  /**
+   * Saca marcas de markdown que la 2ª IA a veces agrega. Deja el texto.
+   */
+  public static function plainTextFromIa(string $text): string
+  {
+    $text = str_replace(["\r\n", "\r"], "\n", $text);
+    $text = preg_replace('/\*\*(.+?)\*\*/su', '$1', $text) ?? $text;
+    $text = preg_replace('/__(.+?)__/su', '$1', $text) ?? $text;
+    $text = preg_replace('/(?<!\w)\*([^*\n]+)\*(?!\w)/u', '$1', $text) ?? $text;
+    $text = preg_replace('/`([^`]+)`/u', '$1', $text) ?? $text;
+    $text = str_replace(['*', '#', '`'], '', $text);
+
+    $lines = preg_split("/\n/u", $text) ?: [];
+    $out = [];
+    foreach ($lines as $line) {
+      $line = preg_replace('/^\s*(?:[-•]|\d+[.)])\s+/u', '', (string) $line) ?? (string) $line;
+      $line = trim($line);
+      if ($line !== '') {
+        $out[] = $line;
+      }
+    }
+
+    return trim(implode("\n", $out));
   }
 
   public static function buildPrompt(
@@ -278,9 +303,9 @@ final class GuideChannel
     try {
       $raw = IAManager::consultarIA($prompt, 'asistente-guide', 'text-generation');
       if (is_string($raw) && trim($raw) !== '') {
-        $text = trim($raw);
+        $text = self::plainTextFromIa($raw);
       } elseif (is_array($raw) && isset($raw['text'])) {
-        $text = trim((string) $raw['text']);
+        $text = self::plainTextFromIa((string) $raw['text']);
       }
     } catch (\Throwable $e) {
       Yii::warning('GuideChannel: ' . $e->getMessage(), 'asistente');

@@ -43,6 +43,15 @@ class DeclarativePlanServiceTest extends Unit
         $this->assertFalse($plan->needsPlanner);
     }
 
+    public function testEmptyPlanDoesNotRequestPlanner(): void
+    {
+        $plan = DeclarativePlanService::plan([], [], new AssistantContextAnchorBag());
+
+        $this->assertSame([], $plan->toolIds);
+        $this->assertFalse($plan->needsPlanner);
+        $this->assertNull($plan->plannerReason);
+    }
+
     public function testFirstIaAdapterKeepsOnlyIaTags(): void
     {
         $first = AssistantFirstIaAdapter::fromPreprocess([

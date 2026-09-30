@@ -8,7 +8,7 @@ use common\components\Platform\Assistant\Context\AssistantContextHISAreaAspect;
 use Yii;
 
 /**
- * Plan área → aspectos HIS (sin catálogo de puertas).
+ * Plan de herramientas HIS. Un plan vacío no llama al planner: Guide sigue con lo que descubrió.
  */
 final class DeclarativePlanService
 {
@@ -41,10 +41,7 @@ final class DeclarativePlanService
         $needsPlanner = false;
         $plannerReason = null;
 
-        if ($toolIds === []) {
-            $needsPlanner = true;
-            $plannerReason = 'empty_plan';
-        } elseif (count($toolIds) > self::maxTools()) {
+        if (count($toolIds) > self::maxTools()) {
             $needsPlanner = true;
             $plannerReason = 'too_many_tools';
         }

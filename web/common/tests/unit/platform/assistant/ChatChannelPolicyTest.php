@@ -45,16 +45,10 @@ class ChatChannelPolicyTest extends Unit
         $this->assertFalse(ChatChannelPolicy::isGreetingOnly('hola me duele la cabeza'));
     }
 
-    public function testThirdPartyCareDoesNotOfferBookingButOwnChildDoes(): void
+    public function testBookingOfferDoesNotDependOnWhoTheSymptomIsAbout(): void
     {
-        $this->assertTrue(ChatChannelPolicy::isCareAboutThirdParty(
+        $this->assertTrue(ChatChannelPolicy::shouldOfferBookingButton(
             'Mi amigo tiene 40 de fiebre, ¿qué le doy?'
-        ));
-        $this->assertFalse(ChatChannelPolicy::shouldOfferBookingButton(
-            'Mi amigo tiene 40 de fiebre, ¿qué le doy?'
-        ));
-        $this->assertFalse(ChatChannelPolicy::isCareAboutThirdParty(
-            'Mi nene de 3 años tiene 39 de fiebre'
         ));
         $this->assertTrue(ChatChannelPolicy::shouldOfferBookingButton(
             'Mi nene de 3 años tiene 39 de fiebre'

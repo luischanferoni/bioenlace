@@ -70,10 +70,7 @@ final class GuideChannel
       $evaluation
     );
 
-    $ctaButtons = self::filterCareCtasForPerimeter(
-      CatalogCtaResolver::resolveAll($evaluation, $userId),
-      $content
-    );
+    $ctaButtons = CatalogCtaResolver::resolveAll($evaluation, $userId);
     $text = self::consultGuideIa($prompt);
     if ($text === null || $text === '') {
       if ($ctaButtons === []) {
@@ -91,28 +88,6 @@ final class GuideChannel
     return AssistantContextAssemblyService::attachDebugIfEnabled(
       AssistantEnvelope::interactive($text, $ctaButtons)
     );
-  }
-
-  /**
-   * @param list<array{label: string, intent_id: string}> $ctaButtons
-   * @return list<array{label: string, intent_id: string}>
-   */
-  private static function filterCareCtasForPerimeter(array $ctaButtons, string $content): array
-  {
-    if (!ChatChannelPolicy::isCareAboutThirdParty($content)) {
-      return $ctaButtons;
-    }
-
-    $kept = [];
-    foreach ($ctaButtons as $button) {
-      $intentId = trim((string) ($button['intent_id'] ?? ''));
-      if ($intentId !== '' && GuideChannelConfig::isBookingOfferIntent($intentId)) {
-        continue;
-      }
-      $kept[] = $button;
-    }
-
-    return $kept;
   }
 
   /**

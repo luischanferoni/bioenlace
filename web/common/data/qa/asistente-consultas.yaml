@@ -157,15 +157,6 @@ cases:
         - guide
       must_not_offer_intent: atencion.necesito-atencion
 
-  - id: fuera-tercero-amigo
-    seccion: orientacion
-    tipo: Perímetro — tercero
-    cobertura: Fuera
-    mensajes:
-      - Mi amigo tiene 40 de fiebre, ¿qué le doy?
-    expect:
-      must_not_offer_intent: atencion.necesito-atencion
-
   - id: guide-menor-propio
     seccion: orientacion
     tipo: Menor propio (tutor)

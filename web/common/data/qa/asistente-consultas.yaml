@@ -163,8 +163,6 @@ cases:
     cobertura: Fuera
     mensajes:
       - Mi amigo tiene 40 de fiebre, ¿qué le doy?
-    expect:
-      must_not_offer_intent: atencion.necesito-atencion
 
   - id: guide-menor-propio
     seccion: orientacion

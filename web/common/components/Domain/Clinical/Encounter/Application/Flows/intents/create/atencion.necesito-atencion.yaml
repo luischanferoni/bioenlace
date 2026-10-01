@@ -233,7 +233,7 @@ states:
           label: 'Llamar al 107'
           href: 'tel:107'
           variant: danger
-    outcome: 'Termina cuando la persona recibe orientación por urgencia.'
+    outcome: 'Termina cuando la persona recibe orientación por urgencia, también para alguien que no está a cargo.'
     type: final
   select_tipo_atencion:
     label: Modalidad
@@ -302,7 +302,7 @@ states:
           triage_nota: 'draft.triage_nota?'
           mensaje: draft.mensaje
       terminal_without_submit: true
-    outcome: 'Termina cuando la persona envía la consulta.'
+    outcome: 'Termina cuando quien está a cargo envía la consulta.'
     type: final
   select_servicio:
     label: Servicio
@@ -402,7 +402,7 @@ states:
           id_efector: draft.id_efector
           id_profesional_efector_servicio: draft.id_profesional_efector_servicio
           fecha: draft.fecha_turno
-    outcome: 'Termina cuando la persona reserva un turno.'
+    outcome: 'Termina cuando se reserva un turno para quien está a cargo.'
     type: final
   select_dia_teleconsulta:
     label: Día (teleconsulta con Medicina General)
@@ -437,7 +437,7 @@ states:
           triage_zona: draft.triage_zona
           care_plan_id: draft.care_plan_id
           fecha: draft.fecha_turno
-    outcome: 'Termina cuando la persona reserva un turno.'
+    outcome: 'Termina cuando se reserva un turno para quien está a cargo.'
     type: final
   cs_select_tipo:
     label: '¿Sobre qué es el control o seguimiento?'
@@ -495,7 +495,7 @@ states:
           triage_raiz: seguimiento_cronico
           mensaje: draft.mensaje
       terminal_without_submit: true
-    outcome: 'Termina cuando la persona envía la consulta.'
+    outcome: 'Termina cuando quien está a cargo envía la consulta.'
     type: final
   cs_select_care_plan:
     label: Tu tratamiento
@@ -600,7 +600,7 @@ states:
           triage_raiz: seguimiento_cronico
           ajuste_motivo: draft.ajuste_motivo
       terminal_without_submit: true
-    outcome: 'Termina cuando la persona envía el pedido de cambio de medicación.'
+    outcome: 'Termina cuando quien está a cargo envía el pedido de cambio de medicación.'
     type: final
   cs_captura_consulta_general:
     label: Escribí tu consulta en el campo de abajo
@@ -620,7 +620,7 @@ states:
           mensaje: draft.mensaje
           triage_raiz: seguimiento_cronico
       terminal_without_submit: true
-    outcome: 'Termina cuando la persona envía la consulta.'
+    outcome: 'Termina cuando quien está a cargo envía la consulta.'
     type: final
   cs_captura_seguimiento_mensaje:
     label: Contanos en el campo de abajo
@@ -643,7 +643,7 @@ states:
           triage_raiz: seguimiento_cronico
           mensaje: draft.mensaje
       terminal_without_submit: true
-    outcome: 'Termina cuando la persona envía la consulta.'
+    outcome: 'Termina cuando quien está a cargo envía la consulta.'
     type: final
   cs_select_preferencia_turno:
     label: '¿Con quién querés el control?'
@@ -728,7 +728,7 @@ states:
           id_efector: draft.id_efector
           id_profesional_efector_servicio: draft.id_profesional_efector_servicio
           fecha: draft.fecha_turno
-    outcome: 'Termina cuando la persona reserva un turno.'
+    outcome: 'Termina cuando se reserva un turno para quien está a cargo.'
     type: final
   cs_select_dia_teleconsulta:
     label: Día (teleconsulta con Medicina General)
@@ -760,7 +760,7 @@ states:
           reserva_modo: teleconsulta_hub
           care_plan_id: draft.care_plan_id
           fecha: draft.fecha_turno
-    outcome: 'Termina cuando la persona reserva un turno.'
+    outcome: 'Termina cuando se reserva un turno para quien está a cargo.'
     type: final
 flow_submit:
   action_id: turnos.crear-como-paciente

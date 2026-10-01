@@ -23,11 +23,11 @@ class IntentSemanticsPromptFormatterTest extends Unit
         $item = $data['funcionalidades'][0];
         $this->assertSame('Turno con un especialista', $item['boton']);
         $this->assertSame('La persona elige la oferta del centro que tiene agenda.', $item['al_presionar']);
-        $this->assertSame('la persona reserva un turno', $item['objetivo']);
+        $this->assertSame('se reserva un turno para quien está a cargo', $item['objetivo']);
         $this->assertArrayNotHasKey('recorridos', $item);
         $this->assertSame('La persona elige el centro de salud.', $item['pasos'][0]['hace']);
         $this->assertStringContainsString('horario para reservar el turno', $item['pasos'][3]['hace']);
-        $this->assertSame('Termina cuando la persona reserva un turno.', $item['exito']);
+        $this->assertSame('Termina cuando se reserva un turno para quien está a cargo.', $item['exito']);
         $this->assertStringNotContainsString('turnos.crear-como-paciente', $block);
     }
 
@@ -48,17 +48,23 @@ class IntentSemanticsPromptFormatterTest extends Unit
         }
 
         $this->assertArrayHasKey('Urgencia', $byName);
-        $this->assertSame('la persona recibe orientación por urgencia', $byName['Urgencia']['objetivo']);
+        $this->assertSame(
+            'la persona recibe orientación por urgencia, también para alguien que no está a cargo',
+            $byName['Urgencia']['objetivo']
+        );
         $this->assertSame(
             'El sistema muestra orientación por urgencia y frena la reserva en la app.',
             $byName['Urgencia']['pasos'][0]['hace']
         );
         $this->assertSame(['Llamar al 107'], $byName['Urgencia']['pasos'][0]['ofrece']);
-        $this->assertSame('Termina cuando la persona recibe orientación por urgencia.', $byName['Urgencia']['exito']);
+        $this->assertSame(
+            'Termina cuando la persona recibe orientación por urgencia, también para alguien que no está a cargo.',
+            $byName['Urgencia']['exito']
+        );
 
         $this->assertArrayHasKey('Malestar nuevo', $byName);
         $malestar = $byName['Malestar nuevo'];
-        $this->assertSame('la persona reserva un turno', $malestar['objetivo']);
+        $this->assertSame('se reserva un turno para quien está a cargo', $malestar['objetivo']);
         $this->assertSame('La persona elige la zona del malestar.', $malestar['pasos'][0]['hace']);
         $this->assertContains('Síntoma general (fiebre, cansancio u otro)', $malestar['pasos'][0]['elige_entre']);
         $this->assertSame('La persona elige cómo atenderse.', $malestar['pasos'][1]['hace']);
@@ -71,10 +77,10 @@ class IntentSemanticsPromptFormatterTest extends Unit
             'La persona elige un centro que ofrece el servicio elegido.',
             $malestar['pasos'][3]['hace']
         );
-        $this->assertSame('Termina cuando la persona reserva un turno.', $malestar['exito']);
+        $this->assertSame('Termina cuando se reserva un turno para quien está a cargo.', $malestar['exito']);
 
         $this->assertArrayHasKey('Control/Seguimiento', $byName);
-        $this->assertSame('la persona envía la consulta', $byName['Control/Seguimiento']['objetivo']);
+        $this->assertSame('quien está a cargo envía la consulta', $byName['Control/Seguimiento']['objetivo']);
         $this->assertStringNotContainsString('triage_raiz', $block);
         $this->assertStringNotContainsString('Por lo que indicaste', $block);
     }

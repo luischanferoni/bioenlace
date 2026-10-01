@@ -100,7 +100,7 @@ states:
           id_efector: draft.id_efector
           id_profesional_efector_servicio: draft.id_profesional_efector_servicio
           fecha: draft.fecha_turno
-    outcome: 'Termina cuando la persona reserva un turno.'
+    outcome: 'Termina cuando se reserva un turno para quien está a cargo.'
     type: final
 flow_submit:
   action_id: turnos.crear-como-paciente

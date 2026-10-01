@@ -26,15 +26,6 @@ final class PersonRepresentationUiActionCatalog implements UiActionCatalogProvid
 
         self::$definitions = [
             self::def(
-                'person-representation.hub',
-                'Gestionar representación',
-                'Vínculos de tutela, representantes designados y preferencias de notificación.',
-                '/api/person-representation/pacientes-a-cargo',
-                ['representación', 'representante', 'tutela', 'menor', 'a cargo de', 'vínculo familiar'],
-                false,
-                self::hubClientOpen()
-            ),
-            self::def(
                 'person-representation.mis-vinculos-como-tutor',
                 'Mis vínculos como tutor',
                 'Listado de menores vinculados en régimen de tutela verificada.',
@@ -158,26 +149,11 @@ final class PersonRepresentationUiActionCatalog implements UiActionCatalogProvid
     }
 
     /**
-     * @return array<string, mixed>
-     */
-    private static function hubClientOpen(): array
-    {
-        return [
-            'kind' => 'native',
-            'mobile' => ['screen_id' => 'person_representation_hub'],
-        ];
-    }
-
-    /**
      * @param array<string, mixed> $def
      */
     private static function userCanAccessDefinition(int $userId, array $def): bool
     {
         $actionId = trim((string) ($def['action_id'] ?? ''));
-        if ($actionId === 'person-representation.hub') {
-            return self::userCanAccessHub($userId);
-        }
-
         $rbacRoute = trim((string) ($def['rbac_route'] ?? ''));
         if ($rbacRoute !== '' && ActionMappingService::userIdCanAccessRoute($userId, $rbacRoute)) {
             return true;
@@ -186,27 +162,8 @@ final class PersonRepresentationUiActionCatalog implements UiActionCatalogProvid
         return $actionId !== '' && YamlIntentCatalogService::userIdCanPermissionKey($userId, $actionId);
     }
 
-    private static function userCanAccessHub(int $userId): bool
-    {
-        foreach ([
-            '/api/person-representation/designar-representante',
-            '/api/person-representation/mis-representantes',
-            '/api/person-representation/solicitar-menor-como-tutor',
-            '/api/person-representation/mis-vinculos-como-tutor',
-            '/api/person-representation/preferencias-como-paciente',
-            '/api/person-representation/pacientes-a-cargo',
-        ] as $route) {
-            if (ActionMappingService::userIdCanAccessRoute($userId, $route)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     /**
      * @param list<string> $keywords
-     * @param array<string, mixed>|null $clientOpen
      * @return array<string, mixed>
      */
     private static function def(
@@ -215,8 +172,7 @@ final class PersonRepresentationUiActionCatalog implements UiActionCatalogProvid
         string $description,
         string $rbacRoute,
         array $keywords,
-        bool $uiJsonDescriptor = false,
-        ?array $clientOpen = null
+        bool $uiJsonDescriptor = false
     ): array {
         $httpRoute = ApiV1HttpRoute::normalize($rbacRoute);
 
@@ -250,11 +206,6 @@ final class PersonRepresentationUiActionCatalog implements UiActionCatalogProvid
                 ],
             ];
             $row['client_interaction'] = 'ui_asistente_json';
-        } elseif ($clientOpen !== null) {
-            $row['client_open'] = $clientOpen;
-            $row['client_interaction'] = ($clientOpen['kind'] ?? '') === 'native'
-                ? 'native_screen'
-                : 'open';
         }
 
         return $row;

@@ -119,7 +119,7 @@ class IntentClassifierKeywordRoutingTest extends Unit
     {
         $catalog = $this->catalog([
             [
-                'person-representation.hub',
+                'person-representation.mis-representantes',
                 'Designar representante',
                 ['delegar gestión de turnos', 'designar representante'],
             ],
@@ -132,7 +132,7 @@ class IntentClassifierKeywordRoutingTest extends Unit
 
         $out = IntentClassifier::classifyAmongItems('Delegar gestión de turnos', $catalog->items, $catalog, 0);
         $this->assertNotNull($out);
-        $this->assertSame('person-representation.hub', $out['item']->action_id);
+        $this->assertSame('person-representation.mis-representantes', $out['item']->action_id);
     }
 
     /**

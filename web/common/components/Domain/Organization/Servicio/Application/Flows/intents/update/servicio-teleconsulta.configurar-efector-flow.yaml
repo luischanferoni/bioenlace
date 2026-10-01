@@ -11,6 +11,11 @@ states:
     description: 'Servicio y política de videollamada'
     explanation: 'La persona elige servicio y política de videollamada.'
     meta:
+      tags:
+        - videollamada_politica
+        - teleconsulta_staff
+        - habilitar
+        - modalidad_staff
       provides:
         - draft.id_servicio
         - draft.teleconsulta_politica

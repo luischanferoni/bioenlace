@@ -15,6 +15,11 @@ states:
     description: 'Turno que hay que reubicar'
     explanation: 'La persona elige turno que hay que reubicar.'
     meta:
+      tags:
+        - reprogramar
+        - reubicar
+        - cambiar_turno
+        - mover
       provides:
         - draft.id
       open_ui:
@@ -25,6 +30,11 @@ states:
     description: 'Servicio para el nuevo turno'
     explanation: 'La persona elige servicio para el nuevo turno.'
     meta:
+      tags:
+        - reprogramar
+        - reubicar
+        - oferta
+        - cambiar_turno
       provides:
         - draft.id_servicio_asignado
       open_ui:
@@ -35,6 +45,11 @@ states:
     description: 'Centro para el nuevo turno'
     explanation: 'La persona elige centro para el nuevo turno.'
     meta:
+      tags:
+        - reprogramar
+        - reubicar
+        - sede
+        - cambiar_turno
       provides:
         - draft.id_efector
       requires:
@@ -56,6 +71,11 @@ states:
     description: 'Profesional para el nuevo turno'
     explanation: 'La persona elige profesional para el nuevo turno.'
     meta:
+      tags:
+        - reprogramar
+        - reubicar
+        - tratante
+        - cambiar_turno
       provides:
         - draft.id_profesional_efector_servicio
       requires:
@@ -72,6 +92,11 @@ states:
     description: 'Día con lugar para el nuevo turno'
     explanation: 'La persona elige día con lugar para el nuevo turno.'
     meta:
+      tags:
+        - reprogramar
+        - reubicar
+        - calendario
+        - cambiar_turno
       provides:
         - draft.fecha_turno
       requires:
@@ -91,6 +116,11 @@ states:
     description: 'Horario para el nuevo turno'
     explanation: 'La persona elige horario para el nuevo turno.'
     meta:
+      tags:
+        - reprogramar
+        - reubicar
+        - nueva_hora
+        - cambiar_turno
       provides:
         - draft.slot_id
       requires:

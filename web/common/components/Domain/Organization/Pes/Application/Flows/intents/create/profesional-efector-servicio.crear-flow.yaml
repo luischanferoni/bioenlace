@@ -46,6 +46,11 @@ states:
     description: 'Persona que se asigna como profesional'
     explanation: 'La persona elige a quién se asigna como profesional.'
     meta:
+      tags:
+        - alta_profesional
+        - incorporar
+        - matricula
+        - documento
       provides:
         - draft.id_persona
       open_ui:
@@ -65,6 +70,11 @@ states:
     description: 'CUIL del profesional'
     explanation: 'La persona elige cUIL del profesional.'
     meta:
+      tags:
+        - cuil
+        - cuit
+        - documento
+        - identidad
       provides:
         - draft.cuil
       open_ui:
@@ -77,6 +87,11 @@ states:
     description: 'Servicio de la asignación'
     explanation: 'La persona elige servicio de la asignación.'
     meta:
+      tags:
+        - alta_profesional
+        - asignacion
+        - oferta_staff
+        - plantel
       provides:
         - draft.id_servicio
       open_ui:
@@ -93,6 +108,11 @@ states:
     description: 'Tipo de agenda de la asignación'
     explanation: 'La persona elige tipo de agenda de la asignación.'
     meta:
+      tags:
+        - alta_profesional
+        - agenda_nueva
+        - intervalo
+        - cupos_staff
       provides:
         - draft.agenda_ui_completed
       requires:

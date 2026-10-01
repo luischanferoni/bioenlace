@@ -10,6 +10,11 @@ states:
     description: 'Día y agenda consultados'
     explanation: 'La persona elige día y agenda consultados.'
     meta:
+      tags:
+        - ocupacion
+        - cupos_dia
+        - llenado
+        - disponibles_staff
       provides:
         - draft.dia
         - draft.id_servicio

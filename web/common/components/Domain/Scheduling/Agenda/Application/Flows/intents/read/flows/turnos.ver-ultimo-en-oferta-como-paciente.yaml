@@ -18,6 +18,9 @@ states:
     meta:
       tags:
         - ultima_vez
+        - ultimo_turno
+        - oferta
+        - recuerdo
       open_ui:
         action_id: turnos.listar-como-paciente
         params:

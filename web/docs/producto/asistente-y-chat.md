@@ -130,7 +130,7 @@ Qué puede preguntar un paciente: [qa/paciente/asistente-consultas.md](../qa/pac
 | Solo sacar turno (sin destino) | **incompletas** + CTAs (agenda / Solicitar Atención) |
 | Turno con destino (oferta/profesional) | `turnos.crear-como-paciente` — [turnos.md](./turnos.md) |
 | Última vez en una oferta del centro | `turnos.ver-ultimo-en-oferta-como-paciente` |
-| Tutela / delegación | `personas.vincular-menor-flow`, `personas.designar-representante-flow` — [representacion-paciente.md](./representacion-paciente.md) |
+| Tutela / delegación | Artículo `representacion` (Configuración → Representación). Sin flow de asistente — [representacion-paciente.md](./representacion-paciente.md) |
 
 El personal usa otros intents (tablero de guardia, mapa de camas, KPIs de agenda, adherencia). Ver el área correspondiente.
 

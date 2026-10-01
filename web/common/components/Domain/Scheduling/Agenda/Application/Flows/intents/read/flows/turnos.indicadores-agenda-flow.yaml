@@ -10,6 +10,11 @@ states:
     description: 'Período y filtros de la agenda'
     explanation: 'La persona elige período y filtros de la agenda.'
     meta:
+      tags:
+        - indicadores
+        - metricas
+        - productividad
+        - ausentismo
       provides:
         - draft.fecha_desde
         - draft.fecha_hasta

@@ -10,6 +10,11 @@ states:
     description: 'Mapa de camas del centro'
     explanation: 'La persona elige mapa de camas del centro.'
     meta:
+      tags:
+        - camas
+        - mapa_camas
+        - ocupacion_camas
+        - piso
       provides:
         - draft.id_cama
       open_ui:

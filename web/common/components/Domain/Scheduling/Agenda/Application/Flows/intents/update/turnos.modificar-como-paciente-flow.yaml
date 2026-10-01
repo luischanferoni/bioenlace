@@ -10,6 +10,11 @@ states:
     description: 'Turno pendiente que se cambia'
     explanation: 'La persona elige turno pendiente que se cambia.'
     meta:
+      tags:
+        - modificar
+        - cambiar_horario
+        - reagendar
+        - mover
       provides:
         - draft.id
       open_ui:
@@ -20,6 +25,11 @@ states:
     description: 'Nuevo horario del turno'
     explanation: 'La persona elige nuevo horario del turno.'
     meta:
+      tags:
+        - modificar
+        - cambiar_horario
+        - reagendar
+        - nueva_hora
       provides:
         - draft.slot_id
       requires:

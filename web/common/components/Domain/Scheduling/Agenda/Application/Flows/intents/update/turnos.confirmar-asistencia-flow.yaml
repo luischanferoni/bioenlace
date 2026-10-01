@@ -10,6 +10,11 @@ states:
     description: 'Turno pendiente por confirmar'
     explanation: 'La persona elige turno pendiente por confirmar.'
     meta:
+      tags:
+        - confirmar
+        - asistencia
+        - presente
+        - voy
       provides:
         - draft.id
       open_ui:
@@ -20,6 +25,11 @@ states:
     description: 'Confirmación de asistencia al turno'
     explanation: 'La persona elige confirmación de asistencia al turno.'
     meta:
+      tags:
+        - confirmar
+        - asistencia
+        - presente
+        - voy
       provides:
         - draft.token
       requires:

@@ -12,6 +12,11 @@ states:
     description: 'Turno con cuestionario de asistencia'
     explanation: 'La persona elige turno con cuestionario de asistencia.'
     meta:
+      tags:
+        - preconsulta
+        - cuestionario
+        - formulario
+        - pack
       provides:
         - draft.id
       open_ui:
@@ -22,6 +27,11 @@ states:
     description: 'Respuestas del cuestionario de asistencia'
     explanation: 'La persona elige respuestas del cuestionario de asistencia.'
     meta:
+      tags:
+        - preconsulta
+        - respuestas
+        - cuestionario
+        - pendiente
       requires:
         - draft.id
       open_ui:

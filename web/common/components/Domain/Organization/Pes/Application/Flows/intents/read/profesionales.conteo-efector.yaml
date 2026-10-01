@@ -14,6 +14,11 @@ states:
     description: 'Cantidad de profesionales del centro'
     explanation: 'La persona elige cantidad de profesionales del centro.'
     meta:
+      tags:
+        - conteo
+        - plantel
+        - dotacion
+        - cantidad
       open_ui:
         action_id: data-access.info
         params:

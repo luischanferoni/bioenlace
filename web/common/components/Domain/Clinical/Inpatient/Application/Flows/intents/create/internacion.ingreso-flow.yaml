@@ -12,6 +12,11 @@ states:
     description: 'Datos del ingreso a internación'
     explanation: 'La persona elige datos del ingreso a internación.'
     meta:
+      tags:
+        - internacion
+        - ingreso
+        - hospitalizacion
+        - piso
       provides:
         - draft.internacion_id
       requires:

@@ -98,9 +98,9 @@ class InfoContentResolverServiceTest extends Unit
     public function testIntentIdListParsing(): void
     {
         $a = new InfoContentArticle();
-        $a->intent_ids = 'personas.vincular-menor-flow, personas.designar-representante-flow';
+        $a->intent_ids = 'turnos.crear-como-paciente, atencion.necesito-atencion';
         $this->assertSame(
-            ['personas.vincular-menor-flow', 'personas.designar-representante-flow'],
+            ['turnos.crear-como-paciente', 'atencion.necesito-atencion'],
             $a->getIntentIdList()
         );
     }

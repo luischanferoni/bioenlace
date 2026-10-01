@@ -10,6 +10,12 @@ states:
     description: 'Recetas electrónicas de la persona'
     explanation: 'La persona elige una receta electrónica.'
     meta:
+      tags:
+        - receta
+        - recetas
+        - prescripcion
+        - electronica
+        - mis_recetas
       provides:
         - draft.prescription_id
       open_ui:
@@ -20,6 +26,11 @@ states:
     description: 'Detalle de la receta'
     explanation: 'La persona elige detalle de la receta.'
     meta:
+      tags:
+        - prescripcion
+        - posologia
+        - farmacia
+        - dispensa
       requires:
         - draft.prescription_id
       open_ui:

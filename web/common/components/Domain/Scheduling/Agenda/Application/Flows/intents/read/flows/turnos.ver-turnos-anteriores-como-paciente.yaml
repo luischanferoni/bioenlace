@@ -16,6 +16,9 @@ states:
     meta:
       tags:
         - historial
+        - anteriores
+        - pasados
+        - asistidos
       open_ui:
         action_id: turnos.listar-como-paciente
         params:

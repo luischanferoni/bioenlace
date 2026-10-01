@@ -10,6 +10,11 @@ states:
     description: 'Datos del sobreturno'
     explanation: 'La persona elige datos del sobreturno.'
     meta:
+      tags:
+        - sobreturno
+        - sobre_turno
+        - extra
+        - encajar
       provides:
         - draft.id_persona
         - draft.fecha

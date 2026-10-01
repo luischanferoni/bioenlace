@@ -12,6 +12,9 @@ states:
     meta:
       tags:
         - cancelacion
+        - anular
+        - desistir
+        - baja_turno
       provides:
         - draft.id
       open_ui:
@@ -22,6 +25,11 @@ states:
     description: 'Motivo para cancelar el turno'
     explanation: 'La persona elige motivo para cancelar el turno.'
     meta:
+      tags:
+        - cancelacion
+        - motivo_baja
+        - anular
+        - desistir
       provides:
         - draft.razon_cancelacion
       requires:

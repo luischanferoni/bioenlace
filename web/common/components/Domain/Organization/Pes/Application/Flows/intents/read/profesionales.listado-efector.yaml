@@ -16,6 +16,9 @@ states:
     meta:
       tags:
         - profesionales
+        - plantel
+        - nomina
+        - listado
       open_ui:
         action_id: data-access.listar
         params:

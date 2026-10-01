@@ -12,6 +12,11 @@ states:
     description: 'Cama destino y motivo del cambio'
     explanation: 'La persona elige cama destino y motivo del cambio.'
     meta:
+      tags:
+        - cama
+        - traslado
+        - pase
+        - habitacion
       requires:
         - draft.internacion_id
       open_ui:

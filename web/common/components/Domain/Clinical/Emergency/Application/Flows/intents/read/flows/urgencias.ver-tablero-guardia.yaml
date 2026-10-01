@@ -10,6 +10,11 @@ states:
     description: 'Tablero de guardia'
     explanation: 'La persona elige tablero de guardia.'
     meta:
+      tags:
+        - tablero
+        - guardia_staff
+        - box
+        - ocupacion
       open_ui:
         action_id: clinical.home.panel
     outcome: 'Termina cuando la persona ve el tablero de guardia.'

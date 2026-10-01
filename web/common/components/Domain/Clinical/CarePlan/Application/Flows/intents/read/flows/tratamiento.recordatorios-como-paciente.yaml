@@ -10,6 +10,11 @@ states:
     description: 'Recordatorios del tratamiento'
     explanation: 'La persona elige recordatorios del tratamiento.'
     meta:
+      tags:
+        - recordatorio
+        - alarma_toma
+        - aviso
+        - preferencia
       open_ui:
         action_id: clinical.care-plan.gestionar-recordatorios-como-paciente
     outcome: 'Termina cuando la persona configura los recordatorios del tratamiento.'

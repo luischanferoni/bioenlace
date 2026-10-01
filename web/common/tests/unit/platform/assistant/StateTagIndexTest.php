@@ -66,6 +66,17 @@ class StateTagIndexTest extends Unit
         $this->assertSame(['atencion.necesito-atencion'], $ids);
     }
 
+    public function testFiebreEligeAtencion(): void
+    {
+        $hits = StateTagIndex::match(['fiebre']);
+        $ids = [];
+        foreach ($hits as $hit) {
+            $ids[] = $hit['intent_id'];
+        }
+
+        $this->assertSame(['atencion.necesito-atencion'], $ids);
+    }
+
     public function testNeedlesIncludeExtractionSpanAndSynonyms(): void
     {
         $needles = StateTagIndex::needles([

@@ -25,8 +25,6 @@ web_staff:
   hide_paciente_flows:
     intent_ids:
       - atencion.necesito-atencion
-      - personas.designar-representante-flow
-      - personas.vincular-menor-flow
       - care-packs.asistencia-pre-consulta-flow
     intent_id_contains:
       - como-paciente

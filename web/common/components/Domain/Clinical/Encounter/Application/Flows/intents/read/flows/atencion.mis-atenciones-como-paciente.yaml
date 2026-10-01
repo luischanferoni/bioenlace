@@ -12,6 +12,9 @@ states:
     meta:
       tags:
         - atenciones
+        - encuentros
+        - historial_clinico
+        - resumenes
       provides:
         - draft.encounter_id
       open_ui:
@@ -22,6 +25,11 @@ states:
     description: 'Resumen de esa atención'
     explanation: 'La persona elige resumen de esa atención.'
     meta:
+      tags:
+        - resumen
+        - encuentro
+        - detalle_atencion
+        - epicrisis
       requires:
         - draft.encounter_id
       open_ui:

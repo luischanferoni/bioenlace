@@ -10,6 +10,11 @@ states:
     description: 'Turno al que la persona no asistió'
     explanation: 'La persona elige el turno al que no asistió.'
     meta:
+      tags:
+        - inasistencia
+        - ausente
+        - no_show
+        - falta
       provides:
         - draft.id
       open_ui:

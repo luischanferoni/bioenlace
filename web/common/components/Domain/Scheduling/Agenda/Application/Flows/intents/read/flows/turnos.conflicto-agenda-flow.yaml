@@ -10,6 +10,11 @@ states:
     description: 'Turno afectado por un conflicto de agenda'
     explanation: 'La persona elige turno afectado por un conflicto de agenda.'
     meta:
+      tags:
+        - conflicto
+        - superposicion
+        - choque
+        - solapado
       provides:
         - draft.id
       open_ui:
@@ -20,6 +25,11 @@ states:
     description: 'Nueva opción para ese turno'
     explanation: 'La persona elige nueva opción para ese turno.'
     meta:
+      tags:
+        - conflicto
+        - superposicion
+        - opcion
+        - resolucion
       provides:
         - draft.eleccion
       requires:

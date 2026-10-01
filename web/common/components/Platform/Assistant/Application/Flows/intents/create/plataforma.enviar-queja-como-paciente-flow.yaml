@@ -12,6 +12,11 @@ states:
     outcome: 'Termina cuando la persona envía la queja.'
     type: final
     meta:
+      tags:
+        - queja
+        - reclamo
+        - sugerencia
+        - queja_app
       open_ui:
         action_id: queja-paciente.enviar-como-paciente
 flow_submit:

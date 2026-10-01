@@ -10,6 +10,11 @@ states:
     description: 'Datos del turno a crear'
     explanation: 'La persona elige datos del turno a crear.'
     meta:
+      tags:
+        - turno_staff
+        - reserva_staff
+        - paciente_tercero
+        - admision
       provides:
         - draft.id_persona
         - draft.slot_id

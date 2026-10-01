@@ -46,6 +46,11 @@ states:
     description: 'Profesional del centro'
     explanation: 'La persona elige profesional del centro.'
     meta:
+      tags:
+        - condicion_staff
+        - vigencia_staff
+        - contrato
+        - relacion
       provides:
         - draft.id_profesional_efector_servicio
       open_ui:
@@ -58,6 +63,11 @@ states:
     description: 'Condición laboral del profesional'
     explanation: 'La persona elige condición laboral del profesional.'
     meta:
+      tags:
+        - condicion_staff
+        - vigencia_staff
+        - inicio
+        - fin
       open_ui:
         action_id: profesional-efector-servicio.crear-condicion-laboral
         params:

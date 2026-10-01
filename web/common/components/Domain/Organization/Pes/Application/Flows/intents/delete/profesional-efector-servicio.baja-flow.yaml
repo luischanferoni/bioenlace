@@ -12,6 +12,11 @@ states:
     description: 'Profesional que se da de baja'
     explanation: 'La persona elige profesional que se da de baja.'
     meta:
+      tags:
+        - baja_profesional
+        - desvincular
+        - egreso_staff
+        - plantel
       provides:
         - draft.id_profesional_efector_servicio
       open_ui:
@@ -22,6 +27,11 @@ states:
     description: 'Servicio que se desasigna'
     explanation: 'La persona elige servicio que se desasigna.'
     meta:
+      tags:
+        - baja_profesional
+        - desasignar
+        - oferta_staff
+        - plantel
       provides:
         - draft.id_servicio
       requires:
@@ -37,6 +47,11 @@ states:
     description: 'Turnos afectados por la baja'
     explanation: 'La persona elige turnos afectados por la baja.'
     meta:
+      tags:
+        - baja_profesional
+        - turnos_afectados
+        - reprogramacion_staff
+        - impacto
       provides:
         - draft.impacto_baja_revisado
       requires:

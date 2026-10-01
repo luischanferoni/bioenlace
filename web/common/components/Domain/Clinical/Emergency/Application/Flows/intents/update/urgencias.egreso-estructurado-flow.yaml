@@ -12,6 +12,11 @@ states:
     description: 'Fecha y hora del retiro de guardia'
     explanation: 'La persona elige fecha y hora del retiro de guardia.'
     meta:
+      tags:
+        - egreso
+        - alta_guardia
+        - retiro
+        - destino
       requires:
         - draft.guardia_id
       open_ui:

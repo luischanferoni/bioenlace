@@ -10,6 +10,11 @@ states:
     description: 'Turno pendiente que se cancela'
     explanation: 'La persona elige turno pendiente que se cancela.'
     meta:
+      tags:
+        - cancelacion_staff
+        - anular_staff
+        - baja_turno_staff
+        - ausente
       provides:
         - draft.id
         - draft.razon_cancelacion

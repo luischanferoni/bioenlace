@@ -15,6 +15,8 @@ states:
         - politica_turnos
         - llegar_tarde
         - tolerancia
+        - plazo
+        - multa
       provides:
         - draft.id_efector
       open_ui:

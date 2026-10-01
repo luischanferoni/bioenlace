@@ -10,6 +10,11 @@ states:
     description: 'Adherencia al tratamiento en el centro'
     explanation: 'La persona elige adherencia al tratamiento en el centro.'
     meta:
+      tags:
+        - adherencia
+        - cumplimiento
+        - toma
+        - dashboard
       provides:
         - draft.care_plan_id
       open_ui:

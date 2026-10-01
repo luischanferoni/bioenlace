@@ -15,6 +15,11 @@ states:
     description: 'Profesional al que se le cargan horarios'
     explanation: 'La persona elige profesional al que se le cargan horarios.'
     meta:
+      tags:
+        - horarios_staff
+        - agenda_ajena
+        - plantel
+        - cobertura
       provides:
         - draft.id_profesional_efector_servicio
       open_ui:
@@ -25,6 +30,11 @@ states:
     description: 'Asignación del profesional'
     explanation: 'La persona elige asignación del profesional.'
     meta:
+      tags:
+        - horarios_staff
+        - asignacion
+        - oferta_staff
+        - plantel
       provides:
         - draft.id_profesional_efector_servicio
       requires:
@@ -40,6 +50,11 @@ states:
     description: 'Horarios de guardia o internación'
     explanation: 'La persona elige horarios de guardia o internación.'
     meta:
+      tags:
+        - horarios_staff
+        - franja_staff
+        - intervalo
+        - cupos_staff
       provides:
         - draft.horario_ui_completed
       requires:

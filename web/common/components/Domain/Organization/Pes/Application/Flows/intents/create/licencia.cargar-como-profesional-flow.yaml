@@ -53,6 +53,11 @@ states:
     description: 'Asignación propia sobre la que se carga la licencia'
     explanation: 'La persona elige asignación propia sobre la que se carga la licencia.'
     meta:
+      tags:
+        - licencia
+        - ausencia
+        - franco
+        - descanso
       provides:
         - draft.id_servicio
         - draft.id_profesional_efector_servicio
@@ -66,6 +71,11 @@ states:
     description: 'Fechas de la licencia, permiso o ausencia'
     explanation: 'La persona elige fechas de la licencia, permiso o ausencia.'
     meta:
+      tags:
+        - licencia
+        - ausencia
+        - certificado
+        - reposo
       provides:
         - draft.condicion_laboral_ui_completed
         - draft.fecha_inicio

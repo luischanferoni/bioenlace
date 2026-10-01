@@ -63,7 +63,7 @@ Push de resumen de atención y touchpoints de cohorte se envían al sujeto (si t
 ## Asistente
 
 - `Person/Representation/Assistant/PersonRepresentationUiActionCatalog.php`
-- Intents: `personas.vincular-menor-flow.yaml`, `personas.designar-representante-flow.yaml`
+- Intents de paciente: no. Tutela y delegación se hacen en Configuración → Representación. El artículo `representacion` orienta esa pantalla. Staff sigue con `personas.verificar-tutela-staff-flow`.
 
 ## Móvil (Flutter)
 

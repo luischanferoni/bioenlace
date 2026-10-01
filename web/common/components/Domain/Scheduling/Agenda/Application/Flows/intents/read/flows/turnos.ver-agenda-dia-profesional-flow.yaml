@@ -10,6 +10,11 @@ states:
     description: 'Fecha de la agenda del profesional'
     explanation: 'La persona elige fecha de la agenda del profesional.'
     meta:
+      tags:
+        - agenda_dia
+        - grilla
+        - dia_profesional
+        - planilla
       provides:
         - draft.fecha
         - draft.id_profesional_efector_servicio

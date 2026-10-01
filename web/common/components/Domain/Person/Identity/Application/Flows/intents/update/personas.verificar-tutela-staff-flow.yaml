@@ -10,6 +10,13 @@ states:
     description: 'Solicitudes de tutela pendientes de verificación'
     explanation: 'La persona elige solicitudes de tutela pendientes de verificación.'
     meta:
+      tags:
+        - verificar
+        - pendiente
+        - aprobacion
+        - staff
+        - administrativo
+        - vinculo
       provides:
         - draft.person_related_id
       open_ui:

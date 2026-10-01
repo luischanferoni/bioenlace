@@ -35,6 +35,11 @@ states:
     description: 'Datos de identidad del profesional'
     explanation: 'La persona elige datos de identidad del profesional.'
     meta:
+      tags:
+        - identidad
+        - matricula
+        - datos_profesional
+        - perfil
       open_ui:
         action_id: data-access.editar
         params:

@@ -133,7 +133,7 @@ class AssistantEnvelopeFlowTest extends Unit
         $motor = [
             'success' => true,
             'text' => 'Representantes',
-            'intent_id' => 'personas.designar-representante-flow',
+            'intent_id' => 'person-representation.hub',
             'subintent_id' => 'gestionar_delegacion',
             'open_ui' => [
                 'action_id' => 'person-representation.hub',

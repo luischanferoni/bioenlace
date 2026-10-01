@@ -35,32 +35,11 @@ final class PersonRepresentationUiActionCatalog implements UiActionCatalogProvid
                 self::hubClientOpen()
             ),
             self::def(
-                'person-representation.solicitar-menor-como-tutor',
-                'Solicitar tutela de menor',
-                'Alta de vínculo padre/madre/tutor sobre menor sin cuenta (pendiente verificación staff).',
-                '/api/person-representation/solicitar-menor-como-tutor',
-                ['vincular hijo', 'vincular menor', 'agregar hijo', 'tutela menor', 'mi hijo']
-            ),
-            self::def(
                 'person-representation.mis-vinculos-como-tutor',
                 'Mis vínculos como tutor',
                 'Listado de menores vinculados en régimen de tutela verificada.',
                 '/api/person-representation/mis-vinculos-como-tutor',
                 ['mis hijos', 'vínculos tutor', 'menores a cargo tutela']
-            ),
-            self::def(
-                'person-representation.designar-representante',
-                'Designar representante',
-                'El paciente delega operación a otra persona con cuenta.',
-                '/api/person-representation/designar-representante',
-                [
-                    'designar representante',
-                    'delegar cuenta',
-                    'delegar gestión de turnos',
-                    'delegar turnos',
-                    'autorizar familiar',
-                    'representante',
-                ]
             ),
             self::def(
                 'person-representation.mis-representantes',

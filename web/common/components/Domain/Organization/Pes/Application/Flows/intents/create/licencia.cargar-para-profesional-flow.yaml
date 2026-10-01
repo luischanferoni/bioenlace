@@ -30,6 +30,11 @@ states:
     description: 'Profesional al que corresponde la licencia'
     explanation: 'La persona elige profesional al que corresponde la licencia.'
     meta:
+      tags:
+        - licencia_staff
+        - ausencia_staff
+        - reemplazo
+        - cobertura
       provides:
         - draft.id_profesional_efector_servicio
       open_ui:
@@ -40,6 +45,11 @@ states:
     description: 'Asignación sobre la que se carga la licencia'
     explanation: 'La persona elige asignación sobre la que se carga la licencia.'
     meta:
+      tags:
+        - licencia_staff
+        - asignacion
+        - cobertura
+        - reemplazo
       provides:
         - draft.id_servicio
       requires:
@@ -54,6 +64,11 @@ states:
     description: 'Fechas de la licencia, permiso o ausencia'
     explanation: 'La persona elige fechas de la licencia, permiso o ausencia.'
     meta:
+      tags:
+        - licencia_staff
+        - ausencia_staff
+        - certificado
+        - reposo
       provides:
         - draft.condicion_laboral_ui_completed
         - draft.fecha_inicio

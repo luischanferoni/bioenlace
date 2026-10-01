@@ -379,13 +379,13 @@ Producto: [representacion-paciente.md](../../producto/representacion-paciente.md
 
 | ✓   | Tipo               | Ejemplo                                    | Cobertura    | Qué deberías ver                                                 |
 | --- | ------------------ | ------------------------------------------ | ------------ | ---------------------------------------------------------------- |
-| [ ] | Tutela             | *«Quiero vincular a mi hijo»*              | **Hoy**      | `personas.vincular-menor-flow` (queda pendiente hasta el centro) |
+| [ ] | Tutela             | *«Quiero vincular a mi hijo»*              | **Hoy**      | Guide + artículo; Configuración → Representación. Sin flow de tutela |
 | [ ] | Turno del menor    | *«Sacá turno para mi hija de 8»*           | **Hoy**      | Con sujeto activo; si no hay tutela, no opera por el menor       |
-| [ ] | Delegar            | *«Que mi hija gestione mis turnos»*        | **Hoy**      | `personas.designar-representante-flow`                           |
+| [ ] | Delegar            | *«Que mi hija gestione mis turnos»*        | **Hoy**      | Guide + artículo; Configuración → Representación. Sin flow de delegación |
 | [ ] | Quién opera por mí | *«¿Quién puede sacar turnos a mi nombre?»* | **Pantalla** | Hub de representación                                            |
 | [ ] | Aviso N9           | *«Avisame si alguien actúa por mí»*        | **Pantalla** | Configuración de alertas                                         |
 | [ ] | Revocar            | *«Sacá a mi hermano de representantes»*    | **Pantalla** | Hub de representación                                            |
-| [ ] | Qué es / cómo funciona | *«¿Qué es la representación?»* / *«¿Cómo vinculo a mi hijo?»* | **Hoy** | Guide: artículo + CTA (`vincular-menor` / `designar-representante`) |
+| [ ] | Qué es / cómo funciona | *«¿Qué es la representación?»* / *«¿Cómo vinculo a mi hijo?»* | **Hoy** | Guide: artículo de representación (Configuración → Representación). Sin CTA de flow |
 | [ ] | Follow-up sobrino  | 1. *«¿Qué es la representación?»* 2. *«¿Qué pasa si quiero representar a mi sobrino?»* · o un solo *«Contame sobre la representación, se puede representar a un sobrino contestame con si o con no»* | **Hoy** / **Futuro** | Mismo topic; **no** Solicitar Atención; no invertir tutela vs designar; puede **no** obedecer “solo sí/no” si hace falta aclarar |
 
 No confundir tutela (menor sin cuenta, verifica el staff) con delegación (otro adulto con cuenta, activa al instante).

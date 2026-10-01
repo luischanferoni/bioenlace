@@ -16,6 +16,9 @@ states:
       tags:
         - turno
         - solicitud
+        - agenda
+        - reserva
+        - cupo
       provides:
         - draft.id_servicio_asignado
       open_ui:
@@ -29,6 +32,11 @@ states:
     description: 'Centros de salud, incluidos los cercanos'
     explanation: 'La persona elige el centro de salud.'
     meta:
+      tags:
+        - efector
+        - hospital
+        - cercania
+        - mapa
       provides:
         - draft.id_efector
       requires:
@@ -53,6 +61,11 @@ states:
     description: 'Profesional de esa oferta en ese centro'
     explanation: 'La persona elige profesional de esa oferta en ese centro.'
     meta:
+      tags:
+        - medico
+        - doctor
+        - especialista
+        - profesional
       provides:
         - draft.id_profesional_efector_servicio
       requires:
@@ -72,6 +85,10 @@ states:
     description: 'Día con cupos'
     explanation: 'La persona elige día con cupos.'
     meta:
+      tags:
+        - fecha
+        - disponibilidad
+        - calendario
       provides:
         - draft.fecha_turno
       requires:
@@ -88,6 +105,10 @@ states:
     description: 'Horario para reservar el turno'
     explanation: 'La persona elige horario para reservar el turno.'
     meta:
+      tags:
+        - horario
+        - franja
+        - hora
       provides:
         - draft.slot_id
       requires:

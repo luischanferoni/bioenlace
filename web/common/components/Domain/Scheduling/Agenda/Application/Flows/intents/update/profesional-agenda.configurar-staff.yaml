@@ -27,6 +27,11 @@ states:
     description: 'Profesional cuya agenda se configura'
     explanation: 'La persona elige profesional cuya agenda se configura.'
     meta:
+      tags:
+        - agenda_staff
+        - configurar_agenda
+        - intervalo
+        - plantel
       provides:
         - draft.id_profesional_efector_servicio
       open_ui:
@@ -37,6 +42,11 @@ states:
     description: 'Servicio de esa agenda'
     explanation: 'La persona elige servicio de esa agenda.'
     meta:
+      tags:
+        - agenda_staff
+        - oferta_staff
+        - intervalo
+        - plantel
       provides:
         - draft.id_servicio
       requires:
@@ -51,6 +61,11 @@ states:
     description: 'Horarios e intervalo de la agenda'
     explanation: 'La persona elige horarios e intervalo de la agenda.'
     meta:
+      tags:
+        - agenda_staff
+        - intervalo
+        - duracion
+        - cupos_staff
       provides:
         - draft.agenda_ui_completed
       requires:

@@ -10,6 +10,11 @@ states:
     description: 'Paciente en guardia pendiente de triage'
     explanation: 'La persona elige paciente en guardia pendiente de triage.'
     meta:
+      tags:
+        - triage
+        - guardia_staff
+        - paciente_guardia
+        - prioridad
       provides:
         - draft.guardia_id
       open_ui:
@@ -20,6 +25,11 @@ states:
     description: 'Nivel de triage, motivo y signos vitales'
     explanation: 'La persona elige nivel de triage, motivo y signos vitales.'
     meta:
+      tags:
+        - triage
+        - signos
+        - vitales
+        - nivel
       requires:
         - draft.guardia_id
       open_ui:

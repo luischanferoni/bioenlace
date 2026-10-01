@@ -94,7 +94,7 @@ sequenceDiagram
 |------------|---------|
 | Chip **«A cargo de»** (inicio) | Elegir «Yo» u otro paciente con representación activa |
 | **Configuración → Representación** | Hub: tutela, representantes, pacientes a cargo, preferencia N9 |
-| Asistente | Intents `personas.vincular-menor-flow`, `personas.designar-representante-flow` → pantalla nativa `person_representation_hub` |
+| Asistente | Artículo de representación: explica Configuración → Representación. No abre un flow propio. |
 
 Al cambiar sujeto, la app propaga `subject_persona_id` en turnos, tratamientos activos, pre-consulta y sesión API.
 
@@ -103,8 +103,7 @@ Código compartido: `mobile/packages/shared/lib/person/person_representation_*.d
 ## Asistente web / SPA
 
 - Catálogo: `PersonRepresentationUiActionCatalog` (registrado en `UiActionCatalog`).
-- Flows YAML: `common/metadata/bioenlace/assistant/intents/` (`personas.vincular-menor-flow`, `personas.designar-representante-flow`).
-- Acción hub con `client_open.kind: native` → móvil; web → configuración.
+- La pantalla nativa del hub sigue en el celular (`person_representation_hub`) y en la web cuando la sesión muestra el control de representación. El asistente no abre un flow de tutela ni de delegación: orienta con el artículo `representacion`.
 
 ## Staff
 

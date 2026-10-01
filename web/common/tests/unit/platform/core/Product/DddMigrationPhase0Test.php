@@ -112,7 +112,7 @@ final class DddMigrationPhase0Test extends Unit
         $samples = [
             'turnos.cancelar-como-paciente-flow' => 'scheduling',
             'internacion.ingreso-flow' => 'clinical',
-            'personas.vincular-menor-flow' => 'person',
+            'personas.verificar-tutela-staff-flow' => 'person',
             'profesional-efector-servicio.crear-flow' => 'organization',
             'data-access.listar' => 'platform',
         ];

@@ -14,6 +14,11 @@ states:
     description: 'Distribución de profesionales por servicio'
     explanation: 'La persona elige distribución de profesionales por servicio.'
     meta:
+      tags:
+        - distribucion
+        - plantel
+        - oferta_staff
+        - dotacion
       open_ui:
         action_id: data-access.info
         params:

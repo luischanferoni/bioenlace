@@ -16,6 +16,11 @@ states:
     description: 'Servicio de la agenda propia'
     explanation: 'La persona elige servicio de la agenda propia.'
     meta:
+      tags:
+        - mis_horarios
+        - agenda_propia
+        - guardia_propia
+        - piso_propio
       provides:
         - draft.id_servicio
         - draft.id_profesional_efector_servicio
@@ -29,6 +34,11 @@ states:
     description: 'Tipo de agenda: ambulatorio, guardia o internación'
     explanation: 'La persona elige tipo de agenda: ambulatorio, guardia o internación.'
     meta:
+      tags:
+        - mis_horarios
+        - ambulatorio_propio
+        - guardia_propia
+        - internacion_propia
       provides:
         - draft.encounter_class
       requires:
@@ -47,6 +57,11 @@ states:
     description: 'Agenda ambulatoria propia'
     explanation: 'La persona elige agenda ambulatoria propia.'
     meta:
+      tags:
+        - mis_horarios
+        - agenda_propia
+        - intervalo
+        - cupos_propios
       provides:
         - draft.horario_ui_completed
       requires:
@@ -65,6 +80,11 @@ states:
     description: 'Horarios propios de guardia o internación'
     explanation: 'La persona elige horarios propios de guardia o internación.'
     meta:
+      tags:
+        - mis_horarios
+        - franja_propia
+        - guardia_propia
+        - piso_propio
       provides:
         - draft.horario_ui_completed
       requires:

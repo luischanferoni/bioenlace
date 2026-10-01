@@ -15,6 +15,9 @@ states:
     meta:
       tags:
         - mis_turnos
+        - proximos
+        - citas
+        - reservas
       open_ui:
         action_id: turnos.listar-como-paciente
     outcome: 'Termina cuando la persona ve sus próximos turnos.'

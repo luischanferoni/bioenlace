@@ -55,8 +55,8 @@ class ClientContextMetadataTest extends Unit
     public function testPacienteOnlyFlowByRepresentationIntentId(): void
     {
         $this->assertTrue(ClientContextMetadata::isPacienteOnlyFlow([
-            'action_id' => 'personas.vincular-menor-flow',
-            'rbac_route' => '/api/person-representation/solicitar-menor-como-tutor',
+            'action_id' => 'atencion.necesito-atencion',
+            'rbac_route' => '/api/turnos/crear-como-paciente',
         ]));
         $this->assertFalse(ClientContextMetadata::isPacienteOnlyFlow([
             'action_id' => 'personas.verificar-tutela-staff-flow',

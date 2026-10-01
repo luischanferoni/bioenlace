@@ -64,6 +64,25 @@ states:
         - atencion
         - turno
         - solicitud
+        - fiebre
+        - tos
+        - nausea
+        - vomito
+        - mareo
+        - cefalea
+        - pecho
+        - sangrado
+        - hinchazon
+        - ansiedad
+        - insomnio
+        - cansancio
+        - diarrea
+        - alergia
+        - presion
+        - diabetes
+        - hipertension
+        - pediatria
+        - pediatrico
       review_prefilled: true
       provides:
         - draft.triage_raiz
@@ -101,6 +120,16 @@ states:
       tags:
         - estudio
         - practica
+        - ecografia
+        - mamografia
+        - radiografia
+        - resonancia
+        - tomografia
+        - electrocardiograma
+        - endoscopia
+        - biopsia
+        - papanicolau
+        - densitometria
       review_prefilled: true
       provides:
         - draft.pedido_acto
@@ -135,6 +164,10 @@ states:
       tags:
         - control
         - seguimiento
+        - cronico
+        - condicion
+        - protocolo
+        - evolucion
       provides:
         - draft.control_hub_anchor
         - draft.control_hub_kind
@@ -157,6 +190,11 @@ states:
     label: '¿Qué necesitás?'
     explanation: 'La persona elige qué necesita sobre ese control.'
     meta:
+      tags:
+        - renovar
+        - consultar
+        - ajustar
+        - mensaje
       provides:
         - draft.condition_accion
       requires:
@@ -196,6 +234,14 @@ states:
         - sintoma
         - dolor
         - malestar
+        - cabeza
+        - abdomen
+        - garganta
+        - espalda
+        - articulacion
+        - oido
+        - piel
+        - lumbar
       review_prefilled: true
       provides:
         - draft.triage_zona
@@ -221,6 +267,12 @@ states:
         - urgencia
         - emergencia
         - alarma
+        - guardia
+        - ambulancia
+        - desmayo
+        - convulsion
+        - ahogo
+        - infarto
       requires:
         - draft.reserva_triage_halt
       open_ui:
@@ -239,6 +291,12 @@ states:
     label: Modalidad
     explanation: 'La persona elige cómo atenderse.'
     meta:
+      tags:
+        - modalidad
+        - teleconsulta
+        - videollamada
+        - presencial
+        - virtual
       guide_options: reserva_modalidad
       provides:
         - draft.tipo_atencion
@@ -283,6 +341,11 @@ states:
     label: Describí tu consulta en el campo de texto de abajo
     explanation: 'La persona escribe la consulta para un profesional.'
     meta:
+      tags:
+        - mensaje
+        - escrito
+        - asincronica
+        - consulta
       provides:
         - draft.mensaje
       requires:
@@ -308,6 +371,10 @@ states:
     label: Servicio
     explanation: 'La persona elige un servicio entre los filtrados por la forma de atenderse.'
     meta:
+      tags:
+        - oferta
+        - ambulatorio
+        - clinica
       provides:
         - draft.id_servicio_asignado
       requires:
@@ -332,6 +399,11 @@ states:
     label: Centro de salud
     explanation: 'La persona elige un centro que ofrece el servicio elegido.'
     meta:
+      tags:
+        - efector
+        - hospital
+        - cercania
+        - mapa
       provides:
         - draft.id_efector
       requires:
@@ -356,6 +428,11 @@ states:
     label: Profesional
     explanation: 'La persona elige profesional de ese servicio en ese centro.'
     meta:
+      tags:
+        - medico
+        - doctor
+        - especialista
+        - profesional
       provides:
         - draft.id_profesional_efector_servicio
       requires:
@@ -375,6 +452,10 @@ states:
     label: Día
     explanation: 'La persona elige día con lugar.'
     meta:
+      tags:
+        - fecha
+        - cupo
+        - disponibilidad
       provides:
         - draft.fecha_turno
       requires:
@@ -390,6 +471,9 @@ states:
     label: Horario
     explanation: 'La persona elige horario disponible para el turno.'
     meta:
+      tags:
+        - horario
+        - franja
       provides:
         - draft.slot_id
       requires:
@@ -408,6 +492,9 @@ states:
     label: Día (teleconsulta con Medicina General)
     explanation: 'La persona elige día de teleconsulta con Medicina General.'
     meta:
+      tags:
+        - virtual
+        - remoto
       provides:
         - draft.fecha_turno
       requires:
@@ -424,6 +511,9 @@ states:
     label: Horario (teleconsulta con Medicina General)
     explanation: 'La persona elige horario de teleconsulta con Medicina General.'
     meta:
+      tags:
+        - virtual
+        - distancia
       provides:
         - draft.slot_id
       requires:
@@ -443,6 +533,11 @@ states:
     label: '¿Sobre qué es el control o seguimiento?'
     explanation: 'La persona elige tema del control o seguimiento.'
     meta:
+      tags:
+        - control
+        - seguimiento
+        - cronico
+        - tratamiento
       provides:
         - draft.intake_tipo
       open_ui:
@@ -468,6 +563,11 @@ states:
     label: '¿Sobre qué atención?'
     explanation: 'La persona elige atención anterior del control.'
     meta:
+      tags:
+        - previa
+        - anterior
+        - consulta
+        - encuentro
       provides:
         - draft.encounter_id
       requires:
@@ -479,6 +579,10 @@ states:
     label: Contanos en el campo de abajo
     explanation: 'La persona escribe la consulta sobre una atención anterior.'
     meta:
+      tags:
+        - previa
+        - mensaje
+        - escrito
       provides:
         - draft.mensaje
       requires:
@@ -501,6 +605,10 @@ states:
     label: Tu tratamiento
     explanation: 'La persona elige tratamiento del control.'
     meta:
+      tags:
+        - tratamiento
+        - plan
+        - cronico
       review_prefilled: true
       provides:
         - draft.care_plan_id
@@ -513,6 +621,11 @@ states:
     label: '¿Qué necesitás?'
     explanation: 'La persona elige qué necesita sobre el tratamiento.'
     meta:
+      tags:
+        - renovacion
+        - ajuste
+        - adherencia
+        - consulta
       provides:
         - draft.seguimiento_necesidad
       requires:
@@ -548,6 +661,11 @@ states:
       tags:
         - medicacion
         - medicamento
+        - remedio
+        - farmaco
+        - dosis
+        - renovacion
+        - receta
       provides:
         - draft.medication_request_ids
       requires:
@@ -580,6 +698,11 @@ states:
     label: '¿Qué cambio necesitás?'
     explanation: 'La persona escribe el cambio que pide en la medicación.'
     meta:
+      tags:
+        - ajuste
+        - dosis
+        - cambio
+        - medicacion
       provides:
         - draft.ajuste_motivo
       requires:
@@ -606,6 +729,11 @@ states:
     label: Escribí tu consulta en el campo de abajo
     explanation: 'La persona escribe la consulta del control.'
     meta:
+      tags:
+        - consulta
+        - mensaje
+        - escrito
+        - control
       provides:
         - draft.mensaje
       requires:
@@ -626,6 +754,11 @@ states:
     label: Contanos en el campo de abajo
     explanation: 'La persona escribe el mensaje de seguimiento.'
     meta:
+      tags:
+        - seguimiento
+        - mensaje
+        - escrito
+        - evolucion
       provides:
         - draft.mensaje
       requires:
@@ -649,6 +782,11 @@ states:
     label: '¿Con quién querés el control?'
     explanation: 'La persona elige con quién quiere el control.'
     meta:
+      tags:
+        - mismo_medico
+        - preferencia
+        - continuidad
+        - habitual
       provides:
         - draft.preferencia_profesional_turno
       requires:
@@ -671,6 +809,10 @@ states:
     label: Centro de salud
     explanation: 'La persona elige un centro que ofrece el servicio elegido.'
     meta:
+      tags:
+        - sede
+        - sucursal
+        - control
       provides:
         - draft.id_efector
       requires:
@@ -685,6 +827,11 @@ states:
     label: Profesional
     explanation: 'La persona elige profesional para el control.'
     meta:
+      tags:
+        - tratante
+        - derivacion
+        - plantel
+        - prestador
       provides:
         - draft.id_profesional_efector_servicio
       requires:
@@ -701,6 +848,9 @@ states:
     label: Día
     explanation: 'La persona elige día del control.'
     meta:
+      tags:
+        - calendario
+        - control
       provides:
         - draft.fecha_turno
       requires:
@@ -716,6 +866,9 @@ states:
     label: Horario
     explanation: 'La persona elige horario del control.'
     meta:
+      tags:
+        - hora
+        - control
       provides:
         - draft.slot_id
       requires:
@@ -734,6 +887,10 @@ states:
     label: Día (teleconsulta con Medicina General)
     explanation: 'La persona elige día de teleconsulta del control.'
     meta:
+      tags:
+        - calendario
+        - control
+        - remoto
       provides:
         - draft.fecha_turno
       requires:
@@ -749,6 +906,10 @@ states:
     label: Horario (teleconsulta con Medicina General)
     explanation: 'La persona elige horario de teleconsulta del control.'
     meta:
+      tags:
+        - hora
+        - control
+        - distancia
       provides:
         - draft.slot_id
       requires:

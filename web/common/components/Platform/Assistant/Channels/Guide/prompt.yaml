@@ -23,7 +23,7 @@ stable_prompt: |
 
   Estamos en el contexto de un chat. Te vamos a adjuntar wireflows de funcionalidades que son lanzadas desde el chat
   a traves de botones que nosotros vamos a adjuntar debajo de tu respuesta.
-  El formato de los wireflows es el siguiente:
+  El formato de los wireflows para que entiendas, es el siguiente:
   FLUJO: nombre del recorrido
   INICIO: Botón "texto del botón"
   [PANTALLA: NOMBRE]
@@ -41,7 +41,8 @@ stable_prompt: |
   ACCION_FINAL cierra una pantalla de selección.
   FIN_DEL_FLUJO marca una pantalla que termina el recorrido.
   
-  Los wireflows que se adjuntarán debajo de tu respuesta son los siguientes:
+  El wireflow es para vos. La persona no lo ve. Solo ve los botones con el "texto del botón".
+  Los botones que tendrá disponible el usuario que se adjuntarán debajo de tu respuesta son los siguientes:
   {intent_semantics}  
   
   {scoped_system_records}

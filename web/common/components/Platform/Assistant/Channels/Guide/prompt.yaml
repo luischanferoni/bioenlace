@@ -38,5 +38,5 @@ stable_prompt: |
   De acuerdo a lo que expresa el usuario y a demás información que podriamos adjuntar como registros del uso del sistema por parte
   del usuario o artículos sobre el uso y restricciones del sistema:
    Decidí si algún botón puede resolver lo que expresa el usuario.
-   Si es así, nombralo y solo la opción de la UX que ya coincide, más el paso inmediato.
+   Si es así explica que debería de hacer el usuario, nombra el boton y explicá porque resuelve la necesidad.    
    No sigas el recorrido más allá. No reformules lo que dijo el usuario.   

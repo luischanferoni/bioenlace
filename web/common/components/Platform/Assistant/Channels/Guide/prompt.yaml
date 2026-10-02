@@ -21,29 +21,25 @@ stable_prompt: |
   Lo que expresa el usuario es lo siguiente:
   {necesidad_usuario}  
 
-  Te adjunto la explicación de como leer el formato de las funcionalidades del sistema en JSON:
-  {
-    "funcionalidades": [
-      {
-        "boton": "nombre del botón",
-        "al_presionar": "qué se abre al tocarlo",
-        "objetivo": "si no hay recorridos: para qué sirve el botón",
-        "pasos": [{ "hace": "…", "elige_entre": ["lista de un paso"], "ofrece": ["acciones"] }],
-        "exito": "cómo termina bien",
-        "recorridos": [
-          {
-            "nombre": "opción de pantalla tras el botón (no es botón del chat)",
-            "objetivo": "…",
-            "pasos": [{ "hace": "…", "elige_entre": ["…"], "ofrece": ["…"] }],
-            "exito": "…"
-          }
-        ]
-      }
-    ]
-  }  
+  Te adjunto la explicación de como leer el formato de las funcionalidades del sistema:
+  FLUJO: nombre del recorrido
+  INICIO: Botón "texto del botón"
+  [PANTALLA: NOMBRE]
+    Tipo: Selección de opción | Información | Texto
+    Opciones:
+      - texto que ve la persona
+    TRANSICIONES:
+      Opcion elegida -> OTRA_PANTALLA
+      CUALQUIER_OPCION -> OTRA_PANTALLA
+    Acciones:
+      - acción que ofrece la pantalla
+    ACCION_FINAL: qué confirma esa pantalla
+    FIN_DEL_FLUJO: Sí
+  CUALQUIER_OPCION significa que da igual qué opción elija: sigue a esa pantalla.
+  ACCION_FINAL cierra una pantalla de selección.
+  FIN_DEL_FLUJO marca una pantalla que termina el recorrido.    
   Las funcionalidades del sistema son:
-  {intent_semantics}
-  Los botones se adjuntarán debajo de tu respuesta, el usuario puede presionar para interactuar
+  {intent_semantics}  
   
   {scoped_system_records}
 

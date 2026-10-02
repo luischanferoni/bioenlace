@@ -13,89 +13,81 @@ class IntentSemanticsPromptFormatterTest extends Unit
         AssistantMetadataLoader::resetCacheForTests();
     }
 
-    public function testTurnosCrearIsFlatUnderBoton(): void
+    public function testTurnosCrearEsMapaDePantallas(): void
     {
         $block = IntentSemanticsPromptFormatter::formatIntentId('turnos.crear-como-paciente');
-        $data = json_decode($block, true);
 
-        $this->assertIsArray($data);
-        $this->assertArrayHasKey('funcionalidades', $data);
-        $item = $data['funcionalidades'][0];
-        $this->assertSame('Turno con un especialista', $item['boton']);
-        $this->assertSame('La persona elige la oferta del centro que tiene agenda.', $item['al_presionar']);
-        $this->assertSame('se reserva un turno para quien está a cargo', $item['objetivo']);
-        $this->assertArrayNotHasKey('recorridos', $item);
-        $this->assertSame('La persona elige el centro de salud.', $item['pasos'][0]['hace']);
-        $this->assertStringContainsString('horario para reservar el turno', $item['pasos'][3]['hace']);
-        $this->assertSame('Termina cuando se reserva un turno para quien está a cargo.', $item['exito']);
+        $this->assertStringStartsWith("FLUJO: TURNO_ESPECIALISTA\n", $block);
+        $this->assertStringContainsString('INICIO: Botón "Turno con un especialista"', $block);
+        $this->assertStringContainsString('[PANTALLA: ELEGIR_OFERTA_CENTRO]', $block);
+        $this->assertStringContainsString('CUALQUIER_OPCION -> ELEGIR_CENTRO_SALUD', $block);
+        $this->assertStringContainsString('Tipo: Selección de opción', $block);
+        $this->assertStringContainsString('CUALQUIER_OPCION ->', $block);
+        $this->assertStringContainsString('ACCION_FINAL: Confirmar turno', $block);
+        $this->assertStringNotContainsString('funcionalidades', $block);
         $this->assertStringNotContainsString('turnos.crear-como-paciente', $block);
+        $this->assertSame(1, substr_count($block, '[PANTALLA: ELEGIR_CENTRO_SALUD]'));
     }
 
-    public function testAtencionUsaRecorridosYEligeEntre(): void
+    public function testAtencionEsGrafoDePantallasSinRepetirLaCola(): void
     {
         $block = IntentSemanticsPromptFormatter::formatIntentId('atencion.necesito-atencion');
-        $data = json_decode($block, true);
 
-        $this->assertIsArray($data);
-        $item = $data['funcionalidades'][0];
-        $this->assertSame('Solicitar Atención', $item['boton']);
-        $this->assertSame('La persona elige qué pedido de atención hace.', $item['al_presionar']);
-        $this->assertArrayHasKey('recorridos', $item);
+        $this->assertStringContainsString("FLUJO: SOLICITAR_ATENCION\n", $block);
+        $this->assertStringContainsString('INICIO: Botón "Solicitar Atención"', $block);
+        $this->assertStringContainsString('[PANTALLA: SOLICITAR_ATENCION]', $block);
+        $this->assertStringContainsString('    - Malestar nuevo', $block);
+        $this->assertStringContainsString('    - Estudio o práctica', $block);
+        $this->assertStringContainsString('    - Control/Seguimiento', $block);
+        $this->assertStringContainsString('    - Urgencia', $block);
+        $this->assertStringContainsString('Malestar nuevo      -> ZONA', $block);
+        $this->assertStringContainsString('Estudio o práctica  -> ESTUDIO_PRACTICA', $block);
+        $this->assertStringContainsString('Control/Seguimiento -> SOBRE_CONTROL_SEGUIMIENTO', $block);
+        $this->assertStringContainsString('Urgencia            -> ORIENTACION_URGENCIA', $block);
 
-        $byName = [];
-        foreach ($item['recorridos'] as $r) {
-            $byName[$r['nombre']] = $r;
-        }
+        $this->assertStringContainsString('    - Cabeza, cuello o mareos', $block);
+        $this->assertStringContainsString('    - Síntoma general (fiebre, cansancio u otro)', $block);
+        $this->assertStringContainsString('CUALQUIER_OPCION -> MODALIDAD', $block);
+        $this->assertStringContainsString('    - Presencial', $block);
+        $this->assertStringContainsString('    - Videollamada', $block);
+        $this->assertStringContainsString('    - Por mensaje', $block);
+        $this->assertStringContainsString('Presencial   -> SERVICIO', $block);
+        $this->assertStringContainsString('Videollamada -> DIA_TELECONSULTA_MEDICINA_GENERAL', $block);
+        $this->assertStringContainsString('Por mensaje  -> DESCRIBI_TU_CONSULTA_CAMPO_TEXTO_ABAJO', $block);
 
-        $this->assertArrayHasKey('Urgencia', $byName);
-        $this->assertSame(
-            'la persona recibe orientación por urgencia, también para alguien que no está a cargo',
-            $byName['Urgencia']['objetivo']
-        );
-        $this->assertSame(
-            'El sistema muestra orientación por urgencia y frena la reserva en la app.',
-            $byName['Urgencia']['pasos'][0]['hace']
-        );
-        $this->assertSame(['Llamar al 107'], $byName['Urgencia']['pasos'][0]['ofrece']);
-        $this->assertSame(
-            'Termina cuando la persona recibe orientación por urgencia, también para alguien que no está a cargo.',
-            $byName['Urgencia']['exito']
-        );
+        $this->assertStringContainsString('CUALQUIER_OPCION -> CENTRO_SALUD', $block);
+        $this->assertStringContainsString('CUALQUIER_OPCION -> PROFESIONAL', $block);
+        $this->assertStringContainsString('CUALQUIER_OPCION -> DIA', $block);
+        $this->assertStringContainsString('CUALQUIER_OPCION -> HORARIO', $block);
+        $this->assertStringContainsString('[PANTALLA: HORARIO]', $block);
+        $this->assertStringContainsString('ACCION_FINAL: Confirmar turno', $block);
+        $this->assertSame(1, substr_count($block, '[PANTALLA: SERVICIO]'));
+        $this->assertSame(1, substr_count($block, '[PANTALLA: HORARIO]'));
 
-        $this->assertArrayHasKey('Malestar nuevo', $byName);
-        $malestar = $byName['Malestar nuevo'];
-        $this->assertSame('se reserva un turno para quien está a cargo', $malestar['objetivo']);
-        $this->assertSame('La persona elige la zona del malestar.', $malestar['pasos'][0]['hace']);
-        $this->assertContains('Síntoma general (fiebre, cansancio u otro)', $malestar['pasos'][0]['elige_entre']);
-        $this->assertSame('La persona elige cómo atenderse.', $malestar['pasos'][1]['hace']);
-        $this->assertSame(['Presencial', 'Videollamada', 'Por mensaje'], $malestar['pasos'][1]['elige_entre']);
-        $this->assertSame(
-            'La persona elige un servicio entre los filtrados por la forma de atenderse.',
-            $malestar['pasos'][2]['hace']
-        );
-        $this->assertSame(
-            'La persona elige un centro que ofrece el servicio elegido.',
-            $malestar['pasos'][3]['hace']
-        );
-        $this->assertSame('Termina cuando se reserva un turno para quien está a cargo.', $malestar['exito']);
+        $this->assertStringContainsString('[PANTALLA: ORIENTACION_URGENCIA]', $block);
+        $this->assertStringContainsString('Tipo: Información', $block);
+        $this->assertStringContainsString('FIN_DEL_FLUJO: Sí', $block);
+        $this->assertStringContainsString('    - Llamar al 107', $block);
+        $this->assertStringContainsString('Tipo: Texto', $block);
 
-        $this->assertArrayHasKey('Control/Seguimiento', $byName);
-        $this->assertSame('quien está a cargo envía la consulta', $byName['Control/Seguimiento']['objetivo']);
         $this->assertStringNotContainsString('triage_raiz', $block);
         $this->assertStringNotContainsString('Por lo que indicaste', $block);
+        $this->assertStringNotContainsString('funcionalidades', $block);
     }
 
-    public function testFormatForIntentIdsJoinsMultipleBotones(): void
+    public function testFormatForIntentIdsUneFlujos(): void
     {
         $wrapped = IntentSemanticsPromptFormatter::formatForIntentIds([
             'turnos.crear-como-paciente',
             'atencion.necesito-atencion',
         ], 4);
-        $data = json_decode($wrapped, true);
 
-        $this->assertCount(2, $data['funcionalidades']);
-        $this->assertSame('Turno con un especialista', $data['funcionalidades'][0]['boton']);
-        $this->assertSame('Solicitar Atención', $data['funcionalidades'][1]['boton']);
-        $this->assertArrayHasKey('recorridos', $data['funcionalidades'][1]);
+        $this->assertSame(2, substr_count($wrapped, 'FLUJO: '));
+        $this->assertStringContainsString('INICIO: Botón "Turno con un especialista"', $wrapped);
+        $this->assertStringContainsString('INICIO: Botón "Solicitar Atención"', $wrapped);
+        $this->assertLessThan(
+            strpos($wrapped, 'FLUJO: SOLICITAR_ATENCION'),
+            strpos($wrapped, 'FLUJO: TURNO_ESPECIALISTA')
+        );
     }
 }

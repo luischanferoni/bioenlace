@@ -22,7 +22,7 @@ class StateTagIndexTest extends Unit
         $this->assertStringContainsString('Solicitar Atención', $block);
         $this->assertStringContainsString('Urgencia', $block);
         $this->assertStringContainsString('Estudio o práctica', $block);
-        $this->assertStringContainsString('"boton"', $block);
+        $this->assertStringContainsString('FLUJO: SOLICITAR_ATENCION', $block);
     }
 
     public function testEstudioIncluyeElRecorridoCompleto(): void

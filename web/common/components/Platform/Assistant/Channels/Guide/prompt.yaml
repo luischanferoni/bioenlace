@@ -25,7 +25,7 @@ stable_prompt: |
   {
     "funcionalidades": [
       {
-        "boton": "se adjunta debajo de tu respuesta, el usuario puede presionar para interactuar",
+        "boton": "nombre del botón",
         "al_presionar": "qué se abre al tocarlo",
         "objetivo": "si no hay recorridos: para qué sirve el botón",
         "pasos": [{ "hace": "…", "elige_entre": ["lista de un paso"], "ofrece": ["acciones"] }],
@@ -41,7 +41,9 @@ stable_prompt: |
       }
     ]
   }  
+  Las funcionalidades del sistema son:
   {intent_semantics}
+  Los botones se adjuntarán debajo de tu respuesta, el usuario puede presionar para interactuar
   
   {scoped_system_records}
 

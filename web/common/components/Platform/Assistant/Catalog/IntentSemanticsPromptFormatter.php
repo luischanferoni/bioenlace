@@ -7,9 +7,10 @@ use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
 /**
  * Arma el mapa de pantallas de un flow para el prompt de la guía.
  *
- * Cada estado reachable se escribe una sola vez. Las opciones cerradas
- * (`meta.guide_options`) salen con su etiqueta. Si todas van a la misma
- * pantalla, la transición es CUALQUIER_OPCION. No adjunta ids técnicos.
+ * El botón de inicio abre la primera pantalla. Cada opción abre la siguiente.
+ * Cada estado reachable se escribe una sola vez, con su explanation.
+ * Si todas las opciones van a la misma pantalla, la transición es CUALQUIER_OPCION.
+ * No adjunta ids técnicos.
  */
 final class IntentSemanticsPromptFormatter
 {
@@ -95,12 +96,14 @@ final class IntentSemanticsPromptFormatter
             $flowToken = 'FLUJO';
         }
 
-        $lines = [
-            'FLUJO: ' . $flowToken,
-            'INICIO: Botón "' . $button . '"',
-        ];
-
         $map = self::screenMap($manifest, $flowToken);
+        $lines = ['FLUJO: ' . $flowToken];
+        $opens = $map[0]['token'] ?? '';
+        if (is_string($opens) && $opens !== '') {
+            $lines[] = 'Botón "' . $button . '" abre ' . $opens;
+        } else {
+            $lines[] = 'Botón "' . $button . '"';
+        }
         if ($map === []) {
             return implode("\n", $lines);
         }
@@ -165,6 +168,7 @@ final class IntentSemanticsPromptFormatter
             $screens[] = [
                 'token' => $tokens[$stateId],
                 'kind' => $kind,
+                'explanation' => self::explanation($state),
                 'options' => self::options($state),
                 'transitions' => $transitions,
                 'actions' => self::actionLabels($state),
@@ -373,6 +377,10 @@ final class IntentSemanticsPromptFormatter
     {
         $lines = ['[PANTALLA: ' . $screen['token'] . ']'];
         $lines[] = '  Tipo: ' . self::kindLabel((string) $screen['kind']);
+        $explanation = trim((string) ($screen['explanation'] ?? ''));
+        if ($explanation !== '') {
+            $lines[] = '  ' . $explanation;
+        }
 
         $options = $screen['options'];
         if (is_array($options) && $options !== []) {
@@ -400,10 +408,10 @@ final class IntentSemanticsPromptFormatter
                 foreach ($rows as $row) {
                     $width = max($width, mb_strlen($row[0]));
                 }
-                $lines[] = '  TRANSICIONES:';
+                $lines[] = '  Al elegir:';
                 foreach ($rows as $row) {
                     $pad = str_repeat(' ', max(0, $width - mb_strlen($row[0])));
-                    $lines[] = '    ' . $row[0] . $pad . ' -> ' . $row[1];
+                    $lines[] = '    ' . $row[0] . $pad . ' abre ' . $row[1];
                 }
             }
         }

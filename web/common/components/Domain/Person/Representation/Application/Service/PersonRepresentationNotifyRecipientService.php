@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Person\Representation\Application\Service;
 
+use common\components\Domain\Person\Representation\Application\Authorization\PersonRepresentationAccess;
 use common\components\Domain\Person\Representation\Domain\Catalog\RepresentationPermissionsCatalog;
 use common\components\Domain\Person\Representation\Domain\Model\DelegationConsentStatus;
 use common\components\Domain\Person\Representation\Domain\Model\PersonRelatedStatus;

@@ -22,7 +22,7 @@ stable_prompt: |
   {necesidad_usuario}  
 
   Estamos en el contexto de un chat. Te vamos a adjuntar wireflows de funcionalidades que son lanzadas desde el chat
-  desde botones que se van a adjuntar debajo de tu respuesta.
+  a traves de botones que nosotros vamos a adjuntar debajo de tu respuesta.
   El formato de los wireflows es el siguiente:
   FLUJO: nombre del recorrido
   INICIO: Botón "texto del botón"

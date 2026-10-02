@@ -157,11 +157,6 @@ final class CaptureDraftService
         }
 
         $dirRelative = self::AUDIO_DIR . '/' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $clientCaptureId);
-        $basePath = Yii::getAlias('@frontend/web') . '/' . $dirRelative;
-        if (!is_dir($basePath) && !@mkdir($basePath, 0755, true)) {
-            return ['__fail' => $this->presenter->fail(500, 'No se pudo crear el directorio de audio.')];
-        }
-
         $filename = 'audio_' . date('YmdHis') . '_' . uniqid() . '.' . $ext;
         $relative = $dirRelative . '/' . $filename;
         $fullPath = Yii::getAlias('@frontend/web') . '/' . $relative;
@@ -170,6 +165,11 @@ final class CaptureDraftService
             $stub = new EncounterCapture();
             $stub->audio_relative_path = $previousRelativePath;
             $this->deleteAudioFile($stub);
+        }
+
+        $basePath = dirname($fullPath);
+        if (!is_dir($basePath) && !@mkdir($basePath, 0755, true)) {
+            return ['__fail' => $this->presenter->fail(500, 'No se pudo crear el directorio de audio.')];
         }
 
         if (!$file->saveAs($fullPath)) {

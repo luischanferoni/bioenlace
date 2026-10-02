@@ -5,6 +5,8 @@ namespace common\components\Domain\Scheduling\Agenda\Application\UseCase;
 use common\components\Domain\Clinical\Encounter\Application\UseCase\OrchestrateEncounterJourney;
 use common\components\Domain\Person\Representation\Domain\Model\RepresentationPermission;
 use common\components\Domain\Person\Representation\Application\Service\PersonRepresentationSubjectService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaModalidadAtencionCatalogService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoCancellationPolicyService;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
 use common\models\Scheduling\Turno;

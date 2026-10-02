@@ -3,6 +3,11 @@
 namespace common\components\Domain\Scheduling\Agenda\Application\UseCase;
 
 use common\components\Domain\Scheduling\Agenda\Application\Agents\TurnoAdvanceOfferAgent;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaTriageServicioSugeridoService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaTurnoTriageCatalogService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoCancellationPolicyService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoCreationContextResolver;
+use common\components\Domain\Scheduling\Agenda\Domain\Model\PolicyModeradaException;
 
 use common\components\Domain\Clinical\Encounter\Application\UseCase\AdvanceEncounterLifecycle;
 use common\models\Scheduling\Turno;

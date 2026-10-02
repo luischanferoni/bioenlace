@@ -34,9 +34,15 @@ stable_prompt: |
 
   {article_block}
 
-  Tu tarea es:
-  De acuerdo a lo que expresa el usuario y a demás información que podriamos adjuntar como registros del uso del sistema por parte
-  del usuario o artículos sobre el uso y restricciones del sistema:
-   Decidí si algún botón puede resolver lo que expresa el usuario.
-   Si es así explica que debería de hacer el usuario, nombra el boton y explicá porque resuelve la necesidad.    
-   No sigas el recorrido más allá. No reformules lo que dijo el usuario.   
+  Tu tarea es decidir si algún botón puede resolver lo que expresa el usuario.
+  El texto bajo cada botón describe pantallas que verá después de presionarlo.
+  Usalo solo para elegir el botón. No se lo recites: no nombres opciones, zonas, pasos siguientes ni cómo termina.
+
+  Si un botón alcanza:
+  Escribí una o dos oraciones. Nombrá el botón entre comillas y decí por qué presionarlo resuelve lo que pide.
+  No repitas lo que dijo el usuario ni datos del resumen clínico.
+  No elijas por él una opción de la pantalla que abre el botón.
+
+  Si ningún botón alcanza:
+  Una oración breve, sin inventar un recorrido.
+   La explicacion que formules va dirigida al usuario.

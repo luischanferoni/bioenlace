@@ -40,11 +40,10 @@ stable_prompt: |
         ]
       }
     ]
-  }
-  Si hay "recorridos", objetivo/pasos/éxito viven ahí. Si no, viven en el botón.
-  "elige_entre" es lista de un paso, no otro botón.
-  Al orientar usá los nombres (boton, nombre, elige_entre); no digas las claves JSON.
-  {intent_semantics}  
+  }  
+  Al orientar usá los valores, no las claves JSON a excepción de los botones.
+  {intent_semantics}
+  Debajo de tu respuesta, adjuntarémos los botones con los que el usuario podrá interactuar.
   
   {scoped_system_records}
 

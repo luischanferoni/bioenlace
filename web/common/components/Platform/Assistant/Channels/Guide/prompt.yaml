@@ -21,11 +21,11 @@ stable_prompt: |
   Lo que expresa el usuario es lo siguiente:
   {necesidad_usuario}  
 
-  Te adjunto las funcionalidades del sistema en JSON. Cómo leerlo:
+  Te adjunto la explicación de como leer el formato de las funcionalidades del sistema en JSON:
   {
     "funcionalidades": [
       {
-        "boton": "único control del chat",
+        "boton": "se adjunta debajo de tu respuesta, el usuario puede presionar para interactuar",
         "al_presionar": "qué se abre al tocarlo",
         "objetivo": "si no hay recorridos: para qué sirve el botón",
         "pasos": [{ "hace": "…", "elige_entre": ["lista de un paso"], "ofrece": ["acciones"] }],
@@ -41,9 +41,7 @@ stable_prompt: |
       }
     ]
   }  
-  Al orientar usá los valores, no las claves JSON a excepción de los botones.
   {intent_semantics}
-  Debajo de tu respuesta, adjuntarémos los botones con los que el usuario podrá interactuar.
   
   {scoped_system_records}
 

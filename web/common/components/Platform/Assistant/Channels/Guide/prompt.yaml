@@ -21,9 +21,10 @@ stable_prompt: |
   Lo que expresa el usuario es lo siguiente:
   {necesidad_usuario}  
 
-  Estamos en el contexto de un chat y luego de tu respuesta vamos a adjuntar botones que lanzarán interfaces.
+  Estamos en el contexto de la interfaz de un chat. El sistema mostrará tu respuesta al usuario en texto plaon y luego 
+  colocara botones que lanzan interfaces que podrían resolver la necesidad del usuario.  
   El usuario verá solo los botones, pero para que vos entiendas lo que resuelve cada boton te vamos a adjuntar 
-  en texto plano los wireflows de funcionalidades de cada boton.
+  en texto plano los wireflows de las interfaces y funcionalidades a que cada boton lleva.
   
   Wireflows:
   {intent_semantics}  

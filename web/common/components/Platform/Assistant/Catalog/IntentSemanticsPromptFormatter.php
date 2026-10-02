@@ -5,12 +5,10 @@ namespace common\components\Platform\Assistant\Catalog;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
 
 /**
- * Arma el mapa de pantallas de un flow para el prompt de la guía.
+ * Arma el recorrido de un flow en prosa, para el prompt de la guía.
  *
- * El botón de inicio abre la primera pantalla. Cada opción abre la siguiente.
- * Cada estado reachable se escribe una sola vez, con su explanation.
- * Si todas las opciones van a la misma pantalla, la transición es CUALQUIER_OPCION.
- * No adjunta ids técnicos.
+ * Cada paso usa la explanation del estado. Si la opción abre un paso que termina,
+ * el cierre queda en la misma línea. No adjunta ids ni nombres de pantalla.
  */
 final class IntentSemanticsPromptFormatter
 {
@@ -91,38 +89,43 @@ final class IntentSemanticsPromptFormatter
             return '';
         }
 
-        $flowToken = self::slug($button);
-        if ($flowToken === '') {
-            $flowToken = 'FLUJO';
-        }
-
-        $map = self::screenMap($manifest, $flowToken);
-        $lines = ['FLUJO: ' . $flowToken];
-        $opens = $map[0]['token'] ?? '';
-        if (is_string($opens) && $opens !== '') {
-            $lines[] = 'Botón "' . $button . '" abre ' . $opens;
-        } else {
-            $lines[] = 'Botón "' . $button . '"';
-        }
+        $map = self::screenMap($manifest);
         if ($map === []) {
-            return implode("\n", $lines);
+            return 'Botón "' . $button . '"';
         }
 
-        $lines[] = '';
-        $chunks = [];
+        $byId = [];
         foreach ($map as $screen) {
-            $chunks[] = self::renderScreen($screen);
+            $byId[$screen['id']] = $screen;
         }
-        $lines[] = implode("\n\n", $chunks);
 
-        return implode("\n", $lines);
+        $blocks = [];
+        $first = true;
+        foreach ($map as $screen) {
+            if (!$first && self::closes($screen)) {
+                continue;
+            }
+            $body = self::renderSteps($screen, $byId);
+            if ($first) {
+                $indented = [];
+                foreach (explode("\n", $body) as $line) {
+                    $indented[] = '  ' . $line;
+                }
+                $blocks[] = 'Botón "' . $button . '"' . "\n" . implode("\n", $indented);
+                $first = false;
+                continue;
+            }
+            $blocks[] = $body;
+        }
+
+        return implode("\n\n", $blocks);
     }
 
     /**
      * @param array<string, mixed>|null $manifest
      * @return list<array<string, mixed>>
      */
-    private static function screenMap(?array $manifest, string $flowToken): array
+    private static function screenMap(?array $manifest): array
     {
         if ($manifest === null) {
             return [];
@@ -137,7 +140,6 @@ final class IntentSemanticsPromptFormatter
         }
 
         $graph = self::walk($states, $initial);
-        $tokens = self::assignTokens($graph['order'], $states, $initial, $flowToken);
         $outgoing = [];
         foreach ($graph['edges'] as $edge) {
             $from = $edge['from'];
@@ -156,17 +158,13 @@ final class IntentSemanticsPromptFormatter
             $kind = self::screenKind($state);
             $transitions = [];
             foreach ($outgoing[$stateId] ?? [] as $edge) {
-                $to = $edge['to'];
-                if (!isset($tokens[$to])) {
-                    continue;
-                }
                 $transitions[] = [
                     'option' => $edge['option'],
-                    'to' => $tokens[$to],
+                    'to' => $edge['to'],
                 ];
             }
             $screens[] = [
-                'token' => $tokens[$stateId],
+                'id' => $stateId,
                 'kind' => $kind,
                 'explanation' => self::explanation($state),
                 'options' => self::options($state),
@@ -298,155 +296,132 @@ final class IntentSemanticsPromptFormatter
     }
 
     /**
-     * @param list<string> $order
-     * @param array<string, array<string, mixed>> $states
-     * @return array<string, string>
-     */
-    private static function assignTokens(array $order, array $states, string $initial, string $flowToken): array
-    {
-        $short = [];
-        $long = [];
-        foreach ($order as $id) {
-            $state = $states[$id];
-            $source = self::tokenSource($state);
-            $short[$id] = self::slug($source);
-            $long[$id] = self::slug($source, true);
-            if ($short[$id] === '') {
-                $short[$id] = 'PANTALLA';
-            }
-            if ($long[$id] === '') {
-                $long[$id] = $short[$id];
-            }
-        }
-
-        $groups = [];
-        foreach ($order as $id) {
-            if ($id === $initial) {
-                continue;
-            }
-            $groups[$short[$id]][] = $id;
-        }
-
-        $tokens = [];
-        $used = [];
-        $entryIsMenu = self::options($states[$initial]) !== [];
-        $tokens[$initial] = self::claim($entryIsMenu ? $flowToken : $short[$initial], $used);
-        foreach ($order as $id) {
-            if ($id === $initial) {
-                continue;
-            }
-            $group = $groups[$short[$id]] ?? [$id];
-            $keepShort = count($group) === 1;
-            if (!$keepShort) {
-                $plain = [];
-                foreach ($group as $other) {
-                    if (!str_contains(self::tokenSource($states[$other]), '(')) {
-                        $plain[] = $other;
-                    }
-                }
-                $keepShort = $plain === [$id];
-            }
-            $candidate = $keepShort ? $short[$id] : $long[$id];
-            $tokens[$id] = self::claim($candidate, $used);
-        }
-
-        return $tokens;
-    }
-
-    /**
-     * @param array<string, true> $used
-     */
-    private static function claim(string $token, array &$used): string
-    {
-        $base = $token !== '' ? $token : 'PANTALLA';
-        $candidate = $base;
-        $n = 2;
-        while (isset($used[$candidate])) {
-            $candidate = $base . '_' . $n;
-            $n++;
-        }
-        $used[$candidate] = true;
-
-        return $candidate;
-    }
-
-    /**
      * @param array<string, mixed> $screen
+     * @param array<string, array<string, mixed>> $byId
      */
-    private static function renderScreen(array $screen): string
+    private static function renderSteps(array $screen, array $byId): string
     {
-        $lines = ['[PANTALLA: ' . $screen['token'] . ']'];
-        $lines[] = '  Tipo: ' . self::kindLabel((string) $screen['kind']);
-        $explanation = trim((string) ($screen['explanation'] ?? ''));
-        if ($explanation !== '') {
-            $lines[] = '  ' . $explanation;
+        if (self::closes($screen)) {
+            return self::paso($screen);
         }
 
-        $options = $screen['options'];
-        if (is_array($options) && $options !== []) {
-            $lines[] = '  Opciones:';
-            foreach ($options as $option) {
-                if (is_string($option) && $option !== '') {
-                    $lines[] = '    - ' . $option;
-                }
-            }
-        }
-
-        $transitions = $screen['transitions'];
-        if (is_array($transitions) && $transitions !== []) {
-            $rows = [];
+        $lines = [self::period((string) $screen['explanation'])];
+        $named = [];
+        $any = null;
+        $transitions = $screen['transitions'] ?? [];
+        if (is_array($transitions)) {
             foreach ($transitions as $transition) {
                 if (!is_array($transition)) {
                     continue;
                 }
-                $option = $transition['option'];
-                $from = is_string($option) && $option !== '' ? $option : 'CUALQUIER_OPCION';
-                $rows[] = [$from, (string) $transition['to']];
-            }
-            if ($rows !== []) {
-                $width = 0;
-                foreach ($rows as $row) {
-                    $width = max($width, mb_strlen($row[0]));
+                $to = (string) ($transition['to'] ?? '');
+                if ($to === '' || !isset($byId[$to])) {
+                    continue;
                 }
-                $lines[] = '  Al elegir:';
-                foreach ($rows as $row) {
-                    $pad = str_repeat(' ', max(0, $width - mb_strlen($row[0])));
-                    $lines[] = '    ' . $row[0] . $pad . ' abre ' . $row[1];
+                $option = $transition['option'] ?? null;
+                if (is_string($option) && $option !== '') {
+                    $named[] = ['option' => $option, 'to' => $to];
+                    continue;
                 }
+                $any = $to;
             }
         }
 
-        $actions = $screen['actions'];
-        if (is_array($actions) && $actions !== []) {
-            $lines[] = '  Acciones:';
-            foreach ($actions as $action) {
-                if (is_string($action) && $action !== '') {
-                    $lines[] = '    - ' . $action;
+        if ($named !== []) {
+            foreach ($named as $transition) {
+                $lines[] = '  - ' . $transition['option'] . ': ' . self::paso($byId[$transition['to']]);
+            }
+        } elseif ($any !== null) {
+            $options = $screen['options'] ?? [];
+            $listed = false;
+            if (is_array($options)) {
+                foreach ($options as $option) {
+                    if (!is_string($option) || $option === '') {
+                        continue;
+                    }
+                    $lines[] = '  - ' . $option;
+                    $listed = true;
                 }
             }
-        }
-
-        $accion = trim((string) $screen['accion_final']);
-        if ($accion !== '') {
-            $lines[] = '  ACCION_FINAL: ' . $accion;
-        }
-        if (!empty($screen['fin'])) {
-            $lines[] = '  FIN_DEL_FLUJO: Sí';
+            $next = self::paso($byId[$any]);
+            $lines[] = $listed
+                ? '  Cualquiera sigue así: ' . $next
+                : '  Después: ' . $next;
         }
 
         return implode("\n", $lines);
     }
 
-    private static function kindLabel(string $kind): string
+    /**
+     * @param array<string, mixed> $screen
+     */
+    private static function closes(array $screen): bool
     {
-        if ($kind === 'informacion') {
-            return 'Información';
-        }
-        if ($kind === 'texto') {
-            return 'Texto';
+        return !empty($screen['fin']) || trim((string) ($screen['accion_final'] ?? '')) !== '';
+    }
+
+    /**
+     * @param array<string, mixed> $screen
+     */
+    private static function paso(array $screen): string
+    {
+        $text = rtrim(self::period((string) ($screen['explanation'] ?? '')), '.');
+        if (!self::closes($screen)) {
+            return $text . '.';
         }
 
-        return 'Selección de opción';
+        $extra = [];
+        $actions = $screen['actions'] ?? [];
+        if (is_array($actions)) {
+            foreach ($actions as $action) {
+                if (!is_string($action) || trim($action) === '') {
+                    continue;
+                }
+                $extra[] = 'puede ' . self::lowerFirst(trim($action));
+            }
+        }
+        $accion = trim((string) ($screen['accion_final'] ?? ''));
+        if ($accion !== '') {
+            $extra[] = self::confirma($accion);
+        }
+        if ($extra !== []) {
+            $text .= ', ' . implode(', ', $extra);
+        }
+
+        return $text . '. Ahí termina.';
+    }
+
+    private static function confirma(string $label): string
+    {
+        if (preg_match('/^Confirmar\s+(.+)$/u', $label, $match) === 1) {
+            return 'confirma el ' . $match[1];
+        }
+
+        return self::lowerFirst($label);
+    }
+
+    private static function lowerFirst(string $text): string
+    {
+        if ($text === '') {
+            return '';
+        }
+        $first = mb_substr($text, 0, 1);
+        $rest = mb_substr($text, 1);
+
+        return mb_strtolower($first) . $rest;
+    }
+
+    private static function period(string $text): string
+    {
+        $text = trim($text);
+        if ($text === '') {
+            return '';
+        }
+        if (str_ends_with($text, '.')) {
+            return $text;
+        }
+
+        return $text . '.';
     }
 
     /**
@@ -488,25 +463,6 @@ final class IntentSemanticsPromptFormatter
         }
 
         return 'Confirmar';
-    }
-
-    /**
-     * @param array<string, mixed> $state
-     */
-    private static function tokenSource(array $state): string
-    {
-        if (self::screenKind($state) === 'informacion') {
-            $explanation = self::explanation($state);
-            if ($explanation !== '') {
-                return $explanation;
-            }
-        }
-        $label = trim((string) ($state['label'] ?? ''));
-        if ($label !== '') {
-            return $label;
-        }
-
-        return self::explanation($state);
     }
 
     /**
@@ -733,44 +689,5 @@ final class IntentSemanticsPromptFormatter
         }
 
         return $rows;
-    }
-
-    private static function stripParen(string $text): string
-    {
-        $stripped = preg_replace('/\s*\([^)]*\)/', '', $text);
-
-        return trim(is_string($stripped) ? $stripped : $text);
-    }
-
-    private static function slug(string $text, bool $keepParen = false): string
-    {
-        if ($keepParen) {
-            $text = str_replace(['(', ')'], ' ', $text);
-        } else {
-            $text = self::stripParen($text);
-        }
-        $text = strtr($text, [
-            'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u', 'ñ' => 'n',
-            'Á' => 'a', 'É' => 'e', 'Í' => 'i', 'Ó' => 'o', 'Ú' => 'u', 'Ü' => 'u', 'Ñ' => 'n',
-        ]);
-        $text = strtolower($text);
-        $text = preg_replace('/[^a-z0-9]+/', ' ', $text);
-        if (!is_string($text)) {
-            return '';
-        }
-        $stop = [
-            'de' => true, 'del' => true, 'la' => true, 'el' => true, 'los' => true, 'las' => true,
-            'un' => true, 'una' => true, 'y' => true, 'o' => true, 'en' => true, 'al' => true,
-            'con' => true, 'para' => true, 'por' => true, 'que' => true, 'es' => true,
-        ];
-        $parts = [];
-        foreach (preg_split('/\s+/', trim($text)) ?: [] as $word) {
-            if ($word === '' || isset($stop[$word])) {
-                continue;
-            }
-            $parts[] = $word;
-        }
-
-        return strtoupper(implode('_', $parts));
     }
 }

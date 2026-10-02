@@ -34,6 +34,7 @@ stable_prompt: |
 
   {article_block}
 
+  Tu tarea es:
   De acuerdo a lo que expresa el usuario y a demás información que podriamos adjuntar como registros del uso del sistema por parte
   del usuario o artículos sobre el uso y restricciones del sistema:
    - Analiza y decidí si algun boton puede resolver la necesidad del usuario. Si es así indica cual boton y de acuerdo al wireflow 

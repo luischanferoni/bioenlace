@@ -24,9 +24,8 @@ stable_prompt: |
   Estamos en el contexto de una interfaz de usuario en formato de un chat. El sistema mostrará dentro del chat 
   tu respuesta al usuario en texto plano y luego colocara botones que el usuario podrá presionar. Dichos botones 
   lanzan interfaces y tienen su correspondiente UX.
-  Para que vos entiendas las interfaces (UX) que lanza cada boton te vamos a adjuntar en texto plano los wireflows las mismas.
   
-  Wireflows:
+  Te adjuntamos el wireflow de la interfaz que abre cada botón.
   {intent_semantics}  
   
   {scoped_system_records}
@@ -38,5 +37,4 @@ stable_prompt: |
   De acuerdo a lo que expresa el usuario y a demás información que podriamos adjuntar como registros del uso del sistema por parte
   del usuario o artículos sobre el uso y restricciones del sistema:
    - Analiza y decidí si algun boton puede resolver la necesidad del usuario. Si es así indica cual boton y de acuerdo al wireflow 
-   asociado a cada boton explica porque. Si no hay ningun boton que pueda resolver la necesidad del usuario, indica porque.
-  Una o dos oraciones si el pedido es simple; hasta cuatro si hace falta orientar.
+   asociado a cada boton explica porque. Si no hay ningun boton que pueda resolver la necesidad del usuario, indica porque.  

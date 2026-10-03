@@ -115,7 +115,7 @@ states:
         target: select_tipo_atencion
   select_pedido_acto:
     label: 'Estudio o práctica'
-    explanation: 'La persona elige el estudio o la práctica que necesita.'
+    explanation: 'La persona elige el estudio o la práctica que ella necesita.'
     meta:
       tags:
         - estudio
@@ -159,7 +159,7 @@ states:
         target: select_tipo_atencion
   cs_hub:
     label: '¿Sobre qué es el control o seguimiento?'
-    explanation: 'La persona elige el tema del control o seguimiento.'
+    explanation: 'La persona elige el tema de su control o seguimiento.'
     meta:
       tags:
         - control
@@ -226,7 +226,7 @@ states:
         target: cs_captura_consulta_general
   triage_zona:
     label: Zona
-    explanation: 'La persona elige la zona del malestar.'
+    explanation: 'La persona elige la zona del malestar que tiene ella.'
     meta:
       guide_options: reserva_triage.zona
       tags:
@@ -261,7 +261,7 @@ states:
         target: select_tipo_atencion
   triage_urgencia:
     label: Urgencia
-    explanation: 'Orientación por urgencia.'
+    explanation: 'Orientación por urgencia, por ella o por otra persona.'
     meta:
       tags:
         - urgencia

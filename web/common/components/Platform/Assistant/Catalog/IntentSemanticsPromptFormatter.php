@@ -101,6 +101,7 @@ final class IntentSemanticsPromptFormatter
 
         $blocks = [];
         $first = true;
+        $scope = self::period(trim((string) ($manifest['explanation'] ?? '')));
         foreach ($map as $screen) {
             if (!$first && self::closes($screen)) {
                 continue;
@@ -108,6 +109,9 @@ final class IntentSemanticsPromptFormatter
             $body = self::renderSteps($screen, $byId);
             if ($first) {
                 $indented = [];
+                if ($scope !== '') {
+                    $indented[] = '  ' . $scope;
+                }
                 foreach (explode("\n", $body) as $line) {
                     $indented[] = '  ' . $line;
                 }

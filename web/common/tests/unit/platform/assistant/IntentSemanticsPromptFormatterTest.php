@@ -36,10 +36,10 @@ class IntentSemanticsPromptFormatterTest extends Unit
 
         $this->assertStringContainsString("Botón \"Solicitar Atención\"\n", $block);
         $this->assertStringContainsString('La persona elige qué pedido de atención hace.', $block);
-        $this->assertStringContainsString('- Malestar nuevo: La persona elige la zona del malestar.', $block);
-        $this->assertStringContainsString('- Estudio o práctica: La persona elige el estudio o la práctica que necesita.', $block);
-        $this->assertStringContainsString('- Control/Seguimiento: La persona elige el tema del control o seguimiento.', $block);
-        $this->assertStringContainsString('- Urgencia: Orientación por urgencia, puede llamar al 107. Ahí termina.', $block);
+        $this->assertStringContainsString('- Malestar nuevo: La persona elige la zona del malestar que tiene ella.', $block);
+        $this->assertStringContainsString('- Estudio o práctica: La persona elige el estudio o la práctica que ella necesita.', $block);
+        $this->assertStringContainsString('- Control/Seguimiento: La persona elige el tema de su control o seguimiento.', $block);
+        $this->assertStringContainsString('- Urgencia: Orientación por urgencia, por ella o por otra persona, puede llamar al 107. Ahí termina.', $block);
 
         $this->assertStringContainsString('- Cabeza, cuello o mareos', $block);
         $this->assertStringContainsString('- Síntoma general (fiebre, cansancio u otro)', $block);
@@ -52,7 +52,7 @@ class IntentSemanticsPromptFormatterTest extends Unit
             $block
         );
 
-        $this->assertSame(1, substr_count($block, "\nLa persona elige la zona del malestar.\n"));
+        $this->assertSame(1, substr_count($block, "\nLa persona elige la zona del malestar que tiene ella.\n"));
         $this->assertStringNotContainsString('ORIENTACION_URGENCIA', $block);
         $this->assertStringNotContainsString('PANTALLA', $block);
         $this->assertStringNotContainsString('CUALQUIER_OPCION', $block);

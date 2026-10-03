@@ -21,30 +21,27 @@ stable_prompt: |
   Lo que expresa el usuario es lo siguiente:
   {necesidad_usuario}  
 
-  Estamos en el contexto de una interfaz de usuario en formato de un chat. El sistema mostrará dentro del chat 
-  tu respuesta al usuario en texto plano y luego colocara botones que el usuario podrá presionar. Dichos botones 
-  lanzan interfaces y tienen su correspondiente UX.
-  
-  Esta es la explicación de la UX que ofrece cada botón:
+  Esto es lo que abre cada botón:
   {intent_semantics}  
-  
+  El texto bajo cada botón describe qué ofrece: primero su pantalla inicial y, más abajo, 
+  pantallas que vienen después.
+
   {scoped_system_records}
 
   {clinical_record_block}
 
   {article_block}
 
-  Tu tarea es decidir si algún botón puede resolver lo que expresa el usuario.
-  El texto bajo cada botón describe qué ofrece: primero su pantalla inicial y, más abajo, pantallas que vienen después.
-  La explicación va dirigida al usuario. No abras parafraseando lo que dijo ni el resumen clínico.
+  Tu tarea es decidir si algún botón puede resolver lo que expresa el usuario.  
+  La explicación va dirigida al usuario. 
+  No abras parafraseando lo que dijo ni el resumen clínico.
 
-  Si un botón alcanza:
-  Escribí dos o tres oraciones.
-  Nombrá el botón entre comillas y decí por qué presionarlo resuelve lo que pide.
-  Explica solo hasta la opción de la UX que ya coincide, más el paso inmediato.  
+  - Si un botón alcanza:
+  Escribí dos o tres oraciones dirigidas al usuario.
+  Nombrá el botón entre comillas y decí por qué presionarlo resuelve lo que pide.  
 
-  Si hay más de un botón que podría servir:
-  Una oración por botón, con lo que ofrece, y señalá cuál encaja mejor.
+  - Si hay más de un botón que podría servir:
+  Lo mismo que en el caso anterior, pero para cada botón.
 
-  Si ningún botón alcanza:
-  Una oración breve, sin inventar un recorrido.
+  - Si ningún botón alcanza:
+  Dos oraciónes breves explicando porque.

@@ -2,8 +2,11 @@
 
 namespace common\components\Domain\Clinical\Encounter\Application\Service;
 
+use common\components\Domain\Clinical\CarePlan\Application\Presentation\CarePlanPresentationService;
+use common\components\Domain\Clinical\CarePlan\Application\Service\PatientActiveCarePlanQueryService;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanCategory;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanStatus;
+use common\components\Domain\Clinical\Encounter\Application\Presentation\ConditionPresentationService;
 use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
 use common\models\Clinical\CarePlan;
 

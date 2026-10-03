@@ -3,6 +3,10 @@
 namespace common\components\Domain\Scheduling\Agenda\Application\UseCase;
 
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncChatPolicyCatalogService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncChatPolicyService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncEncounterMetaService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncSystemMessageService;
 use common\models\Clinical\Encounter;
 use Yii;
 

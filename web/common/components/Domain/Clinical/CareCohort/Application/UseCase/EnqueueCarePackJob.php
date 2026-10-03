@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Clinical\CareCohort\Application\UseCase;
 
+use common\components\Domain\Clinical\CareCohort\Application\Service\CarePackConfig;
 use common\components\Domain\Clinical\CareCohort\Domain\CarePackType;
 use common\components\Domain\Clinical\CareCohort\Domain\Port\CarePackRepository;
 use common\models\Clinical\CarePackJob;

@@ -3,6 +3,8 @@
 namespace common\components\Domain\Scheduling\Agenda\Application\UseCase;
 
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncChatPolicyCatalogService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncEncounterMetaService;
 use common\models\Clinical\Encounter;
 
 /**

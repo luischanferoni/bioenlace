@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Agenda\Application\UseCase;
 
+use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncChatPolicyCatalogService;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
 use Yii;

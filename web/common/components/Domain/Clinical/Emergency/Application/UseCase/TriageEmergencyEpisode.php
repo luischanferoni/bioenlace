@@ -4,6 +4,7 @@ namespace common\components\Domain\Clinical\Emergency\Application\UseCase;
 
 use common\components\Domain\Clinical\Emergency\Application\Authorization\EmergencyEfectorAccess;
 use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyBoardService;
+use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyTriageVitalsService;
 use common\components\Domain\Clinical\Emergency\Domain\BoardState;
 use common\components\Domain\Clinical\Emergency\Domain\BoardEventType;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EpisodioDateTimePresenter;

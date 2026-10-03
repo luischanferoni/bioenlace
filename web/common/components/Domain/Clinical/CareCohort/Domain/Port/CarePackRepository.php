@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Clinical\CareCohort\Domain\Port;
 
+use common\components\Domain\Clinical\CareCohort\Application\Service\CarePackConfig;
 use common\components\Domain\Clinical\CareCohort\Domain\CarePackType;
 use common\models\Clinical\CareCohortPack;
 use common\models\Clinical\CareEncounterPack;

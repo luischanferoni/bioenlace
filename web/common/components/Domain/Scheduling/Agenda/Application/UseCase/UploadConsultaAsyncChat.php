@@ -2,6 +2,8 @@
 
 namespace common\components\Domain\Scheduling\Agenda\Application\UseCase;
 
+use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncChatPolicyCatalogService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncChatPolicyService;
 use common\models\Clinical\Encounter;
 use yii\web\UploadedFile;
 

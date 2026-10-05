@@ -18,7 +18,7 @@ optional_attachments:
     {data}
 
 stable_prompt: | 
-  Lo que escribe o expresa el usuario es lo siguiente:
+  Lo que escribe o expresa la persona es lo siguiente:
   {necesidad_usuario}  
 
   Esto es lo que abre cada botón:
@@ -40,7 +40,7 @@ stable_prompt: |
 
   - Si un botón alcanza para resolver la necesidad del usuario:
   Escribí dos o tres oraciones hablándole de vos.
-  Nombrá el botón entre comillas y solo el camino cuya línea "Para:" incluye a esa persona.
+  Nombrá el botón entre comillas y solo el camino cuya línea "Para:" incluye a la persona que escribe.
   Si el pedido es por otra persona y usá el que dice «o también otra persona», o explicá que primero hay que operar por ella.
 
   - Si hay más de un botón que podría servir:

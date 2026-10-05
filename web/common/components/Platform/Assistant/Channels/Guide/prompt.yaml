@@ -23,8 +23,10 @@ stable_prompt: |
 
   Esto es lo que abre cada botón:
   {intent_semantics}  
-  El texto bajo cada botón describe qué ofrece: primero su pantalla inicial y, más abajo, 
-  pantallas que vienen después.
+  Cada bloque es un camino. La línea Para dice para quién es ese camino.
+  «solo la persona que escribe» no sirve para otra persona, salvo que ya se opere por ella.
+  «la persona que escribe o también otra persona» sí se puede usar por alguien más.
+  Nombrá el botón y el camino que corresponde a esa persona. No mandes a un camino que no es para ella.
 
   {scoped_system_records}
 

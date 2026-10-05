@@ -5,10 +5,10 @@ namespace common\components\Platform\Assistant\Catalog;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
 
 /**
- * Arma el recorrido de un flow como wireflow, para el prompt de la guía.
+ * Arma el recorrido de un flow como árbol, para el prompt de la guía.
  *
- * Cada opción del primer paso es un camino. La línea Para sale del outcome
- * con el que cierra ese camino. No adjunta ids ni nombres de pantalla.
+ * Cada sección es Sección "explanation". Cada elección es Opción "…".
+ * Para quién es el camino está en la hoja (fin · …). No adjunta ids ni labels de pantalla.
  */
 final class IntentSemanticsPromptFormatter
 {
@@ -91,91 +91,161 @@ final class IntentSemanticsPromptFormatter
         if ($button === '') {
             return '';
         }
+        $heading = 'Botón "' . $button . '"';
         if ($manifest === null) {
-            return 'Botón "' . $button . '"';
+            return $heading;
         }
         $states = $manifest['states'] ?? null;
         if (!is_array($states) || $states === []) {
-            return 'Botón "' . $button . '"';
+            return $heading;
         }
         $initial = self::initialId($manifest, $states);
         if ($initial === '' || !isset($states[$initial]) || !is_array($states[$initial])) {
-            return 'Botón "' . $button . '"';
+            return $heading;
         }
 
-        $lines = ['Botón "' . $button . '"'];
-        $named = [];
-        foreach (self::continuations($initial, $states) as $edge) {
-            if (is_string($edge['option']) && $edge['option'] !== '') {
-                $named[] = $edge;
-            }
-        }
-        if (count($named) > 1) {
-            $intro = self::period(self::explanation($states[$initial]));
-            if ($intro !== '') {
-                $lines[] = $intro;
-            }
-            foreach ($named as $edge) {
-                $lines[] = '';
-                $lines[] = self::renderCamino($edge['option'], $edge['to'], $states);
-            }
-
-            return implode("\n", $lines);
+        $root = self::sectionNode($initial, $states, [], 0);
+        if ($root === null) {
+            return $heading;
         }
 
-        $lines[] = '';
-        $lines[] = self::renderCamino(null, $initial, $states);
-
-        return implode("\n", $lines);
-    }
-
-    /**
-     * @param array<string, array<string, mixed>> $states
-     */
-    private static function renderCamino(?string $name, string $startId, array $states): string
-    {
-        $paras = array_values(array_unique(self::parasDe($startId, $states, 0, [])));
-        if ($paras === []) {
-            $paras = [self::paraDesdeOutcome('')];
-        }
-        $anotar = count($paras) !== 1;
-        $body = self::narrar($startId, $states, 0, [], $anotar);
-        $lines = [];
-        if ($name !== null && $name !== '') {
-            $lines[] = 'Camino: ' . $name;
-        }
-        if (!$anotar) {
-            $lines[] = 'Para: ' . $paras[0] . '.';
-        }
-        $lines[] = 'Pantallas: ' . $body;
-
-        return implode("\n", $lines);
+        return $heading . "\n" . implode("\n", self::drawNode($root, '', true));
     }
 
     /**
      * @param array<string, array<string, mixed>> $states
      * @param array<string, true> $seen
-     * @return list<string>
+     * @return array{title: string, children: list<array{title: string, children: list<array<string, mixed>>}>}|null
      */
-    private static function parasDe(string $id, array $states, int $depth, array $seen): array
+    private static function sectionNode(string $id, array $states, array $seen, int $depth): ?array
     {
         if ($depth > self::MAX_SCREENS || isset($seen[$id]) || !isset($states[$id]) || !is_array($states[$id])) {
-            return [];
+            return null;
         }
         $seen[$id] = true;
         $state = $states[$id];
-        $edges = self::isFinal($state) ? [] : self::continuations($id, $states);
-        if ($edges === []) {
-            return [self::paraDesdeOutcome(self::outcomeText($state))];
+        $title = self::quoted('Sección', self::period(self::explanation($state)));
+        if ($title === 'Sección ""') {
+            return null;
         }
-        $out = [];
+
+        $children = [];
+        $submit = self::submitLabel($state);
+        if ($submit !== '' && !self::isFinal($state)) {
+            $children[] = [
+                'title' => self::quoted('Opción', $submit),
+                'children' => [self::finNode($state)],
+            ];
+        }
+        foreach (self::actionLabels($state) as $label) {
+            $children[] = ['title' => self::quoted('Opción', $label), 'children' => []];
+        }
+
+        if (self::isFinal($state)) {
+            $children[] = self::finNode($state);
+
+            return ['title' => $title, 'children' => $children];
+        }
+
+        $edges = self::continuations($id, $states);
+        $named = [];
         foreach ($edges as $edge) {
-            foreach (self::parasDe($edge['to'], $states, $depth + 1, $seen) as $para) {
-                $out[] = $para;
+            if (is_string($edge['option']) && $edge['option'] !== '') {
+                $named[] = $edge;
+            }
+        }
+        if (count($named) > 1) {
+            foreach ($named as $edge) {
+                $next = self::sectionNode($edge['to'], $states, $seen, $depth + 1);
+                $children[] = [
+                    'title' => self::quoted('Opción', $edge['option']),
+                    'children' => $next === null ? [] : [$next],
+                ];
+            }
+
+            return ['title' => $title, 'children' => $children];
+        }
+
+        $options = self::options($state);
+        if ($options !== [] && count($edges) === 1) {
+            $next = self::sectionNode((string) $edges[0]['to'], $states, $seen, $depth + 1);
+            $last = count($options) - 1;
+            foreach ($options as $index => $option) {
+                $optionChildren = [];
+                if ($index === $last && $next !== null) {
+                    $optionChildren[] = $next;
+                }
+                $children[] = ['title' => self::quoted('Opción', $option), 'children' => $optionChildren];
+            }
+            if ($children === [] && $next !== null) {
+                $children[] = $next;
+            }
+
+            return ['title' => $title, 'children' => $children];
+        }
+
+        if (count($edges) > 1) {
+            foreach ($edges as $edge) {
+                $next = self::sectionNode($edge['to'], $states, $seen, $depth + 1);
+                if ($next !== null) {
+                    $children[] = $next;
+                }
+            }
+
+            return ['title' => $title, 'children' => $children];
+        }
+
+        if ($edges === []) {
+            $children[] = self::finNode($state);
+
+            return ['title' => $title, 'children' => $children];
+        }
+
+        $next = self::sectionNode((string) $edges[0]['to'], $states, $seen, $depth + 1);
+        if ($next !== null) {
+            $children[] = $next;
+        }
+
+        return ['title' => $title, 'children' => $children];
+    }
+
+    private static function quoted(string $kind, string $text): string
+    {
+        return $kind . ' "' . trim($text) . '"';
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     * @return array{title: string, children: list<empty>}
+     */
+    private static function finNode(array $state): array
+    {
+        return [
+            'title' => 'fin · ' . self::paraDesdeOutcome(self::outcomeText($state)),
+            'children' => [],
+        ];
+    }
+
+    /**
+     * @param array{title: string, children: list<array<string, mixed>>} $node
+     * @return list<string>
+     */
+    private static function drawNode(array $node, string $prefix, bool $last): array
+    {
+        $lines = [$prefix . ($last ? '└─ ' : '├─ ') . $node['title']];
+        $childPrefix = $prefix . ($last ? '   ' : '│  ');
+        $children = $node['children'];
+        $count = count($children);
+        foreach ($children as $index => $child) {
+            if (!is_array($child) || !isset($child['title'])) {
+                continue;
+            }
+            foreach (self::drawNode($child, $childPrefix, $index === $count - 1) as $line) {
+                $lines[] = $line;
             }
         }
 
-        return $out;
+        return $lines;
     }
 
     private static function paraDesdeOutcome(string $outcome): string
@@ -186,115 +256,6 @@ final class IntentSemanticsPromptFormatter
         }
 
         return 'solo la persona que escribe';
-    }
-
-    /**
-     * @param array<string, array<string, mixed>> $states
-     * @param array<string, true> $seen
-     */
-    private static function narrar(string $id, array $states, int $depth, array $seen, bool $anotarPara): string
-    {
-        if ($depth > self::MAX_SCREENS || isset($seen[$id]) || !isset($states[$id]) || !is_array($states[$id])) {
-            return '';
-        }
-        $seen[$id] = true;
-        $state = $states[$id];
-        $head = self::conAcciones(self::explanation($state), $state);
-        if (self::isFinal($state)) {
-            return self::conCierre($head, $state, $anotarPara);
-        }
-
-        $edges = self::continuations($id, $states);
-        if ($edges === []) {
-            return self::conCierre($head, $state, $anotarPara);
-        }
-
-        $named = [];
-        $unnamed = [];
-        foreach ($edges as $edge) {
-            if (is_string($edge['option']) && $edge['option'] !== '') {
-                $named[] = $edge;
-                continue;
-            }
-            $unnamed[] = $edge;
-        }
-        $forks = count($named) > 1 ? $named : (count($unnamed) > 1 && $named === [] ? $unnamed : []);
-        if ($forks !== []) {
-            $lines = [self::period($head)];
-            foreach ($forks as $edge) {
-                $child = self::narrar($edge['to'], $states, $depth + 1, $seen, $anotarPara);
-                if ($child === '') {
-                    continue;
-                }
-                $prefix = is_string($edge['option']) && $edge['option'] !== '' ? $edge['option'] . ': ' : '';
-                $lines[] = '  - ' . $prefix . self::indentRest($child);
-            }
-
-            return implode("\n", $lines);
-        }
-
-        $next = (string) ($edges[0]['to'] ?? '');
-        $rest = $next === '' ? '' : self::narrar($next, $states, $depth + 1, $seen, $anotarPara);
-        $options = self::options($state);
-        $text = rtrim(self::period($head), '.');
-        if ($options !== [] && ($edges[0]['option'] ?? null) === null) {
-            $text .= ' (' . implode('; ', $options) . ')';
-        }
-        if ($rest === '') {
-            return self::conCierre($text, $state, $anotarPara);
-        }
-
-        return $text . '. Después: ' . $rest;
-    }
-
-    /**
-     * @param array<string, mixed> $state
-     */
-    private static function conAcciones(string $text, array $state): string
-    {
-        $extra = [];
-        foreach (self::actionLabels($state) as $label) {
-            $extra[] = 'puede ' . self::lowerFirst($label);
-        }
-        $submit = self::submitLabel($state);
-        if ($submit !== '' && !self::isFinal($state)) {
-            $extra[] = 'puede ' . self::lowerFirst($submit);
-        }
-        $text = rtrim(self::period($text), '.');
-        if ($extra === []) {
-            return $text;
-        }
-
-        return $text . ', ' . implode(', ', $extra);
-    }
-
-    /**
-     * @param array<string, mixed> $state
-     */
-    private static function conCierre(string $head, array $state, bool $anotarPara): string
-    {
-        $head = rtrim(trim($head), '.');
-        $text = $head === '' ? 'Ahí termina.' : $head . '. Ahí termina.';
-        if ($anotarPara) {
-            $text .= ' Para: ' . self::paraDesdeOutcome(self::outcomeText($state)) . '.';
-        }
-
-        return $text;
-    }
-
-    private static function indentRest(string $text): string
-    {
-        $lines = explode("\n", $text);
-        if (count($lines) < 2) {
-            return $text;
-        }
-        $out = [$lines[0]];
-        $rest = count($lines);
-        for ($i = 1; $i < $rest; $i++) {
-            $out[] = '  ' . $lines[$i];
-        }
-
-        return implode("\n", $out);
     }
 
     private static function fold(string $text): string
@@ -480,17 +441,6 @@ final class IntentSemanticsPromptFormatter
         return $out;
     }
 
-    private static function lowerFirst(string $text): string
-    {
-        if ($text === '') {
-            return '';
-        }
-        $first = mb_substr($text, 0, 1);
-        $rest = mb_substr($text, 1);
-
-        return mb_strtolower($first) . $rest;
-    }
-
     private static function period(string $text): string
     {
         $text = trim($text);
@@ -594,34 +544,7 @@ final class IntentSemanticsPromptFormatter
             $text = trim((string) ($state['label'] ?? ''));
         }
 
-        return self::pasoTexto($text);
-    }
-
-    /**
-     * El Para del camino ya dice para quién es. El paso nombra la acción, sin repetir «La persona».
-     */
-    private static function pasoTexto(string $text): string
-    {
-        $text = trim($text);
-        $text = preg_replace('/^La persona\s+/u', '', $text) ?? $text;
-        $text = preg_replace('/,?\s*para la persona que consulta o por otra persona/iu', '', $text) ?? $text;
-        $text = trim($text, " \t,");
-        if ($text === '') {
-            return '';
-        }
-
-        return self::upperFirst($text);
-    }
-
-    private static function upperFirst(string $text): string
-    {
-        if ($text === '') {
-            return '';
-        }
-        $first = mb_substr($text, 0, 1);
-        $rest = mb_substr($text, 1);
-
-        return mb_strtoupper($first) . $rest;
+        return $text;
     }
 
     /**

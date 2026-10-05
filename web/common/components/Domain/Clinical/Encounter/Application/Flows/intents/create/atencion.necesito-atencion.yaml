@@ -52,7 +52,7 @@ context:
 states:
   triage_raiz:
     label: Motivo
-    explanation: 'La persona elige qué pedido de atención hace.'
+    explanation: 'La persona elige el motivo de su pedido de atención.'
     meta:
       guide_options: reserva_triage.raiz
       tags:

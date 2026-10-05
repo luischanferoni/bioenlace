@@ -18,16 +18,17 @@ class IntentSemanticsPromptFormatterTest extends Unit
         $block = IntentSemanticsPromptFormatter::formatIntentId('turnos.crear-como-paciente');
 
         $this->assertStringStartsWith("Botón \"Turno con un especialista\"\n", $block);
+        $this->assertStringContainsString("Para: solo la persona que escribe.\n", $block);
         $this->assertStringContainsString('La persona elige la oferta del centro que tiene agenda.', $block);
         $this->assertStringContainsString('Después: La persona elige el centro de salud.', $block);
         $this->assertStringContainsString(
-            'La persona elige horario para reservar el turno, confirma el turno. Ahí termina.',
+            'La persona elige horario para reservar el turno. Termina cuando se reserva un turno para quien está a cargo.',
             $block
         );
+        $this->assertStringNotContainsString('confirma el turno', $block);
         $this->assertStringNotContainsString('PANTALLA', $block);
         $this->assertStringNotContainsString('funcionalidades', $block);
         $this->assertStringNotContainsString('turnos.crear-como-paciente', $block);
-        $this->assertSame(1, substr_count($block, "\nLa persona elige el centro de salud.\n"));
     }
 
     public function testAtencionEsProsaSinIdsDePantalla(): void
@@ -35,28 +36,40 @@ class IntentSemanticsPromptFormatterTest extends Unit
         $block = IntentSemanticsPromptFormatter::formatIntentId('atencion.necesito-atencion');
 
         $this->assertStringContainsString("Botón \"Solicitar Atención\"\n", $block);
-        $this->assertStringContainsString(
-            'Las siguientes funcionalidades se aplican únicamente a la necesidad de atención de la persona que escribe el mensaje, salvo que se indique explícitamente que una funcionalidad permite gestionar la atención de otra persona.',
-            $block
-        );
         $this->assertStringContainsString('La persona elige qué pedido de atención hace.', $block);
-        $this->assertStringContainsString('- Malestar nuevo: La persona elige la zona del malestar que tiene ella.', $block);
-        $this->assertStringContainsString('- Estudio o práctica: La persona elige el estudio o la práctica que ella necesita.', $block);
-        $this->assertStringContainsString('- Control/Seguimiento: La persona elige el tema de su control o seguimiento.', $block);
-        $this->assertStringContainsString('- Urgencia: Orientación por urgencia, por ella o por otra persona, puede llamar al 107. Ahí termina.', $block);
-
-        $this->assertStringContainsString('- Cabeza, cuello o mareos', $block);
-        $this->assertStringContainsString('- Síntoma general (fiebre, cansancio u otro)', $block);
-        $this->assertStringContainsString('Cualquiera sigue así: La persona elige cómo atenderse.', $block);
-        $this->assertStringContainsString('- Presencial: La persona elige un servicio entre los filtrados por la forma de atenderse.', $block);
-        $this->assertStringContainsString('- Videollamada: La persona elige día de teleconsulta con Medicina General.', $block);
-        $this->assertStringContainsString('- Por mensaje: La persona escribe la consulta para un profesional. Ahí termina.', $block);
-        $this->assertStringContainsString(
-            'Después: La persona elige horario disponible para el turno, confirma el turno. Ahí termina.',
+        $this->assertStringNotContainsString(
+            'Las siguientes funcionalidades se aplican únicamente',
             $block
         );
 
-        $this->assertSame(1, substr_count($block, "\nLa persona elige la zona del malestar que tiene ella.\n"));
+        $this->assertStringContainsString("Camino: Malestar nuevo\nPara: solo la persona que escribe.", $block);
+        $this->assertStringContainsString("Camino: Estudio o práctica\nPara: solo la persona que escribe.", $block);
+        $this->assertStringContainsString("Camino: Control/Seguimiento\nPara: solo la persona que escribe.", $block);
+        $this->assertStringContainsString(
+            "Camino: Urgencia\nPara: la persona que escribe o también otra persona.",
+            $block
+        );
+
+        $this->assertStringContainsString('Síntoma general (fiebre, cansancio u otro)', $block);
+        $this->assertStringContainsString(
+            '- Presencial: La persona elige un servicio entre los filtrados por la forma de atenderse.',
+            $block
+        );
+        $this->assertStringContainsString('- Videollamada: La persona elige día de teleconsulta con Medicina General.', $block);
+        $this->assertStringContainsString(
+            '- Por mensaje: La persona escribe la consulta para un profesional. Termina cuando quien está a cargo envía la consulta.',
+            $block
+        );
+        $this->assertStringContainsString(
+            'La persona elige horario disponible para el turno. Termina cuando se reserva un turno para quien está a cargo.',
+            $block
+        );
+        $this->assertStringContainsString(
+            'puede llamar al 107. Termina cuando la persona recibe orientación por urgencia, también para alguien que no está a cargo.',
+            $block
+        );
+
+        $this->assertStringNotContainsString('confirma el turno', $block);
         $this->assertStringNotContainsString('ORIENTACION_URGENCIA', $block);
         $this->assertStringNotContainsString('PANTALLA', $block);
         $this->assertStringNotContainsString('CUALQUIER_OPCION', $block);

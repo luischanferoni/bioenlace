@@ -5,10 +5,10 @@ namespace common\components\Platform\Assistant\Catalog;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
 
 /**
- * Arma el recorrido de un flow en prosa, para el prompt de la guía.
+ * Arma el recorrido de un flow como wireflow, para el prompt de la guía.
  *
- * Cada paso usa la explanation del estado. Si la opción abre un paso que termina,
- * el cierre queda en la misma línea. No adjunta ids ni nombres de pantalla.
+ * Cada opción del primer paso es un camino. La línea Para sale del outcome
+ * con el que cierra ese camino. No adjunta ids ni nombres de pantalla.
  */
 final class IntentSemanticsPromptFormatter
 {
@@ -77,6 +77,9 @@ final class IntentSemanticsPromptFormatter
         return self::renderIntent($intentId, $item);
     }
 
+    /**
+     * @param array<string, array<string, mixed>> $states
+     */
     private static function renderIntent(string $intentId, ?UiActionCatalogItem $item = null): string
     {
         $intentId = trim($intentId);
@@ -88,136 +91,232 @@ final class IntentSemanticsPromptFormatter
         if ($button === '') {
             return '';
         }
-
-        $map = self::screenMap($manifest);
-        if ($map === []) {
-            return 'Botón "' . $button . '"';
-        }
-
-        $byId = [];
-        foreach ($map as $screen) {
-            $byId[$screen['id']] = $screen;
-        }
-
-        $blocks = [];
-        $first = true;
-        $scope = self::period(trim((string) ($manifest['explanation'] ?? '')));
-        foreach ($map as $screen) {
-            if (!$first && self::closes($screen)) {
-                continue;
-            }
-            $body = self::renderSteps($screen, $byId);
-            if ($first) {
-                $indented = [];
-                if ($scope !== '') {
-                    $indented[] = '  ' . $scope;
-                }
-                foreach (explode("\n", $body) as $line) {
-                    $indented[] = '  ' . $line;
-                }
-                $blocks[] = 'Botón "' . $button . '"' . "\n" . implode("\n", $indented);
-                $first = false;
-                continue;
-            }
-            $blocks[] = $body;
-        }
-
-        return implode("\n\n", $blocks);
-    }
-
-    /**
-     * @param array<string, mixed>|null $manifest
-     * @return list<array<string, mixed>>
-     */
-    private static function screenMap(?array $manifest): array
-    {
         if ($manifest === null) {
-            return [];
+            return 'Botón "' . $button . '"';
         }
         $states = $manifest['states'] ?? null;
         if (!is_array($states) || $states === []) {
-            return [];
+            return 'Botón "' . $button . '"';
         }
         $initial = self::initialId($manifest, $states);
         if ($initial === '' || !isset($states[$initial]) || !is_array($states[$initial])) {
-            return [];
+            return 'Botón "' . $button . '"';
         }
 
-        $graph = self::walk($states, $initial);
-        $outgoing = [];
-        foreach ($graph['edges'] as $edge) {
-            $from = $edge['from'];
-            if (!isset($outgoing[$from])) {
-                $outgoing[$from] = [];
+        $lines = ['Botón "' . $button . '"'];
+        $named = [];
+        foreach (self::continuations($initial, $states) as $edge) {
+            if (is_string($edge['option']) && $edge['option'] !== '') {
+                $named[] = $edge;
             }
-            $outgoing[$from][] = $edge;
+        }
+        if (count($named) > 1) {
+            $intro = self::period(self::explanation($states[$initial]));
+            if ($intro !== '') {
+                $lines[] = $intro;
+            }
+            foreach ($named as $edge) {
+                $lines[] = '';
+                $lines[] = self::renderCamino($edge['option'], $edge['to'], $states);
+            }
+
+            return implode("\n", $lines);
         }
 
-        $screens = [];
-        foreach ($graph['order'] as $stateId) {
-            if (!isset($states[$stateId]) || !is_array($states[$stateId])) {
-                continue;
-            }
-            $state = $states[$stateId];
-            $kind = self::screenKind($state);
-            $transitions = [];
-            foreach ($outgoing[$stateId] ?? [] as $edge) {
-                $transitions[] = [
-                    'option' => $edge['option'],
-                    'to' => $edge['to'],
-                ];
-            }
-            $screens[] = [
-                'id' => $stateId,
-                'kind' => $kind,
-                'explanation' => self::explanation($state),
-                'options' => self::options($state),
-                'transitions' => $transitions,
-                'actions' => self::actionLabels($state),
-                'accion_final' => $kind === 'seleccion' && self::isFinal($state)
-                    ? self::accionFinal($state)
-                    : '',
-                'fin' => $kind === 'informacion' || $kind === 'texto',
-            ];
-        }
+        $lines[] = '';
+        $lines[] = self::renderCamino(null, $initial, $states);
 
-        return $screens;
+        return implode("\n", $lines);
     }
 
     /**
      * @param array<string, array<string, mixed>> $states
-     * @return array{order: list<string>, edges: list<array{from: string, option: ?string, to: string}>}
      */
-    private static function walk(array $states, string $initial): array
+    private static function renderCamino(?string $name, string $startId, array $states): string
     {
-        $order = [];
-        $edges = [];
-        $seen = [];
-        $queue = [$initial];
+        $paras = array_values(array_unique(self::parasDe($startId, $states, 0, [])));
+        if ($paras === []) {
+            $paras = [self::paraDesdeOutcome('')];
+        }
+        $anotar = count($paras) !== 1;
+        $body = self::narrar($startId, $states, 0, [], $anotar);
+        $lines = [];
+        if ($name !== null && $name !== '') {
+            $lines[] = 'Camino: ' . $name;
+        }
+        if (!$anotar) {
+            $lines[] = 'Para: ' . $paras[0] . '.';
+        }
+        $lines[] = 'Pantallas: ' . $body;
 
-        while ($queue !== [] && count($order) < self::MAX_SCREENS) {
-            $id = array_shift($queue);
-            if (!is_string($id) || $id === '' || isset($seen[$id]) || !isset($states[$id]) || !is_array($states[$id])) {
-                continue;
-            }
-            $seen[$id] = true;
-            $order[] = $id;
-            if (self::isFinal($states[$id])) {
-                continue;
-            }
-            foreach (self::outgoing($states[$id], $states) as $edge) {
-                $edges[] = [
-                    'from' => $id,
-                    'option' => $edge['option'],
-                    'to' => $edge['to'],
-                ];
-                if (!isset($seen[$edge['to']])) {
-                    $queue[] = $edge['to'];
-                }
+        return implode("\n", $lines);
+    }
+
+    /**
+     * @param array<string, array<string, mixed>> $states
+     * @param array<string, true> $seen
+     * @return list<string>
+     */
+    private static function parasDe(string $id, array $states, int $depth, array $seen): array
+    {
+        if ($depth > self::MAX_SCREENS || isset($seen[$id]) || !isset($states[$id]) || !is_array($states[$id])) {
+            return [];
+        }
+        $seen[$id] = true;
+        $state = $states[$id];
+        $edges = self::isFinal($state) ? [] : self::continuations($id, $states);
+        if ($edges === []) {
+            return [self::paraDesdeOutcome(self::outcomeText($state))];
+        }
+        $out = [];
+        foreach ($edges as $edge) {
+            foreach (self::parasDe($edge['to'], $states, $depth + 1, $seen) as $para) {
+                $out[] = $para;
             }
         }
 
-        return ['order' => $order, 'edges' => $edges];
+        return $out;
+    }
+
+    private static function paraDesdeOutcome(string $outcome): string
+    {
+        $folded = self::fold($outcome);
+        if (strpos($folded, 'no esta a cargo') !== false) {
+            return 'la persona que escribe o también otra persona';
+        }
+
+        return 'solo la persona que escribe';
+    }
+
+    /**
+     * @param array<string, array<string, mixed>> $states
+     * @param array<string, true> $seen
+     */
+    private static function narrar(string $id, array $states, int $depth, array $seen, bool $anotarPara): string
+    {
+        if ($depth > self::MAX_SCREENS || isset($seen[$id]) || !isset($states[$id]) || !is_array($states[$id])) {
+            return '';
+        }
+        $seen[$id] = true;
+        $state = $states[$id];
+        $head = self::conAcciones(self::explanation($state), $state);
+        if (self::isFinal($state)) {
+            return self::conCierre($head, $state, $anotarPara);
+        }
+
+        $edges = self::continuations($id, $states);
+        if ($edges === []) {
+            return self::conCierre($head, $state, $anotarPara);
+        }
+
+        $named = [];
+        $unnamed = [];
+        foreach ($edges as $edge) {
+            if (is_string($edge['option']) && $edge['option'] !== '') {
+                $named[] = $edge;
+                continue;
+            }
+            $unnamed[] = $edge;
+        }
+        $forks = count($named) > 1 ? $named : (count($unnamed) > 1 && $named === [] ? $unnamed : []);
+        if ($forks !== []) {
+            $lines = [self::period($head)];
+            foreach ($forks as $edge) {
+                $child = self::narrar($edge['to'], $states, $depth + 1, $seen, $anotarPara);
+                if ($child === '') {
+                    continue;
+                }
+                $prefix = is_string($edge['option']) && $edge['option'] !== '' ? $edge['option'] . ': ' : '';
+                $lines[] = '  - ' . $prefix . self::indentRest($child);
+            }
+
+            return implode("\n", $lines);
+        }
+
+        $next = (string) ($edges[0]['to'] ?? '');
+        $rest = $next === '' ? '' : self::narrar($next, $states, $depth + 1, $seen, $anotarPara);
+        $options = self::options($state);
+        $text = rtrim(self::period($head), '.');
+        if ($options !== [] && ($edges[0]['option'] ?? null) === null) {
+            $text .= ' (' . implode('; ', $options) . ')';
+        }
+        if ($rest === '') {
+            return self::conCierre($text, $state, $anotarPara);
+        }
+
+        return $text . '. Después: ' . $rest;
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     */
+    private static function conAcciones(string $text, array $state): string
+    {
+        $extra = [];
+        foreach (self::actionLabels($state) as $label) {
+            $extra[] = 'puede ' . self::lowerFirst($label);
+        }
+        $submit = self::submitLabel($state);
+        if ($submit !== '' && !self::isFinal($state)) {
+            $extra[] = 'puede ' . self::lowerFirst($submit);
+        }
+        $text = rtrim(self::period($text), '.');
+        if ($extra === []) {
+            return $text;
+        }
+
+        return $text . ', ' . implode(', ', $extra);
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     */
+    private static function conCierre(string $head, array $state, bool $anotarPara): string
+    {
+        $head = rtrim(trim($head), '.');
+        $outcome = self::period(self::outcomeText($state));
+        if ($head === '') {
+            $text = $outcome !== '' ? $outcome : 'Ahí termina.';
+        } elseif ($outcome !== '') {
+            $text = $head . '. ' . $outcome;
+        } else {
+            $text = $head . '. Ahí termina.';
+        }
+        if ($anotarPara) {
+            $text .= ' Para: ' . self::paraDesdeOutcome(self::outcomeText($state)) . '.';
+        }
+
+        return $text;
+    }
+
+    private static function indentRest(string $text): string
+    {
+        $lines = explode("\n", $text);
+        if (count($lines) < 2) {
+            return $text;
+        }
+        $out = [$lines[0]];
+        $rest = count($lines);
+        for ($i = 1; $i < $rest; $i++) {
+            $out[] = '  ' . $lines[$i];
+        }
+
+        return implode("\n", $out);
+    }
+
+    private static function fold(string $text): string
+    {
+        $text = mb_strtolower($text);
+
+        return strtr($text, [
+            'á' => 'a',
+            'é' => 'e',
+            'í' => 'i',
+            'ó' => 'o',
+            'ú' => 'u',
+            'ü' => 'u',
+            'ñ' => 'n',
+        ]);
     }
 
     /**
@@ -256,6 +355,95 @@ final class IntentSemanticsPromptFormatter
         }
 
         return [['option' => null, 'to' => $to]];
+    }
+
+    /**
+     * @var array<string, true>
+     */
+    private static $resolvingContinuation = [];
+
+    /**
+     * @param array<string, array<string, mixed>> $states
+     * @return list<array{option: ?string, to: string}>
+     */
+    private static function continuations(string $id, array $states): array
+    {
+        if ($id === '' || isset(self::$resolvingContinuation[$id]) || !isset($states[$id]) || !is_array($states[$id])) {
+            return [];
+        }
+        self::$resolvingContinuation[$id] = true;
+        $edges = self::continuationEdges($states[$id], $states);
+        unset(self::$resolvingContinuation[$id]);
+
+        return $edges;
+    }
+
+    /**
+     * Si el paso declara opciones de catálogo, sigue esas. Si no, y hay varios destinos, cada uno es una rama.
+     * Un destino que solo adelanta pantallas del camino sin guardia no abre otra rama.
+     *
+     * @param array<string, mixed> $state
+     * @param array<string, array<string, mixed>> $states
+     * @return list<array{option: ?string, to: string}>
+     */
+    private static function continuationEdges(array $state, array $states): array
+    {
+        $catalog = self::outgoing($state, $states);
+        if (self::options($state) !== []) {
+            return $catalog;
+        }
+        $targets = [];
+        foreach (self::alwaysRows($state['always'] ?? null) as $row) {
+            $to = $row['target'];
+            if ($to === '' || !isset($states[$to]) || in_array($to, $targets, true)) {
+                continue;
+            }
+            $targets[] = $to;
+        }
+        if (count($targets) <= 1) {
+            return $catalog;
+        }
+        $unguarded = self::unguardedTarget(self::alwaysRows($state['always'] ?? null));
+        if ($unguarded !== '' && isset($states[$unguarded])) {
+            $reachable = self::reachableFrom($unguarded, $states);
+            $forks = [$unguarded];
+            foreach ($targets as $to) {
+                if ($to !== $unguarded && !isset($reachable[$to])) {
+                    $forks[] = $to;
+                }
+            }
+            $targets = $forks;
+        }
+        if (count($targets) === 1) {
+            return [['option' => null, 'to' => $targets[0]]];
+        }
+        $out = [];
+        foreach ($targets as $to) {
+            $out[] = ['option' => null, 'to' => $to];
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param array<string, array<string, mixed>> $states
+     * @param array<string, true> $seen
+     * @return array<string, true>
+     */
+    private static function reachableFrom(string $id, array $states, array $seen = []): array
+    {
+        if (isset($seen[$id]) || !isset($states[$id]) || !is_array($states[$id])) {
+            return $seen;
+        }
+        $seen[$id] = true;
+        if (self::isFinal($states[$id])) {
+            return $seen;
+        }
+        foreach (self::continuations($id, $states) as $edge) {
+            $seen = self::reachableFrom($edge['to'], $states, $seen);
+        }
+
+        return $seen;
     }
 
     /**
@@ -299,111 +487,6 @@ final class IntentSemanticsPromptFormatter
         return $out;
     }
 
-    /**
-     * @param array<string, mixed> $screen
-     * @param array<string, array<string, mixed>> $byId
-     */
-    private static function renderSteps(array $screen, array $byId): string
-    {
-        if (self::closes($screen)) {
-            return self::paso($screen);
-        }
-
-        $lines = [self::period((string) $screen['explanation'])];
-        $named = [];
-        $any = null;
-        $transitions = $screen['transitions'] ?? [];
-        if (is_array($transitions)) {
-            foreach ($transitions as $transition) {
-                if (!is_array($transition)) {
-                    continue;
-                }
-                $to = (string) ($transition['to'] ?? '');
-                if ($to === '' || !isset($byId[$to])) {
-                    continue;
-                }
-                $option = $transition['option'] ?? null;
-                if (is_string($option) && $option !== '') {
-                    $named[] = ['option' => $option, 'to' => $to];
-                    continue;
-                }
-                $any = $to;
-            }
-        }
-
-        if ($named !== []) {
-            foreach ($named as $transition) {
-                $lines[] = '  - ' . $transition['option'] . ': ' . self::paso($byId[$transition['to']]);
-            }
-        } elseif ($any !== null) {
-            $options = $screen['options'] ?? [];
-            $listed = false;
-            if (is_array($options)) {
-                foreach ($options as $option) {
-                    if (!is_string($option) || $option === '') {
-                        continue;
-                    }
-                    $lines[] = '  - ' . $option;
-                    $listed = true;
-                }
-            }
-            $next = self::paso($byId[$any]);
-            $lines[] = $listed
-                ? '  Cualquiera sigue así: ' . $next
-                : '  Después: ' . $next;
-        }
-
-        return implode("\n", $lines);
-    }
-
-    /**
-     * @param array<string, mixed> $screen
-     */
-    private static function closes(array $screen): bool
-    {
-        return !empty($screen['fin']) || trim((string) ($screen['accion_final'] ?? '')) !== '';
-    }
-
-    /**
-     * @param array<string, mixed> $screen
-     */
-    private static function paso(array $screen): string
-    {
-        $text = rtrim(self::period((string) ($screen['explanation'] ?? '')), '.');
-        if (!self::closes($screen)) {
-            return $text . '.';
-        }
-
-        $extra = [];
-        $actions = $screen['actions'] ?? [];
-        if (is_array($actions)) {
-            foreach ($actions as $action) {
-                if (!is_string($action) || trim($action) === '') {
-                    continue;
-                }
-                $extra[] = 'puede ' . self::lowerFirst(trim($action));
-            }
-        }
-        $accion = trim((string) ($screen['accion_final'] ?? ''));
-        if ($accion !== '') {
-            $extra[] = self::confirma($accion);
-        }
-        if ($extra !== []) {
-            $text .= ', ' . implode(', ', $extra);
-        }
-
-        return $text . '. Ahí termina.';
-    }
-
-    private static function confirma(string $label): string
-    {
-        if (preg_match('/^Confirmar\s+(.+)$/u', $label, $match) === 1) {
-            return 'confirma el ' . $match[1];
-        }
-
-        return self::lowerFirst($label);
-    }
-
     private static function lowerFirst(string $text): string
     {
         if ($text === '') {
@@ -426,47 +509,6 @@ final class IntentSemanticsPromptFormatter
         }
 
         return $text . '.';
-    }
-
-    /**
-     * @param array<string, mixed> $state
-     */
-    private static function screenKind(array $state): string
-    {
-        $meta = isset($state['meta']) && is_array($state['meta']) ? $state['meta'] : [];
-        if (isset($meta['composer_capture']) && is_array($meta['composer_capture'])) {
-            return 'texto';
-        }
-        if (!empty($meta['terminal_without_submit'])) {
-            return 'informacion';
-        }
-
-        return 'seleccion';
-    }
-
-    /**
-     * @param array<string, mixed> $state
-     */
-    private static function accionFinal(array $state): string
-    {
-        $meta = isset($state['meta']) && is_array($state['meta']) ? $state['meta'] : [];
-        $submit = $meta['flow_submit'] ?? null;
-        if (is_array($submit)) {
-            $label = trim((string) ($submit['label'] ?? ''));
-            if ($label !== '') {
-                return $label;
-            }
-        }
-        $outcome = self::outcomeText($state);
-        if ($outcome !== '' && stripos($outcome, 'reserva un turno') !== false) {
-            return 'Confirmar turno';
-        }
-        $clause = self::objectiveClause($state);
-        if ($clause !== '') {
-            return $clause;
-        }
-
-        return 'Confirmar';
     }
 
     /**
@@ -512,20 +554,6 @@ final class IntentSemanticsPromptFormatter
     private static function outcomeText(array $state): string
     {
         return trim((string) ($state['outcome'] ?? ''));
-    }
-
-    /**
-     * @param array<string, mixed> $state
-     */
-    private static function objectiveClause(array $state): string
-    {
-        $text = self::outcomeText($state);
-        $prefix = 'Termina cuando ';
-        if ($text !== '' && strncasecmp($text, $prefix, strlen($prefix)) === 0) {
-            $text = substr($text, strlen($prefix));
-        }
-
-        return rtrim($text, '.');
     }
 
     /**
@@ -640,6 +668,20 @@ final class IntentSemanticsPromptFormatter
         }
 
         return $labels;
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     */
+    private static function submitLabel(array $state): string
+    {
+        $meta = isset($state['meta']) && is_array($state['meta']) ? $state['meta'] : [];
+        $submit = $meta['flow_submit'] ?? null;
+        if (!is_array($submit)) {
+            return '';
+        }
+
+        return trim((string) ($submit['label'] ?? ''));
     }
 
     /**

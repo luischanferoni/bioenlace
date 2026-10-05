@@ -2,7 +2,6 @@ intent_id: atencion.necesito-atencion
 version: 1
 action_name: 'Solicitar Atención'
 rbac_route: /api/turnos/crear-como-paciente
-explanation: 'Las siguientes funcionalidades se aplican únicamente a la necesidad de atención de la persona que escribe el mensaje, salvo que se indique explícitamente que una funcionalidad permite gestionar la atención de otra persona.'
 
 draft_hydrator:
   handler: scheduling.solicitar_atencion

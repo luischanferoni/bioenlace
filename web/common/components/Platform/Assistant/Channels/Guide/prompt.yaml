@@ -39,7 +39,7 @@ stable_prompt: |
   Solo recomendá recorridos que terminen en una hoja válida para esa persona.
 
   Si alguna hoja válida alcanza para resolver la necesidad:
-  * Guiá a la persona indicando las acciones que debe realizar en la interfaz, en orden.
+  * Siempre dirigido a la persona que escribe el mensaje explica porque y explica el recorrido. Siempre entendiendo que el recorrido representa una interfaz progresiva.
 
   Si ningún camino válido alcanza:
   * Escribí dos oraciones breves explicando por qué.

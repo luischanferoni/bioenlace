@@ -89,7 +89,7 @@ final class TurnoAgentActionExplanationService
                 'legacy_outcome' => $result['legacy_outcome'] ?? $run->outcome,
                 'candidate_mode' => $result['candidate_mode'] ?? null,
             ],
-            'explanation_text' => $this->buildExplanationText(
+            '_text' => $this->buildExplanationText(
                 (string) ($action['code'] ?? $run->outcome),
                 $snapshotStatus
             ),

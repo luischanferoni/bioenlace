@@ -35,6 +35,10 @@ class IntentSemanticsPromptFormatterTest extends Unit
         $block = IntentSemanticsPromptFormatter::formatIntentId('atencion.necesito-atencion');
 
         $this->assertStringContainsString("Botón \"Solicitar Atención\"\n", $block);
+        $this->assertStringContainsString(
+            'Las siguientes funcionalidades se aplican únicamente a la necesidad de atención de la persona que escribe el mensaje, salvo que se indique explícitamente que una funcionalidad permite gestionar la atención de otra persona.',
+            $block
+        );
         $this->assertStringContainsString('La persona elige qué pedido de atención hace.', $block);
         $this->assertStringContainsString('- Malestar nuevo: La persona elige la zona del malestar que tiene ella.', $block);
         $this->assertStringContainsString('- Estudio o práctica: La persona elige el estudio o la práctica que ella necesita.', $block);

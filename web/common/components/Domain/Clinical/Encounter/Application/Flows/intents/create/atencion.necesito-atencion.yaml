@@ -2,6 +2,7 @@ intent_id: atencion.necesito-atencion
 version: 1
 action_name: 'Solicitar Atención'
 rbac_route: /api/turnos/crear-como-paciente
+explanation: 'Las siguientes funcionalidades se aplican únicamente a la necesidad de atención de la persona que escribe el mensaje, salvo que se indique explícitamente que una funcionalidad permite gestionar la atención de otra persona.'
 
 draft_hydrator:
   handler: scheduling.solicitar_atencion
@@ -115,7 +116,7 @@ states:
         target: select_tipo_atencion
   select_pedido_acto:
     label: 'Estudio o práctica'
-    explanation: 'La persona elige el estudio o la práctica que ella necesita.'
+    explanation: 'La persona elige el estudio o la práctica que necesita.'
     meta:
       tags:
         - estudio
@@ -226,7 +227,7 @@ states:
         target: cs_captura_consulta_general
   triage_zona:
     label: Zona
-    explanation: 'La persona elige la zona del malestar que tiene ella.'
+    explanation: 'La persona elige la zona de su cuerpo donde tiene malestar.'
     meta:
       guide_options: reserva_triage.zona
       tags:
@@ -261,7 +262,7 @@ states:
         target: select_tipo_atencion
   triage_urgencia:
     label: Urgencia
-    explanation: 'Orientación por urgencia, por ella o por otra persona.'
+    explanation: 'Orientación por urgencia, para la persona que consulta o por otra persona.'
     meta:
       tags:
         - urgencia

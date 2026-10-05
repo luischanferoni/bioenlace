@@ -7,7 +7,7 @@ use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
 /**
  * Arma el recorrido de un flow como árbol, para el prompt de la guía.
  *
- * Cada sección es Sección: "explanation". Cada elección es Opción: "…".
+ * Cada sección es [SECCIÓN] "explanation". Cada elección es [OPCIÓN] "…". El botón es [BOTÓN] "…".
  * Si una opción abre otra sección, una línea ↓ lo indica.
  * Para quién es el camino está en la hoja (fin · …). No adjunta ids ni labels de pantalla.
  */
@@ -92,7 +92,7 @@ final class IntentSemanticsPromptFormatter
         if ($button === '') {
             return '';
         }
-        $heading = 'Botón "' . $button . '"';
+        $heading = self::quoted('BOTÓN', $button);
         if ($manifest === null) {
             return $heading;
         }
@@ -129,7 +129,7 @@ final class IntentSemanticsPromptFormatter
         if ($explanation === '') {
             return null;
         }
-        $title = self::quoted('Sección', $explanation);
+        $title = self::quoted('SECCIÓN', $explanation);
 
         $children = [];
         $submit = self::submitLabel($state);
@@ -222,14 +222,14 @@ final class IntentSemanticsPromptFormatter
     {
         return [
             'kind' => 'option',
-            'title' => self::quoted('Opción', $label),
+            'title' => self::quoted('OPCIÓN', $label),
             'children' => $children,
         ];
     }
 
     private static function quoted(string $kind, string $text): string
     {
-        return $kind . ': "' . trim($text) . '"';
+        return '[' . $kind . '] "' . trim($text) . '"';
     }
 
     /**

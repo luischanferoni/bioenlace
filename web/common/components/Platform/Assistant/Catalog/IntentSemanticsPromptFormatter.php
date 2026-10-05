@@ -7,7 +7,8 @@ use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
 /**
  * Arma el recorrido de un flow como árbol, para el prompt de la guía.
  *
- * Cada sección es Sección "explanation". Cada elección es Opción "…".
+ * Cada sección es Sección: "explanation". Cada elección es Opción: "…".
+ * Si una opción abre otra sección, una línea ↓ lo indica.
  * Para quién es el camino está en la hoja (fin · …). No adjunta ids ni labels de pantalla.
  */
 final class IntentSemanticsPromptFormatter
@@ -109,7 +110,7 @@ final class IntentSemanticsPromptFormatter
             return $heading;
         }
 
-        return $heading . "\n" . implode("\n", self::drawNode($root, '', true));
+        return $heading . "\n\n" . implode("\n", self::drawNode($root, 0, false));
     }
 
     /**
@@ -124,27 +125,25 @@ final class IntentSemanticsPromptFormatter
         }
         $seen[$id] = true;
         $state = $states[$id];
-        $title = self::quoted('Sección', self::period(self::explanation($state)));
-        if ($title === 'Sección ""') {
+        $explanation = self::period(self::explanation($state));
+        if ($explanation === '') {
             return null;
         }
+        $title = self::quoted('Sección', $explanation);
 
         $children = [];
         $submit = self::submitLabel($state);
         if ($submit !== '' && !self::isFinal($state)) {
-            $children[] = [
-                'title' => self::quoted('Opción', $submit),
-                'children' => [self::finNode($state)],
-            ];
+            $children[] = self::choiceNode($submit, [self::finNode($state)]);
         }
         foreach (self::actionLabels($state) as $label) {
-            $children[] = ['title' => self::quoted('Opción', $label), 'children' => []];
+            $children[] = self::choiceNode($label, []);
         }
 
         if (self::isFinal($state)) {
             $children[] = self::finNode($state);
 
-            return ['title' => $title, 'children' => $children];
+            return self::section($title, $children);
         }
 
         $edges = self::continuations($id, $states);
@@ -157,13 +156,10 @@ final class IntentSemanticsPromptFormatter
         if (count($named) > 1) {
             foreach ($named as $edge) {
                 $next = self::sectionNode($edge['to'], $states, $seen, $depth + 1);
-                $children[] = [
-                    'title' => self::quoted('Opción', $edge['option']),
-                    'children' => $next === null ? [] : [$next],
-                ];
+                $children[] = self::choiceNode($edge['option'], $next === null ? [] : [$next]);
             }
 
-            return ['title' => $title, 'children' => $children];
+            return self::section($title, $children);
         }
 
         $options = self::options($state);
@@ -175,13 +171,13 @@ final class IntentSemanticsPromptFormatter
                 if ($index === $last && $next !== null) {
                     $optionChildren[] = $next;
                 }
-                $children[] = ['title' => self::quoted('Opción', $option), 'children' => $optionChildren];
+                $children[] = self::choiceNode($option, $optionChildren);
             }
             if ($children === [] && $next !== null) {
                 $children[] = $next;
             }
 
-            return ['title' => $title, 'children' => $children];
+            return self::section($title, $children);
         }
 
         if (count($edges) > 1) {
@@ -192,13 +188,13 @@ final class IntentSemanticsPromptFormatter
                 }
             }
 
-            return ['title' => $title, 'children' => $children];
+            return self::section($title, $children);
         }
 
         if ($edges === []) {
             $children[] = self::finNode($state);
 
-            return ['title' => $title, 'children' => $children];
+            return self::section($title, $children);
         }
 
         $next = self::sectionNode((string) $edges[0]['to'], $states, $seen, $depth + 1);
@@ -206,12 +202,34 @@ final class IntentSemanticsPromptFormatter
             $children[] = $next;
         }
 
-        return ['title' => $title, 'children' => $children];
+        return self::section($title, $children);
+    }
+
+    /**
+     * @param list<array<string, mixed>> $children
+     * @return array{kind: string, title: string, children: list<array<string, mixed>>}
+     */
+    private static function section(string $title, array $children): array
+    {
+        return ['kind' => 'section', 'title' => $title, 'children' => $children];
+    }
+
+    /**
+     * @param list<array<string, mixed>> $children
+     * @return array{kind: string, title: string, children: list<array<string, mixed>>}
+     */
+    private static function choiceNode(string $label, array $children): array
+    {
+        return [
+            'kind' => 'option',
+            'title' => self::quoted('Opción', $label),
+            'children' => $children,
+        ];
     }
 
     private static function quoted(string $kind, string $text): string
     {
-        return $kind . ' "' . trim($text) . '"';
+        return $kind . ': "' . trim($text) . '"';
     }
 
     /**
@@ -221,26 +239,30 @@ final class IntentSemanticsPromptFormatter
     private static function finNode(array $state): array
     {
         return [
+            'kind' => 'fin',
             'title' => 'fin · ' . self::paraDesdeOutcome(self::outcomeText($state)),
             'children' => [],
         ];
     }
 
     /**
-     * @param array{title: string, children: list<array<string, mixed>>} $node
+     * @param array{kind?: string, title: string, children: list<array<string, mixed>>} $node
      * @return list<string>
      */
-    private static function drawNode(array $node, string $prefix, bool $last): array
+    private static function drawNode(array $node, int $depth, bool $afterOption): array
     {
-        $lines = [$prefix . ($last ? '└─ ' : '├─ ') . $node['title']];
-        $childPrefix = $prefix . ($last ? '   ' : '│  ');
-        $children = $node['children'];
-        $count = count($children);
-        foreach ($children as $index => $child) {
+        $indent = str_repeat('  ', $depth);
+        $lines = [];
+        if ($afterOption && ($node['kind'] ?? '') === 'section') {
+            $lines[] = $indent . '↓ aparece una nueva sección debajo';
+        }
+        $lines[] = $indent . $node['title'];
+        $childAfterOption = ($node['kind'] ?? '') === 'option';
+        foreach ($node['children'] as $child) {
             if (!is_array($child) || !isset($child['title'])) {
                 continue;
             }
-            foreach (self::drawNode($child, $childPrefix, $index === $count - 1) as $line) {
+            foreach (self::drawNode($child, $depth + 1, $childAfterOption) as $line) {
                 $lines[] = $line;
             }
         }

@@ -274,14 +274,7 @@ final class IntentSemanticsPromptFormatter
     private static function conCierre(string $head, array $state, bool $anotarPara): string
     {
         $head = rtrim(trim($head), '.');
-        $outcome = self::period(self::outcomeText($state));
-        if ($head === '') {
-            $text = $outcome !== '' ? $outcome : 'Ahí termina.';
-        } elseif ($outcome !== '') {
-            $text = $head . '. ' . $outcome;
-        } else {
-            $text = $head . '. Ahí termina.';
-        }
+        $text = $head === '' ? 'Ahí termina.' : $head . '. Ahí termina.';
         if ($anotarPara) {
             $text .= ' Para: ' . self::paraDesdeOutcome(self::outcomeText($state)) . '.';
         }
@@ -601,7 +594,34 @@ final class IntentSemanticsPromptFormatter
             $text = trim((string) ($state['label'] ?? ''));
         }
 
-        return $text;
+        return self::pasoTexto($text);
+    }
+
+    /**
+     * El Para del camino ya dice para quién es. El paso nombra la acción, sin repetir «La persona».
+     */
+    private static function pasoTexto(string $text): string
+    {
+        $text = trim($text);
+        $text = preg_replace('/^La persona\s+/u', '', $text) ?? $text;
+        $text = preg_replace('/,?\s*para la persona que consulta o por otra persona/iu', '', $text) ?? $text;
+        $text = trim($text, " \t,");
+        if ($text === '') {
+            return '';
+        }
+
+        return self::upperFirst($text);
+    }
+
+    private static function upperFirst(string $text): string
+    {
+        if ($text === '') {
+            return '';
+        }
+        $first = mb_substr($text, 0, 1);
+        $rest = mb_substr($text, 1);
+
+        return mb_strtoupper($first) . $rest;
     }
 
     /**

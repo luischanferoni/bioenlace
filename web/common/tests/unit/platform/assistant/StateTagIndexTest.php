@@ -19,7 +19,7 @@ class StateTagIndexTest extends Unit
             StateTagIndex::match(['medicacion'])
         );
 
-        $this->assertStringContainsString('ID: solicitar_atencion', $block);
+        $this->assertStringContainsString('ID: atencion.necesito-atencion', $block);
         $this->assertStringContainsString('TEXTO_BOTÓN: "Solicitar Atención"', $block);
         $this->assertStringContainsString('QUÉ CUBRE:', $block);
         $this->assertStringContainsString('medicación', $block);
@@ -32,7 +32,7 @@ class StateTagIndexTest extends Unit
             StateTagIndex::match(['estudio'])
         );
 
-        $this->assertStringContainsString('ID: solicitar_atencion', $block);
+        $this->assertStringContainsString('ID: atencion.necesito-atencion', $block);
         $this->assertStringContainsString('estudios', $block);
         $this->assertStringContainsString('RESULTADO:', $block);
     }

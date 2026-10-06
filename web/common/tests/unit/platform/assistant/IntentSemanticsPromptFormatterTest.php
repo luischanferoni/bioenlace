@@ -17,7 +17,7 @@ class IntentSemanticsPromptFormatterTest extends Unit
     {
         $block = IntentSemanticsPromptFormatter::formatIntentId('turnos.crear-como-paciente');
 
-        $this->assertStringStartsWith("ID: turno_con_un_especialista\nTEXTO_BOTÓN: \"Turno con un especialista\"", $block);
+        $this->assertStringStartsWith("ID: turnos.crear-como-paciente\nTEXTO_BOTÓN: \"Turno con un especialista\"", $block);
         $this->assertStringContainsString('la oferta del centro que tiene agenda', $block);
         $this->assertStringContainsString('el centro de salud', $block);
         $this->assertStringContainsString('horario para reservar el turno', $block);
@@ -25,7 +25,6 @@ class IntentSemanticsPromptFormatterTest extends Unit
         $this->assertStringNotContainsString('[SECCIÓN]', $block);
         $this->assertStringNotContainsString('está a cargo', $block);
         $this->assertStringNotContainsString('confirma el turno', $block);
-        $this->assertStringNotContainsString('turnos.crear-como-paciente', $block);
     }
 
     public function testAtencionAdjuntaLaFicha(): void
@@ -34,7 +33,7 @@ class IntentSemanticsPromptFormatterTest extends Unit
 
         $this->assertSame(
             <<<'TXT'
-ID: solicitar_atencion
+ID: atencion.necesito-atencion
 TEXTO_BOTÓN: "Solicitar Atención"
 QUÉ CUBRE: atención médica en general, incluyendo consultas por síntomas nuevos no urgentes, estudios, controles, medicación y orientación ante urgencias.
 REGLAS:
@@ -60,11 +59,11 @@ TXT,
         ], 4);
 
         $this->assertSame(2, substr_count($wrapped, 'TEXTO_BOTÓN: "'));
-        $this->assertStringContainsString('ID: turno_con_un_especialista', $wrapped);
-        $this->assertStringContainsString('ID: solicitar_atencion', $wrapped);
+        $this->assertStringContainsString('ID: turnos.crear-como-paciente', $wrapped);
+        $this->assertStringContainsString('ID: atencion.necesito-atencion', $wrapped);
         $this->assertLessThan(
-            strpos($wrapped, 'ID: solicitar_atencion'),
-            strpos($wrapped, 'ID: turno_con_un_especialista')
+            strpos($wrapped, 'ID: atencion.necesito-atencion'),
+            strpos($wrapped, 'ID: turnos.crear-como-paciente')
         );
     }
 }

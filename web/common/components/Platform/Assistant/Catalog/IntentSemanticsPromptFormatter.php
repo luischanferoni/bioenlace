@@ -95,19 +95,19 @@ final class IntentSemanticsPromptFormatter
 
         $guide = self::guideOf($manifest);
         if ($guide !== []) {
-            return self::translateGuideFicha($manifest, $guide, $button);
+            return self::translateGuideFicha($manifest, $guide, $button, $intentId);
         }
 
-        return self::translateFicha($manifest, $button);
+        return self::translateFicha($manifest, $button, $intentId);
     }
 
     /**
      * @param array<string, mixed>|null $manifest
      */
-    private static function translateFicha(?array $manifest, string $button): string
+    private static function translateFicha(?array $manifest, string $button, string $intentId): string
     {
         $lines = [
-            'ID: ' . self::slug($button),
+            'ID: ' . self::fichaId($manifest, $intentId),
             'TEXTO_BOTÓN: "' . $button . '"',
         ];
         $states = self::statesOf($manifest);
@@ -140,10 +140,10 @@ final class IntentSemanticsPromptFormatter
      * @param array<string, mixed>|null $manifest
      * @param array<string, mixed> $guide
      */
-    private static function translateGuideFicha(?array $manifest, array $guide, string $button): string
+    private static function translateGuideFicha(?array $manifest, array $guide, string $button, string $intentId): string
     {
         $lines = [
-            'ID: ' . self::slug($button),
+            'ID: ' . self::fichaId($manifest, $intentId),
             'TEXTO_BOTÓN: "' . $button . '"',
         ];
         $cubre = trim((string) ($guide['cubre'] ?? ''));
@@ -711,12 +711,19 @@ final class IntentSemanticsPromptFormatter
         return self::upperFirst(implode(', ', $clean) . ' y ' . $last);
     }
 
-    private static function slug(string $text): string
+    /**
+     * @param array<string, mixed>|null $manifest
+     */
+    private static function fichaId(?array $manifest, string $intentId): string
     {
-        $text = self::fold($text);
-        $text = preg_replace('/[^a-z0-9]+/', '_', $text) ?? '';
+        if ($manifest !== null) {
+            $fromYaml = trim((string) ($manifest['intent_id'] ?? ''));
+            if ($fromYaml !== '') {
+                return $fromYaml;
+            }
+        }
 
-        return trim($text, '_');
+        return trim($intentId);
     }
 
     private static function upperFirst(string $text): string

@@ -11,6 +11,7 @@ Fuente de verdad para las claves que **`SubIntentEngine`** lee y combina con el 
 | `version` | Entero legible para humanos; el motor no lo valida hoy. |
 | `action_name`, `keywords` | Metadatos / descubrimiento. `action_name` = label UX. |
 | `explanation` | Opcional. Hecho del flow para la guía, una sola vez, antes de las pantallas. No es copy de cliente ni título de paso. El motor no la lee. |
+| `guide` | Opcional. Texto de la ficha para la 2ª IA: `cubre`, `reglas`, `params` (`name` + `ref` de catálogo). El motor no la lee. Los códigos de `params` salen del catálogo del `ref`, no se copian en el YAML. |
 | ~~`description`~~ | **Retirado** de intents YAML. No usar. |
 | `rbac_route` | Ruta HTTP del **permiso API base** que se asigna al rol (sin `v1`), no una ruta UI/ghost heredada por migración. Ej.: `listar-atenciones-como-paciente`, no `mis-atenciones-como-paciente`. Las rutas hijas se heredan vía `auth_item_child` al migrate; si el rol recibe el padre después, ejecutar la migración de resync correspondiente. |
 | `intent_semantics` | Retirado. La guía arma el recorrido desde `states` (`explanation`, opciones cerradas y `always`). |
@@ -23,7 +24,7 @@ Fuente de verdad para las claves que **`SubIntentEngine`** lee y combina con el 
 
 ### Recorrido para la guía
 
-`IntentSemanticsPromptFormatter` toma `action_name`, la `explanation` de la raíz si existe, el estado `initial` y sigue `always`. El paso enfocado usa `states.*.explanation`. Si `meta.guide_options` apunta a un catálogo cerrado, se listan esas opciones. El resto de la rama se resume como «Después» con `description`. No incluye guards ni ids.
+Si el intent tiene `guide`, `IntentSemanticsPromptFormatter` arma la ficha con `cubre`, `reglas` y `params` (códigos del catálogo de cada `ref`) y cierra con el resultado de los `outcome`. Si no hay `guide`, resume el recorrido desde `action_name`, el estado `initial` y `always`, con `explanation` y las etiquetas de `meta.guide_options`.
 
 | Campo raíz | Audiencia |
 |------------|-----------|

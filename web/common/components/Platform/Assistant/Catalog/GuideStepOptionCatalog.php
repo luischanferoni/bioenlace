@@ -43,6 +43,33 @@ final class GuideStepOptionCatalog
     }
 
     /**
+     * @return list<string>
+     */
+    public static function codes(string $ref): array
+    {
+        $ref = trim($ref);
+        if ($ref === 'reserva_modalidad') {
+            return ReservaModalidadAtencionCatalog::codes();
+        }
+        $step = self::triageStep($ref);
+        if ($step === '') {
+            return [];
+        }
+
+        return ReservaTriageCatalog::codesForStep($step);
+    }
+
+    public static function soleParentCode(string $ref): string
+    {
+        $step = self::triageStep($ref);
+        if ($step === '') {
+            return '';
+        }
+
+        return ReservaTriageCatalog::soleParentForStep($step);
+    }
+
+    /**
      * Qué muestra el sistema al elegir ese código, cuando el catálogo lo declara.
      */
     public static function helpForCode(string $ref, string $code): string

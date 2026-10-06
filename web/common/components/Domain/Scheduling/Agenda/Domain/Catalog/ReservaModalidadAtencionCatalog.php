@@ -75,6 +75,29 @@ final class ReservaModalidadAtencionCatalog
         return $out;
     }
 
+    /**
+     * @return list<string>
+     */
+    public static function codes(): array
+    {
+        $opciones = self::config()['opciones'] ?? [];
+        if (!is_array($opciones)) {
+            return [];
+        }
+        $codes = [];
+        foreach ($opciones as $key => $def) {
+            if (!is_array($def)) {
+                continue;
+            }
+            $code = trim((string) ($def['code'] ?? $key));
+            if ($code !== '') {
+                $codes[] = $code;
+            }
+        }
+
+        return $codes;
+    }
+
     public static function labelShortForCode(string $code): string
     {
         $code = trim($code);

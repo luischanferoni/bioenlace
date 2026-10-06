@@ -36,22 +36,14 @@ class IntentSemanticsPromptFormatterTest extends Unit
             <<<'TXT'
 ID: solicitar_atencion
 TEXTO_BOTÓN: "Solicitar Atención"
-
-QUÉ CUBRE:
-El motivo de su pedido de atención:
-- Malestar nuevo.
-- Estudio o práctica.
-- Control/Seguimiento.
-- Renovación o ajuste de medicación.
-- Orientación por urgencia (dentro del flujo, deriva a llamar al 107).
-
-URGENCIA:
-Si el relato sugiere urgencia o el usuario la declara, mencionar en el mensaje "Llamar al 107", sin retrasar.
-El botón "Solicitar Atención" puede ofrecerse igual, porque dentro incluye orientación por urgencia, para la persona que consulta o por otra persona.
-Si la urgencia es explícita, priorizar la mención de "Llamar al 107" en el mensaje.
-
-RESULTADO:
-Turno agendado, mensaje enviado, o derivación a llamar al 107.
+QUÉ CUBRE: atención médica en general, incluyendo consultas por síntomas nuevos no urgentes, estudios, controles, medicación y orientación ante urgencias.
+REGLAS:
+- Ante duda clínica, criterio conservador.
+- Si el relato sugiere riesgo vital o el usuario declara urgencia, mencionar en el mensaje que llame al 107.
+PARAMS:
+- motivo: malestar_nuevo | estudio_pedido | seguimiento_cronico | urgencia
+- zona (solo si motivo = malestar_nuevo): zona_cabeza_cuello | zona_pecho | zona_abdomen | zona_musculoesqueletico | zona_piel | zona_sistemas | zona_genitourinario | zona_general
+RESULTADO: turno agendado, mensaje enviado, o mención de urgencia.
 TXT,
             $block
         );

@@ -7,8 +7,9 @@ use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
 /**
  * Traduce un flow YAML a la ficha que la guía adjunta.
  *
- * El YAML describe el recorrido. La ficha resume qué cubre, si hay urgencia adentro y en qué termina,
- * usando explanations, opciones, acciones y outcomes. No lee un bloque de ficha en el YAML.
+ * El YAML describe el recorrido. Si el intent trae `guide`, la ficha usa ese bloque
+ * (qué cubre, reglas, params) y el resultado de los outcomes. Si no, resume el recorrido
+ * con explanations, opciones, acciones y outcomes. El motor del flow no lee `guide`.
  */
 final class IntentSemanticsPromptFormatter
 {
@@ -92,6 +93,11 @@ final class IntentSemanticsPromptFormatter
             return '';
         }
 
+        $guide = self::guideOf($manifest);
+        if ($guide !== []) {
+            return self::translateGuideFicha($manifest, $guide, $button);
+        }
+
         return self::translateFicha($manifest, $button);
     }
 
@@ -128,6 +134,163 @@ final class IntentSemanticsPromptFormatter
         }
 
         return implode("\n", $lines);
+    }
+
+    /**
+     * @param array<string, mixed>|null $manifest
+     * @param array<string, mixed> $guide
+     */
+    private static function translateGuideFicha(?array $manifest, array $guide, string $button): string
+    {
+        $lines = [
+            'ID: ' . self::slug($button),
+            'TEXTO_BOTÓN: "' . $button . '"',
+        ];
+        $cubre = trim((string) ($guide['cubre'] ?? ''));
+        if ($cubre !== '') {
+            $lines[] = 'QUÉ CUBRE: ' . $cubre;
+        }
+        $reglas = self::stringList($guide['reglas'] ?? null);
+        if ($reglas !== []) {
+            $lines[] = 'REGLAS:';
+            foreach ($reglas as $regla) {
+                $lines[] = '- ' . $regla;
+            }
+        }
+        $params = self::paramLines(is_array($guide['params'] ?? null) ? $guide['params'] : []);
+        if ($params !== []) {
+            $lines[] = 'PARAMS:';
+            foreach ($params as $line) {
+                $lines[] = $line;
+            }
+        }
+        $states = self::statesOf($manifest);
+        $resultado = self::resultadoGuide($states);
+        if ($resultado !== '') {
+            $lines[] = 'RESULTADO: ' . $resultado;
+        }
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * @param array<string, mixed>|null $manifest
+     * @return array<string, mixed>
+     */
+    private static function guideOf(?array $manifest): array
+    {
+        if ($manifest === null || !isset($manifest['guide']) || !is_array($manifest['guide'])) {
+            return [];
+        }
+        $guide = $manifest['guide'];
+        $cubre = trim((string) ($guide['cubre'] ?? ''));
+        $reglas = self::stringList($guide['reglas'] ?? null);
+        $params = is_array($guide['params'] ?? null) ? $guide['params'] : [];
+        if ($cubre === '' && $reglas === [] && $params === []) {
+            return [];
+        }
+
+        return $guide;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function stringList($value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+        $out = [];
+        foreach ($value as $item) {
+            if (!is_string($item)) {
+                continue;
+            }
+            $item = trim($item);
+            if ($item !== '') {
+                $out[] = $item;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param list<mixed> $params
+     * @return list<string>
+     */
+    private static function paramLines(array $params): array
+    {
+        $resolved = [];
+        foreach ($params as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $name = trim((string) ($row['name'] ?? ''));
+            $ref = trim((string) ($row['ref'] ?? ''));
+            if ($name === '' || $ref === '') {
+                continue;
+            }
+            $codes = GuideStepOptionCatalog::codes($ref);
+            if ($codes === []) {
+                continue;
+            }
+            $resolved[] = [
+                'name' => $name,
+                'codes' => $codes,
+                'parent' => GuideStepOptionCatalog::soleParentCode($ref),
+            ];
+        }
+        $lines = [];
+        foreach ($resolved as $row) {
+            $cond = '';
+            if ($row['parent'] !== '') {
+                foreach ($resolved as $other) {
+                    if ($other['name'] === $row['name'] || !in_array($row['parent'], $other['codes'], true)) {
+                        continue;
+                    }
+                    $cond = ' (solo si ' . $other['name'] . ' = ' . $row['parent'] . ')';
+                    break;
+                }
+            }
+            $lines[] = '- ' . $row['name'] . $cond . ': ' . implode(' | ', $row['codes']);
+        }
+
+        return $lines;
+    }
+
+    /**
+     * @param array<string, array<string, mixed>> $states
+     */
+    private static function resultadoGuide(array $states): string
+    {
+        $ids = [];
+        foreach ($states as $id => $state) {
+            if (is_array($state)) {
+                $ids[$id] = true;
+            }
+        }
+        $clases = self::clasesResultado($ids, $states);
+        $parts = [];
+        if (isset($clases['turno'])) {
+            $parts[] = 'turno agendado';
+        }
+        if (isset($clases['consulta'])) {
+            $parts[] = 'mensaje enviado';
+        }
+        if (isset($clases['urgencia'])) {
+            $parts[] = 'mención de urgencia';
+        }
+        $n = count($parts);
+        if ($n === 0) {
+            return '';
+        }
+        if ($n === 1) {
+            return self::period($parts[0]);
+        }
+        $last = array_pop($parts);
+
+        return self::period(implode(', ', $parts) . ', o ' . $last);
     }
 
     /**

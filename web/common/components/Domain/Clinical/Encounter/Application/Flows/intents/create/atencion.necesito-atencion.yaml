@@ -1,6 +1,18 @@
 intent_id: atencion.necesito-atencion
 version: 1
 action_name: 'Solicitar Atención'
+guide:
+  cubre: 'atención médica en general, incluyendo consultas por síntomas nuevos no urgentes, estudios, controles, medicación y orientación ante urgencias.'
+  reglas:
+    - Ante duda clínica, criterio conservador.
+    - Si el relato sugiere riesgo vital o el usuario declara urgencia, mencionar en el mensaje que llame al 107.
+  params:
+    -
+      name: motivo
+      ref: reserva_triage.raiz
+    -
+      name: zona
+      ref: reserva_triage.zona
 rbac_route: /api/turnos/crear-como-paciente
 
 draft_hydrator:

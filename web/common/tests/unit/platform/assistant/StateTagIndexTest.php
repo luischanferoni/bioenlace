@@ -22,8 +22,8 @@ class StateTagIndexTest extends Unit
         $this->assertStringContainsString('ID: solicitar_atencion', $block);
         $this->assertStringContainsString('TEXTO_BOTÓN: "Solicitar Atención"', $block);
         $this->assertStringContainsString('QUÉ CUBRE:', $block);
-        $this->assertStringContainsString('Renovación o ajuste de medicación.', $block);
-        $this->assertStringContainsString('URGENCIA:', $block);
+        $this->assertStringContainsString('medicación', $block);
+        $this->assertStringContainsString('REGLAS:', $block);
     }
 
     public function testEstudioIncluyeElRecorridoCompleto(): void
@@ -33,7 +33,7 @@ class StateTagIndexTest extends Unit
         );
 
         $this->assertStringContainsString('ID: solicitar_atencion', $block);
-        $this->assertStringContainsString('Estudio o práctica.', $block);
+        $this->assertStringContainsString('estudios', $block);
         $this->assertStringContainsString('RESULTADO:', $block);
     }
 

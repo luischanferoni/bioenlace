@@ -27,6 +27,52 @@ final class ReservaTriageCatalog
         return $labels;
     }
 
+    /**
+     * @return list<string>
+     */
+    public static function codesForStep(string $step): array
+    {
+        $step = trim($step);
+        $codes = [];
+        foreach (self::nodes() as $node) {
+            if (($node['step'] ?? '') !== $step) {
+                continue;
+            }
+            $code = trim((string) ($node['code'] ?? ''));
+            if ($code !== '') {
+                $codes[] = $code;
+            }
+        }
+
+        return $codes;
+    }
+
+    /**
+     * Padre común del paso, si todos los nodos declaran el mismo.
+     */
+    public static function soleParentForStep(string $step): string
+    {
+        $step = trim($step);
+        $parent = null;
+        $seen = false;
+        foreach (self::nodes() as $node) {
+            if (($node['step'] ?? '') !== $step) {
+                continue;
+            }
+            $seen = true;
+            $code = trim((string) ($node['parent'] ?? ''));
+            if ($parent === null) {
+                $parent = $code;
+                continue;
+            }
+            if ($parent !== $code) {
+                return '';
+            }
+        }
+
+        return $seen && $parent !== null ? $parent : '';
+    }
+
     public static function labelForCode(string $code): string
     {
         $code = trim($code);

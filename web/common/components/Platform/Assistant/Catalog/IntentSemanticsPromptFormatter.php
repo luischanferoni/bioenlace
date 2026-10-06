@@ -5,11 +5,10 @@ namespace common\components\Platform\Assistant\Catalog;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
 
 /**
- * Arma el recorrido de un flow como árbol, para el prompt de la guía.
+ * Traduce un flow YAML a la ficha que la guía adjunta.
  *
- * Cada sección es [SECCIÓN] "explanation". Cada elección es [OPCIÓN] "…". El botón es [BOTÓN] "…".
- * Si una opción abre otra sección, una línea ↓ lo indica.
- * Para quién es el camino está en la hoja (fin · …). No adjunta ids ni labels de pantalla.
+ * El YAML describe el recorrido. La ficha resume qué cubre, si hay urgencia adentro y en qué termina,
+ * usando explanations, opciones, acciones y outcomes. No lee un bloque de ficha en el YAML.
  */
 final class IntentSemanticsPromptFormatter
 {
@@ -92,192 +91,489 @@ final class IntentSemanticsPromptFormatter
         if ($button === '') {
             return '';
         }
-        $heading = self::quoted('BOTÓN', $button);
+
+        return self::translateFicha($manifest, $button);
+    }
+
+    /**
+     * @param array<string, mixed>|null $manifest
+     */
+    private static function translateFicha(?array $manifest, string $button): string
+    {
+        $lines = [
+            'ID: ' . self::slug($button),
+            'TEXTO_BOTÓN: "' . $button . '"',
+        ];
+        $states = self::statesOf($manifest);
+        $initial = $manifest !== null ? self::initialId($manifest, $states) : '';
+        $covers = $initial !== '' ? self::coverageLines($initial, $states) : [];
+        if ($covers !== []) {
+            $lines[] = '';
+            $lines[] = 'QUÉ CUBRE:';
+            foreach ($covers as $line) {
+                $lines[] = $line;
+            }
+        }
+        $urgencia = $initial !== '' ? self::urgenciaTexto($button, $initial, $states) : '';
+        if ($urgencia !== '') {
+            $lines[] = '';
+            $lines[] = 'URGENCIA:';
+            $lines[] = $urgencia;
+        }
+        $resultado = self::resultadoLine($states);
+        if ($resultado !== '') {
+            $lines[] = '';
+            $lines[] = 'RESULTADO:';
+            $lines[] = $resultado;
+        }
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * @param array<string, mixed>|null $manifest
+     * @return array<string, array<string, mixed>>
+     */
+    private static function statesOf(?array $manifest): array
+    {
         if ($manifest === null) {
-            return $heading;
+            return [];
         }
         $states = $manifest['states'] ?? null;
-        if (!is_array($states) || $states === []) {
-            return $heading;
+        if (!is_array($states)) {
+            return [];
         }
-        $initial = self::initialId($manifest, $states);
-        if ($initial === '' || !isset($states[$initial]) || !is_array($states[$initial])) {
-            return $heading;
-        }
-
-        $root = self::sectionNode($initial, $states, [], 0);
-        if ($root === null) {
-            return $heading;
+        $out = [];
+        foreach ($states as $id => $state) {
+            if (is_string($id) && is_array($state)) {
+                $out[$id] = $state;
+            }
         }
 
-        return $heading . "\n\n" . implode("\n", self::drawNode($root, 0, false));
+        return $out;
     }
 
     /**
      * @param array<string, array<string, mixed>> $states
-     * @param array<string, true> $seen
-     * @return array{title: string, children: list<array{title: string, children: list<array<string, mixed>>}>}|null
-     */
-    private static function sectionNode(string $id, array $states, array $seen, int $depth): ?array
-    {
-        if ($depth > self::MAX_SCREENS || isset($seen[$id]) || !isset($states[$id]) || !is_array($states[$id])) {
-            return null;
-        }
-        $seen[$id] = true;
-        $state = $states[$id];
-        $explanation = self::period(self::explanation($state));
-        if ($explanation === '') {
-            return null;
-        }
-        $title = self::quoted('SECCIÓN', $explanation);
-
-        $children = [];
-        $submit = self::submitLabel($state);
-        if ($submit !== '' && !self::isFinal($state)) {
-            $children[] = self::choiceNode($submit, [self::finNode($state)]);
-        }
-        foreach (self::actionLabels($state) as $label) {
-            $children[] = self::choiceNode($label, []);
-        }
-
-        if (self::isFinal($state)) {
-            $children[] = self::finNode($state);
-
-            return self::section($title, $children);
-        }
-
-        $edges = self::continuations($id, $states);
-        $named = [];
-        foreach ($edges as $edge) {
-            if (is_string($edge['option']) && $edge['option'] !== '') {
-                $named[] = $edge;
-            }
-        }
-        if (count($named) > 1) {
-            foreach ($named as $edge) {
-                $next = self::sectionNode($edge['to'], $states, $seen, $depth + 1);
-                $children[] = self::choiceNode($edge['option'], $next === null ? [] : [$next]);
-            }
-
-            return self::section($title, $children);
-        }
-
-        $options = self::options($state);
-        if ($options !== [] && count($edges) === 1) {
-            $next = self::sectionNode((string) $edges[0]['to'], $states, $seen, $depth + 1);
-            $last = count($options) - 1;
-            foreach ($options as $index => $option) {
-                $optionChildren = [];
-                if ($index === $last && $next !== null) {
-                    $optionChildren[] = $next;
-                }
-                $children[] = self::choiceNode($option, $optionChildren);
-            }
-            if ($children === [] && $next !== null) {
-                $children[] = $next;
-            }
-
-            return self::section($title, $children);
-        }
-
-        if (count($edges) > 1) {
-            foreach ($edges as $edge) {
-                $next = self::sectionNode($edge['to'], $states, $seen, $depth + 1);
-                if ($next !== null) {
-                    $children[] = $next;
-                }
-            }
-
-            return self::section($title, $children);
-        }
-
-        if ($edges === []) {
-            $children[] = self::finNode($state);
-
-            return self::section($title, $children);
-        }
-
-        $next = self::sectionNode((string) $edges[0]['to'], $states, $seen, $depth + 1);
-        if ($next !== null) {
-            $children[] = $next;
-        }
-
-        return self::section($title, $children);
-    }
-
-    /**
-     * @param list<array<string, mixed>> $children
-     * @return array{kind: string, title: string, children: list<array<string, mixed>>}
-     */
-    private static function section(string $title, array $children): array
-    {
-        return ['kind' => 'section', 'title' => $title, 'children' => $children];
-    }
-
-    /**
-     * @param list<array<string, mixed>> $children
-     * @return array{kind: string, title: string, children: list<array<string, mixed>>}
-     */
-    private static function choiceNode(string $label, array $children): array
-    {
-        return [
-            'kind' => 'option',
-            'title' => self::quoted('OPCIÓN', $label),
-            'children' => $children,
-        ];
-    }
-
-    private static function quoted(string $kind, string $text): string
-    {
-        return '[' . $kind . '] "' . trim($text) . '"';
-    }
-
-    /**
-     * @param array<string, mixed> $state
-     * @return array{title: string, children: list<empty>}
-     */
-    private static function finNode(array $state): array
-    {
-        return [
-            'kind' => 'fin',
-            'title' => 'fin · ' . self::paraDesdeOutcome(self::outcomeText($state)),
-            'children' => [],
-        ];
-    }
-
-    /**
-     * @param array{kind?: string, title: string, children: list<array<string, mixed>>} $node
      * @return list<string>
      */
-    private static function drawNode(array $node, int $depth, bool $afterOption): array
+    private static function coverageLines(string $initial, array $states): array
     {
-        $indent = str_repeat('  ', $depth);
-        $lines = [];
-        if ($afterOption && ($node['kind'] ?? '') === 'section') {
-            $lines[] = $indent . '↓ aparece una nueva sección debajo';
+        $choiceId = self::firstChoice($initial, $states);
+        if ($choiceId === null) {
+            $line = self::linearCoverage($initial, $states);
+            return $line === '' ? [] : [$line];
         }
-        $lines[] = $indent . $node['title'];
-        $childAfterOption = ($node['kind'] ?? '') === 'option';
-        foreach ($node['children'] as $child) {
-            if (!is_array($child) || !isset($child['title'])) {
+
+        $state = $states[$choiceId];
+        $intro = self::upperFirst(self::sinElige(self::explanation($state)));
+        $lines = $intro !== '' ? [$intro . ':'] : [];
+        $ramas = [];
+        foreach (self::outgoing($state, $states) as $edge) {
+            $label = $edge['option'];
+            if ($label === null || $label === '' || !isset($states[$edge['to']])) {
                 continue;
             }
-            foreach (self::drawNode($child, $depth + 1, $childAfterOption) as $line) {
-                $lines[] = $line;
+            $ids = self::reachableFrom($edge['to'], $states);
+            $ramas[] = [
+                'label' => $label,
+                'state' => $states[$edge['to']],
+                'ids' => $ids,
+                'tel' => self::telEn($ids, $states),
+                'clases' => self::clasesResultado($ids, $states),
+            ];
+        }
+        $firmaComun = null;
+        $mismaFirma = true;
+        foreach ($ramas as $rama) {
+            if ($rama['tel'] !== null) {
+                continue;
+            }
+            $keys = array_keys($rama['clases']);
+            sort($keys);
+            $firma = implode('|', $keys);
+            if ($firmaComun === null) {
+                $firmaComun = $firma;
+                continue;
+            }
+            if ($firma !== $firmaComun) {
+                $mismaFirma = false;
+                break;
+            }
+        }
+        $medicacionYa = false;
+        foreach ($ramas as $rama) {
+            if ($rama['tel'] !== null) {
+                $lines[] = '- ' . self::bulletUrgencia($rama['state'], $rama['tel']);
+                continue;
+            }
+            $text = $rama['label'];
+            if (!$mismaFirma && isset($rama['clases']['turno'], $rama['clases']['consulta'])) {
+                $text .= ': consulta o turno';
+            }
+            $lines[] = '- ' . self::period($text);
+            if ($medicacionYa) {
+                continue;
+            }
+            $med = self::fraseMedicacion($rama['ids'], $states);
+            if ($med !== '') {
+                $medicacionYa = true;
+                $lines[] = '- ' . self::period($med);
             }
         }
 
         return $lines;
     }
 
-    private static function paraDesdeOutcome(string $outcome): string
+    /**
+     * @param array<string, array<string, mixed>> $states
+     */
+    private static function firstChoice(string $id, array $states): ?string
     {
-        $folded = self::fold($outcome);
-        if (strpos($folded, 'no esta a cargo') !== false) {
-            return 'la persona que escribe o también otra persona';
+        $seen = [];
+        for ($guard = 0; $guard < self::MAX_SCREENS; $guard++) {
+            if ($id === '' || isset($seen[$id]) || !isset($states[$id])) {
+                return null;
+            }
+            $seen[$id] = true;
+            if (self::options($states[$id]) !== []) {
+                return $id;
+            }
+            $edges = self::continuations($id, $states);
+            if (count($edges) !== 1 || ($edges[0]['option'] ?? null) !== null) {
+                return null;
+            }
+            $id = $edges[0]['to'];
         }
 
-        return 'solo la persona que escribe';
+        return null;
+    }
+
+    /**
+     * @param array<string, array<string, mixed>> $states
+     */
+    private static function linearCoverage(string $id, array $states): string
+    {
+        $parts = [];
+        $seen = [];
+        for ($guard = 0; $guard < self::MAX_SCREENS; $guard++) {
+            if ($id === '' || isset($seen[$id]) || !isset($states[$id])) {
+                break;
+            }
+            $seen[$id] = true;
+            $state = $states[$id];
+            $bit = self::sinElige(self::explanation($state));
+            if ($bit !== '') {
+                $parts[] = $bit;
+            }
+            if (self::isFinal($state)) {
+                break;
+            }
+            $edges = self::continuations($id, $states);
+            if (count($edges) !== 1) {
+                break;
+            }
+            $id = $edges[0]['to'];
+        }
+
+        return self::period(self::joinY($parts));
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     * @param array{label: string, href: string} $tel
+     */
+    private static function bulletUrgencia(array $state, array $tel): string
+    {
+        $clause = self::primeraClausula(self::explanation($state));
+        if ($clause === '') {
+            $clause = 'Urgencia';
+        }
+
+        return self::period($clause . ' (dentro del flujo, deriva a ' . self::lowerFirst($tel['label']) . ')');
+    }
+
+    /**
+     * @param array<string, array<string, mixed>> $states
+     */
+    private static function urgenciaTexto(string $button, string $initial, array $states): string
+    {
+        $choiceId = self::firstChoice($initial, $states);
+        $start = $choiceId ?? $initial;
+        if (!isset($states[$start])) {
+            return '';
+        }
+        foreach (self::outgoing($states[$start], $states) as $edge) {
+            $ids = self::reachableFrom($edge['to'], $states);
+            $tel = self::telEn($ids, $states);
+            if ($tel === null || !isset($states[$edge['to']])) {
+                continue;
+            }
+            $incluye = self::lowerFirst(rtrim(self::explanation($states[$edge['to']]), '.'));
+            $accion = $tel['label'];
+
+            return 'Si el relato sugiere urgencia o el usuario la declara, mencionar en el mensaje "' . $accion . '", sin retrasar.'
+                . "\n"
+                . 'El botón "' . $button . '" puede ofrecerse igual, porque dentro incluye ' . $incluye . '.'
+                . "\n"
+                . 'Si la urgencia es explícita, priorizar la mención de "' . $accion . '" en el mensaje.';
+        }
+
+        return '';
+    }
+
+    /**
+     * @param array<string, array<string, mixed>> $states
+     */
+    private static function resultadoLine(array $states): string
+    {
+        $ids = [];
+        foreach ($states as $id => $state) {
+            if (is_array($state)) {
+                $ids[$id] = true;
+            }
+        }
+        $clases = self::clasesResultado($ids, $states);
+        $parts = [];
+        if (isset($clases['turno'])) {
+            $parts[] = 'Turno agendado';
+        }
+        if (isset($clases['consulta'])) {
+            $parts[] = 'mensaje enviado';
+        }
+        if (isset($clases['urgencia'])) {
+            $parts[] = $clases['urgencia'];
+        }
+        $n = count($parts);
+        if ($n === 0) {
+            return '';
+        }
+        if ($n === 1) {
+            return self::period($parts[0]);
+        }
+        $last = array_pop($parts);
+
+        return self::period(implode(', ', $parts) . ', o ' . $last);
+    }
+
+    /**
+     * @param array<string, true> $ids
+     * @param array<string, array<string, mixed>> $states
+     * @return array<string, string>
+     */
+    private static function clasesResultado(array $ids, array $states): array
+    {
+        $clases = [];
+        foreach ($ids as $id => $_) {
+            if (!isset($states[$id])) {
+                continue;
+            }
+            $state = $states[$id];
+            $outcome = self::fold(self::outcomeText($state));
+            if ($outcome === '') {
+                continue;
+            }
+            if (strpos($outcome, 'reserva un turno') !== false) {
+                $clases['turno'] = 'turno';
+            }
+            if (strpos($outcome, 'urgencia') !== false) {
+                $tel = self::telsDeEstado($state);
+                $clases['urgencia'] = $tel !== []
+                    ? 'derivación a ' . self::lowerFirst($tel[0]['label'])
+                    : 'derivación por urgencia';
+                continue;
+            }
+            if (strpos($outcome, 'medicacion') !== false) {
+                continue;
+            }
+            if (strpos($outcome, 'envia la consulta') !== false || strpos($outcome, 'envia el pedido') !== false) {
+                $clases['consulta'] = 'consulta';
+            }
+        }
+
+        return $clases;
+    }
+
+    /**
+     * @param array<string, true> $ids
+     * @param array<string, array<string, mixed>> $states
+     */
+    private static function fraseMedicacion(array $ids, array $states): string
+    {
+        $renovacion = false;
+        $ajuste = false;
+        $medicacion = false;
+        foreach ($ids as $id => $_) {
+            if (!isset($states[$id])) {
+                continue;
+            }
+            $state = $states[$id];
+            $blob = self::fold(
+                self::explanation($state) . ' ' . self::submitLabel($state) . ' ' . self::outcomeText($state)
+            );
+            $tags = isset($state['meta']['tags']) && is_array($state['meta']['tags']) ? $state['meta']['tags'] : [];
+            foreach ($tags as $tag) {
+                $blob .= ' ' . self::fold((string) $tag);
+            }
+            if (strpos($blob, 'medicacion') !== false || strpos($blob, 'medicamento') !== false) {
+                $medicacion = true;
+            }
+            if (strpos($blob, 'renov') !== false) {
+                $renovacion = true;
+            }
+            if (strpos($blob, 'ajuste') !== false || strpos($blob, 'ajustar') !== false) {
+                $ajuste = true;
+            }
+            if (strpos($blob, 'cambio') !== false && strpos($blob, 'medicacion') !== false) {
+                $ajuste = true;
+            }
+        }
+        if ($renovacion && $ajuste) {
+            return 'Renovación o ajuste de medicación';
+        }
+        if ($renovacion) {
+            return 'Renovación de medicación';
+        }
+        if ($ajuste) {
+            return 'Ajuste de medicación';
+        }
+        if ($medicacion) {
+            return 'Medicación';
+        }
+
+        return '';
+    }
+
+    /**
+     * @param array<string, true> $ids
+     * @param array<string, array<string, mixed>> $states
+     * @return array{label: string, href: string}|null
+     */
+    private static function telEn(array $ids, array $states): ?array
+    {
+        foreach ($ids as $id => $_) {
+            if (!isset($states[$id])) {
+                continue;
+            }
+            $tels = self::telsDeEstado($states[$id]);
+            if ($tels !== []) {
+                return $tels[0];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     * @return list<array{label: string, href: string}>
+     */
+    private static function telsDeEstado(array $state): array
+    {
+        $meta = isset($state['meta']) && is_array($state['meta']) ? $state['meta'] : [];
+        $actions = $meta['flow_actions'] ?? null;
+        if (!is_array($actions)) {
+            return [];
+        }
+        $out = [];
+        foreach ($actions as $action) {
+            if (!is_array($action)) {
+                continue;
+            }
+            $label = trim((string) ($action['label'] ?? ''));
+            $href = trim((string) ($action['href'] ?? ''));
+            if ($label !== '' && strncmp($href, 'tel:', 4) === 0) {
+                $out[] = ['label' => $label, 'href' => $href];
+            }
+        }
+
+        return $out;
+    }
+
+    private static function primeraClausula(string $text): string
+    {
+        $text = trim($text);
+        if ($text === '') {
+            return '';
+        }
+        $comma = strpos($text, ',');
+        if ($comma !== false) {
+            $text = substr($text, 0, $comma);
+        }
+
+        return trim($text, " \t.");
+    }
+
+    private static function sinPersona(string $text): string
+    {
+        $text = trim($text);
+        if (stripos($text, 'La persona ') === 0) {
+            $text = trim(substr($text, strlen('La persona ')));
+        }
+
+        return $text;
+    }
+
+    private static function sinElige(string $text): string
+    {
+        $text = self::sinPersona($text);
+        if (stripos($text, 'elige ') === 0) {
+            $text = trim(substr($text, strlen('elige ')));
+        }
+
+        return trim($text, " \t.");
+    }
+
+    /**
+     * @param list<string> $parts
+     */
+    private static function joinY(array $parts): string
+    {
+        $clean = [];
+        foreach ($parts as $part) {
+            $part = trim($part);
+            if ($part !== '') {
+                $clean[] = $part;
+            }
+        }
+        $n = count($clean);
+        if ($n === 0) {
+            return '';
+        }
+        if ($n === 1) {
+            return self::upperFirst($clean[0]);
+        }
+        $last = array_pop($clean);
+
+        return self::upperFirst(implode(', ', $clean) . ' y ' . $last);
+    }
+
+    private static function slug(string $text): string
+    {
+        $text = self::fold($text);
+        $text = preg_replace('/[^a-z0-9]+/', '_', $text) ?? '';
+
+        return trim($text, '_');
+    }
+
+    private static function upperFirst(string $text): string
+    {
+        $text = trim($text);
+        if ($text === '') {
+            return '';
+        }
+
+        return mb_strtoupper(mb_substr($text, 0, 1)) . mb_substr($text, 1);
+    }
+
+    private static function lowerFirst(string $text): string
+    {
+        $text = trim($text);
+        if ($text === '') {
+            return '';
+        }
+
+        return mb_strtolower(mb_substr($text, 0, 1)) . mb_substr($text, 1);
     }
 
     private static function fold(string $text): string
@@ -608,31 +904,6 @@ final class IntentSemanticsPromptFormatter
         }
 
         return '';
-    }
-
-    /**
-     * @param array<string, mixed> $state
-     * @return list<string>
-     */
-    private static function actionLabels(array $state): array
-    {
-        $meta = isset($state['meta']) && is_array($state['meta']) ? $state['meta'] : [];
-        $actions = $meta['flow_actions'] ?? null;
-        if (!is_array($actions)) {
-            return [];
-        }
-        $labels = [];
-        foreach ($actions as $action) {
-            if (!is_array($action)) {
-                continue;
-            }
-            $label = trim((string) ($action['label'] ?? ''));
-            if ($label !== '') {
-                $labels[] = $label;
-            }
-        }
-
-        return $labels;
     }
 
     /**

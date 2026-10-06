@@ -19,10 +19,11 @@ class StateTagIndexTest extends Unit
             StateTagIndex::match(['medicacion'])
         );
 
-        $this->assertStringContainsString('Solicitar Atención', $block);
-        $this->assertStringContainsString('Urgencia', $block);
-        $this->assertStringContainsString('Estudio o práctica', $block);
-        $this->assertStringContainsString("[BOTÓN] \"Solicitar Atención\"\n\n[SECCIÓN]", $block);
+        $this->assertStringContainsString('ID: solicitar_atencion', $block);
+        $this->assertStringContainsString('TEXTO_BOTÓN: "Solicitar Atención"', $block);
+        $this->assertStringContainsString('QUÉ CUBRE:', $block);
+        $this->assertStringContainsString('Renovación o ajuste de medicación.', $block);
+        $this->assertStringContainsString('URGENCIA:', $block);
     }
 
     public function testEstudioIncluyeElRecorridoCompleto(): void
@@ -31,9 +32,9 @@ class StateTagIndexTest extends Unit
             StateTagIndex::match(['estudio'])
         );
 
-        $this->assertStringContainsString('Estudio o práctica', $block);
-        $this->assertStringContainsString('Urgencia', $block);
-        $this->assertStringContainsString('Malestar nuevo', $block);
+        $this->assertStringContainsString('ID: solicitar_atencion', $block);
+        $this->assertStringContainsString('Estudio o práctica.', $block);
+        $this->assertStringContainsString('RESULTADO:', $block);
     }
 
     public function testTurnoEmpataAtencionYAgenda(): void

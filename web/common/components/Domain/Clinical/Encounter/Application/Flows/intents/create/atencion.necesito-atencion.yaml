@@ -6,7 +6,7 @@ guide:
   reglas:
     - Ante duda clínica, criterio conservador.
     - Si el relato sugiere riesgo vital o el usuario declara urgencia, mencionar en el mensaje que llame al 107.
-    - Si la necesidad es de otra o para otra persona diferente a la que escribe, descartá este botón. No lo incluyas en botones ni le digas que lo toque.
+    - Si la necesidad es de otra persona diferente a quien escribe, descartá este botón si su funcionalidad no permite utilizarlo para otra persona. No lo incluyas entre los botones válidos ni indiques que la persona lo toque.
   params:
     -
       name: motivo

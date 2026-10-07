@@ -14,7 +14,8 @@ optional_attachments:
     Resumen clínico de esta persona:
     {data}
   article: |-
-    Texto de ayuda del sistema:
+    Texto de ayuda del sistema:    
+    - Si trae "## REGLAS", aplicalas igual que las REGLAS de este prompt.
     {data}
 
 stable_prompt: |  

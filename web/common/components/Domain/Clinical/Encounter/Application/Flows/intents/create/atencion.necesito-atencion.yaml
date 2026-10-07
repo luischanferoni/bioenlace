@@ -5,8 +5,8 @@ guide:
   cubre: 'atención médica en general, incluyendo consultas por síntomas nuevos no urgentes, estudios, controles, medicación y orientación ante urgencias.'
   reglas:
     - Ante duda clínica, criterio conservador.
-    - Si el relato sugiere riesgo vital o el usuario declara urgencia, mencionar en el mensaje que llame al 107.
-    - Si la necesidad es de otra persona diferente a quien escribe, descartá este botón si su funcionalidad no permite utilizarlo para otra persona. No lo incluyas entre los botones válidos ni indiques que la persona lo toque.
+    - Si el relato sugiere riesgo vital o urgencia menciona en el mensaje que llame al 107.
+    - Si el relato no sugiere riesgo vital o urgencia y la necesidad es de o para otra persona descartá este botón.
   params:
     -
       name: motivo

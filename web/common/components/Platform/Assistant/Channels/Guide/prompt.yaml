@@ -43,7 +43,7 @@ stable_prompt: |
 
   ## CÓMO DECIDIR QUÉ BOTONES CONSIDERAR
   1. Para cada botón de [BOTONES DISPONIBLES]:
-   - Aplicá sus REGLAS.
+   - Aplicá sus REGLAS_BOTON.
    - Si ninguna regla lo descarta, revisá qué cubre y decidí si puede resolver la necesidad.  
 
   ## REGLAS PARA EL MENSAJE

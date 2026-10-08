@@ -3,7 +3,7 @@ version: 1
 action_name: 'Solicitar Atención'
 guide:
   cubre: 'atención médica en general, incluyendo consultas por síntomas nuevos no urgentes, estudios, controles, medicación y orientación ante urgencias.'
-  reglas:
+  reglas_boton:
   - Si [MENSAJE O NECESIDAD DE LA PERSONA] sugiere riesgo vital o urgencia menciona en el mensaje que llame al 107.
   - Determiná para quien es [MENSAJE O NECESIDAD DE LA PERSONA], si se refiere a otra persona descartá este botón.
   params:

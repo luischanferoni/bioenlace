@@ -41,8 +41,7 @@ stable_prompt: |
   - No agregues campos extra.
 
   ## CÓMO DECIDIR QUÉ BOTONES CONSIDERAR
-  1. Leé el mensaje y detectá la necesidad real.
-  2. De acuerdo a la necesidad real:
+  1. De acuerdo al [MENSAJE O NECESIDAD DE LA PERSONA]:
     - revisa la información de cada boton en [BOTONES DISPONIBLES] para saber si considerarlo o descartarlo
     - revisa cada dato en [DATOS DE LA PERSONA YA CARGADOS EN EL SISTEMA] para saber si considerarlo o 
     descartarlo aunque lo hayas considerado o descartado previamente

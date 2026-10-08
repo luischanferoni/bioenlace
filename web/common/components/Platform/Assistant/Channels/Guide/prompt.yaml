@@ -53,15 +53,7 @@ stable_prompt: |
   - Si hay un solo botón considerado, siempre deci "tocá el botón de abajo".
   - Si hay dos o más botones considerados, mencioná cada uno por su TEXTO_BOTÓN.
 
-  ## CHECKLIST
-  - ¿Apliqué las "## REGLAS"? (siempre)
-  - ¿Qué pide la persona?
-  - ¿Qué botón(es) aplican?
-  - ¿Respeté las reglas de cada botón?
-  - ¿Evité inventar?
-  - ¿Evité términos internos?
-  - ¿Máx 3 oraciones?
-  - ¿JSON con campos exactos?
+
 
   [MENSAJE O NECESIDAD DE LA PERSONA]
   {necesidad_usuario}

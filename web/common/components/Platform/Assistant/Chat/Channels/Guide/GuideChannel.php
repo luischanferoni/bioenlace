@@ -17,6 +17,7 @@ use common\components\Platform\Assistant\Context\AssistantContextAssemblyService
 use common\components\Platform\Assistant\IntentEngine\IntentEngine;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalog;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
+use common\components\Platform\Assistant\Planning\AssistantPlanningLogService;
 use common\components\Platform\Assistant\Planning\CatalogCtaResolver;
 use common\components\Platform\Assistant\Planning\DeclarativePlanExecutionResult;
 use common\components\Platform\Assistant\Planning\SmartCatalogRoutingEvaluation;
@@ -111,6 +112,8 @@ final class GuideChannel
 
   private static function consultGuideIa(string $prompt): ?string
   {
+    AssistantPlanningLogService::setGuidePrompt($prompt);
+
     try {
       $raw = IAManager::consultarIA($prompt, 'asistente-guide', 'text-generation');
       if (is_string($raw) && trim($raw) !== '') {
@@ -273,20 +276,7 @@ final class GuideChannel
 
     $articleData = self::resolveArticlePromptData($content, $userId);
     $prompt = self::buildPrompt($content, $userId, $history, $articleData);
-
-    $text = null;
-    try {
-      $raw = IAManager::consultarIA($prompt, 'asistente-guide', 'text-generation');
-      if (is_string($raw) && trim($raw) !== '') {
-        $text = self::plainTextFromIa($raw);
-      } elseif (is_array($raw) && isset($raw['text'])) {
-        $text = self::plainTextFromIa((string) $raw['text']);
-      }
-    } catch (\Throwable $e) {
-      Yii::warning('GuideChannel: ' . $e->getMessage(), 'asistente');
-
-      return self::iaFailureEnvelope();
-    }
+    $text = self::consultGuideIa($prompt);
 
     if ($text === null || $text === '') {
       return self::iaFailureEnvelope();

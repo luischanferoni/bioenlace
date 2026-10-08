@@ -68,6 +68,7 @@ class AsistenteConsultasQaObserveEnvelopeTest extends Unit
         ], []);
         AssistantPlanningLogService::setRoutingResult('incompletas');
         AssistantPlanningLogService::setFinalPath('2ia_guide');
+        AssistantPlanningLogService::setGuidePrompt("SYSTEM\npregunta del paciente");
 
         ChatPreprocessContext::set([
             'ok' => true,
@@ -88,6 +89,40 @@ class AsistenteConsultasQaObserveEnvelopeTest extends Unit
 
         $this->assertSame('guide', $obs['user_goal']);
         $this->assertSame('operational', $obs['preprocess_user_goal']);
+        $this->assertSame("SYSTEM\npregunta del paciente", $obs['guide_prompt']);
+    }
+
+    public function testReadableReportIncludesGuidePrompt(): void
+    {
+        $txt = AsistenteConsultasQaService::formatReadableReport([
+            'started_at' => '2026-01-01T00:00:00+00:00',
+            'finished_at' => '2026-01-01T00:00:01+00:00',
+            'user_id' => 1,
+            'report_path' => '/tmp/x.json',
+            'summary' => ['total' => 1, 'pass' => 1, 'fail' => 0, 'observe' => 0, 'error' => 0],
+            'results' => [[
+                'id' => 'smoke-demo',
+                'status' => 'pass',
+                'tipo' => 'síntoma',
+                'seccion' => 'smoke',
+                'cobertura' => 'Hoy',
+                'failures' => [],
+                'detalle' => [[
+                    'indice' => 0,
+                    'mensaje' => 'me duele la cabeza',
+                    'observation' => [
+                        'reply_text' => 'Orientación breve',
+                        'kind' => 'interactive',
+                        'buttons' => [],
+                        'guide_prompt' => "PROMPT FINAL GUIDE\nlínea 2",
+                        'planning_applied' => ['final_path' => '2ia_guide'],
+                    ],
+                ]],
+            ]],
+        ]);
+
+        $this->assertStringContainsString('Prompt Guide (final):', $txt);
+        $this->assertStringContainsString("PROMPT FINAL GUIDE\nlínea 2", $txt);
     }
 
     public function testClaraAnsweredByGuideCountsAsGuide(): void

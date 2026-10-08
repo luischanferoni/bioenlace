@@ -5,7 +5,7 @@ guide:
   cubre: 'atención médica en general, incluyendo consultas por síntomas nuevos no urgentes, estudios, controles, medicación y orientación ante urgencias.'
   reglas:
     - Si el mensaje o necesidad de la persona sugiere riesgo vital o urgencia menciona en el mensaje que llame al 107.
-    - Si la necesidad es de o para otra persona descartá este botón.
+    - Si la necesidad es de o para otra persona no consideres este botón.
   params:
     -
       name: motivo

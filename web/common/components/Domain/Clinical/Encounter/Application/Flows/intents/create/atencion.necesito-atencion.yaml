@@ -5,7 +5,7 @@ guide:
   cubre: 
   reglas:
     - Si [MENSAJE O NECESIDAD DE LA PERSONA] sugiere riesgo vital o urgencia menciona en el mensaje que llame al 107.
-    - Si [MENSAJE O NECESIDAD DE LA PERSONA] corresponde a otra persona descartá este botón.
+    - determiná para quien es [MENSAJE O NECESIDAD DE LA PERSONA], si se refiere a otra persona descartá este botón.
   params:
     -
       name: motivo

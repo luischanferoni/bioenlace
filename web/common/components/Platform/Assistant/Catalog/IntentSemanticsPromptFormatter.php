@@ -8,7 +8,7 @@ use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
  * Traduce un flow YAML a la ficha que la guía adjunta.
  *
  * El YAML describe el recorrido. Si el intent trae `guide`, la ficha usa ese bloque
- * (qué cubre, reglas, params) y el resultado de los outcomes. Si no, resume el recorrido
+ * (qué cubre, reglas_boton, params) y el resultado de los outcomes. Si no, resume el recorrido
  * con explanations, opciones, acciones y outcomes. El motor del flow no lee `guide`.
  */
 final class IntentSemanticsPromptFormatter
@@ -150,10 +150,10 @@ final class IntentSemanticsPromptFormatter
         if ($cubre !== '') {
             $lines[] = 'QUÉ CUBRE: ' . $cubre;
         }
-        $reglas = self::stringList($guide['reglas'] ?? null);
-        if ($reglas !== []) {
-            $lines[] = 'REGLAS:';
-            foreach ($reglas as $regla) {
+        $reglasBoton = self::stringList($guide['reglas_boton'] ?? null);
+        if ($reglasBoton !== []) {
+            $lines[] = 'REGLAS_BOTON:';
+            foreach ($reglasBoton as $regla) {
                 $lines[] = '- ' . $regla;
             }
         }
@@ -184,9 +184,9 @@ final class IntentSemanticsPromptFormatter
         }
         $guide = $manifest['guide'];
         $cubre = trim((string) ($guide['cubre'] ?? ''));
-        $reglas = self::stringList($guide['reglas'] ?? null);
+        $reglasBoton = self::stringList($guide['reglas_boton'] ?? null);
         $params = is_array($guide['params'] ?? null) ? $guide['params'] : [];
-        if ($cubre === '' && $reglas === [] && $params === []) {
+        if ($cubre === '' && $reglasBoton === [] && $params === []) {
             return [];
         }
 

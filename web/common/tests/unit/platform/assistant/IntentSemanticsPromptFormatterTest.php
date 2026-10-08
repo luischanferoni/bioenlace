@@ -36,9 +36,9 @@ class IntentSemanticsPromptFormatterTest extends Unit
 ID: atencion.necesito-atencion
 TEXTO_BOTÓN: "Solicitar Atención"
 QUÉ CUBRE: atención médica en general, incluyendo consultas por síntomas nuevos no urgentes, estudios, controles, medicación y orientación ante urgencias.
-REGLAS:
-- Ante duda clínica, criterio conservador.
-- Si el relato sugiere riesgo vital o el usuario declara urgencia, mencionar en el mensaje que llame al 107.
+REGLAS_BOTON:
+- Si [MENSAJE O NECESIDAD DE LA PERSONA] sugiere riesgo vital o urgencia menciona en el mensaje que llame al 107.
+- Determiná para quien es [MENSAJE O NECESIDAD DE LA PERSONA], si se refiere a otra persona descartá este botón.
 PARAMS:
 - motivo: malestar_nuevo | estudio_pedido | seguimiento_cronico | urgencia
 - zona (solo si motivo = malestar_nuevo): zona_cabeza_cuello | zona_pecho | zona_abdomen | zona_musculoesqueletico | zona_piel | zona_sistemas | zona_genitourinario | zona_general

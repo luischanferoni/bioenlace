@@ -14,8 +14,8 @@ optional_attachments:
     Resumen clínico de esta persona:
     {data}
   article: |-
-    Texto de ayuda del sistema:    
-    - Si trae "## REGLAS", aplicalas igual que las REGLAS de este prompt.
+    Mas información sobre el sistema:
+
     {data}
 
 stable_prompt: |  
@@ -72,8 +72,8 @@ stable_prompt: |
   {intent_semantics}
 
   ## REGLAS
-    - Si hay un solo botón considerado, puedes decir "tocá el botón de abajo".
-    - Si hay dos o más botones considerados, mencioná cada uno por su TEXTO_BOTÓN.
+  - Si hay un solo botón considerado, puedes decir "tocá el botón de abajo".
+  - Si hay dos o más botones considerados, mencioná cada uno por su TEXTO_BOTÓN.
 
   {scoped_system_records}
 

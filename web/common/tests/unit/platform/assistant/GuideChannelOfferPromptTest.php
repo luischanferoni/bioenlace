@@ -50,7 +50,7 @@ class GuideChannelOfferPromptTest extends Unit
     {
         $prompt = GuideChannel::buildPrompt('me duele la cabeza', 0, '', null);
         verify($prompt)->stringContainsString('me duele la cabeza');
-        verify($prompt)->stringContainsString('información hospitalaria');
+        verify($prompt)->stringContainsString('FORMATO DE SALIDA');
     }
 
     public function testFormatPreprocessFactsLines(): void
@@ -74,9 +74,10 @@ class GuideChannelOfferPromptTest extends Unit
     public function testStablePromptFromGuideYaml(): void
     {
         $template = GuideChannelConfig::stablePrompt();
-        verify($template)->stringContainsString('información hospitalaria');
-        verify($template)->stringContainsString('{current_message}');
-        verify($template)->stringContainsString('Mensaje actual del usuario');
+        verify($template)->stringContainsString('FORMATO DE SALIDA');
+        verify($template)->stringContainsString('{necesidad_usuario}');
+        verify($template)->stringContainsString('{intent_semantics}');
+        verify($template)->stringContainsString('"mensaje"');
     }
 
     public function testPlainTextFromIaStripsMarkdown(): void

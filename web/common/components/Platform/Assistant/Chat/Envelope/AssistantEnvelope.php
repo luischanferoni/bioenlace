@@ -72,8 +72,8 @@ final class AssistantEnvelope
     }
 
     /**
-     * @param list<array{label: string, intent_id: string, content?: string}> $buttons
-     * @return array{kind: string, text: string, buttons: list<array{label: string, intent_id: string, content?: string}>}
+     * @param list<array{label: string, intent_id: string, content?: string, params?: array<string, mixed>}> $buttons
+     * @return array{kind: string, text: string, buttons: list<array{label: string, intent_id: string, content?: string, params?: array<string, mixed>}>}
      */
     public static function interactive(string $text, array $buttons): array
     {
@@ -94,6 +94,9 @@ final class AssistantEnvelope
             $btnContent = trim((string) ($b['content'] ?? ''));
             if ($btnContent !== '') {
                 $row['content'] = $btnContent;
+            }
+            if (isset($b['params']) && is_array($b['params']) && $b['params'] !== []) {
+                $row['params'] = $b['params'];
             }
             $normalized[] = $row;
         }

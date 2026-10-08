@@ -71,12 +71,15 @@ final class GuideChannel
       $evaluation
     );
 
-    $ctaButtons = CatalogCtaResolver::resolveAll($evaluation, $userId);
-    $text = self::consultGuideIa($prompt);
-    if ($text === null || $text === '') {
-      if ($ctaButtons === []) {
-        return null;
-      }
+    $allowedButtons = CatalogCtaResolver::resolveAll($evaluation, $userId);
+    $interpreted = self::interpretGuideIa(self::consultGuideIaRaw($prompt), $allowedButtons);
+    $text = $interpreted['text'];
+    $ctaButtons = $interpreted['buttons'];
+
+    if ($text === '' && $ctaButtons === []) {
+      return null;
+    }
+    if ($text === '') {
       $text = self::ctaFallbackText($ctaButtons);
     }
 
@@ -110,17 +113,17 @@ final class GuideChannel
     return 'Para continuar, elegí una de estas opciones: ' . implode(' o ', $parts) . '.';
   }
 
-  private static function consultGuideIa(string $prompt): ?string
+  private static function consultGuideIaRaw(string $prompt): ?string
   {
     AssistantPlanningLogService::setGuidePrompt($prompt);
 
     try {
       $raw = IAManager::consultarIA($prompt, 'asistente-guide', 'text-generation');
       if (is_string($raw) && trim($raw) !== '') {
-        return self::plainTextFromIa($raw);
+        return trim($raw);
       }
       if (is_array($raw) && isset($raw['text'])) {
-        $text = self::plainTextFromIa((string) $raw['text']);
+        $text = trim((string) $raw['text']);
 
         return $text !== '' ? $text : null;
       }
@@ -129,6 +132,75 @@ final class GuideChannel
     }
 
     return null;
+  }
+
+  /**
+   * Interpreta la salida Guide: JSON con mensaje/botones, o texto plano (fallback).
+   *
+   * Con JSON válido, los botones los elige la IA (intersección con los ofrecidos).
+   * Sin JSON, se conservan todos los CTA ofrecidos (compat).
+   *
+   * @param list<array{label: string, intent_id: string}> $allowedButtons
+   * @return array{text: string, buttons: list<array{label: string, intent_id: string, params?: array<string, mixed>}>, parsed: bool}
+   */
+  public static function interpretGuideIa(?string $raw, array $allowedButtons): array
+  {
+    $parsed = GuideIaResponseParser::parse($raw);
+    if ($parsed === null) {
+      if ($raw !== null && trim($raw) !== '') {
+        Yii::info(['guide_ia_json_parse_failed' => true], 'asistente-planning');
+      }
+      $text = $raw !== null && $raw !== '' ? self::plainTextFromIa($raw) : '';
+
+      return [
+        'text' => $text,
+        'buttons' => $allowedButtons,
+        'parsed' => false,
+      ];
+    }
+
+    $text = self::plainTextFromIa($parsed['mensaje']);
+
+    return [
+      'text' => $text,
+      'buttons' => self::filterSelectedButtons($parsed['botones'], $allowedButtons),
+      'parsed' => true,
+    ];
+  }
+
+  /**
+   * @param list<array{intent_id: string, params: array<string, mixed>}> $selected
+   * @param list<array{label: string, intent_id: string}> $allowed
+   * @return list<array{label: string, intent_id: string, params?: array<string, mixed>}>
+   */
+  private static function filterSelectedButtons(array $selected, array $allowed): array
+  {
+    $byId = [];
+    foreach ($allowed as $row) {
+      $intentId = trim((string) ($row['intent_id'] ?? ''));
+      if ($intentId === '') {
+        continue;
+      }
+      $byId[$intentId] = $row;
+    }
+
+    $out = [];
+    $seen = [];
+    foreach ($selected as $row) {
+      $intentId = trim((string) ($row['intent_id'] ?? ''));
+      if ($intentId === '' || !isset($byId[$intentId]) || isset($seen[$intentId])) {
+        continue;
+      }
+      $seen[$intentId] = true;
+      $button = $byId[$intentId];
+      $params = is_array($row['params'] ?? null) ? $row['params'] : [];
+      if ($params !== []) {
+        $button['params'] = $params;
+      }
+      $out[] = $button;
+    }
+
+    return $out;
   }
 
   /**
@@ -276,13 +348,28 @@ final class GuideChannel
 
     $articleData = self::resolveArticlePromptData($content, $userId);
     $prompt = self::buildPrompt($content, $userId, $history, $articleData);
-    $text = self::consultGuideIa($prompt);
-
-    if ($text === null || $text === '') {
+    $allowedButtons = $offer !== null
+      ? [['label' => $offer['label'], 'intent_id' => $offer['intent_id']]]
+      : [];
+    $interpreted = self::interpretGuideIa(self::consultGuideIaRaw($prompt), $allowedButtons);
+    $text = $interpreted['text'];
+    if ($text === '') {
       return self::iaFailureEnvelope();
     }
 
-    return self::finalizeResponse($text, $offer, $origin);
+    $selectedOffer = null;
+    foreach ($interpreted['buttons'] as $button) {
+      if (($button['intent_id'] ?? '') === ($offer['intent_id'] ?? '')) {
+        $selectedOffer = $offer;
+        break;
+      }
+    }
+    // JSON vacío de botones: no forzar CTA. Sin JSON (fallback): conservar offer.
+    if (!$interpreted['parsed']) {
+      $selectedOffer = $offer;
+    }
+
+    return self::finalizeResponse($text, $selectedOffer, $origin);
   }
 
   /**

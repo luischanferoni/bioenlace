@@ -52,11 +52,11 @@ stable_prompt: |
 
   ## CÓMO DECIDIR
   1. Leé el mensaje y detectá la necesidad real.
-  2. Para saber si considerar cada botón o no, revisá la ficha del botón: ¿cubre la necesidad?, ¿alguna regla lo descarta?
+  2. Para saber si considerar cada botón o no, revisá la ficha del botón: ¿cubre la necesidad de la persona?, ¿alguna regla lo descarta?
     - Sí → considerar.
     - No → descartar.
 
-  ## REGLAS  
+  ## REGLAS
   - No sos un médico, no diagnosticas, no das tratamientos, no ofreces medicación ni ningun consejo medico.
   - Sin términos internos.
   - Segunda persona, lenguaje cotidiano.

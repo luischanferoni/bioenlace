@@ -120,16 +120,24 @@ final class GuideChannel
     try {
       $raw = IAManager::consultarIA($prompt, 'asistente-guide', 'text-generation');
       if (is_string($raw) && trim($raw) !== '') {
-        return trim($raw);
+        $text = trim($raw);
+        AssistantPlanningLogService::setGuideIaRaw($text);
+
+        return $text;
       }
       if (is_array($raw) && isset($raw['text'])) {
         $text = trim((string) $raw['text']);
+        if ($text !== '') {
+          AssistantPlanningLogService::setGuideIaRaw($text);
 
-        return $text !== '' ? $text : null;
+          return $text;
+        }
       }
     } catch (\Throwable $e) {
       Yii::warning('GuideChannel: ' . $e->getMessage(), 'asistente');
     }
+
+    AssistantPlanningLogService::setGuideIaRaw(null);
 
     return null;
   }

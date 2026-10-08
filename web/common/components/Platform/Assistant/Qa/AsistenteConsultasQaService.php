@@ -302,6 +302,10 @@ final class AsistenteConsultasQaService
         if (is_array($planning) && is_string($planning['guide_prompt'] ?? null)) {
             $guidePrompt = (string) $planning['guide_prompt'];
         }
+        $guideIaRaw = '';
+        if (is_array($planning) && is_string($planning['guide_ia_raw'] ?? null)) {
+            $guideIaRaw = (string) $planning['guide_ia_raw'];
+        }
 
         return [
             'success' => (bool) ($envelope['success'] ?? ($envelope['kind'] ?? '') !== ''),
@@ -325,6 +329,7 @@ final class AsistenteConsultasQaService
             'reply_text' => $text,
             'error' => AssistantDraftNormalizer::scalarString($envelope['error'] ?? ''),
             'guide_prompt' => $guidePrompt,
+            'guide_ia_raw' => $guideIaRaw,
             'planning_applied' => $planning,
         ];
     }
@@ -818,42 +823,50 @@ final class AsistenteConsultasQaService
                 $lines[] = '--- mensaje ' . $n . ' ---';
                 $lines[] = 'Usuario: ' . (string) ($turn['mensaje'] ?? '');
                 $lines[] = '';
-                $reply = trim((string) ($obs['reply_text'] ?? ''));
-                $error = trim((string) ($obs['error'] ?? ''));
-                if ($reply !== '') {
-                    $lines[] = 'Asistente: ' . $reply;
-                } elseif ($error !== '') {
-                    $lines[] = 'Asistente: (error) ' . $error;
+                $guideIaRaw = trim((string) ($obs['guide_ia_raw'] ?? ''));
+                if ($guideIaRaw !== '') {
+                    $lines[] = 'Respuesta IA Guide (cruda):';
+                    $lines[] = str_repeat('-', 72);
+                    $lines[] = $guideIaRaw;
+                    $lines[] = str_repeat('-', 72);
                 } else {
-                    $lines[] = 'Asistente: (sin texto)';
-                }
-                if ($error !== '' && $reply !== '' && $reply !== $error) {
-                    $lines[] = 'Error: ' . $error;
-                }
-                $kind = trim((string) ($obs['kind'] ?? ''));
-                if ($kind !== '') {
-                    $lines[] = 'kind: ' . $kind;
-                }
-                $flowId = trim((string) ($obs['flow_intent_id'] ?? ''));
-                if ($flowId !== '') {
-                    $lines[] = 'flow_intent_id: ' . $flowId;
-                }
-                $lines[] = '';
-                $lines[] = 'Botones:';
-                $buttons = is_array($obs['buttons'] ?? null) ? $obs['buttons'] : [];
-                if ($buttons === []) {
-                    $lines[] = '  (ninguno)';
-                } else {
-                    foreach ($buttons as $b) {
-                        if (!is_array($b)) {
-                            continue;
-                        }
-                        $label = trim((string) ($b['label'] ?? ''));
-                        $iid = trim((string) ($b['intent_id'] ?? ''));
-                        if ($iid !== '') {
-                            $lines[] = '  - "' . $label . '" → ' . $iid;
-                        } else {
-                            $lines[] = '  - "' . $label . '"';
+                    $reply = trim((string) ($obs['reply_text'] ?? ''));
+                    $error = trim((string) ($obs['error'] ?? ''));
+                    if ($reply !== '') {
+                        $lines[] = 'Asistente: ' . $reply;
+                    } elseif ($error !== '') {
+                        $lines[] = 'Asistente: (error) ' . $error;
+                    } else {
+                        $lines[] = 'Asistente: (sin texto)';
+                    }
+                    if ($error !== '' && $reply !== '' && $reply !== $error) {
+                        $lines[] = 'Error: ' . $error;
+                    }
+                    $kind = trim((string) ($obs['kind'] ?? ''));
+                    if ($kind !== '') {
+                        $lines[] = 'kind: ' . $kind;
+                    }
+                    $flowId = trim((string) ($obs['flow_intent_id'] ?? ''));
+                    if ($flowId !== '') {
+                        $lines[] = 'flow_intent_id: ' . $flowId;
+                    }
+                    $lines[] = '';
+                    $lines[] = 'Botones:';
+                    $buttons = is_array($obs['buttons'] ?? null) ? $obs['buttons'] : [];
+                    if ($buttons === []) {
+                        $lines[] = '  (ninguno)';
+                    } else {
+                        foreach ($buttons as $b) {
+                            if (!is_array($b)) {
+                                continue;
+                            }
+                            $label = trim((string) ($b['label'] ?? ''));
+                            $iid = trim((string) ($b['intent_id'] ?? ''));
+                            if ($iid !== '') {
+                                $lines[] = '  - "' . $label . '" → ' . $iid;
+                            } else {
+                                $lines[] = '  - "' . $label . '"';
+                            }
                         }
                     }
                 }

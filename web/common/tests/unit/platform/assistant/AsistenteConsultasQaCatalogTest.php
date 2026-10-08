@@ -139,6 +139,7 @@ class AsistenteConsultasQaCatalogTest extends Unit
             ]],
         ]);
         $this->assertStringContainsString('Usuario: Quiero un turno', $txt);
+        // Sin guide_ia_raw: fallback al envelope formateado.
         $this->assertStringContainsString('Asistente: Indicame el servicio.', $txt);
         $this->assertStringContainsString('"Charla" → assistant.channel.guide', $txt);
         $this->assertStringContainsString('preprocess + 2 IA', $txt);

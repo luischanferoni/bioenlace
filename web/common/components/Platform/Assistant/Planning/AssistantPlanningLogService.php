@@ -39,6 +39,7 @@ final class AssistantPlanningLogService
             'executed_tools' => [],
             'final_path' => '',
             'guide_prompt' => '',
+            'guide_ia_raw' => '',
         ];
     }
 
@@ -55,6 +56,15 @@ final class AssistantPlanningLogService
     {
         self::ensure();
         self::$current['guide_prompt'] = $prompt;
+    }
+
+    /**
+     * Respuesta cruda de la 2ª IA guide (sin parse ni envelope).
+     */
+    public static function setGuideIaRaw(?string $raw): void
+    {
+        self::ensure();
+        self::$current['guide_ia_raw'] = $raw !== null ? $raw : '';
     }
 
     /**
@@ -131,6 +141,7 @@ final class AssistantPlanningLogService
                 'executed_tools' => [],
                 'final_path' => '',
                 'guide_prompt' => '',
+                'guide_ia_raw' => '',
             ];
         }
     }

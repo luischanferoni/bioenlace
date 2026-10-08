@@ -27,3 +27,6 @@ fields:
   guide_prompt:
     type: string
     notes: Prompt final enviado a la 2ª IA guide (vacío si no hubo llamada).
+  guide_ia_raw:
+    type: string
+    notes: Respuesta cruda de la 2ª IA guide (sin parse ni envelope; vacío si no hubo llamada).

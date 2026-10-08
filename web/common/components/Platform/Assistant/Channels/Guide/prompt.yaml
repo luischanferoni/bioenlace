@@ -60,7 +60,7 @@ stable_prompt: |
   ## FORMATO DE SALIDA
   {
     "mensaje": "texto principal, máx 3 oraciones",
-    "botones": [ { "intent_id": "...", "params": {} } ]
+    "botones": []
   }
   - botones puede estar vacío.
   - solo los botones considerados deben estar en "botones" del JSON.

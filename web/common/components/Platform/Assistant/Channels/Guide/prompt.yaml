@@ -62,7 +62,4 @@ stable_prompt: |
     "mensaje": "texto principal, máx 3 oraciones",
     "botones": [ { "intent_id": "...", "params": {} } ]
   }
-  - botones puede estar vacío.
-  - intent_id debe existir en los botones recibidos.
-  - params es opcional. Si no estás seguro, dejalo vacío u omitilo.
-  - No agregues campos extra.
+  - botones debe estar vacío.

@@ -44,7 +44,7 @@ stable_prompt: |
   ## CÓMO DECIDIR QUÉ BOTONES CONSIDERAR
   1. Para cada botón de [BOTONES DISPONIBLES]:
    - Aplicá sus REGLAS.
-  2. Una vez terminada esta evaluación, los botones considerados quedan definidos y no deben modificarse al elaborar el mensaje y el JSON de salida.
+   - Si ninguna regla lo descarta, revisá qué cubre y decidí si puede resolver la necesidad.  
 
   ## REGLAS PARA EL MENSAJE
   - No sos un médico, no diagnosticas, no das tratamientos, no ofreces medicación ni ningun consejo medico.

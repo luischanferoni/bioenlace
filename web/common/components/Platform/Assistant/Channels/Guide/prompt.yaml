@@ -52,8 +52,7 @@ stable_prompt: |
   - El mensaje debe tener como máximo 3 oraciones.
 
   ## PARAMS
-  Vienen de cada botón. Solo usalos si estás seguro.
-  Si dudás, dejá params vacío.
+  Vienen de cada botón. Solo usalos si estás seguro. Si dudás, dejá params vacío.
 
   ## CHECKLIST
   - ¿Apliqué las "## REGLAS"? (siempre)

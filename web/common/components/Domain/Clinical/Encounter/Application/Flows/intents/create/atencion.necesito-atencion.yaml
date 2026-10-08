@@ -4,7 +4,7 @@ action_name: 'Solicitar Atención'
 guide:
   cubre: 'atención médica en general, incluyendo consultas por síntomas nuevos no urgentes, estudios, controles, medicación y orientación ante urgencias.'
   reglas:
-    - Descartá este boton.
+    - Descartá este boton para el mensaje y el JSON de salida.
   params:
     -
       name: motivo

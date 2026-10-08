@@ -37,8 +37,6 @@ stable_prompt: |
 
   {clinical_record_block}
 
-  {article_block}
-
   ## FORMATO DE SALIDA
   {
     "mensaje": "texto principal, máx 3 oraciones",
@@ -63,3 +61,5 @@ stable_prompt: |
   - El mensaje debe tener como máximo 3 oraciones.
   - Si hay un solo botón considerado, siempre deci "tocá el botón de abajo".
   - Si hay dos o más botones considerados, mencioná cada uno por su TEXTO_BOTÓN.
+
+    {article_block}

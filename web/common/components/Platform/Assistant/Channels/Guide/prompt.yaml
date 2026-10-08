@@ -45,8 +45,7 @@ stable_prompt: |
   1. Para cada botón de [BOTONES DISPONIBLES]:
     - Revisá qué cubre.
     - Aplicá sus reglas.
-    - Si alguna regla indica que no debe considerarse, descartalo.
-    - Solo consideralo si ninguna regla indica descartarlo y el botón puede resolver la necesidad de la persona.
+    - De acuerdo a lo que cubra y las reglas, decidí si considerar o descartarlo.
   2. Una vez terminada esta evaluación, los botones considerados quedan definidos y no deben modificarse al elaborar el mensaje.
 
   ## REGLAS PARA EL MENSAJE
@@ -65,7 +64,7 @@ stable_prompt: |
     "mensaje": "texto principal, máx 3 oraciones",
     "botones": [ { "intent_id": "...", "params": {} } ]
   }
-  - botones va vacio siempre.
+  - botones puede estar vacío.
   - solo los botones considerados deben estar en el JSON.
   - intent_id debe existir en los botones recibidos.
   - params es opcional. Si no estás seguro, dejalo vacío u omitilo.

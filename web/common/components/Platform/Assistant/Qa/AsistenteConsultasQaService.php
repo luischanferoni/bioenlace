@@ -870,6 +870,13 @@ final class AsistenteConsultasQaService
                 $lines[] = '';
                 $lines[] = '--- mensaje ' . $n . ' ---';
                 $lines[] = 'Usuario: ' . (string) ($turn['mensaje'] ?? '');
+                $necesidad = trim((string) ($obs['necesidad_usuario'] ?? ''));
+                if ($necesidad === '') {
+                    $planning = is_array($obs['planning_applied'] ?? null) ? $obs['planning_applied'] : [];
+                    $firstIa = is_array($planning['first_ia'] ?? null) ? $planning['first_ia'] : [];
+                    $necesidad = trim((string) ($firstIa['necesidad_usuario'] ?? ''));
+                }
+                $lines[] = 'necesidad_usuario: ' . ($necesidad !== '' ? $necesidad : '(vacía)');
                 $lines[] = '';
                 $guideIaRaw = trim((string) ($obs['guide_ia_raw'] ?? ''));
                 if ($guideIaRaw !== '') {

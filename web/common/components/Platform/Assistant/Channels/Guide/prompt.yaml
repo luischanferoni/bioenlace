@@ -53,6 +53,7 @@ stable_prompt: |
   - El mensaje debe tener como máximo 3 oraciones.  
   - Si hay un solo botones_considerados, siempre deci "tocá el botón de abajo".
   - Si hay dos o más botones_considerados, mencioná cada uno por su TEXTO_BOTÓN.
+  - Si no hay botones_considerados, siempre deci "ningun boton considerado".
   - [MAS INFORMACIÓN SOBRE EL SISTEMA]:
       - ¿hay informacion del sistema que necesite considerar para elaborar el mensaje para la persona?
       - ¿hay alguna REGLAS_EXTRA a considerar para elaborar el mensaje para la persona?

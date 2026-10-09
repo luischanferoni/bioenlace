@@ -52,9 +52,10 @@ stable_prompt: |
   - Segunda persona, lenguaje cotidiano.
   - El mensaje debe tener como máximo 3 oraciones.
   - Tomas en cuenta los botones_considerados para elaborar el mensaje y explicar como puede resolver la necesidad.
-  - Si hay un solo botones_considerados, siempre deci "tocá el botón de abajo".
-  - Si hay dos o más botones_considerados, mencioná cada uno por su TEXTO_BOTÓN.
-  - Si no hay botones_considerados, no recomiendes utilizar botones ni menciones acciones que dependan de ellos.
+  - Siempre tienes que indicar a la persona como tiene que hacer:
+    - Si hay un solo botones_considerados, dices "tocá el botón de abajo" o "tocá el botón de {TEXTO_BOTÓN}".
+    - Si hay dos o más botones_considerados, mencioná cada uno por su TEXTO_BOTÓN.
+  - Si no hay botones_considerados, siempre deci "Ningun boton considerado".
   - [MAS INFORMACIÓN SOBRE EL SISTEMA]:
       - ¿hay informacion del sistema que necesite considerar para elaborar el mensaje para la persona?
       - ¿hay alguna REGLAS_EXTRA a considerar para elaborar el mensaje para la persona?

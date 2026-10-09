@@ -870,13 +870,28 @@ final class AsistenteConsultasQaService
                 $lines[] = '';
                 $lines[] = '--- mensaje ' . $n . ' ---';
                 $lines[] = 'Usuario: ' . (string) ($turn['mensaje'] ?? '');
+                $planning = is_array($obs['planning_applied'] ?? null) ? $obs['planning_applied'] : [];
+                $firstIa = is_array($planning['first_ia'] ?? null) ? $planning['first_ia'] : [];
                 $necesidad = trim((string) ($obs['necesidad_usuario'] ?? ''));
                 if ($necesidad === '') {
-                    $planning = is_array($obs['planning_applied'] ?? null) ? $obs['planning_applied'] : [];
-                    $firstIa = is_array($planning['first_ia'] ?? null) ? $planning['first_ia'] : [];
                     $necesidad = trim((string) ($firstIa['necesidad_usuario'] ?? ''));
                 }
                 $lines[] = 'necesidad_usuario: ' . ($necesidad !== '' ? $necesidad : '(vacía)');
+                $tags = is_array($obs['tags'] ?? null) ? $obs['tags'] : [];
+                if ($tags === [] && is_array($firstIa['tags'] ?? null)) {
+                    $tags = $firstIa['tags'];
+                }
+                $tagParts = [];
+                foreach ($tags as $tag) {
+                    if (!is_string($tag)) {
+                        continue;
+                    }
+                    $tag = trim($tag);
+                    if ($tag !== '') {
+                        $tagParts[] = $tag;
+                    }
+                }
+                $lines[] = 'tags: ' . ($tagParts !== [] ? implode(', ', $tagParts) : '(ninguno)');
                 $lines[] = '';
                 $guideIaRaw = trim((string) ($obs['guide_ia_raw'] ?? ''));
                 if ($guideIaRaw !== '') {

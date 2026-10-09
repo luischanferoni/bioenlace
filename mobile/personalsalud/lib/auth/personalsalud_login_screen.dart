@@ -475,6 +475,10 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
                   const InstitutionalSignupLink(),
                   BioSpacing.gapH(BioSpacing.sm),
                   const PrivacyPolicyLink(),
+                  if (_demoAvailable) ...[
+                    BioSpacing.gapH(BioSpacing.md),
+                    _buildProbarDemoButton(),
+                  ],
                 ],
               ),
             ),
@@ -562,27 +566,31 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
                           );
                         },
                 ),
-                if (_demoAvailable) ...[
-                  BioSpacing.gapH(BioSpacing.md),
-                  BioButton(
-                    label: _submitting ? 'Abriendo demo…' : 'Probar demo',
-                    icon: Icons.science_outlined,
-                    intent: UiIntent.neutral,
-                    variant: BioButtonVariant.soft,
-                    fullWidth: true,
-                    loading: _submitting,
-                    onPressed: _submitting ? null : _onProbarDemo,
-                  ),
-                ],
                 BioSpacing.gapH(BioSpacing.lg),
                 const InstitutionalSignupLink(),
                 BioSpacing.gapH(BioSpacing.sm),
                 const PrivacyPolicyLink(),
+                if (_demoAvailable) ...[
+                  BioSpacing.gapH(BioSpacing.md),
+                  _buildProbarDemoButton(),
+                ],
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildProbarDemoButton() {
+    return BioButton(
+      label: _submitting ? 'Abriendo demo…' : 'Probar demo',
+      icon: Icons.science_outlined,
+      intent: UiIntent.neutral,
+      variant: BioButtonVariant.soft,
+      fullWidth: true,
+      loading: _submitting,
+      onPressed: _submitting ? null : _onProbarDemo,
     );
   }
 }

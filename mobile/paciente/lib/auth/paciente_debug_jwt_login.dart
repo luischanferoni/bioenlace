@@ -51,7 +51,7 @@ class PacienteDebugJwtAuth {
   }
 }
 
-/// Botón visible solo en builds debug: entra como [kPacienteDebugJwtUserId].
+/// CTA «Probar demo» (solo `kDebugMode`): entra como [kPacienteDebugJwtUserId].
 class PacienteDebugJwtLoginButton extends StatefulWidget {
   const PacienteDebugJwtLoginButton({super.key});
 
@@ -125,12 +125,13 @@ class _PacienteDebugJwtLoginButtonState extends State<PacienteDebugJwtLoginButto
   @override
   Widget build(BuildContext context) {
     if (!kDebugMode) return const SizedBox.shrink();
-    return BioButton.outlinePrimary(
-      label: _loading
-          ? 'Generando JWT…'
-          : 'Debug JWT (user $kPacienteDebugJwtUserId)',
-      icon: Icons.bug_report_outlined,
+    return BioButton(
+      label: _loading ? 'Abriendo demo…' : 'Probar demo',
+      icon: Icons.science_outlined,
+      intent: UiIntent.neutral,
+      variant: BioButtonVariant.soft,
       fullWidth: true,
+      loading: _loading,
       onPressed: _loading ? null : _login,
     );
   }

@@ -419,10 +419,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   loading: _isAuthenticating,
                   onPressed: _canAttemptLogin ? _loginWithBiometrics : null,
                 ),
-                if (kDebugMode && widget.debugExtras != null) ...[
-                  BioSpacing.gapH(BioSpacing.lg),
-                  widget.debugExtras!,
-                ],
                 if (widget.onNavigateToSignup != null) ...[
                   BioSpacing.gapH(BioSpacing.lg),
                   BioButton.softPrimary(
@@ -435,6 +431,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
                 BioSpacing.gapH(BioSpacing.lg),
                 const PrivacyPolicyLink(),
+                if (kDebugMode && widget.debugExtras != null) ...[
+                  BioSpacing.gapH(BioSpacing.md),
+                  widget.debugExtras!,
+                ],
               ],
             ),
           ),

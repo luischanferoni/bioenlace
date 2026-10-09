@@ -101,6 +101,7 @@ class AsistenteConsultasQaObserveEnvelopeTest extends Unit
             'finished_at' => '2026-01-01T00:00:01+00:00',
             'user_id' => 1,
             'report_path' => '/tmp/x.json',
+            'include_guide_prompt' => true,
             'summary' => ['total' => 1, 'pass' => 1, 'fail' => 0, 'observe' => 0, 'error' => 0],
             'results' => [[
                 'id' => 'smoke-demo',
@@ -136,6 +137,39 @@ class AsistenteConsultasQaObserveEnvelopeTest extends Unit
         $this->assertStringNotContainsString('normalized:', $txt);
         $this->assertStringNotContainsString('Asistente: Orientación breve', $txt);
         $this->assertStringNotContainsString('Solicitar Atención', $txt);
+    }
+
+    public function testReadableReportOmitsGuidePromptWhenFlagOff(): void
+    {
+        $txt = AsistenteConsultasQaService::formatReadableReport([
+            'started_at' => '2026-01-01T00:00:00+00:00',
+            'finished_at' => '2026-01-01T00:00:01+00:00',
+            'user_id' => 1,
+            'report_path' => '/tmp/x.json',
+            'include_guide_prompt' => false,
+            'summary' => ['total' => 1, 'pass' => 1, 'fail' => 0, 'observe' => 0, 'error' => 0],
+            'results' => [[
+                'id' => 'smoke-demo',
+                'status' => 'pass',
+                'tipo' => 'síntoma',
+                'seccion' => 'smoke',
+                'cobertura' => 'Hoy',
+                'failures' => [],
+                'detalle' => [[
+                    'indice' => 0,
+                    'mensaje' => 'me duele la cabeza',
+                    'observation' => [
+                        'guide_prompt' => "PROMPT FINAL GUIDE\nlínea 2",
+                        'guide_ia_raw' => "{\"mensaje\":\"crudo\",\"botones\":[]}",
+                        'planning_applied' => ['final_path' => '2ia_guide'],
+                    ],
+                ]],
+            ]],
+        ]);
+
+        $this->assertStringNotContainsString('Prompt Guide (final):', $txt);
+        $this->assertStringNotContainsString('PROMPT FINAL GUIDE', $txt);
+        $this->assertStringContainsString('Respuesta IA Guide (cruda):', $txt);
     }
 
     public function testClaraAnsweredByGuideCountsAsGuide(): void

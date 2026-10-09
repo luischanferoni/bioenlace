@@ -37,6 +37,9 @@ class QaController extends Controller
     /** @var string Ruta absoluta o @alias del reporte JSON (opcional). */
     public $report = '';
 
+    /** @var bool Incluir el prompt Guide final en consola / JSON / TXT. */
+    public $includeGuidePrompt = false;
+
     /**
      * @param string $actionID
      * @return list<string>
@@ -51,6 +54,7 @@ class QaController extends Controller
             'limit',
             'list',
             'report',
+            'includeGuidePrompt',
         ]);
     }
 
@@ -76,6 +80,7 @@ class QaController extends Controller
      *   php yii qa/asistente-consultas --list=1 --seccion=smoke
      *   php yii qa/asistente-consultas --userId=123 --seccion=smoke
      *   php yii qa/asistente-consultas --userId=123 --caseId=smoke-sintoma-cabeza
+     *   php yii qa/asistente-consultas --userId=123 --caseId=smoke-sintoma-cabeza --includeGuidePrompt=1
      *
      * --userId = columna `user.id` (mismo id que /user-management/user-permission/set?id=…).
      * No es id_persona. La persona se resuelve por personas.id_user.
@@ -166,8 +171,15 @@ class QaController extends Controller
             (int) $this->userId
         ), Console::BOLD);
 
+        $includeGuidePrompt = (bool) $this->includeGuidePrompt;
+
         try {
-            $batch = AsistenteConsultasQaService::run($cases, (int) $this->userId, $reportPath);
+            $batch = AsistenteConsultasQaService::run(
+                $cases,
+                (int) $this->userId,
+                $reportPath,
+                $includeGuidePrompt
+            );
         } catch (\Throwable $e) {
             $this->stderr($e->getMessage() . "\n", Console::FG_RED);
 
@@ -175,7 +187,7 @@ class QaController extends Controller
         }
 
         foreach ($batch['results'] as $result) {
-            $this->imprimirResultado($result);
+            $this->imprimirResultado($result, $includeGuidePrompt);
         }
 
         $summary = is_array($batch['summary'] ?? null) ? $batch['summary'] : [];
@@ -201,7 +213,7 @@ class QaController extends Controller
     /**
      * @param array<string, mixed> $result
      */
-    private function imprimirResultado(array $result): void
+    private function imprimirResultado(array $result, bool $includeGuidePrompt = false): void
     {
         $status = (string) ($result['status'] ?? '?');
         if ($status === 'pass') {
@@ -237,7 +249,9 @@ class QaController extends Controller
             }
         }
 
-        $this->imprimirGuidePrompts($result);
+        if ($includeGuidePrompt) {
+            $this->imprimirGuidePrompts($result);
+        }
 
         $failures = is_array($result['failures'] ?? null) ? $result['failures'] : [];
         foreach ($failures as $f) {

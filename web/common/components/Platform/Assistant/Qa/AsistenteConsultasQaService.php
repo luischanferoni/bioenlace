@@ -126,8 +126,12 @@ final class AsistenteConsultasQaService
      *   results: list<array<string, mixed>>
      * }
      */
-    public static function run(array $cases, int $userId, ?string $reportPath = null): array
-    {
+    public static function run(
+        array $cases,
+        int $userId,
+        ?string $reportPath = null,
+        bool $includeGuidePrompt = false
+    ): array {
         if ($userId <= 0) {
             throw new \InvalidArgumentException('userId debe ser un usuario paciente válido (> 0).');
         }
@@ -147,6 +151,9 @@ final class AsistenteConsultasQaService
         foreach ($cases as $case) {
             $summary['total']++;
             $result = self::runCase($case, $userId);
+            if (!$includeGuidePrompt) {
+                $result = self::stripGuidePromptFromResult($result);
+            }
             $results[] = $result;
             $status = (string) ($result['status'] ?? 'error');
             if (isset($summary[$status])) {
@@ -169,6 +176,7 @@ final class AsistenteConsultasQaService
             'user_id' => $userId,
             'report_path' => $path,
             'report_txt_path' => $txtPath,
+            'include_guide_prompt' => $includeGuidePrompt,
             'summary' => $summary,
             'results' => $results,
         ];
@@ -176,6 +184,46 @@ final class AsistenteConsultasQaService
         self::writeReadableReport($txtPath, $payload);
 
         return $payload;
+    }
+
+    /**
+     * @param array<string, mixed> $result
+     * @return array<string, mixed>
+     */
+    private static function stripGuidePromptFromResult(array $result): array
+    {
+        if (isset($result['last']) && is_array($result['last'])) {
+            $result['last'] = self::stripGuidePromptFromObservation($result['last']);
+        }
+        $detalle = is_array($result['detalle'] ?? null) ? $result['detalle'] : [];
+        foreach ($detalle as $i => $turn) {
+            if (!is_array($turn)) {
+                continue;
+            }
+            $obs = is_array($turn['observation'] ?? null) ? $turn['observation'] : null;
+            if ($obs === null) {
+                continue;
+            }
+            $turn['observation'] = self::stripGuidePromptFromObservation($obs);
+            $detalle[$i] = $turn;
+        }
+        $result['detalle'] = $detalle;
+
+        return $result;
+    }
+
+    /**
+     * @param array<string, mixed> $observation
+     * @return array<string, mixed>
+     */
+    private static function stripGuidePromptFromObservation(array $observation): array
+    {
+        unset($observation['guide_prompt']);
+        if (isset($observation['planning_applied']) && is_array($observation['planning_applied'])) {
+            unset($observation['planning_applied']['guide_prompt']);
+        }
+
+        return $observation;
     }
 
     /**
@@ -874,8 +922,9 @@ final class AsistenteConsultasQaService
                 foreach (self::formatFlowLegendLines($obs) as $flowLine) {
                     $lines[] = $flowLine;
                 }
+                $includeGuidePrompt = (bool) ($payload['include_guide_prompt'] ?? false);
                 $guidePrompt = trim((string) ($obs['guide_prompt'] ?? ''));
-                if ($guidePrompt !== '') {
+                if ($includeGuidePrompt && $guidePrompt !== '') {
                     $lines[] = '';
                     $lines[] = 'Prompt Guide (final):';
                     $lines[] = str_repeat('-', 72);

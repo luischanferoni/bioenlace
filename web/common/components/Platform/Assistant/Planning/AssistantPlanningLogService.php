@@ -38,6 +38,7 @@ final class AssistantPlanningLogService
             'declarative_plan' => null,
             'executed_tools' => [],
             'final_path' => '',
+            'guide_prompt' => '',
             'guide_ia_raw' => '',
         ];
     }
@@ -46,6 +47,15 @@ final class AssistantPlanningLogService
     {
         self::ensure();
         self::$current['routing_result'] = trim($routingResult);
+    }
+
+    /**
+     * Prompt completo enviado a la 2ª IA del canal guide (si hubo).
+     */
+    public static function setGuidePrompt(string $prompt): void
+    {
+        self::ensure();
+        self::$current['guide_prompt'] = $prompt;
     }
 
     /**
@@ -130,6 +140,7 @@ final class AssistantPlanningLogService
                 'declarative_plan' => null,
                 'executed_tools' => [],
                 'final_path' => '',
+                'guide_prompt' => '',
                 'guide_ia_raw' => '',
             ];
         }

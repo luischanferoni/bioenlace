@@ -68,6 +68,7 @@ class AsistenteConsultasQaObserveEnvelopeTest extends Unit
         ], []);
         AssistantPlanningLogService::setRoutingResult('incompletas');
         AssistantPlanningLogService::setFinalPath('2ia_guide');
+        AssistantPlanningLogService::setGuidePrompt("SYSTEM\npregunta del paciente");
         AssistantPlanningLogService::setGuideIaRaw('{"mensaje":"texto","botones":[]}');
 
         ChatPreprocessContext::set([
@@ -89,11 +90,11 @@ class AsistenteConsultasQaObserveEnvelopeTest extends Unit
 
         $this->assertSame('guide', $obs['user_goal']);
         $this->assertSame('operational', $obs['preprocess_user_goal']);
-        $this->assertArrayNotHasKey('guide_prompt', $obs);
+        $this->assertSame("SYSTEM\npregunta del paciente", $obs['guide_prompt']);
         $this->assertSame('{"mensaje":"texto","botones":[]}', $obs['guide_ia_raw']);
     }
 
-    public function testReadableReportIncludesRawIaWithoutPromptOrPreprocess(): void
+    public function testReadableReportIncludesGuidePromptAndRawIaWithoutPreprocess(): void
     {
         $txt = AsistenteConsultasQaService::formatReadableReport([
             'started_at' => '2026-01-01T00:00:00+00:00',
@@ -117,6 +118,7 @@ class AsistenteConsultasQaObserveEnvelopeTest extends Unit
                         'buttons' => [
                             ['label' => 'Solicitar Atención', 'intent_id' => 'atencion.necesito-atencion'],
                         ],
+                        'guide_prompt' => "PROMPT FINAL GUIDE\nlínea 2",
                         'guide_ia_raw' => "{\"mensaje\":\"crudo\",\"botones\":[]}",
                         'normalized_text' => 'me duele la cabeza',
                         'tags' => ['sintoma'],
@@ -126,9 +128,10 @@ class AsistenteConsultasQaObserveEnvelopeTest extends Unit
             ]],
         ]);
 
+        $this->assertStringContainsString('Prompt Guide (final):', $txt);
+        $this->assertStringContainsString("PROMPT FINAL GUIDE\nlínea 2", $txt);
         $this->assertStringContainsString('Respuesta IA Guide (cruda):', $txt);
         $this->assertStringContainsString('{"mensaje":"crudo","botones":[]}', $txt);
-        $this->assertStringNotContainsString('Prompt Guide', $txt);
         $this->assertStringNotContainsString('historial preprocess', $txt);
         $this->assertStringNotContainsString('normalized:', $txt);
         $this->assertStringNotContainsString('Asistente: Orientación breve', $txt);

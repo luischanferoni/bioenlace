@@ -115,6 +115,8 @@ final class GuideChannel
 
   private static function consultGuideIaRaw(string $prompt): ?string
   {
+    AssistantPlanningLogService::setGuidePrompt($prompt);
+
     try {
       $raw = IAManager::consultarIA($prompt, 'asistente-guide', 'text-generation');
       if (is_string($raw) && trim($raw) !== '') {

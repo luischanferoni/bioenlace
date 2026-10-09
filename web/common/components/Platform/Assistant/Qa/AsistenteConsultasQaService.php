@@ -298,6 +298,10 @@ final class AsistenteConsultasQaService
             }
         }
 
+        $guidePrompt = '';
+        if (is_array($planning) && is_string($planning['guide_prompt'] ?? null)) {
+            $guidePrompt = (string) $planning['guide_prompt'];
+        }
         $guideIaRaw = '';
         if (is_array($planning) && is_string($planning['guide_ia_raw'] ?? null)) {
             $guideIaRaw = (string) $planning['guide_ia_raw'];
@@ -324,6 +328,7 @@ final class AsistenteConsultasQaService
             'buttons' => self::buttonSummaries($envelope),
             'reply_text' => $text,
             'error' => AssistantDraftNormalizer::scalarString($envelope['error'] ?? ''),
+            'guide_prompt' => $guidePrompt,
             'guide_ia_raw' => $guideIaRaw,
             'planning_applied' => $planning,
         ];
@@ -868,6 +873,14 @@ final class AsistenteConsultasQaService
                 $lines[] = '';
                 foreach (self::formatFlowLegendLines($obs) as $flowLine) {
                     $lines[] = $flowLine;
+                }
+                $guidePrompt = trim((string) ($obs['guide_prompt'] ?? ''));
+                if ($guidePrompt !== '') {
+                    $lines[] = '';
+                    $lines[] = 'Prompt Guide (final):';
+                    $lines[] = str_repeat('-', 72);
+                    $lines[] = $guidePrompt;
+                    $lines[] = str_repeat('-', 72);
                 }
             }
             $lines[] = '';

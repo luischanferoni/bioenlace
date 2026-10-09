@@ -237,46 +237,9 @@ class QaController extends Controller
             }
         }
 
-        $this->imprimirGuidePrompts($result);
-
         $failures = is_array($result['failures'] ?? null) ? $result['failures'] : [];
         foreach ($failures as $f) {
             $this->stdout('  ! ' . $f . "\n", Console::FG_RED);
-        }
-    }
-
-    /**
-     * Imprime el prompt final de Guide de cada turno (si hubo 2ª IA).
-     *
-     * @param array<string, mixed> $result
-     */
-    private function imprimirGuidePrompts(array $result): void
-    {
-        $detalle = is_array($result['detalle'] ?? null) ? $result['detalle'] : [];
-        foreach ($detalle as $turn) {
-            if (!is_array($turn)) {
-                continue;
-            }
-            $obs = is_array($turn['observation'] ?? null) ? $turn['observation'] : [];
-            $prompt = trim((string) ($obs['guide_prompt'] ?? ''));
-            if ($prompt === '') {
-                continue;
-            }
-            $n = (int) ($turn['indice'] ?? 0) + 1;
-            $this->stdout(sprintf("\n  --- Prompt Guide (final) mensaje %d ---\n", $n), Console::BOLD);
-            $this->stdout($prompt . "\n");
-            $this->stdout("  --- fin prompt Guide ---\n");
-        }
-
-        // Caso de un solo turno sin detalle (defensivo): usar last.
-        if ($detalle === []) {
-            $last = is_array($result['last'] ?? null) ? $result['last'] : null;
-            $prompt = $last !== null ? trim((string) ($last['guide_prompt'] ?? '')) : '';
-            if ($prompt !== '') {
-                $this->stdout("\n  --- Prompt Guide (final) ---\n", Console::BOLD);
-                $this->stdout($prompt . "\n");
-                $this->stdout("  --- fin prompt Guide ---\n");
-            }
         }
     }
 

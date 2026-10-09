@@ -298,10 +298,6 @@ final class AsistenteConsultasQaService
             }
         }
 
-        $guidePrompt = '';
-        if (is_array($planning) && is_string($planning['guide_prompt'] ?? null)) {
-            $guidePrompt = (string) $planning['guide_prompt'];
-        }
         $guideIaRaw = '';
         if (is_array($planning) && is_string($planning['guide_ia_raw'] ?? null)) {
             $guideIaRaw = (string) $planning['guide_ia_raw'];
@@ -328,7 +324,6 @@ final class AsistenteConsultasQaService
             'buttons' => self::buttonSummaries($envelope),
             'reply_text' => $text,
             'error' => AssistantDraftNormalizer::scalarString($envelope['error'] ?? ''),
-            'guide_prompt' => $guidePrompt,
             'guide_ia_raw' => $guideIaRaw,
             'planning_applied' => $planning,
         ];
@@ -874,14 +869,6 @@ final class AsistenteConsultasQaService
                 foreach (self::formatFlowLegendLines($obs) as $flowLine) {
                     $lines[] = $flowLine;
                 }
-                $guidePrompt = trim((string) ($obs['guide_prompt'] ?? ''));
-                if ($guidePrompt !== '') {
-                    $lines[] = '';
-                    $lines[] = 'Prompt Guide (final):';
-                    $lines[] = str_repeat('-', 72);
-                    $lines[] = $guidePrompt;
-                    $lines[] = str_repeat('-', 72);
-                }
             }
             $lines[] = '';
         }
@@ -905,50 +892,30 @@ final class AsistenteConsultasQaService
             ? trim((string) $planning['routing_result'])
             : '';
         $userGoal = trim((string) ($observation['user_goal'] ?? ''));
-        $hint = trim((string) ($observation['routing_hint'] ?? ''));
         $flowIntent = trim((string) ($observation['flow_intent_id'] ?? ''));
 
         $lines = [];
         $lines[] = 'Flujo:';
 
-        $tags = is_array($observation['tags'] ?? null) ? $observation['tags'] : [];
-        $extractions = is_array($observation['extractions'] ?? null) ? $observation['extractions'] : [];
-        $normalized = trim((string) ($observation['normalized_text'] ?? ''));
-        $necesidad = trim((string) ($observation['necesidad_usuario'] ?? ''));
-        $history = trim((string) ($observation['conversation_history'] ?? ''));
-        if ($necesidad === '' && is_array($planning)) {
-            $firstIa = is_array($planning['first_ia'] ?? null) ? $planning['first_ia'] : [];
-            $necesidad = trim((string) ($firstIa['necesidad_usuario'] ?? ''));
-        }
-
         if ($planning === null || $finalPath === '') {
-            $lines[] = '  preprocess + PHP (sin telemetría de planning / path vacío)';
+            $lines[] = '  PHP (sin telemetría de planning / path vacío)';
             if ($userGoal !== '') {
                 $lines[] = '  canal: ' . $userGoal;
-            }
-            $preprocessGoal = trim((string) ($observation['preprocess_user_goal'] ?? ''));
-            if ($preprocessGoal !== '' && $preprocessGoal !== $userGoal) {
-                $lines[] = '  preprocess_user_goal: ' . $preprocessGoal;
             }
             if ($flowIntent !== '') {
                 $lines[] = '  intent: ' . $flowIntent;
             }
-            self::appendPreprocessContextLines($lines, $normalized, $necesidad, $tags, $extractions, $hint, $history);
 
             return $lines;
         }
 
         if ($finalPath === '2ia_guide') {
-            $lines[] = '  preprocess + 2 IA (guide)';
+            $lines[] = '  2 IA (guide)';
             if ($routing !== '') {
                 $lines[] = '  routing: ' . $routing;
             }
             if ($userGoal !== '') {
                 $lines[] = '  canal: ' . $userGoal;
-            }
-            $preprocessGoal = trim((string) ($observation['preprocess_user_goal'] ?? ''));
-            if ($preprocessGoal !== '' && $preprocessGoal !== $userGoal) {
-                $lines[] = '  preprocess_user_goal: ' . $preprocessGoal;
             }
             $tools = self::attachedContextToolIds($planning);
             $lines[] = '  Datos cargados:';
@@ -959,12 +926,11 @@ final class AsistenteConsultasQaService
                     $lines[] = '    - ' . $toolId;
                 }
             }
-            self::appendPreprocessContextLines($lines, $normalized, $necesidad, $tags, $extractions, $hint, $history);
 
             return $lines;
         }
 
-        // 1ia_* y demás: preprocess + decisión PHP (sin 2ª IA guide)
+        // 1ia_* y demás: decisión PHP (sin 2ª IA guide)
         $pathLabels = [
             '1ia_clara' => 'match claro → guía',
             '1ia_dudosa' => 'dudosa → desambiguación',
@@ -974,16 +940,12 @@ final class AsistenteConsultasQaService
             'synthesis_unavailable' => 'guide no disponible / fallback (legacy)',
         ];
         $pathLabel = $pathLabels[$finalPath] ?? $finalPath;
-        $lines[] = '  preprocess + PHP solamente (' . $pathLabel . ')';
+        $lines[] = '  PHP solamente (' . $pathLabel . ')';
         if ($routing !== '') {
             $lines[] = '  routing: ' . $routing;
         }
         if ($userGoal !== '') {
             $lines[] = '  canal: ' . $userGoal;
-        }
-        $preprocessGoal = trim((string) ($observation['preprocess_user_goal'] ?? ''));
-        if ($preprocessGoal !== '' && $preprocessGoal !== $userGoal) {
-            $lines[] = '  preprocess_user_goal: ' . $preprocessGoal;
         }
         if ($flowIntent !== '') {
             $lines[] = '  intent: ' . $flowIntent;
@@ -991,92 +953,6 @@ final class AsistenteConsultasQaService
         $kind = trim((string) ($observation['kind'] ?? ''));
         if ($kind !== '') {
             $lines[] = '  kind: ' . $kind;
-        }
-        self::appendPreprocessContextLines($lines, $normalized, $necesidad, $tags, $extractions, $hint, $history);
-
-        return $lines;
-    }
-
-    /**
-     * @param list<string> $lines
-     * @param list<mixed> $tags
-     * @param list<mixed> $extractions
-     */
-    private static function appendPreprocessContextLines(
-        array &$lines,
-        string $normalized,
-        string $necesidad,
-        array $tags,
-        array $extractions,
-        string $hint,
-        string $history = ''
-    ): void {
-        if ($normalized !== '') {
-            $lines[] = '  normalized: ' . $normalized;
-        }
-        $lines[] = '  historial preprocess:';
-        if ($history === '') {
-            $lines[] = '    (sin historial previo)';
-        } else {
-            foreach (preg_split("/\r\n|\n|\r/", $history) as $historyLine) {
-                $historyLine = trim((string) $historyLine);
-                if ($historyLine !== '') {
-                    $lines[] = '    ' . $historyLine;
-                }
-            }
-        }
-        $lines[] = '  necesidad_usuario: ' . ($necesidad !== '' ? $necesidad : '(vacía)');
-        if ($hint !== '') {
-            $lines[] = '  hint preprocess: ' . $hint;
-        }
-        $tagStr = [];
-        foreach ($tags as $t) {
-            if (is_string($t) && trim($t) !== '') {
-                $tagStr[] = trim($t);
-            }
-        }
-        $lines[] = '  tags: ' . ($tagStr === [] ? '(ninguno)' : implode(', ', $tagStr));
-        $lines[] = '  extractions:';
-        $extractionLines = self::formatExtractionLines($extractions);
-        if ($extractionLines === []) {
-            $lines[] = '    (ninguna)';
-        } else {
-            foreach ($extractionLines as $extractionLine) {
-                $lines[] = '    ' . $extractionLine;
-            }
-        }
-    }
-
-    /**
-     * @param list<mixed> $extractions
-     * @return list<string>
-     */
-    private static function formatExtractionLines(array $extractions): array
-    {
-        $lines = [];
-        foreach ($extractions as $row) {
-            if (!is_array($row)) {
-                continue;
-            }
-            $span = trim((string) ($row['span'] ?? ''));
-            $synonyms = [];
-            if (isset($row['synonyms']) && is_array($row['synonyms'])) {
-                foreach ($row['synonyms'] as $synonym) {
-                    if (is_string($synonym) && trim($synonym) !== '') {
-                        $synonyms[] = trim($synonym);
-                    }
-                }
-            }
-            if ($span === '' && $synonyms === []) {
-                continue;
-            }
-            if ($span === '') {
-                $lines[] = implode(', ', $synonyms);
-                continue;
-            }
-            $lines[] = $synonyms === []
-                ? $span
-                : $span . ' (syn: ' . implode(', ', $synonyms) . ')';
         }
 
         return $lines;

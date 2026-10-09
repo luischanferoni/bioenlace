@@ -56,7 +56,7 @@ stable_prompt: |
   - Si hay dos o más botones considerados, mencioná cada uno por su TEXTO_BOTÓN.
   - [MAS INFORMACIÓN SOBRE EL SISTEMA]:
       - ¿hay informacion del sistema que necesite considerar para elaborar el mensaje para la persona?
-      - ¿hay alguna regla a considerar para elaborar el mensaje para la persona?
+      - ¿hay alguna REGLAS_EXTRA a considerar para elaborar el mensaje para la persona?
 
   ## FORMATO DE SALIDA
   {

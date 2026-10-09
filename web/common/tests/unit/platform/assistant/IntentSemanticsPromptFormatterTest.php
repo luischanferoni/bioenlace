@@ -17,7 +17,7 @@ class IntentSemanticsPromptFormatterTest extends Unit
     {
         $block = IntentSemanticsPromptFormatter::formatIntentId('turnos.crear-como-paciente');
 
-        $this->assertStringStartsWith("ID: turnos.crear-como-paciente\nTEXTO_BOTÓN: \"Turno con un especialista\"", $block);
+        $this->assertStringStartsWith("INTENT_ID: turnos.crear-como-paciente\nTEXTO_BOTÓN: \"Turno con un especialista\"", $block);
         $this->assertStringContainsString('la oferta del centro que tiene agenda', $block);
         $this->assertStringContainsString('el centro de salud', $block);
         $this->assertStringContainsString('horario para reservar el turno', $block);
@@ -33,7 +33,7 @@ class IntentSemanticsPromptFormatterTest extends Unit
 
         $this->assertSame(
             <<<'TXT'
-ID: atencion.necesito-atencion
+INTENT_ID: atencion.necesito-atencion
 TEXTO_BOTÓN: "Solicitar Atención"
 QUÉ CUBRE: atención médica en general, incluyendo consultas por síntomas nuevos no urgentes, estudios, controles, medicación y orientación ante urgencias.
 REGLAS_BOTON:
@@ -59,11 +59,11 @@ TXT,
         ], 4);
 
         $this->assertSame(2, substr_count($wrapped, 'TEXTO_BOTÓN: "'));
-        $this->assertStringContainsString('ID: turnos.crear-como-paciente', $wrapped);
-        $this->assertStringContainsString('ID: atencion.necesito-atencion', $wrapped);
+        $this->assertStringContainsString('INTENT_ID: turnos.crear-como-paciente', $wrapped);
+        $this->assertStringContainsString('INTENT_ID: atencion.necesito-atencion', $wrapped);
         $this->assertLessThan(
-            strpos($wrapped, 'ID: atencion.necesito-atencion'),
-            strpos($wrapped, 'ID: turnos.crear-como-paciente')
+            strpos($wrapped, 'INTENT_ID: atencion.necesito-atencion'),
+            strpos($wrapped, 'INTENT_ID: turnos.crear-como-paciente')
         );
     }
 }

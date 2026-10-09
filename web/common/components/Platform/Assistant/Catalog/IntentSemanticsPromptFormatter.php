@@ -107,7 +107,7 @@ final class IntentSemanticsPromptFormatter
     private static function translateFicha(?array $manifest, string $button, string $intentId): string
     {
         $lines = [
-            'ID: ' . self::fichaId($manifest, $intentId),
+            'INTENT_ID: ' . self::fichaId($manifest, $intentId),
             'TEXTO_BOTÓN: "' . $button . '"',
         ];
         $states = self::statesOf($manifest);
@@ -143,7 +143,7 @@ final class IntentSemanticsPromptFormatter
     private static function translateGuideFicha(?array $manifest, array $guide, string $button, string $intentId): string
     {
         $lines = [
-            'ID: ' . self::fichaId($manifest, $intentId),
+            'INTENT_ID: ' . self::fichaId($manifest, $intentId),
             'TEXTO_BOTÓN: "' . $button . '"',
         ];
         $cubre = trim((string) ($guide['cubre'] ?? ''));

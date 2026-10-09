@@ -5,7 +5,10 @@ namespace common\components\Platform\Assistant\Chat\Channels\Guide;
 /**
  * Parsea la salida JSON de la 2ª IA Guide ({@see channels/Guide/prompt.yaml}).
  *
- * Contrato: { "mensaje": string, "botones": [ { "intent_id": string, "params"?: object } ] }
+ * Contrato canónico:
+ * { "mensaje": string, "botones_considerados": [ { "intent_id": string, "params"?: object } ] }
+ *
+ * Compat: "botones" como alias de "botones_considerados"; "id" como alias de "intent_id".
  */
 final class GuideIaResponseParser
 {
@@ -37,31 +40,44 @@ final class GuideIaResponseParser
 
         $mensaje = trim((string) $decoded['mensaje']);
         $botones = [];
-        $rawButtons = $decoded['botones'] ?? [];
-        if (is_array($rawButtons)) {
-            foreach ($rawButtons as $row) {
-                if (!is_array($row)) {
-                    continue;
-                }
-                $intentId = trim((string) ($row['intent_id'] ?? ''));
-                if ($intentId === '') {
-                    continue;
-                }
-                $params = [];
-                if (isset($row['params']) && is_array($row['params'])) {
-                    $params = $row['params'];
-                }
-                $botones[] = [
-                    'intent_id' => $intentId,
-                    'params' => $params,
-                ];
+        $rawButtons = self::rawButtonsList($decoded);
+        foreach ($rawButtons as $row) {
+            if (!is_array($row)) {
+                continue;
             }
+            $intentId = trim((string) ($row['intent_id'] ?? $row['id'] ?? ''));
+            if ($intentId === '') {
+                continue;
+            }
+            $params = [];
+            if (isset($row['params']) && is_array($row['params'])) {
+                $params = $row['params'];
+            }
+            $botones[] = [
+                'intent_id' => $intentId,
+                'params' => $params,
+            ];
         }
 
         return [
             'mensaje' => $mensaje,
             'botones' => $botones,
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $decoded
+     * @return list<mixed>
+     */
+    private static function rawButtonsList(array $decoded): array
+    {
+        foreach (['botones_considerados', 'botones'] as $key) {
+            if (isset($decoded[$key]) && is_array($decoded[$key])) {
+                return $decoded[$key];
+            }
+        }
+
+        return [];
     }
 
     private static function extractJsonObject(string $raw): ?string

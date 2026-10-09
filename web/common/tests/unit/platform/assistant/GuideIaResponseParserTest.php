@@ -35,6 +35,31 @@ JSON);
         $this->assertSame(['motivo' => 'malestar_nuevo'], $parsed['botones'][0]['params']);
     }
 
+    public function testParseBotonesConsideradosWithIdAlias(): void
+    {
+        $parsed = GuideIaResponseParser::parse(<<<'JSON'
+{
+  "mensaje": "Tocá el botón de abajo.",
+  "botones_considerados": [
+    {
+      "id": "atencion.necesito-atencion",
+      "texto_boton": "Solicitar Atención",
+      "params": { "motivo": "malestar_nuevo", "zona": "zona_pecho" }
+    }
+  ]
+}
+JSON);
+
+        $this->assertNotNull($parsed);
+        $this->assertSame('Tocá el botón de abajo.', $parsed['mensaje']);
+        $this->assertCount(1, $parsed['botones']);
+        $this->assertSame('atencion.necesito-atencion', $parsed['botones'][0]['intent_id']);
+        $this->assertSame(
+            ['motivo' => 'malestar_nuevo', 'zona' => 'zona_pecho'],
+            $parsed['botones'][0]['params']
+        );
+    }
+
     public function testParseJsonInMarkdownFence(): void
     {
         $raw = "```json\n{\"mensaje\":\"Hola\",\"botones\":[]}\n```";

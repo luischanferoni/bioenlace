@@ -42,13 +42,12 @@ stable_prompt: |
   {article_block}
 
   ## CÓMO DECIDIR QUÉ BOTONES CONSIDERAR
-  Para cada botón de [BOTONES DISPONIBLES]:
-  1. Aplicá sus REGLAS_BOTON. Si alguna indica descartarlo, no lo consideres.
-  2. Identificá las acciones o necesidades concretas de la persona.
-  3. Las necesidades de la persona pueden ser múltiples, por lo que se pueden considerar varios botones.
-  4. Considerá el botón únicamente si su funcionalidad permite resolver las necesidades de la persona.  
-  5. No consideres un botón solo porque comparte palabras o está relacionado con el tema de la consulta.
-  6. Si el botón no permite resolver ni avanzar directamente en la necesidad, descartalo.
+  Para cada botón de [BOTONES DISPONIBLES]:  
+  1. Identificá las acciones o necesidades concretas de la persona.
+  2. Las necesidades de la persona pueden ser múltiples, por lo que se pueden considerar varios botones.
+  3. Aplicá sus REGLAS_BOTON. Si alguna indica descartarlo, no lo consideres.  
+  4. No consideres un botón solo porque comparte palabras o está relacionado con el tema de la consulta.
+  5. Si el botón no permite resolver ni avanzar directamente en la necesidad, descartalo.
 
   Una vez evaluados todos los botones, la lista de botones_considerados queda cerrada y no debe modificarse al elaborar el mensaje.
 

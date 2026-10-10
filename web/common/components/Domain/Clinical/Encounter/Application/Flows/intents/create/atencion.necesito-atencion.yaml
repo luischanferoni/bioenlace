@@ -4,7 +4,7 @@ action_name: 'Solicitar Atención'
 guide:
   cubre: 'atención médica en general, incluyendo consultas por síntomas nuevos no urgentes, estudios, controles, medicación y orientación ante urgencias.'
   reglas_boton:
-  - Determiná para quien es [MENSAJE O NECESIDAD DE LA PERSONA] y si sugiere urgencia, si se refiere a otra persona y no es urgencia, descartá este botón.
+  - Determiná para quien es [MENSAJE O NECESIDAD DE LA PERSONA] y si sugiere urgencia. Si se refiere a otra persona y no es urgencia, descartá este botón.
   params:
     -
       name: motivo

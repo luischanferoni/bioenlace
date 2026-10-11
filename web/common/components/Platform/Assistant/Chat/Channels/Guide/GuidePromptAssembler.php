@@ -12,7 +12,7 @@ use common\components\Platform\Assistant\Planning\SmartCatalogRoutingEvaluation;
 use Yii;
 
 /**
- * Ensambla el prompt de la 2ª IA del canal guide.
+ * Ensambla el prompt de la 2ª IA (Guide).
  *
  * Adjuntos opcionales (HC, artículo): discovery + datos de sesión.
  * CTA: no va en el prompt; se adjunta en la respuesta HTTP (GuideChannel::finalizeResponse).

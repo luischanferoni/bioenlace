@@ -25,7 +25,7 @@ class AssistantMetadataPhase02Test extends Unit
     public function testPromptYamlFilesExist(): void
     {
         $this->assertFileExists(ProductMetadataPaths::preprocessPromptFile());
-        $this->assertFileExists(ProductMetadataPaths::guideChannelFile());
+        $this->assertFileExists(ProductMetadataPaths::guidePromptFile());
         $this->assertFileExists(ProductMetadataPaths::ambiguousChannelFile());
         $this->assertFileExists(ProductMetadataPaths::assistantUiTextByClientFile());
         $this->assertFileExists(ProductMetadataPaths::bookingOfferFile());

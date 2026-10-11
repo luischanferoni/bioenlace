@@ -3,7 +3,7 @@
 namespace common\components\Platform\Assistant\Chat\Channels\Guide;
 
 /**
- * Parsea la salida JSON de la 2ª IA Guide ({@see channels/Guide/prompt.yaml}).
+ * Parsea la salida JSON de la 2ª IA Guide ({@see Application/Guide/prompt.yaml}).
  *
  * Contrato canónico:
  * { "mensaje": string, "botones_considerados": [ { "intent_id": string, "params"?: object } ] }

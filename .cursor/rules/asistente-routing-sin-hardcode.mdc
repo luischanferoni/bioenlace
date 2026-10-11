@@ -20,15 +20,15 @@ No enumerar `intent_id` en orquestadores ni en prompts de IA para “elegir la a
 
 **Canal (charla vs trámite vs menú vs ambiguous):** `routing_hint` / `routing_result` (catálogo) + `user_goal` derivado para hilo → `ChatRouter`. Predicados de dominio (síntoma, menú, staff) en `ChatChannelPolicy` (PHP). No es configuración de intents.
 
-**Prompt guide:** `assistant/channels/Guide/prompt.yaml`. Encauzamiento ambiguous: `assistant/channels/Ambiguous/ui-text.yaml`. Preprocess: `assistant/preprocess/prompt.yaml`.
+**Prompt guide (2ª IA, no es un canal):** `Application/Guide/prompt.yaml`. Encauzamiento ambiguous: `Channels/Ambiguous/ui-text.yaml`. Preprocess: `Application/Preprocess/prompt.yaml`.
 
 ## Dónde va cada cosa
 
 | Necesidad | Dónde |
 |-----------|--------|
 | Frases NL del intent, flow, `when`/`next` sobre draft | `assistant/intents/**/*.yaml` |
-| Prompt de Guide | `assistant/channels/Guide/prompt.yaml` (espejo `Chat/Channels/Guide/`) |
-| Prompt preprocess | `assistant/preprocess/prompt.yaml` |
+| Prompt de Guide (2ª IA) | `Application/Guide/prompt.yaml` (PHP ensambla en `Chat/Channels/Guide/`) |
+| Prompt preprocess | `Application/Preprocess/prompt.yaml` |
 | Texto UX + botones de encauzamiento ambiguous | `assistant/channels/Ambiguous/ui-text.yaml` |
 | Prioridad CTA booking + capability_labels | `assistant/routing/booking-offer.yaml` |
 | Texto UX por perfil de cliente | `assistant/ui-text/by-client.yaml` |
@@ -42,11 +42,11 @@ No enumerar `intent_id` en orquestadores ni en prompts de IA para “elegir la a
 1. Enriquecer `keywords` del intent.
 2. Empate ambiguo entre dos puertas: unificar flow o desambiguación del motor — no un YAML de boost.
 3. Cambiar política de canal (p. ej. qué cuenta como síntoma): ajustar `ChatChannelPolicy`.
-4. Cambiar tono del canal guide: `assistant/channels/Guide/prompt.yaml`.
+4. Cambiar tono de la 2ª IA: `Application/Guide/prompt.yaml`.
 5. Cambiar opciones de encauzamiento: `assistant/channels/Ambiguous/ui-text.yaml`.
 6. Cambiar prompt preprocess: `assistant/preprocess/prompt.yaml`.
 
-## Prompts de canal (2ª IA)
+## Prompt de la 2ª IA (Guide)
 
 Reglas **transversales** en `stable_prompt`; sin casos particulares ni registros globales de limitaciones. Ver [`asistente-prompts-sin-casos-particulares.mdc`](asistente-prompts-sin-casos-particulares.mdc).
 

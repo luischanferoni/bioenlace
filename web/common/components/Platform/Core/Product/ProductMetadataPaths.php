@@ -131,7 +131,7 @@ final class ProductMetadataPaths
         return self::assistantDir() . DIRECTORY_SEPARATOR . 'Application' . DIRECTORY_SEPARATOR . 'globals';
     }
 
-    /** YAML de canales (`prompt.yaml` / `ui-text.yaml`); PHP de canales vive en Chat/Channels/. */
+    /** YAML de canales de respuesta (p. ej. Ambiguous `ui-text.yaml`). PHP en Chat/Channels/. */
     public static function assistantChannelsDir(): string
     {
         return self::assistantDir() . DIRECTORY_SEPARATOR . 'Channels';
@@ -147,6 +147,12 @@ final class ProductMetadataPaths
     public static function assistantPreprocessDir(): string
     {
         return self::assistantDir() . DIRECTORY_SEPARATOR . 'Application' . DIRECTORY_SEPARATOR . 'Preprocess';
+    }
+
+    /** Prompt de la 2ª IA (Application/Guide); no es un canal. */
+    public static function assistantGuideDir(): string
+    {
+        return self::assistantDir() . DIRECTORY_SEPARATOR . 'Application' . DIRECTORY_SEPARATOR . 'Guide';
     }
 
     public static function assistantRoutingDir(): string
@@ -233,9 +239,15 @@ final class ProductMetadataPaths
         return self::assistantRoutingDir() . DIRECTORY_SEPARATOR . $name;
     }
 
+    public static function guidePromptFile(): string
+    {
+        return self::assistantGuideDir() . DIRECTORY_SEPARATOR . 'prompt.yaml';
+    }
+
+    /** @deprecated Usar {@see guidePromptFile()}. */
     public static function guideChannelFile(): string
     {
-        return self::assistantChannelPromptFile('Guide');
+        return self::guidePromptFile();
     }
 
     public static function preprocessPromptFile(): string

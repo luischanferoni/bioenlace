@@ -6,7 +6,7 @@ use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
 use common\components\Platform\Core\Product\ProductMetadataPaths;
 
 /**
- * Metadata del canal guide ({@see channels/Guide/prompt.yaml}).
+ * Metadata de la 2ª IA guía ({@see Application/Guide/prompt.yaml}).
  */
 final class GuideChannelConfig
 {
@@ -147,7 +147,7 @@ final class GuideChannelConfig
             return self::$config;
         }
 
-        self::$config = AssistantMetadataLoader::load(ProductMetadataPaths::guideChannelFile());
+        self::$config = AssistantMetadataLoader::load(ProductMetadataPaths::guidePromptFile());
 
         return self::$config;
     }

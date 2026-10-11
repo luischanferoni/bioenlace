@@ -55,8 +55,8 @@ ADR: [captura-clinica-contratos-yii-vs-yaml.md](../decisions/captura-clinica-con
 
 - Intents, alias, scores NL y atajos: YAML + motores genéricos.
 - No poner `intent_id` fijos en orquestadores ni prompts.
-- **Prompts de canal** (`assistant/channels/{Name}/prompt.yaml`, `assistant/preprocess/prompt.yaml`): reglas transversales; **no** casos particulares. Los huecos de datos se expresan en **loaders** (campo `null`/ausente en el volcado), no en listas globales de limitaciones. Regla Cursor: `asistente-prompts-sin-casos-particulares.mdc`.
-- Texto UX de encauzamiento: `assistant/channels/Ambiguous/ui-text.yaml`. Texto UX por cliente: `assistant/ui-text/by-client.yaml`.
+- **Prompts de IA** (`Application/Guide/prompt.yaml`, `Application/Preprocess/prompt.yaml`): reglas transversales; **no** casos particulares. Los huecos de datos se expresan en **loaders** (campo `null`/ausente en el volcado), no en listas globales de limitaciones. Regla Cursor: `asistente-prompts-sin-casos-particulares.mdc`.
+- Texto UX de encauzamiento: `Channels/Ambiguous/ui-text.yaml`. Texto UX por cliente: `Presentation/by-client.yaml`.
 - Lectura (“cuántos / listar / último X”): métrica DataAccess + YAML en `intents/read/` con params hidratados; pantallas que no caben van en `intents/read/flows/`. No reabrir `data-access.info|listar` como intents NL.
 
 Ver [asistente-motores.md](./asistente-motores.md), [asistente-lectura-data-access.md](./asistente-lectura-data-access.md) y [rbac-catalogo-permisos.md](./rbac-catalogo-permisos.md).
@@ -92,7 +92,7 @@ Ver [asistente-motores.md](./asistente-motores.md), [asistente-lectura-data-acce
 
 | Tipo | Ejemplo | Dónde |
 |------|---------|-------|
-| flow / routing / prompt / ui-text | `Application/Flows`, `Channels/`, `Presentation/` | Metadata colocalizada; no sustituye `rules()` |
+| flow / routing / prompt / ui-text | `Application/Flows`, `Application/Preprocess`, `Application/Guide`, `Channels/` (UX de canal), `Presentation/` | Metadata colocalizada; no sustituye `rules()` |
 | catalog (id → texto IA/UX) | `Platform/Assistant/Application/Catalog/*.yaml` | Metadata; mapas técnicos en el loader PHP |
 | knob de negocio / agents | `*Catalog` / `*AgentPolicy` | PHP Domain/Application |
 | manifest | `Ui/Presentation/home-panel-manifest.yaml` | Metadata |

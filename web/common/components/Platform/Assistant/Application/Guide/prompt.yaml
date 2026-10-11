@@ -1,6 +1,6 @@
 # Tipo: prompt
-# Propósito: stable_prompt 2ª IA del canal guide.
-# Consumidor: GuideChannelConfig / GuidePromptAssembler / ProductMetadataPaths::guideChannelFile()
+# Propósito: stable_prompt 2ª IA (guía).
+# Consumidor: GuideChannelConfig / GuidePromptAssembler / ProductMetadataPaths::guidePromptFile()
 # Espejo PHP: Platform/Assistant/Chat/Channels/Guide/
 # CTA en respuesta API (ChatChannelPolicy + finalizeResponse), no en el prompt.
 # Placeholders: {@see GuidePromptAssembler}. Áreas HIS = solo descripción humana (sin clave técnica).

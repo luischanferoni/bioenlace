@@ -20,7 +20,7 @@ Documentación estable: [producto/asistente-y-chat.md](../producto/asistente-y-c
 4. **Routing PHP** — resultados: `clara` (match 100 %: intent, artículo o template), `dudosa`, `incompletas`, `fuera_de_his`. PHP decide camino final; `routing_hint` de la IA orienta pero no obliga.
 5. **Match 100%** — score + margen + tool ejecutable → flow, artículo o template (**1 IA**). Empate → **incompletas** si hay tema HIS; no botones entre intents.
 6. **Plan declarativo** — reutiliza `AssistantContextAnchorResolver` y `AssistantContextAreaAspectResolver` (evolucionar a registry YAML); output `tool_ids`.
-7. **2ª IA guide** — incompletas y charla: `scoped_system_records` + prompt `channels/Guide`; líneas de ámbito desde áreas **derivadas**; CTAs de catálogo vía `CatalogCtaResolver`.
+7. **2ª IA guide** — incompletas y charla: `scoped_system_records` + prompt `Application/Guide`; líneas de ámbito desde áreas **derivadas**; CTAs de catálogo vía `CatalogCtaResolver`.
 8. **Log de planificación** — estructura `planning_applied` por mensaje (ver schema metadata).
 
 ### Convención `tool_id`

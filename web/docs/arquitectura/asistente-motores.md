@@ -69,7 +69,7 @@ Tras preprocess, el mensaje **no** se reparte por un catálogo de puertas Platfo
 | Plan | `Planning/DeclarativePlanService` | Área → aspect loaders + `article:topic` |
 | Handlers | `Chat/Routing/Handlers/*` | Guide / dudosa / fuera HIS |
 | Log | `Planning/AssistantPlanningLogService` | `planning_applied` por mensaje |
-| Guide (2ª IA) | `Channels/Guide/` + `asistente-guide` | Charla con adjuntos |
+| Guide (2ª IA) | `Application/Guide/` + `asistente-guide` | Charla con adjuntos |
 
 Entrypoint: `Chat/Routing/ChatRouter.php` → `SmartCatalogRoutingHandlers`. Pedido HIS → `GuideChannel::handleIncomplete`.
 

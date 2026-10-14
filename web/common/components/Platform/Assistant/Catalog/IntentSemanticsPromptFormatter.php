@@ -120,12 +120,7 @@ final class IntentSemanticsPromptFormatter
                 $lines[] = $line;
             }
         }
-        $urgencia = $initial !== '' ? self::urgenciaTexto($button, $initial, $states) : '';
-        if ($urgencia !== '') {
-            $lines[] = '';
-            $lines[] = 'URGENCIA:';
-            $lines[] = $urgencia;
-        }
+
         $resultado = self::resultadoLine($states);
         if ($resultado !== '') {
             $lines[] = '';
@@ -454,35 +449,6 @@ final class IntentSemanticsPromptFormatter
         }
 
         return self::period($clause . ' (dentro del flujo, deriva a ' . self::lowerFirst($tel['label']) . ')');
-    }
-
-    /**
-     * @param array<string, array<string, mixed>> $states
-     */
-    private static function urgenciaTexto(string $button, string $initial, array $states): string
-    {
-        $choiceId = self::firstChoice($initial, $states);
-        $start = $choiceId ?? $initial;
-        if (!isset($states[$start])) {
-            return '';
-        }
-        foreach (self::outgoing($states[$start], $states) as $edge) {
-            $ids = self::reachableFrom($edge['to'], $states);
-            $tel = self::telEn($ids, $states);
-            if ($tel === null || !isset($states[$edge['to']])) {
-                continue;
-            }
-            $incluye = self::lowerFirst(rtrim(self::explanation($states[$edge['to']]), '.'));
-            $accion = $tel['label'];
-
-            return 'Si el relato sugiere urgencia o el usuario la declara, mencionar en el mensaje "' . $accion . '", sin retrasar.'
-                . "\n"
-                . 'El botón "' . $button . '" puede ofrecerse igual, porque dentro incluye ' . $incluye . '.'
-                . "\n"
-                . 'Si la urgencia es explícita, priorizar la mención de "' . $accion . '" en el mensaje.';
-        }
-
-        return '';
     }
 
     /**

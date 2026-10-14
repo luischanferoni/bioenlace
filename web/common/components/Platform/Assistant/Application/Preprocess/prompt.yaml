@@ -18,7 +18,7 @@ stable_prompt: |
       }
     ],
     "routing_hint": "<ver routing_hint abajo>",
-    "tags": ["arma un grupo de tags, etiquetas o categorías para todas las necesidades del usuario"],
+    "tags": ["arma un grupo de tags, etiquetas o categorías para todas las necesidades diferentes del usuario"],
     "extractions": [
       {
         "span": "fragmentos literales del mensaje",        

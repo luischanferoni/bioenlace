@@ -17,6 +17,7 @@ states:
         - tolerancia
         - plazo
         - multa
+        - puntualidad        
       provides:
         - draft.id_efector
       open_ui:

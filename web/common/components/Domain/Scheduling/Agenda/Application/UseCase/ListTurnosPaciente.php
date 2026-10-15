@@ -7,6 +7,8 @@ use common\components\Domain\Person\Representation\Domain\Model\RepresentationPe
 use common\components\Domain\Person\Representation\Application\Service\PersonRepresentationSubjectService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaModalidadAtencionCatalogService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoCancellationPolicyService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\ApplyTurnoAutogestionAnticipacion;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\ConfirmTurno;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
 use common\models\Scheduling\Turno;

@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Agenda\Application\UseCase;
 
+use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaModalidadAtencionCatalogService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaTurnoTriageCatalogService;
 use common\models\Scheduling\Turno;
 

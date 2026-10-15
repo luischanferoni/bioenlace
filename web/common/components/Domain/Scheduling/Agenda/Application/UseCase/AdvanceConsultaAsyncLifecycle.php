@@ -7,6 +7,7 @@ use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsync
 use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncChatPolicyService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncEncounterMetaService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncSystemMessageService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\PushConsultaAsyncNotification;
 use common\models\Clinical\Encounter;
 use Yii;
 

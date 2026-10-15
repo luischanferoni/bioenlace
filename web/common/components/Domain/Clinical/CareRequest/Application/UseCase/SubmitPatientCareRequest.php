@@ -5,6 +5,7 @@ namespace common\components\Domain\Clinical\CareRequest\Application\UseCase;
 use common\components\Domain\Clinical\CareRequest\Application\Service\CareRequestMetadata;
 use common\components\Domain\Clinical\CareRequest\Domain\CodingSystems;
 use common\components\Domain\Clinical\CareRequest\Domain\CompositeServiceLineActCatalog;
+use common\components\Domain\Clinical\CareRequest\Domain\Model\CareRequest;
 use common\components\Domain\Clinical\CareRequest\Domain\ServiceLineActCatalogInterface;
 
 /**

@@ -21,6 +21,9 @@ use common\models\Scheduling\EfectorTurnosConfig;
 use common\models\Organization\Servicio;
 use common\models\Scheduling\TurnoResolucion;
 use common\components\Domain\Organization\Servicio\Application\Service\ServiciosEfectorAutogestionListadoService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\AdvanceTurnoLifecycle;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\ClaimTurnoSlot;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\ReserveTurnoSlot;
 use Yii;
 
 /**

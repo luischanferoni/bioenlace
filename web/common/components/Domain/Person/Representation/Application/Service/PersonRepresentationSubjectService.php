@@ -5,6 +5,7 @@ namespace common\components\Domain\Person\Representation\Application\Service;
 use common\components\Domain\Person\Representation\Application\Authorization\PersonRepresentationAccess;
 use common\components\Domain\Person\Representation\Domain\Model\RepresentationPermission;
 use common\components\Domain\Person\FrontDesk\Application\UseCase\EstablishFrontDeskSession;
+use common\components\Domain\Person\Representation\Application\Service\PersonRepresentationDelegatedActionService;
 use common\models\Person\PersonRelatedAuditLog;
 use common\models\Scheduling\Turno;
 use Yii;

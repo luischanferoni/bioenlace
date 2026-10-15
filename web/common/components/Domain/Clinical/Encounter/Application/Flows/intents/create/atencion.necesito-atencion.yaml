@@ -119,10 +119,6 @@ states:
           triage_raiz: seguimiento_cronico
         target: cs_hub
       -
-        guard:
-          modalidad_paso_requerido: '0'
-        target: select_servicio
-      -
         target: select_tipo_atencion
   select_pedido_acto:
     label: 'Estudio o práctica'

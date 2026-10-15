@@ -5,6 +5,7 @@ namespace common\components\Domain\Scheduling\Agenda\Application\UseCase;
 use common\components\Domain\Organization\Servicio\Application\Service\ServiciosEfectorAutogestionListadoService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaTriageServicioRolResolver;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaTurnoTriageCatalogService;
+use common\components\Domain\Scheduling\Agenda\Domain\Catalog\ReservaTriageAccessCatalog;
 use common\models\Clinical\ConsultaDerivaciones;
 use common\models\Scheduling\Turno;
 use common\models\Organization\Servicio;

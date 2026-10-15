@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Assistant;
 
+use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaTurnoTriageCatalogService;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
 
 /**

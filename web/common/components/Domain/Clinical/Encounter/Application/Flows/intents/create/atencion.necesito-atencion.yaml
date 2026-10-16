@@ -6,9 +6,8 @@ guide:
   # params: derivados automáticamente de states.*.provides y initial
   condiciones_considerar:
     - La necesidad corresponde a la persona que escribe, o a una situación de urgencia que cumple las reglas específicas del sistema.
-    - La funcionalidad permite avanzar directamente en la necesidad expresada.
   condiciones_descartar:
-    - Determiná para quien es [MENSAJE O NECESIDAD DE LA PERSONA] y si sugiere urgencia. Si se refiere a otra persona y no es urgencia, descartá este botón.
+    - La necesidad corresponde a otra persona y no se trata de una urgencia.
   resultados_posibles:
     - Solicitud de turno.
     - Gestión de estudio o seguimiento.

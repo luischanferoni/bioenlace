@@ -63,8 +63,6 @@ states:
         guard:
           persona_requiere_cuil: SI
         target: capture_cuil
-      -
-        target: select_servicio
   capture_cuil:
     label: CUIL del profesional
     description: 'CUIL del profesional'
@@ -101,8 +99,6 @@ states:
         guard:
           servicio_acepta_turnos: SI
         target: configurar_agenda_datos
-      -
-        target: ''
   configurar_agenda_datos:
     label: Agenda
     description: 'Tipo de agenda de la asignación'

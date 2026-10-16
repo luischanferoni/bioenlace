@@ -118,8 +118,6 @@ states:
         guard:
           triage_raiz: seguimiento_cronico
         target: cs_hub
-      -
-        target: select_tipo_atencion
   select_pedido_acto:
     label: 'Estudio o práctica'
     explanation: 'La persona elige el estudio o la práctica que necesita.'
@@ -162,8 +160,6 @@ states:
         guard:
           modalidad_paso_requerido: '0'
         target: select_servicio
-      -
-        target: select_tipo_atencion
   cs_hub:
     label: '¿Sobre qué es el control o seguimiento?'
     explanation: 'La persona elige el tema de su control o seguimiento.'
@@ -229,8 +225,6 @@ states:
         guard:
           condition_accion: consulta_mensaje
         target: cs_captura_consulta_general
-      -
-        target: cs_captura_consulta_general
   triage_zona:
     label: Zona
     explanation: 'La persona elige la zona de su cuerpo donde tiene malestar.'
@@ -264,8 +258,6 @@ states:
         guard:
           modalidad_paso_requerido: '0'
         target: select_servicio
-      -
-        target: select_tipo_atencion
   triage_urgencia:
     label: Urgencia
     explanation: 'Orientación por urgencia, para la persona que consulta o por otra persona.'
@@ -342,8 +334,6 @@ states:
         guard:
           pedido_servicio_resuelto: '1'
         target: select_efector
-      -
-        target: select_servicio
   solicitud_async:
     label: Describí tu consulta en el campo de texto de abajo
     explanation: 'La persona escribe la consulta para un profesional.'
@@ -564,8 +554,6 @@ states:
         guard:
           intake_tipo: seguimiento
         target: cs_select_care_plan
-      -
-        target: cs_select_care_plan
   cs_select_encounter_previa:
     label: '¿Sobre qué atención?'
     explanation: 'La persona elige atención anterior del control.'
@@ -659,8 +647,6 @@ states:
         guard:
           seguimiento_necesidad: solicitar_turno
         target: select_tipo_atencion
-      -
-        target: cs_captura_seguimiento_mensaje
   cs_select_medicamentos:
     label: Medicación
     explanation: 'La persona elige medicación del tratamiento.'
@@ -697,10 +683,6 @@ states:
         guard:
           seguimiento_necesidad: solicitar_ajuste
         target: cs_captura_ajuste_motivo
-      -
-        guard:
-          seguimiento_necesidad: renovar_medicacion
-        target: ''
   cs_captura_ajuste_motivo:
     label: '¿Qué cambio necesitás?'
     explanation: 'La persona escribe el cambio que pide en la medicación.'
@@ -810,8 +792,6 @@ states:
         guard:
           preferencia_profesional_turno: mismo_medico
         target: cs_select_dia
-      -
-        target: cs_select_efector
   cs_select_efector:
     label: Centro de salud
     explanation: 'La persona elige un centro que ofrece el servicio elegido.'

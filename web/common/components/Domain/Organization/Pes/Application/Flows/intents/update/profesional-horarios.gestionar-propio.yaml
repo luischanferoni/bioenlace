@@ -50,8 +50,6 @@ states:
         guard:
           encounter_class: AMB
         target: configurar_agenda
-      -
-        target: configurar_horario
   configurar_agenda:
     label: 'Configurá tu agenda ambulatoria'
     description: 'Agenda ambulatoria propia'

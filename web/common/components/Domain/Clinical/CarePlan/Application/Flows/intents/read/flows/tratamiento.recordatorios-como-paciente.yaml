@@ -3,6 +3,15 @@ version: 1
 action_name: 'Recordatorios de tratamiento'
 rbac_route: /api/clinical/care-plans/preferencias-recordatorios-como-paciente
 
+guide:
+  funcionalidad: 'Permite al paciente configurar sus preferencias de recordatorios para la toma de medicamentos. El flujo abre la pantalla de configuración donde el paciente puede establecer alarmas y avisos para sus tratamientos. El resultado final es la configuración actualizada de recordatorios.'
+  # params: derivados automáticamente de states.*.provides y initial
+  condiciones_considerar: []
+  condiciones_descartar: []
+  resultados_posibles:
+    - Configuración de recordatorios actualizada exitosamente.
+    - Visualización de las preferencias de recordatorios actuales.
+
 initial: abrir_configuracion
 states:
   abrir_configuracion:

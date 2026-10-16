@@ -3,6 +3,15 @@ version: 1
 action_name: 'Recurso de salud en tu provincia'
 rbac_route: /api/paciente-contexto/buscar-recurso-provincial-como-paciente
 
+guide:
+  funcionalidad: 'Permite al paciente buscar recursos de salud disponibles en su provincia de contexto. El flujo busca en la cartilla provincial según el tipo de recurso consultado. El resultado final es la visualización del recurso encontrado.'
+  # params: derivados automáticamente de states.*.provides y initial
+  condiciones_considerar: []
+  condiciones_descartar: []
+  resultados_posibles:
+    - Visualización de recursos de salud de la provincia.
+    - Búsqueda de cartilla o red de servicios provinciales.
+
 draft_hydrator:
   handler: person.paciente_recurso_provincial
 initial: buscar

@@ -3,6 +3,15 @@ version: 1
 action_name: 'Ver mi última atención'
 rbac_route: /api/clinical/encounter-patient-summary/ultima-atencion-como-paciente
 
+guide:
+  funcionalidad: 'Permite al paciente ver rápidamente su última atención realizada. El flujo abre directamente el resumen de la atención más reciente sin necesidad de navegar listados. El resultado final es la visualización de la última atención con su resumen.'
+  # params: derivados automáticamente de states.*.provides y initial
+  condiciones_considerar: []
+  condiciones_descartar: []
+  resultados_posibles:
+    - Visualización de la última atención realizada.
+    - Acceso rápido al resumen del encuentro más reciente.
+
 initial: ver_ultima
 states:
   ver_ultima:

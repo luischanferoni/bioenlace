@@ -3,6 +3,15 @@ version: 1
 action_name: 'Quitar profesional de un servicio'
 rbac_route: /api/profesional-efector-servicio/baja-flow
 
+guide:
+  funcionalidad: 'Permite al staff dar de baja a un profesional de un servicio del efector. El flujo selecciona el profesional, el servicio a desasignar y muestra el impacto en turnos antes de confirmar. El resultado final es la baja del profesional del servicio con impacto revisado.'
+  # params: derivados automáticamente de states.*.provides y initial
+  condiciones_considerar: []
+  condiciones_descartar: []
+  resultados_posibles:
+    - Profesional dado de baja del servicio con impacto revisado.
+    - Visualización de turnos afectados por la baja.
+
 context:
   - impacto_baja_revisado
 initial: select_profesional

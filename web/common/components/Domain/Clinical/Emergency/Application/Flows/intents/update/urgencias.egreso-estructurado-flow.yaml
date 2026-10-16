@@ -5,6 +5,15 @@ shortcut:
 action_name: 'Paciente se retiró'
 rbac_route: /api/clinical/emergency-guardia/egreso-formulario
 
+guide:
+  funcionalidad: 'Permite al staff registrar el egreso estructurado de un paciente de guardia. El flujo abre el formulario para confirmar fecha y hora del retiro, agregar nota administrativa y definir el modo de egreso. El resultado final es el egreso registrado en el sistema.'
+  # params: derivados automáticamente de states.*.provides y initial
+  condiciones_considerar: []
+  condiciones_descartar: []
+  resultados_posibles:
+    - Egreso de guardia registrado con fecha, hora y nota administrativa.
+    - Confirmación del retiro del paciente del sistema.
+
 initial: completar_egreso
 states:
   completar_egreso:

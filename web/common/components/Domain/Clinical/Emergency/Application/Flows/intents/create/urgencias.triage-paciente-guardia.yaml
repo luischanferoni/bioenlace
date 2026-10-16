@@ -3,6 +3,15 @@ version: 1
 action_name: 'Triage en guardia'
 rbac_route: /api/home/panel
 
+guide:
+  funcionalidad: 'Permite al staff realizar el triage de pacientes en guardia. El flujo primero presenta la lista de pacientes pendientes de triage, luego abre el formulario para registrar nivel de prioridad (1-5), motivo y signos vitales. El resultado final es el triage registrado en el sistema.'
+  # params: derivados automáticamente de states.*.provides y initial
+  condiciones_considerar: []
+  condiciones_descartar: []
+  resultados_posibles:
+    - Triage registrado con nivel, motivo y signos vitales.
+    - Paciente seleccionado para realizar triage.
+
 initial: elegir_paciente
 states:
   elegir_paciente:

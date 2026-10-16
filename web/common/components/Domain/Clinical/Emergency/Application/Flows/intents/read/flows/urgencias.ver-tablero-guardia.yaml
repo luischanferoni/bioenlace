@@ -3,6 +3,15 @@ version: 1
 action_name: 'Ver tablero de guardia'
 rbac_route: /api/home/panel
 
+guide:
+  funcionalidad: 'Permite al staff visualizar el tablero de guardia con el estado de los boxes y ocupación. El flujo abre el panel principal que muestra la situación actual de la guardia, pacientes en espera y asignación de boxes. El resultado final es la visualización del estado operativo de guardia.'
+  # params: derivados automáticamente de states.*.provides y initial
+  condiciones_considerar: []
+  condiciones_descartar: []
+  resultados_posibles:
+    - Visualización del tablero de guardia con estado de boxes.
+    - Visualización de la ocupación y pacientes en espera.
+
 initial: abrir_tablero
 states:
   abrir_tablero:

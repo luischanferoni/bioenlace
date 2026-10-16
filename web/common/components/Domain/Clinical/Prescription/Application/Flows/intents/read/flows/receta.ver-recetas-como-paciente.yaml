@@ -3,6 +3,15 @@ version: 1
 action_name: 'Ver mis recetas electrónicas'
 rbac_route: /api/clinical/electronic-prescription/mis-recetas-como-paciente
 
+guide:
+  funcionalidad: 'Permite al paciente ver sus recetas electrónicas y acceder al detalle de cada una. El flujo presenta el listado de prescripciones y permite navegar al detalle con posología y dispensa. El resultado final es la visualización de la receta seleccionada.'
+  # params: derivados automáticamente de states.*.provides y initial
+  condiciones_considerar: []
+  condiciones_descartar: []
+  resultados_posibles:
+    - Visualización del listado de recetas electrónicas.
+    - Visualización del detalle de una receta con posología.
+
 initial: ver_listado
 states:
   ver_listado:

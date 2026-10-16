@@ -8,8 +8,9 @@ use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
  * Traduce un flow YAML a la ficha que la guía adjunta.
  *
  * El YAML describe el recorrido. Si el intent trae `guide`, la ficha usa ese bloque
- * (qué cubre, reglas_boton, params) y el resultado de los outcomes. Si no, resume el recorrido
- * con explanations, opciones, acciones y outcomes. El motor del flow no lee `guide`.
+ * (funcionalidad, condiciones_considerar, condiciones_descartar, resultados_posibles).
+ * Si no, resume el recorrido con explanations, opciones, acciones y outcomes.
+ * El motor del flow no lee `guide`.
  */
 final class IntentSemanticsPromptFormatter
 {
@@ -141,28 +142,30 @@ final class IntentSemanticsPromptFormatter
             'INTENT_ID: ' . self::fichaId($manifest, $intentId),
             'TEXTO_BOTÓN: "' . $button . '"',
         ];
-        $cubre = trim((string) ($guide['cubre'] ?? ''));
-        if ($cubre !== '') {
-            $lines[] = 'QUÉ CUBRE: ' . $cubre;
+        $funcionalidad = trim((string) ($guide['funcionalidad'] ?? ''));
+        if ($funcionalidad !== '') {
+            $lines[] = 'FUNCIONALIDAD: ' . $funcionalidad;
         }
-        $reglasBoton = self::stringList($guide['reglas_boton'] ?? null);
-        if ($reglasBoton !== []) {
-            $lines[] = 'REGLAS_BOTON:';
-            foreach ($reglasBoton as $regla) {
-                $lines[] = '- ' . $regla;
+        $condicionesConsiderar = self::stringList($guide['condiciones_considerar'] ?? null);
+        if ($condicionesConsiderar !== []) {
+            $lines[] = 'CONDICIONES PARA CONSIDERARLO:';
+            foreach ($condicionesConsiderar as $condicion) {
+                $lines[] = '- ' . $condicion;
             }
         }
-        $params = self::paramLines(is_array($guide['params'] ?? null) ? $guide['params'] : []);
-        if ($params !== []) {
-            $lines[] = 'PARAMS:';
-            foreach ($params as $line) {
-                $lines[] = $line;
+        $condicionesDescartar = self::stringList($guide['condiciones_descartar'] ?? null);
+        if ($condicionesDescartar !== []) {
+            $lines[] = 'CONDICIONES PARA DESCARTARLO:';
+            foreach ($condicionesDescartar as $condicion) {
+                $lines[] = '- ' . $condicion;
             }
         }
-        $states = self::statesOf($manifest);
-        $resultado = self::resultadoGuide($states);
-        if ($resultado !== '') {
-            $lines[] = 'RESULTADO: ' . $resultado;
+        $resultadosPosibles = self::stringList($guide['resultados_posibles'] ?? null);
+        if ($resultadosPosibles !== []) {
+            $lines[] = 'RESULTADOS POSIBLES:';
+            foreach ($resultadosPosibles as $resultado) {
+                $lines[] = '- ' . $resultado;
+            }
         }
 
         return implode("\n", $lines);
@@ -178,10 +181,11 @@ final class IntentSemanticsPromptFormatter
             return [];
         }
         $guide = $manifest['guide'];
-        $cubre = trim((string) ($guide['cubre'] ?? ''));
-        $reglasBoton = self::stringList($guide['reglas_boton'] ?? null);
-        $params = is_array($guide['params'] ?? null) ? $guide['params'] : [];
-        if ($cubre === '' && $reglasBoton === [] && $params === []) {
+        $funcionalidad = trim((string) ($guide['funcionalidad'] ?? ''));
+        $condicionesConsiderar = self::stringList($guide['condiciones_considerar'] ?? null);
+        $condicionesDescartar = self::stringList($guide['condiciones_descartar'] ?? null);
+        $resultadosPosibles = self::stringList($guide['resultados_posibles'] ?? null);
+        if ($funcionalidad === '' && $condicionesConsiderar === [] && $condicionesDescartar === [] && $resultadosPosibles === []) {
             return [];
         }
 
@@ -208,84 +212,6 @@ final class IntentSemanticsPromptFormatter
         }
 
         return $out;
-    }
-
-    /**
-     * @param list<mixed> $params
-     * @return list<string>
-     */
-    private static function paramLines(array $params): array
-    {
-        $resolved = [];
-        foreach ($params as $row) {
-            if (!is_array($row)) {
-                continue;
-            }
-            $name = trim((string) ($row['name'] ?? ''));
-            $ref = trim((string) ($row['ref'] ?? ''));
-            if ($name === '' || $ref === '') {
-                continue;
-            }
-            $codes = GuideStepOptionCatalog::codes($ref);
-            if ($codes === []) {
-                continue;
-            }
-            $resolved[] = [
-                'name' => $name,
-                'codes' => $codes,
-                'parent' => GuideStepOptionCatalog::soleParentCode($ref),
-            ];
-        }
-        $lines = [];
-        foreach ($resolved as $row) {
-            $cond = '';
-            if ($row['parent'] !== '') {
-                foreach ($resolved as $other) {
-                    if ($other['name'] === $row['name'] || !in_array($row['parent'], $other['codes'], true)) {
-                        continue;
-                    }
-                    $cond = ' (solo si ' . $other['name'] . ' = ' . $row['parent'] . ')';
-                    break;
-                }
-            }
-            $lines[] = '- ' . $row['name'] . $cond . ': ' . implode(' | ', $row['codes']);
-        }
-
-        return $lines;
-    }
-
-    /**
-     * @param array<string, array<string, mixed>> $states
-     */
-    private static function resultadoGuide(array $states): string
-    {
-        $ids = [];
-        foreach ($states as $id => $state) {
-            if (is_array($state)) {
-                $ids[$id] = true;
-            }
-        }
-        $clases = self::clasesResultado($ids, $states);
-        $parts = [];
-        if (isset($clases['turno'])) {
-            $parts[] = 'turno agendado';
-        }
-        if (isset($clases['consulta'])) {
-            $parts[] = 'mensaje enviado';
-        }
-        if (isset($clases['urgencia'])) {
-            $parts[] = 'mención de urgencia';
-        }
-        $n = count($parts);
-        if ($n === 0) {
-            return '';
-        }
-        if ($n === 1) {
-            return self::period($parts[0]);
-        }
-        $last = array_pop($parts);
-
-        return self::period(implode(', ', $parts) . ', o ' . $last);
     }
 
     /**

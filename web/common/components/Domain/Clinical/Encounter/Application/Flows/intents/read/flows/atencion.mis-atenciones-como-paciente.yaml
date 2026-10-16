@@ -3,6 +3,15 @@ version: 1
 action_name: 'Ver mis atenciones'
 rbac_route: /api/clinical/encounter-patient-summary/listar-atenciones-como-paciente
 
+guide:
+  funcionalidad: 'Permite al paciente ver el listado de sus atenciones finalizadas y seleccionar una para ver su resumen. El flujo presenta las atenciones del historial clínico y permite navegar al detalle de cada una. El resultado final es la visualización del resumen de la atención seleccionada.'
+  # params: derivados automáticamente de states.*.provides y initial
+  condiciones_considerar: []
+  condiciones_descartar: []
+  resultados_posibles:
+    - Visualización del listado de atenciones finalizadas.
+    - Visualización del resumen de una atención específica.
+
 initial: ver_listado
 states:
   ver_listado:

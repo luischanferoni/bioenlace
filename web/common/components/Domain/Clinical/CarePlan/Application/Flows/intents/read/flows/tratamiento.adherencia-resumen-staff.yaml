@@ -3,6 +3,15 @@ version: 1
 action_name: 'Adherencia a tratamientos'
 rbac_route: /api/clinical/care-plan/active
 
+guide:
+  funcionalidad: 'Permite al staff visualizar el resumen de adherencia a los tratamientos en el efector. El flujo abre un dashboard que muestra métricas de cumplimiento y toma de medicamentos de los pacientes del centro. El resultado final es la visualización de los indicadores de adherencia.'
+  # params: derivados automáticamente de states.*.provides y initial
+  condiciones_considerar: []
+  condiciones_descartar: []
+  resultados_posibles:
+    - Visualización del dashboard de adherencia del efector.
+    - Selección de un plan de cuidado específico para ver detalles.
+
 initial: ver_dashboard
 states:
   ver_dashboard:

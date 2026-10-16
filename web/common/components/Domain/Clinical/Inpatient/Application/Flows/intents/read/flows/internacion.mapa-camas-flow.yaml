@@ -3,6 +3,15 @@ version: 1
 action_name: 'Mapa de camas'
 rbac_route: /api/home/panel
 
+guide:
+  funcionalidad: 'Permite al staff visualizar el mapa de camas del efector con su estado de ocupación. El flujo abre una vista gráfica que muestra la distribución de camas por piso y su disponibilidad. El resultado final es la visualización del estado actual de la internación.'
+  # params: derivados automáticamente de states.*.provides y initial
+  condiciones_considerar: []
+  condiciones_descartar: []
+  resultados_posibles:
+    - Visualización del mapa de camas con estado de ocupación.
+    - Selección de una cama para ver detalles.
+
 initial: ver_mapa
 states:
   ver_mapa:

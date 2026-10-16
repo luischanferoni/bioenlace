@@ -7,6 +7,15 @@ metric_id: profesionales_listado_efector
 action_name: 'Listado de profesionales del efector'
 rbac_route: /api/listar
 
+guide:
+  funcionalidad: 'Permite consultar el listado completo de profesionales del efector. El flujo muestra una lista con los profesionales activos en el centro. El resultado final es la visualización de la nómina de profesionales.'
+  # params: derivados automáticamente de states.*.provides y initial
+  condiciones_considerar: []
+  condiciones_descartar: []
+  resultados_posibles:
+    - Visualización del listado de profesionales del efector.
+    - Acceso a la información del plantel del centro.
+
 initial: mostrar_listado
 states:
   mostrar_listado:

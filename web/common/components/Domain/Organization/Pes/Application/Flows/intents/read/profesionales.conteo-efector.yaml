@@ -7,6 +7,15 @@ metric_id: profesionales_conteo_efector
 action_name: 'Conteo de profesionales del efector'
 rbac_route: /api/info
 
+guide:
+  funcionalidad: 'Permite consultar la cantidad total de profesionales activos en el efector. El flujo muestra una métrica de conteo del plantel profesional del centro. El resultado final es la visualización del número de profesionales.'
+  # params: derivados automáticamente de states.*.provides y initial
+  condiciones_considerar: []
+  condiciones_descartar: []
+  resultados_posibles:
+    - Visualización del conteo total de profesionales del efector.
+    - Información de la dotación del plantel.
+
 initial: mostrar_conteo
 states:
   mostrar_conteo:

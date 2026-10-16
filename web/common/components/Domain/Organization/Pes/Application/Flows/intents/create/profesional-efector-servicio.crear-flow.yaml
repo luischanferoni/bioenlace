@@ -3,6 +3,15 @@ version: 1
 action_name: 'Alta profesional en efector y agenda'
 rbac_route: /api/profesional-efector-servicio/crear-flow
 
+guide:
+  funcionalidad: 'Permite al staff dar de alta un profesional en el efector asociándolo a un servicio y configurando su agenda si corresponde. El flujo selecciona la persona, captura su CUIL si es necesario, elige el servicio y configura la agenda con formas de atención. El resultado final es la asignación creada con agenda configurada.'
+  # params: derivados automáticamente de states.*.provides y initial
+  condiciones_considerar: []
+  condiciones_descartar: []
+  resultados_posibles:
+    - Profesional dado de alta en el efector con servicio asignado.
+    - Agenda configurada con formas de atención si el servicio acepta turnos.
+
 context:
   - servicio_acepta_turnos
   - id_persona

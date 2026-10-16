@@ -19,6 +19,15 @@ fields:
 action_name: 'Mi licencia'
 rbac_route: /api/profesional-efector-servicio/cargar-licencia-como-profesional-flow
 
+guide:
+  funcionalidad: 'Permite al profesional cargar su propia licencia, permiso o ausencia en uno de sus servicios del efector. El flujo presenta las asignaciones propias del profesional, luego permite seleccionar fechas de inicio y fin de la licencia. El resultado final es la licencia registrada en el sistema.'
+  # params: derivados automáticamente de states.*.provides y initial
+  condiciones_considerar: []
+  condiciones_descartar: []
+  resultados_posibles:
+    - Licencia propia registrada con fechas especificadas.
+    - Selección del servicio sobre el que se aplica la licencia.
+
 context:
   - condicion_laboral_ui_completed
 draft_hydrator:

@@ -8,6 +8,15 @@ domain_operation: DataAccess.edit
 action_name: 'Horarios de guardia / internación de un profesional'
 rbac_route: /api/profesional-horarios/gestionar
 
+guide:
+  funcionalidad: 'Permite al staff configurar los horarios de guardia o internación de otro profesional. El flujo selecciona el profesional, su asignación de servicio y permite configurar las franjas horarias. El resultado final es la configuración de horarios del profesional actualizada.'
+  # params: derivados automáticamente de states.*.provides y initial
+  condiciones_considerar: []
+  condiciones_descartar: []
+  resultados_posibles:
+    - Horarios de guardia o internación del profesional configurados.
+    - Selección del profesional y asignación para gestionar horarios.
+
 initial: select_profesional
 states:
   select_profesional:

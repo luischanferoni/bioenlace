@@ -5,6 +5,15 @@ shortcut:
 action_name: 'Cuestionario pre-consulta'
 rbac_route: /api/care-packs/assistance
 
+guide:
+  funcionalidad: 'Permite al paciente completar un cuestionario de asistencia pre-consulta. El flujo primero presenta una lista de turnos pendientes de cuestionario, luego abre el formulario de asistencia para el turno seleccionado. El resultado final es el cuestionario completado y guardado.'
+  # params: derivados automáticamente de states.*.provides y initial
+  condiciones_considerar: []
+  condiciones_descartar: []
+  resultados_posibles:
+    - Cuestionario de asistencia completado exitosamente.
+    - Turno seleccionado para completar el cuestionario.
+
 initial: select_turno
 states:
   select_turno:

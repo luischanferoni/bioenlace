@@ -6,6 +6,15 @@ domain_operation: DataAccess.edit
 action_name: 'Configurar mis horarios (ambulatorio / guardia / internación)'
 rbac_route: /api/profesional-horarios/gestionar
 
+guide:
+  funcionalidad: 'Permite al profesional configurar sus propios horarios de agenda ambulatoria, guardia o internación. El flujo selecciona el servicio, el tipo de atención y permite configurar la agenda o horarios según corresponda. El resultado final es la configuración de horarios actualizada.'
+  # params: derivados automáticamente de states.*.provides y initial
+  condiciones_considerar: []
+  condiciones_descartar: []
+  resultados_posibles:
+    - Agenda ambulatoria propia configurada con intervalos y cupos.
+    - Horarios de guardia o internación propios configurados.
+
 draft_hydrator:
   handler: organization.pes_from_servicio
   require_own_pes: true

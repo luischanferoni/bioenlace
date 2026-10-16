@@ -6,6 +6,15 @@ domain_operation: ProfesionalEfectorServicio.condicion_laboral_own
 action_name: 'Mi condición laboral'
 rbac_route: /api/profesional-efector-servicio/editar-condicion-laboral
 
+guide:
+  funcionalidad: 'Permite al profesional editar su propia condición laboral en una asignación de servicio. El flujo presenta las asignaciones propias del profesional y permite modificar el tipo de condición y fechas de vigencia. El resultado final es la condición laboral actualizada.'
+  # params: derivados automáticamente de states.*.provides y initial
+  condiciones_considerar: []
+  condiciones_descartar: []
+  resultados_posibles:
+    - Condición laboral propia actualizada con tipo y fechas.
+    - Selección de la asignación de servicio a modificar.
+
 subject_resolution:
   handler: organization.pes_own_in_efector
 field_groups:

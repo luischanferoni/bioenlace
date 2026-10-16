@@ -3,6 +3,15 @@ version: 1
 action_name: 'Ver resultados de laboratorio'
 rbac_route: /api/clinical/laboratory-result/mis-resultados-como-paciente
 
+guide:
+  funcionalidad: 'Permite al paciente ver sus informes de laboratorio y acceder al detalle de cada uno. El flujo presenta el listado de análisis realizados y permite navegar al detalle con valores y referencias. El resultado final es la visualización del informe seleccionado.'
+  # params: derivados automáticamente de states.*.provides y initial
+  condiciones_considerar: []
+  condiciones_descartar: []
+  resultados_posibles:
+    - Visualización del listado de informes de laboratorio.
+    - Visualización del detalle de un informe con valores y referencias.
+
 initial: ver_listado
 states:
   ver_listado:

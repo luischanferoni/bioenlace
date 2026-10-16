@@ -5,6 +5,15 @@ shortcut:
 action_name: 'Ingreso a internación'
 rbac_route: /api/home/panel
 
+guide:
+  funcionalidad: 'Permite al staff registrar el ingreso de un paciente a internación. El flujo abre el formulario para completar datos del ingreso incluyendo cama, guardia de origen, profesional responsable, fecha, hora y condiciones de derivación. El resultado final es el ingreso registrado en el sistema.'
+  # params: derivados automáticamente de states.*.provides y initial
+  condiciones_considerar: []
+  condiciones_descartar: []
+  resultados_posibles:
+    - Ingreso a internación registrado con todos los datos requeridos.
+    - Asignación de cama y profesional responsable al paciente.
+
 initial: ingresar
 states:
   ingresar:

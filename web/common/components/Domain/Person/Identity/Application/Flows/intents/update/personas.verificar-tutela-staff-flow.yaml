@@ -3,6 +3,15 @@ version: 1
 action_name: 'Verificar tutela de menor'
 rbac_route: /api/person-representation/verificar-vinculo-para-staff
 
+guide:
+  funcionalidad: 'Permite al staff verificar solicitudes de tutela de menores pendientes de aprobación. El flujo presenta las solicitudes pendientes y permite aprobar o rechazar el vínculo de representación. El resultado final es la tutela verificada en el sistema.'
+  # params: derivados automáticamente de states.*.provides y initial
+  condiciones_considerar: []
+  condiciones_descartar: []
+  resultados_posibles:
+    - Tutela de menor verificada y aprobada.
+    - Revisión de solicitudes de vínculo de representación pendientes.
+
 initial: seleccionar_solicitud
 states:
   seleccionar_solicitud:

@@ -4,6 +4,15 @@ domain_operation: ServicioTeleconsultaPolitica.configurar
 action_name: 'Política de teleconsulta por servicio'
 rbac_route: /api/home/panel
 
+guide:
+  funcionalidad: 'Permite al staff configurar la política de teleconsulta por servicio del efector. El flujo permite seleccionar el servicio y definir si habilita videollamada y para qué casos. El resultado final es la política de teleconsulta del servicio configurada.'
+  # params: derivados automáticamente de states.*.provides y initial
+  condiciones_considerar: []
+  condiciones_descartar: []
+  resultados_posibles:
+    - Política de teleconsulta configurada para el servicio.
+    - Definición de casos habilitados para videollamada.
+
 initial: configurar_politica
 states:
   configurar_politica:

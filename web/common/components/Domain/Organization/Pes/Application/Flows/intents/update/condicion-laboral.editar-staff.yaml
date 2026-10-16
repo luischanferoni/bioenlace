@@ -6,6 +6,15 @@ domain_operation: ProfesionalEfectorServicio.condicion_laboral_staff
 action_name: 'Condición laboral de un profesional'
 rbac_route: /api/profesional-efector-servicio/crear-condicion-laboral
 
+guide:
+  funcionalidad: 'Permite al staff editar la condición laboral de otro profesional del efector. El flujo selecciona el profesional y permite modificar el tipo de condición y fechas de vigencia. El resultado final es la condición laboral del profesional actualizada.'
+  # params: derivados automáticamente de states.*.provides y initial
+  condiciones_considerar: []
+  condiciones_descartar: []
+  resultados_posibles:
+    - Condición laboral del profesional actualizada.
+    - Selección del profesional para editar su condición.
+
 subject_resolution:
   handler: organization.pes_staff_in_efector
   open_ui:

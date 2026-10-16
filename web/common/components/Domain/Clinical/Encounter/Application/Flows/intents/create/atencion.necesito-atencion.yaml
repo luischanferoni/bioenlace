@@ -2,10 +2,17 @@ intent_id: atencion.necesito-atencion
 version: 1
 action_name: 'Solicitar Atención'
 guide:
-  cubre: 'atención médica en general, incluyendo consultas por síntomas nuevos no urgentes, estudios, controles, medicación y orientación ante urgencias.'
+  funcionalidad: 'Solicitar turnos, consultas asincrónicas o gestionar medicación por síntomas nuevos, estudios, controles crónicos o urgencias. Permite reservar turnos (presenciales o teleconsulta), enviar consultas por mensaje, renovar o ajustar medicación, y recibir orientación ante urgencias.'
   # params: derivados automáticamente de states.*.provides y initial
-  reglas_boton:
-  - Determiná para quien es [MENSAJE O NECESIDAD DE LA PERSONA] y si sugiere urgencia. Si se refiere a otra persona y no es urgencia, descartá este botón.
+  condiciones_considerar:
+    - La necesidad corresponde a la persona que escribe, o a una situación de urgencia que cumple las reglas específicas del sistema.
+    - La funcionalidad permite avanzar directamente en la necesidad expresada.
+  condiciones_descartar:
+    - Determiná para quien es [MENSAJE O NECESIDAD DE LA PERSONA] y si sugiere urgencia. Si se refiere a otra persona y no es urgencia, descartá este botón.
+  resultados_posibles:
+    - Solicitud de turno.
+    - Gestión de estudio o seguimiento.
+    - Orientación ante una urgencia.
 rbac_route: /api/turnos/crear-como-paciente
 
 draft_hydrator:

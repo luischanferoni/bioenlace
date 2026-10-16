@@ -7,6 +7,15 @@ edit_surface_id: ProfesionalEfectorServicio
 action_name: 'Editar datos de un profesional'
 rbac_route: /api/editar
 
+guide:
+  funcionalidad: 'Permite al staff editar los datos de identidad de un profesional. El flujo abre la interfaz de edición para modificar nombre, apellido y otros datos personales del profesional. El resultado final es la identidad del profesional actualizada.'
+  # params: derivados automáticamente de states.*.provides y initial
+  condiciones_considerar: []
+  condiciones_descartar: []
+  resultados_posibles:
+    - Datos de identidad del profesional actualizados.
+    - Modificación de nombre, apellido u otros datos personales.
+
 fields:
   -
     name: nombre

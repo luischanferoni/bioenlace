@@ -4,3 +4,12 @@ shortcut:
   hidden: true
 action_name: 'ABM plantillas epicrisis'
 rbac_route: /api/clinical/internacion-epicrisis-plantilla/listar-admin
+
+guide:
+  funcionalidad: 'Permite al staff administrar las plantillas de epicrisis del sistema. El flujo abre la interfaz de administración para crear, editar y eliminar plantillas utilizadas en la generación de epicrisis de internación. El resultado final es la gestión actualizada de plantillas.'
+  # params: derivados automáticamente de states.*.provides y initial
+  condiciones_considerar: []
+  condiciones_descartar: []
+  resultados_posibles:
+    - Visualización del listado de plantillas de epicrisis.
+    - Creación, edición o eliminación de plantillas.

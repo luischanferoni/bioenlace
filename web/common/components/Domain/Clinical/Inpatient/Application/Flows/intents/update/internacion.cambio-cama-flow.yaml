@@ -5,6 +5,15 @@ shortcut:
 action_name: 'Cambio de cama'
 rbac_route: /api/clinical/episode-of-care/by-internacion
 
+guide:
+  funcionalidad: 'Permite al staff realizar el cambio de cama de un paciente internado. El flujo abre el formulario para seleccionar la cama destino y especificar el motivo del traslado. El resultado final es el cambio de cama registrado en el sistema.'
+  # params: derivados automáticamente de states.*.provides y initial
+  condiciones_considerar: []
+  condiciones_descartar: []
+  resultados_posibles:
+    - Cambio de cama registrado con motivo especificado.
+    - Actualización de la ubicación del paciente en el mapa de camas.
+
 initial: cambiar_cama
 states:
   cambiar_cama:

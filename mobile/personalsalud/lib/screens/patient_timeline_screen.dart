@@ -1745,7 +1745,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           clientCaptureId: id,
           captureId: existing?.serverCaptureId,
         );
-        print('✓ Captura eliminada del servidor: $id (server: ${existing.serverCaptureId})');
+        print('✓ Captura eliminada del servidor: $id (server: ${existing?.serverCaptureId})');
       } catch (e) {
         print('✗ Error al eliminar captura del servidor: $e');
         _snack('Error al eliminar del servidor', UiIntent.danger);

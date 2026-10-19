@@ -1386,7 +1386,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         await _stopAudioOnlyRecording();
       } else {
         final result = await _dictation.stop();
-        await _stopBackupRecording();
         if (!mounted) return;
         setState(() {
           _dictating = false;
@@ -1417,7 +1416,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       }
       return;
     }
-    if (!_sttConfig.deviceEnabled && _sttConfig.serverEnabled) {
+    if (_sttConfig.serverEnabled) {
       await _startAudioOnlyRecording();
       return;
     }
@@ -1426,7 +1425,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       return;
     }
     try {
-      await _startBackupRecording();
       await _dictation.start(onPartial: (text, _) {
         if (!mounted) return;
         setState(() {
@@ -1489,23 +1487,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     });
     if (_pendingAudioPath != null && _sttConfig.serverEnabled) {
       await _transcribirAudioPendiente();
-    }
-  }
-
-  Future<void> _startBackupRecording() async {
-    if (!await _audioRecorder.hasPermission()) return;
-    final dir = await getTemporaryDirectory();
-    _pendingAudioPath =
-        '${dir.path}/encounter_${DateTime.now().millisecondsSinceEpoch}.m4a';
-    await _audioRecorder.start(
-      const RecordConfig(encoder: AudioEncoder.aacLc, sampleRate: 44100),
-      path: _pendingAudioPath!,
-    );
-  }
-
-  Future<void> _stopBackupRecording() async {
-    if (await _audioRecorder.isRecording()) {
-      await _audioRecorder.stop();
     }
   }
 

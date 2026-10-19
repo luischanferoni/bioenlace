@@ -3152,11 +3152,28 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             onPressed: canConfirm ? _confirmarGuardado : null,
           ),
           BioSpacing.gapH(BioSpacing.sm),
-          BioButton(
-            label: 'Editar texto',
-            intent: UiIntent.neutral,
-            variant: BioButtonVariant.soft,
-            onPressed: _isSaving ? null : _editCaptureDraft,
+          Row(
+            children: [
+              Expanded(
+                child: BioButton(
+                  label: 'Editar texto',
+                  intent: UiIntent.neutral,
+                  variant: BioButtonVariant.soft,
+                  onPressed: _isSaving ? null : _editCaptureDraft,
+                ),
+              ),
+              BioSpacing.gapW(BioSpacing.sm),
+              Expanded(
+                child: BioButton(
+                  label: 'Eliminar',
+                  intent: UiIntent.danger,
+                  variant: BioButtonVariant.soft,
+                  onPressed: _isSaving || _activePendingId == null
+                      ? null
+                      : () => _deletePendingCapture(_activePendingId!),
+                ),
+              ),
+            ],
           ),
         ],
       ),

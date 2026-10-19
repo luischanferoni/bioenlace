@@ -3,14 +3,14 @@
 namespace common\components\Domain\Clinical\CareRequest\Application\UseCase;
 
 use common\components\Domain\Clinical\CareRequest\Domain\CodingSystems;
-
 use common\components\Domain\Clinical\CareRequest\Domain\ServiceLineActCatalogInterface;
-
 use common\components\Domain\Clinical\CareRequest\Domain\CareRequestActCoderInterface;
-
 use common\components\Domain\Clinical\CareRequest\Domain\CompositeServiceLineActCatalog;
 use common\components\Domain\Clinical\CareRequest\Domain\InMemoryServiceLineActCatalog;
+
 use common\components\Domain\Terminology\Application\Service\SnomedIaCodingService;
+use common\components\Domain\Clinical\CareRequest\Application\Service\CareRequestMetadata;
+
 use common\components\Domain\Terminology\Infrastructure\External\Snowstorm\SnowstormClient;
 use Yii;
 

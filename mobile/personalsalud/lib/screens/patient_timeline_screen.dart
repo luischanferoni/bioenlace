@@ -3152,7 +3152,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                   label: 'Eliminar',
                   intent: UiIntent.danger,
                   variant: BioButtonVariant.soft,
-                  onPressed: _isSaving ? null : _clearCaptureDraft,
+                  onPressed: _isSaving || _activePendingId == null
+                      ? null
+                      : () => _deletePendingCapture(_activePendingId!),
                 ),
               ),
             ],

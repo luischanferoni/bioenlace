@@ -1444,24 +1444,34 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
 
   Future<void> _startAudioOnlyRecording() async {
     try {
-      if (!await _audioRecorder.hasPermission()) {
-        _snack('Permiso de micrófono denegado.', UiIntent.warning);
-        return;
-      }
-      final dir = await getTemporaryDirectory();
-      _pendingAudioPath =
-          '${dir.path}/encounter_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      final filename =
+          'encounter_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      final path = kIsWeb
+          ? filename
+          : '${(await getTemporaryDirectory()).path}/$filename';
       await _audioRecorder.start(
         const RecordConfig(encoder: AudioEncoder.aacLc, sampleRate: 44100),
-        path: _pendingAudioPath!,
+        path: path,
       );
+      _pendingAudioPath = path;
       if (!mounted) return;
       setState(() {
         _audioOnlyRecording = true;
         _sttStatus = 'Grabando…';
       });
     } catch (e) {
-      _snack('No se pudo grabar audio: $e', UiIntent.danger);
+      final error = e.toString().toLowerCase();
+      final message = error.contains('notallowederror') ||
+              error.contains('permission denied') ||
+              error.contains('denied')
+          ? 'Chrome bloqueó el micrófono. Permitilo para este sitio desde el ícono junto a la dirección y recargá la página.'
+          : error.contains('notfounderror') ||
+                  error.contains('devicesnotfounderror')
+              ? 'No se encontró un micrófono disponible.'
+              : kIsWeb
+                  ? 'No se pudo acceder al micrófono. Verificá el permiso del sitio en Chrome y que la página esté abierta mediante HTTPS. Detalle: $e'
+                  : 'No se pudo grabar audio: $e';
+      _snack(message, UiIntent.danger);
     }
   }
 

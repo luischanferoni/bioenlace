@@ -529,7 +529,7 @@ class PacientesController extends BaseController
                 'motivo' => null,
             ],
             'http_error' => $this->error(
-                "La historia clínica estará disponible {$min} minuto(s) antes del turno.",
+                "La HC clínica estará disponible {$min} minuto(s) antes del turno.",
                 [
                     'codigo' => 'HC_ANTES_DE_VENTANA',
                     'ventana_medico' => $gate,

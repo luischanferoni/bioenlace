@@ -1444,15 +1444,24 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
 
   Future<void> _startAudioOnlyRecording() async {
     try {
+      final extension = kIsWeb ? 'webm' : 'm4a';
       final filename =
-          'encounter_${DateTime.now().millisecondsSinceEpoch}.m4a';
+          'encounter_${DateTime.now().millisecondsSinceEpoch}.$extension';
       final path = kIsWeb
           ? filename
           : '${(await getTemporaryDirectory()).path}/$filename';
       await _audioRecorder.start(
-        const RecordConfig(encoder: AudioEncoder.aacLc, sampleRate: 44100),
+        RecordConfig(
+          encoder: kIsWeb ? AudioEncoder.opus : AudioEncoder.aacLc,
+          sampleRate: 44100,
+        ),
         path: path,
       );
+      if (!await _audioRecorder.isRecording()) {
+        throw StateError(
+          'Chrome no inició la grabación. Verificá el micrófono y el permiso del sitio.',
+        );
+      }
       _pendingAudioPath = path;
       if (!mounted) return;
       setState(() {
@@ -1460,6 +1469,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         _sttStatus = 'Grabando…';
       });
     } catch (e) {
+      if (kIsWeb) {
+        await _showMicrophonePermissionDialog();
+        return;
+      }
       final error = e.toString().toLowerCase();
       final message = error.contains('notallowederror') ||
               error.contains('permission denied') ||
@@ -1475,38 +1488,99 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     }
   }
 
+  Future<void> _showMicrophonePermissionDialog({
+    bool permissionRequestFailed = false,
+  }) async {
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        icon: const Icon(Icons.mic_off_outlined),
+        title: const Text('Micrófono no habilitado'),
+        content: Text(
+          permissionRequestFailed
+              ? 'Chrome no pudo habilitar el micrófono. Verificá que haya uno conectado y que el permiso esté en “Permitir” en los controles del sitio, a la izquierda de la dirección. Después recargá la página.'
+              : 'Para grabar, habilitá el micrófono para este sitio. Podés solicitar el permiso ahora. Si Chrome no muestra el aviso, habilitalo en los controles del sitio, a la izquierda de la dirección.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cerrar'),
+          ),
+          FilledButton.icon(
+            onPressed: () async {
+              Navigator.of(dialogContext).pop();
+              try {
+                final granted = await _audioRecorder.hasPermission();
+                if (!mounted) return;
+                if (granted) {
+                  await _startAudioOnlyRecording();
+                } else {
+                  await _showMicrophonePermissionDialog(
+                    permissionRequestFailed: true,
+                  );
+                }
+              } catch (_) {
+                if (!mounted) return;
+                await _showMicrophonePermissionDialog(
+                  permissionRequestFailed: true,
+                );
+              }
+            },
+            icon: const Icon(Icons.mic),
+            label: Text(
+              permissionRequestFailed
+                  ? 'Volver a intentar'
+                  : 'Habilitar micrófono',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _stopAudioOnlyRecording() async {
-    if (await _audioRecorder.isRecording()) {
-      await _audioRecorder.stop();
+    String? audioPath;
+    try {
+      audioPath = await _audioRecorder.stop();
+    } catch (e) {
+      _pendingAudioPath = null;
+      if (!mounted) return;
+      setState(() {
+        _audioOnlyRecording = false;
+        _sttStatus = 'No se pudo capturar el audio.';
+      });
+      _snack('No se pudo finalizar la grabación: $e', UiIntent.danger);
+      return;
     }
     if (!mounted) return;
-    final text = _chatController.text.trim();
-    if (_tieneContextoCaptura && _pendingAudioPath != null) {
-      await _persistLocalDraft(
-        texto: text.isEmpty ? '(audio pendiente de transcribir)' : text,
-        status: PendingEncounterCaptureStatus.draft,
-        clearError: true,
+    if (audioPath == null || audioPath.isEmpty) {
+      _pendingAudioPath = null;
+      setState(() {
+        _audioOnlyRecording = false;
+        _sttStatus = 'No se capturó audio.';
+      });
+      _snack(
+        'No se capturó audio. Conectá un micrófono y volvé a intentar.',
+        UiIntent.warning,
       );
+      return;
     }
-    if (!mounted) return;
+    _pendingAudioPath = audioPath;
     setState(() {
       _audioOnlyRecording = false;
-      _sttStatus = _pendingAudioPath != null
-          ? 'Procesando audio…'
-          : 'No se capturó audio.';
+      _sttStatus = 'Procesando audio…';
     });
-    if (_pendingAudioPath != null && _sttConfig.serverEnabled) {
+    if (_sttConfig.serverEnabled) {
       await _transcribirAudioPendiente();
     }
   }
 
   Future<String?> _audioPathToBase64(String path) async {
-    try {
-      final bytes = await XFile(path).readAsBytes();
-      return 'data:audio/m4a;base64,${base64Encode(bytes)}';
-    } catch (_) {
-      return null;
-    }
+    final bytes = await XFile(path).readAsBytes();
+    if (bytes.isEmpty) return null;
+    final mimeType = kIsWeb ? 'audio/webm' : 'audio/m4a';
+    return 'data:$mimeType;base64,${base64Encode(bytes)}';
   }
 
   Future<void> _transcribirAudioPendiente() async {
@@ -1519,8 +1593,33 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     });
     try {
       final b64 = await _audioPathToBase64(_pendingAudioPath!);
-      if (b64 == null) throw Exception('No se pudo leer el audio');
+      if (b64 == null) {
+        if (mounted) {
+          setState(() {
+            _sttStatus = 'No se capturó audio.';
+            _pendingAudioPath = null;
+          });
+          _snack(
+            'No se capturó audio. Conectá un micrófono y volvé a intentar.',
+            UiIntent.warning,
+          );
+        }
+        return;
+      }
       final text = await _encounterApi.transcribirServidor(audioBase64: b64);
+      if (text.trim().isEmpty) {
+        if (mounted) {
+          setState(() {
+            _sttStatus = 'No se detectó voz en el audio.';
+            _pendingAudioPath = null;
+          });
+          _snack(
+            'No se detectó voz en el audio. No se guardó el borrador.',
+            UiIntent.warning,
+          );
+        }
+        return;
+      }
       if (!mounted) return;
       setState(() {
         _chatController.text = text;
@@ -1542,7 +1641,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _sttStatus = 'No se pudo transcribir el audio');
+        setState(() {
+          _sttStatus = 'No se pudo transcribir el audio';
+          _pendingAudioPath = null;
+        });
       }
       _snack('Error al transcribir: $e', UiIntent.danger);
     } finally {

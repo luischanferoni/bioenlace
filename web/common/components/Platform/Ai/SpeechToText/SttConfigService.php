@@ -26,7 +26,7 @@ final class SttConfigService
 
         $defaults = [
             'proveedor_servidor' => self::PROVIDER_GROQ,
-            'device_enabled' => true,
+            'device_enabled' => false,
             'server_enabled' => true,
             'groq_model' => 'whisper-large-v3-turbo',
             'groq_language' => 'es',
@@ -37,12 +37,32 @@ final class SttConfigService
 
     public static function isDeviceEnabled(): bool
     {
+        $stt = Yii::$app->params['stt'] ?? [];
+        if (is_array($stt) && array_key_exists('device_enabled', $stt)) {
+            return (bool) $stt['device_enabled'];
+        }
+
         $device = Yii::$app->params['stt_device'] ?? [];
         if (is_array($device) && array_key_exists('enabled', $device)) {
             return (bool) $device['enabled'];
         }
 
-        return (bool) (self::config()['device_enabled'] ?? true);
+        return (bool) (self::config()['device_enabled'] ?? false);
+    }
+
+    private static function deviceEnabledSource(): string
+    {
+        $stt = Yii::$app->params['stt'] ?? [];
+        if (is_array($stt) && array_key_exists('device_enabled', $stt)) {
+            return 'stt.device_enabled';
+        }
+
+        $device = Yii::$app->params['stt_device'] ?? [];
+        if (is_array($device) && array_key_exists('enabled', $device)) {
+            return 'stt_device.enabled';
+        }
+
+        return 'default';
     }
 
     public static function isServerEnabled(): bool
@@ -128,6 +148,7 @@ final class SttConfigService
 
         return [
             'device_enabled' => self::isDeviceEnabled(),
+            'device_enabled_source' => self::deviceEnabledSource(),
             'server_enabled' => self::isServerEnabled(),
             'proveedor_servidor' => self::serverProvider(),
             'server_configured' => self::isServerProviderConfigured(),

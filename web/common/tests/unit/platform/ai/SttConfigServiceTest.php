@@ -33,6 +33,7 @@ class SttConfigServiceTest extends \Codeception\Test\Unit
 
         verify(SttConfigService::serverProvider())->equals(SttConfigService::PROVIDER_GROQ);
         verify(SttConfigService::isServerEnabled())->true();
+        verify(SttConfigService::isDeviceEnabled())->false();
     }
 
     public function testProveedorDesconocidoNoCaeEnHuggingFace(): void
@@ -53,8 +54,29 @@ class SttConfigServiceTest extends \Codeception\Test\Unit
         verify($snap)->arrayNotHasKey('groq_api_key');
     }
 
+    public function testSttDeviceEnabledTienePrioridadSobreLaConfiguracionLegacy(): void
+    {
+        \Yii::$app->params['stt']['device_enabled'] = false;
+        \Yii::$app->params['stt_device']['enabled'] = true;
+
+        $snapshot = SttConfigService::clientSnapshot();
+
+        verify(SttConfigService::isDeviceEnabled())->false();
+        verify($snapshot['device_enabled'])->false();
+        verify($snapshot['device_enabled_source'])->equals('stt.device_enabled');
+    }
+
+    public function testConfiguracionLegacyDeviceEnabledSeUsaSiNoHayClaveCanonica(): void
+    {
+        unset(\Yii::$app->params['stt']['device_enabled']);
+        \Yii::$app->params['stt_device']['enabled'] = false;
+
+        verify(SttConfigService::isDeviceEnabled())->false();
+    }
+
     public function testDeviceDeshabilitadoOmiteEvaluacionDevice(): void
     {
+        \Yii::$app->params['stt']['device_enabled'] = false;
         \Yii::$app->params['stt_device'] = ['enabled' => false];
 
         $r = (new CaptureSpeechInputResolver())->resolveFromBody([

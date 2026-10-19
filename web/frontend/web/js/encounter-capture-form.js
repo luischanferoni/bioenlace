@@ -48,18 +48,38 @@
 
     function parseSttConfig(formEl) {
         var defaults = {
-            device_enabled: true,
-            server_enabled: true,
+            device_enabled: false,
+            server_enabled: false,
             proveedor_servidor: 'groq',
             server_configured: false,
         };
         if (!formEl || !formEl.dataset || !formEl.dataset.sttConfig) {
+            console.error('[stt-config] config missing; voice dictation disabled');
             return defaults;
         }
         try {
-            return Object.assign(defaults, JSON.parse(formEl.dataset.sttConfig));
+            var parsed = JSON.parse(formEl.dataset.sttConfig);
+            if (
+                typeof parsed.device_enabled !== 'boolean' ||
+                typeof parsed.server_enabled !== 'boolean'
+            ) {
+                throw new Error('invalid device_enabled/server_enabled flags');
+            }
+            var config = Object.assign({}, defaults, parsed);
+            console.info(
+                '[stt-config] loaded',
+                JSON.stringify({
+                    device_enabled: config.device_enabled,
+                    device_enabled_source: config.device_enabled_source || 'unknown',
+                    server_enabled: config.server_enabled,
+                    server_configured: config.server_configured,
+                    provider: config.proveedor_servidor,
+                })
+            );
+            return config;
         } catch (e) {
-            return defaults;
+            console.error('[stt-config] invalid config; voice dictation disabled', e);
+            return Object.assign({}, defaults);
         }
     }
 
@@ -705,10 +725,18 @@
                 text: combined,
                 rawDeviceText: (finalTranscript + interim).trim(),
             };
+            console.debug('[stt-device] result', JSON.stringify({
+                locale: self.recognition.lang,
+                chars: combined.length,
+                words: combined.trim() ? combined.trim().split(/\s+/).length : 0,
+                confidence: conf,
+                final: !!finalTranscript,
+            }));
         };
 
         this.recognition.onerror = function (event) {
             var err = event && event.error ? String(event.error) : '';
+            console.warn('[stt-device] recognition error', err || 'unknown');
             // Al detener o sin habla: no es un fallo de producto.
             if (err === 'aborted' || err === 'no-speech') {
                 return;
@@ -771,9 +799,7 @@
         return navigator.mediaDevices.getUserMedia({ audio: true });
     };
 
-    /**
-     * Mensaje accionable: si el sitio ya bloqueó el mic, Chrome no vuelve a mostrar el diálogo.
-     */
+    /** Mensaje accionable cuando el sitio ya no puede volver a solicitar el permiso. */
     EncounterCaptureForm.prototype.microphoneErrorMessage = function (err, permState) {
         var name = err && err.name ? String(err.name) : '';
         var msg = err && err.message ? String(err.message) : '';
@@ -790,7 +816,7 @@
         if (name === 'NotSupportedError' || msg === 'unsupported') {
             return 'Este navegador no permite grabar audio. Escribí el texto.';
         }
-        // Bloqueo previo: Chrome no muestra el popup otra vez.
+        // Un permiso denegado puede no volver a mostrar una solicitud al usuario.
         if (
             permState === 'denied' ||
             name === 'NotAllowedError' ||
@@ -821,7 +847,7 @@
         }
 
         this.queryMicrophonePermission().then(function (permState) {
-            // Si ya está denegado, getUserMedia falla al instante y Chrome no muestra diálogo.
+            // Si ya está denegado, getUserMedia falla sin volver a solicitar permiso.
             if (permState === 'denied') {
                 self.setStatus(self.microphoneErrorMessage({ name: 'NotAllowedError' }, permState), 'warning');
                 return;
@@ -850,12 +876,20 @@
                     }
                     var useRecognition =
                         !!self.sttConfig.device_enabled && !!self.recognition;
+                    console.info('[stt-device] start route', JSON.stringify({
+                        device_enabled: !!self.sttConfig.device_enabled,
+                        server_enabled: !!self.sttConfig.server_enabled,
+                        recognition_available: !!self.recognition,
+                        locale: self.recognition ? self.recognition.lang : null,
+                        route: useRecognition ? 'device_with_audio_backup' : 'audio_only',
+                    }));
                     if (useRecognition) {
                         try {
                             self.recognition.start();
                             self.listening = true;
                             self.audioOnlyRecording = false;
                         } catch (e) {
+                            console.warn('[stt-device] recognition start failed', e);
                             self.listening = false;
                             self.audioOnlyRecording = true;
                             self._deviceSttFailed = true;
@@ -867,6 +901,7 @@
                     self.setStatus('Escuchando… Tocá Dictar de nuevo para detener.', 'primary');
                 })
                 .catch(function (err) {
+                    console.error('[stt-device] microphone capture failed', err);
                     self.listening = false;
                     self.audioOnlyRecording = false;
                     self.queryMicrophonePermission().then(function (stateAfter) {
@@ -984,6 +1019,13 @@
                     (self.lastSttMeta &&
                         self.lastSttMeta.local_quality &&
                         !self.lastSttMeta.local_quality.ok));
+            console.info('[stt-device] stop route', JSON.stringify({
+                has_text: hasText,
+                has_audio: !!blob,
+                device_failed: self._deviceSttFailed,
+                local_quality: self.lastSttMeta ? self.lastSttMeta.local_quality : null,
+                server_transcription: needServer,
+            }));
 
             if (!blob && !hasText) {
                 self.setStatus('No se capturó audio. Volvé a dictar.', 'warning');

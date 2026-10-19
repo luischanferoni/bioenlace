@@ -296,6 +296,13 @@ Misma [escalera de proveedores](#escalera-de-proveedores-servidor): Groq es el f
 
 No requiere migración de BD: metadatos STT viajan en el body del request (`stt`, `audio` opcional).
 
+### Configuración y diagnóstico de dictado local
+
+- `stt.device_enabled` es el interruptor canónico que controla si los clientes pueden iniciar STT local. `stt_device.enabled` solo se consulta como compatibilidad si falta la clave canónica.
+- El endpoint `GET /api/v1/audio/stt-config` informa `device_enabled_source` para mostrar qué clave definió el valor efectivo. Si la configuración no se puede cargar o no tiene el contrato esperado, las apps deshabilitan STT local en lugar de inferir que está habilitado.
+- En móvil, filtrar la consola por `[stt-config]`, `[stt-device]` y `[stt-motivos]`. Se registran plataforma, locale, modo, motor local solicitado/efectivo, errores, confianza, resultado final, duración y tamaño del texto; no se registra el texto dictado.
+- Para investigar errores de reconocimiento, probar una frase breve conocida en el mismo dispositivo y revisar `locale`, `onDevice`, `confidence`, `final`, `durationMs` y `error`. Confianza `0` significa que el motor no la informó, no que la transcripción tenga confianza neutra.
+
 ## Monitoreo (pendiente de implementación)
 
 Extender [monitoreo.md](./monitoreo.md) con métricas STT (memoria, log `stt-cost`, o BD futura):

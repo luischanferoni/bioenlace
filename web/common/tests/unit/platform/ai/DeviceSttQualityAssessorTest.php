@@ -34,4 +34,16 @@ class DeviceSttQualityAssessorTest extends \Codeception\Test\Unit
         verify($r['ok'])->false();
         verify($r['reasons'])->contains('confianza_baja');
     }
+
+    public function testRechazaResultadoConErrorDelMotor(): void
+    {
+        $r = DeviceSttQualityAssessor::assess(
+            'Dolor de cabeza desde ayer.',
+            ['confidence' => 0.95, 'error' => 'error_no_match'],
+            'captura_clinica'
+        );
+
+        verify($r['ok'])->false();
+        verify($r['reasons'])->contains('error_motor');
+    }
 }

@@ -104,10 +104,9 @@ return [
 
     /**
      * STT en dispositivo (captura clínica): umbrales de calidad y fallback a servidor.
-     * `enabled` false = solo texto manual o STT servidor (si server_enabled).
+     * La activación/desactivación se configura en stt.device_enabled.
      */
     'stt_device' => [
-        'enabled' => true,
         'min_confidence' => 0.75,
         'min_chars' => 3,
         'min_words_per_minute' => 20,

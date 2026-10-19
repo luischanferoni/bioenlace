@@ -29,24 +29,30 @@ class MotivosConsultaService {
   }
 
   Future<SttClientConfig> fetchSttConfig() async {
-    try {
-      final uri = Uri.parse('${AppConfig.apiUrl}/audio/stt-config');
-      final response = await http
-          .get(uri, headers: _headers)
-          .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-      if (response.statusCode != 200) {
-        return SttClientConfig.defaults;
+    final uri = Uri.parse('${AppConfig.apiUrl}/audio/stt-config');
+    final response = await http
+        .get(uri, headers: _headers)
+        .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
+    if (response.statusCode != 200) {
+      throw Exception(
+        'No se pudo cargar la configuración STT (${response.statusCode}).',
+      );
+    }
+    final data = json.decode(response.body);
+    if (data is! Map || data['success'] != true) {
+      throw const FormatException('Respuesta inválida de configuración STT.');
+    }
+    final stt = data['stt'];
+    if (stt is Map) {
+      final config = Map<String, dynamic>.from(stt);
+      if (config['device_enabled'] is bool &&
+          config['server_enabled'] is bool) {
+        return SttClientConfig.fromJson(config);
       }
-      final data = json.decode(response.body);
-      if (data is! Map || data['success'] != true) {
-        return SttClientConfig.defaults;
-      }
-      final stt = data['stt'];
-      if (stt is Map) {
-        return SttClientConfig.fromJson(Map<String, dynamic>.from(stt));
-      }
-    } catch (_) {}
-    return SttClientConfig.defaults;
+    }
+    throw const FormatException(
+      'Falta una configuración STT válida en la respuesta.',
+    );
   }
 
   Future<Map<String, dynamic>> getMessages(int consultaId) async {

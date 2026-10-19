@@ -5,6 +5,7 @@ class SttClientConfig {
     required this.serverEnabled,
     required this.proveedorServidor,
     required this.serverConfigured,
+    this.deviceEnabledSource = 'unknown',
     this.minConfidence = 0.75,
     this.profileMinConfidence = const {},
   });
@@ -13,13 +14,14 @@ class SttClientConfig {
   final bool serverEnabled;
   final String proveedorServidor;
   final bool serverConfigured;
+  final String deviceEnabledSource;
   final double minConfidence;
 
   /// Umbrales por perfil (`captura_clinica`, `motivos_consulta`, …).
   final Map<String, double> profileMinConfidence;
 
   static const defaults = SttClientConfig(
-    deviceEnabled: true,
+    deviceEnabled: false,
     serverEnabled: true,
     proveedorServidor: 'groq',
     serverConfigured: false,
@@ -28,6 +30,14 @@ class SttClientConfig {
       'captura_clinica': 0.85,
       'motivos_consulta': 0.75,
     },
+  );
+
+  static const unavailable = SttClientConfig(
+    deviceEnabled: false,
+    serverEnabled: false,
+    proveedorServidor: 'unknown',
+    serverConfigured: false,
+    deviceEnabledSource: 'unavailable',
   );
 
   double minConfidenceForProfile(String profileId) {
@@ -56,10 +66,12 @@ class SttClientConfig {
         ? 0.75
         : (double.tryParse(rawConf.toString()) ?? 0.75);
     return SttClientConfig(
-      deviceEnabled: json['device_enabled'] != false,
+      deviceEnabled: json['device_enabled'] == true,
       serverEnabled: json['server_enabled'] != false,
       proveedorServidor: (json['proveedor_servidor'] ?? 'groq').toString(),
       serverConfigured: json['server_configured'] == true,
+      deviceEnabledSource:
+          (json['device_enabled_source'] ?? 'unknown').toString(),
       minConfidence: base,
       profileMinConfidence: {
         ...defaults.profileMinConfidence,

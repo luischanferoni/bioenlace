@@ -48,15 +48,24 @@ class EncounterCaptureApi {
         .get(uri, headers: _jsonHeaders)
         .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
     BioenlaceHttpTrace.logResponse('audio/stt-config', response);
+    if (response.statusCode >= 400) {
+      throw Exception(
+        'No se pudo cargar la configuración STT (${response.statusCode}).',
+      );
+    }
     final decoded = json.decode(response.body);
     if (decoded is! Map<String, dynamic> || decoded['success'] != true) {
-      return SttClientConfig.defaults;
+      throw const FormatException('Respuesta inválida de configuración STT.');
     }
     final stt = decoded['stt'];
-    if (stt is Map<String, dynamic>) {
+    if (stt is Map<String, dynamic> &&
+        stt['device_enabled'] is bool &&
+        stt['server_enabled'] is bool) {
       return SttClientConfig.fromJson(stt);
     }
-    return SttClientConfig.defaults;
+    throw const FormatException(
+      'Falta una configuración STT válida en la respuesta.',
+    );
   }
 
   /// POST /api/v1/clinical/encounter/captura/crear-o-subir

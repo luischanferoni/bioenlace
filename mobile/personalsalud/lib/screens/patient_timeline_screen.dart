@@ -72,6 +72,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   final Map<String, TextEditingController> _issueCustomControllers = {};
   String _sttStatus = '';
   SttClientConfig _sttConfig = SttClientConfig.defaults;
+  bool _sttConfigLoaded = false;
   bool _audioOnlyRecording = false;
   bool _editingCaptureDraft = false;
   EncounterCaptureAnalysis? _editBackupReview;
@@ -125,7 +126,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       _consultaGuardar.authToken = widget.authToken;
       _encounterApi.authToken = widget.authToken;
     }
-    _dictation.initialize();
     _loadSttConfig();
     _cargarHistoriaClinica();
     _loadPendingCaptures();
@@ -209,9 +209,25 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     try {
       final cfg = await _encounterApi.fetchSttConfig();
       if (!mounted) return;
-      setState(() => _sttConfig = cfg);
-    } catch (_) {
-      // Mantener defaults locales.
+      setState(() {
+        _sttConfig = cfg;
+        _sttConfigLoaded = true;
+        _sttStatus = '';
+      });
+      debugPrint(
+        '[stt-config] loaded device=${cfg.deviceEnabled} '
+        'source=${cfg.deviceEnabledSource} server=${cfg.serverEnabled} '
+        'serverConfigured=${cfg.serverConfigured} '
+        'provider=${cfg.proveedorServidor}',
+      );
+    } catch (e, st) {
+      debugPrint('[stt-config] load failed: $e\n$st');
+      if (!mounted) return;
+      setState(() {
+        _sttConfig = SttClientConfig.unavailable;
+        _sttConfigLoaded = true;
+        _sttStatus = 'No se pudo cargar la configuración de voz. Dictado deshabilitado.';
+      });
     }
   }
 
@@ -1381,6 +1397,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
 
   Future<void> _toggleDictation() async {
     if (_captureBusy) return;
+    if (!_sttConfigLoaded) {
+      _snack('La configuración de voz todavía se está cargando.', UiIntent.warning);
+      return;
+    }
     if (_dictating || _audioOnlyRecording) {
       if (_audioOnlyRecording) {
         await _stopAudioOnlyRecording();
@@ -1409,7 +1429,13 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         final text = _chatController.text.trim();
         final needsServer = _sttConfig.serverEnabled &&
             _pendingAudioPath != null &&
-            (text.isEmpty || !DeviceSttLocalQuality.isAcceptable(text, result));
+            (text.isEmpty ||
+                !DeviceSttLocalQuality.isAcceptable(
+                  text,
+                  result,
+                  minConfidence:
+                      _sttConfig.minConfidenceForProfile('captura_clinica'),
+                ));
         if (needsServer) {
           await _transcribirAudioPendiente();
         }
@@ -1425,19 +1451,24 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       return;
     }
     try {
-      await _dictation.start(onPartial: (text, _) {
-        if (!mounted) return;
-        setState(() {
-          _chatController.text = text;
-          _sttStatus = 'Escuchando…';
-        });
-      });
+      await _dictation.start(
+        onPartial: (text, _) {
+          if (!mounted) return;
+          setState(() {
+            _chatController.text = text;
+            _sttStatus = 'Escuchando…';
+          });
+        },
+        listenMode: DeviceListenMode.dictation,
+        preferOnDevice: true,
+      );
       if (!mounted) return;
       setState(() {
         _dictating = true;
         _sttStatus = 'Escuchando…';
       });
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint('[stt-device] start failed: $e\n$st');
       _snack('No se pudo iniciar dictado: $e', UiIntent.danger);
     }
   }
@@ -1676,7 +1707,11 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     if (trimmed.isEmpty) {
       return 'Sin voz detectada';
     }
-    if (DeviceSttLocalQuality.isAcceptable(trimmed, result)) {
+    if (DeviceSttLocalQuality.isAcceptable(
+      trimmed,
+      result,
+      minConfidence: _sttConfig.minConfidenceForProfile('captura_clinica'),
+    )) {
       return 'Listo';
     }
     if (_sttConfig.serverEnabled) {
@@ -2105,7 +2140,12 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       var needsServerStt = text.isEmpty;
       if (last != null && text.isNotEmpty && text == last.text.trim()) {
         sttMeta = last.toSttPayload();
-        needsServerStt = !DeviceSttLocalQuality.isAcceptable(text, last);
+        needsServerStt = !DeviceSttLocalQuality.isAcceptable(
+          text,
+          last,
+          minConfidence:
+              _sttConfig.minConfidenceForProfile('captura_clinica'),
+        );
       } else if (text.isEmpty) {
         needsServerStt = true;
       }
@@ -3244,6 +3284,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                   : 'Escribir consulta…'),
           maxLines: 6,
           onVoice: canCapture &&
+                  _sttConfigLoaded &&
                   (_sttConfig.deviceEnabled || _sttConfig.serverEnabled)
               ? _toggleDictation
               : null,

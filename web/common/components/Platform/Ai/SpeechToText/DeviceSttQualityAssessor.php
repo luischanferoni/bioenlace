@@ -10,7 +10,7 @@ use Yii;
 final class DeviceSttQualityAssessor
 {
     /**
-     * @param array<string, mixed> $meta confidence, duration_ms, locale, engine, client_edit_ratio
+     * @param array<string, mixed> $meta confidence, duration_ms, locale, engine, error, client_edit_ratio
      * @return array{ok: bool, needs_server: bool, reasons: list<string>}
      */
     public static function assess(string $text, array $meta = [], ?string $flowProfile = null): array
@@ -21,6 +21,10 @@ final class DeviceSttQualityAssessor
 
         if (mb_strlen($trimmed) < (int) ($cfg['min_chars'] ?? 3)) {
             $reasons[] = 'texto_muy_corto';
+        }
+
+        if (isset($meta['error']) && trim((string) $meta['error']) !== '') {
+            $reasons[] = 'error_motor';
         }
 
         $confidence = isset($meta['confidence']) ? (float) $meta['confidence'] : null;

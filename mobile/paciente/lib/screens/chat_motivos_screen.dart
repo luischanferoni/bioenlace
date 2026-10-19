@@ -85,11 +85,47 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
   }
 
   Future<void> _loadSttConfig() async {
-    final cfg = await _service.fetchSttConfig();
+    late final SttClientConfig cfg;
+    try {
+      cfg = await _service.fetchSttConfig();
+    } catch (e, st) {
+      debugPrint('[stt-config] motivos load failed: $e\n$st');
+      if (!mounted) return;
+      setState(() {
+        _sttConfig = SttClientConfig.unavailable;
+        _voiceHint =
+            'No se pudo cargar la configuración de voz. El audio se conservará para su envío.';
+      });
+      return;
+    }
+
     if (!mounted) return;
     setState(() => _sttConfig = cfg);
+    debugPrint(
+      '[stt-config] motivos loaded device=${cfg.deviceEnabled} '
+      'source=${cfg.deviceEnabledSource} server=${cfg.serverEnabled} '
+      'serverConfigured=${cfg.serverConfigured} '
+      'provider=${cfg.proveedorServidor}',
+    );
     if (cfg.deviceEnabled) {
-      await _dictation.initialize();
+      try {
+        final available = await _dictation.initialize();
+        if (!available) {
+          debugPrint(
+            '[stt-device] local recognizer unavailable; audio fallback remains enabled',
+          );
+          if (mounted) {
+            setState(() {
+              _voiceHint =
+                  'Dictado local no disponible; se conservará el audio para enviarlo.';
+            });
+          }
+        }
+      } catch (e, st) {
+        debugPrint(
+          '[stt-device] initialize failed; audio fallback remains enabled: $e\n$st',
+        );
+      }
     }
   }
 
@@ -197,7 +233,8 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
           },
         );
         dictating = true;
-      } catch (_) {
+      } catch (e, st) {
+        debugPrint('[stt-motivos] local dictation start failed: $e\n$st');
         // Sin dictado local: queda solo la grabación de audio.
         dictating = false;
       }
@@ -218,7 +255,8 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
     if (_dictating) {
       try {
         dictation = await _dictation.stop();
-      } catch (_) {
+      } catch (e, st) {
+        debugPrint('[stt-motivos] local dictation stop failed: $e\n$st');
         dictation = null;
       }
     }
@@ -243,6 +281,16 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
           dictation,
           minConfidence: _motivosMinConfidence,
         );
+    debugPrint(
+      '[stt-motivos] route=${deviceOk ? 'device_text' : 'server_audio'} '
+      'deviceEnabled=${_sttConfig.deviceEnabled} '
+      'chars=${text.length} confidence=${dictation?.confidence ?? 0} '
+      'minConfidence=$_motivosMinConfidence '
+      'durationMs=${dictation?.durationMs ?? 0} '
+      'onDevice=${dictation?.onDevice ?? false} '
+      'final=${dictation?.finalResult ?? false} '
+      'error=${dictation?.error ?? 'none'}',
+    );
 
     if (deviceOk) {
       if (path != null && path.isNotEmpty) {

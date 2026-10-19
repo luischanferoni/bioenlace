@@ -1483,6 +1483,17 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
 
   Future<bool> _startAudioOnlyRecording({bool audioOnly = true}) async {
     try {
+      if (!await _audioRecorder.hasPermission()) {
+        if (kIsWeb) {
+          await _showMicrophonePermissionDialog(permissionRequestFailed: true);
+        } else {
+          _snack(
+            'Para grabar el audio, habilitá el permiso de micrófono en la app.',
+            UiIntent.danger,
+          );
+        }
+        return false;
+      }
       final extension = kIsWeb ? 'webm' : 'm4a';
       final filename =
           'encounter_${DateTime.now().millisecondsSinceEpoch}.$extension';
@@ -1493,6 +1504,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         RecordConfig(
           encoder: kIsWeb ? AudioEncoder.opus : AudioEncoder.aacLc,
           sampleRate: 44100,
+          numChannels: 1,
+          androidConfig: const AndroidRecordConfig(useLegacy: true),
         ),
         path: path,
       );

@@ -1858,7 +1858,11 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   String _pendingPrimaryActionLabel(PendingEncounterCapture item) {
     switch (item.status) {
       case PendingEncounterCaptureStatus.draft:
-        return 'Continuar';
+      return item.hasAudio &&
+        (item.texto.trim().isEmpty ||
+            item.texto.trim().startsWith('(audio'))
+          ? 'Generar Notas Clínicas'
+          : 'Continuar';
       case PendingEncounterCaptureStatus.pendingUpload:
         return 'Subir';
       case PendingEncounterCaptureStatus.pendingStt:

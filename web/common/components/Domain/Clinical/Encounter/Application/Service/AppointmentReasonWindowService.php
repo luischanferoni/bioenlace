@@ -32,7 +32,7 @@ final class AppointmentReasonWindowService
             ?? self::DEFAULT_MEDICO_HC_OPEN_MINUTES_BEFORE
         );
 
-        return 120;
+        return max(0, $v);
     }
 
     public static function findEncounter(int $encounterId): ?Encounter

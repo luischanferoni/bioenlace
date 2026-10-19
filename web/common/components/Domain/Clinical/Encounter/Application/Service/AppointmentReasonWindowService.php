@@ -15,7 +15,7 @@ use Yii;
 final class AppointmentReasonWindowService
 {
     public const DEFAULT_CLOSE_MINUTES_BEFORE = 10;
-    public const DEFAULT_MEDICO_HC_OPEN_MINUTES_BEFORE = 30;
+    public const DEFAULT_MEDICO_HC_OPEN_MINUTES_BEFORE = 120;
 
     public static function minutesBeforeClose(): int
     {

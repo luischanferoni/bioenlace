@@ -1406,6 +1406,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         await _stopAudioOnlyRecording();
       } else {
         final result = await _dictation.stop();
+        final audioStopped = await _stopAudioOnlyRecording(transcribe: false);
         if (!mounted) return;
         setState(() {
           _dictating = false;
@@ -1415,6 +1416,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           }
           _sttStatus = _dictationStatusMessage(result, _chatController.text);
         });
+        if (!audioStopped) return;
         if (_tieneContextoCaptura &&
             (_chatController.text.trim().isNotEmpty ||
                 _pendingAudioPath != null)) {
@@ -1442,15 +1444,17 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       }
       return;
     }
-    if (_sttConfig.serverEnabled) {
-      await _startAudioOnlyRecording();
+    if (!_sttConfig.deviceEnabled && !_sttConfig.serverEnabled) {
+      _snack('Dictado por voz deshabilitado.', UiIntent.warning);
       return;
     }
     if (!_sttConfig.deviceEnabled) {
-      _snack('Dictado en dispositivo deshabilitado.', UiIntent.warning);
+      await _startAudioOnlyRecording();
       return;
     }
     try {
+      final audioStarted = await _startAudioOnlyRecording(audioOnly: false);
+      if (!audioStarted) return;
       await _dictation.start(
         onPartial: (text, _) {
           if (!mounted) return;
@@ -1462,18 +1466,22 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         listenMode: DeviceListenMode.dictation,
         preferOnDevice: true,
       );
-      if (!mounted) return;
+      if (!mounted) {
+        await _audioRecorder.stop();
+        return;
+      }
       setState(() {
         _dictating = true;
         _sttStatus = 'Escuchando…';
       });
     } catch (e, st) {
+      await _stopAudioOnlyRecording(transcribe: false);
       debugPrint('[stt-device] start failed: $e\n$st');
       _snack('No se pudo iniciar dictado: $e', UiIntent.danger);
     }
   }
 
-  Future<void> _startAudioOnlyRecording() async {
+  Future<bool> _startAudioOnlyRecording({bool audioOnly = true}) async {
     try {
       final extension = kIsWeb ? 'webm' : 'm4a';
       final filename =
@@ -1494,21 +1502,25 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         );
       }
       _pendingAudioPath = path;
-      if (!mounted) return;
+      if (!mounted) {
+        await _audioRecorder.stop();
+        return false;
+      }
       setState(() {
-        _audioOnlyRecording = true;
+        _audioOnlyRecording = audioOnly;
         _sttStatus = 'Grabando…';
       });
+      return true;
     } catch (e) {
       if (kIsWeb) {
         await _showMicrophonePermissionDialog();
-        return;
+        return false;
       }
       final error = e.toString().toLowerCase();
       final message = error.contains('notallowederror') ||
               error.contains('permission denied') ||
               error.contains('denied')
-          ? 'El navegador bloqueó el acceso al micrófono. Revisá los permisos del navegador o del dispositivo y volvé a intentar.'
+          ? 'El navegador bloqueó el acceso al micrófono. Revisá los permisos y volvé a intentar.'
           : error.contains('notfounderror') ||
                   error.contains('devicesnotfounderror')
               ? 'No se encontró un micrófono disponible.'
@@ -1516,6 +1528,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                   ? 'No se pudo acceder al micrófono. Verificá los permisos del navegador y que la página esté abierta mediante una conexión segura (HTTPS). Detalle: $e'
                   : 'No se pudo grabar audio: $e';
       _snack(message, UiIntent.danger);
+      return false;
     }
   }
 
@@ -1570,21 +1583,21 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     );
   }
 
-  Future<void> _stopAudioOnlyRecording() async {
+  Future<bool> _stopAudioOnlyRecording({bool transcribe = true}) async {
     String? audioPath;
     try {
       audioPath = await _audioRecorder.stop();
     } catch (e) {
       _pendingAudioPath = null;
-      if (!mounted) return;
+      if (!mounted) return false;
       setState(() {
         _audioOnlyRecording = false;
         _sttStatus = 'No se pudo capturar el audio.';
       });
       _snack('No se pudo finalizar la grabación: $e', UiIntent.danger);
-      return;
+      return false;
     }
-    if (!mounted) return;
+    if (!mounted) return false;
     if (audioPath == null || audioPath.isEmpty) {
       _pendingAudioPath = null;
       setState(() {
@@ -1595,16 +1608,17 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         'No se capturó audio. Conectá un micrófono y volvé a intentar.',
         UiIntent.warning,
       );
-      return;
+      return false;
     }
     _pendingAudioPath = audioPath;
     setState(() {
       _audioOnlyRecording = false;
       _sttStatus = 'Procesando audio…';
     });
-    if (_sttConfig.serverEnabled) {
+    if (transcribe && _sttConfig.serverEnabled) {
       await _transcribirAudioPendiente();
     }
+    return true;
   }
 
   Future<String?> _audioPathToBase64(String path) async {
@@ -1628,10 +1642,14 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         if (mounted) {
           setState(() {
             _sttStatus = 'No se capturó audio.';
-            _pendingAudioPath = null;
           });
+          await _persistLocalDraft(
+            texto: '(audio pendiente de transcribir)',
+            status: PendingEncounterCaptureStatus.pendingStt,
+            error: 'No se pudo leer el audio para transcribirlo.',
+          );
           _snack(
-            'No se capturó audio. Conectá un micrófono y volvé a intentar.',
+            'No se pudo leer el audio. El borrador local se conserva.',
             UiIntent.warning,
           );
         }
@@ -1642,10 +1660,14 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         if (mounted) {
           setState(() {
             _sttStatus = 'No se detectó voz en el audio.';
-            _pendingAudioPath = null;
           });
+          await _persistLocalDraft(
+            texto: '(audio pendiente de transcribir)',
+            status: PendingEncounterCaptureStatus.pendingStt,
+            error: 'No se detectó voz en el audio.',
+          );
           _snack(
-            'No se detectó voz en el audio. No se guardó el borrador.',
+            'No se detectó voz en el audio. El audio quedó guardado en el borrador.',
             UiIntent.warning,
           );
         }
@@ -1674,8 +1696,14 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       if (mounted) {
         setState(() {
           _sttStatus = 'No se pudo transcribir el audio';
-          _pendingAudioPath = null;
         });
+        await _persistLocalDraft(
+          texto: _chatController.text.trim().isEmpty
+              ? '(audio pendiente de transcribir)'
+              : _chatController.text.trim(),
+          status: PendingEncounterCaptureStatus.pendingStt,
+          error: _mensajeErrorCaptura(e),
+        );
       }
       _snack('Error al transcribir: $e', UiIntent.danger);
     } finally {
@@ -2093,6 +2121,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     PendingEncounterCaptureStatus? fromStatus,
     bool forcePipeline = false,
   }) async {
+    if (_dictating || _audioOnlyRecording) {
+      await _toggleDictation();
+      if (_dictating || _audioOnlyRecording) return;
+    }
     final text = _chatController.text.trim();
     if (text.isEmpty && _pendingAudioPath == null) {
       _snack(
@@ -2137,17 +2169,18 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       final ctx = await _operationalContextForCapture();
       final last = _lastDictation;
       Map<String, dynamic>? sttMeta;
-      var needsServerStt = text.isEmpty;
+      var needsServerStt = text.isEmpty && _sttConfig.serverEnabled;
       if (last != null && text.isNotEmpty && text == last.text.trim()) {
         sttMeta = last.toSttPayload();
-        needsServerStt = !DeviceSttLocalQuality.isAcceptable(
-          text,
-          last,
-          minConfidence:
-              _sttConfig.minConfidenceForProfile('captura_clinica'),
-        );
+        needsServerStt = _sttConfig.serverEnabled &&
+            !DeviceSttLocalQuality.isAcceptable(
+              text,
+              last,
+              minConfidence:
+                  _sttConfig.minConfidenceForProfile('captura_clinica'),
+            );
       } else if (text.isEmpty) {
-        needsServerStt = true;
+        needsServerStt = _sttConfig.serverEnabled;
       }
 
       var stage = draft.serverStage;
@@ -2210,10 +2243,11 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         }
       }
 
-      final needsStt = stage == 'UPLOADED' ||
-          stage == 'STT_FAILED' ||
-          (needsServerStt && transcript.isEmpty) ||
-          fromStatus == PendingEncounterCaptureStatus.pendingStt;
+      final needsStt = _sttConfig.serverEnabled &&
+          (stage == 'UPLOADED' ||
+              stage == 'STT_FAILED' ||
+              (needsServerStt && transcript.isEmpty) ||
+              fromStatus == PendingEncounterCaptureStatus.pendingStt);
 
       if (needsStt &&
           fromStatus != PendingEncounterCaptureStatus.pendingAnalyze) {
@@ -2264,6 +2298,21 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           _snack(_mensajeErrorCaptura(e), UiIntent.danger);
           return;
         }
+      }
+
+      if (transcript.trim().isEmpty && !_sttConfig.serverEnabled) {
+        const message =
+            'No se obtuvo texto del dictado. El audio quedó guardado; escribí la consulta para continuar.';
+        await _persistLocalDraft(
+          texto: '(audio pendiente de transcribir)',
+          status: PendingEncounterCaptureStatus.pendingStt,
+          serverCaptureId: serverId,
+          serverStage: stage,
+          audioUploaded: audioUploaded,
+          error: message,
+        );
+        if (mounted) _snack(message, UiIntent.warning);
+        return;
       }
 
       if (transcript.trim().isEmpty) {

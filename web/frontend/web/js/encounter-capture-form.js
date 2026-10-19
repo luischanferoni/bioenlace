@@ -1078,10 +1078,11 @@
         var clientId = this.ensureClientCaptureId();
         var ctx = this.readFormContext();
         var needsServerStt =
-            !consulta ||
-            (this.lastSttMeta &&
-                this.lastSttMeta.local_quality &&
-                !this.lastSttMeta.local_quality.ok);
+            !!this.sttConfig.server_enabled &&
+            (!consulta ||
+                (this.lastSttMeta &&
+                    this.lastSttMeta.local_quality &&
+                    !this.lastSttMeta.local_quality.ok));
 
         var showAnalysis = function (payload) {
             self.lastAnalysisPayload = payload;
@@ -1173,6 +1174,20 @@
                 self.applyCaptureResponse(capture);
                 var stage = capture.stage || '';
                 if (stage === 'UPLOADED' || stage === 'STT_FAILED') {
+                    if (!self.sttConfig.server_enabled) {
+                        if (capture.transcript) {
+                            consulta = capture.transcript;
+                            if (self.textarea) {
+                                self.textarea.value = consulta;
+                            }
+                        }
+                        if (!consulta) {
+                            throw new Error(
+                                'No se obtuvo texto del dictado en el dispositivo. Escribí la consulta para continuar.'
+                            );
+                        }
+                        return capture;
+                    }
                     self.setStatus('Procesando…', 'primary');
                     return fetch('/api/v1/clinical/encounter/captura/transcribir', {
                         method: 'POST',

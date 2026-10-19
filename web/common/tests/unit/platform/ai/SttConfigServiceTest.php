@@ -106,4 +106,27 @@ class SttConfigServiceTest extends \Codeception\Test\Unit
         verify($r['ok'])->false();
         verify($r['message'])->stringContainsString('deshabilitada');
     }
+
+    public function testServerDeshabilitadoConservaTextoDeviceAunqueLaCalidadSeaBaja(): void
+    {
+        \Yii::$app->params['stt']['server_enabled'] = false;
+
+        $text = 'Paciente refiere dolor abdominal desde ayer.';
+        $r = (new CaptureSpeechInputResolver())->resolveFromBody([
+            'consulta' => $text,
+            'audio' => base64_encode('fake-audio'),
+            'stt' => [
+                'provenance' => 'device',
+                'text' => $text,
+                'confidence' => 0.3,
+                'engine' => 'web_speech',
+            ],
+        ]);
+
+        verify($r['ok'])->true();
+        verify($r['text'])->equals($text);
+        verify($r['provenance'])->equals(CaptureSpeechInputResolver::PROVENANCE_DEVICE);
+        verify($r['used_server_stt'])->false();
+        verify($r['quality']['ok'])->false();
+    }
 }

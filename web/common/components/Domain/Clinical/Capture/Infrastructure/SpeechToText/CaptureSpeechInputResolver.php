@@ -66,10 +66,14 @@ final class CaptureSpeechInputResolver implements SpeechToTextPort
             }
             if (!empty($audio)) {
                 if (!SttConfigService::isServerEnabled()) {
-                    return self::fail(
-                        'La transcripción del dispositivo no es confiable y el STT en servidor está deshabilitado.',
-                        $quality
-                    );
+                    Yii::info([
+                        'provenance' => self::PROVENANCE_DEVICE,
+                        'stt_quality_bypass' => true,
+                        'server_stt_disabled' => true,
+                        'quality' => $quality,
+                    ], 'stt-routing');
+
+                    return self::ok($primaryText, self::PROVENANCE_DEVICE, false, $quality);
                 }
                 $serverText = self::transcribeServer($audio, (string) ($body['modelo'] ?? 'economico'));
                 if ($serverText !== '') {

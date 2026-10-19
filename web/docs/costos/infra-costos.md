@@ -127,13 +127,13 @@ Cuando la IA corre en nuestra GPU, estas capacidades suman **más llamadas de in
 
 ### 1. Conversación con el paciente (chat asistente)
 
-Mismo supuesto que [costos-api §1](./costos-api.md#1-conversación-con-el-paciente): preprocess en cada mensaje + 2.ª IA solo conversacional; operativo con match PHP → **~2.660 llamadas/mes**.
+Mismo supuesto que [costos-api §1](./costos-api.md#1-conversación-con-el-paciente): preprocess en cada mensaje + guide cuando routing_result = clara/incompletas → **~3.060 llamadas/mes** (2.000 preprocess + 1.060 guide).
 
 | Concepto | Supuesto | Costo real mensual (por médico) |
 |----------|----------|----------------------------------|
-| Llamadas IA (chat) | **~2.660** | — |
-| **RunPod RTX 3090** ($0.021/llamada) | 2.660 × $0.021 | **aprox. $55.90/médico/mes** |
-| **GCP T4 Preemptible** ($0.0035–0.0095/llamada) | 2.660 × ($0.0035–0.0095) | **aprox. $9.30–25.30/médico/mes** |
+| Llamadas IA (chat) | **~3.060** | — |
+| **RunPod RTX 3090** ($0.021/llamada) | 3.060 × $0.021 | **aprox. $64.30/médico/mes** |
+| **GCP T4 Preemptible** ($0.0035–0.0095/llamada) | 3.060 × ($0.0035–0.0095) | **aprox. $10.70–29.10/médico/mes** |
 
 ---
 

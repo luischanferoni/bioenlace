@@ -27,9 +27,9 @@ Otras reducciones (caché Yii, STT en dispositivo, context caching explícito, e
 
 Por médico por mes, en orden del recorrido del paciente (detalle y costes en §1–6). Escala común **400 encounters por mes** (20 por día x 20 días) donde aplica §1, §2, §4, §5 y §6 — [infra-costos.md](./infra-costos.md).
 
-- **§1 Conversación con el paciente:** 5 mensajes por encounter (~2.660 llamadas Vertex por mes). Misma cifra si el canal es app móvil o WhatsApp (paridad de uso; no duplicar).
+- **§1 Conversación con el paciente:** 5 mensajes por encounter (~3.060 llamadas Vertex por mes: 2.000 preprocess + 1.060 guide). Arquitectura actual: preprocess → discovery → routing; guide (2ª IA) cuando `routing_result` = `clara` / `incompletas`. Misma cifra si el canal es app móvil o WhatsApp (paridad de uso; no duplicar).
 - **§2 Motivos de consulta:** 1 llamada `motivos-consulta-batch` + **1** `motivos-consulta-insights` por encounter (si hay resumen); caso B (audio): COGS modela **~4 min de STT Groq por encounter** (voz paciente; 1.600 min/mes) — ver [§ STT](#stt).
-- **§3 Onboarding y día a día:** 400 llamadas a la IA por mes (`asistente-onboarding` en metadata; en código reutiliza preprocess/conversacional)
+- **§3 Onboarding y día a día:** 400 llamadas a la IA por mes (`asistente-onboarding` en metadata; en código reutiliza preprocess/guide)
 - **§4 Captura clínica (encounter):** **siempre** audio del médico por consulta — **~5 min** STT (2.000 min/mes) + **400** llamadas `analisis-consulta` + **400** llamadas `encounter-codificacion-automatica` al guardar. Sin variante solo texto en el modelo de costos. Alineado a voz típica en consulta (~12 min de reloj → ~5 min de habla del profesional).
 - **§5 Medios (fotos, etc.):** 2 fotos por encounter (Vision)
 - **§6 Videollamada:** self-host; COGS planificado **1,75** @ **40 %** tele = sala/TURN/Track Egress + storage (**sin** STT duplicado: mismo que dictado, una vez en el calculador). Antes techo @ 80 % (**3,50**) — ver [§6](#6-videollamadas-pacientemédico) y [analisis-videollamada-self-host.md](./analisis-videollamada-self-host.md).
@@ -231,68 +231,68 @@ Detalle de estrategia, calidad y fallback: [estrategias-reduccion/stt.md](./estr
 
 Un solo chat para el paciente: turnos, síntomas, menú de ayuda o mensajes poco claros.
 
-**Paso 1 (todos los mensajes):** 1 llamada a la IA de **preprocess** — clasifica `user_goal`, devuelve `normalized_text` (ortografía corregida, abreviaturas abiertas).
+**Arquitectura actual (preprocess + guide):**
 
-**Paso 2 (según intención):**
+1. **Preprocess (1ª IA)** en cada mensaje — clasifica `routing_hint` (`guide` / `fuera_his` / `sin_pedido`), devuelve `normalized_text` (ortografía corregida, abreviaturas abiertas), extracciones y tags.
+2. **Discovery** — PHP cruza tags con `meta.tags` de intents (YAML Domain) y keywords de artículos BD (`DiscoveryIndex`).
+3. **Routing** — Handlers deciden camino según `routing_result`:
+   - `dudosa` / `fuera_de_his` → 0 IAs adicionales (mensaje límite / aclaración)
+   - `clara` / `incompletas` → **Guide (2ª IA)** con adjuntos (intents y/o artículo)
 
-| Intención | Qué hace el producto | ¿2.ª llamada IA? |
-|-----------|----------------------|------------------|
-| **Operacional** | Match con reglas sobre `normalized_text` → **listado**, **formulario** o **flujo guiado** (pasos en chat vía SubIntentEngine; sin IA en cada paso del flujo) | **No** |
-| **Conversacional** | Charla clínica / empatía — **cada mensaje** del paciente | **Sí** (1 por mensaje conversacional) |
-| **Informativo** | Menú de acciones; si no es pregunta de menú → trata como conversacional | **Casi no** / **sí** si deriva |
-| **Ambiguo** | Mensaje guía fijo | **No** |
+Detalle: [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md), [decisions/asistente-canal-guide.md](../decisions/asistente-canal-guide.md).
 
 Los **pasos de un flujo operativo** (elegir profesional, completar formulario, etc.) continúan en el chat con `intent_id`; no consumen una 2.ª IA de clasificación. Si el paciente escribe texto en un paso, puede volver a correr preprocess.
 
-**Historial en charla clínica:** la 2.ª IA conversacional incluye una **ventana acotada** del hilo (implementación: `ConversationalHistoryWindow` — máx. **5 turnos**, **3.200 caracteres** de historial; corte si hubo un trámite operativo). El primer mensaje de un tema va casi solo con instrucciones; los siguientes arrastran contexto. Techo de input por llamada conversacional acotado en la tabla de tokens.
+**Historial en charla guide:** la 2.ª IA guide incluye una **ventana acotada** del hilo (implementación: `GuideHistoryWindow` — foco por área, acotado). El primer mensaje de un tema va casi solo con instrucciones; los siguientes arrastran contexto. Techo de input por llamada guide acotado en la tabla de tokens.
 
-Supuesto de actividad (AMB): **4.000 mensajes por mes** (10 por encounter × 400 encounters). Varios ida y vuelta conversacionales cuentan como **varios mensajes** dentro de esos 10.
+Supuesto de actividad (AMB): **4.000 mensajes por mes** (10 por encounter × 400 encounters). Varios ida y vuelta guide cuentan como **varios mensajes** dentro de esos 10.
 
-#### Tras el preprocess: reparto por intención (escenario central — ajustar con telemetría)
+#### Volumen de llamadas IA por mensaje (escenario central — ajustar con telemetría)
 
 La 1.ª IA ya corrió; la tabla indica **si hace falta una 2.ª** y cuántas llamadas IA suma ese mensaje en total. Los % suman 100 % de los **4.000** mensajes (10 × 400 encounters, solo AMB en el modelo comercial).
 
-| Intención (`user_goal`) | Qué escribe el paciente (ejemplos) | Mensajes por mes | ¿2.ª IA? | Total llamadas IA por mensaje |
-|-------------------------|-----------------------------------|------------------|----------|-------------------------------|
-| `conversational` | Síntomas, malestar, charla clínica | **1.200** (30 %) | **Sí**, siempre | **2** |
-| `operational` | «Quiero un turno», «cancelar mi cita» | **1.800** (45 %) | **No** (match PHP con `normalized_text`) | **1** |
-| `informational` | «¿Qué puedo hacer acá?» | **600** (15 %) | **Sí** en ~120 (~20 % de estos, deriva conversacional); **no** en ~480 (menú) | **1** o **2** |
-| `unclear` | Mensaje ambiguo o muy corto | **400** (10 %) | **No** (solo pide aclaración) | **1** |
+|| `routing_result` | Qué escribe el paciente (ejemplos) | Mensajes por mes | ¿2.ª IA? | Total llamadas IA por mensaje |
+||------------------|-----------------------------------|------------------|----------|-------------------------------|
+|| `clara` / `incompletas` | Pedido claro pero incompleto, síntomas, charla clínica | **2.120** (53 %) | **Sí**, guide con adjuntos | **2** |
+|| `dudosa` | Saludo, mensaje muy corto, sin necesidad clara | **1.880** (47 %) | **No** (solo pide aclaración) | **1** |
 
 **Cómo se traduce en volumen mensual:**
 
-| Tipo de llamada | Cálculo (sobre 4.000 mensajes) | Llamadas por mes |
-|-----------------|--------------------------------|------------------|
-| 1.ª IA — preprocess (todos) | 4.000 | **4.000** |
-| 2.ª IA — conversacional | 1.200 + 120 (deriva desde informational) | **1.320** |
-| **Total Vertex** | 4.000 + 1.320 | **~5.320** |
+|| Tipo de llamada | Cálculo (sobre 4.000 mensajes) | Llamadas por mes |
+||-----------------|--------------------------------|------------------|
+|| 1.ª IA — preprocess (todos) | 4.000 | **4.000** |
+|| 2.ª IA — guide | 2.120 | **2.120** |
+|| **Total Vertex** | 4.000 + 2.120 | **~6.120** |
+
+**Por profesional (200 encounters/mes):** ~**3.060** llamadas/mes (2.000 preprocess + 1.060 guide). Ver `ai-cost-reference.yaml`.
 
 #### Tokens y context caching por tipo de llamada
 
-| Tipo de llamada | Input y output (ref.) | % input cacheado (implícito, conservador) |
-|-----------------|----------------------|-------------------------------------------|
-| Preprocess | ~700 y ~250 | **~40 %** |
-| 2.ª conversacional | ~930 y ~180 (instrucciones + **contexto clínico** + historial acotado + mensaje actual) | **~40 %** (prefijo fijo; bloque clínico semi-estable por paciente; historial variable) |
+|| Tipo de llamada | Input y output (ref.) | % input cacheado (implícito, conservador) |
+||-----------------|----------------------|-------------------------------------------|
+|| Preprocess | ~700 y ~250 | **~40 %** |
+|| Guide | ~1.000 y ~200 (instrucciones + **adjuntos discovery** + contexto clínico + historial acotado + mensaje actual) | **~40 %** (prefijo fijo; bloque clínico semi-estable por paciente; adjuntos variables; historial acotado) |
 
 Tarifas Gemini: ver [§ Gemini Flash](#gemini-flash-tarifas-actuales-y-context-caching).
 
 #### Coste mensual — conversación con el paciente (Google, escenario central, 10 msgs/encounter)
 
-| Concepto | Sin context caching (COGS) | Con context caching (favorable) |
-|----------|----------------------------|----------------------------------|
-| 4.000 x preprocess | ~$0,68 | ~$0,58 |
-| 1.320 x conversacional | ~$0,22 | ~$0,18 |
-| **Total §1** | **~$0,90** | **~$0,76** |
-| DeepSeek V4 Flash (orden de magnitud) | **~$0,72** | **~$0,64** |
+|| Concepto | Sin context caching (COGS) | Con context caching (favorable) |
+||----------|----------------------------|----------------------------------|
+|| 4.000 x preprocess | ~$0,68 | ~$0,58 |
+|| 2.120 x guide | ~$0,85 | ~$0,73 |
+|| **Total §1** | **~$1,53** | **~$1,31** |
+|| DeepSeek V4 Flash (orden de magnitud) | **~$1,22** | **~$1,10** |
 
-**Escenario alternativo (más conversacional, 45 % `conversational`):** sube a **~$0,98** sin caché · **~$0,82** con caché. **Escenario operativo fuerte (55 % operational):** baja a **~$0,82** · **~$0,70**.
+**Por profesional (200 encounters/mes):** ~**$0,77** sin caché · ~**$0,66** con caché.
+
+**Escenario alternativo (más guide, 60 % clara/incompletas):** sube a **~$1,68** sin caché · **~$1,44** con caché. **Escenario operativo fuerte (70 % dudosa):** baja a **~$1,38** · **~$1,18**.
 
 Detalle de flujos y caché: [estrategias-reduccion/matriz-casos-uso.md](./estrategias-reduccion/matriz-casos-uso.md).
 
 > **Nota comercial (pricing):** el COGS §2 que entra al calculador **no** asume audio en el 100 % de las atenciones. Blend por `encounter_class` (caso B × share + caso A × (1−share)), con context caching → AMB **~30 %** ≈ **0,0014**; EMER **~45 %** ≈ **0,0018**; IMP **~50 %** ≈ **0,0019** (`motivos_audio_by_class` en metadata). EMER/IMP asumen más notas de voz de triaje, pases y enfermería, no solo del médico. El cupo de **10 mensajes** en §1 es capacidad / headroom (prompts más largos o varias llamadas IA), no un supuesto de uso pleno en cada mensaje.
----
 
-### 2. Motivos de consulta (chat dedicado, antes de la atención)
+### 2. Motivos de consulta### 2. Motivos de consulta (chat dedicado, antes de la atención)
 
 Tras el chat del asistente (§1), el paciente puede cargar en el chat de **motivos** texto, audio e imágenes hasta **10 minutos antes del turno** (sin IA en cada mensaje). Al cerrar la ventana:
 

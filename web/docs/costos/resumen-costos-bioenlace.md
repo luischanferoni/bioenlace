@@ -36,7 +36,7 @@ El paciente escribe en el chat de la app: turnos, síntomas, dudas o saludos.
 - *«Kiero un turno con la dra García»* → lectura automática → flujo guiado: elegir servicio, día y horario en el chat.
 - *«Me duele la garganta hace tres días»* → lectura + respuesta → *«¿Tenés fiebre?»* (paciente responde) → otra lectura + respuesta; no abre trámites de turnos.
 
-**Costo mensual (5.000 profesionales):** **USD 2.250**
+**Costo mensual (5.000 profesionales):** **USD 3.850**
 
 ---
 
@@ -101,10 +101,10 @@ Solo costos de **inteligencia artificial y transcripción de voz** (sin videolla
 
 | Concepto                                       | USD       |
 | ---------------------------------------------- | --------- |
-| Conversación con el paciente                   | 2.250     |
+| Conversación con el paciente                   | 3.850     |
 | Motivos de consulta (sin audio, batch + insights) | 1.100     |
 | Captura clínica del médico (siempre con audio)      | 8.450     |
-| **Subtotal**                                        | **11.800** |
+| **Subtotal**                                        | **13.400** |
 
 
 ### Escenario intensivo (motivos con audio + onboarding)
@@ -112,18 +112,18 @@ Solo costos de **inteligencia artificial y transcripción de voz** (sin videolla
 
 | Concepto                                       | USD       |
 | ---------------------------------------------- | --------- |
-| Conversación con el paciente                   | 2.250     |
+| Conversación con el paciente                   | 3.850     |
 | Motivos de consulta (con audio, ~4 min)        | 6.850     |
 | Captura clínica del médico (~5 min + IA)       | 8.450     |
 | Onboarding (§3)                                | 700       |
-| **Total**                                      | **18.250** |
+| **Total**                                      | **19.850** |
 
 
 ---
 
 ## Notas
 
-- Por profesional y mes (escenario intensivo, COGS base sin caché): **~USD 3,65** (incluye `motivos-consulta-insights`, STT médico ~5 min + paciente ~4 min, y contexto clínico en prompts). Detalle y comparativa DeepSeek: [costos-api.md](./costos-api.md).
+- Por profesional y mes (escenario intensivo, COGS base sin caché): **~USD 3,97** (incluye `motivos-consulta-insights`, STT médico ~5 min + paciente ~4 min, y contexto clínico en prompts). Detalle y comparativa DeepSeek: [costos-api.md](./costos-api.md).
 - **Identidad (Didit):** costo aparte por verificación, no por profesional. Con &lt; 500 altas/mes suele ser **USD 0**; proyección: [costos-didit.md](./costos-didit.md).
 - **WhatsApp:** asistente solo si el **paciente inicia** el mensaje (Meta ≈ $0). Plantillas utility **no habilitadas**. IA del chat = misma del §1 / app. Ver [costos-api §7](./costos-api.md#7-whatsapp-cloud-api-paciente).
 - No incluye videollamada ni impuestos.

@@ -7,6 +7,7 @@ use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCapture;
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureStage;
 use common\components\Domain\Clinical\Capture\Infrastructure\SpeechToText\CaptureSpeechInputResolver;
 use common\components\Platform\Ai\SpeechToText\DeviceSttQualityAssessor;
+use common\components\Platform\Ai\SpeechToText\SttConfigService;
 use common\models\Clinical\EncounterCaptureAudit;
 use Yii;
 use yii\web\UploadedFile;
@@ -110,6 +111,9 @@ final class CreateOrUploadCapture
                 $quality = DeviceSttQualityAssessor::assess($texto, $stt, 'captura_clinica');
             }
             $acceptDevice = $quality === null || !empty($quality['ok']);
+            if (!$acceptDevice && !SttConfigService::isServerEnabled() && $domain->hasAudio()) {
+                $acceptDevice = true;
+            }
             if ($acceptDevice) {
                 $domain->acceptInitialTranscript($texto, array_merge($stt, [
                     'provenance' => CaptureSpeechInputResolver::PROVENANCE_DEVICE,

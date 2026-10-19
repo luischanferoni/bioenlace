@@ -81,6 +81,22 @@ class ClinicalCaptureAggregateTest extends Unit
         verify($c->attemptsStt())->equals(0);
     }
 
+    public function testInitialDeviceTranscriptCanBeKeptWithAudioEvenWhenQualityIsLow(): void
+    {
+        $c = ClinicalCapture::start('client-9', 1, 2);
+        $c->attachAudio('uploads/encounter_capture/client-9/audio.webm', 'audio/webm');
+        $c->acceptInitialTranscript('texto device', [
+            'provenance' => 'device',
+            'quality' => ['ok' => false, 'needs_server' => true],
+        ]);
+
+        verify($c->stage())->equals(ClinicalCaptureStage::TRANSCRIBED);
+        verify($c->hasAudio())->true();
+        verify($c->transcript())->equals('texto device');
+        verify($c->sttMeta()['provenance'])->equals('device');
+        verify($c->attemptsStt())->equals(0);
+    }
+
     public function testApplyResolutionSnapshot(): void
     {
         $c = ClinicalCapture::start('client-7', 1, 2);

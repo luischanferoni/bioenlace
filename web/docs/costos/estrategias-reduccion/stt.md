@@ -70,7 +70,7 @@ Eso encaja distinto según el flujo (misma tabla en [costos-api § STT](../costo
 
 ### Objetivo
 
-El micrófono produce **texto en el cliente**; el backend recibe `texto` (y metadatos) y **omite** `SpeechToTextManager` salvo fallback. Si `stt.server_enabled` está desactivado, se conserva el texto local aunque no alcance el umbral de calidad y no se intenta transcribir el audio en servidor; si el dispositivo no produjo texto, el usuario debe escribirlo para continuar. La **IA** (Gemini, etc.) sigue en servidor sobre ese texto.
+El micrófono produce **texto en el cliente**; al enviar la captura, el backend conserva **el audio y el texto juntos en el borrador**, con sus metadatos. Omite `SpeechToTextManager` salvo fallback. Si `stt.server_enabled` está desactivado, se conserva el texto local aunque no alcance el umbral de calidad y no se intenta transcribir el audio en servidor; si el dispositivo no produjo texto, el usuario debe escribirlo para continuar. La **IA** (Gemini, etc.) sigue en servidor sobre ese texto.
 
 ### Encaje por flujo (producto)
 

@@ -17,6 +17,7 @@ use common\components\Domain\Clinical\Encounter\Application\UseCase\AdvanceCondi
 use common\components\Domain\Clinical\Encounter\Application\UseCase\ApplyEncounterAutomaticCoding;
 use common\components\Domain\Clinical\Encounter\Application\UseCase\AdvanceEncounterLifecycle;
 use common\components\Domain\Clinical\Encounter\Application\Service\EpisodeCaptureDedupService;
+use common\components\Domain\Clinical\Encounter\Application\Service\EncounterCapturePersistenceCheck;
 use common\components\Domain\Clinical\CarePlan\Application\UseCase\ManageMedicationRequest;
 use common\components\Domain\Clinical\CarePlan\Application\UseCase\ManageServiceRequest;
 use common\components\Domain\Clinical\CarePlan\Application\UseCase\CodeTreatmentRequestSnomed;
@@ -462,6 +463,14 @@ class DocumentEncounter extends Component
             $encounter->refresh();
             $persistido = $this->snapshotPersistido($encounter);
             $persistido['categorias'] = array_keys($datosExtraidos);
+            $persistIncompleteCategories = (new EncounterCapturePersistenceCheck())
+                ->incompleteCategories(
+                    $categorias,
+                    $diagnostico['por_modelo'] ?? [],
+                    $persistido
+                );
+            $persistIncomplete = empty($persistido['note'])
+                || $persistIncompleteCategories !== [];
 
             $out = [
                 '__statusCode' => 200,
@@ -473,18 +482,17 @@ class DocumentEncounter extends Component
                 'diagnostico_guardar' => $diagnostico,
                 'log_id' => $logger->getId(),
                 'log_archivo' => $logger->getArchivoLog(),
-                'persist_incomplete' => empty($persistido['note'])
-                    || (
-                        (int) ($persistido['medication_requests'] ?? 0) <= 0
-                        && !empty($diagnostico['final_counts']['Medicación'])
-                    )
-                    || (
-                        empty($persistido['reasons'])
-                        && !empty($diagnostico['final_counts']['Motivos de consulta'])
-                    ),
+                'persist_incomplete' => $persistIncomplete,
             ];
-            if (!empty($out['persist_incomplete'])) {
-                $out['message'] = 'Encounter guardado con datos incompletos. Revisá medicación/motivos/indicaciones.';
+            if ($persistIncomplete) {
+                $incompleteDetails = $persistIncompleteCategories;
+                if (empty($persistido['note'])) {
+                    array_unshift($incompleteDetails, 'Evolución');
+                }
+                $out['persist_incomplete_categories'] = $incompleteDetails;
+                $out['message'] = 'Encounter guardado con datos incompletos. No se pudo persistir: '
+                    . implode(', ', $incompleteDetails)
+                    . '.';
             }
             $logger->finalizar($out);
 

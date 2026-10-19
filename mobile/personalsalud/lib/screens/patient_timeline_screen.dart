@@ -1459,7 +1459,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       );
       if (!await _audioRecorder.isRecording()) {
         throw StateError(
-          'Chrome no inició la grabación. Verificá el micrófono y el permiso del sitio.',
+          'El navegador no inició la grabación. Verificá el micrófono y el permiso de acceso.',
         );
       }
       _pendingAudioPath = path;
@@ -1477,12 +1477,12 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       final message = error.contains('notallowederror') ||
               error.contains('permission denied') ||
               error.contains('denied')
-          ? 'Chrome bloqueó el micrófono. Permitilo para este sitio desde el ícono junto a la dirección y recargá la página.'
+          ? 'El navegador bloqueó el acceso al micrófono. Revisá los permisos del navegador o del dispositivo y volvé a intentar.'
           : error.contains('notfounderror') ||
                   error.contains('devicesnotfounderror')
               ? 'No se encontró un micrófono disponible.'
               : kIsWeb
-                  ? 'No se pudo acceder al micrófono. Verificá el permiso del sitio en Chrome y que la página esté abierta mediante HTTPS. Detalle: $e'
+                  ? 'No se pudo acceder al micrófono. Verificá los permisos del navegador y que la página esté abierta mediante una conexión segura (HTTPS). Detalle: $e'
                   : 'No se pudo grabar audio: $e';
       _snack(message, UiIntent.danger);
     }
@@ -1499,8 +1499,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         title: const Text('Micrófono no habilitado'),
         content: Text(
           permissionRequestFailed
-              ? 'Chrome no pudo habilitar el micrófono. Verificá que haya uno conectado y que el permiso esté en “Permitir” en los controles del sitio, a la izquierda de la dirección. Después recargá la página.'
-              : 'Para grabar, habilitá el micrófono para este sitio. Podés solicitar el permiso ahora. Si Chrome no muestra el aviso, habilitalo en los controles del sitio, a la izquierda de la dirección.',
+              ? 'No se pudo habilitar el micrófono. Verificá que haya uno disponible y que el permiso esté habilitado en la configuración del navegador o del dispositivo. Después, volvé a intentar.'
+              : 'Para grabar, habilitá el acceso al micrófono. Podés solicitar el permiso ahora. Si no aparece el aviso, revisá los permisos del navegador o del dispositivo.',
         ),
         actions: [
           TextButton(
@@ -2478,15 +2478,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         );
       }
       if (!mounted) return;
-      final aviso = _mensajePersistidoIncompleto(
-            extraidos,
-            guardado,
-            analisisBackup: analisisBackup,
-          ) ??
-          (guardado['persist_incomplete'] == true
-              ? (guardado['message']?.toString() ??
-                  'Encounter guardado con datos incompletos.')
-              : null);
+      final aviso = guardado['persist_incomplete'] == true
+          ? (guardado['message']?.toString() ??
+              'Encounter guardado con datos incompletos.')
+          : null;
       debugPrint(
         '[captura] guardar resultado aviso=${aviso ?? 'ok'} '
         'persistido=${guardado['persistido']} '
@@ -2529,76 +2524,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
-  }
-
-  /// Si el cliente mandó medicación y el backend no creó filas, avisar (deploy/stage).
-  String? _mensajePersistidoIncompleto(
-    Map<String, dynamic> extraidos,
-    Map<String, dynamic> guardado, {
-    Map<String, dynamic>? analisisBackup,
-  }) {
-    final persistido = guardado['persistido'];
-    if (persistido is! Map) return null;
-    const medKeys = [
-      'Medicación',
-      'Medicacion',
-      'ConsultaMedicamentos',
-    ];
-    const motivoKeys = [
-      'Motivos de consulta',
-      'ConsultaMotivos',
-    ];
-    final expectedMeds = _categoryHasRows(extraidos, medKeys) ||
-        _categoryHasRows(analisisBackup ?? const {}, medKeys) ||
-        (_captureReview?.categories.any(
-              (c) =>
-                  (c.title.toLowerCase().contains('medic') ||
-                      c.model == 'ConsultaMedicamentos') &&
-                  c.items.isNotEmpty,
-            ) ??
-            false);
-    final expectedMotivos = _categoryHasRows(extraidos, motivoKeys) ||
-        _categoryHasRows(analisisBackup ?? const {}, motivoKeys);
-    final meds = persistido['medication_requests'];
-    final medCount = meds is int ? meds : int.tryParse('$meds') ?? 0;
-    final srs = persistido['service_requests'];
-    final srCount = srs is int ? srs : int.tryParse('$srs') ?? 0;
-    if (expectedMeds && medCount <= 0) {
-      final diag = guardado['diagnostico_guardar'];
-      final fuente = diag is Map ? diag['backup_fuentes'] : null;
-      final staged = diag is Map ? diag['staged_counts'] : null;
-      final finalCounts = diag is Map ? diag['final_counts'] : null;
-      return 'La medicación no quedó persistida.\n'
-          'staged=$staged\nfinal=$finalCounts\nbackup=$fuente\n'
-          'log_id=${guardado['log_id'] ?? '-'}';
-    }
-    if (persistido['note'] != true) {
-      return 'La nota clínica no quedó en el encounter.';
-    }
-    if (persistido['reason_text'] != true && expectedMotivos) {
-      return 'Los motivos no quedaron en reason_text '
-          '(log_id=${guardado['log_id'] ?? '-'}).';
-    }
-    // Prácticas/indicaciones esperadas en el análisis pero sin service_request.
-    final expectedSr = _categoryHasRows(extraidos, const [
-          'Indicaciones',
-          'ConsultaIndicaciones',
-          'Prácticas realizadas',
-          'Practicas realizadas',
-          'ConsultaPracticas',
-        ]) ||
-        _categoryHasRows(analisisBackup ?? const {}, const [
-          'Indicaciones',
-          'ConsultaIndicaciones',
-          'Prácticas realizadas',
-          'Practicas realizadas',
-          'ConsultaPracticas',
-        ]);
-    if (expectedSr && srCount <= 0) {
-      return 'Indicaciones/prácticas no quedaron persistidas '
-          '(service_requests=0, log_id=${guardado['log_id'] ?? '-'}).';
-    }
-    return null;
   }
 
   String _detalleDiagnosticoGuardado(Map<String, dynamic> guardado) {
@@ -2661,16 +2586,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         );
       },
     );
-  }
-
-  bool _categoryHasRows(Map<String, dynamic> extraidos, List<String> keys) {
-    for (final key in keys) {
-      final v = extraidos[key];
-      if (v is List && v.isNotEmpty) return true;
-      if (v is Map && v.isNotEmpty) return true;
-      if (v is String && v.trim().isNotEmpty) return true;
-    }
-    return false;
   }
 
   Map<String, dynamic>? _resolveAnalisisDatosExtraidos(Map<String, dynamic> analysis) {

@@ -29,6 +29,7 @@ class BioenlaceApiAccessControl extends ActionFilter
         '/api/chat/actualizar-preferencias-como-paciente',
         '/api/client-diagnostic/registrar',
         '/api/audio/stt-config',
+        '/api/audio/transcribir',
         '/api/media/ver',
         '/api/consulta-chat/listar-mensajes',
         '/api/consulta-chat/enviar',

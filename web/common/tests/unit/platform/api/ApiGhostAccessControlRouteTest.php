@@ -25,4 +25,12 @@ final class ApiGhostAccessControlRouteTest extends Unit
         $this->assertContains('/api/listar/index', $candidates);
         $this->assertContains('/api/listar', $candidates);
     }
+
+    public function testAudioTranscriptionIsAvailableToAuthenticatedUsers(): void
+    {
+        $property = new \ReflectionProperty(BioenlaceApiAccessControl::class, 'authenticatedOnlyRoutes');
+        $property->setAccessible(true);
+
+        $this->assertContains('/api/audio/transcribir', $property->getValue());
+    }
 }

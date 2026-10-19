@@ -1729,22 +1729,38 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
 
   Future<void> _deletePendingCapture(String id) async {
     final existing = await _pendingStore.getById(id);
-    try {
-      if (existing?.serverCaptureId != null ||
-          (existing?.id.isNotEmpty ?? false)) {
+    
+    // Actualizar estado inmediatamente para evitar doble tap
+    setState(() {
+      _pendingCaptures.removeWhere((item) => item.id == id);
+      if (_activePendingId == id) {
+        _clearCaptureDraft(deleteLocalPending: false);
+      }
+    });
+
+    // Eliminar del backend si tiene serverCaptureId
+    if (existing?.serverCaptureId != null) {
+      try {
         await _encounterApi.capturaDescartar(
           clientCaptureId: id,
           captureId: existing?.serverCaptureId,
         );
+        print('✓ Captura eliminada del servidor: $id (server: ${existing.serverCaptureId})');
+      } catch (e) {
+        print('✗ Error al eliminar captura del servidor: $e');
+        _snack('Error al eliminar del servidor', UiIntent.danger);
+        // Revertir el cambio local si falló el backend
+        await _loadPendingCaptures();
+        return;
       }
-    } catch (_) {
-      // Si no hay red, igual borramos local.
     }
+
+    // Eliminar localmente
     await _pendingStore.delete(id);
-    if (_activePendingId == id) {
-      _clearCaptureDraft(deleteLocalPending: false);
-    }
+    
+    // Recargar desde el servidor para asegurar consistencia
     await _loadPendingCaptures();
+    
     if (mounted) {
       _snack('Eliminada', UiIntent.neutral);
     }
@@ -3136,28 +3152,11 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             onPressed: canConfirm ? _confirmarGuardado : null,
           ),
           BioSpacing.gapH(BioSpacing.sm),
-          Row(
-            children: [
-              Expanded(
-                child: BioButton(
-                  label: 'Editar texto',
-                  intent: UiIntent.neutral,
-                  variant: BioButtonVariant.soft,
-                  onPressed: _isSaving ? null : _editCaptureDraft,
-                ),
-              ),
-              BioSpacing.gapW(BioSpacing.sm),
-              Expanded(
-                child: BioButton(
-                  label: 'Eliminar',
-                  intent: UiIntent.danger,
-                  variant: BioButtonVariant.soft,
-                  onPressed: _isSaving || _activePendingId == null
-                      ? null
-                      : () => _deletePendingCapture(_activePendingId!),
-                ),
-              ),
-            ],
+          BioButton(
+            label: 'Editar texto',
+            intent: UiIntent.neutral,
+            variant: BioButtonVariant.soft,
+            onPressed: _isSaving ? null : _editCaptureDraft,
           ),
         ],
       ),

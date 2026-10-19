@@ -49,6 +49,19 @@ class AudioController extends BaseController
                     'modelo_usado' => !empty($speech['used_server_stt']) ? $modelo : 'device',
                 ];
             } else {
+                if (!SttConfigService::isServerEnabled()) {
+                    Yii::warning([
+                        'event' => 'server_stt_disabled',
+                        'message' => $speech['message'] ?? null,
+                    ], 'audio-controller');
+
+                    return [
+                        'success' => false,
+                        'error' => $speech['message']
+                            ?? 'STT en servidor deshabilitado por configuración; no se transcribió el audio.',
+                    ];
+                }
+
                 if (empty($audioData)) {
                     return [
                         'success' => false,

@@ -96,7 +96,7 @@ return [
     'stt' => [
         /** groq | huggingface */
         'proveedor_servidor' => 'groq',
-        'device_enabled' => false,
+        'device_enabled' => true,
         'server_enabled' => true,
         'groq_model' => 'whisper-large-v3-turbo',
         'groq_language' => 'es',

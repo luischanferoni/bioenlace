@@ -96,6 +96,11 @@ errors:
     retryable: false
     default_detail: "No tenés permiso para acceder a esta internación."
     message: "{detail}"
+  care_plan_subject_mismatch:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "El plan de tratamiento no existe o no corresponde al paciente de la consulta."
   care_plan_not_found:
     http_status: 404
     intent: error

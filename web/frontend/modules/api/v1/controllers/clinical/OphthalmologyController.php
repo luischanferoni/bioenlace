@@ -26,10 +26,7 @@ class OphthalmologyController extends BaseController
 
     public function actionIndex($encounterId)
     {
-        [$encounter, $err] = $this->requireEncounterAccess((int) $encounterId);
-        if ($err !== null) {
-            return $err;
-        }
+        $encounter = $this->assertEncounterAccess((int) $encounterId);
 
         $bundle = $this->service->bundleForEncounter($encounter->id);
         $specialties = [];
@@ -44,13 +41,9 @@ class OphthalmologyController extends BaseController
             }
         }
 
-        return [
-            'success' => true,
-            'message' => 'Oftalmología del encounter',
-            'data' => array_merge($bundle, [
-                'encounterId' => (int) $encounter->id,
-                'enabledSpecialties' => $specialties,
-            ]),
-        ];
+        return $this->ok(array_merge($bundle, [
+            'encounterId' => (int) $encounter->id,
+            'enabledSpecialties' => $specialties,
+        ]));
     }
 }

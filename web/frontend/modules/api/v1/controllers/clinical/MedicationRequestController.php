@@ -31,36 +31,26 @@ class MedicationRequestController extends BaseController
 
     public function actionIndex($encounterId)
     {
-        [$encounter, $err] = $this->requireEncounterAccess((int) $encounterId);
-        if ($err !== null) {
-            return $err;
-        }
+        $encounter = $this->assertEncounterAccess((int) $encounterId);
 
         $data = [];
         foreach ($this->service->listForEncounter($encounter->id) as $mr) {
             $data[] = MedicationRequestDto::fromModel($mr)->toArray();
         }
 
-        return [
-            'success' => true,
-            'message' => 'Medication requests del encounter',
-            'data' => $data,
-        ];
+        return $this->ok($data);
     }
 
     public function actionCreate($encounterId)
     {
-        [$encounter, $err] = $this->requireEncounterAccess((int) $encounterId);
-        if ($err !== null) {
-            return $err;
-        }
+        $encounter = $this->assertEncounterAccess((int) $encounterId);
 
         $body = Yii::$app->request->getBodyParams();
         if (empty($body)) {
             $body = Yii::$app->request->post();
         }
         if (!is_array($body)) {
-            return $this->clinicalError('Cuerpo JSON inválido', null, 400);
+            return $this->fail('request_invalid');
         }
 
         $carePlan = null;
@@ -68,7 +58,7 @@ class MedicationRequestController extends BaseController
         if ($carePlanId > 0) {
             $carePlan = CarePlan::findOne($carePlanId);
             if ($carePlan === null || (int) $carePlan->subject_persona_id !== (int) $encounter->subject_persona_id) {
-                return $this->clinicalError('Care plan no encontrado o no corresponde al paciente del encounter', null, 400);
+                return $this->fail('care_plan_subject_mismatch');
             }
         } elseif (!empty($body['attach_to_acute_plan'])) {
             $carePlan = $this->carePlans->createAcutePlanForEncounter(
@@ -80,13 +70,9 @@ class MedicationRequestController extends BaseController
         try {
             $mr = $this->service->createFromApi($encounter, $carePlan, $body);
         } catch (\InvalidArgumentException $e) {
-            return $this->clinicalError($e->getMessage(), null, 400);
+            return $this->fail('request_invalid', ['detail' => $e->getMessage()]);
         }
 
-        return [
-            'success' => true,
-            'message' => 'Medication request creado',
-            'data' => MedicationRequestDto::fromModel($mr)->toArray(),
-        ];
+        return $this->ok(MedicationRequestDto::fromModel($mr)->toArray(), ['message' => 'Receta registrada']);
     }
 }

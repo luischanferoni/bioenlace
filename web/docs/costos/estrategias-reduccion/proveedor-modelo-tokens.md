@@ -15,7 +15,7 @@ Hoy un solo modelo para todos los contextos `IAManager`. Palanca futura: `vertex
 | Contexto (`IAManager`) | Modelo sugerido | Dirección |
 |------------------------|-----------------|-----------|
 | `asistente-preprocess` | Flash Lite | Mantener (alto volumen) |
-| `asistente-conversational` | Flash Lite | Mantener; ahorro = menos llamadas ([pre-consulta-onboarding](./pre-consulta-onboarding.md)) |
+| `asistente-guide` | Flash Lite | Mantener; ahorro = menos llamadas ([pre-consulta-onboarding](./pre-consulta-onboarding.md)) |
 | `intent-engine-classification` | Flash Lite | Mantener; ahorro = más reglas ([uso-condicional-ia](./uso-condicional-ia.md)) |
 | `motivos-consulta-batch` | Flash Lite | Mantener |
 | **`motivos-consulta-insights`** | **2.5 Pro o 2.5 Flash** | **Subir** si se prioriza calidad de sugerencias clínicas (1×/consulta; impacto COGS acotado) |

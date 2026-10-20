@@ -16,7 +16,7 @@ Mecanismo del **servicio de IA de Google** (Vertex / Gemini): detecta **prefijos
 | Aspecto | Estado |
 |---------|--------|
 | Modelo en producción | `vertex_ai_model` → **`gemini-2.5-flash-lite`** (`params.php`) |
-| Estructura de prompt | Preprocess y conversacional: **instrucciones al inicio**, mensaje al final |
+| Estructura de prompt | Preprocess y guide: **instrucciones al inicio**, mensaje al final |
 | Medición | `AICostTracker` + `ia_usage_tracking_habilitado`; complemento con `vertex_context_cache_simulado` |
 
 ## Cuándo ayuda en nuestros flujos
@@ -26,7 +26,7 @@ Ver [matriz-casos-uso.md](./matriz-casos-uso.md). Resumen conservador:
 | Contexto (`IAManager`) | % input cacheado (supuesto doc) |
 |------------------------|----------------------------------|
 | `asistente-preprocess` | ~**40 %** |
-| `asistente-conversational` | ~**40 %** (prefijo fijo; bloque clínico semi-estable por paciente; historial acotado variable) |
+| `asistente-guide` | ~**40 %** (prefijo fijo; bloque clínico semi-estable por paciente; historial acotado variable) |
 | `motivos-consulta-batch` | ~**25 %** (+ contexto clínico variable) |
 | `motivos-consulta-insights` | ~**25 %** (1×/consulta; poco peso en COGS total) |
 | `analisis-consulta` | ~**25 %** (+ contexto clínico variable) |

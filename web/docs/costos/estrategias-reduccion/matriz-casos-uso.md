@@ -45,7 +45,7 @@ Código: [`ChatRouter.php`](../../common/components/Platform/Assistant/Chat/Rout
 | `dudosa` / `fuera_de_his` | **0** | — | mensaje límite / aclaración |
 | `clara` / `incompletas` | **+1** guide | `asistente-guide` | discovery + plan declarativo + Guide |
 
-**Nota:** incompletas y charla usan el mismo contexto `asistente-guide` (`GuideChannel` / `GuidePromptAssembler`).
+**Nota:** incompletas y charla usan el mismo contexto `asistente-guide` (`GuideChannel` / `GuidePromptAssembler`). Volumen por profesional: ~3.060 llamadas/mes (2.000 preprocess + 1.060 guide).
 
 ### Flujo anterior (referencia histórica — user_goal)
 
@@ -169,7 +169,7 @@ Prompt: `clinical-text-ia.yaml` + texto del encounter + contexto paciente (`Enco
 
 | Caso | Contextos (`IAManager`) | Palanca principal hoy | Context caching (COGS) |
 |------|-------------------------|------------------------|-------------------------|
-| 1 Chat paciente | `asistente-preprocess`, `asistente-conversational` | Preprocess + 2.ª IA conversacional con **historial acotado** | ~**40 %** preprocess · ~**40 %** conversacional — [costos-api §1](../costos-api.md#1-conversación-con-el-paciente) |
+| 1 Chat paciente | `asistente-preprocess`, `asistente-guide` | Preprocess + 2.ª IA guide con **historial acotado** | ~**40 %** preprocess · ~**40 %** guide — [costos-api §1](../costos-api.md#1-conversación-con-el-paciente) |
 | 2 Motivos | `motivos-consulta-batch`, `motivos-consulta-insights` (+ STT) | 1 lote + idempotencia; **subir modelo** solo en insights — [proveedor-modelo-tokens](./proveedor-modelo-tokens.md) | ~**25 %** favorable |
 | 3 Médico | `analisis-consulta`, `encounter-codificacion-automatica` (+ STT) | SymSpell + analizar + codificar al guardar | ~**25 %** favorable |
 | 4 Onboarding | mismo asistente | Reglas / FAQ | No priorizar |

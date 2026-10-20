@@ -24,7 +24,7 @@ final class ListCaptures
 
         $subjectPersonaId = (int) ($query['id_persona'] ?? $query['subject_persona_id'] ?? 0);
         if ($subjectPersonaId <= 0) {
-            return $this->draft->fail(400, 'Se requiere id_persona.');
+            throw $this->draft->failure('subject_required');
         }
 
         $q = EncounterCapture::find()
@@ -47,10 +47,6 @@ final class ListCaptures
             $items[] = $this->draft->toApiArray($row, false);
         }
 
-        return [
-            'success' => true,
-            'message' => 'OK',
-            'items' => $items,
-        ];
+        return ['items' => $items];
     }
 }

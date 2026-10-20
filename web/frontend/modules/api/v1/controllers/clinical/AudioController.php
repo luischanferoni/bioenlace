@@ -18,10 +18,7 @@ class AudioController extends BaseController
      */
     public function actionSttConfig()
     {
-        return [
-            'success' => true,
-            'stt' => SttConfigService::clientSnapshot(),
-        ];
+        return $this->ok(SttConfigService::clientSnapshot());
     }
 
     /**
@@ -55,27 +52,18 @@ class AudioController extends BaseController
                         'message' => $speech['message'] ?? null,
                     ], 'audio-controller');
 
-                    return [
-                        'success' => false,
-                        'error' => $speech['message']
-                            ?? 'STT en servidor deshabilitado por configuración; no se transcribió el audio.',
-                    ];
+                    return $this->fail('stt_server_disabled');
                 }
 
                 if (empty($audioData)) {
-                    return [
-                        'success' => false,
-                        'error' => $speech['message'] ?? 'No se proporcionó audio',
-                    ];
+                    return $this->fail('audio_missing');
                 }
 
                 $resultado = SpeechToTextManager::transcribir($audioData, $modelo);
                 if (empty($resultado['texto'])) {
-                    return [
-                        'success' => false,
-                        'error' => $resultado['error'] ?? 'No se pudo transcribir el audio',
-                        'detalles' => $resultado,
-                    ];
+                    Yii::warning(['event' => 'stt_empty_result', 'detalles' => $resultado], 'audio-controller');
+
+                    return $this->fail('stt_empty_result');
                 }
                 $textoTranscrito = $resultado['texto'];
                 $speech = [
@@ -115,34 +103,29 @@ class AudioController extends BaseController
                         $idConfiguracion
                     );
 
-                    return [
-                        'success' => true,
+                    return $this->ok([
                         'texto_transcrito' => $textoTranscrito,
                         'texto_procesado' => $textoProcesado,
                         'analisis' => $resultadoIA,
                         'confidence' => $resultado['confidence'] ?? 0.8,
                         'modelo_usado' => $resultado['modelo_usado'] ?? $modelo,
-                        'tiempo_transcripcion' => $resultado['tiempo_procesamiento'] ?? 0
-                    ];
+                        'tiempo_transcripcion' => $resultado['tiempo_procesamiento'] ?? 0,
+                    ]);
                 }
             }
 
-            return [
-                'success' => true,
+            return $this->ok([
                 'texto_transcrito' => $textoTranscrito,
                 'stt_provenance' => $speech['provenance'] ?? CaptureSpeechInputResolver::PROVENANCE_SERVER,
                 'stt_used_server' => !empty($speech['used_server_stt']) || empty($speech['ok']),
                 'confidence' => $resultado['confidence'] ?? 0.8,
                 'modelo_usado' => $resultado['modelo_usado'] ?? $modelo,
                 'tiempo_transcripcion' => $resultado['tiempo_procesamiento'] ?? 0,
-            ];
+            ]);
 
         } catch (\Exception $e) {
             Yii::error("Error en transcripción de audio: " . $e->getMessage(), 'audio-controller');
-            return [
-                'success' => false,
-                'error' => 'Error procesando audio: ' . $e->getMessage()
-            ];
+            return $this->fail('audio_processing_failed');
         }
     }
 }

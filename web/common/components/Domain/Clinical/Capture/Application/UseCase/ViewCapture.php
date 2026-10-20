@@ -22,10 +22,7 @@ final class ViewCapture
     {
 
         $capture = $this->draft->findCapture($body, false);
-        if (is_array($capture)) {
-            return $capture;
-        }
 
-        return $this->draft->ok($capture, 'OK', true);
+        return $this->draft->ok($capture, true);
     }
 }

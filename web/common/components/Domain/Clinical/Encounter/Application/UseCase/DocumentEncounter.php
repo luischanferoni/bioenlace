@@ -27,6 +27,7 @@ use common\components\Domain\Clinical\Specialty\Application\Service\OdontologyEn
 use common\components\Domain\Clinical\Specialty\Application\Service\OphthalmologyEncounterService;
 use common\components\Domain\Clinical\Encounter\Application\UseCase\RecordEncounterReason;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EncounterCaptureReviewPresenter;
+use common\components\Platform\Core\Http\Contract\ApiException;
 use common\models\Clinical\Condition;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterDefinition;
@@ -136,12 +137,11 @@ class DocumentEncounter extends Component
                 if ($message === '') {
                     $message = 'No se puede guardar: el análisis tiene errores.';
                 }
-                $out = $this->error(400, $message, [
+                $logger->finalizar(['code' => 'capture_blocking_error']);
+
+                throw new ApiException('capture_blocking_error', ['detail' => $message], [], null, [
                     'tipo' => $blockingError['tipo'] ?? 'error_sistema',
                 ]);
-                $logger->finalizar($out);
-
-                return $this->clientGuardarResponse($out);
             }
 
             // Defensa: no perder categories si el cliente envió mapas anidados o string.
@@ -255,23 +255,18 @@ class DocumentEncounter extends Component
             }
 
             if (!$idConfiguracion || !$idPersona) {
-                $out = $this->error(400, $this->missingCaptureContextMessage($idConfiguracion, $idPersona), [
-                    'id_configuracion' => $idConfiguracion ? 'ok' : 'falta',
-                    'id_persona' => $idPersona ? 'ok' : 'falta',
-                ]);
-                $out['diagnostico_guardar'] = $diagnostico;
-                $logger->finalizar($out);
+                $logger->finalizar(['code' => 'encounter_context_missing', 'diagnostico_guardar' => $diagnostico]);
 
-                return $this->clientGuardarResponse($out);
+                throw new ApiException('encounter_context_missing', [
+                    'detail' => $this->missingCaptureContextDetail($idConfiguracion, $idPersona),
+                ]);
             }
 
             $configuracion = EncounterDefinition::findOne((int) $idConfiguracion);
             if (!$configuracion) {
-                $out = $this->error(400, 'Configuración de encounter no encontrada.');
-                $out['diagnostico_guardar'] = $diagnostico;
-                $logger->finalizar($out);
+                $logger->finalizar(['code' => 'encounter_definition_not_found', 'diagnostico_guardar' => $diagnostico]);
 
-                return $this->clientGuardarResponse($out);
+                throw new ApiException('encounter_definition_not_found');
             }
 
             $categorias = $this->categoriasForCapture($configuracion, $body);
@@ -300,23 +295,20 @@ class DocumentEncounter extends Component
             }
             if ($completeness['tiene_datos_faltantes'] === true) {
                 $message = trim((string) ($completeness['message'] ?? ''));
-                if ($message === '') {
-                    $message = 'Faltan categorías u obligatorios de captura. Completá el texto y volvé a analizar.';
-                }
-                $out = $this->error(400, $message, [
-                    'datos_faltantes_detalle' => [
-                        'missing_categories' => $completeness['missing_categories'],
-                        'incomplete_items' => $completeness['incomplete_items'],
-                        'issues' => $completeness['issues'] ?? [],
-                        'message' => $completeness['message'],
+                $logger->finalizar(['code' => 'capture_incomplete', 'diagnostico_guardar' => $diagnostico]);
+
+                throw new ApiException('capture_incomplete', ['detail' => $message], [], null, [
+                    'tiene_datos_faltantes' => true,
+                    'analisis_datos_extraidos' => $working,
+                    'errors' => [
+                        'datos_faltantes_detalle' => [
+                            'missing_categories' => $completeness['missing_categories'],
+                            'incomplete_items' => $completeness['incomplete_items'],
+                            'issues' => $completeness['issues'] ?? [],
+                            'message' => $completeness['message'],
+                        ],
                     ],
                 ]);
-                $out['tiene_datos_faltantes'] = true;
-                $out['diagnostico_guardar'] = $diagnostico;
-                $out['analisis_datos_extraidos'] = $working;
-                $logger->finalizar($out);
-
-                return $this->clientGuardarResponse($out);
             }
 
             $parentKey = strtoupper(trim((string) ($body['parent'] ?? '')));
@@ -334,25 +326,17 @@ class DocumentEncounter extends Component
                     $parentIdBody,
                     (int) $idPersona
                 )) {
-                    $msg = 'Esta nota es casi idéntica a una evolución previa del mismo episodio. '
-                        . 'Editá el texto para documentar los cambios clínicos.';
-                    $out = $this->error(400, $msg, [
-                        'episode_note_duplicate' => true,
-                    ]);
-                    $out['diagnostico_guardar'] = $diagnostico;
-                    $logger->finalizar($out);
+                    $logger->finalizar(['code' => 'episode_note_duplicate', 'diagnostico_guardar' => $diagnostico]);
 
-                    return $this->clientGuardarResponse($out);
+                    throw new ApiException('episode_note_duplicate');
                 }
             }
 
             $paciente = $this->lifecycle->findSubject((int) $idPersona);
             if (!$paciente) {
-                $out = $this->error(400, 'Paciente no encontrado.');
-                $out['diagnostico_guardar'] = $diagnostico;
-                $logger->finalizar($out);
+                $logger->finalizar(['code' => 'subject_not_found', 'diagnostico_guardar' => $diagnostico]);
 
-                return $this->clientGuardarResponse($out);
+                throw new ApiException('subject_not_found');
             }
 
             // Toda la escritura clínica (nota/motivos/MR/SR/care_plan/finalize) va en una
@@ -473,13 +457,9 @@ class DocumentEncounter extends Component
                 || $persistIncompleteCategories !== [];
 
             $out = [
-                '__statusCode' => 200,
-                'success' => true,
-                'message' => 'Encounter guardado correctamente.',
                 'encounter_id' => $encounter->id,
                 'id_consulta' => $encounter->id,
                 'persistido' => $persistido,
-                'diagnostico_guardar' => $diagnostico,
                 'log_id' => $logger->getId(),
                 'log_archivo' => $logger->getArchivoLog(),
                 'persist_incomplete' => $persistIncomplete,
@@ -494,31 +474,33 @@ class DocumentEncounter extends Component
                     . implode(', ', $incompleteDetails)
                     . '.';
             }
-            $logger->finalizar($out);
+            $logger->finalizar($out + ['diagnostico_guardar' => $diagnostico]);
 
-            return $this->clientGuardarResponse($out);
-        } catch (\InvalidArgumentException $e) {
-            Yii::warning($e->getMessage(), __METHOD__);
-            $out = $this->error(400, $e->getMessage());
-            $out['diagnostico_guardar'] = $diagnostico;
+            return $out;
+        } catch (ApiException $e) {
             if ($logger !== null) {
-                $logger->registrar('ERROR', null, $e->getMessage(), ['metodo' => __METHOD__]);
-                $logger->finalizar($out);
+                $logger->finalizar(['code' => $e->errorCode()]);
             }
 
-            return $this->clientGuardarResponse($out);
+            throw $e;
+        } catch (\InvalidArgumentException $e) {
+            Yii::warning($e->getMessage(), __METHOD__);
+            if ($logger !== null) {
+                $logger->registrar('ERROR', null, $e->getMessage(), ['metodo' => __METHOD__]);
+                $logger->finalizar(['code' => 'encounter_invalid_request', 'diagnostico_guardar' => $diagnostico]);
+            }
+
+            throw new ApiException('encounter_invalid_request', ['detail' => $e->getMessage()]);
         } catch (\Throwable $e) {
             Yii::error($e->getMessage(), __METHOD__);
-            $out = $this->error(500, 'Error al guardar encounter: ' . $e->getMessage());
-            $out['diagnostico_guardar'] = $diagnostico;
             if ($logger !== null) {
                 $logger->registrar('ERROR', null, $e->getMessage() . "\n" . $e->getTraceAsString(), [
                     'metodo' => __METHOD__,
                 ]);
-                $logger->finalizar($out);
+                $logger->finalizar(['code' => 'save_failed', 'diagnostico_guardar' => $diagnostico]);
             }
 
-            return $this->clientGuardarResponse($out);
+            throw new ApiException('save_failed');
         }
     }
 
@@ -1678,33 +1660,10 @@ class DocumentEncounter extends Component
         return $out;
     }
 
-    private function error(int $code, string $message, ?array $errors = null): array
-    {
-        return [
-            '__statusCode' => $code,
-            'success' => false,
-            'message' => $message,
-            'errors' => $errors,
-        ];
-    }
-
-    /**
-     * Quita telemetría interna del payload al cliente (sigue en logs de guardar).
-     *
-     * @param array<string, mixed> $out
-     * @return array<string, mixed>
-     */
-    private function clientGuardarResponse(array $out): array
-    {
-        unset($out['diagnostico_guardar']);
-
-        return $out;
-    }
-
     /**
      * @param int|string|null $idConfiguracion
      */
-    private function missingCaptureContextMessage($idConfiguracion, ?int $idPersona): string
+    private function missingCaptureContextDetail($idConfiguracion, ?int $idPersona): string
     {
         $parts = [];
         if (!$idConfiguracion) {
@@ -1714,6 +1673,6 @@ class DocumentEncounter extends Component
             $parts[] = 'id_persona o subject_persona_id';
         }
 
-        return 'Faltan datos de contexto para guardar: ' . implode(' y ', $parts) . '.';
+        return implode(' y ', $parts);
     }
 }

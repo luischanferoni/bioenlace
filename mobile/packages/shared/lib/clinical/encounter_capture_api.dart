@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../config/api_config.dart';
+import '../http/api_contract.dart';
 import '../http/bioenlace_http_trace.dart';
 import '../media/chat_media_upload.dart';
 import 'stt_client_config.dart';
@@ -29,16 +30,16 @@ class EncounterCaptureApi {
 
   Map<String, dynamic> _decodeMap(http.Response response, String label) {
     BioenlaceHttpTrace.logResponse(label, response);
-    final decoded = json.decode(response.body);
-    if (decoded is! Map<String, dynamic>) {
+    dynamic decoded;
+    try {
+      decoded = json.decode(response.body);
+    } catch (_) {
       throw Exception('Respuesta inválida ($label)');
     }
-    if (response.statusCode >= 400 || decoded['success'] != true) {
-      throw Exception(
-        decoded['message']?.toString() ?? 'Error en $label',
-      );
+    if (decoded is! Map) {
+      throw Exception('Respuesta inválida ($label)');
     }
-    return decoded;
+    return unwrapApiContract(decoded, response.statusCode);
   }
 
   /// GET /api/v1/audio/stt-config
@@ -47,25 +48,29 @@ class EncounterCaptureApi {
     final response = await http
         .get(uri, headers: _jsonHeaders)
         .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-    BioenlaceHttpTrace.logResponse('audio/stt-config', response);
-    if (response.statusCode >= 400) {
-      throw Exception(
-        'No se pudo cargar la configuración STT (${response.statusCode}).',
-      );
-    }
     final decoded = json.decode(response.body);
-    if (decoded is! Map<String, dynamic> || decoded['success'] != true) {
-      throw const FormatException('Respuesta inválida de configuración STT.');
+    if (response.statusCode >= 400) {
+      throw Exception(_contractErrorMessage(decoded, response.statusCode));
     }
-    final stt = decoded['stt'];
-    if (stt is Map<String, dynamic> &&
-        stt['device_enabled'] is bool &&
-        stt['server_enabled'] is bool) {
-      return SttClientConfig.fromJson(stt);
+    final data = decoded is Map<String, dynamic> ? decoded['data'] : null;
+    if (data is Map<String, dynamic> &&
+        data['device_enabled'] is bool &&
+        data['server_enabled'] is bool) {
+      return SttClientConfig.fromJson(data);
     }
     throw const FormatException(
       'Falta una configuración STT válida en la respuesta.',
     );
+  }
+
+  /// Mensaje del contrato `{error: {message}}`; el texto lo define el backend.
+  String _contractErrorMessage(dynamic decoded, int statusCode) {
+    try {
+      unwrapApiContract(decoded, statusCode);
+    } on ApiContractException catch (e) {
+      return e.message;
+    }
+    return 'Error de comunicación ($statusCode).';
   }
 
   /// POST /api/v1/clinical/encounter/captura/crear-o-subir
@@ -361,8 +366,13 @@ class EncounterCaptureApi {
           }),
         )
         .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-    final decoded = _decodeMap(response, 'audio/transcribir');
-    return (decoded['texto_transcrito'] ?? '').toString();
+    BioenlaceHttpTrace.logResponse('audio/transcribir', response);
+    final decoded = json.decode(response.body);
+    if (response.statusCode >= 400) {
+      throw Exception(_contractErrorMessage(decoded, response.statusCode));
+    }
+    final data = decoded is Map ? decoded['data'] : null;
+    return (data is Map ? data['texto_transcrito'] : null)?.toString() ?? '';
   }
 
   /// POST /api/v1/clinical/encounter/guardar
@@ -423,32 +433,21 @@ class EncounterCaptureApi {
         .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
     BioenlaceHttpTrace.logResponse('encounter/guardar', response, maxBodyChars: 8000);
 
-    Map<String, dynamic>? decoded;
+    dynamic raw;
     try {
-      final raw = json.decode(response.body);
-      if (raw is Map<String, dynamic>) {
-        decoded = raw;
-      } else if (raw is Map) {
-        decoded = Map<String, dynamic>.from(raw);
-      }
+      raw = json.decode(response.body);
     } catch (_) {
-      decoded = null;
+      raw = null;
     }
-    if (decoded == null) {
+    if (raw is! Map) {
       throw Exception(
         'Respuesta inválida al guardar (HTTP ${response.statusCode})',
       );
     }
-    if (response.statusCode >= 400 || decoded['success'] != true) {
-      final diag = decoded['diagnostico_guardar'];
-      debugPrint('[HTTP encounter/guardar FAIL] diagnostico=$diag');
-      throw Exception(decoded['message']?.toString() ?? 'Error al guardar');
-    }
+    final decoded = unwrapApiContract(raw, response.statusCode);
     debugPrint(
       '[HTTP encounter/guardar OK] encounter_id=${decoded['encounter_id']} '
-      'persistido=${decoded['persistido']} '
-      'diagnostico_guardar=${decoded['diagnostico_guardar']} '
-      'log_id=${decoded['log_id']}',
+      'persistido=${decoded['persistido']} log_id=${decoded['log_id']}',
     );
     return decoded;
   }

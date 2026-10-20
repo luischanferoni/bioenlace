@@ -24,13 +24,10 @@ final class DiscardCapture
     {
 
         $capture = $this->draft->findCapture($body, false);
-        if (is_array($capture)) {
-            return $capture;
-        }
 
         $domain = $this->draft->captureRows()->toAggregate($capture);
         if ($domain->stage() === ClinicalCaptureStage::COMPLETED) {
-            return $this->draft->fail(409, 'No se puede descartar una captura ya completada.', $capture);
+            throw $this->draft->failure('capture_not_discardable', $capture);
         }
 
         $this->draft->deleteAudioFile($capture);
@@ -39,7 +36,7 @@ final class DiscardCapture
         try {
             $domain->discard();
         } catch (\InvalidArgumentException $e) {
-            return $this->draft->fail(409, $e->getMessage(), $capture);
+            throw $this->draft->failure('capture_conflict', $capture, ['detail' => $e->getMessage()]);
         }
         $capture = $this->draft->persistDomain($domain);
         $this->draft->audit()->record($capture, EncounterCaptureAudit::EVENT_DISCARDED, [
@@ -47,6 +44,6 @@ final class DiscardCapture
             'previous_had_analysis' => $hadAnalysis,
         ]);
 
-        return $this->draft->ok($capture, 'Captura descartada.');
+        return $this->draft->ok($capture);
     }
 }

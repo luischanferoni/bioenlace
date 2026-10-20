@@ -32,20 +32,20 @@ final class CreateOrUploadCapture
         $body = $this->draft->normalizeMultipartJsonFields($body);
         $clientId = trim((string) ($body['client_capture_id'] ?? $body['clientCaptureId'] ?? ''));
         if ($clientId === '') {
-            return $this->draft->fail(400, 'Se requiere client_capture_id.');
+            throw $this->draft->failure('capture_client_id_required');
         }
         if (strlen($clientId) > 64) {
-            return $this->draft->fail(400, 'client_capture_id demasiado largo.');
+            throw $this->draft->failure('capture_client_id_too_long');
         }
 
         $subjectPersonaId = (int) ($body['id_persona'] ?? $body['subject_persona_id'] ?? 0);
         if ($subjectPersonaId <= 0) {
-            return $this->draft->fail(400, 'Se requiere id_persona.');
+            throw $this->draft->failure('subject_required');
         }
 
         $userId = (int) (Yii::$app->user->id ?? 0);
         if ($userId <= 0) {
-            return $this->draft->fail(401, 'Usuario no autenticado.');
+            throw $this->draft->failure('unauthenticated');
         }
 
         $parent = isset($body['parent']) ? trim((string) $body['parent']) : null;
@@ -62,13 +62,13 @@ final class CreateOrUploadCapture
             $domain = ClinicalCapture::start($clientId, $subjectPersonaId, $userId, $parent, $parentId);
         } else {
             if ($existing->subjectPersonaId() !== $subjectPersonaId) {
-                return $this->draft->fail(409, 'client_capture_id ya existe para otra persona.');
+                throw $this->draft->failure('capture_client_id_conflict');
             }
             if ($existing->stage() === ClinicalCaptureStage::COMPLETED) {
-                return $this->draft->fail(409, 'La captura ya fue completada.');
+                throw $this->draft->failure('capture_already_completed');
             }
             if ($existing->stage() === ClinicalCaptureStage::DISCARDED) {
-                return $this->draft->fail(409, 'La captura fue descartada. Use un nuevo client_capture_id.');
+                throw $this->draft->failure('capture_discarded');
             }
             $domain = $existing;
         }
@@ -79,9 +79,6 @@ final class CreateOrUploadCapture
                 $domain->audioRelativePath(),
                 $file
             );
-            if (isset($stored['__fail'])) {
-                return $stored['__fail'];
-            }
             $hadProgress = in_array($domain->stage(), [
                 ClinicalCaptureStage::STT_FAILED,
                 ClinicalCaptureStage::ANALYSIS_FAILED,
@@ -135,7 +132,7 @@ final class CreateOrUploadCapture
                 'provenance' => CaptureSpeechInputResolver::PROVENANCE_TEXT_ONLY,
             ]));
         } elseif (!$domain->hasAudio() && $texto === '') {
-            return $this->draft->fail(400, 'Envíe audio (file) y/o texto de la consulta.');
+            throw $this->draft->failure('capture_input_required');
         } elseif ($domain->hasAudio() && $texto === '') {
             $domain->markUploaded($stt !== [] ? $stt : null);
         }
@@ -143,7 +140,8 @@ final class CreateOrUploadCapture
         try {
             $capture = $this->draft->persistDomain($domain);
         } catch (\Throwable $e) {
-            return $this->draft->fail(500, 'No se pudo persistir la captura: ' . $e->getMessage());
+            Yii::error('No se pudo persistir la captura: ' . $e->getMessage(), 'encounter-capture');
+            throw $this->draft->failure('capture_persist_failed');
         }
 
         $sttMeta = $capture->getSttMeta();
@@ -155,6 +153,6 @@ final class CreateOrUploadCapture
             'pending_server_stt' => !empty($sttMeta['pending_server_stt']),
         ]);
 
-        return $this->draft->ok($capture, 'Captura registrada.');
+        return $this->draft->ok($capture);
     }
 }

@@ -6,6 +6,7 @@ use common\components\Domain\Clinical\Capture\Application\Service\CaptureCategor
 use common\components\Domain\Clinical\Capture\Application\Service\RowContractService;
 use common\components\Domain\Clinical\Encounter\Application\Service\EncounterOpenProblemsService;
 use common\components\Domain\Clinical\Encounter\Application\Service\EpisodeCaptureDedupService;
+use common\components\Platform\Core\Http\Contract\ApiException;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EncounterCaptureReviewPresenter;
 use common\models\Clinical\EncounterCapture;
 use common\models\Clinical\EncounterDefinition;
@@ -40,33 +41,32 @@ final class CapturePresenter
     }
 
     /**
+     * Datos de éxito: la captura serializada.
+     *
      * @return array<string, mixed>
      */
-    public function ok(EncounterCapture $capture, string $message, bool $includeAnalysis = false): array
+    public function ok(EncounterCapture $capture, bool $includeAnalysis = false): array
     {
-        return [
-            'success' => true,
-            'message' => $message,
-            'capture' => $this->toApiArray($capture, $includeAnalysis),
-        ];
+        return ['capture' => $this->toApiArray($capture, $includeAnalysis)];
     }
 
     /**
-     * @param array<string, mixed> $extra
-     * @return array<string, mixed>
+     * Error del contrato con el estado de la captura como contexto (`meta.capture`).
+     *
+     * @param array<string, scalar> $params
+     * @param array<string, mixed> $meta
      */
-    public function fail(int $status, string $message, ?EncounterCapture $capture = null, array $extra = []): array
-    {
-        $out = array_merge([
-            '__statusCode' => $status,
-            'success' => false,
-            'message' => $message,
-        ], $extra);
+    public function failure(
+        string $code,
+        ?EncounterCapture $capture = null,
+        array $params = [],
+        array $meta = []
+    ): ApiException {
         if ($capture !== null) {
-            $out['capture'] = $this->toApiArray($capture, false);
+            $meta['capture'] = $this->toApiArray($capture, false);
         }
 
-        return $out;
+        return new ApiException($code, $params, [], null, $meta);
     }
 
     /**

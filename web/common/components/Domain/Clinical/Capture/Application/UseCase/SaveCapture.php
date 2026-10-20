@@ -8,6 +8,8 @@ use common\components\Domain\Clinical\Encounter\Application\Presentation\Encount
 use common\models\Clinical\EncounterCaptureAudit;
 use common\components\Domain\Clinical\Encounter\Application\Service\EncounterCaptureAuditService;
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureStage;
+use common\components\Platform\Core\Http\Contract\ApiErrorCatalog;
+use common\components\Platform\Core\Http\Contract\ApiException;
 
 /** Caso de uso: guardar draft de captura → persistencia Encounter. */
 final class SaveCapture
@@ -27,13 +29,10 @@ final class SaveCapture
     {
 
         $capture = $this->draft->findOpenCapture($body);
-        if (is_array($capture)) {
-            return $capture;
-        }
 
         $analysis = $capture->getAnalysisResponse();
         if ($analysis === [] && $capture->getDatosExtraidos() === []) {
-            return $this->draft->fail(400, 'No hay análisis para guardar. Ejecute captura-analizar.', $capture);
+            throw $this->draft->failure('capture_no_analysis', $capture);
         }
 
         $stagedFromBody = $body['staged_item_ids'] ?? $body['stagedItemIds'] ?? null;
@@ -86,9 +85,9 @@ final class SaveCapture
             is_array($datosExtraidos) ? $datosExtraidos : []
         );
         if ($blocking !== null) {
-            $msg = trim((string) ($blocking['texto'] ?? 'No se puede guardar: el análisis tiene errores.'));
+            $msg = trim((string) ($blocking['texto'] ?? ''));
 
-            return $this->draft->fail(400, $msg !== '' ? $msg : 'No se puede guardar.', $capture);
+            throw $this->draft->failure('capture_blocking_error', $capture, ['detail' => $msg]);
         }
 
         $saveBody = $body;
@@ -123,13 +122,20 @@ final class SaveCapture
             $saveBody['id_configuracion'] = $analysis['id_configuracion'];
         }
 
-        $out = $this->draft->documentation()->guardar($saveBody);
-        // Si el dominio devolvió checkpoint resuelto, persistirlo para el próximo intento.
         $domain = $this->draft->captureRows()->toAggregate($capture);
-        if (isset($out['analisis_datos_extraidos']) && is_array($out['analisis_datos_extraidos'])) {
-            $domain->replaceDatosExtraidos($out['analisis_datos_extraidos']);
-        } elseif (empty($out['success']) && $fullExtracted !== []) {
-            $domain->replaceDatosExtraidos($fullExtracted);
+        $saveError = null;
+        try {
+            $out = $this->draft->documentation()->guardar($saveBody);
+        } catch (ApiException $e) {
+            $saveError = $e;
+            $out = [];
+            // Si el dominio devolvió checkpoint resuelto, persistirlo para el próximo intento.
+            $checkpoint = $e->meta()['analisis_datos_extraidos'] ?? null;
+            if (is_array($checkpoint)) {
+                $domain->replaceDatosExtraidos($checkpoint);
+            } elseif ($fullExtracted !== []) {
+                $domain->replaceDatosExtraidos($fullExtracted);
+            }
         }
 
         $reviewForAudit = is_array($analysis['capture_review'] ?? null) ? $analysis['capture_review'] : [];
@@ -139,9 +145,8 @@ final class SaveCapture
             $mergedResolutions !== [] ? $mergedResolutions : null
         );
 
-        if (empty($out['success'])) {
-            $msg = trim((string) ($out['message'] ?? 'Error al guardar.'));
-            $domain->markSaveFailed($msg !== '' ? $msg : 'Error al guardar.');
+        if ($saveError !== null) {
+            $domain->markSaveFailed($this->draft->errorMessage($saveError->errorCode(), $saveError->params()));
             $capture = $this->draft->persistDomain($domain);
             $this->draft->audit()->record($capture, EncounterCaptureAudit::EVENT_SAVE_FAILED, array_merge(
                 [
@@ -150,10 +155,21 @@ final class SaveCapture
                 ],
                 $acceptanceMeta
             ));
-            $status = (int) ($out['__statusCode'] ?? 500);
 
-            return $this->draft->fail($status > 0 ? $status : 500, $capture->last_error, $capture, [
-                'guardar' => $out,
+            $meta = $saveError->meta();
+            unset($meta['analisis_datos_extraidos']);
+            $errors = $meta['errors'] ?? null;
+            unset($meta['errors'], $meta['tiene_datos_faltantes']);
+            $guardar = ['success' => false];
+            if (is_array($errors)) {
+                $guardar['errors'] = $errors;
+            }
+            if (!empty($saveError->meta()['tiene_datos_faltantes'])) {
+                $guardar['tiene_datos_faltantes'] = true;
+            }
+
+            throw $this->draft->failure($saveError->errorCode(), $capture, $saveError->params(), $meta + [
+                'guardar' => $guardar,
             ]);
         }
 
@@ -172,10 +188,8 @@ final class SaveCapture
         $payload['guardar'] = $out;
 
         return [
-            'success' => true,
-            'message' => (string) ($out['message'] ?? 'Captura guardada.'),
             'capture' => $payload,
             'guardar' => $out,
-        ];
+        ] + (isset($out['message']) ? ['message' => (string) $out['message']] : []);
     }
 }

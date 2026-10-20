@@ -5,6 +5,8 @@ namespace common\components\Domain\Clinical\Capture\Application\UseCase;
 use common\components\Domain\Clinical\Capture\Application\Service\CaptureDraftService;
 use common\components\Domain\Clinical\Capture\Application\UseCase\AnalyzeClinicalNote;
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureStage;
+use common\components\Platform\Core\Http\Contract\ApiErrorCatalog;
+use common\components\Platform\Core\Http\Contract\ApiException;
 use common\models\Clinical\EncounterCaptureAudit;
 use common\components\Domain\Clinical\Encounter\Application\Service\EncounterCaptureAuditService;
 
@@ -26,9 +28,6 @@ final class AnalyzeCaptureDraft
     {
 
         $capture = $this->draft->findOpenCapture($body);
-        if (is_array($capture)) {
-            return $capture;
-        }
 
         $domain = $this->draft->captureRows()->toAggregate($capture);
 
@@ -38,14 +37,14 @@ final class AnalyzeCaptureDraft
         }
 
         if (!$domain->hasTranscript()) {
-            return $this->draft->fail(400, 'No hay transcripción. Ejecute captura-transcribir o envíe texto.', $capture);
+            throw $this->draft->failure('capture_no_transcript', $capture);
         }
 
         if ($domain->stage() === ClinicalCaptureStage::READY_FOR_REVIEW
             && $domain->analysisResponse() !== []
             && empty($body['force'])
         ) {
-            return $this->draft->ok($capture, 'Análisis ya disponible.', true);
+            return $this->draft->ok($capture, true);
         }
 
         $analyzeBody = $body;
@@ -64,19 +63,17 @@ final class AnalyzeCaptureDraft
             'force_server' => false,
         ]);
 
-        $out = (new AnalyzeClinicalNote())->execute($analyzeBody);
-
-        if (empty($out['success'])) {
-            $msg = trim((string) ($out['message'] ?? 'Error al analizar la consulta.'));
-            $domain->markAnalysisFailed($msg !== '' ? $msg : 'Error al analizar la consulta.');
+        try {
+            $out = (new AnalyzeClinicalNote())->execute($analyzeBody);
+        } catch (ApiException $e) {
+            $domain->markAnalysisFailed(ApiErrorCatalog::resolve($e->errorCode(), $e->params())['message']);
             $capture = $this->draft->persistDomain($domain);
             $this->draft->audit()->record($capture, EncounterCaptureAudit::EVENT_ANALYSIS_FAILED, [
                 'attempts_analysis' => $domain->attemptsAnalysis(),
                 'error_code' => 'analysis_failed',
             ]);
-            $status = (int) ($out['__statusCode'] ?? 500);
 
-            return $this->draft->fail($status > 0 ? $status : 500, $capture->last_error, $capture);
+            throw $this->draft->failure($e->errorCode(), $capture, $e->params(), $e->meta());
         }
 
         $textoProcesado = isset($out['texto_procesado'])
@@ -113,6 +110,6 @@ final class AnalyzeCaptureDraft
             )
         );
 
-        return $this->draft->ok($capture, 'Análisis listo.', true);
+        return $this->draft->ok($capture, true);
     }
 }

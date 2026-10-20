@@ -9,13 +9,20 @@ String? apiMessageFromJson(dynamic json) {
   if (json is! Map) {
     return null;
   }
+  final error = json['error'];
+  if (error is Map) {
+    final contractMessage = error['message']?.toString().trim();
+    if (contractMessage != null && contractMessage.isNotEmpty) {
+      return contractMessage;
+    }
+  }
   final message = json['message']?.toString().trim();
   if (message != null && message.isNotEmpty) {
     return message;
   }
-  final error = json['error']?.toString().trim();
-  if (error != null && error.isNotEmpty) {
-    return error;
+  final errorText = error is Map ? null : error?.toString().trim();
+  if (errorText != null && errorText.isNotEmpty) {
+    return errorText;
   }
   final errors = json['errors'];
   if (errors is Map) {

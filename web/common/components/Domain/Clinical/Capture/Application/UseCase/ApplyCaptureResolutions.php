@@ -25,21 +25,18 @@ final class ApplyCaptureResolutions
     public function execute(array $body): array
     {
         $capture = $this->draft->findOpenCapture($body);
-        if (is_array($capture)) {
-            return $capture;
-        }
 
         $domain = $this->draft->captureRows()->toAggregate($capture);
         if (!in_array($domain->stage(), [
             ClinicalCaptureStage::READY_FOR_REVIEW,
             ClinicalCaptureStage::SAVE_FAILED,
         ], true)) {
-            return $this->draft->fail(409, 'La captura no tiene análisis para resolver.', $capture);
+            throw $this->draft->failure('capture_no_analysis_to_resolve', $capture);
         }
 
         $resolutions = $body['resolutions'] ?? $body['resoluciones'] ?? null;
         if (!is_array($resolutions) || $resolutions === []) {
-            return $this->draft->fail(400, 'resolutions es obligatorio.', $capture);
+            throw $this->draft->failure('capture_resolutions_required', $capture);
         }
 
         $datos = $domain->datosExtraidos();
@@ -47,7 +44,7 @@ final class ApplyCaptureResolutions
             $datos = $this->draft->extractDatosExtraidos($domain->analysisResponse());
         }
         if ($datos === []) {
-            return $this->draft->fail(400, 'No hay datos extraídos para resolver.', $capture);
+            throw $this->draft->failure('capture_no_extracted_data', $capture);
         }
 
         $categorias = $this->draft->resolveCategoriasForCapture($capture, $body);
@@ -71,7 +68,7 @@ final class ApplyCaptureResolutions
         $review = $this->draft->applyEpisodeDedupToReview($capture, $review, $textoOriginal);
 
         if ($analysis === []) {
-            $analysis = ['success' => true];
+            $analysis = ['analyzed' => true];
         }
         if (isset($analysis['datos']) && is_array($analysis['datos'])) {
             $analysis['datos']['datosExtraidos'] = $datos;
@@ -91,9 +88,9 @@ final class ApplyCaptureResolutions
             $domain->applyResolutionSnapshot($datos, $analysis);
             $capture = $this->draft->persistDomain($domain);
         } catch (\InvalidArgumentException $e) {
-            return $this->draft->fail(409, $e->getMessage(), $capture);
+            throw $this->draft->failure('capture_conflict', $capture, ['detail' => $e->getMessage()]);
         } catch (\Throwable $e) {
-            return $this->draft->fail(500, 'No se pudieron guardar las resoluciones.', $capture);
+            throw $this->draft->failure('capture_resolutions_save_failed', $capture);
         }
 
         $this->draft->audit()->record($capture, EncounterCaptureAudit::EVENT_RESOLUTIONS_APPLIED, [
@@ -101,6 +98,6 @@ final class ApplyCaptureResolutions
             'puede_confirmar' => ($review['puede_confirmar'] ?? false) === true,
         ]);
 
-        return $this->draft->ok($capture, 'Resoluciones aplicadas.', true);
+        return $this->draft->ok($capture, true);
     }
 }

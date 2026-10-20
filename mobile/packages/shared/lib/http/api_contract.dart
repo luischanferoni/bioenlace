@@ -1,0 +1,49 @@
+/// Contrato de API: éxito `{data, meta}`, error `{error:{code,message,...}, meta?}`.
+/// El texto de los errores lo define el backend; el cliente solo lo muestra.
+class ApiContractException implements Exception {
+  ApiContractException({
+    required this.message,
+    this.code,
+    this.retryable = false,
+    this.meta = const {},
+    this.statusCode,
+  });
+
+  final String message;
+  final String? code;
+  final bool retryable;
+  final Map<String, dynamic> meta;
+  final int? statusCode;
+
+  @override
+  String toString() => message;
+}
+
+Map<String, dynamic> _asMap(dynamic value) =>
+    value is Map ? Map<String, dynamic>.from(value) : <String, dynamic>{};
+
+/// Devuelve `data` (con `meta.message` expuesto como `message`) o lanza [ApiContractException].
+Map<String, dynamic> unwrapApiContract(dynamic decoded, int statusCode) {
+  final body = _asMap(decoded);
+  final error = body['error'];
+  if (statusCode >= 400 || error is Map) {
+    final err = _asMap(error);
+    final message = err['message']?.toString().trim() ?? '';
+    throw ApiContractException(
+      message: message.isNotEmpty
+          ? message
+          : 'Error de comunicación ($statusCode).',
+      code: err['code']?.toString(),
+      retryable: err['retryable'] == true,
+      meta: _asMap(body['meta']),
+      statusCode: statusCode,
+    );
+  }
+  final data = _asMap(body['data']);
+  final meta = _asMap(body['meta']);
+  final message = meta['message']?.toString();
+  if (message != null && message.isNotEmpty) {
+    data['message'] = message;
+  }
+  return data;
+}

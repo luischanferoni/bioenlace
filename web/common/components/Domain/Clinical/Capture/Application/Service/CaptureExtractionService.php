@@ -12,6 +12,7 @@ use common\components\Domain\Clinical\Encounter\Application\Service\EpisodeCaptu
 use common\components\Domain\Clinical\Capture\Infrastructure\Logging\ConsultaLogger;
 use common\components\Domain\Clinical\Capture\Infrastructure\Persistence\CaptureAnalysisCache;
 use common\components\Domain\Clinical\Capture\Domain\Policy\CaptureCompletenessPolicy;
+use common\components\Platform\Core\Http\Contract\ApiException;
 use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
 
 /**
@@ -42,22 +43,18 @@ class CaptureExtractionService extends Component
 
             $speech = (new CaptureSpeechInputResolver())->resolveFromBody($body, 'captura_clinica');
             if (empty($speech['ok'])) {
-                return [
-                    '__statusCode' => 400,
-                    'success' => false,
-                    'message' => $speech['message'] ?? 'No se pudo obtener texto para analizar la consulta.',
-                    'errors' => isset($speech['quality']) ? ['stt_quality' => $speech['quality']] : null,
-                ];
+                throw new ApiException(
+                    'capture_text_unavailable',
+                    ['detail' => trim((string) ($speech['message'] ?? ''))],
+                    [],
+                    null,
+                    isset($speech['quality']) ? ['stt_quality' => $speech['quality']] : []
+                );
             }
             $textoConsulta = (string) $speech['text'];
 
             if ($idProfesionalEfectorServicio <= 0 || $textoConsulta === '') {
-                return [
-                    '__statusCode' => 400,
-                    'success' => false,
-                    'message' => 'Faltan datos obligatorios. Verifique id_profesional_efector_servicio y el texto de la consulta.',
-                    'errors' => null,
-                ];
+                throw new ApiException('capture_context_missing');
             }
 
             $tabId = $body['tab_id'] ?? null;
@@ -67,12 +64,7 @@ class CaptureExtractionService extends Component
 
             $servicio = \common\models\Organization\Servicio::findOne($idServicio);
             if (!$servicio) {
-                return [
-                    '__statusCode' => 400,
-                    'success' => false,
-                    'message' => 'Servicio no encontrado. Por favor, verifique la configuración.',
-                    'errors' => null,
-                ];
+                throw new ApiException('service_not_found');
             }
 
             $contextoLogger = [
@@ -195,7 +187,6 @@ class CaptureExtractionService extends Component
             );
 
             $resultado = [
-                'success' => true,
                 'datos' => $datos,
                 'html' => $html,
                 'capture_review' => $captureReview,
@@ -264,6 +255,8 @@ class CaptureExtractionService extends Component
             $logger->finalizar($resultado);
 
             return $resultado;
+        } catch (ApiException $e) {
+            throw $e;
         } catch (\Exception $e) {
             Yii::error('Error en CaptureExtractionService::extract: ' . $e->getMessage() . "\n" . $e->getTraceAsString(), 'consulta-ia');
 
@@ -277,16 +270,7 @@ class CaptureExtractionService extends Component
                 }
             }
 
-            return [
-                '__statusCode' => 500,
-                'success' => false,
-                'message' => 'Ocurrió un error al procesar la consulta. Por favor, intente nuevamente en unos momentos. Si el problema persiste, contacte al soporte técnico.',
-                'errors' => YII_DEBUG ? [
-                    'error' => $e->getMessage(),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine(),
-                ] : null,
-            ];
+            throw new ApiException('analysis_failed');
         }
     }
 

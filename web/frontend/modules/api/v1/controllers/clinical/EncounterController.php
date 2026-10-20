@@ -52,14 +52,14 @@ class EncounterController extends BaseController
     {
         $out = (new AnalyzeClinicalNote())->execute($this->mergeRequestBody());
 
-        return $this->applyServiceHttpStatus($out);
+        return $this->okFromUseCase($out);
     }
 
     public function actionGuardar()
     {
         $out = (new DocumentEncounter())->guardar($this->mergeRequestBody());
 
-        return $this->applyServiceHttpStatus($out);
+        return $this->okFromUseCase($out);
     }
 
     /**
@@ -71,7 +71,7 @@ class EncounterController extends BaseController
         $file = UploadedFile::getInstanceByName('file');
         $out = (new CreateOrUploadCapture())->execute($body, $file);
 
-        return $this->applyServiceHttpStatus($out);
+        return $this->okFromUseCase($out);
     }
 
     /** POST: STT síncrono desde audio ya subido. */
@@ -79,7 +79,7 @@ class EncounterController extends BaseController
     {
         $out = (new TranscribeCapture())->execute($this->mergeRequestBody());
 
-        return $this->applyServiceHttpStatus($out);
+        return $this->okFromUseCase($out);
     }
 
     /** POST: análisis IA síncrono desde transcript persistido. */
@@ -87,7 +87,7 @@ class EncounterController extends BaseController
     {
         $out = (new AnalyzeCaptureDraft())->execute($this->mergeRequestBody());
 
-        return $this->applyServiceHttpStatus($out);
+        return $this->okFromUseCase($out);
     }
 
     /** POST: guardar clínico síncrono desde draft de análisis. */
@@ -95,7 +95,7 @@ class EncounterController extends BaseController
     {
         $out = (new SaveCapture())->execute($this->mergeRequestBody());
 
-        return $this->applyServiceHttpStatus($out);
+        return $this->okFromUseCase($out);
     }
 
     /** GET: listar capturas abiertas (meta liviana; análisis en captura/ver). */
@@ -103,7 +103,7 @@ class EncounterController extends BaseController
     {
         $out = (new ListCaptures())->execute(Yii::$app->request->get());
 
-        return $this->applyServiceHttpStatus($out);
+        return $this->okFromUseCase($out);
     }
 
     /** GET: ver una captura con capture_review / datosExtraidos (por id o client_capture_id). */
@@ -112,7 +112,7 @@ class EncounterController extends BaseController
         $params = array_merge(Yii::$app->request->get(), $this->mergeRequestBody());
         $out = (new ViewCapture())->execute($params);
 
-        return $this->applyServiceHttpStatus($out);
+        return $this->okFromUseCase($out);
     }
 
     /** POST: aplicar resoluciones de issues pendientes y regenerar review. */
@@ -120,7 +120,7 @@ class EncounterController extends BaseController
     {
         $out = (new ApplyCaptureResolutions())->execute($this->mergeRequestBody());
 
-        return $this->applyServiceHttpStatus($out);
+        return $this->okFromUseCase($out);
     }
 
     /** POST: descartar captura y borrar audio. */
@@ -128,24 +128,19 @@ class EncounterController extends BaseController
     {
         $out = (new DiscardCapture())->execute($this->mergeRequestBody());
 
-        return $this->applyServiceHttpStatus($out);
+        return $this->okFromUseCase($out);
     }
 
     /** GET: descargar audio de una captura abierta. */
     public function actionCapturaAudio()
     {
         $out = (new ResolveCaptureAudio())->execute(Yii::$app->request->get());
-        if (isset($out['success']) && $out['success'] === false) {
-            return $this->applyServiceHttpStatus($out);
-        }
 
         $path = (string) ($out['path'] ?? '');
         $mime = (string) ($out['mime'] ?? 'application/octet-stream');
         $filename = (string) ($out['filename'] ?? 'audio.m4a');
         if ($path === '' || !is_file($path)) {
-            Yii::$app->response->statusCode = 404;
-
-            return ['success' => false, 'message' => 'Archivo no encontrado'];
+            return $this->fail('audio_file_not_found');
         }
 
         return Yii::$app->response->sendFile($path, $filename, [
@@ -221,20 +216,6 @@ class EncounterController extends BaseController
         $out = UiScreenService::withListBlockItems($out, $practItems, 'practicas');
 
         return UiScreenService::withListBlockItems($out, $indicacionItems, 'indicaciones');
-    }
-
-    /**
-     * @param array<string, mixed> $out
-     * @return array<string, mixed>
-     */
-    private function applyServiceHttpStatus(array $out): array
-    {
-        if (!empty($out['__statusCode'])) {
-            Yii::$app->response->statusCode = (int) $out['__statusCode'];
-            unset($out['__statusCode']);
-        }
-
-        return $out;
     }
 
     /** @return array<string, mixed> */

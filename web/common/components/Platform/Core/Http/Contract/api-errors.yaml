@@ -1,0 +1,244 @@
+# Catálogo único de errores de la API v1. Los clientes muestran `message` tal cual.
+# intent: error | warning | info
+# Los textos admiten marcadores {nombre} que se completan con los params de la excepción.
+errors:
+  internal_error:
+    http_status: 500
+    intent: error
+    retryable: true
+    message: "Ocurrió un problema inesperado. Intentá nuevamente en unos minutos."
+  validation_failed:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "Revisá los datos ingresados."
+  unauthenticated:
+    http_status: 401
+    intent: error
+    retryable: false
+    message: "Tu sesión expiró. Volvé a iniciar sesión."
+  forbidden:
+    http_status: 403
+    intent: error
+    retryable: false
+    message: "No tenés permisos para realizar esta acción."
+  not_found:
+    http_status: 404
+    intent: error
+    retryable: false
+    message: "No se encontró lo que buscabas."
+
+  audio_missing:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "No se recibió el audio."
+  stt_server_disabled:
+    http_status: 422
+    intent: warning
+    retryable: false
+    message: "La transcripción en el servidor no está habilitada. Se conserva el audio y el texto dictado."
+  stt_empty_result:
+    http_status: 422
+    intent: warning
+    retryable: true
+    message: "No se pudo transcribir el audio. Probá grabar nuevamente."
+  audio_processing_failed:
+    http_status: 500
+    intent: error
+    retryable: true
+    message: "No se pudo procesar el audio. Intentá nuevamente."
+
+  # Captura clínica
+  capture_client_id_required:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "Falta el identificador de la captura."
+  capture_client_id_too_long:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "El identificador de la captura es demasiado largo."
+  capture_client_id_conflict:
+    http_status: 409
+    intent: error
+    retryable: false
+    message: "Ese identificador de captura pertenece a otra persona."
+  capture_ref_required:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "Falta indicar qué captura querés usar."
+  capture_not_found:
+    http_status: 404
+    intent: error
+    retryable: false
+    message: "No se encontró la captura."
+  capture_not_open:
+    http_status: 409
+    intent: error
+    retryable: false
+    message: "La captura ya no está abierta."
+  capture_already_completed:
+    http_status: 409
+    intent: error
+    retryable: false
+    message: "La captura ya fue completada."
+  capture_discarded:
+    http_status: 409
+    intent: error
+    retryable: false
+    message: "La captura fue descartada. Iniciá una nueva."
+  capture_not_discardable:
+    http_status: 409
+    intent: error
+    retryable: false
+    message: "No se puede descartar una captura ya completada."
+  capture_input_required:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "Enviá un audio o el texto de la consulta."
+  capture_persist_failed:
+    http_status: 500
+    intent: error
+    retryable: true
+    message: "No se pudo guardar la captura. Intentá nuevamente."
+  capture_conflict:
+    http_status: 409
+    intent: error
+    retryable: false
+    default_detail: "La captura no admite esta operación en su estado actual."
+    message: "{detail}"
+  capture_no_transcript:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "Todavía no hay texto para analizar."
+  capture_no_analysis:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "Todavía no hay un análisis para guardar."
+  capture_no_analysis_to_resolve:
+    http_status: 409
+    intent: error
+    retryable: false
+    message: "La captura no tiene un análisis para resolver."
+  capture_resolutions_required:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "Faltan las resoluciones a aplicar."
+  capture_no_extracted_data:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "No hay datos extraídos para resolver."
+  capture_resolutions_save_failed:
+    http_status: 500
+    intent: error
+    retryable: true
+    message: "No se pudieron guardar las resoluciones. Intentá nuevamente."
+  subject_required:
+    http_status: 400
+    intent: error
+    retryable: false
+    message: "Seleccioná a quién corresponde la consulta."
+  capture_blocking_error:
+    http_status: 422
+    intent: error
+    retryable: false
+    default_detail: "No se puede guardar: el análisis tiene errores."
+    message: "{detail}"
+  capture_no_audio:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "La captura no tiene audio para transcribir."
+  audio_file_not_found:
+    http_status: 404
+    intent: error
+    retryable: false
+    message: "No se encontró el archivo de audio."
+  audio_invalid:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "El archivo de audio no es válido."
+  audio_extension_not_allowed:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "El formato de audio no está permitido."
+  audio_store_failed:
+    http_status: 500
+    intent: error
+    retryable: true
+    message: "No se pudo guardar el audio. Intentá nuevamente."
+  stt_failed:
+    http_status: 502
+    intent: error
+    retryable: true
+    message: "No se pudo transcribir el audio. Intentá nuevamente."
+  capture_text_unavailable:
+    http_status: 422
+    intent: error
+    retryable: false
+    default_detail: "No se pudo obtener texto para analizar la consulta."
+    message: "{detail}"
+  capture_context_missing:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "Faltan datos para analizar: el profesional del servicio y el texto de la consulta."
+  service_not_found:
+    http_status: 404
+    intent: error
+    retryable: false
+    message: "No se encontró el servicio. Revisá la configuración."
+  analysis_failed:
+    http_status: 500
+    intent: error
+    retryable: true
+    message: "No se pudo analizar la consulta. Intentá nuevamente en unos minutos. Si el problema persiste, contactá a soporte."
+
+  # Guardado del encounter
+  encounter_context_missing:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "Faltan datos de contexto para guardar: {detail}."
+  encounter_definition_not_found:
+    http_status: 404
+    intent: error
+    retryable: false
+    message: "No se encontró la configuración de la consulta."
+  subject_not_found:
+    http_status: 404
+    intent: error
+    retryable: false
+    message: "No se encontró a la persona."
+  capture_incomplete:
+    http_status: 422
+    intent: warning
+    retryable: false
+    default_detail: "Faltan categorías u obligatorios de captura. Completá el texto y volvé a analizar."
+    message: "{detail}"
+  episode_note_duplicate:
+    http_status: 422
+    intent: warning
+    retryable: false
+    message: "Esta nota es casi idéntica a una evolución previa del mismo episodio. Editá el texto para documentar los cambios clínicos."
+  encounter_invalid_request:
+    http_status: 422
+    intent: error
+    retryable: false
+    default_detail: "Los datos enviados no son válidos."
+    message: "{detail}"
+  save_failed:
+    http_status: 500
+    intent: error
+    retryable: true
+    message: "No se pudo guardar la consulta. Intentá nuevamente."

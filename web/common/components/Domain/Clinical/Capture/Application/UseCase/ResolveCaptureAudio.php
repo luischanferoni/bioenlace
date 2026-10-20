@@ -21,15 +21,12 @@ final class ResolveCaptureAudio
     public function execute(array $query): array
     {
         $capture = $this->draft->findCapture($query, false);
-        if (is_array($capture)) {
-            return $capture;
-        }
         if (!$capture->hasAudio()) {
-            return $this->draft->fail(404, 'La captura no tiene audio.', $capture);
+            throw $this->draft->failure('capture_no_audio', $capture);
         }
         $absolute = $this->draft->absoluteAudioPath($capture);
         if ($absolute === null || !is_file($absolute)) {
-            return $this->draft->fail(404, 'Archivo de audio no encontrado.', $capture);
+            throw $this->draft->failure('audio_file_not_found', $capture);
         }
 
         return [

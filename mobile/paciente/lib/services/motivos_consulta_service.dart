@@ -33,16 +33,15 @@ class MotivosConsultaService {
     final response = await http
         .get(uri, headers: _headers)
         .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
+    final data = json.decode(response.body);
     if (response.statusCode != 200) {
+      final error = data is Map ? data['error'] : null;
       throw Exception(
-        'No se pudo cargar la configuración STT (${response.statusCode}).',
+        (error is Map ? error['message']?.toString() : null) ??
+            'Error de comunicación (${response.statusCode}).',
       );
     }
-    final data = json.decode(response.body);
-    if (data is! Map || data['success'] != true) {
-      throw const FormatException('Respuesta inválida de configuración STT.');
-    }
-    final stt = data['stt'];
+    final stt = data is Map ? data['data'] : null;
     if (stt is Map) {
       final config = Map<String, dynamic>.from(stt);
       if (config['device_enabled'] is bool &&

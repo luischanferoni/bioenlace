@@ -16,6 +16,26 @@
         return out;
     }
 
+    /** Aplana el contrato {data, meta} / {error, meta} a un objeto con `success` y `message`. */
+    function contractBody(httpOk, body) {
+        body = body || {};
+        var meta = body.meta || {};
+        if (!httpOk || body.error) {
+            var err = body.error || {};
+            return Object.assign({}, meta, {
+                success: false,
+                message: err.message || '',
+                code: err.code || null,
+                meta: meta,
+            });
+        }
+        return Object.assign({}, body.data || {}, {
+            success: true,
+            message: meta.message || '',
+            meta: meta,
+        });
+    }
+
     function assessLocalQuality(text, meta) {
         var t = (text || '').trim();
         var reasons = [];
@@ -266,7 +286,9 @@
             credentials: 'same-origin',
         })
             .then(function (r) {
-                return r.json();
+                return r.json().then(function (body) {
+                    return contractBody(r.ok, body);
+                });
             })
             .then(function (data) {
                 if (!data || !data.success || !Array.isArray(data.items) || !data.items.length) {
@@ -367,7 +389,9 @@
             credentials: 'same-origin',
         })
             .then(function (r) {
-                return r.json();
+                return r.json().then(function (body) {
+                    return contractBody(r.ok, body);
+                });
             })
             .then(function (data) {
                 if (!data || !data.success || !data.capture) {
@@ -1160,8 +1184,8 @@
                 });
             })
             .then(function (r) {
-                return r.json().then(function (data) {
-                    return { ok: r.ok, data: data };
+                return r.json().then(function (body) {
+                    return { ok: r.ok, data: contractBody(r.ok, body) };
                 });
             })
             .then(function (res) {
@@ -1201,7 +1225,8 @@
                             })
                         ),
                     }).then(function (r) {
-                        return r.json().then(function (data) {
+                        return r.json().then(function (body) {
+                            var data = contractBody(r.ok, body);
                             if (!r.ok || !data.success) {
                                 throw new Error(
                                     (data && data.message) || 'Error al transcribir.'
@@ -1238,8 +1263,8 @@
                 });
             })
             .then(function (r) {
-                return r.json().then(function (data) {
-                    return { ok: r.ok, data: data };
+                return r.json().then(function (body) {
+                    return { ok: r.ok, data: contractBody(r.ok, body) };
                 });
             })
             .then(function (res) {
@@ -1291,14 +1316,20 @@
                 });
             })
             .then(function (r) {
-                return r.json();
+                return r.json().then(function (body) {
+                    return { ok: r.ok, body: body };
+                });
             })
-            .then(function (data) {
-                if (!data.success || !data.texto_transcrito) {
+            .then(function (res) {
+                var data = (res.body && res.body.data) || {};
+                if (!res.ok || !data.texto_transcrito) {
+                    var apiError = res.body && res.body.error;
                     if (!silent) {
-                        self.setStatus('No se pudo procesar el audio. Podés escribir el texto.', 'warning');
+                        self.setStatus((apiError && apiError.message) || 'No se pudo procesar el audio.', 'warning');
                     }
-                    return Promise.reject(new Error(data.error || 'stt_failed'));
+                    var failure = new Error((apiError && apiError.code) || 'stt_failed');
+                    failure.handled = true;
+                    return Promise.reject(failure);
                 }
                 self.textarea.value = data.texto_transcrito;
                 self.lastSttMeta = {
@@ -1315,8 +1346,8 @@
                 return data;
             })
             .catch(function (err) {
-                if (!silent) {
-                    self.setStatus('No se pudo procesar el audio. Podés escribir el texto.', 'warning');
+                if (!silent && !(err && err.handled)) {
+                    self.setStatus('No se pudo procesar el audio.', 'warning');
                 }
                 return Promise.reject(err);
             });
@@ -1453,8 +1484,8 @@
             body: JSON.stringify(payload),
         })
             .then(function (r) {
-                return r.json().then(function (data) {
-                    return { httpOk: r.ok, status: r.status, data: data };
+                return r.json().then(function (body) {
+                    return { httpOk: r.ok, status: r.status, data: contractBody(r.ok, body) };
                 });
             })
             .then(function (result) {

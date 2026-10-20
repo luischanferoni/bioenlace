@@ -63,6 +63,8 @@
     }
   },
   "scripts": {
+    "audit:thin-clients": "php tools/audit-thin-clients.php",
+    "audit:thin-clients:report": "php tools/audit-thin-clients.php --report",
     "post-create-project-cmd": [
       "yii\\composer\\Installer::postCreateProject"
     ]

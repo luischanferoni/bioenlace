@@ -42,6 +42,7 @@ export 'diagnostics/app_diagnostic_log.dart';
 export 'diagnostics/crashlytics_bootstrap.dart';
 export 'diagnostics/client_diagnostic_api.dart';
 export 'text/user_friendly_error.dart';
+export 'http/api_contract.dart';
 export 'http/bioenlace_http_trace.dart';
 export 'format/datetime_friendly.dart';
 export 'assistant/atajo_shortcut_cards.dart';

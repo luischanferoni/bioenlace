@@ -10,6 +10,8 @@ use common\components\Domain\Clinical\Capture\Infrastructure\SpeechToText\Captur
 use common\components\Domain\Clinical\Encounter\Application\UseCase\DocumentEncounter;
 use common\components\Domain\Clinical\Encounter\Application\Service\EncounterCaptureAuditService;
 use common\components\Platform\Ai\SpeechToText\SttConfigService;
+use common\components\Platform\Core\Http\Contract\ApiErrorCatalog;
+use common\components\Platform\Core\Http\Contract\ApiException;
 use common\models\Clinical\EncounterCapture;
 use Yii;
 use yii\web\UploadedFile;
@@ -93,26 +95,17 @@ final class CaptureDraftService
 
     /**
      * @param array<string, mixed> $body
-     * @return EncounterCapture|array<string, mixed>
      */
-    public function findOpenCapture(array $body)
+    public function findOpenCapture(array $body): EncounterCapture
     {
-        $capture = $this->findCapture($body, true);
-        if (is_array($capture)) {
-            return $capture;
-        }
-        if (!$capture->isOpen()) {
-            return $this->presenter->fail(409, 'La captura no está abierta (stage=' . $capture->stage . ').', $capture);
-        }
-
-        return $capture;
+        return $this->findCapture($body, true);
     }
 
     /**
      * @param array<string, mixed> $body
-     * @return EncounterCapture|array<string, mixed>
+     * @throws ApiException
      */
-    public function findCapture(array $body, bool $openOnly)
+    public function findCapture(array $body, bool $openOnly): EncounterCapture
     {
         $id = (int) ($body['capture_id'] ?? $body['id'] ?? 0);
         $clientId = trim((string) ($body['client_capture_id'] ?? $body['clientCaptureId'] ?? ''));
@@ -123,15 +116,15 @@ final class CaptureDraftService
         } elseif ($clientId !== '') {
             $capture = EncounterCapture::findOne(['client_capture_id' => $clientId]);
         } else {
-            return $this->presenter->fail(400, 'Se requiere capture_id o client_capture_id.');
+            throw $this->presenter->failure('capture_ref_required');
         }
 
         if ($capture === null) {
-            return $this->presenter->fail(404, 'Captura no encontrada.');
+            throw $this->presenter->failure('capture_not_found');
         }
 
         if ($openOnly && !$capture->isOpen()) {
-            return $this->presenter->fail(409, 'La captura no está abierta (stage=' . $capture->stage . ').', $capture);
+            throw $this->presenter->failure('capture_not_open', $capture);
         }
 
         return $capture;
@@ -140,12 +133,13 @@ final class CaptureDraftService
     /**
      * Guarda el archivo en disco; no muta el aggregate.
      *
-     * @return array{relative: string, mime: string|null}|array{__fail: array<string, mixed>}
+     * @return array{relative: string, mime: string|null}
+     * @throws ApiException
      */
     public function storeUploadedAudioFile(string $clientCaptureId, ?string $previousRelativePath, UploadedFile $file): array
     {
         if (!$file->tempName) {
-            return ['__fail' => $this->presenter->fail(400, 'Archivo de audio inválido.')];
+            throw $this->presenter->failure('audio_invalid');
         }
 
         $ext = strtolower((string) ($file->getExtension() ?: pathinfo((string) $file->name, PATHINFO_EXTENSION)));
@@ -153,7 +147,7 @@ final class CaptureDraftService
             $ext = 'm4a';
         }
         if (!preg_match('/^[a-z0-9]+$/', $ext)) {
-            return ['__fail' => $this->presenter->fail(400, 'Extensión de audio no permitida.')];
+            throw $this->presenter->failure('audio_extension_not_allowed');
         }
 
         $dirRelative = self::AUDIO_DIR . '/' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $clientCaptureId);
@@ -169,11 +163,11 @@ final class CaptureDraftService
 
         $basePath = dirname($fullPath);
         if (!is_dir($basePath) && !@mkdir($basePath, 0755, true)) {
-            return ['__fail' => $this->presenter->fail(500, 'No se pudo crear el directorio de audio.')];
+            throw $this->presenter->failure('audio_store_failed');
         }
 
         if (!$file->saveAs($fullPath)) {
-            return ['__fail' => $this->presenter->fail(500, 'Error al guardar el archivo de audio.')];
+            throw $this->presenter->failure('audio_store_failed');
         }
 
         return [
@@ -278,15 +272,28 @@ final class CaptureDraftService
     }
 
     /** @return array<string, mixed> */
-    public function ok(EncounterCapture $capture, string $message, bool $includeAnalysis = false): array
+    public function ok(EncounterCapture $capture, bool $includeAnalysis = false): array
     {
-        return $this->presenter->ok($capture, $message, $includeAnalysis);
+        return $this->presenter->ok($capture, $includeAnalysis);
     }
 
-    /** @param array<string, mixed> $extra @return array<string, mixed> */
-    public function fail(int $status, string $message, ?EncounterCapture $capture = null, array $extra = []): array
+    /**
+     * @param array<string, scalar> $params
+     * @param array<string, mixed> $meta
+     */
+    public function failure(string $code, ?EncounterCapture $capture = null, array $params = [], array $meta = []): ApiException
     {
-        return $this->presenter->fail($status, $message, $capture, $extra);
+        return $this->presenter->failure($code, $capture, $params, $meta);
+    }
+
+    /**
+     * Texto del catálogo para persistir como `last_error` de la captura.
+     *
+     * @param array<string, scalar> $params
+     */
+    public function errorMessage(string $code, array $params = []): string
+    {
+        return ApiErrorCatalog::resolve($code, $params)['message'];
     }
 
     /** @return array<string, mixed> */

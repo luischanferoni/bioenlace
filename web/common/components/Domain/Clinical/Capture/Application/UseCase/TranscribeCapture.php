@@ -27,9 +27,6 @@ final class TranscribeCapture
     {
 
         $capture = $this->draft->findOpenCapture($body);
-        if (is_array($capture)) {
-            return $capture;
-        }
 
         $domain = $this->draft->captureRows()->toAggregate($capture);
 
@@ -42,34 +39,34 @@ final class TranscribeCapture
             ], true)
             && empty($body['force'])
         ) {
-            return $this->draft->ok($capture, 'Ya hay transcripción; no se reejecutó STT.');
+            return $this->draft->ok($capture);
         }
 
         if (!$domain->hasAudio()) {
-            return $this->draft->fail(400, 'La captura no tiene audio en servidor para transcribir.', $capture);
+            throw $this->draft->failure('capture_no_audio', $capture);
         }
 
         $absolute = $this->draft->absoluteAudioPath($capture);
         if ($absolute === null || !is_file($absolute)) {
-            $domain->markSttFailed('Archivo de audio no encontrado en servidor.');
+            $domain->markSttFailed($this->draft->errorMessage('audio_file_not_found'));
             $capture = $this->draft->persistDomain($domain);
             $this->draft->audit()->record($capture, EncounterCaptureAudit::EVENT_STT_FAILED, [
                 'error_code' => 'audio_missing',
                 'attempts_stt' => $domain->attemptsStt(),
             ]);
 
-            return $this->draft->fail(404, $capture->last_error, $capture);
+            throw $this->draft->failure('audio_file_not_found', $capture);
         }
 
         if (!SttConfigService::isServerEnabled()) {
-            $domain->markSttFailed('La transcripción en servidor está deshabilitada.');
+            $domain->markSttFailed($this->draft->errorMessage('stt_server_disabled'));
             $capture = $this->draft->persistDomain($domain);
             $this->draft->audit()->record($capture, EncounterCaptureAudit::EVENT_STT_FAILED, [
                 'error_code' => 'server_stt_disabled',
                 'attempts_stt' => $domain->attemptsStt(),
             ]);
 
-            return $this->draft->fail(400, $capture->last_error, $capture);
+            throw $this->draft->failure('stt_server_disabled', $capture);
         }
 
         $modelo = (string) ($body['modelo'] ?? 'economico');
@@ -77,8 +74,7 @@ final class TranscribeCapture
         $texto = trim((string) ($result['texto'] ?? ''));
 
         if ($texto === '') {
-            $err = trim((string) ($result['error'] ?? 'No se pudo transcribir el audio.'));
-            $domain->markSttFailed($err !== '' ? $err : 'No se pudo transcribir el audio.');
+            $domain->markSttFailed($this->draft->errorMessage('stt_failed'));
             $capture = $this->draft->persistDomain($domain);
             $this->draft->audit()->record($capture, EncounterCaptureAudit::EVENT_STT_FAILED, [
                 'error_code' => 'empty_transcript',
@@ -86,7 +82,7 @@ final class TranscribeCapture
                 'modelo' => $modelo,
             ]);
 
-            return $this->draft->fail(502, $capture->last_error, $capture);
+            throw $this->draft->failure('stt_failed', $capture);
         }
 
         $meta = $domain->sttMeta();
@@ -104,6 +100,6 @@ final class TranscribeCapture
             'transcript_length' => mb_strlen($texto),
         ]);
 
-        return $this->draft->ok($capture, 'Transcripción lista.');
+        return $this->draft->ok($capture);
     }
 }

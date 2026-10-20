@@ -39,6 +39,18 @@ errors:
     intent: error
     retryable: false
     message: "No se encontró lo que buscabas."
+  conflict_detail:
+    http_status: 409
+    intent: error
+    retryable: false
+    default_detail: "No se pudo completar la operación por un conflicto."
+    message: "{detail}"
+  rate_limited_detail:
+    http_status: 429
+    intent: warning
+    retryable: true
+    default_detail: "Se realizaron demasiados intentos. Esperá y probá nuevamente."
+    message: "{detail}"
 
   # Acceso y lectura clínica
   encounter_id_required:

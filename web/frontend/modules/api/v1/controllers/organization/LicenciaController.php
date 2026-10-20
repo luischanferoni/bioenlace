@@ -8,10 +8,9 @@ use common\components\Domain\Organization\Efector\Application\UseCase\SignUpInst
 use common\components\Domain\Organization\Efector\Application\UseCase\RequestMinistrySignup;
 use common\components\Platform\Core\Auth\DemoSandboxAccessService;
 use common\components\Platform\Core\Auth\DemoSandboxCaptchaService;
+use common\components\Platform\Core\Http\Contract\ApiException;
 use common\models\Platform\User;
 use Yii;
-use yii\web\BadRequestHttpException;
-use yii\web\ForbiddenHttpException;
 
 /**
  * Onboarding comercial de licencia (institucional + AdminEfector).
@@ -32,6 +31,12 @@ class LicenciaController extends BaseController
         'demo-acceso',
         'demo-acceso-mobile',
     ];
+
+    public function init()
+    {
+        parent::init();
+        $this->contractResponses = true;
+    }
 
     public function actions()
     {
@@ -249,7 +254,7 @@ class LicenciaController extends BaseController
         $this->assertAdminEfector();
         $idEfector = (int) Yii::$app->user->getIdEfector();
         if ($idEfector <= 0) {
-            throw new BadRequestHttpException('Establecé el efector en la sesión operativa.');
+            throw new ApiException('request_invalid', ['detail' => 'Establecé el efector en la sesión operativa.']);
         }
 
         return $this->success(SwitchBillingMembership::summaryForEfector($idEfector));
@@ -263,7 +268,7 @@ class LicenciaController extends BaseController
         $this->assertAdminEfector();
         $idEfector = (int) Yii::$app->user->getIdEfector();
         if ($idEfector <= 0) {
-            throw new BadRequestHttpException('Establecé el efector en la sesión operativa.');
+            throw new ApiException('request_invalid', ['detail' => 'Establecé el efector en la sesión operativa.']);
         }
 
         $body = Yii::$app->request->getBodyParams();
@@ -293,7 +298,7 @@ class LicenciaController extends BaseController
         $this->assertAdminEfector();
         $idEfector = (int) Yii::$app->user->getIdEfector();
         if ($idEfector <= 0) {
-            throw new BadRequestHttpException('Establecé el efector en la sesión operativa.');
+            throw new ApiException('request_invalid', ['detail' => 'Establecé el efector en la sesión operativa.']);
         }
 
         $body = Yii::$app->request->getBodyParams();
@@ -328,7 +333,7 @@ class LicenciaController extends BaseController
             ) {
                 return;
             }
-            throw new ForbiddenHttpException('Se requiere rol AdminEfector.');
+            throw new ApiException('forbidden_detail', ['detail' => 'Se requiere rol AdminEfector.']);
         }
     }
 }

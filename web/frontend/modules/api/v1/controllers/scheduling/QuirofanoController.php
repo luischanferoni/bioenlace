@@ -27,6 +27,7 @@ class QuirofanoController extends BaseController
     public function init()
     {
         parent::init();
+        $this->contractResponses = true;
         $this->agenda = new CirugiaAgendaService();
     }
 
@@ -75,7 +76,7 @@ class QuirofanoController extends BaseController
         } catch (BadRequestHttpException $e) {
             return $this->error($e->getMessage(), null, 400);
         }
-        throw new BadRequestHttpException('Método no soportado.');
+        return $this->error('Método no soportado.', null, 400);
     }
 
     /**
@@ -203,7 +204,7 @@ class QuirofanoController extends BaseController
         } catch (BadRequestHttpException $e) {
             return $this->error($e->getMessage(), null, 400);
         }
-        throw new BadRequestHttpException('Método no soportado.');
+        return $this->error('Método no soportado.', null, 400);
     }
 
     /**

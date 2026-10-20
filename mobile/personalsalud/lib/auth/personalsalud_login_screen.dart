@@ -83,7 +83,13 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
       await PersonalsaludSessionPrefs.clearInvalidAuthSession();
     }
 
-    final demoProfiles = await DemoSandboxStaffAuth.listStaffProfiles();
+    List<DemoSandboxProfile> demoProfiles = const [];
+    String? demoProfilesError;
+    try {
+      demoProfiles = await DemoSandboxStaffAuth.listStaffProfiles();
+    } catch (error) {
+      demoProfilesError = error.toString().replaceFirst('Exception: ', '');
+    }
 
     if (!mounted) return;
     setState(() {
@@ -94,6 +100,9 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
       _demoAvailable = kDebugMode && demoProfiles.isNotEmpty;
       _checkingSession = false;
     });
+    if (demoProfilesError != null) {
+      _snack(demoProfilesError, UiIntent.warning);
+    }
   }
 
   void _snack(String message, UiIntent intent) {
@@ -186,19 +195,16 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
     setState(() => _submitting = true);
     try {
       final data = await DemoSandboxStaffAuth.enter(role: profile.role);
-      final payload = data['data'] is Map
-          ? Map<String, dynamic>.from(data['data'] as Map)
+      final user = data['user'] is Map
+          ? Map<String, dynamic>.from(data['user'] as Map)
           : <String, dynamic>{};
-      final user = payload['user'] is Map
-          ? Map<String, dynamic>.from(payload['user'] as Map)
+      final persona = data['persona'] is Map
+          ? Map<String, dynamic>.from(data['persona'] as Map)
           : <String, dynamic>{};
-      final persona = payload['persona'] is Map
-          ? Map<String, dynamic>.from(payload['persona'] as Map)
+      final session = data['session'] is Map
+          ? Map<String, dynamic>.from(data['session'] as Map)
           : <String, dynamic>{};
-      final session = payload['session'] is Map
-          ? Map<String, dynamic>.from(payload['session'] as Map)
-          : <String, dynamic>{};
-      final token = payload['token']?.toString() ?? '';
+      final token = data['token']?.toString() ?? '';
 
       if (token.isEmpty) {
         throw Exception('La demo no devolvió token de sesión.');

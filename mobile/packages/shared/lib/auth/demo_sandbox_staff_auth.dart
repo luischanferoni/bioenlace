@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../config/api_config.dart';
+import '../http/api_contract.dart';
 
 /// Perfil CTA demo (catálogo GET /licencia/demo-perfiles).
 class DemoSandboxProfile {
@@ -44,36 +45,40 @@ class DemoSandboxStaffAuth {
     String appClient = 'bioenlace-personalsalud',
   }) async {
     final uri = Uri.parse('${AppConfig.apiUrl}/licencia/demo-perfiles');
-    try {
-      final response = await http
-          .get(
-            uri,
-            headers: AppConfig.jsonHeaders(appClient: appClient),
-          )
-          .timeout(const Duration(seconds: 15));
-      final data = jsonDecode(response.body);
-      if (response.statusCode < 200 ||
-          response.statusCode >= 300 ||
-          data is! Map ||
-          data['success'] != true) {
-        return const [];
-      }
-      final payload = data['data'];
-      if (payload is! Map || payload['enabled'] != true) {
-        return const [];
-      }
-      final items = payload['items'];
-      if (items is! List) return const [];
-      final out = <DemoSandboxProfile>[];
-      for (final it in items) {
-        final p = DemoSandboxProfile.fromJson(it);
-        if (p == null || !_staffRoles.contains(p.role)) continue;
-        out.add(p);
-      }
-      return out;
-    } catch (_) {
+    final response = await http
+        .get(uri, headers: AppConfig.jsonHeaders(appClient: appClient))
+        .timeout(const Duration(seconds: 15));
+    final payload = unwrapApiContract(
+      jsonDecode(response.body),
+      response.statusCode,
+    );
+    final enabled = payload['enabled'];
+    if (enabled == false) {
       return const [];
     }
+    if (enabled != true) {
+      throw const FormatException(
+        'Respuesta inválida al consultar perfiles demo.',
+      );
+    }
+    final items = payload['items'];
+    if (items is! List) {
+      throw const FormatException(
+        'La respuesta de perfiles demo no contiene una lista.',
+      );
+    }
+    final out = <DemoSandboxProfile>[];
+    for (final it in items) {
+      final p = DemoSandboxProfile.fromJson(it);
+      if (p == null) {
+        throw const FormatException(
+          'La respuesta contiene un perfil demo inválido.',
+        );
+      }
+      if (!_staffRoles.contains(p.role)) continue;
+      out.add(p);
+    }
+    return out;
   }
 
   /// true si el entorno tiene demo habilitada y al menos un perfil staff.
@@ -109,17 +114,7 @@ class DemoSandboxStaffAuth {
         .timeout(const Duration(seconds: AppConfig.httpTimeoutSeconds));
 
     final data = jsonDecode(response.body);
-    if (response.statusCode >= 200 &&
-        response.statusCode < 300 &&
-        data is Map &&
-        data['success'] == true) {
-      return Map<String, dynamic>.from(data);
-    }
-
-    final message = data is Map
-        ? (data['message'] ?? 'No se pudo abrir la demo')
-        : 'No se pudo abrir la demo';
-    throw Exception(message.toString());
+    return unwrapApiContract(data, response.statusCode);
   }
 
   static Future<Map<String, dynamic>> enterAsMedico({

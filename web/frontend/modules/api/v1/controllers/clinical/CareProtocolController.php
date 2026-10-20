@@ -24,6 +24,7 @@ class CareProtocolController extends BaseController
     public function init(): void
     {
         parent::init();
+        $this->contractResponses = true;
         $this->admin = new CareProtocolAdminService();
     }
 

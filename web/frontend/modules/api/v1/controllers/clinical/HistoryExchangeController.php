@@ -29,45 +29,31 @@ class HistoryExchangeController extends BaseController
     {
         $encounterId = (int) (Yii::$app->request->get('encounter_id') ?? 0);
         if ($encounterId <= 0) {
-            return $this->clinicalError('Se requiere encounter_id.', null, 400);
+            return $this->fail('encounter_id_required');
         }
 
-        [$encounter, $error] = $this->requireEncounterAccess($encounterId);
-        if ($error !== null) {
-            return $error;
-        }
+        $this->assertEncounterAccess($encounterId);
 
-        return [
-            'success' => true,
-            'data' => $this->query->listForEncounter($encounterId),
-        ];
+        return $this->ok($this->query->listForEncounter($encounterId));
     }
 
     public function actionVerEstado(): array
     {
         $jobId = (int) (Yii::$app->request->get('job_id') ?? 0);
         if ($jobId <= 0) {
-            return $this->clinicalError('Se requiere job_id.', null, 400);
+            return $this->fail('history_job_required');
         }
 
         $job = $this->query->findJob($jobId);
         if ($job === null) {
-            Yii::$app->response->statusCode = 404;
-
-            return $this->clinicalError('Job no encontrado.', null, 404);
+            return $this->fail('history_job_not_found');
         }
 
-        [$encounter, $error] = $this->requireEncounterAccess((int) $job->encounter_id);
-        if ($error !== null) {
-            return $error;
-        }
+        $this->assertEncounterAccess((int) $job->encounter_id);
 
-        return [
-            'success' => true,
-            'data' => array_merge(
-                $this->query->serializeJob($job),
-                ['audit' => $this->query->auditTrail($jobId)]
-            ),
-        ];
+        return $this->ok(array_merge(
+            $this->query->serializeJob($job),
+            ['audit' => $this->query->auditTrail($jobId)]
+        ));
     }
 }

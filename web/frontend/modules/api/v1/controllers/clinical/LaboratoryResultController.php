@@ -60,7 +60,7 @@ class LaboratoryResultController extends BaseController
         $req = Yii::$app->request;
         $idPersona = (int) Yii::$app->user->getIdPersona();
         if ($idPersona <= 0) {
-            return $this->clinicalError('Solo pacientes autenticados.', null, 400);
+            return $this->fail('patient_required');
         }
 
         $out = UiScreenService::handleScreen(
@@ -107,7 +107,7 @@ class LaboratoryResultController extends BaseController
         $req = Yii::$app->request;
         $idPersona = (int) Yii::$app->user->getIdPersona();
         if ($idPersona <= 0) {
-            return $this->clinicalError('Solo pacientes autenticados.', null, 400);
+            return $this->fail('patient_required');
         }
 
         $reportId = (int) ($req->get('report_id') ?? $req->post('report_id') ?? 0);
@@ -218,19 +218,12 @@ class LaboratoryResultController extends BaseController
      */
     public function actionPorEncounter($encounterId): array
     {
-        [$encounter, $err] = $this->requireEncounterAccess((int) $encounterId);
-        if ($err !== null) {
-            return $err;
-        }
+        $encounter = $this->assertEncounterAccess((int) $encounterId);
 
-        return [
-            'success' => true,
-            'message' => 'Laboratorio del encounter',
-            'data' => [
-                'encounterId' => (int) $encounter->id,
-                'reports' => $this->query->listForEncounter((int) $encounter->id),
-            ],
-        ];
+        return $this->ok([
+            'encounterId' => (int) $encounter->id,
+            'reports' => $this->query->listForEncounter((int) $encounter->id),
+        ]);
     }
 
     /**
@@ -243,12 +236,9 @@ class LaboratoryResultController extends BaseController
             throw new MethodNotAllowedHttpException(['GET'], 'Solo GET.');
         }
 
-        return [
-            'success' => true,
-            'data' => (new ResolvePendingLaboratoryEncounterLink())->listPending(
-                (int) ($req->get('limit') ?? 50)
-            ),
-        ];
+        return $this->ok((new ResolvePendingLaboratoryEncounterLink())->listPending(
+            (int) ($req->get('limit') ?? 50)
+        ));
     }
 
     /**
@@ -265,13 +255,10 @@ class LaboratoryResultController extends BaseController
         $reportId = (int) ($post['report_id'] ?? $post['id'] ?? 0);
         $encounterId = (int) ($post['encounter_id'] ?? 0);
         if ($reportId <= 0 || $encounterId <= 0) {
-            throw new BadRequestHttpException('report_id y encounter_id son requeridos.');
+            return $this->fail('request_invalid', ['detail' => 'Indicá el informe y la consulta a vincular.']);
         }
 
-        [$encounter, $err] = $this->requireEncounterAccess($encounterId);
-        if ($err !== null) {
-            return $err;
-        }
+        $this->assertEncounterAccess($encounterId);
 
         try {
             $data = (new LaboratoryEncounterLinkAgent())->confirmLinkAsStaff(
@@ -280,9 +267,9 @@ class LaboratoryResultController extends BaseController
                 (int) Yii::$app->user->getIdPersona()
             );
         } catch (\InvalidArgumentException $e) {
-            throw new BadRequestHttpException($e->getMessage());
+            return $this->fail('request_invalid', ['detail' => $e->getMessage()]);
         }
 
-        return ['success' => true, 'data' => $data];
+        return $this->ok($data);
     }
 }

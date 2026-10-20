@@ -8,6 +8,7 @@ use common\components\Domain\Clinical\Encounter\Application\Service\EncounterOpe
 use common\components\Domain\Person\Representation\Domain\Model\RepresentationPermission;
 use common\models\Clinical\Condition;
 use common\models\Clinical\Encounter;
+use common\components\Platform\Core\Http\Contract\ApiException;
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 
@@ -34,10 +35,7 @@ class ConditionController extends BaseController
 
     public function actionIndex($encounterId)
     {
-        [$encounter, $err] = $this->requireEncounterAccess((int) $encounterId);
-        if ($err !== null) {
-            return $err;
-        }
+        $encounter = $this->assertEncounterAccess((int) $encounterId);
 
         $rows = Condition::find()
             ->where(['encounter_id' => $encounter->id])
@@ -50,11 +48,7 @@ class ConditionController extends BaseController
             $data[] = $this->toApiArray($row);
         }
 
-        return [
-            'success' => true,
-            'message' => 'Condiciones del encounter',
-            'data' => $data,
-        ];
+        return $this->ok($data);
     }
 
     /**
@@ -70,7 +64,7 @@ class ConditionController extends BaseController
             $subjectId = (int) ($body['subject_persona_id'] ?? $body['id_persona'] ?? 0);
         }
         if ($subjectId <= 0) {
-            return $this->clinicalError('subject_persona_id es obligatorio.', null, 400);
+            return $this->fail('subject_required');
         }
 
         $sessionPersona = (int) (Yii::$app->user->getIdPersona() ?? 0);
@@ -83,27 +77,13 @@ class ConditionController extends BaseController
                 ->orderBy(['id' => SORT_DESC])
                 ->limit(1)
                 ->one();
-            if ($sample instanceof Encounter) {
-                [$enc, $err] = $this->requireEncounterAccess(
-                    (int) $sample->id,
-                    RepresentationPermission::CLINICAL_CARE_PLAN
-                );
-                if ($err !== null) {
-                    return $err;
-                }
-                unset($enc);
-            } else {
-                return $this->clinicalError('Sin permiso para ver problemas del paciente.', null, 403);
+            if (!$sample instanceof Encounter) {
+                return $this->fail('patient_problems_forbidden');
             }
+            $this->assertEncounterAccess((int) $sample->id, RepresentationPermission::CLINICAL_CARE_PLAN);
         }
 
-        $open = (new EncounterOpenProblemsService())->forSubject($subjectId);
-
-        return [
-            'success' => true,
-            'message' => 'Problemas y planes abiertos',
-            'data' => $open,
-        ];
+        return $this->ok((new EncounterOpenProblemsService())->forSubject($subjectId));
     }
 
     public function actionResolve($id)
@@ -111,7 +91,7 @@ class ConditionController extends BaseController
         $body = $this->mergeRequestBody();
         $note = isset($body['note']) ? (string) $body['note'] : null;
 
-        return $this->transitionOne((int) $id, ConditionClinicalStatus::RESOLVED, $note, 'Condición marcada como resuelta');
+        return $this->transitionOne((int) $id, ConditionClinicalStatus::RESOLVED, $note, 'Diagnóstico marcado como resuelto');
     }
 
     public function actionInactivate($id)
@@ -119,7 +99,7 @@ class ConditionController extends BaseController
         $body = $this->mergeRequestBody();
         $note = isset($body['note']) ? (string) $body['note'] : null;
 
-        return $this->transitionOne((int) $id, ConditionClinicalStatus::INACTIVE, $note, 'Condición inactivada');
+        return $this->transitionOne((int) $id, ConditionClinicalStatus::INACTIVE, $note, 'Diagnóstico inactivado');
     }
 
     public function actionTransition($id)
@@ -127,72 +107,46 @@ class ConditionController extends BaseController
         $body = $this->mergeRequestBody();
         $status = (string) ($body['clinical_status'] ?? $body['status'] ?? '');
         if ($status === '') {
-            return $this->clinicalError('clinical_status es obligatorio.', null, 400);
+            return $this->fail('condition_status_required');
         }
         $note = isset($body['note']) ? (string) $body['note'] : null;
 
-        return $this->transitionOne((int) $id, $status, $note, 'Condición actualizada');
+        return $this->transitionOne((int) $id, $status, $note, 'Diagnóstico actualizado');
     }
 
     private function transitionOne(int $id, string $status, ?string $note, string $message): array
     {
-        [$condition, $err] = $this->requireConditionAccess($id);
-        if ($err !== null) {
-            return $err;
-        }
+        $condition = $this->assertConditionAccess($id);
 
         try {
             $condition = $this->lifecycle->transition($condition, $status, $note);
         } catch (\InvalidArgumentException $e) {
-            return $this->clinicalError($e->getMessage(), null, 400);
-        } catch (\Throwable $e) {
-            return $this->clinicalError($e->getMessage(), null, 500);
+            return $this->fail('request_invalid', ['detail' => $e->getMessage()]);
         }
 
-        return [
-            'success' => true,
-            'message' => $message,
-            'data' => $this->toApiArray($condition),
-        ];
+        return $this->ok($this->toApiArray($condition), ['message' => $message]);
     }
 
     /**
-     * @return array{0: Condition|null, 1: array<string, mixed>|null}
+     * @throws ApiException
      */
-    private function requireConditionAccess(int $conditionId): array
+    private function assertConditionAccess(int $conditionId): Condition
     {
         $condition = Condition::findOne($conditionId);
         if ($condition === null || $condition->deleted_at !== null) {
-            Yii::$app->response->statusCode = 404;
-
-            return [null, $this->clinicalError('Condición no encontrada', null, 404)];
+            throw new ApiException('condition_not_found');
         }
 
         $sessionPersona = (int) (Yii::$app->user->getIdPersona() ?? 0);
-        if ($sessionPersona > 0 && $sessionPersona === (int) $condition->subject_persona_id) {
-            // Paciente no muta sus diagnósticos desde app.
-            Yii::$app->response->statusCode = 403;
-
-            return [null, $this->clinicalError('Sin permiso para modificar esta condición', null, 403)];
-        }
-
         $encounterId = (int) ($condition->encounter_id ?? 0);
-        if ($encounterId > 0) {
-            [$encounter, $err] = $this->requireEncounterAccess(
-                $encounterId,
-                RepresentationPermission::CLINICAL_CARE_PLAN
-            );
-            if ($err !== null) {
-                return [null, $err];
-            }
-            unset($encounter);
-
-            return [$condition, null];
+        // Paciente no muta sus diagnósticos desde app.
+        if (($sessionPersona > 0 && $sessionPersona === (int) $condition->subject_persona_id) || $encounterId <= 0) {
+            throw new ApiException('condition_forbidden');
         }
 
-        Yii::$app->response->statusCode = 403;
+        $this->assertEncounterAccess($encounterId, RepresentationPermission::CLINICAL_CARE_PLAN);
 
-        return [null, $this->clinicalError('Sin permiso para modificar esta condición', null, 403)];
+        return $condition;
     }
 
     /**

@@ -96,6 +96,41 @@ errors:
     retryable: false
     default_detail: "No tenés permiso para acceder a esta internación."
     message: "{detail}"
+  patient_required:
+    http_status: 403
+    intent: error
+    retryable: false
+    message: "Esta acción es solo para pacientes."
+  condition_not_found:
+    http_status: 404
+    intent: error
+    retryable: false
+    message: "No se encontró el diagnóstico."
+  condition_forbidden:
+    http_status: 403
+    intent: error
+    retryable: false
+    message: "No tenés permiso para modificar este diagnóstico."
+  condition_status_required:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "Indicá el nuevo estado del diagnóstico."
+  patient_problems_forbidden:
+    http_status: 403
+    intent: error
+    retryable: false
+    message: "No tenés permiso para ver los problemas de este paciente."
+  history_job_required:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "Indicá el envío de historia clínica a consultar."
+  history_job_not_found:
+    http_status: 404
+    intent: error
+    retryable: false
+    message: "No se encontró el envío de historia clínica."
   care_plan_subject_mismatch:
     http_status: 422
     intent: error

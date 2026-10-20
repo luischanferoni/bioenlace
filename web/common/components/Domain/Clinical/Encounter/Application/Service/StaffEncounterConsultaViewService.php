@@ -6,6 +6,7 @@ use common\components\Domain\Clinical\CareCohort\Application\Service\CarePackCon
 use common\components\Domain\Clinical\CareCohort\Application\Service\CarePackEncounterStaffService;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EncounterStaffDocumentationViewService;
 use common\components\Domain\Clinical\Encounter\Application\UseCase\RecordEncounterReason;
+use common\components\Platform\Core\Http\Contract\ApiException;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\AppointmentReasonMessage;
 use common\models\Person\Persona;
@@ -18,23 +19,15 @@ use common\models\Scheduling\Turno;
 final class StaffEncounterConsultaViewService
 {
     /**
-     * @return array{
-     *   ok: bool,
-     *   http_status?: int,
-     *   message?: string,
-     *   data?: array<string, mixed>
-     * }
+     * @return array<string, mixed>
+     * @throws ApiException
      */
     public function build(?int $turnoId, ?int $encounterId): array
     {
         $turnoId = $turnoId !== null && $turnoId > 0 ? $turnoId : 0;
         $encounterId = $encounterId !== null && $encounterId > 0 ? $encounterId : 0;
         if ($turnoId <= 0 && $encounterId <= 0) {
-            return [
-                'ok' => false,
-                'http_status' => 400,
-                'message' => 'Indicá turno_id o encounter_id.',
-            ];
+            throw new ApiException('encounter_or_appointment_required');
         }
 
         $lookup = new EncounterAppointmentReasonLookupService();
@@ -44,29 +37,17 @@ final class StaffEncounterConsultaViewService
         if ($turnoId > 0) {
             $turno = Turno::findActive()->andWhere(['id_turnos' => $turnoId])->one();
             if ($turno === null) {
-                return [
-                    'ok' => false,
-                    'http_status' => 404,
-                    'message' => 'Turno no encontrado.',
-                ];
+                throw new ApiException('appointment_not_found');
             }
             $resolvedId = $lookup->encounterIdParaTurno($turnoId);
             if ($resolvedId === null) {
-                return [
-                    'ok' => false,
-                    'http_status' => 404,
-                    'message' => 'No hay encounter documentado para este turno.',
-                ];
+                throw new ApiException('encounter_not_documented');
             }
             $encounter = Encounter::findOne($resolvedId);
         } else {
             $encounter = Encounter::findOne($encounterId);
             if ($encounter === null) {
-                return [
-                    'ok' => false,
-                    'http_status' => 404,
-                    'message' => 'Encounter no encontrado.',
-                ];
+                throw new ApiException('encounter_not_found');
             }
             if ($encounter->appointment_id) {
                 $turno = Turno::findActive()
@@ -85,20 +66,12 @@ final class StaffEncounterConsultaViewService
         }
 
         if ($encounter === null) {
-            return [
-                'ok' => false,
-                'http_status' => 404,
-                'message' => 'Encounter no encontrado.',
-            ];
+            throw new ApiException('encounter_not_found');
         }
 
         $persona = Persona::findOne((int) $encounter->subject_persona_id);
         if ($persona === null) {
-            return [
-                'ok' => false,
-                'http_status' => 404,
-                'message' => 'Persona del encounter no encontrada.',
-            ];
+            throw new ApiException('subject_person_not_found');
         }
 
         AppointmentReasonBatchService::ensureProcessedForMedico($encounter);
@@ -126,10 +99,7 @@ final class StaffEncounterConsultaViewService
             $data['care_pack_cohorte'] = $carePack;
         }
 
-        return [
-            'ok' => true,
-            'data' => $data,
-        ];
+        return $data;
     }
 
     /**

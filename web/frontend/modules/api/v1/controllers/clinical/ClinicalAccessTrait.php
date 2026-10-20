@@ -8,6 +8,7 @@ use common\components\Domain\Organization\Efector\Application\Authorization\Efec
 use common\components\Platform\Core\Permission\Domain\DomainOperationAuthorizer;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Domain\Person\Representation\Domain\Model\RepresentationPermission;
+use common\components\Platform\Core\Http\Contract\ApiException;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\InpatientStay;
@@ -17,6 +18,30 @@ use yii\web\ForbiddenHttpException;
 trait ClinicalAccessTrait
 {
     /**
+     * @throws ApiException
+     */
+    protected function assertEncounterAccess(int $encounterId, ?string $representationPermission = null): Encounter
+    {
+        $encounter = Encounter::findOne($encounterId);
+        if (!$encounter) {
+            throw new ApiException('encounter_not_found');
+        }
+
+        try {
+            EncounterAccessService::assertAccess(
+                $encounter,
+                'Encounter.access',
+                $representationPermission
+            );
+        } catch (DomainOperationForbiddenException $e) {
+            throw new ApiException('encounter_forbidden', ['detail' => $e->getMessage()]);
+        }
+
+        return $encounter;
+    }
+
+    /**
+     * @deprecated Formato anterior; usar {@see assertEncounterAccess()}. Se elimina al migrar los controllers clínicos.
      * @return array{0: Encounter|null, 1: array<string, mixed>|null}
      */
     protected function requireEncounterAccess(int $encounterId, ?string $representationPermission = null): array

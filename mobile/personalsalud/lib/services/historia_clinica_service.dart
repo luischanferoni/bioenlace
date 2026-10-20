@@ -95,23 +95,16 @@ class HistoriaClinicaService {
       } else if (turnoId != null && turnoId > 0) {
         q['turno_id'] = '$turnoId';
       }
-      if (q.isEmpty) {
-        throw Exception('Indicá turno_id o encounter_id');
-      }
       final uri = Uri.parse(
         '${AppConfig.apiUrl}/clinical/encounter/ver-consulta-como-staff',
       ).replace(queryParameters: q);
 
       final response = await http.get(uri, headers: _headers);
-      final data = json.decode(response.body) as Map<String, dynamic>;
-      if (response.statusCode == 200 &&
-          data['success'] == true &&
-          data['data'] != null) {
-        return HistoriaClinicaResponse.fromStaffConsultaJson(
-          data['data'] as Map<String, dynamic>,
-        );
-      }
-      throw Exception(data['message'] ?? 'Error al obtener la consulta');
+      final data = unwrapApiContract(
+        json.decode(response.body),
+        response.statusCode,
+      );
+      return HistoriaClinicaResponse.fromStaffConsultaJson(data);
     } catch (e) {
       print('Error fetching consulta staff: $e');
       rethrow;

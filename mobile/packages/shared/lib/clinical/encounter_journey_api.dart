@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config/api_config.dart';
+import '../http/api_contract.dart';
 
 /// Estado del recorrido pre/post consulta (`GET|POST /api/v1/encounter-journey/estado`).
 class EncounterJourneyApi {
@@ -49,10 +50,10 @@ class EncounterJourneyApi {
         .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
 
     if (response.statusCode != 200) return null;
-    final data = json.decode(response.body);
-    if (data is! Map<String, dynamic> || data['success'] != true) {
+    try {
+      return unwrapApiContract(json.decode(response.body), response.statusCode);
+    } on ApiContractException {
       return null;
     }
-    return data;
   }
 }

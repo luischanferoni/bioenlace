@@ -28,6 +28,91 @@ errors:
     retryable: false
     message: "No se encontró lo que buscabas."
 
+  # Acceso y lectura clínica
+  encounter_id_required:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "Indicá la consulta."
+  encounter_or_appointment_required:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "Indicá el turno o la consulta."
+  encounter_not_found:
+    http_status: 404
+    intent: error
+    retryable: false
+    message: "No se encontró la consulta."
+  encounter_forbidden:
+    http_status: 403
+    intent: error
+    retryable: false
+    default_detail: "No tenés permiso para acceder a esta consulta."
+    message: "{detail}"
+  encounter_not_documented:
+    http_status: 404
+    intent: info
+    retryable: false
+    message: "Todavía no hay una consulta documentada para este turno."
+  encounter_without_appointment:
+    http_status: 404
+    intent: error
+    retryable: false
+    message: "La consulta no tiene un turno vinculado."
+  appointment_not_found:
+    http_status: 404
+    intent: error
+    retryable: false
+    message: "No se encontró el turno."
+  appointment_forbidden:
+    http_status: 403
+    intent: error
+    retryable: false
+    message: "No tenés permiso para ver este turno."
+  subject_person_not_found:
+    http_status: 404
+    intent: error
+    retryable: false
+    message: "No se encontró a la persona de la consulta."
+  summary_not_found:
+    http_status: 404
+    intent: info
+    retryable: false
+    message: "El resumen no existe o todavía no fue publicado."
+  summaries_none_published:
+    http_status: 404
+    intent: info
+    retryable: false
+    message: "Todavía no hay atenciones publicadas."
+  inpatient_not_found:
+    http_status: 404
+    intent: error
+    retryable: false
+    message: "No se encontró la internación."
+  inpatient_forbidden:
+    http_status: 403
+    intent: error
+    retryable: false
+    default_detail: "No tenés permiso para acceder a esta internación."
+    message: "{detail}"
+  care_plan_not_found:
+    http_status: 404
+    intent: error
+    retryable: false
+    message: "No se encontró el plan de tratamiento."
+  care_plan_forbidden:
+    http_status: 403
+    intent: error
+    retryable: false
+    message: "No tenés permiso para acceder a este plan de tratamiento."
+  request_invalid:
+    http_status: 422
+    intent: error
+    retryable: false
+    default_detail: "Los datos enviados no son válidos."
+    message: "{detail}"
+
   audio_missing:
     http_status: 422
     intent: error

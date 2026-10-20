@@ -32,16 +32,11 @@ class _EncounterSummaryListScreenState extends State<EncounterSummaryListScreen>
       _error = null;
     });
     try {
-      final r = await _api.list(limit: 50);
-      if (r['success'] == true && r['data'] is Map) {
-        final data = Map<String, dynamic>.from(r['data'] as Map);
-        final raw = data['items'];
-        _items = raw is List
-            ? raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList()
-            : [];
-      } else {
-        _error = r['message']?.toString();
-      }
+      final data = await _api.list(limit: 50);
+      final raw = data['items'];
+      _items = raw is List
+          ? raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList()
+          : [];
     } catch (e) {
       _error = e.toString();
     }

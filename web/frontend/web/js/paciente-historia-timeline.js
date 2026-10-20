@@ -986,7 +986,7 @@
                     if (
                         staffResp.ok
                         && staffPayload
-                        && staffPayload.success === true
+                        && !staffPayload.error
                         && staffPayload.data
                     ) {
                         var turnoStaff = staffPayload.data.turno || {};
@@ -997,8 +997,8 @@
                         }
                     } else if (soloConsultaCargada) {
                         throw new Error(
-                            (staffPayload && staffPayload.message)
-                                ? staffPayload.message
+                            (staffPayload && staffPayload.error && staffPayload.error.message)
+                                ? staffPayload.error.message
                                 : 'No se pudo cargar la consulta documentada.'
                         );
                     }

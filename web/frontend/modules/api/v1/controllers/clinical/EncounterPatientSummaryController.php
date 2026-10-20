@@ -8,6 +8,7 @@ use common\components\Domain\Person\Representation\Domain\Model\RepresentationPe
 use common\components\Domain\Person\Representation\Application\Service\PersonRepresentationSubjectService;
 use common\components\Platform\Ui\UiScreenService;
 use common\models\Person\PersonRelatedAuditLog;
+use common\components\Platform\Core\Http\Contract\ApiException;
 use Yii;
 use frontend\modules\api\v1\controllers\BaseController;
 use yii\web\ForbiddenHttpException;
@@ -38,9 +39,9 @@ class EncounterPatientSummaryController extends BaseController
     }
 
     /**
-     * @return array{0: array|null, 1: int}
+     * @throws ApiException
      */
-    private function requirePatientSubject(?array $params = null): array
+    private function requirePatientSubject(?array $params = null): int
     {
         $params = $params ?? array_merge(Yii::$app->request->get(), Yii::$app->request->post());
         $svc = new PersonRepresentationSubjectService();
@@ -48,72 +49,51 @@ class EncounterPatientSummaryController extends BaseController
             $idPersona = $svc->resolveAndAuthorize($params, RepresentationPermission::CLINICAL_HISTORIA_RESUMEN);
             $svc->auditDelegatedAction(PersonRelatedAuditLog::ACTION_HISTORIA_ACCESSED, $idPersona, []);
 
-            return [null, $idPersona];
+            return $idPersona;
         } catch (\InvalidArgumentException $e) {
-            return [$this->clinicalError($e->getMessage(), null, 400), 0];
+            throw new ApiException('request_invalid', ['detail' => $e->getMessage()]);
         } catch (ForbiddenHttpException $e) {
-            return [$this->clinicalError($e->getMessage(), null, 403), 0];
+            throw new ApiException('forbidden');
         }
     }
 
     public function actionListarAtencionesComoPaciente(): array
     {
-        [$err, $idPersona] = $this->requirePatientSubject();
-        if ($err !== null) {
-            return $err;
-        }
+        $idPersona = $this->requirePatientSubject();
 
         $limit = (int) Yii::$app->request->get('limit', 20);
         $offset = (int) Yii::$app->request->get('offset', 0);
 
-        return [
-            'success' => true,
-            'message' => 'Atenciones publicadas',
-            'data' => $this->query->listForPersona($idPersona, $limit, $offset),
-        ];
+        return $this->ok($this->query->listForPersona($idPersona, $limit, $offset));
     }
 
     public function actionVerResumenComoPaciente(): array
     {
-        [$err, $idPersona] = $this->requirePatientSubject();
-        if ($err !== null) {
-            return $err;
-        }
+        $idPersona = $this->requirePatientSubject();
 
         $encounterId = (int) Yii::$app->request->get('encounter_id', 0);
         if ($encounterId <= 0) {
-            return $this->clinicalError('Se requiere encounter_id.', null, 400);
+            return $this->fail('encounter_id_required');
         }
 
         $detail = $this->query->getDetailForPersona($idPersona, $encounterId);
         if ($detail === null) {
-            return $this->clinicalError('Resumen no encontrado o aún no publicado.', null, 404);
+            return $this->fail('summary_not_found');
         }
 
-        return [
-            'success' => true,
-            'message' => 'Resumen de atención',
-            'data' => $detail,
-        ];
+        return $this->ok($detail);
     }
 
     public function actionUltimaAtencionComoPaciente(): array
     {
-        [$err, $idPersona] = $this->requirePatientSubject();
-        if ($err !== null) {
-            return $err;
-        }
+        $idPersona = $this->requirePatientSubject();
 
         $detail = $this->query->getLatestForPersona($idPersona);
         if ($detail === null) {
-            return $this->clinicalError('No hay atenciones publicadas.', null, 404);
+            return $this->fail('summaries_none_published');
         }
 
-        return [
-            'success' => true,
-            'message' => 'Última atención',
-            'data' => $detail,
-        ];
+        return $this->ok($detail);
     }
 
     /**
@@ -121,13 +101,10 @@ class EncounterPatientSummaryController extends BaseController
      */
     public function actionMisAtencionesComoPaciente(): array
     {
-        [$err, $idPersona] = $this->requirePatientSubject();
-        if ($err !== null) {
-            return $err;
-        }
+        $idPersona = $this->requirePatientSubject();
 
         $req = Yii::$app->request;
-        $out = UiScreenService::handleScreen(
+        $out =  UiScreenService::handleScreen(
             'encounter',
             'mis-atenciones-como-paciente',
             $req->get(),
@@ -165,13 +142,10 @@ class EncounterPatientSummaryController extends BaseController
      */
     public function actionVerResumenAtencionComoPaciente(): array
     {
-        [$err, $idPersona] = $this->requirePatientSubject();
-        if ($err !== null) {
-            return $err;
-        }
+        $idPersona = $this->requirePatientSubject();
 
         $req = Yii::$app->request;
-        $encounterId = (int) ($req->get('encounter_id') ?? $req->post('encounter_id') ?? 0);
+        $encounterId =  (int) ($req->get('encounter_id') ?? $req->post('encounter_id') ?? 0);
 
         if (!$req->isPost) {
             if ($encounterId <= 0) {
@@ -210,13 +184,10 @@ class EncounterPatientSummaryController extends BaseController
      */
     public function actionUltimaAtencionUiComoPaciente(): array
     {
-        [$err, $idPersona] = $this->requirePatientSubject();
-        if ($err !== null) {
-            return $err;
-        }
+        $idPersona = $this->requirePatientSubject();
 
         $req = Yii::$app->request;
-        $detail = $this->query->getLatestForPersona($idPersona);
+        $detail =  $this->query->getLatestForPersona($idPersona);
         if ($detail === null) {
             throw new \InvalidArgumentException('No hay atenciones publicadas todavía.');
         }

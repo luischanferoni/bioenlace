@@ -5,6 +5,7 @@ namespace frontend\modules\api\v1\controllers\clinical;
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 use yii\web\BadRequestHttpException;
+use common\components\Platform\Core\Http\Contract\ApiException;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use common\components\Domain\Clinical\Encounter\Application\UseCase\OrchestrateEncounterJourney;
@@ -43,22 +44,21 @@ class EncounterJourneyController extends BaseController
             RepresentationPermission::SCHEDULING_TURNO
         );
         if ((int) $turno->id_persona !== $idPersona) {
-            throw new ForbiddenHttpException('No tenés permiso para ver este turno.');
+            throw new ApiException('appointment_forbidden');
         }
 
         $journeySvc = new OrchestrateEncounterJourney();
         $journey = $journeySvc->buildForTurno($turno, $encounter);
         $legacy = $journeySvc->legacyFlagsForTurno($turno, $encounter);
 
-        return [
-            'success' => true,
+        return $this->ok([
             'turno_id' => (int) $turno->id_turnos,
             'encounter_id' => $encounter !== null ? (int) $encounter->id : null,
             'journey' => $journey,
             'motivos_input_abierto' => $legacy['motivos_input_abierto'],
             'motivos_cierre_minutos' => $legacy['motivos_cierre_minutos'],
             'asistencia_cohorte_disponible' => $legacy['asistencia_cohorte_disponible'],
-        ];
+        ]);
     }
 
     /**
@@ -100,22 +100,22 @@ class EncounterJourneyController extends BaseController
             if ($turno instanceof Turno) {
                 return $turno;
             }
-            throw new NotFoundHttpException('Turno no encontrado.');
+            throw new ApiException('appointment_not_found');
         }
 
         if ($encounterId > 0) {
             $encounter = Encounter::findOne($encounterId);
             if ($encounter === null || !(int) $encounter->appointment_id) {
-                throw new NotFoundHttpException('Encounter sin turno vinculado.');
+                throw new ApiException('encounter_without_appointment');
             }
             $turno = Turno::findActive()->andWhere(['id_turnos' => (int) $encounter->appointment_id])->one();
             if ($turno instanceof Turno) {
                 return $turno;
             }
-            throw new NotFoundHttpException('Turno no encontrado.');
+            throw new ApiException('appointment_not_found');
         }
 
-        throw new BadRequestHttpException('turno_id o encounter_id es obligatorio.');
+        throw new ApiException('encounter_or_appointment_required');
     }
 
     /**

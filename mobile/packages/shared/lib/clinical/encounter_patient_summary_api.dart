@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config/api_config.dart';
+import '../http/api_contract.dart';
 
 /// API JSON de resúmenes de atención publicados (paciente).
 class EncounterPatientSummaryApi {
@@ -83,19 +84,8 @@ class EncounterPatientSummaryApi {
     return _decodeData(response);
   }
 
-  Map<String, dynamic> _decode(http.Response response) {
-    final decoded = json.decode(response.body);
-    if (decoded is! Map<String, dynamic>) {
-      return {'success': false, 'message': 'Respuesta inválida'};
-    }
-    return decoded;
-  }
+  Map<String, dynamic> _decode(http.Response response) =>
+      unwrapApiContract(json.decode(response.body), response.statusCode);
 
-  Map<String, dynamic> _decodeData(http.Response response) {
-    final decoded = _decode(response);
-    if (response.statusCode == 200 && decoded['success'] == true && decoded['data'] is Map) {
-      return Map<String, dynamic>.from(decoded['data'] as Map);
-    }
-    throw Exception(decoded['message']?.toString() ?? 'No se pudo cargar el resumen');
-  }
+  Map<String, dynamic> _decodeData(http.Response response) => _decode(response);
 }

@@ -43,7 +43,7 @@ class EncounterStaffSummaryController extends BaseController
         $turnoId = (int) Yii::$app->request->get('turno_id', 0);
         $encounterId = (int) Yii::$app->request->get('encounter_id', 0);
         if ($turnoId <= 0 && $encounterId <= 0) {
-            return $this->clinicalError('Indicá turno_id o encounter_id.', null, 400);
+            return $this->fail('encounter_or_appointment_required');
         }
 
         $resolvedEncounterId = $encounterId;
@@ -51,38 +51,17 @@ class EncounterStaffSummaryController extends BaseController
             $resolvedEncounterId = (int) ((new EncounterAppointmentReasonLookupService())
                 ->encounterIdParaTurno($turnoId) ?? 0);
             if ($resolvedEncounterId <= 0) {
-                return $this->clinicalError(
-                    'No hay encounter documentado para este turno.',
-                    null,
-                    404
-                );
+                return $this->fail('encounter_not_documented');
             }
         }
 
-        [$encounter, $err] = $this->requireEncounterAccess($resolvedEncounterId);
-        if ($err !== null) {
-            return $err;
-        }
-        unset($encounter);
+        $this->assertEncounterAccess($resolvedEncounterId);
 
-        $built = (new StaffEncounterConsultaViewService())->build(
+        $data = (new StaffEncounterConsultaViewService())->build(
             $turnoId > 0 ? $turnoId : null,
             $resolvedEncounterId
         );
-        if (empty($built['ok'])) {
-            $status = (int) ($built['http_status'] ?? 400);
 
-            return $this->clinicalError(
-                (string) ($built['message'] ?? 'No se pudo cargar la consulta.'),
-                null,
-                $status
-            );
-        }
-
-        return [
-            'success' => true,
-            'message' => 'OK',
-            'data' => $built['data'],
-        ];
+        return $this->ok($data);
     }
 }

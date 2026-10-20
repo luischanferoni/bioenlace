@@ -1397,7 +1397,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
         }
         return;
       }
-      throw Exception(m['message']?.toString() ?? 'Error al guardar');
+      throw Exception(apiMessageFromJson(m) ?? 'Error al guardar');
     } catch (e) {
       if (!mounted) return;
       setState(() => _loading = false);

@@ -160,16 +160,7 @@ class EmergencyGuardiaApi {
       headers: _headers,
       body: '{}',
     );
-    final decoded = json.decode(response.body);
-    if (response.statusCode < 200 ||
-        response.statusCode >= 300 ||
-        decoded is! Map<String, dynamic> ||
-        decoded['success'] != true) {
-      throw Exception(
-        decoded is Map ? (decoded['message'] ?? 'Error al iniciar atención') : 'Error',
-      );
-    }
-    return (decoded['data'] as Map<String, dynamic>?) ?? {};
+    return unwrapApiContract(json.decode(response.body), response.statusCode);
   }
 
   Future<void> asignar({required int guardiaId, int? idPes}) async {
@@ -184,12 +175,7 @@ class EmergencyGuardiaApi {
       headers: _headers,
       body: json.encode(body),
     );
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      final decoded = json.decode(response.body);
-      throw Exception(
-        decoded is Map ? (decoded['message'] ?? 'Error al asignar') : 'Error',
-      );
-    }
+    unwrapApiContract(json.decode(response.body), response.statusCode);
   }
 
   Future<List<EfectorDerivacionItem>> listarEfectoresDerivacion({int? idEfector}) async {
@@ -199,18 +185,8 @@ class EmergencyGuardiaApi {
       '${AppConfig.apiUrl}/clinical/emergency-guardia/listar-efectores-derivacion',
     ).replace(queryParameters: query.isNotEmpty ? query : null);
     final response = await http.get(uri, headers: _headers);
-    final decoded = json.decode(response.body);
-    if (response.statusCode != 200 ||
-        decoded is! Map<String, dynamic> ||
-        decoded['success'] != true) {
-      throw Exception(
-        decoded is Map ? (decoded['message'] ?? 'Error efectores') : 'Error efectores',
-      );
-    }
-    final data = decoded['data'] as List<dynamic>? ?? [];
-    return data
-        .map((e) => EfectorDerivacionItem.fromJson(e as Map<String, dynamic>))
-        .toList();
+    final data = unwrapApiContractList(json.decode(response.body), response.statusCode);
+    return data.map(EfectorDerivacionItem.fromJson).toList();
   }
 
   Future<void> solicitarInternacion(int guardiaId, {int? idEfectorInternacion}) async {
@@ -225,12 +201,7 @@ class EmergencyGuardiaApi {
           'notificar_internacion_id_efector': idEfectorInternacion,
       }),
     );
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      final decoded = json.decode(response.body);
-      throw Exception(
-        decoded is Map ? (decoded['message'] ?? 'Error internación') : 'Error',
-      );
-    }
+    unwrapApiContract(json.decode(response.body), response.statusCode);
   }
 
   Future<void> derivar({
@@ -254,12 +225,7 @@ class EmergencyGuardiaApi {
           'notificar_internacion_id_efector': idEfectorDerivacion,
       }),
     );
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      final decoded = json.decode(response.body);
-      throw Exception(
-        decoded is Map ? (decoded['message'] ?? 'Error al derivar') : 'Error',
-      );
-    }
+    unwrapApiContract(json.decode(response.body), response.statusCode);
   }
 
   Future<void> finalizar(int guardiaId) async {
@@ -267,12 +233,7 @@ class EmergencyGuardiaApi {
       '${AppConfig.apiUrl}/clinical/emergency-guardia/$guardiaId/finalizar',
     );
     final response = await http.post(uri, headers: _headers, body: '{}');
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      final decoded = json.decode(response.body);
-      throw Exception(
-        decoded is Map ? (decoded['message'] ?? 'Error al egresar') : 'Error',
-      );
-    }
+    unwrapApiContract(json.decode(response.body), response.statusCode);
   }
 
   Future<List<Map<String, String>>> buscarPersonaIngreso(String q) async {
@@ -280,16 +241,8 @@ class EmergencyGuardiaApi {
       '${AppConfig.apiUrl}/clinical/emergency-guardia/buscar-persona-ingreso',
     ).replace(queryParameters: {'q': q});
     final response = await http.get(uri, headers: _headers);
-    final decoded = json.decode(response.body);
-    if (response.statusCode != 200 ||
-        decoded is! Map<String, dynamic> ||
-        decoded['success'] != true) {
-      throw Exception(
-        decoded is Map ? (decoded['message'] ?? 'Error al buscar') : 'Error al buscar',
-      );
-    }
-    final data = decoded['data'];
-    final rows = data is Map ? (data['results'] as List<dynamic>? ?? []) : [];
+    final data = unwrapApiContract(json.decode(response.body), response.statusCode);
+    final rows = data['results'] as List<dynamic>? ?? [];
     return rows.map((e) {
       final m = Map<String, dynamic>.from(e as Map);
       return {
@@ -346,14 +299,7 @@ class EmergencyGuardiaApi {
       headers: _headers,
       body: json.encode(body),
     );
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      final decoded = json.decode(response.body);
-      throw Exception(
-        decoded is Map
-            ? (decoded['message'] ?? 'Error al ingresar')
-            : 'Error al ingresar',
-      );
-    }
+    unwrapApiContract(json.decode(response.body), response.statusCode);
   }
 
   Future<void> vincularIdentidad(int guardiaId, Map<String, dynamic> body) async {
@@ -365,14 +311,7 @@ class EmergencyGuardiaApi {
       headers: _headers,
       body: json.encode(body),
     );
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      final decoded = json.decode(response.body);
-      throw Exception(
-        decoded is Map
-            ? (decoded['message'] ?? 'Error al vincular identidad')
-            : 'Error al vincular identidad',
-      );
-    }
+    unwrapApiContract(json.decode(response.body), response.statusCode);
   }
 
   Future<void> registrarTriage({
@@ -398,11 +337,6 @@ class EmergencyGuardiaApi {
       headers: _headers,
       body: json.encode(body),
     );
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      final decoded = json.decode(response.body);
-      throw Exception(
-        decoded is Map ? (decoded['message'] ?? 'Error triage') : 'Error triage',
-      );
-    }
+    unwrapApiContract(json.decode(response.body), response.statusCode);
   }
 }

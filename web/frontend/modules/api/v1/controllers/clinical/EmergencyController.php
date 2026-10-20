@@ -62,6 +62,7 @@ class EmergencyController extends BaseController
     public function init(): void
     {
         parent::init();
+        $this->contractResponses = true;
         $this->ingreso = new IntakeEmergencyEpisode();
         $this->triage = new TriageEmergencyEpisode();
         $this->queue = new EmergencyQueueService();

@@ -24,6 +24,12 @@ class BaseController extends Controller
      */
     public static $authenticatorExcept = [];
 
+    /**
+     * Si es true, `success()`/`error()` responden en formato contrato. Se activa por controller
+     * cuando todos sus consumidores (móvil y web) ya leen `{data, meta}` / `{error}`.
+     */
+    protected bool $contractResponses = false;
+
     public function behaviors()
     {
         $behaviors = parent::behaviors(); // []
@@ -156,10 +162,13 @@ class BaseController extends Controller
 
     /**
      * @deprecated Formato anterior; se elimina al migrar todos los controllers (fase 9). Usar {@see ok()}.
-     * Respuesta de éxito estándar
+     * Con {@see $contractResponses} responde en formato contrato: el aviso va en `meta.message`.
      */
     protected function success($data = null, $message = 'Operación exitosa', $code = 200)
     {
+        if ($this->contractResponses) {
+            return $this->ok($data, ['message' => (string) $message], (int) $code);
+        }
         Yii::$app->response->statusCode = $code;
         return [
             'success' => true,
@@ -170,10 +179,32 @@ class BaseController extends Controller
 
     /**
      * @deprecated Formato anterior; usar {@see fail()}.
-     * Respuesta de error estándar
+     * Con {@see $contractResponses} traduce el código HTTP a un código del catálogo y usa
+     * el texto recibido como `detail`. Los errores 5xx no exponen el texto interno.
      */
     protected function error($message = 'Error en la operación', $errors = null, $code = 400)
     {
+        if ($this->contractResponses) {
+            $code = (int) $code;
+            $fieldErrors = is_array($errors) ? $errors : [];
+            $params = ['detail' => (string) $message];
+            if ($code === 401) {
+                return $this->fail('unauthenticated');
+            }
+            if ($code === 403) {
+                return $this->fail('forbidden_detail', $params);
+            }
+            if ($code === 404) {
+                return $this->fail('not_found_detail', $params);
+            }
+            if ($code >= 500) {
+                Yii::error($message, 'api-contract');
+
+                return $this->fail('internal_error');
+            }
+
+            return $this->fail('request_invalid', $params, $fieldErrors);
+        }
         Yii::$app->response->statusCode = $code;
         return [
             'success' => false,

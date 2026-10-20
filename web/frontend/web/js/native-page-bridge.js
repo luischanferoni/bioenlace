@@ -30,7 +30,16 @@
   async function fetchJson(url, options) {
     if (window.BioenlaceApiClient && typeof window.BioenlaceApiClient.fetchJson === 'function') {
       var wrapped = await window.BioenlaceApiClient.fetchJson(url, options);
-      return wrapped.json;
+      var body = wrapped.json;
+      if (body && body.error && typeof body.error === 'object' && body.error.code
+          && !(window.BioenlaceApiClient.handleUnauthorized
+            && window.BioenlaceApiClient.handleUnauthorized(wrapped.response && wrapped.response.status, body))) {
+        var contractError = new Error(body.error.message || 'Error');
+        contractError.code = body.error.code;
+        contractError.fieldErrors = body.error.field_errors || null;
+        throw contractError;
+      }
+      return body;
     }
     var opts = Object.assign({}, options || {});
     opts.headers = window.BioenlaceApiClient.mergeHeaders(
@@ -48,7 +57,8 @@
       return json;
     }
     if (!res.ok) {
-      throw new Error((json && (json.message || json.error)) ? (json.message || json.error) : ('HTTP ' + res.status));
+      var errBody = json && json.error;
+      throw new Error((errBody && errBody.message) || (json && json.message) || ('HTTP ' + res.status));
     }
     return json;
   }

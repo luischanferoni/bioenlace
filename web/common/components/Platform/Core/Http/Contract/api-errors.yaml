@@ -22,6 +22,18 @@ errors:
     intent: error
     retryable: false
     message: "No tenés permisos para realizar esta acción."
+  forbidden_detail:
+    http_status: 403
+    intent: error
+    retryable: false
+    default_detail: "No tenés permisos para realizar esta acción."
+    message: "{detail}"
+  not_found_detail:
+    http_status: 404
+    intent: error
+    retryable: false
+    default_detail: "No se encontró lo que buscabas."
+    message: "{detail}"
   not_found:
     http_status: 404
     intent: error

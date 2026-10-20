@@ -26,20 +26,17 @@ class ConsultaChatService {
       final uri = Uri.parse('${AppConfig.apiUrl}/consulta-chat/mensajes/$consultaId');
       final response = await http.get(uri, headers: _headers)
           .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-      final data = json.decode(response.body);
-      if (response.statusCode == 200 && data['success'] == true) {
-        final raw = data['data']?['messages'] as List<dynamic>? ?? [];
-        return {
-          'success': true,
-          'data': data['data'],
-          'messages': normalizeChatMediaMessages(
-            raw,
-            mediaScope: 'consulta-chat',
-            encounterId: consultaId,
-          ),
-        };
-      }
-      return {'success': false, 'message': data['message'] ?? 'Error al cargar mensajes', 'messages': []};
+      final payload = unwrapApiContract(json.decode(response.body), response.statusCode);
+      final raw = payload['messages'] as List<dynamic>? ?? [];
+      return {
+        'success': true,
+        'data': payload,
+        'messages': normalizeChatMediaMessages(
+          raw,
+          mediaScope: 'consulta-chat',
+          encounterId: consultaId,
+        ),
+      };
     } catch (e) {
       return {'success': false, 'message': e.toString(), 'messages': []};
     }
@@ -59,11 +56,8 @@ class ConsultaChatService {
         headers: {..._headers, 'Content-Type': 'application/json'},
         body: json.encode(body),
       ).timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-      final data = json.decode(response.body);
-      if (response.statusCode == 200 && data['success'] == true) {
-        return {'success': true, 'data': data['data']};
-      }
-      return {'success': false, 'message': data['message'] ?? 'Error al enviar mensaje'};
+      final data = unwrapApiContract(json.decode(response.body), response.statusCode);
+      return {'success': true, 'data': data};
     } catch (e) {
       return {'success': false, 'message': e.toString()};
     }
@@ -85,28 +79,13 @@ class ConsultaChatService {
 
       final streamed = await request.send().timeout(Duration(seconds: 60));
       final response = await http.Response.fromStream(streamed);
-      final data = json.decode(response.body);
-
-      if (response.statusCode == 200 && data['success'] == true) {
-        final payload = data['data'];
-        if (payload is Map<String, dynamic>) {
-          normalizeChatMediaMessage(
-            payload,
-            mediaScope: 'consulta-chat',
-            encounterId: consultaId,
-          );
-        } else if (payload is Map) {
-          final copy = Map<String, dynamic>.from(payload);
-          normalizeChatMediaMessage(
-            copy,
-            mediaScope: 'consulta-chat',
-            encounterId: consultaId,
-          );
-          data['data'] = copy;
-        }
-        return {'success': true, 'data': data['data']};
-      }
-      return {'success': false, 'message': data['message'] ?? 'Error al subir archivo'};
+      final payload = unwrapApiContract(json.decode(response.body), response.statusCode);
+      normalizeChatMediaMessage(
+        payload,
+        mediaScope: 'consulta-chat',
+        encounterId: consultaId,
+      );
+      return {'success': true, 'data': payload};
     } catch (e) {
       return {'success': false, 'message': e.toString()};
     }
@@ -129,28 +108,13 @@ class ConsultaChatService {
 
       final streamed = await request.send().timeout(const Duration(seconds: 60));
       final response = await http.Response.fromStream(streamed);
-      final data = json.decode(response.body);
-
-      if (response.statusCode == 200 && data['success'] == true) {
-        final payload = data['data'];
-        if (payload is Map<String, dynamic>) {
-          normalizeChatMediaMessage(
-            payload,
-            mediaScope: 'consulta-chat',
-            encounterId: consultaId,
-          );
-        } else if (payload is Map) {
-          final copy = Map<String, dynamic>.from(payload);
-          normalizeChatMediaMessage(
-            copy,
-            mediaScope: 'consulta-chat',
-            encounterId: consultaId,
-          );
-          data['data'] = copy;
-        }
-        return {'success': true, 'data': data['data']};
-      }
-      return {'success': false, 'message': data['message'] ?? 'Error al subir archivo'};
+      final payload = unwrapApiContract(json.decode(response.body), response.statusCode);
+      normalizeChatMediaMessage(
+        payload,
+        mediaScope: 'consulta-chat',
+        encounterId: consultaId,
+      );
+      return {'success': true, 'data': payload};
     } catch (e) {
       return {'success': false, 'message': e.toString()};
     }

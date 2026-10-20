@@ -32,7 +32,7 @@
         )
           .then(function (r) { return r.json(); })
           .then(function (json) {
-            if (json && json.success && json.data && json.data.epicrisis) {
+            if (json && !json.error && json.data && json.data.epicrisis) {
               taEpicrisis.value = json.data.epicrisis;
             }
           });

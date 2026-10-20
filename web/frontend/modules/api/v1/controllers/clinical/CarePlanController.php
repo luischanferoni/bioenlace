@@ -81,9 +81,9 @@ class CarePlanController extends BaseController
             $idPersona = $subjectSvc->resolveAndAuthorize($params, RepresentationPermission::CLINICAL_CARE_PLAN);
             $subjectSvc->auditDelegatedAction(PersonRelatedAuditLog::ACTION_CARE_PLAN_ACCESSED, $idPersona, []);
         } catch (\InvalidArgumentException $e) {
-            return $this->clinicalError($e->getMessage(), null, 400);
+            return $this->fail('care_plan_invalid', ['detail' => $e->getMessage()]);
         } catch (\yii\web\ForbiddenHttpException $e) {
-            return $this->clinicalError($e->getMessage(), null, 403);
+            return $this->fail('forbidden');
         }
 
         $out = UiScreenService::handleScreen(
@@ -151,20 +151,20 @@ class CarePlanController extends BaseController
             $idPersona = $subjectSvc->resolveAndAuthorize($params, RepresentationPermission::CLINICAL_CARE_PLAN);
             $subjectSvc->auditDelegatedAction(PersonRelatedAuditLog::ACTION_CARE_PLAN_ACCESSED, $idPersona, []);
         } catch (\InvalidArgumentException $e) {
-            return $this->clinicalError($e->getMessage(), null, 400);
+            return $this->fail('care_plan_invalid', ['detail' => $e->getMessage()]);
         } catch (\yii\web\ForbiddenHttpException $e) {
-            return $this->clinicalError($e->getMessage(), null, 403);
+            return $this->fail('forbidden');
         }
 
         $carePlanId = (int) ($params['care_plan_id'] ?? 0);
         if ($carePlanId <= 0) {
-            return $this->clinicalError('Seleccioná un plan de tratamiento.', null, 400);
+            return $this->fail('care_plan_select_required');
         }
 
         $medSvc = new CarePlanMedicationListService();
         $plan = $medSvc->findActivePlanForPersona($carePlanId, $idPersona);
         if ($plan === null) {
-            return $this->clinicalError('Plan no encontrado o no activo.', null, 404);
+            return $this->fail('care_plan_not_active');
         }
 
         $out = UiScreenService::handleScreen(
@@ -270,17 +270,13 @@ class CarePlanController extends BaseController
             $idEfector = (int) ($req->get('id_efector') ?? $req->post('id_efector') ?? 0);
         }
         if ($idEfector <= 0) {
-            return $this->clinicalError(
-                'Se requiere contexto de efector (sesión operativa o id_efector).',
-                null,
-                400
-            );
+            return $this->fail('effector_context_required');
         }
 
         try {
             $resumen = (new CarePlanAdherenceStaffService())->resumen($idEfector);
         } catch (\InvalidArgumentException $e) {
-            return $this->clinicalError($e->getMessage(), null, 400);
+            return $this->fail('care_plan_invalid', ['detail' => $e->getMessage()]);
         }
 
         $params = array_merge($req->get(), $req->post(), [
@@ -305,7 +301,6 @@ class CarePlanController extends BaseController
             ];
         }
 
-        $out['success'] = true;
         $out['data'] = $resumen;
 
         return UiScreenService::withListBlockItems($out, $items, 'planes');
@@ -321,30 +316,19 @@ class CarePlanController extends BaseController
     {
         $idPersona = (int) Yii::$app->user->getIdPersona();
         if ($idPersona <= 0) {
-            return $this->clinicalError(
-                'Solo pacientes autenticados pueden obtener recordatorios de tratamiento.',
-                null,
-                400
-            );
+            return $this->fail('patient_required');
         }
 
         $carePlanId = (int) Yii::$app->request->get('care_plan_id', 0);
         $filter = $carePlanId > 0 ? $carePlanId : null;
         if ($filter !== null) {
-            [$plan, $err] = $this->requireCarePlanAccess($filter);
-            if ($err !== null) {
-                return $err;
-            }
+            $plan = $this->assertCarePlanAccess($filter);
             if ((int) $plan->subject_persona_id !== $idPersona) {
-                return $this->clinicalError('No tiene permiso para este plan.', null, 403);
+                return $this->fail('care_plan_forbidden');
             }
         }
 
-        return [
-            'success' => true,
-            'message' => 'Agenda de recordatorios',
-            'data' => $this->reminderSchedule->buildForPersona($idPersona, $filter),
-        ];
+        return $this->ok($this->reminderSchedule->buildForPersona($idPersona, $filter));
     }
 
     /**
@@ -356,18 +340,10 @@ class CarePlanController extends BaseController
     {
         $idPersona = (int) Yii::$app->user->getIdPersona();
         if ($idPersona <= 0) {
-            return $this->clinicalError(
-                'Solo pacientes autenticados pueden consultar preferencias de recordatorios.',
-                null,
-                400
-            );
+            return $this->fail('patient_required');
         }
 
-        return [
-            'success' => true,
-            'message' => 'Preferencias de recordatorios',
-            'data' => $this->reminderPreferences->exportForPersona($idPersona),
-        ];
+        return $this->ok($this->reminderPreferences->exportForPersona($idPersona));
     }
 
     /**
@@ -379,11 +355,7 @@ class CarePlanController extends BaseController
     {
         $idPersona = (int) Yii::$app->user->getIdPersona();
         if ($idPersona <= 0) {
-            return $this->clinicalError(
-                'Solo pacientes autenticados pueden guardar preferencias de recordatorios.',
-                null,
-                400
-            );
+            return $this->fail('patient_required');
         }
 
         $body = Yii::$app->request->getBodyParams();
@@ -391,20 +363,16 @@ class CarePlanController extends BaseController
             $body = Yii::$app->request->post();
         }
         if (!is_array($body)) {
-            return $this->clinicalError('Cuerpo JSON inválido', null, 400);
+            return $this->fail('request_invalid');
         }
 
         try {
             $this->reminderPreferences->importForPersona($idPersona, $body);
         } catch (\InvalidArgumentException $e) {
-            return $this->clinicalError($e->getMessage(), null, 400);
+            return $this->fail('request_invalid', ['detail' => $e->getMessage()]);
         }
 
-        return [
-            'success' => true,
-            'message' => 'Preferencias guardadas',
-            'data' => $this->reminderPreferences->exportForPersona($idPersona),
-        ];
+        return $this->ok($this->reminderPreferences->exportForPersona($idPersona), ['message' => 'Preferencias guardadas']);
     }
 
     public function actionActive()
@@ -416,9 +384,9 @@ class CarePlanController extends BaseController
             $idPersona = $subjectSvc->resolveAndAuthorize($params, RepresentationPermission::CLINICAL_CARE_PLAN);
             $subjectSvc->auditDelegatedAction(PersonRelatedAuditLog::ACTION_CARE_PLAN_ACCESSED, $idPersona, []);
         } catch (\InvalidArgumentException $e) {
-            return $this->clinicalError($e->getMessage(), null, 400);
+            return $this->fail('care_plan_invalid', ['detail' => $e->getMessage()]);
         } catch (\yii\web\ForbiddenHttpException $e) {
-            return $this->clinicalError($e->getMessage(), null, 403);
+            return $this->fail('forbidden');
         }
 
         $includeActivities = $req->get('includeActivities', '1') !== '0';
@@ -428,30 +396,19 @@ class CarePlanController extends BaseController
             $data[] = $this->presentation->toPatientSummary($plan, $includeActivities);
         }
 
-        return [
-            'success' => true,
-            'message' => 'Care plans activos',
-            'data' => $data,
-        ];
+        return $this->ok($data);
     }
 
     public function actionView($id)
     {
-        [$plan, $err] = $this->requireCarePlanAccess((int) $id);
-        if ($err !== null) {
-            return $err;
-        }
+        $plan = $this->assertCarePlanAccess((int) $id);
 
         $idPersona = (int) Yii::$app->user->getIdPersona();
         $data = $idPersona > 0 && (int) $plan->subject_persona_id === $idPersona
             ? $this->presentation->toPatientSummary($plan, true, null)
             : CarePlanDto::fromModel($plan, true)->toArray();
 
-        return [
-            'success' => true,
-            'message' => 'Care plan',
-            'data' => $data,
-        ];
+        return $this->ok($data);
     }
 
     public function actionComplete($id)
@@ -476,40 +433,33 @@ class CarePlanController extends BaseController
 
     private function transition(int $id, string $operation): array
     {
-        [$plan, $err] = $this->requireCarePlanAccess($id);
-        if ($err !== null) {
-            return $err;
-        }
+        $plan = $this->assertCarePlanAccess($id);
 
         try {
             switch ($operation) {
                 case 'complete':
                     $plan = $this->lifecycle->complete($plan);
-                    $message = 'Care plan completado';
+                    $message = 'Plan de tratamiento completado';
                     break;
                 case 'revoke':
                     $plan = $this->lifecycle->revoke($plan);
-                    $message = 'Care plan revocado';
+                    $message = 'Plan de tratamiento revocado';
                     break;
                 case 'hold':
                     $plan = $this->lifecycle->hold($plan);
-                    $message = 'Care plan en pausa';
+                    $message = 'Plan de tratamiento en pausa';
                     break;
                 case 'activate':
                     $plan = $this->lifecycle->activate($plan);
-                    $message = 'Care plan activado';
+                    $message = 'Plan de tratamiento activado';
                     break;
                 default:
-                    return $this->clinicalError('Operación no soportada', null, 400);
+                    return $this->fail('request_invalid');
             }
         } catch (\InvalidArgumentException $e) {
-            return $this->clinicalError($e->getMessage(), null, 400);
+            return $this->fail('care_plan_invalid', ['detail' => $e->getMessage()]);
         }
 
-        return [
-            'success' => true,
-            'message' => $message,
-            'data' => CarePlanDto::fromModel($plan)->toArray(),
-        ];
+        return $this->ok(CarePlanDto::fromModel($plan)->toArray(), ['message' => $message]);
     }
 }

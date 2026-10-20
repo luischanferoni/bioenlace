@@ -32,10 +32,7 @@ class AppointmentReasonController extends BaseController
     public function actionListarMensajes($id)
     {
         $encounterId = (int) $id;
-        [$encounter, $err] = $this->requireEncounterAccess($encounterId, RepresentationPermission::CLINICAL_MOTIVOS);
-        if ($err !== null) {
-            return $err;
-        }
+        $encounter = $this->assertEncounterAccess($encounterId, RepresentationPermission::CLINICAL_MOTIVOS);
 
         $messages = AppointmentReasonMessage::find()
             ->where(['encounter_id' => $encounterId])
@@ -47,19 +44,15 @@ class AppointmentReasonController extends BaseController
             $this->reservaTriageCodeForEncounter($encounter)
         );
 
-        return [
-            'success' => true,
-            'message' => 'Mensajes obtenidos exitosamente',
-            'data' => array_merge(
-                [
-                    'messages' => $formattedMessages,
-                    'encounter_id' => $encounterId,
-                    'consulta_id' => $encounterId,
-                    'chat_guide' => $chatGuide,
-                ],
-                AppointmentReasonWindowService::apiState($encounterId)
-            ),
-        ];
+        return $this->ok(array_merge(
+            [
+                'messages' => $formattedMessages,
+                'encounter_id' => $encounterId,
+                'consulta_id' => $encounterId,
+                'chat_guide' => $chatGuide,
+            ],
+            AppointmentReasonWindowService::apiState($encounterId)
+        ));
     }
 
     /**
@@ -70,13 +63,10 @@ class AppointmentReasonController extends BaseController
         $body = Yii::$app->request->getBodyParams();
         $encounterId = $this->resolveEncounterIdFromInput($body);
         if ($encounterId === null) {
-            return ['success' => false, 'message' => 'Datos requeridos: encounter_id (o consulta_id), message', 'data' => null];
+            return $this->fail('encounter_id_required');
         }
 
-        [$encounter, $err] = $this->requireEncounterAccess($encounterId, RepresentationPermission::CLINICAL_MOTIVOS);
-        if ($err !== null) {
-            return $err;
-        }
+        $encounter = $this->assertEncounterAccess($encounterId, RepresentationPermission::CLINICAL_MOTIVOS);
 
         $userId = (int) Yii::$app->user->id;
         $userName = Yii::$app->user->identity->username ?? 'Paciente';
@@ -99,22 +89,19 @@ class AppointmentReasonController extends BaseController
     {
         $encounterId = $this->resolveEncounterIdFromInput(Yii::$app->request->post());
         if ($encounterId === null) {
-            return ['success' => false, 'message' => 'Falta encounter_id (o consulta_id)', 'data' => null];
+            return $this->fail('encounter_id_required');
         }
 
-        [$encounter, $err] = $this->requireEncounterAccess($encounterId, RepresentationPermission::CLINICAL_MOTIVOS);
-        if ($err !== null) {
-            return $err;
-        }
+        $encounter = $this->assertEncounterAccess($encounterId, RepresentationPermission::CLINICAL_MOTIVOS);
 
         $messageType = Yii::$app->request->post('message_type', 'imagen');
         if (!in_array($messageType, AppointmentReasonMessageService::UPLOAD_MESSAGE_TYPES, true)) {
-            return ['success' => false, 'message' => 'message_type debe ser: imagen o audio', 'data' => null];
+            return $this->fail('reason_media_type_invalid');
         }
 
         $file = UploadedFile::getInstanceByName('file');
         if (!$file || !$file->tempName) {
-            return ['success' => false, 'message' => 'Debe enviar un archivo en el campo "file"', 'data' => null];
+            return $this->fail('reason_file_missing');
         }
 
         $ext = $file->getExtension() ?: pathinfo($file->name, PATHINFO_EXTENSION);
@@ -139,24 +126,19 @@ class AppointmentReasonController extends BaseController
      */
     private function finalizeMessageResult(array $result, Encounter $encounter, ?string $messageType = null): array
     {
-        if (isset($result['statusCode'])) {
-            Yii::$app->response->statusCode = (int) $result['statusCode'];
-            unset($result['statusCode']);
+        $auditPayload = ['encounter_id' => (int) $encounter->id];
+        if ($messageType !== null) {
+            $auditPayload['message_type'] = $messageType;
         }
+        (new PersonRepresentationSubjectService())->auditDelegatedAction(
+            PersonRelatedAuditLog::ACTION_MOTIVOS_SENT,
+            (int) $encounter->subject_persona_id,
+            $auditPayload
+        );
 
-        if (($result['success'] ?? false) === true) {
-            $auditPayload = ['encounter_id' => (int) $encounter->id];
-            if ($messageType !== null) {
-                $auditPayload['message_type'] = $messageType;
-            }
-            (new PersonRepresentationSubjectService())->auditDelegatedAction(
-                PersonRelatedAuditLog::ACTION_MOTIVOS_SENT,
-                (int) $encounter->subject_persona_id,
-                $auditPayload
-            );
-        }
-
-        return $result;
+        return $this->ok($result, [
+            'message' => $messageType === null ? 'Mensaje enviado' : 'Archivo enviado',
+        ]);
     }
 
     /**

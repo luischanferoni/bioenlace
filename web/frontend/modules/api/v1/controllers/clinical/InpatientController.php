@@ -9,6 +9,7 @@ use common\components\Domain\Clinical\Inpatient\Application\Service\InpatientBed
 use common\components\Domain\Clinical\Inpatient\Application\Service\InpatientIndicatorsService;
 use common\components\Domain\Clinical\Inpatient\Application\Service\InpatientBedMapService;
 use common\components\Platform\Ui\UiScreenService;
+use common\components\Platform\Core\Http\Contract\ApiException;
 use common\models\Person\Persona;
 use common\models\Clinical\InpatientStay;
 use frontend\modules\api\v1\controllers\BaseController;
@@ -63,13 +64,13 @@ class InpatientController extends BaseController
                 (int) ($req->get('id_sala') ?? $req->post('id_sala') ?? 0) ?: null
             );
         } catch (\InvalidArgumentException $e) {
-            return $this->error($e->getMessage(), null, 400);
+            return $this->fail('inpatient_invalid', ['detail' => $e->getMessage()]);
         } catch (ForbiddenHttpException $e) {
-            return $this->error($e->getMessage(), null, 403);
+            return $this->fail('forbidden');
         }
 
         if ($req->isPost && ($req->post('ui_submit') ?? '') === '') {
-            return $this->success($data, 'Mapa de camas');
+            return $this->ok($data, ['message' => 'Mapa de camas']);
         }
 
         $items = [];
@@ -110,12 +111,12 @@ class InpatientController extends BaseController
             $idEfector = $this->resolveIdEfectorForDomainOperation('Clinical.staff_efector');
             $data = $this->indicadores->resumen($idEfector);
         } catch (\InvalidArgumentException $e) {
-            return $this->error($e->getMessage(), null, 400);
+            return $this->fail('inpatient_invalid', ['detail' => $e->getMessage()]);
         } catch (ForbiddenHttpException $e) {
-            return $this->error($e->getMessage(), null, 403);
+            return $this->fail('forbidden');
         }
 
-        return $this->success($data, 'Indicadores de internación');
+        return $this->ok($data, ['message' => 'Indicadores de internación']);
     }
 
     public function actionMarcarEstado(int $camaId): array
@@ -130,14 +131,16 @@ class InpatientController extends BaseController
                 $req->post('motivo') !== null ? (string) $req->post('motivo') : null
             );
         } catch (\InvalidArgumentException $e) {
-            return $this->error($e->getMessage(), null, 400);
+            return $this->fail('inpatient_invalid', ['detail' => $e->getMessage()]);
         } catch (ForbiddenHttpException $e) {
-            return $this->error($e->getMessage(), null, 403);
+            return $this->fail('forbidden');
         } catch (\RuntimeException $e) {
-            return $this->error($e->getMessage(), null, 500);
+            Yii::error($e, 'inpatient');
+
+            return $this->fail('internal_error');
         }
 
-        return $this->success($data, 'Estado de cama actualizado');
+        return $this->ok($data, ['message' => 'Estado de cama actualizado']);
     }
 
     public function actionAltaFormulario(int $internacionId): array
@@ -146,9 +149,9 @@ class InpatientController extends BaseController
         try {
             $idEfector = $this->resolveIdEfectorForDomainOperation('Clinical.staff_efector');
         } catch (\InvalidArgumentException $e) {
-            return $this->error($e->getMessage(), null, 400);
+            return $this->fail('inpatient_invalid', ['detail' => $e->getMessage()]);
         } catch (ForbiddenHttpException $e) {
-            return $this->error($e->getMessage(), null, 403);
+            return $this->fail('forbidden');
         }
 
         $out = UiScreenService::handleScreen(
@@ -157,10 +160,7 @@ class InpatientController extends BaseController
             $req->get(),
             $req->post(),
             function (array $post) use ($internacionId, $idEfector): array {
-                [, $err] = $this->requireInternacionStaffAccess($internacionId, 'Internacion.discharge');
-                if ($err !== null) {
-                    throw new \InvalidArgumentException((string) ($err['message'] ?? 'Sin permiso'));
-                }
+                $this->assertInternacionStaffAccess($internacionId, 'Internacion.discharge');
                 $data = $this->alta->registrarAlta($internacionId, $idEfector, $post);
 
                 return [
@@ -171,10 +171,7 @@ class InpatientController extends BaseController
         );
 
         if (($out['kind'] ?? '') === 'ui_definition' && $req->getIsGet()) {
-            [$internacion, $err] = $this->requireInternacionStaffAccess($internacionId, 'Internacion.discharge');
-            if ($err !== null) {
-                return $err;
-            }
+            $internacion = $this->assertInternacionStaffAccess($internacionId, 'Internacion.discharge');
 
             $ctx = $this->alta->contextoAlta($internacion, $idEfector);
             $tipoOptions = array_map(static fn (array $t): array => [
@@ -233,9 +230,9 @@ class InpatientController extends BaseController
         try {
             $idEfector = $this->resolveIdEfectorForDomainOperation('Clinical.staff_efector');
         } catch (\InvalidArgumentException $e) {
-            return $this->error($e->getMessage(), null, 400);
+            return $this->fail('inpatient_invalid', ['detail' => $e->getMessage()]);
         } catch (ForbiddenHttpException $e) {
-            return $this->error($e->getMessage(), null, 403);
+            return $this->fail('forbidden');
         }
 
         $out = UiScreenService::handleScreen(
@@ -244,10 +241,7 @@ class InpatientController extends BaseController
             $req->get(),
             $req->post(),
             function (array $post) use ($internacionId, $idEfector): array {
-                [, $err] = $this->requireInternacionStaffAccess($internacionId, 'Internacion.change_bed');
-                if ($err !== null) {
-                    throw new \InvalidArgumentException((string) ($err['message'] ?? 'Sin permiso'));
-                }
+                $this->assertInternacionStaffAccess($internacionId, 'Internacion.change_bed');
                 $data = $this->cambioCama->registrarCambioCama($internacionId, $idEfector, $post);
 
                 return [
@@ -258,15 +252,12 @@ class InpatientController extends BaseController
         );
 
         if (($out['kind'] ?? '') === 'ui_definition' && $req->getIsGet()) {
-            [$internacion, $err] = $this->requireInternacionStaffAccess($internacionId, 'Internacion.change_bed');
-            if ($err !== null) {
-                return $err;
-            }
+            $internacion = $this->assertInternacionStaffAccess($internacionId, 'Internacion.change_bed');
 
             try {
                 $ctx = $this->cambioCama->contextoCambioCama($internacion, $idEfector);
             } catch (\InvalidArgumentException $e) {
-                return $this->error($e->getMessage(), null, 400);
+                return $this->fail('inpatient_invalid', ['detail' => $e->getMessage()]);
             }
 
             $camaOptions = $ctx['camas_disponibles'] ?? [];
@@ -309,9 +300,9 @@ class InpatientController extends BaseController
         try {
             $idEfector = $this->resolveIdEfectorForDomainOperation('Internacion.create');
         } catch (\InvalidArgumentException $e) {
-            return $this->error($e->getMessage(), null, 400);
+            return $this->fail('inpatient_invalid', ['detail' => $e->getMessage()]);
         } catch (ForbiddenHttpException $e) {
-            return $this->error($e->getMessage(), null, 403);
+            return $this->fail('forbidden');
         }
 
         $out = UiScreenService::handleScreen(
@@ -354,7 +345,7 @@ class InpatientController extends BaseController
         if (($out['kind'] ?? '') === 'ui_definition' && $req->getIsGet()) {
             $idPersona = (int) ($req->get('id_persona') ?? 0);
             if ($idPersona <= 0) {
-                return $this->error('Se requiere id_persona.', null, 400);
+                return $this->fail('inpatient_person_required');
             }
             try {
                 $ctx = $this->ingreso->contextoIngreso(
@@ -364,7 +355,7 @@ class InpatientController extends BaseController
                     (int) ($req->get('id_guardia') ?? 0) ?: null
                 );
             } catch (\InvalidArgumentException $e) {
-                return $this->error($e->getMessage(), null, 400);
+                return $this->fail('inpatient_invalid', ['detail' => $e->getMessage()]);
             }
 
             $params = array_merge($req->get(), [
@@ -491,12 +482,12 @@ class InpatientController extends BaseController
             $plantillas = (new \common\components\Domain\Clinical\Inpatient\Application\Service\InpatientEpicrisisTemplateService())
                 ->listar($idEfector, (int) ($req->get('id_servicio') ?? 0) ?: null);
         } catch (\InvalidArgumentException $e) {
-            return $this->error($e->getMessage(), null, 400);
+            return $this->fail('inpatient_invalid', ['detail' => $e->getMessage()]);
         } catch (ForbiddenHttpException $e) {
-            return $this->error($e->getMessage(), null, 403);
+            return $this->fail('forbidden');
         }
 
-        return $this->success(['plantillas' => $plantillas], 'Plantillas de epicrisis');
+        return $this->ok(['plantillas' => $plantillas]);
     }
 
     public function actionPreviewPlantillaEpicrisis(int $internacionId): array
@@ -506,15 +497,15 @@ class InpatientController extends BaseController
             $idEfector = $this->resolveIdEfectorForDomainOperation('Clinical.staff_efector');
             $plantillaId = (int) ($req->get('plantilla_id') ?? 0);
             if ($plantillaId <= 0) {
-                throw new \InvalidArgumentException('Se requiere plantilla_id.');
+                throw new ApiException('inpatient_template_required');
             }
             $texto = $this->alta->previewPlantilla($plantillaId, $internacionId, $idEfector);
         } catch (\InvalidArgumentException $e) {
-            return $this->error($e->getMessage(), null, 400);
+            return $this->fail('inpatient_invalid', ['detail' => $e->getMessage()]);
         } catch (ForbiddenHttpException $e) {
-            return $this->error($e->getMessage(), null, 403);
+            return $this->fail('forbidden');
         }
 
-        return $this->success(['epicrisis' => $texto], 'Vista previa de plantilla');
+        return $this->ok(['epicrisis' => $texto]);
     }
 }

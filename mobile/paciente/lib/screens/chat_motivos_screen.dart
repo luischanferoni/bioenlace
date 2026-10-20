@@ -401,10 +401,6 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
 
   Future<void> _uploadPending(PendingMotivoMessage item) async {
     if (_sending) return;
-    if (!_inputAbierto) {
-      _showError('El plazo para cargar motivos ya finalizó.');
-      return;
-    }
     setState(() => _sending = true);
     try {
       Map<String, dynamic> result;

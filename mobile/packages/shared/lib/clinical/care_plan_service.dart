@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config/api_config.dart';
+import '../http/api_contract.dart';
 
 /// Planes de tratamiento activos del paciente (`GET /clinical/care-plans/active`).
 class CarePlanService {
@@ -41,24 +42,10 @@ class CarePlanService {
           )
           .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
 
-      final decoded = json.decode(response.body);
-      if (decoded is! Map<String, dynamic>) {
-        return {'success': false, 'data': <Map<String, dynamic>>[], 'message': 'Respuesta inválida'};
-      }
-
-      if (response.statusCode == 200 && decoded['success'] == true) {
-        final raw = decoded['data'];
-        final list = raw is List
-            ? raw.map((e) => Map<String, dynamic>.from(e as Map)).toList()
-            : <Map<String, dynamic>>[];
-        return {'success': true, 'data': list, 'message': decoded['message']};
-      }
-
-      return {
-        'success': false,
-        'data': <Map<String, dynamic>>[],
-        'message': decoded['message'] ?? 'No se pudieron cargar los tratamientos',
-      };
+      final list = unwrapApiContractList(json.decode(response.body), response.statusCode);
+      return {'success': true, 'data': list};
+    } on ApiContractException catch (e) {
+      return {'success': false, 'data': <Map<String, dynamic>>[], 'message': e.message};
     } catch (e) {
       return {
         'success': false,
@@ -86,22 +73,10 @@ class CarePlanService {
           )
           .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
 
-      final decoded = json.decode(response.body);
-      if (decoded is! Map<String, dynamic>) {
-        return {'success': false, 'data': null, 'message': 'Respuesta inválida'};
-      }
-
-      if (response.statusCode == 200 && decoded['success'] == true) {
-        final raw = decoded['data'];
-        final data = raw is Map ? Map<String, dynamic>.from(raw) : null;
-        return {'success': true, 'data': data, 'message': decoded['message']};
-      }
-
-      return {
-        'success': false,
-        'data': null,
-        'message': decoded['message'] ?? 'No se pudo cargar el tratamiento',
-      };
+      final data = unwrapApiContract(json.decode(response.body), response.statusCode);
+      return {'success': true, 'data': data};
+    } on ApiContractException catch (e) {
+      return {'success': false, 'data': null, 'message': e.message};
     } catch (e) {
       return {'success': false, 'data': null, 'message': e.toString()};
     }

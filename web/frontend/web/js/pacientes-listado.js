@@ -3243,8 +3243,8 @@
           : { 'X-Requested-With': 'XMLHttpRequest' };
         var res = await fetch(url, { method: 'POST', headers: headers, body: form, credentials: 'same-origin' });
         var json = await res.json();
-        if (json.success === false) {
-          throw new Error(json.message || 'No se pudo subir el archivo.');
+        if (!res.ok || !json || json.error) {
+          throw new Error(json && json.error && json.error.message ? json.error.message : 'Error al subir.');
         }
         await loadAsyncChatMessages(asyncChatState.encounterId);
       } catch (e) {
@@ -3343,8 +3343,8 @@
           method: 'GET',
           headers: { 'X-Requested-With': 'XMLHttpRequest' },
         });
-        if (json.success === false) {
-          throw new Error(json.message || 'No se pudieron cargar los mensajes.');
+        if (!json || json.error) {
+          throw new Error(json && json.error && json.error.message ? json.error.message : 'Error al cargar el chat.');
         }
         var messages = json.data && json.data.messages ? json.data.messages : [];
         var helpers = getAsyncChatHelpers();
@@ -3405,8 +3405,8 @@
             message: text,
           }),
         });
-        if (json.success === false) {
-          throw new Error(json.message || 'No se pudo enviar el mensaje.');
+        if (!json || json.error) {
+          throw new Error(json && json.error && json.error.message ? json.error.message : 'Error al enviar.');
         }
         input.value = '';
         await loadAsyncChatMessages(asyncChatState.encounterId);

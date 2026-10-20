@@ -96,6 +96,69 @@ errors:
     retryable: false
     default_detail: "No tenés permiso para acceder a esta internación."
     message: "{detail}"
+  chat_message_required:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "Escribí un mensaje para enviar."
+  chat_message_save_failed:
+    http_status: 422
+    intent: error
+    retryable: false
+    default_detail: "No se pudo guardar el mensaje."
+    message: "{detail}"
+  chat_send_not_allowed:
+    http_status: 403
+    intent: info
+    retryable: false
+    default_detail: "No se pueden enviar mensajes en esta consulta."
+    message: "{detail}"
+  chat_attachment_type_invalid:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "Ese tipo de adjunto no está permitido en esta consulta."
+  chat_file_missing:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "No se recibió el archivo."
+  chat_file_store_failed:
+    http_status: 500
+    intent: error
+    retryable: true
+    message: "No se pudo guardar el archivo. Intentá nuevamente."
+  reason_message_empty:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "El mensaje no puede estar vacío."
+  reason_media_type_invalid:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "Solo se pueden enviar imágenes o audios."
+  reason_file_missing:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "No se recibió el archivo."
+  reason_file_store_failed:
+    http_status: 500
+    intent: error
+    retryable: true
+    message: "No se pudo guardar el archivo. Intentá nuevamente."
+  reason_message_save_failed:
+    http_status: 422
+    intent: error
+    retryable: false
+    default_detail: "No se pudo guardar el mensaje."
+    message: "{detail}"
+  reason_window_closed:
+    http_status: 403
+    intent: info
+    retryable: false
+    message: "El plazo para cargar motivos finalizó {minutes} minuto(s) antes del turno. El profesional verá el resumen al iniciar la consulta."
   patient_required:
     http_status: 403
     intent: error
@@ -131,6 +194,47 @@ errors:
     intent: error
     retryable: false
     message: "No se encontró el envío de historia clínica."
+  prescription_not_found:
+    http_status: 404
+    intent: error
+    retryable: false
+    message: "No se encontró la receta."
+  prescription_forbidden:
+    http_status: 403
+    intent: error
+    retryable: false
+    message: "No tenés permiso para ver esta receta."
+  prescription_select_required:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "Seleccioná una receta de la lista."
+  prescription_token_required:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "Indicá el código de verificación de la receta."
+  prescription_token_not_found:
+    http_status: 404
+    intent: error
+    retryable: false
+    message: "La receta no existe o no está vigente."
+  prescription_invalid:
+    http_status: 422
+    intent: error
+    retryable: false
+    default_detail: "No se pudo completar la operación sobre la receta."
+    message: "{detail}"
+  prescription_draft_failed:
+    http_status: 500
+    intent: error
+    retryable: true
+    message: "No se pudo crear el borrador de receta."
+  prescription_issue_failed:
+    http_status: 500
+    intent: error
+    retryable: true
+    message: "No se pudo emitir la receta."
   care_plan_subject_mismatch:
     http_status: 422
     intent: error
@@ -146,6 +250,58 @@ errors:
     intent: error
     retryable: false
     message: "No tenés permiso para acceder a este plan de tratamiento."
+  inpatient_invalid:
+    http_status: 422
+    intent: error
+    retryable: false
+    default_detail: "No se pudo completar la operación de internación."
+    message: "{detail}"
+  inpatient_person_required:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "Indicá el paciente a internar."
+  inpatient_template_required:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "Indicá la plantilla de epicrisis."
+  episode_not_found:
+    http_status: 404
+    intent: error
+    retryable: false
+    message: "No se encontró el episodio clínico."
+  episode_forbidden:
+    http_status: 403
+    intent: error
+    retryable: false
+    message: "No tenés permiso para acceder a este episodio clínico."
+  care_plan_select_required:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "Seleccioná un plan de tratamiento."
+  care_plan_not_active:
+    http_status: 404
+    intent: error
+    retryable: false
+    message: "El plan de tratamiento no existe o no está activo."
+  care_plan_medication_required:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "Seleccioná al menos un medicamento."
+  care_plan_invalid:
+    http_status: 422
+    intent: error
+    retryable: false
+    default_detail: "No se pudo completar la operación sobre el plan de tratamiento."
+    message: "{detail}"
+  effector_context_required:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "Se requiere un establecimiento activo para esta acción."
   request_invalid:
     http_status: 422
     intent: error

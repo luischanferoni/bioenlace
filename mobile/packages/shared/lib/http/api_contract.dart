@@ -25,6 +25,25 @@ Map<String, dynamic> _asMap(dynamic value) =>
 /// Devuelve `data` (con `meta.message` expuesto como `message`) o lanza [ApiContractException].
 Map<String, dynamic> unwrapApiContract(dynamic decoded, int statusCode) {
   final body = _asMap(decoded);
+  _throwIfError(body, statusCode);
+  final data = _asMap(body['data']);
+  final meta = _asMap(body['meta']);
+  final message = meta['message']?.toString();
+  if (message != null && message.isNotEmpty) {
+    data['message'] = message;
+  }
+  return data;
+}
+
+/// Igual que [unwrapApiContract] pero para respuestas cuyo `data` es una lista.
+List<Map<String, dynamic>> unwrapApiContractList(dynamic decoded, int statusCode) {
+  final body = _asMap(decoded);
+  _throwIfError(body, statusCode);
+  final raw = body['data'];
+  return raw is List ? raw.map(_asMap).toList() : <Map<String, dynamic>>[];
+}
+
+void _throwIfError(Map<String, dynamic> body, int statusCode) {
   final error = body['error'];
   if (statusCode >= 400 || error is Map) {
     final err = _asMap(error);
@@ -39,11 +58,4 @@ Map<String, dynamic> unwrapApiContract(dynamic decoded, int statusCode) {
       statusCode: statusCode,
     );
   }
-  final data = _asMap(body['data']);
-  final meta = _asMap(body['meta']);
-  final message = meta['message']?.toString();
-  if (message != null && message.isNotEmpty) {
-    data['message'] = message;
-  }
-  return data;
 }

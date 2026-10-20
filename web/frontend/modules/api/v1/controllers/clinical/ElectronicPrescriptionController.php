@@ -10,13 +10,13 @@ use common\components\Domain\Clinical\Prescription\Application\UseCase\IssueElec
 use common\components\Domain\Person\Representation\Domain\Model\RepresentationPermission;
 use common\components\Domain\Person\Representation\Application\Service\PersonRepresentationSubjectService;
 use common\models\Person\PersonRelatedAuditLog;
+use common\components\Platform\Core\Http\Contract\ApiException;
 use common\components\Platform\Ui\UiScreenService;
 use common\models\Clinical\ElectronicPrescription;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
-use yii\web\NotFoundHttpException;
 use yii\web\Response;
 
 /**
@@ -43,102 +43,74 @@ class ElectronicPrescriptionController extends BaseController
 
     public function actionCrearBorrador($encounterId): array
     {
-        [$encounter, $err] = $this->requireEncounterAccess((int) $encounterId);
-        if ($err !== null) {
-            return $err;
-        }
+        $encounter = $this->assertEncounterAccess((int) $encounterId);
 
         try {
             $rx = $this->service->createDraftFromEncounter($encounter, $this->jsonBody());
         } catch (\InvalidArgumentException $e) {
-            return $this->clinicalError($e->getMessage(), null, 400);
+            return $this->fail('prescription_invalid', ['detail' => $e->getMessage()]);
         } catch (\Throwable $e) {
             Yii::error($e, 'electronic-prescription');
 
-            return $this->clinicalError('No se pudo crear el borrador de receta.', null, 500);
+            return $this->fail('prescription_draft_failed');
         }
 
-        return [
-            'success' => true,
-            'message' => 'Borrador de receta creado',
-            'data' => ElectronicPrescriptionDto::fromModel($rx)->toArray(),
-        ];
+        return $this->ok(ElectronicPrescriptionDto::fromModel($rx)->toArray(), ['message' => 'Borrador de receta creado']);
     }
 
     public function actionPorEncounter($encounterId): array
     {
-        [$encounter, $err] = $this->requireEncounterAccess((int) $encounterId);
-        if ($err !== null) {
-            return $err;
-        }
+        $encounter = $this->assertEncounterAccess((int) $encounterId);
 
         $data = [];
         foreach ($this->service->listForEncounter((int) $encounter->id) as $rx) {
             $data[] = ElectronicPrescriptionDto::fromModel($rx, false)->toArray();
         }
 
-        return [
-            'success' => true,
-            'message' => 'Recetas del encounter',
-            'data' => $data,
-        ];
+        return $this->ok($data);
     }
 
     public function actionVer($id): array
     {
         $rx = $this->service->getById((int) $id);
         if ($rx === null) {
-            return $this->clinicalError('Receta no encontrada', null, 404);
+            return $this->fail('prescription_not_found');
         }
         if (!$this->canAccessPrescription($rx)) {
-            return $this->clinicalError('No tiene permiso para ver esta receta', null, 403);
+            return $this->fail('prescription_forbidden');
         }
 
-        return [
-            'success' => true,
-            'message' => 'Detalle de receta',
-            'data' => ElectronicPrescriptionDto::fromModel($rx)->toArray(),
-        ];
+        return $this->ok(ElectronicPrescriptionDto::fromModel($rx)->toArray());
     }
 
     public function actionEmitir($id): array
     {
         $rx = $this->service->getById((int) $id);
         if ($rx === null) {
-            return $this->clinicalError('Receta no encontrada', null, 404);
+            return $this->fail('prescription_not_found');
         }
-        [$encounter, $err] = $this->requireEncounterAccess((int) $rx->encounter_id);
-        if ($err !== null) {
-            return $err;
-        }
+        $this->assertEncounterAccess((int) $rx->encounter_id);
 
         try {
             $rx = $this->service->issue((int) $id);
         } catch (\InvalidArgumentException $e) {
-            return $this->clinicalError($e->getMessage(), null, 400);
+            return $this->fail('prescription_invalid', ['detail' => $e->getMessage()]);
         } catch (\Throwable $e) {
             Yii::error($e, 'electronic-prescription');
 
-            return $this->clinicalError('No se pudo emitir la receta.', null, 500);
+            return $this->fail('prescription_issue_failed');
         }
 
-        return [
-            'success' => true,
-            'message' => 'Receta emitida',
-            'data' => ElectronicPrescriptionDto::fromModel($rx)->toArray(),
-        ];
+        return $this->ok(ElectronicPrescriptionDto::fromModel($rx)->toArray(), ['message' => 'Receta emitida']);
     }
 
     public function actionAnular($id): array
     {
         $rx = $this->service->getById((int) $id);
         if ($rx === null) {
-            return $this->clinicalError('Receta no encontrada', null, 404);
+            return $this->fail('prescription_not_found');
         }
-        [$encounter, $err] = $this->requireEncounterAccess((int) $rx->encounter_id);
-        if ($err !== null) {
-            return $err;
-        }
+        $this->assertEncounterAccess((int) $rx->encounter_id);
 
         $body = $this->jsonBody();
         $reason = isset($body['reason']) ? (string) $body['reason'] : null;
@@ -146,14 +118,10 @@ class ElectronicPrescriptionController extends BaseController
         try {
             $rx = $this->service->cancel((int) $id, $reason);
         } catch (\InvalidArgumentException $e) {
-            return $this->clinicalError($e->getMessage(), null, 400);
+            return $this->fail('prescription_invalid', ['detail' => $e->getMessage()]);
         }
 
-        return [
-            'success' => true,
-            'message' => 'Receta anulada',
-            'data' => ElectronicPrescriptionDto::fromModel($rx)->toArray(),
-        ];
+        return $this->ok(ElectronicPrescriptionDto::fromModel($rx)->toArray(), ['message' => 'Receta anulada']);
     }
 
     /**
@@ -168,9 +136,9 @@ class ElectronicPrescriptionController extends BaseController
             $idPersona = $subjectSvc->resolveAndAuthorize($params, RepresentationPermission::CLINICAL_CARE_PLAN);
             $subjectSvc->auditDelegatedAction(PersonRelatedAuditLog::ACTION_CARE_PLAN_ACCESSED, $idPersona, ['scope' => 'recetas']);
         } catch (\InvalidArgumentException $e) {
-            return $this->clinicalError($e->getMessage(), null, 400);
+            return $this->fail('prescription_invalid', ['detail' => $e->getMessage()]);
         } catch (\yii\web\ForbiddenHttpException $e) {
-            return $this->clinicalError($e->getMessage(), null, 403);
+            return $this->fail('forbidden');
         }
 
         $out = UiScreenService::handleScreen(
@@ -213,18 +181,18 @@ class ElectronicPrescriptionController extends BaseController
         $req = Yii::$app->request;
         $idPersona = (int) Yii::$app->user->getIdPersona();
         if ($idPersona <= 0) {
-            return $this->clinicalError('Solo pacientes autenticados.', null, 400);
+            return $this->fail('patient_required');
         }
 
         $prescriptionId = (int) ($req->get('prescription_id') ?? $req->post('prescription_id') ?? 0);
 
         if (!$req->isPost) {
             if ($prescriptionId <= 0) {
-                throw new \InvalidArgumentException('Seleccioná una receta de la lista.');
+                return $this->fail('prescription_select_required');
             }
             $rx = $this->service->getIssuedForPersona($idPersona, $prescriptionId);
             if ($rx === null) {
-                throw new \InvalidArgumentException('Receta no encontrada.');
+                return $this->fail('prescription_not_found');
             }
 
             $pdfPath = '/api/v1/clinical/electronic-prescription/descargar-pdf-como-paciente?prescription_id=' . $prescriptionId;
@@ -261,17 +229,17 @@ class ElectronicPrescriptionController extends BaseController
     {
         $idPersona = (int) Yii::$app->user->getIdPersona();
         if ($idPersona <= 0) {
-            throw new NotFoundHttpException('Solo pacientes autenticados.');
+            throw new ApiException('patient_required');
         }
 
         $prescriptionId = (int) Yii::$app->request->get('prescription_id');
         if ($prescriptionId <= 0) {
-            throw new NotFoundHttpException('prescription_id requerido.');
+            throw new ApiException('prescription_select_required');
         }
 
         $rx = $this->service->getIssuedForPersona($idPersona, $prescriptionId);
         if ($rx === null) {
-            throw new NotFoundHttpException('Receta no encontrada.');
+            throw new ApiException('prescription_not_found');
         }
 
         $persona = Persona::findOne($idPersona);
@@ -296,12 +264,12 @@ class ElectronicPrescriptionController extends BaseController
     {
         $token = trim((string) Yii::$app->request->get('token'));
         if ($token === '') {
-            return $this->clinicalError('token requerido', null, 400);
+            return $this->fail('prescription_token_required');
         }
 
         $rx = $this->service->findIssuedByVerificationToken($token);
         if ($rx === null) {
-            return $this->clinicalError('Receta no encontrada o no vigente', null, 404);
+            return $this->fail('prescription_token_not_found');
         }
 
         $valid = true;
@@ -309,20 +277,16 @@ class ElectronicPrescriptionController extends BaseController
             $valid = false;
         }
 
-        return [
-            'success' => true,
-            'message' => $valid ? 'Receta vigente' : 'Receta vencida',
-            'data' => [
-                'prescription_number' => $rx->prescription_number,
-                'status' => $rx->status,
-                'issued_at' => $rx->issued_at,
-                'valid_until' => $rx->valid_until,
-                'valid' => $valid,
-                'item_count' => (int) $rx->getItems()->count(),
-                'document_hash' => $rx->document_hash,
-                'signature_provider' => $rx->signature_provider,
-            ],
-        ];
+        return $this->ok([
+            'prescription_number' => $rx->prescription_number,
+            'status' => $rx->status,
+            'issued_at' => $rx->issued_at,
+            'valid_until' => $rx->valid_until,
+            'valid' => $valid,
+            'item_count' => (int) $rx->getItems()->count(),
+            'document_hash' => $rx->document_hash,
+            'signature_provider' => $rx->signature_provider,
+        ], ['message' => $valid ? 'Receta vigente' : 'Receta vencida']);
     }
 
     private function canAccessPrescription(ElectronicPrescription $rx): bool

@@ -40,34 +40,6 @@ trait ClinicalAccessTrait
         return $encounter;
     }
 
-    /**
-     * @deprecated Formato anterior; usar {@see assertEncounterAccess()}. Se elimina al migrar los controllers clínicos.
-     * @return array{0: Encounter|null, 1: array<string, mixed>|null}
-     */
-    protected function requireEncounterAccess(int $encounterId, ?string $representationPermission = null): array
-    {
-        $encounter = Encounter::findOne($encounterId);
-        if (!$encounter) {
-            Yii::$app->response->statusCode = 404;
-
-            return [null, $this->clinicalError('Encounter no encontrado', null, 404)];
-        }
-
-        try {
-            EncounterAccessService::assertAccess(
-                $encounter,
-                'Encounter.access',
-                $representationPermission
-            );
-        } catch (DomainOperationForbiddenException $e) {
-            Yii::$app->response->statusCode = 403;
-
-            return [null, $this->clinicalError($e->getMessage() !== '' ? $e->getMessage() : 'No tiene permiso para acceder a este encounter', null, 403)];
-        }
-
-        return [$encounter, null];
-    }
-
     protected function canAccessEncounterDomain(
         Encounter $encounter,
         string $operationKey = 'Encounter.access',
@@ -85,27 +57,20 @@ trait ClinicalAccessTrait
         return InpatientAccessService::staffCanAccess($internacion);
     }
 
-    /**
-     * @return array{0: InpatientStay|null, 1: array<string, mixed>|null}
-     */
-    protected function requireInternacionStaffAccess(int $internacionId, string $operationKey = 'Internacion.staff_access'): array
+    protected function assertInternacionStaffAccess(int $internacionId, string $operationKey = 'Internacion.staff_access'): InpatientStay
     {
         $internacion = InpatientStay::findOne($internacionId);
         if ($internacion === null) {
-            Yii::$app->response->statusCode = 404;
-
-            return [null, $this->clinicalError('Internación no encontrada', null, 404)];
+            throw new ApiException('inpatient_not_found');
         }
 
         try {
             (new DomainOperationAuthorizer())->assert($operationKey, $internacion);
         } catch (DomainOperationForbiddenException $e) {
-            Yii::$app->response->statusCode = 403;
-
-            return [null, $this->clinicalError($e->getMessage() !== '' ? $e->getMessage() : 'No tiene permiso para acceder a esta internación', null, 403)];
+            throw new ApiException('inpatient_forbidden', [], [], $e);
         }
 
-        return [$internacion, null];
+        return $internacion;
     }
 
     protected function canAccessCarePlan(CarePlan $plan): bool
@@ -127,38 +92,17 @@ trait ClinicalAccessTrait
         return false;
     }
 
-    /**
-     * @return array{0: CarePlan|null, 1: array<string, mixed>|null}
-     */
-    protected function requireCarePlanAccess(int $carePlanId): array
+    protected function assertCarePlanAccess(int $carePlanId): CarePlan
     {
         $plan = CarePlan::findOne($carePlanId);
         if (!$plan) {
-            Yii::$app->response->statusCode = 404;
-
-            return [null, $this->clinicalError('CarePlan no encontrado', null, 404)];
+            throw new ApiException('care_plan_not_found');
         }
         if (!$this->canAccessCarePlan($plan)) {
-            Yii::$app->response->statusCode = 403;
-
-            return [null, $this->clinicalError('No tiene permiso para acceder a este care plan', null, 403)];
+            throw new ApiException('care_plan_forbidden');
         }
 
-        return [$plan, null];
-    }
-
-    /**
-     * @param mixed $errors
-     * @return array<string, mixed>
-     */
-    protected function clinicalError(string $message, $errors = null, int $code = 400): array
-    {
-        return [
-            'success' => false,
-            'message' => $message,
-            'errors' => $errors,
-            '__statusCode' => $code,
-        ];
+        return $plan;
     }
 
     /**

@@ -3,31 +3,30 @@
 namespace common\components\Domain\Clinical\Encounter\Application\Service;
 
 use common\components\Domain\Clinical\Encounter\Application\Service\SecureMediaService;
+use common\components\Platform\Core\Http\Contract\ApiException;
 use common\models\Clinical\AppointmentReasonMessage;
 use Yii;
 
 /**
  * Persistencia del chat pre-consulta (texto / imagen / audio).
- * Auth HTTP en el controller; aquí ventana + guardado.
+ * Auth HTTP en el controller; aquí ventana + guardado. Los fallos lanzan {@see ApiException}.
  */
 final class AppointmentReasonMessageService
 {
     public const UPLOAD_MESSAGE_TYPES = ['imagen', 'audio'];
 
     /**
-     * @return array{success: bool, message: string, data: mixed, statusCode?: int}
+     * @return array<string, mixed> Mensaje persistido.
+     * @throws ApiException
      */
     public function sendText(int $encounterId, string $message, int $userId, string $userName): array
     {
         $message = trim($message);
         if ($message === '') {
-            return $this->fail('El mensaje no puede estar vacío', null, 400);
+            throw new ApiException('reason_message_empty');
         }
 
-        $windowErr = $this->windowClosedResponse($encounterId);
-        if ($windowErr !== null) {
-            return $windowErr;
-        }
+        $this->assertWindowOpen($encounterId);
 
         $msg = new AppointmentReasonMessage();
         $msg->encounter_id = $encounterId;
@@ -37,20 +36,17 @@ final class AppointmentReasonMessageService
         $msg->message_type = AppointmentReasonMessage::TYPE_TEXTO;
 
         if (!$msg->save()) {
-            return $this->fail(
-                'Error guardando mensaje: ' . implode(', ', $msg->getFirstErrors()),
-                null,
-                400
-            );
+            throw new ApiException('reason_message_save_failed', ['detail' => implode(', ', $msg->getFirstErrors())]);
         }
 
-        return $this->ok('Mensaje enviado exitosamente', $this->payloadForText($msg));
+        return $this->payloadForText($msg);
     }
 
     /**
      * Guarda el archivo en disco y persiste el mensaje media.
      *
-     * @return array{success: bool, message: string, data: mixed, statusCode?: int}
+     * @return array<string, mixed>
+     * @throws ApiException
      */
     public function sendMedia(
         int $encounterId,
@@ -61,16 +57,13 @@ final class AppointmentReasonMessageService
         string $userName
     ): array {
         if (!in_array($messageType, self::UPLOAD_MESSAGE_TYPES, true)) {
-            return $this->fail('message_type debe ser: imagen o audio', null, 400);
+            throw new ApiException('reason_media_type_invalid');
         }
         if ($sourceTempPath === '' || !is_file($sourceTempPath)) {
-            return $this->fail('Debe enviar un archivo en el campo "file"', null, 400);
+            throw new ApiException('reason_file_missing');
         }
 
-        $windowErr = $this->windowClosedResponse($encounterId);
-        if ($windowErr !== null) {
-            return $windowErr;
-        }
+        $this->assertWindowOpen($encounterId);
 
         $ext = trim($extension, '.');
         if ($ext === '') {
@@ -83,7 +76,7 @@ final class AppointmentReasonMessageService
             if (!@mkdir($basePath, 0755, true)) {
                 Yii::error('No se pudo crear directorio: ' . $basePath);
 
-                return $this->fail('Error al guardar el archivo', null, 500);
+                throw new ApiException('reason_file_store_failed');
             }
         }
 
@@ -92,7 +85,7 @@ final class AppointmentReasonMessageService
 
         if (!@move_uploaded_file($sourceTempPath, $fullPath) && !@rename($sourceTempPath, $fullPath)) {
             if (!@copy($sourceTempPath, $fullPath)) {
-                return $this->fail('Error al guardar el archivo', null, 500);
+                throw new ApiException('reason_file_store_failed');
             }
             @unlink($sourceTempPath);
         }
@@ -107,11 +100,7 @@ final class AppointmentReasonMessageService
         if (!$msg->save()) {
             @unlink($fullPath);
 
-            return $this->fail(
-                'Error guardando mensaje: ' . implode(', ', $msg->getFirstErrors()),
-                null,
-                400
-            );
+            throw new ApiException('reason_message_save_failed', ['detail' => implode(', ', $msg->getFirstErrors())]);
         }
 
         $contentUrl = SecureMediaService::absoluteApiUrl(
@@ -120,7 +109,7 @@ final class AppointmentReasonMessageService
             $relativePath
         );
 
-        return $this->ok('Archivo enviado exitosamente', [
+        return [
             'id' => $msg->id,
             'encounter_id' => (int) $encounterId,
             'consulta_id' => (int) $encounterId,
@@ -129,24 +118,24 @@ final class AppointmentReasonMessageService
             'user_name' => $msg->user_name,
             'message_type' => $msg->message_type,
             'created_at' => $msg->created_at,
-        ]);
+        ];
     }
 
     /**
-     * @return array{success: bool, message: string, data: mixed, statusCode?: int}|null
+     * @throws ApiException
      */
-    private function windowClosedResponse(int $encounterId): ?array
+    private function assertWindowOpen(int $encounterId): void
     {
         if (AppointmentReasonWindowService::isInputOpen($encounterId)) {
-            return null;
+            return;
         }
 
-        return $this->fail(
-            'El plazo para cargar motivos finalizó '
-            . AppointmentReasonWindowService::minutesBeforeClose()
-            . ' minuto(s) antes del turno. El médico verá el resumen al iniciar la consulta.',
-            AppointmentReasonWindowService::apiState($encounterId),
-            403
+        throw new ApiException(
+            'reason_window_closed',
+            ['minutes' => AppointmentReasonWindowService::minutesBeforeClose()],
+            [],
+            null,
+            AppointmentReasonWindowService::apiState($encounterId)
         );
     }
 
@@ -164,33 +153,6 @@ final class AppointmentReasonMessageService
             'user_name' => $msg->user_name,
             'message_type' => $msg->message_type,
             'created_at' => $msg->created_at,
-        ];
-    }
-
-    /**
-     * @param mixed $data
-     * @return array{success: bool, message: string, data: mixed, statusCode: int}
-     */
-    private function fail(string $message, $data, int $statusCode): array
-    {
-        return [
-            'success' => false,
-            'message' => $message,
-            'data' => $data,
-            'statusCode' => $statusCode,
-        ];
-    }
-
-    /**
-     * @param array<string, mixed> $data
-     * @return array{success: bool, message: string, data: array<string, mixed>}
-     */
-    private function ok(string $message, array $data): array
-    {
-        return [
-            'success' => true,
-            'message' => $message,
-            'data' => $data,
         ];
     }
 }

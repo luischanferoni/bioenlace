@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config/api_config.dart';
+import '../http/api_contract.dart';
 
 /// GET /clinical/care-plans/recordatorios-como-paciente
 class CarePlanReminderApi {
@@ -37,24 +38,10 @@ class CarePlanReminderApi {
           )
           .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
 
-      final decoded = json.decode(response.body);
-      if (decoded is! Map<String, dynamic>) {
-        return {'success': false, 'data': null, 'message': 'Respuesta inválida'};
-      }
-
-      if (response.statusCode == 200 && decoded['success'] == true) {
-        return {
-          'success': true,
-          'data': decoded['data'],
-          'message': decoded['message'],
-        };
-      }
-
-      return {
-        'success': false,
-        'data': null,
-        'message': decoded['message'] ?? 'No se pudo cargar recordatorios',
-      };
+      final data = unwrapApiContract(json.decode(response.body), response.statusCode);
+      return {'success': true, 'data': data, 'message': data['message']};
+    } on ApiContractException catch (e) {
+      return {'success': false, 'data': null, 'message': e.message};
     } catch (e) {
       return {'success': false, 'data': null, 'message': e.toString()};
     }
@@ -76,14 +63,10 @@ class CarePlanReminderApi {
           )
           .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
 
-      final decoded = json.decode(response.body);
-      if (decoded is! Map<String, dynamic>) {
-        return {'success': false, 'data': null};
-      }
-      if (response.statusCode == 200 && decoded['success'] == true) {
-        return {'success': true, 'data': decoded['data']};
-      }
-      return {'success': false, 'data': null, 'message': decoded['message']};
+      final data = unwrapApiContract(json.decode(response.body), response.statusCode);
+      return {'success': true, 'data': data};
+    } on ApiContractException catch (e) {
+      return {'success': false, 'data': null, 'message': e.message};
     } catch (e) {
       return {'success': false, 'data': null, 'message': e.toString()};
     }
@@ -106,15 +89,10 @@ class CarePlanReminderApi {
           )
           .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
 
-      final decoded = json.decode(response.body);
-      if (decoded is! Map<String, dynamic>) {
-        return {'success': false};
-      }
-      return {
-        'success': response.statusCode == 200 && decoded['success'] == true,
-        'data': decoded['data'],
-        'message': decoded['message'],
-      };
+      final data = unwrapApiContract(json.decode(response.body), response.statusCode);
+      return {'success': true, 'data': data, 'message': data['message']};
+    } on ApiContractException catch (e) {
+      return {'success': false, 'message': e.message};
     } catch (e) {
       return {'success': false, 'message': e.toString()};
     }

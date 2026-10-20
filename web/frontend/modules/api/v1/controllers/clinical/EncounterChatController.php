@@ -35,10 +35,7 @@ class EncounterChatController extends BaseController
     public function actionListarMensajes($id)
     {
         $encounterId = (int) $id;
-        [$encounter, $err] = $this->requireEncounterAccess($encounterId);
-        if ($err !== null) {
-            return $err;
-        }
+        $encounter = $this->assertEncounterAccess($encounterId);
 
         $subject = $encounter->subject;
         $meta = (new ConsultaAsyncEncounterMetaService())->fromEncounter($encounter);
@@ -87,22 +84,18 @@ class EncounterChatController extends BaseController
             ];
         }
 
-        return [
-            'success' => true,
-            'message' => 'Mensajes obtenidos exitosamente',
-            'data' => [
-                'messages' => $formattedMessages,
-                'encounter_id' => (int) $encounter->id,
-                'consulta_id' => (int) $encounter->id,
-                'intake_context' => $intakeContext,
-                'chat_policy' => $chatPolicy,
-                'encounter' => [
-                    'id' => (int) $encounter->id,
-                    'status' => (string) $encounter->status,
-                    'paciente' => $subject ? $subject->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N) : 'Paciente',
-                ],
+        return $this->ok([
+            'messages' => $formattedMessages,
+            'encounter_id' => (int) $encounter->id,
+            'consulta_id' => (int) $encounter->id,
+            'intake_context' => $intakeContext,
+            'chat_policy' => $chatPolicy,
+            'encounter' => [
+                'id' => (int) $encounter->id,
+                'status' => (string) $encounter->status,
+                'paciente' => $subject ? $subject->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N) : 'Paciente',
             ],
-        ];
+        ]);
     }
 
     private function messageKindFromMessage(ConsultaChatMessage $message): string
@@ -154,18 +147,15 @@ class EncounterChatController extends BaseController
         $body = Yii::$app->request->getBodyParams();
         $encounterId = $this->resolveEncounterIdFromBody($body);
         if (!$encounterId) {
-            return ['success' => false, 'message' => 'Datos requeridos: encounter_id (o consulta_id), message', 'data' => null];
+            return $this->fail('encounter_id_required');
         }
 
-        [$encounter, $err] = $this->requireEncounterAccess($encounterId);
-        if ($err !== null) {
-            return $err;
-        }
+        $encounter = $this->assertEncounterAccess($encounterId);
 
         $message = $body['message'] ?? null;
         $user_role = $body['user_role'] ?? null;
         if ($message === null || $message === '') {
-            return ['success' => false, 'message' => 'Datos requeridos: encounter_id, message', 'data' => null];
+            return $this->fail('chat_message_required');
         }
 
         $userId = Yii::$app->user->id;
@@ -183,7 +173,7 @@ class EncounterChatController extends BaseController
                     $policySvc->assertStaffCanSend($encounter);
                 }
             } catch (\InvalidArgumentException $e) {
-                return ['success' => false, 'message' => $e->getMessage(), 'data' => null];
+                return $this->fail('chat_send_not_allowed', ['detail' => $e->getMessage()]);
             }
         }
 
@@ -202,11 +192,7 @@ class EncounterChatController extends BaseController
         $chatMessage->message_type = $messageType;
 
         if (!$chatMessage->save()) {
-            return [
-                'success' => false,
-                'message' => 'Error guardando mensaje: ' . implode(', ', $chatMessage->getFirstErrors()),
-                'data' => null,
-            ];
+            return $this->fail('chat_message_save_failed', ['detail' => implode(', ', $chatMessage->getFirstErrors())]);
         }
 
         if ($user_role === 'paciente' && $encounter->parent_type === Encounter::PARENT_SOLICITUD_ASYNC) {
@@ -240,46 +226,39 @@ class EncounterChatController extends BaseController
             }
         }
 
-        return [
-            'success' => true,
-            'message' => 'Mensaje enviado exitosamente',
-            'data' => [
-                'id' => $chatMessage->id,
-                'content' => $chatMessage->content,
-                'user_id' => $chatMessage->user_id,
-                'user_name' => $chatMessage->user_name,
-                'user_role' => $chatMessage->user_role,
-                'message_type' => $chatMessage->message_type,
-                'created_at' => $chatMessage->created_at,
-                'is_read' => $chatMessage->is_read,
-            ],
-        ];
+        return $this->ok([
+            'id' => $chatMessage->id,
+            'content' => $chatMessage->content,
+            'user_id' => $chatMessage->user_id,
+            'user_name' => $chatMessage->user_name,
+            'user_role' => $chatMessage->user_role,
+            'message_type' => $chatMessage->message_type,
+            'created_at' => $chatMessage->created_at,
+            'is_read' => $chatMessage->is_read,
+        ], ['message' => 'Mensaje enviado']);
     }
 
     public function actionSubir()
     {
         $encounterId = $this->resolveEncounterIdFromBody(Yii::$app->request->post());
         if (!$encounterId) {
-            return ['success' => false, 'message' => 'Falta encounter_id (o consulta_id)', 'data' => null];
+            return $this->fail('encounter_id_required');
         }
 
-        [$encounter, $err] = $this->requireEncounterAccess($encounterId);
-        if ($err !== null) {
-            return $err;
-        }
+        $encounter = $this->assertEncounterAccess($encounterId);
 
         $messageType = Yii::$app->request->post('message_type', 'audio');
         $isAsync = $encounter->parent_type === Encounter::PARENT_SOLICITUD_ASYNC;
         if (!$isAsync && !in_array($messageType, self::UPLOAD_MESSAGE_TYPES, true)) {
-            return ['success' => false, 'message' => 'message_type debe ser: imagen, audio, video o documento', 'data' => null];
+            return $this->fail('chat_attachment_type_invalid');
         }
         if ($isAsync && !in_array($messageType, ['imagen', 'audio', 'documento'], true)) {
-            return ['success' => false, 'message' => 'Tipo de adjunto no permitido.', 'data' => null];
+            return $this->fail('chat_attachment_type_invalid');
         }
 
         $file = UploadedFile::getInstanceByName('file');
         if (!$file || !$file->tempName) {
-            return ['success' => false, 'message' => 'Debe enviar un archivo en el campo "file"', 'data' => null];
+            return $this->fail('chat_file_missing');
         }
 
         $userId = Yii::$app->user->id;
@@ -302,7 +281,7 @@ class EncounterChatController extends BaseController
                     $viewerEsPaciente
                 );
             } catch (\InvalidArgumentException $e) {
-                return ['success' => false, 'message' => $e->getMessage(), 'data' => null];
+                return $this->fail('chat_send_not_allowed', ['detail' => $e->getMessage()]);
             }
         }
 
@@ -317,7 +296,7 @@ class EncounterChatController extends BaseController
             if (!@mkdir($basePath, 0755, true)) {
                 Yii::error('No se pudo crear directorio: ' . $basePath);
 
-                return ['success' => false, 'message' => 'Error al guardar el archivo', 'data' => null];
+                return $this->fail('chat_file_store_failed');
             }
         }
 
@@ -325,7 +304,7 @@ class EncounterChatController extends BaseController
         $fullPath = Yii::getAlias('@frontend/web') . '/' . $relativePath;
 
         if (!$file->saveAs($fullPath)) {
-            return ['success' => false, 'message' => 'Error al guardar el archivo', 'data' => null];
+            return $this->fail('chat_file_store_failed');
         }
 
         $chatMessage = new ConsultaChatMessage();
@@ -339,11 +318,7 @@ class EncounterChatController extends BaseController
         if (!$chatMessage->save()) {
             @unlink($fullPath);
 
-            return [
-                'success' => false,
-                'message' => 'Error guardando mensaje: ' . implode(', ', $chatMessage->getFirstErrors()),
-                'data' => null,
-            ];
+            return $this->fail('chat_message_save_failed', ['detail' => implode(', ', $chatMessage->getFirstErrors())]);
         }
 
         if ($user_role === 'paciente' && $encounter->parent_type === Encounter::PARENT_SOLICITUD_ASYNC) {
@@ -365,45 +340,34 @@ class EncounterChatController extends BaseController
             $relativePath
         );
 
-        return [
-            'success' => true,
-            'message' => 'Archivo enviado exitosamente',
-            'data' => [
-                'id' => $chatMessage->id,
-                'content' => $contentUrl,
-                'user_id' => $chatMessage->user_id,
-                'user_name' => $chatMessage->user_name,
-                'user_role' => $chatMessage->user_role,
-                'message_type' => $chatMessage->message_type,
-                'created_at' => $chatMessage->created_at,
-                'is_read' => $chatMessage->is_read,
-            ],
-        ];
+        return $this->ok([
+            'id' => $chatMessage->id,
+            'content' => $contentUrl,
+            'user_id' => $chatMessage->user_id,
+            'user_name' => $chatMessage->user_name,
+            'user_role' => $chatMessage->user_role,
+            'message_type' => $chatMessage->message_type,
+            'created_at' => $chatMessage->created_at,
+            'is_read' => $chatMessage->is_read,
+        ], ['message' => 'Archivo enviado']);
     }
 
     public function actionEstado($id)
     {
         $encounterId = (int) $id;
-        [$encounter, $err] = $this->requireEncounterAccess($encounterId);
-        if ($err !== null) {
-            return $err;
-        }
+        $encounter = $this->assertEncounterAccess($encounterId);
 
         $unreadCount = ConsultaChatMessage::find()
             ->where(['encounter_id' => $encounterId, 'is_read' => false])
             ->count();
 
-        return [
-            'success' => true,
-            'message' => 'Estado obtenido exitosamente',
-            'data' => [
-                'encounter_id' => $encounterId,
-                'consulta_id' => $encounterId,
-                'unread_count' => $unreadCount,
-                'is_online' => true,
-                'last_activity' => $encounter->updated_at ?? $encounter->created_at,
-            ],
-        ];
+        return $this->ok([
+            'encounter_id' => $encounterId,
+            'consulta_id' => $encounterId,
+            'unread_count' => $unreadCount,
+            'is_online' => true,
+            'last_activity' => $encounter->updated_at ?? $encounter->created_at,
+        ]);
     }
 
     /**

@@ -160,13 +160,10 @@ class EncounterController extends BaseController
         $params = $req->get();
         $encounterId = (int) ($params['encounter_id'] ?? $params['id_consulta'] ?? 0);
         if ($encounterId <= 0) {
-            return $this->clinicalError('Se requiere encounter_id en query.', null, 400);
+            return $this->fail('encounter_id_required');
         }
 
-        [$encounter, $err] = $this->requireEncounterAccess($encounterId);
-        if ($err !== null) {
-            return $err;
-        }
+        $encounter = $this->assertEncounterAccess($encounterId);
 
         $params['encounter_id'] = (string) $encounterId;
 

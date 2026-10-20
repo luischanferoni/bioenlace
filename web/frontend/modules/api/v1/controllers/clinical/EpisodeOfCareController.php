@@ -42,14 +42,10 @@ class EpisodeOfCareController extends BaseController
     {
         $internacion = InpatientStay::findOne((int) $internacionId);
         if ($internacion === null) {
-            Yii::$app->response->statusCode = 404;
-
-            return $this->clinicalError('Internación no encontrada', null, 404);
+            return $this->fail('inpatient_not_found');
         }
         if (!$this->canAccessInternacion($internacion)) {
-            Yii::$app->response->statusCode = 403;
-
-            return $this->clinicalError('No tiene permiso para acceder a esta internación', null, 403);
+            return $this->fail('inpatient_forbidden');
         }
 
         $episode = $this->episodes->findActiveForInpatientStay((int) $internacion->id);
@@ -60,43 +56,27 @@ class EpisodeOfCareController extends BaseController
                 ->one();
         }
         if ($episode === null) {
-            return [
-                'success' => true,
-                'message' => 'Sin episodio clínico para la internación',
-                'data' => null,
-            ];
+            return $this->ok(null);
         }
 
-        return [
-            'success' => true,
-            'message' => 'EpisodeOfCare de internación',
-            'data' => $this->episodeSummary($episode),
-        ];
+        return $this->ok($this->episodeSummary($episode));
     }
 
     public function actionClinicalBundle($id)
     {
         $episode = EpisodeOfCare::findOne((int) $id);
         if ($episode === null || $episode->deleted_at !== null) {
-            Yii::$app->response->statusCode = 404;
-
-            return $this->clinicalError('EpisodeOfCare no encontrado', null, 404);
+            return $this->fail('episode_not_found');
         }
         if (!$this->canAccessEpisode($episode)) {
-            Yii::$app->response->statusCode = 403;
-
-            return $this->clinicalError('No tiene permiso para acceder a este episodio', null, 403);
+            return $this->fail('episode_forbidden');
         }
 
         $internacion = $episode->internacion_id
             ? InpatientStay::findOne((int) $episode->internacion_id)
             : null;
 
-        return [
-            'success' => true,
-            'message' => 'Bundle clínico de internación',
-            'data' => $this->query->bundleForEpisode($episode, $internacion),
-        ];
+        return $this->ok($this->query->bundleForEpisode($episode, $internacion));
     }
 
     private function canAccessInternacion(InpatientStay $internacion): bool

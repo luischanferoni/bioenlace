@@ -28,4 +28,17 @@ class EpisodioTimelineServiceTest extends Unit
         $this->assertIsArray($rows);
         $this->assertSame([], $rows);
     }
+
+    public function testTimelineMetadataIncludesServerDrivenFiltersAndTriageGroups(): void
+    {
+        $this->assertSame(
+            ['all', 'clinical', 'nursing', 'orders', 'medications', 'circuit'],
+            array_column(EpisodioTimelineService::timelineFilters(), 'id')
+        );
+        $this->assertSame('Clínico', EpisodioTimelineService::timelineFilters()[1]['label']);
+        $this->assertSame(
+            ['evolucion_medica', 'triage'],
+            EpisodioTimelineService::timelineFilters()[1]['types']
+        );
+    }
 }

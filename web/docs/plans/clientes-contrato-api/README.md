@@ -11,7 +11,7 @@ Lectura: [overview.md](./overview.md), [design.md](./design.md), fases en [phase
 | 00 Línea base y guardas | hecho (guarda local; sin CI en el repo) |
 | 01 Contrato de API | hecho (migración de respuestas estándar y consumidores; login legacy preservado como excepción externa) |
 | 02 Terminología encounter | en curso (glosario, resumen staff, razones/chat y contratos de identificación de captura) |
-| 03 Metadata clínica humana | en curso (capacidades de encounter, secciones de odontología/oftalmología y niveles Manchester expuestos; faltan secciones clínicas genéricas en timeline y completar acciones/roles) |
+| 03 Metadata clínica humana | en curso (capacidades de encounter, secciones de odontología/oftalmología, niveles Manchester y metadata de filtros/etiquetas del timeline expuestos; faltan secciones clínicas genéricas y completar acciones/roles) |
 | 04 Captura y STT | pendiente |
 | 05 Móvil | en curso (inicio y configuración por capacidades; wizard limita clases por efector usando metadata del backend) |
 | 06 Web | pendiente |

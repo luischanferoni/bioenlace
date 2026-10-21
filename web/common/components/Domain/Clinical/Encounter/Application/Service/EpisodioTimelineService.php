@@ -26,6 +26,27 @@ final class EpisodioTimelineService
 {
     private const LIMIT_ITEMS = 120;
 
+    private const TIMELINE_FILTERS = [
+        ['id' => 'all', 'label' => 'Todos', 'types' => null],
+        ['id' => 'clinical', 'label' => 'Clínico', 'types' => ['evolucion_medica', 'triage']],
+        ['id' => 'nursing', 'label' => 'Enfermería', 'types' => ['atencion_enfermeria']],
+        ['id' => 'orders', 'label' => 'Pedidos', 'types' => ['pedido', 'resultado_lab', 'interconsulta']],
+        ['id' => 'medications', 'label' => 'Fármacos', 'types' => ['medicacion', 'administracion']],
+        ['id' => 'circuit', 'label' => 'Circuito', 'types' => ['circuito', 'triage']],
+    ];
+
+    private const TIMELINE_ITEM_METADATA = [
+        'circuito' => ['label' => 'Circuito'],
+        'triage' => ['label' => 'Triage'],
+        'evolucion_medica' => ['label' => 'Evolución'],
+        'atencion_enfermeria' => ['label' => 'Enfermería'],
+        'pedido' => ['label' => 'Pedido'],
+        'resultado_lab' => ['label' => 'Lab'],
+        'medicacion' => ['label' => 'Medicación'],
+        'administracion' => ['label' => 'Admin.'],
+        'interconsulta' => ['label' => 'Interconsulta'],
+    ];
+
     /** @var TriageEmergencyEpisode */
     private $triageSerializer;
 
@@ -80,6 +101,14 @@ final class EpisodioTimelineService
         $this->appendEncounterBoundItems($items, $encounters);
 
         return $this->finalize(Encounter::PARENT_INTERNACION, $internacionId, $items);
+    }
+
+    /**
+     * @return list<array{id: string, label: string, types: list<string>|null}>
+     */
+    public static function timelineFilters(): array
+    {
+        return self::TIMELINE_FILTERS;
     }
 
     /**
@@ -501,6 +530,7 @@ final class EpisodioTimelineService
         return [
             'parent_type' => $parentType,
             'episodio_id' => $episodioId,
+            'filters' => self::timelineFilters(),
             'items' => array_values($items),
         ];
     }
@@ -520,6 +550,7 @@ final class EpisodioTimelineService
     ): array {
         $row = [
             'type' => $type,
+            'type_label' => self::TIMELINE_ITEM_METADATA[$type]['label'] ?? $type,
             'id' => $id,
             'occurred_at' => $occurredAt,
             'summary' => $summary,

@@ -62,8 +62,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   EncounterCaptureAnalysis? _captureReview;
   String? _draftText;
   Set<String> _stagedItemIds = {};
+
   /// issue_id → valor elegido (ninguno viene preseleccionado).
   Map<String, dynamic> _issueResolutions = {};
+
   /// open problem key `condition:123` / `care_plan:456` → value.
   Map<String, dynamic> _openProblemResolutions = {};
   final Map<String, TextEditingController> _issueCustomControllers = {};
@@ -106,7 +108,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   String _tlEpisodioFilter = 'all';
 
   bool get _esCapturaInternacion =>
-      (widget.parentType ?? '').toUpperCase() == EncounterParentType.internacion;
+      (widget.parentType ?? '').toUpperCase() ==
+      EncounterParentType.internacion;
 
   bool get _esCapturaGuardia =>
       (widget.parentType ?? '').toUpperCase() == EncounterParentType.guardia;
@@ -151,8 +154,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           local: byId[clientId],
         );
         // listar es liviano: si hace falta revisión y no hay análisis local, pedir /ver.
-        final needsReview = merged.status ==
-                PendingEncounterCaptureStatus.pendingSave ||
+        final needsReview =
+            merged.status == PendingEncounterCaptureStatus.pendingSave ||
             merged.status == PendingEncounterCaptureStatus.failedSave;
         if (needsReview && merged.analysisResponse == null) {
           try {
@@ -186,8 +189,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         !_captureBusy) {
       PendingEncounterCapture? ready;
       for (final item in list) {
-        final isReady = item.status ==
-                PendingEncounterCaptureStatus.pendingSave ||
+        final isReady =
+            item.status == PendingEncounterCaptureStatus.pendingSave ||
             item.status == PendingEncounterCaptureStatus.failedSave;
         if (isReady && item.analysisResponse != null) {
           ready = item;
@@ -222,7 +225,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       setState(() {
         _sttConfig = SttClientConfig.unavailable;
         _sttConfigLoaded = true;
-        _sttStatus = 'No se pudo cargar la configuración de voz. Dictado deshabilitado.';
+        _sttStatus =
+            'No se pudo cargar la configuración de voz. Dictado deshabilitado.';
       });
     }
   }
@@ -263,12 +267,14 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           encounterId: widget.parentType == EncounterParentType.encounter
               ? widget.parentId
               : null,
-          parent: (turnoId == null &&
+          parent:
+              (turnoId == null &&
                   widget.parentType != null &&
                   widget.parentType != EncounterParentType.encounter)
               ? widget.parentType
               : null,
-          parentId: (turnoId == null &&
+          parentId:
+              (turnoId == null &&
                   widget.parentType != null &&
                   widget.parentType != EncounterParentType.encounter)
               ? widget.parentId
@@ -308,168 +314,170 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         title: _isLoadedEncounterSummary
             ? 'Consulta cargada'
             : (_esCapturaGuardia
-                ? 'Atención · guardia'
-                : (_esCapturaInternacion
-                    ? 'Evolución · internación'
-                    : 'Historia clínica')),
+                  ? 'Atención · guardia'
+                  : (_esCapturaInternacion
+                        ? 'Evolución · internación'
+                        : 'Historia clínica')),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage.isNotEmpty
-              ? Center(
-                  child: Padding(
-                    padding: BioSpacing.pageAll,
+          ? Center(
+              child: Padding(
+                padding: BioSpacing.pageAll,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    BioAlert.danger(message: _errorMessage),
+                    BioSpacing.gapH(BioSpacing.lg),
+                    BioButton.primary(
+                      label: 'Reintentar',
+                      icon: Icons.refresh,
+                      onPressed: _cargarHistoriaClinica,
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : _historiaClinicaData == null
+          ? Center(
+              child: Padding(
+                padding: BioSpacing.pageAll,
+                child: BioAlert.info(message: 'No hay datos disponibles'),
+              ),
+            )
+          : Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: BioSpacing.sm,
+                      vertical: BioSpacing.md,
+                    ),
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        BioAlert.danger(message: _errorMessage),
-                        BioSpacing.gapH(BioSpacing.lg),
-                        BioButton.primary(
-                          label: 'Reintentar',
-                          icon: Icons.refresh,
-                          onPressed: _cargarHistoriaClinica,
-                        ),
+                        _buildPacienteHeader(_historiaClinicaData!.persona),
+                        if (_isLoadedEncounterSummary) ...[
+                          if (_historiaClinicaData!
+                              .documentacionMedico
+                              .tieneDatos) ...[
+                            BioSpacing.gapH(BioSpacing.md),
+                            _buildDocumentacionMedico(
+                              _historiaClinicaData!.documentacionMedico,
+                            ),
+                          ],
+                          if (_historiaClinicaData!
+                                  .patientEncounterReasons
+                                  .motivosIntake
+                                  ?.tieneContenido ==
+                              true) ...[
+                            BioSpacing.gapH(BioSpacing.md),
+                            _buildMotivosIntake(
+                              _historiaClinicaData!
+                                  .patientEncounterReasons
+                                  .motivosIntake!,
+                            ),
+                          ],
+                          if ((_historiaClinicaData!
+                                      .patientEncounterReasons
+                                      .resumen ??
+                                  '')
+                              .trim()
+                              .isNotEmpty) ...[
+                            BioSpacing.gapH(BioSpacing.md),
+                            _buildEncounterReasons(_historiaClinicaData!),
+                          ],
+                          if (_historiaClinicaData!
+                                  .carePackCohorte
+                                  ?.tieneContenido ==
+                              true) ...[
+                            BioSpacing.gapH(BioSpacing.md),
+                            _buildCarePackCohorte(
+                              _historiaClinicaData!.carePackCohorte!,
+                            ),
+                          ],
+                        ] else ...[
+                          if (_historiaClinicaData!
+                              .documentacionMedico
+                              .tieneDatos) ...[
+                            BioSpacing.gapH(BioSpacing.md),
+                            _buildDocumentacionMedico(
+                              _historiaClinicaData!.documentacionMedico,
+                            ),
+                          ],
+                          BioSpacing.gapH(BioSpacing.md),
+                          _buildInformacionMedica(
+                            _historiaClinicaData!.informacionMedica,
+                          ),
+                          BioSpacing.gapH(BioSpacing.md),
+                          if (_esCapturaEpisodio)
+                            _buildSignosVitalesEpisodio(
+                              _historiaClinicaData!.signosVitalesEpisodio,
+                            )
+                          else
+                            _buildSignosVitales(
+                              _historiaClinicaData!.signosVitales,
+                            ),
+                          if (_esCapturaEpisodio) ...[
+                            BioSpacing.gapH(BioSpacing.md),
+                            _buildEpisodioBanner(
+                              _historiaClinicaData!.contextoEpisodio,
+                            ),
+                            BioSpacing.gapH(BioSpacing.md),
+                            _buildTimelineEpisodio(
+                              _historiaClinicaData!.timelineEpisodio,
+                            ),
+                          ] else ...[
+                            BioSpacing.gapH(BioSpacing.md),
+                            if (_historiaClinicaData!
+                                    .patientEncounterReasons
+                                    .motivosIntake
+                                    ?.tieneContenido ==
+                                true) ...[
+                              _buildMotivosIntake(
+                                _historiaClinicaData!
+                                    .patientEncounterReasons
+                                    .motivosIntake!,
+                              ),
+                              BioSpacing.gapH(BioSpacing.md),
+                            ],
+                            _buildEncounterReasons(_historiaClinicaData!),
+                            if (_historiaClinicaData!
+                                    .carePackCohorte
+                                    ?.tieneContenido ==
+                                true) ...[
+                              BioSpacing.gapH(BioSpacing.md),
+                              _buildCarePackCohorte(
+                                _historiaClinicaData!.carePackCohorte!,
+                              ),
+                            ],
+                          ],
+                          if (_pendingCaptures.isNotEmpty) ...[
+                            BioSpacing.gapH(BioSpacing.md),
+                            _buildPendingCapturesPanel(),
+                          ],
+                          if (_isAnalyzing) ...[
+                            BioSpacing.gapH(BioSpacing.md),
+                            _buildAnalyzingCard(),
+                          ],
+                          if (_captureReview != null) ...[
+                            BioSpacing.gapH(BioSpacing.md),
+                            _buildCaptureReviewPanel(_captureReview!),
+                          ],
+                        ],
                       ],
                     ),
                   ),
-                )
-              : _historiaClinicaData == null
-                  ? Center(
-                      child: Padding(
-                        padding: BioSpacing.pageAll,
-                        child: BioAlert.info(
-                          message: 'No hay datos disponibles',
-                        ),
-                      ),
-                    )
-                  : Column(
-                      children: [
-                        Expanded(
-                          child: SingleChildScrollView(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: BioSpacing.sm,
-                              vertical: BioSpacing.md,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                _buildPacienteHeader(
-                                    _historiaClinicaData!.persona),
-                                if (_isLoadedEncounterSummary) ...[
-                                  if (_historiaClinicaData!
-                                      .documentacionMedico.tieneDatos) ...[
-                                    BioSpacing.gapH(BioSpacing.md),
-                                    _buildDocumentacionMedico(
-                                      _historiaClinicaData!.documentacionMedico,
-                                    ),
-                                  ],
-                                  if (_historiaClinicaData!
-                                          .patientEncounterReasons
-                                          .motivosIntake
-                                          ?.tieneContenido ==
-                                      true) ...[
-                                    BioSpacing.gapH(BioSpacing.md),
-                                    _buildMotivosIntake(
-                                      _historiaClinicaData!
-                                          .patientEncounterReasons
-                                          .motivosIntake!,
-                                    ),
-                                  ],
-                                  if ((_historiaClinicaData!
-                                              .patientEncounterReasons
-                                              .resumen ??
-                                          '')
-                                      .trim()
-                                      .isNotEmpty) ...[
-                                    BioSpacing.gapH(BioSpacing.md),
-                                    _buildEncounterReasons(
-                                        _historiaClinicaData!),
-                                  ],
-                                  if (_historiaClinicaData!.carePackCohorte
-                                          ?.tieneContenido ==
-                                      true) ...[
-                                    BioSpacing.gapH(BioSpacing.md),
-                                    _buildCarePackCohorte(
-                                      _historiaClinicaData!.carePackCohorte!,
-                                    ),
-                                  ],
-                                ] else ...[
-                                  if (_historiaClinicaData!
-                                      .documentacionMedico.tieneDatos) ...[
-                                    BioSpacing.gapH(BioSpacing.md),
-                                    _buildDocumentacionMedico(
-                                      _historiaClinicaData!.documentacionMedico,
-                                    ),
-                                  ],
-                                  BioSpacing.gapH(BioSpacing.md),
-                                  _buildInformacionMedica(
-                                      _historiaClinicaData!.informacionMedica),
-                                  BioSpacing.gapH(BioSpacing.md),
-                                  if (_esCapturaEpisodio)
-                                    _buildSignosVitalesEpisodio(
-                                      _historiaClinicaData!.signosVitalesEpisodio,
-                                    )
-                                  else
-                                    _buildSignosVitales(
-                                        _historiaClinicaData!.signosVitales),
-                                  if (_esCapturaEpisodio) ...[
-                                    BioSpacing.gapH(BioSpacing.md),
-                                    _buildEpisodioBanner(
-                                      _historiaClinicaData!.contextoEpisodio,
-                                    ),
-                                    BioSpacing.gapH(BioSpacing.md),
-                                    _buildTimelineEpisodio(
-                                      _historiaClinicaData!.timelineEpisodio,
-                                    ),
-                                  ] else ...[
-                                    BioSpacing.gapH(BioSpacing.md),
-                                    if (_historiaClinicaData!
-                                            .patientEncounterReasons
-                                            .motivosIntake
-                                            ?.tieneContenido ==
-                                        true) ...[
-                                      _buildMotivosIntake(
-                                        _historiaClinicaData!
-                                            .patientEncounterReasons
-                                            .motivosIntake!,
-                                      ),
-                                      BioSpacing.gapH(BioSpacing.md),
-                                    ],
-                                    _buildEncounterReasons(_historiaClinicaData!),
-                                    if (_historiaClinicaData!.carePackCohorte
-                                            ?.tieneContenido ==
-                                        true) ...[
-                                      BioSpacing.gapH(BioSpacing.md),
-                                      _buildCarePackCohorte(
-                                        _historiaClinicaData!.carePackCohorte!,
-                                      ),
-                                    ],
-                                  ],
-                                  if (_pendingCaptures.isNotEmpty) ...[
-                                    BioSpacing.gapH(BioSpacing.md),
-                                    _buildPendingCapturesPanel(),
-                                  ],
-                                  if (_isAnalyzing) ...[
-                                    BioSpacing.gapH(BioSpacing.md),
-                                    _buildAnalyzingCard(),
-                                  ],
-                                  if (_captureReview != null) ...[
-                                    BioSpacing.gapH(BioSpacing.md),
-                                    _buildCaptureReviewPanel(_captureReview!),
-                                  ],
-                                ],
-                              ],
-                            ),
-                          ),
-                        ),
-                        if (!_isLoadedEncounterSummary && _enRevisionCaptura)
-                          _buildCaptureActionsBar(),
-                        if (!_isLoadedEncounterSummary &&
-                            _showCaptureBar &&
-                            !_enRevisionCaptura)
-                          _buildChatInputBar(context),
-                      ],
-                    ),
+                ),
+                if (!_isLoadedEncounterSummary && _enRevisionCaptura)
+                  _buildCaptureActionsBar(),
+                if (!_isLoadedEncounterSummary &&
+                    _showCaptureBar &&
+                    !_enRevisionCaptura)
+                  _buildChatInputBar(context),
+              ],
+            ),
     );
   }
 
@@ -489,18 +497,13 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            child: Text(
-              persona.nombreCompleto,
-              style: BioTypography.h3,
-            ),
+            child: Text(persona.nombreCompleto, style: BioTypography.h3),
           ),
           if (meta.isNotEmpty) ...[
             BioSpacing.gapW(BioSpacing.sm),
             Text(
               meta.join(' · '),
-              style: BioTypography.title.copyWith(
-                color: context.bio.textMuted,
-              ),
+              style: BioTypography.title.copyWith(color: context.bio.textMuted),
               textAlign: TextAlign.right,
             ),
           ],
@@ -588,7 +591,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (peso != null) Text('Peso: $peso kg', style: BioTypography.body),
+                if (peso != null)
+                  Text('Peso: $peso kg', style: BioTypography.body),
                 if (talla != null)
                   Text('Altura: $talla cm', style: BioTypography.body),
                 if (imc != null) Text('IMC: $imc', style: BioTypography.body),
@@ -647,10 +651,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         titulo: 'Condiciones crónicas',
         items: _labelsFromCondiciones(info.condicionesCronicas),
       ),
-      (
-        titulo: 'Alergias',
-        items: _labelsFromHallazgos(info.hallazgos),
-      ),
+      (titulo: 'Alergias', items: _labelsFromHallazgos(info.hallazgos)),
     ];
 
     return BioCard.intent(
@@ -670,7 +671,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                       .clamp(1, 4);
               final cardWidth =
                   (constraints.maxWidth - spacing * (maxColumns - 1)) /
-                      maxColumns;
+                  maxColumns;
 
               return Wrap(
                 spacing: spacing,
@@ -793,12 +794,11 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
 
   Widget _buildSignosVitalesEpisodio(SignosVitalesEpisodio? sv) {
     final tiene = sv != null && sv.tieneDatos;
-    final ultimos = sv?.ultimos ?? const <String, SignosVitalesEpisodioUltimo>{};
+    final ultimos =
+        sv?.ultimos ?? const <String, SignosVitalesEpisodioUltimo>{};
     final chips = <Widget>[];
     void addChip(String text) {
-      chips.add(
-        BioBadge(label: text, intent: UiIntent.neutral),
-      );
+      chips.add(BioBadge(label: text, intent: UiIntent.neutral));
     }
 
     final ta = ultimos['ta'];
@@ -835,8 +835,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
               if (sv != null && sv.totalPoints > 0)
                 Text(
                   '${sv.totalPoints} medición${sv.totalPoints == 1 ? '' : 'es'}',
-                  style: BioTypography.caption
-                      .copyWith(color: context.bio.textMuted),
+                  style: BioTypography.caption.copyWith(
+                    color: context.bio.textMuted,
+                  ),
                 ),
             ],
           ),
@@ -844,8 +845,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           if (!tiene)
             Text(
               'Sin signos vitales. Se cargan en la captura de la consulta (texto/audio) o en el triage de admisión.',
-              style: BioTypography.bodySm
-                  .copyWith(color: context.bio.textMuted),
+              style: BioTypography.bodySm.copyWith(
+                color: context.bio.textMuted,
+              ),
             )
           else ...[
             if (chips.isNotEmpty)
@@ -871,8 +873,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                         child: Text(
                           '${s.label.isNotEmpty ? s.label : s.metric}'
                           '${s.unit.isNotEmpty ? ' (${s.unit})' : ''}',
-                          style: BioTypography.bodySm
-                              .copyWith(fontWeight: FontWeight.w600),
+                          style: BioTypography.bodySm.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),
@@ -884,8 +887,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                           child: Text(
                             '${p.at}: ${p.value}${s.unit.isNotEmpty ? ' ${s.unit}' : ''}'
                             '${p.source.isNotEmpty ? ' · ${p.source}' : ''}',
-                            style: BioTypography.caption
-                                .copyWith(color: context.bio.textMuted),
+                            style: BioTypography.caption.copyWith(
+                              color: context.bio.textMuted,
+                            ),
                           ),
                         ),
                       ),
@@ -902,37 +906,18 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
 
   Widget _buildTimelineEpisodio(TimelineEpisodioFeed? feed) {
     final all = feed?.items ?? const <TimelineEpisodioItem>[];
-    final filters = <MapEntry<String, String>>[
-      const MapEntry('all', 'Todos'),
-      const MapEntry('clinico', 'Clínico'),
-      const MapEntry('enfermeria', 'Enfermería'),
-      const MapEntry('pedidos', 'Pedidos'),
-      const MapEntry('farmacos', 'Fármacos'),
-      const MapEntry('circuito', 'Circuito'),
-    ];
-    Set<String>? allowed;
-    switch (_tlEpisodioFilter) {
-      case 'clinico':
-        allowed = {'evolucion_medica', 'triage'};
+    final filters = feed?.filters ?? const <TimelineEpisodioFilter>[];
+    TimelineEpisodioFilter? selectedFilter;
+    for (final filter in filters) {
+      if (filter.id == _tlEpisodioFilter) {
+        selectedFilter = filter;
         break;
-      case 'enfermeria':
-        allowed = {'atencion_enfermeria'};
-        break;
-      case 'pedidos':
-        allowed = {'pedido', 'resultado_lab', 'interconsulta'};
-        break;
-      case 'farmacos':
-        allowed = {'medicacion', 'administracion'};
-        break;
-      case 'circuito':
-        allowed = {'circuito', 'triage'};
-        break;
-      default:
-        allowed = null;
+      }
     }
+    final allowed = selectedFilter?.types;
     final items = allowed == null
         ? all
-        : all.where((e) => allowed!.contains(e.type)).toList();
+        : all.where((e) => allowed.contains(e.type)).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -945,8 +930,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             if (all.isNotEmpty)
               Text(
                 '${all.length} hito${all.length == 1 ? '' : 's'}',
-                style: BioTypography.caption
-                    .copyWith(color: context.bio.textMuted),
+                style: BioTypography.caption.copyWith(
+                  color: context.bio.textMuted,
+                ),
               ),
           ],
         ),
@@ -957,10 +943,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           children: [
             for (final f in filters)
               ChoiceChip(
-                label: Text(f.value),
-                selected: _tlEpisodioFilter == f.key,
+                label: Text(f.label),
+                selected: _tlEpisodioFilter == f.id,
                 onSelected: (_) {
-                  setState(() => _tlEpisodioFilter = f.key);
+                  setState(() => _tlEpisodioFilter = f.id);
                 },
               ),
           ],
@@ -988,14 +974,16 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                       if (it.occurredAt.isNotEmpty)
                         Text(
                           formatEpisodioFecha(it.occurredAt),
-                          style: BioTypography.caption
-                              .copyWith(color: context.bio.textMuted),
+                          style: BioTypography.caption.copyWith(
+                            color: context.bio.textMuted,
+                          ),
                         ),
                       if (it.actorNombre != null && it.actorNombre!.isNotEmpty)
                         Text(
                           it.actorNombre!,
-                          style: BioTypography.caption
-                              .copyWith(color: context.bio.textMuted),
+                          style: BioTypography.caption.copyWith(
+                            color: context.bio.textMuted,
+                          ),
                         ),
                     ],
                   ),
@@ -1024,12 +1012,14 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     final motivo = (ctx?.motivo != null && ctx!.motivo!.isNotEmpty)
         ? ctx.motivo!
         : 'Sin motivo registrado';
-    final triageScale = (ctx?.triageScale != null && ctx!.triageScale!.isNotEmpty)
+    final triageScale =
+        (ctx?.triageScale != null && ctx!.triageScale!.isNotEmpty)
         ? ctx.triageScale!
         : null;
     final triageLevel = ctx?.triageLevel;
     final triageLabel =
-        ctx?.triageLevelLabel ?? (triageLevel != null ? 'Nivel $triageLevel' : null);
+        ctx?.triageLevelLabel ??
+        (triageLevel != null ? 'Nivel $triageLevel' : null);
 
     Widget metaCell(String label, String value) {
       return Column(
@@ -1087,8 +1077,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                 if (triageScale != null)
                   Text(
                     triageScale,
-                    style: BioTypography.caption
-                        .copyWith(color: context.bio.textMuted),
+                    style: BioTypography.caption.copyWith(
+                      color: context.bio.textMuted,
+                    ),
                   ),
               ],
             ),
@@ -1097,9 +1088,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: metaCell('Episodio', tituloParts.join(' · ')),
-              ),
+              Expanded(child: metaCell('Episodio', tituloParts.join(' · '))),
               BioSpacing.gapW(BioSpacing.md),
               Expanded(child: metaCell('Estado', estado)),
             ],
@@ -1134,7 +1123,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
 
   Future<void> _onEpisodioAccion(EpisodioAccionHistoria accion) async {
     if (accion.id == 'editar_triage') {
-      final guardiaId = widget.parentId ??
+      final guardiaId =
+          widget.parentId ??
           _historiaClinicaData?.contextoEpisodio?.episodioId ??
           0;
       if (guardiaId <= 0) return;
@@ -1172,7 +1162,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     }
     if (method != 'GET') {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Método no compatible para esta acción: $method')),
+        SnackBar(
+          content: Text('Método no compatible para esta acción: $method'),
+        ),
       );
       return;
     }
@@ -1287,7 +1279,12 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     final profile = cohorte.cohortProfile;
     final profileParts = <String>[];
     if (profile != null) {
-      for (final key in ['life_stage', 'sexo', 'motive_cluster', 'jurisdiction']) {
+      for (final key in [
+        'life_stage',
+        'sexo',
+        'motive_cluster',
+        'jurisdiction',
+      ]) {
         final val = profile[key]?.toString().trim();
         if (val != null && val.isNotEmpty) {
           profileParts.add(val);
@@ -1313,10 +1310,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           ],
           if (profileParts.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.xs),
-            Text(
-              profileParts.join(' · '),
-              style: BioTypography.bodySm,
-            ),
+            Text(profileParts.join(' · '), style: BioTypography.bodySm),
           ],
           BioSpacing.gapH(BioSpacing.md),
           if (assistance.notesForStaff != null &&
@@ -1370,24 +1364,25 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
 
     for (final match in pattern.allMatches(resumen)) {
       if (match.start > last) {
-        widgets.add(Text(
-          resumen.substring(last, match.start),
-          style: BioTypography.body,
-        ));
+        widgets.add(
+          Text(resumen.substring(last, match.start), style: BioTypography.body),
+        );
       }
       final ref = match.group(1)!;
       final url = byRef[ref];
       if (url != null && url.isNotEmpty) {
-        widgets.add(Padding(
-          padding: const EdgeInsets.symmetric(vertical: BioSpacing.xs),
-          child: ChatMediaImage(
-            source: url,
-            bearerToken: widget.authToken,
-            width: double.infinity,
-            height: 160,
-            fit: BoxFit.contain,
+        widgets.add(
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: BioSpacing.xs),
+            child: ChatMediaImage(
+              source: url,
+              bearerToken: widget.authToken,
+              width: double.infinity,
+              height: 160,
+              fit: BoxFit.contain,
+            ),
           ),
-        ));
+        );
       } else {
         widgets.add(Text('[$ref]', style: BioTypography.body));
       }
@@ -1411,7 +1406,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   Future<void> _toggleDictation() async {
     if (_captureBusy) return;
     if (!_sttConfigLoaded) {
-      _snack('La configuración de voz todavía se está cargando.', UiIntent.warning);
+      _snack(
+        'La configuración de voz todavía se está cargando.',
+        UiIntent.warning,
+      );
       return;
     }
     if (_dictating || _audioOnlyRecording) {
@@ -1442,14 +1440,16 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           );
         }
         final text = _chatController.text.trim();
-        final needsServer = _sttConfig.serverEnabled &&
+        final needsServer =
+            _sttConfig.serverEnabled &&
             _pendingAudioPath != null &&
             (text.isEmpty ||
                 !DeviceSttLocalQuality.isAcceptable(
                   text,
                   result,
-                  minConfidence:
-                      _sttConfig.minConfidenceForProfile('captura_clinica'),
+                  minConfidence: _sttConfig.minConfidenceForProfile(
+                    'captura_clinica',
+                  ),
                 ));
         if (needsServer) {
           await _transcribirAudioPendiente();
@@ -1543,16 +1543,17 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         return false;
       }
       final error = e.toString().toLowerCase();
-      final message = error.contains('notallowederror') ||
+      final message =
+          error.contains('notallowederror') ||
               error.contains('permission denied') ||
               error.contains('denied')
           ? 'El navegador bloqueó el acceso al micrófono. Revisá los permisos y volvé a intentar.'
           : error.contains('notfounderror') ||
-                  error.contains('devicesnotfounderror')
-              ? 'No se encontró un micrófono disponible.'
-              : kIsWeb
-                  ? 'No se pudo acceder al micrófono. Verificá los permisos del navegador y que la página esté abierta mediante una conexión segura (HTTPS). Detalle: $e'
-                  : 'No se pudo grabar audio: $e';
+                error.contains('devicesnotfounderror')
+          ? 'No se encontró un micrófono disponible.'
+          : kIsWeb
+          ? 'No se pudo acceder al micrófono. Verificá los permisos del navegador y que la página esté abierta mediante una conexión segura (HTTPS). Detalle: $e'
+          : 'No se pudo grabar audio: $e';
       _snack(message, UiIntent.danger);
       return false;
     }
@@ -1812,8 +1813,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
 
   Future<PendingEncounterCapture?> _persistLocalDraft({
     required String texto,
-    PendingEncounterCaptureStatus status =
-        PendingEncounterCaptureStatus.draft,
+    PendingEncounterCaptureStatus status = PendingEncounterCaptureStatus.draft,
     String? error,
     Map<String, dynamic>? analysisResponse,
     List<String>? stagedItemIds,
@@ -1832,8 +1832,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
 
     final tempAudio = _pendingAudioPath;
     if (tempAudio != null && tempAudio.isNotEmpty) {
-      final alreadyDurable = !kIsWeb &&
-          tempAudio.contains('/pending-encounters/');
+      final alreadyDurable =
+          !kIsWeb && tempAudio.contains('/pending-encounters/');
       if (!alreadyDurable) {
         try {
           final imported = await _pendingStore.importAudioFile(
@@ -1911,7 +1911,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
 
   Future<void> _deletePendingCapture(String id) async {
     final existing = await _pendingStore.getById(id);
-    
+
     // Actualizar estado inmediatamente para evitar doble tap
     setState(() {
       _pendingCaptures.removeWhere((item) => item.id == id);
@@ -1927,7 +1927,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           clientCaptureId: id,
           captureId: existing?.serverCaptureId,
         );
-        print('✓ Captura eliminada del servidor: $id (server: ${existing?.serverCaptureId})');
+        print(
+          '✓ Captura eliminada del servidor: $id (server: ${existing?.serverCaptureId})',
+        );
       } catch (e) {
         print('✗ Error al eliminar captura del servidor: $e');
         _snack('Error al eliminar del servidor', UiIntent.danger);
@@ -1939,10 +1941,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
 
     // Eliminar localmente
     await _pendingStore.delete(id);
-    
+
     // Recargar desde el servidor para asegurar consistencia
     await _loadPendingCaptures();
-    
+
     if (mounted) {
       _snack('Eliminada', UiIntent.neutral);
     }
@@ -1951,8 +1953,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   Future<void> _resumePendingCapture(PendingEncounterCapture item) async {
     if (_captureBusy) return;
     var current = item;
-    final needsReview = current.status ==
-            PendingEncounterCaptureStatus.pendingSave ||
+    final needsReview =
+        current.status == PendingEncounterCaptureStatus.pendingSave ||
         current.status == PendingEncounterCaptureStatus.failedSave;
     if (needsReview && current.analysisResponse == null) {
       try {
@@ -1977,8 +1979,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     if ((current.status == PendingEncounterCaptureStatus.pendingSave ||
             current.status == PendingEncounterCaptureStatus.failedSave) &&
         current.analysisResponse != null) {
-      final review =
-          EncounterCaptureAnalysis.fromApiResponse(current.analysisResponse!);
+      final review = EncounterCaptureAnalysis.fromApiResponse(
+        current.analysisResponse!,
+      );
       setState(() {
         _activePendingId = current.id;
         _pendingAudioPath = audioPath;
@@ -1992,8 +1995,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         _chatController.clear();
         _sttStatus = current.status == PendingEncounterCaptureStatus.failedSave
             ? (current.lastError?.trim().isNotEmpty == true
-                ? userFriendlyErrorMessage(current.lastError!)
-                : 'No se pudo guardar')
+                  ? userFriendlyErrorMessage(current.lastError!)
+                  : 'No se pudo guardar')
             : '';
       });
       return;
@@ -2030,17 +2033,14 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       }
       return;
     }
-    await _analyzeEncounter(
-      fromStatus: item.status,
-      forcePipeline: true,
-    );
+    await _analyzeEncounter(fromStatus: item.status, forcePipeline: true);
   }
 
   /// Acción primaria del card pendiente según checkpoint.
   String _pendingPrimaryActionLabel(PendingEncounterCapture item) {
     switch (item.status) {
       case PendingEncounterCaptureStatus.draft:
-      return 'Generar Notas Clínicas';
+        return 'Generar Notas Clínicas';
       case PendingEncounterCaptureStatus.pendingUpload:
         return 'Subir';
       case PendingEncounterCaptureStatus.pendingStt:
@@ -2085,8 +2085,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   void _editCaptureDraft() {
     final draft = _draftText ?? '';
     final backupResolutions = Map<String, dynamic>.from(_issueResolutions);
-    final backupOpenProblems =
-        Map<String, dynamic>.from(_openProblemResolutions);
+    final backupOpenProblems = Map<String, dynamic>.from(
+      _openProblemResolutions,
+    );
     setState(() {
       _editBackupReview = _captureReview;
       _editBackupLastAnalysis = _lastAnalysis;
@@ -2111,8 +2112,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     final draft = _editBackupDraft;
     final staged = Set<String>.from(_editBackupStagedItemIds);
     final issues = Map<String, dynamic>.from(_editBackupIssueResolutions);
-    final openProblems =
-        Map<String, dynamic>.from(_editBackupOpenProblemResolutions);
+    final openProblems = Map<String, dynamic>.from(
+      _editBackupOpenProblemResolutions,
+    );
     setState(() {
       _captureReview = review;
       _lastAnalysis = analysis;
@@ -2175,7 +2177,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       _clearEditBackup();
     });
 
-    final startStatus = fromStatus ??
+    final startStatus =
+        fromStatus ??
         (text.isEmpty
             ? PendingEncounterCaptureStatus.pendingUpload
             : PendingEncounterCaptureStatus.pendingAnalyze);
@@ -2198,12 +2201,14 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       var needsServerStt = text.isEmpty && _sttConfig.serverEnabled;
       if (last != null && text.isNotEmpty && text == last.text.trim()) {
         sttMeta = last.toSttPayload();
-        needsServerStt = _sttConfig.serverEnabled &&
+        needsServerStt =
+            _sttConfig.serverEnabled &&
             !DeviceSttLocalQuality.isAcceptable(
               text,
               last,
-              minConfidence:
-                  _sttConfig.minConfidenceForProfile('captura_clinica'),
+              minConfidence: _sttConfig.minConfidenceForProfile(
+                'captura_clinica',
+              ),
             );
       } else if (text.isEmpty) {
         needsServerStt = _sttConfig.serverEnabled;
@@ -2214,14 +2219,15 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       var audioUploaded = draft.audioUploaded;
       var transcript = text;
 
-      final skipUpload = forcePipeline &&
+      final skipUpload =
+          forcePipeline &&
           (fromStatus == PendingEncounterCaptureStatus.pendingStt ||
               fromStatus == PendingEncounterCaptureStatus.pendingAnalyze) &&
           (draft.serverCaptureId != null || draft.audioUploaded);
 
       if (!skipUpload) {
-        final audioPath = await _pendingStore.absoluteAudioPath(draft) ??
-            _pendingAudioPath;
+        final audioPath =
+            await _pendingStore.absoluteAudioPath(draft) ?? _pendingAudioPath;
         try {
           final created = await _encounterApi.capturaCrearOSubir(
             clientCaptureId: draft.id,
@@ -2269,7 +2275,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         }
       }
 
-      final needsStt = _sttConfig.serverEnabled &&
+      final needsStt =
+          _sttConfig.serverEnabled &&
           (stage == 'UPLOADED' ||
               stage == 'STT_FAILED' ||
               (needsServerStt && transcript.isEmpty) ||
@@ -2473,7 +2480,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       return;
     }
     if (review.systemError != null) {
-      _snack('No se puede guardar: el análisis tiene errores de sistema.', UiIntent.warning);
+      _snack(
+        'No se puede guardar: el análisis tiene errores de sistema.',
+        UiIntent.warning,
+      );
       return;
     }
     if (review.episodeNoteDuplicate) {
@@ -2504,19 +2514,18 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     final analisisBackup = _resolveAnalisisDatosExtraidos(_lastAnalysis!);
     final textoOriginal =
         (_lastAnalysis!['texto_original'] ?? review.textoOriginal).toString();
-    final textoProcesado = (_lastAnalysis!['texto_procesado'] ??
-            review.textoProcesado ??
-            _draftText ??
-            textoOriginal)
-        .toString();
+    final textoProcesado =
+        (_lastAnalysis!['texto_procesado'] ??
+                review.textoProcesado ??
+                _draftText ??
+                textoOriginal)
+            .toString();
     final idConfiguracion = _lastAnalysis!['id_configuracion'] is int
         ? _lastAnalysis!['id_configuracion'] as int
         : int.tryParse('${_lastAnalysis!['id_configuracion']}');
     final encounterId = _lastAnalysis!['encounter_id'] is int
         ? _lastAnalysis!['encounter_id'] as int
-        : int.tryParse(
-            '${_lastAnalysis!['encounter_id']}',
-          );
+        : int.tryParse('${_lastAnalysis!['encounter_id']}');
 
     final resolutions = <String, dynamic>{};
     for (final issue in review.issues) {
@@ -2557,7 +2566,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       });
       Map<String, dynamic> guardado;
       if (clientId != null && clientId.isNotEmpty) {
-      final out = await _encounterApi.capturaGuardar(
+        final out = await _encounterApi.capturaGuardar(
           clientCaptureId: clientId,
           datosExtraidos: extraidos,
           // Draft en servidor: el pipeline usa el análisis persistido; no reenviar backup.
@@ -2570,9 +2579,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           resolutions: resolutions.isEmpty ? null : resolutions,
         );
         final nested = out['guardar'];
-        guardado = nested is Map
-            ? Map<String, dynamic>.from(nested)
-            : out;
+        guardado = nested is Map ? Map<String, dynamic>.from(nested) : out;
       } else {
         guardado = await _encounterApi.guardar(
           idPersona: widget.personaId,
@@ -2580,7 +2587,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           parentId: widget.parentId,
           datosExtraidos: extraidos,
           // Sin draft de captura: solo token de cache (si hay), no mapa completo duplicado.
-          analysisCacheToken: _lastAnalysis!['analysis_cache_token']?.toString(),
+          analysisCacheToken: _lastAnalysis!['analysis_cache_token']
+              ?.toString(),
           textoOriginal: textoOriginal,
           textoProcesado: textoProcesado,
           idConfiguracion: idConfiguracion,
@@ -2594,7 +2602,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       if (!mounted) return;
       final aviso = guardado['persist_incomplete'] == true
           ? (guardado['message']?.toString() ??
-              'Encounter guardado con datos incompletos.')
+                'Encounter guardado con datos incompletos.')
           : null;
       debugPrint(
         '[captura] guardar resultado aviso=${aviso ?? 'ok'} '
@@ -2682,10 +2690,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                 Text(mensaje),
                 if (detalle != null && detalle.trim().isNotEmpty) ...[
                   const SizedBox(height: 12),
-                  Text(
-                    detalle,
-                    style: Theme.of(ctx).textTheme.bodySmall,
-                  ),
+                  Text(detalle, style: Theme.of(ctx).textTheme.bodySmall),
                 ],
               ],
             ),
@@ -2702,7 +2707,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     );
   }
 
-  Map<String, dynamic>? _resolveAnalisisDatosExtraidos(Map<String, dynamic> analysis) {
+  Map<String, dynamic>? _resolveAnalisisDatosExtraidos(
+    Map<String, dynamic> analysis,
+  ) {
     final datos = analysis['datos'];
     if (datos is Map) {
       final map = Map<String, dynamic>.from(datos);
@@ -2716,9 +2723,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     }
     final review = _captureReview;
     if (review != null && review.hasExtractedContent) {
-      return review.toDatosExtraidos(
-        review.allItems.map((e) => e.id).toSet(),
-      );
+      return review.toDatosExtraidos(review.allItems.map((e) => e.id).toSet());
     }
     return null;
   }
@@ -2741,7 +2746,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     // Con análisis listo: se muestra como "Nota de esta atención", no como card.
     final items = _pendingCaptures.where((e) {
       if (_enRevisionCaptura && e.id == _activePendingId) return false;
-      final ready = e.status == PendingEncounterCaptureStatus.pendingSave ||
+      final ready =
+          e.status == PendingEncounterCaptureStatus.pendingSave ||
           e.status == PendingEncounterCaptureStatus.failedSave;
       if (ready && e.analysisResponse != null) return false;
       return true;
@@ -2753,9 +2759,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       children: [
         Text(
           'Notas pendientes en el teléfono',
-          style: BioTypography.overline.copyWith(
-            color: context.bio.textMuted,
-          ),
+          style: BioTypography.overline.copyWith(color: context.bio.textMuted),
         ),
         BioSpacing.gapH(BioSpacing.sm),
         for (final item in items) ...[
@@ -2788,11 +2792,12 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     final preview = previewRaw.isEmpty || previewRaw.startsWith('(audio')
         ? (item.hasAudio ? 'Audio' : 'Sin texto')
         : (previewRaw.length > 90
-            ? '${previewRaw.substring(0, 90)}…'
-            : previewRaw);
+              ? '${previewRaw.substring(0, 90)}…'
+              : previewRaw);
     final primary = _pendingPrimaryActionLabel(item);
     final rawError = item.lastError?.trim() ?? '';
-    final friendlyError = rawError.isNotEmpty &&
+    final friendlyError =
+        rawError.isNotEmpty &&
             item.status != PendingEncounterCaptureStatus.pendingSave
         ? userFriendlyErrorMessage(rawError)
         : null;
@@ -2812,11 +2817,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         children: [
           Row(
             children: [
-              Icon(
-                Icons.cloud_off_outlined,
-                size: 18,
-                color: warning.softFg,
-              ),
+              Icon(Icons.cloud_off_outlined, size: 18, color: warning.softFg),
               BioSpacing.gapW(BioSpacing.sm),
               Expanded(
                 child: Text(
@@ -2830,9 +2831,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           BioSpacing.gapH(BioSpacing.xs),
           Text(
             preview,
-            style: BioTypography.caption.copyWith(
-              color: context.bio.textMuted,
-            ),
+            style: BioTypography.caption.copyWith(color: context.bio.textMuted),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -2863,8 +2862,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                 label: 'Eliminar',
                 intent: UiIntent.danger,
                 variant: BioButtonVariant.soft,
-                onPressed:
-                    _captureBusy ? null : () => _deletePendingCapture(item.id),
+                onPressed: _captureBusy
+                    ? null
+                    : () => _deletePendingCapture(item.id),
               ),
             ],
           ),
@@ -2884,12 +2884,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             child: CircularProgressIndicator(strokeWidth: 2),
           ),
           BioSpacing.gapW(BioSpacing.md),
-          Expanded(
-            child: Text(
-              'Analizando…',
-              style: BioTypography.body,
-            ),
-          ),
+          Expanded(child: Text('Analizando…', style: BioTypography.body)),
         ],
       ),
     );
@@ -2930,10 +2925,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                 : (adv.severity == 'info' ? UiIntent.info : UiIntent.warning);
             return Padding(
               padding: const EdgeInsets.only(bottom: BioSpacing.sm),
-              child: BioAlert(
-                intent: intent,
-                message: adv.message,
-              ),
+              child: BioAlert(intent: intent, message: adv.message),
             );
           }),
         ],
@@ -2965,10 +2957,12 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           Text('Resultado del procesamiento', style: sectionTitleStyle),
           BioSpacing.gapH(BioSpacing.sm),
           ...review.categories.map((cat) {
-            final delTexto =
-                cat.items.where((i) => i.isFromClinicalText).toList();
-            final sugeridos =
-                cat.items.where((i) => !i.isFromClinicalText).toList();
+            final delTexto = cat.items
+                .where((i) => i.isFromClinicalText)
+                .toList();
+            final sugeridos = cat.items
+                .where((i) => !i.isFromClinicalText)
+                .toList();
 
             return Padding(
               padding: const EdgeInsets.only(bottom: BioSpacing.md),
@@ -3009,8 +3003,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                           Text(
                             'Sugerido por IA',
                             style: BioTypography.caption.copyWith(
-                              color:
-                                  IntentPalette.of(UiIntent.secondary).base,
+                              color: IntentPalette.of(UiIntent.secondary).base,
                             ),
                           ),
                         ],
@@ -3029,7 +3022,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                 'Faltan categorías obligatorias: ${review.missingCategories.join(', ')}.',
           ),
         ],
-        ...review.orphanIssuesForStaged(_stagedItemIds).map(_buildCaptureIssueBlock),
+        ...review
+            .orphanIssuesForStaged(_stagedItemIds)
+            .map(_buildCaptureIssueBlock),
         if (review.hasOpenProblems) ...[
           BioSpacing.gapH(BioSpacing.md),
           Text('Problemas y tratamientos abiertos', style: sectionTitleStyle),
@@ -3039,10 +3034,12 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             style: BioTypography.caption.copyWith(color: context.bio.textMuted),
           ),
           BioSpacing.gapH(BioSpacing.sm),
-          ...review.openProblems!.conditions
-              .map((item) => _buildOpenProblemBlock(item)),
-          ...review.openProblems!.carePlans
-              .map((item) => _buildOpenProblemBlock(item)),
+          ...review.openProblems!.conditions.map(
+            (item) => _buildOpenProblemBlock(item),
+          ),
+          ...review.openProblems!.carePlans.map(
+            (item) => _buildOpenProblemBlock(item),
+          ),
         ],
       ],
     );
@@ -3063,12 +3060,16 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           if (item.detail != null && item.detail!.isNotEmpty)
             Text(
               item.detail!,
-              style: BioTypography.caption.copyWith(color: context.bio.textMuted),
+              style: BioTypography.caption.copyWith(
+                color: context.bio.textMuted,
+              ),
             ),
           if (item.statusLabel != null && item.statusLabel!.isNotEmpty)
             Text(
               item.statusLabel!,
-              style: BioTypography.caption.copyWith(color: context.bio.textMuted),
+              style: BioTypography.caption.copyWith(
+                color: context.bio.textMuted,
+              ),
             ),
           BioSpacing.gapH(BioSpacing.sm),
           Wrap(
@@ -3076,7 +3077,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             runSpacing: BioSpacing.sm,
             children: item.options.map((opt) {
               final isSelected =
-                  selected != null && selected.toString() == opt.value.toString();
+                  selected != null &&
+                  selected.toString() == opt.value.toString();
               return BioChip(
                 label: opt.label,
                 selected: isSelected,
@@ -3111,7 +3113,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           if (issue.field.isNotEmpty)
             Text(
               issue.field,
-              style: BioTypography.caption.copyWith(color: context.bio.textMuted),
+              style: BioTypography.caption.copyWith(
+                color: context.bio.textMuted,
+              ),
             ),
           BioSpacing.gapH(BioSpacing.sm),
           if (issue.options.isNotEmpty)
@@ -3119,7 +3123,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
               spacing: BioSpacing.sm,
               runSpacing: BioSpacing.sm,
               children: issue.options.map((opt) {
-                final isSelected = selected != null &&
+                final isSelected =
+                    selected != null &&
                     selected.toString() == opt.value.toString();
                 return BioChip(
                   label: opt.label,
@@ -3235,17 +3240,18 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       intent: incomplete
           ? UiIntent.danger
           : (item.alreadyActive && !selected
-              ? UiIntent.neutral
-              : (item.isFromClinicalText
-                  ? UiIntent.neutral
-                  : UiIntent.secondary)),
+                ? UiIntent.neutral
+                : (item.isFromClinicalText
+                      ? UiIntent.neutral
+                      : UiIntent.secondary)),
       onTap: _isSaving ? null : () => _toggleStagedItem(item.id, !selected),
     );
   }
 
   Widget _buildCaptureActionsBar() {
     final review = _captureReview;
-    final canConfirm = !_isSaving &&
+    final canConfirm =
+        !_isSaving &&
         review != null &&
         review.systemError == null &&
         !review.episodeNoteDuplicate &&
@@ -3261,9 +3267,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       ),
       decoration: BoxDecoration(
         color: context.bio.paperSurface,
-        border: Border(
-          top: BorderSide(color: context.bio.paperBorderDefault),
-        ),
+        border: Border(top: BorderSide(color: context.bio.paperBorderDefault)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -3304,9 +3308,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
 
   void _snack(String msg, UiIntent intent) {
     final palette = IntentPalette.of(intent);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: palette.base),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: palette.base));
   }
 
   Widget _buildChatInputBar(BuildContext context) {
@@ -3351,13 +3355,14 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           sendIcon: Icons.fact_check_outlined,
           hintText: canCapture
               ? (_esCapturaEpisodio
-                  ? 'Dictar o escribir la evolución…'
-                  : 'Dictar o escribir la consulta…')
+                    ? 'Dictar o escribir la evolución…'
+                    : 'Dictar o escribir la consulta…')
               : (_esCapturaEpisodio
-                  ? 'Escribir evolución…'
-                  : 'Escribir consulta…'),
+                    ? 'Escribir evolución…'
+                    : 'Escribir consulta…'),
           maxLines: 6,
-          onVoice: canCapture &&
+          onVoice:
+              canCapture &&
                   _sttConfigLoaded &&
                   (_sttConfig.deviceEnabled || _sttConfig.serverEnabled)
               ? _toggleDictation

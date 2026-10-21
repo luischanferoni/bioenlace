@@ -61,4 +61,32 @@ void main() {
     expect(episode.acciones.single.apiRoute, '/clinical/formulario');
     expect(episode.acciones.single.apiMethod, 'GET');
   });
+
+  test('reads episode timeline item labels and filter metadata', () {
+    final feed = TimelineEpisodioFeed.fromJson(<String, dynamic>{
+      'parent_type': 'guardia',
+      'episodio_id': 45,
+      'filters': [
+        <String, dynamic>{'id': 'all', 'label': 'Todos', 'types': null},
+        <String, dynamic>{
+          'id': 'clinical',
+          'label': 'Clínico',
+          'types': ['evolucion_medica', 'triage'],
+        },
+      ],
+      'items': [
+        <String, dynamic>{
+          'id': 'triage:1',
+          'type': 'triage',
+          'type_label': 'Triage',
+          'summary': 'Triage Naranja',
+        },
+      ],
+    });
+
+    expect(feed.filters, hasLength(2));
+    expect(feed.filters.first.types, isNull);
+    expect(feed.filters.last.types, ['evolucion_medica', 'triage']);
+    expect(feed.items.single.typeLabel, 'Triage');
+  });
 }

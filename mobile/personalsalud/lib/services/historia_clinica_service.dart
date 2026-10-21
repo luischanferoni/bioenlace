@@ -854,11 +854,13 @@ class TimelineEpisodioFeed {
   final String parentType;
   final int episodioId;
   final List<TimelineEpisodioItem> items;
+  final List<TimelineEpisodioFilter> filters;
 
   TimelineEpisodioFeed({
     required this.parentType,
     required this.episodioId,
     this.items = const [],
+    this.filters = const [],
   });
 
   factory TimelineEpisodioFeed.fromJson(Map<String, dynamic>? json) {
@@ -879,11 +881,46 @@ class TimelineEpisodioFeed {
         }
       }
     }
+    final filters = <TimelineEpisodioFilter>[];
+    final rawFilters = json['filters'];
+    if (rawFilters is List) {
+      for (final filter in rawFilters) {
+        if (filter is Map) {
+          filters.add(
+            TimelineEpisodioFilter.fromJson(Map<String, dynamic>.from(filter)),
+          );
+        }
+      }
+    }
 
     return TimelineEpisodioFeed(
       parentType: (json['parent_type'] ?? '').toString(),
       episodioId: asInt(json['episodio_id']),
       items: list,
+      filters: filters,
+    );
+  }
+}
+
+class TimelineEpisodioFilter {
+  final String id;
+  final String label;
+  final List<String>? types;
+
+  const TimelineEpisodioFilter({
+    required this.id,
+    required this.label,
+    this.types,
+  });
+
+  factory TimelineEpisodioFilter.fromJson(Map<String, dynamic> json) {
+    final rawTypes = json['types'];
+    return TimelineEpisodioFilter(
+      id: (json['id'] ?? '').toString(),
+      label: (json['label'] ?? '').toString(),
+      types: rawTypes is List
+          ? rawTypes.map((type) => type.toString()).toList()
+          : null,
     );
   }
 }
@@ -1047,6 +1084,7 @@ class SignosVitalesEpisodioPunto {
 
 class TimelineEpisodioItem {
   final String type;
+  final String typeLabel;
   final String id;
   final String occurredAt;
   final String summary;
@@ -1055,37 +1093,13 @@ class TimelineEpisodioItem {
 
   TimelineEpisodioItem({
     required this.type,
+    this.typeLabel = '',
     required this.id,
     this.occurredAt = '',
     this.summary = '',
     this.actorNombre,
     this.encounterId,
   });
-
-  String get typeLabel {
-    switch (type) {
-      case 'circuito':
-        return 'Circuito';
-      case 'triage':
-        return 'Triage';
-      case 'evolucion_medica':
-        return 'Evolución';
-      case 'atencion_enfermeria':
-        return 'Enfermería';
-      case 'pedido':
-        return 'Pedido';
-      case 'resultado_lab':
-        return 'Lab';
-      case 'medicacion':
-        return 'Medicación';
-      case 'administracion':
-        return 'Admin.';
-      case 'interconsulta':
-        return 'Interconsulta';
-      default:
-        return type;
-    }
-  }
 
   factory TimelineEpisodioItem.fromJson(Map<String, dynamic> json) {
     int? asIntOrNull(dynamic v) {
@@ -1103,6 +1117,7 @@ class TimelineEpisodioItem {
 
     return TimelineEpisodioItem(
       type: (json['type'] ?? '').toString(),
+      typeLabel: (json['type_label'] ?? '').toString(),
       id: (json['id'] ?? '').toString(),
       occurredAt: (json['occurred_at'] ?? '').toString(),
       summary: (json['summary'] ?? '').toString(),

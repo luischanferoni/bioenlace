@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../config/api_config.dart';
+import '../http/api_contract.dart';
 import 'assistant_envelope.dart';
 import '../text/user_friendly_error.dart';
 
@@ -60,14 +61,8 @@ String normalizeAtajoDescription(String raw) {
   s = s.replaceAll(RegExp(r'^\s*[:\-–—•·]+\s*'), '');
 
   // Evitar jerga interna en UI (usuario final).
-  s = s.replaceAll(
-    RegExp(r'\bAutogesti[oó]n\b', caseSensitive: false),
-    '',
-  );
-  s = s.replaceAll(
-    RegExp(r'\bstaff\b', caseSensitive: false),
-    '',
-  );
+  s = s.replaceAll(RegExp(r'\bAutogesti[oó]n\b', caseSensitive: false), '');
+  s = s.replaceAll(RegExp(r'\bstaff\b', caseSensitive: false), '');
 
   // Limpieza: espacios repetidos y signos sueltos.
   s = s.replaceAll(RegExp(r'\s+'), ' ').trim();
@@ -92,8 +87,7 @@ String normalizeAtajoDescription(String raw) {
   }
 
   // "Flujo conversacional para ... turno: servicio, centro de salud, profesional..."
-  if (lower.contains('flujo conversacional') &&
-      lower.contains('turno')) {
+  if (lower.contains('flujo conversacional') && lower.contains('turno')) {
     s = 'Para reservar un turno en un centro de salud público';
   }
 
@@ -202,42 +196,24 @@ class AsistenteService {
           .post(uri, headers: headers, body: json.encode(body))
           .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
 
-      final decoded = json.decode(response.body);
-      if (response.statusCode != 200) {
-        final rawMsg = decoded is Map ? apiMessageFromJson(decoded) : null;
-        if (rawMsg != null && rawMsg.isNotEmpty) {
-          return {
-            'success': false,
-            'message': rawMsg,
-            if (decoded is Map) 'errors': decoded['errors'],
-          };
-        }
-        final msg = userFriendlyErrorMessage(
-          Exception('HTTP ${response.statusCode}'),
-          fallback: 'Error en la consulta',
-        );
-        return {
-          'success': false,
-          'message': msg,
-          if (decoded is Map) 'errors': decoded['errors'],
-        };
-      }
-
-      if (decoded is! Map) {
-        return {'success': false, 'message': 'Respuesta inválida del asistente'};
-      }
-      final root = Map<String, dynamic>.from(decoded);
+      final root = unwrapApiContract(
+        json.decode(response.body),
+        response.statusCode,
+      );
       final kind = root['kind']?.toString() ?? '';
       if (kind.isEmpty) {
         return {
           'success': false,
-          'message': root['message']?.toString() ?? 'Error en la consulta',
+          'message':
+              apiMessageFromJson(root) ?? 'Respuesta inválida del asistente',
           'data': root,
         };
       }
 
       _syncFromEnvelope(root);
       return {'success': true, 'data': root};
+    } on ApiContractException catch (e) {
+      return {'success': false, 'message': e.message};
     } catch (e) {
       return {
         'success': false,
@@ -287,11 +263,13 @@ class AsistenteService {
               flatItems.addAll(sgItems);
             }
             if (subgroups.isNotEmpty) {
-              out.add(AtajoCategoria(
-                titulo: titulo,
-                items: flatItems,
-                subgroups: subgroups,
-              ));
+              out.add(
+                AtajoCategoria(
+                  titulo: titulo,
+                  items: flatItems,
+                  subgroups: subgroups,
+                ),
+              );
             }
             continue;
           }
@@ -322,13 +300,15 @@ class AsistenteService {
       final am = Map<String, dynamic>.from(a);
       final iid = intentIdFromCommonActionMap(am);
       if (iid == null || iid.isEmpty) continue;
-      items.add(AtajoItem(
-        intentId: iid,
-        title: actionDisplayNameFromMap(am),
-        description: normalizeAtajoDescription(
-          am['description']?.toString() ?? '',
+      items.add(
+        AtajoItem(
+          intentId: iid,
+          title: actionDisplayNameFromMap(am),
+          description: normalizeAtajoDescription(
+            am['description']?.toString() ?? '',
+          ),
         ),
-      ));
+      );
     }
     return items;
   }

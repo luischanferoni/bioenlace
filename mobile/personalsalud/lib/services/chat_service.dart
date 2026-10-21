@@ -8,6 +8,7 @@ import '../models/message.dart';
 class ChatService {
   final String currentUserId;
   final String currentUserName;
+
   /// Si está definido, se envía en `asistente/enviar` (API v1 con Bearer).
   final String? authToken;
 
@@ -17,8 +18,10 @@ class ChatService {
     this.authToken,
   });
 
-  Map<String, String> _jsonHeaders() =>
-      AppConfig.jsonHeaders(bearerToken: authToken, appClient: 'personalsalud-flutter');
+  Map<String, String> _jsonHeaders() => AppConfig.jsonHeaders(
+    bearerToken: authToken,
+    appClient: 'personalsalud-flutter',
+  );
 
   Map<String, String> _getHeaders() {
     final h = AppConfig.jsonHeaders(
@@ -36,25 +39,20 @@ class ChatService {
         headers: _getHeaders(),
       );
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['success'] == true) {
-          final raw = data['mensajes'];
-          if (raw == null) return [];
-          if (raw is String) {
-            final List<dynamic> jsonMessages = json.decode(raw);
-            return jsonMessages.map((json) => Message.fromJson(json)).toList();
-          }
-          if (raw is List) {
-            return raw.map((json) => Message.fromJson(json)).toList();
-          }
-          return [];
-        } else {
-          throw Exception('Failed to load messages');
-        }
-      } else {
-        throw Exception('Failed to load messages');
+      final data = unwrapApiContract(
+        json.decode(response.body),
+        response.statusCode,
+      );
+      final raw = data['mensajes'];
+      if (raw == null) return [];
+      if (raw is String) {
+        final List<dynamic> jsonMessages = json.decode(raw);
+        return jsonMessages.map((json) => Message.fromJson(json)).toList();
       }
+      if (raw is List) {
+        return raw.map((json) => Message.fromJson(json)).toList();
+      }
+      return [];
     } catch (e) {
       print('Error fetching messages: $e');
       rethrow;
@@ -67,29 +65,24 @@ class ChatService {
       final response = await http.post(
         Uri.parse('${AppConfig.apiUrl}/asistente/enviar'),
         headers: _jsonHeaders(),
-        body: json.encode({
-          'content': content,
-        }),
+        body: json.encode({'content': content}),
       );
 
-      if (response.statusCode == 200) {
-        final body = json.decode(response.body) as Map<String, dynamic>;
-        if (body['success'] == true && body['data'] is Map<String, dynamic>) {
-          final data = body['data'] as Map<String, dynamic>;
-          final explanation =
-              data['explanation']?.toString() ?? 'Consulta procesada';
-          return Message(
-            id: DateTime.now().millisecondsSinceEpoch.toString(),
-            senderId: 'BOT',
-            senderName: 'Bot',
-            content: explanation,
-            timestamp: DateTime.now(),
-          );
-        }
-        throw Exception(body['message']?.toString() ?? 'Failed to send message');
-      } else {
-        throw Exception('Failed to send message');
+      final data = unwrapApiContract(
+        json.decode(response.body),
+        response.statusCode,
+      );
+      final text = data['text']?.toString() ?? data['explanation']?.toString();
+      if (text == null) {
+        throw const FormatException('Respuesta del asistente sin texto.');
       }
+      return Message(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        senderId: 'BOT',
+        senderName: 'Bot',
+        content: text,
+        timestamp: DateTime.now(),
+      );
     } catch (e) {
       print('Error sending message: $e');
       rethrow;
@@ -109,25 +102,22 @@ class ChatService {
         }),
       );
 
-      if (response.statusCode == 200) {
-        final body = json.decode(response.body) as Map<String, dynamic>;
-        if (body['success'] == true && body['data'] is Map<String, dynamic>) {
-          final data = body['data'] as Map<String, dynamic>;
-          final explanation =
-              data['explanation']?.toString() ?? 'Consulta procesada';
-          return Message(
-            id: DateTime.now().millisecondsSinceEpoch.toString(),
-            senderId: 'BOT',
-            senderName: 'Bot',
-            content: explanation,
-            timestamp: DateTime.now(),
-            isResent: true,
-          );
-        }
-        throw Exception(body['message']?.toString() ?? 'Failed to resend message');
-      } else {
-        throw Exception('Failed to resend message');
+      final data = unwrapApiContract(
+        json.decode(response.body),
+        response.statusCode,
+      );
+      final text = data['text']?.toString() ?? data['explanation']?.toString();
+      if (text == null) {
+        throw const FormatException('Respuesta del asistente sin texto.');
       }
+      return Message(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        senderId: 'BOT',
+        senderName: 'Bot',
+        content: text,
+        timestamp: DateTime.now(),
+        isResent: true,
+      );
     } catch (e) {
       print('Error resending message: $e');
       rethrow;
@@ -135,6 +125,8 @@ class ChatService {
   }
 
   Future<Message> _getMessageById(String id) async {
-    throw UnimplementedError('Sin retrocompatibilidad: /messages/{id} fue removido y este método requiere un endpoint específico.');
+    throw UnimplementedError(
+      'Sin retrocompatibilidad: /messages/{id} fue removido y este método requiere un endpoint específico.',
+    );
   }
 }

@@ -19,14 +19,20 @@ use yii\helpers\Json;
  * - GET/OPTIONS `asistente/estado` — estado ligero para clientes.
  * - POST/OPTIONS `asistente/enviar` — sobre en raíz (`kind`: message | interactive | flow).
  *   Request: `content`, `action_id`, o modo flow (`intent_id`, `subintent_id`, `draft`, `interaction`).
- *   HTTP 200: payload del sobre (sin wrapper `{ success, message, data }`).
- *   HTTP 400: errores del motor (`success: false` interno, no convertido a sobre).
+ *   HTTP 200: contrato común con el sobre del asistente dentro de `data`.
+ *   HTTP 4xx/5xx: error del contrato común.
  * - GET `asistente/preferencias-como-paciente` — extracto de HC en el chat (sí mismo).
  * - PUT `asistente/preferencias-como-paciente` — body `usa_resumen_hc_en_asistente`.
  */
 class ChatController extends BaseController
 {
     public $enableCsrfValidation = false;
+
+    public function init()
+    {
+        parent::init();
+        $this->contractResponses = true;
+    }
 
     public function behaviors()
     {
@@ -35,7 +41,7 @@ class ChatController extends BaseController
 
     public function actionEstado()
     {
-        return ['success' => true, 'mensajes' => [], 'msj' => ''];
+        return $this->success(['mensajes' => [], 'msj' => '']);
     }
 
     public function actionRecibir()
@@ -111,7 +117,7 @@ class ChatController extends BaseController
 
         if (!AssistantEnvelope::isPublicEnvelope($out) && empty($out['success'])) {
             $err = isset($out['error']) ? (string) $out['error'] : 'Error';
-            return $this->error($err, $out, 400);
+            return $this->error($err, null, 400);
         }
 
         BioenlaceDb::ensureConnection();
@@ -149,7 +155,7 @@ class ChatController extends BaseController
 
         AssistantThreadContext::clear();
 
-        return $out;
+        return $this->success($out);
     }
 
     /**

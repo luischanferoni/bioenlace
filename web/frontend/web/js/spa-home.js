@@ -2237,7 +2237,10 @@
     function handleAssistantResponse(data) {
             const intentIdBeforeResponse = currentIntentId ? String(currentIntentId) : '';
 
-            const envelope = data && typeof data === 'object' ? data : {};
+            const responseData = data && typeof data === 'object' && data.meta
+                ? data.data
+                : data;
+            const envelope = responseData && typeof responseData === 'object' ? responseData : {};
             const kind = envelope.kind ? String(envelope.kind) : '';
             const flowText = typeof envelope.text === 'string' ? envelope.text : null;
             const primaryText = (flowText && flowText.trim() !== '') ? flowText.trim() : '';
@@ -2695,9 +2698,14 @@
                                 return;
                             }
                             if (j && typeof j === 'object') {
-                                if (j.message != null && String(j.message).trim() !== '') {
+                                if (j.error && typeof j.error === 'object'
+                                    && j.error.message != null
+                                    && String(j.error.message).trim() !== '') {
+                                    msgFromBody = String(j.error.message).trim();
+                                } else if (j.message != null && String(j.message).trim() !== '') {
                                     msgFromBody = String(j.message).trim();
-                                } else if (j.error != null && String(j.error).trim() !== '') {
+                                } else if (j.error != null && typeof j.error !== 'object'
+                                    && String(j.error).trim() !== '') {
                                     msgFromBody = String(j.error).trim();
                                 }
                             }
@@ -5174,7 +5182,10 @@
                         const ct = res.headers.get('content-type') || '';
                         const payload = ct.includes('application/json') ? await res.json() : null;
                         if (!res.ok) {
-                            const msg = payload && payload.message ? String(payload.message) : ('Error HTTP ' + res.status);
+                            const apiError = payload && payload.error;
+                            const msg = apiError && apiError.message
+                                ? String(apiError.message)
+                                : (payload && payload.message ? String(payload.message) : ('Error HTTP ' + res.status));
                             throw new Error(msg);
                         }
                         if (!payload || typeof payload !== 'object') {

@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config/api_config.dart';
+import '../http/api_contract.dart';
 
 /// GET/PUT /asistente/preferencias-como-paciente
 class AssistantPatientPreferencesApi {
@@ -35,20 +36,19 @@ class AssistantPatientPreferencesApi {
           )
           .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
 
-      final decoded = json.decode(response.body);
-      if (decoded is! Map<String, dynamic>) {
-        return {'success': false, 'data': null};
-      }
-      if (response.statusCode == 200 && decoded['success'] == true) {
-        return {'success': true, 'data': decoded['data']};
-      }
-      return {'success': false, 'data': null, 'message': decoded['message']};
+      final data = unwrapApiContract(
+        json.decode(response.body),
+        response.statusCode,
+      );
+      return {'success': true, 'data': data};
     } catch (e) {
       return {'success': false, 'data': null, 'message': e.toString()};
     }
   }
 
-  Future<Map<String, dynamic>> save({required bool usaResumenHcEnAsistente}) async {
+  Future<Map<String, dynamic>> save({
+    required bool usaResumenHcEnAsistente,
+  }) async {
     try {
       final token = await _effectiveToken();
       final uri = Uri.parse(
@@ -67,14 +67,14 @@ class AssistantPatientPreferencesApi {
           )
           .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
 
-      final decoded = json.decode(response.body);
-      if (decoded is! Map<String, dynamic>) {
-        return {'success': false};
-      }
+      final data = unwrapApiContract(
+        json.decode(response.body),
+        response.statusCode,
+      );
       return {
-        'success': response.statusCode == 200 && decoded['success'] == true,
-        'data': decoded['data'],
-        'message': decoded['message'],
+        'success': true,
+        'data': data,
+        if (data['message'] != null) 'message': data['message'],
       };
     } catch (e) {
       return {'success': false, 'message': e.toString()};

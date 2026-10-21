@@ -16,7 +16,7 @@ Lectura: [overview.md](./overview.md), [design.md](./design.md), fases en [phase
 | 05 Móvil | pendiente |
 | 06 Web | pendiente |
 | 07 Veterinaria (estructura) | pendiente |
-| 08 Asistente, admin, jobs, docs | pendiente |
+| 08 Asistente, admin, jobs, docs | en curso (prompt Guide alineado con glosario encounter) |
 | 09 Cierre | pendiente |
 
 ## Reglas relacionadas

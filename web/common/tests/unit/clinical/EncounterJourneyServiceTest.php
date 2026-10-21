@@ -145,4 +145,18 @@ class OrchestrateEncounterJourneyTest extends Unit
         $post = $catalog->phaseIdsByAnchor('encounter_finished');
         $this->assertContains('post_consulta', $post);
     }
+
+    public function testJourneyNotificationsComeFromCatalog(): void
+    {
+        $catalog = new EncounterPhaseWindowsCatalogService();
+        $notifications = $catalog->notifications('post_consulta');
+
+        $this->assertCount(2, $notifications);
+        $this->assertSame('JOURNEY_POSTCONSULTA_DISPONIBLE', $notifications[0]['tipo']);
+        $this->assertSame('Seguimiento post-consulta', $notifications[0]['title']);
+        $this->assertSame(
+            $notifications[0],
+            $catalog->notificationByType('JOURNEY_POSTCONSULTA_DISPONIBLE')
+        );
+    }
 }

@@ -71,7 +71,8 @@ final class EncounterJourneyFollowupStateService
                     $actionableCount++;
                     if ($nextId === null) {
                         $nextId = (int) $row->id;
-                        $nextTitle = trim((string) $row->title) ?: 'Seguimiento post-consulta';
+                        $nextTitle = trim((string) $row->title)
+                            ?: $this->defaultPostEncounterFollowupTitle();
                     }
                 }
             }
@@ -101,6 +102,18 @@ final class EncounterJourneyFollowupStateService
         $state = $this->stateForEncounter($encounterId);
 
         return $state['touchpoint_count'] > 0 && $state['open_count'] === 0;
+    }
+
+    private function defaultPostEncounterFollowupTitle(): string
+    {
+        $notification = (new EncounterPhaseWindowsCatalogService())->notificationByType(
+            \common\models\Scheduling\TurnoNotificacionProgramada::TIPO_JOURNEY_POSTCONSULTA_DISPONIBLE
+        );
+        if ($notification === null) {
+            throw new \RuntimeException('Falta el título de seguimiento post-encounter en el catálogo.');
+        }
+
+        return $notification['title'];
     }
 
     /**

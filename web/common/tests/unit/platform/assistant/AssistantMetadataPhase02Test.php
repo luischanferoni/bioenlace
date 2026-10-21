@@ -45,6 +45,11 @@ class AssistantMetadataPhase02Test extends Unit
         $prompt = GuideChannelConfig::stablePrompt();
         $this->assertStringContainsString('sistema de salud', $prompt);
         $this->assertStringContainsString('Datos del sistema', $prompt);
+        $this->assertStringContainsString('Un encounter es una interacción clínica', $prompt);
+        $this->assertStringContainsString('Un episodio es un contexto longitudinal', $prompt);
+        $this->assertStringContainsString('Una captura es un borrador', $prompt);
+        $this->assertStringContainsString('El motivo explica la razón', $prompt);
+        $this->assertStringContainsString('no uses «encounter» ni «atención»', $prompt);
     }
 
     public function testBookingOfferFromRoutingYaml(): void

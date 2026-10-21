@@ -143,6 +143,8 @@ Al programar el turno se encolan notificaciones (`turno_notificacion_programada`
 3. **T−2 h (riesgo medium o high).** Recordatorio (“tu turno es pronto”) si aún no confirmó / sigue pendiente.
 4. **Confirmación entregada / abierta.** Solo cuenta ACK autenticado de la app paciente. Aceptar el HTTP de FCM o mirar la bandeja **no** acredita entrega ni apertura; sin ACK no se interpreta “no confirmó” como culpa del paciente.
 
+Los avisos del journey clínico (motivos y cuestionario antes del turno, seguimiento posterior al encounter) toman título y cuerpo del [catálogo de notificaciones](../../common/components/Domain/Clinical/Encounter/Application/Catalog/encounter-journey-notifications.yaml); el scheduler y el cron comparten esa fuente.
+
 ### Ejemplo breve
 
 Ana tiene dos ausencias recientes → **high**. Reserva un turno para el viernes 10:00. El miércoles (~T−48) recibe el push de confirmación. El jueves (~T−24) **no** se cancela el turno (liberación deshabilitada). El viernes temprano (~T−2) puede recibir el recordatorio si sigue sin confirmar. Todo queda en `agent_run` con el riesgo legacy y el candidato del perfil.

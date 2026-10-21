@@ -93,20 +93,14 @@ class TurnoNotificacionController extends Controller
                         $row->save(false);
                         continue;
                     }
-                    $title = trim((string) ($meta['title'] ?? ''));
-                    $body = trim((string) ($meta['body'] ?? ''));
-                    if ($title === '') {
-                        $title = in_array($row->tipo, TurnoNotificacionProgramada::journeyPostConsultaTipos(), true)
-                            ? 'Seguimiento post-consulta'
-                            : 'Prepará tu consulta';
+                    $notificationCatalog = new \common\components\Domain\Clinical\Encounter\Application\Service\EncounterPhaseWindowsCatalogService();
+                    $notificationDefinition = $notificationCatalog->notificationByType((string) $row->tipo);
+                    if ($notificationDefinition === null) {
+                        throw new \RuntimeException('Falta la notificación de journey en el catálogo: ' . $row->tipo);
                     }
-                    if ($body !== '') {
-                        $body = str_replace('{fecha}', (string) $turno->fecha, $body);
-                    } else {
-                        $body = in_array($row->tipo, TurnoNotificacionProgramada::journeyPostConsultaTipos(), true)
-                            ? 'Tenés acciones de seguimiento después de tu consulta del ' . $turno->fecha
-                            : 'Tenés acciones pendientes antes del turno del ' . $turno->fecha;
-                    }
+                    $title = trim((string) ($meta['title'] ?? '')) ?: $notificationDefinition['title'];
+                    $bodyTemplate = trim((string) ($meta['body'] ?? '')) ?: $notificationDefinition['body'];
+                    $body = str_replace('{fecha}', (string) $turno->fecha, $bodyTemplate);
                     $encounter = \common\models\Clinical\Encounter::findOne(['appointment_id' => (int) $turno->id_turnos]);
                     $pushPayload = [
                         'type' => $row->tipo,

@@ -3,6 +3,8 @@
 namespace common\components\Domain\Clinical\Encounter\Application\Service;
 
 use common\components\Domain\Clinical\Encounter\Domain\EncounterPhaseWindowsCatalog;
+use common\components\Platform\Core\Product\ProductMetadataPaths;
+use Symfony\Component\Yaml\Yaml;
 use Yii;
 
 /**
@@ -12,6 +14,9 @@ final class EncounterPhaseWindowsCatalogService
 {
     /** @var array<string, mixed>|null */
     private static ?array $cache = null;
+
+    /** @var array<string, mixed>|null */
+    private static ?array $notificationCache = null;
 
     public const PHASE_MOTIVOS = 'motivos_consulta';
 
@@ -73,11 +78,7 @@ final class EncounterPhaseWindowsCatalogService
      */
     public function notifications(string $phaseId): array
     {
-        $def = $this->phase($phaseId);
-        if ($def === null) {
-            return [];
-        }
-        $raw = $def['notifications'] ?? [];
+        $raw = self::loadNotifications()['phases'][$phaseId] ?? [];
         if (!is_array($raw)) {
             return [];
         }
@@ -100,6 +101,22 @@ final class EncounterPhaseWindowsCatalogService
         }
 
         return $out;
+    }
+
+    /**
+     * @return array{offset: string, tipo: string, title: string, body: string}|null
+     */
+    public function notificationByType(string $type): ?array
+    {
+        foreach ($this->phaseIds() as $phaseId) {
+            foreach ($this->notifications($phaseId) as $notification) {
+                if ($notification['tipo'] === $type) {
+                    return $notification;
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -145,6 +162,7 @@ final class EncounterPhaseWindowsCatalogService
     public static function resetCacheForTests(): void
     {
         self::$cache = null;
+        self::$notificationCache = null;
     }
 
     /**
@@ -162,5 +180,59 @@ final class EncounterPhaseWindowsCatalogService
         self::$cache = $data;
 
         return self::$cache;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function loadNotifications(): array
+    {
+        if (self::$notificationCache !== null) {
+            return self::$notificationCache;
+        }
+
+        $path = ProductMetadataPaths::componentsDomainRoot()
+            . DIRECTORY_SEPARATOR . 'Clinical'
+            . DIRECTORY_SEPARATOR . 'Encounter'
+            . DIRECTORY_SEPARATOR . 'Application'
+            . DIRECTORY_SEPARATOR . 'Catalog'
+            . DIRECTORY_SEPARATOR . 'encounter-journey-notifications.yaml';
+        if (!is_file($path)) {
+            throw new \RuntimeException('No se encontró el catálogo de notificaciones de encounter: ' . $path);
+        }
+
+        $data = Yaml::parseFile($path);
+        if (
+            !is_array($data)
+            || ($data['version'] ?? null) !== 1
+            || !is_array($data['phases'] ?? null)
+        ) {
+            throw new \RuntimeException('Catálogo encounter-journey-notifications inválido.');
+        }
+        foreach ($data['phases'] as $phaseId => $notifications) {
+            if (!is_string($phaseId) || !is_array($notifications)) {
+                throw new \RuntimeException('Fase inválida en el catálogo de notificaciones de encounter.');
+            }
+            foreach ($notifications as $notification) {
+                if (
+                    !is_array($notification)
+                    || !is_string($notification['offset'] ?? null)
+                    || trim($notification['offset']) === ''
+                    || !is_string($notification['tipo'] ?? null)
+                    || trim($notification['tipo']) === ''
+                    || !is_string($notification['title'] ?? null)
+                    || trim($notification['title']) === ''
+                    || !is_string($notification['body'] ?? null)
+                    || trim($notification['body']) === ''
+                ) {
+                    throw new \RuntimeException(
+                        'Definición incompleta de notificación en la fase ' . $phaseId . '.'
+                    );
+                }
+            }
+        }
+        self::$notificationCache = $data;
+
+        return self::$notificationCache;
     }
 }

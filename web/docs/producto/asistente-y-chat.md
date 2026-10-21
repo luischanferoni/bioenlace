@@ -53,6 +53,8 @@ Contenido editorial: [contenido-informativo.md](./contenido-informativo.md).
 
 Cuando hace falta **dato del sistema** (próximo turno, reglas del centro, llegar tarde), PHP arma un plan declarativo (áreas derivadas del intent → aspect loaders) y la **guía** (`asistente-guide`) recibe el volcado acotado junto con `intent_semantics` / artículo.
 
+El prompt de guide distingue encounter, episodio, captura y motivo según el [glosario clínico](./glosario-encounter.md). Esas definiciones orientan la interpretación del contexto, pero no habilitan a exponer términos internos: el mensaje al paciente usa lenguaje cotidiano y respeta los textos de botones y copy que recibe.
+
 ```mermaid
 flowchart LR
   P[Preprocess IA]

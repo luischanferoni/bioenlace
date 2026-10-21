@@ -5,10 +5,10 @@ namespace common\components\Domain\Clinical\Capture\Domain\RowContract;
 use common\components\Domain\Clinical\Capture\Domain\Model\CaptureIssueFactory;
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureRowCompleteness;
 
-/** Contrato Domain: indicación clínica (`ConsultaIndicaciones`). */
+/** Domain contract for clinical instructions documented during an encounter. */
 final class IndicacionRowContract
 {
-    public const MODELO = 'ConsultaIndicaciones';
+    public const MODELO = 'EncounterInstruction';
 
     public const TYPE_COUNSELING = 'counseling';
     public const TYPE_CONDITIONAL = 'conditional';

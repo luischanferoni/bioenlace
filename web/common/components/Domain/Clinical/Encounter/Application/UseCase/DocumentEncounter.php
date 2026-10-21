@@ -1202,7 +1202,7 @@ class DocumentEncounter extends Component
                     $stat['created'] = max(0, $after - $before);
                     break;
                 case 'EncounterPractice':
-                case 'ConsultaIndicaciones':
+                case 'EncounterInstruction':
                     $rows = is_array($payload) ? $payload : [];
                     if ($rows !== []) {
                         try {
@@ -1223,7 +1223,7 @@ class DocumentEncounter extends Component
                     $after = (int) \common\models\Clinical\ServiceRequest::find()
                         ->where(['encounter_id' => $encounter->id, 'deleted_at' => null])
                         ->count();
-                    $stat['accion'] = $modelo === 'ConsultaIndicaciones' ? 'indicaciones' : 'practicas';
+                    $stat['accion'] = $modelo === 'EncounterInstruction' ? 'indicaciones' : 'practicas';
                     $stat['created'] = max(0, $after - $before);
                     break;
                 case 'EncounterReferralRequest':
@@ -1517,7 +1517,7 @@ class DocumentEncounter extends Component
         $dedup = new \common\components\Domain\Clinical\Encounter\Application\Service\EpisodeCaptureDedupService();
         $episodeIds = $this->episodeEncounterIdsFor($encounter);
         foreach ($payload as $row) {
-            if ($modelo === 'ConsultaIndicaciones' && is_array($row) && $episodeIds !== []) {
+            if ($modelo === 'EncounterInstruction' && is_array($row) && $episodeIds !== []) {
                 $ind = (string) ($row['Indicacion'] ?? $row['indicacion'] ?? $row['display'] ?? '');
                 $tipo = (string) ($row['Tipo'] ?? $row['tipo'] ?? $row['category'] ?? '');
                 $key = $dedup->normalizeKey($ind . '|' . $tipo);

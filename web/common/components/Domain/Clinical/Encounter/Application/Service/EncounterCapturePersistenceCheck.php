@@ -10,7 +10,7 @@ final class EncounterCapturePersistenceCheck
     private const MODEL_COUNTERS = [
         'EncounterReason' => 'reasons',
         'EncounterMedication' => 'medication_requests',
-        'ConsultaIndicaciones' => 'service_requests',
+        'EncounterInstruction' => 'service_requests',
         'EncounterPractice' => 'service_requests',
         'EncounterReferralRequest' => 'service_requests',
     ];

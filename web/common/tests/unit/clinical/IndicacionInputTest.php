@@ -7,7 +7,7 @@ use common\components\Domain\Clinical\Capture\Application\Service\RowContractSer
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\Capture\Domain\Policy\CaptureCompletenessPolicy;
 use common\models\Clinical\Input\IndicacionInput;
-use common\models\Clinical\ConsultaIndicaciones;
+use common\models\Clinical\EncounterInstruction;
 
 class IndicacionInputTest extends Unit
 {
@@ -69,9 +69,9 @@ class IndicacionInputTest extends Unit
             [
                 [
                     'titulo' => 'Indicaciones',
-                    'modelo' => 'ConsultaIndicaciones',
+                    'modelo' => 'EncounterInstruction',
                     'requerido' => false,
-                    'campos_requeridos' => (new ConsultaIndicaciones())->requeridosPrompt(),
+                    'campos_requeridos' => (new EncounterInstruction())->requeridosPrompt(),
                 ],
             ]
         );
@@ -95,9 +95,9 @@ class IndicacionInputTest extends Unit
             [
                 [
                     'titulo' => 'Indicaciones',
-                    'modelo' => 'ConsultaIndicaciones',
+                    'modelo' => 'EncounterInstruction',
                     'requerido' => false,
-                    'campos_requeridos' => (new ConsultaIndicaciones())->requeridosPrompt(),
+                    'campos_requeridos' => (new EncounterInstruction())->requeridosPrompt(),
                 ],
             ]
         );

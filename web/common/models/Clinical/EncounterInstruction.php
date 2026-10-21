@@ -6,11 +6,11 @@ use common\components\Domain\Clinical\Capture\Domain\RowContract\IndicacionRowCo
 use common\models\Clinical\Input\IndicacionInput;
 
 /**
- * Tipología de extracción/prompt para indicaciones clínicas.
+ * Capture model for clinical instructions.
  * Contrato Domain: {@see IndicacionRowContract}.
  * Persistencia: ServiceRequest / care plan.
  */
-class ConsultaIndicaciones extends \yii\base\Model
+final class EncounterInstruction extends \yii\base\Model
 {
     /**
      * @return list<string>

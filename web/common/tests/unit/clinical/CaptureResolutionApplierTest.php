@@ -6,7 +6,7 @@ use Codeception\Test\Unit;
 use common\components\Domain\Clinical\Capture\Domain\Model\CaptureIssueFactory;
 use common\components\Domain\Clinical\Capture\Application\Service\ResolutionApplier;
 use common\models\Clinical\Input\IndicacionInput;
-use common\models\Clinical\ConsultaIndicaciones;
+use common\models\Clinical\EncounterInstruction;
 
 class CaptureResolutionApplierTest extends Unit
 {
@@ -90,9 +90,9 @@ class CaptureResolutionApplierTest extends Unit
         $categorias = [
             [
                 'titulo' => 'Indicaciones',
-                'modelo' => 'ConsultaIndicaciones',
+                'modelo' => 'EncounterInstruction',
                 'requerido' => false,
-                'campos_requeridos' => (new ConsultaIndicaciones())->requeridosPrompt(),
+                'campos_requeridos' => (new EncounterInstruction())->requeridosPrompt(),
             ],
         ];
         $extraidos = [
@@ -111,7 +111,7 @@ class CaptureResolutionApplierTest extends Unit
 
         $this->assertSame(7, $updated['Indicaciones'][0]['Plazo dias']);
 
-        $check = ConsultaIndicaciones::completenessForExtractedRow($updated['Indicaciones'][0]);
+        $check = EncounterInstruction::completenessForExtractedRow($updated['Indicaciones'][0]);
         $this->assertSame([], $check['missing_fields']);
     }
 

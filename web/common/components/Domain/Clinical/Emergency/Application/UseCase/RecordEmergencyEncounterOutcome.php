@@ -203,7 +203,7 @@ final class RecordEmergencyEncounterOutcome
     {
         $blobs = [];
 
-        foreach (['EncounterReferralRequest', 'ConsultaIndicaciones', 'EncounterPractice'] as $cat) {
+        foreach (['EncounterReferralRequest', 'EncounterInstruction', 'EncounterPractice'] as $cat) {
             $payload = $datosExtraidos[$cat] ?? null;
             if (!is_array($payload)) {
                 continue;

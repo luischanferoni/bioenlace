@@ -141,7 +141,7 @@ class EncounterCaptureReviewPresenterTest extends Unit
             [
                 [
                     'titulo' => 'Indicaciones',
-                    'modelo' => 'ConsultaIndicaciones',
+                    'modelo' => 'EncounterInstruction',
                     'requerido' => false,
                     'campos_requeridos' => ['Indicacion', 'Tipo', 'Plazo dias'],
                 ],

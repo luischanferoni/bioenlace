@@ -4,7 +4,7 @@ namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\CarePlan\Application\UseCase\ManageServiceRequest;
-use common\models\Clinical\ConsultaIndicaciones;
+use common\models\Clinical\EncounterInstruction;
 use common\models\Clinical\Input\PracticaInput;
 
 /**
@@ -20,7 +20,7 @@ class PracticasIndicacionesPromptSplitTest extends Unit
 
     public function testIndicacionesPromptFieldsIncludeTipoAndPlazo(): void
     {
-        $campos = (new ConsultaIndicaciones())->requeridosPrompt();
+        $campos = (new EncounterInstruction())->requeridosPrompt();
         $this->assertSame(['Indicacion', 'Tipo', 'Plazo dias'], $campos);
     }
 

@@ -683,7 +683,7 @@ final class EpisodeCaptureDedupService
 
     private function isIndicationCategory(string $model, string $titleLower): bool
     {
-        if ($model === 'ConsultaIndicaciones') {
+        if ($model === 'EncounterInstruction') {
             return true;
         }
 

@@ -5,7 +5,7 @@ namespace common\tests\unit\clinical;
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\CareCohort\Application\UseCase\ScheduleCareFollowup;
 use common\components\Domain\Clinical\CarePlan\Application\UseCase\ManageServiceRequest;
-use common\models\Clinical\ConsultaIndicaciones;
+use common\models\Clinical\EncounterInstruction;
 
 class CareFollowupTouchpointsNormalizeTest extends Unit
 {
@@ -31,7 +31,7 @@ class CareFollowupTouchpointsNormalizeTest extends Unit
 
     public function testResolvePlazoDiasFromPromptCampos(): void
     {
-        $campos = (new ConsultaIndicaciones())->requeridosPrompt();
+        $campos = (new EncounterInstruction())->requeridosPrompt();
         $this->assertContains('Indicacion', $campos);
         $this->assertContains('Plazo dias', $campos);
         $row = [

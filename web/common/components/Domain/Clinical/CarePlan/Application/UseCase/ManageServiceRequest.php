@@ -48,7 +48,7 @@ final class ManageServiceRequest
         }
 
         if (is_string($row)) {
-            $row = $categoryKey === 'ConsultaIndicaciones'
+            $row = $categoryKey === 'EncounterInstruction'
                 ? ['Indicacion' => trim($row)]
                 : ['Practica' => trim($row)];
         }
@@ -56,7 +56,7 @@ final class ManageServiceRequest
             throw new \InvalidArgumentException('Fila de práctica/indicación inválida.');
         }
 
-        if ($categoryKey === 'ConsultaIndicaciones') {
+        if ($categoryKey === 'EncounterInstruction') {
             return $this->createIndicacionFromExtractedRow($encounter, $row, $carePlan);
         }
         if ($categoryKey === 'EncounterPractice') {

@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
 import '../config/paciente_intents.dart';
-import '../services/consulta_async_api.dart';
+import '../services/encounter_async_api.dart';
 import '../widgets/consulta_async_solicitud_card.dart';
-import 'chat_medico_screen.dart';
+import 'encounter_chat_patient_screen.dart';
 
 /// Detalle de un plan de tratamiento activo del paciente.
 class CarePlanDetailScreen extends StatefulWidget {
@@ -165,7 +165,7 @@ class _CarePlanDetailScreenState extends State<CarePlanDetailScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ChatMedicoScreen(
+        builder: (_) => EncounterChatPatientScreen(
           encounterId: id,
           authToken: widget.authToken,
           userId: widget.userId,
@@ -197,7 +197,7 @@ class _CarePlanDetailScreenState extends State<CarePlanDetailScreen> {
       ),
     );
     if (ok != true || !mounted) return;
-    final res = await ConsultaAsyncApi(authToken: widget.authToken).cancelarComoPaciente(id);
+    final res = await EncounterAsyncApi(authToken: widget.authToken).cancelarComoPaciente(id);
     if (!mounted) return;
     if (res['success'] == true) {
       await _cargarSolicitudes();

@@ -65,7 +65,7 @@ export 'clinical/care_plan_local_reminder_service.dart';
 export 'clinical/care_plan_reminder_settings_tile.dart';
 export 'clinical/care_plan_reminder_plan_panel.dart';
 export 'clinical/care_plan_reminder_time_calculator.dart';
-export 'clinical/async_consulta_chat_policy.dart';
+export 'clinical/encounter_chat_policy.dart';
 export 'clinical/async_intake_context_panel.dart';
 export 'clinical/encounter_patient_summary_api.dart';
 export 'clinical/device_speech_dictation.dart';
@@ -82,4 +82,3 @@ export 'person/paciente_context_api.dart';
 export 'person/paciente_context_scope.dart';
 export 'person/paciente_context_banner.dart';
 export 'person/paciente_operative_limited_notice.dart';
-

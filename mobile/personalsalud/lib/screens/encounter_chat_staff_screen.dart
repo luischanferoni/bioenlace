@@ -6,18 +6,18 @@ import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import 'package:shared/shared.dart';
 import '../services/encounter_chat_service.dart';
-import '../services/consulta_async_api.dart';
+import '../services/encounter_async_api.dart';
 import 'patient_timeline_screen.dart';
 
 /// Pantalla de chat con el paciente para una consulta (app Personal de Salud).
-class ChatConsultaScreen extends StatefulWidget {
+class EncounterChatStaffScreen extends StatefulWidget {
   final int encounterId;
   final String? authToken;
   final String userId;
   final String? userName;
   final String titulo;
 
-  const ChatConsultaScreen({
+  const EncounterChatStaffScreen({
     Key? key,
     required this.encounterId,
     required this.authToken,
@@ -27,17 +27,18 @@ class ChatConsultaScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<ChatConsultaScreen> createState() => _ChatConsultaScreenState();
+  State<EncounterChatStaffScreen> createState() =>
+      _EncounterChatStaffScreenState();
 }
 
-class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
+class _EncounterChatStaffScreenState extends State<EncounterChatStaffScreen> {
   late EncounterChatService _chatService;
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   List<dynamic> _messages = [];
   Map<String, dynamic>? _intakeContext;
-  AsyncConsultaChatPolicy _chatPolicy = AsyncConsultaChatPolicy.fromApi(null);
-  late ConsultaAsyncApi _asyncApi;
+  EncounterChatPolicy _chatPolicy = EncounterChatPolicy.fromApi(null);
+  late EncounterAsyncApi _asyncApi;
   bool _loading = true;
   bool _sending = false;
   String? _error;
@@ -52,7 +53,7 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
       authToken: widget.authToken,
       userName: widget.userName,
     );
-    _asyncApi = ConsultaAsyncApi(authToken: widget.authToken, userId: widget.userId);
+    _asyncApi = EncounterAsyncApi(authToken: widget.authToken, userId: widget.userId);
     _loadMessages();
   }
 
@@ -71,7 +72,7 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
         final ctx = data['intake_context'];
         _intakeContext = ctx is Map ? Map<String, dynamic>.from(ctx) : null;
         final policyRaw = data['chat_policy'];
-        _chatPolicy = AsyncConsultaChatPolicy.fromApi(
+        _chatPolicy = EncounterChatPolicy.fromApi(
           policyRaw is Map ? Map<String, dynamic>.from(policyRaw) : null,
         );
       } else {
@@ -82,7 +83,7 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
     _scrollToBottom();
   }
 
-  Future<void> _resolverConCodigo(AsyncConsultaResolution resolution) async {
+  Future<void> _resolverConCodigo(EncounterChatResolution resolution) async {
     if (_sending) return;
     String note = '';
     if (resolution.requireNote) {
@@ -540,7 +541,7 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
           ),
           BioSpacing.gapW(BioSpacing.sm),
           Text(
-            asyncChatAttachmentLabel(type),
+            encounterChatAttachmentLabel(type),
             style: BioTypography.bodySm.copyWith(color: mutedColor),
           ),
         ],
@@ -548,12 +549,12 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
     }
     if (isImageMessageType(type) && content.isNotEmpty) {
       return Text(
-        asyncChatAttachmentLabel(type),
+        encounterChatAttachmentLabel(type),
         style: BioTypography.bodySm.copyWith(color: mutedColor),
       );
     }
     return Text(
-      content.isNotEmpty ? content : asyncChatAttachmentLabel(type),
+      content.isNotEmpty ? content : encounterChatAttachmentLabel(type),
       style: BioTypography.bodySm.copyWith(color: mutedColor),
     );
   }

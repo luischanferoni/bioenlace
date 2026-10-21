@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../theme/tokens/tokens.dart';
 
-/// Resolución disponible para cierre staff (desde chat_policy.resoluciones_disponibles).
-class AsyncConsultaResolution {
-  const AsyncConsultaResolution({
+/// Resolution available to staff (from chat_policy.resoluciones_disponibles).
+class EncounterChatResolution {
+  const EncounterChatResolution({
     required this.code,
     required this.label,
     this.requireNote = false,
@@ -15,9 +15,9 @@ class AsyncConsultaResolution {
   final bool requireNote;
 }
 
-/// Política de chat async devuelta por GET consulta-chat/mensajes → data.chat_policy.
-class AsyncConsultaChatPolicy {
-  const AsyncConsultaChatPolicy({
+/// Encounter chat policy returned in data.chat_policy.
+class EncounterChatPolicy {
+  const EncounterChatPolicy({
     required this.composerEnabled,
     required this.uploadEnabled,
     required this.uploadTypes,
@@ -35,7 +35,7 @@ class AsyncConsultaChatPolicy {
   final String hint;
   final bool canCancel;
   final bool canClose;
-  final List<AsyncConsultaResolution> resolutions;
+  final List<EncounterChatResolution> resolutions;
   final bool suggestTurno;
   final String conversationMode;
 
@@ -51,9 +51,9 @@ class AsyncConsultaChatPolicy {
   /// Hilo de mensajes solo en consulta/evolución (modo conversacional).
   bool get showMessageThread => conversationMode != 'structured';
 
-  factory AsyncConsultaChatPolicy.fromApi(Map<String, dynamic>? raw) {
+  factory EncounterChatPolicy.fromApi(Map<String, dynamic>? raw) {
     if (raw == null) {
-      return const AsyncConsultaChatPolicy(
+      return const EncounterChatPolicy(
         composerEnabled: true,
         uploadEnabled: false,
         uploadTypes: [],
@@ -81,7 +81,7 @@ class AsyncConsultaChatPolicy {
     final resolutions = _parseResolutions(raw['resoluciones_disponibles']);
     final mode = raw['conversation_mode']?.toString().trim() ?? 'conversational';
 
-    return AsyncConsultaChatPolicy(
+    return EncounterChatPolicy(
       composerEnabled: enabled,
       uploadEnabled: upload,
       uploadTypes: uploadTypes,
@@ -94,8 +94,8 @@ class AsyncConsultaChatPolicy {
     );
   }
 
-  static List<AsyncConsultaResolution> _parseResolutions(dynamic resRaw) {
-    final resolutions = <AsyncConsultaResolution>[];
+  static List<EncounterChatResolution> _parseResolutions(dynamic resRaw) {
+    final resolutions = <EncounterChatResolution>[];
     if (resRaw is! Map) return resolutions;
     resRaw.forEach((k, v) {
       final code = k.toString().trim();
@@ -104,7 +104,7 @@ class AsyncConsultaChatPolicy {
         final label = v['label']?.toString().trim() ?? '';
         if (label.isEmpty) return;
         resolutions.add(
-          AsyncConsultaResolution(
+          EncounterChatResolution(
             code: code,
             label: label,
             requireNote: v['require_note'] == true,
@@ -114,7 +114,7 @@ class AsyncConsultaChatPolicy {
       }
       final label = v?.toString().trim() ?? '';
       if (label.isNotEmpty) {
-        resolutions.add(AsyncConsultaResolution(code: code, label: label));
+        resolutions.add(EncounterChatResolution(code: code, label: label));
       }
     });
     return resolutions;
@@ -122,7 +122,7 @@ class AsyncConsultaChatPolicy {
 }
 
 /// Etiqueta de adjunto para burbujas de chat async.
-String asyncChatAttachmentLabel(String? messageType) {
+String encounterChatAttachmentLabel(String? messageType) {
   switch (messageType) {
     case 'audio':
       return 'Mensaje de audio';
@@ -138,7 +138,10 @@ String asyncChatAttachmentLabel(String? messageType) {
 }
 
 /// Estilo de burbuja según message_kind / message_type del API.
-TextStyle asyncChatMessageTextStyle(BuildContext context, Map<String, dynamic> message) {
+TextStyle encounterChatMessageTextStyle(
+  BuildContext context,
+  Map<String, dynamic> message,
+) {
   final kind = message['message_kind']?.toString() ?? '';
   final type = message['message_type']?.toString() ?? '';
   final categoria = message['solicitud_categoria']?.toString().trim() ?? '';
@@ -158,7 +161,10 @@ TextStyle asyncChatMessageTextStyle(BuildContext context, Map<String, dynamic> m
   return base;
 }
 
-Decoration? asyncChatMessageDecoration(BuildContext context, Map<String, dynamic> message) {
+Decoration? encounterChatMessageDecoration(
+  BuildContext context,
+  Map<String, dynamic> message,
+) {
   final kind = message['message_kind']?.toString() ?? '';
   final type = message['message_type']?.toString() ?? '';
   final categoria = message['solicitud_categoria']?.toString().trim() ?? '';
@@ -178,7 +184,7 @@ Decoration? asyncChatMessageDecoration(BuildContext context, Map<String, dynamic
   return null;
 }
 
-bool asyncChatMessageIsSystem(Map<String, dynamic> message) {
+bool encounterChatMessageIsSystem(Map<String, dynamic> message) {
   final kind = message['message_kind']?.toString() ?? '';
   final type = message['message_type']?.toString() ?? '';
   return kind == 'sistema' || type == 'sistema';

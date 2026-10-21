@@ -11,10 +11,10 @@ import '../models/cirugia_agenda_item.dart';
 import '../auth/personalsalud_post_login.dart';
 import '../services/internados_service.dart';
 import '../services/emergency_guardia_api.dart';
-import '../services/consulta_async_api.dart';
+import '../services/encounter_async_api.dart';
 import 'emergency/emergency_guardia_actions.dart';
 import 'patient_timeline_screen.dart';
-import 'chat_consulta_screen.dart';
+import 'encounter_chat_staff_screen.dart';
 
 /// Pantalla principal del médico. Contenido según encounter class:
 /// AMB = turnos del día; VR = consultas por mensaje; IMP = internados/cirugías; EMER = tablero de guardia.
@@ -46,7 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
     authToken: widget.authToken,
     userId: widget.userId,
   );
-  late ConsultaAsyncApi _consultaAsyncApi = ConsultaAsyncApi(
+  late EncounterAsyncApi _encounterAsyncApi = EncounterAsyncApi(
     authToken: widget.authToken,
     userId: widget.userId,
   );
@@ -114,11 +114,11 @@ class _HomeScreenState extends State<HomeScreen> {
       if (token != null && token.isNotEmpty) {
         _homePanelApi.authToken = token;
         _emergencyApi.authToken = token;
-        _consultaAsyncApi = ConsultaAsyncApi(authToken: token, userId: widget.userId);
+        _encounterAsyncApi = EncounterAsyncApi(authToken: token, userId: widget.userId);
       } else if (widget.authToken != null && widget.authToken!.isNotEmpty) {
         _homePanelApi.authToken = widget.authToken;
         _emergencyApi.authToken = widget.authToken;
-        _consultaAsyncApi = ConsultaAsyncApi(authToken: widget.authToken, userId: widget.userId);
+        _encounterAsyncApi = EncounterAsyncApi(authToken: widget.authToken, userId: widget.userId);
       } else {
         _homePanelApi.userId = widget.userId;
       }
@@ -991,7 +991,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     setState(() => _tomandoAsyncIds.add(encounterId));
     try {
-      final res = await _consultaAsyncApi.tomarComoStaff(encounterId);
+      final res = await _encounterAsyncApi.tomarComoStaff(encounterId);
       if (res['success'] != true) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1027,7 +1027,7 @@ class _HomeScreenState extends State<HomeScreen> {
     await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (_) => ChatConsultaScreen(
+        builder: (_) => EncounterChatStaffScreen(
           encounterId: encounterId,
           authToken: _homePanelApi.authToken ?? widget.authToken,
           userId: widget.userId,

@@ -12,7 +12,7 @@ import 'home_screen.dart';
 import 'chat_screen.dart';
 import 'care_plan_detail_screen.dart';
 import 'configuracion_screen.dart';
-import 'chat_medico_screen.dart';
+import 'encounter_chat_patient_screen.dart';
 import 'encounter_summary_detail_screen.dart';
 import 'encounter_reasons_chat_screen.dart';
 import 'paciente_provincia_context_screen.dart';
@@ -146,7 +146,7 @@ class _MainScreenState extends State<MainScreen> {
     setState(() => _selectedIndex = 0);
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => ChatMedicoScreen(
+        builder: (_) => EncounterChatPatientScreen(
           encounterId: encounterId,
           authToken: widget.authToken,
           userId: widget.chatService.currentUserId,

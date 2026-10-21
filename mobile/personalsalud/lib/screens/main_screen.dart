@@ -4,7 +4,7 @@ import 'package:shared/shared.dart';
 
 import '../services/push_notification_service.dart';
 import '../services/chat_service.dart';
-import 'chat_consulta_screen.dart';
+import 'encounter_chat_staff_screen.dart';
 import 'home_screen.dart';
 import 'chat_screen.dart';
 import 'configuracion_screen.dart';
@@ -53,7 +53,7 @@ class _MainScreenState extends State<MainScreen> {
           setState(() => _selectedIndex = 0);
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (_) => ChatConsultaScreen(
+              builder: (_) => EncounterChatStaffScreen(
                 encounterId: asyncId,
                 authToken: widget.authToken,
                 userId: widget.userId,

@@ -6,7 +6,7 @@ import 'package:shared/shared.dart';
 import '../models/turno.dart';
 import '../services/turnos_service.dart';
 import 'patient_timeline_screen.dart';
-import 'chat_consulta_screen.dart';
+import 'encounter_chat_staff_screen.dart';
 
 class AppointmentsScreen extends StatefulWidget {
   final String? authToken;
@@ -485,7 +485,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ChatConsultaScreen(
+        builder: (context) => EncounterChatStaffScreen(
           encounterId: encounterId,
           authToken: widget.authToken,
           userId: widget.userId ?? '0',

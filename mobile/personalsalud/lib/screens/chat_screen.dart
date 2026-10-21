@@ -11,15 +11,12 @@ import 'package:url_launcher/url_launcher.dart';
 import '../navigation/native_screen_router.dart';
 import '../services/chat_service.dart';
 import '../components/dynamic_form.dart';
-import 'chat_consulta_screen.dart';
+import 'encounter_chat_staff_screen.dart';
 
 class ChatScreen extends StatefulWidget {
   final ChatService chatService;
 
-  const ChatScreen({
-    Key? key,
-    required this.chatService,
-  }) : super(key: key);
+  const ChatScreen({Key? key, required this.chatService}) : super(key: key);
 
   @override
   ChatScreenState createState() => ChatScreenState();
@@ -40,6 +37,7 @@ class ChatScreenState extends State<ChatScreen> {
   String? _intentId;
   String? _subintentId;
   String _lastUserUtterance = '';
+
   /// Evita re-POST del mismo auto-pick si el motor reentrega el mismo paso.
   String? _lastFlowAutoPickKey;
 
@@ -77,7 +75,8 @@ class ChatScreenState extends State<ChatScreen> {
     }
     final route = (inline['route'] ?? '').toString();
     final abs = (inline['api_absolute_url'] ?? '').toString();
-    return route.contains('crear-como-paciente') || abs.contains('crear-como-paciente');
+    return route.contains('crear-como-paciente') ||
+        abs.contains('crear-como-paciente');
   }
 
   /// Título del flujo (`action_name` en el YAML del subintent).
@@ -113,13 +112,15 @@ class ChatScreenState extends State<ChatScreen> {
     final fm = message['flow_manifest'];
     if (fm is! Map) return false;
     final manifest = Map<String, dynamic>.from(fm);
-    final activeId = (message['subintent_id'] ?? manifest['active_subintent_id'] ?? '')
-        .toString()
-        .trim();
+    final activeId =
+        (message['subintent_id'] ?? manifest['active_subintent_id'] ?? '')
+            .toString()
+            .trim();
     final activeStep = manifest['active_step'];
     if (activeStep is Map) {
       final next = activeStep['next']?.toString().trim() ?? '';
-      if (activeId.isEmpty || (activeStep['id']?.toString().trim() ?? '') == activeId) {
+      if (activeId.isEmpty ||
+          (activeStep['id']?.toString().trim() ?? '') == activeId) {
         return next.isEmpty;
       }
     }
@@ -149,7 +150,8 @@ class ChatScreenState extends State<ChatScreen> {
         if (value.isNotEmpty) return value;
       }
     }
-    final autoSelected = message['_flow_auto_selected_id']?.toString().trim() ?? '';
+    final autoSelected =
+        message['_flow_auto_selected_id']?.toString().trim() ?? '';
     return autoSelected.isNotEmpty ? autoSelected : null;
   }
 
@@ -193,8 +195,9 @@ class ChatScreenState extends State<ChatScreen> {
   }
 
   bool _draftAckImpactoBaja() {
-    final ack =
-        (_draft['impacto_baja_revisado']?.toString() ?? '').trim().toLowerCase();
+    final ack = (_draft['impacto_baja_revisado']?.toString() ?? '')
+        .trim()
+        .toLowerCase();
     return ack == '1' || ack == 'true' || ack == 'si' || ack == 'sí';
   }
 
@@ -220,12 +223,15 @@ class ChatScreenState extends State<ChatScreen> {
         : null;
     final resolved = absRaw.trim().isNotEmpty
         ? absRaw
-        : (routeRaw.isNotEmpty ? applyProvidedParamsToRoute(routeRaw, providedMap) : '');
+        : (routeRaw.isNotEmpty
+              ? applyProvidedParamsToRoute(routeRaw, providedMap)
+              : '');
     if (resolved.isEmpty) return;
     final u = Uri.tryParse(resolved);
     if (u == null) return;
     final idServicio =
-        u.queryParameters['id_servicio_asignado'] ?? u.queryParameters['id_servicio'];
+        u.queryParameters['id_servicio_asignado'] ??
+        u.queryParameters['id_servicio'];
     if (idServicio != null && idServicio.isNotEmpty) {
       _draft.putIfAbsent('id_servicio_asignado', () => idServicio);
     }
@@ -288,7 +294,8 @@ class ChatScreenState extends State<ChatScreen> {
         }
         final msg = res['message']?.toString() ?? '';
         lastError = Exception(msg);
-        final retryable = msg.contains('Avance en curso') ||
+        final retryable =
+            msg.contains('Avance en curso') ||
             isRetryableNetworkError(lastError);
         if (attempt < _flowAdvanceMaxAttempts && retryable) {
           continue;
@@ -384,114 +391,123 @@ class ChatScreenState extends State<ChatScreen> {
   }
 
   /// Tras un POST al asistente en modo flow: sincroniza sesión, agrega burbuja y abre mini-UI si aplica.
-  Future<void> _handleFlowEnvelopeResponse(Map<String, dynamic> envelope) async {
+  Future<void> _handleFlowEnvelopeResponse(
+    Map<String, dynamic> envelope,
+  ) async {
     try {
-    final nextFlow = AssistantFlowView.fromEnvelope(envelope);
-    if (nextFlow == null) {
-      final t = envelope['text']?.toString() ?? 'Ok.';
+      final nextFlow = AssistantFlowView.fromEnvelope(envelope);
+      if (nextFlow == null) {
+        final t = envelope['text']?.toString() ?? 'Ok.';
+        setState(() {
+          _chatHistory.add({
+            'type': 'bot',
+            'content': t,
+            'actions': null,
+            'timestamp': DateTime.now(),
+          });
+        });
+        _scrollToBottom();
+        return;
+      }
+
+      _syncFlowSessionFromView(nextFlow);
+      final msgText = nextFlow.text.trim().isNotEmpty
+          ? nextFlow.text.trim()
+          : 'Ok.';
+      final fsPayload = _normalizeFlowSubmit(nextFlow.flowSubmit);
+      final fdPayload = _normalizeFlowDismiss(nextFlow.flowDismiss);
+      final providesPayload = nextFlow.provides;
+      final openUi = nextFlow.openUi;
+      final co = openUi != null ? openUi['client_open'] : null;
+      final actionId = openUi != null ? openUi['action_id']?.toString() : null;
+      final hasInlineUi =
+          co is Map && (actionId != null && actionId.isNotEmpty);
+      final isSubmitOnly = fsPayload != null && !hasInlineUi;
+      final isDismissOnly =
+          fdPayload != null && !hasInlineUi && fsPayload == null;
+
       setState(() {
         _chatHistory.add({
           'type': 'bot',
-          'content': t,
+          'content': msgText,
           'actions': null,
+          if (nextFlow.manifest != null) 'flow_manifest': nextFlow.manifest,
+          if (nextFlow.hints.isNotEmpty) 'hints': nextFlow.hints,
+          if (fsPayload != null && isSubmitOnly) 'flow_submit': fsPayload,
+          if (isDismissOnly) 'flow_dismiss': fdPayload,
+          if (providesPayload.isNotEmpty) 'flow_provides': providesPayload,
           'timestamp': DateTime.now(),
         });
+        _stampLastBotMessageFlowActivation();
+        _applyFlowSupersession(activeIntentId: _intentId);
       });
       _scrollToBottom();
-      return;
-    }
 
-    _syncFlowSessionFromView(nextFlow);
-    final msgText = nextFlow.text.trim().isNotEmpty ? nextFlow.text.trim() : 'Ok.';
-    final fsPayload = _normalizeFlowSubmit(nextFlow.flowSubmit);
-    final fdPayload = _normalizeFlowDismiss(nextFlow.flowDismiss);
-    final providesPayload = nextFlow.provides;
-    final openUi = nextFlow.openUi;
-    final co = openUi != null ? openUi['client_open'] : null;
-    final actionId = openUi != null ? openUi['action_id']?.toString() : null;
-    final hasInlineUi =
-        co is Map && (actionId != null && actionId.isNotEmpty);
-    final isSubmitOnly = fsPayload != null && !hasInlineUi;
-    final isDismissOnly = fdPayload != null && !hasInlineUi && fsPayload == null;
-
-    setState(() {
-      _chatHistory.add({
-        'type': 'bot',
-        'content': msgText,
-        'actions': null,
-        if (nextFlow.manifest != null) 'flow_manifest': nextFlow.manifest,
-        if (nextFlow.hints.isNotEmpty) 'hints': nextFlow.hints,
-        if (fsPayload != null && isSubmitOnly) 'flow_submit': fsPayload,
-        if (isDismissOnly) 'flow_dismiss': fdPayload,
-        if (providesPayload.isNotEmpty) 'flow_provides': providesPayload,
-        'timestamp': DateTime.now(),
-      });
-      _stampLastBotMessageFlowActivation();
-      _applyFlowSupersession(activeIntentId: _intentId);
-    });
-    _scrollToBottom();
-
-    if (openUi == null || isSubmitOnly || isDismissOnly) {
-      return;
-    }
-    if (actionId == null || actionId.isEmpty) {
-      return;
-    }
-
-    Map<String, dynamic>? pseudoAction;
-    if (co is Map) {
-      pseudoAction = <String, dynamic>{
-        'action_id': actionId,
-        'display_name': actionId,
-        'client_open': Map<String, dynamic>.from(co),
-        'parameters': {'provided': _draft},
-      };
-    } else {
-      String? route;
-      final fm = nextFlow.manifest;
-      if (fm != null) {
-        final step = fm['active_step'];
-        if (step is Map) {
-          final ui = step['ui'];
-          if (ui is Map && ui['tabs'] is List) {
-            final tabs = ui['tabs'] as List;
-            final defId = ui['default_tab']?.toString() ?? '';
-            Map? picked;
-            for (final tt in tabs) {
-              if (tt is Map && defId.isNotEmpty && tt['id']?.toString() == defId) {
-                picked = tt;
-                break;
-              }
-            }
-            picked ??= tabs.isNotEmpty && tabs.first is Map ? (tabs.first as Map) : null;
-            route = picked is Map ? picked['route']?.toString() : null;
-          }
-        }
+      if (openUi == null || isSubmitOnly || isDismissOnly) {
+        return;
       }
-      route ??= _apiRouteFromActionId(actionId);
-      if (route != null && route.isNotEmpty) {
+      if (actionId == null || actionId.isEmpty) {
+        return;
+      }
+
+      Map<String, dynamic>? pseudoAction;
+      if (co is Map) {
         pseudoAction = <String, dynamic>{
           'action_id': actionId,
           'display_name': actionId,
-          'client_open': {
-            'kind': 'ui_json',
-            'api': {'route': route, 'method': 'GET|POST'},
-          },
+          'client_open': Map<String, dynamic>.from(co),
           'parameters': {'provided': _draft},
         };
+      } else {
+        String? route;
+        final fm = nextFlow.manifest;
+        if (fm != null) {
+          final step = fm['active_step'];
+          if (step is Map) {
+            final ui = step['ui'];
+            if (ui is Map && ui['tabs'] is List) {
+              final tabs = ui['tabs'] as List;
+              final defId = ui['default_tab']?.toString() ?? '';
+              Map? picked;
+              for (final tt in tabs) {
+                if (tt is Map &&
+                    defId.isNotEmpty &&
+                    tt['id']?.toString() == defId) {
+                  picked = tt;
+                  break;
+                }
+              }
+              picked ??= tabs.isNotEmpty && tabs.first is Map
+                  ? (tabs.first as Map)
+                  : null;
+              route = picked is Map ? picked['route']?.toString() : null;
+            }
+          }
+        }
+        route ??= _apiRouteFromActionId(actionId);
+        if (route != null && route.isNotEmpty) {
+          pseudoAction = <String, dynamic>{
+            'action_id': actionId,
+            'display_name': actionId,
+            'client_open': {
+              'kind': 'ui_json',
+              'api': {'route': route, 'method': 'GET|POST'},
+            },
+            'parameters': {'provided': _draft},
+          };
+        }
       }
-    }
 
-    if (pseudoAction == null) {
-      return;
-    }
+      if (pseudoAction == null) {
+        return;
+      }
 
-    await _tryOpenClientNative(
-      pseudoAction,
-      messageIndex: _chatHistory.length - 1,
-      pendingFlowSubmit: fsPayload,
-      pendingFlowDismiss: fdPayload,
-    );
+      await _tryOpenClientNative(
+        pseudoAction,
+        messageIndex: _chatHistory.length - 1,
+        pendingFlowSubmit: fsPayload,
+        pendingFlowDismiss: fdPayload,
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -532,7 +548,9 @@ class ChatScreenState extends State<ChatScreen> {
   ) {
     final dismiss = Map<String, dynamic>.from(message['flow_dismiss'] as Map);
     final label = dismiss['label']?.toString() ?? 'Entendido';
-    final actions = dismiss['actions'] is List ? dismiss['actions'] as List : const [];
+    final actions = dismiss['actions'] is List
+        ? dismiss['actions'] as List
+        : const [];
     final flowUiDisabled = message['flow_superseded'] == true;
     final flowCollapsing = message['flow_collapsing'] == true;
 
@@ -550,7 +568,10 @@ class ChatScreenState extends State<ChatScreen> {
                   Builder(
                     builder: (ctx) {
                       final a = Map<String, dynamic>.from(raw);
-                      final actionLabel = a['label']?.toString() ?? a['href']?.toString() ?? 'Acción';
+                      final actionLabel =
+                          a['label']?.toString() ??
+                          a['href']?.toString() ??
+                          'Acción';
                       final href = a['href']?.toString() ?? '';
                       final isDanger = a['variant']?.toString() == 'danger';
                       if (isDanger) {
@@ -558,7 +579,8 @@ class ChatScreenState extends State<ChatScreen> {
                           label: actionLabel,
                           icon: Icons.phone,
                           size: BioButtonSize.lg,
-                          onPressed: (flowUiDisabled || flowCollapsing || href.isEmpty)
+                          onPressed:
+                              (flowUiDisabled || flowCollapsing || href.isEmpty)
                               ? null
                               : () => _launchFlowDismissHref(href),
                         );
@@ -566,7 +588,8 @@ class ChatScreenState extends State<ChatScreen> {
                       return BioButton.outlinePrimary(
                         label: actionLabel,
                         size: BioButtonSize.lg,
-                        onPressed: (flowUiDisabled || flowCollapsing || href.isEmpty)
+                        onPressed:
+                            (flowUiDisabled || flowCollapsing || href.isEmpty)
                             ? null
                             : () => _launchFlowDismissHref(href),
                       );
@@ -666,7 +689,8 @@ class ChatScreenState extends State<ChatScreen> {
   void _supersedeAllFlowInteractiveMessages() {
     for (final m in _chatHistory) {
       if (m['type'] != 'bot') continue;
-      if (_messageHasFlowInteractiveUi(m) || _messageInteractiveButtons(m).isNotEmpty) {
+      if (_messageHasFlowInteractiveUi(m) ||
+          _messageInteractiveButtons(m).isNotEmpty) {
         m['flow_superseded'] = true;
       }
     }
@@ -781,7 +805,10 @@ class ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  void _applyFlowSupersession({String? previousIntentId, String? activeIntentId}) {
+  void _applyFlowSupersession({
+    String? previousIntentId,
+    String? activeIntentId,
+  }) {
     if (activeIntentId == null || activeIntentId.isEmpty) {
       return;
     }
@@ -901,16 +928,16 @@ class ChatScreenState extends State<ChatScreen> {
         offset: collapsing ? const Offset(0, -0.06) : Offset.zero,
         duration: _flowCollapseFadeOut,
         curve: Curves.easeInOut,
-        child: IgnorePointer(
-          ignoring: collapsing,
-          child: child,
-        ),
+        child: IgnorePointer(ignoring: collapsing, child: child),
       ),
     );
   }
 
   /// Título del flow: una vez por activación (misma `flow_activation_seq`), no en cada paso.
-  bool _shouldShowFlowChatHeader(int messageIndex, Map<String, dynamic> message) {
+  bool _shouldShowFlowChatHeader(
+    int messageIndex,
+    Map<String, dynamic> message,
+  ) {
     final fm = message['flow_manifest'];
     if (fm is! Map) {
       return false;
@@ -1034,7 +1061,7 @@ class ChatScreenState extends State<ChatScreen> {
     // Cargar token desde SharedPreferences
     final prefs = await SharedPreferences.getInstance();
     final authToken = prefs.getString('auth_token');
-    
+
     // Inicializar servicio con el userId y token
     _asistenteService = AsistenteService(
       userId: widget.chatService.currentUserId,
@@ -1066,7 +1093,8 @@ class ChatScreenState extends State<ChatScreen> {
 
   /// Mensaje genérico cuando el sobre no fue consumido por flow/interactive/message.
   void _appendGenericAsistenteBotMessage(Map<String, dynamic> data) {
-    final actions = data['actions'] ?? (data['action'] != null ? [data['action']] : null);
+    final actions =
+        data['actions'] ?? (data['action'] != null ? [data['action']] : null);
     final textField = data['text']?.toString();
     final explanation = (textField != null && textField.trim().isNotEmpty)
         ? textField.trim()
@@ -1081,7 +1109,9 @@ class ChatScreenState extends State<ChatScreen> {
       _chatHistory.add({
         'type': 'bot',
         'content': explanation,
-        'actions': actions != null && actions.isNotEmpty ? List<Map<String, dynamic>>.from(actions) : null,
+        'actions': actions != null && actions.isNotEmpty
+            ? List<Map<String, dynamic>>.from(actions)
+            : null,
         'suggested_query': suggestedQuery,
         'query_type': queryType,
         'matched_by': matchedBy,
@@ -1096,7 +1126,8 @@ class ChatScreenState extends State<ChatScreen> {
   }
 
   void _maybeAutoExecuteSingleAction(Map<String, dynamic> data) {
-    final actions = data['actions'] ?? (data['action'] != null ? [data['action']] : null);
+    final actions =
+        data['actions'] ?? (data['action'] != null ? [data['action']] : null);
     final matchedBy = data['matched_by'];
     final queryType = data['query_type'];
     final needsUserInput = data['needs_user_input'] ?? false;
@@ -1171,7 +1202,8 @@ class ChatScreenState extends State<ChatScreen> {
     if (openUi != null || flowSubmit != null || flowDismiss != null) {
       final co = openUi != null ? openUi['client_open'] : null;
       final actionId = openUi != null ? openUi['action_id']?.toString() : null;
-      final hasInlineUiOpen = co is Map && actionId != null && actionId.isNotEmpty;
+      final hasInlineUiOpen =
+          co is Map && actionId != null && actionId.isNotEmpty;
       if (flowDismiss != null && flowSubmit == null && !hasInlineUiOpen) {
         setState(() {
           _flowAdvancing = false;
@@ -1197,7 +1229,8 @@ class ChatScreenState extends State<ChatScreen> {
       }
       // Caso "submit-only": el motor cerró el flow sin UI previa (ver `buildTerminalSubmitOnlyResponse`).
       // Mensaje sólo con `flow_submit` → render del botón "Confirmar y enviar" sin `inline_ui`.
-      if (flowSubmit != null && !(co is Map && actionId != null && actionId.isNotEmpty)) {
+      if (flowSubmit != null &&
+          !(co is Map && actionId != null && actionId.isNotEmpty)) {
         setState(() {
           _isSending = false;
           _chatHistory.add({
@@ -1223,14 +1256,21 @@ class ChatScreenState extends State<ChatScreen> {
         final kindCo = co['kind']?.toString();
         final api = co['api'];
         final mobile = co['mobile'];
-        final hasUiJsonRoute = (kindCo == 'ui_json') && (api is Map) && (api['route']?.toString().isNotEmpty ?? false);
-        final hasNativeScreen = (kindCo == 'native') && (mobile is Map) && (mobile['screen_id']?.toString().isNotEmpty ?? false);
+        final hasUiJsonRoute =
+            (kindCo == 'ui_json') &&
+            (api is Map) &&
+            (api['route']?.toString().isNotEmpty ?? false);
+        final hasNativeScreen =
+            (kindCo == 'native') &&
+            (mobile is Map) &&
+            (mobile['screen_id']?.toString().isNotEmpty ?? false);
         if (!(hasUiJsonRoute || hasNativeScreen)) {
           setState(() {
             _isSending = false;
             _chatHistory.add({
               'type': 'bot',
-              'content': '$explanation\n\nNo puedo abrir la mini-UI requerida ($actionId): client_open inválido o incompleto.',
+              'content':
+                  '$explanation\n\nNo puedo abrir la mini-UI requerida ($actionId): client_open inválido o incompleto.',
               'actions': null,
               'timestamp': DateTime.now(),
             });
@@ -1254,9 +1294,11 @@ class ChatScreenState extends State<ChatScreen> {
             if (flow.manifest != null) 'flow_manifest': flow.manifest,
             if (flow.hints.isNotEmpty) 'hints': flow.hints,
             if (flowSubmit != null) 'flow_submit': flowSubmit,
-            if (flowSubmit != null && hasUiJsonRoute) '_flow_submit_ready': false,
+            if (flowSubmit != null && hasUiJsonRoute)
+              '_flow_submit_ready': false,
             if (flowDismiss != null) 'flow_dismiss': flowDismiss,
-            if (flowDismiss != null && hasUiJsonRoute) '_flow_dismiss_ready': false,
+            if (flowDismiss != null && hasUiJsonRoute)
+              '_flow_dismiss_ready': false,
             if (providesList.isNotEmpty) 'flow_provides': providesList,
             'timestamp': DateTime.now(),
           });
@@ -1288,12 +1330,16 @@ class ChatScreenState extends State<ChatScreen> {
               final defId = ui['default_tab']?.toString() ?? '';
               Map? picked;
               for (final t in tabs) {
-                if (t is Map && defId.isNotEmpty && t['id']?.toString() == defId) {
+                if (t is Map &&
+                    defId.isNotEmpty &&
+                    t['id']?.toString() == defId) {
                   picked = t;
                   break;
                 }
               }
-              picked ??= tabs.isNotEmpty && tabs.first is Map ? (tabs.first as Map) : null;
+              picked ??= tabs.isNotEmpty && tabs.first is Map
+                  ? (tabs.first as Map)
+                  : null;
               route = picked is Map ? picked['route']?.toString() : null;
             }
           }
@@ -1344,7 +1390,8 @@ class ChatScreenState extends State<ChatScreen> {
           _isSending = false;
           _chatHistory.add({
             'type': 'bot',
-            'content': '$explanation\n\nNo puedo abrir la mini-UI requerida ($actionId). No vino client_open ni pude derivar route desde flow_manifest.',
+            'content':
+                '$explanation\n\nNo puedo abrir la mini-UI requerida ($actionId). No vino client_open ni pude derivar route desde flow_manifest.',
             'actions': null,
             'timestamp': DateTime.now(),
           });
@@ -1377,14 +1424,22 @@ class ChatScreenState extends State<ChatScreen> {
     return false;
   }
 
-  List<Map<String, dynamic>> _messageInteractiveButtons(Map<String, dynamic> message) {
+  List<Map<String, dynamic>> _messageInteractiveButtons(
+    Map<String, dynamic> message,
+  ) {
     final buttons = message['buttons'];
     if (buttons is List && buttons.isNotEmpty) {
-      return buttons.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      return buttons
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
     }
     final rem = message['remediation'];
     if (rem is List && rem.isNotEmpty) {
-      return rem.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      return rem
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
     }
     return [];
   }
@@ -1427,7 +1482,8 @@ class ChatScreenState extends State<ChatScreen> {
           _isSending = false;
           _chatHistory.add({
             'type': 'bot',
-            'content': result['message']?.toString() ?? 'No se pudo iniciar el flujo.',
+            'content':
+                result['message']?.toString() ?? 'No se pudo iniciar el flujo.',
             'timestamp': DateTime.now(),
           });
         });
@@ -1462,11 +1518,11 @@ class ChatScreenState extends State<ChatScreen> {
   }
 
   /// Inicia un flow por `intent_id` como la SPA (Atajos → `startFlowFromShortcut`).
-  Future<void> _startFlowFromShortcut(String intentId, String displayTitle) async {
-    await _onRemediationChoice({
-      'intent_id': intentId,
-      'reset_flow': true,
-    });
+  Future<void> _startFlowFromShortcut(
+    String intentId,
+    String displayTitle,
+  ) async {
+    await _onRemediationChoice({'intent_id': intentId, 'reset_flow': true});
   }
 
   Future<void> _showAtajosSheet() async {
@@ -1523,8 +1579,8 @@ class ChatScreenState extends State<ChatScreen> {
                     child: Text(
                       'Atajos',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   Expanded(
@@ -1559,7 +1615,8 @@ class ChatScreenState extends State<ChatScreen> {
       categorias: cats,
       scrollController: _welcomeShortcutsScrollController,
       isSending: _isSending,
-      onShortcutTap: (intentId, title) => _startFlowFromShortcut(intentId, title),
+      onShortcutTap: (intentId, title) =>
+          _startFlowFromShortcut(intentId, title),
     );
   }
 
@@ -1619,9 +1676,11 @@ class ChatScreenState extends State<ChatScreen> {
           _isSending = false;
           _chatHistory.add({
             'type': 'bot',
-            'content': (textFromEnvelope != null && textFromEnvelope.trim().isNotEmpty)
+            'content':
+                (textFromEnvelope != null && textFromEnvelope.trim().isNotEmpty)
                 ? textFromEnvelope.trim()
-                : (result['message']?.toString() ?? 'Lo siento, no pude procesar tu consulta. Intenta nuevamente.'),
+                : (result['message']?.toString() ??
+                      'Lo siento, no pude procesar tu consulta. Intenta nuevamente.'),
             'suggested_query': data?['interaccion_sugerida']?['texto'],
             'timestamp': DateTime.now(),
           });
@@ -1633,7 +1692,8 @@ class ChatScreenState extends State<ChatScreen> {
         _isSending = false;
         _chatHistory.add({
           'type': 'bot',
-          'content': 'Error al procesar tu consulta. Por favor, intenta nuevamente.',
+          'content':
+              'Error al procesar tu consulta. Por favor, intenta nuevamente.',
           'timestamp': DateTime.now(),
         });
       });
@@ -1733,15 +1793,21 @@ class ChatScreenState extends State<ChatScreen> {
         }
       }
     }
-    final needsGeo = tab['requires_client'] is List &&
-        (tab['requires_client'] as List).map((e) => e.toString()).contains('geolocation');
+    final needsGeo =
+        tab['requires_client'] is List &&
+        (tab['requires_client'] as List)
+            .map((e) => e.toString())
+            .contains('geolocation');
     if (needsGeo) {
       var perm = await Geolocator.checkPermission();
       if (perm == LocationPermission.denied) {
         perm = await Geolocator.requestPermission();
       }
-      if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) {
-        throw Exception('Se necesita permiso de ubicación para listar centros de salud cercanos.');
+      if (perm == LocationPermission.denied ||
+          perm == LocationPermission.deniedForever) {
+        throw Exception(
+          'Se necesita permiso de ubicación para listar centros de salud cercanos.',
+        );
       }
       final pos = await Geolocator.getCurrentPosition();
       qp['latitud'] = '${pos.latitude}';
@@ -1808,10 +1874,16 @@ class ChatScreenState extends State<ChatScreen> {
     return out;
   }
 
-  Future<void> _onFlowManifestTabSelected(int messageIndex, Map<String, dynamic> tab) async {
+  Future<void> _onFlowManifestTabSelected(
+    int messageIndex,
+    Map<String, dynamic> tab,
+  ) async {
     try {
       final draftSnap = _draftSnapshotForMessage(messageIndex);
-      final url = await _absoluteUrlForFlowManifestTab(tab, draftForQuery: draftSnap);
+      final url = await _absoluteUrlForFlowManifestTab(
+        tab,
+        draftForQuery: draftSnap,
+      );
       if (url == null || url.isEmpty) {
         _showErrorSnackbar('No se pudo armar la URL del listado.');
         return;
@@ -1820,7 +1892,8 @@ class ChatScreenState extends State<ChatScreen> {
       if (route.contains('listar-por-servicio')) {
         final u = Uri.tryParse(url);
         final q = u?.queryParameters ?? {};
-        final hasServ = (q['id_servicio']?.trim().isNotEmpty ?? false) ||
+        final hasServ =
+            (q['id_servicio']?.trim().isNotEmpty ?? false) ||
             (q['id_servicio_asignado']?.trim().isNotEmpty ?? false);
         if (!hasServ) {
           _showErrorSnackbar(
@@ -1864,7 +1937,8 @@ class ChatScreenState extends State<ChatScreen> {
 
     // Intent conversacional (YAML): POST /asistente/enviar con action_id → kind flow.
     if (kind == 'intent') {
-      final intentId = co['intent_id']?.toString() ?? action['action_id']?.toString() ?? '';
+      final intentId =
+          co['intent_id']?.toString() ?? action['action_id']?.toString() ?? '';
       if (intentId.isEmpty) {
         _showErrorSnackbar('Intent sin intent_id.');
         return true;
@@ -1895,7 +1969,9 @@ class ChatScreenState extends State<ChatScreen> {
             _isSending = false;
             _chatHistory.add({
               'type': 'bot',
-              'content': result['message']?.toString() ?? 'No se pudo iniciar el flujo.',
+              'content':
+                  result['message']?.toString() ??
+                  'No se pudo iniciar el flujo.',
               'timestamp': DateTime.now(),
             });
           });
@@ -1937,25 +2013,36 @@ class ChatScreenState extends State<ChatScreen> {
         _showErrorSnackbar('Acción UI JSON sin api.route.');
         return true;
       }
-      final providedRaw = (action['parameters'] is Map) ? (action['parameters'] as Map)['provided'] : null;
+      final providedRaw = (action['parameters'] is Map)
+          ? (action['parameters'] as Map)['provided']
+          : null;
       final effectiveProvided = _mergeDraftIdsWithProvided(providedRaw);
       // Igual que la SPA: `api.query` del descriptor + query desde draft/provided (p. ej. id_servicio_asignado).
       var apiAbs = _clientOpenUiJsonAbsoluteUrl(co);
-      final base = apiAbs.trim().isNotEmpty ? apiAbs : resolveApiAbsoluteUrl(route);
+      final base = apiAbs.trim().isNotEmpty
+          ? apiAbs
+          : resolveApiAbsoluteUrl(route);
       apiAbs = applyProvidedParamsToRoute(base, effectiveProvided);
       if (apiAbs.isEmpty) {
         _showErrorSnackbar('Falta un dato para abrir esta pantalla.');
         return true;
       }
       // Contrato nuevo: el motor abre SIEMPRE inline automáticamente.
-      final title = action['display_name']?.toString() ?? action['action_id']?.toString() ?? 'Formulario';
+      final title =
+          action['display_name']?.toString() ??
+          action['action_id']?.toString() ??
+          'Formulario';
       setState(() {
-        if (messageIndex != null && messageIndex >= 0 && messageIndex < _chatHistory.length) {
+        if (messageIndex != null &&
+            messageIndex >= 0 &&
+            messageIndex < _chatHistory.length) {
           final m = _chatHistory[messageIndex];
           m['inline_ui'] = {
             'title': title,
             'route': route,
-            'provided': effectiveProvided.isNotEmpty ? effectiveProvided : providedRaw,
+            'provided': effectiveProvided.isNotEmpty
+                ? effectiveProvided
+                : providedRaw,
             if (apiAbs.isNotEmpty) 'api_absolute_url': apiAbs,
           };
           final fm = m['flow_manifest'];
@@ -1963,7 +2050,9 @@ class ChatScreenState extends State<ChatScreen> {
             final step = fm['active_step'];
             if (step is Map) {
               final ui = step['ui'];
-              if (ui is Map && ui['tabs'] is List && (ui['tabs'] as List).length >= 2) {
+              if (ui is Map &&
+                  ui['tabs'] is List &&
+                  (ui['tabs'] as List).length >= 2) {
                 m['flow_tabs'] = ui['tabs'];
                 m['flow_default_tab'] = ui['default_tab']?.toString() ?? '';
                 m['flow_selected_tab_id'] = m['flow_default_tab'];
@@ -1989,7 +2078,9 @@ class ChatScreenState extends State<ChatScreen> {
             'inline_ui': {
               'title': title,
               'route': route,
-              'provided': effectiveProvided.isNotEmpty ? effectiveProvided : providedRaw,
+              'provided': effectiveProvided.isNotEmpty
+                  ? effectiveProvided
+                  : providedRaw,
               if (apiAbs.isNotEmpty) 'api_absolute_url': apiAbs,
             },
             if (pendingFlowSubmit != null) 'flow_submit': pendingFlowSubmit,
@@ -2008,8 +2099,8 @@ class ChatScreenState extends State<ChatScreen> {
 
     // UIs nativas (web+flutter) por screen_id: el móvil construye su propia pantalla.
     if (kind == 'native') {
-      final screenId = (mobile is Map ? mobile['screen_id'] : null) ??
-          co['screen_id'];
+      final screenId =
+          (mobile is Map ? mobile['screen_id'] : null) ?? co['screen_id'];
       if (screenId is! String || screenId.isEmpty) {
         _showErrorSnackbar('Acción nativa sin screen_id para móvil.');
         return true;
@@ -2054,20 +2145,30 @@ class ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  Future<void> _executeAction(Map<String, dynamic> action, {int? messageIndex}) async {
+  Future<void> _executeAction(
+    Map<String, dynamic> action, {
+    int? messageIndex,
+  }) async {
     if (await _tryOpenClientNative(action, messageIndex: messageIndex)) {
       return;
     }
 
     // Desde la migración a UI JSON, el backend debe enviar `client_open` para abrir la pantalla.
     // Si no vino, evitamos llamar endpoints legacy (/crud/ejecutar-accion) que ya no existen.
-    _showErrorSnackbar('Acción sin client_open: no se puede abrir en esta versión.');
+    _showErrorSnackbar(
+      'Acción sin client_open: no se puede abrir en esta versión.',
+    );
   }
 
-  Future<void> _executeActionWithParams(String actionId, Map<String, dynamic> params) async {
+  Future<void> _executeActionWithParams(
+    String actionId,
+    Map<String, dynamic> params,
+  ) async {
     // Legacy: antes se posteaba a /crud/ejecutar-accion. Ese endpoint ya no existe.
     // La ejecución/submit ahora ocurre dentro del cliente UI JSON (UiJsonScreen).
-    _showErrorSnackbar('Submit legacy no soportado. Abrí la pantalla desde client_open.');
+    _showErrorSnackbar(
+      'Submit legacy no soportado. Abrí la pantalla desde client_open.',
+    );
   }
 
   /// Despliega el formulario dinámico en un modal (bottom sheet) para móvil.
@@ -2213,7 +2314,8 @@ class ChatScreenState extends State<ChatScreen> {
         final data = m['data'];
         var successText = 'Listo.';
         if (data is Map) {
-          final s = data['mensaje']?.toString() ?? data['message']?.toString() ?? '';
+          final s =
+              data['mensaje']?.toString() ?? data['message']?.toString() ?? '';
           if (s.trim().isNotEmpty) {
             successText = s.trim();
           }
@@ -2263,7 +2365,9 @@ class ChatScreenState extends State<ChatScreen> {
       }
       if (m['kind'] == 'ui_definition' && m['errors'] is Map) {
         final err = m['errors'] as Map;
-        final first = err.values.isNotEmpty ? err.values.first.toString() : 'No se pudo validar.';
+        final first = err.values.isNotEmpty
+            ? err.values.first.toString()
+            : 'No se pudo validar.';
         _showErrorSnackbar(first);
         return;
       }
@@ -2305,796 +2409,1224 @@ class ChatScreenState extends State<ChatScreen> {
             child: _showWelcomeShortcutGrid
                 ? _buildWelcomeShortcutsPanel()
                 : ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              itemCount: _chatHistory.length,
-              itemBuilder: (context, index) {
-                final message = _chatHistory[index];
-                final isUser = message['type'] == 'user';
-                final isFlowCompletedSummary =
-                    !isUser && message['flow_completed_summary'] == true;
-                final content = message['content'] as String;
-                final actions = message['actions'] as List<Map<String, dynamic>>?;
-                final suggestedQuery = message['suggested_query'] as String?;
-                final inlineUi = message['inline_ui'];
-                final impactUiEnvelope = message['_flow_impact_ui'];
-                final showingLicenciaImpact = impactUiEnvelope is Map;
-                final hasEmbeddedUi = !isUser && (inlineUi is Map || showingLicenciaImpact);
-                final flowActionTitle = !isUser ? _flowActionTitleFromMessage(message) : null;
-                final isFlowManifestBot = !isUser && message['flow_manifest'] is Map;
-                final showFlowStepText = isFlowManifestBot && content.isNotEmpty;
-                final showFlowHeader = isFlowManifestBot &&
-                    flowActionTitle != null &&
-                    _shouldShowFlowChatHeader(index, message);
-                final flowUiDisabled = message['flow_superseded'] == true;
-                final flowCollapsing = message['flow_collapsing'] == true;
+                    controller: _scrollController,
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    itemCount: _chatHistory.length,
+                    itemBuilder: (context, index) {
+                      final message = _chatHistory[index];
+                      final isUser = message['type'] == 'user';
+                      final isFlowCompletedSummary =
+                          !isUser && message['flow_completed_summary'] == true;
+                      final content = message['content'] as String;
+                      final actions =
+                          message['actions'] as List<Map<String, dynamic>>?;
+                      final suggestedQuery =
+                          message['suggested_query'] as String?;
+                      final inlineUi = message['inline_ui'];
+                      final impactUiEnvelope = message['_flow_impact_ui'];
+                      final showingLicenciaImpact = impactUiEnvelope is Map;
+                      final hasEmbeddedUi =
+                          !isUser && (inlineUi is Map || showingLicenciaImpact);
+                      final flowActionTitle = !isUser
+                          ? _flowActionTitleFromMessage(message)
+                          : null;
+                      final isFlowManifestBot =
+                          !isUser && message['flow_manifest'] is Map;
+                      final showFlowStepText =
+                          isFlowManifestBot && content.isNotEmpty;
+                      final showFlowHeader =
+                          isFlowManifestBot &&
+                          flowActionTitle != null &&
+                          _shouldShowFlowChatHeader(index, message);
+                      final flowUiDisabled = message['flow_superseded'] == true;
+                      final flowCollapsing = message['flow_collapsing'] == true;
 
-                // Verificar si hay form_config para ocultar el mensaje de chat
-                final hasFormConfig = message['form_config'] != null;
-                final hasActionsRow =
-                    !isUser && actions != null && actions.isNotEmpty;
-                final hasRemediationRow =
-                    !isUser && _messageInteractiveButtons(message).isNotEmpty;
-                /// Separación antes de tabs/UI inline (ver también padding del [UiJsonScreen] abajo).
-                double inlineUiLeadGapHeight = 4.0;
-                if (!hasFormConfig && !isUser && (inlineUi is Map || showingLicenciaImpact) && hasEmbeddedUi) {
-                  if (isFlowManifestBot) {
-                    inlineUiLeadGapHeight = showFlowStepText ? 0.0 : 2.0;
-                  } else if (content.isNotEmpty && !hasActionsRow && !hasRemediationRow) {
-                    inlineUiLeadGapHeight = 2.0;
-                  }
-                }
+                      // Verificar si hay form_config para ocultar el mensaje de chat
+                      final hasFormConfig = message['form_config'] != null;
+                      final hasActionsRow =
+                          !isUser && actions != null && actions.isNotEmpty;
+                      final hasRemediationRow =
+                          !isUser &&
+                          _messageInteractiveButtons(message).isNotEmpty;
 
-                if (isFlowCompletedSummary) {
-                  final summaryTitle = _flowActionTitleFromMessage(message);
-                  return _AnimatedFlowCompletedSummary(
-                    fadeInDuration: _flowSummaryFadeIn,
-                    title: summaryTitle,
-                    content: content,
-                    headerBuilder: summaryTitle != null && summaryTitle.isNotEmpty
-                        ? (ctx) => _buildFlowChatHeader(ctx, title: summaryTitle)
-                        : null,
-                    surfaceColor: cs.primary.withValues(alpha: 0.08),
-                    borderColor: cs.primary.withValues(alpha: 0.35),
-                    textStyle: tt.bodyMedium?.copyWith(color: cs.onSurface),
-                  );
-                }
+                      /// Separación antes de tabs/UI inline (ver también padding del [UiJsonScreen] abajo).
+                      double inlineUiLeadGapHeight = 4.0;
+                      if (!hasFormConfig &&
+                          !isUser &&
+                          (inlineUi is Map || showingLicenciaImpact) &&
+                          hasEmbeddedUi) {
+                        if (isFlowManifestBot) {
+                          inlineUiLeadGapHeight = showFlowStepText ? 0.0 : 2.0;
+                        } else if (content.isNotEmpty &&
+                            !hasActionsRow &&
+                            !hasRemediationRow) {
+                          inlineUiLeadGapHeight = 2.0;
+                        }
+                      }
 
-                return Column(
-                  children: [
-                    if (!hasFormConfig && isFlowManifestBot) ...[
-                      if (showFlowHeader)
-                        _buildFlowChatHeader(context, title: flowActionTitle),
-                      if (showFlowStepText)
-                        _buildFlowStepTitle(
-                          context,
-                          _flowStepLabel(message, content),
-                          muted: flowUiDisabled,
-                        ),
-                    ],
-                    // Mensaje (solo mostrar si no hay form_config)
-                    if (!hasFormConfig) ...[
-                      if (isUser)
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: Container(
-                            margin: const EdgeInsets.symmetric(
-                              vertical: 4.0,
-                              horizontal: 16.0,
-                            ),
-                            padding: const EdgeInsets.all(16.0),
-                            decoration: BoxDecoration(
-                              color: cs.primary,
-                              borderRadius: BorderRadius.circular(16.0),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: cs.shadow.withValues(alpha: 0.12),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
+                      if (isFlowCompletedSummary) {
+                        final summaryTitle = _flowActionTitleFromMessage(
+                          message,
+                        );
+                        return _AnimatedFlowCompletedSummary(
+                          fadeInDuration: _flowSummaryFadeIn,
+                          title: summaryTitle,
+                          content: content,
+                          headerBuilder:
+                              summaryTitle != null && summaryTitle.isNotEmpty
+                              ? (ctx) => _buildFlowChatHeader(
+                                  ctx,
+                                  title: summaryTitle,
+                                )
+                              : null,
+                          surfaceColor: cs.primary.withValues(alpha: 0.08),
+                          borderColor: cs.primary.withValues(alpha: 0.35),
+                          textStyle: tt.bodyMedium?.copyWith(
+                            color: cs.onSurface,
+                          ),
+                        );
+                      }
+
+                      return Column(
+                        children: [
+                          if (!hasFormConfig && isFlowManifestBot) ...[
+                            if (showFlowHeader)
+                              _buildFlowChatHeader(
+                                context,
+                                title: flowActionTitle,
+                              ),
+                            if (showFlowStepText)
+                              _buildFlowStepTitle(
+                                context,
+                                _flowStepLabel(message, content),
+                                muted: flowUiDisabled,
+                              ),
+                          ],
+                          // Mensaje (solo mostrar si no hay form_config)
+                          if (!hasFormConfig) ...[
+                            if (isUser)
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: Container(
+                                  margin: const EdgeInsets.symmetric(
+                                    vertical: 4.0,
+                                    horizontal: 16.0,
+                                  ),
+                                  padding: const EdgeInsets.all(16.0),
+                                  decoration: BoxDecoration(
+                                    color: cs.primary,
+                                    borderRadius: BorderRadius.circular(16.0),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: cs.shadow.withValues(
+                                          alpha: 0.12,
+                                        ),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      if (content.isNotEmpty)
+                                        Text(
+                                          content,
+                                          style: tt.titleMedium?.copyWith(
+                                            color: cs.onPrimary,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
                                 ),
-                              ],
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (content.isNotEmpty)
-                                  Text(
-                                    content,
-                                    style: tt.titleMedium?.copyWith(
-                                      color: cs.onPrimary,
+                              )
+                            else if (hasEmbeddedUi) ...[
+                              if (!isFlowManifestBot && content.isNotEmpty)
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(
+                                      left: 16.0,
+                                      right: 16.0,
+                                      top: 0,
+                                      bottom: 0,
+                                    ),
+                                    child: Text(
+                                      content,
+                                      style: tt.titleMedium?.copyWith(
+                                        color: cs.onSurface,
+                                      ),
                                     ),
                                   ),
-                              ],
-                            ),
-                          ),
-                        )
-                      else if (hasEmbeddedUi) ...[
-                        if (!isFlowManifestBot && content.isNotEmpty)
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Padding(
+                                ),
+                            ] else if (!isFlowManifestBot)
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: Container(
+                                  margin: const EdgeInsets.fromLTRB(
+                                    16.0,
+                                    4.0,
+                                    0,
+                                    0.0,
+                                  ),
+                                  padding: const EdgeInsets.all(16.0),
+                                  decoration: BoxDecoration(
+                                    color: cs.surfaceContainerHighest,
+                                    borderRadius: BorderRadius.circular(16.0),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: cs.shadow.withValues(
+                                          alpha: 0.12,
+                                        ),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      if (content.isNotEmpty)
+                                        Text(
+                                          content,
+                                          style: tt.titleMedium?.copyWith(
+                                            color: cs.onSurface,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                          ],
+                          // Acciones si existen
+                          if (!isUser &&
+                              actions != null &&
+                              actions.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Padding(
                               padding: const EdgeInsets.only(
                                 left: 16.0,
                                 right: 16.0,
                                 top: 0,
                                 bottom: 0,
                               ),
-                              child: Text(
-                                content,
-                                style: tt.titleMedium?.copyWith(color: cs.onSurface),
+                              child: Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: actions.map((action) {
+                                  return ActionChip(
+                                    label: Text(
+                                      action['display_name'] ??
+                                          action['title'] ??
+                                          action['label'] ??
+                                          'Acción',
+                                      style: tt.labelLarge?.copyWith(
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    avatar: Icon(Icons.touch_app, size: 16),
+                                    onPressed: () => _executeAction(
+                                      action,
+                                      messageIndex: index,
+                                    ),
+                                    backgroundColor: cs.primary.withValues(
+                                      alpha: 0.1,
+                                    ),
+                                    labelStyle: tt.labelLarge?.copyWith(
+                                      fontSize: 12,
+                                      color: cs.primary,
+                                    ),
+                                  );
+                                }).toList(),
                               ),
                             ),
-                          ),
-                      ] else if (!isFlowManifestBot)
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Container(
-                            margin: const EdgeInsets.fromLTRB(
-                              16.0,
-                              4.0,
-                              0,
-                              0.0,
+                          ],
+                          if (!isUser &&
+                              _messageInteractiveButtons(
+                                message,
+                              ).isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16.0,
+                              ),
+                              child: Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: _messageInteractiveButtons(message)
+                                    .map((raw) {
+                                      final opt = Map<String, dynamic>.from(
+                                        raw,
+                                      );
+                                      final label =
+                                          opt['label']?.toString() ??
+                                          opt['intent_id']?.toString() ??
+                                          'Opción';
+                                      final offerDisabled =
+                                          flowUiDisabled || _isSending;
+                                      return Opacity(
+                                        opacity: flowUiDisabled ? 0.55 : 1,
+                                        child: ActionChip(
+                                          label: Text(
+                                            label,
+                                            style: tt.labelLarge?.copyWith(
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                          avatar: const Icon(
+                                            Icons.alt_route,
+                                            size: 16,
+                                          ),
+                                          onPressed: offerDisabled
+                                              ? null
+                                              : () => _onRemediationChoice(opt),
+                                          backgroundColor: cs.primary
+                                              .withValues(alpha: 0.12),
+                                          labelStyle: tt.labelLarge?.copyWith(
+                                            fontSize: 12,
+                                            color: cs.primary,
+                                          ),
+                                        ),
+                                      );
+                                    })
+                                    .toList(),
+                              ),
                             ),
-                            padding: const EdgeInsets.all(16.0),
-                            decoration: BoxDecoration(
-                              color: cs.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(16.0),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: cs.shadow.withValues(alpha: 0.12),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (content.isNotEmpty)
-                                  Text(
-                                    content,
-                                    style: tt.titleMedium?.copyWith(
-                                      color: cs.onSurface,
+                          ],
+                          // Inline UI JSON embebida en chat (antes del "Confirmar y enviar" del flow)
+                          if (!isUser &&
+                              (inlineUi is Map || showingLicenciaImpact))
+                            _wrapFlowInteractiveCollapse(
+                              collapsing: flowCollapsing,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  SizedBox(height: inlineUiLeadGapHeight),
+                                  if (message['flow_tabs'] is List &&
+                                      (message['flow_tabs'] as List).length >=
+                                          2) ...[
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                        left: 16.0,
+                                        right: 16.0,
+                                        top: 0,
+                                        bottom: 0,
+                                      ),
+                                      child: Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: Wrap(
+                                          spacing: 6,
+                                          runSpacing: 6,
+                                          children: (message['flow_tabs'] as List).map((
+                                            tab,
+                                          ) {
+                                            if (tab is! Map) {
+                                              return const SizedBox.shrink();
+                                            }
+                                            final tm =
+                                                Map<String, dynamic>.from(tab);
+                                            final id =
+                                                tm['id']?.toString() ?? '';
+                                            final label =
+                                                tm['label']?.toString() ?? id;
+                                            final def =
+                                                message['flow_default_tab']
+                                                    ?.toString() ??
+                                                '';
+                                            final sel =
+                                                message['flow_selected_tab_id']
+                                                    ?.toString() ??
+                                                def;
+                                            final selected =
+                                                id.isNotEmpty && sel == id;
+                                            return ChoiceChip(
+                                              label: Text(
+                                                label,
+                                                style: tt.labelLarge?.copyWith(
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                              selected: selected,
+                                              onSelected: flowUiDisabled
+                                                  ? null
+                                                  : (_) =>
+                                                        _onFlowManifestTabSelected(
+                                                          index,
+                                                          tm,
+                                                        ),
+                                            );
+                                          }).toList(),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                  ],
+                                  Padding(
+                                    // Mismo inset horizontal que `_buildFlowChatHeader` / `_buildFlowStepTitle`.
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: BioSpacing.lg,
+                                    ),
+                                    child: Align(
+                                      alignment: Alignment.topLeft,
+                                      child: ConstrainedBox(
+                                        constraints: BoxConstraints(
+                                          maxWidth:
+                                              MediaQuery.of(
+                                                context,
+                                              ).size.width -
+                                              (BioSpacing.lg * 2),
+                                        ),
+                                        child: AnimatedSize(
+                                          duration: const Duration(
+                                            milliseconds: 180,
+                                          ),
+                                          curve: Curves.easeOut,
+                                          alignment: Alignment.center,
+                                          child: AbsorbPointer(
+                                            absorbing: flowUiDisabled,
+                                            child: Opacity(
+                                              opacity: flowUiDisabled
+                                                  ? 0.55
+                                                  : 1,
+                                              child: _KeepAliveChatChild(
+                                                keepAlive: hasEmbeddedUi,
+                                                child: UiJsonScreen(
+                                                  key: ValueKey(
+                                                    'inline-ui-$index-'
+                                                    '${showingLicenciaImpact ? 'impacto' : (inlineUi is Map ? inlineUi['route'] ?? '' : '')}-'
+                                                    '${showingLicenciaImpact ? '' : (inlineUi is Map ? inlineUi['api_absolute_url'] ?? '' : '')}',
+                                                  ),
+                                                  initialDefinition:
+                                                      showingLicenciaImpact
+                                                      ? Map<
+                                                          String,
+                                                          dynamic
+                                                        >.from(
+                                                          impactUiEnvelope
+                                                              as Map,
+                                                        )
+                                                      : (inlineUi is Map &&
+                                                                inlineUi['ui_definition']
+                                                                    is Map
+                                                            ? Map<
+                                                                String,
+                                                                dynamic
+                                                              >.from(
+                                                                inlineUi['ui_definition']
+                                                                    as Map,
+                                                              )
+                                                            : null),
+                                                  onDefinitionLoaded:
+                                                      (flowUiDisabled ||
+                                                          showingLicenciaImpact)
+                                                      ? null
+                                                      : (def) {
+                                                          if (inlineUi is! Map)
+                                                            return;
+                                                          inlineUi['ui_definition'] =
+                                                              def;
+                                                          message['_flow_requiere_confirmacion'] =
+                                                              _uiDefinitionRequiereConfirmacion(
+                                                                def,
+                                                              );
+                                                        },
+                                                  onEmbeddedReady:
+                                                      flowUiDisabled
+                                                      ? null
+                                                      : () {
+                                                          if (!mounted ||
+                                                              index < 0 ||
+                                                              index >=
+                                                                  _chatHistory
+                                                                      .length) {
+                                                            return;
+                                                          }
+                                                          setState(() {
+                                                            _chatHistory[index]['_flow_dismiss_ready'] =
+                                                                true;
+                                                            _applyTerminalSubmitReadyAfterImpactGate(
+                                                              messageIndex:
+                                                                  index,
+                                                              message: message,
+                                                            );
+                                                          });
+                                                        },
+                                                  enableFlowChainAutoAdvance:
+                                                      !flowUiDisabled &&
+                                                      !_messageIsTerminalFlowStep(
+                                                        message,
+                                                      ),
+                                                  isTerminalFlowStep:
+                                                      _messageIsTerminalFlowStep(
+                                                        message,
+                                                      ) ||
+                                                      showingLicenciaImpact,
+                                                  initialListEmbedSelectedId:
+                                                      _initialListSelectionForMessage(
+                                                        message,
+                                                      ),
+                                                  apiAbsoluteUrl:
+                                                      showingLicenciaImpact
+                                                      ? ''
+                                                      : ((inlineUi is Map &&
+                                                                (inlineUi['api_absolute_url']
+                                                                            ?.toString() ??
+                                                                        '')
+                                                                    .trim()
+                                                                    .isNotEmpty)
+                                                            ? inlineUi['api_absolute_url']!
+                                                                  .toString()
+                                                            : applyProvidedParamsToRoute(
+                                                                inlineUi is Map
+                                                                    ? inlineUi['route']
+                                                                              ?.toString() ??
+                                                                          ''
+                                                                    : '',
+                                                                inlineUi is Map &&
+                                                                        inlineUi['provided']
+                                                                            is Map
+                                                                    ? Map<
+                                                                        String,
+                                                                        dynamic
+                                                                      >.from(
+                                                                        inlineUi['provided']
+                                                                            as Map,
+                                                                      )
+                                                                    : null,
+                                                              )),
+                                                  authToken: _asistenteService
+                                                      .authToken,
+                                                  appClient:
+                                                      'bioenlace-personalsalud',
+                                                  title: inlineUi is Map
+                                                      ? inlineUi['title']
+                                                            ?.toString()
+                                                      : null,
+                                                  embedded: true,
+                                                  onCancel: flowUiDisabled
+                                                      ? null
+                                                      : (inlineUi is Map &&
+                                                                _inlineUiIsConfirmacionTurno(
+                                                                  inlineUi,
+                                                                )
+                                                            ? _resetAssistantToWelcome
+                                                            : null),
+                                                  onDraftDelta: flowUiDisabled
+                                                      ? null
+                                                      : (dd) async {
+                                                          final delta =
+                                                              Map<
+                                                                String,
+                                                                dynamic
+                                                              >.from(dd);
+                                                          if (_isRedundantFlowListPick(
+                                                            message,
+                                                            index,
+                                                            delta,
+                                                          )) {
+                                                            final provides =
+                                                                message['flow_provides'];
+                                                            if (provides
+                                                                is List) {
+                                                              for (final raw
+                                                                  in provides) {
+                                                                final field = raw
+                                                                    .toString()
+                                                                    .trim();
+                                                                final value =
+                                                                    delta[field]
+                                                                        ?.toString()
+                                                                        .trim() ??
+                                                                    '';
+                                                                if (field
+                                                                        .isNotEmpty &&
+                                                                    value
+                                                                        .isNotEmpty) {
+                                                                  message['_flow_auto_selected_id'] =
+                                                                      value;
+                                                                  break;
+                                                                }
+                                                              }
+                                                            }
+                                                            if (mounted)
+                                                              setState(() {});
+                                                            return;
+                                                          }
+                                                          _truncateFlowAfterStepIfNeeded(
+                                                            index,
+                                                          );
+                                                          _applyDraftDelta(
+                                                            delta,
+                                                          );
+                                                          if (inlineUi is Map) {
+                                                            _applyInlineUiQueryToDraft(
+                                                              Map<
+                                                                String,
+                                                                dynamic
+                                                              >.from(inlineUi),
+                                                            );
+                                                          }
+                                                          _asistenteService
+                                                                  .draft =
+                                                              Map<
+                                                                String,
+                                                                dynamic
+                                                              >.from(_draft);
+
+                                                          // Step terminal (último del flow): el tap mergeó local; NO postear al motor.
+                                                          // El submit lo dispara el botón "Confirmar y enviar" del mismo mensaje.
+                                                          if (_messageIsTerminalFlowStep(
+                                                            message,
+                                                          )) {
+                                                            setState(() {
+                                                              message.remove(
+                                                                '_flow_submit_missing',
+                                                              );
+                                                              _applyTerminalSubmitReadyAfterImpactGate(
+                                                                messageIndex:
+                                                                    index,
+                                                                message:
+                                                                    message,
+                                                              );
+                                                            });
+                                                            return;
+                                                          }
+
+                                                          // Avanzar el flow automáticamente (snapshot) sin texto.
+                                                          setState(
+                                                            () => _isSending =
+                                                                true,
+                                                          );
+                                                          try {
+                                                            final res =
+                                                                await _postFlowAdvanceWithRetry();
+                                                            if (!mounted)
+                                                              return;
+                                                            if (res['success'] ==
+                                                                true) {
+                                                              final data =
+                                                                  res['data'];
+                                                              if (data is Map) {
+                                                                await _handleFlowEnvelopeResponse(
+                                                                  Map<
+                                                                    String,
+                                                                    dynamic
+                                                                  >.from(data),
+                                                                );
+                                                              } else {
+                                                                setState(
+                                                                  () =>
+                                                                      _isSending =
+                                                                          false,
+                                                                );
+                                                              }
+                                                            } else {
+                                                              unawaited(
+                                                                AppDiagnosticLog.reportIssue(
+                                                                  'flow_list_pick',
+                                                                  'advance_failed',
+                                                                  data: {
+                                                                    'message':
+                                                                        res['message']
+                                                                            ?.toString() ??
+                                                                        '',
+                                                                  },
+                                                                ),
+                                                              );
+                                                              setState(() {
+                                                                _isSending =
+                                                                    false;
+                                                                _chatHistory.add({
+                                                                  'type': 'bot',
+                                                                  'content':
+                                                                      res['message']
+                                                                          ?.toString() ??
+                                                                      'No se pudo avanzar. Intentá de nuevo.',
+                                                                  'timestamp':
+                                                                      DateTime.now(),
+                                                                });
+                                                              });
+                                                            }
+                                                          } catch (e) {
+                                                            if (mounted) {
+                                                              setState(() {
+                                                                _isSending =
+                                                                    false;
+                                                                _chatHistory.add({
+                                                                  'type': 'bot',
+                                                                  'content':
+                                                                      userFriendlyErrorMessage(
+                                                                        e,
+                                                                        fallback:
+                                                                            'No se pudo avanzar. Intentá de nuevo.',
+                                                                      ),
+                                                                  'timestamp':
+                                                                      DateTime.now(),
+                                                                });
+                                                              });
+                                                            }
+                                                          }
+                                                        },
+                                                  onSubmitSuccess:
+                                                      flowUiDisabled
+                                                      ? null
+                                                      : (data) async {
+                                                          final rc =
+                                                              data['razon_cancelacion']
+                                                                  ?.toString()
+                                                                  .trim();
+                                                          if (rc != null &&
+                                                              rc.isNotEmpty) {
+                                                            setState(() {
+                                                              _applyDraftDelta({
+                                                                'razon_cancelacion':
+                                                                    rc,
+                                                                '_flow_item_razon_cancelacion': {
+                                                                  'code': rc,
+                                                                  'label':
+                                                                      etiquetaRazonCancelacionPaciente(
+                                                                        rc,
+                                                                      ),
+                                                                },
+                                                              });
+                                                            });
+                                                          } else {
+                                                            // Marcadores de cierre del submit (agenda_ui_completed, etc.).
+                                                            final delta =
+                                                                <
+                                                                  String,
+                                                                  dynamic
+                                                                >{};
+                                                            data.forEach((
+                                                              k,
+                                                              v,
+                                                            ) {
+                                                              final key = k
+                                                                  .toString();
+                                                              if (key.isEmpty ||
+                                                                  key.startsWith(
+                                                                    '_',
+                                                                  ))
+                                                                return;
+                                                              if (v == null)
+                                                                return;
+                                                              if (v is Map ||
+                                                                  v is List)
+                                                                return;
+                                                              final s = v
+                                                                  .toString()
+                                                                  .trim();
+                                                              if (s.isNotEmpty)
+                                                                delta[key] = s;
+                                                            });
+                                                            if (delta
+                                                                .isNotEmpty) {
+                                                              setState(
+                                                                () =>
+                                                                    _applyDraftDelta(
+                                                                      delta,
+                                                                    ),
+                                                              );
+                                                            }
+                                                          }
+                                                          if (_messageIsTerminalFlowStep(
+                                                            message,
+                                                          )) {
+                                                            setState(() {
+                                                              message.remove(
+                                                                '_flow_submit_missing',
+                                                              );
+                                                              _applyTerminalSubmitReadyAfterImpactGate(
+                                                                messageIndex:
+                                                                    index,
+                                                                message:
+                                                                    message,
+                                                              );
+                                                            });
+                                                            return;
+                                                          }
+                                                          // Paso final sin flow_submit: el POST de la UI ya cerró el flujo (spa-home).
+                                                          if (_messageFlowStepIsLast(
+                                                            message,
+                                                          )) {
+                                                            final activationSeq =
+                                                                message['flow_activation_seq']
+                                                                    is int
+                                                                ? message['flow_activation_seq']
+                                                                      as int
+                                                                : _flowActivationSeq;
+                                                            await _collapseCompletedFlowActivation(
+                                                              activationSeq:
+                                                                  activationSeq,
+                                                              submitData:
+                                                                  Map<
+                                                                    String,
+                                                                    dynamic
+                                                                  >.from(data),
+                                                              flowActionTitle:
+                                                                  _flowActionTitleFromMessage(
+                                                                    message,
+                                                                  ),
+                                                              intentId:
+                                                                  _intentId,
+                                                              flowSnapshot:
+                                                                  Map<
+                                                                    String,
+                                                                    dynamic
+                                                                  >.from(
+                                                                    _flowSnapshot,
+                                                                  ),
+                                                            );
+                                                            if (!mounted)
+                                                              return;
+                                                            setState(
+                                                              () =>
+                                                                  _clearFlowState(),
+                                                            );
+                                                            _scrollToBottom();
+                                                            return;
+                                                          }
+                                                          // Para submits (fields/custom_widget) no hay draft_delta local; igualmente avanzamos el flow.
+                                                          _asistenteService
+                                                                  .draft =
+                                                              Map<
+                                                                String,
+                                                                dynamic
+                                                              >.from(_draft);
+                                                          final res =
+                                                              await _postFlowAdvanceWithRetry();
+                                                          if (!mounted) return;
+                                                          if (res['success'] ==
+                                                              true) {
+                                                            final data =
+                                                                res['data'];
+                                                            if (data is Map) {
+                                                              await _handleFlowEnvelopeResponse(
+                                                                Map<
+                                                                  String,
+                                                                  dynamic
+                                                                >.from(data),
+                                                              );
+                                                            }
+                                                          } else if (mounted) {
+                                                            setState(() {
+                                                              _chatHistory.add({
+                                                                'type': 'bot',
+                                                                'content':
+                                                                    res['message']
+                                                                        ?.toString() ??
+                                                                    'No se pudo avanzar. Intentá de nuevo.',
+                                                                'timestamp':
+                                                                    DateTime.now(),
+                                                              });
+                                                            });
+                                                          }
+                                                        },
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                        ),
-                    ],
-                    // Acciones si existen
-                    if (!isUser && actions != null && actions.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Padding(
+                          if (!isUser && _showFlowDismissFooter(message))
+                            _wrapFlowInteractiveCollapse(
+                              collapsing: flowCollapsing,
+                              child: _buildFlowDismissFooter(
+                                context,
+                                index,
+                                message,
+                              ),
+                            ),
+                          if (!isUser && _showFlowSubmitButton(message))
+                            _wrapFlowInteractiveCollapse(
+                              collapsing: flowCollapsing,
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  16,
+                                  8,
+                                  16,
+                                  8,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    // Aviso inline si faltan campos del draft al apretar (Cambio 2).
+                                    if (message['_flow_submit_missing']
+                                            is List &&
+                                        (message['_flow_submit_missing']
+                                                as List)
+                                            .isNotEmpty) ...[
+                                      BioAlert.danger(
+                                        message: _missingFieldsMessage(
+                                          List<String>.from(
+                                            (message['_flow_submit_missing']
+                                                    as List)
+                                                .map((e) => e.toString()),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                    ],
+                                    BioButton.primary(
+                                      label: 'Confirmar y Enviar',
+                                      icon: Icons.check_circle_outline,
+                                      size: BioButtonSize.lg,
+                                      fullWidth: true,
+                                      loading:
+                                          message['_flow_submit_busy'] == true,
+                                      // Siempre habilitado salvo: flow superseded / colapsando / submit en curso.
+                                      // Si faltan campos del draft, `_postFlowSubmitFromMessage` muestra el alert
+                                      // inline y no envía (descubrible para el usuario).
+                                      onPressed:
+                                          (flowUiDisabled ||
+                                              flowCollapsing ||
+                                              message['_flow_submit_busy'] ==
+                                                  true ||
+                                              _isSending)
+                                          ? null
+                                          : () => _postFlowSubmitFromMessage(
+                                              index,
+                                            ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          // Formulario dinámico si hay form_config (viene de getActionFormConfig)
+                          if (!isUser) ...[
+                            Builder(
+                              builder: (context) {
+                                final formConfig = message['form_config'];
+                                final wizardSteps = message['wizard_steps'];
+                                final actionIdFromMessage =
+                                    message['action_id'];
+                                final actionName = message['action_name'];
+                                // final parametersFromMessage = message['parameters'];
+
+                                if (formConfig != null && formConfig is Map) {
+                                  // Card tappable: un solo tap abre directamente el formulario en modal
+                                  return Column(
+                                    children: [
+                                      const SizedBox(height: 16),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16.0,
+                                        ),
+                                        child: Material(
+                                          color: cs.primary.withValues(
+                                            alpha: 0.06,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          child: InkWell(
+                                            onTap: () {
+                                              _showFormModal(
+                                                context: context,
+                                                formConfig:
+                                                    Map<String, dynamic>.from(
+                                                      formConfig,
+                                                    ),
+                                                wizardSteps: wizardSteps != null
+                                                    ? List<
+                                                        Map<String, dynamic>
+                                                      >.from(
+                                                        wizardSteps.map(
+                                                          (step) =>
+                                                              Map<
+                                                                String,
+                                                                dynamic
+                                                              >.from(step),
+                                                        ),
+                                                      )
+                                                    : null,
+                                                initialStep:
+                                                    message['initial_step']
+                                                        as int? ??
+                                                    0,
+                                                title:
+                                                    actionName ??
+                                                    'Completa la información',
+                                                authToken:
+                                                    _asistenteService.authToken,
+                                                onSubmit: (formValues) async {
+                                                  if (actionIdFromMessage !=
+                                                      null) {
+                                                    await _executeActionWithParams(
+                                                      actionIdFromMessage,
+                                                      formValues,
+                                                    );
+                                                  }
+                                                },
+                                                onCancel: () {
+                                                  setState(() {
+                                                    _chatHistory.removeAt(
+                                                      index,
+                                                    );
+                                                  });
+                                                },
+                                              );
+                                            },
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                            child: Container(
+                                              padding: const EdgeInsets.all(
+                                                16.0,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                                border: Border.all(
+                                                  color: cs.primary.withValues(
+                                                    alpha: 0.3,
+                                                  ),
+                                                ),
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.input,
+                                                    size: 20,
+                                                    color: cs.primary,
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Expanded(
+                                                    child: Text(
+                                                      actionName ??
+                                                          'Completa la información',
+                                                      style: tt.titleSmall
+                                                          ?.copyWith(
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color: cs.primary,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                  Icon(
+                                                    Icons.arrow_forward_ios,
+                                                    size: 14,
+                                                    color: cs.primary,
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                }
+
+                                // Si no hay form_config, verificar si hay actionAnalysis (comportamiento anterior)
+                                final actionAnalysis =
+                                    message['action_analysis'];
+                                final needsUserInput =
+                                    message['needs_user_input'] ?? false;
+
+                                if (needsUserInput &&
+                                    actionAnalysis != null &&
+                                    actionAnalysis is Map) {
+                                  final actionId =
+                                      actionAnalysis['action_id'] as String?;
+                                  return Column(
+                                    children: [
+                                      const SizedBox(height: 16),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16.0,
+                                        ),
+                                        child: Material(
+                                          color: cs.primary.withValues(
+                                            alpha: 0.06,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          child: InkWell(
+                                            onTap: () {
+                                              _showFormModal(
+                                                context: context,
+                                                formConfig:
+                                                    Map<String, dynamic>.from(
+                                                      actionAnalysis['form_config'] ??
+                                                          {},
+                                                    ),
+                                                title:
+                                                    'Completa la información',
+                                                authToken:
+                                                    _asistenteService.authToken,
+                                                onSubmit: (formValues) async {
+                                                  if (actionId != null) {
+                                                    await _executeActionWithParams(
+                                                      actionId,
+                                                      formValues,
+                                                    );
+                                                  }
+                                                },
+                                                onCancel: () {
+                                                  setState(() {
+                                                    _chatHistory.removeAt(
+                                                      index,
+                                                    );
+                                                  });
+                                                },
+                                              );
+                                            },
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                            child: Container(
+                                              padding: const EdgeInsets.all(
+                                                16.0,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                                border: Border.all(
+                                                  color: cs.primary.withValues(
+                                                    alpha: 0.3,
+                                                  ),
+                                                ),
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.input,
+                                                    size: 20,
+                                                    color: cs.primary,
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Expanded(
+                                                    child: Text(
+                                                      'Completa la información',
+                                                      style: tt.titleSmall
+                                                          ?.copyWith(
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color: cs.primary,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                  Icon(
+                                                    Icons.arrow_forward_ios,
+                                                    size: 14,
+                                                    color: cs.primary,
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                }
+
+                                return const SizedBox.shrink();
+                              },
+                            ),
+                          ],
+                          // Consulta sugerida si existe
+                          if (!isUser &&
+                              suggestedQuery != null &&
+                              suggestedQuery.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Padding(
                               padding: const EdgeInsets.only(
                                 left: 16.0,
                                 right: 16.0,
                                 top: 0,
                                 bottom: 0,
                               ),
-                        child: Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: actions.map((action) {
-                            return ActionChip(
-                              label: Text(
-                                action['display_name'] ?? action['title'] ?? action['label'] ?? 'Acción',
-                                style: tt.labelLarge?.copyWith(fontSize: 12),
-                              ),
-                              avatar: Icon(
-                                Icons.touch_app,
-                                size: 16,
-                              ),
-                              onPressed: () => _executeAction(action, messageIndex: index),
-                              backgroundColor: cs.primary.withValues(alpha: 0.1),
-                              labelStyle: tt.labelLarge?.copyWith(
-                                fontSize: 12,
-                                color: cs.primary,
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    ],
-                    if (!isUser &&
-                        _messageInteractiveButtons(message).isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: _messageInteractiveButtons(message).map((raw) {
-                            final opt = Map<String, dynamic>.from(raw);
-                            final label = opt['label']?.toString() ??
-                                opt['intent_id']?.toString() ??
-                                'Opción';
-                            final offerDisabled = flowUiDisabled || _isSending;
-                            return Opacity(
-                              opacity: flowUiDisabled ? 0.55 : 1,
-                              child: ActionChip(
-                              label: Text(
-                                label,
-                                style: tt.labelLarge?.copyWith(fontSize: 12),
-                              ),
-                              avatar: const Icon(Icons.alt_route, size: 16),
-                              onPressed: offerDisabled
-                                  ? null
-                                  : () => _onRemediationChoice(opt),
-                              backgroundColor: cs.primary.withValues(alpha: 0.12),
-                              labelStyle: tt.labelLarge?.copyWith(
-                                fontSize: 12,
-                                color: cs.primary,
+                              child: BioButton.outlinePrimary(
+                                label: suggestedQuery,
+                                icon: Icons.lightbulb_outline,
+                                size: BioButtonSize.sm,
+                                onPressed: () {
+                                  _messageController.text = suggestedQuery;
+                                  _sendMessage();
+                                },
                               ),
                             ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    ],
-                    // Inline UI JSON embebida en chat (antes del "Confirmar y enviar" del flow)
-                    if (!isUser && (inlineUi is Map || showingLicenciaImpact))
-                      _wrapFlowInteractiveCollapse(
-                        collapsing: flowCollapsing,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                      SizedBox(height: inlineUiLeadGapHeight),
-                      if (message['flow_tabs'] is List && (message['flow_tabs'] as List).length >= 2) ...[
-                        Padding(
-                          padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 0, bottom: 0),
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: Wrap(
-                              spacing: 6,
-                              runSpacing: 6,
-                              children: (message['flow_tabs'] as List).map((tab) {
-                                if (tab is! Map) {
+                          ],
+                          // CTA Cargar motivos cuando la respuesta incluye id_consulta (ej. tras crear turno)
+                          if (!isUser) ...[
+                            Builder(
+                              builder: (context) {
+                                final data = message['data'];
+                                final rawId = data is Map
+                                    ? (data['encounter_id'] ??
+                                          data['id_consulta'])
+                                    : null;
+                                final encounterId = rawId is int
+                                    ? rawId
+                                    : (rawId is num
+                                          ? rawId.toInt()
+                                          : int.tryParse('$rawId'));
+                                if (encounterId == null || encounterId <= 0) {
                                   return const SizedBox.shrink();
                                 }
-                                final tm = Map<String, dynamic>.from(tab);
-                                final id = tm['id']?.toString() ?? '';
-                                final label = tm['label']?.toString() ?? id;
-                                final def = message['flow_default_tab']?.toString() ?? '';
-                                final sel = message['flow_selected_tab_id']?.toString() ?? def;
-                                final selected = id.isNotEmpty && sel == id;
-                                return ChoiceChip(
-                                  label: Text(
-                                    label,
-                                    style: tt.labelLarge?.copyWith(fontSize: 12),
+                                return Padding(
+                                  padding: const EdgeInsets.only(
+                                    left: 16.0,
+                                    right: 16.0,
+                                    top: 0.0,
                                   ),
-                                  selected: selected,
-                                  onSelected: flowUiDisabled
-                                      ? null
-                                      : (_) => _onFlowManifestTabSelected(index, tm),
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                      ],
-                      Padding(
-                        // Mismo inset horizontal que `_buildFlowChatHeader` / `_buildFlowStepTitle`.
-                        padding: const EdgeInsets.symmetric(horizontal: BioSpacing.lg),
-                        child: Align(
-                          alignment: Alignment.topLeft,
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                              maxWidth: MediaQuery.of(context).size.width - (BioSpacing.lg * 2),
-                            ),
-                            child: AnimatedSize(
-                              duration: const Duration(milliseconds: 180),
-                              curve: Curves.easeOut,
-                              alignment: Alignment.center,
-                              child: AbsorbPointer(
-                                absorbing: flowUiDisabled,
-                                child: Opacity(
-                                  opacity: flowUiDisabled ? 0.55 : 1,
-                                  child: _KeepAliveChatChild(
-                                keepAlive: hasEmbeddedUi,
-                                child: UiJsonScreen(
-                              key: ValueKey(
-                                'inline-ui-$index-'
-                                '${showingLicenciaImpact ? 'impacto' : (inlineUi is Map ? inlineUi['route'] ?? '' : '')}-'
-                                '${showingLicenciaImpact ? '' : (inlineUi is Map ? inlineUi['api_absolute_url'] ?? '' : '')}',
-                              ),
-                              initialDefinition: showingLicenciaImpact
-                                  ? Map<String, dynamic>.from(impactUiEnvelope as Map)
-                                  : (inlineUi is Map && inlineUi['ui_definition'] is Map
-                                      ? Map<String, dynamic>.from(inlineUi['ui_definition'] as Map)
-                                      : null),
-                              onDefinitionLoaded: (flowUiDisabled || showingLicenciaImpact)
-                                  ? null
-                                  : (def) {
-                                      if (inlineUi is! Map) return;
-                                      inlineUi['ui_definition'] = def;
-                                      message['_flow_requiere_confirmacion'] =
-                                          _uiDefinitionRequiereConfirmacion(def);
-                                    },
-                              onEmbeddedReady: flowUiDisabled
-                                  ? null
-                                  : () {
-                                      if (!mounted ||
-                                          index < 0 ||
-                                          index >= _chatHistory.length) {
-                                        return;
-                                      }
-                                      setState(() {
-                                        _chatHistory[index]['_flow_dismiss_ready'] = true;
-                                        _applyTerminalSubmitReadyAfterImpactGate(
-                                          messageIndex: index,
-                                          message: message,
-                                        );
-                                      });
-                                    },
-                              enableFlowChainAutoAdvance: !flowUiDisabled &&
-                                  !_messageIsTerminalFlowStep(message),
-                              isTerminalFlowStep: _messageIsTerminalFlowStep(message) || showingLicenciaImpact,
-                              initialListEmbedSelectedId: _initialListSelectionForMessage(message),
-                              apiAbsoluteUrl: showingLicenciaImpact
-                                  ? ''
-                                  : ((inlineUi is Map &&
-                                          (inlineUi['api_absolute_url']?.toString() ?? '').trim().isNotEmpty)
-                                      ? inlineUi['api_absolute_url']!.toString()
-                                      : applyProvidedParamsToRoute(
-                                          inlineUi is Map ? inlineUi['route']?.toString() ?? '' : '',
-                                          inlineUi is Map && inlineUi['provided'] is Map
-                                              ? Map<String, dynamic>.from(inlineUi['provided'] as Map)
-                                              : null,
-                                        )),
-                              authToken: _asistenteService.authToken,
-                              appClient: 'bioenlace-personalsalud',
-                              title: inlineUi is Map ? inlineUi['title']?.toString() : null,
-                              embedded: true,
-                              onCancel: flowUiDisabled
-                                  ? null
-                                  : (inlineUi is Map && _inlineUiIsConfirmacionTurno(inlineUi)
-                                      ? _resetAssistantToWelcome
-                                      : null),
-                              onDraftDelta: flowUiDisabled ? null : (dd) async {
-                                final delta = Map<String, dynamic>.from(dd);
-                                if (_isRedundantFlowListPick(message, index, delta)) {
-                                  final provides = message['flow_provides'];
-                                  if (provides is List) {
-                                    for (final raw in provides) {
-                                      final field = raw.toString().trim();
-                                      final value = delta[field]?.toString().trim() ?? '';
-                                      if (field.isNotEmpty && value.isNotEmpty) {
-                                        message['_flow_auto_selected_id'] = value;
-                                        break;
-                                      }
-                                    }
-                                  }
-                                  if (mounted) setState(() {});
-                                  return;
-                                }
-                                _truncateFlowAfterStepIfNeeded(index);
-                                _applyDraftDelta(delta);
-                                if (inlineUi is Map) {
-                                  _applyInlineUiQueryToDraft(Map<String, dynamic>.from(inlineUi));
-                                }
-                                _asistenteService.draft = Map<String, dynamic>.from(_draft);
-
-                                // Step terminal (último del flow): el tap mergeó local; NO postear al motor.
-                                // El submit lo dispara el botón "Confirmar y enviar" del mismo mensaje.
-                                if (_messageIsTerminalFlowStep(message)) {
-                                  setState(() {
-                                    message.remove('_flow_submit_missing');
-                                    _applyTerminalSubmitReadyAfterImpactGate(
-                                      messageIndex: index,
-                                      message: message,
-                                    );
-                                  });
-                                  return;
-                                }
-
-                                // Avanzar el flow automáticamente (snapshot) sin texto.
-                                setState(() => _isSending = true);
-                                try {
-                                  final res = await _postFlowAdvanceWithRetry();
-                                  if (!mounted) return;
-                                  if (res['success'] == true) {
-                                    final data = res['data'];
-                                    if (data is Map) {
-                                      await _handleFlowEnvelopeResponse(
-                                        Map<String, dynamic>.from(data),
+                                  child: ActionChip(
+                                    avatar: Icon(
+                                      Icons.edit_note,
+                                      size: 18,
+                                      color: cs.primary,
+                                    ),
+                                    label: const Text(
+                                      'Cargar motivos de la consulta',
+                                    ),
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              EncounterChatStaffScreen(
+                                                encounterId: encounterId,
+                                                authToken:
+                                                    _asistenteService.authToken,
+                                                userId: widget
+                                                    .chatService
+                                                    .currentUserId,
+                                                userName: widget
+                                                    .chatService
+                                                    .currentUserName,
+                                                titulo:
+                                                    'Motivos de la consulta',
+                                              ),
+                                        ),
                                       );
-                                    } else {
-                                      setState(() => _isSending = false);
-                                    }
-                                  } else {
-                                    unawaited(AppDiagnosticLog.reportIssue(
-                                      'flow_list_pick',
-                                      'advance_failed',
-                                      data: {'message': res['message']?.toString() ?? ''},
-                                    ));
-                                    setState(() {
-                                      _isSending = false;
-                                      _chatHistory.add({
-                                        'type': 'bot',
-                                        'content': res['message']?.toString() ??
-                                            'No se pudo avanzar. Intentá de nuevo.',
-                                        'timestamp': DateTime.now(),
-                                      });
-                                    });
-                                  }
-                                } catch (e) {
-                                  if (mounted) {
-                                    setState(() {
-                                      _isSending = false;
-                                      _chatHistory.add({
-                                        'type': 'bot',
-                                        'content': userFriendlyErrorMessage(
-                                          e,
-                                          fallback: 'No se pudo avanzar. Intentá de nuevo.',
-                                        ),
-                                        'timestamp': DateTime.now(),
-                                      });
-                                    });
-                                  }
-                                }
-                              },
-                              onSubmitSuccess: flowUiDisabled ? null : (data) async {
-                                final rc = data['razon_cancelacion']?.toString().trim();
-                                if (rc != null && rc.isNotEmpty) {
-                                  setState(() {
-                                    _applyDraftDelta({
-                                      'razon_cancelacion': rc,
-                                      '_flow_item_razon_cancelacion': {
-                                        'code': rc,
-                                        'label': etiquetaRazonCancelacionPaciente(rc),
-                                      },
-                                    });
-                                  });
-                                } else {
-                                  // Marcadores de cierre del submit (agenda_ui_completed, etc.).
-                                  final delta = <String, dynamic>{};
-                                  data.forEach((k, v) {
-                                    final key = k.toString();
-                                    if (key.isEmpty || key.startsWith('_')) return;
-                                    if (v == null) return;
-                                    if (v is Map || v is List) return;
-                                    final s = v.toString().trim();
-                                    if (s.isNotEmpty) delta[key] = s;
-                                  });
-                                  if (delta.isNotEmpty) {
-                                    setState(() => _applyDraftDelta(delta));
-                                  }
-                                }
-                                if (_messageIsTerminalFlowStep(message)) {
-                                  setState(() {
-                                    message.remove('_flow_submit_missing');
-                                    _applyTerminalSubmitReadyAfterImpactGate(
-                                      messageIndex: index,
-                                      message: message,
-                                    );
-                                  });
-                                  return;
-                                }
-                                // Paso final sin flow_submit: el POST de la UI ya cerró el flujo (spa-home).
-                                if (_messageFlowStepIsLast(message)) {
-                                  final activationSeq = message['flow_activation_seq'] is int
-                                      ? message['flow_activation_seq'] as int
-                                      : _flowActivationSeq;
-                                  await _collapseCompletedFlowActivation(
-                                    activationSeq: activationSeq,
-                                    submitData: Map<String, dynamic>.from(data),
-                                    flowActionTitle: _flowActionTitleFromMessage(message),
-                                    intentId: _intentId,
-                                    flowSnapshot: Map<String, dynamic>.from(_flowSnapshot),
-                                  );
-                                  if (!mounted) return;
-                                  setState(() => _clearFlowState());
-                                  _scrollToBottom();
-                                  return;
-                                }
-                                // Para submits (fields/custom_widget) no hay draft_delta local; igualmente avanzamos el flow.
-                                _asistenteService.draft = Map<String, dynamic>.from(_draft);
-                                final res = await _postFlowAdvanceWithRetry();
-                                if (!mounted) return;
-                                if (res['success'] == true) {
-                                  final data = res['data'];
-                                  if (data is Map) {
-                                    await _handleFlowEnvelopeResponse(
-                                      Map<String, dynamic>.from(data),
-                                    );
-                                  }
-                                } else if (mounted) {
-                                  setState(() {
-                                    _chatHistory.add({
-                                      'type': 'bot',
-                                      'content': res['message']?.toString() ??
-                                          'No se pudo avanzar. Intentá de nuevo.',
-                                      'timestamp': DateTime.now(),
-                                    });
-                                  });
-                                }
-                              },
-                            ),
-                          ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                          ],
-                        ),
-                      ),
-                    if (!isUser && _showFlowDismissFooter(message))
-                      _wrapFlowInteractiveCollapse(
-                        collapsing: flowCollapsing,
-                        child: _buildFlowDismissFooter(context, index, message),
-                      ),
-                    if (!isUser && _showFlowSubmitButton(message))
-                      _wrapFlowInteractiveCollapse(
-                        collapsing: flowCollapsing,
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              // Aviso inline si faltan campos del draft al apretar (Cambio 2).
-                              if (message['_flow_submit_missing'] is List &&
-                                  (message['_flow_submit_missing'] as List).isNotEmpty) ...[
-                                BioAlert.danger(
-                                  message: _missingFieldsMessage(
-                                    List<String>.from(
-                                      (message['_flow_submit_missing'] as List)
-                                          .map((e) => e.toString()),
+                                    },
+                                    backgroundColor: cs.primary.withValues(
+                                      alpha: 0.1,
                                     ),
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                              ],
-                              BioButton.primary(
-                                label: 'Confirmar y Enviar',
-                                icon: Icons.check_circle_outline,
-                                size: BioButtonSize.lg,
-                                fullWidth: true,
-                                loading: message['_flow_submit_busy'] == true,
-                                // Siempre habilitado salvo: flow superseded / colapsando / submit en curso.
-                                // Si faltan campos del draft, `_postFlowSubmitFromMessage` muestra el alert
-                                // inline y no envía (descubrible para el usuario).
-                                onPressed: (flowUiDisabled ||
-                                        flowCollapsing ||
-                                        message['_flow_submit_busy'] == true ||
-                                        _isSending)
-                                    ? null
-                                    : () => _postFlowSubmitFromMessage(index),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    // Formulario dinámico si hay form_config (viene de getActionFormConfig)
-                    if (!isUser) ...[
-                      Builder(
-                        builder: (context) {
-                          final formConfig = message['form_config'];
-                          final wizardSteps = message['wizard_steps'];
-                          final actionIdFromMessage = message['action_id'];
-                          final actionName = message['action_name'];
-      // final parametersFromMessage = message['parameters'];
-                          
-                          if (formConfig != null && formConfig is Map) {
-                            // Card tappable: un solo tap abre directamente el formulario en modal
-                            return Column(
-                              children: [
-                                const SizedBox(height: 16),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                                  child: Material(
-                                    color: cs.primary.withValues(alpha: 0.06),
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: InkWell(
-                                      onTap: () {
-                                        _showFormModal(
-                                          context: context,
-                                          formConfig: Map<String, dynamic>.from(formConfig),
-                                          wizardSteps: wizardSteps != null ? List<Map<String, dynamic>>.from(wizardSteps.map((step) => Map<String, dynamic>.from(step))) : null,
-                                          initialStep: message['initial_step'] as int? ?? 0,
-                                          title: actionName ?? 'Completa la información',
-                                          authToken: _asistenteService.authToken,
-                                          onSubmit: (formValues) async {
-                                            if (actionIdFromMessage != null) {
-                                              await _executeActionWithParams(actionIdFromMessage, formValues);
-                                            }
-                                          },
-                                          onCancel: () {
-                                            setState(() {
-                                              _chatHistory.removeAt(index);
-                                            });
-                                          },
-                                        );
-                                      },
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: Container(
-                                        padding: const EdgeInsets.all(16.0),
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(12),
-                                          border: Border.all(
-                                            color: cs.primary.withValues(alpha: 0.3),
-                                          ),
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            Icon(
-                                              Icons.input,
-                                              size: 20,
-                                              color: cs.primary,
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Expanded(
-                                              child: Text(
-                                                actionName ?? 'Completa la información',
-                                                style: tt.titleSmall?.copyWith(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: cs.primary,
-                                                ),
-                                              ),
-                                            ),
-                                            Icon(
-                                              Icons.arrow_forward_ios,
-                                              size: 14,
-                                              color: cs.primary,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            );
-                          }
-                          
-                          // Si no hay form_config, verificar si hay actionAnalysis (comportamiento anterior)
-                          final actionAnalysis = message['action_analysis'];
-                          final needsUserInput = message['needs_user_input'] ?? false;
-                          
-                          if (needsUserInput && actionAnalysis != null && actionAnalysis is Map) {
-                            final actionId = actionAnalysis['action_id'] as String?;
-                            return Column(
-                              children: [
-                                const SizedBox(height: 16),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                                  child: Material(
-                                    color: cs.primary.withValues(alpha: 0.06),
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: InkWell(
-                                      onTap: () {
-                                        _showFormModal(
-                                          context: context,
-                                          formConfig: Map<String, dynamic>.from(actionAnalysis['form_config'] ?? {}),
-                                          title: 'Completa la información',
-                                          authToken: _asistenteService.authToken,
-                                          onSubmit: (formValues) async {
-                                            if (actionId != null) {
-                                              await _executeActionWithParams(actionId, formValues);
-                                            }
-                                          },
-                                          onCancel: () {
-                                            setState(() {
-                                              _chatHistory.removeAt(index);
-                                            });
-                                          },
-                                        );
-                                      },
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: Container(
-                                        padding: const EdgeInsets.all(16.0),
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(12),
-                                          border: Border.all(
-                                            color: cs.primary.withValues(alpha: 0.3),
-                                          ),
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            Icon(
-                                              Icons.input,
-                                              size: 20,
-                                              color: cs.primary,
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Expanded(
-                                              child: Text(
-                                                'Completa la información',
-                                                style: tt.titleSmall?.copyWith(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: cs.primary,
-                                                ),
-                                              ),
-                                            ),
-                                            Icon(
-                                              Icons.arrow_forward_ios,
-                                              size: 14,
-                                              color: cs.primary,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            );
-                          }
-                          
-                          return const SizedBox.shrink();
-                        },
-                      ),
-                    ],
-                    // Consulta sugerida si existe
-                    if (!isUser && suggestedQuery != null && suggestedQuery.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          left: 16.0,
-                          right: 16.0,
-                          top: 0,
-                          bottom: 0,
-                        ),
-                        child: BioButton.outlinePrimary(
-                          label: suggestedQuery,
-                          icon: Icons.lightbulb_outline,
-                          size: BioButtonSize.sm,
-                          onPressed: () {
-                            _messageController.text = suggestedQuery;
-                            _sendMessage();
-                          },
-                        ),
-                      ),
-                    ],
-                    // CTA Cargar motivos cuando la respuesta incluye id_consulta (ej. tras crear turno)
-                    if (!isUser) ...[
-                      Builder(
-                        builder: (context) {
-                          final data = message['data'];
-                          final rawId = data is Map
-                              ? (data['encounter_id'] ?? data['id_consulta'])
-                              : null;
-                          final encounterId = rawId is int
-                              ? rawId
-                              : (rawId is num
-                                  ? rawId.toInt()
-                                  : int.tryParse('$rawId'));
-                          if (encounterId == null || encounterId <= 0) {
-                            return const SizedBox.shrink();
-                          }
-                          return Padding(
-                            padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 0.0),
-                            child: ActionChip(
-                              avatar: Icon(Icons.edit_note, size: 18, color: cs.primary),
-                              label: const Text('Cargar motivos de la consulta'),
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => ChatConsultaScreen(
-                                      encounterId: encounterId,
-                                      authToken: _asistenteService.authToken,
-                                      userId: widget.chatService.currentUserId,
-                                      userName: widget.chatService.currentUserName,
-                                      titulo: 'Motivos de la consulta',
+                                    labelStyle: tt.labelLarge?.copyWith(
+                                      color: cs.primary,
+                                      fontSize: 13,
                                     ),
                                   ),
                                 );
                               },
-                              backgroundColor: cs.primary.withValues(alpha: 0.1),
-                              labelStyle: tt.labelLarge?.copyWith(color: cs.primary, fontSize: 13),
                             ),
-                          );
-                        },
-                      ),
-                    ],
-                  ],
-                );
-              },
-            ),
+                          ],
+                        ],
+                      );
+                    },
+                  ),
           ),
           AssistantChatComposerBar(
             controller: _messageController,
@@ -3179,10 +3711,7 @@ class _AnimatedFlowCompletedSummaryState
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: widget.borderColor),
                 ),
-                child: Text(
-                  widget.content,
-                  style: widget.textStyle,
-                ),
+                child: Text(widget.content, style: widget.textStyle),
               ),
             ),
           ],
@@ -3197,10 +3726,7 @@ class _KeepAliveChatChild extends StatefulWidget {
   final Widget child;
   final bool keepAlive;
 
-  const _KeepAliveChatChild({
-    required this.child,
-    this.keepAlive = true,
-  });
+  const _KeepAliveChatChild({required this.child, this.keepAlive = true});
 
   @override
   State<_KeepAliveChatChild> createState() => _KeepAliveChatChildState();

@@ -5,7 +5,7 @@ import 'package:shared/shared.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/turnos_service.dart';
-import '../services/consulta_async_api.dart';
+import '../services/encounter_async_api.dart';
 import '../utils/turno_resolucion_utils.dart';
 import '../config/paciente_intents.dart';
 import '../auth/paciente_post_login.dart';
@@ -13,7 +13,7 @@ import 'care_plan_detail_screen.dart';
 import 'care_plans_list_screen.dart';
 import 'condition_detail_screen.dart';
 import 'conditions_list_screen.dart';
-import 'chat_medico_screen.dart';
+import 'encounter_chat_patient_screen.dart';
 import 'encounter_reasons_chat_screen.dart';
 import 'encounter_summary_detail_screen.dart';
 import '../widgets/consulta_async_solicitud_card.dart';
@@ -840,7 +840,7 @@ class HomeScreenState extends State<HomeScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ChatMedicoScreen(
+        builder: (_) => EncounterChatPatientScreen(
           encounterId: id,
           authToken: widget.authToken,
           userId: widget.userId,
@@ -869,7 +869,7 @@ class HomeScreenState extends State<HomeScreen> {
       ),
     );
     if (ok != true || !mounted) return;
-    final res = await ConsultaAsyncApi(authToken: widget.authToken).cancelarComoPaciente(id);
+    final res = await EncounterAsyncApi(authToken: widget.authToken).cancelarComoPaciente(id);
     if (!mounted) return;
     if (res['success'] == true) {
       await _cargarInicial();

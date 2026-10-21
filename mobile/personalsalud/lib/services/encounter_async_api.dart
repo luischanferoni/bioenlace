@@ -3,12 +3,12 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared/shared.dart';
 
-/// API de consultas clínicas async (bandeja staff).
-class ConsultaAsyncApi {
+/// Encounter async API for staff request actions.
+class EncounterAsyncApi {
   final String? authToken;
   final String? userId;
 
-  ConsultaAsyncApi({this.authToken, this.userId});
+  EncounterAsyncApi({this.authToken, this.userId});
 
   Map<String, String> get _headers => AppConfig.jsonHeaders(
         bearerToken: authToken,

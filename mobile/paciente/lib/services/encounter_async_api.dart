@@ -3,11 +3,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared/shared.dart';
 
-/// API consulta async (cancelar solicitud) — app paciente.
-class ConsultaAsyncApi {
+/// Encounter async API for patient request cancellation.
+class EncounterAsyncApi {
   final String? authToken;
 
-  ConsultaAsyncApi({this.authToken});
+  EncounterAsyncApi({this.authToken});
 
   Map<String, String> get _headers => AppConfig.jsonHeaders(
         bearerToken: authToken,

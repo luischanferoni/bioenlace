@@ -7,17 +7,17 @@ import 'package:record/record.dart';
 import 'package:shared/shared.dart';
 
 import '../services/encounter_chat_service.dart';
-import '../services/consulta_async_api.dart';
+import '../services/encounter_async_api.dart';
 
 /// Chat con el médico: texto e imágenes (paciente); audio/PDF según policy.
-class ChatMedicoScreen extends StatefulWidget {
+class EncounterChatPatientScreen extends StatefulWidget {
   final int encounterId;
   final String? authToken;
   final String userId;
   final String userName;
   final String titulo;
 
-  const ChatMedicoScreen({
+  const EncounterChatPatientScreen({
     Key? key,
     required this.encounterId,
     required this.authToken,
@@ -27,16 +27,18 @@ class ChatMedicoScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<ChatMedicoScreen> createState() => _ChatMedicoScreenState();
+  State<EncounterChatPatientScreen> createState() =>
+      _EncounterChatPatientScreenState();
 }
 
-class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
+class _EncounterChatPatientScreenState
+    extends State<EncounterChatPatientScreen> {
   late EncounterChatService _chatService;
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   List<dynamic> _messages = [];
-  AsyncConsultaChatPolicy _chatPolicy = AsyncConsultaChatPolicy.fromApi(null);
-  late ConsultaAsyncApi _asyncApi;
+  EncounterChatPolicy _chatPolicy = EncounterChatPolicy.fromApi(null);
+  late EncounterAsyncApi _asyncApi;
   bool _loading = true;
   bool _sending = false;
   String? _error;
@@ -51,7 +53,7 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
       authToken: widget.authToken,
       userName: widget.userName,
     );
-    _asyncApi = ConsultaAsyncApi(authToken: widget.authToken);
+    _asyncApi = EncounterAsyncApi(authToken: widget.authToken);
     _loadMessages();
   }
 
@@ -75,7 +77,7 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
       final data = result['data'];
       if (data is Map) {
         final policyRaw = data['chat_policy'];
-        _chatPolicy = AsyncConsultaChatPolicy.fromApi(
+        _chatPolicy = EncounterChatPolicy.fromApi(
           policyRaw is Map ? Map<String, dynamic>.from(policyRaw) : null,
         );
       }
@@ -87,16 +89,23 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
   Future<void> _cancelarSolicitud() async {
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Retirar solicitud'),
-        content: const Text(
-          '¿Querés retirar esta solicitud? Solo podés hacerlo mientras el equipo aún no la atiende.',
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('No')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Retirar')),
-        ],
-      ),
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text('Retirar solicitud'),
+            content: const Text(
+              '¿Querés retirar esta solicitud? Solo podés hacerlo mientras el equipo aún no la atiende.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('No'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Retirar'),
+              ),
+            ],
+          ),
     );
     if (ok != true || !mounted) return;
     final res = await _asyncApi.cancelarComoPaciente(widget.encounterId);
@@ -228,38 +237,40 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
               child: BioAlert.info(message: _chatPolicy.hint),
             ),
           Expanded(
-            child: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : _error != null
+            child:
+                _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _error != null
                     ? Center(
-                        child: Padding(
-                          padding: BioSpacing.pageAll,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              BioAlert.danger(message: _error!),
-                              BioSpacing.gapH(BioSpacing.lg),
-                              BioButton.primary(
-                                label: 'Reintentar',
-                                icon: Icons.refresh,
-                                onPressed: _loadMessages,
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    : ListView.builder(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.symmetric(
-                          vertical: BioSpacing.sm,
-                          horizontal: BioSpacing.md,
-                        ),
-                        itemCount: _messages.length,
-                        itemBuilder: (context, i) => _buildBubble(
-                          context,
-                          _messages[i] as Map<String, dynamic>,
+                      child: Padding(
+                        padding: BioSpacing.pageAll,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            BioAlert.danger(message: _error!),
+                            BioSpacing.gapH(BioSpacing.lg),
+                            BioButton.primary(
+                              label: 'Reintentar',
+                              icon: Icons.refresh,
+                              onPressed: _loadMessages,
+                            ),
+                          ],
                         ),
                       ),
+                    )
+                    : ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: BioSpacing.sm,
+                        horizontal: BioSpacing.md,
+                      ),
+                      itemCount: _messages.length,
+                      itemBuilder:
+                          (context, i) => _buildBubble(
+                            context,
+                            _messages[i] as Map<String, dynamic>,
+                          ),
+                    ),
           ),
           if (_chatPolicy.composerEnabled) _buildInputBar(context),
         ],
@@ -268,14 +279,14 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
   }
 
   Widget _buildBubble(BuildContext context, Map<String, dynamic> m) {
-    if (asyncChatMessageIsSystem(m)) {
+    if (encounterChatMessageIsSystem(m)) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: BioSpacing.xs),
         child: Center(
           child: Text(
             m['content']?.toString() ?? '',
             textAlign: TextAlign.center,
-            style: asyncChatMessageTextStyle(context, m),
+            style: encounterChatMessageTextStyle(context, m),
           ),
         ),
       );
@@ -283,22 +294,22 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
 
     final tokens = context.bio;
     final isMe =
-        m['user_role'] == 'paciente' || m['user_id'].toString() == widget.userId;
+        m['user_role'] == 'paciente' ||
+        m['user_id'].toString() == widget.userId;
     final type = m['message_type'] as String? ?? 'texto';
     final content = m['content']?.toString() ?? '';
 
     final palette = IntentPalette.of(UiIntent.primary);
     final bg = isMe ? palette.base : tokens.paperSurfaceSunken;
     final fg = isMe ? palette.onBase : tokens.textBody;
-    final fgMuted = isMe
-        ? palette.onBase.withValues(alpha: 0.72)
-        : tokens.textMuted;
+    final fgMuted =
+        isMe ? palette.onBase.withValues(alpha: 0.72) : tokens.textMuted;
 
     Widget contenido;
     if (type == 'texto' || type.startsWith('solicitud_')) {
       contenido = Text(
         content,
-        style: asyncChatMessageTextStyle(context, m).copyWith(color: fg),
+        style: encounterChatMessageTextStyle(context, m).copyWith(color: fg),
       );
     } else if (type == 'audio' || type == 'documento' || type == 'imagen') {
       final IconData icon;
@@ -315,19 +326,19 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
           Icon(icon, color: fgMuted, size: 18),
           BioSpacing.gapW(BioSpacing.sm),
           Text(
-            asyncChatAttachmentLabel(type),
+            encounterChatAttachmentLabel(type),
             style: BioTypography.bodySm.copyWith(color: fgMuted),
           ),
         ],
       );
     } else if (isImageMessageType(type) && content.isNotEmpty) {
       contenido = Text(
-        asyncChatAttachmentLabel(type),
+        encounterChatAttachmentLabel(type),
         style: BioTypography.bodySm.copyWith(color: fgMuted),
       );
     } else {
       contenido = Text(
-        content.isNotEmpty ? content : asyncChatAttachmentLabel(type),
+        content.isNotEmpty ? content : encounterChatAttachmentLabel(type),
         style: BioTypography.bodySm.copyWith(color: fgMuted),
       );
     }
@@ -346,12 +357,13 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(BioRadius.md),
-          border: isMe
-              ? null
-              : Border.all(
-                  color: tokens.paperBorderDefault,
-                  width: BorderWidth.thin,
-                ),
+          border:
+              isMe
+                  ? null
+                  : Border.all(
+                    color: tokens.paperBorderDefault,
+                    width: BorderWidth.thin,
+                  ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -359,10 +371,11 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
             contenido,
             BioSpacing.gapH(BioSpacing.xs),
             Text(
-              m['created_at']?.toString().substring(
-                    0,
-                    m['created_at']?.toString().length ?? 0,
-                  ).padRight(16).substring(0, 16) ??
+              m['created_at']
+                      ?.toString()
+                      .substring(0, m['created_at']?.toString().length ?? 0)
+                      .padRight(16)
+                      .substring(0, 16) ??
                   '',
               style: BioTypography.caption.copyWith(
                 color: fgMuted,

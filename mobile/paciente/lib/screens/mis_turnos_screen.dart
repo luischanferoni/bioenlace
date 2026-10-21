@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
 import '../services/turnos_service.dart';
-import 'chat_medico_screen.dart';
+import 'encounter_chat_patient_screen.dart';
 import 'encounter_reasons_chat_screen.dart';
 
 /// Pantalla "Mis turnos": próximos e historial con paginación por sección.
@@ -388,7 +388,7 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => ChatMedicoScreen(
+                builder: (_) => EncounterChatPatientScreen(
                   encounterId: encounterId,
                   authToken: widget.authToken,
                   userId: widget.userId,

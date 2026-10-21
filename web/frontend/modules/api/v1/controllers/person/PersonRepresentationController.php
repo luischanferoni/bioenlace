@@ -36,10 +36,11 @@ class PersonRepresentationController extends BaseController
         }
 
         try {
-            return (new EstablishVerifiedGuardianship())->solicitarMenorComoTutor(
+            $result = (new EstablishVerifiedGuardianship())->solicitarMenorComoTutor(
                 $idPersona,
                 $this->mergedParams()
             );
+            return $this->ok($result['data']);
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         }
@@ -64,7 +65,8 @@ class PersonRepresentationController extends BaseController
         $params = $this->mergedParams();
         $status = isset($params['status']) ? trim((string) $params['status']) : null;
 
-        return (new EstablishVerifiedGuardianship())->listarMisVinculosComoTutor($idPersona, $status);
+        $result = (new EstablishVerifiedGuardianship())->listarMisVinculosComoTutor($idPersona, $status);
+        return $this->ok($result['data']);
     }
 
     /**
@@ -82,10 +84,11 @@ class PersonRepresentationController extends BaseController
         $staffUserId = (int) Yii::$app->user->id;
 
         try {
-            return (new EstablishVerifiedGuardianship())->verificarVinculoParaStaff(
+            $result = (new EstablishVerifiedGuardianship())->verificarVinculoParaStaff(
                 $staffUserId,
                 $this->mergedParams()
             );
+            return $this->ok($result['data']);
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         }
@@ -106,10 +109,11 @@ class PersonRepresentationController extends BaseController
         $staffUserId = (int) Yii::$app->user->id;
 
         try {
-            return (new EstablishVerifiedGuardianship())->bloquearParaStaff(
+            $result = (new EstablishVerifiedGuardianship())->bloquearParaStaff(
                 $staffUserId,
                 $this->mergedParams()
             );
+            return $this->ok($result['data']);
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         }
@@ -130,10 +134,11 @@ class PersonRepresentationController extends BaseController
         $staffUserId = (int) Yii::$app->user->id;
 
         try {
-            return (new EstablishVerifiedGuardianship())->revocarParaStaff(
+            $result = (new EstablishVerifiedGuardianship())->revocarParaStaff(
                 $staffUserId,
                 $this->mergedParams()
             );
+            return $this->ok($result['data']);
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         }
@@ -154,7 +159,8 @@ class PersonRepresentationController extends BaseController
         $subjectPersonaId = (int) ($params['id_persona'] ?? $params['subject_persona_id'] ?? 0);
 
         try {
-            return (new EstablishVerifiedGuardianship())->listarVinculosPacienteParaStaff($subjectPersonaId);
+            $result = (new EstablishVerifiedGuardianship())->listarVinculosPacienteParaStaff($subjectPersonaId);
+            return $this->ok($result['data']);
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         }
@@ -225,7 +231,8 @@ class PersonRepresentationController extends BaseController
         }
 
         try {
-            return (new DesignatePatientDelegation())->designarRepresentante($idPersona, $this->mergedParams());
+            $result = (new DesignatePatientDelegation())->designarRepresentante($idPersona, $this->mergedParams());
+            return $this->ok($result['data']);
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         }
@@ -249,7 +256,8 @@ class PersonRepresentationController extends BaseController
         }
 
         try {
-            return (new DesignatePatientDelegation())->revocarRepresentante($idPersona, $this->mergedParams());
+            $result = (new DesignatePatientDelegation())->revocarRepresentante($idPersona, $this->mergedParams());
+            return $this->ok($result['data']);
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         }
@@ -269,7 +277,8 @@ class PersonRepresentationController extends BaseController
             throw new BadRequestHttpException('Sesión sin persona.');
         }
 
-        return (new DesignatePatientDelegation())->listarMisRepresentantes($idPersona);
+        $result = (new DesignatePatientDelegation())->listarMisRepresentantes($idPersona);
+        return $this->ok($result['data']);
     }
 
     /**
@@ -286,7 +295,8 @@ class PersonRepresentationController extends BaseController
             throw new BadRequestHttpException('Sesión sin persona.');
         }
 
-        return (new DesignatePatientDelegation())->listarPacientesACargo($idPersona);
+        $result = (new DesignatePatientDelegation())->listarPacientesACargo($idPersona);
+        return $this->ok($result['data']);
     }
 
     /**
@@ -322,13 +332,10 @@ class PersonRepresentationController extends BaseController
         if ($subjectRaw === null || $subjectRaw === '' || (int) $subjectRaw <= 0) {
             $svc->establecerSujetoEnSesion(null);
 
-            return [
-                'success' => true,
-                'data' => [
-                    'subject_persona_id' => $idPersona,
-                    'mensaje' => 'Contexto restablecido a tu persona.',
-                ],
-            ];
+            return $this->ok([
+                'subject_persona_id' => $idPersona,
+                'mensaje' => 'Contexto restablecido a tu persona.',
+            ]);
         }
 
         $subjectId = (int) $subjectRaw;
@@ -338,13 +345,10 @@ class PersonRepresentationController extends BaseController
             throw new BadRequestHttpException($e->getMessage());
         }
 
-        return [
-            'success' => true,
-            'data' => [
-                'subject_persona_id' => $subjectId,
-                'mensaje' => 'Sujeto de atención fijado en sesión.',
-            ],
-        ];
+        return $this->ok([
+            'subject_persona_id' => $subjectId,
+            'mensaje' => 'Sujeto de atención fijado en sesión.',
+        ]);
     }
 
     public function actionPreferenciasComoPaciente(): array
@@ -359,14 +363,16 @@ class PersonRepresentationController extends BaseController
             $params = $this->mergedParams();
             if (array_key_exists('notify_on_representative_action', $params)) {
                 try {
-                    return $service->guardarPreferencias($idPersona, $params);
+                    $result = $service->guardarPreferencias($idPersona, $params);
+                    return $this->ok($result['data']);
                 } catch (\InvalidArgumentException $e) {
                     throw new BadRequestHttpException($e->getMessage());
                 }
             }
         }
 
-        return $service->obtenerPreferencias($idPersona);
+        $result = $service->obtenerPreferencias($idPersona);
+        return $this->ok($result['data']);
     }
 
     private function assertPost(): void

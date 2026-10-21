@@ -6,9 +6,6 @@ use frontend\modules\api\v1\controllers\BaseController;
 use common\components\Domain\Clinical\Encounter\Application\Service\SecureMediaService;
 use Yii;
 use yii\web\Controller;
-use yii\web\ForbiddenHttpException;
-use yii\web\NotFoundHttpException;
-use yii\web\Response;
 
 /**
  * GET /api/v1/media/{scope}/{encounter_id}/{filename} — archivo binario (Bearer + participantes del encounter).
@@ -36,23 +33,11 @@ class MediaController extends BaseController
      */
     public function actionVer($scope, $encounterId, $filename)
     {
-        try {
-            $resolved = SecureMediaService::resolveForDownload(
-                (string) $scope,
-                (int) $encounterId,
-                (string) $filename
-            );
-        } catch (NotFoundHttpException $e) {
-            Yii::$app->response->statusCode = 404;
-            Yii::$app->response->format = Response::FORMAT_JSON;
-
-            return ['success' => false, 'message' => $e->getMessage(), 'data' => null];
-        } catch (ForbiddenHttpException $e) {
-            Yii::$app->response->statusCode = 403;
-            Yii::$app->response->format = Response::FORMAT_JSON;
-
-            return ['success' => false, 'message' => $e->getMessage(), 'data' => null];
-        }
+        $resolved = SecureMediaService::resolveForDownload(
+            (string) $scope,
+            (int) $encounterId,
+            (string) $filename
+        );
 
         Yii::$app->response->format = Response::FORMAT_RAW;
 

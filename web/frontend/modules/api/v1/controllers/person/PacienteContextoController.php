@@ -34,10 +34,7 @@ class PacienteContextoController extends BaseController
         $service = new PacienteContextoService();
         $ctx = $service->getOrCreate($idPersona);
 
-        return [
-            'success' => true,
-            'data' => ['contexto' => $service->export($ctx)],
-        ];
+        return $this->ok(['contexto' => $service->export($ctx)]);
     }
 
     /**
@@ -63,10 +60,7 @@ class PacienteContextoController extends BaseController
                 $this->mergedParams()
             );
 
-            return [
-                'success' => true,
-                'data' => ['contexto' => $contexto],
-            ];
+            return $this->ok(['contexto' => $contexto]);
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         }
@@ -101,13 +95,10 @@ class PacienteContextoController extends BaseController
         $service = new ProvinciaSuggestionService();
         $provincias = $service->sugerirPorIp(null, $iso2, $idPais);
 
-        return [
-            'success' => true,
-            'data' => [
-                'provincias' => $provincias,
-                'paises' => $service->listarPaises(),
-            ],
-        ];
+        return $this->ok([
+            'provincias' => $provincias,
+            'paises' => $service->listarPaises(),
+        ]);
     }
 
     /**
@@ -146,22 +137,16 @@ class PacienteContextoController extends BaseController
         }
 
         if ($result === null) {
-            return [
-                'success' => true,
-                'data' => [
-                    'encontrado' => false,
-                    'mensaje' => 'No encontramos ese recurso para tu provincia de contexto.',
-                ],
-            ];
+            return $this->ok([
+                'encontrado' => false,
+                'mensaje' => 'No encontramos ese recurso para tu provincia de contexto.',
+            ]);
         }
 
-        return [
-            'success' => true,
-            'data' => [
-                'encontrado' => true,
-                'recurso' => $result,
-            ],
-        ];
+        return $this->ok([
+            'encontrado' => true,
+            'recurso' => $result,
+        ]);
     }
 
     /**

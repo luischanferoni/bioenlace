@@ -358,6 +358,12 @@ errors:
     retryable: false
     default_detail: "Los datos enviados no son válidos."
     message: "{detail}"
+  method_not_allowed_detail:
+    http_status: 405
+    intent: error
+    retryable: false
+    default_detail: "El método HTTP no está permitido para este recurso."
+    message: "{detail}"
 
   audio_missing:
     http_status: 422

@@ -31,7 +31,10 @@ class PersonRepresentationApi {
     final response = await http
         .post(
           uri,
-          headers: AppConfig.jsonHeaders(bearerToken: token, appClient: appClient),
+          headers: AppConfig.jsonHeaders(
+            bearerToken: token,
+            appClient: appClient,
+          ),
           body: json.encode(body ?? {}),
         )
         .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
@@ -45,7 +48,10 @@ class PersonRepresentationApi {
     final response = await http
         .get(
           uri,
-          headers: AppConfig.jsonHeaders(bearerToken: token, appClient: appClient),
+          headers: AppConfig.jsonHeaders(
+            bearerToken: token,
+            appClient: appClient,
+          ),
         )
         .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
     BioenlaceHttpTrace.logResponse(path, response);
@@ -61,7 +67,10 @@ class PersonRepresentationApi {
     final response = await http
         .post(
           uri,
-          headers: AppConfig.jsonHeaders(bearerToken: token, appClient: appClient),
+          headers: AppConfig.jsonHeaders(
+            bearerToken: token,
+            appClient: appClient,
+          ),
           body: json.encode(body ?? {}),
         )
         .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
@@ -70,18 +79,37 @@ class PersonRepresentationApi {
   }
 
   Map<String, dynamic> _decode(http.Response response) {
+    dynamic decoded;
     try {
-      final raw = json.decode(response.body);
-      if (raw is Map<String, dynamic>) {
-        if (response.statusCode >= 200 && response.statusCode < 300) {
-          return raw;
+      decoded = json.decode(response.body);
+    } on FormatException {
+      return {
+        'success': false,
+        'message': 'Respuesta inválida (${response.statusCode})',
+      };
+    }
+    if (decoded is Map<String, dynamic>) {
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        if (decoded.containsKey('data') && decoded.containsKey('meta')) {
+          return {
+            'success': true,
+            'data': decoded['data'],
+            'meta': decoded['meta'],
+          };
         }
-        return {
-          'success': false,
-          'message': raw['message'] ?? 'Error en representación (${response.statusCode})',
-        };
+        return decoded;
       }
-    } catch (_) {}
+      final error = decoded['error'];
+      return {
+        'success': false,
+        'message':
+            error is Map
+                ? error['message'] ??
+                    'Error en representación (${response.statusCode})'
+                : decoded['message'] ??
+                    'Error en representación (${response.statusCode})',
+      };
+    }
     return {
       'success': false,
       'message': 'Respuesta inválida (${response.statusCode})',
@@ -103,11 +131,18 @@ class PersonRepresentationApi {
     return _getPost('/person-representation/mis-representantes');
   }
 
-  Future<Map<String, dynamic>> solicitarMenorComoTutor(Map<String, dynamic> body) {
-    return _post('/person-representation/solicitar-menor-como-tutor', body: body);
+  Future<Map<String, dynamic>> solicitarMenorComoTutor(
+    Map<String, dynamic> body,
+  ) {
+    return _post(
+      '/person-representation/solicitar-menor-como-tutor',
+      body: body,
+    );
   }
 
-  Future<Map<String, dynamic>> designarRepresentante(Map<String, dynamic> body) {
+  Future<Map<String, dynamic>> designarRepresentante(
+    Map<String, dynamic> body,
+  ) {
     return _post('/person-representation/designar-representante', body: body);
   }
 
@@ -118,9 +153,10 @@ class PersonRepresentationApi {
   Future<Map<String, dynamic>> establecerSujetoPaciente(int? subjectPersonaId) {
     return _post(
       '/person-representation/establecer-sujeto-paciente',
-      body: subjectPersonaId != null && subjectPersonaId > 0
-          ? {'subject_persona_id': subjectPersonaId}
-          : {},
+      body:
+          subjectPersonaId != null && subjectPersonaId > 0
+              ? {'subject_persona_id': subjectPersonaId}
+              : {},
     );
   }
 

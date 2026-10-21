@@ -4,6 +4,7 @@ namespace frontend\modules\api\v1\controllers;
 
 use Yii;
 use common\components\Platform\Core\Service\Actions\CommonActionsService;
+use common\components\Platform\Core\Http\Contract\ApiException;
 
 /**
  * Metadatos de acciones API para clientes (atajos, descubrimiento ligero).
@@ -32,19 +33,13 @@ class AccionesController extends BaseController
                 $appClient !== '' ? $appClient : null
             );
 
-            return [
-                'success' => true,
+            return $this->ok([
                 'actions' => $payload['actions'] ?? [],
                 'categories' => $payload['categories'] ?? [],
-            ];
+            ]);
         } catch (\Throwable $e) {
-            Yii::error('actionComunes: ' . $e->getMessage(), __METHOD__);
-
-            return [
-                'success' => false,
-                'error' => 'Error al cargar acciones comunes',
-                'actions' => [],
-            ];
+            Yii::error($e, __METHOD__);
+            throw new ApiException('internal_error', [], [], $e);
         }
     }
 }

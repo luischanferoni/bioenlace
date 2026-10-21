@@ -5,10 +5,10 @@ namespace frontend\modules\api\v1\controllers\organization;
 use frontend\modules\api\v1\controllers\BaseController;
 use common\components\Domain\Scheduling\Agenda\Application\UseCase\ResolveServicioTeleconsultaPolitica;
 use common\components\Domain\Scheduling\Agenda\Application\Presentation\ServicioTeleconsultaPoliticaUiPresenter;
+use common\components\Platform\Core\Http\Contract\ApiException;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Platform\Ui\UiScreenService;
 use Yii;
-use yii\web\BadRequestHttpException;
 
 /**
  * Política de teleconsulta por servicio (AdminEfector).
@@ -63,8 +63,7 @@ class ServicioTeleconsultaPoliticaController extends BaseController
 
             return $ui;
         } catch (DomainOperationForbiddenException $e) {
-            Yii::$app->response->statusCode = 403;
-            throw new BadRequestHttpException($e->getMessage());
+            throw new ApiException('forbidden_detail', ['detail' => $e->getMessage()], [], $e);
         } catch (\InvalidArgumentException $e) {
             $values = array_merge($req->get(), $req->isPost ? $req->post() : []);
             $ui = UiScreenService::renderUiDefinition(

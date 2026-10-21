@@ -11,136 +11,183 @@ class TurnosService {
 
   TurnosService({this.authToken, this.userId});
 
-  Map<String, String> get _headers =>
-      AppConfig.jsonHeaders(bearerToken: authToken, appClient: 'personalsalud-flutter');
+  Map<String, String> get _headers => AppConfig.jsonHeaders(
+    bearerToken: authToken,
+    appClient: 'personalsalud-flutter',
+  );
 
   // Obtener turnos por fecha
-  Future<List<Turno>> getTurnosPorFecha(String fecha,
-      {String? idProfesionalEfectorServicio}) async {
+  Future<List<Turno>> getTurnosPorFecha(
+    String fecha, {
+    String? idProfesionalEfectorServicio,
+  }) async {
     try {
-      final queryParams = <String, String>{
-        'fecha': fecha,
-      };
+      final queryParams = <String, String>{'fecha': fecha};
       if (idProfesionalEfectorServicio != null) {
-        queryParams['id_profesional_efector_servicio'] = idProfesionalEfectorServicio;
+        queryParams['id_profesional_efector_servicio'] =
+            idProfesionalEfectorServicio;
       }
-      
+
       // Para desarrollo/simulación: incluir user_id como parámetro si no hay token válido
-      if (userId != null && (authToken == null || authToken!.isEmpty || authToken!.startsWith('simulated_'))) {
+      if (userId != null &&
+          (authToken == null ||
+              authToken!.isEmpty ||
+              authToken!.startsWith('simulated_'))) {
         queryParams['user_id'] = userId!;
       }
 
-      final uri = Uri.parse('${AppConfig.apiUrl}/profesional-agenda/dia').replace(
-        queryParameters: queryParams,
-      );
+      final uri = Uri.parse(
+        '${AppConfig.apiUrl}/profesional-agenda/dia',
+      ).replace(queryParameters: queryParams);
 
       print('Request URL: $uri');
       print('Headers: $_headers');
-      
+
       final response = await http.get(uri, headers: _headers);
 
       print('Response status: ${response.statusCode}');
       print('Response headers: ${response.headers}');
-      final bodyPreview = response.body.length > 200 
-          ? response.body.substring(0, 200) 
+      final bodyPreview = response.body.length > 200
+          ? response.body.substring(0, 200)
           : response.body;
       print('Response body (first 200 chars): $bodyPreview');
 
       // Verificar que la respuesta sea JSON, no HTML
       final contentType = response.headers['content-type'] ?? '';
       final bodyTrimmed = response.body.trim();
-      
-      if (bodyTrimmed.startsWith('<!DOCTYPE') || bodyTrimmed.startsWith('<html')) {
-        throw Exception('La API devolvió HTML en lugar de JSON. Esto puede indicar:\n'
-            '1. La URL está incorrecta: $uri\n'
-            '2. Falta autenticación o el token es inválido\n'
-            '3. El servidor está redirigiendo a una página de login\n\n'
-            'Verifique que:\n'
-            '- La URL base sea correcta: ${AppConfig.apiUrl}\n'
-            '- El token de autenticación esté configurado\n'
-            '- El endpoint exista en el servidor');
+
+      if (bodyTrimmed.startsWith('<!DOCTYPE') ||
+          bodyTrimmed.startsWith('<html')) {
+        throw Exception(
+          'La API devolvió HTML en lugar de JSON. Esto puede indicar:\n'
+          '1. La URL está incorrecta: $uri\n'
+          '2. Falta autenticación o el token es inválido\n'
+          '3. El servidor está redirigiendo a una página de login\n\n'
+          'Verifique que:\n'
+          '- La URL base sea correcta: ${AppConfig.apiUrl}\n'
+          '- El token de autenticación esté configurado\n'
+          '- El endpoint exista en el servidor',
+        );
       }
-      
-      if (!contentType.contains('application/json') && !contentType.contains('json')) {
+
+      if (!contentType.contains('application/json') &&
+          !contentType.contains('json')) {
         if (response.statusCode != 200) {
-          throw Exception('Error ${response.statusCode}: La respuesta no es JSON. Content-Type: $contentType');
+          throw Exception(
+            'Error ${response.statusCode}: La respuesta no es JSON. Content-Type: $contentType',
+          );
         }
       }
 
       if (response.statusCode == 200) {
         try {
           final data = json.decode(response.body);
-          print('[DEBUG] getTurnosPorFecha - Respuesta parseada. Keys: ${data.keys.toList()}');
-          
+          print(
+            '[DEBUG] getTurnosPorFecha - Respuesta parseada. Keys: ${data.keys.toList()}',
+          );
+
           // Manejar diferentes estructuras de respuesta
           List<dynamic> jsonTurnos = [];
-          
+
+          // Contrato API v1: { data: { turnos: [...] }, meta: {} }
+          if (data['data'] is Map<String, dynamic> &&
+              (data['data'] as Map<String, dynamic>)['turnos'] is List) {
+            jsonTurnos =
+                (data['data'] as Map<String, dynamic>)['turnos']
+                    as List<dynamic>;
+          }
           // Estructura 1: { success: true, data: { turnos: [...] } }
-          if (data['success'] == true && data['data'] != null) {
-            print('[DEBUG] getTurnosPorFecha - Estructura 1 detectada (success + data)');
+          else if (data['success'] == true && data['data'] != null) {
+            print(
+              '[DEBUG] getTurnosPorFecha - Estructura 1 detectada (success + data)',
+            );
             final dataObj = data['data'] as Map<String, dynamic>;
             if (dataObj['turnos'] != null) {
               jsonTurnos = dataObj['turnos'] as List<dynamic>;
-              print('[DEBUG] getTurnosPorFecha - Turnos encontrados en data.turnos: ${jsonTurnos.length}');
+              print(
+                '[DEBUG] getTurnosPorFecha - Turnos encontrados en data.turnos: ${jsonTurnos.length}',
+              );
             }
           }
           // Estructura 2: { items: [...], _links: {...}, _meta: {...} } (Yii REST serializer)
           else if (data['items'] != null) {
             print('[DEBUG] getTurnosPorFecha - Estructura 2 detectada (items)');
             jsonTurnos = data['items'] as List<dynamic>;
-            print('[DEBUG] getTurnosPorFecha - Turnos encontrados en items: ${jsonTurnos.length}');
+            print(
+              '[DEBUG] getTurnosPorFecha - Turnos encontrados en items: ${jsonTurnos.length}',
+            );
           }
           // Estructura 3: Array directo (poco probable pero posible)
           else if (data is List) {
-            print('[DEBUG] getTurnosPorFecha - Estructura 3 detectada (array directo)');
+            print(
+              '[DEBUG] getTurnosPorFecha - Estructura 3 detectada (array directo)',
+            );
             jsonTurnos = data;
-            print('[DEBUG] getTurnosPorFecha - Turnos encontrados en array: ${jsonTurnos.length}');
+            print(
+              '[DEBUG] getTurnosPorFecha - Turnos encontrados en array: ${jsonTurnos.length}',
+            );
           }
           // Si no hay turnos pero la respuesta es válida, retornar lista vacía
           else {
-            print('[DEBUG] getTurnosPorFecha - No se encontró estructura conocida. Retornando lista vacía.');
+            print(
+              '[DEBUG] getTurnosPorFecha - No se encontró estructura conocida. Retornando lista vacía.',
+            );
             print('[DEBUG] getTurnosPorFecha - Data completo: $data');
             return [];
           }
-          
-          print('[DEBUG] getTurnosPorFecha - Procesando ${jsonTurnos.length} turnos...');
-          
+
+          print(
+            '[DEBUG] getTurnosPorFecha - Procesando ${jsonTurnos.length} turnos...',
+          );
+
           // Convertir los turnos a objetos Turno
-          final turnos = jsonTurnos
-              .map((json) {
-                try {
-                  return Turno.fromJson(json as Map<String, dynamic>);
-                } catch (e) {
-                  print('[ERROR] getTurnosPorFecha - Error al parsear turno: $e');
-                  print('[ERROR] getTurnosPorFecha - JSON del turno: $json');
-                  rethrow;
-                }
-              })
-              .toList();
-          
-          print('[DEBUG] getTurnosPorFecha - ${turnos.length} turnos procesados exitosamente');
+          final turnos = jsonTurnos.map((json) {
+            try {
+              return Turno.fromJson(json as Map<String, dynamic>);
+            } catch (e) {
+              print('[ERROR] getTurnosPorFecha - Error al parsear turno: $e');
+              print('[ERROR] getTurnosPorFecha - JSON del turno: $json');
+              rethrow;
+            }
+          }).toList();
+
+          print(
+            '[DEBUG] getTurnosPorFecha - ${turnos.length} turnos procesados exitosamente',
+          );
           return turnos;
         } catch (e) {
           print('[ERROR] getTurnosPorFecha - Error en el procesamiento: $e');
           if (e is FormatException) {
-            final bodyPreview = response.body.length > 200 
-                ? response.body.substring(0, 200) 
+            final bodyPreview = response.body.length > 200
+                ? response.body.substring(0, 200)
                 : response.body;
-            throw Exception('Error al parsear respuesta JSON. La API puede estar devolviendo HTML. Respuesta: $bodyPreview');
+            throw Exception(
+              'Error al parsear respuesta JSON. La API puede estar devolviendo HTML. Respuesta: $bodyPreview',
+            );
           }
           rethrow;
         }
       } else {
-        // Intentar parsear el error como JSON, pero si falla, mostrar el cuerpo completo
+        // Priorizar el mensaje tipado del contrato y conservar el fallback de respuestas antiguas.
         try {
           final errorData = json.decode(response.body);
-          throw Exception(errorData['message'] ?? 'Error al obtener turnos (${response.statusCode})');
-        } catch (e) {
-          final bodyPreview = response.body.length > 200 
-              ? response.body.substring(0, 200) 
-              : response.body;
-          throw Exception('Error ${response.statusCode}: $bodyPreview');
+          if (errorData is Map<String, dynamic>) {
+            final apiError = errorData['error'];
+            if (apiError is Map<String, dynamic> &&
+                apiError['message'] is String) {
+              throw Exception(apiError['message'] as String);
+            }
+            if (errorData['message'] is String) {
+              throw Exception(errorData['message'] as String);
+            }
+          }
+        } on FormatException {
+          // The response is not JSON; use the body preview below.
         }
+        final bodyPreview = response.body.length > 200
+            ? response.body.substring(0, 200)
+            : response.body;
+        throw Exception('Error ${response.statusCode}: $bodyPreview');
       }
     } catch (e) {
       print('Error fetching turnos: $e');
@@ -163,7 +210,9 @@ class TurnosService {
         if (data['success'] == true && payload is Map<String, dynamic>) {
           return Turno.fromJson(payload);
         }
-        throw Exception(data['message']?.toString() ?? 'Error al obtener turno');
+        throw Exception(
+          data['message']?.toString() ?? 'Error al obtener turno',
+        );
       } else {
         final errorData = json.decode(response.body) as Map<String, dynamic>;
         throw Exception(errorData['message'] ?? 'Error al obtener turno');
@@ -220,7 +269,9 @@ class TurnosService {
         if (data['success'] == true) {
           return await getTurno(id);
         }
-        throw Exception(data['message']?.toString() ?? 'Error al actualizar turno');
+        throw Exception(
+          data['message']?.toString() ?? 'Error al actualizar turno',
+        );
       } else {
         final errorData = json.decode(response.body) as Map<String, dynamic>;
         throw Exception(errorData['message'] ?? 'Error al actualizar turno');
@@ -231,4 +282,3 @@ class TurnosService {
     }
   }
 }
-

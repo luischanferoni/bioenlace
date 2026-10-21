@@ -5990,18 +5990,24 @@
             if (handleApiUnauthorized(response.status, data)) {
                 return;
             }
+            const payload = data && data.data && typeof data.data === 'object'
+                ? data.data
+                : data;
             if (!response.ok) {
-                throw new Error((data && data.message) ? String(data.message) : ('HTTP ' + response.status));
+                const errorMessage = data && data.error && data.error.message
+                    ? String(data.error.message)
+                    : (data && data.message ? String(data.message) : ('HTTP ' + response.status));
+                throw new Error(errorMessage);
             }
-            if (data && data.success && Array.isArray(data.categories)) {
-                renderShortcutsCategories(data.categories);
-                renderWelcomeShortcutsCategories(data.categories);
+            if (payload && Array.isArray(payload.categories)) {
+                renderShortcutsCategories(payload.categories);
+                renderWelcomeShortcutsCategories(payload.categories);
                 return;
             }
-            if (data && data.success && Array.isArray(data.actions)) {
+            if (payload && Array.isArray(payload.actions)) {
                 // Fallback compat: si el backend solo devuelve actions planas.
-                renderShortcutsFlat(data.actions);
-                renderWelcomeShortcutsFlat(data.actions);
+                renderShortcutsFlat(payload.actions);
+                renderWelcomeShortcutsFlat(payload.actions);
                 return;
             }
             renderShortcutsEmpty();

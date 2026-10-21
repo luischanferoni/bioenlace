@@ -9,7 +9,14 @@ class TurnosService {
 
   TurnosService({this.authToken});
 
-  static String _extractErrorMessage(Map<String, dynamic> data, int statusCode) {
+  static String _extractErrorMessage(
+    Map<String, dynamic> data,
+    int statusCode,
+  ) {
+    final apiError = data['error'];
+    if (apiError is Map && apiError['message'] is String) {
+      return apiError['message'] as String;
+    }
     if (statusCode == 401) {
       return data['message'] as String? ??
           'No autorizado. Iniciá sesión de nuevo para ver tus turnos.';
@@ -64,11 +71,7 @@ class TurnosService {
       };
 
       final response = await http
-          .post(
-            uri,
-            headers: headers,
-            body: json.encode(body),
-          )
+          .post(uri, headers: headers, body: json.encode(body))
           .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
 
       final data = json.decode(response.body) as Map<String, dynamic>;
@@ -85,7 +88,8 @@ class TurnosService {
         }
         final turnos = block['turnos'];
         final totalRaw = block['total'];
-        final total = totalRaw is int ? totalRaw : int.tryParse('$totalRaw') ?? 0;
+        final total =
+            totalRaw is int ? totalRaw : int.tryParse('$totalRaw') ?? 0;
         return {
           'success': true,
           'data': block,
@@ -105,12 +109,7 @@ class TurnosService {
         };
       }
       final message = _extractErrorMessage(data, response.statusCode);
-      return {
-        'success': false,
-        'message': message,
-        'turnos': [],
-        'total': 0,
-      };
+      return {'success': false, 'message': message, 'turnos': [], 'total': 0};
     } catch (e) {
       return {
         'success': false,
@@ -148,7 +147,9 @@ class TurnosService {
       final data = json.decode(response.body) as Map<String, dynamic>;
       if (response.statusCode >= 200 &&
           response.statusCode < 300 &&
-          data['success'] == true) {
+          (data['success'] == true ||
+              (data['data'] is Map<String, dynamic> &&
+                  data.containsKey('meta')))) {
         return {'success': true, 'data': data['data']};
       }
       return {
@@ -185,7 +186,8 @@ class TurnosService {
       final data = json.decode(response.body) as Map<String, dynamic>;
       if (response.statusCode >= 200 &&
           response.statusCode < 300 &&
-          data['success'] == true) {
+          (data['success'] == true ||
+              (data.containsKey('data') && data.containsKey('meta')))) {
         return {'success': true, 'data': data['data']};
       }
       return {

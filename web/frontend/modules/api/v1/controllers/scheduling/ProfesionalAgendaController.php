@@ -119,7 +119,7 @@ class ProfesionalAgendaController extends BaseController
      */
     public function actionDia()
     {
-        return TurnosController::agendaDiaResponse();
+        return $this->ok(TurnosController::agendaDiaResponse());
     }
 
     /**
@@ -285,13 +285,13 @@ class ProfesionalAgendaController extends BaseController
             $items[] = ProfesionalEfectorServicioAgendaApiService::toApiArray($model);
         }
 
-        return [
-            'success' => true,
-            'items' => $items,
-            'total_count' => (int) $dp->getTotalCount(),
-            'page' => (int) $dp->pagination->page + 1,
-            'per_page' => (int) $dp->pagination->pageSize,
-        ];
+        return $this->ok(['items' => $items], [
+            'pagination' => [
+                'total_count' => (int) $dp->getTotalCount(),
+                'page' => (int) $dp->pagination->page + 1,
+                'per_page' => (int) $dp->pagination->pageSize,
+            ],
+        ]);
     }
 
     /**
@@ -332,17 +332,21 @@ class ProfesionalAgendaController extends BaseController
             unset($body['id_efector'], $body['id_profesional_contexto'], $body['id_profesional_efector_servicio']);
 
             if ($idPes <= 0) {
-                return $this->error(
-                    'id_profesional_efector_servicio es obligatorio (sesión operativa o cuerpo).',
-                    ['id_profesional_efector_servicio' => ['Requerido']],
-                    422
+                return $this->fail(
+                    'validation_failed',
+                    [],
+                    ['id_profesional_efector_servicio' => ['Requerido']]
                 );
             }
             $pes = ProfesionalEfectorServicioAgendaApiService::assertProfesionalEfectorServicioEnEfector($idPes, $idEfector);
         }
 
         if (ProfesionalEfectorServicioAgenda::findActivaPorProfesionalEfectorServicio((int) $pes->id) !== null) {
-            return $this->error('Ya existe una agenda para este servicio.', [], 422);
+            return $this->fail(
+                'validation_failed',
+                [],
+                ['id_profesional_efector_servicio' => ['Ya existe una agenda para este servicio.']]
+            );
         }
 
         $model = new ProfesionalEfectorServicioAgenda();
@@ -352,19 +356,17 @@ class ProfesionalAgendaController extends BaseController
         $model->encounter_class = \common\models\Clinical\Encounter::ENCOUNTER_CLASS_AMB;
 
         if (!$model->validate()) {
-            return $this->error('Validación fallida.', $model->errors, 422);
+            return $this->failValidation($model);
         }
         if (!$model->save()) {
-            return $this->error('No se pudo guardar.', $model->errors, 422);
+            return $this->failValidation($model);
         }
 
-        Yii::$app->response->statusCode = 201;
-
-        return [
-            'success' => true,
-            'message' => 'Agenda creada.',
-            'data' => ProfesionalEfectorServicioAgendaApiService::toApiArray($model),
-        ];
+        return $this->ok(
+            ProfesionalEfectorServicioAgendaApiService::toApiArray($model),
+            ['message' => 'Agenda creada.'],
+            201
+        );
     }
 
     /**
@@ -393,17 +395,16 @@ class ProfesionalAgendaController extends BaseController
         $model->encounter_class = \common\models\Clinical\Encounter::ENCOUNTER_CLASS_AMB;
 
         if (!$model->validate()) {
-            return $this->error('Validación fallida.', $model->errors, 422);
+            return $this->failValidation($model);
         }
         if (!$model->save()) {
-            return $this->error('No se pudo guardar.', $model->errors, 422);
+            return $this->failValidation($model);
         }
 
-        return [
-            'success' => true,
-            'message' => 'Agenda actualizada.',
-            'data' => ProfesionalEfectorServicioAgendaApiService::toApiArray($model),
-        ];
+        return $this->ok(
+            ProfesionalEfectorServicioAgendaApiService::toApiArray($model),
+            ['message' => 'Agenda actualizada.']
+        );
     }
 
     /**
@@ -422,10 +423,7 @@ class ProfesionalAgendaController extends BaseController
         }
         $model->delete();
 
-        return [
-            'success' => true,
-            'message' => 'Agenda eliminada.',
-        ];
+        return $this->ok(null, ['message' => 'Agenda eliminada.']);
     }
 
     /**

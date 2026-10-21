@@ -6,8 +6,8 @@ use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 use common\components\Domain\Organization\Efector\Application\Service\EfectoresListadosService;
 use common\components\Domain\Organization\Pes\Application\Service\ProfesionalEnEfectorListadoUiService;
+use common\components\Platform\Core\Http\Contract\ApiException;
 use common\components\Platform\Ui\UiScreenService;
-use yii\web\BadRequestHttpException;
 
 /**
  * API Efectores: búsqueda de efectores.
@@ -69,11 +69,11 @@ class EfectoresController extends BaseController
         }
         $filters = $this->buildEfectoresSearchFilters(false);
         if ($q === null && $filters === []) {
-            return $out;
+            return $this->ok($out);
         }
         $data = \common\models\Organization\Efector::liveSearch($q, $filters);
 
-        return ['results' => array_values($data)];
+        return $this->ok(['results' => array_values($data)]);
     }
 
     /**
@@ -91,7 +91,7 @@ class EfectoresController extends BaseController
         $req = Yii::$app->request;
         $idServicio = EfectoresListadosService::requireServicioId($req);
         if ($idServicio === null) {
-            throw new BadRequestHttpException('Se requiere id_servicio o id_servicio_asignado.');
+            throw $this->invalidRequest('Se requiere id_servicio o id_servicio_asignado.');
         }
 
         $ui = UiScreenService::handleScreen(
@@ -129,11 +129,11 @@ class EfectoresController extends BaseController
         $req = Yii::$app->request;
         $idServicio = EfectoresListadosService::requireServicioId($req);
         if ($idServicio === null) {
-            throw new BadRequestHttpException('Se requiere id_servicio o id_servicio_asignado.');
+            throw $this->invalidRequest('Se requiere id_servicio o id_servicio_asignado.');
         }
         [$lat, $lng] = EfectoresListadosService::requireLatLng($req);
         if ($lat === null || $lng === null) {
-            throw new BadRequestHttpException('Se requiere latitud y longitud.');
+            throw $this->invalidRequest('Se requiere latitud y longitud.');
         }
 
         $ui = UiScreenService::handleScreen(
@@ -166,14 +166,14 @@ class EfectoresController extends BaseController
         $req = Yii::$app->request;
         $idServicio = EfectoresListadosService::requireServicioId($req);
         if ($idServicio === null) {
-            throw new BadRequestHttpException('Se requiere id_servicio o id_servicio_asignado.');
+            throw $this->invalidRequest('Se requiere id_servicio o id_servicio_asignado.');
         }
         $filters = EfectoresListadosService::extractFilters($req, false);
         $filters['id_servicio'] = $idServicio;
         $q = $this->reqParamRaw('q');
         $rows = \common\models\Organization\Efector::liveSearch($q, $filters);
 
-        return ['results' => array_values($rows)];
+        return $this->ok(['results' => array_values($rows)]);
     }
 
     /**
@@ -204,14 +204,16 @@ class EfectoresController extends BaseController
         if (isset($ui['kind']) && $ui['kind'] === 'ui_definition' && isset($ui['ui_type']) && $ui['ui_type'] === 'ui_json') {
             $idEfectorSesion = (int) Yii::$app->user->getIdEfector();
             if ($idEfectorSesion <= 0) {
-                throw new BadRequestHttpException('No hay efector en sesión.');
+                throw $this->invalidRequest('No hay efector en sesión.');
             }
             $idEfectorParam = $req->get('id_efector');
             if ($idEfectorParam === null || $idEfectorParam === '') {
                 $idEfectorParam = $req->post('id_efector');
             }
             if ($idEfectorParam !== null && $idEfectorParam !== '' && (int) $idEfectorParam !== $idEfectorSesion) {
-                throw new BadRequestHttpException('id_efector no coincide con el efector en sesión.');
+                throw new ApiException('forbidden_detail', [
+                    'detail' => 'id_efector no coincide con el efector en sesión.',
+                ]);
             }
 
             $q = $req->get('q') ?: $req->post('q');
@@ -221,11 +223,16 @@ class EfectoresController extends BaseController
                     is_string($q) ? $q : null
                 );
             } catch (\InvalidArgumentException $e) {
-                throw new BadRequestHttpException($e->getMessage());
+                throw $this->invalidRequest($e->getMessage());
             }
             $ui = UiScreenService::withListBlockItems($ui, $uiItems);
         }
 
         return $ui;
+    }
+
+    private function invalidRequest(string $detail): ApiException
+    {
+        return new ApiException('request_invalid', ['detail' => $detail]);
     }
 }

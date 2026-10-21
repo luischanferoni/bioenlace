@@ -143,12 +143,11 @@ class TurnosController extends BaseController
             'source' => 'flow',
         ];
 
-        return [
-            'success' => true,
+        return $this->ok([
             'version' => $catalog->getVersion(),
             'halt_message_band_a' => $catalog->getHaltMessageBandA(),
             'steps' => $steps,
-        ];
+        ]);
     }
 
     /**
@@ -1107,14 +1106,11 @@ class TurnosController extends BaseController
         }
         $this->assertTurnoDomain('Turno.reprogramar', $turno);
 
-        return [
-            'success' => true,
-            'data' => ResolveTurno::resolverEleccionVecina(
+        return $this->ok(ResolveTurno::resolverEleccionVecina(
                 (int) $tid,
                 (int) $turno->id_persona,
                 $eleccion
-            ),
-        ];
+            ));
     }
 
     public function actionReprogramarComoPaciente($id = null)
@@ -1706,7 +1702,7 @@ class TurnosController extends BaseController
     {
         $params = array_merge(Yii::$app->request->get(), Yii::$app->request->post());
 
-        return $this->success((new TurnoCalendarioOcupacionDiaService())->build($params));
+        return $this->ok((new TurnoCalendarioOcupacionDiaService())->build($params));
     }
 
     /**
@@ -2333,7 +2329,7 @@ class TurnosController extends BaseController
             throw new BadRequestHttpException($e->getMessage());
         }
 
-        return ['success' => true, 'data' => $data];
+        return $this->ok($data);
     }
 
     /**
@@ -2367,7 +2363,7 @@ class TurnosController extends BaseController
             throw new BadRequestHttpException($e->getMessage());
         }
 
-        return ['success' => true, 'data' => $data];
+        return $this->ok($data);
     }
 
     /**
@@ -2390,10 +2386,7 @@ class TurnosController extends BaseController
         $idPersona = $subjectSvc->resolveAndAuthorize($params, RepresentationPermission::SCHEDULING_TURNO);
         $this->assertPacienteOfferingForTurnos();
 
-        return [
-            'success' => true,
-            'data' => (new PersonaAgendaPreferenciasService())->getForPersona($idPersona),
-        ];
+        return $this->ok((new PersonaAgendaPreferenciasService())->getForPersona($idPersona));
     }
 
     /**
@@ -2415,7 +2408,7 @@ class TurnosController extends BaseController
             throw new ServerErrorHttpException($e->getMessage());
         }
 
-        return ['success' => true, 'data' => $data];
+        return $this->ok($data);
     }
 
     /**

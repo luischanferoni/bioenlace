@@ -2,11 +2,11 @@
 
 namespace common\tests\unit\platform\api;
 
-use Codeception\Test\Unit;
 use common\components\Platform\Core\Http\Contract\ApiErrorCatalog;
 use common\components\Platform\Core\Http\Contract\ApiResponder;
+use PHPUnit\Framework\TestCase;
 
-class ApiContractTest extends Unit
+class ApiContractTest extends TestCase
 {
     public function testCadaEntradaDelCatalogoEsCompleta(): void
     {

@@ -12,6 +12,7 @@ use common\components\Platform\Core\Http\Contract\ApiException;
 use common\components\Platform\Core\Http\Contract\ApiResponder;
 use frontend\modules\api\v1\components\JsonHttpBearerAuth;
 use frontend\modules\api\v1\components\BioenlaceApiAccessControl;
+use yii\web\HttpException;
 
 class BaseController extends Controller
 {
@@ -106,6 +107,36 @@ class BaseController extends Controller
             return parent::runAction($id, $params);
         } catch (ApiException $e) {
             return $this->fail($e->errorCode(), $e->params(), $e->fieldErrors(), $e->meta());
+        } catch (HttpException $e) {
+            $detail = trim($e->getMessage());
+            $errorParams = $detail === '' ? [] : ['detail' => $detail];
+
+            switch ((int) $e->statusCode) {
+                case 401:
+                    return $this->fail('unauthenticated');
+                case 403:
+                    return $this->fail('forbidden_detail', $errorParams);
+                case 404:
+                    return $this->fail('not_found_detail', $errorParams);
+                case 405:
+                    return $this->fail('method_not_allowed_detail', $errorParams);
+                case 409:
+                    return $this->fail('conflict_detail', $errorParams);
+                case 429:
+                    return $this->fail('rate_limited_detail', $errorParams);
+                case 503:
+                    return $this->fail('service_unavailable');
+            }
+
+            if ($e->statusCode >= 500) {
+                Yii::error($e, 'api-contract');
+                return $this->fail('internal_error');
+            }
+            if ($e->statusCode >= 400) {
+                return $this->fail('request_invalid', $errorParams);
+            }
+
+            throw $e;
         }
     }
 

@@ -72,7 +72,7 @@ function getEventos(dia) {
     data: query,
     dataType: "json",
   }).done(function (resp) {
-    var data = resp && resp.success === true ? resp.data : resp;
+    var data = resp && resp.data && typeof resp.data === "object" ? resp.data : resp;
     if (!data || !data.turnos) {
       return;
     }

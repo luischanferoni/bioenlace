@@ -10,10 +10,7 @@ class PacienteContextApi {
   final String? authToken;
   final String appClient;
 
-  PacienteContextApi({
-    this.authToken,
-    this.appClient = 'paciente-flutter',
-  });
+  PacienteContextApi({this.authToken, this.appClient = 'paciente-flutter'});
 
   Future<String?> _token() async {
     if (authToken != null && authToken!.isNotEmpty) return authToken;
@@ -45,19 +42,37 @@ class PacienteContextApi {
   }
 
   Map<String, dynamic> _decode(http.Response response) {
+    dynamic decoded;
     try {
-      final raw = json.decode(response.body);
-      if (raw is Map<String, dynamic>) {
-        if (response.statusCode >= 200 && response.statusCode < 300) {
-          return raw;
+      decoded = json.decode(response.body);
+    } on FormatException {
+      return {
+        'success': false,
+        'message': 'Respuesta inválida (${response.statusCode})',
+      };
+    }
+    if (decoded is Map<String, dynamic>) {
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        if (decoded.containsKey('data') && decoded.containsKey('meta')) {
+          return {
+            'success': true,
+            'data': decoded['data'],
+            'meta': decoded['meta'],
+          };
         }
-        return {
-          'success': false,
-          'message': raw['message'] ??
-              'Error de contexto paciente (${response.statusCode})',
-        };
+        return decoded;
       }
-    } catch (_) {}
+      final error = decoded['error'];
+      return {
+        'success': false,
+        'message':
+            error is Map
+                ? error['message'] ??
+                    'Error de contexto paciente (${response.statusCode})'
+                : decoded['message'] ??
+                    'Error de contexto paciente (${response.statusCode})',
+      };
+    }
     return {
       'success': false,
       'message': 'Respuesta inválida (${response.statusCode})',

@@ -3,9 +3,10 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
-use yii\web\BadRequestHttpException;
 use common\components\Platform\Core\DataAccess\DataAccessUiService;
+use common\components\Platform\Core\Http\Contract\ApiException;
 use common\components\Platform\Core\Permission\Domain\ApiDomainOperationBridge;
+use yii\web\ForbiddenHttpException;
 
 /**
  * Consultas staff agregadas / informativas (métricas DataAccess).
@@ -39,7 +40,9 @@ class InfoController extends BaseController
         try {
             return (new DataAccessUiService())->renderInfo($params);
         } catch (\InvalidArgumentException $e) {
-            throw new BadRequestHttpException($e->getMessage());
+            throw new ApiException('request_invalid', ['detail' => $e->getMessage()], [], $e);
+        } catch (ForbiddenHttpException $e) {
+            throw new ApiException('forbidden_detail', ['detail' => $e->getMessage()], [], $e);
         }
     }
 }

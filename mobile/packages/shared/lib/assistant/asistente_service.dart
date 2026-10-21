@@ -238,11 +238,13 @@ class AsistenteService {
           .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
 
       final responseData = json.decode(response.body) as Map<String, dynamic>;
-      if (response.statusCode != 200 || responseData['success'] != true) {
+      if (response.statusCode != 200) {
         return [];
       }
+      final data = responseData['data'];
+      final payload = data is Map<String, dynamic> ? data : responseData;
 
-      final catsRaw = responseData['categories'];
+      final catsRaw = payload['categories'];
       if (catsRaw is List && catsRaw.isNotEmpty) {
         final out = <AtajoCategoria>[];
         for (final c in catsRaw) {
@@ -282,7 +284,7 @@ class AsistenteService {
         if (out.isNotEmpty) return out;
       }
 
-      final raw = responseData['actions'];
+      final raw = payload['actions'];
       if (raw is! List) return [];
       final flat = _parseAtajoItems(raw);
       if (flat.isEmpty) return [];

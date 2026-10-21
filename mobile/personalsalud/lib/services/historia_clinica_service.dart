@@ -991,8 +991,6 @@ class SignosVitalesEpisodioUltimo {
   final String? unit;
   final String? label;
   final String? source;
-  final double? sistolica;
-  final double? diastolica;
 
   SignosVitalesEpisodioUltimo({
     this.value,
@@ -1000,8 +998,6 @@ class SignosVitalesEpisodioUltimo {
     this.unit,
     this.label,
     this.source,
-    this.sistolica,
-    this.diastolica,
   });
 
   factory SignosVitalesEpisodioUltimo.fromJson(Map<String, dynamic> json) {
@@ -1017,8 +1013,6 @@ class SignosVitalesEpisodioUltimo {
       unit: (json['unit'] ?? '').toString().isEmpty ? null : json['unit'].toString(),
       label: (json['label'] ?? '').toString().isEmpty ? null : json['label'].toString(),
       source: (json['source'] ?? '').toString().isEmpty ? null : json['source'].toString(),
-      sistolica: asDouble(json['sistolica']),
-      diastolica: asDouble(json['diastolica']),
     );
   }
 }

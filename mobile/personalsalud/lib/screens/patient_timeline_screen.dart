@@ -801,21 +801,13 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       chips.add(BioBadge(label: text, intent: UiIntent.neutral));
     }
 
-    final ta = ultimos['ta'];
-    if (ta != null && (ta.sistolica != null || ta.diastolica != null)) {
+    for (final ultimo in ultimos.values) {
+      if (ultimo.value == null || ultimo.label == null) continue;
+      final unit = ultimo.unit ?? '';
       addChip(
-        'TA ${(ta.sistolica ?? '—')}/${(ta.diastolica ?? '—')}'
-        '${ta.at != null ? ' · ${ta.at}' : ''}',
-      );
-    }
-    for (final key in ['fc', 'fr', 'sat_o2', 'temp', 'glucemia', 'glasgow']) {
-      final u = ultimos[key];
-      if (u == null || u.value == null) continue;
-      final label = u.label ?? key;
-      final unit = u.unit ?? '';
-      addChip(
-        '$label: ${u.value}${unit.isNotEmpty ? ' $unit' : ''}'
-        '${u.at != null ? ' · ${u.at}' : ''}',
+        '${ultimo.label}: ${ultimo.value}'
+        '${unit.isNotEmpty ? ' $unit' : ''}'
+        '${ultimo.at != null ? ' · ${ultimo.at}' : ''}',
       );
     }
 

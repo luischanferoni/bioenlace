@@ -311,17 +311,6 @@ final class EpisodioSignosVitalesService
             ];
         }
 
-        // Compat visual TA agrupada.
-        if (isset($ultimos[self::METRIC_TA_SYS]) || isset($ultimos[self::METRIC_TA_DIA])) {
-            $ultimos['ta'] = [
-                'sistolica' => $ultimos[self::METRIC_TA_SYS]['value'] ?? null,
-                'diastolica' => $ultimos[self::METRIC_TA_DIA]['value'] ?? null,
-                'at' => $ultimos[self::METRIC_TA_SYS]['at']
-                    ?? $ultimos[self::METRIC_TA_DIA]['at']
-                    ?? null,
-            ];
-        }
-
         return [
             'parent_type' => $parentType,
             'episodio_id' => $episodioId,

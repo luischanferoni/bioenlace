@@ -35,4 +35,22 @@ class EpisodioSignosVitalesServiceTest extends Unit
         $this->assertSame(110.0, $out[EpisodioSignosVitalesService::METRIC_GLUC]);
         $this->assertSame(15.0, $out[EpisodioSignosVitalesService::METRIC_GLASGOW]);
     }
+
+    public function testMetricMetadataDefinesDisplayLabelsAndUnits(): void
+    {
+        $service = new EpisodioSignosVitalesService();
+        $method = (new \ReflectionClass($service))->getMethod('metricMeta');
+        $method->setAccessible(true);
+
+        $this->assertSame([
+            'ta_sys' => ['label' => 'TA sistólica', 'unit' => 'mmHg'],
+            'ta_dia' => ['label' => 'TA diastólica', 'unit' => 'mmHg'],
+            'fc' => ['label' => 'Frecuencia cardíaca', 'unit' => 'lpm'],
+            'fr' => ['label' => 'Frecuencia respiratoria', 'unit' => 'rpm'],
+            'sat_o2' => ['label' => 'Saturación O₂', 'unit' => '%'],
+            'temp' => ['label' => 'Temperatura', 'unit' => '°C'],
+            'glucemia' => ['label' => 'Glucemia capilar', 'unit' => 'mg/dL'],
+            'glasgow' => ['label' => 'Glasgow', 'unit' => 'pts'],
+        ], $method->invoke($service));
+    }
 }

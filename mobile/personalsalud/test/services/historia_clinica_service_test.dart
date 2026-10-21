@@ -92,4 +92,25 @@ void main() {
     expect(feed.items.single.typeLabel, 'Triage');
     expect(feed.items.single.intent, UiIntent.danger);
   });
+
+  test('reads latest episode vitals as metadata-driven metrics', () {
+    final vitals = SignosVitalesEpisodio.fromJson(<String, dynamic>{
+      'parent_type': 'guardia',
+      'episodio_id': 45,
+      'total_points': 1,
+      'ultimos': {
+        'custom_metric': <String, dynamic>{
+          'value': 18,
+          'label': 'Frecuencia respiratoria',
+          'unit': 'rpm',
+          'at': '21/10/2026 19:00',
+        },
+      },
+    });
+
+    expect(vitals.ultimos, hasLength(1));
+    expect(vitals.ultimos['custom_metric']?.label, 'Frecuencia respiratoria');
+    expect(vitals.ultimos['custom_metric']?.value, 18);
+    expect(vitals.ultimos['custom_metric']?.unit, 'rpm');
+  });
 }

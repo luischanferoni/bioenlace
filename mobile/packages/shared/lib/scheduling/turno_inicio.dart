@@ -78,8 +78,8 @@ bool turnoInicioEsPasadoEnProducto(Map<String, dynamic> turno) {
   return inicio.isBefore(nowProducto());
 }
 
-/// Ventana de motivos de consulta: abierta hasta [minutosAntesCierre] antes del inicio del turno.
-bool turnoMotivosInputAbiertoEnProducto(
+/// Ventana de motivos del encounter, abierta hasta [minutosAntesCierre] antes del turno.
+bool appointmentEncounterReasonInputOpenInProduct(
   Map<String, dynamic> turno, {
   int minutosAntesCierre = 10,
 }) {
@@ -102,7 +102,7 @@ bool turnoMotivosInputAbiertoEnProducto(
   return nowProducto().isBefore(cierre);
 }
 
-bool turnoTieneEncounterParaMotivos(Map<String, dynamic> turno) {
+bool appointmentHasEncounterForReasons(Map<String, dynamic> turno) {
   final raw = turno['encounter_id'] ?? turno['id_consulta'];
   if (raw is int) return raw > 0;
   if (raw == null) return false;

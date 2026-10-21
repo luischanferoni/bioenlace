@@ -31,20 +31,20 @@ final class CaptureSpeechInputResolver implements SpeechToTextPort
      */
     public function resolveFromBody(array $body, string $flowProfile = 'captura_clinica'): array
     {
-        $consulta = trim((string) ($body['consulta'] ?? $body['consulta_texto'] ?? ''));
+        $transcript = trim((string) ($body['transcript'] ?? ''));
         $stt = self::normalizeSttBlock($body['stt'] ?? null);
         $audio = $body['audio'] ?? $body['audio_data'] ?? null;
         $forceServer = !empty($stt['force_server']) || !empty($body['stt_force_server']);
 
         $deviceText = trim((string) ($stt['text'] ?? ''));
-        $primaryText = $consulta !== '' ? $consulta : $deviceText;
+        $primaryText = $transcript !== '' ? $transcript : $deviceText;
 
         if ($primaryText === '' && empty($audio)) {
             return self::fail('Falta el texto de la consulta o audio para transcribir.');
         }
 
         if ($primaryText !== '' && !$forceServer && self::shouldEvaluateDevice($stt)) {
-            if ($consulta !== '' && $deviceText !== '' && $consulta !== $deviceText) {
+            if ($transcript !== '' && $deviceText !== '' && $transcript !== $deviceText) {
                 return self::ok($primaryText, self::PROVENANCE_TEXT_ONLY, false, null);
             }
         }

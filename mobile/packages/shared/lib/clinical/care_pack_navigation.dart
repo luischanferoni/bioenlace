@@ -5,15 +5,17 @@ import '../scheduling/turno_inicio.dart';
 import '../ui_json/ui_json_screen.dart';
 
 /// Ventana de asistencia pre-consulta por cohorte (misma ventana que motivos).
-bool turnoAsistenciaCohorteDisponibleEnProducto(Map<String, dynamic> turno) {
+bool appointmentCohortAssistanceAvailableInProduct(
+  Map<String, dynamic> turno,
+) {
   final journeyEnabled = journeyPhaseEnabled(turno, 'asistencia_pre_consulta');
   if (journeyEnabled != null) return journeyEnabled;
 
   final flag = turno['asistencia_cohorte_disponible'];
   if (flag is bool) return flag;
 
-  return turnoTieneEncounterParaMotivos(turno) &&
-      turnoMotivosInputAbiertoEnProducto(turno);
+  return appointmentHasEncounterForReasons(turno) &&
+      appointmentEncounterReasonInputOpenInProduct(turno);
 }
 
 int? turnoIdDesdePayloadProducto(Map<String, dynamic> turno) {
@@ -54,7 +56,7 @@ void abrirEncounterJourneyFlowApi({
 }
 
 /// Abre el formulario dinámico GET|POST `/api/v1/care-packs/assistance`.
-void abrirAsistenciaPreConsulta({
+void openPreEncounterAssistance({
   required BuildContext context,
   required int turnoId,
   String? authToken,
@@ -83,7 +85,7 @@ void abrirAsistenciaPreConsulta({
 }
 
 /// Abre el formulario de evolución GET|POST `/api/v1/care-packs/followup`.
-void abrirSeguimientoPostConsulta({
+void openEncounterFollowup({
   required BuildContext context,
   required int touchpointId,
   String? authToken,

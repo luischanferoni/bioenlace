@@ -12,7 +12,7 @@ class Turno {
   final String? observaciones;
   final String? atendido;
   final String? createdAt;
-  final int? idConsulta;
+  final int? encounterId;
   final String? tipoAtencion;
   final String? tipoAtencionLabel;
   final Map<String, dynamic>? modalidadInsight;
@@ -30,7 +30,7 @@ class Turno {
     this.observaciones,
     this.atendido,
     this.createdAt,
-    this.idConsulta,
+    this.encounterId,
     this.tipoAtencion,
     this.tipoAtencionLabel,
     this.modalidadInsight,
@@ -62,6 +62,7 @@ class Turno {
   factory Turno.fromJson(Map<String, dynamic> json) {
     final idVal = json['id'] ?? json['id_turnos'];
     final insightRaw = json['modalidad_insight'];
+    final encounterIdRaw = json['encounter_id'] ?? json['id_consulta'];
     return Turno(
       id: _asInt(idVal),
       idPersona: _asInt(json['id_persona']),
@@ -79,8 +80,8 @@ class Turno {
       observaciones: json['observaciones'] as String?,
       atendido: json['atendido'] as String?,
       createdAt: json['created_at'] as String?,
-      idConsulta:
-          json['id_consulta'] != null ? _asInt(json['id_consulta']) : null,
+      encounterId:
+          encounterIdRaw != null ? _asInt(encounterIdRaw) : null,
       tipoAtencion: json['tipo_atencion'] as String?,
       tipoAtencionLabel: json['tipo_atencion_label'] as String?,
       modalidadInsight: insightRaw is Map

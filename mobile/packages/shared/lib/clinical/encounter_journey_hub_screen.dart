@@ -6,7 +6,7 @@ import 'care_pack_navigation.dart';
 import 'encounter_journey_api.dart';
 import 'encounter_journey_navigation.dart';
 
-/// Hub de fases del recorrido encounter (pre o post consulta), leyendo solo `journey`.
+/// Hub de fases del recorrido encounter, leyendo solo `journey`.
 class EncounterJourneyHubScreen extends StatefulWidget {
   final String title;
   final String intro;
@@ -14,7 +14,7 @@ class EncounterJourneyHubScreen extends StatefulWidget {
   final List<String> phaseIds;
   final String? authToken;
   final int? subjectPersonaId;
-  final AbrirMotivosConsulta onOpenMotivos;
+  final OpenEncounterReasons onOpenEncounterReasons;
   final String appClient;
 
   const EncounterJourneyHubScreen({
@@ -25,7 +25,7 @@ class EncounterJourneyHubScreen extends StatefulWidget {
     required this.phaseIds,
     this.authToken,
     this.subjectPersonaId,
-    required this.onOpenMotivos,
+    required this.onOpenEncounterReasons,
     this.appClient = 'paciente-flutter',
   });
 
@@ -80,7 +80,7 @@ class _EncounterJourneyHubScreenState extends State<EncounterJourneyHubScreen> {
       entry: entry,
       authToken: widget.authToken,
       subjectPersonaId: widget.subjectPersonaId,
-      onOpenMotivos: widget.onOpenMotivos,
+      onOpenEncounterReasons: widget.onOpenEncounterReasons,
       appClient: widget.appClient,
     );
   }
@@ -193,7 +193,7 @@ class _EncounterJourneyHubScreenState extends State<EncounterJourneyHubScreen> {
         return Icons.edit_note;
       case kEncounterJourneyPhaseAsistencia:
         return Icons.fact_check_outlined;
-      case kEncounterJourneyPhasePostConsulta:
+      case kEncounterJourneyPhaseFollowup:
         return Icons.health_and_safety_outlined;
       default:
         return Icons.checklist_outlined;
@@ -209,7 +209,7 @@ void abrirEncounterJourneyHub({
   required List<String> phaseIds,
   String? authToken,
   int? subjectPersonaId,
-  required AbrirMotivosConsulta onOpenMotivos,
+  required OpenEncounterReasons onOpenEncounterReasons,
   String appClient = 'paciente-flutter',
 }) {
   Navigator.of(context).push(
@@ -221,19 +221,19 @@ void abrirEncounterJourneyHub({
         phaseIds: phaseIds,
         authToken: authToken,
         subjectPersonaId: subjectPersonaId,
-        onOpenMotivos: onOpenMotivos,
+        onOpenEncounterReasons: onOpenEncounterReasons,
         appClient: appClient,
       ),
     ),
   );
 }
 
-void abrirPrepararConsultaHub({
+void openEncounterPreparationHub({
   required BuildContext context,
   required Map<String, dynamic> turno,
   String? authToken,
   int? subjectPersonaId,
-  required AbrirMotivosConsulta onOpenMotivos,
+  required OpenEncounterReasons onOpenEncounterReasons,
   String appClient = 'paciente-flutter',
 }) {
   abrirEncounterJourneyHub(
@@ -244,17 +244,17 @@ void abrirPrepararConsultaHub({
     phaseIds: kEncounterJourneyPreTurnoPhases,
     authToken: authToken,
     subjectPersonaId: subjectPersonaId,
-    onOpenMotivos: onOpenMotivos,
+    onOpenEncounterReasons: onOpenEncounterReasons,
     appClient: appClient,
   );
 }
 
-void abrirSeguimientoPostConsultaHub({
+void openEncounterFollowupHub({
   required BuildContext context,
   required Map<String, dynamic> turno,
   String? authToken,
   int? subjectPersonaId,
-  required AbrirMotivosConsulta onOpenMotivos,
+  required OpenEncounterReasons onOpenEncounterReasons,
   String appClient = 'paciente-flutter',
 }) {
   abrirEncounterJourneyHub(
@@ -265,7 +265,7 @@ void abrirSeguimientoPostConsultaHub({
     phaseIds: kEncounterJourneyPostTurnoPhases,
     authToken: authToken,
     subjectPersonaId: subjectPersonaId,
-    onOpenMotivos: onOpenMotivos,
+    onOpenEncounterReasons: onOpenEncounterReasons,
     appClient: appClient,
   );
 }

@@ -8,22 +8,22 @@ import 'package:record/record.dart';
 import 'package:shared/shared.dart';
 
 import '../models/pending_motivo_message.dart';
-import '../services/motivos_consulta_service.dart';
+import '../services/encounter_reason_chat_service.dart';
 import '../services/pending_motivo_message_store.dart';
 
-/// Chat para cargar motivos de consulta: texto y audio.
+/// Chat for encounter reasons: text and audio.
 /// Intenta STT on-device; si la calidad alcanza, envía texto (sin Groq).
 /// Si no, guarda el audio y lo sube para el lote de cierre.
-class ChatMotivosScreen extends StatefulWidget {
-  final int consultaId;
+class EncounterReasonsChatScreen extends StatefulWidget {
+  final int encounterId;
   final String? authToken;
   final String userId;
   final String userName;
   final String titulo;
 
-  const ChatMotivosScreen({
+  const EncounterReasonsChatScreen({
     Key? key,
-    required this.consultaId,
+    required this.encounterId,
     required this.authToken,
     required this.userId,
     required this.userName,
@@ -31,11 +31,13 @@ class ChatMotivosScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<ChatMotivosScreen> createState() => _ChatMotivosScreenState();
+  State<EncounterReasonsChatScreen> createState() =>
+      _EncounterReasonsChatScreenState();
 }
 
-class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
-  late MotivosConsultaService _service;
+class _EncounterReasonsChatScreenState
+    extends State<EncounterReasonsChatScreen> {
+  late EncounterReasonChatService _service;
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final PendingMotivoMessageStore _pendingStore =
@@ -65,7 +67,7 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
   @override
   void initState() {
     super.initState();
-    _service = MotivosConsultaService(
+    _service = EncounterReasonChatService(
       userId: widget.userId,
       authToken: widget.authToken,
       userName: widget.userName,
@@ -130,7 +132,7 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
   }
 
   Future<void> _loadPending() async {
-    final list = await _pendingStore.listForEncounter(widget.consultaId);
+    final list = await _pendingStore.listForEncounter(widget.encounterId);
     if (!mounted) return;
     setState(() => _pending = list);
   }
@@ -140,7 +142,7 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
       _loading = true;
       _error = null;
     });
-    final result = await _service.getMessages(widget.consultaId);
+    final result = await _service.getMessages(widget.encounterId);
     if (!mounted) return;
     setState(() {
       _loading = false;
@@ -342,7 +344,7 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
     final now = DateTime.now();
     final pending = PendingMotivoMessage(
       id: _pendingStore.newId(),
-      encounterId: widget.consultaId,
+      encounterId: widget.encounterId,
       type: PendingMotivoMessageType.texto,
       status: PendingMotivoMessageStatus.pendingUpload,
       createdAt: now,
@@ -381,7 +383,7 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
     final now = DateTime.now();
     final pending = PendingMotivoMessage(
       id: id,
-      encounterId: widget.consultaId,
+      encounterId: widget.encounterId,
       type: PendingMotivoMessageType.audio,
       status: PendingMotivoMessageStatus.pendingUpload,
       createdAt: now,
@@ -413,7 +415,7 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
           await _loadPending();
           return;
         }
-        result = await _service.sendMessage(widget.consultaId, text);
+        result = await _service.sendMessage(widget.encounterId, text);
       } else {
         final path = await _pendingStore.absoluteAudioPath(item);
         if (path == null) {
@@ -421,7 +423,7 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
           return;
         }
         result = await _service.uploadFile(
-          widget.consultaId,
+          widget.encounterId,
           XFile(path),
           messageType: 'audio',
         );

@@ -13,7 +13,7 @@ import '../services/chat_service.dart';
 import '../services/acciones_service.dart';
 import '../utils/turno_resolucion_utils.dart';
 import '../components/dynamic_form.dart';
-import 'chat_motivos_screen.dart';
+import 'encounter_reasons_chat_screen.dart';
 
 class ChatScreen extends StatefulWidget {
   final ChatService chatService;
@@ -3493,12 +3493,12 @@ class ChatScreenState extends State<ChatScreen> {
                           final rawId = data is Map
                               ? (data['encounter_id'] ?? data['id_consulta'])
                               : null;
-                          final idConsultaInt = rawId is int
+                          final encounterId = rawId is int
                               ? rawId
                               : (rawId is num
                                   ? rawId.toInt()
                                   : int.tryParse('$rawId'));
-                          if (idConsultaInt == null || idConsultaInt <= 0) {
+                          if (encounterId == null || encounterId <= 0) {
                             return const SizedBox.shrink();
                           }
                           return Padding(
@@ -3510,8 +3510,8 @@ class ChatScreenState extends State<ChatScreen> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => ChatMotivosScreen(
-                                      consultaId: idConsultaInt,
+                                    builder: (_) => EncounterReasonsChatScreen(
+                                      encounterId: encounterId,
                                       authToken: _asistenteService.authToken,
                                       userId: widget.chatService.currentUserId,
                                       userName: widget.chatService.currentUserName,

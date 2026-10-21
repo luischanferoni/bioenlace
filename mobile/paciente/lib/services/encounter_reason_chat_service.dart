@@ -5,12 +5,16 @@ import 'package:shared/shared.dart';
 
 /// Servicio para la conversación de motivos de consulta (texto, audio, fotos).
 /// Endpoints: motivos-consulta/mensajes, enviar, subir.
-class MotivosConsultaService {
+class EncounterReasonChatService {
   final String? authToken;
   final String userId;
   final String? userName;
 
-  MotivosConsultaService({required this.userId, this.authToken, this.userName});
+  EncounterReasonChatService({
+    required this.userId,
+    this.authToken,
+    this.userName,
+  });
 
   Map<String, String> get _headers => AppConfig.jsonHeaders(
     bearerToken: authToken,
@@ -50,10 +54,10 @@ class MotivosConsultaService {
     );
   }
 
-  Future<Map<String, dynamic>> getMessages(int consultaId) async {
+  Future<Map<String, dynamic>> getMessages(int encounterId) async {
     try {
       final uri = Uri.parse(
-        '${AppConfig.apiUrl}/motivos-consulta/mensajes/$consultaId',
+        '${AppConfig.apiUrl}/motivos-consulta/mensajes/$encounterId',
       );
       final response = await http
           .get(uri, headers: _headers)
@@ -69,7 +73,7 @@ class MotivosConsultaService {
         'messages': normalizeChatMediaMessages(
           rawMsgs,
           mediaScope: 'motivos-consulta',
-          encounterId: consultaId,
+          encounterId: encounterId,
         ),
         'input_abierto': payload['input_abierto'] == true,
         'motivos_resumen': payload['motivos_resumen'],
@@ -81,10 +85,10 @@ class MotivosConsultaService {
     }
   }
 
-  Future<Map<String, dynamic>> sendMessage(int consultaId, String text) async {
+  Future<Map<String, dynamic>> sendMessage(int encounterId, String text) async {
     try {
       final uri = Uri.parse('${AppConfig.apiUrl}/motivos-consulta/enviar');
-      final body = {'encounter_id': consultaId, 'message': text};
+      final body = {'encounter_id': encounterId, 'message': text};
       final response = await http
           .post(
             uri,
@@ -104,7 +108,7 @@ class MotivosConsultaService {
 
   /// Sube imagen o audio. [messageType] debe ser 'imagen' o 'audio'.
   Future<Map<String, dynamic>> uploadFile(
-    int consultaId,
+    int encounterId,
     XFile file, {
     required String messageType,
   }) async {
@@ -112,7 +116,7 @@ class MotivosConsultaService {
       final uri = Uri.parse('${AppConfig.apiUrl}/motivos-consulta/subir');
       final request = http.MultipartRequest('POST', uri);
       request.headers.addAll(_multipartHeaders);
-      request.fields['encounter_id'] = consultaId.toString();
+      request.fields['encounter_id'] = encounterId.toString();
       request.fields['message_type'] = messageType;
       request.files.add(await multipartFileFromXFile(file));
 
@@ -125,7 +129,7 @@ class MotivosConsultaService {
       normalizeChatMediaMessage(
         payload,
         mediaScope: 'motivos-consulta',
-        encounterId: consultaId,
+        encounterId: encounterId,
       );
       return {'success': true, 'data': payload};
     } catch (e) {

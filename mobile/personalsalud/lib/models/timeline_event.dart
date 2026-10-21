@@ -153,8 +153,8 @@ class InformacionMedica {
   final List<Hallazgo> hallazgos;
   final List<Antecedente> antecedentesPersonales;
   final List<Antecedente> antecedentesFamiliares;
-  /// Texto consolidado en `consultas.motivo_consulta` (mismo criterio que la web).
-  final String? motivosConsulta;
+  /// Texto consolidado del motivo del encounter (mismo criterio que la web).
+  final String? encounterReasonSummary;
 
   InformacionMedica({
     required this.condicionesActivas,
@@ -162,7 +162,7 @@ class InformacionMedica {
     required this.hallazgos,
     required this.antecedentesPersonales,
     required this.antecedentesFamiliares,
-    this.motivosConsulta,
+    this.encounterReasonSummary,
   });
 
   factory InformacionMedica.fromJson(Map<String, dynamic> json) {
@@ -187,7 +187,7 @@ class InformacionMedica {
               ?.map((e) => Antecedente.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
-      motivosConsulta: json['motivos_consulta'] as String?,
+      encounterReasonSummary: json['encounter_reason_summary'] as String?,
     );
   }
 }

@@ -94,25 +94,25 @@ final class CreateOrUploadCapture
             }
         }
 
-        $texto = trim((string) ($body['consulta'] ?? $body['texto'] ?? $body['transcript'] ?? ''));
+        $transcript = trim((string) ($body['transcript'] ?? ''));
         $stt = is_array($body['stt'] ?? null) ? $body['stt'] : [];
-        if ($texto === '' && isset($stt['text'])) {
-            $texto = trim((string) $stt['text']);
+        if ($transcript === '' && isset($stt['text'])) {
+            $transcript = trim((string) $stt['text']);
         }
 
         $forceServer = !empty($body['stt_force_server']) || !empty($stt['force_server']);
 
-        if ($texto !== '' && !$forceServer) {
+        if ($transcript !== '' && !$forceServer) {
             $quality = null;
             if ($this->draft->shouldEvaluateDeviceStt($stt)) {
-                $quality = DeviceSttQualityAssessor::assess($texto, $stt, 'captura_clinica');
+                $quality = DeviceSttQualityAssessor::assess($transcript, $stt, 'captura_clinica');
             }
             $acceptDevice = $quality === null || !empty($quality['ok']);
             if (!$acceptDevice && !SttConfigService::isServerEnabled() && $domain->hasAudio()) {
                 $acceptDevice = true;
             }
             if ($acceptDevice) {
-                $domain->acceptInitialTranscript($texto, array_merge($stt, [
+                $domain->acceptInitialTranscript($transcript, array_merge($stt, [
                     'provenance' => CaptureSpeechInputResolver::PROVENANCE_DEVICE,
                     'quality' => $quality,
                 ]));
@@ -122,18 +122,18 @@ final class CreateOrUploadCapture
                     'pending_server_stt' => true,
                 ]));
             } else {
-                $domain->acceptInitialTranscript($texto, array_merge($stt, [
+                $domain->acceptInitialTranscript($transcript, array_merge($stt, [
                     'provenance' => CaptureSpeechInputResolver::PROVENANCE_TEXT_ONLY,
                     'quality' => $quality,
                 ]));
             }
-        } elseif ($texto !== '' && $forceServer && !$domain->hasAudio()) {
-            $domain->acceptInitialTranscript($texto, array_merge($stt, [
+        } elseif ($transcript !== '' && $forceServer && !$domain->hasAudio()) {
+            $domain->acceptInitialTranscript($transcript, array_merge($stt, [
                 'provenance' => CaptureSpeechInputResolver::PROVENANCE_TEXT_ONLY,
             ]));
-        } elseif (!$domain->hasAudio() && $texto === '') {
+        } elseif (!$domain->hasAudio() && $transcript === '') {
             throw $this->draft->failure('capture_input_required');
-        } elseif ($domain->hasAudio() && $texto === '') {
+        } elseif ($domain->hasAudio() && $transcript === '') {
             $domain->markUploaded($stt !== [] ? $stt : null);
         }
 

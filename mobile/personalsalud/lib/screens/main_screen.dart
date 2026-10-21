@@ -54,7 +54,7 @@ class _MainScreenState extends State<MainScreen> {
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) => ChatConsultaScreen(
-                consultaId: asyncId,
+                encounterId: asyncId,
                 authToken: widget.authToken,
                 userId: widget.userId,
                 userName: widget.userName,
@@ -123,4 +123,3 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 }
-

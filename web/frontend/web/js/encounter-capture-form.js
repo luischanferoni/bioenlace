@@ -1064,34 +1064,13 @@
         });
     };
 
-    EncounterCaptureForm.prototype.buildAnalyzePayload = function (extra) {
-        var idConfig = window.idConfiguracionActual || null;
-        var formData = new FormData(this.form);
-        var consulta = (this.textarea && this.textarea.value) ? this.textarea.value.trim() : '';
-        var payload = {
-            consulta: consulta,
-            id_configuracion: idConfig || formData.get('id_configuracion') || null,
-            id_persona: formData.get('id_persona'),
-            id_consulta: formData.get('id_consulta'),
-            parent: formData.get('parent'),
-            parent_id: formData.get('parent_id'),
-        };
-        if (this.lastSttMeta) {
-            payload.stt = Object.assign({}, this.lastSttMeta);
-        }
-        if (extra) {
-            Object.assign(payload, extra);
-        }
-        return mergeApiPayload(payload);
-    };
-
     EncounterCaptureForm.prototype.analyze = function () {
         var self = this;
         if (this.inReview) {
             return;
         }
-        var consulta = (this.textarea && this.textarea.value) ? this.textarea.value.trim() : '';
-        if (!consulta && !this.pendingAudioBlob) {
+        var transcript = (this.textarea && this.textarea.value) ? this.textarea.value.trim() : '';
+        if (!transcript && !this.pendingAudioBlob) {
             this.setStatus('Escriba, dicte o grabe la consulta antes de analizar.', 'warning');
             return;
         }
@@ -1103,14 +1082,14 @@
         var ctx = this.readFormContext();
         var needsServerStt =
             !!this.sttConfig.server_enabled &&
-            (!consulta ||
+            (!transcript ||
                 (this.lastSttMeta &&
                     this.lastSttMeta.local_quality &&
                     !this.lastSttMeta.local_quality.ok));
 
         var showAnalysis = function (payload) {
             self.lastAnalysisPayload = payload;
-            self.draftText = consulta || (payload.texto_original || payload.transcript || '');
+            self.draftText = transcript || (payload.texto_original || payload.transcript || '');
             self.editSnapshot = null;
             self.resolutionAccum = {};
             self.setEditingMode(false);
@@ -1154,7 +1133,7 @@
         if (ctx.id_persona) crearFd.set('id_persona', String(ctx.id_persona));
         if (ctx.parent) crearFd.set('parent', String(ctx.parent));
         if (ctx.parent_id) crearFd.set('parent_id', String(ctx.parent_id));
-        if (consulta) crearFd.set('consulta', consulta);
+        if (transcript) crearFd.set('transcript', transcript);
         if (needsServerStt) crearFd.set('stt_force_server', '1');
         if (this.lastSttMeta) {
             crearFd.set('stt', JSON.stringify(this.lastSttMeta));
@@ -1200,12 +1179,12 @@
                 if (stage === 'UPLOADED' || stage === 'STT_FAILED') {
                     if (!self.sttConfig.server_enabled) {
                         if (capture.transcript) {
-                            consulta = capture.transcript;
+                            transcript = capture.transcript;
                             if (self.textarea) {
-                                self.textarea.value = consulta;
+                                self.textarea.value = transcript;
                             }
                         }
-                        if (!consulta) {
+                        if (!transcript) {
                             throw new Error(
                                 'No se obtuvo texto del dictado en el dispositivo. Escribí la consulta para continuar.'
                             );
@@ -1236,14 +1215,14 @@
                             self.applyCaptureResponse(c);
                             if (c.transcript && self.textarea) {
                                 self.textarea.value = c.transcript;
-                                consulta = c.transcript;
+                                transcript = c.transcript;
                             }
                             return c;
                         });
                     });
                 }
                 if (capture.transcript) {
-                    consulta = capture.transcript;
+                    transcript = capture.transcript;
                 }
                 return capture;
             })
@@ -1257,7 +1236,7 @@
                         mergeApiPayload({
                             client_capture_id: clientId,
                             capture_id: self.serverCaptureId,
-                            consulta: consulta || undefined,
+                            transcript: transcript || undefined,
                         })
                     ),
                 });

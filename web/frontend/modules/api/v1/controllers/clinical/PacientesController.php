@@ -65,7 +65,7 @@ class PacientesController extends BaseController
         $esInternacion = $parentParam === Encounter::PARENT_INTERNACION && $parentIdParam > 0;
         $esGuardia = $parentParam === Encounter::PARENT_GUARDIA && $parentIdParam > 0;
 
-        $motivosLookup = new EncounterAppointmentReasonLookupService();
+        $appointmentReasonLookup = new EncounterAppointmentReasonLookupService();
         $contextoInternacion = null;
         $contextoEpisodio = null;
         $timelineEpisodio = null;
@@ -93,7 +93,7 @@ class PacientesController extends BaseController
             $signosVitalesEpisodio = $esInternacion
                 ? $svEpisodioSvc->buildForInternacion((int) $persona->id_persona, $parentIdParam)
                 : $svEpisodioSvc->buildForGuardia((int) $persona->id_persona, $parentIdParam, $idEfector);
-            $motivosConsulta = null;
+            $encounterReasonSummary = null;
             $patientEncounterReasons = [
                 'encounter_id' => null,
                 'turno_id' => null,
@@ -107,36 +107,36 @@ class PacientesController extends BaseController
             $carePackCohorte = null;
             $documentacionMedico = null;
         } else {
-            $motivosCtx = $this->buildMotivosHistoriaClinicaContext(
+            $encounterReasonsContext = $this->buildEncounterReasonsHistoryContext(
                 $persona,
-                $motivosLookup,
+                $appointmentReasonLookup,
                 $idEfector
             );
-            if ($motivosCtx['http_error'] !== null) {
-                return $motivosCtx['http_error'];
+            if ($encounterReasonsContext['http_error'] !== null) {
+                return $encounterReasonsContext['http_error'];
             }
 
-            $motivosConsulta = $motivosCtx['motivos_consulta'];
-            $patientEncounterReasons = $motivosCtx['patient_encounter_reasons'];
-            $capturaFlags = $motivosCtx['captura'] ?? [
+            $encounterReasonSummary = $encounterReasonsContext['encounter_reason_summary'];
+            $patientEncounterReasons = $encounterReasonsContext['patient_encounter_reasons'];
+            $capturaFlags = $encounterReasonsContext['captura'] ?? [
                 'permitida' => null,
                 'motivo' => null,
             ];
 
             // Estado actual del paciente: solo en ventana de atención (captura) o encounter sin turno ambulatorio.
-            $encounterIdMotivos = (int) ($patientEncounterReasons['encounter_id'] ?? 0);
+            $patientEncounterId = (int) ($patientEncounterReasons['encounter_id'] ?? 0);
             $mostrarEstadoPaciente = ($capturaFlags['permitida'] ?? null) === true
-                || (($capturaFlags['permitida'] ?? null) === null && $encounterIdMotivos > 0);
+                || (($capturaFlags['permitida'] ?? null) === null && $patientEncounterId > 0);
 
             $carePackCohorte = null;
             if (CarePackConfig::isEnabled() && $mostrarEstadoPaciente) {
-                if ($encounterIdMotivos > 0) {
-                    $carePackCohorte = (new CarePackEncounterStaffService())->buildForEncounter($encounterIdMotivos);
+                if ($patientEncounterId > 0) {
+                    $carePackCohorte = (new CarePackEncounterStaffService())->buildForEncounter($patientEncounterId);
                 }
             }
-            $turnosConEncounter = $motivosCtx['turnos_con_encounter'];
+            $turnosConEncounter = $encounterReasonsContext['turnos_con_encounter'];
             $documentacionMedico = $mostrarEstadoPaciente
-                ? ($motivosCtx['documentacion_medico'] ?? null)
+                ? ($encounterReasonsContext['documentacion_medico'] ?? null)
                 : null;
         }
 
@@ -222,7 +222,7 @@ class PacientesController extends BaseController
                 'hallazgos' => $hallazgos,
                 'antecedentes_personales' => $antecedentesPersonales,
                 'antecedentes_familiares' => $antecedentesFamiliares,
-                'motivos_consulta' => $motivosConsulta,
+                'encounter_reason_summary' => $encounterReasonSummary,
             ],
             'signos_vitales' => $signosVitales,
             'signos_vitales_episodio' => $signosVitalesEpisodio,
@@ -266,7 +266,7 @@ class PacientesController extends BaseController
      * GET clinical/encounter/staff-summary, no con este endpoint.
      *
      * @return array{
-     *   motivos_consulta: string|null,
+     *   encounter_reason_summary: string|null,
      *   patient_encounter_reasons: array<string, mixed>,
      *   turnos_con_encounter: list<array<string, mixed>>,
      *   documentacion_medico: array<string, mixed>|null,
@@ -274,9 +274,9 @@ class PacientesController extends BaseController
      *   http_error: array<string, mixed>|null
      * }
      */
-    private function buildMotivosHistoriaClinicaContext(
+    private function buildEncounterReasonsHistoryContext(
         Persona $persona,
-        EncounterAppointmentReasonLookupService $motivosLookup,
+        EncounterAppointmentReasonLookupService $appointmentReasonLookup,
         int $idEfector
     ): array {
         $personaId = (int) $persona->id_persona;
@@ -296,7 +296,7 @@ class PacientesController extends BaseController
 
         $turnosConEncounter = $idEfector > 0
             ? $this->filtrarTurnosConEncounterAccesibles(
-                $motivosLookup->listarTurnosConEncounterParaMotivos($personaId, $idEfector)
+                $appointmentReasonLookup->listarTurnosConEncounterParaMotivos($personaId, $idEfector)
             )
             : [];
 
@@ -309,7 +309,7 @@ class PacientesController extends BaseController
                 ->one();
             if ($turno === null) {
                 return [
-                    'motivos_consulta' => null,
+                    'encounter_reason_summary' => null,
                     'patient_encounter_reasons' => $emptyPaciente,
                     'turnos_con_encounter' => $turnosConEncounter,
                     'documentacion_medico' => null,
@@ -319,7 +319,7 @@ class PacientesController extends BaseController
                     ]),
                 ];
             }
-            $encounterId = $motivosLookup->encounterIdParaTurno($turnoIdParam);
+            $encounterId = $appointmentReasonLookup->encounterIdParaTurno($turnoIdParam);
             if ($encounterId === null) {
                 $deny = AppointmentReasonWindowService::historiaClinicaDenyKindForTurno($turno);
                 if ($deny !== null) {
@@ -327,10 +327,10 @@ class PacientesController extends BaseController
                 }
 
                 return [
-                    'motivos_consulta' => null,
+                    'encounter_reason_summary' => null,
                     'patient_encounter_reasons' => array_merge($emptyPaciente, [
                         'turno_id' => $turnoIdParam,
-                        'turno' => $this->formatTurnoMotivosContext($turno),
+                        'turno' => $this->formatTurnoEncounterReasonContext($turno),
                     ]),
                     'turnos_con_encounter' => $turnosConEncounter,
                     'documentacion_medico' => null,
@@ -346,7 +346,7 @@ class PacientesController extends BaseController
                 || (int) $encounter->subject_persona_id !== $personaId
             ) {
                 return [
-                    'motivos_consulta' => null,
+                    'encounter_reason_summary' => null,
                     'patient_encounter_reasons' => $emptyPaciente,
                     'turnos_con_encounter' => $turnosConEncounter,
                     'documentacion_medico' => null,
@@ -371,8 +371,8 @@ class PacientesController extends BaseController
                     ->one();
             }
         } elseif ($idEfector > 0) {
-            $encounterIdAuto = $motivosLookup->encounterIdConMensajesMotivosRecientes($personaId, $idEfector)
-                ?? $motivosLookup->ultimoEncounterIdDesdeTurno($personaId, $idEfector);
+            $encounterIdAuto = $appointmentReasonLookup->encounterIdConMensajesMotivosRecientes($personaId, $idEfector)
+                ?? $appointmentReasonLookup->ultimoEncounterIdDesdeTurno($personaId, $idEfector);
             if ($encounterIdAuto !== null) {
                 $encounter = Encounter::findOne($encounterIdAuto);
                 if ($encounter !== null && $encounter->appointment_id) {
@@ -385,7 +385,7 @@ class PacientesController extends BaseController
 
         if ($encounter === null) {
             return [
-                'motivos_consulta' => null,
+                'encounter_reason_summary' => null,
                 'patient_encounter_reasons' => $emptyPaciente,
                 'turnos_con_encounter' => $turnosConEncounter,
                 'documentacion_medico' => null,
@@ -400,7 +400,7 @@ class PacientesController extends BaseController
             $explicitTarget = $turnoIdParam > 0 || $encounterIdParam > 0;
 
             return [
-                'motivos_consulta' => null,
+                'encounter_reason_summary' => null,
                 'patient_encounter_reasons' => $emptyPaciente,
                 'turnos_con_encounter' => $turnosConEncounter,
                 'documentacion_medico' => null,
@@ -439,10 +439,10 @@ class PacientesController extends BaseController
         );
         $resumen = $reason !== '' ? $reason : null;
 
-        $motivosPaciente = [
+        $patientEncounterReasons = [
             'encounter_id' => $encounterId,
             'turno_id' => $turno !== null ? (int) $turno->id_turnos : null,
-            'turno' => $this->formatTurnoMotivosContext($turno),
+            'turno' => $this->formatTurnoEncounterReasonContext($turno),
             'contexto_explicito' => $contextoExplicito,
             'ventana_medico' => AppointmentReasonWindowService::apiHistoriaClinicaGateState($encounter),
             'resumen' => $resumen,
@@ -455,8 +455,8 @@ class PacientesController extends BaseController
         ];
 
         return [
-            'motivos_consulta' => $reason !== '' ? $reason : null,
-            'patient_encounter_reasons' => $motivosPaciente,
+            'encounter_reason_summary' => $reason !== '' ? $reason : null,
+            'patient_encounter_reasons' => $patientEncounterReasons,
             'turnos_con_encounter' => $turnosConEncounter,
             'documentacion_medico' => (new EncounterStaffDocumentationViewService())->buildForEncounter($encounter),
             'captura' => $turno !== null ? $this->capturaFlagsForTurno($turno) : $capturaNeutra,
@@ -468,7 +468,7 @@ class PacientesController extends BaseController
      * @param array<string, mixed> $emptyPaciente
      * @param list<array<string, mixed>> $turnosConEncounter
      * @return array{
-     *   motivos_consulta: null,
+     *   encounter_reason_summary: null,
      *   patient_encounter_reasons: array<string, mixed>,
      *   turnos_con_encounter: list<array<string, mixed>>,
      *   documentacion_medico: null,
@@ -496,7 +496,7 @@ class PacientesController extends BaseController
 
         if ($denyKind === 'cerrada') {
             return [
-                'motivos_consulta' => null,
+                'encounter_reason_summary' => null,
                 'patient_encounter_reasons' => $emptyPaciente,
                 'turnos_con_encounter' => $turnosConEncounter,
                 'documentacion_medico' => null,
@@ -516,7 +516,7 @@ class PacientesController extends BaseController
         $min = (int) ($gate['minutos_antes_apertura'] ?? AppointmentReasonWindowService::minutesBeforeMedicoHistoriaClinica());
 
         return [
-            'motivos_consulta' => null,
+            'encounter_reason_summary' => null,
             'patient_encounter_reasons' => $emptyPaciente,
             'turnos_con_encounter' => $turnosConEncounter,
             'documentacion_medico' => null,
@@ -577,7 +577,7 @@ class PacientesController extends BaseController
     /**
      * @return array<string, mixed>|null
      */
-    private function formatTurnoMotivosContext(?Turno $turno): ?array
+    private function formatTurnoEncounterReasonContext(?Turno $turno): ?array
     {
         if ($turno === null) {
             return null;

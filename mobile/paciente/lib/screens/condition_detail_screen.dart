@@ -111,7 +111,7 @@ class _ConditionDetailScreenState extends State<ConditionDetailScreen> {
       context,
       MaterialPageRoute(
         builder: (_) => ChatMedicoScreen(
-          consultaId: id,
+          encounterId: id,
           authToken: widget.authToken,
           userId: widget.userId,
           userName: widget.userName,

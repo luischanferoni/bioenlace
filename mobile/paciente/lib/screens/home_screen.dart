@@ -14,7 +14,7 @@ import 'care_plans_list_screen.dart';
 import 'condition_detail_screen.dart';
 import 'conditions_list_screen.dart';
 import 'chat_medico_screen.dart';
-import 'chat_motivos_screen.dart';
+import 'encounter_reasons_chat_screen.dart';
 import 'encounter_summary_detail_screen.dart';
 import '../widgets/consulta_async_solicitud_card.dart';
 
@@ -504,15 +504,6 @@ class HomeScreenState extends State<HomeScreen> {
     return '$name ${d.toString().padLeft(2, '0')}/${mo.toString().padLeft(2, '0')}';
   }
 
-  /// `encounter_id` (alias legacy `id_consulta`) en el listado de turnos.
-  int? _encounterIdDesdeTurno(Map<String, dynamic> t) {
-    final raw = t['encounter_id'] ?? t['id_consulta'];
-    if (raw == null) return null;
-    if (raw is int) return raw > 0 ? raw : null;
-    final n = int.tryParse(raw.toString());
-    return n != null && n > 0 ? n : null;
-  }
-
   Future<void> _confirmarAsistenciaTurno(
     BuildContext context,
     Map<String, dynamic> t,
@@ -540,16 +531,16 @@ class HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _abrirMotivosConsulta(
+  void _openEncounterReasons(
     BuildContext context,
-    int consultaId,
+    int encounterId,
     Map<String, dynamic> t,
   ) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ChatMotivosScreen(
-          consultaId: consultaId,
+        builder: (_) => EncounterReasonsChatScreen(
+          encounterId: encounterId,
           authToken: widget.authToken,
           userId: widget.userId,
           userName: widget.userName,
@@ -560,23 +551,23 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _abrirPrepararConsulta(BuildContext context, Map<String, dynamic> t) {
-    abrirPrepararConsultaHub(
+  void _openEncounterPreparation(BuildContext context, Map<String, dynamic> t) {
+    openEncounterPreparationHub(
       context: context,
       turno: t,
       authToken: widget.authToken,
       subjectPersonaId: _subjectPersonaId,
-      onOpenMotivos: _onOpenMotivosConsulta,
+      onOpenEncounterReasons: _onOpenEncounterReasons,
     );
   }
 
-  void _abrirSeguimientoPostConsulta(BuildContext context, Map<String, dynamic> t) {
-    abrirSeguimientoPostConsultaHub(
+  void _openEncounterFollowup(BuildContext context, Map<String, dynamic> t) {
+    openEncounterFollowupHub(
       context: context,
       turno: t,
       authToken: widget.authToken,
       subjectPersonaId: _subjectPersonaId,
-      onOpenMotivos: _onOpenMotivosConsulta,
+      onOpenEncounterReasons: _onOpenEncounterReasons,
     );
   }
 
@@ -592,16 +583,16 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _onOpenMotivosConsulta(
+  void _onOpenEncounterReasons(
     BuildContext context, {
-    required int consultaId,
+    required int encounterId,
     required String titulo,
   }) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ChatMotivosScreen(
-          consultaId: consultaId,
+        builder: (_) => EncounterReasonsChatScreen(
+          encounterId: encounterId,
           authToken: widget.authToken,
           userId: widget.userId,
           userName: widget.userName,
@@ -850,7 +841,7 @@ class HomeScreenState extends State<HomeScreen> {
       context,
       MaterialPageRoute(
         builder: (_) => ChatMedicoScreen(
-          consultaId: id,
+          encounterId: id,
           authToken: widget.authToken,
           userId: widget.userId,
           userName: widget.userName,
@@ -1233,20 +1224,20 @@ class HomeScreenState extends State<HomeScreen> {
     final usaJourneyPre = futuro && !enResolucion && usaJourney;
     final usaJourneyPost = !futuro && usaJourney;
     final prepararPendiente =
-        usaJourneyPre && prepararConsultaTienePendientes(t);
+        usaJourneyPre && encounterPreparationHasPending(t);
     final seguimientoPendiente =
-        usaJourneyPost && seguimientoPostConsultaTienePendientes(t);
+        usaJourneyPost && encounterFollowupHasPending(t);
     final puedeMotivos = !usaJourneyPre &&
         futuro &&
         !enResolucion &&
-        turnoTieneEncounterParaMotivos(t) &&
-        turnoMotivosInputAbiertoEnProducto(t);
+        appointmentHasEncounterForReasons(t) &&
+        appointmentEncounterReasonInputOpenInProduct(t);
     final puedeAsistenciaCohorte = !usaJourneyPre &&
         futuro &&
         !enResolucion &&
-        turnoAsistenciaCohorteDisponibleEnProducto(t);
-    final idConsulta = puedeMotivos ? _encounterIdDesdeTurno(t) : null;
-    final encounterIdPasado = !futuro ? _encounterIdDesdeTurno(t) : null;
+        appointmentCohortAssistanceAvailableInProduct(t);
+    final encounterId = puedeMotivos ? encounterIdDesdeTurno(t) : null;
+    final encounterIdPasado = !futuro ? encounterIdDesdeTurno(t) : null;
     final turnoId = turnoIdDesdePayloadProducto(t);
 
     final cabecera = Text(
@@ -1307,21 +1298,21 @@ class HomeScreenState extends State<HomeScreen> {
         label: 'Preparar tu consulta',
         size: BioButtonSize.sm,
         icon: Icons.event_available_outlined,
-        onPressed: () => _abrirPrepararConsulta(context, t),
+        onPressed: () => _openEncounterPreparation(context, t),
       ));
     } else if (!enResolucion && seguimientoPendiente) {
       acciones.add(BioButton.outlinePrimary(
         label: 'Seguimiento post-consulta',
         size: BioButtonSize.sm,
         icon: Icons.health_and_safety_outlined,
-        onPressed: () => _abrirSeguimientoPostConsulta(context, t),
+        onPressed: () => _openEncounterFollowup(context, t),
       ));
-    } else if (!enResolucion && idConsulta != null) {
+    } else if (!enResolucion && encounterId != null) {
       acciones.add(BioButton.outlinePrimary(
         label: 'Cargar motivos de consulta',
         size: BioButtonSize.sm,
         icon: Icons.edit_note,
-        onPressed: () => _abrirMotivosConsulta(context, idConsulta, t),
+        onPressed: () => _openEncounterReasons(context, encounterId, t),
       ));
     }
     if (!enResolucion && futuro && t['puede_confirmar_asistencia'] == true) {
@@ -1343,7 +1334,7 @@ class HomeScreenState extends State<HomeScreen> {
         size: BioButtonSize.sm,
         icon: Icons.fact_check_outlined,
         onPressed: () {
-          abrirAsistenciaPreConsulta(
+          openPreEncounterAssistance(
             context: context,
             turnoId: turnoId,
             authToken: widget.authToken,

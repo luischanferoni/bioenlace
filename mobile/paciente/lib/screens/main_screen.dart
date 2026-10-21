@@ -14,7 +14,7 @@ import 'care_plan_detail_screen.dart';
 import 'configuracion_screen.dart';
 import 'chat_medico_screen.dart';
 import 'encounter_summary_detail_screen.dart';
-import 'chat_motivos_screen.dart';
+import 'encounter_reasons_chat_screen.dart';
 import 'paciente_provincia_context_screen.dart';
 import '../config/paciente_intents.dart';
 
@@ -142,12 +142,12 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  void _abrirChatAsyncConsulta(int consultaId) {
+  void _abrirChatAsyncConsulta(int encounterId) {
     setState(() => _selectedIndex = 0);
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => ChatMedicoScreen(
-          consultaId: consultaId,
+          encounterId: encounterId,
           authToken: widget.authToken,
           userId: widget.chatService.currentUserId,
           userName: widget.chatService.currentUserName,
@@ -210,46 +210,46 @@ class _MainScreenState extends State<MainScreen> {
       final phaseMap = journeyPhase(turno, phase);
       if (phaseMap != null &&
           (phaseMap['enabled'] == true ||
-              phase == kEncounterJourneyPhasePostConsulta)) {
+              phase == kEncounterJourneyPhaseFollowup)) {
         abrirFaseEncounterJourney(
           context: context,
           turno: turno,
           phaseId: phase,
           authToken: widget.authToken,
-          onOpenMotivos: _abrirMotivosDesdeJourney,
+          onOpenEncounterReasons: _openEncounterReasonsFromJourney,
         );
         return;
       }
     }
 
-    if (seguimientoPostConsultaTienePendientes(turno)) {
-      abrirSeguimientoPostConsultaHub(
+    if (encounterFollowupHasPending(turno)) {
+      openEncounterFollowupHub(
         context: context,
         turno: turno,
         authToken: widget.authToken,
-        onOpenMotivos: _abrirMotivosDesdeJourney,
+        onOpenEncounterReasons: _openEncounterReasonsFromJourney,
       );
       return;
     }
 
-    abrirPrepararConsultaHub(
+    openEncounterPreparationHub(
       context: context,
       turno: turno,
       authToken: widget.authToken,
-      onOpenMotivos: _abrirMotivosDesdeJourney,
+      onOpenEncounterReasons: _openEncounterReasonsFromJourney,
     );
   }
 
-  void _abrirMotivosDesdeJourney(
+  void _openEncounterReasonsFromJourney(
     BuildContext context, {
-    required int consultaId,
+    required int encounterId,
     required String titulo,
   }) {
     final chat = widget.chatService;
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => ChatMotivosScreen(
-          consultaId: consultaId,
+        builder: (_) => EncounterReasonsChatScreen(
+          encounterId: encounterId,
           authToken: widget.authToken,
           userId: chat.currentUserId,
           userName: chat.currentUserName,

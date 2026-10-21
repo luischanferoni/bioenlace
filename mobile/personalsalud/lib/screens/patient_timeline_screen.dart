@@ -107,10 +107,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   String _tlEpisodioFilter = 'all';
 
   bool get _esCapturaInternacion =>
-      (widget.parentType ?? '').toUpperCase() == 'INTERNACION';
+      (widget.parentType ?? '').toUpperCase() == EncounterParentType.internacion;
 
   bool get _esCapturaGuardia =>
-      (widget.parentType ?? '').toUpperCase() == 'GUARDIA';
+      (widget.parentType ?? '').toUpperCase() == EncounterParentType.guardia;
 
   bool get _esCapturaEpisodio => _esCapturaInternacion || _esCapturaGuardia;
 
@@ -246,14 +246,14 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     });
 
     try {
-      final int? turnoId = widget.parentType == 'TURNO'
+      final int? turnoId = widget.parentType == EncounterParentType.turno
           ? widget.parentId
           : null;
       final HistoriaClinicaResponse data;
       if (widget.encounterSummaryLoaded) {
         data = await _historiaClinicaService.getEncounterAsStaff(
           turnoId: turnoId,
-          encounterId: widget.parentType == 'ENCOUNTER'
+          encounterId: widget.parentType == EncounterParentType.encounter
               ? widget.parentId
               : null,
         );
@@ -261,17 +261,17 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         data = await _historiaClinicaService.getHistoriaClinica(
           widget.personaId,
           turnoId: turnoId,
-          encounterId: widget.parentType == 'ENCOUNTER'
+          encounterId: widget.parentType == EncounterParentType.encounter
               ? widget.parentId
               : null,
           parent: (turnoId == null &&
                   widget.parentType != null &&
-                  widget.parentType != 'ENCOUNTER')
+                  widget.parentType != EncounterParentType.encounter)
               ? widget.parentType
               : null,
           parentId: (turnoId == null &&
                   widget.parentType != null &&
-                  widget.parentType != 'ENCOUNTER')
+                  widget.parentType != EncounterParentType.encounter)
               ? widget.parentId
               : null,
         );
@@ -1012,10 +1012,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   }
 
   Widget _buildEpisodioBanner(ContextoEpisodioHistoria? ctx) {
-    final tipo = (ctx?.tipo.isNotEmpty == true)
-        ? ctx!.tipo.toUpperCase()
-        : (_esCapturaGuardia ? 'GUARDIA' : 'INTERNACION');
-    final esGuardia = tipo == 'GUARDIA';
+    final esGuardia = ctx?.tipo.isNotEmpty == true
+        ? ctx!.esGuardia
+        : _esCapturaGuardia;
     final tituloTipo = esGuardia ? 'Guardia' : 'Internación';
     final tituloParts = <String>[tituloTipo];
     if (ctx?.ingresoAt != null && ctx!.ingresoAt!.isNotEmpty) {
@@ -1184,8 +1183,12 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
 
   Widget _buildEncounterReasons(HistoriaClinicaResponse hc) {
     final mp = hc.patientEncounterReasons;
-    final resumen = (mp.resumen ?? mp.resumenIa ?? hc.informacionMedica.motivosConsulta ?? '')
-        .trim();
+    final resumen =
+        (mp.resumen ??
+                mp.resumenIa ??
+                hc.informacionMedica.encounterReasonSummary ??
+                '')
+            .trim();
     final hayResumen = resumen.isNotEmpty;
     final sugerencias = mp.sugerenciasClinicas;
     final turnoCtx = mp.turno;
@@ -2212,7 +2215,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             idPersona: widget.personaId,
             parent: widget.parentType,
             parentId: widget.parentId,
-            texto: text.isEmpty ? null : text,
+            transcript: text.isEmpty ? null : text,
             stt: sttMeta,
             audioPath: audioPath,
             sttForceServer: needsServerStt && (audioPath != null),
@@ -2341,7 +2344,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       final analyzed = await _encounterApi.capturaAnalizar(
         clientCaptureId: draft.id,
         captureId: serverId,
-        consulta: transcript,
+        transcript: transcript,
         force: fromStatus == PendingEncounterCaptureStatus.pendingAnalyze,
         userPerTabConfig: ctx,
       );
@@ -2366,7 +2369,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           'analysis_cache_token',
           'id_configuracion',
           'encounter_id',
-          'id_consulta',
           'puede_confirmar',
           'tiene_datos_faltantes',
         ]) {
@@ -2500,7 +2502,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     final encounterId = _lastAnalysis!['encounter_id'] is int
         ? _lastAnalysis!['encounter_id'] as int
         : int.tryParse(
-            '${_lastAnalysis!['encounter_id'] ?? _lastAnalysis!['id_consulta']}',
+            '${_lastAnalysis!['encounter_id']}',
           );
 
     final resolutions = <String, dynamic>{};

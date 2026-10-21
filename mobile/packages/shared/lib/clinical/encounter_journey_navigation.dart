@@ -16,7 +16,7 @@ const List<String> kEncounterJourneyPostTurnoPhases = [
 
 const String kEncounterJourneyPhaseMotivos = 'motivos_consulta';
 const String kEncounterJourneyPhaseAsistencia = 'asistencia_pre_consulta';
-const String kEncounterJourneyPhasePostConsulta = 'post_consulta';
+const String kEncounterJourneyPhaseFollowup = 'post_consulta';
 
 const Set<String> kEncounterJourneyPushTypes = {
   'JOURNEY_MOTIVOS_RECORDATORIO',
@@ -74,8 +74,8 @@ List<JourneyHubEntry> journeyHubEntries(
     if (phase['applies'] != true) continue;
     if (phase['completed'] == true) continue;
 
-    if (phaseId == kEncounterJourneyPhasePostConsulta) {
-      out.addAll(_postConsultaHubEntries(phase));
+    if (phaseId == kEncounterJourneyPhaseFollowup) {
+      out.addAll(_encounterFollowupHubEntries(phase));
       continue;
     }
 
@@ -91,14 +91,16 @@ List<JourneyHubEntry> journeyHubEntries(
   return out;
 }
 
-List<JourneyHubEntry> _postConsultaHubEntries(Map<String, dynamic> phase) {
+List<JourneyHubEntry> _encounterFollowupHubEntries(
+  Map<String, dynamic> phase,
+) {
   final defaultLabel =
       phase['label']?.toString() ?? 'Seguimiento post-consulta';
   final followup = phase['followup'];
   if (followup is! Map) {
     return [
       JourneyHubEntry(
-        phaseId: kEncounterJourneyPhasePostConsulta,
+        phaseId: kEncounterJourneyPhaseFollowup,
         label: defaultLabel,
         subtitle: subtituloFaseJourney(phase),
         enabled: phase['enabled'] == true,
@@ -110,7 +112,7 @@ List<JourneyHubEntry> _postConsultaHubEntries(Map<String, dynamic> phase) {
   if (items is! List || items.isEmpty) {
     return [
       JourneyHubEntry(
-        phaseId: kEncounterJourneyPhasePostConsulta,
+        phaseId: kEncounterJourneyPhaseFollowup,
         label: defaultLabel,
         subtitle: subtituloFaseJourney(phase),
         enabled: phase['enabled'] == true,
@@ -138,7 +140,7 @@ List<JourneyHubEntry> _postConsultaHubEntries(Map<String, dynamic> phase) {
     }
     out.add(
       JourneyHubEntry(
-        phaseId: kEncounterJourneyPhasePostConsulta,
+        phaseId: kEncounterJourneyPhaseFollowup,
         label: label,
         subtitle: subtitle,
         enabled: actionable && touchpointId != null,
@@ -150,7 +152,7 @@ List<JourneyHubEntry> _postConsultaHubEntries(Map<String, dynamic> phase) {
   if (out.isEmpty) {
     return [
       JourneyHubEntry(
-        phaseId: kEncounterJourneyPhasePostConsulta,
+        phaseId: kEncounterJourneyPhaseFollowup,
         label: defaultLabel,
         subtitle: subtituloFaseJourney(phase),
         enabled: false,
@@ -166,7 +168,7 @@ int? _touchpointIdDesdeMap(Map raw) {
   return int.tryParse(id?.toString() ?? '');
 }
 
-List<MapEntry<String, Map<String, dynamic>>> prepararConsultaFasesPendientes(
+List<MapEntry<String, Map<String, dynamic>>> encounterPreparationPendingPhases(
   Map<String, dynamic> turno,
 ) {
   if (!turnoTieneJourneyPayload(turno)) return [];
@@ -181,12 +183,12 @@ List<MapEntry<String, Map<String, dynamic>>> prepararConsultaFasesPendientes(
   return out;
 }
 
-bool prepararConsultaTienePendientes(Map<String, dynamic> turno) {
+bool encounterPreparationHasPending(Map<String, dynamic> turno) {
   return journeyHubEntries(turno, kEncounterJourneyPreTurnoPhases).isNotEmpty;
 }
 
-bool seguimientoPostConsultaTienePendientes(Map<String, dynamic> turno) {
-  final phase = journeyPhase(turno, kEncounterJourneyPhasePostConsulta);
+bool encounterFollowupHasPending(Map<String, dynamic> turno) {
+  final phase = journeyPhase(turno, kEncounterJourneyPhaseFollowup);
   if (phase == null || phase['applies'] != true || phase['completed'] == true) {
     return false;
   }
@@ -200,12 +202,12 @@ bool seguimientoPostConsultaTienePendientes(Map<String, dynamic> turno) {
   return journeyHubEntries(turno, kEncounterJourneyPostTurnoPhases).isNotEmpty;
 }
 
-bool seguimientoPostConsultaTieneAccionDisponible(Map<String, dynamic> turno) {
+bool encounterFollowupHasAvailableAction(Map<String, dynamic> turno) {
   return journeyHubEntries(turno, kEncounterJourneyPostTurnoPhases)
       .any((e) => e.enabled);
 }
 
-bool prepararConsultaTieneAccionDisponible(Map<String, dynamic> turno) {
+bool encounterPreparationHasAvailableAction(Map<String, dynamic> turno) {
   return journeyHubEntries(turno, kEncounterJourneyPreTurnoPhases)
       .any((e) => e.enabled);
 }
@@ -218,7 +220,7 @@ int? encounterIdDesdeTurno(Map<String, dynamic> turno) {
   return n != null && n > 0 ? n : null;
 }
 
-int? touchpointIdDesdeFasePostConsulta(Map<String, dynamic> phase) {
+int? touchpointIdFromEncounterFollowupPhase(Map<String, dynamic> phase) {
   final followup = phase['followup'];
   if (followup is! Map) return null;
   final raw = followup['next_touchpoint_id'];
@@ -226,7 +228,7 @@ int? touchpointIdDesdeFasePostConsulta(Map<String, dynamic> phase) {
   return int.tryParse(raw?.toString() ?? '');
 }
 
-String tituloMotivosDesdeTurno(Map<String, dynamic> turno) {
+String encounterReasonsTitleFromAppointment(Map<String, dynamic> turno) {
   final fecha = turno['fecha']?.toString() ?? '';
   final hora = turno['hora']?.toString() ?? '';
   final horaCorta = hora.length >= 5 ? hora.substring(0, 5) : hora;
@@ -252,9 +254,9 @@ String? subtituloFaseJourney(Map<String, dynamic> phase) {
   return 'No disponible por ahora';
 }
 
-typedef AbrirMotivosConsulta = void Function(
+typedef OpenEncounterReasons = void Function(
   BuildContext context, {
-  required int consultaId,
+  required int encounterId,
   required String titulo,
 });
 
@@ -266,7 +268,7 @@ void abrirFaseEncounterJourney({
   String? authToken,
   int? subjectPersonaId,
   int? touchpointId,
-  required AbrirMotivosConsulta onOpenMotivos,
+  required OpenEncounterReasons onOpenEncounterReasons,
   String appClient = 'paciente-flutter',
 }) {
   final phase = journeyPhase(turno, phaseId);
@@ -275,12 +277,12 @@ void abrirFaseEncounterJourney({
   final surface = phase['surface']?.toString() ?? '';
   if (surface == 'chat_motivos') {
     if (phase['enabled'] != true) return;
-    final consultaId = encounterIdDesdeTurno(turno);
-    if (consultaId == null) return;
-    onOpenMotivos(
+    final encounterId = encounterIdDesdeTurno(turno);
+    if (encounterId == null) return;
+    onOpenEncounterReasons(
       context,
-      consultaId: consultaId,
-      titulo: tituloMotivosDesdeTurno(turno),
+      encounterId: encounterId,
+      titulo: encounterReasonsTitleFromAppointment(turno),
     );
     return;
   }
@@ -301,7 +303,7 @@ void abrirFaseEncounterJourney({
       return;
     }
     if (turnoId == null) return;
-    abrirAsistenciaPreConsulta(
+    openPreEncounterAssistance(
       context: context,
       turnoId: turnoId,
       authToken: authToken,
@@ -312,9 +314,10 @@ void abrirFaseEncounterJourney({
   }
 
   if (surface == 'pack_followup') {
-    final tid = touchpointId ?? touchpointIdDesdeFasePostConsulta(phase);
+    final tid =
+        touchpointId ?? touchpointIdFromEncounterFollowupPhase(phase);
     if (tid == null || tid <= 0) return;
-    abrirSeguimientoPostConsulta(
+    openEncounterFollowup(
       context: context,
       touchpointId: tid,
       authToken: authToken,
@@ -329,7 +332,7 @@ void abrirJourneyHubEntry({
   required JourneyHubEntry entry,
   String? authToken,
   int? subjectPersonaId,
-  required AbrirMotivosConsulta onOpenMotivos,
+  required OpenEncounterReasons onOpenEncounterReasons,
   String appClient = 'paciente-flutter',
 }) {
   if (!entry.enabled) return;
@@ -340,7 +343,7 @@ void abrirJourneyHubEntry({
     authToken: authToken,
     subjectPersonaId: subjectPersonaId,
     touchpointId: entry.touchpointId,
-    onOpenMotivos: onOpenMotivos,
+    onOpenEncounterReasons: onOpenEncounterReasons,
     appClient: appClient,
   );
 }
@@ -368,7 +371,7 @@ Map<String, String>? journeyPushDesdeData(Map<String, dynamic> data) {
     return {
       'type': type,
       'id_turno': idTurno,
-      'phase': data['phase']?.toString() ?? kEncounterJourneyPhasePostConsulta,
+      'phase': data['phase']?.toString() ?? kEncounterJourneyPhaseFollowup,
       'touchpoint_id': touchpointId,
       if (data['encounter_id'] != null)
         'encounter_id': data['encounter_id'].toString(),

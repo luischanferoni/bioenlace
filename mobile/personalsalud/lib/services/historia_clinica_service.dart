@@ -5,6 +5,13 @@ import 'package:shared/shared.dart';
 
 import '../models/timeline_event.dart';
 
+abstract final class EncounterParentType {
+  static const turno = 'TURNO';
+  static const encounter = 'ENCOUNTER';
+  static const guardia = 'GUARDIA';
+  static const internacion = 'INTERNACION';
+}
+
 class HistoriaClinicaService {
   String? authToken;
 
@@ -184,7 +191,7 @@ class SignosVitalesClinica {
 }
 
 /// `patient_encounter_reasons` de la API — mensajes enviados desde la app del paciente.
-class MotivoConsultaMensajeApi {
+class EncounterReasonMessageApi {
   final int id;
   final String content;
   final int userId;
@@ -192,7 +199,7 @@ class MotivoConsultaMensajeApi {
   final String messageType;
   final String createdAt;
 
-  MotivoConsultaMensajeApi({
+  EncounterReasonMessageApi({
     required this.id,
     required this.content,
     required this.userId,
@@ -201,7 +208,7 @@ class MotivoConsultaMensajeApi {
     required this.createdAt,
   });
 
-  factory MotivoConsultaMensajeApi.fromJson(
+  factory EncounterReasonMessageApi.fromJson(
     Map<String, dynamic> json, {
     int? encounterId,
     String mediaScope = 'motivos-consulta',
@@ -229,7 +236,7 @@ class MotivoConsultaMensajeApi {
       }
     }
 
-    return MotivoConsultaMensajeApi(
+    return EncounterReasonMessageApi(
       id: asInt(json['id']),
       content: content,
       userId: asInt(json['user_id']),
@@ -240,26 +247,26 @@ class MotivoConsultaMensajeApi {
   }
 }
 
-class MotivoConsultaTurnoContext {
+class EncounterAppointmentContext {
   final int? turnoId;
   final String? fecha;
   final String? hora;
   final String? estadoLabel;
 
-  MotivoConsultaTurnoContext({
+  EncounterAppointmentContext({
     this.turnoId,
     this.fecha,
     this.hora,
     this.estadoLabel,
   });
 
-  factory MotivoConsultaTurnoContext.fromJson(Map<String, dynamic>? json) {
+  factory EncounterAppointmentContext.fromJson(Map<String, dynamic>? json) {
     if (json == null) {
-      return MotivoConsultaTurnoContext();
+      return EncounterAppointmentContext();
     }
     final idRaw = json['id'];
     final turnoId = idRaw is int ? idRaw : int.tryParse('$idRaw');
-    return MotivoConsultaTurnoContext(
+    return EncounterAppointmentContext(
       turnoId: turnoId,
       fecha: json['fecha']?.toString(),
       hora: json['hora']?.toString(),
@@ -304,18 +311,18 @@ class SugerenciaClinicaItem {
   }
 }
 
-class SugerenciasClinicasMotivos {
+class EncounterReasonSuggestions {
   final List<SugerenciaClinicaItem> diagnosticos;
   final List<SugerenciaClinicaItem> practicas;
 
-  SugerenciasClinicasMotivos({
+  EncounterReasonSuggestions({
     this.diagnosticos = const [],
     this.practicas = const [],
   });
 
-  factory SugerenciasClinicasMotivos.fromJson(Map<String, dynamic>? json) {
+  factory EncounterReasonSuggestions.fromJson(Map<String, dynamic>? json) {
     if (json == null) {
-      return SugerenciasClinicasMotivos();
+      return EncounterReasonSuggestions();
     }
     List<SugerenciaClinicaItem> mapList(String key) {
       final raw = json[key];
@@ -327,7 +334,7 @@ class SugerenciasClinicasMotivos {
           .toList();
     }
 
-    return SugerenciasClinicasMotivos(
+    return EncounterReasonSuggestions(
       diagnosticos: mapList('diagnosticos_sugeridos'),
       practicas: mapList('practicas_sugeridas'),
     );
@@ -391,15 +398,15 @@ class MotivosIntakeStaff {
 class PatientEncounterReasons {
   final int? encounterId;
   final int? turnoId;
-  final MotivoConsultaTurnoContext? turno;
+  final EncounterAppointmentContext? turno;
   final bool contextoExplicito;
   final String? resumen;
   final String? resumenIa;
   final bool resumenPendiente;
   final List<MotivoImagenAdjunta> imagenesAdjuntas;
-  final SugerenciasClinicasMotivos? sugerenciasClinicas;
+  final EncounterReasonSuggestions? sugerenciasClinicas;
   final MotivosIntakeStaff? motivosIntake;
-  final List<MotivoConsultaMensajeApi> messages;
+  final List<EncounterReasonMessageApi> messages;
 
   PatientEncounterReasons({
     required this.encounterId,
@@ -452,7 +459,7 @@ class PatientEncounterReasons {
       encounterId: cid,
       turnoId: tid,
       turno: turnoMap is Map
-          ? MotivoConsultaTurnoContext.fromJson(
+          ? EncounterAppointmentContext.fromJson(
               Map<String, dynamic>.from(turnoMap),
             )
           : null,
@@ -463,7 +470,7 @@ class PatientEncounterReasons {
           json['resumen_ia_pendiente'] == true,
       imagenesAdjuntas: imgs,
       sugerenciasClinicas: sugMap is Map
-          ? SugerenciasClinicasMotivos.fromJson(
+          ? EncounterReasonSuggestions.fromJson(
               Map<String, dynamic>.from(sugMap),
             )
           : null,
@@ -474,7 +481,7 @@ class PatientEncounterReasons {
           : null,
       messages: raw
           .map(
-            (e) => MotivoConsultaMensajeApi.fromJson(
+            (e) => EncounterReasonMessageApi.fromJson(
               e as Map<String, dynamic>,
               encounterId: cid,
             ),
@@ -728,8 +735,8 @@ class ContextoEpisodioHistoria {
     this.acciones = const [],
   });
 
-  bool get esGuardia => tipo.toUpperCase() == 'GUARDIA';
-  bool get esInternacion => tipo.toUpperCase() == 'INTERNACION';
+  bool get esGuardia => tipo.toUpperCase() == EncounterParentType.guardia;
+  bool get esInternacion => tipo.toUpperCase() == EncounterParentType.internacion;
 
   factory ContextoEpisodioHistoria.fromJson(Map<String, dynamic>? json) {
     if (json == null) {

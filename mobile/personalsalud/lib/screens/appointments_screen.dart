@@ -367,14 +367,14 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
             spacing: BioSpacing.sm,
             runSpacing: BioSpacing.xs,
             children: [
-              if (turno.idConsulta != null)
+              if (turno.encounterId != null)
                 BioButton(
                   label: 'Chat',
                   icon: Icons.chat_bubble_outline,
                   intent: UiIntent.secondary,
                   variant: BioButtonVariant.soft,
                   size: BioButtonSize.sm,
-                  onPressed: () => _abrirChat(turno.idConsulta!,
+                  onPressed: () => _abrirChat(turno.encounterId!,
                       turno.paciente?.nombreCompleto ?? 'Paciente'),
                 ),
               BioButton.outlinePrimary(
@@ -481,12 +481,12 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     }
   }
 
-  void _abrirChat(int consultaId, String nombrePaciente) {
+  void _abrirChat(int encounterId, String nombrePaciente) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => ChatConsultaScreen(
-          consultaId: consultaId,
+          encounterId: encounterId,
           authToken: widget.authToken,
           userId: widget.userId ?? '0',
           userName: null,

@@ -2,10 +2,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:personalsalud/services/historia_clinica_service.dart';
 
 void main() {
-  test('reads patient encounter reasons from the current API contract', () {
+  test('reads encounter reason summary from the current API contract', () {
     final response = HistoriaClinicaResponse.fromJson(<String, dynamic>{
       'persona': <String, dynamic>{'id': 12, 'nombre_completo': 'Paciente'},
-      'informacion_medica': <String, dynamic>{},
+      'informacion_medica': <String, dynamic>{
+        'encounter_reason_summary': 'Control de seguimiento',
+      },
       'patient_encounter_reasons': <String, dynamic>{
         'encounter_id': 34,
         'messages': [],
@@ -13,5 +15,25 @@ void main() {
     });
 
     expect(response.patientEncounterReasons.encounterId, 34);
+    expect(
+      response.informacionMedica.encounterReasonSummary,
+      'Control de seguimiento',
+    );
+  });
+
+  test('recognizes encounter episode parent types case-insensitively', () {
+    final guardia = ContextoEpisodioHistoria.fromJson(<String, dynamic>{
+      'tipo': 'guardia',
+      'episodio_id': 45,
+    });
+    final internacion = ContextoEpisodioHistoria.fromJson(<String, dynamic>{
+      'tipo': 'INTERNACION',
+      'episodio_id': 46,
+    });
+
+    expect(guardia.esGuardia, isTrue);
+    expect(guardia.esInternacion, isFalse);
+    expect(internacion.esGuardia, isFalse);
+    expect(internacion.esInternacion, isTrue);
   });
 }

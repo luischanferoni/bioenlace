@@ -6,12 +6,12 @@ import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import 'package:shared/shared.dart';
 
-import '../services/consulta_chat_service.dart';
+import '../services/encounter_chat_service.dart';
 import '../services/consulta_async_api.dart';
 
 /// Chat con el médico: texto e imágenes (paciente); audio/PDF según policy.
 class ChatMedicoScreen extends StatefulWidget {
-  final int consultaId;
+  final int encounterId;
   final String? authToken;
   final String userId;
   final String userName;
@@ -19,7 +19,7 @@ class ChatMedicoScreen extends StatefulWidget {
 
   const ChatMedicoScreen({
     Key? key,
-    required this.consultaId,
+    required this.encounterId,
     required this.authToken,
     required this.userId,
     required this.userName,
@@ -31,7 +31,7 @@ class ChatMedicoScreen extends StatefulWidget {
 }
 
 class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
-  late ConsultaChatService _chatService;
+  late EncounterChatService _chatService;
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   List<dynamic> _messages = [];
@@ -46,7 +46,7 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
   @override
   void initState() {
     super.initState();
-    _chatService = ConsultaChatService(
+    _chatService = EncounterChatService(
       userId: widget.userId,
       authToken: widget.authToken,
       userName: widget.userName,
@@ -67,7 +67,7 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
       _loading = true;
       _error = null;
     });
-    final result = await _chatService.getMessages(widget.consultaId);
+    final result = await _chatService.getMessages(widget.encounterId);
     if (!mounted) return;
     setState(() {
       _loading = false;
@@ -99,7 +99,7 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
       ),
     );
     if (ok != true || !mounted) return;
-    final res = await _asyncApi.cancelarComoPaciente(widget.consultaId);
+    final res = await _asyncApi.cancelarComoPaciente(widget.encounterId);
     if (!mounted) return;
     if (res['success'] == true) {
       await _loadMessages();
@@ -126,7 +126,7 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
     _textController.clear();
     setState(() => _sending = true);
 
-    final result = await _chatService.sendMessage(widget.consultaId, text);
+    final result = await _chatService.sendMessage(widget.encounterId, text);
     if (!mounted) return;
     setState(() => _sending = false);
     if (result['success'] == true && result['data'] != null) {
@@ -181,7 +181,7 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
     }
     setState(() => _sending = true);
     final result = await _chatService.uploadFile(
-      widget.consultaId,
+      widget.encounterId,
       file,
       messageType: messageType,
     );

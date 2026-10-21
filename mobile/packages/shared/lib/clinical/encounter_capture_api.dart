@@ -79,7 +79,7 @@ class EncounterCaptureApi {
     required int idPersona,
     String? parent,
     int? parentId,
-    String? texto,
+    String? transcript,
     Map<String, dynamic>? stt,
     String? audioPath,
     bool sttForceServer = false,
@@ -97,7 +97,8 @@ class EncounterCaptureApi {
         'id_persona': idPersona,
         if (parent != null) 'parent': parent,
         if (parentId != null) 'parent_id': parentId,
-        if (texto != null && texto.isNotEmpty) 'consulta': texto,
+        if (transcript != null && transcript.isNotEmpty)
+          'transcript': transcript,
         if (sttForceServer) 'stt_force_server': true,
         if (stt != null && stt.isNotEmpty) 'stt': stt,
         if (userPerTabConfig != null && userPerTabConfig.isNotEmpty)
@@ -118,8 +119,8 @@ class EncounterCaptureApi {
     request.fields['id_persona'] = idPersona.toString();
     if (parent != null) request.fields['parent'] = parent;
     if (parentId != null) request.fields['parent_id'] = parentId.toString();
-    if (texto != null && texto.isNotEmpty) {
-      request.fields['consulta'] = texto;
+    if (transcript != null && transcript.isNotEmpty) {
+      request.fields['transcript'] = transcript;
     }
     if (sttForceServer) request.fields['stt_force_server'] = '1';
     if (stt != null && stt.isNotEmpty) {
@@ -168,14 +169,14 @@ class EncounterCaptureApi {
   Future<Map<String, dynamic>> capturaAnalizar({
     String? clientCaptureId,
     int? captureId,
-    String? consulta,
+    String? transcript,
     bool force = false,
     Map<String, dynamic>? userPerTabConfig,
   }) async {
     final body = <String, dynamic>{
       if (clientCaptureId != null) 'client_capture_id': clientCaptureId,
       if (captureId != null) 'capture_id': captureId,
-      if (consulta != null && consulta.isNotEmpty) 'consulta': consulta,
+      if (transcript != null && transcript.isNotEmpty) 'transcript': transcript,
       if (force) 'force': true,
       if (userPerTabConfig != null && userPerTabConfig.isNotEmpty)
         'userPerTabConfig': userPerTabConfig,
@@ -321,7 +322,7 @@ class EncounterCaptureApi {
 
   /// POST /api/v1/clinical/encounter/analizar
   Future<Map<String, dynamic>> analizar({
-    required String consulta,
+    required String transcript,
     int? idConfiguracion,
     int? idPersona,
     int? encounterId,
@@ -333,7 +334,7 @@ class EncounterCaptureApi {
     Map<String, dynamic>? userPerTabConfig,
   }) async {
     final body = <String, dynamic>{
-      'consulta': consulta,
+      'transcript': transcript,
       if (idConfiguracion != null) 'id_configuracion': idConfiguracion,
       if (idPersona != null) 'id_persona': idPersona,
       if (encounterId != null) 'encounter_id': encounterId,
@@ -349,7 +350,7 @@ class EncounterCaptureApi {
     final uri = Uri.parse('${AppConfig.apiUrl}/clinical/encounter/analizar');
     debugPrint(
       '[HTTP encounter/analizar] POST $uri id_persona=$idPersona '
-      'parent=$parent/$parentId consulta_len=${consulta.length}',
+      'parent=$parent/$parentId transcript_len=${transcript.length}',
     );
     final response = await http
         .post(uri, headers: _jsonHeaders, body: json.encode(body))

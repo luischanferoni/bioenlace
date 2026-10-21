@@ -4,13 +4,13 @@ import 'package:cross_file/cross_file.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared/shared.dart';
 
-/// Servicio para chat con médico (consulta-chat API: mensajes, envío texto, upload archivos).
-class ConsultaChatService {
+/// Service for encounter chat messages and media uploads.
+class EncounterChatService {
   final String? authToken;
   final String userId;
   final String? userName;
 
-  ConsultaChatService({required this.userId, this.authToken, this.userName});
+  EncounterChatService({required this.userId, this.authToken, this.userName});
 
   Map<String, String> get _headers => {
     'Accept': 'application/json',
@@ -18,10 +18,10 @@ class ConsultaChatService {
       'Authorization': 'Bearer $authToken',
   };
 
-  Future<Map<String, dynamic>> getMessages(int consultaId) async {
+  Future<Map<String, dynamic>> getMessages(int encounterId) async {
     try {
       final uri = Uri.parse(
-        '${AppConfig.apiUrl}/consulta-chat/mensajes/$consultaId',
+        '${AppConfig.apiUrl}/consulta-chat/mensajes/$encounterId',
       );
       final response = await http
           .get(uri, headers: _headers)
@@ -37,7 +37,7 @@ class ConsultaChatService {
         'messages': normalizeChatMediaMessages(
           raw,
           mediaScope: 'consulta-chat',
-          encounterId: consultaId,
+          encounterId: encounterId,
         ),
       };
     } catch (e) {
@@ -46,14 +46,14 @@ class ConsultaChatService {
   }
 
   Future<Map<String, dynamic>> sendMessage(
-    int consultaId,
+    int encounterId,
     String text, {
     String userRole = 'paciente',
   }) async {
     try {
       final uri = Uri.parse('${AppConfig.apiUrl}/consulta-chat/enviar');
       final body = {
-        'encounter_id': consultaId,
+        'encounter_id': encounterId,
         'message': text,
         'user_id': userId,
         'user_role': userRole,
@@ -78,7 +78,7 @@ class ConsultaChatService {
   /// Sube un archivo (imagen, audio, video, documento).
   /// [messageType] debe ser: imagen, audio, video, documento.
   Future<Map<String, dynamic>> uploadFile(
-    int consultaId,
+    int encounterId,
     XFile file, {
     required String messageType,
   }) async {
@@ -86,7 +86,7 @@ class ConsultaChatService {
       final uri = Uri.parse('${AppConfig.apiUrl}/consulta-chat/subir');
       final request = http.MultipartRequest('POST', uri);
       request.headers.addAll(_headers);
-      request.fields['encounter_id'] = consultaId.toString();
+      request.fields['encounter_id'] = encounterId.toString();
       request.fields['user_id'] = userId;
       request.fields['message_type'] = messageType;
       request.files.add(await multipartFileFromXFile(file));
@@ -100,7 +100,7 @@ class ConsultaChatService {
       normalizeChatMediaMessage(
         payload,
         mediaScope: 'consulta-chat',
-        encounterId: consultaId,
+        encounterId: encounterId,
       );
       return {'success': true, 'data': payload};
     } catch (e) {
@@ -109,7 +109,7 @@ class ConsultaChatService {
   }
 
   Future<Map<String, dynamic>> uploadBytes(
-    int consultaId,
+    int encounterId,
     List<int> bytes, {
     required String filename,
     required String messageType,
@@ -119,7 +119,7 @@ class ConsultaChatService {
       final uri = Uri.parse('${AppConfig.apiUrl}/consulta-chat/subir');
       final request = http.MultipartRequest('POST', uri);
       request.headers.addAll(_headers);
-      request.fields['encounter_id'] = consultaId.toString();
+      request.fields['encounter_id'] = encounterId.toString();
       request.fields['user_id'] = userId;
       request.fields['message_type'] = messageType;
       request.files.add(
@@ -137,7 +137,7 @@ class ConsultaChatService {
       normalizeChatMediaMessage(
         payload,
         mediaScope: 'consulta-chat',
-        encounterId: consultaId,
+        encounterId: encounterId,
       );
       return {'success': true, 'data': payload};
     } catch (e) {

@@ -3,7 +3,7 @@ import 'package:shared/shared.dart';
 
 import '../services/turnos_service.dart';
 import 'chat_medico_screen.dart';
-import 'chat_motivos_screen.dart';
+import 'encounter_reasons_chat_screen.dart';
 
 /// Pantalla "Mis turnos": próximos e historial con paginación por sección.
 class MisTurnosScreen extends StatefulWidget {
@@ -275,34 +275,34 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
       if (label.isNotEmpty) return label;
       return tipoAtencion == 'teleconsulta' ? 'Videollamada' : 'Presencial';
     }();
-    final idConsulta = t['id_consulta'];
+    final encounterId = encounterIdDesdeTurno(t);
     final usaJourney = turnoTieneJourneyPayload(t);
     final prepararPendiente =
-        esFuturo && usaJourney && prepararConsultaTienePendientes(t);
+        esFuturo && usaJourney && encounterPreparationHasPending(t);
     final seguimientoPendiente =
-        !esFuturo && usaJourney && seguimientoPostConsultaTienePendientes(t);
-    final puedeChat = tipoAtencion == 'teleconsulta' && idConsulta != null;
+        !esFuturo && usaJourney && encounterFollowupHasPending(t);
+    final puedeChat = tipoAtencion == 'teleconsulta' && encounterId != null;
     final puedeMotivos = esFuturo &&
         !usaJourney &&
-        idConsulta != null &&
-        turnoMotivosInputAbiertoEnProducto(t);
+        encounterId != null &&
+        appointmentEncounterReasonInputOpenInProduct(t);
     final turnoId = turnoIdDesdePayloadProducto(t);
     final puedeAsistenciaCohorte = esFuturo &&
         !usaJourney &&
-        turnoAsistenciaCohorteDisponibleEnProducto(t);
+        appointmentCohortAssistanceAvailableInProduct(t);
     final tituloMotivos = 'Motivos · ${t['fecha']} ${t['hora']}';
     final estado = t['estado_label']?.toString() ?? '';
 
-    void onOpenMotivos(
+    void onOpenEncounterReasons(
       BuildContext ctx, {
-      required int consultaId,
+      required int encounterId,
       required String titulo,
     }) {
       Navigator.push(
         ctx,
         MaterialPageRoute(
-          builder: (_) => ChatMotivosScreen(
-            consultaId: consultaId,
+          builder: (_) => EncounterReasonsChatScreen(
+            encounterId: encounterId,
             authToken: widget.authToken,
             userId: widget.userId,
             userName: widget.userName ?? 'Paciente',
@@ -327,11 +327,11 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
           label: 'Preparar tu consulta',
           size: BioButtonSize.sm,
           icon: Icons.event_available_outlined,
-          onPressed: () => abrirPrepararConsultaHub(
+          onPressed: () => openEncounterPreparationHub(
             context: context,
             turno: t,
             authToken: widget.authToken,
-            onOpenMotivos: onOpenMotivos,
+            onOpenEncounterReasons: onOpenEncounterReasons,
           ),
         ),
       if (seguimientoPendiente)
@@ -339,11 +339,11 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
           label: 'Seguimiento post-consulta',
           size: BioButtonSize.sm,
           icon: Icons.health_and_safety_outlined,
-          onPressed: () => abrirSeguimientoPostConsultaHub(
+          onPressed: () => openEncounterFollowupHub(
             context: context,
             turno: t,
             authToken: widget.authToken,
-            onOpenMotivos: onOpenMotivos,
+            onOpenEncounterReasons: onOpenEncounterReasons,
           ),
         ),
       if (puedeMotivos)
@@ -355,8 +355,8 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => ChatMotivosScreen(
-                  consultaId: idConsulta as int,
+                builder: (_) => EncounterReasonsChatScreen(
+                  encounterId: encounterId,
                   authToken: widget.authToken,
                   userId: widget.userId,
                   userName: widget.userName ?? 'Paciente',
@@ -372,7 +372,7 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
           size: BioButtonSize.sm,
           icon: Icons.fact_check_outlined,
           onPressed: () {
-            abrirAsistenciaPreConsulta(
+            openPreEncounterAssistance(
               context: context,
               turnoId: turnoId,
               authToken: widget.authToken,
@@ -389,7 +389,7 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
               context,
               MaterialPageRoute(
                 builder: (_) => ChatMedicoScreen(
-                  consultaId: idConsulta as int,
+                  encounterId: encounterId,
                   authToken: widget.authToken,
                   userId: widget.userId,
                   userName: widget.userName ?? 'Paciente',

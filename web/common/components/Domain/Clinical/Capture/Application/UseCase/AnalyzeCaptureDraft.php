@@ -31,9 +31,9 @@ final class AnalyzeCaptureDraft
 
         $domain = $this->draft->captureRows()->toAggregate($capture);
 
-        $textoOverride = trim((string) ($body['consulta'] ?? $body['texto'] ?? ''));
-        if ($textoOverride !== '') {
-            $domain->setTranscriptOverride($textoOverride);
+        $transcriptOverride = trim((string) ($body['transcript'] ?? ''));
+        if ($transcriptOverride !== '') {
+            $domain->setTranscriptOverride($transcriptOverride);
         }
 
         if (!$domain->hasTranscript()) {
@@ -48,7 +48,7 @@ final class AnalyzeCaptureDraft
         }
 
         $analyzeBody = $body;
-        $analyzeBody['consulta'] = $domain->transcript();
+        $analyzeBody['transcript'] = $domain->transcript();
         $analyzeBody['id_persona'] = $domain->subjectPersonaId();
         $analyzeBody['subject_persona_id'] = $domain->subjectPersonaId();
         if ($domain->parentType() !== null) {

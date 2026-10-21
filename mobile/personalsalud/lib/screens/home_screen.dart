@@ -1028,7 +1028,7 @@ class _HomeScreenState extends State<HomeScreen> {
       context,
       MaterialPageRoute(
         builder: (_) => ChatConsultaScreen(
-          consultaId: encounterId,
+          encounterId: encounterId,
           authToken: _homePanelApi.authToken ?? widget.authToken,
           userId: widget.userId,
           userName: widget.userName,

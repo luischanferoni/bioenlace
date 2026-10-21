@@ -5,13 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import 'package:shared/shared.dart';
-import '../services/consulta_chat_service.dart';
+import '../services/encounter_chat_service.dart';
 import '../services/consulta_async_api.dart';
 import 'patient_timeline_screen.dart';
 
 /// Pantalla de chat con el paciente para una consulta (app Personal de Salud).
 class ChatConsultaScreen extends StatefulWidget {
-  final int consultaId;
+  final int encounterId;
   final String? authToken;
   final String userId;
   final String? userName;
@@ -19,7 +19,7 @@ class ChatConsultaScreen extends StatefulWidget {
 
   const ChatConsultaScreen({
     Key? key,
-    required this.consultaId,
+    required this.encounterId,
     required this.authToken,
     required this.userId,
     this.userName,
@@ -31,7 +31,7 @@ class ChatConsultaScreen extends StatefulWidget {
 }
 
 class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
-  late ConsultaChatService _chatService;
+  late EncounterChatService _chatService;
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   List<dynamic> _messages = [];
@@ -47,7 +47,7 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
   @override
   void initState() {
     super.initState();
-    _chatService = ConsultaChatService(
+    _chatService = EncounterChatService(
       userId: widget.userId,
       authToken: widget.authToken,
       userName: widget.userName,
@@ -61,7 +61,7 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
       _loading = true;
       _error = null;
     });
-    final result = await _chatService.getMessages(widget.consultaId);
+    final result = await _chatService.getMessages(widget.encounterId);
     if (!mounted) return;
     setState(() {
       _loading = false;
@@ -131,7 +131,7 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
   Future<void> _aplicarResolucion(String code, {String note = ''}) async {
     setState(() => _sending = true);
     final res = await _asyncApi.cerrarComoStaff(
-      widget.consultaId,
+      widget.encounterId,
       code,
       note: note,
     );
@@ -163,7 +163,7 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
     if (text.isEmpty || _sending) return;
     _textController.clear();
     setState(() => _sending = true);
-    final result = await _chatService.sendMessage(widget.consultaId, text);
+    final result = await _chatService.sendMessage(widget.encounterId, text);
     if (!mounted) return;
     setState(() => _sending = false);
     if (result['success'] == true && result['data'] != null) {
@@ -196,7 +196,7 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
     if (_sending) return;
     setState(() => _sending = true);
     final result = await _chatService.uploadBytes(
-      widget.consultaId,
+      widget.encounterId,
       bytes,
       filename: name,
       messageType: messageType,
@@ -245,7 +245,7 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
     }
     setState(() => _sending = true);
     final result = await _chatService.uploadFile(
-      widget.consultaId,
+      widget.encounterId,
       file,
       messageType: messageType,
     );

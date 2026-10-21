@@ -3057,12 +3057,12 @@ class ChatScreenState extends State<ChatScreen> {
                           final rawId = data is Map
                               ? (data['encounter_id'] ?? data['id_consulta'])
                               : null;
-                          final idConsultaInt = rawId is int
+                          final encounterId = rawId is int
                               ? rawId
                               : (rawId is num
                                   ? rawId.toInt()
                                   : int.tryParse('$rawId'));
-                          if (idConsultaInt == null || idConsultaInt <= 0) {
+                          if (encounterId == null || encounterId <= 0) {
                             return const SizedBox.shrink();
                           }
                           return Padding(
@@ -3075,7 +3075,7 @@ class ChatScreenState extends State<ChatScreen> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (_) => ChatConsultaScreen(
-                                      consultaId: idConsultaInt,
+                                      encounterId: encounterId,
                                       authToken: _asistenteService.authToken,
                                       userId: widget.chatService.currentUserId,
                                       userName: widget.chatService.currentUserName,

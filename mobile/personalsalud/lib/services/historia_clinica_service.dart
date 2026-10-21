@@ -12,6 +12,19 @@ abstract final class EncounterParentType {
   static const internacion = 'INTERNACION';
 }
 
+UiIntent _uiIntentFromContract(dynamic value) {
+  return switch ((value ?? '').toString()) {
+    'primary' => UiIntent.primary,
+    'secondary' => UiIntent.secondary,
+    'success' => UiIntent.success,
+    'danger' => UiIntent.danger,
+    'warning' => UiIntent.warning,
+    'info' => UiIntent.info,
+    'dark' => UiIntent.dark,
+    _ => UiIntent.neutral,
+  };
+}
+
 class HistoriaClinicaService {
   String? authToken;
 
@@ -169,15 +182,17 @@ class SignosVitalesClinica {
     final list = <Map<String, dynamic>>[];
     for (final e in raw) {
       if (e is Map) {
-        list.add(Map<String, dynamic>.from(
-            e.map((k, v) => MapEntry(k.toString(), v))));
+        list.add(
+          Map<String, dynamic>.from(e.map((k, v) => MapEntry(k.toString(), v))),
+        );
       }
     }
     Map<String, dynamic>? ultimos;
     final u = json['ultimos_sv'];
     if (u is Map) {
       ultimos = Map<String, dynamic>.from(
-          u.map((k, v) => MapEntry(k.toString(), v)));
+        u.map((k, v) => MapEntry(k.toString(), v)),
+      );
     }
 
     return SignosVitalesClinica(
@@ -226,8 +241,7 @@ class EncounterReasonMessageApi {
         type == 'video' ||
         type == 'documento') {
       if (content.isNotEmpty && !isLocalMediaFilePath(content)) {
-        final id = encounterId ??
-            int.tryParse('${json['encounter_id'] ?? ''}');
+        final id = encounterId ?? int.tryParse('${json['encounter_id'] ?? ''}');
         content = resolveMediaContentUrl(
           content,
           mediaScope: mediaScope,
@@ -285,7 +299,10 @@ class HistoriaClinicaVentanaException implements Exception {
   final String message;
   final Map<String, dynamic> ventanaMedico;
 
-  HistoriaClinicaVentanaException(this.message, {this.ventanaMedico = const {}});
+  HistoriaClinicaVentanaException(
+    this.message, {
+    this.ventanaMedico = const {},
+  });
 
   @override
   String toString() => message;
@@ -296,11 +313,7 @@ class SugerenciaClinicaItem {
   final String? justificacion;
   final String? tipo;
 
-  SugerenciaClinicaItem({
-    required this.termino,
-    this.justificacion,
-    this.tipo,
-  });
+  SugerenciaClinicaItem({required this.termino, this.justificacion, this.tipo});
 
   factory SugerenciaClinicaItem.fromJson(Map<String, dynamic> json) {
     return SugerenciaClinicaItem(
@@ -329,7 +342,9 @@ class EncounterReasonSuggestions {
       if (raw is! List) return [];
       return raw
           .whereType<Map>()
-          .map((e) => SugerenciaClinicaItem.fromJson(Map<String, dynamic>.from(e)))
+          .map(
+            (e) => SugerenciaClinicaItem.fromJson(Map<String, dynamic>.from(e)),
+          )
           .where((e) => e.termino.isNotEmpty)
           .toList();
     }
@@ -386,9 +401,10 @@ class MotivosIntakeStaff {
       notesForStaff: json['notes_for_staff']?.toString(),
       answers: rawAnswers
           .whereType<Map>()
-          .map((e) => CarePackAssistanceAnswer.fromJson(
-                Map<String, dynamic>.from(e),
-              ))
+          .map(
+            (e) =>
+                CarePackAssistanceAnswer.fromJson(Map<String, dynamic>.from(e)),
+          )
           .where((e) => e.question.isNotEmpty || e.answer.isNotEmpty)
           .toList(),
     );
@@ -449,11 +465,15 @@ class PatientEncounterReasons {
     final imgs = imgsRaw is List
         ? imgsRaw
               .whereType<Map>()
-            .map((e) => MotivoImagenAdjunta.fromJson(Map<String, dynamic>.from(e)))
+              .map(
+                (e) =>
+                    MotivoImagenAdjunta.fromJson(Map<String, dynamic>.from(e)),
+              )
               .where((e) => e.ref.isNotEmpty)
               .toList()
         : <MotivoImagenAdjunta>[];
-    final resumenTxt = json['resumen']?.toString() ?? json['resumen_ia']?.toString();
+    final resumenTxt =
+        json['resumen']?.toString() ?? json['resumen_ia']?.toString();
     final intakeMap = json['motivos_intake'];
     return PatientEncounterReasons(
       encounterId: cid,
@@ -466,7 +486,8 @@ class PatientEncounterReasons {
       contextoExplicito: json['contexto_explicito'] == true,
       resumen: resumenTxt,
       resumenIa: resumenTxt,
-      resumenPendiente: json['resumen_pendiente'] == true ||
+      resumenPendiente:
+          json['resumen_pendiente'] == true ||
           json['resumen_ia_pendiente'] == true,
       imagenesAdjuntas: imgs,
       sugerenciasClinicas: sugMap is Map
@@ -475,9 +496,7 @@ class PatientEncounterReasons {
             )
           : null,
       motivosIntake: intakeMap is Map
-          ? MotivosIntakeStaff.fromJson(
-              Map<String, dynamic>.from(intakeMap),
-            )
+          ? MotivosIntakeStaff.fromJson(Map<String, dynamic>.from(intakeMap))
           : null,
       messages: raw
           .map(
@@ -542,9 +561,10 @@ class CarePackAssistanceStaff {
       deltaRequested: json['delta_requested'] == true,
       answers: rawAnswers
           .whereType<Map>()
-          .map((e) => CarePackAssistanceAnswer.fromJson(
-                Map<String, dynamic>.from(e),
-              ))
+          .map(
+            (e) =>
+                CarePackAssistanceAnswer.fromJson(Map<String, dynamic>.from(e)),
+          )
           .where((e) => e.question.isNotEmpty || e.answer.isNotEmpty)
           .toList(),
     );
@@ -577,9 +597,7 @@ class CarePackCohorteStaff {
     return CarePackCohorteStaff(
       encounterId: int.tryParse(json['encounter_id']?.toString() ?? '') ?? 0,
       cohortKeyShort: json['cohort_key_short']?.toString(),
-      cohortProfile: profile is Map
-          ? Map<String, dynamic>.from(profile)
-          : null,
+      cohortProfile: profile is Map ? Map<String, dynamic>.from(profile) : null,
       assistance: CarePackAssistanceStaff.fromJson(
         json['assistance'] as Map<String, dynamic>?,
       ),
@@ -591,17 +609,17 @@ class DocumentacionMedicoSeccion {
   final String titulo;
   final List<String> items;
 
-  const DocumentacionMedicoSeccion({
-    required this.titulo,
-    required this.items,
-  });
+  const DocumentacionMedicoSeccion({required this.titulo, required this.items});
 
   factory DocumentacionMedicoSeccion.fromJson(Map<String, dynamic> json) {
     final raw = json['items'];
     return DocumentacionMedicoSeccion(
       titulo: json['titulo']?.toString() ?? '',
       items: raw is List
-          ? raw.map((e) => e.toString().trim()).where((e) => e.isNotEmpty).toList()
+          ? raw
+                .map((e) => e.toString().trim())
+                .where((e) => e.isNotEmpty)
+                .toList()
           : const [],
     );
   }
@@ -633,9 +651,11 @@ class DocumentacionMedico {
       secciones: raw is List
           ? raw
                 .whereType<Map>()
-              .map((e) => DocumentacionMedicoSeccion.fromJson(
+                .map(
+                  (e) => DocumentacionMedicoSeccion.fromJson(
                     Map<String, dynamic>.from(e),
-                  ))
+                  ),
+                )
                 .where((s) => s.titulo.isNotEmpty && s.items.isNotEmpty)
                 .toList()
           : const [],
@@ -674,9 +694,9 @@ class ContextoInternacionHistoria {
     if (raw is List) {
       for (final e in raw) {
         if (e is Map) {
-          list.add(EvolucionInternacionItem.fromJson(
-            Map<String, dynamic>.from(e),
-          ));
+          list.add(
+            EvolucionInternacionItem.fromJson(Map<String, dynamic>.from(e)),
+          );
         }
       }
     }
@@ -704,6 +724,8 @@ class ContextoInternacionHistoria {
 /// Banner unificado de episodio EMER/IMP (`contexto_episodio` en historia-clinica).
 class ContextoEpisodioHistoria {
   final String tipo;
+  final String? tipoLabel;
+  final UiIntent intent;
   final int episodioId;
   final String? estado;
   final String? estadoLabel;
@@ -720,6 +742,8 @@ class ContextoEpisodioHistoria {
 
   ContextoEpisodioHistoria({
     required this.tipo,
+    this.tipoLabel,
+    this.intent = UiIntent.neutral,
     required this.episodioId,
     this.estado,
     this.estadoLabel,
@@ -736,7 +760,8 @@ class ContextoEpisodioHistoria {
   });
 
   bool get esGuardia => tipo.toUpperCase() == EncounterParentType.guardia;
-  bool get esInternacion => tipo.toUpperCase() == EncounterParentType.internacion;
+  bool get esInternacion =>
+      tipo.toUpperCase() == EncounterParentType.internacion;
 
   factory ContextoEpisodioHistoria.fromJson(Map<String, dynamic>? json) {
     if (json == null) {
@@ -751,6 +776,8 @@ class ContextoEpisodioHistoria {
       final s = (v ?? '').toString().trim();
       return s.isEmpty ? null : s;
     }
+
+    final intent = _uiIntentFromContract(json['intent']);
 
     final ubicacion = json['ubicacion'];
     final equipo = json['equipo'];
@@ -794,6 +821,8 @@ class ContextoEpisodioHistoria {
 
     return ContextoEpisodioHistoria(
       tipo: (json['tipo'] ?? '').toString(),
+      tipoLabel: str(json['tipo_label']),
+      intent: intent,
       episodioId: asInt(json['episodio_id']),
       estado: str(json['estado']),
       estadoLabel: str(json['estado_label']),
@@ -990,6 +1019,7 @@ class SignosVitalesEpisodioUltimo {
   final String? at;
   final String? unit;
   final String? label;
+  final UiIntent intent;
   final String? source;
 
   SignosVitalesEpisodioUltimo({
@@ -997,6 +1027,7 @@ class SignosVitalesEpisodioUltimo {
     this.at,
     this.unit,
     this.label,
+    this.intent = UiIntent.neutral,
     this.source,
   });
 
@@ -1010,9 +1041,16 @@ class SignosVitalesEpisodioUltimo {
     return SignosVitalesEpisodioUltimo(
       value: asDouble(json['value']),
       at: (json['at'] ?? '').toString().isEmpty ? null : json['at'].toString(),
-      unit: (json['unit'] ?? '').toString().isEmpty ? null : json['unit'].toString(),
-      label: (json['label'] ?? '').toString().isEmpty ? null : json['label'].toString(),
-      source: (json['source'] ?? '').toString().isEmpty ? null : json['source'].toString(),
+      unit: (json['unit'] ?? '').toString().isEmpty
+          ? null
+          : json['unit'].toString(),
+      label: (json['label'] ?? '').toString().isEmpty
+          ? null
+          : json['label'].toString(),
+      intent: _uiIntentFromContract(json['intent']),
+      source: (json['source'] ?? '').toString().isEmpty
+          ? null
+          : json['source'].toString(),
     );
   }
 }
@@ -1021,12 +1059,14 @@ class SignosVitalesEpisodioSerie {
   final String metric;
   final String label;
   final String unit;
+  final UiIntent intent;
   final List<SignosVitalesEpisodioPunto> points;
 
   SignosVitalesEpisodioSerie({
     required this.metric,
     this.label = '',
     this.unit = '',
+    this.intent = UiIntent.neutral,
     this.points = const [],
   });
 
@@ -1036,7 +1076,9 @@ class SignosVitalesEpisodioSerie {
     if (raw is List) {
       for (final e in raw) {
         if (e is Map) {
-          pts.add(SignosVitalesEpisodioPunto.fromJson(Map<String, dynamic>.from(e)));
+          pts.add(
+            SignosVitalesEpisodioPunto.fromJson(Map<String, dynamic>.from(e)),
+          );
         }
       }
     }
@@ -1044,6 +1086,7 @@ class SignosVitalesEpisodioSerie {
       metric: (json['metric'] ?? '').toString(),
       label: (json['label'] ?? '').toString(),
       unit: (json['unit'] ?? '').toString(),
+      intent: _uiIntentFromContract(json['intent']),
       points: pts,
     );
   }
@@ -1110,21 +1153,10 @@ class TimelineEpisodioItem {
       final n = (actor['nombre'] ?? '').toString().trim();
       if (n.isNotEmpty) actorNombre = n;
     }
-    final intent = switch ((json['intent'] ?? '').toString()) {
-      'primary' => UiIntent.primary,
-      'secondary' => UiIntent.secondary,
-      'success' => UiIntent.success,
-      'danger' => UiIntent.danger,
-      'warning' => UiIntent.warning,
-      'info' => UiIntent.info,
-      'dark' => UiIntent.dark,
-      _ => UiIntent.neutral,
-    };
-
     return TimelineEpisodioItem(
       type: (json['type'] ?? '').toString(),
       typeLabel: (json['type_label'] ?? '').toString(),
-      intent: intent,
+      intent: _uiIntentFromContract(json['intent']),
       id: (json['id'] ?? '').toString(),
       occurredAt: (json['occurred_at'] ?? '').toString(),
       summary: (json['summary'] ?? '').toString(),
@@ -1176,6 +1208,7 @@ class HistoriaClinicaResponse {
   final DocumentacionMedico documentacionMedico;
   final List<TimelineEvent> historiaClinica;
   final int totalHistoriaClinica;
+
   /// null = sin contexto de turno; true/false según estado del turno.
   final bool? capturaPermitida;
   final String? capturaMotivo;
@@ -1209,7 +1242,8 @@ class HistoriaClinicaResponse {
       return defaultValue;
     }
 
-    final rawList = json['historia_clinica'] as List<dynamic>? ??
+    final rawList =
+        json['historia_clinica'] as List<dynamic>? ??
         json['timeline'] as List<dynamic>?;
     final total = json['total_historia_clinica'] ?? json['total_eventos'];
     final captura = json['captura'];
@@ -1231,10 +1265,12 @@ class HistoriaClinicaResponse {
       informacionMedica: InformacionMedica.fromJson(
         json['informacion_medica'] as Map<String, dynamic>,
       ),
-      signosVitales:
-          SignosVitalesClinica.fromJson(json['signos_vitales'] as Map<String, dynamic>?),
+      signosVitales: SignosVitalesClinica.fromJson(
+        json['signos_vitales'] as Map<String, dynamic>?,
+      ),
       patientEncounterReasons: PatientEncounterReasons.fromJson(
-          json['patient_encounter_reasons'] as Map<String, dynamic>?),
+        json['patient_encounter_reasons'] as Map<String, dynamic>?,
+      ),
       contextoInternacion: json['contexto_internacion'] is Map
           ? ContextoInternacionHistoria.fromJson(
               Map<String, dynamic>.from(json['contexto_internacion'] as Map),
@@ -1264,7 +1300,8 @@ class HistoriaClinicaResponse {
       documentacionMedico: DocumentacionMedico.fromJson(
         json['documentacion_medico'] as Map<String, dynamic>?,
       ),
-      historiaClinica: rawList
+      historiaClinica:
+          rawList
               ?.map((e) => TimelineEvent.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
@@ -1340,7 +1377,8 @@ class PersonaData {
         if (parsed != null) return parsed;
       }
       throw FormatException(
-          'Expected int or String representation of int, got: $value');
+        'Expected int or String representation of int, got: $value',
+      );
     }
 
     return PersonaData(
@@ -1352,7 +1390,9 @@ class PersonaData {
       sexo: json['sexo'] as String?,
       genero: _parseInt(json['genero']),
       generoTexto: () {
-        final raw = (json['genero_texto'] ?? json['generoTexto'])?.toString().trim();
+        final raw = (json['genero_texto'] ?? json['generoTexto'])
+            ?.toString()
+            .trim();
         return (raw == null || raw.isEmpty) ? null : raw;
       }(),
     );

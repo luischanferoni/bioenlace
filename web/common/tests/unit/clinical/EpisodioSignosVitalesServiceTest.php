@@ -43,14 +43,14 @@ class EpisodioSignosVitalesServiceTest extends Unit
         $method->setAccessible(true);
 
         $this->assertSame([
-            'ta_sys' => ['label' => 'TA sistólica', 'unit' => 'mmHg'],
-            'ta_dia' => ['label' => 'TA diastólica', 'unit' => 'mmHg'],
-            'fc' => ['label' => 'Frecuencia cardíaca', 'unit' => 'lpm'],
-            'fr' => ['label' => 'Frecuencia respiratoria', 'unit' => 'rpm'],
-            'sat_o2' => ['label' => 'Saturación O₂', 'unit' => '%'],
-            'temp' => ['label' => 'Temperatura', 'unit' => '°C'],
-            'glucemia' => ['label' => 'Glucemia capilar', 'unit' => 'mg/dL'],
-            'glasgow' => ['label' => 'Glasgow', 'unit' => 'pts'],
+            'ta_sys' => ['label' => 'TA sistólica', 'unit' => 'mmHg', 'intent' => 'danger'],
+            'ta_dia' => ['label' => 'TA diastólica', 'unit' => 'mmHg', 'intent' => 'warning'],
+            'fc' => ['label' => 'Frecuencia cardíaca', 'unit' => 'lpm', 'intent' => 'primary'],
+            'fr' => ['label' => 'Frecuencia respiratoria', 'unit' => 'rpm', 'intent' => 'info'],
+            'sat_o2' => ['label' => 'Saturación O₂', 'unit' => '%', 'intent' => 'info'],
+            'temp' => ['label' => 'Temperatura', 'unit' => '°C', 'intent' => 'warning'],
+            'glucemia' => ['label' => 'Glucemia capilar', 'unit' => 'mg/dL', 'intent' => 'success'],
+            'glasgow' => ['label' => 'Glasgow', 'unit' => 'pts', 'intent' => 'secondary'],
         ], $method->invoke($service));
     }
 }

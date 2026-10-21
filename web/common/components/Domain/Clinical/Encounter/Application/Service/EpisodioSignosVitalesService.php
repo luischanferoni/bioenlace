@@ -299,6 +299,7 @@ final class EpisodioSignosVitalesService
                 'metric' => $metric,
                 'label' => $info['label'],
                 'unit' => $info['unit'],
+                'intent' => $info['intent'],
                 'points' => $pts,
             ];
             $last = $pts[count($pts) - 1];
@@ -307,6 +308,7 @@ final class EpisodioSignosVitalesService
                 'at' => $last['at'],
                 'unit' => $info['unit'],
                 'label' => $info['label'],
+                'intent' => $info['intent'],
                 'source' => $last['source'],
             ];
         }
@@ -329,19 +331,19 @@ final class EpisodioSignosVitalesService
     }
 
     /**
-     * @return array<string, array{label: string, unit: string}>
+     * @return array<string, array{label: string, unit: string, intent: string}>
      */
     private function metricMeta(): array
     {
         return [
-            self::METRIC_TA_SYS => ['label' => 'TA sistólica', 'unit' => 'mmHg'],
-            self::METRIC_TA_DIA => ['label' => 'TA diastólica', 'unit' => 'mmHg'],
-            self::METRIC_FC => ['label' => 'Frecuencia cardíaca', 'unit' => 'lpm'],
-            self::METRIC_FR => ['label' => 'Frecuencia respiratoria', 'unit' => 'rpm'],
-            self::METRIC_SAT => ['label' => 'Saturación O₂', 'unit' => '%'],
-            self::METRIC_TEMP => ['label' => 'Temperatura', 'unit' => '°C'],
-            self::METRIC_GLUC => ['label' => 'Glucemia capilar', 'unit' => 'mg/dL'],
-            self::METRIC_GLASGOW => ['label' => 'Glasgow', 'unit' => 'pts'],
+            self::METRIC_TA_SYS => ['label' => 'TA sistólica', 'unit' => 'mmHg', 'intent' => 'danger'],
+            self::METRIC_TA_DIA => ['label' => 'TA diastólica', 'unit' => 'mmHg', 'intent' => 'warning'],
+            self::METRIC_FC => ['label' => 'Frecuencia cardíaca', 'unit' => 'lpm', 'intent' => 'primary'],
+            self::METRIC_FR => ['label' => 'Frecuencia respiratoria', 'unit' => 'rpm', 'intent' => 'info'],
+            self::METRIC_SAT => ['label' => 'Saturación O₂', 'unit' => '%', 'intent' => 'info'],
+            self::METRIC_TEMP => ['label' => 'Temperatura', 'unit' => '°C', 'intent' => 'warning'],
+            self::METRIC_GLUC => ['label' => 'Glucemia capilar', 'unit' => 'mg/dL', 'intent' => 'success'],
+            self::METRIC_GLASGOW => ['label' => 'Glasgow', 'unit' => 'pts', 'intent' => 'secondary'],
         ];
     }
 

@@ -17,28 +17,15 @@ final class EpisodioTimelineViewBuilder
         'atencion_enfermeria' => true,
     ];
 
-    private const TYPE_LABELS = [
-        'circuito' => 'Circuito',
-        'triage' => 'Triage',
-        'evolucion_medica' => 'Evolución',
-        'atencion_enfermeria' => 'Enfermería',
-        'pedido' => 'Pedido',
-        'resultado_lab' => 'Lab',
-        'medicacion' => 'Medicación',
-        'administracion' => 'Admin.',
-        'interconsulta' => 'Interconsulta',
-    ];
-
-    private const TYPE_BADGES = [
-        'circuito' => 'text-bg-danger',
-        'triage' => 'text-bg-danger',
-        'evolucion_medica' => 'text-bg-secondary',
-        'atencion_enfermeria' => 'text-bg-success',
-        'pedido' => 'text-bg-info',
-        'resultado_lab' => 'text-bg-info',
-        'interconsulta' => 'text-bg-info',
-        'medicacion' => 'text-bg-warning',
-        'administracion' => 'text-bg-warning',
+    private const INTENT_BADGES = [
+        'primary' => 'text-bg-primary',
+        'secondary' => 'text-bg-secondary',
+        'success' => 'text-bg-success',
+        'danger' => 'text-bg-danger',
+        'warning' => 'text-bg-warning',
+        'info' => 'text-bg-info',
+        'neutral' => 'text-bg-secondary',
+        'dark' => 'text-bg-dark',
     ];
 
     private const STATUS_LABELS = [
@@ -95,8 +82,9 @@ final class EpisodioTimelineViewBuilder
 
             $groups[] = [
                 'type' => $type,
-                'type_label' => self::TYPE_LABELS[$type] ?? ($type !== '' ? $type : 'Hito'),
-                'badge_class' => self::TYPE_BADGES[$type] ?? 'text-bg-light border text-dark',
+                'type_label' => (string) ($it['type_label'] ?? ($type !== '' ? $type : 'Hito')),
+                'badge_class' => self::INTENT_BADGES[(string) ($it['intent'] ?? 'neutral')]
+                    ?? 'text-bg-secondary',
                 'time_key' => $timeKey,
                 'occurred_at' => $occurredAt,
                 'actor' => $actor,

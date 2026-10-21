@@ -32,8 +32,6 @@ final class PacienteHistoriaTimelinePageBuilder
      *   modoCaptura: string,
      *   parentUpper: string|null,
      *   parentId: int|null,
-     *   episodioTipoData: string,
-     *   episodioBannerAccent: string,
      *   timelineEpisodioGroups: list<array<string, mixed>>,
      *   timelineEpisodioItemCount: int,
      *   registerGuardiaAssets: bool,
@@ -107,10 +105,6 @@ final class PacienteHistoriaTimelinePageBuilder
             'modoCaptura' => $modoCaptura,
             'parentUpper' => $esContextoEpisodio ? $parentUpper : null,
             'parentId' => $esContextoEpisodio ? $parentId : null,
-            'episodioTipoData' => $esContextoGuardia ? 'GUARDIA' : 'INTERNACION',
-            'episodioBannerAccent' => $esContextoGuardia
-                ? 'border-danger bg-danger-subtle'
-                : 'border-primary bg-primary-subtle',
             'timelineEpisodioGroups' => $timelineEpisodioGroups,
             'timelineEpisodioItemCount' => $timelineEpisodioItemCount,
             'registerGuardiaAssets' => $esContextoGuardia,

@@ -15,6 +15,21 @@
         }
     }
 
+    var intentTokens = {
+        primary: 'primary',
+        secondary: 'secondary',
+        success: 'success',
+        danger: 'danger',
+        warning: 'warning',
+        info: 'info',
+        neutral: 'secondary',
+        dark: 'dark'
+    };
+
+    function intentToken(intent) {
+        return intentTokens[String(intent || '')] || null;
+    }
+
     var triageModalEl = document.getElementById('modal-triage-guardia');
     if (triageModalEl) {
         triageModalEl.addEventListener('hidden.bs.modal', function () {
@@ -121,7 +136,6 @@
         ctx = ctx || {};
         root.hidden = false;
 
-        var tipo = String(ctx.tipo || root.getAttribute('data-episodio-tipo') || '');
         var tituloEl = document.getElementById('tl_episodio_titulo');
         var estadoEl = document.getElementById('tl_episodio_estado');
         var motEl = document.getElementById('tl_episodio_motivo');
@@ -129,11 +143,21 @@
         var triageBadge = document.getElementById('tl_episodio_triage_badge');
         var triageMeta = document.getElementById('tl_episodio_triage_meta');
 
-        var labelTipo = tipo === 'GUARDIA' ? 'Guardia' : (tipo === 'INTERNACION' ? 'Internación' : 'Episodio');
+        var labelTipo = String(ctx.tipo_label || 'Episodio');
         if (tituloEl) {
             var parts = [labelTipo];
             if (ctx.ingreso_at) parts.push('Ingreso ' + formatEpisodioFecha(ctx.ingreso_at));
             tituloEl.textContent = parts.join(' · ');
+        }
+        var episodeSurface = root.querySelector('.sticky-top');
+        if (episodeSurface) {
+            ['danger', 'primary', 'info', 'success', 'warning', 'secondary', 'dark'].forEach(function (token) {
+                episodeSurface.classList.remove('border-' + token, 'bg-' + token + '-subtle');
+            });
+            var surfaceToken = intentToken(ctx.intent);
+            if (surfaceToken) {
+                episodeSurface.classList.add('border-' + surfaceToken, 'bg-' + surfaceToken + '-subtle');
+            }
         }
         if (estadoEl) {
             estadoEl.textContent = ctx.estado_label || ctx.estado || 'En curso';
@@ -146,13 +170,19 @@
         if (triageWrap && triageBadge) {
             if (triage && triage.level != null) {
                 triageWrap.hidden = false;
-                var level = parseInt(triage.level, 10);
-                var levelClass = (level >= 1 && level <= 5)
-                    ? ('guardia-triage-badge--' + level)
-                    : 'guardia-triage-badge--none';
-                triageBadge.className = 'badge ' + levelClass;
-                triageBadge.style.backgroundColor = '';
-                triageBadge.style.color = '';
+                triageBadge.className = 'badge';
+                var triageColor = String(triage.level_color || '');
+                if (/^#[0-9a-fA-F]{6}$/.test(triageColor)) {
+                    var r = parseInt(triageColor.slice(1, 3), 16) / 255;
+                    var g = parseInt(triageColor.slice(3, 5), 16) / 255;
+                    var b = parseInt(triageColor.slice(5, 7), 16) / 255;
+                    var luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+                    triageBadge.style.backgroundColor = triageColor;
+                    triageBadge.style.color = luminance < 0.5 ? '#ffffff' : '#212529';
+                } else {
+                    triageBadge.style.backgroundColor = '';
+                    triageBadge.style.color = '';
+                }
                 triageBadge.textContent = (triage.level_label || ('Nivel ' + triage.level));
                 if (triageMeta) {
                     triageMeta.textContent = triage.scale ? String(triage.scale) : '';
@@ -517,15 +547,7 @@
             + 'documentá la evolución del día.';
     }
 
-    var TL_FILTER_TYPES = {
-        all: null,
-        clinico: ['evolucion_medica', 'triage'],
-        enfermeria: ['atencion_enfermeria'],
-        pedidos: ['pedido', 'resultado_lab', 'interconsulta'],
-        farmacos: ['medicacion', 'administracion'],
-        circuito: ['circuito', 'triage']
-    };
-
+    var _tlEpisodioFilters = [];
     var _tlEpisodioFilter = 'all';
 
     function syncEpisodioTimelineCount() {
@@ -549,7 +571,10 @@
     function applyEpisodioTimelineFilter() {
         var listEl = document.getElementById('tl_episodio_timeline_list');
         if (!listEl) return;
-        var allowed = TL_FILTER_TYPES[_tlEpisodioFilter] || null;
+        var activeFilter = _tlEpisodioFilters.find(function (filter) {
+            return filter.id === _tlEpisodioFilter;
+        });
+        var allowed = activeFilter ? activeFilter.types : null;
         var items = listEl.querySelectorAll('[data-tl-type]');
         var visible = 0;
         items.forEach(function (li) {
@@ -571,18 +596,38 @@
         syncEpisodioTimelineCount();
     }
 
-    function bindTimelineEpisodioFilters() {
+    function bindTimelineEpisodioFilters(filters) {
         var root = document.getElementById('tl_episodio_timeline_filters');
-        if (!root || root.getAttribute('data-bound') === '1') return;
-        root.setAttribute('data-bound', '1');
-        root.addEventListener('click', function (ev) {
-            var btn = ev.target.closest('[data-tl-filter]');
-            if (!btn) return;
-            _tlEpisodioFilter = btn.getAttribute('data-tl-filter') || 'all';
-            root.querySelectorAll('[data-tl-filter]').forEach(function (b) {
-                b.classList.toggle('active', b === btn);
+        if (!root) return;
+        _tlEpisodioFilters = Array.isArray(filters) ? filters.filter(function (filter) {
+            return filter && typeof filter.id === 'string' && typeof filter.label === 'string';
+        }) : [];
+        tlClear(root);
+        _tlEpisodioFilters.forEach(function (filter) {
+            var button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'btn btn-sm btn-outline-secondary';
+            button.setAttribute('data-tl-filter', filter.id);
+            button.textContent = filter.label;
+            root.appendChild(button);
+        });
+        if (!_tlEpisodioFilters.some(function (filter) { return filter.id === _tlEpisodioFilter; })) {
+            _tlEpisodioFilter = _tlEpisodioFilters.length ? _tlEpisodioFilters[0].id : 'all';
+        }
+        if (root.getAttribute('data-bound') !== '1') {
+            root.setAttribute('data-bound', '1');
+            root.addEventListener('click', function (ev) {
+                var btn = ev.target.closest('[data-tl-filter]');
+                if (!btn) return;
+                _tlEpisodioFilter = btn.getAttribute('data-tl-filter') || 'all';
+                root.querySelectorAll('[data-tl-filter]').forEach(function (b) {
+                    b.classList.toggle('active', b === btn);
+                });
+                applyEpisodioTimelineFilter();
             });
-            applyEpisodioTimelineFilter();
+        }
+        root.querySelectorAll('[data-tl-filter]').forEach(function (button) {
+            button.classList.toggle('active', button.getAttribute('data-tl-filter') === _tlEpisodioFilter);
         });
         applyEpisodioTimelineFilter();
     }
@@ -619,21 +664,15 @@
 
         if (ultimosEl) {
             tlClear(ultimosEl);
-            var order = ['ta', 'fc', 'fr', 'sat_o2', 'temp', 'glucemia', 'glasgow'];
-            order.forEach(function (key) {
+            Object.keys(ultimos).forEach(function (key) {
                 var frag = tlTpl('tpl-tl-sv-chip');
                 if (!frag) return;
-                if (key === 'ta' && ultimos.ta) {
-                    var sys = ultimos.ta.sistolica;
-                    var dia = ultimos.ta.diastolica;
-                    if (sys == null && dia == null) return;
-                    tlSet(frag, '[data-field="label"]', 'TA ' + (sys != null ? sys : '—') + '/' + (dia != null ? dia : '—') + ' ');
-                    tlSet(frag, '[data-field="at"]', ultimos.ta.at || '');
-                    ultimosEl.appendChild(frag);
-                    return;
-                }
                 var u = ultimos[key];
                 if (!u || u.value == null) return;
+                var badge = frag.querySelector('.badge');
+                if (badge) {
+                    badge.classList.add('text-bg-' + (intentToken(u.intent) || 'secondary'));
+                }
                 tlSet(frag, '[data-field="label"]', (u.label || key) + ': ');
                 var valEl = frag.querySelector('[data-field="value"]');
                 if (valEl) {
@@ -666,16 +705,6 @@
         }
 
         // Plotly no acepta clases CSS: se leen tokens Bootstrap (--bs-*) del tema.
-        var metricBsToken = {
-            ta_sys: 'danger',
-            ta_dia: 'warning',
-            fc: 'primary',
-            fr: 'info',
-            sat_o2: 'info',
-            temp: 'warning',
-            glucemia: 'success',
-            glasgow: 'secondary'
-        };
         var rootStyles = getComputedStyle(document.documentElement);
         function bsColor(token) {
             if (!token) return undefined;
@@ -691,7 +720,7 @@
                 type: 'scatter',
                 mode: 'lines+markers',
                 name: (s.label || s.metric) + (s.unit ? ' (' + s.unit + ')' : ''),
-                line: { color: bsColor(metricBsToken[s.metric]), width: 2 },
+                line: { color: bsColor(intentToken(s.intent) || 'secondary'), width: 2 },
                 marker: { size: 7 }
             };
         });
@@ -1035,7 +1064,9 @@
                 if (timelineConfig.modoCaptura === 'imp') {
                     renderContextoInternacion(payload.data.contexto_internacion || null);
                 }
-                bindTimelineEpisodioFilters();
+                bindTimelineEpisodioFilters(
+                    (payload.data.timeline_episodio || {}).filters || []
+                );
                 bindEgresoGuardiaForm();
                 renderSignosVitalesEpisodio(payload.data.signos_vitales_episodio || null);
                 try {
@@ -1145,9 +1176,6 @@
     }
 
     // Intentar inicializar inmediatamente y luego con reintentos
-    if (timelineConfig.modoCaptura === 'imp' || timelineConfig.modoCaptura === 'emer') {
-        bindTimelineEpisodioFilters();
-    }
     if (!inicializarTimeline()) {
         // Si el DOM está cargando, esperar a que esté listo
         if (document.readyState === 'loading') {

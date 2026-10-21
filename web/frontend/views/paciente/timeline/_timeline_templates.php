@@ -129,7 +129,7 @@
 </template>
 
 <template id="tpl-tl-sv-chip">
-    <span class="badge text-bg-light border me-1 mb-1">
+    <span class="badge me-1 mb-1">
         <span data-field="label"></span>
         <strong data-field="value" class="d-none"></strong>
         <span data-field="unit"></span>

@@ -105,7 +105,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       widget.encounterSummaryLoaded ||
       _historiaClinicaData?.capturaPermitida == false;
 
-  String _tlEpisodioFilter = 'all';
+  String _tlEpisodioFilter = '';
 
   bool get _esCapturaInternacion =>
       (widget.parentType ?? '').toUpperCase() ==
@@ -797,8 +797,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     final ultimos =
         sv?.ultimos ?? const <String, SignosVitalesEpisodioUltimo>{};
     final chips = <Widget>[];
-    void addChip(String text) {
-      chips.add(BioBadge(label: text, intent: UiIntent.neutral));
+    void addChip(String text, UiIntent intent) {
+      chips.add(BioBadge(label: text, intent: intent));
     }
 
     for (final ultimo in ultimos.values) {
@@ -808,6 +808,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         '${ultimo.label}: ${ultimo.value}'
         '${unit.isNotEmpty ? ' $unit' : ''}'
         '${ultimo.at != null ? ' · ${ultimo.at}' : ''}',
+        ultimo.intent,
       );
     }
 
@@ -862,12 +863,11 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                       padding: const EdgeInsets.only(bottom: BioSpacing.xs),
                       child: Align(
                         alignment: Alignment.centerLeft,
-                        child: Text(
-                          '${s.label.isNotEmpty ? s.label : s.metric}'
-                          '${s.unit.isNotEmpty ? ' (${s.unit})' : ''}',
-                          style: BioTypography.bodySm.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+                        child: BioBadge(
+                          label:
+                              '${s.label.isNotEmpty ? s.label : s.metric}'
+                              '${s.unit.isNotEmpty ? ' (${s.unit})' : ''}',
+                          intent: s.intent,
                         ),
                       ),
                     ),
@@ -906,6 +906,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         break;
       }
     }
+    selectedFilter ??= filters.isEmpty ? null : filters.first;
     final allowed = selectedFilter?.types;
     final items = allowed == null
         ? all
@@ -936,7 +937,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             for (final f in filters)
               ChoiceChip(
                 label: Text(f.label),
-                selected: _tlEpisodioFilter == f.id,
+                selected: selectedFilter?.id == f.id,
                 onSelected: (_) {
                   setState(() => _tlEpisodioFilter = f.id);
                 },
@@ -991,10 +992,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   }
 
   Widget _buildEpisodioBanner(ContextoEpisodioHistoria? ctx) {
-    final esGuardia = ctx?.tipo.isNotEmpty == true
-        ? ctx!.esGuardia
-        : _esCapturaGuardia;
-    final tituloTipo = esGuardia ? 'Guardia' : 'Internación';
+    final tituloTipo = ctx?.tipoLabel ?? 'Episodio';
     final tituloParts = <String>[tituloTipo];
     if (ctx?.ingresoAt != null && ctx!.ingresoAt!.isNotEmpty) {
       tituloParts.add('Ingreso ${formatEpisodioFecha(ctx.ingresoAt)}');
@@ -1055,7 +1053,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     }
 
     return BioCard.intent(
-      intent: esGuardia ? UiIntent.danger : UiIntent.info,
+      intent: ctx?.intent ?? UiIntent.neutral,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

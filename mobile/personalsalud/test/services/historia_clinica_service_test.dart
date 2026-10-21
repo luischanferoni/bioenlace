@@ -25,17 +25,25 @@ void main() {
   test('recognizes encounter episode parent types case-insensitively', () {
     final guardia = ContextoEpisodioHistoria.fromJson(<String, dynamic>{
       'tipo': 'guardia',
+      'tipo_label': 'Guardia',
+      'intent': 'danger',
       'episodio_id': 45,
     });
     final internacion = ContextoEpisodioHistoria.fromJson(<String, dynamic>{
       'tipo': 'INTERNACION',
+      'tipo_label': 'Internación',
+      'intent': 'info',
       'episodio_id': 46,
     });
 
     expect(guardia.esGuardia, isTrue);
+    expect(guardia.tipoLabel, 'Guardia');
+    expect(guardia.intent, UiIntent.danger);
     expect(guardia.esInternacion, isFalse);
     expect(internacion.esGuardia, isFalse);
     expect(internacion.esInternacion, isTrue);
+    expect(internacion.tipoLabel, 'Internación');
+    expect(internacion.intent, UiIntent.info);
   });
 
   test('reads episode action presentation and API metadata', () {
@@ -98,11 +106,23 @@ void main() {
       'parent_type': 'guardia',
       'episodio_id': 45,
       'total_points': 1,
+      'series': [
+        <String, dynamic>{
+          'metric': 'custom_metric',
+          'label': 'Frecuencia respiratoria',
+          'unit': 'rpm',
+          'intent': 'success',
+          'points': [
+            <String, dynamic>{'at': '21/10/2026 19:00', 'value': 18},
+          ],
+        },
+      ],
       'ultimos': {
         'custom_metric': <String, dynamic>{
           'value': 18,
           'label': 'Frecuencia respiratoria',
           'unit': 'rpm',
+          'intent': 'info',
           'at': '21/10/2026 19:00',
         },
       },
@@ -112,5 +132,8 @@ void main() {
     expect(vitals.ultimos['custom_metric']?.label, 'Frecuencia respiratoria');
     expect(vitals.ultimos['custom_metric']?.value, 18);
     expect(vitals.ultimos['custom_metric']?.unit, 'rpm');
+    expect(vitals.ultimos['custom_metric']?.intent, UiIntent.info);
+    expect(vitals.series.single.label, 'Frecuencia respiratoria');
+    expect(vitals.series.single.intent, UiIntent.success);
   });
 }

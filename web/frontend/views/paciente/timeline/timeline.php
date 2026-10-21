@@ -16,8 +16,6 @@ $mostrarMotivosAmbulatorios = (bool) $page['mostrarMotivosAmbulatorios'];
 $mostrarCurvasCrecimiento = (bool) $page['mostrarCurvasCrecimiento'];
 $timelineEpisodioGroups = $page['timelineEpisodioGroups'];
 $timelineEpisodioItemCount = $page['timelineEpisodioItemCount'];
-$episodioBannerAccent = (string) $page['episodioBannerAccent'];
-$episodioTipoData = (string) $page['episodioTipoData'];
 $tlConfigAttr = Html::encode(Json::encode($page['jsConfig']));
 
 ?>
@@ -35,8 +33,8 @@ $tlConfigAttr = Html::encode(Json::encode($page['jsConfig']));
     </div>
 
 <?php if ($esContextoEpisodio): ?>
-<div id="tl_episodio_banner" class="mb-3" hidden data-episodio-tipo="<?= Html::encode($episodioTipoData) ?>">
-    <div class="sticky-top rounded shadow-sm p-3 border-start border-4 <?= Html::encode($episodioBannerAccent) ?>">
+<div id="tl_episodio_banner" class="mb-3" hidden>
+    <div class="sticky-top rounded shadow-sm p-3 border-start border-4">
         <div class="d-flex flex-wrap align-items-center gap-2 mb-2" id="tl_episodio_triage" hidden>
             <span class="badge" id="tl_episodio_triage_badge"></span>
             <span class="text-muted small" id="tl_episodio_triage_meta"></span>
@@ -176,14 +174,7 @@ $tlConfigAttr = Html::encode(Json::encode($page['jsConfig']));
                                 <h6 class="mb-0 text-primary"><b>REGISTRO DEL EPISODIO</b></h6>
                                 <span class="small text-muted" id="tl_episodio_timeline_count"></span>
                             </div>
-                            <div class="d-flex flex-wrap gap-1 mb-2" id="tl_episodio_timeline_filters" role="group" aria-label="Filtros del registro">
-                                <button type="button" class="btn btn-sm btn-outline-secondary active" data-tl-filter="all">Todos</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" data-tl-filter="clinico">Clínico</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" data-tl-filter="enfermeria">Enfermería</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" data-tl-filter="pedidos">Pedidos / lab</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" data-tl-filter="farmacos">Fármacos</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" data-tl-filter="circuito">Circuito</button>
-                            </div>
+                            <div class="d-flex flex-wrap gap-1 mb-2" id="tl_episodio_timeline_filters" role="group" aria-label="Filtros del registro"></div>
                             <div id="tl_episodio_timeline_list">
                                 <?= $this->render('_episodio_timeline_list', [
                                     'groups' => $timelineEpisodioGroups,
@@ -334,4 +325,3 @@ if ($esContextoGuardia):
     Modal::end();
 endif;
 ?>
-

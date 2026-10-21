@@ -18,6 +18,11 @@ use common\models\Clinical\InpatientStay;
  */
 final class EpisodioHistoriaBannerService
 {
+    private const EPISODE_PRESENTATION = [
+        'GUARDIA' => ['label' => 'Guardia', 'intent' => 'danger'],
+        'INTERNACION' => ['label' => 'Internación', 'intent' => 'info'],
+    ];
+
     /** @var EmergencyBoardService */
     private $circuito;
 
@@ -180,14 +185,30 @@ final class EpisodioHistoriaBannerService
         ?string $motivo,
         ?string $ingresoAt
     ): array {
+        $presentation = self::episodePresentation($tipo);
+
         return [
             'tipo' => $tipo,
+            'tipo_label' => $presentation['label'],
+            'intent' => $presentation['intent'],
             'episodio_id' => $episodioId,
             'estado' => $estado,
             'estado_label' => $estadoLabel,
             'motivo' => $motivo,
             'ingreso_at' => $ingresoAt,
         ];
+    }
+
+    /**
+     * @return array{label: string, intent: string}
+     */
+    public static function episodePresentation(string $tipo): array
+    {
+        if (!isset(self::EPISODE_PRESENTATION[$tipo])) {
+            throw new \InvalidArgumentException('Tipo de episodio sin presentación: ' . $tipo);
+        }
+
+        return self::EPISODE_PRESENTATION[$tipo];
     }
 
     /**

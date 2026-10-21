@@ -46,7 +46,7 @@ class PacientesController extends BaseController
      * Condiciones/alergias/antecedentes: solo si hay ventana de atención (turno PENDIENTE/EN_ATENCION)
      * o encounter no ambulatorio; no en turno ATENDIDO.
      * Para “Ver consulta” de un turno ya atendido usar
-     * GET /api/v1/clinical/encounter/ver-consulta-como-staff.
+     * GET /api/v1/clinical/encounter/staff-summary.
      * Incluye `captura.permitida` cuando hay turno: la UI no debe abrir captura si es false.
      * Query (solo YII_DEBUG): simular_signos=1.
      * RBAC: /api/pacientes/historia-clinica
@@ -94,7 +94,7 @@ class PacientesController extends BaseController
                 ? $svEpisodioSvc->buildForInternacion((int) $persona->id_persona, $parentIdParam)
                 : $svEpisodioSvc->buildForGuardia((int) $persona->id_persona, $parentIdParam, $idEfector);
             $motivosConsulta = null;
-            $motivosConsultaPaciente = [
+            $patientEncounterReasons = [
                 'encounter_id' => null,
                 'consulta_id' => null,
                 'turno_id' => null,
@@ -118,14 +118,14 @@ class PacientesController extends BaseController
             }
 
             $motivosConsulta = $motivosCtx['motivos_consulta'];
-            $motivosConsultaPaciente = $motivosCtx['motivos_consulta_paciente'];
+            $patientEncounterReasons = $motivosCtx['motivos_consulta_paciente'];
             $capturaFlags = $motivosCtx['captura'] ?? [
                 'permitida' => null,
                 'motivo' => null,
             ];
 
             // Estado actual del paciente: solo en ventana de atención (captura) o encounter sin turno ambulatorio.
-            $encounterIdMotivos = (int) ($motivosConsultaPaciente['encounter_id'] ?? 0);
+            $encounterIdMotivos = (int) ($patientEncounterReasons['encounter_id'] ?? 0);
             $mostrarEstadoPaciente = ($capturaFlags['permitida'] ?? null) === true
                 || (($capturaFlags['permitida'] ?? null) === null && $encounterIdMotivos > 0);
 
@@ -227,7 +227,7 @@ class PacientesController extends BaseController
             ],
             'signos_vitales' => $signosVitales,
             'signos_vitales_episodio' => $signosVitalesEpisodio,
-            'motivos_consulta_paciente' => $motivosConsultaPaciente,
+            'motivos_consulta_paciente' => $patientEncounterReasons,
             'contexto_episodio' => $contextoEpisodio,
             'timeline_episodio' => $timelineEpisodio,
             'contexto_internacion' => $contextoInternacion,
@@ -264,7 +264,7 @@ class PacientesController extends BaseController
      * - Sin query: encounter con mensajes del paciente más reciente; si no hay, último turno con encounter.
      *
      * La consulta ya documentada (turno atendido) se lee con
-     * GET clinical/encounter/ver-consulta-como-staff, no con este endpoint.
+     * GET clinical/encounter/staff-summary, no con este endpoint.
      *
      * @return array{
      *   motivos_consulta: string|null,

@@ -468,8 +468,8 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
           personaId: personaId,
           authToken: widget.authToken,
           soloVer: parent == null,
-          consultParent: parent,
-          consultParentId: parentId,
+          parentType: parent,
+          parentId: parentId,
         ),
       ),
     );

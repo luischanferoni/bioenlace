@@ -70,4 +70,15 @@ final class ApiRoutePermissionResolverTest extends Unit
         $this->assertContains('/api/consulta/guardar', $candidates);
         $this->assertContains('/api/consulta/analizar', $candidates);
     }
+
+    public function testEncounterStaffSummaryRoutesCheckBothPublicAndControllerPermissions(): void
+    {
+        $routes = ApiRoutePermissionResolver::checkedRoutesForAction(
+            'api/v1/clinical/encounter/staff-summary',
+            'v1/clinical/encounter-staff-summary/staff-summary'
+        );
+
+        $this->assertContains('/api/clinical/encounter/staff-summary', $routes);
+        $this->assertContains('/api/clinical/encounter-staff-summary/staff-summary', $routes);
+    }
 }

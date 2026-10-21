@@ -3,18 +3,18 @@
 namespace frontend\modules\api\v1\controllers\clinical;
 
 use common\components\Domain\Clinical\Encounter\Application\Service\EncounterAppointmentReasonLookupService;
-use common\components\Domain\Clinical\Encounter\Application\Service\StaffEncounterConsultaViewService;
+use common\components\Domain\Clinical\Encounter\Application\Service\StaffEncounterSummaryViewService;
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 
 /**
- * Resumen de consulta documentada para personal de salud (solo lectura).
+ * Resumen del encounter documentado para personal de salud (solo lectura).
  *
- * GET /api/v1/clinical/encounter/ver-consulta-como-staff?turno_id= | encounter_id=
+ * GET /api/v1/clinical/encounter/staff-summary?turno_id= | encounter_id=
  *
  * Capas:
  * 1) RBAC de ruta (ApiGhost): permiso propio o alterno `/api/pacientes/historia-clinica`.
- * 2) Dominio: personal médico dueño/creador de la consulta (PES del encounter/turno ↔ persona del actor).
+ * 2) Dominio: personal médico dueño/creador del encounter (PES del encounter/turno ↔ persona del actor).
  *
  * No usar personas/.../historia-clinica para “Ver consulta” de un turno atendido.
  */
@@ -35,10 +35,10 @@ class EncounterStaffSummaryController extends BaseController
     /**
      * GET — detalle de lo cargado por el médico en un encounter (vía turno_id o encounter_id).
      *
-     * Ámbito: usuario autenticado con permiso de ruta + staff dueño/creador de la consulta.
+     * Ámbito: usuario autenticado con permiso de ruta + staff dueño/creador del encounter.
      * No abre captura ni historia clínica del paciente.
      */
-    public function actionVerConsultaComoStaff(): array
+    public function actionStaffSummary(): array
     {
         $turnoId = (int) Yii::$app->request->get('turno_id', 0);
         $encounterId = (int) Yii::$app->request->get('encounter_id', 0);
@@ -57,7 +57,7 @@ class EncounterStaffSummaryController extends BaseController
 
         $this->assertEncounterAccess($resolvedEncounterId);
 
-        $data = (new StaffEncounterConsultaViewService())->build(
+        $data = (new StaffEncounterSummaryViewService())->build(
             $turnoId > 0 ? $turnoId : null,
             $resolvedEncounterId
         );

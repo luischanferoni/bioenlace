@@ -101,7 +101,7 @@ final class AppointmentReasonWindowService
     /**
      * Historia clínica / estado actual del paciente para el médico:
      * solo con turno PENDIENTE o EN_ATENCION y desde N minutos antes del turno.
-     * Turno ATENDIDO / cancelado / etc. → no hay acceso a HC (usar ver-consulta-como-staff).
+     * Turno ATENDIDO / cancelado / etc. → no hay acceso a HC (usar el resumen de encounter para staff).
      * Sin turno vinculado (guardia, etc.) → visible.
      */
     public static function isHistoriaClinicaVisibleForEncounter(Encounter $encounter): bool

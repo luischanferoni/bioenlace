@@ -826,7 +826,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Center(
         child: ConstrainedBox(
           constraints: BoxConstraints(maxWidth: maxCardWidth),
-          child: _buildTurnoCard(t, resumenConsultaCargada: resumen),
+          child: _buildTurnoCard(t, encounterSummaryLoaded: resumen),
         ),
       ),
     );
@@ -1367,7 +1367,7 @@ class _HomeScreenState extends State<HomeScreen> {
         g.idPersona,
         parent: 'ENCOUNTER',
         parentId: g.encounterId,
-        resumenConsultaCargada: true,
+        encounterSummaryLoaded: true,
       );
       return;
     }
@@ -1761,14 +1761,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildTurnoCard(Turno turno, {bool resumenConsultaCargada = false}) {
+  Widget _buildTurnoCard(Turno turno, {bool encounterSummaryLoaded = false}) {
     final primary = IntentPalette.of(UiIntent.primary).base;
     final estadoIntent = _intentEstado(turno.estado);
     void openTimeline() => _verHistoriaClinica(
           turno.idPersona,
           parent: 'TURNO',
           parentId: turno.id,
-          resumenConsultaCargada: resumenConsultaCargada,
+          encounterSummaryLoaded: encounterSummaryLoaded,
         );
     return BioCard(
       onTap: openTimeline,
@@ -1822,7 +1822,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Align(
             alignment: Alignment.centerRight,
             child: BioButton.outlinePrimary(
-              label: resumenConsultaCargada ? 'Ver consulta' : 'Historia clínica',
+              label: encounterSummaryLoaded ? 'Ver consulta' : 'Historia clínica',
               icon: Icons.medical_services_outlined,
               size: BioButtonSize.sm,
               onPressed: openTimeline,
@@ -1928,7 +1928,7 @@ class _HomeScreenState extends State<HomeScreen> {
     int personaId, {
     String? parent,
     int? parentId,
-    bool resumenConsultaCargada = false,
+    bool encounterSummaryLoaded = false,
   }) async {
     final refreshed = await Navigator.push<bool>(
       context,
@@ -1936,10 +1936,10 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (context) => PatientTimelineScreen(
           personaId: personaId,
           authToken: widget.authToken,
-          soloVer: resumenConsultaCargada || parent == null,
-          resumenConsultaCargada: resumenConsultaCargada,
-          consultParent: parent,
-          consultParentId: parentId,
+          soloVer: encounterSummaryLoaded || parent == null,
+          encounterSummaryLoaded: encounterSummaryLoaded,
+          parentType: parent,
+          parentId: parentId,
         ),
       ),
     );
@@ -1959,8 +1959,8 @@ class _HomeScreenState extends State<HomeScreen> {
           personaId: c.idPersona,
           authToken: widget.authToken,
           soloVer: false,
-          consultParent: 'CIRUGIA',
-          consultParentId: c.id,
+          parentType: 'CIRUGIA',
+          parentId: c.id,
         ),
       ),
     );

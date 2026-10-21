@@ -5,8 +5,8 @@ capabilities:
     description: Ver consulta documentada como staff (solo lectura)
     assignable: true
     routes:
-      - /api/clinical/encounter/ver-consulta-como-staff
-      - /api/clinical/encounter-staff-summary/ver-consulta-como-staff
+      - /api/clinical/encounter/staff-summary
+      - /api/clinical/encounter-staff-summary/staff-summary
       - /api/pacientes/historia-clinica
     default_roles:
       - Medico

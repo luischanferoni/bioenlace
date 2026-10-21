@@ -154,7 +154,7 @@ class PacienteController extends Controller
      * Solo lectura de la consulta ya documentada por el médico (turno o encounter de guardia).
      *
      * GET /paciente/ver-consulta?turno_id=… | encounter_id=… [&id=persona]
-     * Consume GET /api/v1/clinical/encounter/ver-consulta-como-staff.
+     * Consume GET /api/v1/clinical/encounter/staff-summary.
      * No muestra historia clínica / estado actual del paciente.
      *
      * @no_intent_catalog
@@ -202,7 +202,7 @@ class PacienteController extends Controller
         }
 
         $paciente = $this->findModel($personaId);
-        $apiPath = '/api/v1/clinical/encounter/ver-consulta-como-staff?'
+        $apiPath = '/api/v1/clinical/encounter/staff-summary?'
             . http_build_query($apiQuery);
 
         $pageTitle = $paciente

@@ -13,10 +13,10 @@ use common\models\Person\Persona;
 use common\models\Scheduling\Turno;
 
 /**
- * Vista de solo lectura de una consulta ya documentada (staff).
+ * Resumen de solo lectura de un encounter ya documentado (staff).
  * Payload mínimo: sin HC/estado del paciente, sin flags de captura ni ventanas HC.
  */
-final class StaffEncounterConsultaViewService
+final class StaffEncounterSummaryViewService
 {
     /**
      * @return array<string, mixed>

@@ -19,10 +19,10 @@ final class ApiRoutePermissionResolver
             '/api/consulta/analizar',
         ],
         // Misma audiencia que HC staff (migración RBAC + sesión sin re-login).
-        '/api/clinical/encounter/ver-consulta-como-staff' => [
+        '/api/clinical/encounter/staff-summary' => [
             '/api/pacientes/historia-clinica',
         ],
-        '/api/clinical/encounter-staff-summary/ver-consulta-como-staff' => [
+        '/api/clinical/encounter-staff-summary/staff-summary' => [
             '/api/pacientes/historia-clinica',
         ],
     ];

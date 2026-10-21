@@ -145,7 +145,7 @@ final class PacienteHistoriaTimelinePageBuilder
 
         if ($parentUpper === Encounter::PARENT_TURNO && $parentId > 0) {
             $historiaClinicaQs['turno_id'] = $parentId;
-            $verConsultaStaffPath = '/api/v1/clinical/encounter/ver-consulta-como-staff?'
+            $verConsultaStaffPath = '/api/v1/clinical/encounter/staff-summary?'
                 . http_build_query(['turno_id' => $parentId]);
         } elseif ($parentUpper === Encounter::PARENT_INTERNACION && $parentId > 0) {
             $historiaClinicaQs['parent'] = Encounter::PARENT_INTERNACION;

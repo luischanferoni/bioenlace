@@ -74,10 +74,10 @@ class HistoriaClinicaService {
     }
   }
 
-  /// GET /api/v1/clinical/encounter/ver-consulta-como-staff
+  /// GET /api/v1/clinical/encounter/staff-summary
   ///
   /// Solo lectura de lo documentado por el médico (turno atendido / “Ver consulta”).
-  Future<HistoriaClinicaResponse> getConsultaComoStaff({
+  Future<HistoriaClinicaResponse> getEncounterAsStaff({
     int? turnoId,
     int? encounterId,
   }) async {
@@ -89,7 +89,7 @@ class HistoriaClinicaService {
         q['turno_id'] = '$turnoId';
       }
       final uri = Uri.parse(
-        '${AppConfig.apiUrl}/clinical/encounter/ver-consulta-como-staff',
+        '${AppConfig.apiUrl}/clinical/encounter/staff-summary',
       ).replace(queryParameters: q);
 
       final response = await http.get(uri, headers: _headers);
@@ -97,9 +97,9 @@ class HistoriaClinicaService {
         json.decode(response.body),
         response.statusCode,
       );
-      return HistoriaClinicaResponse.fromStaffConsultaJson(data);
+      return HistoriaClinicaResponse.fromStaffEncounterJson(data);
     } catch (e) {
-      print('Error fetching consulta staff: $e');
+      print('Error fetching encounter staff summary: $e');
       rethrow;
     }
   }
@@ -390,8 +390,8 @@ class MotivosIntakeStaff {
   }
 }
 
-class MotivosConsultaPaciente {
-  final int? consultaId;
+class PatientEncounterReasons {
+  final int? encounterId;
   final int? turnoId;
   final MotivoConsultaTurnoContext? turno;
   final bool contextoExplicito;
@@ -403,8 +403,8 @@ class MotivosConsultaPaciente {
   final MotivosIntakeStaff? motivosIntake;
   final List<MotivoConsultaMensajeApi> messages;
 
-  MotivosConsultaPaciente({
-    required this.consultaId,
+  PatientEncounterReasons({
+    required this.encounterId,
     this.turnoId,
     this.turno,
     this.contextoExplicito = false,
@@ -419,9 +419,9 @@ class MotivosConsultaPaciente {
 
   bool get resumenIaPendiente => resumenPendiente;
 
-  factory MotivosConsultaPaciente.fromJson(Map<String, dynamic>? json) {
+  factory PatientEncounterReasons.fromJson(Map<String, dynamic>? json) {
     if (json == null) {
-      return MotivosConsultaPaciente(consultaId: null, messages: []);
+      return PatientEncounterReasons(encounterId: null, messages: []);
     }
     final raw = json['messages'] as List<dynamic>? ?? [];
     int? cid;
@@ -450,8 +450,8 @@ class MotivosConsultaPaciente {
         : <MotivoImagenAdjunta>[];
     final resumenTxt = json['resumen']?.toString() ?? json['resumen_ia']?.toString();
     final intakeMap = json['motivos_intake'];
-    return MotivosConsultaPaciente(
-      consultaId: cid,
+    return PatientEncounterReasons(
+      encounterId: cid,
       turnoId: tid,
       turno: turnoMap is Map
           ? MotivoConsultaTurnoContext.fromJson(
@@ -1139,7 +1139,7 @@ class HistoriaClinicaResponse {
   final PersonaData persona;
   final InformacionMedica informacionMedica;
   final SignosVitalesClinica signosVitales;
-  final MotivosConsultaPaciente motivosConsultaPaciente;
+  final PatientEncounterReasons patientEncounterReasons;
   final ContextoInternacionHistoria? contextoInternacion;
   final ContextoEpisodioHistoria? contextoEpisodio;
   final TimelineEpisodioFeed? timelineEpisodio;
@@ -1157,7 +1157,7 @@ class HistoriaClinicaResponse {
     required this.persona,
     required this.informacionMedica,
     required this.signosVitales,
-    required this.motivosConsultaPaciente,
+    required this.patientEncounterReasons,
     this.contextoInternacion,
     this.contextoEpisodio,
     this.timelineEpisodio,
@@ -1206,7 +1206,7 @@ class HistoriaClinicaResponse {
       ),
       signosVitales:
           SignosVitalesClinica.fromJson(json['signos_vitales'] as Map<String, dynamic>?),
-      motivosConsultaPaciente: MotivosConsultaPaciente.fromJson(
+      patientEncounterReasons: PatientEncounterReasons.fromJson(
           json['motivos_consulta_paciente'] as Map<String, dynamic>?),
       contextoInternacion: json['contexto_internacion'] is Map
           ? ContextoInternacionHistoria.fromJson(
@@ -1247,8 +1247,8 @@ class HistoriaClinicaResponse {
     );
   }
 
-  /// Payload de GET clinical/encounter/ver-consulta-como-staff.
-  factory HistoriaClinicaResponse.fromStaffConsultaJson(
+  /// Payload de GET clinical/encounter/staff-summary.
+  factory HistoriaClinicaResponse.fromStaffEncounterJson(
     Map<String, dynamic> json,
   ) {
     final motivos = json['motivos_consulta_paciente'];
@@ -1257,7 +1257,7 @@ class HistoriaClinicaResponse {
       persona: PersonaData.fromJson(json['persona'] as Map<String, dynamic>),
       informacionMedica: InformacionMedica.fromJson(const {}),
       signosVitales: SignosVitalesClinica.fromJson(null),
-      motivosConsultaPaciente: MotivosConsultaPaciente.fromJson(
+      patientEncounterReasons: PatientEncounterReasons.fromJson(
         motivos is Map ? Map<String, dynamic>.from(motivos) : null,
       ),
       carePackCohorte: json['care_pack_cohorte'] is Map

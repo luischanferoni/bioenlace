@@ -39,6 +39,7 @@ No es un índice del repositorio ni el manual de un endpoint. Para probar: [qa/]
 
 | Documento | Tema |
 |-----------|------|
+| [glosario-encounter.md](./glosario-encounter.md) | Vocabulario canónico: encounter, episodio, captura y motivo |
 | [captura-clinica.md](./captura-clinica.md) | Audio/texto, análisis y guardado del encounter |
 | [resumen-atencion-paciente.md](./resumen-atencion-paciente.md) | Resumen post-consulta y expediente staff |
 | [laboratorio.md](./laboratorio.md) | Resultados externos, ingestas, consulta |

@@ -12,7 +12,6 @@ import '../models/encounter_capture_analysis.dart';
 import '../models/pending_encounter_capture.dart';
 import '../models/timeline_event.dart';
 import '../services/historia_clinica_service.dart';
-import '../services/consulta_guardar_service.dart';
 import '../services/emergency_guardia_api.dart';
 import '../services/pending_encounter_capture_store.dart';
 import 'emergency/emergency_triage_screen.dart';
@@ -25,21 +24,21 @@ class PatientTimelineScreen extends StatefulWidget {
   /// true = solo ver historia clínica (sin formulario); false = barra para escribir notas
   final bool soloVer;
 
-  /// Vista mínima para consultas ya cargadas (solo paciente + datos del médico).
-  final bool resumenConsultaCargada;
+  /// Minimal view of a saved encounter (patient and professional details only).
+  final bool encounterSummaryLoaded;
 
-  /// Contexto de consulta (ej. `CIRUGIA`, `TURNO`) alineado con web / `validarPermisoAtencion`.
-  final String? consultParent;
-  final int? consultParentId;
+  /// Domain parent context aligned with web / `validarPermisoAtencion`.
+  final String? parentType;
+  final int? parentId;
 
   const PatientTimelineScreen({
     Key? key,
     required this.personaId,
     this.authToken,
     this.soloVer = true,
-    this.resumenConsultaCargada = false,
-    this.consultParent,
-    this.consultParentId,
+    this.encounterSummaryLoaded = false,
+    this.parentType,
+    this.parentId,
   }) : super(key: key);
 
   @override
@@ -49,7 +48,6 @@ class PatientTimelineScreen extends StatefulWidget {
 class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   final HistoriaClinicaService _historiaClinicaService =
       HistoriaClinicaService();
-  final ConsultaGuardarService _consultaGuardar = ConsultaGuardarService();
   final EncounterCaptureApi _encounterApi = EncounterCaptureApi();
   final DeviceSpeechDictation _dictation = DeviceSpeechDictation();
   final AudioRecorder _audioRecorder = AudioRecorder();
@@ -92,27 +90,27 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   bool get _captureBusy => _isAnalyzing || _isSaving;
 
   bool get _enRevisionCaptura => _captureReview != null;
-  bool get _mostrarBarraConsulta {
-    if (widget.resumenConsultaCargada) return false;
+  bool get _showCaptureBar {
+    if (widget.encounterSummaryLoaded) return false;
     final capturaApi = _historiaClinicaData?.capturaPermitida;
     if (capturaApi == false) return false;
     return !widget.soloVer ||
-        (widget.consultParent != null &&
-            widget.consultParent!.isNotEmpty &&
-            widget.consultParentId != null);
+        (widget.parentType != null &&
+            widget.parentType!.isNotEmpty &&
+            widget.parentId != null);
   }
 
-  bool get _modoConsultaCargada =>
-      widget.resumenConsultaCargada ||
+  bool get _isLoadedEncounterSummary =>
+      widget.encounterSummaryLoaded ||
       _historiaClinicaData?.capturaPermitida == false;
 
   String _tlEpisodioFilter = 'all';
 
   bool get _esCapturaInternacion =>
-      (widget.consultParent ?? '').toUpperCase() == 'INTERNACION';
+      (widget.parentType ?? '').toUpperCase() == 'INTERNACION';
 
   bool get _esCapturaGuardia =>
-      (widget.consultParent ?? '').toUpperCase() == 'GUARDIA';
+      (widget.parentType ?? '').toUpperCase() == 'GUARDIA';
 
   bool get _esCapturaEpisodio => _esCapturaInternacion || _esCapturaGuardia;
 
@@ -123,7 +121,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     super.initState();
     if (widget.authToken != null) {
       _historiaClinicaService.authToken = widget.authToken;
-      _consultaGuardar.authToken = widget.authToken;
       _encounterApi.authToken = widget.authToken;
     }
     _loadSttConfig();
@@ -135,8 +132,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     if (!_tieneContextoCaptura) return;
     final local = await _pendingStore.listForContext(
       personaId: widget.personaId,
-      parent: widget.consultParent!,
-      parentId: widget.consultParentId!,
+      parent: widget.parentType!,
+      parentId: widget.parentId!,
     );
     final byId = <String, PendingEncounterCapture>{
       for (final item in local) item.id: item,
@@ -144,8 +141,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     try {
       final remote = await _encounterApi.capturaListar(
         idPersona: widget.personaId,
-        parent: widget.consultParent,
-        parentId: widget.consultParentId,
+        parent: widget.parentType,
+        parentId: widget.parentId,
       );
       for (final row in remote) {
         final clientId = row['client_capture_id']?.toString() ?? '';
@@ -249,33 +246,33 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     });
 
     try {
-      final int? turnoId = widget.consultParent == 'TURNO'
-          ? widget.consultParentId
+      final int? turnoId = widget.parentType == 'TURNO'
+          ? widget.parentId
           : null;
       final HistoriaClinicaResponse data;
-      if (widget.resumenConsultaCargada) {
-        data = await _historiaClinicaService.getConsultaComoStaff(
+      if (widget.encounterSummaryLoaded) {
+        data = await _historiaClinicaService.getEncounterAsStaff(
           turnoId: turnoId,
-          encounterId: widget.consultParent == 'ENCOUNTER'
-              ? widget.consultParentId
+          encounterId: widget.parentType == 'ENCOUNTER'
+              ? widget.parentId
               : null,
         );
       } else {
         data = await _historiaClinicaService.getHistoriaClinica(
           widget.personaId,
           turnoId: turnoId,
-          encounterId: widget.consultParent == 'ENCOUNTER'
-              ? widget.consultParentId
+          encounterId: widget.parentType == 'ENCOUNTER'
+              ? widget.parentId
               : null,
           parent: (turnoId == null &&
-                  widget.consultParent != null &&
-                  widget.consultParent != 'ENCOUNTER')
-              ? widget.consultParent
+                  widget.parentType != null &&
+                  widget.parentType != 'ENCOUNTER')
+              ? widget.parentType
               : null,
           parentId: (turnoId == null &&
-                  widget.consultParent != null &&
-                  widget.consultParent != 'ENCOUNTER')
-              ? widget.consultParentId
+                  widget.parentType != null &&
+                  widget.parentType != 'ENCOUNTER')
+              ? widget.parentId
               : null,
         );
       }
@@ -309,7 +306,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     return Scaffold(
       backgroundColor: tokens.paperBackground,
       appBar: BioAppBar(
-        title: _modoConsultaCargada
+        title: _isLoadedEncounterSummary
             ? 'Consulta cargada'
             : (_esCapturaGuardia
                 ? 'Atención · guardia'
@@ -359,7 +356,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                               children: [
                                 _buildPacienteHeader(
                                     _historiaClinicaData!.persona),
-                                if (_modoConsultaCargada) ...[
+                                if (_isLoadedEncounterSummary) ...[
                                   if (_historiaClinicaData!
                                       .documentacionMedico.tieneDatos) ...[
                                     BioSpacing.gapH(BioSpacing.md),
@@ -368,25 +365,25 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                                     ),
                                   ],
                                   if (_historiaClinicaData!
-                                          .motivosConsultaPaciente
+                                          .patientEncounterReasons
                                           .motivosIntake
                                           ?.tieneContenido ==
                                       true) ...[
                                     BioSpacing.gapH(BioSpacing.md),
                                     _buildMotivosIntake(
                                       _historiaClinicaData!
-                                          .motivosConsultaPaciente
+                                          .patientEncounterReasons
                                           .motivosIntake!,
                                     ),
                                   ],
                                   if ((_historiaClinicaData!
-                                              .motivosConsultaPaciente
+                                              .patientEncounterReasons
                                               .resumen ??
                                           '')
                                       .trim()
                                       .isNotEmpty) ...[
                                     BioSpacing.gapH(BioSpacing.md),
-                                    _buildMotivosConsulta(
+                                    _buildEncounterReasons(
                                         _historiaClinicaData!),
                                   ],
                                   if (_historiaClinicaData!.carePackCohorte
@@ -428,18 +425,18 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                                   ] else ...[
                                     BioSpacing.gapH(BioSpacing.md),
                                     if (_historiaClinicaData!
-                                            .motivosConsultaPaciente
+                                            .patientEncounterReasons
                                             .motivosIntake
                                             ?.tieneContenido ==
                                         true) ...[
                                       _buildMotivosIntake(
                                         _historiaClinicaData!
-                                            .motivosConsultaPaciente
+                                            .patientEncounterReasons
                                             .motivosIntake!,
                                       ),
                                       BioSpacing.gapH(BioSpacing.md),
                                     ],
-                                    _buildMotivosConsulta(_historiaClinicaData!),
+                                    _buildEncounterReasons(_historiaClinicaData!),
                                     if (_historiaClinicaData!.carePackCohorte
                                             ?.tieneContenido ==
                                         true) ...[
@@ -466,10 +463,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                             ),
                           ),
                         ),
-                        if (!_modoConsultaCargada && _enRevisionCaptura)
+                        if (!_isLoadedEncounterSummary && _enRevisionCaptura)
                           _buildCaptureActionsBar(),
-                        if (!_modoConsultaCargada &&
-                            _mostrarBarraConsulta &&
+                        if (!_isLoadedEncounterSummary &&
+                            _showCaptureBar &&
                             !_enRevisionCaptura)
                           _buildChatInputBar(context),
                       ],
@@ -479,11 +476,11 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
 
   Widget _buildPacienteHeader(PersonaData persona) {
     final meta = <String>[];
-    if (!_modoConsultaCargada && persona.edad != null) {
+    if (!_isLoadedEncounterSummary && persona.edad != null) {
       meta.add('${persona.edad} años');
     }
     final genero = (persona.generoTexto ?? '').trim();
-    if (!_modoConsultaCargada && genero.isNotEmpty) {
+    if (!_isLoadedEncounterSummary && genero.isNotEmpty) {
       meta.add(genero);
     }
 
@@ -1136,7 +1133,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
 
   Future<void> _onEpisodioAccion(EpisodioAccionHistoria accion) async {
     if (accion.id == 'editar_triage') {
-      final guardiaId = widget.consultParentId ??
+      final guardiaId = widget.parentId ??
           _historiaClinicaData?.contextoEpisodio?.episodioId ??
           0;
       if (guardiaId <= 0) return;
@@ -1185,8 +1182,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     await _cargarHistoriaClinica();
   }
 
-  Widget _buildMotivosConsulta(HistoriaClinicaResponse hc) {
-    final mp = hc.motivosConsultaPaciente;
+  Widget _buildEncounterReasons(HistoriaClinicaResponse hc) {
+    final mp = hc.patientEncounterReasons;
     final resumen = (mp.resumen ?? mp.resumenIa ?? hc.informacionMedica.motivosConsulta ?? '')
         .trim();
     final hayResumen = resumen.isNotEmpty;
@@ -1391,9 +1388,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   }
 
   bool get _tieneContextoCaptura =>
-      widget.consultParent != null &&
-      widget.consultParent!.isNotEmpty &&
-      widget.consultParentId != null;
+      widget.parentType != null &&
+      widget.parentType!.isNotEmpty &&
+      widget.parentId != null;
 
   Future<void> _toggleDictation() async {
     if (_captureBusy) return;
@@ -1834,8 +1831,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                 PendingEncounterCapture(
                   id: id,
                   personaId: widget.personaId,
-                  parent: widget.consultParent!,
-                  parentId: widget.consultParentId!,
+                  parent: widget.parentType!,
+                  parentId: widget.parentId!,
                   texto: texto,
                   status: status,
                   createdAt: now,
@@ -1863,8 +1860,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     final item = PendingEncounterCapture(
       id: id,
       personaId: widget.personaId,
-      parent: widget.consultParent!,
-      parentId: widget.consultParentId!,
+      parent: widget.parentType!,
+      parentId: widget.parentId!,
       texto: texto,
       status: status,
       createdAt: existing?.createdAt ?? now,
@@ -2017,7 +2014,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       }
       return;
     }
-    await _analizarConsulta(
+    await _analyzeEncounter(
       fromStatus: item.status,
       forcePipeline: true,
     );
@@ -2130,7 +2127,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     });
   }
 
-  Future<void> _analizarConsulta({
+  Future<void> _analyzeEncounter({
     PendingEncounterCaptureStatus? fromStatus,
     bool forcePipeline = false,
   }) async {
@@ -2213,8 +2210,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           final created = await _encounterApi.capturaCrearOSubir(
             clientCaptureId: draft.id,
             idPersona: widget.personaId,
-            parent: widget.consultParent,
-            parentId: widget.consultParentId,
+            parent: widget.parentType,
+            parentId: widget.parentId,
             texto: text.isEmpty ? null : text,
             stt: sttMeta,
             audioPath: audioPath,
@@ -2564,8 +2561,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       } else {
         guardado = await _encounterApi.guardar(
           idPersona: widget.personaId,
-          parent: widget.consultParent,
-          parentId: widget.consultParentId,
+          parent: widget.parentType,
+          parentId: widget.parentId,
           datosExtraidos: extraidos,
           // Sin draft de captura: solo token de cache (si hay), no mapa completo duplicado.
           analysisCacheToken: _lastAnalysis!['analysis_cache_token']?.toString(),
@@ -2711,7 +2708,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     return null;
   }
 
-  Future<void> _enviarConsulta() async {
+  Future<void> _sendEncounter() async {
     if (!_tieneContextoCaptura) {
       if (!widget.soloVer) {
         _snack(
@@ -2722,7 +2719,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       return;
     }
     if (_enRevisionCaptura) return;
-    await _analizarConsulta();
+    await _analyzeEncounter();
   }
 
   Widget _buildPendingCapturesPanel() {
@@ -3334,7 +3331,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         AssistantChatComposerBar(
           controller: _chatController,
           focusNode: _chatFocusNode,
-          onSend: _enviarConsulta,
+          onSend: _sendEncounter,
           isSending: _captureBusy,
           sendIcon: Icons.fact_check_outlined,
           hintText: canCapture

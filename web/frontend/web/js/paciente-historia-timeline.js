@@ -1006,7 +1006,7 @@
                     if (soloConsultaCargada) {
                         throw staffErr;
                     }
-                    console.warn('ver-consulta-como-staff no disponible, se usa historia-clinica', staffErr);
+                    console.warn('Encounter staff summary no disponible; se usa historia clínica', staffErr);
                 }
             } else if (soloConsultaCargada) {
                 throw new Error('Falta contexto de turno para ver la consulta.');

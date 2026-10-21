@@ -19,6 +19,12 @@ class PersonaController extends BaseController
 {
     public static $authenticatorExcept = [];
 
+    public function init()
+    {
+        parent::init();
+        $this->contractResponses = true;
+    }
+
     public function actions()
     {
         $actions = parent::actions();

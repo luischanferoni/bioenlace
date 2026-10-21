@@ -203,6 +203,9 @@ class BaseController extends Controller
             if ($code === 429) {
                 return $this->fail('rate_limited_detail', $params);
             }
+            if ($code === 503) {
+                return $this->fail('service_unavailable');
+            }
             if ($code >= 500) {
                 Yii::error($message, 'api-contract');
 

@@ -51,6 +51,11 @@ errors:
     retryable: true
     default_detail: "Se realizaron demasiados intentos. Esperá y probá nuevamente."
     message: "{detail}"
+  service_unavailable:
+    http_status: 503
+    intent: error
+    retryable: true
+    message: "El servicio no está disponible en este momento. Intentá nuevamente más tarde."
 
   # Acceso y lectura clínica
   encounter_id_required:

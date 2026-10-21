@@ -26,45 +26,16 @@ use common\components\Domain\Person\FrontDesk\Infrastructure\External\Identity\C
  *   "extras": { ... }                  // opcional, datos adicionales
  * }
  *
- * Respuesta (éxito):
- *
- * {
- *   "success": true,
- *   "message": "Persona registrada exitosamente",
- *   "data": {
- *     "persona": {
- *       "id_persona": 123,
- *       "nombre": "Mercedes",
- *       "apellido": "Diaz",
- *       "documento": "29486884",
- *       "fecha_nacimiento": "1984-01-01",
- *       "tipo": "paciente"
- *     },
- *     "didit": {
- *       "verification_id": "...",
- *       "status": "approved" | "rejected" | "pending"
- *     },
- *     "mpi": {
- *       "empadronado": true,
- *       "detalles": { ... }
- *     },
- *     "refeps": {
- *       "es_profesional": true,
- *       "detalles": { ... }
- *     }
- *   }
- * }
- *
- * Respuesta (error):
- *
- * {
- *   "success": false,
- *   "message": "Motivo del error",
- *   "errors": { ... } // detalles opcionales
- * }
+ * Las respuestas usan el contrato común `{data, meta}` / `{error}` de la API v1.
  */
 class RegistroController extends BaseController
 {
+    public function init()
+    {
+        parent::init();
+        $this->contractResponses = true;
+    }
+
     /**
      * Este controlador trabaja conceptualmente sobre el modelo Persona.
      *
@@ -132,8 +103,6 @@ class RegistroController extends BaseController
      *
      * Por ahora solo valida y estructura el contrato de entrada/salida;
      * la integración concreta se añadirá en pasos posteriores.
-     *
-     * @return array
      */
     public function actionRegistrar()
     {
@@ -300,4 +269,3 @@ class RegistroController extends BaseController
         return is_array($decoded) ? $decoded : null;
     }
 }
-

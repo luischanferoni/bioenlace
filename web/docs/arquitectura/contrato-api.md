@@ -44,4 +44,4 @@ Los servicios lanzan `ApiException` con un código del catálogo (y params o `fi
 
 Los métodos `success()` y `error()` de `BaseController` quedan marcados como obsoletos hasta migrar todos los controllers (fase 9). Durante la transición, un controller puede activar `contractResponses` para adaptar esas llamadas al contrato después de migrar sus consumidores. En ese modo, los errores HTTP se convierten a códigos del catálogo y los errores 5xx no exponen el mensaje interno. Este adaptador es temporal: luego se reemplazarán las llamadas con `ok()` y `fail()`.
 
-Ya migrados: `AudioController`, `EmergencyController`, `LicenciaController`, `QuirofanoController` y `CareProtocolController`, además de los controllers clínicos del piloto.
+Ya migrados: `AudioController`, `EmergencyController`, `LicenciaController`, `QuirofanoController`, `CareProtocolController`, `InpatientEpicrisisTemplateController`, `PersonaController` y `RegistroController`, además de los controllers clínicos del piloto.

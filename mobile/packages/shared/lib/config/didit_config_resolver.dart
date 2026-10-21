@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import 'api_config.dart';
+import '../http/api_contract.dart';
 
 /// Resuelve IDs de workflow Didit: `--dart-define` en build o API pública del backend.
 class DiditConfigResolver {
@@ -58,13 +59,10 @@ class DiditConfigResolver {
         return null;
       }
 
-      final body = jsonDecode(response.body);
-      if (body is! Map<String, dynamic> || body['success'] != true) {
-        return null;
-      }
-
-      final data = body['data'];
-      if (data is! Map<String, dynamic>) return null;
+      final data = unwrapApiContract(
+        jsonDecode(response.body),
+        response.statusCode,
+      );
 
       _cache = _MobileDiditConfig(
         pacienteKyc: _trimOrNull(data['didit_paciente_kyc_workflow_id']),

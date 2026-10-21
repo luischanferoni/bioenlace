@@ -13,7 +13,7 @@ Lectura: [overview.md](./overview.md), [design.md](./design.md), fases en [phase
 | 02 Terminología encounter | en curso (glosario, resumen staff, razones/chat y contratos de identificación de captura) |
 | 03 Metadata clínica humana | en curso (catálogo de clases encounter expone capacidades y Personal de Salud las consume; falta el resto de metadata clínica) |
 | 04 Captura y STT | pendiente |
-| 05 Móvil | en curso (inicio por capacidades; wizard limita clases por efector usando metadata del backend) |
+| 05 Móvil | en curso (inicio y configuración por capacidades; wizard limita clases por efector usando metadata del backend) |
 | 06 Web | pendiente |
 | 07 Veterinaria (estructura) | pendiente |
 | 08 Asistente, admin, jobs, docs | parcial; pendiente de retomar tras las fases anteriores |

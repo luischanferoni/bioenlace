@@ -34,6 +34,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
   String _currentEncounterLabel = 'Ambulatoria';
   int? _efectorId;
   int? _servicioId;
+  String? _classesErrorMessage;
   bool _isLoadingEncounter = false;
   bool _isLoadingClasses = true;
 
@@ -41,38 +42,62 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
   void initState() {
     super.initState();
     _configService.authToken = widget.authToken;
-    _loadStoredEncounter();
-    _loadEncounterClasses();
+    _loadEncounterConfiguration();
   }
 
-  Future<void> _loadStoredEncounter() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _currentEncounterCode = prefs.getString('encounter_class') ?? 'AMB';
-      _currentEncounterLabel =
-          prefs.getString('encounter_class_label') ?? 'Ambulatoria';
-      _efectorId = prefs.getInt('efector_id');
-      _servicioId = prefs.getInt('servicio_id');
-    });
-  }
-
-  Future<void> _loadEncounterClasses() async {
+  Future<void> _loadEncounterConfiguration() async {
     try {
-      final list = await _configService.getEncounterClasses();
-      if (mounted) {
-        setState(() {
-          _encounterClasses = list;
-          _isLoadingClasses = false;
-        });
+      final prefs = await SharedPreferences.getInstance();
+      final efectorId = prefs.getInt('efector_id');
+      final servicioId = prefs.getInt('servicio_id');
+      final encounterCode = prefs.getString('encounter_class') ?? 'AMB';
+      final storedEncounterLabel =
+          prefs.getString('encounter_class_label') ?? 'Ambulatoria';
+      if (efectorId == null || servicioId == null) {
+        throw Exception(
+          'No se encontró el efector y servicio de la sesión actual.',
+        );
       }
+
+      final options = await _configService.loadSessionWizardOptions(
+        userId: widget.userId,
+      );
+      Efector? selectedEfector;
+      for (final efector in options.efectores) {
+        if (efector.id == efectorId) {
+          selectedEfector = efector;
+          break;
+        }
+      }
+      if (selectedEfector == null) {
+        throw Exception(
+          'El efector actual ya no está habilitado para esta sesión.',
+        );
+      }
+      final currentEfector = selectedEfector;
+      if (!mounted) return;
+      var currentEncounterLabel = storedEncounterLabel;
+      for (final encounterClass in currentEfector.encounterClasses) {
+        if (encounterClass.code == encounterCode) {
+          currentEncounterLabel = encounterClass.label;
+          break;
+        }
+      }
+      setState(() {
+        _efectorId = efectorId;
+        _servicioId = servicioId;
+        _currentEncounterCode = encounterCode;
+        _currentEncounterLabel = currentEncounterLabel;
+        _encounterClasses = currentEfector.encounterClasses;
+        _classesErrorMessage = null;
+        _isLoadingClasses = false;
+      });
     } catch (e) {
       if (mounted) {
-        setState(() => _isLoadingClasses = false);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error al cargar áreas: $e')),
-          );
-        }
+        setState(() {
+          _classesErrorMessage = 'Error al cargar áreas: $e';
+          _isLoadingClasses = false;
+        });
       }
     }
   }
@@ -83,7 +108,8 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-              'Completá la configuración inicial (efector y servicio) para cambiar el área.'),
+            'Completá la configuración inicial (efector y servicio) para cambiar el área.',
+          ),
         ),
       );
       return;
@@ -103,9 +129,13 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
       }
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(
-          'encounter_class', sessionConfig.encounterClass.code);
+        'encounter_class',
+        sessionConfig.encounterClass.code,
+      );
       await prefs.setString(
-          'encounter_class_label', sessionConfig.encounterClass.label);
+        'encounter_class_label',
+        sessionConfig.encounterClass.label,
+      );
       await prefs.setString('auth_token', sessionToken);
       _configService.authToken = sessionToken;
       if (mounted) {
@@ -117,16 +147,18 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
         widget.onEncounterChanged?.call();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text(
-                  'Área actualizada: ${sessionConfig.encounterClass.label}. Andá a Inicio para ver el cambio.')),
+            content: Text(
+              'Área actualizada: ${sessionConfig.encounterClass.label}. Andá a Inicio para ver el cambio.',
+            ),
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoadingEncounter = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al cambiar área: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error al cambiar área: $e')));
       }
     }
   }
@@ -167,8 +199,10 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
               Icon(Icons.person_outline, color: primary, size: 20),
               BioSpacing.gapW(BioSpacing.sm),
               Expanded(
-                child: Text('Usuario: ${widget.userName}',
-                    style: BioTypography.title),
+                child: Text(
+                  'Usuario: ${widget.userName}',
+                  style: BioTypography.title,
+                ),
               ),
             ],
           ),
@@ -198,31 +232,42 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
               ),
             )
           else ...[
+            if (_classesErrorMessage != null) ...[
+              BioAlert.danger(message: _classesErrorMessage!),
+              BioSpacing.gapH(BioSpacing.md),
+            ],
             Row(
               children: [
-                Icon(Icons.medical_services_outlined,
-                    color: primary, size: 20),
+                Icon(Icons.medical_services_outlined, color: primary, size: 20),
                 BioSpacing.gapW(BioSpacing.sm),
                 Expanded(
-                  child: Text(_currentEncounterLabel, style: BioTypography.title),
+                  child: Text(
+                    _currentEncounterLabel,
+                    style: BioTypography.title,
+                  ),
                 ),
               ],
             ),
             BioSpacing.gapH(BioSpacing.md),
-            Wrap(
-              spacing: BioSpacing.sm,
-              runSpacing: BioSpacing.sm,
-              children: _encounterClasses.map((ec) {
-                final isSelected = ec.code == _currentEncounterCode;
-                return BioChip(
-                  label: ec.label,
-                  selected: isSelected,
-                  onTap: _isLoadingEncounter
-                      ? null
-                      : () => _changeEncounterClass(ec),
-                );
-              }).toList(),
-            ),
+            if (_encounterClasses.isEmpty)
+              BioAlert.info(
+                message: 'Este efector no tiene áreas de atención habilitadas.',
+              )
+            else
+              Wrap(
+                spacing: BioSpacing.sm,
+                runSpacing: BioSpacing.sm,
+                children: _encounterClasses.map((ec) {
+                  final isSelected = ec.code == _currentEncounterCode;
+                  return BioChip(
+                    label: ec.label,
+                    selected: isSelected,
+                    onTap: _isLoadingEncounter
+                        ? null
+                        : () => _changeEncounterClass(ec),
+                  );
+                }).toList(),
+              ),
             if (_isLoadingEncounter)
               const Padding(
                 padding: EdgeInsets.only(top: BioSpacing.md),

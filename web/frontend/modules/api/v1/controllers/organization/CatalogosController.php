@@ -43,7 +43,7 @@ class CatalogosController extends BaseController
                 'label' => (string) $label,
             ];
         }
-        return $this->success(['encounter_classes' => $formatted]);
+        return $this->ok(['encounter_classes' => $formatted]);
     }
 
     /**
@@ -87,4 +87,3 @@ class CatalogosController extends BaseController
         return InfraestructuraDepdropService::salasPorPisoResponse(Yii::$app->request->post());
     }
 }
-

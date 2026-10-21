@@ -24,9 +24,9 @@ class HomeController extends BaseController
                 'subject_persona_id' => (int) Yii::$app->request->get('subject_persona_id', 0) ?: null,
             ]);
         } catch (\InvalidArgumentException $e) {
-            return $this->error($e->getMessage(), null, 400);
+            return $this->fail('request_invalid', ['detail' => $e->getMessage()]);
         }
 
-        return $this->success($data, 'Panel de inicio');
+        return $this->ok($data, ['message' => 'Panel de inicio']);
     }
 }

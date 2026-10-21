@@ -69,15 +69,11 @@ class ConfigService {
       Uri.parse('${AppConfig.apiUrl}/catalogos/encounter-classes'),
       headers: _headers,
     );
-    if (response.statusCode != 200) {
-      final errorData = json.decode(response.body) as Map<String, dynamic>?;
-      throw Exception(errorData?['message'] ?? 'Error al obtener encounter classes');
-    }
-    final data = json.decode(response.body) as Map<String, dynamic>;
-    if (data['success'] != true || data['data'] == null) {
-      throw Exception(data['message'] ?? 'Error al obtener encounter classes');
-    }
-    final raw = data['data']['encounter_classes'] as List<dynamic>? ?? [];
+    final data = unwrapApiContract(
+      json.decode(response.body),
+      response.statusCode,
+    );
+    final raw = data['encounter_classes'] as List<dynamic>? ?? [];
     return raw
         .map((c) => EncounterClass.fromJson(c as Map<String, dynamic>))
         .where((c) => c.code.isNotEmpty)

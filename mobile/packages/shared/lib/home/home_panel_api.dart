@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared/config/api_config.dart';
+import 'package:shared/http/api_contract.dart';
 import 'package:shared/http/bioenlace_http_trace.dart';
-import 'package:shared/text/user_friendly_error.dart';
 
 /// Sección del panel de inicio (`GET /api/v1/home/panel`).
 class HomePanelSection {
@@ -113,19 +113,13 @@ class HomePanelApi {
         .get(uri, headers: _headers)
         .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
     BioenlaceHttpTrace.logResponse('home/panel', response);
-    if (response.statusCode != 200) {
-      throw Exception(messageFromHttpResponse(response));
-    }
-
-    final decoded = json.decode(response.body);
-    if (decoded is! Map<String, dynamic> || decoded['success'] != true) {
-      throw Exception(
-        decoded is Map ? (decoded['message'] as String? ?? 'Error panel') : 'Error panel',
-      );
-    }
+    final panel = unwrapApiContract(
+      json.decode(response.body),
+      response.statusCode,
+    );
 
     return HomePanelResponse.fromJson(
-      Map<String, dynamic>.from(decoded['data'] as Map? ?? {}),
+      panel,
     );
   }
 }

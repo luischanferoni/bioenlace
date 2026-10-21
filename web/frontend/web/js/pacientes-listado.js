@@ -3936,10 +3936,6 @@
           headers: { 'X-Requested-With': 'XMLHttpRequest' },
         });
 
-        if (json.success === false) {
-          throw new Error(json.message || 'No se pudo cargar el panel.');
-        }
-
         var panel = json.data || {};
         if (options.sections) {
           var horarioSecPoll = findPanelSection(panel, 'staff_horario_activo');

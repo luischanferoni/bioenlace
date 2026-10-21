@@ -3,7 +3,7 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
-use yii\web\BadRequestHttpException;
+use common\components\Platform\Core\Http\Contract\ApiException;
 
 /**
  * Logs de diagnóstico desde apps móviles (flows, UI JSON, red).
@@ -22,10 +22,12 @@ class ClientDiagnosticController extends BaseController
         $body = Yii::$app->request->getBodyParams();
         $entries = $body['entries'] ?? null;
         if (!is_array($entries) || $entries === []) {
-            throw new BadRequestHttpException('entries debe ser un array no vacío');
+            throw new ApiException('request_invalid', ['detail' => 'entries debe ser un array no vacío']);
         }
         if (count($entries) > self::MAX_ENTRIES_PER_REQUEST) {
-            throw new BadRequestHttpException('Máximo ' . self::MAX_ENTRIES_PER_REQUEST . ' entradas por request');
+            throw new ApiException('request_invalid', [
+                'detail' => 'Máximo ' . self::MAX_ENTRIES_PER_REQUEST . ' entradas por request',
+            ]);
         }
 
         $idPersona = (int) Yii::$app->user->getIdPersona();
@@ -50,10 +52,7 @@ class ClientDiagnosticController extends BaseController
             $received++;
         }
 
-        return [
-            'success' => true,
-            'received' => $received,
-        ];
+        return $this->ok(['received' => $received]);
     }
 
     private function normalizeEntry(array $entry, int $idPersona, int $idUser, string $appClient): ?string

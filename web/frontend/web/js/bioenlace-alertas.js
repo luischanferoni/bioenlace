@@ -157,7 +157,7 @@
 
     NS.refreshBadge = function () {
         return NS.fetchList({ soloNoLeidas: true, limit: 1 }).then(function (res) {
-            if (res && res.success && res.data) {
+            if (res && res.data) {
                 updateBadge(res.data.no_leidas || 0);
             }
             return res;
@@ -177,7 +177,7 @@
         }
         NS.fetchList({ limit: 50 }).then(function (res) {
             if (!list) return;
-            if (res && res.success && res.data) {
+            if (res && res.data) {
                 mountItems(list, res.data.items || []);
                 updateBadge(res.data.no_leidas || 0);
             } else {

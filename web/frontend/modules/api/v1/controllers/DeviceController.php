@@ -3,7 +3,7 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
-use yii\web\BadRequestHttpException;
+use common\components\Platform\Core\Http\Contract\ApiException;
 use common\models\Platform\UserDevice;
 
 /**
@@ -19,7 +19,9 @@ class DeviceController extends BaseController
     {
         $idPersona = (int) Yii::$app->user->getIdPersona();
         if ($idPersona <= 0) {
-            throw new BadRequestHttpException('Sesión sin persona asociada.');
+            throw new ApiException('request_invalid', [
+                'detail' => 'Sesión sin persona asociada.',
+            ]);
         }
         $req = Yii::$app->request;
         $pushToken = $req->post('push_token');
@@ -27,7 +29,7 @@ class DeviceController extends BaseController
         $platform = $req->post('platform');
         $deviceId = $req->post('device_id');
         if ($pushToken === null || $pushToken === '') {
-            throw new BadRequestHttpException('push_token es obligatorio');
+            throw new ApiException('request_invalid', ['detail' => 'push_token es obligatorio']);
         }
         $ok = UserDevice::upsertPushToken(
             (int) $idPersona,
@@ -37,8 +39,11 @@ class DeviceController extends BaseController
             $deviceId !== null && $deviceId !== '' ? (string) $deviceId : null
         );
         if (!$ok) {
-            throw new BadRequestHttpException('No se pudo registrar el token push.');
+            throw new ApiException('request_invalid', [
+                'detail' => 'No se pudo registrar el token push.',
+            ]);
         }
-        return ['success' => true, 'message' => 'Token registrado'];
+
+        return $this->ok(['registered' => true]);
     }
 }

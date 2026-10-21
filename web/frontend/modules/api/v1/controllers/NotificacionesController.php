@@ -3,7 +3,7 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
-use yii\web\BadRequestHttpException;
+use common\components\Platform\Core\Http\Contract\ApiException;
 use common\components\Platform\Core\Service\Notificaciones\PersonaNotificacionService;
 use common\components\Platform\Core\Service\Notificaciones\PersonaNotificacionInteractionService;
 use common\models\Scheduling\TurnoEventoAudit;
@@ -48,12 +48,12 @@ class NotificacionesController extends BaseController
     {
         $req = Yii::$app->request;
         if (!$req->isPost) {
-            throw new \yii\web\MethodNotAllowedHttpException(['POST']);
+            throw $this->invalidRequest('Solo POST.');
         }
 
         $idPersona = (int) Yii::$app->user->getIdPersona();
         if ($idPersona <= 0) {
-            throw new BadRequestHttpException('Sesión sin persona.');
+            throw $this->invalidRequest('Sesión sin persona.');
         }
 
         $post = array_merge($req->get(), $req->post());
@@ -82,17 +82,14 @@ class NotificacionesController extends BaseController
                 Yii::$app->user->id ? (int) Yii::$app->user->id : null
             );
         } catch (\InvalidArgumentException $e) {
-            throw new BadRequestHttpException($e->getMessage());
+            throw $this->invalidRequest($e->getMessage());
         }
 
-        return [
-            'success' => true,
-            'data' => $result,
-        ];
+        return $this->ok($result);
     }
 
     /**
-     * @return array{success: true, data: array<string, mixed>}
+     * @return array<string, mixed>
      */
     private function listarResponse(): array
     {
@@ -100,28 +97,30 @@ class NotificacionesController extends BaseController
 
         $idPersona = (int) Yii::$app->user->getIdPersona();
         if ($idPersona <= 0) {
-            throw new BadRequestHttpException('Sesión sin persona.');
+            throw $this->invalidRequest('Sesión sin persona.');
         }
 
-        return [
-            'success' => true,
-            'data' => PersonaNotificacionService::listarParaPersona($idPersona, $soloNoLeidas, $limit, $offset),
-        ];
+        return $this->ok(PersonaNotificacionService::listarParaPersona(
+            $idPersona,
+            $soloNoLeidas,
+            $limit,
+            $offset
+        ));
     }
 
     /**
-     * @return array{success: true, data: array<string, mixed>}
+     * @return array<string, mixed>
      */
     private function marcarLeidaResponse(): array
     {
         $req = Yii::$app->request;
         if (!$req->isPost) {
-            throw new \yii\web\MethodNotAllowedHttpException(['POST']);
+            throw $this->invalidRequest('Solo POST.');
         }
 
         $idPersona = (int) Yii::$app->user->getIdPersona();
         if ($idPersona <= 0) {
-            throw new BadRequestHttpException('Sesión sin persona.');
+            throw $this->invalidRequest('Sesión sin persona.');
         }
 
         $post = array_merge($req->get(), $req->post());
@@ -132,10 +131,7 @@ class NotificacionesController extends BaseController
             PersonaNotificacionService::marcarTodasLeidas($idPersona);
         }
 
-        return [
-            'success' => true,
-            'data' => PersonaNotificacionService::listarParaPersona($idPersona, false, 1, 0),
-        ];
+        return $this->ok(PersonaNotificacionService::listarParaPersona($idPersona, false, 1, 0));
     }
 
     /**
@@ -150,5 +146,10 @@ class NotificacionesController extends BaseController
         $offset = isset($params['offset']) && $params['offset'] !== '' ? (int) $params['offset'] : 0;
 
         return [$soloNoLeidas, $limit, $offset];
+    }
+
+    private function invalidRequest(string $detail): ApiException
+    {
+        return new ApiException('request_invalid', ['detail' => $detail]);
     }
 }

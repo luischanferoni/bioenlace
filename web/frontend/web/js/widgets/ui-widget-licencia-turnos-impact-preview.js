@@ -106,7 +106,9 @@
                 if (res.ok && res.json && res.json.data) {
                     renderPreview(panel, res.json.data);
                 } else {
-                    var msg = (res.json && res.json.message) ? res.json.message : 'No se pudo obtener el impacto.';
+                    var msg = (res.json && res.json.error && res.json.error.message)
+                        ? res.json.error.message
+                        : 'No se pudo obtener el impacto.';
                     panel.innerHTML = '<div class="alert alert-danger small mb-0">' + escapeHtml(msg) + '</div>';
                 }
             })

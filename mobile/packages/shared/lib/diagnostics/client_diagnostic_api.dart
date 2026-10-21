@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../config/api_config.dart';
+import '../http/api_contract.dart';
 
 /// Envío de logs de diagnóstico al backend (`POST /client-diagnostic/registrar`).
 class ClientDiagnosticApi {
@@ -47,7 +48,8 @@ class ClientDiagnosticApi {
         return false;
       }
       final decoded = jsonDecode(utf8.decode(res.bodyBytes));
-      return decoded is Map && decoded['success'] == true;
+      final data = unwrapApiContract(decoded, res.statusCode);
+      return data['received'] is int;
     } catch (_) {
       return false;
     }

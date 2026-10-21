@@ -78,6 +78,12 @@ $this->registerAssetBundle(BioenlaceApiClientAsset::class);
                                     . 'id_servicio: ' . $idServicioAutocomplete
                                     . '}; }'
                                 ),
+                                'processResults' => new JsExpression(
+                                    'function(response) { return {'
+                                    . 'results: response && response.data && Array.isArray(response.data.results)'
+                                    . ' ? response.data.results : []'
+                                    . '}; }'
+                                ),
                             ],
                         ],
                     ]);

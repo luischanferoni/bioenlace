@@ -4,12 +4,10 @@ namespace frontend\modules\api\v1\controllers\organization;
 
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
-use yii\web\BadRequestHttpException;
-use yii\web\ForbiddenHttpException;
-use yii\web\NotFoundHttpException;
 use common\components\Domain\Organization\Pes\Application\UseCase\ActivateProfesionalHorario;
 use common\components\Domain\Organization\Pes\Application\Service\ProfesionalHorarioService;
 use common\components\Domain\Organization\Pes\Application\Service\ProfesionalHorarioUiFlowService;
+use common\components\Platform\Core\Http\Contract\ApiException;
 use common\models\Organization\ProfesionalHorario;
 use common\models\Organization\ProfesionalEfectorServicio;
 
@@ -22,6 +20,12 @@ use common\models\Organization\ProfesionalEfectorServicio;
  */
 class ProfesionalHorariosController extends BaseController
 {
+    public function init()
+    {
+        parent::init();
+        $this->contractResponses = true;
+    }
+
     /**
      * GET|POST /api/v1/profesional-horarios/elegir-pes
      *
@@ -63,7 +67,9 @@ class ProfesionalHorariosController extends BaseController
                 $idPersona = (int) Yii::$app->user->getIdPersona();
             }
             if ($idPersona <= 0) {
-                throw new BadRequestHttpException('No se pudo resolver el profesional para listar asignaciones.');
+                throw new ApiException('request_invalid', [
+                    'detail' => 'No se pudo resolver el profesional para listar asignaciones.',
+                ]);
             }
 
             $pesRows = ProfesionalEfectorServicio::find()
@@ -187,10 +193,7 @@ class ProfesionalHorariosController extends BaseController
         $class = strtoupper(trim((string) ($params['encounter_class'] ?? 'EMER')));
         $at = isset($params['at']) ? (string) $params['at'] : null;
 
-        return [
-            'success' => true,
-            'data' => ActivateProfesionalHorario::panelPayload($idEfector, $class, $at),
-        ];
+        return $this->ok(ActivateProfesionalHorario::panelPayload($idEfector, $class, $at));
     }
 
     /**
@@ -225,7 +228,7 @@ class ProfesionalHorariosController extends BaseController
         if ($idPes > 0) {
             $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
             if ($pes === null || (int) $pes->id_efector !== $idEfector) {
-                throw new BadRequestHttpException('PES inválido.');
+                throw new ApiException('request_invalid', ['detail' => 'PES inválido.']);
             }
             $params['id_persona'] = (int) $pes->id_persona;
         }
@@ -301,7 +304,7 @@ class ProfesionalHorariosController extends BaseController
             $data[] = ProfesionalHorarioService::toApiArray($row);
         }
 
-        return ['success' => true, 'data' => $data];
+        return $this->ok($data);
     }
 
     /**
@@ -318,7 +321,7 @@ class ProfesionalHorariosController extends BaseController
         if ($paraRecurso) {
             $idEfector = (int) ($merged['id_efector'] ?? 0);
             if ($idEfector <= 0) {
-                throw new BadRequestHttpException('id_efector es requerido.');
+                throw new ApiException('request_invalid', ['detail' => 'id_efector es requerido.']);
             }
             $this->assertEfectorParamMatchesSessionWhenPresent($idEfector);
         } else {
@@ -329,20 +332,11 @@ class ProfesionalHorariosController extends BaseController
 
         $result = ProfesionalHorarioService::crear($merged);
         if (!$result['ok']) {
-            return $this->error(
-                'No se pudo crear el horario.',
-                array_merge($result['errors'] ?? [], ['conflicts' => $result['conflicts'] ?? []]),
-                422
-            );
+            $meta = !empty($result['conflicts']) ? ['conflicts' => $result['conflicts']] : [];
+            return $this->fail('validation_failed', [], $result['errors'] ?? [], $meta);
         }
 
-        Yii::$app->response->statusCode = 201;
-
-        return [
-            'success' => true,
-            'message' => 'Horario creado.',
-            'data' => ProfesionalHorarioService::toApiArray($result['model']),
-        ];
+        return $this->ok(ProfesionalHorarioService::toApiArray($result['model']), [], 201);
     }
 
     /**
@@ -361,18 +355,11 @@ class ProfesionalHorariosController extends BaseController
 
         $result = ProfesionalHorarioService::actualizar($model, $body);
         if (!$result['ok']) {
-            return $this->error(
-                'No se pudo actualizar el horario.',
-                array_merge($result['errors'] ?? [], ['conflicts' => $result['conflicts'] ?? []]),
-                422
-            );
+            $meta = !empty($result['conflicts']) ? ['conflicts' => $result['conflicts']] : [];
+            return $this->fail('validation_failed', [], $result['errors'] ?? [], $meta);
         }
 
-        return [
-            'success' => true,
-            'message' => 'Horario actualizado.',
-            'data' => ProfesionalHorarioService::toApiArray($result['model']),
-        ];
+        return $this->ok(ProfesionalHorarioService::toApiArray($result['model']));
     }
 
     /**
@@ -383,7 +370,7 @@ class ProfesionalHorariosController extends BaseController
         $model = $this->findOwned($id, $paraRecurso);
         $model->delete();
 
-        return ['success' => true, 'message' => 'Horario eliminado.'];
+        return $this->ok();
     }
 
     private function findOwned(int $id, bool $paraRecurso): ProfesionalHorario
@@ -392,10 +379,12 @@ class ProfesionalHorariosController extends BaseController
         /** @var ProfesionalHorario|null $model */
         $model = ProfesionalHorario::findOne(['id' => $id, 'id_efector' => $idEfector, 'deleted_at' => null]);
         if ($model === null) {
-            throw new NotFoundHttpException('Horario no encontrado.');
+            throw new ApiException('not_found_detail', ['detail' => 'Horario no encontrado.']);
         }
         if (!$paraRecurso && (int) $model->id_persona !== (int) Yii::$app->user->getIdPersona()) {
-            throw new ForbiddenHttpException('No puede modificar Horarios de otro profesional.');
+            throw new ApiException('forbidden_detail', [
+                'detail' => 'No puede modificar Horarios de otro profesional.',
+            ]);
         }
 
         return $model;
@@ -405,7 +394,9 @@ class ProfesionalHorariosController extends BaseController
     {
         $id = (int) Yii::$app->user->getIdEfector();
         if ($id <= 0) {
-            throw new BadRequestHttpException('Se requiere efector en sesión operativa.');
+            throw new ApiException('request_invalid', [
+                'detail' => 'Se requiere efector en sesión operativa.',
+            ]);
         }
 
         return $id;
@@ -415,7 +406,9 @@ class ProfesionalHorariosController extends BaseController
     {
         $sessionEfector = (int) Yii::$app->user->getIdEfector();
         if ($sessionEfector > 0 && $sessionEfector !== $idEfectorParam) {
-            throw new ForbiddenHttpException('El efector indicado no coincide con su sesión.');
+            throw new ApiException('forbidden_detail', [
+                'detail' => 'El efector indicado no coincide con su sesión.',
+            ]);
         }
     }
 }

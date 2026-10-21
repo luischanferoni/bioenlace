@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared/http/bioenlace_http_trace.dart';
 import 'package:shared/shared.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -91,8 +90,8 @@ class PushReceiptQueue {
         response,
       );
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        final data = json.decode(response.body);
-        return data is Map && data['success'] == true;
+        unwrapApiContract(json.decode(response.body), response.statusCode);
+        return true;
       }
       // 4xx de negocio (ref ajena / inválida): descartar para no reintentar forever.
       if (response.statusCode >= 400 && response.statusCode < 500) {

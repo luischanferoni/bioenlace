@@ -4,12 +4,8 @@ namespace frontend\modules\api\v1\controllers\organization;
 
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
-use yii\web\BadRequestHttpException;
 use common\components\Platform\Core\Permission\Domain\ApiDomainOperationBridge;
-use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
-use common\components\Domain\Organization\Pes\Application\Authorization\ProfesionalEfectorServicioAccess;
-use yii\web\ForbiddenHttpException;
-use yii\web\MethodNotAllowedHttpException;
+use common\components\Platform\Core\Http\Contract\ApiException;
 use common\components\Domain\Organization\Pes\Application\Service\FhirScheduleOnboardingUiService;
 use common\components\Domain\Organization\Pes\Application\Service\FhirServiceCodeCatalogUiService;
 use common\components\Domain\Organization\Pes\Application\Service\LicenciaUiFlowService;
@@ -19,9 +15,7 @@ use common\components\Domain\Organization\Pes\Application\Service\ProfesionalEnE
 use common\components\Domain\Organization\Pes\Application\Service\ProfesionalEfectorServicioAgendaUiService;
 use common\components\Platform\Ui\UiScreenService;
 use common\components\Platform\Ui\UiSelectOptionSourceResolver;
-use common\models\Person\Persona;
 use common\models\Organization\ProfesionalEfectorServicio;
-use common\models\Organization\ServiciosEfector;
 
 /**
  * API profesional en efector: autocomplete por efector/servicio; servicios asignados en sesión.
@@ -31,6 +25,12 @@ use common\models\Organization\ServiciosEfector;
 class ProfesionalEfectorServicioController extends BaseController
 {
     public static $authenticatorExcept = ['autocomplete'];
+
+    public function init()
+    {
+        parent::init();
+        $this->contractResponses = true;
+    }
 
     private function reqParamRaw(string $name): ?string
     {
@@ -122,7 +122,7 @@ class ProfesionalEfectorServicioController extends BaseController
         $idEfector = $request->get('id_efector') ?: $request->post('id_efector');
         $idServicio = $request->get('id_servicio') ?: $request->post('id_servicio');
         if (empty($idEfector) || empty($idServicio)) {
-            throw new BadRequestHttpException('id_efector e id_servicio son requeridos');
+            throw $this->invalidRequest('id_efector e id_servicio son requeridos');
         }
         $out = ['results' => ['id' => '', 'text' => '']];
         // Para flujos UI JSON con auto_load, es válido consultar sin `q` y listar
@@ -151,7 +151,7 @@ class ProfesionalEfectorServicioController extends BaseController
             $filters['sort_order'] = $request->get('sort_order') ?: $request->post('sort_order');
         }
         $out['results'] = array_values(ProfesionalEnEfectorListadoUiService::autocompletePorEfectorServicio((string) $q, $filters));
-        return $out;
+        return $this->ok($out);
     }
 
     /**
@@ -236,7 +236,7 @@ class ProfesionalEfectorServicioController extends BaseController
         }
 
         if ($idEfector <= 0) {
-            throw new BadRequestHttpException(
+            throw $this->invalidRequest(
                 'Indique id_efector o fije contexto operativo en sesión (efector / profesional) para listar servicios.'
             );
         }
@@ -278,7 +278,7 @@ class ProfesionalEfectorServicioController extends BaseController
             }
             $idEfector = (int) $idEfector;
             if ($idEfector <= 0) {
-                throw new BadRequestHttpException('id_efector es requerido');
+                throw $this->invalidRequest('id_efector es requerido');
             }
 
             $limit = (int) ($req->get('limit') ?: $req->post('limit') ?: 200);
@@ -312,7 +312,7 @@ class ProfesionalEfectorServicioController extends BaseController
                     )
                 );
             } catch (\InvalidArgumentException $e) {
-                throw new BadRequestHttpException($e->getMessage());
+                throw $this->invalidRequest($e->getMessage());
             }
         }
 
@@ -353,7 +353,7 @@ class ProfesionalEfectorServicioController extends BaseController
             }
             $idEfector = (int) $idEfector;
             if ($idEfector <= 0) {
-                throw new BadRequestHttpException('id_efector es requerido');
+                throw $this->invalidRequest('id_efector es requerido');
             }
 
             $limit = (int) ($req->get('limit') ?: $req->post('limit') ?: 200);
@@ -370,7 +370,7 @@ class ProfesionalEfectorServicioController extends BaseController
                     ProfesionalEnEfectorListadoUiService::listarPorEfectorAceptaTurnos($idEfector, is_string($q) ? $q : null, $limit)
                 );
             } catch (\InvalidArgumentException $e) {
-                throw new BadRequestHttpException($e->getMessage());
+                throw $this->invalidRequest($e->getMessage());
             }
         }
 
@@ -435,14 +435,16 @@ class ProfesionalEfectorServicioController extends BaseController
         $request = Yii::$app->request;
         $idPesRaw = $request->get('id_profesional_efector_servicio') ?: $request->post('id_profesional_efector_servicio');
         if ($idPesRaw === null || $idPesRaw === '') {
-            throw new BadRequestHttpException('Indique id_profesional_efector_servicio.');
+            throw $this->invalidRequest('Indique id_profesional_efector_servicio.');
         }
         $pes = ProfesionalEfectorServicio::findOne(['id' => (int) $idPesRaw, 'deleted_at' => null]);
         if ($pes === null) {
-            throw new BadRequestHttpException('id_profesional_efector_servicio inválido.');
+            throw $this->invalidRequest('id_profesional_efector_servicio inválido.');
         }
         if ((int) $pes->id_efector !== (int) $idEfectorSesion) {
-            throw new BadRequestHttpException('La asignación no corresponde al efector de sesión.');
+            throw new ApiException('forbidden_detail', [
+                'detail' => 'La asignación no corresponde al efector de sesión.',
+            ]);
         }
 
         return [(int) $pes->id_persona, (int) $pes->id_efector];
@@ -452,7 +454,7 @@ class ProfesionalEfectorServicioController extends BaseController
     {
         $idEfector = (int) Yii::$app->user->getIdEfector();
         if ($idEfector <= 0) {
-            throw new BadRequestHttpException('No hay efector en sesión.');
+            throw $this->invalidRequest('No hay efector en sesión.');
         }
 
         return $idEfector;
@@ -516,7 +518,7 @@ class ProfesionalEfectorServicioController extends BaseController
             ];
         }
 
-        return ['results' => $results];
+        return $this->ok(['results' => $results]);
     }
 
     /**
@@ -602,7 +604,7 @@ class ProfesionalEfectorServicioController extends BaseController
     {
         $req = Yii::$app->request;
         if (!$req->isPost) {
-            throw new MethodNotAllowedHttpException(['POST'], 'Solo POST.');
+            throw $this->invalidRequest('Solo POST.');
         }
         $idEfector = (int) Yii::$app->user->getIdEfector();
         $post = array_merge($req->get(), $req->post());
@@ -612,11 +614,9 @@ class ProfesionalEfectorServicioController extends BaseController
             ? $intentId
             : ($allowOwn ? 'licencia.cargar-como-profesional-flow' : 'licencia.cargar-para-profesional-flow');
 
-        return [
-            'success' => true,
-            'kind' => 'licencia_impact_preview',
-            'data' => LicenciaUiFlowService::previewImpacto($idEfector, $post, $defaultIntent, $allowOwn),
-        ];
+        return $this->ok(
+            LicenciaUiFlowService::previewImpacto($idEfector, $post, $defaultIntent, $allowOwn)
+        );
     }
 
     /**
@@ -633,7 +633,7 @@ class ProfesionalEfectorServicioController extends BaseController
     {
         $req = Yii::$app->request;
         if (!$req->isPost) {
-            throw new MethodNotAllowedHttpException(['POST'], 'Este endpoint solo acepta POST (cierre del flujo del asistente).');
+            throw $this->invalidRequest('Este endpoint solo acepta POST (cierre del flujo del asistente).');
         }
         $post = $req->post();
         ApiDomainOperationBridge::assertOrForbidden(
@@ -647,7 +647,9 @@ class ProfesionalEfectorServicioController extends BaseController
         if ($idPes > 0) {
             $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
             if ($pes === null || (int) $pes->id_efector !== $idEfector) {
-                throw new ForbiddenHttpException('Asignación inválida para este efector.');
+                throw new ApiException('forbidden_detail', [
+                    'detail' => 'Asignación inválida para este efector.',
+                ]);
             }
         }
 
@@ -677,7 +679,7 @@ class ProfesionalEfectorServicioController extends BaseController
     {
         $req = Yii::$app->request;
         if (!$req->isPost) {
-            throw new MethodNotAllowedHttpException(['POST'], 'Este endpoint solo acepta POST (cierre del flujo del asistente).');
+            throw $this->invalidRequest('Este endpoint solo acepta POST (cierre del flujo del asistente).');
         }
         $post = $req->post();
         ApiDomainOperationBridge::assertOrForbidden(
@@ -687,13 +689,13 @@ class ProfesionalEfectorServicioController extends BaseController
         );
         $idEfector = (int) Yii::$app->user->getIdEfector();
         if ($idEfector <= 0) {
-            throw new BadRequestHttpException('Se requiere efector en sesión.');
+            throw $this->invalidRequest('Se requiere efector en sesión.');
         }
 
         try {
             $result = DeactivatePesAssignment::bajaDesdeParams($idEfector, $post);
         } catch (\InvalidArgumentException $e) {
-            throw new BadRequestHttpException($e->getMessage());
+            throw $this->invalidRequest($e->getMessage());
         }
 
         return [
@@ -727,7 +729,7 @@ class ProfesionalEfectorServicioController extends BaseController
         $req = Yii::$app->request;
         $idEfector = (int) Yii::$app->user->getIdEfector();
         if ($idEfector <= 0) {
-            throw new BadRequestHttpException('Se requiere efector en sesión.');
+            throw $this->invalidRequest('Se requiere efector en sesión.');
         }
 
         $params = array_merge($req->get(), $req->isPost ? $req->post() : []);
@@ -755,7 +757,7 @@ class ProfesionalEfectorServicioController extends BaseController
         try {
             $preview = DeactivatePesAssignment::previewImpacto($idEfector, $params);
         } catch (\InvalidArgumentException $e) {
-            throw new BadRequestHttpException($e->getMessage());
+            throw $this->invalidRequest($e->getMessage());
         }
 
         $uiParams = array_merge($params, [
@@ -866,11 +868,11 @@ class ProfesionalEfectorServicioController extends BaseController
     {
         $req = Yii::$app->request;
         if (!$req->isPost) {
-            throw new BadRequestHttpException('Este endpoint solo acepta POST (cierre del flujo del asistente).');
+            throw $this->invalidRequest('Este endpoint solo acepta POST (cierre del flujo del asistente).');
         }
         $idEfector = (int) Yii::$app->user->getIdEfector();
         if ($idEfector <= 0) {
-            throw new BadRequestHttpException('Se requiere efector en sesión.');
+            throw $this->invalidRequest('Se requiere efector en sesión.');
         }
 
         return LicenciaUiFlowService::handleFlowSubmit(
@@ -896,11 +898,11 @@ class ProfesionalEfectorServicioController extends BaseController
     {
         $req = Yii::$app->request;
         if (!$req->isPost) {
-            throw new BadRequestHttpException('Este endpoint solo acepta POST (cierre del flujo del asistente).');
+            throw $this->invalidRequest('Este endpoint solo acepta POST (cierre del flujo del asistente).');
         }
         $idEfector = (int) Yii::$app->user->getIdEfector();
         if ($idEfector <= 0) {
-            throw new BadRequestHttpException('Se requiere efector en sesión.');
+            throw $this->invalidRequest('Se requiere efector en sesión.');
         }
 
         return LicenciaUiFlowService::handleFlowSubmit(
@@ -1154,7 +1156,7 @@ class ProfesionalEfectorServicioController extends BaseController
         $idEfector = $this->reqParamRaw('id_efector');
         $idServicio = $this->reqParamRaw('id_servicio');
         if ($idEfector === null || $idServicio === null) {
-            throw new BadRequestHttpException('id_efector e id_servicio son requeridos');
+            throw $this->invalidRequest('id_efector e id_servicio son requeridos');
         }
 
         $ui = UiScreenService::handleScreen(
@@ -1174,5 +1176,10 @@ class ProfesionalEfectorServicioController extends BaseController
         }
 
         return $ui;
+    }
+
+    private function invalidRequest(string $detail): ApiException
+    {
+        return new ApiException('request_invalid', ['detail' => $detail]);
     }
 }

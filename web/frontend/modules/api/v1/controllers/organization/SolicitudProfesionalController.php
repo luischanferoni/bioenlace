@@ -4,8 +4,7 @@ namespace frontend\modules\api\v1\controllers\organization;
 
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
-use yii\web\BadRequestHttpException;
-use yii\web\ForbiddenHttpException;
+use common\components\Platform\Core\Http\Contract\ApiException;
 use common\models\Organization\SolicitudProfesionalEfector;
 use common\models\Organization\SolicitudProfesionalEfectorEvento;
 use common\models\Scheduling\EfectorTurnosConfig;
@@ -17,6 +16,12 @@ use yii\db\Query;
  */
 class SolicitudProfesionalController extends BaseController
 {
+    public function init()
+    {
+        parent::init();
+        $this->contractResponses = true;
+    }
+
     private function requireStaffContextIdFromSession(): int
     {
         return (int) (Yii::$app->user->getIdProfesionalEfectorServicio() ?? 0);
@@ -27,11 +32,11 @@ class SolicitudProfesionalController extends BaseController
         $idEfector = Yii::$app->user->getIdEfector();
         $idPes = $this->requireStaffContextIdFromSession();
         if (!$idEfector || !$idPes) {
-            throw new BadRequestHttpException('Efector o contexto profesional no determinado');
+            throw $this->invalidRequest('Efector o contexto profesional no determinado');
         }
         $cfg = EfectorTurnosConfig::getOrCreateForEfector($idEfector);
         if ($cfg->modo_comunicacion_medicos === EfectorTurnosConfig::MODO_MEDICOS_DESHABILITADO) {
-            return ['success' => true, 'solicitudes' => [], 'message' => 'Módulo deshabilitado'];
+            return $this->ok(['solicitudes' => []], ['message' => 'Módulo deshabilitado']);
         }
 
         $q = SolicitudProfesionalEfector::find()->where(['id_efector' => $idEfector]);
@@ -56,7 +61,7 @@ class SolicitudProfesionalController extends BaseController
             ];
         }
 
-        return ['success' => true, 'solicitudes' => $out];
+        return $this->ok(['solicitudes' => $out]);
     }
 
     public function actionCrear()
@@ -64,16 +69,18 @@ class SolicitudProfesionalController extends BaseController
         $idEfector = Yii::$app->user->getIdEfector();
         $idPes = $this->requireStaffContextIdFromSession();
         if (!$idEfector || !$idPes) {
-            throw new BadRequestHttpException('Efector o contexto profesional no determinado');
+            throw $this->invalidRequest('Efector o contexto profesional no determinado');
         }
         $cfg = EfectorTurnosConfig::getOrCreateForEfector($idEfector);
         if ($cfg->modo_comunicacion_medicos === EfectorTurnosConfig::MODO_MEDICOS_DESHABILITADO) {
-            throw new ForbiddenHttpException('Comunicación entre médicos deshabilitada');
+            throw new ApiException('forbidden_detail', [
+                'detail' => 'Comunicación entre médicos deshabilitada',
+            ]);
         }
 
         $mensaje = Yii::$app->request->post('mensaje');
         if ($mensaje === null || $mensaje === '') {
-            throw new BadRequestHttpException('mensaje requerido');
+            throw $this->invalidRequest('mensaje requerido');
         }
         $dest = Yii::$app->request->post('id_destinatario_profesional_efector_servicio');
 
@@ -85,7 +92,7 @@ class SolicitudProfesionalController extends BaseController
 
         if ($cfg->modo_comunicacion_medicos === EfectorTurnosConfig::MODO_MEDICOS_DIRECTO) {
             if (!$dest) {
-                throw new BadRequestHttpException(
+                throw $this->invalidRequest(
                     'id_destinatario_profesional_efector_servicio requerido en modo directo'
                 );
             }
@@ -98,7 +105,7 @@ class SolicitudProfesionalController extends BaseController
         }
 
         if (!$s->save()) {
-            throw new BadRequestHttpException(implode(', ', $s->getFirstErrors()));
+            throw new ApiException('validation_failed', [], $s->getErrors());
         }
         $ev = new SolicitudProfesionalEfectorEvento();
         $ev->id_solicitud = $s->id;
@@ -106,7 +113,12 @@ class SolicitudProfesionalController extends BaseController
         $ev->tipo = 'creada';
         $ev->save(false);
 
-        return ['success' => true, 'id' => $s->id];
+        return $this->ok(['id' => $s->id]);
+    }
+
+    private function invalidRequest(string $detail): ApiException
+    {
+        return new ApiException('request_invalid', ['detail' => $detail]);
     }
 
     /**

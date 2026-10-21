@@ -9,7 +9,7 @@ use common\components\Domain\Clinical\Laboratory\Application\Agents\LabEncounter
 use common\components\Domain\Clinical\Inpatient\Application\Agents\PostDischargeFollowupAgentPolicy;
 use common\components\Domain\Clinical\Laboratory\Application\Agents\PostLabClassificationAgentPolicy;
 use common\components\Domain\Clinical\Prescription\Application\Agents\PrescriptionRdiPreSubmitAgentPolicy;
-use common\components\Domain\Scheduling\Agenda\Application\Agents\ConsultaAsyncBandejaPrioridadAgentPolicy;
+use common\components\Domain\Scheduling\Agenda\Application\Agents\EncounterAsyncInboxPriorityAgentPolicy;
 use common\components\Domain\Scheduling\Agenda\Application\Agents\ReservaTriagePostCupoRoutingAgentPolicy;
 use common\components\Domain\Scheduling\Agenda\Application\Agents\TurnoAdvanceOfferAgentPolicy;
 use common\components\Domain\Scheduling\Agenda\Application\Agents\TurnoAntinoshowAgentPolicy;
@@ -34,7 +34,7 @@ final class AgentPolicyRegistry
         'turno-resolucion-shortlist' => TurnoResolucionShortlistAgentPolicy::class,
         'turno-resolucion-auto-reserva' => TurnoResolucionAutoReservaAgentPolicy::class,
         'turno-resolucion-multicanal' => TurnoResolucionMulticanalAgentPolicy::class,
-        'consulta-async-bandeja-prioridad' => ConsultaAsyncBandejaPrioridadAgentPolicy::class,
+        'consulta-async-bandeja-prioridad' => EncounterAsyncInboxPriorityAgentPolicy::class,
         'reserva-triage-post-cupo-routing' => ReservaTriagePostCupoRoutingAgentPolicy::class,
         'lab-encounter-link' => LabEncounterLinkAgentPolicy::class,
         'post-lab-classification' => PostLabClassificationAgentPolicy::class,

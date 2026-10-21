@@ -63,7 +63,7 @@ class EmergencyBoardItem {
 
   bool get needsTriage => prioridadTriage == null || prioridadTriage! < 1;
 
-  bool get puedeVerConsulta {
+  bool get canViewEncounter {
     final e = circuitoEstado ?? '';
     return encounterId != null &&
         encounterId! > 0 &&

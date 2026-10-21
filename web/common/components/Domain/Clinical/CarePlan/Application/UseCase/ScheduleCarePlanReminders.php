@@ -59,7 +59,7 @@ final class ScheduleCarePlanReminders
     {
         $subjectPersonaId = (int) ($plan->subject_persona_id ?? 0);
         if ($subjectPersonaId > 0
-            && (new \common\components\Domain\Scheduling\Agenda\Application\UseCase\AssertConsultaAsyncSolicitudAllowed())
+            && (new \common\components\Domain\Scheduling\Agenda\Application\UseCase\AssertEncounterAsyncRequestAllowed())
                 ->tieneMedicacionAbiertaParaPlan($subjectPersonaId, (int) $plan->id)) {
             return [];
         }

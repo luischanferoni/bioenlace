@@ -9,7 +9,7 @@ use common\components\Domain\Clinical\Encounter\Application\Service\PatientAiCon
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EncounterCaptureReviewPresenter;
 use common\components\Domain\Clinical\Encounter\Application\Service\EncounterOpenProblemsService;
 use common\components\Domain\Clinical\Encounter\Application\Service\EpisodeCaptureDedupService;
-use common\components\Domain\Clinical\Capture\Infrastructure\Logging\ConsultaLogger;
+use common\components\Domain\Clinical\Capture\Infrastructure\Logging\EncounterCaptureLogger;
 use common\components\Domain\Clinical\Capture\Infrastructure\Persistence\CaptureAnalysisCache;
 use common\components\Domain\Clinical\Capture\Domain\Policy\CaptureCompletenessPolicy;
 use common\components\Platform\Core\Http\Contract\ApiException;
@@ -72,7 +72,7 @@ class CaptureExtractionService extends Component
                 'servicio' => $servicio->nombre,
                 'tabId' => $tabId,
             ];
-            $logger = ConsultaLogger::iniciar($textoConsulta, $contextoLogger);
+            $logger = EncounterCaptureLogger::iniciar($textoConsulta, $contextoLogger);
 
             $resultadoFormato = CaptureTextService::prepararParaIAConFormato(
                 $textoConsulta,

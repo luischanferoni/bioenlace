@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\Encounter\Application\Authorization;
 
 use common\components\Domain\Person\Representation\Application\Authorization\PersonRepresentationAccess;
-use common\components\Domain\Scheduling\Agenda\Application\Authorization\ConsultaAsyncAccess;
+use common\components\Domain\Scheduling\Agenda\Application\Authorization\AsyncEncounterAccess;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
 use common\models\Organization\ProfesionalEfectorServicio;
@@ -45,7 +45,7 @@ final class EncounterOwnershipAccess
             }
         }
 
-        if (ConsultaAsyncAccess::staffCanAccessAsyncEncounter($encounter)) {
+        if (AsyncEncounterAccess::staffCanAccessAsyncEncounter($encounter)) {
             return true;
         }
 

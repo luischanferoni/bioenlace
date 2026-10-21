@@ -23,7 +23,7 @@ class IAManager
      */
     private static function clinicalLogger(): ?object
     {
-        $class = 'common\\components\\Domain\\Clinical\\Capture\\Application\\ConsultaLogger';
+        $class = 'common\\components\\Domain\\Clinical\\Capture\\Infrastructure\\Logging\\EncounterCaptureLogger';
         if (!class_exists($class)) {
             return null;
         }
@@ -836,7 +836,7 @@ class IAManager
                     \common\components\Platform\Ai\Cost\AICostTracker::registrarLlamadaReal($contexto, $tipoModelo);
                 }
 
-                // Los logs detallados ya se manejan en ConsultaLogger
+                // Los logs detallados ya se manejan en EncounterCaptureLogger
                 $responseData = self::procesarRespuestaProveedor($response, $proveedorIA['tipo']);
                 
                 if ($responseData) {
@@ -1791,7 +1791,7 @@ Texto: {$texto}";
         $jsonData = json_decode($respuesta, true);
 
         if (json_last_error() === JSON_ERROR_NONE) {
-            // JSON válido - los logs detallados ya se manejan en ConsultaLogger
+            // JSON válido - los logs detallados ya se manejan en EncounterCaptureLogger
             return $jsonData;
         }
 
@@ -1800,7 +1800,7 @@ Texto: {$texto}";
         $jsonData = json_decode($respuestaLimpia, true);
 
         if (json_last_error() === JSON_ERROR_NONE) {
-            // JSON válido - los logs detallados ya se manejan en ConsultaLogger
+            // JSON válido - los logs detallados ya se manejan en EncounterCaptureLogger
             return $jsonData;
         }
 

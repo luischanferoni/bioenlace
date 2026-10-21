@@ -46,7 +46,7 @@ class _EmergencyIngresoScreenState extends State<EmergencyIngresoScreen> {
   List<Map<String, String>> _candidatos = [];
   bool _buscando = false;
   bool _guardando = false;
-  bool _consultandoIdentidad = false;
+  bool _buscandoIdentidad = false;
   String? _identidadLabel;
   String? _codigoBarrasEscaneado;
   bool _nnPendiente = false;
@@ -221,7 +221,7 @@ class _EmergencyIngresoScreenState extends State<EmergencyIngresoScreen> {
   }
 
   Future<void> _procesarCodigoBarras(String codigo) async {
-    setState(() => _consultandoIdentidad = true);
+    setState(() => _buscandoIdentidad = true);
     try {
       final data = await widget.api.previewRenaperComoStaff(
         codigoBarras: codigo,
@@ -249,7 +249,7 @@ class _EmergencyIngresoScreenState extends State<EmergencyIngresoScreen> {
         SnackBar(content: Text(userFriendlyErrorMessage(e))),
       );
     } finally {
-      if (mounted) setState(() => _consultandoIdentidad = false);
+      if (mounted) setState(() => _buscandoIdentidad = false);
     }
   }
 
@@ -401,10 +401,10 @@ class _EmergencyIngresoScreenState extends State<EmergencyIngresoScreen> {
           if (_mostrarEscanearDni) ...[
             BioSpacing.gapH(BioSpacing.md),
             OutlinedButton.icon(
-              onPressed: _consultandoIdentidad ? null : _escanearDni,
+              onPressed: _buscandoIdentidad ? null : _escanearDni,
               icon: const Icon(Icons.document_scanner_outlined),
               label: Text(
-                _consultandoIdentidad ? 'Consultando RENAPER…' : 'Escanear DNI',
+                _buscandoIdentidad ? 'Consultando RENAPER…' : 'Escanear DNI',
               ),
             ),
           ],

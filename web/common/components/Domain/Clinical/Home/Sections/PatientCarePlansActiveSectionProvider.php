@@ -7,7 +7,7 @@ use common\components\Domain\Clinical\CarePlan\Application\Presentation\CarePlan
 use common\components\Domain\Clinical\CarePlan\Application\Service\PatientActiveCarePlanQueryService;
 use common\components\Domain\Person\Representation\Domain\Model\RepresentationPermission;
 use common\components\Domain\Person\Representation\Application\Service\PersonRepresentationSubjectService;
-use common\components\Domain\Scheduling\Agenda\Application\UseCase\ListConsultaAsyncInbox;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\ListEncounterAsyncInbox;
 
 final class PatientCarePlansActiveSectionProvider implements HomePanelSectionProviderInterface
 {
@@ -25,7 +25,7 @@ final class PatientCarePlansActiveSectionProvider implements HomePanelSectionPro
 
         $plans = (new PatientActiveCarePlanQueryService())->listActive($idPersona);
         $presentation = new CarePlanPresentationService();
-        $bandejaTratamiento = (new ListConsultaAsyncInbox())->listForPaciente($idPersona, [
+        $bandejaTratamiento = (new ListEncounterAsyncInbox())->listForPaciente($idPersona, [
             'ui_group' => 'tratamiento',
         ]);
         $activasByPlan = $this->indexByCarePlanId($bandejaTratamiento['items'] ?? []);

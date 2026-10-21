@@ -159,7 +159,7 @@ final class BuildControlSeguimientoHub
             $id = (int) substr($anchor, strlen(self::ANCHOR_PREFIX_CARE_PLAN));
             if ($id > 0) {
                 $draft['care_plan_id'] = (string) $id;
-                $draft['intake_tipo'] = ConsultasSeguimientoIntakeCatalogService::INTAKE_SEGUIMIENTO;
+                $draft['intake_tipo'] = EncounterFollowupIntakeCatalogService::INTAKE_SEGUIMIENTO;
                 $draft['control_hub_kind'] = self::KIND_CARE_PLAN;
                 $draft['triage_raiz'] = 'seguimiento_cronico';
             }
@@ -194,7 +194,7 @@ final class BuildControlSeguimientoHub
         }
 
         if ($anchor === self::ANCHOR_CONSULTA_GENERAL) {
-            $draft['intake_tipo'] = ConsultasSeguimientoIntakeCatalogService::INTAKE_CONSULTA_GENERAL;
+            $draft['intake_tipo'] = EncounterFollowupIntakeCatalogService::INTAKE_CONSULTA_GENERAL;
             $draft['control_hub_kind'] = self::KIND_CONSULTA_GENERAL;
             $draft['triage_raiz'] = 'seguimiento_cronico';
 
@@ -202,7 +202,7 @@ final class BuildControlSeguimientoHub
         }
 
         if ($anchor === self::ANCHOR_CONSULTA_PREVIA) {
-            $draft['intake_tipo'] = ConsultasSeguimientoIntakeCatalogService::INTAKE_SEGUIMIENTO_CONSULTA_PREVIA;
+            $draft['intake_tipo'] = EncounterFollowupIntakeCatalogService::INTAKE_SEGUIMIENTO_CONSULTA_PREVIA;
             $draft['control_hub_kind'] = self::KIND_CONSULTA_PREVIA;
             $draft['triage_raiz'] = 'seguimiento_cronico';
 

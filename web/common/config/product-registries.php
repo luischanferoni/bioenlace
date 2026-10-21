@@ -51,9 +51,9 @@ use common\components\Domain\Person\DataAccess\Filter\SexoBiologicoFilterResolve
 use common\components\Domain\Person\DataAccess\Scope\PermitirParaSiMismoScopeChecker;
 use common\components\Domain\Person\Representation\Domain\Catalog\PersonRepresentationUiActionCatalog;
 use common\components\Domain\Scheduling\Home\Sections\AppointmentsDaySectionProvider;
-use common\components\Domain\Scheduling\Home\Sections\PatientConsultaAsyncSectionProvider;
+use common\components\Domain\Scheduling\Home\Sections\PatientEncounterAsyncSectionProvider;
 use common\components\Domain\Scheduling\Home\Sections\PatientUpcomingAppointmentsSectionProvider;
-use common\components\Domain\Scheduling\Home\Sections\StaffConsultaAsyncBandejaSectionProvider;
+use common\components\Domain\Scheduling\Home\Sections\StaffEncounterAsyncInboxSectionProvider;
 use common\components\Domain\Scheduling\Home\Sections\StaffEfectorModalidadKpiSectionProvider;
 use common\components\Domain\Scheduling\Home\Sections\StaffAgendaKpiSectionProvider;
 use common\components\Domain\Scheduling\Home\Sections\StaffSurgeryKpiSectionProvider;
@@ -68,7 +68,7 @@ use common\components\Domain\Person\Assistant\PersonHintCandidateProvider;
 use common\components\Domain\Scheduling\Assistant\SchedulingHintCandidateProvider;
 use common\components\Domain\Scheduling\Assistant\SchedulingUiSelectOptionSourceProvider;
 use common\components\Domain\Scheduling\Assistant\SchedulingUiScreenParamsExpander;
-use common\components\Domain\Scheduling\Assistant\ConsultasSeguimientoFlowDraftHydrator;
+use common\components\Domain\Scheduling\Assistant\EncounterFollowupFlowDraftHydrator;
 use common\components\Domain\Scheduling\Assistant\ReservaTurnoTriageFlowDraftHydrator;
 use common\components\Domain\Scheduling\Assistant\TurnosVerMisTurnosFlowDraftHydrator;
 use common\components\Domain\Scheduling\Assistant\SolicitarAtencionFlowDraftHydrator;
@@ -88,7 +88,7 @@ return [
         'data_access.edit_flow' => [DataAccessEditFlowDraftHydrator::class, 'hydrateWithOptions'],
         'scheduling.reserva_triage' => [ReservaTurnoTriageFlowDraftHydrator::class, 'hydrateWithOptions'],
         'scheduling.solicitar_atencion' => [SolicitarAtencionFlowDraftHydrator::class, 'hydrateWithOptions'],
-        'scheduling.consultas_seguimiento_intake' => [ConsultasSeguimientoFlowDraftHydrator::class, 'hydrateWithOptions'],
+        'scheduling.consultas_seguimiento_intake' => [EncounterFollowupFlowDraftHydrator::class, 'hydrateWithOptions'],
         'scheduling.turnos_listar_como_paciente' => [TurnosVerMisTurnosFlowDraftHydrator::class, 'hydrateWithOptions'],
         'person.paciente_recurso_provincial' => [PacienteRecursoProvincialFlowDraftHydrator::class, 'hydrateWithOptions'],
     ],
@@ -197,12 +197,12 @@ return [
         'emergency_indicators' => EmergencyIndicatorsSectionProvider::class,
         'staff_horario_activo' => StaffHorarioActivoSectionProvider::class,
         'appointments_day' => AppointmentsDaySectionProvider::class,
-        'async_consultations_queue' => StaffConsultaAsyncBandejaSectionProvider::class,
+        'async_consultations_queue' => StaffEncounterAsyncInboxSectionProvider::class,
         'inpatients' => InpatientsSectionProvider::class,
         'surgeries_day' => SurgeriesDaySectionProvider::class,
         'action_cards' => ActionCardsSectionProvider::class,
         'patient_upcoming_appointments' => PatientUpcomingAppointmentsSectionProvider::class,
-        'patient_async_consultations' => PatientConsultaAsyncSectionProvider::class,
+        'patient_async_consultations' => PatientEncounterAsyncSectionProvider::class,
         'patient_care_plans_active' => PatientCarePlansActiveSectionProvider::class,
         'patient_conditions_active' => PatientConditionsActiveSectionProvider::class,
         'staff_session_context' => StaffSessionContextSectionProvider::class,

@@ -49,13 +49,13 @@ class Turno {
     return match?.group(1) ?? trimmed;
   }
 
-  bool get esTeleconsulta =>
+  bool get isTelehealth =>
       (tipoAtencion ?? 'presencial').toLowerCase() == 'teleconsulta';
 
   String get modalidadLabel {
     final fromApi = tipoAtencionLabel?.trim() ?? '';
     if (fromApi.isNotEmpty) return fromApi;
-    return esTeleconsulta ? 'Videollamada' : 'Presencial';
+    return isTelehealth ? 'Videollamada' : 'Presencial';
   }
 
   // Crear desde JSON de la API

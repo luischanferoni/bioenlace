@@ -5,13 +5,13 @@ namespace frontend\modules\api\v1\controllers\clinical;
 use frontend\modules\api\v1\controllers\BaseController;
 use common\models\Clinical\ConsultaChatMessage;
 use common\components\Domain\Clinical\Encounter\Application\Service\SecureMediaService;
-use common\components\Domain\Scheduling\Agenda\Application\UseCase\UploadConsultaAsyncChat;
-use common\components\Domain\Scheduling\Agenda\Application\UseCase\PushConsultaAsyncNotification;
-use common\components\Domain\Scheduling\Agenda\Application\Agents\ConsultaAsyncBandejaPrioridadAgent;
-use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncChatPolicyCatalogService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncChatPolicyService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncEncounterMetaService;
-use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultaAsyncIntakeContextService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\UploadEncounterAsyncChat;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\PushEncounterAsyncNotification;
+use common\components\Domain\Scheduling\Agenda\Application\Agents\EncounterAsyncInboxPriorityAgent;
+use common\components\Domain\Scheduling\Agenda\Application\Service\EncounterAsyncChatPolicyCatalogService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\EncounterAsyncChatPolicyService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\EncounterAsyncMetaService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\EncounterAsyncIntakeContextService;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
 use frontend\modules\api\v1\controllers\clinical\ClinicalAccessTrait;
@@ -38,13 +38,13 @@ class EncounterChatController extends BaseController
         $encounter = $this->assertEncounterAccess($encounterId);
 
         $subject = $encounter->subject;
-        $meta = (new ConsultaAsyncEncounterMetaService())->fromEncounter($encounter);
+        $meta = (new EncounterAsyncMetaService())->fromEncounter($encounter);
         $idPersona = (int) ($encounter->subject_persona_id ?? 0);
-        $intakeContext = (new ConsultaAsyncIntakeContextService())->buildFromMeta($meta, $idPersona);
+        $intakeContext = (new EncounterAsyncIntakeContextService())->buildFromMeta($meta, $idPersona);
         $idPersonaViewer = (int) Yii::$app->user->getIdPersona();
         $viewerEsPaciente = $idPersonaViewer > 0 && $idPersonaViewer === $idPersona;
-        $chatPolicy = (new ConsultaAsyncChatPolicyService())->resolveForEncounter($encounter, $viewerEsPaciente);
-        $policyCatalog = new ConsultaAsyncChatPolicyCatalogService();
+        $chatPolicy = (new EncounterAsyncChatPolicyService())->resolveForEncounter($encounter, $viewerEsPaciente);
+        $policyCatalog = new EncounterAsyncChatPolicyCatalogService();
 
         $messages = ConsultaChatMessage::find()
             ->where(['encounter_id' => $encounterId])
@@ -117,7 +117,7 @@ class EncounterChatController extends BaseController
         if ($raw !== '') {
             return $raw;
         }
-        $legacy = (new ConsultaAsyncChatPolicyCatalogService())
+        $legacy = (new EncounterAsyncChatPolicyCatalogService())
             ->solicitudCategoriaFromLegacyMessageType((string) ($message->message_type ?: ''));
 
         return $legacy;
@@ -130,7 +130,7 @@ class EncounterChatController extends BaseController
             return null;
         }
 
-        return (new ConsultaAsyncChatPolicyCatalogService())->solicitudCategoriaLabel($categoria);
+        return (new EncounterAsyncChatPolicyCatalogService())->solicitudCategoriaLabel($categoria);
     }
 
     /**
@@ -138,7 +138,7 @@ class EncounterChatController extends BaseController
      */
     private function parseEncounterNote(?string $note): array
     {
-        return (new ConsultaAsyncEncounterMetaService())->parse($note);
+        return (new EncounterAsyncMetaService())->parse($note);
     }
 
     public function actionEnviar()
@@ -165,7 +165,7 @@ class EncounterChatController extends BaseController
 
         if ($encounter->parent_type === Encounter::PARENT_SOLICITUD_ASYNC) {
             try {
-                $policySvc = new ConsultaAsyncChatPolicyService();
+                $policySvc = new EncounterAsyncChatPolicyService();
                 if ($user_role === 'paciente') {
                     $policySvc->assertPatientCanSend($encounter);
                 } else {
@@ -196,12 +196,12 @@ class EncounterChatController extends BaseController
 
         if ($user_role === 'paciente' && $encounter->parent_type === Encounter::PARENT_SOLICITUD_ASYNC) {
             try {
-                (new ConsultaAsyncBandejaPrioridadAgent())->onPacienteMensaje($encounter);
+                (new EncounterAsyncInboxPriorityAgent())->onPacienteMensaje($encounter);
             } catch (\Throwable $e) {
                 Yii::warning('Prioridad async mensaje paciente: ' . $e->getMessage(), 'consulta-async-prioridad');
             }
             try {
-                (new ConsultaAsyncChatPolicyService())->maybeAutoCloseAfterPatientMessage($encounter);
+                (new EncounterAsyncChatPolicyService())->maybeAutoCloseAfterPatientMessage($encounter);
             } catch (\Throwable $e) {
                 Yii::warning('Auto-cierre async: ' . $e->getMessage(), 'consulta-async-lifecycle');
             }
@@ -218,7 +218,7 @@ class EncounterChatController extends BaseController
                 ->count();
             if ($prevStaffCount === 0) {
                 try {
-                    (new PushConsultaAsyncNotification())->notifyRespuestaStaffPatient($encounter);
+                    (new PushEncounterAsyncNotification())->notifyRespuestaStaffPatient($encounter);
                 } catch (\Throwable $e) {
                     Yii::warning('Push async respuesta staff: ' . $e->getMessage(), 'consulta-async-push');
                 }
@@ -267,13 +267,13 @@ class EncounterChatController extends BaseController
 
         if ($isAsync) {
             try {
-                $policySvc = new ConsultaAsyncChatPolicyService();
+                $policySvc = new EncounterAsyncChatPolicyService();
                 if ($viewerEsPaciente) {
                     $policySvc->assertPatientCanSend($encounter);
                 } else {
                     $policySvc->assertStaffCanSend($encounter);
                 }
-                (new UploadConsultaAsyncChat())->assertUploadAllowed(
+                (new UploadEncounterAsyncChat())->assertUploadAllowed(
                     $encounter,
                     $messageType,
                     $file,
@@ -322,12 +322,12 @@ class EncounterChatController extends BaseController
 
         if ($user_role === 'paciente' && $encounter->parent_type === Encounter::PARENT_SOLICITUD_ASYNC) {
             try {
-                (new ConsultaAsyncBandejaPrioridadAgent())->onPacienteMensaje($encounter);
+                (new EncounterAsyncInboxPriorityAgent())->onPacienteMensaje($encounter);
             } catch (\Throwable $e) {
                 Yii::warning('Prioridad async mensaje paciente: ' . $e->getMessage(), 'consulta-async-prioridad');
             }
             try {
-                (new ConsultaAsyncChatPolicyService())->maybeAutoCloseAfterPatientMessage($encounter);
+                (new EncounterAsyncChatPolicyService())->maybeAutoCloseAfterPatientMessage($encounter);
             } catch (\Throwable $e) {
                 Yii::warning('Auto-cierre async: ' . $e->getMessage(), 'consulta-async-lifecycle');
             }

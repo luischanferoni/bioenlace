@@ -30,7 +30,7 @@ final class SolicitarAtencionFlowDraftHydrator
             $body['draft'] = $draft;
         }
 
-        ConsultasSeguimientoFlowDraftHydrator::hydrateWithOptions($body, $options);
+        EncounterFollowupFlowDraftHydrator::hydrateWithOptions($body, $options);
     }
 
     /**

@@ -5,9 +5,9 @@ namespace frontend\modules\api\v1\controllers\scheduling;
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 use yii\web\BadRequestHttpException;
-use common\components\Domain\Scheduling\Agenda\Application\UseCase\ListConsultaAsyncInbox;
-use common\components\Domain\Scheduling\Agenda\Application\UseCase\AdvanceConsultaAsyncLifecycle;
-use common\components\Domain\Scheduling\Agenda\Application\UseCase\SubmitConsultaAsyncSolicitud;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\ListEncounterAsyncInbox;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\AdvanceEncounterAsyncLifecycle;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\SubmitEncounterAsyncRequest;
 use common\components\Platform\Ui\UiScreenService;
 
 /**
@@ -42,7 +42,7 @@ class ConsultaAsyncController extends BaseController
                 $merged = array_merge(Yii::$app->request->get(), $post);
 
                 try {
-                    return (new SubmitConsultaAsyncSolicitud())->solicitarComoPaciente($idPersona, $merged);
+                    return (new SubmitEncounterAsyncRequest())->solicitarComoPaciente($idPersona, $merged);
                 } catch (\InvalidArgumentException $e) {
                     throw new BadRequestHttpException($e->getMessage());
                 }
@@ -65,7 +65,7 @@ class ConsultaAsyncController extends BaseController
         }
 
         try {
-            return (new ListConsultaAsyncInbox())->tomarComoStaff($encounterId);
+            return (new ListEncounterAsyncInbox())->tomarComoStaff($encounterId);
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         }
@@ -89,7 +89,7 @@ class ConsultaAsyncController extends BaseController
         }
 
         try {
-            return (new AdvanceConsultaAsyncLifecycle())->cancelarComoPaciente($encounterId, $idPersona);
+            return (new AdvanceEncounterAsyncLifecycle())->cancelarComoPaciente($encounterId, $idPersona);
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         }
@@ -114,7 +114,7 @@ class ConsultaAsyncController extends BaseController
         }
 
         try {
-            return (new AdvanceConsultaAsyncLifecycle())->cerrarComoStaff($encounterId, $resolution, $note);
+            return (new AdvanceEncounterAsyncLifecycle())->cerrarComoStaff($encounterId, $resolution, $note);
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         } catch (\RuntimeException $e) {

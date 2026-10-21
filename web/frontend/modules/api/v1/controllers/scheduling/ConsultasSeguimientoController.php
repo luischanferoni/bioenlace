@@ -6,7 +6,7 @@ use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 use yii\web\BadRequestHttpException;
 use common\components\Domain\Clinical\CarePlan\Application\UseCase\MatchCareProtocol;
-use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultasSeguimientoIntakeStepService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\EncounterFollowupIntakeStepService;
 use common\components\Domain\Scheduling\Agenda\Application\UseCase\BuildControlSeguimientoHub;
 use common\components\Platform\Ui\UiScreenService;
 
@@ -117,7 +117,7 @@ class ConsultasSeguimientoController extends BaseController
             );
         }
 
-        $steps = new ConsultasSeguimientoIntakeStepService();
+        $steps = new EncounterFollowupIntakeStepService();
         $stepDef = $steps->stepDefinition($step);
         if ($stepDef === null) {
             throw new BadRequestHttpException('step no válido.');

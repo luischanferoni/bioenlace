@@ -762,9 +762,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final pendientes = _getPendientes(siguienteTurno);
     final cargadas = _getCompletedEncounters();
     final pendientesPresencial =
-        pendientes.where((t) => !t.esTeleconsulta).toList();
+        pendientes.where((t) => !t.isTelehealth).toList();
     final pendientesVideo =
-        pendientes.where((t) => t.esTeleconsulta).toList();
+        pendientes.where((t) => t.isTelehealth).toList();
     const maxCardWidth = 420.0;
 
     return ListView(
@@ -1362,7 +1362,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _onGuardiaTap(EmergencyBoardItem g) async {
-    if (g.puedeVerConsulta) {
+    if (g.canViewEncounter) {
       await _verHistoriaClinica(
         g.idPersona,
         parent: 'ENCOUNTER',
@@ -1563,7 +1563,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       },
                     ),
                   Icon(
-                    g.puedeVerConsulta
+                    g.canViewEncounter
                         ? Icons.visibility_outlined
                         : (g.needsTriage
                             ? Icons.assignment_outlined
@@ -1795,7 +1795,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               BioBadge(
                 label: turno.modalidadLabel,
-                intent: turno.esTeleconsulta ? UiIntent.info : UiIntent.neutral,
+                intent: turno.isTelehealth ? UiIntent.info : UiIntent.neutral,
               ),
             ],
           ),

@@ -7,7 +7,7 @@ use common\components\Domain\Clinical\CarePlan\Domain\Model\CarePlanDto;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanActivityKind;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanCategory;
 use common\components\Domain\Clinical\CarePlan\Domain\CarePlanStatus;
-use common\components\Domain\Scheduling\Agenda\Application\Service\ConsultasSeguimientoIntakeCatalogService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\EncounterFollowupIntakeCatalogService;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\CarePlanActivity;
 use common\models\Clinical\MedicationRequest;
@@ -105,7 +105,7 @@ final class CarePlanPresentationService
         if ($withActivities) {
             $base['activitySummaries'] = $this->summarizeActivities($plan, $activityLimit);
         }
-        $base['seguimientoAcciones'] = (new ConsultasSeguimientoIntakeCatalogService())->accionesSeguimientoCarePlan();
+        $base['seguimientoAcciones'] = (new EncounterFollowupIntakeCatalogService())->accionesSeguimientoCarePlan();
 
         return $base;
     }

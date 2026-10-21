@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
-import '../widgets/consulta_async_solicitud_card.dart';
+import '../widgets/encounter_async_request_card.dart';
 import 'care_plan_detail_screen.dart';
 
 /// Listado de planes de tratamiento activos del paciente.
@@ -31,10 +31,10 @@ class CarePlansListScreen extends StatelessWidget {
     final id = CarePlanUi.idFromMap(plan);
     if (id == null) return;
     final activas = solicitudesActivas
-        .where((i) => ConsultaAsyncSolicitudCard.carePlanIdOf(i) == id)
+        .where((i) => EncounterAsyncRequestCard.carePlanIdOf(i) == id)
         .toList();
     final hist = solicitudesHistorial.where((i) {
-      final cid = ConsultaAsyncSolicitudCard.carePlanIdOf(i);
+      final cid = EncounterAsyncRequestCard.carePlanIdOf(i);
       return cid == null || cid == id;
     }).toList();
     Navigator.push(

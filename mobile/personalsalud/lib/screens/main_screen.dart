@@ -48,7 +48,7 @@ class _MainScreenState extends State<MainScreen> {
           });
           return;
         }
-        final asyncId = PushNotificationService.asyncConsultaIdDesdePush(data);
+        final asyncId = PushNotificationService.asyncEncounterIdDesdePush(data);
         if (asyncId != null && mounted) {
           setState(() => _selectedIndex = 0);
           Navigator.of(context).push(

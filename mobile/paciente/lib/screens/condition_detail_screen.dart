@@ -3,7 +3,7 @@ import 'package:shared/shared.dart';
 
 import '../config/paciente_intents.dart';
 import '../services/encounter_async_api.dart';
-import '../widgets/consulta_async_solicitud_card.dart';
+import '../widgets/encounter_async_request_card.dart';
 import 'encounter_chat_patient_screen.dart';
 
 /// Detalle liviano de una condición activa (acciones + async anidadas).
@@ -249,7 +249,7 @@ class _ConditionDetailScreenState extends State<ConditionDetailScreen> {
         ..._solicitudesActivas.map(
           (item) => Padding(
             padding: const EdgeInsets.only(bottom: BioSpacing.sm),
-            child: ConsultaAsyncSolicitudCard(
+            child: EncounterAsyncRequestCard(
               item: item,
               onAbrirChat: () => _abrirChat(item),
               onCancelar: () => _cancelar(item),

@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../theme/tokens/tokens.dart';
 
-/// Burbuja del sistema con la guía declarativa del chat de motivos.
-class MotivosConsultaGuideBubble extends StatelessWidget {
+/// System bubble that presents the declarative encounter-reasons guide.
+class EncounterReasonsGuideBubble extends StatelessWidget {
   final String message;
   final String? title;
 
-  const MotivosConsultaGuideBubble({
+  const EncounterReasonsGuideBubble({
     super.key,
     required this.message,
     this.title,
@@ -44,7 +44,11 @@ class MotivosConsultaGuideBubble extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.support_agent_outlined, size: 18, color: palette.base),
+                Icon(
+                  Icons.support_agent_outlined,
+                  size: 18,
+                  color: palette.base,
+                ),
                 BioSpacing.gapW(BioSpacing.sm),
                 Text(
                   title ?? 'Bioenlace',

@@ -651,7 +651,7 @@ class _EncounterReasonsChatScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                MotivosConsultaGuideBubble(
+                EncounterReasonsGuideBubble(
                   message: guideMessage,
                   title: guideTitle,
                 ),

@@ -2,9 +2,9 @@
     "counters": {
         "api_controller_literal_messages": 27,
         "domain_literal_messages": 701,
-        "mobile_literal_ui_text": 211,
-        "mobile_consulta_in_code": 108,
-        "mobile_consulta_file_names": 2,
+        "mobile_literal_ui_text": 210,
+        "mobile_consulta_in_code": 13,
+        "mobile_consulta_file_names": 0,
         "mobile_episode_type_branches": 0,
         "backend_consulta_file_names": 59,
         "backend_consulta_routes": 23,

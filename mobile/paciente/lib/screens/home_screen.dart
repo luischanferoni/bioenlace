@@ -16,7 +16,7 @@ import 'conditions_list_screen.dart';
 import 'encounter_chat_patient_screen.dart';
 import 'encounter_reasons_chat_screen.dart';
 import 'encounter_summary_detail_screen.dart';
-import '../widgets/consulta_async_solicitud_card.dart';
+import '../widgets/encounter_async_request_card.dart';
 
 /// Proximidad de un turno respecto al día actual (sólo fecha, sin hora).
 enum _ProximidadPendiente { hoy, manana, masAdelante }
@@ -61,9 +61,9 @@ class HomeScreenState extends State<HomeScreen> {
 
   List<Map<String, dynamic>> _carePlansActivos = [];
   List<Map<String, dynamic>> _conditionsActivas = [];
-  List<Map<String, dynamic>> _consultasAsync = [];
-  List<Map<String, dynamic>> _consultasAsyncHistorial = [];
-  String _tituloConsultasAsync = 'Consultas clínicas por mensaje';
+  List<Map<String, dynamic>> _encounterRequests = [];
+  List<Map<String, dynamic>> _encounterRequestHistory = [];
+  String _encounterRequestsTitle = 'Consultas clínicas por mensaje';
   String _tituloHistorialAsync = 'Consultas anteriores';
   bool _loadingCarePlans = false;
   bool _loadingConditions = false;
@@ -267,20 +267,20 @@ class HomeScreenState extends State<HomeScreen> {
     final asyncSec = panel.sectionByKind('patient_async_consultations');
     if (asyncSec != null) {
       // Solo generales: tratamiento/condición van anidadas en sus secciones.
-      _consultasAsync = _asMapList(asyncSec.data['items']);
+      _encounterRequests = _asMapList(asyncSec.data['items']);
       final titulo = asyncSec.data['title']?.toString().trim();
       if (titulo != null && titulo.isNotEmpty) {
-        _tituloConsultasAsync = titulo;
+        _encounterRequestsTitle = titulo;
       }
       final history = asyncSec.data['history'];
       if (history is Map) {
-        _consultasAsyncHistorial = _asMapList(history['items']);
+        _encounterRequestHistory = _asMapList(history['items']);
         final ht = history['title']?.toString().trim();
         if (ht != null && ht.isNotEmpty) {
           _tituloHistorialAsync = ht;
         }
       } else {
-        _consultasAsyncHistorial = [];
+        _encounterRequestHistory = [];
       }
     }
   }
@@ -662,13 +662,13 @@ class HomeScreenState extends State<HomeScreen> {
     // Hot reload (web): campos nuevos pueden quedar no-iterables hasta cold restart.
     _conditionsActivas = _asMapList(_conditionsActivas);
     _carePlansActivos = _asMapList(_carePlansActivos);
-    _consultasAsync = _asMapList(_consultasAsync);
-    _consultasAsyncHistorial = _asMapList(_consultasAsyncHistorial);
+    _encounterRequests = _asMapList(_encounterRequests);
+    _encounterRequestHistory = _asMapList(_encounterRequestHistory);
 
-    final asyncConsultas = _consultasAsyncGenerales;
-    final asyncConsultasHist = _consultasAsyncHistorialGenerales;
-    final pendientesTratamiento = _consultasAsyncEnTratamiento.length;
-    final pendientesCondiciones = _consultasAsyncEnCondiciones.length;
+    final generalEncounterRequests = _generalEncounterRequests;
+    final generalEncounterRequestHistory = _generalEncounterRequestHistory;
+    final pendientesTratamiento = _encounterRequestsInCarePlans.length;
+    final pendientesCondiciones = _encounterRequestsInConditions.length;
     final mostrarTratamiento =
         _carePlansActivos.isNotEmpty || _loadingCarePlans;
     final mostrarCondiciones =
@@ -697,13 +697,13 @@ class HomeScreenState extends State<HomeScreen> {
             solicitudesPendientes: pendientesTratamiento,
           ),
         ],
-        if (asyncConsultas.isNotEmpty) ...[
+        if (generalEncounterRequests.isNotEmpty) ...[
           BioSpacing.gapH(BioSpacing.lg),
-          _buildConsultasAsyncSection(context, asyncConsultas),
+          _buildEncounterRequestsSection(context, generalEncounterRequests),
         ],
-        if (asyncConsultasHist.isNotEmpty) ...[
+        if (generalEncounterRequestHistory.isNotEmpty) ...[
           BioSpacing.gapH(BioSpacing.lg),
-          _buildConsultasAsyncHistorialSection(context, asyncConsultasHist),
+          _buildEncounterRequestHistorySection(context, generalEncounterRequestHistory),
         ],
         BioSpacing.gapH(BioSpacing.md),
         if (_error != null && _proximosVisibles.isNotEmpty) ...[
@@ -745,12 +745,12 @@ class HomeScreenState extends State<HomeScreen> {
   void _abrirDetalleCarePlan(Map<String, dynamic> plan) {
     final id = CarePlanUi.idFromMap(plan);
     if (id == null) return;
-    final activas = _consultasAsyncEnTratamiento
-        .where((i) => ConsultaAsyncSolicitudCard.carePlanIdOf(i) == id)
+    final activas = _encounterRequestsInCarePlans
+        .where((i) => EncounterAsyncRequestCard.carePlanIdOf(i) == id)
         .toList();
-    final hist = _consultasAsyncHistorialEnTratamiento
+    final hist = _encounterRequestHistoryInCarePlans
         .where((i) {
-          final cid = ConsultaAsyncSolicitudCard.carePlanIdOf(i);
+          final cid = EncounterAsyncRequestCard.carePlanIdOf(i);
           return cid == null || cid == id;
         })
         .toList();
@@ -783,8 +783,8 @@ class HomeScreenState extends State<HomeScreen> {
           userName: widget.userName,
           onStartAssistantFlow: widget.onStartAssistantFlow,
           onSolicitudesChanged: _cargarInicial,
-          solicitudesActivas: _consultasAsyncEnTratamiento,
-          solicitudesHistorial: _consultasAsyncHistorialEnTratamiento,
+          solicitudesActivas: _encounterRequestsInCarePlans,
+          solicitudesHistorial: _encounterRequestHistoryInCarePlans,
         ),
       ),
     );
@@ -833,7 +833,7 @@ class HomeScreenState extends State<HomeScreen> {
     _abrirListaCondiciones();
   }
 
-  void _abrirChatConsultaAsync(Map<String, dynamic> item) {
+  void _openEncounterChat(Map<String, dynamic> item) {
     final raw = item['encounter_id'];
     final id = raw is int ? raw : int.tryParse(raw?.toString() ?? '');
     if (id == null || id <= 0) return;
@@ -851,7 +851,7 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Future<void> _cancelarConsultaAsync(Map<String, dynamic> item) async {
+  Future<void> _cancelEncounterRequest(Map<String, dynamic> item) async {
     final raw = item['encounter_id'];
     final id = raw is int ? raw : int.tryParse(raw?.toString() ?? '');
     if (id == null || id <= 0) return;
@@ -883,7 +883,7 @@ class HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Widget _buildConsultasAsyncHistorialSection(
+  Widget _buildEncounterRequestHistorySection(
     BuildContext context,
     List<Map<String, dynamic>> items,
   ) {
@@ -895,10 +895,10 @@ class HomeScreenState extends State<HomeScreen> {
         ...items.map(
           (item) => Padding(
             padding: const EdgeInsets.only(bottom: BioSpacing.sm),
-            child: ConsultaAsyncSolicitudCard(
+            child: EncounterAsyncRequestCard(
               item: item,
               esHistorial: true,
-              onAbrirChat: () => _abrirChatConsultaAsync(item),
+              onAbrirChat: () => _openEncounterChat(item),
             ),
           ),
         ),
@@ -906,22 +906,22 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildConsultasAsyncSection(
+  Widget _buildEncounterRequestsSection(
     BuildContext context,
     List<Map<String, dynamic>> items,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(_tituloConsultasAsync, style: BioTypography.title),
+        Text(_encounterRequestsTitle, style: BioTypography.title),
         BioSpacing.gapH(BioSpacing.sm),
         ...items.map(
           (item) => Padding(
             padding: const EdgeInsets.only(bottom: BioSpacing.sm),
-            child: ConsultaAsyncSolicitudCard(
+            child: EncounterAsyncRequestCard(
               item: item,
-              onAbrirChat: () => _abrirChatConsultaAsync(item),
-              onCancelar: () => _cancelarConsultaAsync(item),
+              onAbrirChat: () => _openEncounterChat(item),
+              onCancelar: () => _cancelEncounterRequest(item),
             ),
           ),
         ),
@@ -929,60 +929,60 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  List<Map<String, dynamic>> get _consultasAsyncEnTratamiento {
+  List<Map<String, dynamic>> get _encounterRequestsInCarePlans {
     final out = <Map<String, dynamic>>[];
     for (final plan in _carePlansActivos) {
       out.addAll(_asMapList(plan['solicitudes_activas']));
     }
     // Fallback legado si el panel aún no anida.
     if (out.isEmpty) {
-      return _consultasAsync
-          .where(ConsultaAsyncSolicitudCard.perteneceATratamiento)
+      return _encounterRequests
+          .where(EncounterAsyncRequestCard.perteneceATratamiento)
           .toList();
     }
     return out;
   }
 
-  List<Map<String, dynamic>> get _consultasAsyncEnCondiciones {
+  List<Map<String, dynamic>> get _encounterRequestsInConditions {
     final out = <Map<String, dynamic>>[];
     for (final condition in _asMapList(_conditionsActivas)) {
       out.addAll(_asMapList(condition['solicitudes_activas']));
     }
     if (out.isEmpty) {
-      return _asMapList(_consultasAsync)
-          .where(ConsultaAsyncSolicitudCard.perteneceACondicion)
+      return _asMapList(_encounterRequests)
+          .where(EncounterAsyncRequestCard.perteneceACondicion)
           .toList();
     }
     return out;
   }
 
-  List<Map<String, dynamic>> get _consultasAsyncGenerales => _consultasAsync
+  List<Map<String, dynamic>> get _generalEncounterRequests => _encounterRequests
       .where(
         (i) =>
-            !ConsultaAsyncSolicitudCard.perteneceATratamiento(i) &&
-            !ConsultaAsyncSolicitudCard.perteneceACondicion(i),
+            !EncounterAsyncRequestCard.perteneceATratamiento(i) &&
+            !EncounterAsyncRequestCard.perteneceACondicion(i),
       )
       .toList();
 
-  List<Map<String, dynamic>> get _consultasAsyncHistorialEnTratamiento {
+  List<Map<String, dynamic>> get _encounterRequestHistoryInCarePlans {
     final out = <Map<String, dynamic>>[];
     for (final plan in _carePlansActivos) {
       out.addAll(_asMapList(plan['solicitudes_historial']));
     }
     if (out.isEmpty) {
-      return _consultasAsyncHistorial
-          .where(ConsultaAsyncSolicitudCard.perteneceATratamiento)
+      return _encounterRequestHistory
+          .where(EncounterAsyncRequestCard.perteneceATratamiento)
           .toList();
     }
     return out;
   }
 
-  List<Map<String, dynamic>> get _consultasAsyncHistorialGenerales =>
-      _consultasAsyncHistorial
+  List<Map<String, dynamic>> get _generalEncounterRequestHistory =>
+      _encounterRequestHistory
           .where(
             (i) =>
-                !ConsultaAsyncSolicitudCard.perteneceATratamiento(i) &&
-                !ConsultaAsyncSolicitudCard.perteneceACondicion(i),
+                !EncounterAsyncRequestCard.perteneceATratamiento(i) &&
+                !EncounterAsyncRequestCard.perteneceACondicion(i),
           )
           .toList();
 

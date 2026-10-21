@@ -92,10 +92,10 @@ class _MainScreenState extends State<MainScreen> {
           _abrirResumenAtencion(encounterId);
           return;
         }
-        final asyncConsultaId =
-            PushNotificationService.asyncConsultaIdDesdePush(data);
-        if (asyncConsultaId != null) {
-          _abrirChatAsyncConsulta(asyncConsultaId);
+        final asyncEncounterId =
+            PushNotificationService.asyncEncounterIdDesdePush(data);
+        if (asyncEncounterId != null) {
+          _openEncounterChat(asyncEncounterId);
           return;
         }
         // Confirmación / adelantamiento: abrir bandeja (botón de acción ahí).
@@ -142,7 +142,7 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  void _abrirChatAsyncConsulta(int encounterId) {
+  void _openEncounterChat(int encounterId) {
     setState(() => _selectedIndex = 0);
     Navigator.of(context).push(
       MaterialPageRoute(

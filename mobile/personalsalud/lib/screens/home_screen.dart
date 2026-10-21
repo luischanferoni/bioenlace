@@ -52,10 +52,10 @@ class _HomeScreenState extends State<HomeScreen> {
   );
 
   List<Turno> _turnos = [];
-  List<Map<String, dynamic>> _consultasAsync = [];
-  List<Map<String, dynamic>> _consultasAsyncGroups = [];
-  String _tituloConsultasAsync = 'Consultas clínicas por mensaje';
-  int _consultasAsyncSlaIncumplidos = 0;
+  List<Map<String, dynamic>> _encounterRequests = [];
+  List<Map<String, dynamic>> _encounterRequestGroups = [];
+  String _encounterRequestsTitle = 'Consultas clínicas por mensaje';
+  int _encounterRequestSlaBreaches = 0;
   final Set<int> _tomandoAsyncIds = {};
   List<InternadoItem> _internados = [];
   /// `recorrido` = piso→sala→cama; `nombre` = A–Z.
@@ -246,9 +246,9 @@ class _HomeScreenState extends State<HomeScreen> {
         _puedeAtender = false;
         _puedeDocumentar = false;
         _mensajeSinHorario = null;
-        _consultasAsync = [];
-        _consultasAsyncGroups = [];
-        _consultasAsyncSlaIncumplidos = 0;
+        _encounterRequests = [];
+        _encounterRequestGroups = [];
+        _encounterRequestSlaBreaches = 0;
         _lastListKind = '';
         _staffContext = null;
       }
@@ -302,25 +302,25 @@ class _HomeScreenState extends State<HomeScreen> {
       final asyncSec = panel.sectionByKind('async_consultations_queue');
       if (asyncSec != null) {
         final items = asyncSec.data['items'] as List<dynamic>? ?? [];
-        _consultasAsync = items
+        _encounterRequests = items
             .map((e) => Map<String, dynamic>.from(e as Map))
             .toList();
         final rawGroups = asyncSec.data['groups'] as List<dynamic>? ?? [];
-        _consultasAsyncGroups = rawGroups
+        _encounterRequestGroups = rawGroups
             .whereType<Map>()
             .map((e) => Map<String, dynamic>.from(e))
             .toList();
         // Título de página: solo el del header (top nav). Preferir panel.title.
         final panelTitle = panel.title.trim();
         if (panelTitle.isNotEmpty) {
-          _tituloConsultasAsync = panelTitle;
+          _encounterRequestsTitle = panelTitle;
         }
-        _consultasAsyncSlaIncumplidos =
+        _encounterRequestSlaBreaches =
             asyncSec.data['sla_incumplidos'] as int? ?? 0;
       } else if (!partial) {
-        _consultasAsync = [];
-        _consultasAsyncGroups = [];
-        _consultasAsyncSlaIncumplidos = 0;
+        _encounterRequests = [];
+        _encounterRequestGroups = [];
+        _encounterRequestSlaBreaches = 0;
       }
 
       final inpat = panel.sectionByKind('inpatients');
@@ -450,7 +450,7 @@ class _HomeScreenState extends State<HomeScreen> {
         .toList();
   }
 
-  List<Turno> _getConsultasCargadas() {
+  List<Turno> _getCompletedEncounters() {
     return _turnos
         .where((t) => t.estado == 'ATENDIDO' && t.id != 999999)
         .toList();
@@ -537,7 +537,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     : _encounterClass == 'EMER'
                         ? 'Tablero de guardia'
                         : _encounterClass == 'VR'
-                            ? _tituloConsultasAsync
+                            ? _encounterRequestsTitle
                             : _formatearFechaAmigable(_fechaSeleccionada),
                 style: BioTypography.h3,
               ),
@@ -672,10 +672,10 @@ class _HomeScreenState extends State<HomeScreen> {
         vertical: BioSpacing.lg,
       ),
       children: [
-        if (_consultasAsyncSlaIncumplidos > 0) ...[
+        if (_encounterRequestSlaBreaches > 0) ...[
           Align(
             alignment: Alignment.centerRight,
-            child: BioBadge.danger('$_consultasAsyncSlaIncumplidos plazo vencido'),
+            child: BioBadge.danger('$_encounterRequestSlaBreaches plazo vencido'),
           ),
           BioSpacing.gapH(BioSpacing.sm),
         ],
@@ -686,15 +686,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Misma organización que web: orden del API (`groups`) o fallback Las mías → Por tomar.
   List<Map<String, dynamic>> _resolvedAsyncStaffGroups() {
-    if (_consultasAsyncGroups.isNotEmpty) {
-      return _consultasAsyncGroups;
+    if (_encounterRequestGroups.isNotEmpty) {
+      return _encounterRequestGroups;
     }
-    if (_consultasAsync.isEmpty) {
+    if (_encounterRequests.isEmpty) {
       return const [];
     }
     final mias = <Map<String, dynamic>>[];
     final porTomar = <Map<String, dynamic>>[];
-    for (final item in _consultasAsync) {
+    for (final item in _encounterRequests) {
       final asignacion = item['asignacion'] is Map
           ? Map<String, dynamic>.from(item['asignacion'] as Map)
           : <String, dynamic>{};
@@ -760,7 +760,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildTurnosPorEstado(Turno? siguienteTurno) {
     final pendientes = _getPendientes(siguienteTurno);
-    final cargadas = _getConsultasCargadas();
+    final cargadas = _getCompletedEncounters();
     final pendientesPresencial =
         pendientes.where((t) => !t.esTeleconsulta).toList();
     final pendientesVideo =

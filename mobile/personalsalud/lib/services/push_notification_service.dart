@@ -155,8 +155,8 @@ class PushNotificationService {
     return id != null && id > 0 ? id : null;
   }
 
-  /// Consulta async — bandeja / chat staff (`CONSULTA_ASYNC_*_STAFF`).
-  static int? asyncConsultaIdDesdePush(Map<String, dynamic> data) {
+  /// Async encounter inbox and chat notifications for staff.
+  static int? asyncEncounterIdDesdePush(Map<String, dynamic> data) {
     const types = {
       'CONSULTA_ASYNC_SLA_ESCALATE_STAFF',
       'CONSULTA_ASYNC_NUEVA_SOLICITUD_STAFF',

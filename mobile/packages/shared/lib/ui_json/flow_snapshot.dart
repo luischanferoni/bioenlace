@@ -177,7 +177,7 @@ String formatFlowSubmitSummary({
       if ((data['medicacion_operacion']?.toString().trim() ?? '').isNotEmpty ||
           (data['intake_tipo']?.toString().trim() ?? '').isNotEmpty ||
           (data['seguimiento_necesidad']?.toString().trim() ?? '').isNotEmpty) {
-        return _summaryConsultasSeguimiento(snap, data);
+        return _summaryEncounterRequest(snap, data);
       }
       return _summaryCrear(snap, data);
     case 'turnos.crear-como-paciente':
@@ -315,7 +315,10 @@ String _nuevoHorarioLinea(Map<String, dynamic> snap, Map<String, dynamic> data) 
   );
 }
 
-String _summaryConsultasSeguimiento(Map<String, dynamic> snap, Map<String, dynamic> data) {
+String _summaryEncounterRequest(
+  Map<String, dynamic> snap,
+  Map<String, dynamic> data,
+) {
   final msg = data['mensaje']?.toString().trim() ?? data['message']?.toString().trim();
   if (msg != null && msg.isNotEmpty) {
     return msg;

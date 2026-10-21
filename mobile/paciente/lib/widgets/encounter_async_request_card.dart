@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
-/// Card de solicitud/consulta async (bandeja paciente).
-class ConsultaAsyncSolicitudCard extends StatelessWidget {
-  const ConsultaAsyncSolicitudCard({
+/// Card for encounter requests in the patient inbox.
+class EncounterAsyncRequestCard extends StatelessWidget {
+  const EncounterAsyncRequestCard({
     super.key,
     required this.item,
     this.esHistorial = false,
@@ -102,7 +102,7 @@ class ConsultaAsyncSolicitudCard extends StatelessWidget {
           ],
           if (esHistorial && resolucion.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.xs),
-            Text('Resolución: $resolucion', style: BioTypography.bodySm),
+            Text(resolucion, style: BioTypography.bodySm),
           ],
           if (abrirChat || cancelar) ...[
             BioSpacing.gapH(BioSpacing.sm),

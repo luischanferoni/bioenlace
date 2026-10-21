@@ -1201,7 +1201,7 @@ class DocumentEncounter extends Component
                     $stat['accion'] = 'medicacion';
                     $stat['created'] = max(0, $after - $before);
                     break;
-                case 'ConsultaPracticas':
+                case 'EncounterPractice':
                 case 'ConsultaIndicaciones':
                     $rows = is_array($payload) ? $payload : [];
                     if ($rows !== []) {

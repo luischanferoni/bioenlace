@@ -6,11 +6,11 @@ use common\components\Domain\Clinical\Capture\Domain\RowContract\PracticaRowCont
 use common\models\Clinical\Input\PracticaInput;
 
 /**
- * Tipología de captura de prácticas (legacy name `ConsultaPracticas`).
+ * Capture model for practices documented during an encounter.
  * Persistencia: ServiceRequest / Procedure. Sin tabla `consultas_practicas`.
  * Contrato Domain: {@see PracticaRowContract}.
  */
-final class ConsultaPracticas extends \yii\base\Model
+final class EncounterPractice extends \yii\base\Model
 {
     /**
      * @return list<string>

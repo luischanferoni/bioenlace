@@ -40,7 +40,7 @@ final class ManageServiceRequest
     public function createFromExtractedRow(
         Encounter $encounter,
         $row,
-        string $categoryKey = 'ConsultaPracticas',
+        string $categoryKey = 'EncounterPractice',
         ?CarePlan $carePlan = null
     ): ServiceRequest {
         if ($categoryKey === 'EncounterReferralRequest' && is_array($row)) {
@@ -59,7 +59,7 @@ final class ManageServiceRequest
         if ($categoryKey === 'ConsultaIndicaciones') {
             return $this->createIndicacionFromExtractedRow($encounter, $row, $carePlan);
         }
-        if ($categoryKey === 'ConsultaPracticas') {
+        if ($categoryKey === 'EncounterPractice') {
             return $this->createPracticaFromExtractedRow($encounter, $row, $carePlan);
         }
 

@@ -11,7 +11,7 @@ final class EncounterCapturePersistenceCheck
         'EncounterReason' => 'reasons',
         'ConsultaMedicamentos' => 'medication_requests',
         'ConsultaIndicaciones' => 'service_requests',
-        'ConsultaPracticas' => 'service_requests',
+        'EncounterPractice' => 'service_requests',
         'EncounterReferralRequest' => 'service_requests',
     ];
 

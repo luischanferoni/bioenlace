@@ -22,7 +22,7 @@ class FormularioSelect2 extends \yii\base\Model
         $models   = [];
 
         // array(1) { ["codigo"]=> array(2) { [0]=> string(9) "386438000" [1]=> string(9) "431187006" } }
-        // el formato de $post es, 'ConsultaPracticas' => [ 'codigo'=> [ 0 => "386438000", 1 => "431187006" ] ]
+        // Select2 posts the selected codes as indexed values.
         if ($post && is_array($post)) {
             $ok = false;
             $restoAttributes = [];
@@ -50,7 +50,7 @@ class FormularioSelect2 extends \yii\base\Model
             foreach ($multiples as $valor) {
                 $model = new $modelClass;                
                 $model->{$attributo_select2} = ["-"];
-                /*if ($modelClass = 'ConsultaPracticas') {
+                /*if ($modelClass = 'EncounterPractice') {
                     var_dump($valor);die;
                 }*/
                 $model->{$attributo} = $valor;                

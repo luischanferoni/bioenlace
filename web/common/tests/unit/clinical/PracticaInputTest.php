@@ -6,6 +6,7 @@ use common\components\Domain\Clinical\Capture\Application\Service\RowContractSer
 
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\Capture\Domain\Policy\CaptureCompletenessPolicy;
+use common\models\Clinical\EncounterPractice;
 use common\models\Clinical\Input\PracticaInput;
 
 class PracticaInputTest extends Unit
@@ -36,7 +37,7 @@ class PracticaInputTest extends Unit
             [
                 [
                     'titulo' => 'Prácticas realizadas',
-                    'modelo' => 'ConsultaPracticas',
+                    'modelo' => 'EncounterPractice',
                     'requerido' => false,
                     'campos_requeridos' => PracticaInput::promptFieldNames(),
                 ],
@@ -44,5 +45,13 @@ class PracticaInputTest extends Unit
         );
 
         $this->assertTrue($result['complete'], $result['message']);
+    }
+
+    public function testEncounterPracticeModelAssessesExtractedRows(): void
+    {
+        $result = EncounterPractice::completenessForExtractedRow(['Practica' => 'ECG']);
+
+        $this->assertSame([], $result['missing_fields']);
+        $this->assertSame('ECG', $result['label']);
     }
 }

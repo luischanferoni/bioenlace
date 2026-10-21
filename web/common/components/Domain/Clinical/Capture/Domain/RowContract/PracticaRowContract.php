@@ -4,10 +4,10 @@ namespace common\components\Domain\Clinical\Capture\Domain\RowContract;
 
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureRowCompleteness;
 
-/** Contrato Domain: práctica realizada (`ConsultaPracticas`). */
+/** Domain contract for a practice performed during an encounter. */
 final class PracticaRowContract
 {
-    public const MODELO = 'ConsultaPracticas';
+    public const MODELO = 'EncounterPractice';
 
     public const FIELD_PRACTICA = 'Practica';
     public const FIELD_RESULTADO = 'Resultado';

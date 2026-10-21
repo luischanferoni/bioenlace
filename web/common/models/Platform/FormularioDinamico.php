@@ -2,7 +2,6 @@
 
 namespace common\models\Platform;
 
-use common\models\Clinical\ConsultaPracticas;
 use Yii;
 use yii\helpers\ArrayHelper;
 
@@ -39,7 +38,7 @@ class FormularioDinamico extends \yii\base\Model
             
         }
 
-        // el formato de $post es, 'ConsultaPracticas' => [0 => ['id' => .., ...], 1 => ...]
+        // The posted form is keyed by the model form name.
         if ($post && is_array($post)) {
             foreach ($post as $i => $item) {
                 // si recibimos el id en el post es porque es un update, 

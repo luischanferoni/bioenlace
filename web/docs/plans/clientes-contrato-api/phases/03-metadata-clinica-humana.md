@@ -14,6 +14,10 @@ Que secciones clínicas, tipos de episodio, triage y acciones permitidas lleguen
 - Ámbito de atención del profesional (humano o veterinario) informado en el inicio de sesión.
 - Reemplazar los modelos fijos de signos vitales, evolución de internación y agenda de cirugía por el modelo genérico de secciones.
 
+## Avance
+
+El catálogo de clases encounter y las opciones de sesión ahora incluyen `capabilities` junto con `code` y `label`. El catálogo público y el wizard entregan los mismos metadatos; las clases FHIR que no están activas para selección no reciben capacidades de producto. El cliente todavía debe consumir estas capacidades en lugar de inferir pantallas por código.
+
 ## Criterio de salida
 
 Una especialidad nueva se agrega con metadata y un servicio, sin cambios en móvil ni web. El timeline del piloto se pinta solo con secciones genéricas.

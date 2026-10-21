@@ -35,6 +35,13 @@ class EncounterDefinition extends ActiveRecord
      */
     public const ENCOUNTER_CLASS_SESSION_SELECTABLE = ['AMB', 'EMER', 'IMP', 'VR'];
 
+    private const ENCOUNTER_CLASS_CAPABILITIES = [
+        'AMB' => ['appointments', 'date_navigation'],
+        'EMER' => ['emergency_board', 'patient_admission', 'emergency_polling'],
+        'IMP' => ['inpatients', 'date_navigation', 'inpatient_refresh'],
+        'VR' => ['async_requests'],
+    ];
+
     /**
      * @return array<string, string> code => label
      */
@@ -48,6 +55,31 @@ class EncounterDefinition extends ActiveRecord
         }
 
         return $out;
+    }
+
+    /**
+     * @return list<array{code:string,label:string,capabilities:list<string>}>
+     */
+    public static function sessionSelectableClassMetadata(): array
+    {
+        $out = [];
+        foreach (self::ENCOUNTER_CLASS_SESSION_SELECTABLE as $code) {
+            $out[] = self::classMetadata($code);
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return array{code:string,label:string,capabilities:list<string>}
+     */
+    public static function classMetadata(string $code): array
+    {
+        return [
+            'code' => $code,
+            'label' => (string) (self::ENCOUNTER_CLASS[$code] ?? $code),
+            'capabilities' => self::ENCOUNTER_CLASS_CAPABILITIES[$code] ?? [],
+        ];
     }
 
     public static function tableName(): string

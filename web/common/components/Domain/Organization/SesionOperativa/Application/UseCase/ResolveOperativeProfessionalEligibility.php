@@ -26,20 +26,14 @@ class ResolveOperativeProfessionalEligibility extends Component
      * En cada ítem de `servicios`, `id_profesional_efector_servicio` identifica la fila PES.
      *
      * @return array{
-     *   encounter_classes: list<array{code:string,label:string}>,
-     *   efectores: list<array{id_efector:int,id:int,nombre:string,servicios:list<array{id_servicio:int,nombre:string,id_profesional_efector_servicio:int}>}>,
+     *   encounter_classes: list<array{code:string,label:string,capabilities:list<string>}>,
+     *   efectores: list<array{id_efector:int,id:int,nombre:string,servicios:list<array{id_servicio:int,nombre:string,id_profesional_efector_servicio:int}>,encounter_classes:list<array{code:string,label:string,capabilities:list<string>}>}>,
      *   efectores_con_problemas: list<array{id_efector:?int,nombre:?string,message:string,contact:mixed}>
      * }
      */
     public function buildOpcionesIniciales(int $idPersona): array
     {
-        $encounterClassesCatalog = [];
-        foreach (EncounterDefinition::sessionSelectableClasses() as $code => $label) {
-            $encounterClassesCatalog[] = [
-                'code' => (string) $code,
-                'label' => (string) $label,
-            ];
-        }
+        $encounterClassesCatalog = EncounterDefinition::sessionSelectableClassMetadata();
 
         $idEfectoresPes = ProfesionalEfectorServicio::find()
             ->select(['id_efector'])
@@ -183,12 +177,7 @@ class ResolveOperativeProfessionalEligibility extends Component
                 'nombre' => $nombreEfector,
                 'servicios' => $serviciosPayload,
                 'encounter_classes' => array_values(array_map(
-                    static function (string $code): array {
-                        return [
-                            'code' => $code,
-                            'label' => (string) (EncounterDefinition::ENCOUNTER_CLASS[$code] ?? $code),
-                        ];
-                    },
+                    static fn (string $code): array => EncounterDefinition::classMetadata($code),
                     $allowedByEfector[$idEfector] ?? array_keys(EncounterDefinition::ENCOUNTER_CLASS)
                 )),
             ];
@@ -204,10 +193,7 @@ class ResolveOperativeProfessionalEligibility extends Component
         $encounterClasses = [];
         foreach (EncounterDefinition::sessionSelectableClasses() as $code => $label) {
             if ($unionCodes === [] || isset($unionCodes[$code])) {
-                $encounterClasses[] = [
-                    'code' => (string) $code,
-                    'label' => (string) $label,
-                ];
+                $encounterClasses[] = EncounterDefinition::classMetadata((string) $code);
             }
         }
         if ($encounterClasses === []) {

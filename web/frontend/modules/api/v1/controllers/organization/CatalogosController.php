@@ -36,14 +36,9 @@ class CatalogosController extends BaseController
      */
     public function actionEncounterClasses()
     {
-        $formatted = [];
-        foreach (EncounterDefinition::sessionSelectableClasses() as $code => $label) {
-            $formatted[] = [
-                'code' => (string) $code,
-                'label' => (string) $label,
-            ];
-        }
-        return $this->ok(['encounter_classes' => $formatted]);
+        return $this->ok([
+            'encounter_classes' => EncounterDefinition::sessionSelectableClassMetadata(),
+        ]);
     }
 
     /**

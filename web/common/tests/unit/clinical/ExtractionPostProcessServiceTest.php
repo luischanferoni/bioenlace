@@ -179,7 +179,7 @@ class ExtractionPostProcessServiceTest extends Unit
         $processor = new ExtractionPostProcessService($validator);
         $categorias = [
             ['titulo' => 'Motivos de consulta', 'modelo' => 'EncounterReason', 'requerido' => false],
-            ['titulo' => 'Derivaciones', 'modelo' => 'ConsultaDerivaciones', 'requerido' => false],
+            ['titulo' => 'Derivaciones', 'modelo' => 'EncounterReferralRequest', 'requerido' => false],
         ];
         $input = [
             'datosExtraidos' => [

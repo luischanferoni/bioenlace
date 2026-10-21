@@ -4,7 +4,7 @@ namespace common\components\Domain\Scheduling\Agenda\Application\Service;
 
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\models\Clinical\Encounter;
-use common\models\Clinical\ConsultaChatMessage;
+use common\models\Clinical\EncounterChatMessage;
 
 /**
  * Mensajes de sistema en chat async (message_type sistema).
@@ -18,7 +18,7 @@ final class EncounterAsyncSystemMessageService
             return;
         }
 
-        $chatMessage = new ConsultaChatMessage();
+        $chatMessage = new EncounterChatMessage();
         $chatMessage->encounter_id = (int) $encounter->id;
         $chatMessage->user_id = 0;
         $chatMessage->user_name = 'Sistema';
@@ -43,7 +43,7 @@ final class EncounterAsyncSystemMessageService
 
     public function tieneRespuestaStaff(int $encounterId): bool
     {
-        return ConsultaChatMessage::find()
+        return EncounterChatMessage::find()
             ->where(['encounter_id' => $encounterId])
             ->andWhere(['user_role' => ['medico', 'enfermeria']])
             ->andWhere(['not in', 'message_type', ['sistema']])
@@ -52,7 +52,7 @@ final class EncounterAsyncSystemMessageService
 
     public function countMensajesPaciente(int $encounterId): int
     {
-        return (int) ConsultaChatMessage::find()
+        return (int) EncounterChatMessage::find()
             ->where(['encounter_id' => $encounterId, 'user_role' => 'paciente'])
             ->andWhere(['not in', 'message_type', ['sistema']])
             ->count();

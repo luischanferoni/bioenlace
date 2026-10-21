@@ -12,7 +12,7 @@ final class EncounterCapturePersistenceCheck
         'ConsultaMedicamentos' => 'medication_requests',
         'ConsultaIndicaciones' => 'service_requests',
         'ConsultaPracticas' => 'service_requests',
-        'ConsultaDerivaciones' => 'service_requests',
+        'EncounterReferralRequest' => 'service_requests',
     ];
 
     /**

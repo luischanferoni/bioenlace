@@ -23,13 +23,7 @@ final class EncounterSumarAutofacturacionContextService
 
     public static function resolveEncounterIdFromRequest(array $input): ?int
     {
-        foreach (['encounter_id', 'legacy_id_consulta', 'id_consulta'] as $key) {
-            if (!empty($input[$key])) {
-                return (int) $input[$key];
-            }
-        }
-
-        return null;
+        return !empty($input['encounter_id']) ? (int) $input['encounter_id'] : null;
     }
 
     public static function fromRequest(array $input): ?self
@@ -126,9 +120,7 @@ final class EncounterSumarAutofacturacionContextService
 
     public function getAutofacturacion(): ?Autofacturacion
     {
-        $fk = Autofacturacion::legacyConsultaFkAttribute();
-
-        return Autofacturacion::findOne([$fk => (int) $this->encounter->id]);
+        return Autofacturacion::findOne(['encounter_id' => (int) $this->encounter->id]);
     }
 
     /**

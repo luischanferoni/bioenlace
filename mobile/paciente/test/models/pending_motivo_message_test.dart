@@ -3,11 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test(
-    'rewrites queued encounter identifier while preserving existing queue data',
+    'persists queued encounter identifier with its canonical key',
     () {
       final message = PendingMotivoMessage.fromJson(<String, dynamic>{
         'id': 'queued-1',
-        'consulta_id': 42,
+        'encounter_id': 42,
         'type': 'texto',
         'status': 'pendingUpload',
         'created_at': '2026-10-21T10:00:00.000',
@@ -19,7 +19,7 @@ void main() {
 
       expect(message.encounterId, 42);
       expect(persisted['encounter_id'], 42);
-      expect(persisted.containsKey('consulta_id'), isFalse);
+      expect(persisted.containsKey('encounter_id'), isTrue);
       expect(persisted['texto'], 'Necesito consultar');
     },
   );

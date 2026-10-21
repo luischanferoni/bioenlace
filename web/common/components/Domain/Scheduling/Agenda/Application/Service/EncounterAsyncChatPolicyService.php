@@ -5,7 +5,6 @@ namespace common\components\Domain\Scheduling\Agenda\Application\Service;
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Domain\Scheduling\Agenda\Application\Authorization\AsyncEncounterAccess;
 use common\models\Clinical\Encounter;
-use common\models\Clinical\ConsultaChatMessage;
 
 /**
  * Política de composer, cancelación y límites conversacionales (metadata-driven).

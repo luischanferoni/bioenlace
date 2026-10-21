@@ -16,7 +16,7 @@ class EncounterAsyncApi {
 
   Future<Map<String, dynamic>> cancelarComoPaciente(int encounterId) async {
     try {
-      final uri = Uri.parse('${AppConfig.apiUrl}/consulta-async/cancelar-como-paciente');
+      final uri = Uri.parse('${AppConfig.apiUrl}/encounter-async/cancelar-como-paciente');
       final response = await http
           .post(
             uri,

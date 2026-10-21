@@ -29,7 +29,7 @@ final class SubmitEncounterAsyncRequest
         $draft['tipo_atencion'] = ReservaModalidadAtencionCatalogService::CODE_ASYNC;
 
         $intakeSvc = new SubmitEncounterFollowupIntake();
-        if (SubmitEncounterFollowupIntake::esIntakeConsultasSeguimiento($draft)) {
+        if (SubmitEncounterFollowupIntake::isEncounterFollowupIntake($draft)) {
             $intakeSvc->prepararDraft($draft, $idPersona);
             $intakeSvc->assertPuedeSolicitarAsync($draft, $idPersona);
             (new AssertEncounterAsyncRequestAllowed())->assertPuedeCrear($idPersona, $draft);
@@ -83,7 +83,7 @@ final class SubmitEncounterAsyncRequest
         try {
             (new EncounterAsyncInboxPriorityAgent())->onNuevaSolicitud($encounter);
         } catch (\Throwable $e) {
-            Yii::warning('Prioridad async nueva solicitud: ' . $e->getMessage(), 'consulta-async-prioridad');
+            Yii::warning('Prioridad async nueva solicitud: ' . $e->getMessage(), 'encounter-async-prioridad');
         }
 
         return [

@@ -24,7 +24,7 @@ final class AgentBoundedContextMap
         'turno-resolucion-shortlist' => 'scheduling',
         'turno-resolucion-auto-reserva' => 'scheduling',
         'turno-resolucion-multicanal' => 'scheduling',
-        'consulta-async-bandeja-prioridad' => 'scheduling',
+        'encounter-async-bandeja-prioridad' => 'scheduling',
         'reserva-triage-post-cupo-routing' => 'scheduling',
         'lab-encounter-link' => 'clinical',
         'post-lab-classification' => 'clinical',

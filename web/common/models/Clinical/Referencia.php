@@ -6,16 +6,14 @@ use common\models\Terminology\MotivoDerivacion;
 use common\models\Organization\Efector;
 use common\models\Organization\Estado_solicitud;
 use common\models\Organization\Servicio;
-use Yii;
 use common\models\Clinical\Encounter;
-use common\traits\LegacyIdConsultaAsEncounterColumnTrait;
+use common\traits\EncounterIdTrait;
 
 /**
  * This is the model class for table "referencia".
  *
  * @property string $id_referencia
- * @property int|null $legacy_id_consulta Encounter id (columna legacy `id_consulta` pre-migración).
- * @property int|null $encounter_id Alias de {@see $legacy_id_consulta}.
+ * @property int|null $encounter_id
  * @property integer $id_efector_referenciado
  * @property string $id_motivo_derivacion
  * @property string $id_servicio
@@ -36,7 +34,7 @@ use common\traits\LegacyIdConsultaAsEncounterColumnTrait;
  */
 class Referencia extends \yii\db\ActiveRecord
 {
-    use LegacyIdConsultaAsEncounterColumnTrait;
+    use EncounterIdTrait;
 
     /**
      * @inheritdoc
@@ -51,11 +49,9 @@ class Referencia extends \yii\db\ActiveRecord
      */
     public function rules()
     {
-        $fk = static::legacyConsultaFkAttribute();
-
         return [
-            [[$fk, 'id_efector_referenciado', 'id_motivo_derivacion', 'id_servicio', 'id_estado'], 'required'],
-            [[$fk, 'id_efector_referenciado', 'id_motivo_derivacion', 'id_servicio', 'id_estado'], 'integer'],
+            [['encounter_id', 'id_efector_referenciado', 'id_motivo_derivacion', 'id_servicio', 'id_estado'], 'required'],
+            [['encounter_id', 'id_efector_referenciado', 'id_motivo_derivacion', 'id_servicio', 'id_estado'], 'integer'],
             [['estudios_complementarios', 'resumen_hc', 'tratamiento_previo', 'tratamiento', 'observacion'], 'string'],
             [['fecha_turno', 'hora_turno'], 'safe']
         ];
@@ -68,7 +64,7 @@ class Referencia extends \yii\db\ActiveRecord
     {
         return [
             'id_referencia' => 'Id Referencia',
-            static::legacyConsultaFkAttribute() => 'Encounter',
+            'encounter_id' => 'Encounter',
             'id_efector_referenciado' => 'Id Efector Referenciado',
             'id_motivo_derivacion' => 'Id Motivo Derivacion',
             'id_servicio' => 'Id Servicio',
@@ -81,12 +77,6 @@ class Referencia extends \yii\db\ActiveRecord
             'hora_turno' => 'Hora Turno',
             'observacion' => 'Observacion',
         ];
-    }
-
-    /** @deprecated use {@see getEncounter()} */
-    public function getConsulta()
-    {
-        return $this->getEncounter();
     }
 
     /**
@@ -121,12 +111,11 @@ class Referencia extends \yii\db\ActiveRecord
         return $this->hasOne(Estado_solicitud::class, ['id_estado' => 'id_estado']);
     }
     
-    public function getDatosPersona($idEncounter, $idreferencia)
+    public function getDatosPersona(int $idEncounter, int $referenceId): array
     {
-        $fk = static::legacyConsultaFkAttribute();
         $persona = Referencia::find()->asArray()->select(
                         ['id_referencia' => 'referencia.id_referencia',
-                         'id_consulta' => 'enc.id',
+                         'encounter_id' => 'enc.id',
                          'id_turno' => 'turnos.id_turnos',
                          'id_persona' => 'personas.id_persona',
                          'nombre' => 'personas.nombre',  
@@ -134,20 +123,19 @@ class Referencia extends \yii\db\ActiveRecord
                          'id_efector' => 'turnos.id_efector'
                             ])
                         ->from('referencia')
-                        ->innerJoin(['enc' => Encounter::tableName()], "referencia.{$fk} = enc.id")
+                        ->innerJoin(['enc' => Encounter::tableName()], 'referencia.encounter_id = enc.id')
                         ->leftJoin('turnos', 'enc.appointment_id = turnos.id_turnos')
                         ->innerJoin('personas', 'enc.subject_persona_id = personas.id_persona')
-                        ->where(["referencia.{$fk}" => (int) $idEncounter])
-                        ->andwhere(['id_referencia' => $idreferencia])
+                        ->where(['referencia.encounter_id' => (int) $idEncounter])
+                        ->andWhere(['id_referencia' => $referenceId])
                         ->orderBy('apellido')->all();
         return $persona;
     }
     
-    public function getDatosPersonaxIdConsulta($idEncounter)
+    public function getDatosPersonaForEncounter(int $idEncounter): array
     {
-        $fk = static::legacyConsultaFkAttribute();
         $persona = Referencia::find()->asArray()->select(
-                        ['id_consulta' => 'enc.id',
+                        ['encounter_id' => 'enc.id',
                          'id_turno' => 'turnos.id_turnos',
                          'id_persona' => 'personas.id_persona',
                          'nombre' => 'personas.nombre',  

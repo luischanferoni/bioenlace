@@ -40,15 +40,15 @@ final class ManageServiceRequest
     public function createFromExtractedRow(
         Encounter $encounter,
         $row,
-        string $legacyModelo = 'ConsultaPracticas',
+        string $categoryKey = 'ConsultaPracticas',
         ?CarePlan $carePlan = null
     ): ServiceRequest {
-        if ($legacyModelo === 'ConsultaDerivaciones' && is_array($row)) {
+        if ($categoryKey === 'EncounterReferralRequest' && is_array($row)) {
             return CreateReferralRequest::createFromExtractedRow($encounter, $row);
         }
 
         if (is_string($row)) {
-            $row = $legacyModelo === 'ConsultaIndicaciones'
+            $row = $categoryKey === 'ConsultaIndicaciones'
                 ? ['Indicacion' => trim($row)]
                 : ['Practica' => trim($row)];
         }
@@ -56,14 +56,14 @@ final class ManageServiceRequest
             throw new \InvalidArgumentException('Fila de práctica/indicación inválida.');
         }
 
-        if ($legacyModelo === 'ConsultaIndicaciones') {
+        if ($categoryKey === 'ConsultaIndicaciones') {
             return $this->createIndicacionFromExtractedRow($encounter, $row, $carePlan);
         }
-        if ($legacyModelo === 'ConsultaPracticas') {
+        if ($categoryKey === 'ConsultaPracticas') {
             return $this->createPracticaFromExtractedRow($encounter, $row, $carePlan);
         }
 
-        $campos = self::promptFieldsForModelo($legacyModelo);
+        $campos = self::promptFieldsForCategory($categoryKey);
         $primaryKey = $campos[0] ?? 'Practica';
         $secondaryKey = $campos[1] ?? null;
         $codigoKey = null;
@@ -226,14 +226,14 @@ final class ManageServiceRequest
     /**
      * @return list<string>
      */
-    private static function promptFieldsForModelo(string $legacyModelo): array
+    private static function promptFieldsForCategory(string $categoryKey): array
     {
-        if ($legacyModelo === '' || !preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $legacyModelo)) {
+        if ($categoryKey === '' || !preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $categoryKey)) {
             return [];
         }
         $class = null;
         foreach (['\\common\\models\\Clinical\\', '\\common\\models\\'] as $prefix) {
-            $candidate = $prefix . $legacyModelo;
+            $candidate = $prefix . $categoryKey;
             if (class_exists($candidate)) {
                 $class = $candidate;
                 break;

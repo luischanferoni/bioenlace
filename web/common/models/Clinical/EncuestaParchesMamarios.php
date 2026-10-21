@@ -323,7 +323,7 @@ class EncuestaParchesMamarios extends \yii\db\ActiveRecord
     public function getAtencionEnfermeria()
     {
         return $this
-            ->hasOne(ConsultaAtencionesEnfermeria::className(), ['parent_id' => 'id'])
+            ->hasOne(EncounterNursingCare::class, ['parent_id' => 'id'])
             ->onCondition(['parent_class' => static::className()]);
     }
 
@@ -341,7 +341,7 @@ class EncuestaParchesMamarios extends \yii\db\ActiveRecord
     public function link($name, $model, $extraColumns = [])
     {
         if ((
-                $model instanceof ConsultaAtencionesEnfermeria ||
+                $model instanceof EncounterNursingCare ||
                 $model instanceof PersonasAntecedente
             )
             && !$model->isRelationPopulated('parent')

@@ -10,7 +10,7 @@ use yii\web\Controller;
 /**
  * GET /api/v1/media/{scope}/{encounter_id}/{filename} — archivo binario (Bearer + participantes del encounter).
  *
- * scope: motivos-consulta | consulta-chat
+ * scope: encounter-reasons | encounter-chat
  */
 class MediaController extends BaseController
 {

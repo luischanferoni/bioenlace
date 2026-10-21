@@ -44,7 +44,7 @@ class SisseActionFilter extends ActionFilter
     const FILTRO_PACIENTE = 'FILTRO_PACIENTE';
     /** Requiere id PES / contexto profesional en sesión (sesión operativa). */
     const FILTRO_CONTEXTO_PROFESIONAL = 'FILTRO_CONTEXTO_PROFESIONAL';
-    const FILTRO_CONSULTA = 'FILTRO_CONSULTA';
+    const FILTRO_ENCOUNTER = 'FILTRO_ENCOUNTER';
 
     /**
      * @var callable a PHP callback that returns true or false.
@@ -96,8 +96,8 @@ class SisseActionFilter extends ActionFilter
             }
         }
 
-        if (in_array(self::FILTRO_CONSULTA, $this->filtrosExtra)) {
-            if (!Yii::$app->request->get('id_consulta')) {
+        if (in_array(self::FILTRO_ENCOUNTER, $this->filtrosExtra)) {
+            if (!Yii::$app->request->get('encounter_id')) {
                 throw new ForbiddenHttpException(
                     "Error al intentar obtener el parámetro id de consulta");
             }

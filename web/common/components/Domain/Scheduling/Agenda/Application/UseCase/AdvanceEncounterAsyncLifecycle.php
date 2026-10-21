@@ -154,7 +154,7 @@ final class AdvanceEncounterAsyncLifecycle
                 $notifier->notifyCerradaPatient($encounter, $label);
             }
         } catch (\Throwable $e) {
-            Yii::warning('Push async cierre: ' . $e->getMessage(), 'consulta-async-push');
+            Yii::warning('Push async cierre: ' . $e->getMessage(), 'encounter-async-push');
         }
 
         return [

@@ -14,7 +14,7 @@ use common\components\Domain\Scheduling\Agenda\Application\Service\EncounterAsyn
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Domain\Clinical\Encounter\Application\UseCase\RecordEncounterReason;
 use common\models\Clinical\Encounter;
-use common\models\Clinical\ConsultaChatMessage;
+use common\models\Clinical\EncounterChatMessage;
 use common\models\Person\Persona;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Organization\Servicio;
@@ -337,7 +337,7 @@ final class ListEncounterAsyncInbox
         try {
             (new PushEncounterAsyncNotification())->notifyTomadaPatient($encounter);
         } catch (\Throwable $e) {
-            Yii::warning('Push async tomada: ' . $e->getMessage(), 'consulta-async-push');
+            Yii::warning('Push async tomada: ' . $e->getMessage(), 'encounter-async-push');
         }
 
         $staffMsgKey = $structured ? 'tomada_structured' : 'tomada_conversational';
@@ -500,7 +500,7 @@ final class ListEncounterAsyncInbox
 
     private function tieneRespuestaStaff(int $encounterId): bool
     {
-        return ConsultaChatMessage::find()
+        return EncounterChatMessage::find()
             ->where(['encounter_id' => $encounterId])
             ->andWhere(['user_role' => ['medico', 'enfermeria']])
             ->exists();

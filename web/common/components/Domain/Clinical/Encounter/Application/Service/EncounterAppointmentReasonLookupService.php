@@ -5,7 +5,7 @@ namespace common\components\Domain\Clinical\Encounter\Application\Service;
 use common\components\Domain\Clinical\Encounter\Domain\ConditionDiagnosisRole;
 use common\models\Clinical\Condition;
 use common\models\Clinical\Encounter;
-use common\models\Clinical\AppointmentReasonMessage;
+use common\models\Clinical\EncounterReasonMessage;
 use common\models\Scheduling\Turno;
 use yii\db\Expression;
 use yii\db\Query;
@@ -101,7 +101,7 @@ final class EncounterAppointmentReasonLookupService
 
         $id = $this->baseTurnoEncounterQuery($personaId, $idEfector)
             ->innerJoin(
-                ['m' => AppointmentReasonMessage::tableName()],
+                ['m' => EncounterReasonMessage::tableName()],
                 'm.encounter_id = enc.id'
             )
             ->select(['enc.id'])
@@ -131,7 +131,7 @@ final class EncounterAppointmentReasonLookupService
 
         $subMensajes = (new Query())
             ->select(['encounter_id', 'cnt' => 'COUNT(*)'])
-            ->from(AppointmentReasonMessage::tableName())
+            ->from(EncounterReasonMessage::tableName())
             ->groupBy('encounter_id');
 
         $rows = $this->baseTurnoEncounterQuery($personaId, $idEfector)

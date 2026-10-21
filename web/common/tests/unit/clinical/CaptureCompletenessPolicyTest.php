@@ -35,7 +35,7 @@ class CaptureCompletenessPolicyTest extends Unit
             [
                 [
                     'titulo' => 'Signos vitales',
-                    'modelo' => 'ConsultaAtencionesEnfermeria',
+                    'modelo' => 'EncounterNursingCare',
                     'requerido' => false,
                     'sugerido' => true,
                     'campos_requeridos' => [],

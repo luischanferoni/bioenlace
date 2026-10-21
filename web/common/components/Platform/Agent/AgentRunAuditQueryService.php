@@ -26,7 +26,7 @@ final class AgentRunAuditQueryService
             'turno-resolucion-auto-reserva' => 'A01 Auto-reserva',
             'turno-resolucion-multicanal' => 'A02 Multicanal',
             'turno-resolucion-loop-close' => 'A06 Cierre loop',
-            'consulta-async-bandeja-prioridad' => 'H01 Bandeja async',
+            'encounter-async-bandeja-prioridad' => 'H01 Bandeja async',
             'reserva-triage-post-cupo-routing' => 'A05 Ruteo post-triage',
             'post-lab-classification' => 'B03 Post-lab',
             'lab-encounter-link' => 'E01 Lab→encounter',

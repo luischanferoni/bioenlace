@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared/shared.dart';
 
 /// Servicio para la conversación de motivos de consulta (texto, audio, fotos).
-/// Endpoints: motivos-consulta/mensajes, enviar, subir.
+/// Endpoints: encounter-reasons/mensajes, enviar, subir.
 class EncounterReasonChatService {
   final String? authToken;
   final String userId;
@@ -57,7 +57,7 @@ class EncounterReasonChatService {
   Future<Map<String, dynamic>> getMessages(int encounterId) async {
     try {
       final uri = Uri.parse(
-        '${AppConfig.apiUrl}/motivos-consulta/mensajes/$encounterId',
+        '${AppConfig.apiUrl}/encounter-reasons/mensajes/$encounterId',
       );
       final response = await http
           .get(uri, headers: _headers)
@@ -72,7 +72,7 @@ class EncounterReasonChatService {
         'data': payload,
         'messages': normalizeChatMediaMessages(
           rawMsgs,
-          mediaScope: 'motivos-consulta',
+          mediaScope: 'encounter-reasons',
           encounterId: encounterId,
         ),
         'input_abierto': payload['input_abierto'] == true,
@@ -87,7 +87,7 @@ class EncounterReasonChatService {
 
   Future<Map<String, dynamic>> sendMessage(int encounterId, String text) async {
     try {
-      final uri = Uri.parse('${AppConfig.apiUrl}/motivos-consulta/enviar');
+      final uri = Uri.parse('${AppConfig.apiUrl}/encounter-reasons/enviar');
       final body = {'encounter_id': encounterId, 'message': text};
       final response = await http
           .post(
@@ -113,7 +113,7 @@ class EncounterReasonChatService {
     required String messageType,
   }) async {
     try {
-      final uri = Uri.parse('${AppConfig.apiUrl}/motivos-consulta/subir');
+      final uri = Uri.parse('${AppConfig.apiUrl}/encounter-reasons/subir');
       final request = http.MultipartRequest('POST', uri);
       request.headers.addAll(_multipartHeaders);
       request.fields['encounter_id'] = encounterId.toString();
@@ -128,7 +128,7 @@ class EncounterReasonChatService {
       );
       normalizeChatMediaMessage(
         payload,
-        mediaScope: 'motivos-consulta',
+        mediaScope: 'encounter-reasons',
         encounterId: encounterId,
       );
       return {'success': true, 'data': payload};

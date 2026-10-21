@@ -21,7 +21,7 @@ final class EncounterUiActionCatalog implements UiActionCatalogProviderInterface
         }
 
         $provided = [
-            'encounter_id' => ['description' => 'Encounter clínico (alias id_consulta en clientes legacy)'],
+            'encounter_id' => ['description' => 'Identificador del encounter clínico'],
         ];
 
         self::$definitions = [

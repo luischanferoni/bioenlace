@@ -5,15 +5,14 @@ namespace common\models\Clinical;
 use common\models\Person\Persona;
 
 use common\models\Clinical\Encounter;
-use common\traits\EncounterIdLegacyConsultaColumnTrait;
+use common\traits\EncounterIdTrait;
 
 /**
  * Antecedentes de persona — tabla `persona_antecedentes`.
  *
- * La columna `encounter_id` (legacy `id_consulta`) almacena el id de {@see Encounter}.
+ * La columna `encounter_id` almacena el id de {@see Encounter}.
  *
  * @property int|null $encounter_id
- * @property int|null $id_consulta Alias deprecated de {@see $encounter_id}.
  * @property int|null $id_antecedente
  * @property int|null $id_snomed_situacion
  * @property string|null $deleted_at
@@ -25,7 +24,7 @@ use common\traits\EncounterIdLegacyConsultaColumnTrait;
 class PersonasAntecedente extends \yii\db\ActiveRecord
 {
     use \common\traits\SoftDeleteDateTimeTrait;
-    use EncounterIdLegacyConsultaColumnTrait;
+    use EncounterIdTrait;
 
     public $terminos_motivos;
     public $id_servicio;
@@ -55,7 +54,6 @@ class PersonasAntecedente extends \yii\db\ActiveRecord
     {
         return [
             'encounter_id' => 'Encounter',
-            'id_consulta' => 'Encounter (legacy)',
             'id_antecedente' => '',
             'select2_codigo' => 'Antecedentes Personales',
         ];
@@ -95,15 +93,6 @@ class PersonasAntecedente extends \yii\db\ActiveRecord
             ->all();
     }
 
-    /**
-     * @deprecated use {@see getPersonasAntecedentePorEncounter()}
-     * @return static[]
-     */
-    public static function getPersonasAntecedentePorConsulta($id_cons)
-    {
-        return static::getPersonasAntecedentePorEncounter((int) $id_cons);
-    }
-
     public static function getPersonasAntecedentePorSnomed($id_persona, $codigo_snomed, $tipo)
     {
         return static::find()
@@ -137,11 +126,4 @@ class PersonasAntecedente extends \yii\db\ActiveRecord
         ]);
     }
 
-    /**
-     * @deprecated use {@see hardDeleteGrupoPorEncounter()}
-     */
-    public static function hardDeleteGrupo($id_consulta, $ids)
-    {
-        static::hardDeleteGrupoPorEncounter((int) $id_consulta, $ids);
-    }
 }

@@ -31,7 +31,7 @@ class AutofacturacionEncounterBusqueda extends Model
      */
     public function search(array $params): ActiveDataProvider
     {
-        $fk = Autofacturacion::legacyConsultaFkAttribute();
+        $fk = 'encounter_id';
         $afTable = Autofacturacion::tableName();
 
         $query = Encounter::findActive()

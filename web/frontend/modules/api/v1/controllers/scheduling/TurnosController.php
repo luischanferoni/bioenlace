@@ -16,7 +16,7 @@ use common\models\Scheduling\Turno;
 use common\models\Scheduling\AgendaFeriados;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Organization\ServiciosEfector;
-use common\models\Clinical\ConsultaDerivaciones;
+use common\models\Clinical\EncounterReferralRequest;
 use common\models\Person\Persona;
 use common\components\Platform\Ui\UiDefinitionTemplateManager;
 use common\components\Platform\Ui\UiScreenService;
@@ -2131,11 +2131,11 @@ class TurnosController extends BaseController
 
         $model->es_sobreturno = true;
 
-        $cpsQ = ConsultaDerivaciones::getDerivacionesPorPersona(
+        $cpsQ = EncounterReferralRequest::getDerivacionesPorPersona(
             $model->id_persona,
             $model->id_efector,
             $model->id_servicio_asignado,
-            ConsultaDerivaciones::ESTADO_EN_ESPERA
+            EncounterReferralRequest::ESTADO_EN_ESPERA
         );
         $cps = $cpsQ instanceof \yii\db\ActiveQuery ? $cpsQ->all() : (is_array($cpsQ) ? $cpsQ : []);
         if (count($cps) > 0) {

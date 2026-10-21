@@ -13,12 +13,12 @@ use common\components\Platform\Ui\UiScreenService;
 /**
  * Solicitudes de consulta async (paciente, sin turno).
  *
- * RBAC ApiGhost: /api/consulta-async/&lt;action&gt;
+ * RBAC ApiGhost: /api/encounter-async/&lt;action&gt;
  */
 class EncounterAsyncController extends BaseController
 {
     /**
-     * GET|POST /api/v1/consulta-async/solicitar-como-paciente
+     * GET|POST /api/v1/encounter-async/solicitar-como-paciente
      *
      * @action_name Solicitar consulta clínica por mensaje (paciente)
      * @entity ConsultaAsync
@@ -29,7 +29,7 @@ class EncounterAsyncController extends BaseController
         $req = Yii::$app->request;
 
         return UiScreenService::handleScreen(
-            'consulta-async',
+            'encounter-async',
             'solicitar-como-paciente',
             $req->get(),
             $req->post(),
@@ -51,7 +51,7 @@ class EncounterAsyncController extends BaseController
     }
 
     /**
-     * POST /api/v1/consulta-async/tomar-como-staff
+     * POST /api/v1/encounter-async/tomar-como-staff
      *
      * @action_name Tomar solicitud async (staff)
      * @entity ConsultaAsync
@@ -72,7 +72,7 @@ class EncounterAsyncController extends BaseController
     }
 
     /**
-     * POST /api/v1/consulta-async/cancelar-como-paciente
+     * POST /api/v1/encounter-async/cancelar-como-paciente
      *
      * @action_name Cancelar solicitud async (paciente)
      */
@@ -96,7 +96,7 @@ class EncounterAsyncController extends BaseController
     }
 
     /**
-     * POST /api/v1/consulta-async/cerrar-como-staff
+     * POST /api/v1/encounter-async/cerrar-como-staff
      *
      * @action_name Cerrar solicitud async con resolución (staff)
      */

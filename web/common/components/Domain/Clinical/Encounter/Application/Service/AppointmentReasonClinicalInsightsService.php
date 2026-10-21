@@ -101,7 +101,7 @@ Responde ÚNICAMENTE con JSON válido (sin markdown):
 Reglas: máximo 5 ítems por lista; hipótesis razonables, no afirmativas; sin recetas ni dosis.
 PROMPT;
 
-        $raw = IAManager::consultarIA($prompt, 'motivos-consulta-insights', 'analysis');
+        $raw = IAManager::consultarIA($prompt, 'encounter-reasons-insights', 'analysis');
 
         return self::normalizeInsightsPayload($raw);
     }

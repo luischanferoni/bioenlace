@@ -150,7 +150,7 @@ class EncounterCaptureLogger
         self::$instancia = null;
     }
 
-    private function escribirEncabezado($textoConsulta)
+    private function escribirEncabezado($sourceText)
     {
         $timestamp = date('Y-m-d H:i:s');
         $medicoId = $this->contexto['id_profesional_efector_servicio']
@@ -166,7 +166,7 @@ class EncounterCaptureLogger
         $encabezado .= str_repeat('=', 80) . "\n\n";
         $encabezado .= "[{$this->obtenerTimestamp()}] INICIO\n";
         $encabezado .= "Texto original:\n";
-        $encabezado .= $this->formatearTexto($textoConsulta) . "\n\n";
+        $encabezado .= $this->formatearTexto($sourceText) . "\n\n";
 
         $this->escribir($encabezado);
     }

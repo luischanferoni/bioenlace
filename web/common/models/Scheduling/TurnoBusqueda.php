@@ -26,7 +26,7 @@ class TurnoBusqueda extends Turno
     public function rules()
     {
         return [
-            [['id_turnos', 'id_persona', 'id_consulta_referencia', 'id_servicio_asignado', 'id_profesional_efector_servicio'], 'integer'],
+            [['id_turnos', 'id_persona', 'referenced_encounter_id', 'id_servicio_asignado', 'id_profesional_efector_servicio'], 'integer'],
             [['fecha', 'hora', 'confirmado', 'referenciado', 'usuario_alta', 'fecha_alta', 'usuario_mod', 'fecha_mod', 'busqueda_libre', 'dni', 'profesional_clave'], 'safe'],
 
         ];
@@ -70,7 +70,7 @@ class TurnoBusqueda extends Turno
             'id_persona' => $this->id_persona,
             'fecha' => $this->fecha,
             'hora' => $this->hora,
-            'id_consulta_referencia' => $this->id_consulta_referencia,
+            'referenced_encounter_id' => $this->referenced_encounter_id,
             'id_servicio_asignado' => $this->id_servicio_asignado,
             'id_profesional_efector_servicio' => $this->id_profesional_efector_servicio,
             'fecha_alta' => $this->fecha_alta,
@@ -175,7 +175,7 @@ class TurnoBusqueda extends Turno
             'id_persona' => $this->id_persona,
             'fecha' => $this->fecha,
             'hora' => $this->hora,
-            'id_consulta_referencia' => $this->id_consulta_referencia,
+            'referenced_encounter_id' => $this->referenced_encounter_id,
             'id_servicio_asignado' => $this->id_servicio_asignado,
             'id_profesional_efector_servicio' => $this->id_profesional_efector_servicio,
             'fecha_alta' => $this->fecha_alta,

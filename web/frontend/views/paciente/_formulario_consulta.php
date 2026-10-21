@@ -9,7 +9,7 @@ use yii\helpers\Json;
 
 $prefill = (string) $form['motivoPacientePrefill'];
 ?>
-<form id="form-consulta-chat" method="POST" action="<?= Html::encode($form['urlGuardar']) ?>"
+<form id="form-encounter-chat" method="POST" action="<?= Html::encode($form['urlGuardar']) ?>"
       data-stt-config="<?= Json::htmlEncode($form['sttClientConfig']) ?>"
       data-url-inicio="<?= Html::encode($form['urlInicio']) ?>"
       data-modo-captura="<?= Html::encode($form['modoCaptura']) ?>">
@@ -17,8 +17,8 @@ $prefill = (string) $form['motivoPacientePrefill'];
     <?php if (!empty($form['idConfiguracion'])): ?>
         <?= Html::hiddenInput('id_configuracion', (int) $form['idConfiguracion']) ?>
     <?php endif; ?>
-    <?php if (!empty($form['idConsulta'])): ?>
-        <?= Html::hiddenInput('id_consulta', (int) $form['idConsulta']) ?>
+    <?php if (!empty($form['encounterId'])): ?>
+        <?= Html::hiddenInput('encounter_id', (int) $form['encounterId']) ?>
     <?php endif; ?>
     <?php if (!empty($form['parent'])): ?>
         <?= Html::hiddenInput('parent', (string) $form['parent']) ?>

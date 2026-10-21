@@ -4,8 +4,6 @@ namespace common\models\Clinical;
 
 use common\models\Person\Persona;
 
-use Yii;
-
 /**
  * This is the model class for table "valoracion_nutricional".
  *
@@ -20,14 +18,14 @@ use Yii;
  * @property string $per_perim_cefalico
  * @property string $imc
  * @property string $per_imc
- * @property string $id_consulta
+ * @property int $encounter_id
  *
- * @property-read Consulta|null $consulta
+ * @property-read Encounter|null $encounter
  * @property-read Persona|null $persona
  */
 class ValoracionNutricional extends \yii\db\ActiveRecord
 {
-    use \common\traits\LegacyConsultaIdAsEncounterFkTrait;
+    use \common\traits\EncounterIdTrait;
     /**
      * @inheritdoc
      */
@@ -42,10 +40,10 @@ class ValoracionNutricional extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['id_persona', 'peso', 'talla', 'perim_cefalico', 'id_consulta'], 'integer'],
+            [['id_persona', 'peso', 'talla', 'perim_cefalico', 'encounter_id'], 'integer'],
             [['fecha'], 'safe'],
             [['imc'], 'number'],
-            [['id_consulta'], 'required'],
+            [['encounter_id'], 'required'],
             [['per_peso', 'per_talla', 'per_perim_cefalico', 'per_imc'], 'string', 'max' => 10]
         ];
     }
@@ -67,7 +65,7 @@ class ValoracionNutricional extends \yii\db\ActiveRecord
             'per_perim_cefalico' => 'Percentilo (PC)',
             'imc' => 'Imc',
             'per_imc' => 'Per Imc',
-            'id_consulta' => 'Id Consulta',
+            'encounter_id' => 'Encounter',
         ];
     }
 
@@ -79,32 +77,9 @@ class ValoracionNutricional extends \yii\db\ActiveRecord
         return $this->hasOne(Persona::className(), ['id_persona' => 'id_persona']);
     }
     
-    //Busca la valoración por consulta y persona
-    public static function getValoracionPorConsulta($id_cons)
+    public static function getValoracionPorEncounter(int $encounterId): ?self
     {
-        //Consulta Valoracion nutricional por persona ordenado por fecha-----------------------------------
-
-//        $query = ValoracionNutricional::find()
-//                        ->select([
-//                                'valoracion_nutricional.id_valoracion AS id_valoracion', 
-//                                'valoracion_nutricional.peso AS  peso',
-//                                'valoracion_nutricional.talla AS  talla',
-//                                'valoracion_nutricional.perim_cefalico AS perim_cefalico',
-//                                'valoracion_nutricional.per_perim_cefalico AS per_perim_cefalico',
-//                                'valoracion_nutricional.fecha AS fecha',
-//                                ]
-//                        )->from('valoracion_nutricional')
-//                        ->join('INNER JOIN','turnos', '`valoracion_nutricional`.`id_persona` = `turnos`.`id_persona`')
-//                        ->join('INNER JOIN','consultas', '`turnos`.`id_turnos` = `consultas`.`id_turnos`')
-//                        //->where(['consultas.id_consulta' => $id_cons])
-//                        ->orderBy('fecha DESC')
-//                        ->asArray()
-//                        ->all();
-        //----------------------------------------------------------------------------------------
-        $query = ValoracionNutricional::findOne(['id_consulta'=>$id_cons]);
-        
-        return $query;
-               
+        return static::findOne(['encounter_id' => $encounterId]);
     }
     
 }

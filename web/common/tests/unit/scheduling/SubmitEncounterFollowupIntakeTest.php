@@ -15,7 +15,7 @@ class SubmitEncounterFollowupIntakeTest extends Unit
                 EncounterFollowupIntakeCatalogService::INTAKE_SEGUIMIENTO_CONSULTA_PREVIA,
         ];
 
-        $this->assertTrue(SubmitEncounterFollowupIntake::esIntakeConsultasSeguimiento($draft));
+        $this->assertTrue(SubmitEncounterFollowupIntake::isEncounterFollowupIntake($draft));
     }
 
     public function testCompilarMetaAsyncIncluyeReferenceEncounterId(): void

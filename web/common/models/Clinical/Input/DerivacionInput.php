@@ -9,7 +9,7 @@ use common\components\Domain\Clinical\CareRequest\Domain\CodingSystems;
 use common\components\Domain\Clinical\CareRequest\Domain\Model\CareRequest;
 use common\components\Domain\Clinical\CareRequest\Domain\CareRequestActCoderInterface;
 use common\components\Domain\Clinical\CareRequest\Application\UseCase\ResolveCareRequest;
-use common\models\Clinical\ConsultaDerivaciones;
+use common\models\Clinical\EncounterReferralRequest;
 use yii\base\Model;
 
 /**
@@ -217,8 +217,8 @@ final class DerivacionInput extends Model
         $kind = DerivacionRowContract::referralKindForModo($modo);
 
         return $kind === DerivacionRowContract::REFERRAL_PRACTICA
-            ? ConsultaDerivaciones::PRACTICA
-            : ConsultaDerivaciones::INTERCONSULTA;
+            ? EncounterReferralRequest::PRACTICA
+            : EncounterReferralRequest::INTERCONSULTA;
     }
 
     /**

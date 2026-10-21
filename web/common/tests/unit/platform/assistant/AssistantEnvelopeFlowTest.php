@@ -169,8 +169,8 @@ class AssistantEnvelopeFlowTest extends Unit
                 'draft_field' => 'mensaje',
                 'placeholder' => 'Contanos tu consulta…',
                 'min_length' => 10,
-                'action_id' => 'consulta-async.solicitar-como-paciente',
-                'route' => '/api/v1/consulta-async/solicitar-como-paciente',
+                'action_id' => 'encounter-async.solicitar-como-paciente',
+                'route' => '/api/v1/encounter-async/solicitar-como-paciente',
                 'method' => 'POST',
                 'body_template' => [
                     'mensaje' => 'draft.mensaje',

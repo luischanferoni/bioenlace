@@ -16,22 +16,22 @@ use yii\data\ActiveDataProvider;
 use Yii;
 
 /**
- * Derivación / interconsulta — filas en `service_request` con `category = referral`.
+ * Referral requests stored in `service_request` with `category = referral`.
  *
  * @property int $id
- * @property int $encounter_id Encounter solicitante (legacy `id_consulta_solicitante`)
- * @property int|null $target_efector_id Legacy `id_efector`
- * @property int|null $target_service_id Legacy `id_servicio`
- * @property string|null $referral_status Legacy `estado`
- * @property int|null $responded_encounter_id Legacy `id_respondido`
- * @property string|null $referral_kind Legacy `tipo`
- * @property string|null $request_kind Legacy `tipo_solicitud`
- * @property string|null $code Legacy `codigo`
- * @property string|null $note Legacy `indicaciones` (también en `display`)
+ * @property int $encounter_id Encounter solicitante
+ * @property int|null $target_efector_id
+ * @property int|null $target_service_id
+ * @property string|null $referral_status
+ * @property int|null $responded_encounter_id
+ * @property string|null $referral_kind
+ * @property string|null $request_kind
+ * @property string|null $code
+ * @property string|null $note
  *
  * @property-read Encounter|null $encounter
  */
-class ConsultaDerivaciones extends ServiceRequest
+class EncounterReferralRequest extends ServiceRequest
 {
     public const CATEGORY = 'referral';
 
@@ -108,98 +108,6 @@ class ConsultaDerivaciones extends ServiceRequest
         );
     }
 
-    /** @deprecated Alias de {@see $encounter_id} */
-    public function getId_consulta_solicitante(): ?int
-    {
-        return $this->encounter_id !== null ? (int) $this->encounter_id : null;
-    }
-
-    /** @deprecated Alias de {@see $encounter_id} */
-    public function setId_consulta_solicitante($value): void
-    {
-        $this->encounter_id = $value !== null && $value !== '' ? (int) $value : null;
-    }
-
-    public function getId_efector(): ?int
-    {
-        return $this->target_efector_id !== null ? (int) $this->target_efector_id : null;
-    }
-
-    public function setId_efector($value): void
-    {
-        $this->target_efector_id = $value !== null && $value !== '' ? (int) $value : null;
-    }
-
-    public function getId_servicio(): ?int
-    {
-        return $this->target_service_id !== null ? (int) $this->target_service_id : null;
-    }
-
-    public function setId_servicio($value): void
-    {
-        $this->target_service_id = $value !== null && $value !== '' ? (int) $value : null;
-    }
-
-    public function getEstado(): ?string
-    {
-        return $this->referral_status;
-    }
-
-    public function setEstado($value): void
-    {
-        $this->referral_status = $value !== null && $value !== '' ? (string) $value : null;
-    }
-
-    public function getId_respondido(): ?int
-    {
-        return $this->responded_encounter_id !== null ? (int) $this->responded_encounter_id : null;
-    }
-
-    public function setId_respondido($value): void
-    {
-        $this->responded_encounter_id = $value !== null && $value !== '' ? (int) $value : null;
-    }
-
-    public function getTipo(): ?string
-    {
-        return $this->referral_kind;
-    }
-
-    public function setTipo($value): void
-    {
-        $this->referral_kind = $value !== null && $value !== '' ? (string) $value : null;
-    }
-
-    public function getTipo_solicitud(): ?string
-    {
-        return $this->request_kind;
-    }
-
-    public function setTipo_solicitud($value): void
-    {
-        $this->request_kind = $value !== null && $value !== '' ? (string) $value : null;
-    }
-
-    public function getCodigo(): ?string
-    {
-        return $this->code;
-    }
-
-    public function setCodigo($value): void
-    {
-        $this->code = $value !== null && $value !== '' ? (string) $value : null;
-    }
-
-    public function getIndicaciones(): ?string
-    {
-        return $this->note ?? $this->display;
-    }
-
-    public function setIndicaciones($value): void
-    {
-        $this->note = $value !== null && $value !== '' ? (string) $value : null;
-    }
-
     public function beforeSave($insert): bool
     {
         if (!parent::beforeSave($insert)) {
@@ -239,12 +147,6 @@ class ConsultaDerivaciones extends ServiceRequest
     public function getEncounter(): \yii\db\ActiveQuery
     {
         return $this->hasOne(Encounter::class, ['id' => 'encounter_id']);
-    }
-
-    /** @deprecated use {@see getEncounter()} */
-    public function getConsulta(): \yii\db\ActiveQuery
-    {
-        return $this->getEncounter();
     }
 
     public static function getDerivacionesPorPersona(
@@ -287,12 +189,12 @@ class ConsultaDerivaciones extends ServiceRequest
             ->all();
     }
 
-    public function getPracticasSolicitadasPorConsulta(int $encounterId): array
+    public function getPracticasSolicitadasPorEncounter(int $encounterId): array
     {
         return self::findAll(['encounter_id' => $encounterId]);
     }
 
-    public static function getPracticaSolicitadasPorIdConsultaSolicitada(int $encounterId): ?self
+    public static function getPracticaSolicitadaPorEncounterId(int $encounterId): ?self
     {
         return self::findOne(['encounter_id' => $encounterId]);
     }

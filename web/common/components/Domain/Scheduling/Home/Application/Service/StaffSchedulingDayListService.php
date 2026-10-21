@@ -253,7 +253,6 @@ final class StaffSchedulingDayListService
             'tipo_atencion' => $tipoAtencion,
             'tipo_atencion_label' => (new ReservaModalidadAtencionCatalogService())->labelShort($tipoAtencion),
             'encounter_id' => $encounterId,
-            'id_consulta' => $encounterId,
             'atendido' => $turno->atendido,
             'created_at' => $turno->created_at,
             'observaciones' => $turno->hasAttribute('observaciones') ? $turno->observaciones : null,

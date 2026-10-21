@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 
-/// Servicio para obtener "Mis turnos" del paciente (con tipo_atencion e id_consulta para chat).
+/// Servicio para obtener "Mis turnos" del paciente y el encounter asociado.
 class TurnosService {
   final String? authToken;
 

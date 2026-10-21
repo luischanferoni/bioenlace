@@ -5,7 +5,7 @@ namespace common\components\Domain\Scheduling\Agenda\Application\Service;
 use common\components\Domain\Clinical\CareRequest\Application\UseCase\SubmitPatientCareRequest;
 use common\components\Domain\Organization\Servicio\Application\Service\ServicioMencionLookupService;
 use common\components\Domain\Organization\Servicio\Application\Service\ServiciosEfectorAutogestionListadoService;
-use common\models\Clinical\ConsultaDerivaciones;
+use common\models\Clinical\EncounterReferralRequest;
 use common\models\Scheduling\Turno;
 use common\models\Organization\Servicio;
 use Yii;
@@ -297,11 +297,11 @@ final class ReservaTriageServicioSugeridoService
             );
         }
 
-        $pendientes = ConsultaDerivaciones::getDerivacionesPorPersona(
+        $pendientes = EncounterReferralRequest::getDerivacionesPorPersona(
             $idPersona,
             $idEfector,
             $idServicio,
-            ConsultaDerivaciones::ESTADO_EN_ESPERA
+            EncounterReferralRequest::ESTADO_EN_ESPERA
         );
         if ($pendientes === []) {
             throw new \InvalidArgumentException(

@@ -6,7 +6,7 @@ use Yii;
 use common\models\Programs\BeneficiarioSumar;
 use common\models\Clinical\Encounter;
 use common\models\Organization\ProfesionalEfectorServicio;
-use common\traits\LegacyIdConsultaAsEncounterColumnTrait;
+use common\traits\EncounterIdTrait;
 
 /**
  * Registro de envío / autofacturación SUMAR vinculado a un encounter.
@@ -18,7 +18,7 @@ use common\traits\LegacyIdConsultaAsEncounterColumnTrait;
  */
 class Autofacturacion extends \yii\db\ActiveRecord
 {
-    use LegacyIdConsultaAsEncounterColumnTrait;
+    use EncounterIdTrait;
     /**
      * {@inheritdoc}
      */
@@ -32,7 +32,7 @@ class Autofacturacion extends \yii\db\ActiveRecord
         if (!parent::beforeSave($insert)) {
             return false;
         }
-        if ($insert || $this->isAttributeChanged(static::legacyConsultaFkAttribute(), false)) {
+        if ($insert || $this->isAttributeChanged('encounter_id', false)) {
             $this->syncProfesionalEfectorServicioFromContext();
         }
         return true;
@@ -55,11 +55,9 @@ class Autofacturacion extends \yii\db\ActiveRecord
 
     public function rules()
     {
-        $fk = static::legacyConsultaFkAttribute();
-
         return [
-            [[$fk, 'beneficiarios', 'codigos'], 'required'],
-            [[$fk, 'beneficiario_enviado', 'id_profesional_efector_servicio'], 'integer'],
+            [['encounter_id', 'beneficiarios', 'codigos'], 'required'],
+            [['encounter_id', 'beneficiario_enviado', 'id_profesional_efector_servicio'], 'integer'],
             [['codigos', 'codigo_enviado', 'beneficiarios'], 'string'],
         ];
     }
@@ -71,19 +69,13 @@ class Autofacturacion extends \yii\db\ActiveRecord
     {
         return [
             'id_sumar_autofacturacion' => 'ID',
-            static::legacyConsultaFkAttribute() => 'Encounter',
+            'encounter_id' => 'Encounter',
             'id_efector' => 'Efector',
             'beneficiarios' => 'Beneficiario Sumar',
             'codigos' => 'Codigos Mapeados',
             'codigo_enviado' => 'Codigo Enviado',
             'fecha_envio' => 'Fecha de Envío',
         ];
-    }
-
-    /** @deprecated use {@see getEncounter()} */
-    public function getConsulta()
-    {
-        return $this->getEncounter();
     }
 
     /**

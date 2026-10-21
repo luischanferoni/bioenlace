@@ -60,7 +60,7 @@ final class EncounterAsyncInboxPriorityAgent
         try {
             (new PushEncounterAsyncNotification())->notifyNuevaSolicitudStaff($encounter);
         } catch (\Throwable $e) {
-            Yii::warning('Push async nueva solicitud: ' . $e->getMessage(), 'consulta-async-push');
+            Yii::warning('Push async nueva solicitud: ' . $e->getMessage(), 'encounter-async-push');
         }
     }
 
@@ -91,7 +91,7 @@ final class EncounterAsyncInboxPriorityAgent
             try {
                 (new PushEncounterAsyncNotification())->notifyMensajePacienteStaff($encounter);
             } catch (\Throwable $e) {
-                Yii::warning('Push async mensaje paciente: ' . $e->getMessage(), 'consulta-async-push');
+                Yii::warning('Push async mensaje paciente: ' . $e->getMessage(), 'encounter-async-push');
             }
         }
     }

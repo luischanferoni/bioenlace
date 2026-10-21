@@ -39,7 +39,7 @@ String? _legacyUploadsToSecureApiPath(String path) {
     final id = int.parse(motivos.group(1)!);
     final file = motivos.group(2)!;
     return _secureMediaApiPath(
-      scope: 'motivos-consulta',
+      scope: 'encounter-reasons',
       encounterId: id,
       filename: file,
     );
@@ -51,7 +51,7 @@ String? _legacyUploadsToSecureApiPath(String path) {
     final id = int.parse(chat.group(1)!);
     final file = chat.group(2)!;
     return _secureMediaApiPath(
-      scope: 'consulta-chat',
+      scope: 'encounter-chat',
       encounterId: id,
       filename: file,
     );

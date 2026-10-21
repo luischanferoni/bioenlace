@@ -12,7 +12,7 @@ use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 
 /**
- * Guía declarativa del chat AppointmentReason (misma superficie que motivos-consulta/*).
+ * Guía declarativa del chat AppointmentReason (misma superficie que encounter-reasons/*).
  */
 final class AppointmentReasonChatGuideService
 {
@@ -60,7 +60,7 @@ final class AppointmentReasonChatGuideService
     public function submitIntake(array $body): array
     {
         throw new BadRequestHttpException(
-            'Las respuestas se envían por el chat de motivos (motivos-consulta/enviar).'
+            'Las respuestas se envían por el chat de motivos (encounter-reasons/enviar).'
         );
     }
 

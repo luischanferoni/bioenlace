@@ -4,8 +4,6 @@ namespace common\models\Clinical;
 
 use common\models\Person\Persona;
 
-use Yii;
-
 /**
  * This is the model class for table "tension_arterial".
  *
@@ -14,14 +12,14 @@ use Yii;
  * @property string $fecha
  * @property integer $sistolica
  * @property integer $diastolica
- * @property string $id_consulta
+ * @property int $encounter_id
  *
- * @property-read Consulta|null $consulta
+ * @property-read Encounter|null $encounter
  * @property-read Persona|null $persona
  */
 class TensionArterial extends \yii\db\ActiveRecord
 {
-    use \common\traits\LegacyConsultaIdAsEncounterFkTrait;
+    use \common\traits\EncounterIdTrait;
     /**
      * @inheritdoc
      */
@@ -36,8 +34,8 @@ class TensionArterial extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['id_persona', 'id_consulta'], 'required'],
-            [['id_persona', 'sistolica', 'diastolica', 'id_consulta'], 'integer'],
+            [['id_persona', 'encounter_id'], 'required'],
+            [['id_persona', 'sistolica', 'diastolica', 'encounter_id'], 'integer'],
             [['fecha'], 'safe']
         ];
     }
@@ -53,7 +51,7 @@ class TensionArterial extends \yii\db\ActiveRecord
             'fecha' => 'Fecha',
             'sistolica' => 'Sistólica',
             'diastolica' => 'Diastólica',
-            'id_consulta' => 'Id Consulta',
+            'encounter_id' => 'Encounter',
         ];
     }
 
@@ -65,12 +63,8 @@ class TensionArterial extends \yii\db\ActiveRecord
         return $this->hasOne(Persona::className(), ['id_persona' => 'id_persona']);
     }
     
-    public static function getTensionPorConsulta($id_cons)
+    public static function getTensionPorEncounter(int $encounterId): ?self
     {
-    
-        $query = TensionArterial::findOne(['id_consulta'=>$id_cons]);
-        
-        return $query;
-               
+        return static::findOne(['encounter_id' => $encounterId]);
     }
 }

@@ -10,7 +10,7 @@ use yii\filters\VerbFilter;
 use common\models\Scheduling\AgendaFeriados;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Organization\ServiciosEfector;
-use common\models\Clinical\ConsultaDerivaciones;
+use common\models\Clinical\EncounterReferralRequest;
 use common\models\Person\Persona;
 use common\models\Scheduling\Turno;
 
@@ -80,7 +80,7 @@ class TurnosController extends Controller
         $idsServiciosConDerivacion = yii\helpers\ArrayHelper::getColumn($serviciosXEfector['CON_DERIVACION'], 'id_servicio');
         $idsServicios = array_merge($idsServiciosSinDerivacion, $idsServiciosConDerivacion);
 
-        $referencias = ConsultaDerivaciones::getDerivacionesActivasPorPacientePorServiciosPorEfector($idPersonaEnSesion, $idsServicios, $idEfector);
+        $referencias = EncounterReferralRequest::getDerivacionesActivasPorPacientePorServiciosPorEfector($idPersonaEnSesion, $idsServicios, $idEfector);
         $persona = new Persona();
         $ultimoHC = $persona->obtenerUltimoNHistoriaClinica();
 

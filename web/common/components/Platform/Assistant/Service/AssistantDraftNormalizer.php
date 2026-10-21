@@ -27,10 +27,6 @@ final class AssistantDraftNormalizer
             unset($draft[$key]);
         }
 
-        if (self::isEmpty($draft, 'encounter_id') && !self::isEmpty($draft, 'id_consulta')) {
-            $draft['encounter_id'] = self::scalarString($draft['id_consulta']);
-        }
-
         if (self::isEmpty($draft, 'care_plan_id') && !self::isEmpty($draft, 'id_care_plan')) {
             $draft['care_plan_id'] = self::scalarString($draft['id_care_plan']);
         }

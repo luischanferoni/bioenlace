@@ -69,13 +69,13 @@ final class DemoSandboxClinicalSeedService
     ): array {
         $withGuardia = (bool) ($options['with_guardia'] ?? false);
         $withInternacion = (bool) ($options['with_internacion'] ?? false);
-        $withConsultaAmb = (bool) ($options['with_consulta_amb'] ?? true);
-        $withConsultaAsync = (bool) ($options['with_consulta_async'] ?? true);
-        $nAsync = $withConsultaAsync
+        $withAmbulatoryEncounter = (bool) ($options['with_consulta_amb'] ?? true);
+        $withAsyncEncounter = (bool) ($options['with_consulta_async'] ?? true);
+        $nAsync = $withAsyncEncounter
             ? max(0, (int) ($options['consultas_async'] ?? 2))
             : 0;
         $nTurnos = max(0, (int) ($options['turnos'] ?? 2));
-        if ($withConsultaAmb && $nTurnos < 1) {
+        if ($withAmbulatoryEncounter && $nTurnos < 1) {
             $nTurnos = 1;
         }
         $minPacientes = $nTurnos + $nAsync + ($withGuardia ? 1 : 0) + ($withInternacion ? 1 : 0);
@@ -120,8 +120,8 @@ final class DemoSandboxClinicalSeedService
         }
 
         $encounterIds = [];
-        if ($withConsultaAmb && $turnoIds !== []) {
-            $encounterIds = $this->ensureConsultaAmbFromFirstTurno($turnoIds[0], $actingUserId);
+        if ($withAmbulatoryEncounter && $turnoIds !== []) {
+            $encounterIds = $this->ensureAmbulatoryEncounterFromFirstAppointment($turnoIds[0], $actingUserId);
         }
 
         $asyncEncounterIds = [];
@@ -133,7 +133,7 @@ final class DemoSandboxClinicalSeedService
             }
             try {
                 $mensaje = self::ASYNC_MENSAJES[$i % count(self::ASYNC_MENSAJES)];
-                $idEnc = $this->createConsultaAsync(
+                $idEnc = $this->createAsyncEncounter(
                     $pacienteIds[$idx],
                     $idEfector,
                     $idServicio,
@@ -224,7 +224,7 @@ final class DemoSandboxClinicalSeedService
     /**
      * Solicitud async planificada (bandeja Virtual → Por tomar), sin PES asignado.
      */
-    private function createConsultaAsync(
+    private function createAsyncEncounter(
         int $idPersona,
         int $idEfector,
         int $idServicio,
@@ -276,7 +276,7 @@ final class DemoSandboxClinicalSeedService
      *
      * @return list<int>
      */
-    private function ensureConsultaAmbFromFirstTurno(int $idTurno, int $actingUserId): array
+    private function ensureAmbulatoryEncounterFromFirstAppointment(int $idTurno, int $actingUserId): array
     {
         $turno = Turno::findOne($idTurno);
         if ($turno === null) {

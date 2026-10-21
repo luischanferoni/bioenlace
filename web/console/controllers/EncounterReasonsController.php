@@ -5,21 +5,21 @@ namespace console\controllers;
 use common\components\Domain\Clinical\Encounter\Application\Service\AppointmentReasonBatchService;
 use common\components\Domain\Clinical\Encounter\Application\Service\AppointmentReasonWindowService;
 use common\models\Clinical\Encounter;
-use common\models\Clinical\AppointmentReasonMessage;
+use common\models\Clinical\EncounterReasonMessage;
 use yii\console\Controller;
 use yii\helpers\Console;
 
 /**
  * Motivos de consulta (app paciente): procesamiento en lote con IA.
  *
- * Id CLI público: `motivos-consulta` (controllerMap).
+ * Id CLI público: `encounter-reasons` (controllerMap).
  *
  * Uso:
- *   php yii motivos-consulta/procesar              # Encounters con mensajes sin procesar
- *   php yii motivos-consulta/procesar --consultaId=123
- *   php yii motivos-consulta/procesar-vencidos     # Turnos que ya pasaron ventana de cierre (cron respaldo)
+ *   php yii encounter-reasons/procesar              # Encounters con mensajes sin procesar
+ *   php yii encounter-reasons/procesar --consultaId=123
+ *   php yii encounter-reasons/procesar-vencidos     # Turnos que ya pasaron ventana de cierre (cron respaldo)
  */
-class AppointmentReasonController extends Controller
+class EncounterReasonsController extends Controller
 {
     /**
      * @var int|null encounter_id (alias legacy consultaId).
@@ -98,7 +98,7 @@ class AppointmentReasonController extends Controller
      */
     private function encounterIdsPendientes(): array
     {
-        $query = AppointmentReasonMessage::find()
+        $query = EncounterReasonMessage::find()
             ->select('encounter_id')
             ->groupBy('encounter_id');
 

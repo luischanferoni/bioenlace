@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\Encounter\Application\Service;
 
 use common\components\Domain\Clinical\Encounter\Application\Service\SecureMediaService;
 use common\components\Platform\Core\Http\Contract\ApiException;
-use common\models\Clinical\AppointmentReasonMessage;
+use common\models\Clinical\EncounterReasonMessage;
 use Yii;
 
 /**
@@ -28,12 +28,12 @@ final class AppointmentReasonMessageService
 
         $this->assertWindowOpen($encounterId);
 
-        $msg = new AppointmentReasonMessage();
+        $msg = new EncounterReasonMessage();
         $msg->encounter_id = $encounterId;
         $msg->user_id = $userId;
         $msg->user_name = $userName !== '' ? $userName : 'Paciente';
         $msg->texto = $message;
-        $msg->message_type = AppointmentReasonMessage::TYPE_TEXTO;
+        $msg->message_type = EncounterReasonMessage::TYPE_TEXTO;
 
         if (!$msg->save()) {
             throw new ApiException('reason_message_save_failed', ['detail' => implode(', ', $msg->getFirstErrors())]);
@@ -90,7 +90,7 @@ final class AppointmentReasonMessageService
             @unlink($sourceTempPath);
         }
 
-        $msg = new AppointmentReasonMessage();
+        $msg = new EncounterReasonMessage();
         $msg->encounter_id = $encounterId;
         $msg->user_id = $userId;
         $msg->user_name = $userName !== '' ? $userName : 'Paciente';
@@ -104,7 +104,7 @@ final class AppointmentReasonMessageService
         }
 
         $contentUrl = SecureMediaService::absoluteApiUrl(
-            SecureMediaService::SCOPE_MOTIVOS_CONSULTA,
+            SecureMediaService::SCOPE_ENCOUNTER_REASONS,
             $encounterId,
             $relativePath
         );
@@ -141,7 +141,7 @@ final class AppointmentReasonMessageService
     /**
      * @return array<string, mixed>
      */
-    private function payloadForText(AppointmentReasonMessage $msg): array
+    private function payloadForText(EncounterReasonMessage $msg): array
     {
         return [
             'id' => $msg->id,

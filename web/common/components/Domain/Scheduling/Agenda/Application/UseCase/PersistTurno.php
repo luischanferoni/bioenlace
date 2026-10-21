@@ -16,7 +16,7 @@ use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Organization\ProfesionalEfectorServicioAgenda;
 use common\models\Organization\ServiciosEfector;
 use common\components\Domain\Clinical\CarePlan\Application\UseCase\CreateReferralRequest;
-use common\models\Clinical\ConsultaDerivaciones;
+use common\models\Clinical\EncounterReferralRequest;
 use common\models\Scheduling\EfectorTurnosConfig;
 use common\models\Organization\Servicio;
 use common\models\Scheduling\TurnoResolucion;
@@ -99,11 +99,11 @@ class PersistTurno
         }
 
         if ($model->id_servicio_asignado && $model->id_persona && $model->id_efector) {
-            $cps = ConsultaDerivaciones::getDerivacionesPorPersona(
+            $cps = EncounterReferralRequest::getDerivacionesPorPersona(
                 $model->id_persona,
                 $model->id_efector,
                 $model->id_servicio_asignado,
-                ConsultaDerivaciones::ESTADO_EN_ESPERA
+                EncounterReferralRequest::ESTADO_EN_ESPERA
             );
             if (count($cps) > 0) {
                 $parent_id = null;
@@ -336,4 +336,3 @@ class PersistTurno
         }
     }
 }
-

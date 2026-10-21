@@ -9,12 +9,12 @@ use common\components\Domain\Clinical\CareRequest\Domain\CodingSystems;
 use common\components\Domain\Clinical\CareRequest\Domain\Model\CareRequest;
 
 /**
- * Contrato Domain: derivación/interconsulta (`ConsultaDerivaciones`).
+ * Domain contract for a referral request.
  * I/O vía {@see DerivacionRowSupportPort}.
  */
 final class DerivacionRowContract
 {
-    public const MODELO = 'ConsultaDerivaciones';
+    public const MODELO = 'EncounterReferralRequest';
 
     public const FIELD_SERVICIO = 'Servicio';
     public const FIELD_ID_SERVICIO = 'id_servicio';

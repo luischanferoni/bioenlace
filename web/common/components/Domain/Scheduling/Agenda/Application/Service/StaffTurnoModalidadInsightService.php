@@ -46,18 +46,18 @@ final class StaffTurnoModalidadInsightService
         }
 
         $idPes = (int) ($turno->id_profesional_efector_servicio ?? 0);
-        $agendaOnline = $idPes > 0 && $this->pesAceptaConsultasOnline($idPes);
+        $onlineAppointmentsEnabled = $idPes > 0 && $this->professionalServiceAcceptsOnlineAppointments($idPes);
 
         $payload = [
             'elegibilidad_clinica' => $elegClinica,
             'summary' => $mensaje['summary'],
             'tone' => $mensaje['tone'],
             'modalidades' => $modalidades,
-            'agenda_online_habilitada' => $agendaOnline,
+            'agenda_online_habilitada' => $onlineAppointmentsEnabled,
             'servicio_permite_teleconsulta' => (bool) ($res['ofrecible'] ?? false),
         ];
 
-        if (!$agendaOnline) {
+        if (!$onlineAppointmentsEnabled) {
             $footer = $this->catalog->footerAgendaNoOnline();
             if ($footer !== '') {
                 $payload['footer'] = $footer;
@@ -71,7 +71,7 @@ final class StaffTurnoModalidadInsightService
         return $payload;
     }
 
-    private function pesAceptaConsultasOnline(int $idPes): bool
+    private function professionalServiceAcceptsOnlineAppointments(int $idPes): bool
     {
         $agenda = ProfesionalEfectorServicioAgenda::findActivaPorProfesionalEfectorServicio($idPes);
 

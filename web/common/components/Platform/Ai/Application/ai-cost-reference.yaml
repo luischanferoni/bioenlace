@@ -48,12 +48,12 @@ contextos:
     candidates_tokens: 200
     cached_ratio: 0.25
     volumen_mensual_por_profesional: 25
-  motivos-consulta-batch:
+  encounter-reasons-batch:
     prompt_tokens: 1350
     candidates_tokens: 400
     cached_ratio: 0.25
     volumen_mensual_por_profesional: 400
-  motivos-consulta-insights:
+  encounter-reasons-insights:
     prompt_tokens: 1200
     candidates_tokens: 350
     cached_ratio: 0.25

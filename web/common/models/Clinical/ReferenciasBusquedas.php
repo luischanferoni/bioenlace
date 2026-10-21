@@ -18,10 +18,8 @@ class ReferenciasBusquedas extends Referencia
 {
     public function rules()
     {
-        $fk = static::legacyConsultaFkAttribute();
-
         return [
-            [['id_referencia', $fk, 'id_efector_referenciado', 'id_motivo_derivacion', 'id_servicio', 'id_estado'], 'integer'],
+            [['id_referencia', 'encounter_id', 'id_efector_referenciado', 'id_motivo_derivacion', 'id_servicio', 'id_estado'], 'integer'],
             [['estudios_complementarios', 'resumen_hc', 'tratamiento_previo', 'tratamiento', 'fecha_turno', 'hora_turno', 'observacion'], 'safe'],
         ];
     }
@@ -35,7 +33,6 @@ class ReferenciasBusquedas extends Referencia
     {
         $id_user = Yii::$app->user->id;
         $id_efector = Yii::$app->user->idEfector;
-        $fk = static::legacyConsultaFkAttribute();
         $encTable = Encounter::tableName();
 
         $idPersonaSesion = (int) Yii::$app->user->getIdPersona();
@@ -52,7 +49,6 @@ class ReferenciasBusquedas extends Referencia
 
         $select = [
             'id_referencia' => 'referencia.id_referencia',
-            'id_consulta' => 'enc.id',
             'encounter_id' => 'enc.id',
             'id_efector_referenciado' => 'referencia.id_efector_referenciado',
             'id_motivo_derivacion' => 'referencia.id_motivo_derivacion',
@@ -65,7 +61,7 @@ class ReferenciasBusquedas extends Referencia
         $query = Referencia::find()
             ->select($select)
             ->from('referencia')
-            ->innerJoin(['enc' => $encTable], "referencia.{$fk} = enc.id")
+            ->innerJoin(['enc' => $encTable], 'referencia.encounter_id = enc.id')
             ->leftJoin('turnos', 'enc.appointment_id = turnos.id_turnos')
             ->innerJoin('efectores', 'turnos.id_efector = efectores.id_efector')
             ->where(['turnos.id_efector' => $id_efector]);
@@ -90,7 +86,7 @@ class ReferenciasBusquedas extends Referencia
 
         $query->andFilterWhere([
             'referencia.id_referencia' => $this->id_referencia,
-            "referencia.{$fk}" => $this->getEncounter_id(),
+            'referencia.encounter_id' => $this->getEncounter_id(),
             'referencia.id_efector_referenciado' => $this->id_efector_referenciado,
             'referencia.id_motivo_derivacion' => $this->id_motivo_derivacion,
             'referencia.id_servicio' => $this->id_servicio,

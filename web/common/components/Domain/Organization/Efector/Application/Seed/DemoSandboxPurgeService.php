@@ -42,7 +42,7 @@ final class DemoSandboxPurgeService
 
     /**
      * Tablas hijas de encounter sin CASCADE confiable (o RESTRICT).
-     * Se borran por `encounter_id` y/o `id_consulta` si la columna existe.
+     * Se borran por `encounter_id` si la columna existe.
      *
      * @var list<string>
      */
@@ -858,7 +858,7 @@ final class DemoSandboxPurgeService
     {
         foreach ($encounterIds as $idEncounter) {
             try {
-                \common\models\Clinical\ConsultaChatMessage::deleteAll(['encounter_id' => $idEncounter]);
+                \common\models\Clinical\EncounterChatMessage::deleteAll(['encounter_id' => $idEncounter]);
             } catch (\Throwable $e) {
                 $errors[] = 'chat ' . $idEncounter . ': ' . $e->getMessage();
             }
@@ -888,8 +888,6 @@ final class DemoSandboxPurgeService
             $condition = null;
             if (isset($schema->columns['encounter_id'])) {
                 $condition = ['encounter_id' => $encounterIds];
-            } elseif (isset($schema->columns['id_consulta'])) {
-                $condition = ['id_consulta' => $encounterIds];
             }
             if ($condition === null) {
                 continue;

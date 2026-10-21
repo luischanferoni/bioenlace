@@ -386,27 +386,27 @@ return [
                 'POST api/<version:\w+>/auth/generar-token-prueba' => '<version>/auth/generar-token-prueba',
                 'GET api/<version:\w+>/auth/generar-token-prueba' => '<version>/auth/generar-token-prueba',
 
-                // consulta-chat - chat médico
-                'GET api/<version:\w+>/consulta-chat/mensajes/<id:\d+>' => '<version>/consulta-chat/listar-mensajes',
-                'OPTIONS api/<version:\w+>/consulta-chat/mensajes/<id:\d+>' => '<version>/consulta-chat/listar-mensajes',
-                'POST api/<version:\w+>/consulta-chat/enviar' => '<version>/consulta-chat/enviar',
-                'OPTIONS api/<version:\w+>/consulta-chat/enviar' => '<version>/consulta-chat/enviar',
-                'POST api/<version:\w+>/consulta-chat/subir' => '<version>/consulta-chat/subir',
-                'OPTIONS api/<version:\w+>/consulta-chat/subir' => '<version>/consulta-chat/subir',
-                'GET api/<version:\w+>/consulta-chat/estado/<id:\d+>' => '<version>/consulta-chat/estado',
-                'OPTIONS api/<version:\w+>/consulta-chat/estado/<id:\d+>' => '<version>/consulta-chat/estado',
+                // encounter-chat - chat médico
+                'GET api/<version:\w+>/encounter-chat/mensajes/<id:\d+>' => '<version>/encounter-chat/listar-mensajes',
+                'OPTIONS api/<version:\w+>/encounter-chat/mensajes/<id:\d+>' => '<version>/encounter-chat/listar-mensajes',
+                'POST api/<version:\w+>/encounter-chat/enviar' => '<version>/encounter-chat/enviar',
+                'OPTIONS api/<version:\w+>/encounter-chat/enviar' => '<version>/encounter-chat/enviar',
+                'POST api/<version:\w+>/encounter-chat/subir' => '<version>/encounter-chat/subir',
+                'OPTIONS api/<version:\w+>/encounter-chat/subir' => '<version>/encounter-chat/subir',
+                'GET api/<version:\w+>/encounter-chat/estado/<id:\d+>' => '<version>/encounter-chat/estado',
+                'OPTIONS api/<version:\w+>/encounter-chat/estado/<id:\d+>' => '<version>/encounter-chat/estado',
 
                 // Media protegida (motivos, chat clínico): Bearer + participantes del encounter
                 'GET api/<version:\w+>/media/<scope:[\w\-]+>/<encounterId:\d+>/<filename:[\w\.\-]+>' => '<version>/media/ver',
                 'OPTIONS api/<version:\w+>/media/<scope:[\w\-]+>/<encounterId:\d+>/<filename:[\w\.\-]+>' => '<version>/media/options',
 
                 // Motivos de consulta (conversación paciente: texto, audio, fotos)
-                'GET api/<version:\w+>/motivos-consulta/mensajes/<id:\d+>' => '<version>/motivos-consulta/listar-mensajes',
-                'OPTIONS api/<version:\w+>/motivos-consulta/mensajes/<id:\d+>' => '<version>/motivos-consulta/listar-mensajes',
-                'POST api/<version:\w+>/motivos-consulta/enviar' => '<version>/motivos-consulta/enviar',
-                'OPTIONS api/<version:\w+>/motivos-consulta/enviar' => '<version>/motivos-consulta/enviar',
-                'POST api/<version:\w+>/motivos-consulta/subir' => '<version>/motivos-consulta/subir',
-                'OPTIONS api/<version:\w+>/motivos-consulta/subir' => '<version>/motivos-consulta/subir',
+                'GET api/<version:\w+>/encounter-reasons/mensajes/<id:\d+>' => '<version>/encounter-reasons/listar-mensajes',
+                'OPTIONS api/<version:\w+>/encounter-reasons/mensajes/<id:\d+>' => '<version>/encounter-reasons/listar-mensajes',
+                'POST api/<version:\w+>/encounter-reasons/enviar' => '<version>/encounter-reasons/enviar',
+                'OPTIONS api/<version:\w+>/encounter-reasons/enviar' => '<version>/encounter-reasons/enviar',
+                'POST api/<version:\w+>/encounter-reasons/subir' => '<version>/encounter-reasons/subir',
+                'OPTIONS api/<version:\w+>/encounter-reasons/subir' => '<version>/encounter-reasons/subir',
 
                 // Care packs (cohorte): asistencia pre-consulta
                 'GET api/<version:\w+>/care-packs/assistance' => '<version>/care-packs/assistance',
@@ -628,15 +628,15 @@ return [
                 'GET api/<version:\w+>/turnos/reserva-triage-urgencia' => '<version>/turnos/reserva-triage-urgencia',
                 'POST api/<version:\w+>/turnos/reserva-triage-urgencia' => '<version>/turnos/reserva-triage-urgencia',
                 'OPTIONS api/<version:\w+>/turnos/reserva-triage-urgencia' => '<version>/turnos/reserva-triage-urgencia',
-                'GET api/<version:\w+>/consultas-seguimiento/hub' => '<version>/consultas-seguimiento/hub',
-                'POST api/<version:\w+>/consultas-seguimiento/hub' => '<version>/consultas-seguimiento/hub',
-                'OPTIONS api/<version:\w+>/consultas-seguimiento/hub' => '<version>/consultas-seguimiento/hub',
-                'GET api/<version:\w+>/consultas-seguimiento/condicion-acciones' => '<version>/consultas-seguimiento/condicion-acciones',
-                'POST api/<version:\w+>/consultas-seguimiento/condicion-acciones' => '<version>/consultas-seguimiento/condicion-acciones',
-                'OPTIONS api/<version:\w+>/consultas-seguimiento/condicion-acciones' => '<version>/consultas-seguimiento/condicion-acciones',
-                'GET api/<version:\w+>/consultas-seguimiento/paso' => '<version>/consultas-seguimiento/paso',
-                'POST api/<version:\w+>/consultas-seguimiento/paso' => '<version>/consultas-seguimiento/paso',
-                'OPTIONS api/<version:\w+>/consultas-seguimiento/paso' => '<version>/consultas-seguimiento/paso',
+                'GET api/<version:\w+>/encounter-followup/hub' => '<version>/encounter-followup/hub',
+                'POST api/<version:\w+>/encounter-followup/hub' => '<version>/encounter-followup/hub',
+                'OPTIONS api/<version:\w+>/encounter-followup/hub' => '<version>/encounter-followup/hub',
+                'GET api/<version:\w+>/encounter-followup/condicion-acciones' => '<version>/encounter-followup/condicion-acciones',
+                'POST api/<version:\w+>/encounter-followup/condicion-acciones' => '<version>/encounter-followup/condicion-acciones',
+                'OPTIONS api/<version:\w+>/encounter-followup/condicion-acciones' => '<version>/encounter-followup/condicion-acciones',
+                'GET api/<version:\w+>/encounter-followup/paso' => '<version>/encounter-followup/paso',
+                'POST api/<version:\w+>/encounter-followup/paso' => '<version>/encounter-followup/paso',
+                'OPTIONS api/<version:\w+>/encounter-followup/paso' => '<version>/encounter-followup/paso',
                 'GET api/<version:\w+>/encounter-journey/estado' => '<version>/encounter-journey/estado',
                 'POST api/<version:\w+>/encounter-journey/estado' => '<version>/encounter-journey/estado',
                 'OPTIONS api/<version:\w+>/encounter-journey/estado' => '<version>/encounter-journey/estado',
@@ -834,10 +834,6 @@ return [
                 'servicio-teleconsulta' => \frontend\modules\api\v1\controllers\organization\ServicioTeleconsultaPoliticaController::class,
                 // Evita ID nativo whats-app-webhook (Inflector sobre WhatsApp*).
                 'whatsapp' => \frontend\modules\api\v1\controllers\integrations\WhatsAppWebhookController::class,
-                // URL pública histórica del chat del encounter (clase renombrada a EncounterChatController).
-                'consulta-chat' => \frontend\modules\api\v1\controllers\clinical\EncounterChatController::class,
-                // URL/RBAC pública motivos-consulta (clase AppointmentReasonController).
-                'motivos-consulta' => \frontend\modules\api\v1\controllers\clinical\AppointmentReasonController::class,
                 // URL/RBAC/cron pública legal-record-export (clase LegalExportController).
                 'legal-record-export' => \frontend\modules\api\v1\controllers\clinical\LegalExportController::class,
                 // URL/RBAC pública emergency-guardia (clase EmergencyController).

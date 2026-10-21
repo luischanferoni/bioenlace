@@ -26,12 +26,11 @@ use yii\validators\NumberValidator;
  * @property string $imc
  * @property string $per_imc
  * @property int|null $encounter_id
- * @property int|null $id_consulta Compat escritura: alias de {@see $encounter_id}.
  *
  * @property Persona|null $profesionalPersona Profesional vía PES.
  * @property Personas $id_persona
  */
-class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
+class EncounterNursingCare extends \yii\db\ActiveRecord
 {
     use \common\traits\SoftDeleteDateTimeTrait;
     /**
@@ -54,19 +53,6 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
                 'value' => Yii::$app->user->id,
             ],
         ];
-    }
-
-    /** Compat legacy: `id_consulta` = `encounter_id`. */
-    public function getId_consulta(): ?int
-    {
-        $id = $this->encounter_id ?? null;
-
-        return $id !== null && $id !== '' ? (int) $id : null;
-    }
-
-    public function setId_consulta($value): void
-    {
-        $this->encounter_id = $value !== null && $value !== '' ? (int) $value : null;
     }
 
     public function syncProfesionalEfectorServicioFromContext(): void
@@ -133,7 +119,7 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
     {
         return [
             'id' => 'Id',
-            'id_consulta' => 'id_consulta',
+            'encounter_id' => 'Encounter',
             'datos' => 'Datos',
             'id_persona' => 'Paciente',
             'id_user' => 'Usuario',
@@ -148,12 +134,6 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
     public function getEncounter()
     {
         return $this->hasOne(Encounter::class, ['id' => 'encounter_id']);
-    }
-
-    /** @deprecated use {@see getEncounter()} */
-    public function getConsulta()
-    {
-        return $this->getEncounter();
     }
 
     /**
@@ -192,11 +172,6 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
      * getParent hace referencia al vínculo con x clase,
      * se usan las propiedades parent y parent_id
      */
-    public function getParentConsulta()
-    {
-        return $this->hasOne($this->parent_class, ['id_consulta' => 'parent_id']);
-    }
-
     /**
      * getParent hace referencia al vínculo con x clase,
      * se usan las propiedades parent y parent_id
@@ -246,7 +221,7 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
     {
 
         // TODO: Definir la necesidad de filtrar por datos
-        $query = ConsultaAtencionesEnfermeria::find()
+        $query = EncounterNursingCare::find()
             //->where(['like', 'datos', '%' . $dato . '%', false])
             ->andWhere(['fecha_creacion' => $fecha_consulta . ' 00:00:00'])
             ->andWhere(['id_efector' => Yii::$app->user->getIdEfector()])
@@ -263,7 +238,7 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
     {
 
         // TODO: Definir la necesidad de filtrar por datos
-        $query = ConsultaAtencionesEnfermeria::find()
+        $query = EncounterNursingCare::find()
             //->where(['like', 'datos', '%' . $dato . '%', false])
             ->andWhere(['id_efector' => Yii::$app->user->getIdEfector()])
             ->andWhere(['id_persona' => $id_paciente])
@@ -275,7 +250,7 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
 
     public static function obtenerValoracionNutricionalPorIdConsulta($idConsulta)
     {
-        $query = ConsultaAtencionesEnfermeria::find()
+        $query = EncounterNursingCare::find()
             ->andWhere(['encounter_id' => $idConsulta])
             ->limit(1);
 
@@ -288,7 +263,7 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
     */
     public static function ultimoPorPaciente($id_persona)
     {
-        $query = ConsultaAtencionesEnfermeria::find()
+        $query = EncounterNursingCare::find()
             ->andWhere(['id_persona' => $id_persona])
             ->orderBy(['id' => SORT_DESC])
             ->limit(1);
@@ -304,7 +279,7 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
     {
         $idPes = (int) $id_profesional_efector_servicio;
 
-        return ConsultaAtencionesEnfermeria::find()
+        return EncounterNursingCare::find()
             ->where(['fecha_creacion' => $fecha_consulta . ' 00:00:00'])
             ->andWhere(['id_profesional_efector_servicio' => $idPes])
             ->one();

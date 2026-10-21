@@ -24,7 +24,7 @@ final class AssertEncounterAsyncRequestAllowed
      */
     public function assertPuedeCrear(int $idPersona, array $draft): void
     {
-        if (!SubmitEncounterFollowupIntake::esIntakeConsultasSeguimiento($draft)) {
+        if (!SubmitEncounterFollowupIntake::isEncounterFollowupIntake($draft)) {
             return;
         }
 

@@ -4,7 +4,7 @@ namespace common\models\Scheduling;
 
 use common\components\Domain\Clinical\Encounter\Application\Presentation\PatientHistoriaUrl;
 use common\models\Clinical\Encounter;
-use common\models\Clinical\ConsultaAtencionesEnfermeria;
+use common\models\Clinical\EncounterNursingCare;
 use common\models\Organization\Efector;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Organization\Servicio;
@@ -34,7 +34,7 @@ use common\traits\ParameterQuestionsTrait;
  * @property string|null $pes_resolution_trust
  * @property string $confirmado
  * @property string $referenciado
- * @property integer $id_consulta_referencia
+ * @property integer $referenced_encounter_id
  * @property int|null $id_efector
  * @property string $id_servicio
  * @property string $usuario_alta
@@ -277,7 +277,7 @@ class Turno extends \yii\db\ActiveRecord
             [['id_persona', 'hora', 'fecha', 'id_efector', 'id_servicio_asignado'], 'required'],
             [['id_persona'], 'validateDelegarRequiereProfesional', 'on' => ServiciosEfector::DELEGAR_A_CADA_PROFESIONAL],
             [['id_servicio_asignado'], 'required', 'on' => ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS],
-            [['id_persona', 'id_consulta_referencia', 'id_servicio_asignado', 'id_servicio', 'id_profesional_efector_servicio', 'id_efector', 'programado'], 'integer'],
+            [['id_persona', 'referenced_encounter_id', 'id_servicio_asignado', 'id_servicio', 'id_profesional_efector_servicio', 'id_efector', 'programado'], 'integer'],
             // no deja crear un turno para la misma persona para el mismo recurso en el mismo dia
             [
                 ['fecha', 'id_persona', 'id_profesional_efector_servicio'], 'unique',
@@ -347,7 +347,7 @@ class Turno extends \yii\db\ActiveRecord
             'id_profesional_efector_servicio' => 'Profesional (PES)',
             'confirmado' => 'Confirmado',
             'referenciado' => 'Referenciado',
-            'id_consulta_referencia' => 'Efector de Referencia',
+            'referenced_encounter_id' => 'Encounter de referencia',
             'id_servicio_asignado' => 'Servicio',
             'usuario_alta' => 'Usuario Alta',
             'fecha_alta' => 'Fecha Alta',
@@ -835,7 +835,7 @@ class Turno extends \yii\db\ActiveRecord
                             ]
                         );
 
-                        if (ConsultaAtencionesEnfermeria::obtenerUltimaAtencionPorPaciente($id_persona)) {
+                        if (EncounterNursingCare::obtenerUltimaAtencionPorPaciente($id_persona)) {
                             $d = Html::a(
                                 '<b>Ver última AE</b>',
                                 ['atenciones-enfermeria/view', 'id' => $id_persona],

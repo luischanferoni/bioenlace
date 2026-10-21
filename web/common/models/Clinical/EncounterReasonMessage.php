@@ -22,7 +22,7 @@ use yii\db\ActiveRecord;
  *
  * @property Encounter $encounter
  */
-class AppointmentReasonMessage extends ActiveRecord
+class EncounterReasonMessage extends ActiveRecord
 {
     const TYPE_TEXTO = 'texto';
     const TYPE_IMAGEN = 'imagen';
@@ -66,7 +66,7 @@ class AppointmentReasonMessage extends ActiveRecord
             if (in_array($message->message_type, [self::TYPE_IMAGEN, self::TYPE_AUDIO], true)
                 && $content !== '') {
                 $content = SecureMediaService::contentForApi(
-                    SecureMediaService::SCOPE_MOTIVOS_CONSULTA,
+                    SecureMediaService::SCOPE_ENCOUNTER_REASONS,
                     (int) $message->encounter_id,
                     $content
                 );

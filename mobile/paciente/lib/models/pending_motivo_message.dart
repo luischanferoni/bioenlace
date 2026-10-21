@@ -75,7 +75,7 @@ class PendingMotivoMessage {
     final statusName = json['status']?.toString() ?? 'pendingUpload';
     return PendingMotivoMessage(
       id: json['id']?.toString() ?? '',
-      encounterId: _asInt(json['encounter_id'] ?? json['consulta_id']),
+      encounterId: _asInt(json['encounter_id']),
       type: PendingMotivoMessageType.values.firstWhere(
         (e) => e.name == typeName,
         orElse: () => PendingMotivoMessageType.audio,

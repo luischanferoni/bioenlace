@@ -2,7 +2,7 @@
 
 namespace common\tests\unit\clinical;
 
-use frontend\modules\api\v1\controllers\clinical\AppointmentReasonController;
+use frontend\modules\api\v1\controllers\clinical\EncounterReasonsController;
 use frontend\modules\api\v1\controllers\clinical\EncounterChatController;
 use common\components\Domain\Clinical\Capture\Application\Presentation\CapturePresenter;
 use common\models\Clinical\EncounterCapture;
@@ -12,11 +12,11 @@ use ReflectionMethod;
 
 final class EncounterRequestIdentifierContractTest extends TestCase
 {
-    public function testAppointmentReasonRequestsRequireEncounterId(): void
+    public function testEncounterReasonRequestsRequireEncounterId(): void
     {
-        $controller = (new ReflectionClass(AppointmentReasonController::class))
+        $controller = (new ReflectionClass(EncounterReasonsController::class))
             ->newInstanceWithoutConstructor();
-        $resolve = new ReflectionMethod(AppointmentReasonController::class, 'resolveEncounterIdFromInput');
+        $resolve = new ReflectionMethod(EncounterReasonsController::class, 'resolveEncounterIdFromInput');
         $resolve->setAccessible(true);
 
         self::assertSame(18, $resolve->invoke($controller, ['encounter_id' => 18]));
@@ -34,7 +34,7 @@ final class EncounterRequestIdentifierContractTest extends TestCase
         self::assertSame(0, $resolve->invoke($controller, ['consulta_id' => 27]));
     }
 
-    public function testCaptureResponseUsesOnlyEncounterIdForStoredLegacyAnalysis(): void
+    public function testCaptureResponseUsesCanonicalEncounterIdFromStoredAnalysis(): void
     {
         $capture = (new ReflectionClass(EncounterCapture::class))->newInstanceWithoutConstructor();
         $attributes = new \ReflectionProperty(\yii\db\BaseActiveRecord::class, '_attributes');
@@ -60,7 +60,7 @@ final class EncounterRequestIdentifierContractTest extends TestCase
             'created_at' => null,
             'updated_at' => null,
             'datos_extraidos_json' => null,
-            'analysis_response_json' => json_encode(['id_consulta' => 51]),
+            'analysis_response_json' => json_encode(['encounter_id' => 51]),
         ]);
 
         $out = (new CapturePresenter())->toApiArray($capture, true);

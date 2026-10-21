@@ -52,7 +52,6 @@ final class EncounterDto
             'serviceId' => $this->serviceId,
             'efectorId' => $this->efectorId,
             'encounter_id' => $this->id,
-            'id_consulta' => $this->id,
         ];
     }
 }

@@ -3,11 +3,11 @@
 namespace common\components\Domain\Scheduling\Agenda\Application\Agents;
 
 /**
- * Política operativa del agente `consulta-async-bandeja-prioridad` (ex YAML platform/agents).
+ * Política operativa del agente `encounter-async-bandeja-prioridad` (ex YAML platform/agents).
  */
 final class EncounterAsyncInboxPriorityAgentPolicy
 {
-    public const AGENT_ID = 'consulta-async-bandeja-prioridad';
+    public const AGENT_ID = 'encounter-async-bandeja-prioridad';
 
     /**
      * @return array<string, mixed>
@@ -16,7 +16,7 @@ final class EncounterAsyncInboxPriorityAgentPolicy
     {
         return [
         'version' => 1,
-        'agent_id' => 'consulta-async-bandeja-prioridad',
+        'agent_id' => 'encounter-async-bandeja-prioridad',
         'scoring' => [
             'urgency_band' => [
                 'A' => 100,

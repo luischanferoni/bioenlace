@@ -4,8 +4,8 @@ namespace common\components\Domain\Clinical\Encounter\Application\Service;
 
 use common\components\Domain\Clinical\Encounter\Application\Authorization\EncounterAccessService;
 use common\models\Clinical\Encounter;
-use common\models\Clinical\ConsultaChatMessage;
-use common\models\Clinical\AppointmentReasonMessage;
+use common\models\Clinical\EncounterChatMessage;
+use common\models\Clinical\EncounterReasonMessage;
 use Yii;
 use yii\web\NotFoundHttpException;
 use yii\web\ForbiddenHttpException;
@@ -15,19 +15,19 @@ use yii\web\ForbiddenHttpException;
  */
 final class SecureMediaService
 {
-    public const SCOPE_MOTIVOS_CONSULTA = 'motivos-consulta';
-    public const SCOPE_CONSULTA_CHAT = 'consulta-chat';
+    public const SCOPE_ENCOUNTER_REASONS = 'encounter-reasons';
+    public const SCOPE_ENCOUNTER_CHAT = 'encounter-chat';
 
     /** @var array<string, array{dir: string, messageClass: class-string, mediaTypes: list<string>}> */
     private const SCOPES = [
-        self::SCOPE_MOTIVOS_CONSULTA => [
+        self::SCOPE_ENCOUNTER_REASONS => [
             'dir' => 'motivos_consulta',
-            'messageClass' => AppointmentReasonMessage::class,
+            'messageClass' => EncounterReasonMessage::class,
             'mediaTypes' => ['imagen', 'audio'],
         ],
-        self::SCOPE_CONSULTA_CHAT => [
+        self::SCOPE_ENCOUNTER_CHAT => [
             'dir' => 'consulta_chat',
-            'messageClass' => ConsultaChatMessage::class,
+            'messageClass' => EncounterChatMessage::class,
             'mediaTypes' => ['imagen', 'audio', 'video', 'documento'],
         ],
     ];
@@ -146,10 +146,10 @@ final class SecureMediaService
             return null;
         }
         if (strpos($normalized, 'uploads/motivos_consulta/') === 0) {
-            return self::SCOPE_MOTIVOS_CONSULTA;
+            return self::SCOPE_ENCOUNTER_REASONS;
         }
         if (strpos($normalized, 'uploads/consulta_chat/') === 0) {
-            return self::SCOPE_CONSULTA_CHAT;
+            return self::SCOPE_ENCOUNTER_CHAT;
         }
 
         return null;

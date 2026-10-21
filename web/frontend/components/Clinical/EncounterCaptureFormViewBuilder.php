@@ -26,7 +26,7 @@ final class EncounterCaptureFormViewBuilder
      *   urlInicio: string,
      *   personaId: int,
      *   idConfiguracion: int|null,
-     *   idConsulta: int|null,
+     *   encounterId: int|null,
      *   parent: string|null,
      *   parentId: int|null
      * }
@@ -34,15 +34,15 @@ final class EncounterCaptureFormViewBuilder
     public static function build(
         Persona $paciente,
         $idConfiguracion,
-        $idConsulta,
+        $encounterId,
         $parent,
         $parentId,
         string $motivoPacientePrefill = ''
     ): array {
         $parentStr = $parent !== null && $parent !== '' ? (string) $parent : null;
         $parentIdInt = $parentId !== null && $parentId !== '' ? (int) $parentId : null;
-        $idConsultaInt = $idConsulta !== null && $idConsulta !== '' && (int) $idConsulta > 0
-            ? (int) $idConsulta
+        $encounterIdInt = $encounterId !== null && $encounterId !== '' && (int) $encounterId > 0
+            ? (int) $encounterId
             : null;
         $idConfig = $idConfiguracion !== null && $idConfiguracion !== ''
             ? (int) $idConfiguracion
@@ -68,7 +68,7 @@ final class EncounterCaptureFormViewBuilder
             'urlInicio' => Url::to(['/site/index']),
             'personaId' => (int) $paciente->id_persona,
             'idConfiguracion' => $idConfig,
-            'idConsulta' => $idConsultaInt,
+            'encounterId' => $encounterIdInt,
             'parent' => $parentStr,
             'parentId' => $parentIdInt,
         ];

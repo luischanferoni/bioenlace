@@ -21,7 +21,7 @@ class EncounterChatService {
   Future<Map<String, dynamic>> getMessages(int encounterId) async {
     try {
       final uri = Uri.parse(
-        '${AppConfig.apiUrl}/consulta-chat/mensajes/$encounterId',
+        '${AppConfig.apiUrl}/encounter-chat/mensajes/$encounterId',
       );
       final response = await http
           .get(uri, headers: _headers)
@@ -36,7 +36,7 @@ class EncounterChatService {
         'data': payload,
         'messages': normalizeChatMediaMessages(
           raw,
-          mediaScope: 'consulta-chat',
+          mediaScope: 'encounter-chat',
           encounterId: encounterId,
         ),
       };
@@ -51,7 +51,7 @@ class EncounterChatService {
     String userRole = 'paciente',
   }) async {
     try {
-      final uri = Uri.parse('${AppConfig.apiUrl}/consulta-chat/enviar');
+      final uri = Uri.parse('${AppConfig.apiUrl}/encounter-chat/enviar');
       final body = {
         'encounter_id': encounterId,
         'message': text,
@@ -83,7 +83,7 @@ class EncounterChatService {
     required String messageType,
   }) async {
     try {
-      final uri = Uri.parse('${AppConfig.apiUrl}/consulta-chat/subir');
+      final uri = Uri.parse('${AppConfig.apiUrl}/encounter-chat/subir');
       final request = http.MultipartRequest('POST', uri);
       request.headers.addAll(_headers);
       request.fields['encounter_id'] = encounterId.toString();
@@ -99,7 +99,7 @@ class EncounterChatService {
       );
       normalizeChatMediaMessage(
         payload,
-        mediaScope: 'consulta-chat',
+        mediaScope: 'encounter-chat',
         encounterId: encounterId,
       );
       return {'success': true, 'data': payload};
@@ -116,7 +116,7 @@ class EncounterChatService {
     String userRole = 'paciente',
   }) async {
     try {
-      final uri = Uri.parse('${AppConfig.apiUrl}/consulta-chat/subir');
+      final uri = Uri.parse('${AppConfig.apiUrl}/encounter-chat/subir');
       final request = http.MultipartRequest('POST', uri);
       request.headers.addAll(_headers);
       request.fields['encounter_id'] = encounterId.toString();
@@ -136,7 +136,7 @@ class EncounterChatService {
       );
       normalizeChatMediaMessage(
         payload,
-        mediaScope: 'consulta-chat',
+        mediaScope: 'encounter-chat',
         encounterId: encounterId,
       );
       return {'success': true, 'data': payload};

@@ -149,7 +149,7 @@
     var puedeAtender = root.getAttribute('data-puede-atender') === '1';
     var puedeDocumentar = root.getAttribute('data-puede-documentar') === '1';
     var urlHistoriaBase = root.getAttribute('data-url-historia') || '';
-    var urlVerConsultaBase = root.getAttribute('data-url-ver-consulta') || '';
+    var encounterViewUrlBase = root.getAttribute('data-url-ver-consulta') || '';
     var urlAsistente = root.getAttribute('data-url-asistente') || '';
 
     var msgEmptyTurnos = root.getAttribute('data-msg-empty-turnos') || 'Sin resultados.';
@@ -216,10 +216,10 @@
       return base + (base.indexOf('?') >= 0 ? '&' : '?') + q;
     }
 
-    /** Turno ATENDIDO o encounter documentado → pantalla de consulta (no HC). */
-    function verConsultaUrl(personaId, turnoId, encounterId) {
-      if (!urlVerConsultaBase) return null;
-      var base = urlVerConsultaBase;
+    /** Turno ATENDIDO o encounter documentado → pantalla de solo lectura (no HC). */
+    function encounterViewUrl(personaId, turnoId, encounterId) {
+      if (!encounterViewUrlBase) return null;
+      var base = encounterViewUrlBase;
       var q = '';
       if (encounterId) {
         q = 'encounter_id=' + encodeURIComponent(encounterId);
@@ -232,8 +232,8 @@
       return base + (base.indexOf('?') >= 0 ? '&' : '?') + q;
     }
 
-    /** Misma semántica que móvil: ATENDIDO = ver consulta cargada; resto = abrir HC/captura. */
-    function esTurnoConsultaCargada(t) {
+    /** Misma semántica que móvil: ATENDIDO abre el encounter documentado; el resto abre HC/captura. */
+    function isEncounterDocumentedTurn(t) {
       return !!(t && String(t.estado || '').toUpperCase() === 'ATENDIDO');
     }
 
@@ -335,13 +335,13 @@
       }
 
       var idPersona = t.id_persona || (t.paciente ? t.paciente.id : null);
-      var consultaCargada = esTurnoConsultaCargada(t);
+      var isDocumentedEncounter = isEncounterDocumentedTurn(t);
       var a = colEl.querySelector('[data-role="link-historia"]');
       if (!a) return;
-      if (consultaCargada) {
-        var urlConsulta = verConsultaUrl(idPersona, t.id);
-        if (urlConsulta) {
-          a.href = urlConsulta;
+      if (isDocumentedEncounter) {
+        var encounterUrl = encounterViewUrl(idPersona, t.id);
+        if (encounterUrl) {
+          a.href = encounterUrl;
           a.setAttribute('data-spa-title', 'Consulta cargada');
           a.setAttribute('aria-label', 'Ver consulta');
         }
@@ -642,7 +642,7 @@
       return !(Number(g && g.prioridad_triage) >= 1);
     }
 
-    function guardiaPuedeVerConsulta(g) {
+    function emergencyEncounterCanBeViewed(g) {
       return !!(g && g.encounter_id && (g.circuito_estado === 'atendido' || g.circuito_estado === 'derivado'));
     }
 
@@ -807,17 +807,17 @@
         }
       }
 
-      var ctaVerConsulta = rowEl.querySelector('[data-role="cta-ver-consulta"]');
-      if (ctaVerConsulta) {
-        var urlVc = guardiaPuedeVerConsulta(g)
-          ? verConsultaUrl(g.id_persona, null, g.encounter_id)
+      var encounterViewCta = rowEl.querySelector('[data-role="cta-ver-consulta"]');
+      if (encounterViewCta) {
+        var encounterViewHref = emergencyEncounterCanBeViewed(g)
+          ? encounterViewUrl(g.id_persona, null, g.encounter_id)
           : null;
-        if (urlVc) {
-          ctaVerConsulta.href = urlVc;
-          ctaVerConsulta.classList.remove('d-none');
+        if (encounterViewHref) {
+          encounterViewCta.href = encounterViewHref;
+          encounterViewCta.classList.remove('d-none');
         } else {
-          ctaVerConsulta.removeAttribute('href');
-          ctaVerConsulta.classList.add('d-none');
+          encounterViewCta.removeAttribute('href');
+          encounterViewCta.classList.add('d-none');
         }
       }
 
@@ -1581,10 +1581,10 @@
       var api = window.BioenlaceNativePage;
       if (!api) return;
       try {
-        if (guardiaPuedeVerConsulta(g)) {
-          var urlConsulta = verConsultaUrl(g.id_persona, null, g.encounter_id);
-          if (urlConsulta) {
-            window.location.href = urlConsulta;
+        if (emergencyEncounterCanBeViewed(g)) {
+          var encounterUrl = encounterViewUrl(g.id_persona, null, g.encounter_id);
+          if (encounterUrl) {
+            window.location.href = encounterUrl;
             return;
           }
         }
@@ -3144,7 +3144,7 @@
       if (!api || !asyncChatState.encounterId || !resolutionCode) return;
       if (errEl) errEl.classList.add('d-none');
       try {
-        var url = api.apiV1Url('consulta-async/cerrar-como-staff');
+        var url = api.apiV1Url('encounter-async/cerrar-como-staff');
         var json = await api.fetchJson(url, {
           method: 'POST',
           headers: {
@@ -3237,7 +3237,7 @@
       form.append('message_type', messageType);
       form.append('file', file);
       try {
-        var url = api.apiV1Url('consulta-chat/subir');
+        var url = api.apiV1Url('encounter-chat/subir');
         var headers = window.BioenlaceApiClient && window.BioenlaceApiClient.mergeHeaders
           ? window.BioenlaceApiClient.mergeHeaders({ 'X-Requested-With': 'XMLHttpRequest' })
           : { 'X-Requested-With': 'XMLHttpRequest' };
@@ -3338,7 +3338,7 @@
       if (compose) compose.classList.add('d-none');
       if (errEl) errEl.classList.add('d-none');
       try {
-        var url = api.apiV1Url('consulta-chat/mensajes/' + encodeURIComponent(encounterId));
+        var url = api.apiV1Url('encounter-chat/mensajes/' + encodeURIComponent(encounterId));
         var json = await api.fetchJson(url, {
           method: 'GET',
           headers: { 'X-Requested-With': 'XMLHttpRequest' },
@@ -3393,7 +3393,7 @@
       if (!text) return;
       if (errEl) errEl.classList.add('d-none');
       try {
-        var url = api.apiV1Url('consulta-chat/enviar');
+        var url = api.apiV1Url('encounter-chat/enviar');
         var json = await api.fetchJson(url, {
           method: 'POST',
           headers: {
@@ -3425,7 +3425,7 @@
       var errEl = document.getElementById('async-chat-error');
       if (errEl) errEl.classList.add('d-none');
       try {
-        var url = api.apiV1Url('consulta-async/cancelar-como-paciente');
+        var url = api.apiV1Url('encounter-async/cancelar-como-paciente');
         var json = await api.fetchJson(url, {
           method: 'POST',
           headers: {
@@ -3484,7 +3484,7 @@
       var api = window.BioenlaceNativePage;
       if (!api || !item || !item.encounter_id) return;
       try {
-        var url = api.apiV1Url('consulta-async/tomar-como-staff');
+        var url = api.apiV1Url('encounter-async/tomar-como-staff');
         var json = await api.fetchJson(url, {
           method: 'POST',
           headers: {
@@ -3704,7 +3704,7 @@
       if (!api || !(encounterId > 0)) return;
       if (!window.confirm('¿Retirar esta solicitud? Solo podés hacerlo mientras el equipo aún no la atiende.')) return;
       try {
-        var url = api.apiV1Url('consulta-async/cancelar-como-paciente');
+        var url = api.apiV1Url('encounter-async/cancelar-como-paciente');
         var json = await api.fetchJson(url, {
           method: 'POST',
           headers: {
@@ -3722,7 +3722,7 @@
       }
     }
 
-    function asyncPerteneceATratamiento(item) {
+    function asyncBelongsToCarePlan(item) {
       if (!item) return false;
       if (item.ui_group === 'tratamiento') return true;
       if (item.ui_group === 'consultas') return false;
@@ -3730,17 +3730,17 @@
       return carePlanId > 0;
     }
 
-    function splitAsyncByUiGroup(items) {
-      var tratamiento = [];
-      var consultas = [];
+    function splitAsyncItemsByGroup(items) {
+      var carePlanItems = [];
+      var generalEncounterItems = [];
       (items || []).forEach(function (item) {
-        if (asyncPerteneceATratamiento(item)) {
-          tratamiento.push(item);
+        if (asyncBelongsToCarePlan(item)) {
+          carePlanItems.push(item);
         } else {
-          consultas.push(item);
+          generalEncounterItems.push(item);
         }
       });
-      return { tratamiento: tratamiento, consultas: consultas };
+      return { carePlanItems: carePlanItems, generalEncounterItems: generalEncounterItems };
     }
 
     function renderPatientAsyncItemsSection(sectionsSlot, title, items, esHistorial) {
@@ -3763,22 +3763,22 @@
 
     function renderPatientAsyncSection(sectionsSlot, data) {
       if (!sectionsSlot || !data) return;
-      // Solo consultas generales: las de tratamiento se anidan en care_plans_active.
-      var activas = splitAsyncByUiGroup(data.items || []);
+      // Solo encounters generales: los elementos de plan se anidan en care_plans_active.
+      var activeItems = splitAsyncItemsByGroup(data.items || []);
       var history = data.history || {};
-      var hist = splitAsyncByUiGroup(history.items || []);
+      var historicalItems = splitAsyncItemsByGroup(history.items || []);
 
       renderPatientAsyncItemsSection(
         sectionsSlot,
         data.title,
-        activas.consultas,
+        activeItems.generalEncounterItems,
         false
       );
-      if (hist.consultas.length) {
+      if (historicalItems.generalEncounterItems.length) {
         renderPatientAsyncItemsSection(
           sectionsSlot,
           history.title || 'Consultas anteriores',
-          hist.consultas,
+          historicalItems.generalEncounterItems,
           true
         );
       }

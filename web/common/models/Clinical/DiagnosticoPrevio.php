@@ -12,7 +12,7 @@ use common\components\Domain\Clinical\Encounter\Domain\ConditionVerificationStat
  * Lectura de diagnósticos previos vía {@see view_encounter_diagnostico}.
  *
  * @property int $id
- * @property int|null $id_consulta
+ * @property int|null $encounter_id
  * @property string|null $codigo
  * @property string|null $tipo_diagnostico
  * @property string|null $cronico
@@ -20,7 +20,7 @@ use common\components\Domain\Clinical\Encounter\Domain\ConditionVerificationStat
  * @property string|null $condition_verification_status
  *
  * @property-read SnomedHallazgos|null $codigoSnomed
- * @property-read Encounter|null $consulta
+ * @property-read Encounter|null $encounter
  */
 class DiagnosticoPrevio extends ActiveRecord
 {
@@ -33,7 +33,7 @@ class DiagnosticoPrevio extends ActiveRecord
     public $id_servicio;
 
     /**
-     * Lecturas vía {@see view_encounter_diagnostico} (legacy `diagnostico_consultas` o `clinical_condition`).
+     * Lectura de diagnósticos actuales desde la vista de diagnósticos de encounter.
      */
     public static function tableName()
     {
@@ -41,7 +41,7 @@ class DiagnosticoPrevio extends ActiveRecord
     }
 
     /**
-     * La vista no expone PK al schema de Yii; columna `id` viene de legacy o `clinical_condition.id`.
+     * La vista no expone su clave primaria en la caché de esquema de Yii.
      *
      * @return list<string>
      */
@@ -53,7 +53,7 @@ class DiagnosticoPrevio extends ActiveRecord
     public function attributeLabels()
     {
         return [
-            'id_consulta' => 'Id Consulta',
+            'encounter_id' => 'Encounter',
             'codigo' => 'Concepto',
             'tipo_diagnostico' => 'Tipo de Diagnóstico',
             'cronico' => 'Crónico',
@@ -68,8 +68,8 @@ class DiagnosticoPrevio extends ActiveRecord
     public function rules()
     {
         return [
-            [['id_consulta', 'codigo', 'condition_clinical_status', 'condition_verification_status'], 'required'],
-            [['id', 'id_consulta', 'id_servicio'], 'integer'],
+            [['encounter_id', 'codigo', 'condition_clinical_status', 'condition_verification_status'], 'required'],
+            [['id', 'encounter_id', 'id_servicio'], 'integer'],
             [['condition_clinical_status'], 'default', 'value' => ConditionClinicalStatus::ACTIVE],
             [['condition_verification_status'], 'default', 'value' => ConditionVerificationStatus::PROVISIONAL],
             [['tipo_diagnostico', 'cronico', 'condition_verification_status', 'condition_clinical_status', 'terminos_motivos'], 'string'],
@@ -110,9 +110,9 @@ class DiagnosticoPrevio extends ActiveRecord
         return $this->hasOne(SnomedHallazgos::class, ['conceptId' => 'codigo']);
     }
 
-    public function getConsulta()
+    public function getEncounter()
     {
-        return $this->hasOne(Encounter::class, ['id' => 'id_consulta']);
+        return $this->hasOne(Encounter::class, ['id' => 'encounter_id']);
     }
 
     public function getDiagnosticoTerm(): string

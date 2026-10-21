@@ -62,7 +62,7 @@ class Turno {
   factory Turno.fromJson(Map<String, dynamic> json) {
     final idVal = json['id'] ?? json['id_turnos'];
     final insightRaw = json['modalidad_insight'];
-    final encounterIdRaw = json['encounter_id'] ?? json['id_consulta'];
+    final encounterIdRaw = json['encounter_id'];
     return Turno(
       id: _asInt(idVal),
       idPersona: _asInt(json['id_persona']),

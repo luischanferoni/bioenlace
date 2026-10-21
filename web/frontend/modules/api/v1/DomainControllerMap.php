@@ -17,12 +17,6 @@ final class DomainControllerMap
 {
     private const SUFFIX = 'Controller';
 
-    /** @var array<string, string> */
-    private const PUBLIC_ID_OVERRIDES = [
-        'EncounterAsyncController' => 'consulta-async',
-        'EncounterFollowupController' => 'consultas-seguimiento',
-    ];
-
     /** @var array<string, string>|null */
     private static ?array $cache = null;
 
@@ -41,8 +35,7 @@ final class DomainControllerMap
         $out = [];
         foreach ($files as $file) {
             $class = basename($file, '.php');
-            $id = self::PUBLIC_ID_OVERRIDES[$class]
-                ?? Inflector::camel2id(substr($class, 0, -strlen(self::SUFFIX)), '-', true);
+            $id = Inflector::camel2id(substr($class, 0, -strlen(self::SUFFIX)), '-', true);
             if ($id === '' || isset($out[$id])) {
                 continue;
             }

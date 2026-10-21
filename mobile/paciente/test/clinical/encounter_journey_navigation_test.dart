@@ -60,16 +60,15 @@ void main() {
   );
 
   test(
-    'encounter identifier prefers the current field and retains the legacy fallback',
+    'encounter identifier reads the canonical field only',
     () {
       expect(
         encounterIdDesdeTurno(<String, dynamic>{
           'encounter_id': 34,
-          'id_consulta': 12,
         }),
         34,
       );
-      expect(encounterIdDesdeTurno(<String, dynamic>{'id_consulta': '12'}), 12);
+      expect(encounterIdDesdeTurno(<String, dynamic>{'id_consulta': '12'}), isNull);
     },
   );
 }

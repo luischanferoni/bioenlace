@@ -9,7 +9,7 @@ use common\models\Clinical\Encounter;
 use common\models\Clinical\MedicationAdministration;
 use common\models\Clinical\MedicationRequest;
 use common\models\Clinical\ServiceRequest;
-use common\models\Clinical\ConsultaAtencionesEnfermeria;
+use common\models\Clinical\EncounterNursingCare;
 use common\models\Clinical\Emergency\EmergencyBoardEvent;
 use common\models\Clinical\Emergency\EmergencyTriage;
 use common\models\Clinical\Emergency\EmergencyEpisode;
@@ -249,14 +249,14 @@ final class EpisodioTimelineService
      */
     private function appendEnfermeriaItems(array &$items, array $encounterIds): void
     {
-        $rows = ConsultaAtencionesEnfermeria::find()
+        $rows = EncounterNursingCare::find()
             ->where(['encounter_id' => $encounterIds])
             ->orderBy(['id' => SORT_DESC])
             ->limit(40)
             ->all();
 
         foreach ($rows as $row) {
-            if (!$row instanceof ConsultaAtencionesEnfermeria) {
+            if (!$row instanceof EncounterNursingCare) {
                 continue;
             }
             $datos = $row->datos;

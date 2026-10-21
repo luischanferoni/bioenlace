@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\Encounter\Application\Service;
 
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EpisodioDateTimePresenter;
 use common\models\Clinical\Encounter;
-use common\models\Clinical\ConsultaAtencionesEnfermeria;
+use common\models\Clinical\EncounterNursingCare;
 use common\models\Clinical\Emergency\EmergencyTriage;
 use common\models\Clinical\Emergency\EmergencyEpisode;
 use common\models\Clinical\InpatientStay;
@@ -151,14 +151,14 @@ final class EpisodioSignosVitalesService
         foreach ($encounters as $enc) {
             $ids[] = (int) $enc->id;
         }
-        $rows = ConsultaAtencionesEnfermeria::find()
+        $rows = EncounterNursingCare::find()
             ->where(['encounter_id' => $ids])
             ->orderBy(['fecha_creacion' => SORT_ASC, 'id' => SORT_ASC])
             ->limit(80)
             ->all();
 
         foreach ($rows as $row) {
-            if (!$row instanceof ConsultaAtencionesEnfermeria) {
+            if (!$row instanceof EncounterNursingCare) {
                 continue;
             }
             $datos = $row->datos;
@@ -241,7 +241,7 @@ final class EpisodioSignosVitalesService
         return $out;
     }
 
-    private function atencionTimestamp(ConsultaAtencionesEnfermeria $row): string
+    private function atencionTimestamp(EncounterNursingCare $row): string
     {
         $fecha = trim((string) ($row->fecha_creacion ?? ''));
         if ($fecha === '') {

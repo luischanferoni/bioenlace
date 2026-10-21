@@ -22,7 +22,7 @@ final class StartEncounterAsyncChat
             return;
         }
 
-        if (\common\models\Clinical\ConsultaChatMessage::find()->where(['encounter_id' => (int) $encounter->id])->exists()) {
+        if (\common\models\Clinical\EncounterChatMessage::find()->where(['encounter_id' => (int) $encounter->id])->exists()) {
             return;
         }
 
@@ -42,7 +42,7 @@ final class StartEncounterAsyncChat
         $catalog = new EncounterAsyncChatPolicyCatalogService();
         $categoria = $catalog->solicitudCategoriaFromMeta($meta);
 
-        $chatMessage = new \common\models\Clinical\ConsultaChatMessage();
+        $chatMessage = new \common\models\Clinical\EncounterChatMessage();
         $chatMessage->encounter_id = (int) $encounter->id;
         $chatMessage->user_id = $userId;
         $chatMessage->user_name = $userName;

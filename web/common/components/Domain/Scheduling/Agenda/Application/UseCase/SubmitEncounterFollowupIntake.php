@@ -31,7 +31,7 @@ final class SubmitEncounterFollowupIntake
     /**
      * @param array<string, mixed> $draft
      */
-    public static function esIntakeConsultasSeguimiento(array $draft): bool
+    public static function isEncounterFollowupIntake(array $draft): bool
     {
         $tipo = trim((string) ($draft[self::DRAFT_INTAKE_TIPO] ?? ''));
 
@@ -97,7 +97,7 @@ final class SubmitEncounterFollowupIntake
      */
     public function assertPuedeSolicitarAsync(array $draft, int $idPersona): void
     {
-        if (!self::esIntakeConsultasSeguimiento($draft)) {
+        if (!self::isEncounterFollowupIntake($draft)) {
             return;
         }
 

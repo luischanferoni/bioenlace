@@ -22,7 +22,6 @@ class EncounterReporteBusqueda extends Model
         if ($tipoAtencion === 'AMB') {
             $query1 = (new \yii\db\Query())
                 ->select([
-                    'id_consulta' => 'enc.id',
                     'encounter_id' => 'enc.id',
                     'personas.id_persona',
                     'nombreyapellido' => new \yii\db\Expression('CONCAT(personas.apellido," ",personas.nombre)'),
@@ -48,7 +47,6 @@ class EncounterReporteBusqueda extends Model
 
             $query2 = (new \yii\db\Query())
                 ->select([
-                    'id_consulta' => 'enc.id',
                     'encounter_id' => 'enc.id',
                     'personas.id_persona',
                     'nombreyapellido' => new \yii\db\Expression('CONCAT(personas.apellido," ",personas.nombre)'),
@@ -76,7 +74,6 @@ class EncounterReporteBusqueda extends Model
 
         $query1 = (new \yii\db\Query())
             ->select([
-                'id_consulta' => 'enc.id',
                 'encounter_id' => 'enc.id',
                 'personas.id_persona',
                 'nombreyapellido' => new \yii\db\Expression('CONCAT(personas.apellido," ",personas.nombre)'),
@@ -98,7 +95,6 @@ class EncounterReporteBusqueda extends Model
 
         $query2 = (new \yii\db\Query())
             ->select([
-                'id_consulta' => 'enc.id',
                 'encounter_id' => 'enc.id',
                 'personas.id_persona',
                 'nombreyapellido' => new \yii\db\Expression('CONCAT(personas.apellido," ",personas.nombre)'),
@@ -170,7 +166,6 @@ class EncounterReporteBusqueda extends Model
         if ($tipoAtencion === 'AMB') {
             $query1 = (new \yii\db\Query())
                 ->select([
-                    'id_consulta' => 'enc.id',
                     'encounter_id' => 'enc.id',
                     'personas.id_persona',
                     'nombreyapellido' => new \yii\db\Expression('CONCAT(personas.apellido," ",personas.nombre)'),
@@ -194,7 +189,6 @@ class EncounterReporteBusqueda extends Model
 
             $query2 = (new \yii\db\Query())
                 ->select([
-                    'id_consulta' => 'enc.id',
                     'encounter_id' => 'enc.id',
                     'personas.id_persona',
                     'nombreyapellido' => new \yii\db\Expression('CONCAT(personas.apellido," ",personas.nombre)'),
@@ -221,7 +215,6 @@ class EncounterReporteBusqueda extends Model
         if ($tipoAtencion === 'EMER') {
             $query1 = (new \yii\db\Query())
                 ->select([
-                    'id_consulta' => 'enc.id',
                     'encounter_id' => 'enc.id',
                     'personas.id_persona',
                     'nombreyapellido' => new \yii\db\Expression('CONCAT(personas.apellido," ",personas.nombre)'),
@@ -241,7 +234,6 @@ class EncounterReporteBusqueda extends Model
 
             $query2 = (new \yii\db\Query())
                 ->select([
-                    'id_consulta' => 'enc.id',
                     'encounter_id' => 'enc.id',
                     'personas.id_persona',
                     'nombreyapellido' => new \yii\db\Expression('CONCAT(personas.apellido," ",personas.nombre)'),
@@ -267,7 +259,6 @@ class EncounterReporteBusqueda extends Model
 
         return (new \yii\db\Query())
             ->select([
-                'id_consulta' => 'enc.id',
                 'encounter_id' => 'enc.id',
                 'personas.id_persona',
                 'nombreyapellido' => new \yii\db\Expression('CONCAT(personas.apellido," ",personas.nombre)'),

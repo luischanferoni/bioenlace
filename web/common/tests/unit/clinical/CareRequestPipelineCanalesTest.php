@@ -112,7 +112,7 @@ class CareRequestPipelineCanalesTest extends Unit
         ]);
 
         $this->assertNull($input->actoCode);
-        $issues = $input->buildIssues('ConsultaDerivaciones', 0);
+        $issues = $input->buildIssues('EncounterReferralRequest', 0);
         $actoIssue = null;
         foreach ($issues as $issue) {
             if (($issue['field'] ?? '') === DerivacionInput::FIELD_ACTO_DISPLAY) {

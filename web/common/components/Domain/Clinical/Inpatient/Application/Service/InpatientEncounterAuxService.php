@@ -183,7 +183,7 @@ final class InpatientEncounterAuxService
 
         $model = new InpatientFluidBalanceRow();
         $model->id = (int) $obs->id;
-        $model->id_consulta = (int) $obs->encounter_id;
+        $model->encounter_id = (int) $obs->encounter_id;
         $model->tipo_registro = (string) ($meta['tipo_registro'] ?? '');
         $model->cod_ingreso = isset($meta['cod_ingreso']) ? (int) $meta['cod_ingreso'] : null;
         $model->cod_egreso = isset($meta['cod_egreso']) ? (int) $meta['cod_egreso'] : null;
@@ -207,7 +207,7 @@ final class InpatientEncounterAuxService
 
         $model = new InpatientRegimenRow();
         $model->id = (int) ($row['id'] ?? 0);
-        $model->id_consulta = (int) ($row['encounter_id'] ?? 0);
+        $model->encounter_id = (int) ($row['encounter_id'] ?? 0);
         $model->concept_id = isset($diet['concept_id']) ? (string) $diet['concept_id'] : null;
         $model->indicaciones = (string) ($row['note'] ?? '');
         if (isset($row['consulta_fecha'])) {

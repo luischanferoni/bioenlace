@@ -6,10 +6,10 @@ use common\components\Domain\Clinical\Encounter\Domain\RequestStatus;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\Input\DerivacionInput;
 use common\models\Clinical\ServiceRequest;
-use common\models\Clinical\ConsultaDerivaciones;
+use common\models\Clinical\EncounterReferralRequest;
 
 /**
- * Derivaciones clínicas (antes `consultas_derivaciones`) como ServiceRequest referral.
+ * Clinical referrals represented by ServiceRequest referral records.
  */
 final class CreateReferralRequest
 {
@@ -18,12 +18,12 @@ final class CreateReferralRequest
         int $efectorId,
         int $serviceId
     ): array {
-        return ConsultaDerivaciones::find()
+        return EncounterReferralRequest::find()
             ->alias('sr')
             ->innerJoin(['enc' => Encounter::tableName()], 'enc.id = sr.encounter_id')
             ->where([
-                'sr.category' => ConsultaDerivaciones::CATEGORY,
-                'sr.referral_status' => ConsultaDerivaciones::ESTADO_EN_ESPERA,
+                'sr.category' => EncounterReferralRequest::CATEGORY,
+                'sr.referral_status' => EncounterReferralRequest::ESTADO_EN_ESPERA,
                 'sr.target_efector_id' => $efectorId,
                 'sr.target_service_id' => $serviceId,
                 'enc.subject_persona_id' => $personaId,
@@ -34,7 +34,7 @@ final class CreateReferralRequest
 
     /**
      * @param int[] $serviceIds
-     * @return ConsultaDerivaciones[]
+     * @return EncounterReferralRequest[]
      */
     public static function findPendingForPersonEfectorServices(
         int $personaId,
@@ -45,12 +45,12 @@ final class CreateReferralRequest
             return [];
         }
 
-        return ConsultaDerivaciones::find()
+        return EncounterReferralRequest::find()
             ->alias('sr')
             ->innerJoin(['enc' => Encounter::tableName()], 'enc.id = sr.encounter_id')
             ->where([
-                'sr.category' => ConsultaDerivaciones::CATEGORY,
-                'sr.referral_status' => ConsultaDerivaciones::ESTADO_EN_ESPERA,
+                'sr.category' => EncounterReferralRequest::CATEGORY,
+                'sr.referral_status' => EncounterReferralRequest::ESTADO_EN_ESPERA,
                 'sr.target_efector_id' => $efectorId,
             ])
             ->andWhere(['in', 'sr.target_service_id', $serviceIds])
@@ -59,9 +59,9 @@ final class CreateReferralRequest
             ->all();
     }
 
-    public static function markBooked(ConsultaDerivaciones $referral, ?int $respondedEncounterId = null): bool
+    public static function markBooked(EncounterReferralRequest $referral, ?int $respondedEncounterId = null): bool
     {
-        $referral->referral_status = ConsultaDerivaciones::ESTADO_CON_TURNO;
+        $referral->referral_status = EncounterReferralRequest::ESTADO_CON_TURNO;
         if ($respondedEncounterId !== null && $respondedEncounterId > 0) {
             $referral->responded_encounter_id = $respondedEncounterId;
         }
@@ -97,13 +97,13 @@ final class CreateReferralRequest
             );
         }
 
-        $sr = new ConsultaDerivaciones();
+        $sr = new EncounterReferralRequest();
         $sr->encounter_id = (int) $encounter->id;
         $sr->subject_persona_id = (int) $encounter->subject_persona_id;
-        $sr->category = ConsultaDerivaciones::CATEGORY;
+        $sr->category = EncounterReferralRequest::CATEGORY;
         $sr->status = RequestStatus::ACTIVE;
         $sr->intent = 'order';
-        $sr->referral_status = ConsultaDerivaciones::ESTADO_EN_ESPERA;
+        $sr->referral_status = EncounterReferralRequest::ESTADO_EN_ESPERA;
         $sr->code = $targets['code'] ?? (isset($row['codigo']) ? (string) $row['codigo'] : null);
         $sr->code_system = $targets['code_system'] ?? null;
         $sr->display = $targets['acto_display']
@@ -113,7 +113,7 @@ final class CreateReferralRequest
         $sr->target_efector_id = $targets['id_efector'];
         $sr->target_service_id = $targets['id_servicio'];
         $sr->referral_kind = $targets['referral_kind']
-            ?? ($row['tipo'] ?? ConsultaDerivaciones::INTERCONSULTA);
+            ?? ($row['tipo'] ?? EncounterReferralRequest::INTERCONSULTA);
         $sr->request_kind = $row['tipo_solicitud'] ?? null;
         $sr->id_profesional_efector_servicio = $encounter->id_profesional_efector_servicio;
 

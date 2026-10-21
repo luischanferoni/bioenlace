@@ -21,7 +21,7 @@ final class EncounterAsyncIntakeContextService
      * @param array{include_reference_detail?: bool} $options
      *   - include_reference_detail: true (default) carga resumen de atención previa (chat).
      *     false deja solo encounter_id + línea liviana (bandeja staff).
-     * @return array<string, mixed>|null null si no hay intake de consultas-seguimiento
+     * @return array<string, mixed>|null null si no hay intake de encounter-followup
      */
     public function buildFromMeta(array $meta, int $idPersona, array $options = []): ?array
     {

@@ -13,7 +13,7 @@ use common\models\Clinical\EncuestaParchesMamarios;
 use common\models\Clinical\PersonasAntecedente;
 use common\components\Domain\Clinical\Encounter\Application\UseCase\AdvanceEncounterLifecycle;
 use common\models\Clinical\Encounter;
-use common\models\Clinical\ConsultaAtencionesEnfermeria;
+use common\models\Clinical\EncounterNursingCare;
 
 /**
  * EncuestaParchesMamariosController implements the CRUD actions for EncuestaParchesMamarios model.
@@ -140,7 +140,7 @@ class EncuestaParchesMamariosController extends Controller
                 }
 
                 if (isset($post['162879003p']) || isset($post['162879003t'])) {
-                    $model_a_enf = new ConsultaAtencionesEnfermeria();
+                    $model_a_enf = new EncounterNursingCare();
                     $model_a_enf->encounter_id = (int) $encounter->id;
                     // TODO: rehacer todo esto, el id de persona va en el before save de Atenciones Enfermeria
                     $post_a_e = ['162879003p'=> $post['162879003p'], '162879003t' => $post['162879003t']];

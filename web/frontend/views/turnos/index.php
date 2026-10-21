@@ -69,7 +69,7 @@ $datosParaLiveSearch = "";
         // de juntarlos + quitar la referencia para luego no mostrarlo
         foreach ($referencias as $referencia) {
             foreach ($serviciosXEfector['SIN_DERIVACION'] as $key => $servicioEfector) {                
-                if ($servicioEfector->id_servicio == $referencia['id_servicio']) {
+                if ($servicioEfector->id_servicio == $referencia['target_service_id']) {
                     $arrayColor = unserialize($servicioEfector->servicio->parametros);
                     $color = isset($arrayColor['color'])?$arrayColor['color']:"#000";            
                     echo $this->render('_card_servicio', [
@@ -84,7 +84,7 @@ $datosParaLiveSearch = "";
                 }
             }
             foreach ($serviciosXEfector['CON_DERIVACION'] as $key => $servicioEfector) {
-                if ($servicioEfector->id_servicio == $referencia['id_servicio']) {
+                if ($servicioEfector->id_servicio == $referencia['target_service_id']) {
                     $arrayColor = unserialize($servicioEfector->servicio->parametros);
                     $color = isset($arrayColor['color'])?$arrayColor['color']:"#000";            
                     echo $this->render('_card_servicio', [

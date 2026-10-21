@@ -3485,14 +3485,12 @@ class ChatScreenState extends State<ChatScreen> {
                         ),
                       ),
                     ],
-                    // CTA Cargar motivos cuando la respuesta incluye id_consulta (ej. tras crear turno)
+                    // CTA para cargar motivos cuando hay un encounter en el turno.
                     if (!isUser) ...[
                       Builder(
                         builder: (context) {
                           final data = message['data'];
-                          final rawId = data is Map
-                              ? (data['encounter_id'] ?? data['id_consulta'])
-                              : null;
+                          final rawId = data is Map ? data['encounter_id'] : null;
                           final encounterId = rawId is int
                               ? rawId
                               : (rawId is num

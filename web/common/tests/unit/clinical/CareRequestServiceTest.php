@@ -9,7 +9,7 @@ use common\components\Domain\Clinical\CareRequest\Domain\Model\CareRequest;
 use common\components\Domain\Clinical\CareRequest\Application\Service\CareRequestMetadata;
 use common\components\Domain\Clinical\CareRequest\Application\UseCase\ResolveCareRequest;
 use common\models\Clinical\Input\DerivacionInput;
-use common\models\Clinical\ConsultaDerivaciones;
+use common\models\Clinical\EncounterReferralRequest;
 
 class ResolveCareRequestTest extends Unit
 {
@@ -194,11 +194,11 @@ class ResolveCareRequestTest extends Unit
     public function testDerivacionInputReferralKindForModo(): void
     {
         $this->assertSame(
-            ConsultaDerivaciones::PRACTICA,
+            EncounterReferralRequest::PRACTICA,
             DerivacionInput::referralKindForModo(CareRequest::MODO_ESTUDIO)
         );
         $this->assertSame(
-            ConsultaDerivaciones::INTERCONSULTA,
+            EncounterReferralRequest::INTERCONSULTA,
             DerivacionInput::referralKindForModo(CareRequest::MODO_INTERCONSULTA)
         );
     }

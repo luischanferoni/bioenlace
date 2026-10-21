@@ -78,41 +78,41 @@ class EncounterDiagnosisRepository
     }
     
     /**
-     * Contexto parent/persona desde {@see Encounter} o AR legacy `Consulta`.
+     * Contexto parent/persona desde {@see Encounter} o un registro de dominio con persona y parent.
      *
-     * @param Encounter|object $consulta
+     * @param Encounter|object $encounter
      * @return array{persona_id: int, parent_id: int, parent_class: string}
      */
-    protected static function resolveConsultaContext($consulta): array
+    protected static function resolveEncounterContext($encounter): array
     {
-        if ($consulta instanceof Encounter) {
+        if ($encounter instanceof Encounter) {
             return [
-                'persona_id' => (int) $consulta->subject_persona_id,
-                'parent_id' => (int) $consulta->parent_id,
-                'parent_class' => Encounter::PARENT_CLASSES[$consulta->parent_type] ?? '',
+                'persona_id' => (int) $encounter->subject_persona_id,
+                'parent_id' => (int) $encounter->parent_id,
+                'parent_class' => Encounter::PARENT_CLASSES[$encounter->parent_type] ?? '',
             ];
         }
 
         return [
-            'persona_id' => (int) $consulta->id_persona,
-            'parent_id' => (int) $consulta->parent_id,
-            'parent_class' => (string) $consulta->parent_class,
+            'persona_id' => (int) $encounter->id_persona,
+            'parent_id' => (int) $encounter->parent_id,
+            'parent_class' => (string) $encounter->parent_class,
         ];
     }
 
     /**
      * @param Encounter|object $consultaOrEncounter
      */
-    protected static function resolveEncounterId($consultaOrEncounter): int
+    protected static function resolveEncounterId($encounterOrModel): int
     {
-        if ($consultaOrEncounter instanceof Encounter) {
-            return (int) $consultaOrEncounter->id;
+        if ($encounterOrModel instanceof Encounter) {
+            return (int) $encounterOrModel->id;
         }
-        if (isset($consultaOrEncounter->id_consulta) && (int) $consultaOrEncounter->id_consulta > 0) {
-            return (int) $consultaOrEncounter->id_consulta;
+        if (isset($encounterOrModel->encounter_id) && (int) $encounterOrModel->encounter_id > 0) {
+            return (int) $encounterOrModel->encounter_id;
         }
-        if (method_exists($consultaOrEncounter, 'getEncounter_id')) {
-            $id = $consultaOrEncounter->getEncounter_id();
+        if (method_exists($encounterOrModel, 'getEncounter_id')) {
+            $id = $encounterOrModel->getEncounter_id();
             if ($id !== null && (int) $id > 0) {
                 return (int) $id;
             }
@@ -190,8 +190,8 @@ class EncounterDiagnosisRepository
     /*
      * Diagnosticos previos pendientes en internación.
      */
-    public static function getDiagnosticosPreviosPendientesIMP($consulta) {
-        $ctx = self::resolveConsultaContext($consulta);
+    public static function getDiagnosticosPreviosPendientesIMP($encounter) {
+        $ctx = self::resolveEncounterContext($encounter);
         $query = self::getQueryDiagnosticosPreviosPendientes($ctx['persona_id']);
         $query->andWhere(
             'dcm.c_parent_id = :parent_id',
@@ -285,8 +285,8 @@ class EncounterDiagnosisRepository
      * Guarda diagnosticos previos provenientes del formulario
      * de Diagnosticos.
      */
-    public static function saveDiagnosticosPrevios($consulta, $diagsp) {
-        $encounterId = self::resolveEncounterId($consulta);
+    public static function saveDiagnosticosPrevios($encounter, $diagsp) {
+        $encounterId = self::resolveEncounterId($encounter);
         $encounter = Encounter::findOne($encounterId);
         if ($encounter === null) {
             throw new \InvalidArgumentException('Encounter not found.');
@@ -339,8 +339,8 @@ class EncounterDiagnosisRepository
      * 
      * Se utiliza en furmulario de diagnosticos.
      */
-    public static function getDiagnosticos($consulta) {
-        $encounterId = self::resolveEncounterId($consulta);
+    public static function getDiagnosticos($encounter) {
+        $encounterId = self::resolveEncounterId($encounter);
 
         return Condition::find()
             ->where(['encounter_id' => $encounterId, 'deleted_at' => null])

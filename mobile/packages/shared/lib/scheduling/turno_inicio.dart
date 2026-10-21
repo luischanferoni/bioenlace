@@ -103,7 +103,7 @@ bool appointmentEncounterReasonInputOpenInProduct(
 }
 
 bool appointmentHasEncounterForReasons(Map<String, dynamic> turno) {
-  final raw = turno['encounter_id'] ?? turno['id_consulta'];
+  final raw = turno['encounter_id'];
   if (raw is int) return raw > 0;
   if (raw == null) return false;
   final id = int.tryParse(raw.toString());

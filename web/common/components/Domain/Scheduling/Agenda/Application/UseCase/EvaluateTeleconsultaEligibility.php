@@ -6,7 +6,7 @@ use common\components\Domain\Organization\Servicio\Application\Service\Servicios
 use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaTriageServicioRolResolver;
 use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaTurnoTriageCatalogService;
 use common\components\Domain\Scheduling\Agenda\Domain\Catalog\ReservaTriageAccessCatalog;
-use common\models\Clinical\ConsultaDerivaciones;
+use common\models\Clinical\EncounterReferralRequest;
 use common\models\Scheduling\Turno;
 use common\models\Organization\Servicio;
 use common\models\Scheduling\ReservaTriageTeleconsultaElegibilidad;
@@ -314,11 +314,11 @@ final class EvaluateTeleconsultaEligibility
             return false;
         }
 
-        $pendientes = ConsultaDerivaciones::getDerivacionesPorPersona(
+        $pendientes = EncounterReferralRequest::getDerivacionesPorPersona(
             $idPersona,
             $idEfector,
             $idServicio,
-            ConsultaDerivaciones::ESTADO_EN_ESPERA
+            EncounterReferralRequest::ESTADO_EN_ESPERA
         );
 
         return $pendientes !== [];

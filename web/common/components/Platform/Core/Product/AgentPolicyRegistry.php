@@ -34,7 +34,7 @@ final class AgentPolicyRegistry
         'turno-resolucion-shortlist' => TurnoResolucionShortlistAgentPolicy::class,
         'turno-resolucion-auto-reserva' => TurnoResolucionAutoReservaAgentPolicy::class,
         'turno-resolucion-multicanal' => TurnoResolucionMulticanalAgentPolicy::class,
-        'consulta-async-bandeja-prioridad' => EncounterAsyncInboxPriorityAgentPolicy::class,
+        'encounter-async-bandeja-prioridad' => EncounterAsyncInboxPriorityAgentPolicy::class,
         'reserva-triage-post-cupo-routing' => ReservaTriagePostCupoRoutingAgentPolicy::class,
         'lab-encounter-link' => LabEncounterLinkAgentPolicy::class,
         'post-lab-classification' => PostLabClassificationAgentPolicy::class,

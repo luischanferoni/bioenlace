@@ -175,7 +175,7 @@ states:
         - draft.control_hub_anchor
         - draft.control_hub_kind
       open_ui:
-        action_id: consultas-seguimiento.hub
+        action_id: encounter-followup.hub
     always:
       -
         guard:
@@ -203,7 +203,7 @@ states:
       requires:
         - draft.control_hub_kind
       open_ui:
-        action_id: consultas-seguimiento.condicion-acciones
+        action_id: encounter-followup.condicion-acciones
         params:
           condition_codigo: draft.condition_codigo
           condition_ref: draft.condition_ref
@@ -352,7 +352,7 @@ states:
         draft_field: mensaje
         placeholder: 'Contanos tu consulta con el mayor detalle posible. Un profesional te responderá por mensaje.'
         min_length: 10
-        submit_action_id: consulta-async.solicitar-como-paciente
+        submit_action_id: encounter-async.solicitar-como-paciente
         params:
           triage_raiz: draft.triage_raiz
           triage_alarmas: 'draft.triage_alarmas?'
@@ -538,7 +538,7 @@ states:
       provides:
         - draft.intake_tipo
       open_ui:
-        action_id: consultas-seguimiento.paso
+        action_id: encounter-followup.paso
         params:
           step: tipo
     always:
@@ -587,7 +587,7 @@ states:
         draft_field: mensaje
         placeholder: 'Contanos tu consulta o evolución respecto de esa atención.'
         min_length: 10
-        submit_action_id: consulta-async.solicitar-como-paciente
+        submit_action_id: encounter-async.solicitar-como-paciente
         params:
           intake_tipo: seguimiento_consulta_previa
           encounter_id: draft.encounter_id
@@ -626,7 +626,7 @@ states:
       requires:
         - draft.care_plan_id
       open_ui:
-        action_id: consultas-seguimiento.paso
+        action_id: encounter-followup.paso
         params:
           step: necesidad
     always:
@@ -702,7 +702,7 @@ states:
         draft_field: ajuste_motivo
         placeholder: 'Indicá qué cambio necesitás y por qué (síntomas, horarios, etc.).'
         min_length: 10
-        submit_action_id: consulta-async.solicitar-como-paciente
+        submit_action_id: encounter-async.solicitar-como-paciente
         params:
           intake_tipo: seguimiento
           seguimiento_necesidad: draft.seguimiento_necesidad
@@ -731,7 +731,7 @@ states:
         draft_field: mensaje
         placeholder: 'Contanos tu consulta con el mayor detalle posible. Un profesional te responderá por mensaje.'
         min_length: 10
-        submit_action_id: consulta-async.solicitar-como-paciente
+        submit_action_id: encounter-async.solicitar-como-paciente
         params:
           intake_tipo: consulta_general
           mensaje: draft.mensaje
@@ -757,7 +757,7 @@ states:
         draft_field: mensaje
         placeholder: 'Contanos tu duda o cómo te sentís, con el mayor detalle posible.'
         min_length: 10
-        submit_action_id: consulta-async.solicitar-como-paciente
+        submit_action_id: encounter-async.solicitar-como-paciente
         params:
           intake_tipo: seguimiento
           seguimiento_necesidad: draft.seguimiento_necesidad
@@ -783,7 +783,7 @@ states:
         - draft.care_plan_id
         - draft.tipo_atencion
       open_ui:
-        action_id: consultas-seguimiento.paso
+        action_id: encounter-followup.paso
         params:
           step: preferencia_turno
           step_title: '¿Con quién querés el control?'

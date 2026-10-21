@@ -25,7 +25,7 @@ class YamlIntentCatalogExcludeTest extends Unit
     public function testLegacyConsultasSeguimientoIntentRemoved(): void
     {
         $this->assertFalse(
-            YamlIntentCatalogService::intentExists('atencion.consultas-seguimiento-flow')
+            YamlIntentCatalogService::intentExists('atencion.encounter-followup-flow')
         );
     }
 }

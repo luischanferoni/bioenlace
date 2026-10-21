@@ -85,7 +85,7 @@ final class InpatientClinicalQuery
             'fluidBalances' => $internacionModel
                 ? array_map(static fn ($row) => [
                     'id' => (int) $row->id,
-                    'encounterId' => (int) $row->id_consulta,
+                    'encounterId' => (int) $row->encounter_id,
                     'fecha' => $row->fecha,
                     'tipoRegistro' => $row->tipo_registro,
                     'cantidad' => $row->cantidad,
@@ -95,7 +95,7 @@ final class InpatientClinicalQuery
             'nutritionOrders' => $internacionModel
                 ? array_map(static fn ($row) => [
                     'id' => (int) $row->id,
-                    'encounterId' => (int) $row->id_consulta,
+                    'encounterId' => (int) $row->encounter_id,
                     'conceptId' => $row->concept_id,
                     'indicaciones' => $row->indicaciones,
                     'consultaFecha' => $row->getQueryExtraData('consulta_fecha'),

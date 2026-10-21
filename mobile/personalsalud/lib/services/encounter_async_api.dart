@@ -15,10 +15,10 @@ class EncounterAsyncApi {
         appClient: 'personalsalud-flutter',
       );
 
-  /// POST /api/v1/consulta-async/tomar-como-staff
+  /// POST /api/v1/encounter-async/tomar-como-staff
   Future<Map<String, dynamic>> tomarComoStaff(int encounterId) async {
     try {
-      final uri = Uri.parse('${AppConfig.apiUrl}/consulta-async/tomar-como-staff');
+      final uri = Uri.parse('${AppConfig.apiUrl}/encounter-async/tomar-como-staff');
       final response = await http
           .post(
             uri,
@@ -45,14 +45,14 @@ class EncounterAsyncApi {
     }
   }
 
-  /// POST /api/v1/consulta-async/cerrar-como-staff
+  /// POST /api/v1/encounter-async/cerrar-como-staff
   Future<Map<String, dynamic>> cerrarComoStaff(
     int encounterId,
     String resolutionCode, {
     String? note,
   }) async {
     try {
-      final uri = Uri.parse('${AppConfig.apiUrl}/consulta-async/cerrar-como-staff');
+      final uri = Uri.parse('${AppConfig.apiUrl}/encounter-async/cerrar-como-staff');
       final body = <String, dynamic>{
         'encounter_id': encounterId,
         'resolution_code': resolutionCode,

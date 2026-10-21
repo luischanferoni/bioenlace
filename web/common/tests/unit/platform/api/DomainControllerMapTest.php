@@ -20,10 +20,10 @@ final class DomainControllerMapTest extends Unit
         'encounter-chat' => 'clinical',
         'encounter-journey' => 'clinical',
         'media' => 'clinical',
-        'motivos-consulta' => 'clinical',
+        'encounter-reasons' => 'clinical',
         'pacientes' => 'clinical',
-        'consulta-async' => 'scheduling',
-        'consultas-seguimiento' => 'scheduling',
+        'encounter-async' => 'scheduling',
+        'encounter-followup' => 'scheduling',
         'profesional-agenda' => 'scheduling',
         'quirofano' => 'scheduling',
         'turnos' => 'scheduling',
@@ -61,20 +61,26 @@ final class DomainControllerMapTest extends Unit
         }
     }
 
-    public function testRenombrarControllersConservaIdsPublicosHistoricos(): void
+    public function testEncounterControllersExposeCanonicalIds(): void
     {
         $map = DomainControllerMap::build();
 
         $this->assertSame(
             'frontend\modules\api\v1\controllers\scheduling\EncounterAsyncController',
-            $map['consulta-async'] ?? null
+            $map['encounter-async'] ?? null
         );
         $this->assertSame(
             'frontend\modules\api\v1\controllers\scheduling\EncounterFollowupController',
-            $map['consultas-seguimiento'] ?? null
+            $map['encounter-followup'] ?? null
         );
-        $this->assertArrayNotHasKey('encounter-async', $map);
-        $this->assertArrayNotHasKey('encounter-followup', $map);
+        $this->assertSame(
+            'frontend\modules\api\v1\controllers\clinical\EncounterChatController',
+            $map['encounter-chat'] ?? null
+        );
+        $this->assertSame(
+            'frontend\modules\api\v1\controllers\clinical\EncounterReasonsController',
+            $map['encounter-reasons'] ?? null
+        );
     }
 
     public function testCadaControllerDeDominioTieneUnIdUnico(): void
@@ -113,7 +119,7 @@ final class DomainControllerMapTest extends Unit
         $config = file_get_contents(Yii::getAlias('@frontend') . '/config/main.php');
 
         // Ids públicos que no coinciden con el nombre de la clase: van a mano en controllerMap.
-        foreach (['servicio-teleconsulta', 'whatsapp', 'consulta-chat'] as $alias) {
+        foreach (['servicio-teleconsulta', 'whatsapp'] as $alias) {
             $this->assertStringContainsString("'" . $alias . "' =>", (string) $config);
         }
     }

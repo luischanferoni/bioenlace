@@ -35,10 +35,10 @@ class EncounterFollowupFlowYamlTest extends Unit
         $this->assertSame('cs_hub', $raizRoutes['seguimiento_cronico'] ?? null);
 
         $this->assertArrayHasKey('cs_hub', $byId);
-        $this->assertSame('consultas-seguimiento.hub', $byId['cs_hub']['meta']['open_ui']['action_id'] ?? null);
+        $this->assertSame('encounter-followup.hub', $byId['cs_hub']['meta']['open_ui']['action_id'] ?? null);
         $this->assertArrayHasKey('cs_condition_acciones', $byId);
         $this->assertSame(
-            'consultas-seguimiento.condicion-acciones',
+            'encounter-followup.condicion-acciones',
             $byId['cs_condition_acciones']['meta']['open_ui']['action_id'] ?? null
         );
         $this->assertSame(
@@ -169,7 +169,7 @@ class EncounterFollowupFlowYamlTest extends Unit
         $this->assertTrue($response['success'] ?? false);
         $this->assertSame('cs_hub', $response['subintent_id'] ?? null);
         $this->assertSame(
-            'consultas-seguimiento.hub',
+            'encounter-followup.hub',
             $response['open_ui']['action_id'] ?? null
         );
         $this->assertArrayNotHasKey(

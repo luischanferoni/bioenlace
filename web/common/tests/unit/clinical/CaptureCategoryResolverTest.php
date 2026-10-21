@@ -17,7 +17,7 @@ class CaptureCategoryResolverTest extends Unit
         $cats = (new CaptureCategoryResolver())->resolve($def, [], CaptureActorCatalog::ACTOR_MEDICO);
         $modelos = array_column($cats, 'modelo');
 
-        $this->assertNotContains('ConsultaAtencionesEnfermeria', $modelos);
+        $this->assertNotContains('EncounterNursingCare', $modelos);
         $this->assertContains('DiagnosticoConsulta', $modelos);
     }
 
@@ -34,9 +34,9 @@ class CaptureCategoryResolverTest extends Unit
             $byModelo[$cat['modelo']] = $cat;
         }
 
-        $this->assertArrayHasKey('ConsultaAtencionesEnfermeria', $byModelo);
-        $this->assertTrue($byModelo['ConsultaAtencionesEnfermeria']['sugerido']);
-        $this->assertFalse($byModelo['ConsultaAtencionesEnfermeria']['requerido']);
+        $this->assertArrayHasKey('EncounterNursingCare', $byModelo);
+        $this->assertTrue($byModelo['EncounterNursingCare']['sugerido']);
+        $this->assertFalse($byModelo['EncounterNursingCare']['requerido']);
         $this->assertTrue($byModelo['ConsultaBalanceHidrico']['sugerido']);
         $this->assertSame('Signos vitales', $cats[0]['titulo']);
     }
@@ -51,7 +51,7 @@ class CaptureCategoryResolverTest extends Unit
         );
         $sv = array_values(array_filter(
             $cats,
-            static fn ($c) => ($c['modelo'] ?? '') === 'ConsultaAtencionesEnfermeria'
+            static fn ($c) => ($c['modelo'] ?? '') === 'EncounterNursingCare'
         ));
         $this->assertCount(1, $sv);
     }

@@ -51,9 +51,9 @@ class CaptureExtractionService extends Component
                     isset($speech['quality']) ? ['stt_quality' => $speech['quality']] : []
                 );
             }
-            $textoConsulta = (string) $speech['text'];
+            $sourceText = (string) $speech['text'];
 
-            if ($idProfesionalEfectorServicio <= 0 || $textoConsulta === '') {
+            if ($idProfesionalEfectorServicio <= 0 || $sourceText === '') {
                 throw new ApiException('capture_context_missing');
             }
 
@@ -72,16 +72,16 @@ class CaptureExtractionService extends Component
                 'servicio' => $servicio->nombre,
                 'tabId' => $tabId,
             ];
-            $logger = EncounterCaptureLogger::iniciar($textoConsulta, $contextoLogger);
+            $logger = EncounterCaptureLogger::iniciar($sourceText, $contextoLogger);
 
             $resultadoFormato = CaptureTextService::prepararParaIAConFormato(
-                $textoConsulta,
+                $sourceText,
                 $servicio->nombre,
                 $tabId,
                 $idProfesionalEfectorServicio
             );
             $textoLimpio = $resultadoFormato['texto_procesado'];
-            if (trim($textoLimpio) !== trim($textoConsulta)) {
+            if (trim($textoLimpio) !== trim($sourceText)) {
                 $logger->registrar(
                     'PRE-IA',
                     null,
@@ -154,7 +154,7 @@ class CaptureExtractionService extends Component
             $captureReview = (new EncounterCaptureReviewPresenter())->build(
                 $datos,
                 $categorias,
-                $textoConsulta,
+                $sourceText,
                 $textoProcesado,
                 $tieneDatosFaltantes,
                 $completeness,
@@ -174,7 +174,7 @@ class CaptureExtractionService extends Component
                     $parentKey,
                     $parentId,
                     (int) $subjectPersonaId,
-                    $textoConsulta,
+                    $sourceText,
                     is_array($captureReview['categories'] ?? null) ? $captureReview['categories'] : []
                 );
                 $captureReview = $dedupSvc->applyToReview($captureReview, $dedup);
@@ -193,7 +193,7 @@ class CaptureExtractionService extends Component
                 'puede_confirmar' => $captureReview['puede_confirmar'] ?? false,
                 'stt_provenance' => $speech['provenance'] ?? CaptureSpeechInputResolver::PROVENANCE_TEXT_ONLY,
                 'stt_used_server' => !empty($speech['used_server_stt']),
-                'texto_original' => $textoConsulta,
+                'texto_original' => $sourceText,
                 'texto_procesado' => $textoProcesado,
                 'texto_formateado' => $textoFormateado ?? null,
                 'tab_id' => $tabId,
@@ -230,11 +230,11 @@ class CaptureExtractionService extends Component
             $analysisCacheToken = CaptureAnalysisCache::store(
                 $cacheBody,
                 $extraidosForCache,
-                $textoProcesado !== '' ? $textoProcesado : $textoConsulta
+                $textoProcesado !== '' ? $textoProcesado : $sourceText
             );
             // También indexar por texto original tipado (el guardar a veces no reenvía el procesado).
-            if ($textoConsulta !== '' && $textoConsulta !== $textoProcesado) {
-                CaptureAnalysisCache::store($cacheBody, $extraidosForCache, $textoConsulta);
+            if ($sourceText !== '' && $sourceText !== $textoProcesado) {
+                CaptureAnalysisCache::store($cacheBody, $extraidosForCache, $sourceText);
             }
             if ($analysisCacheToken !== null) {
                 $resultado['analysis_cache_token'] = $analysisCacheToken;

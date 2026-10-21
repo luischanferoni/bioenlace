@@ -18,7 +18,7 @@ use common\models\Person\Persona;
 use common\models\Scheduling\Turno;
 use common\models\Clinical\AllergyIntolerance;
 use common\models\Clinical\PersonasAntecedente;
-use common\models\Clinical\AppointmentReasonMessage;
+use common\models\Clinical\EncounterReasonMessage;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\ConditionPresentationService;
 use common\components\Domain\Clinical\Encounter\Application\Service\EpisodioHistoriaBannerService;
 use common\components\Domain\Clinical\Encounter\Application\Service\EpisodioSignosVitalesService;
@@ -425,7 +425,7 @@ class PacientesController extends BaseController
 
         $encounterId = (int) $encounter->id;
         $reason = (new RecordEncounterReason())->displayText($encounter);
-        $mensajes = AppointmentReasonMessage::find()
+        $mensajes = EncounterReasonMessage::find()
             ->where(['encounter_id' => $encounterId])
             ->orderBy(['created_at' => SORT_ASC])
             ->all();

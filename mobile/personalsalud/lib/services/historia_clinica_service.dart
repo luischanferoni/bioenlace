@@ -211,7 +211,7 @@ class EncounterReasonMessageApi {
   factory EncounterReasonMessageApi.fromJson(
     Map<String, dynamic> json, {
     int? encounterId,
-    String mediaScope = 'motivos-consulta',
+    String mediaScope = 'encounter-reasons',
   }) {
     int asInt(dynamic v) {
       if (v is int) return v;

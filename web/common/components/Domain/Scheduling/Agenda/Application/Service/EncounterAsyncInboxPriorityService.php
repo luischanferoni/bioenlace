@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Agenda\Application\Service;
 
-use common\models\Clinical\ConsultaChatMessage;
+use common\models\Clinical\EncounterChatMessage;
 use common\models\Clinical\Encounter;
 
 /**
@@ -10,7 +10,7 @@ use common\models\Clinical\Encounter;
  */
 final class EncounterAsyncInboxPriorityService
 {
-    public const AGENT_ID = 'consulta-async-bandeja-prioridad';
+    public const AGENT_ID = 'encounter-async-bandeja-prioridad';
 
     /**
      * @param array<string, mixed> $item Fila de bandeja (buildItem)
@@ -135,13 +135,13 @@ final class EncounterAsyncInboxPriorityService
             return false;
         }
 
-        $lastStaff = ConsultaChatMessage::find()
+        $lastStaff = EncounterChatMessage::find()
             ->where(['encounter_id' => $encounterId])
             ->andWhere(['user_role' => ['medico', 'enfermeria']])
             ->orderBy(['created_at' => SORT_DESC])
             ->one();
 
-        $query = ConsultaChatMessage::find()
+        $query = EncounterChatMessage::find()
             ->where(['encounter_id' => $encounterId, 'user_role' => 'paciente']);
 
         if ($lastStaff !== null) {

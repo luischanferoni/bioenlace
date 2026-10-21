@@ -13,12 +13,12 @@ use common\components\Platform\Ui\UiScreenService;
 /**
  * Intake paciente: consulta general, seguimiento y hub Control/Seguimiento.
  *
- * RBAC ApiGhost: /api/consultas-seguimiento/&lt;action&gt;
+ * RBAC ApiGhost: /api/encounter-followup/&lt;action&gt;
  */
 class EncounterFollowupController extends BaseController
 {
     /**
-     * GET|POST /api/v1/consultas-seguimiento/hub
+     * GET|POST /api/v1/encounter-followup/hub
      *
      * @action_name Hub control/seguimiento (tratamientos, condiciones, fallback)
      * @entity ConsultasSeguimiento
@@ -32,7 +32,7 @@ class EncounterFollowupController extends BaseController
         $items = $hub->listHubItems($idPersona);
 
         $out = UiScreenService::handleScreen(
-            'consultas-seguimiento',
+            'encounter-followup',
             'hub',
             $req->get(),
             $req->post(),
@@ -50,7 +50,7 @@ class EncounterFollowupController extends BaseController
     }
 
     /**
-     * GET|POST /api/v1/consultas-seguimiento/condicion-acciones
+     * GET|POST /api/v1/encounter-followup/condicion-acciones
      *
      * @action_name Acciones sobre condición o protocolo (hub Control/Seguimiento)
      * @entity ConsultasSeguimiento
@@ -69,7 +69,7 @@ class EncounterFollowupController extends BaseController
         );
 
         $out = UiScreenService::handleScreen(
-            'consultas-seguimiento',
+            'encounter-followup',
             'condicion-acciones',
             $req->get(),
             $req->post(),
@@ -100,7 +100,7 @@ class EncounterFollowupController extends BaseController
     }
 
     /**
-     * GET|POST /api/v1/consultas-seguimiento/paso
+     * GET|POST /api/v1/encounter-followup/paso
      *
      * @action_name Paso intake consultas y seguimiento
      * @entity ConsultasSeguimiento
@@ -126,7 +126,7 @@ class EncounterFollowupController extends BaseController
         $options = $steps->opcionesParaStep($step);
 
         $out = UiScreenService::handleScreen(
-            'consultas-seguimiento',
+            'encounter-followup',
             'paso',
             $req->get(),
             $req->post(),

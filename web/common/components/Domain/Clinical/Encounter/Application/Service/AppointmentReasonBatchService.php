@@ -12,7 +12,7 @@ use common\components\Platform\Ai\IAManager;
 use common\components\Platform\Ai\SpeechToText\SpeechToTextManager;
 use common\components\Domain\Clinical\Encounter\Application\Service\SecureMediaService;
 use common\models\Clinical\Encounter;
-use common\models\Clinical\AppointmentReasonMessage;
+use common\models\Clinical\EncounterReasonMessage;
 use Yii;
 
 final class AppointmentReasonBatchService
@@ -39,7 +39,7 @@ final class AppointmentReasonBatchService
             }
         }
 
-        $messages = AppointmentReasonMessage::find()
+        $messages = EncounterReasonMessage::find()
             ->where(['encounter_id' => $encounterId])
             ->orderBy(['created_at' => SORT_ASC])
             ->all();
@@ -68,7 +68,7 @@ final class AppointmentReasonBatchService
 
         AppointmentReasonClinicalInsightsService::generateAndPersist($encounterId, $summary);
 
-        Yii::info("Motivos IA batch OK encounter={$encounterId}", 'motivos-consulta');
+        Yii::info("Motivos IA batch OK encounter={$encounterId}", 'encounter-reasons');
 
         return [
             'ok' => true,
@@ -86,7 +86,7 @@ final class AppointmentReasonBatchService
             return;
         }
 
-        $hasMessages = AppointmentReasonMessage::find()
+        $hasMessages = EncounterReasonMessage::find()
             ->where(['encounter_id' => (int) $encounter->id])
             ->exists();
         if (!$hasMessages) {
@@ -116,7 +116,7 @@ final class AppointmentReasonBatchService
     }
 
     /**
-     * @param AppointmentReasonMessage[] $messages
+     * @param EncounterReasonMessage[] $messages
      * @return list<array{ref: string, url: string}>
      */
     public static function imagenesAdjuntasFromMessages(array $messages, int $encounterId): array
@@ -127,7 +127,7 @@ final class AppointmentReasonBatchService
     }
 
     /**
-     * @param AppointmentReasonMessage[] $messages
+     * @param EncounterReasonMessage[] $messages
      * @return array{
      *   transcript: string,
      *   textos: list<string>,
@@ -146,7 +146,7 @@ final class AppointmentReasonBatchService
         $audioPlaceholderIndex = null;
 
         foreach ($messages as $msg) {
-            if ($msg->message_type === AppointmentReasonMessage::TYPE_TEXTO) {
+            if ($msg->message_type === EncounterReasonMessage::TYPE_TEXTO) {
                 $t = trim((string) $msg->texto);
                 if ($t !== '') {
                     $textos[] = $t;
@@ -155,7 +155,7 @@ final class AppointmentReasonBatchService
                 continue;
             }
 
-            if ($msg->message_type === AppointmentReasonMessage::TYPE_AUDIO) {
+            if ($msg->message_type === EncounterReasonMessage::TYPE_AUDIO) {
                 $path = self::resolveLocalPath((string) $msg->texto, $webRoot);
                 if ($path !== null && is_file($path)) {
                     if ($audioPlaceholderIndex === null) {
@@ -169,7 +169,7 @@ final class AppointmentReasonBatchService
                 continue;
             }
 
-            if ($msg->message_type === AppointmentReasonMessage::TYPE_IMAGEN) {
+            if ($msg->message_type === EncounterReasonMessage::TYPE_IMAGEN) {
                 $imgIndex++;
                 $ref = 'imagen' . $imgIndex;
                 $url = self::resolveImagenUrl((string) $msg->texto, $encounterId);
@@ -277,7 +277,7 @@ Redactá un resumen breve en español para el médico:
 Sin diagnósticos ni tratamientos. Sin markdown ni JSON.
 PROMPT;
 
-        $raw = IAManager::consultarIA($prompt, 'motivos-consulta-batch', 'analysis');
+        $raw = IAManager::consultarIA($prompt, 'encounter-reasons-batch', 'analysis');
         $text = self::extractTextFromIaResult($raw);
 
         return $text !== null && !self::isLowQualitySummary($text) ? $text : null;
@@ -328,7 +328,7 @@ PROMPT;
         }
 
         return SecureMediaService::absoluteApiUrl(
-            SecureMediaService::SCOPE_MOTIVOS_CONSULTA,
+            SecureMediaService::SCOPE_ENCOUNTER_REASONS,
             $encounterId,
             $filename
         );
@@ -346,7 +346,7 @@ PROMPT;
                 return null;
             }
             $stored = ltrim($path, '/');
-            if (preg_match('#/media/motivos-consulta/\d+/(.+)$#', $stored, $m) === 1) {
+            if (preg_match('#/media/encounter-reasons/\d+/(.+)$#', $stored, $m) === 1) {
                 $stored = 'uploads/motivos_consulta/' . $m[1];
             }
         }

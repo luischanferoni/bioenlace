@@ -5,7 +5,7 @@ namespace common\components\Domain\Clinical\Encounter\Application\Service;
 use common\components\Domain\Clinical\Inpatient\Domain\InpatientClinicalContext;
 use common\models\Scheduling\Cirugia;
 use common\models\Clinical\Encounter;
-use common\models\Clinical\ConsultaDerivaciones;
+use common\models\Clinical\EncounterReferralRequest;
 use common\models\Clinical\Emergency\EmergencyEpisode;
 use common\models\Person\Persona;
 use common\models\Organization\ProfesionalEfectorServicio;
@@ -124,7 +124,7 @@ final class EncounterCaptureContextService
         }
 
         if ($parent == Encounter::PARENT_DERIVACION) {
-            $derivacion = ConsultaDerivaciones::findOne($parentId);
+            $derivacion = EncounterReferralRequest::findOne($parentId);
 
             if (!$derivacion) {
                 Yii::warning('Llamada a getModeloConsulta parentId a una Derivacion que no existe, parentId: ' . $parentId);
@@ -194,7 +194,7 @@ final class EncounterCaptureContextService
                     throw new ApiException('capture_patient_inpatient');
                 }
 
-                $derivaciones = ConsultaDerivaciones::getDerivacionesActivasPorPacientePorServiciosPorEfector(
+                $derivaciones = EncounterReferralRequest::getDerivacionesActivasPorPacientePorServiciosPorEfector(
                     $paciente->id_persona,
                     [Yii::$app->user->getServicioActual()],
                     Yii::$app->user->getIdEfector()

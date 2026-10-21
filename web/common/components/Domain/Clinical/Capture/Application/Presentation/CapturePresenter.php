@@ -184,7 +184,7 @@ final class CapturePresenter
         if (array_key_exists('id_configuracion', $analysisStored) && !array_key_exists('id_configuracion', $out)) {
             $out['id_configuracion'] = $analysisStored['id_configuracion'];
         }
-        $analysisEncounterId = $analysisStored['encounter_id'] ?? $analysisStored['id_consulta'] ?? null;
+        $analysisEncounterId = $analysisStored['encounter_id'] ?? null;
         if ($analysisEncounterId !== null && empty($out['encounter_id'])) {
             $out['encounter_id'] = (int) $analysisEncounterId;
         }

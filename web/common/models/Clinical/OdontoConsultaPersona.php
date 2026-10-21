@@ -10,7 +10,7 @@ use Yii;
  * This is the model class for table "odonto_consulta_persona".
  *
  * @property int $id_odonto_consulta
- * @property int $id_consulta
+ * @property int $encounter_id
  * @property int $id_turno
  * @property int $id_persona
  * @property int $id_nomenclador_odonto
@@ -34,8 +34,8 @@ class OdontoConsultaPersona extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['id_consulta', 'id_turno', 'id_persona', 'id_odonto_pieza', 'estado_pieza'], 'required'],
-            [['id_consulta', 'id_turno', 'id_persona', 'id_nomenclador_odonto'], 'integer'],
+            [['encounter_id', 'id_turno', 'id_persona', 'id_odonto_pieza', 'estado_pieza'], 'required'],
+            [['encounter_id', 'id_turno', 'id_persona', 'id_nomenclador_odonto'], 'integer'],
             [['id_odonto_pieza', 'estado_pieza'], 'string', 'max' => 50],
             [['observaciones'], 'string', 'max' => 100],
         ];
@@ -48,7 +48,7 @@ class OdontoConsultaPersona extends \yii\db\ActiveRecord
     {
         return [
             'id_odonto_consulta' => 'Id Odonto Consulta',
-            'id_consulta' => 'Id Consulta',
+            'encounter_id' => 'Encounter',
             'id_turno' => 'Id Turno',
             'id_persona' => 'Id Persona',
             'id_nomenclador_odonto' => 'Id Nomenclador Odonto',

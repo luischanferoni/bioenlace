@@ -11,35 +11,35 @@ use common\components\Domain\Clinical\Encounter\Application\Service\AppointmentR
 use common\components\Domain\Person\Representation\Domain\Model\RepresentationPermission;
 use common\components\Domain\Person\Representation\Application\Service\PersonRepresentationSubjectService;
 use common\models\Person\PersonRelatedAuditLog;
-use common\models\Clinical\AppointmentReasonMessage;
+use common\models\Clinical\EncounterReasonMessage;
 use common\models\Clinical\Encounter;
 use common\models\Scheduling\Turno;
 
 /**
- * API motivos de consulta (mensajes, envío, subida de archivos).
+ * API de motivos del encounter (mensajes, envío y subida de archivos).
  *
- * Id público RBAC/URL: `motivos-consulta` (alias en Module controllerMap).
+ * ID público RBAC/URL: `encounter-reasons`.
  */
-class AppointmentReasonController extends BaseController
+class EncounterReasonsController extends BaseController
 {
     use ClinicalAccessTrait;
 
     public $enableCsrfValidation = false;
 
     /**
-     * GET /api/v1/motivos-consulta/mensajes/{id} — {id} = encounter_id (alias legacy en clientes).
+     * GET /api/v1/encounter-reasons/mensajes/{id} — {id} = encounter_id.
      */
     public function actionListarMensajes($id)
     {
         $encounterId = (int) $id;
         $encounter = $this->assertEncounterAccess($encounterId, RepresentationPermission::CLINICAL_MOTIVOS);
 
-        $messages = AppointmentReasonMessage::find()
+        $messages = EncounterReasonMessage::find()
             ->where(['encounter_id' => $encounterId])
             ->orderBy(['created_at' => SORT_ASC])
             ->all();
 
-        $formattedMessages = AppointmentReasonMessage::serializeForApi($messages);
+        $formattedMessages = EncounterReasonMessage::serializeForApi($messages);
         $chatGuide = (new AppointmentReasonChatGuideCatalogService())->buildChatGuide(
             $this->reservaTriageCodeForEncounter($encounter)
         );

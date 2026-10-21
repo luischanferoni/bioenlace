@@ -213,7 +213,7 @@ bool encounterPreparationHasAvailableAction(Map<String, dynamic> turno) {
 }
 
 int? encounterIdDesdeTurno(Map<String, dynamic> turno) {
-  final raw = turno['encounter_id'] ?? turno['id_consulta'];
+  final raw = turno['encounter_id'];
   if (raw is int) return raw > 0 ? raw : null;
   if (raw == null) return null;
   final n = int.tryParse(raw.toString());
@@ -391,7 +391,6 @@ Map<String, dynamic> turnoConJourneyDesdeEstado(
   }
   if (estado['encounter_id'] != null) {
     merged['encounter_id'] = estado['encounter_id'];
-    merged['id_consulta'] = estado['encounter_id'];
   }
   if (estado['motivos_input_abierto'] is bool) {
     merged['motivos_input_abierto'] = estado['motivos_input_abierto'];

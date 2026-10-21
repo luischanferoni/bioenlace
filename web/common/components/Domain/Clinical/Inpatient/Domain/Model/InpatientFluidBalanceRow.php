@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\Inpatient\Domain\Model;
 
 /**
- * Vista de balance hídrico (Observation FHIR → shape legacy para UI).
+ * Vista de balance hídrico (Observation FHIR → modelo de lectura para UI).
  */
 final class InpatientFluidBalanceRow
 {
@@ -44,7 +44,7 @@ final class InpatientFluidBalanceRow
     ];
 
     public int $id = 0;
-    public int $id_consulta = 0;
+    public int $encounter_id = 0;
     public string $tipo_registro = '';
     public ?int $cod_ingreso = null;
     public ?int $cod_egreso = null;

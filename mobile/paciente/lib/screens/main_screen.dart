@@ -201,7 +201,6 @@ class _MainScreenState extends State<MainScreen> {
       final eid = int.tryParse(encounterRaw);
       if (eid != null && eid > 0) {
         turno['encounter_id'] = eid;
-        turno['id_consulta'] = eid;
       }
     }
 

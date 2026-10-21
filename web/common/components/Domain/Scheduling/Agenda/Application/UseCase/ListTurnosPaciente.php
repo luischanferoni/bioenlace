@@ -268,7 +268,6 @@ final class ListTurnosPaciente
             'tipo_atencion' => $tipoAtencion,
             'tipo_atencion_label' => $tipoAtencionLabel,
             'encounter_id' => $encounterId,
-            'id_consulta' => $encounterId,
             'motivos_input_abierto' => $legacy['motivos_input_abierto'],
             'motivos_cierre_minutos' => $legacy['motivos_cierre_minutos'],
             'asistencia_cohorte_disponible' => $legacy['asistencia_cohorte_disponible'],

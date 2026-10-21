@@ -5,19 +5,18 @@ namespace common\models\Clinical;
 use common\models\Person\Persona;
 
 use common\models\Clinical\Encounter;
-use common\traits\EncounterIdLegacyConsultaColumnTrait;
+use common\traits\EncounterIdTrait;
 
 /**
  * Antecedentes familiares — misma tabla `persona_antecedentes`.
  *
  * @property int|null $encounter_id
- * @property int|null $id_consulta Alias deprecated de {@see $encounter_id}.
  * @property-read Encounter|null $encounter
  */
 class PersonasAntecedenteFamiliar extends \yii\db\ActiveRecord
 {
     use \common\traits\SoftDeleteDateTimeTrait;
-    use EncounterIdLegacyConsultaColumnTrait;
+    use EncounterIdTrait;
 
     public $select2_codigo;
 
@@ -45,7 +44,6 @@ class PersonasAntecedenteFamiliar extends \yii\db\ActiveRecord
     {
         return [
             'encounter_id' => 'Encounter',
-            'id_consulta' => 'Encounter (legacy)',
             'id_antecedente' => '',
             'id_snomed_situacion' => '',
             'select2_codigo' => 'Antecedentes Familiares',
@@ -79,15 +77,6 @@ class PersonasAntecedenteFamiliar extends \yii\db\ActiveRecord
             ->all();
     }
 
-    /**
-     * @deprecated use {@see getPersonasAntecedenteFamiliarPorEncounter()}
-     * @return static[]
-     */
-    public static function getPersonasAntecedenteFamiliarPorConsulta($id_cons)
-    {
-        return static::getPersonasAntecedenteFamiliarPorEncounter((int) $id_cons);
-    }
-
     public static function hardDeleteGrupoPorEncounter(int $encounterId, array $ids): void
     {
         if ($ids === [] || $encounterId <= 0) {
@@ -100,11 +89,4 @@ class PersonasAntecedenteFamiliar extends \yii\db\ActiveRecord
         ]);
     }
 
-    /**
-     * @deprecated use {@see hardDeleteGrupoPorEncounter()}
-     */
-    public static function hardDeleteGrupo($id_consulta, $ids)
-    {
-        static::hardDeleteGrupoPorEncounter((int) $id_consulta, $ids);
-    }
 }

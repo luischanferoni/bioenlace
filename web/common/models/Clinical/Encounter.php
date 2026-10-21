@@ -56,7 +56,7 @@ class Encounter extends ActiveRecord
 
     const PARENT_CLASSES = [
         self::PARENT_TURNO => '\common\models\Scheduling\Turno',
-        self::PARENT_DERIVACION => '\common\models\Clinical\ConsultaDerivaciones',
+        self::PARENT_DERIVACION => '\common\models\Clinical\EncounterReferralRequest',
         self::PARENT_INTERNACION => '\common\models\Clinical\InpatientStay',
         self::PARENT_GENERICO_AMB => '\common\models\GenericoAMB',
         self::PARENT_GENERICO_EMER => '\common\models\GenericoEMER',
@@ -187,15 +187,7 @@ class Encounter extends ActiveRecord
 
     public function getAutofacturacion(): \yii\db\ActiveQuery
     {
-        $fk = \common\models\Programs\Autofacturacion::legacyConsultaFkAttribute();
-
-        return $this->hasOne(\common\models\Programs\Autofacturacion::class, [$fk => 'id']);
-    }
-
-    /** Alias para vistas legacy de autofacturación. */
-    public function getId_consulta(): int
-    {
-        return (int) $this->id;
+        return $this->hasOne(\common\models\Programs\Autofacturacion::class, ['encounter_id' => 'id']);
     }
 
     /** Alias para vistas legacy de autofacturación. */
@@ -222,7 +214,7 @@ class Encounter extends ActiveRecord
 
     public function getAtencionEnfermeria(): \yii\db\ActiveQuery
     {
-        return $this->hasOne(\common\models\Clinical\ConsultaAtencionesEnfermeria::class, ['encounter_id' => 'id']);
+        return $this->hasOne(EncounterNursingCare::class, ['encounter_id' => 'id']);
     }
 
     /**

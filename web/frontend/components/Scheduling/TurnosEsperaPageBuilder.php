@@ -50,7 +50,7 @@ final class TurnosEsperaPageBuilder
                 'hora' => substr((string) $turno->hora, 0, 5),
                 'nombrePaciente' => $turno->paciente->apellido . ', ' . $turno->paciente->nombre,
                 'edad' => $edad,
-                'esReferencia' => (int) $turno->id_consulta_referencia !== 0,
+                'esReferencia' => (int) $turno->referenced_encounter_id !== 0,
                 'confirmado' => $turno->confirmado && $turno->confirmado === 'SI',
                 'programado' => (int) $turno->programado !== 0,
                 'nHistoriaClinica' => $tieneProfesional

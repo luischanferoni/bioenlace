@@ -231,13 +231,13 @@ class PacienteController extends Controller
         try {
             $paciente = $this->findModel($id);
             
-            $idConsulta = Yii::$app->request->get('id_consulta');
+            $encounterId = Yii::$app->request->get('encounter_id');
             $parentId = Yii::$app->request->get('parent_id');
             $parent = Yii::$app->request->get('parent');
 
             // Sin parent, validarPermisoAtencion asume GENERICO_AMB y bloquea si turnoHoy(); alinear con el
             // turno de la sesión cuando la URL solo trae id (+ fecha del listado, etc.).
-            if (!$idConsulta && ($parent === null || $parent === '')) {
+            if (!$encounterId && ($parent === null || $parent === '')) {
                 $idTurnoGet = Yii::$app->request->get('id_turno');
                 if ($idTurnoGet !== null && $idTurnoGet !== '') {
                     $parent = Encounter::PARENT_TURNO;
@@ -262,7 +262,7 @@ class PacienteController extends Controller
             $mensajeCambioEfector = '';
 
             // Obtener configuración de pasos para el formulario
-            $resultadoConfiguracion = $this->obtenerConfiguracion($idConsulta, $paciente, $parent, $parentId);
+            $resultadoConfiguracion = $this->obtenerConfiguracion($encounterId, $paciente, $parent, $parentId);
 
             if (!$resultadoConfiguracion['success']) {
                 $msg = Html::encode((string) ($resultadoConfiguracion['msg'] ?? 'No se puede iniciar la captura.'));
@@ -280,8 +280,8 @@ class PacienteController extends Controller
             if ($mostrarFormulario) {
                 $idConfiguracion = $resultadoConfiguracion['idConfiguracion'] ?? null;
                 $motivoPacientePrefill = '';
-                if ($idConsulta !== null && $idConsulta !== '' && (int) $idConsulta > 0) {
-                    $encMotivos = Encounter::findOne((int) $idConsulta);
+                if ($encounterId !== null && $encounterId !== '' && (int) $encounterId > 0) {
+                    $encMotivos = Encounter::findOne((int) $encounterId);
                     if ($encMotivos) {
                         $motivoPacientePrefill = (new RecordEncounterReason())
                             ->displayText($encMotivos);
@@ -292,7 +292,7 @@ class PacienteController extends Controller
                     'form' => EncounterCaptureFormViewBuilder::build(
                         $paciente,
                         $idConfiguracion,
-                        $idConsulta,
+                        $encounterId,
                         $parent,
                         $parentId,
                         $motivoPacientePrefill
@@ -342,19 +342,19 @@ class PacienteController extends Controller
 
     /**
      * Obtiene la configuración de pasos para el formulario de consulta
-     * @param integer|null $idConsulta ID de la consulta existente
+     * @param integer|null $encounterId ID del encounter existente
      * @param Persona $paciente Paciente
      * @param string $parent Tipo de parent
      * @param integer $parentId ID del parent
      * @return array Configuración de pasos
      */
-    private function obtenerConfiguracion($idConsulta, $paciente, $parent, $parentId)
+    private function obtenerConfiguracion($encounterId, $paciente, $parent, $parentId)
     {
         $idServicio = 0;
         $encounterClass = '';
 
-        if ($idConsulta) {
-            $encounter = Encounter::findOne((int) $idConsulta);
+        if ($encounterId) {
+            $encounter = Encounter::findOne((int) $encounterId);
             if ($encounter !== null) {
                 $idServicio = (int) ($encounter->service_id ?? 0);
                 $encounterClass = trim((string) ($encounter->encounter_class ?? ''));

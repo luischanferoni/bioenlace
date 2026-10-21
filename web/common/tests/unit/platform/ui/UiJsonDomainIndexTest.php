@@ -92,19 +92,19 @@ class UiJsonDomainIndexTest extends Unit
         ));
     }
 
-    public function testConsultasSeguimientoPasoResolvesSchedulingTemplate(): void
+    public function testEncounterFollowupStepResolvesSchedulingTemplate(): void
     {
-        $this->assertSame('scheduling', UiJsonDomainIndex::domainForEntity('consultas-seguimiento'));
+        $this->assertSame('scheduling', UiJsonDomainIndex::domainForEntity('encounter-followup'));
 
-        $path = UiJsonDomain::resolveActionIdTemplatePath('consultas-seguimiento.paso');
+        $path = UiJsonDomain::resolveActionIdTemplatePath('encounter-followup.paso');
         $this->assertNotNull($path);
         $this->assertStringContainsString(
-            'consultas-seguimiento/paso.json',
+            'encounter-followup/paso.json',
             str_replace('\\', '/', $path)
         );
 
         $this->assertTrue(\common\components\Platform\Ui\UiDefinitionTemplateManager::hasTemplateForApiRoute(
-            '/api/v1/consultas-seguimiento/paso'
+            '/api/v1/encounter-followup/paso'
         ));
     }
 }

@@ -8,7 +8,7 @@ use common\components\Domain\Clinical\Encounter\Application\Presentation\Encount
 use common\components\Domain\Clinical\Encounter\Application\UseCase\RecordEncounterReason;
 use common\components\Platform\Core\Http\Contract\ApiException;
 use common\models\Clinical\Encounter;
-use common\models\Clinical\AppointmentReasonMessage;
+use common\models\Clinical\EncounterReasonMessage;
 use common\models\Person\Persona;
 use common\models\Scheduling\Turno;
 
@@ -89,9 +89,9 @@ final class StaffEncounterSummaryViewService
             'documentacion_medico' => $documentacion,
         ];
 
-        $preconsulta = $this->buildPreconsultaSiAporta($encounter, $documentacion);
-        if ($preconsulta !== null) {
-            $data['patient_encounter_reasons'] = $preconsulta;
+        $encounterReasons = $this->buildEncounterReasonsIfPresent($encounter, $documentacion);
+        if ($encounterReasons !== null) {
+            $data['patient_encounter_reasons'] = $encounterReasons;
         }
 
         $carePack = $this->buildCarePackSiAporta((int) $encounter->id);
@@ -103,16 +103,16 @@ final class StaffEncounterSummaryViewService
     }
 
     /**
-     * Preconsulta solo si aporta algo que no esté ya en documentación del médico.
+     * Devuelve los motivos aportados por el paciente solo cuando agregan información a la documentación del staff.
      *
      * @param array{secciones?: list<array{titulo?: string, items?: list<string>}>} $documentacion
      * @return array<string, mixed>|null
      */
-    private function buildPreconsultaSiAporta(Encounter $encounter, array $documentacion): ?array
+    private function buildEncounterReasonsIfPresent(Encounter $encounter, array $documentacion): ?array
     {
         $encounterId = (int) $encounter->id;
         $reason = (new RecordEncounterReason())->displayText($encounter);
-        $mensajes = AppointmentReasonMessage::find()
+        $mensajes = EncounterReasonMessage::find()
             ->where(['encounter_id' => $encounterId])
             ->orderBy(['created_at' => SORT_ASC])
             ->all();

@@ -3,12 +3,12 @@
 namespace common\components\Domain\Clinical\Inpatient\Domain\Model;
 
 /**
- * Vista de régimen (NutritionOrder FHIR → shape legacy para UI).
+ * Vista de régimen (NutritionOrder FHIR → modelo de lectura para UI).
  */
 final class InpatientRegimenRow
 {
     public int $id = 0;
-    public int $id_consulta = 0;
+    public int $encounter_id = 0;
     public ?string $concept_id = null;
     public string $indicaciones = '';
 

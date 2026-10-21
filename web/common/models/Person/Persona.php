@@ -3,7 +3,7 @@
 namespace common\models\Person;
 
 use Yii;
-use common\models\Clinical\ConsultaAtencionesEnfermeria;
+use common\models\Clinical\EncounterNursingCare;
 use common\models\Clinical\EncuestaParchesMamarios;
 use common\models\Person\EstadoCivil;
 use common\models\Clinical\Emergency\EmergencyEpisode;
@@ -211,7 +211,7 @@ class Persona extends \yii\db\ActiveRecord
      */
     public function getAtencionesEnfermeria()
     {
-        return $this->hasMany(ConsultaAtencionesEnfermeria::className(), ['id_persona' => 'id_persona'])->orderBy(['fecha_creacion' => SORT_DESC]);
+        return $this->hasMany(EncounterNursingCare::class, ['id_persona' => 'id_persona'])->orderBy(['fecha_creacion' => SORT_DESC]);
     }
    /**
      * @return \yii\db\ActiveQuery
@@ -219,7 +219,7 @@ class Persona extends \yii\db\ActiveRecord
     //TODO: borrar este metodo y la vista de atenciones de enfermeria sisse v1 del menu personas (despues de la migracion)
     public function getAtencionesEnfermeriaV1()
     {
-        return $this->hasMany(ConsultaAtencionesEnfermeria::className(), ['id_persona' => 'id_persona'])->where("fecha_creacion < '2024-03-28'")->andWhere("deleted_at IS NULL")->orderBy(['fecha_creacion' => SORT_DESC]);
+        return $this->hasMany(EncounterNursingCare::class, ['id_persona' => 'id_persona'])->where("fecha_creacion < '2024-03-28'")->andWhere("deleted_at IS NULL")->orderBy(['fecha_creacion' => SORT_DESC]);
     }
     /**
      * @return \yii\db\ActiveQuery

@@ -22,7 +22,7 @@ final class ReservaTriagePostCupoRoutingAgentPolicy
             'body_template' => '{{mensaje}}',
         ],
         'deep_links' => [
-            'async' => '/asistente?intent=consulta-async.solicitar-flow',
+            'async' => '/asistente?intent=encounter-async.solicitar-flow',
             'tele_hub' => '/asistente?intent=turnos.crear-como-paciente&modo=teleconsulta_hub',
             'presencial_primaria' => '/asistente?intent=turnos.crear-como-paciente',
             'administrativo' => '/asistente?intent=atencion.tramite-admin-flow',

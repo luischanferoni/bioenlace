@@ -31,7 +31,7 @@ use common\components\Platform\Core\Http\Contract\ApiException;
 use common\models\Clinical\Condition;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterDefinition;
-use common\models\Clinical\ConsultaAtencionesEnfermeria;
+use common\models\Clinical\EncounterNursingCare;
 use common\models\Person\Persona;
 use common\models\Scheduling\Turno;
 use Yii;
@@ -1226,7 +1226,7 @@ class DocumentEncounter extends Component
                     $stat['accion'] = $modelo === 'ConsultaIndicaciones' ? 'indicaciones' : 'practicas';
                     $stat['created'] = max(0, $after - $before);
                     break;
-                case 'ConsultaDerivaciones':
+                case 'EncounterReferralRequest':
                     $this->persistServiceRequests($encounter, $payload, $modelo, null);
                     $stat['accion'] = 'derivaciones';
                     break;
@@ -1259,7 +1259,7 @@ class DocumentEncounter extends Component
                     $this->persistRegimens($encounter, $payload);
                     $stat['accion'] = 'regimen';
                     break;
-                case 'ConsultaAtencionesEnfermeria':
+                case 'EncounterNursingCare':
                     $created = $this->persistSignosVitalesEnfermeria($encounter, $payload);
                     $stat['accion'] = 'signos_vitales';
                     $stat['created'] = $created;
@@ -1551,7 +1551,7 @@ class DocumentEncounter extends Component
             return 0;
         }
 
-        $row = new ConsultaAtencionesEnfermeria();
+        $row = new EncounterNursingCare();
         $row->encounter_id = (int) $encounter->id;
         $row->id_persona = (int) $encounter->subject_persona_id;
         $row->id_efector = (int) ($encounter->id_efector ?? 0) ?: null;

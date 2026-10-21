@@ -624,7 +624,7 @@ async function cargarFormularioConsulta() {
 function inicializarEventosFormulario() {
     console.log('Formulario cargado, inicializando eventos...');
 
-    var form = document.getElementById('form-consulta-chat');
+    var form = document.getElementById('form-encounter-chat');
     if (form && window.EncounterCaptureForm) {
         window.encounterCaptureForm = window.EncounterCaptureForm.init(form);
     }

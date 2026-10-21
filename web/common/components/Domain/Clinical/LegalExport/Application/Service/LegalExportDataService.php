@@ -8,7 +8,7 @@ use common\components\Domain\Person\Identity\Application\Service\PersonaSignosVi
 use common\models\Clinical\AllergyIntolerance;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterPatientSummary;
-use common\models\Clinical\DiagnosticoConsultaRepository as DCRepo;
+use common\models\Clinical\EncounterDiagnosisRepository as DCRepo;
 use common\models\Organization\Efector;
 use common\models\Person\Persona;
 use common\models\Clinical\PersonasAntecedente;

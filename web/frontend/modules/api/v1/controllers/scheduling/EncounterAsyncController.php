@@ -15,7 +15,7 @@ use common\components\Platform\Ui\UiScreenService;
  *
  * RBAC ApiGhost: /api/consulta-async/&lt;action&gt;
  */
-class ConsultaAsyncController extends BaseController
+class EncounterAsyncController extends BaseController
 {
     /**
      * GET|POST /api/v1/consulta-async/solicitar-como-paciente

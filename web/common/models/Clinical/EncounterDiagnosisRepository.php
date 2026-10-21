@@ -15,7 +15,7 @@ use common\models\Clinical\Encounter;
 /*
   Logica de Negocio de procesos que involucra DiagnosticoConsulta.
  */
-class DiagnosticoConsultaRepository
+class EncounterDiagnosisRepository
 {
     protected static function getStatesSubset($subset, $state_labels) {
       $options = [];

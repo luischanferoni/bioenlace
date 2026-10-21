@@ -3010,7 +3010,7 @@
     }
 
     function getAsyncChatHelpers() {
-      return window.BioenlaceAsyncConsultaChat || null;
+      return window.BioenlaceEncounterAsyncChat || null;
     }
 
     function applyAsyncChatPolicyUI(policy) {

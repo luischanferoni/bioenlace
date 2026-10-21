@@ -14,7 +14,7 @@ use common\models\Clinical\AllergyIntolerance;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\MedicationRequest;
-use common\models\Clinical\DiagnosticoConsultaRepository as DCRepo;
+use common\models\Clinical\EncounterDiagnosisRepository as DCRepo;
 use common\models\Person\Persona;
 use Yii;
 

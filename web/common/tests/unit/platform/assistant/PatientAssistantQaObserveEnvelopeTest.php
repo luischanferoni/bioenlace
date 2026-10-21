@@ -5,9 +5,9 @@ namespace common\tests\unit\platform\assistant;
 use Codeception\Test\Unit;
 use common\components\Platform\Assistant\Chat\ChatPreprocessContext;
 use common\components\Platform\Assistant\Planning\AssistantPlanningLogService;
-use common\components\Platform\Assistant\Qa\AsistenteConsultasQaService;
+use common\components\Platform\Assistant\Qa\PatientAssistantQaService;
 
-class AsistenteConsultasQaObserveEnvelopeTest extends Unit
+class PatientAssistantQaObserveEnvelopeTest extends Unit
 {
     protected function _after(): void
     {
@@ -17,7 +17,7 @@ class AsistenteConsultasQaObserveEnvelopeTest extends Unit
 
     public function testFlowEnvelopeV3ExposesSessionIntentId(): void
     {
-        $obs = AsistenteConsultasQaService::observeEnvelope([
+        $obs = PatientAssistantQaService::observeEnvelope([
             'kind' => 'flow',
             'text' => '',
             'session' => [
@@ -35,7 +35,7 @@ class AsistenteConsultasQaObserveEnvelopeTest extends Unit
 
     public function testLabFlowEnvelopePassesIntentIdsAny(): void
     {
-        $obs = AsistenteConsultasQaService::observeEnvelope([
+        $obs = PatientAssistantQaService::observeEnvelope([
             'kind' => 'flow',
             'text' => 'Elegí un informe',
             'session' => [
@@ -46,7 +46,7 @@ class AsistenteConsultasQaObserveEnvelopeTest extends Unit
             'step' => [],
         ]);
 
-        $failures = AsistenteConsultasQaService::evaluateExpect([
+        $failures = PatientAssistantQaService::evaluateExpect([
             'user_goal' => 'operational',
             'intent_ids_any' => ['laboratorio.ver-resultados-como-paciente'],
         ], array_merge($obs, ['user_goal' => 'operational']));
@@ -80,7 +80,7 @@ class AsistenteConsultasQaObserveEnvelopeTest extends Unit
             'context_areas' => [],
         ]);
 
-        $obs = AsistenteConsultasQaService::observeEnvelope([
+        $obs = PatientAssistantQaService::observeEnvelope([
             'kind' => 'interactive',
             'text' => 'Podés solicitar atención',
             'buttons' => [
@@ -96,7 +96,7 @@ class AsistenteConsultasQaObserveEnvelopeTest extends Unit
 
     public function testReadableReportIncludesGuidePromptAndRawIaWithoutPreprocess(): void
     {
-        $txt = AsistenteConsultasQaService::formatReadableReport([
+        $txt = PatientAssistantQaService::formatReadableReport([
             'started_at' => '2026-01-01T00:00:00+00:00',
             'finished_at' => '2026-01-01T00:00:01+00:00',
             'user_id' => 1,
@@ -141,7 +141,7 @@ class AsistenteConsultasQaObserveEnvelopeTest extends Unit
 
     public function testReadableReportOmitsGuidePromptWhenFlagOff(): void
     {
-        $txt = AsistenteConsultasQaService::formatReadableReport([
+        $txt = PatientAssistantQaService::formatReadableReport([
             'started_at' => '2026-01-01T00:00:00+00:00',
             'finished_at' => '2026-01-01T00:00:01+00:00',
             'user_id' => 1,
@@ -196,7 +196,7 @@ class AsistenteConsultasQaObserveEnvelopeTest extends Unit
             'context_areas' => [],
         ]);
 
-        $obs = AsistenteConsultasQaService::observeEnvelope([
+        $obs = PatientAssistantQaService::observeEnvelope([
             'kind' => 'interactive',
             'text' => 'Si es una urgencia, andá a la guardia.',
             'buttons' => [

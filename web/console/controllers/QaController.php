@@ -2,7 +2,7 @@
 
 namespace console\controllers;
 
-use common\components\Platform\Assistant\Qa\AsistenteConsultasQaService;
+use common\components\Platform\Assistant\Qa\PatientAssistantQaService;
 use Yii;
 use yii\console\Controller;
 use yii\console\ExitCode;
@@ -90,7 +90,7 @@ class QaController extends Controller
         $coberturas = $this->parseCoberturas($this->cobertura);
         $seccion = trim($this->seccion);
         $caseId = trim($this->caseId);
-        $cases = AsistenteConsultasQaService::filterCases(
+        $cases = PatientAssistantQaService::filterCases(
             $coberturas,
             $seccion !== '' ? $seccion : null,
             $caseId !== '' ? $caseId : null,
@@ -98,7 +98,7 @@ class QaController extends Controller
         );
 
         if ($cases === []) {
-            $catalog = AsistenteConsultasQaService::loadCatalog();
+            $catalog = PatientAssistantQaService::loadCatalog();
             $secciones = [];
             foreach ($catalog['cases'] as $c) {
                 $s = (string) ($c['seccion'] ?? '');
@@ -174,7 +174,7 @@ class QaController extends Controller
         $includeGuidePrompt = (bool) $this->includeGuidePrompt;
 
         try {
-            $batch = AsistenteConsultasQaService::run(
+            $batch = PatientAssistantQaService::run(
                 $cases,
                 (int) $this->userId,
                 $reportPath,

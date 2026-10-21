@@ -1,5 +1,5 @@
 /**
- * Helpers compartidos para chat de consulta async (policy, estilos, acciones).
+ * Helpers compartidos para chat async de encounter (policy, estilos, acciones).
  * Consumen la misma forma que Flutter: data.chat_policy + message_kind por mensaje.
  */
 (function (global) {
@@ -195,7 +195,7 @@
     }
   }
 
-  global.BioenlaceAsyncConsultaChat = {
+  global.BioenlaceEncounterAsyncChat = {
     parsePolicy: parsePolicy,
     renderMessage: renderMessage,
     attachmentLabel: attachmentLabel,

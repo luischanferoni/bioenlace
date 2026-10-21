@@ -5,7 +5,7 @@ namespace common\components\Domain\Clinical\CareCohort\Domain;
 use common\components\Domain\Clinical\Encounter\Application\Service\PatientAiContextService;
 use common\components\Domain\Clinical\Encounter\Application\UseCase\RecordEncounterReason;
 use common\models\Clinical\Encounter;
-use common\models\Clinical\DiagnosticoConsultaRepository as DCRepo;
+use common\models\Clinical\EncounterDiagnosisRepository as DCRepo;
 use common\models\Organization\Efector;
 use common\models\Person\Persona;
 

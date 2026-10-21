@@ -1,5 +1,5 @@
 /**
- * Solo lectura de consulta documentada (staff).
+ * Vista de solo lectura de un encounter documentado (staff).
  * Config: #ver-consulta-root[data-api][data-url-inicio]
  */
 (function () {

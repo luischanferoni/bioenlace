@@ -61,6 +61,22 @@ final class DomainControllerMapTest extends Unit
         }
     }
 
+    public function testRenombrarControllersConservaIdsPublicosHistoricos(): void
+    {
+        $map = DomainControllerMap::build();
+
+        $this->assertSame(
+            'frontend\modules\api\v1\controllers\scheduling\EncounterAsyncController',
+            $map['consulta-async'] ?? null
+        );
+        $this->assertSame(
+            'frontend\modules\api\v1\controllers\scheduling\EncounterFollowupController',
+            $map['consultas-seguimiento'] ?? null
+        );
+        $this->assertArrayNotHasKey('encounter-async', $map);
+        $this->assertArrayNotHasKey('encounter-followup', $map);
+    }
+
     public function testCadaControllerDeDominioTieneUnIdUnico(): void
     {
         $dir = Yii::getAlias('@frontend') . '/modules/api/v1/controllers';

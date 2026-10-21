@@ -39,7 +39,7 @@ class PacientesListadoAsset extends AssetBundle
 
         $files = [
             'widgets/dni-barcode.js',
-            'async-consulta-chat.js',
+            'async-encounter-chat.js',
             'pacientes-listado.js',
         ];
 

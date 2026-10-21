@@ -21,7 +21,7 @@ use frontend\components\Clinical\EpisodioTimelineViewBuilder;
 use frontend\components\Clinical\PacienteHistoriaTimelinePageBuilder;
 use frontend\assets\EmergencyBoardAsset;
 use frontend\assets\PacienteHistoriaTimelineAsset;
-use frontend\assets\VerConsultaAsset;
+use frontend\assets\EncounterViewAsset;
 use frontend\filters\SisseActionFilter;
 
 /**
@@ -209,7 +209,7 @@ class PacienteController extends Controller
             ? ('Consulta cargada · ' . $paciente->getNombreCompleto(\common\models\Person\Persona::FORMATO_NOMBRE_A_N))
             : 'Consulta cargada';
         $this->view->title = $pageTitle;
-        VerConsultaAsset::register($this->view);
+        EncounterViewAsset::register($this->view);
 
         return $this->render('ver_consulta', [
             'persona' => $paciente,

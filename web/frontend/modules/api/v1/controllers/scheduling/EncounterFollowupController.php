@@ -15,7 +15,7 @@ use common\components\Platform\Ui\UiScreenService;
  *
  * RBAC ApiGhost: /api/consultas-seguimiento/&lt;action&gt;
  */
-class ConsultasSeguimientoController extends BaseController
+class EncounterFollowupController extends BaseController
 {
     /**
      * GET|POST /api/v1/consultas-seguimiento/hub

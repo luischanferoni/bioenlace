@@ -8,7 +8,7 @@ use yii\web\AssetBundle;
 /**
  * Pantalla solo lectura de consulta documentada ({@see PacienteController::actionVerConsulta}).
  */
-class VerConsultaAsset extends AssetBundle
+class EncounterViewAsset extends AssetBundle
 {
     /** @var list<class-string<AssetBundle>> */
     public $depends = [
@@ -22,8 +22,8 @@ class VerConsultaAsset extends AssetBundle
     public function init(): void
     {
         parent::init();
-        $abs = \Yii::getAlias('@frontend/web/js/ver-consulta.js');
-        $url = Url::to('@web/js/ver-consulta.js');
+        $abs = \Yii::getAlias('@frontend/web/js/encounter-view.js');
+        $url = Url::to('@web/js/encounter-view.js');
         if (is_file($abs)) {
             $url .= '?v=' . filemtime($abs);
         }

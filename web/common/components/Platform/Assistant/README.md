@@ -21,4 +21,4 @@ Orquestación del chat: preprocess → router → guía (2ª IA) o canal de resp
 ## Otros entrypoints
 
 - Captura clínica: `clinical/EncounterController` → `Capture/Application (EncounterController)`
-- Smoke QA consultas paciente (CLI): `php yii qa/asistente-consultas` → `Qa/AsistenteConsultasQaService` + `common/data/qa/asistente-consultas.yaml`
+- Smoke QA consultas paciente (CLI): `php yii qa/asistente-consultas` → `Qa/PatientAssistantQaService` + `common/data/qa/asistente-consultas.yaml`

@@ -3,13 +3,13 @@
 namespace common\tests\unit\platform\assistant;
 
 use Codeception\Test\Unit;
-use common\components\Platform\Assistant\Qa\AsistenteConsultasQaService;
+use common\components\Platform\Assistant\Qa\PatientAssistantQaService;
 
-class AsistenteConsultasQaCatalogTest extends Unit
+class PatientAssistantQaCatalogTest extends Unit
 {
     public function testCatalogLoadsAndHasSmokeCases(): void
     {
-        $catalog = AsistenteConsultasQaService::loadCatalog();
+        $catalog = PatientAssistantQaService::loadCatalog();
         $this->assertNotEmpty($catalog['cases']);
 
         $ids = array_column($catalog['cases'], 'id');
@@ -19,7 +19,7 @@ class AsistenteConsultasQaCatalogTest extends Unit
 
     public function testFilterByCoberturaAndSeccion(): void
     {
-        $smoke = AsistenteConsultasQaService::filterCases(['Hoy'], 'smoke', null, null);
+        $smoke = PatientAssistantQaService::filterCases(['Hoy'], 'smoke', null, null);
         $this->assertNotEmpty($smoke);
         foreach ($smoke as $case) {
             $this->assertSame('Hoy', $case['cobertura']);
@@ -27,7 +27,7 @@ class AsistenteConsultasQaCatalogTest extends Unit
             $this->assertNotEmpty($case['mensajes']);
         }
 
-        $borde = AsistenteConsultasQaService::filterCases(null, 'borde', null, null);
+        $borde = PatientAssistantQaService::filterCases(null, 'borde', null, null);
         $this->assertNotEmpty($borde);
         $ids = array_column($borde, 'id');
         $this->assertContains('borde-llegar-tarde-10min', $ids);
@@ -42,13 +42,13 @@ class AsistenteConsultasQaCatalogTest extends Unit
             'button_intent_ids' => ['atencion.necesito-atencion'],
             'reply_text' => 'Podés solicitar atención.',
         ];
-        $this->assertSame([], AsistenteConsultasQaService::evaluateExpect([
+        $this->assertSame([], PatientAssistantQaService::evaluateExpect([
             'user_goal' => 'guide',
             'offer_intent' => 'atencion.necesito-atencion',
             'must_not_intent' => ['turnos.crear-como-paciente'],
         ], $obs));
 
-        $failures = AsistenteConsultasQaService::evaluateExpect([
+        $failures = PatientAssistantQaService::evaluateExpect([
             'user_goal' => 'operational',
         ], $obs);
         $this->assertNotEmpty($failures);
@@ -57,11 +57,11 @@ class AsistenteConsultasQaCatalogTest extends Unit
     public function testReplyMustNotContainIgnoresQueEsDefinition(): void
     {
         $reply = 'Si deseas más detalles sobre qué es un infarto, puedo indicarte dónde buscar.';
-        $this->assertSame([], AsistenteConsultasQaService::evaluateExpect([
+        $this->assertSame([], PatientAssistantQaService::evaluateExpect([
             'reply_must_not_contain' => ['es un infarto', 'tenés un infarto'],
         ], ['reply_text' => $reply]));
 
-        $failures = AsistenteConsultasQaService::evaluateExpect([
+        $failures = PatientAssistantQaService::evaluateExpect([
             'reply_must_not_contain' => ['es un infarto'],
         ], ['reply_text' => 'Eso es un infarto.']);
         $this->assertNotEmpty($failures);
@@ -70,7 +70,7 @@ class AsistenteConsultasQaCatalogTest extends Unit
 
     public function testReadableFlowLegendFor2iaAnd1ia(): void
     {
-        $twoIa = AsistenteConsultasQaService::formatFlowLegendLines([
+        $twoIa = PatientAssistantQaService::formatFlowLegendLines([
             'user_goal' => 'guide',
             'routing_hint' => 'guide',
             'flow_intent_id' => '',
@@ -87,7 +87,7 @@ class AsistenteConsultasQaCatalogTest extends Unit
         $this->assertStringContainsString('preprocess + 2 IA', $joined);
         $this->assertStringContainsString('aspect:appointment.current', $joined);
 
-        $oneIa = AsistenteConsultasQaService::formatFlowLegendLines([
+        $oneIa = PatientAssistantQaService::formatFlowLegendLines([
             'user_goal' => 'operational',
             'routing_hint' => 'guide',
             'flow_intent_id' => '',
@@ -104,7 +104,7 @@ class AsistenteConsultasQaCatalogTest extends Unit
 
     public function testFormatReadableReportIncludesMessageAndReply(): void
     {
-        $txt = AsistenteConsultasQaService::formatReadableReport([
+        $txt = PatientAssistantQaService::formatReadableReport([
             'started_at' => 't0',
             'finished_at' => 't1',
             'user_id' => 1,

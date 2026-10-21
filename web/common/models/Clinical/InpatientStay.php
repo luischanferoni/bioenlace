@@ -12,7 +12,7 @@ use common\models\Person\Persona;
 
 use Yii;
 use common\models\Clinical\Encounter;
-use common\models\Clinical\DiagnosticoConsultaRepository as DCRepo;
+use common\models\Clinical\EncounterDiagnosisRepository as DCRepo;
 
 /**
  * This is the model class for table "seg_nivel_internacion".

@@ -21,7 +21,7 @@ use Yii;
  * @see web/docs/qa/paciente/asistente-consultas.md
  * @see web/common/data/qa/asistente-consultas.yaml
  */
-final class AsistenteConsultasQaService
+final class PatientAssistantQaService
 {
     private const CATALOG_ALIAS = '@common/data/qa/asistente-consultas.yaml';
 

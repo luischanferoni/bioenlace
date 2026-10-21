@@ -10,16 +10,12 @@ class MotivosConsultaService {
   final String userId;
   final String? userName;
 
-  MotivosConsultaService({
-    required this.userId,
-    this.authToken,
-    this.userName,
-  });
+  MotivosConsultaService({required this.userId, this.authToken, this.userName});
 
   Map<String, String> get _headers => AppConfig.jsonHeaders(
-        bearerToken: authToken,
-        appClient: 'paciente-flutter',
-      );
+    bearerToken: authToken,
+    appClient: 'paciente-flutter',
+  );
 
   /// Multipart: sin Content-Type (lo fija el boundary).
   Map<String, String> get _multipartHeaders {
@@ -56,10 +52,16 @@ class MotivosConsultaService {
 
   Future<Map<String, dynamic>> getMessages(int consultaId) async {
     try {
-      final uri = Uri.parse('${AppConfig.apiUrl}/motivos-consulta/mensajes/$consultaId');
-      final response = await http.get(uri, headers: _headers)
+      final uri = Uri.parse(
+        '${AppConfig.apiUrl}/motivos-consulta/mensajes/$consultaId',
+      );
+      final response = await http
+          .get(uri, headers: _headers)
           .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-      final payload = unwrapApiContract(json.decode(response.body), response.statusCode);
+      final payload = unwrapApiContract(
+        json.decode(response.body),
+        response.statusCode,
+      );
       final rawMsgs = payload['messages'] as List<dynamic>? ?? [];
       return {
         'success': true,
@@ -75,27 +77,25 @@ class MotivosConsultaService {
         'chat_guide': payload['chat_guide'],
       };
     } catch (e) {
-      return {
-        'success': false,
-        'message': e.toString(),
-        'messages': [],
-      };
+      return {'success': false, 'message': e.toString(), 'messages': []};
     }
   }
 
   Future<Map<String, dynamic>> sendMessage(int consultaId, String text) async {
     try {
       final uri = Uri.parse('${AppConfig.apiUrl}/motivos-consulta/enviar');
-      final body = {
-        'consulta_id': consultaId,
-        'message': text,
-      };
-      final response = await http.post(
-        uri,
-        headers: {..._headers, 'Content-Type': 'application/json'},
-        body: json.encode(body),
-      ).timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-      final data = unwrapApiContract(json.decode(response.body), response.statusCode);
+      final body = {'encounter_id': consultaId, 'message': text};
+      final response = await http
+          .post(
+            uri,
+            headers: {..._headers, 'Content-Type': 'application/json'},
+            body: json.encode(body),
+          )
+          .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
+      final data = unwrapApiContract(
+        json.decode(response.body),
+        response.statusCode,
+      );
       return {'success': true, 'data': data};
     } catch (e) {
       return {'success': false, 'message': e.toString()};
@@ -112,13 +112,16 @@ class MotivosConsultaService {
       final uri = Uri.parse('${AppConfig.apiUrl}/motivos-consulta/subir');
       final request = http.MultipartRequest('POST', uri);
       request.headers.addAll(_multipartHeaders);
-      request.fields['consulta_id'] = consultaId.toString();
+      request.fields['encounter_id'] = consultaId.toString();
       request.fields['message_type'] = messageType;
       request.files.add(await multipartFileFromXFile(file));
 
       final streamed = await request.send().timeout(Duration(seconds: 60));
       final response = await http.Response.fromStream(streamed);
-      final payload = unwrapApiContract(json.decode(response.body), response.statusCode);
+      final payload = unwrapApiContract(
+        json.decode(response.body),
+        response.statusCode,
+      );
       normalizeChatMediaMessage(
         payload,
         mediaScope: 'motivos-consulta',

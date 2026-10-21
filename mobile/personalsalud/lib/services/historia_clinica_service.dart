@@ -183,7 +183,7 @@ class SignosVitalesClinica {
   }
 }
 
-/// `motivos_consulta_paciente` de la API — mensajes enviados desde la app del paciente.
+/// `patient_encounter_reasons` de la API — mensajes enviados desde la app del paciente.
 class MotivoConsultaMensajeApi {
   final int id;
   final String content;
@@ -220,9 +220,7 @@ class MotivoConsultaMensajeApi {
         type == 'documento') {
       if (content.isNotEmpty && !isLocalMediaFilePath(content)) {
         final id = encounterId ??
-            int.tryParse(
-              '${json['encounter_id'] ?? json['consulta_id'] ?? ''}',
-            );
+            int.tryParse('${json['encounter_id'] ?? ''}');
         content = resolveMediaContentUrl(
           content,
           mediaScope: mediaScope,
@@ -425,7 +423,7 @@ class PatientEncounterReasons {
     }
     final raw = json['messages'] as List<dynamic>? ?? [];
     int? cid;
-    final c = json['encounter_id'] ?? json['consulta_id'];
+    final c = json['encounter_id'];
     if (c is int) {
       cid = c;
     } else if (c != null) {
@@ -1207,7 +1205,7 @@ class HistoriaClinicaResponse {
       signosVitales:
           SignosVitalesClinica.fromJson(json['signos_vitales'] as Map<String, dynamic>?),
       patientEncounterReasons: PatientEncounterReasons.fromJson(
-          json['motivos_consulta_paciente'] as Map<String, dynamic>?),
+          json['patient_encounter_reasons'] as Map<String, dynamic>?),
       contextoInternacion: json['contexto_internacion'] is Map
           ? ContextoInternacionHistoria.fromJson(
               Map<String, dynamic>.from(json['contexto_internacion'] as Map),
@@ -1251,7 +1249,7 @@ class HistoriaClinicaResponse {
   factory HistoriaClinicaResponse.fromStaffEncounterJson(
     Map<String, dynamic> json,
   ) {
-    final motivos = json['motivos_consulta_paciente'];
+    final motivos = json['patient_encounter_reasons'];
 
     return HistoriaClinicaResponse(
       persona: PersonaData.fromJson(json['persona'] as Map<String, dynamic>),

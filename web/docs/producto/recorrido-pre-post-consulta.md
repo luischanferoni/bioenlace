@@ -45,7 +45,7 @@ Catálogo `AppointmentReasonChatGuideCatalog` (`enabled: true/false`). API pacie
 
 El equipo ve el **resumen de motivos** (Condition CC) y sugerencias clínicas (`ia_clinical_suggestions`) en el bloque de motivos del turno. No hay sección de “preguntas previas” persistidas.
 
-**API:** `GET /api/v1/personas/{id}/historia-clinica?turno_id=` (o `encounter_id=`) incluye `motivos_consulta_paciente` con `resumen`, `sugerencias_clinicas`, `imagenes_adjuntas`, etc.
+**API:** `GET /api/v1/personas/{id}/historia-clinica?turno_id=` (o `encounter_id=`) incluye `patient_encounter_reasons` con `resumen`, `sugerencias_clinicas`, `imagenes_adjuntas`, etc.
 
 **Orden en timeline (staff):** resumen motivos (chat → Condition CC) → asistencia pre-consulta cohorte (`care_pack_cohorte`) → signos vitales y captura.
 
@@ -69,7 +69,7 @@ Reglas en `encounter_phase_eligibility.yaml`; evaluación en `EncounterJourneyEl
 
 ### Staff (historia clínica)
 
-- `GET /api/v1/personas/{id}/historia-clinica?turno_id=` — resumen clínico del turno; `motivos_consulta_paciente` + `care_pack_cohorte` cuando aplica.
+- `GET /api/v1/personas/{id}/historia-clinica?turno_id=` — resumen clínico del turno; `patient_encounter_reasons` + `care_pack_cohorte` cuando aplica.
 - Sin `turno_id` / `encounter_id`: motivos del turno con mensajes más reciente en el efector (comportamiento legacy del endpoint).
 
 RBAC journey paciente: hereda de `listar-como-paciente` (migración `m260703_120000_api_encounter_journey_estado_rbac`). Historia clínica: `/api/pacientes/historia-clinica`.

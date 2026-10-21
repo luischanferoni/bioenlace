@@ -220,7 +220,7 @@ final class AdvanceEncounterLifecycle
      */
     private function resolveSubjectPersonaIdFromLinkedEncounter(array $body): ?int
     {
-        $encounterId = (int) ($body['encounter_id'] ?? $body['id_consulta'] ?? 0);
+        $encounterId = (int) ($body['encounter_id'] ?? 0);
         if ($encounterId > 0) {
             $encounter = Encounter::findOne($encounterId);
             if ($encounter !== null && (int) $encounter->subject_persona_id > 0) {

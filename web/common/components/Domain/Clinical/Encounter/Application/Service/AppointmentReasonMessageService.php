@@ -112,7 +112,6 @@ final class AppointmentReasonMessageService
         return [
             'id' => $msg->id,
             'encounter_id' => (int) $encounterId,
-            'consulta_id' => (int) $encounterId,
             'content' => $contentUrl,
             'user_id' => $msg->user_id,
             'user_name' => $msg->user_name,
@@ -147,7 +146,6 @@ final class AppointmentReasonMessageService
         return [
             'id' => $msg->id,
             'encounter_id' => (int) $msg->encounter_id,
-            'consulta_id' => (int) $msg->encounter_id,
             'content' => $msg->texto,
             'user_id' => $msg->user_id,
             'user_name' => $msg->user_name,

@@ -216,7 +216,6 @@ class CaptureExtractionService extends Component
             $linkedEncounter = (new EncounterDefinitionBootstrapService())->resolveLinkedEncounterFromBody($body);
             if ($linkedEncounter !== null) {
                 $resultado['encounter_id'] = $linkedEncounter->id;
-                $resultado['id_consulta'] = $linkedEncounter->id;
             }
 
             $cacheBody = $body;
@@ -226,7 +225,6 @@ class CaptureExtractionService extends Component
             }
             if ($linkedEncounter !== null) {
                 $cacheBody['encounter_id'] = (int) $linkedEncounter->id;
-                $cacheBody['id_consulta'] = (int) $linkedEncounter->id;
             }
             $extraidosForCache = self::resolveDatosExtraidos($datos);
             $analysisCacheToken = CaptureAnalysisCache::store(

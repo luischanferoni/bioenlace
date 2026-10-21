@@ -69,7 +69,7 @@ final class PatientAiContextService
             return $id;
         }
 
-        $encounterId = (int) ($body['encounter_id'] ?? $body['id_consulta'] ?? 0);
+        $encounterId = (int) ($body['encounter_id'] ?? 0);
         if ($encounterId <= 0) {
             return null;
         }

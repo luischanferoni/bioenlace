@@ -79,9 +79,9 @@ class PendingMotivoMessageStore {
     return 'mot_${ts}_$r';
   }
 
-  Future<List<PendingMotivoMessage>> listForConsulta(int consultaId) async {
+  Future<List<PendingMotivoMessage>> listForEncounter(int encounterId) async {
     await _ensureLoaded();
-    final copy = _items.where((e) => e.consultaId == consultaId).toList();
+    final copy = _items.where((e) => e.encounterId == encounterId).toList();
     copy.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
     return copy;
   }

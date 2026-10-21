@@ -134,7 +134,7 @@ final class EncounterDefinitionBootstrapService
     private function findLinkedEncounter(array $body): ?Encounter
     {
         $idConfiguracion = (int) ($body['id_configuracion'] ?? 0);
-        $encounterId = (int) ($body['encounter_id'] ?? $body['id_consulta'] ?? 0);
+        $encounterId = (int) ($body['encounter_id'] ?? 0);
         if ($encounterId > 0 && $idConfiguracion > 0 && $encounterId === $idConfiguracion) {
             $encounterId = 0;
         }

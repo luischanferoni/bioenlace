@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Clinical\Laboratory\Application\Agents;
 
+use common\components\Domain\Clinical\Laboratory\Application\Catalog\PostLabClassificationNotificationCatalog;
 use common\components\Platform\Agent\AgentRunRecorder;
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
@@ -54,12 +55,12 @@ final class PostLabClassificationAgent
         $action = (string) ($outcome['action'] ?? 'notify_patient');
         switch ($action) {
             case 'notify_patient_and_staff':
-                $this->notifyPatient($report, $outcome, $context, $severity, true);
-                $this->notifyStaff($report, $outcome, $context, $severity, $classification);
+                $this->notifyPatient($report, $severity, true);
+                $this->notifyStaff($report, $context, $severity);
                 break;
             case 'notify_patient':
             default:
-                $this->notifyPatient($report, $outcome, $context, $severity, false);
+                $this->notifyPatient($report, $severity, false);
         }
 
         AgentRunRecorder::record(
@@ -139,23 +140,12 @@ final class PostLabClassificationAgent
         return $ctx;
     }
 
-    /**
-     * @param array<string, mixed> $outcome
-     * @param array<string, string> $context
-     */
     private function notifyPatient(
         DiagnosticReport $report,
-        array $outcome,
-        array $context,
         string $severity,
         bool $critical
     ): void {
-        $patient = is_array($outcome['patient'] ?? null) ? $outcome['patient'] : [];
-        $title = (string) ($patient['title'] ?? 'Resultado de laboratorio');
-        $body = (string) ($patient['body'] ?? '');
-        if ($body === '') {
-            return;
-        }
+        $copy = (new PostLabClassificationNotificationCatalog())->forSeverity($severity, 'patient');
 
         $type = $critical
             ? PushNotificationTypes::LAB_RESULT_CRITICAL_PATIENT
@@ -168,28 +158,22 @@ final class PostLabClassificationAgent
                 'diagnostic_report_id' => (string) $report->id,
                 'severity' => $severity,
             ],
-            $title,
-            $body,
+            $copy['title'],
+            $copy['body'],
             $critical
         );
     }
 
     /**
-     * @param array<string, mixed> $outcome
      * @param array<string, string> $context
-     * @param array<string, mixed> $classification
      */
     private function notifyStaff(
         DiagnosticReport $report,
-        array $outcome,
         array $context,
-        string $severity,
-        array $classification
+        string $severity
     ): void {
-        $staff = is_array($outcome['staff'] ?? null) ? $outcome['staff'] : [];
-        $title = (string) ($staff['title'] ?? 'Laboratorio');
-        $bodyTemplate = (string) ($staff['body_template'] ?? 'Revisá el informe de laboratorio del paciente.');
-        $body = $this->interpolate($bodyTemplate, $context);
+        $copy = (new PostLabClassificationNotificationCatalog())->forSeverity($severity, 'staff');
+        $body = $this->interpolate($copy['body_template'], $context);
 
         $pesId = 0;
         if ($report->encounter_id) {
@@ -223,7 +207,7 @@ final class PostLabClassificationAgent
                 'severity' => $severity,
                 'subject_persona_id' => (string) $report->subject_persona_id,
             ],
-            $title,
+            $copy['title'],
             $patientName . ' — ' . $body,
             true
         );

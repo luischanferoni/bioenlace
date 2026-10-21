@@ -52,7 +52,8 @@ Ver [captura-clinica.md](./captura-clinica.md) y [catalogo-usos-ia.md](./catalog
 |-------|--------|
 | **Tipo** | Agente (reglas) |
 | **Trigger** | Paciente envía formulario de seguimiento (`CarePackFollowupService::submitResponses`) |
-| **Política** | `agents/care-followup-branching.yaml` |
+| **Política operativa** | `CareFollowupBranchingAgentPolicy` (reglas de disparo y audiencia) |
+| **Copy de notificación** | `CareCohort/Application/Catalog/care-followup-notifications.yaml` |
 | **Decisiones** | Empeoramiento o intensidad alta → alerta staff; adherencia baja → mensaje educativo al paciente |
 | **Efecto** | Push `CARE_FOLLOWUP_STAFF_ALERT` al PES del encounter; push educativo al paciente si aplica |
 | **Auditoría** | `agent_run` (`agent_id`: `care-followup-branching`) |
@@ -65,7 +66,8 @@ Requiere `care_cohort.enabled`. Ver [asistencia-cohortes.md](./asistencia-cohort
 |-------|--------|
 | **Tipo** | Agente (reglas LOINC) |
 | **Trigger** | Ingesta nueva de `DiagnosticReport` (`LaboratoryIngestService`) |
-| **Política** | `agents/post-lab-classification.yaml` |
+| **Política operativa** | `PostLabClassificationAgentPolicy` (umbrales y acciones por severidad) |
+| **Copy de notificación** | `Laboratory/Application/Catalog/post-lab-classification-notifications.yaml` |
 | **Decisiones** | normal / control / critical por analito |
 | **Efecto** | Push paciente; push staff si crítico y encounter con PES |
 | **Auditoría** | `agent_run` (`agent_id`: `post-lab-classification`) |

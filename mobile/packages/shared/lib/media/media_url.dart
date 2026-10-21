@@ -181,7 +181,7 @@ bool isImageMessageType(String? type) {
 }
 
 int? _encounterIdFromMessage(Map<String, dynamic> message) {
-  final raw = message['encounter_id'] ?? message['consulta_id'];
+  final raw = message['encounter_id'];
   if (raw == null) return null;
   if (raw is int) return raw;
   return int.tryParse(raw.toString());

@@ -458,7 +458,6 @@ class DocumentEncounter extends Component
 
             $out = [
                 'encounter_id' => $encounter->id,
-                'id_consulta' => $encounter->id,
                 'persistido' => $persistido,
                 'log_id' => $logger->getId(),
                 'log_archivo' => $logger->getArchivoLog(),
@@ -1008,22 +1007,14 @@ class DocumentEncounter extends Component
     private function normalizeEncounterIdFromBody(array $body, $idConfiguracion): ?int
     {
         $candidates = [];
-        foreach (['encounter_id', 'id_consulta'] as $key) {
-            if (!array_key_exists($key, $body)) {
-                continue;
+        if (array_key_exists('encounter_id', $body)) {
+            $raw = $body['encounter_id'];
+            if ($raw !== null && $raw !== '') {
+                $id = (int) $raw;
+                if ($id > 0 && ($idConfiguracion === null || (int) $idConfiguracion !== $id)) {
+                    $candidates[] = $id;
+                }
             }
-            $raw = $body[$key];
-            if ($raw === null || $raw === '') {
-                continue;
-            }
-            $id = (int) $raw;
-            if ($id <= 0) {
-                continue;
-            }
-            if ($idConfiguracion !== null && (int) $idConfiguracion === $id) {
-                continue;
-            }
-            $candidates[] = $id;
         }
 
         foreach ($candidates as $id) {

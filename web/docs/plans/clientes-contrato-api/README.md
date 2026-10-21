@@ -10,13 +10,13 @@ Lectura: [overview.md](./overview.md), [design.md](./design.md), fases en [phase
 |------|--------|
 | 00 Línea base y guardas | hecho (guarda local; sin CI en el repo) |
 | 01 Contrato de API | hecho (migración de respuestas estándar y consumidores; login legacy preservado como excepción externa) |
-| 02 Terminología encounter | en curso (glosario, primer corte móvil y renombre coordinado de resumen staff) |
+| 02 Terminología encounter | en curso (glosario, resumen staff, razones/chat y contratos de identificación de captura) |
 | 03 Metadata clínica humana | pendiente |
 | 04 Captura y STT | pendiente |
 | 05 Móvil | pendiente |
 | 06 Web | pendiente |
 | 07 Veterinaria (estructura) | pendiente |
-| 08 Asistente, admin, jobs, docs | en curso (prompt Guide alineado con glosario encounter) |
+| 08 Asistente, admin, jobs, docs | parcial; pendiente de retomar tras las fases anteriores |
 | 09 Cierre | pendiente |
 
 ## Reglas relacionadas

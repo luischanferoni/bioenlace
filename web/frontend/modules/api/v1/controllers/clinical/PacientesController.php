@@ -96,7 +96,6 @@ class PacientesController extends BaseController
             $motivosConsulta = null;
             $patientEncounterReasons = [
                 'encounter_id' => null,
-                'consulta_id' => null,
                 'turno_id' => null,
                 'turno' => null,
                 'contexto_explicito' => true,
@@ -118,7 +117,7 @@ class PacientesController extends BaseController
             }
 
             $motivosConsulta = $motivosCtx['motivos_consulta'];
-            $patientEncounterReasons = $motivosCtx['motivos_consulta_paciente'];
+            $patientEncounterReasons = $motivosCtx['patient_encounter_reasons'];
             $capturaFlags = $motivosCtx['captura'] ?? [
                 'permitida' => null,
                 'motivo' => null,
@@ -227,7 +226,7 @@ class PacientesController extends BaseController
             ],
             'signos_vitales' => $signosVitales,
             'signos_vitales_episodio' => $signosVitalesEpisodio,
-            'motivos_consulta_paciente' => $patientEncounterReasons,
+            'patient_encounter_reasons' => $patientEncounterReasons,
             'contexto_episodio' => $contextoEpisodio,
             'timeline_episodio' => $timelineEpisodio,
             'contexto_internacion' => $contextoInternacion,
@@ -268,7 +267,7 @@ class PacientesController extends BaseController
      *
      * @return array{
      *   motivos_consulta: string|null,
-     *   motivos_consulta_paciente: array<string, mixed>,
+     *   patient_encounter_reasons: array<string, mixed>,
      *   turnos_con_encounter: list<array<string, mixed>>,
      *   documentacion_medico: array<string, mixed>|null,
      *   captura: array{permitida: bool|null, motivo: string|null},
@@ -289,7 +288,6 @@ class PacientesController extends BaseController
         $capturaNeutra = ['permitida' => null, 'motivo' => null];
         $emptyPaciente = [
             'encounter_id' => null,
-            'consulta_id' => null,
             'turno_id' => null,
             'turno' => null,
             'contexto_explicito' => $contextoExplicito,
@@ -312,7 +310,7 @@ class PacientesController extends BaseController
             if ($turno === null) {
                 return [
                     'motivos_consulta' => null,
-                    'motivos_consulta_paciente' => $emptyPaciente,
+                    'patient_encounter_reasons' => $emptyPaciente,
                     'turnos_con_encounter' => $turnosConEncounter,
                     'documentacion_medico' => null,
                     'captura' => $capturaNeutra,
@@ -330,7 +328,7 @@ class PacientesController extends BaseController
 
                 return [
                     'motivos_consulta' => null,
-                    'motivos_consulta_paciente' => array_merge($emptyPaciente, [
+                    'patient_encounter_reasons' => array_merge($emptyPaciente, [
                         'turno_id' => $turnoIdParam,
                         'turno' => $this->formatTurnoMotivosContext($turno),
                     ]),
@@ -349,7 +347,7 @@ class PacientesController extends BaseController
             ) {
                 return [
                     'motivos_consulta' => null,
-                    'motivos_consulta_paciente' => $emptyPaciente,
+                    'patient_encounter_reasons' => $emptyPaciente,
                     'turnos_con_encounter' => $turnosConEncounter,
                     'documentacion_medico' => null,
                     'captura' => $capturaNeutra,
@@ -388,7 +386,7 @@ class PacientesController extends BaseController
         if ($encounter === null) {
             return [
                 'motivos_consulta' => null,
-                'motivos_consulta_paciente' => $emptyPaciente,
+                'patient_encounter_reasons' => $emptyPaciente,
                 'turnos_con_encounter' => $turnosConEncounter,
                 'documentacion_medico' => null,
                 'captura' => $turno !== null ? $this->capturaFlagsForTurno($turno) : $capturaNeutra,
@@ -403,7 +401,7 @@ class PacientesController extends BaseController
 
             return [
                 'motivos_consulta' => null,
-                'motivos_consulta_paciente' => $emptyPaciente,
+                'patient_encounter_reasons' => $emptyPaciente,
                 'turnos_con_encounter' => $turnosConEncounter,
                 'documentacion_medico' => null,
                 'captura' => $turno !== null ? $this->capturaFlagsForTurno($turno) : $capturaNeutra,
@@ -443,7 +441,6 @@ class PacientesController extends BaseController
 
         $motivosPaciente = [
             'encounter_id' => $encounterId,
-            'consulta_id' => $encounterId,
             'turno_id' => $turno !== null ? (int) $turno->id_turnos : null,
             'turno' => $this->formatTurnoMotivosContext($turno),
             'contexto_explicito' => $contextoExplicito,
@@ -459,7 +456,7 @@ class PacientesController extends BaseController
 
         return [
             'motivos_consulta' => $reason !== '' ? $reason : null,
-            'motivos_consulta_paciente' => $motivosPaciente,
+            'patient_encounter_reasons' => $motivosPaciente,
             'turnos_con_encounter' => $turnosConEncounter,
             'documentacion_medico' => (new EncounterStaffDocumentationViewService())->buildForEncounter($encounter),
             'captura' => $turno !== null ? $this->capturaFlagsForTurno($turno) : $capturaNeutra,
@@ -472,7 +469,7 @@ class PacientesController extends BaseController
      * @param list<array<string, mixed>> $turnosConEncounter
      * @return array{
      *   motivos_consulta: null,
-     *   motivos_consulta_paciente: array<string, mixed>,
+     *   patient_encounter_reasons: array<string, mixed>,
      *   turnos_con_encounter: list<array<string, mixed>>,
      *   documentacion_medico: null,
      *   captura: array{permitida: bool|null, motivo: string|null},
@@ -500,7 +497,7 @@ class PacientesController extends BaseController
         if ($denyKind === 'cerrada') {
             return [
                 'motivos_consulta' => null,
-                'motivos_consulta_paciente' => $emptyPaciente,
+                'patient_encounter_reasons' => $emptyPaciente,
                 'turnos_con_encounter' => $turnosConEncounter,
                 'documentacion_medico' => null,
                 'captura' => $turno !== null ? $this->capturaFlagsForTurno($turno) : [
@@ -520,7 +517,7 @@ class PacientesController extends BaseController
 
         return [
             'motivos_consulta' => null,
-            'motivos_consulta_paciente' => $emptyPaciente,
+            'patient_encounter_reasons' => $emptyPaciente,
             'turnos_con_encounter' => $turnosConEncounter,
             'documentacion_medico' => null,
             'captura' => $turno !== null ? $this->capturaFlagsForTurno($turno) : [

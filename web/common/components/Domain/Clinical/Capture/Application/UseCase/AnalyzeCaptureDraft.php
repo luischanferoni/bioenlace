@@ -82,9 +82,7 @@ final class AnalyzeCaptureDraft
         $extraidos = $this->draft->extractDatosExtraidos($out);
         $snapshot = $out;
         unset($snapshot['html']);
-        $encounterId = isset($out['encounter_id'])
-            ? (int) $out['encounter_id']
-            : (isset($out['id_consulta']) ? (int) $out['id_consulta'] : null);
+        $encounterId = isset($out['encounter_id']) ? (int) $out['encounter_id'] : null;
         $staged = null;
         $review = $out['capture_review'] ?? null;
         if (is_array($review) && isset($review['default_staged_item_ids']) && is_array($review['default_staged_item_ids'])) {

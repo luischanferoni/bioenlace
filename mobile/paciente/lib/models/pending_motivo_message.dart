@@ -7,15 +7,12 @@ enum PendingMotivoMessageStatus {
   failedUpload,
 }
 
-enum PendingMotivoMessageType {
-  texto,
-  audio,
-}
+enum PendingMotivoMessageType { texto, audio }
 
 class PendingMotivoMessage {
   PendingMotivoMessage({
     required this.id,
-    required this.consultaId,
+    required this.encounterId,
     required this.type,
     required this.status,
     required this.createdAt,
@@ -26,7 +23,7 @@ class PendingMotivoMessage {
   });
 
   final String id;
-  final int consultaId;
+  final int encounterId;
   final PendingMotivoMessageType type;
   final PendingMotivoMessageStatus status;
   final DateTime createdAt;
@@ -50,7 +47,7 @@ class PendingMotivoMessage {
   }) {
     return PendingMotivoMessage(
       id: id,
-      consultaId: consultaId,
+      encounterId: encounterId,
       type: type,
       status: status ?? this.status,
       createdAt: createdAt,
@@ -62,23 +59,23 @@ class PendingMotivoMessage {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'consulta_id': consultaId,
-        'type': type.name,
-        'status': status.name,
-        'created_at': createdAt.toIso8601String(),
-        'updated_at': updatedAt.toIso8601String(),
-        if (texto != null) 'texto': texto,
-        if (audioFileName != null) 'audio_file_name': audioFileName,
-        if (lastError != null) 'last_error': lastError,
-      };
+    'id': id,
+    'encounter_id': encounterId,
+    'type': type.name,
+    'status': status.name,
+    'created_at': createdAt.toIso8601String(),
+    'updated_at': updatedAt.toIso8601String(),
+    if (texto != null) 'texto': texto,
+    if (audioFileName != null) 'audio_file_name': audioFileName,
+    if (lastError != null) 'last_error': lastError,
+  };
 
   factory PendingMotivoMessage.fromJson(Map<String, dynamic> json) {
     final typeName = json['type']?.toString() ?? 'audio';
     final statusName = json['status']?.toString() ?? 'pendingUpload';
     return PendingMotivoMessage(
       id: json['id']?.toString() ?? '',
-      consultaId: _asInt(json['consulta_id']),
+      encounterId: _asInt(json['encounter_id'] ?? json['consulta_id']),
       type: PendingMotivoMessageType.values.firstWhere(
         (e) => e.name == typeName,
         orElse: () => PendingMotivoMessageType.audio,
@@ -87,9 +84,11 @@ class PendingMotivoMessage {
         (e) => e.name == statusName,
         orElse: () => PendingMotivoMessageStatus.pendingUpload,
       ),
-      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+      createdAt:
+          DateTime.tryParse(json['created_at']?.toString() ?? '') ??
           DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? '') ??
+      updatedAt:
+          DateTime.tryParse(json['updated_at']?.toString() ?? '') ??
           DateTime.now(),
       texto: json['texto']?.toString(),
       audioFileName: json['audio_file_name']?.toString(),

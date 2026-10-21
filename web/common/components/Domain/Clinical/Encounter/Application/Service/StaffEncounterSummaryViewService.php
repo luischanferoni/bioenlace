@@ -91,7 +91,7 @@ final class StaffEncounterSummaryViewService
 
         $preconsulta = $this->buildPreconsultaSiAporta($encounter, $documentacion);
         if ($preconsulta !== null) {
-            $data['motivos_consulta_paciente'] = $preconsulta;
+            $data['patient_encounter_reasons'] = $preconsulta;
         }
 
         $carePack = $this->buildCarePackSiAporta((int) $encounter->id);

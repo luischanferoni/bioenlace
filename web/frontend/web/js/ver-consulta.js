@@ -72,7 +72,7 @@
                 if (t.estado_label || t.estado) tb.push(t.estado_label || t.estado);
                 turnoEl.textContent = tb.length ? ('Turno: ' + tb.join(' · ')) : '';
             }
-            var mp = d.motivos_consulta_paciente || {};
+            var mp = d.patient_encounter_reasons || {};
             var resumen = (mp.resumen || mp.resumen_ia || '').toString().trim();
             var motivosWrap = document.getElementById('vc-motivos-wrap');
             var motivosEl = document.getElementById('vc-motivos');

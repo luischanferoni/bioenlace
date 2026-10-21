@@ -151,7 +151,7 @@ Catálogo: [catalogo-usos-ia.md](./catalogo-usos-ia.md)
 
 Las respuestas del pack **assistance** llegan al médico en `GET /api/v1/personas/{id}/historia-clinica` como `care_pack_cohorte.assistance` (preguntas + `notes_for_staff`). En web timeline y app Personal de Salud aparecen **después** del resumen de motivos del chat.
 
-El **intake previo al chat** (YAML fijo, sin IA por cohorte) es un bloque distinto: `motivos_consulta_paciente.motivos_intake`. Orden completo y journey: [recorrido-pre-post-consulta.md](./recorrido-pre-post-consulta.md).
+El **intake previo al chat** (YAML fijo, sin IA por cohorte) es un bloque distinto: `patient_encounter_reasons.motivos_intake`. Orden completo y journey: [recorrido-pre-post-consulta.md](./recorrido-pre-post-consulta.md).
 
 ---
 

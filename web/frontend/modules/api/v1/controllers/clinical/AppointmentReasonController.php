@@ -48,7 +48,6 @@ class AppointmentReasonController extends BaseController
             [
                 'messages' => $formattedMessages,
                 'encounter_id' => $encounterId,
-                'consulta_id' => $encounterId,
                 'chat_guide' => $chatGuide,
             ],
             AppointmentReasonWindowService::apiState($encounterId)
@@ -146,7 +145,7 @@ class AppointmentReasonController extends BaseController
      */
     private function resolveEncounterIdFromInput(array $input): ?int
     {
-        $raw = $input['encounter_id'] ?? $input['consulta_id'] ?? null;
+        $raw = $input['encounter_id'] ?? null;
         if ($raw === null || $raw === '') {
             return null;
         }

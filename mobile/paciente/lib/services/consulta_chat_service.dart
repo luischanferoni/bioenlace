@@ -10,23 +10,26 @@ class ConsultaChatService {
   final String userId;
   final String? userName;
 
-  ConsultaChatService({
-    required this.userId,
-    this.authToken,
-    this.userName,
-  });
+  ConsultaChatService({required this.userId, this.authToken, this.userName});
 
   Map<String, String> get _headers => {
-        'Accept': 'application/json',
-        if (authToken != null && authToken!.isNotEmpty) 'Authorization': 'Bearer $authToken',
-      };
+    'Accept': 'application/json',
+    if (authToken != null && authToken!.isNotEmpty)
+      'Authorization': 'Bearer $authToken',
+  };
 
   Future<Map<String, dynamic>> getMessages(int consultaId) async {
     try {
-      final uri = Uri.parse('${AppConfig.apiUrl}/consulta-chat/mensajes/$consultaId');
-      final response = await http.get(uri, headers: _headers)
+      final uri = Uri.parse(
+        '${AppConfig.apiUrl}/consulta-chat/mensajes/$consultaId',
+      );
+      final response = await http
+          .get(uri, headers: _headers)
           .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-      final payload = unwrapApiContract(json.decode(response.body), response.statusCode);
+      final payload = unwrapApiContract(
+        json.decode(response.body),
+        response.statusCode,
+      );
       final raw = payload['messages'] as List<dynamic>? ?? [];
       return {
         'success': true,
@@ -42,21 +45,30 @@ class ConsultaChatService {
     }
   }
 
-  Future<Map<String, dynamic>> sendMessage(int consultaId, String text, {String userRole = 'paciente'}) async {
+  Future<Map<String, dynamic>> sendMessage(
+    int consultaId,
+    String text, {
+    String userRole = 'paciente',
+  }) async {
     try {
       final uri = Uri.parse('${AppConfig.apiUrl}/consulta-chat/enviar');
       final body = {
-        'consulta_id': consultaId,
+        'encounter_id': consultaId,
         'message': text,
         'user_id': userId,
         'user_role': userRole,
       };
-      final response = await http.post(
-        uri,
-        headers: {..._headers, 'Content-Type': 'application/json'},
-        body: json.encode(body),
-      ).timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-      final data = unwrapApiContract(json.decode(response.body), response.statusCode);
+      final response = await http
+          .post(
+            uri,
+            headers: {..._headers, 'Content-Type': 'application/json'},
+            body: json.encode(body),
+          )
+          .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
+      final data = unwrapApiContract(
+        json.decode(response.body),
+        response.statusCode,
+      );
       return {'success': true, 'data': data};
     } catch (e) {
       return {'success': false, 'message': e.toString()};
@@ -74,14 +86,17 @@ class ConsultaChatService {
       final uri = Uri.parse('${AppConfig.apiUrl}/consulta-chat/subir');
       final request = http.MultipartRequest('POST', uri);
       request.headers.addAll(_headers);
-      request.fields['consulta_id'] = consultaId.toString();
+      request.fields['encounter_id'] = consultaId.toString();
       request.fields['user_id'] = userId;
       request.fields['message_type'] = messageType;
       request.files.add(await multipartFileFromXFile(file));
 
       final streamed = await request.send().timeout(Duration(seconds: 60));
       final response = await http.Response.fromStream(streamed);
-      final payload = unwrapApiContract(json.decode(response.body), response.statusCode);
+      final payload = unwrapApiContract(
+        json.decode(response.body),
+        response.statusCode,
+      );
       normalizeChatMediaMessage(
         payload,
         mediaScope: 'consulta-chat',
@@ -104,14 +119,21 @@ class ConsultaChatService {
       final uri = Uri.parse('${AppConfig.apiUrl}/consulta-chat/subir');
       final request = http.MultipartRequest('POST', uri);
       request.headers.addAll(_headers);
-      request.fields['consulta_id'] = consultaId.toString();
+      request.fields['encounter_id'] = consultaId.toString();
       request.fields['user_id'] = userId;
       request.fields['message_type'] = messageType;
-      request.files.add(await multipartFileFromBytes(bytes, filename: filename));
+      request.files.add(
+        await multipartFileFromBytes(bytes, filename: filename),
+      );
 
-      final streamed = await request.send().timeout(const Duration(seconds: 60));
+      final streamed = await request.send().timeout(
+        const Duration(seconds: 60),
+      );
       final response = await http.Response.fromStream(streamed);
-      final payload = unwrapApiContract(json.decode(response.body), response.statusCode);
+      final payload = unwrapApiContract(
+        json.decode(response.body),
+        response.statusCode,
+      );
       normalizeChatMediaMessage(
         payload,
         mediaScope: 'consulta-chat',

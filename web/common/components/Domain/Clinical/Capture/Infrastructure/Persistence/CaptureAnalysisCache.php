@@ -151,7 +151,7 @@ final class CaptureAnalysisCache
             $parent = strtoupper(trim((string) ($body['parent'] ?? '')));
             $row->parent_type = $parent !== '' ? $parent : null;
             $row->parent_id = ((int) ($body['parent_id'] ?? 0)) ?: null;
-            $row->encounter_id = ((int) ($body['encounter_id'] ?? $body['id_consulta'] ?? 0)) ?: null;
+            $row->encounter_id = ((int) ($body['encounter_id'] ?? 0)) ?: null;
             $row->texto_hash = hash('sha256', self::normalizeText($textoClinico));
             $row->datos_extraidos_json = $json;
             $row->created_at = date('Y-m-d H:i:s');
@@ -195,7 +195,7 @@ final class CaptureAnalysisCache
                 return null;
             }
 
-            $encounterId = (int) ($body['encounter_id'] ?? $body['id_consulta'] ?? 0);
+            $encounterId = (int) ($body['encounter_id'] ?? 0);
             if ($encounterId > 0) {
                 $row = EncounterCaptureAnalysis::find()
                     ->where(['encounter_id' => $encounterId])
@@ -278,7 +278,7 @@ final class CaptureAnalysisCache
         $subject = (int) ($body['id_persona'] ?? $body['subject_persona_id'] ?? 0);
         $parent = strtoupper(trim((string) ($body['parent'] ?? '')));
         $parentId = (int) ($body['parent_id'] ?? 0);
-        $encounterId = (int) ($body['encounter_id'] ?? $body['id_consulta'] ?? 0);
+        $encounterId = (int) ($body['encounter_id'] ?? 0);
 
         return hash(
             'sha256',

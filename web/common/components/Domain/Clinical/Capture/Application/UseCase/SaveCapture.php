@@ -115,7 +115,6 @@ final class SaveCapture
             $saveBody['analysis_cache_token'] = $capture->analysis_cache_token;
         }
         if ($capture->encounter_id) {
-            $saveBody['id_consulta'] = $capture->encounter_id;
             $saveBody['encounter_id'] = $capture->encounter_id;
         }
         if (isset($analysis['id_configuracion']) && !isset($saveBody['id_configuracion'])) {

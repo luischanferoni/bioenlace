@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Clinical\CareCohort\Application\Agents;
 
+use common\components\Domain\Clinical\CareCohort\Application\Catalog\CareFollowupNotificationCatalog;
 use common\components\Platform\Agent\AgentRunRecorder;
 use common\components\Platform\Agent\AutonomousAgentRuleEngine;
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
@@ -54,10 +55,10 @@ final class CareFollowupBranchingAgent
 
             switch ($action) {
                 case 'notify_staff':
-                    $this->notifyStaff($queue, $encounter, $rule, $context, $ruleId, $answers);
+                    $this->notifyStaff($queue, $encounter, $context, $ruleId, $answers);
                     break;
                 case 'educational_push':
-                    $this->educationalPush($queue, $rule, $ruleId, $answers);
+                    $this->educationalPush($queue, $ruleId, $answers);
                     break;
                 default:
                     Yii::warning(
@@ -97,22 +98,18 @@ final class CareFollowupBranchingAgent
     }
 
     /**
-     * @param array<string, mixed> $rule
      * @param array<string, string> $context
      * @param array<string, mixed> $answers
      */
     private function notifyStaff(
         CareFollowupTouchpointQueue $queue,
         ?Encounter $encounter,
-        array $rule,
         array $context,
         string $ruleId,
         array $answers
     ): void {
-        $staff = is_array($rule['staff'] ?? null) ? $rule['staff'] : [];
-        $title = (string) ($staff['title'] ?? 'Seguimiento post-consulta');
-        $bodyTemplate = (string) ($staff['body_template'] ?? 'Revisá el seguimiento del paciente.');
-        $body = $this->interpolate($bodyTemplate, $context);
+        $copy = (new CareFollowupNotificationCatalog())->forRule($ruleId, 'staff');
+        $body = $this->interpolate($copy['body_template'], $context);
 
         $pesId = $encounter !== null ? (int) ($encounter->id_profesional_efector_servicio ?? 0) : 0;
         $staffPersonaId = $this->personaIdFromPes($pesId);
@@ -130,7 +127,7 @@ final class CareFollowupBranchingAgent
                     'touchpoint_id' => (string) $queue->id,
                     'rule_id' => $ruleId,
                 ],
-                $title,
+                $copy['title'],
                 $body,
                 true
             );
@@ -150,22 +147,14 @@ final class CareFollowupBranchingAgent
     }
 
     /**
-     * @param array<string, mixed> $rule
      * @param array<string, mixed> $answers
      */
     private function educationalPush(
         CareFollowupTouchpointQueue $queue,
-        array $rule,
         string $ruleId,
         array $answers
     ): void {
-        $patient = is_array($rule['patient'] ?? null) ? $rule['patient'] : [];
-        $title = (string) ($patient['title'] ?? 'Seguimiento de tu salud');
-        $body = (string) ($patient['body'] ?? '');
-
-        if ($body === '') {
-            return;
-        }
+        $copy = (new CareFollowupNotificationCatalog())->forRule($ruleId, 'patient');
 
         (new PushNotificationSender())->sendToPersona(
             (int) $queue->subject_persona_id,
@@ -176,8 +165,8 @@ final class CareFollowupBranchingAgent
                 'rule_id' => $ruleId,
                 'educational' => '1',
             ],
-            $title,
-            $body,
+            $copy['title'],
+            $copy['body'],
             false
         );
 

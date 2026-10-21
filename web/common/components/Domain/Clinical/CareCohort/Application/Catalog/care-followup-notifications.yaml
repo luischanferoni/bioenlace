@@ -1,0 +1,14 @@
+version: 1
+rules:
+  worsening_evolution:
+    staff:
+      title: 'Seguimiento: posible empeoramiento'
+      body_template: 'El paciente reportó señales de empeoramiento en «{touchpoint_title}». Revisá el seguimiento post-consulta.'
+  poor_adherence:
+    patient:
+      title: 'Recordatorio de medicación'
+      body: 'Es importante continuar el tratamiento indicado. Si tenés dificultades o efectos adversos, contactá a tu equipo de salud.'
+  high_symptom_intensity:
+    staff:
+      title: 'Seguimiento: síntomas intensos'
+      body_template: 'El paciente indicó intensidad alta ({intensidad}/10) en «{touchpoint_title}».'

@@ -130,7 +130,7 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
   }
 
   Future<void> _loadPending() async {
-    final list = await _pendingStore.listForConsulta(widget.consultaId);
+    final list = await _pendingStore.listForEncounter(widget.consultaId);
     if (!mounted) return;
     setState(() => _pending = list);
   }
@@ -244,9 +244,10 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
     setState(() {
       _isRecording = true;
       _dictating = dictating;
-      _voiceHint = dictating
-          ? 'Escuchando… tocá el micrófono para enviar'
-          : 'Grabando audio… tocá el micrófono para enviar';
+      _voiceHint =
+          dictating
+              ? 'Escuchando… tocá el micrófono para enviar'
+              : 'Grabando audio… tocá el micrófono para enviar';
     });
   }
 
@@ -274,7 +275,8 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
     });
 
     final text = dictation?.text.trim() ?? '';
-    final deviceOk = _sttConfig.deviceEnabled &&
+    final deviceOk =
+        _sttConfig.deviceEnabled &&
         dictation != null &&
         DeviceSttLocalQuality.isAcceptable(
           text,
@@ -340,7 +342,7 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
     final now = DateTime.now();
     final pending = PendingMotivoMessage(
       id: _pendingStore.newId(),
-      consultaId: widget.consultaId,
+      encounterId: widget.consultaId,
       type: PendingMotivoMessageType.texto,
       status: PendingMotivoMessageStatus.pendingUpload,
       createdAt: now,
@@ -379,7 +381,7 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
     final now = DateTime.now();
     final pending = PendingMotivoMessage(
       id: id,
-      consultaId: widget.consultaId,
+      encounterId: widget.consultaId,
       type: PendingMotivoMessageType.audio,
       status: PendingMotivoMessageStatus.pendingUpload,
       createdAt: now,
@@ -456,9 +458,7 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
     );
     await _loadPending();
     if (mounted) {
-      _showError(
-        'Quedó guardado en el teléfono. Podés reintentar.\n$error',
-      );
+      _showError('Quedó guardado en el teléfono. Podés reintentar.\n$error');
     }
   }
 
@@ -494,26 +494,27 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
       body: Column(
         children: [
           Expanded(
-            child: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : _error != null
+            child:
+                _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _error != null
                     ? Center(
-                        child: Padding(
-                          padding: BioSpacing.pageAll,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              BioAlert.danger(message: _error!),
-                              BioSpacing.gapH(BioSpacing.lg),
-                              BioButton.primary(
-                                label: 'Reintentar',
-                                icon: Icons.refresh,
-                                onPressed: _loadMessages,
-                              ),
-                            ],
-                          ),
+                      child: Padding(
+                        padding: BioSpacing.pageAll,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            BioAlert.danger(message: _error!),
+                            BioSpacing.gapH(BioSpacing.lg),
+                            BioButton.primary(
+                              label: 'Reintentar',
+                              icon: Icons.refresh,
+                              onPressed: _loadMessages,
+                            ),
+                          ],
                         ),
-                      )
+                      ),
+                    )
                     : _buildLista(context),
           ),
           if (_pending.isNotEmpty) _buildPendingPanel(context),
@@ -534,9 +535,7 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
       ),
       decoration: BoxDecoration(
         color: context.bio.paperSurface,
-        border: Border(
-          top: BorderSide(color: context.bio.paperBorderDefault),
-        ),
+        border: Border(top: BorderSide(color: context.bio.paperBorderDefault)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -561,11 +560,12 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
   }
 
   Widget _buildPendingRow(PendingMotivoMessage item) {
-    final label = item.type == PendingMotivoMessageType.audio
-        ? 'Audio pendiente'
-        : (item.texto != null && item.texto!.length > 60
-            ? '${item.texto!.substring(0, 60)}…'
-            : (item.texto ?? 'Texto pendiente'));
+    final label =
+        item.type == PendingMotivoMessageType.audio
+            ? 'Audio pendiente'
+            : (item.texto != null && item.texto!.length > 60
+                ? '${item.texto!.substring(0, 60)}…'
+                : (item.texto ?? 'Texto pendiente'));
     return Container(
       padding: const EdgeInsets.all(BioSpacing.sm),
       decoration: BoxDecoration(
@@ -585,9 +585,7 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
                 color: context.bio.textMuted,
               ),
               BioSpacing.gapW(BioSpacing.xs),
-              Expanded(
-                child: Text(label, style: BioTypography.bodySm),
-              ),
+              Expanded(child: Text(label, style: BioTypography.bodySm)),
             ],
           ),
           if (item.lastError != null && item.lastError!.isNotEmpty) ...[
@@ -708,10 +706,7 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
         children: [
           Icon(Icons.mic, color: softColor, size: 18),
           BioSpacing.gapW(BioSpacing.sm),
-          Text(
-            'Audio',
-            style: BioTypography.bodySm.copyWith(color: softColor),
-          ),
+          Text('Audio', style: BioTypography.bodySm.copyWith(color: softColor)),
         ],
       );
     } else {
@@ -783,9 +778,10 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
           controller: _textController,
           onSend: _sendText,
           isSending: _sending,
-          hintText: _sttConfig.deviceEnabled
-              ? 'Escribí el motivo o dictá con el micrófono…'
-              : 'Escribí el motivo o enviá un audio…',
+          hintText:
+              _sttConfig.deviceEnabled
+                  ? 'Escribí el motivo o dictá con el micrófono…'
+                  : 'Escribí el motivo o enviá un audio…',
           maxLines: 2,
           onVoice: _recordAndSendAudio,
           voiceActive: _isRecording,

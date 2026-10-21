@@ -29,7 +29,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 ],
                 [
                     'attribute' => 'encounter_class',
-                    'label' => 'Tipo de atención',
+                    'label' => 'Clase',
                     'value' => static function ($data) {
                         return EncounterDefinition::ENCOUNTER_CLASS[$data->encounter_class] ?? $data->encounter_class;
                     },

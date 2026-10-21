@@ -87,7 +87,6 @@ class EncounterChatController extends BaseController
         return $this->ok([
             'messages' => $formattedMessages,
             'encounter_id' => (int) $encounter->id,
-            'consulta_id' => (int) $encounter->id,
             'intake_context' => $intakeContext,
             'chat_policy' => $chatPolicy,
             'encounter' => [
@@ -363,7 +362,6 @@ class EncounterChatController extends BaseController
 
         return $this->ok([
             'encounter_id' => $encounterId,
-            'consulta_id' => $encounterId,
             'unread_count' => $unreadCount,
             'is_online' => true,
             'last_activity' => $encounter->updated_at ?? $encounter->created_at,
@@ -375,7 +373,7 @@ class EncounterChatController extends BaseController
      */
     protected function resolveEncounterIdFromBody(array $body): int
     {
-        $id = $body['encounter_id'] ?? $body['consulta_id'] ?? null;
+        $id = $body['encounter_id'] ?? null;
 
         return $id ? (int) $id : 0;
     }

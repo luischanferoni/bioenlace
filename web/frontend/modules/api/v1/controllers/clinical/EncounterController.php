@@ -158,7 +158,7 @@ class EncounterController extends BaseController
     {
         $req = Yii::$app->request;
         $params = $req->get();
-        $encounterId = (int) ($params['encounter_id'] ?? $params['id_consulta'] ?? 0);
+        $encounterId = (int) ($params['encounter_id'] ?? 0);
         if ($encounterId <= 0) {
             return $this->fail('encounter_id_required');
         }

@@ -955,7 +955,7 @@
         renderBadges('tl_condiciones_cronicas', [], 'border border-warning text-warning');
         renderBadges('tl_hallazgos', [], 'border border-warning text-warning');
         renderBadges('tl_antecedentes', [], 'border border-gray text-gray');
-        var mp = data.motivos_consulta_paciente || {};
+        var mp = data.patient_encounter_reasons || {};
         renderMotivos(null, mp);
         renderCarePackCohorte(data.care_pack_cohorte || null);
         renderDocumentacionMedico(data.documentacion_medico || null);
@@ -1026,7 +1026,7 @@
             renderBadges('tl_condiciones_cronicas', info.condiciones_cronicas || [], 'border border-warning text-warning');
             renderBadges('tl_hallazgos', info.hallazgos || [], 'border border-warning text-warning');
             renderBadges('tl_antecedentes', [].concat(info.antecedentes_personales || [], info.antecedentes_familiares || []), 'border border-gray text-gray');
-            var mp = payload.data.motivos_consulta_paciente || {};
+            var mp = payload.data.patient_encounter_reasons || {};
             var esEpisodio = timelineConfig.modoCaptura === 'imp' || timelineConfig.modoCaptura === 'emer';
             if (esEpisodio) {
                 renderMotivos(null, null);

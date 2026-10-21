@@ -180,15 +180,13 @@ final class CapturePresenter
             $out['datosExtraidos'] = $extraidos;
         }
 
-        // id_configuracion / id_consulta: necesarios para guardar; no duplicar textos/flags del review.
+        // IDs necesarios para guardar; no duplicar textos/flags del review.
         if (array_key_exists('id_configuracion', $analysisStored) && !array_key_exists('id_configuracion', $out)) {
             $out['id_configuracion'] = $analysisStored['id_configuracion'];
         }
-        if (array_key_exists('id_consulta', $analysisStored) && !array_key_exists('id_consulta', $out)) {
-            $out['id_consulta'] = $analysisStored['id_consulta'];
-        }
-        if (isset($analysisStored['encounter_id']) && empty($out['encounter_id'])) {
-            $out['encounter_id'] = (int) $analysisStored['encounter_id'];
+        $analysisEncounterId = $analysisStored['encounter_id'] ?? $analysisStored['id_consulta'] ?? null;
+        if ($analysisEncounterId !== null && empty($out['encounter_id'])) {
+            $out['encounter_id'] = (int) $analysisEncounterId;
         }
         // texto_procesado solo si aporta algo distinto al transcript.
         $tp = trim((string) ($out['texto_procesado'] ?? ''));

@@ -17,9 +17,9 @@ class EncounterCaptureApi {
   String? authToken;
 
   Map<String, String> get _jsonHeaders => AppConfig.jsonHeaders(
-        bearerToken: authToken,
-        appClient: 'personalsalud-flutter',
-      );
+    bearerToken: authToken,
+    appClient: 'personalsalud-flutter',
+  );
 
   /// Multipart: sin Content-Type (lo fija el boundary).
   Map<String, String> get _multipartHeaders {
@@ -85,8 +85,9 @@ class EncounterCaptureApi {
     bool sttForceServer = false,
     Map<String, dynamic>? userPerTabConfig,
   }) async {
-    final uri =
-        Uri.parse('${AppConfig.apiUrl}/clinical/encounter/captura/crear-o-subir');
+    final uri = Uri.parse(
+      '${AppConfig.apiUrl}/clinical/encounter/captura/crear-o-subir',
+    );
     final hasAudio = audioPath != null && audioPath.isNotEmpty;
 
     // Texto sin audio: JSON (más simple y fiable en web).
@@ -133,9 +134,9 @@ class EncounterCaptureApi {
     debugPrint(
       '[HTTP captura/crear-o-subir] POST multipart $uri client=$clientCaptureId',
     );
-    final streamed = await request
-        .send()
-        .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
+    final streamed = await request.send().timeout(
+      Duration(seconds: AppConfig.httpTimeoutSeconds),
+    );
     final response = await http.Response.fromStream(streamed);
     return _decodeMap(response, 'captura/crear-o-subir');
   }
@@ -154,8 +155,9 @@ class EncounterCaptureApi {
       if (userPerTabConfig != null && userPerTabConfig.isNotEmpty)
         'userPerTabConfig': userPerTabConfig,
     };
-    final uri =
-        Uri.parse('${AppConfig.apiUrl}/clinical/encounter/captura/transcribir');
+    final uri = Uri.parse(
+      '${AppConfig.apiUrl}/clinical/encounter/captura/transcribir',
+    );
     final response = await http
         .post(uri, headers: _jsonHeaders, body: json.encode(body))
         .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
@@ -178,8 +180,9 @@ class EncounterCaptureApi {
       if (userPerTabConfig != null && userPerTabConfig.isNotEmpty)
         'userPerTabConfig': userPerTabConfig,
     };
-    final uri =
-        Uri.parse('${AppConfig.apiUrl}/clinical/encounter/captura/analizar');
+    final uri = Uri.parse(
+      '${AppConfig.apiUrl}/clinical/encounter/captura/analizar',
+    );
     final response = await http
         .post(uri, headers: _jsonHeaders, body: json.encode(body))
         .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
@@ -222,8 +225,9 @@ class EncounterCaptureApi {
       'complete_acute': completeAcute,
       'continue_treatment': continueTreatment,
     };
-    final uri =
-        Uri.parse('${AppConfig.apiUrl}/clinical/encounter/captura/guardar');
+    final uri = Uri.parse(
+      '${AppConfig.apiUrl}/clinical/encounter/captura/guardar',
+    );
     final response = await http
         .post(uri, headers: _jsonHeaders, body: json.encode(body))
         .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
@@ -242,8 +246,9 @@ class EncounterCaptureApi {
       if (parent != null) 'parent': parent,
       if (parentId != null) 'parent_id': parentId.toString(),
     };
-    final uri = Uri.parse('${AppConfig.apiUrl}/clinical/encounter/captura/listar')
-        .replace(queryParameters: qs);
+    final uri = Uri.parse(
+      '${AppConfig.apiUrl}/clinical/encounter/captura/listar',
+    ).replace(queryParameters: qs);
     final response = await http
         .get(uri, headers: _jsonHeaders)
         .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
@@ -265,8 +270,9 @@ class EncounterCaptureApi {
       if (clientCaptureId != null) 'client_capture_id': clientCaptureId,
       if (captureId != null) 'capture_id': captureId.toString(),
     };
-    final uri = Uri.parse('${AppConfig.apiUrl}/clinical/encounter/captura/ver')
-        .replace(queryParameters: qs);
+    final uri = Uri.parse(
+      '${AppConfig.apiUrl}/clinical/encounter/captura/ver',
+    ).replace(queryParameters: qs);
     final response = await http
         .get(uri, headers: _jsonHeaders)
         .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
@@ -304,8 +310,9 @@ class EncounterCaptureApi {
       if (clientCaptureId != null) 'client_capture_id': clientCaptureId,
       if (captureId != null) 'capture_id': captureId,
     };
-    final uri =
-        Uri.parse('${AppConfig.apiUrl}/clinical/encounter/captura/descartar');
+    final uri = Uri.parse(
+      '${AppConfig.apiUrl}/clinical/encounter/captura/descartar',
+    );
     final response = await http
         .post(uri, headers: _jsonHeaders, body: json.encode(body))
         .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
@@ -317,7 +324,7 @@ class EncounterCaptureApi {
     required String consulta,
     int? idConfiguracion,
     int? idPersona,
-    int? idConsulta,
+    int? encounterId,
     String? parent,
     int? parentId,
     Map<String, dynamic>? stt,
@@ -329,7 +336,7 @@ class EncounterCaptureApi {
       'consulta': consulta,
       if (idConfiguracion != null) 'id_configuracion': idConfiguracion,
       if (idPersona != null) 'id_persona': idPersona,
-      if (idConsulta != null) 'id_consulta': idConsulta,
+      if (encounterId != null) 'encounter_id': encounterId,
       if (parent != null) 'parent': parent,
       if (parentId != null) 'parent_id': parentId,
       if (stt != null) 'stt': stt,
@@ -407,7 +414,7 @@ class EncounterCaptureApi {
       if (parent != null) 'parent': parent,
       if (parentId != null) 'parent_id': parentId,
       if (idConfiguracion != null) 'id_configuracion': idConfiguracion,
-      if (encounterId != null) 'id_consulta': encounterId,
+      if (encounterId != null) 'encounter_id': encounterId,
       if (userPerTabConfig != null && userPerTabConfig.isNotEmpty)
         'userPerTabConfig': userPerTabConfig,
       if (conditionResolutions != null && conditionResolutions.isNotEmpty)
@@ -431,7 +438,11 @@ class EncounterCaptureApi {
     final response = await http
         .post(uri, headers: _jsonHeaders, body: json.encode(body))
         .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-    BioenlaceHttpTrace.logResponse('encounter/guardar', response, maxBodyChars: 8000);
+    BioenlaceHttpTrace.logResponse(
+      'encounter/guardar',
+      response,
+      maxBodyChars: 8000,
+    );
 
     dynamic raw;
     try {

@@ -71,28 +71,12 @@ final class PostLabClassificationAgentPolicy
         'outcomes' => [
             'critical' => [
                 'action' => 'notify_patient_and_staff',
-                'patient' => [
-                    'title' => 'Resultado de laboratorio importante',
-                    'body' => 'Uno de tus estudios requiere atención urgente. Acudí a guardia o contactá a tu equipo de salud de inmediato.',
-                ],
-                'staff' => [
-                    'title' => 'Laboratorio: valor crítico',
-                    'body_template' => 'Crítico — {analyte_display}: {value} {unit} ({report_display}).',
-                ],
             ],
             'control' => [
                 'action' => 'notify_patient',
-                'patient' => [
-                    'title' => 'Resultado de laboratorio',
-                    'body' => 'Tu estudio muestra valores que conviene controlar. Tu equipo de salud te contactará o podés reservar un turno de seguimiento.',
-                ],
             ],
             'normal' => [
                 'action' => 'notify_patient',
-                'patient' => [
-                    'title' => 'Resultado de laboratorio',
-                    'body' => 'Tus estudios están dentro de rangos esperados. Tu médico los revisará en la próxima consulta.',
-                ],
             ],
         ],
     ];

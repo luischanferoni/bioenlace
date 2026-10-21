@@ -46,7 +46,7 @@ class ConsultaChatService {
     try {
       final uri = Uri.parse('${AppConfig.apiUrl}/consulta-chat/enviar');
       final body = {
-        'consulta_id': consultaId,
+        'encounter_id': consultaId,
         'message': text,
         'user_id': userId,
         'user_role': userRole,
@@ -72,7 +72,7 @@ class ConsultaChatService {
       final uri = Uri.parse('${AppConfig.apiUrl}/consulta-chat/subir');
       final request = http.MultipartRequest('POST', uri);
       request.headers.addAll(_headers);
-      request.fields['consulta_id'] = consultaId.toString();
+      request.fields['encounter_id'] = consultaId.toString();
       request.fields['user_id'] = userId;
       request.fields['message_type'] = messageType;
       request.files.add(await multipartFileFromXFile(file));
@@ -101,7 +101,7 @@ class ConsultaChatService {
       final uri = Uri.parse('${AppConfig.apiUrl}/consulta-chat/subir');
       final request = http.MultipartRequest('POST', uri);
       request.headers.addAll(_headers);
-      request.fields['consulta_id'] = consultaId.toString();
+      request.fields['encounter_id'] = consultaId.toString();
       request.fields['user_id'] = userId;
       request.fields['message_type'] = messageType;
       request.files.add(await multipartFileFromBytes(bytes, filename: filename));

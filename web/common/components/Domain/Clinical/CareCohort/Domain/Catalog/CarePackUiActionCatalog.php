@@ -3,8 +3,8 @@
 namespace common\components\Domain\Clinical\CareCohort\Domain\Catalog;
 
 use common\components\Platform\Assistant\Catalog\UiActionCatalogProviderInterface;
+use common\components\Platform\Assistant\Catalog\UiActionCatalogDef;
 use common\components\Platform\Assistant\Catalog\YamlIntentCatalogService;
-use common\components\Platform\Ui\ApiV1HttpRoute;
 
 /**
  * Acciones API care-packs para el catálogo del asistente (asistencia, seguimiento).
@@ -53,6 +53,19 @@ final class CarePackUiActionCatalog implements UiActionCatalogProviderInterface
         return YamlIntentCatalogService::filterByRbac(self::discoverAll(), $userId);
     }
 
+    public static function httpRouteForActionId(string $actionId): string
+    {
+        return UiActionCatalogDef::httpRouteFromDefinitions(self::discoverAll(), $actionId);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public static function clientOpenForActionId(string $actionId): ?array
+    {
+        return UiActionCatalogDef::clientOpenFromDefinitions(self::discoverAll(), $actionId);
+    }
+
     /**
      * @param list<string> $keywords
      * @return array<string, mixed>
@@ -65,24 +78,15 @@ final class CarePackUiActionCatalog implements UiActionCatalogProviderInterface
         array $keywords,
         bool $uiJsonDescriptor = false
     ): array {
-        $httpRoute = ApiV1HttpRoute::normalize($rbacRoute);
-
-        return [
-            'action_id' => $actionId,
-            'action_name' => $actionName,
-            'display_name' => $actionName,
-            'description' => $description,
-            'entity' => 'care-packs',
-            'route' => $httpRoute,
-            'rbac_route' => $rbacRoute,
-            'keywords' => $keywords,
-            'synonyms' => [],
-            'tags' => ['clinical', 'care-pack', 'paciente'],
-            'parameters' => [
-                'expected' => [],
-                'provided' => [],
-            ],
-            'ui_json_descriptor' => $uiJsonDescriptor,
-        ];
+        return UiActionCatalogDef::make(
+            $actionId,
+            $actionName,
+            $description,
+            $rbacRoute,
+            $keywords,
+            'care-packs',
+            ['clinical', 'care-pack', 'paciente'],
+            $uiJsonDescriptor
+        );
     }
 }

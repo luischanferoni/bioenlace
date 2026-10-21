@@ -27,7 +27,7 @@ Entrada desde listados: `PatientHistoriaUrl::captura($idPersona, $parent, $paren
 
 En ambulatorio con turno, el timeline carga `GET /api/v1/personas/{id}/historia-clinica?turno_id=` y muestra, en orden:
 
-1. **Preguntas previas al chat** (`motivos_consulta_paciente.motivos_intake`) — formulario declarativo del paciente, sin IA.
+1. **Preguntas previas al chat** (`patient_encounter_reasons.motivos_intake`) — formulario declarativo del paciente, sin IA.
 2. **Resumen de motivos** (`reason_text` / chat) y orientación preliminar (insights IA).
 3. **Asistencia pre-consulta por cohorte** (`care_pack_cohorte`) — si care packs están habilitados.
 

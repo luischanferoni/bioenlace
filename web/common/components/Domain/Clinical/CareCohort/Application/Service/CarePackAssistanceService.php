@@ -166,7 +166,7 @@ final class CarePackAssistanceService
      */
     private function resolveEncounter(array $params): Encounter
     {
-        $encounterId = (int) ($params['encounter_id'] ?? $params['consulta_id'] ?? 0);
+        $encounterId = (int) ($params['encounter_id'] ?? 0);
         if ($encounterId <= 0) {
             $turnoId = (int) ($params['turno_id'] ?? $params['id_turno'] ?? 0);
             if ($turnoId > 0) {

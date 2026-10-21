@@ -970,7 +970,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                     runSpacing: BioSpacing.xs,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      BioBadge(label: it.typeLabel, intent: UiIntent.neutral),
+                      BioBadge(label: it.typeLabel, intent: it.intent),
                       if (it.occurredAt.isNotEmpty)
                         Text(
                           formatEpisodioFecha(it.occurredAt),

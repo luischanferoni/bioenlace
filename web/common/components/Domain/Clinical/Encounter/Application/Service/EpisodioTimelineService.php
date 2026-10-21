@@ -4,6 +4,7 @@ namespace common\components\Domain\Clinical\Encounter\Application\Service;
 
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EpisodioDateTimePresenter;
 use common\components\Domain\Clinical\Emergency\Domain\BoardEventType;
+use common\components\Domain\Clinical\Emergency\Domain\TriageScale;
 use common\components\Domain\Clinical\Emergency\Application\UseCase\TriageEmergencyEpisode;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\MedicationAdministration;
@@ -36,15 +37,15 @@ final class EpisodioTimelineService
     ];
 
     private const TIMELINE_ITEM_METADATA = [
-        'circuito' => ['label' => 'Circuito'],
-        'triage' => ['label' => 'Triage'],
-        'evolucion_medica' => ['label' => 'Evolución'],
-        'atencion_enfermeria' => ['label' => 'Enfermería'],
-        'pedido' => ['label' => 'Pedido'],
-        'resultado_lab' => ['label' => 'Lab'],
-        'medicacion' => ['label' => 'Medicación'],
-        'administracion' => ['label' => 'Admin.'],
-        'interconsulta' => ['label' => 'Interconsulta'],
+        'circuito' => ['label' => 'Circuito', 'intent' => 'neutral'],
+        'triage' => ['label' => 'Triage', 'intent' => 'warning'],
+        'evolucion_medica' => ['label' => 'Evolución', 'intent' => 'info'],
+        'atencion_enfermeria' => ['label' => 'Enfermería', 'intent' => 'success'],
+        'pedido' => ['label' => 'Pedido', 'intent' => 'primary'],
+        'resultado_lab' => ['label' => 'Lab', 'intent' => 'info'],
+        'medicacion' => ['label' => 'Medicación', 'intent' => 'info'],
+        'administracion' => ['label' => 'Admin.', 'intent' => 'success'],
+        'interconsulta' => ['label' => 'Interconsulta', 'intent' => 'primary'],
     ];
 
     /** @var TriageEmergencyEpisode */
@@ -551,6 +552,7 @@ final class EpisodioTimelineService
         $row = [
             'type' => $type,
             'type_label' => self::TIMELINE_ITEM_METADATA[$type]['label'] ?? $type,
+            'intent' => $this->itemIntent($type, $payload),
             'id' => $id,
             'occurred_at' => $occurredAt,
             'summary' => $summary,
@@ -560,6 +562,22 @@ final class EpisodioTimelineService
         ];
 
         return $row;
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private function itemIntent(string $type, array $payload): string
+    {
+        if ($type === 'triage') {
+            $level = (int) ($payload['level'] ?? 0);
+            $levelMetadata = TriageScale::levelMeta()[$level] ?? null;
+            if ($levelMetadata !== null) {
+                return $levelMetadata['intent'];
+            }
+        }
+
+        return self::TIMELINE_ITEM_METADATA[$type]['intent'] ?? 'neutral';
     }
 
     /**

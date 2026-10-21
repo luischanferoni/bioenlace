@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:personalsalud/services/historia_clinica_service.dart';
+import 'package:shared/shared.dart';
 
 void main() {
   test('reads encounter reason summary from the current API contract', () {
@@ -79,6 +80,7 @@ void main() {
           'id': 'triage:1',
           'type': 'triage',
           'type_label': 'Triage',
+          'intent': 'danger',
           'summary': 'Triage Naranja',
         },
       ],
@@ -88,5 +90,6 @@ void main() {
     expect(feed.filters.first.types, isNull);
     expect(feed.filters.last.types, ['evolucion_medica', 'triage']);
     expect(feed.items.single.typeLabel, 'Triage');
+    expect(feed.items.single.intent, UiIntent.danger);
   });
 }

@@ -1085,6 +1085,7 @@ class SignosVitalesEpisodioPunto {
 class TimelineEpisodioItem {
   final String type;
   final String typeLabel;
+  final UiIntent intent;
   final String id;
   final String occurredAt;
   final String summary;
@@ -1094,6 +1095,7 @@ class TimelineEpisodioItem {
   TimelineEpisodioItem({
     required this.type,
     this.typeLabel = '',
+    this.intent = UiIntent.neutral,
     required this.id,
     this.occurredAt = '',
     this.summary = '',
@@ -1114,10 +1116,21 @@ class TimelineEpisodioItem {
       final n = (actor['nombre'] ?? '').toString().trim();
       if (n.isNotEmpty) actorNombre = n;
     }
+    final intent = switch ((json['intent'] ?? '').toString()) {
+      'primary' => UiIntent.primary,
+      'secondary' => UiIntent.secondary,
+      'success' => UiIntent.success,
+      'danger' => UiIntent.danger,
+      'warning' => UiIntent.warning,
+      'info' => UiIntent.info,
+      'dark' => UiIntent.dark,
+      _ => UiIntent.neutral,
+    };
 
     return TimelineEpisodioItem(
       type: (json['type'] ?? '').toString(),
       typeLabel: (json['type_label'] ?? '').toString(),
+      intent: intent,
       id: (json['id'] ?? '').toString(),
       occurredAt: (json['occurred_at'] ?? '').toString(),
       summary: (json['summary'] ?? '').toString(),

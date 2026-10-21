@@ -41,4 +41,15 @@ class EpisodioTimelineServiceTest extends Unit
             EpisodioTimelineService::timelineFilters()[1]['types']
         );
     }
+
+    public function testTriageIntentIsResolvedFromManchesterLevelMetadata(): void
+    {
+        $service = new EpisodioTimelineService();
+        $method = new \ReflectionMethod($service, 'itemIntent');
+        $method->setAccessible(true);
+
+        $this->assertSame('danger', $method->invoke($service, 'triage', ['level' => 1]));
+        $this->assertSame('warning', $method->invoke($service, 'triage', ['level' => 3]));
+        $this->assertSame('neutral', $method->invoke($service, 'circuito', []));
+    }
 }

@@ -396,10 +396,13 @@
       dataType: 'json',
       data: JSON.stringify(payload),
       success: function (res) {
-        if (!res || !res.success) {
+        if (!res || !res.data) {
           wizardSubmitting = false;
           setWizardLoading(false);
-          var m = res && res.message ? String(res.message) : 'No se pudo establecer la sesión';
+          var m =
+            res && res.error && res.error.message
+              ? String(res.error.message)
+              : 'No se pudo establecer la sesión';
           mostrarAlerta(m, true);
           return;
         }
@@ -421,11 +424,12 @@
         var msg = 'Error al establecer la sesión operativa';
         try {
           var j = xhr.responseJSON;
-          if (j && j.message) {
-            msg = j.message;
+          if (j && j.error && j.error.message) {
+            msg = j.error.message;
           }
-          if (j && j.contact && j.contact.length) {
-            var nombres = j.contact
+          var contact = j && j.meta && j.meta.contact;
+          if (contact && contact.length) {
+            var nombres = contact
               .map(function (c) {
                 return c.nombre_completo || '';
               })
@@ -529,7 +533,7 @@
       data: JSON.stringify({}),
       dataType: 'json',
       success: function (res) {
-        if (!res || !res.success || !res.data) {
+        if (!res || !res.data) {
           mostrarAlerta('No se pudieron cargar las opciones de sesión.', true);
           return;
         }
@@ -549,7 +553,7 @@
 
         if (!efectores.length) {
           aplicarEstadoSinEfectoresOperables(
-            res.message || '',
+            (res.meta && res.meta.message) || '',
             data.efectores_con_problemas || []
           );
         } else {
@@ -565,8 +569,8 @@
         setWizardLoading(false);
         var msg = 'Error cargando opciones de sesión';
         try {
-          if (xhr.responseJSON && xhr.responseJSON.message) {
-            msg = xhr.responseJSON.message;
+          if (xhr.responseJSON && xhr.responseJSON.error && xhr.responseJSON.error.message) {
+            msg = xhr.responseJSON.error.message;
           }
         } catch (e) {
           /* ignore */

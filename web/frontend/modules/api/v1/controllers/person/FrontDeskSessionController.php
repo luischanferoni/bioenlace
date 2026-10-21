@@ -40,12 +40,12 @@ class FrontDeskSessionController extends BaseController
         try {
             $data = (new EstablishFrontDeskSession())->iniciar($body, $idEfector);
         } catch (\InvalidArgumentException $e) {
-            return $this->error($e->getMessage(), null, 400);
+            return $this->fail('request_invalid', ['detail' => $e->getMessage()]);
         } catch (\RuntimeException $e) {
-            return $this->error($e->getMessage(), null, 500);
+            return $this->fail('internal_error');
         }
 
-        return $this->success($data, 'FrontDesk iniciada');
+        return $this->ok($data);
     }
 
     /**
@@ -57,7 +57,7 @@ class FrontDeskSessionController extends BaseController
     {
         $data = (new EstablishFrontDeskSession())->estado();
 
-        return $this->success($data, $data === null ? 'Sin ventanilla activa' : 'FrontDesk activa');
+        return $this->ok($data);
     }
 
     /**
@@ -69,7 +69,7 @@ class FrontDeskSessionController extends BaseController
     {
         (new EstablishFrontDeskSession())->cerrar();
 
-        return $this->success(null, 'FrontDesk cerrada');
+        return $this->ok(null);
     }
 
     /**
@@ -89,6 +89,6 @@ class FrontDeskSessionController extends BaseController
             ];
         }
 
-        return $this->success(['results' => $results], 'Candidatos');
+        return $this->ok(['results' => $results]);
     }
 }

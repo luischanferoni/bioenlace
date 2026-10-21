@@ -9,7 +9,7 @@ Lectura: [overview.md](./overview.md), [design.md](./design.md), fases en [phase
 | Fase | Estado |
 |------|--------|
 | 00 Línea base y guardas | hecho (guarda local; sin CI en el repo) |
-| 01 Contrato de API | en curso (base lista; piloto: audio) |
+| 01 Contrato de API | en curso (contrato y piloto listos; migración de controllers y clientes en avance) |
 | 02 Terminología encounter | pendiente |
 | 03 Metadata clínica humana | pendiente |
 | 04 Captura y STT | pendiente |

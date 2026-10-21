@@ -28,6 +28,11 @@ errors:
     intent: error
     retryable: false
     message: "No tenés permisos para realizar esta acción."
+  mobile_role_unavailable:
+    http_status: 403
+    intent: error
+    retryable: false
+    message: "La aplicación móvil no está disponible para este rol."
   forbidden_detail:
     http_status: 403
     intent: error

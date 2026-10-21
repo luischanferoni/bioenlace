@@ -34,11 +34,7 @@ class SesionOperativaController extends BaseController
     {
         $client = strtolower((string) Yii::$app->request->headers->get('X-Client', 'web'));
         if ($client === 'mobile' && !StaffMobileAccessService::isCurrentUserAllowed()) {
-            return $this->error(
-                'La aplicación móvil no está disponible para este rol.',
-                null,
-                403
-            );
+            return $this->fail('mobile_role_unavailable');
         }
 
         $body = [];
@@ -63,7 +59,7 @@ class SesionOperativaController extends BaseController
                     $msg = 'No hay efectores con configuración completa para operar en este momento.';
                 }
 
-                return $this->success($data, $msg);
+                return $this->ok($data, ['message' => $msg]);
             }
 
             /** @var EstablishOperativeSession $service */
@@ -77,38 +73,26 @@ class SesionOperativaController extends BaseController
                 WebApiJwtSessionService::storeRawToken((string) $data['context_token']);
             }
 
-            return $this->success($data, 'Sesión operativa establecida correctamente');
+            return $this->ok($data);
         } catch (\InvalidArgumentException $e) {
-            return $this->errorFijarSesionOperativa(
-                $e->getMessage(),
-                400,
-                $this->resolveContactFromBody($body)
-            );
+            return $this->failFijarSesionOperativa('request_invalid', $e->getMessage(), $body);
         } catch (\RuntimeException $e) {
-            return $this->errorFijarSesionOperativa(
-                $e->getMessage(),
-                404,
-                $this->resolveContactFromBody($body)
-            );
+            return $this->failFijarSesionOperativa('not_found_detail', $e->getMessage(), $body);
         } catch (\Throwable $e) {
             Yii::error('Error estableciendo sesión operativa: ' . $e->getMessage());
-            return $this->error('Error al establecer sesión operativa', null, 500);
+            return $this->fail('internal_error');
         }
     }
 
     /**
-     * Respuesta de error al modo «fijar contexto»; añade `contact` solo en este flujo cuando aplica.
-     *
-     * @param list<array{nombre_completo:string}>|null $contact
+     * @param array<string, mixed> $body
      */
-    private function errorFijarSesionOperativa(string $message, int $code, ?array $contact): array
+    private function failFijarSesionOperativa(string $code, string $detail, array $body): array
     {
-        $out = $this->error($message, null, $code);
-        if ($contact !== null) {
-            $out['contact'] = $contact;
-        }
+        $contact = $this->resolveContactFromBody($body);
+        $meta = $contact === null ? [] : ['contact' => $contact];
 
-        return $out;
+        return $this->fail($code, ['detail' => $detail], [], $meta);
     }
 
     /**

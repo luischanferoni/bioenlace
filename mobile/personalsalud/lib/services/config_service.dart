@@ -106,16 +106,10 @@ class ConfigService {
           'La API devolvió HTML en lugar de JSON. Verifique URL y autenticación: $uri');
     }
 
-    if (response.statusCode != 200) {
-      throw Exception(messageFromHttpResponse(response));
-    }
-
-    final data = json.decode(response.body) as Map<String, dynamic>;
-    if (data['success'] != true || data['data'] == null) {
-      throw Exception(data['message'] ?? 'Error al cargar opciones de sesión');
-    }
-
-    final payload = data['data'] as Map<String, dynamic>;
+    final payload = unwrapApiContract(
+      json.decode(response.body),
+      response.statusCode,
+    );
     final rawEfectores = payload['efectores'] as List<dynamic>? ?? [];
     final efectores = <Efector>[];
     final serviciosPorEfector = <int, List<Servicio>>{};
@@ -189,25 +183,22 @@ class ConfigService {
       _logConfig('Response status: ${response.statusCode}');
       _logConfig('Response body: ${response.body}');
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body) as Map<String, dynamic>;
-        _logConfig('Parsed data: $data');
+      final data = unwrapApiContract(
+        json.decode(response.body),
+        response.statusCode,
+      );
+      _logConfig('Parsed data: $data');
 
-        if (data['success'] == true && data['data'] != null) {
-          try {
-            return SessionConfig.fromJson(data['data'] as Map<String, dynamic>);
-          } catch (e, st) {
-            _logConfig('Error parsing SessionConfig', error: e, stackTrace: st);
-            _logConfig('Data received: ${data['data']}');
-            rethrow;
-          }
-        } else {
-          throw Exception(data['message'] ?? 'Error al establecer configuración');
-        }
-      } else {
-        final errorData = json.decode(response.body) as Map<String, dynamic>;
-        var msg = errorData['message']?.toString() ?? 'Error al establecer configuración';
-        final contact = errorData['contact'];
+      try {
+        return SessionConfig.fromJson(data);
+      } catch (e, st) {
+        _logConfig('Error parsing SessionConfig', error: e, stackTrace: st);
+        _logConfig('Data received: $data');
+        rethrow;
+      }
+    } catch (e, st) {
+      if (e is ApiContractException) {
+        final contact = e.meta['contact'];
         if (contact is List && contact.isNotEmpty) {
           final nombres = contact
               .map((c) => c is Map ? c['nombre_completo']?.toString() : null)
@@ -215,12 +206,12 @@ class ConfigService {
               .where((s) => s.isNotEmpty)
               .toList();
           if (nombres.isNotEmpty) {
-            msg += ' Contacto administración: ${nombres.join(', ')}';
+            throw Exception(
+              '${e.message} Contacto administración: ${nombres.join(', ')}',
+            );
           }
         }
-        throw Exception(msg);
       }
-    } catch (e, st) {
       _logConfig('Error setting session', error: e, stackTrace: st);
       rethrow;
     }

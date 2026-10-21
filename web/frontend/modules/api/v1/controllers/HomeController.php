@@ -27,6 +27,6 @@ class HomeController extends BaseController
             return $this->fail('request_invalid', ['detail' => $e->getMessage()]);
         }
 
-        return $this->ok($data, ['message' => 'Panel de inicio']);
+        return $this->ok($data);
     }
 }

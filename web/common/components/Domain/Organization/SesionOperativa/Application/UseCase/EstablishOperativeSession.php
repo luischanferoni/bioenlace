@@ -70,7 +70,7 @@ class EstablishOperativeSession extends Component
      * @return array{
      *   efector: array{id:int,nombre:string},
      *   servicio: array{id:int,nombre:string,id_profesional_efector_servicio:int},
-     *   encounter_class: array{code:string,label:string},
+     *   encounter_class: array{code:string,label:string,capabilities:list<string>},
      *   id_contexto_profesional: int,
      *   redirect_url: string,
      *   context_token: string
@@ -181,10 +181,7 @@ class EstablishOperativeSession extends Component
                 'id_profesional_efector_servicio' => (int) $pes->id,
             ],
             'encounter_class' => $encounterClass !== ''
-                ? [
-                    'code' => $encounterClass,
-                    'label' => (string) EncounterDefinition::ENCOUNTER_CLASS[$encounterClass],
-                ]
+                ? EncounterDefinition::classMetadata($encounterClass)
                 : null,
             'id_contexto_profesional' => $idContextoStaff,
             'redirect_url' => (string) $redirectUrl,

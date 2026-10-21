@@ -12,6 +12,7 @@ import '../auth/personalsalud_post_login.dart';
 import '../services/internados_service.dart';
 import '../services/emergency_guardia_api.dart';
 import '../services/encounter_async_api.dart';
+import '../services/config_service.dart';
 import 'emergency/emergency_guardia_actions.dart';
 import 'patient_timeline_screen.dart';
 import 'encounter_chat_staff_screen.dart';
@@ -50,6 +51,9 @@ class _HomeScreenState extends State<HomeScreen> {
     authToken: widget.authToken,
     userId: widget.userId,
   );
+  late final ConfigService _configService = ConfigService(
+    authToken: widget.authToken,
+  );
 
   List<Turno> _turnos = [];
   List<Map<String, dynamic>> _encounterRequests = [];
@@ -58,6 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _encounterRequestSlaBreaches = 0;
   final Set<int> _tomandoAsyncIds = {};
   List<InternadoItem> _internados = [];
+
   /// `recorrido` = piso→sala→cama; `nombre` = A–Z.
   String _internadosOrden = 'recorrido';
   List<EmergencyBoardItem> _guardiaTablero = [];
@@ -80,9 +85,12 @@ class _HomeScreenState extends State<HomeScreen> {
     DateTime.now().day,
   );
 
-  String _encounterClass = 'AMB';
+  Set<String> _encounterCapabilities = {};
 
-  /// Poll del tablero EMER (cancelable). Antes era Future.delayed sin cancel →
+  bool _hasEncounterCapability(String capability) =>
+      _encounterCapabilities.contains(capability);
+
+  /// Poll del tablero de guardia (cancelable). Antes era Future.delayed sin cancel →
   /// cada refresh/ciclo armaba otra cadena y las requests se acumulaban.
   Timer? _tableroPollTimer;
   int _tableroPollSeconds = 30;
@@ -114,11 +122,17 @@ class _HomeScreenState extends State<HomeScreen> {
       if (token != null && token.isNotEmpty) {
         _homePanelApi.authToken = token;
         _emergencyApi.authToken = token;
-        _encounterAsyncApi = EncounterAsyncApi(authToken: token, userId: widget.userId);
+        _encounterAsyncApi = EncounterAsyncApi(
+          authToken: token,
+          userId: widget.userId,
+        );
       } else if (widget.authToken != null && widget.authToken!.isNotEmpty) {
         _homePanelApi.authToken = widget.authToken;
         _emergencyApi.authToken = widget.authToken;
-        _encounterAsyncApi = EncounterAsyncApi(authToken: widget.authToken, userId: widget.userId);
+        _encounterAsyncApi = EncounterAsyncApi(
+          authToken: widget.authToken,
+          userId: widget.userId,
+        );
       } else {
         _homePanelApi.userId = widget.userId;
       }
@@ -131,21 +145,54 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadEncounterAndData() async {
-    final prefs = await SharedPreferences.getInstance();
-    final encounter = prefs.getString('encounter_class');
-    if (encounter == null || encounter.isEmpty) {
-      if (!mounted) return;
-      await recoverPersonalsaludOperationalSession(
-        userId: widget.userId,
-        userName: widget.userName,
-        authToken: _homePanelApi.authToken ?? widget.authToken,
-      );
-      return;
-    }
     setState(() {
-      _encounterClass = encounter;
+      _isLoading = true;
+      _errorMessage = '';
     });
-    await _cargarListadoPacientes();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final encounter = prefs.getString('encounter_class');
+      if (encounter == null || encounter.isEmpty) {
+        if (!mounted) return;
+        await recoverPersonalsaludOperationalSession(
+          userId: widget.userId,
+          userName: widget.userName,
+          authToken: _homePanelApi.authToken ?? widget.authToken,
+        );
+        return;
+      }
+
+      final classes = await _configService.getEncounterClasses();
+      EncounterClass? selectedClass;
+      for (final encounterClass in classes) {
+        if (encounterClass.code == encounter) {
+          selectedClass = encounterClass;
+          break;
+        }
+      }
+      if (selectedClass == null) {
+        throw Exception(
+          'El servidor no devolvió metadata para el área operativa seleccionada.',
+        );
+      }
+      if (selectedClass.capabilities.isEmpty) {
+        throw Exception(
+          'El área operativa seleccionada no tiene capacidades habilitadas.',
+        );
+      }
+      if (!mounted) return;
+      final capabilities = selectedClass.capabilities.toSet();
+      setState(() {
+        _encounterCapabilities = capabilities;
+      });
+      await _cargarListadoPacientes();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = userFriendlyErrorMessage(e);
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _cargarListadoPacientes({bool silent = false}) async {
@@ -158,18 +205,16 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     try {
       final fechaStr = DateFormat('yyyy-MM-dd').format(_fechaSeleccionada);
+      final isEmergencyBoard = _hasEncounterCapability('emergency_board');
       final panel = await _homePanelApi.getPanel(
         fecha: fechaStr,
-        sections: silent && _encounterClass == 'EMER'
+        sections: silent && isEmergencyBoard
             ? 'staff_horario_activo,emergency_board,emergency_indicators'
             : null,
       );
       if (!mounted) return;
-      _applyHomePanel(
-        panel,
-        partial: silent && _encounterClass == 'EMER',
-      );
-      if (_encounterClass == 'EMER') {
+      _applyHomePanel(panel, partial: silent && isEmergencyBoard);
+      if (_hasEncounterCapability('emergency_polling')) {
         _rememberTableroPollInterval(panel);
         // Solo armar el timer en carga completa. El silent lo reprograma el callback del Timer.
         if (!silent) {
@@ -219,11 +264,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _startTableroPoll() {
     _stopTableroPoll();
-    if (_encounterClass != 'EMER') return;
+    if (!_hasEncounterCapability('emergency_polling')) return;
     _tableroPollTimer = Timer(Duration(seconds: _tableroPollSeconds), () async {
-      if (!mounted || _encounterClass != 'EMER') return;
+      if (!mounted || !_hasEncounterCapability('emergency_polling')) return;
       await _cargarListadoPacientes(silent: true);
-      if (!mounted || _encounterClass != 'EMER') return;
+      if (!mounted || !_hasEncounterCapability('emergency_polling')) return;
       _startTableroPoll();
     });
   }
@@ -269,9 +314,12 @@ class _HomeScreenState extends State<HomeScreen> {
       final horario = panel.sectionByKind('staff_horario_activo');
       if (horario != null) {
         final session = horario.data['session'];
-        _sessionTieneHorario = session is Map && session['tiene_horario'] == true;
+        _sessionTieneHorario =
+            session is Map && session['tiene_horario'] == true;
         final msg = session is Map ? session['mensaje_sin_horario'] : null;
-        _mensajeSinHorario = msg is String && msg.trim().isNotEmpty ? msg.trim() : null;
+        _mensajeSinHorario = msg is String && msg.trim().isNotEmpty
+            ? msg.trim()
+            : null;
       } else if (!partial) {
         _sessionTieneHorario = false;
         _mensajeSinHorario = null;
@@ -281,7 +329,11 @@ class _HomeScreenState extends State<HomeScreen> {
       if (board != null) {
         final items = board.data['items'] as List<dynamic>? ?? [];
         _guardiaTablero = items
-            .map((e) => EmergencyBoardItem.fromJson(Map<String, dynamic>.from(e as Map)))
+            .map(
+              (e) => EmergencyBoardItem.fromJson(
+                Map<String, dynamic>.from(e as Map),
+              ),
+            )
             .toList();
         _puedeTriage = board.data['puede_triage'] == true;
         _puedeIngresar = board.data['puede_ingresar'] == true;
@@ -327,7 +379,10 @@ class _HomeScreenState extends State<HomeScreen> {
       if (inpat != null) {
         final items = inpat.data['items'] as List<dynamic>? ?? [];
         _internados = items
-            .map((e) => InternadoItem.fromJson(Map<String, dynamic>.from(e as Map)))
+            .map(
+              (e) =>
+                  InternadoItem.fromJson(Map<String, dynamic>.from(e as Map)),
+            )
             .toList();
         _lastListKind = 'internados';
       }
@@ -336,7 +391,11 @@ class _HomeScreenState extends State<HomeScreen> {
       if (surg != null) {
         final items = surg.data['items'] as List<dynamic>? ?? [];
         _cirugias = items
-            .map((e) => CirugiaAgendaItem.fromJson(Map<String, dynamic>.from(e as Map)))
+            .map(
+              (e) => CirugiaAgendaItem.fromJson(
+                Map<String, dynamic>.from(e as Map),
+              ),
+            )
             .toList();
         _lastListKind = 'cirugias';
       }
@@ -377,7 +436,6 @@ class _HomeScreenState extends State<HomeScreen> {
       'horarios en el Asistente («Configurar mis horarios») o pedile a coordinación / '
       'administración del centro que te los asigne.';
 
-
   Widget _buildStaffDashboard() {
     if (_kpiGroups.isEmpty && _staffContext == null) {
       return _buildEmpty(
@@ -388,7 +446,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return ListView(
       padding: const EdgeInsets.only(bottom: BioSpacing.xl),
       children: [
-        if (_staffContext != null) HomePanelStaffContextBanner(data: _staffContext!),
+        if (_staffContext != null)
+          HomePanelStaffContextBanner(data: _staffContext!),
         if (_kpiGroups.isNotEmpty) HomePanelKpiGroupsList(groups: _kpiGroups),
       ],
     );
@@ -396,7 +455,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _cambiarFecha(int dias) {
     setState(() {
-      _fechaSeleccionada = _soloFecha(_fechaSeleccionada).add(Duration(days: dias));
+      _fechaSeleccionada = _soloFecha(
+        _fechaSeleccionada,
+      ).add(Duration(days: dias));
     });
     _cargarListadoPacientes();
   }
@@ -443,10 +504,12 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Turno> _getPendientes(Turno? siguienteTurno) {
     final siguienteId = siguienteTurno?.id;
     return _turnos
-        .where((t) =>
-            t.estado == 'PENDIENTE' &&
-            t.id != 999999 &&
-            (siguienteId == null || t.id != siguienteId))
+        .where(
+          (t) =>
+              t.estado == 'PENDIENTE' &&
+              t.id != 999999 &&
+              (siguienteId == null || t.id != siguienteId),
+        )
         .toList();
   }
 
@@ -475,12 +538,12 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final tokens = context.bio;
-    final esHoy = _fechaSeleccionada.year == DateTime.now().year &&
+    final esHoy =
+        _fechaSeleccionada.year == DateTime.now().year &&
         _fechaSeleccionada.month == DateTime.now().month &&
         _fechaSeleccionada.day == DateTime.now().day;
     final siguienteTurno = esHoy ? _obtenerSiguienteTurno() : null;
-    final puedeFiltrarFecha =
-        _encounterClass == 'AMB' || _encounterClass == 'IMP';
+    final puedeFiltrarFecha = _hasEncounterCapability('date_navigation');
 
     return Container(
       color: tokens.paperBackground,
@@ -491,22 +554,26 @@ class _HomeScreenState extends State<HomeScreen> {
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _errorMessage.isNotEmpty
-                    ? _buildError(context)
-                    : _lastListKind == 'staff_dashboard'
-                    ? _buildStaffDashboard()
-                    : _encounterClass == 'IMP'
-                        ? _wrapWithPanelKpis(
-                            _lastListKind == 'cirugias'
-                                ? _buildCirugiasList()
-                                : _buildInternadosList(),
-                          )
-                        : _encounterClass == 'EMER'
-                            ? _wrapWithPanelKpis(_buildGuardiaTableroList())
-                            : _encounterClass == 'VR'
-                                ? _buildVrHomeContent()
-                                : _wrapWithPanelKpis(
-                                    _buildAmbHomeContent(siguienteTurno),
-                                  ),
+                ? _buildError(context)
+                : _lastListKind == 'staff_dashboard'
+                ? _buildStaffDashboard()
+                : _hasEncounterCapability('inpatients')
+                ? _wrapWithPanelKpis(
+                    _lastListKind == 'cirugias'
+                        ? _buildCirugiasList()
+                        : _buildInternadosList(),
+                  )
+                : _hasEncounterCapability('emergency_board')
+                ? _wrapWithPanelKpis(_buildGuardiaTableroList())
+                : _hasEncounterCapability('async_requests')
+                ? _buildVrHomeContent()
+                : _hasEncounterCapability('appointments')
+                ? _wrapWithPanelKpis(_buildAmbHomeContent(siguienteTurno))
+                : _buildEmpty(
+                    icon: Icons.info_outline,
+                    text:
+                        'El área operativa no tiene una pantalla de inicio habilitada.',
+                  ),
           ),
         ],
       ),
@@ -524,21 +591,24 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         decoration: BoxDecoration(
           color: tokens.paperSurface,
-          border: BioBorder.bottom(BorderWidth.medium, tokens.paperBorderEmphasis),
+          border: BioBorder.bottom(
+            BorderWidth.medium,
+            tokens.paperBorderEmphasis,
+          ),
         ),
         child: Row(
           children: [
             Expanded(
               child: Text(
-                _encounterClass == 'IMP'
+                _hasEncounterCapability('inpatients')
                     ? (_lastListKind == 'cirugias'
-                        ? 'Agenda quirúrgica'
-                        : 'Pacientes internados')
-                    : _encounterClass == 'EMER'
-                        ? 'Tablero de guardia'
-                        : _encounterClass == 'VR'
-                            ? _encounterRequestsTitle
-                            : _formatearFechaAmigable(_fechaSeleccionada),
+                          ? 'Agenda quirúrgica'
+                          : 'Pacientes internados')
+                    : _hasEncounterCapability('emergency_board')
+                    ? 'Tablero de guardia'
+                    : _hasEncounterCapability('async_requests')
+                    ? _encounterRequestsTitle
+                    : _formatearFechaAmigable(_fechaSeleccionada),
                 style: BioTypography.h3,
               ),
             ),
@@ -568,15 +638,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 size: BioButtonSize.sm,
                 onPressed: () => _cambiarFecha(1),
               ),
-              if (_encounterClass == 'IMP') ...[
+              if (_hasEncounterCapability('inpatient_refresh')) ...[
                 BioSpacing.gapW(BioSpacing.xs),
                 IconButton(
                   icon: const Icon(Icons.refresh),
                   onPressed: _isLoading ? null : _cargarListadoPacientes,
                 ),
               ],
-            ] else if (_encounterClass == 'EMER') ...[
-              if (_puedeIngresar) ...[
+            ] else if (_hasEncounterCapability('emergency_board')) ...[
+              if (_hasEncounterCapability('patient_admission') &&
+                  _puedeIngresar) ...[
                 BioButton(
                   label: 'Ingresar',
                   icon: Icons.person_add_alt_1,
@@ -617,7 +688,7 @@ class _HomeScreenState extends State<HomeScreen> {
             BioButton.primary(
               label: 'Reintentar',
               icon: Icons.refresh,
-              onPressed: _cargarListadoPacientes,
+              onPressed: _loadEncounterAndData,
             ),
           ],
         ),
@@ -675,7 +746,9 @@ class _HomeScreenState extends State<HomeScreen> {
         if (_encounterRequestSlaBreaches > 0) ...[
           Align(
             alignment: Alignment.centerRight,
-            child: BioBadge.danger('$_encounterRequestSlaBreaches plazo vencido'),
+            child: BioBadge.danger(
+              '$_encounterRequestSlaBreaches plazo vencido',
+            ),
           ),
           BioSpacing.gapH(BioSpacing.sm),
         ],
@@ -732,7 +805,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<Widget> _buildAsyncGroupSection(Map<String, dynamic> group) {
     final title = group['title']?.toString().trim() ?? '';
-    final emptyMessage = group['empty_message']?.toString().trim() ??
+    final emptyMessage =
+        group['empty_message']?.toString().trim() ??
         'Sin solicitudes en esta sección.';
     final rawItems = group['items'] as List<dynamic>? ?? [];
     final items = rawItems
@@ -761,10 +835,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildTurnosPorEstado(Turno? siguienteTurno) {
     final pendientes = _getPendientes(siguienteTurno);
     final cargadas = _getCompletedEncounters();
-    final pendientesPresencial =
-        pendientes.where((t) => !t.isTelehealth).toList();
-    final pendientesVideo =
-        pendientes.where((t) => t.isTelehealth).toList();
+    final pendientesPresencial = pendientes
+        .where((t) => !t.isTelehealth)
+        .toList();
+    final pendientesVideo = pendientes.where((t) => t.isTelehealth).toList();
     const maxCardWidth = 420.0;
 
     return ListView(
@@ -809,18 +883,12 @@ class _HomeScreenState extends State<HomeScreen> {
         if (cargadas.isEmpty)
           _emptyInline('No hay consultas cargadas.')
         else
-          ...cargadas.map(
-            (t) => _turnoCardPad(t, maxCardWidth, resumen: true),
-          ),
+          ...cargadas.map((t) => _turnoCardPad(t, maxCardWidth, resumen: true)),
       ],
     );
   }
 
-  Widget _turnoCardPad(
-    Turno t,
-    double maxCardWidth, {
-    bool resumen = false,
-  }) {
+  Widget _turnoCardPad(Turno t, double maxCardWidth, {bool resumen = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: BioSpacing.md),
       child: Center(
@@ -843,8 +911,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final preview = item['reason_preview']?.toString().trim() ?? '';
     final createdAt = _formatAsyncCreatedAt(item['created_at']?.toString());
     final status = item['status']?.toString() ?? '';
-    final statusLabel =
-        item['status_label']?.toString().trim() ?? status;
+    final statusLabel = item['status_label']?.toString().trim() ?? status;
     final acciones = item['acciones'] is Map
         ? Map<String, dynamic>.from(item['acciones'] as Map)
         : <String, dynamic>{};
@@ -909,7 +976,9 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
           if (slaIncumplido) ...[
             BioSpacing.gapH(BioSpacing.xs),
-            BioBadge.danger('Plazo vencido${slaHoras != null ? ' ($slaHoras h)' : ''}'),
+            BioBadge.danger(
+              'Plazo vencido${slaHoras != null ? ' ($slaHoras h)' : ''}',
+            ),
           ],
           if (prioridadLabel.isNotEmpty || puedeTomar || abrirChat) ...[
             BioSpacing.gapH(BioSpacing.sm),
@@ -995,7 +1064,11 @@ class _HomeScreenState extends State<HomeScreen> {
       if (res['success'] != true) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(res['message']?.toString() ?? 'No se pudo tomar la solicitud.')),
+          SnackBar(
+            content: Text(
+              res['message']?.toString() ?? 'No se pudo tomar la solicitud.',
+            ),
+          ),
         );
         return;
       }
@@ -1022,7 +1095,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final nombrePaciente =
         paciente['nombre_completo']?.toString().trim() ?? 'Paciente';
     final servicio = item['servicio']?.toString().trim() ?? '';
-    final titulo = servicio.isNotEmpty ? '$nombrePaciente · $servicio' : nombrePaciente;
+    final titulo = servicio.isNotEmpty
+        ? '$nombrePaciente · $servicio'
+        : nombrePaciente;
 
     await Navigator.push<bool>(
       context,
@@ -1092,14 +1167,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildInternadosList() {
     if (!_sessionTieneHorario) {
-      final msg = (_mensajeSinHorario != null &&
+      final msg =
+          (_mensajeSinHorario != null &&
               !_mensajeSinHorario!.toLowerCase().contains('guardia'))
           ? _mensajeSinHorario!
           : _msgSinHorarioPisoFallback;
-      return _buildEmpty(
-        icon: Icons.badge_outlined,
-        text: msg,
-      );
+      return _buildEmpty(icon: Icons.badge_outlined, text: msg);
     }
     if (_internados.isEmpty) {
       return _buildEmpty(
@@ -1145,7 +1218,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<Widget> _internadosEntriesPorNombre(List<InternadoItem> items) {
     final sorted = List<InternadoItem>.from(items)
-      ..sort((a, b) => a.nombreCompleto.toLowerCase().compareTo(b.nombreCompleto.toLowerCase()));
+      ..sort(
+        (a, b) => a.nombreCompleto.toLowerCase().compareTo(
+          b.nombreCompleto.toLowerCase(),
+        ),
+      );
     return [
       for (final i in sorted) _buildInternadoCard(i, showUbicacion: true),
     ];
@@ -1196,23 +1273,34 @@ class _HomeScreenState extends State<HomeScreen> {
         if (!bySala.containsKey(sKey)) {
           bySala[sKey] = [];
           salaOrder.add(sKey);
-          salaLabel[sKey] = (i.sala?.trim().isNotEmpty == true) ? i.sala! : 'Sala';
+          salaLabel[sKey] = (i.sala?.trim().isNotEmpty == true)
+              ? i.sala!
+              : 'Sala';
           salaNro[sKey] = i.nroSala;
         }
         bySala[sKey]!.add(i);
       }
       salaOrder.sort((a, b) => (salaNro[a] ?? 0).compareTo(salaNro[b] ?? 0));
 
-      out.add(_internadosSectionHeader(pisoLabel[pisoKey]!, intent: UiIntent.primary));
+      out.add(
+        _internadosSectionHeader(pisoLabel[pisoKey]!, intent: UiIntent.primary),
+      );
 
       for (final salaKey in salaOrder) {
         final salaItems = bySala[salaKey]!
           ..sort((a, b) {
             final byCama = a.nroCama.compareTo(b.nroCama);
             if (byCama != 0) return byCama;
-            return a.nombreCompleto.toLowerCase().compareTo(b.nombreCompleto.toLowerCase());
+            return a.nombreCompleto.toLowerCase().compareTo(
+              b.nombreCompleto.toLowerCase(),
+            );
           });
-        out.add(_internadosSectionHeader(salaLabel[salaKey]!, intent: UiIntent.success));
+        out.add(
+          _internadosSectionHeader(
+            salaLabel[salaKey]!,
+            intent: UiIntent.success,
+          ),
+        );
         for (final i in salaItems) {
           out.add(_buildInternadoCard(i, showUbicacion: false));
         }
@@ -1251,11 +1339,8 @@ class _HomeScreenState extends State<HomeScreen> {
       if (i.documento?.isNotEmpty ?? false) i.documento!,
     ].join(' · ');
 
-    void openAtender() => _verHistoriaClinica(
-          i.idPersona,
-          parent: 'INTERNACION',
-          parentId: i.id,
-        );
+    void openAtender() =>
+        _verHistoriaClinica(i.idPersona, parent: 'INTERNACION', parentId: i.id);
 
     return BioCard(
       child: Row(
@@ -1266,11 +1351,16 @@ class _HomeScreenState extends State<HomeScreen> {
             decoration: BoxDecoration(
               color: tokens.paperBackground,
               borderRadius: BioRadius.all(BioRadius.sm),
-              border: BioBorder.all(BorderWidth.thin, tokens.paperBorderDefault),
+              border: BioBorder.all(
+                BorderWidth.thin,
+                tokens.paperBorderDefault,
+              ),
             ),
             child: Text(
               i.cama != null && i.cama!.isNotEmpty ? 'Cama ${i.cama}' : 'Cama',
-              style: BioTypography.caption.copyWith(fontWeight: FontWeight.w600),
+              style: BioTypography.caption.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           BioSpacing.gapW(BioSpacing.md),
@@ -1283,7 +1373,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   BioSpacing.gapH(2),
                   Text(
                     meta,
-                    style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
+                    style: BioTypography.bodySm.copyWith(
+                      color: tokens.textMuted,
+                    ),
                   ),
                 ],
                 BioSpacing.gapH(BioSpacing.sm),
@@ -1303,7 +1395,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       size: BioButtonSize.sm,
                       onPressed: () => _openInternacionUiForm(
                         i,
-                        path: '/clinical/internacion/${i.id}/cambio-cama-formulario',
+                        path:
+                            '/clinical/internacion/${i.id}/cambio-cama-formulario',
                         title: 'Cambio de cama',
                       ),
                     ),
@@ -1398,9 +1491,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              _mensajeSinHorario ?? _msgSinHorarioGuardiaFallback,
-            ),
+            content: Text(_mensajeSinHorario ?? _msgSinHorarioGuardiaFallback),
           ),
         );
       }
@@ -1420,25 +1511,19 @@ class _HomeScreenState extends State<HomeScreen> {
         }
         return;
       }
-      _verHistoriaClinica(
-        g.idPersona,
-        parent: 'GUARDIA',
-        parentId: g.id,
-      );
+      _verHistoriaClinica(g.idPersona, parent: 'GUARDIA', parentId: g.id);
       return;
     }
     if (_puedeDocumentar) {
-      _verHistoriaClinica(
-        g.idPersona,
-        parent: 'GUARDIA',
-        parentId: g.id,
-      );
+      _verHistoriaClinica(g.idPersona, parent: 'GUARDIA', parentId: g.id);
       return;
     }
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('El médico atiende el caso. Enfermería registra triage o una nota.'),
+          content: Text(
+            'El médico atiende el caso. Enfermería registra triage o una nota.',
+          ),
         ),
       );
     }
@@ -1447,10 +1532,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildGuardiaTableroList() {
     if (!_sessionTieneHorario) {
       final msg = _mensajeSinHorario ?? _msgSinHorarioGuardiaFallback;
-      return _buildEmpty(
-        icon: Icons.badge_outlined,
-        text: msg,
-      );
+      return _buildEmpty(icon: Icons.badge_outlined, text: msg);
     }
     if (_guardiaTablero.isEmpty) {
       return _buildEmpty(
@@ -1522,9 +1604,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             intent: UiIntent.warning,
                           ),
                         BioBadge(
-                          label: g.circuitoEstadoLabel ??
-                              g.circuitoEstado ??
-                              '—',
+                          label:
+                              g.circuitoEstadoLabel ?? g.circuitoEstado ?? '—',
                           intent: estadoIntent,
                         ),
                         Text(
@@ -1566,8 +1647,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     g.canViewEncounter
                         ? Icons.visibility_outlined
                         : (g.needsTriage
-                            ? Icons.assignment_outlined
-                            : Icons.chevron_right),
+                              ? Icons.assignment_outlined
+                              : Icons.chevron_right),
                     color: context.bio.textMuted,
                   ),
                 ],
@@ -1702,10 +1783,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildSiguienteTurnoCard(Turno turno) {
     final primary = IntentPalette.of(UiIntent.primary).base;
     void openTimeline() => _verHistoriaClinica(
-          turno.idPersona,
-          parent: 'TURNO',
-          parentId: turno.id,
-        );
+      turno.idPersona,
+      parent: 'TURNO',
+      parentId: turno.id,
+    );
     return BioCard.intent(
       intent: UiIntent.primary,
       onTap: openTimeline,
@@ -1765,11 +1846,11 @@ class _HomeScreenState extends State<HomeScreen> {
     final primary = IntentPalette.of(UiIntent.primary).base;
     final estadoIntent = _intentEstado(turno.estado);
     void openTimeline() => _verHistoriaClinica(
-          turno.idPersona,
-          parent: 'TURNO',
-          parentId: turno.id,
-          encounterSummaryLoaded: encounterSummaryLoaded,
-        );
+      turno.idPersona,
+      parent: 'TURNO',
+      parentId: turno.id,
+      encounterSummaryLoaded: encounterSummaryLoaded,
+    );
     return BioCard(
       onTap: openTimeline,
       child: Column(
@@ -1806,7 +1887,8 @@ class _HomeScreenState extends State<HomeScreen> {
             Icons.local_hospital_outlined,
             'Servicio: ${turno.servicio ?? "Sin servicio"}',
           ),
-          if (turno.observaciones != null && turno.observaciones!.isNotEmpty) ...[
+          if (turno.observaciones != null &&
+              turno.observaciones!.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.xs),
             _filaInfo(
               Icons.note_outlined,
@@ -1822,7 +1904,9 @@ class _HomeScreenState extends State<HomeScreen> {
           Align(
             alignment: Alignment.centerRight,
             child: BioButton.outlinePrimary(
-              label: encounterSummaryLoaded ? 'Ver consulta' : 'Historia clínica',
+              label: encounterSummaryLoaded
+                  ? 'Ver consulta'
+                  : 'Historia clínica',
               icon: Icons.medical_services_outlined,
               size: BioButtonSize.sm,
               onPressed: openTimeline,
@@ -1865,13 +1949,16 @@ class _HomeScreenState extends State<HomeScreen> {
           if (modalidades is List && modalidades.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.xs),
             ...modalidades.whereType<Map>().map((m) {
-              final label = m['label']?.toString() ?? m['code']?.toString() ?? '';
+              final label =
+                  m['label']?.toString() ?? m['code']?.toString() ?? '';
               final desc = m['description']?.toString().trim() ?? '';
               return Padding(
                 padding: const EdgeInsets.only(top: 2),
                 child: Text(
                   desc.isEmpty ? '· $label' : '· $label: $desc',
-                  style: BioTypography.caption.copyWith(color: tokens.textMuted),
+                  style: BioTypography.caption.copyWith(
+                    color: tokens.textMuted,
+                  ),
                 ),
               );
             }),
@@ -1898,7 +1985,12 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _filaInfo(IconData icon, String text, {bool small = false, TextStyle? textStyle}) {
+  Widget _filaInfo(
+    IconData icon,
+    String text, {
+    bool small = false,
+    TextStyle? textStyle,
+  }) {
     final tokens = context.bio;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1908,7 +2000,8 @@ class _HomeScreenState extends State<HomeScreen> {
         Expanded(
           child: Text(
             text,
-            style: textStyle ??
+            style:
+                textStyle ??
                 (small ? BioTypography.caption : BioTypography.bodySm),
           ),
         ),
@@ -1944,9 +2037,9 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
     if (refreshed == true && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Consulta guardada')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Consulta guardada')));
       await _cargarListadoPacientes(silent: true);
     }
   }
@@ -1965,9 +2058,9 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
     if (saved == true && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Consulta guardada')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Consulta guardada')));
       await _cargarListadoPacientes(silent: true);
     }
   }

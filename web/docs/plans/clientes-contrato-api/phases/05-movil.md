@@ -4,6 +4,10 @@
 
 Dos apps delgadas sobre `mobile/packages/shared`, sin textos de negocio ni vocabulario clínico fijos.
 
+## Avance
+
+Personal de Salud obtiene las capacidades de la clase encounter desde el catálogo público y las usa para seleccionar el contenido del inicio, navegación de fecha, acciones de internación y polling de guardia. El wizard usa la metadata específica de cada efector y descarta las clases no disponibles para ese efector, evitando ofrecer opciones basadas solo en la unión global. Falta migrar las demás pantallas y contratos indicados en esta fase.
+
 ## Tareas
 
 - Mover a shared lo duplicado: formulario dinámico, selector de tarjetas, servicios de chat y de atención asíncrona.

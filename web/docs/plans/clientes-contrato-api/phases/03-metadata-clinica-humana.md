@@ -16,7 +16,7 @@ Que secciones clínicas, tipos de episodio, triage y acciones permitidas lleguen
 
 ## Avance
 
-El catálogo de clases encounter y las opciones de sesión ahora incluyen `capabilities` junto con `code` y `label`. El catálogo público y el wizard entregan los mismos metadatos; las clases FHIR que no están activas para selección no reciben capacidades de producto. El cliente todavía debe consumir estas capacidades en lugar de inferir pantallas por código.
+El catálogo público, las opciones del wizard y la respuesta al establecer la sesión incluyen `capabilities` junto con `code` y `label`. Las clases FHIR que no están activas para selección no reciben capacidades de producto. Personal de Salud resuelve la metadata del catálogo y usa las capacidades para elegir contenido, acciones, filtros y polling de la pantalla inicial, sin ramificar por código de clase.
 
 ## Criterio de salida
 

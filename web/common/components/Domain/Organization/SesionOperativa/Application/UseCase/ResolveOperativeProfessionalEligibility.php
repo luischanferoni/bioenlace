@@ -176,10 +176,9 @@ class ResolveOperativeProfessionalEligibility extends Component
                 'id' => $idEfector,
                 'nombre' => $nombreEfector,
                 'servicios' => $serviciosPayload,
-                'encounter_classes' => array_values(array_map(
-                    static fn (string $code): array => EncounterDefinition::classMetadata($code),
-                    $allowedByEfector[$idEfector] ?? array_keys(EncounterDefinition::ENCOUNTER_CLASS)
-                )),
+                'encounter_classes' => EncounterDefinition::sessionSelectableClassMetadataForCodes(
+                    $allowedByEfector[$idEfector] ?? []
+                ),
             ];
         }
 

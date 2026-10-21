@@ -38,7 +38,6 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
   SessionWizardOptions? _wizardOptions;
   List<Efector> _efectores = [];
   List<Servicio> _servicios = [];
-  List<EncounterClass> _encounterClasses = [];
   List<EfectorConProblema> _efectoresConProblemas = [];
 
   Efector? _selectedEfector;
@@ -65,13 +64,13 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
     });
 
     try {
-      final options =
-          await _configService.loadSessionWizardOptions(userId: widget.userId);
+      final options = await _configService.loadSessionWizardOptions(
+        userId: widget.userId,
+      );
       if (!mounted) return;
       setState(() {
         _wizardOptions = options;
         _efectores = options.efectores;
-        _encounterClasses = options.encounterClasses;
         _efectoresConProblemas = options.efectoresConProblemas;
         _isLoading = false;
       });
@@ -123,6 +122,8 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
   void _selectEfector(Efector efector) {
     setState(() {
       _selectedEfector = efector;
+      _selectedServicio = null;
+      _selectedEncounterClass = null;
     });
     _loadServicios(efector.id);
   }
@@ -134,15 +135,30 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
   }
 
   void _selectEncounterClass(EncounterClass encounterClass) {
+    if (!_availableEncounterClasses.any(
+      (available) => available.code == encounterClass.code,
+    )) {
+      return;
+    }
     setState(() {
       _selectedEncounterClass = encounterClass;
     });
   }
 
+  List<EncounterClass> get _availableEncounterClasses =>
+      _selectedEfector?.encounterClasses ?? const [];
+
   void _nextStep() {
     if (_currentStep == 0 && _selectedEfector == null) return;
     if (_currentStep == 1 && _selectedServicio == null) return;
-    if (_currentStep == 2 && _selectedEncounterClass == null) return;
+    if (_currentStep == 2 &&
+        (_selectedEncounterClass == null ||
+            !_availableEncounterClasses.any(
+              (encounterClass) =>
+                  encounterClass.code == _selectedEncounterClass!.code,
+            ))) {
+      return;
+    }
 
     if (_currentStep < 2) {
       _pageController.nextPage(
@@ -203,11 +219,17 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
       await prefs.setInt('servicio_id', sessionConfig.servicio.id);
       await prefs.setString('servicio_nombre', sessionConfig.servicio.nombre);
       await prefs.setString(
-          'encounter_class', sessionConfig.encounterClass.code);
+        'encounter_class',
+        sessionConfig.encounterClass.code,
+      );
       await prefs.setString(
-          'encounter_class_label', sessionConfig.encounterClass.label);
-      await prefs.setInt('id_profesional_efector_servicio',
-          sessionConfig.idProfesionalEfectorServicio);
+        'encounter_class_label',
+        sessionConfig.encounterClass.label,
+      );
+      await prefs.setInt(
+        'id_profesional_efector_servicio',
+        sessionConfig.idProfesionalEfectorServicio,
+      );
       await prefs.setBool('config_completed', true);
       await prefs.setString('auth_token', sessionToken);
 
@@ -219,8 +241,9 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
                 userId: widget.userId,
                 userName: widget.userName,
                 authToken: sessionToken,
-                idProfesionalEfectorServicio:
-                    sessionConfig.idProfesionalEfectorServicio.toString(),
+                idProfesionalEfectorServicio: sessionConfig
+                    .idProfesionalEfectorServicio
+                    .toString(),
               ),
             ),
           ),
@@ -261,7 +284,10 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
     if (confirm != true || !mounted) return;
 
     await PersonalsaludSessionPrefs.clearOnLogout();
-    ClientDiagnosticApi.bindSession(authToken: null, appClient: 'bioenlace-personalsalud');
+    ClientDiagnosticApi.bindSession(
+      authToken: null,
+      appClient: 'bioenlace-personalsalud',
+    );
 
     navigatorKey.currentState?.pushAndRemoveUntil(
       MaterialPageRoute(
@@ -288,7 +314,10 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
             ),
             decoration: BoxDecoration(
               color: tokens.paperSurface,
-              border: BioBorder.bottom(BorderWidth.thin, tokens.paperBorderDefault),
+              border: BioBorder.bottom(
+                BorderWidth.thin,
+                tokens.paperBorderDefault,
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -305,32 +334,32 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
             child: _isLoading && _efectores.isEmpty
                 ? const Center(child: CircularProgressIndicator())
                 : _errorMessage.isNotEmpty
-                    ? Center(
-                        child: Padding(
-                          padding: BioSpacing.pageAll,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              BioAlert.danger(message: _errorMessage),
-                              BioSpacing.gapH(BioSpacing.lg),
-                              BioButton.primary(
-                                label: 'Reintentar',
-                                icon: Icons.refresh,
-                                onPressed: _loadInitialData,
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    : PageView(
-                        controller: _pageController,
-                        physics: const NeverScrollableScrollPhysics(),
+                ? Center(
+                    child: Padding(
+                      padding: BioSpacing.pageAll,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          _buildEfectorStep(),
-                          _buildServicioStep(),
-                          _buildEncounterClassStep(),
+                          BioAlert.danger(message: _errorMessage),
+                          BioSpacing.gapH(BioSpacing.lg),
+                          BioButton.primary(
+                            label: 'Reintentar',
+                            icon: Icons.refresh,
+                            onPressed: _loadInitialData,
+                          ),
                         ],
                       ),
+                    ),
+                  )
+                : PageView(
+                    controller: _pageController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      _buildEfectorStep(),
+                      _buildServicioStep(),
+                      _buildEncounterClassStep(),
+                    ],
+                  ),
           ),
           SafeArea(
             top: false,
@@ -338,7 +367,10 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
               padding: const EdgeInsets.all(BioSpacing.lg),
               decoration: BoxDecoration(
                 color: tokens.paperSurface,
-                border: BioBorder.top(BorderWidth.thin, tokens.paperBorderDefault),
+                border: BioBorder.top(
+                  BorderWidth.thin,
+                  tokens.paperBorderDefault,
+                ),
               ),
               child: Row(
                 children: [
@@ -348,7 +380,9 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
                     variant: BioButtonVariant.soft,
                     icon: Icons.logout,
                     size: BioButtonSize.sm,
-                    onPressed: _isLoading && _currentStep == 2 ? null : _confirmarLogout,
+                    onPressed: _isLoading && _currentStep == 2
+                        ? null
+                        : _confirmarLogout,
                   ),
                   if (_currentStep > 0) ...[
                     BioSpacing.gapW(BioSpacing.sm),
@@ -385,8 +419,8 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
     final Color bg = isCompleted
         ? success.base
         : isActive
-            ? primary.base
-            : tokens.paperSurfaceSunken;
+        ? primary.base
+        : tokens.paperSurfaceSunken;
     final Color fg = isCompleted || isActive ? Colors.white : tokens.textMuted;
     final Color labelColor = isActive ? primary.base : tokens.textMuted;
 
@@ -444,7 +478,11 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
       case 1:
         return _selectedServicio != null;
       case 2:
-        return _selectedEncounterClass != null;
+        return _selectedEncounterClass != null &&
+            _availableEncounterClasses.any(
+              (encounterClass) =>
+                  encounterClass.code == _selectedEncounterClass!.code,
+            );
       default:
         return false;
     }
@@ -461,16 +499,19 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
           if (_efectoresConProblemas.isNotEmpty) ...[
             BioAlert.warning(
               title: 'Algunos efectores requieren configuración',
-              message: _efectoresConProblemas.map((p) {
-                var t = p.message;
-                if (p.nombre != null && p.nombre!.isNotEmpty) {
-                  t += ' (${p.nombre})';
-                }
-                if (p.contactosNombreCompleto.isNotEmpty) {
-                  t += '\nContacto: ${p.contactosNombreCompleto.join(', ')}';
-                }
-                return t;
-              }).join('\n\n'),
+              message: _efectoresConProblemas
+                  .map((p) {
+                    var t = p.message;
+                    if (p.nombre != null && p.nombre!.isNotEmpty) {
+                      t += ' (${p.nombre})';
+                    }
+                    if (p.contactosNombreCompleto.isNotEmpty) {
+                      t +=
+                          '\nContacto: ${p.contactosNombreCompleto.join(', ')}';
+                    }
+                    return t;
+                  })
+                  .join('\n\n'),
             ),
             BioSpacing.gapH(BioSpacing.lg),
           ],
@@ -538,18 +579,23 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
             style: BioTypography.bodySm,
           ),
           BioSpacing.gapH(BioSpacing.xl),
-          ..._encounterClasses.map(
-            (encounterClass) => Padding(
-              padding: const EdgeInsets.only(bottom: BioSpacing.md),
-              child: _buildSelectionCard(
-                title: encounterClass.label,
-                subtitle: encounterClass.code,
-                isSelected:
-                    _selectedEncounterClass?.code == encounterClass.code,
-                onTap: () => _selectEncounterClass(encounterClass),
+          if (_availableEncounterClasses.isEmpty)
+            BioAlert.info(
+              message: 'Este efector no tiene áreas de atención habilitadas.',
+            )
+          else
+            ..._availableEncounterClasses.map(
+              (encounterClass) => Padding(
+                padding: const EdgeInsets.only(bottom: BioSpacing.md),
+                child: _buildSelectionCard(
+                  title: encounterClass.label,
+                  subtitle: encounterClass.code,
+                  isSelected:
+                      _selectedEncounterClass?.code == encounterClass.code,
+                  onTap: () => _selectEncounterClass(encounterClass),
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -595,8 +641,7 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
                 Text(
                   title,
                   style: BioTypography.title.copyWith(
-                    fontWeight:
-                        isSelected ? FontWeight.w700 : FontWeight.w500,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   ),
                 ),
                 if (subtitle != null) ...[

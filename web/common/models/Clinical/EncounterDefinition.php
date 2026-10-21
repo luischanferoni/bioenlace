@@ -62,9 +62,20 @@ class EncounterDefinition extends ActiveRecord
      */
     public static function sessionSelectableClassMetadata(): array
     {
+        return self::sessionSelectableClassMetadataForCodes(self::ENCOUNTER_CLASS_SESSION_SELECTABLE);
+    }
+
+    /**
+     * @param list<string> $codes
+     * @return list<array{code:string,label:string,capabilities:list<string>}>
+     */
+    public static function sessionSelectableClassMetadataForCodes(array $codes): array
+    {
         $out = [];
         foreach (self::ENCOUNTER_CLASS_SESSION_SELECTABLE as $code) {
-            $out[] = self::classMetadata($code);
+            if (in_array($code, $codes, true)) {
+                $out[] = self::classMetadata($code);
+            }
         }
 
         return $out;

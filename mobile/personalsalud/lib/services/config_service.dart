@@ -5,20 +5,23 @@ import 'package:http/http.dart' as http;
 import 'package:shared/shared.dart';
 
 void _logConfig(String message, {Object? error, StackTrace? stackTrace}) {
-  developer.log(message, name: 'ConfigService', error: error, stackTrace: stackTrace);
+  developer.log(
+    message,
+    name: 'ConfigService',
+    error: error,
+    stackTrace: stackTrace,
+  );
 }
 
 /// Respuesta del modo «opciones» de POST /sesion-operativa/establecer (body vacío).
 class SessionWizardOptions {
   final List<Efector> efectores;
   final Map<int, List<Servicio>> serviciosPorEfector;
-  final List<EncounterClass> encounterClasses;
   final List<EfectorConProblema> efectoresConProblemas;
 
   SessionWizardOptions({
     required this.efectores,
     required this.serviciosPorEfector,
-    required this.encounterClasses,
     required this.efectoresConProblemas,
   });
 }
@@ -60,8 +63,10 @@ class ConfigService {
 
   ConfigService({this.authToken});
 
-  Map<String, String> get _headers =>
-      AppConfig.jsonHeaders(bearerToken: authToken, appClient: 'personalsalud-flutter');
+  Map<String, String> get _headers => AppConfig.jsonHeaders(
+    bearerToken: authToken,
+    appClient: 'personalsalud-flutter',
+  );
 
   /// Catálogo público de encounter classes (pantallas que no pasan por el wizard).
   Future<List<EncounterClass>> getEncounterClasses() async {
@@ -81,10 +86,14 @@ class ConfigService {
   }
 
   /// Modo opciones: un solo POST sin selección (mismo endpoint que establecer sesión).
-  Future<SessionWizardOptions> loadSessionWizardOptions({String? userId}) async {
+  Future<SessionWizardOptions> loadSessionWizardOptions({
+    String? userId,
+  }) async {
     final body = <String, dynamic>{};
     if (userId != null &&
-        (authToken == null || authToken!.isEmpty || authToken!.startsWith('simulated_'))) {
+        (authToken == null ||
+            authToken!.isEmpty ||
+            authToken!.startsWith('simulated_'))) {
       body['user_id'] = userId;
     }
 
@@ -101,9 +110,11 @@ class ConfigService {
     _logConfig('Response status: ${response.statusCode}');
 
     final bodyTrimmed = response.body.trim();
-    if (bodyTrimmed.startsWith('<!DOCTYPE') || bodyTrimmed.startsWith('<html')) {
+    if (bodyTrimmed.startsWith('<!DOCTYPE') ||
+        bodyTrimmed.startsWith('<html')) {
       throw Exception(
-          'La API devolvió HTML en lugar de JSON. Verifique URL y autenticación: $uri');
+        'La API devolvió HTML en lugar de JSON. Verifique URL y autenticación: $uri',
+      );
     }
 
     final payload = unwrapApiContract(
@@ -127,12 +138,6 @@ class ConfigService {
       serviciosPorEfector[ef.id] = servicios;
     }
 
-    final rawEc = payload['encounter_classes'] as List<dynamic>? ?? [];
-    final encounterClasses = rawEc
-        .map((c) => EncounterClass.fromJson(c as Map<String, dynamic>))
-        .where((c) => c.code.isNotEmpty)
-        .toList();
-
     final rawProb = payload['efectores_con_problemas'] as List<dynamic>? ?? [];
     final problemas = rawProb
         .map((p) => EfectorConProblema.fromJson(p as Map<String, dynamic>))
@@ -141,13 +146,15 @@ class ConfigService {
     return SessionWizardOptions(
       efectores: efectores,
       serviciosPorEfector: serviciosPorEfector,
-      encounterClasses: encounterClasses,
       efectoresConProblemas: problemas,
     );
   }
 
   /// Obtener servicios de un efector (desde caché del wizard; no llama a listar-servicios-en-efector).
-  List<Servicio> serviciosParaEfector(int efectorId, SessionWizardOptions options) {
+  List<Servicio> serviciosParaEfector(
+    int efectorId,
+    SessionWizardOptions options,
+  ) {
     return options.serviciosPorEfector[efectorId] ?? [];
   }
 
@@ -166,11 +173,15 @@ class ConfigService {
       };
 
       if (userId != null &&
-          (authToken == null || authToken!.isEmpty || authToken!.startsWith('simulated_'))) {
+          (authToken == null ||
+              authToken!.isEmpty ||
+              authToken!.startsWith('simulated_'))) {
         body['user_id'] = userId;
       }
 
-      _logConfig('Request URL: ${AppConfig.apiUrl}/sesion-operativa/establecer');
+      _logConfig(
+        'Request URL: ${AppConfig.apiUrl}/sesion-operativa/establecer',
+      );
       _logConfig('Request body: $body');
       _logConfig('Header keys: ${_headers.keys.join(", ")}');
 
@@ -223,11 +234,13 @@ class Efector {
   final int id;
   final String nombre;
   final int? idLocalidad;
+  final List<EncounterClass> encounterClasses;
 
   Efector({
     required this.id,
     required this.nombre,
     this.idLocalidad,
+    this.encounterClasses = const [],
   });
 
   factory Efector.fromJson(Map<String, dynamic> json) {
@@ -239,11 +252,18 @@ class Efector {
     } else {
       nombreStr = 'Sin nombre';
     }
+    final rawEncounterClasses =
+        json['encounter_classes'] as List<dynamic>? ?? const [];
 
     return Efector(
       id: json['id_efector'] as int? ?? json['id'] as int? ?? 0,
       nombre: nombreStr,
       idLocalidad: json['id_localidad'] as int?,
+      encounterClasses: rawEncounterClasses
+          .whereType<Map<String, dynamic>>()
+          .map(EncounterClass.fromJson)
+          .where((encounterClass) => encounterClass.code.isNotEmpty)
+          .toList(),
     );
   }
 }
@@ -251,6 +271,7 @@ class Efector {
 class Servicio {
   final int id;
   final String nombre;
+
   /// Asignación canónica (PES) para agenda y turnos.
   final int idProfesionalEfectorServicio;
 
@@ -266,9 +287,12 @@ class Servicio {
         ? idPesRaw
         : (idPesRaw is String ? int.tryParse(idPesRaw) : null) ?? 0;
     return Servicio(
-      id: (json['id'] as int?) ??
+      id:
+          (json['id'] as int?) ??
           (json['id_servicio'] as int?) ??
-          (json['id_servicio'] is String ? int.tryParse(json['id_servicio'] as String) : null) ??
+          (json['id_servicio'] is String
+              ? int.tryParse(json['id_servicio'] as String)
+              : null) ??
           0,
       nombre: json['nombre'] as String? ?? 'Sin nombre',
       idProfesionalEfectorServicio: idPes,
@@ -279,16 +303,22 @@ class Servicio {
 class EncounterClass {
   final String code;
   final String label;
+  final List<String> capabilities;
 
   EncounterClass({
     required this.code,
     required this.label,
+    this.capabilities = const [],
   });
 
   factory EncounterClass.fromJson(Map<String, dynamic> json) {
+    final rawCapabilities = json['capabilities'];
     return EncounterClass(
       code: json['code'] as String? ?? '',
       label: json['label'] as String? ?? '',
+      capabilities: rawCapabilities is List
+          ? rawCapabilities.whereType<String>().toList()
+          : const [],
     );
   }
 }
@@ -297,6 +327,7 @@ class SessionConfig {
   final Efector efector;
   final Servicio servicio;
   final EncounterClass encounterClass;
+
   /// Identificador PES del contexto operativo (equivale a `servicio.id_profesional_efector_servicio` cuando aplica).
   final int idProfesionalEfectorServicio;
   final String? contextToken;
@@ -311,14 +342,17 @@ class SessionConfig {
 
   factory SessionConfig.fromJson(Map<String, dynamic> json) {
     final servicioMap = json['servicio'] as Map<String, dynamic>?;
-    final idFromServicio =
-        servicioMap != null ? (servicioMap['id_profesional_efector_servicio'] as int?) ?? 0 : 0;
+    final idFromServicio = servicioMap != null
+        ? (servicioMap['id_profesional_efector_servicio'] as int?) ?? 0
+        : 0;
     final idCtx = (json['id_contexto_profesional'] as int?) ?? idFromServicio;
 
     return SessionConfig(
       efector: Efector.fromJson(json['efector'] as Map<String, dynamic>),
       servicio: Servicio.fromJson(json['servicio'] as Map<String, dynamic>),
-      encounterClass: EncounterClass.fromJson(json['encounter_class'] as Map<String, dynamic>),
+      encounterClass: EncounterClass.fromJson(
+        json['encounter_class'] as Map<String, dynamic>,
+      ),
       idProfesionalEfectorServicio: idCtx,
       contextToken: json['context_token'] as String?,
     );

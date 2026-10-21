@@ -2,6 +2,37 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:personalsalud/services/emergency_guardia_api.dart';
 
 void main() {
+  group('EmergencyTriageLevel.fromJson', () {
+    test(
+      'parses the triage level label, color and intent from API metadata',
+      () {
+        final level = EmergencyTriageLevel.fromJson({
+          'level': 2,
+          'label': 'Naranja — muy urgente',
+          'color': '#e67e22',
+          'intent': 'danger',
+        });
+
+        expect(level.level, 2);
+        expect(level.label, 'Naranja — muy urgente');
+        expect(level.color, '#e67e22');
+        expect(level.intent, 'danger');
+      },
+    );
+
+    test('rejects invalid level metadata', () {
+      expect(
+        () => EmergencyTriageLevel.fromJson({
+          'level': 7,
+          'label': 'Inválido',
+          'color': '#ffffff',
+          'intent': 'neutral',
+        }),
+        throwsFormatException,
+      );
+    });
+  });
+
   group('EmergencyBoardItem.canViewEncounter', () {
     test('requires an encounter and a completed/derived circuit', () {
       final completed = EmergencyBoardItem(

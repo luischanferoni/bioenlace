@@ -12,16 +12,34 @@ final class TriageScale
     }
 
     /**
-     * @return array<int, array{label: string, color: string}>
+     * @return array<int, array{label: string, color: string, intent: string}>
      */
     public static function levelMeta(): array
     {
         return [
-            1 => ['label' => 'Rojo — inmediato', 'color' => '#c0392b'],
-            2 => ['label' => 'Naranja — muy urgente', 'color' => '#e67e22'],
-            3 => ['label' => 'Amarillo — urgente', 'color' => '#f1c40f'],
-            4 => ['label' => 'Verde — estándar', 'color' => '#27ae60'],
-            5 => ['label' => 'Azul — no urgente', 'color' => '#3498db'],
+            1 => ['label' => 'Rojo — inmediato', 'color' => '#c0392b', 'intent' => 'danger'],
+            2 => ['label' => 'Naranja — muy urgente', 'color' => '#e67e22', 'intent' => 'danger'],
+            3 => ['label' => 'Amarillo — urgente', 'color' => '#f1c40f', 'intent' => 'warning'],
+            4 => ['label' => 'Verde — estándar', 'color' => '#27ae60', 'intent' => 'success'],
+            5 => ['label' => 'Azul — no urgente', 'color' => '#3498db', 'intent' => 'info'],
         ];
+    }
+
+    /**
+     * @return list<array{level:int,label:string,color:string,intent:string}>
+     */
+    public static function levelMetadata(): array
+    {
+        $out = [];
+        foreach (self::levelMeta() as $level => $metadata) {
+            $out[] = [
+                'level' => (int) $level,
+                'label' => $metadata['label'],
+                'color' => $metadata['color'],
+                'intent' => $metadata['intent'],
+            ];
+        }
+
+        return $out;
     }
 }

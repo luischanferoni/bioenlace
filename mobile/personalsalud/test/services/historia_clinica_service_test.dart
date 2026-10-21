@@ -36,4 +36,29 @@ void main() {
     expect(internacion.esGuardia, isFalse);
     expect(internacion.esInternacion, isTrue);
   });
+
+  test('reads episode action presentation and API metadata', () {
+    final episode = ContextoEpisodioHistoria.fromJson(<String, dynamic>{
+      'tipo': 'guardia',
+      'episodio_id': 45,
+      'acciones': [
+        <String, dynamic>{
+          'id': 'abrir_formulario',
+          'label': 'Abrir formulario',
+          'kind': 'ui_json',
+          'api': <String, dynamic>{
+            'route': '/clinical/formulario',
+            'method': 'GET',
+          },
+        },
+      ],
+    });
+
+    expect(episode.acciones, hasLength(1));
+    expect(episode.acciones.single.id, 'abrir_formulario');
+    expect(episode.acciones.single.label, 'Abrir formulario');
+    expect(episode.acciones.single.kind, 'ui_json');
+    expect(episode.acciones.single.apiRoute, '/clinical/formulario');
+    expect(episode.acciones.single.apiMethod, 'GET');
+  });
 }

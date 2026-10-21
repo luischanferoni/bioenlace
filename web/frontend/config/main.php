@@ -747,6 +747,8 @@ return [
                 // Catálogos API
                 'GET api/<version:\w+>/catalogos/encounter-classes' => '<version>/catalogos/encounter-classes',
                 'OPTIONS api/<version:\w+>/catalogos/encounter-classes' => '<version>/catalogos/encounter-classes',
+                'GET api/<version:\w+>/catalogos/triage-levels' => '<version>/catalogos/triage-levels',
+                'OPTIONS api/<version:\w+>/catalogos/triage-levels' => '<version>/catalogos/triage-levels',
                 'POST api/<version:\w+>/catalogos/departamentos-depdrop' => '<version>/catalogos/departamentos-depdrop',
                 'POST api/<version:\w+>/catalogos/localidades-depdrop' => '<version>/catalogos/localidades-depdrop',
                 'POST api/<version:\w+>/catalogos/barrios-depdrop' => '<version>/catalogos/barrios-depdrop',

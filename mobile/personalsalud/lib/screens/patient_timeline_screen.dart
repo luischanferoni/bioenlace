@@ -15,7 +15,6 @@ import '../services/historia_clinica_service.dart';
 import '../services/emergency_guardia_api.dart';
 import '../services/pending_encounter_capture_store.dart';
 import 'emergency/emergency_triage_screen.dart';
-import 'emergency/manchester_triage_colors.dart';
 
 class PatientTimelineScreen extends StatefulWidget {
   final int personaId;
@@ -1049,8 +1048,11 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     }
 
     Widget triageBadge() {
-      final bg = ManchesterTriageColors.backgroundForLevel(triageLevel);
-      final fg = ManchesterTriageColors.foregroundForLevel(triageLevel);
+      final rawColor = ctx?.triageLevelColor ?? '';
+      final bg = RegExp(r'^#[0-9a-fA-F]{6}$').hasMatch(rawColor)
+          ? Color(int.parse('FF${rawColor.substring(1)}', radix: 16))
+          : Colors.grey.shade300;
+      final fg = bg.computeLuminance() < 0.5 ? Colors.white : Colors.black87;
       return Container(
         decoration: BoxDecoration(
           color: bg,
@@ -1158,12 +1160,23 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       return;
     }
 
-    if (accion.id != 'egreso_estructurado' ||
-        accion.apiRoute == null ||
-        accion.apiRoute!.isEmpty) {
+    final route = accion.apiRoute;
+    final method = (accion.apiMethod ?? 'GET').toUpperCase();
+    if (accion.kind != 'ui_json' || route == null || route.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('La acción no tiene una pantalla compatible.'),
+        ),
+      );
       return;
     }
-    final uri = Uri.parse(resolveApiAbsoluteUrl(accion.apiRoute!));
+    if (method != 'GET') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Método no compatible para esta acción: $method')),
+      );
+      return;
+    }
+    final uri = Uri.parse(resolveApiAbsoluteUrl(route));
     if (!mounted) return;
     await Navigator.of(context).push(
       MaterialPageRoute(

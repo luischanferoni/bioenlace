@@ -3,6 +3,7 @@
 namespace frontend\modules\api\v1\controllers\organization;
 
 use frontend\modules\api\v1\controllers\BaseController;
+use common\components\Domain\Clinical\Emergency\Domain\TriageScale;
 use common\components\Domain\Geo\Application\Service\GeografiaDepdropService;
 use common\components\Domain\Organization\Efector\Application\Service\InfraestructuraDepdropService;
 use common\components\Domain\Organization\Pes\Application\Service\ProfesionalDepdropService;
@@ -16,6 +17,7 @@ class CatalogosController extends BaseController
 {
     public static $authenticatorExcept = [
         'encounter-classes',
+        'triage-levels',
         'departamentos-depdrop',
         'localidades-depdrop',
         'barrios-depdrop',
@@ -38,6 +40,17 @@ class CatalogosController extends BaseController
     {
         return $this->ok([
             'encounter_classes' => EncounterDefinition::sessionSelectableClassMetadata(),
+        ]);
+    }
+
+    /**
+     * GET /api/v1/catalogos/triage-levels
+     * No requiere autenticación (catálogo estático).
+     */
+    public function actionTriageLevels(): array
+    {
+        return $this->ok([
+            'triage_levels' => TriageScale::levelMetadata(),
         ]);
     }
 

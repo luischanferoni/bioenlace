@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:shared/shared.dart';
 
 import '../../services/emergency_guardia_api.dart';
-import 'manchester_triage_colors.dart';
 
 /// Triage rápido (móvil) para un ingreso en guardia.
 class EmergencyTriageScreen extends StatefulWidget {
@@ -41,9 +40,9 @@ class _EmergencyTriageScreenState extends State<EmergencyTriageScreen> {
   late final TextEditingController _hrController;
   late final TextEditingController _sysController;
   late final TextEditingController _diaController;
+  List<EmergencyTriageLevel> _levels = [];
+  String? _loadError;
   bool _saving = false;
-
-  static const _levelColors = ManchesterTriageColors.levels;
 
   static final _vitalFormatters = <TextInputFormatter>[
     FilteringTextInputFormatter.digitsOnly,
@@ -64,6 +63,26 @@ class _EmergencyTriageScreenState extends State<EmergencyTriageScreen> {
     _hrController = TextEditingController(
       text: widget.initialHr != null ? '${widget.initialHr}' : '',
     );
+    _loadTriageLevels();
+  }
+
+  Future<void> _loadTriageLevels() async {
+    try {
+      final levels = await widget.api.getTriageLevels();
+      if (!mounted) return;
+      setState(() {
+        _levels = levels;
+        if (!levels.any((metadata) => metadata.level == _level)) {
+          _level = levels.first.level;
+        }
+        _loadError = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loadError = 'No se pudo cargar el catálogo de triage: $e';
+      });
+    }
   }
 
   @override
@@ -92,7 +111,12 @@ class _EmergencyTriageScreenState extends State<EmergencyTriageScreen> {
   String? _validateVitalsClient() {
     final sysErr = _validateVital(_sysController.text, 'TA sistólica', 50, 250);
     if (sysErr != null) return sysErr;
-    final diaErr = _validateVital(_diaController.text, 'TA diastólica', 30, 150);
+    final diaErr = _validateVital(
+      _diaController.text,
+      'TA diastólica',
+      30,
+      150,
+    );
     if (diaErr != null) return diaErr;
     final hrErr = _validateVital(_hrController.text, 'FC', 20, 250);
     if (hrErr != null) return hrErr;
@@ -122,6 +146,16 @@ class _EmergencyTriageScreenState extends State<EmergencyTriageScreen> {
 
   Future<void> _guardar() async {
     final reason = _reasonController.text.trim();
+    if (_levels.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _loadError ?? 'Esperá a que carguen los niveles de triage.',
+          ),
+        ),
+      );
+      return;
+    }
     if (reason.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Indicá el motivo de consulta.')),
@@ -130,9 +164,9 @@ class _EmergencyTriageScreenState extends State<EmergencyTriageScreen> {
     }
     final vitalsErr = _validateVitalsClient();
     if (vitalsErr != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(vitalsErr)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(vitalsErr)));
       return;
     }
     setState(() => _saving = true);
@@ -146,9 +180,9 @@ class _EmergencyTriageScreenState extends State<EmergencyTriageScreen> {
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No se pudo guardar: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('No se pudo guardar: $e')));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -171,19 +205,25 @@ class _EmergencyTriageScreenState extends State<EmergencyTriageScreen> {
           BioSpacing.gapH(BioSpacing.lg),
           Text('Prioridad (Manchester)', style: BioTypography.title),
           BioSpacing.gapH(BioSpacing.sm),
-          Wrap(
-            spacing: BioSpacing.sm,
-            children: List.generate(5, (i) {
-              final level = i + 1;
-              final selected = _level == level;
-              return ChoiceChip(
-                label: Text('$level'),
-                selected: selected,
-                selectedColor: _levelColors[i].withOpacity(0.35),
-                onSelected: (_) => setState(() => _level = level),
-              );
-            }),
-          ),
+          if (_loadError != null)
+            BioAlert.danger(message: _loadError!)
+          else if (_levels.isEmpty)
+            const Center(child: CircularProgressIndicator())
+          else
+            Wrap(
+              spacing: BioSpacing.sm,
+              runSpacing: BioSpacing.sm,
+              children: _levels.map((metadata) {
+                final selected = _level == metadata.level;
+                final color = _colorFromHex(metadata.color);
+                return ChoiceChip(
+                  label: Text('${metadata.level} · ${metadata.label}'),
+                  selected: selected,
+                  selectedColor: color.withValues(alpha: 0.35),
+                  onSelected: (_) => setState(() => _level = metadata.level),
+                );
+              }).toList(),
+            ),
           BioSpacing.gapH(BioSpacing.lg),
           TextField(
             controller: _reasonController,
@@ -249,5 +289,10 @@ class _EmergencyTriageScreenState extends State<EmergencyTriageScreen> {
         ],
       ),
     );
+  }
+
+  Color _colorFromHex(String value) {
+    final hex = value.replaceFirst('#', '');
+    return Color(int.parse('FF$hex', radix: 16));
   }
 }

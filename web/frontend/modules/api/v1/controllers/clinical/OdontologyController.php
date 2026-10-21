@@ -44,6 +44,8 @@ class OdontologyController extends BaseController
         return $this->ok(array_merge($bundle, [
             'encounterId' => (int) $encounter->id,
             'enabledSpecialties' => $specialties,
+            'specialtyMetadata' => (new EncounterDefinitionSpecialtyRegistry())
+                ->metadataForSpecialties($specialties),
         ]));
     }
 }

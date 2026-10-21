@@ -101,4 +101,38 @@ class SpecialtyCaptureInputTest extends Unit
             $registry->specialtyForModel('OphthalmologyLensPrescription')
         );
     }
+
+    public function testSpecialtyMetadataDescribesSectionsFieldsAndUnits(): void
+    {
+        $registry = new EncounterDefinitionSpecialtyRegistry();
+        $metadata = $registry->metadataForSpecialties([
+            EncounterDefinitionSpecialtyRegistry::SPECIALTY_ODONTOLOGY,
+            EncounterDefinitionSpecialtyRegistry::SPECIALTY_OPHTHALMOLOGY,
+            'unknown',
+        ]);
+        $byCode = [];
+        foreach ($metadata as $specialty) {
+            $byCode[$specialty['code']] = $specialty;
+        }
+
+        $this->assertSame(
+            ['EncounterDentalPractice', 'EncounterDentalDiagnosis', 'EncounterDentalStatus'],
+            array_column($byCode['odontology']['sections'], 'key')
+        );
+        $this->assertSame(
+            ['ojo', 'prueba', 'estado', 'informe', 'tipo'],
+            array_column($byCode['ophthalmology']['sections'][0]['fields'], 'key')
+        );
+
+        $prescription = $byCode['ophthalmology']['sections'][2];
+        $fieldsByKey = [];
+        foreach ($prescription['fields'] as $field) {
+            $fieldsByKey[$field['key']] = $field;
+        }
+        $this->assertSame('decimal', $fieldsByKey['od_esfera']['format']);
+        $this->assertSame('D', $fieldsByKey['od_esfera']['unit']);
+        $this->assertSame('integer', $fieldsByKey['od_eje']['format']);
+        $this->assertSame('°', $fieldsByKey['od_eje']['unit']);
+        $this->assertNotContains('unknown', array_column($metadata, 'code'));
+    }
 }

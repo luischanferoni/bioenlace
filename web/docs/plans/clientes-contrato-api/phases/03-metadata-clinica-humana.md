@@ -16,7 +16,7 @@ Que secciones clínicas, tipos de episodio, triage y acciones permitidas lleguen
 
 ## Avance
 
-El catálogo público, las opciones del wizard y la respuesta al establecer la sesión incluyen `capabilities` junto con `code` y `label`. Las clases FHIR que no están activas para selección no reciben capacidades de producto. Personal de Salud resuelve la metadata del catálogo y usa las capacidades para elegir contenido, acciones, filtros y polling de la pantalla inicial, sin ramificar por código de clase.
+El catálogo público, las opciones del wizard y la respuesta al establecer la sesión incluyen `capabilities` junto con `code` y `label`. Las clases FHIR que no están activas para selección no reciben capacidades de producto. Personal de Salud resuelve la metadata del catálogo y usa las capacidades para elegir contenido, acciones, filtros y polling de la pantalla inicial, sin ramificar por código de clase. Las respuestas de los endpoints de odontología y oftalmología incluyen `specialtyMetadata`, con secciones, campos, formatos y unidades (dioptrías y grados para recetas); se conserva `enabledSpecialties` como lista de códigos. El catálogo de niveles Manchester también expone etiquetas, colores e intents, consumidos por el formulario móvil y el banner del episodio. En el timeline, las acciones UI JSON del episodio se abren a partir de `kind`, ruta y método recibidos del servidor; el registro/edición de triage conserva su pantalla nativa.
 
 ## Criterio de salida
 

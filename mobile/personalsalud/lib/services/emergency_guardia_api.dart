@@ -121,6 +121,47 @@ class EmergencyBoardItem {
   }
 }
 
+class EmergencyTriageLevel {
+  final int level;
+  final String label;
+  final String color;
+  final String intent;
+
+  const EmergencyTriageLevel({
+    required this.level,
+    required this.label,
+    required this.color,
+    required this.intent,
+  });
+
+  factory EmergencyTriageLevel.fromJson(Map<String, dynamic> json) {
+    final levelRaw = json['level'];
+    final level = levelRaw is int
+        ? levelRaw
+        : int.tryParse(levelRaw?.toString() ?? '');
+    final label = json['label'] as String?;
+    final color = json['color'] as String?;
+    final intent = json['intent'] as String?;
+    if (level == null ||
+        level < 1 ||
+        level > 5 ||
+        label == null ||
+        label.trim().isEmpty ||
+        color == null ||
+        !RegExp(r'^#[0-9a-fA-F]{6}$').hasMatch(color) ||
+        intent == null ||
+        intent.trim().isEmpty) {
+      throw const FormatException('Invalid triage level metadata');
+    }
+    return EmergencyTriageLevel(
+      level: level,
+      label: label,
+      color: color,
+      intent: intent,
+    );
+  }
+}
+
 class EfectorDerivacionItem {
   final int idEfector;
   final String nombre;
@@ -150,6 +191,30 @@ class EmergencyGuardiaApi {
       headers['Authorization'] = 'Bearer $authToken';
     }
     return headers;
+  }
+
+  Future<List<EmergencyTriageLevel>> getTriageLevels() async {
+    final uri = Uri.parse('${AppConfig.apiUrl}/catalogos/triage-levels');
+    final response = await http.get(uri, headers: _headers);
+    final data = unwrapApiContract(
+      json.decode(response.body),
+      response.statusCode,
+    );
+    final rawLevels = data['triage_levels'];
+    if (rawLevels is! List) {
+      throw const FormatException('Triage levels catalog is missing');
+    }
+    final levels = rawLevels
+        .map((level) => EmergencyTriageLevel.fromJson(
+              Map<String, dynamic>.from(level as Map),
+            ))
+        .toList()
+      ..sort((a, b) => a.level.compareTo(b.level));
+    if (levels.isEmpty ||
+        levels.map((level) => level.level).toSet().length != levels.length) {
+      throw const FormatException('Triage levels catalog is invalid');
+    }
+    return levels;
   }
 
   Future<Map<String, dynamic>> iniciarAtencion(int guardiaId) async {

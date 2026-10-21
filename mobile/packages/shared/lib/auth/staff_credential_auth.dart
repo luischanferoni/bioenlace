@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../config/api_config.dart';
+import '../http/api_contract.dart';
 
 /// Login usuario/contraseña staff (POST /auth/login-credenciales).
 class StaffCredentialAuth {
@@ -16,23 +17,17 @@ class StaffCredentialAuth {
         .post(
           uri,
           headers: AppConfig.jsonHeaders(appClient: appClient),
-          body: jsonEncode({
-            'username': username.trim(),
-            'password': password,
-          }),
+          body: jsonEncode({'username': username.trim(), 'password': password}),
         )
         .timeout(const Duration(seconds: AppConfig.httpTimeoutSeconds));
 
-    final data = jsonDecode(response.body);
-    if (response.statusCode >= 200 &&
-        response.statusCode < 300 &&
-        data is Map &&
-        data['success'] == true) {
-      return Map<String, dynamic>.from(data);
+    final data = unwrapApiContract(
+      jsonDecode(response.body),
+      response.statusCode,
+    );
+    if (data['token'] is! String || (data['token'] as String).isEmpty) {
+      throw const FormatException();
     }
-
-    final message =
-        data is Map ? (data['message'] ?? 'Error de acceso') : 'Error de acceso';
-    throw Exception(message.toString());
+    return data;
   }
 }

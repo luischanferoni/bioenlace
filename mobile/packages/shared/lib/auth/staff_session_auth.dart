@@ -5,13 +5,10 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config/api_config.dart';
+import '../http/api_contract.dart';
 
 /// Resultado de comprobar el JWT contra la API.
-enum BearerSessionCheckResult {
-  valid,
-  invalid,
-  networkError,
-}
+enum BearerSessionCheckResult { valid, invalid, networkError }
 
 @Deprecated('Use BearerSessionCheckResult')
 typedef StaffSessionCheckResult = BearerSessionCheckResult;
@@ -62,11 +59,16 @@ abstract final class BearerSessionAuth {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         try {
-          final decoded = jsonDecode(response.body);
-          if (decoded is Map && decoded['success'] == true) {
+          final payload = unwrapApiContract(
+            jsonDecode(response.body),
+            response.statusCode,
+          );
+          if (payload['id'] != null) {
             return BearerSessionCheckResult.valid;
           }
         } on FormatException {
+          return BearerSessionCheckResult.networkError;
+        } on ApiContractException {
           return BearerSessionCheckResult.networkError;
         }
         // 2xx con body inesperado: conservar token.
@@ -129,13 +131,11 @@ abstract final class BearerSessionAuth {
       final parts = token.trim().split('.');
       if (parts.length < 2) return null;
       final normalized = base64Url.normalize(parts[1]);
-      final payload =
-          jsonDecode(utf8.decode(base64Url.decode(normalized)));
+      final payload = jsonDecode(utf8.decode(base64Url.decode(normalized)));
       if (payload is! Map) return null;
       final exp = payload['exp'];
-      final seconds = exp is int
-          ? exp
-          : (exp is num ? exp.toInt() : int.tryParse('$exp'));
+      final seconds =
+          exp is int ? exp : (exp is num ? exp.toInt() : int.tryParse('$exp'));
       if (seconds == null || seconds <= 0) return null;
       return DateTime.fromMillisecondsSinceEpoch(seconds * 1000, isUtc: true);
     } catch (_) {
@@ -174,20 +174,14 @@ abstract final class BearerSessionAuth {
       if (response.statusCode < 200 || response.statusCode >= 300) {
         return null;
       }
-      final decoded = jsonDecode(response.body);
-      if (decoded is! Map || decoded['success'] != true) {
-        return null;
-      }
-      final data = decoded['data'];
-      if (data is Map && data['token'] is String) {
-        final next = (data['token'] as String).trim();
-        return next.isEmpty ? null : next;
-      }
-      if (decoded['token'] is String) {
-        final next = (decoded['token'] as String).trim();
-        return next.isEmpty ? null : next;
-      }
-      return null;
+      final payload = unwrapApiContract(
+        jsonDecode(response.body),
+        response.statusCode,
+      );
+      final next = payload['token'];
+      if (next is! String) return null;
+      final trimmed = next.trim();
+      return trimmed.isEmpty ? null : trimmed;
     } catch (_) {
       return null;
     }

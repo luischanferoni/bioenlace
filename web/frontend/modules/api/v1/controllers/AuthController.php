@@ -21,6 +21,8 @@ use Firebase\JWT\Key;
 
 class AuthController extends BaseController
 {
+    protected bool $contractResponses = true;
+
     /** Acciones sin autenticación Bearer (no mapea a frontend; solo API). */
     public static $authenticatorExcept = [
         'registrar',
@@ -100,7 +102,7 @@ class AuthController extends BaseController
         $user = Yii::$app->user->identity;
         
         if (!$user) {
-            return $this->error('Usuario no autenticado', null, 401);
+            return $this->fail('unauthenticated');
         }
 
         $role = $this->getUserRole($user);
@@ -142,7 +144,7 @@ class AuthController extends BaseController
             $user = User::findIdentity($decoded->user_id);
             
             if (!$user) {
-                return $this->error('Usuario no encontrado', null, 401);
+                return $this->fail('unauthenticated');
             }
 
             // Generar nuevo token
@@ -153,7 +155,7 @@ class AuthController extends BaseController
             ], 'Token refrescado exitosamente');
 
         } catch (\Exception $e) {
-            return $this->error('Token inválido', null, 401);
+            return $this->fail('unauthenticated');
         }
     }
 
@@ -188,7 +190,9 @@ class AuthController extends BaseController
         $diditResult = $didit->getBiometricAuth($verificationId);
 
         if ($diditResult['success'] !== true || $diditResult['status'] === 'rejected') {
-            return $this->error('Verificación biométrica rechazada por Didit', $diditResult, 401);
+            return $this->fail('authentication_failed_detail', [
+                'detail' => 'Verificación biométrica rechazada por Didit',
+            ]);
         }
 
         // Resolver persona por referencia Didit o por documento
@@ -201,7 +205,7 @@ class AuthController extends BaseController
         }
 
         if ($persona === null) {
-            return $this->error('No se encontró persona asociada a la verificación biométrica', $diditResult, 404);
+            return $this->error('No se encontró persona asociada a la verificación biométrica', null, 404);
         }
 
         if (!$persona->id_user) {
@@ -218,7 +222,9 @@ class AuthController extends BaseController
         }
 
         if ($user->status !== User::STATUS_ACTIVE) {
-            return $this->error('Usuario inactivo', null, 401);
+            return $this->fail('authentication_failed_detail', [
+                'detail' => 'Usuario inactivo',
+            ]);
         }
 
         // Generar token JWT
@@ -269,7 +275,9 @@ class AuthController extends BaseController
         try {
             $auth = PlayReviewLoginService::authenticate($username, $password);
         } catch (\DomainException $e) {
-            return $this->error($e->getMessage(), null, 401);
+            return $this->fail('authentication_failed_detail', [
+                'detail' => $e->getMessage(),
+            ]);
         }
 
         $user = $auth['user'];
@@ -310,7 +318,9 @@ class AuthController extends BaseController
         try {
             $auth = StaffMobileLoginService::authenticate($username, $password);
         } catch (\DomainException $e) {
-            return $this->error($e->getMessage(), null, 401);
+            return $this->fail('authentication_failed_detail', [
+                'detail' => $e->getMessage(),
+            ]);
         }
 
         $user = $auth['user'];
@@ -704,7 +714,9 @@ class AuthController extends BaseController
         }
 
         if ($user->status !== User::STATUS_ACTIVE) {
-            return $this->error('Usuario inactivo', null, 401);
+            return $this->fail('authentication_failed_detail', [
+                'detail' => 'Usuario inactivo',
+            ]);
         }
 
         try {

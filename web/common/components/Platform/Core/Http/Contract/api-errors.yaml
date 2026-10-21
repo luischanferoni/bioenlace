@@ -17,6 +17,12 @@ errors:
     intent: error
     retryable: false
     message: "Tu sesión expiró. Volvé a iniciar sesión."
+  authentication_failed_detail:
+    http_status: 401
+    intent: error
+    retryable: false
+    default_detail: "No se pudo verificar la identidad."
+    message: "{detail}"
   forbidden:
     http_status: 403
     intent: error

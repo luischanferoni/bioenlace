@@ -4,6 +4,7 @@ namespace frontend\modules\api\v1\components;
 
 use Yii;
 use common\components\Platform\Assistant\UiActions\AllowedRoutesResolver;
+use common\components\Platform\Core\Http\Contract\ApiResponder;
 use common\models\Person\Persona;
 use common\models\Organization\ProfesionalEfectorServicio;
 use frontend\components\WebApiJwtSessionService;
@@ -23,13 +24,7 @@ class JsonHttpBearerAuth extends HttpBearerAuth
     public function handleFailure($response)
     {
         $response->format = Response::FORMAT_JSON;
-        $response->statusCode = 401;
-
-        $response->data = [
-            'success' => false,
-            'message' => 'Su solicitud fue hecha con credenciales inválidas. Verifique que el token de autenticación sea válido.',
-            'errors' => null,
-        ];
+        $this->setContractError($response, 'unauthenticated');
 
         $response->send();
         Yii::$app->end();
@@ -129,23 +124,13 @@ class JsonHttpBearerAuth extends HttpBearerAuth
 
         $userModel = \common\models\Platform\User::findOne($userId);
         if (!$userModel) {
-            $response->statusCode = 401;
-            $response->data = [
-                'success' => false,
-                'message' => 'Usuario no encontrado',
-                'errors' => null,
-            ];
+            $this->setContractError($response, 'unauthenticated');
             $response->send();
             Yii::$app->end();
         }
 
         if ($userModel->status !== \common\models\Platform\User::STATUS_ACTIVE) {
-            $response->statusCode = 401;
-            $response->data = [
-                'success' => false,
-                'message' => 'Usuario inactivo',
-                'errors' => null,
-            ];
+            $this->setContractError($response, 'unauthenticated');
             $response->send();
             Yii::$app->end();
         }
@@ -161,12 +146,7 @@ class JsonHttpBearerAuth extends HttpBearerAuth
         if ($idPersonaClaim > 0) {
             $persona = Persona::findOne($idPersonaClaim);
             if ($persona && (int) $persona->id_user !== (int) $userModel->id) {
-                $response->statusCode = 401;
-                $response->data = [
-                    'success' => false,
-                    'message' => 'El token no coincide con la identidad del usuario.',
-                    'errors' => null,
-                ];
+                $this->setContractError($response, 'unauthenticated');
                 $response->send();
                 Yii::$app->end();
             }
@@ -175,12 +155,7 @@ class JsonHttpBearerAuth extends HttpBearerAuth
             $persona = Persona::findOne(['id_user' => $userModel->id]);
         }
         if (!$persona && (int) ($userModel->superadmin ?? 0) !== 1) {
-            $response->statusCode = 401;
-            $response->data = [
-                'success' => false,
-                'message' => 'Cuenta sin persona asociada. Comuníquese con administración.',
-                'errors' => null,
-            ];
+            $this->setContractError($response, 'unauthenticated');
             $response->send();
             Yii::$app->end();
         }
@@ -252,5 +227,12 @@ class JsonHttpBearerAuth extends HttpBearerAuth
         AllowedRoutesResolver::markSessionRoutesOwner((int) $userModel->id);
 
         return $userModel;
+    }
+
+    private function setContractError(Response $response, string $code): void
+    {
+        $result = ApiResponder::error($code);
+        $response->statusCode = $result['status'];
+        $response->data = $result['body'];
     }
 }

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../config/api_config.dart';
+import '../http/api_contract.dart';
 
 /// Activación de cuenta staff con código presencial (POST /auth/activar-cuenta).
 class StaffAccountActivation {
@@ -25,17 +26,6 @@ class StaffAccountActivation {
         )
         .timeout(const Duration(seconds: AppConfig.httpTimeoutSeconds));
 
-    final data = jsonDecode(response.body);
-    if (response.statusCode >= 200 &&
-        response.statusCode < 300 &&
-        data is Map &&
-        data['success'] == true) {
-      return;
-    }
-
-    final message = data is Map
-        ? (data['message'] ?? 'No se pudo activar la cuenta')
-        : 'No se pudo activar la cuenta';
-    throw Exception(message.toString());
+    unwrapApiContract(jsonDecode(response.body), response.statusCode);
   }
 }

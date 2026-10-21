@@ -15,6 +15,7 @@ import '../auth/person_display_name.dart';
 import '../config/api_config.dart';
 import '../config/didit_config_resolver.dart';
 import '../http/bioenlace_http_trace.dart';
+import '../http/api_contract.dart';
 import '../platform/didit_platform.dart';
 import '../theme/tokens/tokens.dart';
 import '../ui/ui.dart';
@@ -33,7 +34,7 @@ class LoginScreen extends StatefulWidget {
   /// Callback cuando el login es exitoso.
   /// Recibe userId, userName y BuildContext del LoginScreen.
   final Function(String userId, String userName, BuildContext context)
-      onLoginSuccess;
+  onLoginSuccess;
 
   /// Callback para navegar a la pantalla de registro.
   /// Recibe BuildContext del LoginScreen.
@@ -161,10 +162,8 @@ class _LoginScreenState extends State<LoginScreen> {
           final prefs = await SharedPreferences.getInstance();
           final token = (prefs.getString('auth_token') ?? '').trim();
           if (token.isEmpty) {
-            _snack(
-              'Volvé a ingresar con tu cuenta.',
-              UiIntent.warning,
-            );
+            const message = 'Volvé a ingresar con tu cuenta.';
+            _snack(message, UiIntent.warning);
             return;
           }
 
@@ -175,10 +174,8 @@ class _LoginScreenState extends State<LoginScreen> {
           if (sessionCheck == BearerSessionCheckResult.invalid) {
             await prefs.setBool('is_logged_in', false);
             await prefs.remove('auth_token');
-            _snack(
-              'Tu sesión expiró. Ingresá de nuevo.',
-              UiIntent.warning,
-            );
+            const message = 'Tu sesión expiró. Ingresá de nuevo.';
+            _snack(message, UiIntent.warning);
             return;
           }
           if (sessionCheck == BearerSessionCheckResult.networkError) {
@@ -189,7 +186,8 @@ class _LoginScreenState extends State<LoginScreen> {
             return;
           }
 
-          final userId = prefs.getString('user_id') ??
+          final userId =
+              prefs.getString('user_id') ??
               'user_${DateTime.now().millisecondsSinceEpoch}';
           final userName = prefs.getString('user_name') ?? 'Usuario';
 
@@ -233,25 +231,24 @@ class _LoginScreenState extends State<LoginScreen> {
       // 1) Autenticación biométrica remota con Didit.
       final diditResult = await DiditSdk.startVerificationWithWorkflow(
         workflowId,
-        config: const DiditConfig(
-          languageCode: 'es',
-          loggingEnabled: true,
-        ),
+        config: const DiditConfig(languageCode: 'es', loggingEnabled: true),
       );
 
       switch (diditResult) {
         case VerificationCompleted(:final session):
           // 2) Llamar al backend para login biométrico.
           final prefs = await SharedPreferences.getInstance();
-          String deviceId = prefs.getString('device_id') ??
+          String deviceId =
+              prefs.getString('device_id') ??
               'device_${DateTime.now().millisecondsSinceEpoch}';
           if (!prefs.containsKey('device_id')) {
             await prefs.setString('device_id', deviceId);
           }
 
-          final platform = Platform.isAndroid
-              ? 'android'
-              : (Platform.isIOS ? 'ios' : 'otro');
+          final platform =
+              Platform.isAndroid
+                  ? 'android'
+                  : (Platform.isIOS ? 'ios' : 'otro');
 
           final uri = Uri.parse('${AppConfig.apiUrl}/auth/login-biometrico');
           final response = await http
@@ -268,56 +265,50 @@ class _LoginScreenState extends State<LoginScreen> {
 
           BioenlaceHttpTrace.logResponse('auth/login-biometrico', response);
 
-          final data = jsonDecode(response.body);
+          final payload = unwrapApiContract(
+            jsonDecode(response.body),
+            response.statusCode,
+          );
+          final user = payload['user'];
+          final persona = payload['persona'];
+          final token = payload['token'];
+          if (user is! Map ||
+              persona is! Map ||
+              token is! String ||
+              token.isEmpty) {
+            throw const FormatException();
+          }
 
-          if (response.statusCode >= 200 &&
-              response.statusCode < 300 &&
-              data['success'] == true) {
-            final payload = data['data'] ?? {};
-            final user = payload['user'] ?? {};
-            final persona = payload['persona'] ?? {};
-            final token = payload['token'] as String?;
+          final userMap = Map<String, dynamic>.from(user);
+          final personaMap = Map<String, dynamic>.from(persona);
+          final userId = (userMap['id'] ?? '').toString();
+          final userName = PersonDisplayName.resolveForLogin(
+            user: userMap,
+            persona: personaMap,
+          );
 
-            final userId = (user['id'] ?? '').toString();
-            final userMap = user is Map<String, dynamic>
-                ? user
-                : Map<String, dynamic>.from(user as Map);
-            final personaMap = persona is Map<String, dynamic>
-                ? persona
-                : Map<String, dynamic>.from(persona as Map);
-            final userName = PersonDisplayName.resolveForLogin(
-              user: userMap,
-              persona: personaMap,
-            );
+          await prefs.setBool('is_logged_in', true);
+          await prefs.setString('auth_token', token);
+          await prefs.setString('user_id', userId);
+          await prefs.setString('user_name', userName);
+          if (userName.isNotEmpty) {
+            await prefs.setString('name_detected', userName);
+          }
+          if (personaMap['documento'] != null) {
+            await prefs.setString('dni_detected', personaMap['documento']);
+          }
 
-            await prefs.setBool('is_logged_in', true);
-            if (token != null) {
-              await prefs.setString('auth_token', token);
-            }
-            await prefs.setString('user_id', userId);
-            await prefs.setString('user_name', userName);
-            if (userName.isNotEmpty) {
-              await prefs.setString('name_detected', userName);
-            }
-            if (persona['documento'] != null) {
-              await prefs.setString('dni_detected', persona['documento']);
-            }
+          final welcomeMsg =
+              widget.welcomeMessage ?? '¡Bienvenido de vuelta, {userName}!';
+          _snack(
+            welcomeMsg.replaceAll('{userName}', userName),
+            UiIntent.success,
+          );
 
-            final welcomeMsg =
-                widget.welcomeMessage ?? '¡Bienvenido de vuelta, {userName}!';
-            _snack(
-              welcomeMsg.replaceAll('{userName}', userName),
-              UiIntent.success,
-            );
-
-            await Future.delayed(const Duration(milliseconds: 200));
-            if (mounted) {
-              await BiometricSessionPrefs.touchActivity();
-              widget.onLoginSuccess(userId, userName, context);
-            }
-          } else {
-            final message = data['message'] ?? 'Error en login biométrico';
-            _snack(message.toString(), UiIntent.danger);
+          await Future.delayed(const Duration(milliseconds: 200));
+          if (mounted) {
+            await BiometricSessionPrefs.touchActivity();
+            widget.onLoginSuccess(userId, userName, context);
           }
           break;
 
@@ -347,7 +338,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _onLogoTap() {
     final now = DateTime.now();
-    if (_lastLogoTap == null || now.difference(_lastLogoTap!) > const Duration(seconds: 3)) {
+    if (_lastLogoTap == null ||
+        now.difference(_lastLogoTap!) > const Duration(seconds: 3)) {
       _logoTapCount = 0;
     }
     _lastLogoTap = now;
@@ -402,18 +394,21 @@ class _LoginScreenState extends State<LoginScreen> {
                         'Verificá tu identidad con una selfie para volver a entrar.',
                   ),
                   BioSpacing.gapH(BioSpacing.lg),
-                ] else if (_biometricAvailable && _biometricType.isNotEmpty) ...[
+                ] else if (_biometricAvailable &&
+                    _biometricType.isNotEmpty) ...[
                   BioAlert.success(
-                    message: widget.biometricAvailableText ??
+                    message:
+                        widget.biometricAvailableText ??
                         '$_biometricType configurada y lista para usar',
                   ),
                   BioSpacing.gapH(BioSpacing.lg),
                 ],
                 BioButton.primary(
                   label: _resolveLoginLabel(),
-                  icon: _usesDiditRemoteLogin
-                      ? Icons.face_retouching_natural
-                      : Icons.fingerprint,
+                  icon:
+                      _usesDiditRemoteLogin
+                          ? Icons.face_retouching_natural
+                          : Icons.fingerprint,
                   size: BioButtonSize.lg,
                   fullWidth: true,
                   loading: _isAuthenticating,
@@ -422,7 +417,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 if (widget.onNavigateToSignup != null) ...[
                   BioSpacing.gapH(BioSpacing.lg),
                   BioButton.softPrimary(
-                    label: widget.signupButtonText ??
+                    label:
+                        widget.signupButtonText ??
                         '¿No tienes cuenta? Registrate aquí',
                     icon: Icons.person_add_alt,
                     fullWidth: true,

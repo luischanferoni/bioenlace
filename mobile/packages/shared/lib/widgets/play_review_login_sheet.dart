@@ -25,13 +25,16 @@ class PlayReviewLoginSheet extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (_) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-        child: PlayReviewLoginSheet(
-          appClient: appClient,
-          onSuccess: onSuccess,
-        ),
-      ),
+      builder:
+          (_) => Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.viewInsetsOf(context).bottom,
+            ),
+            child: PlayReviewLoginSheet(
+              appClient: appClient,
+              onSuccess: onSuccess,
+            ),
+          ),
     );
   }
 
@@ -61,19 +64,29 @@ class _PlayReviewLoginSheetState extends State<PlayReviewLoginSheet> {
         password: _passCtrl.text,
         appClient: widget.appClient,
       );
-      final payload = data['data'] is Map ? Map<String, dynamic>.from(data['data'] as Map) : <String, dynamic>{};
-      final user = payload['user'] is Map ? Map<String, dynamic>.from(payload['user'] as Map) : <String, dynamic>{};
-      final persona = payload['persona'] is Map ? Map<String, dynamic>.from(payload['persona'] as Map) : <String, dynamic>{};
+      final payload = data;
+      final user =
+          payload['user'] is Map
+              ? Map<String, dynamic>.from(payload['user'] as Map)
+              : <String, dynamic>{};
+      final persona =
+          payload['persona'] is Map
+              ? Map<String, dynamic>.from(payload['persona'] as Map)
+              : <String, dynamic>{};
       final token = payload['token']?.toString();
 
       final userId = (user['id'] ?? persona['id_persona'] ?? '').toString();
-      final userName = user['name']?.toString().trim() ??
+      final userName =
+          user['name']?.toString().trim() ??
           '${persona['nombre'] ?? ''} ${persona['apellido'] ?? ''}'.trim();
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('is_logged_in', true);
       await prefs.setString('user_id', userId);
-      await prefs.setString('user_name', userName.isNotEmpty ? userName : 'Usuario');
+      await prefs.setString(
+        'user_name',
+        userName.isNotEmpty ? userName : 'Usuario',
+      );
       if (persona['documento'] != null) {
         await prefs.setString('dni_detected', persona['documento'].toString());
       }
@@ -83,7 +96,10 @@ class _PlayReviewLoginSheetState extends State<PlayReviewLoginSheet> {
 
       if (!mounted) return;
       Navigator.of(context).pop();
-      await widget.onSuccess(userId, userName.isNotEmpty ? userName : 'Usuario');
+      await widget.onSuccess(
+        userId,
+        userName.isNotEmpty ? userName : 'Usuario',
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -99,7 +115,12 @@ class _PlayReviewLoginSheetState extends State<PlayReviewLoginSheet> {
     final tokens = context.bio;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(BioSpacing.xl, 0, BioSpacing.xl, BioSpacing.xl),
+      padding: const EdgeInsets.fromLTRB(
+        BioSpacing.xl,
+        0,
+        BioSpacing.xl,
+        BioSpacing.xl,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -23,10 +23,7 @@ class PacienteDebugJwtAuth {
           headers: AppConfig.jsonHeaders(
             appClient: BearerSessionAuth.appClientPaciente,
           ),
-          body: jsonEncode({
-            'user_id': userId,
-            'auto_pes': 0,
-          }),
+          body: jsonEncode({'user_id': userId, 'auto_pes': 0}),
         )
         .timeout(const Duration(seconds: AppConfig.httpTimeoutSeconds));
 
@@ -36,18 +33,11 @@ class PacienteDebugJwtAuth {
     } catch (_) {
       decoded = null;
     }
-    if (response.statusCode >= 200 &&
-        response.statusCode < 300 &&
-        decoded is Map &&
-        decoded['success'] == true) {
-      return Map<String, dynamic>.from(decoded);
+    final payload = unwrapApiContract(decoded, response.statusCode);
+    if (payload['token'] is! String || (payload['token'] as String).isEmpty) {
+      throw const FormatException();
     }
-
-    final apiMessage = decoded is Map ? decoded['message']?.toString().trim() : null;
-    final message = (apiMessage != null && apiMessage.isNotEmpty)
-        ? apiMessage
-        : 'No se pudo generar el JWT (${response.statusCode}) en ${uri.path}';
-    throw Exception(message);
+    return payload;
   }
 }
 
@@ -60,28 +50,33 @@ class PacienteDebugJwtLoginButton extends StatefulWidget {
       _PacienteDebugJwtLoginButtonState();
 }
 
-class _PacienteDebugJwtLoginButtonState extends State<PacienteDebugJwtLoginButton> {
+class _PacienteDebugJwtLoginButtonState
+    extends State<PacienteDebugJwtLoginButton> {
   bool _loading = false;
 
   Future<void> _login() async {
     if (_loading || !kDebugMode) return;
     setState(() => _loading = true);
     try {
-      final data = await PacienteDebugJwtAuth.loginAsUser(kPacienteDebugJwtUserId);
-      final payload = data['data'] is Map
-          ? Map<String, dynamic>.from(data['data'] as Map)
-          : <String, dynamic>{};
-      final user = payload['user'] is Map
-          ? Map<String, dynamic>.from(payload['user'] as Map)
-          : <String, dynamic>{};
-      final persona = payload['persona'] is Map
-          ? Map<String, dynamic>.from(payload['persona'] as Map)
-          : <String, dynamic>{};
+      final data = await PacienteDebugJwtAuth.loginAsUser(
+        kPacienteDebugJwtUserId,
+      );
+      final payload = data;
+      final user =
+          payload['user'] is Map
+              ? Map<String, dynamic>.from(payload['user'] as Map)
+              : <String, dynamic>{};
+      final persona =
+          payload['persona'] is Map
+              ? Map<String, dynamic>.from(payload['persona'] as Map)
+              : <String, dynamic>{};
       final token = payload['token']?.toString() ?? '';
 
-      final userId = (user['id'] ?? persona['id_persona'] ?? kPacienteDebugJwtUserId)
-          .toString();
-      final userName = user['name']?.toString().trim() ??
+      final userId =
+          (user['id'] ?? persona['id_persona'] ?? kPacienteDebugJwtUserId)
+              .toString();
+      final userName =
+          user['name']?.toString().trim() ??
           '${persona['nombre'] ?? ''} ${persona['apellido'] ?? ''}'.trim();
 
       final prefs = await SharedPreferences.getInstance();

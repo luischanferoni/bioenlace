@@ -9,11 +9,8 @@ import 'personalsalud_authenticated_shell.dart';
 import 'personalsalud_session_prefs.dart';
 import 'personalsalud_staff_activation_screen.dart';
 
-typedef PersonalsaludLoginSuccess = void Function(
-  String userId,
-  String userName,
-  BuildContext loginContext,
-);
+typedef PersonalsaludLoginSuccess =
+    void Function(String userId, String userName, BuildContext loginContext);
 
 /// Login del personal: usuario/contraseña la primera vez; luego huella del teléfono.
 Widget buildPersonalsaludLoginScreen({
@@ -23,10 +20,7 @@ Widget buildPersonalsaludLoginScreen({
 }
 
 class PersonalsaludLoginScreen extends StatefulWidget {
-  const PersonalsaludLoginScreen({
-    super.key,
-    required this.onLoginSuccess,
-  });
+  const PersonalsaludLoginScreen({super.key, required this.onLoginSuccess});
 
   final PersonalsaludLoginSuccess onLoginSuccess;
 
@@ -65,8 +59,10 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
   Future<void> _bootstrap() async {
     final prefs = await SharedPreferences.getInstance();
     final established =
-        prefs.getBool(PersonalsaludSessionPrefs.staffMobileLoginEstablishedKey) ??
-            false;
+        prefs.getBool(
+          PersonalsaludSessionPrefs.staffMobileLoginEstablishedKey,
+        ) ??
+        false;
     var hasToken = (prefs.getString('auth_token') ?? '').isNotEmpty;
     final bioAvailable = await _biometricAuth.isAvailable();
     final bioType = await _biometricAuth.getBiometricType();
@@ -153,7 +149,9 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
                 padding: BioSpacing.pageHorizontal.copyWith(top: BioSpacing.sm),
                 child: Text(
                   'Elegí con qué rol entrar',
-                  style: BioTypography.title.copyWith(fontWeight: FontWeight.w700),
+                  style: BioTypography.title.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               BioSpacing.gapH(BioSpacing.sm),
@@ -211,7 +209,8 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
       }
 
       final userId = (user['id'] ?? persona['id_persona'] ?? '').toString();
-      final userName = user['name']?.toString().trim() ??
+      final userName =
+          user['name']?.toString().trim() ??
           '${persona['nombre'] ?? ''} ${persona['apellido'] ?? ''}'.trim();
       final displayName = userName.isNotEmpty ? userName : profile.label;
 
@@ -228,9 +227,9 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
       final idServicio = int.tryParse('${session['id_servicio'] ?? 0}') ?? 0;
       final idPes =
           int.tryParse('${session['id_profesional_efector_servicio'] ?? 0}') ??
-              0;
-      final encounter =
-          (session['encounter_class']?.toString() ?? 'AMB').trim();
+          0;
+      final encounter = (session['encounter_class']?.toString() ?? 'AMB')
+          .trim();
       if (idEfector <= 0 || idServicio <= 0 || idPes <= 0) {
         throw Exception('La demo no trajo contexto operativo completo.');
       }
@@ -270,10 +269,7 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
         (route) => false,
       );
     } catch (e) {
-      _snack(
-        e.toString().replaceFirst('Exception: ', ''),
-        UiIntent.danger,
-      );
+      _snack(e.toString().replaceFirst('Exception: ', ''), UiIntent.danger);
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -294,9 +290,7 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
         username: username,
         password: password,
       );
-      final payload = data['data'] is Map
-          ? Map<String, dynamic>.from(data['data'] as Map)
-          : <String, dynamic>{};
+      final payload = data;
       final user = payload['user'] is Map
           ? Map<String, dynamic>.from(payload['user'] as Map)
           : <String, dynamic>{};
@@ -306,7 +300,8 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
       final token = payload['token']?.toString();
 
       final userId = (user['id'] ?? persona['id_persona'] ?? '').toString();
-      final userName = user['name']?.toString().trim() ??
+      final userName =
+          user['name']?.toString().trim() ??
           '${persona['nombre'] ?? ''} ${persona['apellido'] ?? ''}'.trim();
 
       final prefs = await SharedPreferences.getInstance();
@@ -327,10 +322,7 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
         context,
       );
     } catch (e) {
-      _snack(
-        e.toString().replaceFirst('Exception: ', ''),
-        UiIntent.danger,
-      );
+      _snack(e.toString().replaceFirst('Exception: ', ''), UiIntent.danger);
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -413,7 +405,9 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
 
   Future<void> _switchToCredentials() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(PersonalsaludSessionPrefs.staffMobileLoginEstablishedKey);
+    await prefs.remove(
+      PersonalsaludSessionPrefs.staffMobileLoginEstablishedKey,
+    );
     await prefs.remove('auth_token');
     await prefs.setBool('is_logged_in', false);
     if (!mounted) return;
@@ -426,9 +420,7 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
   @override
   Widget build(BuildContext context) {
     if (_checkingSession) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final tokens = context.bio;
@@ -539,8 +531,8 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
                       onPressed: _submitting
                           ? null
                           : () => setState(
-                                () => _obscurePassword = !_obscurePassword,
-                              ),
+                              () => _obscurePassword = !_obscurePassword,
+                            ),
                     ),
                   ),
                   obscureText: _obscurePassword,

@@ -6,6 +6,7 @@ use common\components\Platform\Core\Permission\ApiRoutePermissionResolver;
 use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
 use common\components\Platform\Core\Permission\BioenlaceSessionPermissions;
 use common\components\Platform\Core\Permission\FlowStepAccessService;
+use common\components\Platform\Core\Http\Contract\ApiResponder;
 use Yii;
 use yii\base\ActionFilter;
 use yii\web\Response;
@@ -146,19 +147,14 @@ class BioenlaceApiAccessControl extends ActionFilter
     protected function denyAccessJson(string $message = 'No tiene permiso para acceder a este recurso.'): void
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
-        Yii::$app->response->statusCode = 403;
-        $data = [
-            'success' => false,
-            'message' => $message,
-            'errors' => null,
-        ];
+        $meta = [];
         try {
             $dbg = Yii::$app->request->getHeaders()->get('X-Bioenlace-Debug');
             if ($dbg === '1' || $dbg === 1) {
                 $userId = Yii::$app->user->identity ? (int) Yii::$app->user->identity->id : null;
                 $roles = Yii::$app->session->get(BioenlaceSessionPermissions::SESSION_PREFIX_ROLES, []);
                 $routes = Yii::$app->session->get(BioenlaceSessionPermissions::SESSION_PREFIX_ROUTES, []);
-                $data['debug'] = [
+                $meta['debug'] = [
                     'route' => Yii::$app->requestedRoute,
                     'userId' => $userId,
                     'roles' => is_array($roles) ? $roles : [],
@@ -168,7 +164,14 @@ class BioenlaceApiAccessControl extends ActionFilter
         } catch (\Throwable $e) {
             // noop
         }
-        Yii::$app->response->data = $data;
+        $result = ApiResponder::error(
+            'forbidden_detail',
+            ['detail' => $message],
+            [],
+            $meta
+        );
+        Yii::$app->response->statusCode = $result['status'];
+        Yii::$app->response->data = $result['body'];
         Yii::$app->response->send();
         Yii::$app->end();
     }

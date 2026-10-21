@@ -32,6 +32,8 @@ class PacientesController extends BaseController
 {
     use ClinicalAccessTrait;
 
+    protected bool $contractResponses = true;
+
     /**
      * Resumen de historia clínica para abrir HC / preparar captura (PENDIENTE / EN_ATENCION).
      *
@@ -53,7 +55,7 @@ class PacientesController extends BaseController
     {
         $persona = Persona::findOne((int) $id);
         if (!$persona) {
-            return $this->error('Persona no encontrada', null, 404);
+            return $this->fail('not_found_detail', ['detail' => 'Persona no encontrada']);
         }
 
         $idEfector = (int) Yii::$app->user->getIdEfector();
@@ -75,13 +77,11 @@ class PacientesController extends BaseController
                 ? $bannerSvc->buildForInternacion((int) $persona->id_persona, $parentIdParam)
                 : $bannerSvc->buildForGuardia((int) $persona->id_persona, $parentIdParam, $idEfector);
             if ($bannerPack === null) {
-                return $this->error(
-                    $esInternacion
+                return $this->fail('not_found_detail', [
+                    'detail' => $esInternacion
                         ? 'Internación no válida para este paciente.'
                         : 'Guardia no válida para este paciente o efector.',
-                    null,
-                    404
-                );
+                ]);
             }
             $contextoEpisodio = $bannerPack['contexto_episodio'];
             $contextoInternacion = $bannerPack['contexto_internacion'];
@@ -207,7 +207,7 @@ class PacientesController extends BaseController
         $generoCode = (int) ($persona->genero ?? 0);
         $generoTexto = $generoLabels[$generoCode] ?? null;
 
-        return $this->success([
+        return $this->ok([
             'persona' => [
                 'id' => (int) $persona->id_persona,
                 'nombre_completo' => $persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N),
@@ -238,7 +238,7 @@ class PacientesController extends BaseController
             'captura' => $capturaFlags,
             'historia_clinica' => [],
             'total_historia_clinica' => 0,
-        ], 'OK');
+        ], ['message' => 'OK']);
     }
 
     /**
@@ -316,7 +316,9 @@ class PacientesController extends BaseController
                     'turnos_con_encounter' => $turnosConEncounter,
                     'documentacion_medico' => null,
                     'captura' => $capturaNeutra,
-                    'http_error' => $this->error('Turno no encontrado para este paciente.', null, 404),
+                    'http_error' => $this->fail('not_found_detail', [
+                        'detail' => 'Turno no encontrado para este paciente.',
+                    ]),
                 ];
             }
             $encounterId = $motivosLookup->encounterIdParaTurno($turnoIdParam);
@@ -351,7 +353,9 @@ class PacientesController extends BaseController
                     'turnos_con_encounter' => $turnosConEncounter,
                     'documentacion_medico' => null,
                     'captura' => $capturaNeutra,
-                    'http_error' => $this->error('Encounter no encontrado para este paciente.', null, 404),
+                    'http_error' => $this->fail('not_found_detail', [
+                        'detail' => 'Encounter no encontrado para este paciente.',
+                    ]),
                 ];
             }
             if ($encounter->appointment_id) {
@@ -404,11 +408,9 @@ class PacientesController extends BaseController
                 'documentacion_medico' => null,
                 'captura' => $turno !== null ? $this->capturaFlagsForTurno($turno) : $capturaNeutra,
                 'http_error' => $explicitTarget
-                    ? $this->error(
-                        'No tiene permiso para ver los motivos de consulta de este encounter.',
-                        null,
-                        403
-                    )
+                    ? $this->fail('forbidden_detail', [
+                        'detail' => 'No tiene permiso para ver los motivos de consulta de este encounter.',
+                    ])
                     : null,
             ];
         }
@@ -505,14 +507,11 @@ class PacientesController extends BaseController
                     'permitida' => null,
                     'motivo' => null,
                 ],
-                'http_error' => $this->error(
-                    'La historia clínica de este paciente ya no está disponible. '
-                    . 'Para un turno atendido usá la consulta documentada (ver consulta).',
-                    [
-                        'codigo' => 'HC_CERRADA',
-                        'ventana_medico' => $gate,
-                    ],
-                    403
+                'http_error' => $this->fail(
+                    'history_window_closed',
+                    [],
+                    [],
+                    ['ventana_medico' => $gate]
                 ),
             ];
         }
@@ -528,13 +527,11 @@ class PacientesController extends BaseController
                 'permitida' => null,
                 'motivo' => null,
             ],
-            'http_error' => $this->error(
-                "La historia clínica estará disponible {$min} minuto(s) antes del turno.",
-                [
-                    'codigo' => 'HC_ANTES_DE_VENTANA',
-                    'ventana_medico' => $gate,
-                ],
-                403
+            'http_error' => $this->fail(
+                'history_before_window',
+                ['minutes' => $min],
+                [],
+                ['ventana_medico' => $gate]
             ),
         ];
     }

@@ -34,6 +34,16 @@ errors:
     retryable: false
     default_detail: "No tenés permisos para realizar esta acción."
     message: "{detail}"
+  history_window_closed:
+    http_status: 403
+    intent: info
+    retryable: false
+    message: "La historia clínica de este paciente ya no está disponible. Para un turno atendido usá la consulta documentada (ver consulta)."
+  history_before_window:
+    http_status: 403
+    intent: info
+    retryable: false
+    message: "La historia clínica estará disponible {minutes} minuto(s) antes del turno."
   not_found_detail:
     http_status: 404
     intent: error

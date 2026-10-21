@@ -51,30 +51,23 @@ class HistoriaClinicaService {
 
       final response = await http.get(uri, headers: _headers);
 
-      final data = json.decode(response.body) as Map<String, dynamic>;
-      if (response.statusCode == 200) {
-        if (data['success'] == true && data['data'] != null) {
-          return HistoriaClinicaResponse.fromJson(
-              data['data'] as Map<String, dynamic>);
-        }
-        throw Exception(data['message'] ?? 'Error al obtener historia clínica');
+      final data = unwrapApiContract(
+        json.decode(response.body),
+        response.statusCode,
+      );
+      return HistoriaClinicaResponse.fromJson(data);
+    } on ApiContractException catch (e) {
+      if (e.code == 'history_before_window' ||
+          e.code == 'history_window_closed') {
+        final window = e.meta['ventana_medico'];
+        throw HistoriaClinicaVentanaException(
+          e.message,
+          ventanaMedico: window is Map
+              ? Map<String, dynamic>.from(window)
+              : const {},
+        );
       }
-      if (response.statusCode == 403) {
-        final extra = data['errors'];
-        final codigo = extra is Map ? extra['codigo']?.toString() : null;
-        if (codigo == 'HC_ANTES_DE_VENTANA') {
-          throw HistoriaClinicaVentanaException(
-            data['message']?.toString() ??
-                'La historia clínica aún no está disponible.',
-            ventanaMedico: extra is Map
-                ? Map<String, dynamic>.from(
-                    extra['ventana_medico'] as Map? ?? {},
-                  )
-                : const {},
-          );
-        }
-      }
-      throw Exception(data['message'] ?? 'Error al obtener historia clínica');
+      rethrow;
     } catch (e) {
       print('Error fetching historia clínica: $e');
       rethrow;
@@ -117,18 +110,11 @@ class HistoriaClinicaService {
         Uri.parse('${AppConfig.apiUrl}/personas/$id'),
         headers: _headers,
       );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['success'] == true && data['data'] != null) {
-          return PersonaData.fromJson(data['data'] as Map<String, dynamic>);
-        } else {
-          throw Exception(data['message'] ?? 'Error al obtener persona');
-        }
-      } else {
-        final errorData = json.decode(response.body);
-        throw Exception(errorData['message'] ?? 'Error al obtener persona');
-      }
+      final data = unwrapApiContract(
+        json.decode(response.body),
+        response.statusCode,
+      );
+      return PersonaData.fromJson(data);
     } catch (e) {
       print('Error fetching persona: $e');
       rethrow;
@@ -457,10 +443,10 @@ class MotivosConsultaPaciente {
     final imgsRaw = json['imagenes_adjuntas'];
     final imgs = imgsRaw is List
         ? imgsRaw
-            .whereType<Map>()
+              .whereType<Map>()
             .map((e) => MotivoImagenAdjunta.fromJson(Map<String, dynamic>.from(e)))
-            .where((e) => e.ref.isNotEmpty)
-            .toList()
+              .where((e) => e.ref.isNotEmpty)
+              .toList()
         : <MotivoImagenAdjunta>[];
     final resumenTxt = json['resumen']?.toString() ?? json['resumen_ia']?.toString();
     final intakeMap = json['motivos_intake'];
@@ -641,12 +627,12 @@ class DocumentacionMedico {
       tieneDatos: json['tiene_datos'] == true,
       secciones: raw is List
           ? raw
-              .whereType<Map>()
+                .whereType<Map>()
               .map((e) => DocumentacionMedicoSeccion.fromJson(
                     Map<String, dynamic>.from(e),
                   ))
-              .where((s) => s.titulo.isNotEmpty && s.items.isNotEmpty)
-              .toList()
+                .where((s) => s.titulo.isNotEmpty && s.items.isNotEmpty)
+                .toList()
           : const [],
     );
   }

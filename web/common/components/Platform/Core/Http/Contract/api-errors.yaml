@@ -541,6 +541,116 @@ errors:
     intent: error
     retryable: false
     message: "No se encontró la configuración de la consulta."
+  capture_subject_other_effector:
+    http_status: 422
+    intent: warning
+    retryable: false
+    message: "El paciente está en un efector diferente al seleccionado. Para cargar la consulta debe cambiar el efector desde el menú superior."
+  capture_encounter_class_invalid:
+    http_status: 422
+    intent: warning
+    retryable: false
+    message: "El tipo de encuentro determina el tipo de consulta que se creará, por lo que es importante seleccionar el correcto antes de proceder."
+  capture_active_inpatient_not_found:
+    http_status: 404
+    intent: warning
+    retryable: false
+    message: "No se encontró una internación activa de este paciente en el efector actual."
+  capture_inpatient_service_required:
+    http_status: 422
+    intent: warning
+    retryable: false
+    message: "No hay servicio institucional en sesión para documentar la internación. Seleccioná el servicio de piso en el menú superior."
+  capture_referral_not_found:
+    http_status: 404
+    intent: error
+    retryable: false
+    message: "Ocurrio un error con la derivacion, por favor comunicarse con los administradores de SISSE"
+  capture_surgery_not_found:
+    http_status: 404
+    intent: error
+    retryable: false
+    message: "No se encontró la cirugía indicada."
+  capture_surgery_patient_mismatch:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "La cirugía no corresponde al paciente de esta historia clínica."
+  capture_operating_room_unavailable:
+    http_status: 422
+    intent: warning
+    retryable: false
+    message: "La sala de quirófano asociada no está disponible."
+  capture_surgery_other_effector:
+    http_status: 403
+    intent: warning
+    retryable: false
+    message: "La cirugía pertenece a otro efector. Cambie el efector en el menú superior."
+  capture_emergency_not_found:
+    http_status: 404
+    intent: error
+    retryable: false
+    message: "Ocurrio un error con la Guardia, por favor comunicarse con los administradores de SISSE"
+  capture_appointment_context_required:
+    http_status: 422
+    intent: warning
+    retryable: false
+    message: "El paciente tiene un turno para hoy, para su servicio. Por favor busque el turno en la historia clínica y realice la atención desde dicho turno."
+  capture_patient_inpatient:
+    http_status: 422
+    intent: warning
+    retryable: false
+    message: "El paciente se encuentra actualmente internado. En su historia clínica verifique los detalles de la internación y comuníquese con el personal indicado para solicitar el alta de ser necesario"
+  capture_referral_context_required:
+    http_status: 422
+    intent: warning
+    retryable: false
+    message: "El paciente tiene un derivación para su servicio. Por favor busque el turno en la historia clínica y realice la atención desde dicho turno."
+  capture_service_context_unavailable:
+    http_status: 500
+    intent: error
+    retryable: true
+    message: "Ocurrio un error con la atencion, por favor comunicarse con los administradores de SISSE"
+  capture_referral_required:
+    http_status: 422
+    intent: warning
+    retryable: false
+    message: "Este servicio solo acepta consultas con derivación previa"
+  capture_previous_service_unavailable:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "Ocurrio un error, por favor comunicarse con los administradores de SISSE"
+  capture_context_unresolved:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "Ocurrio un error, por favor comunicarse con los administradores de SISSE"
+  capture_appointment_already_attended:
+    http_status: 422
+    intent: info
+    retryable: false
+    message: "Este turno ya fue atendido. Podés ver la consulta documentada, pero no registrar una nueva captura desde este turno."
+  capture_appointment_cancelled:
+    http_status: 422
+    intent: warning
+    retryable: false
+    message: "Este turno está cancelado. No se puede iniciar la captura clínica."
+  capture_appointment_unattended:
+    http_status: 422
+    intent: warning
+    retryable: false
+    message: "Este turno quedó sin atender. No se puede iniciar la captura clínica."
+  capture_appointment_resolving:
+    http_status: 422
+    intent: warning
+    retryable: false
+    message: "Este turno está en resolución de horario. Completá o cancelá la resolución antes de atender."
+  capture_appointment_unavailable:
+    http_status: 422
+    intent: warning
+    retryable: false
+    message: "Este turno no está disponible para captura clínica (estado: {status})."
   subject_not_found:
     http_status: 404
     intent: error

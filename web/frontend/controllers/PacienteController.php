@@ -14,6 +14,8 @@ use common\components\Domain\Clinical\Encounter\Application\Service\EncounterCap
 use common\components\Domain\Clinical\Encounter\Application\UseCase\RecordEncounterReason;
 use common\components\Domain\Clinical\Encounter\Application\Service\EpisodioTimelineService;
 use common\components\Domain\Clinical\Capture\Application\Service\EncounterDefinitionBootstrapService;
+use common\components\Platform\Core\Http\Contract\ApiErrorCatalog;
+use common\components\Platform\Core\Http\Contract\ApiException;
 use frontend\components\Clinical\EncounterCaptureFormViewBuilder;
 use frontend\components\Clinical\EpisodioTimelineViewBuilder;
 use frontend\components\Clinical\PacienteHistoriaTimelinePageBuilder;
@@ -358,9 +360,16 @@ class PacienteController extends Controller
                 $encounterClass = trim((string) ($encounter->encounter_class ?? ''));
             }
         } else {
-            $resultadoValidacion = EncounterCaptureContextService::validarPermisoAtencion($parent, $parentId, $paciente);
-            if (!$resultadoValidacion['success']) {
-                return $resultadoValidacion;
+            try {
+                $resultadoValidacion = EncounterCaptureContextService::validarPermisoAtencion(
+                    $parent,
+                    $parentId,
+                    $paciente
+                );
+            } catch (ApiException $e) {
+                $error = ApiErrorCatalog::resolve($e->errorCode(), $e->params());
+
+                return ['success' => false, 'msg' => $error['message']];
             }
 
             $idServicio = (int) ($resultadoValidacion['idServicio'] ?? 0);
@@ -368,7 +377,9 @@ class PacienteController extends Controller
         }
 
         if ($idServicio <= 0 || $encounterClass === '') {
-            return ['success' => false, 'msg' => 'Error: Servicio sin configuración'];
+            $error = ApiErrorCatalog::resolve('encounter_definition_not_found');
+
+            return ['success' => false, 'msg' => $error['message']];
         }
 
         // Misma política que el guardado: si falta fila IMP/AMB/EMER, bootstrap con plantilla del catálogo
@@ -377,10 +388,12 @@ class PacienteController extends Controller
             ->ensureForServiceAndClass($idServicio, $encounterClass);
 
         if (!$configuracion instanceof EncounterDefinition) {
-            return ['success' => false, 'msg' => 'Error: Servicio sin configuración'];
+            $error = ApiErrorCatalog::resolve('encounter_definition_not_found');
+
+            return ['success' => false, 'msg' => $error['message']];
         }
 
-        return ['success' => true, 'msg' => '', 'idConfiguracion' => $configuracion->id];
+        return ['success' => true, 'idConfiguracion' => $configuracion->id];
     }
 
 }

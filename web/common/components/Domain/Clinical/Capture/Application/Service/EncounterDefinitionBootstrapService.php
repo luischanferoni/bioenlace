@@ -4,6 +4,7 @@ namespace common\components\Domain\Clinical\Capture\Application\Service;
 
 use common\components\Domain\Clinical\Capture\Application\Service\OperationalContextResolver;
 use common\components\Domain\Clinical\Capture\Domain\Catalog\EncounterDefinitionWorkflowCatalog;
+use common\components\Platform\Core\Http\Contract\ApiException;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterDefinition;
 use common\models\Organization\Servicio;
@@ -91,14 +92,19 @@ final class EncounterDefinitionBootstrapService
                 && !empty($body['parent'])
                 && !empty($body['parent_id'])
             ) {
-                $ctx = \common\components\Domain\Clinical\Encounter\Application\Service\EncounterCaptureContextService::validarPermisoAtencion(
-                    $body['parent'],
-                    $body['parent_id'],
-                    $paciente
-                );
-                if (!empty($ctx['success'])) {
+                try {
+                    $ctx = \common\components\Domain\Clinical\Encounter\Application\Service\EncounterCaptureContextService::validarPermisoAtencion(
+                        $body['parent'],
+                        $body['parent_id'],
+                        $paciente
+                    );
                     $idServicio = isset($ctx['idServicio']) ? (int) $ctx['idServicio'] : null;
                     $encounterClass = isset($ctx['encounterClass']) ? (string) $ctx['encounterClass'] : null;
+                } catch (ApiException $e) {
+                    Yii::debug(
+                        'No se resolvió el contexto del parent para bootstrap: ' . $e->errorCode(),
+                        __METHOD__
+                    );
                 }
             }
         }

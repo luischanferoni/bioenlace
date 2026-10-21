@@ -12,6 +12,7 @@ use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Scheduling\Turno;
 use common\models\Clinical\InpatientStay;
 use common\models\Organization\ServiciosEfector;
+use common\components\Platform\Core\Http\Contract\ApiException;
 use Yii;
 
 /**
@@ -23,7 +24,8 @@ final class EncounterCaptureContextService
     /**
      * @param string|null $parent {@see Encounter::PARENT_*}
      * @param int|string|null $parentId
-     * @return array{success: bool, msg: string, idServicio: int|null, encounterClass: string|null}
+     * @return array{idServicio: int|null, encounterClass: string|null}
+     * @throws ApiException cuando el contexto no permite iniciar la captura
      */
     public static function validarPermisoAtencion($parent, $parentId, Persona $paciente): array
     {
@@ -45,12 +47,7 @@ final class EncounterCaptureContextService
             }
 
             if (!$efectorCoincide) {
-                return [
-                    'success' => false,
-                    'msg' => 'El paciente está en un efector diferente al seleccionado. Para cargar la consulta debe cambiar el efector desde el menú superior.',
-                    'idServicio' => null,
-                    'encounterClass' => null,
-                ];
+                throw new ApiException('capture_subject_other_effector');
             }
         }
 
@@ -65,12 +62,7 @@ final class EncounterCaptureContextService
             ], true);
 
             if (!$isValidEncounter) {
-                return [
-                    'success' => false,
-                    'msg' => 'El tipo de encuentro determina el tipo de consulta que se creará, por lo que es importante seleccionar el correcto antes de proceder.',
-                    'idServicio' => null,
-                    'encounterClass' => null,
-                ];
+                throw new ApiException('capture_encounter_class_invalid');
             }
 
             $parent = ($encounterClass === Encounter::ENCOUNTER_CLASS_AMB)
@@ -86,18 +78,10 @@ final class EncounterCaptureContextService
             if (!$turno) {
                 Yii::warning('Llamada a getModeloConsulta parentId a un Turno que no existe, parentId: ' . $parentId);
 
-                return [
-                    'success' => false,
-                    'msg' => 'No se encontró el turno indicado.',
-                    'idServicio' => null,
-                    'encounterClass' => null,
-                ];
+                throw new ApiException('appointment_not_found');
             }
 
-            $bloqueoTurno = self::mensajeSiTurnoNoCapturable($turno);
-            if ($bloqueoTurno !== null) {
-                return $bloqueoTurno;
-            }
+            self::validarTurnoCapturable($turno);
 
             $idServicio = $turno->id_servicio_asignado;
             $encounterClass = Encounter::ENCOUNTER_CLASS_AMB;
@@ -113,22 +97,12 @@ final class EncounterCaptureContextService
                     __METHOD__
                 );
 
-                return [
-                    'success' => false,
-                    'msg' => 'No se encontró una internación activa de este paciente en el efector actual.',
-                    'idServicio' => null,
-                    'encounterClass' => null,
-                ];
+                throw new ApiException('capture_active_inpatient_not_found');
             }
 
             $idServicio = self::resolveServicioParaInternacion($internacion);
             if ($idServicio <= 0) {
-                return [
-                    'success' => false,
-                    'msg' => 'No hay servicio institucional en sesión para documentar la internación. Seleccioná el servicio de piso en el menú superior.',
-                    'idServicio' => null,
-                    'encounterClass' => null,
-                ];
+                throw new ApiException('capture_inpatient_service_required');
             }
 
             // Asegura episode + care plan inpatient + encounter IMP abierto (contexto de evolución del episodio).
@@ -155,12 +129,7 @@ final class EncounterCaptureContextService
             if (!$derivacion) {
                 Yii::warning('Llamada a getModeloConsulta parentId a una Derivacion que no existe, parentId: ' . $parentId);
 
-                return [
-                    'success' => false,
-                    'msg' => 'Ocurrio un error con la derivacion, por favor comunicarse con los administradores de SISSE',
-                    'idServicio' => null,
-                    'encounterClass' => null,
-                ];
+                throw new ApiException('capture_referral_not_found');
             }
 
             $idServicio = $derivacion->id_servicio;
@@ -172,38 +141,18 @@ final class EncounterCaptureContextService
             if (!$cirugia) {
                 Yii::warning('validarPermisoAtencion: cirugía inexistente, parentId: ' . $parentId);
 
-                return [
-                    'success' => false,
-                    'msg' => 'No se encontró la cirugía indicada.',
-                    'idServicio' => null,
-                    'encounterClass' => null,
-                ];
+                throw new ApiException('capture_surgery_not_found');
             }
             if ((int) $cirugia->id_persona !== (int) $paciente->id_persona) {
-                return [
-                    'success' => false,
-                    'msg' => 'La cirugía no corresponde al paciente de esta historia clínica.',
-                    'idServicio' => null,
-                    'encounterClass' => null,
-                ];
+                throw new ApiException('capture_surgery_patient_mismatch');
             }
             $sala = $cirugia->sala;
             if (!$sala || $sala->deleted_at !== null) {
-                return [
-                    'success' => false,
-                    'msg' => 'La sala de quirófano asociada no está disponible.',
-                    'idServicio' => null,
-                    'encounterClass' => null,
-                ];
+                throw new ApiException('capture_operating_room_unavailable');
             }
             $efectorSesion = Yii::$app->user->getIdEfector();
             if ($efectorSesion && (int) $sala->id_efector !== (int) $efectorSesion) {
-                return [
-                    'success' => false,
-                    'msg' => 'La cirugía pertenece a otro efector. Cambie el efector en el menú superior.',
-                    'idServicio' => null,
-                    'encounterClass' => null,
-                ];
+                throw new ApiException('capture_surgery_other_effector');
             }
             $idServicio = Yii::$app->user->getServicioActual();
             $encounterClass = Encounter::ENCOUNTER_CLASS_IMP;
@@ -215,12 +164,7 @@ final class EncounterCaptureContextService
             if (!$guardia) {
                 Yii::warning('Llamada a getModeloConsulta parentId a una Guardia que no existe, parentId: ' . $parentId);
 
-                return [
-                    'success' => false,
-                    'msg' => 'Ocurrio un error con la Guardia, por favor comunicarse con los administradores de SISSE',
-                    'idServicio' => null,
-                    'encounterClass' => null,
-                ];
+                throw new ApiException('capture_emergency_not_found');
             }
 
             $idServicio = Yii::$app->user->getServicioActual();
@@ -238,12 +182,7 @@ final class EncounterCaptureContextService
                 );
 
                 if ($turno) {
-                    return [
-                        'success' => false,
-                        'msg' => 'El paciente tiene un turno para hoy, para su servicio. Por favor busque el turno en la historia clínica y realice la atención desde dicho turno.',
-                        'idServicio' => null,
-                        'encounterClass' => null,
-                    ];
+                    throw new ApiException('capture_appointment_context_required');
                 }
 
                 $idInpatientStay = InpatientStay::personaInternadaEnEfector(
@@ -252,12 +191,7 @@ final class EncounterCaptureContextService
                 );
 
                 if ($idInpatientStay) {
-                    return [
-                        'success' => false,
-                        'msg' => 'El paciente se encuentra actualmente internado. En su historia clínica verifique los detalles de la internación y comuníquese con el personal indicado para solicitar el alta de ser necesario',
-                        'idServicio' => null,
-                        'encounterClass' => null,
-                    ];
+                    throw new ApiException('capture_patient_inpatient');
                 }
 
                 $derivaciones = ConsultaDerivaciones::getDerivacionesActivasPorPacientePorServiciosPorEfector(
@@ -267,12 +201,7 @@ final class EncounterCaptureContextService
                 );
 
                 if (count($derivaciones) > 0) {
-                    return [
-                        'success' => false,
-                        'msg' => 'El paciente tiene un derivación para su servicio. Por favor busque el turno en la historia clínica y realice la atención desde dicho turno.',
-                        'idServicio' => null,
-                        'encounterClass' => null,
-                    ];
+                    throw new ApiException('capture_referral_context_required');
                 }
 
                 $servicio = ServiciosEfector::find()->andWhere([
@@ -288,24 +217,14 @@ final class EncounterCaptureContextService
                         . Yii::$app->user->getIdEfector()
                     );
 
-                    return [
-                        'success' => false,
-                        'msg' => 'Ocurrio un error con la atencion, por favor comunicarse con los administradores de SISSE',
-                        'idServicio' => null,
-                        'encounterClass' => null,
-                    ];
+                    throw new ApiException('capture_service_context_unavailable');
                 }
 
                 if (
                     $servicio->formas_atencion == ServiciosEfector::DERIVACION_DELEGAR_A_CADA_PROFESIONAL
                     || $servicio->formas_atencion == ServiciosEfector::DERIVACION_ORDEN_LLEGADA_PARA_TODOS
                 ) {
-                    return [
-                        'success' => false,
-                        'msg' => 'Este servicio solo acepta consultas con derivación previa',
-                        'idServicio' => null,
-                        'encounterClass' => null,
-                    ];
+                    throw new ApiException('capture_referral_required');
                 }
             }
         }
@@ -316,18 +235,10 @@ final class EncounterCaptureContextService
             if (!$turno) {
                 Yii::warning('Llamada a getModeloConsulta parentId a un Turno que no existe, parentId: ' . $parentId);
 
-                return [
-                    'success' => false,
-                    'msg' => 'No se encontró el turno indicado.',
-                    'idServicio' => null,
-                    'encounterClass' => null,
-                ];
+                throw new ApiException('appointment_not_found');
             }
 
-            $bloqueoTurno = self::mensajeSiTurnoNoCapturable($turno);
-            if ($bloqueoTurno !== null) {
-                return $bloqueoTurno;
-            }
+            self::validarTurnoCapturable($turno);
 
             $idServicio = $turno->id_servicio_asignado;
             $idEfector = Yii::$app->user->getIdEfector();
@@ -342,12 +253,7 @@ final class EncounterCaptureContextService
             if (!isset($idServiocioPP)) {
                 Yii::warning('Llamada a getModeloConsulta con un servicio que no tiene pase previo');
 
-                return [
-                    'success' => false,
-                    'msg' => 'Ocurrio un error, por favor comunicarse con los administradores de SISSE',
-                    'idServicio' => null,
-                    'encounterClass' => null,
-                ];
+                throw new ApiException('capture_previous_service_unavailable');
             }
 
             $idServicio = $idServiocioPP;
@@ -358,17 +264,10 @@ final class EncounterCaptureContextService
         if ($parentId === null) {
             Yii::warning('Llamada a getModeloConsulta sin parentId');
 
-            return [
-                'success' => false,
-                'msg' => 'Ocurrio un error, por favor comunicarse con los administradores de SISSE',
-                'idServicio' => null,
-                'encounterClass' => null,
-            ];
+            throw new ApiException('capture_context_unresolved');
         }
 
         return [
-            'success' => true,
-            'msg' => '',
             'idServicio' => $idServicio,
             'encounterClass' => $encounterClass,
         ];
@@ -377,37 +276,27 @@ final class EncounterCaptureContextService
     /**
      * Captura permitida en PENDIENTE o EN_ATENCION. Otros estados: mensaje claro (sin formulario).
      *
-     * @return array{success: false, msg: string, idServicio: null, encounterClass: null}|null
+     * @throws ApiException cuando el estado del turno no permite capturar
      */
-    private static function mensajeSiTurnoNoCapturable(Turno $turno): ?array
+    private static function validarTurnoCapturable(Turno $turno): void
     {
         $estado = (string) $turno->estado;
         if ($estado === Turno::ESTADO_PENDIENTE || $estado === Turno::ESTADO_EN_ATENCION) {
-            return null;
+            return;
         }
 
         Yii::warning(
             'validarPermisoAtencion: turno no capturable, parentId=' . $turno->id_turnos . ' estado=' . $estado
         );
 
-        if ($estado === Turno::ESTADO_ATENDIDO) {
-            $msg = 'Este turno ya fue atendido. Podés ver la consulta documentada, pero no registrar una nueva captura desde este turno.';
-        } elseif ($estado === Turno::ESTADO_CANCELADO) {
-            $msg = 'Este turno está cancelado. No se puede iniciar la captura clínica.';
-        } elseif ($estado === Turno::ESTADO_SIN_ATENDER) {
-            $msg = 'Este turno quedó sin atender. No se puede iniciar la captura clínica.';
-        } elseif ($estado === Turno::ESTADO_EN_RESOLUCION) {
-            $msg = 'Este turno está en resolución de horario. Completá o cancelá la resolución antes de atender.';
-        } else {
-            $msg = 'Este turno no está disponible para captura clínica (estado: ' . $estado . ').';
-        }
-
-        return [
-            'success' => false,
-            'msg' => $msg,
-            'idServicio' => null,
-            'encounterClass' => null,
-        ];
+        $errorCode = match ($estado) {
+            Turno::ESTADO_ATENDIDO => 'capture_appointment_already_attended',
+            Turno::ESTADO_CANCELADO => 'capture_appointment_cancelled',
+            Turno::ESTADO_SIN_ATENDER => 'capture_appointment_unattended',
+            Turno::ESTADO_EN_RESOLUCION => 'capture_appointment_resolving',
+            default => 'capture_appointment_unavailable',
+        };
+        throw new ApiException($errorCode, ['status' => $estado]);
     }
 
     /**

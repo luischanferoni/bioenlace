@@ -38,7 +38,7 @@ class ClinicalTextIaMetadataTest extends Unit
     {
         $categorias = [
             ['titulo' => 'Motivos de consulta', 'modelo' => 'EncounterReason'],
-            ['titulo' => 'Diagnóstico', 'modelo' => 'DiagnosticoConsulta'],
+            ['titulo' => 'Diagnóstico', 'modelo' => 'EncounterDiagnosis'],
         ];
 
         $prompt = ClinicalTextIaMetadata::buildEncounterCaptureExtractionPrompt('gripe', $categorias);

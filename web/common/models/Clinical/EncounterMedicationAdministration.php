@@ -3,9 +3,9 @@
 namespace common\models\Clinical;
 
 /**
- * Tipología de captura — suministro/administración. Persistencia MedicationAdministration.
+ * Capture model for medication administration, persisted as MedicationAdministration.
  */
-final class ConsultaSuministroMedicamento extends \yii\base\Model
+final class EncounterMedicationAdministration extends \yii\base\Model
 {
     /**
      * @return list<string>

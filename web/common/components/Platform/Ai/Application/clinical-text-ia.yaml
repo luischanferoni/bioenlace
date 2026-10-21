@@ -128,26 +128,26 @@ encounter_capture_extraction:
     - Si el texto narra un síntoma o queja (dolor, cefalea, tos, etc.) y además un diagnóstico, el síntoma va en Motivos y el diagnóstico en Diagnóstico (no omitas el Motivo).
   category_hints:
     EncounterReason: queja o síntoma referido (cefalea, dolor, malestar, etc.); no lo dejes vacío si el texto lo menciona
-    DiagnosticoConsulta: diagnóstico, evolución o enfermedad nombrada por el profesional
+    EncounterDiagnosis: diagnóstico, evolución o enfermedad nombrada por el profesional
     EncounterMedication: medicación mencionada o indicada; objetos Nombre+Tipo(mentioned|ordered)+Cantidad+Via+Frecuencia+tipos/duración — si Tipo=ordered exigir Cantidad y Frecuencia; mentioned basta el nombre
     EncounterPractice: mediciones o prácticas realizadas en el encounter (ECG, etc.); objetos Practica+Resultado+Codigo — Resultado y Codigo opcionales; nunca reposo/dieta/control; las cifras de signos vitales (TA, FC, FR, SatO2, temp) van en EncounterNursingCare
     EncounterReferralRequest: derivación/pedido a otro servicio del centro O conducta de guardia (pase a internación/UCI, derivación a otra institución); campos Servicio (área institucional), Acto, Modo (consulta|interconsulta|practica|estudio); si el profesional indica internar / UCI / cama, dejalo explícito en Servicio o Acto (p. ej. "internación")
     EncounterInstruction: instrucciones al paciente (reposo, hidratación, control, alta domiciliaria, pautas de alarma); objetos Indicacion+Tipo(counseling|conditional|follow_up)+Plazo dias — plazo solo si Tipo=follow_up o hay días explícitos; nunca signos vitales ni TA; en guardia, si da el alta o indica control, reflejalo acá
     EncounterNursingCare: signos vitales medidos o dictados durante el encounter (TA sistólica/diastólica, FC, FR, saturación O2, temperatura, glucemia, Glasgow, peso, talla); sugerí cargarlos si el profesional menciona cifras o si faltan en el episodio
-    ConsultaPracticasOftalmologia: práctica o procedimiento oftalmológico
-    ConsultaPracticasOftalmologiaEstudios: estudio oftalmológico solicitado o realizado
-    ConsultasRecetaLentes: receta o indicación de lentes
-    ConsultaOdontologiaPracticas: práctica odontológica
-    ConsultaOdontologiaDiagnosticos: diagnóstico odontológico
-    ConsultaOdontologiaEstados: estado dental o pieza
-    ConsultaRegimen: régimen o indicación de internación
-    ConsultaBalanceHidrico: balance hídrico
+    OphthalmologyPractice: práctica o procedimiento oftalmológico
+    OphthalmologyStudy: estudio oftalmológico solicitado o realizado
+    OphthalmologyLensPrescription: receta o indicación de lentes
+    EncounterDentalPractice: práctica odontológica
+    EncounterDentalDiagnosis: diagnóstico odontológico
+    EncounterDentalStatus: estado dental o pieza
+    EncounterNutritionOrder: régimen o indicación de internación
+    EncounterFluidBalance: balance hídrico
   # Overrides de política de post-proceso (defaults en ExtractionPostProcessPolicy).
   # No es fuente de verdad de integridad clínica: solo knobs operativos.
   post_process:
     reason_model: EncounterReason
     diagnosis_models:
-      - DiagnosticoConsulta
+      - EncounterDiagnosis
     filter_non_clinical_extractions:
       enabled: true
       strict_category_models:

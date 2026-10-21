@@ -3,9 +3,9 @@
 namespace common\models\Clinical;
 
 /**
- * Tipología de captura — receta de lentes. Persistencia VisionPrescription. Sin tabla legacy.
+ * Capture model for lens prescriptions, persisted as VisionPrescription.
  */
-final class ConsultasRecetaLentes extends \yii\base\Model
+final class OphthalmologyLensPrescription extends \yii\base\Model
 {
     /**
      * @return list<string>

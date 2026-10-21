@@ -1164,7 +1164,7 @@ class DocumentEncounter extends Component
                         80
                     );
                     break;
-                case 'DiagnosticoConsulta':
+                case 'EncounterDiagnosis':
                     $this->persistConditions($encounter, $payload);
                     $stat['accion'] = 'conditions_sin_codigo_omitidas_coding_auto';
                     break;
@@ -1230,32 +1230,32 @@ class DocumentEncounter extends Component
                     $this->persistServiceRequests($encounter, $payload, $modelo, null);
                     $stat['accion'] = 'derivaciones';
                     break;
-                case 'ConsultaOdontologiaPracticas':
+                case 'EncounterDentalPractice':
                     $carePlan = $this->odontology->persistPractices($encounter, $payload, $carePlan);
                     $stat['accion'] = 'odontologia_practicas';
                     break;
-                case 'ConsultaOdontologiaDiagnosticos':
+                case 'EncounterDentalDiagnosis':
                     $this->odontology->persistDiagnostics($encounter, $payload);
                     $stat['accion'] = 'odontologia_dx';
                     break;
-                case 'ConsultaOdontologiaEstados':
+                case 'EncounterDentalStatus':
                     $this->odontology->persistToothStates($encounter, $payload);
                     $stat['accion'] = 'odontologia_estados';
                     break;
-                case 'ConsultaPracticasOftalmologia':
-                case 'ConsultaPracticasOftalmologiaEstudios':
+                case 'OphthalmologyPractice':
+                case 'OphthalmologyStudy':
                     $this->ophthalmology->persistPractices($encounter, $payload);
                     $stat['accion'] = 'oftalmologia';
                     break;
-                case 'ConsultasRecetaLentes':
+                case 'OphthalmologyLensPrescription':
                     $this->ophthalmology->persistLensPrescription($encounter, $payload);
                     $stat['accion'] = 'receta_lentes';
                     break;
-                case 'ConsultaBalanceHidrico':
+                case 'EncounterFluidBalance':
                     $this->persistFluidBalances($encounter, $payload);
                     $stat['accion'] = 'balance_hidrico';
                     break;
-                case 'ConsultaRegimen':
+                case 'EncounterNutritionOrder':
                     $this->persistRegimens($encounter, $payload);
                     $stat['accion'] = 'regimen';
                     break;
@@ -1264,7 +1264,7 @@ class DocumentEncounter extends Component
                     $stat['accion'] = 'signos_vitales';
                     $stat['created'] = $created;
                     break;
-                case 'ConsultaSuministroMedicamento':
+                case 'EncounterMedicationAdministration':
                     $this->persistMedicationSupplies($encounter, $payload);
                     $stat['accion'] = 'suministro';
                     break;

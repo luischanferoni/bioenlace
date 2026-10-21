@@ -11,7 +11,7 @@ class ExtractionPostProcessServiceTest extends Unit
 {
     private const CATEGORIAS_AMB = [
         ['titulo' => 'Motivos de consulta', 'modelo' => 'EncounterReason', 'requerido' => false],
-        ['titulo' => 'Diagnóstico', 'modelo' => 'DiagnosticoConsulta', 'requerido' => false],
+        ['titulo' => 'Diagnóstico', 'modelo' => 'EncounterDiagnosis', 'requerido' => false],
     ];
 
     protected function _after(): void

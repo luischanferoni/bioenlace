@@ -665,7 +665,7 @@ final class EpisodeCaptureDedupService
 
     private function isConditionCategory(string $model, string $titleLower): bool
     {
-        if (in_array($model, ['DiagnosticoConsulta', 'ConsultaOdontologiaDiagnosticos'], true)) {
+        if (in_array($model, ['EncounterDiagnosis', 'EncounterDentalDiagnosis'], true)) {
             return true;
         }
 

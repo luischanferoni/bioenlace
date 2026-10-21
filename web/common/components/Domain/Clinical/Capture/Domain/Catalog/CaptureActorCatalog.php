@@ -55,7 +55,7 @@ final class CaptureActorCatalog
             return [];
         }
         if ($encounterClass === EncounterClassCatalog::IMP) {
-            return ['EncounterNursingCare', 'ConsultaBalanceHidrico'];
+            return ['EncounterNursingCare', 'EncounterFluidBalance'];
         }
         if ($encounterClass === EncounterClassCatalog::EMER) {
             return ['EncounterNursingCare'];

@@ -72,7 +72,7 @@ final class OdontologyEncounterService
     }
 
     /**
-     * @param mixed $payload filas IA / JSON (ex ConsultaOdontologiaPracticas)
+     * @param mixed $payload filas IA / JSON de prácticas dentales
      */
     public function persistPractices(Encounter $encounter, $payload, ?CarePlan $carePlan = null): CarePlan
     {
@@ -165,7 +165,7 @@ final class OdontologyEncounterService
     }
 
     /**
-     * @param mixed $payload filas ex {@see \common\models\Clinical\ConsultaOdontologiaEstados}
+     * @param mixed $payload filas de estado dental
      */
     public function persistToothStates(Encounter $encounter, $payload): void
     {
@@ -194,7 +194,7 @@ final class OdontologyEncounterService
     }
 
     /**
-     * @param mixed $payload filas ex ConsultaOdontologiaDiagnosticos
+     * @param mixed $payload filas de diagnósticos dentales
      */
     public function persistDiagnostics(Encounter $encounter, $payload): void
     {

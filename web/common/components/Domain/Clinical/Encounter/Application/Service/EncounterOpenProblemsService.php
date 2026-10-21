@@ -20,8 +20,8 @@ final class EncounterOpenProblemsService
 {
     /** Modelos de categoría cuyo contenido es diagnóstico (se abrirá al guardar). */
     private const CURRENT_DIAGNOSIS_MODELS = [
-        'DiagnosticoConsulta',
-        'ConsultaOdontologiaDiagnosticos',
+        'EncounterDiagnosis',
+        'EncounterDentalDiagnosis',
     ];
 
     private PatientActiveConditionQueryService $conditions;

@@ -3,9 +3,9 @@
 namespace common\models\Clinical;
 
 /**
- * Tipología de captura — prácticas oftalmológicas. Sin tabla legacy.
+ * Capture model for ophthalmology practices.
  */
-final class ConsultaPracticasOftalmologia extends \yii\base\Model
+final class OphthalmologyPractice extends \yii\base\Model
 {
     /**
      * @return list<string>

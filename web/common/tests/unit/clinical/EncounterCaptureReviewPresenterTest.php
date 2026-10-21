@@ -100,7 +100,7 @@ class EncounterCaptureReviewPresenterTest extends Unit
                 ],
                 [
                     'titulo' => 'Diagnóstico',
-                    'modelo' => 'DiagnosticoConsulta',
+                    'modelo' => 'EncounterDiagnosis',
                     'requerido' => false,
                     'campos_requeridos' => [],
                 ],

@@ -18,7 +18,7 @@ class CaptureCategoryResolverTest extends Unit
         $modelos = array_column($cats, 'modelo');
 
         $this->assertNotContains('EncounterNursingCare', $modelos);
-        $this->assertContains('DiagnosticoConsulta', $modelos);
+        $this->assertContains('EncounterDiagnosis', $modelos);
     }
 
     public function testEnfermeriaImpAgregaSignosVitalesSugeridos(): void
@@ -37,7 +37,7 @@ class CaptureCategoryResolverTest extends Unit
         $this->assertArrayHasKey('EncounterNursingCare', $byModelo);
         $this->assertTrue($byModelo['EncounterNursingCare']['sugerido']);
         $this->assertFalse($byModelo['EncounterNursingCare']['requerido']);
-        $this->assertTrue($byModelo['ConsultaBalanceHidrico']['sugerido']);
+        $this->assertTrue($byModelo['EncounterFluidBalance']['sugerido']);
         $this->assertSame('Signos vitales', $cats[0]['titulo']);
     }
 

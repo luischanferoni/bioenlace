@@ -6,10 +6,10 @@ use common\components\Domain\Clinical\Capture\Domain\RowContract\OftalmologiaEst
 use common\models\Clinical\Input\OftalmologiaEstudioInput;
 
 /**
- * Tipología de captura — estudios oftalmológicos. Sin tabla legacy.
+ * Capture model for ophthalmology studies.
  * Contrato Domain: {@see OftalmologiaEstudioRowContract}.
  */
-final class ConsultaPracticasOftalmologiaEstudios extends \yii\base\Model
+final class OphthalmologyStudy extends \yii\base\Model
 {
     /**
      * @return list<string>

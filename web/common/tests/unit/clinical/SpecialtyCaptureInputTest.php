@@ -3,6 +3,7 @@
 namespace common\tests\unit\clinical;
 
 use common\components\Domain\Clinical\Capture\Application\Service\RowContractService;
+use common\components\Domain\Clinical\Specialty\Domain\EncounterDefinitionSpecialtyRegistry;
 
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\Capture\Domain\Policy\CaptureCompletenessPolicy;
@@ -44,13 +45,22 @@ class SpecialtyCaptureInputTest extends Unit
             [
                 [
                     'titulo' => 'Prácticas odontológicas',
-                    'modelo' => 'ConsultaOdontologiaPracticas',
+                    'modelo' => 'EncounterDentalPractice',
                     'requerido' => false,
                     'campos_requeridos' => OdontologiaItemInput::promptFieldNames(),
                 ],
             ]
         );
         $this->assertTrue($result['complete'], $result['message']);
+    }
+
+    public function testOdontologiaRowContractRecognizesAllDentalEncounterCategories(): void
+    {
+        $contract = new \common\components\Domain\Clinical\Capture\Domain\RowContract\OdontologiaItemRowContract();
+
+        $this->assertTrue($contract->matchesModelo('EncounterDentalPractice'));
+        $this->assertTrue($contract->matchesModelo('EncounterDentalDiagnosis'));
+        $this->assertTrue($contract->matchesModelo('EncounterDentalStatus'));
     }
 
     public function testCompletenessDiscoversOftalmologiaContractByModelName(): void
@@ -65,12 +75,30 @@ class SpecialtyCaptureInputTest extends Unit
             [
                 [
                     'titulo' => 'Estudios oftalmológicos',
-                    'modelo' => 'ConsultaPracticasOftalmologiaEstudios',
+                    'modelo' => 'OphthalmologyStudy',
                     'requerido' => false,
                     'campos_requeridos' => OftalmologiaEstudioInput::promptFieldNames(),
                 ],
             ]
         );
         $this->assertTrue($result['complete'], $result['message']);
+    }
+
+    public function testOphthalmologyEncounterCategoriesResolveToSpecialty(): void
+    {
+        $registry = new EncounterDefinitionSpecialtyRegistry();
+
+        $this->assertSame(
+            EncounterDefinitionSpecialtyRegistry::SPECIALTY_OPHTHALMOLOGY,
+            $registry->specialtyForModel('OphthalmologyPractice')
+        );
+        $this->assertSame(
+            EncounterDefinitionSpecialtyRegistry::SPECIALTY_OPHTHALMOLOGY,
+            $registry->specialtyForModel('OphthalmologyStudy')
+        );
+        $this->assertSame(
+            EncounterDefinitionSpecialtyRegistry::SPECIALTY_OPHTHALMOLOGY,
+            $registry->specialtyForModel('OphthalmologyLensPrescription')
+        );
     }
 }

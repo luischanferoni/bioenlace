@@ -4,10 +4,10 @@ namespace common\components\Domain\Clinical\Capture\Domain\RowContract;
 
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureRowCompleteness;
 
-/** Contrato Domain: régimen/dieta (`ConsultaRegimen`). */
+/** Domain contract for nutrition orders documented during an encounter. */
 final class RegimenRowContract
 {
-    public const MODELO = 'ConsultaRegimen';
+    public const MODELO = 'EncounterNutritionOrder';
 
     public const FIELD_INDICACIONES = 'Indicaciones';
 

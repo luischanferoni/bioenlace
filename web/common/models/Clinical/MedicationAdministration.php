@@ -5,7 +5,7 @@ namespace common\models\Clinical;
 use yii\db\ActiveRecord;
 
 /**
- * Administración / suministro de medicación (ex {@see \common\models\Clinical\ConsultaSuministroMedicamento}).
+ * Medication administered during an encounter.
  */
 class MedicationAdministration extends ActiveRecord
 {

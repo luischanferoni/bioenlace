@@ -5,7 +5,7 @@ namespace common\components\Domain\Clinical\Specialty\Domain;
 use common\models\Clinical\EncounterDefinition;
 
 /**
- * Mapea nombres de modelo legacy (workflow_json → relacion) a especialidad FHIR.
+ * Maps encounter workflow model keys to FHIR specialties.
  */
 final class EncounterDefinitionSpecialtyRegistry
 {
@@ -13,14 +13,14 @@ final class EncounterDefinitionSpecialtyRegistry
     public const SPECIALTY_OPHTHALMOLOGY = 'ophthalmology';
     public const SPECIALTY_MENTAL_HEALTH = 'mental-health';
 
-    /** @var array<string, string> modelo legacy → código especialidad */
+    /** @var array<string, string> workflow model key → specialty code */
     private const MODEL_TO_SPECIALTY = [
-        'ConsultaOdontologiaPracticas' => self::SPECIALTY_ODONTOLOGY,
-        'ConsultaOdontologiaDiagnosticos' => self::SPECIALTY_ODONTOLOGY,
-        'ConsultaOdontologiaEstados' => self::SPECIALTY_ODONTOLOGY,
-        'ConsultaPracticasOftalmologia' => self::SPECIALTY_OPHTHALMOLOGY,
-        'ConsultaPracticasOftalmologiaEstudios' => self::SPECIALTY_OPHTHALMOLOGY,
-        'ConsultasRecetaLentes' => self::SPECIALTY_OPHTHALMOLOGY,
+        'EncounterDentalPractice' => self::SPECIALTY_ODONTOLOGY,
+        'EncounterDentalDiagnosis' => self::SPECIALTY_ODONTOLOGY,
+        'EncounterDentalStatus' => self::SPECIALTY_ODONTOLOGY,
+        'OphthalmologyPractice' => self::SPECIALTY_OPHTHALMOLOGY,
+        'OphthalmologyStudy' => self::SPECIALTY_OPHTHALMOLOGY,
+        'OphthalmologyLensPrescription' => self::SPECIALTY_OPHTHALMOLOGY,
     ];
 
     /**
@@ -39,9 +39,9 @@ final class EncounterDefinitionSpecialtyRegistry
         return array_keys($found);
     }
 
-    public function specialtyForModel(string $legacyModel): ?string
+    public function specialtyForModel(string $modelKey): ?string
     {
-        return self::MODEL_TO_SPECIALTY[$legacyModel] ?? null;
+        return self::MODEL_TO_SPECIALTY[$modelKey] ?? null;
     }
 
     public function isModelAllowed(EncounterDefinition $definition, string $legacyModel): bool

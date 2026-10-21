@@ -19,7 +19,7 @@ class ExtractionBackfillMotivosTest extends Unit
         ];
         $categorias = [
             ['titulo' => 'Motivos de consulta', 'modelo' => 'EncounterReason'],
-            ['titulo' => 'Diagnóstico', 'modelo' => 'DiagnosticoConsulta'],
+            ['titulo' => 'Diagnóstico', 'modelo' => 'EncounterDiagnosis'],
         ];
 
         $out = $processor->apply($resultado, $categorias, $text);

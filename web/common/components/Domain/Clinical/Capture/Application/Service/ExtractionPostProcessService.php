@@ -191,9 +191,10 @@ final class ExtractionPostProcessService
             $strictModels = [ExtractionPostProcessPolicy::REASON_MODEL];
         }
 
-        $terminologyGuardModels = $config['terminology_guard_category_models'] ?? ['DiagnosticoConsulta'];
+        $terminologyGuardModels = $config['terminology_guard_category_models']
+            ?? ExtractionPostProcessPolicy::DIAGNOSIS_MODELS;
         if (!is_array($terminologyGuardModels)) {
-            $terminologyGuardModels = ['DiagnosticoConsulta'];
+            $terminologyGuardModels = ExtractionPostProcessPolicy::DIAGNOSIS_MODELS;
         }
 
         foreach ($categorias as $categoria) {
@@ -245,9 +246,9 @@ final class ExtractionPostProcessService
         }
 
         $motivoModel = (string) ($config['reason_model'] ?? ExtractionPostProcessPolicy::REASON_MODEL);
-        $diagnosisModels = $config['diagnosis_models'] ?? ['DiagnosticoConsulta'];
+        $diagnosisModels = $config['diagnosis_models'] ?? ExtractionPostProcessPolicy::DIAGNOSIS_MODELS;
         if (!is_array($diagnosisModels)) {
-            $diagnosisModels = ['DiagnosticoConsulta'];
+            $diagnosisModels = ExtractionPostProcessPolicy::DIAGNOSIS_MODELS;
         }
 
         $motivoTitulo = $this->resolveTitulo($categorias, $motivoModel);

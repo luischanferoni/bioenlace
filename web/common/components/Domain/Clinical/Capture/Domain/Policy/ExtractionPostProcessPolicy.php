@@ -13,7 +13,7 @@ final class ExtractionPostProcessPolicy
     public const REASON_MODEL = 'EncounterReason';
 
     /** @var list<string> */
-    public const DIAGNOSIS_MODELS = ['DiagnosticoConsulta'];
+    public const DIAGNOSIS_MODELS = ['EncounterDiagnosis'];
 
     /**
      * Léxico clínico por defecto (PCRE `/…/iu`).

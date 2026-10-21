@@ -5,15 +5,14 @@ namespace common\components\Domain\Clinical\Capture\Domain\RowContract;
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureRowCompleteness;
 
 /**
- * Contrato Domain: ítem odontológico
- * (`ConsultaOdontologiaPracticas|Diagnosticos|Estados`).
+ * Domain contract for dental practices, diagnoses, and tooth status.
  */
 final class OdontologiaItemRowContract
 {
     public const MODELOS = [
-        'ConsultaOdontologiaPracticas',
-        'ConsultaOdontologiaDiagnosticos',
-        'ConsultaOdontologiaEstados',
+        'EncounterDentalPractice',
+        'EncounterDentalDiagnosis',
+        'EncounterDentalStatus',
     ];
 
     public const FIELD_TIPO = 'Tipo';

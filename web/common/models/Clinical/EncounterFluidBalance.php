@@ -9,7 +9,7 @@ use common\models\Clinical\Input\BalanceHidricoInput;
  * Tipología de captura de balance hídrico.
  * Contrato Domain: {@see BalanceHidricoRowContract}.
  */
-final class ConsultaBalanceHidrico extends \yii\base\Model
+final class EncounterFluidBalance extends \yii\base\Model
 {
     /**
      * @return list<string>

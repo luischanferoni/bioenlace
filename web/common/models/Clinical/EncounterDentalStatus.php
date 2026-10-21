@@ -6,10 +6,10 @@ use common\components\Domain\Clinical\Capture\Domain\RowContract\OdontologiaItem
 use common\models\Clinical\Input\OdontologiaItemInput;
 
 /**
- * Tipología de captura odontológica — estados. Sin tabla legacy.
+ * Capture model for dental status.
  * Contrato Domain: {@see OdontologiaItemRowContract}.
  */
-final class ConsultaOdontologiaEstados extends \yii\base\Model
+final class EncounterDentalStatus extends \yii\base\Model
 {
     /**
      * @return list<string>

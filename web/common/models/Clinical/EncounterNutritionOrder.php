@@ -6,11 +6,11 @@ use common\components\Domain\Clinical\Capture\Domain\RowContract\RegimenRowContr
 use common\models\Clinical\Input\RegimenInput;
 
 /**
- * Tipología de captura de régimen/dieta (legacy name `ConsultaRegimen`).
- * Persistencia: NutritionOrder FHIR. Sin tabla `consultas_regimen`.
+ * Capture model for a nutrition order documented during an encounter.
+ * Persisted as {@see NutritionOrder}.
  * Contrato Domain: {@see RegimenRowContract}.
  */
-final class ConsultaRegimen extends \yii\base\Model
+final class EncounterNutritionOrder extends \yii\base\Model
 {
     /**
      * @return list<string>

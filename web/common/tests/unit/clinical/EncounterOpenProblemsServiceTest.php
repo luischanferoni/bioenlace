@@ -28,7 +28,7 @@ class EncounterOpenProblemsServiceTest extends Unit
             'Diagnóstico' => [['texto' => 'cefalea tensional']],
             'Medicación' => [['Nombre del medicamento' => 'ibuprofeno']],
         ], [
-            ['titulo' => 'Diagnóstico', 'modelo' => 'DiagnosticoConsulta'],
+            ['titulo' => 'Diagnóstico', 'modelo' => 'EncounterDiagnosis'],
             ['titulo' => 'Medicación', 'modelo' => 'EncounterMedication'],
         ]);
 

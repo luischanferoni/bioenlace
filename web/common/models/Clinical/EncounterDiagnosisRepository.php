@@ -13,7 +13,7 @@ use common\models\Clinical\Condition;
 use common\models\Clinical\Encounter;
 
 /*
-  Logica de Negocio de procesos que involucra DiagnosticoConsulta.
+  Clinical condition operations for encounters.
  */
 class EncounterDiagnosisRepository
 {

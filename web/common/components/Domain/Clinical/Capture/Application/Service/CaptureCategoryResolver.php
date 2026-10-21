@@ -25,7 +25,7 @@ final class CaptureCategoryResolver
     private const CARE_PLAN_KIND_TO_MODELO = [
         CarePlanActivityKind::MEDICATION_REQUEST => 'EncounterMedication',
         CarePlanActivityKind::SERVICE_REQUEST => 'EncounterInstruction',
-        CarePlanActivityKind::NUTRITION_ORDER => 'ConsultaRegimen',
+        CarePlanActivityKind::NUTRITION_ORDER => 'EncounterNutritionOrder',
     ];
 
     /**

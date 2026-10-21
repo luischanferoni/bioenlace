@@ -35,9 +35,9 @@ final class CompositeRowContractRegistry implements RowContractRegistry
         MedicacionRowContract::MODELO => MedicacionRowContract::class,
         BalanceHidricoRowContract::MODELO => BalanceHidricoRowContract::class,
         DerivacionRowContract::MODELO => DerivacionRowContract::class,
-        'ConsultaOdontologiaPracticas' => OdontologiaItemRowContract::class,
-        'ConsultaOdontologiaDiagnosticos' => OdontologiaItemRowContract::class,
-        'ConsultaOdontologiaEstados' => OdontologiaItemRowContract::class,
+        'EncounterDentalPractice' => OdontologiaItemRowContract::class,
+        'EncounterDentalDiagnosis' => OdontologiaItemRowContract::class,
+        'EncounterDentalStatus' => OdontologiaItemRowContract::class,
     ];
 
     private RowContractRegistry $fallback;

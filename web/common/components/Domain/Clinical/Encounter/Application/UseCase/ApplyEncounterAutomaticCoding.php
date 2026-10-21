@@ -186,7 +186,7 @@ final class ApplyEncounterAutomaticCoding
         $keys = [];
         if ($configuracion !== null) {
             foreach (EncounterDefinition::getCategoriasParaPrompt($configuracion) as $categoria) {
-                if (($categoria['modelo'] ?? '') !== 'DiagnosticoConsulta') {
+                if (($categoria['modelo'] ?? '') !== 'EncounterDiagnosis') {
                     continue;
                 }
                 $titulo = $categoria['titulo'] ?? null;
@@ -196,8 +196,8 @@ final class ApplyEncounterAutomaticCoding
             }
         }
 
-        if (isset($datosExtraidos['DiagnosticoConsulta'])) {
-            $keys[] = 'DiagnosticoConsulta';
+        if (isset($datosExtraidos['EncounterDiagnosis'])) {
+            $keys[] = 'EncounterDiagnosis';
         }
 
         if ($keys === []) {

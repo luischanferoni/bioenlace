@@ -6,12 +6,12 @@ use common\components\Domain\Clinical\Capture\Domain\Model\CaptureIssueFactory;
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureRowCompleteness;
 
 /**
- * Contrato Domain: balance hídrico (`ConsultaBalanceHidrico`).
+ * Domain contract for fluid-balance entries documented during an encounter.
  * Tipo registro alineado con filas inpatient (Ingreso|Egreso).
  */
 final class BalanceHidricoRowContract
 {
-    public const MODELO = 'ConsultaBalanceHidrico';
+    public const MODELO = 'EncounterFluidBalance';
 
     public const TREG_INGRESO = 'Ingreso';
     public const TREG_EGRESO = 'Egreso';

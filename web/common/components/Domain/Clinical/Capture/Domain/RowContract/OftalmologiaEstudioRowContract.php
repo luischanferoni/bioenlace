@@ -4,10 +4,10 @@ namespace common\components\Domain\Clinical\Capture\Domain\RowContract;
 
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureRowCompleteness;
 
-/** Contrato Domain: estudio oftalmológico (`ConsultaPracticasOftalmologiaEstudios`). */
+/** Domain contract for an ophthalmology study. */
 final class OftalmologiaEstudioRowContract
 {
-    public const MODELO = 'ConsultaPracticasOftalmologiaEstudios';
+    public const MODELO = 'OphthalmologyStudy';
 
     public const FIELD_CODIGO = 'Codigo';
     public const FIELD_OJO = 'Ojo';

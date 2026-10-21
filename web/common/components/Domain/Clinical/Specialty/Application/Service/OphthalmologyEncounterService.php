@@ -49,7 +49,7 @@ final class OphthalmologyEncounterService
     }
 
     /**
-     * @param mixed $payload filas ex ConsultaPracticasOftalmologia
+     * @param mixed $payload ophthalmology practice rows
      */
     public function persistPractices(Encounter $encounter, $payload): void
     {
@@ -86,7 +86,7 @@ final class OphthalmologyEncounterService
     }
 
     /**
-     * @param mixed $payload objeto o fila única ex ConsultasRecetaLentes
+     * @param mixed $payload ophthalmology lens prescription object or single row
      */
     public function persistLensPrescription(Encounter $encounter, $payload): void
     {

@@ -9,7 +9,6 @@
 
 namespace common\models\Terminology;
 
-use common\models\Clinical\ConsultaMedicamentos;
 use Yii;
 use common\traits\ParameterQuestionsTrait;
 
@@ -20,9 +19,6 @@ use common\traits\ParameterQuestionsTrait;
  * @property string $generico
  * @property string $presentacion
  *
- * @property ConsultaMedicamentos[] $medicamentosConsultas
- * @property-read ConsultaMedicamentos[] $consultaMedicamentos
- * @property-read Consulta[] $consultas
  */
 class Medicamento extends \yii\db\ActiveRecord
 {
@@ -67,22 +63,6 @@ class Medicamento extends \yii\db\ActiveRecord
             'medicamento' => '¿Qué medicamento querés consultar?',
             'id_medicamento' => '¿Qué medicamento querés consultar?',
         ];
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getMedicamentosConsultas()
-    {
-        return $this->hasMany(ConsultaMedicamentos::className(), ['id_medicamento' => 'id_medicamento']);
-    }
-
-    /**
-     * Alias con nombre alineado al modelo {@see ConsultaMedicamentos}.
-     */
-    public function getConsultaMedicamentos()
-    {
-        return $this->getMedicamentosConsultas();
     }
 
     public function getMedicamentoConcat() {

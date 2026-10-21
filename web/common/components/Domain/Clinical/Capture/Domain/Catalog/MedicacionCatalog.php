@@ -4,7 +4,7 @@ namespace common\components\Domain\Clinical\Capture\Domain\Catalog;
 
 /**
  * Catálogos de captura de medicación (frecuencia / duración).
- * Alineados con tipología legacy ConsultaMedicamentos.
+ * Shared medication frequency and duration values.
  */
 final class MedicacionCatalog
 {

@@ -94,7 +94,7 @@ class EncounterCaptureReviewPresenterTest extends Unit
             [
                 [
                     'titulo' => 'Medicación',
-                    'modelo' => 'ConsultaMedicamentos',
+                    'modelo' => 'EncounterMedication',
                     'requerido' => false,
                     'campos_requeridos' => ['Nombre del medicamento', 'Cantidad'],
                 ],
@@ -147,7 +147,7 @@ class EncounterCaptureReviewPresenterTest extends Unit
                 ],
                 [
                     'titulo' => 'Medicación',
-                    'modelo' => 'ConsultaMedicamentos',
+                    'modelo' => 'EncounterMedication',
                     'requerido' => false,
                     'campos_requeridos' => [
                         'Nombre del medicamento',

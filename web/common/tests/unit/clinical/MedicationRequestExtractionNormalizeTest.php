@@ -4,7 +4,7 @@ namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\CarePlan\Application\UseCase\ManageMedicationRequest;
-use common\models\Clinical\ConsultaMedicamentos;
+use common\models\Clinical\EncounterMedication;
 
 class MedicationRequestExtractionNormalizeTest extends Unit
 {
@@ -34,7 +34,7 @@ class MedicationRequestExtractionNormalizeTest extends Unit
 
     public function testNormalizeUsingCamposPromptExtraccion(): void
     {
-        $campos = ConsultaMedicamentos::camposPromptExtraccion();
+        $campos = EncounterMedication::camposPromptExtraccion();
         $this->assertNotEmpty($campos);
 
         $valores = [
@@ -42,9 +42,9 @@ class MedicationRequestExtractionNormalizeTest extends Unit
             '10 mg',
             'vía oral',
             '1',
-            ConsultaMedicamentos::FRECUENCIA_TIPO_DIA,
+            EncounterMedication::FRECUENCIA_TIPO_DIA,
             '30',
-            ConsultaMedicamentos::DURANTE_TIPO_DIA,
+            EncounterMedication::DURANTE_TIPO_DIA,
         ];
         $this->assertCount(count($campos), $valores, 'Fixture alineado a camposPromptExtraccion()');
 

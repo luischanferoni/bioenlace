@@ -94,9 +94,9 @@ class CaptureCompletenessPolicyTest extends Unit
             [
                 [
                     'titulo' => 'Medicación',
-                    'modelo' => 'ConsultaMedicamentos',
+                    'modelo' => 'EncounterMedication',
                     'requerido' => false,
-                    'campos_requeridos' => (new \common\models\Clinical\ConsultaMedicamentos())->requeridosPrompt(),
+                    'campos_requeridos' => (new \common\models\Clinical\EncounterMedication())->requeridosPrompt(),
                 ],
             ]
         );
@@ -121,9 +121,9 @@ class CaptureCompletenessPolicyTest extends Unit
             [
                 [
                     'titulo' => 'Medicación',
-                    'modelo' => 'ConsultaMedicamentos',
+                    'modelo' => 'EncounterMedication',
                     'requerido' => false,
-                    'campos_requeridos' => (new \common\models\Clinical\ConsultaMedicamentos())->requeridosPrompt(),
+                    'campos_requeridos' => (new \common\models\Clinical\EncounterMedication())->requeridosPrompt(),
                 ],
             ]
         );

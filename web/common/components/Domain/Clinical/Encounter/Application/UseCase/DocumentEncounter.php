@@ -1168,14 +1168,14 @@ class DocumentEncounter extends Component
                     $this->persistConditions($encounter, $payload);
                     $stat['accion'] = 'conditions_sin_codigo_omitidas_coding_auto';
                     break;
-                case 'ConsultaMedicamentos':
+                case 'EncounterMedication':
                     $medicationRows = ManageMedicationRequest::normalizeExtractedMedicationPayload($payload);
                     $stat['rows'] = count($medicationRows);
                     if ($medicationRows === []) {
                         $stat['accion'] = 'medicacion_sin_filas';
                         $stat['detalle'] = 'payload_type=' . gettype($payload);
                         Yii::warning(
-                            'encounter.guardar Medicación/ConsultaMedicamentos sin filas normalizables. payload_type='
+                            'encounter.guardar medicación sin filas normalizables. payload_type='
                             . gettype($payload),
                             'encounter-doc'
                         );

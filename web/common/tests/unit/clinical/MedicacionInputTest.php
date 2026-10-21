@@ -4,7 +4,7 @@ namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
 use common\models\Clinical\Input\MedicacionInput;
-use common\models\Clinical\ConsultaMedicamentos;
+use common\models\Clinical\EncounterMedication;
 
 class MedicacionInputTest extends Unit
 {
@@ -40,13 +40,13 @@ class MedicacionInputTest extends Unit
             'Frecuencia de administracion' => '1',
         ]);
         $this->assertSame(MedicacionInput::TYPE_ORDERED, $input->tipo);
-        $this->assertSame(ConsultaMedicamentos::FRECUENCIA_TIPO_DIA, $input->tipoFrecuencia);
+        $this->assertSame(EncounterMedication::FRECUENCIA_TIPO_DIA, $input->tipoFrecuencia);
         $this->assertTrue($input->validate());
     }
 
     public function testPromptFieldsIncludeTipo(): void
     {
-        $campos = (new ConsultaMedicamentos())->requeridosPrompt();
+        $campos = (new EncounterMedication())->requeridosPrompt();
         $this->assertSame(MedicacionInput::FIELD_NOMBRE, $campos[0]);
         $this->assertContains(MedicacionInput::FIELD_TIPO, $campos);
     }

@@ -6,10 +6,10 @@ use common\components\Domain\Clinical\Capture\Domain\Catalog\MedicacionCatalog;
 use common\components\Domain\Clinical\Capture\Domain\Model\CaptureIssueFactory;
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureRowCompleteness;
 
-/** Contrato Domain: medicación (`ConsultaMedicamentos`). */
+/** Domain contract for medication documented during an encounter. */
 final class MedicacionRowContract
 {
-    public const MODELO = 'ConsultaMedicamentos';
+    public const MODELO = 'EncounterMedication';
 
     public const TYPE_MENTIONED = 'mentioned';
     public const TYPE_ORDERED = 'ordered';

@@ -674,7 +674,7 @@ final class EpisodeCaptureDedupService
 
     private function isMedicationCategory(string $model, string $titleLower): bool
     {
-        if ($model === 'ConsultaMedicamentos') {
+        if ($model === 'EncounterMedication') {
             return true;
         }
 

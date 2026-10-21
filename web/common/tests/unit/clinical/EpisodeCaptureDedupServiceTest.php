@@ -117,7 +117,7 @@ class EpisodeCaptureDedupServiceTest extends Unit
             ],
         ];
         $categorias = [
-            ['titulo' => 'Medicación', 'modelo' => 'ConsultaMedicamentos'],
+            ['titulo' => 'Medicación', 'modelo' => 'EncounterMedication'],
         ];
         $out = $svc->dropAlreadyActiveRows($extraidos, $categorias, Encounter::PARENT_TURNO, 1, 1);
         $this->assertSame($extraidos, $out);

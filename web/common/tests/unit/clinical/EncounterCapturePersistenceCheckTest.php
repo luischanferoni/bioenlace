@@ -13,12 +13,12 @@ class EncounterCapturePersistenceCheckTest extends Unit
 
         $incomplete = $check->incompleteCategories(
             [
-                ['titulo' => 'Tratamientos indicados', 'modelo' => 'ConsultaMedicamentos'],
+                ['titulo' => 'Tratamientos indicados', 'modelo' => 'EncounterMedication'],
                 ['titulo' => 'Intervenciones', 'modelo' => 'EncounterPractice'],
                 ['titulo' => 'Razón de atención', 'modelo' => 'EncounterReason'],
             ],
             [
-                'ConsultaMedicamentos' => ['payload' => true, 'rows' => 1],
+                'EncounterMedication' => ['payload' => true, 'rows' => 1],
                 'EncounterPractice' => ['payload' => true, 'rows' => 1],
                 'EncounterReason' => ['payload' => true, 'rows' => 1],
             ],
@@ -41,11 +41,11 @@ class EncounterCapturePersistenceCheckTest extends Unit
 
         $incomplete = $check->incompleteCategories(
             [
-                ['titulo' => 'Tratamiento', 'modelo' => 'ConsultaMedicamentos'],
+                ['titulo' => 'Tratamiento', 'modelo' => 'EncounterMedication'],
                 ['titulo' => 'Prácticas', 'modelo' => 'EncounterPractice'],
             ],
             [
-                'ConsultaMedicamentos' => ['payload' => true, 'rows' => 1],
+                'EncounterMedication' => ['payload' => true, 'rows' => 1],
                 'EncounterPractice' => ['payload' => false, 'rows' => 0],
             ],
             ['medication_requests' => 1, 'service_requests' => 0]

@@ -7,12 +7,12 @@ use common\components\Domain\Clinical\Capture\Domain\RowContract\MedicacionRowCo
 use common\models\Clinical\Input\MedicacionInput;
 
 /**
- * Constantes y helpers de extracción de medicación (legacy name `ConsultaMedicamentos`).
+ * Constants and extraction helpers for encounter medication.
  *
- * La tabla `consultas_medicamentos` ya no existe; la persistencia va a {@see MedicationRequest}.
+ * Persisted as {@see MedicationRequest}.
  * Contrato Domain: {@see MedicacionRowContract}.
  */
-final class ConsultaMedicamentos
+final class EncounterMedication
 {
     public const ESTADO_SUSPENDIDO = 'SUSPENDIDO';
     public const ESTADO_INGRESADO_POR_ERROR = 'INGRESADO_POR_ERROR';

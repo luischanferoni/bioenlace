@@ -256,8 +256,8 @@
                     widgetsOptions = widgetsOptions.reverse();
                     for (var i = identifiers.length - 1; i >= 1; i--) {
                         // agregamos esto para considerar los multiples dynamic forms
-                        // para el caso comun, ej: ConsultaMedicamentos[0][id_consultas_diagnosticos]
-                        // identifiers siempre tiene un solo elemento, pero para ConsultaMedicamentos[107][0][id_consultas_diagnosticos]
+                        // para el caso comun, ej: EncounterMedication[0][id]
+                        // identifiers siempre tiene un solo elemento, pero para EncounterMedication[107][0][id]
                         // pasa a tener mas de uno
                        /* if(typeof widgetsOptions[i] !== 'undefined') {
                             identifiers[i] = $elem.closest(widgetsOptions[i].widgetItem).index();

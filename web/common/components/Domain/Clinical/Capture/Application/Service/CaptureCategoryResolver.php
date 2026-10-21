@@ -23,7 +23,7 @@ final class CaptureCategoryResolver
 {
     /** @var array<string, string> */
     private const CARE_PLAN_KIND_TO_MODELO = [
-        CarePlanActivityKind::MEDICATION_REQUEST => 'ConsultaMedicamentos',
+        CarePlanActivityKind::MEDICATION_REQUEST => 'EncounterMedication',
         CarePlanActivityKind::SERVICE_REQUEST => 'ConsultaIndicaciones',
         CarePlanActivityKind::NUTRITION_ORDER => 'ConsultaRegimen',
     ];

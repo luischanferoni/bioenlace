@@ -29,7 +29,7 @@ class EncounterOpenProblemsServiceTest extends Unit
             'Medicación' => [['Nombre del medicamento' => 'ibuprofeno']],
         ], [
             ['titulo' => 'Diagnóstico', 'modelo' => 'DiagnosticoConsulta'],
-            ['titulo' => 'Medicación', 'modelo' => 'ConsultaMedicamentos'],
+            ['titulo' => 'Medicación', 'modelo' => 'EncounterMedication'],
         ]);
 
         $this->assertArrayHasKey('cefalea tensional', $keys);

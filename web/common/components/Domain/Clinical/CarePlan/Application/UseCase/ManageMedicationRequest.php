@@ -10,7 +10,7 @@ use common\components\Domain\Terminology\Domain\Model\SnomedCodeSystem;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\MedicationRequest;
-use common\models\Clinical\ConsultaMedicamentos;
+use common\models\Clinical\EncounterMedication;
 
 final class ManageMedicationRequest
 {
@@ -34,7 +34,7 @@ final class ManageMedicationRequest
     }
 
     /**
-     * Fila extraída por IA (modelo legacy ConsultaMedicamentos en JSON).
+     * Fila extraída por IA para una solicitud de medicación.
      *
      * @param array<string, mixed> $row
      */
@@ -126,7 +126,7 @@ final class ManageMedicationRequest
             \common\models\Clinical\Input\MedicacionInput::FIELD_NOMBRE => true,
             \common\models\Clinical\Input\MedicacionInput::FIELD_TIPO => true,
         ];
-        $campos = ConsultaMedicamentos::camposPromptExtraccion();
+        $campos = EncounterMedication::camposPromptExtraccion();
         $parts = [];
         foreach ($campos as $campo) {
             if (isset($skip[$campo])) {
@@ -157,7 +157,7 @@ final class ManageMedicationRequest
      */
     private static function displayKeyCandidates(): array
     {
-        $campos = ConsultaMedicamentos::camposPromptExtraccion();
+        $campos = EncounterMedication::camposPromptExtraccion();
         $primary = isset($campos[0]) && is_string($campos[0]) && $campos[0] !== ''
             ? [$campos[0]]
             : [];

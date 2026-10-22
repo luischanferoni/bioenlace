@@ -4,6 +4,7 @@ namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\Capture\Application\Presentation\CapturePresenter;
+use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureStage;
 use common\models\Clinical\EncounterCapture;
 
 class EncounterCaptureStageTest extends Unit
@@ -26,6 +27,26 @@ class EncounterCaptureStageTest extends Unit
             ],
             EncounterCapture::openStageValues()
         );
+    }
+
+    public function testStageMetadataCoversEveryStage(): void
+    {
+        foreach (ClinicalCaptureStage::all() as $stage) {
+            $metadata = ClinicalCaptureStage::metadata($stage);
+
+            $this->assertSame($stage, $metadata['code']);
+            $this->assertNotEmpty($metadata['label']);
+            $this->assertContains($metadata['intent'], [
+                'primary',
+                'secondary',
+                'success',
+                'danger',
+                'warning',
+                'info',
+                'neutral',
+                'dark',
+            ]);
+        }
     }
 
     public function testJsonHelpers(): void
@@ -85,6 +106,11 @@ class EncounterCaptureStageTest extends Unit
         $this->assertArrayNotHasKey('datosExtraidos', $listItem);
         $this->assertArrayNotHasKey('capture_review', $listItem);
         $this->assertSame('Control en 7 días', $listItem['transcript']);
+        $this->assertSame([
+            'code' => ClinicalCaptureStage::READY_FOR_REVIEW,
+            'label' => 'Para revisar',
+            'intent' => 'primary',
+        ], $listItem['stage_metadata']);
 
         $detail = $presenter->toApiArray($capture, true);
         $this->assertTrue($detail['has_analysis']);

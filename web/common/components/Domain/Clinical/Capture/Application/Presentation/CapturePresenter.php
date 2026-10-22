@@ -4,6 +4,7 @@ namespace common\components\Domain\Clinical\Capture\Application\Presentation;
 
 use common\components\Domain\Clinical\Capture\Application\Service\CaptureCategoryResolver;
 use common\components\Domain\Clinical\Capture\Application\Service\RowContractService;
+use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureStage;
 use common\components\Domain\Clinical\Encounter\Application\Service\EncounterOpenProblemsService;
 use common\components\Domain\Clinical\Encounter\Application\Service\EpisodeCaptureDedupService;
 use common\components\Platform\Core\Http\Contract\ApiException;
@@ -92,6 +93,7 @@ final class CapturePresenter
             'parent_id' => $capture->parent_id !== null ? (int) $capture->parent_id : null,
             'encounter_id' => $capture->encounter_id !== null ? (int) $capture->encounter_id : null,
             'stage' => $capture->stage,
+            'stage_metadata' => ClinicalCaptureStage::metadata((string) $capture->stage),
             'has_audio' => $capture->hasAudio(),
             'has_analysis' => $hasAnalysis,
             'transcript' => $capture->transcript,

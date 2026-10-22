@@ -56,6 +56,28 @@ final class ClinicalCaptureStage
         return in_array($stage, self::all(), true);
     }
 
+    /**
+     * @return array{code: string, label: string, intent: string}
+     */
+    public static function metadata(string $stage): array
+    {
+        $metadata = [
+            self::UPLOADED => ['label' => 'Audio recibido', 'intent' => 'info'],
+            self::STT_FAILED => ['label' => 'Error de transcripción', 'intent' => 'danger'],
+            self::TRANSCRIBED => ['label' => 'Transcripto', 'intent' => 'neutral'],
+            self::ANALYSIS_FAILED => ['label' => 'Error de análisis', 'intent' => 'danger'],
+            self::READY_FOR_REVIEW => ['label' => 'Para revisar', 'intent' => 'primary'],
+            self::SAVE_FAILED => ['label' => 'Error al guardar', 'intent' => 'danger'],
+            self::COMPLETED => ['label' => 'Completada', 'intent' => 'success'],
+            self::DISCARDED => ['label' => 'Descartada', 'intent' => 'neutral'],
+        ];
+        if (!isset($metadata[$stage])) {
+            throw new \InvalidArgumentException("Etapa de captura inválida: «{$stage}».");
+        }
+
+        return ['code' => $stage] + $metadata[$stage];
+    }
+
     public static function isOpen(string $stage): bool
     {
         return in_array($stage, self::open(), true);

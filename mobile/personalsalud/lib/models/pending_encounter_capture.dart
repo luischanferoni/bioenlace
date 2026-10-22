@@ -31,6 +31,8 @@ class PendingEncounterCapture {
     required this.updatedAt,
     this.serverCaptureId,
     this.serverStage,
+    this.serverStageLabel,
+    this.serverStageIntent,
     this.audioFileName,
     this.stt,
     this.lastError,
@@ -53,6 +55,8 @@ class PendingEncounterCapture {
 
   /// Stage servidor (UPLOADED, TRANSCRIBED, …).
   final String? serverStage;
+  final String? serverStageLabel;
+  final String? serverStageIntent;
 
   /// Nombre de archivo bajo el directorio del store (no ruta absoluta).
   final String? audioFileName;
@@ -72,6 +76,8 @@ class PendingEncounterCapture {
     bool clearServerCaptureId = false,
     String? serverStage,
     bool clearServerStage = false,
+    String? serverStageLabel,
+    String? serverStageIntent,
     String? audioFileName,
     bool clearAudio = false,
     Map<String, dynamic>? stt,
@@ -97,6 +103,8 @@ class PendingEncounterCapture {
           : (serverCaptureId ?? this.serverCaptureId),
       serverStage:
           clearServerStage ? null : (serverStage ?? this.serverStage),
+      serverStageLabel: serverStageLabel ?? this.serverStageLabel,
+      serverStageIntent: serverStageIntent ?? this.serverStageIntent,
       audioFileName: clearAudio ? null : (audioFileName ?? this.audioFileName),
       stt: clearStt ? null : (stt ?? this.stt),
       lastError: clearError ? null : (lastError ?? this.lastError),
@@ -118,6 +126,8 @@ class PendingEncounterCapture {
         'updated_at': updatedAt.toIso8601String(),
         if (serverCaptureId != null) 'server_capture_id': serverCaptureId,
         if (serverStage != null) 'server_stage': serverStage,
+        if (serverStageLabel != null) 'server_stage_label': serverStageLabel,
+        if (serverStageIntent != null) 'server_stage_intent': serverStageIntent,
         if (audioFileName != null) 'audio_file_name': audioFileName,
         if (stt != null) 'stt': stt,
         if (lastError != null) 'last_error': lastError,
@@ -148,6 +158,8 @@ class PendingEncounterCapture {
           ? null
           : _asInt(json['server_capture_id']),
       serverStage: json['server_stage']?.toString(),
+      serverStageLabel: json['server_stage_label']?.toString(),
+      serverStageIntent: json['server_stage_intent']?.toString(),
       audioFileName: json['audio_file_name']?.toString(),
       stt: json['stt'] is Map
           ? Map<String, dynamic>.from(json['stt'] as Map)
@@ -171,6 +183,7 @@ class PendingEncounterCapture {
     final clientId =
         capture['client_capture_id']?.toString() ?? local?.id ?? '';
     final stage = capture['stage']?.toString() ?? '';
+    final stageMetadata = capture['stage_metadata'];
     final transcript =
         (capture['transcript'] ?? capture['texto'] ?? local?.texto ?? '')
             .toString();
@@ -191,6 +204,12 @@ class PendingEncounterCapture {
           now,
       serverCaptureId: capture['id'] == null ? local?.serverCaptureId : _asInt(capture['id']),
       serverStage: stage.isEmpty ? local?.serverStage : stage,
+      serverStageLabel: stageMetadata is Map && stageMetadata['code'] == stage
+          ? stageMetadata['label']?.toString() ?? local?.serverStageLabel
+          : local?.serverStageLabel,
+      serverStageIntent: stageMetadata is Map && stageMetadata['code'] == stage
+          ? stageMetadata['intent']?.toString() ?? local?.serverStageIntent
+          : local?.serverStageIntent,
       audioFileName: local?.audioFileName,
       stt: capture['stt'] is Map
           ? Map<String, dynamic>.from(capture['stt'] as Map)

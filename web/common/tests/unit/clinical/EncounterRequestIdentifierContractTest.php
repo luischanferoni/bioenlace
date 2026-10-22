@@ -46,7 +46,7 @@ final class EncounterRequestIdentifierContractTest extends TestCase
             'parent_type' => null,
             'parent_id' => null,
             'encounter_id' => null,
-            'stage' => null,
+            'stage' => EncounterCapture::STAGE_READY_FOR_REVIEW,
             'audio_relative_path' => null,
             'transcript' => null,
             'texto_procesado' => null,
@@ -66,6 +66,10 @@ final class EncounterRequestIdentifierContractTest extends TestCase
         $out = (new CapturePresenter())->toApiArray($capture, true);
 
         self::assertSame(51, $out['encounter_id']);
+        self::assertSame(
+            'READY_FOR_REVIEW',
+            $out['stage_metadata']['code']
+        );
         self::assertArrayNotHasKey('id_consulta', $out);
     }
 }

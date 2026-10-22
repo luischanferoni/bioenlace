@@ -1679,6 +1679,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     List<String>? stagedItemIds,
     int? serverCaptureId,
     String? serverStage,
+    String? serverStageLabel,
+    String? serverStageIntent,
     bool? audioUploaded,
     bool clearError = false,
     bool clearAnalysis = false,
@@ -1749,6 +1751,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       updatedAt: now,
       serverCaptureId: serverCaptureId ?? existing?.serverCaptureId,
       serverStage: serverStage ?? existing?.serverStage,
+      serverStageLabel: serverStageLabel ?? existing?.serverStageLabel,
+      serverStageIntent: serverStageIntent ?? existing?.serverStageIntent,
       audioFileName: audioName,
       stt: sttPayload ?? existing?.stt,
       lastError: clearError ? null : (error ?? existing?.lastError),
@@ -2068,6 +2072,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       }
 
       var stage = draft.serverStage;
+      var stageLabel = draft.serverStageLabel;
+      var stageIntent = draft.serverStageIntent;
       var serverId = draft.serverCaptureId;
       var audioUploaded = draft.audioUploaded;
       var transcript = text;
@@ -2096,6 +2102,11 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           if (capture is Map) {
             final map = Map<String, dynamic>.from(capture);
             stage = map['stage']?.toString();
+            final metadata = map['stage_metadata'];
+            if (metadata is Map && metadata['code'] == stage) {
+              stageLabel = metadata['label']?.toString();
+              stageIntent = metadata['intent']?.toString();
+            }
             serverId = map['id'] is int
                 ? map['id'] as int
                 : int.tryParse('${map['id']}');
@@ -2112,6 +2123,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             ),
             serverCaptureId: serverId,
             serverStage: stage,
+            serverStageLabel: stageLabel,
+            serverStageIntent: stageIntent,
             audioUploaded: audioUploaded,
             clearError: true,
           );
@@ -2146,6 +2159,11 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           if (capture is Map) {
             final map = Map<String, dynamic>.from(capture);
             stage = map['stage']?.toString();
+            final metadata = map['stage_metadata'];
+            if (metadata is Map && metadata['code'] == stage) {
+              stageLabel = metadata['label']?.toString();
+              stageIntent = metadata['intent']?.toString();
+            }
             serverId = map['id'] is int
                 ? map['id'] as int
                 : int.tryParse('${map['id']}');
@@ -2164,6 +2182,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             ),
             serverCaptureId: serverId,
             serverStage: stage,
+            serverStageLabel: stageLabel,
+            serverStageIntent: stageIntent,
             audioUploaded: true,
             clearError: true,
           );
@@ -2621,8 +2641,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     );
   }
 
-  String _pendingStatusLabel(PendingEncounterCaptureStatus status) {
-    switch (status) {
+  String _pendingStatusLabel(PendingEncounterCapture item) {
+    final serverLabel = item.serverStageLabel?.trim();
+    if (serverLabel != null && serverLabel.isNotEmpty) return serverLabel;
+    switch (item.status) {
       case PendingEncounterCaptureStatus.draft:
         return 'Borrador';
       case PendingEncounterCaptureStatus.pendingUpload:
@@ -2636,6 +2658,20 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       case PendingEncounterCaptureStatus.failedSave:
         return 'No guardado';
     }
+  }
+
+  UiIntent _pendingStatusIntent(String? serverIntent) {
+    return switch (serverIntent) {
+      'primary' => UiIntent.primary,
+      'secondary' => UiIntent.secondary,
+      'success' => UiIntent.success,
+      'danger' => UiIntent.danger,
+      'warning' => UiIntent.warning,
+      'info' => UiIntent.info,
+      'neutral' => UiIntent.neutral,
+      'dark' => UiIntent.dark,
+      _ => UiIntent.neutral,
+    };
   }
 
   Widget _buildPendingCaptureRow(PendingEncounterCapture item) {
@@ -2676,7 +2712,12 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                   style: BioTypography.title.copyWith(color: warning.softFg),
                 ),
               ),
-              BioBadge.warning(_pendingStatusLabel(item.status)),
+              BioBadge(
+                label: _pendingStatusLabel(item),
+                intent: item.serverStageIntent == null
+                    ? UiIntent.warning
+                    : _pendingStatusIntent(item.serverStageIntent),
+              ),
             ],
           ),
           BioSpacing.gapH(BioSpacing.xs),

@@ -12,7 +12,7 @@ Lectura: [overview.md](./overview.md), [design.md](./design.md), fases en [phase
 | 01 Contrato de API | hecho (migración de respuestas estándar y consumidores; login legacy preservado como excepción externa) |
 | 02 Terminología encounter | en curso (glosario, resumen staff, razones/chat y contratos de identificación de captura) |
 | 03 Metadata clínica humana | en curso (capacidades de encounter, secciones de odontología/oftalmología, niveles Manchester, presentación de episodios y etiquetas/filtros del timeline, signos vitales; faltan secciones clínicas genéricas y completar acciones/roles) |
-| 04 Captura y STT | en curso (Personal de Salud envía audio y STT local por el pipeline de captura; falta completar política/estados del contrato y validar en dispositivo real) |
+| 04 Captura y STT | en curso (Personal de Salud envía audio y STT local por el pipeline; etapas con metadata contractual; queda el chat de motivos de la app Paciente y validar en dispositivo real) |
 | 05 Móvil | en curso (inicio y configuración por capacidades; wizard limita clases por efector usando metadata del backend) |
 | 06 Web | pendiente |
 | 07 Veterinaria (estructura) | pendiente |

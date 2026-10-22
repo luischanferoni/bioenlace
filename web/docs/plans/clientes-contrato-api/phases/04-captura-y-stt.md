@@ -18,7 +18,7 @@ Que el servidor decida qué hacer con el audio y la transcripción. El audio sie
 
 ## Avance
 
-Personal de Salud envía el audio y la transcripción local juntos por `captura/crear-o-subir`. El cliente ya no llama a `audio/transcribir` ni fuerza STT remoto según una evaluación local de calidad; el servidor evalúa la metadata recibida y devuelve la etapa de captura, y el cliente usa esa etapa para continuar el flujo. Si hay que transcribir, se usa `captura/transcribir` sobre el audio persistido. Falta completar la política y presentación de etapas como metadata contractual, revisar las demás superficies STT y validar la captura simultánea en un dispositivo móvil real.
+Personal de Salud envía el audio y la transcripción local juntos por `captura/crear-o-subir`. El cliente ya no llama a `audio/transcribir` ni fuerza STT remoto según una evaluación local de calidad; el servidor evalúa la metadata recibida y devuelve la etapa de captura junto con `stage_metadata` (`code`, `label`, `intent`), y el cliente usa esa etapa para continuar el flujo y presenta la etiqueta/intención recibidas en la cola local. Si hay que transcribir, se usa `captura/transcribir` sobre el audio persistido. El chat de motivos de la app Paciente aún decide localmente entre enviar texto o un mensaje de audio y usa un endpoint de mensajes distinto; falta definir/migrar ese contrato y validar la captura simultánea en un dispositivo móvil real.
 
 ## Criterio de salida
 

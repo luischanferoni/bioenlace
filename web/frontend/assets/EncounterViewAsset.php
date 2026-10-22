@@ -6,7 +6,7 @@ use yii\helpers\Url;
 use yii\web\AssetBundle;
 
 /**
- * Pantalla solo lectura de consulta documentada ({@see PacienteController::actionVerConsulta}).
+ * Pantalla solo lectura de documentación clínica ({@see PacienteController::actionEncounterDocumentation}).
  */
 class EncounterViewAsset extends AssetBundle
 {

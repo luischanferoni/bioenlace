@@ -1,11 +1,11 @@
 /**
  * Vista de solo lectura de un encounter documentado (staff).
- * Config: #ver-consulta-root[data-api][data-url-inicio]
+ * Config: #encounter-documentation-root[data-api][data-url-inicio]
  */
 (function () {
     'use strict';
 
-    var root = document.getElementById('ver-consulta-root');
+    var root = document.getElementById('encounter-documentation-root');
     if (!root) return;
     var api = root.getAttribute('data-api') || '';
     var urlInicio = root.getAttribute('data-url-inicio') || '/';

@@ -37,7 +37,7 @@ class PacienteController extends Controller
         return [
             'access' => [
                 'class' => SisseActionFilter::className(),
-                'only' => ['historia', 'formulario-consulta', 'ver-consulta', 'episodio-timeline-html'],
+                'only' => ['historia', 'formulario-consulta', 'encounter-documentation', 'episodio-timeline-html'],
                 'filtrosExtra' => [SisseActionFilter::FILTRO_CONTEXTO_PROFESIONAL],
             ],
         ];
@@ -46,7 +46,7 @@ class PacienteController extends Controller
     /**
      * Obtiene el historial de un paciente específico (HC / captura en ventana de turno).
      *
-     * No usar para turnos ATENDIDO: {@see actionVerConsulta}.
+     * No usar para turnos ATENDIDO: {@see actionEncounterDocumentation}.
      *
      * La vista usa timeline por API (`views/paciente/timeline/timeline.php`). Cualquier rearmado de SQL local
      * debe filtrar también por {@see \common\models\Organization\ProfesionalEfectorServicio} además de `consultas.id_profesional_efector_servicio`
@@ -70,7 +70,7 @@ class PacienteController extends Controller
                 ->one();
             if ($turno !== null && (string) $turno->estado === \common\models\Scheduling\Turno::ESTADO_ATENDIDO) {
                 return $this->redirect([
-                    'ver-consulta',
+                    'encounter-documentation',
                     'turno_id' => $parentId,
                     'id' => (int) $paciente->id_persona,
                 ]);
@@ -151,15 +151,15 @@ class PacienteController extends Controller
     }
 
     /**
-     * Solo lectura de la consulta ya documentada por el médico (turno o encounter de guardia).
+     * Solo lectura de la documentación clínica ya registrada (turno o encounter de guardia).
      *
-     * GET /paciente/ver-consulta?turno_id=… | encounter_id=… [&id=persona]
+     * GET /paciente/encounter-documentation?turno_id=… | encounter_id=… [&id=persona]
      * Consume GET /api/v1/clinical/encounter/staff-summary.
      * No muestra historia clínica / estado actual del paciente.
      *
      * @no_intent_catalog
      */
-    public function actionVerConsulta()
+    public function actionEncounterDocumentation()
     {
         $this->layout = 'blanco';
 
@@ -211,7 +211,7 @@ class PacienteController extends Controller
         $this->view->title = $pageTitle;
         EncounterViewAsset::register($this->view);
 
-        return $this->render('ver_consulta', [
+        return $this->render('encounter_documentation', [
             'persona' => $paciente,
             'apiPath' => $apiPath,
             'pageTitle' => $pageTitle,

@@ -135,7 +135,7 @@ final class EncounterJourneyNotificationService
      */
     public function shouldSendJourneyNotification(Turno $turno, string $tipo, array $meta): bool
     {
-        if (!in_array($tipo, TurnoNotificacionProgramada::journeyPostConsultaTipos(), true)) {
+        if (!in_array($tipo, TurnoNotificacionProgramada::postEncounterJourneyTypes(), true)) {
             return true;
         }
 

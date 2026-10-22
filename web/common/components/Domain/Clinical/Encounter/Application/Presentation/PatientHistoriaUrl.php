@@ -6,7 +6,7 @@ use yii\helpers\Url;
 
 /**
  * Enlaces a captura clínica vía timeline ({@see \frontend\controllers\PacienteController::actionHistoria})
- * o a consulta documentada ({@see \frontend\controllers\PacienteController::actionVerConsulta}).
+ * o a documentación clínica ({@see \frontend\controllers\PacienteController::actionEncounterDocumentation}).
  *
  * Parent keys: {@see \common\models\Clinical\Encounter::PARENT_*}.
  */
@@ -26,11 +26,11 @@ final class PatientHistoriaUrl
         ], $extraParams));
     }
 
-    /** Solo lectura de consulta ya cargada (turno atendido). */
-    public static function consultaCargada(int $turnoId, ?int $idPersona = null): string
+    /** Solo lectura de documentación de un encounter asociado a un turno atendido. */
+    public static function documentedEncounter(int $turnoId, ?int $idPersona = null): string
     {
         $params = [
-            '/paciente/ver-consulta',
+            '/paciente/encounter-documentation',
             'turno_id' => $turnoId,
         ];
         if ($idPersona !== null && $idPersona > 0) {

@@ -1086,7 +1086,7 @@
     async function loadTimelineSummary() {
         try {
             var endpoints = timelineConfig.endpoints || {};
-            var staffEp = endpoints.verConsultaComoStaff;
+            var staffEp = endpoints.encounterStaffSummary;
             var soloConsultaCargada = !!timelineConfig.vistaConsultaCargada;
 
             if (staffEp) {

@@ -43,7 +43,7 @@ class TurnoNotificacionProgramada extends ActiveRecord
     /**
      * @return list<string>
      */
-    public static function journeyPostConsultaTipos(): array
+    public static function postEncounterJourneyTypes(): array
     {
         return [
             self::TIPO_JOURNEY_POSTCONSULTA_DISPONIBLE,
@@ -60,7 +60,7 @@ class TurnoNotificacionProgramada extends ActiveRecord
             self::TIPO_JOURNEY_MOTIVOS_RECORDATORIO,
             self::TIPO_JOURNEY_MOTIVOS_ULTIMO_AVISO,
             self::TIPO_JOURNEY_PRECONSULTA_RECORDATORIO,
-        ], self::journeyPostConsultaTipos());
+        ], self::postEncounterJourneyTypes());
     }
 
     /** Escalada multicanal tras push de reubicación (agente A02). */

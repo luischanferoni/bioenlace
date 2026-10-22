@@ -14,7 +14,7 @@ use yii\helpers\Url;
 
 ?>
 
-<div class="container-fluid py-3 px-3" id="ver-consulta-root"
+<div class="container-fluid py-3 px-3" id="encounter-documentation-root"
      data-api="<?= Html::encode($apiPath) ?>"
      data-url-inicio="<?= Html::encode(Url::to(['/site/index'])) ?>">
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">

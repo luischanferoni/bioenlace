@@ -88,7 +88,7 @@ final class PacienteHistoriaTimelinePageBuilder
                     : null,
                 'formularioConsulta' => Url::to(['paciente/formulario-consulta', 'id' => $personaId]),
                 'historiaClinica' => $vistaConsultaCargada ? null : $paths['historiaClinicaPath'],
-                'verConsultaComoStaff' => $paths['verConsultaStaffPath'],
+                'encounterStaffSummary' => $paths['encounterStaffSummaryPath'],
                 'episodioTimelineHtml' => $paths['episodioTimelineHtmlPath'],
             ],
         ];
@@ -129,17 +129,17 @@ final class PacienteHistoriaTimelinePageBuilder
     }
 
     /**
-     * @return array{historiaClinicaPath: string, verConsultaStaffPath: string|null, episodioTimelineHtmlPath: string|null}
+     * @return array{historiaClinicaPath: string, encounterStaffSummaryPath: string|null, episodioTimelineHtmlPath: string|null}
      */
     private static function resolvePaths(int $personaId, string $parentUpper, int $parentId): array
     {
         $historiaClinicaQs = [];
-        $verConsultaStaffPath = null;
+        $encounterStaffSummaryPath = null;
         $episodioTimelineHtmlPath = null;
 
         if ($parentUpper === Encounter::PARENT_TURNO && $parentId > 0) {
             $historiaClinicaQs['turno_id'] = $parentId;
-            $verConsultaStaffPath = '/api/v1/clinical/encounter/staff-summary?'
+            $encounterStaffSummaryPath = '/api/v1/clinical/encounter/staff-summary?'
                 . http_build_query(['turno_id' => $parentId]);
         } elseif ($parentUpper === Encounter::PARENT_INTERNACION && $parentId > 0) {
             $historiaClinicaQs['parent'] = Encounter::PARENT_INTERNACION;
@@ -168,7 +168,7 @@ final class PacienteHistoriaTimelinePageBuilder
 
         return [
             'historiaClinicaPath' => $historiaClinicaPath,
-            'verConsultaStaffPath' => $verConsultaStaffPath,
+            'encounterStaffSummaryPath' => $encounterStaffSummaryPath,
             'episodioTimelineHtmlPath' => $episodioTimelineHtmlPath,
         ];
     }

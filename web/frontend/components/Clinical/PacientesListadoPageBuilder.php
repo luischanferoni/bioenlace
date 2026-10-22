@@ -72,7 +72,7 @@ final class PacientesListadoPageBuilder
             'loadingMessage' => $esPacienteHome ? 'Cargando tu panel…' : 'Cargando listado de pacientes…',
             'urls' => [
                 'historia' => Url::to(['/paciente/historia'], true),
-                'verConsulta' => Url::to(['/paciente/ver-consulta'], true),
+                'encounterDocumentation' => Url::to(['/paciente/encounter-documentation'], true),
                 'asistente' => Url::to(['/site/asistente'], true),
                 'fechaAnterior' => Url::to(['site/index', 'fecha' => date('Y-m-d', strtotime('-1 day', $fechaTs))]),
                 'fechaHoy' => Url::to(['site/index', 'fecha' => date('Y-m-d')]),

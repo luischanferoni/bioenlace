@@ -55,7 +55,7 @@ $messages = $page['messages'];
      data-fecha="<?= Html::encode($fecha) ?>"
      data-encounter="<?= Html::encode($page['encounterClass']) ?>"
      data-url-historia="<?= Html::encode($urls['historia']) ?>"
-     data-url-ver-consulta="<?= Html::encode($urls['verConsulta']) ?>"
+     data-url-encounter-documentation="<?= Html::encode($urls['encounterDocumentation']) ?>"
      data-url-asistente="<?= Html::encode($urls['asistente']) ?>"
      data-msg-empty-turnos="<?= Html::encode($messages['emptyTurnos']) ?>"
      data-msg-empty-internados="<?= Html::encode($messages['emptyInternados']) ?>"

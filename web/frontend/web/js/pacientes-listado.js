@@ -149,7 +149,7 @@
     var puedeAtender = root.getAttribute('data-puede-atender') === '1';
     var puedeDocumentar = root.getAttribute('data-puede-documentar') === '1';
     var urlHistoriaBase = root.getAttribute('data-url-historia') || '';
-    var encounterViewUrlBase = root.getAttribute('data-url-ver-consulta') || '';
+    var encounterDocumentationUrlBase = root.getAttribute('data-url-encounter-documentation') || '';
     var urlAsistente = root.getAttribute('data-url-asistente') || '';
 
     var msgEmptyTurnos = root.getAttribute('data-msg-empty-turnos') || 'Sin resultados.';
@@ -219,9 +219,9 @@
     }
 
     /** Turno ATENDIDO o encounter documentado → pantalla de solo lectura (no HC). */
-    function encounterViewUrl(personaId, turnoId, encounterId) {
-      if (!encounterViewUrlBase) return null;
-      var base = encounterViewUrlBase;
+    function encounterDocumentationUrl(personaId, turnoId, encounterId) {
+      if (!encounterDocumentationUrlBase) return null;
+      var base = encounterDocumentationUrlBase;
       var q = '';
       if (encounterId) {
         q = 'encounter_id=' + encodeURIComponent(encounterId);
@@ -341,7 +341,7 @@
       var a = colEl.querySelector('[data-role="link-historia"]');
       if (!a) return;
       if (isDocumentedEncounter) {
-        var encounterUrl = encounterViewUrl(idPersona, t.id);
+        var encounterUrl = encounterDocumentationUrl(idPersona, t.id);
         if (encounterUrl) {
           a.href = encounterUrl;
           a.setAttribute('data-spa-title', 'Consulta cargada');
@@ -800,17 +800,17 @@
         }
       }
 
-      var encounterViewCta = rowEl.querySelector('[data-role="cta-ver-consulta"]');
-      if (encounterViewCta) {
-        var encounterViewHref = emergencyEncounterCanBeViewed(g)
-          ? encounterViewUrl(g.id_persona, null, g.encounter_id)
+      var encounterDocumentationCta = rowEl.querySelector('[data-role="cta-encounter-documentation"]');
+      if (encounterDocumentationCta) {
+        var encounterDocumentationHref = emergencyEncounterCanBeViewed(g)
+          ? encounterDocumentationUrl(g.id_persona, null, g.encounter_id)
           : null;
-        if (encounterViewHref) {
-          encounterViewCta.href = encounterViewHref;
-          encounterViewCta.classList.remove('d-none');
+        if (encounterDocumentationHref) {
+          encounterDocumentationCta.href = encounterDocumentationHref;
+          encounterDocumentationCta.classList.remove('d-none');
         } else {
-          encounterViewCta.removeAttribute('href');
-          encounterViewCta.classList.add('d-none');
+          encounterDocumentationCta.removeAttribute('href');
+          encounterDocumentationCta.classList.add('d-none');
         }
       }
 
@@ -1700,7 +1700,7 @@
       if (!api) return;
       try {
         if (emergencyEncounterCanBeViewed(g)) {
-          var encounterUrl = encounterViewUrl(g.id_persona, null, g.encounter_id);
+          var encounterUrl = encounterDocumentationUrl(g.id_persona, null, g.encounter_id);
           if (encounterUrl) {
             window.location.href = encounterUrl;
             return;

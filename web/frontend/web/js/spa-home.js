@@ -11,6 +11,40 @@
     /** Lista de un solo ítem sin confirmación: espera antes del click automático. */
     const SPA_LIST_SINGLE_AUTO_INTRO_MS = 480;
 
+    function mountSpaAlert(container, severity, message, className, attributes) {
+        if (!container) {
+            return null;
+        }
+        var alert = document.createElement('div');
+        alert.className = 'alert alert-' + severity + (className ? ' ' + className : '');
+        if (attributes) {
+            Object.keys(attributes).forEach(function (name) {
+                alert.setAttribute(name, attributes[name]);
+            });
+        }
+        alert.textContent = message == null ? '' : String(message);
+        container.replaceChildren(alert);
+        return alert;
+    }
+
+    function appendSpaAlertDetails(alert, title, message, detail) {
+        if (title) {
+            var strong = document.createElement('strong');
+            strong.textContent = title;
+            alert.appendChild(strong);
+            alert.appendChild(document.createElement('br'));
+        }
+        if (message) {
+            alert.appendChild(document.createTextNode(String(message)));
+        }
+        if (detail) {
+            alert.appendChild(document.createElement('br'));
+            var small = document.createElement('small');
+            small.textContent = String(detail);
+            alert.appendChild(small);
+        }
+    }
+
     /** URL absoluta para fetch desde el shell (misma regla que loadPageContent). */
     function routeHasUnresolvedPlaceholders(url) {
         return /\{[\w-]+\}/.test(String(url || ''));
@@ -1010,7 +1044,7 @@
                 });
             }
         } else {
-            mountEl.innerHTML = '<div class="alert alert-warning mb-0">La respuesta no es una definición de UI válida.</div>';
+            mountSpaAlert(mountEl, 'warning', 'La respuesta no es una definición de UI válida.', 'mb-0');
         }
     }
 
@@ -1213,7 +1247,7 @@
                 console.error('Error cargando UI JSON (flow):', err);
                 const msg = (err && err.message) ? String(err.message) : 'Error al cargar la UI';
                 setFlowStepUiLoadingState(mountEl, false);
-                mountEl.innerHTML = '<div class="alert alert-danger mb-0">' + escapeHtml(msg) + '</div>';
+                mountSpaAlert(mountEl, 'danger', msg, 'mb-0');
             })
             .finally(function () {
                 setTimeout(scrollChatToBottom, 10);
@@ -2485,7 +2519,7 @@
                             url = fullUrl;
                         } else if (flowTabNeedsGeo(tab)) {
                             if (!navigator.geolocation) {
-                                mountEl.innerHTML = '<div class="alert alert-warning mb-0">Geolocalización no disponible en este navegador.</div>';
+                                mountSpaAlert(mountEl, 'warning', 'Geolocalización no disponible en este navegador.', 'mb-0');
                                 return;
                             }
                             // Loader genérico (no específico del dominio): mientras esperamos geolocalización.
@@ -2496,14 +2530,14 @@
                                 u.searchParams.set('longitud', String(pos.coords.longitude));
                                 fetchFlowUiDefinition(u.toString(), mountEl, fsr, flowFetchOpts);
                             }, function () {
-                                mountEl.innerHTML = '<div class="alert alert-warning mb-0">No se pudo obtener la ubicación.</div>';
+                                mountSpaAlert(mountEl, 'warning', 'No se pudo obtener la ubicación.', 'mb-0');
                             });
                             return;
                         } else {
                             url = buildUrlForFlowTab(tab);
                         }
                         if (!url) {
-                            mountEl.innerHTML = '<div class="alert alert-warning mb-0">URL inválida para esta pestaña.</div>';
+                            mountSpaAlert(mountEl, 'warning', 'URL inválida para esta pestaña.', 'mb-0');
                             return;
                         }
                         fetchFlowUiDefinition(url, mountEl, fsr, flowFetchOpts);
@@ -2868,9 +2902,10 @@
         const sev = severity === 'warning' ? 'warning' : 'danger';
         const wrap = document.createElement('div');
         wrap.className = 'bio-edit-sparse-step bio-edit-sparse-error w-100';
-        wrap.innerHTML = '<div class="alert alert-' + sev + ' mb-0">'
-            + escapeHtml(message)
-            + '</div>';
+        const alert = document.createElement('div');
+        alert.className = 'alert alert-' + sev + ' mb-0';
+        alert.textContent = message;
+        wrap.appendChild(alert);
         if (chain) {
             chain.appendChild(wrap);
         } else if (mountEl) {
@@ -3018,10 +3053,10 @@
                     renderUiJsonBlocks(json, container, renderOptions);
                     break;
                 }
-                container.innerHTML = '<div class="alert alert-warning mb-0">UI JSON inválida: falta blocks.</div>';
+                mountSpaAlert(container, 'warning', 'UI JSON inválida: falta blocks.', 'mb-0');
                 break;
             default:
-                container.innerHTML = '<div class="alert alert-info">Este tipo de UI aún no está soportado en la web: ' + escapeHtml(uiType) + '</div>';
+                mountSpaAlert(container, 'info', 'Este tipo de UI aún no está soportado en la web: ' + uiType);
         }
     }
 
@@ -3038,7 +3073,7 @@
             });
         }
         if (blocks.length < 1) {
-            container.innerHTML = '<div class="alert alert-warning mb-0">UI JSON sin blocks.</div>';
+            mountSpaAlert(container, 'warning', 'UI JSON sin blocks.', 'mb-0');
             return;
         }
 
@@ -3047,7 +3082,7 @@
             if (json && json.success === false && json.errors && typeof json.errors === 'object') {
                 const msg = firstUiErrorMessage(json.errors);
                 if (msg) {
-                    container.innerHTML = '<div class="alert alert-danger mb-2" data-ui-json-error="1">' + escapeHtml(msg) + '</div>';
+                    mountSpaAlert(container, 'danger', msg, 'mb-2', { 'data-ui-json-error': '1' });
                 }
             }
         } catch (e) { /* ignore */ }
@@ -3078,7 +3113,7 @@
             } else if (kind === 'fields') {
                 renderUiJsonFieldsBlock(b, mount, options);
             } else {
-                mount.innerHTML = '<div class="alert alert-warning mb-0">Block no soportado: ' + escapeHtml(kind) + '</div>';
+                mountSpaAlert(mount, 'warning', 'Block no soportado: ' + kind, 'mb-0');
             }
         });
     }
@@ -3705,7 +3740,13 @@
                         return;
                     }
                     const url = setUrlQueryParam(baseListUrl, 'q', q);
-                    itemsMount.innerHTML = '<div class="d-flex align-items-center gap-2 py-2 text-muted small"><div class="spinner-border spinner-border-sm"></div> Buscando…</div>';
+                    const searchLoading = document.createElement('div');
+                    searchLoading.className = 'd-flex align-items-center gap-2 py-2 text-muted small';
+                    const searchSpinner = document.createElement('div');
+                    searchSpinner.className = 'spinner-border spinner-border-sm';
+                    searchLoading.appendChild(searchSpinner);
+                    searchLoading.appendChild(document.createTextNode(' Buscando…'));
+                    itemsMount.replaceChildren(searchLoading);
                     if (emptyHintEl) emptyHintEl.classList.add('d-none');
                     fetch(url, {
                         method: 'GET',
@@ -3734,7 +3775,7 @@
                         })
                         .catch(function () {
                             if (isListPickLocked()) return;
-                            itemsMount.innerHTML = '<div class="alert alert-warning mb-0 py-2 small">No se pudo buscar. Intentá de nuevo.</div>';
+                            mountSpaAlert(itemsMount, 'warning', 'No se pudo buscar. Intentá de nuevo.', 'mb-0 py-2 small');
                             if (emptyHintEl && emptyMsg) emptyHintEl.classList.remove('d-none');
                         });
                 }, 320);
@@ -5270,7 +5311,7 @@
      */
     function loadCardContent(url, kind, assets, container) {
         if (!url) {
-            container.innerHTML = '<div class="alert alert-warning">No hay contenido disponible</div>';
+            mountSpaAlert(container, 'warning', 'No hay contenido disponible');
             return;
         }
 
@@ -5295,13 +5336,13 @@
                 if (json && json.kind === 'ui_definition') {
                     renderDynamicUi(json, container, { url: fullUrl });
                 } else {
-                    container.innerHTML = '<div class="alert alert-warning">La respuesta no es una definición de UI válida.</div>';
+                    mountSpaAlert(container, 'warning', 'La respuesta no es una definición de UI válida.');
                 }
             })
             .catch(error => {
                 console.error('Error cargando UI JSON (inline):', error);
                 const msg = (error && error.message) ? String(error.message) : 'Error al cargar la UI';
-                container.innerHTML = '<div class="alert alert-danger">' + escapeHtml(msg) + '</div>';
+                mountSpaAlert(container, 'danger', msg);
             });
             return;
         }
@@ -5326,7 +5367,7 @@
         })
         .catch(error => {
             console.error('Error cargando contenido:', error);
-            container.innerHTML = '<div class="alert alert-danger">Error al cargar el contenido</div>';
+            mountSpaAlert(container, 'danger', 'Error al cargar el contenido');
         });
     }
 
@@ -5442,7 +5483,7 @@
             if (pageElement) {
                 const content = pageElement.querySelector('.spa-page-content');
                 if (content) {
-                    content.innerHTML = '<div class="alert alert-warning">No hay contenido disponible</div>';
+                    mountSpaAlert(content, 'warning', 'No hay contenido disponible');
                 }
             }
             return;
@@ -5487,7 +5528,7 @@
                 if (json.kind === 'ui_definition') {
                     renderDynamicUi(json, content, { url: fullUrl });
                 } else {
-                    content.innerHTML = '<div class="alert alert-warning">La respuesta no es una definición de UI válida.</div>';
+                    mountSpaAlert(content, 'warning', 'La respuesta no es una definición de UI válida.');
                 }
             })
             .catch(error => {
@@ -5496,11 +5537,8 @@
                 if (pageElement) {
                     const content = pageElement.querySelector('.spa-page-content');
                     if (content) {
-                        content.innerHTML = `<div class="alert alert-danger">
-                            <strong>Error al cargar la UI dinámica</strong><br>
-                            ${error.message}<br>
-                            <small>URL: ${fullUrl}</small>
-                        </div>`;
+                        const alert = mountSpaAlert(content, 'danger', '', '');
+                        appendSpaAlertDetails(alert, 'Error al cargar la UI dinámica', error.message, 'URL: ' + fullUrl);
                     }
                 }
             });
@@ -5540,7 +5578,8 @@
                 if (pageElement) {
                     const content = pageElement.querySelector('.spa-page-content');
                     if (content) {
-                        content.innerHTML = `<div class="alert alert-danger">Error al cargar el contenido<br>${escapeHtml(error.message)}</div>`;
+                        const alert = mountSpaAlert(content, 'danger', '', '');
+                        appendSpaAlertDetails(alert, 'Error al cargar el contenido', error.message, '');
                     }
                 }
             });
@@ -5579,11 +5618,8 @@
             if (pageElement) {
                 const content = pageElement.querySelector('.spa-page-content');
                 if (content) {
-                    content.innerHTML = `<div class="alert alert-danger">
-                        <strong>Error al cargar el contenido</strong><br>
-                        ${error.message}<br>
-                        <small>URL: ${fullUrl}</small>
-                    </div>`;
+                    const alert = mountSpaAlert(content, 'danger', '', '');
+                    appendSpaAlertDetails(alert, 'Error al cargar el contenido', error.message, 'URL: ' + fullUrl);
                 }
             }
         });
@@ -5709,7 +5745,7 @@
 
         const bodyEl = doc.body;
         if (!bodyEl) {
-            content.innerHTML = '<div class="alert alert-danger">La respuesta no es un documento HTML válido.</div>';
+            mountSpaAlert(content, 'danger', 'La respuesta no es un documento HTML válido.');
             return;
         }
 

@@ -36,14 +36,6 @@
         return body;
     }
 
-    function escapeHtml(s) {
-        return String(s)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
-    }
-
     function formatFechaEs(iso) {
         var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || '').trim());
         if (!m) {
@@ -52,46 +44,67 @@
         return m[3] + '/' + m[2] + '/' + m[1].slice(-2);
     }
 
+    function createElement(tag, className, text) {
+        var el = document.createElement(tag);
+        if (className) {
+            el.className = className;
+        }
+        if (text !== undefined) {
+            el.textContent = text;
+        }
+        return el;
+    }
+
+    function showPanelMessage(panel, className, message) {
+        panel.replaceChildren(createElement('div', className, message));
+    }
+
     function renderPreview(panel, data) {
         if (!data || typeof data !== 'object') {
-            panel.innerHTML = '<div class="text-muted small">Sin datos de preview.</div>';
+            showPanelMessage(panel, 'text-muted small', 'Sin datos de preview.');
             return;
         }
         var total = parseInt(data.turnos_afectados_total, 10) || 0;
-        var html = '<div class="alert ' + (total > 0 ? 'alert-warning' : 'alert-info') + ' small mb-0" role="status">';
+        var alert = createElement('div', 'alert ' + (total > 0 ? 'alert-warning' : 'alert-info') + ' small mb-0');
+        alert.setAttribute('role', 'status');
         if (data.mensaje) {
-            html += '<p class="mb-2">' + escapeHtml(String(data.mensaje)) + '</p>';
+            alert.appendChild(createElement('p', 'mb-2', String(data.mensaje)));
         }
         if (total <= 0) {
-            html += '</div>';
-            panel.innerHTML = html;
+            panel.replaceChildren(alert);
             return;
         }
-        html += '<p class="mb-1"><strong>Turnos pendientes (' + total + '):</strong></p><ul class="mb-0 ps-3">';
+        var heading = createElement('p', 'mb-1');
+        heading.appendChild(createElement('strong', '', 'Turnos pendientes (' + total + '):'));
+        alert.appendChild(heading);
+        var listElement = createElement('ul', 'mb-0 ps-3');
         var list = Array.isArray(data.turnos) ? data.turnos : [];
         list.forEach(function (t) {
-            var line = formatFechaEs(t.fecha) + ' ' + escapeHtml(String(t.hora || ''));
+            var line = formatFechaEs(t.fecha) + ' ' + String(t.hora || '');
             if (t.paciente) {
-                line += ' — ' + escapeHtml(String(t.paciente));
+                line += ' — ' + String(t.paciente);
             }
-            html += '<li>' + line + '</li>';
+            listElement.appendChild(createElement('li', '', line));
         });
         if (total > list.length) {
-            html += '<li class="text-muted">… y ' + (total - list.length) + ' más</li>';
+            listElement.appendChild(createElement('li', 'text-muted', '… y ' + (total - list.length) + ' más'));
         }
-        html += '</ul>';
-        html += '<p class="mb-0 mt-2 text-warning">Confirmá solo si aceptás que esos turnos pasen a resolución.</p>';
-        html += '</div>';
-        panel.innerHTML = html;
+        alert.appendChild(listElement);
+        alert.appendChild(createElement(
+            'p',
+            'mb-0 mt-2 text-warning',
+            'Confirmá solo si aceptás que esos turnos pasen a resolución.'
+        ));
+        panel.replaceChildren(alert);
     }
 
     function fetchPreview(root, panel) {
         var form = findForm(root);
         if (!form) {
-            panel.innerHTML = '<div class="alert alert-warning small mb-0">No se encontró el formulario.</div>';
+            showPanelMessage(panel, 'alert alert-warning small mb-0', 'No se encontró el formulario.');
             return;
         }
-        panel.innerHTML = '<div class="text-muted small">Calculando impacto en turnos…</div>';
+        showPanelMessage(panel, 'text-muted small', 'Calculando impacto en turnos…');
         fetch('/api/v1/profesional-efector-servicio/preview-impacto-licencia', {
             method: 'POST',
             headers: global.BioenlaceApiClient.mergeHeaders({
@@ -109,11 +122,11 @@
                     var msg = (res.json && res.json.error && res.json.error.message)
                         ? res.json.error.message
                         : 'No se pudo obtener el impacto.';
-                    panel.innerHTML = '<div class="alert alert-danger small mb-0">' + escapeHtml(msg) + '</div>';
+                    showPanelMessage(panel, 'alert alert-danger small mb-0', msg);
                 }
             })
             .catch(function () {
-                panel.innerHTML = '<div class="alert alert-danger small mb-0">Error de red al calcular el impacto.</div>';
+                showPanelMessage(panel, 'alert alert-danger small mb-0', 'Error de red al calcular el impacto.');
             });
     }
 
@@ -123,7 +136,9 @@
             if (mount && mount.parentNode) {
                 mount.parentNode.removeChild(mount);
             }
-            root.insertAdjacentHTML('beforeend', '<div data-licencia-impact-panel="1"></div>');
+            var panelElement = document.createElement('div');
+            panelElement.setAttribute('data-licencia-impact-panel', '1');
+            root.appendChild(panelElement);
             var panel = root.querySelector('[data-licencia-impact-panel="1"]');
             if (!panel) {
                 return;

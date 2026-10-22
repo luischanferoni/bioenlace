@@ -17,7 +17,7 @@ El script corre en CI, falla si un contador sube y está documentado cómo bajar
 
 ## Estado
 
-Hecho. No hay CI configurado en el repositorio, así que la guarda es un comando local.
+Parcial. No hay CI configurado en el repositorio, así que la guarda es un comando local. El script y el baseline existen, pero la verificación actual no pasa: `domain_literal_messages` marca 764 frente al tope 701. No se debe elevar el baseline para ocultar el exceso; la fase queda abierta hasta reducir el contador a su tope o menos.
 
 - Script: `web/tools/audit-thin-clients.php`. Tope versionado: `web/tools/thin-clients-baseline.json`.
 - Comandos: `composer audit:thin-clients` (verifica; sale con 1 si un contador sube), `composer audit:thin-clients:report` (contadores y archivos con más ocurrencias).
@@ -28,4 +28,4 @@ Hecho. No hay CI configurado en el repositorio, así que la guarda es un comando
 
 Topes iniciales: mensajes en controllers API 68; en dominio 702; textos literales en Dart 211; «consulta» en código Dart 394 y 10 archivos; ramas por episodio en Dart 10 y en JS 1; «consulta» en archivos PHP 60 y 25 rutas; HTML concatenado en JS 226; textos literales en JS 65; lógica en vistas 39.
 
-Pendiente: conectar la verificación a CI cuando el repositorio tenga uno.
+Pendiente: reducir `domain_literal_messages` a 701 o menos; conectar la verificación a CI cuando el repositorio tenga uno.

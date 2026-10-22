@@ -35,60 +35,95 @@
         return body;
     }
 
-    function escapeHtml(s) {
-        return String(s)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
+    function createElement(tag, className, text) {
+        var el = document.createElement(tag);
+        if (className) {
+            el.className = className;
+        }
+        if (text !== undefined) {
+            el.textContent = text;
+        }
+        return el;
+    }
+
+    function showPanelMessage(panel, className, message) {
+        panel.replaceChildren(createElement('div', className, message));
     }
 
     function renderPreview(panel, data) {
         if (!data || typeof data !== 'object') {
-            panel.innerHTML = '<div class="text-muted small">Sin datos de preview.</div>';
+            showPanelMessage(panel, 'text-muted small', 'Sin datos de preview.');
             return;
         }
-        var html = '<div class="alert alert-info small mb-0" role="status">';
-        html += '<strong>Vista previa</strong><br>';
+        var alert = createElement('div', 'alert alert-info small mb-0');
+        alert.setAttribute('role', 'status');
+        alert.appendChild(createElement('strong', '', 'Vista previa'));
+        alert.appendChild(document.createElement('br'));
         if (data.mensaje) {
-            html += escapeHtml(String(data.mensaje));
+            alert.appendChild(document.createTextNode(String(data.mensaje)));
         }
-        html += '<ul class="mb-0 mt-2 ps-3">';
-        html += '<li>Intervalo: ' + escapeHtml(String(data.intervalo_actual)) + ' → ' + escapeHtml(String(data.intervalo_nuevo)) + ' min</li>';
-        html += '<li>Turnos futuros: ' + escapeHtml(String(data.turnos_alineados || 0)) + ' alineados, ';
-        html += escapeHtml(String(data.turnos_en_conflicto || 0)) + ' en conflicto</li>';
-        html += '<li>Cambios de intervalo este año: ' + escapeHtml(String(data.cambios_intervalo_este_anio || 0));
-        html += ' / ' + escapeHtml(String(data.cambios_intervalo_max_por_anio || 2)) + '</li>';
-        html += '</ul>';
+        var summaryList = createElement('ul', 'mb-0 mt-2 ps-3');
+        summaryList.appendChild(createElement(
+            'li',
+            '',
+            'Intervalo: ' + String(data.intervalo_actual) + ' → ' + String(data.intervalo_nuevo) + ' min'
+        ));
+        summaryList.appendChild(createElement(
+            'li',
+            '',
+            'Turnos futuros: ' + String(data.turnos_alineados || 0) + ' alineados, ' +
+                String(data.turnos_en_conflicto || 0) + ' en conflicto'
+        ));
+        summaryList.appendChild(createElement(
+            'li',
+            '',
+            'Cambios de intervalo este año: ' + String(data.cambios_intervalo_este_anio || 0) +
+                ' / ' + String(data.cambios_intervalo_max_por_anio || 2)
+        ));
+        alert.appendChild(summaryList);
         if (Array.isArray(data.conflictos) && data.conflictos.length > 0) {
-            html += '<p class="mb-1 mt-2"><strong>Conflictos (muestra):</strong></p><ul class="mb-0 ps-3">';
+            var conflictHeading = createElement('p', 'mb-1 mt-2');
+            conflictHeading.appendChild(createElement('strong', '', 'Conflictos (muestra):'));
+            alert.appendChild(conflictHeading);
+            var conflictsList = createElement('ul', 'mb-0 ps-3');
             data.conflictos.slice(0, 5).forEach(function (c) {
-                html += '<li>' + escapeHtml(String(c.fecha || '')) + ' ' + escapeHtml(String(c.hora_actual || ''));
-                html += ' → antes ' + escapeHtml(String(c.opcion_antes || '—'));
-                html += ' / después ' + escapeHtml(String(c.opcion_despues || '—')) + '</li>';
+                conflictsList.appendChild(createElement(
+                    'li',
+                    '',
+                    String(c.fecha || '') + ' ' + String(c.hora_actual || '') +
+                        ' → antes ' + String(c.opcion_antes || '—') +
+                        ' / después ' + String(c.opcion_despues || '—')
+                ));
             });
             if (data.conflictos.length > 5) {
-                html += '<li class="text-muted">… y ' + (data.conflictos.length - 5) + ' más</li>';
+                conflictsList.appendChild(createElement(
+                    'li',
+                    'text-muted',
+                    '… y ' + (data.conflictos.length - 5) + ' más'
+                ));
             }
-            html += '</ul>';
+            alert.appendChild(conflictsList);
         }
         if (data.requiere_confirmacion) {
-            html += '<p class="mb-0 mt-2 text-warning">Confirmá el guardado solo si aceptás el impacto en turnos futuros.</p>';
+            alert.appendChild(createElement(
+                'p',
+                'mb-0 mt-2 text-warning',
+                'Confirmá el guardado solo si aceptás el impacto en turnos futuros.'
+            ));
         }
-        html += '</div>';
-        panel.innerHTML = html;
+        panel.replaceChildren(alert);
     }
 
     function fetchPreview(root, panel, btn) {
         var form = findForm(root);
         if (!form) {
-            panel.innerHTML = '<div class="alert alert-warning small mb-0">No se encontró el formulario.</div>';
+            showPanelMessage(panel, 'alert alert-warning small mb-0', 'No se encontró el formulario.');
             return;
         }
         if (btn) {
             btn.disabled = true;
         }
-        panel.innerHTML = '<div class="text-muted small">Calculando impacto…</div>';
+        showPanelMessage(panel, 'text-muted small', 'Calculando impacto…');
         // Misma ruta RBAC que el guardado (`configurar-agenda` + preview=1).
         var body = collectBody(form);
         body.set('preview', '1');
@@ -107,11 +142,11 @@
                     renderPreview(panel, res.json.data);
                 } else {
                     var msg = (res.json && res.json.message) ? res.json.message : 'No se pudo obtener el preview.';
-                    panel.innerHTML = '<div class="alert alert-danger small mb-0">' + escapeHtml(msg) + '</div>';
+                    showPanelMessage(panel, 'alert alert-danger small mb-0', msg);
                 }
             })
             .catch(function () {
-                panel.innerHTML = '<div class="alert alert-danger small mb-0">Error de red al calcular el impacto.</div>';
+                showPanelMessage(panel, 'alert alert-danger small mb-0', 'Error de red al calcular el impacto.');
             })
             .finally(function () {
                 if (btn) {
@@ -127,11 +162,15 @@
                 mount.parentNode.removeChild(mount);
             }
             var autoFetch = fieldDef && (fieldDef.auto_fetch_on_init === true || fieldDef.auto_fetch_on_init === 1);
-            root.insertAdjacentHTML(
-                'beforeend',
-                (autoFetch ? '' : '<button type="button" class="btn btn-outline-primary btn-sm mb-2" data-agenda-preview-btn="1">Ver impacto antes de guardar</button>') +
-                '<div data-agenda-preview-panel="1"></div>'
-            );
+            if (!autoFetch) {
+                var btn = createElement('button', 'btn btn-outline-primary btn-sm mb-2', 'Ver impacto antes de guardar');
+                btn.setAttribute('type', 'button');
+                btn.setAttribute('data-agenda-preview-btn', '1');
+                root.appendChild(btn);
+            }
+            var panelElement = document.createElement('div');
+            panelElement.setAttribute('data-agenda-preview-panel', '1');
+            root.appendChild(panelElement);
             var panel = root.querySelector('[data-agenda-preview-panel="1"]');
             var btn = root.querySelector('[data-agenda-preview-btn="1"]');
             if (!panel) {

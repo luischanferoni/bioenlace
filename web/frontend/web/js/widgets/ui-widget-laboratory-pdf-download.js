@@ -42,14 +42,17 @@
             var initial = field.initial_values && typeof field.initial_values === 'object' ? field.initial_values : {};
             var pdfPath = initial.pdf_url ? String(initial.pdf_url) : '';
             if (!pdfPath) {
-                el.innerHTML = '<p class="text-muted small">PDF no disponible.</p>';
+                var unavailable = document.createElement('p');
+                unavailable.className = 'text-muted small';
+                unavailable.textContent = global.BioenlaceApiClient.pdfDownloadUnavailableMessage();
+                el.appendChild(unavailable);
                 return;
             }
             el.innerHTML = '';
             var btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'btn btn-primary';
-            btn.textContent = 'Descargar PDF';
+            btn.textContent = global.BioenlaceApiClient.pdfDownloadButtonLabel();
             btn.addEventListener('click', function () {
                 btn.disabled = true;
                 var url = resolveUrl(pdfPath);

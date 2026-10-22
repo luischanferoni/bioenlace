@@ -91,10 +91,11 @@
             if (mount && mount.parentNode) {
                 mount.parentNode.removeChild(mount);
             }
-            root.insertAdjacentHTML(
-                'beforeend',
-                '<p class="text-muted small mb-0 spa-licencia-rango-dias-hint" data-licencia-rango-dias-hint="1" role="status"></p>'
-            );
+            var hintElement = document.createElement('p');
+            hintElement.className = 'text-muted small mb-0 spa-licencia-rango-dias-hint';
+            hintElement.setAttribute('data-licencia-rango-dias-hint', '1');
+            hintElement.setAttribute('role', 'status');
+            root.appendChild(hintElement);
             var hintEl = root.querySelector('[data-licencia-rango-dias-hint="1"]');
             if (!hintEl) {
                 return;

@@ -14,6 +14,14 @@
 
   var webJwtRefreshInFlight = null;
 
+  NS.pdfDownloadButtonLabel = function () {
+    return 'Descargar PDF';
+  };
+
+  NS.pdfDownloadUnavailableMessage = function () {
+    return 'PDF no disponible.';
+  };
+
   NS.pdfDownloadErrorMessage = function () {
     return 'No se pudo descargar el PDF. Intentá de nuevo.';
   };

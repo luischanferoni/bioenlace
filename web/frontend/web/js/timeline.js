@@ -188,35 +188,6 @@ function ocultarLoadingContainer() {
     }
 }
 
-// Función para cargar la última vacuna
-/*async function loadUltimaVacuna() {
-    try {
-        const url = `${endpoints.vacunas}&ultima=1`;
-        const response = await fetch(url);
-        
-        if (response.ok) {
-            const data = await response.json();
-            const content = document.getElementById('ultima-vacuna-content');
-            
-            if (data.success) {
-                content.innerHTML = data.html;
-                
-                // Mostrar link si hay más vacunas
-                if (data.tieneMasVacunas) {
-                    document.getElementById('vacunas-link').style.display = 'block';
-                }
-            } else {
-                content.innerHTML = '<div class="text-muted"><i class="bi bi-info-circle"></i> No se pudieron cargar las vacunas</div>';
-            }
-        } else {
-            throw new Error('Error en la respuesta');
-        }
-    } catch (error) {
-        console.error('Error cargando última vacuna:', error);
-        document.getElementById('ultima-vacuna-content').innerHTML = '<div class="text-muted"><i class="bi bi-exclamation-triangle"></i> Error cargando vacunas</div>';
-    }
-}*/
-
 // Función para cargar todas las vacunas en el modal
 async function loadTodasLasVacunas() {
     const modalContent = document.getElementById('modal-vacunas-content');

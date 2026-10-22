@@ -549,19 +549,32 @@ async function loadEncounterCaptureForm() {
         const data = await response.json();
         
         if (data.success) {
-            let html = '';
+            var content = document.createDocumentFragment();
             
             // Mostrar mensajes si existen
-            if (data.mensajeCondicion) {
-                html += data.mensajeCondicion;
-            }
-            if (data.mensajeCambioEfector) {
-                html += data.mensajeCambioEfector;
-            }
+            [data.mensajeCondicion, data.mensajeCambioEfector].forEach(function (message) {
+                if (!message) return;
+                var alert = document.createElement('div');
+                alert.className = 'alert alert-warning alert-dismissible fade show';
+                alert.setAttribute('role', 'alert');
+                var icon = document.createElement('i');
+                icon.className = 'bi bi-info-circle me-1';
+                alert.appendChild(icon);
+                alert.appendChild(document.createTextNode(' ' + String(message)));
+                var closeButton = document.createElement('button');
+                closeButton.type = 'button';
+                closeButton.className = 'btn-close';
+                closeButton.setAttribute('data-bs-dismiss', 'alert');
+                closeButton.setAttribute('aria-label', 'Cerrar');
+                alert.appendChild(closeButton);
+                content.appendChild(alert);
+            });
             
             // Mostrar formulario si está permitido
             if (data.mostrarFormulario && data.formularioHtml) {
-                html += data.formularioHtml;
+                var template = document.createElement('template');
+                template.innerHTML = data.formularioHtml;
+                content.appendChild(template.content);
                 
                 // Almacenar id_configuracion en variable global para el chat inteligente
                 if (data.id_configuracion) {
@@ -569,7 +582,7 @@ async function loadEncounterCaptureForm() {
                 }
             }
             
-            container.innerHTML = html;
+            container.replaceChildren(content);
             
             // Re-inicializar eventos del formulario si está presente
             if (data.mostrarFormulario) {

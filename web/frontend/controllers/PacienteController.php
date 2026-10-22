@@ -265,13 +265,7 @@ class PacienteController extends Controller
             $resultadoConfiguracion = $this->obtenerConfiguracion($encounterId, $paciente, $parent, $parentId);
 
             if (!$resultadoConfiguracion['success']) {
-                $msg = Html::encode((string) ($resultadoConfiguracion['msg'] ?? 'No se puede iniciar la captura.'));
-                $mensajeCondicion =
-                    '<div class="alert alert-warning alert-dismissible fade show" role="alert">'
-                    . '<i class="bi bi-info-circle me-1"></i> '
-                    . $msg
-                    . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>'
-                    . '</div>';
+                $mensajeCondicion = (string) ($resultadoConfiguracion['msg'] ?? 'No se puede iniciar la captura.');
                 $mostrarFormulario = false;
             }
 

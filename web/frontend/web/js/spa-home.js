@@ -45,6 +45,26 @@
         }
     }
 
+    function appendAssistantResponseDetails(container, details) {
+        if (!container || !Array.isArray(details) || details.length === 0) {
+            return;
+        }
+        var wrapper = document.createElement('div');
+        wrapper.className = 'mt-2 p-2 bg-light rounded';
+        var small = document.createElement('small');
+        details.forEach(function (detail, index) {
+            if (index > 0) {
+                small.appendChild(document.createTextNode(' | '));
+            }
+            var label = document.createElement('strong');
+            label.textContent = String(detail.label);
+            small.appendChild(label);
+            small.appendChild(document.createTextNode(': ' + String(detail.value)));
+        });
+        wrapper.appendChild(small);
+        container.appendChild(wrapper);
+    }
+
     /** URL absoluta para fetch desde el shell (misma regla que loadPageContent). */
     function routeHasUnresolvedPlaceholders(url) {
         return /\{[\w-]+\}/.test(String(url || ''));
@@ -637,20 +657,27 @@
         }
     }
 
-    function buildFlowChatHeaderHtml(actionTitle, fm) {
+    function buildFlowChatHeader(actionTitle, fm) {
         const titleStr = typeof actionTitle === 'string' ? actionTitle.trim() : '';
         if (titleStr === '') {
-            return '';
+            return null;
         }
         const tone = flowCrudToneFromManifest(fm);
         const titleTone = tone && FLOW_CRUD_TITLE_TONE_BY_CRUD[tone] ? ' ' + FLOW_CRUD_TITLE_TONE_BY_CRUD[tone] : '';
         const titleClass = 'spa-flow-chat-title' + titleTone;
         const ruleClass = 'spa-flow-chat-rule' + (tone ? ' spa-flow-chat-rule--' + tone : '');
         const headerClass = 'spa-flow-chat-header' + (tone ? ' spa-flow-chat--' + tone : '');
-        return '<div class="' + headerClass + '">'
-            + '<h3 class="' + titleClass + '">' + escapeHtml(titleStr) + '</h3>'
-            + '<div class="' + ruleClass + '" aria-hidden="true"></div>'
-            + '</div>';
+        const header = document.createElement('div');
+        header.className = headerClass;
+        const title = document.createElement('h3');
+        title.className = titleClass;
+        title.textContent = titleStr;
+        const rule = document.createElement('div');
+        rule.className = ruleClass;
+        rule.setAttribute('aria-hidden', 'true');
+        header.appendChild(title);
+        header.appendChild(rule);
+        return header;
     }
 
     /**
@@ -696,12 +723,24 @@
         applyFlowChatCrudTone(header, fm);
     }
 
-    function buildFlowSubmitSummaryHtml(data, intentId, flowSnapshotOpt) {
+    function buildFlowSubmitSummary(data, intentId, flowSnapshotOpt) {
         const lines = formatFlowSubmitSummaryLines(data, intentId, flowSnapshotOpt);
-        const body = lines.length
-            ? lines.map(function (ln) { return escapeHtml(ln); }).join('<br>')
-            : escapeHtml('Listo.');
-        return '<div class="spa-flow-completed-summary"><div class="alert alert-success mb-0 py-2">' + body + '</div></div>';
+        const summary = document.createElement('div');
+        summary.className = 'spa-flow-completed-summary';
+        const alert = document.createElement('div');
+        alert.className = 'alert alert-success mb-0 py-2';
+        if (lines.length) {
+            lines.forEach(function (line, index) {
+                if (index > 0) {
+                    alert.appendChild(document.createElement('br'));
+                }
+                alert.appendChild(document.createTextNode(String(line)));
+            });
+        } else {
+            alert.textContent = window.BioenlaceApiClient.flowCompletedSummaryFallback();
+        }
+        summary.appendChild(alert);
+        return summary;
     }
 
     const FLOW_COLLAPSE_FADE_MS = 620;
@@ -726,7 +765,7 @@
             if (!chatMessagesDiv) {
                 return;
             }
-            const summaryHtml = buildFlowSubmitSummaryHtml(data, intentIdOpt, flowSnapshotOpt);
+            const summary = buildFlowSubmitSummary(data, intentIdOpt, flowSnapshotOpt);
             const first = rows[0];
             if (!first || !first.isConnected) {
                 return;
@@ -736,20 +775,14 @@
             first.classList.add('spa-chat-flow-row--completed');
             const inner = first.querySelector('.spa-chat-flow-turn');
             if (inner) {
-                var headerHtml = '';
                 var existingHeader = inner.querySelector('.spa-flow-chat-header');
-                if (existingHeader) {
-                    headerHtml = existingHeader.outerHTML;
-                } else {
-                    headerHtml = buildFlowChatHeaderHtml(actionTitle, currentFlowManifest);
-                }
-                inner.innerHTML = headerHtml + summaryHtml;
-                var summaryEl = inner.querySelector('.spa-flow-completed-summary');
-                if (summaryEl) {
-                    requestAnimationFrame(function () {
-                        summaryEl.classList.add('spa-flow-completed-summary--visible');
-                    });
-                }
+                var header = existingHeader || buildFlowChatHeader(actionTitle, currentFlowManifest);
+                inner.replaceChildren();
+                if (header) inner.appendChild(header);
+                inner.appendChild(summary);
+                requestAnimationFrame(function () {
+                    summary.classList.add('spa-flow-completed-summary--visible');
+                });
             }
             for (let i = 1; i < rows.length; i++) {
                 if (rows[i] && rows[i].parentNode) {
@@ -1048,12 +1081,21 @@
         }
     }
 
-    function flowStepUiLoadingHtml(message) {
+    function createFlowStepUiLoading(message) {
         const msg = (message && String(message).trim() !== '') ? String(message).trim() : 'Cargando...';
-        return '<div class="spa-flow-step-loading d-flex align-items-center gap-2 py-3 text-muted" role="status" aria-live="polite">'
-            + '<div class="spinner-border spinner-border-sm" aria-hidden="true"></div>'
-            + '<span class="spa-flow-step-loading-text">' + escapeHtml(msg) + '</span>'
-            + '</div>';
+        const loading = document.createElement('div');
+        loading.className = 'spa-flow-step-loading d-flex align-items-center gap-2 py-3 text-muted';
+        loading.setAttribute('role', 'status');
+        loading.setAttribute('aria-live', 'polite');
+        const spinner = document.createElement('div');
+        spinner.className = 'spinner-border spinner-border-sm';
+        spinner.setAttribute('aria-hidden', 'true');
+        const label = document.createElement('span');
+        label.className = 'spa-flow-step-loading-text';
+        label.textContent = msg;
+        loading.appendChild(spinner);
+        loading.appendChild(label);
+        return loading;
     }
 
     function setFlowStepUiLoadingState(mountEl, loading) {
@@ -1151,7 +1193,7 @@
             return;
         }
         setFlowStepUiLoadingState(mountEl, true);
-        mountEl.innerHTML = flowStepUiLoadingHtml(message);
+        mountEl.replaceChildren(createFlowStepUiLoading(message));
     }
 
     /**
@@ -1186,7 +1228,7 @@
         body.className = 'spa-flow-step-body';
         const mount = document.createElement('div');
         mount.className = 'spa-flow-step-ui spa-flow-step-ui--loading';
-        mount.innerHTML = flowStepUiLoadingHtml(message);
+        mount.appendChild(createFlowStepUiLoading(message));
         body.appendChild(mount);
         li.appendChild(body);
         list.appendChild(li);
@@ -2078,6 +2120,7 @@
         } else {
             explanationEl.innerHTML = '<div class="mb-0 spa-chat-bubble-text spa-chat-bubble-text--assistant">' + explanationHtml + '</div>';
         }
+        appendAssistantResponseDetails(explanationEl, o.details);
 
         const actionsEl = document.createElement('div');
         actionsEl.className = 'row g-3';
@@ -2475,12 +2518,12 @@
                     }
                     removeFlowPlanStrip();
                     flowSectionInner.innerHTML = '';
-                    const errHtml = openUi && openUi.action_id
-                        ? ('<div class="alert alert-danger mb-0 mt-2">No puedo abrir la mini-UI requerida (' + escapeHtml(String(openUi.action_id)) + ').</div>')
-                        : ('<div class="alert alert-danger mb-0 mt-2">No puedo determinar la UI a abrir para este paso.</div>');
                     const errWrap = document.createElement('div');
                     errWrap.className = 'mt-2';
-                    errWrap.innerHTML = errHtml;
+                    const errorMessage = openUi && openUi.action_id
+                        ? window.BioenlaceApiClient.flowRequiredUiUnavailableMessage(openUi.action_id)
+                        : window.BioenlaceApiClient.flowUiUndeterminedMessage();
+                    mountSpaAlert(errWrap, 'danger', errorMessage, 'mb-0 mt-2');
                     flowSectionInner.appendChild(errWrap);
                     setTimeout(scrollChatToBottom, 20);
                     return;
@@ -2597,26 +2640,23 @@
                     }
                     
                     // Mostrar datos adicionales si existen (ej: datos de persona encontrada)
-                    let explanation = result.explanation || '';
+                    const explanation = result.explanation || '';
+                    const dataDetails = [];
                     if (result.data && typeof result.data === 'object') {
-                        const dataInfo = [];
                         if (result.data.nombre) {
-                            dataInfo.push(`<strong>Nombre:</strong> ${escapeHtml(result.data.nombre)}`);
+                            dataDetails.push({ label: 'Nombre', value: result.data.nombre });
                         }
                         if (result.data.dni) {
-                            dataInfo.push(`<strong>DNI:</strong> ${escapeHtml(result.data.dni)}`);
-                        }
-                        if (dataInfo.length > 0) {
-                            explanation += '<div class="mt-2 p-2 bg-light rounded"><small>' + dataInfo.join(' | ') + '</small></div>';
+                            dataDetails.push({ label: 'DNI', value: result.data.dni });
                         }
                     }
                     
                     // Si success es false pero hay explicación, mostrar como información (no error)
                     if (result.success === false) {
                         const suggested = result.interaccion_sugerida && result.interaccion_sugerida.texto ? result.interaccion_sugerida.texto : null;
-                        displayInfoResponse(explanation, actionsToDisplay, suggested);
+                        displayInfoResponse(explanation, actionsToDisplay, suggested, dataDetails);
                     } else {
-                        displayResponse(explanation, actionsToDisplay);
+                        displayResponse(explanation, actionsToDisplay, dataDetails);
                     }
                 }
             } else if (result.success !== false) {
@@ -2805,7 +2845,7 @@
             actionsHtml = '<div class="col-12"><p class="text-muted mb-0">' + escapeHtml(data.message || 'No hay acciones disponibles') + '</p></div>';
         }
 
-        const panel = appendAssistantResponsePanel({ explanationHtml: explanationHtml, actionsHtml: actionsHtml, variant: 'plain' });
+        const panel = appendAssistantResponsePanel({ explanationHtml: explanationHtml, actionsHtml: actionsHtml, variant: 'plain', details: details });
         if (panel && panel.actionsEl) {
             attachCardListeners(panel.actionsEl);
         } else {
@@ -2966,11 +3006,11 @@
         const chain = ensureEditSparseChainRoot(mountEl);
         const loader = document.createElement('div');
         loader.className = 'd-flex align-items-center justify-content-center gap-2 py-2 text-muted bio-edit-sparse-loader';
-        loader.innerHTML = flowStepUiLoadingHtml();
+        loader.appendChild(createFlowStepUiLoading());
         if (chain) {
             chain.appendChild(loader);
         } else {
-            mountEl.innerHTML = loader.outerHTML;
+            mountEl.replaceChildren(loader);
         }
         return fetch(nextUrl, {
             method: 'GET',
@@ -3087,25 +3127,31 @@
             }
         } catch (e) { /* ignore */ }
 
-        let html = '<div class="bio-ui-json-blocks spa-chat-embed-blocks d-flex flex-column gap-3 w-100">';
+        const wrapper = document.createElement('div');
+        wrapper.className = 'bio-ui-json-blocks spa-chat-embed-blocks d-flex flex-column gap-3 w-100';
+        const blockMounts = [];
         blocks.forEach(function (b, idx) {
             if (!b || typeof b !== 'object') return;
             const kind = String(b.kind || '');
             const bid = b.id ? String(b.id) : ('block_' + idx);
-            html += '<div class="bio-ui-json-block" data-block-kind="' + escapeHtml(kind) + '" data-block-id="' + escapeHtml(bid) + '"></div>';
+            const mount = document.createElement('div');
+            mount.className = 'bio-ui-json-block';
+            mount.setAttribute('data-block-kind', kind);
+            mount.setAttribute('data-block-id', bid);
+            wrapper.appendChild(mount);
+            blockMounts.push({ block: b, kind: kind, mount: mount });
         });
-        html += '</div>';
-        // Preservar banner de error si existe
         const existingErr = container.querySelector('[data-ui-json-error="1"]');
-        const errHtml = existingErr ? existingErr.outerHTML : '';
-        container.innerHTML = errHtml + html;
+        container.replaceChildren();
+        if (existingErr) {
+            container.appendChild(existingErr);
+        }
+        container.appendChild(wrapper);
 
-        blocks.forEach(function (b, idx) {
-            if (!b || typeof b !== 'object') return;
-            const kind = String(b.kind || '');
-            const bid = b.id ? String(b.id) : ('block_' + idx);
-            const mount = container.querySelector('[data-block-id="' + CSS.escape(bid) + '"]');
-            if (!mount) return;
+        blockMounts.forEach(function (item) {
+            const b = item.block;
+            const kind = item.kind;
+            const mount = item.mount;
             if (kind === 'list') {
                 renderUiJsonListBlock(b, mount, options);
             } else if (kind === 'message') {
@@ -3288,16 +3334,19 @@
     function renderUiJsonMessageBlock(block, container) {
         const text = block.text != null ? String(block.text) : (block.body != null ? String(block.body) : '');
         if (text.trim() === '') {
-            container.innerHTML = '';
+            container.replaceChildren();
             return;
         }
         const severity = block.severity ? String(block.severity) : '';
-        const alertClass = severity === 'warning' ? ' alert alert-warning' : (severity === 'danger' ? ' alert alert-danger' : '');
-        let html = '<div class="bio-ui-json-message' + alertClass + '">';
-        html += '<div class="bio-ui-json-message-body mb-0" style="white-space:pre-wrap;">'
-            + escapeHtml(text)
-            + '</div></div>';
-        container.innerHTML = html;
+        const message = document.createElement('div');
+        message.className = 'bio-ui-json-message' +
+            (severity === 'warning' ? ' alert alert-warning' : (severity === 'danger' ? ' alert alert-danger' : ''));
+        const body = document.createElement('div');
+        body.className = 'bio-ui-json-message-body mb-0';
+        body.style.whiteSpace = 'pre-wrap';
+        body.textContent = text;
+        message.appendChild(body);
+        container.replaceChildren(message);
     }
 
     function uiJsonListIsReadOnly(block) {
@@ -3365,45 +3414,72 @@
         const emptyMsg = block.empty_message ? String(block.empty_message) : 'No hay registros que coincidan con los filtros.';
         const columns = uiJsonListColumnsFromBlock(block);
 
-        let html = '<div class="bio-ui-json-list bio-ui-json-list--layout-table">';
+        const list = document.createElement('div');
+        list.className = 'bio-ui-json-list bio-ui-json-list--layout-table';
         if (title) {
-            html += '<div class="fw-semibold mb-2">' + escapeHtml(title) + '</div>';
+            const titleEl = document.createElement('div');
+            titleEl.className = 'fw-semibold mb-2';
+            titleEl.textContent = title;
+            list.appendChild(titleEl);
         }
         if (items.length === 0) {
-            html += '<div class="small text-muted mb-0">' + escapeHtml(emptyMsg) + '</div>';
+            const emptyEl = document.createElement('div');
+            emptyEl.className = 'small text-muted mb-0';
+            emptyEl.textContent = emptyMsg;
+            list.appendChild(emptyEl);
         } else {
-            html += '<div class="table-responsive"><table class="table table-sm table-striped bio-ui-json-list-table mb-0">';
-            html += '<thead><tr>';
+            const responsive = document.createElement('div');
+            responsive.className = 'table-responsive';
+            const table = document.createElement('table');
+            table.className = 'table table-sm table-striped bio-ui-json-list-table mb-0';
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
             columns.forEach(function (col) {
-                html += '<th scope="col">' + escapeHtml(col.label) + '</th>';
+                const th = document.createElement('th');
+                th.setAttribute('scope', 'col');
+                th.textContent = col.label;
+                headerRow.appendChild(th);
             });
-            html += '</tr></thead><tbody>';
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+            const tbody = document.createElement('tbody');
             items.forEach(function (it) {
                 if (!it || typeof it !== 'object') return;
-                html += '<tr>';
+                const row = document.createElement('tr');
                 columns.forEach(function (col) {
-                    html += '<td>' + escapeHtml(uiJsonListCellValue(it, col.field)) + '</td>';
+                    const td = document.createElement('td');
+                    td.textContent = uiJsonListCellValue(it, col.field);
+                    row.appendChild(td);
                 });
-                html += '</tr>';
+                tbody.appendChild(row);
             });
-            html += '</tbody></table></div>';
+            table.appendChild(tbody);
+            responsive.appendChild(table);
+            list.appendChild(responsive);
         }
-        html += '</div>';
-        container.innerHTML = html;
+        container.replaceChildren(list);
     }
 
     function renderUiJsonListCardsBlock(block, container) {
         const title = block.title ? String(block.title) : '';
         const items = Array.isArray(block.items) ? block.items : [];
         const emptyMsg = block.empty_message ? String(block.empty_message) : 'No hay registros que coincidan con los filtros.';
-        let html = '<div class="bio-ui-json-list bio-ui-json-list--layout-cards">';
+        const list = document.createElement('div');
+        list.className = 'bio-ui-json-list bio-ui-json-list--layout-cards';
         if (title) {
-            html += '<div class="fw-semibold mb-2">' + escapeHtml(title) + '</div>';
+            const titleEl = document.createElement('div');
+            titleEl.className = 'fw-semibold mb-2';
+            titleEl.textContent = title;
+            list.appendChild(titleEl);
         }
         if (items.length === 0) {
-            html += '<div class="small text-muted mb-0">' + escapeHtml(emptyMsg) + '</div>';
+            const emptyEl = document.createElement('div');
+            emptyEl.className = 'small text-muted mb-0';
+            emptyEl.textContent = emptyMsg;
+            list.appendChild(emptyEl);
         } else {
-            html += '<ul class="list-unstyled mb-0">';
+            const itemList = document.createElement('ul');
+            itemList.className = 'list-unstyled mb-0';
             items.forEach(function (it) {
                 if (!it || typeof it !== 'object') {
                     return;
@@ -3411,12 +3487,14 @@
                 const label = uiJsonListCellValue(it, 'name')
                     || uiJsonListCellValue(it, 'label')
                     || uiJsonListCellValue(it, 'id');
-                html += '<li class="bio-ui-json-list-card">' + escapeHtml(label) + '</li>';
+                const item = document.createElement('li');
+                item.className = 'bio-ui-json-list-card';
+                item.textContent = label;
+                itemList.appendChild(item);
             });
-            html += '</ul>';
+            list.appendChild(itemList);
         }
-        html += '</div>';
-        container.innerHTML = html;
+        container.replaceChildren(list);
     }
 
     function renderUiJsonListBlock(block, container, options = {}) {
@@ -3458,8 +3536,9 @@
         }
         rebuildItemsById(items);
 
-        function buildPickButtonsHtml(listItems) {
-            let h = '<div class="d-flex gap-2 overflow-auto pb-2 flex-wrap bio-ui-json-list-picks">';
+        function buildPickButtonsElement(listItems) {
+            const picks = document.createElement('div');
+            picks.className = 'd-flex gap-2 overflow-auto pb-2 flex-wrap bio-ui-json-list-picks';
             (Array.isArray(listItems) ? listItems : []).forEach((it) => {
                 const id = it && it.id !== undefined ? String(it.id) : '';
                 const name = it && (it.name || it.label) ? String(it.name || it.label) : id;
@@ -3468,54 +3547,93 @@
                 const btnClass = subtitle !== ''
                     ? 'btn btn-outline-primary btn-sm text-start position-relative bio-ui-json-list-pick--rich'
                     : 'btn btn-outline-primary btn-sm text-nowrap position-relative';
-                h += '<button type="button" class="' + btnClass + '" data-embed-pick="1" data-embed-id="' + escapeHtml(id) + '" data-embed-label="' + escapeHtml(name) + '">';
-                h += '<span class="bio-ui-pick-check position-absolute top-50 end-0 translate-middle badge rounded-pill bg-success d-none" aria-hidden="true">✓</span>';
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = btnClass;
+                button.setAttribute('data-embed-pick', '1');
+                button.setAttribute('data-embed-id', id);
+                button.setAttribute('data-embed-label', name);
+                const check = document.createElement('span');
+                check.className = 'bio-ui-pick-check position-absolute top-50 end-0 translate-middle badge rounded-pill bg-success d-none';
+                check.setAttribute('aria-hidden', 'true');
+                check.textContent = '✓';
+                button.appendChild(check);
                 if (subtitle !== '') {
-                    h += '<span class="d-block fw-semibold pe-4">' + escapeHtml(name) + '</span>';
-                    h += '<span class="d-block small text-muted pe-4">' + escapeHtml(subtitle) + '</span>';
+                    const nameEl = document.createElement('span');
+                    nameEl.className = 'd-block fw-semibold pe-4';
+                    nameEl.textContent = name;
+                    button.appendChild(nameEl);
+                    const subtitleEl = document.createElement('span');
+                    subtitleEl.className = 'd-block small text-muted pe-4';
+                    subtitleEl.textContent = subtitle;
+                    button.appendChild(subtitleEl);
                 } else {
-                    h += escapeHtml(name);
+                    button.appendChild(document.createTextNode(name));
                 }
-                h += '</button>';
+                picks.appendChild(button);
             });
-            h += '</div>';
-            return h;
+            return picks;
         }
 
         const showPersonaSearch = itemKind === 'persona' && baseListUrl !== '';
 
-        let html = '<div class="bio-ui-json-list ' + presClass + '">';
+        const listRoot = document.createElement('div');
+        listRoot.className = 'bio-ui-json-list ' + presClass;
         if (title) {
-            html += '<div class="fw-semibold mb-2">' + escapeHtml(title) + '</div>';
+            const titleEl = document.createElement('div');
+            titleEl.className = 'fw-semibold mb-2';
+            titleEl.textContent = title;
+            listRoot.appendChild(titleEl);
         }
         if (showPersonaSearch) {
-            html += '<div class="mb-2">';
-            html += '<label class="form-label small text-muted mb-1">Buscar persona</label>';
-            html += '<input type="search" class="form-control form-control-sm" autocomplete="off" placeholder="Nombre, apellido o documento…" data-bio-list-persona-q="1" />';
-            html += '</div>';
+            const searchWrap = document.createElement('div');
+            searchWrap.className = 'mb-2';
+            const searchLabel = document.createElement('label');
+            searchLabel.className = 'form-label small text-muted mb-1';
+            searchLabel.textContent = 'Buscar persona';
+            const search = document.createElement('input');
+            search.type = 'search';
+            search.className = 'form-control form-control-sm';
+            search.setAttribute('autocomplete', 'off');
+            search.setAttribute('placeholder', 'Nombre, apellido o documento…');
+            search.setAttribute('data-bio-list-persona-q', '1');
+            searchWrap.appendChild(searchLabel);
+            searchWrap.appendChild(search);
+            listRoot.appendChild(searchWrap);
         }
+        let emptyHintEl = null;
         if (items.length === 0 && emptyMsg) {
-            html += '<div class="small text-muted mb-2" data-bio-list-empty-hint="1">' + escapeHtml(emptyMsg) + '</div>';
+            emptyHintEl = document.createElement('div');
+            emptyHintEl.className = 'small text-muted mb-2';
+            emptyHintEl.setAttribute('data-bio-list-empty-hint', '1');
+            emptyHintEl.textContent = emptyMsg;
+            listRoot.appendChild(emptyHintEl);
         }
-        html += '<div class="bio-ui-json-list-items" data-bio-list-items="1">';
-        html += buildPickButtonsHtml(items);
-        html += '</div>';
+        const itemsMount = document.createElement('div');
+        itemsMount.className = 'bio-ui-json-list-items';
+        itemsMount.setAttribute('data-bio-list-items', '1');
+        itemsMount.appendChild(buildPickButtonsElement(items));
+        listRoot.appendChild(itemsMount);
         const effectiveRequiresConfirmation = requiresConfirmation && options.isTerminalFlowStep !== true;
+        let confirmBtn = null;
         if (effectiveRequiresConfirmation) {
-            html += '<div class="spa-flow-submit-inline d-flex flex-column align-items-center w-100 mt-3">';
-            html += '<button type="button" class="btn btn-success" data-embed-confirm="1" disabled>' + escapeHtml(FLOW_SUBMIT_BUTTON_LABEL) + '</button>';
-            html += '</div>';
+            const confirmWrap = document.createElement('div');
+            confirmWrap.className = 'spa-flow-submit-inline d-flex flex-column align-items-center w-100 mt-3';
+            confirmBtn = document.createElement('button');
+            confirmBtn.type = 'button';
+            confirmBtn.className = 'btn btn-success';
+            confirmBtn.setAttribute('data-embed-confirm', '1');
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = FLOW_SUBMIT_BUTTON_LABEL;
+            confirmWrap.appendChild(confirmBtn);
+            listRoot.appendChild(confirmWrap);
         }
-        html += '</div>';
-        container.innerHTML = html;
+        container.replaceChildren(listRoot);
 
-        listLockEl = container.querySelector('.bio-ui-json-list') || container;
+        listLockEl = listRoot;
         listLockEl.__bioListPickLocked = listLockEl.__bioListPickLocked === true;
 
-        const itemsMount = container.querySelector('[data-bio-list-items="1"]');
-        const emptyHintEl = container.querySelector('[data-bio-list-empty-hint="1"]');
-        const confirmBtn = container.querySelector('button[data-embed-confirm="1"]');
-        const searchInput = container.querySelector('input[data-bio-list-persona-q="1"]');
+        const searchInput = listRoot.querySelector('input[data-bio-list-persona-q="1"]');
 
         function allPickButtons() {
             return Array.from(container.querySelectorAll('button[data-embed-pick="1"]'));
@@ -3735,7 +3853,7 @@
                     searchDebounce = null;
                     if (isListPickLocked()) return;
                     if (q.length < 1) {
-                        itemsMount.innerHTML = buildPickButtonsHtml([]);
+                        itemsMount.replaceChildren(buildPickButtonsElement([]));
                         if (emptyHintEl && emptyMsg) emptyHintEl.classList.remove('d-none');
                         return;
                     }
@@ -3763,7 +3881,7 @@
                             if (isListPickLocked()) return;
                             const nextItems = listBlockItemsFromUiDefinition(json, blockId);
                             rebuildItemsById(nextItems);
-                            itemsMount.innerHTML = buildPickButtonsHtml(nextItems);
+                            itemsMount.replaceChildren(buildPickButtonsElement(nextItems));
                             if (emptyHintEl) {
                                 if (nextItems.length < 1 && emptyMsg) {
                                     emptyHintEl.textContent = emptyMsg;
@@ -3827,6 +3945,285 @@
         }
     }
 
+    function createUiJsonElement(tag, className, text) {
+        const element = document.createElement(tag);
+        if (className) {
+            element.className = className;
+        }
+        if (text !== undefined) {
+            element.textContent = String(text);
+        }
+        return element;
+    }
+
+    function createUiJsonFieldControl(field) {
+        const name = field.name == null ? '' : String(field.name);
+        const value = field.value == null ? '' : String(field.value);
+        const required = !!field.required;
+        let control;
+
+        switch (String(field.type || 'text')) {
+            case 'autocomplete': {
+                const wrapper = document.createDocumentFragment();
+                const id = 'ac_' + name.replace(/[^a-z0-9_]/gi, '_') + '_' + Math.floor(Math.random() * 100000);
+                const hidden = createUiJsonElement('input');
+                hidden.type = 'hidden';
+                hidden.name = name;
+                hidden.id = id + '_value';
+                hidden.value = value;
+                wrapper.appendChild(hidden);
+
+                const group = createUiJsonElement('div', 'input-group');
+                const preview = createUiJsonElement('input', 'form-control');
+                preview.type = 'text';
+                preview.id = id + '_text';
+                preview.setAttribute('placeholder', 'Seleccionar...');
+                preview.readOnly = true;
+                group.appendChild(preview);
+                const open = createUiJsonElement('button', 'btn btn-outline-primary', 'Elegir');
+                open.type = 'button';
+                open.setAttribute('data-ac-field', name);
+                open.setAttribute('data-ac-open', id);
+                group.appendChild(open);
+                wrapper.appendChild(group);
+
+                const panel = createUiJsonElement('div', 'mt-2 d-none');
+                panel.setAttribute('data-ac-panel', id);
+                wrapper.appendChild(panel);
+
+                const meta = createUiJsonElement('div', 'd-none');
+                meta.setAttribute('data-ac-meta', id);
+                meta.setAttribute('data-ac-endpoint', field.endpoint || '');
+                meta.setAttribute('data-ac-show-search', field.show_search === true ? '1' : '0');
+                meta.setAttribute('data-ac-filters', JSON.stringify(Array.isArray(field.filters) ? field.filters : []));
+                meta.setAttribute('data-ac-params', JSON.stringify(field.params || {}));
+                wrapper.appendChild(meta);
+                return wrapper;
+            }
+            case 'select': {
+                control = createUiJsonElement('select', 'form-select');
+                control.name = name;
+                control.required = required;
+                const placeholder = createUiJsonElement('option', '', 'Seleccione...');
+                placeholder.value = '';
+                control.appendChild(placeholder);
+                normalizeFieldOptions(field).forEach(function (option) {
+                    const optionValue = option && typeof option === 'object' ? option.value : option;
+                    const optionLabel = option && typeof option === 'object' ? option.label : option;
+                    const optionEl = createUiJsonElement('option', '', optionLabel == null ? '' : optionLabel);
+                    optionEl.value = optionValue == null ? '' : String(optionValue);
+                    optionEl.selected = optionEl.value === value;
+                    control.appendChild(optionEl);
+                });
+                return control;
+            }
+            case 'radio': {
+                const group = createUiJsonElement('div', 'd-flex flex-wrap gap-2');
+                normalizeFieldOptions(field).forEach(function (option) {
+                    const optionValue = option && typeof option === 'object' ? option.value : option;
+                    const optionLabel = option && typeof option === 'object' ? option.label : option;
+                    const optionValueString = optionValue == null ? '' : String(optionValue);
+                    const id = name + '_' + optionValueString;
+                    const item = createUiJsonElement('div', 'form-check');
+                    const radio = createUiJsonElement('input', 'form-check-input');
+                    radio.type = 'radio';
+                    radio.name = name;
+                    radio.id = id;
+                    radio.value = optionValueString;
+                    radio.required = required;
+                    radio.checked = field.value != null && optionValueString === value;
+                    const label = createUiJsonElement('label', 'form-check-label', optionLabel == null ? '' : optionLabel);
+                    label.setAttribute('for', id);
+                    item.appendChild(radio);
+                    item.appendChild(label);
+                    group.appendChild(item);
+                });
+                return group;
+            }
+            case 'chips': {
+                const fragment = document.createDocumentFragment();
+                const hidden = createUiJsonElement('input', 'spa-ui-chip-value');
+                hidden.type = 'hidden';
+                hidden.name = name;
+                hidden.value = value;
+                hidden.required = required;
+                fragment.appendChild(hidden);
+                const group = createUiJsonElement('div', 'spa-ui-chips d-flex flex-wrap gap-2');
+                group.setAttribute('role', 'radiogroup');
+                if (field.label) {
+                    group.setAttribute('aria-label', String(field.label));
+                }
+                normalizeFieldOptions(field).forEach(function (option) {
+                    const optionValue = option && typeof option === 'object' ? option.value : option;
+                    const optionLabel = option && typeof option === 'object' ? option.label : option;
+                    const optionValueString = optionValue == null ? '' : String(optionValue);
+                    const active = value !== '' && optionValueString === value;
+                    const chip = createUiJsonElement(
+                        'button',
+                        'btn btn-sm btn-outline-secondary rounded-pill spa-ui-chip-btn' + (active ? ' is-active' : ''),
+                        optionLabel == null ? '' : optionLabel
+                    );
+                    chip.type = 'button';
+                    chip.setAttribute('data-field', name);
+                    chip.setAttribute('data-value', optionValueString);
+                    chip.setAttribute('aria-pressed', active ? 'true' : 'false');
+                    group.appendChild(chip);
+                });
+                fragment.appendChild(group);
+                return fragment;
+            }
+            case 'number': {
+                const fragment = document.createDocumentFragment();
+                if (Array.isArray(field.quick_options) && field.quick_options.length > 0) {
+                    const quickOptions = createUiJsonElement('div', 'mb-2 d-flex gap-2 flex-wrap');
+                    field.quick_options.forEach(function (option) {
+                        const optionValue = option == null ? '' : String(option);
+                        const button = createUiJsonElement('button', 'btn btn-outline-primary btn-sm quick-option-btn', optionValue);
+                        button.type = 'button';
+                        button.setAttribute('data-field', name);
+                        button.setAttribute('data-value', optionValue);
+                        quickOptions.appendChild(button);
+                    });
+                    fragment.appendChild(quickOptions);
+                }
+                const group = createUiJsonElement('div', 'input-group');
+                const decrement = createUiJsonElement('button', 'btn btn-outline-secondary number-decrement', '-');
+                decrement.type = 'button';
+                decrement.setAttribute('data-field', name);
+                const input = createUiJsonElement('input', 'form-control text-center');
+                input.type = 'number';
+                input.name = name;
+                input.value = value;
+                if (field.min !== null && field.min !== undefined) input.setAttribute('min', String(field.min));
+                if (field.max !== null && field.max !== undefined) input.setAttribute('max', String(field.max));
+                if (field.step) input.setAttribute('step', String(field.step));
+                input.required = required;
+                const increment = createUiJsonElement('button', 'btn btn-outline-secondary number-increment', '+');
+                increment.type = 'button';
+                increment.setAttribute('data-field', name);
+                group.appendChild(decrement);
+                group.appendChild(input);
+                group.appendChild(increment);
+                fragment.appendChild(group);
+                return fragment;
+            }
+            case 'date': {
+                control = createUiJsonElement('input', 'form-control spa-ui-date-input');
+                control.type = 'text';
+                control.setAttribute('data-spa-date-input', '1');
+                control.setAttribute('inputmode', 'numeric');
+                control.setAttribute('autocomplete', 'off');
+                control.name = name;
+                control.value = value;
+                control.setAttribute('placeholder', 'dd/mm/aa');
+                control.required = required;
+                if (field.min != null && String(field.min).trim() !== '') control.setAttribute('data-min', String(field.min));
+                if (field.max != null && String(field.max).trim() !== '') control.setAttribute('data-max', String(field.max));
+                return control;
+            }
+            case 'time': {
+                const time = value.replace(/^(\d{1,2}:\d{2}):\d{2}$/, '$1');
+                control = createUiJsonElement('input', 'form-control');
+                control.type = 'time';
+                control.name = name;
+                control.value = time;
+                control.required = required;
+                return control;
+            }
+            case 'display':
+                return createUiJsonElement(
+                    'p',
+                    value.trim() === '' ? 'form-control-plaintext text-muted mb-0' : 'form-control-plaintext mb-0',
+                    value.trim() === '' ? '—' : value.trim()
+                );
+            case 'textarea': {
+                const rows = field.rows != null && String(field.rows).trim() !== ''
+                    ? Math.max(2, parseInt(String(field.rows), 10) || 4)
+                    : 4;
+                control = createUiJsonElement('textarea', 'form-control', value);
+                control.name = name;
+                control.rows = rows;
+                control.required = required;
+                control.readOnly = field.readonly === true || field.readonly === 1
+                    || field.readonly === '1' || field.readonly === 'true';
+                return control;
+            }
+            default: {
+                const readOnly = field.readonly === true || field.readonly === 1
+                    || field.readonly === '1' || field.readonly === 'true';
+                const vitalNames = { bp_sys: 1, bp_dia: 1, hr: 1 };
+                const isVital = !!vitalNames[name];
+                control = createUiJsonElement('input', 'form-control');
+                control.type = 'text';
+                control.name = name;
+                control.value = value;
+                control.required = required;
+                control.readOnly = readOnly;
+                if (field.placeholder) control.setAttribute('placeholder', String(field.placeholder));
+                if (field.maxlength != null) control.setAttribute('maxlength', String(field.maxlength));
+                else if (isVital) control.setAttribute('maxlength', '3');
+                if (field.inputmode) control.setAttribute('inputmode', String(field.inputmode));
+                else if (isVital) control.setAttribute('inputmode', 'numeric');
+                if (field.pattern) control.setAttribute('pattern', String(field.pattern));
+                if (isVital) control.setAttribute('data-triage-vital', name);
+                return control;
+            }
+        }
+    }
+
+    function renderUiJsonFieldElement(field, opts) {
+        opts = opts || {};
+        if (String(field.type || '') === 'hidden') {
+            const hidden = createUiJsonElement('input');
+            hidden.type = 'hidden';
+            hidden.name = field.name == null ? '' : String(field.name);
+            hidden.value = field.value == null ? '' : String(field.value);
+            return hidden;
+        }
+        const useGrid = opts.useGrid === true;
+        const outerClass = fieldBootstrapColClass(field, useGrid);
+        if (String(field.type || '') === 'custom_widget') {
+            const widget = createUiJsonElement('div', outerClass + ' bio-ui-custom-widget');
+            widget.setAttribute('data-bio-ui-widget', field.widget_id || '');
+            if (field.label) {
+                const label = createUiJsonElement('label', 'form-label', field.label);
+                if (field.required) {
+                    label.appendChild(createUiJsonElement('span', 'text-danger', '*'));
+                }
+                widget.appendChild(label);
+            }
+            const initial = field.initial_values && typeof field.initial_values === 'object' ? field.initial_values : {};
+            (Array.isArray(field.value_fields) ? field.value_fields : []).forEach(function (fieldName) {
+                const hidden = createUiJsonElement('input');
+                hidden.type = 'hidden';
+                hidden.name = String(fieldName);
+                hidden.value = initial[fieldName] == null ? '' : String(initial[fieldName]);
+                widget.appendChild(hidden);
+            });
+            const responsive = createUiJsonElement('div', 'table-responsive');
+            const mount = createUiJsonElement('table', 'w-100');
+            mount.setAttribute('data-weekly-scheduler-mount', '');
+            responsive.appendChild(mount);
+            widget.appendChild(responsive);
+            if (field.hint) widget.appendChild(createUiJsonElement('div', 'form-text', String(field.hint)));
+            return widget;
+        }
+
+        const wrapper = createUiJsonElement('div', outerClass);
+        const labelText = field.label == null ? '' : String(field.label).trim();
+        if (labelText !== '' || field.required) {
+            const label = createUiJsonElement('label', 'form-label', labelText);
+            if (field.required) label.appendChild(createUiJsonElement('span', 'text-danger', '*'));
+            wrapper.appendChild(label);
+        }
+        const control = createUiJsonFieldControl(field);
+        wrapper.appendChild(control);
+        if (field.hint && !['number', 'date', 'time', 'display', 'textarea', 'radio', 'chips', 'select', 'autocomplete'].includes(String(field.type || 'text'))) {
+            wrapper.appendChild(createUiJsonElement('div', 'form-text', String(field.hint)));
+        }
+        return wrapper;
+    }
+
     function renderUiJsonFieldsBlock(block, container, options = {}) {
         const title = block.title ? String(block.title) : '';
         const fields = Array.isArray(block.fields) ? block.fields : [];
@@ -3847,38 +4244,45 @@
             }
         });
 
-        let html = '<div class="bio-ui-json-fields">';
+        const fieldsRoot = document.createElement('div');
+        fieldsRoot.className = 'bio-ui-json-fields';
         if (title) {
-            html += '<div class="fw-semibold mb-2">' + escapeHtml(title) + '</div>';
+            const titleEl = document.createElement('div');
+            titleEl.className = 'fw-semibold mb-2';
+            titleEl.textContent = title;
+            fieldsRoot.appendChild(titleEl);
         }
-        html += '<form data-ui-json-form="1">';
+        const form = document.createElement('form');
+        form.setAttribute('data-ui-json-form', '1');
         hiddenFields.forEach(function (fd) {
-            html += renderFormField(fd, { useGrid: false });
+            form.appendChild(renderUiJsonFieldElement(fd, { useGrid: false }));
         });
+        let visibleFieldsRoot = form;
         if (grid) {
-            html += '<div class="row g-3">';
+            visibleFieldsRoot = document.createElement('div');
+            visibleFieldsRoot.className = 'row g-3';
+            form.appendChild(visibleFieldsRoot);
         }
         visibleFields.forEach(function (fd) {
-            html += renderFormField(fd, { useGrid: grid });
+            visibleFieldsRoot.appendChild(renderUiJsonFieldElement(fd, { useGrid: grid }));
         });
-        if (grid) {
-            html += '</div>';
-        }
         const hideSubmit = block.hide_submit === true || block.hide_submit === 1 || block.hide_submit === '1'
             || options.isTerminalFlowStep === true;
         if (!hideSubmit) {
-            html += '<div class="spa-flow-submit-inline d-flex flex-column align-items-center w-100 mt-3">';
-            html += '<button type="button" class="btn btn-success" data-ui-json-submit="1">' + escapeHtml(FLOW_SUBMIT_BUTTON_LABEL) + '</button>';
-            html += '</div>';
+            const submitWrap = document.createElement('div');
+            submitWrap.className = 'spa-flow-submit-inline d-flex flex-column align-items-center w-100 mt-3';
+            const submitButton = document.createElement('button');
+            submitButton.type = 'button';
+            submitButton.className = 'btn btn-success';
+            submitButton.setAttribute('data-ui-json-submit', '1');
+            submitButton.textContent = FLOW_SUBMIT_BUTTON_LABEL;
+            submitWrap.appendChild(submitButton);
+            form.appendChild(submitWrap);
         }
-        html += '</form></div>';
-        container.innerHTML = html;
+        fieldsRoot.appendChild(form);
+        container.replaceChildren(fieldsRoot);
 
-        const form = container.querySelector('form[data-ui-json-form="1"]');
-        const submitBtn = hideSubmit ? null : container.querySelector('button[data-ui-json-submit="1"]');
-        if (!form) {
-            return;
-        }
+        const submitBtn = hideSubmit ? null : form.querySelector('button[data-ui-json-submit="1"]');
 
         initCustomWidgetsInContainer(container, fields);
         attachAutocompleteHandlers(container);
@@ -4205,8 +4609,39 @@
                 const params = buildEndpointParamsFromWizardForm(paramsMapping);
                 const showSearch = metaEl.getAttribute('data-ac-show-search') === '1';
 
+                function showAcMessage(target, className, message) {
+                    var messageEl = document.createElement('div');
+                    messageEl.className = className;
+                    messageEl.textContent = message;
+                    target.replaceChildren(messageEl);
+                }
+
+                function bindAcSelection(button) {
+                    button.addEventListener('click', function () {
+                        const value = button.getAttribute('data-value') || '';
+                        const label = button.getAttribute('data-label') || '';
+                        const valueEl = document.getElementById(id + '_value');
+                        const textEl = document.getElementById(id + '_text');
+                        if (valueEl) valueEl.value = value;
+                        if (textEl) textEl.value = label;
+                        panel.classList.add('d-none');
+                    });
+                }
+
+                function createAcItemButton(item) {
+                    const itemButton = document.createElement('button');
+                    itemButton.type = 'button';
+                    itemButton.className = 'btn btn-sm btn-outline-secondary';
+                    itemButton.setAttribute('data-ac-item', id);
+                    itemButton.setAttribute('data-value', String(item.value));
+                    itemButton.setAttribute('data-label', String(item.label));
+                    itemButton.textContent = String(item.label);
+                    bindAcSelection(itemButton);
+                    return itemButton;
+                }
+
                 panel.classList.remove('d-none');
-                panel.innerHTML = '<div class="text-muted small">Cargando...</div>';
+                showAcMessage(panel, 'text-muted small', 'Cargando...');
                 try {
                     const url = new URL(resolveSpaFetchUrl(endpoint), window.location.origin);
                     Object.keys(params).forEach(k => url.searchParams.set(k, params[k]));
@@ -4223,19 +4658,6 @@
                         const uniqDias = [...new Set(dias)];
                         let selectedDia = uniqDias[0] || null;
                         let selectedFranja = wantsFranja ? 'manana' : null;
-
-                        const chipsHtml = [];
-                        if (wantsDia && uniqDias.length) {
-                            chipsHtml.push('<div class="mb-2"><div class="d-flex gap-2 overflow-auto" style="white-space:nowrap;">'
-                                + uniqDias.map(fecha => '<button type="button" class="btn btn-sm ' + (fecha === selectedDia ? 'btn-primary' : 'btn-outline-primary') + '" data-ac-chip-dia="' + id + '" data-value="' + escapeHtml(fecha) + '">' + escapeHtml(fecha) + '</button>').join('')
-                                + '</div></div>');
-                        }
-                        if (wantsFranja) {
-                            const franjas = [{ v: 'manana', l: 'Por la mañana' }, { v: 'tarde', l: 'Por la tarde' }];
-                            chipsHtml.push('<div class="mb-2"><div class="d-flex gap-2 overflow-auto" style="white-space:nowrap;">'
-                                + franjas.map(fr => '<button type="button" class="btn btn-sm ' + (fr.v === selectedFranja ? 'btn-primary' : 'btn-outline-primary') + '" data-ac-chip-franja="' + id + '" data-value="' + fr.v + '">' + fr.l + '</button>').join('')
-                                + '</div></div>');
-                        }
 
                         function rebuildItems() {
                             items = [];
@@ -4267,23 +4689,62 @@
                             renderItems();
                         }
 
-                        function renderItems() {
-                            panel.innerHTML = chipsHtml.join('') + (items.length ? '<div class="d-flex gap-2 overflow-auto" style="white-space:nowrap;">'
-                                + items.map(it => '<button type="button" class="btn btn-sm btn-outline-secondary" data-ac-item="' + id + '" data-value="' + escapeHtml(it.value) + '" data-label="' + escapeHtml(it.label) + '">' + escapeHtml(it.label) + '</button>').join('')
-                                + '</div>' : '<div class="text-muted small">Sin resultados</div>');
+                        function appendChipRow(attribute, options, selectedValue, onSelect) {
+                            const row = document.createElement('div');
+                            row.className = 'mb-2';
+                            const scroller = document.createElement('div');
+                            scroller.className = 'd-flex gap-2 overflow-auto';
+                            scroller.style.whiteSpace = 'nowrap';
+                            options.forEach(function (option) {
+                                const chip = document.createElement('button');
+                                chip.type = 'button';
+                                chip.className = 'btn btn-sm ' +
+                                    (option.value === selectedValue ? 'btn-primary' : 'btn-outline-primary');
+                                chip.setAttribute(attribute, id);
+                                chip.setAttribute('data-value', option.value);
+                                chip.textContent = option.label;
+                                chip.addEventListener('click', function () {
+                                    onSelect(option.value);
+                                    rebuildItems();
+                                });
+                                scroller.appendChild(chip);
+                            });
+                            row.appendChild(scroller);
+                            panel.appendChild(row);
+                        }
 
-                            // Bind chips/items
-                            panel.querySelectorAll('[data-ac-chip-dia="' + id + '"]').forEach(b => b.addEventListener('click', () => { selectedDia = b.getAttribute('data-value'); rebuildItems(); }));
-                            panel.querySelectorAll('[data-ac-chip-franja="' + id + '"]').forEach(b => b.addEventListener('click', () => { selectedFranja = b.getAttribute('data-value'); rebuildItems(); }));
-                            panel.querySelectorAll('[data-ac-item="' + id + '"]').forEach(b => b.addEventListener('click', () => {
-                                const v = b.getAttribute('data-value') || '';
-                                const l = b.getAttribute('data-label') || '';
-                                const valueEl = document.getElementById(id + '_value');
-                                const textEl = document.getElementById(id + '_text');
-                                if (valueEl) valueEl.value = v;
-                                if (textEl) textEl.value = l;
-                                panel.classList.add('d-none');
-                            }));
+                        function renderItems() {
+                            panel.replaceChildren();
+                            if (wantsDia && uniqDias.length) {
+                                appendChipRow(
+                                    'data-ac-chip-dia',
+                                    uniqDias.map(fecha => ({ value: fecha, label: fecha })),
+                                    selectedDia,
+                                    function (value) { selectedDia = value; }
+                                );
+                            }
+                            if (wantsFranja) {
+                                appendChipRow(
+                                    'data-ac-chip-franja',
+                                    [{ value: 'manana', label: 'Por la mañana' }, { value: 'tarde', label: 'Por la tarde' }],
+                                    selectedFranja,
+                                    function (value) { selectedFranja = value; }
+                                );
+                            }
+                            if (!items.length) {
+                                const emptyMessage = document.createElement('div');
+                                emptyMessage.className = 'text-muted small';
+                                emptyMessage.textContent = 'Sin resultados';
+                                panel.appendChild(emptyMessage);
+                                return;
+                            }
+                            const itemRow = document.createElement('div');
+                            itemRow.className = 'd-flex gap-2 overflow-auto';
+                            itemRow.style.whiteSpace = 'nowrap';
+                            items.forEach(function (item) {
+                                itemRow.appendChild(createAcItemButton(item));
+                            });
+                            panel.appendChild(itemRow);
                         }
 
                         rebuildItems();
@@ -4303,18 +4764,18 @@
                     }
 
                     function bindAcItems(listEl, list) {
-                        listEl.innerHTML = list.length
-                            ? '<div class="d-flex flex-column gap-1">' + list.map(it => '<button type="button" class="btn btn-sm btn-outline-secondary text-start" data-ac-item="' + id + '" data-value="' + escapeHtml(it.value) + '" data-label="' + escapeHtml(it.label) + '">' + escapeHtml(it.label) + '</button>').join('') + '</div>'
-                            : '<div class="text-muted small">Sin resultados</div>';
-                        listEl.querySelectorAll('[data-ac-item="' + id + '"]').forEach(b => b.addEventListener('click', () => {
-                            const v = b.getAttribute('data-value') || '';
-                            const l = b.getAttribute('data-label') || '';
-                            const valueEl = document.getElementById(id + '_value');
-                            const textEl = document.getElementById(id + '_text');
-                            if (valueEl) valueEl.value = v;
-                            if (textEl) textEl.value = l;
-                            panel.classList.add('d-none');
-                        }));
+                        if (!list.length) {
+                            showAcMessage(listEl, 'text-muted small', 'Sin resultados');
+                            return;
+                        }
+                        const itemList = document.createElement('div');
+                        itemList.className = 'd-flex flex-column gap-1';
+                        list.forEach(function (item) {
+                            const itemButton = createAcItemButton(item);
+                            itemButton.classList.add('text-start');
+                            itemList.appendChild(itemButton);
+                        });
+                        listEl.replaceChildren(itemList);
                     }
 
                     async function fetchAc(q) {
@@ -4326,18 +4787,25 @@
                     }
 
                     if (showSearch) {
-                        panel.innerHTML = '<input type="search" class="form-control form-control-sm mb-2" data-ac-q="' + id + '" placeholder="Buscar por apellido o documento">'
-                            + '<div data-ac-list="' + id + '"><div class="text-muted small">Cargando...</div></div>';
+                        const qInput = document.createElement('input');
+                        qInput.type = 'search';
+                        qInput.className = 'form-control form-control-sm mb-2';
+                        qInput.setAttribute('data-ac-q', id);
+                        qInput.setAttribute('placeholder', 'Buscar por apellido o documento');
+                        const listContainer = document.createElement('div');
+                        listContainer.setAttribute('data-ac-list', id);
+                        showAcMessage(listContainer, 'text-muted small', 'Cargando...');
+                        panel.replaceChildren(qInput, listContainer);
                         const qEl = panel.querySelector('[data-ac-q="' + id + '"]');
                         const listEl = panel.querySelector('[data-ac-list="' + id + '"]');
                         let t = null;
                         async function run(q) {
                             if (!listEl) return;
-                            listEl.innerHTML = '<div class="text-muted small">Cargando...</div>';
+                            showAcMessage(listEl, 'text-muted small', 'Cargando...');
                             try {
                                 bindAcItems(listEl, await fetchAc(q));
                             } catch (eFetch) {
-                                listEl.innerHTML = '<div class="text-danger small">Error cargando opciones</div>';
+                                showAcMessage(listEl, 'text-danger small', 'Error cargando opciones');
                             }
                         }
                         if (qEl) {
@@ -4350,22 +4818,20 @@
                         await run('');
                         return;
                     }
-
                     items = parseAcItems(data);
-                    panel.innerHTML = items.length
-                        ? '<div class="d-flex gap-2 overflow-auto" style="white-space:nowrap;">' + items.map(it => '<button type="button" class="btn btn-sm btn-outline-secondary" data-ac-item="' + id + '" data-value="' + escapeHtml(it.value) + '" data-label="' + escapeHtml(it.label) + '">' + escapeHtml(it.label) + '</button>').join('') + '</div>'
-                        : '<div class="text-muted small">Sin resultados</div>';
-                    panel.querySelectorAll('[data-ac-item="' + id + '"]').forEach(b => b.addEventListener('click', () => {
-                        const v = b.getAttribute('data-value') || '';
-                        const l = b.getAttribute('data-label') || '';
-                        const valueEl = document.getElementById(id + '_value');
-                        const textEl = document.getElementById(id + '_text');
-                        if (valueEl) valueEl.value = v;
-                        if (textEl) textEl.value = l;
-                        panel.classList.add('d-none');
-                    }));
+                    if (!items.length) {
+                        showAcMessage(panel, 'text-muted small', 'Sin resultados');
+                        return;
+                    }
+                    const itemRow = document.createElement('div');
+                    itemRow.className = 'd-flex gap-2 overflow-auto';
+                    itemRow.style.whiteSpace = 'nowrap';
+                    items.forEach(function (item) {
+                        itemRow.appendChild(createAcItemButton(item));
+                    });
+                    panel.replaceChildren(itemRow);
                 } catch (e) {
-                    panel.innerHTML = '<div class="text-danger small">Error cargando opciones</div>';
+                    showAcMessage(panel, 'text-danger small', 'Error cargando opciones');
                 }
             });
         });
@@ -4784,9 +5250,15 @@
         
         // Mostrar loading
         const submitBtn = form.querySelector('button[type="submit"]');
-        const originalText = submitBtn.innerHTML;
+        const originalContent = document.createDocumentFragment();
+        while (submitBtn.firstChild) {
+            originalContent.appendChild(submitBtn.firstChild);
+        }
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
+        const spinner = document.createElement('span');
+        spinner.className = 'spinner-border spinner-border-sm';
+        submitBtn.appendChild(spinner);
+        submitBtn.appendChild(document.createTextNode(' Guardando...'));
         
         fetch(action, {
             method: 'POST',
@@ -4814,7 +5286,7 @@
         })
         .finally(() => {
             submitBtn.disabled = false;
-            submitBtn.innerHTML = originalText;
+            submitBtn.replaceChildren(originalContent);
         });
     }
 
@@ -4937,7 +5409,7 @@
     /**
      * Mostrar respuesta de la IA
      */
-    function displayResponse(explanation, actions) {
+    function displayResponse(explanation, actions, details) {
         // Mostrar explicación - si contiene HTML, no escapar, solo escapar el texto plano
         // Detectar si explanation ya contiene HTML (tags)
         let explanationHtml = explanation;
@@ -4961,7 +5433,7 @@
     /**
      * Mostrar respuesta informativa (cuando success es false pero hay explicación útil)
      */
-    function displayInfoResponse(explanation, actions, suggestedQuery) {
+    function displayInfoResponse(explanation, actions, suggestedQuery, details) {
         // Mostrar explicación - si contiene HTML, no escapar
         let explanationHtml = explanation;
         if (explanation && !/<[a-z][\s\S]*>/i.test(explanation)) {
@@ -4977,7 +5449,7 @@
             ? renderActionCards(actions)
             : '<div class="col-12"><p class="text-muted mb-0">No se encontraron acciones específicas para esta consulta.</p></div>';
 
-        const panel = appendAssistantResponsePanel({ explanationHtml: explanationHtml + extraHtml, actionsHtml: actionsHtml, variant: 'info' });
+        const panel = appendAssistantResponsePanel({ explanationHtml: explanationHtml + extraHtml, actionsHtml: actionsHtml, variant: 'info', details: details });
         if (panel && panel.explanationEl && suggestedQuery) {
             const b = panel.explanationEl.querySelector('.spa-suggested-query-btn');
             if (b) {
@@ -5293,7 +5765,13 @@
             
             // Si no tiene contenido, cargarlo
             if (!expandContent.innerHTML || expandContent.innerHTML.trim() === '') {
-                expandContent.innerHTML = '<div class="d-flex align-items-center justify-content-center gap-2 py-3 text-muted"><div class="spinner-border spinner-border-sm"></div> Cargando...</div>';
+                const loading = document.createElement('div');
+                loading.className = 'd-flex align-items-center justify-content-center gap-2 py-3 text-muted';
+                const spinner = document.createElement('div');
+                spinner.className = 'spinner-border spinner-border-sm';
+                loading.appendChild(spinner);
+                loading.appendChild(document.createTextNode(' Cargando...'));
+                expandContent.replaceChildren(loading);
                 loadCardContent(actionUrl, kind, assets, expandContent);
             }
 
@@ -6059,7 +6537,10 @@
     function renderShortcutsEmpty(msg) {
         if (!shortcutsContent) return;
         const t = (msg && String(msg).trim() !== '') ? String(msg).trim() : 'No hay atajos disponibles.';
-        shortcutsContent.innerHTML = '<div class="text-muted small">' + escapeHtml(t) + '</div>';
+        const message = document.createElement('div');
+        message.className = 'text-muted small';
+        message.textContent = t;
+        shortcutsContent.replaceChildren(message);
     }
 
     function renderShortcutsFlat(actions) {

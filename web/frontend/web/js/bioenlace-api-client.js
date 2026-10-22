@@ -26,6 +26,18 @@
     return 'No se pudo descargar el PDF. Intentá de nuevo.';
   };
 
+  NS.flowCompletedSummaryFallback = function () {
+    return 'Listo.';
+  };
+
+  NS.flowRequiredUiUnavailableMessage = function (actionId) {
+    return 'No puedo abrir la mini-UI requerida (' + String(actionId) + ').';
+  };
+
+  NS.flowUiUndeterminedMessage = function () {
+    return 'No puedo determinar la UI a abrir para este paso.';
+  };
+
   /**
    * @param {Object<string,string>=} extra Se fusiona encima del base (Object.assign final).
    * @returns {Object<string,string>}

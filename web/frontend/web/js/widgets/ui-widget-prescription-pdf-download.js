@@ -45,10 +45,10 @@
                 var unavailable = document.createElement('p');
                 unavailable.className = 'text-muted small';
                 unavailable.textContent = global.BioenlaceApiClient.pdfDownloadUnavailableMessage();
-                el.appendChild(unavailable);
+                el.replaceChildren(unavailable);
                 return;
             }
-            el.innerHTML = '';
+            el.replaceChildren();
             var btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'btn btn-primary';

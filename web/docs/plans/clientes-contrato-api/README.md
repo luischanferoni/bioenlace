@@ -14,7 +14,7 @@ Lectura: [overview.md](./overview.md), [design.md](./design.md), fases en [phase
 | 03 Metadata clínica humana | en curso (capacidades de encounter, secciones de odontología/oftalmología, niveles Manchester, presentación de episodios y etiquetas/filtros del timeline; documentación profesional ahora publica campos genéricos; faltan unificar signos vitales/evolución y completar acciones/roles) |
 | 04 Captura y STT | en curso (audio+STT local y decisión server-side implementados; falta abstraer el sujeto genérico; validación en dispositivo real no bloquea el cierre) |
 | 05 Móvil | en curso (inicio y configuración por capacidades; wizard limita clases por efector usando metadata del backend) |
-| 06 Web | en curso (consumo `client_open` verificado; previews de agenda/licencias, alertas UI JSON y estados de cargadores usan DOM/textContent; contadores 164/226 HTML, 62/65 textos UI y 39/39 vistas; falta completar Camino A y el resto de entregables) |
+| 06 Web | en curso (consumo `client_open` verificado; previews, alertas/cargadores, autocomplete y formularios/listas UI JSON usan DOM/textContent; contadores 110/226 HTML, 64/65 textos UI y 39/39 vistas; falta completar Camino A y las migraciones de vistas/renderizado) |
 | 07 Veterinaria (estructura) | pendiente |
 | 08 Asistente, admin, jobs, docs | pendiente revisión humana de prompts reservados; copy de jobs verificado |
 | 09 Cierre | pendiente |

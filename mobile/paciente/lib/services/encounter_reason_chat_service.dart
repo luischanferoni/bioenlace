@@ -111,6 +111,8 @@ class EncounterReasonChatService {
     int encounterId,
     XFile file, {
     required String messageType,
+    String? transcript,
+    Map<String, dynamic>? sttMeta,
   }) async {
     try {
       final uri = Uri.parse('${AppConfig.apiUrl}/encounter-reasons/subir');
@@ -118,6 +120,12 @@ class EncounterReasonChatService {
       request.headers.addAll(_multipartHeaders);
       request.fields['encounter_id'] = encounterId.toString();
       request.fields['message_type'] = messageType;
+      if (transcript != null && transcript.trim().isNotEmpty) {
+        request.fields['transcript'] = transcript.trim();
+      }
+      if (sttMeta != null && sttMeta.isNotEmpty) {
+        request.fields['stt_meta'] = json.encode(sttMeta);
+      }
       request.files.add(await multipartFileFromXFile(file));
 
       final streamed = await request.send().timeout(Duration(seconds: 60));

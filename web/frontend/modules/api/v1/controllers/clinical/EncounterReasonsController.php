@@ -106,6 +106,17 @@ class EncounterReasonsController extends BaseController
         $ext = $file->getExtension() ?: pathinfo($file->name, PATHINFO_EXTENSION);
         $userId = (int) Yii::$app->user->id;
         $userName = Yii::$app->user->identity->username ?? 'Paciente';
+        $transcript = trim((string) Yii::$app->request->post('transcript', ''));
+        $sttMeta = Yii::$app->request->post('stt_meta');
+        if (is_string($sttMeta) && $sttMeta !== '') {
+            $sttMeta = json_decode($sttMeta, true);
+            if (!is_array($sttMeta)) {
+                return $this->fail('reason_stt_metadata_invalid');
+            }
+        }
+        if (!is_array($sttMeta)) {
+            $sttMeta = [];
+        }
 
         $result = (new AppointmentReasonMessageService())->sendMedia(
             $encounterId,
@@ -113,7 +124,9 @@ class EncounterReasonsController extends BaseController
             (string) $file->tempName,
             (string) $ext,
             $userId,
-            $userName
+            $userName,
+            $transcript,
+            $sttMeta
         );
 
         return $this->finalizeMessageResult($result, $encounter, (string) $messageType);

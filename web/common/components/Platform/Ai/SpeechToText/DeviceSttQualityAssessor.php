@@ -76,6 +76,20 @@ final class DeviceSttQualityAssessor
     }
 
     /**
+     * @param array{ok: bool, needs_server: bool, reasons: list<string>} $assessment
+     */
+    public static function isDeviceTranscriptAccepted(
+        string $text,
+        array $assessment,
+        bool $deviceEnabled,
+        bool $serverEnabled
+    ): bool {
+        return trim($text) !== ''
+            && $deviceEnabled
+            && ($assessment['ok'] || !$serverEnabled);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private static function config(?string $flowProfile): array

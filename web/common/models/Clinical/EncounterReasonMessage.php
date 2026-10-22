@@ -19,6 +19,8 @@ use yii\db\ActiveRecord;
  * @property string $texto
  * @property string $message_type
  * @property string $created_at
+ * @property string|null $transcript
+ * @property string|null $stt_meta_json
  *
  * @property Encounter $encounter
  */
@@ -39,6 +41,7 @@ class EncounterReasonMessage extends ActiveRecord
             [['encounter_id', 'user_id', 'user_name', 'texto'], 'required'],
             [['encounter_id', 'user_id'], 'integer'],
             [['texto'], 'string'],
+            [['transcript', 'stt_meta_json'], 'string'],
             [['created_at'], 'safe'],
             [['user_name'], 'string', 'max' => 100],
             [['message_type'], 'string', 'max' => 20],
@@ -71,7 +74,7 @@ class EncounterReasonMessage extends ActiveRecord
                     $content
                 );
             }
-            $out[] = [
+            $apiMessage = [
                 'id' => (int) $message->id,
                 'content' => $content,
                 'user_id' => (int) $message->user_id,
@@ -79,6 +82,10 @@ class EncounterReasonMessage extends ActiveRecord
                 'message_type' => $message->message_type ?: self::TYPE_TEXTO,
                 'created_at' => (string) $message->created_at,
             ];
+            if ($message->message_type === self::TYPE_AUDIO && trim((string) $message->transcript) !== '') {
+                $apiMessage['transcript'] = (string) $message->transcript;
+            }
+            $out[] = $apiMessage;
         }
 
         return $out;

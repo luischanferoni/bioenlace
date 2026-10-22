@@ -19,6 +19,8 @@ class PendingMotivoMessage {
     required this.updatedAt,
     this.texto,
     this.audioFileName,
+    this.transcript,
+    this.sttMeta,
     this.lastError,
   });
 
@@ -32,6 +34,8 @@ class PendingMotivoMessage {
 
   /// Nombre bajo el directorio del store (no ruta absoluta).
   final String? audioFileName;
+  final String? transcript;
+  final Map<String, dynamic>? sttMeta;
   final String? lastError;
 
   bool get hasAudio =>
@@ -54,6 +58,8 @@ class PendingMotivoMessage {
       updatedAt: updatedAt ?? this.updatedAt,
       texto: texto,
       audioFileName: audioFileName,
+      transcript: transcript,
+      sttMeta: sttMeta,
       lastError: clearError ? null : (lastError ?? this.lastError),
     );
   }
@@ -67,6 +73,8 @@ class PendingMotivoMessage {
     'updated_at': updatedAt.toIso8601String(),
     if (texto != null) 'texto': texto,
     if (audioFileName != null) 'audio_file_name': audioFileName,
+    if (transcript != null) 'transcript': transcript,
+    if (sttMeta != null) 'stt_meta': sttMeta,
     if (lastError != null) 'last_error': lastError,
   };
 
@@ -92,6 +100,11 @@ class PendingMotivoMessage {
           DateTime.now(),
       texto: json['texto']?.toString(),
       audioFileName: json['audio_file_name']?.toString(),
+      transcript: json['transcript']?.toString(),
+      sttMeta:
+          json['stt_meta'] is Map
+              ? Map<String, dynamic>.from(json['stt_meta'] as Map)
+              : null,
       lastError: json['last_error']?.toString(),
     );
   }

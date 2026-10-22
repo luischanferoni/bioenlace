@@ -46,4 +46,52 @@ class DeviceSttQualityAssessorTest extends \Codeception\Test\Unit
         verify($r['ok'])->false();
         verify($r['reasons'])->contains('error_motor');
     }
+
+    public function testAceptaTextoLocalDeBuenaCalidadConSttServidorHabilitado(): void
+    {
+        $quality = ['ok' => true, 'needs_server' => false, 'reasons' => []];
+
+        verify(DeviceSttQualityAssessor::isDeviceTranscriptAccepted(
+            'Paciente con dolor de garganta desde ayer.',
+            $quality,
+            true,
+            true
+        ))->true();
+    }
+
+    public function testSolicitaSttServidorParaTextoLocalDeBajaCalidad(): void
+    {
+        $quality = ['ok' => false, 'needs_server' => true, 'reasons' => ['confianza_baja']];
+
+        verify(DeviceSttQualityAssessor::isDeviceTranscriptAccepted(
+            'Paciente con dolor de garganta desde ayer.',
+            $quality,
+            true,
+            true
+        ))->false();
+    }
+
+    public function testConservaTextoLocalSiSttServidorEstaDeshabilitado(): void
+    {
+        $quality = ['ok' => false, 'needs_server' => true, 'reasons' => ['confianza_baja']];
+
+        verify(DeviceSttQualityAssessor::isDeviceTranscriptAccepted(
+            'Paciente con dolor de garganta desde ayer.',
+            $quality,
+            true,
+            false
+        ))->true();
+    }
+
+    public function testNoAceptaTextoSiDictadoEnDispositivoEstaDeshabilitado(): void
+    {
+        $quality = ['ok' => true, 'needs_server' => false, 'reasons' => []];
+
+        verify(DeviceSttQualityAssessor::isDeviceTranscriptAccepted(
+            'Paciente con dolor de garganta desde ayer.',
+            $quality,
+            false,
+            false
+        ))->false();
+    }
 }

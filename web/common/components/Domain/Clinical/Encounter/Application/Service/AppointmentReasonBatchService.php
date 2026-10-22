@@ -10,6 +10,7 @@ namespace common\components\Domain\Clinical\Encounter\Application\Service;
 use common\components\Domain\Clinical\Encounter\Application\Service\PatientAiContextService;
 use common\components\Platform\Ai\IAManager;
 use common\components\Platform\Ai\SpeechToText\SpeechToTextManager;
+use common\components\Platform\Ai\SpeechToText\SttConfigService;
 use common\components\Domain\Clinical\Encounter\Application\Service\SecureMediaService;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterReasonMessage;
@@ -156,8 +157,15 @@ final class AppointmentReasonBatchService
             }
 
             if ($msg->message_type === EncounterReasonMessage::TYPE_AUDIO) {
+                $deviceTranscript = trim((string) $msg->transcript);
+                if ($deviceTranscript !== '' && self::deviceTranscriptAccepted($msg)) {
+                    $textos[] = $deviceTranscript;
+                    $lines[] = '(audio transcripto) ' . $deviceTranscript;
+                    continue;
+                }
+
                 $path = self::resolveLocalPath((string) $msg->texto, $webRoot);
-                if ($path !== null && is_file($path)) {
+                if ($path !== null && is_file($path) && SttConfigService::isServerEnabled()) {
                     if ($audioPlaceholderIndex === null) {
                         $audioPlaceholderIndex = count($lines);
                         $lines[] = '';
@@ -197,6 +205,13 @@ final class AppointmentReasonBatchService
             'textos' => $textos,
             'imagenes' => $imagenes,
         ];
+    }
+
+    private static function deviceTranscriptAccepted(EncounterReasonMessage $message): bool
+    {
+        $metadata = json_decode((string) $message->stt_meta_json, true);
+
+        return is_array($metadata) && ($metadata['device_transcript_accepted'] ?? false) === true;
     }
 
     /**

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -12,8 +11,7 @@ import '../services/encounter_reason_chat_service.dart';
 import '../services/pending_motivo_message_store.dart';
 
 /// Chat for encounter reasons: text and audio.
-/// Intenta STT on-device; si la calidad alcanza, envía texto (sin Groq).
-/// Si no, guarda el audio y lo sube para el lote de cierre.
+/// Conserva y sube el audio junto con cualquier transcripción local disponible.
 class EncounterReasonsChatScreen extends StatefulWidget {
   final int encounterId;
   final String? authToken;
@@ -60,9 +58,6 @@ class _EncounterReasonsChatScreenState
   String? _motivosResumen;
   String? _chatGuideMessage;
   String? _chatGuideTitle;
-
-  double get _motivosMinConfidence =>
-      _sttConfig.minConfidenceForProfile('motivos_consulta');
 
   @override
   void initState() {
@@ -277,55 +272,22 @@ class _EncounterReasonsChatScreenState
     });
 
     final text = dictation?.text.trim() ?? '';
-    final deviceOk =
-        _sttConfig.deviceEnabled &&
-        dictation != null &&
-        DeviceSttLocalQuality.isAcceptable(
-          text,
-          dictation,
-          minConfidence: _motivosMinConfidence,
-        );
     debugPrint(
-      '[stt-motivos] route=${deviceOk ? 'device_text' : 'server_audio'} '
-      'deviceEnabled=${_sttConfig.deviceEnabled} '
-      'chars=${text.length} confidence=${dictation?.confidence ?? 0} '
-      'minConfidence=$_motivosMinConfidence '
+      '[stt-motivos] deviceEnabled=${_sttConfig.deviceEnabled} '
+      'chars=${text.length} '
+      'confidence=${dictation?.confidence ?? 0} '
       'durationMs=${dictation?.durationMs ?? 0} '
       'onDevice=${dictation?.onDevice ?? false} '
       'final=${dictation?.finalResult ?? false} '
       'error=${dictation?.error ?? 'none'}',
     );
 
-    if (deviceOk) {
-      if (path != null && path.isNotEmpty) {
-        try {
-          await File(path).delete();
-        } catch (_) {}
-      }
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Texto reconocido en el teléfono. Enviando…'),
-            backgroundColor: IntentPalette.of(UiIntent.success).base,
-          ),
-        );
-      }
-      await _persistAndUploadTexto(text);
-      return;
-    }
-
     if (path != null && path.isNotEmpty) {
-      if (mounted && text.isNotEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text(
-              'Calidad baja del dictado. Subimos el audio para el resumen.',
-            ),
-            backgroundColor: IntentPalette.of(UiIntent.info).base,
-          ),
-        );
-      }
-      await _persistAndUploadAudio(path);
+      await _persistAndUploadAudio(
+        path,
+        transcript: text.isEmpty ? null : text,
+        sttMeta: dictation?.toSttPayload(),
+      );
       return;
     }
 
@@ -356,7 +318,11 @@ class _EncounterReasonsChatScreenState
     await _uploadPending(pending);
   }
 
-  Future<void> _persistAndUploadAudio(String tempPath) async {
+  Future<void> _persistAndUploadAudio(
+    String tempPath, {
+    String? transcript,
+    Map<String, dynamic>? sttMeta,
+  }) async {
     if (!kIsWeb) {
       try {
         final file = XFile(tempPath);
@@ -389,6 +355,8 @@ class _EncounterReasonsChatScreenState
       createdAt: now,
       updatedAt: now,
       audioFileName: imported,
+      transcript: transcript,
+      sttMeta: sttMeta,
     );
     await _pendingStore.upsert(pending);
     await _loadPending();
@@ -426,6 +394,8 @@ class _EncounterReasonsChatScreenState
           widget.encounterId,
           XFile(path),
           messageType: 'audio',
+          transcript: item.transcript,
+          sttMeta: item.sttMeta,
         );
       }
 
@@ -703,12 +673,28 @@ class _EncounterReasonsChatScreenState
         placeholderColor: softColor,
       );
     } else if (type == 'audio') {
-      child = Row(
-        mainAxisSize: MainAxisSize.min,
+      final transcript = m['transcript']?.toString().trim() ?? '';
+      child = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.mic, color: softColor, size: 18),
-          BioSpacing.gapW(BioSpacing.sm),
-          Text('Audio', style: BioTypography.bodySm.copyWith(color: softColor)),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.mic, color: softColor, size: 18),
+              BioSpacing.gapW(BioSpacing.sm),
+              Text(
+                'Audio',
+                style: BioTypography.bodySm.copyWith(color: softColor),
+              ),
+            ],
+          ),
+          if (transcript.isNotEmpty) ...[
+            BioSpacing.gapH(BioSpacing.xs),
+            Text(
+              transcript,
+              style: BioTypography.bodySm.copyWith(color: palette.onBase),
+            ),
+          ],
         ],
       );
     } else {

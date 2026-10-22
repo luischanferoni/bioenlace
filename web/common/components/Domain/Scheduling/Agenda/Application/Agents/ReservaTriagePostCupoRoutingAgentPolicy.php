@@ -17,10 +17,6 @@ final class ReservaTriagePostCupoRoutingAgentPolicy
         return [
         'version' => 1,
         'agent_id' => 'reserva-triage-post-cupo-routing',
-        'push' => [
-            'title' => 'Alternativas de atención',
-            'body_template' => '{{mensaje}}',
-        ],
         'deep_links' => [
             'async' => '/asistente?intent=encounter-async.solicitar-flow',
             'tele_hub' => '/asistente?intent=turnos.crear-como-paciente&modo=teleconsulta_hub',

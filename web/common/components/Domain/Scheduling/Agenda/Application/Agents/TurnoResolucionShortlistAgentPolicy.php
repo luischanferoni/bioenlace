@@ -27,9 +27,6 @@ final class TurnoResolucionShortlistAgentPolicy
             'proximity_per_day' => 2,
             'max_proximity_days' => 14,
         ],
-        'push' => [
-            'body_suffix_template' => ' Opciones sugeridas: {{options_summary}}',
-        ],
     ];
     }
 }

@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Agenda\Application\Agents;
 
+use common\components\Domain\Scheduling\Agenda\Application\Catalog\TurnoResolucionMulticanalNotificationCatalog;
 use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoResolucionLinkTokenService;
 use common\components\Domain\Scheduling\Agenda\Application\UseCase\SendTurnoResolutionMultichannel;
 use common\components\Domain\Scheduling\Agenda\Infrastructure\External\Outbound\TurnoOutboundChannel;
@@ -28,14 +29,18 @@ final class TurnoResolucionMulticanalAgent
 
     private SendTurnoResolutionMultichannel $scheduler;
 
+    private TurnoResolucionMulticanalNotificationCatalog $notifications;
+
     public function __construct(
         ?TurnoOutboundChannel $outbound = null,
         ?TurnoResolucionLinkTokenService $linkTokens = null,
-        ?SendTurnoResolutionMultichannel $scheduler = null
+        ?SendTurnoResolutionMultichannel $scheduler = null,
+        ?TurnoResolucionMulticanalNotificationCatalog $notifications = null
     ) {
         $this->outbound = $outbound ?? new TurnoOutboundChannel();
         $this->linkTokens = $linkTokens ?? new TurnoResolucionLinkTokenService();
         $this->scheduler = $scheduler ?? new SendTurnoResolutionMultichannel();
+        $this->notifications = $notifications ?? new TurnoResolucionMulticanalNotificationCatalog();
     }
 
     public function processScheduled(TurnoNotificacionProgramada $row, Turno $turno): string
@@ -81,7 +86,7 @@ final class TurnoResolucionMulticanalAgent
         $link = $this->linkTokens->buildPublicUrl($token);
         $context = $this->buildContext($turno, $link);
 
-        $sent = $this->dispatchChannel($channelId, (int) $turno->id_persona, $context, $config);
+        $sent = $this->dispatchChannel($channelId, (int) $turno->id_persona, $context);
 
         AgentRunRecorder::record(
             self::AGENT_ID,
@@ -108,23 +113,20 @@ final class TurnoResolucionMulticanalAgent
 
     /**
      * @param array<string, string> $context
-     * @param array<string, mixed> $config
      */
-    private function dispatchChannel(string $channelId, int $idPersona, array $context, array $config): bool
+    private function dispatchChannel(string $channelId, int $idPersona, array $context): bool
     {
-        $templates = is_array($config['message_templates'] ?? null) ? $config['message_templates'] : [];
-
         if ($channelId === 'email') {
-            $tpl = is_array($templates['email'] ?? null) ? $templates['email'] : [];
-            $subject = $this->interpolate((string) ($tpl['subject'] ?? 'Tu turno requiere una nueva cita'), $context);
-            $body = $this->interpolate((string) ($tpl['body'] ?? 'Elegí otro horario: {{link}}'), $context);
+            $template = $this->notifications->forChannel('email');
+            $subject = $this->interpolate($template['subject'], $context);
+            $body = $this->interpolate($template['body'], $context);
 
             return $this->outbound->sendEmail($idPersona, $subject, $body);
         }
 
         if ($channelId === 'sms') {
-            $tpl = is_array($templates['sms'] ?? null) ? $templates['sms'] : [];
-            $body = $this->interpolate((string) ($tpl['body'] ?? 'Reubicá tu turno: {{link}}'), $context);
+            $template = $this->notifications->forChannel('sms');
+            $body = $this->interpolate($template['body'], $context);
 
             return $this->outbound->sendSms($idPersona, $body);
         }

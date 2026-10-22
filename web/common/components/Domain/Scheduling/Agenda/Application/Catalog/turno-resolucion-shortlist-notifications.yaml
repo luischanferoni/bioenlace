@@ -1,0 +1,2 @@
+version: 1
+push_body_suffix_template: ' Opciones sugeridas: {{options_summary}}'

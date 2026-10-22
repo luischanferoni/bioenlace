@@ -2,6 +2,8 @@
 
 namespace common\components\Domain\Scheduling\Agenda\Application\Agents;
 
+use common\components\Domain\Scheduling\Agenda\Application\Catalog\TurnoResolucionShortlistNotificationCatalog;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\BuildTurnoResolutionShortlist;
 use common\components\Platform\Agent\AgentRunRecorder;
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
 use common\models\Scheduling\Turno;
@@ -19,9 +21,14 @@ final class TurnoResolucionShortlistAgent
 
     private BuildTurnoResolutionShortlist $shortlist;
 
-    public function __construct(?BuildTurnoResolutionShortlist $shortlist = null)
-    {
+    private TurnoResolucionShortlistNotificationCatalog $notifications;
+
+    public function __construct(
+        ?BuildTurnoResolutionShortlist $shortlist = null,
+        ?TurnoResolucionShortlistNotificationCatalog $notifications = null
+    ) {
         $this->shortlist = $shortlist ?? new BuildTurnoResolutionShortlist();
+        $this->notifications = $notifications ?? new TurnoResolucionShortlistNotificationCatalog();
     }
 
     /**
@@ -124,15 +131,11 @@ final class TurnoResolucionShortlistAgent
     /**
      * @param list<array<string, mixed>> $options
      */
-    public function formatPushBodySuffix(array $options, ?array $config = null): string
+    public function formatPushBodySuffix(array $options): string
     {
         if ($options === []) {
             return '';
         }
-
-        $config = $config ?? AutonomousAgentMetadata::loadAgent(self::AGENT_ID) ?? [];
-        $pushCfg = is_array($config['push'] ?? null) ? $config['push'] : [];
-        $template = (string) ($pushCfg['body_suffix_template'] ?? ' Opciones: {{options_summary}}');
 
         $labels = [];
         foreach ($options as $opt) {
@@ -140,7 +143,7 @@ final class TurnoResolucionShortlistAgent
         }
         $summary = implode('; ', array_filter($labels));
 
-        return str_replace('{{options_summary}}', $summary, $template);
+        return str_replace('{{options_summary}}', $summary, $this->notifications->pushBodySuffixTemplate());
     }
 
     /**

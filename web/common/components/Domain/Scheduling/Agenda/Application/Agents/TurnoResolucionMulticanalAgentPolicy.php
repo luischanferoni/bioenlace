@@ -38,15 +38,6 @@ final class TurnoResolucionMulticanalAgentPolicy
                 'stub' => true,
             ],
         ],
-        'message_templates' => [
-            'email' => [
-                'subject' => 'Tu turno requiere una nueva cita',
-                'body' => 'Hola {{nombre}}, tu turno del {{fecha}} a las {{hora}} necesita una nueva cita. Abrí el enlace para cambiar el horario: {{link}}',
-            ],
-            'sms' => [
-                'body' => 'Bioenlace: tu turno del {{fecha}} {{hora}} necesita nueva cita. Cambiá el horario: {{link}}',
-            ],
-        ],
     ];
     }
 }

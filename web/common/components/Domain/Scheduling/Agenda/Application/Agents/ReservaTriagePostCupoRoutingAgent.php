@@ -2,8 +2,8 @@
 
 namespace common\components\Domain\Scheduling\Agenda\Application\Agents;
 
+use common\components\Domain\Scheduling\Agenda\Application\Catalog\ReservaTriagePostCupoNotificationCatalog;
 use common\components\Platform\Agent\AgentRunRecorder;
-use common\components\Platform\Core\Product\AutonomousAgentMetadata;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\components\Platform\Core\Service\Push\PushNotificationTypes;
 use Yii;
@@ -19,9 +19,14 @@ final class ReservaTriagePostCupoRoutingAgent
 
     private RouteReservaTriagePostCupo $routing;
 
-    public function __construct(?RouteReservaTriagePostCupo $routing = null)
-    {
+    private ReservaTriagePostCupoNotificationCatalog $notifications;
+
+    public function __construct(
+        ?RouteReservaTriagePostCupo $routing = null,
+        ?ReservaTriagePostCupoNotificationCatalog $notifications = null
+    ) {
         $this->routing = $routing ?? new RouteReservaTriagePostCupo();
+        $this->notifications = $notifications ?? new ReservaTriagePostCupoNotificationCatalog();
     }
 
     public function isEnabled(): bool
@@ -79,12 +84,9 @@ final class ReservaTriagePostCupoRoutingAgent
      */
     private function pushRecomendacion(int $idPersona, array $recommendation): void
     {
-        $config = AutonomousAgentMetadata::loadAgent(self::AGENT_ID);
-        $pushCfg = is_array($config['push'] ?? null) ? $config['push'] : [];
-        $title = (string) ($pushCfg['title'] ?? 'Alternativas de atención');
-        $template = (string) ($pushCfg['body_template'] ?? '{{mensaje}}');
+        $pushCopy = $this->notifications->push();
         $mensaje = (string) ($recommendation['mensaje'] ?? '');
-        $body = str_replace('{{mensaje}}', $mensaje, $template);
+        $body = str_replace('{{mensaje}}', $mensaje, $pushCopy['body_template']);
 
         (new PushNotificationSender())->sendToPersona(
             $idPersona,
@@ -94,7 +96,7 @@ final class ReservaTriagePostCupoRoutingAgent
                 'rule_id' => (string) ($recommendation['rule_id'] ?? ''),
                 'deep_link' => (string) ($recommendation['deep_link'] ?? ''),
             ],
-            $title,
+            $pushCopy['title'],
             $body,
             false
         );

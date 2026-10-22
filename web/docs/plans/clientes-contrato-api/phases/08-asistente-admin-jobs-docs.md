@@ -28,6 +28,18 @@ El mensaje de confirmación de auto-reserva del agente A01 D2 se movió de `Turn
 
 El copy de los tres resultados del agente A06 de cierre de resolución (escalamiento a staff, cancelación y continuidad) pasó a `Scheduling/Agenda/Application/Catalog/turno-resolucion-loop-close-notifications.yaml`. Las reglas PHP solo conservan el umbral y la acción; el agente obtiene los mensajes del catálogo y mantiene la interpolación de fecha y banda de urgencia. La prueba valida el copy exacto y el error para una clave inexistente.
 
+Las plantillas email/SMS del agente A02 multicanal se movieron desde la política a `Scheduling/Agenda/Application/Catalog/turno-resolucion-multicanal-notifications.yaml`. La selección y habilitación de canales continúa en la política PHP; el agente mantiene el envío y la interpolación de nombre, fecha, hora y enlace. La prueba valida ambos textos y rechaza canales no soportados.
+
+Validación de este incremento: las pruebas del catálogo multicanal pasaron (2 tests, 3 assertions), PHP lint, YAML lint y `git diff --check` también. PHPUnit se ejecutó con PHP 8.0 mediante bypass temporal del guard Composer, restaurado inmediatamente; no certifica el runtime soportado (PHP >=8.1).
+
+El título y la plantilla externa del push del agente A05 de ruteo post-cupo pasaron a `Scheduling/Agenda/Application/Catalog/reserva-triage-post-cupo-notifications.yaml`. Se preservan las copias `mensaje` dentro de las reglas porque integran la recomendación que devuelve el endpoint; no se cambia ese contrato de API. El agente conserva la sustitución de `{{mensaje}}` antes de enviar el push.
+
+Validación: la prueba focalizada del catálogo pasó (1 test, 1 assertion), PHP lint, YAML lint y `git diff --check` pasaron. PHPUnit se ejecutó con PHP 8.0 y el bypass temporal del guard Composer, restaurado al terminar; no certifica PHP >=8.1. El test existente del servicio de ruteo no pudo ejecutarse directamente con PHPUnit porque requiere `common\tests\unit\DbTestCase`, cargado por la configuración de Codeception.
+
+El sufijo de opciones sugeridas del agente D1 shortlist pasó de `TurnoResolucionShortlistAgentPolicy` al catálogo YAML `turno-resolucion-shortlist-notifications.yaml`. Se mantiene el prefijo con su espacio inicial, el separador `; ` entre opciones y el retorno vacío cuando no existen opciones.
+
+Validación de este incremento: la prueba de formato pasó (2 tests, 2 assertions), PHP lint, YAML lint y `git diff --check` pasaron. PHPUnit se ejecutó en PHP 8.0 mediante bypass temporal del guard Composer, restaurado al finalizar; no certifica PHP >=8.1. El test detectó y permitió corregir el import faltante del use case `BuildTurnoResolutionShortlist`.
+
 Validación de este incremento: la prueba de renderizado pasó (1 test, 1 assertion), PHP lint y `git diff --check` pasaron, y el catálogo YAML fue validado. La prueba se ejecutó con PHP 8.0 mediante bypass temporal del guard Composer, restaurado al terminar; no certifica el runtime soportado (PHP >=8.1). La prueba también detectó imports ausentes para `AutoReserveTurnoResolution` y `PersonaAgendaPreferenciasService` en el agente, que se agregaron para que la construcción normal del agente funcione.
 
 Pendiente: revisar los mensajes de sistema y flujos YAML restantes; revisar terminología/copy del panel administrativo MVC, mensajes de jobs/agentes fuera de los journeys clínicos y B01, documentación estable y reglas `.cursor`.

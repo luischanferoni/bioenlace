@@ -22,6 +22,8 @@ La documentación clínica del profesional ahora publica secciones genéricas co
 
 La serie de signos vitales publica también `metric_metadata` completo aunque el episodio todavía no tenga puntos, conservando `series` y `ultimos` para los clientes actuales. Web y Personal de Salud usan esa metadata como respaldo de etiqueta, unidad e intent cuando los datos de una serie o último valor no los repiten. El mapeo de fuentes y métricas sigue siendo explícito; esto mejora la disponibilidad de metadata, pero no completa la migración a secciones genéricas.
 
+La metadata de especialidades declara campos, formatos y unidades, pero todavía no serializa sus validaciones. No es correcto convertirlas en booleanos `required`: odontología acepta tipo o código, y estudios oftalmológicos acepta código o informe. El contrato genérico debe poder representar estos grupos alternativos y mantenerse alineado con las reglas de captura antes de publicarse.
+
 Las acciones actuales del banner ya declaran presentación y se condicionan al estado del episodio, pero todavía no representan permisos por rol. No se considera cumplida la tarea de acciones permitidas por episodio y rol hasta que esa política se publique de forma autorizada desde el backend.
 
 ## Criterio de salida

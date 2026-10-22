@@ -232,6 +232,139 @@
     return Object.assign({}, base, extra || {});
   };
 
+  /**
+   * Resuelve una ruta API o una URL externa sin alterar el resolver de la SPA.
+   * @param {string} path Ruta o URL recibida del contrato.
+   * @returns {string}
+   */
+  NS.resolveApiUrl = function (path) {
+    path = String(path || '');
+    if (typeof window.resolveSpaFetchUrl === 'function') {
+      return window.resolveSpaFetchUrl(path);
+    }
+    if (/^https?:\/\//i.test(path)) {
+      return path;
+    }
+    if (typeof NS.normalizeApiV1Path === 'function') {
+      path = NS.normalizeApiV1Path(path);
+    }
+    if (path.indexOf('/api/') === 0) {
+      return window.location.origin + path;
+    }
+    var base =
+      window.spaConfig && window.spaConfig.apiBase
+        ? String(window.spaConfig.apiBase)
+        : '';
+    if (base && base.slice(-1) === '/') {
+      base = base.slice(0, -1);
+    }
+    return base + path;
+  };
+
+  function isSameOriginUrl(url) {
+    var requestUrl;
+    try {
+      requestUrl = new URL(url, window.location.origin);
+    } catch (error) {
+      return false;
+    }
+    return requestUrl.origin === window.location.origin;
+  }
+
+  /**
+   * @param {string} url URL absoluta o relativa de la solicitud.
+   * @returns {Object<string,string>} Solo incluye cabeceras autenticadas same-origin.
+   */
+  NS.headersForUrl = function (url) {
+    return isSameOriginUrl(url) ? NS.mergeHeaders({}) : {};
+  };
+
+  /**
+   * @param {Response} response Respuesta de un endpoint de descarga PDF.
+   * @returns {Promise<Blob>} Contenido PDF o rechazo si la respuesta no es PDF.
+   */
+  NS.pdfBlobFromResponse = function (response) {
+    if (!response.ok) {
+      return Promise.reject(new Error('HTTP ' + response.status));
+    }
+    var contentType = (response.headers.get('content-type') || '')
+      .split(';', 1)[0]
+      .trim()
+      .toLowerCase();
+    if (contentType !== 'application/pdf') {
+      return Promise.reject(new Error('Unexpected PDF content type: ' + contentType));
+    }
+    return response.blob();
+  };
+
+  /**
+   * Descarga un blob mediante un enlace temporal y libera su object URL.
+   * @param {Blob} blob
+   * @param {string} filename
+   */
+  NS.downloadBlob = function (blob, filename) {
+    var objectUrl = window.URL.createObjectURL(blob);
+    var link;
+    try {
+      link = window.document.createElement('a');
+      link.href = objectUrl;
+      link.download = filename || 'download.pdf';
+      window.document.body.appendChild(link);
+      link.click();
+    } finally {
+      try {
+        if (link) {
+          link.remove();
+        }
+      } finally {
+        window.setTimeout(function () {
+          window.URL.revokeObjectURL(objectUrl);
+        }, 500);
+      }
+    }
+  };
+
+  /**
+   * Solicita y descarga un PDF, aplicando la política común de origen y MIME.
+   * @param {string} url URL ya resuelta.
+   * @param {string} filename Nombre del archivo descargado.
+   * @returns {Promise<void>}
+   */
+  NS.downloadPdf = function (url, filename) {
+    function request(jwtRetried) {
+      var headers = NS.headersForUrl(url);
+      return window.fetch(url, {
+        method: 'GET',
+        credentials: isSameOriginUrl(url) ? 'same-origin' : 'omit',
+        headers: headers,
+      }).then(function (response) {
+        if (response.status !== 401 || !isSameOriginUrl(url)) {
+          return NS.pdfBlobFromResponse(response);
+        }
+        if (jwtRetried) {
+          NS.handleUnauthorized(response.status, null);
+          return NS.pdfBlobFromResponse(response);
+        }
+        return NS.refreshWebJwtFromSession().then(function (refreshed) {
+          if (!refreshed) {
+            NS.handleUnauthorized(response.status, null);
+            return NS.pdfBlobFromResponse(response);
+          }
+          return request(true);
+        });
+      });
+    }
+
+    var ready = isSameOriginUrl(url) && !window.apiAuthToken
+      ? NS.refreshWebJwtFromSession()
+      : Promise.resolve(true);
+    return ready.then(function () {
+      return request(false);
+    }).then(function (blob) {
+      NS.downloadBlob(blob, filename);
+    });
+  };
+
   /** Alias de {@link NS.mergeHeaders} (mismo contrato). */
   NS.apiHeaders = NS.mergeHeaders;
 

@@ -72,20 +72,6 @@ final class TurnoAntinoshowAgentPolicy
                 0 => 'high',
             ],
         ],
-        'patient_messages' => [
-            'extra_confirm' => [
-                'title' => 'Confirmá tu turno',
-                'body' => 'Confirmá asistencia al turno del {{fecha}} {{hora}}.',
-            ],
-            'reminder' => [
-                'title' => 'Tu turno es pronto',
-                'body' => 'Recordá tu turno del {{fecha}} a las {{hora}}.',
-            ],
-            'slot_released' => [
-                'title' => 'Turno liberado',
-                'body' => 'No confirmaste tu turno del {{fecha}}. El cupo quedó disponible; podés reservar otro horario desde la app.',
-            ],
-        ],
     ];
     }
 }

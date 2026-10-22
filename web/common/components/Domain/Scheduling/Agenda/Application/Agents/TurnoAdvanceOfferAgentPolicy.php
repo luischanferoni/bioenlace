@@ -31,11 +31,6 @@ final class TurnoAdvanceOfferAgentPolicy
             'same_modalidad' => true,
         ],
         'require_active_push' => true,
-        'texts' => [
-            'title' => 'Se liberó un turno más temprano',
-            'body' => 'Hay un horario el {fecha} a las {hora}. Podés adelantar tu consulta si todavía está disponible.',
-            'action_label' => 'Adelantar mi turno',
-        ],
         'push_type' => 'TURNO_ADVANCE_OFFER',
         'action' => 'adelantar_turno',
     ];

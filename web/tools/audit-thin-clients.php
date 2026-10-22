@@ -69,7 +69,7 @@ $counters = [
         'regex' => '/(==|!=)\s*[\'"](GUARDIA|INTERNACION|CIRUGIA|TURNO|ENCOUNTER)[\'"]|case\s+[\'"](GUARDIA|INTERNACION|CIRUGIA|TURNO|ENCOUNTER)[\'"]/u',
     ],
     'backend_consulta_file_names' => [
-        'desc' => 'Archivos PHP con «consulta» en el nombre (dominio, API, modelos)',
+        'desc' => 'Archivos PHP con «consulta» en el nombre (incluye conceptos diferenciados como teleconsulta)',
         'roots' => ['web/common/components', 'web/common/models', 'web/frontend/modules/api', 'web/frontend/controllers'],
         'ext' => ['php'],
         'file_name_regex' => '/consulta/i',

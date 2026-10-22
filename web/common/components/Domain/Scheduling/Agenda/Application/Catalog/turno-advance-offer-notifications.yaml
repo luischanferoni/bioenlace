@@ -1,0 +1,5 @@
+version: 1
+offer:
+  title: 'Se liberó un turno más temprano'
+  body_template: 'Hay un horario el {fecha} a las {hora}. Podés adelantar tu consulta si todavía está disponible.'
+  action_label: 'Adelantar mi turno'

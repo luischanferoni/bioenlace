@@ -2,11 +2,11 @@
 
 ## Objetivo
 
-Que «encounter» sea el único término en código, rutas, clases y tablas. «Consulta» solo queda en copy español que decida el backend.
+Que «encounter» sea el término canónico del registro clínico en código, rutas, clases y tablas. «Consulta» solo queda en copy español que decida el backend, salvo términos de dominios distintos que no sean sinónimos del encounter, como «teleconsulta».
 
 ## Tareas
 
-- Glosario en `web/docs/producto/` con los términos oficiales (encounter, episodio, captura, motivo) y su equivalente en copy. Frontera fijada: «consulta» solo en lo visible; «encounter» en todo lo interno; «atención» no se usa para este concepto.
+- Glosario en `web/docs/producto/` con los términos oficiales (encounter, episodio, captura, motivo) y su equivalente en copy. Frontera fijada: «consulta» solo en lo visible salvo conceptos diferenciados como «teleconsulta»; «encounter» nombra el registro clínico; «atención» no se usa como sinónimo.
 - Backend: renombrar las 37 clases con «Consulta» en el nombre. Familias de rutas a renombrar: chat de consulta, motivos de consulta, consultas de seguimiento, ver consulta como staff, consulta async.
 - Borrar las rutas viejas sin alias.
 - Migraciones nuevas para tablas y columnas que lo exijan, sin vistas de compatibilidad.
@@ -21,7 +21,7 @@ Despliegue coordinado de backend, web y apps. Las apps instaladas dejan de funci
 
 ## Criterio de salida
 
-El contador de «consulta» en código llega a cero y solo se permite en copy declarado por el backend.
+No quedan identificadores genéricos de «consulta» usados como sinónimo de encounter. El contador de identificadores Dart y el de rutas API llegan a cero; los nombres PHP restantes solo se aceptan si pertenecen a conceptos diferenciados documentados (actualmente, teleconsulta). El copy visible debe estar declarado por el backend.
 
 ## Estado
 
@@ -122,3 +122,7 @@ Eliminé del render de referencias del intake una rama inalcanzable que excluía
 Corrección del registro histórico de rutas: la nota anterior que atribuía a `DomainControllerMap` la conservación explícita de los IDs `consulta-async` y `consultas-seguimiento` ya no describe el estado actual. El mapa deriva IDs de las clases canónicas `EncounterAsyncController`/`EncounterFollowupController`; no existen los IDs viejos en el código activo y solo aparecen en migraciones históricas RBAC. Se agregaron aserciones a `DomainControllerMapTest` para impedir que se reintroduzcan.
 
 Los wrappers ActiveRecord sin consumidores `TipoConsulta` y `TipoIngreso` se eliminaron, junto con la relación obsoleta entre ambos. Las tablas `cat_tipo_consulta` y `cat_tipo_ingreso` y su migración histórica se preservan; no se cambia almacenamiento ni identificadores persistidos. La auditoría queda en ocho nombres PHP con `consulta`, todos vinculados a teleconsulta, modalidad remota diferenciada del encounter. Se baja el tope de `backend_consulta_file_names` de 9 a 8. La guarda global continúa reportando alzas ajenas a este corte (`domain_literal_messages` 704/701 y `web_js_literal_ui_text` 66/65); no se elevan esos topes.
+
+El método sin consumidores `EncounterNursingCare::obtenerValoracionNutricionalPorIdConsulta` pasó a `findByEncounterId`; mantiene el mismo filtro `encounter_id` y resultado. También se limpiaron docblocks de `Encounter`/`EncounterDiagnosisRepository` que apuntaban a una clase legacy inexistente. El glosario ahora distingue explícitamente la teleconsulta (modalidad remota) del encounter (registro clínico), para conservar esos ocho nombres de modalidad sin confundir el criterio de la fase.
+
+Validación de este incremento: PHP lint de los cuatro archivos PHP modificados y `git diff --check` pasan. La auditoría `audit-thin-clients.php --report` no pudo ejecutarse con el PHP CLI disponible (7.4), porque el script utiliza `str_starts_with`, disponible desde PHP 8.0.

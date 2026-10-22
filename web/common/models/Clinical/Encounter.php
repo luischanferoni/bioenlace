@@ -118,7 +118,7 @@ class Encounter extends ActiveRecord
     }
 
     /**
-     * Padre operativo (turno u otro contexto) para vistas que usaban `Consulta::getParent()`.
+     * Padre operativo del encounter (turno u otro contexto).
      */
     public function getParent(): \yii\db\ActiveQuery
     {
@@ -252,7 +252,7 @@ class Encounter extends ActiveRecord
     }
 
     /**
-     * Encounter de pase previo para servicio/efector (reemplazo de {@see Consulta::existeConsultaPasePrevio}).
+     * Busca el encounter de pase previo para servicio/efector.
      */
     public static function findPasePrevioEncounter(int $parentId, int $serviceId): ?self
     {

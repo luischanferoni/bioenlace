@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Agenda\Application\Agents;
 
+use common\components\Domain\Scheduling\Agenda\Application\Catalog\TurnoResolucionLoopCloseNotificationCatalog;
 use common\components\Platform\Agent\AgentRunRecorder;
 use common\components\Platform\Agent\AutonomousAgentRuleEngine;
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
@@ -25,9 +26,14 @@ final class TurnoResolucionLoopCloseAgent
 
     private CloseTurnoResolutionLoop $scheduler;
 
-    public function __construct(?CloseTurnoResolutionLoop $scheduler = null)
-    {
+    private TurnoResolucionLoopCloseNotificationCatalog $notifications;
+
+    public function __construct(
+        ?CloseTurnoResolutionLoop $scheduler = null,
+        ?TurnoResolucionLoopCloseNotificationCatalog $notifications = null
+    ) {
         $this->scheduler = $scheduler ?? new CloseTurnoResolutionLoop();
+        $this->notifications = $notifications ?? new TurnoResolucionLoopCloseNotificationCatalog();
     }
 
     public function processScheduled(TurnoNotificacionProgramada $row, Turno $turno): string
@@ -53,16 +59,16 @@ final class TurnoResolucionLoopCloseAgent
 
         switch ($action) {
             case 'escalate_staff':
-                $this->escalateStaff($turno, $res, $config, $facts, $ruleId);
+                $this->escalateStaff($turno, $res, $facts, $ruleId);
                 $this->scheduler->cancelPendingLoopClose((int) $turno->id_turnos);
                 break;
             case 'keep_in_resolution':
-                $this->notifyPatientKeep($turno, $config, $facts, $ruleId);
+                $this->notifyPatientKeep($turno, $facts, $ruleId);
                 $this->scheduler->cancelPendingLoopClose((int) $turno->id_turnos);
                 break;
             case 'cancel_turno':
             default:
-                $this->cancelTurno($turno, $res, $config, $facts, $ruleId);
+                $this->cancelTurno($turno, $res, $facts, $ruleId);
                 break;
         }
 
@@ -112,7 +118,7 @@ final class TurnoResolucionLoopCloseAgent
      * @param array<string, mixed> $config
      * @param array<string, mixed> $facts
      */
-    private function cancelTurno(Turno $turno, TurnoResolucion $res, array $config, array $facts, string $ruleId): void
+    private function cancelTurno(Turno $turno, TurnoResolucion $res, array $facts, string $ruleId): void
     {
         $life = new AdvanceTurnoLifecycle();
         $life->cancelar(
@@ -129,22 +135,16 @@ final class TurnoResolucionLoopCloseAgent
             \common\models\Scheduling\TurnoEventoAudit::ACTOR_SISTEMA
         );
 
-        $msgs = is_array($config['patient_messages'] ?? null) ? $config['patient_messages'] : [];
-        $tpl = is_array($msgs['cancel_turno'] ?? null) ? $msgs['cancel_turno'] : [];
-        $title = $this->interpolate((string) ($tpl['title'] ?? 'Turno liberado'), $turno, $facts);
-        $body = $this->interpolate((string) ($tpl['body'] ?? ''), $turno, $facts);
-
-        if ($body !== '') {
-            (new PushNotificationSender())->sendToPersona(
-                (int) $turno->id_persona,
-                [
-                    'type' => PushNotificationTypes::TURNO_RESOLUCION_SIN_RESPUESTA,
-                    'id_turno' => (string) $turno->id_turnos,
-                ],
-                $title,
-                $body
-            );
-        }
+        $copy = $this->notifications->forMessage('cancel_turno');
+        (new PushNotificationSender())->sendToPersona(
+            (int) $turno->id_persona,
+            [
+                'type' => PushNotificationTypes::TURNO_RESOLUCION_SIN_RESPUESTA,
+                'id_turno' => (string) $turno->id_turnos,
+            ],
+            $this->interpolate($copy['title'], $turno, $facts),
+            $this->interpolate($copy['body'], $turno, $facts)
+        );
 
         AgentRunRecorder::record(
             self::AGENT_ID,
@@ -163,24 +163,18 @@ final class TurnoResolucionLoopCloseAgent
      * @param array<string, mixed> $config
      * @param array<string, mixed> $facts
      */
-    private function notifyPatientKeep(Turno $turno, array $config, array $facts, string $ruleId): void
+    private function notifyPatientKeep(Turno $turno, array $facts, string $ruleId): void
     {
-        $msgs = is_array($config['patient_messages'] ?? null) ? $config['patient_messages'] : [];
-        $tpl = is_array($msgs['keep_in_resolution'] ?? null) ? $msgs['keep_in_resolution'] : [];
-        $title = $this->interpolate((string) ($tpl['title'] ?? 'Seguimos con tu turno'), $turno, $facts);
-        $body = $this->interpolate((string) ($tpl['body'] ?? ''), $turno, $facts);
-
-        if ($body !== '') {
-            (new PushNotificationSender())->sendToPersona(
-                (int) $turno->id_persona,
-                [
-                    'type' => PushNotificationTypes::TURNO_REQUIERE_REUBICACION,
-                    'id_turno' => (string) $turno->id_turnos,
-                ],
-                $title,
-                $body
-            );
-        }
+        $copy = $this->notifications->forMessage('keep_in_resolution');
+        (new PushNotificationSender())->sendToPersona(
+            (int) $turno->id_persona,
+            [
+                'type' => PushNotificationTypes::TURNO_REQUIERE_REUBICACION,
+                'id_turno' => (string) $turno->id_turnos,
+            ],
+            $this->interpolate($copy['title'], $turno, $facts),
+            $this->interpolate($copy['body'], $turno, $facts)
+        );
 
         AgentRunRecorder::record(
             self::AGENT_ID,
@@ -198,15 +192,11 @@ final class TurnoResolucionLoopCloseAgent
      * @param array<string, mixed> $config
      * @param array<string, mixed> $facts
      */
-    private function escalateStaff(Turno $turno, TurnoResolucion $res, array $config, array $facts, string $ruleId): void
+    private function escalateStaff(Turno $turno, TurnoResolucion $res, array $facts, string $ruleId): void
     {
-        $rules = AutonomousAgentMetadata::rulesForAgent(self::AGENT_ID);
-        $matched = AutonomousAgentRuleEngine::matchAll($rules, $facts, null);
-        $rule = $matched[0] ?? [];
-        $staff = is_array($rule['staff'] ?? null) ? $rule['staff'] : [];
-        $title = (string) ($staff['title'] ?? 'Resolución sin respuesta');
-        $bodyTemplate = (string) ($staff['body_template'] ?? 'Revisá coordinación de agenda.');
-        $body = $this->interpolate($bodyTemplate, $turno, $facts);
+        $copy = $this->notifications->forMessage('staff_escalation');
+        $title = $copy['title'];
+        $body = $this->interpolate($copy['body_template'], $turno, $facts);
 
         $staffPersonaId = $this->personaIdFromPes((int) ($turno->id_profesional_efector_servicio ?? 0));
         if ($staffPersonaId > 0) {

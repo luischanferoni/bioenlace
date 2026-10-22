@@ -26,12 +26,6 @@ final class TurnoResolucionAutoReservaAgentPolicy
             'preference_dia_match' => 10,
             'preference_tipo_atencion_match' => 15,
         ],
-        'patient_messages' => [
-            'auto_rebooked' => [
-                'title' => 'Te reubicamos el turno',
-                'body' => 'Reservamos tu turno para el {{fecha}} a las {{hora}}. Si no te sirve, cambiá el horario desde la app.',
-            ],
-        ],
     ];
     }
 }

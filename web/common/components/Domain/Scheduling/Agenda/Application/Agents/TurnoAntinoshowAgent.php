@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Agenda\Application\Agents;
 
+use common\components\Domain\Scheduling\Agenda\Application\Catalog\TurnoAntinoshowNotificationCatalog;
 use common\components\Platform\Agent\AgentRunRecorder;
 use common\components\Platform\Agent\AutonomousAgentRuleEngine;
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
@@ -33,12 +34,16 @@ final class TurnoAntinoshowAgent
 
     private ApplyTurnoAntinoshow $scheduler;
 
+    private TurnoAntinoshowNotificationCatalog $notifications;
+
     public function __construct(
         ?TurnoAntinoshowRiskService $risk = null,
-        ?ApplyTurnoAntinoshow $scheduler = null
+        ?ApplyTurnoAntinoshow $scheduler = null,
+        ?TurnoAntinoshowNotificationCatalog $notifications = null
     ) {
         $this->risk = $risk ?? new TurnoAntinoshowRiskService();
         $this->scheduler = $scheduler ?? new ApplyTurnoAntinoshow();
+        $this->notifications = $notifications ?? new TurnoAntinoshowNotificationCatalog();
     }
 
     public function processCheckpoint(TurnoNotificacionProgramada $row, Turno $turno): string
@@ -253,22 +258,16 @@ final class TurnoAntinoshowAgent
             ]
         ));
 
-        $msgs = is_array($config['patient_messages'] ?? null) ? $config['patient_messages'] : [];
-        $tpl = is_array($msgs['slot_released'] ?? null) ? $msgs['slot_released'] : [];
-        $title = $this->interpolate((string) ($tpl['title'] ?? 'Turno liberado'), $turno);
-        $body = $this->interpolate((string) ($tpl['body'] ?? ''), $turno);
-
-        if ($body !== '') {
-            (new PushNotificationSender())->sendToPersona(
-                (int) $turno->id_persona,
-                [
-                    'type' => PushNotificationTypes::TURNO_ANTINOSHOW_LIBERADO,
-                    'id_turno' => (string) $turno->id_turnos,
-                ],
-                $title,
-                $body
-            );
-        }
+        $copy = $this->notifications->forMessage('slot_released');
+        (new PushNotificationSender())->sendToPersona(
+            (int) $turno->id_persona,
+            [
+                'type' => PushNotificationTypes::TURNO_ANTINOSHOW_LIBERADO,
+                'id_turno' => (string) $turno->id_turnos,
+            ],
+            $this->interpolate($copy['title'], $turno),
+            $this->interpolate($copy['body'], $turno)
+        );
 
         AgentRunRecorder::record(
             self::AGENT_ID,
@@ -339,10 +338,7 @@ final class TurnoAntinoshowAgent
     private function sendExtraConfirm(Turno $turno, array $config, array $facts, string $ruleId): void
     {
         $token = (new ConfirmTurno())->ensureConfirmacionToken($turno);
-        $msgs = is_array($config['patient_messages'] ?? null) ? $config['patient_messages'] : [];
-        $tpl = is_array($msgs['extra_confirm'] ?? null) ? $msgs['extra_confirm'] : [];
-        $title = $this->interpolate((string) ($tpl['title'] ?? 'Confirmá tu turno'), $turno);
-        $body = $this->interpolate((string) ($tpl['body'] ?? ''), $turno);
+        $copy = $this->notifications->forMessage('extra_confirm');
 
         (new PushNotificationSender())->sendToPersona(
             (int) $turno->id_persona,
@@ -351,8 +347,8 @@ final class TurnoAntinoshowAgent
                 'id_turno' => (string) $turno->id_turnos,
                 'token' => $token,
             ],
-            $title,
-            $body !== '' ? $body : 'Confirmá asistencia al turno del ' . $turno->fecha
+            $this->interpolate($copy['title'], $turno),
+            $this->interpolate($copy['body'], $turno)
         );
 
         AgentRunRecorder::record(
@@ -375,10 +371,7 @@ final class TurnoAntinoshowAgent
      */
     private function sendReminder(Turno $turno, array $config, array $facts, string $ruleId): void
     {
-        $msgs = is_array($config['patient_messages'] ?? null) ? $config['patient_messages'] : [];
-        $tpl = is_array($msgs['reminder'] ?? null) ? $msgs['reminder'] : [];
-        $title = $this->interpolate((string) ($tpl['title'] ?? 'Tu turno es pronto'), $turno);
-        $body = $this->interpolate((string) ($tpl['body'] ?? ''), $turno);
+        $copy = $this->notifications->forMessage('reminder');
 
         (new PushNotificationSender())->sendToPersona(
             (int) $turno->id_persona,
@@ -387,8 +380,8 @@ final class TurnoAntinoshowAgent
                 'id_turno' => (string) $turno->id_turnos,
                 'antinoshow' => '1',
             ],
-            $title,
-            $body !== '' ? $body : 'Recordá tu turno del ' . $turno->fecha
+            $this->interpolate($copy['title'], $turno),
+            $this->interpolate($copy['body'], $turno)
         );
 
         AgentRunRecorder::record(

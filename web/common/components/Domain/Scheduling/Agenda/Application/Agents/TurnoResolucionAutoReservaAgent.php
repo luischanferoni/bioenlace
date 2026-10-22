@@ -2,6 +2,9 @@
 
 namespace common\components\Domain\Scheduling\Agenda\Application\Agents;
 
+use common\components\Domain\Scheduling\Agenda\Application\Catalog\TurnoResolucionAutoReservaNotificationCatalog;
+use common\components\Domain\Scheduling\Agenda\Application\Service\PersonaAgendaPreferenciasService;
+use common\components\Domain\Scheduling\Agenda\Application\UseCase\AutoReserveTurnoResolution;
 use common\components\Platform\Agent\AgentRunRecorder;
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
 use common\models\Scheduling\Turno;
@@ -21,12 +24,16 @@ final class TurnoResolucionAutoReservaAgent
 
     private PersonaAgendaPreferenciasService $preferencias;
 
+    private TurnoResolucionAutoReservaNotificationCatalog $notifications;
+
     public function __construct(
         ?AutoReserveTurnoResolution $autoReserva = null,
-        ?PersonaAgendaPreferenciasService $preferencias = null
+        ?PersonaAgendaPreferenciasService $preferencias = null,
+        ?TurnoResolucionAutoReservaNotificationCatalog $notifications = null
     ) {
         $this->autoReserva = $autoReserva ?? new AutoReserveTurnoResolution();
         $this->preferencias = $preferencias ?? new PersonaAgendaPreferenciasService();
+        $this->notifications = $notifications ?? new TurnoResolucionAutoReservaNotificationCatalog();
     }
 
     /**
@@ -114,22 +121,19 @@ final class TurnoResolucionAutoReservaAgent
      * @param array<string, mixed> $result
      * @return array{title: string, body: string}
      */
-    public function buildAutoRebookedPush(array $result, ?array $config = null): array
+    public function buildAutoRebookedPush(array $result): array
     {
-        $config = $config ?? AutonomousAgentMetadata::loadAgent(self::AGENT_ID) ?? [];
-        $msgs = is_array($config['patient_messages'] ?? null) ? $config['patient_messages'] : [];
-        $tpl = is_array($msgs['auto_rebooked'] ?? null) ? $msgs['auto_rebooked'] : [];
-
         $fecha = (string) ($result['fecha'] ?? '');
         $hora = substr((string) ($result['hora'] ?? ''), 0, 5);
+        $template = $this->notifications->autoRebooked();
         $replace = [
             '{{fecha}}' => $fecha,
             '{{hora}}' => $hora,
         ];
 
         return [
-            'title' => str_replace(array_keys($replace), array_values($replace), (string) ($tpl['title'] ?? 'Te reubicamos el turno')),
-            'body' => str_replace(array_keys($replace), array_values($replace), (string) ($tpl['body'] ?? 'Reservamos tu turno para el {{fecha}} a las {{hora}}.')),
+            'title' => str_replace(array_keys($replace), array_values($replace), $template['title']),
+            'body' => str_replace(array_keys($replace), array_values($replace), $template['body']),
         ];
     }
 

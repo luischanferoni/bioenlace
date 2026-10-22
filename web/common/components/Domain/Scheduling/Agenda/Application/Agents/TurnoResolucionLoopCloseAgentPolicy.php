@@ -30,20 +30,6 @@ final class TurnoResolucionLoopCloseAgentPolicy
                     ],
                 ],
                 'action' => 'escalate_staff',
-                'staff' => [
-                    'title' => 'Resolución sin respuesta — seguimiento prioritario',
-                    'body_template' => 'Turno del {{fecha}} sin reubicar tras el plazo de contacto. Paciente banda {{urgency_band}}.',
-                ],
-            ],
-        ],
-        'patient_messages' => [
-            'cancel_turno' => [
-                'title' => 'Turno liberado',
-                'body' => 'No recibimos respuesta para reubicar tu turno del {{fecha}}. Volvé a reservar cuando puedas desde la app.',
-            ],
-            'keep_in_resolution' => [
-                'title' => 'Seguimos con tu turno',
-                'body' => 'Aún estamos gestionando un nuevo horario para tu turno del {{fecha}}. Te avisaremos cuando haya novedades.',
             ],
         ],
     ];

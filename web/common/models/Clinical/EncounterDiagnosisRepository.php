@@ -101,7 +101,7 @@ class EncounterDiagnosisRepository
     }
 
     /**
-     * @param Encounter|object $consultaOrEncounter
+     * @param Encounter|object $encounterOrModel
      */
     protected static function resolveEncounterId($encounterOrModel): int
     {

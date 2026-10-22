@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Agenda\Application\Agents;
 
+use common\components\Domain\Scheduling\Agenda\Application\Catalog\TurnoAdvanceOfferNotificationCatalog;
 use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoSlotOccupancyService;
 use common\components\Domain\Scheduling\Agenda\Application\UseCase\ListTurnoAdvanceOfferCandidates;
 use common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoAdvancePushReceiptService;
@@ -29,10 +30,14 @@ final class TurnoAdvanceOfferAgent
     public const TRIGGER_TYPE = 'turno_cancelled_advance';
 
     private ListTurnoAdvanceOfferCandidates $finder;
+    private TurnoAdvanceOfferNotificationCatalog $notifications;
 
-    public function __construct(?ListTurnoAdvanceOfferCandidates $finder = null)
-    {
+    public function __construct(
+        ?ListTurnoAdvanceOfferCandidates $finder = null,
+        ?TurnoAdvanceOfferNotificationCatalog $notifications = null
+    ) {
         $this->finder = $finder ?? new ListTurnoAdvanceOfferCandidates();
+        $this->notifications = $notifications ?? new TurnoAdvanceOfferNotificationCatalog();
     }
 
     public function onTurnoCancelled(Turno $cancelled): void
@@ -337,11 +342,8 @@ final class TurnoAdvanceOfferAgent
 
         $fechaFmt = (string) $campaign->fecha;
         $horaFmt = substr($this->normalizeHora($campaign->hora), 0, 5);
-        $texts = is_array($config['texts'] ?? null) ? $config['texts'] : [];
-        $title = (string) ($texts['title'] ?? 'Se liberó un turno más temprano');
-        $bodyTpl = (string) ($texts['body'] ?? 'Hay un horario el {fecha} a las {hora}. Podés adelantar tu consulta si todavía está disponible.');
-        $body = str_replace(['{fecha}', '{hora}'], [$fechaFmt, $horaFmt], $bodyTpl);
-        $actionLabel = (string) ($texts['action_label'] ?? 'Adelantar mi turno');
+        $copy = $this->notifications->offer();
+        $body = str_replace(['{fecha}', '{hora}'], [$fechaFmt, $horaFmt], $copy['body_template']);
         $pushType = (string) ($config['push_type'] ?? PushNotificationTypes::TURNO_ADVANCE_OFFER);
 
         $notif = (new PushNotificationSender())->sendToPersona(
@@ -349,14 +351,14 @@ final class TurnoAdvanceOfferAgent
             [
                 'type' => $pushType,
                 'action' => (string) ($config['action'] ?? 'adelantar_turno'),
-                'action_label' => $actionLabel,
+                'action_label' => $copy['action_label'],
                 'offer_token' => $token,
                 'campaign_id' => (string) $campaign->id,
                 'id_turno' => (string) $candidate->id_turnos,
                 'fecha' => $fechaFmt,
                 'hora' => $horaFmt,
             ],
-            $title,
+            $copy['title'],
             $body,
             true,
             [

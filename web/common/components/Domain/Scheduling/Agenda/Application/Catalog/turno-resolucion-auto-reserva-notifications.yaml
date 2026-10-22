@@ -1,0 +1,4 @@
+version: 1
+auto_rebooked:
+  title: 'Te reubicamos el turno'
+  body: 'Reservamos tu turno para el {{fecha}} a las {{hora}}. Si no te sirve, cambiá el horario desde la app.'

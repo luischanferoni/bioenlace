@@ -248,10 +248,10 @@ class EncounterNursingCare extends \yii\db\ActiveRecord
         return $query->one();
     }
 
-    public static function obtenerValoracionNutricionalPorIdConsulta($idConsulta)
+    public static function findByEncounterId($encounterId)
     {
         $query = EncounterNursingCare::find()
-            ->andWhere(['encounter_id' => $idConsulta])
+            ->andWhere(['encounter_id' => $encounterId])
             ->limit(1);
 
         return $query->one();

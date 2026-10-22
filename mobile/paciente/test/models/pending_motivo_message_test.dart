@@ -6,7 +6,7 @@ void main() {
     final message = PendingMotivoMessage.fromJson(<String, dynamic>{
       'id': 'queued-1',
       'encounter_id': 42,
-      'type': 'texto',
+      'type': 'audio',
       'status': 'pendingUpload',
       'created_at': '2026-10-21T10:00:00.000',
       'updated_at': '2026-10-21T10:01:00.000',
@@ -22,6 +22,8 @@ void main() {
     final persisted = message.toJson();
 
     expect(message.encounterId, 42);
+    expect(message.type, PendingMotivoMessageType.audio);
+    expect(message.hasAudio, isTrue);
     expect(persisted['encounter_id'], 42);
     expect(persisted.containsKey('encounter_id'), isTrue);
     expect(persisted['transcript'], 'Dolor de garganta desde ayer.');

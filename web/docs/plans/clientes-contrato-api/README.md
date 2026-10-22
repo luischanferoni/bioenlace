@@ -13,7 +13,7 @@ Lectura: [overview.md](./overview.md), [design.md](./design.md), fases en [phase
 | 02 Terminología encounter | pendiente de alineación/revisión humana de prompts protegidos; identificadores Dart y rutas API en 0, nombres PHP restantes de teleconsulta documentados |
 | 03 Metadata clínica humana | en curso (capacidades de encounter, secciones de odontología/oftalmología, niveles Manchester, presentación de episodios y etiquetas/filtros del timeline; documentación profesional y metadata de signos vitales consumida como fallback por web/móvil; faltan serializar validaciones condicionales, unificar modelos clínicos y resolver acciones por rol) |
 | 04 Captura y STT | en curso (audio+STT local y decisión server-side implementados; falta abstraer el sujeto genérico; validación en dispositivo real no bloquea el cierre) |
-| 05 Móvil | en curso (inicio y configuración por capacidades; wizard limita clases por efector usando metadata del backend) |
+| 05 Móvil | en curso (inicio/configuración por capacidades; formularios, selector y acciones async compartidos; faltan migrar otras pantallas, cliente HTTP/error uniforme y guardas de textos) |
 | 06 Web | hecho (contrato `client_open`, renderer y vistas delgadas; auditoría dentro de topes: 0/226 HTML concatenado, 38/65 textos UI y 0/39 vistas con lógica; smoke tests HC/captura/tablero pendientes como validación no bloqueante) |
 | 07 Veterinaria (estructura) | en curso (esqueleto backend/móvil materializado; pendiente confirmación manual del MVP de endpoints/catálogos y abstracción de sujeto de fase 04) |
 | 08 Asistente, admin, jobs, docs | pendiente revisión humana de prompts reservados; copy de jobs verificado |

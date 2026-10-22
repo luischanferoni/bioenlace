@@ -2,6 +2,8 @@
 
 namespace common\components\Domain\Clinical\Specialty\Domain;
 
+use common\components\Domain\Clinical\Capture\Domain\RowContract\OdontologiaItemRowContract;
+use common\components\Domain\Clinical\Capture\Domain\RowContract\OftalmologiaEstudioRowContract;
 use common\models\Clinical\EncounterDefinition;
 
 /**
@@ -32,24 +34,81 @@ final class EncounterDefinitionSpecialtyRegistry
                     'key' => 'EncounterDentalPractice',
                     'label' => 'Prácticas odontológicas',
                     'fields' => [
-                        ['key' => 'Tipo', 'label' => 'Tipo', 'value' => null, 'unit' => null, 'format' => 'text'],
-                        ['key' => 'Codigo', 'label' => 'Código', 'value' => null, 'unit' => null, 'format' => 'text'],
+                        [
+                            'key' => OdontologiaItemRowContract::FIELD_TIPO,
+                            'label' => 'Tipo',
+                            'value' => null,
+                            'unit' => null,
+                            'format' => 'text',
+                        ],
+                        [
+                            'key' => OdontologiaItemRowContract::FIELD_CODIGO,
+                            'label' => 'Código',
+                            'value' => null,
+                            'unit' => null,
+                            'format' => 'text',
+                        ],
+                    ],
+                    'validation' => [
+                        'type' => 'at_least_one',
+                        'fields' => [
+                            OdontologiaItemRowContract::FIELD_TIPO,
+                            OdontologiaItemRowContract::FIELD_CODIGO,
+                        ],
                     ],
                 ],
                 [
                     'key' => 'EncounterDentalDiagnosis',
                     'label' => 'Diagnósticos odontológicos',
                     'fields' => [
-                        ['key' => 'Tipo', 'label' => 'Tipo', 'value' => null, 'unit' => null, 'format' => 'text'],
-                        ['key' => 'Codigo', 'label' => 'Código', 'value' => null, 'unit' => null, 'format' => 'text'],
+                        [
+                            'key' => OdontologiaItemRowContract::FIELD_TIPO,
+                            'label' => 'Tipo',
+                            'value' => null,
+                            'unit' => null,
+                            'format' => 'text',
+                        ],
+                        [
+                            'key' => OdontologiaItemRowContract::FIELD_CODIGO,
+                            'label' => 'Código',
+                            'value' => null,
+                            'unit' => null,
+                            'format' => 'text',
+                        ],
+                    ],
+                    'validation' => [
+                        'type' => 'at_least_one',
+                        'fields' => [
+                            OdontologiaItemRowContract::FIELD_TIPO,
+                            OdontologiaItemRowContract::FIELD_CODIGO,
+                        ],
                     ],
                 ],
                 [
                     'key' => 'EncounterDentalStatus',
                     'label' => 'Estado dental',
                     'fields' => [
-                        ['key' => 'Tipo', 'label' => 'Tipo', 'value' => null, 'unit' => null, 'format' => 'text'],
-                        ['key' => 'Codigo', 'label' => 'Código', 'value' => null, 'unit' => null, 'format' => 'text'],
+                        [
+                            'key' => OdontologiaItemRowContract::FIELD_TIPO,
+                            'label' => 'Tipo',
+                            'value' => null,
+                            'unit' => null,
+                            'format' => 'text',
+                        ],
+                        [
+                            'key' => OdontologiaItemRowContract::FIELD_CODIGO,
+                            'label' => 'Código',
+                            'value' => null,
+                            'unit' => null,
+                            'format' => 'text',
+                        ],
+                    ],
+                    'validation' => [
+                        'type' => 'at_least_one',
+                        'fields' => [
+                            OdontologiaItemRowContract::FIELD_TIPO,
+                            OdontologiaItemRowContract::FIELD_CODIGO,
+                        ],
                     ],
                 ],
             ],
@@ -73,9 +132,34 @@ final class EncounterDefinitionSpecialtyRegistry
                     'key' => 'OphthalmologyStudy',
                     'label' => 'Estudios oftalmológicos',
                     'fields' => [
-                        ['key' => 'Codigo', 'label' => 'Código', 'value' => null, 'unit' => null, 'format' => 'text'],
-                        ['key' => 'Ojo', 'label' => 'Ojo', 'value' => null, 'unit' => null, 'format' => 'text'],
-                        ['key' => 'Informe', 'label' => 'Informe', 'value' => null, 'unit' => null, 'format' => 'text'],
+                        [
+                            'key' => OftalmologiaEstudioRowContract::FIELD_CODIGO,
+                            'label' => 'Código',
+                            'value' => null,
+                            'unit' => null,
+                            'format' => 'text',
+                        ],
+                        [
+                            'key' => OftalmologiaEstudioRowContract::FIELD_OJO,
+                            'label' => 'Ojo',
+                            'value' => null,
+                            'unit' => null,
+                            'format' => 'text',
+                        ],
+                        [
+                            'key' => OftalmologiaEstudioRowContract::FIELD_INFORME,
+                            'label' => 'Informe',
+                            'value' => null,
+                            'unit' => null,
+                            'format' => 'text',
+                        ],
+                    ],
+                    'validation' => [
+                        'type' => 'at_least_one',
+                        'fields' => [
+                            OftalmologiaEstudioRowContract::FIELD_CODIGO,
+                            OftalmologiaEstudioRowContract::FIELD_INFORME,
+                        ],
                     ],
                 ],
                 [
@@ -114,7 +198,16 @@ final class EncounterDefinitionSpecialtyRegistry
 
     /**
      * @param list<string> $specialties
-     * @return list<array{code:string,label:string,sections:list<array{key:string,label:string,fields:list<array{key:string,label:string,value:mixed,unit:?string,format:string}>}>}>
+     * @return list<array{
+     *   code: string,
+     *   label: string,
+     *   sections: list<array{
+     *     key: string,
+     *     label: string,
+     *     fields: list<array{key:string,label:string,value:mixed,unit:?string,format:string}>,
+     *     validation?: array{type:string,fields:list<string>}
+     *   }>
+     * }>
      */
     public function metadataForSpecialties(array $specialties): array
     {

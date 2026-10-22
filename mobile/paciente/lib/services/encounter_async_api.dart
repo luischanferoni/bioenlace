@@ -1,45 +1,7 @@
-import 'dart:convert';
-
-import 'package:http/http.dart' as http;
 import 'package:shared/shared.dart';
 
-/// Encounter async API for patient request cancellation.
-class EncounterAsyncApi {
-  final String? authToken;
-
-  EncounterAsyncApi({this.authToken});
-
-  Map<String, String> get _headers => AppConfig.jsonHeaders(
-        bearerToken: authToken,
-        appClient: 'bioenlace-paciente',
-      );
-
-  Future<Map<String, dynamic>> cancelarComoPaciente(int encounterId) async {
-    try {
-      final uri = Uri.parse('${AppConfig.apiUrl}/encounter-async/cancelar-como-paciente');
-      final response = await http
-          .post(
-            uri,
-            headers: _headers,
-            body: json.encode({'encounter_id': encounterId}),
-          )
-          .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-      final data = json.decode(utf8.decode(response.bodyBytes));
-      if (data is! Map) {
-        return {'success': false, 'message': 'Respuesta inválida'};
-      }
-      final map = Map<String, dynamic>.from(data);
-      if (response.statusCode >= 200 &&
-          response.statusCode < 300 &&
-          map['success'] != false) {
-        return {'success': true, 'data': map['data']};
-      }
-      return {
-        'success': false,
-        'message': map['message']?.toString() ?? 'No se pudo cancelar la solicitud.',
-      };
-    } catch (e) {
-      return {'success': false, 'message': userFriendlyErrorMessage(e)};
-    }
-  }
+/// Patient-facing actions for asynchronous encounter requests.
+class EncounterAsyncApi extends EncounterAsyncClient {
+  EncounterAsyncApi({super.authToken, super.client})
+    : super(appClient: 'bioenlace-paciente');
 }

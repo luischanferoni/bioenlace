@@ -10,7 +10,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../navigation/native_screen_router.dart';
 import '../services/chat_service.dart';
-import '../components/dynamic_form.dart';
 import 'encounter_chat_staff_screen.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -2224,6 +2223,7 @@ class ChatScreenState extends State<ChatScreen> {
                 padding: const EdgeInsets.all(16),
                 child: DynamicForm(
                   formConfig: formConfig,
+                  appClient: 'personalsalud-flutter',
                   wizardSteps: wizardSteps,
                   initialStep: initialStep,
                   authToken: authToken,
@@ -3563,8 +3563,9 @@ class ChatScreenState extends State<ChatScreen> {
                             Builder(
                               builder: (context) {
                                 final data = message['data'];
-                                final rawId =
-                                    data is Map ? data['encounter_id'] : null;
+                                final rawId = data is Map
+                                    ? data['encounter_id']
+                                    : null;
                                 final encounterId = rawId is int
                                     ? rawId
                                     : (rawId is num

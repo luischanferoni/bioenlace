@@ -119,9 +119,25 @@ class SpecialtyCaptureInputTest extends Unit
             ['EncounterDentalPractice', 'EncounterDentalDiagnosis', 'EncounterDentalStatus'],
             array_column($byCode['odontology']['sections'], 'key')
         );
+        foreach ($byCode['odontology']['sections'] as $section) {
+            $this->assertSame(
+                [
+                    'type' => 'at_least_one',
+                    'fields' => ['Tipo', 'Codigo'],
+                ],
+                $section['validation']
+            );
+        }
         $this->assertSame(
             ['ojo', 'prueba', 'estado', 'informe', 'tipo'],
             array_column($byCode['ophthalmology']['sections'][0]['fields'], 'key')
+        );
+        $this->assertSame(
+            [
+                'type' => 'at_least_one',
+                'fields' => ['Codigo', 'Informe'],
+            ],
+            $byCode['ophthalmology']['sections'][1]['validation']
         );
 
         $prescription = $byCode['ophthalmology']['sections'][2];

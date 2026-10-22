@@ -12,7 +12,6 @@ import '../navigation/native_screen_router.dart';
 import '../services/chat_service.dart';
 import '../services/acciones_service.dart';
 import '../utils/turno_resolucion_utils.dart';
-import '../components/dynamic_form.dart';
 import 'encounter_reasons_chat_screen.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -2563,6 +2562,7 @@ class ChatScreenState extends State<ChatScreen> {
                 padding: const EdgeInsets.all(16),
                 child: DynamicForm(
                   formConfig: formConfig,
+                  appClient: 'paciente-flutter',
                   wizardSteps: wizardSteps,
                   initialStep: initialStep,
                   authToken: authToken,

@@ -14,7 +14,7 @@ Lectura: [overview.md](./overview.md), [design.md](./design.md), fases en [phase
 | 03 Metadata clínica humana | en curso (capacidades de encounter, secciones de odontología/oftalmología, niveles Manchester, presentación de episodios y etiquetas/filtros del timeline; documentación profesional ahora publica campos genéricos; faltan unificar signos vitales/evolución y completar acciones/roles) |
 | 04 Captura y STT | en curso (Personal de Salud y chat de motivos envían audio+STT local; etapas y transcripciones con metadata contractual; queda validar en dispositivo real) |
 | 05 Móvil | en curso (inicio y configuración por capacidades; wizard limita clases por efector usando metadata del backend) |
-| 06 Web | pendiente |
+| 06 Web | en curso (consumo `client_open` verificado; unificado un mensaje UI duplicado; faltan Camino A, vistas y humo) |
 | 07 Veterinaria (estructura) | pendiente |
 | 08 Asistente, admin, jobs, docs | casi completo; pendiente revisión humana de prompts reservados |
 | 09 Cierre | pendiente |

@@ -69,7 +69,7 @@
                     })
                     .catch(function (err) {
                         console.error('[SPA] laboratory_pdf_download', err);
-                        alert('No se pudo descargar el PDF. Intentá de nuevo.');
+                        alert(global.BioenlaceApiClient.pdfDownloadErrorMessage());
                     })
                     .finally(function () {
                         btn.disabled = false;

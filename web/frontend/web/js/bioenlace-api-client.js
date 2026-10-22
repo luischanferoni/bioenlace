@@ -14,6 +14,10 @@
 
   var webJwtRefreshInFlight = null;
 
+  NS.pdfDownloadErrorMessage = function () {
+    return 'No se pudo descargar el PDF. Intentá de nuevo.';
+  };
+
   /**
    * @param {Object<string,string>=} extra Se fusiona encima del base (Object.assign final).
    * @returns {Object<string,string>}

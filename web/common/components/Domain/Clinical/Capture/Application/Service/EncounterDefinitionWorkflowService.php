@@ -9,7 +9,7 @@ use yii\helpers\Url;
  * Application Service: limpia URLs MVC legacy en {@see \common\models\Clinical\EncounterDefinition::workflow_json}.
  *
  * Tras fase 12 el wizard Yii por paso (`consulta-*`, `consultas/*`) no existe; la captura es
- * API (`clinical/encounter/guardar`) + formulario en `paciente/formulario-consulta`.
+ * API (`clinical/encounter/guardar`) + formulario en `paciente/encounter-capture-form`.
  * Se conservan `titulo`, `relacion` y `requerido` para IA y documentación.
  */
 final class EncounterDefinitionWorkflowService

@@ -57,7 +57,7 @@ Referencias: [apps-paciente-personalsalud.md](./apps-paciente-personalsalud.md),
 
 ## Captura clínica (timeline + formulario)
 
-- Shell web: `PacienteController::actionHistoria` + partial `_formulario_consulta.php`.
+- Shell web: `PacienteController::actionHistoria` + partial `_encounter_capture_form.php`, cargado por `/paciente/encounter-capture-form`.
 - Contexto vía query/hidden: `id_persona`, `parent` (`Encounter::PARENT_*`), `parent_id`, `id_consulta` (= encounter id), `id_configuracion`.
 - La **mutación por servicio institucional** no va hardcodeada en la vista: la resuelve `EncounterDefinition` (`service_id` + `encounter_class` → `workflow_json`). “Servicio” = oferta del centro — [glosario-servicio-pes-acto.md](./glosario-servicio-pes-acto.md).
 - Persistencia: `POST /api/v1/clinical/encounter/guardar` (FHIR).

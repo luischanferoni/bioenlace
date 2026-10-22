@@ -80,7 +80,7 @@ Asistencia, reserva con modalidad clínicamente habilitada, seguimiento de CareP
 
 ## Demo captura clínica (`js/encounter-demo.js`)
 
-Mock del **formulario de encounter en la historia del paciente** (`_formulario_consulta.php`), no del chat del asistente. Pestañas Consulta / Evolución / Guardia: preconsulta o triage → **dictado simulado** (micrófono, ondas, transcripción) → analizar → confirmar. Labels de acción según el flujo. Datos ficticios. La rotación puede pausarse explícitamente.
+Mock del **formulario de encounter en la historia del paciente** (`_encounter_capture_form.php`), no del chat del asistente. Pestañas Consulta / Evolución / Guardia: preconsulta o triage → **dictado simulado** (micrófono, ondas, transcripción) → analizar → confirmar. Labels de acción según el flujo. Datos ficticios. La rotación puede pausarse explícitamente.
 
 ## Desarrollo local
 

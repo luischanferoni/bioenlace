@@ -1,6 +1,6 @@
 <?php
 /**
- * Vista parcial para el formulario de consulta / evolución.
+ * Vista parcial para el formulario de captura de encounter.
  *
  * @var array $form {@see \frontend\components\Clinical\EncounterCaptureFormViewBuilder}
  */

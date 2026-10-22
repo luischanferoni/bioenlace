@@ -86,7 +86,7 @@ final class PacienteHistoriaTimelinePageBuilder
                 'curvasCrecimiento' => $mostrarCurvas
                     ? Url::to(['personas/curvas-crecimiento', 'id' => $personaId])
                     : null,
-                'formularioConsulta' => Url::to(['paciente/formulario-consulta', 'id' => $personaId]),
+                'encounterCaptureForm' => Url::to(['paciente/encounter-capture-form', 'id' => $personaId]),
                 'historiaClinica' => $vistaConsultaCargada ? null : $paths['historiaClinicaPath'],
                 'encounterStaffSummary' => $paths['encounterStaffSummaryPath'],
                 'episodioTimelineHtml' => $paths['episodioTimelineHtmlPath'],

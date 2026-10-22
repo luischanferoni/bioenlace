@@ -11,8 +11,8 @@ La captura es **una sola superficie** para ambulatorio, guardia, internación y 
 | Pieza | Rol |
 |-------|-----|
 | `paciente/historia` (timeline) | Estado del paciente, historial, **motivos pre-turno** (intake, chat, cohorte) |
-| `_formulario_consulta.php` | Entrada texto/audio + análisis + confirmación |
-| `PacienteController::actionFormularioConsulta` | Resuelve `id_configuracion` (`encounter_definition.id`) |
+| `_encounter_capture_form.php` | Entrada texto/audio + análisis + confirmación |
+| `PacienteController::actionEncounterCaptureForm` (`/paciente/encounter-capture-form`) | Resuelve `id_configuracion` (`encounter_definition.id`) |
 
 **Contexto del formulario** (hidden / query):
 

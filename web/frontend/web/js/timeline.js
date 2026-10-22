@@ -535,9 +535,9 @@ async function loadTodosLosSignosVitales() {
 }
 
 /**
- * Query string de la página HC para el fetch de formulario-consulta (sin duplicar `id` ni `fecha`).
+ * Query string de la página HC para el fetch del formulario de captura (sin duplicar `id` ni `fecha`).
  */
-function buildFormularioConsultaQueryFromLocation() {
+function buildEncounterCaptureFormQueryFromLocation() {
     if (typeof window === 'undefined' || !window.location || !window.location.search) {
         return '';
     }
@@ -553,17 +553,17 @@ function buildFormularioConsultaQueryFromLocation() {
 }
 
 // Función para cargar el estado del formulario via AJAX
-async function cargarFormularioConsulta() {
+async function loadEncounterCaptureForm() {
     const container = document.getElementById('formulario-container');
     
     try {
         const endpoints = getEndpoints();
-        let formularioUrl = endpoints.formularioConsulta || '';
-        const qs = buildFormularioConsultaQueryFromLocation();
+        let captureFormUrl = endpoints.encounterCaptureForm || '';
+        const qs = buildEncounterCaptureFormQueryFromLocation();
         if (qs) {
-            formularioUrl += (formularioUrl.indexOf('?') >= 0 ? '&' : '?') + qs;
+            captureFormUrl += (captureFormUrl.indexOf('?') >= 0 ? '&' : '?') + qs;
         }
-        const response = await fetch(formularioUrl, {
+        const response = await fetch(captureFormUrl, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -714,7 +714,7 @@ function initTimeline(config) {
     // Formulario de captura: lo decide loadTimelineSummary según captura.permitida del API.
     // Si no hay endpoint de HC, intentar captura (flujos sin turno_id).
     if (!endpointsCfg.historiaClinica) {
-        cargarFormularioConsulta();
+        loadEncounterCaptureForm();
     } 
     // Manejar modal de vacunas (después de clonar)
     const modalVacunasNew = document.getElementById('modal-vacunas');
@@ -742,7 +742,7 @@ if (!window.TimelineJS) {
         loadSignosVitalesActuales,
         loadTodosLosSignosVitales,
         applySignosVitalesPayload,
-        cargarFormularioConsulta,
+        loadEncounterCaptureForm,
         inicializarEventosFormulario
     };
 }

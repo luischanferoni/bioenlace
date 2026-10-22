@@ -21,7 +21,7 @@ class EncounterAsyncController extends BaseController
      * GET|POST /api/v1/encounter-async/solicitar-como-paciente
      *
      * @action_name Solicitar consulta clínica por mensaje (paciente)
-     * @entity ConsultaAsync
+     * @entity EncounterAsync
      * @tags views, ui, paciente, consulta, async
      */
     public function actionSolicitarComoPaciente(): array
@@ -54,7 +54,7 @@ class EncounterAsyncController extends BaseController
      * POST /api/v1/encounter-async/tomar-como-staff
      *
      * @action_name Tomar solicitud async (staff)
-     * @entity ConsultaAsync
+     * @entity EncounterAsync
      */
     public function actionTomarComoStaff(): array
     {

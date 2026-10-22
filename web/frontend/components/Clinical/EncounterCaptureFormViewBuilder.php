@@ -8,7 +8,7 @@ use common\models\Person\Persona;
 use yii\helpers\Url;
 
 /**
- * View model del partial de captura ({@see PacienteController::actionFormularioConsulta}).
+ * View model del partial de captura ({@see PacienteController::actionEncounterCaptureForm}).
  */
 final class EncounterCaptureFormViewBuilder
 {

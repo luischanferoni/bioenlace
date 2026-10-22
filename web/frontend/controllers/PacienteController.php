@@ -37,7 +37,7 @@ class PacienteController extends Controller
         return [
             'access' => [
                 'class' => SisseActionFilter::className(),
-                'only' => ['historia', 'formulario-consulta', 'encounter-documentation', 'episodio-timeline-html'],
+                'only' => ['historia', 'encounter-capture-form', 'encounter-documentation', 'episodio-timeline-html'],
                 'filtrosExtra' => [SisseActionFilter::FILTRO_CONTEXTO_PROFESIONAL],
             ],
         ];
@@ -224,7 +224,7 @@ class PacienteController extends Controller
      * @return Response JSON con HTML del formulario y mensajes
      * @no_intent_catalog
     */
-    public function actionFormularioConsulta($id)
+    public function actionEncounterCaptureForm($id)
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
         
@@ -288,7 +288,7 @@ class PacienteController extends Controller
                     }
                 }
 
-                $formularioHtml = $this->renderPartial('_formulario_consulta', [
+                $formularioHtml = $this->renderPartial('_encounter_capture_form', [
                     'form' => EncounterCaptureFormViewBuilder::build(
                         $paciente,
                         $idConfiguracion,
@@ -316,7 +316,7 @@ class PacienteController extends Controller
             return $response;
             
         } catch (\Exception $e) {
-            Yii::error('Error en actionFormularioConsulta: ' . $e->getMessage());
+            Yii::error('Error en actionEncounterCaptureForm: ' . $e->getMessage());
             return [
                 'success' => false,
                 'error' => 'Error al obtener el estado del formulario'

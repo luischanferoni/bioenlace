@@ -21,7 +21,7 @@ class EncounterFollowupController extends BaseController
      * GET|POST /api/v1/encounter-followup/hub
      *
      * @action_name Hub control/seguimiento (tratamientos, condiciones, fallback)
-     * @entity ConsultasSeguimiento
+     * @entity EncounterFollowup
      * @tags views, ui, paciente, consulta, seguimiento
      */
     public function actionHub(): array
@@ -53,7 +53,7 @@ class EncounterFollowupController extends BaseController
      * GET|POST /api/v1/encounter-followup/condicion-acciones
      *
      * @action_name Acciones sobre condición o protocolo (hub Control/Seguimiento)
-     * @entity ConsultasSeguimiento
+     * @entity EncounterFollowup
      * @tags views, ui, paciente, consulta, seguimiento
      */
     public function actionCondicionAcciones(): array
@@ -103,7 +103,7 @@ class EncounterFollowupController extends BaseController
      * GET|POST /api/v1/encounter-followup/paso
      *
      * @action_name Paso intake consultas y seguimiento
-     * @entity ConsultasSeguimiento
+     * @entity EncounterFollowup
      * @tags views, ui, paciente, consulta, seguimiento
      */
     public function actionPaso(): array

@@ -1166,7 +1166,7 @@
             if (!esEpisodio && window.TimelineJS && typeof window.TimelineJS.applySignosVitalesPayload === 'function') {
                 window.TimelineJS.applySignosVitalesPayload(payload.data.signos_vitales || null);
             }
-            // Captura solo si el turno lo permite; no invocar formulario-consulta en solo lectura.
+            // Captura solo si el turno lo permite; no invocar el formulario en solo lectura.
             var captura = payload.data.captura || {};
             var formBox = document.getElementById('formulario-container');
             if (captura.permitida === false) {
@@ -1175,8 +1175,8 @@
                 if (loadingEl) {
                     loadingEl.style.display = 'none';
                 }
-            } else if (window.TimelineJS && typeof window.TimelineJS.cargarFormularioConsulta === 'function') {
-                window.TimelineJS.cargarFormularioConsulta();
+            } else if (window.TimelineJS && typeof window.TimelineJS.loadEncounterCaptureForm === 'function') {
+                window.TimelineJS.loadEncounterCaptureForm();
             }
         } catch (e) {
             renderBadges('tl_condiciones_activas', [], 'border border-info text-info');

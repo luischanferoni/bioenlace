@@ -379,7 +379,7 @@ function applySignosVitalesPayload(d) {
         }
         const tituloEmpty = document.getElementById('signos-vitales-titulo');
         if (tituloEmpty) {
-            tituloEmpty.textContent = 'SIGNOS VITALES ACTUALES';
+            tituloEmpty.textContent = window.BioenlaceApiClient.currentVitalsTitle();
         }
         const linkEmpty = document.getElementById('signos-vitales-link');
         if (linkEmpty) {
@@ -393,9 +393,7 @@ function applySignosVitalesPayload(d) {
     }
     const titulo = document.getElementById('signos-vitales-titulo');
     if (titulo) {
-        titulo.textContent = d.fecha_titulo
-            ? 'SIGNOS VITALES ACTUALES (' + d.fecha_titulo + ')'
-            : 'SIGNOS VITALES ACTUALES';
+        titulo.textContent = window.BioenlaceApiClient.currentVitalsTitle(d.fecha_titulo);
     }
     const link = document.getElementById('signos-vitales-link');
     if (link) {

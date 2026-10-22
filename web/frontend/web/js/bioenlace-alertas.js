@@ -98,7 +98,7 @@
             var empty = tpl('tpl-alertas-empty');
             if (empty) {
                 var msg = empty.querySelector('[data-field="message"]');
-                if (msg) msg.textContent = 'No hay alertas.';
+                if (msg) msg.textContent = window.BioenlaceApiClient.alertsEmptyMessage();
                 listEl.appendChild(empty);
             }
             return;
@@ -186,7 +186,7 @@
                 if (err) {
                     var msg = err.querySelector('[data-field="message"]');
                     if (msg) {
-                        msg.textContent = 'No se pudieron cargar las alertas.';
+                        msg.textContent = window.BioenlaceApiClient.alertsLoadErrorMessage();
                         msg.classList.remove('text-muted');
                         msg.classList.add('text-danger');
                     }

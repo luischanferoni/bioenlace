@@ -14,6 +14,7 @@ use common\models\Clinical\PersonasAntecedente;
 use common\components\Domain\Clinical\Encounter\Application\UseCase\AdvanceEncounterLifecycle;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterNursingCare;
+use frontend\components\Clinical\EncuestaParchesMamariosFormPageBuilder;
 
 /**
  * EncuestaParchesMamariosController implements the CRUD actions for EncuestaParchesMamarios model.
@@ -86,6 +87,7 @@ class EncuestaParchesMamariosController extends Controller
     public function actionCreate()
     {
         $model = new EncuestaParchesMamarios();
+        $formPageData = EncuestaParchesMamariosFormPageBuilder::build();
         $post = Yii::$app->request->post();
         $session = Yii::$app->getSession();
         $persona = unserialize($session['persona']);
@@ -93,7 +95,8 @@ class EncuestaParchesMamariosController extends Controller
         if (!$model->load(Yii::$app->request->post()) || (!$post['162879003p'] && $post['162879003t'])) {
             return $this->render('create', [
                 'model' => $model,
-                'modelAtencionEnfermeria' => isset($model_a_enf) ? $model_a_enf : NULL
+                'modelAtencionEnfermeria' => isset($model_a_enf) ? $model_a_enf : NULL,
+                'formPageData' => $formPageData,
             ]);
         }
         $idPesSesion = (int) (Yii::$app->user->getIdProfesionalEfectorServicio() ?? 0);
@@ -223,7 +226,8 @@ class EncuestaParchesMamariosController extends Controller
         }
         return $this->render('create', [
             'model' => $model,
-            'modelAtencionEnfermeria' => isset($model_a_enf) ? $model_a_enf : NULL
+            'modelAtencionEnfermeria' => isset($model_a_enf) ? $model_a_enf : NULL,
+            'formPageData' => $formPageData,
         ]);
     }
 

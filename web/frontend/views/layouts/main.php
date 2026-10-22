@@ -8,9 +8,7 @@ use yii\bootstrap5\Nav;
 use yii\bootstrap5\NavBar;
 use frontend\assets\AppAsset;
 use frontend\assets\BioenlaceApiClientAsset;
-use yii\helpers\Url;
-use common\models\Clinical\EncounterDefinition;
-use common\components\Platform\Core\Product\ClientContextMetadata;
+use frontend\components\Layout\MainLayoutPageBuilder;
 
 AppAsset::register($this);
 
@@ -22,59 +20,16 @@ $this->registerJsFile('@web/js/navbar-dropdowns.js', ['depends' => [\yii\web\Jqu
 $this->registerJsFile('@web/js/bioenlace-fecha.js', ['depends' => [\yii\web\JqueryAsset::class]]);
 $this->registerJsFile('@web/js/bioenlace-alertas.js', ['depends' => [BioenlaceApiClientAsset::class]]);
 
-$home = Yii::$app->getHomeUrl();
-$apellidoUsuario = Yii::$app->user->getApellidoUsuario();
-$nombreUsuario = Yii::$app->user->getNombreUsuario();
-
-$listaEfectores = Yii::$app->user->getEfectores();
-
-$encounterClass = Yii::$app->user->getEncounterClass();
-$listaEncounters = EncounterDefinition::sessionSelectableClasses();
-$labelsEncounter = EncounterDefinition::ENCOUNTER_CLASS;
-$itemsMenuEncounters = [];
-foreach ($listaEncounters as $key => $value) {
-    $itemsMenuEncounters[] = [
-        'label' => $value,
-        'url' => ['site/cambiar-encounter-class', 'codigo' => $key],
-        'linkOptions' => ['class' => 'alerta-cambio-encounter'],
-    ];
-}
-
-$listaServicios = Yii::$app->user->getServicios();
-$itemsMenuServicios = [];
-$nombreServicio = "Seleccione un Servicio";
-if (!is_null($listaServicios)) {
-    foreach ($listaServicios as $key => $value) {
-        $itemsMenuServicios[] = ['label' => $value, 'url' => ['site/cambiar-servicio', 'id_servicio' => $key], 'linkOptions' => ['class' => 'alerta-cambio-servicio']];
-
-        if(count($listaServicios) == 1 || Yii::$app->user->getServicioActual() == $key) {        
-            $nombreServicio = $value;
-        }
-    }
-}
-
-if (Yii::$app->user->getNombreEfector()) {
-    $efector_nombre = Yii::$app->user->getNombreEfector();
-} else {
-    $efector_nombre = '';
-}
-if (Yii::$app->user->username) {
-    $user = Yii::$app->user->username;
-} else {
-    $user = '';
-}
-
-$hideServicioNavbar = !Yii::$app->user->isGuest
-    && ClientContextMetadata::shouldHideServicioInNavbar((int) Yii::$app->user->id);
+$layout = MainLayoutPageBuilder::build();
 
 ?>
 
 <?php $this->beginPage() ?>
 <!DOCTYPE html>
-<html lang="<?= Yii::$app->language ?>">
+<html lang="<?= Html::encode($layout['language']) ?>">
 
 <head>
-    <meta charset="<?= Yii::$app->charset ?>">
+    <meta charset="<?= Html::encode($layout['charset']) ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <?= Html::csrfMetaTags() ?>
     <title><?= Html::encode($this->title) ?></title>
@@ -84,21 +39,21 @@ $hideServicioNavbar = !Yii::$app->user->isGuest
 <body class="boxed light theme-color-default">
     <?php $this->beginBody() ?>
 
-    <?php if (!Yii::$app->user->isGuest): ?>
+    <?php if (!$layout['isGuest']): ?>
     <script>
     // Debe definirse ANTES de scripts POS_END (registerJs) para que AJAX incluya Bearer.
-    window.userPerTabConfig = <?= \yii\helpers\Json::encode(Yii::$app->user->getPerTabSessions()) ?>;
-    window.apiAuthToken = <?= json_encode(Yii::$app->session->get('apiJwtToken')); ?>;
+    window.userPerTabConfig = <?= \yii\helpers\Json::encode($layout['userPerTabConfig']) ?>;
+    window.apiAuthToken = <?= json_encode($layout['apiAuthToken']); ?>;
     </script>
     <?php endif; ?>
 
     <script>
-    // Helpers globales para consumir /api/v1 desde SPA web.
+    // Helpers globales para consumir la API desde SPA web.
     window.spaConfig = {
-        baseUrl: '<?= rtrim(Yii::$app->urlManager->createAbsoluteUrl(['/']), '/') ?>',
-        csrfToken: '<?= Yii::$app->request->csrfToken ?>',
-        appVersion: <?= json_encode(Yii::$app->params['spaWebAppVersion'] ?? '1.0.0', JSON_UNESCAPED_UNICODE) ?>,
-        asistenteUrl: <?= json_encode(Url::to(['/site/asistente']), JSON_UNESCAPED_UNICODE) ?>
+        baseUrl: '<?= $layout['spaConfig']['baseUrl'] ?>',
+        csrfToken: '<?= $layout['spaConfig']['csrfToken'] ?>',
+        appVersion: <?= json_encode($layout['spaConfig']['appVersion'], JSON_UNESCAPED_UNICODE) ?>,
+        asistenteUrl: <?= json_encode($layout['spaConfig']['asistenteUrl'], JSON_UNESCAPED_UNICODE) ?>
     };
     window.getBioenlaceApiClientHeaders = function (extra) {
         var ver = (window.spaConfig && window.spaConfig.appVersion) ? String(window.spaConfig.appVersion) : '1.0.0';
@@ -120,18 +75,18 @@ $hideServicioNavbar = !Yii::$app->user->isGuest
                 <div class="container-fluid">
                     <div class="d-flex justify-content-between w-100 align-items-center">
                         <div class="d-flex align-items-center">
-                            <img class="brand-logo" src="<?= Yii::getAlias('@web') ?>/images/logo.svg" alt="Bioenlace">
+                            <img class="brand-logo" src="<?= Html::encode($layout['logoUrl']) ?>" alt="Bioenlace">
                         </div>
                         
-                        <?php if (!Yii::$app->user->isGuest): ?>
+                        <?php if (!$layout['isGuest']): ?>
                         <div class="d-flex align-items-center gap-3">
-                            <?php if (!empty($listaEfectores) && count($listaEfectores) > 1): ?>
+                            <?php if (!empty($layout['listaEfectores']) && count($layout['listaEfectores']) > 1): ?>
                                 <div class="dropdown">
                                     <button class="btn btn-light btn-sm dropdown-toggle" type="button" id="dropdownEfector" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <?= Html::encode($efector_nombre) ?>
+                                        <?= Html::encode($layout['efectorNombre']) ?>
                                     </button>
                                     <ul class="dropdown-menu" aria-labelledby="dropdownEfector">
-                                        <?php foreach ($listaEfectores as $idEfector => $nombreEfector): ?>
+                                        <?php foreach ($layout['listaEfectores'] as $idEfector => $nombreEfector): ?>
                                             <li>
                                                 <a class="dropdown-item" href="#" onclick="cambiarEfector(<?= $idEfector ?>); return false;">
                                                     <?= Html::encode($nombreEfector) ?>
@@ -140,59 +95,59 @@ $hideServicioNavbar = !Yii::$app->user->isGuest
                                         <?php endforeach; ?>
                                     </ul>
                                 </div>
-                            <?php elseif (!empty($efector_nombre)): ?>
-                                <span class="text-muted small"><?= Html::encode($efector_nombre) ?></span>
+                            <?php elseif (!empty($layout['efectorNombre'])): ?>
+                                <span class="text-muted small"><?= Html::encode($layout['efectorNombre']) ?></span>
                             <?php endif; ?>
 
-                            <?php if (!$hideServicioNavbar && !empty($itemsMenuServicios) && count($itemsMenuServicios) > 1): ?>
+                            <?php if (!$layout['hideServicioNavbar'] && !empty($layout['itemsMenuServicios']) && count($layout['itemsMenuServicios']) > 1): ?>
                                 <div class="dropdown">
                                     <button class="btn btn-light btn-sm dropdown-toggle" type="button" id="dropdownServicio" data-bs-toggle="dropdown" aria-expanded="false">
-                                        Servicio: <?= Html::encode($nombreServicio) ?>
+                                        Servicio: <?= Html::encode($layout['nombreServicio']) ?>
                                     </button>
                                     <ul class="dropdown-menu" aria-labelledby="dropdownServicio">
-                                        <?php foreach ($itemsMenuServicios as $item): ?>
+                                        <?php foreach ($layout['itemsMenuServicios'] as $item): ?>
                                             <li>
-                                                <a class="dropdown-item <?= $item['linkOptions']['class'] ?? '' ?>" href="<?= Url::to($item['url']) ?>">
+                                                <a class="dropdown-item <?= Html::encode($item['class']) ?>" href="<?= Html::encode($item['url']) ?>">
                                                     <?= Html::encode($item['label']) ?>
                                                 </a>
                                             </li>
                                         <?php endforeach; ?>
                                     </ul>
                                 </div>
-                            <?php elseif (!$hideServicioNavbar && !empty($nombreServicio) && $nombreServicio !== "Seleccione un Servicio"): ?>
-                                <span class="text-muted small">Servicio: <?= Html::encode($nombreServicio) ?></span>
+                            <?php elseif (!$layout['hideServicioNavbar'] && !empty($layout['nombreServicio']) && $layout['nombreServicio'] !== 'Seleccione un Servicio'): ?>
+                                <span class="text-muted small">Servicio: <?= Html::encode($layout['nombreServicio']) ?></span>
                             <?php endif; ?>
 
-                            <?php if (!empty($itemsMenuEncounters) && count($itemsMenuEncounters) > 1): ?>
+                            <?php if (!empty($layout['itemsMenuEncounters']) && count($layout['itemsMenuEncounters']) > 1): ?>
                                 <div class="dropdown">
                                     <button class="btn btn-light btn-sm dropdown-toggle" type="button" id="dropdownEncounter" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <?= Html::encode($labelsEncounter[$encounterClass] ?? $listaEncounters[$encounterClass] ?? 'N/A') ?>
+                                        <?= Html::encode($layout['encounterLabel']) ?>
                                     </button>
                                     <ul class="dropdown-menu" aria-labelledby="dropdownEncounter">
-                                        <?php foreach ($itemsMenuEncounters as $item): ?>
+                                        <?php foreach ($layout['itemsMenuEncounters'] as $item): ?>
                                             <li>
-                                                <a class="dropdown-item <?= $item['linkOptions']['class'] ?? '' ?>" href="<?= Url::to($item['url']) ?>">
+                                                <a class="dropdown-item <?= Html::encode($item['class']) ?>" href="<?= Html::encode($item['url']) ?>">
                                                     <?= Html::encode($item['label']) ?>
                                                 </a>
                                             </li>
                                         <?php endforeach; ?>
                                     </ul>
                                 </div>
-                            <?php elseif (!empty($encounterClass) && isset($labelsEncounter[$encounterClass])): ?>
-                                <span class="text-muted small">Tipo: <?= Html::encode($labelsEncounter[$encounterClass]) ?></span>
+                            <?php elseif ($layout['showEncounterLabel']): ?>
+                                <span class="text-muted small">Tipo: <?= Html::encode($layout['encounterLabel']) ?></span>
                             <?php endif; ?>
 
                             <?= $this->render('_alertas_topmenu') ?>
 
                             <div class="dropdown">
                                 <button class="btn btn-light btn-sm dropdown-toggle" type="button" id="dropdownUser" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <?= Html::encode($user) ?>
+                                    <?= Html::encode($layout['userName']) ?>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownUser">
-                                    <li><a class="dropdown-item" href="<?= Url::to(['/auth/change-own-password']) ?>">Modificar Contraseña</a></li>
-                                    <li><a class="dropdown-item" href="<?= Url::to(['/auth/confirm-email']) ?>">Confirmación de email</a></li>
+                                    <li><a class="dropdown-item" href="<?= Html::encode($layout['urls']['changePassword']) ?>">Modificar Contraseña</a></li>
+                                    <li><a class="dropdown-item" href="<?= Html::encode($layout['urls']['confirmEmail']) ?>">Confirmación de email</a></li>
                                     <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="<?= Url::to(['/auth/logout']) ?>">Salir</a></li>
+                                    <li><a class="dropdown-item" href="<?= Html::encode($layout['urls']['logout']) ?>">Salir</a></li>
                                 </ul>
                             </div>
                         </div>
@@ -210,12 +165,12 @@ $hideServicioNavbar = !Yii::$app->user->isGuest
                         <div class="container-fluid">
                             <ul class="navbar-nav">
                                 <li class="nav-item">
-                                    <a class="nav-link d-flex flex-column align-items-center justify-content-center <?= (Yii::$app->controller->id === 'site' && Yii::$app->controller->action->id === 'index') ? 'active' : '' ?>" href="<?= Url::to(['/site/index']) ?>">
+                                    <a class="nav-link d-flex flex-column align-items-center justify-content-center <?= $layout['activeHome'] ? 'active' : '' ?>" href="<?= Html::encode($layout['urls']['home']) ?>">
                                         <i class="bi bi-people fs-2"></i> Pacientes
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link d-flex flex-column align-items-center justify-content-center <?= Yii::$app->controller->action->id == 'asistente' ? 'active' : '' ?>" href="<?= Url::to(['/site/asistente']) ?>">
+                                    <a class="nav-link d-flex flex-column align-items-center justify-content-center <?= $layout['activeAssistant'] ? 'active' : '' ?>" href="<?= Html::encode($layout['urls']['assistant']) ?>">
                                         <i class="bi bi-stars fs-2"></i> Asistente
                                     </a>
                                 </li>
@@ -233,17 +188,17 @@ $hideServicioNavbar = !Yii::$app->user->isGuest
     </div>
     <?php $this->endBody() ?>
     
-    <?php if (!empty($listaEfectores) && count($listaEfectores) > 1): ?>
+    <?php if (!empty($layout['listaEfectores']) && count($layout['listaEfectores']) > 1): ?>
     <script>
     function cambiarEfector(idEfector) {
         var form = document.createElement('form');
         form.method = 'POST';
-        form.action = '<?= Url::to(['site/establecer-sesion-final']) ?>';
+        form.action = '<?= Html::encode($layout['urls']['setSession']) ?>';
         
         var csrfInput = document.createElement('input');
         csrfInput.type = 'hidden';
         csrfInput.name = '_csrf';
-        csrfInput.value = '<?= Yii::$app->request->csrfToken ?>';
+        csrfInput.value = '<?= Html::encode($layout['csrfToken']) ?>';
         form.appendChild(csrfInput);
         
         var efectorInput = document.createElement('input');
@@ -255,13 +210,13 @@ $hideServicioNavbar = !Yii::$app->user->isGuest
         var encounterInput = document.createElement('input');
         encounterInput.type = 'hidden';
         encounterInput.name = 'encounterClass';
-        encounterInput.value = '<?= $encounterClass ?>';
+        encounterInput.value = '<?= Html::encode($layout['encounterClass']) ?>';
         form.appendChild(encounterInput);
         
         var servicioInput = document.createElement('input');
         servicioInput.type = 'hidden';
         servicioInput.name = 'servicio';
-        servicioInput.value = '<?= Yii::$app->user->getServicioActual() ?>';
+        servicioInput.value = '<?= Html::encode($layout['serviceActual']) ?>';
         form.appendChild(servicioInput);
         
         document.body.appendChild(form);

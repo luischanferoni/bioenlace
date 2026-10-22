@@ -5,18 +5,20 @@
 
 use yii\helpers\Html;
 use frontend\assets\AppAsset;
+use frontend\components\Layout\SpaLayoutPageBuilder;
 
 AppAsset::register($this);
 $this->registerCssFile('@web/css/spa.css', ['depends' => [AppAsset::class]]);
+$layout = SpaLayoutPageBuilder::build();
 
 ?>
 
 <?php $this->beginPage() ?>
 <!DOCTYPE html>
-<html lang="<?= Yii::$app->language ?>">
+<html lang="<?= Html::encode($layout['language']) ?>">
 
 <head>
-    <meta charset="<?= Yii::$app->charset ?>">
+    <meta charset="<?= Html::encode($layout['charset']) ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <?= Html::csrfMetaTags() ?>
     <title><?= Html::encode($this->title) ?></title>
@@ -26,20 +28,20 @@ $this->registerCssFile('@web/css/spa.css', ['depends' => [AppAsset::class]]);
 <body class="boxed light theme-color-default">
     <?php $this->beginBody() ?>
 
-    <?php if (!Yii::$app->user->isGuest): ?>
+    <?php if (!$layout['isGuest']): ?>
     <script>
     // Debe definirse ANTES de scripts POS_END (registerJs) para que AJAX incluya Bearer.
-    window.userPerTabConfig = <?= \yii\helpers\Json::encode(Yii::$app->user->getPerTabSessions()) ?>;
-    window.apiAuthToken = <?= json_encode(Yii::$app->session->get('apiJwtToken')) ?>;
+    window.userPerTabConfig = <?= \yii\helpers\Json::encode($layout['userPerTabConfig']) ?>;
+    window.apiAuthToken = <?= json_encode($layout['apiAuthToken']) ?>;
     </script>
     <?php endif; ?>
 
     <script>
-    // Helpers globales para consumir /api/v1 (web y wizard post-login)
+    // Helpers globales para consumir la API (web y wizard post-login)
     window.spaConfig = {
-        baseUrl: '<?= rtrim(Yii::$app->urlManager->createAbsoluteUrl(['/']), '/') ?>',
-        csrfToken: '<?= Yii::$app->request->csrfToken ?>',
-        appVersion: <?= json_encode(Yii::$app->params['spaWebAppVersion'] ?? '1.0.0', JSON_UNESCAPED_UNICODE) ?>
+        baseUrl: '<?= $layout['spaConfig']['baseUrl'] ?>',
+        csrfToken: '<?= $layout['spaConfig']['csrfToken'] ?>',
+        appVersion: <?= json_encode($layout['spaConfig']['appVersion'], JSON_UNESCAPED_UNICODE) ?>
     };
     window.getBioenlaceApiClientHeaders = function (extra) {
         var ver = (window.spaConfig && window.spaConfig.appVersion) ? String(window.spaConfig.appVersion) : '1.0.0';

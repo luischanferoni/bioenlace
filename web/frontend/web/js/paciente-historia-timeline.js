@@ -257,7 +257,7 @@
         contentEl.replaceChildren();
         var spin = tlTpl('tpl-tl-spinner');
         if (spin) contentEl.appendChild(spin);
-        if (titleEl) titleEl.textContent = 'Triage';
+        if (titleEl) titleEl.textContent = window.BioenlaceApiClient.triageModalTitle();
         var modal = window.bootstrap.Modal.getOrCreateInstance(modalEl);
         modal.show();
 
@@ -431,7 +431,7 @@
                 var reasonVal = reasonEl ? String(reasonEl.value || '').trim() : '';
                 if (!reasonVal) {
                     if (errEl) {
-                        errEl.textContent = 'Indicá el motivo de consulta.';
+                        errEl.textContent = window.BioenlaceApiClient.triageReasonRequiredMessage();
                         errEl.classList.remove('d-none');
                     }
                     return;
@@ -508,7 +508,7 @@
 
     function applyEgresoModoUi() {
         var titleEl = document.querySelector('#modal-egreso-guardia .modal-title');
-        if (titleEl) titleEl.textContent = 'Paciente se retiró';
+        if (titleEl) titleEl.textContent = window.BioenlaceApiClient.patientLeftMessage();
     }
 
     async function openEgresoGuardiaModal() {

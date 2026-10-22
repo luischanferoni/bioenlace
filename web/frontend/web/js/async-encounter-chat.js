@@ -111,7 +111,7 @@
       var btn = document.createElement('button');
       btn.type = 'button';
       btn.className = linkClass || 'btn btn-link btn-sm p-0 align-baseline';
-      btn.textContent = 'Abrir';
+      btn.textContent = global.BioenlaceApiClient.openAttachmentLabel();
       btn.addEventListener('click', function () { openHandler(content, type); });
       wrap.appendChild(btn);
     }

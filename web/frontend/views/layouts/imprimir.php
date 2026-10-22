@@ -5,26 +5,11 @@
 
 use yii\helpers\Html;
 use frontend\assets\AppAsset;
+use frontend\components\Layout\PrintLayoutPageBuilder;
 
 AppAsset::register($this);
 
-if(Yii::$app->user->getNombreEfector())
-{
-    $efector_nombre= ' - '.Yii::$app->user->getNombreEfector();//.yii::$app->user->getNombreEfector();
-}
-else
-{
-    $efector_nombre='';
-}
-if(Yii::$app->user->username)
-{
-    $user=Yii::$app->user->username;
-    
-}
-    else
-    {
-        $user='';
-    }
+$layout = PrintLayoutPageBuilder::build();
 
 ?>
 <?php $this->beginPage() ?>
@@ -36,7 +21,7 @@ if(Yii::$app->user->username)
     <?= Html::csrfMetaTags() ?>
     <title><?= Html::encode($this->title) ?></title>
         <?php $this->head() ?>
-    <?php $this->registerJs('var baseUrl = "' . Yii::$app->urlManager->createAbsoluteUrl(['/']) . '"', yii\web\View::POS_HEAD); ?>
+    <?php $this->registerJs('var baseUrl = "' . $layout['baseUrl'] . '"', yii\web\View::POS_HEAD); ?>
     <script>
     document.addEventListener('DOMContentLoaded',function(){/*fun code to run*/
         window.print();

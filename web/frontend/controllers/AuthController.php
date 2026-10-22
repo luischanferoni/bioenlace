@@ -49,7 +49,10 @@ class AuthController extends Controller
 
         $model->password = '';
 
-        return $this->render('@frontend/views/login/login', ['model' => $model]);
+        return $this->render('@frontend/views/login/login', [
+            'model' => $model,
+            'enableAutoLogin' => isset(Yii::$app->user->enableAutoLogin) && Yii::$app->user->enableAutoLogin,
+        ]);
     }
 
     public function actionLogout()
@@ -117,7 +120,7 @@ class AuthController extends Controller
         $model = new ChangeOwnPasswordForm(['user' => $user]);
 
         if ($model->load(Yii::$app->request->post()) && $model->changePassword()) {
-            return $this->render('@frontend/views/login/change-own-password-success');
+            return $this->render('@frontend/views/login/change-own-password-success', ['isGuest' => false]);
         }
 
         return $this->render('@frontend/views/login/change-own-password', ['model' => $model]);
@@ -162,7 +165,7 @@ class AuthController extends Controller
         if ($model->load(Yii::$app->request->post()) && $model->validate()) {
             $model->changePassword(false);
 
-            return $this->render('@frontend/views/login/change-own-password-success');
+            return $this->render('@frontend/views/login/change-own-password-success', ['isGuest' => true]);
         }
 
         return $this->render('@frontend/views/login/change-own-password', ['model' => $model]);
@@ -180,7 +183,10 @@ class AuthController extends Controller
         }
 
         if ((int) $user->email_confirmed === 1) {
-            return $this->render('@frontend/views/login/confirm-email-success', ['user' => $user]);
+            return $this->render('@frontend/views/login/confirm-email-success', [
+                'user' => $user,
+                'isGuest' => false,
+            ]);
         }
 
         $model = new ConfirmEmailForm([
@@ -211,7 +217,10 @@ class AuthController extends Controller
 
         $this->layout = '@frontend/views/layouts/loginLayout.php';
 
-        return $this->render('@frontend/views/login/confirm-email-success', ['user' => $user]);
+        return $this->render('@frontend/views/login/confirm-email-success', [
+            'user' => $user,
+            'isGuest' => Yii::$app->user->isGuest,
+        ]);
     }
 
     public function actionActivateAccount()

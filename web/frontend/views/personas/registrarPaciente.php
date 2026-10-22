@@ -1,12 +1,13 @@
 <?php
 
 use yii\helpers\Html;
-use yii\helpers\Url;
 use common\assets\RegistroPacienteStaffAsset;
 
 /** @var yii\web\View $this */
 /** @var string $diditVerificationId */
 /** @var string $diditStatus */
+/** @var string $csrfToken */
+/** @var array<string, string> $registrationUrls */
 
 $this->title = 'Registrar paciente';
 $this->params['breadcrumbs'][] = ['label' => 'Personas', 'url' => ['registrar-paciente']];
@@ -14,18 +15,11 @@ $this->params['breadcrumbs'][] = $this->title;
 
 RegistroPacienteStaffAsset::register($this);
 
-$csrf = Yii::$app->request->csrfToken;
 $config = [
-    'csrfToken' => $csrf,
+    'csrfToken' => $csrfToken,
     'diditVerificationId' => $diditVerificationId,
     'diditStatus' => $diditStatus,
-    'urls' => [
-        'previewRenaper' => Url::to(['personas/preview-renaper-staff']),
-        'registrar' => Url::to(['personas/registrar-paciente-submit']),
-        'crearSesionDidit' => Url::to(['personas/crear-sesion-didit-staff']),
-        'diditCallback' => Url::to(['personas/registrar-paciente'], true),
-        'nuevaAlta' => Url::to(['personas/registrar-paciente']),
-    ],
+    'urls' => $registrationUrls,
 ];
 $this->registerJs(
     'window.BioenlaceRegistroPacienteStaff = ' . json_encode($config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . ';',

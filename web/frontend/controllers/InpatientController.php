@@ -156,6 +156,8 @@ class InpatientController extends Controller
             );
         }
 
+        $puedeGestionarEstadia = Yii::$app->user->getIdEfector() === $model->cama->sala->piso->id_efector;
+
         return $this->render('view', [
             'model' => $model,
             'model_profesional_pes' => $model_profesional_pes,
@@ -163,6 +165,7 @@ class InpatientController extends Controller
             'type' => Yii::$app->getRequest()->getQueryParam('type'),
             'urlCapturaClinica' => $urlCapturaClinica,
             'puedeAtender' => $puedeAtender,
+            'puedeGestionarEstadia' => $puedeGestionarEstadia,
             'altaCtx' => $altaCtx,
             'cambioCtx' => $cambioCtx,
         ]);

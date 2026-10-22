@@ -46,7 +46,7 @@
         });
     }
     if (!api) {
-        showError('Falta turno_id o encounter_id para ver la consulta.');
+        showError(window.BioenlaceApiClient.encounterMissingIdentifiersMessage());
         return;
     }
     fetch(api, { headers: bioHeaders(), credentials: 'same-origin' })

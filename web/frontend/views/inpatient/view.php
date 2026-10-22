@@ -8,7 +8,6 @@ use common\models\Clinical\InpatientStay;
 use common\models\Organization\Servicio;
 use yii\bootstrap5\Modal;
 
-use common\models\Platform\User;
 
 /* @var $this yii\web\View */
 /* @var $model common\models\Clinical\InpatientStay */
@@ -46,7 +45,7 @@ InpatientBedTransferAsset::register($this);
         <div class="card-header bg-soft-info d-flex align-items-self justify-content-between">
             <h3 class="card-title mt-1"><?= "Cama " . $model->cama->nro_cama . " en Sala " . $model->cama->sala->descripcion . " del Piso/Sector " . $model->cama->sala->piso->descripcion; ?></h3>
             <div class="btn-group" role="group">
-                <?php if (Yii::$app->user->getIdEfector() === $model->cama->sala->piso->id_efector) : ?>
+                <?php if ($puedeGestionarEstadia) : ?>
                     <?php if ($model->enableCambioCama() && !empty($cambioCtx)) : ?>
                         <?= Html::a(
                             '<svg fill="#000000" width="20" height="20" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
@@ -254,4 +253,3 @@ InpatientBedTransferAsset::register($this);
         </div>
     <?php } ?>
 </div>
-

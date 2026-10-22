@@ -1044,7 +1044,7 @@
 
     function mountFlowUiDefinition(json, mountEl, fullUrl, flowSubmitRequestOpt, enableFlowChainAutoAdvance, flowDismissOpt) {
         setFlowStepUiLoadingState(mountEl, false);
-        mountEl.innerHTML = '';
+        mountEl.replaceChildren();
         if (json && json.kind === 'ui_definition') {
             const isTerminalFlowStep = isActiveFlowSubmitRequest(flowSubmitRequestOpt);
             const hasEditSparse = !!(json.ui_meta && json.ui_meta.edit_sparse);
@@ -1648,7 +1648,7 @@
         for (let i = fromStepIdx; i < items.length; i++) {
             const uiMount = items[i].querySelector('.spa-flow-step-ui');
             if (uiMount) {
-                uiMount.innerHTML = '';
+                uiMount.replaceChildren();
             }
         }
     }
@@ -1833,7 +1833,7 @@
             list = row.querySelector('.spa-flow-steps-list');
             if (!list) {
                 const inner = row.querySelector('.spa-chat-flow-turn') || row;
-                inner.innerHTML = '';
+                inner.replaceChildren();
                 list = document.createElement('ol');
                 list.className = 'spa-flow-steps-list list-unstyled mb-0'
                     + (numberedSteps ? ' spa-flow-steps-list--numbered' : '');
@@ -1845,7 +1845,7 @@
             list.classList.toggle('spa-flow-steps-list--numbered', numberedSteps);
             const items = list.querySelectorAll('.spa-flow-step-item');
             if (items.length !== steps.length) {
-                list.innerHTML = '';
+                list.replaceChildren();
                 steps.forEach(function (st, idx) {
                     list.appendChild(createFlowStepListItem(st, idx, activeIdx, passthroughFlow, numberedSteps));
                 });
@@ -1870,7 +1870,7 @@
                             // Pasos futuros: vacíos. Pasos previos con spinner optimista residual: limpiar.
                             if (idx > activeIdx
                                 || uiMount.classList.contains('spa-flow-step-ui--loading')) {
-                                uiMount.innerHTML = '';
+                                uiMount.replaceChildren();
                                 setFlowStepUiLoadingState(uiMount, false);
                             }
                         }
@@ -2094,7 +2094,8 @@
      *
      * @param {Object} opts
      * @param {string} [opts.explanationHtml] - HTML ya escapado/sanitizado por el llamador
-     * @param {string} [opts.actionsHtml] - HTML de cards en grilla `.row.g-3`
+     * @param {string} [opts.actionsHtml] - HTML legacy en grilla `.row.g-3`
+     * @param {DocumentFragment|HTMLElement} [opts.actionsNode] - Contenido de acciones creado con DOM
      * @param {string} [opts.variant] - 'plain' | 'info' | 'danger'
      * @returns {{row: HTMLDivElement, panel: HTMLDivElement, explanationEl: HTMLDivElement, actionsEl: HTMLDivElement}|null}
      */
@@ -2103,6 +2104,7 @@
         const o = opts && typeof opts === 'object' ? opts : {};
         const explanationHtml = typeof o.explanationHtml === 'string' ? o.explanationHtml : '';
         const actionsHtml = typeof o.actionsHtml === 'string' ? o.actionsHtml : '';
+        const actionsNode = o.actionsNode && typeof o.actionsNode.nodeType === 'number' ? o.actionsNode : null;
         const variant = typeof o.variant === 'string' ? o.variant : 'plain';
 
         const row = document.createElement('div');
@@ -2114,17 +2116,44 @@
         const explanationEl = document.createElement('div');
         explanationEl.className = 'mb-3';
         if (variant === 'info') {
-            explanationEl.innerHTML = '<div class="alert alert-info mb-0">' + explanationHtml + '</div>';
+            const infoAlert = document.createElement('div');
+            infoAlert.className = 'alert alert-info mb-0';
+            infoAlert.innerHTML = explanationHtml;
+            if (o.suggestedQuery) {
+                const suggestion = document.createElement('div');
+                suggestion.className = 'mt-2';
+                const small = document.createElement('small');
+                small.className = 'text-muted';
+                small.appendChild(document.createTextNode(window.BioenlaceApiClient.suggestedQueryLabel() + ' '));
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'btn btn-link btn-sm p-0 align-baseline text-primary spa-suggested-query-btn';
+                button.textContent = String(o.suggestedQuery);
+                small.appendChild(button);
+                suggestion.appendChild(small);
+                infoAlert.appendChild(suggestion);
+            }
+            explanationEl.appendChild(infoAlert);
         } else if (variant === 'danger') {
-            explanationEl.innerHTML = '<div class="alert alert-danger mb-0">' + explanationHtml + '</div>';
+            const dangerAlert = document.createElement('div');
+            dangerAlert.className = 'alert alert-danger mb-0';
+            dangerAlert.innerHTML = explanationHtml;
+            explanationEl.appendChild(dangerAlert);
         } else {
-            explanationEl.innerHTML = '<div class="mb-0 spa-chat-bubble-text spa-chat-bubble-text--assistant">' + explanationHtml + '</div>';
+            const plainMessage = document.createElement('div');
+            plainMessage.className = 'mb-0 spa-chat-bubble-text spa-chat-bubble-text--assistant';
+            plainMessage.innerHTML = explanationHtml;
+            explanationEl.appendChild(plainMessage);
         }
         appendAssistantResponseDetails(explanationEl, o.details);
 
         const actionsEl = document.createElement('div');
         actionsEl.className = 'row g-3';
-        actionsEl.innerHTML = actionsHtml || '';
+        if (actionsNode) {
+            actionsEl.appendChild(actionsNode);
+        } else {
+            actionsEl.innerHTML = actionsHtml || '';
+        }
 
         panel.appendChild(explanationEl);
         panel.appendChild(actionsEl);
@@ -2234,7 +2263,7 @@
                 queryInput.value = trimmed;
                 handleInput();
             }
-            showError('Contanos tu consulta con al menos ' + minLen + ' caracteres.');
+            showError(window.BioenlaceApiClient.composerMinimumLengthMessage(minLen));
             setLoadingState(false);
             return Promise.resolve();
         }
@@ -2248,7 +2277,7 @@
                 queryInput.value = trimmed;
                 handleInput();
             }
-            showError('Faltan datos: ' + resolved.missing.join(', '));
+            showError(window.BioenlaceApiClient.composerMissingDataMessage(resolved.missing));
             setLoadingState(false);
             return Promise.resolve();
         }
@@ -2284,7 +2313,7 @@
                 });
             }
             return response.json().then(function (json) {
-                var successText = 'Listo.';
+                var successText = window.BioenlaceApiClient.flowCompletedSummaryFallback();
                 if (json && json.data && (json.data.message || json.data.mensaje)) {
                     successText = String(json.data.message || json.data.mensaje);
                 } else if (json && json.message) {
@@ -2302,7 +2331,7 @@
             });
         }).catch(function (err) {
             console.error('composer_capture POST:', err);
-            showError('No se pudo enviar la consulta.');
+            showError(window.BioenlaceApiClient.composerSubmitError());
             setLoadingState(false);
         });
     }
@@ -2425,7 +2454,7 @@
 
                 const panel = syncFlowStepsPanel(fm, flowIntentId, flowActionTitle);
                 if (!panel || !panel.row) {
-                    showError('No se pudo mostrar el flujo en el chat.');
+                    showError(window.BioenlaceApiClient.flowDisplayError());
                     return;
                 }
                 unlockFlowListPicksInRow(panel.row);
@@ -2506,18 +2535,18 @@
                         return;
                     }
                     if (!flowSectionInner) {
-                        showError('No se pudo montar la UI del paso activo.');
+                        showError(window.BioenlaceApiClient.flowActiveStepUiError());
                         return;
                     }
                     if (fsr && fsr.route && fsr.body_template && typeof fsr.body_template === 'object') {
                         removeFlowPlanStrip();
-                        flowSectionInner.innerHTML = '';
+                        flowSectionInner.replaceChildren();
                         appendFlowInlineSubmit(flowSectionInner, fsr, flowSubmitClearState);
                         setTimeout(scrollChatToBottom, 20);
                         return;
                     }
                     removeFlowPlanStrip();
-                    flowSectionInner.innerHTML = '';
+                    flowSectionInner.replaceChildren();
                     const errWrap = document.createElement('div');
                     errWrap.className = 'mt-2';
                     const errorMessage = openUi && openUi.action_id
@@ -2530,12 +2559,12 @@
                 }
 
                 if (!flowSectionInner) {
-                    showError('No se pudo montar la UI del paso activo.');
+                    showError(window.BioenlaceApiClient.flowActiveStepUiError());
                     return;
                 }
 
                 // Montaje: solo en el paso activo (`.spa-flow-step-ui`).
-                flowSectionInner.innerHTML = '';
+                flowSectionInner.replaceChildren();
                 setFlowStepUiLoadingState(flowSectionInner, false);
                 const mountHost = flowSectionInner;
 
@@ -2681,11 +2710,11 @@
         // En flows, se permite avanzar con `content=''` (solo snapshot draft/intento).
         if (!query) {
             if (currentComposerCapture) {
-                showError('Por favor, ingresa una consulta');
+                showError(window.BioenlaceApiClient.enterConsultationPrompt());
                 return;
             }
             if (!currentIntentId) {
-                showError('Por favor, ingresa una consulta');
+                showError(window.BioenlaceApiClient.enterConsultationPrompt());
                 return;
             }
         }
@@ -2831,21 +2860,22 @@
     function displayCrudResponse(data) {
         const explanationHtml = escapeHtml(data.explanation || '');
         let actionsHtml = '';
+        let actionsNode = null;
 
         // Si hay formulario, renderizarlo
         if (data.form && data.form.success) {
-            actionsHtml = renderCrudForm(data.form, data.intention, data.entity_id);
+            actionsNode = renderCrudForm(data.form, data.intention, data.entity_id);
         } else if (data.action) {
             // Acción directa (navegación, eliminación, etc)
-            actionsHtml = renderCrudAction(data);
+            actionsNode = renderCrudAction(data);
         } else if (data.suggested_actions && data.suggested_actions.length > 0) {
             // Acciones sugeridas cuando la entidad no existe
-            actionsHtml = renderActionCards(data.suggested_actions);
+            actionsNode = renderActionCards(data.suggested_actions);
         } else {
-            actionsHtml = '<div class="col-12"><p class="text-muted mb-0">' + escapeHtml(data.message || 'No hay acciones disponibles') + '</p></div>';
+            actionsNode = renderEmptyActionMessage(data.message || window.BioenlaceApiClient.crudNoActionsMessage());
         }
 
-        const panel = appendAssistantResponsePanel({ explanationHtml: explanationHtml, actionsHtml: actionsHtml, variant: 'plain', details: details });
+        const panel = appendAssistantResponsePanel({ explanationHtml: explanationHtml, actionsHtml: actionsHtml, actionsNode: actionsNode, variant: 'plain' });
         if (panel && panel.actionsEl) {
             attachCardListeners(panel.actionsEl);
         } else {
@@ -2857,26 +2887,52 @@
      * Renderizar formulario CRUD dinámico
      */
     function renderCrudForm(formData, intention, entityId) {
-        let html = '<div class="col-12"><div class="card"><div class="card-body">';
-        html += '<h6 class="card-title mb-4">Formulario</h6>';
-        html += '<form id="crud-dynamic-form" data-intention="' + intention + '" data-entity-id="' + (entityId || '') + '" data-form-action="' + escapeHtml(formData.form_action) + '">';
-        
-        formData.fields.forEach(field => {
-            html += renderFormField(field);
+        const column = document.createElement('div');
+        column.className = 'col-12';
+        const card = document.createElement('div');
+        card.className = 'card';
+        const body = document.createElement('div');
+        body.className = 'card-body';
+        const heading = document.createElement('h6');
+        heading.className = 'card-title mb-4';
+        heading.textContent = window.BioenlaceApiClient.crudFormHeading();
+        const form = document.createElement('form');
+        form.id = 'crud-dynamic-form';
+        form.setAttribute('data-intention', String(intention == null ? '' : intention));
+        form.setAttribute('data-entity-id', String(entityId == null ? '' : entityId));
+        form.setAttribute('data-form-action', String(formData.form_action || ''));
+
+        (Array.isArray(formData.fields) ? formData.fields : []).forEach(function (field) {
+            form.appendChild(renderFormField(field));
         });
-        
-        html += '<div class="mt-4 d-flex gap-2">';
-        html += '<button type="submit" class="btn btn-primary">Guardar</button>';
-        html += '<button type="button" class="btn btn-secondary" onclick="document.getElementById(\'crud-dynamic-form\').reset()">Limpiar</button>';
-        html += '</div>';
-        html += '</form></div></div></div>';
-        
+
+        const buttons = document.createElement('div');
+        buttons.className = 'mt-4 d-flex gap-2';
+        const saveButton = document.createElement('button');
+        saveButton.type = 'submit';
+        saveButton.className = 'btn btn-primary';
+        saveButton.textContent = window.BioenlaceApiClient.crudSaveLabel();
+        const clearButton = document.createElement('button');
+        clearButton.type = 'button';
+        clearButton.className = 'btn btn-secondary';
+        clearButton.textContent = window.BioenlaceApiClient.crudClearLabel();
+        clearButton.addEventListener('click', function () {
+            form.reset();
+        });
+        buttons.appendChild(saveButton);
+        buttons.appendChild(clearButton);
+        form.appendChild(buttons);
+        body.appendChild(heading);
+        body.appendChild(form);
+        card.appendChild(body);
+        column.appendChild(card);
+
         // Adjuntar listeners al formulario
         setTimeout(() => {
             attachFormListeners();
         }, 100);
         
-        return html;
+        return column;
     }
 
     /**
@@ -2949,7 +3005,7 @@
         if (chain) {
             chain.appendChild(wrap);
         } else if (mountEl) {
-            mountEl.innerHTML = '';
+            mountEl.replaceChildren();
             mountEl.appendChild(wrap);
         }
     }
@@ -3044,7 +3100,7 @@
                     if (chain) {
                         chain.appendChild(stepEl);
                     } else {
-                        mountEl.innerHTML = '';
+                        mountEl.replaceChildren();
                         mountEl.appendChild(stepEl);
                     }
                     renderDynamicUi(json, stepEl, Object.assign({}, options, {
@@ -3230,18 +3286,23 @@
         }
     }
 
+    const inlineButtonOriginalContents = new WeakMap();
+
     function setInlineButtonSpinner(btn, loading) {
         if (!btn) return;
-        try {
-            if (!btn.dataset.originalHtml) {
-                btn.dataset.originalHtml = btn.innerHTML;
+        if (loading) {
+            if (!inlineButtonOriginalContents.has(btn)) {
+                inlineButtonOriginalContents.set(btn, Array.from(btn.childNodes));
             }
-            if (loading) {
-                btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
-            } else if (btn.dataset.originalHtml) {
-                btn.innerHTML = btn.dataset.originalHtml;
-            }
-        } catch (e) { /* ignore */ }
+            const spinner = document.createElement('span');
+            spinner.className = 'spinner-border spinner-border-sm';
+            spinner.setAttribute('role', 'status');
+            spinner.setAttribute('aria-hidden', 'true');
+            btn.replaceChildren(spinner);
+        } else if (inlineButtonOriginalContents.has(btn)) {
+            btn.replaceChildren(...inlineButtonOriginalContents.get(btn));
+            inlineButtonOriginalContents.delete(btn);
+        }
     }
 
     function markInlineButtonConfirmed(btn) {
@@ -3250,7 +3311,7 @@
             btn.disabled = true;
             btn.classList.remove('btn-primary', 'btn-success');
             btn.classList.add('btn-secondary');
-            btn.textContent = 'Confirmado';
+            btn.textContent = window.BioenlaceApiClient.crudConfirmedLabel();
         } catch (e) { /* ignore */ }
     }
 
@@ -3590,7 +3651,7 @@
             searchWrap.className = 'mb-2';
             const searchLabel = document.createElement('label');
             searchLabel.className = 'form-label small text-muted mb-1';
-            searchLabel.textContent = 'Buscar persona';
+            searchLabel.textContent = window.BioenlaceApiClient.personSearchLabel();
             const search = document.createElement('input');
             search.type = 'search';
             search.className = 'form-control form-control-sm';
@@ -4457,25 +4518,45 @@
         const useGrid = opts.useGrid === true;
         const outerClass = fieldBootstrapColClass(field, useGrid);
         const wid = field.widget_id || '';
-        let html = '<div class="' + outerClass + ' bio-ui-custom-widget" data-bio-ui-widget="' + escapeHtml(wid) + '">';
+        const wrapper = document.createElement('div');
+        wrapper.className = outerClass + ' bio-ui-custom-widget';
+        wrapper.setAttribute('data-bio-ui-widget', String(wid));
         if (field.label) {
-            html += '<label class="form-label">' + escapeHtml(field.label);
+            const label = document.createElement('label');
+            label.className = 'form-label';
+            label.textContent = String(field.label);
             if (field.required) {
-                html += ' <span class="text-danger">*</span>';
+                const required = document.createElement('span');
+                required.className = 'text-danger';
+                required.textContent = '*';
+                label.appendChild(document.createTextNode(' '));
+                label.appendChild(required);
             }
-            html += '</label>';
+            wrapper.appendChild(label);
         }
         const initial = field.initial_values && typeof field.initial_values === 'object' ? field.initial_values : {};
-        (field.value_fields || []).forEach(name => {
+        (Array.isArray(field.value_fields) ? field.value_fields : []).forEach(name => {
             const v = initial[name] !== undefined && initial[name] !== null ? String(initial[name]) : '';
-            html += '<input type="hidden" name="' + escapeHtml(name) + '" value="' + escapeHtml(v) + '">';
+            const hidden = document.createElement('input');
+            hidden.type = 'hidden';
+            hidden.name = String(name);
+            hidden.value = v;
+            wrapper.appendChild(hidden);
         });
-        html += '<div class="table-responsive"><table class="w-100" data-weekly-scheduler-mount></table></div>';
+        const responsive = document.createElement('div');
+        responsive.className = 'table-responsive';
+        const table = document.createElement('table');
+        table.className = 'w-100';
+        table.setAttribute('data-weekly-scheduler-mount', '');
+        responsive.appendChild(table);
+        wrapper.appendChild(responsive);
         if (field.hint) {
-            html += '<div class="form-text">' + escapeHtml(String(field.hint)) + '</div>';
+            const hint = document.createElement('div');
+            hint.className = 'form-text';
+            hint.textContent = String(field.hint);
+            wrapper.appendChild(hint);
         }
-        html += '</div>';
-        return html;
+        return wrapper;
     }
 
     function renderFormField(field, opts) {
@@ -4483,57 +4564,68 @@
         const useGrid = opts.useGrid === true;
         if (field.type === 'hidden') {
             const v = field.value !== undefined && field.value !== null ? String(field.value) : '';
-            return '<input type="hidden" name="' + escapeHtml(field.name) + '" value="' + escapeHtml(v) + '">';
+            const hidden = document.createElement('input');
+            hidden.type = 'hidden';
+            hidden.name = String(field.name || '');
+            hidden.value = v;
+            return hidden;
         }
         if (field.type === 'custom_widget') {
             return renderCustomWidgetField(field, opts);
         }
 
         const outerClass = fieldBootstrapColClass(field, useGrid);
-        let html = '<div class="' + outerClass + '">';
+        const wrapper = document.createElement('div');
+        wrapper.className = outerClass;
         const lblRaw = field.label != null ? String(field.label).trim() : '';
         if (lblRaw !== '' || field.required) {
-            html += '<label class="form-label">' + escapeHtml(lblRaw);
+            const label = document.createElement('label');
+            label.className = 'form-label';
+            label.textContent = lblRaw;
             if (field.required) {
-                html += ' <span class="text-danger">*</span>';
+                const required = document.createElement('span');
+                required.className = 'text-danger';
+                required.textContent = '*';
+                label.appendChild(document.createTextNode(' '));
+                label.appendChild(required);
             }
-            html += '</label>';
+            wrapper.appendChild(label);
         }
 
+        let control;
         switch (field.type) {
             case 'autocomplete':
-                html += renderAutocompleteField(field);
+                control = renderAutocompleteField(field);
                 break;
             case 'select':
-                html += renderSelectField(field);
+                control = renderSelectField(field);
                 break;
             case 'radio':
-                html += renderRadioField(field);
+                control = renderRadioField(field);
                 break;
             case 'chips':
-                html += renderChipsField(field);
+                control = renderChipsField(field);
                 break;
             case 'number':
-                html += renderNumberField(field);
+                control = renderNumberField(field);
                 break;
             case 'date':
-                html += renderDateField(field);
+                control = renderDateField(field);
                 break;
             case 'time':
-                html += renderTimeField(field);
+                control = renderTimeField(field);
                 break;
             case 'display':
-                html += renderDisplayField(field);
+                control = renderDisplayField(field);
                 break;
             case 'textarea':
-                html += renderTextareaField(field);
+                control = renderTextareaField(field);
                 break;
             default:
-                html += renderTextField(field);
+                control = renderTextField(field);
         }
-        
-        html += '</div>';
-        return html;
+        wrapper.appendChild(control);
+        return wrapper;
     }
 
     /**
@@ -4547,24 +4639,46 @@
         const filters = Array.isArray(field.filters) ? field.filters : [];
         const id = 'ac_' + (field.name || '').replace(/[^a-z0-9_]/gi, '_') + '_' + Math.floor(Math.random() * 100000);
 
-        let html = '';
+        const wrapper = document.createElement('div');
         // Valor seleccionado (hidden) + preview (readonly)
-        html += '<input type="hidden" name="' + escapeHtml(field.name) + '" id="' + id + '_value" value="' + escapeHtml(field.value || '') + '">';
-        html += '<div class="input-group">';
-        html += '<input type="text" class="form-control" id="' + id + '_text" placeholder="Seleccionar..." readonly>';
-        html += '<button type="button" class="btn btn-outline-primary" data-ac-field="' + escapeHtml(field.name || '') + '" data-ac-open="' + id + '">Elegir</button>';
-        html += '</div>';
-        html += '<div class="mt-2 d-none" data-ac-panel="' + id + '"></div>';
+        const hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = String(field.name || '');
+        hidden.id = id + '_value';
+        hidden.value = String(field.value || '');
+        wrapper.appendChild(hidden);
+        const inputGroup = document.createElement('div');
+        inputGroup.className = 'input-group';
+        const preview = document.createElement('input');
+        preview.type = 'text';
+        preview.className = 'form-control';
+        preview.id = id + '_text';
+        preview.placeholder = window.BioenlaceApiClient.autocompletePlaceholder();
+        preview.readOnly = true;
+        const choose = document.createElement('button');
+        choose.type = 'button';
+        choose.className = 'btn btn-outline-primary';
+        choose.setAttribute('data-ac-field', String(field.name || ''));
+        choose.setAttribute('data-ac-open', id);
+        choose.textContent = window.BioenlaceApiClient.autocompleteChooseLabel();
+        inputGroup.appendChild(preview);
+        inputGroup.appendChild(choose);
+        wrapper.appendChild(inputGroup);
+        const panel = document.createElement('div');
+        panel.className = 'mt-2 d-none';
+        panel.setAttribute('data-ac-panel', id);
+        wrapper.appendChild(panel);
 
         // Guardar metadata en data-* para el handler
-        html += '<div class="d-none"'
-            + ' data-ac-meta="' + id + '"'
-            + ' data-ac-endpoint="' + escapeHtml(endpoint) + '"'
-            + ' data-ac-show-search="' + (showSearch ? '1' : '0') + '"'
-            + ' data-ac-filters=\'' + escapeHtml(JSON.stringify(filters)) + '\''
-            + ' data-ac-params=\'' + escapeHtml(JSON.stringify(field.params || {})) + '\''
-            + '></div>';
-        return html;
+        const meta = document.createElement('div');
+        meta.className = 'd-none';
+        meta.setAttribute('data-ac-meta', id);
+        meta.setAttribute('data-ac-endpoint', String(endpoint));
+        meta.setAttribute('data-ac-show-search', showSearch ? '1' : '0');
+        meta.setAttribute('data-ac-filters', JSON.stringify(filters));
+        meta.setAttribute('data-ac-params', JSON.stringify(field.params || {}));
+        wrapper.appendChild(meta);
+        return wrapper;
     }
 
     /**
@@ -4734,7 +4848,7 @@
                             if (!items.length) {
                                 const emptyMessage = document.createElement('div');
                                 emptyMessage.className = 'text-muted small';
-                                emptyMessage.textContent = 'Sin resultados';
+                                emptyMessage.textContent = window.BioenlaceApiClient.noResultsMessage();
                                 panel.appendChild(emptyMessage);
                                 return;
                             }
@@ -4842,18 +4956,24 @@
      */
     function renderSelectField(field) {
         const fv = field.value !== undefined && field.value !== null ? String(field.value) : '';
-        let html = '<select class="form-select" name="' + escapeHtml(field.name) + '"' + (field.required ? ' required' : '') + '>';
-        html += '<option value="">Seleccione...</option>';
-        if (field.options) {
-            field.options.forEach(option => {
-                const value = typeof option === 'object' ? option.value : option;
-                const label = typeof option === 'object' ? option.label : option;
-                const sel = String(value) === fv ? ' selected' : '';
-                html += '<option value="' + escapeHtml(value) + '"' + sel + '>' + escapeHtml(label) + '</option>';
-            });
-        }
-        html += '</select>';
-        return html;
+        const select = document.createElement('select');
+        select.className = 'form-select';
+        select.name = String(field.name || '');
+        select.required = !!field.required;
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = window.BioenlaceApiClient.selectPlaceholder();
+        select.appendChild(placeholder);
+        normalizeFieldOptions(field).forEach(function (option) {
+            const value = typeof option === 'object' ? option.value : option;
+            const label = typeof option === 'object' ? option.label : option;
+            const optionEl = document.createElement('option');
+            optionEl.value = String(value == null ? '' : value);
+            optionEl.textContent = String(label == null ? '' : label);
+            optionEl.selected = String(value) === fv;
+            select.appendChild(optionEl);
+        });
+        return select;
     }
 
     function normalizeFieldOptions(field) {
@@ -4870,19 +4990,31 @@
      * Renderizar campo radio (opciones seleccionables)
      */
     function renderRadioField(field) {
-        let html = '<div class="d-flex flex-wrap gap-2">';
+        const wrapper = document.createElement('div');
+        wrapper.className = 'd-flex flex-wrap gap-2';
         normalizeFieldOptions(field).forEach(function (option) {
             const value = typeof option === 'object' ? option.value : option;
             const label = typeof option === 'object' ? option.label : option;
-            const id = field.name + '_' + value;
-            html += '<div class="form-check">';
-            const checked = field.value !== undefined && field.value !== null && String(value) === String(field.value) ? ' checked' : '';
-            html += '<input class="form-check-input" type="radio" name="' + escapeHtml(field.name) + '" id="' + id + '" value="' + escapeHtml(value) + '"' + (field.required ? ' required' : '') + checked + '>';
-            html += '<label class="form-check-label" for="' + id + '">' + escapeHtml(label) + '</label>';
-            html += '</div>';
+            const id = String(field.name || '') + '_' + String(value == null ? '' : value);
+            const item = document.createElement('div');
+            item.className = 'form-check';
+            const input = document.createElement('input');
+            input.className = 'form-check-input';
+            input.type = 'radio';
+            input.name = String(field.name || '');
+            input.id = id;
+            input.value = String(value == null ? '' : value);
+            input.required = !!field.required;
+            input.checked = field.value !== undefined && field.value !== null && String(value) === String(field.value);
+            const optionLabel = document.createElement('label');
+            optionLabel.className = 'form-check-label';
+            optionLabel.htmlFor = id;
+            optionLabel.textContent = String(label == null ? '' : label);
+            item.appendChild(input);
+            item.appendChild(optionLabel);
+            wrapper.appendChild(item);
         });
-        html += '</div>';
-        return html;
+        return wrapper;
     }
 
     /**
@@ -4890,55 +5022,82 @@
      */
     function renderChipsField(field) {
         const current = field.value !== undefined && field.value !== null ? String(field.value) : '';
-        let html = '<input type="hidden" class="spa-ui-chip-value" name="' + escapeHtml(field.name) + '" value="' + escapeHtml(current) + '"';
-        if (field.required) {
-            html += ' required';
-        }
-        html += '>';
-        html += '<div class="spa-ui-chips d-flex flex-wrap gap-2" role="radiogroup"';
+        const wrapper = document.createElement('div');
+        const hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.className = 'spa-ui-chip-value';
+        hidden.name = String(field.name || '');
+        hidden.value = current;
+        hidden.required = !!field.required;
+        wrapper.appendChild(hidden);
+        const chips = document.createElement('div');
+        chips.className = 'spa-ui-chips d-flex flex-wrap gap-2';
+        chips.setAttribute('role', 'radiogroup');
         if (field.label) {
-            html += ' aria-label="' + escapeHtml(String(field.label)) + '"';
+            chips.setAttribute('aria-label', String(field.label));
         }
-        html += '>';
         normalizeFieldOptions(field).forEach(function (option) {
             const value = typeof option === 'object' ? option.value : option;
             const label = typeof option === 'object' ? option.label : option;
-            const active = current !== '' && String(value) === current ? ' is-active' : '';
-            const pressed = active ? 'true' : 'false';
-            html += '<button type="button" class="btn btn-sm btn-outline-secondary rounded-pill spa-ui-chip-btn' + active + '" data-field="' + escapeHtml(field.name) + '" data-value="' + escapeHtml(value) + '" aria-pressed="' + pressed + '">' + escapeHtml(label) + '</button>';
+            const active = current !== '' && String(value) === current;
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'btn btn-sm btn-outline-secondary rounded-pill spa-ui-chip-btn' + (active ? ' is-active' : '');
+            button.setAttribute('data-field', String(field.name || ''));
+            button.setAttribute('data-value', String(value == null ? '' : value));
+            button.setAttribute('aria-pressed', active ? 'true' : 'false');
+            button.textContent = String(label == null ? '' : label);
+            chips.appendChild(button);
         });
-        html += '</div>';
-        return html;
+        wrapper.appendChild(chips);
+        return wrapper;
     }
 
     /**
      * Renderizar campo numérico con opciones rápidas y botones +/-
      */
     function renderNumberField(field) {
-        let html = '';
-        
-        // Opciones rápidas
-        if (field.quick_options && field.quick_options.length > 0) {
-            html += '<div class="mb-2 d-flex gap-2 flex-wrap">';
+        const wrapper = document.createElement('div');
+        if (Array.isArray(field.quick_options) && field.quick_options.length > 0) {
+            const quickOptions = document.createElement('div');
+            quickOptions.className = 'mb-2 d-flex gap-2 flex-wrap';
             field.quick_options.forEach(option => {
-                html += '<button type="button" class="btn btn-outline-primary btn-sm quick-option-btn" data-field="' + escapeHtml(field.name) + '" data-value="' + option + '">' + option + '</button>';
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'btn btn-outline-primary btn-sm quick-option-btn';
+                button.setAttribute('data-field', String(field.name || ''));
+                button.setAttribute('data-value', String(option));
+                button.textContent = String(option);
+                quickOptions.appendChild(button);
             });
-            html += '</div>';
+            wrapper.appendChild(quickOptions);
         }
-        
-        // Input numérico con botones +/-
-        html += '<div class="input-group">';
-        html += '<button type="button" class="btn btn-outline-secondary number-decrement" data-field="' + escapeHtml(field.name) + '">-</button>';
-        html += '<input type="number" class="form-control text-center" name="' + escapeHtml(field.name) + '" value="' + (field.value || '') + '"';
-        if (field.min !== null) html += ' min="' + field.min + '"';
-        if (field.max !== null) html += ' max="' + field.max + '"';
-        if (field.step) html += ' step="' + field.step + '"';
-        if (field.required) html += ' required';
-        html += '>';
-        html += '<button type="button" class="btn btn-outline-secondary number-increment" data-field="' + escapeHtml(field.name) + '">+</button>';
-        html += '</div>';
-        
-        return html;
+        const inputGroup = document.createElement('div');
+        inputGroup.className = 'input-group';
+        const decrement = document.createElement('button');
+        decrement.type = 'button';
+        decrement.className = 'btn btn-outline-secondary number-decrement';
+        decrement.setAttribute('data-field', String(field.name || ''));
+        decrement.textContent = '-';
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.className = 'form-control text-center';
+        input.name = String(field.name || '');
+        input.value = field.value !== undefined && field.value !== null ? String(field.value) : '';
+        if (field.min != null) input.min = String(field.min);
+        if (field.max != null) input.max = String(field.max);
+        if (field.step) input.step = String(field.step);
+        input.required = !!field.required;
+        const increment = document.createElement('button');
+        increment.type = 'button';
+        increment.className = 'btn btn-outline-secondary number-increment';
+        increment.setAttribute('data-field', String(field.name || ''));
+        increment.textContent = '+';
+        inputGroup.appendChild(decrement);
+        inputGroup.appendChild(input);
+        inputGroup.appendChild(increment);
+        wrapper.appendChild(inputGroup);
+        return wrapper;
     }
 
     /**
@@ -4946,18 +5105,23 @@
      */
     function renderDateField(field) {
         const v = field.value !== undefined && field.value !== null ? String(field.value) : '';
-        let html = '<input type="text" class="form-control spa-ui-date-input" data-spa-date-input="1" inputmode="numeric" autocomplete="off" name="' + escapeHtml(field.name) + '" value="' + escapeHtml(v) + '" placeholder="dd/mm/aa"';
-        if (field.required) {
-            html += ' required';
-        }
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'form-control spa-ui-date-input';
+        input.setAttribute('data-spa-date-input', '1');
+        input.setAttribute('inputmode', 'numeric');
+        input.autocomplete = 'off';
+        input.name = String(field.name || '');
+        input.value = v;
+        input.placeholder = 'dd/mm/aa';
+        input.required = !!field.required;
         if (field.min != null && String(field.min).trim() !== '') {
-            html += ' data-min="' + escapeHtml(String(field.min)) + '"';
+            input.setAttribute('data-min', String(field.min));
         }
         if (field.max != null && String(field.max).trim() !== '') {
-            html += ' data-max="' + escapeHtml(String(field.max)) + '"';
+            input.setAttribute('data-max', String(field.max));
         }
-        html += '>';
-        return html;
+        return input;
     }
 
     /**
@@ -4968,12 +5132,13 @@
         if (/^\d{1,2}:\d{2}:\d{2}$/.test(v)) {
             v = v.substring(0, 5);
         }
-        let html = '<input type="time" class="form-control" name="' + escapeHtml(field.name) + '" value="' + escapeHtml(v) + '"';
-        if (field.required) {
-            html += ' required';
-        }
-        html += '>';
-        return html;
+        const input = document.createElement('input');
+        input.type = 'time';
+        input.className = 'form-control';
+        input.name = String(field.name || '');
+        input.value = v;
+        input.required = !!field.required;
+        return input;
     }
 
     /**
@@ -4981,10 +5146,12 @@
      */
     function renderDisplayField(field) {
         const v = field.value !== undefined && field.value !== null ? String(field.value).trim() : '';
-        if (v === '') {
-            return '<p class="form-control-plaintext text-muted mb-0">—</p>';
-        }
-        return '<p class="form-control-plaintext mb-0">' + escapeHtml(v) + '</p>';
+        const display = document.createElement('p');
+        display.className = v === ''
+            ? 'form-control-plaintext text-muted mb-0'
+            : 'form-control-plaintext mb-0';
+        display.textContent = v === '' ? '—' : v;
+        return display;
     }
 
     const SPA_FLATPICKR_LOCALE_ES = {
@@ -5085,19 +5252,35 @@
         const v = field.value !== undefined && field.value !== null ? String(field.value) : '';
         const vitalNames = { bp_sys: 1, bp_dia: 1, hr: 1 };
         const isVital = !!vitalNames[String(field.name || '')];
-        let html = '<input type="text" class="form-control" name="' + escapeHtml(field.name) + '" value="' + escapeHtml(v) + '"'
-            + (field.required ? ' required' : '')
-            + (ro ? ' readonly' : '')
-            + (field.placeholder ? ' placeholder="' + escapeHtml(String(field.placeholder)) + '"' : '')
-            + (field.maxlength != null ? ' maxlength="' + escapeHtml(String(field.maxlength)) + '"' : (isVital ? ' maxlength="3"' : ''))
-            + (field.inputmode ? ' inputmode="' + escapeHtml(String(field.inputmode)) + '"' : (isVital ? ' inputmode="numeric"' : ''))
-            + (field.pattern ? ' pattern="' + escapeHtml(String(field.pattern)) + '"' : '')
-            + (isVital ? ' data-triage-vital="' + escapeHtml(String(field.name)) + '"' : '')
-            + '>';
-        if (field.hint) {
-            html += '<div class="form-text">' + escapeHtml(String(field.hint)) + '</div>';
+        const fragment = document.createDocumentFragment();
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'form-control';
+        input.name = String(field.name || '');
+        input.value = v;
+        input.required = !!field.required;
+        input.readOnly = ro;
+        if (field.placeholder) input.placeholder = String(field.placeholder);
+        if (field.maxlength != null) {
+            input.maxLength = Number(field.maxlength);
+        } else if (isVital) {
+            input.maxLength = 3;
         }
-        return html;
+        if (field.inputmode) {
+            input.setAttribute('inputmode', String(field.inputmode));
+        } else if (isVital) {
+            input.setAttribute('inputmode', 'numeric');
+        }
+        if (field.pattern) input.pattern = String(field.pattern);
+        if (isVital) input.setAttribute('data-triage-vital', String(field.name));
+        fragment.appendChild(input);
+        if (field.hint) {
+            const hint = document.createElement('div');
+            hint.className = 'form-text';
+            hint.textContent = String(field.hint);
+            fragment.appendChild(hint);
+        }
+        return fragment;
     }
 
     /**
@@ -5106,34 +5289,72 @@
     function renderTextareaField(field) {
         const ro = field.readonly === true || field.readonly === 1 || field.readonly === '1' || field.readonly === 'true';
         const rows = field.rows != null && String(field.rows).trim() !== '' ? Math.max(2, parseInt(String(field.rows), 10) || 4) : 4;
-        let html = '<textarea class="form-control" name="' + escapeHtml(field.name) + '" rows="' + rows + '"'
-            + (field.required ? ' required' : '')
-            + (ro ? ' readonly' : '')
-            + '>' + escapeHtml(field.value || '') + '</textarea>';
-        return html;
+        const textarea = document.createElement('textarea');
+        textarea.className = 'form-control';
+        textarea.name = String(field.name || '');
+        textarea.rows = rows;
+        textarea.required = !!field.required;
+        textarea.readOnly = ro;
+        textarea.value = field.value !== undefined && field.value !== null ? String(field.value) : '';
+        return textarea;
     }
 
     /**
      * Renderizar acción CRUD (navegación, eliminación, etc)
      */
     function renderCrudAction(data) {
-        let html = '<div class="col-12">';
-        
+        const column = document.createElement('div');
+        column.className = 'col-12';
+        const explanation = document.createElement('p');
+        explanation.textContent = String(data.explanation || '');
+
         if (data.action.type === 'delete' && data.action.requires_confirmation) {
-            html += '<div class="alert alert-warning">';
-            html += '<p>' + escapeHtml(data.explanation) + '</p>';
-            html += '<button class="btn btn-danger" onclick="confirmDelete(\'' + escapeHtml(data.action.route) + '\', ' + (data.entity_id || 'null') + ')">Confirmar Eliminación</button>';
-            html += '<button class="btn btn-secondary ms-2" onclick="cancelDelete()">Cancelar</button>';
-            html += '</div>';
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-warning';
+            alert.appendChild(explanation);
+            const confirmButton = document.createElement('button');
+            confirmButton.type = 'button';
+            confirmButton.className = 'btn btn-danger';
+            confirmButton.textContent = window.BioenlaceApiClient.crudDeleteConfirmLabel();
+            confirmButton.addEventListener('click', function () {
+                window.confirmDelete(data.action.route, data.entity_id || null);
+            });
+            const cancelButton = document.createElement('button');
+            cancelButton.type = 'button';
+            cancelButton.className = 'btn btn-secondary ms-2';
+            cancelButton.textContent = window.BioenlaceApiClient.crudCancelLabel();
+            cancelButton.addEventListener('click', function () {
+                window.cancelDelete();
+            });
+            alert.appendChild(confirmButton);
+            alert.appendChild(cancelButton);
+            column.appendChild(alert);
         } else {
-            html += '<div class="card"><div class="card-body">';
-            html += '<p>' + escapeHtml(data.explanation) + '</p>';
-            html += '<a href="' + escapeHtml(data.action.route) + '" class="btn btn-primary">Continuar</a>';
-            html += '</div></div>';
+            const card = document.createElement('div');
+            card.className = 'card';
+            const body = document.createElement('div');
+            body.className = 'card-body';
+            const link = document.createElement('a');
+            link.href = String(data.action.route || '');
+            link.className = 'btn btn-primary';
+            link.textContent = window.BioenlaceApiClient.crudContinueLabel();
+            body.appendChild(explanation);
+            body.appendChild(link);
+            card.appendChild(body);
+            column.appendChild(card);
         }
-        
-        html += '</div>';
-        return html;
+
+        return column;
+    }
+
+    function renderEmptyActionMessage(message) {
+        const column = document.createElement('div');
+        column.className = 'col-12';
+        const text = document.createElement('p');
+        text.className = 'text-muted mb-0';
+        text.textContent = String(message);
+        column.appendChild(text);
+        return column;
     }
 
     function bindDynamicFormFieldControls(form) {
@@ -5270,19 +5491,19 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showError('Operación realizada exitosamente');
+                showError(window.BioenlaceApiClient.crudOperationSuccessMessage());
                 form.reset();
                 // Opcional: recargar o redirigir
                 if (data.url_siguiente) {
                     window.location.href = data.url_siguiente;
                 }
             } else {
-                showError(data.msg || data.error || 'Error al guardar');
+                showError(data.msg || data.error || window.BioenlaceApiClient.crudSaveFallbackError());
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            showError('Error de conexión al guardar');
+            showError(window.BioenlaceApiClient.crudSaveConnectionError());
         })
         .finally(() => {
             submitBtn.disabled = false;
@@ -5294,7 +5515,7 @@
      * Confirmar eliminación
      */
     window.confirmDelete = function(route, entityId) {
-        if (!confirm('¿Estás seguro de que quieres eliminar este registro? Esta acción no se puede deshacer.')) {
+        if (!confirm(window.BioenlaceApiClient.crudDeleteConfirmationPrompt())) {
             return;
         }
         
@@ -5314,14 +5535,14 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showError('Registro eliminado exitosamente');
+                showError(window.BioenlaceApiClient.crudRecordDeletedMessage());
             } else {
-                showError(data.error || 'Error al eliminar');
+                showError(data.error || window.BioenlaceApiClient.crudDeleteFallbackError());
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            showError('Error de conexión al eliminar');
+            showError(window.BioenlaceApiClient.crudDeleteConnectionError());
         });
     };
 
@@ -5418,11 +5639,12 @@
             explanationHtml = escapeHtml(explanation);
         }
 
-        const actionsHtml = (actions && actions.length > 0)
+        const actionsNode = (actions && actions.length > 0)
             ? renderActionCards(actions)
-            : '<div class="col-12"><p class="text-muted mb-0">No se encontraron acciones específicas para esta consulta.</p></div>';
+            : renderEmptyActionMessage(window.BioenlaceApiClient.assistantNoSpecificActionsMessage());
+        const actionsHtml = '';
 
-        const panel = appendAssistantResponsePanel({ explanationHtml: explanationHtml, actionsHtml: actionsHtml, variant: 'plain' });
+        const panel = appendAssistantResponsePanel({ explanationHtml: explanationHtml, actionsHtml: actionsHtml, actionsNode: actionsNode, variant: 'plain' });
         if (panel && panel.actionsEl) {
             attachCardListeners(panel.actionsEl);
         } else {
@@ -5440,16 +5662,12 @@
             explanationHtml = escapeHtml(explanation);
         }
 
-        let extraHtml = '';
-        if (suggestedQuery) {
-            extraHtml = '<div class="mt-2"><small class="text-muted">Sugerencia: <button type="button" class="btn btn-link btn-sm p-0 align-baseline text-primary spa-suggested-query-btn">' + escapeHtml(suggestedQuery) + '</button></small></div>';
-        }
-
-        const actionsHtml = (actions && actions.length > 0)
+        const actionsNode = (actions && actions.length > 0)
             ? renderActionCards(actions)
-            : '<div class="col-12"><p class="text-muted mb-0">No se encontraron acciones específicas para esta consulta.</p></div>';
+            : renderEmptyActionMessage(window.BioenlaceApiClient.assistantNoSpecificActionsMessage());
+        const actionsHtml = '';
 
-        const panel = appendAssistantResponsePanel({ explanationHtml: explanationHtml + extraHtml, actionsHtml: actionsHtml, variant: 'info', details: details });
+        const panel = appendAssistantResponsePanel({ explanationHtml: explanationHtml, actionsHtml: actionsHtml, actionsNode: actionsNode, variant: 'info', details: details, suggestedQuery: suggestedQuery });
         if (panel && panel.explanationEl && suggestedQuery) {
             const b = panel.explanationEl.querySelector('.spa-suggested-query-btn');
             if (b) {
@@ -5578,12 +5796,18 @@
 
     function renderActionCards(actions, includeHeader = true) {
         if (!actions || actions.length === 0) {
-            return '';
+            return document.createDocumentFragment();
         }
 
-        let html = '';
+        const cards = document.createDocumentFragment();
         if (includeHeader) {
-            html = '<div class="col-12"><h6 class="mb-3 fw-semibold">Acciones sugeridas:</h6></div>';
+            const headerColumn = document.createElement('div');
+            headerColumn.className = 'col-12';
+            const header = document.createElement('h6');
+            header.className = 'mb-3 fw-semibold';
+            header.textContent = window.BioenlaceApiClient.suggestedActionsHeading();
+            headerColumn.appendChild(header);
+            cards.appendChild(headerColumn);
         }
 
         actions.forEach((action, index) => {
@@ -5609,20 +5833,36 @@
                 fullPage = false;
             }
  
-            html += `
-                <div class="col-12">
-                    <div class="card h-100 spa-card shadow-sm" data-card-id="${cardId}" data-expandable="${expandable}" data-full-page="${fullPage}" data-open-kind="${escapeHtml(kind)}" data-action-url="${escapeHtml(url)}" data-action-id="${escapeHtml(String(actionId))}" data-action-assets='${assets ? escapeHtml(JSON.stringify(assets)) : ""}'>
-                        <div class="card-body">
-                            <h6 class="card-title text-primary fw-semibold mb-2">${escapeHtml(actionName)}</h6>
-                            <p class="card-text text-muted small mb-0">${escapeHtml(actionDescription)}</p>
-                            <div class="spa-card-expand-content d-none mt-3"></div>
-                        </div>
-                    </div>
-                </div>
-            `;
+            const column = document.createElement('div');
+            column.className = 'col-12';
+            const card = document.createElement('div');
+            card.className = 'card h-100 spa-card shadow-sm';
+            card.setAttribute('data-card-id', cardId);
+            card.setAttribute('data-expandable', String(expandable));
+            card.setAttribute('data-full-page', String(fullPage));
+            card.setAttribute('data-open-kind', kind);
+            card.setAttribute('data-action-url', url);
+            card.setAttribute('data-action-id', String(actionId));
+            card.setAttribute('data-action-assets', assets ? JSON.stringify(assets) : '');
+            const body = document.createElement('div');
+            body.className = 'card-body';
+            const title = document.createElement('h6');
+            title.className = 'card-title text-primary fw-semibold mb-2';
+            title.textContent = String(actionName);
+            const description = document.createElement('p');
+            description.className = 'card-text text-muted small mb-0';
+            description.textContent = String(actionDescription);
+            const expandContent = document.createElement('div');
+            expandContent.className = 'spa-card-expand-content d-none mt-3';
+            body.appendChild(title);
+            body.appendChild(description);
+            body.appendChild(expandContent);
+            card.appendChild(body);
+            column.appendChild(card);
+            cards.appendChild(column);
         });
 
-        return html;
+        return cards;
     }
 
     /**
@@ -5678,7 +5918,7 @@
                     // Disparar intent conversacional por action_id.
                     const asistenteUrl = window.location.origin + '/api/v1/asistente/enviar';
                     if (!actionId) {
-                        alert('Acción inválida: falta action_id');
+                        alert(window.BioenlaceApiClient.assistantInvalidActionIdMessage());
                         return;
                     }
                     setLoadingState(true);
@@ -5810,7 +6050,7 @@
                 return response.json();
             })
             .then(json => {
-                container.innerHTML = '';
+                container.replaceChildren();
                 if (json && json.kind === 'ui_definition') {
                     renderDynamicUi(json, container, { url: fullUrl });
                 } else {
@@ -6295,18 +6535,47 @@
         return { name: name, desc: desc, iid: iid };
     }
 
-    function shortcutCardHtml(meta) {
-        return '<button type="button" class="btn btn-light border text-start w-100 d-flex align-items-start gap-2 py-2 px-3 spa-shortcut-card" data-shortcut-intent-id="' + escapeHtml(meta.iid) + '" data-shortcut-name="' + escapeHtml(meta.name) + '">' +
-            '<span class="flex-grow-1 min-w-0">' +
-            '<span class="d-block fw-semibold text-primary">' + escapeHtml(meta.name) + '</span>' +
-            (meta.desc ? '<span class="d-block small text-secondary mt-1">' + escapeHtml(meta.desc) + '</span>' : '') +
-            '</span>' +
-            '<span class="flex-shrink-0 text-secondary fs-5 lh-1" aria-hidden="true">›</span>' +
-            '</button>';
+    function createShortcutCard(meta) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'btn btn-light border text-start w-100 d-flex align-items-start gap-2 py-2 px-3 spa-shortcut-card';
+        button.setAttribute('data-shortcut-intent-id', String(meta.iid));
+        button.setAttribute('data-shortcut-name', String(meta.name));
+        const content = document.createElement('span');
+        content.className = 'flex-grow-1 min-w-0';
+        const name = document.createElement('span');
+        name.className = 'd-block fw-semibold text-primary';
+        name.textContent = String(meta.name);
+        content.appendChild(name);
+        if (meta.desc) {
+            const description = document.createElement('span');
+            description.className = 'd-block small text-secondary mt-1';
+            description.textContent = String(meta.desc);
+            content.appendChild(description);
+        }
+        const arrow = document.createElement('span');
+        arrow.className = 'flex-shrink-0 text-secondary fs-5 lh-1';
+        arrow.setAttribute('aria-hidden', 'true');
+        arrow.textContent = '›';
+        button.appendChild(content);
+        button.appendChild(arrow);
+        return button;
     }
 
-    function welcomeShortcutButtonHtml(meta) {
-        return shortcutCardHtml(meta);
+    function appendShortcutCardsGrid(container, actions) {
+        const grid = document.createElement('div');
+        grid.className = 'spa-shortcut-cards-grid';
+        let count = 0;
+        (Array.isArray(actions) ? actions : []).forEach(function (action) {
+            const meta = shortcutMetaFromAction(action);
+            if (!meta) {
+                return;
+            }
+            grid.appendChild(createShortcutCard(meta));
+            count++;
+        });
+        container.appendChild(grid);
+        return count;
     }
 
     /**
@@ -6339,23 +6608,11 @@
             return;
         }
         const t = (msg && String(msg).trim() !== '') ? String(msg).trim() : '';
-        welcomeActionsEl.innerHTML = t !== ''
-            ? '<div class="text-muted small">' + escapeHtml(t) + '</div>'
-            : '<div class="text-muted small">No hay atajos disponibles.</div>';
+        const message = document.createElement('div');
+        message.className = 'text-muted small';
+        message.textContent = t !== '' ? t : window.BioenlaceApiClient.shortcutsEmptyMessage();
+        welcomeActionsEl.replaceChildren(message);
         syncShortcutsToolbarVisibility();
-    }
-
-    function appendShortcutCardsGridHtml(actions) {
-        let html = '';
-        const items = Array.isArray(actions) ? actions : [];
-        items.forEach(function (a) {
-            const m = shortcutMetaFromAction(a);
-            if (!m) {
-                return;
-            }
-            html += welcomeShortcutButtonHtml(m);
-        });
-        return html;
     }
 
     function renderWelcomeShortcutsCategories(categories) {
@@ -6367,47 +6624,62 @@
             renderWelcomeShortcutsEmpty();
             return;
         }
-        let html = '<div class="spa-chat-welcome-categories d-flex flex-column gap-3">';
+        const categoriesRoot = document.createElement('div');
+        categoriesRoot.className = 'spa-chat-welcome-categories d-flex flex-column gap-3';
         cats.forEach(function (c) {
-            const title = c && c.titulo ? String(c.titulo) : 'Atajos';
+            const title = c && c.titulo ? String(c.titulo) : window.BioenlaceApiClient.shortcutsHeading();
             const subgroups = c && Array.isArray(c.subgroups) ? c.subgroups : [];
             const actions = c && Array.isArray(c.actions) ? c.actions : [];
             if (subgroups.length > 0) {
                 let hasAny = false;
-                let sectionHtml = '<section class="spa-chat-welcome-category">';
-                sectionHtml += '<h3 class="spa-chat-welcome-category-title h6 mb-2 fw-semibold text-secondary">' + escapeHtml(title) + '</h3>';
+                const section = document.createElement('section');
+                section.className = 'spa-chat-welcome-category';
+                const heading = document.createElement('h3');
+                heading.className = 'spa-chat-welcome-category-title h6 mb-2 fw-semibold text-secondary';
+                heading.textContent = title;
+                section.appendChild(heading);
                 subgroups.forEach(function (sg) {
                     const sgTitle = sg && sg.titulo ? String(sg.titulo) : '';
                     const sgActions = sg && Array.isArray(sg.actions) ? sg.actions : [];
                     if (!sgActions.length) {
                         return;
                     }
-                    hasAny = true;
-                    sectionHtml += '<div class="spa-chat-welcome-subgroup mb-2">';
+                    const subgroup = document.createElement('div');
+                    subgroup.className = 'spa-chat-welcome-subgroup mb-2';
                     if (sgTitle) {
-                        sectionHtml += '<h4 class="spa-chat-welcome-subgroup-title h6 mb-2 small fw-semibold text-secondary">' + escapeHtml(sgTitle) + '</h4>';
+                        const subgroupHeading = document.createElement('h4');
+                        subgroupHeading.className = 'spa-chat-welcome-subgroup-title h6 mb-2 small fw-semibold text-secondary';
+                        subgroupHeading.textContent = sgTitle;
+                        subgroup.appendChild(subgroupHeading);
                     }
-                    sectionHtml += '<div class="spa-shortcut-cards-grid">';
-                    sectionHtml += appendShortcutCardsGridHtml(sgActions);
-                    sectionHtml += '</div></div>';
+                    if (appendShortcutCardsGrid(subgroup, sgActions) > 0) {
+                        section.appendChild(subgroup);
+                        hasAny = true;
+                    }
                 });
-                sectionHtml += '</section>';
                 if (hasAny) {
-                    html += sectionHtml;
+                    categoriesRoot.appendChild(section);
                 }
                 return;
             }
             if (!actions.length) {
                 return;
             }
-            html += '<section class="spa-chat-welcome-category">';
-            html += '<h3 class="spa-chat-welcome-category-title h6 mb-2 fw-semibold text-secondary">' + escapeHtml(title) + '</h3>';
-            html += '<div class="spa-shortcut-cards-grid">';
-            html += appendShortcutCardsGridHtml(actions);
-            html += '</div></section>';
+            const section = document.createElement('section');
+            section.className = 'spa-chat-welcome-category';
+            const heading = document.createElement('h3');
+            heading.className = 'spa-chat-welcome-category-title h6 mb-2 fw-semibold text-secondary';
+            heading.textContent = title;
+            section.appendChild(heading);
+            if (appendShortcutCardsGrid(section, actions) > 0) {
+                categoriesRoot.appendChild(section);
+            }
         });
-        html += '</div>';
-        welcomeActionsEl.innerHTML = html;
+        if (categoriesRoot.children.length === 0) {
+            renderWelcomeShortcutsEmpty();
+            return;
+        }
+        welcomeActionsEl.replaceChildren(categoriesRoot);
         attachWelcomeShortcutListeners();
         toggleWelcomeActionsForComposer();
         syncShortcutsToolbarVisibility();
@@ -6422,18 +6694,18 @@
             renderWelcomeShortcutsEmpty();
             return;
         }
-        let html = '<div class="spa-chat-welcome-category">';
-        html += '<h3 class="spa-chat-welcome-category-title h6 mb-2 fw-semibold text-secondary">Atajos</h3>';
-        html += '<div class="spa-shortcut-cards-grid">';
-        items.forEach(function (a) {
-            const m = shortcutMetaFromAction(a);
-            if (!m) {
-                return;
-            }
-            html += welcomeShortcutButtonHtml(m);
-        });
-        html += '</div></div>';
-        welcomeActionsEl.innerHTML = html;
+        const category = document.createElement('div');
+        category.className = 'spa-chat-welcome-category';
+        const heading = document.createElement('h3');
+        heading.className = 'spa-chat-welcome-category-title h6 mb-2 fw-semibold text-secondary';
+        heading.textContent = window.BioenlaceApiClient.shortcutsHeading();
+        category.appendChild(heading);
+        const count = appendShortcutCardsGrid(category, items);
+        if (count === 0) {
+            renderWelcomeShortcutsEmpty();
+            return;
+        }
+        welcomeActionsEl.replaceChildren(category);
         attachWelcomeShortcutListeners();
         toggleWelcomeActionsForComposer();
         syncShortcutsToolbarVisibility();
@@ -6529,14 +6801,15 @@
         })
         .catch(error => {
             console.warn('No se pudieron cargar las acciones comunes:', error);
-            renderShortcutsEmpty('No se pudieron cargar los atajos.');
-            renderWelcomeShortcutsEmpty('No se pudieron cargar los atajos.');
+            const message = window.BioenlaceApiClient.shortcutsLoadErrorMessage();
+            renderShortcutsEmpty(message);
+            renderWelcomeShortcutsEmpty(message);
         });
     }
 
     function renderShortcutsEmpty(msg) {
         if (!shortcutsContent) return;
-        const t = (msg && String(msg).trim() !== '') ? String(msg).trim() : 'No hay atajos disponibles.';
+        const t = (msg && String(msg).trim() !== '') ? String(msg).trim() : window.BioenlaceApiClient.shortcutsEmptyMessage();
         const message = document.createElement('div');
         message.className = 'text-muted small';
         message.textContent = t;
@@ -6550,18 +6823,16 @@
             renderShortcutsEmpty();
             return;
         }
-        let html = '<div>';
-        html += '<h4 class="h6 text-decoration-underline mb-2">Atajos</h4>';
-        html += '<div class="spa-shortcut-cards-grid">';
-        items.forEach(function (a) {
-            const m = shortcutMetaFromAction(a);
-            if (!m) {
-                return;
-            }
-            html += shortcutCardHtml(m);
-        });
-        html += '</div></div>';
-        shortcutsContent.innerHTML = html;
+        const root = document.createElement('div');
+        const heading = document.createElement('h4');
+        heading.className = 'h6 text-decoration-underline mb-2';
+        heading.textContent = window.BioenlaceApiClient.shortcutsHeading();
+        root.appendChild(heading);
+        if (appendShortcutCardsGrid(root, items) === 0) {
+            renderShortcutsEmpty();
+            return;
+        }
+        shortcutsContent.replaceChildren(root);
         attachShortcutListeners();
     }
 
@@ -6572,62 +6843,62 @@
             renderShortcutsEmpty();
             return;
         }
-        let html = '<div class="d-flex flex-column gap-3">';
+        const root = document.createElement('div');
+        root.className = 'd-flex flex-column gap-3';
         cats.forEach(function (c) {
-            const title = c && c.titulo ? String(c.titulo) : 'Atajos';
+            const title = c && c.titulo ? String(c.titulo) : window.BioenlaceApiClient.shortcutsHeading();
             const subgroups = c && Array.isArray(c.subgroups) ? c.subgroups : [];
             const actions = c && Array.isArray(c.actions) ? c.actions : [];
 
             if (subgroups.length > 0) {
                 let hasAny = false;
-                let blockHtml = '<div>';
-                blockHtml += '<h4 class="spa-chat-welcome-category-title h6 mb-2 fw-semibold text-secondary">' + escapeHtml(title) + '</h4>';
+                const block = document.createElement('div');
+                const heading = document.createElement('h4');
+                heading.className = 'spa-chat-welcome-category-title h6 mb-2 fw-semibold text-secondary';
+                heading.textContent = title;
+                block.appendChild(heading);
                 subgroups.forEach(function (sg) {
                     const sgTitle = sg && sg.titulo ? String(sg.titulo) : '';
                     const sgActions = sg && Array.isArray(sg.actions) ? sg.actions : [];
                     if (!sgActions.length) {
                         return;
                     }
-                    hasAny = true;
-                    blockHtml += '<div class="spa-chat-welcome-subgroup mb-2">';
+                    const subgroup = document.createElement('div');
+                    subgroup.className = 'spa-chat-welcome-subgroup mb-2';
                     if (sgTitle) {
-                        blockHtml += '<h5 class="spa-chat-welcome-subgroup-title h6 mb-2 small fw-semibold text-secondary">' + escapeHtml(sgTitle) + '</h5>';
+                        const subgroupHeading = document.createElement('h5');
+                        subgroupHeading.className = 'spa-chat-welcome-subgroup-title h6 mb-2 small fw-semibold text-secondary';
+                        subgroupHeading.textContent = sgTitle;
+                        subgroup.appendChild(subgroupHeading);
                     }
-                    blockHtml += '<div class="spa-shortcut-cards-grid">';
-                    sgActions.forEach(function (a) {
-                        const m = shortcutMetaFromAction(a);
-                        if (!m) {
-                            return;
-                        }
-                        blockHtml += shortcutCardHtml(m);
-                    });
-                    blockHtml += '</div></div>';
+                    if (appendShortcutCardsGrid(subgroup, sgActions) > 0) {
+                        block.appendChild(subgroup);
+                        hasAny = true;
+                    }
                 });
-                blockHtml += '</div>';
                 if (hasAny) {
-                    html += blockHtml;
+                    root.appendChild(block);
                 }
                 return;
             }
 
-            if (!actions || actions.length < 1) {
+            if (actions.length < 1) {
                 return;
             }
-
-            html += '<div>';
-            html += '<h4 class="spa-chat-welcome-category-title h6 mb-2 fw-semibold text-secondary">' + escapeHtml(title) + '</h4>';
-            html += '<div class="spa-shortcut-cards-grid">';
-            actions.forEach(function (a) {
-                const m = shortcutMetaFromAction(a);
-                if (!m) {
-                    return;
-                }
-                html += shortcutCardHtml(m);
-            });
-            html += '</div></div>';
+            const block = document.createElement('div');
+            const heading = document.createElement('h4');
+            heading.className = 'spa-chat-welcome-category-title h6 mb-2 fw-semibold text-secondary';
+            heading.textContent = title;
+            block.appendChild(heading);
+            if (appendShortcutCardsGrid(block, actions) > 0) {
+                root.appendChild(block);
+            }
         });
-        html += '</div>';
-        shortcutsContent.innerHTML = html;
+        if (root.children.length === 0) {
+            renderShortcutsEmpty();
+            return;
+        }
+        shortcutsContent.replaceChildren(root);
         attachShortcutListeners();
     }
 
@@ -6664,20 +6935,8 @@
         const sendIcon = sendBtn.querySelector('.spa-send-icon');
         const sendText = sendBtn.querySelector('.spa-send-text');
         // Soportar botones "solo ícono": `.spa-send-icon` puede no existir.
-        // Fallback: si faltan spinner o texto, degradar a HTML swap.
         if (!spinner || !sendText) {
-            try {
-                if (!sendBtn.dataset.originalHtml) {
-                    sendBtn.dataset.originalHtml = sendBtn.innerHTML;
-                }
-                if (loading) {
-                    sendBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
-                } else if (sendBtn.dataset.originalHtml) {
-                    sendBtn.innerHTML = sendBtn.dataset.originalHtml;
-                }
-            } catch (e) {
-                // ignore
-            }
+            setInlineButtonSpinner(sendBtn, loading);
             return;
         }
         if (loading) {

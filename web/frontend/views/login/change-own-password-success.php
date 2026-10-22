@@ -2,6 +2,7 @@
 
 /**
  * @var yii\web\View $this
+ * @var bool $isGuest
  */
 
 use yii\helpers\Html;
@@ -15,7 +16,7 @@ $this->title = 'Contraseña actualizada';
 				La contraseña se actualizó correctamente.
 			</div>
 			<div class="text-center">
-				<?php if (Yii::$app->user->isGuest): ?>
+				<?php if ($isGuest): ?>
 					<?= Html::a('Iniciar sesión', ['/auth/login'], ['class' => 'btn btn-primary']) ?>
 				<?php else: ?>
 					<?= Html::a('Volver al inicio', Yii::$app->homeUrl, ['class' => 'btn btn-primary']) ?>

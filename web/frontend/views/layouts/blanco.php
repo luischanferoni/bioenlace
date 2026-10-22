@@ -5,14 +5,16 @@
 
 use yii\helpers\Html;
 use frontend\assets\AppAsset;
+use frontend\components\Layout\SpaLayoutPageBuilder;
 
 AppAsset::register($this);
+$layout = SpaLayoutPageBuilder::build();
 ?>
 <?php $this->beginPage() ?>
 <!DOCTYPE html>
-<html lang="<?= Yii::$app->language ?>">
+<html lang="<?= Html::encode($layout['language']) ?>">
 <head>
-    <meta charset="<?= Yii::$app->charset ?>">
+    <meta charset="<?= Html::encode($layout['charset']) ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <?= Html::csrfMetaTags() ?>
     <title><?= Html::encode($this->title) ?></title>
@@ -21,18 +23,18 @@ AppAsset::register($this);
 <body class="boxed light theme-color-default">
 <?php $this->beginBody() ?>
 
-<?php if (!Yii::$app->user->isGuest): ?>
+<?php if (!$layout['isGuest']): ?>
 <script>
-window.userPerTabConfig = <?= \yii\helpers\Json::encode(Yii::$app->user->getPerTabSessions()) ?>;
-window.apiAuthToken = <?= json_encode(Yii::$app->session->get('apiJwtToken')) ?>;
+window.userPerTabConfig = <?= \yii\helpers\Json::encode($layout['userPerTabConfig']) ?>;
+window.apiAuthToken = <?= json_encode($layout['apiAuthToken']) ?>;
 </script>
 <?php endif; ?>
 
 <script>
 window.spaConfig = {
-    baseUrl: '<?= rtrim(Yii::$app->urlManager->createAbsoluteUrl(['/']), '/') ?>',
-    csrfToken: '<?= Yii::$app->request->csrfToken ?>',
-    appVersion: <?= json_encode(Yii::$app->params['spaWebAppVersion'] ?? '1.0.0', JSON_UNESCAPED_UNICODE) ?>
+    baseUrl: '<?= $layout['spaConfig']['baseUrl'] ?>',
+    csrfToken: '<?= $layout['spaConfig']['csrfToken'] ?>',
+    appVersion: <?= json_encode($layout['spaConfig']['appVersion'], JSON_UNESCAPED_UNICODE) ?>
 };
 window.getBioenlaceApiClientHeaders = function (extra) {
     var ver = (window.spaConfig && window.spaConfig.appVersion) ? String(window.spaConfig.appVersion) : '1.0.0';

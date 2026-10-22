@@ -38,6 +38,178 @@
     return 'No puedo determinar la UI a abrir para este paso.';
   };
 
+  NS.suggestedActionsHeading = function () {
+    return 'Acciones sugeridas:';
+  };
+
+  NS.suggestedQueryLabel = function () {
+    return 'Sugerencia:';
+  };
+
+  NS.crudDeleteConfirmLabel = function () {
+    return 'Confirmar Eliminación';
+  };
+
+  NS.crudCancelLabel = function () {
+    return 'Cancelar';
+  };
+
+  NS.crudContinueLabel = function () {
+    return 'Continuar';
+  };
+
+  NS.crudFormHeading = function () {
+    return 'Formulario';
+  };
+
+  NS.crudSaveLabel = function () {
+    return 'Guardar';
+  };
+
+  NS.crudClearLabel = function () {
+    return 'Limpiar';
+  };
+
+  NS.crudNoActionsMessage = function () {
+    return 'No hay acciones disponibles';
+  };
+
+  NS.assistantNoSpecificActionsMessage = function () {
+    return 'No se encontraron acciones específicas para esta consulta.';
+  };
+
+  NS.shortcutsHeading = function () {
+    return 'Atajos';
+  };
+
+  NS.shortcutsEmptyMessage = function () {
+    return 'No hay atajos disponibles.';
+  };
+
+  NS.shortcutsLoadErrorMessage = function () {
+    return 'No se pudieron cargar los atajos.';
+  };
+
+  NS.autocompletePlaceholder = function () {
+    return 'Seleccionar...';
+  };
+
+  NS.autocompleteChooseLabel = function () {
+    return 'Elegir';
+  };
+
+  NS.selectPlaceholder = function () {
+    return 'Seleccione...';
+  };
+
+  NS.composerMinimumLengthMessage = function (minLength) {
+    return 'Contanos tu consulta con al menos ' + String(minLength) + ' caracteres.';
+  };
+
+  NS.composerMissingDataMessage = function (missing) {
+    return 'Faltan datos: ' + missing.join(', ');
+  };
+
+  NS.composerSubmitError = function () {
+    return 'No se pudo enviar la consulta.';
+  };
+
+  NS.flowDisplayError = function () {
+    return 'No se pudo mostrar el flujo en el chat.';
+  };
+
+  NS.flowActiveStepUiError = function () {
+    return 'No se pudo montar la UI del paso activo.';
+  };
+
+  NS.enterConsultationPrompt = function () {
+    return 'Por favor, ingresa una consulta';
+  };
+
+  NS.crudConfirmedLabel = function () {
+    return 'Confirmado';
+  };
+
+  NS.personSearchLabel = function () {
+    return 'Buscar persona';
+  };
+
+  NS.noResultsMessage = function () {
+    return 'Sin resultados';
+  };
+
+  NS.crudOperationSuccessMessage = function () {
+    return 'Operación realizada exitosamente';
+  };
+
+  NS.crudSaveFallbackError = function () {
+    return 'Error al guardar';
+  };
+
+  NS.crudSaveConnectionError = function () {
+    return 'Error de conexión al guardar';
+  };
+
+  NS.crudDeleteConfirmationPrompt = function () {
+    return '¿Estás seguro de que quieres eliminar este registro? Esta acción no se puede deshacer.';
+  };
+
+  NS.crudRecordDeletedMessage = function () {
+    return 'Registro eliminado exitosamente';
+  };
+
+  NS.crudDeleteFallbackError = function () {
+    return 'Error al eliminar';
+  };
+
+  NS.crudDeleteConnectionError = function () {
+    return 'Error de conexión al eliminar';
+  };
+
+  NS.assistantInvalidActionIdMessage = function () {
+    return 'Acción inválida: falta action_id';
+  };
+
+  NS.alertsEmptyMessage = function () {
+    return 'No hay alertas.';
+  };
+
+  NS.alertsLoadErrorMessage = function () {
+    return 'No se pudieron cargar las alertas.';
+  };
+
+  NS.openAttachmentLabel = function () {
+    return 'Abrir';
+  };
+
+  NS.encounterMissingIdentifiersMessage = function () {
+    return 'Falta turno_id o encounter_id para ver la consulta.';
+  };
+
+  NS.currentVitalsTitle = function (date) {
+    return date ? 'SIGNOS VITALES ACTUALES (' + String(date) + ')' : 'SIGNOS VITALES ACTUALES';
+  };
+
+  NS.triageModalTitle = function () {
+    return 'Triage';
+  };
+
+  NS.triageReasonRequiredMessage = function () {
+    return 'Indicá el motivo de consulta.';
+  };
+
+  NS.patientLeftMessage = function () {
+    return 'Paciente se retiró';
+  };
+
+  NS.personSearchRequiredFieldsMessage = function () {
+    return 'Por favor, ingrese los campos obligatorios para poder buscar al paciente.';
+  };
+
+  NS.personIdentityManualEntryMessage = function () {
+    return 'Debe ingresar los datos manualmente. No se ha podido leer correctamente el DNI';
+  };
+
   /**
    * @param {Object<string,string>=} extra Se fusiona encima del base (Object.assign final).
    * @returns {Object<string,string>}

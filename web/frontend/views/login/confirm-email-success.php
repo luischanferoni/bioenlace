@@ -3,6 +3,7 @@
 /**
  * @var yii\web\View $this
  * @var common\models\Platform\User $user
+ * @var bool $isGuest
  */
 
 use yii\helpers\Html;
@@ -16,7 +17,7 @@ $this->title = 'E-mail confirmado';
 				El e-mail <strong><?= Html::encode($user->email) ?></strong> quedó confirmado.
 			</div>
 			<div class="text-center">
-				<?php if (Yii::$app->user->isGuest): ?>
+				<?php if ($isGuest): ?>
 					<?= Html::a('Iniciar sesión', ['/auth/login'], ['class' => 'btn btn-primary']) ?>
 				<?php else: ?>
 					<?= Html::a('Volver al inicio', Yii::$app->homeUrl, ['class' => 'btn btn-primary']) ?>

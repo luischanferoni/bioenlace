@@ -1,6 +1,5 @@
 <?php
 
-use yii\helpers\Url;
 use yii\helpers\Html;
 
 use frontend\assets\SesionOperativaPostloginWizardAsset;
@@ -9,7 +8,6 @@ SesionOperativaPostloginWizardAsset::register($this);
 
 $this->title = 'Configurar sesión';
 
-$urlEstablecerSesionOperativa = Url::to(['/api/v1/sesion-operativa/establecer'], true);
 ?>
 
 <div class="py-3 py-md-4" id="sesion-operativa-wizard-root">

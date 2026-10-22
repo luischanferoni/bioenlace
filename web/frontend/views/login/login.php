@@ -3,6 +3,7 @@
 /**
  * @var $this yii\web\View
  * @var $model common\models\Platform\LoginForm
+ * @var bool $enableAutoLogin
  */
 
 use yii\bootstrap5\ActiveForm;
@@ -41,7 +42,7 @@ use yii\helpers\Html;
 								<?= $form->field($model, 'password')
 									->passwordInput(['placeholder' => $model->getAttributeLabel('password'), 'autocomplete' => 'off']) ?>
 
-								<?= (isset(Yii::$app->user->enableAutoLogin) && Yii::$app->user->enableAutoLogin) ? $form->field($model, 'rememberMe')->checkbox(['value' => true]) : '' ?>
+								<?= $enableAutoLogin ? $form->field($model, 'rememberMe')->checkbox(['value' => true]) : '' ?>
 
 								<div class="d-flex justify-content-center">
 									<?= Html::submitButton(

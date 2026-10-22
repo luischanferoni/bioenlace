@@ -7,6 +7,7 @@ use yii\web\Controller;
 use yii\web\BadRequestHttpException;
 use yii\web\Response;
 use yii\helpers\ArrayHelper;
+use yii\helpers\Url;
 
 use common\components\Platform\Core\Auth\DemoSandboxAccessService;
 use common\components\Platform\Core\Auth\DemoSandboxSessionService;
@@ -101,7 +102,9 @@ class SiteController extends Controller
         $this->layout = 'main_sinmenuizquierda';
         WebApiJwtSessionService::ensureValidTokenInSession();
 
-        return $this->render('despuesdelogin/inicio');
+        return $this->render('despuesdelogin/inicio', [
+            'urlEstablecerSesionOperativa' => Url::to(['/api/v1/sesion-operativa/establecer'], true),
+        ]);
     }
 
     /**

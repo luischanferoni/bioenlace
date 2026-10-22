@@ -190,7 +190,7 @@ function habilitarQrScan() {
 				$("#foto_hidden").val(data.data[0].foto);
 			  } else {
 				$("#cover-spin").hide();
-				alert("Por favor, ingrese los campos obligatorios para poder buscar al paciente.");
+				alert(window.BioenlaceApiClient.personSearchRequiredFieldsMessage());
 			  }
 			  } else {
 				$("#cover-spin").hide(); 
@@ -207,7 +207,7 @@ function habilitarQrScan() {
 		  });
 		  return false; // Evitar ejecutar el submit del formulario.    
 		} else {
-			alert("Debe ingresar los datos manualmente. No se ha podido leer correctamente el DNI");
+			alert(window.BioenlaceApiClient.personIdentityManualEntryMessage());
 		}
 	}
   });

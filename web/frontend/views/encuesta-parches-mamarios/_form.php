@@ -10,9 +10,10 @@ use yii\web\JsExpression;
 /* @var $this yii\web\View */
 /* @var $model common\models\Clinical\EncuestaParchesMamarios */
 /* @var $form yii\widgets\ActiveForm */
+/* @var $formPageData array */
 
-$idEfectorAutocomplete = (int) Yii::$app->user->getIdEfector();
-$idServicioAutocomplete = (int) Yii::$app->user->getServicioActual();
+$idEfectorAutocomplete = $formPageData['idEfectorAutocomplete'];
+$idServicioAutocomplete = $formPageData['idServicioAutocomplete'];
 $this->registerAssetBundle(BioenlaceApiClientAsset::class);
 ?>
 
@@ -64,7 +65,7 @@ $this->registerAssetBundle(BioenlaceApiClientAsset::class);
                             'allowClear' => true,
                             'minimumInputLength' => 3,
                             'ajax' => [
-                                'url' => '/api/v1/profesional-efector-servicio/autocomplete',
+                                'url' => $formPageData['profesionalAutocompleteUrl'],
                                 'dataType' => 'json',
                                 'delay' => 250,
                                 'headers' => new JsExpression(

@@ -601,6 +601,14 @@ class PersonasController extends Controller
         return $this->render('registrarPaciente', [
             'diditVerificationId' => $diditVerificationId,
             'diditStatus' => $diditStatus,
+            'csrfToken' => $request->csrfToken,
+            'registrationUrls' => [
+                'previewRenaper' => Url::to(['personas/preview-renaper-staff']),
+                'registrar' => Url::to(['personas/registrar-paciente-submit']),
+                'crearSesionDidit' => Url::to(['personas/crear-sesion-didit-staff']),
+                'diditCallback' => Url::to(['personas/registrar-paciente'], true),
+                'nuevaAlta' => Url::to(['personas/registrar-paciente']),
+            ],
         ]);
     }
 

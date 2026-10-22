@@ -20,7 +20,8 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <?= $this->render('_form', [
         'model' => $model,
-        'modelAtencionEnfermeria' => $modelAtencionEnfermeria 
+        'modelAtencionEnfermeria' => $modelAtencionEnfermeria,
+        'formPageData' => $formPageData,
     ]) ?>
 
 

@@ -40,3 +40,16 @@ Endpoints de encounter veterinario, receta veterinaria, historia clínica comple
 ## Criterio de salida
 
 Esqueleto de dominio y de módulos revisado, glosario veterinario definido y lista de endpoints del MVP escrita (sin implementar).
+
+## Avance
+
+Se reservó la frontera del dominio bajo `common/components/Domain/Veterinary/` y la vertical móvil bajo `personalsalud/lib/veterinary/`; sus README fijan la gramática módulo-primero, la separación respecto de Clinical humano y la prohibición temporal de rutas/pantallas clínicas. El glosario de Animal, tutor y sujeto genérico ya está en `design.md`.
+
+### Alcance MVP propuesto — requiere confirmación manual
+
+- `GET /api/v1/animals`: listar los animales asociados al tutor autenticado.
+- `POST /api/v1/animals`: crear animal con nombre, especie, raza opcional, fecha de nacimiento aproximada y sexo.
+- `GET /api/v1/animal-catalogs/species`: catálogo de especies.
+- `GET /api/v1/animal-catalogs/breeds?species_id={id}`: razas filtradas por especie.
+
+No se incluyen en esta propuesta turnos, encounter clínico, receta ni historia veterinaria. Antes de crear migraciones o contratos API hay que confirmar el vínculo persistente tutor-animal, los catálogos iniciales y el alcance de edición/listado. La fase sigue en curso por esa decisión manual y por el refactor genérico del sujeto de captura descrito en fase 04; pruebas pendientes no condicionan el estado.

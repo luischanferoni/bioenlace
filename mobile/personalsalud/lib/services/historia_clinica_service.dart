@@ -1019,6 +1019,7 @@ class SignosVitalesEpisodio {
   final String parentType;
   final int episodioId;
   final int totalPoints;
+  final Map<String, SignosVitalesEpisodioMetricMetadata> metricMetadata;
   final Map<String, SignosVitalesEpisodioUltimo> ultimos;
   final List<SignosVitalesEpisodioSerie> series;
 
@@ -1026,6 +1027,7 @@ class SignosVitalesEpisodio {
     required this.parentType,
     required this.episodioId,
     this.totalPoints = 0,
+    this.metricMetadata = const {},
     this.ultimos = const {},
     this.series = const [],
   });
@@ -1036,6 +1038,19 @@ class SignosVitalesEpisodio {
     if (json == null) {
       return SignosVitalesEpisodio(parentType: '', episodioId: 0);
     }
+    final metricMetadata = <String, SignosVitalesEpisodioMetricMetadata>{};
+    final rawMetricMetadata = json['metric_metadata'];
+    if (rawMetricMetadata is Map) {
+      rawMetricMetadata.forEach((key, value) {
+        if (value is Map) {
+          metricMetadata[key
+              .toString()] = SignosVitalesEpisodioMetricMetadata.fromJson(
+            Map<String, dynamic>.from(value),
+          );
+        }
+      });
+    }
+
     int asInt(dynamic v) {
       if (v is int) return v;
       return int.tryParse(v?.toString() ?? '') ?? 0;
@@ -1048,6 +1063,7 @@ class SignosVitalesEpisodio {
         if (v is Map) {
           ultimos[k.toString()] = SignosVitalesEpisodioUltimo.fromJson(
             Map<String, dynamic>.from(v),
+            metadata: metricMetadata[k.toString()],
           );
         }
       });
@@ -1058,8 +1074,12 @@ class SignosVitalesEpisodio {
     if (rawSeries is List) {
       for (final e in rawSeries) {
         if (e is Map) {
+          final serie = Map<String, dynamic>.from(e);
           series.add(
-            SignosVitalesEpisodioSerie.fromJson(Map<String, dynamic>.from(e)),
+            SignosVitalesEpisodioSerie.fromJson(
+              serie,
+              metadata: metricMetadata[(serie['metric'] ?? '').toString()],
+            ),
           );
         }
       }
@@ -1069,8 +1089,31 @@ class SignosVitalesEpisodio {
       parentType: (json['parent_type'] ?? '').toString(),
       episodioId: asInt(json['episodio_id']),
       totalPoints: asInt(json['total_points']),
+      metricMetadata: metricMetadata,
       ultimos: ultimos,
       series: series,
+    );
+  }
+}
+
+class SignosVitalesEpisodioMetricMetadata {
+  final String label;
+  final String unit;
+  final UiIntent intent;
+
+  const SignosVitalesEpisodioMetricMetadata({
+    this.label = '',
+    this.unit = '',
+    this.intent = UiIntent.neutral,
+  });
+
+  factory SignosVitalesEpisodioMetricMetadata.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    return SignosVitalesEpisodioMetricMetadata(
+      label: (json['label'] ?? '').toString(),
+      unit: (json['unit'] ?? '').toString(),
+      intent: _uiIntentFromContract(json['intent']),
     );
   }
 }
@@ -1092,7 +1135,10 @@ class SignosVitalesEpisodioUltimo {
     this.source,
   });
 
-  factory SignosVitalesEpisodioUltimo.fromJson(Map<String, dynamic> json) {
+  factory SignosVitalesEpisodioUltimo.fromJson(
+    Map<String, dynamic> json, {
+    SignosVitalesEpisodioMetricMetadata? metadata,
+  }) {
     double? asDouble(dynamic v) {
       if (v == null) return null;
       if (v is num) return v.toDouble();
@@ -1103,12 +1149,18 @@ class SignosVitalesEpisodioUltimo {
       value: asDouble(json['value']),
       at: (json['at'] ?? '').toString().isEmpty ? null : json['at'].toString(),
       unit: (json['unit'] ?? '').toString().isEmpty
-          ? null
+          ? (metadata != null && metadata.unit.isNotEmpty
+                ? metadata.unit
+                : null)
           : json['unit'].toString(),
       label: (json['label'] ?? '').toString().isEmpty
-          ? null
+          ? (metadata != null && metadata.label.isNotEmpty
+                ? metadata.label
+                : null)
           : json['label'].toString(),
-      intent: _uiIntentFromContract(json['intent']),
+      intent: (json['intent'] ?? '').toString().isEmpty
+          ? metadata?.intent ?? UiIntent.neutral
+          : _uiIntentFromContract(json['intent']),
       source: (json['source'] ?? '').toString().isEmpty
           ? null
           : json['source'].toString(),
@@ -1131,7 +1183,10 @@ class SignosVitalesEpisodioSerie {
     this.points = const [],
   });
 
-  factory SignosVitalesEpisodioSerie.fromJson(Map<String, dynamic> json) {
+  factory SignosVitalesEpisodioSerie.fromJson(
+    Map<String, dynamic> json, {
+    SignosVitalesEpisodioMetricMetadata? metadata,
+  }) {
     final pts = <SignosVitalesEpisodioPunto>[];
     final raw = json['points'];
     if (raw is List) {
@@ -1145,9 +1200,15 @@ class SignosVitalesEpisodioSerie {
     }
     return SignosVitalesEpisodioSerie(
       metric: (json['metric'] ?? '').toString(),
-      label: (json['label'] ?? '').toString(),
-      unit: (json['unit'] ?? '').toString(),
-      intent: _uiIntentFromContract(json['intent']),
+      label: (json['label'] ?? '').toString().isEmpty
+          ? metadata?.label ?? ''
+          : json['label'].toString(),
+      unit: (json['unit'] ?? '').toString().isEmpty
+          ? metadata?.unit ?? ''
+          : json['unit'].toString(),
+      intent: (json['intent'] ?? '').toString().isEmpty
+          ? metadata?.intent ?? UiIntent.neutral
+          : _uiIntentFromContract(json['intent']),
       points: pts,
     );
   }

@@ -36,6 +36,7 @@ final class EpisodioSignosVitalesService
      * @return array{
      *   parent_type: string,
      *   episodio_id: int,
+     *   metric_metadata: array<string, array{label: string, unit: string, intent: string}>,
      *   series: list<array<string, mixed>>,
      *   ultimos: array<string, mixed>,
      *   total_points: int
@@ -64,6 +65,7 @@ final class EpisodioSignosVitalesService
      * @return array{
      *   parent_type: string,
      *   episodio_id: int,
+     *   metric_metadata: array<string, array{label: string, unit: string, intent: string}>,
      *   series: list<array<string, mixed>>,
      *   ultimos: array<string, mixed>,
      *   total_points: int
@@ -262,6 +264,7 @@ final class EpisodioSignosVitalesService
      * @return array{
      *   parent_type: string,
      *   episodio_id: int,
+     *   metric_metadata: array<string, array{label: string, unit: string, intent: string}>,
      *   series: list<array<string, mixed>>,
      *   ultimos: array<string, mixed>,
      *   total_points: int
@@ -316,6 +319,7 @@ final class EpisodioSignosVitalesService
         return [
             'parent_type' => $parentType,
             'episodio_id' => $episodioId,
+            'metric_metadata' => $meta,
             'series' => $series,
             'ultimos' => $ultimos,
             'total_points' => count($points),

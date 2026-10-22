@@ -43,7 +43,7 @@ Esqueleto de dominio y de módulos revisado, glosario veterinario definido y lis
 
 ## Avance
 
-Se reservó la frontera del dominio bajo `common/components/Domain/Veterinary/` y la vertical móvil bajo `personalsalud/lib/veterinary/`; sus README fijan la gramática módulo-primero, la separación respecto de Clinical humano y la prohibición temporal de rutas/pantallas clínicas. El glosario de Animal, tutor y sujeto genérico ya está en `design.md`.
+Se materializó la frontera del dominio bajo `common/components/Domain/Veterinary/Animal/` y la vertical móvil bajo `personalsalud/lib/veterinary/`, con carpetas Application, Domain, Infrastructure y pantallas, modelos y servicios. Sus README fijan la gramática módulo-primero, la separación respecto de Clinical humano y la prohibición temporal de rutas/pantallas clínicas. El glosario de Animal, tutor y sujeto genérico ya está en `design.md`.
 
 ### Alcance MVP propuesto — requiere confirmación manual
 

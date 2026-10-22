@@ -728,6 +728,9 @@
         sv = sv || {};
         var series = Array.isArray(sv.series) ? sv.series : [];
         var ultimos = sv.ultimos || {};
+        var metricMetadata = sv.metric_metadata && typeof sv.metric_metadata === 'object'
+            ? sv.metric_metadata
+            : {};
         var total = parseInt(sv.total_points || 0, 10) || 0;
 
         if (countEl) {
@@ -741,17 +744,21 @@
                 if (!frag) return;
                 var u = ultimos[key];
                 if (!u || u.value == null) return;
+                var metadata = metricMetadata[key] && typeof metricMetadata[key] === 'object'
+                    ? metricMetadata[key]
+                    : {};
                 var badge = frag.querySelector('.badge');
                 if (badge) {
-                    badge.classList.add('text-bg-' + (intentToken(u.intent) || 'secondary'));
+                    badge.classList.add('text-bg-' + (intentToken(u.intent || metadata.intent) || 'secondary'));
                 }
-                tlSet(frag, '[data-field="label"]', (u.label || key) + ': ');
+                tlSet(frag, '[data-field="label"]', (u.label || metadata.label || key) + ': ');
                 var valEl = frag.querySelector('[data-field="value"]');
                 if (valEl) {
                     valEl.classList.remove('d-none');
                     valEl.textContent = String(u.value);
                 }
-                tlSet(frag, '[data-field="unit"]', u.unit ? (' ' + u.unit + ' ') : ' ');
+                var unit = u.unit || metadata.unit || '';
+                tlSet(frag, '[data-field="unit"]', unit ? (' ' + unit + ' ') : ' ');
                 tlSet(frag, '[data-field="at"]', u.at || '');
                 ultimosEl.appendChild(frag);
             });
@@ -784,15 +791,20 @@
             return v || undefined;
         }
         var traces = series.map(function (s) {
+            var metadata = metricMetadata[s.metric] && typeof metricMetadata[s.metric] === 'object'
+                ? metricMetadata[s.metric]
+                : {};
             var xs = (s.points || []).map(function (p) { return p.at; });
             var ys = (s.points || []).map(function (p) { return p.value; });
+            var label = s.label || metadata.label || s.metric;
+            var unit = s.unit || metadata.unit || '';
             return {
                 x: xs,
                 y: ys,
                 type: 'scatter',
                 mode: 'lines+markers',
-                name: (s.label || s.metric) + (s.unit ? ' (' + s.unit + ')' : ''),
-                line: { color: bsColor(intentToken(s.intent) || 'secondary'), width: 2 },
+                name: label + (unit ? ' (' + unit + ')' : ''),
+                line: { color: bsColor(intentToken(s.intent || metadata.intent) || 'secondary'), width: 2 },
                 marker: { size: 7 }
             };
         });

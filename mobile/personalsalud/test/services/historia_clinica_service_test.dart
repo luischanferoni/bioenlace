@@ -145,6 +145,46 @@ void main() {
     expect(vitals.series.single.intent, UiIntent.success);
   });
 
+  test(
+    'uses episode vital metadata when series and latest omit presentation',
+    () {
+      final vitals = SignosVitalesEpisodio.fromJson(<String, dynamic>{
+        'parent_type': 'guardia',
+        'episodio_id': 45,
+        'total_points': 1,
+        'metric_metadata': {
+          'custom_metric': <String, dynamic>{
+            'label': 'Métrica nueva',
+            'unit': 'u',
+            'intent': 'warning',
+          },
+        },
+        'series': [
+          <String, dynamic>{
+            'metric': 'custom_metric',
+            'points': [
+              <String, dynamic>{'at': '21/10/2026 19:00', 'value': 18},
+            ],
+          },
+        ],
+        'ultimos': {
+          'custom_metric': <String, dynamic>{
+            'value': 18,
+            'at': '21/10/2026 19:00',
+          },
+        },
+      });
+
+      expect(vitals.metricMetadata['custom_metric']?.label, 'Métrica nueva');
+      expect(vitals.series.single.label, 'Métrica nueva');
+      expect(vitals.series.single.unit, 'u');
+      expect(vitals.series.single.intent, UiIntent.warning);
+      expect(vitals.ultimos['custom_metric']?.label, 'Métrica nueva');
+      expect(vitals.ultimos['custom_metric']?.unit, 'u');
+      expect(vitals.ultimos['custom_metric']?.intent, UiIntent.warning);
+    },
+  );
+
   test('reads generic clinical documentation field metadata', () {
     final documentation = DocumentacionMedico.fromJson(<String, dynamic>{
       'encounter_id': 34,

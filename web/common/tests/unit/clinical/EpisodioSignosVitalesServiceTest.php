@@ -53,4 +53,26 @@ class EpisodioSignosVitalesServiceTest extends Unit
             'glasgow' => ['label' => 'Glasgow', 'unit' => 'pts', 'intent' => 'secondary'],
         ], $method->invoke($service));
     }
+
+    public function testMetricMetadataIsAvailableWhenEpisodeHasNoMeasurements(): void
+    {
+        $service = (new \ReflectionClass(EpisodioSignosVitalesService::class))
+            ->newInstanceWithoutConstructor();
+        $method = (new \ReflectionClass($service))->getMethod('finalize');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($service, 'GUARDIA', 45, []);
+
+        $this->assertSame([], $result['series']);
+        $this->assertSame([], $result['ultimos']);
+        $this->assertSame(0, $result['total_points']);
+        $this->assertSame(
+            'TA sistólica',
+            $result['metric_metadata'][EpisodioSignosVitalesService::METRIC_TA_SYS]['label']
+        );
+        $this->assertSame(
+            'mmHg',
+            $result['metric_metadata'][EpisodioSignosVitalesService::METRIC_TA_SYS]['unit']
+        );
+    }
 }

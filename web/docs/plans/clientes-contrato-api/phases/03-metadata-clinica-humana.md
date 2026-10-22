@@ -20,6 +20,10 @@ El catálogo público, las opciones del wizard y la respuesta al establecer la s
 
 La documentación clínica del profesional ahora publica secciones genéricas con `key`, `label` y `fields` (`key`, `label`, `value`, `unit`, `format`), además de mantener `titulo` e `items` para clientes anteriores. Web y Personal de Salud prefieren los campos estructurados y conservan lectura de la forma anterior; el test verifica ambos contratos.
 
+La serie de signos vitales publica también `metric_metadata` completo aunque el episodio todavía no tenga puntos, conservando `series` y `ultimos` para los clientes actuales. Web y Personal de Salud usan esa metadata como respaldo de etiqueta, unidad e intent cuando los datos de una serie o último valor no los repiten. El mapeo de fuentes y métricas sigue siendo explícito; esto mejora la disponibilidad de metadata, pero no completa la migración a secciones genéricas.
+
+Las acciones actuales del banner ya declaran presentación y se condicionan al estado del episodio, pero todavía no representan permisos por rol. No se considera cumplida la tarea de acciones permitidas por episodio y rol hasta que esa política se publique de forma autorizada desde el backend.
+
 ## Criterio de salida
 
 Una especialidad nueva se agrega con metadata y un servicio, sin cambios en móvil ni web. El timeline del piloto se pinta solo con secciones genéricas.

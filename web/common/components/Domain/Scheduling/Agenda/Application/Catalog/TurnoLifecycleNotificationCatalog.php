@@ -34,6 +34,16 @@ final class TurnoLifecycleNotificationCatalog
         return $this->render('scheduled_overbook_delay', ['minutes' => (string) $minutes]);
     }
 
+    public function reminderServiceFallback(): string
+    {
+        $fallback = self::load()['messages']['reminder']['service_fallback'] ?? null;
+        if (!is_string($fallback) || trim($fallback) === '') {
+            throw new \RuntimeException('Fallback de servicio para recordatorio de turno incompleto.');
+        }
+
+        return trim($fallback);
+    }
+
     /**
      * @return array{title: string, body: string, transport_hint: string}
      */

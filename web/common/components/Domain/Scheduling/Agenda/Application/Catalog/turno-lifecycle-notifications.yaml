@@ -13,5 +13,6 @@ messages:
     body_template: 'Tu turno podría demorar ~{minutes} min por un sobreturno.'
   reminder:
     title: 'Recordatorio de turno'
+    service_fallback: 'Consulta'
     body_template: "{service} — {date} {time}\n{directions}"
     transport_hint: 'Consultá en la app "Cómo llegar" o colectivos según tu ubicación (datos de transporte público pendiente de integración).'

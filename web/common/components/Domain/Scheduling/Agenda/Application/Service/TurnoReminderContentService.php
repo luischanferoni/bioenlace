@@ -32,7 +32,9 @@ class TurnoReminderContentService
     public function buildForTurno(Turno $turno)
     {
         $efector = $turno->efector ?: Efector::findOne($turno->id_efector);
-        $servicio = $turno->servicio ? $turno->servicio->nombre : 'Consulta';
+        $servicio = $turno->servicio
+            ? $turno->servicio->nombre
+            : $this->notificationCatalog->reminderServiceFallback();
         $fecha = $turno->fecha;
         $hora = $turno->hora;
 

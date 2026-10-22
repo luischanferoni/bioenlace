@@ -16,6 +16,7 @@ final class TurnoLifecycleNotificationCatalogTest extends Unit
     {
         $catalog = new TurnoLifecycleNotificationCatalog();
 
+        $this->assertSame('Consulta', $catalog->reminderServiceFallback());
         $this->assertSame(
             [
                 'title' => 'Turno cancelado por el consultorio',

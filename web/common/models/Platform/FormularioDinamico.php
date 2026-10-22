@@ -43,7 +43,7 @@ class FormularioDinamico extends \yii\base\Model
             foreach ($post as $i => $item) {
                 // si recibimos el id en el post es porque es un update, 
                 // en teoria en el array el 'id' viene al comienzo 
-                // Consulta => ['id o id_consulta' => ..., ... resto de parametros]
+                // Formulario => ['id' => ..., ... resto de parámetros]
                 if (isset($item[$id]) && !empty($item[$id]) && isset($modelsToUpdate[$item[$id]])) {
                     $models[] = $modelsToUpdate[$item[$id]];
                 } else {              

@@ -35,6 +35,16 @@ flowchart TB
 
 Los YAML de flujo viven en `common/metadata/bioenlace/assistant/intents/`.
 
+### Apertura de pantallas
+
+Cuando un paso abre una pantalla, `client_open` identifica el destino de interfaz sin confundirlo con la ruta API de envío:
+
+- `intent`: continuar un flujo conversacional declarado.
+- `ui_json`: abrir una pantalla dinámica definida por un descriptor UI JSON; el descriptor proporciona la ruta y el método.
+- `native`: abrir una pantalla nativa identificada por el cliente (por ejemplo, una pantalla móvil).
+
+El flow puede declarar `open_ui` explícitamente; para acciones descubiertas, el backend completa `client_open` a partir del catálogo de acciones o de un descriptor UI existente. Una acción POST-only de cierre no se convierte en una pantalla GET. Las pruebas del sobre verifican tanto la preservación de targets nativos como la resolución de UI JSON. Detalle de motores: [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md).
+
 Clasificación: el preprocess inventa **tags** y un **hint** de canal (`guide`, `fuera_his`, `sin_pedido`). PHP cruza los tags con `meta.tags` de los estados de cada intent (YAML Domain) y con keywords de artículos en BD (`DiscoveryIndex`). Lo que matchea se **adjunta** a la guía (2ª IA): semántica del flow y, si hay, cuerpo del artículo. El flow se abre cuando la persona toca el botón.
 
 **Routing** (1ª IA preprocess → hint + tags):

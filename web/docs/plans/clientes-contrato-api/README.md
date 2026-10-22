@@ -16,7 +16,7 @@ Lectura: [overview.md](./overview.md), [design.md](./design.md), fases en [phase
 | 05 Móvil | en curso (inicio y configuración por capacidades; wizard limita clases por efector usando metadata del backend) |
 | 06 Web | pendiente |
 | 07 Veterinaria (estructura) | pendiente |
-| 08 Asistente, admin, jobs, docs | parcial; pendiente de retomar tras las fases anteriores |
+| 08 Asistente, admin, jobs, docs | casi completo; pendiente revisión humana de prompts reservados |
 | 09 Cierre | pendiente |
 
 ## Reglas relacionadas

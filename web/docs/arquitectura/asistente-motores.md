@@ -88,6 +88,10 @@ ADR: [decisions/asistente-discovery-unificado.md](../decisions/asistente-discove
 | Motor | `SubIntentEngine/SubIntentEngine.php` | Lee el YAML del intent y avanza según el statechart (`states`) |
 | Definiciones | `Domain/<BC>/[Modulo/]Application/Flows/intents/*.yaml` (+ platform) | Guion: textos del asistente, qué pantalla abrir, qué datos pedir |
 | Manifiesto de flujo | `FlowManifest/FlowManifest.php` | Describe en runtime qué pasos tiene el flujo (sin duplicar pantallas en otro sitio) |
+
+### Destino de UI (`client_open`)
+
+Los pasos con `open_ui` exponen `client_open` como destino del cliente; no se debe usar una ruta API POST como si fuera una URL de navegación. Los targets conocidos son `intent` para continuar un flow conversacional, `ui_json` para abrir una definición UI JSON y `native` para una pantalla propia del cliente. El flow puede proveer el destino explícitamente; el backend también enriquece acciones de catálogo y rutas con descriptor UI registrado. Los cierres POST-only no reciben una pantalla GET inferida. `AssistantEnvelopeFlowTest` cubre la preservación de targets nativos y la conversión de una ruta de descriptor a `ui_json`.
 | Reglas de negocio | `SubIntentEngine/IntentBusinessRules.php` | Comprueba condiciones antes de entrar al flujo (por ejemplo “falta efector”) |
 | Pantallas embebibles | `frontend/modules/api/v1/views/json/…` | JSON que la interfaz renderiza como formularios y listas |
 

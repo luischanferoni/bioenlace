@@ -125,6 +125,8 @@ Equivalente al paso followup de `run-jobs`. Solo si querés separar cargas; en l
 
 Tras publicar el resumen al paciente, el cron programa touchpoints (`CareFollowupSchedulerService`) y el job envía push con formulario corto.
 
+El título fallback y el copy del push según destinatario (paciente o representante) tienen una única fuente en [care-followup-touchpoint-notifications.yaml](../../common/components/Domain/Clinical/CareCohort/Application/Catalog/care-followup-touchpoint-notifications.yaml). Los títulos específicos ya persistidos en cada touchpoint se conservan; el catálogo solo se usa como fallback y para los cuerpos por audiencia.
+
 **Agente B01 (rama decisoria):** cuando el paciente responde, `CareFollowupBranchingAgent` evalúa reglas en `agents/care-followup-branching.yaml`:
 
 - Empeoramiento o síntomas intensos → push al profesional (`CARE_FOLLOWUP_STAFF_ALERT`).

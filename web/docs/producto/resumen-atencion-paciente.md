@@ -22,6 +22,8 @@ flowchart LR
 2. Un proceso en segundo plano arma el resumen y **notifica** (“tu resumen está listo”).
 3. El paciente abre desde push o “Mis atenciones” y ve narrativa + vínculos.
 
+El título y los cuerpos del push (variante para el paciente y para representante autorizado) tienen una única fuente en [encounter-patient-notifications.yaml](../../common/components/Domain/Clinical/Encounter/Application/Catalog/encounter-patient-notifications.yaml). La selección del destinatario y el envío permanecen en el caso de uso; el nombre dinámico del sujeto se interpola para el representante.
+
 ## Expediente legal (staff)
 
 ```mermaid
@@ -36,6 +38,7 @@ flowchart LR
 
 - Solo roles con permiso dedicado; no está disponible para el paciente.
 - Auditoría de quién solicitó y quién descargó.
+- Al finalizar la generación, el job avisa al solicitante con el copy definido en [legal-export-notifications.yaml](../../common/components/Domain/Clinical/LegalExport/Application/Catalog/legal-export-notifications.yaml); el destinatario y los metadatos del push no dependen del catálogo.
 
 ## Qué ve el paciente en el detalle
 

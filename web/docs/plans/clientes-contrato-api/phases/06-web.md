@@ -17,3 +17,9 @@ La web sigue el mismo criterio que los móviles: renderiza lo que manda la API.
 ## Criterio de salida
 
 Contadores de web en su nuevo tope. Pruebas de humo de HC, captura y tablero.
+
+## Avance
+
+La verificación del asistente SPA confirma que el cliente distingue las acciones por `client_open.kind`, sin inferir el tipo de pantalla a partir de la URL: para `ui_json` toma `client_open.api.route`; en tarjetas `native` prioriza el path web declarado y conserva un fallback de ruta si falta; en un paso de flow `native` no intenta montar la pantalla web. Los `intent` se envían al endpoint conversacional con `action_id`. Se conserva el fallback de navegación para payloads legacy que no traen `client_open.kind`. La normalización del sobre cubre la preservación de targets `ui_json` y `native` en `common/tests/unit/platform/assistant/AssistantEnvelopeFlowTest.php`.
+
+Esto completa solo la tarea de verificación del asistente de esta fase; los contadores, el cliente HTTP, las vistas, las plantillas y las pruebas de humo siguen pendientes de validar contra el criterio de salida.

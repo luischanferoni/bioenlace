@@ -1,6 +1,6 @@
 # Clinical — Especialidades (Fase 7)
 
-Extensiones FHIR por especialidad. Los modelos legacy (`ConsultaOdontologia*`, `ConsultaPracticasOftalmologia`, `ConsultasRecetaLentes`) se mapean a recursos clínicos sin escribir tablas `consultas_*` (eliminadas en migración).
+Extensiones FHIR por especialidad. Los modelos de captura específicos de cada especialidad se mapean a recursos clínicos sin escribir tablas `consultas_*` (eliminadas en migración).
 
 ## Pilotos completos
 
@@ -13,10 +13,10 @@ Extensiones FHIR por especialidad. Los modelos legacy (`ConsultaOdontologia*`, `
 
 `EncounterDocumentationService::guardar` enruta por `workflow_json` → `relacion`:
 
-- `ConsultaOdontologiaPracticas` → `OdontologyEncounterService::persistPractices` (+ care plan `odontology`)
-- `ConsultaOdontologiaDiagnosticos` → `persistDiagnostics`
-- `ConsultaPracticasOftalmologia` / `Estudios` → `OphthalmologyEncounterService::persistPractices`
-- `ConsultasRecetaLentes` → `persistLensPrescription`
+- `EncounterDentalPractice` → `OdontologyEncounterService::persistPractices` (+ care plan `odontology`)
+- `EncounterDentalDiagnosis` → `persistDiagnostics`
+- `OphthalmologyPractice` / `OphthalmologyStudy` → `OphthalmologyEncounterService::persistPractices`
+- `OphthalmologyLensPrescription` → `persistLensPrescription`
 
 Solo se persisten modelos listados en la definición del encounter (`EncounterDefinitionSpecialtyRegistry::isModelAllowed`).
 

@@ -16,6 +16,8 @@ Los YAML de catálogo / ui-text / prompt llevan **textos** que ve el usuario o l
 
 No llevan mapas máquina↔máquina (`aliases` id→id, listas de ids auxiliares sin copy): eso va en el **loader PHP** del catálogo. No se mantienen capas de retrocompatibilidad en metadata. Patrón: YAML `id → descripción`; PHP `all()` / `isValid()` + constantes de wiring. Ejemplos: `PreprocessRoutingHintCatalog`, `HintResolutionMetadata`, `UiJsonDomainIndex`, `DomainOperationPolicyCatalog::DOMAIN_ONLY_OPERATIONS`.
 
+Los **catálogos de notificaciones** siguen la misma separación: YAML mantiene el copy estático y las plantillas/placeholders; el servicio PHP conserva reglas de disparo, destinatarios, plazos, persistencia, payload y envío. Los valores interpolados son datos de ejecución y no se deben duplicar en el catálogo. Ejemplos: [notificaciones de turnos](../../common/components/Domain/Scheduling/Agenda/Application/Catalog/turno-lifecycle-notifications.yaml), [resumen clínico](../../common/components/Domain/Clinical/Encounter/Application/Catalog/encounter-patient-notifications.yaml) y [expediente legal](../../common/components/Domain/Clinical/LegalExport/Application/Catalog/legal-export-notifications.yaml).
+
 ## Matriz rápida
 
 | Pregunta | Respuesta típica |

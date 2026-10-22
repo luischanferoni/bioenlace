@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Clinical\CareCohort\Application\Service;
 
+use common\components\Domain\Clinical\CareCohort\Application\Catalog\CareFollowupTouchpointNotificationCatalog;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\components\Platform\Core\Service\Push\PushNotificationTypes;
 use common\components\Domain\Clinical\Encounter\Application\Service\EncounterPhaseWindowsCatalogService;
@@ -16,6 +17,13 @@ use Yii;
  */
 final class CareFollowupTouchpointService
 {
+    private CareFollowupTouchpointNotificationCatalog $notificationCatalog;
+
+    public function __construct(?CareFollowupTouchpointNotificationCatalog $notificationCatalog = null)
+    {
+        $this->notificationCatalog = $notificationCatalog ?? new CareFollowupTouchpointNotificationCatalog();
+    }
+
     /**
      * @return int touchpoints notificados
      */
@@ -70,7 +78,7 @@ final class CareFollowupTouchpointService
             return false;
         }
 
-        $title = trim((string) $row->title) ?: 'Seguimiento de tu atención';
+        $title = trim((string) $row->title) ?: $this->notificationCatalog->fallbackTitle();
         $subjectLabel = $recipientSvc->subjectDisplayLabel($subjectId);
         $sender = new PushNotificationSender();
         $sent = 0;
@@ -81,10 +89,10 @@ final class CareFollowupTouchpointService
         }
 
         foreach ($recipients as $recipientId) {
-            $body = $recipientId === $subjectId
-                ? 'Contanos cómo te sentís y revisá las recomendaciones de tu consulta.'
-                : 'Seguimiento de la atención de ' . $subjectLabel
-                    . ': completá el formulario de evolución.';
+            $body = $this->notificationCatalog->bodyForRecipient(
+                $recipientId === $subjectId,
+                $subjectLabel
+            );
 
             $pushData = [
                 'type' => PushNotificationTypes::CARE_FOLLOWUP_TOUCHPOINT,

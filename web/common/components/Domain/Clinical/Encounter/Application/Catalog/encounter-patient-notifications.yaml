@@ -1,0 +1,8 @@
+# Copy de notificaciones de resumen clínico publicado al paciente y sus representantes.
+# Consumidor: PublishPatientEncounterSummary / EncounterPatientSummaryNotificationCatalog.
+version: 1
+messages:
+  summary_ready:
+    title: 'Resumen de atención disponible'
+    patient_body: 'Consultá qué indicó el profesional y tus próximos pasos.'
+    representative_body_template: 'El resumen de atención de {subject_label} está listo.'

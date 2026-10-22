@@ -1,0 +1,7 @@
+# Copy de push de touchpoints de seguimiento post-consulta.
+# Consumidor: CareFollowupTouchpointService / CareFollowupTouchpointNotificationCatalog.
+version: 1
+messages:
+  fallback_title: 'Seguimiento de tu atención'
+  patient_body: 'Contanos cómo te sentís y revisá las recomendaciones de tu consulta.'
+  representative_body_template: 'Seguimiento de la atención de {subject_label}: completá el formulario de evolución.'

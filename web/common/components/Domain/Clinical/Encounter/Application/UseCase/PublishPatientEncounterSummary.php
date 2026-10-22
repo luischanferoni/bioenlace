@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Clinical\Encounter\Application\UseCase;
 
+use common\components\Domain\Clinical\Encounter\Application\Catalog\EncounterPatientSummaryNotificationCatalog;
 use common\components\Domain\Clinical\CareCohort\Application\UseCase\ScheduleCareFollowup;
 use common\components\Domain\Clinical\Encounter\Application\Service\PatientEncounterSummaryService;
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
@@ -22,10 +23,14 @@ final class PublishPatientEncounterSummary
     public const DELAY_MINUTES = 3;
 
     private PatientEncounterSummaryService $builder;
+    private EncounterPatientSummaryNotificationCatalog $notificationCatalog;
 
-    public function __construct(?PatientEncounterSummaryService $builder = null)
-    {
+    public function __construct(
+        ?PatientEncounterSummaryService $builder = null,
+        ?EncounterPatientSummaryNotificationCatalog $notificationCatalog = null
+    ) {
         $this->builder = $builder ?? new PatientEncounterSummaryService();
+        $this->notificationCatalog = $notificationCatalog ?? new EncounterPatientSummaryNotificationCatalog();
     }
 
     public function schedulePublication(Encounter $encounter): void
@@ -154,11 +159,12 @@ final class PublishPatientEncounterSummary
 
         $subjectLabel = $recipientSvc->subjectDisplayLabel($subjectPersonaId);
         $sender = new PushNotificationSender();
+        $title = $this->notificationCatalog->title();
 
         foreach ($recipients as $recipientId) {
             $body = $recipientId === $subjectPersonaId
-                ? 'Consultá qué indicó el profesional y tus próximos pasos.'
-                : 'El resumen de atención de ' . $subjectLabel . ' está listo.';
+                ? $this->notificationCatalog->bodyForPatient()
+                : $this->notificationCatalog->bodyForRepresentative($subjectLabel);
 
             $sender->sendToPersona(
                 $recipientId,
@@ -167,7 +173,7 @@ final class PublishPatientEncounterSummary
                     'encounter_id' => (string) $encounterId,
                     'subject_persona_id' => (string) $subjectPersonaId,
                 ],
-                'Resumen de atención disponible',
+                $title,
                 $body,
                 true
             );

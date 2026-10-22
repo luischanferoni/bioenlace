@@ -3,6 +3,9 @@ messages:
   extra_confirm:
     title: 'Confirmá tu turno'
     body: 'Confirmá asistencia al turno del {{fecha}} {{hora}}.'
+  scheduled_confirm_request:
+    title: 'Confirmá tu turno'
+    body: 'Confirmá asistencia al turno del {{fecha}} {{hora}}'
   reminder:
     title: 'Tu turno es pronto'
     body: 'Recordá tu turno del {{fecha}} a las {{hora}}.'

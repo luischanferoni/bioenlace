@@ -1,5 +1,5 @@
-# Copy de notificaciones por eventos del ciclo de vida del turno.
-# Consumidores: AdvanceTurnoLifecycle y CreateSobreturno / TurnoLifecycleNotificationCatalog.
+# Copy de notificaciones operativas y de ciclo de vida del turno.
+# Consumidores: TurnoLifecycleNotificationCatalog, TurnoReminderContentService y TurnoNotificacionController.
 version: 1
 messages:
   cancelled_by_provider:
@@ -8,3 +8,10 @@ messages:
   overbook_delay:
     title: 'Posible demora en tu turno'
     body_template: 'Se agregó un sobreturno urgente; tu horario podría retrasarse aprox. {minutes} min.'
+  scheduled_overbook_delay:
+    title: 'Demora posible'
+    body_template: 'Tu turno podría demorar ~{minutes} min por un sobreturno.'
+  reminder:
+    title: 'Recordatorio de turno'
+    body_template: "{service} — {date} {time}\n{directions}"
+    transport_hint: 'Consultá en la app "Cómo llegar" o colectivos según tu ubicación (datos de transporte público pendiente de integración).'

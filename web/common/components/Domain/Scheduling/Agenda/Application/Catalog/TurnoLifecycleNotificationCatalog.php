@@ -26,6 +26,45 @@ final class TurnoLifecycleNotificationCatalog
         return $this->render('overbook_delay', ['minutes' => (string) $minutes]);
     }
 
+    /**
+     * @return array{title: string, body: string}
+     */
+    public function scheduledOverbookDelay(int $minutes): array
+    {
+        return $this->render('scheduled_overbook_delay', ['minutes' => (string) $minutes]);
+    }
+
+    /**
+     * @return array{title: string, body: string, transport_hint: string}
+     */
+    public function reminder(string $service, string $date, string $time, string $directions): array
+    {
+        $message = self::load()['messages']['reminder'] ?? null;
+        if (
+            !is_array($message)
+            || !is_string($message['title'] ?? null)
+            || trim($message['title']) === ''
+            || !is_string($message['body_template'] ?? null)
+            || trim($message['body_template']) === ''
+            || !is_string($message['transport_hint'] ?? null)
+            || trim($message['transport_hint']) === ''
+        ) {
+            throw new \RuntimeException('Copy de recordatorio de turno incompleto.');
+        }
+
+        $body = str_replace(
+            ['{service}', '{date}', '{time}', '{directions}'],
+            [$service, $date, $time, $directions],
+            $message['body_template']
+        );
+
+        return [
+            'title' => trim($message['title']),
+            'body' => $body,
+            'transport_hint' => trim($message['transport_hint']),
+        ];
+    }
+
     public static function resetCacheForTests(): void
     {
         self::$cache = null;

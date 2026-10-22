@@ -21,6 +21,10 @@ final class TurnoAntinoshowNotificationCatalogTest extends TestCase
             'body' => 'Confirmá asistencia al turno del {{fecha}} {{hora}}.',
         ], $catalog->forMessage('extra_confirm'));
         self::assertSame([
+            'title' => 'Confirmá tu turno',
+            'body' => 'Confirmá asistencia al turno del {{fecha}} {{hora}}',
+        ], $catalog->forMessage('scheduled_confirm_request'));
+        self::assertSame([
             'title' => 'Tu turno es pronto',
             'body' => 'Recordá tu turno del {{fecha}} a las {{hora}}.',
         ], $catalog->forMessage('reminder'));

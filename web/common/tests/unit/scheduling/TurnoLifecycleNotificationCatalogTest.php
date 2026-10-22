@@ -30,5 +30,20 @@ final class TurnoLifecycleNotificationCatalogTest extends Unit
             ],
             $catalog->overbookDelay(20)
         );
+        $this->assertSame(
+            [
+                'title' => 'Demora posible',
+                'body' => 'Tu turno podría demorar ~30 min por un sobreturno.',
+            ],
+            $catalog->scheduledOverbookDelay(30)
+        );
+        $this->assertSame(
+            [
+                'title' => 'Recordatorio de turno',
+                'body' => "Cardiología — 2026-10-22 09:30\nCalle 1",
+                'transport_hint' => 'Consultá en la app "Cómo llegar" o colectivos según tu ubicación (datos de transporte público pendiente de integración).',
+            ],
+            $catalog->reminder('Cardiología', '2026-10-22', '09:30', 'Calle 1')
+        );
     }
 }

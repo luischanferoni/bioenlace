@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Agenda\Application\Service;
 
+use common\components\Domain\Scheduling\Agenda\Application\Catalog\TurnoLifecycleNotificationCatalog;
 use common\components\Domain\Scheduling\Agenda\Domain\Port\EfectorDirectionsProvider;
 use common\components\Domain\Scheduling\Agenda\Infrastructure\Persistence\NullEfectorDirectionsProvider;
 use common\models\Scheduling\Turno;
@@ -15,9 +16,14 @@ class TurnoReminderContentService
     /** @var EfectorDirectionsProvider */
     private $directions;
 
-    public function __construct(EfectorDirectionsProvider $directions = null)
-    {
+    private TurnoLifecycleNotificationCatalog $notificationCatalog;
+
+    public function __construct(
+        EfectorDirectionsProvider $directions = null,
+        ?TurnoLifecycleNotificationCatalog $notificationCatalog = null
+    ) {
         $this->directions = $directions ?: new NullEfectorDirectionsProvider();
+        $this->notificationCatalog = $notificationCatalog ?? new TurnoLifecycleNotificationCatalog();
     }
 
     /**
@@ -29,8 +35,6 @@ class TurnoReminderContentService
         $servicio = $turno->servicio ? $turno->servicio->nombre : 'Consulta';
         $fecha = $turno->fecha;
         $hora = $turno->hora;
-        $title = 'Recordatorio de turno';
-        $body = sprintf('%s — %s %s', $servicio, $fecha, $hora);
 
         $dir = $efector ? $this->directions->getDirectionsForEfector($efector) : [
             'lat' => null,
@@ -39,7 +43,12 @@ class TurnoReminderContentService
             'fuente_datos' => 'none',
         ];
 
-        $transporte = 'Consultá en la app "Cómo llegar" o colectivos según tu ubicación (datos de transporte público pendiente de integración).';
+        $copy = $this->notificationCatalog->reminder(
+            (string) $servicio,
+            (string) $fecha,
+            (string) $hora,
+            (string) $dir['texto_indicaciones']
+        );
 
         $data = [
             'type' => 'TURNO_REMINDER',
@@ -51,11 +60,9 @@ class TurnoReminderContentService
             'ubicacion_lat' => $dir['lat'] !== null ? (string) $dir['lat'] : '',
             'ubicacion_lng' => $dir['lng'] !== null ? (string) $dir['lng'] : '',
             'ubicacion_fuente' => $dir['fuente_datos'],
-            'transporte_hint' => $transporte,
+            'transporte_hint' => $copy['transport_hint'],
         ];
 
-        $body .= "\n" . $dir['texto_indicaciones'];
-
-        return ['title' => $title, 'body' => $body, 'data' => $data];
+        return ['title' => $copy['title'], 'body' => $copy['body'], 'data' => $data];
     }
 }

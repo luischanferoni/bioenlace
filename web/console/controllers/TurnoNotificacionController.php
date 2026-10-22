@@ -9,6 +9,8 @@ use common\models\Scheduling\Turno;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\components\Platform\Core\Service\Push\FcmPushConfig;
 use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoReminderContentService;
+use common\components\Domain\Scheduling\Agenda\Application\Catalog\TurnoLifecycleNotificationCatalog;
+use common\components\Domain\Scheduling\Agenda\Application\Catalog\TurnoAntinoshowNotificationCatalog;
 use common\components\Domain\Clinical\Encounter\Application\Service\AppointmentReasonBatchService;
 
 /**
@@ -48,6 +50,12 @@ class TurnoNotificacionController extends Controller
                 } elseif ($row->tipo === TurnoNotificacionProgramada::TIPO_CONFIRM_REQUEST) {
                     $confirmation = new \common\components\Domain\Scheduling\Agenda\Application\UseCase\ConfirmTurno();
                     $token = $confirmation->ensureConfirmacionToken($turno);
+                    $copy = (new TurnoAntinoshowNotificationCatalog())->forMessage('scheduled_confirm_request');
+                    $confirmationBody = str_replace(
+                        ['{{fecha}}', '{{hora}}'],
+                        [(string) $turno->fecha, (string) $turno->hora],
+                        $copy['body']
+                    );
                     $push->sendToPersona(
                         (int) $turno->id_persona,
                         [
@@ -57,8 +65,8 @@ class TurnoNotificacionController extends Controller
                             'action' => 'confirmar_asistencia',
                             'action_label' => 'Confirmar asistencia',
                         ],
-                        'Confirmá tu turno',
-                        'Confirmá asistencia al turno del ' . $turno->fecha . ' ' . $turno->hora,
+                        $copy['title'],
+                        $confirmationBody,
                         true,
                         [
                             'idempotency_key' => 'turno-confirmation:' . (int) $row->id,
@@ -121,11 +129,12 @@ class TurnoNotificacionController extends Controller
                     $meta = $row->payload_json ? json_decode($row->payload_json, true) : [];
                     $min = isset($meta['minutos_retraso_estimado']) ? (int) $meta['minutos_retraso_estimado'] : 30;
                     if ($turno->paciente) {
+                        $copy = (new TurnoLifecycleNotificationCatalog())->scheduledOverbookDelay($min);
                         $push->sendToPersona(
                             (int) $turno->id_persona,
                             ['type' => 'TURNO_RETRASO_SOBRETURNO', 'id_turno' => (string) $turno->id_turnos],
-                            'Demora posible',
-                            'Tu turno podría demorar ~' . $min . ' min por un sobreturno.'
+                            $copy['title'],
+                            $copy['body']
                         );
                     }
                 } elseif ($row->tipo === TurnoNotificacionProgramada::TIPO_RESOLUCION_MULTICANAL) {

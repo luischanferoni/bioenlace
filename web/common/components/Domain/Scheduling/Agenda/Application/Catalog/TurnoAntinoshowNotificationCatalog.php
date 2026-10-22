@@ -68,7 +68,7 @@ final class TurnoAntinoshowNotificationCatalog
             throw new \RuntimeException('Catálogo turno-antinoshow-notifications inválido.');
         }
 
-        foreach (['extra_confirm', 'reminder', 'slot_released'] as $messageId) {
+        foreach (['extra_confirm', 'scheduled_confirm_request', 'reminder', 'slot_released'] as $messageId) {
             $message = $data['messages'][$messageId] ?? null;
             if (
                 !is_array($message)

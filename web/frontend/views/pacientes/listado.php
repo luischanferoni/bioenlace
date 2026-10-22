@@ -1,6 +1,5 @@
 <?php
 
-use common\components\Domain\Clinical\Emergency\Domain\TriageScale;
 use yii\helpers\Html;
 
 /**
@@ -202,16 +201,7 @@ $messages = $page['messages'];
                 <p class="text-muted small mb-3" id="guardia-triage-paciente-nombre"></p>
                 <div class="mb-3">
                     <label class="form-label">Prioridad (Manchester)</label>
-                    <div class="d-flex flex-wrap gap-2" id="guardia-triage-levels">
-                        <?php foreach (TriageScale::levelMeta() as $n => $meta): ?>
-                        <input type="radio" class="btn-check" name="guardia_triage_level" id="guardia-triage-level-<?= (int) $n ?>" value="<?= (int) $n ?>"<?= (int) $n === 3 ? ' checked' : '' ?>>
-                        <label
-                            class="btn btn-sm btn-outline-secondary fw-bold guardia-triage-level guardia-triage-level--<?= (int) $n ?>"
-                            for="guardia-triage-level-<?= (int) $n ?>"
-                            title="<?= Html::encode($meta['label']) ?>"
-                        ><?= (int) $n ?></label>
-                        <?php endforeach; ?>
-                    </div>
+                    <div class="d-flex flex-wrap gap-2" id="guardia-triage-levels" role="radiogroup" aria-label="Niveles de prioridad Manchester"></div>
                 </div>
                 <div class="mb-3">
                     <label for="guardia-triage-reason" class="form-label">Motivo de consulta</label>

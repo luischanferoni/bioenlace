@@ -20,7 +20,8 @@ final class EmergencySlaService
      *   sla_violado: bool,
      *   sla_tipo: string|null,
      *   sla_umbral_minutos: int|null,
-     *   triage_espera_nivel: string|null
+     *   triage_espera_nivel: string|null,
+     *   triage_espera_intent: string|null
      * }
      */
     public function evaluate(EmergencyEpisode $guardia, int $minutosEspera, ?string $circuitoEstado, ?int $prioridadTriage): array
@@ -39,6 +40,7 @@ final class EmergencySlaService
                 'sla_tipo' => $violado ? 'triage' : null,
                 'sla_umbral_minutos' => $umbral,
                 'triage_espera_nivel' => $nivel,
+                'triage_espera_intent' => $this->triageEsperaIntent($nivel),
             ];
         }
 
@@ -48,6 +50,7 @@ final class EmergencySlaService
                 'sla_tipo' => null,
                 'sla_umbral_minutos' => null,
                 'triage_espera_nivel' => null,
+                'triage_espera_intent' => null,
             ];
         }
 
@@ -59,6 +62,7 @@ final class EmergencySlaService
                 'sla_tipo' => 'medico',
                 'sla_umbral_minutos' => $umbral,
                 'triage_espera_nivel' => null,
+                'triage_espera_intent' => null,
             ];
         }
 
@@ -67,7 +71,22 @@ final class EmergencySlaService
             'sla_tipo' => null,
             'sla_umbral_minutos' => null,
             'triage_espera_nivel' => null,
+            'triage_espera_intent' => null,
         ];
+    }
+
+    public function triageEsperaIntent(string $nivel): string
+    {
+        switch ($nivel) {
+            case self::TRIAGE_ESPERA_ROJO:
+                return 'danger';
+            case self::TRIAGE_ESPERA_NARANJA:
+                return 'warning';
+            case self::TRIAGE_ESPERA_GRIS:
+                return 'neutral';
+            default:
+                throw new \InvalidArgumentException('Nivel de espera de triage inválido: ' . $nivel);
+        }
     }
 
     /**

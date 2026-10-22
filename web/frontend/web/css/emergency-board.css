@@ -22,13 +22,6 @@
   --manchester-none: #adb5bd;
 }
 
-.guardia-tablero-row--nivel-1 { border-left-color: var(--manchester-1) !important; }
-.guardia-tablero-row--nivel-2 { border-left-color: var(--manchester-2) !important; }
-.guardia-tablero-row--nivel-3 { border-left-color: var(--manchester-3) !important; }
-.guardia-tablero-row--nivel-4 { border-left-color: var(--manchester-4) !important; }
-.guardia-tablero-row--nivel-5 { border-left-color: var(--manchester-5) !important; }
-.guardia-tablero-row--sin-triage { border-left-color: var(--manchester-none) !important; }
-
 /* Badge sólido de triage (banner HC / resumen) */
 .badge.guardia-triage-badge--1 {
   background-color: var(--manchester-1);

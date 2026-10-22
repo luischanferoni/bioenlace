@@ -1818,8 +1818,13 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
 
     final tempAudio = _pendingAudioPath;
     if (tempAudio != null && tempAudio.isNotEmpty) {
+      final storedAudioPath = existing == null
+          ? null
+          : await _pendingStore.absoluteAudioPath(existing);
       final alreadyDurable =
-          !kIsWeb && tempAudio.contains('/pending-encounters/');
+          storedAudioPath != null &&
+          storedAudioPath.replaceAll('\\', '/') ==
+              tempAudio.replaceAll('\\', '/');
       if (!alreadyDurable) {
         try {
           final imported = await _pendingStore.importAudioFile(

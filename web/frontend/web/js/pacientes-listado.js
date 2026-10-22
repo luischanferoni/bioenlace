@@ -161,6 +161,8 @@
     var triageModal = null;
     var triageModalGuardiaId = 0;
     var triageModalIsRetriage = false;
+    var triageLevels = null;
+    var triageLevelsRequest = null;
     var derivarModal = null;
     var derivarModalGuardiaId = 0;
     var finalizarModal = null;
@@ -666,14 +668,12 @@
     function circuitoBadgeClass(g) {
       var sinTriage = guardiaSinTriage(g);
       if (sinTriage) {
-        var nivel = g.triage_espera_nivel || '';
-        if (nivel === 'rojo') {
-          return 'bg-danger';
-        }
-        if (nivel === 'naranja') {
-          return 'bg-warning text-dark';
-        }
-        return 'bg-secondary';
+        var intentClasses = {
+          danger: 'bg-danger',
+          warning: 'bg-warning text-dark',
+          neutral: 'bg-secondary',
+        };
+        return intentClasses[String(g.triage_espera_intent || '')] || 'bg-secondary';
       }
       if (g.circuito_estado === 'en_atencion') {
         return 'bg-info text-dark';
@@ -687,19 +687,12 @@
       return paciente.nombre_completo || '';
     }
 
-    function nivelRowClass(g) {
-      var parts = [];
-      var level = g.prioridad_triage;
-      if (!(Number(level) >= 1)) {
-        parts.push('guardia-tablero-row--sin-triage');
-      } else {
-        parts.push('guardia-tablero-row--nivel-' + String(level));
-      }
-      return parts.join(' ');
-    }
-
     function fillGuardiaTableroRow(rowEl, g) {
-      rowEl.className = 'd-flex align-items-center justify-content-between p-3 mb-0 border-bottom border-start border-4 guardia-tablero-row ' + nivelRowClass(g);
+      rowEl.className = 'd-flex align-items-center justify-content-between p-3 mb-0 border-bottom border-start border-4 guardia-tablero-row';
+      var triageColor = g.triage_metadata && g.triage_metadata.color;
+      rowEl.style.borderLeftColor = /^#[0-9a-fA-F]{6}$/.test(String(triageColor || ''))
+        ? triageColor
+        : '';
 
       rowEl.querySelector('[data-field="nombre"]').textContent = nombrePacienteGuardia(g);
 
@@ -1260,7 +1253,116 @@
       return triageModal;
     }
 
-    function openTriageModal(g, isRetriage) {
+    function loadTriageLevels() {
+      if (triageLevels) return Promise.resolve(triageLevels);
+      if (triageLevelsRequest) return triageLevelsRequest;
+      var url = '/api/v1/catalogos/triage-levels';
+      var headers = window.BioenlaceApiClient
+        && typeof window.BioenlaceApiClient.mergeHeaders === 'function'
+        ? window.BioenlaceApiClient.mergeHeaders({ Accept: 'application/json' })
+        : { Accept: 'application/json' };
+      triageLevelsRequest = fetch(url, { method: 'GET', credentials: 'same-origin', headers: headers })
+        .then(function (response) {
+          if (!response.ok) {
+            throw new Error('No se pudo cargar el catálogo de niveles de triage.');
+          }
+          return response.json();
+        })
+        .then(function (payload) {
+          var data = payload && payload.data ? payload.data : payload;
+          var levels = data && data.triage_levels;
+          if (!Array.isArray(levels) || levels.length === 0) {
+            throw new Error('El catálogo de niveles de triage está vacío.');
+          }
+          var ids = {};
+          var defaults = 0;
+          levels.forEach(function (level) {
+            if (!level
+                || !Number.isInteger(Number(level.level))
+                || Number(level.level) < 1
+                || typeof level.label !== 'string'
+                || level.label.trim() === ''
+                || !/^#[0-9a-fA-F]{6}$/.test(String(level.color || ''))
+                || ids[String(level.level)]) {
+              throw new Error('El catálogo de niveles de triage es inválido.');
+            }
+            ids[String(level.level)] = true;
+            if (level.is_default === true) defaults += 1;
+          });
+          if (defaults !== 1) {
+            throw new Error('El catálogo debe indicar un único nivel de triage predeterminado.');
+          }
+          triageLevels = levels.slice().sort(function (a, b) {
+            return Number(a.level) - Number(b.level);
+          });
+          return triageLevels;
+        })
+        .catch(function (error) {
+          triageLevelsRequest = null;
+          throw error;
+        });
+      return triageLevelsRequest;
+    }
+
+    function renderTriageLevels(container, selectedLevel, levels) {
+      clearNode(container);
+      levels.forEach(function (metadata) {
+        var level = Number(metadata.level);
+        var input = document.createElement('input');
+        input.type = 'radio';
+        input.className = 'btn-check';
+        input.name = 'guardia_triage_level';
+        input.id = 'guardia-triage-level-' + level;
+        input.value = String(level);
+        input.checked = level === selectedLevel;
+        input.required = true;
+        input.autocomplete = 'off';
+
+        var label = document.createElement('label');
+        label.className = 'btn btn-sm fw-bold guardia-triage-level';
+        label.htmlFor = input.id;
+        label.title = metadata.label;
+        label.textContent = level + ' · ' + metadata.label;
+        label.style.borderColor = metadata.color;
+        label.style.color = metadata.color;
+        var wrap = document.createElement('span');
+        wrap.appendChild(input);
+        wrap.appendChild(label);
+        container.appendChild(wrap);
+      });
+      function syncLevelColors() {
+        levels.forEach(function (metadata) {
+          var level = Number(metadata.level);
+          var input = container.querySelector('#guardia-triage-level-' + level);
+          var label = container.querySelector('label[for="guardia-triage-level-' + level + '"]');
+          if (!input || !label) return;
+          var red = parseInt(metadata.color.slice(1, 3), 16);
+          var green = parseInt(metadata.color.slice(3, 5), 16);
+          var blue = parseInt(metadata.color.slice(5, 7), 16);
+          var luminance = 0.2126 * (red / 255) + 0.7152 * (green / 255) + 0.0722 * (blue / 255);
+          label.style.backgroundColor = input.checked
+            ? 'rgba(' + red + ', ' + green + ', ' + blue + ', 0.25)'
+            : '';
+          label.style.color = input.checked
+            ? (luminance < 0.5 ? '#ffffff' : '#212529')
+            : metadata.color;
+        });
+      }
+      if (container.getAttribute('data-color-bound') !== '1') {
+        container.setAttribute('data-color-bound', '1');
+        container.addEventListener('change', syncLevelColors);
+      }
+      syncLevelColors();
+    }
+
+    async function openTriageModal(g, isRetriage) {
+      var levels;
+      try {
+        levels = await loadTriageLevels();
+      } catch (error) {
+        showPanelToast(friendlyErrorMessage(error));
+        return;
+      }
       triageModalIsRetriage = !!isRetriage;
       triageModalGuardiaId = g.id;
       var nameEl = document.getElementById('guardia-triage-paciente-nombre');
@@ -1278,10 +1380,19 @@
       if (reasonEl) {
         reasonEl.value = triageModalIsRetriage ? (triage.reason_text || '') : '';
       }
-      if (triageModalIsRetriage && g.prioridad_triage != null) {
-        var levelRadio = document.getElementById('guardia-triage-level-' + String(g.prioridad_triage));
-        if (levelRadio) levelRadio.checked = true;
+      var selectedLevel = triageModalIsRetriage && g.prioridad_triage != null
+        ? Number(g.prioridad_triage)
+        : NaN;
+      if (!levels.some(function (metadata) { return Number(metadata.level) === selectedLevel; })) {
+        selectedLevel = Number(levels.filter(function (metadata) {
+          return metadata.is_default === true;
+        })[0].level);
       }
+      renderTriageLevels(
+        document.getElementById('guardia-triage-levels'),
+        selectedLevel,
+        levels
+      );
       var vitals = triage.vitals || {};
       var sysEl = document.getElementById('guardia-triage-bp-sys');
       var diaEl = document.getElementById('guardia-triage-bp-dia');
@@ -1529,7 +1640,14 @@
         return;
       }
       var levelInput = document.querySelector('input[name="guardia_triage_level"]:checked');
-      var level = levelInput ? parseInt(levelInput.value, 10) : 3;
+      if (!levelInput) {
+        if (errEl) {
+          errEl.textContent = 'Seleccioná un nivel del catálogo de triage.';
+          errEl.classList.remove('d-none');
+        }
+        return;
+      }
+      var level = parseInt(levelInput.value, 10);
       var vitalsCheck = window.BioenlaceTriageVitals
         ? window.BioenlaceTriageVitals.validateVitals({
             bp_sys: (document.getElementById('guardia-triage-bp-sys') || {}).value,

@@ -5,6 +5,7 @@ namespace common\components\Domain\Clinical\Emergency\Application\Service;
 use common\components\Domain\Clinical\Emergency\Application\UseCase\TransferEmergencyToInpatient;
 use common\components\Domain\Clinical\Emergency\Application\UseCase\TriageEmergencyEpisode;
 use common\components\Domain\Clinical\Emergency\Domain\BoardState;
+use common\components\Domain\Clinical\Emergency\Domain\TriageScale;
 use common\models\Clinical\DiagnosticReport;
 use common\models\Clinical\ServiceRequest;
 use common\models\Organization\Efector;
@@ -207,12 +208,14 @@ final class EmergencyQueueService
 
         if ($prioridad !== null) {
             $row['prioridad_triage'] = $prioridad;
+            $row['triage_metadata'] = TriageScale::levelMeta()[$prioridad] ?? null;
         }
         if ($pesNombre !== null && $pesNombre !== '') {
             $row['profesional_asignado'] = $pesNombre;
         }
         if (!empty($sla['triage_espera_nivel'])) {
             $row['triage_espera_nivel'] = $sla['triage_espera_nivel'];
+            $row['triage_espera_intent'] = $sla['triage_espera_intent'];
         }
         if (!empty($sla['sla_violado']) && ($sla['sla_tipo'] ?? null) === 'medico') {
             $row['sla_violado'] = true;

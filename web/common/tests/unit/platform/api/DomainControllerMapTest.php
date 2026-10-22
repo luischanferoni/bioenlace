@@ -65,6 +65,8 @@ final class DomainControllerMapTest extends Unit
     {
         $map = DomainControllerMap::build();
 
+        $this->assertArrayNotHasKey('consulta-async', $map);
+        $this->assertArrayNotHasKey('consultas-seguimiento', $map);
         $this->assertSame(
             'frontend\modules\api\v1\controllers\scheduling\EncounterAsyncController',
             $map['encounter-async'] ?? null

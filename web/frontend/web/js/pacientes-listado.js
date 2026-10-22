@@ -3065,17 +3065,12 @@
       clearNode(linksSlot);
       var references = Array.isArray(ctx.references) ? ctx.references : [];
       references.forEach(function (ref) {
-        if (!ref || !ref.kind || ref.kind === 'reference_encounter') return;
+        if (!ref || !ref.kind) return;
+        if (ref.kind === 'reference_encounter') return;
         var personaId = ref.subject_persona_id;
         if (!personaId) return;
         var href = historiaConContexto(personaId, {});
         if (!href) return;
-        if (ref.kind === 'reference_encounter' && ref.encounter_id) {
-          href +=
-            (href.indexOf('?') >= 0 ? '&' : '?') +
-            'id_consulta=' +
-            encodeURIComponent(ref.encounter_id);
-        }
         var a = document.createElement('a');
         a.href = href;
         a.className =

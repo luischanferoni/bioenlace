@@ -807,8 +807,8 @@
         }, { responsive: true, displayModeBar: false });
     }
 
-    function renderMotivos(texto, mp) {
-        var el = document.getElementById('tl_motivos_consulta');
+    function renderEncounterReasons(texto, mp) {
+        var el = document.getElementById('tl_encounter_reasons');
         if (!el) return;
         tlClear(el);
         if (timelineConfig.modoCaptura === 'imp' || timelineConfig.modoCaptura === 'emer') {
@@ -952,8 +952,8 @@
         el.appendChild(root);
     }
 
-    function renderMotivosPacienteApp(mp) {
-        var box = document.getElementById('tl_motivos_consulta_mensajes');
+    function renderPatientEncounterMessages(mp) {
+        var box = document.getElementById('tl_encounter_reason_messages');
         if (!box) return;
         tlClear(box);
         var msgs = (mp && mp.messages) ? mp.messages : [];
@@ -1060,16 +1060,16 @@
         });
     }
 
-    function applyStaffConsultaSoloLectura(data) {
+    function applyStaffEncounterReadOnly(data) {
         renderBadges('tl_condiciones_activas', [], 'border border-info text-info');
         renderBadges('tl_condiciones_cronicas', [], 'border border-warning text-warning');
         renderBadges('tl_hallazgos', [], 'border border-warning text-warning');
         renderBadges('tl_antecedentes', [], 'border border-gray text-gray');
         var mp = data.patient_encounter_reasons || {};
-        renderMotivos(null, mp);
+        renderEncounterReasons(null, mp);
         renderCarePackCohorte(data.care_pack_cohorte || null);
         renderDocumentacionMedico(data.documentacion_medico || null);
-        var boxMsgs = document.getElementById('tl_motivos_consulta_mensajes');
+        var boxMsgs = document.getElementById('tl_encounter_reason_messages');
         tlClear(boxMsgs);
         var signos = document.getElementById('signos-vitales-actuales-content');
         if (signos) {
@@ -1087,7 +1087,7 @@
         try {
             var endpoints = timelineConfig.endpoints || {};
             var staffEp = endpoints.encounterStaffSummary;
-            var soloConsultaCargada = !!timelineConfig.vistaConsultaCargada;
+            var documentedEncounterView = !!timelineConfig.documentedEncounterView;
 
             if (staffEp) {
                 try {
@@ -1101,11 +1101,11 @@
                     ) {
                         var turnoStaff = staffPayload.data.turno || {};
                         var esAtendido = String(turnoStaff.estado || '').toUpperCase() === 'ATENDIDO';
-                        if (soloConsultaCargada || esAtendido) {
-                            applyStaffConsultaSoloLectura(staffPayload.data);
+                        if (documentedEncounterView || esAtendido) {
+                            applyStaffEncounterReadOnly(staffPayload.data);
                             return;
                         }
-                    } else if (soloConsultaCargada) {
+                    } else if (documentedEncounterView) {
                         throw new Error(
                             (staffPayload && staffPayload.error && staffPayload.error.message)
                                 ? staffPayload.error.message
@@ -1113,12 +1113,12 @@
                         );
                     }
                 } catch (staffErr) {
-                    if (soloConsultaCargada) {
+                    if (documentedEncounterView) {
                         throw staffErr;
                     }
                     console.warn('Encounter staff summary no disponible; se usa historia clínica', staffErr);
                 }
-            } else if (soloConsultaCargada) {
+            } else if (documentedEncounterView) {
                 throw new Error('Falta contexto de turno para ver la consulta.');
             }
 
@@ -1139,7 +1139,7 @@
             var mp = payload.data.patient_encounter_reasons || {};
             var esEpisodio = timelineConfig.modoCaptura === 'imp' || timelineConfig.modoCaptura === 'emer';
             if (esEpisodio) {
-                renderMotivos(null, null);
+                renderEncounterReasons(null, null);
                 renderCarePackCohorte(null);
                 renderEpisodioBanner(payload.data.contexto_episodio || null);
                 if (timelineConfig.modoCaptura === 'imp') {
@@ -1157,11 +1157,11 @@
                     }
                 } catch (eEg) {}
             } else {
-                renderMotivos(info.motivos_consulta || null, mp);
+                renderEncounterReasons(info.motivos_consulta || null, mp);
                 renderCarePackCohorte(payload.data.care_pack_cohorte || null);
             }
             renderDocumentacionMedico(null);
-            var boxMsgs = document.getElementById('tl_motivos_consulta_mensajes');
+            var boxMsgs = document.getElementById('tl_encounter_reason_messages');
             tlClear(boxMsgs);
             if (!esEpisodio && window.TimelineJS && typeof window.TimelineJS.applySignosVitalesPayload === 'function') {
                 window.TimelineJS.applySignosVitalesPayload(payload.data.signos_vitales || null);
@@ -1183,16 +1183,16 @@
             renderBadges('tl_condiciones_cronicas', [], 'border border-warning text-warning');
             renderBadges('tl_hallazgos', [], 'border border-warning text-warning');
             renderBadges('tl_antecedentes', [], 'border border-gray text-gray');
-            renderMotivos(null, null);
+            renderEncounterReasons(null, null);
             renderCarePackCohorte(null);
             renderDocumentacionMedico(null);
-            var boxMsgsErr = document.getElementById('tl_motivos_consulta_mensajes');
+            var boxMsgsErr = document.getElementById('tl_encounter_reason_messages');
             tlClear(boxMsgsErr);
             if (window.TimelineJS && typeof window.TimelineJS.applySignosVitalesPayload === 'function') {
                 window.TimelineJS.applySignosVitalesPayload(null);
             }
             var formBoxErr = document.getElementById('formulario-container');
-            if (formBoxErr && timelineConfig.vistaConsultaCargada) {
+            if (formBoxErr && timelineConfig.documentedEncounterView) {
                 tlClear(formBoxErr);
                 var errAlert = tlAlert(e && e.message ? String(e.message) : 'No se pudo cargar la consulta.', 'warning');
                 if (errAlert) formBoxErr.appendChild(errAlert);

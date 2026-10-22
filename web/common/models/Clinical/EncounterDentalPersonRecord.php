@@ -7,7 +7,7 @@ use common\models\Person\Persona;
 use Yii;
 
 /**
- * This is the model class for table "odonto_consulta_persona".
+ * ActiveRecord for the legacy dental encounter-person table.
  *
  * @property int $id_odonto_consulta
  * @property int $encounter_id
@@ -18,7 +18,7 @@ use Yii;
  * @property string $estado_pieza
  * @property string $observaciones
  */
-class OdontoConsultaPersona extends \yii\db\ActiveRecord
+class EncounterDentalPersonRecord extends \yii\db\ActiveRecord
 {
     /**
      * {@inheritdoc}
@@ -60,12 +60,8 @@ class OdontoConsultaPersona extends \yii\db\ActiveRecord
         ];
     }
 
-//Busca consultas anteriores (id_persona)
-    public function getOdontoConsultaPorPersona($id_persona)
+    public function findAllForPerson($personId)
     {
-        $odontoConsulta = OdontoConsultaPersona::findAll(['id_persona'=>$id_persona]);
-        ////$odontoConsulta = OdontoConsultaPersona::find()->where([['id_persona'=>$id_persona]])->orderBy(['id_odonto_consulta'=>SORT_DESC])->all(); actualizar con esta consulta
-        return $odontoConsulta;
+        return self::findAll(['id_persona' => $personId]);
     }
-
 }

@@ -58,9 +58,9 @@ final class PacienteHistoriaTimelinePageBuilder
         $edadTexto = ($edad !== null && $edad !== '') ? ((int) $edad) . ' años' : 'edad s/d';
         $generoTexto = self::GENERO_LABELS[(int) ($persona->genero ?? 0)] ?? 'Sin datos';
         $barrioTexto = self::barrioTexto($persona);
-        $vistaConsultaCargada = strtolower(trim($vistaQuery)) === 'consulta';
+        $documentedEncounterView = strtolower(trim($vistaQuery)) === 'consulta';
 
-        $pageTitle = $vistaConsultaCargada
+        $pageTitle = $documentedEncounterView
             ? ('Consulta cargada · ' . $persona->apellido . ', ' . $persona->nombre . ' | ' . $edadTexto)
             : ($persona->nombre . ' ' . $persona->otro_nombre . ', ' . $persona->apellido
                 . ' | ' . $edadTexto . ' · ' . $generoTexto . ' · Barrio: ' . $barrioTexto);
@@ -77,7 +77,7 @@ final class PacienteHistoriaTimelinePageBuilder
 
         $jsConfig = [
             'pacienteId' => $personaId,
-            'vistaConsultaCargada' => $vistaConsultaCargada,
+            'documentedEncounterView' => $documentedEncounterView,
             'modoCaptura' => $modoCaptura,
             'parent' => $esContextoEpisodio ? $parentUpper : null,
             'parentId' => $esContextoEpisodio ? $parentId : null,
@@ -87,7 +87,7 @@ final class PacienteHistoriaTimelinePageBuilder
                     ? Url::to(['personas/curvas-crecimiento', 'id' => $personaId])
                     : null,
                 'encounterCaptureForm' => Url::to(['paciente/encounter-capture-form', 'id' => $personaId]),
-                'historiaClinica' => $vistaConsultaCargada ? null : $paths['historiaClinicaPath'],
+                'historiaClinica' => $documentedEncounterView ? null : $paths['historiaClinicaPath'],
                 'encounterStaffSummary' => $paths['encounterStaffSummaryPath'],
                 'episodioTimelineHtml' => $paths['episodioTimelineHtmlPath'],
             ],

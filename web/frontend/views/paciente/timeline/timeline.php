@@ -145,8 +145,8 @@ $tlConfigAttr = Html::encode(Json::encode($page['jsConfig']));
                         <?php if ($mostrarMotivosAmbulatorios): ?>
                         <div class="mb-3 pb-2 border-bottom border-2" id="tl_motivos_ambulatorio_wrap">
                             <h6 class="mb-2 text-primary"><b>MOTIVOS DE ESTA CONSULTA</b></h6>
-                            <p class="mb-0 text-muted" id="tl_motivos_consulta">Cargando...</p>
-                            <div id="tl_motivos_consulta_mensajes" class="mt-2"></div>
+                            <p class="mb-0 text-muted" id="tl_encounter_reasons">Cargando...</p>
+                            <div id="tl_encounter_reason_messages" class="mt-2"></div>
                         </div>
 
                         <div class="mb-3 pb-2 border-bottom border-2" id="tl_care_pack_section" style="display:none;">
@@ -154,8 +154,8 @@ $tlConfigAttr = Html::encode(Json::encode($page['jsConfig']));
                             <div id="tl_care_pack_cohorte" class="text-body"></div>
                         </div>
                         <?php else: ?>
-                        <div id="tl_motivos_consulta" class="d-none" aria-hidden="true"></div>
-                        <div id="tl_motivos_consulta_mensajes" class="d-none" aria-hidden="true"></div>
+                        <div id="tl_encounter_reasons" class="d-none" aria-hidden="true"></div>
+                        <div id="tl_encounter_reason_messages" class="d-none" aria-hidden="true"></div>
                         <div id="tl_care_pack_section" class="d-none" aria-hidden="true">
                             <div id="tl_care_pack_cohorte"></div>
                         </div>

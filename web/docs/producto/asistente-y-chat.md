@@ -131,6 +131,8 @@ Tres tipos de UI: **inicio**, **captura del encounter**, **flows** (asistente). 
 
 **WhatsApp** es el mismo asistente paciente, solo ante mensajes **iniciados por el paciente**. Los avisos proactivos (recordatorios, reubicación) siguen en **push**. Si un paso necesita pantalla rica, se invita a abrir Bioenlace. Hay que vincular el número a la cuenta (confirmación explícita).
 
+En el canal clínico por mensaje, los avisos push de estado (por ejemplo, solicitud tomada, respuesta recibida o solicitud cerrada) usan el catálogo [encounter-async-push-notifications.yaml](../../common/components/Domain/Scheduling/Agenda/Application/Catalog/encounter-async-push-notifications.yaml). Los eventos, destinatarios y datos de envío permanecen en el backend.
+
 Smoke WhatsApp: [qa/paciente/asistente-whatsapp.md](../qa/paciente/asistente-whatsapp.md).  
 Qué puede preguntar un paciente: [qa/paciente/asistente-consultas.md](../qa/paciente/asistente-consultas.md) (incluye “mi dentista”, última vez en una oferta y pedidos de que el asistente lo haga solo).
 

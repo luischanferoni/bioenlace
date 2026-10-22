@@ -26,6 +26,8 @@ Cada **lista cerrada** que el runtime valida o inyecta en prompts tiene **exacta
 | Copy límites de canal (fuera HIS) | `Platform/Assistant/Application/Routing/channel-limits.yaml` | metadata loader |
 | Copy de notificaciones del journey clínico | `Domain/Clinical/Encounter/Application/Catalog/encounter-journey-notifications.yaml` | `EncounterJourneyNotificationCatalog` |
 | Copy de push de resumen publicado | `Domain/Clinical/Encounter/Application/Catalog/encounter-patient-notifications.yaml` | `EncounterPatientSummaryNotificationCatalog` |
+| Copy de notificaciones de encounter async | `Domain/Scheduling/Agenda/Application/Catalog/encounter-async-push-notifications.yaml` | `EncounterAsyncPushNotificationCatalog` |
+| Copy de alertas SLA de bandeja async | `Domain/Scheduling/Agenda/Application/Catalog/encounter-async-inbox-priority-notifications.yaml` | `EncounterAsyncInboxPriorityNotificationCatalog` |
 | Copy de notificaciones B01 (staff/paciente) | `Domain/Clinical/CareCohort/Application/Catalog/care-followup-notifications.yaml` | `CareFollowupNotificationCatalog` |
 | Copy de push de touchpoints post-consulta | `Domain/Clinical/CareCohort/Application/Catalog/care-followup-touchpoint-notifications.yaml` | `CareFollowupTouchpointNotificationCatalog` |
 | Copy de títulos de touchpoints B02 post-alta | `Domain/Clinical/Inpatient/Application/Catalog/post-discharge-followup-copy.yaml` | `PostDischargeFollowupTouchpointCatalog` |
@@ -33,10 +35,18 @@ Cada **lista cerrada** que el runtime valida o inyecta en prompts tiene **exacta
 | Copy de explicación de acciones anti no-show | `Domain/Scheduling/BehaviorProfile/Application/Catalog/turno-action-explanations.yaml` | `TurnoAgentActionExplanationCatalog` |
 | Copy de notificaciones del ciclo de vida de turnos | `Domain/Scheduling/Agenda/Application/Catalog/turno-lifecycle-notifications.yaml` | `TurnoLifecycleNotificationCatalog` |
 | Copy del aviso inicial de reubicación de turnos | `Domain/Scheduling/Agenda/Application/Catalog/turno-resolution-notifications.yaml` | `TurnoResolutionNotificationCatalog` |
+| Copy de anti no-show de turnos | `Domain/Scheduling/Agenda/Application/Catalog/turno-antinoshow-notifications.yaml` | `TurnoAntinoshowNotificationCatalog` |
+| Copy de oferta para adelantar turnos | `Domain/Scheduling/Agenda/Application/Catalog/turno-advance-offer-notifications.yaml` | `TurnoAdvanceOfferNotificationCatalog` |
+| Copy de cierre del loop de resolución de turnos | `Domain/Scheduling/Agenda/Application/Catalog/turno-resolucion-loop-close-notifications.yaml` | `TurnoResolucionLoopCloseNotificationCatalog` |
+| Copy de resolución multicanal de turnos | `Domain/Scheduling/Agenda/Application/Catalog/turno-resolucion-multicanal-notifications.yaml` | `TurnoResolucionMulticanalNotificationCatalog` |
+| Copy de opciones de shortlist de resolución | `Domain/Scheduling/Agenda/Application/Catalog/turno-resolucion-shortlist-notifications.yaml` | `TurnoResolucionShortlistNotificationCatalog` |
+| Copy de auto-reserva de resolución | `Domain/Scheduling/Agenda/Application/Catalog/turno-resolucion-auto-reserva-notifications.yaml` | `TurnoResolucionAutoReservaNotificationCatalog` |
+| Copy del ruteo post-cupo | `Domain/Scheduling/Agenda/Application/Catalog/reserva-triage-post-cupo-notifications.yaml` | `ReservaTriagePostCupoNotificationCatalog` |
 | Copy de push de guardia | `Domain/Clinical/Emergency/Application/Catalog/emergency-push-copy.yaml` | `EmergencyPushCopyCatalog` |
 | Copy de push de expediente legal | `Domain/Clinical/LegalExport/Application/Catalog/legal-export-notifications.yaml` | `LegalExportNotificationCatalog` |
 | Copy de push de domicilio verificado | `Domain/Person/Identity/Application/Catalog/patient-address-verification-notifications.yaml` | `PatientAddressVerificationNotificationCatalog` |
 | Copy de acciones delegadas a representante | `Domain/Person/Representation/Application/Catalog/delegated-action-notifications.yaml` | `PersonRepresentationDelegatedActionNotificationCatalog` |
+| Copy de reintentos de integración | `Domain/Clinical/HistoryExchange/Application/Catalog/integration-retry-notifications.yaml` | `IntegrationRetryNotificationCatalog` |
 | Maestros consultados en request (geo, recursos) | **BD** + seed console | servicio dominio + cache |
 
 ## Reglas PHP

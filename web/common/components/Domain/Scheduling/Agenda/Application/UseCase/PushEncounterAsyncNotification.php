@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Agenda\Application\UseCase;
 
+use common\components\Domain\Scheduling\Agenda\Application\Catalog\EncounterAsyncPushNotificationCatalog;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\components\Platform\Core\Service\Push\PushNotificationTypes;
 use common\models\Clinical\Encounter;
@@ -39,7 +40,7 @@ final class PushEncounterAsyncNotification
         }
         $replace = $this->baseReplace($encounter);
         $replace['{{resolution_label}}'] = $resolutionLabel !== '' ? $resolutionLabel : 'Consulta finalizada';
-        $tpl = (new EncounterAsyncPushCatalogService())->event('cerrada_patient', $replace);
+        $tpl = (new EncounterAsyncPushNotificationCatalog())->event('cerrada_patient', $replace);
         $this->sendPatient(
             $idPersona,
             $encounter,
@@ -125,7 +126,7 @@ final class PushEncounterAsyncNotification
      */
     private function tpl(string $eventKey, Encounter $encounter): array
     {
-        return (new EncounterAsyncPushCatalogService())->event($eventKey, $this->baseReplace($encounter));
+        return (new EncounterAsyncPushNotificationCatalog())->event($eventKey, $this->baseReplace($encounter));
     }
 
     /**

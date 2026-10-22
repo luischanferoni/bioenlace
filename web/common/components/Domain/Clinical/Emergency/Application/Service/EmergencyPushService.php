@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Clinical\Emergency\Application\Service;
 
+use common\components\Domain\Clinical\Emergency\Application\Catalog\EmergencyPushCopyCatalog;
 use common\components\Domain\Clinical\Emergency\Domain\TriageScale;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\components\Platform\Core\Service\Push\PushNotificationTypes;
@@ -14,6 +15,13 @@ use common\models\Organization\ProfesionalEfectorServicio;
  */
 final class EmergencyPushService
 {
+    private EmergencyPushCopyCatalog $copyCatalog;
+
+    public function __construct(?EmergencyPushCopyCatalog $copyCatalog = null)
+    {
+        $this->copyCatalog = $copyCatalog ?? new EmergencyPushCopyCatalog();
+    }
+
     public function notifyAssigned(EmergencyEpisode $guardia, int $idPes): void
     {
         $idPersona = $this->personaIdFromPes($idPes);
@@ -24,6 +32,7 @@ final class EmergencyPushService
             ? $guardia->paciente->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N)
             : 'Paciente';
 
+        $copy = $this->copyCatalog->assigned($nombre);
         (new PushNotificationSender())->sendToPersona(
             $idPersona,
             [
@@ -31,8 +40,8 @@ final class EmergencyPushService
                 'guardia_id' => (string) $guardia->id,
                 'id_persona' => (string) $guardia->id_persona,
             ],
-            'Guardia: paciente asignado',
-            'Te asignaron la atención de ' . $nombre . ' en guardia.',
+            $copy['title'],
+            $copy['body'],
             true
         );
     }
@@ -49,8 +58,11 @@ final class EmergencyPushService
             ? $guardia->paciente->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N)
             : 'Paciente';
         $meta = TriageScale::levelMeta()[$level] ?? ['label' => 'Urgente'];
-        $title = $level === 1 ? 'Guardia: prioridad inmediata' : 'Guardia: muy urgente';
-        $body = $nombre . ' — ' . ($meta['label'] ?? (string) $level);
+        $copy = $this->copyCatalog->criticalTriage(
+            $level,
+            $nombre,
+            (string) ($meta['label'] ?? (string) $level)
+        );
 
         $sent = [];
         foreach ([(int) $guardia->id_profesional_efector_servicio, (int) ($triagerPesId ?? 0)] as $pesId) {
@@ -68,8 +80,8 @@ final class EmergencyPushService
                     'guardia_id' => (string) $guardia->id,
                     'level' => (string) $level,
                 ],
-                $title,
-                $body,
+                $copy['title'],
+                $copy['body'],
                 true
             );
             $sent[$pesId] = true;

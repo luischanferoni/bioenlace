@@ -1,0 +1,10 @@
+# Copy de notificaciones por eventos del ciclo de vida del turno.
+# Consumidores: AdvanceTurnoLifecycle y CreateSobreturno / TurnoLifecycleNotificationCatalog.
+version: 1
+messages:
+  cancelled_by_provider:
+    title: 'Turno cancelado por el consultorio'
+    body_template: 'Tu turno del {date} fue cancelado.'
+  overbook_delay:
+    title: 'Posible demora en tu turno'
+    body_template: 'Se agregó un sobreturno urgente; tu horario podría retrasarse aprox. {minutes} min.'

@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Person\Identity\Application\Service;
 
+use common\components\Domain\Person\Identity\Application\Catalog\PatientAddressVerificationNotificationCatalog;
 use common\components\Domain\Person\Identity\Infrastructure\External\Mpi\MpiDomicilioGatewayService;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\models\Person\Persona;
@@ -17,11 +18,15 @@ final class PacienteDomicilioVerificacionService
 
     public const INTERVALO_REINTENTO_SEGUNDOS = 1800;
 
+    private PatientAddressVerificationNotificationCatalog $notificationCatalog;
+
     public function __construct(
         private readonly MpiDomicilioGatewayService $domicilioGateway = new MpiDomicilioGatewayService(),
         private readonly RenaperDomicilioPersisterService $domicilioPersister = new RenaperDomicilioPersisterService(),
         private readonly PacienteContextoService $contextoService = new PacienteContextoService(),
+        ?PatientAddressVerificationNotificationCatalog $notificationCatalog = null,
     ) {
+        $this->notificationCatalog = $notificationCatalog ?? new PatientAddressVerificationNotificationCatalog();
     }
 
     public function iniciarTrasRegistro(Persona $persona): void
@@ -122,11 +127,12 @@ final class PacienteDomicilioVerificacionService
     private function notificarVerificado(int $idPersona): void
     {
         try {
+            $copy = $this->notificationCatalog->verified();
             (new PushNotificationSender())->sendToPersona(
                 $idPersona,
                 ['type' => 'DOMICILIO_VERIFICADO'],
-                'Domicilio verificado',
-                'Tu domicilio fue verificado. Ya podés usar todos los servicios de la app.'
+                $copy['title'],
+                $copy['body']
             );
         } catch (\Throwable $e) {
             Yii::warning('Push domicilio verificado: ' . $e->getMessage(), 'paciente_contexto');

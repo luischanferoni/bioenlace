@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Agenda\Application\UseCase;
 
+use common\components\Domain\Scheduling\Agenda\Application\Catalog\TurnoLifecycleNotificationCatalog;
 use common\components\Domain\Scheduling\BehaviorProfile\Domain\Model\TurnoCanonicalEventCommand;
 use common\components\Domain\Scheduling\BehaviorProfile\Application\Service\TurnoCanonicalEventService;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
@@ -20,12 +21,16 @@ class AdvanceTurnoLifecycle
     /** @var TurnoCanonicalEventService */
     private $canonicalEvents;
 
+    private TurnoLifecycleNotificationCatalog $notificationCatalog;
+
     public function __construct(
         ConfirmTurno $confirmation = null,
-        ?TurnoCanonicalEventService $canonicalEvents = null
+        ?TurnoCanonicalEventService $canonicalEvents = null,
+        ?TurnoLifecycleNotificationCatalog $notificationCatalog = null
     ) {
         $this->confirmation = $confirmation ?: new ConfirmTurno();
         $this->canonicalEvents = $canonicalEvents ?: new TurnoCanonicalEventService();
+        $this->notificationCatalog = $notificationCatalog ?? new TurnoLifecycleNotificationCatalog();
     }
 
     /**
@@ -148,11 +153,12 @@ class AdvanceTurnoLifecycle
             || $estadoMotivo === Turno::ESTADO_MOTIVO_CANCELADO_EFECTOR
         )) {
             $push = new PushNotificationSender();
+            $copy = $this->notificationCatalog->cancelledByProvider((string) $turno->fecha);
             $push->sendToPersona(
                 (int) $turno->id_persona,
                 ['type' => 'TURNO_CANCELADO_EFECTOR', 'id_turno' => (string) $turno->id_turnos],
-                'Turno cancelado por el consultorio',
-                'Tu turno del ' . $turno->fecha . ' fue cancelado.'
+                $copy['title'],
+                $copy['body']
             );
         }
 

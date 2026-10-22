@@ -4,6 +4,7 @@ namespace common\components\Domain\Scheduling\Agenda\Application\UseCase;
 
 use common\components\Domain\Scheduling\Agenda\Application\Agents\TurnoResolucionAutoReservaAgent;
 use common\components\Domain\Scheduling\Agenda\Application\Agents\TurnoResolucionShortlistAgent;
+use common\components\Domain\Scheduling\Agenda\Application\Catalog\TurnoResolutionNotificationCatalog;
 
 use common\components\Domain\Scheduling\Agenda\Infrastructure\External\NisFhir\Sync\TurnoFhirOutboundNotifier;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
@@ -132,7 +133,6 @@ final class ResolveTurno
 
         self::notificarPacienteRequiereReubicacion(
             $turno,
-            'Tu turno requiere una nueva cita',
             self::buildBodyRequiereReubicacion(
                 'El consultorio modificó tu turno',
                 $turno
@@ -183,7 +183,6 @@ final class ResolveTurno
 
             self::notificarPacienteRequiereReubicacion(
                 $turno,
-                'Tu turno requiere una nueva cita',
                 self::buildBodyRequiereReubicacion(
                     'El profesional registró una licencia',
                     $turno
@@ -232,7 +231,6 @@ final class ResolveTurno
 
             self::notificarPacienteRequiereReubicacion(
                 $turno,
-                'Tu turno requiere una nueva cita',
                 self::buildBodyRequiereReubicacion(
                     'El profesional ya no atiende en ese servicio',
                     $turno
@@ -253,9 +251,11 @@ final class ResolveTurno
         $fecha = self::formatFechaEsParaAviso((string) $turno->fecha);
         $hora = self::formatHoraCortaParaAviso((string) $turno->hora);
 
-        return $motivo
-            . ' Tocá esta notificación para cambiar el horario del turno '
-            . $fecha . ' a las ' . $hora . '.';
+        return (new TurnoResolutionNotificationCatalog())->requiresRelocationBody([
+            'reason' => $motivo,
+            'date' => $fecha,
+            'time' => $hora,
+        ]);
     }
 
     private static function formatFechaEsParaAviso(string $fecha): string
@@ -312,7 +312,6 @@ final class ResolveTurno
 
             self::notificarPacienteRequiereReubicacion(
                 $turno,
-                'Tu turno requiere una nueva cita',
                 self::buildBodyRequiereReubicacion(
                     'Tu profesional actualizó la agenda',
                     $turno
@@ -673,7 +672,7 @@ final class ResolveTurno
         }
     }
 
-    private static function notificarPacienteRequiereReubicacion(Turno $turno, string $title, string $body): void
+    private static function notificarPacienteRequiereReubicacion(Turno $turno, string $body): void
     {
         $autoAgent = new TurnoResolucionAutoReservaAgent();
         try {
@@ -717,7 +716,7 @@ final class ResolveTurno
                 'fecha' => (string) $turno->fecha,
                 'hora' => self::formatHoraCortaParaAviso((string) $turno->hora),
             ],
-            $title,
+            (new TurnoResolutionNotificationCatalog())->requiresRelocationTitle(),
             $body
         );
 

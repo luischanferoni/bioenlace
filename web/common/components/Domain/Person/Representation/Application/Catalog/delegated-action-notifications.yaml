@@ -1,0 +1,28 @@
+# Copy de notificaciones al paciente cuando un representante actúa en su nombre.
+# Consumidor: PersonRepresentationDelegatedActionService / PersonRepresentationDelegatedActionNotificationCatalog.
+version: 1
+actions:
+  turno_created:
+    title: 'Acción de tu representante'
+    body_template: '{actor_label} sacó un turno a tu nombre.'
+  turno_cancelled:
+    title: 'Acción de tu representante'
+    body_template: '{actor_label} canceló un turno a tu nombre.'
+  motivos_sent:
+    title: 'Acción de tu representante'
+    body_template: '{actor_label} cargó motivos de consulta a tu nombre.'
+  care_pack_assistance:
+    title: 'Acción de tu representante'
+    body_template: '{actor_label} completó el cuestionario pre-consulta a tu nombre.'
+  care_pack_followup:
+    title: 'Acción de tu representante'
+    body_template: '{actor_label} registró el seguimiento post-consulta a tu nombre.'
+  historia_accesed:
+    title: 'Acción de tu representante'
+    body_template: '{actor_label} consultó tu historia clínica.'
+  care_plan_accessed:
+    title: 'Acción de tu representante'
+    body_template: '{actor_label} consultó tu plan de tratamiento.'
+  default:
+    title: 'Acción de tu representante'
+    body_template: '{actor_label} realizó una gestión a tu nombre.'

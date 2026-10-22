@@ -1,0 +1,6 @@
+# Copy de la notificación al verificar el domicilio de una persona.
+# Consumidor: PacienteDomicilioVerificacionService / PatientAddressVerificationNotificationCatalog.
+version: 1
+verified:
+  title: 'Domicilio verificado'
+  body: 'Tu domicilio fue verificado. Ya podés usar todos los servicios de la app.'

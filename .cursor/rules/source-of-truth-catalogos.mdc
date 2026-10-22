@@ -29,6 +29,12 @@ Cada **lista cerrada** que el runtime valida o inyecta en prompts tiene **exacta
 | Copy de títulos de touchpoints B02 post-alta | `Domain/Clinical/Inpatient/Application/Catalog/post-discharge-followup-copy.yaml` | `PostDischargeFollowupTouchpointCatalog` |
 | Copy de notificaciones B03 (laboratorio) | `Domain/Clinical/Laboratory/Application/Catalog/post-lab-classification-notifications.yaml` | `PostLabClassificationNotificationCatalog` |
 | Copy de explicación de acciones anti no-show | `Domain/Scheduling/BehaviorProfile/Application/Catalog/turno-action-explanations.yaml` | `TurnoAgentActionExplanationCatalog` |
+| Copy de notificaciones del ciclo de vida de turnos | `Domain/Scheduling/Agenda/Application/Catalog/turno-lifecycle-notifications.yaml` | `TurnoLifecycleNotificationCatalog` |
+| Copy del aviso inicial de reubicación de turnos | `Domain/Scheduling/Agenda/Application/Catalog/turno-resolution-notifications.yaml` | `TurnoResolutionNotificationCatalog` |
+| Copy de push de guardia | `Domain/Clinical/Emergency/Application/Catalog/emergency-push-copy.yaml` | `EmergencyPushCopyCatalog` |
+| Copy de push de expediente legal | `Domain/Clinical/LegalExport/Application/Catalog/legal-export-notifications.yaml` | `LegalExportNotificationCatalog` |
+| Copy de push de domicilio verificado | `Domain/Person/Identity/Application/Catalog/patient-address-verification-notifications.yaml` | `PatientAddressVerificationNotificationCatalog` |
+| Copy de acciones delegadas a representante | `Domain/Person/Representation/Application/Catalog/delegated-action-notifications.yaml` | `PersonRepresentationDelegatedActionNotificationCatalog` |
 | Maestros consultados en request (geo, recursos) | **BD** + seed console | servicio dominio + cache |
 
 ## Reglas PHP

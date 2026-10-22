@@ -1,0 +1,7 @@
+# Copy de notificaciones del job de generación de expedientes legales.
+# Consumidor: ProcessLegalExport / LegalExportNotificationCatalog.
+version: 1
+messages:
+  ready:
+    title: 'Expediente legal listo'
+    body: 'Ya podés descargar el expediente que solicitaste.'

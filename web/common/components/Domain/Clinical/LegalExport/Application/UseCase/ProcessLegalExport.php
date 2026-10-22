@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Clinical\LegalExport\Application\UseCase;
 
+use common\components\Domain\Clinical\LegalExport\Application\Catalog\LegalExportNotificationCatalog;
 use common\components\Domain\Clinical\LegalExport\Application\Service\LegalExportDataService;
 use common\components\Domain\Clinical\LegalExport\Application\Service\LegalExportPdfService;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
@@ -18,13 +19,16 @@ final class ProcessLegalExport
 {
     private LegalExportDataService $collector;
     private LegalExportPdfService $pdf;
+    private LegalExportNotificationCatalog $notificationCatalog;
 
     public function __construct(
         ?LegalExportDataService $collector = null,
-        ?LegalExportPdfService $pdf = null
+        ?LegalExportPdfService $pdf = null,
+        ?LegalExportNotificationCatalog $notificationCatalog = null
     ) {
         $this->collector = $collector ?? new LegalExportDataService();
         $this->pdf = $pdf ?? new LegalExportPdfService();
+        $this->notificationCatalog = $notificationCatalog ?? new LegalExportNotificationCatalog();
     }
 
     public function processDueQueue(int $limit = 10): int
@@ -101,6 +105,7 @@ final class ProcessLegalExport
             return;
         }
 
+        $copy = $this->notificationCatalog->ready();
         (new PushNotificationSender())->sendToPersona(
             $idPersona,
             [
@@ -108,8 +113,8 @@ final class ProcessLegalExport
                 'request_id' => (string) $row->id,
                 'subject_persona_id' => (string) $row->subject_persona_id,
             ],
-            'Expediente legal listo',
-            'Ya podés descargar el expediente que solicitaste.',
+            $copy['title'],
+            $copy['body'],
             true
         );
     }

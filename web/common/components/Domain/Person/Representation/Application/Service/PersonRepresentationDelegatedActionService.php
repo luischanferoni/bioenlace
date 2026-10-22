@@ -2,9 +2,9 @@
 
 namespace common\components\Domain\Person\Representation\Application\Service;
 
+use common\components\Domain\Person\Representation\Application\Catalog\PersonRepresentationDelegatedActionNotificationCatalog;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\components\Platform\Core\Service\Push\PushNotificationTypes;
-use common\models\Person\PersonRelatedAuditLog;
 use common\models\Person\Persona;
 
 /**
@@ -13,10 +13,14 @@ use common\models\Person\Persona;
 final class PersonRepresentationDelegatedActionService
 {
     private PersonRepresentationPreferenceService $preferenceService;
+    private PersonRepresentationDelegatedActionNotificationCatalog $notificationCatalog;
 
-    public function __construct(?PersonRepresentationPreferenceService $preferenceService = null)
-    {
+    public function __construct(
+        ?PersonRepresentationPreferenceService $preferenceService = null,
+        ?PersonRepresentationDelegatedActionNotificationCatalog $notificationCatalog = null
+    ) {
         $this->preferenceService = $preferenceService ?? new PersonRepresentationPreferenceService();
+        $this->notificationCatalog = $notificationCatalog ?? new PersonRepresentationDelegatedActionNotificationCatalog();
     }
 
     /**
@@ -36,7 +40,8 @@ final class PersonRepresentationDelegatedActionService
         }
 
         $actorLabel = $this->actorLabel($actorPersonaId);
-        [$title, $body] = $this->messageFor($action, $actorLabel);
+        $message = $this->notificationCatalog->forAction($action);
+        $body = str_replace('{actor_label}', $actorLabel, $message['body_template']);
 
         $data = [
             'type' => PushNotificationTypes::REPRESENTATIVE_ACTION,
@@ -50,7 +55,7 @@ final class PersonRepresentationDelegatedActionService
             }
         }
 
-        (new PushNotificationSender())->sendToPersona($subjectPersonaId, $data, $title, $body);
+        (new PushNotificationSender())->sendToPersona($subjectPersonaId, $data, $message['title'], $body);
     }
 
     private function actorLabel(int $actorPersonaId): string
@@ -60,48 +65,6 @@ final class PersonRepresentationDelegatedActionService
             return 'Tu representante';
         }
         $name = trim((string) $persona->nombre . ' ' . (string) $persona->apellido);
-
         return $name !== '' ? $name : 'Tu representante';
-    }
-
-    /**
-     * @return array{0: string, 1: string}
-     */
-    private function messageFor(string $action, string $actorLabel): array
-    {
-        return match ($action) {
-            PersonRelatedAuditLog::ACTION_TURNO_CREATED => [
-                'Acción de tu representante',
-                "$actorLabel sacó un turno a tu nombre.",
-            ],
-            PersonRelatedAuditLog::ACTION_TURNO_CANCELLED => [
-                'Acción de tu representante',
-                "$actorLabel canceló un turno a tu nombre.",
-            ],
-            PersonRelatedAuditLog::ACTION_MOTIVOS_SENT => [
-                'Acción de tu representante',
-                "$actorLabel cargó motivos de consulta a tu nombre.",
-            ],
-            PersonRelatedAuditLog::ACTION_CARE_PACK_ASSISTANCE => [
-                'Acción de tu representante',
-                "$actorLabel completó el cuestionario pre-consulta a tu nombre.",
-            ],
-            PersonRelatedAuditLog::ACTION_CARE_PACK_FOLLOWUP => [
-                'Acción de tu representante',
-                "$actorLabel registró el seguimiento post-consulta a tu nombre.",
-            ],
-            PersonRelatedAuditLog::ACTION_HISTORIA_ACCESSED => [
-                'Acción de tu representante',
-                "$actorLabel consultó tu historia clínica.",
-            ],
-            PersonRelatedAuditLog::ACTION_CARE_PLAN_ACCESSED => [
-                'Acción de tu representante',
-                "$actorLabel consultó tu plan de tratamiento.",
-            ],
-            default => [
-                'Acción de tu representante',
-                "$actorLabel realizó una gestión a tu nombre.",
-            ],
-        };
     }
 }

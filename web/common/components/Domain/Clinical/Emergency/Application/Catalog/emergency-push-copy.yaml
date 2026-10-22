@@ -1,0 +1,13 @@
+# Copy de notificaciones push del circuito de guardia.
+# Consumidor: EmergencyPushService / EmergencyPushCopyCatalog.
+version: 1
+messages:
+  assigned:
+    title: 'Guardia: paciente asignado'
+    body_template: 'Te asignaron la atención de {patient_name} en guardia.'
+  critical_triage.1:
+    title: 'Guardia: prioridad inmediata'
+    body_template: '{patient_name} — {triage_label}'
+  critical_triage.2:
+    title: 'Guardia: muy urgente'
+    body_template: '{patient_name} — {triage_label}'

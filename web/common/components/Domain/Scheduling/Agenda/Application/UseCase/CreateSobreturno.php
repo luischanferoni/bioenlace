@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Agenda\Application\UseCase;
 
+use common\components\Domain\Scheduling\Agenda\Application\Catalog\TurnoLifecycleNotificationCatalog;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use Yii;
 use common\models\Scheduling\Turno;
@@ -12,6 +13,13 @@ use common\models\Scheduling\TurnoEventoAudit;
 
 class CreateSobreturno
 {
+    private TurnoLifecycleNotificationCatalog $notificationCatalog;
+
+    public function __construct(?TurnoLifecycleNotificationCatalog $notificationCatalog = null)
+    {
+        $this->notificationCatalog = $notificationCatalog ?? new TurnoLifecycleNotificationCatalog();
+    }
+
     /**
      * Tras crear un sobreturno, notifica a turnos pendientes posteriores el mismo día (mismo rrhh servicio).
      */
@@ -54,6 +62,7 @@ class CreateSobreturno
             $n->save(false);
 
             if ($t->paciente) {
+                $copy = $this->notificationCatalog->overbookDelay($minutos);
                 $push->sendToPersona(
                     (int) $t->id_persona,
                     [
@@ -61,8 +70,8 @@ class CreateSobreturno
                         'id_turno' => (string) $t->id_turnos,
                         'minutos' => (string) $minutos,
                     ],
-                    'Posible demora en tu turno',
-                    'Se agregó un sobreturno urgente; tu horario podría retrasarse aprox. ' . $minutos . ' min.'
+                    $copy['title'],
+                    $copy['body']
                 );
             }
         }

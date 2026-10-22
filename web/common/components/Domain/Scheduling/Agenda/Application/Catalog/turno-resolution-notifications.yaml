@@ -1,0 +1,7 @@
+# Copy del aviso inicial de reubicación de turnos.
+# Consumidores: ResolveTurno / TurnoResolutionNotificationCatalog.
+version: 1
+messages:
+  requires_relocation:
+    title: 'Tu turno requiere una nueva cita'
+    body_template: '{reason} Tocá esta notificación para cambiar el horario del turno {date} a las {time}.'

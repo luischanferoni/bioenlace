@@ -16,7 +16,13 @@ final class EncounterStaffDocumentationViewService
      * @return array{
      *   encounter_id: int,
      *   tiene_datos: bool,
-     *   secciones: list<array{titulo: string, items: list<string>}>
+     *   secciones: list<array{
+     *     key: string,
+     *     label: string,
+     *     titulo: string,
+     *     items: list<string>,
+     *     fields: list<array{key: string, label: string, value: string, unit: null, format: string}>
+     *   }>
      * }
      */
     public function buildForEncounter(Encounter $encounter): array
@@ -27,10 +33,7 @@ final class EncounterStaffDocumentationViewService
 
         $nota = trim((string) ($encounter->note ?? ''));
         if ($nota !== '') {
-            $secciones[] = [
-                'titulo' => 'Evolución',
-                'items' => [$nota],
-            ];
+            $secciones[] = self::sectionPayload('evolution', 'Evolución', [$nota]);
         }
 
         $motivos = [];
@@ -71,16 +74,10 @@ final class EncounterStaffDocumentationViewService
             }
         }
         if ($motivos !== []) {
-            $secciones[] = [
-                'titulo' => 'Motivos de consulta',
-                'items' => $motivos,
-            ];
+            $secciones[] = self::sectionPayload('chief_complaints', 'Motivos de consulta', $motivos);
         }
         if ($diagnosticos !== []) {
-            $secciones[] = [
-                'titulo' => 'Diagnósticos',
-                'items' => $diagnosticos,
-            ];
+            $secciones[] = self::sectionPayload('diagnoses', 'Diagnósticos', $diagnosticos);
         }
 
         $medicacion = [];
@@ -98,10 +95,7 @@ final class EncounterStaffDocumentationViewService
             }
         }
         if ($medicacion !== []) {
-            $secciones[] = [
-                'titulo' => 'Medicación',
-                'items' => $medicacion,
-            ];
+            $secciones[] = self::sectionPayload('medications', 'Medicación', $medicacion);
         }
 
         $practicas = [];
@@ -130,22 +124,52 @@ final class EncounterStaffDocumentationViewService
             }
         }
         if ($practicas !== []) {
-            $secciones[] = [
-                'titulo' => 'Prácticas realizadas',
-                'items' => $practicas,
-            ];
+            $secciones[] = self::sectionPayload('performed_procedures', 'Prácticas realizadas', $practicas);
         }
         if ($indicaciones !== []) {
-            $secciones[] = [
-                'titulo' => 'Indicaciones',
-                'items' => $indicaciones,
-            ];
+            $secciones[] = self::sectionPayload('instructions', 'Indicaciones', $indicaciones);
         }
 
         return [
             'encounter_id' => (int) $encounter->id,
             'tiene_datos' => $secciones !== [],
             'secciones' => $secciones,
+        ];
+    }
+
+    /**
+     * @param list<string> $items
+     * @return array{
+     *   key: string,
+     *   label: string,
+     *   titulo: string,
+     *   items: list<string>,
+     *   fields: list<array{key: string, label: string, value: string, unit: null, format: string}>
+     * }
+     */
+    public static function sectionPayload(string $key, string $label, array $items): array
+    {
+        $items = array_values(array_filter(
+            array_map(static fn ($item): string => trim((string) $item), $items),
+            static fn (string $item): bool => $item !== ''
+        ));
+        $fields = [];
+        foreach ($items as $index => $item) {
+            $fields[] = [
+                'key' => 'item_' . ($index + 1),
+                'label' => 'Detalle',
+                'value' => $item,
+                'unit' => null,
+                'format' => 'text',
+            ];
+        }
+
+        return [
+            'key' => $key,
+            'label' => $label,
+            'titulo' => $label,
+            'items' => $items,
+            'fields' => $fields,
         ];
     }
 

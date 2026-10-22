@@ -121,7 +121,16 @@
                     var tit = secFrag.querySelector('[data-field="titulo"]');
                     if (tit) tit.textContent = sec.titulo || '';
                     var items = secFrag.querySelector('[data-slot="items"]');
-                    (sec.items || []).forEach(function (item) {
+                    var fields = Array.isArray(sec.fields) && sec.fields.length
+                        ? sec.fields.map(function (field) {
+                            var parts = [];
+                            if (field.label) parts.push(field.label + ':');
+                            if (field.value !== null && field.value !== undefined) parts.push(String(field.value));
+                            if (field.unit) parts.push(String(field.unit));
+                            return parts.join(' ');
+                        })
+                        : (sec.items || []);
+                    fields.forEach(function (item) {
                         var li = tpl('tpl-vc-doc-item');
                         if (!li) return;
                         var tx = li.querySelector('[data-field="text"]');

@@ -532,12 +532,29 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                   children: [
                     Text(seccion.titulo, style: BioTypography.overline),
                     BioSpacing.gapH(BioSpacing.xs),
-                    ...seccion.items.map(
-                      (item) => Padding(
-                        padding: const EdgeInsets.only(bottom: BioSpacing.xs),
-                        child: Text(item, style: BioTypography.body),
+                    if (seccion.fields.isNotEmpty)
+                      ...seccion.fields.map(
+                        (field) => Padding(
+                          padding: const EdgeInsets.only(
+                            bottom: BioSpacing.xs,
+                          ),
+                          child: Text(
+                            [
+                              if (field.label.isNotEmpty) '${field.label}:',
+                              field.value,
+                              if (field.unit != null) field.unit!,
+                            ].join(' '),
+                            style: BioTypography.body,
+                          ),
+                        ),
+                      )
+                    else
+                      ...seccion.items.map(
+                        (item) => Padding(
+                          padding: const EdgeInsets.only(bottom: BioSpacing.xs),
+                          child: Text(item, style: BioTypography.body),
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),

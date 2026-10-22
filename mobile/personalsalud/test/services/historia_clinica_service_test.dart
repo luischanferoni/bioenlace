@@ -58,7 +58,8 @@ void main() {
           'intent': 'primary',
           'variant': 'outline',
           'api': <String, dynamic>{
-            'route': '/clinical/emergency-guardia/registrar-triage-formulario?guardia_id=45',
+            'route':
+                '/clinical/emergency-guardia/registrar-triage-formulario?guardia_id=45',
             'method': 'GET',
           },
         },
@@ -142,5 +143,52 @@ void main() {
     expect(vitals.ultimos['custom_metric']?.intent, UiIntent.info);
     expect(vitals.series.single.label, 'Frecuencia respiratoria');
     expect(vitals.series.single.intent, UiIntent.success);
+  });
+
+  test('reads generic clinical documentation field metadata', () {
+    final documentation = DocumentacionMedico.fromJson(<String, dynamic>{
+      'encounter_id': 34,
+      'tiene_datos': true,
+      'secciones': [
+        <String, dynamic>{
+          'key': 'diagnoses',
+          'label': 'Diagnósticos',
+          'titulo': 'Diagnósticos',
+          'fields': [
+            <String, dynamic>{
+              'key': 'item_1',
+              'label': 'Detalle',
+              'value': 'Hipertensión',
+              'unit': null,
+              'format': 'text',
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(documentation.secciones, hasLength(1));
+    expect(documentation.secciones.single.key, 'diagnoses');
+    expect(documentation.secciones.single.titulo, 'Diagnósticos');
+    expect(documentation.secciones.single.fields.single.value, 'Hipertensión');
+    expect(documentation.secciones.single.fields.single.format, 'text');
+    expect(documentation.secciones.single.items, isEmpty);
+  });
+
+  test('keeps reading legacy clinical documentation items', () {
+    final documentation = DocumentacionMedico.fromJson(<String, dynamic>{
+      'encounter_id': 34,
+      'tiene_datos': true,
+      'secciones': [
+        <String, dynamic>{
+          'titulo': 'Evolución',
+          'items': ['Control clínico'],
+        },
+      ],
+    });
+
+    expect(documentation.secciones.single.titulo, 'Evolución');
+    expect(documentation.secciones.single.items, ['Control clínico']);
+    expect(documentation.secciones.single.fields, isEmpty);
   });
 }

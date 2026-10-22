@@ -606,21 +606,68 @@ class CarePackCohorteStaff {
 }
 
 class DocumentacionMedicoSeccion {
+  final String key;
   final String titulo;
   final List<String> items;
+  final List<DocumentacionMedicoCampo> fields;
 
-  const DocumentacionMedicoSeccion({required this.titulo, required this.items});
+  const DocumentacionMedicoSeccion({
+    required this.key,
+    required this.titulo,
+    required this.items,
+    required this.fields,
+  });
 
   factory DocumentacionMedicoSeccion.fromJson(Map<String, dynamic> json) {
     final raw = json['items'];
+    final rawFields = json['fields'];
     return DocumentacionMedicoSeccion(
-      titulo: json['titulo']?.toString() ?? '',
+      key: json['key']?.toString() ?? '',
+      titulo: json['label']?.toString() ?? json['titulo']?.toString() ?? '',
       items: raw is List
           ? raw
                 .map((e) => e.toString().trim())
                 .where((e) => e.isNotEmpty)
                 .toList()
           : const [],
+      fields: rawFields is List
+          ? rawFields
+                .whereType<Map>()
+                .map(
+                  (field) => DocumentacionMedicoCampo.fromJson(
+                    Map<String, dynamic>.from(field),
+                  ),
+                )
+                .where((field) => field.value.isNotEmpty)
+                .toList()
+          : const [],
+    );
+  }
+}
+
+class DocumentacionMedicoCampo {
+  final String key;
+  final String label;
+  final String value;
+  final String? unit;
+  final String format;
+
+  const DocumentacionMedicoCampo({
+    required this.key,
+    required this.label,
+    required this.value,
+    required this.unit,
+    required this.format,
+  });
+
+  factory DocumentacionMedicoCampo.fromJson(Map<String, dynamic> json) {
+    final rawUnit = json['unit']?.toString().trim() ?? '';
+    return DocumentacionMedicoCampo(
+      key: json['key']?.toString() ?? '',
+      label: json['label']?.toString() ?? '',
+      value: json['value']?.toString().trim() ?? '',
+      unit: rawUnit.isEmpty ? null : rawUnit,
+      format: json['format']?.toString() ?? 'text',
     );
   }
 }
@@ -656,7 +703,11 @@ class DocumentacionMedico {
                     Map<String, dynamic>.from(e),
                   ),
                 )
-                .where((s) => s.titulo.isNotEmpty && s.items.isNotEmpty)
+                .where(
+                  (s) =>
+                      s.titulo.isNotEmpty &&
+                      (s.items.isNotEmpty || s.fields.isNotEmpty),
+                )
                 .toList()
           : const [],
     );

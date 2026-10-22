@@ -82,7 +82,6 @@ class EncounterCaptureApi {
     String? transcript,
     Map<String, dynamic>? stt,
     String? audioPath,
-    bool sttForceServer = false,
     Map<String, dynamic>? userPerTabConfig,
   }) async {
     final uri = Uri.parse(
@@ -99,7 +98,6 @@ class EncounterCaptureApi {
         if (parentId != null) 'parent_id': parentId,
         if (transcript != null && transcript.isNotEmpty)
           'transcript': transcript,
-        if (sttForceServer) 'stt_force_server': true,
         if (stt != null && stt.isNotEmpty) 'stt': stt,
         if (userPerTabConfig != null && userPerTabConfig.isNotEmpty)
           'userPerTabConfig': userPerTabConfig,
@@ -122,7 +120,6 @@ class EncounterCaptureApi {
     if (transcript != null && transcript.isNotEmpty) {
       request.fields['transcript'] = transcript;
     }
-    if (sttForceServer) request.fields['stt_force_server'] = '1';
     if (stt != null && stt.isNotEmpty) {
       request.fields['stt'] = json.encode(stt);
     }
@@ -330,7 +327,6 @@ class EncounterCaptureApi {
     int? parentId,
     Map<String, dynamic>? stt,
     String? audioBase64,
-    bool sttForceServer = false,
     Map<String, dynamic>? userPerTabConfig,
   }) async {
     final body = <String, dynamic>{
@@ -342,7 +338,6 @@ class EncounterCaptureApi {
       if (parentId != null) 'parent_id': parentId,
       if (stt != null) 'stt': stt,
       if (audioBase64 != null && audioBase64.isNotEmpty) 'audio': audioBase64,
-      if (sttForceServer) 'stt_force_server': true,
       if (userPerTabConfig != null && userPerTabConfig.isNotEmpty)
         'userPerTabConfig': userPerTabConfig,
     };
@@ -356,31 +351,6 @@ class EncounterCaptureApi {
         .post(uri, headers: _jsonHeaders, body: json.encode(body))
         .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
     return _decodeMap(response, 'encounter/analizar');
-  }
-
-  /// POST /api/v1/audio/transcribir
-  Future<String> transcribirServidor({
-    required String audioBase64,
-    bool forceServer = true,
-  }) async {
-    final uri = Uri.parse('${AppConfig.apiUrl}/audio/transcribir');
-    final response = await http
-        .post(
-          uri,
-          headers: _jsonHeaders,
-          body: json.encode({
-            'audio': audioBase64,
-            'stt': {'force_server': forceServer, 'provenance': 'device'},
-          }),
-        )
-        .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-    BioenlaceHttpTrace.logResponse('audio/transcribir', response);
-    final decoded = json.decode(response.body);
-    if (response.statusCode >= 400) {
-      throw Exception(_contractErrorMessage(decoded, response.statusCode));
-    }
-    final data = decoded is Map ? decoded['data'] : null;
-    return (data is Map ? data['texto_transcrito'] : null)?.toString() ?? '';
   }
 
   /// POST /api/v1/clinical/encounter/guardar

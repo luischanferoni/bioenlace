@@ -6,7 +6,7 @@ Dos apps delgadas sobre `mobile/packages/shared`, sin textos de negocio ni vocab
 
 ## Avance
 
-Personal de Salud obtiene las capacidades de la clase encounter desde el catálogo y las usa para seleccionar el contenido del inicio, navegación de fecha, acciones de internación y polling de guardia. El wizard y la configuración de área usan la metadata específica de cada efector y descartan clases no disponibles, evitando ofrecer opciones basadas solo en la unión global. Falta migrar las demás pantallas y contratos indicados en esta fase.
+Personal de Salud obtiene las capacidades de la clase encounter desde el catálogo y las usa para seleccionar el contenido del inicio, navegación de fecha, acciones de internación y polling de guardia. El wizard y la configuración de área usan la metadata específica de cada efector y descartan clases no disponibles, evitando ofrecer opciones basadas solo en la unión global. En captura clínica, audio y transcripción local se envían por el pipeline de captura para que el servidor resuelva STT. Falta migrar las demás pantallas y contratos indicados en esta fase.
 
 ## Tareas
 

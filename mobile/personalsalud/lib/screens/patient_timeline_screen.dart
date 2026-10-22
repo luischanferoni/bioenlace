@@ -1,6 +1,4 @@
 // lib/screens/patient_timeline_screen.dart
-import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
@@ -1403,7 +1401,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         await _stopAudioOnlyRecording();
       } else {
         final result = await _dictation.stop();
-        final audioStopped = await _stopAudioOnlyRecording(transcribe: false);
+        final audioStopped = await _stopAudioOnlyRecording();
         if (!mounted) return;
         setState(() {
           _dictating = false;
@@ -1411,7 +1409,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           if (result.text.trim().isNotEmpty) {
             _chatController.text = result.text.trim();
           }
-          _sttStatus = _dictationStatusMessage(result, _chatController.text);
+          _sttStatus = _chatController.text.trim().isEmpty
+              ? 'Sin voz detectada'
+              : 'Listo';
         });
         if (!audioStopped) return;
         if (_tieneContextoCaptura &&
@@ -1424,21 +1424,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             status: PendingEncounterCaptureStatus.draft,
             clearError: true,
           );
-        }
-        final text = _chatController.text.trim();
-        final needsServer =
-            _sttConfig.serverEnabled &&
-            _pendingAudioPath != null &&
-            (text.isEmpty ||
-                !DeviceSttLocalQuality.isAcceptable(
-                  text,
-                  result,
-                  minConfidence: _sttConfig.minConfidenceForProfile(
-                    'captura_clinica',
-                  ),
-                ));
-        if (needsServer) {
-          await _transcribirAudioPendiente();
         }
       }
       return;
@@ -1474,7 +1459,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         _sttStatus = 'Escuchando…';
       });
     } catch (e, st) {
-      await _stopAudioOnlyRecording(transcribe: false);
+      await _stopAudioOnlyRecording();
       debugPrint('[stt-device] start failed: $e\n$st');
       _snack('No se pudo iniciar dictado: $e', UiIntent.danger);
     }
@@ -1596,7 +1581,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     );
   }
 
-  Future<bool> _stopAudioOnlyRecording({bool transcribe = true}) async {
+  Future<bool> _stopAudioOnlyRecording() async {
     String? audioPath;
     try {
       audioPath = await _audioRecorder.stop();
@@ -1626,102 +1611,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     _pendingAudioPath = audioPath;
     setState(() {
       _audioOnlyRecording = false;
-      _sttStatus = 'Procesando audio…';
+      _sttStatus = 'Audio listo';
     });
-    if (transcribe && _sttConfig.serverEnabled) {
-      await _transcribirAudioPendiente();
-    }
     return true;
-  }
-
-  Future<String?> _audioPathToBase64(String path) async {
-    final bytes = await XFile(path).readAsBytes();
-    if (bytes.isEmpty) return null;
-    final mimeType = kIsWeb ? 'audio/webm' : 'audio/m4a';
-    return 'data:$mimeType;base64,${base64Encode(bytes)}';
-  }
-
-  Future<void> _transcribirAudioPendiente() async {
-    if (!_sttConfig.serverEnabled || _pendingAudioPath == null) {
-      return;
-    }
-    setState(() {
-      _isAnalyzing = true;
-      _sttStatus = 'Transcribiendo…';
-    });
-    try {
-      final b64 = await _audioPathToBase64(_pendingAudioPath!);
-      if (b64 == null) {
-        if (mounted) {
-          setState(() {
-            _sttStatus = 'No se capturó audio.';
-          });
-          await _persistLocalDraft(
-            texto: '(audio pendiente de transcribir)',
-            status: PendingEncounterCaptureStatus.pendingStt,
-            error: 'No se pudo leer el audio para transcribirlo.',
-          );
-          _snack(
-            'No se pudo leer el audio. El borrador local se conserva.',
-            UiIntent.warning,
-          );
-        }
-        return;
-      }
-      final text = await _encounterApi.transcribirServidor(audioBase64: b64);
-      if (text.trim().isEmpty) {
-        if (mounted) {
-          setState(() {
-            _sttStatus = 'No se detectó voz en el audio.';
-          });
-          await _persistLocalDraft(
-            texto: '(audio pendiente de transcribir)',
-            status: PendingEncounterCaptureStatus.pendingStt,
-            error: 'No se detectó voz en el audio.',
-          );
-          _snack(
-            'No se detectó voz en el audio. El audio quedó guardado en el borrador.',
-            UiIntent.warning,
-          );
-        }
-        return;
-      }
-      if (!mounted) return;
-      setState(() {
-        _chatController.text = text;
-        _lastDictation = DeviceDictationResult(
-          text: text,
-          confidence: 0.9,
-          durationMs: 0,
-          engine: 'server',
-          locale: 'es_AR',
-        );
-        _sttStatus = 'Listo';
-      });
-      if (_tieneContextoCaptura && text.trim().isNotEmpty) {
-        await _persistLocalDraft(
-          texto: text.trim(),
-          status: PendingEncounterCaptureStatus.draft,
-          clearError: true,
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _sttStatus = 'No se pudo transcribir el audio';
-        });
-        await _persistLocalDraft(
-          texto: _chatController.text.trim().isEmpty
-              ? '(audio pendiente de transcribir)'
-              : _chatController.text.trim(),
-          status: PendingEncounterCaptureStatus.pendingStt,
-          error: _mensajeErrorCaptura(e),
-        );
-      }
-      _snack('Error al transcribir: $e', UiIntent.danger);
-    } finally {
-      if (mounted) setState(() => _isAnalyzing = false);
-    }
   }
 
   Future<Map<String, dynamic>?> _operationalContextForCapture() async {
@@ -1741,24 +1633,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       return '$friendly La nota quedó en el teléfono; reintentá cuando haya conexión.';
     }
     return friendly;
-  }
-
-  String _dictationStatusMessage(DeviceDictationResult result, String text) {
-    final trimmed = text.trim();
-    if (trimmed.isEmpty) {
-      return 'Sin voz detectada';
-    }
-    if (DeviceSttLocalQuality.isAcceptable(
-      trimmed,
-      result,
-      minConfidence: _sttConfig.minConfidenceForProfile('captura_clinica'),
-    )) {
-      return 'Listo';
-    }
-    if (_sttConfig.serverEnabled) {
-      return 'Mejorando transcripción…';
-    }
-    return 'Revisá el texto';
   }
 
   void _clearIssueResolutions() {
@@ -2189,20 +2063,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       final ctx = await _operationalContextForCapture();
       final last = _lastDictation;
       Map<String, dynamic>? sttMeta;
-      var needsServerStt = text.isEmpty && _sttConfig.serverEnabled;
       if (last != null && text.isNotEmpty && text == last.text.trim()) {
         sttMeta = last.toSttPayload();
-        needsServerStt =
-            _sttConfig.serverEnabled &&
-            !DeviceSttLocalQuality.isAcceptable(
-              text,
-              last,
-              minConfidence: _sttConfig.minConfidenceForProfile(
-                'captura_clinica',
-              ),
-            );
-      } else if (text.isEmpty) {
-        needsServerStt = _sttConfig.serverEnabled;
       }
 
       var stage = draft.serverStage;
@@ -2228,7 +2090,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             transcript: text.isEmpty ? null : text,
             stt: sttMeta,
             audioPath: audioPath,
-            sttForceServer: needsServerStt && (audioPath != null),
             userPerTabConfig: ctx,
           );
           final capture = created['capture'];
@@ -2270,7 +2131,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           _sttConfig.serverEnabled &&
           (stage == 'UPLOADED' ||
               stage == 'STT_FAILED' ||
-              (needsServerStt && transcript.isEmpty) ||
               fromStatus == PendingEncounterCaptureStatus.pendingStt);
 
       if (needsStt &&

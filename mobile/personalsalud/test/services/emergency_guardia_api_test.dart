@@ -11,19 +11,33 @@ void main() {
           'label': 'Naranja — muy urgente',
           'color': '#e67e22',
           'intent': 'danger',
+          'is_default': false,
         });
 
         expect(level.level, 2);
         expect(level.label, 'Naranja — muy urgente');
         expect(level.color, '#e67e22');
         expect(level.intent, 'danger');
+        expect(level.isDefault, isFalse);
       },
     );
+
+    test('parses the default triage level from API metadata', () {
+      final level = EmergencyTriageLevel.fromJson({
+        'level': 3,
+        'label': 'Amarillo — urgente',
+        'color': '#f1c40f',
+        'intent': 'warning',
+        'is_default': true,
+      });
+
+      expect(level.isDefault, isTrue);
+    });
 
     test('rejects invalid level metadata', () {
       expect(
         () => EmergencyTriageLevel.fromJson({
-          'level': 7,
+          'level': 0,
           'label': 'Inválido',
           'color': '#ffffff',
           'intent': 'neutral',

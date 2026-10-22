@@ -13,6 +13,7 @@ use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyOpe
 use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyQueueService;
 use common\components\Domain\Clinical\Emergency\Application\Service\EmergencySlaService;
 use common\components\Domain\Clinical\Emergency\Application\UseCase\TriageEmergencyEpisode;
+use common\components\Domain\Clinical\Emergency\Domain\TriageScale;
 use common\components\Platform\Ui\UiScreenService;
 use common\models\Clinical\Emergency\EmergencyTriage;
 use frontend\modules\api\v1\controllers\BaseController;
@@ -478,7 +479,7 @@ class EmergencyController extends BaseController
                 $idEfector = $this->requireGuardiaEfector('GuardiaEpisode.triage');
 
                 $data = $this->triage->registrar($guardiaId, [
-                    'level' => (int) ($post['level'] ?? 3),
+                    'level' => (int) ($post['level'] ?? TriageScale::DEFAULT_LEVEL),
                     'reason_text' => (string) ($post['reason_text'] ?? ''),
                     'vitals' => $post['vitals'] ?? null,
                     'bp_sys' => $post['bp_sys'] ?? null,
@@ -497,7 +498,10 @@ class EmergencyController extends BaseController
         if (($out['kind'] ?? '') === 'ui_definition' && $req->getIsGet()) {
             $guardiaId = (int) ($req->get('guardia_id') ?? 0);
             if ($guardiaId > 0) {
-                $defaults = ['guardia_id' => (string) $guardiaId, 'level' => '3'];
+                $defaults = [
+                    'guardia_id' => (string) $guardiaId,
+                    'level' => (string) TriageScale::DEFAULT_LEVEL,
+                ];
                 $triageRow = EmergencyTriage::findOne(['guardia_id' => $guardiaId]);
                 if ($triageRow !== null) {
                     $defaults['level'] = (string) (int) $triageRow->level;

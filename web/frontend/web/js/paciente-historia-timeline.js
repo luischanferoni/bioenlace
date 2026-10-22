@@ -212,18 +212,24 @@
             if (!frag) return;
             var btn = frag.querySelector('button');
             if (!btn) return;
-            btn.classList.add(a.id === 'editar_triage' ? 'btn-outline-primary' : 'btn-danger');
+            var actionIntent = intentToken(a.intent) || 'secondary';
+            var actionVariant = String(a.variant || 'filled');
+            var actionClass = actionVariant === 'outline'
+                ? 'btn-outline-' + actionIntent
+                : (actionVariant === 'soft'
+                    ? 'btn-' + actionIntent + '-subtle'
+                    : 'btn-' + actionIntent);
+            btn.classList.add(actionClass);
             btn.setAttribute('data-tl-accion', String(a.id));
+            btn.setAttribute('data-tl-accion-kind', String(a.kind || ''));
             var apiRoute = '';
             if (a.api && a.api.route) apiRoute = String(a.api.route);
             else if (a.api_route) apiRoute = String(a.api_route);
             if (apiRoute) btn.setAttribute('data-tl-api-route', apiRoute);
             btn.textContent = a.label || a.id;
             btn.addEventListener('click', function () {
-                var id = btn.getAttribute('data-tl-accion');
-                if (id === 'egreso_estructurado') {
-                    openEgresoGuardiaModal();
-                } else if (id === 'editar_triage') {
+                var kind = btn.getAttribute('data-tl-accion-kind');
+                if (kind === 'native_triage') {
                     openTriageGuardiaModal(btn.getAttribute('data-tl-api-route'));
                 }
             });
@@ -303,10 +309,46 @@
             if (!root || root.kind !== 'ui_definition') {
                 throw new Error((json && json.message) || 'No se pudo cargar el triage.');
             }
+            var catalogResponse = await fetch('/api/v1/catalogos/triage-levels', {
+                method: 'GET',
+                credentials: 'same-origin',
+                headers: headers
+            });
+            var catalogPayload = await catalogResponse.json();
+            var catalogData = catalogPayload && catalogPayload.data
+                ? catalogPayload.data
+                : catalogPayload;
+            var triageLevels = catalogData && catalogData.triage_levels;
+            if (!catalogResponse.ok || !Array.isArray(triageLevels) || !triageLevels.length) {
+                throw new Error((catalogPayload && catalogPayload.message)
+                    || 'No se pudo cargar el catálogo de niveles de triage.');
+            }
+            var defaultLevels = triageLevels.filter(function (metadata) {
+                return metadata && metadata.is_default === true;
+            });
+            var validLevels = triageLevels.filter(function (metadata) {
+                return metadata
+                    && Number.isInteger(Number(metadata.level))
+                    && Number(metadata.level) > 0
+                    && typeof metadata.label === 'string'
+                    && metadata.label.trim() !== ''
+                    && typeof metadata.color === 'string'
+                    && /^#[0-9a-fA-F]{6}$/.test(metadata.color)
+                    && intentToken(metadata.intent);
+            });
+            if (validLevels.length !== triageLevels.length || defaultLevels.length !== 1) {
+                throw new Error('El catálogo de niveles de triage es inválido.');
+            }
             if (titleEl) titleEl.textContent = root.title || 'Triage';
 
             var data = fieldValuesFromUi(root);
-            var level = String(data.level || '3');
+            var defaultLevel = String(defaultLevels[0].level);
+            var level = String(data.level || defaultLevel);
+            if (!validLevels.some(function (metadata) {
+                return String(metadata.level) === level;
+            })) {
+                level = defaultLevel;
+            }
             var reason = String(data.reason_text || '');
             var formFrag = tlTpl('tpl-tl-triage-form');
             if (!formFrag) throw new Error('Falta template de triage.');
@@ -322,7 +364,8 @@
             if (hrEl) hrEl.value = String(data.hr || '');
             var levelsSlot = formFrag.querySelector('[data-slot="levels"]');
             if (levelsSlot) {
-                [1, 2, 3, 4, 5].forEach(function (n) {
+                validLevels.forEach(function (metadata) {
+                    var n = Number(metadata.level);
                     var lvlFrag = tlTpl('tpl-tl-triage-level');
                     if (!lvlFrag) return;
                     var input = lvlFrag.querySelector('[data-field="input"]');
@@ -335,11 +378,40 @@
                     }
                     if (label) {
                         label.setAttribute('for', id);
-                        label.classList.add('guardia-triage-level--' + n);
-                        label.textContent = String(n);
+                        label.classList.add('btn-outline-' + intentToken(metadata.intent));
+                        label.textContent = n + ' · ' + metadata.label;
+                        var color = metadata.color;
+                        var r = parseInt(color.slice(1, 3), 16);
+                        var g = parseInt(color.slice(3, 5), 16);
+                        var b = parseInt(color.slice(5, 7), 16);
+                        var luminance = 0.2126 * (r / 255) + 0.7152 * (g / 255) + 0.0722 * (b / 255);
+                        label.setAttribute('data-level-color', color);
+                        label.setAttribute(
+                            'data-level-selected-color',
+                            luminance < 0.5 ? '#ffffff' : '#212529'
+                        );
+                        label.style.borderColor = color;
                     }
                     levelsSlot.appendChild(lvlFrag);
                 });
+                function syncLevelStyles() {
+                    levelsSlot.querySelectorAll('input[name="level"]').forEach(function (input) {
+                        var label = levelsSlot.querySelector('label[for="' + input.id + '"]');
+                        if (!label) return;
+                        var color = label.getAttribute('data-level-color') || '';
+                        var r = parseInt(color.slice(1, 3), 16);
+                        var g = parseInt(color.slice(3, 5), 16);
+                        var b = parseInt(color.slice(5, 7), 16);
+                        label.style.backgroundColor = input.checked
+                            ? 'rgba(' + r + ', ' + g + ', ' + b + ', 0.25)'
+                            : '';
+                        label.style.color = input.checked
+                            ? label.getAttribute('data-level-selected-color')
+                            : color;
+                    });
+                }
+                levelsSlot.addEventListener('change', syncLevelStyles);
+                syncLevelStyles();
             }
             contentEl.replaceChildren();
             contentEl.appendChild(formFrag);

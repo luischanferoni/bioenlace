@@ -52,7 +52,7 @@ class _EmergencyTriageScreenState extends State<EmergencyTriageScreen> {
   @override
   void initState() {
     super.initState();
-    _level = widget.initialLevel ?? 3;
+    _level = widget.initialLevel ?? 0;
     _reasonController = TextEditingController(text: widget.initialReason ?? '');
     _sysController = TextEditingController(
       text: widget.initialBpSys != null ? '${widget.initialBpSys}' : '',
@@ -73,7 +73,7 @@ class _EmergencyTriageScreenState extends State<EmergencyTriageScreen> {
       setState(() {
         _levels = levels;
         if (!levels.any((metadata) => metadata.level == _level)) {
-          _level = levels.first.level;
+          _level = levels.firstWhere((metadata) => metadata.isDefault).level;
         }
         _loadError = null;
       });

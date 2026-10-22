@@ -126,12 +126,14 @@ class EmergencyTriageLevel {
   final String label;
   final String color;
   final String intent;
+  final bool isDefault;
 
   const EmergencyTriageLevel({
     required this.level,
     required this.label,
     required this.color,
     required this.intent,
+    this.isDefault = false,
   });
 
   factory EmergencyTriageLevel.fromJson(Map<String, dynamic> json) {
@@ -144,7 +146,6 @@ class EmergencyTriageLevel {
     final intent = json['intent'] as String?;
     if (level == null ||
         level < 1 ||
-        level > 5 ||
         label == null ||
         label.trim().isEmpty ||
         color == null ||
@@ -158,6 +159,7 @@ class EmergencyTriageLevel {
       label: label,
       color: color,
       intent: intent,
+      isDefault: json['is_default'] == true,
     );
   }
 }
@@ -204,14 +206,18 @@ class EmergencyGuardiaApi {
     if (rawLevels is! List) {
       throw const FormatException('Triage levels catalog is missing');
     }
-    final levels = rawLevels
-        .map((level) => EmergencyTriageLevel.fromJson(
-              Map<String, dynamic>.from(level as Map),
-            ))
-        .toList()
-      ..sort((a, b) => a.level.compareTo(b.level));
+    final levels =
+        rawLevels
+            .map(
+              (level) => EmergencyTriageLevel.fromJson(
+                Map<String, dynamic>.from(level as Map),
+              ),
+            )
+            .toList()
+          ..sort((a, b) => a.level.compareTo(b.level));
     if (levels.isEmpty ||
-        levels.map((level) => level.level).toSet().length != levels.length) {
+        levels.map((level) => level.level).toSet().length != levels.length ||
+        levels.where((level) => level.isDefault).length != 1) {
       throw const FormatException('Triage levels catalog is invalid');
     }
     return levels;

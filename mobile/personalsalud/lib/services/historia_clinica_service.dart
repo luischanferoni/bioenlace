@@ -844,6 +844,8 @@ class EpisodioAccionHistoria {
   final String id;
   final String label;
   final String kind;
+  final UiIntent intent;
+  final BioButtonVariant variant;
   final String? apiRoute;
   final String? apiMethod;
 
@@ -851,6 +853,8 @@ class EpisodioAccionHistoria {
     required this.id,
     required this.label,
     this.kind = 'ui_json',
+    this.intent = UiIntent.primary,
+    this.variant = BioButtonVariant.outline,
     this.apiRoute,
     this.apiMethod,
   });
@@ -873,6 +877,12 @@ class EpisodioAccionHistoria {
       id: (json['id'] ?? '').toString(),
       label: (json['label'] ?? json['id'] ?? '').toString(),
       kind: (json['kind'] ?? 'ui_json').toString(),
+      intent: _uiIntentFromContract(json['intent']),
+      variant: switch ((json['variant'] ?? '').toString()) {
+        'filled' => BioButtonVariant.filled,
+        'soft' => BioButtonVariant.soft,
+        _ => BioButtonVariant.outline,
+      },
       apiRoute: route,
       apiMethod: method,
     );

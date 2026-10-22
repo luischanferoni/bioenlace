@@ -100,18 +100,7 @@ final class EpisodioHistoriaBannerService
         // Triage en tablero = staff; el médico edita desde HC (esta acción).
         $banner['acciones'] = $cerrado
             ? []
-            : [
-                [
-                    'id' => 'editar_triage',
-                    'label' => $triageRow !== null ? 'Editar triage' : 'Registrar triage',
-                    'kind' => 'ui_json',
-                    'api' => [
-                        'route' => '/clinical/emergency-guardia/registrar-triage-formulario'
-                            . '?guardia_id=' . $guardiaId,
-                        'method' => 'GET',
-                    ],
-                ],
-            ];
+            : [self::triageAction($guardiaId, $triageRow !== null)];
 
         return [
             'contexto_episodio' => $banner,
@@ -209,6 +198,32 @@ final class EpisodioHistoriaBannerService
         }
 
         return self::EPISODE_PRESENTATION[$tipo];
+    }
+
+    /**
+     * @return array{
+     *   id: string,
+     *   label: string,
+     *   kind: string,
+     *   intent: string,
+     *   variant: string,
+     *   api: array{route: string, method: string}
+     * }
+     */
+    private static function triageAction(int $guardiaId, bool $hasTriage): array
+    {
+        return [
+            'id' => 'editar_triage',
+            'label' => $hasTriage ? 'Editar triage' : 'Registrar triage',
+            'kind' => 'native_triage',
+            'intent' => 'primary',
+            'variant' => 'outline',
+            'api' => [
+                'route' => '/clinical/emergency-guardia/registrar-triage-formulario'
+                    . '?guardia_id=' . $guardiaId,
+                'method' => 'GET',
+            ],
+        ];
     }
 
     /**

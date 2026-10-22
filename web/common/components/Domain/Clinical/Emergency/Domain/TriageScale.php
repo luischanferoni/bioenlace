@@ -5,6 +5,7 @@ namespace common\components\Domain\Clinical\Emergency\Domain;
 final class TriageScale
 {
     public const MANCHESTER = 'manchester';
+    public const DEFAULT_LEVEL = 3;
 
     public static function isValid(string $scale): bool
     {
@@ -26,7 +27,7 @@ final class TriageScale
     }
 
     /**
-     * @return list<array{level:int,label:string,color:string,intent:string}>
+     * @return list<array{level:int,label:string,color:string,intent:string,is_default:bool}>
      */
     public static function levelMetadata(): array
     {
@@ -37,6 +38,7 @@ final class TriageScale
                 'label' => $metadata['label'],
                 'color' => $metadata['color'],
                 'intent' => $metadata['intent'],
+                'is_default' => (int) $level === self::DEFAULT_LEVEL,
             ];
         }
 

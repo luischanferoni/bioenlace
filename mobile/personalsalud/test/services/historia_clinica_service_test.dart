@@ -52,11 +52,13 @@ void main() {
       'episodio_id': 45,
       'acciones': [
         <String, dynamic>{
-          'id': 'abrir_formulario',
-          'label': 'Abrir formulario',
-          'kind': 'ui_json',
+          'id': 'editar_triage',
+          'label': 'Registrar triage',
+          'kind': 'native_triage',
+          'intent': 'primary',
+          'variant': 'outline',
           'api': <String, dynamic>{
-            'route': '/clinical/formulario',
+            'route': '/clinical/emergency-guardia/registrar-triage-formulario?guardia_id=45',
             'method': 'GET',
           },
         },
@@ -64,10 +66,15 @@ void main() {
     });
 
     expect(episode.acciones, hasLength(1));
-    expect(episode.acciones.single.id, 'abrir_formulario');
-    expect(episode.acciones.single.label, 'Abrir formulario');
-    expect(episode.acciones.single.kind, 'ui_json');
-    expect(episode.acciones.single.apiRoute, '/clinical/formulario');
+    expect(episode.acciones.single.id, 'editar_triage');
+    expect(episode.acciones.single.label, 'Registrar triage');
+    expect(episode.acciones.single.kind, 'native_triage');
+    expect(episode.acciones.single.intent, UiIntent.primary);
+    expect(episode.acciones.single.variant, BioButtonVariant.outline);
+    expect(
+      episode.acciones.single.apiRoute,
+      '/clinical/emergency-guardia/registrar-triage-formulario?guardia_id=45',
+    );
     expect(episode.acciones.single.apiMethod, 'GET');
   });
 

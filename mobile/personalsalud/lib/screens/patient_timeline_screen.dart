@@ -1092,17 +1092,13 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
               runSpacing: BioSpacing.xs,
               children: [
                 for (final a in ctx.acciones)
-                  a.id == 'editar_triage'
-                      ? BioButton.outlinePrimary(
-                          label: a.label,
-                          size: BioButtonSize.sm,
-                          onPressed: () => _onEpisodioAccion(a),
-                        )
-                      : BioButton.danger(
-                          label: a.label,
-                          size: BioButtonSize.sm,
-                          onPressed: () => _onEpisodioAccion(a),
-                        ),
+                  BioButton(
+                    label: a.label,
+                    intent: a.intent,
+                    variant: a.variant,
+                    size: BioButtonSize.sm,
+                    onPressed: () => _onEpisodioAccion(a),
+                  ),
               ],
             ),
           ],
@@ -1112,7 +1108,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   }
 
   Future<void> _onEpisodioAccion(EpisodioAccionHistoria accion) async {
-    if (accion.id == 'editar_triage') {
+    if (accion.kind == 'native_triage') {
       final guardiaId =
           widget.parentId ??
           _historiaClinicaData?.contextoEpisodio?.episodioId ??

@@ -25,4 +25,23 @@ class EpisodioHistoriaBannerServiceTest extends Unit
         $this->expectException(\InvalidArgumentException::class);
         EpisodioHistoriaBannerService::episodePresentation('UNKNOWN');
     }
+
+    public function testTriageActionDeclaresItsNativeKindAndPresentation(): void
+    {
+        $method = (new \ReflectionClass(EpisodioHistoriaBannerService::class))
+            ->getMethod('triageAction');
+        $method->setAccessible(true);
+
+        $this->assertSame([
+            'id' => 'editar_triage',
+            'label' => 'Registrar triage',
+            'kind' => 'native_triage',
+            'intent' => 'primary',
+            'variant' => 'outline',
+            'api' => [
+                'route' => '/clinical/emergency-guardia/registrar-triage-formulario?guardia_id=45',
+                'method' => 'GET',
+            ],
+        ], $method->invoke(null, 45, false));
+    }
 }

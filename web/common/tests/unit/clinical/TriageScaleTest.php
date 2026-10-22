@@ -16,6 +16,12 @@ class TriageScaleTest extends Unit
             ['danger', 'danger', 'warning', 'success', 'info'],
             array_column($levels, 'intent')
         );
+        $this->assertSame(
+            [3],
+            array_column(array_filter($levels, static function (array $level): bool {
+                return $level['is_default'];
+            }), 'level')
+        );
         $this->assertSame('#c0392b', $levels[0]['color']);
         $this->assertSame('Azul — no urgente', $levels[4]['label']);
     }

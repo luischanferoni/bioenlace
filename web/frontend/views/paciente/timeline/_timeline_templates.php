@@ -287,6 +287,6 @@
 <template id="tpl-tl-triage-level">
     <span>
         <input type="radio" class="btn-check" name="level" autocomplete="off" required data-field="input">
-        <label class="btn btn-sm btn-outline-secondary fw-bold guardia-triage-level" data-field="label"></label>
+        <label class="btn btn-sm fw-bold guardia-triage-level" data-field="label"></label>
     </span>
 </template>

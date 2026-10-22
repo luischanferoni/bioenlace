@@ -9,7 +9,6 @@ use yii\grid\GridView;
 /* @var $entityGroups array<string, string> */
 
 $this->title = 'Campos por atributo (BD)';
-$this->params['breadcrumbs'][] = ['label' => 'Consultas staff', 'url' => ['#']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="data-access-attribute-field-index">

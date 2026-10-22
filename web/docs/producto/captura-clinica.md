@@ -2,7 +2,7 @@
 
 ## De qué se trata
 
-Durante la atención, el profesional registra la evolución por **texto** o **audio**. El sistema interpreta, corrige y enriquece con IA, y persiste el encuentro clínico (encounter FHIR).
+Durante el encuentro clínico, el profesional registra la evolución por **texto** o **audio**. El sistema interpreta, corrige y enriquece con IA, y persiste el encounter FHIR.
 
 La captura es **una sola superficie** para ambulatorio, guardia, internación y demás contextos: el formulario muta según encounter, rol y **servicio institucional del encounter** (`EncounterDefinition` por `service_id` + clase) — igual en web y móvil. Ver [superficies-ui.md](./superficies-ui.md). “Servicio” aquí es la oferta del centro, no la especialidad del título ni un acto SNOMED — [glosario-servicio-pes-acto.md](./glosario-servicio-pes-acto.md).
 
@@ -18,7 +18,7 @@ La captura es **una sola superficie** para ambulatorio, guardia, internación y 
 
 - `id_persona`
 - `parent` + `parent_id` — turno, internación, guardia, etc. (`Encounter::PARENT_*`)
-- `id_consulta` — id del encounter en curso (alias legacy; semántica = `encounter_id`)
+- `encounter_id` — id del encounter en curso (solo al editar uno existente)
 - `id_configuracion` — id de `encounter_definition` (**servicio del centro** + `encounter_class` + workflow)
 
 Entrada desde listados: `PatientHistoriaUrl::captura($idPersona, $parent, $parentId)`.
@@ -64,7 +64,7 @@ La integridad de cada ítem (p. ej. plazo solo en controles programados) vive en
 
 Detalle: [metadata-yaml-uso.md](../arquitectura/metadata-yaml-uso.md) y [captura-clinica-contratos-yii-vs-yaml.md](../decisions/captura-clinica-contratos-yii-vs-yaml.md).
 
-Al cerrar la atención, el review puede listar **problemas y tratamientos abiertos** del paciente para que el profesional confirme estado (resuelto, en pausa, etc.) sin preselección. Ver [planes-de-tratamiento.md](./planes-de-tratamiento.md).
+Al cerrar la documentación clínica, el review puede listar **problemas y tratamientos abiertos** del paciente para que el profesional confirme estado (resuelto, en pausa, etc.) sin preselección. Ver [planes-de-tratamiento.md](./planes-de-tratamiento.md).
 
 En **internación / guardia**, cada evolución es un encounter nuevo (salvo editar un `encounter_id` o continuar un pase `in-progress`). Una nota casi idéntica a una evolución previa **bloquea** el guardado; los ítems ya activos en el episodio no se tildan ni se reinsertan. Completar el care plan “Internación” no es el alta del episodio. El alta la indica el **médico en la captura** al documentar el diagnóstico (misma línea que guardia); otros roles no deciden el alta.
 

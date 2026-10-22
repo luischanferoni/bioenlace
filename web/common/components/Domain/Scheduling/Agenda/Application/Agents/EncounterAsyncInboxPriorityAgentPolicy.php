@@ -54,10 +54,6 @@ final class EncounterAsyncInboxPriorityAgentPolicy
                 0 => 'A',
                 1 => 'B',
             ],
-            'staff_push' => [
-                'title' => 'Plazo vencido — consulta clínica por mensaje',
-                'body' => '{{paciente}} · {{servicio}}. Responder cuanto antes.',
-            ],
         ],
     ];
     }

@@ -77,12 +77,12 @@ $this->params['breadcrumbs'][] = $this->title;
                 <div class="card-body">
                     <h4 class="mb-2">Enfermería</h4>
                     <div class="row"><?= Html::a(
-                        'Ver Atenciones de Enfermería',
+                        'Ver registros de enfermería',
                         ['frontend/atenciones-enfermeria/view', 'id' => $model->id_persona],
                         [
                             'class' => 'linkaModalGeneral ms-2',
-                            'title' => 'Valores de Atenciones/Controles',
-                            'data-title' => 'Atenciones de enfermería',
+                            'title' => 'Valores y controles de enfermería',
+                            'data-title' => 'Registros de enfermería',
                         ]
                     ); ?></div>
                 </div>

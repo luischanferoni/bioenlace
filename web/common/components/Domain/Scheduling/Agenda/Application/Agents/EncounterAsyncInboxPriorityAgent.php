@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Agenda\Application\Agents;
 
+use common\components\Domain\Scheduling\Agenda\Application\Catalog\EncounterAsyncInboxPriorityNotificationCatalog;
 use common\components\Domain\Scheduling\Agenda\Application\Service\EncounterAsyncInboxPriorityService;
 use common\components\Domain\Scheduling\Agenda\Application\UseCase\PushEncounterAsyncNotification;
 use common\components\Platform\Agent\AgentRunRecorder;
@@ -27,9 +28,14 @@ final class EncounterAsyncInboxPriorityAgent
 
     private EncounterAsyncInboxPriorityService $prioridad;
 
-    public function __construct(?EncounterAsyncInboxPriorityService $prioridad = null)
-    {
+    private EncounterAsyncInboxPriorityNotificationCatalog $notifications;
+
+    public function __construct(
+        ?EncounterAsyncInboxPriorityService $prioridad = null,
+        ?EncounterAsyncInboxPriorityNotificationCatalog $notifications = null
+    ) {
         $this->prioridad = $prioridad ?? new EncounterAsyncInboxPriorityService();
+        $this->notifications = $notifications ?? new EncounterAsyncInboxPriorityNotificationCatalog();
     }
 
     public function isEnabled(): bool
@@ -180,7 +186,6 @@ final class EncounterAsyncInboxPriorityAgent
 
         $bands = is_array($escCfg['urgency_bands'] ?? null) ? $escCfg['urgency_bands'] : ['A', 'B'];
         $bands = array_map(static fn ($b) => strtoupper((string) $b), $bands);
-        $pushTpl = is_array($escCfg['staff_push'] ?? null) ? $escCfg['staff_push'] : [];
 
         $idEfector = (int) Yii::$app->user->getIdEfector();
 
@@ -201,15 +206,14 @@ final class EncounterAsyncInboxPriorityAgent
                 continue;
             }
 
-            $this->escalateSlaToStaff($item, $encounter, $pushTpl, $idEfector);
+            $this->escalateSlaToStaff($item, $encounter, $idEfector);
         }
     }
 
     /**
      * @param array<string, mixed> $item
-     * @param array<string, mixed> $pushTpl
      */
-    private function escalateSlaToStaff(array $item, Encounter $encounter, array $pushTpl, int $idEfector): void
+    private function escalateSlaToStaff(array $item, Encounter $encounter, int $idEfector): void
     {
         $serviceId = (int) ($item['servicio_id'] ?? $encounter->service_id ?? 0);
         $staffPersonas = $this->staffPersonaIdsForServicio($serviceId, $idEfector);
@@ -222,8 +226,9 @@ final class EncounterAsyncInboxPriorityAgent
             '{{paciente}}' => (string) ($paciente['nombre_completo'] ?? 'Paciente'),
             '{{servicio}}' => (string) ($item['servicio'] ?? 'Servicio'),
         ];
-        $title = str_replace(array_keys($replace), array_values($replace), (string) ($pushTpl['title'] ?? 'Plazo vencido'));
-        $body = str_replace(array_keys($replace), array_values($replace), (string) ($pushTpl['body'] ?? ''));
+        $pushTemplate = $this->notifications->slaEscalationPush();
+        $title = str_replace(array_keys($replace), array_values($replace), $pushTemplate['title']);
+        $body = str_replace(array_keys($replace), array_values($replace), $pushTemplate['body']);
 
         $push = new PushNotificationSender();
         foreach ($staffPersonas as $idPersona) {

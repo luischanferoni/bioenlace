@@ -31,9 +31,9 @@ $this->params['breadcrumbs'][] = $this->title;
                 'attribute'=> 'id_efector',
                 'label'=> 'Efector',
                 'value'=>function($data){
-                    $consulta = \common\models\Organization\Efector::findOne(['id_efector'=>$data['id_efector']]);
+                    $efector = \common\models\Organization\Efector::findOne(['id_efector'=>$data['id_efector']]);
                     
-                    return $consulta->nombre;
+                    return $efector->nombre;
                 }
             ],
             //'id_servicio',
@@ -41,9 +41,9 @@ $this->params['breadcrumbs'][] = $this->title;
                 'attribute'=> 'id_servicio',
                 'label'=> 'Servicio',
                 'value'=>function($data){
-                    $consulta = \common\models\Organization\Servicio::findOne(['id_servicio'=>$data['id_servicio']]);
+                    $servicio = \common\models\Organization\Servicio::findOne(['id_servicio'=>$data['id_servicio']]);
                     
-                    return $consulta? $consulta->nombre: 'No definido' ;
+                    return $servicio? $servicio->nombre: 'No definido' ;
                 }
             ],
             'totalcamas',

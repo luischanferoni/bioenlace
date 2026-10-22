@@ -10,7 +10,6 @@ use yii\helpers\Html;
 /* @var $editSurfaces array<string, array<string, mixed>> */
 
 $this->title = 'Catálogo DataAccess';
-$this->params['breadcrumbs'][] = ['label' => 'Consultas staff', 'url' => ['#']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="data-access-catalog-index">

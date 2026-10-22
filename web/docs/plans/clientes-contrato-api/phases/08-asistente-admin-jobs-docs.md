@@ -44,6 +44,18 @@ El título y la plantilla del aviso operativo por dead-letter del agente E02 de 
 
 Validación de este incremento: prueba del catálogo (1 test, 1 assertion), PHP lint, YAML lint y `git diff --check` pasaron. PHPUnit se ejecutó con PHP 8.0 mediante bypass temporal del guard Composer, restaurado inmediatamente; no certifica PHP >=8.1.
 
+El título y cuerpo del push de escalamiento SLA de la bandeja async se movieron desde `EncounterAsyncInboxPriorityAgentPolicy` al catálogo `Scheduling/Agenda/Application/Catalog/encounter-async-inbox-priority-notifications.yaml`. Las bandas de urgencia, la detección del SLA vencido y el control de escalamiento único permanecen en sus capas operativas.
+
+Validación de este incremento: prueba del catálogo (1 test, 1 assertion), PHP lint, YAML lint y `git diff --check` pasaron. PHPUnit se ejecutó en PHP 8.0 con bypass temporal del guard Composer, restaurado inmediatamente; no certifica PHP >=8.1.
+
 Validación de este incremento: la prueba de renderizado pasó (1 test, 1 assertion), PHP lint y `git diff --check` pasaron, y el catálogo YAML fue validado. La prueba se ejecutó con PHP 8.0 mediante bypass temporal del guard Composer, restaurado al terminar; no certifica el runtime soportado (PHP >=8.1). La prueba también detectó imports ausentes para `AutoReserveTurnoResolution` y `PersonaAgendaPreferenciasService` en el agente, que se agregaron para que la construcción normal del agente funcione.
 
-Pendiente: revisar los mensajes de sistema y flujos YAML restantes; revisar terminología/copy del panel administrativo MVC, mensajes de jobs/agentes fuera de los journeys clínicos y B01, documentación estable y reglas `.cursor`.
+En la revisión del admin MVC se eliminaron los breadcrumbs huérfanos «Consultas staff» de las vistas DataAccess, que no correspondían a esa sección y enlazaban a `#`; cada pantalla conserva su título como breadcrumb. Las otras coincidencias encontradas son términos de códigos/keys de dominio preservados (por ejemplo `teleconsulta`, `snomed_motivos_consulta`) o el verbo común «consultar», no nombres del encounter que deban renombrarse.
+
+En el reporte de camas, los resultados de `Efector::findOne()` y `Servicio::findOne()` dejaron de llamarse `$consulta`; ahora usan `$efector` y `$servicio`, precisando los tipos de entidad sin alterar las búsquedas ni el contenido mostrado.
+
+La ficha administrativa de persona ahora presenta los datos de enfermería como «registros» y «valores y controles», en vez de «atenciones» como término genérico. Se conserva intacta la ruta legacy y sus identificadores técnicos; el cambio es solo de copy.
+
+Se auditaron los README de `common/components/` contra los identificadores retirados de Encounter: no hay referencias obsoletas a los nombres revisados. La documentación estable de captura y superficies UI también se corrigió para reflejar los hechos del formulario actual: el campo es `encounter_id` (solo al editar un encounter), no `id_consulta`, y se evitó usar «atención» como sinónimo genérico del encuentro clínico.
+
+Pendiente: revisar los mensajes de sistema y flujos YAML restantes; completar la auditoría de terminología/copy del panel administrativo MVC; revisar mensajes de jobs/agentes fuera de los journeys clínicos y B01, documentación estable y reglas `.cursor`.

@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Clinical\Inpatient\Application\UseCase;
 
+use common\components\Domain\Clinical\Inpatient\Application\Catalog\PostDischargeFollowupTouchpointCatalog;
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
 use common\models\Clinical\CareFollowupTouchpointQueue;
 use common\models\Clinical\Encounter;
@@ -17,6 +18,13 @@ final class SchedulePostDischargeFollowup
     public const AGENT_ID = 'post-discharge-followup';
 
     public const TOUCHPOINT_KEY_PREFIX = 'pd-';
+
+    private PostDischargeFollowupTouchpointCatalog $copyCatalog;
+
+    public function __construct(?PostDischargeFollowupTouchpointCatalog $copyCatalog = null)
+    {
+        $this->copyCatalog = $copyCatalog ?? new PostDischargeFollowupTouchpointCatalog();
+    }
 
     /**
      * @return array{program: string, scheduled: int, encounter_id: int|null}
@@ -67,7 +75,7 @@ final class SchedulePostDischargeFollowup
             $row->touchpoint_key = $key;
             $row->run_at = date('Y-m-d H:i:s', $anchorTs + $delayDays * 86400);
             $row->estado = CareFollowupTouchpointQueue::ESTADO_PENDIENTE;
-            $row->title = trim((string) ($tp['title'] ?? 'Seguimiento post-alta')) ?: 'Seguimiento post-alta';
+            $row->title = $this->copyCatalog->title($programId, (int) $index);
             $row->purpose = trim((string) ($tp['purpose'] ?? 'recovery')) ?: 'recovery';
             $row->form_kind = trim((string) ($tp['form_kind'] ?? 'symptoms')) ?: 'symptoms';
             $row->education_refs = null;

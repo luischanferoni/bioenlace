@@ -1,0 +1,12 @@
+# Copy de títulos persistidos al programar touchpoints post-alta.
+# Consumidor: SchedulePostDischargeFollowup / PostDischargeFollowupTouchpointCatalog.
+version: 1
+programs:
+  default:
+    0: 'Primer día en casa'
+    1: 'Primera semana en casa'
+    2: 'Un mes del alta'
+  cirugia:
+    0: 'Post cirugía — día 1'
+    1: 'Post cirugía — herida y fiebre'
+    2: 'Control post cirugía'

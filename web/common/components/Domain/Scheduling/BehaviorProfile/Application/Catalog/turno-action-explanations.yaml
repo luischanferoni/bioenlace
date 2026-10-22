@@ -1,0 +1,25 @@
+# Copy devuelto al paciente por la explicación de acciones anti no-show.
+# Consumidor: TurnoAgentActionExplanationService / TurnoAgentActionExplanationCatalog.
+version: 1
+unavailable_message: 'No hay una acción registrada para este turno.'
+disclaimer: 'Esta explicación describe hechos registrados y la acción aplicada. No es una calificación personal.'
+superseded_snapshot_suffix: 'La información de historial usada en ese momento ya fue actualizada.'
+actions:
+  extra_confirm_push:
+    label: 'Pedido adicional de confirmación'
+    explanation: 'Se envió un pedido adicional para confirmar la asistencia al turno.'
+  shared_confirm_evaluate:
+    label: 'Evaluación sobre pedido de confirmación'
+    explanation: 'Se evaluó el pedido de confirmación ya enviado según el historial del turno.'
+  reminder_push:
+    label: 'Recordatorio de turno'
+    explanation: 'Se envió un recordatorio próximo a la cita.'
+  release_slot:
+    label: 'Liberación de cupo'
+    explanation: 'Se evaluó la liberación del cupo según la política vigente.'
+  skip_low_risk:
+    label: 'Sin acción adicional'
+    explanation: 'No se aplicó una acción adicional sobre este turno.'
+  default:
+    label: 'Acción de acompañamiento de turno'
+    explanation: 'Se registró una acción automática relacionada con este turno.'

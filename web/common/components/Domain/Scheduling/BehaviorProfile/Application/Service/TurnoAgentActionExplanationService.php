@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Scheduling\BehaviorProfile\Application\Service;
 
+use common\components\Domain\Scheduling\BehaviorProfile\Application\Catalog\TurnoAgentActionExplanationCatalog;
 use common\models\Platform\AgentRun;
 use common\models\Scheduling\PersonaTurnosPerfil;
 use common\models\Scheduling\Turno;
@@ -12,6 +13,13 @@ use common\components\Domain\Scheduling\Agenda\Application\Agents\TurnoAntinosho
  */
 final class TurnoAgentActionExplanationService
 {
+    private TurnoAgentActionExplanationCatalog $copyCatalog;
+
+    public function __construct(?TurnoAgentActionExplanationCatalog $copyCatalog = null)
+    {
+        $this->copyCatalog = $copyCatalog ?? new TurnoAgentActionExplanationCatalog();
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -41,7 +49,7 @@ final class TurnoAgentActionExplanationService
         if ($run === null) {
             return [
                 'status' => 'UNAVAILABLE',
-                'message' => 'No hay una acción registrada para este turno.',
+                'message' => $this->copyCatalog->unavailableMessage(),
             ];
         }
 
@@ -62,13 +70,16 @@ final class TurnoAgentActionExplanationService
             }
         }
 
+        $actionCode = (string) ($action['code'] ?? $run->outcome);
+        $copy = $this->copyCatalog->forAction($actionCode, $snapshotStatus === 'SUPERSEDED_SNAPSHOT');
+
         return [
             'status' => 'AVAILABLE',
             'decision_ref' => (int) $run->id,
             'appointment_ref' => $idTurno,
             'occurred_at' => (string) $run->created_at,
-            'action_code' => (string) ($action['code'] ?? $run->outcome),
-            'action_label' => $this->labelForAction((string) ($action['code'] ?? $run->outcome)),
+            'action_code' => $actionCode,
+            'action_label' => $copy['action_label'],
             'policy_version' => $run->hasAttribute('policy_version')
                 ? (string) ($run->policy_version ?? '')
                 : null,
@@ -89,41 +100,9 @@ final class TurnoAgentActionExplanationService
                 'legacy_outcome' => $result['legacy_outcome'] ?? $run->outcome,
                 'candidate_mode' => $result['candidate_mode'] ?? null,
             ],
-            '_text' => $this->buildExplanationText(
-                (string) ($action['code'] ?? $run->outcome),
-                $snapshotStatus
-            ),
-            'disclaimer' => 'Esta explicación describe hechos registrados y la acción aplicada. No es una calificación personal.',
+            '_text' => $copy['explanation_text'],
+            'disclaimer' => $copy['disclaimer'],
         ];
-    }
-
-    private function labelForAction(string $code): string
-    {
-        return match ($code) {
-            'extra_confirm_push' => 'Pedido adicional de confirmación',
-            'shared_confirm_evaluate' => 'Evaluación sobre pedido de confirmación',
-            'reminder_push' => 'Recordatorio de turno',
-            'release_slot' => 'Liberación de cupo',
-            'skip_low_risk' => 'Sin acción adicional',
-            default => 'Acción de acompañamiento de turno',
-        };
-    }
-
-    private function buildExplanationText(string $actionCode, string $snapshotStatus): string
-    {
-        $base = match ($actionCode) {
-            'extra_confirm_push' => 'Se envió un pedido adicional para confirmar la asistencia al turno.',
-            'shared_confirm_evaluate' => 'Se evaluó el pedido de confirmación ya enviado según el historial del turno.',
-            'reminder_push' => 'Se envió un recordatorio próximo a la cita.',
-            'release_slot' => 'Se evaluó la liberación del cupo según la política vigente.',
-            'skip_low_risk' => 'No se aplicó una acción adicional sobre este turno.',
-            default => 'Se registró una acción automática relacionada con este turno.',
-        };
-        if ($snapshotStatus === 'SUPERSEDED_SNAPSHOT') {
-            $base .= ' La información de historial usada en ese momento ya fue actualizada.';
-        }
-
-        return $base;
     }
 
     /**

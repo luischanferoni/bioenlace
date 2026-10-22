@@ -26,7 +26,9 @@ Cada **lista cerrada** que el runtime valida o inyecta en prompts tiene **exacta
 | Copy límites de canal (fuera HIS) | `Platform/Assistant/Application/Routing/channel-limits.yaml` | metadata loader |
 | Copy de notificaciones del journey clínico | `Domain/Clinical/Encounter/Application/Catalog/encounter-journey-notifications.yaml` | `EncounterJourneyNotificationCatalog` |
 | Copy de notificaciones B01 (staff/paciente) | `Domain/Clinical/CareCohort/Application/Catalog/care-followup-notifications.yaml` | `CareFollowupNotificationCatalog` |
+| Copy de títulos de touchpoints B02 post-alta | `Domain/Clinical/Inpatient/Application/Catalog/post-discharge-followup-copy.yaml` | `PostDischargeFollowupTouchpointCatalog` |
 | Copy de notificaciones B03 (laboratorio) | `Domain/Clinical/Laboratory/Application/Catalog/post-lab-classification-notifications.yaml` | `PostLabClassificationNotificationCatalog` |
+| Copy de explicación de acciones anti no-show | `Domain/Scheduling/BehaviorProfile/Application/Catalog/turno-action-explanations.yaml` | `TurnoAgentActionExplanationCatalog` |
 | Maestros consultados en request (geo, recursos) | **BD** + seed console | servicio dominio + cache |
 
 ## Reglas PHP

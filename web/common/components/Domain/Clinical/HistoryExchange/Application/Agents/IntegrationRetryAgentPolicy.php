@@ -22,10 +22,6 @@ final class IntegrationRetryAgentPolicy
                 'dead_letter_notify' => true,
             ],
         ],
-        'ops_alert' => [
-            'title' => 'Integración fallida',
-            'body_template' => '{{connector}} job #{{job_id}}: {{message}}',
-        ],
     ];
     }
 }

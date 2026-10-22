@@ -40,6 +40,10 @@ El sufijo de opciones sugeridas del agente D1 shortlist pasó de `TurnoResolucio
 
 Validación de este incremento: la prueba de formato pasó (2 tests, 2 assertions), PHP lint, YAML lint y `git diff --check` pasaron. PHPUnit se ejecutó en PHP 8.0 mediante bypass temporal del guard Composer, restaurado al finalizar; no certifica PHP >=8.1. El test detectó y permitió corregir el import faltante del use case `BuildTurnoResolutionShortlist`.
 
+El título y la plantilla del aviso operativo por dead-letter del agente E02 de reintentos de integración se movieron a `Clinical/HistoryExchange/Application/Catalog/integration-retry-notifications.yaml`. La política mantiene el gate por conector; el flujo conserva los destinatarios configurados, el truncado del error y los metadatos del push.
+
+Validación de este incremento: prueba del catálogo (1 test, 1 assertion), PHP lint, YAML lint y `git diff --check` pasaron. PHPUnit se ejecutó con PHP 8.0 mediante bypass temporal del guard Composer, restaurado inmediatamente; no certifica PHP >=8.1.
+
 Validación de este incremento: la prueba de renderizado pasó (1 test, 1 assertion), PHP lint y `git diff --check` pasaron, y el catálogo YAML fue validado. La prueba se ejecutó con PHP 8.0 mediante bypass temporal del guard Composer, restaurado al terminar; no certifica el runtime soportado (PHP >=8.1). La prueba también detectó imports ausentes para `AutoReserveTurnoResolution` y `PersonaAgendaPreferenciasService` en el agente, que se agregaron para que la construcción normal del agente funcione.
 
 Pendiente: revisar los mensajes de sistema y flujos YAML restantes; revisar terminología/copy del panel administrativo MVC, mensajes de jobs/agentes fuera de los journeys clínicos y B01, documentación estable y reglas `.cursor`.

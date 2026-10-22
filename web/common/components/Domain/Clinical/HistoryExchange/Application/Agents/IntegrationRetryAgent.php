@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Clinical\HistoryExchange\Application\Agents;
 
+use common\components\Domain\Clinical\HistoryExchange\Application\Catalog\IntegrationRetryNotificationCatalog;
 use common\components\Platform\Agent\AgentRunRecorder;
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
@@ -17,6 +18,13 @@ final class IntegrationRetryAgent
     public const AGENT_ID = 'integration-retry';
 
     public const TRIGGER_TYPE = 'integration_job';
+
+    private IntegrationRetryNotificationCatalog $notifications;
+
+    public function __construct(?IntegrationRetryNotificationCatalog $notifications = null)
+    {
+        $this->notifications = $notifications ?? new IntegrationRetryNotificationCatalog();
+    }
 
     public function onJobFailed(ClinicalHistoryOutboundJob $job, string $message, bool $retryable): void
     {
@@ -90,14 +98,14 @@ final class IntegrationRetryAgent
             return;
         }
 
-        $alert = is_array($config['ops_alert'] ?? null) ? $config['ops_alert'] : [];
+        $alert = $this->notifications->opsAlert();
         $replace = [
             '{{connector}}' => $connectorKey,
             '{{job_id}}' => (string) $jobId,
             '{{message}}' => mb_substr($message, 0, 200),
         ];
-        $title = str_replace(array_keys($replace), array_values($replace), (string) ($alert['title'] ?? 'Integración fallida'));
-        $body = str_replace(array_keys($replace), array_values($replace), (string) ($alert['body_template'] ?? ''));
+        $title = str_replace(array_keys($replace), array_values($replace), $alert['title']);
+        $body = str_replace(array_keys($replace), array_values($replace), $alert['body_template']);
 
         $push = new PushNotificationSender();
         foreach ($personaIds as $idPersona) {

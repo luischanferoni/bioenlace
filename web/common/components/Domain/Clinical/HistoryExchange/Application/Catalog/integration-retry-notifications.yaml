@@ -1,0 +1,4 @@
+version: 1
+ops_alert:
+  title: 'Integración fallida'
+  body_template: '{{connector}} job #{{job_id}}: {{message}}'

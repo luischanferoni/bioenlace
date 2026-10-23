@@ -3,7 +3,6 @@
 namespace common\components\Platform\Ai;
 
 use Yii;
-use common\components\Platform\Ai\Prompt\PromptRegistry;
 use common\components\Platform\Core\Db\BioenlaceDb;
 use yii\httpclient\Client;
 use common\components\Platform\Ai\HuggingFace\HuggingFaceRateLimiter;
@@ -986,108 +985,6 @@ class IAManager
         }
 
         return $class::build($texto, $categoria);
-    }
-
-    /**
-     * Corregir una palabra (intenta CPU primero, luego LLM si es necesario)
-     * @param string $palabra
-     * @param string $contexto
-     * @param string|null $especialidad
-     * @return array|null
-     */
-    public function corregirPalabraConLLM($palabra, $contexto, $especialidad = null)
-    {
-        // Intentar corrección básica con CPU primero
-        $usarCPU = Yii::$app->params['usar_cpu_tareas_simples'] ?? true;
-        $cpuProcessor = 'common\\helpers\\CPUProcessor';
-        if ($usarCPU && class_exists($cpuProcessor) && $cpuProcessor::puedeProcesarConCPU('correccion_ortografica_basica')) {
-            $corregidaCPU = $cpuProcessor::procesar('correccion_ortografica_basica', $palabra);
-            if ($corregidaCPU !== $palabra) {
-                \Yii::info("Corrección CPU aplicada: '{$palabra}' -> '{$corregidaCPU}'", 'ia-manager');
-                if (class_exists(\common\components\Platform\Ai\Cost\AICostTracker::class)) {
-                    \common\components\Platform\Ai\Cost\AICostTracker::registrarEvitada('cpu', 'corregirPalabra');
-                }
-                return [
-                    'suggestion' => $corregidaCPU,
-                    'confidence' => 0.7,
-                    'metodo' => 'cpu'
-                ];
-            }
-        }
-
-        // Si CPU no corrigió, usar LLM
-        return $this->corregirPalabraConLLMReal($palabra, $contexto, $especialidad);
-    }
-    
-    /**
-     * Corregir una palabra usando LLM (mismo comportamiento que en CaptureTextService)
-     * @param string $palabra
-     * @param string $contexto
-     * @param string|null $especialidad
-     * @return array|null
-     */
-    private function corregirPalabraConLLMReal($palabra, $contexto, $especialidad = null)
-    {
-        try {
-            if (class_exists(\common\components\Platform\Ai\Cost\AICostTracker::class) && \common\components\Platform\Ai\Cost\AICostTracker::debeSimularIA()) {
-                \common\components\Platform\Ai\Cost\AICostTracker::registrarLlamadaSimulada('corregirPalabraLLM', 'text-correction');
-                return null;
-            }
-            // Mejor prompt que enfatiza el contexto
-            $prompt = PromptRegistry::render('clinical.word_correction', [
-                'especialidad' => (string) $especialidad,
-                'contexto' => (string) $contexto,
-                'palabra' => (string) $palabra,
-            ]);
-            $endpoint = \Yii::$app->params['hf_endpoint'] ?? 'https://router.huggingface.co/hf-inference/PlanTL-GOB-ES/roberta-base-biomedical-clinical-es';
-            $apiKey = \Yii::$app->params['hf_api_key'] ?? '';
-
-            $payload = [
-                'inputs' => $prompt,
-                'parameters' => [
-                    'max_length' => 50,
-                    'temperature' => 0.1,
-                    'return_full_text' => false
-                ]
-            ];
-
-            // Comprimir datos en tránsito (solo para HuggingFace)
-            $payloadJson = json_encode($payload);
-            $compresion = self::comprimirDatos($payloadJson, 'huggingface');
-            $headers = [
-                'Authorization' => 'Bearer ' . $apiKey,
-                'Content-Type' => 'application/json'
-            ];
-            $headers = array_merge($headers, $compresion['headers']);
-            
-            $client = new Client();
-            $response = $client->createRequest()
-                ->setMethod('POST')
-                ->setUrl($endpoint)
-                ->addHeaders($headers)
-                ->setContent($compresion['data'])
-                ->send();
-
-            if ($response->isOk) {
-                $content = self::descomprimirRespuesta($response);
-                $data = json_decode($content, true);
-                $suggestion = trim($data[0]['generated_text'] ?? '');
-
-                if (!empty($suggestion) && $suggestion !== $palabra) {
-                    $confianza = $this->calcularConfianzaLLM($palabra, $suggestion, $contexto);
-                    return [
-                        'suggestion' => $suggestion,
-                        'confidence' => $confianza
-                    ];
-                }
-            }
-
-            return null;
-
-        } catch (\Exception $e) {
-            \Yii::error("Error corrigiendo palabra con LLM (IAManager): " . $e->getMessage(), 'ia-manager');
-            return null;
-        }
     }
 
     /**

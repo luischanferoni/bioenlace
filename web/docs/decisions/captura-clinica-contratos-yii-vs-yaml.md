@@ -29,7 +29,7 @@ Eso produjo hard-stops incorrectos (p. ej. exigir «Plazo dias» en toda indicac
 ## Consecuencias
 
 - Nuevas tipologías de captura: agregar `*Input` + `completenessForExtractedRow` (+ opcional `buildIssues` / `applyResolutionToRow`) en el `Consulta*`; el validator/applier lo descubren por nombre de modelo. No alargar listas planas ni if-chains.
-- `clinical-text-ia.yaml` `post_process` / `clinical_lexicon`: overrides; defaults en `ExtractionPostProcessPolicy`.
+- `Capture/Policy/capture-policy.yaml` `post_process` / `clinical_lexicon`: overrides; defaults en `ExtractionPostProcessPolicy`.
 - Receta RDI: escenarios `rdi_issue` en `ElectronicPrescription` / Item; YAML `prescription-rdi-pre-submit` solo política operativa.
 - Path legacy sin `modelo` en categorías: sigue interpretando `campos_requeridos` como lista plana (compat tests / datos viejos); issues genéricos con `allow_custom`.
 

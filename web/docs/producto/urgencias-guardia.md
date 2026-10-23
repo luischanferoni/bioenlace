@@ -90,7 +90,7 @@ Al atender, la HC se abre con `parent=GUARDIA` (banner + timeline + captura). El
 
 ## Post-v1 / evolución de configuración
 
-Hoy la deducción de internación usa señales en Derivaciones/Indicaciones + texto. El camino deseado es **declarar en `EncounterDefinition`** (secciones/campos requeridos por efector) la conducta de guardia de forma estructurada, para no depender de keywords. Mientras tanto, IA (`clinical-text-ia.yaml`) orienta a dejar explícita internación/alta en esas categorías.
+Hoy la deducción de internación usa señales en Derivaciones/Indicaciones + texto. El camino deseado es **declarar en `EncounterDefinition`** (secciones/campos requeridos por efector) la conducta de guardia de forma estructurada, para no depender de keywords. Mientras tanto, IA (`capture-extraction.yaml`) orienta a dejar explícita internación/alta en esas categorías.
 
 ## Asistente
 

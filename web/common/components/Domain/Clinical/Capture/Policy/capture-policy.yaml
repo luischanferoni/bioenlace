@@ -1,0 +1,54 @@
+# Tipo: knob (NO es prompt)
+# Propósito: política operativa de post-proceso de la extracción, léxico clínico y confianza LLM.
+# Consumidor: ClinicalTextIaMetadata (ProductMetadataPaths::clinicalCapturePolicyFile()) → ExtractionPostProcessPolicy
+# No poner aquí: required_when de integridad clínica (modelos *Input Yii). Defaults de dominio en
+# ExtractionPostProcessPolicy::DEFAULT_LEXICON.
+version: 1
+
+llm_correction_confidence:
+  context_terms:
+    - paciente
+    - consulta
+    - diagnóstico
+    - tratamiento
+    - medicamento
+    - síntoma
+    - enfermedad
+  context_term_boost: 0.1
+
+# Léxico clínico: overrides opcionales.
+clinical_lexicon:
+  # Delimitadores PCRE `/…/iu` (no usar `(?iu)`: en PCRE `u` no es opción inline).
+  narrative_framing: '/\b(refiere|vengo\s+por|consulta\s+por|desde\s+hace|presenta|paciente\s+con|me\s+siento|hace\s+\d+|desde\s+ayer|desde\s+hoy)\b/iu'
+  subjective_complaint: '/\b(problema|dolor|duele|sintoma|síntoma|malestar|enfermo|fiebre|tos|nausea|náusea|vomito|vómito|mareo|hinchazon|hinchazón|presion|presión|chichon|chichón|golpe|hematoma|moreton|moretón|bulto|hinchado|inflamado|herida|sangra|sangrado|cefalea|astenia|disnea|prurito|cansancio|diarrea)\b/iu'
+
+encounter_capture_extraction:
+  # Overrides de política de post-proceso (defaults en ExtractionPostProcessPolicy).
+  # No es fuente de verdad de integridad clínica: solo knobs operativos.
+  post_process:
+    reason_model: EncounterReason
+    diagnosis_models:
+      - EncounterDiagnosis
+    filter_non_clinical_extractions:
+      enabled: true
+      strict_category_models:
+        - EncounterReason
+      terminology_guard_category_models: []
+      retain_if_lexicon_keys:
+        - narrative_framing
+        - subjective_complaint
+      validate_terminology: false
+      snowstorm_fallback: false
+    relocate_isolated_terms:
+      enabled: false
+      max_words: 5
+    backfill_empty_motivos:
+      enabled: true
+      require_lexicon_key: subjective_complaint
+      max_chars: 140
+      split_before_patterns:
+        - '/\bdiagn[oó]stico\s*:/iu'
+        - '/\bindico\b/iu'
+        - '/\bindicaci[oó]n\b/iu'
+        - '/\breposo\b/iu'
+        - '/\bcontrol\b/iu'

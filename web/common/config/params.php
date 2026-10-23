@@ -25,7 +25,7 @@ return [
     /**
      * Legacy / unused en captura clínica.
      * La nota corregida (`texto_procesado`) la devolvió la extracción IA
-     * (clinical-text-ia.yaml → encounter_capture_extraction). SymSpell no se usa.
+     * (Capture/Prompts/capture-extraction.yaml → encounter_capture_extraction). SymSpell no se usa.
      */
     'hf_activar_correccion' => false,
     /**

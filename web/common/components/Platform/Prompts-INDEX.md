@@ -15,9 +15,10 @@ mediante `PromptRegistry` (`Platform/Ai/Prompt/PromptRegistry.php`). El mapa cla
 
 | Clave | Archivo | Propósito |
 |---|---|---|
-| `clinical.word_correction` | [Shared/Prompts/medical-word-correction.yaml](../Domain/Clinical/Shared/Prompts/medical-word-correction.yaml) | Corrección ortográfica en contexto médico |
-| `clinical.abbreviation_disambiguation` | [Shared/Prompts/abbreviation-disambiguation.yaml](../Domain/Clinical/Shared/Prompts/abbreviation-disambiguation.yaml) | Selección de expansión correcta de abreviaturas |
-| `clinical.text_ia` | [Shared/Prompts/clinical-text-ia.yaml](../Domain/Clinical/Shared/Prompts/clinical-text-ia.yaml) | Extracción/heurísticas IA de texto clínico (vía `ClinicalTextIaMetadata`) |
+| `clinical.capture_extraction` | [Capture/Prompts/capture-extraction.yaml](../Domain/Clinical/Capture/Prompts/capture-extraction.yaml) | Extracción de datos de captura (humano). Esqueleto genérico: las categorías llegan como variables; incluye bloque de abreviaturas ambiguas |
+| `veterinary.capture_extraction` | [Veterinary/Capture/Prompts/capture-extraction.yaml](../Domain/Veterinary/Capture/Prompts/capture-extraction.yaml) | Extracción veterinaria (v1 exploratoria; mismo contrato de salida). Se elige por ámbito de atención |
+| `clinical.automatic_coding` | [Encounter/Prompts/automatic-coding.yaml](../Domain/Clinical/Encounter/Prompts/automatic-coding.yaml) | Codificación diagnóstica CIE-10 / SNOMED |
+| `terminology.snomed_context` | [Terminology/Prompts/snomed-context.yaml](../Domain/Terminology/Prompts/snomed-context.yaml) | Término SNOMED CT más preciso por categoría |
 | `clinical.care_pack` | [CareCohort/Prompts/care-pack.yaml](../Domain/Clinical/CareCohort/Prompts/care-pack.yaml) | Packs reutilizables de cohorte |
 | `clinical.appointment_reason_summary` | [Encounter/Prompts/appointment-reason-summary.yaml](../Domain/Clinical/Encounter/Prompts/appointment-reason-summary.yaml) | Resumen breve de motivos para el médico |
 | `clinical.appointment_reason_insights` | [Encounter/Prompts/appointment-reason-insights.yaml](../Domain/Clinical/Encounter/Prompts/appointment-reason-insights.yaml) | Orientación preliminar diagnósticos/prácticas |
@@ -35,4 +36,11 @@ No usar rutas hardcodeadas (`__DIR__ . '/Prompt/...'`) en el código.
 
 - `# Tipo:` · `# Propósito:` · `# Consumidor:` · `# Placeholders:` (si aplica) · `version:`
 
-Los YAML que no son prompts (schemas, catálogos, `ui-text`, `ai-cost-reference`) no van en `Prompts/`.
+Los YAML que no son prompts (schemas, catálogos, `ui-text`, `ai-cost-reference`, y la política de captura `Domain/Clinical/Capture/Policy/capture-policy.yaml`) no van en `Prompts/`.
+
+## Escalabilidad por especialidad
+
+- Un solo prompt base por vertical (humano / veterinario). Las especialidades no tienen prompt propio: sus categorías entran por `{categories_block}` y `{category_semantics}`.
+- Una especialidad solo justifica un overlay o prompt aparte si sus reglas contradicen las del base, cambia el sujeto o el modelo de datos, o hay un riesgo clínico que exige instrucciones propias. Validarlo con un set de casos dorados por especialidad.
+- Veterinaria no comparte el base: tiene su prompt y mantiene el mismo contrato de salida (`texto_procesado` + `datosExtraidos`).
+- Pendiente: mover `category_hints` del prompt a la definición de cada categoría.

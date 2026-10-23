@@ -2,16 +2,22 @@
 
 namespace common\components\Platform\Core\Product;
 
+use common\components\Platform\Ai\Prompt\PromptRegistry;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
 
 /**
- * Metadata de prompts/heurísticas IA para texto clínico ({@see ProductMetadataPaths::clinicalTextIaFile()}).
+ * Metadata de prompts/heurísticas IA para texto clínico ({@see ProductMetadataPaths::clinicalTextIaFiles()}).
+ * La config humana se fusiona desde varios YAML (uno por responsabilidad); la variante veterinaria se
+ * resuelve por clave de registro (`veterinary.capture_extraction`).
  */
 final class ClinicalTextIaMetadata
 {
     /** @var array<string, mixed>|null */
     private static ?array $config = null;
+
+    /** @var array<string, array<string, mixed>> */
+    private static array $vetSection = [];
 
     public static function buildSnomedContextPrompt(string $texto, string $categoria): string
     {
@@ -86,16 +92,17 @@ final class ClinicalTextIaMetadata
 
     /**
      * @param list<array<string, mixed>> $categorias
+     * @param array<string, list<string>> $ambiguousAbbreviations abreviatura => expansiones posibles
+     * @param string $ambito `humano` | `veterinario` (ver Servicio::AMBITO_*)
      */
     public static function buildEncounterCaptureExtractionPrompt(
         string $clinicalText,
         array $categorias,
-        string $patientContext = ''
+        string $patientContext = '',
+        array $ambiguousAbbreviations = [],
+        string $ambito = 'humano'
     ): string {
-        $section = self::loadConfig()['encounter_capture_extraction'] ?? [];
-        if (!is_array($section)) {
-            $section = [];
-        }
+        $section = self::captureExtractionSection($ambito);
 
         $template = (string) ($section['prompt_template'] ?? '');
         if ($template === '') {
@@ -122,6 +129,7 @@ final class ClinicalTextIaMetadata
                 '{frecuencia_tipos}',
                 '{duracion_tipos}',
                 '{patient_context}',
+                '{abbreviations_block}',
                 '{clinical_text}',
             ],
             [
@@ -131,10 +139,51 @@ final class ClinicalTextIaMetadata
                 implode(', ', $tipos['frecuencia']),
                 implode(', ', $tipos['duracion']),
                 $patientBlock,
+                self::buildAmbiguousAbbreviationsBlock($ambiguousAbbreviations, $section),
                 trim($clinicalText),
             ],
             $template
         );
+    }
+
+    /**
+     * @param array<string, list<string>> $ambiguousAbbreviations
+     * @param array<string, mixed> $section
+     */
+    private static function buildAmbiguousAbbreviationsBlock(array $ambiguousAbbreviations, array $section): string
+    {
+        $header = trim((string) ($section['abbreviations_header'] ?? ''));
+        if ($header === '' || $ambiguousAbbreviations === []) {
+            return '';
+        }
+
+        $lines = [$header];
+        foreach ($ambiguousAbbreviations as $abbr => $expansions) {
+            $options = array_values(array_filter(array_map('trim', $expansions), static fn (string $e): bool => $e !== ''));
+            if ($options !== []) {
+                $lines[] = '- ' . $abbr . ': ' . implode(' | ', $options);
+            }
+        }
+
+        return count($lines) > 1 ? implode("\n", $lines) : '';
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function captureExtractionSection(string $ambito): array
+    {
+        if ($ambito === 'veterinario') {
+            $key = 'veterinary.capture_extraction';
+            if (!isset(self::$vetSection[$key])) {
+                self::$vetSection[$key] = self::parseYamlFile(PromptRegistry::path($key))['encounter_capture_extraction'] ?? [];
+            }
+            $section = self::$vetSection[$key];
+        } else {
+            $section = self::loadConfig()['encounter_capture_extraction'] ?? [];
+        }
+
+        return is_array($section) ? $section : [];
     }
 
     /**
@@ -365,6 +414,7 @@ final class ClinicalTextIaMetadata
     public static function resetCacheForTests(): void
     {
         self::$config = null;
+        self::$vetSection = [];
         \common\components\Domain\Clinical\Capture\Domain\Policy\ExtractionPostProcessPolicy::resetAllForTests();
     }
 
@@ -378,24 +428,31 @@ final class ClinicalTextIaMetadata
         }
 
         self::$config = [];
+        foreach (ProductMetadataPaths::clinicalTextIaFiles() as $path) {
+            self::$config = array_replace_recursive(self::$config, self::parseYamlFile($path));
+        }
 
-        $path = ProductMetadataPaths::clinicalTextIaFile();
+        return self::$config;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function parseYamlFile(string $path): array
+    {
         if (!is_file($path)) {
-            return self::$config;
+            return [];
         }
 
         try {
             $data = Yaml::parseFile($path);
         } catch (\Throwable $e) {
-            Yii::warning('ClinicalTextIaMetadata: YAML inválido: ' . $e->getMessage(), __METHOD__);
+            Yii::warning('ClinicalTextIaMetadata: YAML inválido (' . basename($path) . '): ' . $e->getMessage(), __METHOD__);
 
-            return self::$config;
+            return [];
         }
 
-        if (is_array($data)) {
-            self::$config = $data;
-        }
-
-        return self::$config;
+        return is_array($data) ? $data : [];
     }
+
 }

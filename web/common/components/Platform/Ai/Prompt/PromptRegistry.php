@@ -3,7 +3,7 @@
 namespace common\components\Platform\Ai\Prompt;
 
 /**
- * Resuelve claves de prompt (`clinical.word_correction`) a archivos YAML.
+ * Resuelve claves de prompt (`clinical.appointment_reason_summary`) a archivos YAML.
  *
  * Platform no conoce rutas de Domain: el mapa clave → archivo vive en `common/config/prompts.php`
  * (raíz de composición) y puede ampliarse con {@see register()}.

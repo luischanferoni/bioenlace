@@ -310,9 +310,30 @@ final class ProductMetadataPaths
         return self::uiPresentationDir() . DIRECTORY_SEPARATOR . 'screen-params.yaml';
     }
 
-    public static function clinicalTextIaFile(): string
+    /**
+     * Archivos que componen la config de IA para texto clínico (humano); se fusionan por sección.
+     *
+     * @return list<string>
+     */
+    public static function clinicalTextIaFiles(): array
     {
-        return PromptRegistry::path('clinical.text_ia');
+        return [
+            PromptRegistry::path('clinical.capture_extraction'),
+            self::clinicalCapturePolicyFile(),
+            PromptRegistry::path('clinical.automatic_coding'),
+            PromptRegistry::path('terminology.snomed_context'),
+        ];
+    }
+
+    /** Knobs de post-proceso/léxico de la captura (no es un prompt). */
+    public static function clinicalCapturePolicyFile(): string
+    {
+        return self::componentsRoot()
+            . DIRECTORY_SEPARATOR . 'Domain'
+            . DIRECTORY_SEPARATOR . 'Clinical'
+            . DIRECTORY_SEPARATOR . 'Capture'
+            . DIRECTORY_SEPARATOR . 'Policy'
+            . DIRECTORY_SEPARATOR . 'capture-policy.yaml';
     }
 
     public static function aiCostReferenceFile(): string

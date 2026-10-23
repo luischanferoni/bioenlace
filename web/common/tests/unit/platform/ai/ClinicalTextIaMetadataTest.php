@@ -49,6 +49,39 @@ class ClinicalTextIaMetadataTest extends Unit
         $this->assertStringContainsString('queja o síntoma referido', $prompt);
         $this->assertStringContainsString('diagnóstico, evolución o enfermedad', $prompt);
         $this->assertStringNotContainsString('NO uses esta categoría para nombres de enfermedades', $prompt);
+        $this->assertStringNotContainsString('{abbreviations_block}', $prompt);
+        $this->assertStringNotContainsString('Abreviaturas ambiguas', $prompt);
+    }
+
+    public function testEncounterCapturePromptIncludesAmbiguousAbbreviations(): void
+    {
+        $prompt = ClinicalTextIaMetadata::buildEncounterCaptureExtractionPrompt(
+            'paciente con IC',
+            [['titulo' => 'Diagnóstico', 'modelo' => 'EncounterDiagnosis']],
+            '',
+            ['IC' => ['insuficiencia cardíaca', 'intervalo de confianza']]
+        );
+
+        $this->assertStringContainsString('Abreviaturas ambiguas', $prompt);
+        $this->assertStringContainsString('- IC: insuficiencia cardíaca | intervalo de confianza', $prompt);
+    }
+
+    public function testVeterinaryCapturePromptUsesOwnTemplateWithSameContract(): void
+    {
+        $categorias = [['titulo' => 'Motivos de consulta', 'modelo' => 'X']];
+
+        $vet = ClinicalTextIaMetadata::buildEncounterCaptureExtractionPrompt('no come', $categorias, '', [], 'veterinario');
+        $human = ClinicalTextIaMetadata::buildEncounterCaptureExtractionPrompt('no come', $categorias);
+
+        $this->assertStringContainsString('veterinarios', $vet);
+        $this->assertStringContainsString('mg/kg', $vet);
+        $this->assertStringNotContainsString('veterinarios', $human);
+        foreach ([$vet, $human] as $prompt) {
+            $this->assertStringContainsString('texto_procesado', $prompt);
+            $this->assertStringContainsString('datosExtraidos', $prompt);
+            $this->assertStringNotContainsString('{clinical_text}', $prompt);
+            $this->assertStringNotContainsString('{abbreviations_block}', $prompt);
+        }
     }
 
     public function testClinicalLexiconMatchesNarrativeFraming(): void

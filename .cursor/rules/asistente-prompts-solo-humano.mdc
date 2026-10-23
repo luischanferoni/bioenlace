@@ -13,7 +13,7 @@ Los archivos de **prompt** (instrucciones a la IA) y los **catálogos cuyo texto
 - `Platform/Assistant/Prompts/guide.yaml`
 - `Platform/Assistant/Prompts/preprocess.yaml`
 - `Platform/Assistant/Application/Catalog/preprocess-routing-hints.yaml` (descripciones de `routing_hint` → `{routing_hints_list}` en preprocess)
-- `Platform/Ai/Application/**/*.yaml` con `stable_prompt` / `prompt_template` (p. ej. `clinical-text-ia.yaml`)
+- `Domain/**/Prompts/*.yaml` con `prompt_template` (p. ej. `Capture/Prompts/capture-extraction.yaml`)
 
 **No** aplica a texto UX (`ui-text.yaml`, `Platform/Assistant/Presentation/*`): ahí sí se puede editar código/metadata de mensajes y rótulos si la tarea lo pide.
 

@@ -144,7 +144,7 @@ Prompt: categorías del servicio + **contexto clínico acotado** + texto de cons
 
 ### Codificación automática (`encounter-codificacion-automatica`)
 
-Prompt: `clinical-text-ia.yaml` + texto del encounter + contexto paciente (`EncounterAutomaticCodingService`).
+Prompt: `Encounter/Prompts/automatic-coding.yaml` + texto del encounter + contexto paciente (`EncounterAutomaticCodingService`).
 
 | Estrategia | Aplica |
 |------------|--------|

@@ -2,7 +2,6 @@
 
 namespace common\models\Clinical;
 
-use common\components\Platform\Ai\Prompt\PromptRegistry;
 use Yii;
 
 /**
@@ -391,111 +390,49 @@ class AbreviaturasMedicas extends \yii\db\ActiveRecord
             return $abreviatura->expansion_completa;
         }
         
-        // Verificar si hay empate de frecuencia o ambigüedad
-        $abreviaturasSimilares = self::find()
-            ->where(['abreviatura' => $abreviatura->abreviatura, 'activo' => 1])
-            ->andWhere(['!=', 'id', $abreviatura->id])
-            ->all();
-        
-        // Asegurar que sea un array antes de contar
-        if (!is_array($abreviaturasSimilares) && !($abreviaturasSimilares instanceof \Countable)) {
-            $abreviaturasSimilares = [];
-        }
-        
-        if (is_countable($abreviaturasSimilares) && count($abreviaturasSimilares) > 0) {
-            // Hay ambigüedad, usar LLM para desambiguar
-            return self::desambiguarConLLM($abreviatura, $abreviaturasSimilares, $contexto, $idProfesionalEfectorServicio);
-        }
-        
-        // Si no hay preferencia del médico, usar la más frecuente
+        // Sin preferencia del médico: la expansión más frecuente. La ambigüedad real se resuelve en la
+        // extracción IA (ver buscarAmbiguasEnTexto), con todo el contexto de la nota.
         return $abreviatura->expansion_completa;
     }
 
     /**
-     * Desambiguar abreviatura usando LLM
-     * @param AbreviaturasMedicas $abreviatura
-     * @param array $abreviaturasSimilares
-     * @param string $contexto
-     * @param int|null $idProfesionalEfectorServicio
-     * @return string
+     * Abreviaturas con más de una expansión activa que aparecen en el texto (para el prompt de extracción).
+     *
+     * @return array<string, list<string>> abreviatura => expansiones posibles
      */
-    private static function desambiguarConLLM($abreviatura, $abreviaturasSimilares, $contexto, $idProfesionalEfectorServicio)
+    public static function buscarAmbiguasEnTexto(string $texto): array
     {
-        // Asegurar que $abreviaturasSimilares sea un array
-        if (!is_array($abreviaturasSimilares)) {
-            $abreviaturasSimilares = [];
+        $tokens = preg_split('/[^\p{L}\p{N}.]+/u', mb_strtolower($texto, 'UTF-8'), -1, PREG_SPLIT_NO_EMPTY);
+        $tokens = array_values(array_unique(array_map(static fn (string $t): string => rtrim($t, '.'), $tokens ?: [])));
+        if ($tokens === []) {
+            return [];
         }
-        try {
-            // Crear prompt para el LLM
-            $opciones = [$abreviatura->expansion_completa];
-            foreach ($abreviaturasSimilares as $simil) {
-                $opciones[] = $simil->expansion_completa;
-            }
-            
-            $lista = '';
-            foreach ($opciones as $i => $opcion) {
-                $lista .= ($i + 1) . ". {$opcion}\n";
-            }
-            $prompt = PromptRegistry::render('clinical.abbreviation_disambiguation', [
-                'abreviatura' => (string) $abreviatura->abreviatura,
-                'contexto' => (string) $contexto,
-                'opciones' => $lista,
-            ]);
-            // Usar IAManager para consultar LLM
-            $respuesta = \Yii::$app->iamanager->consultarLLM($prompt);
-            
-            $opcionesCount = is_countable($opciones) ? count($opciones) : 0;
-            if (is_numeric($respuesta) && $respuesta >= 1 && $respuesta <= $opcionesCount) {
-                $expansionElegida = $opciones[$respuesta - 1];
-                
-                // Guardar la elección del LLM para futuras referencias
-                self::guardarEleccionLLM($abreviatura->abreviatura, $expansionElegida, $contexto, $idProfesionalEfectorServicio);
-                
-                return $expansionElegida;
-            }
-            
-        } catch (\Exception $e) {
-            \Yii::error("Error en desambiguación LLM: " . $e->getMessage(), 'abreviaturas');
-        }
-        
-        // Fallback a la expansión original si LLM falla
-        return $abreviatura->expansion_completa;
-    }
 
-    /**
-     * Guardar elección del LLM para futuras referencias
-     * @param string $abreviatura
-     * @param string $expansionElegida
-     * @param string $contexto
-     * @param int|null $idProfesionalEfectorServicio
-     */
-    private static function guardarEleccionLLM($abreviatura, $expansionElegida, $contexto, $idProfesionalEfectorServicio)
-    {
         try {
-            // Crear o actualizar registro en tabla principal con origen LLM
-            $eleccion = self::find()
-                ->where(['abreviatura' => $abreviatura, 'origen' => self::ORIGEN_LLM])
-                ->one();
-            
-            if ($eleccion) {
-                $eleccion->expansion_completa = $expansionElegida;
-                $eleccion->frecuencia_uso++;
-                $eleccion->fecha_actualizacion = date('Y-m-d H:i:s');
-            } else {
-                $eleccion = new self();
-                $eleccion->abreviatura = $abreviatura;
-                $eleccion->expansion_completa = $expansionElegida;
-                $eleccion->contexto = $contexto;
-                $eleccion->origen = self::ORIGEN_LLM;
-                $eleccion->frecuencia_uso = 1;
-                $eleccion->activo = 1;
-            }
-            
-            $eleccion->save();
-            
-        } catch (\Exception $e) {
-            \Yii::error("Error guardando elección LLM: " . $e->getMessage(), 'abreviaturas');
+            $rows = self::find()
+                ->where(['activo' => 1])
+                ->andWhere(['in', new \yii\db\Expression('LOWER(abreviatura)'), $tokens])
+                ->orderBy(['frecuencia_uso' => SORT_DESC])
+                ->all();
+        } catch (\Throwable $e) {
+            \Yii::error('Error buscando abreviaturas ambiguas: ' . $e->getMessage(), 'abreviaturas');
+
+            return [];
         }
+
+        $porAbreviatura = [];
+        foreach ($rows as $row) {
+            $porAbreviatura[(string) $row->abreviatura][(string) $row->expansion_completa] = true;
+        }
+
+        $ambiguas = [];
+        foreach ($porAbreviatura as $abreviatura => $expansiones) {
+            if (count($expansiones) > 1) {
+                $ambiguas[$abreviatura] = array_keys($expansiones);
+            }
+        }
+
+        return $ambiguas;
     }
 
     /**

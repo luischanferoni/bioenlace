@@ -12,9 +12,14 @@ return [
     'assistant.guide' => $components . '/Platform/Assistant/Prompts/guide.yaml',
 
     // Domain: Clinical
-    'clinical.word_correction' => $components . '/Domain/Clinical/Shared/Prompts/medical-word-correction.yaml',
-    'clinical.abbreviation_disambiguation' => $components . '/Domain/Clinical/Shared/Prompts/abbreviation-disambiguation.yaml',
-    'clinical.text_ia' => $components . '/Domain/Clinical/Shared/Prompts/clinical-text-ia.yaml',
+    'clinical.capture_extraction' => $components . '/Domain/Clinical/Capture/Prompts/capture-extraction.yaml',
+    'clinical.automatic_coding' => $components . '/Domain/Clinical/Encounter/Prompts/automatic-coding.yaml',
+    'terminology.snomed_context' => $components . '/Domain/Terminology/Prompts/snomed-context.yaml',
+
+    // Domain: Veterinary
+    'veterinary.capture_extraction' => $components . '/Domain/Veterinary/Capture/Prompts/capture-extraction.yaml',
+
+    // Domain: Clinical (el resto)
     'clinical.care_pack' => $components . '/Domain/Clinical/CareCohort/Prompts/care-pack.yaml',
     'clinical.appointment_reason_summary' => $components . '/Domain/Clinical/Encounter/Prompts/appointment-reason-summary.yaml',
     'clinical.appointment_reason_insights' => $components . '/Domain/Clinical/Encounter/Prompts/appointment-reason-insights.yaml',

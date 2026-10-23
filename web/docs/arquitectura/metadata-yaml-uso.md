@@ -43,7 +43,7 @@ Detalle de capas: regla del proyecto «capas y metadata sin hardcode».
 
 - Tipologías (`IndicacionInput`, `MedicacionInput`, …): integridad y issues resolubles.
 - Completeness: descubre el contrato por `modelo` del workflow; no hardcodea títulos de categoría.
-- Post-proceso IA: defaults en `ExtractionPostProcessPolicy`; `clinical-text-ia.yaml` solo overrides.
+- Post-proceso IA: defaults en `ExtractionPostProcessPolicy`; `capture-policy.yaml` solo overrides.
 - Resolución de faltantes: el profesional elige opciones (`capture_review.issues` → `captura/aplicar-resoluciones`).
 
 ADR: [captura-clinica-contratos-yii-vs-yaml.md](../decisions/captura-clinica-contratos-yii-vs-yaml.md). Narrativa de producto: [captura-clinica.md](../producto/captura-clinica.md).

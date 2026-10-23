@@ -538,7 +538,9 @@ class CaptureExtractionService extends Component
         $prompt = ClinicalTextIaMetadata::buildEncounterCaptureExtractionPrompt(
             (string) $texto,
             is_array($categorias) ? $categorias : [],
-            $patientBlock
+            $patientBlock,
+            \common\models\Clinical\AbreviaturasMedicas::buscarAmbiguasEnTexto((string) $texto),
+            \common\models\Organization\Servicio::ambitoAtencionPorNombre((string) $servicio)
         );
 
         return [

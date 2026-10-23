@@ -12,8 +12,6 @@ class YamlPromptTest extends Unit
     private function prompts(): array
     {
         return [
-            'clinical.word_correction' => ['especialidad', 'contexto', 'palabra'],
-            'clinical.abbreviation_disambiguation' => ['abreviatura', 'contexto', 'opciones'],
             'clinical.appointment_reason_summary' => ['patient_block', 'image_block', 'transcript'],
             'clinical.appointment_reason_insights' => ['motivos_resumen', 'patient_block'],
             'clinical.care_pack' => ['profile_json', 'encounter_hint', 'delta_hint', 'context_block', 'schema'],
@@ -41,16 +39,18 @@ class YamlPromptTest extends Unit
 
     public function testRenderRejectsMissingAndExtraValues(): void
     {
-        $file = PromptRegistry::path('clinical.word_correction');
-        $vars = ['especialidad' => 'x', 'contexto' => 'y', 'palabra' => 'z'];
+        $file = PromptRegistry::path('clinical.appointment_reason_insights');
+        $vars = ['motivos_resumen' => 'MOTIVOS-X', 'patient_block' => 'PACIENTE-Y'];
 
-        $this->assertStringContainsString('médico en x.', YamlPrompt::render($file, $vars));
+        $out = YamlPrompt::render($file, $vars);
+        $this->assertStringContainsString('MOTIVOS-X', $out);
+        $this->assertStringContainsString('PACIENTE-Y', $out);
 
         try {
-            YamlPrompt::render($file, ['especialidad' => 'x']);
+            YamlPrompt::render($file, ['motivos_resumen' => 'x']);
             $this->fail('Debía fallar por placeholders sin valor');
         } catch (\LogicException $e) {
-            $this->assertStringContainsString('contexto', $e->getMessage());
+            $this->assertStringContainsString('patient_block', $e->getMessage());
         }
 
         $this->expectException(\LogicException::class);
@@ -59,10 +59,10 @@ class YamlPromptTest extends Unit
 
     public function testValuesWithBracesAreNotReinterpreted(): void
     {
-        $file = PromptRegistry::path('clinical.word_correction');
-        $out = YamlPrompt::render($file, ['especialidad' => '{contexto}', 'contexto' => 'y', 'palabra' => 'z']);
+        $file = PromptRegistry::path('clinical.appointment_reason_insights');
+        $out = YamlPrompt::render($file, ['motivos_resumen' => '{patient_block}', 'patient_block' => 'y']);
 
-        $this->assertStringContainsString('en {contexto}.', $out);
+        $this->assertStringContainsString('{patient_block}', $out);
     }
 
     public function testCarePackSchemasExistForEveryPackType(): void

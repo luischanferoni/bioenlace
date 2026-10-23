@@ -1,0 +1,68 @@
+# Tipo: prompt
+# Propósito: extracción IA de datos clínicos VETERINARIOS en captura (primera versión, exploratoria).
+#            Sujeto = animal + tutor; la dosificación depende del peso del animal.
+# Consumidor: ClinicalTextIaMetadata::buildEncounterCaptureExtractionPrompt con ámbito `veterinario`
+#             (clave `veterinary.capture_extraction`). Mismos placeholders y mismo contrato de salida
+#             (texto_procesado + datosExtraidos) que la variante humana, para reutilizar parser y post-proceso.
+# Pendiente (fase 07): category_hints por modelo veterinario cuando existan los modelos de categoría.
+version: 1
+
+encounter_capture_extraction:
+  prompt_template: |
+    Extraé datos clínicos veterinarios en JSON válido y completo (cerrá todas las llaves, corchetes y comillas).
+    El paciente es un ANIMAL; quien habla en la consulta puede ser el tutor (dueño) o el profesional veterinario.
+
+    OBLIGATORIO: la respuesta debe incluir SIEMPRE la clave raíz "texto_procesado" (string) además de "datosExtraidos".
+    Sin "texto_procesado" la respuesta es inválida.
+
+    {classification_rules}
+
+    Categorías (usá exactamente estos nombres como claves dentro de datosExtraidos):
+    {categories_block}
+
+    Reglas de formato:
+    - Sin datos para una categoría: [].
+    - No repitas el mismo dato en más de una categoría.
+    - Formato JSON exacto:
+      {
+        "texto_procesado": "nota clínica corregida…",
+        "datosExtraidos": {"Motivos de consulta": ["…"], "Diagnóstico": ["…"]}
+      }
+    - Categorías SIN subdatos: array de strings cortos y específicos (no copies párrafos enteros).
+    - Categorías CON subdatos: array de OBJETOS usando exactamente las claves listadas en subdatos. NO uses un string único que mezcle toda la indicación.
+    {structured_examples_block}
+    - Tipos de frecuencia admitidos: {frecuencia_tipos}.
+    - Tipos de duración admitidos: {duracion_tipos}.
+
+    Reglas específicas de veterinaria:
+    - Los síntomas que relata el tutor son observaciones del tutor ("no come", "se rasca"); registralos como motivo, sin convertirlos en diagnóstico.
+    - Especie, raza, sexo, edad y peso del animal son datos del paciente: si aparecen en el texto, respetá las cifras y unidades exactas (kg, g).
+    - Las dosis veterinarias suelen darse por peso (mg/kg, ml/kg): conservá la expresión original y no la conviertas ni la calcules.
+    - Vacunación, desparasitación y estado reproductivo (castración) son antecedentes, no diagnósticos.
+    - No apliques terminología de medicina humana que el texto no use (no inventes diagnósticos ni fármacos).
+
+    Reglas para texto_procesado:
+    - Reescribí la misma nota del profesional, más clara y correcta; no es un copy-paste del original.
+    - Restaurá/corregí ortografía y tildes en español.
+    - Expandí abreviaturas habituales cuando aporte claridad (FC→frecuencia cardíaca). Si hay abreviaturas ambiguas listadas más abajo, elegí la expansión según el contexto.
+    - Mejorá puntuación y mayúsculas; mantené cifras, pesos y dosis exactas del original.
+    - Sin agregar hallazgos, fármacos, dosis ni indicaciones que no estén en el texto.
+    - Sin markdown.
+
+    {patient_context}
+    {abbreviations_block}
+
+    Texto clínico: "{clinical_text}"
+
+    Respondé SOLO con el JSON (con texto_procesado Y datosExtraidos), sin texto adicional antes o después.
+  abbreviations_header: 'Abreviaturas ambiguas detectadas en el texto (opciones posibles; elegí la que corresponda al contexto):'
+  classification_rules_template: |
+    Reglas de clasificación (obligatorias):
+    - No dupliques un mismo dato en más de una categoría.
+    - Clasificá cada fragmento según la semántica de su categoría:
+    {category_semantics}
+    - Si el texto no tiene interpretación clínica (objetos cotidianos, palabras sin sentido médico, bromas, etc.), dejá todas las categorías en [].
+    - No inventes motivos de consulta ni diagnósticos que el texto no sustente clínicamente.
+    - Un término aislado que nombra una enfermedad o condición va en diagnóstico, no en motivos de consulta.
+    - Si el texto narra un síntoma o queja y además un diagnóstico, el síntoma va en Motivos y el diagnóstico en Diagnóstico (no omitas el Motivo).
+  category_hints: {}

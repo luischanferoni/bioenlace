@@ -1,0 +1,20 @@
+# Tipo: prompt
+# Propósito: sugerir el término SNOMED CT más preciso para un término en su categoría clínica.
+# Consumidor: ClinicalTextIaMetadata::buildSnomedContextPrompt (clave `terminology.snomed_context`)
+# Placeholders: {texto}, {contexto}
+version: 1
+
+snomed_context:
+  categories:
+    diagnosticos: diagnósticos médicos, enfermedades, condiciones patológicas, hallazgos clínicos
+    sintomas: síntomas, signos, manifestaciones clínicas, motivos de consulta
+    medicamentos: medicamentos, fármacos, sustancias farmacológicas, tratamientos
+    procedimientos: procedimientos médicos, intervenciones, técnicas diagnósticas, exámenes
+  default_category_label: conceptos médicos
+  prompt_template: |
+    Analiza el siguiente término médico en el contexto de {contexto} y proporciona el término SNOMED CT más apropiado y preciso.
+
+    Término: '{texto}'
+    Contexto: {contexto}
+
+    Responde SOLO con el término SNOMED CT más preciso, sin explicaciones adicionales:

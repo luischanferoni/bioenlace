@@ -1,82 +1,11 @@
-# Tipo: prompt + knob
-# Propósito: prompts y heurísticas de IA para texto clínico (SNOMED, captura, léxico).
-# Consumidor: ClinicalTextIaMetadata / ProductMetadataPaths::clinicalTextIaFile()
-# No poner aquí: required_when de integridad clínica (modelos *Input Yii).
-version: 1
+# Tipo: prompt
+# Propósito: extracción IA de datos clínicos HUMANOS en captura (analizar encounter). Esqueleto genérico:
+#            las categorías llegan como variables ({categories_block}, {category_semantics}); no se listan aquí.
+# Consumidor: ClinicalTextIaMetadata::buildEncounterCaptureExtractionPrompt (clave `clinical.capture_extraction`)
+# Variante veterinaria: Domain/Veterinary/Capture/Prompts/capture-extraction.yaml (mismo contrato de salida).
+# Política de post-proceso y léxico: ../Policy/capture-policy.yaml (no es prompt).
+version: 2
 
-snomed_context:
-  categories:
-    diagnosticos: diagnósticos médicos, enfermedades, condiciones patológicas, hallazgos clínicos
-    sintomas: síntomas, signos, manifestaciones clínicas, motivos de consulta
-    medicamentos: medicamentos, fármacos, sustancias farmacológicas, tratamientos
-    procedimientos: procedimientos médicos, intervenciones, técnicas diagnósticas, exámenes
-  default_category_label: conceptos médicos
-  prompt_template: |
-    Analiza el siguiente término médico en el contexto de {contexto} y proporciona el término SNOMED CT más apropiado y preciso.
-
-    Término: '{texto}'
-    Contexto: {contexto}
-
-    Responde SOLO con el término SNOMED CT más preciso, sin explicaciones adicionales:
-
-encounter_automatic_coding:
-  max_diagnosticos: 8
-  prompt_template: |
-    Sos el motor de codificación diagnóstica del HIS Bioenlace. Debés elegir los códigos oficiales y persistirlos; no sugerís al médico para confirmar.
-
-    {patient_context}
-
-    Texto clínico del encounter (dictado / evolución):
-    ---
-    {clinical_text}
-    ---
-
-    {diagnosis_hints}
-
-    Devolvé SOLO JSON válido con esta forma:
-    {
-      "diagnosticos": [
-        {
-          "termino": "nombre del diagnóstico en español",
-          "codigo_cie10": "código CIE-10-ES sin espacios (ej. J06.9) o null",
-          "codigo_snomed": "conceptId SNOMED CT numérico o null",
-          "rol": "principal|secundario",
-          "justificacion": "breve cita del texto que sustenta el código"
-        }
-      ]
-    }
-
-    Reglas:
-    - Codificá SOLO los ítems listados en «Diagnósticos a codificar». No agregues síntomas, motivos de consulta ni signos vitales como diagnóstico.
-    - Si la lista de diagnósticos a codificar está vacía, devolvé {"diagnosticos":[]}.
-    - Incluí al menos un diagnóstico principal cuando la lista lo permita.
-    - Usá CIE-10-ES cuando corresponda a facturación/epidemiología en Argentina; SNOMED CT para interoperabilidad clínica.
-    - Al menos uno de codigo_cie10 o codigo_snomed debe estar presente por ítem.
-    - Máximo {max_diagnosticos} diagnósticos.
-    - No inventes hallazgos ausentes en el texto.
-    - Sin markdown ni texto fuera del JSON.
-
-llm_correction_confidence:
-  context_terms:
-    - paciente
-    - consulta
-    - diagnóstico
-    - tratamiento
-    - medicamento
-    - síntoma
-    - enfermedad
-  context_term_boost: 0.1
-
-# Léxico clínico: overrides opcionales. Defaults de dominio en
-# ExtractionPostProcessPolicy::DEFAULT_LEXICON.
-clinical_lexicon:
-  # Delimitadores PCRE `/…/iu` (no usar `(?iu)`: en PCRE `u` no es opción inline).
-  narrative_framing: '/\b(refiere|vengo\s+por|consulta\s+por|desde\s+hace|presenta|paciente\s+con|me\s+siento|hace\s+\d+|desde\s+ayer|desde\s+hoy)\b/iu'
-  subjective_complaint: '/\b(problema|dolor|duele|sintoma|síntoma|malestar|enfermo|fiebre|tos|nausea|náusea|vomito|vómito|mareo|hinchazon|hinchazón|presion|presión|chichon|chichón|golpe|hematoma|moreton|moretón|bulto|hinchado|inflamado|herida|sangra|sangrado|cefalea|astenia|disnea|prurito|cansancio|diarrea)\b/iu'
-
-# Extracción IA en captura clínica (analizar encounter).
-# {@see ClinicalTextIaMetadata::buildEncounterCaptureExtractionPrompt}
-# {@see EncounterCaptureExtractionPostProcessService}
 encounter_capture_extraction:
   prompt_template: |
     Extraé datos clínicos en JSON válido y completo (cerrá todas las llaves, corchetes y comillas).
@@ -106,16 +35,19 @@ encounter_capture_extraction:
     Reglas para texto_procesado:
     - Reescribí la misma nota del profesional, más clara y correcta; no es un copy-paste del original.
     - Restaurá/correjí ortografía y tildes en español.
-    - Expandí abreviaturas médicas habituales cuando aporte claridad (TA→tensión arterial).
+    - Expandí abreviaturas médicas habituales cuando aporte claridad (TA→tensión arterial). Si hay abreviaturas ambiguas listadas más abajo, elegí la expansión según el contexto.
     - Mejorá puntuación y mayúsculas; mantené cifras y dosis exactas del original.
     - Sin agregar hallazgos, fármacos, dosis ni indicaciones que no estén en el texto.
     - Sin markdown.
 
     {patient_context}
+    {abbreviations_block}
 
     Texto clínico: "{clinical_text}"
 
     Respondé SOLO con el JSON (con texto_procesado Y datosExtraidos), sin texto adicional antes o después.
+  # Encabezado del bloque de abreviaturas ambiguas (solo si el texto contiene alguna).
+  abbreviations_header: 'Abreviaturas ambiguas detectadas en el texto (opciones posibles; elegí la que corresponda al contexto):'
   classification_rules_template: |
     Reglas de clasificación (obligatorias):
     - No dupliques un mismo dato en más de una categoría.
@@ -126,6 +58,7 @@ encounter_capture_extraction:
     - No inventes motivos de consulta ni diagnósticos que el texto no sustente clínicamente.
     - Un término aislado que nombra una enfermedad o condición médica va en diagnóstico, no en motivos de consulta.
     - Si el texto narra un síntoma o queja (dolor, cefalea, tos, etc.) y además un diagnóstico, el síntoma va en Motivos y el diagnóstico en Diagnóstico (no omitas el Motivo).
+  # Semántica por categoría (clave = modelo). Pendiente de migrar a la definición de cada categoría.
   category_hints:
     EncounterReason: queja o síntoma referido (cefalea, dolor, malestar, etc.); no lo dejes vacío si el texto lo menciona
     EncounterDiagnosis: diagnóstico, evolución o enfermedad nombrada por el profesional
@@ -142,32 +75,3 @@ encounter_capture_extraction:
     EncounterDentalStatus: estado dental o pieza
     EncounterNutritionOrder: régimen o indicación de internación
     EncounterFluidBalance: balance hídrico
-  # Overrides de política de post-proceso (defaults en ExtractionPostProcessPolicy).
-  # No es fuente de verdad de integridad clínica: solo knobs operativos.
-  post_process:
-    reason_model: EncounterReason
-    diagnosis_models:
-      - EncounterDiagnosis
-    filter_non_clinical_extractions:
-      enabled: true
-      strict_category_models:
-        - EncounterReason
-      terminology_guard_category_models: []
-      retain_if_lexicon_keys:
-        - narrative_framing
-        - subjective_complaint
-      validate_terminology: false
-      snowstorm_fallback: false
-    relocate_isolated_terms:
-      enabled: false
-      max_words: 5
-    backfill_empty_motivos:
-      enabled: true
-      require_lexicon_key: subjective_complaint
-      max_chars: 140
-      split_before_patterns:
-        - '/\bdiagn[oó]stico\s*:/iu'
-        - '/\bindico\b/iu'
-        - '/\bindicaci[oó]n\b/iu'
-        - '/\breposo\b/iu'
-        - '/\bcontrol\b/iu'

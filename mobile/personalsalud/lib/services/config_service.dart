@@ -332,12 +332,16 @@ class SessionConfig {
   final int idProfesionalEfectorServicio;
   final String? contextToken;
 
+  /// Ámbito de atención informado por el backend (`humano` o `veterinario`).
+  final String ambitoAtencion;
+
   SessionConfig({
     required this.efector,
     required this.servicio,
     required this.encounterClass,
     required this.idProfesionalEfectorServicio,
     this.contextToken,
+    this.ambitoAtencion = 'humano',
   });
 
   factory SessionConfig.fromJson(Map<String, dynamic> json) {
@@ -355,6 +359,7 @@ class SessionConfig {
       ),
       idProfesionalEfectorServicio: idCtx,
       contextToken: json['context_token'] as String?,
+      ambitoAtencion: json['ambito_atencion'] as String? ?? 'humano',
     );
   }
 }

@@ -4,6 +4,8 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 
+import '../http/api_contract.dart';
+
 /// Mensaje de error desde cuerpo JSON típico de la API Bioenlace.
 String? apiMessageFromJson(dynamic json) {
   if (json is! Map) {
@@ -61,6 +63,11 @@ String userFriendlyErrorMessage(
   String? serverMessage,
   String? fallback,
 }) {
+  // Un error del contrato trae el texto del backend: se muestra tal cual.
+  if (error is ApiContractException) {
+    return error.message;
+  }
+
   final server = serverMessage?.trim();
   if (server != null && server.isNotEmpty && _looksUserFacing(server)) {
     return server;
@@ -73,65 +80,26 @@ String userFriendlyErrorMessage(
     }
   }
 
-  final unwrapped = _unwrapExceptionMessage(error);
-  if (unwrapped != null && _looksUserFacing(unwrapped)) {
-    return unwrapped;
-  }
-
+  // Los fallos de transporte se clasifican por tipo, no por el texto de la excepción.
   if (error is TimeoutException) {
     return 'La conexión tardó demasiado. Verificá tu internet e intentá de nuevo.';
   }
-
-  final raw = error.toString();
-  final lower = raw.toLowerCase();
-
-  if (lower.contains('failed to fetch') ||
-      lower.contains('network request failed') ||
-      lower.contains('xmlhttprequest error') ||
-      lower.contains('networkerror') ||
-      lower.contains('failed to connect')) {
-    return 'Sin conexión a internet. Revisá la red e intentá de nuevo.';
-  }
-
-  if (lower.contains('connection reset') ||
-      lower.contains('connection refused') ||
-      lower.contains('connection closed') ||
-      lower.contains('broken pipe') ||
-      lower.contains('socketexception') ||
-      lower.contains('failed host lookup') ||
-      lower.contains('network is unreachable') ||
-      lower.contains('software caused connection abort')) {
-    return 'No pudimos conectar con el servidor. Revisá tu conexión e intentá de nuevo.';
-  }
-
-  if (lower.contains('handshake') ||
-      lower.contains('certificate') ||
-      lower.contains('tls') ||
-      lower.contains('ssl')) {
+  if (error is TlsException) {
     return 'Hubo un problema de conexión segura. Intentá de nuevo en unos segundos.';
   }
-
-  if (lower.contains('clientexception')) {
-    return 'No pudimos conectar con el servidor. Revisá tu conexión e intentá de nuevo.';
-  }
-
   if (error is SocketException) {
     return 'No hay conexión a internet o el servidor no responde. Intentá de nuevo.';
   }
-
-  if (lower.startsWith('http 5') || RegExp(r'\b5\d{2}\b').hasMatch(lower)) {
-    return 'El servidor no está disponible en este momento. Intentá de nuevo más tarde.';
+  if (error is http.ClientException) {
+    return 'No pudimos conectar con el servidor. Revisá tu conexión e intentá de nuevo.';
   }
-
-  if (lower.startsWith('http 4') || RegExp(r'\b4\d{2}\b').hasMatch(lower)) {
-    return server ??
-        'No se pudo completar la operación. Verificá los datos e intentá de nuevo.';
-  }
-
-  if (lower.contains('format exception') ||
-      lower.contains('respuesta inválida') ||
-      lower.contains('no es ui_definition')) {
+  if (error is FormatException) {
     return 'Recibimos una respuesta inesperada del servidor. Intentá de nuevo.';
+  }
+
+  final unwrapped = _unwrapExceptionMessage(error);
+  if (unwrapped != null && _looksUserFacing(unwrapped)) {
+    return unwrapped;
   }
 
   return fallback ??
@@ -139,23 +107,12 @@ String userFriendlyErrorMessage(
 }
 
 bool isRetryableNetworkError(Object error) {
-  if (error is TimeoutException || error is SocketException) {
-    return true;
+  if (error is ApiContractException) {
+    return error.retryable;
   }
-  final lower = error.toString().toLowerCase();
-  return lower.contains('failed to fetch') ||
-      lower.contains('network request failed') ||
-      lower.contains('xmlhttprequest error') ||
-      lower.contains('networkerror') ||
-      lower.contains('failed to connect') ||
-      lower.contains('connection reset') ||
-      lower.contains('connection refused') ||
-      lower.contains('connection closed') ||
-      lower.contains('broken pipe') ||
-      lower.contains('failed host lookup') ||
-      lower.contains('network is unreachable') ||
-      lower.contains('clientexception') ||
-      lower.contains('software caused connection abort');
+  return error is TimeoutException ||
+      error is SocketException ||
+      error is http.ClientException;
 }
 
 bool _looksUserFacing(String message) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../text/shared_texts.dart';
 import '../theme/tokens/tokens.dart';
 import '../ui/ui.dart';
 import 'care_plan_local_reminder_service.dart';
@@ -142,7 +143,7 @@ class _CarePlanReminderPlanPanelState extends State<CarePlanReminderPlanPanel> {
             );
 
             return AlertDialog(
-              title: const Text('Hora de la primera toma'),
+              title: const Text(SharedTexts.firstDoseTime),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -170,7 +171,7 @@ class _CarePlanReminderPlanPanelState extends State<CarePlanReminderPlanPanel> {
                   ),
                   if (preview.isNotEmpty) ...[
                     BioSpacing.gapH(BioSpacing.md),
-                    Text('Recordatorios del día', style: BioTypography.title),
+                    Text(SharedTexts.dailyReminders, style: BioTypography.title),
                     BioSpacing.gapH(BioSpacing.xs),
                     Text(preview.join(' · '), style: BioTypography.body),
                   ],
@@ -179,11 +180,11 @@ class _CarePlanReminderPlanPanelState extends State<CarePlanReminderPlanPanel> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx, false),
-                  child: const Text('Cancelar'),
+                  child: const Text(SharedTexts.cancel),
                 ),
                 FilledButton(
                   onPressed: preview.isEmpty ? null : () => Navigator.pop(ctx, true),
-                  child: const Text('Guardar'),
+                  child: const Text(SharedTexts.save),
                 ),
               ],
             );
@@ -251,11 +252,11 @@ class _CarePlanReminderPlanPanelState extends State<CarePlanReminderPlanPanel> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Recordatorios', style: BioTypography.title),
+          Text(SharedTexts.reminders, style: BioTypography.title),
           BioSpacing.gapH(BioSpacing.sm),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Recordatorios de este tratamiento'),
+            title: const Text(SharedTexts.treatmentReminders),
             value: _planOn,
             onChanged: _setPlan,
           ),
@@ -294,9 +295,9 @@ class _CarePlanReminderPlanPanelState extends State<CarePlanReminderPlanPanel> {
                       builder: (context, snap) {
                         final custom = snap.data ?? [];
                         if (custom.isNotEmpty) {
-                          return Text('Recordatorios: ${custom.join(' · ')}');
+                          return Text(SharedTexts.remindersCustom(custom.join(' · ')));
                         }
-                        return const Text('Elegí la hora de la primera toma');
+                        return const Text(SharedTexts.chooseFirstDoseTime);
                       },
                     )
                   : Text(item['subtitle']?.toString() ?? ''),
@@ -310,7 +311,7 @@ class _CarePlanReminderPlanPanelState extends State<CarePlanReminderPlanPanel> {
                 alignment: Alignment.centerLeft,
                 child: TextButton(
                   onPressed: () => _configureCustomTimes(item),
-                  child: const Text('Elegir hora de la primera toma'),
+                  child: const Text(SharedTexts.chooseFirstDoseTimeButton),
                 ),
               ),
           ],

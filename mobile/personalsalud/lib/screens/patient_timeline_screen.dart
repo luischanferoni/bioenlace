@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/encounter_capture_analysis.dart';
 import '../models/pending_encounter_capture.dart';
 import '../models/timeline_event.dart';
+import '../infra/app_texts.dart';
 import '../services/historia_clinica_service.dart';
 import '../services/emergency_guardia_api.dart';
 import '../services/pending_encounter_capture_store.dart';
@@ -516,7 +517,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Datos cargados', style: BioTypography.title),
+          Text(AppTexts.timelineLoadedData, style: BioTypography.title),
           BioSpacing.gapH(BioSpacing.md),
           if (!doc.tieneDatos || doc.secciones.isEmpty)
             Text(
@@ -599,18 +600,18 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           Text(titulo, style: BioTypography.title),
           BioSpacing.gapH(BioSpacing.md),
           if (!hayResumen)
-            Text('Sin datos', style: BioTypography.bodySm)
+            Text(AppTexts.noData, style: BioTypography.bodySm)
           else
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (peso != null)
-                  Text('Peso: $peso kg', style: BioTypography.body),
+                  Text(AppTexts.timelineWeightKg(peso), style: BioTypography.body),
                 if (talla != null)
-                  Text('Altura: $talla cm', style: BioTypography.body),
-                if (imc != null) Text('IMC: $imc', style: BioTypography.body),
+                  Text(AppTexts.timelineHeightCm(talla), style: BioTypography.body),
+                if (imc != null) Text(AppTexts.timelineBmiValue(imc), style: BioTypography.body),
                 if (tension != null)
-                  Text('Tensión arterial: $tension', style: BioTypography.body),
+                  Text(AppTexts.timelineBloodPressureValue(tension), style: BioTypography.body),
               ],
             ),
           if (sv.datosSv.isNotEmpty &&
@@ -672,7 +673,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Condición actual', style: BioTypography.title),
+          Text(AppTexts.timelineCurrentCondition, style: BioTypography.title),
           BioSpacing.gapH(BioSpacing.lg),
           LayoutBuilder(
             builder: (context, constraints) {
@@ -738,7 +739,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           Text(titulo, style: BioTypography.overline),
           BioSpacing.gapH(BioSpacing.sm),
           if (items.isEmpty)
-            Text('Sin datos', style: BioTypography.bodySm)
+            Text(AppTexts.noData, style: BioTypography.bodySm)
           else
             Wrap(
               spacing: BioSpacing.xs,
@@ -758,7 +759,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Preguntas previas al chat', style: BioTypography.title),
+          Text(AppTexts.timelineIntakeTitle, style: BioTypography.title),
           if (intake.title != null && intake.title!.trim().isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.xs),
             Text(
@@ -771,7 +772,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           BioSpacing.gapH(BioSpacing.md),
           if (intake.notesForStaff != null &&
               intake.notesForStaff!.trim().isNotEmpty) ...[
-            Text('Orientación', style: BioTypography.overline),
+            Text(AppTexts.timelineGuidance, style: BioTypography.overline),
             BioSpacing.gapH(BioSpacing.xs),
             Text(intake.notesForStaff!.trim(), style: BioTypography.bodySm),
             BioSpacing.gapH(BioSpacing.md),
@@ -784,7 +785,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
               style: BioTypography.bodySm,
             )
           else ...[
-            Text('Respuestas del paciente', style: BioTypography.overline),
+            Text(AppTexts.timelinePatientAnswers, style: BioTypography.overline),
             BioSpacing.gapH(BioSpacing.sm),
             ...intake.answers.map(
               (a) => Padding(
@@ -954,7 +955,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         Row(
           children: [
             Expanded(
-              child: Text('Registro del episodio', style: BioTypography.title),
+              child: Text(AppTexts.timelineEpisodeRecord, style: BioTypography.title),
             ),
             if (all.isNotEmpty)
               Text(
@@ -1177,7 +1178,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     if (accion.kind != 'ui_json' || route == null || route.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('La acción no tiene una pantalla compatible.'),
+          content: Text(AppTexts.timelineActionNoScreen),
         ),
       );
       return;
@@ -1185,7 +1186,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     if (method != 'GET') {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Método no compatible para esta acción: $method'),
+          content: Text(AppTexts.timelineActionMethodUnsupported(method)),
         ),
       );
       return;
@@ -1228,7 +1229,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Motivos de esta consulta', style: BioTypography.title),
+          Text(AppTexts.timelineReasonsTitle, style: BioTypography.title),
           if (subtituloTurno != null) ...[
             BioSpacing.gapH(BioSpacing.xs),
             Text(
@@ -1240,7 +1241,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           ],
           BioSpacing.gapH(BioSpacing.md),
           if (hayResumen) ...[
-            Text('Resumen', style: BioTypography.overline),
+            Text(AppTexts.timelineSummary, style: BioTypography.overline),
             BioSpacing.gapH(BioSpacing.xs),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1264,7 +1265,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             ),
             if (sugerencias.diagnosticos.isNotEmpty) ...[
               BioSpacing.gapH(BioSpacing.sm),
-              Text('Diagnósticos a considerar', style: BioTypography.bodySm),
+              Text(AppTexts.timelineDiagnoses, style: BioTypography.bodySm),
               BioSpacing.gapH(BioSpacing.xs),
               ...sugerencias.diagnosticos.map(
                 (d) => Padding(
@@ -1278,7 +1279,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             ],
             if (sugerencias.practicas.isNotEmpty) ...[
               BioSpacing.gapH(BioSpacing.sm),
-              Text('Prácticas / estudios', style: BioTypography.bodySm),
+              Text(AppTexts.timelinePractices, style: BioTypography.bodySm),
               BioSpacing.gapH(BioSpacing.xs),
               ...sugerencias.practicas.map(
                 (p) => Padding(
@@ -1319,7 +1320,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Asistencia pre-consulta (cohorte)', style: BioTypography.title),
+          Text(AppTexts.timelinePreconsult, style: BioTypography.title),
           if (cohorte.cohortKeyShort != null &&
               cohorte.cohortKeyShort!.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.xs),
@@ -1337,7 +1338,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           BioSpacing.gapH(BioSpacing.md),
           if (assistance.notesForStaff != null &&
               assistance.notesForStaff!.trim().isNotEmpty) ...[
-            Text('Orientación', style: BioTypography.overline),
+            Text(AppTexts.timelineGuidance, style: BioTypography.overline),
             BioSpacing.gapH(BioSpacing.xs),
             Text(assistance.notesForStaff!.trim(), style: BioTypography.bodySm),
             BioSpacing.gapH(BioSpacing.md),
@@ -1350,7 +1351,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
               style: BioTypography.bodySm,
             )
           else ...[
-            Text('Respuestas del paciente', style: BioTypography.overline),
+            Text(AppTexts.timelinePatientAnswers, style: BioTypography.overline),
             BioSpacing.gapH(BioSpacing.sm),
             ...assistance.answers.map(
               (a) => Padding(
@@ -1467,7 +1468,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       return;
     }
     if (!_sttConfig.deviceEnabled && !_sttConfig.serverEnabled) {
-      _snack('Dictado por voz deshabilitado.', UiIntent.warning);
+      _snack(AppTexts.dictationDisabled, UiIntent.warning);
       return;
     }
     if (!_sttConfig.deviceEnabled) {
@@ -1499,7 +1500,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     } catch (e, st) {
       await _stopAudioOnlyRecording();
       debugPrint('[stt-device] start failed: $e\n$st');
-      _snack('No se pudo iniciar dictado: $e', UiIntent.danger);
+      _snack(AppTexts.dictationStartFailed(e), UiIntent.danger);
     }
   }
 
@@ -1576,7 +1577,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         icon: const Icon(Icons.mic_off_outlined),
-        title: const Text('Micrófono no habilitado'),
+        title: const Text(AppTexts.micDisabledTitle),
         content: Text(
           permissionRequestFailed
               ? 'No se pudo habilitar el micrófono. Verificá que haya uno disponible y que el permiso esté habilitado en la configuración del navegador o del dispositivo. Después, volvé a intentar.'
@@ -1585,7 +1586,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cerrar'),
+            child: const Text(AppTexts.close),
           ),
           FilledButton.icon(
             onPressed: () async {
@@ -1630,7 +1631,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         _audioOnlyRecording = false;
         _sttStatus = 'No se pudo capturar el audio.';
       });
-      _snack('No se pudo finalizar la grabación: $e', UiIntent.danger);
+      _snack(AppTexts.recordingFinishFailed(e), UiIntent.danger);
       return false;
     }
     if (!mounted) return false;
@@ -1839,7 +1840,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         );
       } catch (e) {
         print('✗ Error al eliminar captura del servidor: $e');
-        _snack('Error al eliminar del servidor', UiIntent.danger);
+        _snack(AppTexts.captureDeleteFailed, UiIntent.danger);
         // Revertir el cambio local si falló el backend
         await _loadPendingCaptures();
         return;
@@ -1853,7 +1854,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     await _loadPendingCaptures();
 
     if (mounted) {
-      _snack('Eliminada', UiIntent.neutral);
+      _snack(AppTexts.captureDeleted, UiIntent.neutral);
     }
   }
 
@@ -2071,7 +2072,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       return;
     }
     if (!_tieneContextoCaptura) {
-      _snack('Falta contexto de atención (parent).', UiIntent.warning);
+      _snack(AppTexts.captureMissingParent, UiIntent.warning);
       return;
     }
     setState(() {
@@ -2266,7 +2267,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           error: 'Sin texto para analizar.',
         );
         if (!mounted) return;
-        _snack('No hay texto para analizar.', UiIntent.warning);
+        _snack(AppTexts.captureNoText, UiIntent.warning);
         return;
       }
 
@@ -2385,7 +2386,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   Future<void> _confirmarGuardado() async {
     final review = _captureReview;
     if (review == null || _lastAnalysis == null) {
-      _snack('Analizá antes de guardar.', UiIntent.warning);
+      _snack(AppTexts.captureAnalyzeFirst, UiIntent.warning);
       return;
     }
     if (review.systemError != null) {
@@ -2608,7 +2609,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
               style: TextButton.styleFrom(foregroundColor: palette.base),
-              child: const Text('Entendido'),
+              child: const Text(AppTexts.understood),
             ),
           ],
         );
@@ -2814,7 +2815,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             child: CircularProgressIndicator(strokeWidth: 2),
           ),
           BioSpacing.gapW(BioSpacing.md),
-          Expanded(child: Text('Analizando…', style: BioTypography.body)),
+          Expanded(child: Text(AppTexts.captureAnalyzing, style: BioTypography.body)),
         ],
       ),
     );
@@ -2839,7 +2840,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           ),
         ),
         BioSpacing.gapH(BioSpacing.md),
-        Text('Texto registrado', style: sectionTitleStyle),
+        Text(AppTexts.captureRegisteredText, style: sectionTitleStyle),
         BioSpacing.gapH(BioSpacing.xs),
         Text(
           (_draftText ?? review.textoOriginal).trim().isNotEmpty
@@ -2870,7 +2871,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             review.textoProcesado!.trim().isNotEmpty &&
             review.textoProcesado!.trim() != review.textoOriginal.trim()) ...[
           BioSpacing.gapH(BioSpacing.md),
-          Text('Texto procesado', style: sectionTitleStyle),
+          Text(AppTexts.captureProcessedText, style: sectionTitleStyle),
           BioSpacing.gapH(BioSpacing.xs),
           Text(review.textoProcesado!, style: BioTypography.bodySm),
         ],
@@ -2884,7 +2885,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           ),
         ] else ...[
           BioSpacing.gapH(BioSpacing.lg),
-          Text('Resultado del procesamiento', style: sectionTitleStyle),
+          Text(AppTexts.captureProcessingResult, style: sectionTitleStyle),
           BioSpacing.gapH(BioSpacing.sm),
           ...review.categories.map((cat) {
             final delTexto = cat.items
@@ -2957,7 +2958,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             .map(_buildCaptureIssueBlock),
         if (review.hasOpenProblems) ...[
           BioSpacing.gapH(BioSpacing.md),
-          Text('Problemas y tratamientos abiertos', style: sectionTitleStyle),
+          Text(AppTexts.captureOpenProblems, style: sectionTitleStyle),
           BioSpacing.gapH(BioSpacing.xs),
           Text(
             'Opcional: indicá el estado al cerrar. Si no elegís, se mantienen.',
@@ -3261,7 +3262,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
               child: TextButton.icon(
                 onPressed: _captureBusy ? null : _cancelEditCaptureDraft,
                 icon: const Icon(Icons.arrow_back, size: 18),
-                label: const Text('Cancelar edición'),
+                label: const Text(AppTexts.captureCancelEdit),
               ),
             ),
           ),

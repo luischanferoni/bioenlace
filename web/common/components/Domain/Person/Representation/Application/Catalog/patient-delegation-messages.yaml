@@ -1,0 +1,22 @@
+# Mensajes de DesignatePatientDelegation (régimen B: representante designado por el paciente).
+version: 1
+messages:
+  self_delegation: 'No podés designarte a vos mismo como representante.'
+  relationship_invalid: 'Tipo de vínculo no válido.'
+  regime_not_applicable: 'Ese parentesco no aplica a delegación de representante.'
+  representative_already_active: 'Esa persona ya es representante activo o está bloqueada.'
+  designate_failed: 'No se pudo designar al representante: {errors}'
+  consent_failed: 'No se pudo registrar el consentimiento: {errors}'
+  representative_already_revoked: 'El representante ya está revocado.'
+  revoke_failed: 'No se pudo revocar: {errors}'
+  session_without_person: 'Sesión sin persona.'
+  permission_invalid: 'Permiso no válido: {permission}'
+  representative_not_found: 'Representante no encontrado.'
+  representative_needs_account: 'El representante debe tener cuenta en la app.'
+  representative_reference_required: 'Indicá representative_id_persona o representative_documento.'
+  document_not_found: 'No hay persona registrada con ese documento.'
+  person_without_account: 'Esa persona no tiene cuenta; no puede ser representante.'
+  link_not_found: 'Vínculo no encontrado.'
+  link_not_delegation: 'El vínculo no es de delegación paciente.'
+  link_reference_required: 'Indicá person_related_id o representative_id_persona.'
+  delegation_not_found: 'No existe delegación con ese representante.'

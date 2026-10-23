@@ -21,7 +21,7 @@ Dejar la estructura lista para un MVP veterinario sin implementar todavía endpo
 ## App Personal de Salud
 
 - Registro de módulos por ámbito de atención. Módulo humano (actual, reorganizado) y módulo veterinario (esqueleto con carpetas propias de pantallas, modelos y servicios).
-- El ámbito lo informa el backend en la sesión y se deduce del servicio del profesional (rol Médico con servicio Veterinaria). Mismo alta de personal y mismos roles que el resto.
+- El ámbito lo informa el backend en la sesión (`ambito_atencion`) y se deduce del servicio del profesional: `Servicio.nombre = 'VETERINARIA'` es veterinario (decisión; ver fase 03). Mismo alta de personal y mismos roles que el resto.
 - Pantallas veterinarias particulares donde haga falta, con espacio para archivos propios a futuro.
 
 ## Backend
@@ -29,8 +29,8 @@ Dejar la estructura lista para un MVP veterinario sin implementar todavía endpo
 - Dominio nuevo bajo Domain para veterinaria con la gramática de carpetas vigente (Application, Domain, Infrastructure).
 - Entidad Animal con vínculo a tutor y catálogos de especie y raza (fuente única, con migración y semilla).
 - Sujeto del encounter como referencia genérica (tipo e identificador). Esto requiere refactorizar el motor de captura, hoy atado a `id_persona` (ver fase 4).
-- Efectores: solo privados con servicio de veterinaria, reutilizando servicio, agenda y turnos.
-- Definición de encounter veterinario sobre el mismo motor de captura, como una especialidad más en el registro de la fase 3. Prompts con sujeto variable y pocas instrucciones adicionales para animales.
+- Hipótesis pendiente de validar: iniciar con efectores privados y reutilizar servicio, agenda y turnos. No implementar esta regla hasta acordarla. El ámbito del profesional ya se deriva de `Servicio.nombre = 'VETERINARIA'` (fase 03).
+- Hipótesis pendiente de validar: definir encounter veterinario sobre el motor de captura existente y registrarlo como una especialidad más. Requiere resolver el sujeto genérico en fase 4 y auditar persistencia, autorización y prompts antes de afirmar que el motor es reutilizable.
 - Sin controllers de encounter veterinario hasta definir el MVP. Documentar la frontera con el dominio humano.
 
 ## Fuera de esta fase
@@ -53,3 +53,15 @@ Se materializó la frontera del dominio bajo `common/components/Domain/Veterinar
 - `GET /api/v1/animal-catalogs/breeds?species_id={id}`: razas filtradas por especie.
 
 No se incluyen en esta propuesta turnos, encounter clínico, receta ni historia veterinaria. Antes de crear migraciones o contratos API hay que confirmar el vínculo persistente tutor-animal, los catálogos iniciales y el alcance de edición/listado. La fase sigue en curso por esa decisión manual y por el refactor genérico del sujeto de captura descrito en fase 04; pruebas pendientes no condicionan el estado.
+
+### Análisis pendiente — no implementar todavía
+
+La vertical veterinaria sigue en etapa exploratoria. La propuesta anterior no equivale a una decisión de producto ni a una autorización para adaptar el modelo humano por aproximación. Mantener el trabajo en el esqueleto aislado y no agregar migraciones, endpoints, filtros de servicio ni pantallas clínicas veterinarias hasta cerrar estos puntos:
+
+- Ámbito de atención de un servicio/PES: resuelto por convención (`Servicio.nombre = 'VETERINARIA'`, ver fase 03). Pendiente solo decidir si esa convención se reemplaza luego por una clasificación explícita.
+- Validar si el servicio, agenda, efector y turno actuales pueden representar una oferta veterinaria sin introducir ramas veterinarias en contratos clínicos humanos. Confirmar también la regla de efectores privados.
+- Acordar el vínculo persistente tutor-animal, permisos de lectura/escritura y representación del sujeto activo en cada request.
+- Elegir la fuente de verdad y el primer conjunto de especies/razas, y confirmar si el MVP requiere edición, baja o solo alta/listado.
+- Resolver el sujeto genérico de captura de la fase 04 antes de conectar animales al motor de encounter.
+
+Hasta que producto/dominio confirme estas decisiones, la lista de endpoints MVP permanece como borrador. La fase 07 puede continuar solo con documentación y estructura sin comportamiento.

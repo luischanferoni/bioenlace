@@ -49,9 +49,9 @@ Contadores con tope descendente («ratchet») para: mensajes literales en contro
 |------|----------|
 | Animal | Entidad propia (no es una persona ni una variante de ella), vinculada a un tutor. Se llama Animal y no Mascota, porque no todo animal atendido es una mascota |
 | Alta de animal | Alcance básico. El formulario de representación pide los datos mínimos del animal al crearlo |
-| Efectores | Solo efectores privados con el servicio de veterinaria. A partir de ahí reutilizan servicio, agenda y turnos del modelo existente. Si más adelante algo debe separarse, se decide en ese momento (aún no está diseñado) |
-| Profesional veterinario | Mismo alta de personal y mismos roles. Ejemplo: rol Médico con servicio Veterinaria. El ámbito de atención se deduce del servicio |
-| Motor de captura | Se reutiliza con una definición propia por especialidad. Los prompts cambian el sujeto (persona o animal) y agregan pocas instrucciones para animales |
+| Efectores veterinarios (hipótesis pendiente) | Se propuso comenzar por efectores privados y reutilizar servicio, agenda y turnos existentes. No es una decisión de dominio aprobada: antes hay que validar si el modelo actual representa una oferta veterinaria sin mezclarla con la clínica humana y definir una clasificación canónica del servicio. No implementar filtros ni reglas por nombre libre del servicio. |
+| Profesional veterinario (hipótesis pendiente) | Se propuso evaluar el alta y roles existentes. No asumir que un servicio llamado «Veterinaria» clasifica el ámbito: falta definir el dato canónico y validar asignaciones, permisos y sesión operativa |
+| Motor de captura veterinario (hipótesis pendiente) | Se propuso reutilizar el motor con una definición propia, pero solo después de resolver el sujeto genérico en fase 04 y comprobar que el flujo de captura no acople persistencia, autorización o prompts a Persona |
 | Término visible | «Consulta» en lo que ve el usuario; «encounter» en todo lo interno. «Atención» se reserva para otro concepto |
 
 ## Hallazgos que condicionan el diseño

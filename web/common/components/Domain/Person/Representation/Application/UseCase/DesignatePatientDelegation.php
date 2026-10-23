@@ -9,6 +9,8 @@ use common\components\Domain\Person\Representation\Domain\Model\PersonRelatedVer
 use common\components\Domain\Person\Representation\Domain\Model\RepresentationRegime;
 use common\components\Domain\Person\Representation\Application\Presentation\PersonRepresentationPresenter;
 use common\components\Domain\Person\Representation\Application\Service\PersonRepresentationPreferenceService;
+use common\components\Platform\Core\Product\DomainMessageCatalog;
+use common\components\Platform\Core\Product\ProductMetadataPaths;
 use common\models\Person\PersonDelegationConsent;
 use common\models\Person\PersonRelated;
 use common\models\Person\PersonRelatedAuditLog;
@@ -36,6 +38,21 @@ final class DesignatePatientDelegation
     }
 
     /**
+     * @param array<string, scalar> $params
+     */
+    private static function msg(string $key, array $params = []): string
+    {
+        $path = ProductMetadataPaths::componentsDomainRoot()
+            . DIRECTORY_SEPARATOR . 'Person'
+            . DIRECTORY_SEPARATOR . 'Representation'
+            . DIRECTORY_SEPARATOR . 'Application'
+            . DIRECTORY_SEPARATOR . 'Catalog'
+            . DIRECTORY_SEPARATOR . 'patient-delegation-messages.yaml';
+
+        return (new DomainMessageCatalog($path))->text($key, $params);
+    }
+
+    /**
      * @param array<string, mixed> $input
      * @return array{success: true, data: array<string, mixed>}
      */
@@ -45,16 +62,16 @@ final class DesignatePatientDelegation
 
         $representative = $this->resolveRepresentative($input);
         if ((int) $representative->id_persona === $subjectPersonaId) {
-            throw new \InvalidArgumentException('No podés designarte a vos mismo como representante.');
+            throw new \InvalidArgumentException(self::msg('self_delegation'));
         }
 
         $relationshipCode = trim((string) ($input['relationship_type_code'] ?? 'otro'));
         $relationshipType = RelationshipType::findByCode($relationshipCode);
         if ($relationshipType === null) {
-            throw new \InvalidArgumentException('Tipo de vínculo no válido.');
+            throw new \InvalidArgumentException(self::msg('relationship_invalid'));
         }
         if (!in_array($relationshipType->regime_allowed, ['B', 'both'], true)) {
-            throw new \InvalidArgumentException('Ese parentesco no aplica a delegación de representante.');
+            throw new \InvalidArgumentException(self::msg('regime_not_applicable'));
         }
 
         $permissions = $this->resolvePermissions($input);
@@ -71,7 +88,7 @@ final class DesignatePatientDelegation
         ]);
 
         if ($link !== null && in_array($link->status, [PersonRelatedStatus::ACTIVE, PersonRelatedStatus::BLOCKED], true)) {
-            throw new \InvalidArgumentException('Esa persona ya es representante activo o está bloqueada.');
+            throw new \InvalidArgumentException(self::msg('representative_already_active'));
         }
 
         if ($link === null) {
@@ -95,7 +112,7 @@ final class DesignatePatientDelegation
         $tx = Yii::$app->db->beginTransaction();
         try {
             if (!$link->save()) {
-                throw new \RuntimeException('No se pudo designar al representante: ' . json_encode($link->getErrors()));
+                throw new \RuntimeException(self::msg('designate_failed', ['errors' => json_encode($link->getErrors())]));
             }
 
             $this->revokeActiveConsents((int) $link->id, $now);
@@ -108,7 +125,7 @@ final class DesignatePatientDelegation
             $consent->created_at = $now;
             $consent->updated_at = $now;
             if (!$consent->save()) {
-                throw new \RuntimeException('No se pudo registrar el consentimiento: ' . json_encode($consent->getErrors()));
+                throw new \RuntimeException(self::msg('consent_failed', ['errors' => json_encode($consent->getErrors())]));
             }
 
             PersonRelatedAuditLog::record(
@@ -146,7 +163,7 @@ final class DesignatePatientDelegation
     {
         $link = $this->resolveDelegationLinkForPatient($subjectPersonaId, $input);
         if ($link->status === PersonRelatedStatus::REVOKED) {
-            throw new \InvalidArgumentException('El representante ya está revocado.');
+            throw new \InvalidArgumentException(self::msg('representative_already_revoked'));
         }
 
         $now = gmdate('Y-m-d H:i:s');
@@ -156,7 +173,7 @@ final class DesignatePatientDelegation
         $tx = Yii::$app->db->beginTransaction();
         try {
             if (!$link->save()) {
-                throw new \RuntimeException('No se pudo revocar: ' . json_encode($link->getErrors()));
+                throw new \RuntimeException(self::msg('revoke_failed', ['errors' => json_encode($link->getErrors())]));
             }
             $this->revokeActiveConsents((int) $link->id, $now);
 
@@ -191,7 +208,7 @@ final class DesignatePatientDelegation
     public function listarMisRepresentantes(int $subjectPersonaId): array
     {
         if ($subjectPersonaId <= 0) {
-            throw new \InvalidArgumentException('Sesión sin persona.');
+            throw new \InvalidArgumentException(self::msg('session_without_person'));
         }
 
         $query = PersonRelated::find()
@@ -222,7 +239,7 @@ final class DesignatePatientDelegation
     public function listarPacientesACargo(int $actorPersonaId): array
     {
         if ($actorPersonaId <= 0) {
-            throw new \InvalidArgumentException('Sesión sin persona.');
+            throw new \InvalidArgumentException(self::msg('session_without_person'));
         }
 
         $query = PersonRelated::find()
@@ -288,7 +305,7 @@ final class DesignatePatientDelegation
         $permissions = array_values(array_filter(array_map('strval', $raw)));
         foreach ($permissions as $permission) {
             if (!$this->permissionsCatalog->isKnownPermission($permission)) {
-                throw new \InvalidArgumentException('Permiso no válido: ' . $permission);
+                throw new \InvalidArgumentException(self::msg('permission_invalid', ['permission' => $permission]));
             }
         }
 
@@ -304,10 +321,10 @@ final class DesignatePatientDelegation
         if ($idPersona > 0) {
             $persona = Persona::findOne($idPersona);
             if ($persona === null) {
-                throw new \InvalidArgumentException('Representante no encontrado.');
+                throw new \InvalidArgumentException(self::msg('representative_not_found'));
             }
             if ((int) $persona->id_user <= 0) {
-                throw new \InvalidArgumentException('El representante debe tener cuenta en la app.');
+                throw new \InvalidArgumentException(self::msg('representative_needs_account'));
             }
 
             return $persona;
@@ -315,15 +332,15 @@ final class DesignatePatientDelegation
 
         $documento = trim((string) ($input['representative_documento'] ?? $input['documento_representante'] ?? ''));
         if ($documento === '') {
-            throw new \InvalidArgumentException('Indicá representative_id_persona o representative_documento.');
+            throw new \InvalidArgumentException(self::msg('representative_reference_required'));
         }
 
         $persona = Persona::findOne(['documento' => $documento]);
         if ($persona === null) {
-            throw new \InvalidArgumentException('No hay persona registrada con ese documento.');
+            throw new \InvalidArgumentException(self::msg('document_not_found'));
         }
         if ((int) $persona->id_user <= 0) {
-            throw new \InvalidArgumentException('Esa persona no tiene cuenta; no puede ser representante.');
+            throw new \InvalidArgumentException(self::msg('person_without_account'));
         }
 
         return $persona;
@@ -341,10 +358,10 @@ final class DesignatePatientDelegation
                 ->with('relationshipType')
                 ->one();
             if ($link === null) {
-                throw new \InvalidArgumentException('Vínculo no encontrado.');
+                throw new \InvalidArgumentException(self::msg('link_not_found'));
             }
             if ($link->regime !== RepresentationRegime::PATIENT_DELEGATION) {
-                throw new \InvalidArgumentException('El vínculo no es de delegación paciente.');
+                throw new \InvalidArgumentException(self::msg('link_not_delegation'));
             }
 
             return $link;
@@ -352,7 +369,7 @@ final class DesignatePatientDelegation
 
         $actorId = (int) ($input['representative_id_persona'] ?? $input['actor_id_persona'] ?? 0);
         if ($actorId <= 0) {
-            throw new \InvalidArgumentException('Indicá person_related_id o representative_id_persona.');
+            throw new \InvalidArgumentException(self::msg('link_reference_required'));
         }
 
         $link = PersonRelated::findOne([
@@ -361,7 +378,7 @@ final class DesignatePatientDelegation
             'regime' => RepresentationRegime::PATIENT_DELEGATION,
         ]);
         if ($link === null) {
-            throw new \InvalidArgumentException('No existe delegación con ese representante.');
+            throw new \InvalidArgumentException(self::msg('delegation_not_found'));
         }
 
         return $link;
@@ -385,7 +402,7 @@ final class DesignatePatientDelegation
     private function assertPersonaWithAccount(int $idPersona, string $message): void
     {
         if ($idPersona <= 0) {
-            throw new \InvalidArgumentException('Sesión sin persona.');
+            throw new \InvalidArgumentException(self::msg('session_without_person'));
         }
         $persona = Persona::findOne($idPersona);
         if ($persona === null || (int) $persona->id_user <= 0) {

@@ -1,16 +1,16 @@
 {
     "counters": {
         "api_controller_literal_messages": 27,
-        "domain_literal_messages": 701,
-        "mobile_literal_ui_text": 210,
+        "domain_literal_messages": 697,
+        "mobile_literal_ui_text": 90,
         "mobile_consulta_in_code": 0,
         "mobile_consulta_file_names": 0,
         "mobile_episode_type_branches": 0,
         "backend_consulta_file_names": 8,
         "backend_consulta_routes": 0,
-        "web_js_html_concat": 226,
-        "web_js_literal_ui_text": 65,
-        "web_views_logic": 39,
-        "web_episode_type_branches": 1
+        "web_js_html_concat": 0,
+        "web_js_literal_ui_text": 38,
+        "web_views_logic": 0,
+        "web_episode_type_branches": 0
     }
 }

@@ -51,6 +51,27 @@ class Servicio extends \yii\db\ActiveRecord
     public const TIPO_PROCEDIMIENTO = 'procedimiento';
     public const TIPO_SOPORTE = 'soporte';
 
+    /** Nombre (varchar 40) reservado del servicio veterinario; único criterio de ámbito de atención. */
+    public const NOMBRE_VETERINARIA = 'VETERINARIA';
+
+    public const AMBITO_HUMANO = 'humano';
+    public const AMBITO_VETERINARIO = 'veterinario';
+
+    /**
+     * Ámbito de atención del servicio: veterinario si el nombre es exactamente {@see NOMBRE_VETERINARIA}.
+     */
+    public static function ambitoAtencionPorNombre(?string $nombre): string
+    {
+        return trim((string) $nombre) === self::NOMBRE_VETERINARIA
+            ? self::AMBITO_VETERINARIO
+            : self::AMBITO_HUMANO;
+    }
+
+    public function getAmbitoAtencion(): string
+    {
+        return self::ambitoAtencionPorNombre((string) $this->nombre);
+    }
+
     /**
      * @return list<string>
      */

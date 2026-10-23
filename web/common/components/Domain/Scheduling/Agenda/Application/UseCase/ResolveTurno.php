@@ -7,6 +7,8 @@ use common\components\Domain\Scheduling\Agenda\Application\Agents\TurnoResolucio
 use common\components\Domain\Scheduling\Agenda\Application\Catalog\TurnoResolutionNotificationCatalog;
 
 use common\components\Domain\Scheduling\Agenda\Infrastructure\External\NisFhir\Sync\TurnoFhirOutboundNotifier;
+use common\components\Platform\Core\Product\DomainMessageCatalog;
+use common\components\Platform\Core\Product\ProductMetadataPaths;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\components\Platform\Core\Service\Push\PushNotificationTypes;
 use common\components\Domain\Organization\Pes\Domain\Model\AgendaIntervaloMinutos;
@@ -27,6 +29,21 @@ use yii\web\NotFoundHttpException;
 final class ResolveTurno
 {
     /**
+     * @param array<string, scalar> $params
+     */
+    private static function msg(string $key, array $params = []): string
+    {
+        $path = ProductMetadataPaths::componentsDomainRoot()
+            . DIRECTORY_SEPARATOR . 'Scheduling'
+            . DIRECTORY_SEPARATOR . 'Agenda'
+            . DIRECTORY_SEPARATOR . 'Application'
+            . DIRECTORY_SEPARATOR . 'Catalog'
+            . DIRECTORY_SEPARATOR . 'resolve-turno-messages.yaml';
+
+        return (new DomainMessageCatalog($path))->text($key, $params);
+    }
+
+    /**
      * @param array<string, mixed> $opts id_agenda_version, opcion_hora_antes, opcion_hora_despues, permitir_otro_efector, permitir_otro_pes, meta_json
      */
     public static function marcarTurnoEnResolucion(Turno $turno, string $origen, array $opts = []): TurnoResolucion
@@ -37,10 +54,10 @@ final class ResolveTurno
             TurnoResolucion::ORIGEN_LICENCIA,
             TurnoResolucion::ORIGEN_BAJA_PES,
         ], true)) {
-            throw new \InvalidArgumentException('origen de resolución inválido');
+            throw new \InvalidArgumentException(self::msg('origin_invalid'));
         }
         if ($turno->estado !== Turno::ESTADO_PENDIENTE && $turno->estado !== Turno::ESTADO_EN_RESOLUCION) {
-            throw new \InvalidArgumentException('Solo turnos pendientes o ya en resolución pueden entrar al flujo.');
+            throw new \InvalidArgumentException(self::msg('turno_not_resolvable'));
         }
 
         $existente = TurnoResolucion::findPendientePorTurno((int) $turno->id_turnos);
@@ -104,7 +121,7 @@ final class ResolveTurno
         ?int $idUser
     ): array {
         if ($razonCodigo === '' || !TurnoCancellationReasonsCatalog::esCodigoMedicoAppValido($razonCodigo)) {
-            throw new BadRequestHttpException('razon_cancelacion médica inválida.');
+            throw new BadRequestHttpException(self::msg('cancellation_reason_invalid'));
         }
 
         if (TurnoCancellationReasonsCatalog::staffCancelacionDirecta($razonCodigo)) {
@@ -121,7 +138,7 @@ final class ResolveTurno
                 false
             );
 
-            return ['estado' => Turno::ESTADO_CANCELADO, 'message' => 'Turno cancelado.'];
+            return ['estado' => Turno::ESTADO_CANCELADO,             'message' => self::msg('turno_cancelled')];
         }
 
         self::marcarTurnoEnResolucion($turno, TurnoResolucion::ORIGEN_GESTION_STAFF, [
@@ -141,7 +158,7 @@ final class ResolveTurno
 
         return [
             'estado' => Turno::ESTADO_EN_RESOLUCION,
-            'message' => 'Turno en resolución: el paciente puede reubicar o cancelar desde la app.',
+            'message' => self::msg('turno_in_resolution'),
         ];
     }
 
@@ -327,7 +344,7 @@ final class ResolveTurno
     {
         $eleccion = strtolower(trim($eleccion));
         if (!in_array($eleccion, ['antes', 'despues', 'cancelar'], true)) {
-            throw new BadRequestHttpException('eleccion debe ser antes, despues o cancelar.');
+            throw new BadRequestHttpException(self::msg('choice_invalid'));
         }
 
         /** @var TurnoResolucion|null $res */
@@ -342,12 +359,12 @@ final class ResolveTurno
             ])
             ->one();
         if ($res === null) {
-            throw new BadRequestHttpException('No hay resolución pendiente para este turno.');
+            throw new BadRequestHttpException(self::msg('no_pending_resolution'));
         }
 
         $turno = $res->turno;
         if ($turno === null) {
-            throw new BadRequestHttpException('Turno no encontrado.');
+            throw new BadRequestHttpException(self::msg('turno_not_found'));
         }
 
         if ($eleccion === 'cancelar') {
@@ -363,12 +380,12 @@ final class ResolveTurno
             $res->estado = TurnoResolucion::ESTADO_CANCELADO;
             $res->save(false);
 
-            return ['message' => 'Turno cancelado.', 'estado' => Turno::ESTADO_CANCELADO];
+            return ['message' => self::msg('turno_cancelled'), 'estado' => Turno::ESTADO_CANCELADO];
         }
 
         $hora = $eleccion === 'antes' ? $res->opcion_hora_antes : $res->opcion_hora_despues;
         if ($hora === null || trim((string) $hora) === '') {
-            throw new BadRequestHttpException('La opción elegida no está disponible.');
+            throw new BadRequestHttpException(self::msg('option_unavailable'));
         }
 
         $version = $res->agendaVersion;
@@ -383,7 +400,7 @@ final class ResolveTurno
             $fin,
             (int) $turno->id_turnos
         )) {
-            throw new BadRequestHttpException('El horario elegido ya no está disponible.');
+            throw new BadRequestHttpException(self::msg('slot_unavailable'));
         }
 
         $before = AdvanceTurnoLifecycle::scheduleSnapshot($turno);
@@ -409,7 +426,7 @@ final class ResolveTurno
         self::reprogramarNotificaciones($turno);
 
         return [
-            'message' => 'Turno reprogramado a las ' . $horaNorm . '.',
+            'message' => self::msg('turno_rescheduled', ['hora' => $horaNorm]),
             'estado' => Turno::ESTADO_PENDIENTE,
             'fecha' => $turno->fecha,
             'hora' => $horaNorm,
@@ -426,26 +443,26 @@ final class ResolveTurno
     {
         $turno = Turno::findActive()->andWhere(['id_turnos' => $idTurno])->one();
         if ($turno === null || (int) $turno->id_persona !== $idPersona) {
-            throw new NotFoundHttpException('Turno no encontrado');
+            throw new NotFoundHttpException(self::msg('turno_not_found_plain'));
         }
         if ($turno->estado !== Turno::ESTADO_EN_RESOLUCION) {
-            throw new BadRequestHttpException('El turno no está en resolución.');
+                        throw new BadRequestHttpException(self::msg('turno_not_in_resolution'));
         }
         $res = TurnoResolucion::findPendientePorTurno($idTurno);
         if ($res === null) {
-            throw new BadRequestHttpException('No hay resolución pendiente para este turno.');
+                        throw new BadRequestHttpException(self::msg('no_pending_resolution'));
         }
 
         $fecha = trim((string) ($post['fecha'] ?? ''));
         $hora = trim((string) ($post['hora'] ?? ''));
         $idPesPost = isset($post['id_profesional_efector_servicio']) ? (int) $post['id_profesional_efector_servicio'] : 0;
         if ($fecha === '' || $hora === '' || $idPesPost <= 0) {
-            throw new BadRequestHttpException('fecha, hora e id_profesional_efector_servicio son requeridos.');
+            throw new BadRequestHttpException(self::msg('relocation_fields_required'));
         }
 
         $pesPost = ProfesionalEfectorServicio::findOne(['id' => $idPesPost, 'deleted_at' => null]);
         if ($pesPost === null) {
-            throw new BadRequestHttpException('Profesional inválido.');
+            throw new BadRequestHttpException(self::msg('professional_invalid'));
         }
 
         $idEfectorNuevo = isset($post['id_efector']) && (int) $post['id_efector'] > 0
@@ -454,13 +471,13 @@ final class ResolveTurno
         $idEfectorActual = (int) ($turno->id_efector ?? 0);
 
         if ($idEfectorNuevo !== (int) $pesPost->id_efector) {
-            throw new BadRequestHttpException('El profesional no pertenece al centro indicado.');
+            throw new BadRequestHttpException(self::msg('professional_other_center'));
         }
         if ($idEfectorNuevo !== $idEfectorActual && !$res->permitir_otro_efector) {
-            throw new BadRequestHttpException('Este turno no permite cambiar de centro de salud.');
+            throw new BadRequestHttpException(self::msg('center_change_not_allowed'));
         }
         if ($idPesPost !== (int) $turno->id_profesional_efector_servicio && !$res->permitir_otro_pes) {
-            throw new BadRequestHttpException('Este turno solo permite elegir otro horario con el mismo profesional.');
+            throw new BadRequestHttpException(self::msg('same_professional_only'));
         }
 
         $before = AdvanceTurnoLifecycle::scheduleSnapshot($turno);
@@ -548,7 +565,7 @@ final class ResolveTurno
     public static function listarEnResolucionStaff(int $idEfector, ?int $idPes = null): array
     {
         if ($idEfector <= 0) {
-            throw new BadRequestHttpException('id_efector requerido.');
+            throw new BadRequestHttpException(self::msg('efector_required'));
         }
 
         $query = TurnoResolucion::find()
@@ -593,16 +610,16 @@ final class ResolveTurno
     public static function resolverConflictoStaff(int $idTurno, int $idEfector, string $eleccion): array
     {
         if ($idEfector <= 0) {
-            throw new BadRequestHttpException('Sesión operativa sin efector.');
+            throw new BadRequestHttpException(self::msg('session_without_efector'));
         }
 
         $turno = Turno::findOne($idTurno);
         if ($turno === null || (int) $turno->id_efector !== $idEfector) {
-            throw new NotFoundHttpException('Turno no encontrado en este efector.');
+            throw new NotFoundHttpException(self::msg('turno_not_found_in_efector'));
         }
         $idPersona = (int) $turno->id_persona;
         if ($idPersona <= 0) {
-            throw new BadRequestHttpException('Turno sin paciente asociado.');
+            throw new BadRequestHttpException(self::msg('turno_without_patient'));
         }
 
         return self::resolverEleccionVecina($idTurno, $idPersona, $eleccion);

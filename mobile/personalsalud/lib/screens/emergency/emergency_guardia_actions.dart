@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
+import '../../infra/app_texts.dart';
 import '../../services/emergency_guardia_api.dart';
 import 'emergency_ingreso_screen.dart';
 import 'emergency_triage_screen.dart';
@@ -82,7 +83,7 @@ class EmergencyGuardiaActions {
     if (item.idPersona <= 0) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Falta el paciente para el ingreso.')),
+          const SnackBar(content: Text(AppTexts.guardiaMissingPatient)),
         );
       }
       return;
@@ -249,14 +250,14 @@ class EmergencyGuardiaActions {
       await api.solicitarInternacion(item.id);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Solicitud de cama registrada')),
+          const SnackBar(content: Text(AppTexts.guardiaBedRequested)),
         );
       }
       onChanged();
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          SnackBar(content: Text(AppTexts.errorWithDetail(e))),
         );
       }
     }
@@ -273,21 +274,16 @@ class EmergencyGuardiaActions {
       final cont = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Sin horario'),
-          content: const Text(
-            'No tenés horario de guardia cargado. '
-            'Para atender, configurá tus horarios en el Asistente («Configurar mis horarios») '
-            'o pedile a coordinación / administración del centro que te los asigne. '
-            'Podés intentar igual, pero el servidor puede rechazar la asignación.',
-          ),
+          title: const Text(AppTexts.guardiaNoScheduleTitle),
+          content: const Text(AppTexts.guardiaNoScheduleBody),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancelar'),
+              child: const Text(AppTexts.cancel),
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Intentar igual'),
+              child: const Text(AppTexts.guardiaTryAnyway),
             ),
           ],
         ),
@@ -298,7 +294,7 @@ class EmergencyGuardiaActions {
       await api.asignar(guardiaId: item.id);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Caso asignado')),
+          const SnackBar(content: Text(AppTexts.guardiaCaseAssigned)),
         );
       }
       onChanged();
@@ -323,7 +319,7 @@ class EmergencyGuardiaActions {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al cargar efectores: $e')),
+          SnackBar(content: Text(AppTexts.guardiaLoadEffectorsFailed(e))),
         );
       }
       return;
@@ -340,14 +336,14 @@ class EmergencyGuardiaActions {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-          title: const Text('Derivar paciente'),
+          title: const Text(AppTexts.guardiaReferTitle),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 DropdownButtonFormField<int>(
                   initialValue: selectedId,
-                  decoration: const InputDecoration(labelText: 'Efector destino'),
+                  decoration: const InputDecoration(labelText: AppTexts.guardiaReferTargetLabel),
                   items: efectores
                       .map(
                         (ef) => DropdownMenuItem(
@@ -362,14 +358,14 @@ class EmergencyGuardiaActions {
                 TextField(
                   controller: condicionesCtrl,
                   decoration: const InputDecoration(
-                    labelText: 'Condiciones / motivo',
+                    labelText: AppTexts.guardiaReferReasonLabel,
                   ),
                   maxLines: 2,
                 ),
                 CheckboxListTile(
                   value: solicitarCama,
                   onChanged: (v) => setState(() => solicitarCama = v ?? false),
-                  title: const Text('Solicitar internación (cama)'),
+                  title: const Text(AppTexts.guardiaReferRequestBed),
                   contentPadding: EdgeInsets.zero,
                 ),
               ],
@@ -378,11 +374,11 @@ class EmergencyGuardiaActions {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancelar'),
+              child: const Text(AppTexts.cancel),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Derivar'),
+              child: const Text(AppTexts.guardiaReferAction),
             ),
           ],
             );
@@ -402,14 +398,14 @@ class EmergencyGuardiaActions {
       );
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Derivación registrada')),
+          const SnackBar(content: Text(AppTexts.guardiaReferralRegistered)),
         );
       }
       onChanged();
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No se pudo derivar: $e')),
+          SnackBar(content: Text(AppTexts.guardiaReferFailed(e))),
         );
       }
     }

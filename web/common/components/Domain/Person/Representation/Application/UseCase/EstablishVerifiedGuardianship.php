@@ -10,6 +10,8 @@ use common\components\Domain\Person\Representation\Domain\Model\PersonRelatedVer
 use common\components\Domain\Person\Representation\Domain\Model\RepresentationRegime;
 use common\components\Domain\Person\Representation\Application\Presentation\PersonRepresentationPresenter;
 use common\components\Domain\Person\Representation\Application\Service\PersonRepresentationMpiService;
+use common\components\Platform\Core\Product\DomainMessageCatalog;
+use common\components\Platform\Core\Product\ProductMetadataPaths;
 use common\models\Person\PersonDelegationConsent;
 use common\models\Person\PersonRelated;
 use common\models\Person\PersonRelatedAuditLog;
@@ -37,6 +39,21 @@ final class EstablishVerifiedGuardianship
     }
 
     /**
+     * @param array<string, scalar> $params
+     */
+    private static function msg(string $key, array $params = []): string
+    {
+        $path = ProductMetadataPaths::componentsDomainRoot()
+            . DIRECTORY_SEPARATOR . 'Person'
+            . DIRECTORY_SEPARATOR . 'Representation'
+            . DIRECTORY_SEPARATOR . 'Application'
+            . DIRECTORY_SEPARATOR . 'Catalog'
+            . DIRECTORY_SEPARATOR . 'verified-guardianship-messages.yaml';
+
+        return (new DomainMessageCatalog($path))->text($key, $params);
+    }
+
+    /**
      * @param array<string, mixed> $input
      * @return array{success: true, data: array<string, mixed>}
      */
@@ -46,27 +63,27 @@ final class EstablishVerifiedGuardianship
 
         $relationshipCode = trim((string) ($input['relationship_type_code'] ?? ''));
         if ($relationshipCode === '') {
-            throw new \InvalidArgumentException('relationship_type_code es obligatorio (padre, madre, tutor_legal).');
+            throw new \InvalidArgumentException(self::msg('relationship_required'));
         }
 
         $relationshipType = RelationshipType::findByCode($relationshipCode);
         if ($relationshipType === null) {
-            throw new \InvalidArgumentException('Tipo de vínculo no válido.');
+            throw new \InvalidArgumentException(self::msg('relationship_invalid'));
         }
         if (!in_array($relationshipType->regime_allowed, ['A', 'both'], true)) {
-            throw new \InvalidArgumentException('Ese parentesco no aplica al régimen de tutela verificada.');
+            throw new \InvalidArgumentException(self::msg('regime_not_applicable'));
         }
 
         $subject = $this->mpiService->resolveOrCreateSubject($input);
         $this->assertSubjectEligibleForGuardianship($subject);
 
         if ((int) $subject->id_persona === $actorPersonaId) {
-            throw new \InvalidArgumentException('No podés solicitar tutela sobre vos mismo.');
+            throw new \InvalidArgumentException(self::msg('self_guardianship'));
         }
 
         $evidence = $this->buildEvidencePayload($input, $relationshipType);
         if ($relationshipType->requires_legal_document && $evidence === []) {
-            throw new \InvalidArgumentException('El tutor legal debe adjuntar documentación en evidence.');
+            throw new \InvalidArgumentException(self::msg('evidence_required'));
         }
 
         $link = PersonRelated::findOne([
@@ -84,7 +101,7 @@ final class EstablishVerifiedGuardianship
             $link->regime = RepresentationRegime::VERIFIED_GUARDIANSHIP;
             $link->created_at = $now;
         } elseif (in_array($link->status, [PersonRelatedStatus::ACTIVE, PersonRelatedStatus::BLOCKED, PersonRelatedStatus::PENDING], true)) {
-            throw new \InvalidArgumentException('Ya existe un vínculo en curso para este tutor y menor.');
+            throw new \InvalidArgumentException(self::msg('link_in_progress'));
         }
 
         $link->status = PersonRelatedStatus::PENDING;
@@ -98,7 +115,7 @@ final class EstablishVerifiedGuardianship
         $link->updated_at = $now;
 
         if (!$link->save()) {
-            throw new \RuntimeException('No se pudo registrar la solicitud: ' . json_encode($link->getErrors()));
+            throw new \RuntimeException(self::msg('request_save_failed', ['errors' => json_encode($link->getErrors())]));
         }
 
         PersonRelatedAuditLog::record(
@@ -129,7 +146,7 @@ final class EstablishVerifiedGuardianship
     {
         $link = $this->requireGuardianshipLink((int) ($input['person_related_id'] ?? 0));
         if ($link->status !== PersonRelatedStatus::PENDING) {
-            throw new \InvalidArgumentException('Solo se pueden verificar vínculos pendientes.');
+            throw new \InvalidArgumentException(self::msg('only_pending_verifiable'));
         }
 
         $now = gmdate('Y-m-d H:i:s');
@@ -148,7 +165,7 @@ final class EstablishVerifiedGuardianship
         }
 
         if (!$link->save()) {
-            throw new \RuntimeException('No se pudo verificar el vínculo: ' . json_encode($link->getErrors()));
+            throw new \RuntimeException(self::msg('verify_failed', ['errors' => json_encode($link->getErrors())]));
         }
 
         PersonRelatedAuditLog::record(
@@ -176,7 +193,7 @@ final class EstablishVerifiedGuardianship
     {
         $link = $this->requireLink((int) ($input['person_related_id'] ?? 0));
         if ($link->status === PersonRelatedStatus::REVOKED) {
-            throw new \InvalidArgumentException('El vínculo ya está revocado.');
+            throw new \InvalidArgumentException(self::msg('already_revoked'));
         }
 
         $reason = trim((string) ($input['blocked_reason'] ?? PersonRelatedBlockedReason::COURT_ORDER));
@@ -185,7 +202,7 @@ final class EstablishVerifiedGuardianship
             PersonRelatedBlockedReason::CUSTODY_DISPUTE,
             PersonRelatedBlockedReason::OTHER,
         ], true)) {
-            throw new \InvalidArgumentException('blocked_reason no válido.');
+            throw new \InvalidArgumentException(self::msg('blocked_reason_invalid'));
         }
 
         $now = gmdate('Y-m-d H:i:s');
@@ -201,7 +218,7 @@ final class EstablishVerifiedGuardianship
         }
 
         if (!$link->save()) {
-            throw new \RuntimeException('No se pudo bloquear el vínculo: ' . json_encode($link->getErrors()));
+            throw new \RuntimeException(self::msg('block_failed', ['errors' => json_encode($link->getErrors())]));
         }
 
         PersonRelatedAuditLog::record(
@@ -229,7 +246,7 @@ final class EstablishVerifiedGuardianship
     {
         $link = $this->requireLink((int) ($input['person_related_id'] ?? 0));
         if ($link->status === PersonRelatedStatus::REVOKED) {
-            throw new \InvalidArgumentException('El vínculo ya está revocado.');
+            throw new \InvalidArgumentException(self::msg('already_revoked'));
         }
 
         $now = gmdate('Y-m-d H:i:s');
@@ -242,7 +259,7 @@ final class EstablishVerifiedGuardianship
         }
 
         if (!$link->save()) {
-            throw new \RuntimeException('No se pudo revocar el vínculo: ' . json_encode($link->getErrors()));
+            throw new \RuntimeException(self::msg('revoke_failed', ['errors' => json_encode($link->getErrors())]));
         }
 
         $this->revokeDelegationConsentIfAny($link, $now);
@@ -301,7 +318,7 @@ final class EstablishVerifiedGuardianship
     public function listarVinculosPacienteParaStaff(int $subjectPersonaId): array
     {
         if ($subjectPersonaId <= 0) {
-            throw new \InvalidArgumentException('id_persona es obligatorio.');
+            throw new \InvalidArgumentException(self::msg('persona_required'));
         }
 
         $query = PersonRelated::find()
@@ -350,7 +367,7 @@ final class EstablishVerifiedGuardianship
     {
         $link = $this->requireLink($personRelatedId);
         if ($link->regime !== RepresentationRegime::VERIFIED_GUARDIANSHIP) {
-            throw new \InvalidArgumentException('El vínculo no pertenece al régimen de tutela verificada.');
+            throw new \InvalidArgumentException(self::msg('link_not_guardianship'));
         }
 
         return $link;
@@ -359,11 +376,11 @@ final class EstablishVerifiedGuardianship
     private function requireLink(int $personRelatedId): PersonRelated
     {
         if ($personRelatedId <= 0) {
-            throw new \InvalidArgumentException('person_related_id es obligatorio.');
+            throw new \InvalidArgumentException(self::msg('link_id_required'));
         }
         $link = PersonRelated::find()->where(['id' => $personRelatedId])->with('relationshipType')->one();
         if ($link === null) {
-            throw new \InvalidArgumentException('Vínculo no encontrado.');
+            throw new \InvalidArgumentException(self::msg('link_not_found'));
         }
 
         return $link;
@@ -372,22 +389,22 @@ final class EstablishVerifiedGuardianship
     private function assertActorWithAccount(int $actorPersonaId): void
     {
         if ($actorPersonaId <= 0) {
-            throw new \InvalidArgumentException('Sesión sin persona.');
+            throw new \InvalidArgumentException(self::msg('session_without_person'));
         }
         $actor = Persona::findOne($actorPersonaId);
         if ($actor === null || (int) $actor->id_user <= 0) {
-            throw new \InvalidArgumentException('Solo una persona con cuenta puede solicitar tutela.');
+            throw new \InvalidArgumentException(self::msg('actor_needs_account'));
         }
     }
 
     private function assertSubjectEligibleForGuardianship(Persona $subject): void
     {
         if ((int) $subject->id_user > 0) {
-            throw new \InvalidArgumentException('El menor no debe tener cuenta propia para tutela verificada.');
+            throw new \InvalidArgumentException(self::msg('minor_has_account'));
         }
         if ($subject->fecha_nacimiento !== null && trim((string) $subject->fecha_nacimiento) !== '') {
             if ((int) $subject->getEdad() >= 18) {
-                throw new \InvalidArgumentException('El sujeto no es menor de edad.');
+                throw new \InvalidArgumentException(self::msg('subject_not_minor'));
             }
         }
     }

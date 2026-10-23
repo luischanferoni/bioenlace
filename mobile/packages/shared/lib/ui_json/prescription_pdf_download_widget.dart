@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../config/api_config.dart';
+import '../http/api_contract.dart';
+import '../text/shared_texts.dart';
+import '../text/user_friendly_error.dart';
 import 'laboratory_pdf_save.dart';
 import 'ui_json_screen.dart';
 
@@ -45,7 +48,10 @@ class _PrescriptionPdfDownloadWidgetState extends State<PrescriptionPdfDownloadW
           .timeout(const Duration(seconds: AppConfig.httpTimeoutSeconds));
 
       if (res.statusCode < 200 || res.statusCode >= 300) {
-        throw Exception('HTTP ${res.statusCode}');
+        throw ApiContractException(
+          message: messageFromHttpResponse(res),
+          statusCode: res.statusCode,
+        );
       }
 
       final name = widget.filename.trim().isEmpty ? 'receta.pdf' : widget.filename.trim();
@@ -60,7 +66,7 @@ class _PrescriptionPdfDownloadWidgetState extends State<PrescriptionPdfDownloadW
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No se pudo descargar el PDF: $e')),
+          SnackBar(content: Text(SharedTexts.pdfDownloadFailed(userFriendlyErrorMessage(e)))),
         );
       }
     } finally {

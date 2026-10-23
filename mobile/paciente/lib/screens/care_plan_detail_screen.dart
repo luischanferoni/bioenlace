@@ -3,6 +3,7 @@ import 'package:shared/shared.dart';
 
 import '../config/paciente_intents.dart';
 import '../services/encounter_async_api.dart';
+import '../utils/app_texts.dart';
 import '../widgets/encounter_async_request_card.dart';
 import 'encounter_chat_patient_screen.dart';
 
@@ -186,13 +187,13 @@ class _CarePlanDetailScreenState extends State<CarePlanDetailScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Retirar solicitud'),
+        title: const Text(AppTexts.withdrawRequest),
         content: const Text(
           '¿Querés retirar esta solicitud? Solo podés hacerlo mientras el equipo aún no la atiende.',
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('No')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Retirar')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false),           child: const Text(AppTexts.no)),
+                    TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text(AppTexts.withdraw)),
         ],
       ),
     );
@@ -290,7 +291,7 @@ class _CarePlanDetailScreenState extends State<CarePlanDetailScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (_solicitudesActivas.isNotEmpty) ...[
-          Text('Solicitudes del tratamiento', style: BioTypography.title),
+          Text(AppTexts.treatmentRequests, style: BioTypography.title),
           BioSpacing.gapH(BioSpacing.sm),
           ..._solicitudesActivas.map(
             (item) => Padding(
@@ -305,7 +306,7 @@ class _CarePlanDetailScreenState extends State<CarePlanDetailScreen> {
         ],
         if (_solicitudesHistorial.isNotEmpty) ...[
           if (_solicitudesActivas.isNotEmpty) BioSpacing.gapH(BioSpacing.sm),
-          Text('Solicitudes anteriores', style: BioTypography.title),
+          Text(AppTexts.previousRequests, style: BioTypography.title),
           BioSpacing.gapH(BioSpacing.sm),
           ..._solicitudesHistorial.map(
             (item) => Padding(
@@ -361,7 +362,7 @@ class _CarePlanDetailScreenState extends State<CarePlanDetailScreen> {
           ],
           if (lines.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.lg),
-            Text('Indicaciones', style: BioTypography.title),
+            Text(AppTexts.indications, style: BioTypography.title),
             BioSpacing.gapH(BioSpacing.sm),
             ...lines.map(
               (line) => Padding(
@@ -408,7 +409,7 @@ class _CarePlanDetailScreenState extends State<CarePlanDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Control y seguimiento', style: BioTypography.title),
+          Text(AppTexts.followUp, style: BioTypography.title),
           BioSpacing.gapH(BioSpacing.sm),
           Text(
             'Elegí qué necesitás sobre este tratamiento.',

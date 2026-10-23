@@ -70,6 +70,7 @@ class EstablishOperativeSession extends Component
      * @return array{
      *   efector: array{id:int,nombre:string},
      *   servicio: array{id:int,nombre:string,id_profesional_efector_servicio:int},
+     *   ambito_atencion: string,
      *   encounter_class: array{code:string,label:string,capabilities:list<string>},
      *   id_contexto_profesional: int,
      *   redirect_url: string,
@@ -180,6 +181,7 @@ class EstablishOperativeSession extends Component
                 'nombre' => (string) ($pes->servicio->nombre ?? ''),
                 'id_profesional_efector_servicio' => (int) $pes->id,
             ],
+            'ambito_atencion' => Servicio::ambitoAtencionPorNombre((string) ($pes->servicio->nombre ?? '')),
             'encounter_class' => $encounterClass !== ''
                 ? EncounterDefinition::classMetadata($encounterClass)
                 : null,

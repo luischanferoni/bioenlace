@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
+import '../utils/app_texts.dart';
+
 /// Gestión de tutela (A), delegación (B) y preferencias N9.
 class PersonRepresentationHubScreen extends StatefulWidget {
   final String? authToken;
@@ -178,7 +180,7 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
     final nombre = _nombreMenorCtrl.text.trim();
     final apellido = _apellidoMenorCtrl.text.trim();
     if (doc.isEmpty) {
-      _snack('Ingresá el documento del menor.');
+      _snack(AppTexts.minorDocumentRequired);
       return;
     }
     final existente = _vinculoTutorPorDocumento(doc);
@@ -186,13 +188,13 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
       final status = existente['status']?.toString() ?? '';
       _snack(
         status == 'pending'
-            ? 'Ya hay una solicitud de tutela en verificación para este documento.'
-            : 'Ya existe un vínculo de tutela (${_statusLabel(status)}) para este documento.',
+            ? AppTexts.guardianshipPendingExists
+            : AppTexts.guardianshipExists(_statusLabel(status)),
       );
       return;
     }
     if (nombre.isEmpty || apellido.isEmpty || _fechaNacimientoMenor == null) {
-      _snack('Completá nombre, apellido y fecha de nacimiento del menor.');
+      _snack(AppTexts.minorDataRequired);
       return;
     }
     final fecha = _fechaNacimientoMenor!;
@@ -215,11 +217,11 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
       _nombreMenorCtrl.clear();
       _apellidoMenorCtrl.clear();
       setState(() => _fechaNacimientoMenor = null);
-      _snack(r['data'] is Map ? (r['data']['mensaje']?.toString() ?? 'Solicitud enviada') : 'Solicitud enviada');
+      _snack(r['data'] is Map ? (r['data']['mensaje']?.toString() ?? AppTexts.requestSent) : AppTexts.requestSent);
       await _cargar();
     } else {
       final msg = r['message']?.toString() ?? 'No se pudo solicitar la tutela';
-      _snack(msg.contains('Ya existe') ? 'Ya hay una solicitud o vínculo en curso para este menor.' : msg);
+      _snack(msg.contains('Ya existe') ? AppTexts.requestInProgress : msg);
     }
   }
 
@@ -247,7 +249,7 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
   Future<void> _designarRepresentante() async {
     final doc = _docRepresentanteCtrl.text.trim();
     if (doc.isEmpty) {
-      _snack('Ingresá el documento del representante.');
+      _snack(AppTexts.representativeDocumentRequired);
       return;
     }
     final r = await _api.designarRepresentante({
@@ -257,10 +259,10 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
     if (!mounted) return;
     if (r['success'] == true) {
       _docRepresentanteCtrl.clear();
-      _snack(r['data'] is Map ? (r['data']['mensaje']?.toString() ?? 'Representante designado') : 'Representante designado');
+      _snack(r['data'] is Map ? (r['data']['mensaje']?.toString() ?? AppTexts.representativeDesignated) : AppTexts.representativeDesignated);
       await _cargar();
     } else {
-      _snack(r['message']?.toString() ?? 'No se pudo designar');
+      _snack(r['message']?.toString() ?? AppTexts.designateFailed);
     }
   }
 
@@ -272,7 +274,7 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
     if (r['success'] == true) {
       await _cargar();
     } else {
-      _snack(r['message']?.toString() ?? 'No se pudo revocar');
+      _snack(r['message']?.toString() ?? AppTexts.revokeFailed);
     }
   }
 
@@ -287,7 +289,7 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
       }
     });
     if (r['success'] != true) {
-      _snack(r['message']?.toString() ?? 'No se guardaron las preferencias');
+      _snack(r['message']?.toString() ?? AppTexts.preferencesNotSaved);
     }
   }
 
@@ -306,7 +308,7 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
       authToken: widget.authToken,
     );
     if (!mounted) return;
-    _snack('Contexto: ${label.isNotEmpty ? label : 'paciente'}');
+    _snack(AppTexts.contextLabel(label.isNotEmpty ? label : AppTexts.patientFallback));
     Navigator.pop(context);
   }
 
@@ -357,7 +359,7 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
                   BioSpacing.gapH(BioSpacing.lg),
                   _sectionTitle('Preferencias'),
                   SwitchListTile(
-                    title: const Text('Avisame cuando un representante actúe'),
+                    title: const Text(AppTexts.notifyRepresentativeActs),
                     value: _notifyOnRepresentativeAction,
                     onChanged: _savingPrefs ? null : _toggleNotify,
                   ),
@@ -397,9 +399,9 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
       title: Text(nombre.isNotEmpty ? nombre : 'Paciente'),
       subtitle: Text(subtitleParts.join(' · ')),
       trailing: status == 'active'
-          ? TextButton(onPressed: () => _operarPor(link), child: const Text('Operar'))
+          ? TextButton(onPressed: () => _operarPor(link), child: const Text(AppTexts.operate))
           : status == 'pending'
-              ? Text('En revisión', style: BioTypography.caption.copyWith(color: context.bio.textMuted))
+              ? Text(AppTexts.inReview, style: BioTypography.caption.copyWith(color: context.bio.textMuted))
               : null,
     );
   }
@@ -411,7 +413,7 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
     return ListTile(
       contentPadding: EdgeInsets.zero,
       title: Text(nombre.isNotEmpty ? nombre : 'Representante'),
-      subtitle: Text('Estado: $status'),
+      subtitle: Text(AppTexts.statusLine(status)),
       trailing: status == 'active'
           ? IconButton(
               icon: const Icon(Icons.person_remove_outlined),
@@ -428,7 +430,7 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Solicitar tutela de menor', style: BioTypography.body.copyWith(fontWeight: FontWeight.w600)),
+          Text(AppTexts.requestMinorGuardianship, style: BioTypography.body.copyWith(fontWeight: FontWeight.w600)),
           if (vinculoDoc != null) ...[
             BioSpacing.gapH(BioSpacing.sm),
             BioAlert.warning(
@@ -442,9 +444,9 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
             value: _parentescoMenor,
             decoration: const InputDecoration(labelText: 'Parentesco'),
             items: const [
-              DropdownMenuItem(value: 'padre', child: Text('Padre')),
-              DropdownMenuItem(value: 'madre', child: Text('Madre')),
-              DropdownMenuItem(value: 'tutor_legal', child: Text('Tutor legal')),
+              DropdownMenuItem(value: 'padre', child: Text(AppTexts.father)),
+              DropdownMenuItem(value: 'madre', child: Text(AppTexts.mother)),
+              DropdownMenuItem(value: 'tutor_legal', child: Text(AppTexts.legalGuardian)),
             ],
             onChanged: (v) => setState(() => _parentescoMenor = v ?? 'padre'),
           ),
@@ -472,8 +474,8 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
             value: _sexoMenor,
             decoration: const InputDecoration(labelText: 'Sexo registrado (RENAPER)'),
             items: const [
-              DropdownMenuItem(value: 1, child: Text('Masculino')),
-              DropdownMenuItem(value: 2, child: Text('Femenino')),
+              DropdownMenuItem(value: 1,               child: Text(AppTexts.male)),
+                            DropdownMenuItem(value: 2, child: Text(AppTexts.female)),
             ],
             onChanged: (v) => setState(() => _sexoMenor = v ?? 1),
           ),
@@ -516,17 +518,17 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Designar representante', style: BioTypography.body.copyWith(fontWeight: FontWeight.w600)),
+          Text(AppTexts.designateRepresentative, style: BioTypography.body.copyWith(fontWeight: FontWeight.w600)),
           BioSpacing.gapH(BioSpacing.sm),
           DropdownButtonFormField<String>(
             value: _parentescoRepresentante,
             decoration: const InputDecoration(labelText: 'Parentesco'),
             items: const [
-              DropdownMenuItem(value: 'conyuge', child: Text('Cónyuge')),
-              DropdownMenuItem(value: 'hijo', child: Text('Hijo/a')),
-              DropdownMenuItem(value: 'padre', child: Text('Padre')),
-              DropdownMenuItem(value: 'madre', child: Text('Madre')),
-              DropdownMenuItem(value: 'otro', child: Text('Otro')),
+              DropdownMenuItem(value: 'conyuge', child: Text(AppTexts.spouse)),
+              DropdownMenuItem(value: 'hijo', child: Text(AppTexts.child)),
+              DropdownMenuItem(value: 'padre', child: Text(AppTexts.father)),
+              DropdownMenuItem(value: 'madre', child: Text(AppTexts.mother)),
+              DropdownMenuItem(value: 'otro', child: Text(AppTexts.other)),
             ],
             onChanged: (v) => setState(() => _parentescoRepresentante = v ?? 'otro'),
           ),

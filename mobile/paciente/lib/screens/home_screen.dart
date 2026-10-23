@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/turnos_service.dart';
 import '../services/encounter_async_api.dart';
+import '../utils/app_texts.dart';
 import '../utils/turno_resolucion_utils.dart';
 import '../config/paciente_intents.dart';
 import '../auth/paciente_post_login.dart';
@@ -519,7 +520,7 @@ class HomeScreenState extends State<HomeScreen> {
     if (!mounted) return;
     if (r['success'] == true) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Asistencia confirmada')),
+        const SnackBar(content: Text(AppTexts.attendanceConfirmed)),
       );
       await _recargarPendientesDesdeCero();
     } else {
@@ -711,7 +712,7 @@ class HomeScreenState extends State<HomeScreen> {
           BioSpacing.gapH(BioSpacing.md),
         ],
         Center(
-          child: Text('Próximos turnos', style: BioTypography.h3),
+          child: Text(AppTexts.upcomingAppointments, style: BioTypography.h3),
         ),
         BioSpacing.gapH(BioSpacing.md),
         if (_refrescandoTabActivo && _proximosVisibles.isEmpty)
@@ -858,13 +859,13 @@ class HomeScreenState extends State<HomeScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Retirar solicitud'),
+        title: const Text(AppTexts.withdrawRequest),
         content: const Text(
           '¿Querés retirar esta solicitud? Solo podés hacerlo mientras el equipo aún no la atiende.',
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('No')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Retirar')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false),           child: const Text(AppTexts.no)),
+                    TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text(AppTexts.withdraw)),
         ],
       ),
     );
@@ -1030,7 +1031,7 @@ class HomeScreenState extends State<HomeScreen> {
               Icon(Icons.healing_outlined, color: context.bio.textMuted, size: 22),
               BioSpacing.gapW(BioSpacing.sm),
               Expanded(
-                child: Text('Tus condiciones', style: BioTypography.h3),
+                child: Text(AppTexts.yourConditions, style: BioTypography.h3),
               ),
               BioBadge(
                 label: _conditionsActivas.length == 1
@@ -1103,7 +1104,7 @@ class HomeScreenState extends State<HomeScreen> {
               Icon(Icons.medical_services_outlined, color: context.bio.textMuted, size: 22),
               BioSpacing.gapW(BioSpacing.sm),
               Expanded(
-                child: Text('Tu tratamiento', style: BioTypography.h3),
+                child: Text(AppTexts.yourTreatment, style: BioTypography.h3),
               ),
               BioBadge(
                 label: CarePlanUi.statusLabel(plan),

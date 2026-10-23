@@ -615,6 +615,11 @@
         ctx = ctx || {};
         var parts = [];
         if (ctx.fecha_inicio) parts.push('Ingreso ' + formatEpisodioFecha(ctx.fecha_inicio));
+        var sections = Array.isArray(ctx.sections) ? ctx.sections
+            : (Array.isArray(ctx.secciones) ? ctx.secciones : null);
+        var total = sections ? sections.length
+            : (Array.isArray(ctx.evoluciones) ? ctx.evoluciones.length : 0);
+        if (total > 0) parts.push(total + (total === 1 ? ' evolución' : ' evoluciones'));
         resumenEl.textContent = (parts.length ? parts.join(' · ') + ' — ' : '')
             + 'documentá la evolución del día.';
     }

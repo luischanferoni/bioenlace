@@ -28,4 +28,6 @@ Parcial. No hay CI configurado en el repositorio, así que la guarda es un coman
 
 Topes iniciales: mensajes en controllers API 68; en dominio 702; textos literales en Dart 211; «consulta» en código Dart 394 y 10 archivos; ramas por episodio en Dart 10 y en JS 1; «consulta» en archivos PHP 60 y 25 rutas; HTML concatenado en JS 226; textos literales en JS 65; lógica en vistas 39.
 
-Pendiente: reducir `domain_literal_messages` a 701 o menos; conectar la verificación a CI cuando el repositorio tenga uno.
+Pendiente: conectar la verificación a CI cuando el repositorio tenga uno.
+
+Actualización: `domain_literal_messages` volvió a 697 (tope) y el guard local sale con 0. Los mensajes de `ResolveTurno`, `EstablishVerifiedGuardianship` y `DesignatePatientDelegation` salieron a YAML por caso de uso, cargados con `DomainMessageCatalog` (`Platform/Core/Product`), con placeholders `{nombre}` y falla explícita ante claves inexistentes. El texto visible no cambió. Siguen siendo candidatos para bajar el tope: `SignUpInstitutionalEfector`, `ProfesionalEfectorServicioAgendaUiService`, `DemoSandboxClinicalSeedService` y `CareProtocolAdminService`. Bajar el tope con `--write` recién cuando haya margen real.

@@ -24,6 +24,8 @@ El chat de motivos de la app Paciente ahora conserva el audio y la transcripció
 
 Pendiente de implementación: el motor de captura todavía modela el sujeto como `subjectPersonaId` y conserva `id_persona`/`subject_persona_id` como identidad de la captura y la caché; la referencia genérica `tipo + identificador` de sujeto, necesaria para veterinaria, no está implementada. La prueba de captura simultánea en un dispositivo real queda como validación, no como bloqueo de cierre una vez completado el comportamiento.
 
+Bloqueo documentado (no implementar todavía): el sujeto genérico toca 13 archivos de `Domain/Clinical/Capture` (modelo, repositorio, caché, extracción y presentadores) y depende del diseño veterinario, aún hipotético (ver `design.md`). Separar la parte común y la específica del sujeto en los prompts requiere edición manual, por la regla de prompts reservados. Hasta definir el sujeto veterinario, la fase 04 queda con el comportamiento de captura y STT terminado y este punto abierto.
+
 ## Criterio de salida
 
 Prueba de punta a punta del cliente Flutter en un dispositivo móvil real; el cliente web propio se valida con su stack web, no con Flutter Web. La lógica de aceptación vive solo en `Domain/Clinical/Capture`.

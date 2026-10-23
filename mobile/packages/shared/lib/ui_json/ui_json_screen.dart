@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 
 import '../config/api_config.dart';
 import '../diagnostics/app_diagnostic_log.dart';
+import '../text/shared_texts.dart';
 import '../text/user_friendly_error.dart';
 import '../theme/tokens/tokens.dart';
 import '../ui/bio_button.dart';
@@ -934,7 +935,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
             appClient: 'paciente-flutter',
           );
         }
-        return Text('Widget no soportado: $wid');
+        return Text(SharedTexts.unsupportedWidget(wid));
       case 'select':
         final opts = (field['options'] as List?) ?? [];
         final current = _accum[name];
@@ -965,7 +966,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
         if (items.isEmpty) {
           return ListTile(
             title: Text(required ? '$label *' : label),
-            subtitle: const Text('Sin opciones disponibles'),
+            subtitle: const Text(SharedTexts.noOptions),
           );
         }
         final dropdownKey = ValueKey<String>('ui_json.select.$name.${items.length}.${effective ?? ""}');
@@ -978,7 +979,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
           ),
           // ignore: deprecated_member_use
           value: effective,
-          hint: const Text('Seleccioná una opción'),
+          hint: const Text(SharedTexts.selectOption),
           items: items,
           selectedItemBuilder: (context) {
             return items
@@ -1019,7 +1020,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
         if (rentries.isEmpty) {
           return ListTile(
             title: Text(required ? '$label *' : label),
-            subtitle: const Text('Sin opciones disponibles'),
+            subtitle: const Text(SharedTexts.noOptions),
           );
         }
         return Column(
@@ -1064,7 +1065,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
         if (centries.isEmpty) {
           return ListTile(
             title: Text(required ? '$label *' : label),
-            subtitle: const Text('Sin opciones disponibles'),
+            subtitle: const Text(SharedTexts.noOptions),
           );
         }
         return Column(
@@ -1200,7 +1201,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                 }
                 final items = snap.data ?? [];
                 if (items.isEmpty) {
-                  return const Text('Sin resultados.');
+                  return const Text(SharedTexts.noResults);
                 }
 
                 // Listado horizontal en cards (sin search).
@@ -1306,7 +1307,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
         final v = _accum[name];
         if (v == null || v.trim().isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Complete: ${f['label'] ?? name}')),
+            SnackBar(content: Text(SharedTexts.completeField(f['label'] ?? name))),
           );
           return false;
         }
@@ -1551,7 +1552,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                     TextButton.icon(
                       onPressed: _loading ? null : _load,
                       icon: const Icon(Icons.refresh, size: 18),
-                      label: const Text('Reintentar'),
+                      label: const Text(SharedTexts.retry),
                     ),
                   ],
                 ),
@@ -1568,7 +1569,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                     TextButton.icon(
                       onPressed: _loading ? null : _load,
                       icon: const Icon(Icons.refresh),
-                      label: const Text('Reintentar'),
+                      label: const Text(SharedTexts.retry),
                     ),
                   ],
                 ),
@@ -1582,9 +1583,9 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
         body: widget.embedded
             ? const Padding(
                 padding: EdgeInsets.all(12),
-                child: Text('UI inválida'),
+                child: Text(SharedTexts.invalidUi),
               )
-            : const Center(child: Text('UI inválida')),
+            : const Center(child: Text(SharedTexts.invalidUi)),
       );
     }
 
@@ -1639,7 +1640,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
         textScaler: MediaQuery.textScalerOf(context),
       );
       if (draftField.isEmpty) {
-        return const Text('UI inválida: falta draft_field');
+        return const Text(SharedTexts.invalidUiMissingDraftField);
       }
       if (items.isEmpty && !_loading) {
         final msg = (emptyMessage != null && emptyMessage.isNotEmpty)
@@ -1874,7 +1875,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                             }
                           }
                         },
-                  child: const Text('Confirmar'),
+                  child: const Text(SharedTexts.confirm),
                 ),
               ],
             ),
@@ -2157,7 +2158,7 @@ class _UiJsonSearchableAutocompleteState extends State<_UiJsonSearchableAutocomp
         if (_selectedLabel != null)
           Padding(
             padding: const EdgeInsets.only(top: 8),
-            child: Text('Seleccionado: $_selectedLabel'),
+            child: Text(SharedTexts.selected(_selectedLabel)),
           ),
         if (_items.isNotEmpty) ...[
           const SizedBox(height: 8),
@@ -2185,7 +2186,7 @@ class _UiJsonSearchableAutocompleteState extends State<_UiJsonSearchableAutocomp
         ] else if (!_loading && _q.text.trim().length >= 2)
           const Padding(
             padding: EdgeInsets.only(top: 8),
-            child: Text('Sin resultados. Completá el alta mínima si es un paciente nuevo.'),
+            child: Text(SharedTexts.noResultsMinimalSignup),
           ),
       ],
     );

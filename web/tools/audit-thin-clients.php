@@ -20,6 +20,9 @@ $skipDirs = ['vendor', 'node_modules', 'runtime', 'build', '.dart_tool', '.git',
 // Textos de infraestructura permitidos en cliente (sin red, permiso, error inesperado).
 $infraTextFiles = [
     'mobile/packages/shared/lib/text/user_friendly_error.dart',
+    'mobile/packages/shared/lib/text/shared_texts.dart',
+    'mobile/personalsalud/lib/infra/app_texts.dart',
+    'mobile/paciente/lib/utils/app_texts.dart',
 ];
 
 $stripDart = static function (string $line): string {
@@ -54,6 +57,12 @@ $counters = [
         'roots' => $dartRoots,
         'ext' => ['dart'],
         'regex' => '/(\bText\(\s*[\'"]\p{Lu}|_snack\(\s*[\'"]|SnackBar\(\s*content:\s*(const\s+)?Text\(\s*[\'"])/u',
+    ],
+    'mobile_literal_ui_text_multiline' => [
+        'desc' => 'Textos de usuario literales en Dart partidos en varias líneas (argumento solo en su línea, o message:/titulo:/title:)',
+        'roots' => $dartRoots,
+        'ext' => ['dart'],
+        'regex' => '/(^\s*(const\s+)?[\'"]\p{Lu}[^\'"$]*\s[^\'"$]*[\'"],?\s*$|\b(message|mensaje|titulo|title|error)\s*:\s*[\'"]\p{Lu}[^\'"$]*\s)/u',
     ],
     'mobile_consulta_in_code' => [
         'desc' => '«consulta» en identificadores Dart (fuera de strings y comentarios)',

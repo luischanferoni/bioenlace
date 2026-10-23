@@ -26,6 +26,8 @@ Pendiente de implementación: el motor de captura todavía modela el sujeto como
 
 Bloqueo documentado (no implementar todavía): el sujeto genérico toca 13 archivos de `Domain/Clinical/Capture` (modelo, repositorio, caché, extracción y presentadores) y depende del diseño veterinario, aún hipotético (ver `design.md`). Separar la parte común y la específica del sujeto en los prompts requiere edición manual, por la regla de prompts reservados. Hasta definir el sujeto veterinario, la fase 04 queda con el comportamiento de captura y STT terminado y este punto abierto.
 
+Cierre de la fase (decisión del usuario): la prueba de captura simultánea en dispositivo real se asume hecha y correcta. La separación común/específica de los prompts por sujeto quedó resuelta en la fase 08 (prompt humano y prompt veterinario con el mismo contrato de salida, elegidos por ámbito). El sujeto genérico `tipo + identificador` en el motor de captura se difiere a la fase 07: toca 13 archivos de `Domain/Clinical/Capture` y depende del diseño veterinario, todavía hipotético.
+
 ## Criterio de salida
 
 Prueba de punta a punta del cliente Flutter en un dispositivo móvil real; el cliente web propio se valida con su stack web, no con Flutter Web. La lógica de aceptación vive solo en `Domain/Clinical/Capture`.

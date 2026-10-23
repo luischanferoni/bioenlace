@@ -209,10 +209,7 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
 
       final sessionToken = sessionConfig.contextToken;
       if (sessionToken == null || sessionToken.isEmpty) {
-        throw Exception(
-          'El servidor no devolvió token de contexto operativo. '
-          'No se puede usar la app sin completar efector, servicio y área.',
-        );
+        throw Exception(AppTexts.wizardNoContextToken);
       }
 
       final prefs = await SharedPreferences.getInstance();
@@ -500,7 +497,7 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
           BioSpacing.gapH(BioSpacing.sm),
           if (_efectoresConProblemas.isNotEmpty) ...[
             BioAlert.warning(
-              title: 'Algunos efectores requieren configuración',
+              title: AppTexts.wizardEffectorsNeedSetup,
               message: _efectoresConProblemas
                   .map((p) {
                     var t = p.message;
@@ -543,15 +540,12 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
         children: [
           Text(AppTexts.selectService, style: BioTypography.h2),
           BioSpacing.gapH(BioSpacing.sm),
-          Text(
-            'Elegí el servicio donde vas a trabajar.',
-            style: BioTypography.bodySm,
-          ),
+          Text(AppTexts.wizardChooseService, style: BioTypography.bodySm),
           BioSpacing.gapH(BioSpacing.xl),
           if (_isLoading)
             const Center(child: CircularProgressIndicator())
           else if (_servicios.isEmpty)
-            BioAlert.info(message: 'No hay servicios disponibles')
+            BioAlert.info(message: AppTexts.wizardNoServices)
           else
             ..._servicios.map(
               (servicio) => Padding(
@@ -576,15 +570,10 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
         children: [
           Text(AppTexts.selectArea, style: BioTypography.h2),
           BioSpacing.gapH(BioSpacing.sm),
-          Text(
-            'Elegí el tipo de atención (ambulatorio, guardia, internación, etc.).',
-            style: BioTypography.bodySm,
-          ),
+          Text(AppTexts.wizardChooseEncounterType, style: BioTypography.bodySm),
           BioSpacing.gapH(BioSpacing.xl),
           if (_availableEncounterClasses.isEmpty)
-            BioAlert.info(
-              message: 'Este efector no tiene áreas de atención habilitadas.',
-            )
+            BioAlert.info(message: AppTexts.wizardNoAreas)
           else
             ..._availableEncounterClasses.map(
               (encounterClass) => Padding(

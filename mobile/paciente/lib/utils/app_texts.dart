@@ -67,4 +67,18 @@ class AppTexts {
   static const upcomingAppointments = 'Próximos turnos';
   static const yourConditions = 'Tus condiciones';
   static const yourTreatment = 'Tu tratamiento';
+  static const chatNoShortcuts = 'No hay atajos disponibles.';
+  static const settingsYourAccount = 'Tu cuenta';
+  static const settingsHealthSector = 'Sector de salud';
+  static const settingsContextProvince = 'Provincia de contexto';
+  static const settingsVerifyingAddress =
+      'Estamos verificando tu domicilio, te avisaremos cuando esté listo.';
+  static const settingsSendComplaint = 'Enviar queja';
+  static const settingsComplaintHint =
+      'Problemas con la app, turnos o la atención recibida';
+  static const chatMissingService =
+      'Falta el servicio elegido para listar centros de salud. Volvé a elegir el servicio en el paso anterior o iniciá de nuevo el trámite de turno.';
+  static const chatAdvanceFailed = 'No se pudo avanzar. Intentá de nuevo.';
+  static const chatCompleteInfo = 'Completa la información';
+  static const chatReasonsTitle = 'Motivos de la consulta';
 }

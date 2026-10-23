@@ -93,6 +93,104 @@ class AppTexts {
   static const captureProcessingResult = 'Resultado del procesamiento';
   static const captureOpenProblems = 'Problemas y tratamientos abiertos';
   static const captureCancelEdit = 'Cancelar edición';
+  static const timelineTitleLoaded = 'Consulta cargada';
+  static const timelineTitleGuardia = 'Atención · guardia';
+  static const timelineTitleInternacion = 'Evolución · internación';
+  static const timelineTitleHistory = 'Historia clínica';
+  static const timelineNoData = 'No hay datos disponibles';
+  static const captureSaveFailed = 'No se pudo guardar';
+  static const reviewNoteTitle = 'Nota de esta atención';
+  static const reviewDuplicateNote =
+      'Esta nota es casi idéntica a una evolución previa. Editá el texto para documentar los cambios.';
+  static const reviewNoStructuredData =
+      'Sin datos estructurados. Se guardará el texto.';
+  static const reviewSuggestedByAi = 'Sugerido por IA';
+  static const reviewOptionalStatus =
+      'Opcional: indicá el estado al cerrar. Si no elegís, se mantienen.';
+  static const reviewCompleteData = 'Completar datos';
+  static const settingsNoSessionEffector =
+      'No se encontró el efector y servicio de la sesión actual.';
+  static const settingsEffectorDisabled =
+      'El efector actual ya no está habilitado para esta sesión.';
+  static const settingsCompleteInitialSetup =
+      'Completá la configuración inicial (efector y servicio) para cambiar el área.';
+  static const settingsAreaHint =
+      'Según el área, Inicio mostrará turnos, pacientes internados o ingresos en guardia.';
+  static const chatNoShortcuts = 'No hay atajos disponibles.';
+  static const chatProcessError =
+      'Error al procesar tu consulta. Por favor, intenta nuevamente.';
+  static const chatLocationPermission =
+      'Se necesita permiso de ubicación para listar centros de salud cercanos.';
+  static const chatMissingService =
+      'Falta el servicio elegido para listar centros de salud. Volvé a elegir el servicio en el paso anterior o iniciá de nuevo el trámite de turno.';
+  static const chatFlowStartFailed = 'No se pudo iniciar el flujo.';
+  static const chatActionWithoutClientOpen =
+      'Acción sin client_open: no se puede abrir en esta versión.';
+  static const chatLegacySubmitUnsupported =
+      'Submit legacy no soportado. Abrí la pantalla desde client_open.';
+  static const chatAdvanceFailed = 'No se pudo avanzar. Intentá de nuevo.';
+  static const chatCompleteInfo = 'Completa la información';
+  static const chatLoadReasons = 'Cargar motivos de la consulta';
+  static const chatReasonsTitle = 'Motivos de la consulta';
+  static const loginChooseRole = 'Elegí con qué rol entrar';
+  static const loginBiometricUnavailable =
+      'La huella no está disponible en este dispositivo.';
+  static const loginSessionExpired =
+      'Tu sesión expiró. Ingresá de nuevo con usuario y contraseña.';
+  static const loginSessionCheckFailed =
+      'No pudimos verificar tu sesión. Revisá la conexión e intentá de nuevo.';
+  static const loginSessionIncomplete =
+      'Sesión incompleta. Ingresá con usuario y contraseña.';
+  static const loginFirstTime =
+      'Primera vez: activá tu cuenta con el código de administración '
+      'o ingresá si ya elegiste contraseña.';
+  static const wizardNoContextToken =
+      'El servidor no devolvió token de contexto operativo. '
+      'No se puede usar la app sin completar efector, servicio y área.';
+  static const wizardEffectorsNeedSetup =
+      'Algunos efectores requieren configuración';
+  static const wizardChooseService = 'Elegí el servicio donde vas a trabajar.';
+  static const wizardNoServices = 'No hay servicios disponibles';
+  static const wizardChooseEncounterType =
+      'Elegí el tipo de atención (ambulatorio, guardia, internación, etc.).';
+  static const wizardNoAreas =
+      'Este efector no tiene áreas de atención habilitadas.';
+  static const homeNoAreaMetadata =
+      'El servidor no devolvió metadata para el área operativa seleccionada.';
+  static const homeAreaWithoutCapabilities =
+      'El área operativa seleccionada no tiene capacidades habilitadas.';
+  static const sessionExpiredShort = 'Tu sesión expiró. Ingresá de nuevo.';
+  static const homeNoGuardiaSchedule =
+      'No tenés horario de guardia cargado. Para ver el tablero y atender, '
+      'configurá tus horarios en el Asistente («Configurar mis horarios») o pedile a '
+      'coordinación / administración del centro que te los asigne.';
+  static const homeNoWardSchedule =
+      'No tenés horario de piso cargado. Para ver internados, configurá tus '
+      'horarios en el Asistente («Configurar mis horarios») o pedile a coordinación / '
+      'administración del centro que te los asigne.';
+  static const homeNoHomeScreen =
+      'El área operativa no tiene una pantalla de inicio habilitada.';
+  static const homeBedChange = 'Cambio de cama';
+  static const homePendingTriage =
+      'Pendiente de triage. Lo registra admisión o enfermería.';
+  static const homeDoctorAttending =
+      'El médico atiende el caso. Enfermería registra triage o una nota.';
+  static const captureWriteEvolution = 'Escribí o dictá la evolución.';
+  static const captureWriteNote = 'Escriba o dicte la consulta.';
+  static const captureDictationEmpty =
+      'No se obtuvo texto del dictado. El audio quedó guardado; escribí la consulta para continuar.';
+  static const captureNothingToAnalyze = 'Sin texto para analizar.';
+  static const captureSaveBlockedBySystemError =
+      'No se puede guardar: el análisis tiene errores de sistema.';
+  static const captureEditDuplicateNote =
+      'Editá el texto: la nota es casi idéntica a una evolución previa del episodio.';
+  static const captureResolveMissingData =
+      'Completá los datos faltantes marcados antes de confirmar.';
+  static const captureSavedIncomplete =
+      'Encounter guardado con datos incompletos.';
+  static const captureSavedIncompleteTitle = 'Guardado incompleto';
+  static const captureDefineParent =
+      'Defina contexto de consulta (parent) para captura con IA.';
 
   static String timelineWeightKg(Object v) => '$timelineWeight: $v kg';
   static String timelineHeightCm(Object v) => '$timelineHeight: $v cm';

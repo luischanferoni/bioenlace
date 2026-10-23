@@ -173,14 +173,10 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       }
       if (selectedClass == null) {
-        throw Exception(
-          'El servidor no devolvió metadata para el área operativa seleccionada.',
-        );
+        throw Exception(AppTexts.homeNoAreaMetadata);
       }
       if (selectedClass.capabilities.isEmpty) {
-        throw Exception(
-          'El área operativa seleccionada no tiene capacidades habilitadas.',
-        );
+        throw Exception(AppTexts.homeAreaWithoutCapabilities);
       }
       if (!mounted) return;
       final capabilities = selectedClass.capabilities.toSet();
@@ -236,9 +232,7 @@ class _HomeScreenState extends State<HomeScreen> {
         return;
       }
       if (BearerSessionAuth.isAuthSessionError(e)) {
-        await returnPersonalsaludToLogin(
-          message: 'Tu sesión expiró. Ingresá de nuevo.',
-        );
+        await returnPersonalsaludToLogin(message: AppTexts.sessionExpiredShort);
         return;
       }
       setState(() {
@@ -429,14 +423,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   static const String _msgSinHorarioGuardiaFallback =
-      'No tenés horario de guardia cargado. Para ver el tablero y atender, '
-      'configurá tus horarios en el Asistente («Configurar mis horarios») o pedile a '
-      'coordinación / administración del centro que te los asigne.';
+      AppTexts.homeNoGuardiaSchedule;
 
-  static const String _msgSinHorarioPisoFallback =
-      'No tenés horario de piso cargado. Para ver internados, configurá tus '
-      'horarios en el Asistente («Configurar mis horarios») o pedile a coordinación / '
-      'administración del centro que te los asigne.';
+  static const String _msgSinHorarioPisoFallback = AppTexts.homeNoWardSchedule;
 
   Widget _buildStaffDashboard() {
     if (_kpiGroups.isEmpty && _staffContext == null) {
@@ -573,8 +562,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ? _wrapWithPanelKpis(_buildAmbHomeContent(siguienteTurno))
                 : _buildEmpty(
                     icon: Icons.info_outline,
-                    text:
-                        'El área operativa no tiene una pantalla de inicio habilitada.',
+                    text: AppTexts.homeNoHomeScreen,
                   ),
           ),
         ],
@@ -1399,7 +1387,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         i,
                         path:
                             '/clinical/internacion/${i.id}/cambio-cama-formulario',
-                        title: 'Cambio de cama',
+                        title: AppTexts.homeBedChange,
                       ),
                     ),
                   ],
@@ -1481,9 +1469,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-              'Pendiente de triage. Lo registra admisión o enfermería.',
-            ),
+            content: Text(AppTexts.homePendingTriage),
           ),
         );
       }
@@ -1523,9 +1509,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'El médico atiende el caso. Enfermería registra triage o una nota.',
-          ),
+          content: Text(AppTexts.homeDoctorAttending),
         ),
       );
     }

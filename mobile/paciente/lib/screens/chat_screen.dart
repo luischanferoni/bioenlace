@@ -1791,7 +1791,7 @@ class ChatScreenState extends State<ChatScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'No hay atajos disponibles.',
+                      AppTexts.chatNoShortcuts,
                       style: BioTypography.bodySm.copyWith(
                         color: context.bio.textMuted,
                       ),
@@ -2265,9 +2265,7 @@ class ChatScreenState extends State<ChatScreen> {
         final hasServ = (q['id_servicio']?.trim().isNotEmpty ?? false) ||
             (q['id_servicio_asignado']?.trim().isNotEmpty ?? false);
         if (!hasServ) {
-          _showErrorSnackbar(
-            'Falta el servicio elegido para listar centros de salud. Volvé a elegir el servicio en el paso anterior o iniciá de nuevo el trámite de turno.',
-          );
+          _showErrorSnackbar(AppTexts.chatMissingService);
           return;
         }
       }
@@ -3153,7 +3151,7 @@ class ChatScreenState extends State<ChatScreen> {
                                       _chatHistory.add({
                                         'type': 'bot',
                                         'content': res['message']?.toString() ??
-                                            'No se pudo avanzar. Intentá de nuevo.',
+                                            AppTexts.chatAdvanceFailed,
                                         'timestamp': DateTime.now(),
                                       });
                                     });
@@ -3229,7 +3227,7 @@ class ChatScreenState extends State<ChatScreen> {
                                         _chatHistory.add({
                                           'type': 'bot',
                                           'content': res['message']?.toString() ??
-                                              'No se pudo avanzar. Intentá de nuevo.',
+                                              AppTexts.chatAdvanceFailed,
                                           'timestamp': DateTime.now(),
                                         });
                                       });
@@ -3406,7 +3404,7 @@ class ChatScreenState extends State<ChatScreen> {
                                         _showFormModal(
                                           context: context,
                                           formConfig: Map<String, dynamic>.from(actionAnalysis['form_config'] ?? {}),
-                                          title: 'Completa la información',
+                                          title: AppTexts.chatCompleteInfo,
                                           authToken: _asistenteService.authToken,
                                           onSubmit: (formValues) async {
                                             if (actionId != null) {
@@ -3439,7 +3437,7 @@ class ChatScreenState extends State<ChatScreen> {
                                             const SizedBox(width: 8),
                                             Expanded(
                                               child: Text(
-                                                'Completa la información',
+                                                AppTexts.chatCompleteInfo,
                                                 style: tt.titleSmall?.copyWith(
                                                   fontWeight: FontWeight.bold,
                                                   color: cs.primary,
@@ -3514,7 +3512,7 @@ class ChatScreenState extends State<ChatScreen> {
                                       authToken: _asistenteService.authToken,
                                       userId: widget.chatService.currentUserId,
                                       userName: widget.chatService.currentUserName,
-                                      titulo: 'Motivos de la consulta',
+                                      titulo: AppTexts.chatReasonsTitle,
                                     ),
                                   ),
                                 );

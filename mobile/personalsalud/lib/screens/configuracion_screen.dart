@@ -56,9 +56,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
       final storedEncounterLabel =
           prefs.getString('encounter_class_label') ?? 'Ambulatoria';
       if (efectorId == null || servicioId == null) {
-        throw Exception(
-          'No se encontró el efector y servicio de la sesión actual.',
-        );
+        throw Exception(AppTexts.settingsNoSessionEffector);
       }
 
       final options = await _configService.loadSessionWizardOptions(
@@ -72,9 +70,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
         }
       }
       if (selectedEfector == null) {
-        throw Exception(
-          'El efector actual ya no está habilitado para esta sesión.',
-        );
+        throw Exception(AppTexts.settingsEffectorDisabled);
       }
       final currentEfector = selectedEfector;
       if (!mounted) return;
@@ -109,9 +105,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
     if (_efectorId == null || _servicioId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Completá la configuración inicial (efector y servicio) para cambiar el área.',
-          ),
+          content: Text(AppTexts.settingsCompleteInitialSetup),
         ),
       );
       return;
@@ -222,7 +216,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
           Text(AppTexts.workAreaTitle, style: BioTypography.h3),
           BioSpacing.gapH(BioSpacing.xs),
           Text(
-            'Según el área, Inicio mostrará turnos, pacientes internados o ingresos en guardia.',
+            AppTexts.settingsAreaHint,
             style: BioTypography.caption,
           ),
           BioSpacing.gapH(BioSpacing.md),
@@ -252,9 +246,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
             ),
             BioSpacing.gapH(BioSpacing.md),
             if (_encounterClasses.isEmpty)
-              BioAlert.info(
-                message: 'Este efector no tiene áreas de atención habilitadas.',
-              )
+              BioAlert.info(message: AppTexts.wizardNoAreas)
             else
               Wrap(
                 spacing: BioSpacing.sm,
@@ -323,7 +315,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
       child: _ConfigTile(
         icon: Icons.logout,
         iconColor: danger,
-        title: 'Cerrar sesión',
+        title: AppTexts.logout,
         titleColor: danger,
         onTap: _confirmarLogout,
       ),

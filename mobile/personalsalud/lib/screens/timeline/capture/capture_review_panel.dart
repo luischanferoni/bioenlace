@@ -46,7 +46,7 @@ class CaptureReviewPanel extends StatelessWidget {
       children: [
         Center(
           child: Text(
-            'Nota de esta atención',
+            AppTexts.reviewNoteTitle,
             textAlign: TextAlign.center,
             style: BioTypography.title.copyWith(
               decoration: TextDecoration.underline,
@@ -77,8 +77,7 @@ class CaptureReviewPanel extends StatelessWidget {
         if (review.episodeNoteDuplicate && review.advisories.isEmpty) ...[
           BioSpacing.gapH(BioSpacing.sm),
           BioAlert.danger(
-            message:
-                'Esta nota es casi idéntica a una evolución previa. Editá el texto para documentar los cambios.',
+            message: AppTexts.reviewDuplicateNote,
           ),
         ],
         if (review.textoProcesado != null &&
@@ -94,9 +93,7 @@ class CaptureReviewPanel extends StatelessWidget {
           BioAlert.danger(message: review.systemError!),
         ] else if (!review.hasExtractedContent) ...[
           BioSpacing.gapH(BioSpacing.md),
-          BioAlert.info(
-            message: 'Sin datos estructurados. Se guardará el texto.',
-          ),
+          BioAlert.info(message: AppTexts.reviewNoStructuredData),
         ] else ...[
           BioSpacing.gapH(BioSpacing.lg),
           Text(AppTexts.captureProcessingResult, style: sectionTitleStyle),
@@ -146,7 +143,7 @@ class CaptureReviewPanel extends StatelessWidget {
                         children: [
                           _itemBlock(context, item),
                           Text(
-                            'Sugerido por IA',
+                            AppTexts.reviewSuggestedByAi,
                             style: BioTypography.caption.copyWith(
                               color: IntentPalette.of(UiIntent.secondary).base,
                             ),
@@ -175,7 +172,7 @@ class CaptureReviewPanel extends StatelessWidget {
           Text(AppTexts.captureOpenProblems, style: sectionTitleStyle),
           BioSpacing.gapH(BioSpacing.xs),
           Text(
-            'Opcional: indicá el estado al cerrar. Si no elegís, se mantienen.',
+            AppTexts.reviewOptionalStatus,
             style: BioTypography.caption.copyWith(color: context.bio.textMuted),
           ),
           BioSpacing.gapH(BioSpacing.sm),
@@ -316,7 +313,7 @@ class CaptureReviewPanel extends StatelessWidget {
           if (selected && itemIssues.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.sm),
             Text(
-              'Completar datos',
+              AppTexts.reviewCompleteData,
               style: BioTypography.bodySm.copyWith(
                 fontWeight: FontWeight.w600,
                 color: IntentPalette.of(UiIntent.danger).base,

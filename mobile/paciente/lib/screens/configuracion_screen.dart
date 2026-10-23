@@ -89,7 +89,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Tu cuenta',
+            AppTexts.settingsYourAccount,
             style: BioTypography.title.copyWith(fontWeight: FontWeight.w700),
           ),
           BioSpacing.gapH(BioSpacing.md),
@@ -128,14 +128,14 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
                 children: [
                   _ConfigTile(
                     icon: Icons.account_balance_outlined,
-                    title: 'Sector de salud',
+                    title: AppTexts.settingsHealthSector,
                     subtitle: sectorLabel,
                     onTap: _toggleSector,
                   ),
                   BioDivider.subtle(),
                   _ConfigTile(
                     icon: Icons.map_outlined,
-                    title: 'Provincia de contexto',
+                    title: AppTexts.settingsContextProvince,
                     subtitle: provinciaLabel,
                     onTap: _abrirProvinciaContexto,
                   ),
@@ -150,7 +150,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
                       ),
                       child: BioAlert.info(
                         message: ctx.banner?['message']?.toString() ??
-                            'Estamos verificando tu domicilio, te avisaremos cuando esté listo.',
+                            AppTexts.settingsVerifyingAddress,
                       ),
                     ),
                   ],
@@ -180,8 +180,8 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
           BioDivider.subtle(),
           _ConfigTile(
             icon: Icons.report_outlined,
-            title: 'Enviar queja',
-            subtitle: 'Problemas con la app, turnos o la atención recibida',
+            title: AppTexts.settingsSendComplaint,
+            subtitle: AppTexts.settingsComplaintHint,
             onTap: widget.onEnviarQueja ??
                 () {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -221,7 +221,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
               BioSpacing.gapW(BioSpacing.md),
               Expanded(
                 child: Text(
-                  'Cerrar sesión',
+                  AppTexts.logout,
                   style: BioTypography.title.copyWith(
                     color: danger,
                     fontWeight: FontWeight.w600,

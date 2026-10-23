@@ -9,6 +9,7 @@ import 'package:shared/shared.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../navigation/native_screen_router.dart';
+import '../infra/app_texts.dart';
 import '../services/chat_service.dart';
 import 'encounter_chat_staff_screen.dart';
 
@@ -1550,7 +1551,7 @@ class ChatScreenState extends State<ChatScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'No hay atajos disponibles.',
+                      AppTexts.chatNoShortcuts,
                       style: BioTypography.bodySm.copyWith(
                         color: context.bio.textMuted,
                       ),
@@ -1691,8 +1692,7 @@ class ChatScreenState extends State<ChatScreen> {
         _isSending = false;
         _chatHistory.add({
           'type': 'bot',
-          'content':
-              'Error al procesar tu consulta. Por favor, intenta nuevamente.',
+          'content': AppTexts.chatProcessError,
           'timestamp': DateTime.now(),
         });
       });
@@ -1804,9 +1804,7 @@ class ChatScreenState extends State<ChatScreen> {
       }
       if (perm == LocationPermission.denied ||
           perm == LocationPermission.deniedForever) {
-        throw Exception(
-          'Se necesita permiso de ubicación para listar centros de salud cercanos.',
-        );
+        throw Exception(AppTexts.chatLocationPermission);
       }
       final pos = await Geolocator.getCurrentPosition();
       qp['latitud'] = '${pos.latitude}';
@@ -1895,9 +1893,7 @@ class ChatScreenState extends State<ChatScreen> {
             (q['id_servicio']?.trim().isNotEmpty ?? false) ||
             (q['id_servicio_asignado']?.trim().isNotEmpty ?? false);
         if (!hasServ) {
-          _showErrorSnackbar(
-            'Falta el servicio elegido para listar centros de salud. Volvé a elegir el servicio en el paso anterior o iniciá de nuevo el trámite de turno.',
-          );
+          _showErrorSnackbar(AppTexts.chatMissingService);
           return;
         }
       }
@@ -1970,7 +1966,7 @@ class ChatScreenState extends State<ChatScreen> {
               'type': 'bot',
               'content':
                   result['message']?.toString() ??
-                  'No se pudo iniciar el flujo.',
+                  AppTexts.chatFlowStartFailed,
               'timestamp': DateTime.now(),
             });
           });
@@ -2154,9 +2150,7 @@ class ChatScreenState extends State<ChatScreen> {
 
     // Desde la migración a UI JSON, el backend debe enviar `client_open` para abrir la pantalla.
     // Si no vino, evitamos llamar endpoints legacy (/crud/ejecutar-accion) que ya no existen.
-    _showErrorSnackbar(
-      'Acción sin client_open: no se puede abrir en esta versión.',
-    );
+    _showErrorSnackbar(AppTexts.chatActionWithoutClientOpen);
   }
 
   Future<void> _executeActionWithParams(
@@ -2165,9 +2159,7 @@ class ChatScreenState extends State<ChatScreen> {
   ) async {
     // Legacy: antes se posteaba a /crud/ejecutar-accion. Ese endpoint ya no existe.
     // La ejecución/submit ahora ocurre dentro del cliente UI JSON (UiJsonScreen).
-    _showErrorSnackbar(
-      'Submit legacy no soportado. Abrí la pantalla desde client_open.',
-    );
+    _showErrorSnackbar(AppTexts.chatLegacySubmitUnsupported);
   }
 
   /// Despliega el formulario dinámico en un modal (bottom sheet) para móvil.
@@ -3043,7 +3035,7 @@ class ChatScreenState extends State<ChatScreen> {
                                                                   'content':
                                                                       res['message']
                                                                           ?.toString() ??
-                                                                      'No se pudo avanzar. Intentá de nuevo.',
+                                                                      AppTexts.chatAdvanceFailed,
                                                                   'timestamp':
                                                                       DateTime.now(),
                                                                 });
@@ -3060,7 +3052,7 @@ class ChatScreenState extends State<ChatScreen> {
                                                                       userFriendlyErrorMessage(
                                                                         e,
                                                                         fallback:
-                                                                            'No se pudo avanzar. Intentá de nuevo.',
+                                                                                                                                                    AppTexts.chatAdvanceFailed,
                                                                       ),
                                                                   'timestamp':
                                                                       DateTime.now(),
@@ -3217,7 +3209,7 @@ class ChatScreenState extends State<ChatScreen> {
                                                                 'content':
                                                                     res['message']
                                                                         ?.toString() ??
-                                                                    'No se pudo avanzar. Intentá de nuevo.',
+                                                                                                                              AppTexts.chatAdvanceFailed,
                                                                 'timestamp':
                                                                     DateTime.now(),
                                                               });
@@ -3354,7 +3346,7 @@ class ChatScreenState extends State<ChatScreen> {
                                                     0,
                                                 title:
                                                     actionName ??
-                                                    'Completa la información',
+                                                    AppTexts.chatCompleteInfo,
                                                 authToken:
                                                     _asistenteService.authToken,
                                                 onSubmit: (formValues) async {
@@ -3402,7 +3394,7 @@ class ChatScreenState extends State<ChatScreen> {
                                                   Expanded(
                                                     child: Text(
                                                       actionName ??
-                                                          'Completa la información',
+                                                          AppTexts.chatCompleteInfo,
                                                       style: tt.titleSmall
                                                           ?.copyWith(
                                                             fontWeight:
@@ -3461,7 +3453,7 @@ class ChatScreenState extends State<ChatScreen> {
                                                           {},
                                                     ),
                                                 title:
-                                                    'Completa la información',
+                                                    AppTexts.chatCompleteInfo,
                                                 authToken:
                                                     _asistenteService.authToken,
                                                 onSubmit: (formValues) async {
@@ -3507,7 +3499,7 @@ class ChatScreenState extends State<ChatScreen> {
                                                   const SizedBox(width: 8),
                                                   Expanded(
                                                     child: Text(
-                                                      'Completa la información',
+                                                      AppTexts.chatCompleteInfo,
                                                       style: tt.titleSmall
                                                           ?.copyWith(
                                                             fontWeight:
@@ -3587,7 +3579,7 @@ class ChatScreenState extends State<ChatScreen> {
                                       color: cs.primary,
                                     ),
                                     label: const Text(
-                                      'Cargar motivos de la consulta',
+                                      AppTexts.chatLoadReasons,
                                     ),
                                     onPressed: () {
                                       Navigator.push(
@@ -3605,7 +3597,7 @@ class ChatScreenState extends State<ChatScreen> {
                                                     .chatService
                                                     .currentUserName,
                                                 titulo:
-                                                    'Motivos de la consulta',
+                                                    AppTexts.chatReasonsTitle,
                                               ),
                                         ),
                                       );

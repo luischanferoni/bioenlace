@@ -20,6 +20,8 @@ import 'timeline/blocks/signos_vitales_episodio_card.dart';
 import 'timeline/capture/capture_actions_bar.dart';
 import 'timeline/capture/capture_dictation_controller.dart';
 import 'timeline/capture/capture_input_bar.dart';
+import 'timeline/capture/capture_analysis_helpers.dart';
+import 'timeline/capture/capture_server_snapshot.dart';
 import 'timeline/timeline_history_controller.dart';
 import 'timeline/capture/capture_save_result_dialog.dart';
 import 'timeline/capture/microphone_permission_dialog.dart';
@@ -230,12 +232,12 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       backgroundColor: tokens.paperBackground,
       appBar: BioAppBar(
         title: _isLoadedEncounterSummary
-            ? 'Consulta cargada'
+            ? AppTexts.timelineTitleLoaded
             : (_esCapturaGuardia
-                  ? 'Atención · guardia'
+                  ? AppTexts.timelineTitleGuardia
                   : (_esCapturaInternacion
-                        ? 'Evolución · internación'
-                        : 'Historia clínica')),
+                        ? AppTexts.timelineTitleInternacion
+                        : AppTexts.timelineTitleHistory)),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -261,7 +263,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           ? Center(
               child: Padding(
                 padding: BioSpacing.pageAll,
-                child: BioAlert.info(message: 'No hay datos disponibles'),
+                child: BioAlert.info(message: AppTexts.timelineNoData),
               ),
             )
           : Column(
@@ -781,7 +783,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         _sttStatus = current.status == PendingEncounterCaptureStatus.failedSave
             ? (current.lastError?.trim().isNotEmpty == true
                   ? userFriendlyErrorMessage(current.lastError!)
-                  : 'No se pudo guardar')
+                  : AppTexts.captureSaveFailed)
             : '';
       });
       return;
@@ -925,8 +927,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     if (text.isEmpty && _pendingAudioPath == null) {
       _snack(
         _esCapturaEpisodio
-            ? 'Escribí o dictá la evolución.'
-            : 'Escriba o dicte la consulta.',
+            ? AppTexts.captureWriteEvolution
+            : AppTexts.captureWriteNote,
         UiIntent.warning,
       );
       return;
@@ -997,21 +999,14 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             audioPath: audioPath,
             userPerTabConfig: ctx,
           );
-          final capture = created['capture'];
-          if (capture is Map) {
-            final map = Map<String, dynamic>.from(capture);
-            stage = map['stage']?.toString();
-            final metadata = map['stage_metadata'];
-            if (metadata is Map && metadata['code'] == stage) {
-              stageLabel = metadata['label']?.toString();
-              stageIntent = metadata['intent']?.toString();
-            }
-            serverId = map['id'] is int
-                ? map['id'] as int
-                : int.tryParse('${map['id']}');
-            audioUploaded = map['has_audio'] == true;
-            final t = map['transcript']?.toString() ?? '';
-            if (t.isNotEmpty) transcript = t;
+          final snap = CaptureServerSnapshot.fromResponse(created);
+          if (snap != null) {
+            stage = snap.stage;
+            stageLabel = snap.stageLabel;
+            stageIntent = snap.stageIntent;
+            serverId = snap.id;
+            audioUploaded = snap.hasAudio;
+            if (snap.transcript.isNotEmpty) transcript = snap.transcript;
           }
           await _persistLocalDraft(
             texto: transcript.isEmpty
@@ -1054,23 +1049,16 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             force: stage == 'STT_FAILED',
             userPerTabConfig: ctx,
           );
-          final capture = sttRes['capture'];
-          if (capture is Map) {
-            final map = Map<String, dynamic>.from(capture);
-            stage = map['stage']?.toString();
-            final metadata = map['stage_metadata'];
-            if (metadata is Map && metadata['code'] == stage) {
-              stageLabel = metadata['label']?.toString();
-              stageIntent = metadata['intent']?.toString();
-            }
-            serverId = map['id'] is int
-                ? map['id'] as int
-                : int.tryParse('${map['id']}');
-            final t = map['transcript']?.toString() ?? '';
-            if (t.isNotEmpty) {
-              transcript = t;
+          final snap = CaptureServerSnapshot.fromResponse(sttRes);
+          if (snap != null) {
+            stage = snap.stage;
+            stageLabel = snap.stageLabel;
+            stageIntent = snap.stageIntent;
+            serverId = snap.id;
+            if (snap.transcript.isNotEmpty) {
+              transcript = snap.transcript;
               if (mounted) {
-                setState(() => _chatController.text = t);
+                setState(() => _chatController.text = snap.transcript);
               }
             }
           }
@@ -1104,8 +1092,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       }
 
       if (transcript.trim().isEmpty && !_sttConfig.serverEnabled) {
-        const message =
-            'No se obtuvo texto del dictado. El audio quedó guardado; escribí la consulta para continuar.';
+        const message = AppTexts.captureDictationEmpty;
         await _persistLocalDraft(
           texto: '(audio pendiente de transcribir)',
           status: PendingEncounterCaptureStatus.pendingStt,
@@ -1124,7 +1111,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           status: PendingEncounterCaptureStatus.pendingStt,
           serverCaptureId: serverId,
           serverStage: stage,
-          error: 'Sin texto para analizar.',
+          error: AppTexts.captureNothingToAnalyze,
         );
         if (!mounted) return;
         _snack(AppTexts.captureNoText, UiIntent.warning);
@@ -1138,55 +1125,16 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         force: fromStatus == PendingEncounterCaptureStatus.pendingAnalyze,
         userPerTabConfig: ctx,
       );
-      final capture = analyzed['capture'];
-      Map<String, dynamic> analysisPayload = analyzed;
-      if (capture is Map) {
-        final map = Map<String, dynamic>.from(capture);
-        stage = map['stage']?.toString();
-        serverId = map['id'] is int
-            ? map['id'] as int
-            : int.tryParse('${map['id']}');
-        // Preferir payload completo del análisis (incluye capture_review).
-        if (map['analysis'] is Map) {
-          analysisPayload = Map<String, dynamic>.from(map['analysis'] as Map);
-        }
-        // Completar con campos top-level del capture si faltan.
-        for (final key in [
-          'capture_review',
-          'texto_original',
-          'texto_procesado',
-          'datosExtraidos',
-          'analysis_cache_token',
-          'id_configuracion',
-          'encounter_id',
-          'puede_confirmar',
-          'tiene_datos_faltantes',
-        ]) {
-          if (!analysisPayload.containsKey(key) && map[key] != null) {
-            analysisPayload[key] = map[key];
-          }
-        }
-        // Legacy: datos.datosExtraidos → datosExtraidos top-level.
-        final datos = analysisPayload['datos'];
-        if (datos is Map &&
-            analysisPayload['datosExtraidos'] == null &&
-            datos['datosExtraidos'] != null) {
-          analysisPayload['datosExtraidos'] = datos['datosExtraidos'];
-        }
+      final snap = CaptureServerSnapshot.fromResponse(analyzed);
+      final analysisPayload = buildAnalysisPayload(analyzed, snap);
+      if (snap != null) {
+        stage = snap.stage;
+        serverId = snap.id;
       }
 
       if (!mounted) return;
       final review = EncounterCaptureAnalysis.fromApiResponse(analysisPayload);
-      final staged = <String>{};
-      if (review.defaultStagedItemIds.isNotEmpty) {
-        staged.addAll(review.defaultStagedItemIds);
-      } else {
-        staged.addAll(
-          review.allItems
-              .where((i) => i.isFromClinicalText && !i.alreadyActive)
-              .map((e) => e.id),
-        );
-      }
+      final staged = defaultStagedItems(review);
       await _persistLocalDraft(
         texto: transcript,
         status: PendingEncounterCaptureStatus.pendingSave,
@@ -1234,23 +1182,12 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   }
 
   bool _allStagedIssuesResolved(EncounterCaptureAnalysis review) {
-    for (final issue in review.issues) {
-      final m = RegExp(r'^(.*)::(\d+):').firstMatch(issue.id);
-      final stagedId = m != null ? '${m.group(1)}::${m.group(2)}' : issue.id;
-      if (!_stagedItemIds.contains(stagedId)) {
-        continue;
-      }
-      if (_issueResolutions.containsKey(issue.id)) {
-        final v = _issueResolutions[issue.id];
-        if (v != null && v.toString().trim().isNotEmpty) continue;
-      }
-      if (issue.allowCustom) {
-        final custom = _issueCustomControllers[issue.id]?.text.trim() ?? '';
-        if (custom.isNotEmpty) continue;
-      }
-      return false;
-    }
-    return true;
+    return allStagedIssuesResolved(
+      review: review,
+      stagedItemIds: _stagedItemIds,
+      resolutions: _issueResolutions,
+      customText: (id) => _issueCustomControllers[id]?.text ?? '',
+    );
   }
 
   Future<void> _confirmarGuardado() async {
@@ -1261,7 +1198,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     }
     if (review.systemError != null) {
       _snack(
-        'No se puede guardar: el análisis tiene errores de sistema.',
+        AppTexts.captureSaveBlockedBySystemError,
         UiIntent.warning,
       );
       return;
@@ -1275,15 +1212,14 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         }
       }
       _snack(
-        dupMsg ??
-            'Editá el texto: la nota es casi idéntica a una evolución previa del episodio.',
+        dupMsg ?? AppTexts.captureEditDuplicateNote,
         UiIntent.warning,
       );
       return;
     }
     if (!_allStagedIssuesResolved(review)) {
       _snack(
-        'Completá los datos faltantes marcados antes de confirmar.',
+        AppTexts.captureResolveMissingData,
         UiIntent.warning,
       );
       return;
@@ -1380,7 +1316,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       if (!mounted) return;
       final aviso = guardado['persist_incomplete'] == true
           ? (guardado['message']?.toString() ??
-                'Encounter guardado con datos incompletos.')
+                AppTexts.captureSavedIncomplete)
           : null;
       debugPrint(
         '[captura] guardar resultado aviso=${aviso ?? 'ok'} '
@@ -1391,7 +1327,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       if (aviso != null) {
         // No hacer pop inmediato: el SnackBar se pierde al cerrar la pantalla.
         await _mostrarResultadoGuardado(
-          titulo: 'Guardado incompleto',
+          titulo: AppTexts.captureSavedIncompleteTitle,
           mensaje: aviso,
           intent: UiIntent.warning,
           detalle: captureSaveDiagnosticDetail(guardado),
@@ -1417,7 +1353,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       );
       if (!mounted) return;
       await _mostrarResultadoGuardado(
-        titulo: 'No se pudo guardar',
+        titulo: AppTexts.captureSaveFailed,
         mensaje: _mensajeErrorCaptura(e),
         intent: UiIntent.danger,
       );
@@ -1446,7 +1382,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     if (!_tieneContextoCaptura) {
       if (!widget.soloVer) {
         _snack(
-          'Defina contexto de consulta (parent) para captura con IA.',
+          AppTexts.captureDefineParent,
           UiIntent.warning,
         );
       }

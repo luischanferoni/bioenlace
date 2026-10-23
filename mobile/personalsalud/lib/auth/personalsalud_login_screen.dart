@@ -149,7 +149,7 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
               Padding(
                 padding: BioSpacing.pageHorizontal.copyWith(top: BioSpacing.sm),
                 child: Text(
-                  'Elegí con qué rol entrar',
+                  AppTexts.loginChooseRole,
                   style: BioTypography.title.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -331,10 +331,7 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
 
   Future<void> _loginWithBiometrics() async {
     if (!_biometricAvailable) {
-      _snack(
-        'La huella no está disponible en este dispositivo.',
-        UiIntent.warning,
-      );
+      _snack(AppTexts.loginBiometricUnavailable, UiIntent.warning);
       return;
     }
 
@@ -365,17 +362,11 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
         await PersonalsaludSessionPrefs.clearInvalidAuthSession();
         if (!mounted) return;
         setState(() => _useBiometricLogin = false);
-        _snack(
-          'Tu sesión expiró. Ingresá de nuevo con usuario y contraseña.',
-          UiIntent.warning,
-        );
+        _snack(AppTexts.loginSessionExpired, UiIntent.warning);
         return;
       }
       if (sessionCheck == BearerSessionCheckResult.networkError) {
-        _snack(
-          'No pudimos verificar tu sesión. Revisá la conexión e intentá de nuevo.',
-          UiIntent.warning,
-        );
+        _snack(AppTexts.loginSessionCheckFailed, UiIntent.warning);
         return;
       }
 
@@ -383,10 +374,7 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
       final userName = prefs.getString('user_name') ?? 'Usuario';
       if (userId.isEmpty) {
         setState(() => _useBiometricLogin = false);
-        _snack(
-          'Sesión incompleta. Ingresá con usuario y contraseña.',
-          UiIntent.warning,
-        );
+        _snack(AppTexts.loginSessionIncomplete, UiIntent.warning);
         return;
       }
 
@@ -499,14 +487,13 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
                 const Center(child: BioLogo(height: 56)),
                 BioSpacing.gapH(BioSpacing.xl),
                 Text(
-                  'Personal de Salud',
+                  AppTexts.appTitle,
                   style: BioTypography.h1,
                   textAlign: TextAlign.center,
                 ),
                 BioSpacing.gapH(BioSpacing.sm),
                 Text(
-                  'Primera vez: activá tu cuenta con el código de administración '
-                  'o ingresá si ya elegiste contraseña.',
+                  AppTexts.loginFirstTime,
                   style: BioTypography.body.copyWith(color: tokens.textMuted),
                   textAlign: TextAlign.center,
                 ),

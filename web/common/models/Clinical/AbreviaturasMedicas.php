@@ -2,7 +2,7 @@
 
 namespace common\models\Clinical;
 
-use common\components\Platform\Ai\Prompt\YamlPrompt;
+use common\components\Platform\Ai\Prompt\PromptRegistry;
 use Yii;
 
 /**
@@ -436,7 +436,7 @@ class AbreviaturasMedicas extends \yii\db\ActiveRecord
             foreach ($opciones as $i => $opcion) {
                 $lista .= ($i + 1) . ". {$opcion}\n";
             }
-            $prompt = YamlPrompt::render(dirname(__DIR__, 2) . '/components/Platform/Ai/Prompt/abbreviation-disambiguation.yaml', [
+            $prompt = PromptRegistry::render('clinical.abbreviation_disambiguation', [
                 'abreviatura' => (string) $abreviatura->abreviatura,
                 'contexto' => (string) $contexto,
                 'opciones' => $lista,

@@ -7,7 +7,7 @@ Orquestación del chat: preprocess → router → guía (2ª IA) o canal de resp
 1. **Preprocess** (`ChatPreprocessService`): `routing_hint`, `normalized_text`, tags, extracciones; deriva `user_goal` para hilo/canal. Las `context_areas` las calcula el match (carpeta del intent), no la 1ª IA.
 2. **Router** (`ChatRouter`): evalúa catálogo inteligente → `routing_result` → handlers.
 3. **Hilos** (`AssistantThreadStateService`): `thread_tag` desde goal (mapa PHP) + knobs en `assistant/routing/thread-state.yaml`.
-4. **Destino**: 2ª IA Guide (`Application/Guide/prompt.yaml`) cuando hay pedido HIS; canal ambiguous (`Channels/Ambiguous/`); operativo staff. Hilo: `user_goal` derivado. Predicados: `ChatChannelPolicy`. Booking CTA: `Application/Routing/booking-offer.yaml`.
+4. **Destino**: 2ª IA Guide (`Prompts/guide.yaml`) cuando hay pedido HIS; canal ambiguous (`Channels/Ambiguous/`); operativo staff. Hilo: `user_goal` derivado. Predicados: `ChatChannelPolicy`. Booking CTA: `Application/Routing/booking-offer.yaml`.
 
 ## Routing result (eje PHP)
 

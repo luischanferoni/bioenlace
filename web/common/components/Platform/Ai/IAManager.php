@@ -3,7 +3,7 @@
 namespace common\components\Platform\Ai;
 
 use Yii;
-use common\components\Platform\Ai\Prompt\YamlPrompt;
+use common\components\Platform\Ai\Prompt\PromptRegistry;
 use common\components\Platform\Core\Db\BioenlaceDb;
 use yii\httpclient\Client;
 use common\components\Platform\Ai\HuggingFace\HuggingFaceRateLimiter;
@@ -1034,7 +1034,7 @@ class IAManager
                 return null;
             }
             // Mejor prompt que enfatiza el contexto
-            $prompt = YamlPrompt::render(__DIR__ . '/Prompt/medical-word-correction.yaml', [
+            $prompt = PromptRegistry::render('clinical.word_correction', [
                 'especialidad' => (string) $especialidad,
                 'contexto' => (string) $contexto,
                 'palabra' => (string) $palabra,

@@ -6,7 +6,7 @@ use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
 use common\components\Platform\Core\Product\ProductMetadataPaths;
 
 /**
- * Metadata de la 2ª IA guía ({@see Application/Guide/prompt.yaml}).
+ * Metadata de la 2ª IA guía ({@see Prompts/guide.yaml}).
  */
 final class GuideChannelConfig
 {

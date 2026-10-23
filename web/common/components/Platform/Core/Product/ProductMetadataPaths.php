@@ -2,6 +2,8 @@
 
 namespace common\components\Platform\Core\Product;
 
+use common\components\Platform\Ai\Prompt\PromptRegistry;
+
 /**
  * Rutas de metadata declarativa del producto (intents, reglas NL, permisos, UI, AI).
  *
@@ -143,18 +145,6 @@ final class ProductMetadataPaths
         return self::assistantDir() . DIRECTORY_SEPARATOR . 'Presentation';
     }
 
-    /** Prompt preprocess (Application/Preprocess); loaders PHP en Assistant/Preprocess/. */
-    public static function assistantPreprocessDir(): string
-    {
-        return self::assistantDir() . DIRECTORY_SEPARATOR . 'Application' . DIRECTORY_SEPARATOR . 'Preprocess';
-    }
-
-    /** Prompt de la 2ª IA (Application/Guide); no es un canal. */
-    public static function assistantGuideDir(): string
-    {
-        return self::assistantDir() . DIRECTORY_SEPARATOR . 'Application' . DIRECTORY_SEPARATOR . 'Guide';
-    }
-
     public static function assistantRoutingDir(): string
     {
         return self::assistantDir() . DIRECTORY_SEPARATOR . 'Application' . DIRECTORY_SEPARATOR . 'Routing';
@@ -241,7 +231,7 @@ final class ProductMetadataPaths
 
     public static function guidePromptFile(): string
     {
-        return self::assistantGuideDir() . DIRECTORY_SEPARATOR . 'prompt.yaml';
+        return PromptRegistry::path('assistant.guide');
     }
 
     /** @deprecated Usar {@see guidePromptFile()}. */
@@ -252,7 +242,7 @@ final class ProductMetadataPaths
 
     public static function preprocessPromptFile(): string
     {
-        return self::assistantPreprocessDir() . DIRECTORY_SEPARATOR . 'prompt.yaml';
+        return PromptRegistry::path('assistant.preprocess');
     }
 
     public static function ambiguousChannelFile(): string
@@ -322,7 +312,7 @@ final class ProductMetadataPaths
 
     public static function clinicalTextIaFile(): string
     {
-        return self::aiApplicationDir() . DIRECTORY_SEPARATOR . 'clinical-text-ia.yaml';
+        return PromptRegistry::path('clinical.text_ia');
     }
 
     public static function aiCostReferenceFile(): string

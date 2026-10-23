@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\Encounter\Application\Service;
 
 use common\components\Domain\Clinical\Encounter\Application\Service\PatientAiContextService;
-use common\components\Platform\Ai\Prompt\YamlPrompt;
+use common\components\Platform\Ai\Prompt\PromptRegistry;
 use common\components\Platform\Ai\IAManager;
 use common\models\Clinical\Encounter;
 use Yii;
@@ -13,7 +13,7 @@ use Yii;
  */
 final class AppointmentReasonClinicalInsightsService
 {
-    private const INSIGHTS_PROMPT = __DIR__ . '/../Prompt/appointment-reason-insights.yaml';
+    private const INSIGHTS_PROMPT = 'clinical.appointment_reason_insights';
 
     /**
      * @return array{
@@ -75,7 +75,7 @@ final class AppointmentReasonClinicalInsightsService
             );
         }
 
-        $prompt = YamlPrompt::render(self::INSIGHTS_PROMPT, [
+        $prompt = PromptRegistry::render(self::INSIGHTS_PROMPT, [
             'motivos_resumen' => $motivosResumen,
             'patient_block' => $patientBlock !== '' ? "\n\n" . $patientBlock : '',
         ]);

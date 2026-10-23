@@ -5,12 +5,13 @@ namespace common\components\Domain\Clinical\CareCohort\Application\Service;
 use common\components\Domain\Clinical\CareCohort\Domain\CohortKeyBuilder;
 use common\components\Domain\Clinical\CareCohort\Domain\CarePackType;
 use common\components\Domain\Clinical\Encounter\Application\UseCase\RecordEncounterReason;
+use common\components\Platform\Ai\Prompt\PromptRegistry;
 use common\components\Platform\Ai\Prompt\YamlPrompt;
 use common\models\Clinical\Encounter;
 
 final class CarePackPromptService
 {
-    private const PROMPT_FILE = __DIR__ . '/../Prompt/care-pack.yaml';
+    private const PROMPT_FILE = 'clinical.care_pack';
 
     private CohortKeyBuilder $cohortBuilder;
 
@@ -28,7 +29,7 @@ final class CarePackPromptService
         int $subjectPersonaId,
         ?Encounter $encounter = null
     ): string {
-        $file = self::PROMPT_FILE;
+        $file = PromptRegistry::path(self::PROMPT_FILE);
         $contextBlock = $this->cohortBuilder->patientContextBlock($subjectPersonaId);
         $profileJson = json_encode($profile, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
         $encounterHint = '';
@@ -60,6 +61,6 @@ final class CarePackPromptService
             throw new \InvalidArgumentException('pack_type desconocido');
         }
 
-        return YamlPrompt::text(self::PROMPT_FILE, 'schema_' . $packType);
+        return YamlPrompt::text(PromptRegistry::path(self::PROMPT_FILE), 'schema_' . $packType);
     }
 }

@@ -8,6 +8,7 @@
 namespace common\components\Domain\Clinical\Encounter\Application\Service;
 
 use common\components\Domain\Clinical\Encounter\Application\Service\PatientAiContextService;
+use common\components\Platform\Ai\Prompt\PromptRegistry;
 use common\components\Platform\Ai\Prompt\YamlPrompt;
 use common\components\Platform\Ai\IAManager;
 use common\components\Platform\Ai\SpeechToText\SpeechToTextManager;
@@ -19,7 +20,7 @@ use Yii;
 
 final class AppointmentReasonBatchService
 {
-    private const SUMMARY_PROMPT = __DIR__ . '/../Prompt/appointment-reason-summary.yaml';
+    private const SUMMARY_PROMPT = 'clinical.appointment_reason_summary';
 
     /**
      * @return array{ok: bool, message: string, summary?: string}
@@ -263,13 +264,13 @@ final class AppointmentReasonBatchService
 
         $imagenBlock = '';
         if ($input['imagenes'] !== []) {
-            $imagenBlock = YamlPrompt::text(self::SUMMARY_PROMPT, 'image_header') . "\n";
+            $imagenBlock = PromptRegistry::text(self::SUMMARY_PROMPT, 'image_header') . "\n";
             foreach ($input['imagenes'] as $img) {
                 $imagenBlock .= '- [' . $img['ref'] . "]\n";
             }
         }
 
-        $prompt = YamlPrompt::render(self::SUMMARY_PROMPT, [
+        $prompt = PromptRegistry::render(self::SUMMARY_PROMPT, [
             'patient_block' => $patientBlock !== '' ? "\n\n" . $patientBlock : '',
             'image_block' => $imagenBlock !== '' ? "\n\n" . $imagenBlock : '',
             'transcript' => (string) $input['transcript'],

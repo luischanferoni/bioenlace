@@ -264,7 +264,7 @@ class _CameraOverlayState extends State<CameraOverlay> {
               CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
               SizedBox(height: 16),
               Text(
-                'Inicializando cámara...',
+                AppTexts.cameraInitializing,
                 style: TextStyle(color: Colors.white),
               ),
             ],

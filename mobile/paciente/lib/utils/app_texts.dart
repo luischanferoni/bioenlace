@@ -1,6 +1,26 @@
 /// Textos de infraestructura de la app Paciente (avisos y etiquetas genéricas del cliente).
 /// Los textos clínicos y de negocio vienen del backend.
 class AppTexts {
+  static const appTitle = 'BioEnlace Paciente';
+  static const yourTreatments = 'Tus tratamientos';
+  static const conditionChooseNeed = 'Elegí qué necesitás sobre esta condición.';
+  static const myEncounters = 'Mis atenciones';
+  static const noEncountersPublished = 'Todavía no hay atenciones publicadas.';
+  static const encounterSummaryTitle = 'Resumen de atención';
+  static const viewDetailAndPdf = 'Ver detalle y PDF';
+  static const messageEncounterTitle = 'Consulta clínica por mensaje';
+  static const diditNotConfigured =
+      'El registro con verificación de identidad no está configurado en el servidor. '
+      'Contactá al soporte de Bioenlace.';
+  static const diditTimeout = 'La verificación de identidad tardó demasiado. Intentá de nuevo.';
+  static const biometricRequiredBody =
+      'Para usar BioEnlace Paciente necesitás tener huella o Face ID '
+      'configurados en este dispositivo (Ajustes del sistema) y '
+      'volver a intentar.';
+  static const myAppointments = 'Mis turnos';
+  static String chatWith(Object? nombre) => 'Chat con $nombre';
+  static const defaultDoctorName = 'médico';
+  static const cameraInitializing = 'Inicializando cámara...';
   static String pendingOnPhone(Object? n) => 'Pendientes en el teléfono ($n)';
   static const pendingSavedLocally = 'Se guardaron localmente por si falla la conexión.';
   static const reasonsChatClosed =

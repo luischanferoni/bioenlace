@@ -111,11 +111,11 @@ class _EmergencyTriageScreenState extends State<EmergencyTriageScreen> {
 
   /// Alineado con GuardiaTriageVitalsValidator (PHP).
   String? _validateVitalsClient() {
-    final sysErr = _validateVital(_sysController.text, 'TA sistólica', 50, 250);
+    final sysErr = _validateVital(_sysController.text, AppTexts.vitalSystolic, 50, 250);
     if (sysErr != null) return sysErr;
     final diaErr = _validateVital(
       _diaController.text,
-      'TA diastólica',
+      AppTexts.vitalDiastolic,
       30,
       150,
     );

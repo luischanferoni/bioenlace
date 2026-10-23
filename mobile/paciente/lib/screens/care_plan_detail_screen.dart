@@ -171,7 +171,7 @@ class _CarePlanDetailScreenState extends State<CarePlanDetailScreen> {
           authToken: widget.authToken,
           userId: widget.userId,
           userName: widget.userName,
-          titulo: item['servicio']?.toString() ?? 'Consulta clínica por mensaje',
+          titulo: item['servicio']?.toString() ?? AppTexts.messageEncounterTitle,
         ),
       ),
     ).then((_) {
@@ -219,7 +219,7 @@ class _CarePlanDetailScreenState extends State<CarePlanDetailScreen> {
 
     return Scaffold(
       backgroundColor: tokens.paperBackground,
-      appBar: const BioAppBar(title: 'Tu tratamiento'),
+      appBar: const BioAppBar(title: AppTexts.yourTreatment),
       body: _loading && _plan == null
           ? const Center(child: CircularProgressIndicator())
           : _error != null && _plan == null

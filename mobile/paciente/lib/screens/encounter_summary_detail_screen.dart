@@ -75,7 +75,7 @@ class _EncounterSummaryDetailScreenState extends State<EncounterSummaryDetailScr
     final tokens = context.bio;
     return Scaffold(
       backgroundColor: tokens.paperBackground,
-      appBar: const BioAppBar(title: 'Resumen de atención'),
+      appBar: const BioAppBar(title: AppTexts.encounterSummaryTitle),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
@@ -134,7 +134,7 @@ class _EncounterSummaryDetailScreenState extends State<EncounterSummaryDetailScr
             return _linkTile(
               context,
               'Receta electrónica #${p['id']}',
-              'Ver detalle y PDF',
+              AppTexts.viewDetailAndPdf,
               () => _openUiJson(route),
             );
           }),

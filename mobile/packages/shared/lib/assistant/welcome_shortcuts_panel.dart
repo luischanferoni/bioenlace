@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../text/shared_texts.dart';
 import '../theme/tokens/tokens.dart';
 import 'asistente_service.dart';
 import 'atajo_shortcut_cards.dart';
@@ -37,7 +38,7 @@ class WelcomeShortcutsPanel extends StatelessWidget {
             BioSpacing.sm,
           ),
           child: Text(
-            'Elegí un atajo para comenzar o escribí tu consulta abajo.',
+            SharedTexts.welcomeShortcutsHint,
             style: BioTypography.h3.copyWith(
               color: tokens.textMuted,
               fontSize: 16,

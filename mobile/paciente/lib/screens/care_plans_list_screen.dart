@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
+import '../utils/app_texts.dart';
+
 import '../widgets/encounter_async_request_card.dart';
 import 'care_plan_detail_screen.dart';
 
@@ -61,7 +63,7 @@ class CarePlansListScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: tokens.paperBackground,
-      appBar: const BioAppBar(title: 'Tus tratamientos'),
+      appBar: const BioAppBar(title: AppTexts.yourTreatments),
       body: ListView.separated(
         padding: const EdgeInsets.symmetric(
           horizontal: BioSpacing.lg,

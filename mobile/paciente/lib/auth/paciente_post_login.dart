@@ -110,9 +110,7 @@ Future<bool> requirePacienteBiometricEnrollment(
           backgroundColor: tokens.paperBackground,
           title: Text(AppTexts.biometricRequired, style: BioTypography.h2),
           content: Text(
-            'Para usar BioEnlace Paciente necesitás tener huella o Face ID '
-            'configurados en este dispositivo (Ajustes del sistema) y '
-            'volver a intentar.',
+            AppTexts.biometricRequiredBody,
             style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
           ),
           actions: [

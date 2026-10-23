@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
 import '../services/chat_service.dart';
+import '../utils/app_texts.dart';
 import '../services/notificaciones_service.dart';
 import '../services/push_notification_service.dart';
 import '../utils/turno_resolucion_utils.dart';
@@ -151,7 +152,7 @@ class _MainScreenState extends State<MainScreen> {
           authToken: widget.authToken,
           userId: widget.chatService.currentUserId,
           userName: widget.chatService.currentUserName,
-          titulo: 'Consulta clínica por mensaje',
+          titulo: AppTexts.messageEncounterTitle,
         ),
       ),
     );

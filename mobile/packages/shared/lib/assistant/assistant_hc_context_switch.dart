@@ -82,7 +82,7 @@ class _AssistantHcContextSwitchState extends State<AssistantHcContextSwitch> {
               : const Icon(Icons.health_and_safety_outlined),
           title: const Text(SharedTexts.hcSummaryInAssistantTitle),
           subtitle: const Text(
-            'Si está activo, el chat puede usar un extracto de tus alergias, condiciones y medicación. No cambia lo que ve el médico en la consulta.',
+            SharedTexts.hcContextSwitchHint,
           ),
           value: _enabled,
           onChanged: _loading ? null : _onChanged,

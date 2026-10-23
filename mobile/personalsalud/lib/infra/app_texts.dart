@@ -70,6 +70,17 @@ class AppTexts {
   static String assistantGreeting(Object? name) => 'Hola, $name';
   static const assistantHowCanIHelp = '¿En qué puedo ayudarte?';
   static const messageEncounterTitle = 'Consulta clínica por mensaje';
+  static const unnamedPerson = 'Sin nombre';
+  static const unnamedPatient = 'Sin paciente';
+  static const activationCodeHint =
+      'Ingresá el código que te entregó administración de tu centro '
+      'y elegí tu contraseña.';
+  static const biometricRequiredBody =
+      'Este dispositivo debe tener huella digital o Face ID configurado '
+      'para usar Personal de Salud.';
+  static const wizardTitle = 'Configuración inicial';
+  static const vitalSystolic = 'TA sistólica';
+  static const vitalDiastolic = 'TA diastólica';
   static String areaUpdated(Object? label) =>
       'Área actualizada: $label. Andá a Inicio para ver el cambio.';
   static String configUser(Object? name) => 'Usuario: $name';

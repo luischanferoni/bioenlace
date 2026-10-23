@@ -82,7 +82,7 @@ class _PacienteProvinciaContextScreenState
     final tokens = context.bio;
     return Scaffold(
       backgroundColor: tokens.paperBackground,
-      appBar: const BioAppBar(title: 'Provincia de contexto'),
+      appBar: const BioAppBar(title: AppTexts.settingsContextProvince),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(

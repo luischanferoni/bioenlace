@@ -91,8 +91,7 @@ class _PersonalsaludStaffActivationScreenState
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Ingresá el código que te entregó administración de tu centro '
-                'y elegí tu contraseña.',
+                AppTexts.activationCodeHint,
                 style: BioTypography.body.copyWith(color: tokens.textMuted),
               ),
               BioSpacing.gapH(BioSpacing.lg),

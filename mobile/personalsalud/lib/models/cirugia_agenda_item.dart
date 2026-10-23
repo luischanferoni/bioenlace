@@ -1,6 +1,8 @@
 // lib/models/cirugia_agenda_item.dart
 import 'package:flutter/foundation.dart';
 
+import '../infra/app_texts.dart';
+
 @immutable
 class CirugiaAgendaItem {
   final int id;
@@ -57,7 +59,7 @@ class CirugiaAgendaItem {
       idPersona: asInt(value('id_persona', json['id_persona'])),
       nombrePaciente:
           value('nombre_paciente', paciente['nombre_completo'])?.toString() ??
-          'Sin paciente',
+          AppTexts.unnamedPatient,
       documento: value('documento', paciente['documento'])?.toString(),
       salaNombre: value('sala_nombre', json['sala_nombre'])?.toString() ?? '',
       fechaHoraInicio: value(

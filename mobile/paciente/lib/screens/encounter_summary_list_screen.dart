@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
+import '../utils/app_texts.dart';
+
 import 'encounter_summary_detail_screen.dart';
 
 /// Listado de atenciones publicadas del paciente.
@@ -61,7 +63,7 @@ class _EncounterSummaryListScreenState extends State<EncounterSummaryListScreen>
     final tokens = context.bio;
     return Scaffold(
       backgroundColor: tokens.paperBackground,
-      appBar: const BioAppBar(title: 'Mis atenciones'),
+      appBar: const BioAppBar(title: AppTexts.myEncounters),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
@@ -76,7 +78,7 @@ class _EncounterSummaryListScreenState extends State<EncounterSummaryListScreen>
                       child: Padding(
                         padding: BioSpacing.pageAll,
                         child: Text(
-                          'Todavía no hay atenciones publicadas.',
+                          AppTexts.noEncountersPublished,
                           style: BioTypography.body.copyWith(color: tokens.textMuted),
                           textAlign: TextAlign.center,
                         ),

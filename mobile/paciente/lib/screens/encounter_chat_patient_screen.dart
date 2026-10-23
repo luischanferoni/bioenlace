@@ -94,9 +94,7 @@ class _EncounterChatPatientScreenState
       builder:
           (ctx) => AlertDialog(
             title: const Text(AppTexts.withdrawRequestTitle),
-            content: const Text(
-              '¿Querés retirar esta solicitud? Solo podés hacerlo mientras el equipo aún no la atiende.',
-            ),
+            content: const Text(AppTexts.withdrawRequestBody),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),

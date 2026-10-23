@@ -139,7 +139,7 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
     final tokens = context.bio;
     return Scaffold(
       backgroundColor: tokens.paperBackground,
-      appBar: const BioAppBar(title: 'Mis turnos'),
+      appBar: const BioAppBar(title: AppTexts.myAppointments),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null && _pendientes.isEmpty && _pasados.isEmpty
@@ -395,7 +395,7 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
                   authToken: widget.authToken,
                   userId: widget.userId,
                   userName: widget.userName ?? 'Paciente',
-                  titulo: 'Chat con ${t['profesional'] ?? 'médico'}',
+                  titulo: AppTexts.chatWith(t['profesional'] ?? AppTexts.defaultDoctorName),
                 ),
               ),
             );

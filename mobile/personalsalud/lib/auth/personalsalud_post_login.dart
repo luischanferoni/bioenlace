@@ -61,8 +61,7 @@ Future<bool> requirePersonalsaludBiometricEnrollment(
             backgroundColor: tokens.paperBackground,
             title: Text(AppTexts.biometricRequired, style: BioTypography.h2),
             content: Text(
-              'Este dispositivo debe tener huella digital o Face ID configurado '
-              'para usar Personal de Salud.',
+              AppTexts.biometricRequiredBody,
               style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
             ),
             actions: [

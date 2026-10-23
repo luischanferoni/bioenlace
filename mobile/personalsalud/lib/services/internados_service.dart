@@ -1,6 +1,8 @@
 // lib/services/internados_service.dart
 import 'package:shared/shared.dart';
 
+import '../infra/app_texts.dart';
+
 class InternadoItem {
   final int id;
   final int idPersona;
@@ -45,7 +47,7 @@ class InternadoItem {
       idPersona: asInt(json['id_persona']),
       nombreCompleto: (json['nombre_completo'] as String?) ??
           (json['nombre'] as String?) ??
-          'Sin nombre',
+          AppTexts.unnamedPerson,
       documento: (json['documento'] as String?)?.trim().isEmpty == true
           ? null
           : (json['documento'] as String?)?.trim(),

@@ -63,6 +63,8 @@ $counters = [
         'roots' => $dartRoots,
         'ext' => ['dart'],
         'regex' => '/(^\s*(const\s+)?[\'"]\p{Lu}[^\'"$]*\s[^\'"$]*[\'"],?\s*$|\b(message|mensaje|titulo|title|error)\s*:\s*[\'"]\p{Lu}[^\'"$]*\s)/u',
+        // Mensajes técnicos (excepciones, logs, avisos de desarrollo) que el usuario no ve.
+        'skip_if_prev' => '/(Exception\(|debugPrint\(|\bprint\(|\bthrow\b|Sin retrocompatibilidad|Firebase no listo)/u',
     ],
     'mobile_consulta_in_code' => [
         'desc' => '«consulta» en identificadores Dart (fuera de strings y comentarios)',
@@ -174,9 +176,12 @@ foreach ($counters as $id => $def) {
             }
             $strip = $def['strip'] ?? null;
             $n = 0;
+            $prev = '';
             foreach (file($path, FILE_IGNORE_NEW_LINES) ?: [] as $line) {
                 $subject = $strip ? $strip($line) : $line;
-                if (preg_match($def['regex'], $subject)) {
+                $technical = isset($def['skip_if_prev']) && preg_match($def['skip_if_prev'], $prev . ' ' . $line);
+                $prev = $line;
+                if (!$technical && preg_match($def['regex'], $subject)) {
                     $n++;
                 }
             }

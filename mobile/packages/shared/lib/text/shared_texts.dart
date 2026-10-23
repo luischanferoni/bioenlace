@@ -2,6 +2,9 @@
 class SharedTexts {
   SharedTexts._();
 
+  static const biometricUnavailableWeb =
+      'La autenticación biométrica no está disponible en el navegador';
+
   static const diditUnsupportedPlatform =
       'La verificación de identidad (Didit) solo funciona en la app móvil '
       'Android o iOS. Usá un dispositivo o emulador; no está disponible en '
@@ -10,6 +13,9 @@ class SharedTexts {
       'No se pudo iniciar Didit en este dispositivo. Detené la app, ejecutá '
       '«flutter clean», volvé a compilar e instalá de nuevo (no uses hot reload '
       'ni Chrome).';
+  static const hcContextSwitchHint =
+      'Si está activo, el chat puede usar un extracto de tus alergias, condiciones y medicación. No cambia lo que ve el médico en la consulta.';
+  static const welcomeShortcutsHint = 'Elegí un atajo para comenzar o escribí tu consulta abajo.';
   static const journeyNoPendingActions = 'No hay acciones pendientes para este turno.';
   static String journeyAppointmentOf(Object? v) => 'Turno del $v';
   static const journeyPrepareTitle = 'Preparar tu consulta';

@@ -846,7 +846,7 @@ class HomeScreenState extends State<HomeScreen> {
           authToken: widget.authToken,
           userId: widget.userId,
           userName: widget.userName,
-          titulo: item['servicio']?.toString() ?? 'Consulta clínica por mensaje',
+          titulo: item['servicio']?.toString() ?? AppTexts.messageEncounterTitle,
         ),
       ),
     );

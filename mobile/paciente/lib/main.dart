@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 
 import 'firebase/firebase_bootstrap.dart';
+import 'utils/app_texts.dart';
 import 'auth/paciente_authenticated_shell.dart';
 import 'auth/paciente_post_login.dart';
 import 'auth/paciente_session_prefs.dart';
@@ -86,7 +87,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'BioEnlace Paciente',
+      title: AppTexts.appTitle,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       navigatorKey: navigatorKey,

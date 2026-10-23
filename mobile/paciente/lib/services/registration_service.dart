@@ -5,11 +5,11 @@ import 'package:flutter/services.dart';
 import 'package:shared/platform/didit_platform.dart';
 import 'package:shared/shared.dart';
 
+import '../utils/app_texts.dart';
+
 const _diditVerificationTimeout = Duration(minutes: 10);
 
-const String _diditNotConfiguredMessage =
-    'El registro con verificación de identidad no está configurado en el servidor. '
-    'Contactá al soporte de Bioenlace.';
+const String _diditNotConfiguredMessage = AppTexts.diditNotConfigured;
 
 class RegistrationService {
   /// Inicia el flujo de verificación de identidad con Didit y, si es aprobado,
@@ -80,8 +80,7 @@ class RegistrationService {
     } on TimeoutException {
       return {
         'success': false,
-        'message':
-            'La verificación de identidad tardó demasiado. Intentá de nuevo.',
+        'message': AppTexts.diditTimeout,
       };
     } catch (e) {
       return {

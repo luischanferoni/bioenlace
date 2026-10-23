@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
 
+import '../text/shared_texts.dart';
+
 class BiometricAuth {
   final LocalAuthentication _auth = LocalAuthentication();
 
@@ -56,7 +58,7 @@ class BiometricAuth {
       return {
         'success': false,
         'error':
-            'La autenticación biométrica no está disponible en el navegador',
+            SharedTexts.biometricUnavailableWeb,
       };
     }
     try {

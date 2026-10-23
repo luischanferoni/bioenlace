@@ -303,7 +303,7 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
     final tokens = context.bio;
     return Scaffold(
       backgroundColor: tokens.paperBackground,
-      appBar: const BioAppBar(title: 'Configuración inicial'),
+      appBar: const BioAppBar(title: AppTexts.wizardTitle),
       body: Column(
         children: [
           Container(

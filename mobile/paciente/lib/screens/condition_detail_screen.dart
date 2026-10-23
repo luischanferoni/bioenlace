@@ -116,7 +116,7 @@ class _ConditionDetailScreenState extends State<ConditionDetailScreen> {
           authToken: widget.authToken,
           userId: widget.userId,
           userName: widget.userName,
-          titulo: item['servicio']?.toString() ?? 'Consulta clínica por mensaje',
+          titulo: item['servicio']?.toString() ?? AppTexts.messageEncounterTitle,
         ),
       ),
     ).then((_) {
@@ -283,7 +283,7 @@ class _ConditionDetailScreenState extends State<ConditionDetailScreen> {
           Text(AppTexts.followUpControl, style: BioTypography.title),
           BioSpacing.gapH(BioSpacing.sm),
           Text(
-            'Elegí qué necesitás sobre esta condición.',
+            AppTexts.conditionChooseNeed,
             style: BioTypography.bodySm.copyWith(color: context.bio.textMuted),
           ),
           BioSpacing.gapH(BioSpacing.md),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
+import '../utils/app_texts.dart';
+
 import 'condition_detail_screen.dart';
 
 /// Listado de condiciones activas del paciente.
@@ -56,7 +58,7 @@ class ConditionsListScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: tokens.paperBackground,
-      appBar: const BioAppBar(title: 'Tus condiciones'),
+      appBar: const BioAppBar(title: AppTexts.yourConditions),
       body: ListView.separated(
         padding: const EdgeInsets.symmetric(
           horizontal: BioSpacing.lg,

@@ -5,7 +5,8 @@ import 'package:record/record.dart';
 /// Grabación de audio de la captura: solo el acceso al micrófono y al archivo,
 /// sin estado de pantalla ni mensajes.
 class CaptureAudioRecorder {
-  final AudioRecorder _recorder = AudioRecorder();
+  // Perezoso: crearlo toca la plataforma y no debe pasar al construir el controlador.
+  late final AudioRecorder _recorder = AudioRecorder();
 
   Future<bool> hasPermission() => _recorder.hasPermission();
 

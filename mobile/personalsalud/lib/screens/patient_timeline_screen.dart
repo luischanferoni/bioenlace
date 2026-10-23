@@ -18,7 +18,7 @@ import 'timeline/blocks/episodio_banner.dart';
 import 'timeline/blocks/episodio_feed_section.dart';
 import 'timeline/blocks/signos_vitales_episodio_card.dart';
 import 'timeline/capture/capture_actions_bar.dart';
-import 'timeline/capture/capture_audio_recorder.dart';
+import 'timeline/capture/capture_dictation_controller.dart';
 import 'timeline/capture/capture_input_bar.dart';
 import 'timeline/timeline_history_controller.dart';
 import 'timeline/capture/capture_save_result_dialog.dart';
@@ -63,17 +63,23 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   final HistoriaClinicaService _historiaClinicaService =
       HistoriaClinicaService();
   final EncounterCaptureApi _encounterApi = EncounterCaptureApi();
-  final DeviceSpeechDictation _dictation = DeviceSpeechDictation();
-  final CaptureAudioRecorder _audioRecorder = CaptureAudioRecorder();
+  late final CaptureDictationController _voice;
   late final TimelineHistoryController _history;
   HistoriaClinicaResponse? get _historiaClinicaData => _history.data;
   bool get _isLoading => _history.isLoading;
   String get _errorMessage => _history.errorMessage;
   bool _isAnalyzing = false;
   bool _isSaving = false;
-  bool _dictating = false;
-  String? _pendingAudioPath;
-  DeviceDictationResult? _lastDictation;
+  String? get _pendingAudioPath => _voice.pendingAudioPath;
+  set _pendingAudioPath(String? v) => _voice.pendingAudioPath = v;
+  DeviceDictationResult? get _lastDictation => _voice.lastDictation;
+  set _lastDictation(DeviceDictationResult? v) => _voice.lastDictation = v;
+  bool get _dictating => _voice.dictating;
+  bool get _audioOnlyRecording => _voice.audioOnlyRecording;
+  SttClientConfig get _sttConfig => _voice.config;
+  bool get _sttConfigLoaded => _voice.configLoaded;
+  String get _sttStatus => _voice.status;
+  set _sttStatus(String v) => _voice.status = v;
   Map<String, dynamic>? _lastAnalysis;
   EncounterCaptureAnalysis? _captureReview;
   String? _draftText;
@@ -85,10 +91,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   /// open problem key `condition:123` / `care_plan:456` → value.
   Map<String, dynamic> _openProblemResolutions = {};
   final Map<String, TextEditingController> _issueCustomControllers = {};
-  String _sttStatus = '';
-  SttClientConfig _sttConfig = SttClientConfig.defaults;
-  bool _sttConfigLoaded = false;
-  bool _audioOnlyRecording = false;
   bool _editingCaptureDraft = false;
   EncounterCaptureAnalysis? _editBackupReview;
   Map<String, dynamic>? _editBackupLastAnalysis;
@@ -141,6 +143,19 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       _historiaClinicaService.authToken = widget.authToken;
       _encounterApi.authToken = widget.authToken;
     }
+    _voice = CaptureDictationController(CaptureDictationHost(
+      getText: () => _chatController.text,
+      setText: (v) => _chatController.text = v,
+      notify: _snack,
+      showPermissionDialog: _showMicrophonePermissionDialog,
+      saveDraft: (texto) => _persistLocalDraft(
+        texto: texto,
+        status: PendingEncounterCaptureStatus.draft,
+        clearError: true,
+      ),
+      isBusy: () => _captureBusy,
+      hasCaptureContext: () => _tieneContextoCaptura,
+    ))..addListener(_onHistoryChanged);
     _loadSttConfig();
     _history = TimelineHistoryController(
       service: _historiaClinicaService,
@@ -176,12 +191,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   Future<void> _loadSttConfig() async {
     try {
       final cfg = await _encounterApi.fetchSttConfig();
-      if (!mounted) return;
-      setState(() {
-        _sttConfig = cfg;
-        _sttConfigLoaded = true;
-        _sttStatus = '';
-      });
+      _voice.applyConfig(cfg);
       debugPrint(
         '[stt-config] loaded device=${cfg.deviceEnabled} '
         'source=${cfg.deviceEnabledSource} server=${cfg.serverEnabled} '
@@ -190,19 +200,14 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       );
     } catch (e, st) {
       debugPrint('[stt-config] load failed: $e\n$st');
-      if (!mounted) return;
-      setState(() {
-        _sttConfig = SttClientConfig.unavailable;
-        _sttConfigLoaded = true;
-        _sttStatus =
-            'No se pudo cargar la configuración de voz. Dictado deshabilitado.';
-      });
+      _voice.markConfigUnavailable();
     }
   }
 
   @override
   void dispose() {
     _history.dispose();
+    _voice.dispose();
     _chatController.dispose();
     _chatFocusNode.dispose();
     for (final c in _issueCustomControllers.values) {
@@ -414,7 +419,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                     sttStatus: _sttStatus,
                     dictating: _dictating || _audioOnlyRecording,
                     onCancelEdit: _cancelEditCaptureDraft,
-                    onVoice: _tieneContextoCaptura && _sttConfigLoaded && (_sttConfig.deviceEnabled || _sttConfig.serverEnabled) ? _toggleDictation : null,
+                    onVoice: _tieneContextoCaptura && _sttConfigLoaded && (_sttConfig.deviceEnabled || _sttConfig.serverEnabled) ? _voice.toggle : null,
                   ),
               ],
             ),
@@ -503,119 +508,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       widget.parentType!.isNotEmpty &&
       widget.parentId != null;
 
-  Future<void> _toggleDictation() async {
-    if (_captureBusy) return;
-    if (!_sttConfigLoaded) {
-      _snack(
-        'La configuración de voz todavía se está cargando.',
-        UiIntent.warning,
-      );
-      return;
-    }
-    if (_dictating || _audioOnlyRecording) {
-      if (_audioOnlyRecording) {
-        await _stopAudioOnlyRecording();
-      } else {
-        final result = await _dictation.stop();
-        final audioStopped = await _stopAudioOnlyRecording();
-        if (!mounted) return;
-        setState(() {
-          _dictating = false;
-          _lastDictation = result;
-          if (result.text.trim().isNotEmpty) {
-            _chatController.text = result.text.trim();
-          }
-          _sttStatus = _chatController.text.trim().isEmpty
-              ? 'Sin voz detectada'
-              : 'Listo';
-        });
-        if (!audioStopped) return;
-        if (_tieneContextoCaptura &&
-            (_chatController.text.trim().isNotEmpty ||
-                _pendingAudioPath != null)) {
-          await _persistLocalDraft(
-            texto: _chatController.text.trim().isEmpty
-                ? '(audio pendiente de transcribir)'
-                : _chatController.text.trim(),
-            status: PendingEncounterCaptureStatus.draft,
-            clearError: true,
-          );
-        }
-      }
-      return;
-    }
-    if (!_sttConfig.deviceEnabled && !_sttConfig.serverEnabled) {
-      _snack(AppTexts.dictationDisabled, UiIntent.warning);
-      return;
-    }
-    if (!_sttConfig.deviceEnabled) {
-      await _startAudioOnlyRecording();
-      return;
-    }
-    try {
-      final audioStarted = await _startAudioOnlyRecording(audioOnly: false);
-      if (!audioStarted) return;
-      await _dictation.start(
-        onPartial: (text, _) {
-          if (!mounted) return;
-          setState(() {
-            _chatController.text = text;
-            _sttStatus = 'Escuchando…';
-          });
-        },
-        listenMode: DeviceListenMode.dictation,
-        preferOnDevice: true,
-      );
-      if (!mounted) {
-        await _audioRecorder.stop();
-        return;
-      }
-      setState(() {
-        _dictating = true;
-        _sttStatus = 'Escuchando…';
-      });
-    } catch (e, st) {
-      await _stopAudioOnlyRecording();
-      debugPrint('[stt-device] start failed: $e\n$st');
-      _snack(AppTexts.dictationStartFailed(e), UiIntent.danger);
-    }
-  }
-
-  Future<bool> _startAudioOnlyRecording({bool audioOnly = true}) async {
-    try {
-      if (!await _audioRecorder.hasPermission()) {
-        if (kIsWeb) {
-          await _showMicrophonePermissionDialog(permissionRequestFailed: true);
-        } else {
-          _snack(
-            'Para grabar el audio, habilitá el permiso de micrófono en la app.',
-            UiIntent.danger,
-          );
-        }
-        return false;
-      }
-      final path = await _audioRecorder.start();
-      _pendingAudioPath = path;
-      if (!mounted) {
-        await _audioRecorder.stop();
-        return false;
-      }
-      setState(() {
-        _audioOnlyRecording = audioOnly;
-        _sttStatus = 'Grabando…';
-      });
-      return true;
-    } catch (e) {
-      if (kIsWeb) {
-        await _showMicrophonePermissionDialog();
-        return false;
-      }
-      final message = recordingStartErrorMessage(e);
-      _snack(message, UiIntent.danger);
-      return false;
-    }
-  }
-
   Future<void> _showMicrophonePermissionDialog({
     bool permissionRequestFailed = false,
   }) async {
@@ -625,10 +517,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       permissionRequestFailed: permissionRequestFailed,
       onRetry: () async {
         try {
-          final granted = await _audioRecorder.hasPermission();
+          final granted = await _voice.hasMicrophonePermission();
           if (!mounted) return;
           if (granted) {
-            await _startAudioOnlyRecording();
+            await _voice.startAudioOnly();
           } else {
             await _showMicrophonePermissionDialog(permissionRequestFailed: true);
           }
@@ -638,41 +530,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         }
       },
     );
-  }
-
-  Future<bool> _stopAudioOnlyRecording() async {
-    String? audioPath;
-    try {
-      audioPath = await _audioRecorder.stop();
-    } catch (e) {
-      _pendingAudioPath = null;
-      if (!mounted) return false;
-      setState(() {
-        _audioOnlyRecording = false;
-        _sttStatus = 'No se pudo capturar el audio.';
-      });
-      _snack(AppTexts.recordingFinishFailed(e), UiIntent.danger);
-      return false;
-    }
-    if (!mounted) return false;
-    if (audioPath == null || audioPath.isEmpty) {
-      _pendingAudioPath = null;
-      setState(() {
-        _audioOnlyRecording = false;
-        _sttStatus = 'No se capturó audio.';
-      });
-      _snack(
-        'No se capturó audio. Conectá un micrófono y volvé a intentar.',
-        UiIntent.warning,
-      );
-      return false;
-    }
-    _pendingAudioPath = audioPath;
-    setState(() {
-      _audioOnlyRecording = false;
-      _sttStatus = 'Audio listo';
-    });
-    return true;
   }
 
   Future<Map<String, dynamic>?> _operationalContextForCapture() async {
@@ -1061,7 +918,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     bool forcePipeline = false,
   }) async {
     if (_dictating || _audioOnlyRecording) {
-      await _toggleDictation();
+      await _voice.toggle();
       if (_dictating || _audioOnlyRecording) return;
     }
     final text = _chatController.text.trim();

@@ -63,6 +63,21 @@ class AppTexts {
   static const timelineDiagnoses = 'Diagnósticos a considerar';
   static const timelinePractices = 'Prácticas / estudios';
   static const timelinePreconsult = 'Asistencia pre-consulta (cohorte)';
+  static const voiceConfigLoading = 'La configuración de voz todavía se está cargando.';
+  static const voiceConfigLoadFailed =
+      'No se pudo cargar la configuración de voz. Dictado deshabilitado.';
+  static const voiceListening = 'Escuchando…';
+  static const voiceRecording = 'Grabando…';
+  static const voiceNoSpeech = 'Sin voz detectada';
+  static const voiceReady = 'Listo';
+  static const voiceAudioReady = 'Audio listo';
+  static const voiceAudioFailed = 'No se pudo capturar el audio.';
+  static const voiceAudioNone = 'No se capturó audio.';
+  static const voiceAudioNoneHint =
+      'No se capturó audio. Conectá un micrófono y volvé a intentar.';
+  static const voiceAudioPendingText = '(audio pendiente de transcribir)';
+  static const microphonePermissionNeeded =
+      'Para grabar el audio, habilitá el permiso de micrófono en la app.';
   static const dictationDisabled = 'Dictado por voz deshabilitado.';
   static const micDisabledTitle = 'Micrófono no habilitado';
   static const close = 'Cerrar';

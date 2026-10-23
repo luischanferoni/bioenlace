@@ -409,7 +409,7 @@ void main() {
 
     expect(documentation.secciones, hasLength(1));
     expect(documentation.secciones.single.key, 'diagnoses');
-    expect(documentation.secciones.single.titulo, 'Diagnósticos');
+    expect(documentation.secciones.single.title, 'Diagnósticos');
     expect(documentation.secciones.single.fields.single.value, 'Hipertensión');
     expect(documentation.secciones.single.fields.single.format, 'text');
     expect(documentation.secciones.single.items, isEmpty);
@@ -427,7 +427,7 @@ void main() {
       ],
     });
 
-    expect(documentation.secciones.single.titulo, 'Evolución');
+    expect(documentation.secciones.single.title, 'Evolución');
     expect(documentation.secciones.single.items, ['Control clínico']);
     expect(documentation.secciones.single.fields, isEmpty);
   });

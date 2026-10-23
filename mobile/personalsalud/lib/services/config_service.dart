@@ -1,7 +1,5 @@
 // lib/services/config_service.dart
-import 'dart:convert';
 import 'dart:developer' as developer;
-import 'package:http/http.dart' as http;
 import 'package:shared/shared.dart';
 
 void _logConfig(String message, {Object? error, StackTrace? stackTrace}) {
@@ -63,17 +61,15 @@ class ConfigService {
 
   ConfigService({this.authToken});
 
-  Map<String, String> get _headers => AppConfig.jsonHeaders(
-    bearerToken: authToken,
+  ApiClient get _api => ApiClient(
+    authToken: authToken,
     appClient: 'personalsalud-flutter',
+    traceLabel: 'sesion-operativa',
   );
 
   /// Catálogo público de encounter classes (pantallas que no pasan por el wizard).
   Future<List<EncounterClass>> getEncounterClasses() async {
-    final data = await ApiClient(
-      authToken: authToken,
-      appClient: 'personalsalud-flutter',
-    ).getData('/catalogos/encounter-classes');
+    final data = await _api.getData('/catalogos/encounter-classes');
     final raw = data['encounter_classes'] as List<dynamic>? ?? [];
     return raw
         .map((c) => EncounterClass.fromJson(c as Map<String, dynamic>))
@@ -93,29 +89,9 @@ class ConfigService {
       body['user_id'] = userId;
     }
 
-    final uri = Uri.parse('${AppConfig.apiUrl}/sesion-operativa/establecer');
-    _logConfig('Request URL: $uri (wizard options)');
-    _logConfig('Header keys: ${_headers.keys.join(", ")}');
-
-    final response = await http.post(
-      uri,
-      headers: _headers,
-      body: json.encode(body),
-    );
-
-    _logConfig('Response status: ${response.statusCode}');
-
-    final bodyTrimmed = response.body.trim();
-    if (bodyTrimmed.startsWith('<!DOCTYPE') ||
-        bodyTrimmed.startsWith('<html')) {
-      throw Exception(
-        'La API devolvió HTML en lugar de JSON. Verifique URL y autenticación: $uri',
-      );
-    }
-
-    final payload = unwrapApiContract(
-      json.decode(response.body),
-      response.statusCode,
+    final payload = await _api.postData(
+      '/sesion-operativa/establecer',
+      body: body,
     );
     final rawEfectores = payload['efectores'] as List<dynamic>? ?? [];
     final efectores = <Efector>[];
@@ -175,24 +151,9 @@ class ConfigService {
         body['user_id'] = userId;
       }
 
-      _logConfig(
-        'Request URL: ${AppConfig.apiUrl}/sesion-operativa/establecer',
-      );
-      _logConfig('Request body: $body');
-      _logConfig('Header keys: ${_headers.keys.join(", ")}');
-
-      final response = await http.post(
-        Uri.parse('${AppConfig.apiUrl}/sesion-operativa/establecer'),
-        headers: _headers,
-        body: json.encode(body),
-      );
-
-      _logConfig('Response status: ${response.statusCode}');
-      _logConfig('Response body: ${response.body}');
-
-      final data = unwrapApiContract(
-        json.decode(response.body),
-        response.statusCode,
+      final data = await _api.postData(
+        '/sesion-operativa/establecer',
+        body: body,
       );
       _logConfig('Parsed data: $data');
 

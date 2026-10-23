@@ -98,7 +98,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
               Icon(Icons.person_outline, color: primary, size: 20),
               BioSpacing.gapW(BioSpacing.sm),
               Expanded(
-                child: Text('Usuario: ${widget.userName}', style: BioTypography.body),
+                child: Text(AppTexts.userLabel(widget.userName), style: BioTypography.body),
               ),
             ],
           ),

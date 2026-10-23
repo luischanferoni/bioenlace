@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared/shared.dart';
+import '../utils/app_texts.dart';
 
 class CameraOverlay extends StatefulWidget {
   final bool isSelfie;
@@ -95,7 +96,7 @@ class _CameraOverlayState extends State<CameraOverlay> {
     if (!_hasValidated) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Primero valida la posición presionando el botón de enfoque'),
+          content: Text(AppTexts.cameraFocusFirst),
           backgroundColor: IntentPalette.of(UiIntent.warning).base,
         ),
       );
@@ -124,7 +125,7 @@ class _CameraOverlayState extends State<CameraOverlay> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error al capturar la imagen'),
+          content: Text(AppTexts.imageCaptureFailed),
           backgroundColor: IntentPalette.of(UiIntent.danger).base,
         ),
       );

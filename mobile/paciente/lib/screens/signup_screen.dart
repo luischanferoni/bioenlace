@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
+import '../utils/app_texts.dart';
 
 import '../auth/paciente_post_login.dart';
 import '../services/registration_service.dart';
@@ -86,7 +87,7 @@ class _SignupScreenState extends State<SignupScreen> {
     } catch (e) {
       debugPrint('SignupScreen: error $e');
       if (!mounted) return;
-      _snack('Error inesperado: ${e.toString()}', UiIntent.danger);
+      _snack(AppTexts.unexpectedError(e), UiIntent.danger);
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }

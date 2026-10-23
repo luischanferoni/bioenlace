@@ -10,6 +10,16 @@ class AppTexts {
   static const ordersTitle = 'Pedidos e indicaciones';
   static const audioSavedUploading = 'Audio guardado en el teléfono. Subiendo…';
   static const pendingMessageDeleted = 'Mensaje pendiente eliminado';
+  static String screenNotImplemented(Object? id) => 'Pantalla no implementada: $id';
+  static const biometricRequired = 'Biometría requerida';
+  static const cameraFocusFirst = 'Primero valida la posición presionando el botón de enfoque';
+  static const imageCaptureFailed = 'Error al capturar la imagen';
+  static String appointmentMovedUp(String detail) => 'Turno adelantado.$detail';
+  static String userLabel(String name) => 'Usuario: $name';
+  static const loadEncounterReasons = 'Cargar motivos de la consulta';
+  static String professionalLabel(String name) => 'Profesional: $name';
+  static const noProvincesAvailable = 'No hay provincias disponibles.';
+  static String unexpectedError(Object e) => 'Error inesperado: $e';
   static const withdrawRequestTitle = 'Retirar solicitud';
   static const withdrawRequestBody = '¿Querés retirar esta solicitud? Solo podés hacerlo mientras el equipo aún no la atiende.';
   static String protocolLabel(String protocol) => 'Protocolo: $protocol';

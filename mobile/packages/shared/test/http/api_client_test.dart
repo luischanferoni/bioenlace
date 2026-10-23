@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -27,6 +28,22 @@ void main() {
     expect(data['message'], 'ok');
     expect(captured.url.queryParameters['a'], '1');
     expect(captured.headers['X-App-Client'], 'paciente-flutter');
+  });
+
+  test('traceLabel registra la respuesta y no altera el resultado', () async {
+    final logs = <String>[];
+    final previous = debugPrint;
+    debugPrint = (String? message, {int? wrapWidth}) {
+      if (message != null) logs.add(message);
+    };
+    addTearDown(() => debugPrint = previous);
+    final api = ApiClient(
+      traceLabel: 'home/panel',
+      client: MockClient((_) async => json200({'data': {'id': 3}})),
+    );
+    final data = await api.getData('/home/panel');
+    expect(data['id'], 3);
+    expect(logs.any((l) => l.contains('[HTTP home/panel] 200')), isTrue);
   });
 
   test('traduce el error del contrato con code, intent y retryable', () async {

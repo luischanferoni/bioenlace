@@ -106,7 +106,7 @@ class _EncounterSummaryDetailScreenState extends State<EncounterSummaryDetailScr
           Text(efector, style: BioTypography.title.copyWith(fontWeight: FontWeight.w700)),
         if (profesional != null && profesional.isNotEmpty) ...[
           BioSpacing.gapH(BioSpacing.xs),
-          Text('Profesional: $profesional', style: BioTypography.body),
+          Text(AppTexts.professionalLabel(profesional), style: BioTypography.body),
         ],
         if (fecha != null && fecha.isNotEmpty) ...[
           BioSpacing.gapH(BioSpacing.xs),

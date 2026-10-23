@@ -148,7 +148,7 @@ class _AlertasScreenState extends State<AlertasScreen> {
           ? ' Nuevo horario: $fecha $hora.'
           : '';
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Turno adelantado.$detalle')),
+        SnackBar(content: Text(AppTexts.appointmentMovedUp(detalle))),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

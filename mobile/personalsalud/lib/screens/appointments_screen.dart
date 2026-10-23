@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared/shared.dart';
+import '../infra/app_texts.dart';
 
 import '../models/turno.dart';
 import '../services/turnos_service.dart';
@@ -475,7 +476,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     );
     if (saved == true && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Consulta guardada')),
+        const SnackBar(content: Text(AppTexts.encounterSaved)),
       );
       await _cargarTurnos();
     }

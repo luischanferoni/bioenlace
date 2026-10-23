@@ -1508,7 +1508,7 @@ class _HomeScreenState extends State<HomeScreen> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('No se pudo iniciar atención: $e')),
+            SnackBar(content: Text(AppTexts.startAttendanceFailed(e))),
           );
         }
         return;

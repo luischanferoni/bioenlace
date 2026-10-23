@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import '../utils/app_texts.dart';
 
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -3503,7 +3504,7 @@ class ChatScreenState extends State<ChatScreen> {
                             padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 0.0),
                             child: ActionChip(
                               avatar: Icon(Icons.edit_note, size: 18, color: cs.primary),
-                              label: const Text('Cargar motivos de la consulta'),
+                              label: const Text(AppTexts.loadEncounterReasons),
                               onPressed: () {
                                 Navigator.push(
                                   context,

@@ -1,8 +1,4 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:shared/config/api_config.dart';
-import 'package:shared/http/api_contract.dart';
-import 'package:shared/http/bioenlace_http_trace.dart';
+import 'package:shared/http/api_client.dart';
 
 /// Sección del panel de inicio (`GET /api/v1/home/panel`).
 class HomePanelSection {
@@ -78,14 +74,6 @@ class HomePanelApi {
 
   HomePanelApi({this.authToken, this.userId, this.appClient});
 
-  Map<String, String> get _headers {
-    final headers = AppConfig.jsonHeaders(
-      bearerToken: authToken,
-      appClient: appClient ?? 'flutter',
-    );
-    return headers;
-  }
-
   Future<HomePanelResponse> getPanel({
     String? fecha,
     String? sections,
@@ -106,17 +94,11 @@ class HomePanelApi {
       query['user_id'] = userId!;
     }
 
-    final uri = Uri.parse('${AppConfig.apiUrl}/home/panel')
-        .replace(queryParameters: query.isNotEmpty ? query : null);
-
-    final response = await http
-        .get(uri, headers: _headers)
-        .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-    BioenlaceHttpTrace.logResponse('home/panel', response);
-    final panel = unwrapApiContract(
-      json.decode(response.body),
-      response.statusCode,
-    );
+    final panel = await ApiClient(
+      authToken: authToken,
+      appClient: appClient ?? 'flutter',
+      traceLabel: 'home/panel',
+    ).getData('/home/panel', query: query);
 
     return HomePanelResponse.fromJson(
       panel,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
+import '../infra/app_texts.dart';
 
 /// Activación de cuenta con código presencial (administración del efector).
 class PersonalsaludStaffActivationScreen extends StatefulWidget {
@@ -46,11 +47,11 @@ class _PersonalsaludStaffActivationScreenState
     final repeat = _repeatCtrl.text;
 
     if (username.isEmpty || code.isEmpty || password.isEmpty) {
-      _snack('Completá usuario, código y contraseña.', UiIntent.warning);
+      _snack(AppTexts.completeActivationFields, UiIntent.warning);
       return;
     }
     if (password != repeat) {
-      _snack('Las contraseñas no coinciden.', UiIntent.warning);
+      _snack(AppTexts.passwordsMismatch, UiIntent.warning);
       return;
     }
 
@@ -62,7 +63,7 @@ class _PersonalsaludStaffActivationScreenState
         password: password,
       );
       if (!mounted) return;
-      _snack('Cuenta activada. Ya podés ingresar.', UiIntent.success);
+      _snack(AppTexts.accountActivated, UiIntent.success);
       Navigator.of(context).pop();
     } catch (e) {
       _snack(
@@ -81,7 +82,7 @@ class _PersonalsaludStaffActivationScreenState
     return Scaffold(
       backgroundColor: tokens.paperBackground,
       appBar: AppBar(
-        title: const Text('Activar cuenta'),
+        title: const Text(AppTexts.activateAccount),
       ),
       body: SafeArea(
         child: SingleChildScrollView(

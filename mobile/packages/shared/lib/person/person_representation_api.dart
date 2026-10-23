@@ -1,12 +1,10 @@
-import 'dart:convert';
-
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../config/api_config.dart';
-import '../http/bioenlace_http_trace.dart';
+import '../http/api_client.dart';
+import '../http/api_contract.dart';
 
 /// Cliente HTTP para `/api/v1/person-representation/*`.
+/// Devuelve `{success, data}` o `{success: false, message}` para no cambiar a los llamadores.
 class PersonRepresentationApi {
   final String? authToken;
   final String appClient;
@@ -16,119 +14,46 @@ class PersonRepresentationApi {
     this.appClient = 'paciente-flutter',
   });
 
-  Future<String?> _token() async {
-    if (authToken != null && authToken!.isNotEmpty) return authToken;
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('auth_token');
+  Future<ApiClient> _api() async {
+    var token = authToken;
+    if (token == null || token.isEmpty) {
+      final prefs = await SharedPreferences.getInstance();
+      token = prefs.getString('auth_token');
+    }
+    return ApiClient(authToken: token, appClient: appClient);
   }
 
-  Future<Map<String, dynamic>> _post(
-    String path, {
-    Map<String, dynamic>? body,
-  }) async {
-    final token = await _token();
-    final uri = Uri.parse('${AppConfig.apiUrl}$path');
-    final response = await http
-        .post(
-          uri,
-          headers: AppConfig.jsonHeaders(
-            bearerToken: token,
-            appClient: appClient,
-          ),
-          body: json.encode(body ?? {}),
-        )
-        .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-    BioenlaceHttpTrace.logResponse(path, response);
-    return _decode(response);
-  }
-
-  Future<Map<String, dynamic>> _get(String path) async {
-    final token = await _token();
-    final uri = Uri.parse('${AppConfig.apiUrl}$path');
-    final response = await http
-        .get(
-          uri,
-          headers: AppConfig.jsonHeaders(
-            bearerToken: token,
-            appClient: appClient,
-          ),
-        )
-        .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-    BioenlaceHttpTrace.logResponse(path, response);
-    return _decode(response);
-  }
-
-  Future<Map<String, dynamic>> _getPost(
-    String path, {
-    Map<String, dynamic>? body,
-  }) async {
-    final token = await _token();
-    final uri = Uri.parse('${AppConfig.apiUrl}$path');
-    final response = await http
-        .post(
-          uri,
-          headers: AppConfig.jsonHeaders(
-            bearerToken: token,
-            appClient: appClient,
-          ),
-          body: json.encode(body ?? {}),
-        )
-        .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-    BioenlaceHttpTrace.logResponse(path, response);
-    return _decode(response);
-  }
-
-  Map<String, dynamic> _decode(http.Response response) {
-    dynamic decoded;
+  Future<Map<String, dynamic>> _run(
+    Future<Map<String, dynamic>> Function(ApiClient api) call,
+  ) async {
     try {
-      decoded = json.decode(response.body);
-    } on FormatException {
-      return {
-        'success': false,
-        'message': 'Respuesta inválida (${response.statusCode})',
-      };
+      final data = await call(await _api());
+      return {'success': true, 'data': data};
+    } on ApiContractException catch (e) {
+      return {'success': false, 'message': e.message};
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
     }
-    if (decoded is Map<String, dynamic>) {
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        if (decoded.containsKey('data') && decoded.containsKey('meta')) {
-          return {
-            'success': true,
-            'data': decoded['data'],
-            'meta': decoded['meta'],
-          };
-        }
-        return decoded;
-      }
-      final error = decoded['error'];
-      return {
-        'success': false,
-        'message':
-            error is Map
-                ? error['message'] ??
-                    'Error en representación (${response.statusCode})'
-                : decoded['message'] ??
-                    'Error en representación (${response.statusCode})',
-      };
-    }
-    return {
-      'success': false,
-      'message': 'Respuesta inválida (${response.statusCode})',
-    };
   }
 
+  Future<Map<String, dynamic>> _post(String path, {Map<String, dynamic>? body}) =>
+      _run((api) => api.postData(path, body: body));
+
+  Future<Map<String, dynamic>> _get(String path) =>
+      _run((api) => api.getData(path));
   Future<Map<String, dynamic>> fetchPacientesACargo() {
-    return _getPost('/person-representation/pacientes-a-cargo');
+    return _post('/person-representation/pacientes-a-cargo');
   }
 
   Future<Map<String, dynamic>> fetchVinculosComoTutor({String? status}) {
-    return _getPost(
+    return _post(
       '/person-representation/mis-vinculos-como-tutor',
       body: status != null ? {'status': status} : null,
     );
   }
 
   Future<Map<String, dynamic>> fetchMisRepresentantes() {
-    return _getPost('/person-representation/mis-representantes');
+    return _post('/person-representation/mis-representantes');
   }
 
   Future<Map<String, dynamic>> solicitarMenorComoTutor(

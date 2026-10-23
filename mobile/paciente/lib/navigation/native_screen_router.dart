@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/app_texts.dart';
 
 import '../screens/configuracion_screen.dart';
 import '../screens/encounter_summary_list_screen.dart';
@@ -25,7 +26,7 @@ class NativeScreenRouter {
     );
     if (route == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Pantalla no implementada: $screenId')),
+        SnackBar(content: Text(AppTexts.screenNotImplemented(screenId))),
       );
       return;
     }

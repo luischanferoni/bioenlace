@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
+import '../utils/app_texts.dart';
 
 /// Permite elegir la provincia de contexto (no modifica el domicilio RENAPER).
 class PacienteProvinciaContextScreen extends StatefulWidget {
@@ -101,7 +102,7 @@ class _PacienteProvinciaContextScreenState
                     ),
                   ),
                 if (_provincias.isEmpty && _error == null)
-                  const Text('No hay provincias disponibles.'),
+                  const Text(AppTexts.noProvincesAvailable),
                 ..._provincias.map((p) {
                   final id = p['id_provincia'] as int? ?? 0;
                   final nombre = p['nombre']?.toString() ?? 'Provincia';

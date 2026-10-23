@@ -4,16 +4,24 @@ import 'package:http/http.dart' as http;
 
 import '../config/api_config.dart';
 import 'api_contract.dart';
+import 'bioenlace_http_trace.dart';
 
 /// Cliente HTTP único de los clientes móviles: arma headers, aplica timeout,
 /// decodifica el JSON y traduce cualquier error al contrato ([ApiContractException]).
 class ApiClient {
-  ApiClient({this.authToken, this.appClient = 'flutter', http.Client? client})
-      : _client = client;
+  ApiClient({
+    this.authToken,
+    this.appClient = 'flutter',
+    this.traceLabel,
+    http.Client? client,
+  }) : _client = client;
 
   final String? authToken;
   final String appClient;
   final http.Client? _client;
+
+  /// Si se informa, cada respuesta se registra con [BioenlaceHttpTrace].
+  final String? traceLabel;
 
   Map<String, String> get _headers =>
       AppConfig.jsonHeaders(bearerToken: authToken, appClient: appClient);
@@ -80,7 +88,13 @@ class ApiClient {
               ? http.put(uri, headers: _headers, body: encoded)
               : http.post(uri, headers: _headers, body: encoded));
     }
-    return request.timeout(timeout);
+    final traced = request.timeout(timeout);
+    final label = traceLabel;
+    if (label == null) return traced;
+    return traced.then((response) {
+      BioenlaceHttpTrace.logResponse(label, response);
+      return response;
+    });
   }
 
   dynamic _decode(http.Response response) {

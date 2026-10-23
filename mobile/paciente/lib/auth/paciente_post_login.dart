@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../utils/app_texts.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -107,7 +108,7 @@ Future<bool> requirePacienteBiometricEnrollment(
         final tokens = ctx.bio;
         return AlertDialog(
           backgroundColor: tokens.paperBackground,
-          title: Text('Biometría requerida', style: BioTypography.h2),
+          title: Text(AppTexts.biometricRequired, style: BioTypography.h2),
           content: Text(
             'Para usar BioEnlace Paciente necesitás tener huella o Face ID '
             'configurados en este dispositivo (Ajustes del sistema) y '

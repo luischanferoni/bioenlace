@@ -8,7 +8,7 @@ Lectura: [overview.md](./overview.md), [design.md](./design.md), fases en [phase
 
 | Fase | Estado |
 |------|--------|
-| 00 Línea base y guardas | en curso (guard local en verde: `domain_literal_messages` 697/697 y `mobile_literal_ui_text` 24/24 tras externalizar mensajes; topes de web y vistas también bajaron; falta CI, que el repositorio no tiene) |
+| 00 Línea base y guardas | en curso (guard local en verde: `domain_literal_messages` 697/697 y `mobile_literal_ui_text` 0/0 tras externalizar mensajes; topes de web y vistas también bajaron; falta CI, que el repositorio no tiene) |
 | 01 Contrato de API | hecho (migración de respuestas estándar y consumidores; login legacy preservado como excepción externa) |
 | 02 Terminología encounter | pendiente de alineación/revisión humana de prompts protegidos; identificadores Dart y rutas API en 0, nombres PHP restantes de teleconsulta documentados |
 | 03 Metadata clínica humana | hecho (metadata de episodios, triage por catálogo, secciones genéricas con fallback legacy en web y Personal de Salud, acción de triage por capability RBAC y `ambito_atencion` en la sesión, derivado de `Servicio.nombre = 'VETERINARIA'`; la UI de odontología/oftalmología sobre `specialtyMetadata` pasa a otro plan; `secciones` en internación es alias temporal) |

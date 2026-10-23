@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../infra/app_texts.dart';
 
 import '../main.dart';
 import '../screens/main_screen.dart';
@@ -280,7 +281,7 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
     final username = _usernameCtrl.text.trim();
     final password = _passwordCtrl.text;
     if (username.isEmpty || password.isEmpty) {
-      _snack('Ingresá usuario y contraseña.', UiIntent.warning);
+      _snack(AppTexts.enterUserAndPassword, UiIntent.warning);
       return;
     }
 
@@ -355,7 +356,7 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
       final token = prefs.getString('auth_token');
       if (token == null || token.isEmpty) {
         setState(() => _useBiometricLogin = false);
-        _snack('Volvé a ingresar con usuario y contraseña.', UiIntent.warning);
+        _snack(AppTexts.reenterUserAndPassword, UiIntent.warning);
         return;
       }
 
@@ -437,7 +438,7 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
                 children: [
                   const BioLogo(height: 56),
                   BioSpacing.gapH(BioSpacing.xl),
-                  Text('Personal de Salud', style: BioTypography.h1),
+                  Text(AppTexts.appTitle, style: BioTypography.h1),
                   BioSpacing.gapH(BioSpacing.sm),
                   Text(
                     'Ingresá con $_biometricType',

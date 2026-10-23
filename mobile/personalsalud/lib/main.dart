@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
+import 'infra/app_texts.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'auth/personalsalud_authenticated_shell.dart';
@@ -142,7 +143,7 @@ class MyApp extends StatelessWidget {
                         children: [
                           const Icon(Icons.error_outline, size: 64, color: Colors.red),
                           const SizedBox(height: 16),
-                          Text('Error al cargar datos: ${snapshot.error}'),
+                          Text(AppTexts.dataLoadFailed(snapshot.error)),
                           const SizedBox(height: 16),
                           ElevatedButton(
                             onPressed: () {
@@ -153,7 +154,7 @@ class MyApp extends StatelessWidget {
                                 userName: userName,
                               ));
                             },
-                            child: const Text('Reintentar'),
+                            child: const Text(AppTexts.retry),
                           ),
                         ],
                       ),
@@ -163,7 +164,7 @@ class MyApp extends StatelessWidget {
                 
                 if (!snapshot.hasData) {
                   return const Scaffold(
-                    body: Center(child: Text('No se pudieron cargar datos de usuario')),
+                    body: Center(child: Text(AppTexts.userDataLoadFailed)),
                   );
                 }
                 

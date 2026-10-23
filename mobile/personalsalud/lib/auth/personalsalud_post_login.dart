@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../infra/app_texts.dart';
 
 import '../main.dart';
 import '../screens/config_wizard_screen.dart';
@@ -58,7 +59,7 @@ Future<bool> requirePersonalsaludBiometricEnrollment(
           final tokens = ctx.bio;
           return AlertDialog(
             backgroundColor: tokens.paperBackground,
-            title: Text('Biometría requerida', style: BioTypography.h2),
+            title: Text(AppTexts.biometricRequired, style: BioTypography.h2),
             content: Text(
               'Este dispositivo debe tener huella digital o Face ID configurado '
               'para usar Personal de Salud.',

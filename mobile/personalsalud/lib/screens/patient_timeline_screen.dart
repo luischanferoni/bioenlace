@@ -21,6 +21,7 @@ import 'timeline/capture/capture_actions_bar.dart';
 import 'timeline/capture/capture_dictation_controller.dart';
 import 'timeline/capture/capture_input_bar.dart';
 import 'timeline/capture/capture_analysis_helpers.dart';
+import 'timeline/capture/capture_resolution_state.dart';
 import 'timeline/capture/capture_server_snapshot.dart';
 import 'timeline/timeline_history_controller.dart';
 import 'timeline/capture/capture_save_result_dialog.dart';
@@ -85,21 +86,16 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   Map<String, dynamic>? _lastAnalysis;
   EncounterCaptureAnalysis? _captureReview;
   String? _draftText;
-  Set<String> _stagedItemIds = {};
-
-  /// issue_id → valor elegido (ninguno viene preseleccionado).
-  Map<String, dynamic> _issueResolutions = {};
-
-  /// open problem key `condition:123` / `care_plan:456` → value.
-  Map<String, dynamic> _openProblemResolutions = {};
-  final Map<String, TextEditingController> _issueCustomControllers = {};
+  Set<String> get _stagedItemIds => _resolutions.stagedItemIds;
+  set _stagedItemIds(Set<String> v) => _resolutions.stagedItemIds = v;
+  final CaptureResolutionState _resolutions = CaptureResolutionState();
+  Map<String, dynamic> get _issueResolutions => _resolutions.issueResolutions;
+  Map<String, dynamic> get _openProblemResolutions =>
+      _resolutions.openProblemResolutions;
   bool _editingCaptureDraft = false;
   EncounterCaptureAnalysis? _editBackupReview;
   Map<String, dynamic>? _editBackupLastAnalysis;
   String _editBackupDraft = '';
-  Set<String> _editBackupStagedItemIds = {};
-  Map<String, dynamic> _editBackupIssueResolutions = {};
-  Map<String, dynamic> _editBackupOpenProblemResolutions = {};
   final PendingEncounterCaptureStore _pendingStore =
       PendingEncounterCaptureStore.instance;
   List<PendingEncounterCapture> _pendingCaptures = [];
@@ -212,10 +208,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     _voice.dispose();
     _chatController.dispose();
     _chatFocusNode.dispose();
-    for (final c in _issueCustomControllers.values) {
-      c.dispose();
-    }
-    _issueCustomControllers.clear();
+    _resolutions.dispose();
     super.dispose();
   }
 
@@ -553,21 +546,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     return friendly;
   }
 
-  void _clearIssueResolutions() {
-    for (final c in _issueCustomControllers.values) {
-      c.dispose();
-    }
-    _issueCustomControllers.clear();
-    _issueResolutions = {};
-    _openProblemResolutions = {};
-  }
+  void _clearIssueResolutions() => _resolutions.clearResolutions();
 
-  TextEditingController _issueCustomController(String issueId) {
-    return _issueCustomControllers.putIfAbsent(
-      issueId,
-      () => TextEditingController(),
-    );
-  }
+  TextEditingController _issueCustomController(String issueId) =>
+      _resolutions.customController(issueId);
 
   void _clearCaptureDraft({bool deleteLocalPending = true}) {
     final pendingId = _activePendingId;
@@ -847,29 +829,19 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     _editBackupReview = null;
     _editBackupLastAnalysis = null;
     _editBackupDraft = '';
-    _editBackupStagedItemIds = {};
-    _editBackupIssueResolutions = {};
-    _editBackupOpenProblemResolutions = {};
+    _resolutions.clearBackup();
   }
 
   void _editCaptureDraft() {
     final draft = _draftText ?? '';
-    final backupResolutions = Map<String, dynamic>.from(_issueResolutions);
-    final backupOpenProblems = Map<String, dynamic>.from(
-      _openProblemResolutions,
-    );
     setState(() {
       _editBackupReview = _captureReview;
       _editBackupLastAnalysis = _lastAnalysis;
       _editBackupDraft = draft;
-      _editBackupStagedItemIds = Set<String>.from(_stagedItemIds);
-      _editBackupIssueResolutions = backupResolutions;
-      _editBackupOpenProblemResolutions = backupOpenProblems;
+      _resolutions.backupAndReset();
       _editingCaptureDraft = true;
       _captureReview = null;
       _lastAnalysis = null;
-      _stagedItemIds = {};
-      _clearIssueResolutions();
       _sttStatus = '';
       _chatController.text = draft;
     });
@@ -880,18 +852,11 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     final review = _editBackupReview;
     final analysis = _editBackupLastAnalysis;
     final draft = _editBackupDraft;
-    final staged = Set<String>.from(_editBackupStagedItemIds);
-    final issues = Map<String, dynamic>.from(_editBackupIssueResolutions);
-    final openProblems = Map<String, dynamic>.from(
-      _editBackupOpenProblemResolutions,
-    );
     setState(() {
       _captureReview = review;
       _lastAnalysis = analysis;
       _draftText = draft;
-      _stagedItemIds = staged;
-      _issueResolutions = issues;
-      _openProblemResolutions = openProblems;
+      _resolutions.restoreBackup();
       _chatController.text = draft;
       _sttStatus = '';
       _clearEditBackup();
@@ -899,20 +864,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   }
 
   void _toggleStagedItem(String id, bool selected) {
-    setState(() {
-      if (selected) {
-        _stagedItemIds.add(id);
-      } else {
-        _stagedItemIds.remove(id);
-        final prefix = '$id:';
-        _issueResolutions.removeWhere((key, _) => key.startsWith(prefix));
-        for (final entry in _issueCustomControllers.entries.toList()) {
-          if (entry.key.startsWith(prefix)) {
-            entry.value.clear();
-          }
-        }
-      }
-    });
+    setState(() => _resolutions.toggleStagedItem(id, selected));
   }
 
   Future<void> _analyzeEncounter({
@@ -1181,14 +1133,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         _allStagedIssuesResolved(review);
   }
 
-  bool _allStagedIssuesResolved(EncounterCaptureAnalysis review) {
-    return allStagedIssuesResolved(
-      review: review,
-      stagedItemIds: _stagedItemIds,
-      resolutions: _issueResolutions,
-      customText: (id) => _issueCustomControllers[id]?.text ?? '',
-    );
-  }
+  bool _allStagedIssuesResolved(EncounterCaptureAnalysis review) =>
+      _resolutions.allIssuesResolved(review);
 
   Future<void> _confirmarGuardado() async {
     final review = _captureReview;
@@ -1248,7 +1194,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         continue;
       }
       if (issue.allowCustom) {
-        final custom = _issueCustomControllers[issue.id]?.text.trim() ?? '';
+        final custom = _resolutions.customText(issue.id).trim();
         if (custom.isNotEmpty) {
           resolutions[issue.id] = custom;
         }
@@ -1393,41 +1339,15 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   }
 
   void _onIssueOption(EncounterCaptureIssue issue, dynamic value, bool wasSelected) {
-    setState(() {
-      if (wasSelected) {
-        _issueResolutions.remove(issue.id);
-      } else {
-        _issueResolutions[issue.id] = value;
-        _issueCustomControllers[issue.id]?.clear();
-      }
-    });
+    setState(() => _resolutions.selectIssueOption(issue.id, value, wasSelected));
   }
 
   void _onIssueCustomText(EncounterCaptureIssue issue, String trimmed) {
-    setState(() {
-      if (trimmed.isEmpty) {
-        // Solo limpia si el valor actual era custom (no chip).
-        final current = _issueResolutions[issue.id];
-        final matchesChip = issue.options.any(
-          (o) => o.value.toString() == current?.toString(),
-        );
-        if (!matchesChip) {
-          _issueResolutions.remove(issue.id);
-        }
-      } else {
-        _issueResolutions[issue.id] = trimmed;
-      }
-    });
+    setState(() => _resolutions.setIssueCustomText(issue, trimmed));
   }
 
   void _onOpenProblemOption(String key, dynamic value, bool wasSelected) {
-    setState(() {
-      if (wasSelected) {
-        _openProblemResolutions.remove(key);
-      } else {
-        _openProblemResolutions[key] = value;
-      }
-    });
+    setState(() => _resolutions.selectOpenProblemOption(key, value, wasSelected));
   }
 
   void _snack(String msg, UiIntent intent) {

@@ -1,11 +1,8 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
-import 'package:shared/http/bioenlace_http_trace.dart';
 import 'package:shared/shared.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -137,31 +134,21 @@ class PushNotificationService {
       return;
     }
     try {
-      final uri = Uri.parse('${AppConfig.apiUrl}/devices/push-token');
-      final headers = AppConfig.jsonHeaders(
-        bearerToken: token,
-        appClient: 'paciente-flutter',
-      );
       final platform = Platform.isAndroid
           ? 'android'
           : (Platform.isIOS ? 'ios' : 'unknown');
-      final response = await http
-          .post(
-            uri,
-            headers: headers,
-            body: json.encode({
-              'push_token': pushToken,
-              'push_provider': 'fcm',
-              'platform': platform,
-            }),
-          )
-          .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-      BioenlaceHttpTrace.logResponse('devices/push-token', response);
-      if (response.statusCode >= 400) {
-        debugPrint(
-          'registerTokenWithApi: HTTP ${response.statusCode} ${response.body}',
-        );
-      }
+      await ApiClient(
+        authToken: token,
+        appClient: 'paciente-flutter',
+        traceLabel: 'devices/push-token',
+      ).postData(
+        '/devices/push-token',
+        body: {
+          'push_token': pushToken,
+          'push_provider': 'fcm',
+          'platform': platform,
+        },
+      );
     } catch (e) {
       debugPrint('registerTokenWithApi: $e');
     }

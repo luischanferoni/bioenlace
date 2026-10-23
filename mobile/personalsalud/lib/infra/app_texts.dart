@@ -9,6 +9,8 @@ class AppTexts {
   static const userInfoTitle = 'Información del usuario';
   static const workAreaTitle = 'Área de trabajo';
   static const featureInDevelopment = 'Funcionalidad en desarrollo';
+  static String timelineHistoryLoadError(String detail) =>
+      'Error al cargar historia clínica: $detail';
   static String areaChangeFailed(Object e) => 'Error al cambiar área: $e';
   static const selectEffector = 'Seleccioná el efector';
   static const selectService = 'Seleccioná el servicio';

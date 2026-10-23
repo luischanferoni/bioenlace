@@ -1,8 +1,6 @@
 // lib/screens/patient_timeline_screen.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:record/record.dart';
 import 'package:shared/shared.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -20,10 +18,12 @@ import 'timeline/blocks/episodio_banner.dart';
 import 'timeline/blocks/episodio_feed_section.dart';
 import 'timeline/blocks/signos_vitales_episodio_card.dart';
 import 'timeline/capture/capture_actions_bar.dart';
+import 'timeline/capture/capture_audio_recorder.dart';
 import 'timeline/capture/capture_input_bar.dart';
-import 'timeline/timeline_history_loader.dart';
+import 'timeline/timeline_history_controller.dart';
 import 'timeline/capture/capture_save_result_dialog.dart';
 import 'timeline/capture/microphone_permission_dialog.dart';
+import 'timeline/capture/pending_captures_sync.dart';
 import 'timeline/capture/capture_review_panel.dart';
 import 'timeline/capture/pending_captures_panel.dart';
 import 'timeline/blocks/informacion_medica_card.dart';
@@ -64,10 +64,11 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       HistoriaClinicaService();
   final EncounterCaptureApi _encounterApi = EncounterCaptureApi();
   final DeviceSpeechDictation _dictation = DeviceSpeechDictation();
-  final AudioRecorder _audioRecorder = AudioRecorder();
-  HistoriaClinicaResponse? _historiaClinicaData;
-  bool _isLoading = true;
-  String _errorMessage = '';
+  final CaptureAudioRecorder _audioRecorder = CaptureAudioRecorder();
+  late final TimelineHistoryController _history;
+  HistoriaClinicaResponse? get _historiaClinicaData => _history.data;
+  bool get _isLoading => _history.isLoading;
+  String get _errorMessage => _history.errorMessage;
   bool _isAnalyzing = false;
   bool _isSaving = false;
   bool _dictating = false;
@@ -141,84 +142,37 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       _encounterApi.authToken = widget.authToken;
     }
     _loadSttConfig();
+    _history = TimelineHistoryController(
+      service: _historiaClinicaService,
+      personaId: widget.personaId,
+      encounterSummaryLoaded: widget.encounterSummaryLoaded,
+      parentType: widget.parentType,
+      parentId: widget.parentId,
+    )..addListener(_onHistoryChanged);
     _cargarHistoriaClinica();
     _loadPendingCaptures();
   }
 
   Future<void> _loadPendingCaptures() async {
     if (!_tieneContextoCaptura) return;
-    final local = await _pendingStore.listForContext(
+    final list = await loadMergedPendingCaptures(
+      store: _pendingStore,
+      api: _encounterApi,
       personaId: widget.personaId,
-      parent: widget.parentType!,
+      parentType: widget.parentType!,
       parentId: widget.parentId!,
     );
-    final byId = <String, PendingEncounterCapture>{
-      for (final item in local) item.id: item,
-    };
-    try {
-      final remote = await _encounterApi.capturaListar(
-        idPersona: widget.personaId,
-        parent: widget.parentType,
-        parentId: widget.parentId,
-      );
-      for (final row in remote) {
-        final clientId = row['client_capture_id']?.toString() ?? '';
-        if (clientId.isEmpty) continue;
-        var merged = PendingEncounterCapture.fromServerCapture(
-          row,
-          local: byId[clientId],
-        );
-        // listar es liviano: si hace falta revisión y no hay análisis local, pedir /ver.
-        final needsReview =
-            merged.status == PendingEncounterCaptureStatus.pendingSave ||
-            merged.status == PendingEncounterCaptureStatus.failedSave;
-        if (needsReview && merged.analysisResponse == null) {
-          try {
-            final detail = await _encounterApi.capturaVer(
-              clientCaptureId: merged.id,
-              captureId: merged.serverCaptureId,
-            );
-            final capture = detail['capture'];
-            if (capture is Map) {
-              merged = PendingEncounterCapture.fromServerCapture(
-                Map<String, dynamic>.from(capture),
-                local: merged,
-              );
-            }
-          } catch (_) {}
-        }
-        byId[clientId] = merged;
-        await _pendingStore.upsert(merged);
-      }
-    } catch (_) {
-      // Sin red: solo locales.
-    }
-    final list = byId.values.toList()
-      ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
     if (!mounted) return;
     setState(() => _pendingCaptures = list);
 
-    if (!_autoOpenedReview &&
-        !_enRevisionCaptura &&
-        _captureReview == null &&
-        !_captureBusy) {
-      PendingEncounterCapture? ready;
-      for (final item in list) {
-        final isReady =
-            item.status == PendingEncounterCaptureStatus.pendingSave ||
-            item.status == PendingEncounterCaptureStatus.failedSave;
-        if (isReady && item.analysisResponse != null) {
-          ready = item;
-          break;
-        }
-      }
+    if (!_autoOpenedReview && !_enRevisionCaptura && !_captureBusy) {
+      final ready = firstCaptureReadyForReview(list);
       if (ready != null) {
         _autoOpenedReview = true;
         await _resumePendingCapture(ready);
       }
     }
   }
-
   Future<void> _loadSttConfig() async {
     try {
       final cfg = await _encounterApi.fetchSttConfig();
@@ -248,6 +202,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
 
   @override
   void dispose() {
+    _history.dispose();
     _chatController.dispose();
     _chatFocusNode.dispose();
     for (final c in _issueCustomControllers.values) {
@@ -257,43 +212,11 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     super.dispose();
   }
 
-  Future<void> _cargarHistoriaClinica() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = '';
-    });
-
-    try {
-      final data = await fetchTimelineHistory(
-        _historiaClinicaService,
-        personaId: widget.personaId,
-        encounterSummaryLoaded: widget.encounterSummaryLoaded,
-        parentType: widget.parentType,
-        parentId: widget.parentId,
-      );
-      if (!mounted) return;
-      setState(() {
-        _historiaClinicaData = data;
-        _isLoading = false;
-      });
-    } on HistoriaClinicaVentanaException catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _errorMessage = e.message;
-        _isLoading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _errorMessage = _mensajeErrorHistoriaClinica(e);
-        _isLoading = false;
-      });
-    }
+  void _onHistoryChanged() {
+    if (mounted) setState(() {});
   }
 
-  String _mensajeErrorHistoriaClinica(Object e) {
-    return 'Error al cargar historia clínica: ${userFriendlyErrorMessage(e)}';
-  }
+  Future<void> _cargarHistoriaClinica() => _history.load();
 
   @override
   Widget build(BuildContext context) {
@@ -671,26 +594,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         }
         return false;
       }
-      final extension = kIsWeb ? 'webm' : 'm4a';
-      final filename =
-          'encounter_${DateTime.now().millisecondsSinceEpoch}.$extension';
-      final path = kIsWeb
-          ? filename
-          : '${(await getTemporaryDirectory()).path}/$filename';
-      await _audioRecorder.start(
-        RecordConfig(
-          encoder: kIsWeb ? AudioEncoder.opus : AudioEncoder.aacLc,
-          sampleRate: 44100,
-          numChannels: 1,
-          androidConfig: const AndroidRecordConfig(useLegacy: true),
-        ),
-        path: path,
-      );
-      if (!await _audioRecorder.isRecording()) {
-        throw StateError(
-          'El navegador no inició la grabación. Verificá el micrófono y el permiso de acceso.',
-        );
-      }
+      final path = await _audioRecorder.start();
       _pendingAudioPath = path;
       if (!mounted) {
         await _audioRecorder.stop();
@@ -1529,8 +1433,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     }
     final saveIds = review.effectiveSaveItemIds(_stagedItemIds);
     final extraidos = review.toDatosExtraidos(saveIds);
-    // Backup: extracción completa del analizar (el backend completa categorías omitidas).
-    final analisisBackup = _resolveAnalisisDatosExtraidos(_lastAnalysis!);
     final textoOriginal =
         (_lastAnalysis!['texto_original'] ?? review.textoOriginal).toString();
     final textoProcesado =
@@ -1681,27 +1583,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       intent: intent,
       detalle: detalle,
     );
-  }
-
-  Map<String, dynamic>? _resolveAnalisisDatosExtraidos(
-    Map<String, dynamic> analysis,
-  ) {
-    final datos = analysis['datos'];
-    if (datos is Map) {
-      final map = Map<String, dynamic>.from(datos);
-      final inner = map['datosExtraidos'];
-      if (inner is Map) {
-        return Map<String, dynamic>.from(inner);
-      }
-      if (map.keys.any((k) => k != 'Error')) {
-        return map;
-      }
-    }
-    final review = _captureReview;
-    if (review != null && review.hasExtractedContent) {
-      return review.toDatosExtraidos(review.allItems.map((e) => e.id).toSet());
-    }
-    return null;
   }
 
   Future<void> _sendEncounter() async {

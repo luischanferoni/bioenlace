@@ -1,8 +1,5 @@
-import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared/shared.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -16,24 +13,11 @@ class PacienteDebugJwtAuth {
   PacienteDebugJwtAuth._();
 
   static Future<Map<String, dynamic>> loginAsUser(int userId) async {
-    final uri = Uri.parse('${AppConfig.apiUrl}/auth/generar-token-prueba');
-    final response = await http
-        .post(
-          uri,
-          headers: AppConfig.jsonHeaders(
-            appClient: BearerSessionAuth.appClientPaciente,
-          ),
-          body: jsonEncode({'user_id': userId, 'auto_pes': 0}),
-        )
-        .timeout(const Duration(seconds: AppConfig.httpTimeoutSeconds));
-
-    Object? decoded;
-    try {
-      decoded = jsonDecode(utf8.decode(response.bodyBytes));
-    } catch (_) {
-      decoded = null;
-    }
-    final payload = unwrapApiContract(decoded, response.statusCode);
+    final payload = await ApiClient(appClient: BearerSessionAuth.appClientPaciente)
+        .postData(
+          '/auth/generar-token-prueba',
+          body: {'user_id': userId, 'auto_pes': 0},
+        );
     if (payload['token'] is! String || (payload['token'] as String).isEmpty) {
       throw const FormatException();
     }

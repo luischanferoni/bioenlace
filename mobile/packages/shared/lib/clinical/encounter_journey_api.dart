@@ -1,12 +1,8 @@
-import 'dart:convert';
-
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../config/api_config.dart';
-import '../http/api_contract.dart';
+import '../http/api_client.dart';
 
-/// Estado del recorrido pre/post consulta (`GET|POST /api/v1/encounter-journey/estado`).
+/// Estado del recorrido pre/post consulta (`GET /api/v1/encounter-journey/estado`).
 class EncounterJourneyApi {
   final String? authToken;
   final String appClient;
@@ -24,35 +20,23 @@ class EncounterJourneyApi {
     return prefs.getString('auth_token');
   }
 
+  /// Devuelve null sin token o ante cualquier fallo (el recorrido es opcional).
   Future<Map<String, dynamic>?> fetchEstado({
     required int turnoId,
     int? subjectPersonaId,
   }) async {
     final token = await _effectiveToken();
     if (token == null || token.isEmpty) return null;
-
-    final params = <String, String>{
-      'turno_id': '$turnoId',
-      if (subjectPersonaId != null && subjectPersonaId > 0)
-        'subject_persona_id': '$subjectPersonaId',
-    };
-    final uri = Uri.parse('${AppConfig.apiUrl}/encounter-journey/estado')
-        .replace(queryParameters: params);
-
-    final response = await http
-        .get(
-          uri,
-          headers: AppConfig.jsonHeaders(
-            bearerToken: token,
-            appClient: appClient,
-          ),
-        )
-        .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-
-    if (response.statusCode != 200) return null;
     try {
-      return unwrapApiContract(json.decode(response.body), response.statusCode);
-    } on ApiContractException {
+      return await ApiClient(authToken: token, appClient: appClient).getData(
+        '/encounter-journey/estado',
+        query: {
+          'turno_id': '$turnoId',
+          if (subjectPersonaId != null && subjectPersonaId > 0)
+            'subject_persona_id': '$subjectPersonaId',
+        },
+      );
+    } catch (_) {
       return null;
     }
   }

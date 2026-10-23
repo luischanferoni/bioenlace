@@ -1,9 +1,7 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:didit_sdk/sdk_flutter.dart';
 import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared/platform/didit_platform.dart';
 import 'package:shared/shared.dart';
 
@@ -40,30 +38,12 @@ class RegistrationService {
       switch (result) {
         case VerificationCompleted(:final session):
           if (session.status == VerificationStatus.approved) {
-            final registroUri = Uri.parse(
-              '${AppConfig.apiUrl}/registro/registrar',
-            );
-            final registroResponse = await http
-                .post(
-                  registroUri,
-                  headers: AppConfig.jsonHeaders(
-                    appClient: 'bioenlace-paciente',
-                  ),
-                  body: json.encode({
-                    'tipo': 'paciente',
-                    'verification_id': session.sessionId,
-                  }),
-                )
-                .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-
-            BioenlaceHttpTrace.logResponse(
-              'registro/registrar',
-              registroResponse,
-            );
-
-            final registroData = unwrapApiContract(
-              json.decode(registroResponse.body),
-              registroResponse.statusCode,
+            final registroData = await ApiClient(
+              appClient: 'bioenlace-paciente',
+              traceLabel: 'registro/registrar',
+            ).postData(
+              '/registro/registrar',
+              body: {'tipo': 'paciente', 'verification_id': session.sessionId},
             );
             return {
               'success': true,

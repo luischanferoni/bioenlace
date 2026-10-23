@@ -16,6 +16,9 @@ class EncounterReasonChatService {
     this.userName,
   });
 
+  ApiClient get _api =>
+      ApiClient(authToken: authToken, appClient: 'paciente-flutter');
+
   Map<String, String> get _headers => AppConfig.jsonHeaders(
     bearerToken: authToken,
     appClient: 'paciente-flutter',
@@ -29,25 +32,9 @@ class EncounterReasonChatService {
   }
 
   Future<SttClientConfig> fetchSttConfig() async {
-    final uri = Uri.parse('${AppConfig.apiUrl}/audio/stt-config');
-    final response = await http
-        .get(uri, headers: _headers)
-        .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-    final data = json.decode(response.body);
-    if (response.statusCode != 200) {
-      final error = data is Map ? data['error'] : null;
-      throw Exception(
-        (error is Map ? error['message']?.toString() : null) ??
-            'Error de comunicación (${response.statusCode}).',
-      );
-    }
-    final stt = data is Map ? data['data'] : null;
-    if (stt is Map) {
-      final config = Map<String, dynamic>.from(stt);
-      if (config['device_enabled'] is bool &&
-          config['server_enabled'] is bool) {
-        return SttClientConfig.fromJson(config);
-      }
+    final config = await _api.getData('/audio/stt-config');
+    if (config['device_enabled'] is bool && config['server_enabled'] is bool) {
+      return SttClientConfig.fromJson(config);
     }
     throw const FormatException(
       'Falta una configuración STT válida en la respuesta.',
@@ -56,15 +43,8 @@ class EncounterReasonChatService {
 
   Future<Map<String, dynamic>> getMessages(int encounterId) async {
     try {
-      final uri = Uri.parse(
-        '${AppConfig.apiUrl}/encounter-reasons/mensajes/$encounterId',
-      );
-      final response = await http
-          .get(uri, headers: _headers)
-          .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-      final payload = unwrapApiContract(
-        json.decode(response.body),
-        response.statusCode,
+      final payload = await _api.getData(
+        '/encounter-reasons/mensajes/$encounterId',
       );
       final rawMsgs = payload['messages'] as List<dynamic>? ?? [];
       return {
@@ -87,18 +67,9 @@ class EncounterReasonChatService {
 
   Future<Map<String, dynamic>> sendMessage(int encounterId, String text) async {
     try {
-      final uri = Uri.parse('${AppConfig.apiUrl}/encounter-reasons/enviar');
-      final body = {'encounter_id': encounterId, 'message': text};
-      final response = await http
-          .post(
-            uri,
-            headers: {..._headers, 'Content-Type': 'application/json'},
-            body: json.encode(body),
-          )
-          .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-      final data = unwrapApiContract(
-        json.decode(response.body),
-        response.statusCode,
+      final data = await _api.postData(
+        '/encounter-reasons/enviar',
+        body: {'encounter_id': encounterId, 'message': text},
       );
       return {'success': true, 'data': data};
     } catch (e) {

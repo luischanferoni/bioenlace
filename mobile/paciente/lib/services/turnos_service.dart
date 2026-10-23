@@ -1,7 +1,5 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Servicio para obtener "Mis turnos" del paciente y el encounter asociado.
 class TurnosService {
@@ -9,40 +7,20 @@ class TurnosService {
 
   TurnosService({this.authToken});
 
-  static String _extractErrorMessage(
-    Map<String, dynamic> data,
-    int statusCode,
-  ) {
-    final apiError = data['error'];
-    if (apiError is Map && apiError['message'] is String) {
-      return apiError['message'] as String;
+  /// Usa el token inyectado o el guardado en SharedPreferences (evita 401 en turnos/como-paciente).
+  Future<ApiClient> _api() async {
+    var token = authToken;
+    if (token == null || token.isEmpty) {
+      final prefs = await SharedPreferences.getInstance();
+      token = prefs.getString('auth_token');
     }
-    if (statusCode == 401) {
-      return data['message'] as String? ??
-          'No autorizado. Iniciá sesión de nuevo para ver tus turnos.';
-    }
-    final errors = data['errors'];
-    if (errors is Map) {
-      final global = errors['_error'];
-      if (global is List && global.isNotEmpty) {
-        return global.first.toString();
-      }
-      if (global is String && global.isNotEmpty) {
-        return global;
-      }
-    }
-    return data['message'] as String? ?? 'Error al cargar turnos';
+    return ApiClient(authToken: token, appClient: 'paciente-flutter');
   }
 
-  /// Obtiene el token a usar: el inyectado o el guardado en SharedPreferences (para evitar 401 en turnos/como-paciente).
-  Future<String?> _getEffectiveToken() async {
-    if (authToken != null && authToken!.isNotEmpty) return authToken;
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('auth_token');
-  }
+  String _message(Object e) =>
+      e is ApiContractException ? e.message : e.toString();
 
-  /// [alcance]: `pendientes` (inicio ≥ ahora, activos) o `pasados` (inicio &lt; ahora, historial).
-  /// Sin [alcance]: comportamiento API legacy (rango de fechas).
+  /// [alcance]: `pendientes` (inicio ≥ ahora, activos) o `pasados` (inicio < ahora, historial).
   Future<Map<String, dynamic>> getMisTurnos({
     String? fechaDesde,
     String? fechaHasta,
@@ -52,68 +30,30 @@ class TurnosService {
     int? subjectPersonaId,
   }) async {
     try {
-      final uri = Uri.parse('${AppConfig.apiUrl}/turnos/listar-como-paciente');
-
-      final token = await _getEffectiveToken();
-      final headers = AppConfig.jsonHeaders(
-        bearerToken: token,
-        appClient: 'paciente-flutter',
+      final block = await (await _api()).postData(
+        '/turnos/listar-como-paciente',
+        body: {
+          if (fechaDesde != null) 'fecha_desde': fechaDesde,
+          if (fechaHasta != null) 'fecha_hasta': fechaHasta,
+          if (alcance != null) 'alcance': alcance,
+          if (limit != null) 'limit': limit,
+          if (offset != null) 'offset': offset,
+          if (subjectPersonaId != null && subjectPersonaId > 0)
+            'subject_persona_id': subjectPersonaId,
+        },
       );
-
-      final body = <String, dynamic>{
-        if (fechaDesde != null) 'fecha_desde': fechaDesde,
-        if (fechaHasta != null) 'fecha_hasta': fechaHasta,
-        if (alcance != null) 'alcance': alcance,
-        if (limit != null) 'limit': limit,
-        if (offset != null) 'offset': offset,
-        if (subjectPersonaId != null && subjectPersonaId > 0)
-          'subject_persona_id': subjectPersonaId,
+      final turnos = block['turnos'];
+      final totalRaw = block['total'];
+      return {
+        'success': true,
+        'data': block,
+        'turnos': turnos is List<dynamic> ? turnos : [],
+        'total': totalRaw is int ? totalRaw : int.tryParse('$totalRaw') ?? 0,
       };
-
-      final response = await http
-          .post(uri, headers: headers, body: json.encode(body))
-          .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-
-      final data = json.decode(response.body) as Map<String, dynamic>;
-
-      if (response.statusCode == 200 && data['success'] == true) {
-        final block = data['data'];
-        if (block is! Map<String, dynamic>) {
-          return {
-            'success': false,
-            'message': 'Respuesta de turnos sin datos (formato inesperado).',
-            'turnos': <dynamic>[],
-            'total': 0,
-          };
-        }
-        final turnos = block['turnos'];
-        final totalRaw = block['total'];
-        final total =
-            totalRaw is int ? totalRaw : int.tryParse('$totalRaw') ?? 0;
-        return {
-          'success': true,
-          'data': block,
-          'turnos': turnos is List<dynamic> ? turnos : [],
-          'total': total,
-        };
-      }
-      if (response.statusCode == 200 &&
-          data['kind'] == 'ui_definition' &&
-          data['success'] == true) {
-        return {
-          'success': false,
-          'message':
-              'La API devolvió un formulario en lugar del listado. Enviá POST con alcance (pendientes/pasados).',
-          'turnos': <dynamic>[],
-          'total': 0,
-        };
-      }
-      final message = _extractErrorMessage(data, response.statusCode);
-      return {'success': false, 'message': message, 'turnos': [], 'total': 0};
     } catch (e) {
       return {
         'success': false,
-        'message': e.toString(),
+        'message': _message(e),
         'turnos': [],
         'total': 0,
       };
@@ -125,77 +65,32 @@ class TurnosService {
     required int idTurno,
     String? token,
     int? subjectPersonaId,
-  }) async {
-    try {
-      final uri = Uri.parse(
-        '${AppConfig.apiUrl}/turnos/confirmar-asistencia-como-paciente',
-      );
-      final auth = await _getEffectiveToken();
-      final headers = AppConfig.jsonHeaders(
-        bearerToken: auth,
-        appClient: 'paciente-flutter',
-      );
-      final body = <String, dynamic>{
-        'id': idTurno,
-        if (token != null && token.isNotEmpty) 'token': token,
-        if (subjectPersonaId != null && subjectPersonaId > 0)
-          'subject_persona_id': subjectPersonaId,
-      };
-      final response = await http
-          .post(uri, headers: headers, body: json.encode(body))
-          .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-      final data = json.decode(response.body) as Map<String, dynamic>;
-      if (response.statusCode >= 200 &&
-          response.statusCode < 300 &&
-          (data['success'] == true ||
-              (data['data'] is Map<String, dynamic> &&
-                  data.containsKey('meta')))) {
-        return {'success': true, 'data': data['data']};
-      }
-      return {
-        'success': false,
-        'message': _extractErrorMessage(data, response.statusCode),
-      };
-    } catch (e) {
-      return {'success': false, 'message': e.toString()};
-    }
-  }
+  }) => _post('/turnos/confirmar-asistencia-como-paciente', {
+    'id': idTurno,
+    if (token != null && token.isNotEmpty) 'token': token,
+    if (subjectPersonaId != null && subjectPersonaId > 0)
+      'subject_persona_id': subjectPersonaId,
+  });
 
   /// Acepta adelantar el turno propio/representado al slot liberado.
   Future<Map<String, dynamic>> acceptAdvanceOffer({
     required String offerToken,
     int? subjectPersonaId,
-  }) async {
+  }) => _post('/turnos/adelantar-oferta-como-paciente', {
+    'offer_token': offerToken,
+    if (subjectPersonaId != null && subjectPersonaId > 0)
+      'subject_persona_id': subjectPersonaId,
+  });
+
+  Future<Map<String, dynamic>> _post(
+    String path,
+    Map<String, dynamic> body,
+  ) async {
     try {
-      final uri = Uri.parse(
-        '${AppConfig.apiUrl}/turnos/adelantar-oferta-como-paciente',
-      );
-      final auth = await _getEffectiveToken();
-      final headers = AppConfig.jsonHeaders(
-        bearerToken: auth,
-        appClient: 'paciente-flutter',
-      );
-      final body = <String, dynamic>{
-        'offer_token': offerToken,
-        if (subjectPersonaId != null && subjectPersonaId > 0)
-          'subject_persona_id': subjectPersonaId,
-      };
-      final response = await http
-          .post(uri, headers: headers, body: json.encode(body))
-          .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-      final data = json.decode(response.body) as Map<String, dynamic>;
-      if (response.statusCode >= 200 &&
-          response.statusCode < 300 &&
-          (data['success'] == true ||
-              (data.containsKey('data') && data.containsKey('meta')))) {
-        return {'success': true, 'data': data['data']};
-      }
-      return {
-        'success': false,
-        'message': _extractErrorMessage(data, response.statusCode),
-      };
+      final data = await (await _api()).postData(path, body: body);
+      return {'success': true, 'data': data};
     } catch (e) {
-      return {'success': false, 'message': e.toString()};
+      return {'success': false, 'message': _message(e)};
     }
   }
 }

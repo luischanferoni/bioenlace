@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared/shared.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -75,35 +74,24 @@ class PushReceiptQueue {
 
   static Future<bool> _post(Map<String, dynamic> item, String token) async {
     try {
-      final uri = Uri.parse(
-        '${AppConfig.apiUrl}/notificaciones/registrar-interaccion-push-propia',
-      );
-      final headers = AppConfig.jsonHeaders(
-        bearerToken: token,
+      await ApiClient(
+        authToken: token,
         appClient: 'paciente-flutter',
+        traceLabel: 'notificaciones/registrar-interaccion-push-propia',
+      ).postData(
+        '/notificaciones/registrar-interaccion-push-propia',
+        body: item,
       );
-      final response = await http
-          .post(uri, headers: headers, body: json.encode(item))
-          .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-      BioenlaceHttpTrace.logResponse(
-        'notificaciones/registrar-interaccion-push-propia',
-        response,
-      );
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        unwrapApiContract(json.decode(response.body), response.statusCode);
-        return true;
-      }
+      return true;
+    } on ApiContractException catch (e) {
       // 4xx de negocio (ref ajena / inválida): descartar para no reintentar forever.
-      if (response.statusCode >= 400 && response.statusCode < 500) {
-        return true;
-      }
-      return false;
+      final status = e.statusCode ?? 0;
+      return status >= 400 && status < 500;
     } catch (e) {
       debugPrint('PushReceiptQueue.flush: $e');
       return false;
     }
   }
-
   static List<Map<String, dynamic>> _decode(String? raw) {
     if (raw == null || raw.trim().isEmpty) {
       return [];

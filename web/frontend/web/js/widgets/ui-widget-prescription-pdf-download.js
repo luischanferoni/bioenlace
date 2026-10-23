@@ -25,9 +25,12 @@
             btn.addEventListener('click', function () {
                 btn.disabled = true;
                 var client = global.BioenlaceApiClient;
-                var url = client.resolveApiUrl(pdfPath);
                 var name = initial.filename ? String(initial.filename) : 'receta.pdf';
-                client.downloadPdf(url, name)
+                Promise.resolve()
+                    .then(function () {
+                        var url = client.resolveApiUrl(pdfPath);
+                        return client.downloadPdf(url, name);
+                    })
                     .catch(function (err) {
                         console.error('[SPA] prescription_pdf_download', err);
                         alert(client.pdfDownloadErrorMessage());

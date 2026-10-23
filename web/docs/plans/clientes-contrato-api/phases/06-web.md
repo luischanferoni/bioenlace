@@ -32,7 +32,7 @@ Para descargas del mismo origen, el cliente API obtiene el JWT de la sesión cua
 
 La descarga de blobs y la liberación de sus object URLs también están centralizadas en el cliente API; los widgets conservan sus nombres de archivo predeterminados y comparten el mismo ciclo de limpieza.
 
-Ambos widgets de descarga son idempotentes al inicializarse sobre un mount existente: la salida vacía y el botón reemplazan el contenido anterior en lugar de acumular elementos. Se verificó la inicialización repetida en los dos estados.
+Ambos widgets de descarga son idempotentes al inicializarse sobre un mount existente: la salida vacía y el botón reemplazan el contenido anterior en lugar de acumular elementos. Los fallos síncronos al resolver la URL o iniciar la descarga también pasan por el mensaje de error y restauran el botón; se verificó junto con las respuestas exitosas y las promesas rechazadas. Se verificó la inicialización repetida en los dos estados.
 
 Se eliminó un bloque comentado y sin consumidor que aún contenía la implementación HTML anterior del panel de última vacuna. No cambia el runtime y redujo el contador `web_js_html_concat` de 224 a 222.
 

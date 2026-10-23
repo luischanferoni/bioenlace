@@ -36,7 +36,8 @@ final class EpisodioSignosVitalesService
      * @return array{
      *   parent_type: string,
      *   episodio_id: int,
-     *   metric_metadata: array<string, array{label: string, unit: string, intent: string}>,
+     *   metric_metadata: array<string, array{label: string, unit: string, intent: string, format: string}>,
+     *   sections: list<array<string, mixed>>,
      *   series: list<array<string, mixed>>,
      *   ultimos: array<string, mixed>,
      *   total_points: int
@@ -320,10 +321,47 @@ final class EpisodioSignosVitalesService
             'parent_type' => $parentType,
             'episodio_id' => $episodioId,
             'metric_metadata' => $meta,
+            'sections' => [[
+                'key' => 'vital_signs',
+                'label' => 'Signos vitales',
+                'order' => 1,
+                'fields' => $this->vitalSignFields($meta, $ultimos),
+            ]],
             'series' => $series,
             'ultimos' => $ultimos,
             'total_points' => count($points),
         ];
+    }
+
+    /**
+     * @param array<string, array{label: string, unit: string, intent: string, format: string}> $metadata
+     * @param array<string, array<string, mixed>> $ultimos
+     * @return list<array{
+     *   key: string,
+     *   label: string,
+     *   value: float|null,
+     *   unit: string,
+     *   format: string,
+     *   order: int,
+     *   intent: string
+     * }>
+     */
+    private function vitalSignFields(array $metadata, array $ultimos): array
+    {
+        $fields = [];
+        foreach ($metadata as $metric => $info) {
+            $fields[] = [
+                'key' => $metric,
+                'label' => $info['label'],
+                'value' => isset($ultimos[$metric]) ? (float) $ultimos[$metric]['value'] : null,
+                'unit' => $info['unit'],
+                'format' => $info['format'],
+                'order' => count($fields) + 1,
+                'intent' => $info['intent'],
+            ];
+        }
+
+        return $fields;
     }
 
     /**
@@ -335,19 +373,19 @@ final class EpisodioSignosVitalesService
     }
 
     /**
-     * @return array<string, array{label: string, unit: string, intent: string}>
+     * @return array<string, array{label: string, unit: string, intent: string, format: string}>
      */
     private function metricMeta(): array
     {
         return [
-            self::METRIC_TA_SYS => ['label' => 'TA sistólica', 'unit' => 'mmHg', 'intent' => 'danger'],
-            self::METRIC_TA_DIA => ['label' => 'TA diastólica', 'unit' => 'mmHg', 'intent' => 'warning'],
-            self::METRIC_FC => ['label' => 'Frecuencia cardíaca', 'unit' => 'lpm', 'intent' => 'primary'],
-            self::METRIC_FR => ['label' => 'Frecuencia respiratoria', 'unit' => 'rpm', 'intent' => 'info'],
-            self::METRIC_SAT => ['label' => 'Saturación O₂', 'unit' => '%', 'intent' => 'info'],
-            self::METRIC_TEMP => ['label' => 'Temperatura', 'unit' => '°C', 'intent' => 'warning'],
-            self::METRIC_GLUC => ['label' => 'Glucemia capilar', 'unit' => 'mg/dL', 'intent' => 'success'],
-            self::METRIC_GLASGOW => ['label' => 'Glasgow', 'unit' => 'pts', 'intent' => 'secondary'],
+            self::METRIC_TA_SYS => ['label' => 'TA sistólica', 'unit' => 'mmHg', 'intent' => 'danger', 'format' => 'integer'],
+            self::METRIC_TA_DIA => ['label' => 'TA diastólica', 'unit' => 'mmHg', 'intent' => 'warning', 'format' => 'integer'],
+            self::METRIC_FC => ['label' => 'Frecuencia cardíaca', 'unit' => 'lpm', 'intent' => 'primary', 'format' => 'integer'],
+            self::METRIC_FR => ['label' => 'Frecuencia respiratoria', 'unit' => 'rpm', 'intent' => 'info', 'format' => 'integer'],
+            self::METRIC_SAT => ['label' => 'Saturación O₂', 'unit' => '%', 'intent' => 'info', 'format' => 'integer'],
+            self::METRIC_TEMP => ['label' => 'Temperatura', 'unit' => '°C', 'intent' => 'warning', 'format' => 'decimal'],
+            self::METRIC_GLUC => ['label' => 'Glucemia capilar', 'unit' => 'mg/dL', 'intent' => 'success', 'format' => 'decimal'],
+            self::METRIC_GLASGOW => ['label' => 'Glasgow', 'unit' => 'pts', 'intent' => 'secondary', 'format' => 'integer'],
         ];
     }
 

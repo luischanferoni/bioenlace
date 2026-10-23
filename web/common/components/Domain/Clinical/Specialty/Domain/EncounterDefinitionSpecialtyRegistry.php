@@ -33,6 +33,7 @@ final class EncounterDefinitionSpecialtyRegistry
                 [
                     'key' => 'EncounterDentalPractice',
                     'label' => 'Prácticas odontológicas',
+                    'order' => 1,
                     'fields' => [
                         [
                             'key' => OdontologiaItemRowContract::FIELD_TIPO,
@@ -40,6 +41,7 @@ final class EncounterDefinitionSpecialtyRegistry
                             'value' => null,
                             'unit' => null,
                             'format' => 'text',
+                            'order' => 1,
                         ],
                         [
                             'key' => OdontologiaItemRowContract::FIELD_CODIGO,
@@ -47,6 +49,7 @@ final class EncounterDefinitionSpecialtyRegistry
                             'value' => null,
                             'unit' => null,
                             'format' => 'text',
+                            'order' => 2,
                         ],
                     ],
                     'validation' => [
@@ -60,6 +63,7 @@ final class EncounterDefinitionSpecialtyRegistry
                 [
                     'key' => 'EncounterDentalDiagnosis',
                     'label' => 'Diagnósticos odontológicos',
+                    'order' => 2,
                     'fields' => [
                         [
                             'key' => OdontologiaItemRowContract::FIELD_TIPO,
@@ -67,6 +71,7 @@ final class EncounterDefinitionSpecialtyRegistry
                             'value' => null,
                             'unit' => null,
                             'format' => 'text',
+                            'order' => 1,
                         ],
                         [
                             'key' => OdontologiaItemRowContract::FIELD_CODIGO,
@@ -74,6 +79,7 @@ final class EncounterDefinitionSpecialtyRegistry
                             'value' => null,
                             'unit' => null,
                             'format' => 'text',
+                            'order' => 2,
                         ],
                     ],
                     'validation' => [
@@ -87,6 +93,7 @@ final class EncounterDefinitionSpecialtyRegistry
                 [
                     'key' => 'EncounterDentalStatus',
                     'label' => 'Estado dental',
+                    'order' => 3,
                     'fields' => [
                         [
                             'key' => OdontologiaItemRowContract::FIELD_TIPO,
@@ -94,6 +101,7 @@ final class EncounterDefinitionSpecialtyRegistry
                             'value' => null,
                             'unit' => null,
                             'format' => 'text',
+                            'order' => 1,
                         ],
                         [
                             'key' => OdontologiaItemRowContract::FIELD_CODIGO,
@@ -101,6 +109,7 @@ final class EncounterDefinitionSpecialtyRegistry
                             'value' => null,
                             'unit' => null,
                             'format' => 'text',
+                            'order' => 2,
                         ],
                     ],
                     'validation' => [
@@ -120,17 +129,19 @@ final class EncounterDefinitionSpecialtyRegistry
                 [
                     'key' => 'OphthalmologyPractice',
                     'label' => 'Prácticas oftalmológicas',
+                    'order' => 1,
                     'fields' => [
-                        ['key' => 'ojo', 'label' => 'Ojo', 'value' => null, 'unit' => null, 'format' => 'text'],
-                        ['key' => 'prueba', 'label' => 'Prueba', 'value' => null, 'unit' => null, 'format' => 'text'],
-                        ['key' => 'estado', 'label' => 'Estado', 'value' => null, 'unit' => null, 'format' => 'text'],
-                        ['key' => 'informe', 'label' => 'Informe', 'value' => null, 'unit' => null, 'format' => 'text'],
-                        ['key' => 'tipo', 'label' => 'Tipo', 'value' => null, 'unit' => null, 'format' => 'text'],
+                        ['key' => 'ojo', 'label' => 'Ojo', 'value' => null, 'unit' => null, 'format' => 'text', 'order' => 1],
+                        ['key' => 'prueba', 'label' => 'Prueba', 'value' => null, 'unit' => null, 'format' => 'text', 'order' => 2],
+                        ['key' => 'estado', 'label' => 'Estado', 'value' => null, 'unit' => null, 'format' => 'text', 'order' => 3],
+                        ['key' => 'informe', 'label' => 'Informe', 'value' => null, 'unit' => null, 'format' => 'text', 'order' => 4],
+                        ['key' => 'tipo', 'label' => 'Tipo', 'value' => null, 'unit' => null, 'format' => 'text', 'order' => 5],
                     ],
                 ],
                 [
                     'key' => 'OphthalmologyStudy',
                     'label' => 'Estudios oftalmológicos',
+                    'order' => 2,
                     'fields' => [
                         [
                             'key' => OftalmologiaEstudioRowContract::FIELD_CODIGO,
@@ -138,6 +149,7 @@ final class EncounterDefinitionSpecialtyRegistry
                             'value' => null,
                             'unit' => null,
                             'format' => 'text',
+                            'order' => 1,
                         ],
                         [
                             'key' => OftalmologiaEstudioRowContract::FIELD_OJO,
@@ -145,6 +157,7 @@ final class EncounterDefinitionSpecialtyRegistry
                             'value' => null,
                             'unit' => null,
                             'format' => 'text',
+                            'order' => 2,
                         ],
                         [
                             'key' => OftalmologiaEstudioRowContract::FIELD_INFORME,
@@ -152,6 +165,7 @@ final class EncounterDefinitionSpecialtyRegistry
                             'value' => null,
                             'unit' => null,
                             'format' => 'text',
+                            'order' => 3,
                         ],
                     ],
                     'validation' => [
@@ -165,15 +179,16 @@ final class EncounterDefinitionSpecialtyRegistry
                 [
                     'key' => 'OphthalmologyLensPrescription',
                     'label' => 'Receta de lentes',
+                    'order' => 3,
                     'fields' => [
-                        ['key' => 'od_esfera', 'label' => 'OD esfera', 'value' => null, 'unit' => 'D', 'format' => 'decimal'],
-                        ['key' => 'od_cilindro', 'label' => 'OD cilindro', 'value' => null, 'unit' => 'D', 'format' => 'decimal'],
-                        ['key' => 'od_eje', 'label' => 'OD eje', 'value' => null, 'unit' => '°', 'format' => 'integer'],
-                        ['key' => 'od_add', 'label' => 'OD adición', 'value' => null, 'unit' => 'D', 'format' => 'decimal'],
-                        ['key' => 'oi_esfera', 'label' => 'OI esfera', 'value' => null, 'unit' => 'D', 'format' => 'decimal'],
-                        ['key' => 'oi_cilindro', 'label' => 'OI cilindro', 'value' => null, 'unit' => 'D', 'format' => 'decimal'],
-                        ['key' => 'oi_eje', 'label' => 'OI eje', 'value' => null, 'unit' => '°', 'format' => 'integer'],
-                        ['key' => 'oi_add', 'label' => 'OI adición', 'value' => null, 'unit' => 'D', 'format' => 'decimal'],
+                        ['key' => 'od_esfera', 'label' => 'OD esfera', 'value' => null, 'unit' => 'D', 'format' => 'decimal', 'order' => 1],
+                        ['key' => 'od_cilindro', 'label' => 'OD cilindro', 'value' => null, 'unit' => 'D', 'format' => 'decimal', 'order' => 2],
+                        ['key' => 'od_eje', 'label' => 'OD eje', 'value' => null, 'unit' => '°', 'format' => 'integer', 'order' => 3],
+                        ['key' => 'od_add', 'label' => 'OD adición', 'value' => null, 'unit' => 'D', 'format' => 'decimal', 'order' => 4],
+                        ['key' => 'oi_esfera', 'label' => 'OI esfera', 'value' => null, 'unit' => 'D', 'format' => 'decimal', 'order' => 5],
+                        ['key' => 'oi_cilindro', 'label' => 'OI cilindro', 'value' => null, 'unit' => 'D', 'format' => 'decimal', 'order' => 6],
+                        ['key' => 'oi_eje', 'label' => 'OI eje', 'value' => null, 'unit' => '°', 'format' => 'integer', 'order' => 7],
+                        ['key' => 'oi_add', 'label' => 'OI adición', 'value' => null, 'unit' => 'D', 'format' => 'decimal', 'order' => 8],
                     ],
                 ],
             ],
@@ -204,7 +219,8 @@ final class EncounterDefinitionSpecialtyRegistry
      *   sections: list<array{
      *     key: string,
      *     label: string,
-     *     fields: list<array{key:string,label:string,value:mixed,unit:?string,format:string}>,
+     *     order: int,
+     *     fields: list<array{key:string,label:string,value:mixed,unit:?string,format:string,order:int}>,
      *     validation?: array{type:string,fields:list<string>}
      *   }>
      * }>

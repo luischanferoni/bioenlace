@@ -6,10 +6,12 @@ use common\components\Domain\Clinical\Encounter\Application\Presentation\Episodi
 use common\components\Domain\Clinical\Emergency\Domain\BoardState;
 use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyBoardService;
 use common\components\Domain\Clinical\Emergency\Application\UseCase\TriageEmergencyEpisode;
+use common\components\Platform\Core\Permission\CapabilityAccessService;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\Emergency\EmergencyTriage;
 use common\models\Clinical\Emergency\EmergencyEpisode;
 use common\models\Clinical\InpatientStay;
+use Yii;
 
 /**
  * Banner de episodio para HC / captura EMER e IMP (triaje, estado, motivo, ingreso).
@@ -97,10 +99,16 @@ final class EpisodioHistoriaBannerService
             BoardState::FINALIZADO,
             BoardState::DERIVADO,
         ], true);
-        // Triage en tablero = staff; el médico edita desde HC (esta acción).
-        $banner['acciones'] = $cerrado
-            ? []
-            : [self::triageAction($guardiaId, $triageRow !== null)];
+        $canRegisterTriage = CapabilityAccessService::userCanExecuteCapability(
+            (int) Yii::$app->user->id,
+            'guardia.triage'
+        );
+        $banner['acciones'] = self::triageActions(
+            $guardiaId,
+            $triageRow !== null,
+            $cerrado,
+            $canRegisterTriage
+        );
 
         return [
             'contexto_episodio' => $banner,
@@ -150,10 +158,13 @@ final class EpisodioHistoriaBannerService
         $banner['triage'] = null;
         $banner['acciones'] = [];
 
+        $seccionesInternacion = self::sectionsForInternacionEvolutions($evoluciones);
         $contextoInternacion = [
             'internacion_id' => $internacionId,
             'fecha_inicio' => $fechaInicio,
             'evoluciones' => $evoluciones,
+            'sections' => $seccionesInternacion,
+            'secciones' => $seccionesInternacion,
             'motivo' => $motivo,
         ];
 
@@ -201,6 +212,66 @@ final class EpisodioHistoriaBannerService
     }
 
     /**
+     * @param list<array{encounter_id: int, fecha: string, texto: string, status: string}> $evoluciones
+     * @return list<array{
+     *   key: string,
+     *   label: string,
+     *   order: int,
+     *   fields: list<array{key: string, label: string, value: string, unit: null, format: string, order: int}>
+     * }>
+     */
+    public static function sectionsForInternacionEvolutions(array $evoluciones): array
+    {
+        $sections = [];
+        foreach (array_values($evoluciones) as $index => $evolucion) {
+            $fields = [
+                [
+                    'key' => 'encounter_id',
+                    'label' => 'Identificador',
+                    'value' => (string) $evolucion['encounter_id'],
+                    'unit' => null,
+                    'format' => 'integer',
+                    'order' => 1,
+                ],
+                [
+                    'key' => 'fecha',
+                    'label' => 'Fecha',
+                    'value' => $evolucion['fecha'],
+                    'unit' => null,
+                    'format' => 'text',
+                    'order' => 2,
+                ],
+                [
+                    'key' => 'texto',
+                    'label' => 'Evolución',
+                    'value' => $evolucion['texto'],
+                    'unit' => null,
+                    'format' => 'text',
+                    'order' => 3,
+                ],
+            ];
+            if ($evolucion['status'] !== '') {
+                $fields[] = [
+                    'key' => 'status',
+                    'label' => 'Estado',
+                    'value' => $evolucion['status'],
+                    'unit' => null,
+                    'format' => 'text',
+                    'order' => 4,
+                ];
+            }
+            $sections[] = [
+                'key' => 'inpatient_evolution',
+                'label' => 'Evolución de internación',
+                'order' => $index + 1,
+                'fields' => $fields,
+            ];
+        }
+
+        return $sections;
+    }
+
+    /**
      * @return array{
      *   id: string,
      *   label: string,
@@ -224,6 +295,22 @@ final class EpisodioHistoriaBannerService
                 'method' => 'GET',
             ],
         ];
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private static function triageActions(
+        int $guardiaId,
+        bool $hasTriage,
+        bool $closed,
+        bool $canRegisterTriage
+    ): array {
+        if ($closed || !$canRegisterTriage) {
+            return [];
+        }
+
+        return [self::triageAction($guardiaId, $hasTriage)];
     }
 
     /**

@@ -535,9 +535,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                     if (seccion.fields.isNotEmpty)
                       ...seccion.fields.map(
                         (field) => Padding(
-                          padding: const EdgeInsets.only(
-                            bottom: BioSpacing.xs,
-                          ),
+                          padding: const EdgeInsets.only(bottom: BioSpacing.xs),
                           child: Text(
                             [
                               if (field.label.isNotEmpty) '${field.label}:',
@@ -825,6 +823,29 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         '${ultimo.at != null ? ' · ${ultimo.at}' : ''}',
         ultimo.intent,
       );
+    }
+
+    final genericFields = sv?.sections
+        .expand((section) => section.fields)
+        .where((field) => field.value != null)
+        .toList();
+    if (genericFields != null && genericFields.isNotEmpty) {
+      chips.clear();
+      for (final field in genericFields) {
+        final latest = ultimos[field.key];
+        final numericValue = field.value!;
+        final value =
+            field.format == 'integer' &&
+                numericValue == numericValue.truncateToDouble()
+            ? numericValue.toInt().toString()
+            : numericValue.toString();
+        addChip(
+          '${field.label}: $value'
+          '${field.unit.isNotEmpty ? ' ${field.unit}' : ''}'
+          '${latest?.at != null ? ' · ${latest!.at}' : ''}',
+          field.intent,
+        );
+      }
     }
 
     return BioCard.intent(

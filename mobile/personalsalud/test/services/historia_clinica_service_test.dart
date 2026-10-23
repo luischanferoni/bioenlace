@@ -46,6 +46,124 @@ void main() {
     expect(internacion.intent, UiIntent.info);
   });
 
+  test(
+    'prefers generic inpatient evolution sections over legacy evolutions',
+    () {
+      final context = ContextoInternacionHistoria.fromJson(<String, dynamic>{
+        'internacion_id': 72,
+        'sections': [
+          <String, dynamic>{
+            'key': 'inpatient_evolution',
+            'label': 'Evolución de internación',
+            'order': 1,
+            'fields': [
+              <String, dynamic>{
+                'key': 'encounter_id',
+                'label': 'Identificador',
+                'value': '91',
+                'format': 'integer',
+                'order': 1,
+              },
+              <String, dynamic>{
+                'key': 'fecha',
+                'label': 'Fecha',
+                'value': '23/10/2026 08:00',
+                'format': 'text',
+                'order': 2,
+              },
+              <String, dynamic>{
+                'key': 'texto',
+                'label': 'Evolución',
+                'value': 'Texto genérico',
+                'format': 'text',
+                'order': 3,
+              },
+              <String, dynamic>{
+                'key': 'status',
+                'label': 'Estado',
+                'value': 'firmada',
+                'format': 'text',
+                'order': 4,
+              },
+            ],
+          },
+        ],
+        'evoluciones': [
+          <String, dynamic>{
+            'encounter_id': 90,
+            'fecha': 'fecha legacy',
+            'texto': 'texto legacy',
+            'status': 'borrador',
+          },
+        ],
+      });
+
+      expect(context.secciones, hasLength(1));
+      expect(context.secciones.single.order, 1);
+      expect(context.secciones.single.fields.last.value, 'firmada');
+      expect(context.evoluciones, hasLength(1));
+      expect(context.evoluciones.single.encounterId, 91);
+      expect(context.evoluciones.single.fecha, '23/10/2026 08:00');
+      expect(context.evoluciones.single.texto, 'Texto genérico');
+      expect(context.evoluciones.single.status, 'firmada');
+    },
+  );
+
+  test('continues to read the legacy Spanish generic-sections key', () {
+    final context = ContextoInternacionHistoria.fromJson(<String, dynamic>{
+      'internacion_id': 72,
+      'secciones': [
+        <String, dynamic>{
+          'key': 'inpatient_evolution',
+          'label': 'Evolución',
+          'order': 1,
+          'fields': [
+            <String, dynamic>{
+              'key': 'encounter_id',
+              'label': 'Identificador',
+              'value': '91',
+              'format': 'integer',
+              'order': 1,
+            },
+            <String, dynamic>{
+              'key': 'texto',
+              'label': 'Evolución',
+              'value': 'Texto genérico legacy',
+              'format': 'text',
+              'order': 2,
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(context.secciones.single.key, 'inpatient_evolution');
+    expect(context.evoluciones.single.encounterId, 91);
+    expect(context.evoluciones.single.texto, 'Texto genérico legacy');
+  });
+
+  test(
+    'falls back to legacy inpatient evolutions when generic sections are absent',
+    () {
+      final context = ContextoInternacionHistoria.fromJson(<String, dynamic>{
+        'internacion_id': 72,
+        'evoluciones': [
+          <String, dynamic>{
+            'encounter_id': 90,
+            'fecha': '22/10/2026 08:00',
+            'texto': 'Evolución legacy',
+            'status': 'firmada',
+          },
+        ],
+      });
+
+      expect(context.secciones, isEmpty);
+      expect(context.evoluciones, hasLength(1));
+      expect(context.evoluciones.single.encounterId, 90);
+      expect(context.evoluciones.single.texto, 'Evolución legacy');
+    },
+  );
+
   test('reads episode action presentation and API metadata', () {
     final episode = ContextoEpisodioHistoria.fromJson(<String, dynamic>{
       'tipo': 'guardia',
@@ -182,6 +300,88 @@ void main() {
       expect(vitals.ultimos['custom_metric']?.label, 'Métrica nueva');
       expect(vitals.ultimos['custom_metric']?.unit, 'u');
       expect(vitals.ultimos['custom_metric']?.intent, UiIntent.warning);
+    },
+  );
+
+  test('reads generic episode vital sections before the legacy contract', () {
+    final vitals = SignosVitalesEpisodio.fromJson(<String, dynamic>{
+      'parent_type': 'guardia',
+      'episodio_id': 45,
+      'sections': [
+        <String, dynamic>{
+          'key': 'vital_signs',
+          'label': 'Signos vitales',
+          'order': 1,
+          'fields': [
+            <String, dynamic>{
+              'key': 'glasgow',
+              'label': 'Glasgow',
+              'value': 15,
+              'unit': 'pts',
+              'format': 'integer',
+              'intent': 'secondary',
+              'order': 8,
+            },
+            <String, dynamic>{
+              'key': 'temp',
+              'label': 'Temperatura',
+              'value': null,
+              'unit': '°C',
+              'format': 'decimal',
+              'intent': 'warning',
+              'order': 6,
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(vitals.sections, hasLength(1));
+    expect(vitals.sections.single.fields, hasLength(2));
+    expect(vitals.sections.single.fields.first.format, 'integer');
+    expect(vitals.metricMetadata['glasgow']?.format, 'integer');
+    expect(vitals.ultimos['glasgow']?.value, 15);
+    expect(vitals.ultimos['glasgow']?.unit, 'pts');
+    expect(vitals.ultimos.containsKey('temp'), isFalse);
+    expect(vitals.tieneDatos, isTrue);
+  });
+
+  test(
+    'legacy latest values override generic values when both are present',
+    () {
+      final vitals = SignosVitalesEpisodio.fromJson(<String, dynamic>{
+        'parent_type': 'guardia',
+        'episodio_id': 45,
+        'sections': [
+          <String, dynamic>{
+            'key': 'vital_signs',
+            'label': 'Signos vitales',
+            'order': 1,
+            'fields': [
+              <String, dynamic>{
+                'key': 'ta_sys',
+                'label': 'TA sistólica',
+                'value': 119,
+                'unit': 'mmHg',
+                'format': 'integer',
+                'intent': 'danger',
+                'order': 1,
+              },
+            ],
+          },
+        ],
+        'ultimos': {
+          'ta_sys': <String, dynamic>{
+            'value': 120,
+            'at': '23/10/2026 08:00',
+            'source': 'nursing',
+          },
+        },
+      });
+
+      expect(vitals.ultimos['ta_sys']?.value, 120);
+      expect(vitals.ultimos['ta_sys']?.at, '23/10/2026 08:00');
+      expect(vitals.metricMetadata['ta_sys']?.label, 'TA sistólica');
     },
   );
 

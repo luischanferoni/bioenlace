@@ -26,19 +26,51 @@ class CirugiaAgendaItem {
   });
 
   factory CirugiaAgendaItem.fromJson(Map<String, dynamic> json) {
-    final paciente = json['paciente'] as Map<String, dynamic>?;
+    final paciente = json['paciente'] is Map
+        ? Map<String, dynamic>.from(json['paciente'] as Map)
+        : <String, dynamic>{};
+    final genericFields = <String, dynamic>{};
+    final sections = json['sections'];
+    if (sections is List) {
+      for (final section in sections.whereType<Map>()) {
+        if (section['key'] != 'surgery_schedule' ||
+            section['fields'] is! List) {
+          continue;
+        }
+        for (final field in (section['fields'] as List).whereType<Map>()) {
+          final key = field['key']?.toString() ?? '';
+          if (key.isNotEmpty && field['value'] != null) {
+            genericFields[key] = field['value'];
+          }
+        }
+      }
+    }
+
+    dynamic value(String key, dynamic legacy) => genericFields[key] ?? legacy;
+    int asInt(dynamic raw) {
+      if (raw is int) return raw;
+      return int.tryParse(raw?.toString() ?? '') ?? 0;
+    }
+
     return CirugiaAgendaItem(
-      id: json['id'] as int,
-      idPersona: json['id_persona'] as int,
-      nombrePaciente: paciente != null
-          ? (paciente['nombre_completo'] as String? ?? 'Sin paciente')
-          : 'Sin paciente',
-      documento: paciente?['documento'] as String?,
-      salaNombre: json['sala_nombre'] as String? ?? '',
-      fechaHoraInicio: json['fecha_hora_inicio'] as String?,
-      fechaHoraFinEstimada: json['fecha_hora_fin_estimada'] as String?,
-      estado: json['estado'] as String? ?? '',
-      estadoLabel: json['estado_label'] as String? ?? '',
+      id: asInt(value('id', json['id'])),
+      idPersona: asInt(value('id_persona', json['id_persona'])),
+      nombrePaciente:
+          value('nombre_paciente', paciente['nombre_completo'])?.toString() ??
+          'Sin paciente',
+      documento: value('documento', paciente['documento'])?.toString(),
+      salaNombre: value('sala_nombre', json['sala_nombre'])?.toString() ?? '',
+      fechaHoraInicio: value(
+        'fecha_hora_inicio',
+        json['fecha_hora_inicio'],
+      )?.toString(),
+      fechaHoraFinEstimada: value(
+        'fecha_hora_fin_estimada',
+        json['fecha_hora_fin_estimada'],
+      )?.toString(),
+      estado: value('estado', json['estado'])?.toString() ?? '',
+      estadoLabel:
+          value('estado_label', json['estado_label'])?.toString() ?? '',
     );
   }
 }

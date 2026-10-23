@@ -718,6 +718,7 @@ class ContextoInternacionHistoria {
   final int internacionId;
   final String camaLabel;
   final String fechaInicio;
+  final List<EvolucionInternacionSeccion> secciones;
   final List<EvolucionInternacionItem> evoluciones;
   final String? medicoNombre;
   final String? motivo;
@@ -726,6 +727,7 @@ class ContextoInternacionHistoria {
     required this.internacionId,
     this.camaLabel = '',
     this.fechaInicio = '',
+    this.secciones = const [],
     this.evoluciones = const [],
     this.medicoNombre,
     this.motivo,
@@ -740,9 +742,28 @@ class ContextoInternacionHistoria {
       return int.tryParse(v?.toString() ?? '') ?? 0;
     }
 
+    final rawSections = json['sections'] is List
+        ? json['sections']
+        : json['secciones'];
+    final sections = rawSections is List
+        ? rawSections
+              .whereType<Map>()
+              .map(
+                (section) => EvolucionInternacionSeccion.fromJson(
+                  Map<String, dynamic>.from(section),
+                ),
+              )
+              .where((section) => section.fields.isNotEmpty)
+              .toList()
+        : <EvolucionInternacionSeccion>[];
     final raw = json['evoluciones'];
     final list = <EvolucionInternacionItem>[];
-    if (raw is List) {
+    final evolutionSections = sections
+        .where((section) => section.key == 'inpatient_evolution')
+        .toList();
+    if (evolutionSections.isNotEmpty) {
+      list.addAll(evolutionSections.map(EvolucionInternacionItem.fromSection));
+    } else if (raw is List) {
       for (final e in raw) {
         if (e is Map) {
           list.add(
@@ -765,6 +786,7 @@ class ContextoInternacionHistoria {
       internacionId: asInt(json['internacion_id']),
       camaLabel: (json['cama_label'] ?? '').toString(),
       fechaInicio: (json['fecha_inicio'] ?? '').toString(),
+      secciones: sections,
       evoluciones: list,
       medicoNombre: medicoNombre,
       motivo: motivo.isEmpty ? null : motivo,
@@ -1019,6 +1041,7 @@ class SignosVitalesEpisodio {
   final String parentType;
   final int episodioId;
   final int totalPoints;
+  final List<SignosVitalesEpisodioSeccion> sections;
   final Map<String, SignosVitalesEpisodioMetricMetadata> metricMetadata;
   final Map<String, SignosVitalesEpisodioUltimo> ultimos;
   final List<SignosVitalesEpisodioSerie> series;
@@ -1027,12 +1050,18 @@ class SignosVitalesEpisodio {
     required this.parentType,
     required this.episodioId,
     this.totalPoints = 0,
+    this.sections = const [],
     this.metricMetadata = const {},
     this.ultimos = const {},
     this.series = const [],
   });
 
-  bool get tieneDatos => totalPoints > 0 || series.isNotEmpty;
+  bool get tieneDatos =>
+      totalPoints > 0 ||
+      series.isNotEmpty ||
+      sections.any(
+        (section) => section.fields.any((field) => field.value != null),
+      );
 
   factory SignosVitalesEpisodio.fromJson(Map<String, dynamic>? json) {
     if (json == null) {
@@ -1051,12 +1080,46 @@ class SignosVitalesEpisodio {
       });
     }
 
+    final sections = <SignosVitalesEpisodioSeccion>[];
+    final rawSections = json['sections'];
+    if (rawSections is List) {
+      for (final rawSection in rawSections) {
+        if (rawSection is! Map) continue;
+        final section = SignosVitalesEpisodioSeccion.fromJson(
+          Map<String, dynamic>.from(rawSection),
+        );
+        sections.add(section);
+        for (final field in section.fields) {
+          metricMetadata.putIfAbsent(
+            field.key,
+            () => SignosVitalesEpisodioMetricMetadata(
+              label: field.label,
+              unit: field.unit,
+              intent: field.intent,
+              format: field.format,
+            ),
+          );
+        }
+      }
+    }
+
     int asInt(dynamic v) {
       if (v is int) return v;
       return int.tryParse(v?.toString() ?? '') ?? 0;
     }
 
     final ultimos = <String, SignosVitalesEpisodioUltimo>{};
+    for (final section in sections) {
+      for (final field in section.fields) {
+        if (field.value == null) continue;
+        ultimos[field.key] = SignosVitalesEpisodioUltimo(
+          value: field.value,
+          unit: field.unit.isEmpty ? null : field.unit,
+          label: field.label.isEmpty ? null : field.label,
+          intent: field.intent,
+        );
+      }
+    }
     final rawUltimos = json['ultimos'];
     if (rawUltimos is Map) {
       rawUltimos.forEach((k, v) {
@@ -1089,9 +1152,78 @@ class SignosVitalesEpisodio {
       parentType: (json['parent_type'] ?? '').toString(),
       episodioId: asInt(json['episodio_id']),
       totalPoints: asInt(json['total_points']),
+      sections: sections,
       metricMetadata: metricMetadata,
       ultimos: ultimos,
       series: series,
+    );
+  }
+}
+
+class SignosVitalesEpisodioSeccion {
+  final String key;
+  final String label;
+  final int order;
+  final List<SignosVitalesEpisodioCampo> fields;
+
+  const SignosVitalesEpisodioSeccion({
+    required this.key,
+    required this.label,
+    required this.order,
+    required this.fields,
+  });
+
+  factory SignosVitalesEpisodioSeccion.fromJson(Map<String, dynamic> json) {
+    final rawFields = json['fields'];
+    return SignosVitalesEpisodioSeccion(
+      key: (json['key'] ?? '').toString(),
+      label: (json['label'] ?? '').toString(),
+      order: int.tryParse(json['order']?.toString() ?? '') ?? 0,
+      fields: rawFields is List
+          ? rawFields
+                .whereType<Map>()
+                .map(
+                  (field) => SignosVitalesEpisodioCampo.fromJson(
+                    Map<String, dynamic>.from(field),
+                  ),
+                )
+                .toList()
+          : const [],
+    );
+  }
+}
+
+class SignosVitalesEpisodioCampo {
+  final String key;
+  final String label;
+  final double? value;
+  final String unit;
+  final UiIntent intent;
+  final String format;
+  final int order;
+
+  const SignosVitalesEpisodioCampo({
+    required this.key,
+    required this.label,
+    required this.value,
+    required this.unit,
+    required this.intent,
+    required this.format,
+    required this.order,
+  });
+
+  factory SignosVitalesEpisodioCampo.fromJson(Map<String, dynamic> json) {
+    final rawValue = json['value'];
+    return SignosVitalesEpisodioCampo(
+      key: (json['key'] ?? '').toString(),
+      label: (json['label'] ?? '').toString(),
+      value: rawValue is num
+          ? rawValue.toDouble()
+          : double.tryParse(rawValue?.toString() ?? ''),
+      unit: (json['unit'] ?? '').toString(),
+      intent: _uiIntentFromContract(json['intent']),
+      format: (json['format'] ?? 'text').toString(),
+      order: int.tryParse(json['order']?.toString() ?? '') ?? 0,
     );
   }
 }
@@ -1100,11 +1232,13 @@ class SignosVitalesEpisodioMetricMetadata {
   final String label;
   final String unit;
   final UiIntent intent;
+  final String format;
 
   const SignosVitalesEpisodioMetricMetadata({
     this.label = '',
     this.unit = '',
     this.intent = UiIntent.neutral,
+    this.format = 'text',
   });
 
   factory SignosVitalesEpisodioMetricMetadata.fromJson(
@@ -1114,6 +1248,7 @@ class SignosVitalesEpisodioMetricMetadata {
       label: (json['label'] ?? '').toString(),
       unit: (json['unit'] ?? '').toString(),
       intent: _uiIntentFromContract(json['intent']),
+      format: (json['format'] ?? 'text').toString(),
     );
   }
 }
@@ -1288,6 +1423,69 @@ class TimelineEpisodioItem {
   }
 }
 
+class EvolucionInternacionSeccion {
+  final String key;
+  final String label;
+  final int order;
+  final List<EvolucionInternacionCampo> fields;
+
+  const EvolucionInternacionSeccion({
+    required this.key,
+    required this.label,
+    required this.order,
+    required this.fields,
+  });
+
+  factory EvolucionInternacionSeccion.fromJson(Map<String, dynamic> json) {
+    final rawFields = json['fields'];
+    return EvolucionInternacionSeccion(
+      key: (json['key'] ?? '').toString(),
+      label: (json['label'] ?? '').toString(),
+      order: int.tryParse(json['order']?.toString() ?? '') ?? 0,
+      fields: rawFields is List
+          ? rawFields
+                .whereType<Map>()
+                .map(
+                  (field) => EvolucionInternacionCampo.fromJson(
+                    Map<String, dynamic>.from(field),
+                  ),
+                )
+                .toList()
+          : const [],
+    );
+  }
+}
+
+class EvolucionInternacionCampo {
+  final String key;
+  final String label;
+  final String value;
+  final String? unit;
+  final String format;
+  final int order;
+
+  const EvolucionInternacionCampo({
+    required this.key,
+    required this.label,
+    required this.value,
+    required this.unit,
+    required this.format,
+    required this.order,
+  });
+
+  factory EvolucionInternacionCampo.fromJson(Map<String, dynamic> json) {
+    final rawUnit = json['unit']?.toString().trim() ?? '';
+    return EvolucionInternacionCampo(
+      key: (json['key'] ?? '').toString(),
+      label: (json['label'] ?? '').toString(),
+      value: json['value']?.toString() ?? '',
+      unit: rawUnit.isEmpty ? null : rawUnit,
+      format: (json['format'] ?? 'text').toString(),
+      order: int.tryParse(json['order']?.toString() ?? '') ?? 0,
+    );
+  }
+}
+
 class EvolucionInternacionItem {
   final int encounterId;
   final String fecha;
@@ -1312,6 +1510,25 @@ class EvolucionInternacionItem {
       fecha: (json['fecha'] ?? '').toString(),
       texto: (json['texto'] ?? '').toString(),
       status: (json['status'] ?? '').toString(),
+    );
+  }
+
+  factory EvolucionInternacionItem.fromSection(
+    EvolucionInternacionSeccion section,
+  ) {
+    final fields = <String, EvolucionInternacionCampo>{
+      for (final field in section.fields) field.key: field,
+    };
+    int asInt(dynamic v) {
+      if (v is int) return v;
+      return int.tryParse(v?.toString() ?? '') ?? 0;
+    }
+
+    return EvolucionInternacionItem(
+      encounterId: asInt(fields['encounter_id']?.value),
+      fecha: fields['fecha']?.value ?? '',
+      texto: fields['texto']?.value ?? '',
+      status: fields['status']?.value ?? '',
     );
   }
 }

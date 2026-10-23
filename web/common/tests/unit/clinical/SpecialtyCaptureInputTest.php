@@ -119,7 +119,9 @@ class SpecialtyCaptureInputTest extends Unit
             ['EncounterDentalPractice', 'EncounterDentalDiagnosis', 'EncounterDentalStatus'],
             array_column($byCode['odontology']['sections'], 'key')
         );
+        $this->assertSame([1, 2, 3], array_column($byCode['odontology']['sections'], 'order'));
         foreach ($byCode['odontology']['sections'] as $section) {
+            $this->assertSame([1, 2], array_column($section['fields'], 'order'));
             $this->assertSame(
                 [
                     'type' => 'at_least_one',
@@ -131,6 +133,11 @@ class SpecialtyCaptureInputTest extends Unit
         $this->assertSame(
             ['ojo', 'prueba', 'estado', 'informe', 'tipo'],
             array_column($byCode['ophthalmology']['sections'][0]['fields'], 'key')
+        );
+        $this->assertSame([1, 2, 3], array_column($byCode['ophthalmology']['sections'], 'order'));
+        $this->assertSame(
+            [1, 2, 3, 4, 5],
+            array_column($byCode['ophthalmology']['sections'][0]['fields'], 'order')
         );
         $this->assertSame(
             [
@@ -145,6 +152,7 @@ class SpecialtyCaptureInputTest extends Unit
         foreach ($prescription['fields'] as $field) {
             $fieldsByKey[$field['key']] = $field;
         }
+        $this->assertSame([1, 2, 3, 4, 5, 6, 7, 8], array_column($prescription['fields'], 'order'));
         $this->assertSame('decimal', $fieldsByKey['od_esfera']['format']);
         $this->assertSame('D', $fieldsByKey['od_esfera']['unit']);
         $this->assertSame('integer', $fieldsByKey['od_eje']['format']);

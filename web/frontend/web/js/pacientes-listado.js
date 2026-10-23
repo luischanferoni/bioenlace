@@ -2384,20 +2384,41 @@
     }
 
     function fillCirugiaCard(colEl, c) {
+      var genericFields = {};
+      (Array.isArray(c.sections) ? c.sections : []).forEach(function (section) {
+        if (!section || section.key !== 'surgery_schedule' || !Array.isArray(section.fields)) return;
+        section.fields.forEach(function (field) {
+          if (!field || typeof field.key !== 'string' || field.value == null) return;
+          genericFields[field.key] = field.value;
+        });
+      });
+      function fieldValue(key, legacy) {
+        return Object.prototype.hasOwnProperty.call(genericFields, key)
+          ? genericFields[key]
+          : legacy;
+      }
+      var paciente = c.paciente && typeof c.paciente === 'object' ? c.paciente : {};
+      var personId = fieldValue('id_persona', c.id_persona || paciente.id);
+      var nombre = fieldValue('nombre_paciente', paciente.nombre_completo);
+      var sala = fieldValue('sala_nombre', c.sala_nombre);
+      var inicio = fieldValue('fecha_hora_inicio', c.fecha_hora_inicio);
+      var estado = fieldValue('estado', c.estado);
+      var estadoLabel = fieldValue('estado_label', c.estado_label);
+
       colEl.querySelector('[data-field="nombre"]').textContent =
-        (c.paciente && c.paciente.nombre_completo) ? c.paciente.nombre_completo : 'Sin paciente';
-      colEl.querySelector('[data-field="sala"]').textContent = c.sala_nombre || '—';
-      colEl.querySelector('[data-field="inicio"]').textContent = c.fecha_hora_inicio || '';
+        nombre ? String(nombre) : 'Sin paciente';
+      colEl.querySelector('[data-field="sala"]').textContent = sala || '—';
+      colEl.querySelector('[data-field="inicio"]').textContent = inicio || '';
 
       var badge = colEl.querySelector('[data-field="estado-badge"]');
       if (badge) {
-        var estadoClass = (c.estado === 'REALIZADA' || c.estado === 'CANCELADA') ? 'secondary' : 'warning';
+        var estadoClass = (estado === 'REALIZADA' || estado === 'CANCELADA') ? 'secondary' : 'warning';
         badge.className = 'badge bg-' + estadoClass;
-        badge.textContent = c.estado_label || c.estado || '';
+        badge.textContent = estadoLabel || estado || '';
       }
 
-      var idPersona = c.id_persona || (c.paciente ? c.paciente.id : null);
-      var urlHistoria = historiaConContexto(idPersona, { parent: 'CIRUGIA', parent_id: c.id });
+      var id = fieldValue('id', c.id);
+      var urlHistoria = historiaConContexto(personId, { parent: 'CIRUGIA', parent_id: id });
       var a = colEl.querySelector('[data-role="link-historia"]');
       if (a && urlHistoria) a.href = urlHistoria;
     }

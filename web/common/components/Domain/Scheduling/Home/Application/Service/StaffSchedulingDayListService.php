@@ -175,7 +175,7 @@ final class StaffSchedulingDayListService
             /** @var Cirugia $c */
             $paciente = $c->persona;
             $sala = $c->sala;
-            $out[] = [
+            $item = [
                 'id' => (int) $c->id,
                 'id_persona' => (int) $c->id_persona,
                 'paciente' => [
@@ -189,9 +189,54 @@ final class StaffSchedulingDayListService
                 'estado' => $c->estado,
                 'estado_label' => $c->getEstadoLabel(),
             ];
+            $item['sections'] = self::genericSurgerySections($item);
+            $out[] = $item;
         }
 
         return $out;
+    }
+
+    /**
+     * @param array<string, mixed> $surgery
+     * @return list<array{
+     *   key: string,
+     *   label: string,
+     *   order: int,
+     *   fields: list<array{key: string, label: string, value: mixed, unit: null, format: string, order: int}>
+     * }>
+     */
+    private static function genericSurgerySections(array $surgery): array
+    {
+        $patient = is_array($surgery['paciente'] ?? null) ? $surgery['paciente'] : [];
+        $values = [
+            ['id', 'Identificador', $surgery['id'] ?? null, 'integer'],
+            ['id_persona', 'Persona', $surgery['id_persona'] ?? null, 'integer'],
+            ['nombre_paciente', 'Paciente', $patient['nombre_completo'] ?? null, 'text'],
+            ['documento', 'Documento', $patient['documento'] ?? null, 'text'],
+            ['sala_nombre', 'Quirófano', $surgery['sala_nombre'] ?? null, 'text'],
+            ['fecha_hora_inicio', 'Inicio', $surgery['fecha_hora_inicio'] ?? null, 'text'],
+            ['fecha_hora_fin_estimada', 'Fin estimado', $surgery['fecha_hora_fin_estimada'] ?? null, 'text'],
+            ['estado', 'Estado', $surgery['estado'] ?? null, 'text'],
+            ['estado_label', 'Estado', $surgery['estado_label'] ?? null, 'text'],
+        ];
+        $fields = [];
+        foreach ($values as $index => [$key, $label, $value, $format]) {
+            $fields[] = [
+                'key' => $key,
+                'label' => $label,
+                'value' => $value,
+                'unit' => null,
+                'format' => $format,
+                'order' => $index + 1,
+            ];
+        }
+
+        return [[
+            'key' => 'surgery_schedule',
+            'label' => 'Agenda quirúrgica',
+            'order' => 1,
+            'fields' => $fields,
+        ]];
     }
 
     /**

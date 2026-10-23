@@ -727,10 +727,45 @@
         if (!chartEl && !ultimosEl) return;
         sv = sv || {};
         var series = Array.isArray(sv.series) ? sv.series : [];
-        var ultimos = sv.ultimos || {};
-        var metricMetadata = sv.metric_metadata && typeof sv.metric_metadata === 'object'
+        var legacyUltimos = sv.ultimos && typeof sv.ultimos === 'object' ? sv.ultimos : {};
+        var legacyMetricMetadata = sv.metric_metadata && typeof sv.metric_metadata === 'object'
             ? sv.metric_metadata
             : {};
+        var genericUltimos = {};
+        var genericMetricMetadata = {};
+        var genericSections = Array.isArray(sv.sections) ? sv.sections : [];
+        genericSections.forEach(function (section) {
+            if (!section || !Array.isArray(section.fields)) return;
+            section.fields.slice().sort(function (a, b) {
+                return (parseInt(a && a.order, 10) || 0) - (parseInt(b && b.order, 10) || 0);
+            }).forEach(function (field) {
+                if (!field || typeof field.key !== 'string' || field.key === '') return;
+                genericMetricMetadata[field.key] = {
+                    label: field.label || field.key,
+                    unit: field.unit || '',
+                    intent: field.intent || '',
+                    format: field.format || ''
+                };
+                if (field.value != null) {
+                    genericUltimos[field.key] = { value: field.value };
+                }
+            });
+        });
+        var metricMetadata = Object.assign({}, legacyMetricMetadata, genericMetricMetadata);
+        var ultimos = {};
+        Object.keys(genericUltimos).forEach(function (key) {
+            ultimos[key] = Object.assign(
+                {},
+                legacyUltimos[key] || {},
+                genericMetricMetadata[key],
+                { value: genericUltimos[key].value }
+            );
+        });
+        Object.keys(legacyUltimos).forEach(function (key) {
+            if (!Object.prototype.hasOwnProperty.call(ultimos, key)) {
+                ultimos[key] = legacyUltimos[key];
+            }
+        });
         var total = parseInt(sv.total_points || 0, 10) || 0;
 
         if (countEl) {

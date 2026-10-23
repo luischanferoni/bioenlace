@@ -16,21 +16,6 @@ void main() {
     s.dispose();
   });
 
-  test('backup y restore conservan el estado', () {
-    final s = CaptureResolutionState();
-    s.toggleStagedItem('a', true);
-    s.selectIssueOption('i', 1, false);
-    s.selectOpenProblemOption('condition:1', 2, false);
-    s.backupAndReset();
-    expect(s.stagedItemIds, isEmpty);
-    expect(s.issueResolutions, isEmpty);
-    s.restoreBackup();
-    expect(s.stagedItemIds, {'a'});
-    expect(s.issueResolutions['i'], 1);
-    expect(s.openProblemResolutions['condition:1'], 2);
-    s.dispose();
-  });
-
   test('seleccionar de nuevo una opción la deselecciona', () {
     final s = CaptureResolutionState();
     s.selectIssueOption('i', 1, false);

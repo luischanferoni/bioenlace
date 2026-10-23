@@ -453,6 +453,23 @@ errors:
     intent: error
     retryable: false
     message: "Todavía no hay texto para analizar."
+  capture_batch_too_many:
+    http_status: 422
+    intent: error
+    retryable: false
+    default_detail: "10"
+    message: "Podés analizar hasta {detail} notas juntas. Borrá alguna e intentá de nuevo."
+  capture_batch_too_long:
+    http_status: 422
+    intent: error
+    retryable: false
+    default_detail: "8000"
+    message: "Las notas superan los {detail} caracteres. Borrá alguna e intentá de nuevo."
+  capture_batch_note_not_ready:
+    http_status: 409
+    intent: error
+    retryable: false
+    message: "Alguna de las notas todavía no tiene texto. Esperá la transcripción o borrala."
   capture_no_analysis:
     http_status: 422
     intent: error

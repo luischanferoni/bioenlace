@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
-/// Barra inferior de la captura en revisión: guardar, editar texto o eliminar.
+import '../../../infra/app_texts.dart';
+
+/// Barra inferior de la captura en revisión: guardar o volver a las notas.
 class CaptureActionsBar extends StatelessWidget {
-  const CaptureActionsBar({super.key, required this.isSaving, required this.canConfirm, required this.onConfirm, required this.onEdit, this.onDelete});
+  const CaptureActionsBar({super.key, required this.isSaving, required this.canConfirm, required this.onConfirm, required this.onBackToNotes});
 
   final bool isSaving;
   final bool canConfirm;
   final VoidCallback onConfirm;
-  final VoidCallback onEdit;
-  final VoidCallback? onDelete;
+  final VoidCallback onBackToNotes;
 
   @override
   Widget build(BuildContext context) {
@@ -33,28 +34,11 @@ class CaptureActionsBar extends StatelessWidget {
             onPressed: canConfirm ? onConfirm : null,
           ),
           BioSpacing.gapH(BioSpacing.sm),
-          Row(
-            children: [
-              Expanded(
-                child: BioButton(
-                  label: 'Editar texto',
-                  intent: UiIntent.neutral,
-                  variant: BioButtonVariant.soft,
-                  onPressed: isSaving ? null : onEdit,
-                ),
-              ),
-              BioSpacing.gapW(BioSpacing.sm),
-              Expanded(
-                child: BioButton(
-                  label: 'Eliminar',
-                  intent: UiIntent.danger,
-                  variant: BioButtonVariant.soft,
-                  onPressed: isSaving || onDelete == null
-                      ? null
-                      : onDelete,
-                ),
-              ),
-            ],
+          BioButton(
+            label: AppTexts.noteBackToNotes,
+            intent: UiIntent.neutral,
+            variant: BioButtonVariant.soft,
+            onPressed: isSaving ? null : onBackToNotes,
           ),
         ],
       ),

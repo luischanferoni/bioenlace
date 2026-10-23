@@ -18,6 +18,11 @@ import 'timeline/blocks/episodio_banner.dart';
 import 'timeline/blocks/episodio_feed_section.dart';
 import 'timeline/blocks/signos_vitales_episodio_card.dart';
 import 'timeline/capture/capture_actions_bar.dart';
+import 'timeline/capture/capture_analyze_bar.dart';
+import 'timeline/capture/collapsible_section.dart';
+import 'timeline/capture/draft_notes.dart';
+import 'timeline/capture/draft_notes_panel.dart';
+import 'timeline/capture/note_playback_controller.dart';
 import 'timeline/capture/capture_dictation_controller.dart';
 import 'timeline/capture/capture_input_bar.dart';
 import 'timeline/capture/capture_analysis_helpers.dart';
@@ -92,10 +97,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   Map<String, dynamic> get _issueResolutions => _resolutions.issueResolutions;
   Map<String, dynamic> get _openProblemResolutions =>
       _resolutions.openProblemResolutions;
-  bool _editingCaptureDraft = false;
-  EncounterCaptureAnalysis? _editBackupReview;
-  Map<String, dynamic>? _editBackupLastAnalysis;
-  String _editBackupDraft = '';
+  final NotePlaybackController _playback = NotePlaybackController();
+  bool _historyExpanded = true;
+  bool _draftExpanded = true;
+  bool _isAddingNote = false;
   final PendingEncounterCaptureStore _pendingStore =
       PendingEncounterCaptureStore.instance;
   List<PendingEncounterCapture> _pendingCaptures = [];
@@ -104,7 +109,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   final TextEditingController _chatController = TextEditingController();
   final FocusNode _chatFocusNode = FocusNode();
 
-  bool get _captureBusy => _isAnalyzing || _isSaving;
+  bool get _captureBusy => _isAnalyzing || _isSaving || _isAddingNote;
 
   bool get _enRevisionCaptura => _captureReview != null;
   bool get _showCaptureBar {
@@ -209,6 +214,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     _chatController.dispose();
     _chatFocusNode.dispose();
     _resolutions.dispose();
+    _playback.dispose();
     super.dispose();
   }
 
@@ -309,6 +315,15 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                             CarePackCohorteCard(cohorte: _historiaClinicaData!.carePackCohorte!),
                           ],
                         ] else ...[
+                          CollapsibleSection(
+                            title: AppTexts.notesHistoryTitle,
+                            expanded: _historyExpanded,
+                            onToggle: () => setState(
+                              () => _historyExpanded = !_historyExpanded,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
                           if (_historiaClinicaData!
                               .documentacionMedico
                               .tieneDatos) ...[
@@ -358,13 +373,29 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                               CarePackCohorteCard(cohorte: _historiaClinicaData!.carePackCohorte!),
                             ],
                           ],
-                          if (_pendingCaptures.isNotEmpty) ...[
+                              ],
+                            ),
+                          ),
+                          if (_notes.isNotEmpty && !_enRevisionCaptura) ...[
                             BioSpacing.gapH(BioSpacing.md),
-                            PendingCapturesPanel(
-                              items: _visiblePendingCaptures,
-                              busy: _captureBusy,
-                              onPrimaryAction: _onPendingPrimaryAction,
-                              onDelete: (item) => _deletePendingCapture(item.id),
+                            CollapsibleSection(
+                              title: AppTexts.notesDraftTitle,
+                              badge: '${_notes.length}',
+                              expanded: _draftExpanded,
+                              onToggle: () => setState(
+                                () => _draftExpanded = !_draftExpanded,
+                              ),
+                              child: ListenableBuilder(
+                                listenable: _playback,
+                                builder: (context, _) => DraftNotesPanel(
+                                  notes: _notes,
+                                  busy: _captureBusy,
+                                  playingId: _playback.playingId,
+                                  onTogglePlay: _togglePlayNote,
+                                  onDelete: _deleteNote,
+                                  onRetry: _retryNote,
+                                ),
+                              ),
                             ),
                           ],
                           if (_isAnalyzing) ...[
@@ -397,8 +428,20 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                     isSaving: _isSaving,
                     canConfirm: _canConfirmCapture,
                     onConfirm: _confirmarGuardado,
-                    onEdit: _editCaptureDraft,
-                    onDelete: _activePendingId == null || _isSaving ? null : () => _deletePendingCapture(_activePendingId!),
+                    onBackToNotes: _backToNotes,
+                  ),
+                if (!_isLoadedEncounterSummary &&
+                    _showCaptureBar &&
+                    !_enRevisionCaptura &&
+                    _notes.isNotEmpty)
+                  CaptureAnalyzeBar(
+                    noteCount: _notes.length,
+                    enabled: canAnalyzeNotes(_notes) && !_captureBusy,
+                    analyzing: _isAnalyzing,
+                    onAnalyze: _analyzeDraft,
+                    blockedHint: canAnalyzeNotes(_notes)
+                        ? null
+                        : AppTexts.noteAnalyzeBlocked,
                   ),
                 if (!_isLoadedEncounterSummary &&
                     _showCaptureBar &&
@@ -406,14 +449,12 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                   CaptureInputBar(
                     controller: _chatController,
                     focusNode: _chatFocusNode,
-                    onSend: _sendEncounter,
+                    onSend: _addNote,
                     busy: _captureBusy,
                     canCapture: _tieneContextoCaptura,
                     isEpisode: _esCapturaEpisodio,
-                    editingDraft: _editingCaptureDraft,
                     sttStatus: _sttStatus,
                     dictating: _dictating || _audioOnlyRecording,
-                    onCancelEdit: _cancelEditCaptureDraft,
                     onVoice: _tieneContextoCaptura && _sttConfigLoaded && (_sttConfig.deviceEnabled || _sttConfig.serverEnabled) ? _voice.toggle : null,
                   ),
               ],
@@ -488,15 +529,11 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     await _cargarHistoriaClinica();
   }
 
-  // Con análisis listo se muestra como "Nota de esta atención", no como card pendiente.
-  List<PendingEncounterCapture> get _visiblePendingCaptures =>
-      _pendingCaptures.where((e) {
-        if (_enRevisionCaptura && e.id == _activePendingId) return false;
-        final ready =
-            e.status == PendingEncounterCaptureStatus.pendingSave ||
-            e.status == PendingEncounterCaptureStatus.failedSave;
-        return !(ready && e.analysisResponse != null);
-      }).toList();
+  // Notas del borrador: toda la cola local salvo la que se está componiendo ahora.
+  List<PendingEncounterCapture> get _notes => draftNotes(
+    _pendingCaptures,
+    composingId: _enRevisionCaptura ? null : _activePendingId,
+  );
 
   bool get _tieneContextoCaptura =>
       widget.parentType != null &&
@@ -559,7 +596,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       _draftText = null;
       _stagedItemIds = {};
       _clearIssueResolutions();
-      _clearEditBackup();
       _lastDictation = null;
       _sttStatus = '';
       _pendingAudioPath = null;
@@ -678,44 +714,76 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     return item;
   }
 
-  Future<void> _deletePendingCapture(String id) async {
-    final existing = await _pendingStore.getById(id);
+  Future<bool> _confirmDeleteAudio() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text(AppTexts.noteDeleteAudioTitle),
+        content: const Text(AppTexts.noteDeleteAudioBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text(AppTexts.noteCancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text(AppTexts.noteDelete),
+          ),
+        ],
+      ),
+    );
+    return ok == true;
+  }
 
-    // Actualizar estado inmediatamente para evitar doble tap
-    setState(() {
-      _pendingCaptures.removeWhere((item) => item.id == id);
-      if (_activePendingId == id) {
-        _clearCaptureDraft(deleteLocalPending: false);
-      }
-    });
+  Future<void> _deleteNote(PendingEncounterCapture note) async {
+    if (_captureBusy) return;
+    if (note.hasAudio && !await _confirmDeleteAudio()) return;
+    await _playback.stop();
 
-    // Eliminar del backend si tiene serverCaptureId
-    if (existing?.serverCaptureId != null) {
+    if (note.serverCaptureId != null) {
       try {
         await _encounterApi.capturaDescartar(
-          clientCaptureId: id,
-          captureId: existing?.serverCaptureId,
+          clientCaptureId: note.id,
+          captureId: note.serverCaptureId,
         );
-        print(
-          '✓ Captura eliminada del servidor: $id (server: ${existing?.serverCaptureId})',
-        );
-      } catch (e) {
-        print('✗ Error al eliminar captura del servidor: $e');
-        _snack(AppTexts.captureDeleteFailed, UiIntent.danger);
-        // Revertir el cambio local si falló el backend
-        await _loadPendingCaptures();
+      } catch (_) {
+        if (mounted) _snack(AppTexts.captureDeleteFailed, UiIntent.danger);
         return;
       }
     }
+    await _pendingStore.delete(note.id);
 
-    // Eliminar localmente
-    await _pendingStore.delete(id);
-
-    // Recargar desde el servidor para asegurar consistencia
+    // Con una nota menos el análisis visible ya no corresponde al borrador.
+    if (_enRevisionCaptura) _discardReview();
     await _loadPendingCaptures();
+    if (mounted) _snack(AppTexts.captureDeleted, UiIntent.neutral);
+  }
 
-    if (mounted) {
-      _snack(AppTexts.captureDeleted, UiIntent.neutral);
+  /// Cierra la revisión sin tocar las notas, para sumar o borrar notas y volver a analizar.
+  void _discardReview() {
+    setState(() {
+      _captureReview = null;
+      _lastAnalysis = null;
+      _draftText = null;
+      _stagedItemIds = {};
+      _clearIssueResolutions();
+      _activePendingId = null;
+      _sttStatus = '';
+      _draftExpanded = true;
+      _autoOpenedReview = true;
+    });
+  }
+
+  Future<void> _togglePlayNote(PendingEncounterCapture note) async {
+    final path = await _pendingStore.absoluteAudioPath(note);
+    if (path == null) {
+      if (mounted) _snack(AppTexts.noteAudioUnavailable, UiIntent.warning);
+      return;
+    }
+    try {
+      await _playback.toggle(note.id, path);
+    } catch (_) {
+      if (mounted) _snack(AppTexts.noteAudioUnavailable, UiIntent.warning);
     }
   }
 
@@ -788,89 +856,38 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     });
   }
 
-  Future<void> _retryPendingCapture(PendingEncounterCapture item) async {
+  Future<void> _retryNote(PendingEncounterCapture item) async {
     if (_captureBusy) return;
-    await _resumePendingCapture(item);
+    final audioPath = await _pendingStore.absoluteAudioPath(item);
     if (!mounted) return;
-    if (item.status == PendingEncounterCaptureStatus.pendingSave ||
-        item.status == PendingEncounterCaptureStatus.failedSave) {
-      if (_captureReview != null) {
-        if (item.status == PendingEncounterCaptureStatus.failedSave) {
-          await _confirmarGuardado();
-        }
-        // pendingSave: ya quedó en revisión; el usuario confirma desde la barra.
-      }
-      return;
-    }
-    await _analyzeEncounter(fromStatus: item.status, forcePipeline: true);
-  }
-
-  /// Acción primaria del card pendiente según checkpoint.
-  Future<void> _onPendingPrimaryAction(PendingEncounterCapture item) async {
-    if (_captureBusy) return;
-    switch (item.status) {
-      case PendingEncounterCaptureStatus.pendingSave:
-        await _resumePendingCapture(item);
-        return;
-      case PendingEncounterCaptureStatus.failedSave:
-        await _retryPendingCapture(item);
-        return;
-      case PendingEncounterCaptureStatus.draft:
-      case PendingEncounterCaptureStatus.pendingUpload:
-      case PendingEncounterCaptureStatus.pendingStt:
-      case PendingEncounterCaptureStatus.pendingAnalyze:
-        await _retryPendingCapture(item);
-        return;
-    }
-  }
-
-  void _clearEditBackup() {
-    _editingCaptureDraft = false;
-    _editBackupReview = null;
-    _editBackupLastAnalysis = null;
-    _editBackupDraft = '';
-    _resolutions.clearBackup();
-  }
-
-  void _editCaptureDraft() {
-    final draft = _draftText ?? '';
     setState(() {
-      _editBackupReview = _captureReview;
-      _editBackupLastAnalysis = _lastAnalysis;
-      _editBackupDraft = draft;
-      _resolutions.backupAndReset();
-      _editingCaptureDraft = true;
-      _captureReview = null;
-      _lastAnalysis = null;
-      _sttStatus = '';
-      _chatController.text = draft;
+      _activePendingId = item.id;
+      _pendingAudioPath = audioPath;
+      _chatController.text = item.texto.startsWith('(audio') ? '' : item.texto;
     });
-    _chatFocusNode.requestFocus();
+    await _storeActiveNote(fromStatus: item.status, forcePipeline: true);
   }
 
-  void _cancelEditCaptureDraft() {
-    final review = _editBackupReview;
-    final analysis = _editBackupLastAnalysis;
-    final draft = _editBackupDraft;
-    setState(() {
-      _captureReview = review;
-      _lastAnalysis = analysis;
-      _draftText = draft;
-      _resolutions.restoreBackup();
-      _chatController.text = draft;
-      _sttStatus = '';
-      _clearEditBackup();
-    });
+  /// Cierra la revisión para sumar o borrar notas y volver a analizar.
+  void _backToNotes() {
+    if (_isSaving) return;
+    _discardReview();
   }
 
   void _toggleStagedItem(String id, bool selected) {
     setState(() => _resolutions.toggleStagedItem(id, selected));
   }
 
-  Future<void> _analyzeEncounter({
-    PendingEncounterCaptureStatus? fromStatus,
-    bool forcePipeline = false,
-  }) async {
+  /// Agrega la nota escrita o dictada al borrador: la guarda en el teléfono,
+  /// la sube y, si es audio, la transcribe. No analiza.
+  Future<void> _addNote() async {
+    if (!_tieneContextoCaptura) {
+      if (!widget.soloVer) {
+        _snack(AppTexts.captureDefineParent, UiIntent.warning);
+      }
+      return;
+    }
+    if (_enRevisionCaptura || _captureBusy) return;
     if (_dictating || _audioOnlyRecording) {
       await _voice.toggle();
       if (_dictating || _audioOnlyRecording) return;
@@ -885,19 +902,56 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       );
       return;
     }
-    if (!_tieneContextoCaptura) {
-      _snack(AppTexts.captureMissingParent, UiIntent.warning);
+    if (_notes.length >= maxDraftNotes) {
+      _snack(AppTexts.noteLimitReached, UiIntent.warning);
       return;
     }
+    await _storeActiveNote();
+  }
+
+  /// Sube la nota en composición. Si falla queda en la lista con su error para reintentar.
+  Future<void> _storeActiveNote({
+    PendingEncounterCaptureStatus? fromStatus,
+    bool forcePipeline = false,
+  }) async {
+    await _playback.stop();
     setState(() {
-      _isAnalyzing = true;
+      _isAddingNote = true;
       _sttStatus = '';
-      _captureReview = null;
-      _lastAnalysis = null;
-      _draftText = null;
-      _stagedItemIds = {};
-      _clearEditBackup();
     });
+    var stored = false;
+    try {
+      stored = await _uploadActiveNote(
+        fromStatus: fromStatus,
+        forcePipeline: forcePipeline,
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isAddingNote = false;
+          // La nota ya es parte del borrador (lista) tanto si subió como si falló.
+          _activePendingId = null;
+          _lastDictation = null;
+          _pendingAudioPath = null;
+          _chatController.clear();
+          if (stored) {
+            _historyExpanded = false;
+            _draftExpanded = true;
+          }
+        });
+      }
+    }
+  }
+
+  Future<bool> _uploadActiveNote({
+    PendingEncounterCaptureStatus? fromStatus,
+    bool forcePipeline = false,
+  }) async {
+    final text = _chatController.text.trim();
+    if (!_tieneContextoCaptura) {
+      _snack(AppTexts.captureMissingParent, UiIntent.warning);
+      return false;
+    }
 
     final startStatus =
         fromStatus ??
@@ -914,7 +968,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         clearAnalysis: true,
       );
       if (draft == null) {
-        return;
+        return false;
       }
 
       final ctx = await _operationalContextForCapture();
@@ -980,9 +1034,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             status: PendingEncounterCaptureStatus.pendingUpload,
             error: _mensajeErrorCaptura(e),
           );
-          if (!mounted) return;
+          if (!mounted) return false;
           _snack(_mensajeErrorCaptura(e), UiIntent.danger);
-          return;
+          return false;
         }
       }
 
@@ -1037,9 +1091,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             audioUploaded: audioUploaded,
             error: _mensajeErrorCaptura(e),
           );
-          if (!mounted) return;
+          if (!mounted) return false;
           _snack(_mensajeErrorCaptura(e), UiIntent.danger);
-          return;
+          return false;
         }
       }
 
@@ -1054,7 +1108,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           error: message,
         );
         if (mounted) _snack(message, UiIntent.warning);
-        return;
+        return false;
       }
 
       if (transcript.trim().isEmpty) {
@@ -1065,57 +1119,89 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           serverStage: stage,
           error: AppTexts.captureNothingToAnalyze,
         );
-        if (!mounted) return;
+        if (!mounted) return false;
         _snack(AppTexts.captureNoText, UiIntent.warning);
-        return;
+        return false;
       }
 
+      if (stage == 'UPLOADED' || stage == 'STT_FAILED') {
+        stage = 'TRANSCRIBED';
+      }
+      await _persistLocalDraft(
+        texto: transcript,
+        status: PendingEncounterCaptureStatus.pendingAnalyze,
+        serverCaptureId: serverId,
+        serverStage: stage ?? 'TRANSCRIBED',
+        audioUploaded: audioUploaded,
+        clearError: true,
+      );
+      return true;
+    } catch (e, st) {
+      debugPrint('[captura] subir nota falló: $e\n$st');
+      try {
+        await _persistLocalDraft(
+          texto: text.isEmpty ? '(audio pendiente de transcribir)' : text,
+          status: PendingEncounterCaptureStatus.pendingUpload,
+          error: _mensajeErrorCaptura(e),
+        );
+      } catch (_) {}
+      if (!mounted) return false;
+      _snack(_mensajeErrorCaptura(e), UiIntent.danger);
+      return false;
+    } finally {
+      await _loadPendingCaptures();
+    }
+  }
+
+  /// Analiza todas las notas del borrador juntas con una sola llamada.
+  Future<void> _analyzeDraft() async {
+    final notes = _notes;
+    if (_captureBusy || !canAnalyzeNotes(notes)) return;
+    final primary = primaryNote(notes);
+    if (primary == null) return;
+    await _playback.stop();
+    setState(() {
+      _isAnalyzing = true;
+      _sttStatus = '';
+    });
+    try {
+      final ctx = await _operationalContextForCapture();
       final analyzed = await _encounterApi.capturaAnalizar(
-        clientCaptureId: draft.id,
-        captureId: serverId,
-        transcript: transcript,
-        force: fromStatus == PendingEncounterCaptureStatus.pendingAnalyze,
+        clientCaptureId: primary.id,
+        captureId: primary.serverCaptureId,
+        batchClientCaptureIds: batchClientIds(notes),
+        force: true,
         userPerTabConfig: ctx,
       );
       final snap = CaptureServerSnapshot.fromResponse(analyzed);
       final analysisPayload = buildAnalysisPayload(analyzed, snap);
-      if (snap != null) {
-        stage = snap.stage;
-        serverId = snap.id;
-      }
-
       if (!mounted) return;
       final review = EncounterCaptureAnalysis.fromApiResponse(analysisPayload);
       final staged = defaultStagedItems(review);
+      _activePendingId = primary.id;
       await _persistLocalDraft(
-        texto: transcript,
+        texto: primary.texto,
         status: PendingEncounterCaptureStatus.pendingSave,
         analysisResponse: analysisPayload,
         stagedItemIds: staged.toList(),
-        serverCaptureId: serverId,
-        serverStage: stage ?? 'READY_FOR_REVIEW',
-        audioUploaded: audioUploaded,
+        serverCaptureId: snap?.id ?? primary.serverCaptureId,
+        serverStage: snap?.stage ?? 'READY_FOR_REVIEW',
+        audioUploaded: primary.audioUploaded,
         clearError: true,
       );
+      if (!mounted) return;
       setState(() {
         _lastAnalysis = analysisPayload;
-        _draftText = transcript;
+        _draftText = review.textoOriginal;
         _captureReview = review;
         _clearIssueResolutions();
-        _clearEditBackup();
         _stagedItemIds = staged;
-        _chatController.clear();
+        _historyExpanded = false;
         _sttStatus = '';
       });
     } catch (e, st) {
-      debugPrint('[captura] analizar falló: $e\n$st');
-      try {
-        await _persistLocalDraft(
-          texto: text.isEmpty ? '(audio pendiente de transcribir)' : text,
-          status: PendingEncounterCaptureStatus.pendingAnalyze,
-          error: _mensajeErrorCaptura(e),
-        );
-      } catch (_) {}
+      debugPrint('[captura] analizar borrador falló: $e\n$st');
+      _activePendingId = null;
       if (!mounted) return;
       _snack(_mensajeErrorCaptura(e), UiIntent.danger);
     } finally {
@@ -1224,10 +1310,12 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           conditionResolutions[parts[1]] = value;
         }
       });
+      final batchIds = batchClientIds(_notes);
       Map<String, dynamic> guardado;
       if (clientId != null && clientId.isNotEmpty) {
         final out = await _encounterApi.capturaGuardar(
           clientCaptureId: clientId,
+          batchClientCaptureIds: batchIds.length > 1 ? batchIds : null,
           datosExtraidos: extraidos,
           // Draft en servidor: el pipeline usa el análisis persistido; no reenviar backup.
           stagedItemIds: _stagedItemIds.toList(),
@@ -1280,11 +1368,12 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         );
       }
       final doneId = _activePendingId;
+      final doneIds = <String>{...batchClientIds(_notes), ?doneId};
       _clearCaptureDraft(deleteLocalPending: false);
-      if (doneId != null) {
-        await _pendingStore.delete(doneId);
-        await _loadPendingCaptures();
+      for (final id in doneIds) {
+        await _pendingStore.delete(id);
       }
+      if (doneIds.isNotEmpty) await _loadPendingCaptures();
       if (!mounted) return;
       // El aviso de éxito lo muestra la pantalla anterior (home / agenda).
       Navigator.of(context).pop(true);
@@ -1322,20 +1411,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       intent: intent,
       detalle: detalle,
     );
-  }
-
-  Future<void> _sendEncounter() async {
-    if (!_tieneContextoCaptura) {
-      if (!widget.soloVer) {
-        _snack(
-          AppTexts.captureDefineParent,
-          UiIntent.warning,
-        );
-      }
-      return;
-    }
-    if (_enRevisionCaptura) return;
-    await _analyzeEncounter();
   }
 
   void _onIssueOption(EncounterCaptureIssue issue, dynamic value, bool wasSelected) {

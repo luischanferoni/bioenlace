@@ -168,6 +168,7 @@ class EncounterCaptureApi {
     int? captureId,
     String? transcript,
     bool force = false,
+    List<String>? batchClientCaptureIds,
     Map<String, dynamic>? userPerTabConfig,
   }) async {
     final body = <String, dynamic>{
@@ -175,6 +176,8 @@ class EncounterCaptureApi {
       if (captureId != null) 'capture_id': captureId,
       if (transcript != null && transcript.isNotEmpty) 'transcript': transcript,
       if (force) 'force': true,
+      if (batchClientCaptureIds != null && batchClientCaptureIds.isNotEmpty)
+        'batch_client_capture_ids': batchClientCaptureIds,
       if (userPerTabConfig != null && userPerTabConfig.isNotEmpty)
         'userPerTabConfig': userPerTabConfig,
     };
@@ -202,10 +205,13 @@ class EncounterCaptureApi {
     Map<String, dynamic>? resolutions,
     bool completeAcute = true,
     bool continueTreatment = false,
+    List<String>? batchClientCaptureIds,
   }) async {
     final body = <String, dynamic>{
       if (clientCaptureId != null) 'client_capture_id': clientCaptureId,
       if (captureId != null) 'capture_id': captureId,
+      if (batchClientCaptureIds != null && batchClientCaptureIds.isNotEmpty)
+        'batch_client_capture_ids': batchClientCaptureIds,
       'datosExtraidos': datosExtraidos,
       if (analisisDatosExtraidos != null && analisisDatosExtraidos.isNotEmpty)
         'analisis_datos_extraidos': analisisDatosExtraidos,

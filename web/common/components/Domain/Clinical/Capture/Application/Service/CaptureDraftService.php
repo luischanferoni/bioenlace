@@ -80,6 +80,64 @@ final class CaptureDraftService
 
 
     /**
+     * Texto de un lote de notas (la captura principal incluida), en el orden recibido.
+     * Todas deben ser abiertas, del mismo paciente y del mismo profesional.
+     *
+     * @param list<string> $clientIds
+     * @throws ApiException
+     */
+    public function batchTranscript(ClinicalCapture $primary, array $clientIds): string
+    {
+        if (!in_array($primary->clientCaptureId(), $clientIds, true)) {
+            throw $this->failure('capture_conflict', null, ['detail' => 'La captura principal no forma parte del lote.']);
+        }
+
+        $texts = [];
+        foreach ($clientIds as $clientId) {
+            $note = $clientId === $primary->clientCaptureId()
+                ? $primary
+                : $this->captures->findByClientCaptureId($clientId);
+            if ($note === null) {
+                throw $this->failure('capture_not_found');
+            }
+            if (!$note->isOpen()
+                || $note->subjectPersonaId() !== $primary->subjectPersonaId()
+                || $note->createdByUserId() !== $primary->createdByUserId()
+            ) {
+                throw $this->failure('capture_conflict', null, ['detail' => 'Una de las notas no pertenece a este borrador.']);
+            }
+            $texts[] = (string) $note->transcript();
+        }
+
+        return CaptureBatchTextComposer::compose($texts);
+    }
+
+    /**
+     * Completa las notas acompañantes del lote una vez guardada la principal.
+     *
+     * @param list<string> $clientIds
+     */
+    public function completeBatchCompanions(ClinicalCapture $primary, array $clientIds, ?int $encounterId): void
+    {
+        foreach ($clientIds as $clientId) {
+            if ($clientId === $primary->clientCaptureId()) {
+                continue;
+            }
+            $note = $this->captures->findByClientCaptureId($clientId);
+            if ($note === null
+                || !$note->isOpen()
+                || $note->subjectPersonaId() !== $primary->subjectPersonaId()
+                || $note->createdByUserId() !== $primary->createdByUserId()
+            ) {
+                continue;
+            }
+            $note->complete($encounterId);
+            $row = $this->persistDomain($note);
+            $this->deleteAudioFile($row);
+        }
+    }
+
+    /**
      * Persiste el aggregate y devuelve el AR para audit / respuesta API.
      */
     public function persistDomain(ClinicalCapture $domain): EncounterCapture

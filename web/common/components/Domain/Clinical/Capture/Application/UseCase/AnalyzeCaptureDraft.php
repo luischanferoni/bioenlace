@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Clinical\Capture\Application\UseCase;
 
+use common\components\Domain\Clinical\Capture\Application\Service\CaptureBatchTextComposer;
 use common\components\Domain\Clinical\Capture\Application\Service\CaptureDraftService;
 use common\components\Domain\Clinical\Capture\Application\UseCase\AnalyzeClinicalNote;
 use common\components\Domain\Clinical\Capture\Domain\Model\ClinicalCaptureStage;
@@ -32,15 +33,23 @@ final class AnalyzeCaptureDraft
         $domain = $this->draft->captureRows()->toAggregate($capture);
 
         $transcriptOverride = trim((string) ($body['transcript'] ?? ''));
-        if ($transcriptOverride !== '') {
+        $batchIds = CaptureBatchTextComposer::clientIdsFromBody($body);
+        $isBatch = $batchIds !== [];
+        if ($transcriptOverride !== '' && !$isBatch) {
             $domain->setTranscriptOverride($transcriptOverride);
         }
 
-        if (!$domain->hasTranscript()) {
+        // En un lote, el texto es la unión de las notas; la principal conserva su propia transcripción.
+        $analysisText = $isBatch
+            ? $this->draft->batchTranscript($domain, $batchIds)
+            : (string) $domain->transcript();
+
+        if (!$isBatch && !$domain->hasTranscript()) {
             throw $this->draft->failure('capture_no_transcript', $capture);
         }
 
-        if ($domain->stage() === ClinicalCaptureStage::READY_FOR_REVIEW
+        if (!$isBatch
+            && $domain->stage() === ClinicalCaptureStage::READY_FOR_REVIEW
             && $domain->analysisResponse() !== []
             && empty($body['force'])
         ) {
@@ -48,7 +57,7 @@ final class AnalyzeCaptureDraft
         }
 
         $analyzeBody = $body;
-        $analyzeBody['transcript'] = $domain->transcript();
+        $analyzeBody['transcript'] = $analysisText;
         $analyzeBody['id_persona'] = $domain->subjectPersonaId();
         $analyzeBody['subject_persona_id'] = $domain->subjectPersonaId();
         if ($domain->parentType() !== null) {
@@ -59,7 +68,7 @@ final class AnalyzeCaptureDraft
         }
         unset($analyzeBody['audio'], $analyzeBody['audio_data'], $analyzeBody['file']);
         $analyzeBody['stt'] = array_merge($domain->sttMeta(), [
-            'text' => $domain->transcript(),
+            'text' => $analysisText,
             'force_server' => false,
         ]);
 
@@ -78,7 +87,7 @@ final class AnalyzeCaptureDraft
 
         $textoProcesado = isset($out['texto_procesado'])
             ? (string) $out['texto_procesado']
-            : (string) $domain->transcript();
+            : $analysisText;
         $extraidos = $this->draft->extractDatosExtraidos($out);
         $snapshot = $out;
         unset($snapshot['html']);

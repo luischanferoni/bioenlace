@@ -17,10 +17,6 @@ class CaptureResolutionState {
 
   final Map<String, TextEditingController> _customControllers = {};
 
-  Set<String> _backupStaged = {};
-  Map<String, dynamic> _backupIssues = {};
-  Map<String, dynamic> _backupOpenProblems = {};
-
   TextEditingController customController(String issueId) =>
       _customControllers.putIfAbsent(issueId, () => TextEditingController());
 
@@ -35,28 +31,6 @@ class CaptureResolutionState {
     _customControllers.clear();
     issueResolutions = {};
     openProblemResolutions = {};
-  }
-
-  /// Guarda una copia para poder volver atrás y vacía el estado actual.
-  void backupAndReset() {
-    _backupStaged = Set<String>.from(stagedItemIds);
-    _backupIssues = Map<String, dynamic>.from(issueResolutions);
-    _backupOpenProblems = Map<String, dynamic>.from(openProblemResolutions);
-    stagedItemIds = {};
-    clearResolutions();
-  }
-
-  void restoreBackup() {
-    stagedItemIds = Set<String>.from(_backupStaged);
-    issueResolutions = Map<String, dynamic>.from(_backupIssues);
-    openProblemResolutions = Map<String, dynamic>.from(_backupOpenProblems);
-    clearBackup();
-  }
-
-  void clearBackup() {
-    _backupStaged = {};
-    _backupIssues = {};
-    _backupOpenProblems = {};
   }
 
   void toggleStagedItem(String id, bool selected) {

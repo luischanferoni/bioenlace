@@ -37,6 +37,15 @@ Los clientes de chat y acciones async interpretan los errores estándar con `Api
 
 `flutter analyze` sin avisos nuevos, tests de shared y contadores de móvil en su nuevo tope.
 
+## Captura multinota (N notas → 1 análisis)
+
+- Cada nota (texto o audio) es inmutable: solo se puede escuchar (audio) y eliminar (con confirmación si es audio). Tope: 10 notas / 8.000 caracteres (`capture_batch_too_many`, `capture_batch_too_long`).
+- Agregar una nota la guarda y la sube (y transcribe) sin analizar; la historia se contrae y aparece el borrador expandible. Un único botón «Analizar» al final envía todas las notas al prompt `capture-extraction` en una sola llamada.
+- Contrato: `capturaAnalizar` y `capturaGuardar` aceptan `batch_client_capture_ids`; la nota más antigua es la principal y lleva el análisis. Backend: `CaptureBatchTextComposer` (concatena `[Nota N]`), `CaptureDraftService::batchTranscript` y `completeBatchCompanions`.
+- El borrador sobrevive al cierre de la app (cola local `PendingEncounterCaptureStore`).
+- Limitación conocida: «Volver a las notas» no reinicia el análisis del servidor; la captura principal queda en READY_FOR_REVIEW y reabrir la pantalla puede mostrar la revisión anterior hasta re-analizar.
+- Pendiente: prueba manual del reproductor de audio en un dispositivo y correr Codeception (PHP 8.1+) incluyendo `CaptureBatchTextComposerTest`.
+
 ## Dirección del timeline (decisión del usuario)
 
 El timeline no necesita un motor como el del asistente (ese era solo un ejemplo). La historia clínica tiene un esqueleto conocido y fijo (condición actual, signos vitales, diagnósticos, medicación) que se renderiza con widgets concretos y modelos tipados. Lo que cambia por especialidad son bloques adicionales.

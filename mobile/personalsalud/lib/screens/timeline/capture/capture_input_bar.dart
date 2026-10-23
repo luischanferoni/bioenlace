@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
-import '../../../infra/app_texts.dart';
 
 /// Barra de entrada de la captura: texto, dictado y estado de transcripción.
 class CaptureInputBar extends StatelessWidget {
@@ -13,10 +12,8 @@ class CaptureInputBar extends StatelessWidget {
     required this.busy,
     required this.canCapture,
     required this.isEpisode,
-    required this.editingDraft,
     required this.sttStatus,
     required this.dictating,
-    this.onCancelEdit,
     this.onVoice,
   });
 
@@ -26,10 +23,8 @@ class CaptureInputBar extends StatelessWidget {
   final bool busy;
   final bool canCapture;
   final bool isEpisode;
-  final bool editingDraft;
   final String sttStatus;
   final bool dictating;
-  final VoidCallback? onCancelEdit;
   final VoidCallback? onVoice;
 
   @override
@@ -38,22 +33,6 @@ class CaptureInputBar extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (editingDraft)
-          Padding(
-            padding: const EdgeInsets.only(
-              left: BioSpacing.sm,
-              right: BioSpacing.sm,
-              bottom: BioSpacing.xs,
-            ),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed: busy ? null : onCancelEdit,
-                icon: const Icon(Icons.arrow_back, size: 18),
-                label: const Text(AppTexts.captureCancelEdit),
-              ),
-            ),
-          ),
         if (sttStatus.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(
@@ -71,7 +50,7 @@ class CaptureInputBar extends StatelessWidget {
           focusNode: focusNode,
           onSend: onSend,
           isSending: busy,
-          sendIcon: Icons.fact_check_outlined,
+          sendIcon: Icons.playlist_add,
           hintText: canCapture
               ? (isEpisode ? 'Dictar o escribir la evolución…' : 'Dictar o escribir la consulta…')
               : (isEpisode ? 'Escribir evolución…' : 'Escribir consulta…'),

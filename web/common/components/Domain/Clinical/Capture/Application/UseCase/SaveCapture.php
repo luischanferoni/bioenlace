@@ -3,6 +3,7 @@
 namespace common\components\Domain\Clinical\Capture\Application\UseCase;
 
 use common\components\Domain\Clinical\Capture\Application\Service\RowContractService;
+use common\components\Domain\Clinical\Capture\Application\Service\CaptureBatchTextComposer;
 use common\components\Domain\Clinical\Capture\Application\Service\CaptureDraftService;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EncounterCaptureReviewPresenter;
 use common\models\Clinical\EncounterCaptureAudit;
@@ -175,6 +176,10 @@ final class SaveCapture
         $encounterId = isset($out['encounter_id']) ? (int) $out['encounter_id'] : null;
         $domain->complete($encounterId);
         $capture = $this->draft->persistDomain($domain);
+        $batchIds = CaptureBatchTextComposer::clientIdsFromBody($body);
+        if ($batchIds !== []) {
+            $this->draft->completeBatchCompanions($domain, $batchIds, $encounterId);
+        }
         $this->draft->audit()->record($capture, EncounterCaptureAudit::EVENT_SAVED, array_merge(
             ['attempts_save' => $domain->attemptsSave()],
             $acceptanceMeta

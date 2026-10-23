@@ -64,6 +64,30 @@ class AppTexts {
   static const vitalsTriageHint = 'Enteros de 2–3 dígitos. TA sys 50–250 · TA dia 30–150 · FC 20–250.';
   static const pendingCapturesTitle = 'Notas pendientes en el teléfono';
   static const pendingCaptureItem = 'Nota pendiente';
+  static const notesDraftTitle = 'Notas del borrador';
+  static const notesHistoryTitle = 'Historia clínica';
+  static const notesExpand = 'Expandir';
+  static const notesCollapse = 'Contraer';
+  static const noteAudio = 'Nota de audio';
+  static const noteText = 'Nota de texto';
+  static const noteWaitingText = 'Esperando el texto';
+  static const noteDelete = 'Borrar';
+  static const noteCancel = 'Cancelar';
+  static const noteRetry = 'Reintentar';
+  static const notePlay = 'Escuchar';
+  static const noteStop = 'Detener';
+  static const noteAudioUnavailable = 'El audio ya no está en este teléfono.';
+  static const noteDeleteAudioTitle = 'Borrar el audio';
+  static const noteDeleteAudioBody =
+      'El audio se elimina y no se puede recuperar. ¿Querés borrarlo?';
+  static const noteLimitReached =
+      'Llegaste al máximo de notas. Analizalas o borrá alguna.';
+  static const noteAnalyzeBlocked =
+      'Hay notas sin texto: reintentá o borralas para analizar.';
+  static const noteBackToNotes = 'Volver a las notas';
+  static String noteAnalyzeButton(int count) =>
+      count == 1 ? 'Analizar la nota' : 'Analizar $count notas';
+  static String noteOrdinal(int index) => 'Nota $index';
   static const audioRecordingNotStarted =
       'El navegador no inició la grabación. Verificá el micrófono y el permiso de acceso.';
   static const dniScanHint = 'Apuntá la cámara al código de barras del dorso del DNI.';

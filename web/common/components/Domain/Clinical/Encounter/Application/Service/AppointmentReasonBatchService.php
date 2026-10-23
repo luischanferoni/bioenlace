@@ -8,6 +8,7 @@
 namespace common\components\Domain\Clinical\Encounter\Application\Service;
 
 use common\components\Domain\Clinical\Encounter\Application\Service\PatientAiContextService;
+use common\components\Platform\Ai\Prompt\YamlPrompt;
 use common\components\Platform\Ai\IAManager;
 use common\components\Platform\Ai\SpeechToText\SpeechToTextManager;
 use common\components\Platform\Ai\SpeechToText\SttConfigService;
@@ -18,6 +19,8 @@ use Yii;
 
 final class AppointmentReasonBatchService
 {
+    private const SUMMARY_PROMPT = __DIR__ . '/../Prompt/appointment-reason-summary.yaml';
+
     /**
      * @return array{ok: bool, message: string, summary?: string}
      */
@@ -260,37 +263,17 @@ final class AppointmentReasonBatchService
 
         $imagenBlock = '';
         if ($input['imagenes'] !== []) {
-            $imagenBlock = "Imágenes adjuntas (usá solo estos marcadores en el resumen, sin nombres de archivo):\n";
+            $imagenBlock = YamlPrompt::text(self::SUMMARY_PROMPT, 'image_header') . "\n";
             foreach ($input['imagenes'] as $img) {
                 $imagenBlock .= '- [' . $img['ref'] . "]\n";
             }
         }
 
-        $prompt = <<<PROMPT
-Sos un asistente clínico. El paciente cargó motivos de consulta antes del turno.
-PROMPT;
-
-        if ($patientBlock !== '') {
-            $prompt .= "\n\n" . $patientBlock;
-        }
-
-        if ($imagenBlock !== '') {
-            $prompt .= "\n\n" . $imagenBlock;
-        }
-
-        $prompt .= <<<PROMPT
-
-
-Mensajes del paciente:
----
-{$input['transcript']}
----
-
-Redactá un resumen breve en español para el médico:
-1) Un párrafo en prosa clara con el motivo y síntomas ("El paciente observa…", "Refiere…"). No copies el formato "usuario: mensaje".
-2) Si hay imágenes, una segunda línea exacta: "Adjunta las siguientes imágenes: [imagen1] [imagen2]…" usando solo los marcadores indicados.
-Sin diagnósticos ni tratamientos. Sin markdown ni JSON.
-PROMPT;
+        $prompt = YamlPrompt::render(self::SUMMARY_PROMPT, [
+            'patient_block' => $patientBlock !== '' ? "\n\n" . $patientBlock : '',
+            'image_block' => $imagenBlock !== '' ? "\n\n" . $imagenBlock : '',
+            'transcript' => (string) $input['transcript'],
+        ]);
 
         $raw = IAManager::consultarIA($prompt, 'encounter-reasons-batch', 'analysis');
         $text = self::extractTextFromIaResult($raw);

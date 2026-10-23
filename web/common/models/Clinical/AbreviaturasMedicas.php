@@ -2,6 +2,7 @@
 
 namespace common\models\Clinical;
 
+use common\components\Platform\Ai\Prompt\YamlPrompt;
 use Yii;
 
 /**
@@ -431,14 +432,15 @@ class AbreviaturasMedicas extends \yii\db\ActiveRecord
                 $opciones[] = $simil->expansion_completa;
             }
             
-            $prompt = "Eres un especialista médico. Dada la abreviatura '{$abreviatura->abreviatura}' en el siguiente contexto, elige la expansión más apropiada:\n\n";
-            $prompt .= "Contexto: {$contexto}\n\n";
-            $prompt .= "Opciones:\n";
+            $lista = '';
             foreach ($opciones as $i => $opcion) {
-                $prompt .= ($i + 1) . ". {$opcion}\n";
+                $lista .= ($i + 1) . ". {$opcion}\n";
             }
-            $prompt .= "\nResponde SOLO con el número de la opción correcta:";
-            
+            $prompt = YamlPrompt::render(dirname(__DIR__, 2) . '/components/Platform/Ai/Prompt/abbreviation-disambiguation.yaml', [
+                'abreviatura' => (string) $abreviatura->abreviatura,
+                'contexto' => (string) $contexto,
+                'opciones' => $lista,
+            ]);
             // Usar IAManager para consultar LLM
             $respuesta = \Yii::$app->iamanager->consultarLLM($prompt);
             

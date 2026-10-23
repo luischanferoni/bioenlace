@@ -43,6 +43,12 @@ $counters = [
         'ext' => ['php'],
         'regex' => '/((?<!Api)Exception\(\s*[\'"]|[\'"]message[\'"]\s*=>\s*[\'"])/u',
     ],
+    'php_embedded_prompts' => [
+        'desc' => 'Prompts de IA embebidos en PHP (deben vivir en YAML, como Guide y Preprocess)',
+        'roots' => ['web/common/components', 'web/common/models', 'web/frontend/modules/api'],
+        'ext' => ['php'],
+        'regex' => '/(Sos (un|una|el) |Eres (un|una) |Actu[aá] como )/u',
+    ],
     'mobile_literal_ui_text' => [
         'desc' => 'Textos de usuario literales en Dart (Text, SnackBar, _snack)',
         'roots' => $dartRoots,

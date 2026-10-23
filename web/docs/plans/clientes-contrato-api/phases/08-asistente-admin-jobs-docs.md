@@ -9,6 +9,7 @@ Cerrar las superficies restantes del asistente, jobs y documentación; alinear l
 - Asistente: mensajes de sistema en YAML, `client_open` para las pantallas nuevas, prompts con el glosario de la fase 2.
 - Admin (MVC): revisar controladores, servicios y vistas del panel para alinear la terminología/copy con el glosario. No requiere integrar el panel con la API ni adoptar su contrato de respuesta.
 - Notificaciones push y mensajes de jobs: textos desde catálogo YAML (hoy en servicios con «Consulta» en el nombre).
+- Prompts de IA: un YAML por contexto junto a su módulo (`version`, `template` con placeholders `{nombre}` y `texts`). Hecho: `Platform/Ai/Prompt/YamlPrompt` (loader que falla si falta o sobra un valor), `medical-word-correction` e `abbreviation-disambiguation` (Platform/Ai/Prompt), `appointment-reason-summary` y `appointment-reason-insights` (Encounter/Application/Prompt) y `care-pack` (CareCohort/Application/Prompt). Los textos se copiaron sin cambios y se verificó con un script que el prompt armado es idéntico byte a byte al anterior (con y sin bloques opcionales). El audit `php_embedded_prompts` quedó en 0 y su tope impide volver a embeber prompts. Falta correr `YamlPromptTest` (no corre en este entorno).
 - Actualizar `web/docs/` (producto, arquitectura, decisions) y las reglas de `.cursor/rules`.
 - Revisar README de `common/components/` y enlaces que apunten a nombres renombrados.
 

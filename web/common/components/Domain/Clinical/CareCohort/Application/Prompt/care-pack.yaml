@@ -1,0 +1,28 @@
+# Tipo: prompt
+# Propósito: generar un pack reutilizable de cohorte (preguntas, seguimiento o educación).
+# Consumidor: CarePackPromptService
+# Placeholders: profile_json, encounter_hint, delta_hint, context_block, schema
+version: 1
+
+template: |-
+  Sos un asistente clínico de Bioenlace. Generá un pack reutilizable para pacientes con el mismo perfil de cohorte (no personalices nombres ni fechas).
+
+  Perfil de cohorte (JSON):
+  {profile_json}
+  {encounter_hint}
+  {delta_hint}
+
+  {context_block}
+
+  {schema}
+
+  Respondé ÚNICAMENTE con JSON válido, sin markdown ni texto adicional.
+
+texts:
+  delta_header: "Adaptación delta — respuestas del paciente que no encajan en el pack base:"
+  delta_footer: "Generá preguntas de seguimiento adicionales o reformuladas para ESTE caso (máx. 5)."
+  encounter_id_label: "Encounter id:"
+  encounter_reason_label: "Motivo/resumen:"
+  schema_assistance_questions: 'Esquema: {"version":1,"questions":[{"id":"q1","text":"...","answer_type":"choice|text|scale","options":["..."],"required":true}],"notes_for_staff":"..."} — entre 5 y 10 preguntas clínicamente relevantes para esta cohorte.'
+  schema_followup_program: 'Esquema: {"version":1,"touchpoints":[{"delay_days":3,"title":"...","purpose":"evolution|education","form_kind":"evolution_short|adherence|symptoms","education_refs":["m1"]}],"alert_rules":[{"signal":"worsening","action":"notify_staff"}]} — 2 a 4 touchpoints.'
+  schema_education_bundle: 'Esquema: {"version":1,"modules":[{"id":"m1","title":"...","summary":"...","bullet_points":["..."],"when_to_seek_care":"..."}]} — 2 a 5 módulos breves en español claro.'

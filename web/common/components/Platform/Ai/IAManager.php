@@ -3,6 +3,7 @@
 namespace common\components\Platform\Ai;
 
 use Yii;
+use common\components\Platform\Ai\Prompt\YamlPrompt;
 use common\components\Platform\Core\Db\BioenlaceDb;
 use yii\httpclient\Client;
 use common\components\Platform\Ai\HuggingFace\HuggingFaceRateLimiter;
@@ -1033,15 +1034,11 @@ class IAManager
                 return null;
             }
             // Mejor prompt que enfatiza el contexto
-            $prompt = "Eres un especialista médico en {$especialidad}. Analiza la siguiente oración médica y corrige SOLO la palabra indicada si tiene un error ortográfico. Si la palabra está correcta en el contexto, no la cambies.\n\n";
-            $prompt .= "Oración: {$contexto}\n";
-            $prompt .= "Palabra a revisar: {$palabra}\n";
-            $prompt .= "Instrucciones:\n";
-            $prompt .= "- Si la palabra tiene un error ortográfico, responde SOLO con la palabra corregida\n";
-            $prompt .= "- Si la palabra está correcta (incluyendo preposiciones, artículos, etc.), responde con la misma palabra\n";
-            $prompt .= "- Considera el contexto médico de la oración\n";
-            $prompt .= "Corrección:";
-
+            $prompt = YamlPrompt::render(__DIR__ . '/Prompt/medical-word-correction.yaml', [
+                'especialidad' => (string) $especialidad,
+                'contexto' => (string) $contexto,
+                'palabra' => (string) $palabra,
+            ]);
             $endpoint = \Yii::$app->params['hf_endpoint'] ?? 'https://router.huggingface.co/hf-inference/PlanTL-GOB-ES/roberta-base-biomedical-clinical-es';
             $apiKey = \Yii::$app->params['hf_api_key'] ?? '';
 

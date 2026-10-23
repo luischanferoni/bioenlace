@@ -3,6 +3,7 @@
 namespace common\components\Domain\Clinical\Encounter\Application\Service;
 
 use common\components\Domain\Clinical\Encounter\Application\Service\PatientAiContextService;
+use common\components\Platform\Ai\Prompt\YamlPrompt;
 use common\components\Platform\Ai\IAManager;
 use common\models\Clinical\Encounter;
 use Yii;
@@ -12,6 +13,8 @@ use Yii;
  */
 final class AppointmentReasonClinicalInsightsService
 {
+    private const INSIGHTS_PROMPT = __DIR__ . '/../Prompt/appointment-reason-insights.yaml';
+
     /**
      * @return array{
      *   diagnosticos_sugeridos: list<array{termino: string, codigo_snomed: string|null, justificacion: string}>,
@@ -72,34 +75,10 @@ final class AppointmentReasonClinicalInsightsService
             );
         }
 
-        $prompt = <<<PROMPT
-Sos un asistente clínico de apoyo al médico (no reemplazás criterio profesional).
-
-Resumen de motivos de consulta del paciente:
----
-{$motivosResumen}
----
-PROMPT;
-
-        if ($patientBlock !== '') {
-            $prompt .= "\n\n" . $patientBlock;
-        }
-
-        $prompt .= <<<PROMPT
-
-
-Con el resumen y el contexto del paciente, proponé orientación PRELIMINAR para la apertura de la consulta.
-Responde ÚNICAMENTE con JSON válido (sin markdown):
-{
-  "diagnosticos_sugeridos": [
-    {"termino": "...", "codigo_snomed": null, "justificacion": "breve"}
-  ],
-  "practicas_sugeridas": [
-    {"termino": "...", "tipo": "estudio|procedimiento|control", "justificacion": "breve"}
-  ]
-}
-Reglas: máximo 5 ítems por lista; hipótesis razonables, no afirmativas; sin recetas ni dosis.
-PROMPT;
+        $prompt = YamlPrompt::render(self::INSIGHTS_PROMPT, [
+            'motivos_resumen' => $motivosResumen,
+            'patient_block' => $patientBlock !== '' ? "\n\n" . $patientBlock : '',
+        ]);
 
         $raw = IAManager::consultarIA($prompt, 'encounter-reasons-insights', 'analysis');
 

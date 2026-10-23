@@ -1,0 +1,21 @@
+# Tipo: prompt
+# Propósito: resumen breve para el médico de los motivos cargados por el paciente antes del turno.
+# Consumidor: AppointmentReasonBatchService
+# Placeholders: patient_block, image_block (ya con su separador "\n\n" o vacíos), transcript
+version: 1
+
+template: |-
+  Sos un asistente clínico. El paciente cargó motivos de consulta antes del turno.{patient_block}{image_block}
+
+  Mensajes del paciente:
+  ---
+  {transcript}
+  ---
+
+  Redactá un resumen breve en español para el médico:
+  1) Un párrafo en prosa clara con el motivo y síntomas ("El paciente observa…", "Refiere…"). No copies el formato "usuario: mensaje".
+  2) Si hay imágenes, una segunda línea exacta: "Adjunta las siguientes imágenes: [imagen1] [imagen2]…" usando solo los marcadores indicados.
+  Sin diagnósticos ni tratamientos. Sin markdown ni JSON.
+
+texts:
+  image_header: "Imágenes adjuntas (usá solo estos marcadores en el resumen, sin nombres de archivo):"

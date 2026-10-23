@@ -20,7 +20,7 @@ El chat del asistente y el modelo `Message` también se centralizaron en shared.
 
 Los clientes de chat y acciones async interpretan los errores estándar con `ApiContractException` y devuelven `message` más el objeto estructurado (`code`, `intent`, `retryable` y `field_errors`) para que los consumidores existentes sigan funcionando y los nuevos puedan reaccionar a metadata sin inspeccionar texto. Las respuestas legacy `{success, message}` se conservan durante esta migración; falta generalizar este comportamiento al resto de clientes móviles y centralizar su transporte.
 
-`userFriendlyErrorMessage` e `isRetryableNetworkError` (shared) ya no interpretan el texto de las excepciones: un `ApiContractException` muestra su `message` tal cual y usa su `retryable`; los fallos de transporte se clasifican por tipo (`TimeoutException`, `SocketException`, `TlsException`, `http.ClientException`, `FormatException`). Las descargas de PDF de receta y laboratorio lanzan `ApiContractException` con el mensaje del backend en lugar de `HTTP nnn`. Prueba: `shared/test/text/user_friendly_error_test.dart`. Quedan el cliente HTTP único (muchos servicios siguen llamando a `http` directo) y el timeline en componentes.
+`userFriendlyErrorMessage` e `isRetryableNetworkError` (shared) ya no interpretan el texto de las excepciones: un `ApiContractException` muestra su `message` tal cual y usa su `retryable`; los fallos de transporte se clasifican por tipo (`TimeoutException`, `SocketException`, `TlsException`, `http.ClientException`, `FormatException`). Las descargas de PDF de receta y laboratorio lanzan `ApiContractException` con el mensaje del backend en lugar de `HTTP nnn`. Prueba: `shared/test/text/user_friendly_error_test.dart`. Cliente HTTP único: `ApiClient` (`mobile/packages/shared/lib/http/api_client.dart`) arma headers, aplica timeout, decodifica y traduce todo fallo a `ApiContractException`; acepta un `http.Client` inyectable. `CarePlanService` y `CarePlanReminderApi` y `EncounterPatientSummaryApi` y `AssistantPatientPreferencesApi` ya lo usan (GET, POST y PUT) y `shared/test/http/api_client_test.dart` cubre headers, query, error del contrato y respuestas no JSON. Faltan migrar los servicios que aún llaman a `http` directo (46 archivos importan `package:http`), por tandas y conservando la forma de respuesta de cada uno (por ejemplo `PacienteContextApi` devuelve `data` y `meta` y sus llamadores dependen de ello). Queda también el timeline en componentes.
 
 ## Tareas
 
@@ -36,3 +36,15 @@ Los clientes de chat y acciones async interpretan los errores estándar con `Api
 ## Criterio de salida
 
 `flutter analyze` sin avisos nuevos, tests de shared y contadores de móvil en su nuevo tope.
+
+## Dirección del timeline (decisión del usuario)
+
+El timeline no necesita un motor como el del asistente (ese era solo un ejemplo). La historia clínica tiene un esqueleto conocido y fijo (condición actual, signos vitales, diagnósticos, medicación) que se renderiza con widgets concretos y modelos tipados. Lo que cambia por especialidad son bloques adicionales.
+
+- Bloques comunes: widget propio por bloque, un archivo cada uno.
+- Bloques desconocidos o nuevos: el backend los envía como sección simple (título más campos o ítems) y `ClinicalSectionList` (`mobile/packages/shared/lib/clinical/sections/`) los muestra como texto, sin publicar una versión de la app. Ya lo usan la documentación de la consulta y el contexto de internación.
+- Bloques con UI propia (odontograma, agudeza visual): widget concreto, agregado cuando exista la especialidad. Si crecen, se evalúa un registro; hoy no hace falta.
+- Si una especialidad no encaja en el esqueleto (veterinaria), se hace otro timeline completo.
+- Estructura por capas objetivo: modelos del contrato, servicio sobre `ApiClient`, controlador de estado, widgets por bloque, pantalla delgada. `patient_timeline_screen.dart` (~3.300 líneas) debe reducirse en esa dirección. Los signos vitales del episodio siguen con su modelo propio.
+
+Extraídos de `patient_timeline_screen.dart` a `mobile/personalsalud/lib/screens/timeline/blocks/`: cabecera del paciente, documentación de la consulta, signos vitales, información médica (condición actual) y motivos de intake (la pantalla pasó de 3.275 líneas). También signos vitales del episodio y feed de hitos (`EpisodioFeedSection`, el filtro lo conserva la pantalla); banner del episodio (`EpisodioBanner`; la navegación de sus acciones sigue en la pantalla), motivos de consulta y cohorte; cola de capturas pendientes y tarjeta de análisis (`timeline/capture/pending_captures_panel.dart`); panel de revisión de la captura (`timeline/capture/capture_review_panel.dart`, sin estado propio: recibe selecciones y notifica por callback); la pantalla queda en ~1.960 líneas. Faltan la barra de acciones y los módulos de captura, chat y voz.

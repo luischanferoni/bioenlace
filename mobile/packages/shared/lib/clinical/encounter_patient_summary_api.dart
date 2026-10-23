@@ -1,23 +1,26 @@
-import 'dart:convert';
-
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../config/api_config.dart';
-import '../http/api_contract.dart';
+import '../http/api_client.dart';
 
 /// API JSON de resúmenes de atención publicados (paciente).
 class EncounterPatientSummaryApi {
   final String? authToken;
+  final http.Client? httpClient;
 
-  EncounterPatientSummaryApi({this.authToken});
+  EncounterPatientSummaryApi({this.authToken, this.httpClient});
 
-  Future<String?> _effectiveToken() async {
-    if (authToken != null && authToken!.isNotEmpty) {
-      return authToken;
+  Future<ApiClient> _api() async {
+    var token = authToken;
+    if (token == null || token.isEmpty) {
+      final prefs = await SharedPreferences.getInstance();
+      token = prefs.getString('auth_token');
     }
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('auth_token');
+    return ApiClient(
+      authToken: token,
+      appClient: 'paciente-flutter',
+      client: httpClient,
+    );
   }
 
   Future<Map<String, dynamic>> list({
@@ -25,67 +28,25 @@ class EncounterPatientSummaryApi {
     int offset = 0,
     int? subjectPersonaId,
   }) async {
-    final token = await _effectiveToken();
-    final params = <String, String>{
-      'limit': '$limit',
-      'offset': '$offset',
-      if (subjectPersonaId != null && subjectPersonaId > 0)
-        'subject_persona_id': '$subjectPersonaId',
-    };
-    final uri = Uri.parse(
-      '${AppConfig.apiUrl}/clinical/encounter/listar-atenciones-como-paciente',
-    ).replace(queryParameters: params);
-    final response = await http
-        .get(
-          uri,
-          headers: AppConfig.jsonHeaders(
-            bearerToken: token,
-            appClient: 'paciente-flutter',
-          ),
-        )
-        .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-
-    return _decode(response);
+    return (await _api()).getData(
+      '/clinical/encounter/listar-atenciones-como-paciente',
+      query: {
+        'limit': '$limit',
+        'offset': '$offset',
+        if (subjectPersonaId != null && subjectPersonaId > 0)
+          'subject_persona_id': '$subjectPersonaId',
+      },
+    );
   }
 
   Future<Map<String, dynamic>> fetchDetail(int encounterId) async {
-    final token = await _effectiveToken();
-    final uri = Uri.parse(
-      '${AppConfig.apiUrl}/clinical/encounter/ver-resumen-como-paciente?encounter_id=$encounterId',
+    return (await _api()).getData(
+      '/clinical/encounter/ver-resumen-como-paciente',
+      query: {'encounter_id': '$encounterId'},
     );
-    final response = await http
-        .get(
-          uri,
-          headers: AppConfig.jsonHeaders(
-            bearerToken: token,
-            appClient: 'paciente-flutter',
-          ),
-        )
-        .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-
-    return _decodeData(response);
   }
 
   Future<Map<String, dynamic>> fetchLatest() async {
-    final token = await _effectiveToken();
-    final uri = Uri.parse(
-      '${AppConfig.apiUrl}/clinical/encounter/ultima-atencion-como-paciente',
-    );
-    final response = await http
-        .get(
-          uri,
-          headers: AppConfig.jsonHeaders(
-            bearerToken: token,
-            appClient: 'paciente-flutter',
-          ),
-        )
-        .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-
-    return _decodeData(response);
+    return (await _api()).getData('/clinical/encounter/ultima-atencion-como-paciente');
   }
-
-  Map<String, dynamic> _decode(http.Response response) =>
-      unwrapApiContract(json.decode(response.body), response.statusCode);
-
-  Map<String, dynamic> _decodeData(http.Response response) => _decode(response);
 }

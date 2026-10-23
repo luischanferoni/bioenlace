@@ -8,12 +8,23 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/encounter_capture_analysis.dart';
 import '../models/pending_encounter_capture.dart';
-import '../models/timeline_event.dart';
 import '../infra/app_texts.dart';
 import '../services/historia_clinica_service.dart';
 import '../services/emergency_guardia_api.dart';
 import '../services/pending_encounter_capture_store.dart';
 import 'emergency/emergency_triage_screen.dart';
+import 'timeline/blocks/care_pack_cohorte_card.dart';
+import 'timeline/blocks/documentacion_medico_card.dart';
+import 'timeline/blocks/encounter_reasons_card.dart';
+import 'timeline/blocks/episodio_banner.dart';
+import 'timeline/blocks/episodio_feed_section.dart';
+import 'timeline/blocks/signos_vitales_episodio_card.dart';
+import 'timeline/capture/capture_review_panel.dart';
+import 'timeline/capture/pending_captures_panel.dart';
+import 'timeline/blocks/informacion_medica_card.dart';
+import 'timeline/blocks/motivos_intake_card.dart';
+import 'timeline/blocks/paciente_header_card.dart';
+import 'timeline/blocks/signos_vitales_card.dart';
 
 class PatientTimelineScreen extends StatefulWidget {
   final int personaId;
@@ -356,13 +367,13 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _buildPacienteHeader(_historiaClinicaData!.persona),
+                        PacienteHeaderCard(persona: _historiaClinicaData!.persona, showDemographics: !_isLoadedEncounterSummary),
                         if (_isLoadedEncounterSummary) ...[
                           if (_historiaClinicaData!
                               .documentacionMedico
                               .tieneDatos) ...[
                             BioSpacing.gapH(BioSpacing.md),
-                            _buildDocumentacionMedico(
+                            DocumentacionMedicoCard(doc:
                               _historiaClinicaData!.documentacionMedico,
                             ),
                           ],
@@ -372,7 +383,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                                   ?.tieneContenido ==
                               true) ...[
                             BioSpacing.gapH(BioSpacing.md),
-                            _buildMotivosIntake(
+                            MotivosIntakeCard(intake:
                               _historiaClinicaData!
                                   .patientEncounterReasons
                                   .motivosIntake!,
@@ -385,48 +396,42 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                               .trim()
                               .isNotEmpty) ...[
                             BioSpacing.gapH(BioSpacing.md),
-                            _buildEncounterReasons(_historiaClinicaData!),
+                            EncounterReasonsCard(hc: _historiaClinicaData!, authToken: widget.authToken),
                           ],
                           if (_historiaClinicaData!
                                   .carePackCohorte
                                   ?.tieneContenido ==
                               true) ...[
                             BioSpacing.gapH(BioSpacing.md),
-                            _buildCarePackCohorte(
-                              _historiaClinicaData!.carePackCohorte!,
-                            ),
+                            CarePackCohorteCard(cohorte: _historiaClinicaData!.carePackCohorte!),
                           ],
                         ] else ...[
                           if (_historiaClinicaData!
                               .documentacionMedico
                               .tieneDatos) ...[
                             BioSpacing.gapH(BioSpacing.md),
-                            _buildDocumentacionMedico(
+                            DocumentacionMedicoCard(doc:
                               _historiaClinicaData!.documentacionMedico,
                             ),
                           ],
                           BioSpacing.gapH(BioSpacing.md),
-                          _buildInformacionMedica(
+                          InformacionMedicaCard(info:
                             _historiaClinicaData!.informacionMedica,
                           ),
                           BioSpacing.gapH(BioSpacing.md),
                           if (_esCapturaEpisodio)
-                            _buildSignosVitalesEpisodio(
+                            SignosVitalesEpisodioCard(data:
                               _historiaClinicaData!.signosVitalesEpisodio,
                             )
                           else
-                            _buildSignosVitales(
+                            SignosVitalesCard(sv:
                               _historiaClinicaData!.signosVitales,
                             ),
                           if (_esCapturaEpisodio) ...[
                             BioSpacing.gapH(BioSpacing.md),
-                            _buildEpisodioBanner(
-                              _historiaClinicaData!.contextoEpisodio,
-                            ),
+                            EpisodioBanner(ctx: _historiaClinicaData!.contextoEpisodio, onAction: _onEpisodioAccion),
                             BioSpacing.gapH(BioSpacing.md),
-                            _buildTimelineEpisodio(
-                              _historiaClinicaData!.timelineEpisodio,
-                            ),
+                            EpisodioFeedSection(feed: _historiaClinicaData!.timelineEpisodio, selectedFilterId: _tlEpisodioFilter, onFilterChanged: (id) => setState(() => _tlEpisodioFilter = id)),
                           ] else ...[
                             BioSpacing.gapH(BioSpacing.md),
                             if (_historiaClinicaData!
@@ -434,35 +439,50 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                                     .motivosIntake
                                     ?.tieneContenido ==
                                 true) ...[
-                              _buildMotivosIntake(
+                              MotivosIntakeCard(intake:
                                 _historiaClinicaData!
                                     .patientEncounterReasons
                                     .motivosIntake!,
                               ),
                               BioSpacing.gapH(BioSpacing.md),
                             ],
-                            _buildEncounterReasons(_historiaClinicaData!),
+                            EncounterReasonsCard(hc: _historiaClinicaData!, authToken: widget.authToken),
                             if (_historiaClinicaData!
                                     .carePackCohorte
                                     ?.tieneContenido ==
                                 true) ...[
                               BioSpacing.gapH(BioSpacing.md),
-                              _buildCarePackCohorte(
-                                _historiaClinicaData!.carePackCohorte!,
-                              ),
+                              CarePackCohorteCard(cohorte: _historiaClinicaData!.carePackCohorte!),
                             ],
                           ],
                           if (_pendingCaptures.isNotEmpty) ...[
                             BioSpacing.gapH(BioSpacing.md),
-                            _buildPendingCapturesPanel(),
+                            PendingCapturesPanel(
+                              items: _visiblePendingCaptures,
+                              busy: _captureBusy,
+                              onPrimaryAction: _onPendingPrimaryAction,
+                              onDelete: (item) => _deletePendingCapture(item.id),
+                            ),
                           ],
                           if (_isAnalyzing) ...[
                             BioSpacing.gapH(BioSpacing.md),
-                            _buildAnalyzingCard(),
+                            const AnalyzingCaptureCard(),
                           ],
                           if (_captureReview != null) ...[
                             BioSpacing.gapH(BioSpacing.md),
-                            _buildCaptureReviewPanel(_captureReview!),
+                            CaptureReviewPanel(
+                              review: _captureReview!,
+                              draftText: _draftText,
+                              stagedItemIds: _stagedItemIds,
+                              issueResolutions: _issueResolutions,
+                              openProblemResolutions: _openProblemResolutions,
+                              isSaving: _isSaving,
+                              customController: _issueCustomController,
+                              onToggleItem: _toggleStagedItem,
+                              onIssueOption: _onIssueOption,
+                              onIssueCustomText: _onIssueCustomText,
+                              onOpenProblemOption: _onOpenProblemOption,
+                            ),
                           ],
                         ],
                       ],
@@ -480,669 +500,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     );
   }
 
-  Widget _buildPacienteHeader(PersonaData persona) {
-    final meta = <String>[];
-    if (!_isLoadedEncounterSummary && persona.edad != null) {
-      meta.add('${persona.edad} años');
-    }
-    final genero = (persona.generoTexto ?? '').trim();
-    if (!_isLoadedEncounterSummary && genero.isNotEmpty) {
-      meta.add(genero);
-    }
 
-    return BioCard.intent(
-      intent: UiIntent.primary,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Text(persona.nombreCompleto, style: BioTypography.h3),
-          ),
-          if (meta.isNotEmpty) ...[
-            BioSpacing.gapW(BioSpacing.sm),
-            Text(
-              meta.join(' · '),
-              style: BioTypography.title.copyWith(color: context.bio.textMuted),
-              textAlign: TextAlign.right,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDocumentacionMedico(DocumentacionMedico doc) {
-    return BioCard.intent(
-      intent: UiIntent.success,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(AppTexts.timelineLoadedData, style: BioTypography.title),
-          BioSpacing.gapH(BioSpacing.md),
-          if (!doc.tieneDatos || doc.secciones.isEmpty)
-            Text(
-              'Sin datos registrados en esta consulta.',
-              style: BioTypography.bodySm,
-            )
-          else
-            ...doc.secciones.map(
-              (seccion) => Padding(
-                padding: const EdgeInsets.only(bottom: BioSpacing.md),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(seccion.titulo, style: BioTypography.overline),
-                    BioSpacing.gapH(BioSpacing.xs),
-                    if (seccion.fields.isNotEmpty)
-                      ...seccion.fields.map(
-                        (field) => Padding(
-                          padding: const EdgeInsets.only(bottom: BioSpacing.xs),
-                          child: Text(
-                            [
-                              if (field.label.isNotEmpty) '${field.label}:',
-                              field.value,
-                              if (field.unit != null) field.unit!,
-                            ].join(' '),
-                            style: BioTypography.body,
-                          ),
-                        ),
-                      )
-                    else
-                      ...seccion.items.map(
-                        (item) => Padding(
-                          padding: const EdgeInsets.only(bottom: BioSpacing.xs),
-                          child: Text(item, style: BioTypography.body),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  String? _signoValorNodo(dynamic node, String key) {
-    if (node is! Map) return null;
-    final v = node[key];
-    if (v == null) return null;
-    final s = v.toString().trim();
-    return s.isEmpty ? null : s;
-  }
-
-  Widget _buildSignosVitales(SignosVitalesClinica sv) {
-    final u = sv.ultimosSv;
-    final peso = _signoValorNodo(u?['peso'], 'value');
-    final talla = _signoValorNodo(u?['talla'], 'value');
-    final imc = _signoValorNodo(u?['imc'], 'value');
-    String? tension;
-    final ta = u?['ta'];
-    if (ta is Map) {
-      final sys = ta['sistolica']?.toString().trim() ?? '';
-      final dia = ta['diastolica']?.toString().trim() ?? '';
-      if (sys.isNotEmpty && dia.isNotEmpty) {
-        tension = '$sys/$dia mmHg';
-      }
-    }
-    final hayResumen =
-        peso != null || talla != null || imc != null || tension != null;
-
-    final titulo = sv.fechaTitulo.isNotEmpty
-        ? 'Signos vitales actuales (${sv.fechaTitulo})'
-        : 'Signos vitales actuales';
-
-    return BioCard.intent(
-      intent: UiIntent.info,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(titulo, style: BioTypography.title),
-          BioSpacing.gapH(BioSpacing.md),
-          if (!hayResumen)
-            Text(AppTexts.noData, style: BioTypography.bodySm)
-          else
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (peso != null)
-                  Text(AppTexts.timelineWeightKg(peso), style: BioTypography.body),
-                if (talla != null)
-                  Text(AppTexts.timelineHeightCm(talla), style: BioTypography.body),
-                if (imc != null) Text(AppTexts.timelineBmiValue(imc), style: BioTypography.body),
-                if (tension != null)
-                  Text(AppTexts.timelineBloodPressureValue(tension), style: BioTypography.body),
-              ],
-            ),
-          if (sv.datosSv.isNotEmpty &&
-              (sv.tieneMasSv || sv.datosSv.length > 1)) ...[
-            BioSpacing.gapH(BioSpacing.md),
-            ExpansionTile(
-              tilePadding: EdgeInsets.zero,
-              title: Text(
-                'Historial (${sv.totalSv} registros)',
-                style: BioTypography.title,
-              ),
-              children: [
-                for (final row in sv.datosSv.take(12))
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: BioSpacing.sm),
-                    child: Text(
-                      _formatFilaSignosResumen(row),
-                      style: BioTypography.caption,
-                    ),
-                  ),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  String _formatFilaSignosResumen(Map<String, dynamic> row) {
-    final fechaRaw = row['fecha_atencion'] ?? row['fecha'];
-    final partes = <String>[];
-    if (fechaRaw != null && '$fechaRaw'.trim().isNotEmpty) {
-      partes.add('$fechaRaw');
-    }
-    final ta = row['ta1_sistolica'] != null && row['ta1_diastolica'] != null
-        ? '${row['ta1_sistolica']}/${row['ta1_diastolica']}'
-        : row['ta']?.toString();
-    if (ta != null && ta.trim().isNotEmpty) partes.add('PA $ta');
-    if (row['peso'] != null) partes.add('Peso ${row['peso']}');
-    if (row['talla'] != null) partes.add('Talla ${row['talla']}');
-    return partes.isEmpty ? '—' : partes.join(' · ');
-  }
-
-  Widget _buildInformacionMedica(InformacionMedica info) {
-    final secciones = <({String titulo, List<String> items})>[
-      (
-        titulo: 'Diagnósticos recientes',
-        items: _labelsFromCondiciones(info.condicionesActivas),
-      ),
-      (
-        titulo: 'Condiciones crónicas',
-        items: _labelsFromCondiciones(info.condicionesCronicas),
-      ),
-      (titulo: 'Alergias', items: _labelsFromHallazgos(info.hallazgos)),
-    ];
-
-    return BioCard.intent(
-      intent: UiIntent.warning,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(AppTexts.timelineCurrentCondition, style: BioTypography.title),
-          BioSpacing.gapH(BioSpacing.lg),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              const spacing = BioSpacing.md;
-              const minCardWidth = 148.0;
-              final maxColumns =
-                  ((constraints.maxWidth + spacing) / (minCardWidth + spacing))
-                      .floor()
-                      .clamp(1, 4);
-              final cardWidth =
-                  (constraints.maxWidth - spacing * (maxColumns - 1)) /
-                  maxColumns;
-
-              return Wrap(
-                spacing: spacing,
-                runSpacing: spacing,
-                children: [
-                  for (final seccion in secciones)
-                    SizedBox(
-                      width: cardWidth,
-                      child: _buildSeccionInfo(seccion.titulo, seccion.items),
-                    ),
-                ],
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  List<String> _labelsFromCondiciones(List<Condicion> items) {
-    return items
-        .map((c) => c.termino?.trim())
-        .whereType<String>()
-        .where((t) => t.isNotEmpty)
-        .toList();
-  }
-
-  List<String> _labelsFromHallazgos(List<Hallazgo> items) {
-    return items
-        .map((h) => h.termino?.trim())
-        .whereType<String>()
-        .where((t) => t.isNotEmpty)
-        .toList();
-  }
-
-  Widget _buildSeccionInfo(String titulo, List<String> items) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(BioSpacing.sm),
-      decoration: BoxDecoration(
-        color: context.bio.paperSurfaceSunken,
-        borderRadius: BorderRadius.circular(BioRadius.sm),
-        border: Border.all(
-          color: context.bio.paperBorderDefault,
-          width: BorderWidth.thin,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(titulo, style: BioTypography.overline),
-          BioSpacing.gapH(BioSpacing.sm),
-          if (items.isEmpty)
-            Text(AppTexts.noData, style: BioTypography.bodySm)
-          else
-            Wrap(
-              spacing: BioSpacing.xs,
-              runSpacing: BioSpacing.xs,
-              children: items
-                  .map((item) => BioBadge.info(item.toUpperCase()))
-                  .toList(),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMotivosIntake(MotivosIntakeStaff intake) {
-    return BioCard.intent(
-      intent: UiIntent.info,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(AppTexts.timelineIntakeTitle, style: BioTypography.title),
-          if (intake.title != null && intake.title!.trim().isNotEmpty) ...[
-            BioSpacing.gapH(BioSpacing.xs),
-            Text(
-              intake.title!.trim(),
-              style: BioTypography.caption.copyWith(
-                color: context.bio.textMuted,
-              ),
-            ),
-          ],
-          BioSpacing.gapH(BioSpacing.md),
-          if (intake.notesForStaff != null &&
-              intake.notesForStaff!.trim().isNotEmpty) ...[
-            Text(AppTexts.timelineGuidance, style: BioTypography.overline),
-            BioSpacing.gapH(BioSpacing.xs),
-            Text(intake.notesForStaff!.trim(), style: BioTypography.bodySm),
-            BioSpacing.gapH(BioSpacing.md),
-          ],
-          if (intake.answers.isEmpty)
-            Text(
-              intake.status == 'submitted'
-                  ? 'Respuestas registradas sin detalle disponible.'
-                  : 'El paciente aún no completó las preguntas previas.',
-              style: BioTypography.bodySm,
-            )
-          else ...[
-            Text(AppTexts.timelinePatientAnswers, style: BioTypography.overline),
-            BioSpacing.gapH(BioSpacing.sm),
-            ...intake.answers.map(
-              (a) => Padding(
-                padding: const EdgeInsets.only(bottom: BioSpacing.sm),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(a.question, style: BioTypography.bodySm),
-                    BioSpacing.gapH(BioSpacing.xs),
-                    Text(a.answer, style: BioTypography.body),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSignosVitalesEpisodio(SignosVitalesEpisodio? sv) {
-    final tiene = sv != null && sv.tieneDatos;
-    final ultimos =
-        sv?.ultimos ?? const <String, SignosVitalesEpisodioUltimo>{};
-    final chips = <Widget>[];
-    void addChip(String text, UiIntent intent) {
-      chips.add(BioBadge(label: text, intent: intent));
-    }
-
-    for (final ultimo in ultimos.values) {
-      if (ultimo.value == null || ultimo.label == null) continue;
-      final unit = ultimo.unit ?? '';
-      addChip(
-        '${ultimo.label}: ${ultimo.value}'
-        '${unit.isNotEmpty ? ' $unit' : ''}'
-        '${ultimo.at != null ? ' · ${ultimo.at}' : ''}',
-        ultimo.intent,
-      );
-    }
-
-    final genericFields = sv?.sections
-        .expand((section) => section.fields)
-        .where((field) => field.value != null)
-        .toList();
-    if (genericFields != null && genericFields.isNotEmpty) {
-      chips.clear();
-      for (final field in genericFields) {
-        final latest = ultimos[field.key];
-        final numericValue = field.value!;
-        final value =
-            field.format == 'integer' &&
-                numericValue == numericValue.truncateToDouble()
-            ? numericValue.toInt().toString()
-            : numericValue.toString();
-        addChip(
-          '${field.label}: $value'
-          '${field.unit.isNotEmpty ? ' ${field.unit}' : ''}'
-          '${latest?.at != null ? ' · ${latest!.at}' : ''}',
-          field.intent,
-        );
-      }
-    }
-
-    return BioCard.intent(
-      intent: UiIntent.info,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Signos vitales actuales',
-                  style: BioTypography.title,
-                ),
-              ),
-              if (sv != null && sv.totalPoints > 0)
-                Text(
-                  '${sv.totalPoints} medición${sv.totalPoints == 1 ? '' : 'es'}',
-                  style: BioTypography.caption.copyWith(
-                    color: context.bio.textMuted,
-                  ),
-                ),
-            ],
-          ),
-          BioSpacing.gapH(BioSpacing.md),
-          if (!tiene)
-            Text(
-              'Sin signos vitales. Se cargan en la captura de la consulta (texto/audio) o en el triage de admisión.',
-              style: BioTypography.bodySm.copyWith(
-                color: context.bio.textMuted,
-              ),
-            )
-          else ...[
-            if (chips.isNotEmpty)
-              Wrap(
-                spacing: BioSpacing.xs,
-                runSpacing: BioSpacing.xs,
-                children: chips,
-              ),
-            if (sv!.series.isNotEmpty) ...[
-              BioSpacing.gapH(BioSpacing.md),
-              ExpansionTile(
-                tilePadding: EdgeInsets.zero,
-                title: Text(
-                  'Historial (${sv.totalPoints} mediciones)',
-                  style: BioTypography.title,
-                ),
-                children: [
-                  for (final s in sv.series) ...[
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: BioSpacing.xs),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: BioBadge(
-                          label:
-                              '${s.label.isNotEmpty ? s.label : s.metric}'
-                              '${s.unit.isNotEmpty ? ' (${s.unit})' : ''}',
-                          intent: s.intent,
-                        ),
-                      ),
-                    ),
-                    for (final p in s.points.reversed.take(5))
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 2),
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            '${p.at}: ${p.value}${s.unit.isNotEmpty ? ' ${s.unit}' : ''}'
-                            '${p.source.isNotEmpty ? ' · ${p.source}' : ''}',
-                            style: BioTypography.caption.copyWith(
-                              color: context.bio.textMuted,
-                            ),
-                          ),
-                        ),
-                      ),
-                    BioSpacing.gapH(BioSpacing.xs),
-                  ],
-                ],
-              ),
-            ],
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTimelineEpisodio(TimelineEpisodioFeed? feed) {
-    final all = feed?.items ?? const <TimelineEpisodioItem>[];
-    final filters = feed?.filters ?? const <TimelineEpisodioFilter>[];
-    TimelineEpisodioFilter? selectedFilter;
-    for (final filter in filters) {
-      if (filter.id == _tlEpisodioFilter) {
-        selectedFilter = filter;
-        break;
-      }
-    }
-    selectedFilter ??= filters.isEmpty ? null : filters.first;
-    final allowed = selectedFilter?.types;
-    final items = allowed == null
-        ? all
-        : all.where((e) => allowed.contains(e.type)).toList();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(AppTexts.timelineEpisodeRecord, style: BioTypography.title),
-            ),
-            if (all.isNotEmpty)
-              Text(
-                '${all.length} hito${all.length == 1 ? '' : 's'}',
-                style: BioTypography.caption.copyWith(
-                  color: context.bio.textMuted,
-                ),
-              ),
-          ],
-        ),
-        BioSpacing.gapH(BioSpacing.sm),
-        Wrap(
-          spacing: BioSpacing.xs,
-          runSpacing: BioSpacing.xs,
-          children: [
-            for (final f in filters)
-              ChoiceChip(
-                label: Text(f.label),
-                selected: selectedFilter?.id == f.id,
-                onSelected: (_) {
-                  setState(() => _tlEpisodioFilter = f.id);
-                },
-              ),
-          ],
-        ),
-        BioSpacing.gapH(BioSpacing.sm),
-        if (items.isEmpty)
-          Text(
-            all.isEmpty
-                ? 'Sin hitos registrados en este episodio.'
-                : 'Sin hitos para este filtro.',
-            style: BioTypography.bodySm.copyWith(color: context.bio.textMuted),
-          )
-        else
-          for (final it in items) ...[
-            BioCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Wrap(
-                    spacing: BioSpacing.xs,
-                    runSpacing: BioSpacing.xs,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      BioBadge(label: it.typeLabel, intent: it.intent),
-                      if (it.occurredAt.isNotEmpty)
-                        Text(
-                          formatEpisodioFecha(it.occurredAt),
-                          style: BioTypography.caption.copyWith(
-                            color: context.bio.textMuted,
-                          ),
-                        ),
-                      if (it.actorNombre != null && it.actorNombre!.isNotEmpty)
-                        Text(
-                          it.actorNombre!,
-                          style: BioTypography.caption.copyWith(
-                            color: context.bio.textMuted,
-                          ),
-                        ),
-                    ],
-                  ),
-                  BioSpacing.gapH(BioSpacing.xs),
-                  Text(it.summary, style: BioTypography.body),
-                ],
-              ),
-            ),
-            BioSpacing.gapH(BioSpacing.sm),
-          ],
-      ],
-    );
-  }
-
-  Widget _buildEpisodioBanner(ContextoEpisodioHistoria? ctx) {
-    final tituloTipo = ctx?.tipoLabel ?? 'Episodio';
-    final tituloParts = <String>[tituloTipo];
-    if (ctx?.ingresoAt != null && ctx!.ingresoAt!.isNotEmpty) {
-      tituloParts.add('Ingreso ${formatEpisodioFecha(ctx.ingresoAt)}');
-    }
-
-    final estado = ctx?.estadoLabel ?? ctx?.estado ?? 'En curso';
-    final motivo = (ctx?.motivo != null && ctx!.motivo!.isNotEmpty)
-        ? ctx.motivo!
-        : 'Sin motivo registrado';
-    final triageScale =
-        (ctx?.triageScale != null && ctx!.triageScale!.isNotEmpty)
-        ? ctx.triageScale!
-        : null;
-    final triageLevel = ctx?.triageLevel;
-    final triageLabel =
-        ctx?.triageLevelLabel ??
-        (triageLevel != null ? 'Nivel $triageLevel' : null);
-
-    Widget metaCell(String label, String value) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label.toUpperCase(),
-            style: BioTypography.caption.copyWith(
-              color: context.bio.textMuted,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          Text(value, style: BioTypography.body),
-        ],
-      );
-    }
-
-    Widget triageBadge() {
-      final rawColor = ctx?.triageLevelColor ?? '';
-      final bg = RegExp(r'^#[0-9a-fA-F]{6}$').hasMatch(rawColor)
-          ? Color(int.parse('FF${rawColor.substring(1)}', radix: 16))
-          : Colors.grey.shade300;
-      final fg = bg.computeLuminance() < 0.5 ? Colors.white : Colors.black87;
-      return Container(
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(BioRadius.xs),
-        ),
-        padding: const EdgeInsets.symmetric(
-          horizontal: BioSpacing.sm,
-          vertical: 2,
-        ),
-        child: Text(
-          triageLabel ?? 'Triage',
-          style: BioTypography.caption.copyWith(
-            color: fg,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      );
-    }
-
-    return BioCard.intent(
-      intent: ctx?.intent ?? UiIntent.neutral,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (triageLevel != null) ...[
-            Wrap(
-              spacing: BioSpacing.xs,
-              runSpacing: BioSpacing.xs,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                triageBadge(),
-                if (triageScale != null)
-                  Text(
-                    triageScale,
-                    style: BioTypography.caption.copyWith(
-                      color: context.bio.textMuted,
-                    ),
-                  ),
-              ],
-            ),
-            BioSpacing.gapH(BioSpacing.sm),
-          ],
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: metaCell('Episodio', tituloParts.join(' · '))),
-              BioSpacing.gapW(BioSpacing.md),
-              Expanded(child: metaCell('Estado', estado)),
-            ],
-          ),
-          BioSpacing.gapH(BioSpacing.sm),
-          metaCell('Motivo / ingreso', motivo),
-          if (ctx != null && ctx.acciones.isNotEmpty) ...[
-            BioSpacing.gapH(BioSpacing.sm),
-            Wrap(
-              spacing: BioSpacing.xs,
-              runSpacing: BioSpacing.xs,
-              children: [
-                for (final a in ctx.acciones)
-                  BioButton(
-                    label: a.label,
-                    intent: a.intent,
-                    variant: a.variant,
-                    size: BioButtonSize.sm,
-                    onPressed: () => _onEpisodioAccion(a),
-                  ),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
 
   Future<void> _onEpisodioAccion(EpisodioAccionHistoria accion) async {
     if (accion.kind == 'native_triage') {
@@ -1209,217 +567,15 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     await _cargarHistoriaClinica();
   }
 
-  Widget _buildEncounterReasons(HistoriaClinicaResponse hc) {
-    final mp = hc.patientEncounterReasons;
-    final resumen =
-        (mp.resumen ??
-                mp.resumenIa ??
-                hc.informacionMedica.encounterReasonSummary ??
-                '')
-            .trim();
-    final hayResumen = resumen.isNotEmpty;
-    final sugerencias = mp.sugerenciasClinicas;
-    final turnoCtx = mp.turno;
-    final subtituloTurno = turnoCtx != null && turnoCtx.etiquetaCorta.isNotEmpty
-        ? 'Turno ${turnoCtx.etiquetaCorta}'
-        : (mp.turnoId != null ? 'Turno #${mp.turnoId}' : null);
-
-    return BioCard.intent(
-      intent: UiIntent.success,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(AppTexts.timelineReasonsTitle, style: BioTypography.title),
-          if (subtituloTurno != null) ...[
-            BioSpacing.gapH(BioSpacing.xs),
-            Text(
-              subtituloTurno,
-              style: BioTypography.caption.copyWith(
-                color: context.bio.textMuted,
-              ),
-            ),
-          ],
-          BioSpacing.gapH(BioSpacing.md),
-          if (hayResumen) ...[
-            Text(AppTexts.timelineSummary, style: BioTypography.overline),
-            BioSpacing.gapH(BioSpacing.xs),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: _buildResumenConImagenes(resumen, mp.imagenesAdjuntas),
-            ),
-          ] else if (mp.resumenPendiente)
-            Text(
-              'Generando resumen… Actualizá en unos segundos.',
-              style: BioTypography.bodySm,
-            )
-          else
-            Text(
-              'Sin motivos registrados para esta consulta.',
-              style: BioTypography.bodySm,
-            ),
-          if (sugerencias != null && sugerencias.tieneContenido) ...[
-            BioSpacing.gapH(BioSpacing.lg),
-            Text(
-              'Orientación según motivos del paciente',
-              style: BioTypography.overline,
-            ),
-            if (sugerencias.diagnosticos.isNotEmpty) ...[
-              BioSpacing.gapH(BioSpacing.sm),
-              Text(AppTexts.timelineDiagnoses, style: BioTypography.bodySm),
-              BioSpacing.gapH(BioSpacing.xs),
-              ...sugerencias.diagnosticos.map(
-                (d) => Padding(
-                  padding: const EdgeInsets.only(bottom: BioSpacing.xs),
-                  child: Text(
-                    '• ${d.termino}${d.justificacion != null && d.justificacion!.isNotEmpty ? ' — ${d.justificacion}' : ''}',
-                    style: BioTypography.bodySm,
-                  ),
-                ),
-              ),
-            ],
-            if (sugerencias.practicas.isNotEmpty) ...[
-              BioSpacing.gapH(BioSpacing.sm),
-              Text(AppTexts.timelinePractices, style: BioTypography.bodySm),
-              BioSpacing.gapH(BioSpacing.xs),
-              ...sugerencias.practicas.map(
-                (p) => Padding(
-                  padding: const EdgeInsets.only(bottom: BioSpacing.xs),
-                  child: Text(
-                    '• ${p.termino}${p.justificacion != null && p.justificacion!.isNotEmpty ? ' — ${p.justificacion}' : ''}',
-                    style: BioTypography.bodySm,
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCarePackCohorte(CarePackCohorteStaff cohorte) {
-    final assistance = cohorte.assistance;
-    final profile = cohorte.cohortProfile;
-    final profileParts = <String>[];
-    if (profile != null) {
-      for (final key in [
-        'life_stage',
-        'sexo',
-        'motive_cluster',
-        'jurisdiction',
-      ]) {
-        final val = profile[key]?.toString().trim();
-        if (val != null && val.isNotEmpty) {
-          profileParts.add(val);
-        }
-      }
-    }
-
-    return BioCard.intent(
-      intent: UiIntent.info,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(AppTexts.timelinePreconsult, style: BioTypography.title),
-          if (cohorte.cohortKeyShort != null &&
-              cohorte.cohortKeyShort!.isNotEmpty) ...[
-            BioSpacing.gapH(BioSpacing.xs),
-            Text(
-              'Cohorte ${cohorte.cohortKeyShort}',
-              style: BioTypography.caption.copyWith(
-                color: context.bio.textMuted,
-              ),
-            ),
-          ],
-          if (profileParts.isNotEmpty) ...[
-            BioSpacing.gapH(BioSpacing.xs),
-            Text(profileParts.join(' · '), style: BioTypography.bodySm),
-          ],
-          BioSpacing.gapH(BioSpacing.md),
-          if (assistance.notesForStaff != null &&
-              assistance.notesForStaff!.trim().isNotEmpty) ...[
-            Text(AppTexts.timelineGuidance, style: BioTypography.overline),
-            BioSpacing.gapH(BioSpacing.xs),
-            Text(assistance.notesForStaff!.trim(), style: BioTypography.bodySm),
-            BioSpacing.gapH(BioSpacing.md),
-          ],
-          if (assistance.answers.isEmpty)
-            Text(
-              assistance.status == 'submitted'
-                  ? 'Respuestas registradas sin detalle disponible.'
-                  : 'El paciente aún no completó el cuestionario.',
-              style: BioTypography.bodySm,
-            )
-          else ...[
-            Text(AppTexts.timelinePatientAnswers, style: BioTypography.overline),
-            BioSpacing.gapH(BioSpacing.sm),
-            ...assistance.answers.map(
-              (a) => Padding(
-                padding: const EdgeInsets.only(bottom: BioSpacing.sm),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(a.question, style: BioTypography.bodySm),
-                    BioSpacing.gapH(BioSpacing.xs),
-                    Text(a.answer, style: BioTypography.body),
-                  ],
-                ),
-              ),
-            ),
-          ],
-          if (assistance.deltaRequested) ...[
-            BioSpacing.gapH(BioSpacing.sm),
-            BioBadge.warning('Requiere adaptación del pack'),
-          ],
-        ],
-      ),
-    );
-  }
-
-  List<Widget> _buildResumenConImagenes(
-    String resumen,
-    List<MotivoImagenAdjunta> imagenes,
-  ) {
-    final byRef = {for (final i in imagenes) i.ref: i.url};
-    final pattern = RegExp(r'\[(imagen\d+)\]');
-    final widgets = <Widget>[];
-    var last = 0;
-
-    for (final match in pattern.allMatches(resumen)) {
-      if (match.start > last) {
-        widgets.add(
-          Text(resumen.substring(last, match.start), style: BioTypography.body),
-        );
-      }
-      final ref = match.group(1)!;
-      final url = byRef[ref];
-      if (url != null && url.isNotEmpty) {
-        widgets.add(
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: BioSpacing.xs),
-            child: ChatMediaImage(
-              source: url,
-              bearerToken: widget.authToken,
-              width: double.infinity,
-              height: 160,
-              fit: BoxFit.contain,
-            ),
-          ),
-        );
-      } else {
-        widgets.add(Text('[$ref]', style: BioTypography.body));
-      }
-      last = match.end;
-    }
-    if (last < resumen.length) {
-      widgets.add(Text(resumen.substring(last), style: BioTypography.body));
-    }
-    if (widgets.isEmpty) {
-      widgets.add(Text(resumen, style: BioTypography.body));
-    }
-
-    return widgets;
-  }
+  // Con análisis listo se muestra como "Nota de esta atención", no como card pendiente.
+  List<PendingEncounterCapture> get _visiblePendingCaptures =>
+      _pendingCaptures.where((e) {
+        if (_enRevisionCaptura && e.id == _activePendingId) return false;
+        final ready =
+            e.status == PendingEncounterCaptureStatus.pendingSave ||
+            e.status == PendingEncounterCaptureStatus.failedSave;
+        return !(ready && e.analysisResponse != null);
+      }).toList();
 
   bool get _tieneContextoCaptura =>
       widget.parentType != null &&
@@ -1945,23 +1101,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   }
 
   /// Acción primaria del card pendiente según checkpoint.
-  String _pendingPrimaryActionLabel(PendingEncounterCapture item) {
-    switch (item.status) {
-      case PendingEncounterCaptureStatus.draft:
-        return 'Generar Notas Clínicas';
-      case PendingEncounterCaptureStatus.pendingUpload:
-        return 'Subir';
-      case PendingEncounterCaptureStatus.pendingStt:
-        return 'Transcribir';
-      case PendingEncounterCaptureStatus.pendingAnalyze:
-        return 'Generar Notas Clínicas';
-      case PendingEncounterCaptureStatus.pendingSave:
-        return 'Revisar';
-      case PendingEncounterCaptureStatus.failedSave:
-        return 'Guardar';
-    }
-  }
-
   Future<void> _onPendingPrimaryAction(PendingEncounterCapture item) async {
     if (_captureBusy) return;
     switch (item.status) {
@@ -2652,531 +1791,42 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     await _analyzeEncounter();
   }
 
-  Widget _buildPendingCapturesPanel() {
-    // Con análisis listo: se muestra como "Nota de esta atención", no como card.
-    final items = _pendingCaptures.where((e) {
-      if (_enRevisionCaptura && e.id == _activePendingId) return false;
-      final ready =
-          e.status == PendingEncounterCaptureStatus.pendingSave ||
-          e.status == PendingEncounterCaptureStatus.failedSave;
-      if (ready && e.analysisResponse != null) return false;
-      return true;
-    }).toList();
-    if (items.isEmpty) return const SizedBox.shrink();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          'Notas pendientes en el teléfono',
-          style: BioTypography.overline.copyWith(color: context.bio.textMuted),
-        ),
-        BioSpacing.gapH(BioSpacing.sm),
-        for (final item in items) ...[
-          _buildPendingCaptureRow(item),
-          if (item != items.last) BioSpacing.gapH(BioSpacing.sm),
-        ],
-      ],
-    );
+  void _onIssueOption(EncounterCaptureIssue issue, dynamic value, bool wasSelected) {
+    setState(() {
+      if (wasSelected) {
+        _issueResolutions.remove(issue.id);
+      } else {
+        _issueResolutions[issue.id] = value;
+        _issueCustomControllers[issue.id]?.clear();
+      }
+    });
   }
 
-  String _pendingStatusLabel(PendingEncounterCapture item) {
-    final serverLabel = item.serverStageLabel?.trim();
-    if (serverLabel != null && serverLabel.isNotEmpty) return serverLabel;
-    switch (item.status) {
-      case PendingEncounterCaptureStatus.draft:
-        return 'Borrador';
-      case PendingEncounterCaptureStatus.pendingUpload:
-        return 'Sin subir';
-      case PendingEncounterCaptureStatus.pendingStt:
-        return 'Sin transcribir';
-      case PendingEncounterCaptureStatus.pendingAnalyze:
-        return 'Sin analizar';
-      case PendingEncounterCaptureStatus.pendingSave:
-        return 'Para revisar';
-      case PendingEncounterCaptureStatus.failedSave:
-        return 'No guardado';
-    }
+  void _onIssueCustomText(EncounterCaptureIssue issue, String trimmed) {
+    setState(() {
+      if (trimmed.isEmpty) {
+        // Solo limpia si el valor actual era custom (no chip).
+        final current = _issueResolutions[issue.id];
+        final matchesChip = issue.options.any(
+          (o) => o.value.toString() == current?.toString(),
+        );
+        if (!matchesChip) {
+          _issueResolutions.remove(issue.id);
+        }
+      } else {
+        _issueResolutions[issue.id] = trimmed;
+      }
+    });
   }
 
-  UiIntent _pendingStatusIntent(String? serverIntent) {
-    return switch (serverIntent) {
-      'primary' => UiIntent.primary,
-      'secondary' => UiIntent.secondary,
-      'success' => UiIntent.success,
-      'danger' => UiIntent.danger,
-      'warning' => UiIntent.warning,
-      'info' => UiIntent.info,
-      'neutral' => UiIntent.neutral,
-      'dark' => UiIntent.dark,
-      _ => UiIntent.neutral,
-    };
-  }
-
-  Widget _buildPendingCaptureRow(PendingEncounterCapture item) {
-    final previewRaw = item.texto.trim();
-    final preview = previewRaw.isEmpty || previewRaw.startsWith('(audio')
-        ? (item.hasAudio ? 'Audio' : 'Sin texto')
-        : (previewRaw.length > 90
-              ? '${previewRaw.substring(0, 90)}…'
-              : previewRaw);
-    final primary = _pendingPrimaryActionLabel(item);
-    final rawError = item.lastError?.trim() ?? '';
-    final friendlyError =
-        rawError.isNotEmpty &&
-            item.status != PendingEncounterCaptureStatus.pendingSave
-        ? userFriendlyErrorMessage(rawError)
-        : null;
-    final warning = IntentPalette.of(UiIntent.warning);
-
-    // Cola local: fondo hundido + borde suave, no BioCard.intent (evita
-    // confundirse con condición / signos / motivos).
-    return Container(
-      padding: const EdgeInsets.all(BioSpacing.md),
-      decoration: BoxDecoration(
-        color: PaperPalette.paper100,
-        borderRadius: BorderRadius.circular(BioRadius.sm),
-        border: Border.all(color: warning.border, width: BorderWidth.thin),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.cloud_off_outlined, size: 18, color: warning.softFg),
-              BioSpacing.gapW(BioSpacing.sm),
-              Expanded(
-                child: Text(
-                  'Nota pendiente',
-                  style: BioTypography.title.copyWith(color: warning.softFg),
-                ),
-              ),
-              BioBadge(
-                label: _pendingStatusLabel(item),
-                intent: item.serverStageIntent == null
-                    ? UiIntent.warning
-                    : _pendingStatusIntent(item.serverStageIntent),
-              ),
-            ],
-          ),
-          BioSpacing.gapH(BioSpacing.xs),
-          Text(
-            preview,
-            style: BioTypography.caption.copyWith(color: context.bio.textMuted),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          if (friendlyError != null) ...[
-            BioSpacing.gapH(BioSpacing.xs),
-            Text(
-              friendlyError,
-              style: BioTypography.caption.copyWith(color: warning.softFg),
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-          BioSpacing.gapH(BioSpacing.sm),
-          Row(
-            children: [
-              Expanded(
-                child: BioButton(
-                  label: primary,
-                  intent: UiIntent.primary,
-                  variant: BioButtonVariant.soft,
-                  onPressed: _captureBusy
-                      ? null
-                      : () => _onPendingPrimaryAction(item),
-                ),
-              ),
-              BioSpacing.gapW(BioSpacing.sm),
-              BioButton(
-                label: 'Eliminar',
-                intent: UiIntent.danger,
-                variant: BioButtonVariant.soft,
-                onPressed: _captureBusy
-                    ? null
-                    : () => _deletePendingCapture(item.id),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAnalyzingCard() {
-    return BioCard.intent(
-      intent: UiIntent.info,
-      child: Row(
-        children: [
-          const SizedBox(
-            width: 22,
-            height: 22,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-          BioSpacing.gapW(BioSpacing.md),
-          Expanded(child: Text(AppTexts.captureAnalyzing, style: BioTypography.body)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCaptureReviewPanel(EncounterCaptureAnalysis review) {
-    final sectionTitleStyle = BioTypography.title;
-    final categoryTitleStyle = BioTypography.bodySm.copyWith(
-      fontWeight: FontWeight.w600,
-    );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Center(
-          child: Text(
-            'Nota de esta atención',
-            textAlign: TextAlign.center,
-            style: BioTypography.title.copyWith(
-              decoration: TextDecoration.underline,
-            ),
-          ),
-        ),
-        BioSpacing.gapH(BioSpacing.md),
-        Text(AppTexts.captureRegisteredText, style: sectionTitleStyle),
-        BioSpacing.gapH(BioSpacing.xs),
-        Text(
-          (_draftText ?? review.textoOriginal).trim().isNotEmpty
-              ? (_draftText ?? review.textoOriginal)
-              : review.textoOriginal,
-          style: BioTypography.body,
-        ),
-        if (review.advisories.isNotEmpty) ...[
-          BioSpacing.gapH(BioSpacing.md),
-          ...review.advisories.map((adv) {
-            final intent = adv.severity == 'danger'
-                ? UiIntent.danger
-                : (adv.severity == 'info' ? UiIntent.info : UiIntent.warning);
-            return Padding(
-              padding: const EdgeInsets.only(bottom: BioSpacing.sm),
-              child: BioAlert(intent: intent, message: adv.message),
-            );
-          }),
-        ],
-        if (review.episodeNoteDuplicate && review.advisories.isEmpty) ...[
-          BioSpacing.gapH(BioSpacing.sm),
-          BioAlert.danger(
-            message:
-                'Esta nota es casi idéntica a una evolución previa. Editá el texto para documentar los cambios.',
-          ),
-        ],
-        if (review.textoProcesado != null &&
-            review.textoProcesado!.trim().isNotEmpty &&
-            review.textoProcesado!.trim() != review.textoOriginal.trim()) ...[
-          BioSpacing.gapH(BioSpacing.md),
-          Text(AppTexts.captureProcessedText, style: sectionTitleStyle),
-          BioSpacing.gapH(BioSpacing.xs),
-          Text(review.textoProcesado!, style: BioTypography.bodySm),
-        ],
-        if (review.systemError != null) ...[
-          BioSpacing.gapH(BioSpacing.md),
-          BioAlert.danger(message: review.systemError!),
-        ] else if (!review.hasExtractedContent) ...[
-          BioSpacing.gapH(BioSpacing.md),
-          BioAlert.info(
-            message: 'Sin datos estructurados. Se guardará el texto.',
-          ),
-        ] else ...[
-          BioSpacing.gapH(BioSpacing.lg),
-          Text(AppTexts.captureProcessingResult, style: sectionTitleStyle),
-          BioSpacing.gapH(BioSpacing.sm),
-          ...review.categories.map((cat) {
-            final delTexto = cat.items
-                .where((i) => i.isFromClinicalText)
-                .toList();
-            final sugeridos = cat.items
-                .where((i) => !i.isFromClinicalText)
-                .toList();
-
-            return Padding(
-              padding: const EdgeInsets.only(bottom: BioSpacing.md),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(cat.title, style: categoryTitleStyle),
-                      ),
-                      if (cat.required) BioBadge.danger('Requerido'),
-                    ],
-                  ),
-                  BioSpacing.gapH(BioSpacing.sm),
-                  if (cat.items.isEmpty)
-                    Text(
-                      cat.required
-                          ? 'Falta información en esta categoría.'
-                          : 'Sin datos en esta categoría.',
-                      style: BioTypography.bodySm.copyWith(
-                        color: cat.required
-                            ? IntentPalette.of(UiIntent.danger).base
-                            : context.bio.textMuted,
-                      ),
-                    ),
-                  ...delTexto.map(
-                    (item) => _buildCaptureItemBlock(review, item),
-                  ),
-                  if (sugeridos.isNotEmpty) ...[
-                    if (delTexto.isNotEmpty) BioSpacing.gapH(BioSpacing.sm),
-                    ...sugeridos.map(
-                      (item) => Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildCaptureItemBlock(review, item),
-                          Text(
-                            'Sugerido por IA',
-                            style: BioTypography.caption.copyWith(
-                              color: IntentPalette.of(UiIntent.secondary).base,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            );
-          }),
-        ],
-        if (review.missingCategories.isNotEmpty) ...[
-          BioSpacing.gapH(BioSpacing.sm),
-          BioAlert.warning(
-            message:
-                'Faltan categorías obligatorias: ${review.missingCategories.join(', ')}.',
-          ),
-        ],
-        ...review
-            .orphanIssuesForStaged(_stagedItemIds)
-            .map(_buildCaptureIssueBlock),
-        if (review.hasOpenProblems) ...[
-          BioSpacing.gapH(BioSpacing.md),
-          Text(AppTexts.captureOpenProblems, style: sectionTitleStyle),
-          BioSpacing.gapH(BioSpacing.xs),
-          Text(
-            'Opcional: indicá el estado al cerrar. Si no elegís, se mantienen.',
-            style: BioTypography.caption.copyWith(color: context.bio.textMuted),
-          ),
-          BioSpacing.gapH(BioSpacing.sm),
-          ...review.openProblems!.conditions.map(
-            (item) => _buildOpenProblemBlock(item),
-          ),
-          ...review.openProblems!.carePlans.map(
-            (item) => _buildOpenProblemBlock(item),
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildOpenProblemBlock(EncounterOpenProblemItem item) {
-    final key = '${item.kind}:${item.id}';
-    final selected = _openProblemResolutions[key];
-    return Padding(
-      padding: const EdgeInsets.only(bottom: BioSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            item.label,
-            style: BioTypography.bodySm.copyWith(fontWeight: FontWeight.w600),
-          ),
-          if (item.detail != null && item.detail!.isNotEmpty)
-            Text(
-              item.detail!,
-              style: BioTypography.caption.copyWith(
-                color: context.bio.textMuted,
-              ),
-            ),
-          if (item.statusLabel != null && item.statusLabel!.isNotEmpty)
-            Text(
-              item.statusLabel!,
-              style: BioTypography.caption.copyWith(
-                color: context.bio.textMuted,
-              ),
-            ),
-          BioSpacing.gapH(BioSpacing.sm),
-          Wrap(
-            spacing: BioSpacing.sm,
-            runSpacing: BioSpacing.sm,
-            children: item.options.map((opt) {
-              final isSelected =
-                  selected != null &&
-                  selected.toString() == opt.value.toString();
-              return BioChip(
-                label: opt.label,
-                selected: isSelected,
-                icon: isSelected ? Icons.check : null,
-                intent: UiIntent.neutral,
-                onTap: _isSaving
-                    ? null
-                    : () {
-                        setState(() {
-                          if (isSelected) {
-                            _openProblemResolutions.remove(key);
-                          } else {
-                            _openProblemResolutions[key] = opt.value;
-                          }
-                        });
-                      },
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCaptureIssueBlock(EncounterCaptureIssue issue) {
-    final selected = _issueResolutions[issue.id];
-    return Padding(
-      padding: const EdgeInsets.only(bottom: BioSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (issue.field.isNotEmpty)
-            Text(
-              issue.field,
-              style: BioTypography.caption.copyWith(
-                color: context.bio.textMuted,
-              ),
-            ),
-          BioSpacing.gapH(BioSpacing.sm),
-          if (issue.options.isNotEmpty)
-            Wrap(
-              spacing: BioSpacing.sm,
-              runSpacing: BioSpacing.sm,
-              children: issue.options.map((opt) {
-                final isSelected =
-                    selected != null &&
-                    selected.toString() == opt.value.toString();
-                return BioChip(
-                  label: opt.label,
-                  selected: isSelected,
-                  icon: isSelected ? Icons.check : null,
-                  intent: UiIntent.neutral,
-                  onTap: _isSaving
-                      ? null
-                      : () {
-                          setState(() {
-                            if (isSelected) {
-                              _issueResolutions.remove(issue.id);
-                            } else {
-                              _issueResolutions[issue.id] = opt.value;
-                              _issueCustomControllers[issue.id]?.clear();
-                            }
-                          });
-                        },
-                );
-              }).toList(),
-            ),
-          if (issue.allowCustom) ...[
-            BioSpacing.gapH(BioSpacing.sm),
-            TextField(
-              controller: _issueCustomController(issue.id),
-              enabled: !_isSaving,
-              decoration: InputDecoration(
-                hintText: issue.options.isEmpty
-                    ? 'Completá el valor'
-                    : 'Otra opción…',
-                isDense: true,
-                border: const OutlineInputBorder(),
-              ),
-              onChanged: (value) {
-                final trimmed = value.trim();
-                setState(() {
-                  if (trimmed.isEmpty) {
-                    // Solo limpia si el valor actual era custom (no chip).
-                    final current = _issueResolutions[issue.id];
-                    final matchesChip = issue.options.any(
-                      (o) => o.value.toString() == current?.toString(),
-                    );
-                    if (!matchesChip) {
-                      _issueResolutions.remove(issue.id);
-                    }
-                  } else {
-                    _issueResolutions[issue.id] = trimmed;
-                  }
-                });
-              },
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCaptureItemBlock(
-    EncounterCaptureAnalysis review,
-    EncounterCaptureItem item,
-  ) {
-    final incomplete = review.incompleteForItem(item.id);
-    final itemIssues = review.issuesForItem(item.id);
-    final selected = _stagedItemIds.contains(item.id);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: BioSpacing.sm),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildCaptureItemChip(item, incomplete: incomplete != null),
-          if (selected && incomplete != null && itemIssues.isEmpty) ...[
-            BioSpacing.gapH(BioSpacing.xs),
-            Text(
-              incomplete.message,
-              style: BioTypography.bodySm.copyWith(
-                color: IntentPalette.of(UiIntent.danger).base,
-              ),
-            ),
-          ],
-          if (selected && itemIssues.isNotEmpty) ...[
-            BioSpacing.gapH(BioSpacing.sm),
-            Text(
-              'Completar datos',
-              style: BioTypography.bodySm.copyWith(
-                fontWeight: FontWeight.w600,
-                color: IntentPalette.of(UiIntent.danger).base,
-              ),
-            ),
-            BioSpacing.gapH(BioSpacing.xs),
-            ...itemIssues.map(_buildCaptureIssueBlock),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCaptureItemChip(
-    EncounterCaptureItem item, {
-    bool incomplete = false,
-  }) {
-    final selected = _stagedItemIds.contains(item.id);
-    final label = item.subtitle != null && item.subtitle!.isNotEmpty
-        ? '${item.label} (${item.subtitle})'
-        : item.label;
-
-    return BioChip(
-      label: label,
-      selected: selected,
-      filled: incomplete && selected,
-      icon: selected
-          ? Icons.check_circle
-          : (incomplete ? Icons.add_circle_outline : Icons.add_circle_outline),
-      intent: incomplete
-          ? UiIntent.danger
-          : (item.alreadyActive && !selected
-                ? UiIntent.neutral
-                : (item.isFromClinicalText
-                      ? UiIntent.neutral
-                      : UiIntent.secondary)),
-      onTap: _isSaving ? null : () => _toggleStagedItem(item.id, !selected),
-    );
+  void _onOpenProblemOption(String key, dynamic value, bool wasSelected) {
+    setState(() {
+      if (wasSelected) {
+        _openProblemResolutions.remove(key);
+      } else {
+        _openProblemResolutions[key] = value;
+      }
+    });
   }
 
   Widget _buildCaptureActionsBar() {

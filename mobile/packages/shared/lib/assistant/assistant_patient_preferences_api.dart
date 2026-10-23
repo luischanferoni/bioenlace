@@ -1,48 +1,39 @@
-import 'dart:convert';
-
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../config/api_config.dart';
+import '../http/api_client.dart';
 import '../http/api_contract.dart';
 
 /// GET/PUT /asistente/preferencias-como-paciente
 class AssistantPatientPreferencesApi {
   final String? authToken;
+  final http.Client? httpClient;
 
-  AssistantPatientPreferencesApi({this.authToken});
+  AssistantPatientPreferencesApi({this.authToken, this.httpClient});
 
-  Future<String?> _effectiveToken() async {
-    if (authToken != null && authToken!.isNotEmpty) {
-      return authToken;
+  static const _path = '/asistente/preferencias-como-paciente';
+
+  Future<ApiClient> _api() async {
+    var token = authToken;
+    if (token == null || token.isEmpty) {
+      final prefs = await SharedPreferences.getInstance();
+      token = prefs.getString('auth_token');
     }
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('auth_token');
+    return ApiClient(
+      authToken: token,
+      appClient: 'paciente-flutter',
+      client: httpClient,
+    );
   }
+
+  String _message(Object e) => e is ApiContractException ? e.message : e.toString();
 
   Future<Map<String, dynamic>> fetch() async {
     try {
-      final token = await _effectiveToken();
-      final uri = Uri.parse(
-        '${AppConfig.apiUrl}/asistente/preferencias-como-paciente',
-      );
-      final response = await http
-          .get(
-            uri,
-            headers: AppConfig.jsonHeaders(
-              bearerToken: token,
-              appClient: 'paciente-flutter',
-            ),
-          )
-          .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-
-      final data = unwrapApiContract(
-        json.decode(response.body),
-        response.statusCode,
-      );
+      final data = await (await _api()).getData(_path);
       return {'success': true, 'data': data};
     } catch (e) {
-      return {'success': false, 'data': null, 'message': e.toString()};
+      return {'success': false, 'data': null, 'message': _message(e)};
     }
   }
 
@@ -50,26 +41,9 @@ class AssistantPatientPreferencesApi {
     required bool usaResumenHcEnAsistente,
   }) async {
     try {
-      final token = await _effectiveToken();
-      final uri = Uri.parse(
-        '${AppConfig.apiUrl}/asistente/preferencias-como-paciente',
-      );
-      final response = await http
-          .put(
-            uri,
-            headers: AppConfig.jsonHeaders(
-              bearerToken: token,
-              appClient: 'paciente-flutter',
-            ),
-            body: json.encode({
-              'usa_resumen_hc_en_asistente': usaResumenHcEnAsistente,
-            }),
-          )
-          .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-
-      final data = unwrapApiContract(
-        json.decode(response.body),
-        response.statusCode,
+      final data = await (await _api()).putData(
+        _path,
+        body: {'usa_resumen_hc_en_asistente': usaResumenHcEnAsistente},
       );
       return {
         'success': true,
@@ -77,7 +51,7 @@ class AssistantPatientPreferencesApi {
         if (data['message'] != null) 'message': data['message'],
       };
     } catch (e) {
-      return {'success': false, 'message': e.toString()};
+      return {'success': false, 'message': _message(e)};
     }
   }
 }

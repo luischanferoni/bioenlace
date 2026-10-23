@@ -605,77 +605,10 @@ class CarePackCohorteStaff {
   }
 }
 
-class DocumentacionMedicoSeccion {
-  final String key;
-  final String titulo;
-  final List<String> items;
-  final List<DocumentacionMedicoCampo> fields;
-
-  const DocumentacionMedicoSeccion({
-    required this.key,
-    required this.titulo,
-    required this.items,
-    required this.fields,
-  });
-
-  factory DocumentacionMedicoSeccion.fromJson(Map<String, dynamic> json) {
-    final raw = json['items'];
-    final rawFields = json['fields'];
-    return DocumentacionMedicoSeccion(
-      key: json['key']?.toString() ?? '',
-      titulo: json['label']?.toString() ?? json['titulo']?.toString() ?? '',
-      items: raw is List
-          ? raw
-                .map((e) => e.toString().trim())
-                .where((e) => e.isNotEmpty)
-                .toList()
-          : const [],
-      fields: rawFields is List
-          ? rawFields
-                .whereType<Map>()
-                .map(
-                  (field) => DocumentacionMedicoCampo.fromJson(
-                    Map<String, dynamic>.from(field),
-                  ),
-                )
-                .where((field) => field.value.isNotEmpty)
-                .toList()
-          : const [],
-    );
-  }
-}
-
-class DocumentacionMedicoCampo {
-  final String key;
-  final String label;
-  final String value;
-  final String? unit;
-  final String format;
-
-  const DocumentacionMedicoCampo({
-    required this.key,
-    required this.label,
-    required this.value,
-    required this.unit,
-    required this.format,
-  });
-
-  factory DocumentacionMedicoCampo.fromJson(Map<String, dynamic> json) {
-    final rawUnit = json['unit']?.toString().trim() ?? '';
-    return DocumentacionMedicoCampo(
-      key: json['key']?.toString() ?? '',
-      label: json['label']?.toString() ?? '',
-      value: json['value']?.toString().trim() ?? '',
-      unit: rawUnit.isEmpty ? null : rawUnit,
-      format: json['format']?.toString() ?? 'text',
-    );
-  }
-}
-
 class DocumentacionMedico {
   final int encounterId;
   final bool tieneDatos;
-  final List<DocumentacionMedicoSeccion> secciones;
+  final List<ClinicalSection> secciones;
 
   const DocumentacionMedico({
     required this.encounterId,
@@ -691,25 +624,10 @@ class DocumentacionMedico {
         secciones: [],
       );
     }
-    final raw = json['secciones'];
     return DocumentacionMedico(
       encounterId: int.tryParse(json['encounter_id']?.toString() ?? '') ?? 0,
       tieneDatos: json['tiene_datos'] == true,
-      secciones: raw is List
-          ? raw
-                .whereType<Map>()
-                .map(
-                  (e) => DocumentacionMedicoSeccion.fromJson(
-                    Map<String, dynamic>.from(e),
-                  ),
-                )
-                .where(
-                  (s) =>
-                      s.titulo.isNotEmpty &&
-                      (s.items.isNotEmpty || s.fields.isNotEmpty),
-                )
-                .toList()
-          : const [],
+      secciones: ClinicalSection.listFromJson(json).where((s) => s.title.isNotEmpty && !s.isEmpty).toList(),
     );
   }
 }
@@ -718,7 +636,7 @@ class ContextoInternacionHistoria {
   final int internacionId;
   final String camaLabel;
   final String fechaInicio;
-  final List<EvolucionInternacionSeccion> secciones;
+  final List<ClinicalSection> secciones;
   final List<EvolucionInternacionItem> evoluciones;
   final String? medicoNombre;
   final String? motivo;
@@ -742,20 +660,7 @@ class ContextoInternacionHistoria {
       return int.tryParse(v?.toString() ?? '') ?? 0;
     }
 
-    final rawSections = json['sections'] is List
-        ? json['sections']
-        : json['secciones'];
-    final sections = rawSections is List
-        ? rawSections
-              .whereType<Map>()
-              .map(
-                (section) => EvolucionInternacionSeccion.fromJson(
-                  Map<String, dynamic>.from(section),
-                ),
-              )
-              .where((section) => section.fields.isNotEmpty)
-              .toList()
-        : <EvolucionInternacionSeccion>[];
+    final sections = ClinicalSection.listFromJson(json);
     final raw = json['evoluciones'];
     final list = <EvolucionInternacionItem>[];
     final evolutionSections = sections
@@ -1423,69 +1328,6 @@ class TimelineEpisodioItem {
   }
 }
 
-class EvolucionInternacionSeccion {
-  final String key;
-  final String label;
-  final int order;
-  final List<EvolucionInternacionCampo> fields;
-
-  const EvolucionInternacionSeccion({
-    required this.key,
-    required this.label,
-    required this.order,
-    required this.fields,
-  });
-
-  factory EvolucionInternacionSeccion.fromJson(Map<String, dynamic> json) {
-    final rawFields = json['fields'];
-    return EvolucionInternacionSeccion(
-      key: (json['key'] ?? '').toString(),
-      label: (json['label'] ?? '').toString(),
-      order: int.tryParse(json['order']?.toString() ?? '') ?? 0,
-      fields: rawFields is List
-          ? rawFields
-                .whereType<Map>()
-                .map(
-                  (field) => EvolucionInternacionCampo.fromJson(
-                    Map<String, dynamic>.from(field),
-                  ),
-                )
-                .toList()
-          : const [],
-    );
-  }
-}
-
-class EvolucionInternacionCampo {
-  final String key;
-  final String label;
-  final String value;
-  final String? unit;
-  final String format;
-  final int order;
-
-  const EvolucionInternacionCampo({
-    required this.key,
-    required this.label,
-    required this.value,
-    required this.unit,
-    required this.format,
-    required this.order,
-  });
-
-  factory EvolucionInternacionCampo.fromJson(Map<String, dynamic> json) {
-    final rawUnit = json['unit']?.toString().trim() ?? '';
-    return EvolucionInternacionCampo(
-      key: (json['key'] ?? '').toString(),
-      label: (json['label'] ?? '').toString(),
-      value: json['value']?.toString() ?? '',
-      unit: rawUnit.isEmpty ? null : rawUnit,
-      format: (json['format'] ?? 'text').toString(),
-      order: int.tryParse(json['order']?.toString() ?? '') ?? 0,
-    );
-  }
-}
-
 class EvolucionInternacionItem {
   final int encounterId;
   final String fecha;
@@ -1513,10 +1355,8 @@ class EvolucionInternacionItem {
     );
   }
 
-  factory EvolucionInternacionItem.fromSection(
-    EvolucionInternacionSeccion section,
-  ) {
-    final fields = <String, EvolucionInternacionCampo>{
+  factory EvolucionInternacionItem.fromSection(ClinicalSection section) {
+    final fields = <String, ClinicalField>{
       for (final field in section.fields) field.key: field,
     };
     int asInt(dynamic v) {

@@ -1,44 +1,36 @@
-import 'dart:convert';
-
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../config/api_config.dart';
+import '../http/api_client.dart';
 import '../http/api_contract.dart';
 
 /// GET /clinical/care-plans/recordatorios-como-paciente
 class CarePlanReminderApi {
   final String? authToken;
+  final http.Client? httpClient;
 
-  CarePlanReminderApi({this.authToken});
+  CarePlanReminderApi({this.authToken, this.httpClient});
 
-  Future<String?> _effectiveToken() async {
-    if (authToken != null && authToken!.isNotEmpty) {
-      return authToken;
+  static const _preferencesPath =
+      '/clinical/care-plans/preferencias-recordatorios-como-paciente';
+
+  Future<ApiClient> _api() async {
+    var token = authToken;
+    if (token == null || token.isEmpty) {
+      final prefs = await SharedPreferences.getInstance();
+      token = prefs.getString('auth_token');
     }
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('auth_token');
+    return ApiClient(authToken: token, appClient: 'paciente-flutter', client: httpClient);
   }
 
   Future<Map<String, dynamic>> fetchSchedule({int? carePlanId}) async {
     try {
-      final token = await _effectiveToken();
-      var path = '/clinical/care-plans/recordatorios-como-paciente';
-      if (carePlanId != null && carePlanId > 0) {
-        path += '?care_plan_id=$carePlanId';
-      }
-      final uri = Uri.parse('${AppConfig.apiUrl}$path');
-      final response = await http
-          .get(
-            uri,
-            headers: AppConfig.jsonHeaders(
-              bearerToken: token,
-              appClient: 'paciente-flutter',
-            ),
-          )
-          .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-
-      final data = unwrapApiContract(json.decode(response.body), response.statusCode);
+      final data = await (await _api()).getData(
+        '/clinical/care-plans/recordatorios-como-paciente',
+        query: {
+          if (carePlanId != null && carePlanId > 0) 'care_plan_id': '$carePlanId',
+        },
+      );
       return {'success': true, 'data': data, 'message': data['message']};
     } on ApiContractException catch (e) {
       return {'success': false, 'data': null, 'message': e.message};
@@ -49,21 +41,7 @@ class CarePlanReminderApi {
 
   Future<Map<String, dynamic>> fetchPreferences() async {
     try {
-      final token = await _effectiveToken();
-      final uri = Uri.parse(
-        '${AppConfig.apiUrl}/clinical/care-plans/preferencias-recordatorios-como-paciente',
-      );
-      final response = await http
-          .get(
-            uri,
-            headers: AppConfig.jsonHeaders(
-              bearerToken: token,
-              appClient: 'paciente-flutter',
-            ),
-          )
-          .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-
-      final data = unwrapApiContract(json.decode(response.body), response.statusCode);
+      final data = await (await _api()).getData(_preferencesPath);
       return {'success': true, 'data': data};
     } on ApiContractException catch (e) {
       return {'success': false, 'data': null, 'message': e.message};
@@ -74,22 +52,7 @@ class CarePlanReminderApi {
 
   Future<Map<String, dynamic>> savePreferences(Map<String, dynamic> body) async {
     try {
-      final token = await _effectiveToken();
-      final uri = Uri.parse(
-        '${AppConfig.apiUrl}/clinical/care-plans/preferencias-recordatorios-como-paciente',
-      );
-      final response = await http
-          .put(
-            uri,
-            headers: AppConfig.jsonHeaders(
-              bearerToken: token,
-              appClient: 'paciente-flutter',
-            ),
-            body: json.encode(body),
-          )
-          .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-
-      final data = unwrapApiContract(json.decode(response.body), response.statusCode);
+      final data = await (await _api()).putData(_preferencesPath, body: body);
       return {'success': true, 'data': data, 'message': data['message']};
     } on ApiContractException catch (e) {
       return {'success': false, 'message': e.message};

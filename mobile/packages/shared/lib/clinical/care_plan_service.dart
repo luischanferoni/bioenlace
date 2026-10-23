@@ -1,21 +1,23 @@
-import 'dart:convert';
-
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../config/api_config.dart';
+import '../http/api_client.dart';
 import '../http/api_contract.dart';
 
 /// Planes de tratamiento activos del paciente (`GET /clinical/care-plans/active`).
 class CarePlanService {
   final String? authToken;
+  final http.Client? httpClient;
 
-  CarePlanService({this.authToken});
+  CarePlanService({this.authToken, this.httpClient});
 
-  Future<String?> _effectiveToken() async {
-    if (authToken != null && authToken!.isNotEmpty) return authToken;
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('auth_token');
+  Future<ApiClient> _api() async {
+    var token = authToken;
+    if (token == null || token.isEmpty) {
+      final prefs = await SharedPreferences.getInstance();
+      token = prefs.getString('auth_token');
+    }
+    return ApiClient(authToken: token, appClient: 'paciente-flutter', client: httpClient);
   }
 
   /// Devuelve `{ success, data: List<Map>, message? }`.
@@ -24,25 +26,14 @@ class CarePlanService {
     int? subjectPersonaId,
   }) async {
     try {
-      final token = await _effectiveToken();
-      final params = <String, String>{
-        'includeActivities': includeActivities ? '1' : '0',
-        if (subjectPersonaId != null && subjectPersonaId > 0)
-          'subject_persona_id': '$subjectPersonaId',
-      };
-      final uri = Uri.parse('${AppConfig.apiUrl}/clinical/care-plans/active')
-          .replace(queryParameters: params);
-      final response = await http
-          .get(
-            uri,
-            headers: AppConfig.jsonHeaders(
-              bearerToken: token,
-              appClient: 'paciente-flutter',
-            ),
-          )
-          .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-
-      final list = unwrapApiContractList(json.decode(response.body), response.statusCode);
+      final list = await (await _api()).getList(
+        '/clinical/care-plans/active',
+        query: {
+          'includeActivities': includeActivities ? '1' : '0',
+          if (subjectPersonaId != null && subjectPersonaId > 0)
+            'subject_persona_id': '$subjectPersonaId',
+        },
+      );
       return {'success': true, 'data': list};
     } on ApiContractException catch (e) {
       return {'success': false, 'data': <Map<String, dynamic>>[], 'message': e.message};
@@ -61,19 +52,7 @@ class CarePlanService {
       return {'success': false, 'data': null, 'message': 'Plan inválido'};
     }
     try {
-      final token = await _effectiveToken();
-      final uri = Uri.parse('${AppConfig.apiUrl}/clinical/care-plans/$id');
-      final response = await http
-          .get(
-            uri,
-            headers: AppConfig.jsonHeaders(
-              bearerToken: token,
-              appClient: 'paciente-flutter',
-            ),
-          )
-          .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-
-      final data = unwrapApiContract(json.decode(response.body), response.statusCode);
+      final data = await (await _api()).getData('/clinical/care-plans/$id');
       return {'success': true, 'data': data};
     } on ApiContractException catch (e) {
       return {'success': false, 'data': null, 'message': e.message};

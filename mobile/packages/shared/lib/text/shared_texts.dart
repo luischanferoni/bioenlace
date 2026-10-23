@@ -2,6 +2,20 @@
 class SharedTexts {
   SharedTexts._();
 
+  static String kpiService(Object? v) => 'Servicio: $v';
+  static String kpiContext(Object? v) => 'Contexto: $v';
+  static const dynamicOptionsRequired =
+      'Este campo requiere opciones que se cargarán dinámicamente. Por favor, use autocomplete en su lugar.';
+  static const privacyPolicy = 'Política de privacidad';
+  static const playReviewCredentialsNote =
+      'Credenciales provistas en Google Play Console. Uso solo para revisores de la tienda.';
+  static String biometricPrompt(Object? type, Object? app) =>
+      'Autenticación con $type para ingresar a $app';
+  static const verifyIdentitySelfie = 'Verificá tu identidad con una selfie para volver a entrar.';
+  static String biometricReady(Object? type) => '$type configurada y lista para usar';
+  static const signupPrompt = '¿No tienes cuenta? Registrate aquí';
+  static const institutionalSignupPrompt = '¿Tenés tu consultorio? Creá tu cuenta en la web';
+
   static const biometricUnavailable =
       'La autenticación biométrica no está disponible en este dispositivo';
   static const sessionCheckFailed =

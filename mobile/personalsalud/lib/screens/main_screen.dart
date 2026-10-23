@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
+import '../infra/app_texts.dart';
 import '../services/push_notification_service.dart';
 import '../services/chat_service.dart';
 import 'encounter_chat_staff_screen.dart';
@@ -58,7 +59,7 @@ class _MainScreenState extends State<MainScreen> {
                 authToken: widget.authToken,
                 userId: widget.userId,
                 userName: widget.userName,
-                titulo: 'Consulta clínica por mensaje',
+                titulo: AppTexts.messageEncounterTitle,
               ),
             ),
           );

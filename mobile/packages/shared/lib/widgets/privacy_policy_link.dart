@@ -28,7 +28,7 @@ class PrivacyPolicyLink extends StatelessWidget {
       child: TextButton(
         onPressed: () => _open(context),
         child: Text(
-          'Política de privacidad',
+          SharedTexts.privacyPolicy,
           style: BioTypography.bodySm.copyWith(
             color: tokens.textMuted,
             decoration: TextDecoration.underline,

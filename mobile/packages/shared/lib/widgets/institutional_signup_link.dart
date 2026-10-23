@@ -28,7 +28,7 @@ class InstitutionalSignupLink extends StatelessWidget {
       child: TextButton(
         onPressed: () => _open(context),
         child: Text(
-          '¿Tenés tu consultorio? Creá tu cuenta en la web',
+          SharedTexts.institutionalSignupPrompt,
           textAlign: TextAlign.center,
           style: BioTypography.bodySm.copyWith(
             color: tokens.textMuted,

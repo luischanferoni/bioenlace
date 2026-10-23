@@ -239,7 +239,7 @@ class _EmergencyTriageScreenState extends State<EmergencyTriageScreen> {
           Text(AppTexts.vitalSignsOptionalTitle, style: BioTypography.title),
           BioSpacing.gapH(BioSpacing.xs),
           Text(
-            'Enteros de 2–3 dígitos. TA sys 50–250 · TA dia 30–150 · FC 20–250.',
+            AppTexts.vitalsTriageHint,
             style: BioTypography.caption.copyWith(color: tokens.textMuted),
           ),
           BioSpacing.gapH(BioSpacing.sm),

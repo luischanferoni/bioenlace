@@ -71,7 +71,7 @@ class PendingCapturesPanel extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Notas pendientes en el teléfono',
+          AppTexts.pendingCapturesTitle,
           style: BioTypography.overline.copyWith(color: context.bio.textMuted),
         ),
         BioSpacing.gapH(BioSpacing.sm),
@@ -117,7 +117,7 @@ class PendingCapturesPanel extends StatelessWidget {
               BioSpacing.gapW(BioSpacing.sm),
               Expanded(
                 child: Text(
-                  'Nota pendiente',
+                  AppTexts.pendingCaptureItem,
                   style: BioTypography.title.copyWith(color: warning.softFg),
                 ),
               ),

@@ -81,7 +81,7 @@ class SignosVitalesCard extends StatelessWidget {
             ExpansionTile(
               tilePadding: EdgeInsets.zero,
               title: Text(
-                'Historial (${sv.totalSv} registros)',
+                AppTexts.vitalsHistoryRecords(sv.totalSv),
                 style: BioTypography.title,
               ),
               children: [

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../text/shared_texts.dart';
 import '../theme/tokens/tokens.dart';
 import '../ui/bio_card.dart';
 import 'home_panel_api.dart';
@@ -110,13 +111,13 @@ class HomePanelStaffContextBanner extends StatelessWidget {
           if (servicio != null && servicio.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.xs),
             Text(
-              'Servicio: $servicio',
+              SharedTexts.kpiService(servicio),
               style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
             ),
           ],
           if (encounter != null && encounter.isNotEmpty)
             Text(
-              'Contexto: $encounter',
+              SharedTexts.kpiContext(encounter),
               style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
             ),
           if (hint != null && hint.isNotEmpty) ...[

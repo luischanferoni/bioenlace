@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
+import '../../../infra/app_texts.dart';
 import '../../../services/historia_clinica_service.dart';
 
 /// Signos vitales del episodio de captura: últimos valores y series.
@@ -63,7 +64,7 @@ class SignosVitalesEpisodioCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Signos vitales actuales',
+                  AppTexts.vitalsCurrent,
                   style: BioTypography.title,
                 ),
               ),
@@ -79,7 +80,7 @@ class SignosVitalesEpisodioCard extends StatelessWidget {
           BioSpacing.gapH(BioSpacing.md),
           if (!tiene)
             Text(
-              'Sin signos vitales. Se cargan en la captura de la consulta (texto/audio) o en el triage de admisión.',
+              AppTexts.vitalsEmptyEpisode,
               style: BioTypography.bodySm.copyWith(
                 color: context.bio.textMuted,
               ),
@@ -96,7 +97,7 @@ class SignosVitalesEpisodioCard extends StatelessWidget {
               ExpansionTile(
                 tilePadding: EdgeInsets.zero,
                 title: Text(
-                  'Historial (${sv.totalPoints} mediciones)',
+                  AppTexts.vitalsHistoryMeasurements(sv.totalPoints),
                   style: BioTypography.title,
                 ),
                 children: [

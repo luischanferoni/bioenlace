@@ -21,7 +21,7 @@ class DocumentacionMedicoCard extends StatelessWidget {
           BioSpacing.gapH(BioSpacing.md),
           if (!doc.tieneDatos || doc.secciones.isEmpty)
             Text(
-              'Sin datos registrados en esta consulta.',
+              AppTexts.documentationEmpty,
               style: BioTypography.bodySm,
             )
           else

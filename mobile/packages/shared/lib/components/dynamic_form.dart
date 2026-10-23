@@ -337,7 +337,7 @@ class _DynamicFormState extends State<DynamicForm> {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
         child: Text(
-          'Este campo requiere opciones que se cargarán dinámicamente. Por favor, use autocomplete en su lugar.',
+          SharedTexts.dynamicOptionsRequired,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: Theme.of(context).colorScheme.tertiary,
           ),

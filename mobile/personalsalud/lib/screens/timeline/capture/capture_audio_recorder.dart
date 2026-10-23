@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 
+import '../../../infra/app_texts.dart';
+
 /// Grabación de audio de la captura: solo el acceso al micrófono y al archivo,
 /// sin estado de pantalla ni mensajes.
 class CaptureAudioRecorder {
@@ -29,7 +31,7 @@ class CaptureAudioRecorder {
     );
     if (!await _recorder.isRecording()) {
       throw StateError(
-        'El navegador no inició la grabación. Verificá el micrófono y el permiso de acceso.',
+        AppTexts.audioRecordingNotStarted,
       );
     }
     return path;

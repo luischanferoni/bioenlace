@@ -17,11 +17,11 @@ class InformacionMedicaCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final secciones = <({String titulo, List<String> items})>[
       (
-        titulo: 'Diagnósticos recientes',
+        titulo: AppTexts.recentDiagnoses,
         items: _terminos(info.condicionesActivas.map((c) => c.termino)),
       ),
       (
-        titulo: 'Condiciones crónicas',
+        titulo: AppTexts.chronicConditions,
         items: _terminos(info.condicionesCronicas.map((c) => c.termino)),
       ),
       (titulo: 'Alergias', items: _terminos(info.hallazgos.map((h) => h.termino))),

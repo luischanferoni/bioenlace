@@ -262,13 +262,13 @@ class _AccionesScreenState extends State<AccionesScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Hola, ${widget.userName}',
+                AppTexts.assistantGreeting(widget.userName),
                 style: BioTypography.h3,
                 textAlign: TextAlign.center,
               ),
               BioSpacing.gapH(BioSpacing.xs),
               Text(
-                '¿En qué puedo ayudarte?',
+                AppTexts.assistantHowCanIHelp,
                 style: BioTypography.body.copyWith(color: tokens.textMuted),
                 textAlign: TextAlign.center,
               ),

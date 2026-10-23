@@ -130,7 +130,7 @@ class _PlayReviewLoginSheetState extends State<PlayReviewLoginSheet> {
           Text(SharedTexts.reviewAccessTitle, style: BioTypography.h3),
           BioSpacing.gapH(BioSpacing.sm),
           Text(
-            'Credenciales provistas en Google Play Console. Uso solo para revisores de la tienda.',
+            SharedTexts.playReviewCredentialsNote,
             style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
           ),
           BioSpacing.gapH(BioSpacing.lg),

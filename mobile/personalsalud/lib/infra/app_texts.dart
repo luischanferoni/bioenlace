@@ -59,6 +59,30 @@ class AppTexts {
   static const timelineEpisodeRecord = 'Registro del episodio';
   static const timelineActionNoScreen = 'La acción no tiene una pantalla compatible.';
   static const timelineReasonsTitle = 'Motivos de esta consulta';
+  static const vitalsTriageHint = 'Enteros de 2–3 dígitos. TA sys 50–250 · TA dia 30–150 · FC 20–250.';
+  static const pendingCapturesTitle = 'Notas pendientes en el teléfono';
+  static const pendingCaptureItem = 'Nota pendiente';
+  static const audioRecordingNotStarted =
+      'El navegador no inició la grabación. Verificá el micrófono y el permiso de acceso.';
+  static const dniScanHint = 'Apuntá la cámara al código de barras del dorso del DNI.';
+  static String assistantGreeting(Object? name) => 'Hola, $name';
+  static const assistantHowCanIHelp = '¿En qué puedo ayudarte?';
+  static const messageEncounterTitle = 'Consulta clínica por mensaje';
+  static String areaUpdated(Object? label) =>
+      'Área actualizada: $label. Andá a Inicio para ver el cambio.';
+  static String configUser(Object? name) => 'Usuario: $name';
+  static const configNotifications = 'Notificaciones';
+  static const configTheme = 'Tema';
+  static String appointmentMode(Object? v) => 'Modalidad: $v';
+  static const documentationEmpty = 'Sin datos registrados en esta consulta.';
+  static const recentDiagnoses = 'Diagnósticos recientes';
+  static const chronicConditions = 'Condiciones crónicas';
+  static const vitalsCurrent = 'Signos vitales actuales';
+  static String vitalsCurrentWithDate(Object? fecha) => 'Signos vitales actuales ($fecha)';
+  static const vitalsEmptyEpisode =
+      'Sin signos vitales. Se cargan en la captura de la consulta (texto/audio) o en el triage de admisión.';
+  static String vitalsHistoryMeasurements(Object? n) => 'Historial ($n mediciones)';
+  static String vitalsHistoryRecords(Object? n) => 'Historial ($n registros)';
   static const appointmentNext = 'Siguiente turno';
   static const appointmentsEmptyForDate = 'No hay turnos programados para esta fecha.';
   static String appointmentTime(Object? hora) => 'Hora: $hora';

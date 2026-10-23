@@ -144,7 +144,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Área actualizada: ${sessionConfig.encounterClass.label}. Andá a Inicio para ver el cambio.',
+              AppTexts.areaUpdated(sessionConfig.encounterClass.label),
             ),
           ),
         );
@@ -196,7 +196,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
               BioSpacing.gapW(BioSpacing.sm),
               Expanded(
                 child: Text(
-                  'Usuario: ${widget.userName}',
+                  AppTexts.configUser(widget.userName),
                   style: BioTypography.title,
                 ),
               ),
@@ -286,7 +286,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
         children: [
           _ConfigTile(
             icon: Icons.notifications_outlined,
-            title: 'Notificaciones',
+            title: AppTexts.configNotifications,
             subtitle: 'Gestionar notificaciones',
             trailing: Switch(
               value: true,
@@ -298,7 +298,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
           const BioDivider(),
           _ConfigTile(
             icon: Icons.dark_mode_outlined,
-            title: 'Tema',
+            title: AppTexts.configTheme,
             subtitle: 'Claro',
             trailing: const Icon(Icons.chevron_right),
             onTap: () => _showDevSnack(),

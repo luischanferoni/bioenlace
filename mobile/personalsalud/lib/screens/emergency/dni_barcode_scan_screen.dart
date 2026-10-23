@@ -67,7 +67,7 @@ class _DniBarcodeScanScreenState extends State<DniBarcodeScanScreen> {
           Padding(
             padding: const EdgeInsets.all(BioSpacing.md),
             child: Text(
-              'Apuntá la cámara al código de barras del dorso del DNI.',
+              AppTexts.dniScanHint,
               style: BioTypography.bodySm,
             ),
           ),

@@ -1794,19 +1794,19 @@ class _HomeScreenState extends State<HomeScreen> {
           BioSpacing.gapH(BioSpacing.md),
           _filaInfo(
             Icons.access_time,
-            'Hora: ${turno.hora}',
+            AppTexts.appointmentTime(turno.hora),
             textStyle: BioTypography.body,
           ),
           BioSpacing.gapH(BioSpacing.xs),
           _filaInfo(
             Icons.videocam_outlined,
-            'Modalidad: ${turno.modalidadLabel}',
+            AppTexts.appointmentMode(turno.modalidadLabel),
           ),
           if (turno.servicio != null && turno.servicio!.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.xs),
             _filaInfo(
               Icons.local_hospital_outlined,
-              'Servicio: ${turno.servicio}',
+              AppTexts.appointmentService(turno.servicio),
             ),
           ],
           if (turno.modalidadInsight != null) ...[
@@ -1878,7 +1878,7 @@ class _HomeScreenState extends State<HomeScreen> {
             BioSpacing.gapH(BioSpacing.xs),
             _filaInfo(
               Icons.note_outlined,
-              'Observaciones: ${turno.observaciones}',
+              AppTexts.appointmentNotes(turno.observaciones),
               small: true,
             ),
           ],

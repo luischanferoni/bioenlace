@@ -156,7 +156,7 @@ class _LoginScreenState extends State<LoginScreen> {
       // Huella/Face ID del teléfono: desbloquea la sesión guardada en el dispositivo.
       if (!_usesDiditRemoteLogin) {
         final localResult = await _biometricAuth.authenticate(
-          'Autenticación con $_biometricType para ingresar a ${widget.appTitle}',
+          SharedTexts.biometricPrompt(_biometricType, widget.appTitle),
         );
 
         if (localResult['success'] == true) {
@@ -391,8 +391,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 BioSpacing.gapH(BioSpacing.xxl),
                 if (_usesDiditRemoteLogin) ...[
                   BioAlert.info(
-                    message:
-                        'Verificá tu identidad con una selfie para volver a entrar.',
+                    message: SharedTexts.verifyIdentitySelfie,
                   ),
                   BioSpacing.gapH(BioSpacing.lg),
                 ] else if (_biometricAvailable &&
@@ -400,7 +399,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   BioAlert.success(
                     message:
                         widget.biometricAvailableText ??
-                        '$_biometricType configurada y lista para usar',
+                        SharedTexts.biometricReady(_biometricType),
                   ),
                   BioSpacing.gapH(BioSpacing.lg),
                 ],
@@ -420,7 +419,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   BioButton.softPrimary(
                     label:
                         widget.signupButtonText ??
-                        '¿No tienes cuenta? Registrate aquí',
+                        SharedTexts.signupPrompt,
                     icon: Icons.person_add_alt,
                     fullWidth: true,
                     onPressed: () => widget.onNavigateToSignup!(context),

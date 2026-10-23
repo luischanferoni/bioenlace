@@ -6,6 +6,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import 'package:shared/shared.dart';
 
+import '../utils/app_texts.dart';
+
 import '../services/encounter_chat_service.dart';
 import '../services/encounter_async_api.dart';
 
@@ -91,18 +93,18 @@ class _EncounterChatPatientScreenState
       context: context,
       builder:
           (ctx) => AlertDialog(
-            title: const Text('Retirar solicitud'),
+            title: const Text(AppTexts.withdrawRequestTitle),
             content: const Text(
               '¿Querés retirar esta solicitud? Solo podés hacerlo mientras el equipo aún no la atiende.',
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('No'),
+                child: const Text(AppTexts.no),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('Retirar'),
+                child: const Text(AppTexts.withdraw),
               ),
             ],
           ),

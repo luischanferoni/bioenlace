@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../text/shared_texts.dart';
+
 import '../theme/tokens/tokens.dart';
 import 'assistant_patient_preferences_api.dart';
 
@@ -78,7 +80,7 @@ class _AssistantHcContextSwitchState extends State<AssistantHcContextSwitch> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : const Icon(Icons.health_and_safety_outlined),
-          title: const Text('Resumen de historia en el asistente'),
+          title: const Text(SharedTexts.hcSummaryInAssistantTitle),
           subtitle: const Text(
             'Si está activo, el chat puede usar un extracto de tus alergias, condiciones y medicación. No cambia lo que ve el médico en la consulta.',
           ),

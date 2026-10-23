@@ -1,4 +1,6 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+
+import '../text/shared_texts.dart';
 
 import '../theme/tokens/tokens.dart';
 import 'person_representation_context.dart';
@@ -45,7 +47,7 @@ Future<void> showPersonRepresentationSubjectPicker(
                 ),
                 title: Text(o.label),
                 subtitle: o.isSelf
-                    ? const Text('Tu cuenta')
+                    ? const Text(SharedTexts.yourAccount)
                     : Text(
                         o.regime == 'verified_guardianship'
                             ? 'Tutela'

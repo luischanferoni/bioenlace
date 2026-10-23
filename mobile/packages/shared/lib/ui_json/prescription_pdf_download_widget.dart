@@ -61,7 +61,7 @@ class _PrescriptionPdfDownloadWidgetState extends State<PrescriptionPdfDownloadW
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('PDF listo: $name')),
+        SnackBar(content: Text(SharedTexts.pdfReady(name))),
       );
     } catch (e) {
       if (mounted) {

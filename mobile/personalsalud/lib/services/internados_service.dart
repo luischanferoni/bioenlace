@@ -1,6 +1,4 @@
 // lib/services/internados_service.dart
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:shared/shared.dart';
 
 class InternadoItem {
@@ -71,17 +69,6 @@ class InternadosService {
 
   InternadosService({this.authToken, this.userId});
 
-  Map<String, String> get _headers {
-    final headers = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
-    if (authToken != null) {
-      headers['Authorization'] = 'Bearer $authToken';
-    }
-    return headers;
-  }
-
   /// Preferir [HomePanelApi] sección `inpatients`. Este método queda por compat.
   Future<List<InternadoItem>> getInternados({int? efectorId}) async {
     try {
@@ -90,18 +77,14 @@ class InternadosService {
       if (userId != null && (authToken == null || authToken!.isEmpty || authToken!.startsWith('simulated_'))) {
         queryParams['user_id'] = userId!;
       }
-      final uri = Uri.parse('${AppConfig.apiUrl}/listado/internacion').replace(
-        queryParameters: queryParams.isNotEmpty ? queryParams : null,
+      final data = await ApiClient(authToken: authToken).getData(
+        '/listado/internacion',
+        query: queryParams,
       );
-      final response = await http.get(uri, headers: _headers);
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['success'] == true && data['data'] != null) {
-          final list = data['data']['items'] as List<dynamic>? ?? [];
-          return list.map((e) => InternadoItem.fromJson(e as Map<String, dynamic>)).toList();
-        }
-      }
-      return [];
+      final list = data['items'] as List<dynamic>? ?? [];
+      return list
+          .map((e) => InternadoItem.fromJson(e as Map<String, dynamic>))
+          .toList();
     } catch (e) {
       print('Error fetching internados: $e');
       return [];

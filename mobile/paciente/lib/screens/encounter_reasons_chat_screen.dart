@@ -6,6 +6,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import 'package:shared/shared.dart';
 
+import '../utils/app_texts.dart';
+
 import '../models/pending_motivo_message.dart';
 import '../services/encounter_reason_chat_service.dart';
 import '../services/pending_motivo_message_store.dart';
@@ -363,7 +365,7 @@ class _EncounterReasonsChatScreenState
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Audio guardado en el teléfono. Subiendo…'),
+          content: const Text(AppTexts.audioSavedUploading),
           backgroundColor: IntentPalette.of(UiIntent.info).base,
         ),
       );
@@ -440,7 +442,7 @@ class _EncounterReasonsChatScreenState
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Mensaje pendiente eliminado'),
+          content: const Text(AppTexts.pendingMessageDeleted),
           backgroundColor: IntentPalette.of(UiIntent.neutral).base,
         ),
       );

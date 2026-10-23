@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../text/shared_texts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../auth/play_review_auth.dart';
@@ -125,7 +127,7 @@ class _PlayReviewLoginSheetState extends State<PlayReviewLoginSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Acceso para revisión', style: BioTypography.h3),
+          Text(SharedTexts.reviewAccessTitle, style: BioTypography.h3),
           BioSpacing.gapH(BioSpacing.sm),
           Text(
             'Credenciales provistas en Google Play Console. Uso solo para revisores de la tienda.',

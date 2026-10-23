@@ -3,6 +3,8 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+import '../text/shared_texts.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
@@ -313,7 +315,7 @@ class _LoginScreenState extends State<LoginScreen> {
           break;
 
         case VerificationCancelled():
-          _snack('Verificación cancelada por el usuario', UiIntent.warning);
+          _snack(SharedTexts.verificationCancelled, UiIntent.warning);
           break;
 
         case VerificationFailed(:final error):
@@ -326,7 +328,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } on MissingPluginException {
       _snack(diditMissingPluginMessage, UiIntent.danger);
     } catch (e) {
-      _snack('Error en la autenticación: ${e.toString()}', UiIntent.danger);
+      _snack(SharedTexts.authenticationFailed(e), UiIntent.danger);
     } finally {
       if (mounted) {
         setState(() {

@@ -195,87 +195,45 @@ class TurnosService {
     }
   }
 
-  /// Detalle vía `POST …/turnos/ver-turno` (UiScreenService: el GET solo devuelve descriptor UI).
+  ApiClient get _api =>
+      ApiClient(authToken: authToken, appClient: 'personalsalud-flutter');
+
+  /// Detalle vía POST turnos/ver-turno (UiScreenService: el GET solo devuelve descriptor UI).
   Future<Turno> getTurno(int id) async {
     try {
-      final response = await http.post(
-        Uri.parse('${AppConfig.apiUrl}/turnos/ver-turno'),
-        headers: _headers,
-        body: json.encode({'id': id}),
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body) as Map<String, dynamic>;
-        final payload = data['data'];
-        if (data['success'] == true && payload is Map<String, dynamic>) {
-          return Turno.fromJson(payload);
-        }
-        throw Exception(
-          data['message']?.toString() ?? 'Error al obtener turno',
-        );
-      } else {
-        final errorData = json.decode(response.body) as Map<String, dynamic>;
-        throw Exception(errorData['message'] ?? 'Error al obtener turno');
-      }
+      final data = await _api.postData('/turnos/ver-turno', body: {'id': id});
+      if (data.isEmpty) throw Exception('Error al obtener turno');
+      return Turno.fromJson(data);
     } catch (e) {
       print('Error fetching turno: $e');
       rethrow;
     }
   }
 
-  /// Alta operativa: `POST …/turnos/para-paciente` (respuesta típica 200 + `kind: ui_submit_result`).
+  /// Alta operativa: POST turnos/para-paciente (respuesta típica 200 + kind ui_submit_result).
   Future<Turno> crearTurno(Map<String, dynamic> datosTurno) async {
     try {
-      final response = await http.post(
-        Uri.parse('${AppConfig.apiUrl}/turnos/para-paciente'),
-        headers: _headers,
-        body: json.encode(datosTurno),
-      );
-
-      final ok = response.statusCode == 200 || response.statusCode == 201;
-      if (ok) {
-        final data = json.decode(response.body) as Map<String, dynamic>;
-        final inner = data['data'];
-        if (data['success'] == true && inner is Map<String, dynamic>) {
-          final idRaw = inner['id'];
-          final turnoId = idRaw is int ? idRaw : int.tryParse('$idRaw');
-          if (turnoId != null && turnoId > 0) {
-            return await getTurno(turnoId);
-          }
-        }
-        throw Exception(data['message']?.toString() ?? 'Error al crear turno');
-      } else {
-        final errorData = json.decode(response.body) as Map<String, dynamic>;
-        throw Exception(errorData['message'] ?? 'Error al crear turno');
+      final data = await _api.postData('/turnos/para-paciente', body: datosTurno);
+      final idRaw = data['id'];
+      final turnoId = idRaw is int ? idRaw : int.tryParse('$idRaw');
+      if (turnoId != null && turnoId > 0) {
+        return await getTurno(turnoId);
       }
+      throw Exception(data['message']?.toString() ?? 'Error al crear turno');
     } catch (e) {
       print('Error creating turno: $e');
       rethrow;
     }
   }
 
-  /// Actualización vía `POST …/turnos/actualizar-turno` (UiScreenService no ejecuta submit en PUT).
+  /// Actualización vía POST turnos/actualizar-turno (UiScreenService no ejecuta submit en PUT).
   Future<Turno> actualizarTurno(int id, Map<String, dynamic> datosTurno) async {
     try {
-      final body = <String, dynamic>{'id': id, ...datosTurno};
-      final response = await http.post(
-        Uri.parse('${AppConfig.apiUrl}/turnos/actualizar-turno'),
-        headers: _headers,
-        body: json.encode(body),
+      await _api.postData(
+        '/turnos/actualizar-turno',
+        body: {'id': id, ...datosTurno},
       );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body) as Map<String, dynamic>;
-        if (data['success'] == true) {
-          return await getTurno(id);
-        }
-        throw Exception(
-          data['message']?.toString() ?? 'Error al actualizar turno',
-        );
-      } else {
-        final errorData = json.decode(response.body) as Map<String, dynamic>;
-        throw Exception(errorData['message'] ?? 'Error al actualizar turno');
-      }
+      return await getTurno(id);
     } catch (e) {
       print('Error updating turno: $e');
       rethrow;

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
+import '../utils/app_texts.dart';
+
 /// Detalle de resumen de atención (texto IA + enlaces a receta/lab).
 class EncounterSummaryDetailScreen extends StatefulWidget {
   final int encounterId;
@@ -124,7 +126,7 @@ class _EncounterSummaryDetailScreenState extends State<EncounterSummaryDetailScr
         ),
         if (prescriptions.isNotEmpty) ...[
           BioSpacing.gapH(BioSpacing.lg),
-          Text('Recetas', style: BioTypography.title),
+          Text(AppTexts.prescriptionsTitle, style: BioTypography.title),
           BioSpacing.gapH(BioSpacing.sm),
           ...prescriptions.whereType<Map>().map((p) {
             final route = p['detailApiRoute']?.toString() ??
@@ -139,7 +141,7 @@ class _EncounterSummaryDetailScreenState extends State<EncounterSummaryDetailScr
         ],
         if (labs.isNotEmpty) ...[
           BioSpacing.gapH(BioSpacing.lg),
-          Text('Resultados de laboratorio', style: BioTypography.title),
+          Text(AppTexts.labResultsTitle, style: BioTypography.title),
           BioSpacing.gapH(BioSpacing.sm),
           ...labs.whereType<Map>().map((lr) {
             final route = lr['detailApiRoute']?.toString() ??
@@ -154,7 +156,7 @@ class _EncounterSummaryDetailScreenState extends State<EncounterSummaryDetailScr
         ],
         if (orders.isNotEmpty) ...[
           BioSpacing.gapH(BioSpacing.lg),
-          Text('Pedidos e indicaciones', style: BioTypography.title),
+          Text(AppTexts.ordersTitle, style: BioTypography.title),
           BioSpacing.gapH(BioSpacing.sm),
           ...orders.whereType<Map>().map((o) {
             final status = o['resultStatus']?.toString() ?? '';

@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
+import '../infra/app_texts.dart';
+
 import '../navigation/native_screen_router.dart';
 
 class AccionesScreen extends StatefulWidget {
@@ -141,7 +143,7 @@ class _AccionesScreenState extends State<AccionesScreen> {
     if (openUi == null) {
       if (flow.flowSubmit != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Confirmá el envío desde el paso anterior del flujo.')),
+          const SnackBar(content: Text(AppTexts.flowConfirmFromPreviousStep)),
         );
       }
       return;
@@ -151,7 +153,7 @@ class _AccionesScreenState extends State<AccionesScreen> {
     final co = openUi['client_open'];
     if (co is! Map || actionId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No puedo abrir el paso ($actionId).')),
+        SnackBar(content: Text(AppTexts.flowStepUnavailable(actionId))),
       );
       return;
     }
@@ -164,7 +166,7 @@ class _AccionesScreenState extends State<AccionesScreen> {
       final route = api is Map ? api['route']?.toString() : null;
       if (route == null || route.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Pantalla sin ruta API.')),
+          const SnackBar(content: Text(AppTexts.screenWithoutApiRoute)),
         );
         return;
       }
@@ -218,7 +220,7 @@ class _AccionesScreenState extends State<AccionesScreen> {
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Tipo de pantalla no soportado en móvil médico.')),
+      const SnackBar(content: Text(AppTexts.screenTypeUnsupported)),
     );
   }
 
@@ -280,7 +282,7 @@ class _AccionesScreenState extends State<AccionesScreen> {
                         selected: true,
                       ),
                     ),
-                    TextButton(onPressed: _clearFlow, child: const Text('Salir')),
+                    TextButton(onPressed: _clearFlow, child: const Text(AppTexts.exitFlow)),
                   ],
                 ),
               ],

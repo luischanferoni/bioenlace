@@ -1,6 +1,4 @@
 // lib/services/guardia_service.dart
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:shared/shared.dart';
 
 class GuardiaItem {
@@ -41,17 +39,6 @@ class GuardiaService {
 
   GuardiaService({this.authToken, this.userId});
 
-  Map<String, String> get _headers {
-    final headers = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
-    if (authToken != null) {
-      headers['Authorization'] = 'Bearer $authToken';
-    }
-    return headers;
-  }
-
   Future<List<GuardiaItem>> getGuardia({int? efectorId}) async {
     try {
       final queryParams = <String, String>{};
@@ -59,18 +46,14 @@ class GuardiaService {
       if (userId != null && (authToken == null || authToken!.isEmpty || authToken!.startsWith('simulated_'))) {
         queryParams['user_id'] = userId!;
       }
-      final uri = Uri.parse('${AppConfig.apiUrl}/listado/guardia').replace(
-        queryParameters: queryParams.isNotEmpty ? queryParams : null,
+      final data = await ApiClient(authToken: authToken).getData(
+        '/listado/guardia',
+        query: queryParams,
       );
-      final response = await http.get(uri, headers: _headers);
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['success'] == true && data['data'] != null) {
-          final list = data['data']['items'] as List<dynamic>? ?? [];
-          return list.map((e) => GuardiaItem.fromJson(e as Map<String, dynamic>)).toList();
-        }
-      }
-      return [];
+      final list = data['items'] as List<dynamic>? ?? [];
+      return list
+          .map((e) => GuardiaItem.fromJson(e as Map<String, dynamic>))
+          .toList();
     } catch (e) {
       print('Error fetching guardia: $e');
       return [];

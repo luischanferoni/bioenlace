@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../text/shared_texts.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared/config/api_config.dart';
@@ -359,7 +361,7 @@ class _DynamicFormState extends State<DynamicForm> {
                 ? [
                   DropdownMenuItem<String>(
                     value: null,
-                    child: Text('Sin opciones disponibles'),
+                    child: Text(SharedTexts.noOptions),
                   ),
                 ]
                 : options.map((option) {
@@ -560,7 +562,7 @@ class _DynamicFormState extends State<DynamicForm> {
               child: CircularProgressIndicator(strokeWidth: 2),
             ),
             SizedBox(width: 8),
-            Text('Buscando...'),
+            Text(SharedTexts.searching),
           ],
         ),
       );
@@ -861,7 +863,7 @@ class _DynamicFormState extends State<DynamicForm> {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: _goToPreviousStep,
-                    child: Text('Anterior'),
+                    child: Text(SharedTexts.previous),
                   ),
                 ),
                 const SizedBox(width: 8),

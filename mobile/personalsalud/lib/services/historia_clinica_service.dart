@@ -1,6 +1,4 @@
 // lib/services/historia_clinica_service.dart
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:shared/shared.dart';
 
 import '../models/timeline_event.dart';
@@ -30,16 +28,7 @@ class HistoriaClinicaService {
 
   HistoriaClinicaService({this.authToken});
 
-  Map<String, String> get _headers {
-    final headers = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
-    if (authToken != null) {
-      headers['Authorization'] = 'Bearer $authToken';
-    }
-    return headers;
-  }
+  ApiClient get _api => ApiClient(authToken: authToken);
 
   /// GET /api/v1/personas/{id}/historia-clinica
   ///
@@ -65,15 +54,9 @@ class HistoriaClinicaService {
         q['parent'] = parent;
         q['parent_id'] = '$parentId';
       }
-      final uri = Uri.parse(
-        '${AppConfig.apiUrl}/personas/$personaId/historia-clinica',
-      ).replace(queryParameters: q.isEmpty ? null : q);
-
-      final response = await http.get(uri, headers: _headers);
-
-      final data = unwrapApiContract(
-        json.decode(response.body),
-        response.statusCode,
+      final data = await _api.getData(
+        '/personas/$personaId/historia-clinica',
+        query: q,
       );
       return HistoriaClinicaResponse.fromJson(data);
     } on ApiContractException catch (e) {
@@ -108,14 +91,9 @@ class HistoriaClinicaService {
       } else if (turnoId != null && turnoId > 0) {
         q['turno_id'] = '$turnoId';
       }
-      final uri = Uri.parse(
-        '${AppConfig.apiUrl}/clinical/encounter/staff-summary',
-      ).replace(queryParameters: q);
-
-      final response = await http.get(uri, headers: _headers);
-      final data = unwrapApiContract(
-        json.decode(response.body),
-        response.statusCode,
+      final data = await _api.getData(
+        '/clinical/encounter/staff-summary',
+        query: q,
       );
       return HistoriaClinicaResponse.fromStaffEncounterJson(data);
     } catch (e) {
@@ -126,14 +104,7 @@ class HistoriaClinicaService {
 
   Future<PersonaData> getPersona(int id) async {
     try {
-      final response = await http.get(
-        Uri.parse('${AppConfig.apiUrl}/personas/$id'),
-        headers: _headers,
-      );
-      final data = unwrapApiContract(
-        json.decode(response.body),
-        response.statusCode,
-      );
+      final data = await _api.getData('/personas/$id');
       return PersonaData.fromJson(data);
     } catch (e) {
       print('Error fetching persona: $e');

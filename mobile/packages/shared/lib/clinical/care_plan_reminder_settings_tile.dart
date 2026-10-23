@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../text/shared_texts.dart';
+
 import '../theme/tokens/tokens.dart';
 import 'care_plan_local_reminder_service.dart';
 import 'care_plan_reminder_pref_sync.dart';
@@ -104,7 +106,7 @@ class _CarePlanReminderGlobalSwitchState extends State<CarePlanReminderGlobalSwi
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : const Icon(Icons.medication_outlined),
-          title: const Text('Recordatorios de tratamiento'),
+          title: const Text(SharedTexts.treatmentRemindersTitle),
           subtitle: Text(
             CarePlanLocalReminderService.isSupported
                 ? 'Alarmas locales según tus planes activos (medicación y estudios con horario).'

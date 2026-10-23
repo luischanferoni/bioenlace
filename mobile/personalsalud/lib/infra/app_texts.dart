@@ -3,6 +3,32 @@
 class AppTexts {
   AppTexts._();
 
+  static const logout = 'Cerrar sesión';
+  static const back = 'Volver';
+  static const confirm = 'Confirmar';
+  static const userInfoTitle = 'Información del usuario';
+  static const workAreaTitle = 'Área de trabajo';
+  static const featureInDevelopment = 'Funcionalidad en desarrollo';
+  static String areaChangeFailed(Object e) => 'Error al cambiar área: $e';
+  static const selectEffector = 'Seleccioná el efector';
+  static const selectService = 'Seleccioná el servicio';
+  static const selectArea = 'Seleccioná el área';
+  static const scanDniTitle = 'Escanear DNI';
+  static const contactPhoneRequired = 'Indicá un teléfono de contacto.';
+  static const withoutDocumentNn = 'Sin documento / NN';
+  static const triageReasonRequired = 'Indicá el motivo de consulta.';
+  static String saveFailed(Object e) => 'No se pudo guardar: $e';
+  static const triagePriorityTitle = 'Prioridad (Manchester)';
+  static const vitalSignsOptionalTitle = 'Signos vitales (opcional)';
+  static const flowConfirmFromPreviousStep = 'Confirmá el envío desde el paso anterior del flujo.';
+  static String flowStepUnavailable(String actionId) => 'No puedo abrir el paso ($actionId).';
+  static const screenWithoutApiRoute = 'Pantalla sin ruta API.';
+  static const screenTypeUnsupported = 'Tipo de pantalla no soportado en móvil médico.';
+  static const exitFlow = 'Salir';
+  static const sessionUnavailableForAction = 'Sesión no disponible para esta acción.';
+  static const historyTemporarilyUnavailable = 'Historia clínica no disponible temporalmente.';
+  static const encounterSaved = 'Consulta guardada';
+
   static const cancel = 'Cancelar';
 
   static const timelineLoadedData = 'Datos cargados';

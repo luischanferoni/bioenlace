@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
+import '../utils/app_texts.dart';
+
 import '../services/notificaciones_service.dart';
 import '../services/push_notification_service.dart';
 import '../services/turnos_service.dart';
@@ -108,7 +110,7 @@ class _AlertasScreenState extends State<AlertasScreen> {
       await _marcarLeida(item);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Asistencia confirmada')),
+        const SnackBar(content: Text(AppTexts.attendanceConfirmed)),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:shared/shared.dart';
 
+import '../../infra/app_texts.dart';
+
 /// Escaneo del código PDF417 / QR del DNI con la cámara del dispositivo.
 class DniBarcodeScanScreen extends StatefulWidget {
   const DniBarcodeScanScreen({super.key});
@@ -44,7 +46,7 @@ class _DniBarcodeScanScreenState extends State<DniBarcodeScanScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Escanear DNI'),
+        title: const Text(AppTexts.scanDniTitle),
         actions: [
           IconButton(
             tooltip: 'Linterna',

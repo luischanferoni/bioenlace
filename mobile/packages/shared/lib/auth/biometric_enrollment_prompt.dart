@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../text/shared_texts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../theme/tokens/tokens.dart';
@@ -39,7 +41,7 @@ abstract final class BiometricEnrollmentPrompt {
                 'si la app estuvo inactiva unos minutos.';
         return AlertDialog(
           backgroundColor: tokens.paperBackground,
-          title: Text('Activar $biometricType', style: BioTypography.h2),
+          title: Text(SharedTexts.enableBiometric(biometricType), style: BioTypography.h2),
           content: Text(
             content,
             style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
@@ -48,7 +50,7 @@ abstract final class BiometricEnrollmentPrompt {
             if (!mandatory)
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Ahora no'),
+                child: const Text(SharedTexts.notNow),
               ),
             BioButton.primary(
               label: mandatory ? 'Continuar con $biometricType' : 'Activar $biometricType',

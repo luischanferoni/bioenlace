@@ -1,9 +1,7 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared/shared.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -118,27 +116,19 @@ class PushNotificationService {
     if (token == null || token.isEmpty) return;
 
     try {
-      final uri = Uri.parse('${AppConfig.apiUrl}/devices/push-token');
-      final headers = AppConfig.jsonHeaders(
-        bearerToken: token,
-        appClient: 'personalsalud-flutter',
-      );
       final platform = Platform.isAndroid
           ? 'android'
           : (Platform.isIOS ? 'ios' : 'unknown');
-      final response = await http.post(
-        uri,
-        headers: headers,
-        body: json.encode({
+      await ApiClient(authToken: token, appClient: 'personalsalud-flutter')
+          .postData(
+        '/devices/push-token',
+        body: {
           'device_id': deviceId,
           'push_token': pushToken,
           'push_provider': 'fcm',
           'platform': platform,
-        }),
+        },
       );
-      if (response.statusCode >= 400) {
-        debugPrint('registerTokenWithApi médico: HTTP ${response.statusCode}');
-      }
     } catch (e) {
       debugPrint('registerTokenWithApi médico: $e');
     }

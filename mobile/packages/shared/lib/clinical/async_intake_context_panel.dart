@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../text/shared_texts.dart';
+
 import '../theme/tokens/tokens.dart';
 import '../ui/ui.dart';
 
@@ -241,7 +243,7 @@ class AsyncReferenceEncounterDetailScreen extends StatelessWidget {
             ),
           if (profesional != null && profesional.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.xs),
-            Text('Profesional: $profesional', style: BioTypography.body),
+            Text(SharedTexts.professionalLabel(profesional), style: BioTypography.body),
           ],
           if (fecha != null && fecha.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.xs),

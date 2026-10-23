@@ -19,6 +19,11 @@ import 'timeline/blocks/encounter_reasons_card.dart';
 import 'timeline/blocks/episodio_banner.dart';
 import 'timeline/blocks/episodio_feed_section.dart';
 import 'timeline/blocks/signos_vitales_episodio_card.dart';
+import 'timeline/capture/capture_actions_bar.dart';
+import 'timeline/capture/capture_input_bar.dart';
+import 'timeline/timeline_history_loader.dart';
+import 'timeline/capture/capture_save_result_dialog.dart';
+import 'timeline/capture/microphone_permission_dialog.dart';
 import 'timeline/capture/capture_review_panel.dart';
 import 'timeline/capture/pending_captures_panel.dart';
 import 'timeline/blocks/informacion_medica_card.dart';
@@ -259,38 +264,13 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     });
 
     try {
-      final int? turnoId = widget.parentType == EncounterParentType.turno
-          ? widget.parentId
-          : null;
-      final HistoriaClinicaResponse data;
-      if (widget.encounterSummaryLoaded) {
-        data = await _historiaClinicaService.getEncounterAsStaff(
-          turnoId: turnoId,
-          encounterId: widget.parentType == EncounterParentType.encounter
-              ? widget.parentId
-              : null,
-        );
-      } else {
-        data = await _historiaClinicaService.getHistoriaClinica(
-          widget.personaId,
-          turnoId: turnoId,
-          encounterId: widget.parentType == EncounterParentType.encounter
-              ? widget.parentId
-              : null,
-          parent:
-              (turnoId == null &&
-                  widget.parentType != null &&
-                  widget.parentType != EncounterParentType.encounter)
-              ? widget.parentType
-              : null,
-          parentId:
-              (turnoId == null &&
-                  widget.parentType != null &&
-                  widget.parentType != EncounterParentType.encounter)
-              ? widget.parentId
-              : null,
-        );
-      }
+      final data = await fetchTimelineHistory(
+        _historiaClinicaService,
+        personaId: widget.personaId,
+        encounterSummaryLoaded: widget.encounterSummaryLoaded,
+        parentType: widget.parentType,
+        parentId: widget.parentId,
+      );
       if (!mounted) return;
       setState(() {
         _historiaClinicaData = data;
@@ -490,11 +470,29 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                   ),
                 ),
                 if (!_isLoadedEncounterSummary && _enRevisionCaptura)
-                  _buildCaptureActionsBar(),
+                  CaptureActionsBar(
+                    isSaving: _isSaving,
+                    canConfirm: _canConfirmCapture,
+                    onConfirm: _confirmarGuardado,
+                    onEdit: _editCaptureDraft,
+                    onDelete: _activePendingId == null || _isSaving ? null : () => _deletePendingCapture(_activePendingId!),
+                  ),
                 if (!_isLoadedEncounterSummary &&
                     _showCaptureBar &&
                     !_enRevisionCaptura)
-                  _buildChatInputBar(context),
+                  CaptureInputBar(
+                    controller: _chatController,
+                    focusNode: _chatFocusNode,
+                    onSend: _sendEncounter,
+                    busy: _captureBusy,
+                    canCapture: _tieneContextoCaptura,
+                    isEpisode: _esCapturaEpisodio,
+                    editingDraft: _editingCaptureDraft,
+                    sttStatus: _sttStatus,
+                    dictating: _dictating || _audioOnlyRecording,
+                    onCancelEdit: _cancelEditCaptureDraft,
+                    onVoice: _tieneContextoCaptura && _sttConfigLoaded && (_sttConfig.deviceEnabled || _sttConfig.serverEnabled) ? _toggleDictation : null,
+                  ),
               ],
             ),
     );
@@ -708,18 +706,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         await _showMicrophonePermissionDialog();
         return false;
       }
-      final error = e.toString().toLowerCase();
-      final message =
-          error.contains('notallowederror') ||
-              error.contains('permission denied') ||
-              error.contains('denied')
-          ? 'El navegador bloqueó el acceso al micrófono. Revisá los permisos y volvé a intentar.'
-          : error.contains('notfounderror') ||
-                error.contains('devicesnotfounderror')
-          ? 'No se encontró un micrófono disponible.'
-          : kIsWeb
-          ? 'No se pudo acceder al micrófono. Verificá los permisos del navegador y que la página esté abierta mediante una conexión segura (HTTPS). Detalle: $e'
-          : 'No se pudo grabar audio: $e';
+      final message = recordingStartErrorMessage(e);
       _snack(message, UiIntent.danger);
       return false;
     }
@@ -729,50 +716,23 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     bool permissionRequestFailed = false,
   }) async {
     if (!mounted) return;
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        icon: const Icon(Icons.mic_off_outlined),
-        title: const Text(AppTexts.micDisabledTitle),
-        content: Text(
-          permissionRequestFailed
-              ? 'No se pudo habilitar el micrófono. Verificá que haya uno disponible y que el permiso esté habilitado en la configuración del navegador o del dispositivo. Después, volvé a intentar.'
-              : 'Para grabar, habilitá el acceso al micrófono. Podés solicitar el permiso ahora. Si no aparece el aviso, revisá los permisos del navegador o del dispositivo.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text(AppTexts.close),
-          ),
-          FilledButton.icon(
-            onPressed: () async {
-              Navigator.of(dialogContext).pop();
-              try {
-                final granted = await _audioRecorder.hasPermission();
-                if (!mounted) return;
-                if (granted) {
-                  await _startAudioOnlyRecording();
-                } else {
-                  await _showMicrophonePermissionDialog(
-                    permissionRequestFailed: true,
-                  );
-                }
-              } catch (_) {
-                if (!mounted) return;
-                await _showMicrophonePermissionDialog(
-                  permissionRequestFailed: true,
-                );
-              }
-            },
-            icon: const Icon(Icons.mic),
-            label: Text(
-              permissionRequestFailed
-                  ? 'Volver a intentar'
-                  : 'Habilitar micrófono',
-            ),
-          ),
-        ],
-      ),
+    await showMicrophonePermissionDialog(
+      context,
+      permissionRequestFailed: permissionRequestFailed,
+      onRetry: () async {
+        try {
+          final granted = await _audioRecorder.hasPermission();
+          if (!mounted) return;
+          if (granted) {
+            await _startAudioOnlyRecording();
+          } else {
+            await _showMicrophonePermissionDialog(permissionRequestFailed: true);
+          }
+        } catch (_) {
+          if (!mounted) return;
+          await _showMicrophonePermissionDialog(permissionRequestFailed: true);
+        }
+      },
     );
   }
 
@@ -1502,6 +1462,16 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     }
   }
 
+  bool get _canConfirmCapture {
+    final review = _captureReview;
+    return !_isSaving &&
+        review != null &&
+        review.systemError == null &&
+        !review.episodeNoteDuplicate &&
+        review.textoOriginal.trim().isNotEmpty &&
+        _allStagedIssuesResolved(review);
+  }
+
   bool _allStagedIssuesResolved(EncounterCaptureAnalysis review) {
     for (final issue in review.issues) {
       final m = RegExp(r'^(.*)::(\d+):').firstMatch(issue.id);
@@ -1665,7 +1635,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           titulo: 'Guardado incompleto',
           mensaje: aviso,
           intent: UiIntent.warning,
-          detalle: _detalleDiagnosticoGuardado(guardado),
+          detalle: captureSaveDiagnosticDetail(guardado),
         );
       }
       final doneId = _activePendingId;
@@ -1697,26 +1667,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     }
   }
 
-  String _detalleDiagnosticoGuardado(Map<String, dynamic> guardado) {
-    final parts = <String>[];
-    final persistido = guardado['persistido'];
-    if (persistido is Map) {
-      parts.add('persistido: $persistido');
-    }
-    final diag = guardado['diagnostico_guardar'];
-    if (diag is Map) {
-      parts.add('staged: ${diag['staged_counts']}');
-      parts.add('final: ${diag['final_counts']}');
-      parts.add('backup: ${diag['backup_fuentes']}');
-      parts.add('cache: ${diag['cache']}');
-      parts.add('por_modelo: ${diag['por_modelo']}');
-    }
-    if (guardado['log_id'] != null) {
-      parts.add('log_id: ${guardado['log_id']}');
-    }
-    return parts.join('\n');
-  }
-
   Future<void> _mostrarResultadoGuardado({
     required String titulo,
     required String mensaje,
@@ -1724,35 +1674,12 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     String? detalle,
   }) async {
     if (!mounted) return;
-    final palette = IntentPalette.of(intent);
-    await showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) {
-        return AlertDialog(
-          title: Text(titulo),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(mensaje),
-                if (detalle != null && detalle.trim().isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  Text(detalle, style: Theme.of(ctx).textTheme.bodySmall),
-                ],
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              style: TextButton.styleFrom(foregroundColor: palette.base),
-              child: const Text(AppTexts.understood),
-            ),
-          ],
-        );
-      },
+    await showCaptureSaveResultDialog(
+      context,
+      titulo: titulo,
+      mensaje: mensaje,
+      intent: intent,
+      detalle: detalle,
     );
   }
 
@@ -1829,128 +1756,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     });
   }
 
-  Widget _buildCaptureActionsBar() {
-    final review = _captureReview;
-    final canConfirm =
-        !_isSaving &&
-        review != null &&
-        review.systemError == null &&
-        !review.episodeNoteDuplicate &&
-        review.textoOriginal.trim().isNotEmpty &&
-        _allStagedIssuesResolved(review);
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(
-        BioSpacing.md,
-        BioSpacing.sm,
-        BioSpacing.md,
-        BioSpacing.sm,
-      ),
-      decoration: BoxDecoration(
-        color: context.bio.paperSurface,
-        border: Border(top: BorderSide(color: context.bio.paperBorderDefault)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          BioButton.primary(
-            label: _isSaving ? 'Guardando…' : 'Guardar',
-            icon: _isSaving ? null : Icons.check,
-            onPressed: canConfirm ? _confirmarGuardado : null,
-          ),
-          BioSpacing.gapH(BioSpacing.sm),
-          Row(
-            children: [
-              Expanded(
-                child: BioButton(
-                  label: 'Editar texto',
-                  intent: UiIntent.neutral,
-                  variant: BioButtonVariant.soft,
-                  onPressed: _isSaving ? null : _editCaptureDraft,
-                ),
-              ),
-              BioSpacing.gapW(BioSpacing.sm),
-              Expanded(
-                child: BioButton(
-                  label: 'Eliminar',
-                  intent: UiIntent.danger,
-                  variant: BioButtonVariant.soft,
-                  onPressed: _isSaving || _activePendingId == null
-                      ? null
-                      : () => _deletePendingCapture(_activePendingId!),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   void _snack(String msg, UiIntent intent) {
     final palette = IntentPalette.of(intent);
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: palette.base));
-  }
-
-  Widget _buildChatInputBar(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final canCapture = _tieneContextoCaptura;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (_editingCaptureDraft)
-          Padding(
-            padding: const EdgeInsets.only(
-              left: BioSpacing.sm,
-              right: BioSpacing.sm,
-              bottom: BioSpacing.xs,
-            ),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed: _captureBusy ? null : _cancelEditCaptureDraft,
-                icon: const Icon(Icons.arrow_back, size: 18),
-                label: const Text(AppTexts.captureCancelEdit),
-              ),
-            ),
-          ),
-        if (_sttStatus.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(
-              left: BioSpacing.sm,
-              right: BioSpacing.sm,
-              bottom: BioSpacing.xs,
-            ),
-            child: Text(
-              _sttStatus,
-              style: BioTypography.caption.copyWith(color: cs.primary),
-            ),
-          ),
-        AssistantChatComposerBar(
-          controller: _chatController,
-          focusNode: _chatFocusNode,
-          onSend: _sendEncounter,
-          isSending: _captureBusy,
-          sendIcon: Icons.fact_check_outlined,
-          hintText: canCapture
-              ? (_esCapturaEpisodio
-                    ? 'Dictar o escribir la evolución…'
-                    : 'Dictar o escribir la consulta…')
-              : (_esCapturaEpisodio
-                    ? 'Escribir evolución…'
-                    : 'Escribir consulta…'),
-          maxLines: 6,
-          onVoice:
-              canCapture &&
-                  _sttConfigLoaded &&
-                  (_sttConfig.deviceEnabled || _sttConfig.serverEnabled)
-              ? _toggleDictation
-              : null,
-          voiceActive: _dictating || _audioOnlyRecording,
-        ),
-      ],
-    );
   }
 }

@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
+import '../../infra/app_texts.dart';
+
 import '../../services/emergency_guardia_api.dart';
 import 'dni_barcode_scan_screen.dart';
 
@@ -143,7 +145,7 @@ class _EmergencyIngresoScreenState extends State<EmergencyIngresoScreen> {
     if (!_puedeGuardar) return;
     if (!_esVincular && _telRequerido && _telController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Indicá un teléfono de contacto.')),
+        const SnackBar(content: Text(AppTexts.contactPhoneRequired)),
       );
       return;
     }
@@ -395,7 +397,7 @@ class _EmergencyIngresoScreenState extends State<EmergencyIngresoScreen> {
                   color: Theme.of(context).colorScheme.error.withValues(alpha: 0.5),
                 ),
               ),
-              child: const Text('Sin documento / NN'),
+              child: const Text(AppTexts.withoutDocumentNn),
             ),
           ],
           if (_mostrarEscanearDni) ...[

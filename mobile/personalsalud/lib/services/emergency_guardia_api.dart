@@ -1,6 +1,4 @@
 // lib/services/emergency_guardia_api.dart
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:shared/shared.dart';
 
 /// Fila del tablero operativo de guardia (sección emergency_board en GET /api/v1/home/panel).
@@ -184,24 +182,12 @@ class EmergencyGuardiaApi {
 
   EmergencyGuardiaApi({this.authToken, this.userId});
 
-  Map<String, String> get _headers {
-    final headers = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
-    if (authToken != null && authToken!.isNotEmpty) {
-      headers['Authorization'] = 'Bearer $authToken';
-    }
-    return headers;
-  }
+  static const _base = '/clinical/emergency-guardia';
+
+  ApiClient get _api => ApiClient(authToken: authToken);
 
   Future<List<EmergencyTriageLevel>> getTriageLevels() async {
-    final uri = Uri.parse('${AppConfig.apiUrl}/catalogos/triage-levels');
-    final response = await http.get(uri, headers: _headers);
-    final data = unwrapApiContract(
-      json.decode(response.body),
-      response.statusCode,
-    );
+    final data = await _api.getData('/catalogos/triage-levels');
     final rawLevels = data['triage_levels'];
     if (rawLevels is! List) {
       throw const FormatException('Triage levels catalog is missing');
@@ -223,41 +209,22 @@ class EmergencyGuardiaApi {
     return levels;
   }
 
-  Future<Map<String, dynamic>> iniciarAtencion(int guardiaId) async {
-    final uri = Uri.parse(
-      '${AppConfig.apiUrl}/clinical/emergency-guardia/$guardiaId/iniciar-atencion',
-    );
-    final response = await http.post(uri, headers: _headers, body: '{}');
-    return unwrapApiContract(json.decode(response.body), response.statusCode);
-  }
+  Future<Map<String, dynamic>> iniciarAtencion(int guardiaId) =>
+      _api.postData('$_base/$guardiaId/iniciar-atencion', body: {});
 
   Future<void> asignar({required int guardiaId, int? idPes}) async {
-    final body = <String, dynamic>{
-      if (idPes != null) 'id_profesional_efector_servicio': idPes,
-    };
-    final uri = Uri.parse(
-      '${AppConfig.apiUrl}/clinical/emergency-guardia/$guardiaId/asignar',
+    await _api.postData(
+      '$_base/$guardiaId/asignar',
+      body: {if (idPes != null) 'id_profesional_efector_servicio': idPes},
     );
-    final response = await http.post(
-      uri,
-      headers: _headers,
-      body: json.encode(body),
-    );
-    unwrapApiContract(json.decode(response.body), response.statusCode);
   }
 
   Future<List<EfectorDerivacionItem>> listarEfectoresDerivacion({
     int? idEfector,
   }) async {
-    final query = <String, String>{};
-    if (idEfector != null) query['id_efector'] = idEfector.toString();
-    final uri = Uri.parse(
-      '${AppConfig.apiUrl}/clinical/emergency-guardia/listar-efectores-derivacion',
-    ).replace(queryParameters: query.isNotEmpty ? query : null);
-    final response = await http.get(uri, headers: _headers);
-    final data = unwrapApiContractList(
-      json.decode(response.body),
-      response.statusCode,
+    final data = await _api.getList(
+      '$_base/listar-efectores-derivacion',
+      query: {if (idEfector != null) 'id_efector': idEfector.toString()},
     );
     return data.map(EfectorDerivacionItem.fromJson).toList();
   }
@@ -266,18 +233,13 @@ class EmergencyGuardiaApi {
     int guardiaId, {
     int? idEfectorInternacion,
   }) async {
-    final uri = Uri.parse(
-      '${AppConfig.apiUrl}/clinical/emergency-guardia/$guardiaId/solicitar-internacion',
-    );
-    final response = await http.post(
-      uri,
-      headers: _headers,
-      body: json.encode({
+    await _api.postData(
+      '$_base/$guardiaId/solicitar-internacion',
+      body: {
         if (idEfectorInternacion != null)
           'notificar_internacion_id_efector': idEfectorInternacion,
-      }),
+      },
     );
-    unwrapApiContract(json.decode(response.body), response.statusCode);
   }
 
   Future<void> derivar({
@@ -286,40 +248,27 @@ class EmergencyGuardiaApi {
     String? condicionesDerivacion,
     bool solicitarInternacion = false,
   }) async {
-    final uri = Uri.parse(
-      '${AppConfig.apiUrl}/clinical/emergency-guardia/$guardiaId/derivar',
-    );
-    final response = await http.post(
-      uri,
-      headers: _headers,
-      body: json.encode({
+    await _api.postData(
+      '$_base/$guardiaId/derivar',
+      body: {
         'id_efector_derivacion': idEfectorDerivacion,
         if (condicionesDerivacion != null && condicionesDerivacion.isNotEmpty)
           'condiciones_derivacion': condicionesDerivacion,
         'solicitar_internacion': solicitarInternacion,
         if (solicitarInternacion)
           'notificar_internacion_id_efector': idEfectorDerivacion,
-      }),
+      },
     );
-    unwrapApiContract(json.decode(response.body), response.statusCode);
   }
 
   Future<void> finalizar(int guardiaId) async {
-    final uri = Uri.parse(
-      '${AppConfig.apiUrl}/clinical/emergency-guardia/$guardiaId/finalizar',
-    );
-    final response = await http.post(uri, headers: _headers, body: '{}');
-    unwrapApiContract(json.decode(response.body), response.statusCode);
+    await _api.postData('$_base/$guardiaId/finalizar', body: {});
   }
 
   Future<List<Map<String, String>>> buscarPersonaIngreso(String q) async {
-    final uri = Uri.parse(
-      '${AppConfig.apiUrl}/clinical/emergency-guardia/buscar-persona-ingreso',
-    ).replace(queryParameters: {'q': q});
-    final response = await http.get(uri, headers: _headers);
-    final data = unwrapApiContract(
-      json.decode(response.body),
-      response.statusCode,
+    final data = await _api.getData(
+      '$_base/buscar-persona-ingreso',
+      query: {'q': q},
     );
     final rows = data['results'] as List<dynamic>? ?? [];
     return rows
@@ -339,49 +288,27 @@ class EmergencyGuardiaApi {
     String? documento,
     int? sexoBiologico,
     String? codigoBarras,
-  }) async {
-    final uri = Uri.parse(
-      '${AppConfig.apiUrl}/registro/preview-renaper-como-staff',
+  }) {
+    return _api.postData(
+      '/registro/preview-renaper-como-staff',
+      body: {
+        if (codigoBarras != null && codigoBarras.isNotEmpty)
+          'codigo_barras': codigoBarras,
+        if (documento != null && documento.isNotEmpty) 'documento': documento,
+        if (sexoBiologico != null) 'sexo_biologico': sexoBiologico,
+      },
     );
-    final body = <String, dynamic>{
-      if (codigoBarras != null && codigoBarras.isNotEmpty)
-        'codigo_barras': codigoBarras,
-      if (documento != null && documento.isNotEmpty) 'documento': documento,
-      if (sexoBiologico != null) 'sexo_biologico': sexoBiologico,
-    };
-    final response = await http.post(
-      uri,
-      headers: _headers,
-      body: json.encode(body),
-    );
-    return unwrapApiContract(json.decode(response.body), response.statusCode);
   }
 
   Future<void> ingresar(Map<String, dynamic> body) async {
-    final uri = Uri.parse(
-      '${AppConfig.apiUrl}/clinical/emergency-guardia/ingresar',
-    );
-    final response = await http.post(
-      uri,
-      headers: _headers,
-      body: json.encode(body),
-    );
-    unwrapApiContract(json.decode(response.body), response.statusCode);
+    await _api.postData('$_base/ingresar', body: body);
   }
 
   Future<void> vincularIdentidad(
     int guardiaId,
     Map<String, dynamic> body,
   ) async {
-    final uri = Uri.parse(
-      '${AppConfig.apiUrl}/clinical/emergency-guardia/$guardiaId/vincular-identidad',
-    );
-    final response = await http.post(
-      uri,
-      headers: _headers,
-      body: json.encode(body),
-    );
-    unwrapApiContract(json.decode(response.body), response.statusCode);
+    await _api.postData('$_base/$guardiaId/vincular-identidad', body: body);
   }
 
   Future<void> registrarTriage({
@@ -392,22 +319,16 @@ class EmergencyGuardiaApi {
     Map<String, dynamic>? vitals,
     int? idEfector,
   }) async {
-    final body = <String, dynamic>{
-      'level': level,
-      'reason_text': reasonText,
-      if (reasonCode != null && reasonCode.isNotEmpty)
-        'reason_code': reasonCode,
-      if (vitals != null) 'vitals': vitals,
-      if (idEfector != null) 'id_efector': idEfector,
-    };
-    final uri = Uri.parse(
-      '${AppConfig.apiUrl}/clinical/emergency-guardia/$guardiaId/registrar-triage',
+    await _api.postData(
+      '$_base/$guardiaId/registrar-triage',
+      body: {
+        'level': level,
+        'reason_text': reasonText,
+        if (reasonCode != null && reasonCode.isNotEmpty)
+          'reason_code': reasonCode,
+        if (vitals != null) 'vitals': vitals,
+        if (idEfector != null) 'id_efector': idEfector,
+      },
     );
-    final response = await http.post(
-      uri,
-      headers: _headers,
-      body: json.encode(body),
-    );
-    unwrapApiContract(json.decode(response.body), response.statusCode);
   }
 }

@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+
+import '../text/shared_texts.dart';
 import 'package:http/http.dart' as http;
 
 import '../config/api_config.dart';
@@ -101,7 +103,7 @@ class _LicenciaTurnosImpactPreviewWidgetState extends State<LicenciaTurnosImpact
               child: CircularProgressIndicator(strokeWidth: 2),
             ),
             SizedBox(width: 10),
-            Expanded(child: Text('Calculando impacto en turnos…')),
+            Expanded(child: Text(SharedTexts.calculatingAppointmentImpact)),
           ],
         ),
       );

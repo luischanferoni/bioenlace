@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared/shared.dart';
 
+import '../../infra/app_texts.dart';
+
 import '../../services/emergency_guardia_api.dart';
 
 /// Triage rápido (móvil) para un ingreso en guardia.
@@ -158,7 +160,7 @@ class _EmergencyTriageScreenState extends State<EmergencyTriageScreen> {
     }
     if (reason.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Indicá el motivo de consulta.')),
+        const SnackBar(content: Text(AppTexts.triageReasonRequired)),
       );
       return;
     }
@@ -182,7 +184,7 @@ class _EmergencyTriageScreenState extends State<EmergencyTriageScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('No se pudo guardar: $e')));
+        ).showSnackBar(SnackBar(content: Text(AppTexts.saveFailed(e))));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -203,7 +205,7 @@ class _EmergencyTriageScreenState extends State<EmergencyTriageScreen> {
         children: [
           Text(widget.pacienteNombre, style: BioTypography.h3),
           BioSpacing.gapH(BioSpacing.lg),
-          Text('Prioridad (Manchester)', style: BioTypography.title),
+          Text(AppTexts.triagePriorityTitle, style: BioTypography.title),
           BioSpacing.gapH(BioSpacing.sm),
           if (_loadError != null)
             BioAlert.danger(message: _loadError!)
@@ -234,7 +236,7 @@ class _EmergencyTriageScreenState extends State<EmergencyTriageScreen> {
             maxLines: 2,
           ),
           BioSpacing.gapH(BioSpacing.md),
-          Text('Signos vitales (opcional)', style: BioTypography.title),
+          Text(AppTexts.vitalSignsOptionalTitle, style: BioTypography.title),
           BioSpacing.gapH(BioSpacing.xs),
           Text(
             'Enteros de 2–3 dígitos. TA sys 50–250 · TA dia 30–150 · FC 20–250.',

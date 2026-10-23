@@ -24,4 +24,19 @@ class SharedTexts {
   static String remindersCustom(String times) => 'Recordatorios: $times';
   static const chooseFirstDoseTime = 'Elegí la hora de la primera toma';
   static const chooseFirstDoseTimeButton = 'Elegir hora de la primera toma';
-}
+
+  static const privacyPolicyOpenFailed = 'No se pudo abrir la política de privacidad';
+  static const institutionalSignupOpenFailed = 'No se pudo abrir el alta de consultorio';
+  static const reviewAccessTitle = 'Acceso para revisión';
+  static const hcSummaryInAssistantTitle = 'Resumen de historia en el asistente';
+  static const yourAccount = 'Tu cuenta';
+  static const treatmentRemindersTitle = 'Recordatorios de tratamiento';
+  static String pdfReady(String name) => 'PDF listo: $name';
+  static const calculatingAppointmentImpact = 'Calculando impacto en turnos…';
+  static const searching = 'Buscando...';
+  static const previous = 'Anterior';
+  static String professionalLabel(String name) => 'Profesional: $name';
+  static String enableBiometric(String type) => 'Activar $type';
+  static const notNow = 'Ahora no';
+  static const verificationCancelled = 'Verificación cancelada por el usuario';
+  static String authenticationFailed(Object e) => 'Error en la autenticación: $e';}

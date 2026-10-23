@@ -70,14 +70,10 @@ class ConfigService {
 
   /// Catálogo público de encounter classes (pantallas que no pasan por el wizard).
   Future<List<EncounterClass>> getEncounterClasses() async {
-    final response = await http.get(
-      Uri.parse('${AppConfig.apiUrl}/catalogos/encounter-classes'),
-      headers: _headers,
-    );
-    final data = unwrapApiContract(
-      json.decode(response.body),
-      response.statusCode,
-    );
+    final data = await ApiClient(
+      authToken: authToken,
+      appClient: 'personalsalud-flutter',
+    ).getData('/catalogos/encounter-classes');
     final raw = data['encounter_classes'] as List<dynamic>? ?? [];
     return raw
         .map((c) => EncounterClass.fromJson(c as Map<String, dynamic>))

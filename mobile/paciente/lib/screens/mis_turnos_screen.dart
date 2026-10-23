@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
+import '../utils/app_texts.dart';
+
 import '../services/turnos_service.dart';
 import 'encounter_chat_patient_screen.dart';
 import 'encounter_reasons_chat_screen.dart';
@@ -251,7 +253,7 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
     if (!mounted) return;
     if (r['success'] == true) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Asistencia confirmada')),
+        const SnackBar(content: Text(AppTexts.attendanceConfirmed)),
       );
       await _cargarInicial();
     } else {

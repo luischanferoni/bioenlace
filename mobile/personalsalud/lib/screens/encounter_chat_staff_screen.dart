@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import 'package:shared/shared.dart';
+
+import '../infra/app_texts.dart';
 import '../services/encounter_chat_service.dart';
 import '../services/encounter_async_api.dart';
 import 'patient_timeline_screen.dart';
@@ -101,8 +103,8 @@ class _EncounterChatStaffScreenState extends State<EncounterChatStaffScreen> {
             autofocus: true,
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Volver')),
-            TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Confirmar')),
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text(AppTexts.back)),
+            TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text(AppTexts.confirm)),
           ],
         ),
       );
@@ -119,8 +121,8 @@ class _EncounterChatStaffScreenState extends State<EncounterChatStaffScreen> {
           title: Text(resolution.label),
           content: const Text('¿Confirmás esta resolución?'),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Volver')),
-            TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Confirmar')),
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text(AppTexts.back)),
+            TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text(AppTexts.confirm)),
           ],
         ),
       );

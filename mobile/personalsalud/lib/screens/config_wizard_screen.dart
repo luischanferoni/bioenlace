@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 
+import '../infra/app_texts.dart';
+
 import '../auth/personalsalud_authenticated_shell.dart';
 import '../auth/personalsalud_post_login.dart';
 import '../auth/personalsalud_login_screen.dart';
@@ -262,7 +264,7 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Cerrar sesión'),
+        title: const Text(AppTexts.logout),
         content: const Text('¿Seguro que querés salir?'),
         actions: [
           BioButton(
@@ -494,7 +496,7 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Seleccioná el efector', style: BioTypography.h2),
+          Text(AppTexts.selectEffector, style: BioTypography.h2),
           BioSpacing.gapH(BioSpacing.sm),
           if (_efectoresConProblemas.isNotEmpty) ...[
             BioAlert.warning(
@@ -539,7 +541,7 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Seleccioná el servicio', style: BioTypography.h2),
+          Text(AppTexts.selectService, style: BioTypography.h2),
           BioSpacing.gapH(BioSpacing.sm),
           Text(
             'Elegí el servicio donde vas a trabajar.',
@@ -572,7 +574,7 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Seleccioná el área', style: BioTypography.h2),
+          Text(AppTexts.selectArea, style: BioTypography.h2),
           BioSpacing.gapH(BioSpacing.sm),
           Text(
             'Elegí el tipo de atención (ambulatorio, guardia, internación, etc.).',

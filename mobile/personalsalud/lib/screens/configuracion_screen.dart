@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 
+import '../infra/app_texts.dart';
+
 import '../auth/personalsalud_login_screen.dart';
 import '../auth/personalsalud_post_login.dart';
 import '../auth/personalsalud_session_prefs.dart';
@@ -158,7 +160,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
         setState(() => _isLoadingEncounter = false);
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error al cambiar área: $e')));
+        ).showSnackBar(SnackBar(content: Text(AppTexts.areaChangeFailed(e))));
       }
     }
   }
@@ -192,7 +194,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Información del usuario', style: BioTypography.h3),
+          Text(AppTexts.userInfoTitle, style: BioTypography.h3),
           BioSpacing.gapH(BioSpacing.md),
           Row(
             children: [
@@ -217,7 +219,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Área de trabajo', style: BioTypography.h3),
+          Text(AppTexts.workAreaTitle, style: BioTypography.h3),
           BioSpacing.gapH(BioSpacing.xs),
           Text(
             'Según el área, Inicio mostrará turnos, pacientes internados o ingresos en guardia.',
@@ -332,7 +334,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Cerrar sesión'),
+        title: const Text(AppTexts.logout),
         content: const Text('¿Seguro que querés cerrar sesión?'),
         actions: [
           BioButton(
@@ -367,7 +369,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
 
   void _showDevSnack() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Funcionalidad en desarrollo')),
+      const SnackBar(content: Text(AppTexts.featureInDevelopment)),
     );
   }
 }

@@ -1,6 +1,20 @@
 /// Textos de infraestructura de la app Paciente (avisos y etiquetas genéricas del cliente).
 /// Los textos clínicos y de negocio vienen del backend.
 class AppTexts {
+  static const logout = 'Cerrar sesión';
+  static const comingSoon = 'Próximamente';
+  static const sectorUpdateFailed = 'No se pudo actualizar el sector';
+  static const loginToSendComplaint = 'Iniciá sesión para enviar una queja';
+  static const prescriptionsTitle = 'Recetas';
+  static const labResultsTitle = 'Resultados de laboratorio';
+  static const ordersTitle = 'Pedidos e indicaciones';
+  static const audioSavedUploading = 'Audio guardado en el teléfono. Subiendo…';
+  static const pendingMessageDeleted = 'Mensaje pendiente eliminado';
+  static const withdrawRequestTitle = 'Retirar solicitud';
+  static const withdrawRequestBody = '¿Querés retirar esta solicitud? Solo podés hacerlo mientras el equipo aún no la atiende.';
+  static String protocolLabel(String protocol) => 'Protocolo: $protocol';
+  static const messageEncounters = 'Consultas por mensaje';
+  static const followUpControl = 'Control y seguimiento';
   AppTexts._();
 
   static const minorDocumentRequired = 'Ingresá el documento del menor.';

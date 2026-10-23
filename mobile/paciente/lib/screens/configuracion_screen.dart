@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 
+import '../utils/app_texts.dart';
+
 import '../auth/paciente_post_login.dart';
 import 'person_representation_hub_screen.dart';
 import 'paciente_provincia_context_screen.dart';
@@ -56,7 +58,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
     if (!mounted) return;
     if (!ok) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No se pudo actualizar el sector')),
+        const SnackBar(content: Text(AppTexts.sectorUpdateFailed)),
       );
     }
   }
@@ -184,7 +186,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
                 () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Iniciá sesión para enviar una queja'),
+                      content: Text(AppTexts.loginToSendComplaint),
                     ),
                   );
                 },
@@ -236,7 +238,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
 
   void _proximamente(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Próximamente')),
+      const SnackBar(content: Text(AppTexts.comingSoon)),
     );
   }
 
@@ -244,7 +246,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Cerrar sesión'),
+        title: const Text(AppTexts.logout),
         content: const Text('¿Estás seguro de que deseas cerrar sesión?'),
         actionsPadding: const EdgeInsets.symmetric(
           horizontal: BioSpacing.md,

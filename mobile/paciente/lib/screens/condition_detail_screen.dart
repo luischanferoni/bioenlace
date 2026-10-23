@@ -3,6 +3,7 @@ import 'package:shared/shared.dart';
 
 import '../config/paciente_intents.dart';
 import '../services/encounter_async_api.dart';
+import '../utils/app_texts.dart';
 import '../widgets/encounter_async_request_card.dart';
 import 'encounter_chat_patient_screen.dart';
 
@@ -131,13 +132,11 @@ class _ConditionDetailScreenState extends State<ConditionDetailScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Retirar solicitud'),
-        content: const Text(
-          '¿Querés retirar esta solicitud? Solo podés hacerlo mientras el equipo aún no la atiende.',
-        ),
+        title: const Text(AppTexts.withdrawRequestTitle),
+        content: const Text(AppTexts.withdrawRequestBody),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('No')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Retirar')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text(AppTexts.no)),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text(AppTexts.withdraw)),
         ],
       ),
     );
@@ -215,7 +214,7 @@ class _ConditionDetailScreenState extends State<ConditionDetailScreen> {
           ],
           if (protocol != null && protocol.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.sm),
-            Text('Protocolo: $protocol', style: BioTypography.body),
+            Text(AppTexts.protocolLabel(protocol), style: BioTypography.body),
           ],
         ],
       ),
@@ -244,7 +243,7 @@ class _ConditionDetailScreenState extends State<ConditionDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Consultas por mensaje', style: BioTypography.title),
+        Text(AppTexts.messageEncounters, style: BioTypography.title),
         BioSpacing.gapH(BioSpacing.sm),
         ..._solicitudesActivas.map(
           (item) => Padding(
@@ -281,7 +280,7 @@ class _ConditionDetailScreenState extends State<ConditionDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Control y seguimiento', style: BioTypography.title),
+          Text(AppTexts.followUpControl, style: BioTypography.title),
           BioSpacing.gapH(BioSpacing.sm),
           Text(
             'Elegí qué necesitás sobre esta condición.',

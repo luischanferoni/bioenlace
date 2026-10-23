@@ -6,6 +6,8 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 
+import '../infra/app_texts.dart';
+
 import '../models/turno.dart';
 import '../models/cirugia_agenda_item.dart';
 import '../auth/personalsalud_post_login.dart';
@@ -1419,7 +1421,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (token == null || token.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sesión no disponible para esta acción.')),
+        const SnackBar(content: Text(AppTexts.sessionUnavailableForAction)),
       );
       return;
     }
@@ -2012,7 +2014,7 @@ class _HomeScreenState extends State<HomeScreen> {
   static void _onTapSinTimeline(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Historia clínica no disponible temporalmente.'),
+        content: Text(AppTexts.historyTemporarilyUnavailable),
       ),
     );
   }
@@ -2039,7 +2041,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (refreshed == true && mounted) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Consulta guardada')));
+      ).showSnackBar(const SnackBar(content: Text(AppTexts.encounterSaved)));
       await _cargarListadoPacientes(silent: true);
     }
   }
@@ -2060,7 +2062,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (saved == true && mounted) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Consulta guardada')));
+      ).showSnackBar(const SnackBar(content: Text(AppTexts.encounterSaved)));
       await _cargarListadoPacientes(silent: true);
     }
   }

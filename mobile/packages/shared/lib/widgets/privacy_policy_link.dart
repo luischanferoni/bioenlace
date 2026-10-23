@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../text/shared_texts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../config/api_config.dart';
@@ -13,7 +15,7 @@ class PrivacyPolicyLink extends StatelessWidget {
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!ok && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No se pudo abrir la política de privacidad')),
+        const SnackBar(content: Text(SharedTexts.privacyPolicyOpenFailed)),
       );
     }
   }

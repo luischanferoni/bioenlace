@@ -89,8 +89,7 @@ class _PacienteProvinciaContextScreenState
               padding: BioSpacing.pageAll,
               children: [
                 Text(
-                  'Esta provincia define qué servicios y respuestas verás en la app. '
-                  'No cambia tu domicilio registrado.',
+                  AppTexts.provinceContextHint,
                   style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
                 ),
                 BioSpacing.gapH(BioSpacing.lg),

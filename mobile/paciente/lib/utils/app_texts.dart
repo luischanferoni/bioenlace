@@ -1,6 +1,32 @@
 /// Textos de infraestructura de la app Paciente (avisos y etiquetas genéricas del cliente).
 /// Los textos clínicos y de negocio vienen del backend.
 class AppTexts {
+  static const signupBiometricPending =
+      'Registramos tu cuenta, pero falta activar la huella del dispositivo.';
+  static const signupComplete = 'Completá tu registro';
+  static const signupUploadPhotos = 'Subí las fotos requeridas para verificar tu identidad.';
+  static const guardianshipPendingVerification =
+      'Hay solicitudes de tutela en verificación. Un operador del centro debe confirmar el vínculo antes de que puedas operar por el menor.';
+  static const noGuardianYet =
+      'Nadie a cargo todavía. Las delegaciones activas y las solicitudes de tutela aparecerán acá.';
+  static const minorRegistrationHint =
+      'Si el documento no está en el sistema, usamos estos datos para dar de alta al menor.';
+  static const provinceContextHint =
+      'Esta provincia define qué servicios y respuestas verás en la app. '
+      'No cambia tu domicilio registrado.';
+  static const carePlanNoInstructions = 'No hay indicaciones cargadas en este plan.';
+  static const carePlanChooseNeed = 'Elegí qué necesitás sobre este tratamiento.';
+  static const noAlerts = 'No tienes alertas.';
+  static const alertConfirmAttendance = 'Confirmar asistencia';
+  static const alertAdvanceAppointment = 'Adelantar mi turno';
+  static const sessionExpired = 'Tu sesión expiró. Ingresá de nuevo.';
+  static const withdrawRequestConfirm =
+      '¿Querés retirar esta solicitud? Solo podés hacerlo mientras el equipo aún no la atiende.';
+  static const appointmentInResolution = 'En resolución';
+  static const appointmentInResolutionHint =
+      'Este turno está en resolución: no podés preparar la consulta hasta elegir un nuevo horario.';
+  static const noPendingAppointments =
+      'No tienes turnos pendientes. Puede pedir uno desde el asistente.';
   static const logout = 'Cerrar sesión';
   static const comingSoon = 'Próximamente';
   static const sectorUpdateFailed = 'No se pudo actualizar el sector';

@@ -137,8 +137,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _loginWithBiometrics() async {
     if (!_usesDiditRemoteLogin && !_biometricAvailable) {
       _snack(
-        widget.biometricNotAvailableMessage ??
-            'La autenticación biométrica no está disponible en este dispositivo',
+        widget.biometricNotAvailableMessage ?? SharedTexts.biometricUnavailable,
         UiIntent.warning,
       );
       return;
@@ -182,7 +181,7 @@ class _LoginScreenState extends State<LoginScreen> {
           }
           if (sessionCheck == BearerSessionCheckResult.networkError) {
             _snack(
-              'No pudimos verificar tu sesión. Revisá la conexión e intentá de nuevo.',
+              SharedTexts.sessionCheckFailed,
               UiIntent.warning,
             );
             return;
@@ -219,7 +218,7 @@ class _LoginScreenState extends State<LoginScreen> {
           await DiditConfigResolver.resolvePacienteBiometricWorkflowId();
       if (workflowId == null) {
         _snack(
-          'El login biométrico con Didit no está configurado. Contactá soporte.',
+          SharedTexts.diditLoginNotConfigured,
           UiIntent.warning,
         );
         return;
@@ -320,7 +319,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
         case VerificationFailed(:final error):
           _snack(
-            'No se pudo completar la verificación biométrica: ${error.message}',
+            SharedTexts.biometricVerificationFailed(error.message),
             UiIntent.danger,
           );
           break;

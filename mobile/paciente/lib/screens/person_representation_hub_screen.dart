@@ -336,13 +336,13 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
                   if (_haySolicitudesTutelaPendientes) ...[
                     BioAlert.info(
                       message:
-                          'Hay solicitudes de tutela en verificación. Un operador del centro debe confirmar el vínculo antes de que puedas operar por el menor.',
+                          AppTexts.guardianshipPendingVerification,
                     ),
                     BioSpacing.gapH(BioSpacing.sm),
                   ],
                   if (_itemsPacientesACargo.isEmpty)
                     Text(
-                      'Nadie a cargo todavía. Las delegaciones activas y las solicitudes de tutela aparecerán acá.',
+                      AppTexts.noGuardianYet,
                       style: BioTypography.bodySm,
                     )
                   else
@@ -500,7 +500,7 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
           ),
           BioSpacing.gapH(BioSpacing.xs),
           Text(
-            'Si el documento no está en el sistema, usamos estos datos para dar de alta al menor.',
+            AppTexts.minorRegistrationHint,
             style: BioTypography.caption.copyWith(color: context.bio.textMuted),
           ),
           BioSpacing.gapH(BioSpacing.md),

@@ -151,7 +151,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                               children: [
                                 if (siguienteTurno != null) ...[
                                   Text(
-                                    'Siguiente turno',
+                                    AppTexts.appointmentNext,
                                     style: BioTypography.h3.copyWith(
                                       color: IntentPalette.of(UiIntent.primary)
                                           .base,
@@ -257,7 +257,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
             Icon(Icons.event_busy_outlined, size: 48, color: tokens.textMuted),
             BioSpacing.gapH(BioSpacing.md),
             Text(
-              'No hay turnos programados para esta fecha.',
+              AppTexts.appointmentsEmptyForDate,
               style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
               textAlign: TextAlign.center,
             ),
@@ -295,14 +295,14 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
           BioSpacing.gapH(BioSpacing.md),
           _filaInfo(
             Icons.access_time,
-            'Hora: ${turno.hora}',
+            AppTexts.appointmentTime(turno.hora),
             textStyle: BioTypography.body,
           ),
           if (turno.servicio != null && turno.servicio!.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.xs),
             _filaInfo(
               Icons.local_hospital_outlined,
-              'Servicio: ${turno.servicio}',
+              AppTexts.appointmentService(turno.servicio),
             ),
           ],
           BioSpacing.gapH(BioSpacing.md),
@@ -348,14 +348,14 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
             ],
           ),
           BioSpacing.gapH(BioSpacing.md),
-          _filaInfo(Icons.access_time, 'Hora: ${turno.hora}'),
+          _filaInfo(Icons.access_time, AppTexts.appointmentTime(turno.hora)),
           BioSpacing.gapH(BioSpacing.xs),
           _filaInfo(Icons.local_hospital_outlined,
-              'Servicio: ${turno.servicio ?? "Sin servicio"}'),
+              AppTexts.appointmentService(turno.servicio ?? AppTexts.appointmentNoService)),
           if (turno.observaciones != null && turno.observaciones!.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.xs),
             _filaInfo(Icons.note_outlined,
-                'Observaciones: ${turno.observaciones}',
+                AppTexts.appointmentNotes(turno.observaciones),
                 small: true),
           ],
           if (turno.modalidadInsight != null) ...[
@@ -491,7 +491,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
           authToken: widget.authToken,
           userId: widget.userId ?? '0',
           userName: null,
-          titulo: 'Chat con $nombrePaciente',
+          titulo: AppTexts.appointmentChatTitle(nombrePaciente),
         ),
       ),
     );

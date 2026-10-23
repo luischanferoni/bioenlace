@@ -2,6 +2,24 @@
 class SharedTexts {
   SharedTexts._();
 
+  static const biometricUnavailable =
+      'La autenticación biométrica no está disponible en este dispositivo';
+  static const sessionCheckFailed =
+      'No pudimos verificar tu sesión. Revisá la conexión e intentá de nuevo.';
+  static const diditLoginNotConfigured =
+      'El login biométrico con Didit no está configurado. Contactá soporte.';
+  static String biometricVerificationFailed(Object? reason) =>
+      'No se pudo completar la verificación biométrica: $reason';
+
+  static const reminderFirstDoseHint =
+      'Indicá cuándo tomás la primera dosis. Calculamos el resto según la prescripción.';
+  static const reminderUnsupportedPlatform =
+      'Las alarmas de recordatorio están disponibles en la app para Android o iPhone. '
+      'En el navegador podés ver el plan; las preferencias se sincronizan al usar el celular.';
+  static const reminderEnableGlobal =
+      'Activá "Recordatorios de tratamiento" en Configuración para usar alarmas de este plan.';
+  static const reminderNoScheduledItems = 'No hay actividades con horarios para recordar.';
+
   static String unsupportedWidget(Object? id) => 'Widget no soportado: $id';
   static const noOptions = 'Sin opciones disponibles';
   static const selectOption = 'Seleccioná una opción';

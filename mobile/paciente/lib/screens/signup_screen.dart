@@ -61,7 +61,7 @@ class _SignupScreenState extends State<SignupScreen> {
           debugPrint('SignupScreen: no se completó enrolamiento/navegación');
           if (mounted) {
             _snack(
-              'Registramos tu cuenta, pero falta activar la huella del dispositivo.',
+              AppTexts.signupBiometricPending,
               UiIntent.warning,
             );
           }
@@ -119,13 +119,13 @@ class _SignupScreenState extends State<SignupScreen> {
           child: ListView(
             children: [
               Text(
-                'Completá tu registro',
+                AppTexts.signupComplete,
                 style: BioTypography.h2,
                 textAlign: TextAlign.center,
               ),
               BioSpacing.gapH(BioSpacing.sm),
               Text(
-                'Subí las fotos requeridas para verificar tu identidad.',
+                AppTexts.signupUploadPhotos,
                 style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
                 textAlign: TextAlign.center,
               ),

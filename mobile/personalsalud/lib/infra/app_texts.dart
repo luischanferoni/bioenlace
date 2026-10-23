@@ -59,6 +59,16 @@ class AppTexts {
   static const timelineEpisodeRecord = 'Registro del episodio';
   static const timelineActionNoScreen = 'La acción no tiene una pantalla compatible.';
   static const timelineReasonsTitle = 'Motivos de esta consulta';
+  static const appointmentNext = 'Siguiente turno';
+  static const appointmentsEmptyForDate = 'No hay turnos programados para esta fecha.';
+  static String appointmentTime(Object? hora) => 'Hora: $hora';
+  static String appointmentService(Object? servicio) => 'Servicio: $servicio';
+  static const appointmentNoService = 'Sin servicio';
+  static String appointmentNotes(Object? obs) => 'Observaciones: $obs';
+  static String appointmentChatTitle(Object? nombre) => 'Chat con $nombre';
+  static const timelineReasonsSummaryPending = 'Generando resumen… Actualizá en unos segundos.';
+  static const timelineReasonsEmpty = 'Sin motivos registrados para esta consulta.';
+  static const timelineReasonsGuidance = 'Orientación según motivos del paciente';
   static const timelineSummary = 'Resumen';
   static const timelineDiagnoses = 'Diagnósticos a considerar';
   static const timelinePractices = 'Prácticas / estudios';

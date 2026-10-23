@@ -52,18 +52,18 @@ class EncounterReasonsCard extends StatelessWidget {
             ),
           ] else if (mp.resumenPendiente)
             Text(
-              'Generando resumen… Actualizá en unos segundos.',
+              AppTexts.timelineReasonsSummaryPending,
               style: BioTypography.bodySm,
             )
           else
             Text(
-              'Sin motivos registrados para esta consulta.',
+              AppTexts.timelineReasonsEmpty,
               style: BioTypography.bodySm,
             ),
           if (sugerencias != null && sugerencias.tieneContenido) ...[
             BioSpacing.gapH(BioSpacing.lg),
             Text(
-              'Orientación según motivos del paciente',
+              AppTexts.timelineReasonsGuidance,
               style: BioTypography.overline,
             ),
             if (sugerencias.diagnosticos.isNotEmpty) ...[

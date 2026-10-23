@@ -261,7 +261,7 @@ class _AlertasScreenState extends State<AlertasScreen> {
                 BioSpacing.gapW(BioSpacing.md),
                 Expanded(
                   child: Text(
-                    'No tienes alertas.',
+                    AppTexts.noAlerts,
                     style: BioTypography.body,
                   ),
                 ),
@@ -330,7 +330,7 @@ class _AlertasScreenState extends State<AlertasScreen> {
           else
             BioButton(
               label: confirmacion['action_label']?.toString() ??
-                  'Confirmar asistencia',
+                  AppTexts.alertConfirmAttendance,
               intent: UiIntent.primary,
               variant: BioButtonVariant.filled,
               size: BioButtonSize.sm,
@@ -347,7 +347,7 @@ class _AlertasScreenState extends State<AlertasScreen> {
           else
             BioButton(
               label: adelantamiento['action_label']?.toString() ??
-                  'Adelantar mi turno',
+                  AppTexts.alertAdvanceAppointment,
               intent: UiIntent.primary,
               variant: BioButtonVariant.filled,
               size: BioButtonSize.sm,

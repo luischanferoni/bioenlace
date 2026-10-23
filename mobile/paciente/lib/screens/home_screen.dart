@@ -311,7 +311,7 @@ class HomeScreenState extends State<HomeScreen> {
       }
     }
     await returnPacienteToLogin(
-      message: 'Tu sesión expiró. Ingresá de nuevo.',
+      message: AppTexts.sessionExpired,
     );
     return true;
   }
@@ -861,7 +861,7 @@ class HomeScreenState extends State<HomeScreen> {
       builder: (ctx) => AlertDialog(
         title: const Text(AppTexts.withdrawRequest),
         content: const Text(
-          '¿Querés retirar esta solicitud? Solo podés hacerlo mientras el equipo aún no la atiende.',
+          AppTexts.withdrawRequestConfirm,
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false),           child: const Text(AppTexts.no)),
@@ -1272,7 +1272,7 @@ class HomeScreenState extends State<HomeScreen> {
     Widget? badge;
     if (enResolucion) {
       badge = BioBadge.warning(
-        'En resolución',
+        AppTexts.appointmentInResolution,
         icon: Icons.warning_amber_outlined,
       );
     } else if (futuro && proximidad != null) {
@@ -1381,7 +1381,7 @@ class HomeScreenState extends State<HomeScreen> {
         if (enResolucion) ...[
           BioSpacing.gapH(BioSpacing.sm),
           Text(
-            'Este turno está en resolución: no podés preparar la consulta hasta elegir un nuevo horario.',
+            AppTexts.appointmentInResolutionHint,
             style: BioTypography.bodySm.copyWith(
               color: IntentPalette.of(UiIntent.warning).base,
             ),
@@ -1438,7 +1438,7 @@ class HomeScreenState extends State<HomeScreen> {
           BioSpacing.gapW(BioSpacing.md),
           Expanded(
             child: Text(
-              'No tienes turnos pendientes. Puede pedir uno desde el asistente.',
+              AppTexts.noPendingAppointments,
               style: BioTypography.body,
             ),
           ),

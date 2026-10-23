@@ -189,7 +189,7 @@ class _CarePlanDetailScreenState extends State<CarePlanDetailScreen> {
       builder: (ctx) => AlertDialog(
         title: const Text(AppTexts.withdrawRequest),
         content: const Text(
-          '¿Querés retirar esta solicitud? Solo podés hacerlo mientras el equipo aún no la atiende.',
+          AppTexts.withdrawRequestConfirm,
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false),           child: const Text(AppTexts.no)),
@@ -379,7 +379,7 @@ class _CarePlanDetailScreenState extends State<CarePlanDetailScreen> {
           ] else ...[
             BioSpacing.gapH(BioSpacing.md),
             Text(
-              'No hay indicaciones cargadas en este plan.',
+              AppTexts.carePlanNoInstructions,
               style: BioTypography.bodySm.copyWith(color: context.bio.textMuted),
             ),
           ],
@@ -412,7 +412,7 @@ class _CarePlanDetailScreenState extends State<CarePlanDetailScreen> {
           Text(AppTexts.followUp, style: BioTypography.title),
           BioSpacing.gapH(BioSpacing.sm),
           Text(
-            'Elegí qué necesitás sobre este tratamiento.',
+            AppTexts.carePlanChooseNeed,
             style: BioTypography.bodySm.copyWith(color: context.bio.textMuted),
           ),
           BioSpacing.gapH(BioSpacing.md),

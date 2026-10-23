@@ -12,6 +12,12 @@ Personal de Salud obtiene las capacidades de la clase encounter desde el catálo
 
 El transporte de acciones async (`cancelar-como-paciente`, `tomar-como-staff`, `cerrar-como-staff`) también se centralizó en `EncounterAsyncClient` dentro de shared. Las dos apps mantienen wrappers locales compatibles que fijan su `appClient`; la cobertura compartida verifica la identidad de cada app, el cuerpo de cierre con nota y el mensaje de error del servidor.
 
+El servicio de chat de encounter (`mensajes`, `enviar` y `subir`) ahora se centraliza en `EncounterChatClient`. Los wrappers locales mantienen el rol predeterminado de paciente o médico, y el cliente compartido permite inyectar HTTP para verificar transporte y cargas multipart en pruebas.
+
+El chat del asistente y el modelo `Message` también se centralizaron en shared. Las apps mantienen sus imports y clases locales como reexportación/wrapper, y el cliente fija el `appClient` correspondiente a cada una.
+
+Los clientes de chat y acciones async interpretan los errores estándar con `ApiContractException` y devuelven `message` más el objeto estructurado (`code`, `intent`, `retryable` y `field_errors`) para que los consumidores existentes sigan funcionando y los nuevos puedan reaccionar a metadata sin inspeccionar texto. Las respuestas legacy `{success, message}` se conservan durante esta migración; falta generalizar este comportamiento al resto de clientes móviles y centralizar su transporte.
+
 ## Tareas
 
 - Mover a shared lo duplicado: formulario dinámico, selector de tarjetas, servicios de chat y de atención asíncrona.

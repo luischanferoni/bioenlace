@@ -4,16 +4,28 @@ class ApiContractException implements Exception {
   ApiContractException({
     required this.message,
     this.code,
+    this.intent,
     this.retryable = false,
+    this.fieldErrors = const {},
     this.meta = const {},
     this.statusCode,
   });
 
   final String message;
   final String? code;
+  final String? intent;
   final bool retryable;
+  final Map<String, dynamic> fieldErrors;
   final Map<String, dynamic> meta;
   final int? statusCode;
+
+  Map<String, dynamic> toJson() => {
+    if (code != null) 'code': code,
+    'message': message,
+    if (intent != null) 'intent': intent,
+    'retryable': retryable,
+    if (fieldErrors.isNotEmpty) 'field_errors': fieldErrors,
+  };
 
   @override
   String toString() => message;
@@ -53,7 +65,9 @@ void _throwIfError(Map<String, dynamic> body, int statusCode) {
           ? message
           : 'Error de comunicación ($statusCode).',
       code: err['code']?.toString(),
+      intent: err['intent']?.toString(),
       retryable: err['retryable'] == true,
+      fieldErrors: _asMap(err['field_errors']),
       meta: _asMap(body['meta']),
       statusCode: statusCode,
     );

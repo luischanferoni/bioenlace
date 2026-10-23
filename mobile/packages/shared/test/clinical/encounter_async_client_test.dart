@@ -92,6 +92,44 @@ void main() {
     client.close();
   });
 
+  test('preserves structured API error metadata for callers', () async {
+    final client = MockClient(
+      (_) async => http.Response.bytes(
+        utf8.encode(
+          json.encode({
+            'error': {
+              'code': 'encounter_conflict',
+              'message': 'La solicitud ya cambió.',
+              'intent': 'warning',
+              'retryable': false,
+              'field_errors': {'encounter_id': ['No disponible.']},
+            },
+          }),
+        ),
+        409,
+      ),
+    );
+    final api = EncounterAsyncClient(
+      appClient: 'personalsalud-flutter',
+      client: client,
+    );
+
+    final result = await api.tomarComoStaff(81);
+
+    expect(result['success'], isFalse);
+    expect(result['message'], 'La solicitud ya cambió.');
+    expect(result['error'], {
+      'code': 'encounter_conflict',
+      'message': 'La solicitud ya cambió.',
+      'intent': 'warning',
+      'retryable': false,
+      'field_errors': {
+        'encounter_id': ['No disponible.'],
+      },
+    });
+    client.close();
+  });
+
   test('rejects non-object responses', () async {
     final client = MockClient((_) async => http.Response('[]', 200));
     final api = EncounterAsyncClient(

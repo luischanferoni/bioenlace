@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../config/api_config.dart';
+import '../text/shared_texts.dart';
 import '../theme/tokens/tokens.dart';
 import 'local_chat_image.dart';
 import 'media_url.dart';
@@ -58,7 +59,7 @@ class ChatMediaImage extends StatelessWidget {
           Icon(Icons.broken_image_outlined, color: muted, size: 40),
           const SizedBox(height: 6),
           Text(
-            'No se pudo cargar la imagen',
+            SharedTexts.imageLoadFailed,
             textAlign: TextAlign.center,
             style: BioTypography.caption.copyWith(color: muted),
           ),

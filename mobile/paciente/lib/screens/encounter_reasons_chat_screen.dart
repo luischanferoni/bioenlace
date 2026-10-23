@@ -515,12 +515,12 @@ class _EncounterReasonsChatScreenState
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Pendientes en el teléfono (${_pending.length})',
+            AppTexts.pendingOnPhone(_pending.length),
             style: BioTypography.overline,
           ),
           BioSpacing.gapH(BioSpacing.xs),
           Text(
-            'Se guardaron localmente por si falla la conexión.',
+            AppTexts.pendingSavedLocally,
             style: BioTypography.caption.copyWith(color: context.bio.textMuted),
           ),
           BioSpacing.gapH(BioSpacing.sm),
@@ -630,8 +630,7 @@ class _EncounterReasonsChatScreenState
                 if (!_inputAbierto) ...[
                   BioSpacing.gapH(BioSpacing.sm),
                   BioAlert.warning(
-                    message:
-                        'Ya no podés enviar más mensajes. El médico verá un resumen al iniciar la consulta.',
+                    message: AppTexts.reasonsChatClosed,
                     icon: Icons.lock_clock_outlined,
                   ),
                 ],
@@ -639,8 +638,7 @@ class _EncounterReasonsChatScreenState
                     _motivosResumen!.trim().isNotEmpty) ...[
                   BioSpacing.gapH(BioSpacing.sm),
                   BioAlert.success(
-                    message:
-                        'Resumen para el médico:\n${_motivosResumen!.trim()}',
+                    message: AppTexts.reasonsSummaryForDoctor(_motivosResumen!.trim()),
                     icon: Icons.summarize_outlined,
                   ),
                 ],

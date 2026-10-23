@@ -2,6 +2,36 @@
 class SharedTexts {
   SharedTexts._();
 
+  static const diditUnsupportedPlatform =
+      'La verificación de identidad (Didit) solo funciona en la app móvil '
+      'Android o iOS. Usá un dispositivo o emulador; no está disponible en '
+      'navegador ni en escritorio.';
+  static const diditMissingPlugin =
+      'No se pudo iniciar Didit en este dispositivo. Detené la app, ejecutá '
+      '«flutter clean», volvé a compilar e instalá de nuevo (no uses hot reload '
+      'ni Chrome).';
+  static const journeyNoPendingActions = 'No hay acciones pendientes para este turno.';
+  static String journeyAppointmentOf(Object? v) => 'Turno del $v';
+  static const journeyPrepareTitle = 'Preparar tu consulta';
+  static const journeyFollowupTitle = 'Seguimiento post-consulta';
+
+  static const imageLoadFailed = 'No se pudo cargar la imagen';
+  static String biometricConfirmContinue(Object? type, Object? app) =>
+      'Confirmá con $type para continuar en $app';
+  static const biometricSecurityConfirm = 'Por seguridad, confirmá tu identidad para continuar';
+  static String biometricConfirmEnroll(Object? type) =>
+      'Confirmá con $type para activar el acceso rápido';
+  static const asyncTakeFailed = 'No se pudo tomar la solicitud.';
+  static const asyncCloseFailed = 'No se pudo cerrar la solicitud.';
+  static const whoToOperateFor = '¿Por quién operás?';
+  static const previewNoData = 'Sin datos de preview.';
+  static String pendingAppointmentsCount(Object? total) => 'Turnos pendientes ($total):';
+  static String andMore(Object? n) => '… y $n más';
+  static const confirmAppointmentsToResolution =
+      'Confirmá solo si aceptás que esos turnos pasen a resolución.';
+  static const asyncReviewNotice =
+      'Un profesional la revisará y te responderá por mensaje en Inicio → Consultas clínicas por mensaje.';
+
   static String kpiService(Object? v) => 'Servicio: $v';
   static String kpiContext(Object? v) => 'Contexto: $v';
   static const dynamicOptionsRequired =

@@ -1,17 +1,13 @@
 import 'package:flutter/foundation.dart';
 
+import '../text/shared_texts.dart';
+
 /// Didit solo expone implementación nativa en Android e iOS (no web ni desktop).
 bool get isDiditSupported =>
     !kIsWeb &&
     (defaultTargetPlatform == TargetPlatform.android ||
         defaultTargetPlatform == TargetPlatform.iOS);
 
-const String diditUnsupportedPlatformMessage =
-    'La verificación de identidad (Didit) solo funciona en la app móvil '
-    'Android o iOS. Usá un dispositivo o emulador; no está disponible en '
-    'navegador ni en escritorio.';
+const String diditUnsupportedPlatformMessage = SharedTexts.diditUnsupportedPlatform;
 
-const String diditMissingPluginMessage =
-    'No se pudo iniciar Didit en este dispositivo. Detené la app, ejecutá '
-    '«flutter clean», volvé a compilar e instalá de nuevo (no uses hot reload '
-    'ni Chrome).';
+const String diditMissingPluginMessage = SharedTexts.diditMissingPlugin;

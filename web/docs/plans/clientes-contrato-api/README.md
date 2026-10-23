@@ -21,7 +21,7 @@ Lectura: [overview.md](./overview.md), [design.md](./design.md), fases en [phase
 
 ## Reglas relacionadas
 
-Capas y metadata sin hardcode, source of truth de catálogos, UI nativas embebibles, Camino A web, vistas Yii delgadas, UI JSON en móvil.
+Capas y metadata sin hardcode, source of truth de catálogos, UI nativas embebibles, Camino A web, vistas Yii delgadas, UI JSON del asistente en móvil.
 
 ## Pendiente de decidir
 

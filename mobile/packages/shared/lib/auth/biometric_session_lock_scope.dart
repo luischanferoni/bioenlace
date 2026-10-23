@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../text/shared_texts.dart';
 import '../theme/tokens/tokens.dart';
 import '../ui/ui.dart';
 import 'biometric_auth.dart';
@@ -128,7 +129,7 @@ class _BiometricSessionLockScopeState extends State<BiometricSessionLockScope>
     setState(() => _authenticating = true);
     try {
       final result = await _biometricAuth.authenticate(
-        'Confirmá con $_biometricType para continuar en ${widget.appTitle}',
+        SharedTexts.biometricConfirmContinue(_biometricType, widget.appTitle),
       );
       if (!mounted) return;
 
@@ -209,7 +210,7 @@ class _BiometricSessionLockScopeState extends State<BiometricSessionLockScope>
                 ),
                 BioSpacing.gapH(BioSpacing.sm),
                 Text(
-                  'Por seguridad, confirmá tu identidad para continuar',
+                  SharedTexts.biometricSecurityConfirm,
                   style: BioTypography.body.copyWith(color: tokens.textMuted),
                   textAlign: TextAlign.center,
                 ),

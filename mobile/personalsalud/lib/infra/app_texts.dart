@@ -59,6 +59,8 @@ class AppTexts {
   static const timelineEpisodeRecord = 'Registro del episodio';
   static const timelineActionNoScreen = 'La acción no tiene una pantalla compatible.';
   static const timelineReasonsTitle = 'Motivos de esta consulta';
+  static const guardiaAdmissionTitle = 'Ingreso a internación';
+  static const guardiaLeftTitle = 'Paciente se retiró';
   static const vitalsTriageHint = 'Enteros de 2–3 dígitos. TA sys 50–250 · TA dia 30–150 · FC 20–250.';
   static const pendingCapturesTitle = 'Notas pendientes en el teléfono';
   static const pendingCaptureItem = 'Nota pendiente';

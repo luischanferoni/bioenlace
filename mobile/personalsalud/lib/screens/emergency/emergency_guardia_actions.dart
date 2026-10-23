@@ -101,7 +101,7 @@ class EmergencyGuardiaActions {
           apiAbsoluteUrl: uri.toString(),
           authToken: api.authToken,
           appClient: 'bioenlace-personalsalud',
-          title: 'Ingreso a internación',
+          title: AppTexts.guardiaAdmissionTitle,
           onSubmitSuccess: (_) async {
             onChanged();
           },
@@ -429,7 +429,7 @@ class EmergencyGuardiaActions {
           apiAbsoluteUrl: uri.toString(),
           authToken: api.authToken,
           appClient: 'bioenlace-personalsalud',
-          title: 'Paciente se retiró',
+          title: AppTexts.guardiaLeftTitle,
           onSubmitSuccess: (_) async {
             onChanged();
           },

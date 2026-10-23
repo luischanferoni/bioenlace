@@ -32,7 +32,7 @@ Future<void> showPersonRepresentationSubjectPicker(
             Padding(
               padding: BioSpacing.pageHorizontal.copyWith(top: BioSpacing.sm),
               child: Text(
-                '¿Por quién operás?',
+                SharedTexts.whoToOperateFor,
                 style: BioTypography.title.copyWith(fontWeight: FontWeight.w700),
               ),
             ),

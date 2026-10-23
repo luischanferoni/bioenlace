@@ -117,7 +117,7 @@ class _LicenciaTurnosImpactPreviewWidgetState extends State<LicenciaTurnosImpact
     final data = _data;
     if (data == null) {
       return Text(
-        'Sin datos de preview.',
+        SharedTexts.previewNoData,
         style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
       );
     }
@@ -148,7 +148,7 @@ class _LicenciaTurnosImpactPreviewWidgetState extends State<LicenciaTurnosImpact
           if (total > 0) ...[
             const SizedBox(height: 8),
             Text(
-              'Turnos pendientes ($total):',
+              SharedTexts.pendingAppointmentsCount(total),
               style: theme.textTheme.labelLarge,
             ),
             const SizedBox(height: 4),
@@ -168,7 +168,7 @@ class _LicenciaTurnosImpactPreviewWidgetState extends State<LicenciaTurnosImpact
               Padding(
                 padding: const EdgeInsets.only(left: 8, top: 2),
                 child: Text(
-                  '… y ${total - turnos.length} más',
+                  SharedTexts.andMore(total - turnos.length),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: Colors.grey.shade700,
                   ),
@@ -176,7 +176,7 @@ class _LicenciaTurnosImpactPreviewWidgetState extends State<LicenciaTurnosImpact
               ),
             const SizedBox(height: 8),
             Text(
-              'Confirmá solo si aceptás que esos turnos pasen a resolución.',
+              SharedTexts.confirmAppointmentsToResolution,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.error,
                 fontWeight: FontWeight.w600,

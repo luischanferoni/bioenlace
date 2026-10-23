@@ -1,6 +1,8 @@
 /// Contexto legible capturado durante flows del asistente (turnos, etc.).
 /// No se envía al backend: solo alimenta el mensaje de éxito al colapsar el flow.
 
+import '../text/shared_texts.dart';
+
 /// Etiquetas PAC_* (alineadas con {@see TurnoCancelacionRazones} en PHP).
 const Map<String, String> kTurnoCancelacionPacienteLabels = {
   'PAC_ENFERMEDAD': 'Enfermedad o síntomas: no puedo asistir',
@@ -334,7 +336,7 @@ String _summaryEncounterRequest(
       }
     }
     lines.add(
-      'Un profesional la revisará y te responderá por mensaje en Inicio → Consultas clínicas por mensaje.',
+      SharedTexts.asyncReviewNotice,
     );
     return lines.join('\n');
   }

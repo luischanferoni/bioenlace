@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 
 import '../config/api_config.dart';
 import '../http/api_contract.dart';
+import '../text/shared_texts.dart';
 import '../text/user_friendly_error.dart';
 
 /// HTTP client for patient and staff actions on asynchronous encounters.
@@ -25,7 +26,7 @@ class EncounterAsyncClient {
   Future<Map<String, dynamic>> tomarComoStaff(int encounterId) => _postAction(
     'tomar-como-staff',
     {'encounter_id': encounterId},
-    'No se pudo tomar la solicitud.',
+    SharedTexts.asyncTakeFailed,
   );
 
   Future<Map<String, dynamic>> cerrarComoStaff(
@@ -43,7 +44,7 @@ class EncounterAsyncClient {
     return _postAction(
       'cerrar-como-staff',
       body,
-      'No se pudo cerrar la solicitud.',
+      SharedTexts.asyncCloseFailed,
     );
   }
 

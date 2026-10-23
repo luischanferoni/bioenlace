@@ -1,6 +1,11 @@
 /// Textos de infraestructura de la app Paciente (avisos y etiquetas genéricas del cliente).
 /// Los textos clínicos y de negocio vienen del backend.
 class AppTexts {
+  static String pendingOnPhone(Object? n) => 'Pendientes en el teléfono ($n)';
+  static const pendingSavedLocally = 'Se guardaron localmente por si falla la conexión.';
+  static const reasonsChatClosed =
+      'Ya no podés enviar más mensajes. El médico verá un resumen al iniciar la consulta.';
+  static String reasonsSummaryForDoctor(Object? resumen) => 'Resumen para el médico:\n$resumen';
   static const signupBiometricPending =
       'Registramos tu cuenta, pero falta activar la huella del dispositivo.';
   static const signupComplete = 'Completá tu registro';

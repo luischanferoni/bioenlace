@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../text/shared_texts.dart';
 import '../theme/tokens/tokens.dart';
 import '../ui/bio_card.dart';
 import 'care_pack_navigation.dart';
@@ -118,7 +119,7 @@ class _EncounterJourneyHubScreenState extends State<EncounterJourneyHubScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(BioSpacing.lg),
                 child: Text(
-                  'No hay acciones pendientes para este turno.',
+                  SharedTexts.journeyNoPendingActions,
                   textAlign: TextAlign.center,
                   style: BioTypography.body.copyWith(color: tokens.textMuted),
                 ),
@@ -129,7 +130,7 @@ class _EncounterJourneyHubScreenState extends State<EncounterJourneyHubScreen> {
               children: [
                 if (subtituloTurno != null) ...[
                   Text(
-                    'Turno del $subtituloTurno',
+                    SharedTexts.journeyAppointmentOf(subtituloTurno),
                     style: BioTypography.bodySm.copyWith(
                       color: tokens.textMuted,
                     ),
@@ -238,7 +239,7 @@ void openEncounterPreparationHub({
 }) {
   abrirEncounterJourneyHub(
     context: context,
-    title: 'Preparar tu consulta',
+    title: SharedTexts.journeyPrepareTitle,
     intro: 'Completá estos pasos antes de tu consulta.',
     turno: turno,
     phaseIds: kEncounterJourneyPreTurnoPhases,
@@ -259,7 +260,7 @@ void openEncounterFollowupHub({
 }) {
   abrirEncounterJourneyHub(
     context: context,
-    title: 'Seguimiento post-consulta',
+    title: SharedTexts.journeyFollowupTitle,
     intro: 'Contanos cómo seguís después de tu atención.',
     turno: turno,
     phaseIds: kEncounterJourneyPostTurnoPhases,

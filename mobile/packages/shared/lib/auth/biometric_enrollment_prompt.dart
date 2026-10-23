@@ -70,7 +70,7 @@ abstract final class BiometricEnrollmentPrompt {
 
     final auth = BiometricAuth();
     final result = await auth.authenticate(
-      'Confirmá con $biometricType para activar el acceso rápido',
+      SharedTexts.biometricConfirmEnroll(biometricType),
     );
     if (result['success'] == true) {
       await BiometricSessionPrefs.setUnlockEnabled(true);

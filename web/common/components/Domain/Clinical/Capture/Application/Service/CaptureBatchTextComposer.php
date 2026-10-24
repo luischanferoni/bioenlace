@@ -6,7 +6,8 @@ use common\components\Platform\Core\Http\Contract\ApiException;
 
 /**
  * Une el texto de varias notas de un mismo borrador en un único texto para
- * `capture-extraction`, conservando el orden y marcando cada nota.
+ * `capture-extraction`, conservando el orden. Las etiquetas visuales (Nota 1, Nota 2)
+ * solo se muestran en el cliente al cargar; no se envían al prompt de análisis.
  */
 final class CaptureBatchTextComposer
 {
@@ -39,7 +40,7 @@ final class CaptureBatchTextComposer
 
         $parts = [];
         foreach ($notes as $i => $text) {
-            $parts[] = '[Nota ' . ($i + 1) . '] ' . $text;
+            $parts[] = $text;
         }
         $composed = implode("\n\n", $parts);
         if (mb_strlen($composed) > self::MAX_CHARS) {

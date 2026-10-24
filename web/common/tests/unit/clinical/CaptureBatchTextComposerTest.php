@@ -13,10 +13,10 @@ class CaptureBatchTextComposerTest extends Unit
         $this->assertSame('dolor de cabeza', CaptureBatchTextComposer::compose(['  dolor de cabeza ']));
     }
 
-    public function testVariasNotasSeUnenEnOrdenConMarcadores(): void
+    public function testVariasNotasSeUnenEnOrdenSinMarcadores(): void
     {
         $text = CaptureBatchTextComposer::compose(['uno', 'dos']);
-        $this->assertSame("[Nota 1] uno\n\n[Nota 2] dos", $text);
+        $this->assertSame("uno\n\ndos", $text);
     }
 
     public function testNotaSinTextoFalla(): void

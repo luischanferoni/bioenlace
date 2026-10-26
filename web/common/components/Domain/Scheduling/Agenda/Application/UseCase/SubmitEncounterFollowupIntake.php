@@ -4,6 +4,7 @@ namespace common\components\Domain\Scheduling\Agenda\Application\UseCase;
 
 use common\components\Domain\Clinical\Encounter\Application\Service\PatientEncounterSummaryQueryService;
 use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanMedicationListService;
+use common\components\Domain\Scheduling\Agenda\Application\Service\EncounterFollowupIntakeCatalogService;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;
 

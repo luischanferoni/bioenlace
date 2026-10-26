@@ -6,6 +6,8 @@ use DateTimeImmutable;
 use DateTimeZone;
 use Yii;
 
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoSlotOfferUiCatalogService;
+
 /**
  * Arma ítems/bloques de oferta de slots a partir de datos agrupados + plantilla JSON / metadata.
  */

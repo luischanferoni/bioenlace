@@ -8,6 +8,7 @@ use common\components\Domain\Scheduling\Agenda\Application\Service\ReservaTurnoT
 use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoCancellationPolicyService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoCreationContextResolver;
 use common\components\Domain\Scheduling\Agenda\Domain\Model\PolicyModeradaException;
+use common\components\Domain\Scheduling\Agenda\Domain\Catalog\ReservaTriageAccessCatalog;
 
 use common\components\Domain\Clinical\Encounter\Application\UseCase\AdvanceEncounterLifecycle;
 use common\models\Scheduling\Turno;

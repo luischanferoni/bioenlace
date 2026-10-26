@@ -130,14 +130,12 @@ final class CapturePresenter
                 $refined = RowContractService::refineDerivaciones($extraidos, $categorias);
                 if ($refined !== $extraidos) {
                     $extraidos = $refined;
-                    $textoOriginal = trim((string) ($analysisStored['texto_original'] ?? $capture->transcript ?? ''));
                     $textoProcesado = isset($analysisStored['texto_procesado'])
                         ? (string) $analysisStored['texto_procesado']
                         : ($capture->texto_procesado !== null ? (string) $capture->texto_procesado : null);
                     $review = (new EncounterCaptureReviewPresenter())->build(
                         $extraidos,
                         $categorias,
-                        $textoOriginal,
                         $textoProcesado,
                         false
                     );

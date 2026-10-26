@@ -54,14 +54,6 @@ class CaptureReviewPanel extends StatelessWidget {
           ),
         ),
         BioSpacing.gapH(BioSpacing.md),
-        Text(AppTexts.captureRegisteredText, style: sectionTitleStyle),
-        BioSpacing.gapH(BioSpacing.xs),
-        Text(
-          (draftText ?? review.textoOriginal).trim().isNotEmpty
-              ? (draftText ?? review.textoOriginal)
-              : review.textoOriginal,
-          style: BioTypography.body,
-        ),
         if (review.advisories.isNotEmpty) ...[
           BioSpacing.gapH(BioSpacing.md),
           ...review.advisories.map((adv) {

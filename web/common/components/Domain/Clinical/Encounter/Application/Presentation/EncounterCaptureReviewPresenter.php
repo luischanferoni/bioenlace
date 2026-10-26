@@ -20,7 +20,6 @@ final class EncounterCaptureReviewPresenter
     public function build(
         array $datosResultado,
         array $categorias,
-        string $textoOriginal,
         ?string $textoProcesado,
         bool $tieneDatosFaltantes,
         ?array $completenessResult = null,
@@ -28,7 +27,7 @@ final class EncounterCaptureReviewPresenter
     ): array {
         $extraidos = $this->resolveExtraidos($datosResultado);
         $systemError = $this->resolveSystemError($extraidos);
-        $categories = $this->buildCategories($extraidos, $categorias, $textoOriginal);
+        $categories = $this->buildCategories($extraidos, $categorias);
         // Lo anclado en el texto del profesional se tilda por defecto; los aportes de la IA
         // se ofrecen como sugerencias sin tildar y requieren confirmación explícita.
         $defaultStaged = [];
@@ -51,12 +50,10 @@ final class EncounterCaptureReviewPresenter
 
         // Hard stop: sin confirmar si faltan categorías/campos requeridos o hay error de sistema.
         $puedeConfirmar = $systemError === null
-            && trim($textoOriginal) !== ''
             && !$tieneDatosFaltantes;
 
         $out = [
             'version' => 1,
-            'texto_original' => $textoOriginal,
             'texto_procesado' => $textoProcesado,
             'tiene_datos_faltantes' => $tieneDatosFaltantes,
             'system_error' => $systemError,
@@ -179,11 +176,9 @@ final class EncounterCaptureReviewPresenter
         $completeness = RowContractService::completenessValidator()->validate($extraidos, $categorias);
         $tieneDatosFaltantes = ($completeness['tiene_datos_faltantes'] ?? false) === true;
         $systemError = $review['system_error'] ?? null;
-        $textoOriginal = trim((string) ($review['texto_original'] ?? ''));
 
         $review['tiene_datos_faltantes'] = $tieneDatosFaltantes;
         $review['puede_confirmar'] = $systemError === null
-            && $textoOriginal !== ''
             && !$tieneDatosFaltantes;
         $review['datos_faltantes_detalle'] = [
             'missing_categories' => $completeness['missing_categories'] ?? [],
@@ -210,9 +205,8 @@ final class EncounterCaptureReviewPresenter
     {
         $review = self::sanitizeCaptureReview($review);
 
-        $textoOriginal = trim((string) ($review['texto_original'] ?? ''));
         $textoProcesado = trim((string) ($review['texto_procesado'] ?? ''));
-        if ($textoProcesado !== '' && $textoProcesado === $textoOriginal) {
+        if ($textoProcesado === '') {
             unset($review['texto_procesado']);
         }
 
@@ -361,10 +355,9 @@ final class EncounterCaptureReviewPresenter
      * @param list<array<string, mixed>> $categorias
      * @return list<array<string, mixed>>
      */
-    private function buildCategories(array $extraidos, array $categorias, string $textoClinico = ''): array
+    private function buildCategories(array $extraidos, array $categorias): array
     {
         $out = [];
-        $haystack = $this->foldClinicalText($textoClinico);
 
         if ($categorias !== []) {
             foreach ($categorias as $categoria) {
@@ -384,8 +377,7 @@ final class EncounterCaptureReviewPresenter
                     'items' => $this->parseCategoryItems(
                         $title,
                         $this->resolveCategoryRaw($extraidos, $title, (string) ($categoria['modelo'] ?? '')),
-                        is_array($campos) ? $campos : [],
-                        $haystack
+                        is_array($campos) ? $campos : []
                     ),
                 ];
             }
@@ -397,7 +389,7 @@ final class EncounterCaptureReviewPresenter
             if ($key === 'Error' || !is_string($key) || $key === '') {
                 continue;
             }
-            $items = $this->parseCategoryItems($key, $raw, [], $haystack);
+            $items = $this->parseCategoryItems($key, $raw, []);
             if ($items === []) {
                 continue;
             }
@@ -455,8 +447,7 @@ final class EncounterCaptureReviewPresenter
     private function parseCategoryItems(
         string $categoryTitle,
         mixed $raw,
-        array $camposRequeridos = [],
-        string $clinicalHaystack = ''
+        array $camposRequeridos = []
     ): array {
         if ($raw === null) {
             return [];
@@ -464,7 +455,7 @@ final class EncounterCaptureReviewPresenter
 
         if (is_string($raw) && trim($raw) !== '') {
             return [
-                $this->makeItem($categoryTitle, 0, trim($raw), ['texto' => trim($raw)], null, $clinicalHaystack),
+                $this->makeItem($categoryTitle, 0, trim($raw), ['texto' => trim($raw)], null),
             ];
         }
 
@@ -481,8 +472,7 @@ final class EncounterCaptureReviewPresenter
                     $index,
                     trim($row),
                     ['texto' => trim($row)],
-                    null,
-                    $clinicalHaystack
+                    null
                 );
                 $index++;
                 continue;
@@ -499,8 +489,7 @@ final class EncounterCaptureReviewPresenter
                 $index,
                 $label,
                 $row,
-                $this->subtitleFromMap($row, $camposRequeridos, $label),
-                $clinicalHaystack
+                $this->subtitleFromMap($row, $camposRequeridos, $label)
             );
             $index++;
         }
@@ -517,14 +506,13 @@ final class EncounterCaptureReviewPresenter
         int $index,
         string $label,
         array $payload,
-        ?string $subtitle = null,
-        string $clinicalHaystack = ''
+        ?string $subtitle = null
     ): array {
         $item = [
             'id' => $categoryTitle . '::' . $index,
             'label' => $label,
             'payload' => $payload,
-            'source' => $this->resolveItemSource($label, $payload, $clinicalHaystack),
+            'source' => 'clinical',
         ];
         if ($subtitle !== null && $subtitle !== '') {
             $item['subtitle'] = $subtitle;
@@ -533,83 +521,6 @@ final class EncounterCaptureReviewPresenter
         return $item;
     }
 
-    /**
-     * clinical = anclado en el texto del profesional; ai = aporte / enriquecimiento de la IA.
-     *
-     * @param array<string, mixed> $payload
-     */
-    private function resolveItemSource(string $label, array $payload, string $clinicalHaystack): string
-    {
-        if ($clinicalHaystack === '') {
-            return 'clinical';
-        }
-        $haystack = $this->expandClinicalAbbreviations($clinicalHaystack);
-        $candidates = [$label];
-        foreach ($payload as $value) {
-            if (is_string($value) && trim($value) !== '') {
-                $candidates[] = trim($value);
-            } elseif (is_numeric($value)) {
-                $candidates[] = (string) $value;
-            }
-        }
-        foreach ($candidates as $candidate) {
-            $folded = $this->foldClinicalText($candidate);
-            if ($folded === '') {
-                continue;
-            }
-            if (mb_strlen($folded) >= 4 && mb_strpos($haystack, $folded) !== false) {
-                return 'clinical';
-            }
-            // Cifras / signos vitales cortos (p. ej. 138/88).
-            if (preg_match('/\d/', $folded) === 1 && mb_strpos($haystack, $folded) !== false) {
-                return 'clinical';
-            }
-            $tokens = preg_split('/\s+/u', $folded) ?: [];
-            $hits = 0;
-            $significant = 0;
-            foreach ($tokens as $token) {
-                if (mb_strlen($token) < 4 && !preg_match('/\d/', $token)) {
-                    continue;
-                }
-                $significant++;
-                if (mb_strpos($haystack, $token) !== false) {
-                    $hits++;
-                }
-            }
-            if ($significant > 0 && $hits >= max(1, (int) ceil($significant * 0.5))) {
-                return 'clinical';
-            }
-        }
-
-        return 'ai';
-    }
-
-    /** Expande abreviaturas clínicas frecuentes para anclar ítems al texto del profesional. */
-    private function expandClinicalAbbreviations(string $foldedHaystack): string
-    {
-        $out = $foldedHaystack;
-        $map = [
-            '/\bta\b/u' => 'ta tension arterial',
-            '/\bfc\b/u' => 'fc frecuencia cardiaca',
-            '/\bfr\b/u' => 'fr frecuencia respiratoria',
-            '/\btemp\b/u' => 'temp temperatura',
-            '/\bsat\b/u' => 'sat saturacion',
-        ];
-        foreach ($map as $pattern => $replacement) {
-            $out = preg_replace($pattern, $replacement, $out) ?? $out;
-        }
-
-        return $out;
-    }
-
-    private function foldClinicalText(string $text): string
-    {
-        $folded = strtr(mb_strtolower(trim($text), 'UTF-8'), [
-            'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u', 'ñ' => 'n',
-        ]);
-
-        return preg_replace('/\s+/u', ' ', $folded) ?? $folded;
-    }
 
     /**
      * @param array<string, mixed> $map

@@ -26,13 +26,11 @@ class EncounterCaptureReviewPresenterTest extends Unit
                 ['titulo' => 'Diagnósticos', 'requerido' => true],
                 ['titulo' => 'Motivos de Consulta', 'requerido' => false],
             ],
-            'Paciente con dolor torácico',
             'Paciente con dolor toracico',
             false
         );
 
         $this->assertSame(1, $review['version']);
-        $this->assertSame('Paciente con dolor torácico', $review['texto_original']);
         $this->assertFalse($review['tiene_datos_faltantes']);
         $this->assertNull($review['system_error']);
         $this->assertCount(2, $review['categories']);
@@ -65,7 +63,6 @@ class EncounterCaptureReviewPresenterTest extends Unit
                 ],
             ],
             [],
-            'texto',
             null,
             true
         );
@@ -105,13 +102,12 @@ class EncounterCaptureReviewPresenterTest extends Unit
                     'campos_requeridos' => [],
                 ],
             ],
-            // Haystack sin el fármaco → Medicación queda source=ai: sugerencia sin tildar.
-            'Consulta por cefalea. Diagnóstico: hipertensión arterial esencial.',
             null,
             false
         );
 
-        $this->assertNotContains('Medicación::0', $review['default_staged_item_ids']);
+        // Todos los items son 'clinical' por defecto
+        $this->assertContains('Medicación::0', $review['default_staged_item_ids']);
         $this->assertContains('Diagnóstico::0', $review['default_staged_item_ids']);
     }
 
@@ -157,7 +153,6 @@ class EncounterCaptureReviewPresenterTest extends Unit
                     ],
                 ],
             ],
-            'Control en consultorio en 7 días. Indico enalapril 10 mg 1 vez al día.',
             null,
             false
         );

@@ -315,13 +315,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                             CarePackCohorteCard(cohorte: _historiaClinicaData!.carePackCohorte!),
                           ],
                         ] else ...[
-                          CollapsibleSection(
-                            title: AppTexts.notesHistoryTitle,
-                            expanded: _historyExpanded,
-                            onToggle: () => setState(
-                              () => _historyExpanded = !_historyExpanded,
-                            ),
-                            child: Column(
+                          if (_historyExpanded)
+                            Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                           if (_historiaClinicaData!
@@ -375,27 +370,75 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                           ],
                               ],
                             ),
-                          ),
-                          if (_notes.isNotEmpty && !_enRevisionCaptura) ...[
+                          if (_historiaClinicaData!.documentacionMedico.tieneDatos) ...[
                             BioSpacing.gapH(BioSpacing.md),
-                            CollapsibleSection(
-                              title: AppTexts.notesDraftTitle,
-                              badge: '${_notes.length}',
-                              expanded: _draftExpanded,
-                              onToggle: () => setState(
-                                () => _draftExpanded = !_draftExpanded,
-                              ),
-                              child: ListenableBuilder(
-                                listenable: _playback,
-                                builder: (context, _) => DraftNotesPanel(
-                                  notes: _notes,
-                                  busy: _captureBusy,
-                                  playingId: _playback.playingId,
-                                  onTogglePlay: _togglePlayNote,
-                                  onDelete: _deleteNote,
-                                  onRetry: _retryNote,
+                            Center(
+                              child: InkWell(
+                                onTap: () => setState(
+                                  () => _historyExpanded = !_historyExpanded,
+                                ),
+                                borderRadius: BorderRadius.circular(BioRadius.sm),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: BioSpacing.sm,
+                                    horizontal: BioSpacing.md,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        _historyExpanded ? AppTexts.notesCollapse : AppTexts.notesExpand,
+                                        style: BioTypography.caption.copyWith(
+                                          color: context.bio.textMuted,
+                                        ),
+                                      ),
+                                      BioSpacing.gapW(BioSpacing.xs),
+                                      Icon(
+                                        _historyExpanded ? Icons.expand_less : Icons.expand_more,
+                                        size: 20,
+                                        color: context.bio.textMuted,
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
+                            ),
+                          ],
+                          if (_notes.isNotEmpty && !_enRevisionCaptura) ...[
+                            BioSpacing.gapH(BioSpacing.md),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: BioSpacing.sm,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        AppTexts.notesDraftTitle,
+                                        style: BioTypography.title,
+                                      ),
+                                      BioSpacing.gapW(BioSpacing.sm),
+                                      BioBadge(
+                                        label: '${_notes.length}',
+                                        intent: UiIntent.neutral,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                ListenableBuilder(
+                                  listenable: _playback,
+                                  builder: (context, _) => DraftNotesPanel(
+                                    notes: _notes,
+                                    busy: _captureBusy,
+                                    playingId: _playback.playingId,
+                                    onTogglePlay: _togglePlayNote,
+                                    onDelete: _deleteNote,
+                                    onRetry: _retryNote,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                           if (_isAnalyzing) ...[

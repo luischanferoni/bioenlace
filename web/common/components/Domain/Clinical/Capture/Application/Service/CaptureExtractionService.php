@@ -154,7 +154,6 @@ class CaptureExtractionService extends Component
             $captureReview = (new EncounterCaptureReviewPresenter())->build(
                 $datos,
                 $categorias,
-                $sourceText,
                 $textoProcesado,
                 $tieneDatosFaltantes,
                 $completeness,

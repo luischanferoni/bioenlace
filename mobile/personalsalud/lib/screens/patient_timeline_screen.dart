@@ -398,7 +398,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                                             ? 'Contraer Historia Clínica'
                                             : 'Expandir Historia Clínica',
                                         style: BioTypography.bodySm.copyWith(
-                                          color: context.bio.textPrimary,
+                                          color: context.bio.textTitle,
                                           fontWeight: FontWeight.w500,
                                         ),
                                       ),
@@ -406,7 +406,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                                       Icon(
                                         _historyExpanded ? Icons.expand_less : Icons.expand_more,
                                         size: 20,
-                                        color: context.bio.textPrimary,
+                                        color: context.bio.textTitle,
                                       ),
                                     ],
                                   ),

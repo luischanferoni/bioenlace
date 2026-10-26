@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Agenda\Application\UseCase;
 
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoSlotOccupancyService;
 use common\components\Domain\Organization\Pes\Domain\Model\AgendaIntervaloMinutos;
 use common\components\Domain\Organization\Pes\Application\Service\AgendaSlotService;
 use common\models\Organization\ProfesionalEfectorServicioAgendaVersion;

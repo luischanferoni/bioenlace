@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Agenda\Application\UseCase;
 
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoSlotOccupancyService;
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
 use common\models\Scheduling\Turno;
 use common\models\Scheduling\TurnoResolucion;

@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Agenda\Application\UseCase;
 
+use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoSlotOccupancyService;
 use common\components\Domain\Scheduling\Agenda\Application\Agents\TurnoResolucionAutoReservaAgent;
 use common\components\Domain\Scheduling\Agenda\Application\Agents\TurnoResolucionShortlistAgent;
 use common\components\Domain\Scheduling\Agenda\Application\Catalog\TurnoResolutionNotificationCatalog;

@@ -4,6 +4,7 @@ namespace common\components\Domain\Scheduling\Assistant;
 
 use common\components\Domain\Scheduling\Agenda\Application\UseCase\BuildControlSeguimientoHub;
 use common\components\Domain\Scheduling\Assistant\Application\UseCase\SubmitEncounterFollowupIntake;
+use common\components\Domain\Scheduling\Assistant\Application\UseCase\EncounterFollowupIntakeCatalogService;
 
 /**
  * Enriquece el draft de Control/Seguimiento (dentro de Solicitar Atención) antes del SubIntentEngine.

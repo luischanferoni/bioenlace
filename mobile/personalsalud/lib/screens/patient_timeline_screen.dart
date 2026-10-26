@@ -315,62 +315,61 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                             CarePackCohorteCard(cohorte: _historiaClinicaData!.carePackCohorte!),
                           ],
                         ] else ...[
-                          if (_historyExpanded)
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                          if (_historiaClinicaData!
-                              .documentacionMedico
-                              .tieneDatos) ...[
-                            BioSpacing.gapH(BioSpacing.md),
-                            DocumentacionMedicoCard(doc:
-                              _historiaClinicaData!.documentacionMedico,
-                            ),
-                          ],
-                          BioSpacing.gapH(BioSpacing.md),
-                          InformacionMedicaCard(info:
-                            _historiaClinicaData!.informacionMedica,
-                          ),
-                          BioSpacing.gapH(BioSpacing.md),
-                          if (_esCapturaEpisodio)
-                            SignosVitalesEpisodioCard(data:
-                              _historiaClinicaData!.signosVitalesEpisodio,
-                            )
-                          else
-                            SignosVitalesCard(sv:
-                              _historiaClinicaData!.signosVitales,
-                            ),
-                          if (_esCapturaEpisodio) ...[
-                            BioSpacing.gapH(BioSpacing.md),
-                            EpisodioBanner(ctx: _historiaClinicaData!.contextoEpisodio, onAction: _onEpisodioAccion),
-                            BioSpacing.gapH(BioSpacing.md),
-                            EpisodioFeedSection(feed: _historiaClinicaData!.timelineEpisodio, selectedFilterId: _tlEpisodioFilter, onFilterChanged: (id) => setState(() => _tlEpisodioFilter = id)),
-                          ] else ...[
-                            BioSpacing.gapH(BioSpacing.md),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                          if (_historyExpanded) ...[
                             if (_historiaClinicaData!
-                                    .patientEncounterReasons
-                                    .motivosIntake
-                                    ?.tieneContenido ==
-                                true) ...[
-                              MotivosIntakeCard(intake:
-                                _historiaClinicaData!
-                                    .patientEncounterReasons
-                                    .motivosIntake!,
+                                .documentacionMedico
+                                .tieneDatos) ...[
+                              BioSpacing.gapH(BioSpacing.md),
+                              DocumentacionMedicoCard(doc:
+                                _historiaClinicaData!.documentacionMedico,
                               ),
-                              BioSpacing.gapH(BioSpacing.md),
                             ],
-                            EncounterReasonsCard(hc: _historiaClinicaData!, authToken: widget.authToken),
-                            if (_historiaClinicaData!
-                                    .carePackCohorte
-                                    ?.tieneContenido ==
-                                true) ...[
+                            BioSpacing.gapH(BioSpacing.md),
+                            InformacionMedicaCard(info:
+                              _historiaClinicaData!.informacionMedica,
+                            ),
+                            BioSpacing.gapH(BioSpacing.md),
+                            if (_esCapturaEpisodio)
+                              SignosVitalesEpisodioCard(data:
+                                _historiaClinicaData!.signosVitalesEpisodio,
+                              )
+                            else
+                              SignosVitalesCard(sv:
+                                _historiaClinicaData!.signosVitales,
+                              ),
+                            if (_esCapturaEpisodio) ...[
                               BioSpacing.gapH(BioSpacing.md),
-                              CarePackCohorteCard(cohorte: _historiaClinicaData!.carePackCohorte!),
+                              EpisodioBanner(ctx: _historiaClinicaData!.contextoEpisodio, onAction: _onEpisodioAccion),
+                              BioSpacing.gapH(BioSpacing.md),
+                              EpisodioFeedSection(feed: _historiaClinicaData!.timelineEpisodio, selectedFilterId: _tlEpisodioFilter, onFilterChanged: (id) => setState(() => _tlEpisodioFilter = id)),
+                            ] else ...[
+                              BioSpacing.gapH(BioSpacing.md),
+                              if (_historiaClinicaData!
+                                      .patientEncounterReasons
+                                      .motivosIntake
+                                      ?.tieneContenido ==
+                                  true) ...[
+                                MotivosIntakeCard(intake:
+                                  _historiaClinicaData!
+                                      .patientEncounterReasons
+                                      .motivosIntake!,
+                                ),
+                                BioSpacing.gapH(BioSpacing.md),
+                              ],
+                              EncounterReasonsCard(hc: _historiaClinicaData!, authToken: widget.authToken),
+                              if (_historiaClinicaData!
+                                      .carePackCohorte
+                                      ?.tieneContenido ==
+                                  true) ...[
+                                BioSpacing.gapH(BioSpacing.md),
+                                CarePackCohorteCard(cohorte: _historiaClinicaData!.carePackCohorte!),
+                              ],
                             ],
                           ],
-                              ],
-                            ),
-                          if (_historiaClinicaData!.documentacionMedico.tieneDatos) ...[
+                          if (_notes.isNotEmpty) ...[
                             BioSpacing.gapH(BioSpacing.md),
                             Center(
                               child: InkWell(
@@ -378,25 +377,36 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                                   () => _historyExpanded = !_historyExpanded,
                                 ),
                                 borderRadius: BorderRadius.circular(BioRadius.sm),
-                                child: Padding(
+                                child: Container(
                                   padding: const EdgeInsets.symmetric(
                                     vertical: BioSpacing.sm,
                                     horizontal: BioSpacing.md,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: context.bio.paperBackground,
+                                    border: Border.all(
+                                      color: context.bio.paperBorderDefault,
+                                      width: BorderWidth.thin,
+                                    ),
+                                    borderRadius: BorderRadius.circular(BioRadius.sm),
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Text(
-                                        _historyExpanded ? AppTexts.notesCollapse : AppTexts.notesExpand,
-                                        style: BioTypography.caption.copyWith(
-                                          color: context.bio.textMuted,
+                                        _historyExpanded
+                                            ? 'Contraer Historia Clínica'
+                                            : 'Expandir Historia Clínica',
+                                        style: BioTypography.bodySm.copyWith(
+                                          color: context.bio.textPrimary,
+                                          fontWeight: FontWeight.w500,
                                         ),
                                       ),
                                       BioSpacing.gapW(BioSpacing.xs),
                                       Icon(
                                         _historyExpanded ? Icons.expand_less : Icons.expand_more,
                                         size: 20,
-                                        color: context.bio.textMuted,
+                                        color: context.bio.textPrimary,
                                       ),
                                     ],
                                   ),
@@ -404,6 +414,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                               ),
                             ),
                           ],
+                            ],
+                          ),
                           if (_notes.isNotEmpty && !_enRevisionCaptura) ...[
                             BioSpacing.gapH(BioSpacing.md),
                             Column(

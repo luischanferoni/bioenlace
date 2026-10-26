@@ -4,6 +4,7 @@ namespace common\components\Domain\Scheduling\Agenda\Application\UseCase;
 
 use Yii;
 use common\components\Domain\Scheduling\Agenda\Application\Service\TurnoSlotQueryService;
+use common\components\Domain\Scheduling\Agenda\Application\Presentation\TurnoSlotOfferUiPresenter;
 
 /**
  * Oferta de slots libres: lista desde {@see TurnoSlotQueryService} y, si hace falta, agrupación por día y franja mañana/tarde.

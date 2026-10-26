@@ -186,13 +186,13 @@ class CaptureReviewPanel extends StatelessWidget {
             );
           }),
         ],
-        if (review.missingCategories.isNotEmpty) ...[
+        /*if (review.missingCategories.isNotEmpty) ...[
           BioSpacing.gapH(BioSpacing.sm),
           BioAlert.warning(
             message:
                 'Faltan categorías obligatorias: ${review.missingCategories.join(', ')}.',
           ),
-        ],
+        ],*/
         ...review
             .orphanIssuesForStaged(stagedItemIds)
             .map((i) => _issueBlock(context, i)),

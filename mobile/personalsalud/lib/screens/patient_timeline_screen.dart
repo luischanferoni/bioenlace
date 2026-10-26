@@ -1270,7 +1270,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         review != null &&
         review.systemError == null &&
         !review.episodeNoteDuplicate &&
-        review.textoOriginal.trim().isNotEmpty &&
+        review.textoProcesado != null &&
+        review.missingCategories.isEmpty &&
         _allStagedIssuesResolved(review);
   }
 

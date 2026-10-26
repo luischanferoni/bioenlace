@@ -4,7 +4,8 @@ namespace common\components\Domain\Clinical\Capture\Infrastructure\Terminology;
 
 use common\components\Domain\Clinical\Capture\Domain\Port\TerminologyLookupPort;
 use common\components\Domain\Terminology\Infrastructure\External\Snowstorm\SnowstormClient;
-use common\models\Terminology\Application\SnomedHallazgos;
+use common\models\Terminology\Snomed\SnomedHallazgos;
+
 use common\models\Terminology\Application\SnomedProblemas;
 use Yii;
 use yii\db\ActiveRecord;

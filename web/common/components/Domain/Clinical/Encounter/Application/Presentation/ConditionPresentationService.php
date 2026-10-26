@@ -7,7 +7,7 @@ use common\components\Domain\Clinical\Encounter\Application\Service\PatientActiv
 use common\components\Domain\Person\Identity\Application\Service\PacienteContextoService;
 use common\components\Domain\Scheduling\Agenda\Application\UseCase\BuildControlSeguimientoHub;
 use common\models\Clinical\Condition;
-use common\models\Terminology\Application\SnomedHallazgos;
+use common\models\Terminology\Snomed\SnomedHallazgos;
 
 /**
  * Resúmenes de condiciones activas para home / hub paciente / HC staff.

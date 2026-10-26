@@ -22,18 +22,23 @@ class UiJsonSingleListPick {
       if (b['kind']?.toString() != 'list') continue;
 
       final itemsRaw = b['items'];
-      final pickable = _pickableItems(b, itemsRaw is List ? itemsRaw : const []);
+      final pickable = _pickableItems(
+        b,
+        itemsRaw is List ? itemsRaw : const [],
+      );
       if (pickable.length != 1) continue;
 
-      final selection = b['selection'] is Map
-          ? Map<String, dynamic>.from(b['selection'] as Map)
-          : const <String, dynamic>{};
+      final selection =
+          b['selection'] is Map
+              ? Map<String, dynamic>.from(b['selection'] as Map)
+              : const <String, dynamic>{};
       final mode = selection['mode']?.toString().trim().toLowerCase() ?? '';
       if (mode == 'none') continue;
       final isMultiple = mode == 'multiple';
-      final rawRequires = selection.containsKey('requires_confirmation')
-          ? selection['requires_confirmation'] == true
-          : isMultiple;
+      final rawRequires =
+          selection.containsKey('requires_confirmation')
+              ? selection['requires_confirmation'] == true
+              : isMultiple;
       if (rawRequires) continue;
 
       final draftField = b['draft_field']?.toString() ?? '';
@@ -55,7 +60,7 @@ class UiJsonSingleListPick {
     return null;
   }
 
-  /// Lista con varias opciones pero una ya elegida (hydrator / `review_prefilled`).
+  /// Lista con una opción ya elegida (hydrator / `review_prefilled`).
   static UiJsonSingleListPick? fromInitialSelection(
     Map<String, dynamic> definition,
     String selectedId,
@@ -91,8 +96,7 @@ class UiJsonSingleListPick {
 
       Map<String, dynamic>? matched;
       for (final it in pickable) {
-        final id = itemIdFromBlock(b, it);
-        if (id == preId) {
+        if (itemIdFromBlock(b, it) == preId) {
           matched = it;
           break;
         }
@@ -125,11 +129,8 @@ class UiJsonSingleListPick {
     return out;
   }
 
-  Map<String, dynamic> toDraftDelta() => draftDeltaFor(
-        draftField: draftField,
-        itemId: itemId,
-        item: item,
-      );
+  Map<String, dynamic> toDraftDelta() =>
+      draftDeltaFor(draftField: draftField, itemId: itemId, item: item);
 
   /// Mismo delta que el tap en lista (`_applyListEmbedDraft` / spa-home).
   static Map<String, dynamic> draftDeltaFor({
@@ -173,10 +174,14 @@ class UiJsonSingleListPick {
   }
 
   /// Id estable del ítem de un bloque `kind: list` (respeta `item.id_field`).
-  static String? itemIdFromBlock(Map<String, dynamic> block, Map<String, dynamic> item) {
-    final itemConfig = block['item'] is Map
-        ? Map<String, dynamic>.from(block['item'] as Map)
-        : const <String, dynamic>{};
+  static String? itemIdFromBlock(
+    Map<String, dynamic> block,
+    Map<String, dynamic> item,
+  ) {
+    final itemConfig =
+        block['item'] is Map
+            ? Map<String, dynamic>.from(block['item'] as Map)
+            : const <String, dynamic>{};
     final idField = itemConfig['id_field']?.toString().trim();
     final idKeys = <String>[
       if (idField != null && idField.isNotEmpty) idField,
@@ -205,8 +210,11 @@ class UiJsonSingleListPick {
     }
 
     final out = List<dynamic>.from(raw);
-    out.sort((a, b) =>
-        orderKey((a as Map)['display_order']).compareTo(orderKey((b as Map)['display_order'])));
+    out.sort(
+      (a, b) => orderKey(
+        (a as Map)['display_order'],
+      ).compareTo(orderKey((b as Map)['display_order'])),
+    );
     return out;
   }
 }

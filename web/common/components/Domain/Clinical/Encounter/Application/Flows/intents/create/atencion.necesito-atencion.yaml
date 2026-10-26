@@ -258,6 +258,8 @@ states:
         guard:
           modalidad_paso_requerido: '0'
         target: select_servicio
+      -
+        target: select_tipo_atencion
   triage_urgencia:
     label: Urgencia
     explanation: 'Orientación por urgencia, para la persona que consulta o por otra persona.'
@@ -334,6 +336,8 @@ states:
         guard:
           pedido_servicio_resuelto: '1'
         target: select_efector
+      -
+        target: select_servicio
   solicitud_async:
     label: Describí tu consulta en el campo de texto de abajo
     explanation: 'La persona escribe la consulta para un profesional.'
@@ -924,4 +928,3 @@ flow_submit:
     triage_nota: 'draft.triage_nota?'
     intake_tipo: 'draft.intake_tipo?'
     seguimiento_necesidad: 'draft.seguimiento_necesidad?'
-

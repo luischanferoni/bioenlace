@@ -3052,7 +3052,7 @@ class ChatScreenState extends State<ChatScreen> {
                                                                       userFriendlyErrorMessage(
                                                                         e,
                                                                         fallback:
-                                                                                                                                                    AppTexts.chatAdvanceFailed,
+                                                                                                                              AppTexts.chatAdvanceFailed,
                                                                       ),
                                                                   'timestamp':
                                                                       DateTime.now(),

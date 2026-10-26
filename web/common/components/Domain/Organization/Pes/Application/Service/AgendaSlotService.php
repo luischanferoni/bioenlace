@@ -3,6 +3,7 @@
 namespace common\components\Domain\Organization\Pes\Application\Service;
 
 use common\traits\AgendaHorarioSlotsTrait;
+use common\components\Domain\Organization\Pes\Domain\Model\AgendaIntervaloMinutos;
 
 /**
  * Generación de slots y utilidades de intervalo (sin cupo/duración libre).

@@ -108,19 +108,56 @@ class CaptureReviewPanel extends StatelessWidget {
                       Expanded(
                         child: Text(cat.title, style: categoryTitleStyle),
                       ),
-                      if (cat.required) BioBadge.danger('Requerido'),
+                      if (cat.required) ...[
+                        BioBadge.danger('Requerido'),
+                        BioSpacing.gapW(BioSpacing.xs),
+                      ],
+                      if (cat.required && cat.items.isEmpty)
+                        Icon(
+                          Icons.warning_amber_rounded,
+                          size: 18,
+                          color: IntentPalette.of(UiIntent.warning).base,
+                        ),
                     ],
                   ),
                   BioSpacing.gapH(BioSpacing.sm),
                   if (cat.items.isEmpty)
-                    Text(
-                      cat.required
-                          ? 'Falta información en esta categoría.'
-                          : 'Sin datos en esta categoría.',
-                      style: BioTypography.bodySm.copyWith(
+                    Container(
+                      padding: const EdgeInsets.all(BioSpacing.sm),
+                      decoration: BoxDecoration(
                         color: cat.required
-                            ? IntentPalette.of(UiIntent.danger).base
-                            : context.bio.textMuted,
+                            ? IntentPalette.of(UiIntent.warning).softFg.withOpacity(0.1)
+                            : null,
+                        borderRadius: BorderRadius.circular(BioRadius.sm),
+                        border: cat.required
+                            ? Border.all(
+                                color: IntentPalette.of(UiIntent.warning).base,
+                                width: BorderWidth.thin,
+                              )
+                            : null,
+                      ),
+                      child: Row(
+                        children: [
+                          if (cat.required)
+                            Icon(
+                              Icons.info_outline,
+                              size: 16,
+                              color: IntentPalette.of(UiIntent.warning).base,
+                            ),
+                          if (cat.required) BioSpacing.gapW(BioSpacing.xs),
+                          Expanded(
+                            child: Text(
+                              cat.required
+                                  ? 'Falta completar esta categoría requerida'
+                                  : 'Sin datos en esta categoría.',
+                              style: BioTypography.bodySm.copyWith(
+                                color: cat.required
+                                    ? IntentPalette.of(UiIntent.warning).base
+                                    : context.bio.textMuted,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ...delTexto.map(

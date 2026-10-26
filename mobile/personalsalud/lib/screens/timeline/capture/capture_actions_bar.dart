@@ -28,12 +28,6 @@ class CaptureActionsBar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (!canConfirm && !isSaving) ...[
-            BioAlert.warning(
-              message: 'Faltan datos requeridos para guardar. Completá las categorías marcadas.',
-            ),
-            BioSpacing.gapH(BioSpacing.sm),
-          ],
           BioButton.primary(
             label: isSaving ? 'Guardando…' : 'Guardar',
             icon: isSaving ? null : Icons.check,

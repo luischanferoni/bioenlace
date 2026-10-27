@@ -20,6 +20,11 @@
 #   patient (solo móvil)                    → panels.patient
 #   invitado / sin contexto                 → panels.fallback
 #
+# Overlay por rol (fase 2): si `panels.staff_by_role.<rol>.<clase>` existe, se aplica sobre el panel
+# base. Claves permitidas en el overlay: `sections` (reemplaza), `sections_append`, `exclude_sections`,
+# `title`, `layout`. La clave vacía («») es "sesión sin encounter todavía".
+# La clave de rol es la canónica de permission/metadata/roles.yaml (medico, enfermeria, administrativo, …).
+#
 # RBAC HTTP: capability YAML (guardia.*, panel.*) — sync a auth_item.
 # Este archivo solo define layout, secciones y CTAs EMER (capability_id + exclusiones UX).
 #
@@ -140,6 +145,31 @@ panels:
       - id: staff_internacion_kpis
         provider: staff_internacion_kpis
         kind: staff_kpi_group
+
+  # --- Overlays por rol, cruzados con encounter class ---
+  # Enfermería y administración no cargan agenda propia: ven la cola del servicio en sesión.
+  staff_by_role:
+    enfermeria:
+      AMB:
+        title: Pacientes del servicio
+        sections:
+          - id: service_pending_appointments
+            provider: service_pending_appointments
+            kind: appointments_day
+    administrativo:
+      AMB:
+        title: Cola de pacientes
+        sections:
+          - id: service_pending_appointments
+            provider: service_pending_appointments
+            kind: appointments_day
+    admin_ministerio:
+      "":
+        title: Panel de red
+        sections_append:
+          - id: red_solicitudes
+            provider: red_solicitudes
+            kind: staff_kpi_group
 
   fallback:
     layout: staff_dashboard

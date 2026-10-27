@@ -151,6 +151,50 @@ final class StaffSchedulingDayListService
 
 
     /**
+     * Turnos pendientes del día para el **servicio** en sesión (no la agenda del profesional).
+     * Alimenta la cola de enfermería y administración en AMB.
+     *
+     * @return array{turnos: array<int, array<string, mixed>>, fecha: string, total: int}
+     */
+    public function turnosPendientesDelServicio(string $fecha): array
+    {
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        $idServicio = (int) Yii::$app->user->getServicioActual();
+        if ($idEfector <= 0 || $idServicio <= 0) {
+            return ['turnos' => [], 'fecha' => $fecha, 'total' => 0];
+        }
+
+        $turnos = Turno::findActive()
+            ->andWhere([
+                'fecha' => $fecha,
+                'id_efector' => $idEfector,
+                'id_servicio_asignado' => $idServicio,
+                'estado' => Turno::ESTADO_PENDIENTE,
+            ])
+            ->andWhere(['is', 'atendido', null])
+            ->orderBy('hora')
+            ->all();
+
+        $motivosLookup = new EncounterAppointmentReasonLookupService();
+        $modalidadInsight = new StaffTurnoModalidadInsightService();
+
+        $formattedTurnos = [];
+        foreach ($turnos as $turno) {
+            $formattedTurnos[] = $this->formatTurnoAmbulatorioRow(
+                $turno,
+                $motivosLookup,
+                $modalidadInsight
+            );
+        }
+
+        return [
+            'turnos' => $formattedTurnos,
+            'fecha' => $fecha,
+            'total' => count($formattedTurnos),
+        ];
+    }
+
+    /**
      * @return array<int, array<string, mixed>>
      */
     public function cirugiasAgendadasPorEfectorYFecha(string $fecha): array

@@ -20,7 +20,7 @@ final class HomePanelManifest
      *   sections: list<array{id: string, provider: string, kind: string, poll_interval_seconds?: int}>
      * }
      */
-    public function resolve(string $audience, ?string $encounterClass): array
+    public function resolve(string $audience, ?string $encounterClass, ?string $role = null): array
     {
         $manifest = $this->load();
         if ($audience === HomePanelAudienceResolver::PATIENT) {
@@ -28,42 +28,121 @@ final class HomePanelManifest
         }
 
         if ($audience === HomePanelAudienceResolver::STAFF) {
-            return $this->resolveForStaff($encounterClass);
+            return $this->resolveForStaff($encounterClass, $role);
         }
 
         return $this->normalizePanel($manifest['panels']['fallback'] ?? []);
     }
 
     /**
+     * Panel staff = base por encounter + overlay del rol (si existe).
+     *
      * @return array{
      *   layout: string,
      *   title: string,
      *   sections: list<array{id: string, provider: string, kind: string, poll_interval_seconds?: int}>
      * }
      */
-    public function resolveForStaff(?string $encounterClass): array
+    public function resolveForStaff(?string $encounterClass, ?string $role = null): array
+    {
+        $base = $this->normalizePanel($this->staffBasePanel($encounterClass));
+        $overlay = $this->roleOverlay($role, $encounterClass);
+        if ($overlay === null) {
+            return $base;
+        }
+
+        return $this->applyRoleOverlay($base, $overlay);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function staffBasePanel(?string $encounterClass): array
     {
         $manifest = $this->load();
-        if ($encounterClass === null || $encounterClass === '') {
-            $ops = $manifest['panels']['staff_operations'] ?? $manifest['panels']['fallback'] ?? [];
+        $operations = $manifest['panels']['staff_operations'] ?? $manifest['panels']['fallback'] ?? [];
 
-            return $this->normalizePanel($ops);
+        if ($encounterClass === null || $encounterClass === '') {
+            return $operations;
         }
 
         $staff = $manifest['panels']['staff'] ?? [];
         if (!isset($staff[$encounterClass]) || !is_array($staff[$encounterClass])) {
-            $ops = $manifest['panels']['staff_operations'] ?? $manifest['panels']['fallback'] ?? [];
-
-            return $this->normalizePanel($ops);
+            return $operations;
         }
 
         $panel = $staff[$encounterClass];
         $resolved = HomePanelStaffPanelSliceRegistry::resolve($encounterClass, $panel);
-        if ($resolved !== null) {
-            $panel = $resolved;
+
+        return $resolved !== null ? $resolved : $panel;
+    }
+
+    /**
+     * Overlay declarado en `panels.staff_by_role.<rol>.<encounter>`; si no hay para el encounter,
+     * se usa la clave vacía (sesión sin encounter).
+     *
+     * @return array<string, mixed>|null
+     */
+    private function roleOverlay(?string $role, ?string $encounterClass): ?array
+    {
+        if ($role === null || $role === '') {
+            return null;
         }
 
-        return $this->normalizePanel($panel);
+        $byRole = $this->load()['panels']['staff_by_role'] ?? [];
+        if (!is_array($byRole) || !isset($byRole[$role]) || !is_array($byRole[$role])) {
+            return null;
+        }
+
+        $overlays = $byRole[$role];
+        $key = $encounterClass !== null && $encounterClass !== '' ? $encounterClass : '';
+        if (isset($overlays[$key]) && is_array($overlays[$key])) {
+            return $overlays[$key];
+        }
+
+        if ($key !== '' && isset($overlays['']) && is_array($overlays[''])) {
+            return $overlays[''];
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array{layout: string, title: string, sections: list<array<string, mixed>>} $base
+     * @param array<string, mixed> $overlay
+     * @return array{layout: string, title: string, sections: list<array<string, mixed>>}
+     */
+    private function applyRoleOverlay(array $base, array $overlay): array
+    {
+        $sections = isset($overlay['sections']) && is_array($overlay['sections'])
+            ? $this->normalizeSections($overlay['sections'])
+            : $base['sections'];
+
+        if (isset($overlay['sections_append']) && is_array($overlay['sections_append'])) {
+            $sections = array_merge($sections, $this->normalizeSections($overlay['sections_append']));
+        }
+
+        $excluded = [];
+        if (isset($overlay['exclude_sections']) && is_array($overlay['exclude_sections'])) {
+            foreach ($overlay['exclude_sections'] as $id) {
+                $id = trim((string) $id);
+                if ($id !== '') {
+                    $excluded[$id] = true;
+                }
+            }
+        }
+        if ($excluded !== []) {
+            $sections = array_values(array_filter(
+                $sections,
+                static fn (array $section): bool => !isset($excluded[$section['id']])
+            ));
+        }
+
+        return [
+            'layout' => (string) ($overlay['layout'] ?? $base['layout']),
+            'title' => (string) ($overlay['title'] ?? $base['title']),
+            'sections' => $sections,
+        ];
     }
 
     /**
@@ -91,8 +170,25 @@ final class HomePanelManifest
      */
     private function normalizePanel(array $panel): array
     {
+        return [
+            'layout' => (string) ($panel['layout'] ?? 'cards'),
+            'title' => (string) ($panel['title'] ?? 'Inicio'),
+            'sections' => $this->normalizeSections($panel['sections'] ?? []),
+        ];
+    }
+
+    /**
+     * @param mixed $rows
+     * @return list<array{id: string, provider: string, kind: string, poll_interval_seconds?: int}>
+     */
+    private function normalizeSections($rows): array
+    {
+        if (!is_array($rows)) {
+            return [];
+        }
+
         $sections = [];
-        foreach (($panel['sections'] ?? []) as $row) {
+        foreach ($rows as $row) {
             if (!is_array($row)) {
                 continue;
             }
@@ -113,11 +209,7 @@ final class HomePanelManifest
             $sections[] = $section;
         }
 
-        return [
-            'layout' => (string) ($panel['layout'] ?? 'cards'),
-            'title' => (string) ($panel['title'] ?? 'Inicio'),
-            'sections' => $sections,
-        ];
+        return $sections;
     }
 
     /**

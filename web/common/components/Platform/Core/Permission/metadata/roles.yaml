@@ -10,15 +10,29 @@
 # =============================================================================
 version: 1
 
-# Clave canónica → nombre de referencia en RBAC / servicios.item_name (documental).
+# Clave canónica → datos del rol.
+# `nombre`: nombre de referencia en RBAC / servicios.item_name (documental).
+# `requiere_horario_activo`: si las secciones de agenda exigen horario cargado del profesional.
+#   Enfermería y médico trabajan por turnos propios; administración opera la cola del servicio.
+# `panel_red`: si el rol opera cuentas de red (ministerio) y ve sus indicadores.
 roles:
-  admin_ministerio: AdminMinisterio
-  nivel_central: nivelCentral
-  admin_efector: AdminEfector
-  administrativo: Administrativo
-  facturista: facturista
-  enfermeria: enfermeria
-  medico: Medico
+  admin_ministerio:
+    nombre: AdminMinisterio
+    panel_red: true
+  nivel_central:
+    nombre: nivelCentral
+    panel_red: true
+  admin_efector:
+    nombre: AdminEfector
+  administrativo:
+    nombre: Administrativo
+    requiere_horario_activo: false
+  facturista:
+    nombre: facturista
+  enfermeria:
+    nombre: enfermeria
+  medico:
+    nombre: Medico
 
 # Alias aceptados (auth_assignment.item_name y servicios.item_name) → clave canónica.
 # La comparación es exacta y sensible a mayúsculas: listar las variantes reales en uso.

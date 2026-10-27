@@ -55,7 +55,9 @@ use common\components\Domain\Scheduling\Home\Sections\PatientEncounterAsyncSecti
 use common\components\Domain\Scheduling\Home\Sections\PatientUpcomingAppointmentsSectionProvider;
 use common\components\Domain\Scheduling\Home\Sections\StaffEncounterAsyncInboxSectionProvider;
 use common\components\Domain\Scheduling\Home\Sections\StaffEfectorModalidadKpiSectionProvider;
+use common\components\Domain\Scheduling\Home\Sections\ServicePendingAppointmentsSectionProvider;
 use common\components\Domain\Organization\Efector\Application\Presentation\StaffEfectorResumenSectionProvider;
+use common\components\Domain\Organization\Efector\Application\Presentation\StaffRedSolicitudesSectionProvider;
 use common\components\Domain\Scheduling\Home\Sections\StaffAgendaKpiSectionProvider;
 use common\components\Domain\Scheduling\Home\Sections\StaffSurgeryKpiSectionProvider;
 use common\components\Domain\Scheduling\Home\Sections\SurgeriesDaySectionProvider;
@@ -198,6 +200,7 @@ return [
         'emergency_indicators' => EmergencyIndicatorsSectionProvider::class,
         'staff_horario_activo' => StaffHorarioActivoSectionProvider::class,
         'appointments_day' => AppointmentsDaySectionProvider::class,
+        'service_pending_appointments' => ServicePendingAppointmentsSectionProvider::class,
         'async_consultations_queue' => StaffEncounterAsyncInboxSectionProvider::class,
         'inpatients' => InpatientsSectionProvider::class,
         'surgeries_day' => SurgeriesDaySectionProvider::class,
@@ -210,6 +213,7 @@ return [
         'staff_agenda_kpis' => StaffAgendaKpiSectionProvider::class,
         'staff_efector_modalidad_kpis' => StaffEfectorModalidadKpiSectionProvider::class,
         'staff_efector_resumen' => StaffEfectorResumenSectionProvider::class,
+        'red_solicitudes' => StaffRedSolicitudesSectionProvider::class,
         'staff_guardia_kpis' => StaffEmergencyKpiSectionProvider::class,
         'staff_internacion_kpis' => StaffInpatientKpiSectionProvider::class,
         'staff_surgery_kpis' => StaffSurgeryKpiSectionProvider::class,

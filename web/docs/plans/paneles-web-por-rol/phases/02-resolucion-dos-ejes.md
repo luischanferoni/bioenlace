@@ -34,4 +34,12 @@ Hoy `HomePanelManifest::resolveForStaff(?string $encounterClass)` resuelve **só
 
 ## Estado
 
-Pendiente.
+Implementado.
+
+- `HomePanelManifest::resolve($audience, $encounterClass, $role)` y `resolveForStaff($encounterClass, $role)`; `HomePanelService` pasa el rol.
+- Cadena: `staff_by_role.<rol>.<encounter>` → `staff_by_role.<rol>.""` → `staff.<encounter>` (con slices) → `staff_operations` → `fallback`.
+- Overlay: `sections` reemplaza, `sections_append` agrega, `exclude_sections` quita, `title`/`layout` override. Un overlay sin `sections` ni `sections_append` se rechaza en test.
+- Configuración activa: enfermería y administrativo en AMB (cola del servicio), admin_ministerio sin encounter (agrega indicadores de red).
+- Tests en `HomePanelManifestTest`: overlay por rol, panel sin overlay intacto, overlay que no aplica a otros encounters.
+
+Pendiente: el caso AdminEfector-elige-encounter (también en esta fase) no se implementó todavía. Sin correr en PHP 8.3; validado con `php -l` y un harness sobre el YAML real (AMB/EMER/VR y staff_operations).

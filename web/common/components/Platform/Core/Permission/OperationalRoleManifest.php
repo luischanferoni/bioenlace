@@ -139,6 +139,47 @@ final class OperationalRoleManifest
     }
 
     /**
+     * ¿El rol exige horario activo del profesional para ver secciones de agenda?
+     */
+    public function requiresActiveSchedule(?string $canonical): bool
+    {
+        if ($canonical === null || $canonical === '') {
+            return true;
+        }
+
+        $row = $this->roleRow($canonical);
+
+        return $row === null || (bool) ($row['requiere_horario_activo'] ?? true);
+    }
+
+    /**
+     * ¿El rol opera cuentas de red (ministerio) y ve sus indicadores?
+     */
+    public function belongsToNetworkPanel(?string $canonical): bool
+    {
+        if ($canonical === null || $canonical === '') {
+            return false;
+        }
+
+        $row = $this->roleRow($canonical);
+
+        return $row !== null && (bool) ($row['panel_red'] ?? false);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function roleRow(string $canonical): ?array
+    {
+        $roles = $this->load()['roles'] ?? [];
+        if (!is_array($roles) || !isset($roles[$canonical]) || !is_array($roles[$canonical])) {
+            return null;
+        }
+
+        return $roles[$canonical];
+    }
+
+    /**
      * @param mixed $raw
      * @return list<string>
      */

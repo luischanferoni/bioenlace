@@ -11,7 +11,8 @@
 | Nombres de rol | Clave canónica en snake_case más tabla de alias en `permission/metadata/roles.yaml` | Evita `enfermeria` vs `Enfermeria` disperso (hoy `redirectRouteForCurrentUser()` ya compara mal); el manifest sólo usa claves canónicas |
 | Multicrol | No hay desempate: el usuario elige servicio (y encounter) al iniciar sesión y puede cambiarlo desde el top menu. `precedence` sólo define el valor por defecto del wizard cuando aún no eligió | Evita paneles "sorpresa" para quien tiene dos roles |
 | Configuración de paneles | Extender `home-panel-manifest.yaml` con `staff_by_role` | El manifest ya es el punto de composición; sigue siendo presentación, no RBAC |
-| Semántica de overlay | `sections` reemplaza; `sections_append` agrega; `exclude_sections` quita; `title`/`layout` override | Reglas explícitas y testeables, sin merges implícitos de YAML |
+| Semántica de overlay | `sections` reemplaza; `sections_append` agrega; `exclude_sections` quita; `title`/`layout` override | Implementado en `HomePanelManifest::applyRoleOverlay()` |
+| Horario por rol | `roles.yaml` declara `requiere_horario_activo`; administración opera la cola sin horario propio | Los candados de agenda no deben vaciar el panel de quien no atiende |
 | Variantes por rol | Resolver registrado en `product-registries.php`, mismo patrón que los slices de IMP | Permite override por `params-local` y apagado sin tocar core |
 | Audiencia | `AdminMinisterio` (y los roles que defina la fase 00) entran a `audience.staff_roles` | Hoy caen en `fallback` y la capability no los cubre |
 | Top menu | Metadata en `client-context.yaml` (`hide_servicio_navbar_roles`, `hide_encounter_navbar_roles`) | Ya existe el patrón; evita condicionales de rol en vistas |
@@ -194,10 +195,21 @@ El usuario elige servicio (y encounter type) al iniciar sesión, y puede cambiar
 | Un provider por métrica sin verificar la fuente | Deuda fantasma: secciones que nunca se pueden llenar |
 | `deep_merge` genérico de YAML entre overlay y base | Impredecible; se prefieren claves explícitas de append/exclude |
 
-## Pendientes de decidir
+## Definiciones MVP por rol y encounter (acordadas con producto)
 
-1. Definición funcional de «pendiente» para signos vitales y admisiones.
-2. Roles de auditoría (`_x_efector_aditoria`) y `_sin_efector_CEAMM`: ¿entran al panel o quedan fuera en v1?
-3. Etiqueta del menú lateral por rol.
+El programa es un MVP: el contenido va a evolucionar y **se acepta que un panel quede sin información**. Cuando una sección devuelve vacío, el cliente no la muestra; no se inventan métricas.
 
-Resuelto con producto: el rol sale del servicio elegido en la sesión (cambiable desde el top menu), no de un desempate entre roles de la cuenta; AdminEfector elegirá encounter type como el resto.
+| Rol | AMB | EMER | IMP | VR |
+|-----|-----|------|-----|----|
+| `enfermeria` | Listado de pacientes del **servicio** para cargar (hoy `appointments_day` es la agenda del profesional: hace falta una variante por servicio) | Sin definir: panel por encounter sin overlay | `inpatients` (reuso: ya trae `cama`, `sala`, `piso`) | Sin definir |
+| `administrativo` | Turnos del día + cola de espera del servicio (parcialmente reutilizable) | `emergency_board` (reuso: cola activa, total, capacidades del usuario) | Sin definir: sin overlay | Sin definir |
+| `admin_efector` | KPIs (`staff_efector_resumen` ya entregado) | Ídem | Ídem | Ídem |
+| `admin_ministerio` / `nivel_central` | KPIs (a definir cuáles) | Ídem | Ídem | Ídem |
+
+Rondas e indicaciones de enfermería en IMP quedan **fuera de v1**: no hay dato estructurado hoy (los modelos de enfermería existen en captura, no como planificación de rondas).
+
+## Reglas para las secciones
+
+1. Una sección puede devolver vacío: el panel no se rompe y el cliente no la muestra. No se completan huecos con métricas inventadas.
+2. Primero se reutiliza una sección existente; sólo se crea un provider cuando el recorte (rol/servicio) o el dato no existen.
+3. Un overlay sin secciones es válido si el panel por encounter ya alcanza (p. ej. enfermería EMER en v1).

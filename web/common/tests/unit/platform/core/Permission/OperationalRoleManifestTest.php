@@ -48,6 +48,27 @@ class OperationalRoleManifestTest extends Unit
         }
     }
 
+    public function testScheduleRequirementIsPerRole(): void
+    {
+        $manifest = new OperationalRoleManifest();
+
+        $this->assertTrue($manifest->requiresActiveSchedule('enfermeria'));
+        $this->assertTrue($manifest->requiresActiveSchedule('medico'));
+        $this->assertFalse($manifest->requiresActiveSchedule('administrativo'));
+        // Sin rol resuelto se mantiene el comportamiento histórico.
+        $this->assertTrue($manifest->requiresActiveSchedule(null));
+    }
+
+    public function testNetworkPanelIsPerRole(): void
+    {
+        $manifest = new OperationalRoleManifest();
+
+        $this->assertTrue($manifest->belongsToNetworkPanel('admin_ministerio'));
+        $this->assertTrue($manifest->belongsToNetworkPanel('nivel_central'));
+        $this->assertFalse($manifest->belongsToNetworkPanel('admin_efector'));
+        $this->assertFalse($manifest->belongsToNetworkPanel(null));
+    }
+
     public function testCanonicalForNormalizesKnownVariants(): void
     {
         $manifest = new OperationalRoleManifest();

@@ -165,4 +165,46 @@ class HomePanelManifestTest extends Unit
         $this->assertSame('staff_horario_activo', $ids[0] ?? null);
         $this->assertNotContains('emergency_indicators', $ids);
     }
+
+    public function testRoleOverlayReplacesAmbPanelForNurseAndAdmin(): void
+    {
+        $manifest = new HomePanelManifest();
+
+        foreach (['enfermeria', 'administrativo'] as $role) {
+            $panel = $manifest->resolveForStaff('AMB', $role);
+            $this->assertSame(
+                ['service_pending_appointments'],
+                array_column($panel['sections'], 'id'),
+                'El overlay de ' . $role . ' debe mostrar la cola del servicio'
+            );
+        }
+    }
+
+    public function testWithoutOverlayTheEncounterPanelIsUnchanged(): void
+    {
+        $manifest = new HomePanelManifest();
+
+        $medico = $manifest->resolveForStaff('AMB', 'medico');
+        $this->assertSame(['staff_agenda_kpis', 'appointments_day'], array_column($medico['sections'], 'id'));
+        $this->assertSame('Pacientes del día', $medico['title']);
+
+        $sinRol = $manifest->resolveForStaff('AMB');
+        $this->assertSame(['staff_agenda_kpis', 'appointments_day'], array_column($sinRol['sections'], 'id'));
+
+        $enfermeriaImp = $manifest->resolveForStaff('IMP', 'enfermeria');
+        $medicoImp = $manifest->resolveForStaff('IMP', 'medico');
+        $this->assertSame(
+            array_column($medicoImp['sections'], 'id'),
+            array_column($enfermeriaImp['sections'], 'id')
+        );
+    }
+
+    public function testRoleOverlayDoesNotApplyToOtherEncounters(): void
+    {
+        $manifest = new HomePanelManifest();
+
+        // administrativo sólo declara overlay para AMB: en EMER sigue el panel base.
+        $emer = $manifest->resolveForStaff('EMER', 'administrativo');
+        $this->assertContains('emergency_board', array_column($emer['sections'], 'id'));
+    }
 }

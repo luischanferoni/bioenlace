@@ -7,12 +7,22 @@ use common\components\Domain\Clinical\Emergency\Application\Service\EmergencyQue
 use common\components\Domain\Organization\Efector\Application\Authorization\EfectorOperationAccess;
 use common\components\Domain\Organization\Pes\Application\UseCase\ActivateProfesionalHorario;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
+use common\components\Platform\Core\Permission\OperationalRoleManifest;
+use common\components\Platform\Core\Permission\OperativeRoleResolver;
 use common\components\Platform\Ui\Home\Service\Sections\HomePanelSectionProviderInterface;
 use common\models\Clinical\Encounter;
 use Yii;
 
 final class EmergencyBoardSectionProvider implements HomePanelSectionProviderInterface
 {
+    /** Roles como administración operan la cola sin tener horario propio cargado. */
+    private function roleRequiresActiveSchedule(): bool
+    {
+        $manifest = new OperationalRoleManifest();
+
+        return $manifest->requiresActiveSchedule((new OperativeRoleResolver($manifest))->resolve());
+    }
+
     public function build(array $context): array
     {
         $params = [];
@@ -31,11 +41,12 @@ final class EmergencyBoardSectionProvider implements HomePanelSectionProviderInt
             $idPersona = (int) (Yii::$app->user->getIdPersona() ?? 0);
         }
         if ($idPersona <= 0
-            || !ActivateProfesionalHorario::personaTieneHorarioActivo(
-                $idPersona,
-                $idEfector,
-                Encounter::ENCOUNTER_CLASS_EMER
-            )
+            || ($this->roleRequiresActiveSchedule()
+                && !ActivateProfesionalHorario::personaTieneHorarioActivo(
+                    $idPersona,
+                    $idEfector,
+                    Encounter::ENCOUNTER_CLASS_EMER
+                ))
         ) {
             $proxima = $idPersona > 0
                 ? ActivateProfesionalHorario::proximoHorarioInicio(

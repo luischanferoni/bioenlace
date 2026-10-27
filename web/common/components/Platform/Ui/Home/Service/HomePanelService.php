@@ -42,7 +42,8 @@ final class HomePanelService
 
         $panelDef = $this->manifest->resolve(
             $audience,
-            $encounterClass ? (string) $encounterClass : null
+            $encounterClass ? (string) $encounterClass : null,
+            $role
         );
         $context = [
             'fecha' => $fecha,

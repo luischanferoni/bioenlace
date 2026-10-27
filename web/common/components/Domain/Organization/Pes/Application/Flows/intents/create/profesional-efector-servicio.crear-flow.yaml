@@ -72,6 +72,10 @@ states:
         guard:
           persona_requiere_cuil: SI
         target: capture_cuil
+      -
+        guard:
+          persona_requiere_cuil: NO
+        target: select_servicio
   capture_cuil:
     label: CUIL del profesional
     description: 'CUIL del profesional'
@@ -137,4 +141,3 @@ flow_submit:
     id_profesional_efector_servicio: draft.id_profesional_efector_servicio
     id_servicio: draft.id_servicio
     id_persona: draft.id_persona
-

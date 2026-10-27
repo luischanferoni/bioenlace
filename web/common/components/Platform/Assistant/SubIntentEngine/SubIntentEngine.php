@@ -240,7 +240,20 @@ final class SubIntentEngine
         }
 
         // Salida del loop: el flow no tiene más pasos por delante (o el "siguiente" es un stub
-        // sin `open_ui` ni `next`). Cierre por `flow_submit` si está declarado.
+        // sin `open_ui` ni `next`). Cierre por `flow_dismiss` si el paso lo declara
+        // (`terminal_without_submit`) o, si no, por `flow_submit`.
+        $dismiss = self::buildFlowDismissDescriptor($current);
+        if ($dismiss !== null) {
+            return self::withFlowManifest(self::attachHints([
+                'success' => true,
+                'text' => self::assistantTextForPrompt($current, 'Listo.', $draft),
+                'intent_id' => $intentId,
+                'subintent_id' => $currentId,
+                'draft_delta' => (object) [],
+                'flow_dismiss' => $dismiss,
+            ], $hints), $intentId, $currentId);
+        }
+
         $effectiveFlowSubmitBlock = self::resolveFlowSubmitBlock($current, $flowSubmitBlock);
         if ($effectiveFlowSubmitBlock !== null && self::flowSubmitHasActionId($effectiveFlowSubmitBlock)) {
             return self::buildTerminalSubmitOnlyResponse(

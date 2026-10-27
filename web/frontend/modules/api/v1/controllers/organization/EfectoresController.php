@@ -217,10 +217,15 @@ class EfectoresController extends BaseController
             }
 
             $q = $req->get('q') ?: $req->post('q');
+            $idPersona = $req->get('id_persona');
+            if ($idPersona === null || $idPersona === '') {
+                $idPersona = $req->post('id_persona');
+            }
             try {
                 $uiItems = ProfesionalEnEfectorListadoUiService::uiJsonItemsServiciosHabilitadosEfector(
                     $idEfectorSesion,
-                    is_string($q) ? $q : null
+                    is_string($q) ? $q : null,
+                    (int) $idPersona
                 );
             } catch (\InvalidArgumentException $e) {
                 throw $this->invalidRequest($e->getMessage());

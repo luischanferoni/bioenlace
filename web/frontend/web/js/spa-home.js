@@ -2528,6 +2528,18 @@
                 }
 
                 if (!fullUrl) {
+                    // Cierre sin mini-UI con derivaciones (p. ej. el profesional ya tiene el servicio).
+                    if (fdr) {
+                        if (!flowSectionInner) {
+                            showError(window.BioenlaceApiClient.flowActiveStepUiError());
+                            return;
+                        }
+                        removeFlowPlanStrip();
+                        flowSectionInner.replaceChildren();
+                        appendFlowDismissFooter(flowSectionInner, fdr, flowSubmitClearState);
+                        setTimeout(scrollChatToBottom, 20);
+                        return;
+                    }
                     // Cierre sin mini-UI: el paso final sólo pide confirmar y enviar.
                     // Debe resolverse antes de limpiar el estado, porque `body_template`
                     // se completa con el draft del flow.

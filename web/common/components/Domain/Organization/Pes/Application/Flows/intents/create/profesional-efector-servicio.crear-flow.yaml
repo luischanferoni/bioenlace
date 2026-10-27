@@ -68,6 +68,10 @@ states:
     always:
       -
         guard:
+          servicios_disponibles_persona: '0'
+        target: sin_servicios_disponibles
+      -
+        guard:
           persona_requiere_cuil: SI
         target: capture_cuil
       -
@@ -105,13 +109,64 @@ states:
         - draft.id_servicio
       open_ui:
         action_id: efectores.listar-servicios-habilitados
+        params:
+          id_persona: draft.id_persona
     always:
+      -
+        guard:
+          servicio_ya_asignado: SI
+        target: servicio_ya_asignado
       -
         guard:
           servicio_acepta_turnos: SI
         target: configurar_agenda_datos
       -
         target: finalizar_alta
+  servicio_ya_asignado:
+    label: 'El profesional ya tiene este servicio en el efector'
+    description: 'La asignación ya existe: no hace falta darla de alta otra vez'
+    meta:
+      tags:
+        - alta_profesional
+        - duplicado
+        - asignacion_existente
+      terminal_without_submit: true
+      flow_dismiss:
+        label: Entendido
+      flow_actions:
+        -
+          label: 'Editar agenda de ese servicio'
+          href: '/site/asistente?spa_flow_intent=profesional-agenda.configurar-staff&spa_flow_intent_name=Editar%20agenda'
+        -
+          label: 'Ver mis horarios'
+          href: '/site/asistente?spa_flow_intent=profesional-horarios.gestionar-propio&spa_flow_intent_name=Mis%20horarios'
+        -
+          label: 'Dar de baja la asignación'
+          href: '/site/asistente?spa_flow_intent=profesional-efector-servicio.baja-flow&spa_flow_intent_name=Dar%20de%20baja'
+    outcome: 'Termina cuando la persona ya estaba asignada al servicio y se la orienta a editar, consultar o dar de baja.'
+    type: final
+  sin_servicios_disponibles:
+    label: 'El profesional ya tiene todos los servicios del efector'
+    description: 'No quedan servicios habilitados para asignarle en este efector'
+    meta:
+      tags:
+        - alta_profesional
+        - sin_servicios
+      terminal_without_submit: true
+      flow_dismiss:
+        label: Entendido
+      flow_actions:
+        -
+          label: 'Editar agenda de un servicio'
+          href: '/site/asistente?spa_flow_intent=profesional-agenda.configurar-staff&spa_flow_intent_name=Editar%20agenda'
+        -
+          label: 'Ver mis horarios'
+          href: '/site/asistente?spa_flow_intent=profesional-horarios.gestionar-propio&spa_flow_intent_name=Mis%20horarios'
+        -
+          label: 'Dar de baja una asignación'
+          href: '/site/asistente?spa_flow_intent=profesional-efector-servicio.baja-flow&spa_flow_intent_name=Dar%20de%20baja'
+    outcome: 'Termina cuando la persona ya tiene todos los servicios del efector y se la orienta a editar o dar de baja.'
+    type: final
   finalizar_alta:
     label: Alta del profesional
     description: 'Finalizar el alta del profesional en el servicio seleccionado'

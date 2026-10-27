@@ -270,10 +270,16 @@ final class ProfesionalEnEfectorListadoUiService
      * Servicios habilitados en el efector (tabla {@see ServiciosEfector}), para elegir asignación sin profesional previo.
      * Sin `q` devuelve todos los habilitados (hasta `$limit`), ordenados por nombre. Con `q` filtra por nombre.
      *
+     * @param int $excluirPersonaId Si > 0, omite los servicios donde la persona ya tiene asignación activa.
+     *
      * @return list<array{id: string, name: string, meta: array{acepta_turnos: string}}>
      */
-    public static function listarServiciosHabilitadosPorEfector(int $idEfector, ?string $q = null, int $limit = 200): array
-    {
+    public static function listarServiciosHabilitadosPorEfector(
+        int $idEfector,
+        ?string $q = null,
+        int $limit = 200,
+        int $excluirPersonaId = 0
+    ): array {
         if ($idEfector <= 0) {
             throw new \InvalidArgumentException('idEfector inválido.');
         }
@@ -286,16 +292,32 @@ final class ProfesionalEnEfectorListadoUiService
 
         $q = $q !== null ? trim((string) $q) : '';
 
+        // `findActive()` fija la condición con `where(...)`, que se pierde al encadenar otro `where`
+        // y además usa el nombre de tabla sin alias: se declara explícito sobre el alias.
         /** @var \yii\db\ActiveQuery $query */
-        $query = ServiciosEfector::findActive()->alias('se');
+        $query = ServiciosEfector::find()->alias('se');
         $query->innerJoin(['s' => 'servicios'], 's.id_servicio = se.id_servicio')
-            ->where(['se.id_efector' => $idEfector])
+            ->where(['se.id_efector' => $idEfector, 'se.deleted_at' => null])
             ->orderBy(['s.nombre' => SORT_ASC])
             ->limit($limit);
 
         if ($q !== '') {
             $term = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $q) . '%';
             $query->andWhere(['like', 's.nombre', $term, false]);
+        }
+
+        if ($excluirPersonaId > 0) {
+            $query->andWhere([
+                'not exists',
+                (new \yii\db\Query())
+                    ->from(['pes_asig' => 'profesional_efector_servicio'])
+                    ->where('pes_asig.id_servicio = se.id_servicio')
+                    ->andWhere([
+                        'pes_asig.id_efector' => $idEfector,
+                        'pes_asig.id_persona' => $excluirPersonaId,
+                        'pes_asig.deleted_at' => null,
+                    ]),
+            ]);
         }
 
         $rows = $query->all();
@@ -322,13 +344,30 @@ final class ProfesionalEnEfectorListadoUiService
     }
 
     /**
+     * Cantidad de servicios habilitados en el efector donde la persona todavía no tiene asignación activa.
+     */
+    public static function contarServiciosDisponiblesParaPersona(int $idEfector, int $idPersona): int
+    {
+        if ($idEfector <= 0 || $idPersona <= 0) {
+            return 0;
+        }
+
+        return count(self::listarServiciosHabilitadosPorEfector($idEfector, null, 200, $idPersona));
+    }
+
+    /**
      * Ítems normalizados para `UiScreenService::withListBlockItems` (servicios del efector en {@see ServiciosEfector}).
+     *
+     * @param int $excluirPersonaId Si > 0, omite los servicios donde la persona ya tiene asignación activa.
      *
      * @return list<array{id: string, name: string, meta: array<string, mixed>}>
      */
-    public static function uiJsonItemsServiciosHabilitadosEfector(int $idEfector, ?string $q = null): array
-    {
-        $raw = self::listarServiciosHabilitadosPorEfector($idEfector, $q);
+    public static function uiJsonItemsServiciosHabilitadosEfector(
+        int $idEfector,
+        ?string $q = null,
+        int $excluirPersonaId = 0
+    ): array {
+        $raw = self::listarServiciosHabilitadosPorEfector($idEfector, $q, 200, $excluirPersonaId);
         $uiItems = [];
         foreach ($raw as $it) {
             $uiItems[] = [

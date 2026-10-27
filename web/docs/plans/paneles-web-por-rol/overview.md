@@ -17,7 +17,7 @@ Que el panel de inicio web y el top menu se compongan según el rol operativo de
 ## Necesidad
 
 - Un home por rol, con secciones relevantes y fuente de datos definida.
-- Un top menu que no ofrezca Servicio/Encounter Type a quien no los usa.
+- El top menu no cambia: se muestra igual para todos los roles.
 - Sin `if` por nombre de rol en vistas ni page builders.
 - Sin romper las apps móviles ni los paneles actuales.
 
@@ -28,8 +28,8 @@ Que el panel de inicio web y el top menu se compongan según el rol operativo de
 | Médico | Por encounter (sin cambios) | Efector → Servicio → Encounter |
 | Enfermería | Por encounter + overlay (internación, signos vitales) | Efector → Servicio → Encounter |
 | Administrativo | Por encounter + overlay (gestión de turnos/admisión) | Efector → Servicio → Encounter |
-| AdminEfector | Por encounter + overlay de gestión del efector | Efector (a definir si además Servicio/Encounter) |
-| AdminMinisterio / nivelCentral | Por encounter + overlay de red ministerial | Sólo Efector |
+| AdminEfector | Por encounter + overlay de gestión del efector | Siempre visible (Efector → Servicio → Encounter) |
+| AdminMinisterio / nivelCentral | Por encounter + overlay de red ministerial | Siempre visible (Efector → Servicio → Encounter) |
 
 Todo rol de personal de salud se cruza con encounter class; sólo `paciente` no lo está. El usuario elige servicio (rol) y encounter al iniciar sesión, y puede cambiarlos desde el top menu. Hoy AdminEfector saltea la elección de encounter (`EstablishOperativeSession` la omite para ese servicio): la fase 03 la habilita como para el resto.
 

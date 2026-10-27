@@ -1,36 +1,24 @@
-# Fase 05 — Top menu por metadata
+# Fase 05 — Top menu: se mantiene siempre visible (fase descartada)
 
-## Objetivo
+## Decisión
 
-Que AdminEfector y los roles de red no vean dropdowns de Servicio ni Encounter Type, sin condicionales de rol en la vista ni en el page builder.
+El top menu (Efector → Servicio → Encounter Type) **se muestra siempre, para todos los roles**. No se ocultan dropdowns por rol. Producto lo confirmó: en ningún momento se pidió ocultarlos.
 
-## Patrón existente a extender
+## Qué se había implementado y se revirtió
 
-`ClientContextMetadata::shouldHideServicioInNavbar()` ya lee `web_staff.hide_servicio_navbar_roles` de `common/components/Platform/Ui/Presentation/client-context.yaml` (hoy sólo `Administrativo`), y `MainLayoutPageBuilder` expone `hideServicioNavbar` a `frontend/views/layouts/main.php`.
+Se había extendido el patrón de `client-context.yaml` para ocultar Servicio y Encounter Type a `AdminEfector`, `AdminMinisterio` y `nivelCentral`. Revertido por completo, y además se quitó la regla previa que ocultaba el selector de servicio a `Administrativo`:
 
-## Tareas
+- `client-context.yaml`: `hide_servicio_navbar_roles: []` (ya no oculta a ningún rol) y se elimina `hide_encounter_navbar_roles`.
+- `ClientContextMetadata`: se quitan `shouldHideEncounterInNavbar()` / `hideEncounterNavbarRoles()`; `shouldHideServicioInNavbar()` vuelve a su implementación original (queda sin efecto práctico porque la lista está vacía).
+- `MainLayoutPageBuilder`: se quita `hideEncounterNavbar`.
+- `frontend/views/layouts/main.php`: los dropdowns de encounter vuelven a renderizarse sin condición de rol.
+- `ClientContextMetadataTest`: el caso de roles ocultos ahora verifica lista vacía.
 
-- Agregar en `client-context.yaml`, sección `web_staff`:
-  - `hide_servicio_navbar_roles`: sumar `AdminEfector`, `AdminMinisterio`, `nivelCentral`.
-  - `hide_encounter_navbar_roles`: nueva clave con los mismos roles.
-- Nuevo método `ClientContextMetadata::shouldHideEncounterInNavbar(int $userId)` siguiendo el mismo patrón (roles vía `RbacRoleQueryService`, lista desde metadata).
-- `MainLayoutPageBuilder::build()` pasa `hideEncounterNavbar` y deja de calcular nada por rol.
-- Revisar `main.php`: los dropdowns sólo se renderizan con más de una opción; para AdminEfector con un solo efector ya se muestra como texto. Relevar el comportamiento actual y decidir si hay que ajustar copy.
-- Evaluar renombrar la etiqueta del ítem de menú lateral («Pacientes») por rol vía el mismo `page builder` (`homeNavLabel`), sin lógica en la vista.
+Resultado: el top menu se ve completo para todos los roles (médico, enfermería, administrativo, admin de efector, admin de red).
 
-## Criterio de salida
+Origen del malentendido: el `design.md` inicial del plan decía «AdminEfector y AdminMinisterio ocultan dropdowns de Servicio y Encounter Type», y de ahí salió la implementación. Esa línea también quedó corregida.
 
-- Un usuario AdminEfector ve sólo el efector; AdminMinisterio, sólo el efector.
-- Ningún `if` nuevo por nombre de rol en `MainLayoutPageBuilder` ni en `main.php`.
-- Tests de `ClientContextMetadata` para las dos claves.
+## Pendiente real
 
-## Estado
-
-Implementado.
-
-- `client-context.yaml` (`web_staff`): `hide_servicio_navbar_roles` sumó `AdminEfector`, `AdminMinisterio` y `nivelCentral`; nueva clave `hide_encounter_navbar_roles`.
-- `ClientContextMetadata::shouldHideEncounterInNavbar()` + `hideEncounterNavbarRoles()`, con la lógica de roles compartida con `shouldHideServicioInNavbar()`.
-- `MainLayoutPageBuilder` expone `hideEncounterNavbar`; `main.php` oculta el selector de encounter (dropdown y etiqueta) cuando corresponde.
-- Tests en `ClientContextMetadataTest`.
-
-Pendiente: relevar qué ve hoy un AdminEfector con un solo efector (el dropdown de efector ya se muestra como texto plano cuando hay una sola opción) y la etiqueta del menú lateral por rol.
+- Relevar qué ve hoy un AdminEfector con un solo efector: el dropdown de efector ya se muestra como texto plano cuando hay una sola opción (`main.php`), y eso es comportamiento previo.
+- Etiqueta del menú lateral por rol («Pacientes» para todos hoy): sin definir.

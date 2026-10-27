@@ -107,38 +107,17 @@ final class ClientContextMetadata
 
     public static function shouldHideServicioInNavbar(int $userId): bool
     {
-        return self::userHasAnyRole($userId, self::hideServicioNavbarRoles());
-    }
+        if ($userId <= 0) {
+            return false;
+        }
 
-    /**
-     * @return list<string>
-     */
-    public static function hideServicioNavbarRoles(): array
-    {
-        return self::roleList(self::webStaffSection()['hide_servicio_navbar_roles'] ?? []);
-    }
-
-    public static function shouldHideEncounterInNavbar(int $userId): bool
-    {
-        return self::userHasAnyRole($userId, self::hideEncounterNavbarRoles());
-    }
-
-    /**
-     * @return list<string>
-     */
-    public static function hideEncounterNavbarRoles(): array
-    {
-        return self::roleList(self::webStaffSection()['hide_encounter_navbar_roles'] ?? []);
-    }
-
-    private static function userHasAnyRole(int $userId, array $roles): bool
-    {
-        if ($userId <= 0 || $roles === []) {
+        $hideRoles = self::hideServicioNavbarRoles();
+        if ($hideRoles === []) {
             return false;
         }
 
         $userRoles = array_keys(RbacRoleQueryService::getUserRoles($userId));
-        foreach ($roles as $role) {
+        foreach ($hideRoles as $role) {
             if (in_array($role, $userRoles, true)) {
                 return true;
             }
@@ -148,11 +127,11 @@ final class ClientContextMetadata
     }
 
     /**
-     * @param mixed $raw
      * @return list<string>
      */
-    private static function roleList($raw): array
+    public static function hideServicioNavbarRoles(): array
     {
+        $raw = self::webStaffSection()['hide_servicio_navbar_roles'] ?? [];
         if (!is_array($raw)) {
             return [];
         }

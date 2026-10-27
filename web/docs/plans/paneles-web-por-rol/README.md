@@ -13,7 +13,7 @@ Lectura: [overview.md](./overview.md), [design.md](./design.md), fases en [phase
 | 02 Resolución de dos ejes (rol × encounter) | implementado (AdminEfector elige encounter: pendiente, requiere wizard) |
 | 03 Audiencia staff ampliada y RBAC de gestión | implementado (AdminMinisterio en audiencia + capability + migración) |
 | 04 Secciones por rol y encounter | implementadas las 3 secciones del MVP; quedan definiciones de producto |
-| 05 Top menu por metadata | implementado (servicio y encounter ocultos por rol) |
+| 05 Top menu por metadata | descartada (el top menu se muestra siempre; cambio revertido) |
 | 06 QA por rol y compatibilidad de clientes | pendiente |
 
 ## Código involucrado

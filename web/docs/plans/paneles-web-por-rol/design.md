@@ -15,7 +15,7 @@
 | Horario por rol | `roles.yaml` declara `requiere_horario_activo`; administración opera la cola sin horario propio | Los candados de agenda no deben vaciar el panel de quien no atiende |
 | Variantes por rol | Resolver registrado en `product-registries.php`, mismo patrón que los slices de IMP | Permite override por `params-local` y apagado sin tocar core |
 | Audiencia | `AdminMinisterio` (y los roles que defina la fase 00) entran a `audience.staff_roles` | Hoy caen en `fallback` y la capability no los cubre |
-| Top menu | Metadata en `client-context.yaml` (`hide_servicio_navbar_roles`, `hide_encounter_navbar_roles`) | Ya existe el patrón; evita condicionales de rol en vistas |
+| Top menu | **Sin cambios**: Efector → Servicio → Encounter Type se muestra siempre, para todos los roles | Producto confirmó que no se oculta nada por rol |
 | Ubicación de providers | `Domain/<BoundedContext>/Home/Sections/` + registro en `product-registries.php`; si la gramática del BC no admite `Home/` como plugin (p. ej. `Organization`, que sólo permite `Assistant` y `DataAccess`), va en `<Modulo>/Application/Presentation/` | Patrón dominante del repo sin romper `BoundedContextLayerShapeTest` |
 | Panel médico | Sin cambios | Ya construido |
 | Menú lateral | Se mantiene Inicio + Asistente; sólo cambia la etiqueta por rol vía page builder | Alcance mínimo de UI |
@@ -146,7 +146,7 @@ Reglas de autoría del YAML:
 | Audiencia | `Platform/Ui/Home/Service/HomePanelAudienceResolver.php` | modificar |
 | Metadata de cliente | `Platform/Core/Product/ClientContextMetadata.php` + `client-context.yaml` | modificar |
 | Capabilities | `permission/metadata/capabilities/panel.yaml` + migración de sync | modificar |
-| Layout / top menu | `frontend/components/Layout/MainLayoutPageBuilder.php`, `frontend/views/layouts/main.php` | modificar sin lógica de rol |
+| Layout / top menu | `frontend/components/Layout/MainLayoutPageBuilder.php`, `frontend/views/layouts/main.php` | sin cambios |
 | Providers | `Domain/<BC>/Home/Sections/` (o `<Modulo>/Application/Presentation/` si el BC no admite `Home/`) + `product-registries.php` | nuevo |
 
 ## Rol operativo y cambios de contexto
@@ -179,7 +179,7 @@ El usuario elige servicio (y encounter type) al iniciar sesión, y puede cambiar
 | `OperativeRoleResolverTest` (nuevo) | fuentes de rol, normalización, precedencia, guest, superadmin |
 | `HomePanelManifestTest` (extender) | matriz rol × encounter, cada escalón del fallback, merge (`append`/`exclude`), overlays vacíos |
 | `HomePanelAudienceResolverTest` (nuevo o extendido) | rol de gestión sin sesión operativa |
-| `ClientContextMetadataTest` (extender) | nuevas claves de top menu |
+| `ClientContextMetadataTest` (extender) | nuevas claves de cliente, si se agregan |
 | Tests de providers | forma de `data` por sección |
 
 `HomePanelManifest` cachea el YAML en estático: usar `resetCacheForTests()` en `_after()` como ya hace el test existente.

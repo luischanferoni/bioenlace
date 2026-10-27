@@ -99,28 +99,12 @@ class ClientContextMetadataTest extends Unit
 
     public function testHideServicioNavbarRolesFromMetadata(): void
     {
-        $roles = ClientContextMetadata::hideServicioNavbarRoles();
-        $this->assertContains('Administrativo', $roles);
-        $this->assertContains('AdminEfector', $roles);
-        $this->assertContains('AdminMinisterio', $roles);
-    }
-
-    public function testHideEncounterNavbarRolesFromMetadata(): void
-    {
-        $roles = ClientContextMetadata::hideEncounterNavbarRoles();
-        $this->assertContains('AdminEfector', $roles);
-        $this->assertContains('AdminMinisterio', $roles);
-        $this->assertNotContains('Medico', $roles);
-        $this->assertNotContains('enfermeria', $roles);
+        // El top menu se muestra siempre: ninguna lista de roles lo oculta.
+        $this->assertSame([], ClientContextMetadata::hideServicioNavbarRoles());
     }
 
     public function testShouldHideServicioInNavbarForUnknownUser(): void
     {
         $this->assertFalse(ClientContextMetadata::shouldHideServicioInNavbar(0));
-    }
-
-    public function testShouldHideEncounterInNavbarForUnknownUser(): void
-    {
-        $this->assertFalse(ClientContextMetadata::shouldHideEncounterInNavbar(0));
     }
 }

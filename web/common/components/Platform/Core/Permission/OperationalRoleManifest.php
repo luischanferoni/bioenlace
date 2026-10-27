@@ -167,6 +167,21 @@ final class OperationalRoleManifest
     }
 
     /**
+     * Etiqueta del ítem de inicio del menú lateral para el rol (por defecto «Pacientes»).
+     */
+    public function homeNavLabel(?string $canonical, string $default = 'Pacientes'): string
+    {
+        if ($canonical === null || $canonical === '') {
+            return $default;
+        }
+
+        $row = $this->roleRow($canonical);
+        $label = $row !== null ? trim((string) ($row['home_nav_label'] ?? '')) : '';
+
+        return $label !== '' ? $label : $default;
+    }
+
+    /**
      * @return array<string, mixed>|null
      */
     private function roleRow(string $canonical): ?array

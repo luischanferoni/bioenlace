@@ -18,7 +18,7 @@
 | Top menu | **Sin cambios**: Efector → Servicio → Encounter Type se muestra siempre, para todos los roles | Producto confirmó que no se oculta nada por rol |
 | Ubicación de providers | `Domain/<BoundedContext>/Home/Sections/` + registro en `product-registries.php`; si la gramática del BC no admite `Home/` como plugin (p. ej. `Organization`, que sólo permite `Assistant` y `DataAccess`), va en `<Modulo>/Application/Presentation/` | Patrón dominante del repo sin romper `BoundedContextLayerShapeTest` |
 | Panel médico | Sin cambios | Ya construido |
-| Menú lateral | Se mantiene Inicio + Asistente; sólo cambia la etiqueta por rol vía page builder | Alcance mínimo de UI |
+| Menú lateral | Se mantiene Inicio + Asistente; la etiqueta del inicio sale de `home_nav_label` en `roles.yaml` (por defecto «Pacientes»; «Gestión»/«Red» para roles de gestión) | Config, no PHP de vista |
 | Apps móviles | Los paneles de todos los roles se muestran también en las apps: contrato compartido, sin filtro por cliente | Decisión confirmada con producto |
 | Retrocompatibilidad | No hay requisito de retrocompatibilidad; el contrato puede cambiar y se documenta en [arquitectura/contrato-api.md](../../arquitectura/contrato-api.md) | Confirmado con producto |
 

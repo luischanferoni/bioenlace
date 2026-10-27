@@ -2538,6 +2538,7 @@
       if (!panel || !panel.title) return;
       var h2 = document.querySelector('.mb-4 h2');
       if (h2) h2.textContent = panel.title;
+      document.title = panel.title;
     }
 
     function formatFechaAmigable(fechaYmd) {

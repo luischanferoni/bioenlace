@@ -214,4 +214,31 @@ class HomePanelManifestTest extends Unit
         $emer = $manifest->resolveForStaff('EMER', 'administrativo');
         $this->assertContains('emergency_board', array_column($emer['sections'], 'id'));
     }
+
+    public function testManagementRolesIgnoreSessionEncounter(): void
+    {
+        $manifest = new HomePanelManifest();
+
+        // Cambiar de servicio a admin de efector no debe dejar el panel del encounter anterior.
+        foreach ([null, 'AMB', 'EMER'] as $encounterClass) {
+            $panel = $manifest->resolveForStaff($encounterClass, 'admin_efector');
+            $this->assertSame('staff_dashboard', $panel['layout']);
+            $this->assertSame('Panel de gestión del efector', $panel['title']);
+            $ids = array_column($panel['sections'], 'id');
+            $this->assertNotContains('appointments_day', $ids);
+            $this->assertContains('staff_efector_resumen', $ids);
+        }
+    }
+
+    public function testNetworkRolesIgnoreSessionEncounter(): void
+    {
+        $manifest = new HomePanelManifest();
+
+        foreach (['admin_ministerio', 'nivel_central'] as $role) {
+            $panel = $manifest->resolveForStaff('AMB', $role);
+            $this->assertSame('staff_dashboard', $panel['layout']);
+            $this->assertSame('Panel de red', $panel['title']);
+            $this->assertSame(['red_solicitudes'], array_column($panel['sections'], 'id'));
+        }
+    }
 }

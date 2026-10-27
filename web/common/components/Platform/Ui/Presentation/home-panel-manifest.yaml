@@ -166,10 +166,32 @@ panels:
             kind: appointments_day
     admin_ministerio:
       "":
+        layout: staff_dashboard
         title: Panel de red
-        sections_append:
+        sections:
           - id: red_solicitudes
             provider: red_solicitudes
+            kind: staff_kpi_group
+    nivel_central:
+      "":
+        layout: staff_dashboard
+        title: Panel de red
+        sections:
+          - id: red_solicitudes
+            provider: red_solicitudes
+            kind: staff_kpi_group
+    # Gestión del efector: el panel no depende del encounter. La clave vacía hace que el overlay
+    # gane aunque la sesión conserve un encounter class (p. ej. AMB) al cambiar de servicio.
+    admin_efector:
+      "":
+        layout: staff_dashboard
+        title: Panel de gestión del efector
+        sections:
+          - id: staff_efector_resumen
+            provider: staff_efector_resumen
+            kind: staff_kpi_group
+          - id: staff_efector_modalidad_kpis
+            provider: staff_efector_modalidad_kpis
             kind: staff_kpi_group
 
   fallback:

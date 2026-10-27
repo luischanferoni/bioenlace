@@ -46,6 +46,8 @@ Entregado:
 2. **Cola del servicio en AMB** (`service_pending_appointments`, enfermería y administrativo) — `StaffSchedulingDayListService::turnosPendientesDelServicio()`: turnos pendientes del día del efector+servicio en sesión, con `kind: appointments_day` para que web y app lo rendericen sin cambios. Se aplica por overlay de rol (`staff_by_role.enfermeria.AMB` y `staff_by_role.administrativo.AMB`).
 3. **Indicadores de red** (`red_solicitudes`, AdminMinisterio / nivelCentral) — solicitudes de alta pendientes (`BillingSignupRequest::STATUS_PENDING`), agregado a `staff_operations` por overlay.
 4. **Candado de horario por rol**: `roles.yaml` declara `requiere_horario_activo`; administración no lo exige para ver la cola de guardia (`EmergencyBoardSectionProvider`), enfermería y médico sí.
+5. **Paneles de gestión independientes del encounter**: `staff_by_role.admin_efector.""` y los roles de red declaran `layout: staff_dashboard` con sus KPIs. Como la clave es `""`, el overlay gana aunque la sesión conserve un encounter class al cambiar de servicio (era el caso real: cambiar a «ADMINISTRADOR DE EFECTOR» seguía mostrando el panel AMB).
+6. **Etiqueta del menú lateral**: `OperationalRoleManifest::homeNavLabel()` lee `home_nav_label` de `roles.yaml`; `MainLayoutPageBuilder` la expone y `main.php` ya no dice «Pacientes» fijo.
 
 Tests: `StaffEfectorResumenSectionProviderTest`, `StaffRedSolicitudesSectionProviderTest`, `HomePanelManifestTest` (overlays), `OperationalRoleManifestTest` (flags de rol).
 

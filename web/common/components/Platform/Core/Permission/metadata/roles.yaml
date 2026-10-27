@@ -15,15 +15,19 @@ version: 1
 # `requiere_horario_activo`: si las secciones de agenda exigen horario cargado del profesional.
 #   Enfermería y médico trabajan por turnos propios; administración opera la cola del servicio.
 # `panel_red`: si el rol opera cuentas de red (ministerio) y ve sus indicadores.
+# `home_nav_label`: etiqueta del ítem de inicio en el menú lateral (por defecto «Pacientes»).
 roles:
   admin_ministerio:
     nombre: AdminMinisterio
     panel_red: true
+    home_nav_label: Red
   nivel_central:
     nombre: nivelCentral
     panel_red: true
+    home_nav_label: Red
   admin_efector:
     nombre: AdminEfector
+    home_nav_label: Gestión
   administrativo:
     nombre: Administrativo
     requiere_horario_activo: false

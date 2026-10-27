@@ -166,7 +166,7 @@ $layout = MainLayoutPageBuilder::build();
                             <ul class="navbar-nav">
                                 <li class="nav-item">
                                     <a class="nav-link d-flex flex-column align-items-center justify-content-center <?= $layout['activeHome'] ? 'active' : '' ?>" href="<?= Html::encode($layout['urls']['home']) ?>">
-                                        <i class="bi bi-people fs-2"></i> Pacientes
+                                        <i class="bi bi-people fs-2"></i> <?= Html::encode($layout['homeNavLabel']) ?>
                                     </a>
                                 </li>
                                 <li class="nav-item">

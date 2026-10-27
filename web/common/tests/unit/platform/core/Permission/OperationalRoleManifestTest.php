@@ -69,6 +69,17 @@ class OperationalRoleManifestTest extends Unit
         $this->assertFalse($manifest->belongsToNetworkPanel(null));
     }
 
+    public function testHomeNavLabelPerRole(): void
+    {
+        $manifest = new OperationalRoleManifest();
+
+        $this->assertSame('Gestión', $manifest->homeNavLabel('admin_efector'));
+        $this->assertSame('Red', $manifest->homeNavLabel('admin_ministerio'));
+        $this->assertSame('Pacientes', $manifest->homeNavLabel('medico'));
+        $this->assertSame('Pacientes', $manifest->homeNavLabel('enfermeria'));
+        $this->assertSame('Pacientes', $manifest->homeNavLabel(null));
+    }
+
     public function testCanonicalForNormalizesKnownVariants(): void
     {
         $manifest = new OperationalRoleManifest();

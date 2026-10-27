@@ -3,6 +3,8 @@
 namespace frontend\components\Layout;
 
 use common\components\Platform\Core\Product\ClientContextMetadata;
+use common\components\Platform\Core\Permission\OperationalRoleManifest;
+use common\components\Platform\Core\Permission\OperativeRoleResolver;
 use common\models\Clinical\EncounterDefinition;
 use Yii;
 use yii\helpers\Url;
@@ -54,6 +56,8 @@ final class MainLayoutPageBuilder
             ?? 'N/A';
         $controller = $app->controller;
         $actionId = $controller ? $controller->action->id : null;
+        $roleManifest = new OperationalRoleManifest();
+        $operativeRole = $isGuest ? null : (new OperativeRoleResolver($roleManifest))->resolve();
 
         return [
             'isGuest' => $isGuest,
@@ -86,6 +90,7 @@ final class MainLayoutPageBuilder
             ],
             'activeHome' => $controller && $controller->id === 'site' && $actionId === 'index',
             'activeAssistant' => $actionId === 'asistente',
+            'homeNavLabel' => $roleManifest->homeNavLabel($operativeRole),
             'csrfToken' => $spaLayout['spaConfig']['csrfToken'],
             'serviceActual' => $servicioActual,
         ];

@@ -147,7 +147,7 @@ class ProfesionalEfectorServicio extends ActiveRecord
         }
 
         return static::findActive()
-            ->where(['id_persona' => $idPersona, 'id_efector' => $idEfector])
+            ->andWhere(['id_persona' => $idPersona, 'id_efector' => $idEfector])
             ->exists();
     }
 

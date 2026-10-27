@@ -25,7 +25,8 @@ final class AgendaConfigUiFlowService
     {
         $step = self::normalizeStep((string) ($query['ui_step'] ?? self::STEP_DATOS));
         $defaults = ProfesionalEfectorServicioAgendaUiService::buildFieldValuesForGet($idEfector, $query);
-        $params = array_merge($defaults, $query);
+        // Los valores derivados (PES/servicio vigentes) mandan sobre identificadores del cliente.
+        $params = array_merge($query, $defaults);
         $params['ui_step'] = $step;
         $params['today'] = date('Y-m-d');
 

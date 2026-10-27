@@ -134,6 +134,7 @@ states:
       open_ui:
         action_id: profesional-agenda.configurar-agenda
         params:
+          id_persona: draft.id_persona
           id_profesional_efector_servicio: draft.id_profesional_efector_servicio
           id_servicio: draft.id_servicio
           ui_step: datos

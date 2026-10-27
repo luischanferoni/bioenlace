@@ -28,7 +28,9 @@ return [
             'class' => \yii\caching\FileCache::class,
         ],
         'assetManager' => [
-            'bundles' => [                
+            // Fuerza recarga de JS/CSS propios al desplegar (evita pestañas con spa-home.js viejo).
+            'appendTimestamp' => true,
+            'bundles' => [
                 'kartik\select2\ThemeDefaultAsset' => ['css' => [], 'js' => []],
                 //'kartik\select2\ThemeBootstrapAsset' => ['css' => [], 'js' => []],
                 'kartik\select2\Select2Asset' => ['css' => [], 'js' => []],

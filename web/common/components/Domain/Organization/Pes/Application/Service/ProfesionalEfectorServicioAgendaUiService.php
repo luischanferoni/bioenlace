@@ -33,6 +33,7 @@ final class ProfesionalEfectorServicioAgendaUiService
     {
         $idServicio = isset($query['id_servicio']) ? (int) $query['id_servicio'] : 0;
         $idPesIn = isset($query['id_profesional_efector_servicio']) ? (int) $query['id_profesional_efector_servicio'] : 0;
+        $idPersonaQuery = isset($query['id_persona']) ? (int) $query['id_persona'] : 0;
         $idStaff = ProfesionalEfectorServicioRecord::staffContextIdFromRequestParams($query);
         if ($idPesIn > 0) {
             $idStaff = $idPesIn;
@@ -56,7 +57,7 @@ final class ProfesionalEfectorServicioAgendaUiService
             } elseif ($idServicio > 0) {
                 // La asignación recibida puede haber quedado obsoleta (baja y alta posterior del
                 // mismo servicio). Se re-resuelve por persona + efector + servicio.
-                $pesAnchor = self::findPesSustituto($idPesIn, $idEfector, $idServicio);
+                $pesAnchor = self::findPesSustituto($idPesIn, $idEfector, $idServicio, $idPersonaQuery);
                 if ($pesAnchor === null) {
                     $motivo = $pesRecibido !== null && (int) $pesRecibido->id_efector === $idEfector
                         ? 'id_servicio no coincide con la asignación profesional seleccionada.'
@@ -67,6 +68,16 @@ final class ProfesionalEfectorServicioAgendaUiService
                 $out['id_profesional_efector_servicio'] = (string) $pesAnchor->id;
             } else {
                 throw new BadRequestHttpException('id_profesional_efector_servicio inválido para este efector.');
+            }
+        } elseif ($idPersonaQuery > 0 && $idServicio > 0) {
+            $pesAnchor = ProfesionalEfectorServicioRecord::findOneActivoPorPersonaEfectorServicio(
+                $idPersonaQuery,
+                $idEfector,
+                $idServicio
+            );
+            if ($pesAnchor !== null) {
+                $idStaff = (int) $pesAnchor->id;
+                $out['id_profesional_efector_servicio'] = (string) $pesAnchor->id;
             }
         }
 
@@ -694,15 +705,22 @@ final class ProfesionalEfectorServicioAgendaUiService
      * Asignación vigente equivalente a un PES recibido que ya no sirve (baja o servicio distinto).
      * Mantiene persona + efector y usa el servicio solicitado: la agenda es por persona–servicio.
      */
-    private static function findPesSustituto(int $idPesIn, int $idEfector, int $idServicio): ?ProfesionalEfectorServicioRecord
-    {
-        $referencia = ProfesionalEfectorServicioRecord::findOne(['id' => $idPesIn]);
-        if ($referencia === null) {
+    private static function findPesSustituto(
+        int $idPesIn,
+        int $idEfector,
+        int $idServicio,
+        int $idPersona = 0
+    ): ?ProfesionalEfectorServicioRecord {
+        if ($idPersona <= 0) {
+            $referencia = ProfesionalEfectorServicioRecord::findOne(['id' => $idPesIn]);
+            $idPersona = $referencia !== null ? (int) $referencia->id_persona : 0;
+        }
+        if ($idPersona <= 0) {
             return null;
         }
 
         return ProfesionalEfectorServicioRecord::findOneActivoPorPersonaEfectorServicio(
-            (int) $referencia->id_persona,
+            $idPersona,
             $idEfector,
             $idServicio
         );

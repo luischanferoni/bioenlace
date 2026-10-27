@@ -55,7 +55,7 @@ final class EnsureAdminEfectorAssignment
             : (int) (Yii::$app->has('user', true) ? (Yii::$app->user->id ?? 0) : 0);
 
         $exists = ServiciosEfector::findActive()
-            ->where(['id_servicio' => $idServicio, 'id_efector' => $idEfector])
+            ->andWhere(['id_servicio' => $idServicio, 'id_efector' => $idEfector])
             ->exists();
         if (!$exists) {
             $now = date('Y-m-d H:i:s');

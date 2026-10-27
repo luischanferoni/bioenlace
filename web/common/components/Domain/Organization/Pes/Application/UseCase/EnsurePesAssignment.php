@@ -33,7 +33,7 @@ final class EnsurePesAssignment
         }
 
         $habilitado = ServiciosEfector::findActive()
-            ->where(['id_efector' => $idEfector, 'id_servicio' => $idServicio])
+            ->andWhere(['id_efector' => $idEfector, 'id_servicio' => $idServicio])
             ->one();
         if ($habilitado === null) {
             throw new \InvalidArgumentException('El servicio no está habilitado en este efector.');
@@ -65,7 +65,7 @@ final class EnsurePesAssignment
         try {
             /** @var ProfesionalEfectorServicioModel|null $pes */
             $pes = ProfesionalEfectorServicioModel::findActive()
-                ->where([
+                ->andWhere([
                     'id_persona' => $idPersona,
                     'id_efector' => $idEfector,
                     'id_servicio' => $idServicio,

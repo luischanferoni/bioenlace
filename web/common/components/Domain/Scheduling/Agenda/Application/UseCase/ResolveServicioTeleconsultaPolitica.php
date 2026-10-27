@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Agenda\Application\UseCase;
 
+use common\components\Domain\Scheduling\Agenda\Application\Service\StaffModalidadInsightMetricsService;
 use common\components\Domain\Organization\Efector\Application\Authorization\EfectorOperationAccess;
 use common\components\Domain\Organization\SesionOperativa\Application\UseCase\EstablishOperativeSession;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;

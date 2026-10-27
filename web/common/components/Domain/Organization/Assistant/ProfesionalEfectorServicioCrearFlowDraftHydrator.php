@@ -34,7 +34,7 @@ final class ProfesionalEfectorServicioCrearFlowDraftHydrator
         $draft = &$body['draft'];
 
         $idServicio = isset($draft['id_servicio']) ? (int) $draft['id_servicio'] : 0;
-        if ($idServicio > 0 && (!isset($draft['servicio_acepta_turnos']) || $draft['servicio_acepta_turnos'] === '')) {
+        if ($idServicio > 0) {
             $s = Servicio::findOne($idServicio);
             if ($s !== null) {
                 $draft['servicio_acepta_turnos'] = strtoupper(trim((string) $s->acepta_turnos));

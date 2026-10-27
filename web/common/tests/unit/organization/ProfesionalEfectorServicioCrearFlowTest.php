@@ -43,4 +43,19 @@ class ProfesionalEfectorServicioCrearFlowTest extends Unit
             FlowStatechart::resolveNext($state, ['persona_requiere_cuil' => 'NO'])
         );
     }
+
+    public function testSoloServiciosQueAceptanTurnosAvanzanAConfigurarAgenda(): void
+    {
+        $state = FlowStatechart::find($this->intent(), 'select_servicio');
+
+        $this->assertNotNull($state);
+        $this->assertSame(
+            'configurar_agenda_datos',
+            FlowStatechart::resolveNext($state, ['servicio_acepta_turnos' => 'SI'])
+        );
+        $this->assertSame(
+            '',
+            FlowStatechart::resolveNext($state, ['servicio_acepta_turnos' => 'NO'])
+        );
+    }
 }

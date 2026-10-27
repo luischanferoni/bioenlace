@@ -290,6 +290,14 @@ final class ProductMetadataPaths
         return self::permissionDir() . DIRECTORY_SEPARATOR . 'capabilities';
     }
 
+    /**
+     * Roles operativos de personal de salud: claves canónicas, alias y precedencia.
+     */
+    public static function operationalRolesFile(): string
+    {
+        return self::permissionDir() . DIRECTORY_SEPARATOR . 'roles.yaml';
+    }
+
     public static function homePanelManifestFile(): string
     {
         return self::uiPresentationDir() . DIRECTORY_SEPARATOR . 'home-panel-manifest.yaml';

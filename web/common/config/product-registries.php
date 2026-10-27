@@ -55,6 +55,7 @@ use common\components\Domain\Scheduling\Home\Sections\PatientEncounterAsyncSecti
 use common\components\Domain\Scheduling\Home\Sections\PatientUpcomingAppointmentsSectionProvider;
 use common\components\Domain\Scheduling\Home\Sections\StaffEncounterAsyncInboxSectionProvider;
 use common\components\Domain\Scheduling\Home\Sections\StaffEfectorModalidadKpiSectionProvider;
+use common\components\Domain\Organization\Efector\Application\Presentation\StaffEfectorResumenSectionProvider;
 use common\components\Domain\Scheduling\Home\Sections\StaffAgendaKpiSectionProvider;
 use common\components\Domain\Scheduling\Home\Sections\StaffSurgeryKpiSectionProvider;
 use common\components\Domain\Scheduling\Home\Sections\SurgeriesDaySectionProvider;
@@ -208,6 +209,7 @@ return [
         'staff_session_context' => StaffSessionContextSectionProvider::class,
         'staff_agenda_kpis' => StaffAgendaKpiSectionProvider::class,
         'staff_efector_modalidad_kpis' => StaffEfectorModalidadKpiSectionProvider::class,
+        'staff_efector_resumen' => StaffEfectorResumenSectionProvider::class,
         'staff_guardia_kpis' => StaffEmergencyKpiSectionProvider::class,
         'staff_internacion_kpis' => StaffInpatientKpiSectionProvider::class,
         'staff_surgery_kpis' => StaffSurgeryKpiSectionProvider::class,

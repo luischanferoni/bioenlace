@@ -3,6 +3,7 @@
 namespace common\components\Platform\Ui\Home\Service;
 
 use common\components\Domain\Person\Identity\Application\Service\PacienteContextoOfferingService;
+use common\components\Platform\Core\Permission\OperativeRoleResolver;
 use Yii;
 
 /**
@@ -13,15 +14,18 @@ final class HomePanelService
     private HomePanelManifest $manifest;
     private HomePanelSectionRegistry $registry;
     private HomePanelAudienceResolver $audienceResolver;
+    private OperativeRoleResolver $roleResolver;
 
     public function __construct(
         ?HomePanelManifest $manifest = null,
         ?HomePanelSectionRegistry $registry = null,
-        ?HomePanelAudienceResolver $audienceResolver = null
+        ?HomePanelAudienceResolver $audienceResolver = null,
+        ?OperativeRoleResolver $roleResolver = null
     ) {
         $this->manifest = $manifest ?? new HomePanelManifest();
         $this->registry = $registry ?? new HomePanelSectionRegistry();
         $this->audienceResolver = $audienceResolver ?? new HomePanelAudienceResolver($this->manifest);
+        $this->roleResolver = $roleResolver ?? new OperativeRoleResolver();
     }
 
     /**
@@ -34,6 +38,7 @@ final class HomePanelService
         $fecha = isset($options['fecha']) ? (string) $options['fecha'] : date('Y-m-d');
         $filterSectionIds = $this->normalizeSectionFilter($options['sections'] ?? null);
         $audience = $this->audienceResolver->resolve();
+        $role = $audience === HomePanelAudienceResolver::STAFF ? $this->roleResolver->resolve() : null;
 
         $panelDef = $this->manifest->resolve(
             $audience,
@@ -65,6 +70,7 @@ final class HomePanelService
             'layout' => $panelDef['layout'],
             'title' => $panelDef['title'],
             'audience' => $audience,
+            'role' => $role,
             'encounter_class' => $encounterClass ?: null,
             'fecha' => $fecha,
             'sections' => $sections,

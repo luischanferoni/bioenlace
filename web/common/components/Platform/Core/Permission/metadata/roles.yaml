@@ -1,0 +1,46 @@
+# =============================================================================
+# Tipo: metadata de roles operativos
+# Propósito: claves canónicas de rol de personal de salud, alias aceptados y
+#            precedencia cuando el usuario tiene más de un rol.
+# Consumidor: OperationalRoleManifest / OperativeRoleResolver (Platform/Core/Permission)
+# No poner aquí: grants ni capabilities (van en permission/metadata/capabilities/).
+#
+# Las claves canónicas son las que usa home-panel-manifest.yaml en `staff_by_role`.
+# No agregar claves sin un panel o un consumidor real.
+# =============================================================================
+version: 1
+
+# Clave canónica → nombre de referencia en RBAC / servicios.item_name (documental).
+roles:
+  admin_ministerio: AdminMinisterio
+  nivel_central: nivelCentral
+  admin_efector: AdminEfector
+  administrativo: Administrativo
+  facturista: facturista
+  enfermeria: enfermeria
+  medico: Medico
+
+# Alias aceptados (auth_assignment.item_name y servicios.item_name) → clave canónica.
+# La comparación es exacta y sensible a mayúsculas: listar las variantes reales en uso.
+aliases:
+  AdminMinisterio: admin_ministerio
+  nivelCentral: nivel_central
+  AdminEfector: admin_efector
+  Administrativo: administrativo
+  facturista: facturista
+  enfermeria: enfermeria
+  Enfermeria: enfermeria
+  Medico: medico
+  medico: medico
+
+# Si el usuario tiene más de un rol, gana el primero de esta lista.
+# Uso acotado: sólo cuando todavía NO hay servicio elegido en la sesión (wizard post-login,
+# prefill del selector). Con sesión operativa manda siempre el servicio elegido por el usuario.
+precedence:
+  - admin_ministerio
+  - nivel_central
+  - admin_efector
+  - administrativo
+  - facturista
+  - enfermeria
+  - medico

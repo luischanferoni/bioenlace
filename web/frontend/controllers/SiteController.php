@@ -27,6 +27,7 @@ use common\models\Organization\Servicio;
 use frontend\components\Clinical\PacientesListadoPageBuilder;
 use frontend\assets\EmergencyBoardAsset;
 use frontend\assets\PacientesListadoAsset;
+use common\components\Domain\Organization\Efector\Application\Service\EfectorEncounterEntitlementService;
 use common\components\Domain\Organization\SesionOperativa\Application\UseCase\EstablishOperativeSession;
 
 class SiteController extends Controller
@@ -215,13 +216,53 @@ class SiteController extends Controller
     */
     public function actionCambiarServicio($id_servicio)
     {
-        $encounterClass = (string) (Yii::$app->user->getEncounterClass() ?? '');
+        $idServicio = (int) $id_servicio;
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        $encounterClass = self::resolveEncounterClassForServicio($idEfector, $idServicio);
+
+        if ($encounterClass === null) {
+            Yii::$app->session->setFlash(
+                'error',
+                'No hay un área de trabajo habilitada en este efector para el servicio elegido.'
+            );
+
+            return $this->redirect(['site/sesion-operativa']);
+        }
 
         return $this->reestablecerContextoOperativoYRedirigir([
-            'efector_id' => (int) Yii::$app->user->getIdEfector(),
-            'servicio_id' => (int) $id_servicio,
+            'efector_id' => $idEfector,
+            'servicio_id' => $idServicio,
             'encounter_class' => $encounterClass,
         ]);
+    }
+
+    /**
+     * Área de trabajo al cambiar de servicio: el servicio de administración no usa área; en el resto
+     * se conserva la de sesión si sigue siendo válida o se toma la primera habilitada en el efector.
+     *
+     * @return string|null `null` si el efector no tiene ninguna área habilitada para ese servicio.
+     */
+    private static function resolveEncounterClassForServicio(int $idEfector, int $idServicio): ?string
+    {
+        if (EstablishOperativeSession::isServicioAdminEfector($idServicio)) {
+            return '';
+        }
+
+        $actual = (string) (Yii::$app->user->getEncounterClass() ?? '');
+        $permitidas = EncounterDefinition::sessionSelectableClasses();
+
+        if ($actual !== '' && isset($permitidas[$actual])
+            && EfectorEncounterEntitlementService::isEncounterClassAllowed($idEfector, $actual)) {
+            return $actual;
+        }
+
+        foreach (array_keys($permitidas) as $codigo) {
+            if (EfectorEncounterEntitlementService::isEncounterClassAllowed($idEfector, (string) $codigo)) {
+                return (string) $codigo;
+            }
+        }
+
+        return null;
     }
 
     /**

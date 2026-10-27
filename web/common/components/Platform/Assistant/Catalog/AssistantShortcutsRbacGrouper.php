@@ -21,8 +21,8 @@ final class AssistantShortcutsRbacGrouper
      */
     public static function buildCategoryDefinitions(array $availableFlows): array
     {
-        /** @var array<string, list<string>> $byGroup */
-        $byGroup = [];
+        /** @var array<string, true> $availableIds */
+        $availableIds = [];
 
         foreach ($availableFlows as $flow) {
             if (!is_array($flow)) {
@@ -35,32 +35,88 @@ final class AssistantShortcutsRbacGrouper
             if ($intentId === '') {
                 continue;
             }
-
-            $groupId = self::groupIdFromIntentId($intentId);
-            $byGroup[$groupId][] = $intentId;
+            $availableIds[$intentId] = true;
         }
 
-        if ($byGroup === []) {
+        if ($availableIds === []) {
             return [];
         }
 
-        $labels = AssistantShortcutGroupLabels::labels();
-        $order = AssistantShortcutGroupLabels::groupOrder();
-        $sortedGroupIds = self::sortGroupIds(array_keys($byGroup), $order);
-
+        /** @var array<string, true> $assigned */
+        $assigned = [];
         $out = [];
-        foreach ($sortedGroupIds as $groupId) {
-            $intentIds = array_values(array_unique($byGroup[$groupId] ?? []));
-            sort($intentIds, SORT_STRING);
-            if ($intentIds === []) {
+
+        foreach (AssistantShortcutGrouping::categories() as $cat) {
+            $catIntentIds = [];
+            $subgroups = [];
+
+            foreach ($cat['subgroups'] as $sgDef) {
+                $ids = [];
+                foreach ($sgDef['intent_ids'] as $intentId) {
+                    if (isset($availableIds[$intentId]) && !isset($assigned[$intentId])) {
+                        $ids[] = $intentId;
+                    }
+                }
+                if ($ids === []) {
+                    continue;
+                }
+                // Orden declarado en la metadata: define el orden visible dentro del subgrupo.
+                foreach ($ids as $intentId) {
+                    $assigned[$intentId] = true;
+                    $catIntentIds[] = $intentId;
+                }
+                $subgroups[] = [
+                    'id' => $sgDef['id'],
+                    'titulo' => $sgDef['titulo'],
+                    'intent_ids' => $ids,
+                ];
+            }
+
+            foreach ($cat['intent_ids'] as $intentId) {
+                if (isset($availableIds[$intentId]) && !isset($assigned[$intentId])) {
+                    $assigned[$intentId] = true;
+                    $catIntentIds[] = $intentId;
+                }
+            }
+
+            if ($catIntentIds === []) {
                 continue;
             }
+
             $out[] = [
-                'id' => $groupId,
-                'titulo' => $labels[$groupId] ?? self::fallbackGroupTitle($groupId),
-                'intent_ids' => $intentIds,
-                'subgroups' => [],
+                'id' => $cat['id'],
+                'titulo' => $cat['titulo'],
+                'intent_ids' => $catIntentIds,
+                'subgroups' => $subgroups,
             ];
+        }
+
+        /** @var array<string, list<string>> $byGroup */
+        $byGroup = [];
+        foreach (array_keys($availableIds) as $intentId) {
+            if (isset($assigned[$intentId])) {
+                continue;
+            }
+            $byGroup[self::groupIdFromIntentId($intentId)][] = $intentId;
+        }
+
+        if ($byGroup !== []) {
+            $labels = AssistantShortcutGroupLabels::labels();
+            $order = AssistantShortcutGroupLabels::groupOrder();
+
+            foreach (self::sortGroupIds(array_keys($byGroup), $order) as $groupId) {
+                $intentIds = array_values(array_unique($byGroup[$groupId] ?? []));
+                sort($intentIds, SORT_STRING);
+                if ($intentIds === []) {
+                    continue;
+                }
+                $out[] = [
+                    'id' => $groupId,
+                    'titulo' => $labels[$groupId] ?? self::fallbackGroupTitle($groupId),
+                    'intent_ids' => $intentIds,
+                    'subgroups' => [],
+                ];
+            }
         }
 
         return $out;

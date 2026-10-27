@@ -1,0 +1,54 @@
+# =============================================================================
+# Tipo: metadata de agrupamiento visual de atajos
+# Propósito: agrupar en categorías/subgrupos los atajos que devuelve
+#            GET /api/v1/acciones/comunes, sin depender del prefijo del intent_id.
+# Consumidor: AssistantShortcutGrouping / AssistantShortcutsRbacGrouper
+# No poner aquí: permisos. Qué atajos ve cada usuario lo decide RBAC (auth_item_child);
+# este archivo sólo decide cómo se agrupan los que ya tiene.
+#
+# Los intents que no estén listados acá se siguen agrupando por familia
+# (prefijo del intent_id) con las etiquetas de assistant-shortcut-group-labels.yaml.
+# =============================================================================
+version: 1
+
+categories:
+  # Gestión del padrón: varias familias de intents, una sola tarjeta con subgrupos.
+  - id: profesionales-efector
+    titulo: Profesionales del efector
+    order: 10
+    subgroups:
+      - id: padron
+        titulo: Padrón
+        intents:
+          - profesionales.listado-efector
+          - profesionales.conteo-efector
+          - profesionales.distribucion-servicio-efector
+      - id: altas-bajas
+        titulo: Altas y bajas
+        intents:
+          - profesional-efector-servicio.crear-flow
+          - profesional-efector-servicio.baja-flow
+      - id: datos-laborales
+        titulo: Datos y condición laboral
+        intents:
+          - profesional-identidad.editar-staff
+          - condicion-laboral.editar-staff
+      - id: licencias
+        titulo: Licencias
+        intents:
+          - licencia.cargar-para-profesional-flow
+
+  # Autoservicio: acciones sobre uno mismo, separadas de la gestión de otros.
+  - id: mi-trabajo
+    titulo: Mi trabajo
+    order: 20
+    intents:
+      - condicion-laboral.editar-propio
+      - licencia.cargar-como-profesional-flow
+      - profesional-horarios.gestionar-propio
+
+  - id: servicio-teleconsulta
+    titulo: Teleconsulta del efector
+    order: 30
+    intents:
+      - servicio-teleconsulta.configurar-efector-flow

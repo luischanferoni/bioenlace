@@ -91,7 +91,7 @@ final class CommonActionsService
             'mode' => 'rbac',
             'catalog_basename' => '',
             'use_yaml_action_name' => false,
-            'omit_subgroups' => true,
+            'omit_subgroups' => false,
         ];
     }
 

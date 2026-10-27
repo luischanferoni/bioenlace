@@ -44,16 +44,29 @@ final class ProfesionalEfectorServicioAgendaUiService
 
         $pesAnchor = null;
         if ($idPesIn > 0) {
-            $pesAnchor = ProfesionalEfectorServicioRecord::findOne(['id' => $idPesIn, 'deleted_at' => null]);
-            if ($pesAnchor === null || (int) $pesAnchor->id_efector !== $idEfector) {
+            $pesRecibido = ProfesionalEfectorServicioRecord::findOne(['id' => $idPesIn, 'deleted_at' => null]);
+            $servicioCoincide = $idServicio <= 0
+                || ($pesRecibido !== null && (int) $pesRecibido->id_servicio === $idServicio);
+            if ($pesRecibido !== null && (int) $pesRecibido->id_efector === $idEfector && $servicioCoincide) {
+                $pesAnchor = $pesRecibido;
+                $out['id_profesional_efector_servicio'] = (string) $idPesIn;
+                if ($idServicio <= 0) {
+                    $idServicio = (int) $pesRecibido->id_servicio;
+                }
+            } elseif ($idServicio > 0) {
+                // La asignación recibida puede haber quedado obsoleta (baja y alta posterior del
+                // mismo servicio). Se re-resuelve por persona + efector + servicio.
+                $pesAnchor = self::findPesSustituto($idPesIn, $idEfector, $idServicio);
+                if ($pesAnchor === null) {
+                    $motivo = $pesRecibido !== null && (int) $pesRecibido->id_efector === $idEfector
+                        ? 'id_servicio no coincide con la asignación profesional seleccionada.'
+                        : 'id_profesional_efector_servicio inválido para este efector.';
+                    throw new BadRequestHttpException($motivo);
+                }
+                $idStaff = (int) $pesAnchor->id;
+                $out['id_profesional_efector_servicio'] = (string) $pesAnchor->id;
+            } else {
                 throw new BadRequestHttpException('id_profesional_efector_servicio inválido para este efector.');
-            }
-            $out['id_profesional_efector_servicio'] = (string) $idPesIn;
-            if ($idServicio <= 0) {
-                $idServicio = (int) $pesAnchor->id_servicio;
-            }
-            if ((int) $pesAnchor->id_servicio !== $idServicio) {
-                throw new BadRequestHttpException('id_servicio no coincide con la asignación profesional seleccionada.');
             }
         }
 
@@ -675,6 +688,24 @@ final class ProfesionalEfectorServicioAgendaUiService
         if (!ProfesionalEfectorServicioRecord::staffContextTienePesEnEfector($idStaffContext, $idEfector)) {
             throw new ForbiddenHttpException('El profesional no pertenece al efector actual.');
         }
+    }
+
+    /**
+     * Asignación vigente equivalente a un PES recibido que ya no sirve (baja o servicio distinto).
+     * Mantiene persona + efector y usa el servicio solicitado: la agenda es por persona–servicio.
+     */
+    private static function findPesSustituto(int $idPesIn, int $idEfector, int $idServicio): ?ProfesionalEfectorServicioRecord
+    {
+        $referencia = ProfesionalEfectorServicioRecord::findOne(['id' => $idPesIn]);
+        if ($referencia === null) {
+            return null;
+        }
+
+        return ProfesionalEfectorServicioRecord::findOneActivoPorPersonaEfectorServicio(
+            (int) $referencia->id_persona,
+            $idEfector,
+            $idServicio
+        );
     }
 
     /**

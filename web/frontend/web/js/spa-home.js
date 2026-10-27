@@ -130,6 +130,11 @@
             });
         }
         ['id_profesional_efector_servicio', 'id_servicio', 'id_efector'].forEach(function (field) {
+            // La query resuelta por el motor manda: el draft local puede conservar el PES
+            // de un servicio elegido antes en el mismo flow.
+            if (Object.prototype.hasOwnProperty.call(extra.query, field)) {
+                return;
+            }
             const dv = draft[field];
             if (dv != null && String(dv).trim() !== '') {
                 extra.query[field] = String(dv).trim();
@@ -2523,6 +2528,20 @@
                 }
 
                 if (!fullUrl) {
+                    // Cierre sin mini-UI: el paso final sólo pide confirmar y enviar.
+                    // Debe resolverse antes de limpiar el estado, porque `body_template`
+                    // se completa con el draft del flow.
+                    if (fsr && fsr.route && fsr.body_template && typeof fsr.body_template === 'object') {
+                        if (!flowSectionInner) {
+                            showError(window.BioenlaceApiClient.flowActiveStepUiError());
+                            return;
+                        }
+                        removeFlowPlanStrip();
+                        flowSectionInner.replaceChildren();
+                        appendFlowInlineSubmit(flowSectionInner, fsr, flowSubmitClearState);
+                        setTimeout(scrollChatToBottom, 20);
+                        return;
+                    }
                     // Sin nada que montar: el flujo puede haber terminado sin `open_ui` (no es anómalo).
                     if (!serverAskedForUi) {
                         currentIntentId = null;

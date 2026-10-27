@@ -29,16 +29,17 @@ final class PersonaBusquedaAsistenteUiService
             $limit = 200;
         }
 
-        $term = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $q) . '%';
-
         /** @var \yii\db\ActiveQuery $query */
         $query = Persona::find()->alias('p');
-        $query->andWhere([
-            'or',
-            ['like', 'p.apellido', $term, false],
-            ['like', 'p.nombre', $term, false],
-            ['like', 'p.documento', $term, false],
-        ]);
+        foreach (preg_split('/\s+/u', $q, -1, PREG_SPLIT_NO_EMPTY) ?: [] as $token) {
+            $term = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $token) . '%';
+            $query->andWhere([
+                'or',
+                ['like', 'p.apellido', $term, false],
+                ['like', 'p.nombre', $term, false],
+                ['like', 'p.documento', $term, false],
+            ]);
+        }
 
         $excluirIdEfector = $excluirIdEfector !== null ? (int) $excluirIdEfector : 0;
         if ($excluirIdEfector > 0) {

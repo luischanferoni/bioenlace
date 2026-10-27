@@ -65,8 +65,6 @@ states:
       open_ui:
         action_id: persona.buscar-para-asistente
         pass_content_as_query: q
-        params:
-          excluir_en_efector: '1'
     always:
       -
         guard:

@@ -69,7 +69,7 @@ final class FlowDraftHydratorService
     }
 
     /**
-     * El delta del hydrator no pisa una selección explícita del motor.
+     * El delta del hydrator prevalece para los campos que recalculó desde el draft recibido.
      *
      * @param array<string, mixed> $motor
      * @param array<string, string> $delta
@@ -87,7 +87,7 @@ final class FlowDraftHydratorService
         if (!is_array($existing)) {
             $existing = [];
         }
-        $motor['draft_delta'] = array_merge($delta, $existing);
+        $motor['draft_delta'] = array_merge($existing, $delta);
 
         return $motor;
     }

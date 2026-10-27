@@ -24,18 +24,19 @@ class FlowDraftHydratorServiceTest extends Unit
         $this->assertArrayNotHasKey('_interno', $delta);
     }
 
-    public function testMergeDeltaNoPisaSeleccionDelMotor(): void
+    public function testMergeDeltaActualizaValoresDerivadosYConservaOtrosCampos(): void
     {
         $motor = [
-            'draft_delta' => ['pedido_acto' => 'elegido-por-el-usuario'],
+            'draft_delta' => [
+                'servicio_acepta_turnos' => 'SI',
+                'id_servicio' => '81',
+            ],
         ];
         $merged = FlowDraftHydratorService::mergeDeltaIntoMotor($motor, [
-            'triage_raiz' => 'estudio_pedido',
-            'pedido_acto' => 'desde-hydrator',
+            'servicio_acepta_turnos' => 'NO',
         ]);
 
-        $this->assertSame('estudio_pedido', $merged['draft_delta']['triage_raiz']);
-        $this->assertSame('elegido-por-el-usuario', $merged['draft_delta']['pedido_acto']);
+        $this->assertSame('NO', $merged['draft_delta']['servicio_acepta_turnos']);
+        $this->assertSame('81', $merged['draft_delta']['id_servicio']);
     }
-
 }

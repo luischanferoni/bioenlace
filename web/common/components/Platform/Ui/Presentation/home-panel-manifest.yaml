@@ -38,6 +38,7 @@ audience:
     - enfermeria
     - Administrativo
     - AdminEfector
+    - AdminMinisterio
     - facturista
     - nivelCentral
   # Rol único paciente (app móvil; no web)

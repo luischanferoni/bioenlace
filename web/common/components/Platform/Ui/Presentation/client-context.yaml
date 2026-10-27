@@ -19,8 +19,17 @@ whatsapp_paciente:
     omit_subgroups: true
 
 web_staff:
+  # Roles que no operan servicio/encounter desde el top menu (administran el centro o la red).
   hide_servicio_navbar_roles:
     - Administrativo
+    - AdminEfector
+    - AdminMinisterio
+    - nivelCentral
+
+  hide_encounter_navbar_roles:
+    - AdminEfector
+    - AdminMinisterio
+    - nivelCentral
 
   hide_paciente_flows:
     intent_ids:

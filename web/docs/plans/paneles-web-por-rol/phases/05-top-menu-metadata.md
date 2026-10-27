@@ -26,4 +26,11 @@ Que AdminEfector y los roles de red no vean dropdowns de Servicio ni Encounter T
 
 ## Estado
 
-Pendiente.
+Implementado.
+
+- `client-context.yaml` (`web_staff`): `hide_servicio_navbar_roles` sumó `AdminEfector`, `AdminMinisterio` y `nivelCentral`; nueva clave `hide_encounter_navbar_roles`.
+- `ClientContextMetadata::shouldHideEncounterInNavbar()` + `hideEncounterNavbarRoles()`, con la lógica de roles compartida con `shouldHideServicioInNavbar()`.
+- `MainLayoutPageBuilder` expone `hideEncounterNavbar`; `main.php` oculta el selector de encounter (dropdown y etiqueta) cuando corresponde.
+- Tests en `ClientContextMetadataTest`.
+
+Pendiente: relevar qué ve hoy un AdminEfector con un solo efector (el dropdown de efector ya se muestra como texto plano cuando hay una sola opción) y la etiqueta del menú lateral por rol.

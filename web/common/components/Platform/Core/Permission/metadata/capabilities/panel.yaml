@@ -9,6 +9,7 @@ capabilities:
     default_roles:
       - Administrativo
       - AdminEfector
+      - AdminMinisterio
       - enfermeria
       - Medico
       - facturista

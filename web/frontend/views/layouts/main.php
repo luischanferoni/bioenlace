@@ -118,7 +118,7 @@ $layout = MainLayoutPageBuilder::build();
                                 <span class="text-muted small">Servicio: <?= Html::encode($layout['nombreServicio']) ?></span>
                             <?php endif; ?>
 
-                            <?php if (!empty($layout['itemsMenuEncounters']) && count($layout['itemsMenuEncounters']) > 1): ?>
+                            <?php if (!$layout['hideEncounterNavbar'] && !empty($layout['itemsMenuEncounters']) && count($layout['itemsMenuEncounters']) > 1): ?>
                                 <div class="dropdown">
                                     <button class="btn btn-light btn-sm dropdown-toggle" type="button" id="dropdownEncounter" data-bs-toggle="dropdown" aria-expanded="false">
                                         <?= Html::encode($layout['encounterLabel']) ?>
@@ -133,7 +133,7 @@ $layout = MainLayoutPageBuilder::build();
                                         <?php endforeach; ?>
                                     </ul>
                                 </div>
-                            <?php elseif ($layout['showEncounterLabel']): ?>
+                            <?php elseif (!$layout['hideEncounterNavbar'] && $layout['showEncounterLabel']): ?>
                                 <span class="text-muted small">Tipo: <?= Html::encode($layout['encounterLabel']) ?></span>
                             <?php endif; ?>
 

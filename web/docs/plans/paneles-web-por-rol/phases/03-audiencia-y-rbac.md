@@ -19,4 +19,10 @@ Que los roles de gestión lleguen efectivamente al panel (audiencia correcta) y 
 
 ## Estado
 
-Pendiente.
+Implementado (alcance mínimo).
+
+- `audience.staff_roles` incluye `AdminMinisterio`: un usuario sólo con ese rol ya resuelve audiencia `staff` en lugar de `fallback`.
+- `default_roles` de `panel.staff_clinical` incluye `AdminMinisterio`.
+- Migración `m261027_120000_panel_staff_clinical_admin_ministerio`: sync incremental de capabilities (`applyDefaultRoles`), sin tocar grants existentes.
+
+Pendiente: decidir si `_x_efector_aditoria`, `_sin_efector_CEAMM` y `facturista` necesitan panel propio; hoy quedan en `staff_operations` (o `fallback` si no tienen sesión operativa).

@@ -26,6 +26,13 @@ class HomePanelManifestTest extends Unit
         $this->assertNotContains('paciente', $roles);
     }
 
+    public function testAdminMinisterioBelongsToStaffAudience(): void
+    {
+        $manifest = new HomePanelManifest();
+
+        $this->assertContains('AdminMinisterio', $manifest->audienceStaffRoles());
+    }
+
     public function testEmergencyCapabilityIdsFromManifest(): void
     {
         $manifest = new HomePanelManifest();

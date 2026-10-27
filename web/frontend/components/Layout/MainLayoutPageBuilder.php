@@ -70,6 +70,8 @@ final class MainLayoutPageBuilder
             'userName' => $user->username ?: '',
             'hideServicioNavbar' => !$isGuest
                 && ClientContextMetadata::shouldHideServicioInNavbar((int) $user->id),
+            'hideEncounterNavbar' => !$isGuest
+                && ClientContextMetadata::shouldHideEncounterInNavbar((int) $user->id),
             'logoUrl' => Yii::getAlias('@web') . '/images/logo.svg',
             'userPerTabConfig' => $spaLayout['userPerTabConfig'],
             'apiAuthToken' => $spaLayout['apiAuthToken'],

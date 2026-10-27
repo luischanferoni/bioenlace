@@ -10,10 +10,10 @@ Lectura: [overview.md](./overview.md), [design.md](./design.md), fases en [phase
 |------|--------|
 | 00 Inventario de roles y matriz de paneles | pendiente |
 | 01 Resolver de rol operativo | implementado (falta correr la suite en PHP 8.3) |
-| 02 Resolución de dos ejes (rol × encounter) | implementado (falta AdminEfector elige encounter) |
-| 03 Audiencia staff ampliada y RBAC de gestión | pendiente |
+| 02 Resolución de dos ejes (rol × encounter) | implementado (AdminEfector elige encounter: pendiente, requiere wizard) |
+| 03 Audiencia staff ampliada y RBAC de gestión | implementado (AdminMinisterio en audiencia + capability + migración) |
 | 04 Secciones por rol y encounter | implementadas las 3 secciones del MVP; quedan definiciones de producto |
-| 05 Top menu por metadata | pendiente |
+| 05 Top menu por metadata | implementado (servicio y encounter ocultos por rol) |
 | 06 QA por rol y compatibilidad de clientes | pendiente |
 
 ## Código involucrado

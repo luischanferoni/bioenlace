@@ -42,4 +42,4 @@ Implementado.
 - Configuración activa: enfermería y administrativo en AMB (cola del servicio), admin_ministerio sin encounter (agrega indicadores de red).
 - Tests en `HomePanelManifestTest`: overlay por rol, panel sin overlay intacto, overlay que no aplica a otros encounters.
 
-Pendiente: el caso AdminEfector-elige-encounter (también en esta fase) no se implementó todavía. Sin correr en PHP 8.3; validado con `php -l` y un harness sobre el YAML real (AMB/EMER/VR y staff_operations).
+Pendiente: el caso AdminEfector-elige-encounter no se implementó. No alcanza con quitar el `omiteEncounter` de `EstablishOperativeSession`: `SesionOperativaController::isModoOpciones()` usa `isServicioAdminEfector()` para decidir si la request es «pedir opciones» o «establecer sesión», así que cambiar el flujo requiere ajustar también el wizard web y probarlo con un login real. Sin correr en PHP 8.3; validado con `php -l` y un harness sobre el YAML real (AMB/EMER/VR y staff_operations).

@@ -101,10 +101,26 @@ class ClientContextMetadataTest extends Unit
     {
         $roles = ClientContextMetadata::hideServicioNavbarRoles();
         $this->assertContains('Administrativo', $roles);
+        $this->assertContains('AdminEfector', $roles);
+        $this->assertContains('AdminMinisterio', $roles);
+    }
+
+    public function testHideEncounterNavbarRolesFromMetadata(): void
+    {
+        $roles = ClientContextMetadata::hideEncounterNavbarRoles();
+        $this->assertContains('AdminEfector', $roles);
+        $this->assertContains('AdminMinisterio', $roles);
+        $this->assertNotContains('Medico', $roles);
+        $this->assertNotContains('enfermeria', $roles);
     }
 
     public function testShouldHideServicioInNavbarForUnknownUser(): void
     {
         $this->assertFalse(ClientContextMetadata::shouldHideServicioInNavbar(0));
+    }
+
+    public function testShouldHideEncounterInNavbarForUnknownUser(): void
+    {
+        $this->assertFalse(ClientContextMetadata::shouldHideEncounterInNavbar(0));
     }
 }

@@ -110,6 +110,12 @@ states:
         guard:
           servicio_acepta_turnos: SI
         target: configurar_agenda_datos
+      -
+        target: finalizar_alta
+  finalizar_alta:
+    label: Alta del profesional
+    description: 'Finalizar el alta del profesional en el servicio seleccionado'
+    type: final
   configurar_agenda_datos:
     label: Agenda
     description: 'Tipo de agenda de la asignación'

@@ -311,7 +311,10 @@ final class ProfesionalEnEfectorListadoUiService
             $items[] = [
                 'id' => (string) $idServicio,
                 'name' => $nombre,
-                'meta' => ['acepta_turnos' => $acepta],
+                'meta' => [
+                    'acepta_turnos' => $acepta,
+                    'draft' => ['servicio_acepta_turnos' => $acepta],
+                ],
             ];
         }
 

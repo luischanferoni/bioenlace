@@ -54,7 +54,7 @@ class ProfesionalEfectorServicioCrearFlowTest extends Unit
             FlowStatechart::resolveNext($state, ['servicio_acepta_turnos' => 'SI'])
         );
         $this->assertSame(
-            '',
+            'finalizar_alta',
             FlowStatechart::resolveNext($state, ['servicio_acepta_turnos' => 'NO'])
         );
     }

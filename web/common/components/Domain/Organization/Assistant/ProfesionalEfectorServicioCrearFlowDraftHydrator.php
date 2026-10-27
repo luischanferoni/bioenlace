@@ -5,14 +5,15 @@ namespace common\components\Domain\Organization\Assistant;
 use common\components\Domain\Organization\Pes\Application\UseCase\EnsurePesAssignment;
 use common\components\Domain\Person\Identity\Application\Service\PersonCuilService;
 use common\models\Person\Persona;
+use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Organization\Servicio;
 use Yii;
 
 /**
  * Completa el draft del intent `profesional-efector-servicio.crear-flow` antes de {@see \common\components\Platform\Assistant\SubIntentEngine\SubIntentEngine::process}:
  * - `servicio_acepta_turnos` desde catálogo si hay `id_servicio`
- * - Alta idempotente del vínculo persona–efector–servicio vía {@see EnsurePesAssignment} al tener
- *   persona + servicio + efector en sesión y aún sin `id_profesional_efector_servicio` (mismo criterio con o sin agenda de turnos).
+ * - Resuelve el vínculo persona–efector–servicio canónico vía {@see EnsurePesAssignment} cuando el ID
+ *   del draft no corresponde a la combinación seleccionada.
  */
 final class ProfesionalEfectorServicioCrearFlowDraftHydrator
 {
@@ -50,7 +51,20 @@ final class ProfesionalEfectorServicioCrearFlowDraftHydrator
         $idPes = isset($draft['id_profesional_efector_servicio']) ? (int) $draft['id_profesional_efector_servicio'] : 0;
         $cuil = isset($draft['cuil']) ? trim((string) $draft['cuil']) : '';
 
-        if ($idPersona > 0 && $idServicio > 0 && $idEfector > 0 && $idPes <= 0) {
+        if ($idPersona > 0 && $idServicio > 0 && $idEfector > 0) {
+            $pes = $idPes > 0
+                ? ProfesionalEfectorServicio::findOne([
+                    'id' => $idPes,
+                    'id_persona' => $idPersona,
+                    'id_efector' => $idEfector,
+                    'id_servicio' => $idServicio,
+                    'deleted_at' => null,
+                ])
+                : null;
+            if ($pes !== null) {
+                return;
+            }
+
             $out = EnsurePesAssignment::ensurePersonaServicioEnEfector(
                 $idPersona,
                 $idEfector,

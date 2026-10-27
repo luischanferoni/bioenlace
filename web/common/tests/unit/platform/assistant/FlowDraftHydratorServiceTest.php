@@ -37,4 +37,16 @@ class FlowDraftHydratorServiceTest extends Unit
         $this->assertSame('estudio_pedido', $merged['draft_delta']['triage_raiz']);
         $this->assertSame('elegido-por-el-usuario', $merged['draft_delta']['pedido_acto']);
     }
+
+    public function testMergeDeltaUsaPESCanonicoDelHydrator(): void
+    {
+        $motor = [
+            'draft_delta' => ['id_profesional_efector_servicio' => '107'],
+        ];
+        $merged = FlowDraftHydratorService::mergeDeltaIntoMotor($motor, [
+            'id_profesional_efector_servicio' => '108',
+        ]);
+
+        $this->assertSame('108', $merged['draft_delta']['id_profesional_efector_servicio']);
+    }
 }

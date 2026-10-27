@@ -88,6 +88,9 @@ final class FlowDraftHydratorService
             $existing = [];
         }
         $motor['draft_delta'] = array_merge($delta, $existing);
+        if (array_key_exists('id_profesional_efector_servicio', $delta)) {
+            $motor['draft_delta']['id_profesional_efector_servicio'] = $delta['id_profesional_efector_servicio'];
+        }
 
         return $motor;
     }

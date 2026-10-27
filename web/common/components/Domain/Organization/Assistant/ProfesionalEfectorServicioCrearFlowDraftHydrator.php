@@ -5,7 +5,6 @@ namespace common\components\Domain\Organization\Assistant;
 use common\components\Domain\Organization\Pes\Application\UseCase\EnsurePesAssignment;
 use common\components\Domain\Person\Identity\Application\Service\PersonCuilService;
 use common\models\Person\Persona;
-use common\models\Organization\ProfesionalEfectorServicio as ProfesionalEfectorServicioModel;
 use common\models\Organization\Servicio;
 use Yii;
 
@@ -52,9 +51,6 @@ final class ProfesionalEfectorServicioCrearFlowDraftHydrator
         $cuil = isset($draft['cuil']) ? trim((string) $draft['cuil']) : '';
 
         if ($idPersona > 0 && $idServicio > 0 && $idEfector > 0 && $idPes <= 0) {
-            if (ProfesionalEfectorServicioModel::existePersonaActivaEnEfector($idPersona, $idEfector)) {
-                throw new \InvalidArgumentException('Esa persona ya está asignada a este efector.');
-            }
             $out = EnsurePesAssignment::ensurePersonaServicioEnEfector(
                 $idPersona,
                 $idEfector,

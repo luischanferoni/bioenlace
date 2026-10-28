@@ -3,6 +3,7 @@
 namespace common\components\Domain\Scheduling\Agenda\Application\Presentation;
 
 use common\components\Domain\Scheduling\Agenda\Application\UseCase\ResolveServicioTeleconsultaPolitica;
+use common\components\Domain\Scheduling\Agenda\Application\Service\ServicioTeleconsultaPoliticaCatalogService;
 
 /**
  * Enriquece UI JSON de política de teleconsulta con opciones dinámicas y resumen.

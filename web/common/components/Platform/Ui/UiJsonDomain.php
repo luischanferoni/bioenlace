@@ -47,22 +47,9 @@ final class UiJsonDomain
             return null;
         }
 
-        $path = UiDefinitionTemplateManager::resolveTemplateAbsolutePath(
-            $parsed['entity'],
-            $parsed['action']
-        );
-        if ($path !== null) {
-            return $path;
-        }
-
-        $aliasAction = UiJsonDomainIndex::templateAliasAction($parsed['entity'], $parsed['action']);
-        if ($aliasAction === null || $aliasAction === '') {
-            return null;
-        }
-
         return UiDefinitionTemplateManager::resolveTemplateAbsolutePath(
             $parsed['entity'],
-            $aliasAction
+            $parsed['action']
         );
     }
 
@@ -77,14 +64,13 @@ final class UiJsonDomain
             return [];
         }
 
-        $folderEntity = UiJsonDomainIndex::templateFolderForEntity($entity);
         $file = $action . '.json';
         $out = [];
-        $domain = self::forEntity($folderEntity) ?? self::forEntity($entity);
+        $domain = self::forEntity($entity);
         if ($domain !== null) {
-            $out[] = $domain . '/' . $folderEntity . '/' . $file;
+            $out[] = $domain . '/' . $entity . '/' . $file;
         }
-        $out[] = $folderEntity . '/' . $file;
+        $out[] = $entity . '/' . $file;
 
         return array_values(array_unique($out));
     }

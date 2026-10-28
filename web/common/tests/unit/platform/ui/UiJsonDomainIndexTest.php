@@ -37,11 +37,17 @@ class UiJsonDomainIndexTest extends Unit
         $this->assertFalse(UiJsonDomainIndex::isDomain('desconocido'));
     }
 
-    public function testTemplateAliasFromIndex(): void
+    public function testEachActionIdResolvesItsMatchingTemplate(): void
     {
         $path = UiJsonDomain::resolveActionIdTemplatePath('clinical.encounter.ultima-atencion-ui-como-paciente');
         $this->assertNotNull($path);
-        $this->assertStringContainsString('ver-resumen-atencion-como-paciente.json', str_replace('\\', '/', $path));
+        $this->assertStringContainsString(
+            'clinical/encounter/ultima-atencion-ui-como-paciente.json',
+            str_replace('\\', '/', $path)
+        );
+        $this->assertTrue(\common\components\Platform\Ui\UiDefinitionTemplateManager::hasTemplateForApiRoute(
+            '/api/v1/clinical/encounter/ultima-atencion-ui-como-paciente'
+        ));
     }
 
     public function testScreenParamsSchedulingMatch(): void
@@ -58,19 +64,43 @@ class UiJsonDomainIndexTest extends Unit
         ));
     }
 
-    public function testCarePlansRestEntityResolvesCarePlanTemplateFolder(): void
+    public function testCarePlanEntitiesResolveMatchingTemplateFolders(): void
     {
-        $this->assertSame('care-plan', UiJsonDomainIndex::templateFolderForEntity('care-plans'));
         $this->assertSame('clinical', UiJsonDomainIndex::domainForEntity('care-plans'));
-        // El dominio de la carpeta (care-plan) también resuelve.
         $this->assertSame('clinical', UiJsonDomainIndex::domainForEntity('care-plan'));
 
         $path = UiJsonDomain::resolveActionIdTemplatePath('clinical.care-plan.adherencia-resumen-staff');
         $this->assertNotNull($path);
-        $this->assertStringContainsString('care-plan/adherencia-resumen-staff.json', str_replace('\\', '/', $path));
+        $this->assertStringContainsString(
+            'clinical/care-plan/adherencia-resumen-staff.json',
+            str_replace('\\', '/', $path)
+        );
+
+        $restPath = UiJsonDomain::resolveActionIdTemplatePath('clinical.care-plans.adherencia-resumen-staff');
+        $this->assertNotNull($restPath);
+        $this->assertStringContainsString(
+            'clinical/care-plans/adherencia-resumen-staff.json',
+            str_replace('\\', '/', $restPath)
+        );
 
         $this->assertTrue(\common\components\Platform\Ui\UiDefinitionTemplateManager::hasTemplateForApiRoute(
             '/api/v1/clinical/care-plans/adherencia-resumen-staff'
+        ));
+    }
+
+    public function testInternacionResolvesItsMatchingTemplateFolder(): void
+    {
+        $this->assertSame('clinical', UiJsonDomainIndex::domainForEntity('internacion'));
+
+        $path = UiJsonDomain::resolveActionIdTemplatePath('clinical.internacion.mapa-camas');
+        $this->assertNotNull($path);
+        $this->assertStringContainsString(
+            'clinical/internacion/mapa-camas.json',
+            str_replace('\\', '/', $path)
+        );
+
+        $this->assertTrue(\common\components\Platform\Ui\UiDefinitionTemplateManager::hasTemplateForApiRoute(
+            '/api/v1/clinical/internacion/mapa-camas'
         ));
     }
 

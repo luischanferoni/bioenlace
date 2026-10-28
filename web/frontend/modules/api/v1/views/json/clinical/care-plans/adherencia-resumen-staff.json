@@ -1,0 +1,30 @@
+{
+  "ui_type": "ui_json",
+  "title": "Adherencia a planes de tratamiento",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "message",
+      "id": "resumen_global",
+      "title": "Resumen del efector",
+      "text_field": "resumen_texto",
+      "text": ""
+    },
+    {
+      "kind": "list",
+      "id": "planes",
+      "title": "Planes activos",
+      "draft_field": "care_plan_id",
+      "empty_message": "No hay planes de tratamiento activos vinculados a atenciones de este efector.",
+      "item": { "kind": "generic", "id_field": "id", "label_field": "name" },
+      "presentation": { "tile": "large", "shape": "wide" },
+      "selection": { "mode": "single", "requires_confirmation": false },
+      "items": []
+    }
+  ]
+}

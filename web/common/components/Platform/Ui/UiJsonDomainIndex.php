@@ -12,23 +12,11 @@ use Yii;
  * que mantener a mano: mover un descriptor de carpeta cambia su dominio, y agregar uno nuevo
  * no exige tocar PHP.
  *
- * Lo único declarado son los dos mapas técnicos de alias (nombre público ≠ nombre de carpeta),
- * que viven acá y no en YAML porque son máquina↔máquina y no los ve nadie.
  */
 final class UiJsonDomainIndex
 {
     /** Raíz del árbol de descriptores. Única definición en el proyecto. */
     public const BASE_ALIAS = '@frontend/modules/api/v1/views/json';
-
-    /** Acción pública → acción de archivo. @var array<string, string> */
-    private const ACTION_TEMPLATE_ALIASES = [
-        'encounter/ultima-atencion-ui-como-paciente' => 'ver-resumen-atencion-como-paciente',
-    ];
-
-    /** Entidad pública → carpeta. @var array<string, string> */
-    private const ENTITY_FOLDER_ALIASES = [
-        'care-plans' => 'care-plan',
-    ];
 
     /** @var array<string, string>|null entidad → dominio */
     private static ?array $entityDomains = null;
@@ -43,9 +31,8 @@ final class UiJsonDomainIndex
             return null;
         }
         $index = self::index();
-        $folder = self::templateFolderForEntity($entity);
 
-        return $index[$folder] ?? $index[$entity] ?? null;
+        return $index[$entity] ?? null;
     }
 
     /**
@@ -74,29 +61,6 @@ final class UiJsonDomainIndex
     public static function entityDomains(): array
     {
         return self::index();
-    }
-
-    public static function templateAliasAction(string $entity, string $action): ?string
-    {
-        $entity = strtolower(trim($entity));
-        $action = trim($action);
-        if ($entity === '' || $action === '') {
-            return null;
-        }
-        $target = self::ACTION_TEMPLATE_ALIASES[$entity . '/' . $action] ?? null;
-
-        return is_string($target) && $target !== '' ? $target : null;
-    }
-
-    public static function templateFolderForEntity(string $entity): string
-    {
-        $entity = strtolower(trim($entity));
-        if ($entity === '') {
-            return '';
-        }
-        $target = self::ENTITY_FOLDER_ALIASES[$entity] ?? null;
-
-        return is_string($target) && $target !== '' ? $target : $entity;
     }
 
     public static function resetCacheForTests(): void

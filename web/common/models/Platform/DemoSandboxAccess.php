@@ -26,6 +26,12 @@ class DemoSandboxAccess extends ActiveRecord
     public const ROLE_STAFF = 'staff';
     public const ROLE_ENFERMERIA = 'enfermeria';
     public const ROLE_ADMINISTRATIVO = 'administrativo';
+    /**
+     * Perfil demo «Médico odontología». No es un rol RBAC: el rol sigue siendo
+     * 'Medico' (heredado vía `servicios.item_name`) y 'ODONTOLOGIA' es la
+     * especialidad (subrol) tomada de la tabla `servicios`.
+     */
+    public const ROLE_ODONTOLOGIA = 'odontologia';
     public const ROLE_PACIENTE = 'paciente';
 
     public static function tableName(): string
@@ -42,6 +48,7 @@ class DemoSandboxAccess extends ActiveRecord
             self::ROLE_STAFF,
             self::ROLE_ENFERMERIA,
             self::ROLE_ADMINISTRATIVO,
+            self::ROLE_ODONTOLOGIA,
             self::ROLE_PACIENTE,
         ];
     }
@@ -50,7 +57,8 @@ class DemoSandboxAccess extends ActiveRecord
     {
         return $role === self::ROLE_STAFF
             || $role === self::ROLE_ENFERMERIA
-            || $role === self::ROLE_ADMINISTRATIVO;
+            || $role === self::ROLE_ADMINISTRATIVO
+            || $role === self::ROLE_ODONTOLOGIA;
     }
 
     /**
@@ -65,6 +73,8 @@ class DemoSandboxAccess extends ActiveRecord
             return 'administrativo';
         }
 
+        // 'staff' y 'odontologia' comparten el rol RBAC 'Medico'; la
+        // especialidad (servicio) se resuelve por separado desde `profiles`.
         return 'medico';
     }
 

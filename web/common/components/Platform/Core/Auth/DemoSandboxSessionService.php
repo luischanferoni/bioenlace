@@ -25,13 +25,14 @@ final class DemoSandboxSessionService
      * Crea staff temporal + seed clínico y registra la sesión.
      *
      * @param 'medico'|'enfermeria'|'administrativo' $staffKind
+     * @param string|null $servicioOverride Servicio (especialidad) del médico; si es null se usa el default de config.
      * @return array{user: User, session: DemoSandboxSession}
      */
-    public function provisionEphemeralStaff(?int $idAccess = null, string $staffKind = 'medico'): array
+    public function provisionEphemeralStaff(?int $idAccess = null, string $staffKind = 'medico', ?string $servicioOverride = null): array
     {
         $cfg = $this->config();
         $idEfector = $this->resolveIdEfector($cfg);
-        $spec = $this->staffProvisionSpec($staffKind, $cfg);
+        $spec = $this->staffProvisionSpec($staffKind, $cfg, $servicioOverride);
         $sessionTtl = (int) $spec['horario_ttl_seconds'];
 
         $staff = (new DemoSandboxStaffProvisionService())->provision(
@@ -269,7 +270,7 @@ final class DemoSandboxSessionService
      *     with_internacion: bool
      * }
      */
-    private function staffProvisionSpec(string $staffKind, array $cfg): array
+    private function staffProvisionSpec(string $staffKind, array $cfg, ?string $servicioOverride = null): array
     {
         $seedCfg = is_array($cfg['seed'] ?? null) ? $cfg['seed'] : [];
         $sessionTtl = max(600, (int) ($cfg['session_ttl_seconds'] ?? 14400));
@@ -323,7 +324,9 @@ final class DemoSandboxSessionService
             ];
         }
 
-        $servicioNombre = trim((string) ($cfg['servicio_nombre'] ?? 'MED GENERAL'));
+        // Médico (roles 'staff' y 'odontologia'): la especialidad/subrol es el
+        // servicio. Si el perfil define `servicio`, se usa; si no, el default.
+        $servicioNombre = trim((string) ($servicioOverride ?? $cfg['servicio_nombre'] ?? 'MED GENERAL'));
 
         return [
             'servicio_nombre' => $servicioNombre !== '' ? $servicioNombre : 'MED GENERAL',

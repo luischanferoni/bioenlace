@@ -20,13 +20,20 @@ class DemoSandboxAccessServiceTest extends Unit
         $this->assertContains(DemoSandboxAccess::ROLE_STAFF, DemoSandboxAccess::roleValues());
         $this->assertContains(DemoSandboxAccess::ROLE_ENFERMERIA, DemoSandboxAccess::roleValues());
         $this->assertContains(DemoSandboxAccess::ROLE_ADMINISTRATIVO, DemoSandboxAccess::roleValues());
+        $this->assertContains(DemoSandboxAccess::ROLE_ODONTOLOGIA, DemoSandboxAccess::roleValues());
         $this->assertContains(DemoSandboxAccess::ROLE_PACIENTE, DemoSandboxAccess::roleValues());
         $this->assertTrue(DemoSandboxAccess::isEphemeralStaffRole(DemoSandboxAccess::ROLE_ENFERMERIA));
         $this->assertTrue(DemoSandboxAccess::isEphemeralStaffRole(DemoSandboxAccess::ROLE_ADMINISTRATIVO));
+        $this->assertTrue(DemoSandboxAccess::isEphemeralStaffRole(DemoSandboxAccess::ROLE_ODONTOLOGIA));
         $this->assertSame('administrativo', DemoSandboxAccess::staffKindForRole(DemoSandboxAccess::ROLE_ADMINISTRATIVO));
+        // 'odontologia' no es un rol RBAC: comparte el rol 'Medico' con 'staff';
+        // la especialidad (servicio) se resuelve por separado.
+        $this->assertSame('medico', DemoSandboxAccess::staffKindForRole(DemoSandboxAccess::ROLE_ODONTOLOGIA));
         $this->assertSame('demo_a_', DemoSandboxAccess::usernamePrefixForStaffKind('administrativo'));
+        $this->assertSame('demo_m_', DemoSandboxAccess::usernamePrefixForStaffKind('medico'));
         $this->assertSame('EMER', DemoSandboxAccess::defaultEncounterClassForRole(DemoSandboxAccess::ROLE_ADMINISTRATIVO));
         $this->assertSame('AMB', DemoSandboxAccess::defaultEncounterClassForRole(DemoSandboxAccess::ROLE_STAFF));
+        $this->assertSame('AMB', DemoSandboxAccess::defaultEncounterClassForRole(DemoSandboxAccess::ROLE_ODONTOLOGIA));
     }
 
     public function testListProfilesEphemeralFromProfilesConfig(): void

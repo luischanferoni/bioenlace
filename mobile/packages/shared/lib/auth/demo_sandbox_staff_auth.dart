@@ -18,7 +18,10 @@ class DemoSandboxProfile {
   });
 
   bool get isStaff =>
-      role == 'staff' || role == 'enfermeria' || role == 'administrativo';
+      role == 'staff' ||
+      role == 'enfermeria' ||
+      role == 'administrativo' ||
+      role == 'odontologia';
 
   static DemoSandboxProfile? fromJson(Object? raw) {
     if (raw is! Map) return null;
@@ -38,7 +41,7 @@ class DemoSandboxProfile {
 /// Misma plantilla DEV + seed que el CTA institucional web, pero responde JWT
 /// con contexto listo para Personal de Salud (sin password ni enter_url).
 class DemoSandboxStaffAuth {
-  static const _staffRoles = {'staff', 'enfermeria', 'administrativo'};
+  static const _staffRoles = {'staff', 'enfermeria', 'administrativo', 'odontologia'};
 
   /// Perfiles staff del sandbox (sin paciente).
   static Future<List<DemoSandboxProfile>> listStaffProfiles({

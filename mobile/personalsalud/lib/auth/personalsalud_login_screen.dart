@@ -178,6 +178,7 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
       case 'administrativo':
         return Icons.badge_outlined;
       default:
+        // 'staff' y 'odontologia' son ambos del rol Médico.
         return Icons.health_and_safety_outlined;
     }
   }

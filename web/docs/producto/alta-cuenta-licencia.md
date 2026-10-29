@@ -34,9 +34,9 @@ flowchart LR
 
 ## Demo sandbox (probar sin crear cuenta)
 
-Desde el sitio institucional, CTA **Probar demo** pide un captcha y un código de un solo uso (`POST /api/v1/licencia/demo-acceso`). El perfil elige médico (`demo_m_*`, AMB), enfermería (`demo_e_*`, EMER) o administrativo (`demo_a_*`, EMER, ingreso a guardia). `/site/demo-entrar` solo consume el código y hace login (nunca la cuenta legacy `medico_med_general_*`). Se borran al cerrar sesión o al vencer el TTL.
+Desde el sitio institucional, CTA **Probar demo** pide un captcha y un código de un solo uso (`POST /api/v1/licencia/demo-acceso`). El perfil elige médico (`demo_m_*`, AMB), médico odontología (`demo_m_*`, AMB, servicio ODONTOLOGIA), enfermería (`demo_e_*`, EMER) o administrativo (`demo_a_*`, EMER, ingreso a guardia). La especialidad del médico (subrol) se toma de la tabla `servicios`: el perfil `odontologia` no es un rol RBAC distinto, es un médico con `servicio = ODONTOLOGIA`. `/site/demo-entrar` solo consume el código y hace login (nunca la cuenta legacy `medico_med_general_*`). Se borran al cerrar sesión o al vencer el TTL.
 
-Desde la app **Personal de Salud**, **Probar demo** lista los perfiles staff (`GET …/demo-perfiles`) y llama `POST /api/v1/licencia/demo-acceso-mobile` con el `role` elegido (médico AMB, enfermería o administrativo EMER). Flag `demo_sandbox_habilitado` + knobs en `demo_sandbox` (params), incluido `require_captcha` (web) y `require_captcha_mobile` (app, off por defecto).
+Desde la app **Personal de Salud**, **Probar demo** lista los perfiles staff (`GET …/demo-perfiles`) y llama `POST /api/v1/licencia/demo-acceso-mobile` con el `role` elegido (médico AMB, médico odontología AMB, enfermería o administrativo EMER). Flag `demo_sandbox_habilitado` + knobs en `demo_sandbox` (params), incluido `require_captcha` (web) y `require_captcha_mobile` (app, off por defecto).
 
 ## Relación con el resto
 

@@ -160,7 +160,11 @@ final class DemoSandboxAccessService
         if ($mode === self::MODE_EPHEMERAL) {
             // Provision ANTES de persistir el código: así id_user nunca queda null/0 ni apunta al seed 863.
             $staffKind = DemoSandboxAccess::staffKindForRole($role);
-            $provisioned = (new DemoSandboxSessionService())->provisionEphemeralStaff(null, $staffKind);
+            $provisioned = (new DemoSandboxSessionService())->provisionEphemeralStaff(
+                null,
+                $staffKind,
+                $this->resolveProfileServicio($role)
+            );
             $user = $provisioned['user'];
             $session = $provisioned['session'];
             $username = (string) $user->username;
@@ -345,6 +349,25 @@ final class DemoSandboxAccessService
     }
 
     /**
+     * Servicio (especialidad) asociado a un perfil demo, si lo define.
+     *
+     * Para el rol 'Medico' el subrol/especialidad se toma de la tabla `servicios`;
+     * por eso un perfil (p. ej. 'odontologia') puede fijar `servicio` sin ser un
+     * rol RBAC distinto. Devuelve null si el perfil no define servicio (usa default).
+     */
+    private function resolveProfileServicio(string $role): ?string
+    {
+        $cfg = $this->config();
+        $profiles = is_array($cfg['profiles'] ?? null) ? $cfg['profiles'] : [];
+        $row = $profiles[$role] ?? null;
+        if (!is_array($row)) {
+            return null;
+        }
+        $servicio = trim((string) ($row['servicio'] ?? ''));
+        return $servicio !== '' ? $servicio : null;
+    }
+
+    /**
      * @return array{username: string|null, label: string, mode: string}
      */
     private function resolveProfile(string $role): array
@@ -493,7 +516,11 @@ final class DemoSandboxAccessService
             $mobileRole = DemoSandboxAccess::ROLE_STAFF;
         }
         $staffKind = DemoSandboxAccess::staffKindForRole($mobileRole);
-        $provisioned = (new DemoSandboxSessionService())->provisionEphemeralStaff(null, $staffKind);
+        $provisioned = (new DemoSandboxSessionService())->provisionEphemeralStaff(
+            null,
+            $staffKind,
+            $this->resolveProfileServicio($mobileRole)
+        );
         $user = $provisioned['user'];
         /** @var DemoSandboxSession $session */
         $session = $provisioned['session'];

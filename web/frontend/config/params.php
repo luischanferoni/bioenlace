@@ -195,6 +195,12 @@ return [
                 'label' => 'Médico demo (captura y turnos)',
                 'mode' => 'ephemeral',
             ],
+            'odontologia' => [
+                'label' => 'Médico demo (odontología)',
+                'mode' => 'ephemeral',
+                // Especialidad (subrol del rol RBAC 'Medico') tomada de la tabla `servicios`.
+                'servicio' => 'ODONTOLOGIA',
+            ],
             'enfermeria' => [
                 'label' => 'Enfermería demo (guardia e internación)',
                 'mode' => 'ephemeral',

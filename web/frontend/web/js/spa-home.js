@@ -6657,14 +6657,19 @@
         }
         const categoriesRoot = document.createElement('div');
         categoriesRoot.className = 'spa-chat-welcome-categories d-flex flex-column gap-3';
-        cats.forEach(function (c) {
+        cats.forEach(function (c, idx) {
             const title = c && c.titulo ? String(c.titulo) : window.BioenlaceApiClient.shortcutsHeading();
             const subgroups = c && Array.isArray(c.subgroups) ? c.subgroups : [];
             const actions = c && Array.isArray(c.actions) ? c.actions : [];
+            const isLast = idx === cats.length - 1;
+
             if (subgroups.length > 0) {
                 let hasAny = false;
                 const section = document.createElement('section');
-                section.className = 'spa-chat-welcome-category';
+                section.className = 'spa-chat-welcome-category pb-3 mb-3 border-bottom';
+                if (isLast) {
+                    section.classList.remove('pb-3', 'mb-3', 'border-bottom');
+                }
                 const heading = document.createElement('h3');
                 heading.className = 'spa-chat-welcome-category-title h6 mb-2 fw-semibold text-secondary';
                 heading.textContent = title;
@@ -6697,7 +6702,10 @@
                 return;
             }
             const section = document.createElement('section');
-            section.className = 'spa-chat-welcome-category';
+            section.className = 'spa-chat-welcome-category pb-3 mb-3 border-bottom';
+            if (isLast) {
+                section.classList.remove('pb-3', 'mb-3', 'border-bottom');
+            }
             const heading = document.createElement('h3');
             heading.className = 'spa-chat-welcome-category-title h6 mb-2 fw-semibold text-secondary';
             heading.textContent = title;
@@ -6885,9 +6893,9 @@
             if (subgroups.length > 0) {
                 let hasAny = false;
                 const block = document.createElement('div');
-                block.className = 'spa-chat-welcome-category-block';
-                if (!isLast) {
-                    block.classList.add('spa-chat-welcome-category-block--with-divider');
+                block.className = 'pb-3 mb-3 border-bottom';
+                if (isLast) {
+                    block.classList.remove('pb-3', 'mb-3', 'border-bottom');
                 }
                 const heading = document.createElement('h4');
                 heading.className = 'spa-chat-welcome-category-title h6 mb-2 fw-semibold text-secondary';
@@ -6922,9 +6930,9 @@
                 return;
             }
             const block = document.createElement('div');
-            block.className = 'spa-chat-welcome-category-block';
-            if (!isLast) {
-                block.classList.add('spa-chat-welcome-category-block--with-divider');
+            block.className = 'pb-3 mb-3 border-bottom';
+            if (isLast) {
+                block.classList.remove('pb-3', 'mb-3', 'border-bottom');
             }
             const heading = document.createElement('h4');
             heading.className = 'spa-chat-welcome-category-title h6 mb-2 fw-semibold text-secondary';

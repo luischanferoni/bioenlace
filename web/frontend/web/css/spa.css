@@ -637,10 +637,3 @@ html:has(.spa-asistente-root) {
 .bio-ui-json-list-card:last-child {
     margin-bottom: 0;
 }
-
-/* Línea divisoria sutil entre grupos de atajos */
-.spa-chat-welcome-category-block--with-divider {
-    padding-bottom: 1rem;
-    margin-bottom: 1rem;
-    border-bottom: 1px solid var(--bs-border-color, #dee2e6);
-}

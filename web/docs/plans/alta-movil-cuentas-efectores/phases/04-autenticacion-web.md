@@ -10,9 +10,11 @@ Retirar contraseñas como acceso de producto y habilitar métodos resistentes al
 - [ ] Enrolar la primera passkey web al finalizar alta móvil de clínica/centro o consultorio.
 - [ ] Aprobación QR desde app para roles habilitados en ambos canales, separada del alta KYC.
 - [ ] Desafío QR de un solo uso, vida corta, vinculado a sesión/navegador; aprobación explícita en app.
-- [ ] Allowlist de roles en middleware/API web y móvil; no confiar solo en UI.
+- [x] Allowlist explícita de roles clínicos en login, alta de identidad y autenticación de solicitudes de Personal de Salud; AdminEfector, Administrativo y facturista quedan fuera del canal móvil.
+- [ ] Allowlist equivalente de roles web y protección de rutas.
 - [ ] Emitir sesiones con expiración/revocación y proteger contra replay/CSRF.
-- [ ] Retirar login web y API de contraseña/códigos al completar enrolamiento.
+- [x] Retirar login móvil de usuario/contraseña y activación por código.
+- [ ] Retirar login web de contraseña/códigos al completar enrolamiento y conservar el acceso de revisión de tiendas.
 
 ## Criterio de salida
 

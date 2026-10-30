@@ -2,8 +2,8 @@
 
 namespace common\components\Platform\Core\Auth;
 
-use common\components\Platform\Ui\Home\Service\HomePanelManifest;
 use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Person\Persona;
 use common\models\Platform\User;
 use Yii;
 
@@ -12,55 +12,92 @@ use Yii;
  */
 final class StaffMobileAccessService
 {
+    private const MOBILE_STAFF_ROLES = ['Medico', 'medico', 'enfermeria', 'Enfermeria'];
+    private const IDENTITY_ONLY_ROLES = ['usuario', 'paciente'];
+    private const PERSONAL_SALUD_APP_CLIENTS = ['personalsalud-flutter', 'bioenlace-personalsalud'];
+
+    public static function isPersonalSaludRequest(string $client, string $appClient): bool
+    {
+        return strtolower(trim($client)) === 'mobile'
+            && in_array(strtolower(trim($appClient)), self::PERSONAL_SALUD_APP_CLIENTS, true);
+    }
+
     public static function isCurrentUserAllowed(): bool
     {
-        if (Yii::$app->user->isGuest) {
-            return false;
-        }
-
         if (Yii::$app->user->isSuperadmin) {
             return true;
         }
 
-        $staffRoles = (new HomePanelManifest())->audienceStaffRoles();
-        if ($staffRoles !== [] && User::hasRole($staffRoles, false)) {
-            return true;
-        }
-
-        if (self::hasEfectorScopedStaffRole($staffRoles)) {
-            return true;
-        }
-
-        $idPersona = (int) Yii::$app->user->getIdPersona();
-        if ($idPersona > 0 && ProfesionalEfectorServicio::getEfectoresParaSesion($idPersona) !== []) {
+        $user = Yii::$app->user->identity;
+        if (!$user instanceof User) {
             return false;
         }
 
-        if ($idPersona <= 0 || !Yii::$app->has('authManager')) {
+        $persona = Persona::findOne(['id_user' => (int) $user->id]);
+        if ($persona === null) {
             return false;
         }
 
-        $assignedRoles = array_keys(Yii::$app->authManager->getRolesByUser((int) Yii::$app->user->id));
-        return self::isIdentityOnlyAccountAllowed($assignedRoles, true, false);
+        return self::isUserAllowedToLogin($user, $persona);
+    }
+
+    public static function isUserAllowedToLogin(User $user, Persona $persona): bool
+    {
+        if ((int) $user->status !== User::STATUS_ACTIVE
+            || (int) $user->id <= 0
+            || (int) $persona->id_user !== (int) $user->id) {
+            return false;
+        }
+
+        if ((int) $user->superadmin === 1) {
+            return true;
+        }
+
+        if (!Yii::$app->has('authManager')) {
+            return false;
+        }
+
+        $assignedRoles = array_keys(Yii::$app->authManager->getRolesByUser((int) $user->id));
+        $hasEfectorAssignment = ProfesionalEfectorServicio::getEfectoresParaSesion(
+            (int) $persona->id_persona
+        ) !== [];
+
+        return self::isMobileAccountAllowed($assignedRoles, true, $hasEfectorAssignment);
     }
 
     /**
-     * Una cuenta profesional sin asignaciones puede consultar el wizard de sesión,
-     * pero no obtiene por esta vía permisos ni una sesión clínica.
+     * Roles clínicos requieren una asignación vigente; cuentas de identidad/paciente
+     * sin asignaciones solo pueden consultar el wizard de sesión.
      *
      * @param list<string> $assignedRoles
      */
-    public static function isIdentityOnlyAccountAllowed(
+    public static function isMobileAccountAllowed(
         array $assignedRoles,
         bool $hasPersona,
         bool $hasEfectorAssignment
     ): bool {
-        if (!$hasPersona || $hasEfectorAssignment) {
+        if (!$hasPersona) {
+            return false;
+        }
+
+        if (self::hasMobileStaffRole($assignedRoles)) {
+            return $hasEfectorAssignment;
+        }
+
+        return self::isIdentityOnlyAccountAllowed($assignedRoles, $hasEfectorAssignment);
+    }
+
+    /**
+     * @param list<string> $assignedRoles
+     */
+    private static function isIdentityOnlyAccountAllowed(array $assignedRoles, bool $hasEfectorAssignment): bool
+    {
+        if ($hasEfectorAssignment) {
             return false;
         }
 
         foreach ($assignedRoles as $roleName) {
-            if ($roleName !== 'usuario') {
+            if (!in_array($roleName, self::IDENTITY_ONLY_ROLES, true)) {
                 return false;
             }
         }
@@ -69,29 +106,16 @@ final class StaffMobileAccessService
     }
 
     /**
-     * Roles RBAC con sufijo por efector (p. ej. Medico_x_efector_863).
+     * Roles clínicos habilitados en Personal de Salud, incluidos los nombres scoped por efector.
      *
-     * @param list<string> $baseRoles
+     * @param list<string> $assignedRoles
      */
-    private static function hasEfectorScopedStaffRole(array $baseRoles): bool
+    public static function hasMobileStaffRole(array $assignedRoles): bool
     {
-        if ($baseRoles === [] || !Yii::$app->has('authManager')) {
-            return false;
-        }
-
-        $userId = (int) Yii::$app->user->id;
-        if ($userId <= 0) {
-            return false;
-        }
-
-        $assigned = Yii::$app->authManager->getRolesByUser($userId);
-        foreach (array_keys($assigned) as $roleName) {
-            foreach ($baseRoles as $base) {
-                $base = trim($base);
-                if ($base === '') {
-                    continue;
-                }
-                if ($roleName === $base || str_starts_with((string) $roleName, $base . '_x_efector_')) {
+        foreach ($assignedRoles as $roleName) {
+            foreach (self::MOBILE_STAFF_ROLES as $baseRole) {
+                if ($roleName === $baseRole
+                    || str_starts_with((string) $roleName, $baseRole . '_x_efector_')) {
                     return true;
                 }
             }

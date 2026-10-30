@@ -19,6 +19,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
   bool _submitting = false;
   bool _accountCreated = false;
   _SignupPath _selectedPath = _SignupPath.professional;
+  String? _pendingVerificationId;
 
   void _snack(String msg) {
     if (!mounted) return;
@@ -29,7 +30,9 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
     setState(() => _submitting = true);
     try {
       final service = StaffSignupService();
-      final verificationId = await service.verifyIdentity();
+      final verificationId =
+          _pendingVerificationId ?? await service.verifyIdentity();
+      _pendingVerificationId = verificationId;
       final account = await service.createAccount(
         verificationId: verificationId,
       );
@@ -37,6 +40,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
       setState(() {
         _accountCreated = true;
         _submitting = false;
+        _pendingVerificationId = null;
       });
 
       final token = account['token']?.toString().trim() ?? '';
@@ -65,6 +69,9 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
       _snack(
         message == 'Verificación cancelada.'
             ? 'Cancelaste la verificación.'
+            : _pendingVerificationId != null
+            ? 'Tu identidad ya fue verificada, pero no pudimos crear la cuenta. '
+                  'Reintentá sin volver a verificarte.'
             : 'No pudimos continuar con la creación de tu cuenta. Intentá nuevamente. '
                   'Si el problema continúa, contactá a soporte.',
       );
@@ -175,10 +182,21 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                 enabled: false,
               ),
               BioSpacing.gapH(BioSpacing.md),
+              if (_pendingVerificationId != null) ...[
+                Text(
+                  'Tu identidad ya está verificada. Podés reintentar la creación '
+                  'de la cuenta sin volver a hacer este paso.',
+                  style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
+                  textAlign: TextAlign.center,
+                ),
+                BioSpacing.gapH(BioSpacing.md),
+              ],
               if (!_accountCreated) ...[
                 BioButton.primary(
                   label: _submitting
                       ? 'Verificando…'
+                      : _pendingVerificationId != null
+                      ? 'Reintentar creación de cuenta'
                       : 'Verificar identidad y crear cuenta',
                   icon: Icons.verified_user_outlined,
                   size: BioButtonSize.lg,

@@ -7,10 +7,12 @@ use common\components\Domain\Organization\Efector\Application\UseCase\SwitchBill
 use common\components\Domain\Organization\Efector\Application\UseCase\SignUpInstitutionalEfector;
 use common\components\Domain\Organization\Efector\Application\UseCase\RequestMinistrySignup;
 use common\components\Domain\Organization\Efector\Application\UseCase\CreateIdentityAccount;
+use common\components\Domain\Person\Identity\Application\Service\IdentityVerificationException;
 use common\components\Domain\Organization\Efector\Application\UseCase\CompleteMinistrySignupIdentity;
 use common\components\Domain\Organization\Efector\Application\Service\SignupAbuseGuard;
 use common\components\Platform\Core\Auth\DemoSandboxAccessService;
 use common\components\Platform\Core\Auth\DemoSandboxCaptchaService;
+use common\components\Platform\Core\Auth\StaffMobileAccessService;
 use common\components\Platform\Core\Http\Contract\ApiException;
 use common\models\Platform\User;
 use Yii;
@@ -102,13 +104,18 @@ class LicenciaController extends BaseController
         try {
             (new SignupAbuseGuard())->assertAllowed($body);
             $data = (new CreateIdentityAccount())->crear($body);
+            if (!StaffMobileAccessService::isUserAllowedToLogin($data['user'], $data['persona'])) {
+                return $this->fail('forbidden_detail', [
+                    'detail' => 'Esta cuenta no tiene acceso desde Personal de Salud. Ingresá desde la web.',
+                ]);
+            }
 
             return $this->success([
                 'id_persona' => (int) $data['persona']->id_persona,
                 'id_user' => (int) $data['user']->id,
                 'username' => (string) $data['user']->username,
                 'email' => (string) $data['user']->email,
-                'token' => $data['token'] ?? null,
+                'token' => $data['token'],
                 'es_nueva_persona' => (bool) $data['es_nueva_persona'],
                 'es_nuevo_usuario' => (bool) $data['es_nuevo_usuario'],
             ], 'Cuenta de identidad creada.');
@@ -116,6 +123,12 @@ class LicenciaController extends BaseController
             return $this->error($e->getMessage(), null, str_contains($e->getMessage(), 'Demasiados') ? 429 : 400);
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
+        } catch (IdentityVerificationException $e) {
+            if ($e->isRetryable()) {
+                return $this->fail('service_unavailable');
+            }
+
+            return $this->error($e->getMessage(), null, 422);
         } catch (\Throwable $e) {
             Yii::error($e->getMessage() . "\n" . $e->getTraceAsString(), 'billing.signup');
 
@@ -157,29 +170,15 @@ class LicenciaController extends BaseController
     }
 
     /**
-     * @action_name Alta self-service efector + AdminEfector + pago simulado
+     * Ruta retirada: no se aceptan altas institucionales ni licencias mediante pago simulado.
      */
     public function actionRegistrarEfector()
     {
-        $body = Yii::$app->request->getBodyParams();
-        if (!is_array($body)) {
-            $body = [];
-        }
-
-        try {
-            (new SignupAbuseGuard())->assertAllowed($body);
-            $data = SignUpInstitutionalEfector::register($body);
-
-            return $this->success($data, 'Cuenta creada. Ya podés ingresar a la plataforma.');
-        } catch (\DomainException $e) {
-            return $this->error($e->getMessage(), null, str_contains($e->getMessage(), 'Demasiados') ? 429 : 400);
-        } catch (\InvalidArgumentException $e) {
-            return $this->error($e->getMessage(), null, 400);
-        } catch (\Throwable $e) {
-            Yii::error($e->getMessage() . "\n" . $e->getTraceAsString(), 'billing.signup');
-
-            return $this->error('No se pudo completar el alta. Reintentá o escribinos.', null, 500);
-        }
+        return $this->error(
+            'El alta de clínicas y centros no está disponible desde este canal. No se creó una cuenta ni una licencia.',
+            null,
+            410
+        );
     }
 
     /**

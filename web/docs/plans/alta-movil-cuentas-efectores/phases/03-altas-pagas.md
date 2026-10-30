@@ -18,3 +18,5 @@ Crear consultorio o clínica desde la app con confirmación informada e idempote
 ## Criterio de salida
 
 Pruebas de aprobación, rechazo, timeout, webhook repetido y reintento prueban ausencia de duplicados y de acceso prematuro.
+
+El endpoint legado de alta institucional con pago simulado fue retirado (`410 Gone`). No se crea una licencia hasta integrar un proveedor real y confirmar el pago.

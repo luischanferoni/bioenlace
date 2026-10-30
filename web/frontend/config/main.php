@@ -50,6 +50,9 @@ return [
             'efectorAssignmentTable' => 'profesional_efector_servicio',
             'rolesEspeciales' => ['_x_efector_', '_sin_efector_', 'AdminMinisterio'],
         ],
+        'sisa' => [
+            'class' => 'frontend\components\apis\Sisa',
+        ],
         'user' => [
             'class' => 'frontend\components\UserConfig',
             'enableAutoLogin' => true,

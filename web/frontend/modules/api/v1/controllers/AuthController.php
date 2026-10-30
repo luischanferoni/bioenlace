@@ -14,8 +14,9 @@ use common\components\Domain\Person\FrontDesk\Infrastructure\External\Identity\C
 use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
 use common\components\Platform\Core\Permission\RbacRoleQueryService;
 use common\components\Platform\Core\Auth\PlayReviewLoginService;
-use common\components\Platform\Core\Auth\StaffAccountInvitationService;
-use common\components\Platform\Core\Auth\StaffMobileLoginService;
+use common\components\Platform\Core\Auth\StaffMobileAccessService;
+use common\components\Domain\Person\Identity\Application\Service\IdentityVerificationException;
+use common\components\Domain\Person\Identity\Application\Service\DiditIdentityService;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
@@ -35,63 +36,15 @@ class AuthController extends BaseController
     ];
 
     /**
-     * Registro de usuario
+     * Ruta retirada: el registro con correo y contraseña no forma parte del alta actual.
      */
     public function actionRegistrar()
     {
-        $request = Yii::$app->request;
-        $email = $request->post('email');
-        $password = $request->post('password');
-        $name = $request->post('name');
-
-        if (!$email || !$password || !$name) {
-            return $this->error('Email, contraseña y nombre son requeridos', null, 400);
-        }
-
-        // Verificar si el usuario ya existe
-        if (User::findByEmail($email)) {
-            return $this->error('El usuario ya existe', null, 409);
-        }
-
-        // Crear nuevo usuario
-        $user = new User();
-        $user->username = $name;
-        $user->email = $email;
-        $user->setPassword($password);
-        $user->generateAuthKey();
-        $user->status = User::STATUS_ACTIVE;
-
-        if (!$user->save()) {
-            return $this->error('Error creando usuario', $user->getErrors(), 422);
-        }
-
-        // Asignar rol 'paciente' si existe en el sistema RBAC
-        // Nota: Esto requiere que el rol 'paciente' exista en la tabla auth_item
-        try {
-            $pacienteRole = Role::findOne(['name' => 'paciente']);
-            if ($pacienteRole) {
-                Yii::$app->authManager->assign($pacienteRole, $user->id);
-            }
-        } catch (\Exception $e) {
-            // Si no se puede asignar el rol, continuar sin él
-            Yii::warning('No se pudo asignar rol paciente al usuario: ' . $e->getMessage());
-        }
-
-        // Generar token JWT reutilizando id_persona ya resuelto
-        $token = $this->generateJwtToken($user, $persona->id_persona);
-        $role = $this->getUserRole($user);
-        $permissions = $this->getUserPermissions($user);
-
-        return $this->success([
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->username,
-                'email' => $user->email,
-                'role' => $role,
-                'permissions' => $permissions,
-            ],
-            'token' => $token,
-        ], 'Usuario creado exitosamente', 201);
+        return $this->error(
+            'El registro con correo y contraseña fue retirado. Usá el registro correspondiente a tu tipo de cuenta.',
+            null,
+            410
+        );
     }
 
     /**
@@ -165,18 +118,13 @@ class AuthController extends BaseController
      * Ruta: POST /api/v1/auth/login-biometrico
      *
      * Payload esperado:
-     * {
-     *   "biometric_verification_id": "didit-biometric-verification-id",
-     *   "device_id": "uuid-del-dispositivo",
-     *   "platform": "android" | "ios" | "otro"
-     * }
+     * { "biometric_verification_id": "didit-biometric-verification-id" }
      */
     public function actionLoginBiometrico()
     {
         $request = Yii::$app->request;
-        $verificationId = $request->post('biometric_verification_id');
-        $deviceId = $request->post('device_id');
-        $platform = $request->post('platform');
+        $verificationIdInput = $request->post('biometric_verification_id');
+        $verificationId = is_string($verificationIdInput) ? trim($verificationIdInput) : '';
 
         if (!$verificationId) {
             return $this->error('El campo "biometric_verification_id" es requerido', null, 400);
@@ -189,19 +137,21 @@ class AuthController extends BaseController
 
         $diditResult = $didit->getBiometricAuth($verificationId);
 
-        if ($diditResult['success'] !== true || $diditResult['status'] === 'rejected') {
+        try {
+            DiditIdentityService::assertApprovedVerification($diditResult);
+        } catch (IdentityVerificationException $e) {
             return $this->fail('authentication_failed_detail', [
-                'detail' => 'Verificación biométrica rechazada por Didit',
+                'detail' => 'No pudimos confirmar tu identidad. Verificá tus datos e intentá nuevamente.',
             ]);
         }
 
-        // Resolver persona por referencia Didit o por documento
+        // El documento verificado es la identidad principal; vendor_data puede no ser único.
         $persona = null;
-        if (!empty($diditResult['didit_reference_id'])) {
+        $linkedDocument = preg_replace('/\D+/', '', (string) ($diditResult['linked_document'] ?? '')) ?? '';
+        if ($linkedDocument !== '') {
+            $persona = Persona::findOne(['documento' => $linkedDocument]);
+        } elseif (!empty($diditResult['didit_reference_id'])) {
             $persona = Persona::findOne(['didit_reference_id' => $diditResult['didit_reference_id']]);
-        }
-        if ($persona === null && !empty($diditResult['linked_document'])) {
-            $persona = Persona::findOne(['documento' => $diditResult['linked_document']]);
         }
 
         if ($persona === null) {
@@ -227,6 +177,12 @@ class AuthController extends BaseController
             ]);
         }
 
+        if (!StaffMobileAccessService::isUserAllowedToLogin($user, $persona)) {
+            return $this->fail('forbidden_detail', [
+                'detail' => 'Esta cuenta no tiene acceso desde Personal de Salud. Ingresá desde la web.',
+            ]);
+        }
+
         // Generar token JWT
         $token = $this->generateJwtToken($user);
         $role = $this->getUserRole($user);
@@ -248,7 +204,6 @@ class AuthController extends BaseController
                 'apellido' => $persona->apellido,
                 'documento' => $persona->documento,
             ],
-            'didit' => $diditResult,
             'token' => $token,
         ], 'Login biométrico exitoso');
     }
@@ -305,93 +260,33 @@ class AuthController extends BaseController
     }
 
     /**
-     * Login usuario/contraseña para app móvil Personal de Salud (primera vez en el dispositivo).
+     * Ruta retirada: Personal de Salud ingresa verificando su identidad.
      *
      * POST /api/v1/auth/login-credenciales
-     * Body: { "username": "...", "password": "..." }
+     * Devuelve 410 para clientes legacy.
      */
     public function actionLoginCredenciales()
     {
-        $username = (string) (Yii::$app->request->post('username') ?? '');
-        $password = (string) (Yii::$app->request->post('password') ?? '');
-
-        try {
-            $auth = StaffMobileLoginService::authenticate($username, $password);
-        } catch (\DomainException $e) {
-            return $this->fail('authentication_failed_detail', [
-                'detail' => $e->getMessage(),
-            ]);
-        }
-
-        $user = $auth['user'];
-        $persona = $auth['persona'];
-        $token = $this->generateJwtToken($user, (int) $persona->id_persona);
-        $role = $this->getUserRole($user);
-        $permissions = $this->getUserPermissions($user);
-
-        return $this->success([
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->username,
-                'email' => $user->email,
-                'role' => $role,
-                'permissions' => $permissions,
-            ],
-            'persona' => [
-                'id_persona' => $persona->id_persona,
-                'nombre' => $persona->nombre,
-                'apellido' => $persona->apellido,
-                'documento' => $persona->documento,
-            ],
-            'token' => $token,
-        ], 'Login exitoso');
+        return $this->error(
+            'El ingreso móvil con usuario y contraseña fue retirado. Verificá tu identidad desde Personal de Salud.',
+            null,
+            410
+        );
     }
 
     /**
-     * Activación de cuenta staff con código presencial (app Personal de Salud / clientes móviles).
+     * Ruta retirada: el alta y la incorporación no usan activación por código.
      *
      * POST /api/v1/auth/activar-cuenta
-     * Body: { "username": "...", "activation_code": "...", "password": "..." }
+     * Devuelve 410 para clientes legacy.
      */
     public function actionActivarCuenta()
     {
-        $username = trim((string) (Yii::$app->request->post('username') ?? ''));
-        $code = trim((string) (Yii::$app->request->post('activation_code') ?? ''));
-        $password = (string) (Yii::$app->request->post('password') ?? '');
-
-        if ($username === '' || $code === '' || $password === '') {
-            return $this->error('Usuario, código de activación y contraseña son requeridos', null, 400);
-        }
-
-        $minLength = (int) (Yii::$app->params['user.passwordMinLength'] ?? 8);
-        if (strlen($password) < max(6, $minLength)) {
-            return $this->error('La contraseña debe tener al menos ' . max(6, $minLength) . ' caracteres', null, 400);
-        }
-
-        $user = StaffAccountInvitationService::findPendingByUsername($username);
-        if ($user === null) {
-            return $this->error('Usuario no encontrado o cuenta ya activada', null, 404);
-        }
-
-        if (!StaffAccountInvitationService::validateActivationCode($user, $code)) {
-            return $this->error('Código inválido o expirado', null, 400);
-        }
-
-        try {
-            if (!StaffAccountInvitationService::activateWithPassword(
-                $user,
-                $password,
-                StaffAccountInvitationService::ACTIVATION_METHOD_CODE
-            )) {
-                return $this->error('No se pudo activar la cuenta', null, 500);
-            }
-        } catch (\InvalidArgumentException $e) {
-            return $this->error($e->getMessage(), null, 400);
-        }
-
-        return $this->success([
-            'username' => $user->username,
-        ], 'Cuenta activada. Ya podés iniciar sesión.');
+        return $this->error(
+            'La activación con código y contraseña fue retirada. Pedí a la administración que te sume al centro y verificá tu identidad en la app.',
+            null,
+            410
+        );
     }
 
     /**

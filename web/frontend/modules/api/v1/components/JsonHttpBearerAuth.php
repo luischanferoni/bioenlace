@@ -5,6 +5,7 @@ namespace frontend\modules\api\v1\components;
 use Yii;
 use common\components\Platform\Assistant\UiActions\AllowedRoutesResolver;
 use common\components\Platform\Core\Http\Contract\ApiResponder;
+use common\components\Platform\Core\Auth\StaffMobileAccessService;
 use common\models\Person\Persona;
 use common\models\Organization\ProfesionalEfectorServicio;
 use frontend\components\WebApiJwtSessionService;
@@ -63,7 +64,7 @@ class JsonHttpBearerAuth extends HttpBearerAuth
             return null;
         }
 
-        return $this->authenticateDecodedToken($user, $response, $decoded);
+        return $this->authenticateDecodedToken($user, $request, $response, $decoded);
     }
 
     /**
@@ -117,7 +118,7 @@ class JsonHttpBearerAuth extends HttpBearerAuth
      * @param object $decoded payload JWT
      * @return \common\models\Platform\User|null
      */
-    private function authenticateDecodedToken($user, $response, object $decoded)
+    private function authenticateDecodedToken($user, Request $request, $response, object $decoded)
     {
         $userId = $decoded->user_id;
         $idPersonaClaim = isset($decoded->id_persona) ? (int) $decoded->id_persona : 0;
@@ -159,6 +160,19 @@ class JsonHttpBearerAuth extends HttpBearerAuth
             $response->send();
             Yii::$app->end();
         }
+        if (StaffMobileAccessService::isPersonalSaludRequest(
+            (string) $request->headers->get('X-Client', ''),
+            (string) $request->headers->get('X-App-Client', '')
+        ) && (int) ($userModel->superadmin ?? 0) !== 1
+            && (
+                $persona === null
+                || !StaffMobileAccessService::isUserAllowedToLogin($userModel, $persona)
+            )) {
+            $this->setContractError($response, 'mobile_role_unavailable');
+            $response->send();
+            Yii::$app->end();
+        }
+
         if ($persona !== null) {
             $idPersona = (int) $persona->id_persona;
             $session->set('idPersona', $idPersona);

@@ -3,6 +3,8 @@
 namespace common\components\Domain\Organization\Efector\Application\UseCase;
 
 use common\components\Domain\Person\Identity\Application\Service\DiditIdentityService;
+use common\components\Domain\Person\Identity\Application\Service\IdentitySignupAttemptStore;
+use common\components\Domain\Person\Identity\Application\Service\IdentityVerificationException;
 use common\models\Person\Persona;
 use common\models\Platform\User;
 use Firebase\JWT\JWT;
@@ -17,7 +19,7 @@ final class CreateIdentityAccount
 {
     /**
      * @param array{verification_id: string, email?: string} $payload
-     * @return array{persona: Persona, user: User, es_nueva_persona: bool, es_nuevo_usuario: bool, didit: array<string, mixed>}
+     * @return array{persona: Persona, user: User, es_nueva_persona: bool, es_nuevo_usuario: bool, didit: array<string, mixed>, token: string}
      */
     public function crear(array $payload): array
     {
@@ -31,51 +33,72 @@ final class CreateIdentityAccount
             throw new \InvalidArgumentException('E-mail inválido.');
         }
 
-        $resolved = (new DiditIdentityService())->resolveAndUpsertPersona(
+        $identityService = new DiditIdentityService();
+        $attemptStore = new IdentitySignupAttemptStore();
+        try {
+            $diditResult = $identityService->fetchApprovedVerification($verificationId);
+        } catch (IdentityVerificationException $e) {
+            $attemptStore->recordVerification($verificationId, $e->verificationStatus);
+            throw $e;
+        }
+        $attemptStore->recordVerification($verificationId, 'approved');
+        $account = Yii::$app->db->transaction(function () use (
+            $identityService,
+            $attemptStore,
+            $diditResult,
             $verificationId,
-            null,
-            ['email' => $email]
-        );
-        $persona = $resolved['persona'];
+            $email
+        ): array {
+            $resolved = $identityService->upsertVerifiedPersona(
+                $diditResult,
+                $verificationId,
+                null,
+                ['email' => $email]
+            );
+            $persona = $resolved['persona'];
+            [$user, $esNuevoUsuario] = $this->ensureUserForPersona($persona, $email);
+            $attemptStore->markAccountCreated(
+                $verificationId,
+                (int) $persona->id_persona,
+                (int) $user->id
+            );
 
-        [$user, $esNuevoUsuario] = $this->ensureUserForPersona($persona, $email);
+            return [
+                'persona' => $persona,
+                'user' => $user,
+                'es_nueva_persona' => (bool) $resolved['es_nueva'],
+                'es_nuevo_usuario' => $esNuevoUsuario,
+            ];
+        });
 
         return [
-            'persona' => $persona,
-            'user' => $user,
-            'es_nueva_persona' => (bool) $resolved['es_nueva'],
-            'es_nuevo_usuario' => $esNuevoUsuario,
-            'didit' => $resolved['didit'],
-            'token' => $this->issueJwt($user, $persona),
+            'persona' => $account['persona'],
+            'user' => $account['user'],
+            'es_nueva_persona' => $account['es_nueva_persona'],
+            'es_nuevo_usuario' => $account['es_nuevo_usuario'],
+            'didit' => $diditResult,
+            'token' => $this->issueJwt($account['user'], $account['persona']),
         ];
     }
 
     /**
      * Emite un JWT de sesión para la cuenta de identidad (mismo patrón que RegisterPerson).
      */
-    private function issueJwt(User $user, Persona $persona): ?string
+    private function issueJwt(User $user, Persona $persona): string
     {
         $jwtSecret = Yii::$app->params['jwtSecret'] ?? null;
-        if (!$jwtSecret) {
-            Yii::warning('jwtSecret no configurado; no se generará token en CreateIdentityAccount.', 'billing.signup');
-
-            return null;
+        if (!is_string($jwtSecret) || trim($jwtSecret) === '') {
+            throw new \RuntimeException('jwtSecret no configurado; no se puede emitir la sesión de la cuenta.');
         }
 
-        try {
-            return JWT::encode([
-                'user_id' => (int) $user->id,
-                'email' => (string) $user->email,
-                'role' => 'usuario',
-                'id_persona' => (int) $persona->id_persona,
-                'iat' => time(),
-                'exp' => time() + (24 * 60 * 60),
-            ], $jwtSecret, 'HS256');
-        } catch (\Throwable $e) {
-            Yii::error('Error generando JWT en CreateIdentityAccount: ' . $e->getMessage(), 'billing.signup');
-
-            return null;
-        }
+        return JWT::encode([
+            'user_id' => (int) $user->id,
+            'email' => (string) $user->email,
+            'role' => 'usuario',
+            'id_persona' => (int) $persona->id_persona,
+            'iat' => time(),
+            'exp' => time() + (24 * 60 * 60),
+        ], $jwtSecret, 'HS256');
     }
 
     /**

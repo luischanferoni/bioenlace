@@ -9,7 +9,7 @@ use Yii;
 /**
  * Resuelve la identidad verificada por Didit y sincroniza la Persona asociada.
  *
- * Paso compartido por los flujos de registro (paciente, médico, personal de salud):
+ * Paso compartido por los flujos de registro de pacientes y cuentas de identidad:
  * consulta la verificación, normaliza los datos y crea/actualiza la Persona con
  * identidad acreditada. No crea usuario, rol ni contexto; eso queda en cada UseCase.
  */
@@ -24,22 +24,69 @@ final class DiditIdentityService
         ?string $fechaNacimientoFallback = null,
         array $extras = []
     ): array {
+        $diditResult = $this->fetchApprovedVerification($verificationId);
+
+        return $this->upsertVerifiedPersona(
+            $diditResult,
+            $verificationId,
+            $fechaNacimientoFallback,
+            $extras
+        );
+    }
+
+    /**
+     * Consulta Didit y registra solo el estado resumido de la verificación.
+     *
+     * @return array<string, mixed>
+     */
+    public function fetchApprovedVerification(string $verificationId): array
+    {
         /** @var DiditClient $didit */
         $didit = Yii::$container->has(DiditClient::class)
             ? Yii::$container->get(DiditClient::class)
             : new DiditClient();
 
         $diditResult = $didit->getIdentityVerification($verificationId);
-
-        if ($diditResult['success'] === false || $diditResult['status'] === 'rejected') {
-            $detalle = trim((string) ($diditResult['message'] ?? ''));
-            $estado = trim((string) ($diditResult['status'] ?? 'unknown'));
-            throw new \RuntimeException(
-                'Verificación de identidad rechazada por Didit'
-                . ($estado !== '' ? ' (estado: ' . $estado . ')' : '')
-                . ($detalle !== '' ? ': ' . $detalle : '')
-            );
+        $status = strtolower(trim((string) ($diditResult['status'] ?? 'unknown')));
+        if (!in_array($status, ['approved', 'rejected', 'pending'], true)) {
+            $status = 'unknown';
         }
+        $this->recordVerificationAttempt($verificationId, $status);
+        self::assertApprovedVerification($diditResult);
+
+        return $diditResult;
+    }
+
+    /**
+     * @param array<string, mixed> $diditResult
+     */
+    public static function assertApprovedVerification(array $diditResult): void
+    {
+        if (($diditResult['success'] ?? false) !== true
+            || strtolower(trim((string) ($diditResult['status'] ?? ''))) !== 'approved') {
+            $status = strtolower(trim((string) ($diditResult['status'] ?? 'unknown')));
+            if (!in_array($status, ['rejected', 'pending', 'unknown'], true)) {
+                $status = 'unknown';
+            }
+
+            throw new IdentityVerificationException($status);
+        }
+    }
+
+    /**
+     * Persiste los datos de identidad de una verificación previamente aprobada.
+     *
+     * @param array<string, mixed> $diditResult
+     * @param array<string, mixed> $extras
+     * @return array{persona: Persona, es_nueva: bool, didit: array<string, mixed>, verification_id: string}
+     */
+    public function upsertVerifiedPersona(
+        array $diditResult,
+        string $verificationId,
+        ?string $fechaNacimientoFallback = null,
+        array $extras = []
+    ): array {
+        self::assertApprovedVerification($diditResult);
 
         $dni = $this->normalizeDocumento((string) $diditResult['documento']);
         $nombre = $this->normalizePersonName((string) $diditResult['nombre']);
@@ -109,12 +156,37 @@ final class DiditIdentityService
             );
         }
 
+        Yii::$app->db->createCommand()->update(
+            '{{%didit_verification}}',
+            ['id_persona' => (int) $persona->id_persona],
+            ['didit_verification_id' => $verificationId, 'tipo' => 'identity_signup']
+        )->execute();
+
         return [
             'persona' => $persona,
             'es_nueva' => $esNueva,
             'didit' => $diditResult,
             'verification_id' => $verificationId,
         ];
+    }
+
+    private function recordVerificationAttempt(string $verificationId, string $status): void
+    {
+        Yii::$app->db->createCommand()->upsert(
+            '{{%didit_verification}}',
+            [
+                'didit_verification_id' => $verificationId,
+                'tipo' => 'identity_signup',
+                'status' => $status,
+                'message' => null,
+                'raw_response' => null,
+            ],
+            [
+                'status' => $status,
+                'message' => null,
+                'raw_response' => null,
+            ]
+        )->execute();
     }
 
     private function normalizeDocumento(string $documento): string

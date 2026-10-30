@@ -30,7 +30,11 @@ La integración todavía no está lista para producción: este repositorio no in
 
 La identidad profesional sin asignación no puede elegir un centro ni sumarse por cuenta propia. La licencia del efector cubre a los profesionales según el plan, no se compra una segunda licencia por cada profesional asignado.
 
-El endpoint legado `POST /api/v1/registro/registrar` ya no acepta `tipo=medico`; devuelve `410 Gone` y dirige a la creación de cuenta desde Personal de Salud. El registro de pacientes continúa disponible en ese endpoint.
+El endpoint legado `POST /api/v1/registro/registrar` ya no acepta `tipo=medico`; devuelve `410 Gone` y dirige a la creación de cuenta desde Personal de Salud. El registro de pacientes continúa disponible en ese endpoint. Si falla la creación luego de una verificación aprobada, la app puede reintentar usando la misma verificación; la API reutiliza la identidad existente.
+
+El acceso a Personal de Salud se valida en el servidor: solo los roles clínicos habilitados o una identidad profesional todavía sin asignación pueden ingresar. AdminEfector, Administrativo y facturista usan la web; los endpoints móviles legacy de usuario/contraseña y activación por código responden `410 Gone`.
+
+El alta institucional por `POST /api/v1/licencia/registrar-efector` también responde `410 Gone`: no se crean clínicas, centros ni licencias usando pagos simulados.
 
 ## Pagos y licencia
 

@@ -14,7 +14,7 @@ import 'personalsalud_session_prefs.dart';
 typedef PersonalsaludLoginSuccess =
     void Function(String userId, String userName, BuildContext loginContext);
 
-/// Login del personal: usuario/contraseña la primera vez; luego huella del teléfono.
+/// Login del personal con identidad verificada y desbloqueo biométrico del dispositivo.
 Widget buildPersonalsaludLoginScreen({
   required PersonalsaludLoginSuccess onLoginSuccess,
 }) {

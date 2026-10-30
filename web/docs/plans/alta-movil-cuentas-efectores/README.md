@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|--------|
 | Slug | `alta-movil-cuentas-efectores` |
-| Estado | En ejecución — Fases 1 y 2; proveedor REFEPS pendiente |
+| Estado | En ejecución — Fase 1 implementada; Fases 2, 4 y 6 parciales; checkout y passkeys pendientes |
 | Dueño | Producto / Identidad / Organización / Mobile |
 | Corte de compatibilidad | Sin flujos legacy; migrar las cuentas y relaciones existentes |
 
@@ -23,6 +23,7 @@
 
 - AdminEfector inicia todas las asignaciones a un centro, incluso su propia asignación clínica.
 - REFEPS se verifica al asignar un rol profesional y antes de vender un consultorio propio; no es requisito para crear la identidad ni para administrar un centro.
+- La integración REFEPS está conectada al componente Yii `sisa` con política fail-closed, pero la clase adaptadora no está incluida en este repositorio y debe confirmarse en el entorno desplegado. Mientras no responda con una coincidencia confirmada, no se habilitan asignaciones clínicas.
 - Una identidad sin asignación puede iniciar sesión, pero no ve ni ejecuta operaciones clínicas.
 - Los pagos requieren mostrar condiciones completas y registrar intentos idempotentes. El simulador actual no cuenta como checkout de producción.
 - No mantener login de contraseña, activación por código ni alta comercial web como rutas legacy; preservar datos y relaciones existentes durante la transición.

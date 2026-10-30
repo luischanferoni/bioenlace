@@ -8,40 +8,53 @@ class AppTexts {
   static const confirm = 'Confirmar';
   static const userInfoTitle = 'Información del usuario';
   static const workAreaTitle = 'Área de trabajo';
-  static const featureInDevelopment = 'Funcionalidad en desarrollo';
-  static String timelineHistoryLoadError(String detail) =>
-      'Error al cargar historia clínica: $detail';
-  static String areaChangeFailed(Object e) => 'Error al cambiar área: $e';
-  static const selectEffector = 'Seleccioná el efector';
+  static const featureInDevelopment = 'Esta opción todavía no está disponible.';
+  static String timelineHistoryLoadError(String _) =>
+      'No pudimos cargar la historia clínica. Revisá tu conexión e intentá nuevamente.';
+  static String areaChangeFailed(Object _) =>
+      'No pudimos cambiar el área de trabajo. Intentá nuevamente.';
+  static const selectEffector = 'Seleccioná el centro de salud';
   static const selectService = 'Seleccioná el servicio';
   static const selectArea = 'Seleccioná el área';
   static const scanDniTitle = 'Escanear DNI';
   static const contactPhoneRequired = 'Indicá un teléfono de contacto.';
   static const withoutDocumentNn = 'Sin documento / NN';
   static const triageReasonRequired = 'Indicá el motivo de consulta.';
-  static String saveFailed(Object e) => 'No se pudo guardar: $e';
+  static String saveFailed(Object _) =>
+      'No se pudo guardar la información. Intentá nuevamente.';
   static const triagePriorityTitle = 'Prioridad (Manchester)';
   static const vitalSignsOptionalTitle = 'Signos vitales (opcional)';
-  static String dataLoadFailed(Object? e) => 'Error al cargar datos: $e';
+  static String dataLoadFailed(Object? _) =>
+      'No pudimos cargar la información. Revisá tu conexión e intentá nuevamente.';
   static const retry = 'Reintentar';
-  static const userDataLoadFailed = 'No se pudieron cargar datos de usuario';
-  static String screenNotImplemented(Object? id) => 'Pantalla no implementada: $id';
-  static const enterUserAndPassword = 'Ingresá usuario y contraseña.';
-  static const reenterUserAndPassword = 'Volvé a ingresar con usuario y contraseña.';
+  static const userDataLoadFailed =
+      'No pudimos cargar tus datos. Revisá tu conexión e intentá nuevamente.';
+  static String screenNotImplemented(Object? _) =>
+      'Esta pantalla todavía no está disponible.';
+  static const enterUserAndPassword = 'Verificá tu identidad para continuar.';
+  static const reenterUserAndPassword = 'Verificá tu identidad para volver a ingresar.';
   static const appTitle = 'Personal de Salud';
   static const completeActivationFields = 'Completá usuario, código y contraseña.';
   static const passwordsMismatch = 'Las contraseñas no coinciden.';
   static const accountActivated = 'Cuenta activada. Ya podés ingresar.';
   static const activateAccount = 'Activar cuenta';
-  static const biometricRequired = 'Biometría requerida';
-  static String startAttendanceFailed(Object e) => 'No se pudo iniciar atención: $e';
-  static const flowConfirmFromPreviousStep = 'Confirmá el envío desde el paso anterior del flujo.';
-  static String flowStepUnavailable(String actionId) => 'No puedo abrir el paso ($actionId).';
-  static const screenWithoutApiRoute = 'Pantalla sin ruta API.';
-  static const screenTypeUnsupported = 'Tipo de pantalla no soportado en móvil médico.';
+  static const biometricRequired =
+      'Configurá la huella o el reconocimiento facial para continuar.';
+  static String startAttendanceFailed(Object _) =>
+      'No se pudo iniciar la atención. Intentá nuevamente.';
+  static const flowConfirmFromPreviousStep =
+      'Volvé al paso anterior y confirmá el envío para continuar.';
+  static String flowStepUnavailable(String _) =>
+      'No pudimos abrir este paso. Volvé a intentarlo.';
+  static const screenWithoutApiRoute =
+      'Esta opción no está disponible en este momento.';
+  static const screenTypeUnsupported =
+      'Esta opción todavía no está disponible en la app.';
   static const exitFlow = 'Salir';
-  static const sessionUnavailableForAction = 'Sesión no disponible para esta acción.';
-  static const historyTemporarilyUnavailable = 'Historia clínica no disponible temporalmente.';
+  static const sessionUnavailableForAction =
+      'Tu sesión no está disponible. Volvé a ingresar para continuar.';
+  static const historyTemporarilyUnavailable =
+      'La historia clínica no está disponible por el momento. Intentá nuevamente.';
   static const encounterSaved = 'Consulta guardada';
 
   static const cancel = 'Cancelar';
@@ -57,7 +70,8 @@ class AppTexts {
   static const timelineGuidance = 'Orientación';
   static const timelinePatientAnswers = 'Respuestas del paciente';
   static const timelineEpisodeRecord = 'Registro del episodio';
-  static const timelineActionNoScreen = 'La acción no tiene una pantalla compatible.';
+  static const timelineActionNoScreen =
+      'No se puede abrir esta opción en este momento.';
   static const timelineReasonsTitle = 'Motivos de esta consulta';
   static const guardiaAdmissionTitle = 'Ingreso a internación';
   static const guardiaLeftTitle = 'Paciente se retiró';
@@ -133,10 +147,10 @@ class AppTexts {
   static const timelineSummary = 'Resumen';
   static const timelineDiagnoses = 'Diagnósticos a considerar';
   static const timelinePractices = 'Prácticas / estudios';
-  static const timelinePreconsult = 'Asistencia pre-consulta (cohorte)';
-  static const voiceConfigLoading = 'La configuración de voz todavía se está cargando.';
+  static const timelinePreconsult = 'Orientación antes de la consulta';
+  static const voiceConfigLoading = 'Preparando el dictado…';
   static const voiceConfigLoadFailed =
-      'No se pudo cargar la configuración de voz. Dictado deshabilitado.';
+      'No pudimos habilitar el dictado. Podés escribir la consulta.';
   static const voiceListening = 'Escuchando…';
   static const voiceRecording = 'Grabando…';
   static const voiceNoSpeech = 'Sin voz detectada';
@@ -152,9 +166,11 @@ class AppTexts {
   static const dictationDisabled = 'Dictado por voz deshabilitado.';
   static const micDisabledTitle = 'Micrófono no habilitado';
   static const close = 'Cerrar';
-  static const captureDeleteFailed = 'Error al eliminar del servidor';
+  static const captureDeleteFailed =
+      'No se pudo borrar la nota. Intentá nuevamente.';
   static const captureDeleted = 'Eliminada';
-  static const captureMissingParent = 'Falta contexto de atención (parent).';
+  static const captureMissingParent =
+      'No encontramos la consulta asociada. Volvé a abrirla e intentá nuevamente.';
   static const captureNoText = 'No hay texto para analizar.';
   static const captureAnalyzeFirst = 'Analizá antes de guardar.';
   static const understood = 'Entendido';
@@ -189,52 +205,54 @@ class AppTexts {
       'Según el área, Inicio mostrará turnos, pacientes internados o ingresos en guardia.';
   static const chatNoShortcuts = 'No hay atajos disponibles.';
   static const chatProcessError =
-      'Error al procesar tu consulta. Por favor, intenta nuevamente.';
+      'No pudimos procesar tu consulta. Intentá nuevamente.';
   static const chatLocationPermission =
       'Se necesita permiso de ubicación para listar centros de salud cercanos.';
   static const chatMissingService =
-      'Falta el servicio elegido para listar centros de salud. Volvé a elegir el servicio en el paso anterior o iniciá de nuevo el trámite de turno.';
-  static const chatFlowStartFailed = 'No se pudo iniciar el flujo.';
+      'Elegí nuevamente el servicio en el paso anterior o iniciá de nuevo la solicitud de turno.';
+  static const chatFlowStartFailed =
+      'No se pudo iniciar esta consulta. Intentá nuevamente.';
   static const chatActionWithoutClientOpen =
-      'Acción sin client_open: no se puede abrir en esta versión.';
+      'No se puede abrir esta opción en este momento.';
   static const chatLegacySubmitUnsupported =
-      'Submit legacy no soportado. Abrí la pantalla desde client_open.';
+      'No se puede completar esta acción en este momento. Volvé a intentarlo.';
   static const chatAdvanceFailed = 'No se pudo avanzar. Intentá de nuevo.';
-  static const chatCompleteInfo = 'Completa la información';
+  static const chatCompleteInfo = 'Completá la información.';
   static const chatLoadReasons = 'Cargar motivos de la consulta';
   static const chatReasonsTitle = 'Motivos de la consulta';
   static const loginChooseRole = 'Elegí con qué rol entrar';
   static const loginBiometricUnavailable =
-      'La huella no está disponible en este dispositivo.';
+      'La huella o el reconocimiento facial no están disponibles en este dispositivo.';
   static const loginSessionExpired =
-      'Tu sesión expiró. Ingresá de nuevo con usuario y contraseña.';
+      'Tu sesión expiró. Verificá tu identidad para volver a ingresar.';
   static const loginSessionCheckFailed =
       'No pudimos verificar tu sesión. Revisá la conexión e intentá de nuevo.';
   static const loginSessionIncomplete =
-      'Sesión incompleta. Ingresá con usuario y contraseña.';
+      'No pudimos recuperar tu sesión. Verificá tu identidad para ingresar.';
+  static const loginReverifyIdentity =
+      'No hay sesión guardada. Verificá tu identidad para ingresar.';
   static const loginFirstTime =
-      'Primera vez: activá tu cuenta con el código de administración '
-      'o ingresá si ya elegiste contraseña.';
+      'Ingresá con tu identidad o creá tu cuenta desde la app.';
   static const wizardNoContextToken =
-      'El servidor no devolvió token de contexto operativo. '
-      'No se puede usar la app sin completar efector, servicio y área.';
+      'No pudimos completar la configuración de tu lugar de trabajo. Revisá el '
+      'centro, servicio y área seleccionados. Si el problema continúa, contactá a soporte.';
   static const wizardEffectorsNeedSetup =
       'Algunos efectores requieren configuración';
   static const wizardCreateConsultorioHint =
-      '¿Querés trabajar por tu cuenta? Para crear tu propio consultorio privado, presioná el botón.';
+      '¿Querés trabajar por tu cuenta? Creá tu consultorio privado desde aquí.';
   static const wizardCreateConsultorio = 'Crear mi consultorio';
   static const wizardCreateConsultorioSoon =
-      'El alta de consultorio desde la app estará disponible próximamente.';
+      'La creación de consultorios todavía no está disponible desde la app.';
   static const wizardChooseService = 'Elegí el servicio donde vas a trabajar.';
   static const wizardNoServices = 'No hay servicios disponibles';
   static const wizardChooseEncounterType =
       'Elegí el tipo de atención (ambulatorio, guardia, internación, etc.).';
   static const wizardNoAreas =
-      'Este efector no tiene áreas de atención habilitadas.';
+      'Este centro no tiene áreas de atención disponibles.';
   static const homeNoAreaMetadata =
-      'El servidor no devolvió metadata para el área operativa seleccionada.';
+      'No pudimos cargar la información de esta área. Intentá nuevamente.';
   static const homeAreaWithoutCapabilities =
-      'El área operativa seleccionada no tiene capacidades habilitadas.';
+      'Esta área no tiene funciones disponibles. Elegí otra área o contactá a administración.';
   static const sessionExpiredShort = 'Tu sesión expiró. Ingresá de nuevo.';
   static const homeNoGuardiaSchedule =
       'No tenés horario de guardia cargado. Para ver el tablero y atender, '
@@ -245,41 +263,42 @@ class AppTexts {
       'horarios en el Asistente («Configurar mis horarios») o pedile a coordinación / '
       'administración del centro que te los asigne.';
   static const homeNoHomeScreen =
-      'El área operativa no tiene una pantalla de inicio habilitada.';
+      'No hay una pantalla de inicio disponible para esta área. Elegí otra área o contactá a administración.';
   static const homeBedChange = 'Cambio de cama';
   static const homePendingTriage =
       'Pendiente de triage. Lo registra admisión o enfermería.';
   static const homeDoctorAttending =
       'El médico atiende el caso. Enfermería registra triage o una nota.';
   static const captureWriteEvolution = 'Escribí o dictá la evolución.';
-  static const captureWriteNote = 'Escriba o dicte la consulta.';
+  static const captureWriteNote = 'Escribí o dictá la consulta.';
   static const captureDictationEmpty =
       'No se obtuvo texto del dictado. El audio quedó guardado; escribí la consulta para continuar.';
   static const captureNothingToAnalyze = 'Sin texto para analizar.';
   static const captureSaveBlockedBySystemError =
-      'No se puede guardar: el análisis tiene errores de sistema.';
+      'No se pudo guardar porque ocurrió un problema al analizar la nota. Intentá nuevamente.';
   static const captureEditDuplicateNote =
       'Editá el texto: la nota es casi idéntica a una evolución previa del episodio.';
   static const captureResolveMissingData =
       'Completá los datos faltantes marcados antes de confirmar.';
   static const captureSavedIncomplete =
-      'Encounter guardado con datos incompletos.';
+      'La consulta se guardó con algunos datos incompletos.';
   static const captureSavedIncompleteTitle = 'Guardado incompleto';
   static const captureDefineParent =
-      'Defina contexto de consulta (parent) para captura con IA.';
+      'No encontramos la consulta asociada. Volvé a abrirla e intentá nuevamente.';
 
   static String timelineWeightKg(Object v) => '$timelineWeight: $v kg';
   static String timelineHeightCm(Object v) => '$timelineHeight: $v cm';
   static String timelineBmiValue(Object v) => '$timelineBmi: $v';
   static String timelineBloodPressureValue(Object v) =>
       '$timelineBloodPressure: $v';
-  static String timelineActionMethodUnsupported(Object method) =>
-      'Método no compatible para esta acción: $method';
-  static String dictationStartFailed(Object e) => 'No se pudo iniciar dictado: $e';
-  static String recordingFinishFailed(Object e) =>
-      'No se pudo finalizar la grabación: $e';
+  static String timelineActionMethodUnsupported(Object _) =>
+      'Esta opción no está disponible en este momento.';
+  static String dictationStartFailed(Object _) =>
+      'No se pudo iniciar el dictado. Intentá nuevamente o escribí la consulta.';
+  static String recordingFinishFailed(Object _) =>
+      'No se pudo finalizar la grabación. Intentá nuevamente.';
 
-  static const guardiaMissingPatient = 'Falta el paciente para el ingreso.';
+  static const guardiaMissingPatient = 'Seleccioná un paciente para continuar.';
   static const guardiaBedRequested = 'Solicitud de cama registrada';
   static const guardiaCaseAssigned = 'Caso asignado';
   static const guardiaReferralRegistered = 'Derivación registrada';
@@ -288,17 +307,18 @@ class AppTexts {
       'No tenés horario de guardia cargado. '
       'Para atender, configurá tus horarios en el Asistente («Configurar mis horarios») '
       'o pedile a coordinación / administración del centro que te los asigne. '
-      'Podés intentar igual, pero el servidor puede rechazar la asignación.';
+      'Podés intentar igual, pero tal vez no puedas asignar el caso.';
   static const guardiaTryAnyway = 'Intentar igual';
   static const guardiaReferTitle = 'Derivar paciente';
   static const guardiaReferAction = 'Derivar';
-  static const guardiaReferTargetLabel = 'Efector destino';
+  static const guardiaReferTargetLabel = 'Centro de salud de destino';
   static const guardiaReferReasonLabel = 'Condiciones / motivo';
   static const guardiaReferRequestBed = 'Solicitar internación (cama)';
 
-  static String errorWithDetail(Object error) => 'Error: $error';
-  static String guardiaLoadEffectorsFailed(Object error) =>
-      'Error al cargar efectores: $error';
-  static String guardiaReferFailed(Object error) =>
-      'No se pudo derivar: $error';
+  static String errorWithDetail(Object _) =>
+      'Ocurrió un problema. Intentá nuevamente.';
+  static String guardiaLoadEffectorsFailed(Object _) =>
+      'No pudimos cargar los centros de salud. Revisá tu conexión e intentá nuevamente.';
+  static String guardiaReferFailed(Object _) =>
+      'No se pudo derivar al paciente. Revisá los datos e intentá nuevamente.';
 }

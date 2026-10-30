@@ -56,8 +56,14 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
         _account = account;
         _submitting = false;
       });
-    } catch (e) {
-      _snack(e.toString().replaceFirst('Exception: ', ''));
+    } catch (error) {
+      final message = error.toString().replaceFirst('Exception: ', '');
+      _snack(
+        message == 'Verificación cancelada.'
+            ? 'Cancelaste la verificación.'
+            : 'No pudimos continuar con la creación de tu cuenta. Intentá nuevamente. '
+                  'Si el problema continúa, contactá a soporte.',
+      );
       if (mounted) setState(() => _submitting = false);
     }
   }
@@ -83,8 +89,8 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
 
       final account = _account ?? const <String, dynamic>{};
       final token = account['token']?.toString() ?? '';
-      final userId =
-          (account['id_user'] ?? account['id_persona'] ?? '').toString();
+      final userId = (account['id_user'] ?? account['id_persona'] ?? '')
+          .toString();
       final userName = account['email']?.toString().trim() ?? 'Usuario';
 
       final prefs = await SharedPreferences.getInstance();
@@ -94,8 +100,10 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
 
       if (!mounted) return;
       await navigatePersonalsaludAfterLogin(userId, userName, context);
-    } catch (e) {
-      _snack(e.toString().replaceFirst('Exception: ', ''));
+    } catch (_) {
+      _snack(
+        'No pudimos crear tu consultorio. Revisá los datos e intentá nuevamente.',
+      );
       if (mounted) setState(() => _submitting = false);
     }
   }
@@ -121,7 +129,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
               ),
               BioSpacing.gapH(BioSpacing.sm),
               Text(
-                'Verificamos tu identidad con Didit (documento + selfie) y, si trabajás por tu cuenta, creás tu consultorio privado.',
+                'Verificamos tu identidad con tu documento y una selfie; si trabajás por tu cuenta, creás tu consultorio privado.',
                 style: BioTypography.body.copyWith(color: tokens.textMuted),
                 textAlign: TextAlign.center,
               ),
@@ -171,10 +179,8 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                 ),
                 BioSpacing.gapH(BioSpacing.sm),
                 Text(
-                  'El cobro de esta demo es simulado (no se debita una tarjeta real).',
-                  style: BioTypography.bodySm.copyWith(
-                    color: tokens.textMuted,
-                  ),
+                  'No se realizará ningún cobro durante este paso.',
+                  style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
                   textAlign: TextAlign.center,
                 ),
               ],

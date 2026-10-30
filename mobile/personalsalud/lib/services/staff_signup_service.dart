@@ -9,16 +9,26 @@ const _diditVerificationTimeout = Duration(minutes: 10);
 
 /// Alta de cuenta de personal de salud: identidad (Didit) → cuenta → consultorio.
 class StaffSignupService {
-  /// Corre el KYC de Didit y devuelve el `verification_id` aprobado.
-  Future<String> verifyIdentity() async {
+  /// Corre una verificación de Didit y devuelve el `session_id` aprobado.
+  Future<String> runDiditVerification({required bool biometric}) async {
     if (!isDiditSupported) {
       throw Exception(diditUnsupportedPlatformMessage);
     }
-    final workflowId = await DiditConfigResolver.resolvePacienteKycWorkflowId();
+    final workflowId = biometric
+        ? await DiditConfigResolver.resolvePacienteBiometricWorkflowId()
+        : await DiditConfigResolver.resolvePacienteKycWorkflowId();
     if (workflowId == null) {
-      throw Exception('El alta no está configurada (workflow Didit).');
+      // Fallback: sin workflow biométrico configurado, usar el KYC.
+      final kyc = await DiditConfigResolver.resolvePacienteKycWorkflowId();
+      if (kyc == null) {
+        throw Exception('El alta no está configurada. Reintentá más tarde.');
+      }
+      return _startVerification(kyc);
     }
+    return _startVerification(workflowId);
+  }
 
+  Future<String> _startVerification(String workflowId) async {
     try {
       final result = await DiditSdk.startVerificationWithWorkflow(
         workflowId,
@@ -43,6 +53,20 @@ class StaffSignupService {
     } on TimeoutException {
       throw Exception('La verificación tardó demasiado. Intentá de nuevo.');
     }
+  }
+
+  /// Corre el KYC de Didit y devuelve el `verification_id` aprobado.
+  Future<String> verifyIdentity() => runDiditVerification(biometric: false);
+
+  /// Re-verifica identidad con Didit y hace login biométrico (dispositivo nuevo).
+  Future<Map<String, dynamic>> loginExisting() async {
+    final verificationId = await runDiditVerification(biometric: true);
+    return ApiClient(
+      appClient: 'bioenlace-personalsalud',
+      traceLabel: 'auth/login-biometrico',
+    ).postData('/auth/login-biometrico', body: {
+      'biometric_verification_id': verificationId,
+    });
   }
 
   /// Crea la cuenta de identidad (Persona + User passwordless).

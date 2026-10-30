@@ -7,6 +7,7 @@ import '../infra/app_texts.dart';
 import '../main.dart';
 import '../screens/main_screen.dart';
 import '../screens/staff_signup_screen.dart';
+import '../services/staff_signup_service.dart';
 import 'personalsalud_authenticated_shell.dart';
 import 'personalsalud_session_prefs.dart';
 
@@ -31,15 +32,12 @@ class PersonalsaludLoginScreen extends StatefulWidget {
 }
 
 class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
-  final _usernameCtrl = TextEditingController();
-  final _passwordCtrl = TextEditingController();
   final _biometricAuth = BiometricAuth();
 
   bool _checkingSession = true;
   bool _useBiometricLogin = false;
   bool _biometricAvailable = false;
   String _biometricType = '';
-  bool _obscurePassword = true;
   bool _submitting = false;
   bool _demoAvailable = false;
   List<DemoSandboxProfile> _demoProfiles = const [];
@@ -48,13 +46,6 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
   void initState() {
     super.initState();
     _bootstrap();
-  }
-
-  @override
-  void dispose() {
-    _usernameCtrl.dispose();
-    _passwordCtrl.dispose();
-    super.dispose();
   }
 
   Future<void> _bootstrap() async {
@@ -277,29 +268,22 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
     }
   }
 
-  Future<void> _submitCredentials() async {
+  Future<void> _loginExisting() async {
     if (_submitting) return;
-    final username = _usernameCtrl.text.trim();
-    final password = _passwordCtrl.text;
-    if (username.isEmpty || password.isEmpty) {
-      _snack(AppTexts.enterUserAndPassword, UiIntent.warning);
-      return;
-    }
-
     setState(() => _submitting = true);
     try {
-      final data = await StaffCredentialAuth.login(
-        username: username,
-        password: password,
-      );
-      final payload = data;
-      final user = payload['user'] is Map
-          ? Map<String, dynamic>.from(payload['user'] as Map)
+      final data = await StaffSignupService().loginExisting();
+      final user = data['user'] is Map
+          ? Map<String, dynamic>.from(data['user'] as Map)
           : <String, dynamic>{};
-      final persona = payload['persona'] is Map
-          ? Map<String, dynamic>.from(payload['persona'] as Map)
+      final persona = data['persona'] is Map
+          ? Map<String, dynamic>.from(data['persona'] as Map)
           : <String, dynamic>{};
-      final token = payload['token']?.toString();
+      final token = data['token']?.toString();
+
+      if (token == null || token.isEmpty) {
+        throw Exception('No se pudo iniciar sesión.');
+      }
 
       final userId = (user['id'] ?? persona['id_persona'] ?? '').toString();
       final userName =
@@ -354,7 +338,7 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
       final token = prefs.getString('auth_token');
       if (token == null || token.isEmpty) {
         setState(() => _useBiometricLogin = false);
-        _snack(AppTexts.reenterUserAndPassword, UiIntent.warning);
+        _snack(AppTexts.loginReverifyIdentity, UiIntent.warning);
         return;
       }
 
@@ -393,7 +377,7 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
     }
   }
 
-  Future<void> _switchToCredentials() async {
+  Future<void> _useAnotherAccount() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(
       PersonalsaludSessionPrefs.staffMobileLoginEstablishedKey,
@@ -403,7 +387,6 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
     if (!mounted) return;
     setState(() {
       _useBiometricLogin = false;
-      _passwordCtrl.clear();
     });
   }
 
@@ -454,14 +437,12 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
                   ),
                   BioSpacing.gapH(BioSpacing.md),
                   BioButton.softPrimary(
-                    label: 'Usar otro usuario',
+                    label: 'Usar otra cuenta',
                     icon: Icons.switch_account,
                     fullWidth: true,
-                    onPressed: _submitting ? null : _switchToCredentials,
+                    onPressed: _submitting ? null : _useAnotherAccount,
                   ),
                   BioSpacing.gapH(BioSpacing.lg),
-                  const InstitutionalSignupLink(),
-                  BioSpacing.gapH(BioSpacing.sm),
                   const PrivacyPolicyLink(),
                   if (_demoAvailable) ...[
                     BioSpacing.gapH(BioSpacing.md),
@@ -499,43 +480,13 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
                   textAlign: TextAlign.center,
                 ),
                 BioSpacing.gapH(BioSpacing.xxl),
-                TextField(
-                  controller: _usernameCtrl,
-                  decoration: const InputDecoration(labelText: 'Usuario'),
-                  textInputAction: TextInputAction.next,
-                  autocorrect: false,
-                  enabled: !_submitting,
-                ),
-                BioSpacing.gapH(BioSpacing.md),
-                TextField(
-                  controller: _passwordCtrl,
-                  decoration: InputDecoration(
-                    labelText: 'Contraseña',
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                      ),
-                      onPressed: _submitting
-                          ? null
-                          : () => setState(
-                              () => _obscurePassword = !_obscurePassword,
-                            ),
-                    ),
-                  ),
-                  obscureText: _obscurePassword,
-                  onSubmitted: (_) => _submitCredentials(),
-                  enabled: !_submitting,
-                ),
-                BioSpacing.gapH(BioSpacing.lg),
                 BioButton.primary(
-                  label: _submitting ? 'Ingresando…' : 'Ingresar',
-                  icon: Icons.login,
+                  label: _submitting ? 'Ingresando…' : 'Ingresar con identidad',
+                  icon: Icons.fingerprint,
                   size: BioButtonSize.lg,
                   fullWidth: true,
                   loading: _submitting,
-                  onPressed: _submitting ? null : _submitCredentials,
+                  onPressed: _submitting ? null : _loginExisting,
                 ),
                 BioSpacing.gapH(BioSpacing.md),
                 BioButton.softPrimary(
@@ -553,8 +504,6 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
                         },
                 ),
                 BioSpacing.gapH(BioSpacing.lg),
-                const InstitutionalSignupLink(),
-                BioSpacing.gapH(BioSpacing.sm),
                 const PrivacyPolicyLink(),
                 if (_demoAvailable) ...[
                   BioSpacing.gapH(BioSpacing.md),

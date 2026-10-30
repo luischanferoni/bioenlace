@@ -17,6 +17,7 @@ export 'assistant/flow_licencia_impact.dart';
 export 'auth/staff_credential_auth.dart';
 export 'auth/demo_sandbox_staff_auth.dart';
 export 'auth/staff_session_auth.dart';
+export 'auth/auth_token_store.dart';
 export 'auth/staff_account_activation.dart';
 export 'auth/biometric_auth.dart';
 export 'auth/biometric_session_prefs.dart';

@@ -232,7 +232,7 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
         sessionConfig.idProfesionalEfectorServicio,
       );
       await prefs.setBool('config_completed', true);
-      await prefs.setString('auth_token', sessionToken);
+      await AuthTokenStore.instance.write(sessionToken);
 
       if (mounted) {
         navigatorKey.currentState?.pushReplacement(

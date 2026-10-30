@@ -55,13 +55,14 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
           PersonalsaludSessionPrefs.staffMobileLoginEstablishedKey,
         ) ??
         false;
-    var hasToken = (prefs.getString('auth_token') ?? '').isNotEmpty;
+    var authToken = await AuthTokenStore.instance.read();
+    var hasToken = (authToken ?? '').isNotEmpty;
     final bioAvailable = await _biometricAuth.isAvailable();
     final bioType = await _biometricAuth.getBiometricType();
 
     if (hasToken) {
       final check = await BearerSessionAuth.checkBearerToken(
-        prefs.getString('auth_token')!,
+        authToken!,
       );
       if (check == BearerSessionCheckResult.invalid) {
         await PersonalsaludSessionPrefs.clearInvalidAuthSession();
@@ -112,7 +113,7 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
     await prefs.setString('user_id', userId);
     await prefs.setString('user_name', userName);
     if (token != null && token.isNotEmpty) {
-      await prefs.setString('auth_token', token);
+    await AuthTokenStore.instance.write(token);
     }
     if (markEstablished) {
       await prefs.setBool(
@@ -335,7 +336,7 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
       }
 
       final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('auth_token');
+      final token = await AuthTokenStore.instance.read();
       if (token == null || token.isEmpty) {
         setState(() => _useBiometricLogin = false);
         _snack(AppTexts.loginReverifyIdentity, UiIntent.warning);
@@ -382,7 +383,7 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
     await prefs.remove(
       PersonalsaludSessionPrefs.staffMobileLoginEstablishedKey,
     );
-    await prefs.remove('auth_token');
+    await AuthTokenStore.instance.delete();
     await prefs.setBool('is_logged_in', false);
     if (!mounted) return;
     setState(() {

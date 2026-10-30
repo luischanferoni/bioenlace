@@ -21,7 +21,7 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 Future<Map<String, dynamic>> _getUserData() async {
   try {
     final prefs = await SharedPreferences.getInstance();
-    final authToken = prefs.getString('auth_token');
+    final authToken = await AuthTokenStore.instance.read();
     
     // Contexto PES (profesional_efector_servicio) persistido tras el wizard.
     String idProfesionalEfectorServicio = '0';
@@ -34,7 +34,6 @@ Future<Map<String, dynamic>> _getUserData() async {
     final configCompleted = (prefs.getBool('config_completed') ?? false) &&
         ((prefs.getString('encounter_class') ?? '').isNotEmpty);
     
-    print('[DEBUG] _getUserData() - authToken: ${authToken != null ? "${authToken.substring(0, authToken.length > 20 ? 20 : authToken.length)}..." : "null"}');
     print('[DEBUG] _getUserData() - idProfesionalEfectorServicio: $idProfesionalEfectorServicio');
     print('[DEBUG] _getUserData() - configCompleted: $configCompleted');
     
@@ -75,7 +74,7 @@ void main() {
       userName = prefs.getString('user_name') ?? 'Usuario';
 
       if (isLoggedIn) {
-        final token = prefs.getString('auth_token')!;
+        final token = (await AuthTokenStore.instance.read())!;
         final check = await BearerSessionAuth.checkBearerToken(token);
         if (check == BearerSessionCheckResult.invalid) {
           await PersonalsaludSessionPrefs.clearInvalidAuthSession();

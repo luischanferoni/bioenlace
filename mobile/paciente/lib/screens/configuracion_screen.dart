@@ -275,7 +275,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
     await prefs.setBool('is_logged_in', false);
     await prefs.remove('user_id');
     await prefs.remove('user_name');
-    await prefs.remove('auth_token');
+    await AuthTokenStore.instance.delete();
     DiditConfigResolver.clearCache();
     await BiometricSessionPrefs.clearOnLogout();
     await PersonRepresentationContext.instance.clearOnLogout();

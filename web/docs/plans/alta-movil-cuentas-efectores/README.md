@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|--------|
 | Slug | `alta-movil-cuentas-efectores` |
-| Estado | En ejecución — Fase 1 implementada; Fases 2, 4 y 6 parciales; checkout y passkeys pendientes |
+| Estado | En ejecución — Fase 1 implementada; Fases 2 y 4 parciales; Fase 6 parcial (JWT móvil seguro y backups Android deshabilitados); checkout y passkeys pendientes |
 | Dueño | Producto / Identidad / Organización / Mobile |
 | Corte de compatibilidad | Sin flujos legacy; migrar las cuentas y relaciones existentes |
 

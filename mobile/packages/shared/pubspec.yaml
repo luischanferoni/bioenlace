@@ -23,6 +23,7 @@ dependencies:
   firebase_core: ^4.13.0
   firebase_crashlytics: ^5.2.7
   permission_handler: ^13.0.1
+  flutter_secure_storage: ^11.2.0
 
 dev_dependencies:
   flutter_test:

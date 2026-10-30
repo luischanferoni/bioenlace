@@ -1,5 +1,4 @@
-import 'package:shared_preferences/shared_preferences.dart';
-
+import '../auth/auth_token_store.dart';
 import '../http/api_client.dart';
 
 /// Estado del recorrido pre/post consulta (`GET /api/v1/encounter-journey/estado`).
@@ -16,8 +15,7 @@ class EncounterJourneyApi {
     if (authToken != null && authToken!.isNotEmpty) {
       return authToken;
     }
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('auth_token');
+    return AuthTokenStore.instance.read();
   }
 
   /// Devuelve null sin token o ante cualquier fallo (el recorrido es opcional).

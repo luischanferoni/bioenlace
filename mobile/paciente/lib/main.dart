@@ -27,7 +27,7 @@ void main() {
     var isLoggedIn = await PacienteSessionPrefs.hasRestorableSession();
     var userId = prefs.getString('user_id') ?? '';
     var userName = prefs.getString('user_name') ?? '';
-    var authToken = prefs.getString('auth_token');
+    var authToken = await AuthTokenStore.instance.read();
 
     if (isLoggedIn && authToken != null && authToken.isNotEmpty) {
       // Renovación preventiva si el JWT está cerca de expirar.

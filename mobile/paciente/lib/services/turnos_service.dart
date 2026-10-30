@@ -1,5 +1,4 @@
 import 'package:shared/shared.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 /// Servicio para obtener "Mis turnos" del paciente y el encounter asociado.
 class TurnosService {
@@ -11,8 +10,7 @@ class TurnosService {
   Future<ApiClient> _api() async {
     var token = authToken;
     if (token == null || token.isEmpty) {
-      final prefs = await SharedPreferences.getInstance();
-      token = prefs.getString('auth_token');
+      token = await AuthTokenStore.instance.read();
     }
     return ApiClient(authToken: token, appClient: 'paciente-flutter');
   }

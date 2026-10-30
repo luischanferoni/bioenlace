@@ -4,7 +4,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared/shared.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../firebase/firebase_bootstrap.dart';
 import 'push_receipt_queue.dart';
@@ -41,9 +40,7 @@ class PushNotificationService {
     }
 
     try {
-      FirebaseMessaging.onBackgroundMessage(
-        firebaseMessagingBackgroundHandler,
-      );
+      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
       await _requestNotificationPermissions();
 
@@ -99,11 +96,7 @@ class PushNotificationService {
       }
     }
     final messaging = FirebaseMessaging.instance;
-    await messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    await messaging.requestPermission(alert: true, badge: true, sound: true);
   }
 
   void _dispatchOpen(Map<String, dynamic> data) {
@@ -124,19 +117,20 @@ class PushNotificationService {
     }
   }
 
-  Future<void> registerTokenWithApi(String pushToken, {String? authToken}) async {
+  Future<void> registerTokenWithApi(
+    String pushToken, {
+    String? authToken,
+  }) async {
     if (pushToken.trim().isEmpty) {
       return;
     }
-    final prefs = await SharedPreferences.getInstance();
-    final token = authToken ?? prefs.getString('auth_token');
+    final token = authToken ?? await AuthTokenStore.instance.read();
     if (token == null || token.isEmpty) {
       return;
     }
     try {
-      final platform = Platform.isAndroid
-          ? 'android'
-          : (Platform.isIOS ? 'ios' : 'unknown');
+      final platform =
+          Platform.isAndroid ? 'android' : (Platform.isIOS ? 'ios' : 'unknown');
       await ApiClient(
         authToken: token,
         appClient: 'paciente-flutter',
@@ -163,9 +157,10 @@ class PushNotificationService {
       return;
     }
     final messageId = (message.messageId ?? '').trim();
-    final clientEventId = messageId.isNotEmpty
-        ? 'delivered:$messageId'
-        : 'delivered:$ref:$source';
+    final clientEventId =
+        messageId.isNotEmpty
+            ? 'delivered:$messageId'
+            : 'delivered:$ref:$source';
     await PushReceiptQueue.enqueue(
       notificationRef: ref,
       interactionType: 'DELIVERED',
@@ -184,9 +179,8 @@ class PushNotificationService {
       return;
     }
     final messageId = (message.messageId ?? '').trim();
-    final clientEventId = messageId.isNotEmpty
-        ? 'opened:$messageId'
-        : 'opened:$ref:$source';
+    final clientEventId =
+        messageId.isNotEmpty ? 'opened:$messageId' : 'opened:$ref:$source';
     await PushReceiptQueue.enqueue(
       notificationRef: ref,
       interactionType: 'OPENED',
@@ -238,14 +232,18 @@ class PushNotificationService {
   }
 
   /// Payload de confirmación de asistencia desde push/bandeja.
-  static Map<String, dynamic>? confirmacionDesdeData(Map<String, dynamic> data) {
+  static Map<String, dynamic>? confirmacionDesdeData(
+    Map<String, dynamic> data,
+  ) {
     final type = data['type']?.toString() ?? '';
     final action = data['action']?.toString() ?? '';
-    final isConfirm = type == 'TURNO_CONFIRMAR' || action == 'confirmar_asistencia';
+    final isConfirm =
+        type == 'TURNO_CONFIRMAR' || action == 'confirmar_asistencia';
     if (!isConfirm) {
       return null;
     }
-    final idTurnoRaw = data['id_turno']?.toString() ?? data['id']?.toString() ?? '';
+    final idTurnoRaw =
+        data['id_turno']?.toString() ?? data['id']?.toString() ?? '';
     final idTurno = int.tryParse(idTurnoRaw);
     if (idTurno == null || idTurno <= 0) {
       return null;
@@ -254,12 +252,15 @@ class PushNotificationService {
       'id_turno': idTurno,
       'token': data['token']?.toString(),
       'notification_ref': data['notification_ref']?.toString(),
-      'action_label': data['action_label']?.toString() ?? 'Confirmar asistencia',
+      'action_label':
+          data['action_label']?.toString() ?? 'Confirmar asistencia',
     };
   }
 
   /// Payload de oferta de adelantamiento desde push/bandeja.
-  static Map<String, dynamic>? adelantamientoDesdeData(Map<String, dynamic> data) {
+  static Map<String, dynamic>? adelantamientoDesdeData(
+    Map<String, dynamic> data,
+  ) {
     final type = data['type']?.toString() ?? '';
     final action = data['action']?.toString() ?? '';
     final isAdvance =

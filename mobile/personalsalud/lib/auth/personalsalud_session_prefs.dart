@@ -13,7 +13,6 @@ abstract final class PersonalsaludSessionPrefs {
       'staff_biometric_enrollment_declined';
 
   static const operationalKeys = [
-    'auth_token',
     'config_completed',
     'encounter_class',
     'encounter_class_label',
@@ -36,6 +35,7 @@ abstract final class PersonalsaludSessionPrefs {
     await prefs.remove(staffMobileLoginEstablishedKey);
     await prefs.remove(staffBiometricEnrollmentDeclinedKey);
     await prefs.remove(demoSandboxActiveKey);
+    await AuthTokenStore.instance.delete();
     for (final key in operationalKeys) {
       await prefs.remove(key);
     }
@@ -47,8 +47,10 @@ abstract final class PersonalsaludSessionPrefs {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('config_completed', false);
     for (final key in operationalKeys) {
-      if (keepAuthToken && key == 'auth_token') continue;
       await prefs.remove(key);
+    }
+    if (!keepAuthToken) {
+      await AuthTokenStore.instance.delete();
     }
   }
 
@@ -57,7 +59,7 @@ abstract final class PersonalsaludSessionPrefs {
     if (!(prefs.getBool('is_logged_in') ?? false)) {
       return false;
     }
-    final token = (prefs.getString('auth_token') ?? '').trim();
+    final token = (await AuthTokenStore.instance.read() ?? '').trim();
     final userId = (prefs.getString('user_id') ?? '').trim();
     return token.isNotEmpty && userId.isNotEmpty;
   }
@@ -68,7 +70,7 @@ abstract final class PersonalsaludSessionPrefs {
     if (!(prefs.getBool('is_logged_in') ?? false)) {
       return;
     }
-    final token = (prefs.getString('auth_token') ?? '').trim();
+    final token = (await AuthTokenStore.instance.read() ?? '').trim();
     if (token.isNotEmpty) {
       return;
     }
@@ -85,6 +87,7 @@ abstract final class PersonalsaludSessionPrefs {
     for (final key in operationalKeys) {
       await prefs.remove(key);
     }
+    await AuthTokenStore.instance.delete();
     ClientDiagnosticApi.bindSession(
       authToken: null,
       appClient: 'bioenlace-personalsalud',
@@ -95,6 +98,6 @@ abstract final class PersonalsaludSessionPrefs {
     final prefs = await SharedPreferences.getInstance();
     return (prefs.getBool('config_completed') ?? false) &&
         (prefs.getString('encounter_class') ?? '').isNotEmpty &&
-        (prefs.getString('auth_token') ?? '').isNotEmpty;
+        (await AuthTokenStore.instance.read() ?? '').isNotEmpty;
   }
 }

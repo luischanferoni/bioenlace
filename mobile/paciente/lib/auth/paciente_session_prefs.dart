@@ -8,7 +8,7 @@ abstract final class PacienteSessionPrefs {
     if (!(prefs.getBool('is_logged_in') ?? false)) {
       return false;
     }
-    final token = (prefs.getString('auth_token') ?? '').trim();
+    final token = (await AuthTokenStore.instance.read() ?? '').trim();
     final userId = (prefs.getString('user_id') ?? '').trim();
     return token.isNotEmpty && userId.isNotEmpty;
   }
@@ -19,7 +19,7 @@ abstract final class PacienteSessionPrefs {
     if (!(prefs.getBool('is_logged_in') ?? false)) {
       return;
     }
-    final token = (prefs.getString('auth_token') ?? '').trim();
+    final token = (await AuthTokenStore.instance.read() ?? '').trim();
     if (token.isNotEmpty) {
       return;
     }
@@ -32,7 +32,7 @@ abstract final class PacienteSessionPrefs {
     await prefs.setBool('is_logged_in', false);
     await prefs.remove('user_id');
     await prefs.remove('user_name');
-    await prefs.remove('auth_token');
+    await AuthTokenStore.instance.delete();
     ClientDiagnosticApi.bindSession(
       authToken: null,
       appClient: BearerSessionAuth.appClientPaciente,

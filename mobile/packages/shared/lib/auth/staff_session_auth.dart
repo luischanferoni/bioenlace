@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'auth_token_store.dart';
 import '../config/api_config.dart';
 import '../http/api_contract.dart';
 
@@ -203,8 +204,12 @@ abstract final class BearerSessionAuth {
     if (next == null || next.isEmpty) {
       return bearer;
     }
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(prefsKey, next);
+    if (prefsKey == AuthTokenStore.tokenKey) {
+      await AuthTokenStore.instance.write(next);
+    } else {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(prefsKey, next);
+    }
     return next;
   }
 }

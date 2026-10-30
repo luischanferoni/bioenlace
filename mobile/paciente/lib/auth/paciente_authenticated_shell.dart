@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'paciente_session_prefs.dart';
 
@@ -53,8 +52,7 @@ class _PacienteJwtKeepAliveState extends State<_PacienteJwtKeepAlive>
   }
 
   Future<void> _refreshIfNeeded() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = (prefs.getString('auth_token') ?? '').trim();
+    final token = (await AuthTokenStore.instance.read() ?? '').trim();
     if (token.isEmpty) return;
     final next = await BearerSessionAuth.ensureFreshBearerToken(
       token,

@@ -15,6 +15,9 @@ Desplegar el modelo nuevo sin rutas antiguas y sin perder las relaciones/activos
 - [x] Retirar login y autenticación móvil para AdminEfector y roles no aprobados; también se filtran tokens emitidos antes del cambio cuando se usan desde Personal de Salud.
 - [x] Retirar el alta institucional con pago simulado; `POST /api/v1/licencia/registrar-efector` responde `410 Gone` hasta contar con checkout real.
 - [x] No provisionar licencias/roles por pagos simulados en producción.
+- [x] Migrar los JWT de ambas apps móviles desde `SharedPreferences` al almacenamiento seguro de la plataforma, eliminando la copia en texto plano al migrar o leer la sesión.
+- [x] Deshabilitar los backups automáticos de Android en ambas apps para evitar restaurar datos cifrados sin sus claves del dispositivo.
+- [ ] Definir/verificar revocación server-side de sesiones/JWT; el almacenamiento seguro local no la reemplaza.
 - [ ] Añadir QA para identidad sin efector, incorporación, REFEPS, ambos checkout, passkey, QR y recuperación.
 - [ ] Confirmar observabilidad, límites de abuso y runbook de soporte.
 

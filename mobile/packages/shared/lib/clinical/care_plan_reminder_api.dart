@@ -1,6 +1,5 @@
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
-
+import '../auth/auth_token_store.dart';
 import '../http/api_client.dart';
 import '../http/api_contract.dart';
 
@@ -17,8 +16,7 @@ class CarePlanReminderApi {
   Future<ApiClient> _api() async {
     var token = authToken;
     if (token == null || token.isEmpty) {
-      final prefs = await SharedPreferences.getInstance();
-      token = prefs.getString('auth_token');
+      token = await AuthTokenStore.instance.read();
     }
     return ApiClient(authToken: token, appClient: 'paciente-flutter', client: httpClient);
   }

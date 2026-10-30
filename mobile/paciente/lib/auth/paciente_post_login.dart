@@ -212,7 +212,7 @@ Future<bool> enterPacienteAuthenticatedApp({
   await prefs.setString('user_id', userId);
   await prefs.setString('user_name', userName);
   if (authToken != null && authToken.isNotEmpty) {
-    await prefs.setString('auth_token', authToken);
+    await AuthTokenStore.instance.write(authToken);
     PacienteContextScope.instance.bindAuthToken(authToken);
   }
   if (pacienteContexto != null) {
@@ -220,12 +220,12 @@ Future<bool> enterPacienteAuthenticatedApp({
   }
   await CrashlyticsBootstrap.setUserId(userId);
   ClientDiagnosticApi.bindSession(
-    authToken: authToken ?? prefs.getString('auth_token'),
+    authToken: authToken ?? await AuthTokenStore.instance.read(),
     appClient: BearerSessionAuth.appClientPaciente,
   );
   await BiometricSessionPrefs.touchActivity();
 
-  final token = authToken ?? prefs.getString('auth_token');
+  final token = authToken ?? await AuthTokenStore.instance.read();
   final chatService = ChatService(
     currentUserId: userId,
     currentUserName: userName,
@@ -259,9 +259,8 @@ Future<void> navigatePacienteAfterLogin(
   String userName,
   BuildContext loginContext,
 ) async {
-  final prefs = await SharedPreferences.getInstance();
   // LoginScreen ya pudo persistir token; reutilizarlo.
-  final token = prefs.getString('auth_token');
+  final token = await AuthTokenStore.instance.read();
 
   await enterPacienteAuthenticatedApp(
     userId: userId,
@@ -304,8 +303,7 @@ Future<void> returnPacienteToLogin({String? message}) async {
 }
 
 Future<bool> validatePacienteBearerOnUnlock() async {
-  final prefs = await SharedPreferences.getInstance();
-  final token = (prefs.getString('auth_token') ?? '').trim();
+  final token = (await AuthTokenStore.instance.read() ?? '').trim();
   // Solo presencia local del JWT. No llamar a /auth/yo acá: un 4xx/parse
   // transitorio disparaba clearInvalidAuthSession y perdía el token.
   return token.isNotEmpty;

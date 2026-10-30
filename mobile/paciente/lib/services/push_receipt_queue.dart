@@ -50,7 +50,8 @@ class PushReceiptQueue {
 
   static Future<void> flush({String? authToken}) async {
     final prefs = await SharedPreferences.getInstance();
-    final token = (authToken ?? prefs.getString('auth_token') ?? '').trim();
+    final token =
+        (authToken ?? await AuthTokenStore.instance.read() ?? '').trim();
     if (token.isEmpty) {
       return;
     }

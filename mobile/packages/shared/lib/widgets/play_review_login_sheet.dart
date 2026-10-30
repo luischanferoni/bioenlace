@@ -4,6 +4,7 @@ import '../text/shared_texts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../auth/play_review_auth.dart';
+import '../auth/auth_token_store.dart';
 import '../theme/tokens/tokens.dart';
 import '../ui/ui.dart';
 
@@ -93,7 +94,7 @@ class _PlayReviewLoginSheetState extends State<PlayReviewLoginSheet> {
         await prefs.setString('dni_detected', persona['documento'].toString());
       }
       if (token != null && token.isNotEmpty) {
-        await prefs.setString('auth_token', token);
+        await AuthTokenStore.instance.write(token);
       }
 
       if (!mounted) return;

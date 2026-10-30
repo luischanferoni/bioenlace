@@ -132,7 +132,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
         'encounter_class_label',
         sessionConfig.encounterClass.label,
       );
-      await prefs.setString('auth_token', sessionToken);
+      await AuthTokenStore.instance.write(sessionToken);
       _configService.authToken = sessionToken;
       if (mounted) {
         setState(() {

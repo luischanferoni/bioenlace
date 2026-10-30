@@ -74,7 +74,7 @@ class _PacienteDebugJwtLoginButtonState
         await prefs.setString('dni_detected', persona['documento'].toString());
       }
       if (token.isNotEmpty) {
-        await prefs.setString('auth_token', token);
+        await AuthTokenStore.instance.write(token);
       }
       // Evita el enrolamiento biométrico obligatorio en el atajo de debug.
       await BiometricSessionPrefs.setUnlockEnabled(true);

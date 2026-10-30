@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:didit_sdk/sdk_flutter.dart';
 
+import '../auth/auth_token_store.dart';
 import '../auth/biometric_auth.dart';
 import '../auth/biometric_session_prefs.dart';
 import '../auth/staff_session_auth.dart';
@@ -161,7 +162,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (localResult['success'] == true) {
           final prefs = await SharedPreferences.getInstance();
-          final token = (prefs.getString('auth_token') ?? '').trim();
+          final token = (await AuthTokenStore.instance.read() ?? '').trim();
           if (token.isEmpty) {
             const message = 'Volvé a ingresar con tu cuenta.';
             _snack(message, UiIntent.warning);
@@ -174,7 +175,7 @@ class _LoginScreenState extends State<LoginScreen> {
           );
           if (sessionCheck == BearerSessionCheckResult.invalid) {
             await prefs.setBool('is_logged_in', false);
-            await prefs.remove('auth_token');
+            await AuthTokenStore.instance.delete();
             const message = 'Tu sesión expiró. Ingresá de nuevo.';
             _snack(message, UiIntent.warning);
             return;
@@ -289,7 +290,7 @@ class _LoginScreenState extends State<LoginScreen> {
           );
 
           await prefs.setBool('is_logged_in', true);
-          await prefs.setString('auth_token', token);
+          await AuthTokenStore.instance.write(token);
           await prefs.setString('user_id', userId);
           await prefs.setString('user_name', userName);
           if (userName.isNotEmpty) {

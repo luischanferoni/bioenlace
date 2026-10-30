@@ -5,7 +5,6 @@ import '../utils/app_texts.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -1083,9 +1082,7 @@ class ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _initializeService() async {
-    // Cargar token desde SharedPreferences
-    final prefs = await SharedPreferences.getInstance();
-    final authToken = prefs.getString('auth_token');
+    final authToken = await AuthTokenStore.instance.read();
     
     // Inicializar servicio con el userId y token
     _asistenteService = AsistenteService(

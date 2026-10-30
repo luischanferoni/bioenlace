@@ -148,7 +148,7 @@ Future<void> navigatePersonalsaludAfterLogin(
   BuildContext loginContext,
 ) async {
   final prefs = await SharedPreferences.getInstance();
-  final loginToken = prefs.getString('auth_token');
+  final loginToken = await AuthTokenStore.instance.read();
 
   await PersonalsaludSessionPrefs.clearOperationalContext(keepAuthToken: true);
   await prefs.setBool('is_logged_in', true);
@@ -156,7 +156,7 @@ Future<void> navigatePersonalsaludAfterLogin(
   await prefs.setString('user_name', userName);
   await CrashlyticsBootstrap.setUserId(userId);
   if (loginToken != null && loginToken.isNotEmpty) {
-    await prefs.setString('auth_token', loginToken);
+    await AuthTokenStore.instance.write(loginToken);
   }
 
   if (!loginContext.mounted) return;
@@ -204,11 +204,10 @@ Future<void> recoverPersonalsaludOperationalSession({
   required String userName,
   String? authToken,
 }) async {
-  final prefs = await SharedPreferences.getInstance();
-  final token = authToken ?? prefs.getString('auth_token');
+  final token = authToken ?? await AuthTokenStore.instance.read();
   await PersonalsaludSessionPrefs.clearOperationalContext(keepAuthToken: true);
   if (token != null && token.isNotEmpty) {
-    await prefs.setString('auth_token', token);
+    await AuthTokenStore.instance.write(token);
   }
   openPersonalsaludSessionWizard(
     userId: userId,

@@ -35,9 +35,7 @@ class PushNotificationService {
     }
 
     try {
-      FirebaseMessaging.onBackgroundMessage(
-        firebaseMessagingBackgroundHandler,
-      );
+      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
       await _requestPermissions();
       final messaging = FirebaseMessaging.instance;
 
@@ -104,7 +102,10 @@ class PushNotificationService {
     }
   }
 
-  Future<void> registerTokenWithApi(String pushToken, {String? authToken}) async {
+  Future<void> registerTokenWithApi(
+    String pushToken, {
+    String? authToken,
+  }) async {
     if (pushToken.trim().isEmpty) return;
     final prefs = await SharedPreferences.getInstance();
     var deviceId = prefs.getString('device_id');
@@ -112,15 +113,17 @@ class PushNotificationService {
       deviceId = 'med-${DateTime.now().millisecondsSinceEpoch}';
       await prefs.setString('device_id', deviceId);
     }
-    final token = authToken ?? prefs.getString('auth_token');
+    final token = authToken ?? await AuthTokenStore.instance.read();
     if (token == null || token.isEmpty) return;
 
     try {
       final platform = Platform.isAndroid
           ? 'android'
           : (Platform.isIOS ? 'ios' : 'unknown');
-      await ApiClient(authToken: token, appClient: 'personalsalud-flutter')
-          .postData(
+      await ApiClient(
+        authToken: token,
+        appClient: 'personalsalud-flutter',
+      ).postData(
         '/devices/push-token',
         body: {
           'device_id': deviceId,

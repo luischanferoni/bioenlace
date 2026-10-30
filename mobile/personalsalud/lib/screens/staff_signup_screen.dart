@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../auth/personalsalud_post_login.dart';
 import '../services/staff_signup_service.dart';
@@ -49,8 +48,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
           .trim();
       if (token.isEmpty || userId.isEmpty) return;
 
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('auth_token', token);
+      await AuthTokenStore.instance.write(token);
       if (!mounted) return;
       await navigatePersonalsaludAfterLogin(
         userId,

@@ -118,9 +118,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadAuthToken() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      // Tras el wizard, prefs tiene el context_token con encounter_class en el JWT.
-      final token = prefs.getString('auth_token');
+      // Tras el wizard, el token seguro conserva el encounter_class del JWT.
+      final token = await AuthTokenStore.instance.read();
       if (token != null && token.isNotEmpty) {
         _homePanelApi.authToken = token;
         _emergencyApi.authToken = token;

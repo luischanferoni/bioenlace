@@ -8,7 +8,7 @@ Sitio institucional estático para presentar Bioenlace: asistente conversacional
 institucional/
 ├── index.html
 ├── precios.html           # Planes: qué incluye + calculadora
-├── alta.html              # Wizard self-service clínica / consultorio / ministerio
+├── alta.html              # Crear cuenta desde la app (descarga + contacto ministerio)
 ├── privacidad.html        # Política de privacidad (apps móviles)
 ├── css/
 │   ├── styles.css
@@ -21,7 +21,6 @@ institucional/
 │   ├── pricing-core.js
 │   ├── pricing-calculator.js
 │   ├── pricing-config.json   # Mantener alineado con pricing-pes-by-encounter-class.yaml
-│   ├── signup.js
 │   └── api-config.json
 ├── images/
 │   ├── logo.svg
@@ -40,19 +39,17 @@ institucional/
 5. **Funcionalidades** — Catálogo por audiencia
 6. **Precios** — Teaser en el index; detalle + calculadora en [`precios.html`](precios.html) (qué incluye / no incluye por clase AMB·EMER·IMP)
 7. **Contacto** — Formulario e información
-8. **Alta** (`alta.html`) — Wizard self-service clínica / consultorio (pago simulado) y solicitud ministerio; deep-link `?perfil=consultorio`
+8. **Alta** (`alta.html`) — Crear cuenta desde la app Personal de Salud (descarga + verificación con Didit) y contacto para ministerio
 
 ## Demo sandbox (`js/demo-access.js`)
 
 CTA **Probar demo como médico** (sección personal de salud) → modal con captcha → `POST /api/v1/licencia/demo-acceso` → redirect a `enter_url` (app `/site/demo-entrar`). Al entrar se provisiona un médico efímero + seed en el efector plantilla. Requiere `demo_sandbox_habilitado` en params del frontend. Captcha: `GET /licencia/demo-captcha`. Doc: [alta-cuenta-licencia.md](../web/docs/producto/alta-cuenta-licencia.md).
 
-## Alta de cuenta (`alta.html` + `js/signup.js`)
+## Alta de cuenta (`alta.html`)
 
-Configurar `js/api-config.json`: en **bioenlace.io** usa `apiBaseUrl` / `loginUrl` (`https://app.bioenlace.io/...`); en **localhost** usa `apiBaseUrlLocal` / `loginUrlLocal`. El JS elige según `hostname`.  
-Tabs: clínica (privado/público; plan AMB/EMER/IMP opcionales, al menos uno), consultorio **solo privado**, **solo ambulatorio × 1 profesional** (unipersonal), ministerio. Tras el alta se muestran `next_steps` (guía para asignarse a un servicio clínico).  
-Doc producto: [alta-cuenta-licencia.md](../web/docs/producto/alta-cuenta-licencia.md).
+El alta web self-service fue retirada: `alta.html` ahora redirige a descargar la app **Personal de Salud** (donde se verifica la identidad con Didit y se crea la cuenta) y, para ministerios, al contacto. El plan de trabajo está en [onboarding-mobile-didit](../web/docs/plans/onboarding-mobile-didit/README.md).
 
-El CTA del calculador (`Crear cuenta` → `alta.html`) guarda la selección en `sessionStorage` (`bioenlace_pricing_selection`) para prellenar el plan del alta.
+El CTA del calculador (`precios.html`) ya no pre-carga el plan en un formulario de alta; el alta se completa desde la app.
 
 ## Calculador (`js/pricing-core.js` + `js/pricing-calculator.js`)
 

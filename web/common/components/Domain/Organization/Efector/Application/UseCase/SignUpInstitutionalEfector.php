@@ -11,6 +11,7 @@ use common\models\Geo\Localidad;
 use common\models\Person\Persona;
 use common\models\Platform\User;
 use common\components\Domain\Organization\Pes\Application\UseCase\EnsureAdminEfectorAssignment;
+use common\components\Domain\Organization\Efector\Application\Service\ContactPhoneValidator;
 use common\components\Platform\Core\Product\PricingPesByEncounterClassMetadata;
 use Yii;
 
@@ -297,6 +298,7 @@ final class SignUpInstitutionalEfector
         $password = (string) ($admin['password'] ?? '');
         $documento = preg_replace('/\D+/', '', (string) ($admin['documento'] ?? '')) ?? '';
         $telefono = trim((string) ($admin['telefono'] ?? ''));
+        ContactPhoneValidator::assertValid($telefono, 'Teléfono del administrador');
         $fn = trim((string) ($admin['fecha_nacimiento'] ?? '1980-01-01'));
 
         if ($nombre === '' || $apellido === '' || $email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -339,9 +341,10 @@ final class SignUpInstitutionalEfector
         if ($idLocalidad <= 0) {
             $idLocalidad = self::resolveDefaultLocalidadId();
         }
-        if (Localidad::findOne(['id_localidad' => $idLocalidad]) === null) {
-            throw new \InvalidArgumentException('Localidad inválida.');
-        }
+        self::assertAllowedCountry($idLocalidad);
+
+        $telefono = trim((string) ($efector['telefono'] ?? ''));
+        ContactPhoneValidator::assertValid($telefono, 'Teléfono del efector');
 
         $publico = $sector === self::SECTOR_PUBLICO;
         $tipologia = $perfil === self::PERFIL_CONSULTORIO
@@ -351,7 +354,7 @@ final class SignUpInstitutionalEfector
         return [
             'nombre' => $nombre,
             'domicilio' => $domicilio,
-            'telefono' => ($t = trim((string) ($efector['telefono'] ?? ''))) !== '' ? $t : null,
+            'telefono' => $telefono !== '' ? $telefono : null,
             'id_localidad' => $idLocalidad,
             'origen_financiamiento' => $publico ? 'Público' : 'Privado',
             'dependencia' => $publico ? 'Provincial' : 'Privado',
@@ -549,6 +552,32 @@ final class SignUpInstitutionalEfector
         } while (Efector::find()->where(['codigo_sisa' => $code])->exists());
 
         return substr($code, 0, 15);
+    }
+
+    /**
+     * Valida que la localidad exista y pertenezca a un país habilitado para el alta.
+     */
+    private static function assertAllowedCountry(int $idLocalidad): void
+    {
+        $localidad = Localidad::findOne(['id_localidad' => $idLocalidad]);
+        if ($localidad === null) {
+            throw new \InvalidArgumentException('Localidad inválida.');
+        }
+
+        $iso2 = '';
+        try {
+            $departamento = $localidad->departamento;
+            $provincia = $departamento !== null ? $departamento->provincia : null;
+            $pais = $provincia !== null ? $provincia->pais : null;
+            $iso2 = $pais !== null ? strtoupper(trim((string) $pais->iso2)) : '';
+        } catch (\Throwable $e) {
+            Yii::warning('No se pudo resolver país de la localidad: ' . $e->getMessage(), 'billing.signup');
+        }
+
+        $allowed = (array) (Yii::$app->params['signupAllowedIso2'] ?? ['AR', 'UY']);
+        if ($iso2 === '' || !in_array($iso2, $allowed, true)) {
+            throw new \InvalidArgumentException('Bioenlace aún no está disponible en ese país.');
+        }
     }
 
     private static function resolveDefaultLocalidadId(): int

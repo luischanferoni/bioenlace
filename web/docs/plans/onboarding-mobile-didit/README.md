@@ -48,6 +48,10 @@ Las fases 0 y 1 son bloqueantes: no se toca el alta actual hasta cerrar el contr
 - Fase 1: hecho. Parámetro de workflow KYC compartido (`didit_kyc_workflow_id`, con fallback) y extracción del paso Didit→Persona a `DiditIdentityService` (consumido por `RegisterPerson` sin cambio de comportamiento).
 - Fase 2: en curso. Implementado: `CreateIdentityAccount` (Persona + User passwordless desde Didit, sin efector/plan/pago) + endpoint público `POST /licencia/crear-cuenta` + ruta. Pendiente: login biométrico/re-verificación para esta cuenta.
 - Fase 3: en curso. `registrar-efector` extendido: con `verification_id` resuelve la identidad por Didit (`resolveIdentity` → `CreateIdentityAccount`) y crea efector + plan + pago; sin `verification_id` mantiene el camino legacy. Queda para más adelante: ubicación con mapa y estimación server-side.
+- Fase 4: en curso (web). `sesion-operativa/establecer` devuelve `puede_crear_efector`; el estado vacío de la web muestra mensaje + botón "Crear mi consultorio" (URL desde `institucionalSignupUrl`). Pendiente: mismo estado vacío en la app staff (`config_wizard_screen`).
+- Fase 5: en curso (núcleo). `AddProfessionalToEfector` (asignación idempotente vía `EnsurePesAssignment` + push FCM vía `PushNotificationSender`). Pendiente: invocarlo desde la acción de admin que agrega profesionales y validar el payload de push en la app.
+- Fase 6: en curso (núcleo). `CompleteMinistrySignupIdentity` (KYC → Persona + User passwordless + vínculo a la solicitud pendiente; la aprobación y el rol AdminMinisterio siguen en `RequestMinistrySignup::approve`). Pendiente: token de invitación de un solo uso + endpoint y flujo en la app.
+- Fase 7: en curso. Web desarmada (`alta.html` → descarga/contacto, `signup.js` y estilos `.signup-*` eliminados, navegación/CTAs actualizados). Hardening: teléfono E.164 opcional (`ContactPhoneValidator`) y geo-gating AR/UY (`signupAllowedIso2`). Pendiente: rate limit/honeypot en endpoints públicos de alta.
 
 ## Cierre del plan
 

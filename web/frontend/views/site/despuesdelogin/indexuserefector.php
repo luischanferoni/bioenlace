@@ -13,6 +13,10 @@
                 <h3 class="alert-heading h6">No hay efectores listos para operar</h3>
                 <p id="sesion-operativa-estado-vacio-lead" class="mb-2 small text-body-secondary"></p>
                 <div id="sesion-operativa-estado-vacio-body"></div>
+                <div id="sesion-operativa-estado-vacio-acciones" class="mt-3 pt-2 border-top d-none">
+                    <p class="small text-body-secondary mb-2">¿Querés trabajar por tu cuenta? Para crear tu propio consultorio privado, presioná el botón.</p>
+                    <a id="btn-crear-consultorio" class="btn btn-primary btn-sm" href="#">Crear mi consultorio</a>
+                </div>
             </div>
         </div>
 

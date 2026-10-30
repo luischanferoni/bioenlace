@@ -71,4 +71,5 @@ $this->title = 'Configurar sesión';
     'id' => 'sesion-operativa-wizard-config',
     'class' => 'd-none',
     'data-establecer-url' => $urlEstablecerSesionOperativa,
+    'data-crear-consultorio-url' => (Yii::$app->params['institucionalSignupUrl'] ?? 'https://bioenlace.io/alta.html') . '?perfil=consultorio',
 ]) ?>

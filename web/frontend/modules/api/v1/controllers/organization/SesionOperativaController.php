@@ -54,8 +54,12 @@ class SesionOperativaController extends BaseController
                 $data = $hab->buildOpcionesIniciales($idPersona);
                 $hab->syncSessionEfectoresDesdeOpciones($data['efectores']);
 
+                $sinEfectores = ($data['efectores'] ?? []) === [];
+                // Sin efector asignado, el profesional puede crear su propio consultorio privado.
+                $data['puede_crear_efector'] = $sinEfectores;
+
                 $msg = 'Opciones de sesión operativa';
-                if (($data['efectores'] ?? []) === []) {
+                if ($sinEfectores) {
                     $msg = 'No hay efectores con configuración completa para operar en este momento.';
                 }
 

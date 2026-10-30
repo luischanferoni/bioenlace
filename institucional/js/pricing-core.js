@@ -1,6 +1,6 @@
 /**
  * Núcleo compartido del calculador de licencia (COGS por atención + margen por volumen).
- * Usado por pricing-calculator.js y signup.js.
+ * Usado por pricing-calculator.js.
  */
 (function (global) {
   'use strict';

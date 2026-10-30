@@ -37,15 +37,7 @@ final class CreateIdentityAccount
         );
         $persona = $resolved['persona'];
 
-        $user = null;
-        $esNuevoUsuario = false;
-        if ((int) $persona->id_user > 0) {
-            $user = User::findOne((int) $persona->id_user);
-        }
-        if ($user === null) {
-            $user = $this->createPasswordlessUser($persona, $email);
-            $esNuevoUsuario = true;
-        }
+        [$user, $esNuevoUsuario] = $this->ensureUserForPersona($persona, $email);
 
         return [
             'persona' => $persona,
@@ -54,6 +46,23 @@ final class CreateIdentityAccount
             'es_nuevo_usuario' => $esNuevoUsuario,
             'didit' => $resolved['didit'],
         ];
+    }
+
+    /**
+     * Garantiza un User passwordless vinculado a la Persona (reusa el existente).
+     *
+     * @return array{0: User, 1: bool} user y flag de usuario recién creado
+     */
+    public function ensureUserForPersona(Persona $persona, string $email): array
+    {
+        if ((int) $persona->id_user > 0) {
+            $existing = User::findOne((int) $persona->id_user);
+            if ($existing !== null) {
+                return [$existing, false];
+            }
+        }
+
+        return [$this->createPasswordlessUser($persona, $email), true];
     }
 
     private function createPasswordlessUser(Persona $persona, string $email): User

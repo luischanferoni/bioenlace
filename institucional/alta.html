@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Creá tu cuenta Bioenlace: clínica privada o centro público, o solicitá acceso como ministerio.">
-    <title>Crear cuenta — Bioenlace</title>
+    <meta name="description" content="Creá tu cuenta Bioenlace desde la app Personal de Salud: clínica, consultorio o alta institucional.">
+    <title>Descargar la app — Bioenlace</title>
     <link rel="icon" href="images/logo-icon.svg" type="image/svg+xml">
     <link rel="icon" href="images/logo-icon-32.png" type="image/png" sizes="32x32">
     <link rel="apple-touch-icon" href="images/logo-icon.png">
@@ -28,7 +28,7 @@
                     <li><a href="index.html#pacientes" class="nav-link">Pacientes</a></li>
                     <li><a href="index.html#funcionalidades" class="nav-link">Funcionalidades</a></li>
                     <li><a href="precios.html" class="nav-link">Precios</a></li>
-                    <li><a href="alta.html" class="nav-link active" aria-current="page">Crear cuenta</a></li>
+                    <li><a href="alta.html" class="nav-link active" aria-current="page">Descargar app</a></li>
                     <li><a href="index.html#contacto" class="nav-link nav-link--cta">Contacto</a></li>
                 </ul>
                 <button type="button" class="hamburger" id="hamburger" aria-label="Abrir menú" aria-expanded="false">
@@ -40,154 +40,50 @@
         </div>
     </nav>
 
-    <main class="signup-page">
-        <div class="container">
-            <h1 class="section-title">Crear cuenta</h1>
-            <p class="section-subtitle">Registrá tu clínica, tu consultorio profesional o solicitá acceso como ministerio.</p>
+    <main class="legal-main">
+        <div class="container legal-container">
+            <header class="legal-header">
+                <p class="legal-eyebrow">Alta de cuenta</p>
+                <h1>Creá tu cuenta desde la app</h1>
+                <p class="legal-lead">
+                    Bioenlace se da de alta desde la app <strong>Personal de Salud</strong>: verificás tu identidad
+                    con Didit (sin contraseñas) y elegís si trabajás en una organización o creás tu propio
+                    consultorio privado.
+                </p>
+            </header>
 
-            <div class="signup-tabs" role="tablist">
-                <button type="button" class="is-active" role="tab" aria-selected="true" data-signup-tab="efector" data-perfil="CLINICA">Soy clínica / centro</button>
-                <button type="button" role="tab" aria-selected="false" data-signup-tab="efector" data-perfil="CONSULTORIO">Soy profesional / consultorio</button>
-                <button type="button" role="tab" aria-selected="false" data-signup-tab="ministerio">Soy ministerio</button>
-            </div>
+            <article class="legal-content">
+                <section id="descargar">
+                    <h2>1. Descargá la app</h2>
+                    <p>Buscá <strong>Bioenlace Personal de Salud</strong> en tu tienda de aplicaciones.</p>
+                    <p>
+                        <a class="btn btn-primary" href="https://play.google.com/store/apps/details?id=com.bioenlace.personalsalud" target="_blank" rel="noopener">Descargar en Google Play</a>
+                        <a class="btn btn-secondary" href="https://apps.apple.com/ar/search?term=bioenlace" target="_blank" rel="noopener">Buscar en App Store</a>
+                    </p>
+                </section>
 
-            <section class="signup-panel" data-signup-panel="efector">
-                <h2 id="efector-panel-title">Registrar mi clínica o centro</h2>
-                <p class="signup-hint" id="efector-panel-hint">Vas a crear tu usuario administrador, el centro y la licencia. El cobro de esta demo es simulado (no se debita una tarjeta real).</p>
-                <form id="form-efector" autocomplete="off" novalidate>
-                    <input type="hidden" name="perfil" id="signup-perfil" value="CLINICA">
-                    <fieldset class="signup-fieldset" id="sector-fieldset">
-                        <legend>Sector</legend>
-                        <div class="signup-sector">
-                            <label class="signup-check"><input type="radio" name="sector" value="PRIVADO" checked> Privado</label>
-                            <label class="signup-check" id="sector-publico-label"><input type="radio" name="sector" value="PUBLICO"> Público</label>
-                        </div>
-                        <p class="signup-hint" id="sector-consultorio-hint" hidden>El alta de consultorio profesional es solo para el sector <strong>privado</strong>. Si trabajás en un centro público, pedí que administración del centro te sume a Bioenlace.</p>
-                        <div id="ministerio-wrap" class="signup-field full signup-ministerio-option" hidden>
-                            <label for="id_billing_account_ministerio">Ministerio</label>
-                            <select id="id_billing_account_ministerio" name="id_billing_account_ministerio"></select>
-                        </div>
-                        <div id="pago-ministerio-wrap" class="signup-ministerio-option" hidden>
-                            <label class="signup-check">
-                                <input type="checkbox" name="pago_cubierto_por_ministerio" value="1">
-                                <span>Solicitar que el ministerio cubra el pago (queda pendiente de aprobación)</span>
-                            </label>
-                        </div>
-                    </fieldset>
+                <section id="verificar">
+                    <h2>2. Verificá tu identidad</h2>
+                    <p>Al abrir la app, verificás tu identidad con Didit (documento + selfie). No necesitás contraseña: el acceso es con huella o Face ID.</p>
+                </section>
 
-                    <fieldset class="signup-fieldset">
-                        <legend id="admin-legend">Administrador</legend>
-                        <div class="signup-grid">
-                            <div class="signup-field"><label for="admin_nombre">Nombre</label><input id="admin_nombre" name="admin_nombre" type="text" autocomplete="off" required></div>
-                            <div class="signup-field"><label for="admin_apellido">Apellido</label><input id="admin_apellido" name="admin_apellido" type="text" autocomplete="off" required></div>
-                            <div class="signup-field"><label for="admin_email">E-mail</label><input id="admin_email" name="admin_email" type="email" autocomplete="off" required></div>
-                            <div class="signup-field"><label for="admin_password">Contraseña</label><input id="admin_password" name="admin_password" type="password" minlength="8" autocomplete="new-password" required></div>
-                            <div class="signup-field"><label for="admin_documento">Documento</label><input id="admin_documento" name="admin_documento" type="text" autocomplete="off" required></div>
-                            <div class="signup-field"><label for="admin_telefono">Teléfono</label><input id="admin_telefono" name="admin_telefono" type="tel" autocomplete="off"></div>
-                            <div class="signup-field full"><label for="admin_fecha_nacimiento">Fecha de nacimiento</label><input id="admin_fecha_nacimiento" name="admin_fecha_nacimiento" type="date" value="1980-01-01" autocomplete="off"></div>
-                        </div>
-                    </fieldset>
+                <section id="modalidad">
+                    <h2>3. Elegí tu modalidad</h2>
+                    <ul>
+                        <li><strong>Clínica o centro:</strong> creás el centro y su licencia desde la app.</li>
+                        <li><strong>Consultorio privado:</strong> creás tu consultorio y pagás la licencia.</li>
+                        <li><strong>Trabajás en una organización:</strong> pedile al administrador que te agregue; te avisa la app.</li>
+                    </ul>
+                </section>
 
-                    <fieldset class="signup-fieldset">
-                        <legend id="centro-legend">Centro de salud</legend>
-                        <div class="signup-grid">
-                            <div class="signup-field full"><label for="efector_nombre" id="efector_nombre_label">Nombre del centro</label><input id="efector_nombre" name="efector_nombre" type="text" autocomplete="off" required></div>
-                            <div class="signup-field full"><label for="efector_domicilio">Domicilio</label><input id="efector_domicilio" name="efector_domicilio" type="text" autocomplete="off" required></div>
-                            <div class="signup-field full"><label for="efector_telefono">Teléfono</label><input id="efector_telefono" name="efector_telefono" type="tel" autocomplete="off"></div>
-                        </div>
-                    </fieldset>
-
-                    <fieldset class="signup-fieldset">
-                        <legend>Plan</legend>
-                        <p class="signup-hint" id="plan-hint">Elegí tipos de atención y un volumen aproximado. El dictado está incluido; la videollamada es opcional en ambulatorio.</p>
-                        <div class="signup-grid">
-                            <div class="full signup-check-row" id="row-amb">
-                                <label class="signup-check">
-                                    <input type="checkbox" name="incluir_amb" id="incluir_amb" data-plan-input checked>
-                                    <span id="max_pes_amb_label">Incluir ambulatorio</span>
-                                </label>
-                                <div class="signup-volume" data-volume-for="attentions_amb">
-                                    <span class="signup-volume__label">Volumen de atenciones mensual</span>
-                                    <div class="signup-volume__chips" id="chips-amb" role="group" aria-label="Volumen ambulatorio"></div>
-                                    <input type="hidden" class="signup-qty" id="max_pes_amb" name="attentions_amb" value="5000" data-plan-input data-attentions>
-                                </div>
-                            </div>
-                            <div class="full signup-addons" id="amb-addons">
-                                <p class="signup-policy">Dictado incluido</p>
-                                <label class="signup-addon">
-                                    <input type="checkbox" name="videollamada" data-plan-input>
-                                    <span class="signup-addon__label">Videollamada <em class="signup-addon__hint">(opcional)</em></span>
-                                </label>
-                            </div>
-                            <div class="full signup-check-row" id="row-emer" data-plan-row="EMER">
-                                <label class="signup-check"><input type="checkbox" name="incluir_emer" data-plan-input> <span>Incluir urgencia / guardia</span></label>
-                                <div class="signup-volume" data-volume-for="attentions_emer">
-                                    <span class="signup-volume__label">Volumen de atenciones mensual</span>
-                                    <div class="signup-volume__chips" id="chips-emer" role="group" aria-label="Volumen urgencia"></div>
-                                    <input type="hidden" class="signup-qty" name="attentions_emer" value="200" data-plan-input data-attentions disabled>
-                                </div>
-                            </div>
-                            <div class="full signup-check-row" id="row-imp" data-plan-row="IMP">
-                                <label class="signup-check"><input type="checkbox" name="incluir_imp" data-plan-input> <span>Incluir internación</span></label>
-                                <div class="signup-volume" data-volume-for="attentions_imp">
-                                    <span class="signup-volume__label">Volumen de atenciones mensual</span>
-                                    <div class="signup-volume__chips" id="chips-imp" role="group" aria-label="Volumen internación"></div>
-                                    <input type="hidden" class="signup-qty" name="attentions_imp" value="200" data-plan-input data-attentions disabled>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="signup-price" id="signup-price" aria-live="polite">
-                            <div class="signup-price__label">Estimado orientativo</div>
-                            <div class="signup-price__total" id="signup-price-total">—</div>
-                            <div class="signup-price__lines" id="signup-price-lines"></div>
-                            <p class="signup-price__note" id="signup-price-note"></p>
-                        </div>
-                    </fieldset>
-
-                    <fieldset class="signup-fieldset" id="payment-fieldset">
-                        <legend>Pago simulado (primer mes)</legend>
-                        <div class="signup-grid">
-                            <div class="signup-field full">
-                                <label for="sim_titular">Nombre en la simulación</label>
-                                <input id="sim_titular" name="sim_titular" type="text" autocomplete="off" data-lpignore="true" data-1p-ignore="true" required>
-                            </div>
-                            <div class="signup-field full">
-                                <label for="sim_token">Código de prueba</label>
-                                <input id="sim_token" name="sim_token" type="text" autocomplete="off" data-lpignore="true" data-1p-ignore="true" value="SIM-OK" placeholder="SIM-OK" required>
-                            </div>
-                        </div>
-                        <p class="signup-hint">Usá SIM-OK para aprobar o SIM-FAIL para simular rechazo. No se solicita una tarjeta real del dispositivo.</p>
-                    </fieldset>
-
-                    <button type="submit" class="btn btn-primary">Crear cuenta y continuar</button>
-                    <p id="efector-status" class="signup-status" hidden></p>
-                    <div id="efector-next-steps" class="signup-next" hidden></div>
-                    <p><a id="login-link" href="#" hidden>Ir al login de la plataforma</a></p>
-                </form>
-            </section>
-
-            <section class="signup-panel" data-signup-panel="ministerio" hidden>
-                <h2>Solicitar cuenta de ministerio</h2>
-                <p class="signup-hint">No se activa sola: verificamos la identidad institucional y después habilitamos el acceso.</p>
-                <form id="form-ministerio" autocomplete="off" novalidate>
-                    <div class="signup-grid">
-                        <div class="signup-field full"><label for="nombre_organizacion">Nombre del ministerio / organismo</label><input id="nombre_organizacion" name="nombre_organizacion" type="text" autocomplete="off" required></div>
-                        <div class="signup-field"><label for="contacto_nombre">Nombre</label><input id="contacto_nombre" name="contacto_nombre" type="text" autocomplete="off" required></div>
-                        <div class="signup-field"><label for="contacto_apellido">Apellido</label><input id="contacto_apellido" name="contacto_apellido" type="text" autocomplete="off" required></div>
-                        <div class="signup-field"><label for="contacto_email">E-mail institucional</label><input id="contacto_email" name="contacto_email" type="email" autocomplete="off" required></div>
-                        <div class="signup-field"><label for="contacto_telefono">Teléfono</label><input id="contacto_telefono" name="contacto_telefono" type="tel" autocomplete="off"></div>
-                        <div class="signup-field"><label for="contacto_documento">Documento</label><input id="contacto_documento" name="contacto_documento" type="text" autocomplete="off"></div>
-                        <div class="signup-field full"><label for="notas">Notas / jurisdicción</label><textarea id="notas" name="notas" rows="3" autocomplete="off"></textarea></div>
-                    </div>
-                    <button type="submit" class="btn btn-primary signup-submit">Enviar solicitud</button>
-                    <p id="ministerio-status" class="signup-status" hidden></p>
-                </form>
-            </section>
+                <section id="ministerio">
+                    <h2>¿Sos un ministerio u organismo público?</h2>
+                    <p>El alta de ministerio no se hace sola desde la web. <a href="index.html#contacto">Contactanos</a> o escribinos a <a href="mailto:info@bioenlace.io">info@bioenlace.io</a> y coordinamos el alta institucional.</p>
+                </section>
+            </article>
         </div>
     </main>
 
     <script src="js/main.js"></script>
-    <script src="js/pricing-core.js"></script>
-    <script src="js/signup.js?v=20260713a"></script>
 </body>
 </html>

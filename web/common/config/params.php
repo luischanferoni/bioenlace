@@ -47,6 +47,10 @@ return [
      */
     'didit_base_url' => 'https://api.didit.me',
     'didit_verification_base_url' => 'https://verification.didit.me',
+    /** URL base del sitio institucional (alta self-service). Ajustar en params-local.php. */
+    'institucionalSignupUrl' => 'https://bioenlace.io/alta.html',
+    /** Países habilitados para el alta self-service (ISO 3166-1 alpha-2). */
+    'signupAllowedIso2' => ['AR', 'UY'],
     /** UUID workflow KYC compartido (Didit Console). Configurar en params-local.php */
     'didit_kyc_workflow_id' => null,
     /** Deprecado: alias de didit_kyc_workflow_id, se conserva como fallback. */

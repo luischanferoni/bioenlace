@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Organization\Efector\Application\UseCase;
 
+use common\components\Domain\Organization\Efector\Application\Service\ContactPhoneValidator;
 use common\models\Organization\BillingAccount;
 use common\models\Organization\BillingSignupRequest;
 use common\models\Platform\User;
@@ -27,6 +28,11 @@ final class RequestMinistrySignup
         if ($org === '' || $nombre === '' || $apellido === '' || $email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             throw new \InvalidArgumentException('Completá organización, nombre, apellido y un e-mail válido.');
         }
+
+        ContactPhoneValidator::assertValid(
+            self::nullableString($data['contacto_telefono'] ?? null),
+            'Teléfono de contacto'
+        );
 
         $dup = BillingSignupRequest::find()
             ->where([

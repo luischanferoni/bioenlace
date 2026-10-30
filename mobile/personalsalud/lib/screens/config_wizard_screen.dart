@@ -522,6 +522,18 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
             ),
             BioSpacing.gapH(BioSpacing.lg),
           ],
+          if (!_isLoading && _efectores.isEmpty) ...[
+            Text(
+              AppTexts.wizardNoAssignedEfectorTitle,
+              style: BioTypography.title,
+            ),
+            BioSpacing.gapH(BioSpacing.xs),
+            Text(
+              AppTexts.wizardNoAssignedEfectorMessage,
+              style: BioTypography.body,
+            ),
+            BioSpacing.gapH(BioSpacing.md),
+          ],
           if (!_isLoading && _efectores.isEmpty && _puedeCrearEfector) ...[
             Text(
               AppTexts.wizardCreateConsultorioHint,

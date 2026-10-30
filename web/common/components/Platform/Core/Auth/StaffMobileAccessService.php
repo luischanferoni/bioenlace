@@ -33,10 +33,39 @@ final class StaffMobileAccessService
 
         $idPersona = (int) Yii::$app->user->getIdPersona();
         if ($idPersona > 0 && ProfesionalEfectorServicio::getEfectoresParaSesion($idPersona) !== []) {
-            return true;
+            return false;
         }
 
-        return false;
+        if ($idPersona <= 0 || !Yii::$app->has('authManager')) {
+            return false;
+        }
+
+        $assignedRoles = array_keys(Yii::$app->authManager->getRolesByUser((int) Yii::$app->user->id));
+        return self::isIdentityOnlyAccountAllowed($assignedRoles, true, false);
+    }
+
+    /**
+     * Una cuenta profesional sin asignaciones puede consultar el wizard de sesión,
+     * pero no obtiene por esta vía permisos ni una sesión clínica.
+     *
+     * @param list<string> $assignedRoles
+     */
+    public static function isIdentityOnlyAccountAllowed(
+        array $assignedRoles,
+        bool $hasPersona,
+        bool $hasEfectorAssignment
+    ): bool {
+        if (!$hasPersona || $hasEfectorAssignment) {
+            return false;
+        }
+
+        foreach ($assignedRoles as $roleName) {
+            if ($roleName !== 'usuario') {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

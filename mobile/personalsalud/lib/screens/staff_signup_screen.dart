@@ -5,7 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../auth/personalsalud_post_login.dart';
 import '../services/staff_signup_service.dart';
 
-/// Alta de cuenta de personal de salud: Didit KYC → cuenta de identidad → consultorio.
+enum _SignupPath { professional, privateConsultorio, clinic }
+
+/// Alta de cuenta profesional personal. Las altas comerciales requieren checkout.
 class StaffSignupScreen extends StatefulWidget {
   const StaffSignupScreen({super.key});
 
@@ -14,21 +16,9 @@ class StaffSignupScreen extends StatefulWidget {
 }
 
 class _StaffSignupScreenState extends State<StaffSignupScreen> {
-  final _emailCtrl = TextEditingController();
-  final _nombreCtrl = TextEditingController();
-  final _domicilioCtrl = TextEditingController();
-
   bool _submitting = false;
-  String? _verificationId;
-  Map<String, dynamic>? _account;
-
-  @override
-  void dispose() {
-    _emailCtrl.dispose();
-    _nombreCtrl.dispose();
-    _domicilioCtrl.dispose();
-    super.dispose();
-  }
+  bool _accountCreated = false;
+  _SignupPath _selectedPath = _SignupPath.professional;
 
   void _snack(String msg) {
     if (!mounted) return;
@@ -36,28 +26,42 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
   }
 
   Future<void> _verifyIdentity() async {
-    final email = _emailCtrl.text.trim();
-    if (email.isEmpty) {
-      _snack('Ingresá tu e-mail.');
-      return;
-    }
-
     setState(() => _submitting = true);
     try {
       final service = StaffSignupService();
       final verificationId = await service.verifyIdentity();
       final account = await service.createAccount(
         verificationId: verificationId,
-        email: email,
       );
       if (!mounted) return;
       setState(() {
-        _verificationId = verificationId;
-        _account = account;
+        _accountCreated = true;
         _submitting = false;
       });
+
+      final token = account['token']?.toString().trim() ?? '';
+      final userId = (account['id_user'] ?? account['id_persona'] ?? '')
+          .toString()
+          .trim();
+      if (token.isEmpty || userId.isEmpty) return;
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('auth_token', token);
+      if (!mounted) return;
+      await navigatePersonalsaludAfterLogin(
+        userId,
+        'Personal de Salud',
+        context,
+      );
     } catch (error) {
       final message = error.toString().replaceFirst('Exception: ', '');
+      if (_accountCreated) {
+        _snack(
+          'Tu cuenta está creada, pero no pudimos iniciar la sesión. '
+          'Volvé al inicio e ingresá verificando tu identidad.',
+        );
+        return;
+      }
       _snack(
         message == 'Verificación cancelada.'
             ? 'Cancelaste la verificación.'
@@ -68,50 +72,66 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
     }
   }
 
-  Future<void> _createConsultorio() async {
-    final verificationId = _verificationId;
-    if (verificationId == null) return;
-    final nombre = _nombreCtrl.text.trim();
-    final domicilio = _domicilioCtrl.text.trim();
-    if (nombre.isEmpty || domicilio.isEmpty) {
-      _snack('Completá nombre y domicilio del consultorio.');
-      return;
-    }
-
-    setState(() => _submitting = true);
-    try {
-      await StaffSignupService().createConsultorio(
-        verificationId: verificationId,
-        email: _emailCtrl.text.trim(),
-        nombre: nombre,
-        domicilio: domicilio,
-      );
-
-      final account = _account ?? const <String, dynamic>{};
-      final token = account['token']?.toString() ?? '';
-      final userId = (account['id_user'] ?? account['id_persona'] ?? '')
-          .toString();
-      final userName = account['email']?.toString().trim() ?? 'Usuario';
-
-      final prefs = await SharedPreferences.getInstance();
-      if (token.isNotEmpty) {
-        await prefs.setString('auth_token', token);
-      }
-
-      if (!mounted) return;
-      await navigatePersonalsaludAfterLogin(userId, userName, context);
-    } catch (_) {
-      _snack(
-        'No pudimos crear tu consultorio. Revisá los datos e intentá nuevamente.',
-      );
-      if (mounted) setState(() => _submitting = false);
-    }
+  Widget _buildPathCard({
+    required _SignupPath path,
+    required String title,
+    required String description,
+    bool enabled = true,
+  }) {
+    final tokens = context.bio;
+    final primary = Theme.of(context).colorScheme.primary;
+    final selected = _selectedPath == path;
+    return Container(
+      margin: const EdgeInsets.only(bottom: BioSpacing.md),
+      decoration: BoxDecoration(
+        color: tokens.paperSurface,
+        border: Border.all(
+          color: selected ? primary : tokens.paperDividerDefault,
+          width: selected ? 2 : 1,
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: enabled ? () => setState(() => _selectedPath = path) : null,
+        child: Padding(
+          padding: const EdgeInsets.all(BioSpacing.md),
+          child: Row(
+            children: [
+              Icon(
+                selected ? Icons.radio_button_checked : Icons.radio_button_off,
+                color: enabled ? primary : tokens.textMuted,
+              ),
+              BioSpacing.gapW(BioSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: BioTypography.title),
+                    BioSpacing.gapH(BioSpacing.xs),
+                    Text(
+                      description,
+                      style: BioTypography.bodySm.copyWith(
+                        color: tokens.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (!enabled) ...[
+                BioSpacing.gapW(BioSpacing.sm),
+                const Icon(Icons.schedule, size: 18),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.bio;
-    final identityDone = _verificationId != null;
 
     return Scaffold(
       backgroundColor: tokens.paperBackground,
@@ -129,22 +149,37 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
               ),
               BioSpacing.gapH(BioSpacing.sm),
               Text(
-                'Verificamos tu identidad con tu documento y una selfie; si trabajás por tu cuenta, creás tu consultorio privado.',
+                'Elegí qué tipo de cuenta necesitás. No necesitás un e-mail para crear una cuenta profesional.',
                 style: BioTypography.body.copyWith(color: tokens.textMuted),
                 textAlign: TextAlign.center,
               ),
               BioSpacing.gapH(BioSpacing.xl),
-              TextField(
-                controller: _emailCtrl,
-                decoration: const InputDecoration(labelText: 'E-mail'),
-                keyboardType: TextInputType.emailAddress,
-                autocorrect: false,
-                enabled: !_submitting && !identityDone,
+              _buildPathCard(
+                path: _SignupPath.professional,
+                title: 'Cuenta profesional',
+                description:
+                    'Gratis. Creá tu identidad; la administración del centro te suma cuando corresponda.',
               ),
-              BioSpacing.gapH(BioSpacing.lg),
-              if (!identityDone) ...[
+              _buildPathCard(
+                path: _SignupPath.privateConsultorio,
+                title: 'Consultorio propio',
+                description:
+                    'Alta con pago y verificación profesional. Todavía no disponible.',
+                enabled: false,
+              ),
+              _buildPathCard(
+                path: _SignupPath.clinic,
+                title: 'Clínica o centro',
+                description:
+                    'Alta con pago para administrar una institución. Todavía no disponible.',
+                enabled: false,
+              ),
+              BioSpacing.gapH(BioSpacing.md),
+              if (!_accountCreated) ...[
                 BioButton.primary(
-                  label: _submitting ? 'Verificando…' : 'Verificar identidad',
+                  label: _submitting
+                      ? 'Verificando…'
+                      : 'Verificar identidad y crear cuenta',
                   icon: Icons.verified_user_outlined,
                   size: BioButtonSize.lg,
                   fullWidth: true,
@@ -152,36 +187,27 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                   onPressed: _submitting ? null : _verifyIdentity,
                 ),
               ],
-              if (identityDone) ...[
-                TextField(
-                  controller: _nombreCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Nombre del consultorio',
+              if (_accountCreated) ...[
+                Container(
+                  padding: const EdgeInsets.all(BioSpacing.md),
+                  decoration: BoxDecoration(
+                    color: tokens.paperSurface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: tokens.paperDividerDefault),
                   ),
-                  enabled: !_submitting,
+                  child: Text(
+                    'Tu cuenta está creada. Si trabajás en un centro, su '
+                    'AdminEfector debe sumarte para que puedas acceder a las '
+                    'funciones clínicas. Crear la cuenta no te asigna a un centro. '
+                    'Para volver a entrar, verificá tu identidad desde el inicio.',
+                    style: BioTypography.body,
+                    textAlign: TextAlign.center,
+                  ),
                 ),
                 BioSpacing.gapH(BioSpacing.md),
-                TextField(
-                  controller: _domicilioCtrl,
-                  decoration: const InputDecoration(labelText: 'Domicilio'),
-                  enabled: !_submitting,
-                ),
-                BioSpacing.gapH(BioSpacing.lg),
-                BioButton.primary(
-                  label: _submitting
-                      ? 'Creando…'
-                      : 'Crear consultorio y continuar',
-                  icon: Icons.storefront_outlined,
-                  size: BioButtonSize.lg,
-                  fullWidth: true,
-                  loading: _submitting,
-                  onPressed: _submitting ? null : _createConsultorio,
-                ),
-                BioSpacing.gapH(BioSpacing.sm),
-                Text(
-                  'No se realizará ningún cobro durante este paso.',
-                  style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
-                  textAlign: TextAlign.center,
+                OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Volver al inicio'),
                 ),
               ],
             ],

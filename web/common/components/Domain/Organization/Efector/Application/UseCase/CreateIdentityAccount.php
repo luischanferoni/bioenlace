@@ -136,6 +136,6 @@ final class CreateIdentityAccount
 
     private function fallbackEmail(Persona $persona): string
     {
-        return $persona->documento . '@example.com';
+        return $this->uniqueUsername($persona, '') . '@accounts.bioenlace.invalid';
     }
 }

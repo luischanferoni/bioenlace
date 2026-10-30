@@ -1,51 +1,54 @@
 # Alta de cuenta y licencia
 
-## De qué se trata
+## Modelo acordado (implementación en curso)
 
-El alta es **identidad-primero** y se hace desde la app **Personal de Salud**: la persona verifica su identidad con **Didit** (documento + selfie, sin contraseñas) y obtiene una cuenta de identidad (Persona + User). El efector es una capa posterior: o lo crea la propia persona pagando (consultorio/clínica privada), o la agrega un `AdminEfector` de una organización (sin pago). El **ministerio** es asistido por admin (token + KYC), sin self-service. Login con huella/Face ID local; en un dispositivo nuevo se re-verifica con Didit.
+La app **Personal de Salud** es el canal de creación de cuenta. La persona verifica su identidad con documento y selfie. Esa verificación acredita identidad, pero no otorga por sí sola habilitación profesional, asignación a un centro, licencia ni acceso clínico.
 
-## Actores
+Hay tres recorridos:
 
-| Actor | Cómo entra |
-|-------|------------|
-| Cuenta de identidad | App Personal de Salud → Didit KYC → `POST /licencia/crear-cuenta` |
-| AdminEfector (clínica / centro) | Identidad → `POST /licencia/registrar-efector` con `verification_id` + plan + pago |
-| AdminEfector (consultorio unipersonal) | Igual, perfil `CONSULTORIO` **solo PRIVADO**, plan solo ambulatorio (1 profesional) |
-| Profesional de una organización | El `AdminEfector` lo agrega (PES) → push → aparece en el wizard |
-| AdminMinisterio | Solicitud asistida por admin → token de invitación → KYC → aprobación |
-| Ops Bioenlace | Aprueba solicitudes y movimientos de pool |
+1. **Cuenta profesional personal:** gratuita y sin efector. El AdminEfector del centro incorpora a la persona buscándola en Bioenlace. Hasta entonces no puede ver ni realizar operaciones clínicas.
+2. **Consultorio propio:** recorrido pago. REFEPS debe estar confirmado antes de iniciar el checkout. La gestión del consultorio y el rol clínico son permisos separados.
+3. **Clínica o centro:** recorrido pago. Crea la organización y el acceso de AdminEfector; REFEPS no es requisito para administrar. Si esa persona también atiende, AdminEfector debe asignarla y se verifica REFEPS para el rol clínico.
 
-## Cómo funciona
+No se solicita e-mail para crear identidad. El modelo objetivo reemplaza los códigos por correo y las contraseñas por passkeys y aprobación QR según el canal habilitado; el retiro de los flujos de autenticación heredados todavía está pendiente. AdminEfector es web-only por ahora; Personal de Salud permite únicamente roles habilitados explícitamente. Los roles administrativos y futuros son web-only por defecto.
 
-```mermaid
-flowchart LR
-  App[App Personal de Salud] --> Didit[Didit KYC]
-  Didit --> Cuenta[Cuenta de identidad: Persona + User sin contraseña]
-  Cuenta -->|crear efector propio| Pay[Pago simulado]
-  Pay --> Efe[billing_account EFECTOR + POOL + PES AdminEfector]
-  Cuenta -->|lo agrega admin| Pool[PES en efector existente + push]
-  Admin[Admin] -->|ministerio| Token[Token de invitación]
-  Token --> KYC[Didit KYC] --> Aprob[Aprobación AdminMinisterio]
-```
+## Estado actual de implementación
 
-1. **Identidad:** `POST /licencia/crear-cuenta` con `verification_id` + `email` → Persona + User passwordless + JWT. No crea efector ni paga.
-2. **Efector propio (privado):** `POST /licencia/registrar-efector` con `verification_id` (el backend resuelve la identidad) + plan + pago simulado → cuenta propia + entitlements.
-3. **Público (solo clínica/centro):** elige ministerio (AFILIADO); si pide cobertura queda `PENDING` hasta que ops mueva el POOL.
-4. **Consultorio:** perfil `CONSULTORIO` solo privado; plan ambulatorio con 1 profesional fijo; validación REFEPS/SISA en el alta.
-5. **Profesional de una organización:** el `AdminEfector` lo agrega desde admin → push `profesional_agregado` a la app.
-6. **Ministerio:** admin crea la solicitud y emite token; la persona completa KYC con `POST /licencia/completar-ministerio`; aprobación asigna rol `AdminMinisterio` + cuenta MINISTERIO.
-7. **Desvincular pago ministerio / asociar:** AdminEfector autenticado vía API `desvincular-pago-ministerio` / `asociar-pago-ministerio`.
+- La app permite elegir el recorrido profesional personal y crear una cuenta tras Didit, sin pedir e-mail.
+- Consultorio y clínica/centro aparecen como opciones, pero permanecen deshabilitados hasta implementar checkout real, condiciones de venta e intentos persistidos.
+- Una cuenta sin efector puede abrir el wizard informativo, sin obtener permisos clínicos.
+- AdminEfector fue retirado de la allowlist de Personal de Salud.
+- El simulador no se considera un pago válido y queda bloqueado en producción. No usarlo para contratar o activar licencias.
+- El endpoint legado de alta comercial sigue presente y debe sustituirse o retirarse al implementar checkout real; no está habilitado como recorrido nuevo.
+- El login web y otros puntos legacy de alta/autenticación aún requieren el corte de la Fase 6; no se consideran parte del flujo nuevo.
 
-## Hardening del alta
+## REFEPS y asignación
 
-- Workflow KYC Didit compartido (`didit_kyc_workflow_id`, fallback `didit_paciente_kyc_workflow_id`).
-- Teléfono opcional validado E.164 (`ContactPhoneValidator`).
-- Geo-gating AR/UY (`signupAllowedIso2`).
-- Rate limit + honeypot en endpoints públicos (`SignupAbuseGuard`, `signupMaxPerIpHour`).
+AdminEfector inicia la incorporación de una persona ya registrada, incluso si se incorpora a sí mismo a un servicio clínico. La comprobación de REFEPS debe distinguir coincidencia confirmada, persona no encontrada, indisponibilidad temporal y revisión manual. La falta de respuesta nunca concede rol clínico ni debe tratarse como una negativa definitiva.
 
-## Demo sandbox (probar sin crear cuenta)
+La identidad profesional sin asignación no puede elegir un centro ni sumarse por cuenta propia. La licencia del efector cubre a los profesionales según el plan, no se compra una segunda licencia por cada profesional asignado.
 
-Desde el sitio institucional, CTA **Probar demo** pide un captcha y un código de un solo uso (`POST /api/v1/licencia/demo-acceso`). El perfil elige médico (`demo_m_*`, AMB), médico odontología (`demo_m_*`, AMB, servicio ODONTOLOGIA), enfermería (`demo_e_*`, EMER) o administrativo (`demo_a_*`, EMER, ingreso a guardia). La especialidad del médico (subrol) se toma de la tabla `servicios`: el perfil `odontologia` no es un rol RBAC distinto, es un médico con `servicio = ODONTOLOGIA`. `/site/demo-entrar` solo consume el código y hace login (nunca la cuenta legacy `medico_med_general_*`). Se borran al cerrar sesión o al vencer el TTL.
+## Pagos y licencia
+
+Antes del checkout se informarán importe, moneda, impuestos, alcance del plan, recurrencia, renovación, cancelación y soporte. Los datos de tarjeta se procesarán mediante checkout alojado o tokenización; Bioenlace no guardará PAN ni CVV. El alta, los intentos y la conciliación deben ser idempotentes. Una licencia no se activa hasta la confirmación del proveedor.
+
+No hay actualmente una pasarela comercial real configurada para estos recorridos. El proveedor, los precios y las condiciones de suscripción deben definirse antes de habilitar los caminos pagos.
+
+## Acceso y recuperación
+
+- Web: passkeys/WebAuthn como autenticación principal.
+- App y web: aprobación de un desafío QR desde la app solo para roles habilitados en ambos canales.
+- App: recuperación mediante nueva verificación de identidad.
+- Web-only: recuperación asistida con re-verificación, auditoría y revocación de credenciales/sesiones anteriores.
+- No mantener login de contraseña o códigos como fallback legacy. La migración preserva las relaciones y activos existentes y exige enrolamiento seguro.
+
+## Ministerios
+
+El alta de AdminMinisterio continúa siendo asistida y requiere aprobación humana. No está incluida en el alta comercial self-service de clínicas, centros o consultorios.
+
+## Demo sandbox
+
+Desde el sitio institucional, CTA **Probar demo** pide captcha y un código de un solo uso (`POST /api/v1/licencia/demo-acceso`). El perfil elige médico (`demo_m_*`, AMB), médico odontología (`demo_m_*`, AMB, servicio ODONTOLOGIA), enfermería (`demo_e_*`, EMER) o administrativo (`demo_a_*`, EMER, ingreso a guardia). La especialidad del médico (subrol) se toma de la tabla `servicios`: el perfil `odontologia` no es un rol RBAC distinto, es un médico con `servicio = ODONTOLOGIA`. `/site/demo-entrar` solo consume el código y hace login (nunca la cuenta legacy `medico_med_general_*`). Se borran al cerrar sesión o al vencer el TTL.
 
 Desde la app **Personal de Salud**, **Probar demo** lista los perfiles staff (`GET …/demo-perfiles`) y llama `POST /api/v1/licencia/demo-acceso-mobile` con el `role` elegido (médico AMB, médico odontología AMB, enfermería o administrativo EMER). Flag `demo_sandbox_habilitado` + knobs en `demo_sandbox` (params), incluido `require_captcha` (web) y `require_captcha_mobile` (app, off por defecto).
 

@@ -23,6 +23,12 @@ final class SimulatedPaymentGateway
      */
     public static function charge(array $input): BillingPayment
     {
+        if (!defined('YII_ENV_PROD') || YII_ENV_PROD) {
+            throw new \LogicException(
+                'Los pagos simulados solo están disponibles en entornos no productivos.'
+            );
+        }
+
         $idAccount = (int) ($input['id_billing_account'] ?? 0);
         if ($idAccount <= 0) {
             throw new \InvalidArgumentException('Cuenta de facturación inválida para el cobro.');

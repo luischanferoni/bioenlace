@@ -7,7 +7,7 @@ import 'package:shared/shared.dart';
 
 const _diditVerificationTimeout = Duration(minutes: 10);
 
-/// Alta de cuenta de personal de salud: identidad (Didit) → cuenta → consultorio.
+/// Alta de cuenta profesional: identidad (Didit) → cuenta passwordless.
 class StaffSignupService {
   /// Corre una verificación de Didit y devuelve el `session_id` aprobado.
   Future<String> runDiditVerification({required bool biometric}) async {
@@ -72,48 +72,17 @@ class StaffSignupService {
   /// Crea la cuenta de identidad (Persona + User passwordless).
   Future<Map<String, dynamic>> createAccount({
     required String verificationId,
-    required String email,
+    String? email,
   }) {
+    final body = <String, dynamic>{'verification_id': verificationId};
+    final normalizedEmail = email?.trim();
+    if (normalizedEmail != null && normalizedEmail.isNotEmpty) {
+      body['email'] = normalizedEmail;
+    }
+
     return ApiClient(
       appClient: 'bioenlace-personalsalud',
       traceLabel: 'licencia/crear-cuenta',
-    ).postData('/licencia/crear-cuenta', body: {
-      'verification_id': verificationId,
-      'email': email.trim(),
-    });
-  }
-
-  /// Crea el consultorio privado + licencia (pago simulado) sobre la identidad.
-  Future<Map<String, dynamic>> createConsultorio({
-    required String verificationId,
-    required String email,
-    required String nombre,
-    required String domicilio,
-  }) {
-    return ApiClient(
-      appClient: 'bioenlace-personalsalud',
-      traceLabel: 'licencia/registrar-efector',
-    ).postData('/licencia/registrar-efector', body: {
-      'perfil': 'CONSULTORIO',
-      'sector': 'PRIVADO',
-      'verification_id': verificationId,
-      'email': email.trim(),
-      'efector': {
-        'nombre': nombre.trim(),
-        'domicilio': domicilio.trim(),
-      },
-      'plan': {
-        'classes': {
-          'AMB': {
-            'attentions_per_month': 200,
-            'max_pes': 1,
-          },
-        },
-      },
-      'payment': {
-        'card_number': '4242424242424242',
-        'card_holder': nombre.trim(),
-      },
-    });
+    ).postData('/licencia/crear-cuenta', body: body);
   }
 }

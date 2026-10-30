@@ -238,8 +238,13 @@ class AppTexts {
       'centro, servicio y área seleccionados. Si el problema continúa, contactá a soporte.';
   static const wizardEffectorsNeedSetup =
       'Algunos efectores requieren configuración';
+  static const wizardNoAssignedEfectorTitle =
+      'Todavía no tenés un centro asignado';
+  static const wizardNoAssignedEfectorMessage =
+      'La administración del centro debe incorporarte. Crear una cuenta no te '
+      'asigna a un centro ni habilita funciones clínicas.';
   static const wizardCreateConsultorioHint =
-      '¿Querés trabajar por tu cuenta? Creá tu consultorio privado desde aquí.';
+      'Si querés trabajar por tu cuenta, podés crear un consultorio privado.';
   static const wizardCreateConsultorio = 'Crear mi consultorio';
   static const wizardCreateConsultorioSoon =
       'La creación de consultorios todavía no está disponible desde la app.';

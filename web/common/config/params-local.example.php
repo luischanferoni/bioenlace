@@ -29,8 +29,10 @@ return [
     // --- Didit — identidad (registro) y auth biométrica (POST /api/v1/registro/registrar, login-biometrico) ---
     // La app móvil obtiene el workflow vía GET /api/v1/registro/config-movil (este valor).
     'didit_api_key' => '…', // Didit Console → API Keys
-    // UUID workflow KYC paciente (Didit Console → Workflows). Requerido para registro admin con foto y app móvil.
-    'didit_paciente_kyc_workflow_id' => '…',
+    // UUID workflow KYC compartido (Didit Console → Workflows). Requerido para registro admin con foto y app móvil.
+    'didit_kyc_workflow_id' => '…',
+    // Deprecado: alias de didit_kyc_workflow_id. Se conserva solo como fallback.
+    // 'didit_paciente_kyc_workflow_id' => '…',
     // Opcional pero recomendado: workflow solo Biometric Authentication (selfie + face match)
     // para reingreso tras cerrar sesión en app paciente. Si se omite, config-movil devuelve el KYC.
     // 'didit_paciente_biometric_workflow_id' => '…',

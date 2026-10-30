@@ -18,6 +18,7 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Flows como statechart | `flow-statechart/` | Fases 1–3: lectores y guía usan `states`; compilador retirado |
 | Clientes delgados y contrato de API | `clientes-contrato-api/` | Sin implementar; piloto captura + timeline del encounter; veterinaria solo estructura |
 | Paneles web por rol | `paneles-web-por-rol/` | Rediseñado: resolución por dos ejes (rol × encounter); fases 00–06 pendientes |
+| Alta de cuenta móvil con identidad Didit | `onboarding-mobile-didit/` | Identidad primero (Didit), alta en app staff, login biométrico, ministerio asistido |
 
 ## Planes archivados (carpeta eliminada)
 

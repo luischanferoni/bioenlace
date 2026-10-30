@@ -65,7 +65,8 @@ class DiditConfigResolver {
       );
 
       _cache = _MobileDiditConfig(
-        pacienteKyc: _trimOrNull(data['didit_paciente_kyc_workflow_id']),
+        pacienteKyc: _trimOrNull(data['didit_kyc_workflow_id']) ??
+            _trimOrNull(data['didit_paciente_kyc_workflow_id']),
         pacienteBiometric: _trimOrNull(
           data['didit_paciente_biometric_workflow_id'],
         ),

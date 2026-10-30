@@ -26,11 +26,14 @@ class DiditClient extends Component
      */
     public function createVerificationSession(array $options = []): array
     {
-        $workflowId = trim((string) ($options['workflow_id'] ?? Yii::$app->params['didit_paciente_kyc_workflow_id'] ?? ''));
+        $workflowId = trim((string) ($options['workflow_id']
+            ?? Yii::$app->params['didit_kyc_workflow_id']
+            ?? Yii::$app->params['didit_paciente_kyc_workflow_id']
+            ?? ''));
         if ($workflowId === '') {
             return [
                 'success' => false,
-                'message' => 'didit_paciente_kyc_workflow_id no configurado.',
+                'message' => 'didit_kyc_workflow_id no configurado.',
             ];
         }
 

@@ -47,7 +47,9 @@ return [
      */
     'didit_base_url' => 'https://api.didit.me',
     'didit_verification_base_url' => 'https://verification.didit.me',
-    /** UUID workflow KYC paciente (Didit Console). Configurar en params-local.php */
+    /** UUID workflow KYC compartido (Didit Console). Configurar en params-local.php */
+    'didit_kyc_workflow_id' => null,
+    /** Deprecado: alias de didit_kyc_workflow_id, se conserva como fallback. */
     'didit_paciente_kyc_workflow_id' => null,
     /** Opcional: workflow biométrico distinto; si null, se usa el KYC. */
     'didit_paciente_biometric_workflow_id' => null,

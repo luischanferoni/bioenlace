@@ -146,15 +146,17 @@ class RegistroController extends BaseController
      * GET /api/v1/registro/config-movil
      *
      * Config pública para apps móviles (workflows Didit). Sin auth.
-     * KYC: params `didit_paciente_kyc_workflow_id` (registro).
+     * KYC: params `didit_kyc_workflow_id` (compartido); fallback `didit_paciente_kyc_workflow_id`.
      * Biométrico: params `didit_paciente_biometric_workflow_id`; si falta, se devuelve el KYC como respaldo.
      */
     public function actionConfigMovil(): array
     {
-        $kyc = trim((string) (Yii::$app->params['didit_paciente_kyc_workflow_id'] ?? ''));
+        $kyc = trim((string) (Yii::$app->params['didit_kyc_workflow_id']
+            ?? Yii::$app->params['didit_paciente_kyc_workflow_id']
+            ?? ''));
         if ($kyc === '') {
             return $this->error(
-                'Registro móvil no configurado (didit_paciente_kyc_workflow_id).',
+                'Registro móvil no configurado (didit_kyc_workflow_id).',
                 null,
                 503
             );
@@ -166,6 +168,7 @@ class RegistroController extends BaseController
         }
 
         return $this->success([
+            'didit_kyc_workflow_id' => $kyc,
             'didit_paciente_kyc_workflow_id' => $kyc,
             'didit_paciente_biometric_workflow_id' => $biometric,
         ], 'Configuración móvil Didit', 200);

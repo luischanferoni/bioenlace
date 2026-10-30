@@ -6,6 +6,7 @@ use frontend\modules\api\v1\controllers\BaseController;
 use common\components\Domain\Organization\Efector\Application\UseCase\SwitchBillingMembership;
 use common\components\Domain\Organization\Efector\Application\UseCase\SignUpInstitutionalEfector;
 use common\components\Domain\Organization\Efector\Application\UseCase\RequestMinistrySignup;
+use common\components\Domain\Organization\Efector\Application\UseCase\CreateIdentityAccount;
 use common\components\Platform\Core\Auth\DemoSandboxAccessService;
 use common\components\Platform\Core\Auth\DemoSandboxCaptchaService;
 use common\components\Platform\Core\Http\Contract\ApiException;
@@ -15,8 +16,8 @@ use Yii;
 /**
  * Onboarding comercial de licencia (institucional + AdminEfector).
  *
- * Públicas (sin auth): catalogo-ministerios, planes, registrar-efector, solicitar-ministerio,
- * demo-perfiles, demo-captcha, demo-acceso, demo-acceso-mobile.
+ * Públicas (sin auth): catalogo-ministerios, planes, crear-cuenta, registrar-efector,
+ * solicitar-ministerio, demo-perfiles, demo-captcha, demo-acceso, demo-acceso-mobile.
  * Auth AdminEfector: mi-licencia, desvincular-pago-ministerio, asociar-pago-ministerio.
  */
 class LicenciaController extends BaseController
@@ -24,6 +25,7 @@ class LicenciaController extends BaseController
     public static $authenticatorExcept = [
         'catalogo-ministerios',
         'planes',
+        'crear-cuenta',
         'registrar-efector',
         'solicitar-ministerio',
         'demo-perfiles',
@@ -51,6 +53,7 @@ class LicenciaController extends BaseController
         $verbs = parent::verbs();
         $verbs['catalogo-ministerios'] = ['GET', 'OPTIONS'];
         $verbs['planes'] = ['GET', 'OPTIONS'];
+        $verbs['crear-cuenta'] = ['POST', 'OPTIONS'];
         $verbs['registrar-efector'] = ['POST', 'OPTIONS'];
         $verbs['solicitar-ministerio'] = ['POST', 'OPTIONS'];
         $verbs['demo-perfiles'] = ['GET', 'OPTIONS'];
@@ -80,6 +83,36 @@ class LicenciaController extends BaseController
     public function actionPlanes()
     {
         return $this->success(SignUpInstitutionalEfector::planesCatalog());
+    }
+
+    /**
+     * @action_name Cuenta de identidad (Persona + User passwordless, sin efector)
+     */
+    public function actionCrearCuenta()
+    {
+        $body = Yii::$app->request->getBodyParams();
+        if (!is_array($body)) {
+            $body = [];
+        }
+
+        try {
+            $data = (new CreateIdentityAccount())->crear($body);
+
+            return $this->success([
+                'id_persona' => (int) $data['persona']->id_persona,
+                'id_user' => (int) $data['user']->id,
+                'username' => (string) $data['user']->username,
+                'email' => (string) $data['user']->email,
+                'es_nueva_persona' => (bool) $data['es_nueva_persona'],
+                'es_nuevo_usuario' => (bool) $data['es_nuevo_usuario'],
+            ], 'Cuenta de identidad creada.');
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), null, 400);
+        } catch (\Throwable $e) {
+            Yii::error($e->getMessage() . "\n" . $e->getTraceAsString(), 'billing.signup');
+
+            return $this->error('No se pudo crear la cuenta. Reintentá o escribinos.', null, 500);
+        }
     }
 
     /**

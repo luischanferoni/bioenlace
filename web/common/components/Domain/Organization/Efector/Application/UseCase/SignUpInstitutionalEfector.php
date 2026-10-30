@@ -77,14 +77,20 @@ final class SignUpInstitutionalEfector
             throw new \InvalidArgumentException('La cobertura ministerial solo aplica a efectores públicos con ministerio.');
         }
 
-        $admin = self::normalizeAdmin($payload['admin'] ?? []);
+        $identity = self::resolveIdentity($payload);
+        $admin = $identity['admin'];
+
         $efectorData = self::normalizeEfector($payload['efector'] ?? [], $sector, $perfil);
         $plan = self::normalizePlan($payload['plan'] ?? [], $perfil);
         $paymentIn = is_array($payload['payment'] ?? null) ? $payload['payment'] : [];
 
         $tx = Yii::$app->db->beginTransaction();
         try {
-            [$persona, $user] = self::createPersonaAndUser($admin);
+            if ($identity['persona'] !== null && $identity['user'] !== null) {
+                [$persona, $user] = [$identity['persona'], $identity['user']];
+            } else {
+                [$persona, $user] = self::createPersonaAndUser($admin);
+            }
 
             $efector = self::createEfector($efectorData);
             $idEfector = (int) $efector->id_efector;
@@ -177,6 +183,54 @@ final class SignUpInstitutionalEfector
             $tx->rollBack();
             throw $e;
         }
+    }
+
+    /**
+     * Resuelve la identidad del administrador.
+     *
+     * Con verification_id (Didit) crea/recupera Persona + User passwordless y
+     * arma el array de admin desde la identidad verificada. Sin verification_id
+     * mantiene el camino legacy (normalizeAdmin + createPersonaAndUser).
+     *
+     * @param array<string, mixed> $payload
+     * @return array{admin: array<string, mixed>, persona: ?Persona, user: ?User}
+     */
+    private static function resolveIdentity(array $payload): array
+    {
+        $verificationId = trim((string) ($payload['verification_id'] ?? ''));
+        if ($verificationId === '') {
+            return [
+                'admin' => self::normalizeAdmin($payload['admin'] ?? []),
+                'persona' => null,
+                'user' => null,
+            ];
+        }
+
+        $email = trim((string) ($payload['email'] ?? ($payload['admin']['email'] ?? '')));
+        $account = (new CreateIdentityAccount())->crear([
+            'verification_id' => $verificationId,
+            'email' => $email,
+        ]);
+
+        $persona = $account['persona'];
+        $user = $account['user'];
+        $telefono = trim((string) ($payload['telefono'] ?? ($payload['admin']['telefono'] ?? '')));
+
+        $admin = [
+            'nombre' => (string) $persona->nombre,
+            'apellido' => (string) $persona->apellido,
+            'email' => (string) $user->email,
+            'password' => '',
+            'documento' => (string) $persona->documento,
+            'telefono' => $telefono !== '' ? $telefono : null,
+            'fecha_nacimiento' => (string) $persona->fecha_nacimiento,
+        ];
+
+        return [
+            'admin' => $admin,
+            'persona' => $persona,
+            'user' => $user,
+        ];
     }
 
     /**

@@ -7,6 +7,7 @@ use common\components\Domain\Organization\Efector\Application\UseCase\SwitchBill
 use common\components\Domain\Organization\Efector\Application\UseCase\SignUpInstitutionalEfector;
 use common\components\Domain\Organization\Efector\Application\UseCase\RequestMinistrySignup;
 use common\components\Domain\Organization\Efector\Application\UseCase\CreateIdentityAccount;
+use common\components\Domain\Organization\Efector\Application\UseCase\CompleteMinistrySignupIdentity;
 use common\components\Domain\Organization\Efector\Application\Service\SignupAbuseGuard;
 use common\components\Platform\Core\Auth\DemoSandboxAccessService;
 use common\components\Platform\Core\Auth\DemoSandboxCaptchaService;
@@ -27,6 +28,7 @@ class LicenciaController extends BaseController
         'catalogo-ministerios',
         'planes',
         'crear-cuenta',
+        'completar-ministerio',
         'registrar-efector',
         'solicitar-ministerio',
         'demo-perfiles',
@@ -55,6 +57,7 @@ class LicenciaController extends BaseController
         $verbs['catalogo-ministerios'] = ['GET', 'OPTIONS'];
         $verbs['planes'] = ['GET', 'OPTIONS'];
         $verbs['crear-cuenta'] = ['POST', 'OPTIONS'];
+        $verbs['completar-ministerio'] = ['POST', 'OPTIONS'];
         $verbs['registrar-efector'] = ['POST', 'OPTIONS'];
         $verbs['solicitar-ministerio'] = ['POST', 'OPTIONS'];
         $verbs['demo-perfiles'] = ['GET', 'OPTIONS'];
@@ -105,6 +108,7 @@ class LicenciaController extends BaseController
                 'id_user' => (int) $data['user']->id,
                 'username' => (string) $data['user']->username,
                 'email' => (string) $data['user']->email,
+                'token' => $data['token'] ?? null,
                 'es_nueva_persona' => (bool) $data['es_nueva_persona'],
                 'es_nuevo_usuario' => (bool) $data['es_nuevo_usuario'],
             ], 'Cuenta de identidad creada.');
@@ -116,6 +120,39 @@ class LicenciaController extends BaseController
             Yii::error($e->getMessage() . "\n" . $e->getTraceAsString(), 'billing.signup');
 
             return $this->error('No se pudo crear la cuenta. Reintentá o escribinos.', null, 500);
+        }
+    }
+
+    /**
+     * @action_name Completar identidad de solicitud de ministerio (token + Didit)
+     */
+    public function actionCompletarMinisterio()
+    {
+        $body = Yii::$app->request->getBodyParams();
+        if (!is_array($body)) {
+            $body = [];
+        }
+
+        try {
+            (new SignupAbuseGuard())->assertAllowed($body);
+            $token = trim((string) ($body['token'] ?? ''));
+            $verificationId = trim((string) ($body['verification_id'] ?? ''));
+            $req = RequestMinistrySignup::resolvePendingByToken($token);
+            $data = (new CompleteMinistrySignupIdentity())->complete((int) $req->id, $verificationId);
+
+            return $this->success([
+                'id_request' => (int) $data['id_request'],
+                'id_persona' => (int) $data['id_persona'],
+                'id_user' => (int) $data['id_user'],
+            ], 'Identidad verificada. Un administrador aprobará tu solicitud.');
+        } catch (\DomainException $e) {
+            return $this->error($e->getMessage(), null, str_contains($e->getMessage(), 'Demasiados') ? 429 : 400);
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), null, 400);
+        } catch (\Throwable $e) {
+            Yii::error($e->getMessage() . "\n" . $e->getTraceAsString(), 'billing.signup');
+
+            return $this->error('No se pudo completar la solicitud. Reintentá o escribinos.', null, 500);
         }
     }
 

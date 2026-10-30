@@ -18,7 +18,6 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Flows como statechart | `flow-statechart/` | Fases 1–3: lectores y guía usan `states`; compilador retirado |
 | Clientes delgados y contrato de API | `clientes-contrato-api/` | Sin implementar; piloto captura + timeline del encounter; veterinaria solo estructura |
 | Paneles web por rol | `paneles-web-por-rol/` | Rediseñado: resolución por dos ejes (rol × encounter); fases 00–06 pendientes |
-| Alta de cuenta móvil con identidad Didit | `onboarding-mobile-didit/` | Identidad primero (Didit), alta en app staff, login biométrico, ministerio asistido |
 
 ## Planes archivados (carpeta eliminada)
 
@@ -55,6 +54,7 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | DataAccess — edición dispersa | `common/components/Platform/Core/DataAccess/README.md` + admin «Consultas staff» |
 | Permisos DataAccess staff | `common/components/Platform/Core/DataAccess/README.md` + admin «Consultas staff» |
 | RBAC sin webvimark | [arquitectura/rbac-catalogo-permisos.md](../arquitectura/rbac-catalogo-permisos.md) |
+| Alta cuenta móvil con identidad Didit | [alta-cuenta-licencia.md](../producto/alta-cuenta-licencia.md) |
 | RBAC unificado por intents | [decisions/autorizacion-solo-por-intents.md](../decisions/autorizacion-solo-por-intents.md) + [arquitectura/rbac-catalogo-permisos.md](../arquitectura/rbac-catalogo-permisos.md) |
 | Limpieza legacy Yii / modelos / BD | Migraciones y código en repo; sin plan activo |
 

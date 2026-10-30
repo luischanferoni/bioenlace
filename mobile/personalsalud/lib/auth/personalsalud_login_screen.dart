@@ -6,9 +6,9 @@ import '../infra/app_texts.dart';
 
 import '../main.dart';
 import '../screens/main_screen.dart';
+import '../screens/staff_signup_screen.dart';
 import 'personalsalud_authenticated_shell.dart';
 import 'personalsalud_session_prefs.dart';
-import 'personalsalud_staff_activation_screen.dart';
 
 typedef PersonalsaludLoginSuccess =
     void Function(String userId, String userName, BuildContext loginContext);
@@ -539,16 +539,15 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
                 ),
                 BioSpacing.gapH(BioSpacing.md),
                 BioButton.softPrimary(
-                  label: 'Activar cuenta con código',
-                  icon: Icons.vpn_key_outlined,
+                  label: 'Crear cuenta',
+                  icon: Icons.person_add_alt_outlined,
                   fullWidth: true,
                   onPressed: _submitting
                       ? null
                       : () {
                           Navigator.of(context).push(
                             MaterialPageRoute<void>(
-                              builder: (_) =>
-                                  const PersonalsaludStaffActivationScreen(),
+                              builder: (_) => const StaffSignupScreen(),
                             ),
                           );
                         },

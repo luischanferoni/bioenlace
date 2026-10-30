@@ -2,35 +2,46 @@
 
 ## De qué se trata
 
-Desde el sitio institucional se puede **crear una clínica/efector** (privado o público) o un **consultorio profesional privado** (mismo modelo AdminEfector + licencia, con defaults distintos) con **pago simulado**, o **solicitar** una cuenta de ministerio (activación asistida). Un efector público declara ministerio (afiliación) y puede pagar por su cuenta o pedir cobertura del pool ministerial. El perfil **consultorio** no admite sector público: quien trabaja en un centro público debe ser sumado por AdminEfector.
+El alta es **identidad-primero** y se hace desde la app **Personal de Salud**: la persona verifica su identidad con **Didit** (documento + selfie, sin contraseñas) y obtiene una cuenta de identidad (Persona + User). El efector es una capa posterior: o lo crea la propia persona pagando (consultorio/clínica privada), o la agrega un `AdminEfector` de una organización (sin pago). El **ministerio** es asistido por admin (token + KYC), sin self-service. Login con huella/Face ID local; en un dispositivo nuevo se re-verifica con Didit.
 
 ## Actores
 
 | Actor | Cómo entra |
 |-------|------------|
-| AdminEfector (clínica / centro) | Self-service en institucional → perfil `CLINICA` |
-| AdminEfector (consultorio unipersonal) | Self-service → perfil `CONSULTORIO` **solo PRIVADO**; deep-link `?perfil=consultorio` |
-| AdminMinisterio | Solicitud → verificación → aprobación en admin plataforma |
+| Cuenta de identidad | App Personal de Salud → Didit KYC → `POST /licencia/crear-cuenta` |
+| AdminEfector (clínica / centro) | Identidad → `POST /licencia/registrar-efector` con `verification_id` + plan + pago |
+| AdminEfector (consultorio unipersonal) | Igual, perfil `CONSULTORIO` **solo PRIVADO**, plan solo ambulatorio (1 profesional) |
+| Profesional de una organización | El `AdminEfector` lo agrega (PES) → push → aparece en el wizard |
+| AdminMinisterio | Solicitud asistida por admin → token de invitación → KYC → aprobación |
 | Ops Bioenlace | Aprueba solicitudes y movimientos de pool |
 
 ## Cómo funciona
 
 ```mermaid
 flowchart LR
-  Inst[Institucional alta.html] --> API[API licencia]
-  API -->|efector| Pay[Pago simulado]
-  Pay --> Acc[billing_account EFECTOR + POOL + PES AdminEfector]
-  Acc --> Guide[Guía: asignarse a servicio clínico]
-  API -->|ministerio| Pend[billing_signup_request]
-  Pend --> Admin[Admin aprueba]
-  Admin --> Rol[AdminMinisterio + cuenta MINISTERIO]
+  App[App Personal de Salud] --> Didit[Didit KYC]
+  Didit --> Cuenta[Cuenta de identidad: Persona + User sin contraseña]
+  Cuenta -->|crear efector propio| Pay[Pago simulado]
+  Pay --> Efe[billing_account EFECTOR + POOL + PES AdminEfector]
+  Cuenta -->|lo agrega admin| Pool[PES en efector existente + push]
+  Admin[Admin] -->|ministerio| Token[Token de invitación]
+  Token --> KYC[Didit KYC] --> Aprob[Aprobación AdminMinisterio]
 ```
 
-1. **Privado:** cuenta propia, cobro simulado, entitlements según plan.
-2. **Público (solo clínica/centro):** elige ministerio (AFILIADO). Por defecto paga en cuenta propia; si marca cobertura ministerial, queda pendiente hasta que ops mueva el POOL.
-3. **Consultorio:** mismos pasos que clínica privada; **sin** opción público; plan **solo ambulatorio con 1 profesional fijo** (unipersonal; sin EMER/IMP); tipología de consultorio; tras el alta, `next_steps` indica asignarse a un servicio clínico (no se crea PES clínico automáticamente).
-4. **Plan clínica/centro:** AMB / EMER / IMP opcionales (al menos uno), con cantidad de profesionales editable; dictado/videollamada solo si hay ambulatorio.
-5. **Desvincular pago ministerio / asociar:** AdminEfector autenticado vía API `desvincular-pago-ministerio` / `asociar-pago-ministerio` (esta última genera solicitud).
+1. **Identidad:** `POST /licencia/crear-cuenta` con `verification_id` + `email` → Persona + User passwordless + JWT. No crea efector ni paga.
+2. **Efector propio (privado):** `POST /licencia/registrar-efector` con `verification_id` (el backend resuelve la identidad) + plan + pago simulado → cuenta propia + entitlements.
+3. **Público (solo clínica/centro):** elige ministerio (AFILIADO); si pide cobertura queda `PENDING` hasta que ops mueva el POOL.
+4. **Consultorio:** perfil `CONSULTORIO` solo privado; plan ambulatorio con 1 profesional fijo; validación REFEPS/SISA en el alta.
+5. **Profesional de una organización:** el `AdminEfector` lo agrega desde admin → push `profesional_agregado` a la app.
+6. **Ministerio:** admin crea la solicitud y emite token; la persona completa KYC con `POST /licencia/completar-ministerio`; aprobación asigna rol `AdminMinisterio` + cuenta MINISTERIO.
+7. **Desvincular pago ministerio / asociar:** AdminEfector autenticado vía API `desvincular-pago-ministerio` / `asociar-pago-ministerio`.
+
+## Hardening del alta
+
+- Workflow KYC Didit compartido (`didit_kyc_workflow_id`, fallback `didit_paciente_kyc_workflow_id`).
+- Teléfono opcional validado E.164 (`ContactPhoneValidator`).
+- Geo-gating AR/UY (`signupAllowedIso2`).
+- Rate limit + honeypot en endpoints públicos (`SignupAbuseGuard`, `signupMaxPerIpHour`).
 
 ## Demo sandbox (probar sin crear cuenta)
 

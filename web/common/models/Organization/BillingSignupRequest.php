@@ -25,6 +25,8 @@ use yii\db\ActiveRecord;
  * @property int|null $id_efector
  * @property int|null $reviewed_by
  * @property string|null $reviewed_at
+ * @property string|null $invitation_token_hash
+ * @property string|null $invitation_expires_at
  */
 class BillingSignupRequest extends ActiveRecord
 {
@@ -107,7 +109,8 @@ class BillingSignupRequest extends ActiveRecord
             [['contacto_documento'], 'string', 'max' => 20],
             [['contacto_email'], 'email'],
             [['notas'], 'string'],
-            [['reviewed_at', 'created_at', 'updated_at', 'deleted_at'], 'safe'],
+            [['invitation_token_hash'], 'string', 'max' => 64],
+            [['reviewed_at', 'invitation_expires_at', 'created_at', 'updated_at', 'deleted_at'], 'safe'],
         ];
     }
 

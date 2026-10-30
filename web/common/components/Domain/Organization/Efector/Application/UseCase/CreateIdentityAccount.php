@@ -5,6 +5,7 @@ namespace common\components\Domain\Organization\Efector\Application\UseCase;
 use common\components\Domain\Person\Identity\Application\Service\DiditIdentityService;
 use common\models\Person\Persona;
 use common\models\Platform\User;
+use Firebase\JWT\JWT;
 use Yii;
 
 /**
@@ -45,7 +46,36 @@ final class CreateIdentityAccount
             'es_nueva_persona' => (bool) $resolved['es_nueva'],
             'es_nuevo_usuario' => $esNuevoUsuario,
             'didit' => $resolved['didit'],
+            'token' => $this->issueJwt($user, $persona),
         ];
+    }
+
+    /**
+     * Emite un JWT de sesión para la cuenta de identidad (mismo patrón que RegisterPerson).
+     */
+    private function issueJwt(User $user, Persona $persona): ?string
+    {
+        $jwtSecret = Yii::$app->params['jwtSecret'] ?? null;
+        if (!$jwtSecret) {
+            Yii::warning('jwtSecret no configurado; no se generará token en CreateIdentityAccount.', 'billing.signup');
+
+            return null;
+        }
+
+        try {
+            return JWT::encode([
+                'user_id' => (int) $user->id,
+                'email' => (string) $user->email,
+                'role' => 'usuario',
+                'id_persona' => (int) $persona->id_persona,
+                'iat' => time(),
+                'exp' => time() + (24 * 60 * 60),
+            ], $jwtSecret, 'HS256');
+        } catch (\Throwable $e) {
+            Yii::error('Error generando JWT en CreateIdentityAccount: ' . $e->getMessage(), 'billing.signup');
+
+            return null;
+        }
     }
 
     /**

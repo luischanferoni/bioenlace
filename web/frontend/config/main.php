@@ -128,6 +128,7 @@ return [
                 'GET api/<version:\w+>/licencia/catalogo-ministerios' => '<version>/licencia/catalogo-ministerios',
                 'GET api/<version:\w+>/licencia/planes' => '<version>/licencia/planes',
                 'POST api/<version:\w+>/licencia/crear-cuenta' => '<version>/licencia/crear-cuenta',
+                'POST api/<version:\w+>/licencia/completar-ministerio' => '<version>/licencia/completar-ministerio',
                 'POST api/<version:\w+>/licencia/registrar-efector' => '<version>/licencia/registrar-efector',
                 'POST api/<version:\w+>/licencia/solicitar-ministerio' => '<version>/licencia/solicitar-ministerio',
                 'GET api/<version:\w+>/licencia/demo-perfiles' => '<version>/licencia/demo-perfiles',

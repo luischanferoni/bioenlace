@@ -15,6 +15,8 @@ final class RequestMinistrySignup
 {
     public const ROLE_ADMIN_MINISTERIO = 'AdminMinisterio';
 
+    private const INVITATION_TOKEN_TTL = 72 * 3600;
+
     /**
      * @param array<string, mixed> $data
      */
@@ -63,6 +65,60 @@ final class RequestMinistrySignup
         }
 
         return $row;
+    }
+
+    /**
+     * Genera un token de invitación de un solo uso (link a la app) para completar el KYC.
+     */
+    public static function issueInvitationToken(int $idRequest, ?int $actorUserId = null): string
+    {
+        $req = BillingSignupRequest::findOne(['id' => $idRequest, 'deleted_at' => null]);
+        if ($req === null || $req->tipo !== BillingSignupRequest::TIPO_MINISTERIO) {
+            throw new \InvalidArgumentException('Solicitud de ministerio inexistente.');
+        }
+        if ($req->status !== BillingSignupRequest::STATUS_PENDING) {
+            throw new \InvalidArgumentException('La solicitud ya fue resuelta.');
+        }
+
+        $plain = bin2hex(random_bytes(24));
+        $req->invitation_token_hash = Yii::$app->security->generatePasswordHash($plain);
+        $req->invitation_expires_at = date('Y-m-d H:i:s', time() + self::INVITATION_TOKEN_TTL);
+        if (!$req->save(false)) {
+            throw new \RuntimeException('No se pudo generar el token de invitación.');
+        }
+
+        return $plain;
+    }
+
+    /**
+     * Resuelve una solicitud pendiente por su token de invitación (un solo uso, con TTL).
+     */
+    public static function resolvePendingByToken(string $token): BillingSignupRequest
+    {
+        $token = trim($token);
+        if ($token === '') {
+            throw new \InvalidArgumentException('Token de invitación requerido.');
+        }
+
+        $rows = BillingSignupRequest::find()
+            ->where([
+                'tipo' => BillingSignupRequest::TIPO_MINISTERIO,
+                'status' => BillingSignupRequest::STATUS_PENDING,
+                'deleted_at' => null,
+            ])
+            ->andWhere(['not', ['invitation_token_hash' => null]])
+            ->all();
+
+        foreach ($rows as $req) {
+            if ((string) $req->invitation_expires_at !== '' && strtotime((string) $req->invitation_expires_at) < time()) {
+                continue;
+            }
+            if (Yii::$app->security->validatePassword($token, (string) $req->invitation_token_hash)) {
+                return $req;
+            }
+        }
+
+        throw new \InvalidArgumentException('Token de invitación inválido o expirado.');
     }
 
     /**

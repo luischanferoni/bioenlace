@@ -13,8 +13,10 @@ use yii\web\Response;
 
 use common\models\Organization\ProfesionalEfectorServicioBusqueda;
 use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Organization\Efector;
 use common\models\Person\Persona;
 use common\components\Domain\Organization\Pes\Application\UseCase\EnsureAdminEfectorAssignment;
+use common\components\Platform\Core\Service\Push\PushNotificationSender;
 
 /**
  * Gestión backend de filas PES (`profesional_efector_servicio`): listados, admin efector, live search.
@@ -114,6 +116,7 @@ class ProfesionalEfectorServicioController extends Controller
                             (int) $persona->id_persona,
                             (int) $id_efector_a_crear
                         );
+                        $this->notifyPersonaAdded((int) $persona->id_persona, (int) $id_efector_a_crear);
                     } catch (\Throwable $e) {
                         $error = [$e->getMessage()];
                         throw new Exception($e->getMessage(), 0, $e);
@@ -171,7 +174,38 @@ class ProfesionalEfectorServicioController extends Controller
             return ['error' => true, 'message' => $e->getMessage()];
         }
 
+        $this->notifyPersonaAdded($idPersona, $idEfector);
+
         return ['ok' => true];
+    }
+
+    /**
+     * Avisa por push a la app del profesional que fue agregado a un efector.
+     */
+    private function notifyPersonaAdded(int $idPersona, int $idEfector): void
+    {
+        try {
+            $nombre = '';
+            $efector = Efector::findOne(['id_efector' => $idEfector, 'deleted_at' => null]);
+            if ($efector !== null) {
+                $nombre = (string) $efector->nombre;
+            }
+            (new PushNotificationSender())->sendToPersona(
+                $idPersona,
+                [
+                    'type' => 'profesional_agregado',
+                    'id_efector' => $idEfector,
+                ],
+                'Te agregaron a un efector',
+                $nombre !== ''
+                    ? 'Ya podés operar en ' . $nombre . '. Abrí la app para configurar tu sesión.'
+                    : 'Ya podés operar. Abrí la app para configurar tu sesión.',
+                true,
+                ['idempotency_key' => 'profesional_agregado:' . $idPersona . ':' . $idEfector]
+            );
+        } catch (\Throwable $e) {
+            Yii::warning('No se pudo enviar push de alta profesional: ' . $e->getMessage(), 'billing.signup');
+        }
     }
 
     public function actionRemoveAdminEfector($id_pes)

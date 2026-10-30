@@ -220,6 +220,11 @@ class AppTexts {
       'No se puede usar la app sin completar efector, servicio y área.';
   static const wizardEffectorsNeedSetup =
       'Algunos efectores requieren configuración';
+  static const wizardCreateConsultorioHint =
+      '¿Querés trabajar por tu cuenta? Para crear tu propio consultorio privado, presioná el botón.';
+  static const wizardCreateConsultorio = 'Crear mi consultorio';
+  static const wizardCreateConsultorioSoon =
+      'El alta de consultorio desde la app estará disponible próximamente.';
   static const wizardChooseService = 'Elegí el servicio donde vas a trabajar.';
   static const wizardNoServices = 'No hay servicios disponibles';
   static const wizardChooseEncounterType =

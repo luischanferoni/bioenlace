@@ -7,6 +7,7 @@ use common\components\Domain\Organization\Efector\Application\UseCase\SwitchBill
 use common\components\Domain\Organization\Efector\Application\UseCase\SignUpInstitutionalEfector;
 use common\components\Domain\Organization\Efector\Application\UseCase\RequestMinistrySignup;
 use common\components\Domain\Organization\Efector\Application\UseCase\CreateIdentityAccount;
+use common\components\Domain\Organization\Efector\Application\Service\SignupAbuseGuard;
 use common\components\Platform\Core\Auth\DemoSandboxAccessService;
 use common\components\Platform\Core\Auth\DemoSandboxCaptchaService;
 use common\components\Platform\Core\Http\Contract\ApiException;
@@ -96,6 +97,7 @@ class LicenciaController extends BaseController
         }
 
         try {
+            (new SignupAbuseGuard())->assertAllowed($body);
             $data = (new CreateIdentityAccount())->crear($body);
 
             return $this->success([
@@ -106,6 +108,8 @@ class LicenciaController extends BaseController
                 'es_nueva_persona' => (bool) $data['es_nueva_persona'],
                 'es_nuevo_usuario' => (bool) $data['es_nuevo_usuario'],
             ], 'Cuenta de identidad creada.');
+        } catch (\DomainException $e) {
+            return $this->error($e->getMessage(), null, str_contains($e->getMessage(), 'Demasiados') ? 429 : 400);
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
         } catch (\Throwable $e) {
@@ -126,9 +130,12 @@ class LicenciaController extends BaseController
         }
 
         try {
+            (new SignupAbuseGuard())->assertAllowed($body);
             $data = SignUpInstitutionalEfector::register($body);
 
             return $this->success($data, 'Cuenta creada. Ya podés ingresar a la plataforma.');
+        } catch (\DomainException $e) {
+            return $this->error($e->getMessage(), null, str_contains($e->getMessage(), 'Demasiados') ? 429 : 400);
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
         } catch (\Throwable $e) {

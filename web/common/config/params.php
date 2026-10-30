@@ -51,6 +51,8 @@ return [
     'institucionalSignupUrl' => 'https://bioenlace.io/alta.html',
     /** Países habilitados para el alta self-service (ISO 3166-1 alpha-2). */
     'signupAllowedIso2' => ['AR', 'UY'],
+    /** Máximo de solicitudes de alta por IP y por hora (rate limit). */
+    'signupMaxPerIpHour' => 20,
     /** UUID workflow KYC compartido (Didit Console). Configurar en params-local.php */
     'didit_kyc_workflow_id' => null,
     /** Deprecado: alias de didit_kyc_workflow_id, se conserva como fallback. */

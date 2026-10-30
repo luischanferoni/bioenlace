@@ -16,11 +16,13 @@ class SessionWizardOptions {
   final List<Efector> efectores;
   final Map<int, List<Servicio>> serviciosPorEfector;
   final List<EfectorConProblema> efectoresConProblemas;
+  final bool puedeCrearEfector;
 
   SessionWizardOptions({
     required this.efectores,
     required this.serviciosPorEfector,
     required this.efectoresConProblemas,
+    this.puedeCrearEfector = false,
   });
 }
 
@@ -119,6 +121,7 @@ class ConfigService {
       efectores: efectores,
       serviciosPorEfector: serviciosPorEfector,
       efectoresConProblemas: problemas,
+      puedeCrearEfector: payload['puede_crear_efector'] == true,
     );
   }
 

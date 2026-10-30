@@ -41,6 +41,7 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
   List<Efector> _efectores = [];
   List<Servicio> _servicios = [];
   List<EfectorConProblema> _efectoresConProblemas = [];
+  bool _puedeCrearEfector = false;
 
   Efector? _selectedEfector;
   Servicio? _selectedServicio;
@@ -74,6 +75,7 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
         _wizardOptions = options;
         _efectores = options.efectores;
         _efectoresConProblemas = options.efectoresConProblemas;
+        _puedeCrearEfector = options.puedeCrearEfector;
         _isLoading = false;
       });
 
@@ -469,6 +471,12 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
     );
   }
 
+  void _onCrearConsultorio() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text(AppTexts.wizardCreateConsultorioSoon)),
+    );
+  }
+
   bool _canProceed() {
     if (_isLoading) return false;
     switch (_currentStep) {
@@ -511,6 +519,18 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
                     return t;
                   })
                   .join('\n\n'),
+            ),
+            BioSpacing.gapH(BioSpacing.lg),
+          ],
+          if (!_isLoading && _efectores.isEmpty && _puedeCrearEfector) ...[
+            Text(
+              AppTexts.wizardCreateConsultorioHint,
+              style: BioTypography.body,
+            ),
+            BioSpacing.gapH(BioSpacing.md),
+            BioButton.primary(
+              label: AppTexts.wizardCreateConsultorio,
+              onPressed: _onCrearConsultorio,
             ),
             BioSpacing.gapH(BioSpacing.lg),
           ],

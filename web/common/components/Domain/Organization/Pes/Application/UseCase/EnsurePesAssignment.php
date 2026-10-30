@@ -4,6 +4,8 @@ namespace common\components\Domain\Organization\Pes\Application\UseCase;
 
 use common\components\Domain\Organization\Efector\Application\Service\EfectorEncounterEntitlementService;
 use common\components\Domain\Organization\Efector\Application\Seed\ActiveRecordConsoleBlame;
+use common\components\Domain\Person\Identity\Application\Service\RefepsProfessionalVerificationService;
+use common\components\Domain\Person\Identity\Application\Service\RefepsVerificationException;
 use common\components\Domain\Person\Identity\Application\Service\PersonCuilService;
 use common\models\Person\Persona;
 use common\models\Organization\ProfesionalEfectorServicio as ProfesionalEfectorServicioModel;
@@ -19,6 +21,7 @@ use Yii;
 final class EnsurePesAssignment
 {
     /**
+     * @param bool $trustedProvisioning Only internal seed/signup provisioning may bypass actor checks and REFEPS.
      * @return array{id_profesional_efector_servicio: int, id_servicio: int, servicio_acepta_turnos: string}
      */
     public static function ensurePersonaServicioEnEfector(
@@ -26,7 +29,8 @@ final class EnsurePesAssignment
         int $idEfector,
         int $idServicio,
         ?int $actingUserId = null,
-        ?string $cuil = null
+        ?string $cuil = null,
+        bool $trustedProvisioning = false
     ): array {
         if ($idPersona <= 0 || $idEfector <= 0 || $idServicio <= 0) {
             throw new \InvalidArgumentException('Datos inválidos para la asignación (persona, efector o servicio).');
@@ -45,8 +49,32 @@ final class EnsurePesAssignment
             throw new \InvalidArgumentException('Servicio inexistente.');
         }
         $acepta = strtoupper(trim((string) $servicio->acepta_turnos));
+        $isAdminEfectorService = strcasecmp(
+            trim((string) ($servicio->item_name ?? '')),
+            EnsureAdminEfectorAssignment::ITEM_NAME
+        ) === 0;
 
-        if (self::servicioRequiereCuilProfesional($servicio)) {
+        if (!$trustedProvisioning) {
+            self::assertActingUserIsEfectorAdmin($idEfector, $actingUserId);
+        }
+
+        $existingPes = ProfesionalEfectorServicioModel::findActive()
+            ->andWhere([
+                'id_persona' => $idPersona,
+                'id_efector' => $idEfector,
+                'id_servicio' => $idServicio,
+            ])
+            ->one();
+        if (
+            $existingPes === null
+            && !$trustedProvisioning
+            && !$isAdminEfectorService
+            && self::serviceRequiresProfessionalVerification($servicio)
+        ) {
+            self::assertProfessionalRegistryVerification($idPersona);
+        }
+
+        if (!$isAdminEfectorService) {
             $persona = Persona::findOne(['id_persona' => $idPersona]);
             if ($persona === null) {
                 throw new \InvalidArgumentException('Persona inexistente.');
@@ -119,12 +147,62 @@ final class EnsurePesAssignment
         ];
     }
 
-    private static function servicioRequiereCuilProfesional(?Servicio $servicio): bool
+    private static function assertActingUserIsEfectorAdmin(int $idEfector, ?int $actingUserId): void
     {
-        if ($servicio === null) {
-            return true;
+        if (!Yii::$app->has('user', true) || Yii::$app->user->isGuest) {
+            throw new \DomainException('Solo la administración del centro puede incorporar personas.');
         }
 
-        return strcasecmp(trim((string) ($servicio->item_name ?? '')), 'AdminEfector') !== 0;
+        $currentUserId = (int) Yii::$app->user->id;
+        if ($currentUserId <= 0 || ($actingUserId !== null && $actingUserId !== $currentUserId)) {
+            throw new \DomainException('No se pudo validar quién realiza la asignación.');
+        }
+        if (Yii::$app->user->isSuperadmin) {
+            return;
+        }
+
+        $persona = Persona::findOne(['id_user' => $currentUserId]);
+        $adminService = EnsureAdminEfectorAssignment::findSistemaServicio();
+        if ($persona === null || $adminService === null) {
+            throw new \DomainException('Solo la administración del centro puede incorporar personas.');
+        }
+
+        $hasAdminAssignment = ProfesionalEfectorServicioModel::findActive()
+            ->andWhere([
+                'id_persona' => (int) $persona->id_persona,
+                'id_efector' => $idEfector,
+                'id_servicio' => (int) $adminService->id_servicio,
+            ])
+            ->exists();
+        if (!$hasAdminAssignment) {
+            throw new \DomainException('Solo la administración de este centro puede incorporar personas.');
+        }
     }
+
+    private static function assertProfessionalRegistryVerification(int $idPersona): void
+    {
+        $persona = Persona::findOne(['id_persona' => $idPersona]);
+        if ($persona === null) {
+            throw new \InvalidArgumentException('Persona inexistente.');
+        }
+
+        $result = (new RefepsProfessionalVerificationService())->verify($persona);
+        if (!$result->isConfirmed()) {
+            throw new RefepsVerificationException($result->status, $result->message);
+        }
+    }
+
+    private static function serviceRequiresProfessionalVerification(Servicio $servicio): bool
+    {
+        $nonClinicalRoles = [
+            'AdminEfector',
+            'AdminMinisterio',
+            'nivelCentral',
+            'Administrativo',
+            'facturista',
+        ];
+
+        return !in_array(trim((string) ($servicio->item_name ?? '')), $nonClinicalRoles, true);
+    }
+
 }

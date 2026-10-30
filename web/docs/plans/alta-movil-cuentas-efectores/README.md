@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|--------|
 | Slug | `alta-movil-cuentas-efectores` |
-| Estado | En ejecución — Fase 1 |
+| Estado | En ejecución — Fases 1 y 2; proveedor REFEPS pendiente |
 | Dueño | Producto / Identidad / Organización / Mobile |
 | Corte de compatibilidad | Sin flujos legacy; migrar las cuentas y relaciones existentes |
 

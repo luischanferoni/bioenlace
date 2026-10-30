@@ -541,7 +541,12 @@ final class SignUpInstitutionalEfector
 
     private static function ensureAdminEfectorPes(int $idPersona, int $idEfector, int $actingUserId): void
     {
-        EnsureAdminEfectorAssignment::ensurePersonaEnEfector($idPersona, $idEfector, $actingUserId);
+        EnsureAdminEfectorAssignment::ensurePersonaEnEfector(
+            $idPersona,
+            $idEfector,
+            $actingUserId,
+            true
+        );
     }
 
     private static function generateCodigoSisa(): string

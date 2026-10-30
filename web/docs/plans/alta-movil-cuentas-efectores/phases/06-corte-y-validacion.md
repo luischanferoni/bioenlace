@@ -8,6 +8,7 @@ Desplegar el modelo nuevo sin rutas antiguas y sin perder las relaciones/activos
 
 - [ ] Inventariar y migrar usuarios, Persona, efectores, PES, billing accounts, contratos y permisos.
 - [ ] Activar enrolamiento de passkey para identidades web existentes antes de retirar contraseña.
+- [x] Retirar el alta profesional del endpoint legacy `/api/v1/registro/registrar` y conservar el registro de pacientes.
 - [ ] Retirar login web/mobile con password, código de activación y alta comercial web antigua.
 - [ ] Retirar acceso móvil implícito para AdminEfector y roles no aprobados.
 - [ ] No provisionar licencias/roles por pagos simulados en producción.

@@ -111,7 +111,9 @@ final class MedicoMedGeneralEfectorSeedService
             (int) $persona->id_persona,
             $idEfector,
             $idServicio,
-            $actingUserId
+            $actingUserId,
+            null,
+            true
         );
         $idPes = (int) $pesResult['id_profesional_efector_servicio'];
         $createdPes = $pesBefore === null;

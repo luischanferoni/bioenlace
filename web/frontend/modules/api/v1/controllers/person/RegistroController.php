@@ -9,7 +9,7 @@ use common\components\Domain\Person\Identity\Application\UseCase\RegisterPatient
 use common\components\Domain\Person\FrontDesk\Infrastructure\External\Identity\Connector\DiditClient;
 
 /**
- * Controlador de registro unificado para pacientes y médicos.
+ * Controlador de registro de pacientes. Las cuentas profesionales se crean desde Personal de Salud.
  *
  * Endpoint principal:
  *
@@ -18,7 +18,7 @@ use common\components\Domain\Person\FrontDesk\Infrastructure\External\Identity\C
  * Payload esperado (JSON o x-www-form-urlencoded):
  *
  * {
- *   "tipo": "paciente" | "medico",
+ *   "tipo": "paciente",
  *   "verification_id": "didit-verification-id",
  *   "fecha_nacimiento": "1984-01-01",   // opcional, solo si no viene de Didit
  *   "email": "persona@example.com",     // opcional según caso de uso
@@ -89,20 +89,12 @@ class RegistroController extends BaseController
     }
 
     /**
-     * Endpoint unificado de registro de pacientes y médicos utilizando Didit.
+     * Endpoint de registro de pacientes utilizando Didit.
      *
      * Ruta: POST /api/v1/registro/registrar
      *
      * - Valida parámetros mínimos del request.
-     * - Delegará la lógica de orquestación a un servicio de registro
-     *   (por ejemplo, common\components\RegisterPerson), que se encargará de:
-     *      * llamar a Verifik,
-     *      * crear/actualizar Persona en la base,
-     *      * sincronizar con MPI,
-     *      * y, en caso de médicos, validar contra REFEPS.
-     *
-     * Por ahora solo valida y estructura el contrato de entrada/salida;
-     * la integración concreta se añadirá en pasos posteriores.
+     * El alta de cuentas profesionales desde este endpoint fue retirada.
      */
     public function actionRegistrar()
     {
@@ -112,8 +104,16 @@ class RegistroController extends BaseController
         $tipo = $bodyParams['tipo'] ?? null;
         $verificationId = $bodyParams['verification_id'] ?? null;
 
-        if (!$tipo || !in_array($tipo, ['paciente', 'medico'], true)) {
-            return $this->error('El campo "tipo" es requerido y debe ser "paciente" o "medico".', null, 400);
+        if ($tipo === 'medico') {
+            return $this->error(
+                'El alta de profesionales se realiza desde Personal de Salud. Ingresá a la app para crear tu cuenta.',
+                null,
+                410
+            );
+        }
+
+        if ($tipo !== 'paciente') {
+            return $this->error('El campo "tipo" debe ser "paciente".', null, 400);
         }
 
         if (!$verificationId) {

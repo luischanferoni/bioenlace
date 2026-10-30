@@ -60,6 +60,12 @@ errors:
     intent: error
     retryable: false
     message: "No se encontró lo que buscabas."
+  gone_detail:
+    http_status: 410
+    intent: info
+    retryable: false
+    default_detail: "Este recurso ya no está disponible."
+    message: "{detail}"
   conflict_detail:
     http_status: 409
     intent: error

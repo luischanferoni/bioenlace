@@ -228,6 +228,9 @@ class BaseController extends Controller
             if ($code === 404) {
                 return $this->fail('not_found_detail', $params);
             }
+            if ($code === 410) {
+                return $this->fail('gone_detail', $params);
+            }
             if ($code === 409) {
                 return $this->fail('conflict_detail', $params);
             }

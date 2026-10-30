@@ -24,9 +24,13 @@ No se solicita e-mail para crear identidad. El modelo objetivo reemplaza los có
 
 ## REFEPS y asignación
 
-AdminEfector inicia la incorporación de una persona ya registrada, incluso si se incorpora a sí mismo a un servicio clínico. La comprobación de REFEPS debe distinguir coincidencia confirmada, persona no encontrada, indisponibilidad temporal y revisión manual. La falta de respuesta nunca concede rol clínico ni debe tratarse como una negativa definitiva.
+AdminEfector inicia la incorporación de una persona ya registrada, incluso si se incorpora a sí mismo a un servicio clínico. El servidor ahora exige confirmación REFEPS y coincidencia exacta del documento devuelto antes de crear una asignación clínica. Distingue coincidencia confirmada, no encontrado, indisponibilidad temporal y revisión manual; ninguna respuesta negativa, ambigua o ausente concede el rol.
+
+La integración todavía no está lista para producción: este repositorio no incluye el cliente SISA/REFEPS y la única referencia existente consulta el alcance de Santiago. Hasta conectar un proveedor con cobertura adecuada y un circuito de revisión, las nuevas asignaciones clínicas fallan de forma segura; las asignaciones AdminEfector no requieren esa consulta.
 
 La identidad profesional sin asignación no puede elegir un centro ni sumarse por cuenta propia. La licencia del efector cubre a los profesionales según el plan, no se compra una segunda licencia por cada profesional asignado.
+
+El endpoint legado `POST /api/v1/registro/registrar` ya no acepta `tipo=medico`; devuelve `410 Gone` y dirige a la creación de cuenta desde Personal de Salud. El registro de pacientes continúa disponible en ese endpoint.
 
 ## Pagos y licencia
 

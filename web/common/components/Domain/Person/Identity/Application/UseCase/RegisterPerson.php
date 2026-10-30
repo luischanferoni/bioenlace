@@ -8,18 +8,16 @@ use common\components\Domain\Person\Identity\Application\Service\PacienteDomicil
 use common\components\Domain\Person\Identity\Application\Service\PacienteContextoService;
 use common\models\Person\Persona;
 use common\models\Platform\User;
-use common\models\Platform\Permission\AuthRole;
 use common\components\Platform\Core\Permission\RbacRoleQueryService;
 use Firebase\JWT\JWT;
 
 /**
- * Servicio de orquestación para el registro de pacientes y médicos.
+ * Servicio de orquestación para el registro de pacientes.
  *
  * Se encarga de:
  *  - Verificar identidad con Didit.
  *  - Crear o actualizar registros en la tabla personas.
  *  - Inicializar contexto paciente y verificación de domicilio MPI (tipo paciente).
- *  - Validar profesionales contra REFEPS/SISA cuando el tipo es "medico".
  */
 class RegisterPerson
 {
@@ -36,8 +34,8 @@ class RegisterPerson
         $tipo = $bodyParams['tipo'] ?? null;
         $verificationId = $bodyParams['verification_id'] ?? null;
 
-        if (!$tipo || !in_array($tipo, ['paciente', 'medico'], true)) {
-            throw new \RuntimeException('El campo "tipo" es requerido y debe ser "paciente" o "medico".');
+        if ($tipo !== 'paciente') {
+            throw new \RuntimeException('Este flujo solo registra pacientes.');
         }
 
         if (!$verificationId) {
@@ -63,7 +61,7 @@ class RegisterPerson
     }
 
     /**
-     * Cierra el alta de paciente/médico tras persistir identidad (Didit, lector DNI staff, etc.).
+     * Cierra el alta de paciente tras persistir identidad (Didit, lector DNI staff, etc.).
      *
      * @param array<string, mixed>|null $diditResult
      * @return array<string, mixed>
@@ -76,23 +74,16 @@ class RegisterPerson
         ?array $diditResult = null,
         bool $emitJwt = true
     ): array {
+        if ($tipo !== 'paciente') {
+            throw new \InvalidArgumentException('Este flujo solo registra pacientes.');
+        }
+
         $dni = (string) $persona->documento;
 
-        $pacienteContexto = null;
-        if ($tipo === 'paciente') {
-            (new PacienteDomicilioVerificacionService())->iniciarTrasRegistro($persona);
-            $pacienteContexto = (new PacienteContextoService())->export(
-                (new PacienteContextoService())->getOrCreate((int) $persona->id_persona)
-            );
-        }
-
-        $refepsInfo = null;
-        if ($tipo === 'medico') {
-            $refepsInfo = $this->verifyRefEpsMedico($persona);
-            if ($refepsInfo['es_profesional'] !== true) {
-                throw new \RuntimeException('El DNI no corresponde a un profesional de la salud registrado en REFEPS/SISA');
-            }
-        }
+        (new PacienteDomicilioVerificacionService())->iniciarTrasRegistro($persona);
+        $pacienteContexto = (new PacienteContextoService())->export(
+            (new PacienteContextoService())->getOrCreate((int) $persona->id_persona)
+        );
 
         // Crear o vincular usuario de aplicación asociado a la persona
         $user = null;
@@ -102,7 +93,7 @@ class RegisterPerson
 
         if ($user === null) {
             $user = new User();
-            $user->username = ($tipo === 'medico' ? 'medico_' : 'paciente_') . $dni;
+            $user->username = 'paciente_' . $dni;
             $email = $bodyParams['email'] ?? null;
             if (empty($email)) {
                 $email = $dni . '@example.com';
@@ -122,16 +113,6 @@ class RegisterPerson
                 throw new \RuntimeException('Error actualizando id_user en persona: ' . json_encode($persona->getErrors()));
             }
 
-            try {
-                if ($tipo === 'medico') {
-                    $medicoRole = AuthRole::findOne(['name' => 'Medico']) ?? AuthRole::findOne(['name' => 'medico']);
-                    if ($medicoRole) {
-                        Yii::$app->authManager->assign($medicoRole, $user->id);
-                    }
-                }
-            } catch (\Throwable $e) {
-                Yii::warning('No se pudo asignar rol al usuario recién creado: ' . $e->getMessage(), 'registro');
-            }
         }
 
         if ($user !== null && $tipo === 'paciente') {
@@ -196,7 +177,7 @@ class RegisterPerson
             'persona' => $personaData,
             'didit' => $diditResult,
             'paciente_contexto' => $pacienteContexto,
-            'refeps' => $refepsInfo,
+            'refeps' => null,
             'user' => $user ? [
                 'id' => $user->id,
                 'username' => $user->username,
@@ -207,69 +188,4 @@ class RegisterPerson
         ];
     }
 
-    /**
-     * Verifica en REFEPS/SISA si la persona es un profesional de la salud registrado.
-     *
-     * @param Persona $persona
-     * @return array
-     */
-    protected function verifyRefEpsMedico(Persona $persona): array
-    {
-        if (!Yii::$app->has('sisa')) {
-            return [
-                'es_profesional' => null,
-                'detalles' => [
-                    'message' => 'Componente SISA/REFEPS no configurado en la aplicación',
-                ],
-            ];
-        }
-
-        try {
-            $dni = $persona->documento;
-
-            $nombreCompleto = $persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON);
-            $apellidoCompleto = $persona->apellido;
-            $nombreSolo = $persona->nombre;
-
-            if (strpos($nombreCompleto, ',') !== false) {
-                [$apellidoCompletoFromFormat, $nombreSoloFromFormat] = explode(',', $nombreCompleto, 2);
-                $apellidoCompleto = trim($apellidoCompletoFromFormat);
-                $nombreSolo = trim($nombreSoloFromFormat);
-            }
-
-            /** @var \frontend\components\apis\Sisa $sisa */
-            $sisa = Yii::$app->sisa;
-
-            $rawResponse = $sisa->getProfesionalesDeSantiago($apellidoCompleto, $nombreSolo, '', $dni);
-
-            $decoded = json_decode($rawResponse, true);
-
-            $esProfesional = false;
-
-            if (is_array($decoded)) {
-                if (isset($decoded['ok']) && $decoded['ok'] === true) {
-                    $esProfesional = true;
-                } elseif (isset($decoded['total']) && (int) $decoded['total'] > 0) {
-                    $esProfesional = true;
-                } elseif (isset($decoded['profesionales']) && is_array($decoded['profesionales']) && count($decoded['profesionales']) > 0) {
-                    $esProfesional = true;
-                }
-            }
-
-            return [
-                'es_profesional' => $esProfesional,
-                'detalles' => $decoded ?? $rawResponse,
-            ];
-        } catch (\Throwable $e) {
-            Yii::error('Error verificando profesional en REFEPS/SISA: ' . $e->getMessage(), 'refeps');
-            return [
-                'es_profesional' => false,
-                'detalles' => [
-                    'message' => 'Error al comunicarse con REFEPS/SISA',
-                    'exception' => $e->getMessage(),
-                ],
-            ];
-        }
-    }
 }
-

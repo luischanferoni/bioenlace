@@ -42,7 +42,8 @@ final class EnsureAdminEfectorAssignment
     public static function ensurePersonaEnEfector(
         int $idPersona,
         int $idEfector,
-        ?int $actingUserId = null
+        ?int $actingUserId = null,
+        bool $trustedProvisioning = false
     ): void {
         if ($idPersona <= 0 || $idEfector <= 0) {
             throw new \InvalidArgumentException('Persona o efector inválidos para AdminEfector.');
@@ -75,7 +76,9 @@ final class EnsureAdminEfectorAssignment
             $idPersona,
             $idEfector,
             $idServicio,
-            $actingUserId > 0 ? $actingUserId : null
+            $actingUserId > 0 ? $actingUserId : null,
+            null,
+            $trustedProvisioning
         );
     }
 

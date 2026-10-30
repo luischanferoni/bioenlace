@@ -9,7 +9,6 @@ use common\models\Clinical\EncounterDefinition;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Organization\ProfesionalEfectorServicioAgenda;
 use common\components\Domain\Organization\Efector\Application\Service\EfectorEncounterEntitlementService;
-use common\components\Domain\Organization\Pes\Application\UseCase\EnsurePesAssignment;
 use common\models\Organization\Servicio;
 use common\models\Platform\User;
 use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
@@ -110,19 +109,9 @@ class EstablishOperativeSession extends Component
         $idPersona = (int) Yii::$app->user->getIdPersona();
         $pes = ProfesionalEfectorServicio::findOneActivoPorPersonaEfectorServicio($idPersona, $efectorId, $servicioId);
         if ($pes === null) {
-            try {
-                $out = EnsurePesAssignment::ensurePersonaServicioEnEfector(
-                    $idPersona,
-                    $efectorId,
-                    $servicioId
-                );
-                $pes = ProfesionalEfectorServicio::findOne(['id' => $out['id_profesional_efector_servicio'], 'deleted_at' => null]);
-            } catch (\InvalidArgumentException $e) {
-                throw new \InvalidArgumentException($e->getMessage(), 0, $e);
-            }
-        }
-        if ($pes === null) {
-            throw new \RuntimeException('No se encontr? asignaci?n profesional-efector-servicio para la persona autenticada');
+            throw new \DomainException(
+                'No tenés una asignación activa para este centro y servicio. La administración del centro debe incorporarte.'
+            );
         }
 
         $idContextoStaff = (int) $pes->id;

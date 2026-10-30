@@ -31,6 +31,15 @@ class ApiContractTest extends TestCase
         );
     }
 
+    public function testGoneDetailUsaElEstadoHttp410(): void
+    {
+        $result = ApiResponder::error('gone_detail', ['detail' => 'El alta profesional se trasladó a la app.']);
+
+        $this->assertSame(410, $result['status']);
+        $this->assertSame('gone_detail', $result['body']['error']['code']);
+        $this->assertSame('El alta profesional se trasladó a la app.', $result['body']['error']['message']);
+    }
+
     public function testCodigoDesconocidoCaeEnErrorInterno(): void
     {
         $result = ApiResponder::error('codigo_que_no_existe');

@@ -4,6 +4,12 @@ return [
     /** Versión de la SPA web (headers X-App-Version hacia /api/v1/* para compatibilidad de UI) */
     'spaWebAppVersion' => '1.0.0',
 
+    'webAuthn' => [
+        'rpId' => 'app.bioenlace.io',
+        'rpName' => 'Bioenlace',
+        'allowedOrigins' => ['https://app.bioenlace.io'],
+    ],
+
     'path' => '/frontend',
     'botonera' => ['view' => false, 'params' => []], // para guardar el path de un partial en donde esten los botones
     

@@ -9,6 +9,7 @@ use common\components\Domain\Person\Identity\Application\Service\PacienteContext
 use common\models\Person\Persona;
 use common\models\Platform\User;
 use common\components\Platform\Core\Permission\RbacRoleQueryService;
+use common\components\Platform\Core\Auth\ApiAuthSessionService;
 use Firebase\JWT\JWT;
 
 /**
@@ -145,13 +146,19 @@ class RegisterPerson
         if ($emitJwt && $user) {
             $jwtSecret = Yii::$app->params['jwtSecret'] ?? null;
             if ($jwtSecret) {
+                $expiresAt = time() + (24 * 60 * 60);
                 $payload = [
                     'user_id' => $user->id,
                     'email' => $user->email,
                     'role' => $roleName,
                     'id_persona' => $persona->id_persona,
                     'iat' => time(),
-                    'exp' => time() + (24 * 60 * 60),
+                    'exp' => $expiresAt,
+                    'jti' => ApiAuthSessionService::issue(
+                        (int) $user->id,
+                        $expiresAt,
+                        'patient-registration'
+                    ),
                 ];
                 try {
                     $token = JWT::encode($payload, $jwtSecret, 'HS256');

@@ -11,6 +11,7 @@ use common\models\Organization\ProfesionalEfectorServicioAgenda;
 use common\components\Domain\Organization\Efector\Application\Service\EfectorEncounterEntitlementService;
 use common\models\Organization\Servicio;
 use common\models\Platform\User;
+use common\components\Platform\Core\Auth\ApiAuthSessionService;
 use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
 use common\components\Platform\Assistant\UiActions\AllowedRoutesResolver;
 use Firebase\JWT\JWT;
@@ -147,6 +148,7 @@ class EstablishOperativeSession extends Component
 
         // Token stateless con contexto operativo: permite que clientes m?viles operen sin cookie de sesi?n.
         $identity = Yii::$app->user->identity;
+        $expiresAt = time() + (24 * 60 * 60);
         $payload = [
             'user_id' => (int) ($identity->id ?? 0),
             'email' => (string) ($identity->email ?? ''),
@@ -156,7 +158,12 @@ class EstablishOperativeSession extends Component
             'servicio_actual' => (int) $servicioId,
             'encounter_class' => $encounterClass !== '' ? $encounterClass : null,
             'iat' => time(),
-            'exp' => time() + (24 * 60 * 60),
+            'exp' => $expiresAt,
+            'jti' => ApiAuthSessionService::issue(
+                (int) ($identity->id ?? 0),
+                $expiresAt,
+                'operative-session'
+            ),
         ];
         $contextToken = JWT::encode($payload, Yii::$app->params['jwtSecret'], 'HS256');
 

@@ -15,8 +15,11 @@ use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
 use common\components\Platform\Core\Permission\RbacRoleQueryService;
 use common\components\Platform\Core\Auth\PlayReviewLoginService;
 use common\components\Platform\Core\Auth\StaffMobileAccessService;
+use common\components\Platform\Core\Auth\ApiAuthSessionService;
 use common\components\Domain\Person\Identity\Application\Service\IdentityVerificationException;
 use common\components\Domain\Person\Identity\Application\Service\DiditIdentityService;
+use frontend\components\QrLoginService;
+use frontend\components\WebApiJwtSessionService;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
@@ -71,12 +74,57 @@ class AuthController extends BaseController
     }
 
     /**
+     * Aprueba un desafío QR de login web desde Personal de Salud.
+     *
+     * POST /api/v1/auth/qr-login-aprobar
+     * Body: { "challenge_id": "..." }
+     */
+    public function actionAprobarQrLogin()
+    {
+        $challengeId = (string) (Yii::$app->request->post('challenge_id') ?? '');
+        if ($challengeId === '') {
+            return $this->error('El campo "challenge_id" es requerido', null, 400);
+        }
+
+        $user = Yii::$app->user->identity;
+        if (!$user instanceof User) {
+            return $this->fail('unauthenticated');
+        }
+
+        try {
+            QrLoginService::approve($challengeId, $user);
+        } catch (\yii\web\BadRequestHttpException $e) {
+            return $this->fail('qr_login_invalid', ['detail' => $e->getMessage()]);
+        }
+
+        return $this->success(null, 'Acceso web aprobado');
+    }
+
+    /**
      * Logout
      */
     public function actionCerrarSesion()
     {
-        // En JWT, el logout se maneja del lado del cliente
-        // Aquí podríamos implementar una blacklist de tokens si es necesario
+        $token = $this->requestBearerToken();
+        if ($token === null && $this->isWebClientRequest()) {
+            $token = WebApiJwtSessionService::getSessionToken();
+        }
+        if ($token !== null) {
+            try {
+                $decoded = JWT::decode($token, new Key(Yii::$app->params['jwtSecret'], 'HS256'));
+            } catch (\Throwable $e) {
+                return $this->fail('unauthenticated');
+            }
+
+            ApiAuthSessionService::revoke(
+                (string) ($decoded->jti ?? ''),
+                isset($decoded->user_id) ? (int) $decoded->user_id : null
+            );
+            if ($this->isWebClientRequest()) {
+                WebApiJwtSessionService::revokeCurrentToken();
+            }
+        }
+
         return $this->success(null, 'Logout exitoso');
     }
 
@@ -94,7 +142,13 @@ class AuthController extends BaseController
 
         try {
             $decoded = JWT::decode($token, new Key(Yii::$app->params['jwtSecret'], 'HS256'));
-            $user = User::findIdentity($decoded->user_id);
+            $userId = (int) ($decoded->user_id ?? 0);
+            $jti = (string) ($decoded->jti ?? '');
+            if (!ApiAuthSessionService::isActive($jti, $userId)) {
+                return $this->fail('unauthenticated');
+            }
+
+            $user = User::findIdentity($userId);
             
             if (!$user) {
                 return $this->fail('unauthenticated');
@@ -102,6 +156,7 @@ class AuthController extends BaseController
 
             // Generar nuevo token
             $newToken = $this->generateJwtToken($user);
+            ApiAuthSessionService::revoke($jti, $userId);
 
             return $this->success([
                 'token' => $newToken,
@@ -500,16 +555,40 @@ class AuthController extends BaseController
             }
         }
 
+        $expiresAt = time() + (24 * 60 * 60);
         $payload = array_merge([
             'user_id' => $user->id,
             'email' => $user->email,
             'role' => $role,
             'id_persona' => $idPersona,
             'iat' => time(),
-            'exp' => time() + (24 * 60 * 60),
+            'exp' => $expiresAt,
+            'jti' => ApiAuthSessionService::issue(
+                (int) $user->id,
+                $expiresAt,
+                (string) Yii::$app->request->headers->get('X-App-Client', 'unknown')
+            ),
         ], $extraClaims);
 
         return JWT::encode($payload, Yii::$app->params['jwtSecret'], 'HS256');
+    }
+
+    private function requestBearerToken(): ?string
+    {
+        $authorization = (string) Yii::$app->request->headers->get('Authorization', '');
+        if (preg_match('/^Bearer\s+(.+)$/i', $authorization, $matches) !== 1) {
+            return null;
+        }
+
+        return trim($matches[1]) ?: null;
+    }
+
+    private function isWebClientRequest(): bool
+    {
+        $client = strtolower((string) Yii::$app->request->headers->get('X-Client', ''));
+        $appClient = strtolower((string) Yii::$app->request->headers->get('X-App-Client', ''));
+
+        return $client === 'web' || $appClient === 'web-frontend';
     }
 
     /**

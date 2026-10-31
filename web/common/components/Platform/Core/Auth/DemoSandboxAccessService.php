@@ -10,6 +10,7 @@ use common\models\Platform\DemoSandboxAccess;
 use common\models\Platform\DemoSandboxSession;
 use common\models\Organization\Servicio;
 use common\models\Platform\User;
+use common\components\Platform\Core\Auth\ApiAuthSessionService;
 use Firebase\JWT\JWT;
 use Yii;
 use yii\db\Query;
@@ -584,6 +585,7 @@ final class DemoSandboxAccessService
         $seedPayload = $session->getSeedPayload();
         $encounterClass = DemoSandboxAccess::defaultEncounterClassForRole($mobileRole);
         $encounterLabel = (string) (EncounterDefinition::ENCOUNTER_CLASS[$encounterClass] ?? $encounterClass);
+        $tokenExpiresAt = time() + $sessionTtl;
 
         $payload = [
             'user_id' => (int) $user->id,
@@ -597,7 +599,12 @@ final class DemoSandboxAccessService
             'demo_sandbox' => true,
             'demo_sandbox_session_id' => (int) $session->id,
             'iat' => time(),
-            'exp' => time() + $sessionTtl,
+            'exp' => $tokenExpiresAt,
+            'jti' => ApiAuthSessionService::issue(
+                (int) $user->id,
+                $tokenExpiresAt,
+                'demo-sandbox'
+            ),
         ];
         $token = JWT::encode($payload, Yii::$app->params['jwtSecret'], 'HS256');
 

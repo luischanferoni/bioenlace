@@ -4,6 +4,7 @@ namespace frontend\components;
 
 use common\models\Person\Persona;
 use common\models\Platform\User;
+use common\components\Platform\Core\Auth\ApiAuthSessionService;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use Yii;
@@ -73,6 +74,31 @@ final class WebApiJwtSessionService
         }
     }
 
+    public static function revokeCurrentToken(): void
+    {
+        $token = self::getSessionToken();
+        if ($token === null) {
+            return;
+        }
+
+        try {
+            $decoded = JWT::decode($token, new Key(Yii::$app->params['jwtSecret'], 'HS256'));
+        } catch (\Throwable $e) {
+            Yii::$app->session->remove(self::SESSION_KEY);
+
+            return;
+        }
+
+        try {
+            ApiAuthSessionService::revoke(
+                (string) ($decoded->jti ?? ''),
+                isset($decoded->user_id) ? (int) $decoded->user_id : null
+            );
+        } finally {
+            Yii::$app->session->remove(self::SESSION_KEY);
+        }
+    }
+
     public static function storeTokenForIdentity(IdentityInterface $identity, Persona $persona): void
     {
         Yii::$app->session->set(self::SESSION_KEY, self::encodeToken($identity, $persona));
@@ -81,11 +107,17 @@ final class WebApiJwtSessionService
     public static function storeTokenForSuperadmin(IdentityInterface $identity): void
     {
         $now = time();
+        $expiresAt = $now + self::TTL_SECONDS;
         $payload = [
             'user_id' => $identity->id,
             'email' => $identity->email,
             'iat' => $now,
-            'exp' => $now + self::TTL_SECONDS,
+            'exp' => $expiresAt,
+            'jti' => ApiAuthSessionService::issue(
+                (int) $identity->id,
+                $expiresAt,
+                'web-frontend'
+            ),
         ];
 
         Yii::$app->session->set(
@@ -99,6 +131,9 @@ final class WebApiJwtSessionService
         $existing = Yii::$app->session->get(self::SESSION_KEY);
         if (is_string($existing) && $existing !== '' && !self::shouldRefreshToken($existing)) {
             return;
+        }
+        if (is_string($existing) && $existing !== '') {
+            self::revokeToken($existing);
         }
 
         if ((int) ($identity->superadmin ?? 0) === 1) {
@@ -131,6 +166,10 @@ final class WebApiJwtSessionService
         if ($user === null || (int) $user->status !== User::STATUS_ACTIVE) {
             return null;
         }
+        $authKey = $session->get('__authKey');
+        if (!is_string($authKey) || !$user->validateAuthKey($authKey)) {
+            return null;
+        }
 
         return $user;
     }
@@ -138,12 +177,18 @@ final class WebApiJwtSessionService
     private static function encodeToken(IdentityInterface $identity, Persona $persona): string
     {
         $now = time();
+        $expiresAt = $now + self::TTL_SECONDS;
         $payload = [
             'user_id' => $identity->id,
             'email' => $identity->email,
             'id_persona' => (int) $persona->id_persona,
             'iat' => $now,
-            'exp' => $now + self::TTL_SECONDS,
+            'exp' => $expiresAt,
+            'jti' => ApiAuthSessionService::issue(
+                (int) $identity->id,
+                $expiresAt,
+                'web-frontend'
+            ),
         ];
 
         // Preservar contexto operativo de sesión al renovar (mismo criterio que EstablishOperativeSession).
@@ -172,7 +217,9 @@ final class WebApiJwtSessionService
         try {
             $decoded = JWT::decode($token, new Key(Yii::$app->params['jwtSecret'], 'HS256'));
             $exp = isset($decoded->exp) ? (int) $decoded->exp : 0;
-            if ($exp <= 0) {
+            $jti = (string) ($decoded->jti ?? '');
+            $userId = (int) ($decoded->user_id ?? 0);
+            if ($exp <= 0 || !ApiAuthSessionService::isActive($jti, $userId)) {
                 return true;
             }
 
@@ -180,5 +227,19 @@ final class WebApiJwtSessionService
         } catch (\Throwable $e) {
             return true;
         }
+    }
+
+    private static function revokeToken(string $token): void
+    {
+        try {
+            $decoded = JWT::decode($token, new Key(Yii::$app->params['jwtSecret'], 'HS256'));
+        } catch (\Throwable $e) {
+            return;
+        }
+
+        ApiAuthSessionService::revoke(
+            (string) ($decoded->jti ?? ''),
+            isset($decoded->user_id) ? (int) $decoded->user_id : null
+        );
     }
 }

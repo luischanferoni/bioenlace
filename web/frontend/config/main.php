@@ -387,6 +387,7 @@ return [
                 'POST api/<version:\w+>/auth/login-revision' => '<version>/auth/login-revision',
                 'POST api/<version:\w+>/auth/login-credenciales' => '<version>/auth/login-credenciales',
                 'POST api/<version:\w+>/auth/activar-cuenta' => '<version>/auth/activar-cuenta',
+                'POST api/<version:\w+>/auth/qr-login-aprobar' => '<version>/auth/qr-login-aprobar',
                 // generar token de prueba para paciente por DNI
                 'POST api/<version:\w+>/auth/generar-token-prueba' => '<version>/auth/generar-token-prueba',
                 'GET api/<version:\w+>/auth/generar-token-prueba' => '<version>/auth/generar-token-prueba',

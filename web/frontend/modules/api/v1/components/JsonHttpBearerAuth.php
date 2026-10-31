@@ -6,6 +6,7 @@ use Yii;
 use common\components\Platform\Assistant\UiActions\AllowedRoutesResolver;
 use common\components\Platform\Core\Http\Contract\ApiResponder;
 use common\components\Platform\Core\Auth\StaffMobileAccessService;
+use common\components\Platform\Core\Auth\ApiAuthSessionService;
 use common\models\Person\Persona;
 use common\models\Organization\ProfesionalEfectorServicio;
 use frontend\components\WebApiJwtSessionService;
@@ -131,6 +132,15 @@ class JsonHttpBearerAuth extends HttpBearerAuth
         }
 
         if ($userModel->status !== \common\models\Platform\User::STATUS_ACTIVE) {
+            $this->setContractError($response, 'unauthenticated');
+            $response->send();
+            Yii::$app->end();
+        }
+
+        if (!ApiAuthSessionService::isActive(
+            (string) ($decoded->jti ?? ''),
+            (int) $userModel->id
+        )) {
             $this->setContractError($response, 'unauthenticated');
             $response->send();
             Yii::$app->end();

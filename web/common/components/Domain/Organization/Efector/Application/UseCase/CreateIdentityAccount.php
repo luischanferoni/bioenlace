@@ -7,6 +7,7 @@ use common\components\Domain\Person\Identity\Application\Service\IdentitySignupA
 use common\components\Domain\Person\Identity\Application\Service\IdentityVerificationException;
 use common\models\Person\Persona;
 use common\models\Platform\User;
+use common\components\Platform\Core\Auth\ApiAuthSessionService;
 use Firebase\JWT\JWT;
 use Yii;
 
@@ -91,13 +92,19 @@ final class CreateIdentityAccount
             throw new \RuntimeException('jwtSecret no configurado; no se puede emitir la sesión de la cuenta.');
         }
 
+        $expiresAt = time() + (24 * 60 * 60);
         return JWT::encode([
             'user_id' => (int) $user->id,
             'email' => (string) $user->email,
             'role' => 'usuario',
             'id_persona' => (int) $persona->id_persona,
             'iat' => time(),
-            'exp' => time() + (24 * 60 * 60),
+            'exp' => $expiresAt,
+            'jti' => ApiAuthSessionService::issue(
+                (int) $user->id,
+                $expiresAt,
+                'identity-account'
+            ),
         ], $jwtSecret, 'HS256');
     }
 

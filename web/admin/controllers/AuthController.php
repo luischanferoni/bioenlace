@@ -33,6 +33,8 @@ class AuthController extends \frontend\controllers\AuthController
             return $this->goHome();
         }
 
+        $this->layout = '@admin/views/layouts/loginLayout.php';
+        
         $model = new LoginForm();
 
         if ($model->load(Yii::$app->request->post()) && $model->login()) {

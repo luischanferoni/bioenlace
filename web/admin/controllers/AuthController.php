@@ -20,9 +20,9 @@ class AuthController extends \frontend\controllers\AuthController
             'activate-account',
             'activate-account-receive',
         ];
-        if (in_array($action->id, $guestLayoutActions, true)) {
+        /*if (in_array($action->id, $guestLayoutActions, true)) {
             $this->layout = '@admin/views/layouts/loginLayout.php';
-        }
+        }*/
 
         return parent::beforeAction($action);
     }
@@ -46,6 +46,6 @@ class AuthController extends \frontend\controllers\AuthController
 
         $model->password = '';
 
-        return $this->render('@frontend/views/login/login', ['model' => $model]);
+        return $this->render('@admin/views/login/login', ['model' => $model]);
     }
 }

@@ -128,7 +128,7 @@ return [
             // Tip: you can use this event in any module
             'on beforeAction' => function(yii\base\ActionEvent $event) {
                 if ($event->action->uniqueId === 'auth/login') {
-                    $event->action->controller->layout = '@frontend/views/layouts/loginLayout.php';
+                    $event->action->controller->layout = '@frontend/views/layouts/ffloginLayout.php';
                 }
             },
         ],

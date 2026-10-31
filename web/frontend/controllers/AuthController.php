@@ -3,12 +3,6 @@
 namespace frontend\controllers;
 
 use common\components\Platform\Core\Auth\DemoSandboxSessionService;
-use common\components\Platform\Core\Auth\StaffAccountInvitationService;
-use common\models\Platform\ActivateAccountForm;
-use common\models\Platform\ChangeOwnPasswordForm;
-use common\models\Platform\ConfirmEmailForm;
-use common\models\Platform\PasswordRecoveryForm;
-use common\models\Platform\LoginForm;
 use common\models\Platform\User;
 use frontend\components\AccountRecoveryService;
 use frontend\components\PasskeyAuthenticationService;
@@ -66,28 +60,7 @@ class AuthController extends Controller
             ? '@admin/views/layouts/loginLayout.php'
             : '@frontend/views/layouts/loginLayout.php';
 
-        $model = new LoginForm();
-        $passwordLoginEnabled = (bool) (Yii::$app->params['passwordLoginWebEnabled'] ?? true);
-
-        if ($passwordLoginEnabled
-            && $model->load(Yii::$app->request->post())
-            && $model->login()
-        ) {
-            $returnUrl = Yii::$app->user->getReturnUrl(Yii::$app->homeUrl);
-            if (Yii::$app->id === 'bioenlace-admin' && !\admin\components\UserConfig::isValidReturnUrl($returnUrl)) {
-                $returnUrl = Yii::$app->homeUrl;
-            }
-
-            return $this->redirect($returnUrl);
-        }
-
-        $model->password = '';
-
-        return $this->render('@frontend/views/login/login', [
-            'model' => $model,
-            'passwordLoginEnabled' => $passwordLoginEnabled,
-            'enableAutoLogin' => isset(Yii::$app->user->enableAutoLogin) && Yii::$app->user->enableAutoLogin,
-        ]);
+        return $this->render('@frontend/views/login/login');
     }
 
     public function actionPasskeyLoginOptions(): array
@@ -240,6 +213,27 @@ class AuthController extends Controller
         $code = AccountRecoveryService::approve($requestId, $identity);
 
         return ['success' => true, 'recoveryCode' => $code];
+    }
+
+    public function actionRecoveryReject(): array
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        $identity = Yii::$app->user->identity;
+        if (!$identity instanceof User || (int) ($identity->superadmin ?? 0) !== 1) {
+            Yii::$app->response->statusCode = 403;
+
+            return ['success' => false, 'message' => 'No autorizado.'];
+        }
+
+        $requestId = (string) (Yii::$app->request->getBodyParams()['requestId'] ?? '');
+        $reason = (string) (Yii::$app->request->getBodyParams()['reason'] ?? '');
+        if ($requestId === '') {
+            throw new \yii\web\BadRequestHttpException('Falta la solicitud a rechazar.');
+        }
+
+        AccountRecoveryService::reject($requestId, $identity, $reason);
+
+        return ['success' => true];
     }
 
     public function actionRecoveryConsume()
@@ -432,165 +426,4 @@ class AuthController extends Controller
         ];
     }
 
-    public function actionChangeOwnPassword()
-    {
-        if (Yii::$app->user->isGuest) {
-            return $this->redirect(['/auth/login']);
-        }
 
-        $user = User::findOne((int) Yii::$app->user->id);
-        if ($user === null || (int) $user->status !== User::STATUS_ACTIVE) {
-            throw new ForbiddenHttpException();
-        }
-
-        $model = new ChangeOwnPasswordForm(['user' => $user]);
-
-        if ($model->load(Yii::$app->request->post()) && $model->changePassword()) {
-            return $this->render('@frontend/views/login/change-own-password-success', ['isGuest' => false]);
-        }
-
-        return $this->render('@frontend/views/login/change-own-password', ['model' => $model]);
-    }
-
-    public function actionPasswordRecovery()
-    {
-        if (!Yii::$app->user->isGuest) {
-            return $this->goHome();
-        }
-
-        $this->layout = '@frontend/views/layouts/loginLayout.php';
-        $model = new PasswordRecoveryForm();
-
-        if ($model->load(Yii::$app->request->post()) && $model->validate()) {
-            if ($model->sendEmail(false)) {
-                return $this->render('@frontend/views/login/password-recovery-success');
-            }
-            Yii::$app->session->setFlash('error', 'No se pudo enviar el mensaje al e-mail indicado.');
-        }
-
-        return $this->render('@frontend/views/login/password-recovery', ['model' => $model]);
-    }
-
-    public function actionPasswordRecoveryReceive($token)
-    {
-        if (!Yii::$app->user->isGuest) {
-            return $this->goHome();
-        }
-
-        $this->layout = '@frontend/views/layouts/loginLayout.php';
-        $user = User::findByConfirmationToken($token);
-        if ($user === null) {
-            throw new NotFoundHttpException('Token no encontrado o expirado. Solicite restablecer la contraseña nuevamente.');
-        }
-
-        $model = new ChangeOwnPasswordForm([
-            'scenario' => ChangeOwnPasswordForm::SCENARIO_RESTORE_VIA_EMAIL,
-            'user' => $user,
-        ]);
-
-        if ($model->load(Yii::$app->request->post()) && $model->validate()) {
-            $model->changePassword(false);
-
-            return $this->render('@frontend/views/login/change-own-password-success', ['isGuest' => true]);
-        }
-
-        return $this->render('@frontend/views/login/change-own-password', ['model' => $model]);
-    }
-
-    public function actionConfirmEmail()
-    {
-        if (Yii::$app->user->isGuest) {
-            return $this->redirect(['/auth/login']);
-        }
-
-        $user = User::findOne((int) Yii::$app->user->id);
-        if ($user === null || (int) $user->status !== User::STATUS_ACTIVE) {
-            throw new ForbiddenHttpException();
-        }
-
-        if ((int) $user->email_confirmed === 1) {
-            return $this->render('@frontend/views/login/confirm-email-success', [
-                'user' => $user,
-                'isGuest' => false,
-            ]);
-        }
-
-        $model = new ConfirmEmailForm([
-            'email' => $user->email,
-            'user' => $user,
-        ]);
-
-        if ($model->load(Yii::$app->request->post()) && $model->validate()) {
-            if ($model->sendEmail(false)) {
-                return $this->refresh();
-            }
-            Yii::$app->session->setFlash('error', 'No se pudo enviar el mensaje al e-mail indicado.');
-        }
-
-        return $this->render('@frontend/views/login/confirm-email', ['model' => $model]);
-    }
-
-    public function actionConfirmEmailReceive($token)
-    {
-        $user = User::findByConfirmationToken($token);
-        if ($user === null) {
-            throw new NotFoundHttpException('Token no encontrado o expirado.');
-        }
-
-        $user->email_confirmed = 1;
-        $user->removeConfirmationToken();
-        $user->save(false);
-
-        $this->layout = '@frontend/views/layouts/loginLayout.php';
-
-        return $this->render('@frontend/views/login/confirm-email-success', [
-            'user' => $user,
-            'isGuest' => Yii::$app->user->isGuest,
-        ]);
-    }
-
-    public function actionActivateAccount()
-    {
-        if (!Yii::$app->user->isGuest) {
-            return $this->goHome();
-        }
-
-        $this->layout = '@frontend/views/layouts/loginLayout.php';
-        $model = new ActivateAccountForm();
-
-        if ($model->load(Yii::$app->request->post()) && $model->activate()) {
-            return $this->render('@frontend/views/login/activate-account-success');
-        }
-
-        return $this->render('@frontend/views/login/activate-account', ['model' => $model]);
-    }
-
-    public function actionActivateAccountReceive($token)
-    {
-        if (!Yii::$app->user->isGuest) {
-            return $this->goHome();
-        }
-
-        $this->layout = '@frontend/views/layouts/loginLayout.php';
-        $user = StaffAccountInvitationService::findByInvitationToken($token);
-        if ($user === null) {
-            throw new NotFoundHttpException('Enlace no encontrado o expirado. Pedí una nueva invitación a administración.');
-        }
-
-        $model = new ChangeOwnPasswordForm([
-            'scenario' => ChangeOwnPasswordForm::SCENARIO_RESTORE_VIA_EMAIL,
-            'user' => $user,
-        ]);
-
-        if ($model->load(Yii::$app->request->post()) && $model->validate()) {
-            $model->changePassword(false);
-
-            return $this->render('@frontend/views/login/activate-account-success');
-        }
-
-        return $this->render('@frontend/views/login/change-own-password', [
-            'model' => $model,
-            'title' => 'Elegí tu contraseña',
-        ]);
-    }
-}

@@ -14,7 +14,11 @@ Retirar contraseñas como acceso de producto y habilitar métodos resistentes al
 - [ ] Allowlist equivalente de roles web y protección de rutas.
 - [x] Emitir sesiones con expiración/revocación y proteger contra replay/CSRF.
 - [x] Retirar login móvil de usuario/contraseña y activación por código.
-- [ ] Retirar login web de contraseña/códigos al completar enrolamiento y conservar el acceso de revisión de tiendas.
+- [x] Configurar parámetro `passwordLoginWebEnabled = false` por defecto en `common/config/params.php`.
+- [x] AuthController respeta el parámetro y oculta formulario de contraseña cuando está deshabilitado.
+- [x] Documentar retiro directo de contraseñas en `phases/04-retiro-login-contrasena.md`.
+- [ ] Retirar código legacy de password recovery por email.
+- [ ] Retirar formularios de cambio de contraseña.
 
 ## Criterio de salida
 

@@ -1,0 +1,21 @@
+version: 1
+notifications:
+  reviewed:
+    title: "Tu solicitud de recuperación fue revisada"
+    body: "Un administrador revisó tu solicitud de recuperación de acceso. Si fue aprobada, recibirás un código de un solo uso para completar el proceso."
+
+  approved:
+    title: "Recuperación de acceso aprobada"
+    body: "Tu solicitud de recuperación fue aprobada. Usa el código de un solo uso que te proporcionamos para restablecer tu acceso. El código expira en 15 minutos."
+
+  consumed:
+    title: "Recuperación de acceso completada"
+    body: "Tu recuperación de acceso fue completada exitosamente. Se revocaron todas las sesiones y passkeys anteriores. Ahora debes enrolar una nueva passkey."
+
+  rejected:
+    title: "Solicitud de recuperación rechazada"
+    body: "Tu solicitud de recuperación de acceso fue rechazada. Si crees que es un error, contacta al soporte."
+
+  fraud_alert:
+    title: "Alerta de seguridad: posible fraude"
+    body: "Se detectó actividad sospechosa en tu cuenta. Por seguridad, se ha puesto tu cuenta en revisión. Contacta al soporte para verificar tu identidad."

@@ -9,9 +9,14 @@ Recuperar accesos sin convertir e-mail o soporte en un factor de autenticación 
 - [x] App: volver a verificar identidad y revocar credenciales/dispositivos anteriores.
 - [x] Web-only: flujo asistido con prueba de identidad, revisión de riesgo y registro de auditoría.
 - [x] Revocar sesiones activas, passkeys anteriores y desafíos pendientes antes de recuperar.
-- [ ] Notificar a canales registrados y otros administradores, sin usarlos como autorización única.
+- [x] Notificar a canales registrados y otros administradores, sin usarlos como autorización única.
+- [x] Crear catálogo de notificaciones (`AccountRecoveryNotificationCatalog`) con copy para cada evento.
+- [x] Implementar envío de notificaciones al aprobar, consumir y rechazar solicitudes.
+- [x] Implementar acción de rechazo (`AccountRecoveryService::reject`) en AuthController.
+- [x] Implementar detección de señales de fraude (`checkFraudSignals`) con estructura básica.
 - [x] Exigir enrolar una passkey nueva y presentar recuperación explícita al usuario.
-- [ ] Definir escalamiento/hold para señales de fraude o disputas de propiedad de la organización.
+- [ ] Completar implementación de notificaciones (canal real: email/push/in-app, cola de envío).
+- [ ] Completar lógica de detección de fraude (umbrales, tabla de holds, notificación a ops).
 
 ## Criterio de salida
 

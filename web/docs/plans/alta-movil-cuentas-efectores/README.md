@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|--------|
 | Slug | `alta-movil-cuentas-efectores` |
-| Estado | En ejecución — Fase 1 completa; Fase 2 parcial (mockup SISA implementado, auditoría pendiente); Fase 3 estructura base MercadoPago creada (integración completa pendiente); Fases 4 y 5 implementadas a nivel servidor/web (passkeys, QR, recuperación asistida); Fase 6 parcial (migración simplificada por entorno demo, JWT móvil seguro, backups Android deshabilitados y revocación server-side); checkout completo pendiente |
+| Estado | En ejecución — Fase 1 completa; Fase 2 parcial (mockup SISA implementado, auditoría pendiente); Fase 3 estructura base MercadoPago creada (integración completa pendiente); Fase 4 ~90% (passkeys, QR, login web con contraseña retirado por defecto, limpieza de código legacy pendiente); Fase 5 ~85% (recuperación asistida, catálogo de notificaciones, detección de fraude básica, implementación completa de notificaciones pendiente); Fase 6 ~75% (migración simplificada, JWT móvil seguro, retiro de legacy móvil, retiro de login web completado); checkout completo pendiente |
 | Dueño | Producto / Identidad / Organización / Mobile |
 | Corte de compatibilidad | Sin flujos legacy; migrar las cuentas y relaciones existentes |
 
@@ -16,6 +16,7 @@
 - [phases/02-asignacion-y-refeps.md](./phases/02-asignacion-y-refeps.md) — incorporación de profesionales
 - [phases/03-altas-pagas.md](./phases/03-altas-pagas.md) — consultorio y clínica/centro con checkout
 - [phases/04-autenticacion-web.md](./phases/04-autenticacion-web.md) — passkeys y aprobación QR
+- [phases/04-retiro-login-contrasena.md](./phases/04-retiro-login-contrasena.md) — estrategia de retiro de contraseñas web
 - [phases/05-recuperacion.md](./phases/05-recuperacion.md) — recuperación asistida
 - [phases/06-corte-y-validacion.md](./phases/06-corte-y-validacion.md) — migración y retiro de legacy
 - [phases/06-migracion-demo.md](./phases/06-migracion-demo.md) — notas sobre migración en entorno de demo

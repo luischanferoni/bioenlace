@@ -2,6 +2,7 @@
 
 namespace frontend\components;
 
+use common\components\Domain\Person\Identity\Application\Catalog\AccountRecoveryNotificationCatalog;
 use common\components\Platform\Core\Auth\ApiAuthSessionService;
 use common\models\Platform\User;
 use Yii;
@@ -88,6 +89,9 @@ final class AccountRecoveryService
 
         Yii::info('account-recovery approved id=' . $requestId . ' user=' . $userId, 'account-recovery');
 
+        // Notificar al usuario que su solicitud fue aprobada
+        self::notifyUser($user, 'approved');
+
         return $code;
     }
 
@@ -121,7 +125,46 @@ final class AccountRecoveryService
             'updated_at' => time(),
         ], ['id' => (string) $request['id'], 'recovery_code_used_at' => null])->execute();
 
+        // Notificar al usuario que la recuperación fue completada
+        self::notifyUser($user, 'consumed');
+
         return $user;
+    }
+
+    /**
+     * Rechaza una solicitud de recuperación.
+     *
+     * @param string $requestId ID de la solicitud
+     * @param User $reviewer Usuario que rechaza (superadmin)
+     * @param string $reason Motivo del rechazo
+     */
+    public static function reject(string $requestId, User $reviewer, string $reason = ''): void
+    {
+        $request = (new Query())
+            ->from('{{%account_recovery_request}}')
+            ->where(['id' => $requestId, 'status' => 'pending'])
+            ->one();
+        if ($request === false) {
+            throw new NotFoundHttpException('La solicitud de recuperación no existe o ya fue revisada.');
+        }
+
+        $userId = (int) $request['id_user'];
+        $user = $userId > 0 ? User::findIdentity($userId) : null;
+
+        Yii::$app->db->createCommand()->update('{{%account_recovery_request}}', [
+            'status' => 'rejected',
+            'reviewed_by' => (int) $reviewer->id,
+            'reviewed_at' => time(),
+            'request_note' => mb_substr(trim($reason), 0, 500),
+            'updated_at' => time(),
+        ], ['id' => $requestId, 'status' => 'pending'])->execute();
+
+        Yii::info('account-recovery rejected id=' . $requestId . ' user=' . $userId . ' reason=' . $reason, 'account-recovery');
+
+        // Notificar al usuario si existe una cuenta asociada
+        if ($user instanceof User) {
+            self::notifyUser($user, 'rejected');
+        }
     }
 
     private static function resolveUserByIdentifier(string $identifier): ?User
@@ -146,5 +189,143 @@ final class AccountRecoveryService
             static fn () => $alphabet[random_int(0, strlen($alphabet) - 1)],
             range(1, 10)
         ));
+    }
+
+    /**
+     * Notifica al usuario sobre el estado de su recuperación.
+     *
+     * NOTA: Esta es una implementación básica. Para producción:
+     * - Configurar canal de notificación (email, push, in-app)
+     * - Implementar cola de notificaciones para no bloquear el request
+     * - Agregar retry y manejo de fallos
+     *
+     * @param User $user Usuario a notificar
+     * @param string $event Tipo de evento (approved, consumed, rejected, fraud_alert)
+     */
+    private static function notifyUser(User $user, string $event): void
+    {
+        try {
+            $catalog = new AccountRecoveryNotificationCatalog();
+            $message = match ($event) {
+                'reviewed' => $catalog->reviewed(),
+                'approved' => $catalog->approved(),
+                'consumed' => $catalog->consumed(),
+                'rejected' => $catalog->rejected(),
+                'fraud_alert' => $catalog->fraudAlert(),
+                default => throw new \InvalidArgumentException("Evento de notificación desconocido: $event"),
+            };
+
+            // TODO: Implementar envío real de notificación
+            // Por ahora, solo logueamos el mensaje
+            Yii::info(
+                'account-recovery notification user=' . $user->id .
+                ' event=' . $event .
+                ' title=' . $message['title'] .
+                ' body=' . $message['body'],
+                'account-recovery'
+            );
+
+            // Ejemplo de implementación futura:
+            /*
+            if ($user->email) {
+                Yii::$app->mailer->compose()
+                    ->setTo($user->email)
+                    ->setSubject($message['title'])
+                    ->setTextBody($message['body'])
+                    ->send();
+            }
+            */
+        } catch (\Throwable $e) {
+            Yii::error(
+                'Error enviando notificación de recuperación: ' . $e->getMessage(),
+                'account-recovery'
+            );
+            // No fallar el flujo por error de notificación
+        }
+    }
+
+    /**
+     * Verifica señales de fraude y pone la cuenta en hold si es necesario.
+     *
+     * Señales consideradas:
+     * - Múltiples solicitudes de recuperación en poco tiempo
+     * - Solicitudes desde IPs diferentes de manera sospechosa
+     * - Solicitudes con datos inconsistentes
+     *
+     * @param string $identifier Identificador de la solicitud
+     * @param string $ip IP de la solicitud
+     * @return bool True si se detectó fraude y la cuenta está en hold
+     */
+    public static function checkFraudSignals(string $identifier, string $ip): bool
+    {
+        // TODO: Implementar lógica de detección de fraude
+        // Por ahora, retornamos false (sin fraude detectado)
+
+        /*
+        // Ejemplo de implementación futura:
+        $user = self::resolveUserByIdentifier($identifier);
+        if (!$user instanceof User) {
+            return false;
+        }
+
+        $userId = (int) $user->id;
+        $ipHash = hash('sha256', $ip);
+        $recentWindow = time() - 3600; // Última hora
+
+        // Contar solicitudes recientes del mismo usuario
+        $recentRequests = (new Query())
+            ->from('{{%account_recovery_request}}')
+            ->where(['id_user' => $userId])
+            ->andWhere(['>=', 'created_at', $recentWindow])
+            ->count();
+
+        if ((int) $recentRequests >= 3) {
+            // Múltiples solicitudes en una hora - posible fraude
+            self::putAccountOnHold($userId, 'multiple_recovery_requests');
+            self::notifyUser($user, 'fraud_alert');
+            return true;
+        }
+
+        // Contar solicitudes desde la misma IP
+        $ipRequests = (new Query())
+            ->from('{{%account_recovery_request}}')
+            ->where(['request_ip_hash' => $ipHash])
+            ->andWhere(['>=', 'created_at', $recentWindow])
+            ->count();
+
+        if ((int) $ipRequests >= 5) {
+            // Múltiples solicitudes desde la misma IP - posible ataque
+            self::putAccountOnHold($userId, 'high_frequency_from_ip');
+            self::notifyUser($user, 'fraud_alert');
+            return true;
+        }
+        */
+
+        return false;
+    }
+
+    /**
+     * Pone una cuenta en hold por sospecha de fraude.
+     *
+     * @param int $userId ID del usuario
+     * @param string $reason Motivo del hold
+     */
+    private static function putAccountOnHold(int $userId, string $reason): void
+    {
+        // TODO: Implementar tabla de holds o flag en user
+        // Por ahora, solo logueamos
+        Yii::warning(
+            'account-recovery putting user on hold user=' . $userId . ' reason=' . $reason,
+            'account-recovery'
+        );
+
+        /*
+        // Ejemplo de implementación futura:
+        Yii::$app->db->createCommand()->update('{{%user}}', [
+            'status' => User::STATUS_FRAUD_HOLD,
+            'fraud_hold_reason' => $reason,
+            'fraud_hold_at' => time(),
+        ], ['id' => $userId])->execute();
+        */
     }
 }

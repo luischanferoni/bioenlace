@@ -23,14 +23,14 @@ LoginAsset::register($this);
 	<?php $this->head() ?>
 </head>
 <body>
-<?php if (getenv("SISSE_SHOW_TEST_ENVIRONMENT_WARNING") == "Y"): ?>
+<?php if (getenv("BIOENLACE_SHOW_TEST_ENVIRONMENT_WARNING") == "Y"): ?>
   <div class="alert alert-warning" role="alert">
     AMBIENTE DE PRUEBAS  --  AMBIENTE DE PRUEBAS  --  AMBIENTE DE PRUEBAS  -- 
     AMBIENTE DE PRUEBAS  --  AMBIENTE DE PRUEBAS  --  AMBIENTE DE PRUEBAS
   </div>
   <div class="alert alert-info" role="alert">
     Para ingresar al Sistema en línea siga el 
-    siguiente enlace: <a href="https://sisse.msalsgo.gob.ar">BIOENLACE</a>.
+    siguiente enlace: <a href="https://app.bioenlace.io">BIOENLACE</a>.
   </div>
 <?php endif;?>
 <?php $this->beginBody() ?>

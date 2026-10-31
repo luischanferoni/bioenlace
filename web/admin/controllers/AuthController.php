@@ -46,6 +46,6 @@ class AuthController extends \frontend\controllers\AuthController
 
         $model->password = '';
 
-        return $this->render('@admin/views/login/login', ['model' => $model]);
+        return $this->render('@admin/views/site/login', ['model' => $model]);
     }
 }

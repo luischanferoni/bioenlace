@@ -8,6 +8,7 @@ use yii\helpers\Html;
 
 $this->title = 'BIOENLACE Admin';
 AppAsset::register($this);
+LoginAsset::register($this);
 
 ?>
 <?php $this->beginPage() ?>

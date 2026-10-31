@@ -32,8 +32,7 @@ $showPasswordForm = isset($model) && ($passwordLoginEnabled ?? true);
                 <div class="row justify-content-center pt-3">
                     <div class="col-md-9">
                         <div class="card d-flex justify-content-center mb-0 auth-card iq-auth-form">
-                            <div class="card-body text-center">
-                                <h1 class="h2 mb-4">Ingresá a Bioenlace</h1>
+                            <div class="card-body text-center">                                
                                 <p class="mb-4">Usá la passkey guardada en este dispositivo o en tu administrador de contraseñas.</p>
 
                                 <button type="button" class="btn btn-primary mb-3" id="passkey-login-button">

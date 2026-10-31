@@ -1,0 +1,45 @@
+/* Login / auth shell (loginLayout) */
+
+.login-content {
+  min-height: 100vh;
+}
+
+.login-brand-logo {
+  display: block;
+  width: min(240px, 70vw);
+  height: auto;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.login-side-pattern {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background-color: #0a4f9c;
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.14), transparent 42%),
+    radial-gradient(circle at 85% 70%, rgba(10, 189, 227, 0.28), transparent 45%),
+    radial-gradient(rgba(255, 255, 255, 0.22) 1.1px, transparent 1.2px);
+  background-size: auto, auto, 22px 22px;
+  background-position: 0 0, 0 0, 0 0;
+}
+
+.login-side-pattern::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    160deg,
+    rgba(8, 70, 160, 0.35) 0%,
+    rgba(8, 70, 160, 0.05) 45%,
+    rgba(10, 189, 227, 0.18) 100%
+  );
+  pointer-events: none;
+}
+
+@media (max-width: 991.98px) {
+  .login-side-pattern {
+    display: none;
+  }
+}

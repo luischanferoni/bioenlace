@@ -55,6 +55,8 @@ class AuthController extends Controller
         if (!Yii::$app->user->isGuest) {
             return $this->goHome();
         }
+
+        $this->layout = '@frontend/views/layouts/loginLayout.php';
 /*
         $this->layout = Yii::$app->id === 'bioenlace-admin'
             ? '@admin/views/layouts/loginLayout.php'

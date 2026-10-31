@@ -822,11 +822,11 @@ return [
             // 'enableRegistration' => true,
             // Here you can set your handler to change layout for any controller or action
             // Tip: you can use this event in any module
-            'on beforeAction' => function (yii\base\ActionEvent $event) {
+            /*'on beforeAction' => function (yii\base\ActionEvent $event) {
                 if ($event->action->uniqueId === 'auth/login') {
                     $event->action->controller->layout = '@frontend/views/layouts/loginLayout.php';
                 }
-            },
+            },*/
         ],
         'gridview' => [
             'class' => 'kartik\grid\Module',

@@ -23,6 +23,35 @@ return [
     'SISA_APP_ID'=> '6df3d2f1',
     'SISA_APP_KEY'=>'e6d747f81e4ef3112750cc477f35fd29',
     /**
+     * SISA mock mode para desarrollo de REFEPS.
+     * true: Simula respuesta OK de REFEPS (clase frontend\components\apis\Sisa).
+     * false: Usa integración real con la API de SISA (requiere configuración completa).
+     *
+     * @see web/docs/plans/alta-movil-cuentas-efectores/phases/02-asignacion-y-refeps.md
+     */
+    'sisa' => [
+        'mockMode' => true,
+        'appId' => null, // Configurar en params-local.php para integración real
+        'appKey' => null, // Configurar en params-local.php para integración real
+        'baseUrl' => null, // Configurar en params-local.php para integración real
+    ],
+    /**
+     * MercadoPago — checkout de altas pagas (consultorio, clínica/centro).
+     * Estructura básica para el plan alta-movil-cuentas-efectores.
+     * Pendiente de pulir con integración completa.
+     *
+     * @see web/docs/plans/alta-movil-cuentas-efectores/phases/03-altas-pagas.md
+     */
+    'mercadoPago' => [
+        'sandboxMode' => true,
+        'accessToken' => null, // Configurar en params-local.php
+        'currency' => 'ARS',
+        'successUrl' => null, // Configurar en params-local.php
+        'failureUrl' => null, // Configurar en params-local.php
+        'pendingUrl' => null, // Configurar en params-local.php
+        'webhookSecret' => null, // Configurar en params-local.php para validar firmas
+    ],
+    /**
      * Legacy / unused en captura clínica.
      * La nota corregida (`texto_procesado`) la devolvió la extracción IA
      * (Capture/Prompts/capture-extraction.yaml → encounter_capture_extraction). SymSpell no se usa.

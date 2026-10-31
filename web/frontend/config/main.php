@@ -51,7 +51,7 @@ return [
             'rolesEspeciales' => ['_x_efector_', '_sin_efector_', 'AdminMinisterio'],
         ],
         'sisa' => [
-            'class' => 'frontend\components\apis\Sisa',
+            'class' => 'common\components\Domain\Person\Identity\Infrastructure\External\Sisa\SisaAdapter',
         ],
         'user' => [
             'class' => 'frontend\components\UserConfig',

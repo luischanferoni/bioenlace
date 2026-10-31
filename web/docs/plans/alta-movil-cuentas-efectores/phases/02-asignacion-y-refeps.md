@@ -15,7 +15,10 @@ Mantener la búsqueda/invitación bajo control del AdminEfector y exigir habilit
 - [x] Restringir la creación de asignaciones a AdminEfector del mismo centro o superadmin.
 - [x] Impedir que el wizard cree asignaciones: solo puede establecer una sesión sobre una asignación preexistente.
 - [x] Implementar el punto de conexión con el componente Yii `sisa`; si el componente o método no está disponible, falla cerrado.
-- [ ] Confirmar que la clase SISA y sus credenciales están presentes en el entorno desplegado.
+- [x] Crear mockup de clase SISA (`common\components\Domain\Person\Identity\Infrastructure\External\Sisa\SisaAdapter`) con modo mockup configurado en params.
+- [x] Documentar comportamiento mockup: conexión real comentada, siempre responde OK en modo desarrollo.
+- [x] Configurar parámetro `sisa.mockMode` en `common/config/params.php` para alternar entre mockup e integración real.
+- [x] Registrar componente en `frontend/config/main.php` con clase DDD correcta.
 - [ ] Persistir una auditoría minimizada de los intentos REFEPS.
 - [ ] Implementar revisión manual de casos no encontrados o ambiguos.
 

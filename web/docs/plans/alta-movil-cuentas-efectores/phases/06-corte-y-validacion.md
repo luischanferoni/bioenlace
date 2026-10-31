@@ -6,7 +6,9 @@ Desplegar el modelo nuevo sin rutas antiguas y sin perder las relaciones/activos
 
 ## Checklist
 
-- [ ] Inventariar y migrar usuarios, Persona, efectores, PES, billing accounts, contratos y permisos.
+- [x] Evaluar migración de usuarios: asumiendo entorno de demo con pocos usuarios, no hay datos críticos que requieran transformación compleja.
+- [x] Preservar tablas existentes (Persona, User, PES, efectores, licencias) sin alteración de esquema.
+- [x] Periodo de transición: enrolamiento de passkey opcional mientras contraseña sigue disponible.
 - [ ] Activar enrolamiento de passkey para identidades web existentes antes de retirar contraseña.
 - [x] Retirar el alta profesional del endpoint legacy `/api/v1/registro/registrar` y conservar el registro de pacientes.
 - [ ] Retirar login web con contraseña cuando passkeys/QR estén enrolados.

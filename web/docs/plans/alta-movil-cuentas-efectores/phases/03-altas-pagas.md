@@ -6,10 +6,15 @@ Crear consultorio o clínica desde la app con confirmación informada e idempote
 
 ## Checklist
 
+- [x] Definir proveedor de pagos: MercadoPago con estructura básica de integración.
+- [x] Crear servicio `MercadoPagoCheckoutService` con métodos createPreference, getPaymentStatus, processWebhook.
+- [x] Crear controlador `MercadoPagoWebhookController` para recibir notificaciones de pago.
+- [x] Configurar parámetros `mercadoPago` en `common/config/params.php` (sandboxMode, accessToken, etc.).
+- [x] Documentar estructura base: código con bloques de integración real comentados, modo sandbox por defecto.
 - [ ] Consultorio: KYC + REFEPS aprobado + datos del efector + plan + términos antes del checkout.
 - [ ] Clínica/centro: KYC + datos del efector + plan + términos; sin requisito REFEPS para AdminEfector.
 - [ ] Mostrar importe, moneda, impuestos, recurrencia, renovación, cancelación y soporte antes de pagar.
-- [ ] Definir proveedor antes de aceptar pagos reales; checkout alojado o tokenizado, sin guardar PAN/CVV.
+- [ ] Completar integración real con MercadoPago: checkout alojado/tokenizado, sin guardar PAN/CVV.
 - [ ] Persistir estado del alta y cada intento de pago; idempotencia, reconciliación y webhooks firmados.
 - [ ] No activar la licencia ni permisos de pago antes de la confirmación del proveedor.
 - [ ] Reanudar errores/rechazos desde el registro persistido sin duplicar efector, usuario o cobro.

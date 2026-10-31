@@ -55,11 +55,11 @@ class AuthController extends Controller
         if (!Yii::$app->user->isGuest) {
             return $this->goHome();
         }
-
+/*
         $this->layout = Yii::$app->id === 'bioenlace-admin'
             ? '@admin/views/layouts/loginLayout.php'
             : '@frontend/views/layouts/loginLayout.php';
-
+*/
         return $this->render('@frontend/views/login/login');
     }
 
@@ -425,5 +425,5 @@ class AuthController extends Controller
             'data' => ['token' => $token],
         ];
     }
-
+}
 

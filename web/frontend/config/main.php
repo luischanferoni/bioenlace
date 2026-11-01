@@ -93,8 +93,6 @@ return [
             // Disable r= routes
             'enablePrettyUrl' => true,
             'rules' => [
-                'site/login' => 'auth/login',
-                'login' => 'auth/login',
                 'user-management/auth/login' => 'auth/login',
                 'user-management/auth/logout' => 'auth/logout',
                 'user-management/auth/change-own-password' => 'auth/change-own-password',

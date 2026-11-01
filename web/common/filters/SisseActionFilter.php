@@ -1,6 +1,6 @@
 <?php
 
-namespace frontend\filters;
+namespace common\filters;
 
 use Yii;
 use yii\base\Action;

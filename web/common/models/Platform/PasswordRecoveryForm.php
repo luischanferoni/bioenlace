@@ -85,7 +85,7 @@ class PasswordRecoveryForm extends Model
         $from = (string) (Yii::$app->params['senderEmail'] ?? Yii::$app->params['supportEmail'] ?? 'noreply@example.com');
         $fromName = (string) (Yii::$app->params['senderName'] ?? Yii::$app->name);
 
-        return Yii::$app->mailer->compose('@frontend/views/mail/passwordRecovery', [
+        return Yii::$app->mailer->compose('@common/views/mail/passwordRecovery', [
             'user' => $user,
             'resetUrl' => $resetUrl,
         ])

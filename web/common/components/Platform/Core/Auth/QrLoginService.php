@@ -1,6 +1,6 @@
 <?php
 
-namespace frontend\components;
+namespace common\components\Platform\Core\Auth;
 
 use common\models\Platform\User;
 use Yii;
@@ -74,7 +74,7 @@ final class QrLoginService
     }
 
     /**
-     * @return array{status: string, userId?: int}
+     * @return array{status: string, user?: User}
      */
     public static function status(string $webSessionId, string $challengeId): array
     {
@@ -100,8 +100,12 @@ final class QrLoginService
                 'state' => 'consumed',
                 'consumed_at' => time(),
             ], ['id' => $challengeId, 'state' => 'approved'])->execute();
+            $user = User::findIdentity($userId);
+            if (!$user instanceof User || (int) $user->status !== User::STATUS_ACTIVE) {
+                return ['status' => 'not_found'];
+            }
 
-            return ['status' => 'approved', 'userId' => $userId];
+            return ['status' => 'approved', 'user' => $user];
         }
 
         return ['status' => $challenge['state']];

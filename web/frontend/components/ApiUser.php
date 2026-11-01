@@ -2,6 +2,7 @@
 
 namespace frontend\components;
 
+use common\components\Platform\Core\Auth\BaseUserConfig;
 use Yii;
 use yii\web\NotFoundHttpException;
 use common\models\Person\Persona;

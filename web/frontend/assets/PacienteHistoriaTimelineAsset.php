@@ -14,7 +14,7 @@ class PacienteHistoriaTimelineAsset extends AssetBundle
     /** @var list<class-string<AssetBundle>> */
     public $depends = [
         AppAsset::class,
-        BioenlaceApiClientAsset::class,
+        \common\assets\BioenlaceApiClientAsset::class,
     ];
 
     /** @var list<string> */

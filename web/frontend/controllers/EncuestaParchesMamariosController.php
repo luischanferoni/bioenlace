@@ -8,7 +8,7 @@ use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 
-use frontend\filters\SisseActionFilter;
+use common\filters\SisseActionFilter;
 use common\models\Clinical\EncuestaParchesMamarios;
 use common\models\Clinical\PersonasAntecedente;
 use common\components\Domain\Clinical\Encounter\Application\UseCase\AdvanceEncounterLifecycle;

@@ -11,6 +11,7 @@ use yii\helpers\Url;
 
 use common\components\Platform\Core\Auth\DemoSandboxAccessService;
 use common\components\Platform\Core\Auth\DemoSandboxSessionService;
+use common\components\Platform\Core\Auth\ImpersonationTicketService;
 use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
 use common\components\Platform\Core\Permission\BioenlaceSessionPermissions;
 use common\models\Platform\User;
@@ -21,7 +22,7 @@ use common\models\Organization\Efector;
 use common\models\Person\Persona;
 use common\models\Platform\DemoSandboxAccess;
 use common\models\Platform\DemoSandboxSession;
-use frontend\components\WebApiJwtSessionService;
+use common\components\Platform\Core\Auth\WebApiJwtSessionService;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Organization\Servicio;
 use frontend\components\Clinical\PacientesListadoPageBuilder;
@@ -432,8 +433,7 @@ class SiteController extends Controller
      */
     public function actionImpersonate()
     {
-        $path = Yii::getAlias('@runtime') . '/impersonation/a.txt';
-        $raw = is_file($path) ? file_get_contents($path) : '';
+        $raw = ImpersonationTicketService::read();
         $id = is_string($raw) ? (int) trim($raw) : 0;
 
         if ($id <= 0) {
@@ -453,14 +453,14 @@ class SiteController extends Controller
         try {
             Yii::$app->user->login($user, 0);
         } catch (\Throwable $e) {
-            @file_put_contents($path, '', LOCK_EX);
+            ImpersonationTicketService::clear();
             Yii::$app->session->setFlash('error', 'No se pudo iniciar sesión con ese usuario.');
             Yii::error('actionImpersonate: ' . $e->getMessage(), __METHOD__);
 
             return $this->redirect(Yii::$app->user->loginUrl);
         }
 
-        @file_put_contents($path, '', LOCK_EX);
+        ImpersonationTicketService::clear();
 
         // Si afterLogin no terminó la respuesta (p. ej. sin evento redirect), ir a inicio (wizard o pacientes).
         if (!Yii::$app->response->isSent) {
@@ -703,7 +703,7 @@ class SiteController extends Controller
         if ($exception instanceof yii\web\TooManyRequestsHttpException) {
             $this->layout = 'publico/error';
         } elseif (Yii::$app->user->isGuest) {
-            $this->layout = '@frontend/views/layouts/loginLayout.php';
+            $this->layout = 'loginLayout';
         }
 
         return $this->render('error', ['exception' => $exception]);

@@ -808,23 +808,12 @@ return [
     'modules' => [
         'user-management' => [
             'class' => \common\modules\UserManagementModule::class,
+            'controllerNamespace' => 'frontend\controllers\userManagement',
             'controllerMap' => [
                 'auth' => 'frontend\controllers\userManagement\AuthController',
-                'permission' => 'admin\controllers\LegacyRbacRedirectController',
-                'role' => 'admin\controllers\LegacyRbacRedirectController',
-                'auth-item-group' => 'admin\controllers\LegacyRbacRedirectController',
-                'user' => 'admin\controllers\UserAccountController',
-                'user-permission' => 'admin\controllers\UserRoleController',
             ],
             //'registrationFormClass' => 'common\models\Platform\User',
             // 'enableRegistration' => true,
-            // Here you can set your handler to change layout for any controller or action
-            // Tip: you can use this event in any module
-            /*'on beforeAction' => function (yii\base\ActionEvent $event) {
-                if ($event->action->uniqueId === 'auth/login') {
-                    $event->action->controller->layout = '@frontend/views/layouts/loginLayout.php';
-                }
-            },*/
         ],
         'gridview' => [
             'class' => 'kartik\grid\Module',

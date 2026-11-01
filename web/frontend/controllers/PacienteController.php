@@ -22,7 +22,7 @@ use frontend\components\Clinical\PacienteHistoriaTimelinePageBuilder;
 use frontend\assets\EmergencyBoardAsset;
 use frontend\assets\PacienteHistoriaTimelineAsset;
 use frontend\assets\EncounterViewAsset;
-use frontend\filters\SisseActionFilter;
+use common\filters\SisseActionFilter;
 
 /**
  * PacienteHistorialController implementa las acciones CRUD para el modelo PacienteHistoriall.

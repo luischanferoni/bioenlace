@@ -6,7 +6,7 @@ use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenEx
 use common\components\Domain\Organization\Efector\Application\Authorization\EfectorOperationAccess;
 use common\components\Domain\Clinical\Inpatient\Application\Service\InpatientEpicrisisTemplateAdminService;
 use common\models\Organization\ServiciosEfector;
-use frontend\filters\SisseActionFilter;
+use common\filters\SisseActionFilter;
 use Yii;
 use yii\filters\VerbFilter;
 use yii\web\Controller;

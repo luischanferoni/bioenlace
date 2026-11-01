@@ -7,7 +7,7 @@ use yii\web\Controller;
 use yii\base\Exception;
 use yii\helpers\ArrayHelper;
 
-use frontend\filters\SisseActionFilter;
+use common\filters\SisseActionFilter;
 use common\models\Person\ProfesionalSalud;
 use common\models\Person\Profesiones;
 use common\models\Organization\Especialidades;

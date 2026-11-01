@@ -9,8 +9,6 @@ $params = \yii\helpers\ArrayHelper::merge(
     is_file($paramsLocal) ? require $paramsLocal : []
 );
 
-$frontConfig = require __DIR__ . '/../../frontend/config/main.php';
-
 use \yii\web\Request;
 $baseUrl = str_replace('/admin/web', '/admin', (new Request)->getBaseUrl());
 
@@ -50,7 +48,6 @@ return [
             'enableAutoLogin' => true,
             'identityCookie' => ['name' => '_identity-bioenlace-admin', 'httpOnly' => true],
         ],
-        'frontendUser' => $frontConfig['components']['user'],        
         'errorHandler' => [
             'errorAction' => 'site/error'
         ],        
@@ -95,7 +92,7 @@ return [
             ],            
         ],
         'sisa' => [
-            'class' => 'frontend\components\apis\Sisa',
+            'class' => \common\components\Domain\Person\Identity\Infrastructure\External\Sisa\SisaAdapter::class,
         ],
     ],
     'params' => $params,
@@ -114,8 +111,9 @@ return [
             ],
         'user-management' => [
             'class' => \common\modules\UserManagementModule::class,
+            'controllerNamespace' => 'admin\controllers',
             'controllerMap' => [
-                'auth' => 'frontend\controllers\userManagement\AuthController',
+                'auth' => 'admin\controllers\userManagement\AuthController',
                 'permission' => 'admin\controllers\LegacyRbacRedirectController',
                 'role' => 'admin\controllers\RbacRoleController',
                 'auth-item-group' => 'admin\controllers\LegacyRbacRedirectController',
@@ -124,13 +122,6 @@ return [
             ],
             //'registrationFormClass' => 'app\models\User',
             // 'enableRegistration' => true,
-            // Here you can set your handler to change layout for any controller or action
-            // Tip: you can use this event in any module
-            'on beforeAction' => function(yii\base\ActionEvent $event) {
-                if ($event->action->uniqueId === 'auth/login') {
-                    $event->action->controller->layout = '@frontend/views/layouts/ffloginLayout.php';
-                }
-            },
         ],
         'frontend' => ['class' => \frontend\Module::class],
         'api' => ['class' => \frontend\modules\api\v1\Module::class]

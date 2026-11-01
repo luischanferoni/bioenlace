@@ -9,7 +9,7 @@ use common\components\Platform\Core\Auth\StaffMobileAccessService;
 use common\components\Platform\Core\Auth\ApiAuthSessionService;
 use common\models\Person\Persona;
 use common\models\Organization\ProfesionalEfectorServicio;
-use frontend\components\WebApiJwtSessionService;
+use common\components\Platform\Core\Auth\WebApiJwtSessionService;
 use yii\filters\auth\HttpBearerAuth;
 use yii\web\Request;
 use yii\web\Response;

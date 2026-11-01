@@ -1,6 +1,6 @@
 <?php
 
-namespace frontend\components;
+namespace common\components\Platform\Core\Auth;
 
 use common\models\Platform\User;
 use RuntimeException;
@@ -28,12 +28,45 @@ use Yii;
 use yii\db\Query;
 use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
+use yii\web\NotFoundHttpException;
 
 final class PasskeyAuthenticationService
 {
     private const CHALLENGE_TTL_SECONDS = 300;
 
     private static ?SerializerInterface $serializer = null;
+
+    public static function activeCredentialsForUser(int $userId): array
+    {
+        return (new Query())
+            ->select(['credential_id_hash', 'name', 'created_at', 'last_used_at'])
+            ->from('{{%webauthn_credential}}')
+            ->where(['id_user' => $userId, 'revoked_at' => null])
+            ->orderBy(['created_at' => SORT_DESC])
+            ->all();
+    }
+
+    public static function revokeCredential(int $userId, string $credentialIdHash): void
+    {
+        $activeCount = (new Query())
+            ->from('{{%webauthn_credential}}')
+            ->where(['id_user' => $userId, 'revoked_at' => null])
+            ->count();
+        if ((int) $activeCount <= 1) {
+            throw new ForbiddenHttpException('Registrá otra passkey antes de revocar la única disponible.');
+        }
+
+        $revoked = Yii::$app->db->createCommand()->update('{{%webauthn_credential}}', [
+            'revoked_at' => time(),
+        ], [
+            'credential_id_hash' => $credentialIdHash,
+            'id_user' => $userId,
+            'revoked_at' => null,
+        ])->execute();
+        if ($revoked !== 1) {
+            throw new NotFoundHttpException('La passkey no existe o ya fue revocada.');
+        }
+    }
 
     public static function registrationOptions(User $user, string $sessionId): array
     {

@@ -3,12 +3,12 @@
 namespace admin\controllers;
 
 use common\components\Platform\Core\Auth\StaffAccountInvitationService;
+use common\components\Platform\Core\Auth\ImpersonationTicketService;
 use common\models\Platform\UserSearch;
 use common\models\Platform\User;
 use common\components\Platform\Ui\Grid\GridAdminActionsTrait;
 use Yii;
 use yii\filters\VerbFilter;
-use yii\helpers\FileHelper;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 
@@ -25,7 +25,7 @@ class UserAccountController extends Controller
     {
         return [
             'ghost-access' => [
-                'class' => \frontend\components\BioenlaceAdminAccessControl::class,
+                'class' => \common\components\Platform\Core\Permission\BioenlaceAdminAccessControl::class,
             ],
             'verbs' => [
                 'class' => VerbFilter::class,
@@ -197,9 +197,7 @@ class UserAccountController extends Controller
 
     public function actionImpersonate($id)
     {
-        $dir = Yii::getAlias('@frontend') . '/runtime/impersonation';
-        FileHelper::createDirectory($dir);
-        file_put_contents($dir . '/a.txt', (string) (int) $id, LOCK_EX);
+        ImpersonationTicketService::store((int) $id);
 
         $url = Yii::$app->urlManager->createAbsoluteUrl(['site/impersonate']);
         $url = str_replace('/admin/', '/', $url);

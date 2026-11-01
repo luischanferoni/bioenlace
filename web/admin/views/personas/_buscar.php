@@ -5,7 +5,7 @@ use yii\bootstrap5\ActiveForm;
 use kartik\switchinput\SwitchInput;
 use yii\widgets\MaskedInput;
 use yii\helpers\Url;
-use frontend\assets\PersonasBuscarAsset;
+use common\assets\PersonasBuscarAsset;
 /* @var $this yii\web\View */
 /* @var $model common\models\Person\PersonaBusqueda */
 /* @var $form yii\widgets\ActiveForm */

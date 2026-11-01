@@ -24,7 +24,7 @@ class ServiciosController extends Controller
         //control de acceso mediante la extension
         return [
             'ghost-access'=> [
-                'class' => \frontend\components\BioenlaceAdminAccessControl::class,
+                'class' => \common\components\Platform\Core\Permission\BioenlaceAdminAccessControl::class,
                 'except' => ['search']
             ],
             'verbs' => [

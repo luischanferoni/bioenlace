@@ -1,6 +1,6 @@
 <?php
 
-namespace frontend\components;
+namespace common\components\Platform\Core\Auth;
 
 use common\components\Domain\Person\Identity\Application\Catalog\AccountRecoveryNotificationCatalog;
 use common\components\Platform\Core\Auth\ApiAuthSessionService;
@@ -20,6 +20,17 @@ use yii\web\NotFoundHttpException;
 final class AccountRecoveryService
 {
     private const CODE_TTL_SECONDS = 900;
+
+    public static function pendingRequests(): array
+    {
+        return (new Query())
+            ->select(['r.*', 'u.username', 'u.email'])
+            ->from(['r' => '{{%account_recovery_request}}'])
+            ->leftJoin(['u' => '{{%user}}'], 'u.id = r.id_user')
+            ->where(['r.status' => 'pending'])
+            ->orderBy(['r.created_at' => SORT_ASC])
+            ->all();
+    }
 
     public static function request(string $identifier, string $note): void
     {

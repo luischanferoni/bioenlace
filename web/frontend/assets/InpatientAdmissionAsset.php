@@ -16,6 +16,6 @@ class InpatientAdmissionAsset extends AssetBundle
     ];
 
     public $depends = [
-        BioenlaceApiClientAsset::class,
+        \common\assets\BioenlaceApiClientAsset::class,
     ];
 }

@@ -17,7 +17,7 @@ $dsn = isset($params['mailerDsn']) ? trim((string) $params['mailerDsn']) : '';
 
 $config = [
     'class' => \yii\symfonymailer\Mailer::class,
-    'viewPath' => '@frontend/views/mail',
+    'viewPath' => '@common/views/mail',
     'useFileTransport' => $dsn === '',
 ];
 

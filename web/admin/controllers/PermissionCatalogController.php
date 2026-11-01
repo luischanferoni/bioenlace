@@ -22,7 +22,7 @@ class PermissionCatalogController extends Controller
     {
         return [
             'ghost-access' => [
-                'class' => \frontend\components\BioenlaceAdminAccessControl::class,
+                'class' => \common\components\Platform\Core\Permission\BioenlaceAdminAccessControl::class,
             ],
             'verbs' => [
                 'class' => VerbFilter::class,

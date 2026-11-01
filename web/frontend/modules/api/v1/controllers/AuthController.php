@@ -18,8 +18,8 @@ use common\components\Platform\Core\Auth\StaffMobileAccessService;
 use common\components\Platform\Core\Auth\ApiAuthSessionService;
 use common\components\Domain\Person\Identity\Application\Service\IdentityVerificationException;
 use common\components\Domain\Person\Identity\Application\Service\DiditIdentityService;
-use frontend\components\QrLoginService;
-use frontend\components\WebApiJwtSessionService;
+use common\components\Platform\Core\Auth\QrLoginService;
+use common\components\Platform\Core\Auth\WebApiJwtSessionService;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 

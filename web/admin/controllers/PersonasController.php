@@ -45,7 +45,7 @@ use common\models\Person\Tipo_documento;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\controllers\Model;
 use common\components\Domain\Person\Identity\Infrastructure\External\Mpi\MpiApiClient;
-use frontend\filters\SisseActionFilter;
+use common\filters\SisseActionFilter;
 
 /**
  * PersonasController implements the CRUD actions for persona model.
@@ -65,7 +65,7 @@ class PersonasController extends Controller {
     public function behaviors() {
         return [
             'ghost-access'=> [
-                'class' => \frontend\components\BioenlaceAdminAccessControl::class,
+                'class' => \common\components\Platform\Core\Permission\BioenlaceAdminAccessControl::class,
                 'except' => ['vacunas']
             ],
             'access' => [

@@ -65,6 +65,6 @@ class AppAsset extends AssetBundle
 
     public $depends = [
         '\common\assets\AppAsset',
-        BioenlaceApiClientAsset::class,
+        \common\assets\BioenlaceApiClientAsset::class,
     ];
 }

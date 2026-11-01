@@ -4,7 +4,7 @@ namespace frontend\modules\api\v1\controllers\organization;
 
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
-use frontend\components\WebApiJwtSessionService;
+use common\components\Platform\Core\Auth\WebApiJwtSessionService;
 use common\components\Platform\Core\Auth\StaffMobileAccessService;
 use common\components\Domain\Organization\SesionOperativa\Application\UseCase\ResolveOperativeProfessionalEligibility;
 use common\components\Domain\Organization\SesionOperativa\Application\UseCase\EstablishOperativeSession;

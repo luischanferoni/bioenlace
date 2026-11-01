@@ -24,7 +24,7 @@ return [
     'SISA_APP_KEY'=>'e6d747f81e4ef3112750cc477f35fd29',
     /**
      * SISA mock mode para desarrollo de REFEPS.
-     * true: Simula respuesta OK de REFEPS (clase frontend\components\apis\Sisa).
+     * true: Simula respuesta OK de REFEPS (clase común SisaAdapter).
      * false: Usa integración real con la API de SISA (requiere configuración completa).
      *
      * @see web/docs/plans/alta-movil-cuentas-efectores/phases/02-asignacion-y-refeps.md

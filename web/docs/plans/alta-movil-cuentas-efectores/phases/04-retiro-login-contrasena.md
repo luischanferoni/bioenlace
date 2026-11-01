@@ -43,7 +43,7 @@ public function actionLogin()
     }
 
     // Si passwordLoginEnabled = false, el formulario de contraseña no se muestra
-    return $this->render('@frontend/views/login/login', [
+    return $this->render('//login/login', [
         'model' => $model,
         'passwordLoginEnabled' => $passwordLoginEnabled,
         // ...

@@ -28,7 +28,7 @@ class EfectoresController extends Controller
          //control de acceso mediante la extensión
         return [
             'ghost-access' => [
-                'class' => \frontend\components\BioenlaceAdminAccessControl::class,
+                'class' => \common\components\Platform\Core\Permission\BioenlaceAdminAccessControl::class,
             ],
             'verbs' => [
                 'class' => VerbFilter::className(),

@@ -7,8 +7,8 @@ use yii\base\Module;
 /**
  * Módulo Yii `user-management`: knobs de cuentas/RBAC leídos por formularios y auth.
  *
- * El id de módulo y las URLs `/user-management/...` se mantienen; la implementación
- * es Bioenlace (controllers en admin/frontend), no un paquete externo.
+ * El id de módulo y las URLs `/user-management/...` se mantienen; los controladores
+ * y su namespace se configuran localmente en cada aplicación.
  */
 class UserManagementModule extends Module
 {
@@ -41,5 +41,4 @@ class UserManagementModule extends Module
 
     public $auth_rule_table = '{{%auth_rule}}';
 
-    public $controllerNamespace = 'admin\controllers';
 }

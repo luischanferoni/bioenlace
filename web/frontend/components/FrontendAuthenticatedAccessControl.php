@@ -3,6 +3,8 @@
 namespace frontend\components;
 
 use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
+use common\components\Platform\Core\Auth\WebApiJwtSessionService;
+use common\components\Platform\Core\Auth\ImpersonationTicketService;
 use Yii;
 use yii\base\Action;
 use yii\base\ActionFilter;
@@ -76,13 +78,7 @@ class FrontendAuthenticatedAccessControl extends ActionFilter
 
     private static function hasPendingImpersonationTicket(): bool
     {
-        $path = Yii::getAlias('@runtime') . '/impersonation/a.txt';
-        if (!is_file($path)) {
-            return false;
-        }
-        $raw = @file_get_contents($path);
-
-        return is_string($raw) && trim($raw) !== '';
+        return ImpersonationTicketService::hasPending();
     }
 
     /**

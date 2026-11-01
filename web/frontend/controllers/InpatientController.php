@@ -17,7 +17,7 @@ use common\models\Organization\Servicio;
 use common\models\Clinical\Encounter;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\PatientHistoriaUrl;
 
-use frontend\filters\SisseActionFilter;
+use common\filters\SisseActionFilter;
 
 /**
  * InpatientController implements the CRUD actions for InpatientStay model.

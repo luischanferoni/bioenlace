@@ -7,7 +7,7 @@ use yii\helpers\Html;
 use yii\bootstrap5\Nav;
 use yii\bootstrap5\NavBar;
 use frontend\assets\AppAsset;
-use frontend\assets\BioenlaceApiClientAsset;
+use common\assets\BioenlaceApiClientAsset;
 use frontend\components\Layout\MainLayoutPageBuilder;
 
 AppAsset::register($this);

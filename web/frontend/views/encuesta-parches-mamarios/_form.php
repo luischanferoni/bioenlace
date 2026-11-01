@@ -3,7 +3,7 @@
 use yii\helpers\Html;
 use yii\bootstrap5\ActiveForm;
 use kartik\select2\Select2;
-use frontend\assets\BioenlaceApiClientAsset;
+use common\assets\BioenlaceApiClientAsset;
 
 use yii\web\JsExpression;
 

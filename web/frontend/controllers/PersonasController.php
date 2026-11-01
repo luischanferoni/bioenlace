@@ -28,7 +28,7 @@ use common\models\Clinical\Percentilos;
 
 use common\components\Platform\Core\Form\NestedFormModels;
 use common\components\Domain\Person\Identity\Infrastructure\External\Mpi\MpiApiClient;
-use frontend\filters\SisseActionFilter;
+use common\filters\SisseActionFilter;
 use common\components\Platform\Core\Http\UserRequest;
 
 /**

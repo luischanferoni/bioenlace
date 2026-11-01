@@ -83,7 +83,7 @@ final class StaffAccountInvitationService
         $fromName = (string) (Yii::$app->params['senderName'] ?? Yii::$app->name);
         $expireHours = (int) ceil(self::invitationTokenExpireSeconds() / 3600);
 
-        $sent = Yii::$app->mailer->compose('@frontend/views/mail/accountInvitation', [
+        $sent = Yii::$app->mailer->compose('@common/views/mail/accountInvitation', [
             'user' => $user,
             'activateUrl' => $activateUrl,
             'expireHours' => $expireHours,

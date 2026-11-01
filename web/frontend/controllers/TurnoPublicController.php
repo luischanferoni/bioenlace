@@ -14,7 +14,7 @@ use yii\web\NotFoundHttpException;
  */
 class TurnoPublicController extends Controller
 {
-    public $layout = '@frontend/views/layouts/loginLayout.php';
+    public $layout = 'loginLayout';
 
     /**
      * Link firmado desde email/SMS: reubicar turno en resolución.

@@ -1,5 +1,5 @@
 /**
- * Headers unificados para llamadas a /api/v1 desde el frontend web (SPA y vistas Yii).
+ * Headers unificados para llamadas a /api/v1 desde las aplicaciones web (SPA y vistas Yii).
  *
  * - Base: {@see window.getBioenlaceApiClientHeaders} (layouts main / main_sinmenuizquierda: Bearer, X-App-*, X-Client).
  * - Extensión: pasar `extra` para añadir o sobrescribir cabeceras puntuales.

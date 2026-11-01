@@ -1,6 +1,6 @@
 <?php
 
-namespace frontend\components;
+namespace common\components\Platform\Core\Auth;
 
 use common\models\Person\Persona;
 use common\models\Platform\User;

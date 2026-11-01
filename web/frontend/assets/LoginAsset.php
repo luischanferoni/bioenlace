@@ -5,7 +5,7 @@ namespace frontend\assets;
 use yii\web\AssetBundle;
 
 /**
- * Estilos del shell de login / auth (`loginLayout`).
+ * Estilos y scripts del shell de login / auth (`loginLayout`).
  */
 class LoginAsset extends AssetBundle
 {
@@ -16,5 +16,6 @@ class LoginAsset extends AssetBundle
     ];
     public $depends = [
         AppAsset::class,
+        \common\assets\AuthLoginAsset::class,
     ];
 }

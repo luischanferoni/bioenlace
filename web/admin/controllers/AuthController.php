@@ -3,51 +3,36 @@
 namespace admin\controllers;
 
 use admin\components\UserConfig;
+use common\controllers\WebAuthController;
 use common\models\Platform\LoginForm;
 use Yii;
 
 /**
- * Login/logout admin: formulario compartido con frontend; layout y sesión propios del admin.
+ * Login/logout admin con vistas y sesión propias; reutiliza la lógica común de autenticación.
  */
-class AuthController extends \frontend\controllers\AuthController
+class AuthController extends WebAuthController
 {
-    public function beforeAction($action): bool
-    {
-        $guestLayoutActions = [
-            'login',
-            'password-recovery',
-            'password-recovery-receive',
-            'activate-account',
-            'activate-account-receive',
-        ];
-        /*if (in_array($action->id, $guestLayoutActions, true)) {
-            $this->layout = '@admin/views/layouts/loginLayout.php';
-        }*/
-
-        return parent::beforeAction($action);
-    }
-
     public function actionLogin()
     {
         if (!Yii::$app->user->isGuest) {
             return $this->goHome();
         }
 
-        $this->layout = '@admin/views/layouts/loginLayout.php';
+        $this->layout = 'loginLayout';
         
         $model = new LoginForm();
 
         if ($model->load(Yii::$app->request->post()) && $model->login()) {
-            $returnUrl = Yii::$app->user->getReturnUrl(Yii::$app->homeUrl);
-            if (!UserConfig::isValidReturnUrl($returnUrl)) {
-                $returnUrl = Yii::$app->homeUrl;
-            }
-
-            return $this->redirect($returnUrl);
+            return $this->redirect($this->getReturnUrl());
         }
 
         $model->password = '';
 
-        return $this->render('@admin/views/site/login', ['model' => $model]);
+        return $this->render('//site/login', ['model' => $model]);
+    }
+
+    protected function isValidReturnUrl(string $url): bool
+    {
+        return UserConfig::isValidReturnUrl($url);
     }
 }

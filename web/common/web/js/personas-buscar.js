@@ -1,5 +1,5 @@
 /**
- * Formulario búsqueda de personas (QR / Renaper).
+ * Comportamiento compartido del formulario búsqueda de personas (QR / Renaper).
  * URL: #buscar[data-url-renaper]
  */
 (function () {

@@ -2,7 +2,7 @@
 
 use yii\helpers\Html;
 use yii\helpers\Url;
-use frontend\assets\BioenlaceApiClientAsset;
+use common\assets\BioenlaceApiClientAsset;
 
 $this->title = 'Asistente';
 $this->registerJsFile('@web/js/spa-navigation.js', ['depends' => [\yii\web\JqueryAsset::class]]);

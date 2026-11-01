@@ -1,6 +1,6 @@
 <?php
 
-namespace frontend\components;
+namespace common\components\Platform\Core\Permission;
 
 use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
 use Yii;

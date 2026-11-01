@@ -8,6 +8,8 @@ use yii\web\NotFoundHttpException;
 use common\models\Person\Persona;
 use common\models\Platform\User;
 use common\models\Organization\ProfesionalEfectorServicio;
+use common\components\Platform\Core\Auth\WebApiJwtSessionService;
+use common\components\Platform\Core\Auth\BaseUserConfig;
 use common\components\Domain\Organization\SesionOperativa\Application\UseCase\EstablishOperativeSession;
 
 /**

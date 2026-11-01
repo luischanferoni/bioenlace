@@ -2,16 +2,16 @@
 
 namespace frontend\controllers;
 
-use common\models\Person\Persona;
 use common\models\Platform\User;
-use frontend\filters\SisseActionFilter;
+use common\filters\SisseActionFilter;
 use Yii;
+use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 
 /**
  * Alta/actualización de usuario desde flujos frontend (personas / profesional-salud).
  */
-class UserController extends \admin\controllers\UserAccountController
+class UserController extends Controller
 {
     public function behaviors(): array
     {
@@ -60,7 +60,7 @@ class UserController extends \admin\controllers\UserAccountController
             ]);
         }
 
-        return $this->render('@frontend/views/user-management/user/create', ['model' => $model]);
+        return $this->render('//user-management/user/create', ['model' => $model]);
     }
 
     /**
@@ -80,6 +80,6 @@ class UserController extends \admin\controllers\UserAccountController
             return $this->redirect(['personas/view', 'id' => $persona->id_persona]);
         }
 
-        return $this->render('@frontend/views/user-management/user/update', ['model' => $model]);
+        return $this->render('//user-management/user/update', ['model' => $model]);
     }
 }

@@ -2,7 +2,7 @@
   "version": 11,
   "currency": "USD",
   "billing_period": "month",
-  "tax_note": "",
+  "tax_note": "Estimación mensual en USD sin IVA. En el alta desde Personal de Salud se convierte a ARS con la cotización MEP vendedora vigente y se suma el IVA aplicable (actualmente 21%). El total exacto se informa antes de abrir Mercado Pago.",
   "cogs_source": "costos-api.md — context caching; chat 10 msgs (preprocess + guide); motivos audio por clase (AMB 30% / EMER 45% / IMP 50%); videollamada 40% teleconsulta; dictado incluido",
   "reference_encounters_per_professional_month": 200,
   "cogs_assumptions": {
@@ -133,10 +133,10 @@
     }
   },
   "simulator": {
-    "cta_label": "Crear cuenta",
+    "cta_label": "Crear cuenta desde la app",
     "cta_href": "alta.html",
     "footnotes": [
-      "Montos en USD sin IVA."
+      "Estimación en USD sin IVA. El importe final se cobra en ARS con MEP vendedor vigente + IVA y se muestra antes de autorizar en Mercado Pago."
     ]
   },
   "plans_page": {

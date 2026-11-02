@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../auth/personalsalud_post_login.dart';
 import 'commercial_signup_screen.dart';
@@ -24,6 +25,16 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
   void _snack(String msg) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  Future<void> _openPricingPage() async {
+    final opened = await launchUrl(
+      Uri.parse('https://bioenlace.io/precios.html'),
+      mode: LaunchMode.externalApplication,
+    );
+    if (!opened) {
+      _snack('No pudimos abrir el simulador de precios. Intentá nuevamente.');
+    }
   }
 
   Future<void> _verifyIdentity() async {
@@ -165,7 +176,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
               Text(
                 _selectedPath == _SignupPath.professional
                     ? 'Creá tu cuenta de Personal de Salud'
-                    : 'Verificá tu identidad para iniciar el alta',
+                    : 'Información antes de crear tu cuenta',
                 style: BioTypography.h2,
                 textAlign: TextAlign.center,
               ),
@@ -173,7 +184,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
               Text(
                 _selectedPath == _SignupPath.professional
                     ? 'Elegí qué tipo de cuenta necesitás. No necesitás un e-mail para crear una cuenta profesional.'
-                    : 'La identidad se crea primero desde la app. Después completarás los datos del efector y el checkout mensual.',
+                    : 'La verificación con DNI y selfie es solo para confirmar tu identidad. No inicia una suscripción ni genera un cobro.',
                 style: BioTypography.body.copyWith(color: tokens.textMuted),
                 textAlign: TextAlign.center,
               ),
@@ -182,20 +193,22 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                 path: _SignupPath.professional,
                 title: 'Cuenta profesional',
                 description:
-                    'Gratis. Creá tu identidad; la administración del centro te suma cuando corresponda.',
+                    'Crear tu cuenta es gratis. Si trabajás en una institución, su administración te asigna el acceso.',
               ),
               _buildPathCard(
                 path: _SignupPath.privateConsultorio,
                 title: 'Consultorio propio',
                 description:
-                    'Alta paga mensual en ARS. Se asigna automáticamente AdminEfector.',
+                    'Suscripción mensual para un consultorio privado y un profesional. Incluye hasta 200 atenciones ambulatorias por mes.',
               ),
               _buildPathCard(
                 path: _SignupPath.clinic,
                 title: 'Clínica o centro',
                 description:
-                    'Alta paga mensual en ARS para administrar una institución.',
+                    'Suscripción mensual según los tipos de atención y el volumen que elijas. Para centros públicos se solicita el código SISA.',
               ),
+              BioSpacing.gapH(BioSpacing.md),
+              _buildSignupDetails(tokens),
               BioSpacing.gapH(BioSpacing.md),
               if (_pendingVerificationId != null) ...[
                 Text(
@@ -214,7 +227,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                       ? 'Reintentar creación de cuenta'
                       : _selectedPath == _SignupPath.professional
                       ? 'Verificar identidad y crear cuenta'
-                      : 'Verificar identidad y continuar',
+                      : 'Continuar a verificación con Didit',
                   icon: Icons.verified_user_outlined,
                   size: BioButtonSize.lg,
                   fullWidth: true,
@@ -248,6 +261,52 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildSignupDetails(BioTokens tokens) {
+    final isProfessional = _selectedPath == _SignupPath.professional;
+    final isConsultorio = _selectedPath == _SignupPath.privateConsultorio;
+    return Container(
+      padding: const EdgeInsets.all(BioSpacing.md),
+      decoration: BoxDecoration(
+        color: tokens.paperSurface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: tokens.paperDividerDefault),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            isProfessional
+                ? 'Qué necesitás para crear tu cuenta'
+                : 'Cómo funciona el alta y el precio',
+            style: BioTypography.title,
+          ),
+          BioSpacing.gapH(BioSpacing.sm),
+          Text(
+            isProfessional
+                ? 'Didit te pedirá fotografiar tu DNI físico y tomarte una selfie. La cuenta profesional no tiene cargo. Crear la cuenta no te asigna automáticamente a un centro.'
+                : isConsultorio
+                ? 'El precio estimado para un consultorio de un profesional y 200 atenciones ambulatorias es USD 4,26 por mes, antes de IVA. La suscripción tiene renovación mensual y se cobra en ARS según la cotización MEP vendedora vigente, más IVA.'
+                : 'El precio mensual depende de las atenciones ambulatorias, de urgencia o de internación y de los volúmenes que elijas. La suscripción tiene renovación mensual. El simulador muestra valores de referencia en USD, sin IVA.',
+            style: BioTypography.body,
+          ),
+          if (!isProfessional) ...[
+            BioSpacing.gapH(BioSpacing.sm),
+            Text(
+              'Después de verificar tu identidad completarás los datos del efector. Antes de abrir Mercado Pago verás el importe exacto en ARS, el IVA, la cotización utilizada y las condiciones de renovación. Didit no procesa pagos; el efector y su licencia se activan al confirmarse el primer pago.',
+              style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
+            ),
+            BioSpacing.gapH(BioSpacing.sm),
+            TextButton.icon(
+              onPressed: _openPricingPage,
+              icon: const Icon(Icons.open_in_new),
+              label: const Text('Ver simulador y detalle de precios'),
+            ),
+          ],
+        ],
       ),
     );
   }

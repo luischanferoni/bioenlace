@@ -668,25 +668,7 @@
     <script src="js/assistant-demo.js"></script>
     <script src="js/encounter-demo.js"></script>
     <script src="js/patient-demo.js"></script>
-    <script src="js/pricing-core.js"></script>
     <script src="js/demo-access.js"></script>
     <script src="js/main.js"></script>
-    <script>
-      (function () {
-        fetch('js/pricing-config.json', { cache: 'no-cache' })
-          .then(function (r) { return r.ok ? r.json() : null; })
-          .then(function (cfg) {
-            if (!cfg || !cfg.plans_page) return;
-            var p = cfg.plans_page;
-            var title = document.getElementById('pricing-teaser-title');
-            var subtitle = document.getElementById('pricing-teaser-subtitle');
-            var cta = document.getElementById('pricing-teaser-cta');
-            if (title && p.teaser_title) title.textContent = p.teaser_title;
-            if (subtitle && p.teaser_subtitle) subtitle.textContent = p.teaser_subtitle;
-            if (cta && p.teaser_cta) cta.textContent = p.teaser_cta;
-          })
-          .catch(function () {});
-      })();
-    </script>
 </body>
 </html>

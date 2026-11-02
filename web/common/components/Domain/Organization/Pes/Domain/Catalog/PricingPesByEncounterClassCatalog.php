@@ -3,7 +3,7 @@
 namespace common\components\Domain\Organization\Pes\Domain\Catalog;
 
 /**
- * Catálogo de dominio (ex metadata/bioenlace/organization/pricing-pes-by-encounter-class.yaml).
+ * Catálogo único de costos y precios por volumen de atenciones.
  */
 final class PricingPesByEncounterClassCatalog
 {
@@ -16,7 +16,7 @@ final class PricingPesByEncounterClassCatalog
         'version' => 11,
         'currency' => 'USD',
         'billing_period' => 'month',
-        'tax_note' => 'Precios en USD. No incluyen IVA.',
+        'tax_note' => 'El total mensual en ARS incluye IVA; el valor en USD se muestra antes de impuestos.',
         'default_when_empty' => 'allow_all',
         'reference_encounters_per_professional_month' => 200,
         'cogs_assumptions' => [
@@ -32,7 +32,7 @@ final class PricingPesByEncounterClassCatalog
             'videollamada_note' => 'Planificación: ~40% de atenciones ambulatorias por videollamada cuando el add-on está contratado (12 min, 2 participantes). COGS infra+storage escalado desde el techo @ 80%.',
         ],
         'cogs_usd_per_encounter' => [
-            'patient_chat_amb' => 0.0019,
+            'patient_chat_amb' => 0.0048,
             'motivos_audio' => 0.0014,
             'motivos_audio_by_class' => [
                 'AMB' => 0.0014,
@@ -144,7 +144,7 @@ final class PricingPesByEncounterClassCatalog
                 'margin_after_iibb_ganancias_percent' => 37.5,
             ],
         ],
-        'cogs_source' => 'web/docs/costos/costos-api.md — context caching; chat 10 msgs (capacidad); motivos audio por clase (AMB 30% / EMER 45% / IMP 50%); dictado incluido',
+        'cogs_source' => 'web/docs/costos/costos-api.md — conversación del paciente con costo AMB conservador para preprocess + guide con adjuntos e historial; motivos audio por clase; dictado incluido',
         'addons' => [
             'videollamada' => [
                 'label' => 'Videollamada',

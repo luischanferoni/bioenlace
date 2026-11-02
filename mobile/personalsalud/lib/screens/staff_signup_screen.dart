@@ -1,6 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:shared/shared.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../auth/personalsalud_post_login.dart';
 import 'commercial_signup_screen.dart';
@@ -17,35 +19,184 @@ class StaffSignupScreen extends StatefulWidget {
 }
 
 class _StaffSignupScreenState extends State<StaffSignupScreen> {
+  final StaffSignupService _signupService = StaffSignupService();
   bool _submitting = false;
   bool _accountCreated = false;
-  _SignupPath _selectedPath = _SignupPath.professional;
+  bool _loadingPlans = true;
+  bool _loadingConsultorioQuote = false;
+  bool _loadingClinicQuote = false;
+  List<int> _attentionPresets = const [];
+  final Map<String, int> _clinicAttentions = {'AMB': 5000};
+  Map<String, dynamic>? _consultorioQuote;
+  Map<String, dynamic>? _clinicQuote;
+  String? _consultorioQuoteError;
+  String? _clinicQuoteError;
+  Timer? _clinicQuoteDebounce;
+  int _clinicQuoteRequestId = 0;
   String? _pendingVerificationId;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPlansAndQuotes();
+  }
+
+  @override
+  void dispose() {
+    _clinicQuoteDebounce?.cancel();
+    super.dispose();
+  }
 
   void _snack(String msg) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  Future<void> _openPricingPage() async {
-    final opened = await launchUrl(
-      Uri.parse('https://bioenlace.io/precios.html'),
-      mode: LaunchMode.externalApplication,
-    );
-    if (!opened) {
-      _snack('No pudimos abrir el simulador de precios. Intentá nuevamente.');
+  Future<void> _loadPlansAndQuotes() async {
+    try {
+      final catalog = await _signupService.fetchSignupPlans();
+      final rawPresets = catalog['attention_volume_presets'];
+      if (rawPresets is! List) {
+        throw const FormatException('El catálogo de planes no es válido.');
+      }
+      final presets =
+          rawPresets
+              .whereType<Map>()
+              .map((item) => int.tryParse(item['attentions']?.toString() ?? ''))
+              .whereType<int>()
+              .where((value) => value > 0)
+              .toSet()
+              .toList()
+            ..sort();
+      if (presets.isEmpty) {
+        throw const FormatException(
+          'El catálogo no tiene volúmenes disponibles.',
+        );
+      }
+      if (!mounted) return;
+      setState(() {
+        _attentionPresets = presets;
+        if (!presets.contains(_clinicAttentions['AMB'])) {
+          _clinicAttentions['AMB'] = presets.first;
+        }
+        _loadingPlans = false;
+      });
+      await Future.wait([_refreshConsultorioQuote(), _refreshClinicQuote()]);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _loadingPlans = false;
+        _consultorioQuoteError = _priceErrorText(error);
+        _clinicQuoteError = _priceErrorText(error);
+      });
     }
   }
 
-  Future<void> _verifyIdentity() async {
-    final selectedPath = _selectedPath;
+  String _priceErrorText(Object error) {
+    final message = error.toString().replaceFirst('Exception: ', '').trim();
+    return message.isEmpty
+        ? 'No pudimos consultar el precio. Intentá nuevamente.'
+        : message;
+  }
+
+  Map<String, dynamic> _consultorioPlan() => {
+    'classes': {
+      'AMB': {
+        'attentions_per_month': 200,
+        'max_pes': 1,
+        'videollamada_permitida': false,
+      },
+    },
+  };
+
+  Map<String, dynamic>? _clinicPlan() {
+    if (_clinicAttentions.isEmpty) return null;
+    return {
+      'classes': _clinicAttentions.map(
+        (code, attentions) => MapEntry(code, {
+          'attentions_per_month': attentions,
+          'max_pes': (attentions / 200).ceil(),
+        }),
+      ),
+    };
+  }
+
+  Future<void> _refreshConsultorioQuote() async {
+    setState(() {
+      _loadingConsultorioQuote = true;
+      _consultorioQuoteError = null;
+    });
+    try {
+      final quote = await _signupService.quoteSignupPlan(
+        profile: 'CONSULTORIO',
+        plan: _consultorioPlan(),
+      );
+      if (!mounted) return;
+      setState(() {
+        _consultorioQuote = quote;
+        _loadingConsultorioQuote = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _consultorioQuoteError = _priceErrorText(error);
+        _loadingConsultorioQuote = false;
+      });
+    }
+  }
+
+  Future<void> _refreshClinicQuote() async {
+    final requestId = ++_clinicQuoteRequestId;
+    final plan = _clinicPlan();
+    if (plan == null) {
+      setState(() {
+        _clinicQuote = null;
+        _clinicQuoteError = 'Elegí al menos un tipo de atención.';
+        _loadingClinicQuote = false;
+      });
+      return;
+    }
+    setState(() {
+      _loadingClinicQuote = true;
+      _clinicQuoteError = null;
+    });
+    try {
+      final quote = await _signupService.quoteSignupPlan(
+        profile: 'CLINICA',
+        plan: plan,
+      );
+      if (!mounted || requestId != _clinicQuoteRequestId) return;
+      setState(() {
+        _clinicQuote = quote;
+        _loadingClinicQuote = false;
+      });
+    } catch (error) {
+      if (!mounted || requestId != _clinicQuoteRequestId) return;
+      setState(() {
+        _clinicQuoteError = _priceErrorText(error);
+        _loadingClinicQuote = false;
+      });
+    }
+  }
+
+  void _scheduleClinicQuote() {
+    _clinicQuoteDebounce?.cancel();
+    _clinicQuoteDebounce = Timer(
+      const Duration(milliseconds: 350),
+      _refreshClinicQuote,
+    );
+  }
+
+  Future<void> _verifyIdentity(
+    _SignupPath selectedPath, {
+    Map<String, dynamic>? plan,
+  }) async {
     setState(() => _submitting = true);
     try {
-      final service = StaffSignupService();
       final verificationId =
-          _pendingVerificationId ?? await service.verifyIdentity();
+          _pendingVerificationId ?? await _signupService.verifyIdentity();
       _pendingVerificationId = verificationId;
-      final account = await service.createAccount(
+      final account = await _signupService.createAccount(
         verificationId: verificationId,
       );
       if (!mounted) return;
@@ -71,6 +222,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
               profile: selectedPath == _SignupPath.privateConsultorio
                   ? 'CONSULTORIO'
                   : 'CLINICA',
+              initialPlan: plan,
             ),
           ),
         );
@@ -103,59 +255,141 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
     }
   }
 
-  Widget _buildPathCard({
-    required _SignupPath path,
-    required String title,
-    required String description,
-    bool enabled = true,
+  String _formatArs(Object? amount) {
+    final value = double.tryParse(amount?.toString() ?? '');
+    if (value == null) return '—';
+    return NumberFormat.currency(
+      locale: 'es_AR',
+      symbol: 'ARS ',
+      decimalDigits: 2,
+    ).format(value);
+  }
+
+  Widget _buildQuoteSummary({
+    required Map<String, dynamic>? quote,
+    required bool loading,
+    required String? error,
+    required VoidCallback onRetry,
   }) {
     final tokens = context.bio;
-    final primary = Theme.of(context).colorScheme.primary;
-    final selected = _selectedPath == path;
     return Container(
-      margin: const EdgeInsets.only(bottom: BioSpacing.md),
+      margin: const EdgeInsets.only(top: BioSpacing.sm),
+      padding: const EdgeInsets.all(BioSpacing.md),
       decoration: BoxDecoration(
-        color: tokens.paperSurface,
-        border: Border.all(
-          color: selected ? primary : tokens.paperDividerDefault,
-          width: selected ? 2 : 1,
-        ),
-        borderRadius: BorderRadius.circular(12),
+        color: tokens.paperBackground,
+        borderRadius: BorderRadius.circular(10),
       ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: enabled ? () => setState(() => _selectedPath = path) : null,
-        child: Padding(
-          padding: const EdgeInsets.all(BioSpacing.md),
-          child: Row(
-            children: [
-              Icon(
-                selected ? Icons.radio_button_checked : Icons.radio_button_off,
-                color: enabled ? primary : tokens.textMuted,
-              ),
-              BioSpacing.gapW(BioSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: BioTypography.title),
-                    BioSpacing.gapH(BioSpacing.xs),
-                    Text(
-                      description,
-                      style: BioTypography.bodySm.copyWith(
-                        color: tokens.textMuted,
+      child: loading
+          ? const Center(child: CircularProgressIndicator())
+          : error != null
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(error, style: BioTypography.bodySm),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: onRetry,
+                    child: const Text('Reintentar'),
+                  ),
+                ),
+              ],
+            )
+          : quote == null
+          ? const Text('No hay una cotización disponible.')
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${_formatArs(quote['amount_total_ars'])} por mes',
+                  style: BioTypography.title,
+                ),
+                BioSpacing.gapH(BioSpacing.xs),
+                Text(
+                  'Total mensual con impuestos incluidos. '
+                  'El importe final se confirma antes de pagar.',
+                  style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
+                ),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildClassSelector(String code, String label) {
+    final selected = _clinicAttentions.containsKey(code);
+    final tokens = context.bio;
+    return Padding(
+      padding: const EdgeInsets.only(top: BioSpacing.sm),
+      child: Column(
+        children: [
+          CheckboxListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(label, style: BioTypography.body),
+            value: selected,
+            onChanged: _loadingPlans
+                ? null
+                : (enabled) {
+                    setState(() {
+                      if (enabled == true) {
+                        _clinicAttentions[code] = _attentionPresets.isNotEmpty
+                            ? _attentionPresets.first
+                            : 200;
+                      } else {
+                        _clinicAttentions.remove(code);
+                      }
+                      _clinicQuote = null;
+                    });
+                    _scheduleClinicQuote();
+                  },
+          ),
+          if (selected)
+            Padding(
+              padding: const EdgeInsets.only(left: BioSpacing.xl),
+              child: DropdownButtonFormField<int>(
+                initialValue: _clinicAttentions[code],
+                decoration: const InputDecoration(
+                  labelText: 'Atenciones por mes',
+                  border: OutlineInputBorder(),
+                ),
+                items: _attentionPresets
+                    .map(
+                      (value) => DropdownMenuItem(
+                        value: value,
+                        child: Text(
+                          '${NumberFormat.decimalPattern('es_AR').format(value)} '
+                          'atenciones / mes',
+                        ),
                       ),
-                    ),
-                  ],
+                    )
+                    .toList(),
+                onChanged: _loadingPlans
+                    ? null
+                    : (value) {
+                        if (value == null) return;
+                        setState(() {
+                          _clinicAttentions[code] = value;
+                          _clinicQuote = null;
+                        });
+                        _scheduleClinicQuote();
+                      },
+              ),
+            ),
+          if (selected)
+            Padding(
+              padding: const EdgeInsets.only(top: BioSpacing.xs),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  code == 'AMB'
+                      ? 'Consultas ambulatorias'
+                      : code == 'EMER'
+                      ? 'Atenciones de urgencia o guardia'
+                      : 'Atenciones de internación',
+                  style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
                 ),
               ),
-              if (!enabled) ...[
-                BioSpacing.gapW(BioSpacing.sm),
-                const Icon(Icons.schedule, size: 18),
-              ],
-            ],
-          ),
-        ),
+            ),
+        ],
       ),
     );
   }
@@ -174,41 +408,166 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                _selectedPath == _SignupPath.professional
-                    ? 'Creá tu cuenta de Personal de Salud'
-                    : 'Información antes de crear tu cuenta',
+                'Elegí cómo usar Bioenlace',
                 style: BioTypography.h2,
                 textAlign: TextAlign.center,
               ),
               BioSpacing.gapH(BioSpacing.sm),
               Text(
-                _selectedPath == _SignupPath.professional
-                    ? 'Elegí qué tipo de cuenta necesitás. No necesitás un e-mail para crear una cuenta profesional.'
-                    : 'La verificación con DNI y selfie es solo para confirmar tu identidad. No inicia una suscripción ni genera un cobro.',
+                'La creación de la cuenta es desde la app y requiere verificar '
+                'tu identidad con DNI y selfie. Elegí una opción; las '
+                'suscripciones son mensuales.',
                 style: BioTypography.body.copyWith(color: tokens.textMuted),
                 textAlign: TextAlign.center,
               ),
               BioSpacing.gapH(BioSpacing.xl),
-              _buildPathCard(
-                path: _SignupPath.professional,
-                title: 'Cuenta profesional',
-                description:
-                    'Crear tu cuenta es gratis. Si trabajás en una institución, su administración te asigna el acceso.',
-              ),
-              _buildPathCard(
-                path: _SignupPath.privateConsultorio,
-                title: 'Consultorio propio',
-                description:
-                    'Suscripción mensual para un consultorio privado y un profesional. Incluye hasta 200 atenciones ambulatorias por mes.',
-              ),
-              _buildPathCard(
-                path: _SignupPath.clinic,
-                title: 'Clínica o centro',
-                description:
-                    'Suscripción mensual según los tipos de atención y el volumen que elijas. Para centros públicos se solicita el código SISA.',
-              ),
-              BioSpacing.gapH(BioSpacing.md),
-              _buildSignupDetails(tokens),
+              if (!_accountCreated) ...[
+                Container(
+                  decoration: BoxDecoration(
+                    color: tokens.paperSurface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: tokens.paperDividerDefault),
+                  ),
+                  child: ExpansionTile(
+                    initiallyExpanded: true,
+                    title: Text(
+                      'Cuenta profesional',
+                      style: BioTypography.title,
+                    ),
+                    subtitle: const Text('Gratis'),
+                    childrenPadding: const EdgeInsets.fromLTRB(
+                      BioSpacing.md,
+                      0,
+                      BioSpacing.md,
+                      BioSpacing.md,
+                    ),
+                    children: [
+                      Text(
+                        'Para profesionales que se sumarán a un consultorio, '
+                        'clínica o institución. La administración te asignará '
+                        'el acceso.',
+                        style: BioTypography.body,
+                      ),
+                      BioSpacing.gapH(BioSpacing.md),
+                      BioButton.primary(
+                        label: _signupButtonLabel,
+                        icon: Icons.verified_user_outlined,
+                        size: BioButtonSize.lg,
+                        fullWidth: true,
+                        loading: _submitting,
+                        onPressed: _submitting
+                            ? null
+                            : () => _verifyIdentity(_SignupPath.professional),
+                      ),
+                    ],
+                  ),
+                ),
+                BioSpacing.gapH(BioSpacing.sm),
+                Container(
+                  decoration: BoxDecoration(
+                    color: tokens.paperSurface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: tokens.paperDividerDefault),
+                  ),
+                  child: ExpansionTile(
+                    title: Text(
+                      'Consultorio propio',
+                      style: BioTypography.title,
+                    ),
+                    subtitle: const Text(
+                      '1 profesional · 200 atenciones por mes',
+                    ),
+                    childrenPadding: const EdgeInsets.fromLTRB(
+                      BioSpacing.md,
+                      0,
+                      BioSpacing.md,
+                      BioSpacing.md,
+                    ),
+                    children: [
+                      const Text(
+                        'Un espacio privado para atender pacientes. Incluye '
+                        'agenda, herramientas clínicas y asistente.',
+                      ),
+                      _buildQuoteSummary(
+                        quote: _consultorioQuote,
+                        loading: _loadingPlans || _loadingConsultorioQuote,
+                        error: _consultorioQuoteError,
+                        onRetry: _refreshConsultorioQuote,
+                      ),
+                      BioSpacing.gapH(BioSpacing.md),
+                      BioButton.primary(
+                        label: _signupButtonLabel,
+                        icon: Icons.arrow_forward,
+                        size: BioButtonSize.lg,
+                        fullWidth: true,
+                        loading: _submitting,
+                        onPressed:
+                            _submitting ||
+                                _loadingPlans ||
+                                _loadingConsultorioQuote ||
+                                _consultorioQuote == null
+                            ? null
+                            : () => _verifyIdentity(
+                                _SignupPath.privateConsultorio,
+                                plan: _consultorioPlan(),
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
+                BioSpacing.gapH(BioSpacing.sm),
+                Container(
+                  decoration: BoxDecoration(
+                    color: tokens.paperSurface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: tokens.paperDividerDefault),
+                  ),
+                  child: ExpansionTile(
+                    title: Text('Clínica o centro', style: BioTypography.title),
+                    subtitle: const Text('Elegí servicios y volumen mensual'),
+                    childrenPadding: const EdgeInsets.fromLTRB(
+                      BioSpacing.md,
+                      0,
+                      BioSpacing.md,
+                      BioSpacing.md,
+                    ),
+                    children: [
+                      const Text(
+                        'Configurá los tipos de atención que brindás y el '
+                        'volumen mensual aproximado.',
+                      ),
+                      _buildClassSelector('AMB', 'Ambulatorio'),
+                      _buildClassSelector('EMER', 'Urgencia o guardia'),
+                      _buildClassSelector('IMP', 'Internación'),
+                      _buildQuoteSummary(
+                        quote: _clinicQuote,
+                        loading: _loadingPlans || _loadingClinicQuote,
+                        error: _clinicQuoteError,
+                        onRetry: _refreshClinicQuote,
+                      ),
+                      BioSpacing.gapH(BioSpacing.md),
+                      BioButton.primary(
+                        label: _signupButtonLabel,
+                        icon: Icons.arrow_forward,
+                        size: BioButtonSize.lg,
+                        fullWidth: true,
+                        loading: _submitting,
+                        onPressed:
+                            _submitting ||
+                                _loadingPlans ||
+                                _loadingClinicQuote ||
+                                _clinicQuote == null ||
+                                _clinicAttentions.isEmpty
+                            ? null
+                            : () => _verifyIdentity(
+                                _SignupPath.clinic,
+                                plan: _clinicPlan(),
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               BioSpacing.gapH(BioSpacing.md),
               if (_pendingVerificationId != null) ...[
                 Text(
@@ -218,22 +577,6 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                   textAlign: TextAlign.center,
                 ),
                 BioSpacing.gapH(BioSpacing.md),
-              ],
-              if (!_accountCreated) ...[
-                BioButton.primary(
-                  label: _submitting
-                      ? 'Verificando…'
-                      : _pendingVerificationId != null
-                      ? 'Reintentar creación de cuenta'
-                      : _selectedPath == _SignupPath.professional
-                      ? 'Verificar identidad y crear cuenta'
-                      : 'Continuar a verificación con Didit',
-                  icon: Icons.verified_user_outlined,
-                  size: BioButtonSize.lg,
-                  fullWidth: true,
-                  loading: _submitting,
-                  onPressed: _submitting ? null : _verifyIdentity,
-                ),
               ],
               if (_accountCreated) ...[
                 Container(
@@ -265,49 +608,9 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
     );
   }
 
-  Widget _buildSignupDetails(BioTokens tokens) {
-    final isProfessional = _selectedPath == _SignupPath.professional;
-    final isConsultorio = _selectedPath == _SignupPath.privateConsultorio;
-    return Container(
-      padding: const EdgeInsets.all(BioSpacing.md),
-      decoration: BoxDecoration(
-        color: tokens.paperSurface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: tokens.paperDividerDefault),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            isProfessional
-                ? 'Qué necesitás para crear tu cuenta'
-                : 'Cómo funciona el alta y el precio',
-            style: BioTypography.title,
-          ),
-          BioSpacing.gapH(BioSpacing.sm),
-          Text(
-            isProfessional
-                ? 'Didit te pedirá fotografiar tu DNI físico y tomarte una selfie. La cuenta profesional no tiene cargo. Crear la cuenta no te asigna automáticamente a un centro.'
-                : isConsultorio
-                ? 'El precio estimado para un consultorio de un profesional y 200 atenciones ambulatorias es USD 4,26 por mes, antes de IVA. La suscripción tiene renovación mensual y se cobra en ARS según la cotización MEP vendedora vigente, más IVA.'
-                : 'El precio mensual depende de las atenciones ambulatorias, de urgencia o de internación y de los volúmenes que elijas. La suscripción tiene renovación mensual. El simulador muestra valores de referencia en USD, sin IVA.',
-            style: BioTypography.body,
-          ),
-          if (!isProfessional) ...[
-            BioSpacing.gapH(BioSpacing.sm),
-            Text(
-              'Después de verificar tu identidad completarás los datos del efector. Antes de abrir Mercado Pago verás el importe exacto en ARS, el IVA, la cotización utilizada y las condiciones de renovación. Didit no procesa pagos; el efector y su licencia se activan al confirmarse el primer pago.',
-              style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
-            ),
-            BioSpacing.gapH(BioSpacing.sm),
-            TextButton.icon(
-              onPressed: _openPricingPage,
-              icon: const Icon(Icons.open_in_new),
-              label: const Text('Ver simulador y detalle de precios'),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
+  String get _signupButtonLabel => _submitting
+      ? 'Verificando…'
+      : _pendingVerificationId != null
+      ? 'Reintentar creación de cuenta'
+      : 'Continuar';
 }

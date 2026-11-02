@@ -188,7 +188,7 @@ La fila «margen mínimo» histórico (1,8–2 por prof) **no cubre** STT ni vid
 
 Para **licitación provincial**: sumar retenciones y plazos de pago que exija el pliego (no modelados acá).
 
-Fuente de verdad de cifras de lista: [matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md) y `pricing-pes-by-encounter-class.yaml`.
+Fuente de verdad de cifras de lista: [matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md) y el catálogo backend `common/components/Domain/Organization/Pes/Domain/Catalog/PricingPesByEncounterClassCatalog.php`.
 
 ---
 

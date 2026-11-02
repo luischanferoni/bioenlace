@@ -87,6 +87,26 @@ class StaffSignupService {
     ).postData('/licencia/crear-cuenta', body: body);
   }
 
+  Future<Map<String, dynamic>> fetchSignupPlans() {
+    return ApiClient(
+      appClient: 'bioenlace-personalsalud',
+      traceLabel: 'licencia/planes',
+    ).getData('/licencia/planes');
+  }
+
+  Future<Map<String, dynamic>> quoteSignupPlan({
+    required String profile,
+    required Map<String, dynamic> plan,
+  }) {
+    return ApiClient(
+      appClient: 'bioenlace-personalsalud',
+      traceLabel: 'licencia/cotizar',
+    ).postData(
+      '/licencia/cotizar',
+      body: {'perfil': profile, 'plan': plan},
+    );
+  }
+
   Future<List<Map<String, dynamic>>> searchLocalities(String query) async {
     final data = await ApiClient(
       appClient: 'bioenlace-personalsalud',

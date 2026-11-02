@@ -96,17 +96,16 @@ Al leer la tabla y el detalle, conviene distinguir cuatro líneas que se repiten
 
 #### Licencia base y add-ons por módulo (vía 1)
 
-- **Licencia:** por profesional y mes = **COGS × (1 + margen sobre costo)**. El COGS sale de [costos-api.md](../../costos/costos-api.md); el margen y la lista comercial en [matriz-argentina-modulos-precios.md](./matriz-argentina-modulos-precios.md).
-- **Clases de encounter (AMB / EMER / IMP):** el cliente contrata qué tipos de atención habilita y cuántos profesionales por cada uno. Mismo precio unitario; lo no contratado se deshabilita en producto.
-- **Add-ons variables de costo:** audio (dictado del profesional) y videollamada — suman COGS y suben el precio unitario.
+- **Licencia:** suma de atenciones por clase × precio unitario del tramo de volumen. El COGS sale de [costos-api.md](../../costos/costos-api.md); las reglas están en [matriz-argentina-modulos-precios.md](./matriz-argentina-modulos-precios.md) y el importe final lo calcula el backend.
+- **Clases de encounter (AMB / EMER / IMP):** el cliente elige qué tipos de atención habilita y el volumen mensual aproximado de cada uno. Lo no contratado se deshabilita en producto.
+- **Incluye:** dictado clínico. **Videollamada** es opcional en AMB y suma su COGS al precio.
 
 
-| Add-on / alcance (AR) | Para qué | Orden de magnitud (lista, vol. 400) |
-| --------------------- | -------- | ----------------------------------- |
-| Base (sin audio ni video) | IA + captura texto (COGS con caché) | ~**USD 3,16**/prof/mes |
-| + Audio | Dictado (STT ~5 min, −30 % on-device) | ~**USD 6,43**/prof/mes |
-| + Videollamada (incluye STT) | Teleconsulta self-host (§6) @ 40 % | ~**USD 12,25**/prof/mes |
-| Clase EMER / IMP | Tablero guardia / internación | Escala si el volumen/mes difiere del de AMB |
+| Plan / alcance (AR) | Para qué | Orden de magnitud (lista, 400 atenciones AMB) |
+| ------------------- | -------- | -------------------------------------------- |
+| AMB sin videollamada | Dictado incluido; agenda, captura clínica y chat | ~**USD 12,40/mes**; cotización backend |
+| AMB con videollamada | Teleconsulta self-host (§6), STT incluido | ~**USD 18,24/mes**; cotización backend |
+| Clase EMER / IMP | Tablero guardia / internación | Escala según volumen contratado |
 | Receta electrónica / pack OS | Vías 2 y 5 | Cotización aparte (no en fórmula COGS) |
 
 

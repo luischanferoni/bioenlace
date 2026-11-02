@@ -292,6 +292,8 @@ Detalle de flujos y caché: [estrategias-reduccion/matriz-casos-uso.md](./estrat
 
 > **Nota comercial (pricing):** el COGS §2 que entra al calculador **no** asume audio en el 100 % de las atenciones. Blend por `encounter_class` (caso B × share + caso A × (1−share)), con context caching → AMB **~30 %** ≈ **0,0014**; EMER **~45 %** ≈ **0,0018**; IMP **~50 %** ≈ **0,0019** (`motivos_audio_by_class` en metadata). EMER/IMP asumen más notas de voz de triaje, pases y enfermería, no solo del médico. El cupo de **10 mensajes** en §1 es capacidad / headroom (prompts más largos o varias llamadas IA), no un supuesto de uso pleno en cada mensaje.
 
+> **Presupuesto comercial del chat AMB:** el catálogo de precios reserva **USD 0,0048 por atención** para la conversación del paciente, en lugar del supuesto anterior de **USD 0,0019**. El ajuste reconoce el costo de `preprocess` en cada mensaje y que `guide` puede sumar una segunda llamada con adjuntos de discovery, contexto clínico e historial; el tamaño real del prompt de `guide` puede crecer según el caso. Es un presupuesto conservador del modelo comercial, no una medición de tokens promedio ni una garantía de uso pleno del cupo de 10 mensajes. Las tablas de §1 describen escenarios de llamadas y caching con supuestos propios; no son la fuente del precio de licencia. Recalibrar el presupuesto con telemetría de tokens y uso real antes de reducirlo.
+
 ### 2. Motivos de consulta (chat dedicado, antes de la atención)
 
 Tras el chat del asistente (§1), el paciente puede cargar en el chat de **motivos** texto, audio e imágenes hasta **10 minutos antes del turno** (sin IA en cada mensaje). Al cerrar la ventana:
@@ -493,7 +495,7 @@ Ver totales en [§6](#6-videollamadas-pacientemédico).
 
 **WhatsApp (§7, alcance actual):** Meta **~$0** (sin utility). La IA del chat sigue en §1.
 
-**De COGS a precio de lista:** la licencia comercial usa **USD por atención** (`cogs_usd_per_encounter`) × volumen mensual × margen (lista **233 %**; tramos por atenciones totales). Motivos **siempre con audio**; chat paciente **10 msgs solo ambulatorio**. Videollamada **incluye** STT profesional una vez. Detalle: [matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md). Metadata: `pricing-pes-by-encounter-class.yaml` (+ `institucional/js/pricing-config.json`).
+**De COGS a precio de lista:** la licencia comercial usa **USD por atención** (`cogs_usd_per_encounter`) × volumen mensual × margen (lista **233 %**; tramos por atenciones totales). Motivos **siempre con audio**; chat paciente **10 msgs solo ambulatorio**. Videollamada **incluye** STT profesional una vez. Detalle: [matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md). El catálogo vigente está en `common/components/Domain/Organization/Pes/Domain/Catalog/PricingPesByEncounterClassCatalog.php`; web y app solicitan las cotizaciones al backend.
 
 **Nota:** Si la IA corre en **nuestra infra**, los ítems del apartado 1 figuran en [infra-costos.md](./infra-costos.md) y no se duplican aquí. El apartado 3 usa COGS planificado **1,75** @ **40 %** tele (self-host; STT no duplicado) — ver [videollamadas.md](./estrategias-reduccion/videollamadas.md).
 

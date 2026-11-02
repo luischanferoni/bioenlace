@@ -149,13 +149,13 @@ Ingreso Bioenlace (AR) ≈
 
 ### Modelo A — Licencia modular (efector)
 
-**Idea:** pricing según [matriz Argentina](./matriz-argentina-modulos-precios.md): **COGS documentado × (1 + margen sobre costo)**, por profesional y mes. El cliente elige qué `encounter_class` contrata (AMB / EMER / IMP), cuántos profesionales por cada una, y add-ons **audio** / **videollamada**.
+**Idea:** pricing según [matriz Argentina](./matriz-argentina-modulos-precios.md): el cliente elige qué `encounter_class` contrata (AMB / EMER / IMP) y el volumen mensual aproximado por clase. El backend calcula **COGS × (1 + margen del tramo)** por atención. El dictado está incluido; la videollamada es opcional en AMB.
 
 | Componente | Descripción |
 |------------|-------------|
-| **Licencia** | `precio = COGS_ref × (vol_clase/400) × (1 + margen%)` — margen de lista **233 %** ≈ ~70 % bruto ≈ ~49 % después IIBB+ganancias; tramos por PES totales (20–49 → 163 %, 50–149 → 134 %, 150+ → 117 %); COGS **con context caching**; base ~**USD 3,16**/prof/mes; con audio ~**6,43**; con videollamada (STT incluido, **40 %** tele) ~**USD 12,25**/prof/mes |
-| **Clases** | AMB / EMER / IMP habilitan módulos; el precio escala con `encounters_per_professional_month` por clase |
-| **Add-ons variables** | Audio (STT profesional ~5 min con **−30 % on-device** → COGS **0,98**) y/o videollamada (self-host, COGS **1,75** @ **40 %** tele; incluye STT una vez) — suman COGS y se reflejan en el precio |
+| **Licencia** | `precio = Σ(atenciones_mes[clase] × precio_por_atención)`; precio por atención = COGS × (1 + margen del tramo). El catálogo backend calcula el total y aplica descuentos por volumen. |
+| **Clases** | AMB / EMER / IMP habilitan módulos; el cliente selecciona el volumen mensual por clase |
+| **Add-ons variables** | Videollamada opcional en AMB: agrega **USD 0,0044** de COGS por atención (40 % de uso planificado); el dictado ya está incluido y no se duplica |
 | **Rev share Rx (opcional)** | USD 0,5–2 por receta enrutada a farmacia partner (vía 5; fuera de la fórmula COGS) |
 
 **Quién paga:** director médico / COO / IT del efector.
@@ -218,7 +218,7 @@ Para clínicas 5–15 profesionales:
 | **Gratis** | Hasta N encounters/mes: ambulatorio básico | USD 0 |
 | **Pago** | Superar umbral; más clases (EMER/IMP); audio; videollamada | Según [matriz](./matriz-argentina-modulos-precios.md) (COGS + margen) |
 
-Compite con «HIS caro y complejo» sin regalar consultas al paciente final. COGS variable ~USD 0,95–3,5/prof/mes sin video (con caché; ver [costos-api](../../costos/costos-api.md)); precio lista base ~USD 3,16/prof/mes con margen ~70 % bruto.
+Compite con «HIS caro y complejo» sin regalar consultas al paciente final. El presupuesto comercial AMB vigente es **USD 0,0093 por atención** sin videollamada, incluido el costo conservador de `preprocess` + `guide`; los importes de lista se calculan con el volumen total y el tramo vigente en el backend.
 
 ---
 
@@ -228,12 +228,12 @@ Supuestos: **clínica 20 profesionales**, ~8.000 encounters/año, ~670/mes.
 
 | Concepto | Orden de magnitud (USD/mes) |
 |----------|----------------------------|
-| COGS IA+STT (20 prof, base sin video) | ~19–55 (0,95–2,73 × 20; [costos-api](../../costos/costos-api.md) con caché y −30 % STT) |
-| COGS + videollamada (20 prof, video incluye STT) | ~74 (3,68 × 20) |
+| COGS del presupuesto comercial (13.400 AMB, sin videollamada) | ~**USD 124,62** (13.400 × USD 0,0093/atención) |
+| COGS del presupuesto comercial (13.400 AMB, con videollamada) | ~**USD 183,58** (incluye USD 0,0044/atención de videollamada) |
 | Infra + soporte | 200–500 |
 | Costo equipo (amortizado por cliente) | Variable según headcount; meta **gross margin ~70%** |
-| **Precio lista** (20 prof, solo base, margen 233 %) | ~**63** (20 × 3,16) |
-| **Precio lista** (20 prof + videollamada) | ~**245** (20 × 12,25) |
+| **Precio mensual antes de impuestos** (13.400 atenciones AMB, sin videollamada) | ~**USD 328** (tramo mediano; cotización backend) |
+| **Precio mensual antes de impuestos** (13.400 atenciones AMB, con videollamada) | ~**USD 482** (tramo mediano; cotización backend) |
 | **Ingreso incremental Rx** (opcional) | 200 recetas/mes × USD 1 fee = **USD 200/mes**; rev share farmacia aparte |
 
 El ingreso incremental por receta enrutada es **puente a fulfillment** (vía 5), no margen retail propio. Cifras de lista: [matriz Argentina](./matriz-argentina-modulos-precios.md).

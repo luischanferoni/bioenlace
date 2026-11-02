@@ -8,7 +8,7 @@
 
 **STT base:** [costos-api.md § STT](./costos-api.md#stt) — médico **~5 min** + paciente **~4 min** por encounter → bruto **~$2,52**/prof/mes en servidor; planificación **−30 % on-device → ~$1,76**. La videollamada **alimenta** esos minutos (no los duplica) cuando el transcript reemplaza dictado / notas de voz.
 
-**Lista comercial:** base **0,95** + audio **0,98** (−30 % on-device) + video **1,75** → AMB con videollamada (STT incluido) **~12,25**/prof/mes @ 400 encounters ([matriz](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md), [`pricing-config.json`](../../../institucional/js/pricing-config.json)).
+**Precio comercial:** se cotiza con el catálogo backend vigente y depende de la clase, volumen total contratado, impuestos y cotización USD/ARS. Para AMB con videollamada, el COGS de referencia es **USD 0,0137 por atención**; el importe de suscripción no se vuelve a calcular en este documento. Ver [matriz de precios](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md) y el catálogo backend.
 
 ---
 
@@ -329,8 +329,8 @@ Precio lista (margen 233 % sobre COGS):
 | Área | Archivos |
 |------|----------|
 | Costos | `videollamadas.md`, `costos-api.md` §6, `stt.md`, `resumen-costos-bioenlace.md`, `impuestos-argentina.md`, `overview.md`, `estrategias-api.md` |
-| Pricing | `pricing-pes-by-encounter-class.yaml` |
-| Institucional | `institucional/js/pricing-config.json`, `institucional/README.md` |
+| Pricing | `PricingPesByEncounterClassCatalog.php` |
+| Institucional | `institucional/js/pricing-core.js`, `institucional/js/pricing-calculator.js`, `institucional/README.md` |
 | Negocio | `matriz-argentina-modulos-precios.md`, `mapa-vias-ingreso-bioenlace.md`, `modelos-pricing-diferenciados.md` |
 
 **Cerrado en storage:** caliente 14 d + Deep Archive + sin 2.ª copia.  
@@ -351,4 +351,4 @@ Precio lista (margen 233 % sobre COGS):
 - COGS actual: [videollamadas.md](./estrategias-reduccion/videollamadas.md), [costos-api.md](./costos-api.md)
 - STT captura: [stt.md](./estrategias-reduccion/stt.md)
 - Matriz precios: [matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md)
-- Institucional: [`institucional/js/pricing-config.json`](../../../institucional/js/pricing-config.json)
+- Institucional: [`institucional/js/pricing-calculator.js`](../../../institucional/js/pricing-calculator.js)

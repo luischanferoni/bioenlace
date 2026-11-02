@@ -6,6 +6,7 @@ use frontend\modules\api\v1\controllers\BaseController;
 use common\components\Domain\Organization\Efector\Application\UseCase\SwitchBillingMembership;
 use common\components\Domain\Organization\Efector\Application\UseCase\SignUpInstitutionalEfector;
 use common\components\Domain\Organization\Billing\Application\Service\BillingCheckoutService;
+use common\components\Domain\Organization\Billing\Application\Service\MercadoPagoCheckoutService;
 use common\components\Domain\Organization\Efector\Application\UseCase\RequestMinistrySignup;
 use common\components\Domain\Organization\Efector\Application\UseCase\CreateIdentityAccount;
 use common\components\Domain\Person\Identity\Application\Service\IdentityVerificationException;
@@ -32,6 +33,7 @@ class LicenciaController extends BaseController
     public static $authenticatorExcept = [
         'catalogo-ministerios',
         'planes',
+        'cotizar',
         'crear-cuenta',
         'completar-ministerio',
         'solicitar-ministerio',
@@ -60,6 +62,7 @@ class LicenciaController extends BaseController
         $verbs = parent::verbs();
         $verbs['catalogo-ministerios'] = ['GET', 'OPTIONS'];
         $verbs['planes'] = ['GET', 'OPTIONS'];
+        $verbs['cotizar'] = ['POST', 'OPTIONS'];
         $verbs['crear-cuenta'] = ['POST', 'OPTIONS'];
         $verbs['completar-ministerio'] = ['POST', 'OPTIONS'];
         $verbs['registrar-efector'] = ['POST', 'OPTIONS'];
@@ -93,6 +96,56 @@ class LicenciaController extends BaseController
     public function actionPlanes()
     {
         return $this->success(SignUpInstitutionalEfector::planesCatalog());
+    }
+
+    /**
+     * Calcula una estimación mensual con las reglas vigentes del backend.
+     */
+    public function actionCotizar()
+    {
+        $body = Yii::$app->request->getBodyParams();
+        if (!is_array($body)) {
+            return $this->error('Los datos del plan son inválidos.', null, 400);
+        }
+
+        $profile = strtoupper(trim((string) ($body['perfil'] ?? '')));
+        $plan = $body['plan'] ?? null;
+        if (!is_array($plan)) {
+            return $this->error('Indicá un plan válido.', null, 400);
+        }
+
+        try {
+            $estimate = SignUpInstitutionalEfector::estimatePlanMonthlyQuote($plan, $profile);
+            $pricing = (new MercadoPagoCheckoutService())->calculateArsAmount($estimate['amount_usd']);
+            $catalog = SignUpInstitutionalEfector::planesCatalog();
+
+            return $this->success([
+                'perfil' => $profile,
+                'billing_period' => 'month',
+                'pricing_version' => (int) ($catalog['version'] ?? 1),
+                'amount_usd' => $pricing['amount_usd'],
+                'amount_net_ars' => $pricing['net_ars'],
+                'vat_rate' => $pricing['vat_rate'],
+                'vat_ars' => $pricing['vat_ars'],
+                'amount_total_ars' => $pricing['total_ars'],
+                'exchange_rate_effective_date' => $pricing['exchange_rate_effective_date'],
+                'list_amount_usd' => $estimate['list_amount_usd'],
+                'discount_amount_usd' => $estimate['discount_amount_usd'],
+                'discount_percent' => $estimate['discount_percent'],
+                'total_attentions' => $estimate['total_attentions'],
+                'items' => $estimate['items'],
+            ], 'Estimación mensual calculada.');
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), null, 400);
+        } catch (\yii\base\InvalidConfigException $e) {
+            Yii::error($e->getMessage(), 'billing.quote');
+
+            return $this->error('La cotización no está disponible temporalmente.', null, 503);
+        } catch (\Throwable $e) {
+            Yii::error($e->getMessage() . "\n" . $e->getTraceAsString(), 'billing.quote');
+
+            return $this->error('No se pudo calcular el precio. Reintentá más tarde.', null, 503);
+        }
     }
 
     /**

@@ -20,7 +20,6 @@ institucional/
 │   ├── patient-demo.js
 │   ├── pricing-core.js
 │   ├── pricing-calculator.js
-│   ├── pricing-config.json   # Mantener alineado con pricing-pes-by-encounter-class.yaml
 │   └── api-config.json
 ├── images/
 │   ├── logo.svg
@@ -53,16 +52,12 @@ El CTA del calculador (`precios.html`) ya no pre-carga el plan en un formulario 
 
 ## Calculador (`js/pricing-core.js` + `js/pricing-calculator.js`)
 
-Núcleo compartido en `pricing-core.js`. En [`precios.html`](precios.html) está el calculador y, debajo, el listado único de **qué incluye** (`included_features` en el JSON). En `alta.html` solo un **indicador de precio**. El index enlaza al teaser → `precios.html`. Los chips de volumen muestran solo atenciones/mes (sin labels de “1 profesional”, etc.).
+`pricing-core.js` contiene utilidades de selección; no calcula precios. En [`precios.html`](precios.html), el catálogo y las estimaciones se consultan en `GET /licencia/planes` y `POST /licencia/cotizar`. El backend es la única fuente de precios, impuestos y conversión a ARS. `alta.html` deriva el alta a la app.
 
-**Fórmula:** `precio = atenciones_mes × COGS_por_atención × (1 + margen%/100)`, donde `margen%` sale de `volume_discount_tiers` según la **suma de atenciones** contratadas. Lista: `margin_on_cost_percent` **233**.  
-COGS por atención: chat paciente AMB **0,0019** (10 msgs) + motivos audio **0,0014** + captura IA **0,0006** ± dictado **0,0025** ± videollamada **0,0044** (@ **40 %** teleconsulta) ([costos-api.md](../web/docs/costos/costos-api.md)).  
-El usuario elige clases (ambulatorio / urgencia / internación), **volumen mensual** de atenciones y opcionales audio/videollamada.
+La página conserva controles para clases (ambulatorio / urgencia / internación), volumen mensual y videollamada opcional. Los chips, el detalle de prestaciones y el CTA se alimentan del catálogo público del backend. La cotización muestra el total en ARS con IVA y el importe base en USD.
 
-Fuente de cifras del calculador: `js/pricing-config.json` (mantener alineado con `pricing-pes-by-encounter-class.yaml`).
-CTA del simulador: `Crear cuenta` → `alta.html` (misma fuente en YAML y JSON).
-
-Doc comercial: [matriz-argentina-modulos-precios.md](../web/docs/modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md).  
+Doc comercial: [matriz-argentina-modulos-precios.md](../web/docs/modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md).
+Catálogo backend: `web/common/components/Domain/Organization/Pes/Domain/Catalog/PricingPesByEncounterClassCatalog.php`.
 STT on-device: [stt.md](../web/docs/costos/estrategias-reduccion/stt.md).  
 Análisis video: [analisis-videollamada-self-host.md](../web/docs/costos/analisis-videollamada-self-host.md).  
 Roadmap video: [videollamadas.md](../web/docs/costos/estrategias-reduccion/videollamadas.md).

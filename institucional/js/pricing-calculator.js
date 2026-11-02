@@ -1,5 +1,5 @@
 /**
- * Calculador: atenciones/mes × clase. Dictado incluido; videollamada opcional solo en AMB.
+ * Selector de planes y cotizaciones mensuales provistas por el backend.
  * Requiere pricing-core.js (window.BioenlacePricing).
  */
 (function () {
@@ -11,10 +11,13 @@
   const breakdownEl = document.getElementById('pricing-breakdown');
   const ctaEl = document.getElementById('pricing-cta');
   const rowsEl = document.getElementById('pricing-rows');
-  const addonsEl = document.getElementById('pricing-addons');
   const mode = (root.getAttribute('data-mode') || 'page').toLowerCase();
 
   let config = null;
+  let apiBaseUrl = null;
+  let latestQuote = null;
+  let quoteRequestId = 0;
+  let quoteTimer = null;
 
   function currentSelection() {
     return Pricing.readDomSelection(rowsEl);
@@ -62,156 +65,239 @@
     });
   }
 
-  function tierRangeLabel(tier) {
-    if (!tier) return '';
-    const min = Number(tier.min_attentions != null ? tier.min_attentions : tier.min_pes) || 1;
-    const maxRaw = tier.max_attentions != null ? tier.max_attentions : tier.max_pes;
-    if (maxRaw == null || maxRaw === '') {
-      return Pricing.formatAttentions(min) + '+ atenciones / mes';
-    }
-    return Pricing.formatAttentions(min) + '–' + Pricing.formatAttentions(maxRaw) + ' / mes';
-  }
-
-  function buildVolumeDiscountPanel(activeTierId) {
-    if (!addonsEl || !config) return;
-    const tiers = Pricing.volumeDiscountTiers(config);
-    if (!tiers.length) {
-      addonsEl.innerHTML = '';
-      addonsEl.hidden = true;
-      return;
-    }
-    addonsEl.hidden = false;
-    const rows = tiers
-      .map((tier) => {
-        const pct = Pricing.discountVsListPercent(config, tier);
-        const benefit = pct > 0 ? '−' + pct + '%' : 'Precio base';
-        const active = tier.id === activeTierId ? ' is-active' : '';
-        return (
-          '<li class="pricing-calc__volume-item' +
-          active +
-          '"><span>' +
-          tierRangeLabel(tier) +
-          '</span><strong>' +
-          benefit +
-          '</strong></li>'
-        );
-      })
-      .join('');
-    addonsEl.innerHTML =
-      '<div class="pricing-calc__volume">' +
-      '<p class="pricing-calc__volume-title">Descuentos por volumen</p>' +
-      '<ul class="pricing-calc__volume-list">' +
-      rows +
-      '</ul>' +
-      '<p class="pricing-calc__volume-nudge" id="pricing-volume-nudge" hidden></p>' +
-      '</div>';
-  }
-
-  function updateVolumeNudge(result) {
-    const nudgeEl = document.getElementById('pricing-volume-nudge');
-    if (!nudgeEl) return;
-    const next = result && result.nextStep;
-    const hasSelection = result && result.lines && result.lines.length;
-    const needed = next && (next.attentionsNeeded || next.professionalsNeeded);
-    if (!hasSelection || !next || !(needed > 0) || !(next.discountPercent > 0)) {
-      nudgeEl.hidden = true;
-      nudgeEl.innerHTML = '';
-      return;
-    }
-    nudgeEl.hidden = false;
-    nudgeEl.innerHTML =
-      'Sumá <strong>' +
-      Pricing.formatAttentions(needed) +
-      ' atenciones / mes más</strong> y obtené <strong>' +
-      next.discountPercent +
-      '% de descuento</strong>';
-  }
-
   function recalc() {
-    if (!config) return;
+    if (!config || !apiBaseUrl) return;
     const selection = currentSelection();
-    const result = Pricing.estimate(config, selection);
+    const requestId = ++quoteRequestId;
+    const selectedClasses = Object.keys(selection.classes || {});
+    window.clearTimeout(quoteTimer);
+    latestQuote = null;
     refreshUnitLabels();
-    buildVolumeDiscountPanel(result.tier && result.tier.id);
-    updateVolumeNudge(result);
 
     if (totalEl) {
-      totalEl.textContent = result.lines.length
-        ? result.formattedTotal + ' / mes'
-        : '—';
+      totalEl.textContent = selectedClasses.length ? 'Calculando…' : '—';
     }
     if (breakdownEl) {
-      if (!result.lines.length) {
+      if (!selectedClasses.length) {
         breakdownEl.innerHTML =
           '<p class="pricing-calc__hint">Activá al menos un tipo de atención y elegí un volumen.</p>';
       } else {
-        let meta = '';
-        if (result.discountPercent > 0) {
-          meta =
-            '<div class="pricing-calc__line pricing-calc__line--savings">' +
-            '<span>Incluye <strong>' +
-            Math.round(result.discountPercent) +
-            '% de descuento</strong> por volumen</span>' +
-            '<strong>−' +
-            Pricing.formatMoney(result.listTotal - result.total, result.currency) +
-            '</strong></div>';
-        }
         breakdownEl.innerHTML =
-          meta +
-          result.lines
-            .map((l) => {
-              let note = '';
-              if (l.code === 'AMB') {
-                note = selection.addons.videollamada
-                  ? ' · con videollamada'
-                  : ' · sin videollamada';
-              } else {
-                note = ' · sin videollamada';
-              }
-              return (
-                '<div class="pricing-calc__line"><span>' +
-                Pricing.formatVolumeChoice(config, l.qty) +
-                ' · ' +
-                l.label +
-                note +
-                '</span><strong>' +
-                Pricing.formatMoney(l.line, result.currency) +
-                '</strong></div>'
-              );
-            })
-            .join('');
+          '<p class="pricing-calc__hint">Consultando el precio actualizado…</p>';
       }
     }
 
     root.dispatchEvent(
       new CustomEvent('bioenlace:pricing-change', {
         bubbles: true,
-        detail: { selection: selection, estimate: result },
+        detail: { selection: selection, estimate: null },
       })
     );
 
     if (ctaEl && mode !== 'signup') {
-      const summary = result.lines
-        .map((l) => {
-          let extra = '';
-          if (l.code === 'AMB' && selection.addons.videollamada) {
-            extra = ' con videollamada';
-          } else {
-            extra = ' sin videollamada';
-          }
-          return Pricing.formatVolumeChoice(config, l.qty) + ' ' + l.label + extra;
-        })
-        .join(', ');
+      const summary = selectionSummary(selection);
       const msg =
         'Hola, quiero cotizar Bioenlace: ' +
         (summary || 'sin selección') +
-        '. Estimado orientativo ' +
-        result.formattedTotal +
-        '/mes.';
+        '.';
       const href = (config.simulator && config.simulator.cta_href) || '#contacto';
       ctaEl.setAttribute('href', href);
       ctaEl.dataset.quoteMessage = msg;
     }
+
+    if (!selectedClasses.length) return;
+    quoteTimer = window.setTimeout(() => {
+      requestQuote(selection, requestId);
+    }, 250);
+  }
+
+  function selectionSummary(selection) {
+    return Object.keys(selection.classes || {})
+      .map((code) => {
+        const row = (config.sellable_classes || {})[code] || {};
+        const extra =
+          code === 'AMB' && selection.addons.videollamada
+            ? ' · videollamada'
+            : '';
+        return (
+          Pricing.formatAttentions(selection.classes[code]) +
+          ' · ' +
+          (row.label || code) +
+          extra
+        );
+      })
+      .join(', ');
+  }
+
+  function formatQuoteMoney(amount, currency) {
+    const formatted = new Intl.NumberFormat('es-AR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(Number(amount));
+    return currency + ' ' + formatted;
+  }
+
+  function formatQuoteUnitPrice(amount) {
+    const formatted = new Intl.NumberFormat('es-AR', {
+      minimumFractionDigits: 4,
+      maximumFractionDigits: 4,
+    }).format(Number(amount));
+    return 'USD ' + formatted;
+  }
+
+  function unwrapResponse(body) {
+    if (body && body.error) {
+      throw new Error(body.error.message || 'No se pudo calcular el precio.');
+    }
+    if (body && body.success === false) {
+      throw new Error(body.message || 'No se pudo calcular el precio.');
+    }
+    return body && Object.prototype.hasOwnProperty.call(body, 'data')
+      ? body.data
+      : body;
+  }
+
+  function requestQuote(selection, requestId) {
+    fetch(apiBaseUrl + '/licencia/cotizar', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      credentials: 'omit',
+      body: JSON.stringify({
+        perfil: 'CLINICA',
+        plan: Pricing.toSignupPlan(selection, config),
+      }),
+    })
+      .then((response) =>
+        response.json().then((body) => {
+          if (!response.ok) {
+            const data = unwrapResponse(body);
+            throw new Error(
+              (data && data.message) || 'No se pudo calcular el precio.',
+            );
+          }
+          return unwrapResponse(body);
+        }),
+      )
+      .then((quote) => {
+        if (requestId !== quoteRequestId) return;
+        const amounts = [
+          quote.amount_usd,
+          quote.amount_net_ars,
+          quote.vat_ars,
+          quote.amount_total_ars,
+          quote.list_amount_usd,
+          quote.discount_amount_usd,
+          quote.discount_percent,
+          quote.total_attentions,
+        ].map(Number);
+        const amountUsd = Number(quote.amount_usd);
+        const listAmountUsd = Number(quote.list_amount_usd);
+        const discountAmountUsd = Number(quote.discount_amount_usd);
+        if (
+          amounts.some((amount) => !Number.isFinite(amount)) ||
+          listAmountUsd < amountUsd ||
+          discountAmountUsd < 0 ||
+          discountAmountUsd > listAmountUsd ||
+          Number(quote.discount_percent) < 0 ||
+          !Array.isArray(quote.items) ||
+          quote.items.length === 0 ||
+          quote.items.some((item) =>
+            !item ||
+            typeof item.code !== 'string' ||
+            !(Number(item.attentions_per_month) > 0) ||
+            !(Number(item.unit_amount_usd) >= 0) ||
+            !(Number(item.amount_usd) >= 0) ||
+            !Number.isFinite(Number(item.unit_amount_usd)) ||
+            !Number.isFinite(Number(item.amount_usd))
+          )
+        ) {
+          throw new Error('La cotización recibida no es válida.');
+        }
+        latestQuote = quote;
+        renderQuote(selection, quote);
+        root.classList.remove('is-error');
+      })
+      .catch((error) => {
+        if (requestId !== quoteRequestId) return;
+        latestQuote = null;
+        if (totalEl) totalEl.textContent = '—';
+        if (breakdownEl) {
+          breakdownEl.innerHTML =
+            '<p class="pricing-calc__hint">' +
+            escapeHtml(error.message || 'No se pudo calcular el precio.') +
+            '</p>';
+        }
+        root.classList.add('is-error');
+      });
+  }
+
+  function renderQuote(selection, quote) {
+    if (totalEl) {
+      totalEl.textContent =
+        formatQuoteMoney(quote.amount_total_ars, 'ARS') + ' / mes';
+    }
+    if (breakdownEl) {
+      const itemLines = quote.items
+        .map((item) => {
+          const row = (config.sellable_classes || {})[item.code] || {};
+          const videoAddon =
+            item.code === 'AMB' && selection.addons.videollamada
+              ? ' (videollamada)'
+              : '';
+          return (
+            '<div class="pricing-calc__line"><span>' +
+            escapeHtml(row.label || item.code) +
+            escapeHtml(videoAddon) +
+            ' · ' +
+            Pricing.formatAttentions(item.attentions_per_month) +
+            ' atenciones/mes × ' +
+            formatQuoteUnitPrice(item.unit_amount_usd) +
+            '</span><strong>' +
+            formatQuoteMoney(item.amount_usd, 'USD') +
+            '</strong></div>'
+          );
+        })
+        .join('');
+      const discountPercent = Number(quote.discount_percent);
+      const discount =
+        discountPercent > 0
+          ? '<div class="pricing-calc__line"><span>Precio de lista</span><strong>' +
+            formatQuoteMoney(quote.list_amount_usd, 'USD') +
+            '</strong></div><div class="pricing-calc__line"><span>Descuento por volumen (' +
+            escapeHtml(String(discountPercent)) +
+            '%)</span><strong>− ' +
+            formatQuoteMoney(quote.discount_amount_usd, 'USD') +
+            '</strong></div>'
+          : '';
+      const rateDate = quote.exchange_rate_effective_date
+        ? '<div class="pricing-calc__line"><span>Cotización vigente desde</span><strong>' +
+          escapeHtml(quote.exchange_rate_effective_date) +
+          '</strong></div>'
+        : '';
+      breakdownEl.innerHTML =
+        itemLines +
+        discount +
+        '<div class="pricing-calc__line"><span>Precio mensual antes de IVA</span><strong>' +
+        formatQuoteMoney(quote.amount_usd, 'USD') +
+        '</strong></div>' +
+        '<div class="pricing-calc__line"><span>Neto en pesos</span><strong>' +
+        formatQuoteMoney(quote.amount_net_ars, 'ARS') +
+        '</strong></div>' +
+        '<div class="pricing-calc__line"><span>IVA</span><strong>' +
+        formatQuoteMoney(quote.vat_ars, 'ARS') +
+        '</strong></div>' +
+        rateDate +
+        '<p class="pricing-calc__hint">El total en pesos incluye IVA. El importe final se confirma antes de pagar.</p>';
+    }
+    root.dispatchEvent(
+      new CustomEvent('bioenlace:pricing-change', {
+        bubbles: true,
+        detail: { selection: selection, estimate: quote },
+      }),
+    );
   }
 
   function refreshUnitLabels() {
@@ -294,14 +380,14 @@
         '<div class="pricing-calc__main">' +
         '<label class="pricing-calc__check">' +
         '<input type="checkbox" name="class_' +
-        code +
+        escapeHtml(code) +
         '" />' +
         '<span class="pricing-calc__check-body">' +
         '<strong>' +
-        cls.label +
+        escapeHtml(cls.label || code) +
         '</strong>' +
         '<span class="pricing-calc__short">' +
-        (cls.short || '') +
+        escapeHtml(cls.short || '') +
         '</span>' +
         '</span></label>' +
         optionsHtml +
@@ -354,9 +440,16 @@
   function fillPlansPageCopy() {
     const listEl = document.getElementById('pricing-includes-list');
     if (!listEl || !config) return;
-    const items = Array.isArray(config.included_features)
-      ? config.included_features.filter(Boolean)
-      : [];
+    const classes = config.sellable_classes || {};
+    const items = Object.keys(classes).reduce((all, code) => {
+      const includes = Array.isArray(classes[code].includes)
+        ? classes[code].includes
+        : [];
+      includes.forEach((item) => {
+        if (item) all.push((classes[code].label || code) + ': ' + item);
+      });
+      return all;
+    }, []);
     if (!items.length) {
       listEl.innerHTML = '';
       const section = document.getElementById('incluye');
@@ -447,31 +540,71 @@
       return Pricing.toSignupPlan(currentSelection(), config);
     },
     getEstimate: function () {
-      return config ? Pricing.estimate(config, currentSelection()) : null;
+      return latestQuote;
     },
     isReady: function () {
-      return !!config;
+      return !!config && !!apiBaseUrl;
     },
   };
 
-  fetch('js/pricing-config.json', { cache: 'no-cache' })
-    .then((r) => {
-      if (!r.ok) throw new Error('No se pudo cargar precios');
-      return r.json();
+  function resolveApiBaseUrl(apiConfig) {
+    const host = window.location.hostname;
+    const isLocal =
+      host === 'localhost' ||
+      host === '127.0.0.1' ||
+      host === '[::1]' ||
+      host.endsWith('.local') ||
+      host.endsWith('.test') ||
+      host.endsWith('.localhost');
+    const base =
+      isLocal && apiConfig.apiBaseUrlLocal
+        ? apiConfig.apiBaseUrlLocal
+        : apiConfig.apiBaseUrl;
+    if (!base) throw new Error('La API de precios no está configurada.');
+    return String(base).replace(/\/+$/, '');
+  }
+
+  function fetchJson(url) {
+    return fetch(url, {
+      headers: { Accept: 'application/json' },
+      credentials: 'omit',
     })
-    .then((data) => {
-      config = data;
+      .then((response) =>
+        response.json().then((body) => {
+          if (!response.ok) {
+            const data = unwrapResponse(body);
+            throw new Error(
+              (data && data.message) || 'No se pudo cargar el catálogo de precios.',
+            );
+          }
+          return unwrapResponse(body);
+        }),
+      );
+  }
+
+  fetchJson('js/api-config.json')
+    .then((apiConfig) => {
+      apiBaseUrl = resolveApiBaseUrl(apiConfig);
+      return fetchJson(apiBaseUrl + '/licencia/planes');
+    })
+    .then((catalog) => {
+      if (!catalog || !catalog.sellable_classes) {
+        throw new Error('El catálogo de planes no tiene un formato válido.');
+      }
+      config = catalog;
       fillStaticCopy();
       buildRows();
       refreshUnitLabels();
       recalc();
       root.classList.add('is-ready');
     })
-    .catch(() => {
+    .catch((error) => {
       root.classList.add('is-error');
       if (breakdownEl) {
         breakdownEl.innerHTML =
-          '<p class="pricing-calc__hint">No se pudo cargar el calculador. Escribinos a contacto.</p>';
+          '<p class="pricing-calc__hint">' +
+          escapeHtml(error.message || 'No se pudo cargar el calculador.') +
+          '</p>';
       }
     });
 })();

@@ -435,6 +435,39 @@ final class SignUpInstitutionalEfector
     }
 
     /**
+     * Validates a public plan selection and returns its server-calculated monthly price.
+     *
+     * @param array<string, mixed> $plan
+     */
+    public static function estimatePlanMonthlyUsd(array $plan, string $perfil): float
+    {
+        return self::estimatePlanMonthlyQuote($plan, $perfil)['amount_usd'];
+    }
+
+    /**
+     * Validates a public plan selection and returns its server-calculated monthly breakdown.
+     *
+     * @param array<string, mixed> $plan
+     * @return array{
+     *     amount_usd: float,
+     *     list_amount_usd: float,
+     *     discount_amount_usd: float,
+     *     discount_percent: float,
+     *     total_attentions: int,
+     *     items: list<array{code: string, attentions_per_month: int, unit_amount_usd: float, amount_usd: float}>
+     * }
+     */
+    public static function estimatePlanMonthlyQuote(array $plan, string $perfil): array
+    {
+        $perfil = strtoupper(trim($perfil));
+        if (!in_array($perfil, [self::PERFIL_CLINICA, self::PERFIL_CONSULTORIO], true)) {
+            throw new \InvalidArgumentException('Perfil de alta inválido (CLINICA o CONSULTORIO).');
+        }
+
+        return self::estimateMonthlyQuote(self::normalizePlan($plan, $perfil));
+    }
+
+    /**
      * @param array<string, mixed> $efector
      * @return array{nombre: string, domicilio: string, telefono: ?string, id_localidad: int, origen_financiamiento: string, dependencia: string, tipologia: string, codigo_sisa: string}
      */
@@ -552,6 +585,22 @@ final class SignUpInstitutionalEfector
      */
     public static function estimateMonthlyUsd(array $plan): float
     {
+        return self::estimateMonthlyQuote($plan)['amount_usd'];
+    }
+
+    /**
+     * @param array<string, mixed> $plan
+     * @return array{
+     *     amount_usd: float,
+     *     list_amount_usd: float,
+     *     discount_amount_usd: float,
+     *     discount_percent: float,
+     *     total_attentions: int,
+     *     items: list<array{code: string, attentions_per_month: int, unit_amount_usd: float, amount_usd: float}>
+     * }
+     */
+    private static function estimateMonthlyQuote(array $plan): array
+    {
         if (!isset($plan['classes']) || !is_array($plan['classes'])) {
             $plan = ['classes' => $plan];
         }
@@ -579,7 +628,7 @@ final class SignUpInstitutionalEfector
         }
 
         // Dictado siempre incluido en el precio.
-        return PricingPesByEncounterClassMetadata::estimateMonthlyTotal($byClass, true, $video);
+        return PricingPesByEncounterClassMetadata::estimateMonthlyQuote($byClass, true, $video);
     }
 
     /**

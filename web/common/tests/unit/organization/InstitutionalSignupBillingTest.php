@@ -19,9 +19,31 @@ class InstitutionalSignupBillingTest extends Unit
                 ],
             ],
         ]);
-        // 5000 × 0.0064 × 2.63 (tramo mediano) ≈ 84.16
-        $this->assertGreaterThan(80.0, $usd);
-        $this->assertLessThan(90.0, $usd);
+        // 5000 × 0.0093 × 2.63 (tramo mediano, redondeo unitario) = 122.50
+        $this->assertSame(122.5, $usd);
+    }
+
+    public function testEstimatePlanMonthlyQuoteIncludesClassAndVolumeDiscountBreakdown(): void
+    {
+        $quote = SignUpInstitutionalEfector::estimatePlanMonthlyQuote([
+            'classes' => [
+                'AMB' => [
+                    'attentions_per_month' => 20000,
+                    'dictado_incluido' => true,
+                    'videollamada_permitida' => false,
+                ],
+            ],
+        ], 'CLINICA');
+
+        $this->assertSame(436.0, $quote['amount_usd']);
+        $this->assertSame(620.0, $quote['list_amount_usd']);
+        $this->assertSame(184.0, $quote['discount_amount_usd']);
+        $this->assertSame(29.7, $quote['discount_percent']);
+        $this->assertSame(20000, $quote['total_attentions']);
+        $this->assertSame('AMB', $quote['items'][0]['code']);
+        $this->assertSame(20000, $quote['items'][0]['attentions_per_month']);
+        $this->assertSame(0.0218, $quote['items'][0]['unit_amount_usd']);
+        $this->assertSame(436.0, $quote['items'][0]['amount_usd']);
     }
 
     public function testSimFailPanConstant(): void

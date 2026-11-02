@@ -20,6 +20,7 @@
 - [phases/05-recuperacion.md](./phases/05-recuperacion.md) — recuperación asistida
 - [phases/06-corte-y-validacion.md](./phases/06-corte-y-validacion.md) — migración y retiro de legacy
 - [phases/06-migracion-demo.md](./phases/06-migracion-demo.md) — notas sobre migración en entorno de demo
+- [phases/07-precios-saas-fuente-unica.md](./phases/07-precios-saas-fuente-unica.md) — planes SaaS, costos unificados y cotización en backend
 - [configuracion-mockups.md](./configuracion-mockups.md) — configuración de mockups SISA y MercadoPago
 
 ## Reglas de ejecución

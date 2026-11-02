@@ -13,6 +13,7 @@ final class MercadoPagoCheckoutService
 
     /** @var array<string, mixed> */
     private array $config;
+    private bool $useExchangeRateOverride;
 
     /**
      * @param array<string, mixed>|null $config
@@ -20,9 +21,9 @@ final class MercadoPagoCheckoutService
     public function __construct(?array $config = null)
     {
         $this->config = $config ?? (Yii::$app->params['mercadoPago'] ?? []);
-        if (trim((string) ($this->config['accessToken'] ?? '')) === '') {
-            throw new InvalidConfigException('Mercado Pago access token no configurado.');
-        }
+        $this->useExchangeRateOverride = $config !== null
+            && array_key_exists('usdArsRate', $config)
+            && array_key_exists('usdArsRateEffectiveDate', $config);
     }
 
     /**
@@ -33,9 +34,15 @@ final class MercadoPagoCheckoutService
      */
     public function calculateArsAmount(float $amountUsd): array
     {
-        $exchangeRate = (float) ($this->config['usdArsRate'] ?? 0);
         $vatRate = (float) ($this->config['vatRate'] ?? 0.21);
-        $effectiveDate = trim((string) ($this->config['usdArsRateEffectiveDate'] ?? ''));
+        if ($this->useExchangeRateOverride) {
+            $exchangeRate = (float) ($this->config['usdArsRate'] ?? 0);
+            $effectiveDate = trim((string) ($this->config['usdArsRateEffectiveDate'] ?? ''));
+        } else {
+            $exchangeRateSnapshot = (new BillingExchangeRateService())->current();
+            $exchangeRate = $exchangeRateSnapshot['rate'];
+            $effectiveDate = $exchangeRateSnapshot['effective_date'];
+        }
         if ($amountUsd <= 0 || !is_finite($amountUsd)) {
             throw new \InvalidArgumentException('El importe mensual debe ser mayor que cero.');
         }
@@ -196,6 +203,11 @@ final class MercadoPagoCheckoutService
      */
     private function request(string $method, string $path, ?array $data = null, ?string $idempotencyKey = null): array
     {
+        $accessToken = trim((string) ($this->config['accessToken'] ?? ''));
+        if ($accessToken === '') {
+            throw new InvalidConfigException('Mercado Pago access token no configurado.');
+        }
+
         $client = new Client([
             'baseUrl' => self::API_URL,
             'transport' => CurlTransport::class,
@@ -204,7 +216,7 @@ final class MercadoPagoCheckoutService
             ->setMethod($method)
             ->setUrl($path)
             ->setHeaders([
-                'Authorization' => 'Bearer ' . trim((string) $this->config['accessToken']),
+                'Authorization' => 'Bearer ' . $accessToken,
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json',
             ])

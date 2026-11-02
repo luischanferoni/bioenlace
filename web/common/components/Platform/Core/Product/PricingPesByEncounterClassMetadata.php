@@ -327,20 +327,66 @@ final class PricingPesByEncounterClassMetadata
         bool $audio = false,
         bool $videollamada = false
     ): float {
+        return self::estimateMonthlyQuote($attentionsByClass, $audio, $videollamada)['amount_usd'];
+    }
+
+    /**
+     * @param array<string, int> $attentionsByClass code => atenciones / mes
+     * @return array{
+     *     amount_usd: float,
+     *     list_amount_usd: float,
+     *     discount_amount_usd: float,
+     *     discount_percent: float,
+     *     total_attentions: int,
+     *     items: list<array{code: string, attentions_per_month: int, unit_amount_usd: float, amount_usd: float}>
+     * }
+     */
+    public static function estimateMonthlyQuote(
+        array $attentionsByClass,
+        bool $audio = false,
+        bool $videollamada = false
+    ): array {
         $totalAttentions = 0;
         foreach ($attentionsByClass as $qty) {
             $totalAttentions += max(0, (int) $qty);
         }
 
         $total = 0.0;
+        $listTotal = 0.0;
+        $items = [];
         foreach ($attentionsByClass as $code => $qty) {
             $code = (string) $code;
             if (!self::isSellableClass($code) || (int) $qty <= 0) {
                 continue;
             }
-            $total += self::unitPrice($audio, $videollamada, $code, $totalAttentions) * (int) $qty;
+            $unitPrice = self::unitPrice($audio, $videollamada, $code, $totalAttentions);
+            $listUnitPrice = self::unitPrice($audio, $videollamada, $code);
+            $lineTotal = $unitPrice * (int) $qty;
+            $lineListTotal = $listUnitPrice * (int) $qty;
+            $total += $lineTotal;
+            $listTotal += $lineListTotal;
+            $items[] = [
+                'code' => $code,
+                'attentions_per_month' => (int) $qty,
+                'unit_amount_usd' => $unitPrice,
+                'amount_usd' => round($lineTotal, 2),
+            ];
         }
 
-        return round($total, 2);
+        $total = round($total, 2);
+        $listTotal = round($listTotal, 2);
+        $discountAmount = round(max(0, $listTotal - $total), 2);
+        $discountPercent = $listTotal > 0 && $discountAmount > 0
+            ? round(($discountAmount / $listTotal) * 100, 1)
+            : (float) (self::tierForTotalAttentions($totalAttentions)['discount_vs_list_percent'] ?? 0);
+
+        return [
+            'amount_usd' => $total,
+            'list_amount_usd' => $listTotal,
+            'discount_amount_usd' => $discountAmount,
+            'discount_percent' => $discountPercent,
+            'total_attentions' => $totalAttentions,
+            'items' => $items,
+        ];
     }
 }

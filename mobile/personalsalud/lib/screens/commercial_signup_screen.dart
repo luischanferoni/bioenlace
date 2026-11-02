@@ -10,11 +10,13 @@ class CommercialSignupScreen extends StatefulWidget {
   const CommercialSignupScreen({
     required this.authToken,
     required this.profile,
+    this.initialPlan,
     super.key,
   });
 
   final String authToken;
   final String profile;
+  final Map<String, dynamic>? initialPlan;
 
   @override
   State<CommercialSignupScreen> createState() => _CommercialSignupScreenState();
@@ -60,6 +62,15 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    final classes = widget.initialPlan?['classes'];
+    if (classes is Map) {
+      _ambController.text =
+          classes['AMB']?['attentions_per_month']?.toString() ?? '';
+      _emerController.text =
+          classes['EMER']?['attentions_per_month']?.toString() ?? '';
+      _impController.text =
+          classes['IMP']?['attentions_per_month']?.toString() ?? '';
+    }
     if (!_isConsultorio) _loadMinistries();
   }
 

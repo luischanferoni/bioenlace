@@ -13,7 +13,7 @@
       "id": "default",
       "selection": { "mode": "single" },
       "draft_field": "id_persona",
-      "empty_message": "Escribí al menos unas letras o el documento para buscar personas.",
+      "empty_message": "Buscá por DNI, apellido o nombre. Si no aparece, pedile que cree su cuenta desde la app móvil Bioenlace Personal de Salud y volvé a buscarla.",
       "item": { "kind": "persona", "id_field": "id", "label_field": "name" },
       "presentation": { "tile": "large", "shape": "wide" },
       "items": []

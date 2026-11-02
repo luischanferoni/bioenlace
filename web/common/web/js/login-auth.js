@@ -1,5 +1,5 @@
 (() => {
-    const login = document.querySelector('.login-content[data-passkey-options-url]');
+    const login = document.querySelector('.login-content[data-qr-start-url]');
     if (!login) {
         return;
     }

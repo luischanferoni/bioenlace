@@ -7,6 +7,7 @@ use common\components\Domain\Organization\Efector\Application\Seed\ActiveRecordC
 use common\components\Domain\Person\Identity\Application\Service\RefepsProfessionalVerificationService;
 use common\components\Domain\Person\Identity\Application\Service\RefepsVerificationException;
 use common\components\Domain\Person\Identity\Application\Service\PersonCuilService;
+use common\components\Domain\Person\Identity\Application\UseCase\CreatePendingIdentity;
 use common\models\Person\Persona;
 use common\models\Organization\ProfesionalEfectorServicio as ProfesionalEfectorServicioModel;
 use common\models\Organization\Servicio;
@@ -58,6 +59,16 @@ final class EnsurePesAssignment
             self::assertActingUserIsEfectorAdmin($idEfector, $actingUserId);
         }
 
+        $persona = Persona::findOne(['id_persona' => $idPersona]);
+        if ($persona === null) {
+            throw new \InvalidArgumentException('Persona inexistente.');
+        }
+        if (CreatePendingIdentity::esPlaceholder($persona)) {
+            throw new \InvalidArgumentException(
+                'No se puede asignar una identidad pendiente sin identificar. La persona debe crear su cuenta en la app móvil.'
+            );
+        }
+
         $existingPes = ProfesionalEfectorServicioModel::findActive()
             ->andWhere([
                 'id_persona' => $idPersona,
@@ -75,10 +86,6 @@ final class EnsurePesAssignment
         }
 
         if (!$isAdminEfectorService) {
-            $persona = Persona::findOne(['id_persona' => $idPersona]);
-            if ($persona === null) {
-                throw new \InvalidArgumentException('Persona inexistente.');
-            }
             if ($cuil !== null && trim($cuil) !== '') {
                 PersonCuilService::ensureOnPersona($idPersona, $cuil);
             } elseif (!PersonCuilService::personaTieneCuil($persona)) {

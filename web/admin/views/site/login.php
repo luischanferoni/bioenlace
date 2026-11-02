@@ -8,19 +8,12 @@
 
 use yii\bootstrap5\ActiveForm;
 use yii\helpers\Html;
-use yii\helpers\Url;
 
 $showPasswordForm = isset($model) && ($passwordLoginEnabled ?? true);
 ?>
 
 <div class="container-fluid">
-    <section
-        class="login-content overflow-hidden"
-        data-passkey-options-url="<?= Html::encode(Url::to(['/auth/passkey-login-options'])) ?>"
-        data-passkey-verify-url="<?= Html::encode(Url::to(['/auth/passkey-login-verify'])) ?>"
-        data-qr-start-url="<?= Html::encode(Url::to(['/auth/qr-login-start'])) ?>"
-        data-qr-status-url="<?= Html::encode(Url::to(['/auth/qr-login-status'])) ?>"
-    >
+    <section class="login-content overflow-hidden">
         <div class="row no-gutters align-items-center bg-white">
             <div class="col-md-12 col-lg-6 align-self-center">
                 <img
@@ -33,25 +26,8 @@ $showPasswordForm = isset($model) && ($passwordLoginEnabled ?? true);
                 <div class="row justify-content-center pt-3">
                     <div class="col-md-9">
                         <div class="card d-flex justify-content-center mb-0 auth-card iq-auth-form">
-                            <div class="card-body text-center">                                
-                                <p class="mb-4">Usá la passkey guardada en este dispositivo o en tu administrador de contraseñas.</p>
-
-                                <button type="button" class="btn btn-primary mb-3" id="passkey-login-button">
-                                    Ingresar con passkey
-                                </button>
-                                <p id="passkey-login-message" class="text-danger" role="status" aria-live="polite"></p>
-
-                                <button type="button" class="btn btn-outline-primary mb-3" id="qr-login-button" data-bs-toggle="modal" data-bs-target="#qr-login-modal">
-                                    Ingresar con la app
-                                </button>
-
+                            <div class="card-body text-center">
                                 <?php if ($showPasswordForm): ?>
-                                    <hr class="my-4">
-                                    <p class="text-muted small mb-3">
-                                        ¿Todavía no registraste una passkey? Podés ingresar con tu contraseña y luego
-                                        registrarla desde tu perfil.
-                                    </p>
-
                                     <?php $form = ActiveForm::begin([
                                         'id' => 'login-form',
                                         'options' => ['autocomplete' => 'off', 'class' => 'text-start'],
@@ -89,20 +65,3 @@ $showPasswordForm = isset($model) && ($passwordLoginEnabled ?? true);
         </div>
     </section>
 </div>
-
-<div class="modal fade" id="qr-login-modal" tabindex="-1" aria-labelledby="qr-login-title" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="qr-login-title">Ingresá con la app</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body text-center">
-                <p class="text-muted small">Abrí Bioenlace en tu teléfono y escaneá este código para confirmar tu acceso.</p>
-                <div id="qr-login-canvas" class="d-flex justify-content-center my-3"></div>
-                <p id="qr-login-message" class="text-danger" role="status" aria-live="polite"></p>
-            </div>
-        </div>
-    </div>
-</div>
-

@@ -16,8 +16,6 @@ $showPasswordForm = isset($model) && ($passwordLoginEnabled ?? true);
 <div class="container-fluid">
     <section
         class="login-content overflow-hidden"
-        data-passkey-options-url="<?= Html::encode(Url::to(['/auth/passkey-login-options'])) ?>"
-        data-passkey-verify-url="<?= Html::encode(Url::to(['/auth/passkey-login-verify'])) ?>"
         data-qr-start-url="<?= Html::encode(Url::to(['/auth/qr-login-start'])) ?>"
         data-qr-status-url="<?= Html::encode(Url::to(['/auth/qr-login-status'])) ?>"
     >
@@ -35,12 +33,7 @@ $showPasswordForm = isset($model) && ($passwordLoginEnabled ?? true);
                         <div class="card d-flex justify-content-center mb-0 auth-card iq-auth-form">
                             <div class="card-body text-center">
                                 <h1 class="h2 mb-4">Ingresá a Bioenlace</h1>
-                                <p class="mb-4">Usá la passkey guardada en este dispositivo o en tu administrador de contraseñas.</p>
-
-                                <button type="button" class="btn btn-primary mb-3" id="passkey-login-button">
-                                    Ingresar con passkey
-                                </button>
-                                <p id="passkey-login-message" class="text-danger" role="status" aria-live="polite"></p>
+                                <p class="mb-4">Ingresá con tu usuario y contraseña o confirmá el acceso desde la app.</p>
 
                                 <button type="button" class="btn btn-outline-primary mb-3" id="qr-login-button" data-bs-toggle="modal" data-bs-target="#qr-login-modal">
                                     Ingresar con la app
@@ -49,8 +42,7 @@ $showPasswordForm = isset($model) && ($passwordLoginEnabled ?? true);
                                 <?php if ($showPasswordForm): ?>
                                     <hr class="my-4">
                                     <p class="text-muted small mb-3">
-                                        ¿Todavía no registraste una passkey? Podés ingresar con tu contraseña y luego
-                                        registrarla desde tu perfil.
+                                        Ingresá con tu usuario y contraseña.
                                     </p>
 
                                     <?php $form = ActiveForm::begin([
@@ -106,4 +98,3 @@ $showPasswordForm = isset($model) && ($passwordLoginEnabled ?? true);
         </div>
     </div>
 </div>
-

@@ -10,7 +10,7 @@ use common\models\Person\Persona;
 final class PersonaBusquedaAsistenteUiService
 {
     /**
-     * Solo devuelve filas si `$q` no está vacío (evita listar todo el padrón sin criterio).
+     * Solo devuelve filas si `$q` no está vacío y omite placeholders NN sin identidad acreditada.
      *
      * @param int|null $excluirIdEfector Si > 0, omite personas con asignación PES activa en ese efector.
      *
@@ -31,6 +31,9 @@ final class PersonaBusquedaAsistenteUiService
 
         /** @var \yii\db\ActiveQuery $query */
         $query = Persona::find()->alias('p');
+        $query->andWhere(
+            "NOT (COALESCE(p.acredita_identidad, 0) = 0 AND TRIM(COALESCE(p.documento, '')) = '')"
+        );
         foreach (preg_split('/\s+/u', $q, -1, PREG_SPLIT_NO_EMPTY) ?: [] as $token) {
             $term = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $token) . '%';
             $query->andWhere([

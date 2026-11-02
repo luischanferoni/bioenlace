@@ -17,7 +17,7 @@ use common\models\Organization\Servicio;
 use common\models\Clinical\Encounter;
 use common\components\Domain\Clinical\Encounter\Application\Presentation\PatientHistoriaUrl;
 
-use common\filters\SisseActionFilter;
+use common\filters\BioenlaceActionFilter;
 
 /**
  * InpatientController implements the CRUD actions for InpatientStay model.
@@ -36,9 +36,9 @@ class InpatientController extends Controller
     {
         return [
             'access' => [
-                'class' => SisseActionFilter::className(),
+                'class' => BioenlaceActionFilter::className(),
                 'only' => ['index'],
-                'filtrosExtra' => [SisseActionFilter::FILTRO_PACIENTE],
+                'filtrosExtra' => [BioenlaceActionFilter::FILTRO_PACIENTE],
             ],
             'verbs' => [
                 'class' => VerbFilter::className(),

@@ -126,7 +126,48 @@ class WebAuthController extends Controller
     {
         Yii::$app->session->open();
 
-        return QrLoginService::start(Yii::$app->session->getId());
+        $result = QrLoginService::start(Yii::$app->session->getId());
+        $result['qrSvg'] = $this->renderQrCodeSvg($result['qrPayload']);
+
+        return $result;
+    }
+
+    private function renderQrCodeSvg(string $payload): string
+    {
+        require_once dirname(Yii::getAlias('@common'))
+            . '/vendor/reportico/yii2-reportico/components/tcpdf/include/barcodes/qrcode.php';
+
+        // The bundled TCPDF encoder emits PHP 8.3 deprecations that would corrupt the JSON response.
+        $errorReporting = error_reporting();
+        error_reporting($errorReporting & ~E_DEPRECATED);
+        try {
+            $barcode = new \QRcode($payload, 'M');
+            $matrix = $barcode->getBarcodeArray();
+        } finally {
+            error_reporting($errorReporting);
+        }
+
+        $size = (int) $matrix['num_cols'];
+        $quietZone = 4;
+        $path = '';
+
+        foreach ($matrix['bcode'] as $rowIndex => $row) {
+            foreach ($row as $columnIndex => $module) {
+                if ($module) {
+                    $x = $columnIndex + $quietZone;
+                    $y = $rowIndex + $quietZone;
+                    $path .= "M{$x} {$y}h1v1h-1z";
+                }
+            }
+        }
+
+        $viewSize = $size + 2 * $quietZone;
+
+        return sprintf(
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %1$d %1$d" role="img" aria-label="Código QR de inicio de sesión"><rect width="%1$d" height="%1$d" fill="#fff"/><path d="%2$s" fill="#000"/></svg>',
+            $viewSize,
+            $path
+        );
     }
 
     public function actionQrLoginStatus(): array

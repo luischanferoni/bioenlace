@@ -45,7 +45,7 @@ use common\models\Person\Tipo_documento;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\controllers\Model;
 use common\components\Domain\Person\Identity\Infrastructure\External\Mpi\MpiApiClient;
-use common\filters\SisseActionFilter;
+use common\filters\BioenlaceActionFilter;
 
 /**
  * PersonasController implements the CRUD actions for persona model.
@@ -69,9 +69,9 @@ class PersonasController extends Controller {
                 'except' => ['vacunas']
             ],
             'access' => [
-                'class' => SisseActionFilter::className(),
+                'class' => BioenlaceActionFilter::className(),
                 'only' => ['view', 'crear-numero-historia-clinica'],
-                'filtrosExtra' => [SisseActionFilter::FILTRO_CONTEXTO_PROFESIONAL],
+                'filtrosExtra' => [BioenlaceActionFilter::FILTRO_CONTEXTO_PROFESIONAL],
             ],
             'verbs' => [
                 'class' => VerbFilter::className(),

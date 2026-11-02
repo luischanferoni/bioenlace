@@ -20,6 +20,10 @@ class FrontendAuthenticatedAccessControl extends ActionFilter
     /** @var list<string> uniqueId sin RBAC (público o ticket especial) */
     private const FREE_ACTIONS = [
         'auth/login',
+        'auth/passkey-login-options',
+        'auth/passkey-login-verify',
+        'auth/qr-login-start',
+        'auth/qr-login-status',
         'auth/password-recovery',
         'auth/password-recovery-receive',
         'auth/activate-account',

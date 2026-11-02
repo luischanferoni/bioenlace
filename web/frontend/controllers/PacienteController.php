@@ -22,7 +22,7 @@ use frontend\components\Clinical\PacienteHistoriaTimelinePageBuilder;
 use frontend\assets\EmergencyBoardAsset;
 use frontend\assets\PacienteHistoriaTimelineAsset;
 use frontend\assets\EncounterViewAsset;
-use common\filters\SisseActionFilter;
+use common\filters\BioenlaceActionFilter;
 
 /**
  * PacienteHistorialController implementa las acciones CRUD para el modelo PacienteHistoriall.
@@ -36,9 +36,9 @@ class PacienteController extends Controller
     {
         return [
             'access' => [
-                'class' => SisseActionFilter::className(),
+                'class' => BioenlaceActionFilter::className(),
                 'only' => ['historia', 'encounter-capture-form', 'encounter-documentation', 'episodio-timeline-html'],
-                'filtrosExtra' => [SisseActionFilter::FILTRO_CONTEXTO_PROFESIONAL],
+                'filtrosExtra' => [BioenlaceActionFilter::FILTRO_CONTEXTO_PROFESIONAL],
             ],
         ];
     }

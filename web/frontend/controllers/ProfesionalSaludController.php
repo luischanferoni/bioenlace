@@ -7,7 +7,7 @@ use yii\web\Controller;
 use yii\base\Exception;
 use yii\helpers\ArrayHelper;
 
-use common\filters\SisseActionFilter;
+use common\filters\BioenlaceActionFilter;
 use common\models\Person\ProfesionalSalud;
 use common\models\Person\Profesiones;
 use common\models\Organization\Especialidades;
@@ -24,9 +24,9 @@ class ProfesionalSaludController extends Controller
     {
         return [
             'access' => [
-                'class' => SisseActionFilter::className(),
+                'class' => BioenlaceActionFilter::className(),
                 'only' => ['create'],
-                'filtrosExtra' => [SisseActionFilter::FILTRO_PACIENTE, SisseActionFilter::FILTRO_CONTEXTO_PROFESIONAL],
+                'filtrosExtra' => [BioenlaceActionFilter::FILTRO_PACIENTE, BioenlaceActionFilter::FILTRO_CONTEXTO_PROFESIONAL],
             ],
         ];
     }

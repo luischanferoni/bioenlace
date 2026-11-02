@@ -28,7 +28,7 @@ use common\models\Clinical\Percentilos;
 
 use common\components\Platform\Core\Form\NestedFormModels;
 use common\components\Domain\Person\Identity\Infrastructure\External\Mpi\MpiApiClient;
-use common\filters\SisseActionFilter;
+use common\filters\BioenlaceActionFilter;
 use common\components\Platform\Core\Http\UserRequest;
 
 /**
@@ -51,9 +51,9 @@ class PersonasController extends Controller
     {
         return [
             'access' => [
-                'class' => SisseActionFilter::className(),
+                'class' => BioenlaceActionFilter::className(),
                 'only' => ['view', 'crear-numero-historia-clinica'],
-                'filtrosExtra' => [SisseActionFilter::FILTRO_CONTEXTO_PROFESIONAL],
+                'filtrosExtra' => [BioenlaceActionFilter::FILTRO_CONTEXTO_PROFESIONAL],
             ],
             'verbs' => [
                 'class' => VerbFilter::className(),

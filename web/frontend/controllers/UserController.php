@@ -3,7 +3,7 @@
 namespace frontend\controllers;
 
 use common\models\Platform\User;
-use common\filters\SisseActionFilter;
+use common\filters\BioenlaceActionFilter;
 use Yii;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
@@ -17,11 +17,11 @@ class UserController extends Controller
     {
         return [
             'access' => [
-                'class' => SisseActionFilter::class,
+                'class' => BioenlaceActionFilter::class,
                 'only' => ['crear'],
                 'filtrosExtra' => [
-                    SisseActionFilter::FILTRO_PACIENTE,
-                    SisseActionFilter::FILTRO_CONTEXTO_PROFESIONAL,
+                    BioenlaceActionFilter::FILTRO_PACIENTE,
+                    BioenlaceActionFilter::FILTRO_CONTEXTO_PROFESIONAL,
                 ],
             ],
         ];

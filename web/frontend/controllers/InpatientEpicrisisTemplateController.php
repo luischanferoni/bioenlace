@@ -6,7 +6,7 @@ use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenEx
 use common\components\Domain\Organization\Efector\Application\Authorization\EfectorOperationAccess;
 use common\components\Domain\Clinical\Inpatient\Application\Service\InpatientEpicrisisTemplateAdminService;
 use common\models\Organization\ServiciosEfector;
-use common\filters\SisseActionFilter;
+use common\filters\BioenlaceActionFilter;
 use Yii;
 use yii\filters\VerbFilter;
 use yii\web\Controller;
@@ -36,9 +36,9 @@ class InpatientEpicrisisTemplateController extends Controller
     {
         return [
             'access' => [
-                'class' => SisseActionFilter::class,
+                'class' => BioenlaceActionFilter::class,
                 'only' => ['index', 'create', 'update', 'toggle-activo'],
-                'filtrosExtra' => [SisseActionFilter::FILTRO_PACIENTE],
+                'filtrosExtra' => [BioenlaceActionFilter::FILTRO_PACIENTE],
             ],
             'verbs' => [
                 'class' => VerbFilter::class,

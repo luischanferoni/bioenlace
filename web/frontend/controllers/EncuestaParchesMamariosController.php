@@ -8,7 +8,7 @@ use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 
-use common\filters\SisseActionFilter;
+use common\filters\BioenlaceActionFilter;
 use common\models\Clinical\EncuestaParchesMamarios;
 use common\models\Clinical\PersonasAntecedente;
 use common\components\Domain\Clinical\Encounter\Application\UseCase\AdvanceEncounterLifecycle;
@@ -29,9 +29,9 @@ class EncuestaParchesMamariosController extends Controller
         return [
             // Este es para no permitir crear una encuesta para un paciente que ya la tiene
             'access' => [
-                'class' => SisseActionFilter::className(),
+                'class' => BioenlaceActionFilter::className(),
                 'only' => ['create'],
-                'filtrosExtra' => [SisseActionFilter::FILTRO_PACIENTE, SisseActionFilter::FILTRO_CONTEXTO_PROFESIONAL],
+                'filtrosExtra' => [BioenlaceActionFilter::FILTRO_PACIENTE, BioenlaceActionFilter::FILTRO_CONTEXTO_PROFESIONAL],
                 'allowed' => function () {
                     $persona = Yii::$app->session['persona'];
                     $persona =  unserialize($persona);

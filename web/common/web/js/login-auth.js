@@ -135,22 +135,18 @@
         qrMessage.textContent = '';
         stopQrPolling();
 
-        if (typeof QRCode === 'undefined' || typeof QRCode.toCanvas !== 'function') {
-            qrMessage.textContent = 'No se pudo cargar el código QR. Probá con una passkey.';
-            return;
-        }
-
         try {
             const start = await post(login.dataset.qrStartUrl, {});
-            const canvas = document.createElement('canvas');
-            await QRCode.toCanvas(canvas, start.qrPayload, {
-                width: 220,
-                color: {
-                    dark: '#000000',
-                    light: '#ffffff',
-                },
-            });
-            qrCanvas.appendChild(canvas);
+            const qrDocument = new DOMParser().parseFromString(start.qrSvg, 'image/svg+xml');
+            const svg = qrDocument.documentElement;
+            if (svg.localName !== 'svg' || qrDocument.querySelector('parsererror')) {
+                throw new Error('El servidor devolvió un código QR inválido.');
+            }
+            svg.setAttribute('width', '200');
+            svg.setAttribute('height', '200');
+            svg.style.padding = '20px';
+            svg.style.backgroundColor = '#ffffff';
+            qrCanvas.appendChild(document.importNode(svg, true));
 
             qrPollTimer = setInterval(async () => {
                 try {

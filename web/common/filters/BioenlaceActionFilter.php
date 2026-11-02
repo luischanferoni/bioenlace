@@ -8,11 +8,11 @@ use yii\base\ActionFilter;
 use yii\web\ForbiddenHttpException;
 
 /**
- * SisseActionFilter implements a layer of access to the controller actions.
+ * BioenlaceActionFilter implements a layer of access to the controller actions.
  *
  * It is an action filter that can be added to a controller and handles the `beforeAction` event.
  *
- * To use SisseActionFilter, declare it in the `behaviors()` method of your controller class.
+ * To use BioenlaceActionFilter, declare it in the `behaviors()` method of your controller class.
  * In the following example the filter will be applied to the `index` action and
  * the Last-Modified header will contain the date of the last update to the user table in the database.
  *
@@ -21,7 +21,7 @@ use yii\web\ForbiddenHttpException;
  * {
  *     return [
  *         [
- *             'class' => SisseActionFilter::className(),
+ *              'class' => BioenlaceActionFilter::className(),
  *             'only' => ['index'],
  *             'allowed' => function ($params) {
  *                 $q = new \yii\db\Query();
@@ -36,7 +36,7 @@ use yii\web\ForbiddenHttpException;
  * @since 1.0
  */
 
-class SisseActionFilter extends ActionFilter
+class BioenlaceActionFilter extends ActionFilter
 {
     /**
      * constantes que indican que variables de session requiere el action tener

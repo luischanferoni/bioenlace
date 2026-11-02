@@ -4,6 +4,7 @@ namespace common\components\Domain\Organization\Efector\Application\UseCase;
 
 use common\models\Organization\BillingAccount;
 use common\models\Organization\BillingAccountEfector;
+use common\models\Organization\BillingPayment;
 use common\models\Organization\BillingSignupRequest;
 use common\models\Clinical\EncounterDefinition;
 use common\models\Organization\Efector;
@@ -16,7 +17,7 @@ use common\components\Platform\Core\Product\PricingPesByEncounterClassMetadata;
 use Yii;
 
 /**
- * Alta self-service de clínica/efector + AdminEfector + licencia (pago simulado).
+ * Alta self-service de clínica/efector + AdminEfector + licencia.
  */
 final class SignUpInstitutionalEfector
 {
@@ -37,7 +38,139 @@ final class SignUpInstitutionalEfector
      * @param array<string, mixed> $payload
      * @return array<string, mixed>
      */
-    public static function register(array $payload): array
+    public static function register(
+        array $payload,
+        User $verifiedUser,
+        Persona $verifiedPersona,
+        array $confirmedPayment
+    ): array
+    {
+        $draft = self::prepareDraft($payload);
+        $perfil = $draft['perfil'];
+        $sector = $draft['sector'];
+        $ministerio = $draft['ministerio'];
+        $pagoPorMinisterio = !empty($payload['pago_cubierto_por_ministerio']);
+        if ($pagoPorMinisterio) {
+            throw new \InvalidArgumentException('No se puede combinar el checkout propio con una cobertura ministerial.');
+        }
+
+        $identity = self::resolveVerifiedIdentity($payload, $verifiedUser, $verifiedPersona);
+        $admin = $identity['admin'];
+        $efectorData = $draft['efector'];
+        $plan = $draft['plan'];
+
+        $tx = Yii::$app->db->beginTransaction();
+        try {
+            [$persona, $user] = [$identity['persona'], $identity['user']];
+
+            if ((int) ($efectorData['id_efector'] ?? 0) > 0) {
+                $efector = Efector::find()
+                    ->where([
+                        'id_efector' => (int) $efectorData['id_efector'],
+                        'codigo_sisa' => (string) $efectorData['codigo_sisa'],
+                    ])
+                    ->forUpdate()
+                    ->one();
+                if ($efector === null) {
+                    throw new \InvalidArgumentException('El efector SISA dejó de estar disponible.');
+                }
+                self::assertPublicEfectorAvailable($efector);
+            } else {
+                $efector = self::createEfector($efectorData);
+            }
+            $idEfector = (int) $efector->id_efector;
+
+            $account = BillingAccountService::createAccount([
+                'nombre' => 'Licencia — ' . $efector->nombre,
+                'tipo' => BillingAccount::TIPO_EFECTOR,
+                'notas' => $perfil === self::PERFIL_CONSULTORIO
+                    ? 'Alta self-service consultorio unipersonal'
+                    : 'Alta self-service institucional',
+                'activo' => $pagoPorMinisterio ? 0 : 1,
+            ]);
+            $account->owner_user_id = (int) $user->id;
+            if (!$account->save(false, ['owner_user_id', 'updated_at'])) {
+                throw new \RuntimeException('No se pudo asignar el titular de la cuenta comercial.');
+            }
+
+            $amount = self::estimateMonthlyUsd($plan);
+            $payment = self::recordConfirmedPayment(
+                (int) $account->id,
+                (float) ($confirmedPayment['amount_usd'] ?? $amount),
+                $confirmedPayment
+            );
+            foreach ($plan['classes'] as $class => $cfg) {
+                BillingAccountService::upsertEntitlement((int) $account->id, $class, [
+                    'max_pes' => (int) $cfg['max_pes'],
+                    'dictado_incluido' => !empty($cfg['dictado_incluido']),
+                    'videollamada_permitida' => !empty($cfg['videollamada_permitida']),
+                    'activo' => 1,
+                ]);
+            }
+            BillingAccountService::attachEfector((int) $account->id, $idEfector, BillingAccountEfector::ROL_POOL);
+
+            if ($ministerio !== null) {
+                BillingAccountService::attachEfector(
+                    (int) $ministerio->id,
+                    $idEfector,
+                    BillingAccountEfector::ROL_AFILIADO
+                );
+            }
+
+            self::ensureAdminEfectorPes((int) $persona->id_persona, $idEfector, (int) $user->id);
+
+            $log = new BillingSignupRequest();
+            $log->tipo = BillingSignupRequest::TIPO_EFECTOR;
+            $log->status = BillingSignupRequest::STATUS_APPROVED;
+            $log->nombre_organizacion = (string) $efector->nombre;
+            $log->sector = $sector;
+            $log->id_billing_account_ministerio = $ministerio !== null ? (int) $ministerio->id : null;
+            $log->contacto_nombre = $admin['nombre'];
+            $log->contacto_apellido = $admin['apellido'];
+            $log->contacto_email = $admin['email'];
+            $log->contacto_telefono = $admin['telefono'];
+            $log->contacto_documento = $admin['documento'];
+            $log->notas = ($perfil === self::PERFIL_CONSULTORIO ? '[CONSULTORIO] ' : '')
+                . 'Alta self-service con primer pago confirmado por Mercado Pago.';
+            $log->id_user = (int) $user->id;
+            $log->id_billing_account = (int) $account->id;
+            $log->id_efector = $idEfector;
+            $log->reviewed_at = date('Y-m-d H:i:s');
+            if (!$log->save(false)) {
+                throw new \RuntimeException('No se pudo registrar la solicitud de alta comercial.');
+            }
+
+            $tx->commit();
+
+            return [
+                'id_user' => (int) $user->id,
+                'id_persona' => (int) $persona->id_persona,
+                'id_efector' => $idEfector,
+                'id_billing_account' => (int) $account->id,
+                'perfil' => $perfil,
+                'sector' => $sector,
+                'pago_cubierto_por_ministerio' => false,
+                'amount_usd_charged' => (float) $payment->amount_usd,
+                'payment_reference' => (string) $payment->external_reference,
+                'amount_ars_charged' => (float) $payment->amount_ars,
+                'username' => (string) $user->username,
+                'email' => (string) $user->email,
+                'login_hint' => 'Ingresá en la web clínica con tu e-mail/usuario y la contraseña elegida.',
+                'next_steps' => self::nextStepsForPerfil($perfil),
+            ];
+        } catch (\Throwable $e) {
+            $tx->rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Valida y normaliza los datos comerciales sin crear entidades ni cobrar.
+     *
+     * @param array<string, mixed> $payload
+     * @return array{perfil: string, sector: string, ministerio: ?BillingAccount, efector: array<string, mixed>, plan: array<string, mixed>, amount_usd: float}
+     */
+    public static function prepareDraft(array $payload): array
     {
         $perfil = strtoupper(trim((string) ($payload['perfil'] ?? self::PERFIL_CLINICA)));
         if (!in_array($perfil, [self::PERFIL_CLINICA, self::PERFIL_CONSULTORIO], true)) {
@@ -48,7 +181,12 @@ final class SignUpInstitutionalEfector
         if (!in_array($sector, [self::SECTOR_PUBLICO, self::SECTOR_PRIVADO], true)) {
             throw new \InvalidArgumentException('Indicá si el efector es PUBLICO o PRIVADO.');
         }
-
+        if (!is_array($payload['efector'] ?? null)) {
+            throw new \InvalidArgumentException('Los datos del efector son inválidos.');
+        }
+        if (!is_array($payload['plan'] ?? null)) {
+            throw new \InvalidArgumentException('Los datos del plan son inválidos.');
+        }
         $idMinisterio = (int) ($payload['id_billing_account_ministerio'] ?? 0);
         if ($sector === self::SECTOR_PUBLICO && $idMinisterio <= 0) {
             throw new \InvalidArgumentException('Para un efector público debés elegir el ministerio.');
@@ -67,171 +205,181 @@ final class SignUpInstitutionalEfector
             }
         }
 
-        $pagoPorMinisterio = !empty($payload['pago_cubierto_por_ministerio']);
         if ($perfil === self::PERFIL_CONSULTORIO && $sector === self::SECTOR_PUBLICO) {
             throw new \InvalidArgumentException(
                 'El alta de consultorio profesional solo admite sector privado. '
                 . 'Si trabajás en un centro público, pedí que administración del centro te sume a Bioenlace.'
             );
         }
-        if ($pagoPorMinisterio && ($sector !== self::SECTOR_PUBLICO || $ministerio === null)) {
-            throw new \InvalidArgumentException('La cobertura ministerial solo aplica a efectores públicos con ministerio.');
+
+        if ($sector === self::SECTOR_PUBLICO) {
+            $efector = self::resolvePublicEfector($payload['efector']);
+            self::assertAllowedCountry((int) $efector['id_localidad']);
+        } else {
+            if ((int) ($payload['efector']['id_localidad'] ?? 0) <= 0) {
+                throw new \InvalidArgumentException('Seleccioná una localidad válida para el efector.');
+            }
+            $efector = self::normalizeEfector($payload['efector'], $sector, $perfil);
+        }
+        $plan = self::normalizePlan($payload['plan'] ?? [], $perfil);
+        $amountUsd = self::estimateMonthlyUsd($plan);
+        if ($amountUsd <= 0 || !is_finite($amountUsd)) {
+            throw new \InvalidArgumentException('No se pudo calcular un importe válido para el plan.');
         }
 
-        $identity = self::resolveIdentity($payload);
-        $admin = $identity['admin'];
+        return [
+            'perfil' => $perfil,
+            'sector' => $sector,
+            'ministerio' => $ministerio,
+            'efector' => $efector,
+            'plan' => $plan,
+            'amount_usd' => $amountUsd,
+        ];
+    }
 
-        $efectorData = self::normalizeEfector($payload['efector'] ?? [], $sector, $perfil);
-        $plan = self::normalizePlan($payload['plan'] ?? [], $perfil);
-        $paymentIn = is_array($payload['payment'] ?? null) ? $payload['payment'] : [];
+    /**
+     * Resuelve el efector desde el catálogo local alimentado por el archivo oficial SISA.
+     *
+     * @return array{id_efector: int, codigo_sisa: string, nombre: string, domicilio: string, telefono: ?string, id_localidad: int, origen_financiamiento: string, dependencia: string, tipologia: string}
+     */
+    private static function resolvePublicEfector(array $input): array
+    {
+        $codigoSisa = strtoupper(trim((string) ($input['codigo_sisa'] ?? '')));
+        if (!preg_match('/^[A-Z0-9]{1,15}$/', $codigoSisa)
+            || str_starts_with($codigoSisa, 'W')
+            || str_starts_with($codigoSisa, 'DEV')) {
+            throw new \InvalidArgumentException('Ingresá un código SISA oficial válido.');
+        }
 
-        $tx = Yii::$app->db->beginTransaction();
-        try {
-            if ($identity['persona'] !== null && $identity['user'] !== null) {
-                [$persona, $user] = [$identity['persona'], $identity['user']];
-            } else {
-                [$persona, $user] = self::createPersonaAndUser($admin);
-            }
+        $efector = Efector::findOne(['codigo_sisa' => $codigoSisa]);
+        if ($efector === null || strtoupper(trim((string) $efector->estado)) === 'INACTIVO') {
+            throw new \InvalidArgumentException(
+                'El código SISA no está cargado como activo en el catálogo local. Revisá el código o solicitá actualizar el catálogo.'
+            );
+        }
+        if (stripos((string) $efector->origen_financiamiento, 'privado') !== false) {
+            throw new \InvalidArgumentException('El código SISA corresponde a un efector privado.');
+        }
 
-            $efector = self::createEfector($efectorData);
-            $idEfector = (int) $efector->id_efector;
+        self::assertPublicEfectorAvailable($efector);
 
-            $account = BillingAccountService::createAccount([
-                'nombre' => 'Licencia — ' . $efector->nombre,
-                'tipo' => BillingAccount::TIPO_EFECTOR,
-                'notas' => $perfil === self::PERFIL_CONSULTORIO
-                    ? 'Alta self-service consultorio unipersonal'
-                    : 'Alta self-service institucional',
-                'activo' => $pagoPorMinisterio ? 0 : 1,
-            ]);
-            $account->owner_user_id = (int) $user->id;
-            $account->save(false, ['owner_user_id', 'updated_at']);
+        return [
+            'id_efector' => (int) $efector->id_efector,
+            'codigo_sisa' => (string) $efector->codigo_sisa,
+            'nombre' => (string) $efector->nombre,
+            'domicilio' => (string) $efector->domicilio,
+            'telefono' => trim((string) $efector->telefono) !== '' ? (string) $efector->telefono : null,
+            'id_localidad' => (int) $efector->id_localidad,
+            'origen_financiamiento' => (string) $efector->origen_financiamiento,
+            'dependencia' => (string) $efector->dependencia,
+            'tipologia' => (string) $efector->tipologia,
+        ];
+    }
 
-            $amount = self::estimateMonthlyUsd($plan);
-            $payment = null;
-            if (!$pagoPorMinisterio) {
-                $payment = SimulatedPaymentGateway::charge([
-                    'id_billing_account' => (int) $account->id,
-                    'amount_usd' => $amount,
-                    'card_number' => $paymentIn['card_number'] ?? null,
-                    'card_holder' => $paymentIn['card_holder'] ?? ($admin['nombre'] . ' ' . $admin['apellido']),
-                    'currency' => 'USD',
-                ]);
-                foreach ($plan['classes'] as $class => $cfg) {
-                    BillingAccountService::upsertEntitlement((int) $account->id, $class, [
-                        'max_pes' => (int) $cfg['max_pes'],
-                        'dictado_incluido' => !empty($cfg['dictado_incluido']),
-                        'videollamada_permitida' => !empty($cfg['videollamada_permitida']),
-                        'activo' => 1,
-                    ]);
-                }
-                BillingAccountService::attachEfector((int) $account->id, $idEfector, BillingAccountEfector::ROL_POOL);
-            }
+    private static function assertPublicEfectorAvailable(Efector $efector): void
+    {
+        $hasMinistry = BillingAccountEfector::find()
+            ->alias('membership')
+            ->innerJoin(
+                ['account' => BillingAccount::tableName()],
+                'account.id = membership.id_billing_account'
+            )
+            ->where([
+                'membership.id_efector' => (int) $efector->id_efector,
+                'membership.rol_membresia' => BillingAccountEfector::ROL_AFILIADO,
+                'membership.deleted_at' => null,
+                'account.tipo' => BillingAccount::TIPO_MINISTERIO,
+                'account.deleted_at' => null,
+            ])
+            ->exists();
+        if ($hasMinistry) {
+            throw new \InvalidArgumentException(
+                'Este efector ya está afiliado a un ministerio y no puede registrarse otra vez.'
+            );
+        }
 
-            if ($ministerio !== null) {
-                BillingAccountService::attachEfector(
-                    (int) $ministerio->id,
-                    $idEfector,
-                    BillingAccountEfector::ROL_AFILIADO
-                );
-            }
-
-            self::ensureAdminEfectorPes((int) $persona->id_persona, $idEfector, (int) $user->id);
-
-            $log = new BillingSignupRequest();
-            $log->tipo = BillingSignupRequest::TIPO_EFECTOR;
-            $log->status = $pagoPorMinisterio
-                ? BillingSignupRequest::STATUS_PENDING
-                : BillingSignupRequest::STATUS_APPROVED;
-            $log->nombre_organizacion = (string) $efector->nombre;
-            $log->sector = $sector;
-            $log->id_billing_account_ministerio = $ministerio !== null ? (int) $ministerio->id : null;
-            $log->contacto_nombre = $admin['nombre'];
-            $log->contacto_apellido = $admin['apellido'];
-            $log->contacto_email = $admin['email'];
-            $log->contacto_telefono = $admin['telefono'];
-            $log->contacto_documento = $admin['documento'];
-            $log->notas = ($perfil === self::PERFIL_CONSULTORIO ? '[CONSULTORIO] ' : '')
-                . ($pagoPorMinisterio
-                    ? 'Solicita cobertura de pago del ministerio; pendiente de aprobación operativa.'
-                    : 'Alta self-service con pago simulado.');
-            $log->id_user = (int) $user->id;
-            $log->id_billing_account = (int) $account->id;
-            $log->id_efector = $idEfector;
-            if (!$pagoPorMinisterio) {
-                $log->reviewed_at = date('Y-m-d H:i:s');
-            }
-            $log->save(false);
-
-            $tx->commit();
-
-            return [
-                'id_user' => (int) $user->id,
-                'id_persona' => (int) $persona->id_persona,
-                'id_efector' => $idEfector,
-                'id_billing_account' => (int) $account->id,
-                'perfil' => $perfil,
-                'sector' => $sector,
-                'pago_cubierto_por_ministerio' => $pagoPorMinisterio,
-                'amount_usd_charged' => $payment !== null ? (float) $payment->amount_usd : 0.0,
-                'payment_reference' => $payment !== null ? (string) $payment->external_reference : null,
-                'username' => (string) $user->username,
-                'email' => (string) $user->email,
-                'login_hint' => 'Ingresá en la web clínica con tu e-mail/usuario y la contraseña elegida.',
-                'next_steps' => self::nextStepsForPerfil($perfil),
-            ];
-        } catch (\Throwable $e) {
-            $tx->rollBack();
-            throw $e;
+        $hasBillingPool = BillingAccountEfector::find()
+            ->where([
+                'id_efector' => (int) $efector->id_efector,
+                'rol_membresia' => BillingAccountEfector::ROL_POOL,
+                'deleted_at' => null,
+            ])
+            ->exists();
+        if ($hasBillingPool) {
+            throw new \InvalidArgumentException(
+                'Este efector ya tiene una cuenta de facturación. Contactá al administrador para continuar.'
+            );
         }
     }
 
     /**
-     * Resuelve la identidad del administrador.
-     *
-     * Con verification_id (Didit) crea/recupera Persona + User passwordless y
-     * arma el array de admin desde la identidad verificada. Sin verification_id
-     * mantiene el camino legacy (normalizeAdmin + createPersonaAndUser).
-     *
-     * @param array<string, mixed> $payload
-     * @return array{admin: array<string, mixed>, persona: ?Persona, user: ?User}
+     * @return array{admin: array<string, mixed>, persona: Persona, user: User}
      */
-    private static function resolveIdentity(array $payload): array
+    private static function resolveVerifiedIdentity(array $payload, User $user, Persona $persona): array
     {
-        $verificationId = trim((string) ($payload['verification_id'] ?? ''));
-        if ($verificationId === '') {
-            return [
-                'admin' => self::normalizeAdmin($payload['admin'] ?? []),
-                'persona' => null,
-                'user' => null,
-            ];
+        if ((int) $persona->id_user !== (int) $user->id || (int) $user->status !== User::STATUS_ACTIVE) {
+            throw new \InvalidArgumentException('La cuenta autenticada no está vinculada a una persona activa.');
         }
 
-        $email = trim((string) ($payload['email'] ?? ($payload['admin']['email'] ?? '')));
-        $account = (new CreateIdentityAccount())->crear([
-            'verification_id' => $verificationId,
-            'email' => $email,
-        ]);
-
-        $persona = $account['persona'];
-        $user = $account['user'];
-        $telefono = trim((string) ($payload['telefono'] ?? ($payload['admin']['telefono'] ?? '')));
-
-        $admin = [
-            'nombre' => (string) $persona->nombre,
-            'apellido' => (string) $persona->apellido,
-            'email' => (string) $user->email,
-            'password' => '',
-            'documento' => (string) $persona->documento,
-            'telefono' => $telefono !== '' ? $telefono : null,
-            'fecha_nacimiento' => (string) $persona->fecha_nacimiento,
-        ];
+        $email = strtolower(trim((string) ($user->email ?: ($payload['payer_email'] ?? ''))));
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new \InvalidArgumentException('La cuenta debe tener un e-mail válido para el alta.');
+        }
+        $telefono = trim((string) ($payload['contact_phone'] ?? ''));
+        ContactPhoneValidator::assertValid($telefono, 'Teléfono del administrador');
 
         return [
-            'admin' => $admin,
+            'admin' => [
+                'nombre' => (string) $persona->nombre,
+                'apellido' => (string) $persona->apellido,
+                'email' => $email,
+                'password' => '',
+                'documento' => (string) $persona->documento,
+                'telefono' => $telefono !== '' ? $telefono : null,
+                'fecha_nacimiento' => (string) $persona->fecha_nacimiento,
+            ],
             'persona' => $persona,
             'user' => $user,
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $confirmedPayment
+     */
+    private static function recordConfirmedPayment(
+        int $idBillingAccount,
+        float $amountUsd,
+        array $confirmedPayment
+    ): BillingPayment {
+        $providerPaymentId = trim((string) ($confirmedPayment['provider_payment_id'] ?? ''));
+        $providerSubscriptionId = trim((string) ($confirmedPayment['provider_subscription_id'] ?? ''));
+        $amountUsd = (float) ($confirmedPayment['amount_usd'] ?? $amountUsd);
+        $amountArs = (float) ($confirmedPayment['amount_ars'] ?? 0);
+        if ($providerPaymentId === '' || $providerSubscriptionId === ''
+            || $amountArs <= 0 || $amountUsd <= 0 || !is_finite($amountUsd)) {
+            throw new \InvalidArgumentException('El pago confirmado de Mercado Pago está incompleto.');
+        }
+
+        $payment = new BillingPayment();
+        $payment->id_billing_account = $idBillingAccount;
+        $payment->provider = BillingPayment::PROVIDER_MERCADOPAGO;
+        $payment->status = BillingPayment::STATUS_APPROVED;
+        $payment->amount_usd = round($amountUsd, 2);
+        $payment->amount_ars = round($amountArs, 2);
+        $payment->currency = 'ARS';
+        $payment->external_reference = (string) ($confirmedPayment['external_reference'] ?? '');
+        $payment->provider_subscription_id = $providerSubscriptionId;
+        $payment->provider_payment_id = $providerPaymentId;
+        $payment->payload_json = json_encode(
+            $confirmedPayment['provider_payload'] ?? [],
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+        );
+        $payment->paid_at = (string) ($confirmedPayment['paid_at'] ?? date('Y-m-d H:i:s'));
+        if (!$payment->save()) {
+            throw new \RuntimeException('No se pudo registrar el pago confirmado: ' . json_encode($payment->getErrors()));
+        }
+
+        return $payment;
     }
 
     /**
@@ -284,45 +432,6 @@ final class SignUpInstitutionalEfector
     public static function planesCatalog(): array
     {
         return PricingPesByEncounterClassMetadata::loadConfig();
-    }
-
-    /**
-     * @param array<string, mixed> $admin
-     * @return array{nombre: string, apellido: string, email: string, password: string, documento: string, telefono: ?string, fecha_nacimiento: string}
-     */
-    private static function normalizeAdmin(array $admin): array
-    {
-        $nombre = trim((string) ($admin['nombre'] ?? ''));
-        $apellido = trim((string) ($admin['apellido'] ?? ''));
-        $email = strtolower(trim((string) ($admin['email'] ?? '')));
-        $password = (string) ($admin['password'] ?? '');
-        $documento = preg_replace('/\D+/', '', (string) ($admin['documento'] ?? '')) ?? '';
-        $telefono = trim((string) ($admin['telefono'] ?? ''));
-        ContactPhoneValidator::assertValid($telefono, 'Teléfono del administrador');
-        $fn = trim((string) ($admin['fecha_nacimiento'] ?? '1980-01-01'));
-
-        if ($nombre === '' || $apellido === '' || $email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            throw new \InvalidArgumentException('Datos del administrador incompletos (nombre, apellido, e-mail).');
-        }
-        if (strlen($password) < 8) {
-            throw new \InvalidArgumentException('La contraseña debe tener al menos 8 caracteres.');
-        }
-        if ($documento === '' || strlen($documento) < 7) {
-            throw new \InvalidArgumentException('Indicá un documento válido del administrador.');
-        }
-        if (User::find()->where(['or', ['email' => $email], ['username' => $email]])->exists()) {
-            throw new \InvalidArgumentException('Ya existe un usuario con ese e-mail.');
-        }
-
-        return [
-            'nombre' => $nombre,
-            'apellido' => $apellido,
-            'email' => $email,
-            'password' => $password,
-            'documento' => $documento,
-            'telefono' => $telefono !== '' ? $telefono : null,
-            'fecha_nacimiento' => $fn,
-        ];
     }
 
     /**
@@ -471,48 +580,6 @@ final class SignUpInstitutionalEfector
 
         // Dictado siempre incluido en el precio.
         return PricingPesByEncounterClassMetadata::estimateMonthlyTotal($byClass, true, $video);
-    }
-
-    /**
-     * @param array{nombre: string, apellido: string, email: string, password: string, documento: string, telefono: ?string, fecha_nacimiento: string} $admin
-     * @return array{0: Persona, 1: User}
-     */
-    private static function createPersonaAndUser(array $admin): array
-    {
-        $persona = new Persona();
-        $persona->scenario = Persona::SCENARIOCREATEUPDATE;
-        $persona->nombre = $admin['nombre'];
-        $persona->apellido = $admin['apellido'];
-        $persona->documento = $admin['documento'];
-        $persona->id_tipodoc = 1;
-        $persona->fecha_nacimiento = $admin['fecha_nacimiento'];
-        $persona->sexo_biologico = 1;
-        $persona->genero = 1;
-        $persona->id_estado_civil = 1;
-        $persona->acredita_identidad = 1;
-        if (!$persona->save()) {
-            throw new \InvalidArgumentException('No se pudo crear la persona: ' . json_encode($persona->getErrors()));
-        }
-
-        $user = new User();
-        $user->username = $admin['email'];
-        $user->email = $admin['email'];
-        $user->status = User::STATUS_ACTIVE;
-        $user->setPassword($admin['password']);
-        $user->password_set_at = time();
-        $user->generateAuthKey();
-        $user->email_confirmed = 1;
-        if (!$user->save()) {
-            throw new \InvalidArgumentException('No se pudo crear el usuario: ' . json_encode($user->getErrors()));
-        }
-
-        $persona->id_user = (int) $user->id;
-        $persona->scenario = Persona::SCENARIOUSERUPDATE;
-        if (!$persona->save(false)) {
-            throw new \RuntimeException('No se pudo vincular usuario a persona.');
-        }
-
-        return [$persona, $user];
     }
 
     /**

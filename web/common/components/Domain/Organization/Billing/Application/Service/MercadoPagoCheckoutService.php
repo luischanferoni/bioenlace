@@ -4,219 +4,234 @@ namespace common\components\Domain\Organization\Billing\Application\Service;
 
 use Yii;
 use yii\base\InvalidConfigException;
+use yii\httpclient\Client;
+use yii\httpclient\CurlTransport;
 
-/**
- * Servicio de checkout con MercadoPago.
- *
- * Estructura básica para el plan alta-movil-cuentas-efectores.
- * Pendiente de pulir con integración completa.
- *
- * NOTAS:
- * - Esta es una estructura base; la integración completa requiere:
- *   - Definir modelo de precios, planes y recurrencia
- *   - Implementar webhooks firmados para confirmación de pago
- *   - Conciliación de intentos de pago para evitar duplicados
- *   - Gestión de suscripciones, renovación y cancelación
- *   - Moneda, impuestos, facturación
- *
- * - Para habilitar pagos reales:
- *   1. Configurar credenciales en params-local.php
- *   2. Configurar webhook URL en la consola de MercadoPago
- *   3. Implementar lógica de webhooks en MercadoPagoWebhookController
- *   4. Definir precios y planes en metadata o tabla catálogo
- *
- * @see web/docs/plans/alta-movil-cuentas-efectores/phases/03-altas-pagas.md
- */
-class MercadoPagoCheckoutService
+final class MercadoPagoCheckoutService
 {
-    /**
-     * @var array Configuración de MercadoPago
-     */
-    private $config;
+    private const API_URL = 'https://api.mercadopago.com';
+
+    /** @var array<string, mixed> */
+    private array $config;
 
     /**
-     * @var bool Modo sandbox/prueba
+     * @param array<string, mixed>|null $config
      */
-    private $sandboxMode;
-
-    public function __construct()
+    public function __construct(?array $config = null)
     {
-        $this->config = Yii::$app->params['mercadoPago'] ?? [];
-        $this->sandboxMode = $this->config['sandboxMode'] ?? true;
-
-        if (empty($this->config['accessToken'])) {
-            throw new InvalidConfigException('MercadoPago access token no configurado');
+        $this->config = $config ?? (Yii::$app->params['mercadoPago'] ?? []);
+        if (trim((string) ($this->config['accessToken'] ?? '')) === '') {
+            throw new InvalidConfigException('Mercado Pago access token no configurado.');
         }
     }
 
     /**
-     * Crea una preferencia de pago para checkout.
+     * Calcula el snapshot del precio comercial. La cotización se configura y
+     * actualiza trimestralmente; no se consulta una cotización externa durante el checkout.
      *
-     * @param array $data Datos del checkout
-     *   - idempotencyKey: clave única para evitar duplicados
-     *   - planId: identificador del plan (consultorio, clínica, etc.)
-     *   - metadata: datos adicionales (efector, usuario, etc.)
-     * @return array Preferencia de pago con ID de MercadoPago
+     * @return array{amount_usd: float, exchange_rate: float, exchange_rate_effective_date: string, net_ars: float, vat_rate: float, vat_ars: float, total_ars: float}
      */
-    public function createPreference(array $data): array
+    public function calculateArsAmount(float $amountUsd): array
     {
-        // TODO: Implementar llamada real a API de MercadoPago
-        // TODO: Validar idempotencyKey antes de crear preferencia
-        // TODO: Calcular precio desde catálogo de planes
-        // TODO: Configurar URLs de success/failure/pending
-
-        if ($this->sandboxMode) {
-            Yii::info(
-                'MercadoPago sandbox: creando preferencia mockup para ' . json_encode($data),
-                'mercadopago'
-            );
-
-            return [
-                'id' => 'mock-' . ($data['idempotencyKey'] ?? 'unknown'),
-                'sandbox_init_point' => 'https://sandbox.mercadopago.com/checkout/v1/redirect',
-                'init_point' => 'https://www.mercadopago.com/checkout/v1/redirect',
-                'auto_return' => 'approved',
-                'external_reference' => $data['idempotencyKey'] ?? null,
-            ];
+        $exchangeRate = (float) ($this->config['usdArsRate'] ?? 0);
+        $vatRate = (float) ($this->config['vatRate'] ?? 0.21);
+        $effectiveDate = trim((string) ($this->config['usdArsRateEffectiveDate'] ?? ''));
+        if ($amountUsd <= 0 || !is_finite($amountUsd)) {
+            throw new \InvalidArgumentException('El importe mensual debe ser mayor que cero.');
+        }
+        if ($exchangeRate <= 0 || !is_finite($exchangeRate)) {
+            throw new InvalidConfigException('Cotización MEP vendedora USD/ARS no configurada.');
+        }
+        $effectiveTimestamp = $effectiveDate !== '' ? strtotime($effectiveDate) : false;
+        if ($effectiveTimestamp === false || date('Y-m-d', $effectiveTimestamp) !== $effectiveDate) {
+            throw new InvalidConfigException('Fecha de vigencia de la cotización MEP no configurada o inválida.');
+        }
+        $ageDays = (int) floor((strtotime(date('Y-m-d')) - $effectiveTimestamp) / 86400);
+        if ($ageDays < 0 || $ageDays > 100) {
+            throw new InvalidConfigException('La cotización MEP está vencida; debe revisarse trimestralmente.');
+        }
+        if ($vatRate < 0 || $vatRate > 1 || !is_finite($vatRate)) {
+            throw new InvalidConfigException('Alícuota de IVA de Mercado Pago inválida.');
         }
 
-        // === INTEGRACIÓN REAL CON MERCADOPAGO (PENDIENTE) ===
-        /*
-        try {
-            $client = new \yii\httpclient\Client();
-            $response = $client->createRequest()
-                ->setMethod('POST')
-                ->setUrl($this->getApiUrl() . '/checkout/preferences')
-                ->setHeaders([
-                    'Authorization' => 'Bearer ' . $this->config['accessToken'],
-                    'Content-Type' => 'application/json',
-                ])
-                ->setData([
-                    'items' => [
-                        [
-                            'title' => $this->getPlanTitle($data['planId']),
-                            'quantity' => 1,
-                            'currency_id' => $this->config['currency'] ?? 'ARS',
-                            'unit_price' => $this->getPlanPrice($data['planId']),
-                        ],
-                    ],
-                    'back_urls' => [
-                        'success' => $this->config['successUrl'],
-                        'failure' => $this->config['failureUrl'],
-                        'pending' => $this->config['pendingUrl'],
-                    ],
-                    'auto_return' => 'approved',
-                    'external_reference' => $data['idempotencyKey'],
-                    'metadata' => $data['metadata'] ?? [],
-                ])
-                ->send();
+        $netArs = round($amountUsd * $exchangeRate, 2);
+        $vatArs = round($netArs * $vatRate, 2);
 
-            if (!$response->isOk()) {
-                Yii::error(
-                    'MercadoPago API error: ' . $response->getStatusCode() . ' ' . $response->content,
-                    'mercadopago'
-                );
-                throw new \RuntimeException('Error al crear preferencia de pago');
+        return [
+            'amount_usd' => round($amountUsd, 2),
+            'exchange_rate' => $exchangeRate,
+            'exchange_rate_effective_date' => $effectiveDate,
+            'net_ars' => $netArs,
+            'vat_rate' => $vatRate,
+            'vat_ars' => $vatArs,
+            'total_ars' => round($netArs + $vatArs, 2),
+        ];
+    }
+
+    /**
+     * Crea una suscripción mensual con Checkout Pro.
+     *
+     * @param array{
+     *   amount_ars: float,
+     *   payer_email: string,
+     *   reason: string,
+     *   external_reference: string,
+     *   back_url: string,
+     *   notification_url: string,
+     *   idempotency_key: string
+     * } $data
+     * @return array{id: string, init_point: string, status: string|null}
+     */
+    public function createSubscription(array $data): array
+    {
+        if ((float) $data['amount_ars'] <= 0 || !is_finite((float) $data['amount_ars'])) {
+            throw new \InvalidArgumentException('El importe de la suscripción debe ser mayor que cero.');
+        }
+        if (!filter_var($data['payer_email'], FILTER_VALIDATE_EMAIL)) {
+            throw new \InvalidArgumentException('Se requiere un e-mail válido para crear la suscripción.');
+        }
+        foreach (['back_url', 'notification_url'] as $urlKey) {
+            if (!filter_var($data[$urlKey], FILTER_VALIDATE_URL)
+                || parse_url($data[$urlKey], PHP_URL_SCHEME) !== 'https') {
+                throw new \InvalidArgumentException('Las URLs de retorno y notificación deben ser HTTPS.');
             }
-
-            return $response->data;
-        } catch (\Exception $e) {
-            Yii::error(
-                'MercadoPago connection error: ' . $e->getMessage(),
-                'mercadopago'
-            );
-            throw $e;
-        }
-        */
-        // === FIN INTEGRACIÓN REAL ===
-
-        throw new \RuntimeException('Integración de MercadoPago no completada');
-    }
-
-    /**
-     * Consulta el estado de un pago por ID de preferencia.
-     *
-     * @param string $preferenceId ID de preferencia de MercadoPago
-     * @return array Estado del pago
-     */
-    public function getPaymentStatus(string $preferenceId): array
-    {
-        // TODO: Implementar consulta real a API de MercadoPago
-        // TODO: Buscar por external_reference (idempotencyKey) en vez de preferenceId
-        // TODO: Conciliar con intentos de pago persistidos
-
-        if ($this->sandboxMode) {
-            return [
-                'status' => 'approved',
-                'status_detail' => 'accredited',
-                'external_reference' => $preferenceId,
-            ];
         }
 
-        // === INTEGRACIÓN REAL (PENDIENTE) ===
-        throw new \RuntimeException('Integración de MercadoPago no completada');
-    }
+        $response = $this->request('POST', '/preapproval', [
+            'reason' => $data['reason'],
+            'external_reference' => $data['external_reference'],
+            'payer_email' => $data['payer_email'],
+            'back_url' => $data['back_url'],
+            'notification_url' => $data['notification_url'],
+            'auto_recurring' => [
+                'frequency' => 1,
+                'frequency_type' => 'months',
+                'transaction_amount' => round((float) $data['amount_ars'], 2),
+                'currency_id' => 'ARS',
+            ],
+            'status' => 'pending',
+        ], $data['idempotency_key']);
 
-    /**
-     * Procesa un webhook de MercadoPago.
-     *
-     * @param array $payload Datos del webhook
-     * @return bool True si el webhook fue procesado correctamente
-     */
-    public function processWebhook(array $payload): bool
-    {
-        // TODO: Validar firma del webhook (X-Signature)
-        // TODO: Deduplicar webhooks repetidos por ID
-        // TODO: Actualizar estado de intento de pago
-        // TODO: Activar licencia/entitlement solo tras confirmación
-        // TODO: Reintentar webhooks fallidos con backoff
-
-        if ($this->sandboxMode) {
-            Yii::info(
-                'MercadoPago sandbox: webhook mockup procesado',
-                'mercadopago'
-            );
-            return true;
+        $id = trim((string) ($response['id'] ?? ''));
+        $initPoint = trim((string) ($response['init_point'] ?? ''));
+        if ($id === '' || !filter_var($initPoint, FILTER_VALIDATE_URL)) {
+            throw new \RuntimeException('Mercado Pago no devolvió una suscripción y URL de checkout válidas.');
         }
 
-        // === INTEGRACIÓN REAL (PENDIENTE) ===
-        throw new \RuntimeException('Integración de MercadoPago no completada');
-    }
-
-    /**
-     * Obtiene la URL base de la API según modo sandbox/producción.
-     */
-    private function getApiUrl(): string
-    {
-        return $this->sandboxMode
-            ? 'https://api.mercadopago.com'
-            : 'https://api.mercadopago.com';
-    }
-
-    /**
-     * Obtiene el título de un plan desde catálogo.
-     * TODO: Implementar catálogo de planes.
-     */
-    private function getPlanTitle(string $planId): string
-    {
-        $catalog = [
-            'consultorio' => 'Consultorio propio',
-            'clinica' => 'Clínica / Centro',
+        return [
+            'id' => $id,
+            'init_point' => $initPoint,
+            'status' => isset($response['status']) ? (string) $response['status'] : null,
         ];
-        return $catalog[$planId] ?? 'Plan Bioenlace';
     }
 
     /**
-     * Obtiene el precio de un plan desde catálogo.
-     * TODO: Implementar catálogo de planes con precios, impuestos, recurrencia.
+     * @return array<string, mixed>
      */
-    private function getPlanPrice(string $planId): float
+    public function getSubscription(string $subscriptionId): array
     {
-        // Precios de ejemplo; definir en metadata o tabla
-        $catalog = [
-            'consultorio' => 10000.00,
-            'clinica' => 50000.00,
-        ];
-        return $catalog[$planId] ?? 0.0;
+        return $this->request('GET', '/preapproval/' . rawurlencode($subscriptionId));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getAuthorizedPayment(string $authorizedPaymentId): array
+    {
+        return $this->request('GET', '/authorized_payments/' . rawurlencode($authorizedPaymentId));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function cancelSubscription(string $subscriptionId): array
+    {
+        return $this->request('PUT', '/preapproval/' . rawurlencode($subscriptionId), [
+            'status' => 'cancelled',
+        ]);
+    }
+
+    /**
+     * Valida X-Signature según el manifest de Webhooks de Mercado Pago.
+     *
+     * @param array<string, mixed> $payload
+     */
+    public function validateWebhookSignature(
+        array $payload,
+        ?string $signatureHeader,
+        ?string $requestId
+    ): bool {
+        $secret = trim((string) ($this->config['webhookSecret'] ?? ''));
+        if ($secret === '' || $signatureHeader === null || $requestId === null || trim($requestId) === '') {
+            return false;
+        }
+
+        $resourceId = strtolower(trim((string) ($payload['data']['id'] ?? '')));
+        if ($resourceId === '') {
+            return false;
+        }
+
+        $parts = [];
+        foreach (explode(',', $signatureHeader) as $part) {
+            $pair = explode('=', trim($part), 2);
+            if (count($pair) === 2) {
+                $parts[$pair[0]] = $pair[1];
+            }
+        }
+        $timestamp = $parts['ts'] ?? '';
+        $signature = $parts['v1'] ?? '';
+        if (!ctype_digit($timestamp) || !preg_match('/^[a-f0-9]{64}$/i', $signature)) {
+            return false;
+        }
+
+        $manifest = 'id:' . $resourceId . ';request-id:' . trim($requestId) . ';ts:' . $timestamp . ';';
+        $expected = hash_hmac('sha256', $manifest, $secret);
+
+        return hash_equals($expected, strtolower($signature));
+    }
+
+    /**
+     * @param array<string, mixed>|null $data
+     * @return array<string, mixed>
+     */
+    private function request(string $method, string $path, ?array $data = null, ?string $idempotencyKey = null): array
+    {
+        $client = new Client([
+            'baseUrl' => self::API_URL,
+            'transport' => CurlTransport::class,
+        ]);
+        $request = $client->createRequest()
+            ->setMethod($method)
+            ->setUrl($path)
+            ->setHeaders([
+                'Authorization' => 'Bearer ' . trim((string) $this->config['accessToken']),
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+            ])
+            ->setOptions([
+                CURLOPT_CONNECTTIMEOUT => 5,
+                CURLOPT_TIMEOUT => 20,
+            ]);
+        if ($idempotencyKey !== null) {
+            $request->addHeaders(['X-Idempotency-Key' => $idempotencyKey]);
+        }
+        if ($data !== null) {
+            $request->setFormat(Client::FORMAT_JSON)->setData($data);
+        }
+
+        $response = $request->send();
+        $body = json_decode($response->content, true);
+        if (!$response->isOk() || !is_array($body)) {
+            $statusCode = $response->getStatusCode();
+            Yii::error([
+                'event' => 'mercadopago.api_error',
+                'method' => $method,
+                'path' => $path,
+                'status_code' => $statusCode,
+            ], 'mercadopago');
+            throw new \RuntimeException('Mercado Pago no pudo completar la operación (HTTP ' . $statusCode . ').');
+        }
+
+        return $body;
     }
 }

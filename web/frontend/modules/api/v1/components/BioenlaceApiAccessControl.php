@@ -53,6 +53,9 @@ class BioenlaceApiAccessControl extends ActionFilter
         '/api/person-representation/preferencias-como-paciente',
         '/api/person-representation/pacientes-a-cargo',
         '/api/person-representation/establecer-sujeto-paciente',
+        '/api/licencia/registrar-efector',
+        '/api/licencia/estado-checkout',
+        '/api/licencia/cancelar-suscripcion',
     ];
 
     /** @var list<string> */

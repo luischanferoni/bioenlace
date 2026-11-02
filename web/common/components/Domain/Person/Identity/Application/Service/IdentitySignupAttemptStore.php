@@ -4,6 +4,7 @@ namespace common\components\Domain\Person\Identity\Application\Service;
 
 use Yii;
 use yii\db\Expression;
+use yii\db\Query;
 
 final class IdentitySignupAttemptStore
 {
@@ -61,6 +62,18 @@ final class IdentitySignupAttemptStore
             || (int) $attempt['id_user'] !== $idUser) {
             throw new \RuntimeException('No se pudo persistir el estado final del alta de identidad.');
         }
+    }
+
+    public function accountWasCreatedFromApprovedVerification(int $idPersona, int $idUser): bool
+    {
+        return (new Query())
+            ->from('{{%identity_signup_attempt}}')
+            ->where([
+                'id_persona' => $idPersona,
+                'id_user' => $idUser,
+                'status' => self::STATUS_ACCOUNT_CREATED,
+            ])
+            ->exists(Yii::$app->db);
     }
 
     private function normalizeStatus(string $status): string

@@ -15,9 +15,15 @@ final class StaffMobileAccessServiceTest extends TestCase
         self::assertTrue(StaffMobileAccessService::isMobileAccountAllowed(['usuario', 'paciente'], true, false));
     }
 
-    public function testDoesNotTreatAnAssignedRoleOrEfectorAsIdentityOnly(): void
+    public function testAllowsAdminEfectorToAuthenticateWithoutMobileAdminOperations(): void
     {
-        self::assertFalse(StaffMobileAccessService::isMobileAccountAllowed(['AdminEfector'], true, false));
+        self::assertTrue(StaffMobileAccessService::isMobileAccountAllowed(['AdminEfector'], true, false));
+        self::assertTrue(StaffMobileAccessService::isMobileAccountAllowed(['AdminEfector'], true, true));
+        self::assertTrue(StaffMobileAccessService::isMobileAccountAllowed(['AdminEfector_x_efector_12'], true, true));
+    }
+
+    public function testDoesNotTreatOtherAssignedRolesAsIdentityOnly(): void
+    {
         self::assertFalse(StaffMobileAccessService::isMobileAccountAllowed(['Medico'], true, false));
         self::assertFalse(StaffMobileAccessService::isMobileAccountAllowed(['usuario'], true, true));
         self::assertTrue(StaffMobileAccessService::isMobileAccountAllowed(['Medico'], true, true));
@@ -37,7 +43,7 @@ final class StaffMobileAccessServiceTest extends TestCase
         self::assertTrue(StaffMobileAccessService::isMobileAccountAllowed(['enfermeria'], true, true));
         self::assertTrue(StaffMobileAccessService::hasMobileStaffRole(['enfermeria_x_efector_12']));
         self::assertFalse(StaffMobileAccessService::hasMobileStaffRole(['AdminEfector']));
-        self::assertFalse(StaffMobileAccessService::isMobileAccountAllowed(['AdminEfector'], true, true));
+        self::assertTrue(StaffMobileAccessService::isMobileAccountAllowed(['AdminEfector'], true, true));
         self::assertFalse(StaffMobileAccessService::hasMobileStaffRole(['Administrativo']));
         self::assertFalse(StaffMobileAccessService::isMobileAccountAllowed(['Administrativo'], true, true));
         self::assertFalse(StaffMobileAccessService::hasMobileStaffRole(['facturista']));

@@ -17,7 +17,7 @@ Desplegar el modelo nuevo sin rutas antiguas y sin perder las relaciones/activos
 - [ ] Filtrar candidatos a personal y validar server-side que toda asignación de personal sea de origen `MOBILE_APP`.
 - [ ] Confirmar que la migración no infiere origen con `id_user`, `acredita_identidad` ni referencias Didit sin evidencia suficiente.
 - [x] Retirar login y autenticación móvil para AdminEfector y roles no aprobados; también se filtran tokens emitidos antes del cambio cuando se usan desde Personal de Salud.
-- [x] Retirar el alta institucional con pago simulado; `POST /api/v1/licencia/registrar-efector` responde `410 Gone` hasta contar con checkout real.
+- [x] Retirar el alta institucional con pago simulado; `POST /api/v1/licencia/registrar-efector` exige sesión móvil y crea un checkout pendiente.
 - [ ] Quitar de la vista frontend el formulario y textos legacy de usuario/contraseña y mantener solo ingreso con la app; no ofrecer passkey.
 - [ ] Restringir el login del panel Admin a superadmin, manteniendo usuario/contraseña y sin passkey/QR.
 - [x] No provisionar licencias/roles por pagos simulados en producción.

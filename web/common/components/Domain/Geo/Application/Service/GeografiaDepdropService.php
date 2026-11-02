@@ -5,6 +5,8 @@ namespace common\components\Domain\Geo\Application\Service;
 use common\models\Geo\Barrios;
 use common\models\Geo\Departamento;
 use common\models\Geo\Localidad;
+use common\models\Geo\Pais;
+use common\models\Geo\Provincia;
 
 /**
  * Respuestas Kartik DepDrop ({@code output}/{@code selected}) para provincia → departamento → localidad → barrio.
@@ -119,6 +121,45 @@ final class GeografiaDepdropService
             ->select(['id' => 'l.id_localidad', 'name' => 'l.nombre'])
             ->where(['d.id_provincia' => $idProvincia])
             ->orderBy(['l.nombre' => SORT_ASC])
+            ->all();
+    }
+
+    /**
+     * Búsqueda acotada para el alta móvil de efectores.
+     *
+     * @return list<array{id: int, nombre: string, departamento: string, provincia: string}>
+     */
+    public static function buscarLocalidades(string $query): array
+    {
+        $query = trim($query);
+        if (mb_strlen($query) < 2) {
+            return [];
+        }
+
+        $allowedCountries = array_values(array_filter(
+            (array) (\Yii::$app->params['signupAllowedIso2'] ?? ['AR']),
+            static fn ($value) => is_string($value) && strlen($value) === 2
+        ));
+        if ($allowedCountries === []) {
+            return [];
+        }
+
+        return Localidad::find()
+            ->alias('l')
+            ->innerJoin(['d' => Departamento::tableName()], 'd.id_departamento = l.id_departamento')
+            ->innerJoin(['p' => Provincia::tableName()], 'p.id_provincia = d.id_provincia')
+            ->innerJoin(['country' => Pais::tableName()], 'country.id_pais = p.id_pais')
+            ->asArray()
+            ->select([
+                'id' => 'l.id_localidad',
+                'nombre' => 'l.nombre',
+                'departamento' => 'd.nombre',
+                'provincia' => 'p.nombre',
+            ])
+            ->where(['like', 'l.nombre', $query])
+            ->andWhere(['country.iso2' => $allowedCountries])
+            ->orderBy(['l.nombre' => SORT_ASC, 'p.nombre' => SORT_ASC])
+            ->limit(20)
             ->all();
     }
 

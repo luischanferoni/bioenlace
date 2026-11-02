@@ -37,19 +37,19 @@ return [
     ],
     /**
      * MercadoPago — checkout de altas pagas (consultorio, clínica/centro).
-     * Estructura básica para el plan alta-movil-cuentas-efectores.
-     * Pendiente de pulir con integración completa.
+     * Credenciales y precio ARS para suscripciones de altas comerciales.
      *
      * @see web/docs/plans/alta-movil-cuentas-efectores/phases/03-altas-pagas.md
      */
     'mercadoPago' => [
-        'sandboxMode' => true,
-        'accessToken' => null, // Configurar en params-local.php
+        'accessToken' => null, // Configurar en params-local.php o variables de entorno
+        'webhookSecret' => null, // Configurar en params-local.php
+        'notificationUrl' => null, // URL HTTPS pública configurada en Mercado Pago
+        'backUrl' => null, // URL HTTPS de retorno al flujo móvil
         'currency' => 'ARS',
-        'successUrl' => null, // Configurar en params-local.php
-        'failureUrl' => null, // Configurar en params-local.php
-        'pendingUrl' => null, // Configurar en params-local.php
-        'webhookSecret' => null, // Configurar en params-local.php para validar firmas
+        'usdArsRate' => null, // Cotización MEP vendedora revisada trimestralmente
+        'usdArsRateEffectiveDate' => null,
+        'vatRate' => 0.21,
     ],
     /**
      * Legacy / unused en captura clínica.

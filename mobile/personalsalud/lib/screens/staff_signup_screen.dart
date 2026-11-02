@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
 import '../auth/personalsalud_post_login.dart';
+import 'commercial_signup_screen.dart';
 import '../services/staff_signup_service.dart';
 
 enum _SignupPath { professional, privateConsultorio, clinic }
@@ -26,6 +27,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
   }
 
   Future<void> _verifyIdentity() async {
+    final selectedPath = _selectedPath;
     setState(() => _submitting = true);
     try {
       final service = StaffSignupService();
@@ -50,6 +52,19 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
 
       await AuthTokenStore.instance.write(token);
       if (!mounted) return;
+      if (selectedPath != _SignupPath.professional) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => CommercialSignupScreen(
+              authToken: token,
+              profile: selectedPath == _SignupPath.privateConsultorio
+                  ? 'CONSULTORIO'
+                  : 'CLINICA',
+            ),
+          ),
+        );
+        return;
+      }
       await navigatePersonalsaludAfterLogin(
         userId,
         'Personal de Salud',
@@ -148,13 +163,17 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Creá tu cuenta de Personal de Salud',
+                _selectedPath == _SignupPath.professional
+                    ? 'Creá tu cuenta de Personal de Salud'
+                    : 'Verificá tu identidad para iniciar el alta',
                 style: BioTypography.h2,
                 textAlign: TextAlign.center,
               ),
               BioSpacing.gapH(BioSpacing.sm),
               Text(
-                'Elegí qué tipo de cuenta necesitás. No necesitás un e-mail para crear una cuenta profesional.',
+                _selectedPath == _SignupPath.professional
+                    ? 'Elegí qué tipo de cuenta necesitás. No necesitás un e-mail para crear una cuenta profesional.'
+                    : 'La identidad se crea primero desde la app. Después completarás los datos del efector y el checkout mensual.',
                 style: BioTypography.body.copyWith(color: tokens.textMuted),
                 textAlign: TextAlign.center,
               ),
@@ -169,15 +188,13 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                 path: _SignupPath.privateConsultorio,
                 title: 'Consultorio propio',
                 description:
-                    'Alta con pago y verificación profesional. Todavía no disponible.',
-                enabled: false,
+                    'Alta paga mensual en ARS. Se asigna automáticamente AdminEfector.',
               ),
               _buildPathCard(
                 path: _SignupPath.clinic,
                 title: 'Clínica o centro',
                 description:
-                    'Alta con pago para administrar una institución. Todavía no disponible.',
-                enabled: false,
+                    'Alta paga mensual en ARS para administrar una institución.',
               ),
               BioSpacing.gapH(BioSpacing.md),
               if (_pendingVerificationId != null) ...[
@@ -195,7 +212,9 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                       ? 'Verificando…'
                       : _pendingVerificationId != null
                       ? 'Reintentar creación de cuenta'
-                      : 'Verificar identidad y crear cuenta',
+                      : _selectedPath == _SignupPath.professional
+                      ? 'Verificar identidad y crear cuenta'
+                      : 'Verificar identidad y continuar',
                   icon: Icons.verified_user_outlined,
                   size: BioButtonSize.lg,
                   fullWidth: true,

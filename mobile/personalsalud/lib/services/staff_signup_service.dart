@@ -64,9 +64,10 @@ class StaffSignupService {
     return ApiClient(
       appClient: 'bioenlace-personalsalud',
       traceLabel: 'auth/login-biometrico',
-    ).postData('/auth/login-biometrico', body: {
-      'biometric_verification_id': verificationId,
-    });
+    ).postData(
+      '/auth/login-biometrico',
+      body: {'biometric_verification_id': verificationId},
+    );
   }
 
   /// Crea la cuenta de identidad (Persona + User passwordless).
@@ -84,5 +85,72 @@ class StaffSignupService {
       appClient: 'bioenlace-personalsalud',
       traceLabel: 'licencia/crear-cuenta',
     ).postData('/licencia/crear-cuenta', body: body);
+  }
+
+  Future<List<Map<String, dynamic>>> searchLocalities(String query) async {
+    final data = await ApiClient(
+      appClient: 'bioenlace-personalsalud',
+      traceLabel: 'catalogos/buscar-localidad',
+    ).getData('/catalogos/buscar-localidad', query: {'q': query});
+    final items = data['items'];
+    if (items is! List) {
+      throw const FormatException('Respuesta inválida al buscar localidades.');
+    }
+    return items.whereType<Map>().map((item) {
+      return item.map((key, value) => MapEntry(key.toString(), value));
+    }).toList();
+  }
+
+  Future<List<Map<String, dynamic>>> fetchMinistries() async {
+    final data = await ApiClient(
+      appClient: 'bioenlace-personalsalud',
+      traceLabel: 'licencia/catalogo-ministerios',
+    ).getData('/licencia/catalogo-ministerios');
+    final items = data['items'];
+    if (items is! List) {
+      throw const FormatException('Respuesta inválida al cargar ministerios.');
+    }
+    return items.whereType<Map>().map((item) {
+      return item.map((key, value) => MapEntry(key.toString(), value));
+    }).toList();
+  }
+
+  Future<Map<String, dynamic>> startCommercialCheckout({
+    required String authToken,
+    required Map<String, dynamic> body,
+  }) {
+    return ApiClient(
+      authToken: authToken,
+      appClient: 'bioenlace-personalsalud',
+      traceLabel: 'licencia/registrar-efector',
+    ).postData('/licencia/registrar-efector', body: body);
+  }
+
+  Future<Map<String, dynamic>> checkoutStatus({
+    required String authToken,
+    required String checkoutKey,
+  }) {
+    return ApiClient(
+      authToken: authToken,
+      appClient: 'bioenlace-personalsalud',
+      traceLabel: 'licencia/estado-checkout',
+    ).getData(
+      '/licencia/estado-checkout',
+      query: {'checkout_key': checkoutKey},
+    );
+  }
+
+  Future<Map<String, dynamic>> cancelCommercialCheckout({
+    required String authToken,
+    required String checkoutKey,
+  }) {
+    return ApiClient(
+      authToken: authToken,
+      appClient: 'bioenlace-personalsalud',
+      traceLabel: 'licencia/cancelar-suscripcion',
+    ).postData(
+      '/licencia/cancelar-suscripcion',
+      body: {'checkout_key': checkoutKey},
+    );
   }
 }

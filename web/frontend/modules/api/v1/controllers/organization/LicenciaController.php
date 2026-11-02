@@ -5,6 +5,7 @@ namespace frontend\modules\api\v1\controllers\organization;
 use frontend\modules\api\v1\controllers\BaseController;
 use common\components\Domain\Organization\Efector\Application\UseCase\SwitchBillingMembership;
 use common\components\Domain\Organization\Efector\Application\UseCase\SignUpInstitutionalEfector;
+use common\components\Domain\Organization\Billing\Application\Service\BillingCheckoutService;
 use common\components\Domain\Organization\Efector\Application\UseCase\RequestMinistrySignup;
 use common\components\Domain\Organization\Efector\Application\UseCase\CreateIdentityAccount;
 use common\components\Domain\Person\Identity\Application\Service\IdentityVerificationException;
@@ -15,13 +16,15 @@ use common\components\Platform\Core\Auth\DemoSandboxCaptchaService;
 use common\components\Platform\Core\Auth\StaffMobileAccessService;
 use common\components\Platform\Core\Http\Contract\ApiException;
 use common\models\Platform\User;
+use common\models\Person\Persona;
 use Yii;
 
 /**
  * Onboarding comercial de licencia (institucional + AdminEfector).
  *
- * Públicas (sin auth): catalogo-ministerios, planes, crear-cuenta, registrar-efector,
+ * Públicas (sin auth): catalogo-ministerios, planes, crear-cuenta,
  * solicitar-ministerio, demo-perfiles, demo-captcha, demo-acceso, demo-acceso-mobile.
+ * Auth cuenta móvil: registrar-efector, estado-checkout.
  * Auth AdminEfector: mi-licencia, desvincular-pago-ministerio, asociar-pago-ministerio.
  */
 class LicenciaController extends BaseController
@@ -31,7 +34,6 @@ class LicenciaController extends BaseController
         'planes',
         'crear-cuenta',
         'completar-ministerio',
-        'registrar-efector',
         'solicitar-ministerio',
         'demo-perfiles',
         'demo-captcha',
@@ -61,6 +63,8 @@ class LicenciaController extends BaseController
         $verbs['crear-cuenta'] = ['POST', 'OPTIONS'];
         $verbs['completar-ministerio'] = ['POST', 'OPTIONS'];
         $verbs['registrar-efector'] = ['POST', 'OPTIONS'];
+        $verbs['estado-checkout'] = ['GET', 'OPTIONS'];
+        $verbs['cancelar-suscripcion'] = ['POST', 'OPTIONS'];
         $verbs['solicitar-ministerio'] = ['POST', 'OPTIONS'];
         $verbs['demo-perfiles'] = ['GET', 'OPTIONS'];
         $verbs['demo-captcha'] = ['GET', 'OPTIONS'];
@@ -170,15 +174,83 @@ class LicenciaController extends BaseController
     }
 
     /**
-     * Ruta retirada: no se aceptan altas institucionales ni licencias mediante pago simulado.
+     * Inicia el checkout mensual. La cuenta y el efector se crean cuando el webhook confirma el primer pago.
      */
     public function actionRegistrarEfector()
     {
-        return $this->error(
-            'El alta de clínicas y centros no está disponible desde este canal. No se creó una cuenta ni una licencia.',
-            null,
-            410
-        );
+        $userId = (int) Yii::$app->user->id;
+        $user = User::findOne($userId);
+        $persona = Persona::findOne(['id_user' => $userId]);
+        if ($user === null || $persona === null) {
+            return $this->error('La sesión no está asociada a una persona verificada.', null, 403);
+        }
+
+        $body = Yii::$app->request->getBodyParams();
+        if (!is_array($body)) {
+            $body = [];
+        }
+
+        try {
+            $checkout = (new BillingCheckoutService())->start($user, $persona, $body);
+
+            return $this->success($checkout, 'Checkout de Mercado Pago iniciado.', 201);
+        } catch (\DomainException $e) {
+            return $this->error($e->getMessage(), null, 403);
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), null, 400);
+        } catch (\yii\base\InvalidConfigException $e) {
+            Yii::error($e->getMessage(), 'mercadopago');
+
+            return $this->error('El checkout no está configurado para este entorno.', null, 503);
+        } catch (\Throwable $e) {
+            Yii::error($e->getMessage() . "\n" . $e->getTraceAsString(), 'mercadopago');
+
+            return $this->error('No se pudo iniciar el checkout. Reintentá más tarde.', null, 503);
+        }
+    }
+
+    /**
+     * Consulta el estado de un checkout perteneciente a la cuenta autenticada.
+     */
+    public function actionEstadoCheckout()
+    {
+        $checkoutKey = trim((string) Yii::$app->request->get('checkout_key', ''));
+        if ($checkoutKey === '') {
+            return $this->error('checkout_key es requerido.', null, 400);
+        }
+
+        try {
+            return $this->success(
+                (new BillingCheckoutService())->statusForUser($checkoutKey, (int) Yii::$app->user->id)
+            );
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), null, 404);
+        }
+    }
+
+    /**
+     * Cancela la renovación futura sin quitar el acceso al período ya pagado.
+     */
+    public function actionCancelarSuscripcion()
+    {
+        $body = Yii::$app->request->getBodyParams();
+        $checkoutKey = is_array($body) ? trim((string) ($body['checkout_key'] ?? '')) : '';
+        if ($checkoutKey === '') {
+            return $this->error('checkout_key es requerido.', null, 400);
+        }
+
+        try {
+            return $this->success(
+                (new BillingCheckoutService())->cancelForUser($checkoutKey, (int) Yii::$app->user->id),
+                'Se solicitó cancelar la renovación. El acceso continúa hasta el fin del período pagado.'
+            );
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), null, 404);
+        } catch (\Throwable $e) {
+            Yii::error($e->getMessage() . "\n" . $e->getTraceAsString(), 'mercadopago');
+
+            return $this->error('No se pudo cancelar la renovación. Reintentá más tarde.', null, 503);
+        }
     }
 
     /**

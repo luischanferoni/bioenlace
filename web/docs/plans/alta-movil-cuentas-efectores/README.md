@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|--------|
 | Slug | `alta-movil-cuentas-efectores` |
-| Estado | En ejecución — alta Didit base implementada; procedencia de Persona y autorización de asignaciones pendientes; REFEPS continúa mock; altas comerciales bloqueadas hasta checkout real; limpieza de login y clientes legacy pendiente |
+| Estado | En ejecución — checkout mensual Mercado Pago implementado; falta QA/configuración del proveedor, verificar vigencia del catálogo SISA y cerrar reglas de reembolso/contracargo y ejercicio profesional |
 | Dueño | Producto / Identidad / Organización / Mobile |
 | Corte de compatibilidad | Sin flujos legacy; migrar las cuentas y relaciones existentes |
 
@@ -28,7 +28,9 @@
 - La creación de Persona desde la app exige una verificación Didit aprobada. La creación asistida con lector físico de DNI es un origen distinto y no habilita asignación de personal.
 - REFEPS permanece mock por ahora. El comportamiento mock debe ser explícito y no considerarse una verificación real en producción; los estados no disponibles/revisión deben poder probarse.
 - Una identidad sin asignación puede iniciar sesión, pero no ve ni ejecuta operaciones clínicas.
-- Los pagos usarán Mercado Pago en Argentina (ARS). El checkout real, sus webhooks firmados, la idempotencia y la conciliación siguen pendientes; no activar licencias con respuestas simuladas.
+- Las altas pagas usan una suscripción mensual de Mercado Pago en ARS. El servidor guarda el snapshot USD/MEP/IVA y solo crea efector/licencia tras confirmar el primer pago por webhook firmado; no habilitar producción hasta configurar credenciales, cotización vigente y URLs externas.
+- Para clínicas públicas se exige un código SISA del catálogo oficial local y se rechaza una afiliación ministerial o cuenta POOL previa. La vigencia del catálogo debe mantenerse mediante el proceso administrativo de importación SISA.
+- La cancelación detiene renovaciones futuras, preserva el acceso hasta el período pagado y requiere el cron diario de vencimientos para suspender la licencia.
 - Frontend ofrece ingreso con la app; el login Admin queda con usuario y contraseña solo para superadmin. Retirar código y formularios de login que contradigan esa política.
 - Retirar rutas y llamadas legacy no usadas del cliente, sin mantener contratos 410 como sustituto permanente; preservar los registros de pacientes vigentes y los flujos autorizados de lector DNI.
 - No habilitar un rol en una app por defecto: Personal de Salud solo admite roles expresamente incluidos en su política.

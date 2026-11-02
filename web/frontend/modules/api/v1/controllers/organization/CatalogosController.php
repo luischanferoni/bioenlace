@@ -20,6 +20,7 @@ class CatalogosController extends BaseController
         'triage-levels',
         'departamentos-depdrop',
         'localidades-depdrop',
+        'buscar-localidad',
         'barrios-depdrop',
         'especialidades-depdrop',
         'salas-por-piso-depdrop',
@@ -69,6 +70,18 @@ class CatalogosController extends BaseController
     public function actionLocalidadesDepdrop(): array
     {
         return GeografiaDepdropService::localidadesResponse(Yii::$app->request->post());
+    }
+
+    /**
+     * GET /api/v1/catalogos/buscar-localidad?q=...
+     */
+    public function actionBuscarLocalidad(): array
+    {
+        return $this->ok([
+            'items' => GeografiaDepdropService::buscarLocalidades(
+                (string) Yii::$app->request->get('q', '')
+            ),
+        ]);
     }
 
     /**

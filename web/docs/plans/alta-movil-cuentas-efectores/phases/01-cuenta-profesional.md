@@ -10,7 +10,7 @@ Permitir crear una identidad profesional desde la app sin e-mail, efector, REFEP
 - [x] Retirar el e-mail obligatorio del alta profesional.
 - [x] Crear/recuperar identidad de forma idempotente a partir de verificación aprobada.
 - [ ] Guardar procedencia `MOBILE_APP` únicamente al completar el flujo aprobado desde Personal de Salud; no aceptar el valor desde el cliente.
-- [ ] Verificar que la creación/reutilización de Persona no transforme una identidad preexistente de otro origen en `MOBILE_APP` sin una verificación Didit aprobada asociada a esta cuenta.
+- [ ] Verificar que todo flujo de alta de cuenta desde Personal de Salud marque `MOBILE_APP` solo después de Didit aprobado; no aceptar el origen desde el cliente.
 - [x] Persistir intentos por hash de la verificación, con estado, contador y referencias de Persona/User; sin guardar el identificador ni la respuesta cruda.
 - [x] Hacer atómica la persistencia de Persona + User para evitar cuentas parciales.
 - [x] Permitir reintentar la creación desde la app reutilizando la verificación aprobada.
@@ -18,7 +18,7 @@ Permitir crear una identidad profesional desde la app sin e-mail, efector, REFEP
 - [x] Permitir que una identidad sin roles/efector consulte el wizard de sesión, sin acceso a APIs clínicas.
 - [x] Añadir prueba unitaria de la política para identidad sin asignación.
 
-Las opciones comerciales se muestran deshabilitadas hasta que exista un checkout real. Se retiró del cliente la tarjeta de prueba fija y su llamada al endpoint; el endpoint de alta institucional ahora responde `410 Gone` y el simulador rechaza cobros en producción.
+Las opciones comerciales abren el flujo autenticado de alta y checkout. La identidad Didit se crea primero; no se envían datos civiles para crear Persona/User desde el alta comercial.
 
 ## Estado
 

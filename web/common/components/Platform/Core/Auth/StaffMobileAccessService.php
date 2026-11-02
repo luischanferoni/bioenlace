@@ -14,6 +14,7 @@ use Yii;
 final class StaffMobileAccessService
 {
     private const MOBILE_STAFF_ROLES = ['Medico', 'medico', 'enfermeria', 'Enfermeria'];
+    private const MOBILE_IDENTITY_ROLES = ['usuario', 'paciente', 'AdminEfector'];
     private const IDENTITY_ONLY_ROLES = ['usuario', 'paciente'];
     private const PERSONAL_SALUD_APP_CLIENTS = ['personalsalud-flutter', 'bioenlace-personalsalud'];
 
@@ -113,6 +114,10 @@ final class StaffMobileAccessService
             return $hasEfectorAssignment;
         }
 
+        if (self::hasMobileIdentityRole($assignedRoles)) {
+            return true;
+        }
+
         return self::isIdentityOnlyAccountAllowed($assignedRoles, $hasEfectorAssignment);
     }
 
@@ -132,6 +137,26 @@ final class StaffMobileAccessService
         }
 
         return true;
+    }
+
+    /**
+     * AdminEfector may authenticate in the app even though the app currently
+     * exposes no AdminEfector-specific operations.
+     *
+     * @param list<string> $assignedRoles
+     */
+    private static function hasMobileIdentityRole(array $assignedRoles): bool
+    {
+        foreach ($assignedRoles as $roleName) {
+            foreach (self::MOBILE_IDENTITY_ROLES as $baseRole) {
+                if ($roleName === $baseRole
+                    || str_starts_with((string) $roleName, $baseRole . '_x_efector_')) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**

@@ -13,8 +13,11 @@ use yii\db\ActiveRecord;
  * @property string $provider
  * @property string $status
  * @property float $amount_usd
+ * @property float|null $amount_ars
  * @property string $currency
  * @property string|null $external_reference
+ * @property string|null $provider_subscription_id
+ * @property string|null $provider_payment_id
  * @property string|null $card_last4
  * @property string|null $payload_json
  * @property string|null $paid_at
@@ -90,11 +93,12 @@ class BillingPayment extends ActiveRecord
         return [
             [['id_billing_account', 'provider', 'status', 'amount_usd'], 'required'],
             [['id_billing_account'], 'integer'],
-            [['amount_usd'], 'number'],
+            [['amount_usd', 'amount_ars'], 'number'],
             [['provider'], 'in', 'range' => self::providerValues()],
             [['status'], 'in', 'range' => self::statusValues()],
             [['currency'], 'string', 'max' => 3],
             [['external_reference'], 'string', 'max' => 64],
+            [['provider_subscription_id', 'provider_payment_id'], 'string', 'max' => 100],
             [['card_last4'], 'string', 'max' => 4],
             [['payload_json'], 'string'],
             [['paid_at', 'created_at', 'updated_at', 'deleted_at'], 'safe'],

@@ -5,6 +5,7 @@ namespace common\components\Domain\Organization\Efector\Application\Service;
 use common\components\Platform\Core\Product\PricingPesByEncounterClassMetadata;
 use common\models\Organization\BillingAccountEncounterEntitlement;
 use common\models\Organization\BillingAccountEfector;
+use common\models\Organization\BillingAccount;
 use common\models\Clinical\EncounterDefinition;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Organization\Servicio;
@@ -140,6 +141,9 @@ final class EfectorEncounterEntitlementService
                 ? $selectable
                 : [];
         }
+        if (!self::isBillingAccountActive($accountId)) {
+            return [];
+        }
 
         $rows = BillingAccountEncounterEntitlement::findActivasPorAccount($accountId);
         if ($rows === []) {
@@ -202,6 +206,10 @@ final class EfectorEncounterEntitlementService
 
     public static function maxPesForAccountClass(int $idBillingAccount, string $encounterClass): ?int
     {
+        if (!self::isBillingAccountActive($idBillingAccount)) {
+            return 0;
+        }
+
         foreach (BillingAccountEncounterEntitlement::findActivasPorAccount($idBillingAccount) as $row) {
             if ((string) $row->encounter_class === $encounterClass) {
                 return $row->max_pes !== null ? (int) $row->max_pes : null;
@@ -367,12 +375,15 @@ final class EfectorEncounterEntitlementService
         if ($idEfector <= 0 || $idPersona <= 0 || $idServicio <= 0) {
             return;
         }
-        if (self::isAdminEfectorServicio($idServicio)) {
-            return;
-        }
 
         $accountId = self::resolveAccountIdForEfector($idEfector);
         if ($accountId === null) {
+            return;
+        }
+        if (!self::isBillingAccountActive($accountId)) {
+            throw new \InvalidArgumentException('La licencia del efector está suspendida por falta de pago.');
+        }
+        if (self::isAdminEfectorServicio($idServicio)) {
             return;
         }
 
@@ -462,6 +473,21 @@ final class EfectorEncounterEntitlementService
         $dt = $from ? \DateTimeImmutable::createFromInterface($from) : new \DateTimeImmutable('today');
 
         return $dt->modify('first day of next month')->format('Y-m-d');
+    }
+
+    private static function isBillingAccountActive(int $idBillingAccount): bool
+    {
+        if ($idBillingAccount <= 0) {
+            return false;
+        }
+
+        return BillingAccount::find()
+            ->where([
+                'id' => $idBillingAccount,
+                'activo' => 1,
+                'deleted_at' => null,
+            ])
+            ->exists();
     }
 
     /**

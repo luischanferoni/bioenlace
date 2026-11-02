@@ -13,7 +13,7 @@ Mantener la búsqueda/invitación bajo control del AdminEfector y exigir habilit
 - [x] No requerir REFEPS para asignación AdminEfector ni para administrar el centro.
 - [x] Aplicar la misma regla cuando AdminEfector se incorpora a sí mismo a un servicio clínico.
 - [x] Restringir la creación de asignaciones a AdminEfector del mismo centro o superadmin.
-- [ ] Registrar el origen de cada Persona en servidor: `MOBILE_APP`, `STAFF_DNI_READER` o `LEGACY_UNKNOWN`; definir una categoría no móvil para cualquier alta asistida con Didit que se conserve.
+- [ ] Registrar el origen de cada Persona en servidor: `MOBILE_APP`, `STAFF_DNI_READER` o `LEGACY_UNKNOWN`; toda alta de cuenta Didit desde la app se marca `MOBILE_APP`.
 - [ ] Autorizar asignaciones de personal únicamente para origen `MOBILE_APP`, en la búsqueda específica de candidatos y en el caso de uso de asignación.
 - [ ] Migrar Personas existentes sin evidencia inequívoca a `LEGACY_UNKNOWN`; no inferir origen a partir de `id_user`, `acredita_identidad` ni referencias Didit aisladas.
 - [ ] Mantener sin filtro de origen las búsquedas generales para pacientes/admisión; limitar el filtro `MOBILE_APP` a la selección de personal.

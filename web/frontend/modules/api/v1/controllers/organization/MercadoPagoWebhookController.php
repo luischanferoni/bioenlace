@@ -2,25 +2,15 @@
 
 namespace frontend\modules\api\v1\controllers\organization;
 
-use common\components\Domain\Organization\Billing\Application\Service\MercadoPagoCheckoutService;
+use common\components\Domain\Organization\Billing\Application\Service\BillingCheckoutService;
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 use yii\web\BadRequestHttpException;
+use yii\web\ServerErrorHttpException;
+use yii\web\UnauthorizedHttpException;
 
 /**
- * Controlador API v1 para recibir webhooks de MercadoPago.
- *
- * Estructura básica para el plan alta-movil-cuentas-efectores.
- * Pendiente de pulir con integración completa.
- *
- * NOTAS:
- * - Este controlador recibe notificaciones de pago de MercadoPago
- * - Debe validar la firma del webhook (X-Signature)
- * - Debe deduplicar webhooks repetidos
- * - Debe actualizar el estado del intento de pago
- * - Debe activar la licencia/entitlement solo tras confirmación
- *
- * @see web/docs/plans/alta-movil-cuentas-efectores/phases/03-altas-pagas.md
+ * Recibe y procesa notificaciones firmadas de suscripciones y pagos de Mercado Pago.
  */
 class MercadoPagoWebhookController extends BaseController
 {
@@ -37,72 +27,41 @@ class MercadoPagoWebhookController extends BaseController
     }
 
     /**
-     * Acción para recibir webhooks de MercadoPago.
-     *
-     * @return array
+     * @return array<string, string>
      * @throws BadRequestHttpException
+     * @throws ServerErrorHttpException
+     * @throws UnauthorizedHttpException
      */
-    public function actionIndex()
+    public function actionIndex(): array
     {
         $rawBody = Yii::$app->request->getRawBody();
-        if (empty($rawBody)) {
-            throw new BadRequestHttpException('Payload vacío');
+        if ($rawBody === '') {
+            throw new BadRequestHttpException('Payload vacío.');
         }
-
         $payload = json_decode($rawBody, true);
         if (!is_array($payload)) {
-            throw new BadRequestHttpException('Payload inválido');
+            throw new BadRequestHttpException('Payload inválido.');
         }
-
-        // TODO: Validar firma del webhook (X-Signature header)
-        // $signature = Yii::$app->request->headers->get('X-Signature');
-        // $this->validateWebhookSignature($signature, $rawBody);
 
         try {
-            $service = new MercadoPagoCheckoutService();
-            $processed = $service->processWebhook($payload);
-
-            if ($processed) {
-                return [
-                    'status' => 'ok',
-                    'message' => 'Webhook procesado',
-                ];
-            }
-
-            return [
-                'status' => 'error',
-                'message' => 'Webhook no procesado',
-            ];
-        } catch (\Exception $e) {
-            Yii::error(
-                'Error procesando webhook MercadoPago: ' . $e->getMessage(),
-                'mercadopago'
+            (new BillingCheckoutService())->processWebhook(
+                $payload,
+                Yii::$app->request->headers->get('x-signature'),
+                Yii::$app->request->headers->get('x-request-id')
             );
-            throw new BadRequestHttpException('Error procesando webhook');
-        }
-    }
-
-    /**
-     * Valida la firma del webhook de MercadoPago.
-     *
-     * @param string|null $signature Header X-Signature
-     * @param string $rawBody Payload crudo
-     * @throws BadRequestHttpException
-     */
-    private function validateWebhookSignature(?string $signature, string $rawBody): void
-    {
-        // TODO: Implementar validación de firma según documentación de MercadoPago
-        // Usar HMAC-SHA256 con webhookSecret configurado en params
-        /*
-        $secret = Yii::$app->params['mercadoPago']['webhookSecret'] ?? null;
-        if (!$secret) {
-            throw new BadRequestHttpException('Webhook secret no configurado');
+        } catch (\DomainException $e) {
+            Yii::warning('Firma inválida en webhook de Mercado Pago.', 'mercadopago');
+            throw new UnauthorizedHttpException('Firma de webhook inválida.');
+        } catch (\InvalidArgumentException $e) {
+            throw new BadRequestHttpException($e->getMessage());
+        } catch (\Throwable $e) {
+            Yii::error($e->getMessage() . "\n" . $e->getTraceAsString(), 'mercadopago');
+            throw new ServerErrorHttpException('No se pudo procesar la notificación de Mercado Pago.');
         }
 
-        $expected = hash_hmac('sha256', $rawBody, $secret);
-        if (!hash_equals($expected, $signature)) {
-            throw new BadRequestHttpException('Firma inválida');
-        }
-        */
+        return [
+            'status' => 'ok',
+            'message' => 'Notificación recibida.',
+        ];
     }
 }

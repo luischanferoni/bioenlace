@@ -7,7 +7,7 @@ Este documento registra la decisión vigente y reemplaza la propuesta anterior d
 - **Frontend:** solo ingreso confirmado desde la app (QR). El formulario de usuario/contraseña no aparece en el navegador porque el controlador no pasa un modelo, pero debe quitarse también del código de la vista junto con su texto. No se ofrece passkey.
 - **Admin:** usuario/contraseña, solo para superadmin. El panel no ofrece ingreso con app ni passkey. La restricción a superadmin debe validarse en servidor.
 - **App móvil:** crear cuenta/verificar identidad mediante Didit. Los caminos legacy de credenciales y activación por código se retiran del cliente.
-- **Alta institucional:** permanece bloqueada hasta implementar identidad autenticada y checkout real; no conservar el pago simulado como fallback.
+- **Alta institucional:** el endpoint requiere identidad móvil autenticada y checkout Mercado Pago; no conservar el pago simulado como fallback.
 
 ## Limpieza de cliente y servidor
 

@@ -9,6 +9,8 @@ Permitir crear una identidad profesional desde la app sin e-mail, efector, REFEP
 - [x] Reemplazar el formulario único de consultorio por la selección de cuenta profesional, consultorio y clínica/centro.
 - [x] Retirar el e-mail obligatorio del alta profesional.
 - [x] Crear/recuperar identidad de forma idempotente a partir de verificación aprobada.
+- [ ] Guardar procedencia `MOBILE_APP` únicamente al completar el flujo aprobado desde Personal de Salud; no aceptar el valor desde el cliente.
+- [ ] Verificar que la creación/reutilización de Persona no transforme una identidad preexistente de otro origen en `MOBILE_APP` sin una verificación Didit aprobada asociada a esta cuenta.
 - [x] Persistir intentos por hash de la verificación, con estado, contador y referencias de Persona/User; sin guardar el identificador ni la respuesta cruda.
 - [x] Hacer atómica la persistencia de Persona + User para evitar cuentas parciales.
 - [x] Permitir reintentar la creación desde la app reutilizando la verificación aprobada.
@@ -20,4 +22,4 @@ Las opciones comerciales se muestran deshabilitadas hasta que exista un checkout
 
 ## Estado
 
-La API exige aprobación explícita de Didit, conserva el estado resumido de cada verificación y el alta en una tabla idempotente, y persiste Persona/User en una transacción. Si falla la creación, la app permite reintentar sin repetir la verificación mientras el flujo siga abierto. La creación es idempotente para reintentos secuenciales; falta la validación de integración en una base con las extensiones PHP requeridas por Codeception.
+La API exige aprobación explícita de Didit, conserva el estado resumido de cada verificación y el alta en una tabla idempotente, y persiste Persona/User en una transacción. Si falla la creación, la app permite reintentar sin repetir la verificación mientras el flujo siga abierto. La creación es idempotente para reintentos secuenciales. Falta persistir la procedencia verificable y validar la integración en una base con las extensiones PHP requeridas por Codeception.

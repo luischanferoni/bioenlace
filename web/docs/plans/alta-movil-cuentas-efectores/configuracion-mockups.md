@@ -6,17 +6,14 @@
 
 Clase adaptadora mockup para verificación REFEPS en desarrollo, siguiendo estructura DDD (Infrastructure/External).
 
-### Comportamiento
+### Estado y límites
+
+El mock se mantiene por ahora para desarrollo y pruebas. No es una integración real ni debe presentarse como una consulta efectiva al padrón. La integración HTTP de producción y la semántica nacional del endpoint provincial deben verificarse antes de sustituirlo.
 
 - **Modo mockup (`sisa.mockMode = true`):**
   - Simula respuesta exitosa de REFEPS para cualquier profesional
   - Devuelve un profesional con el documento solicitado
   - No hace llamadas HTTP reales
-
-- **Modo producción (`sisa.mockMode = false`):**
-  - Requiere configuración completa de credenciales
-  - Realiza llamadas HTTP a la API de SISA
-  - Valida respuesta real del registro de Santiago
 
 ### Configuración en `common/config/params.php`
 
@@ -29,19 +26,7 @@ Clase adaptadora mockup para verificación REFEPS en desarrollo, siguiendo estru
 ],
 ```
 
-### Para habilitar integración real
-
-1. Configurar en `common/config/params-local.php`:
-   ```php
-   'sisa' => [
-       'mockMode' => false,
-       'appId' => 'your-app-id',
-       'appKey' => 'your-app-key',
-       'baseUrl' => 'https://sisa.msal.gob.ar',
-   ],
-   ```
-
-2. Descomentar el bloque de conexión HTTP en `Sisa::getProfesionalesDeSantiago()`
+No cambiar `mockMode` a `false` como si la integración real ya estuviera disponible. Antes de hacerlo, implementar y probar el conector real, validar el alcance nacional informado y asegurar que la aplicación no use datos simulados en producción.
 
 3. Verificar formato de respuesta según documentación de SISA
 

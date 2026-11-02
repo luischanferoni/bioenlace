@@ -32,9 +32,14 @@ final class StaffMobileAccessServiceTest extends TestCase
     public function testOnlyExplicitClinicalRolesAreAllowedInTheMobileApp(): void
     {
         self::assertTrue(StaffMobileAccessService::hasMobileStaffRole(['Medico']));
+        self::assertTrue(StaffMobileAccessService::isMobileAccountAllowed(['Medico'], true, true));
+        self::assertTrue(StaffMobileAccessService::isMobileAccountAllowed(['medico'], true, true));
+        self::assertTrue(StaffMobileAccessService::isMobileAccountAllowed(['enfermeria'], true, true));
         self::assertTrue(StaffMobileAccessService::hasMobileStaffRole(['enfermeria_x_efector_12']));
         self::assertFalse(StaffMobileAccessService::hasMobileStaffRole(['AdminEfector']));
+        self::assertFalse(StaffMobileAccessService::isMobileAccountAllowed(['AdminEfector'], true, true));
         self::assertFalse(StaffMobileAccessService::hasMobileStaffRole(['Administrativo']));
+        self::assertFalse(StaffMobileAccessService::isMobileAccountAllowed(['Administrativo'], true, true));
         self::assertFalse(StaffMobileAccessService::hasMobileStaffRole(['facturista']));
     }
 

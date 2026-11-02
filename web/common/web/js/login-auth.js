@@ -91,6 +91,21 @@
         return data;
     };
 
+    const passkeyErrorMessage = (error) => {
+        switch (error?.name) {
+            case 'NotAllowedError':
+                return 'No se pudo completar el acceso. Puede que hayas cancelado la solicitud, que no haya una passkey disponible para Bioenlace o que haya vencido. Intentá nuevamente o ingresá con la app.';
+            case 'AbortError':
+                return 'La solicitud de passkey se interrumpió. Intentá nuevamente.';
+            case 'SecurityError':
+                return 'No se pudo validar la passkey desde este sitio. Revisá que estés en la dirección habitual de Bioenlace.';
+            case 'NotSupportedError':
+                return 'Este dispositivo no ofrece una passkey compatible. Probá con otro método de acceso.';
+            default:
+                return 'No se pudo iniciar sesión con la passkey. Intentá nuevamente o ingresá con la app.';
+        }
+    };
+
     passkeyButton?.addEventListener('click', async () => {
         passkeyMessage.textContent = '';
         if (!window.PublicKeyCredential || !navigator.credentials) {
@@ -101,11 +116,16 @@
         passkeyButton.disabled = true;
         try {
             const optionsResponse = await post(login.dataset.passkeyOptionsUrl, {});
-            const credential = await navigator.credentials.get({
-                publicKey: prepareOptions(optionsResponse.publicKey),
-            });
+            let credential;
+            try {
+                credential = await navigator.credentials.get({
+                    publicKey: prepareOptions(optionsResponse.publicKey),
+                });
+            } catch (error) {
+                throw new Error(passkeyErrorMessage(error));
+            }
             if (!credential) {
-                throw new Error('No se seleccionó una passkey.');
+                throw new Error('No se seleccionó una passkey. Intentá nuevamente o ingresá con la app.');
             }
 
             const result = await post(login.dataset.passkeyVerifyUrl, {
@@ -116,13 +136,14 @@
         } catch (error) {
             passkeyMessage.textContent = error instanceof Error
                 ? error.message
-                : 'No se pudo iniciar sesión. Volvé a intentarlo.';
+                : passkeyErrorMessage(error);
         } finally {
             passkeyButton.disabled = false;
         }
     });
 
     let qrPollTimer = null;
+    let qrAttempt = 0;
     const stopQrPolling = () => {
         if (qrPollTimer) {
             clearInterval(qrPollTimer);
@@ -131,12 +152,16 @@
     };
 
     qrModal?.addEventListener('shown.bs.modal', async () => {
+        const currentAttempt = ++qrAttempt;
         qrCanvas.replaceChildren();
         qrMessage.textContent = '';
         stopQrPolling();
 
         try {
             const start = await post(login.dataset.qrStartUrl, {});
+            if (currentAttempt !== qrAttempt) {
+                return;
+            }
             const qrDocument = new DOMParser().parseFromString(start.qrSvg, 'image/svg+xml');
             const svg = qrDocument.documentElement;
             if (svg.localName !== 'svg' || qrDocument.querySelector('parsererror')) {
@@ -146,11 +171,15 @@
             svg.setAttribute('height', '200');
             svg.style.padding = '20px';
             svg.style.backgroundColor = '#ffffff';
-            qrCanvas.appendChild(document.importNode(svg, true));
+            qrCanvas.replaceChildren(document.importNode(svg, true));
 
             qrPollTimer = setInterval(async () => {
                 try {
                     const status = await post(login.dataset.qrStatusUrl, { challengeId: start.challengeId });
+                    if (currentAttempt !== qrAttempt) {
+                        stopQrPolling();
+                        return;
+                    }
                     if (status.status === 'approved' && status.redirectUrl) {
                         stopQrPolling();
                         window.location.assign(status.redirectUrl);
@@ -160,17 +189,27 @@
                     }
                 } catch (error) {
                     stopQrPolling();
+                    if (currentAttempt !== qrAttempt) {
+                        return;
+                    }
                     qrMessage.textContent = error instanceof Error
                         ? error.message
                         : 'No se pudo verificar el acceso.';
                 }
             }, 1500);
         } catch (error) {
+            if (currentAttempt !== qrAttempt) {
+                return;
+            }
             qrMessage.textContent = error instanceof Error
                 ? error.message
                 : 'No se pudo iniciar el acceso con la app.';
         }
     });
 
-    qrModal?.addEventListener('hidden.bs.modal', stopQrPolling);
+    qrModal?.addEventListener('hidden.bs.modal', () => {
+        qrAttempt++;
+        stopQrPolling();
+        qrCanvas.replaceChildren();
+    });
 })();

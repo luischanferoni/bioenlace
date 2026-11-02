@@ -3,6 +3,7 @@
 namespace common\components\Platform\Core\Auth;
 
 use common\models\Organization\ProfesionalEfectorServicio;
+use common\models\Organization\Servicio;
 use common\models\Person\Persona;
 use common\models\Platform\User;
 use Yii;
@@ -57,12 +58,40 @@ final class StaffMobileAccessService
             return false;
         }
 
-        $assignedRoles = array_keys(Yii::$app->authManager->getRolesByUser((int) $user->id));
+        $assignedRoles = array_merge(
+            array_keys(Yii::$app->authManager->getRolesByUser((int) $user->id)),
+            self::getRolesFromActivePes((int) $persona->id_persona)
+        );
         $hasEfectorAssignment = ProfesionalEfectorServicio::getEfectoresParaSesion(
             (int) $persona->id_persona
         ) !== [];
 
         return self::isMobileAccountAllowed($assignedRoles, true, $hasEfectorAssignment);
+    }
+
+    /**
+     * Roles inherited from PES must be resolved from this persona directly: the
+     * auth manager's request-context roles may not be initialized during JWT auth.
+     *
+     * @return list<string>
+     */
+    private static function getRolesFromActivePes(int $idPersona): array
+    {
+        $roles = ProfesionalEfectorServicio::find()
+            ->alias('pes')
+            ->innerJoin(['servicio' => Servicio::tableName()], 'servicio.id_servicio = pes.id_servicio')
+            ->select('servicio.item_name')
+            ->where([
+                'pes.id_persona' => $idPersona,
+                'pes.deleted_at' => null,
+            ])
+            ->distinct()
+            ->column();
+
+        return array_values(array_filter(
+            array_map(static fn($role): string => trim((string) $role), $roles),
+            static fn(string $role): bool => $role !== ''
+        ));
     }
 
     /**

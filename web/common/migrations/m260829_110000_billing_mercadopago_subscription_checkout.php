@@ -140,8 +140,15 @@ class m260829_110000_billing_mercadopago_subscription_checkout extends Migration
 
     private function indexExists(string $name, string $table): bool
     {
-        $schema = $this->db->schema->getTableSchema($table, true);
+        $rawTable = $this->db->schema->getRawTableName($table);
+        $indexes = $this->db->schema->getTableIndexes($rawTable, true);
 
-        return $schema !== null && isset($schema->indexes[$name]);
+        foreach ($indexes as $index) {
+            if ($index->name === $name) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

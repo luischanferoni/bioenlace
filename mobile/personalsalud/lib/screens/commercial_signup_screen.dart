@@ -40,6 +40,9 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
   bool _cancellingSubscription = false;
   bool _videollamada = false;
   bool _loadingQuote = false;
+  bool _ambEnabled = true;
+  bool _emerEnabled = false;
+  bool _impEnabled = false;
   int _currentStep = 0;
   int _sisaSearchRequestId = 0;
   String _sector = 'PRIVADO';
@@ -74,6 +77,12 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
           classes['EMER']?['attentions_per_month']?.toString() ?? '';
       _impController.text =
           classes['IMP']?['attentions_per_month']?.toString() ?? '';
+      if (classes.isNotEmpty) {
+        _ambEnabled = classes.containsKey('AMB');
+        _emerEnabled = classes.containsKey('EMER');
+        _impEnabled = classes.containsKey('IMP');
+        _videollamada = classes['AMB']?['videollamada_permitida'] == true;
+      }
     }
     _loadMinistries();
     WidgetsBinding.instance.addPostFrameCallback((_) => _refreshQuote());
@@ -395,11 +404,12 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
   Map<String, dynamic>? _selectedPlan() {
     final classes = <String, dynamic>{};
     for (final entry in [
-      ('AMB', _ambController.text),
-      ('EMER', _emerController.text),
-      ('IMP', _impController.text),
+      ('AMB', _ambEnabled, _ambController.text),
+      ('EMER', _emerEnabled, _emerController.text),
+      ('IMP', _impEnabled, _impController.text),
     ]) {
-      final value = int.tryParse(entry.$2.trim()) ?? 0;
+      if (!entry.$2) continue;
+      final value = int.tryParse(entry.$3.trim()) ?? 0;
       if (value > 0) {
         classes[entry.$1] = {
           'attentions_per_month': value,
@@ -608,23 +618,212 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     );
   }
 
-  Widget _buildSignupProgress() {
-    const steps = ['Sector', 'Efector', 'Servicios y volumen', 'Pago'];
-    final visibleStep = _checkoutKey == null ? _currentStep : 3;
+  Widget _buildClassSelector({
+    required bool enabled,
+    required String title,
+    required String description,
+    required TextEditingController controller,
+    required ValueChanged<bool> onToggle,
+  }) {
     final tokens = context.bio;
     return Padding(
-      padding: const EdgeInsets.only(bottom: BioSpacing.lg),
+      padding: const EdgeInsets.only(bottom: BioSpacing.md),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'Paso ${visibleStep + 1} de ${steps.length}: ${steps[visibleStep]}',
-            style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            value: enabled,
+            onChanged: (value) {
+              onToggle(value);
+              _refreshQuote();
+            },
+            title: Text(title),
+            subtitle: Text(
+              description,
+              style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
+            ),
           ),
-          BioSpacing.gapH(BioSpacing.xs),
-          LinearProgressIndicator(value: (visibleStep + 1) / steps.length),
+          if (enabled)
+            Padding(
+              padding: const EdgeInsets.only(left: BioSpacing.xl),
+              child: TextFormField(
+                controller: controller,
+                keyboardType: TextInputType.number,
+                onChanged: (_) => _scheduleQuoteRefresh(),
+                decoration: const InputDecoration(
+                  labelText: 'Atenciones por mes',
+                  border: OutlineInputBorder(),
+                ),
+                validator: _validateRequiredVolume,
+              ),
+            ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSignupProgress() {
+    const steps = [
+      'Tipo de espacio',
+      'Datos del efector',
+      'Atenciones y volumen',
+      'Verificación y pago',
+    ];
+    final visibleStep = _checkoutKey == null ? _currentStep : 3;
+    final tokens = context.bio;
+
+    Widget row(int index) {
+      final done = index < visibleStep;
+      final active = index == visibleStep;
+      final color = done
+          ? tokens.textBody
+          : active
+          ? Theme.of(context).colorScheme.primary
+          : tokens.textDisabled;
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 24,
+              height: 24,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: done || active ? color : Colors.transparent,
+                border: Border.all(color: color),
+              ),
+              child: done
+                  ? Icon(Icons.check, size: 14, color: tokens.paperBackground)
+                  : Text(
+                      '${index + 1}',
+                      style: BioTypography.bodySm.copyWith(
+                        color: active
+                            ? tokens.paperBackground
+                            : tokens.textDisabled,
+                      ),
+                    ),
+            ),
+            BioSpacing.gapW(BioSpacing.sm),
+            Expanded(
+              child: Text(
+                steps[index],
+                style: BioTypography.bodySm.copyWith(
+                  color: color,
+                  fontWeight: active ? FontWeight.w600 : null,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: BioSpacing.lg),
+      padding: const EdgeInsets.all(BioSpacing.md),
+      decoration: BoxDecoration(
+        color: tokens.paperSurface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: tokens.paperDividerDefault),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Paso ${visibleStep + 1} de ${steps.length}',
+            style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
+          ),
+          BioSpacing.gapH(BioSpacing.sm),
+          for (var i = 0; i < steps.length; i++) row(i),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectorStep() {
+    final tokens = context.bio;
+
+    Widget option(String value, String title, String description) {
+      final selected = _sector == value;
+      return Padding(
+        padding: const EdgeInsets.only(bottom: BioSpacing.sm),
+        child: Card(
+          margin: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: selected
+                  ? Theme.of(context).colorScheme.primary
+                  : tokens.paperDividerDefault,
+              width: selected ? 2 : 1,
+            ),
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => setState(() {
+              _sector = value;
+              _selectedSisaEfector = null;
+              _sisaEfectores = const [];
+              _selectedMinistryId = null;
+              _errorMessage = null;
+            }),
+            child: Padding(
+              padding: const EdgeInsets.all(BioSpacing.md),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    selected
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_unchecked,
+                    color: selected
+                        ? Theme.of(context).colorScheme.primary
+                        : tokens.textMuted,
+                  ),
+                  BioSpacing.gapW(BioSpacing.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(title, style: BioTypography.title),
+                        BioSpacing.gapH(BioSpacing.xs),
+                        Text(
+                          description,
+                          style: BioTypography.bodySm.copyWith(
+                            color: tokens.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text('¿Qué tipo de espacio querés crear?', style: BioTypography.title),
+        BioSpacing.gapH(BioSpacing.md),
+        option(
+          'PRIVADO',
+          'Privado',
+          'Consultorio, clínica o centro privado. En el siguiente paso '
+              'registrás nombre, domicilio y localidad.',
+        ),
+        option(
+          'PUBLICO',
+          'Público',
+          'Efector del catálogo oficial SISA afiliado a un ministerio.',
+        ),
+      ],
     );
   }
 
@@ -759,38 +958,9 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
               _buildSignupProgress(),
               if (_checkoutKey != null)
                 _buildCheckoutStatus()
-              else if (_currentStep == 0) ...[
-                Text(
-                  '¿Qué tipo de espacio querés crear?',
-                  style: BioTypography.title,
-                ),
-                BioSpacing.gapH(BioSpacing.md),
-                DropdownButtonFormField<String>(
-                  initialValue: _sector,
-                  decoration: const InputDecoration(
-                    labelText: 'Sector',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: 'PRIVADO', child: Text('Privado')),
-                    DropdownMenuItem(value: 'PUBLICO', child: Text('Público')),
-                  ],
-                  onChanged: (value) => setState(() {
-                    _sector = value ?? 'PRIVADO';
-                    _selectedSisaEfector = null;
-                    _sisaEfectores = const [];
-                    _selectedMinistryId = null;
-                    _errorMessage = null;
-                  }),
-                ),
-                BioSpacing.gapH(BioSpacing.md),
-                Text(
-                  _sector == 'PUBLICO'
-                      ? 'Los espacios públicos requieren elegir un ministerio y un efector del catálogo oficial.'
-                      : 'Vas a registrar los datos del efector privado en el siguiente paso.',
-                  style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
-                ),
-              ] else if (_currentStep == 1) ...[
+              else if (_currentStep == 0)
+                _buildSectorStep()
+              else if (_currentStep == 1) ...[
                 Text('Datos del efector', style: BioTypography.title),
                 BioSpacing.gapH(BioSpacing.md),
                 if (_sector == 'PUBLICO') ...[
@@ -957,46 +1127,61 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
                     ),
                 ],
               ] else ...[
-                Text('Servicios y volumen mensual', style: BioTypography.title),
+                Text(
+                  'Atenciones y volumen mensual',
+                  style: BioTypography.title,
+                ),
                 BioSpacing.gapH(BioSpacing.sm),
                 Text(
-                  'El volumen define la cotización, no la cantidad de personas '
-                  'que podés asignar.',
+                  'Elegí qué tipos de atención vas a ofrecer y el volumen '
+                  'mensual estimado de cada uno. El volumen define la '
+                  'cotización, no la cantidad de personas que podés asignar.',
                   style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
                 ),
-                _textField(
-                  _ambController,
-                  'Ambulatorias (0 si no aplica)',
-                  keyboardType: TextInputType.number,
-                  validator: _validateOptionalVolume,
-                  onChanged: (_) => _scheduleQuoteRefresh(),
+                BioSpacing.gapH(BioSpacing.md),
+                _buildClassSelector(
+                  enabled: _ambEnabled,
+                  title: 'Atención ambulatoria',
+                  description: 'Consultas y seguimiento en consultorio.',
+                  controller: _ambController,
+                  onToggle: (value) => setState(() {
+                    _ambEnabled = value;
+                    if (!value) _videollamada = false;
+                  }),
                 ),
-                _textField(
-                  _emerController,
-                  'Emergencias (0 si no aplica)',
-                  keyboardType: TextInputType.number,
-                  validator: _validateOptionalVolume,
-                  onChanged: (_) => _scheduleQuoteRefresh(),
+                _buildClassSelector(
+                  enabled: _emerEnabled,
+                  title: 'Emergencias',
+                  description: 'Guardia y urgencias.',
+                  controller: _emerController,
+                  onToggle: (value) => setState(() => _emerEnabled = value),
                 ),
-                _textField(
-                  _impController,
-                  'Internaciones (0 si no aplica)',
-                  keyboardType: TextInputType.number,
-                  validator: _validateOptionalVolume,
-                  onChanged: (_) => _scheduleQuoteRefresh(),
+                _buildClassSelector(
+                  enabled: _impEnabled,
+                  title: 'Internación',
+                  description: 'Pacientes internados en el efector.',
+                  controller: _impController,
+                  onToggle: (value) => setState(() => _impEnabled = value),
                 ),
-                CheckboxListTile(
+                SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   value: _videollamada,
-                  onChanged: (value) {
-                    setState(() => _videollamada = value ?? false);
-                    _refreshQuote();
-                  },
-                  title: const Text('Atención ambulatoria por videollamada'),
-                  subtitle: const Text(
-                    'Suma la modalidad de videollamada al precio estimado.',
+                  onChanged: _ambEnabled
+                      ? (value) {
+                          setState(() => _videollamada = value);
+                          _refreshQuote();
+                        }
+                      : null,
+                  title: const Text('Atención por videollamada'),
+                  subtitle: Text(
+                    _ambEnabled
+                        ? 'Habilita consultas ambulatorias por videollamada. '
+                              'Suma la modalidad al precio estimado.'
+                        : 'Requiere habilitar la atención ambulatoria.',
+                    style: BioTypography.bodySm.copyWith(
+                      color: tokens.textMuted,
+                    ),
                   ),
-                  controlAffinity: ListTileControlAffinity.leading,
                 ),
                 _buildQuoteCard(),
                 _textField(
@@ -1076,11 +1261,10 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     );
   }
 
-  String? _validateOptionalVolume(String? value) {
-    if (value == null || value.trim().isEmpty) return null;
-    final amount = int.tryParse(value.trim());
-    if (amount == null || amount < 0) {
-      return 'Ingresá un número entero mayor o igual a cero.';
+  String? _validateRequiredVolume(String? value) {
+    final amount = int.tryParse(value?.trim() ?? '');
+    if (amount == null || amount <= 0) {
+      return 'Ingresá un número entero mayor a cero.';
     }
     return null;
   }

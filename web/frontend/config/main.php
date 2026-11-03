@@ -127,6 +127,10 @@ return [
 
                 // Licencia / onboarding comercial (institucional)
                 'GET api/<version:\w+>/licencia/catalogo-ministerios' => '<version>/licencia/catalogo-ministerios',
+                'GET api/<version:\w+>/licencia/catalogo-centros' => '<version>/licencia/catalogo-centros',
+                'OPTIONS api/<version:\w+>/licencia/catalogo-centros' => '<version>/licencia/catalogo-centros',
+                'GET api/<version:\w+>/licencia/catalogo-provincias' => '<version>/licencia/catalogo-provincias',
+                'OPTIONS api/<version:\w+>/licencia/catalogo-provincias' => '<version>/licencia/catalogo-provincias',
                 'GET api/<version:\w+>/licencia/planes' => '<version>/licencia/planes',
                 'GET api/<version:\w+>/licencia/estado-checkout' => '<version>/licencia/estado-checkout',
                 'POST api/<version:\w+>/licencia/crear-cuenta' => '<version>/licencia/crear-cuenta',

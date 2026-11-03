@@ -31,6 +31,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
   bool _loadingProvinces = true;
   bool _loadingCenters = true;
   String? _centersError;
+  String? _provincesError;
   List<Map<String, dynamic>> _provinces = const [];
   List<Map<String, dynamic>> _centers = const [];
   String? _centerSector;
@@ -68,6 +69,17 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
         : message;
   }
 
+  String _catalogErrorText(Object error, String resource) {
+    final fallback =
+        'No pudimos cargar $resource. Reintentá en unos instantes.';
+    if (error is ApiContractException) {
+      final code = error.statusCode ?? 0;
+      if (code == 0 || code == 404 || code >= 500) return fallback;
+      return error.message;
+    }
+    return userFriendlyErrorMessage(error, fallback: fallback);
+  }
+
   Map<String, dynamic> _initialSpacePlan() => {
     'classes': {
       'AMB': {'attentions_per_month': 200, 'videollamada_permitida': false},
@@ -98,17 +110,25 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
   }
 
   Future<void> _loadProvinces() async {
-    setState(() => _loadingProvinces = true);
+    setState(() {
+      _loadingProvinces = true;
+      _provincesError = null;
+    });
     try {
       final provinces = await _signupService.fetchProvinces();
       if (!mounted) return;
       setState(() {
         _provinces = provinces;
         _loadingProvinces = false;
+        if (!_provinceExists(provinces, _provinceId)) _provinceId = null;
       });
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
-      setState(() => _loadingProvinces = false);
+      setState(() {
+        _provinces = const [];
+        _loadingProvinces = false;
+        _provincesError = _catalogErrorText(error, 'las provincias');
+      });
     }
   }
 
@@ -136,14 +156,46 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
       setState(() {
         _centers = centers;
         _loadingCenters = false;
+        if (_provinces.isEmpty) {
+          final derived = _provincesFromCenters(centers);
+          if (derived.isNotEmpty) {
+            _provinces = derived;
+            _provincesError = null;
+            if (!_provinceExists(derived, _provinceId)) _provinceId = null;
+          }
+        }
       });
     } catch (error) {
       if (!mounted || requestId != _centerSearchRequestId) return;
       setState(() {
         _loadingCenters = false;
-        _centersError = _priceErrorText(error);
+        _centersError = _catalogErrorText(error, 'los centros');
       });
     }
+  }
+
+  bool _provinceExists(List<Map<String, dynamic>> provinces, int? id) {
+    if (id == null) return true;
+    return provinces.any(
+      (province) => int.tryParse(province['id']?.toString() ?? '') == id,
+    );
+  }
+
+  List<Map<String, dynamic>> _provincesFromCenters(
+    List<Map<String, dynamic>> centers,
+  ) {
+    final seen = <int>{};
+    final derived = <Map<String, dynamic>>[];
+    for (final center in centers) {
+      final id = int.tryParse(center['id_provincia']?.toString() ?? '');
+      final name = center['provincia']?.toString().trim() ?? '';
+      if (id == null || id <= 0 || name.isEmpty || !seen.add(id)) continue;
+      derived.add({'id': id, 'nombre': name});
+    }
+    derived.sort(
+      (a, b) => a['nombre'].toString().compareTo(b['nombre'].toString()),
+    );
+    return derived;
   }
 
   Future<void> _createPersonalAccount() async {
@@ -283,8 +335,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
   }
 
   Widget _buildSectorFilter() {
-    final options = <(String?, String)>[
-      (null, 'Todos'),
+    final options = <(String, String)>[
       ('PUBLICO', 'Público'),
       ('PRIVADO', 'Privado'),
     ];
@@ -296,9 +347,8 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
           label: Text(option.$2),
           selected: selected,
           onSelected: (_) {
-            if (_centerSector == option.$1) return;
             setState(() {
-              _centerSector = option.$1;
+              _centerSector = selected ? null : option.$1;
               _selectedCenter = null;
             });
             _loadCenters();
@@ -323,6 +373,26 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
         BioSpacing.gapH(BioSpacing.md),
         _buildSectorFilter(),
         BioSpacing.gapH(BioSpacing.sm),
+        if (_provincesError != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: BioSpacing.sm),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _provincesError!,
+                    style: BioTypography.bodySm.copyWith(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: _loadingProvinces ? null : _loadProvinces,
+                  child: const Text('Reintentar'),
+                ),
+              ],
+            ),
+          ),
         DropdownButtonFormField<int>(
           initialValue: _provinceId ?? 0,
           isExpanded: true,
@@ -331,7 +401,10 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
             border: OutlineInputBorder(),
           ),
           items: [
-            const DropdownMenuItem<int>(value: 0, child: Text('Todas')),
+            const DropdownMenuItem<int>(
+              value: 0,
+              child: Text('Todas las provincias'),
+            ),
             ..._provinces
                 .map((province) {
                   final id = int.tryParse(province['id']?.toString() ?? '');
@@ -342,7 +415,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                 })
                 .where((item) => item.value != null),
           ],
-          onChanged: _loadingProvinces
+          onChanged: _loadingProvinces || _provinces.isEmpty
               ? null
               : (value) {
                   setState(() {

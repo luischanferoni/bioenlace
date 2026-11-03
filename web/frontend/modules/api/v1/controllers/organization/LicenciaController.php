@@ -144,13 +144,19 @@ class LicenciaController extends BaseController
 
         $idProvincia = (int) Yii::$app->request->get('id_provincia', 0);
 
-        return $this->success([
-            'items' => SignUpInstitutionalEfector::listAvailableCenters(
-                $query,
-                $sector !== '' ? $sector : null,
-                $idProvincia > 0 ? $idProvincia : null
-            ),
-        ]);
+        try {
+            return $this->success([
+                'items' => SignUpInstitutionalEfector::listAvailableCenters(
+                    $query,
+                    $sector !== '' ? $sector : null,
+                    $idProvincia > 0 ? $idProvincia : null
+                ),
+            ]);
+        } catch (\Throwable $e) {
+            Yii::error($e->getMessage() . "\n" . $e->getTraceAsString(), 'billing.centers');
+
+            return $this->error('No pudimos cargar los centros. Reintentá más tarde.', null, 503);
+        }
     }
 
     /**
@@ -158,12 +164,18 @@ class LicenciaController extends BaseController
      */
     public function actionCatalogoProvincias()
     {
-        $pais = Pais::defaultPais();
-        $rows = Provincia::find()
-            ->filterWhere(['id_pais' => $pais !== null ? (int) $pais->id_pais : null])
-            ->orderBy(['nombre' => SORT_ASC])
-            ->asArray()
-            ->all();
+        try {
+            $pais = Pais::defaultPais();
+            $rows = Provincia::find()
+                ->filterWhere(['id_pais' => $pais !== null ? (int) $pais->id_pais : null])
+                ->orderBy(['nombre' => SORT_ASC])
+                ->asArray()
+                ->all();
+        } catch (\Throwable $e) {
+            Yii::error($e->getMessage() . "\n" . $e->getTraceAsString(), 'billing.centers');
+
+            return $this->error('No pudimos cargar las provincias. Reintentá más tarde.', null, 503);
+        }
 
         $items = [];
         foreach ($rows as $row) {

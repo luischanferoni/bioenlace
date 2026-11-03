@@ -342,38 +342,37 @@ final class SignUpInstitutionalEfector
             ]);
 
         return Efector::find()
-            ->alias('efector')
             ->select([
-                'codigo_sisa' => 'efector.codigo_sisa',
-                'nombre' => 'efector.nombre',
-                'domicilio' => 'efector.domicilio',
+                'codigo_sisa' => 'efectores.codigo_sisa',
+                'nombre' => 'efectores.nombre',
+                'domicilio' => 'efectores.domicilio',
                 'localidad' => 'localidad.nombre',
             ])
-            ->innerJoin(['localidad' => Localidad::tableName()], 'localidad.id_localidad = efector.id_localidad')
+            ->innerJoin(['localidad' => Localidad::tableName()], 'localidad.id_localidad = efectores.id_localidad')
             ->where([
                 'or',
-                ['like', 'efector.nombre', $term, false],
-                ['like', 'efector.codigo_sisa', $term, false],
+                ['like', 'efectores.nombre', $term, false],
+                ['like', 'efectores.codigo_sisa', $term, false],
             ])
             ->andWhere([
                 'or',
-                ['efector.estado' => null],
-                ['<>', 'efector.estado', 'INACTIVO'],
+                ['efectores.estado' => null],
+                ['<>', 'efectores.estado', 'INACTIVO'],
             ])
-            ->andWhere("LOWER(COALESCE(efector.origen_financiamiento, '')) NOT LIKE :private", [
+            ->andWhere("LOWER(COALESCE(efectores.origen_financiamiento, '')) NOT LIKE :private", [
                 ':private' => '%privado%',
             ])
-            ->andWhere(['not like', 'efector.codigo_sisa', 'W%', false])
-            ->andWhere(['not like', 'efector.codigo_sisa', 'DEV%', false])
+            ->andWhere(['not like', 'efectores.codigo_sisa', 'W%', false])
+            ->andWhere(['not like', 'efectores.codigo_sisa', 'DEV%', false])
             ->andWhere([
                 'not exists',
-                (clone $ministerioMemberships)->andWhere('membership.id_efector = efector.id_efector'),
+                (clone $ministerioMemberships)->andWhere('membership.id_efector = efectores.id_efector'),
             ])
             ->andWhere([
                 'not exists',
-                (clone $billingPoolMemberships)->andWhere('membership.id_efector = efector.id_efector'),
+                (clone $billingPoolMemberships)->andWhere('membership.id_efector = efectores.id_efector'),
             ])
-            ->orderBy(['efector.nombre' => SORT_ASC, 'efector.codigo_sisa' => SORT_ASC])
+            ->orderBy(['efectores.nombre' => SORT_ASC, 'efectores.codigo_sisa' => SORT_ASC])
             ->limit(20)
             ->asArray()
             ->all();
@@ -401,8 +400,8 @@ final class SignUpInstitutionalEfector
             $term = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $query) . '%';
             $centers->andWhere([
                 'or',
-                ['like', 'efector.nombre', $term, false],
-                ['like', 'efector.codigo_sisa', $term, false],
+                ['like', 'efectores.nombre', $term, false],
+                ['like', 'efectores.codigo_sisa', $term, false],
                 ['like', 'localidad.nombre', $term, false],
             ]);
         }
@@ -414,7 +413,7 @@ final class SignUpInstitutionalEfector
         }
 
         $rows = $centers
-            ->orderBy(['efector.nombre' => SORT_ASC])
+            ->orderBy(['efectores.nombre' => SORT_ASC])
             ->limit(50)
             ->asArray()
             ->all();
@@ -432,7 +431,7 @@ final class SignUpInstitutionalEfector
         }
 
         $row = self::availableCentersQuery()
-            ->andWhere(['efector.id_efector' => $idEfector])
+            ->andWhere(['efectores.id_efector' => $idEfector])
             ->asArray()
             ->one();
 
@@ -466,20 +465,19 @@ final class SignUpInstitutionalEfector
             ->from(['servicio' => ServiciosEfector::tableName()]);
 
         return Efector::find()
-            ->alias('efector')
             ->select([
-                'id_efector' => 'efector.id_efector',
-                'nombre' => 'efector.nombre',
-                'codigo_sisa' => 'efector.codigo_sisa',
+                'id_efector' => 'efectores.id_efector',
+                'nombre' => 'efectores.nombre',
+                'codigo_sisa' => 'efectores.codigo_sisa',
                 'localidad' => 'localidad.nombre',
                 'departamento' => 'departamento.nombre',
                 'provincia' => 'provincia.nombre',
                 'id_provincia' => 'provincia.id_provincia',
-                'origen_financiamiento' => 'efector.origen_financiamiento',
+                'origen_financiamiento' => 'efectores.origen_financiamiento',
             ])
             ->innerJoin(
                 ['localidad' => Localidad::tableName()],
-                'localidad.id_localidad = efector.id_localidad'
+                'localidad.id_localidad = efectores.id_localidad'
             )
             ->innerJoin(
                 ['departamento' => Departamento::tableName()],
@@ -491,13 +489,13 @@ final class SignUpInstitutionalEfector
             )
             ->where([
                 'or',
-                ['efector.estado' => null],
-                ['<>', 'efector.estado', 'INACTIVO'],
+                ['efectores.estado' => null],
+                ['<>', 'efectores.estado', 'INACTIVO'],
             ])
             ->andWhere([
                 'or',
-                ['exists', (clone $memberships)->andWhere('membership.id_efector = efector.id_efector')],
-                ['exists', (clone $services)->andWhere('servicio.id_efector = efector.id_efector')],
+                ['exists', (clone $memberships)->andWhere('membership.id_efector = efectores.id_efector')],
+                ['exists', (clone $services)->andWhere('servicio.id_efector = efectores.id_efector')],
             ]);
     }
 
@@ -715,7 +713,7 @@ final class SignUpInstitutionalEfector
         $nombre = trim((string) ($efector['nombre'] ?? ''));
         $domicilio = trim((string) ($efector['domicilio'] ?? ''));
         if ($nombre === '' || $domicilio === '') {
-            throw new \InvalidArgumentException('Indicá nombre y domicilio del efector.');
+            throw new \InvalidArgumentException('Indicá nombre y domicilio del efectores.');
         }
 
         $idLocalidad = (int) ($efector['id_localidad'] ?? 0);

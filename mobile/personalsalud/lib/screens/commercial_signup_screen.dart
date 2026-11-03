@@ -219,9 +219,20 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
         draft: _draftPayload(currentStep: nextStep),
       );
       final saved = _asStringMap(response['borrador']);
-      if (saved != null) _checkoutRequestKey = saved['checkout_request_key']?.toString();
+      if (saved != null) {
+        _checkoutRequestKey = saved['checkout_request_key']?.toString();
+      }
       if (!mounted) return false;
       setState(() => _submitting = false);
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Tu avance quedó guardado. Para retomarlo, volvé a Crear cuenta y verificá tu identidad.',
+            ),
+          ),
+        );
       return true;
     } catch (error) {
       if (!mounted) return false;

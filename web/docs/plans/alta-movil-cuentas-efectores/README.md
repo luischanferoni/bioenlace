@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|--------|
 | Slug | `alta-movil-cuentas-efectores` |
-| Estado | En ejecución — checkout mensual Mercado Pago implementado; falta QA/configuración del proveedor, verificar vigencia del catálogo SISA y cerrar reglas de reembolso/contracargo y ejercicio profesional |
+| Estado | Cerrado — implementación anterior conservada como historial; el rediseño está en el plan [alta-espacio-atencion-unificada](../alta-espacio-atencion-unificada/README.md) |
 | Dueño | Producto / Identidad / Organización / Mobile |
 | Corte de compatibilidad | Sin flujos legacy; migrar las cuentas y relaciones existentes |
 

@@ -4,7 +4,7 @@ Contextos medibles en [catálogo de IA](../../producto/catalogo-usos-ia.md) (`AI
 
 ## Qué hace
 
-Evita **llamadas enteras** al proveedor si el mismo `prompt + contexto + tipoModelo` ya se resolvió dentro del TTL (`ia_cache_ttl`, `correccion_cache_ttl`, etc. en `params.php`). Clave: `ia_response_` + `md5(...)`.
+Evita **llamadas enteras** al proveedor si el mismo `prompt + contexto + tipoModelo` ya se resolvió dentro del TTL (`ia_cache_ttl`, etc. en `params.php`). Clave: `ia_response_` + `md5(...)`.
 
 **No es** context caching de Vertex: no aparece `cachedContentTokenCount`; es ahorro del 100 % de esa llamada.
 
@@ -13,9 +13,8 @@ Evita **llamadas enteras** al proveedor si el mismo `prompt + contexto + tipoMod
 | Parámetro | Valor típico dev | Notas |
 |-----------|------------------|--------|
 | `ia_cache_desactivado` | `true` | Fuerza llamadas reales en desarrollo |
-| `correccion_cache_desactivado` | `true` | Idem corrección |
 
-En producción se puede activar (`false`) donde haya repetición (corrección, mismos lotes).
+En producción se puede activar (`false`) donde haya repetición.
 
 ## Reducción estimada (orientativa)
 

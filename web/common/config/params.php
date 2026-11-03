@@ -52,12 +52,6 @@ return [
         'vatRate' => 0.21,
     ],
     /**
-     * Legacy / unused en captura clínica.
-     * La nota corregida (`texto_procesado`) la devolvió la extracción IA
-     * (Capture/Prompts/capture-extraction.yaml → encounter_capture_extraction). SymSpell no se usa.
-     */
-    'hf_activar_correccion' => false,
-    /**
      * Push FCM de la plataforma (turnos, alertas, mensajes, etc.).
      * Proyecto Firebase separado de google_cloud_* (Vertex / voz).
      * - credentialsPath + projectId: FCM HTTP v1.

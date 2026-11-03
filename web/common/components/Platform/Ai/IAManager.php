@@ -1009,7 +1009,9 @@ class IAManager
             $prompt .= "- Si la palabra tiene error ortográfico, escribe: palabra_original -> palabra_corregida\n";
             $prompt .= "Correcciones:\n";
 
-            $endpoint = \Yii::$app->params['hf_endpoint'] ?? 'https://router.huggingface.co/hf-inference/PlanTL-GOB-ES/roberta-base-biomedical-clinical-es';
+            $modeloClinico = \Yii::$app->params['hf_modelo_clinico'] ?? 'PlanTL-GOB-ES/roberta-base-biomedical-clinical-es';
+            $endpoint = \Yii::$app->params['hf_endpoint']
+                ?? "https://router.huggingface.co/hf-inference/models/{$modeloClinico}";
             $apiKey = \Yii::$app->params['hf_api_key'] ?? '';
 
             $payload = [

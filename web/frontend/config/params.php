@@ -22,6 +22,14 @@ return [
     'hf_model_analysis' => 'deepseek-ai/DeepSeek-R1:hyperbolic', // Modelo para análisis (DeepSeek R1)
     'hf_embedding_model' => 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2', // Modelo de embeddings
     'hf_stt_model' => 'jonatasgrosman/wav2vec2-xlsr-53-spanish', // Modelo STT alternativo si se selecciona Hugging Face explícitamente
+
+    /**
+     * Corrección clínica con modelo HF (IAManager::corregirPalabrasConLLM).
+     * Endpoint de Inference Providers: la ruta debe incluir /models/.
+     * La API key (hf_api_key) va en common/config/params-local.php.
+     */
+    'hf_modelo_clinico' => 'PlanTL-GOB-ES/roberta-base-biomedical-clinical-es',
+    'hf_endpoint' => 'https://router.huggingface.co/hf-inference/models/PlanTL-GOB-ES/roberta-base-biomedical-clinical-es',
     
     // Parámetros de optimización de costos
     'hf_max_length' => 1000, // Longitud máxima de respuesta (aumentado para DeepSeek R1)

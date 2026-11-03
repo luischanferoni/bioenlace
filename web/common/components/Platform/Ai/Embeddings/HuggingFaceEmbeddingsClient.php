@@ -23,7 +23,7 @@ final class HuggingFaceEmbeddingsClient
             $client = new Client();
             $response = $client->createRequest()
                 ->setMethod('POST')
-                ->setUrl("https://router.huggingface.co/hf-inference/pipeline/feature-extraction/{$modelo}")
+                ->setUrl("https://router.huggingface.co/hf-inference/models/{$modelo}")
                 ->addHeaders([
                     'Authorization' => 'Bearer ' . $apiKey,
                     'Content-Type' => 'application/json',

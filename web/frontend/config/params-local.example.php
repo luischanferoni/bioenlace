@@ -51,7 +51,7 @@ return [
     //     ],
     // ],
 
-    // --- Sistema híbrido corrección clínica (si se reactiva en params.php) ---
-    // 'hf_modelo_clinico' => 'PlanTL-GOB-ES/roberta-base-biomedical-clinical-es',
-    // 'sistema_hibrido' => [ … ],
+    // --- Corrección clínica HF ---
+    // Los valores no secretos (hf_modelo_clinico, hf_endpoint, hf_activar_correccion)
+    // viven en frontend/config/params.php. Aquí solo overrides por entorno si hiciera falta.
 ];

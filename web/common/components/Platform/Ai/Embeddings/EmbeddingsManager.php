@@ -17,7 +17,7 @@ class EmbeddingsManager
     private const SIMILITUD_MINIMA = 0.7; // Umbral mínimo de similitud
 
     /**
-     * Generar embedding para un texto usando HuggingFace o OpenAI
+     * Generar embedding para un texto usando HuggingFace
      * @param string $texto
      * @param bool $useHuggingFace Si true, usa modelos de HuggingFace (más económico)
      * @return array|null
@@ -68,16 +68,8 @@ class EmbeddingsManager
             if ($useHuggingFace && !empty(Yii::$app->params['hf_api_key'])) {
                 // Usar HuggingFace (más económico, especialmente para español)
                 $embedding = self::generarEmbeddingHuggingFace($texto);
-            }
-
-            // Fallback a OpenAI si HuggingFace falla o no está configurado
-            // Solo intentar si la API key está configurada y parece válida (no vacía y tiene formato correcto)
-            if (
-                !$embedding && !empty(Yii::$app->params['openai_api_key']) &&
-                strlen(trim(Yii::$app->params['openai_api_key'])) > 10 &&
-                strpos(Yii::$app->params['openai_api_key'], 'sk-') === 0
-            ) {
-                $embedding = self::generarEmbeddingOpenAI($texto);
+            } elseif ($useHuggingFace) {
+                \Yii::warning('Embedding no generado: hf_api_key no configurada', 'embeddings');
             }
 
             if ($embedding) {
@@ -112,14 +104,14 @@ class EmbeddingsManager
     private static function generarEmbeddingHuggingFace($texto)
     {
         try {
-            // Usar modelo de embeddings multilingüe optimizado
-            // sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2 es gratuito en Inference API
+            // Endpoint de HuggingFace Inference Providers (requiere /models/ en la ruta).
+            // La cuota gratuita mensual es limitada: si se agota responde HTTP 402.
             $modelo = Yii::$app->params['hf_embedding_model'] ?? 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2';
 
             $client = new Client();
             $response = $client->createRequest()
                 ->setMethod('POST')
-                ->setUrl("https://router.huggingface.co/hf-inference/{$modelo}")
+                ->setUrl("https://router.huggingface.co/hf-inference/models/{$modelo}")
                 ->addHeaders([
                     'Authorization' => 'Bearer ' . Yii::$app->params['hf_api_key'],
                     'Content-Type' => 'application/json'
@@ -146,46 +138,14 @@ class EmbeddingsManager
                 }
             }
 
-            \Yii::warning("HuggingFace embedding falló: " . $response->getStatusCode(), 'embeddings');
+            $status = $response->getStatusCode();
+            $detalle = trim((string) $response->content);
+            if (strlen($detalle) > 300) {
+                $detalle = substr($detalle, 0, 300) . '...';
+            }
+            \Yii::warning("HuggingFace embedding falló: HTTP {$status} {$detalle}", 'embeddings');
         } catch (\Exception $e) {
             \Yii::warning("Error HuggingFace embedding: " . $e->getMessage(), 'embeddings');
-        }
-
-        return null;
-    }
-
-    /**
-     * Generar embedding usando OpenAI (más caro, pero más preciso)
-     * @param string $texto
-     * @return array|null
-     */
-    private static function generarEmbeddingOpenAI($texto)
-    {
-        try {
-            $client = new Client();
-            $response = $client->createRequest()
-                ->setMethod('POST')
-                ->setUrl('https://api.openai.com/v1/embeddings')
-                ->addHeaders([
-                    'Authorization' => 'Bearer ' . Yii::$app->params['openai_api_key'],
-                    'Content-Type' => 'application/json'
-                ])
-                ->setContent(json_encode([
-                    'input' => $texto,
-                    'model' => Yii::$app->params['openai_embedding_model'] ?? 'text-embedding-3-small'
-                ]))
-                ->send();
-
-            if ($response->isOk) {
-                $data = json_decode($response->content, true);
-                if (isset($data['data'][0]['embedding'])) {
-                    return $data['data'][0]['embedding'];
-                }
-            }
-
-            \Yii::warning("OpenAI embedding falló: " . $response->getStatusCode(), 'embeddings');
-        } catch (\Exception $e) {
-            \Yii::warning("Error OpenAI embedding: " . $e->getMessage(), 'embeddings');
         }
 
         return null;

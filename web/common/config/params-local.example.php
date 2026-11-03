@@ -13,7 +13,7 @@
 return [
     // --- API keys (IA, embeddings, STT servidor Groq/HF) ---
     'groq_api_key' => 'gsk_...',       // https://console.groq.com/
-    'openai_api_key' => 'sk-...',      // https://platform.openai.com/ (embeddings fallback)
+    'openai_api_key' => 'sk-...',      // https://platform.openai.com/ (chat IA; ya no se usa para embeddings)
     'hf_api_key' => 'hf_...',          // https://huggingface.co/settings/tokens
 
     // --- Vertex / Google Cloud (proyecto integracion-voz-del-agro). Ver GOOGLE_CLOUD_SETUP.md ---

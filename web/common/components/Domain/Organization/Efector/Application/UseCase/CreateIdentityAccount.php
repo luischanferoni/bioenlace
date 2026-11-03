@@ -7,8 +7,6 @@ use common\components\Domain\Person\Identity\Application\Service\IdentitySignupA
 use common\components\Domain\Person\Identity\Application\Service\IdentityVerificationException;
 use common\models\Person\Persona;
 use common\models\Platform\User;
-use common\components\Platform\Core\Auth\ApiAuthSessionService;
-use Firebase\JWT\JWT;
 use Yii;
 
 /**
@@ -18,9 +16,11 @@ use Yii;
  */
 final class CreateIdentityAccount
 {
+    private const IDENTITY_LOCK_TIMEOUT_SECONDS = 10;
+
     /**
      * @param array{verification_id: string, email?: string} $payload
-     * @return array{persona: Persona, user: User, es_nueva_persona: bool, es_nuevo_usuario: bool, didit: array<string, mixed>, token: string}
+     * @return array{persona: Persona, user: User, es_nueva_persona: bool, es_nuevo_usuario: bool, didit: array<string, mixed>}
      */
     public function crear(array $payload): array
     {
@@ -43,34 +43,58 @@ final class CreateIdentityAccount
             throw $e;
         }
         $attemptStore->recordVerification($verificationId, 'approved');
-        $account = Yii::$app->db->transaction(function () use (
-            $identityService,
-            $attemptStore,
-            $diditResult,
-            $verificationId,
-            $email
-        ): array {
-            $resolved = $identityService->upsertVerifiedPersona(
+        $lockName = $this->identityLockName($diditResult);
+        $lockAcquired = Yii::$app->db->createCommand(
+            'SELECT GET_LOCK(:lockName, :timeout)'
+        )->bindValues([
+            ':lockName' => $lockName,
+            ':timeout' => self::IDENTITY_LOCK_TIMEOUT_SECONDS,
+        ])->queryScalar();
+        if ((int) $lockAcquired !== 1) {
+            throw new \RuntimeException('No se pudo reservar la identidad para completar el alta; reintentá en unos segundos.');
+        }
+
+        try {
+            $account = Yii::$app->db->transaction(function () use (
+                $identityService,
+                $attemptStore,
                 $diditResult,
                 $verificationId,
-                null,
-                ['email' => $email]
-            );
-            $persona = $resolved['persona'];
-            [$user, $esNuevoUsuario] = $this->ensureUserForPersona($persona, $email);
-            $attemptStore->markAccountCreated(
-                $verificationId,
-                (int) $persona->id_persona,
-                (int) $user->id
-            );
+                $email
+            ): array {
+                $resolved = $identityService->upsertVerifiedPersona(
+                    $diditResult,
+                    $verificationId,
+                    null,
+                    ['email' => $email]
+                );
+                $persona = $resolved['persona'];
+                [$user, $esNuevoUsuario] = $this->ensureUserForPersona($persona, $email);
+                $this->ensurePatientRole($user);
+                $attemptStore->markAccountCreated(
+                    $verificationId,
+                    (int) $persona->id_persona,
+                    (int) $user->id
+                );
 
-            return [
-                'persona' => $persona,
-                'user' => $user,
-                'es_nueva_persona' => (bool) $resolved['es_nueva'],
-                'es_nuevo_usuario' => $esNuevoUsuario,
-            ];
-        });
+                return [
+                    'persona' => $persona,
+                    'user' => $user,
+                    'es_nueva_persona' => (bool) $resolved['es_nueva'],
+                    'es_nuevo_usuario' => $esNuevoUsuario,
+                ];
+            });
+        } finally {
+            $lockReleased = Yii::$app->db->createCommand(
+                'SELECT RELEASE_LOCK(:lockName)'
+            )->bindValue(':lockName', $lockName)->queryScalar();
+            if ((int) $lockReleased !== 1) {
+                Yii::error(
+                    'No se pudo liberar el bloqueo de alta de identidad ' . $lockName,
+                    __METHOD__
+                );
+            }
+        }
 
         return [
             'persona' => $account['persona'],
@@ -78,34 +102,7 @@ final class CreateIdentityAccount
             'es_nueva_persona' => $account['es_nueva_persona'],
             'es_nuevo_usuario' => $account['es_nuevo_usuario'],
             'didit' => $diditResult,
-            'token' => $this->issueJwt($account['user'], $account['persona']),
         ];
-    }
-
-    /**
-     * Emite un JWT de sesión para la cuenta de identidad (mismo patrón que RegisterPerson).
-     */
-    private function issueJwt(User $user, Persona $persona): string
-    {
-        $jwtSecret = Yii::$app->params['jwtSecret'] ?? null;
-        if (!is_string($jwtSecret) || trim($jwtSecret) === '') {
-            throw new \RuntimeException('jwtSecret no configurado; no se puede emitir la sesión de la cuenta.');
-        }
-
-        $expiresAt = time() + (24 * 60 * 60);
-        return JWT::encode([
-            'user_id' => (int) $user->id,
-            'email' => (string) $user->email,
-            'role' => 'usuario',
-            'id_persona' => (int) $persona->id_persona,
-            'iat' => time(),
-            'exp' => $expiresAt,
-            'jti' => ApiAuthSessionService::issue(
-                (int) $user->id,
-                $expiresAt,
-                'identity-account'
-            ),
-        ], $jwtSecret, 'HS256');
     }
 
     /**
@@ -123,6 +120,22 @@ final class CreateIdentityAccount
         }
 
         return [$this->createPasswordlessUser($persona, $email), true];
+    }
+
+    private function ensurePatientRole(User $user): void
+    {
+        if (!Yii::$app->has('authManager')) {
+            throw new \RuntimeException('No se pudo asignar el perfil Paciente a la cuenta.');
+        }
+
+        $authManager = Yii::$app->authManager;
+        $role = $authManager->getRole('paciente');
+        if ($role === null) {
+            throw new \RuntimeException('No se encontró el perfil Paciente.');
+        }
+        if ($authManager->getAssignment('paciente', (string) $user->id) === null) {
+            $authManager->assign($role, (string) $user->id);
+        }
     }
 
     private function createPasswordlessUser(Persona $persona, string $email): User
@@ -167,5 +180,24 @@ final class CreateIdentityAccount
     private function fallbackEmail(Persona $persona): string
     {
         return $this->uniqueUsername($persona, '') . '@accounts.bioenlace.invalid';
+    }
+
+    /**
+     * MySQL named locks serialize concurrent first-time signups for one identity,
+     * including the case where no Persona row exists yet.
+     *
+     * @param array<string, mixed> $diditResult
+     */
+    private function identityLockName(array $diditResult): string
+    {
+        $documento = preg_replace('/\D+/', '', (string) ($diditResult['documento'] ?? '')) ?? '';
+        $fechaNacimiento = trim((string) ($diditResult['fecha_nacimiento'] ?? ''));
+        if (preg_match('#^(\d{2})/(\d{2})/(\d{4})$#', $fechaNacimiento, $matches)) {
+            $fechaNacimiento = $matches[3] . '-' . $matches[2] . '-' . $matches[1];
+        } elseif (preg_match('/^(\d{4}-\d{2}-\d{2})/', $fechaNacimiento, $matches)) {
+            $fechaNacimiento = $matches[1];
+        }
+
+        return 'signup-persona-' . substr(hash('sha256', $documento . '|' . $fechaNacimiento), 0, 48);
     }
 }

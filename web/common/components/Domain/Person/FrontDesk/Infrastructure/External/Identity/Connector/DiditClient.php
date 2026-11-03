@@ -639,7 +639,17 @@ class DiditClient extends Component
             return 'approved';
         }
 
-        if (in_array($lower, ['rejected', 'declined', 'invalid', 'failed', 'error'], true)) {
+        if (in_array($lower, [
+            'rejected',
+            'declined',
+            'invalid',
+            'failed',
+            'error',
+            'expired',
+            'abandoned',
+            'canceled',
+            'cancelled',
+        ], true)) {
             return 'rejected';
         }
 
@@ -696,4 +706,3 @@ class DiditClient extends Component
         ];
     }
 }
-

@@ -108,7 +108,10 @@ final class DiditIdentityService
         }
 
         // Crear o actualizar persona en base a los datos devueltos por Didit.
-        $persona = Persona::findOne(['documento' => $dni]);
+        $persona = Persona::findOne([
+            'documento' => $dni,
+            'fecha_nacimiento' => $fechaNacimiento,
+        ]);
         $esNueva = false;
 
         if ($persona === null) {

@@ -9,6 +9,18 @@ const _diditVerificationTimeout = Duration(minutes: 10);
 
 /// Alta de cuenta profesional: identidad (Didit) → cuenta passwordless.
 class StaffSignupService {
+  final PendingSignupVerificationStore _pendingVerificationStore =
+      PendingSignupVerificationStore.instance;
+
+  Future<String?> readPendingVerificationId() =>
+      _pendingVerificationStore.read();
+
+  Future<void> storePendingVerificationId(String verificationId) =>
+      _pendingVerificationStore.write(verificationId);
+
+  Future<void> clearPendingVerificationId() =>
+      _pendingVerificationStore.delete();
+
   /// Corre una verificación de Didit y devuelve el `session_id` aprobado.
   Future<String> runDiditVerification({required bool biometric}) async {
     if (!isDiditSupported) {
@@ -148,41 +160,54 @@ class StaffSignupService {
   }
 
   Future<Map<String, dynamic>> startCommercialCheckout({
-    required String authToken,
+    required String verificationId,
     required Map<String, dynamic> body,
   }) {
     return ApiClient(
-      authToken: authToken,
       appClient: 'bioenlace-personalsalud',
-      traceLabel: 'licencia/registrar-efector',
-    ).postData('/licencia/registrar-efector', body: body);
+      traceLabel: 'licencia/registrar-efector-didit',
+    ).postData(
+      '/licencia/registrar-efector-didit',
+      body: {...body, 'verification_id': verificationId},
+    );
   }
 
   Future<Map<String, dynamic>> checkoutStatus({
-    required String authToken,
+    required String verificationId,
     required String checkoutKey,
   }) {
     return ApiClient(
-      authToken: authToken,
       appClient: 'bioenlace-personalsalud',
-      traceLabel: 'licencia/estado-checkout',
-    ).getData(
-      '/licencia/estado-checkout',
-      query: {'checkout_key': checkoutKey},
+      traceLabel: 'licencia/estado-checkout-didit',
+    ).postData(
+      '/licencia/estado-checkout-didit',
+      body: {'verification_id': verificationId, 'checkout_key': checkoutKey},
+    );
+  }
+
+  Future<Map<String, dynamic>> saveCommercialDraft({
+    required String verificationId,
+    required Map<String, dynamic> draft,
+  }) {
+    return ApiClient(
+      appClient: 'bioenlace-personalsalud',
+      traceLabel: 'licencia/guardar-borrador',
+    ).postData(
+      '/licencia/guardar-borrador',
+      body: {'verification_id': verificationId, 'borrador': draft},
     );
   }
 
   Future<Map<String, dynamic>> cancelCommercialCheckout({
-    required String authToken,
+    required String verificationId,
     required String checkoutKey,
   }) {
     return ApiClient(
-      authToken: authToken,
       appClient: 'bioenlace-personalsalud',
-      traceLabel: 'licencia/cancelar-suscripcion',
+      traceLabel: 'licencia/cancelar-suscripcion-didit',
     ).postData(
-      '/licencia/cancelar-suscripcion',
-      body: {'checkout_key': checkoutKey},
+      '/licencia/cancelar-suscripcion-didit',
+      body: {'verification_id': verificationId, 'checkout_key': checkoutKey},
     );
   }
 }

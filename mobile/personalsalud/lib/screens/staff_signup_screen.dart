@@ -44,9 +44,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
 
   Map<String, dynamic> _initialSpacePlan() => {
     'classes': {
-      'AMB': {
-        'attentions_per_month': 200,
-      },
+      'AMB': {'attentions_per_month': 200},
     },
   };
 
@@ -78,15 +76,21 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
     Map<String, dynamic>? plan,
   }) async {
     var identityCreated = false;
+    String? verificationId;
+    var reusedVerification = false;
     setState(() => _submitting = true);
     try {
-      final verificationId =
-          _pendingVerificationId ?? await _signupService.verifyIdentity();
-      _pendingVerificationId = verificationId;
+      verificationId = await _signupService.readPendingVerificationId();
+      reusedVerification = verificationId != null;
+      verificationId ??= await _signupService.verifyIdentity();
+      await _signupService.storePendingVerificationId(verificationId);
+      reusedVerification = true;
+      if (mounted) setState(() => _pendingVerificationId = verificationId);
       final account = await _signupService.createAccount(
         verificationId: verificationId,
       );
       identityCreated = true;
+      await _signupService.clearPendingVerificationId();
       if (selectedPath == _SignupPath.personalFree) {
         if (!mounted) return;
         setState(() {
@@ -97,27 +101,35 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
         return;
       }
 
-      final token = account['token']?.toString().trim() ?? '';
-      final userId = (account['id_user'] ?? account['id_persona'] ?? '')
-          .toString()
-          .trim();
-      if (token.isEmpty || userId.isEmpty) {
-        throw StateError(
-          'La cuenta existe, pero la API no devolvió los datos necesarios para continuar.',
-        );
-      }
-
-      await AuthTokenStore.instance.write(token);
+      final rawDraft = account['borrador'];
+      final initialDraft = rawDraft is Map
+          ? rawDraft.map((key, value) => MapEntry(key.toString(), value))
+          : null;
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => CommercialSignupScreen(
-            authToken: token,
+            verificationId: verificationId!,
+            initialDraft: initialDraft,
             initialPlan: plan,
           ),
         ),
       );
     } catch (error) {
+      if (error is ApiContractException && error.statusCode == 422) {
+        try {
+          await _signupService.clearPendingVerificationId();
+        } catch (storageError) {
+          _snack(
+            'La verificación no se puede reutilizar y no pudimos borrar su '
+            'referencia segura: $storageError',
+          );
+          if (mounted) setState(() => _submitting = false);
+          return;
+        }
+        _pendingVerificationId = null;
+        reusedVerification = false;
+      }
       final message = error.toString().replaceFirst('Exception: ', '');
       if (identityCreated) {
         _snack(
@@ -131,7 +143,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
       _snack(
         message == 'Verificación cancelada.'
             ? 'Cancelaste la verificación.'
-            : _pendingVerificationId != null
+            : reusedVerification
             ? 'Tu identidad ya fue verificada, pero no pudimos crear la cuenta. '
                   'Reintentá sin volver a verificarte.'
             : 'No pudimos continuar con la creación de tu cuenta. Intentá nuevamente. '
@@ -364,5 +376,4 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
       ),
     );
   }
-
 }

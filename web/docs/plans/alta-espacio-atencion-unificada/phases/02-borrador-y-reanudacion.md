@@ -6,14 +6,14 @@ Sobrevivir a cierres, pérdida de conectividad y fallos entre Didit, identidad, 
 
 ## Trabajo
 
-- [ ] Persistir borrador comercial server-side ligado a Persona/User con estado, sector, efector, ministerio/SISA, plan, contacto y versión.
-- [ ] Proveer operaciones de guardar, consultar, actualizar y recuperar borrador con autorización basada en nueva verificación Didit, no en sesión de paciente de Personal de Salud.
-- [ ] Hacer idempotente y seguro ante concurrencia el alta de Persona/User y la asociación `verification_id` aprobada; asegurar recuperación de transacciones/estados parciales.
-- [ ] En móvil, guardar `verification_id` aprobado en almacenamiento seguro hasta confirmación de creación; reintentar la API antes de lanzar una nueva verificación.
-- [ ] Borrar/invalidar el dato local al confirmar cuenta, al expirar Didit o cuando la API indique que no es reutilizable.
-- [ ] Tras cuenta creada, mantener la app en login si no tiene rol habilitante. El CTA «Crear cuenta» reejecuta Didit y recupera el borrador correspondiente.
-- [ ] Restaurar el paso y datos desde servidor después de reintento; usar almacenamiento local solo como optimización.
-- [ ] Recuperar borrador en otro dispositivo tras Didit y devolver únicamente el borrador de esa identidad.
+- [x] Persistir borrador comercial server-side ligado a Persona/User con estado, sector, efector, ministerio/SISA, plan, contacto y versión.
+- [x] Proveer operaciones de guardar, consultar, actualizar y recuperar borrador con autorización basada en nueva verificación Didit, no en sesión de paciente de Personal de Salud.
+- [x] Hacer idempotente y seguro ante concurrencia el alta de Persona/User y la asociación `verification_id` aprobada; asegurar recuperación de transacciones/estados parciales.
+- [x] En móvil, guardar `verification_id` aprobado en almacenamiento seguro hasta confirmación de creación; reintentar la API antes de lanzar una nueva verificación.
+- [x] Borrar/invalidar el dato local al confirmar cuenta, al expirar Didit o cuando la API indique que no es reutilizable.
+- [x] Tras cuenta creada, mantener la app en login si no tiene rol habilitante. El CTA «Crear cuenta» reejecuta Didit y recupera el borrador correspondiente.
+- [x] Restaurar el paso y datos desde servidor después de reintento; usar almacenamiento local solo como optimización.
+- [x] Recuperar borrador en otro dispositivo tras Didit y devolver únicamente el borrador de esa identidad.
 - [ ] Añadir expiración/limpieza con retención explícita; conservar la auditoría comercial necesaria.
 
 ## Criterios de aceptación

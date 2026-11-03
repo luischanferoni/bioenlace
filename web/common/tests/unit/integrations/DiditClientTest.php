@@ -83,4 +83,20 @@ class DiditClientTest extends Unit
         $this->assertFalse($result['success']);
         $this->assertSame('rejected', $result['status']);
     }
+
+    public function testExpiredAndAbandonedSessionsAreNotReusable(): void
+    {
+        $client = new DiditClientTestable();
+
+        foreach (['Expired', 'Abandoned'] as $status) {
+            $result = $client->identityFromPayload([
+                'session_id' => 'session-' . strtolower($status),
+                'status' => $status,
+                'id_verifications' => [],
+            ], 'session-' . strtolower($status));
+
+            $this->assertFalse($result['success']);
+            $this->assertSame('rejected', $result['status']);
+        }
+    }
 }

@@ -229,6 +229,10 @@ final class BillingCheckoutService
             'paid_through_at' => $attempt->paid_through_at,
             'checkout_url' => $attempt->checkout_url,
             'id_efector' => $attempt->id_efector !== null ? (int) $attempt->id_efector : null,
+            'amount_usd' => (float) $attempt->amount_usd,
+            'amount_net_ars' => (float) $attempt->amount_net_ars,
+            'vat_rate' => (float) $attempt->vat_rate,
+            'vat_ars' => (float) $attempt->vat_ars,
             'amount_total_ars' => (float) $attempt->amount_total_ars,
             'currency' => 'ARS',
         ];

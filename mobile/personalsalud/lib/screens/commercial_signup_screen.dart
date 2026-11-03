@@ -8,12 +8,14 @@ import '../services/staff_signup_service.dart';
 
 class CommercialSignupScreen extends StatefulWidget {
   const CommercialSignupScreen({
-    required this.authToken,
+    required this.verificationId,
+    this.initialDraft,
     this.initialPlan,
     super.key,
   });
 
-  final String authToken;
+  final String verificationId;
+  final Map<String, dynamic>? initialDraft;
   final Map<String, dynamic>? initialPlan;
 
   @override
@@ -72,7 +74,79 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
       _impController.text =
           classes['IMP']?['attentions_per_month']?.toString() ?? '';
     }
+    _restoreDraft(widget.initialDraft);
     _loadMinistries();
+    if (_checkoutKey != null) _refreshCheckoutStatus();
+  }
+
+  void _restoreDraft(Map<String, dynamic>? draft) {
+    if (draft == null) return;
+    if (draft['status'] == 'EXPIRED') {
+      _errorMessage =
+          'El borrador anterior venció. Podés comenzar una configuración nueva.';
+      return;
+    }
+
+    final sector = draft['sector']?.toString();
+    if (sector == 'PUBLICO' || sector == 'PRIVADO') _sector = sector!;
+    final efector = _asStringMap(draft['efector']);
+    if (efector != null) {
+      if (_sector == 'PUBLICO') {
+        _selectedSisaEfector = efector;
+        _sisaSearchController.text =
+            '${efector['nombre'] ?? ''} ${efector['codigo_sisa'] ?? ''}'.trim();
+      } else {
+        _nameController.text = efector['nombre']?.toString() ?? '';
+        _addressController.text = efector['domicilio']?.toString() ?? '';
+        final localityId = efector['id_localidad'];
+        if (localityId != null) {
+          _selectedLocality = {
+            'id': localityId,
+            'nombre': efector['localidad'] ?? '',
+            'departamento': efector['departamento'] ?? '',
+            'provincia': efector['provincia'] ?? '',
+          };
+          final locality = _selectedLocality!;
+          _localityQueryController.text = [
+            locality['nombre'],
+            locality['departamento'],
+            locality['provincia'],
+          ].where((part) => part.toString().isNotEmpty).join(', ');
+        }
+      }
+    }
+    _selectedMinistryId = int.tryParse(
+      draft['id_billing_account_ministerio']?.toString() ?? '',
+    );
+    _emailController.text = draft['payer_email']?.toString() ?? '';
+    _phoneController.text = draft['contact_phone']?.toString() ?? '';
+    final plan = _asStringMap(draft['plan']);
+    final savedClasses = _asStringMap(plan?['classes']);
+    if (savedClasses != null) {
+      _ambController.text =
+          _asStringMap(savedClasses['AMB'])?['attentions_per_month']
+              ?.toString() ??
+          '';
+      _emerController.text =
+          _asStringMap(savedClasses['EMER'])?['attentions_per_month']
+              ?.toString() ??
+          '';
+      _impController.text =
+          _asStringMap(savedClasses['IMP'])?['attentions_per_month']
+              ?.toString() ??
+          '';
+    }
+    _currentStep =
+        (int.tryParse(draft['current_step']?.toString() ?? '') ?? 0)
+            .clamp(0, 2)
+            .toInt();
+    _checkoutRequestKey = draft['checkout_request_key']?.toString();
+    _checkoutKey = draft['checkout_key']?.toString();
+  }
+
+  Map<String, dynamic>? _asStringMap(Object? value) {
+    if (value is! Map) return null;
+    return value.map((key, value) => MapEntry(key.toString(), value));
   }
 
   @override
@@ -99,6 +173,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
 
   Future<void> _continueSignup() async {
     if (_currentStep == 0) {
+      if (!await _saveDraft(nextStep: 1)) return;
       setState(() {
         _currentStep = 1;
         _errorMessage = null;
@@ -122,6 +197,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
         );
         return;
       }
+      if (!await _saveDraft(nextStep: 2)) return;
       setState(() {
         _currentStep = 2;
         _errorMessage = null;
@@ -130,6 +206,58 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     }
 
     await _startCheckout();
+  }
+
+  Future<bool> _saveDraft({required int nextStep}) async {
+    setState(() {
+      _submitting = true;
+      _errorMessage = null;
+    });
+    try {
+      final response = await _service.saveCommercialDraft(
+        verificationId: widget.verificationId,
+        draft: _draftPayload(currentStep: nextStep),
+      );
+      final saved = _asStringMap(response['borrador']);
+      if (saved != null) _checkoutRequestKey = saved['checkout_request_key']?.toString();
+      if (!mounted) return false;
+      setState(() => _submitting = false);
+      return true;
+    } catch (error) {
+      if (!mounted) return false;
+      setState(() {
+        _submitting = false;
+        _errorMessage = _errorText(error);
+      });
+      return false;
+    }
+  }
+
+  Map<String, dynamic> _draftPayload({required int currentStep}) {
+    final plan = _selectedPlan();
+    final efector = _sector == 'PUBLICO'
+        ? _selectedSisaEfector
+        : {
+            'nombre': _nameController.text.trim(),
+            'domicilio': _addressController.text.trim(),
+            if (_selectedLocality != null) ...{
+              'id_localidad': _selectedLocality!['id'],
+              'localidad': _selectedLocality!['nombre'],
+              'departamento': _selectedLocality!['departamento'],
+              'provincia': _selectedLocality!['provincia'],
+            },
+            'telefono': _phoneController.text.trim(),
+          };
+    return {
+      'sector': _sector,
+      'efector': efector,
+      'id_billing_account_ministerio': _selectedMinistryId,
+      'plan': plan ?? {'classes': <String, dynamic>{}},
+      'payer_email': _emailController.text.trim(),
+      'contact_phone': _phoneController.text.trim(),
+      'current_step': currentStep,
+      'checkout_request_key': _checkoutRequestKey,
+    };
   }
 
   Future<void> _loadMinistries() async {
@@ -265,27 +393,14 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     });
     try {
       final body = <String, dynamic>{
+        'perfil': 'ESPACIO_ATENCION',
+        ..._draftPayload(currentStep: 2),
         'checkout_request_key': _checkoutRequestKey ??=
             _newCheckoutRequestKey(),
-        'perfil': 'ESPACIO_ATENCION',
-        'sector': _sector,
-        'payer_email': _emailController.text.trim(),
-        'contact_phone': _phoneController.text.trim(),
-        'efector': _sector == 'PUBLICO'
-            ? {'codigo_sisa': _selectedSisaEfector!['codigo_sisa']}
-            : {
-                'nombre': _nameController.text.trim(),
-                'domicilio': _addressController.text.trim(),
-                'id_localidad': _selectedLocality!['id'],
-                'telefono': _phoneController.text.trim(),
-              },
         'plan': plan,
       };
-      if (_sector == 'PUBLICO' && _selectedMinistryId != null) {
-        body['id_billing_account_ministerio'] = _selectedMinistryId;
-      }
       final checkout = await _service.startCommercialCheckout(
-        authToken: widget.authToken,
+        verificationId: widget.verificationId,
         body: body,
       );
       final key = checkout['checkout_key']?.toString() ?? '';
@@ -358,7 +473,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     if (key == null) return;
     try {
       final status = await _service.checkoutStatus(
-        authToken: widget.authToken,
+        verificationId: widget.verificationId,
         checkoutKey: key,
       );
       if (!mounted) return;
@@ -367,11 +482,29 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
         _providerSubscriptionStatus = status['provider_subscription_status']
             ?.toString();
         _paidThroughAt = status['paid_through_at']?.toString();
+        _checkoutUrl = status['checkout_url']?.toString();
+        _pricing = status;
       });
     } catch (error) {
       if (!mounted) return;
       setState(() => _errorMessage = _errorText(error));
     }
+
+  }
+
+  void _startRetryAfterFailedCheckout() {
+    setState(() {
+      _checkoutKey = null;
+      _checkoutUrl = null;
+      _checkoutStatus = null;
+      _providerSubscriptionStatus = null;
+      _paidThroughAt = null;
+      _pricing = null;
+      _checkoutOpened = false;
+      _checkoutRequestKey = null;
+      _currentStep = 2;
+      _errorMessage = null;
+    });
   }
 
   Future<void> _cancelSubscription() async {
@@ -402,7 +535,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     });
     try {
       final status = await _service.cancelCommercialCheckout(
-        authToken: widget.authToken,
+        verificationId: widget.verificationId,
         checkoutKey: _checkoutKey!,
       );
       if (!mounted) return;
@@ -546,7 +679,14 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
         Text(message, style: BioTypography.body),
         BioSpacing.gapH(BioSpacing.md),
         if (status != 'ACTIVE' && status != 'CANCELLED' && status != 'EXPIRED')
-          BioButton.primary(
+          status == 'FAILED'
+              ? BioButton.primary(
+                  label: 'Intentar nuevamente',
+                  icon: Icons.refresh,
+                  fullWidth: true,
+                  onPressed: _startRetryAfterFailedCheckout,
+                )
+              : BioButton.primary(
             label: _checkoutOpened
                 ? 'Volver a Mercado Pago'
                 : 'Continuar a Mercado Pago',
@@ -555,7 +695,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
             onPressed: (!_checkoutOpened && !_termsAccepted)
                 ? null
                 : _openCheckout,
-          ),
+                ),
         BioSpacing.gapH(BioSpacing.sm),
         OutlinedButton(
           onPressed: _refreshCheckoutStatus,

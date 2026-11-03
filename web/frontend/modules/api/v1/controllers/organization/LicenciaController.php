@@ -5,6 +5,7 @@ namespace frontend\modules\api\v1\controllers\organization;
 use frontend\modules\api\v1\controllers\BaseController;
 use common\components\Domain\Organization\Efector\Application\UseCase\SwitchBillingMembership;
 use common\components\Domain\Organization\Efector\Application\UseCase\SignUpInstitutionalEfector;
+use common\components\Domain\Organization\Efector\Application\Service\CommercialSignupDraftService;
 use common\components\Domain\Organization\Billing\Application\Service\BillingCheckoutService;
 use common\components\Domain\Organization\Billing\Application\Service\MercadoPagoCheckoutService;
 use common\components\Domain\Organization\Efector\Application\UseCase\RequestMinistrySignup;
@@ -36,6 +37,10 @@ class LicenciaController extends BaseController
         'planes',
         'cotizar',
         'crear-cuenta',
+        'guardar-borrador',
+        'registrar-efector-didit',
+        'estado-checkout-didit',
+        'cancelar-suscripcion-didit',
         'completar-ministerio',
         'solicitar-ministerio',
         'demo-perfiles',
@@ -66,6 +71,10 @@ class LicenciaController extends BaseController
         $verbs['planes'] = ['GET', 'OPTIONS'];
         $verbs['cotizar'] = ['POST', 'OPTIONS'];
         $verbs['crear-cuenta'] = ['POST', 'OPTIONS'];
+        $verbs['guardar-borrador'] = ['POST', 'OPTIONS'];
+        $verbs['registrar-efector-didit'] = ['POST', 'OPTIONS'];
+        $verbs['estado-checkout-didit'] = ['POST', 'OPTIONS'];
+        $verbs['cancelar-suscripcion-didit'] = ['POST', 'OPTIONS'];
         $verbs['completar-ministerio'] = ['POST', 'OPTIONS'];
         $verbs['registrar-efector'] = ['POST', 'OPTIONS'];
         $verbs['estado-checkout'] = ['GET', 'OPTIONS'];
@@ -185,15 +194,14 @@ class LicenciaController extends BaseController
         try {
             (new SignupAbuseGuard())->assertAllowed($body);
             $data = (new CreateIdentityAccount())->crear($body);
+            $draft = (new CommercialSignupDraftService())->findForPersona(
+                (int) $data['persona']->id_persona
+            );
 
             return $this->success([
-                'id_persona' => (int) $data['persona']->id_persona,
-                'id_user' => (int) $data['user']->id,
-                'username' => (string) $data['user']->username,
-                'email' => (string) $data['user']->email,
-                'token' => $data['token'],
                 'es_nueva_persona' => (bool) $data['es_nueva_persona'],
                 'es_nuevo_usuario' => (bool) $data['es_nuevo_usuario'],
+                'borrador' => $draft,
             ], 'Cuenta de identidad creada.');
         } catch (\DomainException $e) {
             return $this->error($e->getMessage(), null, str_contains($e->getMessage(), 'Demasiados') ? 429 : 400);
@@ -209,6 +217,43 @@ class LicenciaController extends BaseController
             Yii::error($e->getMessage() . "\n" . $e->getTraceAsString(), 'billing.signup');
 
             return $this->error('No se pudo crear la cuenta. Reintentá o escribinos.', null, 500);
+        }
+    }
+
+    /**
+     * Saves or recovers the commercial draft after revalidating the Didit proof.
+     */
+    public function actionGuardarBorrador()
+    {
+        $body = Yii::$app->request->getBodyParams();
+        if (!is_array($body)) {
+            return $this->error('Los datos del borrador son inválidos.', null, 400);
+        }
+
+        try {
+            (new SignupAbuseGuard())->assertAllowed($body);
+            $draftInput = $body['borrador'] ?? null;
+            if (!is_array($draftInput)) {
+                return $this->error('Los datos del borrador son inválidos.', null, 400);
+            }
+            $identity = (new CreateIdentityAccount())->crear($body);
+            $draft = (new CommercialSignupDraftService())->save(
+                (int) $identity['persona']->id_persona,
+                $draftInput
+            );
+
+            return $this->success(['borrador' => $draft], 'Borrador guardado.');
+        } catch (\DomainException $e) {
+            return $this->error($e->getMessage(), null, 429);
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), null, 400);
+        } catch (IdentityVerificationException $e) {
+            return $e->isRetryable()
+                ? $this->fail('service_unavailable')
+                : $this->error($e->getMessage(), null, 422);
+        } catch (\Throwable $e) {
+            Yii::error($e->getMessage() . "\n" . $e->getTraceAsString(), 'billing.signup');
+            return $this->error('No se pudo guardar el borrador. Reintentá más tarde.', null, 503);
         }
     }
 
@@ -278,6 +323,126 @@ class LicenciaController extends BaseController
             Yii::error($e->getMessage() . "\n" . $e->getTraceAsString(), 'mercadopago');
 
             return $this->error('No se pudo iniciar el checkout. Reintentá más tarde.', null, 503);
+        }
+    }
+
+    /**
+     * Starts checkout after validating the Didit proof; no app session token is issued.
+     */
+    public function actionRegistrarEfectorDidit()
+    {
+        $body = Yii::$app->request->getBodyParams();
+        if (!is_array($body)) {
+            return $this->error('Los datos del alta son inválidos.', null, 400);
+        }
+
+        try {
+            (new SignupAbuseGuard())->assertAllowed($body);
+            $identity = (new CreateIdentityAccount())->crear($body);
+            $draftService = new CommercialSignupDraftService();
+            $draftService->save((int) $identity['persona']->id_persona, $body);
+            $checkout = (new BillingCheckoutService())->start(
+                $identity['user'],
+                $identity['persona'],
+                $body
+            );
+            $draftService->markCheckoutPending(
+                (int) $identity['persona']->id_persona,
+                (string) $checkout['checkout_key']
+            );
+
+            return $this->success($checkout, 'Checkout de Mercado Pago iniciado.', 201);
+        } catch (\DomainException $e) {
+            return $this->error($e->getMessage(), null, 403);
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), null, 400);
+        } catch (IdentityVerificationException $e) {
+            return $e->isRetryable()
+                ? $this->fail('service_unavailable')
+                : $this->error($e->getMessage(), null, 422);
+        } catch (\yii\base\InvalidConfigException $e) {
+            Yii::error($e->getMessage(), 'mercadopago');
+            return $this->error('El checkout no está configurado para este entorno.', null, 503);
+        } catch (\Throwable $e) {
+            Yii::error($e->getMessage() . "\n" . $e->getTraceAsString(), 'mercadopago');
+            return $this->error('No se pudo iniciar el checkout. Reintentá más tarde.', null, 503);
+        }
+    }
+
+    /**
+     * Reads a checkout status after revalidating the Didit proof and its owner.
+     */
+    public function actionEstadoCheckoutDidit()
+    {
+        $body = Yii::$app->request->getBodyParams();
+        if (!is_array($body)) {
+            return $this->error('Los datos de consulta son inválidos.', null, 400);
+        }
+        $checkoutKey = trim((string) ($body['checkout_key'] ?? ''));
+        if ($checkoutKey === '') {
+            return $this->error('checkout_key es requerido.', null, 400);
+        }
+        if (trim((string) ($body['verification_id'] ?? '')) === '') {
+            return $this->error('verification_id es requerido.', null, 400);
+        }
+
+        try {
+            (new SignupAbuseGuard())->assertAllowed($body);
+            $identity = (new CreateIdentityAccount())->crear($body);
+            $status = (new BillingCheckoutService())->statusForUser(
+                $checkoutKey,
+                (int) $identity['user']->id
+            );
+            (new CommercialSignupDraftService())->syncCheckoutStatus(
+                (int) $identity['persona']->id_persona,
+                (string) ($status['status'] ?? '')
+            );
+            return $this->success($status);
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), null, 404);
+        } catch (IdentityVerificationException $e) {
+            return $e->isRetryable()
+                ? $this->fail('service_unavailable')
+                : $this->error($e->getMessage(), null, 422);
+        } catch (\Throwable $e) {
+            Yii::error($e->getMessage() . "\n" . $e->getTraceAsString(), 'billing.signup');
+            return $this->error('No se pudo consultar el checkout. Reintentá más tarde.', null, 503);
+        }
+    }
+
+    public function actionCancelarSuscripcionDidit()
+    {
+        $body = Yii::$app->request->getBodyParams();
+        if (!is_array($body)) {
+            return $this->error('Los datos de cancelación son inválidos.', null, 400);
+        }
+        $checkoutKey = trim((string) ($body['checkout_key'] ?? ''));
+        if ($checkoutKey === '') {
+            return $this->error('checkout_key es requerido.', null, 400);
+        }
+        if (trim((string) ($body['verification_id'] ?? '')) === '') {
+            return $this->error('verification_id es requerido.', null, 400);
+        }
+
+        try {
+            (new SignupAbuseGuard())->assertAllowed($body);
+            $identity = (new CreateIdentityAccount())->crear($body);
+            return $this->success(
+                (new BillingCheckoutService())->cancelForUser(
+                    $checkoutKey,
+                    (int) $identity['user']->id
+                ),
+                'Se solicitó cancelar la renovación.'
+            );
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), null, 404);
+        } catch (IdentityVerificationException $e) {
+            return $e->isRetryable()
+                ? $this->fail('service_unavailable')
+                : $this->error($e->getMessage(), null, 422);
+        } catch (\Throwable $e) {
+            Yii::error($e->getMessage() . "\n" . $e->getTraceAsString(), 'mercadopago');
+            return $this->error('No se pudo cancelar la renovación. Reintentá más tarde.', null, 503);
         }
     }
 

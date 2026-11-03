@@ -32,12 +32,13 @@
 # =============================================================================
 
 audience:
-  # Roles Yii que cuentan como «staff» para el panel clínico
+  # Roles Yii que cuentan como «staff» (clínico o de gestión) para el panel
   staff_roles:
     - Medico
     - enfermeria
     - Administrativo
     - AdminMinisterio
+    - AdminEfector
     - facturista
     - nivelCentral
   # Rol único paciente (app móvil; no web)

@@ -41,6 +41,52 @@ void main() {
     });
   });
 
+  group('Servicio.fromJson', () {
+    test('marks services that operate without a clinical encounter class', () {
+      final servicio = Servicio.fromJson({
+        'id_servicio': 5,
+        'nombre': 'Administración del efector',
+        'id_profesional_efector_servicio': 91,
+        'requires_encounter_class': false,
+      });
+
+      expect(servicio.requiresEncounterClass, isFalse);
+      expect(servicio.idProfesionalEfectorServicio, 91);
+    });
+
+    test(
+      'defaults to requiring an encounter class when the flag is absent',
+      () {
+        final servicio = Servicio.fromJson({
+          'id_servicio': 7,
+          'nombre': 'Clínica',
+        });
+
+        expect(servicio.requiresEncounterClass, isTrue);
+      },
+    );
+  });
+
+  group('SessionConfig.fromJson', () {
+    test('accepts a management session without encounter class', () {
+      final config = SessionConfig.fromJson({
+        'efector': {'id': 17, 'nombre': 'Hospital'},
+        'servicio': {
+          'id': 5,
+          'nombre': 'Administración del efector',
+          'id_profesional_efector_servicio': 91,
+        },
+        'encounter_class': null,
+        'id_contexto_profesional': 91,
+        'context_token': 'token',
+      });
+
+      expect(config.encounterClass, isNull);
+      expect(config.servicio.id, 5);
+      expect(config.idProfesionalEfectorServicio, 91);
+    });
+  });
+
   group('EncounterClass.fromJson', () {
     test('parses capabilities supplied by the API', () {
       final encounterClass = EncounterClass.fromJson({

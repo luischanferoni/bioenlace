@@ -12,10 +12,14 @@ abstract final class PersonalsaludSessionPrefs {
   static const staffBiometricEnrollmentDeclinedKey =
       'staff_biometric_enrollment_declined';
 
+  /// Sesión de gestión (AdminEfector) que opera sin área clínica (`encounter_class`).
+  static const sessionWithoutEncounterKey = 'session_without_encounter_class';
+
   static const operationalKeys = [
     'config_completed',
     'encounter_class',
     'encounter_class_label',
+    sessionWithoutEncounterKey,
     'id_profesional_efector_servicio',
     'id_efector',
     'id_persona',
@@ -96,8 +100,22 @@ abstract final class PersonalsaludSessionPrefs {
 
   static Future<bool> hasCompleteOperationalContext() async {
     final prefs = await SharedPreferences.getInstance();
-    return (prefs.getBool('config_completed') ?? false) &&
-        (prefs.getString('encounter_class') ?? '').isNotEmpty &&
+    return hasOperationalContextIn(prefs) &&
         (await AuthTokenStore.instance.read() ?? '').isNotEmpty;
+  }
+
+  /// El wizard terminó: hay área clínica o es una sesión de gestión sin área.
+  static bool hasOperationalContextIn(SharedPreferences prefs) {
+    if (!(prefs.getBool('config_completed') ?? false)) {
+      return false;
+    }
+    final hasEncounter = (prefs.getString('encounter_class') ?? '').isNotEmpty;
+    return hasEncounter || isSessionWithoutEncounterIn(prefs);
+  }
+
+  /// Sesión operativa de gestión (AdminEfector) sin `encounter_class`.
+  static bool isSessionWithoutEncounterIn(SharedPreferences prefs) {
+    return (prefs.getBool(sessionWithoutEncounterKey) ?? false) &&
+        (prefs.getString('encounter_class') ?? '').isEmpty;
   }
 }

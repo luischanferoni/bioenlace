@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|--------|
 | Slug | `alta-espacio-atencion-unificada` |
-| Estado | Implementación en curso; fase 01 de UX y contrato unificado |
+| Estado | Implementación cerrada (fases 00–04); fase 05 de QA y liberación a cargo de producto |
 | Dueño | Producto / Identidad / Organización / Billing / Mobile |
 | Compatibilidad | Sin retrocompatibilidad funcional con los perfiles comerciales `CONSULTORIO` y `CLINICA`; preservar cuentas, licencias y pagos históricos |
 

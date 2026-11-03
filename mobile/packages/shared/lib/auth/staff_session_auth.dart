@@ -53,9 +53,12 @@ abstract final class BearerSessionAuth {
         return BearerSessionCheckResult.invalid;
       }
 
-      // Permiso / ruta / contexto: no borrar sesión.
+      // Permiso / ruta / contexto: no borrar sesión, salvo que la cuenta haya
+      // perdido su rol habilitante para Personal de Salud.
       if (response.statusCode == 403) {
-        return BearerSessionCheckResult.networkError;
+        return isMobileRoleUnavailableBody(response.body)
+            ? BearerSessionCheckResult.invalid
+            : BearerSessionCheckResult.networkError;
       }
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -90,6 +93,20 @@ abstract final class BearerSessionAuth {
       return BearerSessionCheckResult.networkError;
     } catch (_) {
       return BearerSessionCheckResult.networkError;
+    }
+  }
+
+  /// `true` si el cuerpo de error indica que la cuenta ya no tiene un rol
+  /// habilitante para Personal de Salud (`mobile_role_unavailable`).
+  static bool isMobileRoleUnavailableBody(String body) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is! Map) return false;
+      final error = decoded['error'];
+      if (error is! Map) return false;
+      return error['code'] == 'mobile_role_unavailable';
+    } catch (_) {
+      return false;
     }
   }
 

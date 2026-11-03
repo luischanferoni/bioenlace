@@ -123,6 +123,20 @@ Aplica `pending_max_pes` cuando llega el nuevo período (baja de profesionales d
 /usr/bin/php /home/u257309594/domains/bioenlace.io/repo/web/yii entitlement/apply-pending-downgrades >> /home/u257309594/domains/bioenlace.io/repo/web/console/runtime/logs/entitlement-downgrade-cron.log 2>&1
 ```
 
+### 01:00 diario (`0 1 * * *`) — suspender licencias con período vencido
+
+```bash
+/usr/bin/php /home/u257309594/domains/bioenlace.io/repo/web/yii billing-subscription/expire-paid-through >> /home/u257309594/domains/bioenlace.io/repo/web/console/runtime/logs/billing-expire-cron.log 2>&1
+```
+
+### 01:30 diario (`30 1 * * *`) — purgar borradores de alta vencidos
+
+Elimina borradores `EXPIRED` con más de 30 días de retención. Los checkouts pendientes no se tocan.
+
+```bash
+/usr/bin/php /home/u257309594/domains/bioenlace.io/repo/web/yii commercial-signup/purge-drafts >> /home/u257309594/domains/bioenlace.io/repo/web/console/runtime/logs/commercial-signup-cron.log 2>&1
+```
+
 ### 02:00 diario (`0 2 * * *`) — laboratorio LIS
 
 ```bash
@@ -165,6 +179,8 @@ Aplica `pending_max_pes` cuando llega el nuevo período (baja de profesionales d
 | Cada 5 min | `care-pack/run-jobs` | `care-pack-cron.log` |
 | Cada 30 min | `paciente-domicilio/run` | `domicilio-cron.log` |
 | 00:15 diario | `entitlement/apply-pending-downgrades` | `entitlement-downgrade-cron.log` |
+| 01:00 diario | `billing-subscription/expire-paid-through` | `billing-expire-cron.log` |
+| 01:30 diario | `commercial-signup/purge-drafts` | `commercial-signup-cron.log` |
 
 Ruta base logs: `/home/u257309594/domains/bioenlace.io/repo/web/console/runtime/logs/`
 

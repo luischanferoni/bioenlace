@@ -2,6 +2,7 @@
 
 namespace common\models\Organization;
 
+use common\models\Person\Persona;
 use yii\db\ActiveRecord;
 
 /**
@@ -92,5 +93,30 @@ final class BillingCheckoutAttempt extends ActiveRecord
     public function getBillingAccount()
     {
         return $this->hasOne(BillingAccount::class, ['id' => 'id_billing_account']);
+    }
+
+    public function getEfector()
+    {
+        return $this->hasOne(Efector::class, ['id_efector' => 'id_efector']);
+    }
+
+    public function getPersona()
+    {
+        return $this->hasOne(Persona::class, ['id_persona' => 'id_persona']);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function statusOptions(): array
+    {
+        return [
+            self::STATUS_CREATING => 'Creando',
+            self::STATUS_PENDING => 'Pago pendiente',
+            self::STATUS_ACTIVE => 'Activo',
+            self::STATUS_FAILED => 'Rechazado',
+            self::STATUS_CANCELLED => 'Cancelado',
+            self::STATUS_EXPIRED => 'Vencido',
+        ];
     }
 }

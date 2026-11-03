@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Organization\Billing\Application\Service;
 
+use common\components\Domain\Organization\Efector\Application\Service\CommercialSignupDraftService;
 use common\components\Domain\Organization\Efector\Application\UseCase\SignUpInstitutionalEfector;
 use common\components\Domain\Person\Identity\Application\Service\IdentitySignupAttemptStore;
 use common\models\Organization\BillingAccount;
@@ -619,6 +620,31 @@ final class BillingCheckoutService
         $attempt->last_provider_payload = $this->encodeJson($paymentData);
         if (!$attempt->save()) {
             throw new \RuntimeException('No se pudo guardar la confirmación del pago.');
+        }
+
+        if ($attempt->status === BillingCheckoutAttempt::STATUS_ACTIVE) {
+            $this->syncDraftActivation((int) $attempt->id_persona, (string) $attempt->checkout_key);
+        }
+    }
+
+    /**
+     * Keeps the onboarding draft consistent with the reconciled payment.
+     *
+     * The draft is auxiliary state: a failure here must never roll back an already
+     * authorized payment or its provisioning, so it is logged and retried by the
+     * next status poll.
+     */
+    private function syncDraftActivation(int $idPersona, string $checkoutKey): void
+    {
+        try {
+            (new CommercialSignupDraftService())->markActivated($idPersona, $checkoutKey);
+        } catch (\Throwable $e) {
+            Yii::warning([
+                'event' => 'billing.signup.draft_activation_failed',
+                'id_persona' => $idPersona,
+                'checkout_key' => $checkoutKey,
+                'error' => $e->getMessage(),
+            ], 'billing.signup');
         }
     }
 

@@ -18,6 +18,8 @@ Liberar el nuevo onboarding sin pérdida de pagos ni permisos inconsistentes.
 
 ## Transición de datos
 
+> No hay clientes ni perfiles legacy en operación: esta sección queda como referencia histórica y no requiere trabajo.
+
 - [ ] Inventariar intentos y suscripciones `CONSULTORIO`/`CLINICA` pendientes, fallidas, activas y expiradas.
 - [ ] Mantener checkout/subscripción ya creados y cargos existentes; no recrear cobros.
 - [ ] Para intento sin suscripción: definir migración a borrador unificado o cierre con comunicación al usuario.

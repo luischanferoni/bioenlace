@@ -33,6 +33,13 @@ class HomePanelManifestTest extends Unit
         $this->assertContains('AdminMinisterio', $manifest->audienceStaffRoles());
     }
 
+    public function testAdminEfectorBelongsToStaffAudience(): void
+    {
+        $manifest = new HomePanelManifest();
+
+        $this->assertContains('AdminEfector', $manifest->audienceStaffRoles());
+    }
+
     public function testEmergencyCapabilityIdsFromManifest(): void
     {
         $manifest = new HomePanelManifest();

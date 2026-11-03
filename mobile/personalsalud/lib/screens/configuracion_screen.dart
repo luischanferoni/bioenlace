@@ -36,6 +36,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
   String _currentEncounterLabel = 'Ambulatoria';
   int? _efectorId;
   int? _servicioId;
+  bool _serviceRequiresEncounterClass = true;
   String? _classesErrorMessage;
   bool _isLoadingEncounter = false;
   bool _isLoadingClasses = true;
@@ -81,9 +82,20 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
           break;
         }
       }
+      final serviciosEfector =
+          options.serviciosPorEfector[efectorId] ?? const <Servicio>[];
+      Servicio? currentServicio;
+      for (final servicio in serviciosEfector) {
+        if (servicio.id == servicioId) {
+          currentServicio = servicio;
+          break;
+        }
+      }
       setState(() {
         _efectorId = efectorId;
         _servicioId = servicioId;
+        _serviceRequiresEncounterClass =
+            currentServicio?.requiresEncounterClass ?? true;
         _currentEncounterCode = encounterCode;
         _currentEncounterLabel = currentEncounterLabel;
         _encounterClasses = currentEfector.encounterClasses;
@@ -123,30 +135,25 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
       if (sessionToken == null || sessionToken.isEmpty) {
         throw Exception('El servidor no devolvió token de contexto operativo.');
       }
+      final nextEncounter = sessionConfig.encounterClass;
+      if (nextEncounter == null) {
+        throw Exception('El servidor no devolvió el área de la sesión.');
+      }
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(
-        'encounter_class',
-        sessionConfig.encounterClass.code,
-      );
-      await prefs.setString(
-        'encounter_class_label',
-        sessionConfig.encounterClass.label,
-      );
+      await prefs.setString('encounter_class', nextEncounter.code);
+      await prefs.setString('encounter_class_label', nextEncounter.label);
+      await prefs.remove(PersonalsaludSessionPrefs.sessionWithoutEncounterKey);
       await AuthTokenStore.instance.write(sessionToken);
       _configService.authToken = sessionToken;
       if (mounted) {
         setState(() {
-          _currentEncounterCode = sessionConfig.encounterClass.code;
-          _currentEncounterLabel = sessionConfig.encounterClass.label;
+          _currentEncounterCode = nextEncounter.code;
+          _currentEncounterLabel = nextEncounter.label;
           _isLoadingEncounter = false;
         });
         widget.onEncounterChanged?.call();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              AppTexts.areaUpdated(sessionConfig.encounterClass.label),
-            ),
-          ),
+          SnackBar(content: Text(AppTexts.areaUpdated(nextEncounter.label))),
         );
       }
     } catch (e) {
@@ -171,8 +178,10 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
           children: [
             _buildUsuarioCard(),
             BioSpacing.gapH(BioSpacing.md),
-            _buildAreaCard(),
-            BioSpacing.gapH(BioSpacing.md),
+            if (_serviceRequiresEncounterClass) ...[
+              _buildAreaCard(),
+              BioSpacing.gapH(BioSpacing.md),
+            ],
             _buildOpcionesCard(),
             BioSpacing.gapH(BioSpacing.md),
             _buildCerrarSesionCard(),

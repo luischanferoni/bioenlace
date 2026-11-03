@@ -8,7 +8,7 @@ use yii\db\IntegrityException;
 
 final class CommercialSignupDraftService
 {
-    private const RETENTION_DAYS = 30;
+    public const RETENTION_DAYS = 30;
     private const SCHEMA_VERSION = 1;
 
     /**
@@ -175,6 +175,56 @@ final class CommercialSignupDraftService
         $draft->updated_at = date('Y-m-d H:i:s');
         if (!$draft->save(false, ['status', 'checkout_key', 'checkout_request_key', 'updated_at'])) {
             throw new \RuntimeException('No se pudo sincronizar el estado del borrador con el checkout.');
+        }
+    }
+
+    /**
+     * Deletes drafts that have been expired longer than the retention window.
+     *
+     * Only EXPIRED drafts are removed: a CHECKOUT_PENDING draft may still be paid,
+     * and the commercial audit lives in the billing tables, not in this row.
+     */
+    public function purgeExpired(?\DateTimeImmutable $asOf = null): int
+    {
+        $this->expireInactiveDrafts();
+        $cutoff = ($asOf ?? new \DateTimeImmutable())
+            ->modify('-' . self::RETENTION_DAYS . ' days')
+            ->format('Y-m-d H:i:s');
+
+        return (int) Yii::$app->db->createCommand()->delete(
+            CommercialSignupDraft::tableName(),
+            [
+                'and',
+                ['status' => CommercialSignupDraft::STATUS_EXPIRED],
+                ['<=', 'updated_at', $cutoff],
+            ]
+        )->execute();
+    }
+
+    /**
+     * Marks the draft as activated once the first approved payment provisions the space.
+     *
+     * Idempotent: repeated webhooks or retries keep the same ACTIVE state and never
+     * reopen the mutable draft.
+     */
+    public function markActivated(int $idPersona, ?string $checkoutKey = null): void
+    {
+        if ($idPersona <= 0) {
+            return;
+        }
+        $draft = CommercialSignupDraft::findOne(['id_persona' => $idPersona]);
+        if ($draft === null || $draft->status === CommercialSignupDraft::STATUS_ACTIVE) {
+            return;
+        }
+        $draft->status = CommercialSignupDraft::STATUS_ACTIVE;
+        if ($checkoutKey !== null && $checkoutKey !== '') {
+            $draft->checkout_key = $checkoutKey;
+        }
+        $now = date('Y-m-d H:i:s');
+        $draft->last_activity_at = $now;
+        $draft->updated_at = $now;
+        if (!$draft->save(false, ['status', 'checkout_key', 'last_activity_at', 'updated_at'])) {
+            throw new \RuntimeException('No se pudo marcar el borrador comercial como activado.');
         }
     }
 

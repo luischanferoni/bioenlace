@@ -135,6 +135,9 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
   void _selectServicio(Servicio servicio) {
     setState(() {
       _selectedServicio = servicio;
+      if (!servicio.requiresEncounterClass) {
+        _selectedEncounterClass = null;
+      }
     });
   }
 
@@ -152,6 +155,13 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
   List<EncounterClass> get _availableEncounterClasses =>
       _selectedEfector?.encounterClasses ?? const [];
 
+  /// Servicios de gestión (AdminEfector) no eligen área clínica.
+  bool get _requiresEncounterClass =>
+      _selectedServicio?.requiresEncounterClass ?? true;
+
+  bool get _isLastStep =>
+      _currentStep == 2 || (_currentStep == 1 && !_requiresEncounterClass);
+
   void _nextStep() {
     if (_currentStep == 0 && _selectedEfector == null) return;
     if (_currentStep == 1 && _selectedServicio == null) return;
@@ -161,6 +171,11 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
               (encounterClass) =>
                   encounterClass.code == _selectedEncounterClass!.code,
             ))) {
+      return;
+    }
+
+    if (_currentStep == 1 && !_requiresEncounterClass) {
+      _saveConfiguration();
       return;
     }
 
@@ -190,9 +205,10 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
   }
 
   Future<void> _saveConfiguration() async {
+    final requiresEncounter = _requiresEncounterClass;
     if (_selectedEfector == null ||
         _selectedServicio == null ||
-        _selectedEncounterClass == null) {
+        (requiresEncounter && _selectedEncounterClass == null)) {
       return;
     }
 
@@ -205,7 +221,9 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
       final sessionConfig = await _configService.setSession(
         efectorId: _selectedEfector!.id,
         servicioId: _selectedServicio!.id,
-        encounterClass: _selectedEncounterClass!.code,
+        encounterClass: requiresEncounter
+            ? _selectedEncounterClass!.code
+            : null,
         userId: widget.userId,
       );
 
@@ -219,14 +237,21 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
       await prefs.setString('efector_nombre', sessionConfig.efector.nombre);
       await prefs.setInt('servicio_id', sessionConfig.servicio.id);
       await prefs.setString('servicio_nombre', sessionConfig.servicio.nombre);
-      await prefs.setString(
-        'encounter_class',
-        sessionConfig.encounterClass.code,
-      );
-      await prefs.setString(
-        'encounter_class_label',
-        sessionConfig.encounterClass.label,
-      );
+      final encounter = sessionConfig.encounterClass;
+      if (encounter != null) {
+        await prefs.setString('encounter_class', encounter.code);
+        await prefs.setString('encounter_class_label', encounter.label);
+        await prefs.remove(
+          PersonalsaludSessionPrefs.sessionWithoutEncounterKey,
+        );
+      } else {
+        await prefs.remove('encounter_class');
+        await prefs.remove('encounter_class_label');
+        await prefs.setBool(
+          PersonalsaludSessionPrefs.sessionWithoutEncounterKey,
+          true,
+        );
+      }
       await prefs.setInt(
         'id_profesional_efector_servicio',
         sessionConfig.idProfesionalEfectorServicio,
@@ -303,6 +328,7 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
   @override
   Widget build(BuildContext context) {
     final tokens = context.bio;
+    final isLastStep = _isLastStep;
     return Scaffold(
       backgroundColor: tokens.paperBackground,
       appBar: const BioAppBar(title: AppTexts.wizardTitle),
@@ -326,8 +352,10 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
                 _buildStepIndicator(0, 'Efector'),
                 _buildStepConnector(connectedDone: _currentStep >= 1),
                 _buildStepIndicator(1, 'Servicio'),
-                _buildStepConnector(connectedDone: _currentStep >= 2),
-                _buildStepIndicator(2, 'Área'),
+                if (_requiresEncounterClass) ...[
+                  _buildStepConnector(connectedDone: _currentStep >= 2),
+                  _buildStepIndicator(2, 'Área'),
+                ],
               ],
             ),
           ),
@@ -381,7 +409,7 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
                     variant: BioButtonVariant.soft,
                     icon: Icons.logout,
                     size: BioButtonSize.sm,
-                    onPressed: _isLoading && _currentStep == 2
+                    onPressed: _isLoading && isLastStep
                         ? null
                         : _confirmarLogout,
                   ),
@@ -396,10 +424,10 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
                   ],
                   const Spacer(),
                   BioButton.primary(
-                    label: _currentStep == 2 ? 'Finalizar' : 'Siguiente',
-                    icon: _currentStep == 2 ? Icons.check : Icons.arrow_forward,
+                    label: isLastStep ? 'Finalizar' : 'Siguiente',
+                    icon: isLastStep ? Icons.check : Icons.arrow_forward,
                     onPressed: _canProceed() ? _nextStep : null,
-                    loading: _isLoading && _currentStep == 2,
+                    loading: _isLoading && isLastStep,
                   ),
                 ],
               ),

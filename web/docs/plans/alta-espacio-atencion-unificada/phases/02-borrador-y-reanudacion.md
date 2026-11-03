@@ -14,7 +14,7 @@ Sobrevivir a cierres, pérdida de conectividad y fallos entre Didit, identidad, 
 - [x] Tras cuenta creada, mantener la app en login si no tiene rol habilitante. El CTA «Crear cuenta» reejecuta Didit y recupera el borrador correspondiente.
 - [x] Restaurar el paso y datos desde servidor después de reintento; usar almacenamiento local solo como optimización.
 - [x] Recuperar borrador en otro dispositivo tras Didit y devolver únicamente el borrador de esa identidad.
-- [ ] Añadir expiración/limpieza con retención explícita; conservar la auditoría comercial necesaria.
+- [x] Añadir expiración/limpieza con retención explícita; conservar la auditoría comercial necesaria. (`CommercialSignupDraftService`: retención de 30 días; los borradores `DRAFT` vencidos pasan a `EXPIRED` sin borrar la fila de auditoría.)
 
 ## Criterios de aceptación
 

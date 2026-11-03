@@ -30,9 +30,10 @@ Future<Map<String, dynamic>> _getUserData() async {
       idProfesionalEfectorServicio = pesInt.toString();
     }
     
-    // config_completed solo vale si el wizard fijó encounter_class (sesión operativa completa).
-    final configCompleted = (prefs.getBool('config_completed') ?? false) &&
-        ((prefs.getString('encounter_class') ?? '').isNotEmpty);
+    // config_completed vale con área clínica o con sesión de gestión sin área.
+    final configCompleted = PersonalsaludSessionPrefs.hasOperationalContextIn(
+      prefs,
+    );
     
     print('[DEBUG] _getUserData() - idProfesionalEfectorServicio: $idProfesionalEfectorServicio');
     print('[DEBUG] _getUserData() - configCompleted: $configCompleted');

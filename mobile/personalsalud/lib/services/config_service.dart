@@ -137,15 +137,18 @@ class ConfigService {
   Future<SessionConfig> setSession({
     required int efectorId,
     required int servicioId,
-    required String encounterClass,
+    String? encounterClass,
     String? userId,
   }) async {
     try {
       final body = <String, dynamic>{
         'efector_id': efectorId,
         'servicio_id': servicioId,
-        'encounter_class': encounterClass,
       };
+      final normalizedEncounter = encounterClass?.trim() ?? '';
+      if (normalizedEncounter.isNotEmpty) {
+        body['encounter_class'] = normalizedEncounter;
+      }
 
       if (userId != null &&
           (authToken == null ||
@@ -235,10 +238,14 @@ class Servicio {
   /// Asignación canónica (PES) para agenda y turnos.
   final int idProfesionalEfectorServicio;
 
+  /// Servicios de gestión (p. ej. AdminEfector) operan sin área clínica.
+  final bool requiresEncounterClass;
+
   Servicio({
     required this.id,
     required this.nombre,
     this.idProfesionalEfectorServicio = 0,
+    this.requiresEncounterClass = true,
   });
 
   factory Servicio.fromJson(Map<String, dynamic> json) {
@@ -256,6 +263,7 @@ class Servicio {
           0,
       nombre: json['nombre'] as String? ?? 'Sin nombre',
       idProfesionalEfectorServicio: idPes,
+      requiresEncounterClass: json['requires_encounter_class'] != false,
     );
   }
 }
@@ -286,7 +294,9 @@ class EncounterClass {
 class SessionConfig {
   final Efector efector;
   final Servicio servicio;
-  final EncounterClass encounterClass;
+
+  /// `null` en sesiones de gestión que no operan un área clínica (AdminEfector).
+  final EncounterClass? encounterClass;
 
   /// Identificador PES del contexto operativo (equivale a `servicio.id_profesional_efector_servicio` cuando aplica).
   final int idProfesionalEfectorServicio;
@@ -298,7 +308,7 @@ class SessionConfig {
   SessionConfig({
     required this.efector,
     required this.servicio,
-    required this.encounterClass,
+    this.encounterClass,
     required this.idProfesionalEfectorServicio,
     this.contextToken,
     this.ambitoAtencion = 'humano',
@@ -310,13 +320,14 @@ class SessionConfig {
         ? (servicioMap['id_profesional_efector_servicio'] as int?) ?? 0
         : 0;
     final idCtx = (json['id_contexto_profesional'] as int?) ?? idFromServicio;
+    final rawEncounterClass = json['encounter_class'];
 
     return SessionConfig(
       efector: Efector.fromJson(json['efector'] as Map<String, dynamic>),
       servicio: Servicio.fromJson(json['servicio'] as Map<String, dynamic>),
-      encounterClass: EncounterClass.fromJson(
-        json['encounter_class'] as Map<String, dynamic>,
-      ),
+      encounterClass: rawEncounterClass is Map<String, dynamic>
+          ? EncounterClass.fromJson(rawEncounterClass)
+          : null,
       idProfesionalEfectorServicio: idCtx,
       contextToken: json['context_token'] as String?,
       ambitoAtencion: json['ambito_atencion'] as String? ?? 'humano',

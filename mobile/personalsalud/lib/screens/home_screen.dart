@@ -11,6 +11,7 @@ import '../infra/app_texts.dart';
 import '../models/turno.dart';
 import '../models/cirugia_agenda_item.dart';
 import '../auth/personalsalud_post_login.dart';
+import '../auth/personalsalud_session_prefs.dart';
 import '../services/internados_service.dart';
 import '../services/emergency_guardia_api.dart';
 import '../services/encounter_async_api.dart';
@@ -61,6 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Map<String, dynamic>> _encounterRequests = [];
   List<Map<String, dynamic>> _encounterRequestGroups = [];
   String _encounterRequestsTitle = 'Consultas clínicas por mensaje';
+  String _panelTitle = '';
   int _encounterRequestSlaBreaches = 0;
   final Set<int> _tomandoAsyncIds = {};
   List<InternadoItem> _internados = [];
@@ -154,6 +156,15 @@ class _HomeScreenState extends State<HomeScreen> {
       final prefs = await SharedPreferences.getInstance();
       final encounter = prefs.getString('encounter_class');
       if (encounter == null || encounter.isEmpty) {
+        // AdminEfector opera sin área clínica: el panel es el de gestión.
+        if (PersonalsaludSessionPrefs.isSessionWithoutEncounterIn(prefs)) {
+          if (!mounted) return;
+          setState(() {
+            _encounterCapabilities = <String>{};
+          });
+          await _cargarListadoPacientes();
+          return;
+        }
         if (!mounted) return;
         await recoverPersonalsaludOperationalSession(
           userId: widget.userId,
@@ -293,6 +304,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _staffContext = null;
       }
       _errorMessage = '';
+      _panelTitle = panel.title.trim();
 
       final newKpis = homePanelKpiGroupsFromResponse(panel);
       if (newKpis.isNotEmpty || !partial) {
@@ -597,6 +609,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     ? 'Tablero de guardia'
                     : _hasEncounterCapability('async_requests')
                     ? _encounterRequestsTitle
+                    : _lastListKind == 'staff_dashboard' &&
+                          _panelTitle.isNotEmpty
+                    ? _panelTitle
                     : _formatearFechaAmigable(_fechaSeleccionada),
                 style: BioTypography.h3,
               ),

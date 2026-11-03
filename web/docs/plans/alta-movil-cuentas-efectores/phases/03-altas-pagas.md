@@ -19,6 +19,8 @@ Habilitar consultorio propio y clínica/centro desde la app con identidad Didit,
 - [ ] Verificar y documentar actualización periódica del catálogo local con el archivo oficial SISA; códigos que no estén cargados se rechazan.
 - [ ] Después del alta, permitir a AdminEfector definir los servicios del centro y luego asignar personal; no precargar servicios ni personal.
 - [x] Mostrar importe ARS, neto, IVA, referencia USD/MEP y recurrencia antes de autorizar.
+- [x] Completar el formulario (sector, efector, volumen, tipos de atención y videollamada) antes de Didit; Didit se ejecuta antes de abrir el checkout.
+- [x] Mostrar el precio estimado según el volumen y la modalidad de videollamada elegidos.
 - [ ] Configurar credenciales, secreto de webhook, `backUrl`, `notificationUrl` y cotización MEP vigente fuera del repositorio; probar sandbox y conciliación real.
 - [x] Cancelar renovación sin corte inmediato; guardar el fin del período pagado y suspender la cuenta cuando vence sin otro pago aprobado.
 - [ ] Definir comportamiento ante reembolsos y contracargos.

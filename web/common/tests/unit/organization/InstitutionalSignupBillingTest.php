@@ -46,6 +46,19 @@ class InstitutionalSignupBillingTest extends Unit
         $this->assertSame(436.0, $quote['items'][0]['amount_usd']);
     }
 
+    public function testAvailableCentersRejectOverlongQueryWithoutDatabase(): void
+    {
+        $this->assertSame(
+            [],
+            SignUpInstitutionalEfector::listAvailableCenters(str_repeat('a', 81))
+        );
+    }
+
+    public function testFindAvailableCenterRejectsInvalidId(): void
+    {
+        $this->assertNull(SignUpInstitutionalEfector::findAvailableCenter(0));
+    }
+
     public function testRetiredCommercialProfilesAreRejected(): void
     {
         foreach (['CONSULTORIO', 'CLINICA'] as $profile) {

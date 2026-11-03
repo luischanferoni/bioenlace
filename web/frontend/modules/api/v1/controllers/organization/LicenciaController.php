@@ -13,10 +13,13 @@ use common\components\Domain\Organization\Efector\Application\UseCase\CreateIden
 use common\components\Domain\Person\Identity\Application\Service\IdentityVerificationException;
 use common\components\Domain\Organization\Efector\Application\UseCase\CompleteMinistrySignupIdentity;
 use common\components\Domain\Organization\Efector\Application\Service\SignupAbuseGuard;
+use common\components\Domain\Organization\Efector\Application\Service\StaffAffiliationRequestService;
 use common\components\Platform\Core\Auth\DemoSandboxAccessService;
 use common\components\Platform\Core\Auth\DemoSandboxCaptchaService;
 use common\components\Platform\Core\Auth\StaffMobileAccessService;
 use common\components\Platform\Core\Http\Contract\ApiException;
+use common\models\Geo\Pais;
+use common\models\Geo\Provincia;
 use common\models\Platform\User;
 use common\models\Person\Persona;
 use Yii;
@@ -34,6 +37,8 @@ class LicenciaController extends BaseController
     public static $authenticatorExcept = [
         'catalogo-ministerios',
         'catalogo-efectores-publicos',
+        'catalogo-centros',
+        'catalogo-provincias',
         'planes',
         'cotizar',
         'crear-cuenta',
@@ -68,6 +73,8 @@ class LicenciaController extends BaseController
         $verbs = parent::verbs();
         $verbs['catalogo-ministerios'] = ['GET', 'OPTIONS'];
         $verbs['catalogo-efectores-publicos'] = ['GET', 'OPTIONS'];
+        $verbs['catalogo-centros'] = ['GET', 'OPTIONS'];
+        $verbs['catalogo-provincias'] = ['GET', 'OPTIONS'];
         $verbs['planes'] = ['GET', 'OPTIONS'];
         $verbs['cotizar'] = ['POST', 'OPTIONS'];
         $verbs['crear-cuenta'] = ['POST', 'OPTIONS'];
@@ -114,6 +121,59 @@ class LicenciaController extends BaseController
         return $this->success([
             'items' => SignUpInstitutionalEfector::searchAvailablePublicEfectores($query),
         ]);
+    }
+
+    /**
+     * Centros activos de Bioenlace para que el personal solicite incorporarse.
+     * Filtros opcionales: sector (PUBLICO|PRIVADO) y provincia.
+     */
+    public function actionCatalogoCentros()
+    {
+        $query = trim((string) Yii::$app->request->get('q', ''));
+        if (strlen($query) > 80) {
+            return $this->error('La búsqueda supera el largo permitido.', null, 400);
+        }
+
+        $sector = strtoupper(trim((string) Yii::$app->request->get('sector', '')));
+        if ($sector !== '' && !in_array($sector, [
+            SignUpInstitutionalEfector::SECTOR_PUBLICO,
+            SignUpInstitutionalEfector::SECTOR_PRIVADO,
+        ], true)) {
+            return $this->error('El sector indicado es inválido.', null, 400);
+        }
+
+        $idProvincia = (int) Yii::$app->request->get('id_provincia', 0);
+
+        return $this->success([
+            'items' => SignUpInstitutionalEfector::listAvailableCenters(
+                $query,
+                $sector !== '' ? $sector : null,
+                $idProvincia > 0 ? $idProvincia : null
+            ),
+        ]);
+    }
+
+    /**
+     * Provincias del país por defecto para el filtro de centros.
+     */
+    public function actionCatalogoProvincias()
+    {
+        $pais = Pais::defaultPais();
+        $rows = Provincia::find()
+            ->filterWhere(['id_pais' => $pais !== null ? (int) $pais->id_pais : null])
+            ->orderBy(['nombre' => SORT_ASC])
+            ->asArray()
+            ->all();
+
+        $items = [];
+        foreach ($rows as $row) {
+            $items[] = [
+                'id' => (int) $row['id_provincia'],
+                'nombre' => (string) $row['nombre'],
+            ];
+        }
+
+        return $this->success(['items' => $items]);
     }
 
     /**
@@ -191,9 +251,21 @@ class LicenciaController extends BaseController
             $body = [];
         }
 
+        $idEfector = (int) ($body['id_efector'] ?? 0);
+        if ($idEfector > 0 && SignUpInstitutionalEfector::findAvailableCenter($idEfector) === null) {
+            return $this->error('El centro seleccionado no está disponible.', null, 400);
+        }
+
         try {
             (new SignupAbuseGuard())->assertAllowed($body);
             $data = (new CreateIdentityAccount())->crear($body);
+            $solicitud = $idEfector > 0
+                ? (new StaffAffiliationRequestService())->record(
+                    (int) $data['persona']->id_persona,
+                    (int) $data['user']->id,
+                    $idEfector
+                )
+                : null;
             $draft = (new CommercialSignupDraftService())->findForPersona(
                 (int) $data['persona']->id_persona
             );
@@ -202,6 +274,7 @@ class LicenciaController extends BaseController
                 'es_nueva_persona' => (bool) $data['es_nueva_persona'],
                 'es_nuevo_usuario' => (bool) $data['es_nuevo_usuario'],
                 'borrador' => $draft,
+                'solicitud' => $solicitud,
             ], 'Cuenta de identidad creada.');
         } catch (\DomainException $e) {
             return $this->error($e->getMessage(), null, str_contains($e->getMessage(), 'Demasiados') ? 429 : 400);

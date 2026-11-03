@@ -1,21 +1,16 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:shared/shared.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../services/staff_signup_service.dart';
 
 class CommercialSignupScreen extends StatefulWidget {
-  const CommercialSignupScreen({
-    required this.verificationId,
-    this.initialDraft,
-    this.initialPlan,
-    super.key,
-  });
+  const CommercialSignupScreen({this.initialPlan, super.key});
 
-  final String verificationId;
-  final Map<String, dynamic>? initialDraft;
   final Map<String, dynamic>? initialPlan;
 
   @override
@@ -43,23 +38,29 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
   bool _termsAccepted = false;
   bool _checkoutOpened = false;
   bool _cancellingSubscription = false;
+  bool _videollamada = false;
+  bool _loadingQuote = false;
   int _currentStep = 0;
   int _sisaSearchRequestId = 0;
   String _sector = 'PRIVADO';
   String? _errorMessage;
+  String? _verificationId;
   String? _checkoutKey;
   String? _checkoutRequestKey;
   String? _checkoutUrl;
   String? _checkoutStatus;
+  String? _quoteError;
   String? _providerSubscriptionStatus;
   String? _paidThroughAt;
   Map<String, dynamic>? _pricing;
+  Map<String, dynamic>? _quote;
   Map<String, dynamic>? _selectedLocality;
   Map<String, dynamic>? _selectedSisaEfector;
   List<Map<String, dynamic>> _localities = const [];
   List<Map<String, dynamic>> _sisaEfectores = const [];
   List<Map<String, dynamic>> _ministries = const [];
   int? _selectedMinistryId;
+  Timer? _quoteDebounce;
 
   @override
   void initState() {
@@ -74,83 +75,13 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
       _impController.text =
           classes['IMP']?['attentions_per_month']?.toString() ?? '';
     }
-    _restoreDraft(widget.initialDraft);
     _loadMinistries();
-    if (_checkoutKey != null) _refreshCheckoutStatus();
-  }
-
-  void _restoreDraft(Map<String, dynamic>? draft) {
-    if (draft == null) return;
-    if (draft['status'] == 'EXPIRED') {
-      _errorMessage =
-          'El borrador anterior venció. Podés comenzar una configuración nueva.';
-      return;
-    }
-
-    final sector = draft['sector']?.toString();
-    if (sector == 'PUBLICO' || sector == 'PRIVADO') _sector = sector!;
-    final efector = _asStringMap(draft['efector']);
-    if (efector != null) {
-      if (_sector == 'PUBLICO') {
-        _selectedSisaEfector = efector;
-        _sisaSearchController.text =
-            '${efector['nombre'] ?? ''} ${efector['codigo_sisa'] ?? ''}'.trim();
-      } else {
-        _nameController.text = efector['nombre']?.toString() ?? '';
-        _addressController.text = efector['domicilio']?.toString() ?? '';
-        final localityId = efector['id_localidad'];
-        if (localityId != null) {
-          _selectedLocality = {
-            'id': localityId,
-            'nombre': efector['localidad'] ?? '',
-            'departamento': efector['departamento'] ?? '',
-            'provincia': efector['provincia'] ?? '',
-          };
-          final locality = _selectedLocality!;
-          _localityQueryController.text = [
-            locality['nombre'],
-            locality['departamento'],
-            locality['provincia'],
-          ].where((part) => part.toString().isNotEmpty).join(', ');
-        }
-      }
-    }
-    _selectedMinistryId = int.tryParse(
-      draft['id_billing_account_ministerio']?.toString() ?? '',
-    );
-    _emailController.text = draft['payer_email']?.toString() ?? '';
-    _phoneController.text = draft['contact_phone']?.toString() ?? '';
-    final plan = _asStringMap(draft['plan']);
-    final savedClasses = _asStringMap(plan?['classes']);
-    if (savedClasses != null) {
-      _ambController.text =
-          _asStringMap(savedClasses['AMB'])?['attentions_per_month']
-              ?.toString() ??
-          '';
-      _emerController.text =
-          _asStringMap(savedClasses['EMER'])?['attentions_per_month']
-              ?.toString() ??
-          '';
-      _impController.text =
-          _asStringMap(savedClasses['IMP'])?['attentions_per_month']
-              ?.toString() ??
-          '';
-    }
-    _currentStep =
-        (int.tryParse(draft['current_step']?.toString() ?? '') ?? 0)
-            .clamp(0, 2)
-            .toInt();
-    _checkoutRequestKey = draft['checkout_request_key']?.toString();
-    _checkoutKey = draft['checkout_key']?.toString();
-  }
-
-  Map<String, dynamic>? _asStringMap(Object? value) {
-    if (value is! Map) return null;
-    return value.map((key, value) => MapEntry(key.toString(), value));
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refreshQuote());
   }
 
   @override
   void dispose() {
+    _quoteDebounce?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     _nameController.dispose();
     _addressController.dispose();
@@ -173,7 +104,6 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
 
   Future<void> _continueSignup() async {
     if (_currentStep == 0) {
-      if (!await _saveDraft(nextStep: 1)) return;
       setState(() {
         _currentStep = 1;
         _errorMessage = null;
@@ -197,50 +127,52 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
         );
         return;
       }
-      if (!await _saveDraft(nextStep: 2)) return;
       setState(() {
         _currentStep = 2;
         _errorMessage = null;
       });
+      _refreshQuote();
       return;
     }
 
     await _startCheckout();
   }
 
-  Future<bool> _saveDraft({required int nextStep}) async {
+  void _scheduleQuoteRefresh() {
+    _quoteDebounce?.cancel();
+    _quoteDebounce = Timer(const Duration(milliseconds: 400), _refreshQuote);
+  }
+
+  Future<void> _refreshQuote() async {
+    final plan = _selectedPlan();
+    if (plan == null) {
+      if (!mounted) return;
+      setState(() {
+        _quote = null;
+        _quoteError = null;
+        _loadingQuote = false;
+      });
+      return;
+    }
+
     setState(() {
-      _submitting = true;
-      _errorMessage = null;
+      _loadingQuote = true;
+      _quoteError = null;
     });
     try {
-      final response = await _service.saveCommercialDraft(
-        verificationId: widget.verificationId,
-        draft: _draftPayload(currentStep: nextStep),
-      );
-      final saved = _asStringMap(response['borrador']);
-      if (saved != null) {
-        _checkoutRequestKey = saved['checkout_request_key']?.toString();
-      }
-      if (!mounted) return false;
-      setState(() => _submitting = false);
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Tu avance quedó guardado. Para retomarlo, volvé a Crear cuenta y verificá tu identidad.',
-            ),
-          ),
-        );
-      return true;
-    } catch (error) {
-      if (!mounted) return false;
+      final quote = await _service.quoteSignupPlan(plan: plan);
+      if (!mounted) return;
       setState(() {
-        _submitting = false;
-        _errorMessage = _errorText(error);
+        _quote = quote;
+        _loadingQuote = false;
       });
-      return false;
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _quote = null;
+        _quoteError = _errorText(error);
+        _loadingQuote = false;
+      });
     }
   }
 
@@ -403,6 +335,16 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
       _errorMessage = null;
     });
     try {
+      var verificationId = _verificationId;
+      if (verificationId == null) {
+        verificationId = await _service.readPendingVerificationId();
+        verificationId ??= await _service.verifyIdentity();
+        await _service.storePendingVerificationId(verificationId);
+        _verificationId = verificationId;
+      }
+      if (!mounted) return;
+      setState(() => _submitting = true);
+
       final body = <String, dynamic>{
         'perfil': 'ESPACIO_ATENCION',
         ..._draftPayload(currentStep: 2),
@@ -411,9 +353,10 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
         'plan': plan,
       };
       final checkout = await _service.startCommercialCheckout(
-        verificationId: widget.verificationId,
+        verificationId: verificationId,
         body: body,
       );
+      await _service.clearPendingVerificationId();
       final key = checkout['checkout_key']?.toString() ?? '';
       final url = checkout['checkout_url']?.toString() ?? '';
       final checkoutUri = Uri.tryParse(url);
@@ -435,6 +378,12 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
         _submitting = false;
       });
     } catch (error) {
+      if (error is ApiContractException && error.statusCode == 422) {
+        _verificationId = null;
+        try {
+          await _service.clearPendingVerificationId();
+        } catch (_) {}
+      }
       if (!mounted) return;
       setState(() {
         _submitting = false;
@@ -452,10 +401,62 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     ]) {
       final value = int.tryParse(entry.$2.trim()) ?? 0;
       if (value > 0) {
-        classes[entry.$1] = {'attentions_per_month': value};
+        classes[entry.$1] = {
+          'attentions_per_month': value,
+          'videollamada_permitida': entry.$1 == 'AMB' && _videollamada,
+        };
       }
     }
     return classes.isEmpty ? null : {'classes': classes};
+  }
+
+  String _formatArs(Object? amount) {
+    final value = double.tryParse(amount?.toString() ?? '');
+    if (value == null) return '—';
+    return NumberFormat.currency(
+      locale: 'es_AR',
+      symbol: 'ARS ',
+      decimalDigits: 2,
+    ).format(value);
+  }
+
+  Widget _buildQuoteCard() {
+    final tokens = context.bio;
+    return Container(
+      margin: const EdgeInsets.only(top: BioSpacing.sm, bottom: BioSpacing.md),
+      padding: const EdgeInsets.all(BioSpacing.md),
+      decoration: BoxDecoration(
+        color: tokens.paperSurface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: tokens.paperDividerDefault),
+      ),
+      child: _loadingQuote
+          ? const Center(child: CircularProgressIndicator())
+          : _quoteError != null
+          ? Text(_quoteError!, style: BioTypography.bodySm)
+          : _quote == null
+          ? Text(
+              'Ingresá el volumen mensual para ver el precio estimado.',
+              style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Precio estimado',
+                  style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
+                ),
+                Text(
+                  '${_formatArs(_quote!['amount_total_ars'])} por mes',
+                  style: BioTypography.title,
+                ),
+                Text(
+                  'Total mensual con impuestos incluidos.',
+                  style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
+                ),
+              ],
+            ),
+    );
   }
 
   Future<void> _openCheckout() async {
@@ -481,10 +482,11 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
 
   Future<void> _refreshCheckoutStatus() async {
     final key = _checkoutKey;
-    if (key == null) return;
+    final verificationId = _verificationId;
+    if (key == null || verificationId == null) return;
     try {
       final status = await _service.checkoutStatus(
-        verificationId: widget.verificationId,
+        verificationId: verificationId,
         checkoutKey: key,
       );
       if (!mounted) return;
@@ -500,7 +502,6 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
       if (!mounted) return;
       setState(() => _errorMessage = _errorText(error));
     }
-
   }
 
   void _startRetryAfterFailedCheckout() {
@@ -539,6 +540,8 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
       ),
     );
     if (confirmed != true || _checkoutKey == null) return;
+    final verificationId = _verificationId;
+    if (verificationId == null) return;
 
     setState(() {
       _cancellingSubscription = true;
@@ -546,7 +549,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     });
     try {
       final status = await _service.cancelCommercialCheckout(
-        verificationId: widget.verificationId,
+        verificationId: verificationId,
         checkoutKey: _checkoutKey!,
       );
       if (!mounted) return;
@@ -584,12 +587,14 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     String label, {
     TextInputType? keyboardType,
     String? Function(String?)? validator,
+    ValueChanged<String>? onChanged,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: BioSpacing.md),
       child: TextFormField(
         controller: controller,
         keyboardType: keyboardType,
+        onChanged: onChanged,
         decoration: InputDecoration(
           labelText: label,
           border: const OutlineInputBorder(),
@@ -698,14 +703,14 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
                   onPressed: _startRetryAfterFailedCheckout,
                 )
               : BioButton.primary(
-            label: _checkoutOpened
-                ? 'Volver a Mercado Pago'
-                : 'Continuar a Mercado Pago',
-            icon: Icons.open_in_new,
-            fullWidth: true,
-            onPressed: (!_checkoutOpened && !_termsAccepted)
-                ? null
-                : _openCheckout,
+                  label: _checkoutOpened
+                      ? 'Volver a Mercado Pago'
+                      : 'Continuar a Mercado Pago',
+                  icon: Icons.open_in_new,
+                  fullWidth: true,
+                  onPressed: (!_checkoutOpened && !_termsAccepted)
+                      ? null
+                      : _openCheckout,
                 ),
         BioSpacing.gapH(BioSpacing.sm),
         OutlinedButton(
@@ -964,19 +969,36 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
                   'Ambulatorias (0 si no aplica)',
                   keyboardType: TextInputType.number,
                   validator: _validateOptionalVolume,
+                  onChanged: (_) => _scheduleQuoteRefresh(),
                 ),
                 _textField(
                   _emerController,
                   'Emergencias (0 si no aplica)',
                   keyboardType: TextInputType.number,
                   validator: _validateOptionalVolume,
+                  onChanged: (_) => _scheduleQuoteRefresh(),
                 ),
                 _textField(
                   _impController,
                   'Internaciones (0 si no aplica)',
                   keyboardType: TextInputType.number,
                   validator: _validateOptionalVolume,
+                  onChanged: (_) => _scheduleQuoteRefresh(),
                 ),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: _videollamada,
+                  onChanged: (value) {
+                    setState(() => _videollamada = value ?? false);
+                    _refreshQuote();
+                  },
+                  title: const Text('Atención ambulatoria por videollamada'),
+                  subtitle: const Text(
+                    'Suma la modalidad de videollamada al precio estimado.',
+                  ),
+                  controlAffinity: ListTileControlAffinity.leading,
+                ),
+                _buildQuoteCard(),
                 _textField(
                   _emailController,
                   'E-mail para el pago y los comprobantes',
@@ -1026,12 +1048,12 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
                     Expanded(
                       child: BioButton.primary(
                         label: _submitting
-                            ? 'Preparando cotización…'
+                            ? 'Verificando identidad…'
                             : _currentStep == 2
-                            ? 'Cotizar y continuar'
+                            ? 'Verificar identidad y continuar al pago'
                             : 'Continuar',
                         icon: _currentStep == 2
-                            ? Icons.request_quote_outlined
+                            ? Icons.verified_user_outlined
                             : Icons.arrow_forward,
                         fullWidth: true,
                         loading: _submitting,

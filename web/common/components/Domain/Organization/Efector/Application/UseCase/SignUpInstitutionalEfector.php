@@ -8,7 +8,10 @@ use common\models\Organization\BillingPayment;
 use common\models\Organization\BillingSignupRequest;
 use common\models\Clinical\EncounterDefinition;
 use common\models\Organization\Efector;
+use common\models\Organization\ServiciosEfector;
+use common\models\Geo\Departamento;
 use common\models\Geo\Localidad;
+use common\models\Geo\Provincia;
 use common\models\Person\Persona;
 use common\models\Platform\User;
 use common\components\Domain\Organization\Pes\Application\UseCase\EnsureAdminEfectorAssignment;
@@ -374,6 +377,150 @@ final class SignUpInstitutionalEfector
             ->limit(20)
             ->asArray()
             ->all();
+    }
+
+    /**
+     * Centros activos en Bioenlace (licencia vigente o servicios configurados)
+     * para que el personal de salud solicite incorporarse desde la app.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function listAvailableCenters(
+        string $query,
+        ?string $sector = null,
+        ?int $idProvincia = null
+    ): array {
+        $query = trim($query);
+        if (strlen($query) > 80) {
+            return [];
+        }
+
+        $centers = self::availableCentersQuery();
+
+        if ($query !== '') {
+            $term = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $query) . '%';
+            $centers->andWhere([
+                'or',
+                ['like', 'efector.nombre', $term, false],
+                ['like', 'efector.codigo_sisa', $term, false],
+                ['like', 'localidad.nombre', $term, false],
+            ]);
+        }
+        if ($sector !== null && $sector !== '') {
+            Efector::applySectorSaludFilterToQuery($centers, $sector);
+        }
+        if ($idProvincia !== null && $idProvincia > 0) {
+            $centers->andWhere(['departamento.id_provincia' => $idProvincia]);
+        }
+
+        $rows = $centers
+            ->orderBy(['efector.nombre' => SORT_ASC])
+            ->limit(50)
+            ->asArray()
+            ->all();
+
+        return array_map([self::class, 'mapAvailableCenter'], $rows);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public static function findAvailableCenter(int $idEfector): ?array
+    {
+        if ($idEfector <= 0) {
+            return null;
+        }
+
+        $row = self::availableCentersQuery()
+            ->andWhere(['efector.id_efector' => $idEfector])
+            ->asArray()
+            ->one();
+
+        return is_array($row) ? self::mapAvailableCenter($row) : null;
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    private static function availableCentersQuery()
+    {
+        $memberships = (new Query())
+            ->select('membership.id_efector')
+            ->from(['membership' => BillingAccountEfector::tableName()])
+            ->innerJoin(
+                ['account' => BillingAccount::tableName()],
+                'account.id = membership.id_billing_account'
+            )
+            ->where([
+                'membership.deleted_at' => null,
+                'account.deleted_at' => null,
+            ])
+            ->andWhere([
+                'or',
+                ['account.activo' => 1],
+                ['membership.rol_membresia' => BillingAccountEfector::ROL_AFILIADO],
+            ]);
+
+        $services = (new Query())
+            ->select('servicio.id_efector')
+            ->from(['servicio' => ServiciosEfector::tableName()]);
+
+        return Efector::find()
+            ->alias('efector')
+            ->select([
+                'id_efector' => 'efector.id_efector',
+                'nombre' => 'efector.nombre',
+                'codigo_sisa' => 'efector.codigo_sisa',
+                'localidad' => 'localidad.nombre',
+                'departamento' => 'departamento.nombre',
+                'provincia' => 'provincia.nombre',
+                'id_provincia' => 'provincia.id_provincia',
+                'origen_financiamiento' => 'efector.origen_financiamiento',
+            ])
+            ->innerJoin(
+                ['localidad' => Localidad::tableName()],
+                'localidad.id_localidad = efector.id_localidad'
+            )
+            ->innerJoin(
+                ['departamento' => Departamento::tableName()],
+                'departamento.id_departamento = localidad.id_departamento'
+            )
+            ->innerJoin(
+                ['provincia' => Provincia::tableName()],
+                'provincia.id_provincia = departamento.id_provincia'
+            )
+            ->where([
+                'or',
+                ['efector.estado' => null],
+                ['<>', 'efector.estado', 'INACTIVO'],
+            ])
+            ->andWhere([
+                'or',
+                ['exists', (clone $memberships)->andWhere('membership.id_efector = efector.id_efector')],
+                ['exists', (clone $services)->andWhere('servicio.id_efector = efector.id_efector')],
+            ]);
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     * @return array<string, mixed>
+     */
+    private static function mapAvailableCenter(array $row): array
+    {
+        $origen = (string) ($row['origen_financiamiento'] ?? '');
+
+        return [
+            'id_efector' => (int) ($row['id_efector'] ?? 0),
+            'nombre' => (string) ($row['nombre'] ?? ''),
+            'codigo_sisa' => isset($row['codigo_sisa']) ? (string) $row['codigo_sisa'] : null,
+            'localidad' => isset($row['localidad']) ? (string) $row['localidad'] : null,
+            'departamento' => isset($row['departamento']) ? (string) $row['departamento'] : null,
+            'provincia' => isset($row['provincia']) ? (string) $row['provincia'] : null,
+            'id_provincia' => isset($row['id_provincia']) ? (int) $row['id_provincia'] : null,
+            'sector' => stripos($origen, 'privado') !== false
+                ? self::SECTOR_PRIVADO
+                : self::SECTOR_PUBLICO,
+        ];
     }
 
     private static function assertPublicEfectorAvailable(Efector $efector): void

@@ -8,7 +8,7 @@ Unificar creación de identidad, altas comerciales, incorporación profesional y
 
 | Recorrido | Identidad / REFEPS | Pago | Rol y canales |
 |-----------|--------------------|------|---------------|
-| Cuenta profesional personal | Verificación Didit desde la app; REFEPS al ser incorporado a un centro | No | Sin asignación, sin acceso operativo; AdminEfector lo agrega. Solo se puede asignar una Persona de origen `MOBILE_APP` |
+| Cuenta profesional personal | Verificación Didit desde la app; REFEPS al ser incorporado a un centro | No | Elige un centro activo (filtro público/privado y provincia) y se registra la solicitud; sin asignación no hay acceso operativo. AdminEfector la incorpora. Solo se puede asignar una Persona de origen `MOBILE_APP` |
 | Consultorio propio | Identidad Didit desde la app + REFEPS (mock por ahora) antes del checkout | Sí | AdminEfector automático; si el titular elige una especialidad, se incorpora además como Médico según la política REFEPS |
 | Clínica o centro | Identidad Didit desde la app; no requiere REFEPS para administrar | Sí | AdminEfector puede autenticarse en la app aunque no tenga operaciones visibles; REFEPS solo si también se incorpora como profesional |
 | Personal incorporado por un centro | El AdminEfector busca una Persona existente; solo se asignan Personas de origen `MOBILE_APP`; REFEPS antes del rol clínico (mock por ahora) | Lo cubre la licencia del centro | Canales determinados por cada rol, no por el hecho de tener cuenta |
@@ -17,7 +17,7 @@ Unificar creación de identidad, altas comerciales, incorporación profesional y
 
 ## Límite de una cuenta profesional sin centro
 
-Crear identidad no crea una asignación PES, no permite buscar instituciones para sumarse y no concede acceso a datos clínicos. El AdminEfector inicia la vinculación desde la búsqueda de personas. La app muestra un estado informativo hasta que exista una asignación que habilite una sesión.
+Antes de la verificación Didit, la app lista los centros activos en Bioenlace y permite filtrarlos por sector (público/privado) y provincia. La selección es obligatoria y se persiste como solicitud de incorporación; todavía no asigna roles ni habilita acceso. El AdminEfector inicia la vinculación efectiva desde la búsqueda de personas. La app muestra un estado informativo hasta que exista una asignación que habilite una sesión.
 
 ## Alcance del programa
 
@@ -37,7 +37,7 @@ Crear identidad no crea una asignación PES, no permite buscar instituciones par
 
 ## Fuera de alcance
 
-- Self-service para que un profesional elija o solicite sumarse a un centro.
+- Aprobación automática o asignación de rol a partir de la solicitud de incorporación.
 - REFEPS como requisito para que AdminEfector cree o administre un centro.
 - Usar `id_user`, `acredita_identidad` o campos Didit como sustituto implícito de la procedencia de alta.
 - Habilitar Administrativos en la app sin una decisión explícita.

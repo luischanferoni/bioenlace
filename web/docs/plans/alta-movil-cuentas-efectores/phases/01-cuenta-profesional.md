@@ -17,6 +17,9 @@ Permitir crear una identidad profesional desde la app sin e-mail, efector, REFEP
 - [x] Mostrar estado “pendiente de incorporación por administración” en la app sin asignación.
 - [x] Permitir que una identidad sin roles/efector consulte el wizard de sesión, sin acceso a APIs clínicas.
 - [x] Añadir prueba unitaria de la política para identidad sin asignación.
+- [x] Listar centros activos en Bioenlace con filtro por sector (público/privado) y provincia antes de Didit.
+- [x] Exigir la selección de un centro y persistir la solicitud de incorporación (`staff_affiliation_request`), sin aprobarla ni asignar roles.
+- [x] Dejar Didit como último paso del alta personal gratuita.
 
 Las opciones comerciales abren el flujo autenticado de alta y checkout. La identidad Didit se crea primero; no se envían datos civiles para crear Persona/User desde el alta comercial.
 

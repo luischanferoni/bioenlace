@@ -1,11 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared/shared.dart';
 
 import 'commercial_signup_screen.dart';
 import '../services/staff_signup_service.dart';
-
-enum _SignupPath { personalFree, attentionSpace }
 
 /// Alta personal gratuita o inicio de un alta paga.
 class StaffSignupScreen extends StatefulWidget {
@@ -17,6 +17,10 @@ class StaffSignupScreen extends StatefulWidget {
 
 class _StaffSignupScreenState extends State<StaffSignupScreen> {
   final StaffSignupService _signupService = StaffSignupService();
+  final ExpansibleController _freeTileController = ExpansibleController();
+  final ExpansibleController _spaceTileController = ExpansibleController();
+  final TextEditingController _centerSearchController = TextEditingController();
+
   bool _submitting = false;
   bool _accountCreated = false;
   bool _loadingQuote = true;
@@ -24,10 +28,32 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
   String? _spaceQuoteError;
   String? _pendingVerificationId;
 
+  bool _loadingProvinces = true;
+  bool _loadingCenters = true;
+  String? _centersError;
+  List<Map<String, dynamic>> _provinces = const [];
+  List<Map<String, dynamic>> _centers = const [];
+  String? _centerSector;
+  int? _provinceId;
+  Map<String, dynamic>? _selectedCenter;
+  Timer? _centerSearchDebounce;
+  int _centerSearchRequestId = 0;
+
   @override
   void initState() {
     super.initState();
     _refreshSpaceQuote();
+    _loadProvinces();
+    _loadCenters();
+  }
+
+  @override
+  void dispose() {
+    _centerSearchDebounce?.cancel();
+    _freeTileController.dispose();
+    _spaceTileController.dispose();
+    _centerSearchController.dispose();
+    super.dispose();
   }
 
   void _snack(String msg) {
@@ -44,7 +70,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
 
   Map<String, dynamic> _initialSpacePlan() => {
     'classes': {
-      'AMB': {'attentions_per_month': 200},
+      'AMB': {'attentions_per_month': 200, 'videollamada_permitida': false},
     },
   };
 
@@ -71,10 +97,63 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
     }
   }
 
-  Future<void> _verifyIdentity(
-    _SignupPath selectedPath, {
-    Map<String, dynamic>? plan,
-  }) async {
+  Future<void> _loadProvinces() async {
+    setState(() => _loadingProvinces = true);
+    try {
+      final provinces = await _signupService.fetchProvinces();
+      if (!mounted) return;
+      setState(() {
+        _provinces = provinces;
+        _loadingProvinces = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loadingProvinces = false);
+    }
+  }
+
+  void _scheduleCenterSearch() {
+    _centerSearchDebounce?.cancel();
+    _centerSearchDebounce = Timer(
+      const Duration(milliseconds: 350),
+      _loadCenters,
+    );
+  }
+
+  Future<void> _loadCenters() async {
+    final requestId = ++_centerSearchRequestId;
+    setState(() {
+      _loadingCenters = true;
+      _centersError = null;
+    });
+    try {
+      final centers = await _signupService.searchCenters(
+        query: _centerSearchController.text,
+        sector: _centerSector,
+        idProvincia: _provinceId,
+      );
+      if (!mounted || requestId != _centerSearchRequestId) return;
+      setState(() {
+        _centers = centers;
+        _loadingCenters = false;
+      });
+    } catch (error) {
+      if (!mounted || requestId != _centerSearchRequestId) return;
+      setState(() {
+        _loadingCenters = false;
+        _centersError = _priceErrorText(error);
+      });
+    }
+  }
+
+  Future<void> _createPersonalAccount() async {
+    final center = _selectedCenter;
+    final idEfector = int.tryParse(center?['id_efector']?.toString() ?? '');
+    if (idEfector == null || idEfector <= 0) {
+      _snack('Elegí el centro de salud al que pertenecés.');
+      return;
+    }
+
     var identityCreated = false;
     String? verificationId;
     var reusedVerification = false;
@@ -86,35 +165,18 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
       await _signupService.storePendingVerificationId(verificationId);
       reusedVerification = true;
       if (mounted) setState(() => _pendingVerificationId = verificationId);
-      final account = await _signupService.createAccount(
+      await _signupService.createAccount(
         verificationId: verificationId,
+        idEfector: idEfector,
       );
       identityCreated = true;
       await _signupService.clearPendingVerificationId();
-      if (selectedPath == _SignupPath.personalFree) {
-        if (!mounted) return;
-        setState(() {
-          _accountCreated = true;
-          _submitting = false;
-          _pendingVerificationId = null;
-        });
-        return;
-      }
-
-      final rawDraft = account['borrador'];
-      final initialDraft = rawDraft is Map
-          ? rawDraft.map((key, value) => MapEntry(key.toString(), value))
-          : null;
       if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => CommercialSignupScreen(
-            verificationId: verificationId!,
-            initialDraft: initialDraft,
-            initialPlan: plan,
-          ),
-        ),
-      );
+      setState(() {
+        _accountCreated = true;
+        _submitting = false;
+        _pendingVerificationId = null;
+      });
     } catch (error) {
       if (error is ApiContractException && error.statusCode == 422) {
         try {
@@ -133,9 +195,8 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
       final message = error.toString().replaceFirst('Exception: ', '');
       if (identityCreated) {
         _snack(
-          'Tu cuenta ya existe, pero no pudimos iniciar el alta del espacio. '
-          'Volvé a Crear cuenta y elegí la opción paga; verificaremos tu '
-          'identidad otra vez y reutilizaremos esta cuenta.',
+          'Tu cuenta ya existe, pero no pudimos registrar el centro. '
+          'Volvé a intentar: reutilizaremos tu verificación.',
         );
         if (mounted) setState(() => _submitting = false);
         return;
@@ -151,6 +212,15 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
       );
       if (mounted) setState(() => _submitting = false);
     }
+  }
+
+  void _openCommercialSignup() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) =>
+            CommercialSignupScreen(initialPlan: _initialSpacePlan()),
+      ),
+    );
   }
 
   String _formatArs(Object? amount) {
@@ -212,6 +282,162 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
     );
   }
 
+  Widget _buildSectorFilter() {
+    final options = <(String?, String)>[
+      (null, 'Todos'),
+      ('PUBLICO', 'Público'),
+      ('PRIVADO', 'Privado'),
+    ];
+    return Wrap(
+      spacing: BioSpacing.sm,
+      children: options.map((option) {
+        final selected = _centerSector == option.$1;
+        return ChoiceChip(
+          label: Text(option.$2),
+          selected: selected,
+          onSelected: (_) {
+            if (_centerSector == option.$1) return;
+            setState(() {
+              _centerSector = option.$1;
+              _selectedCenter = null;
+            });
+            _loadCenters();
+          },
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildCenterPicker() {
+    final tokens = context.bio;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text('¿En qué centro de salud trabajás?', style: BioTypography.title),
+        BioSpacing.gapH(BioSpacing.xs),
+        Text(
+          'Elegí un centro activo en Bioenlace. Guardaremos tu solicitud para '
+          'que la administración del centro pueda incorporarte.',
+          style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
+        ),
+        BioSpacing.gapH(BioSpacing.md),
+        _buildSectorFilter(),
+        BioSpacing.gapH(BioSpacing.sm),
+        DropdownButtonFormField<int>(
+          initialValue: _provinceId ?? 0,
+          isExpanded: true,
+          decoration: const InputDecoration(
+            labelText: 'Provincia',
+            border: OutlineInputBorder(),
+          ),
+          items: [
+            const DropdownMenuItem<int>(value: 0, child: Text('Todas')),
+            ..._provinces
+                .map((province) {
+                  final id = int.tryParse(province['id']?.toString() ?? '');
+                  return DropdownMenuItem<int>(
+                    value: id,
+                    child: Text(province['nombre']?.toString() ?? ''),
+                  );
+                })
+                .where((item) => item.value != null),
+          ],
+          onChanged: _loadingProvinces
+              ? null
+              : (value) {
+                  setState(() {
+                    _provinceId = value == 0 ? null : value;
+                    _selectedCenter = null;
+                  });
+                  _loadCenters();
+                },
+        ),
+        BioSpacing.gapH(BioSpacing.sm),
+        TextFormField(
+          controller: _centerSearchController,
+          textInputAction: TextInputAction.search,
+          onFieldSubmitted: (_) => _loadCenters(),
+          onChanged: (_) => _scheduleCenterSearch(),
+          decoration: InputDecoration(
+            labelText: 'Buscar centro',
+            hintText: 'Nombre, código SISA o localidad',
+            border: const OutlineInputBorder(),
+            suffixIcon: IconButton(
+              onPressed: _loadingCenters ? null : _loadCenters,
+              icon: const Icon(Icons.search),
+            ),
+          ),
+        ),
+        BioSpacing.gapH(BioSpacing.sm),
+        if (_loadingCenters)
+          const Padding(
+            padding: EdgeInsets.all(BioSpacing.md),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (_centersError != null)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(_centersError!, style: BioTypography.bodySm),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: _loadCenters,
+                  child: const Text('Reintentar'),
+                ),
+              ),
+            ],
+          )
+        else if (_centers.isEmpty)
+          Text(
+            'No encontramos centros con esos filtros.',
+            style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
+          )
+        else
+          ..._centers.map((center) {
+            final id = int.tryParse(center['id_efector']?.toString() ?? '');
+            final selected =
+                _selectedCenter?['id_efector']?.toString() ==
+                center['id_efector']?.toString();
+            final location = [
+              center['localidad']?.toString() ?? '',
+              center['provincia']?.toString() ?? '',
+            ].where((value) => value.isNotEmpty).join(' · ');
+            final sector = center['sector']?.toString() == 'PRIVADO'
+                ? 'Privado'
+                : 'Público';
+            return Card(
+              child: ListTile(
+                selected: selected,
+                title: Text(center['nombre']?.toString() ?? ''),
+                subtitle: Text(
+                  [
+                    sector,
+                    if (location.isNotEmpty) location,
+                    if ((center['codigo_sisa']?.toString() ?? '').isNotEmpty)
+                      'SISA ${center['codigo_sisa']}',
+                  ].join(' · '),
+                ),
+                trailing: selected ? const Icon(Icons.check_circle) : null,
+                onTap: id == null
+                    ? null
+                    : () => setState(() {
+                        _selectedCenter = center;
+                      }),
+              ),
+            );
+          }),
+        if (_selectedCenter != null) ...[
+          BioSpacing.gapH(BioSpacing.sm),
+          Text(
+            'Centro seleccionado: ${_selectedCenter!['nombre']}',
+            style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
+          ),
+        ],
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens = context.bio;
@@ -240,7 +466,11 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                     border: Border.all(color: tokens.paperDividerDefault),
                   ),
                   child: ExpansionTile(
+                    controller: _freeTileController,
                     initiallyExpanded: true,
+                    onExpansionChanged: (expanded) {
+                      if (expanded) _spaceTileController.collapse();
+                    },
                     title: Text(
                       'Cuenta personal gratis',
                       style: BioTypography.title,
@@ -254,11 +484,13 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                     ),
                     children: [
                       Text(
-                        'Crea una cuenta con perfil de paciente. Para ingresar '
-                        'a Personal de Salud como profesional, un efector debe '
-                        'asignarte un rol clínico.',
+                        'Crea tu cuenta de personal de salud y elegí el centro '
+                        'donde trabajás. Un efector debe asignarte un rol '
+                        'clínico para habilitar las funciones asistenciales.',
                         style: BioTypography.body,
                       ),
+                      BioSpacing.gapH(BioSpacing.md),
+                      _buildCenterPicker(),
                       BioSpacing.gapH(BioSpacing.md),
                       BioButton.primary(
                         label: _submitting
@@ -270,9 +502,9 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                         size: BioButtonSize.lg,
                         fullWidth: true,
                         loading: _submitting,
-                        onPressed: _submitting
+                        onPressed: _submitting || _selectedCenter == null
                             ? null
-                            : () => _verifyIdentity(_SignupPath.personalFree),
+                            : _createPersonalAccount,
                       ),
                     ],
                   ),
@@ -285,6 +517,10 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                     border: Border.all(color: tokens.paperDividerDefault),
                   ),
                   child: ExpansionTile(
+                    controller: _spaceTileController,
+                    onExpansionChanged: (expanded) {
+                      if (expanded) _freeTileController.collapse();
+                    },
                     title: Text(
                       'Crear espacio de atención',
                       style: BioTypography.title,
@@ -313,22 +549,11 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                       ),
                       BioSpacing.gapH(BioSpacing.md),
                       BioButton.primary(
-                        label: _submitting
-                            ? 'Verificando…'
-                            : _pendingVerificationId != null
-                            ? 'Reintentar creación de cuenta'
-                            : 'Crear espacio de atención',
+                        label: 'Crear espacio de atención',
                         icon: Icons.arrow_forward,
                         size: BioButtonSize.lg,
                         fullWidth: true,
-                        loading: _submitting,
-                        onPressed:
-                            _submitting || _loadingQuote || _spaceQuote == null
-                            ? null
-                            : () => _verifyIdentity(
-                                _SignupPath.attentionSpace,
-                                plan: _initialSpacePlan(),
-                              ),
+                        onPressed: _loadingQuote ? null : _openCommercialSignup,
                       ),
                     ],
                   ),
@@ -353,13 +578,12 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                     border: Border.all(color: tokens.paperDividerDefault),
                   ),
                   child: Text(
-                    'Tu cuenta personal gratuita está lista. Para usar Personal '
-                    'de Salud como profesional, pedí al administrador de tu '
-                    'efector que te asigne un rol clínico. '
+                    'Tu cuenta personal gratuita está lista y registramos tu '
+                    'solicitud para el centro elegido. Cuando la administración '
+                    'del centro te asigne un rol clínico, podrás ingresar a las '
+                    'funciones asistenciales. '
                     '¿Querías crear un espacio de atención pago? Volvé al inicio, '
-                    'elegí Crear cuenta y seleccioná una opción paga. Tendrás que '
-                    'verificar tu identidad otra vez; reconoceremos tu cuenta '
-                    'existente y no crearemos otra.',
+                    'elegí Crear cuenta y seleccioná una opción paga.',
                     style: BioTypography.body,
                     textAlign: TextAlign.center,
                   ),

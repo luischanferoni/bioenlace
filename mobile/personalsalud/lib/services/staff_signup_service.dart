@@ -86,11 +86,15 @@ class StaffSignupService {
   Future<Map<String, dynamic>> createAccount({
     required String verificationId,
     String? email,
+    int? idEfector,
   }) {
     final body = <String, dynamic>{'verification_id': verificationId};
     final normalizedEmail = email?.trim();
     if (normalizedEmail != null && normalizedEmail.isNotEmpty) {
       body['email'] = normalizedEmail;
+    }
+    if (idEfector != null && idEfector > 0) {
+      body['id_efector'] = idEfector;
     }
 
     return ApiClient(
@@ -153,6 +157,47 @@ class StaffSignupService {
       throw const FormatException(
         'Respuesta inválida al buscar efectores públicos.',
       );
+    }
+    return items.whereType<Map>().map((item) {
+      return item.map((key, value) => MapEntry(key.toString(), value));
+    }).toList();
+  }
+
+  Future<List<Map<String, dynamic>>> fetchProvinces() async {
+    final data = await ApiClient(
+      appClient: 'bioenlace-personalsalud',
+      traceLabel: 'licencia/catalogo-provincias',
+    ).getData('/licencia/catalogo-provincias');
+    final items = data['items'];
+    if (items is! List) {
+      throw const FormatException('Respuesta inválida al cargar provincias.');
+    }
+    return items.whereType<Map>().map((item) {
+      return item.map((key, value) => MapEntry(key.toString(), value));
+    }).toList();
+  }
+
+  Future<List<Map<String, dynamic>>> searchCenters({
+    String query = '',
+    String? sector,
+    int? idProvincia,
+  }) async {
+    final data =
+        await ApiClient(
+          appClient: 'bioenlace-personalsalud',
+          traceLabel: 'licencia/catalogo-centros',
+        ).getData(
+          '/licencia/catalogo-centros',
+          query: {
+            'q': query.trim(),
+            if (sector != null && sector.isNotEmpty) 'sector': sector,
+            if (idProvincia != null && idProvincia > 0)
+              'id_provincia': '$idProvincia',
+          },
+        );
+    final items = data['items'];
+    if (items is! List) {
+      throw const FormatException('Respuesta inválida al cargar centros.');
     }
     return items.whereType<Map>().map((item) {
       return item.map((key, value) => MapEntry(key.toString(), value));

@@ -4,13 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared/shared.dart';
 
-import '../auth/personalsalud_post_login.dart';
 import 'commercial_signup_screen.dart';
 import '../services/staff_signup_service.dart';
 
-enum _SignupPath { professional, privateConsultorio, clinic }
+enum _SignupPath { personalFree, privateConsultorio, clinic }
 
-/// Alta de cuenta profesional personal. Las altas comerciales requieren checkout.
+/// Alta personal gratuita o inicio de un alta paga.
 class StaffSignupScreen extends StatefulWidget {
   const StaffSignupScreen({super.key});
 
@@ -206,6 +205,8 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
         _pendingVerificationId = null;
       });
 
+      if (selectedPath == _SignupPath.personalFree) return;
+
       final token = account['token']?.toString().trim() ?? '';
       final userId = (account['id_user'] ?? account['id_persona'] ?? '')
           .toString()
@@ -214,24 +215,16 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
 
       await AuthTokenStore.instance.write(token);
       if (!mounted) return;
-      if (selectedPath != _SignupPath.professional) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (_) => CommercialSignupScreen(
-              authToken: token,
-              profile: selectedPath == _SignupPath.privateConsultorio
-                  ? 'CONSULTORIO'
-                  : 'CLINICA',
-              initialPlan: plan,
-            ),
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => CommercialSignupScreen(
+            authToken: token,
+            profile: selectedPath == _SignupPath.privateConsultorio
+                ? 'CONSULTORIO'
+                : 'CLINICA',
+            initialPlan: plan,
           ),
-        );
-        return;
-      }
-      await navigatePersonalsaludAfterLogin(
-        userId,
-        'Personal de Salud',
-        context,
+        ),
       );
     } catch (error) {
       final message = error.toString().replaceFirst('Exception: ', '');
@@ -423,7 +416,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                   child: ExpansionTile(
                     initiallyExpanded: true,
                     title: Text(
-                      'Cuenta profesional',
+                      'Cuenta personal gratis',
                       style: BioTypography.title,
                     ),
                     subtitle: const Text('Gratis'),
@@ -435,9 +428,9 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                     ),
                     children: [
                       Text(
-                        'Para profesionales que se sumarán a un consultorio, '
-                        'clínica o institución. La administración te asignará '
-                        'el acceso.',
+                        'Crea una cuenta con perfil de paciente. Para ingresar '
+                        'a Personal de Salud como profesional, un efector debe '
+                        'asignarte un rol clínico.',
                         style: BioTypography.body,
                       ),
                       BioSpacing.gapH(BioSpacing.md),
@@ -449,7 +442,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                         loading: _submitting,
                         onPressed: _submitting
                             ? null
-                            : () => _verifyIdentity(_SignupPath.professional),
+                            : () => _verifyIdentity(_SignupPath.personalFree),
                       ),
                     ],
                   ),
@@ -579,10 +572,13 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                     border: Border.all(color: tokens.paperDividerDefault),
                   ),
                   child: Text(
-                    'Tu cuenta está creada. Si trabajás en un centro, su '
-                    'AdminEfector debe sumarte para que puedas acceder a las '
-                    'funciones clínicas. Crear la cuenta no te asigna a un centro. '
-                    'Para volver a entrar, verificá tu identidad desde el inicio.',
+                    'Tu cuenta personal gratuita está lista. Para usar Personal '
+                    'de Salud como profesional, pedí al administrador de tu '
+                    'efector que te asigne un rol clínico. '
+                    '¿Querías crear un espacio de atención pago? Volvé al inicio, '
+                    'elegí Crear cuenta y seleccioná una opción paga. Tendrás que '
+                    'verificar tu identidad otra vez; reconoceremos tu cuenta '
+                    'existente y no crearemos otra.',
                     style: BioTypography.body,
                     textAlign: TextAlign.center,
                   ),

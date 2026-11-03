@@ -14,14 +14,28 @@ use Yii;
 final class StaffMobileAccessService
 {
     private const MOBILE_STAFF_ROLES = ['Medico', 'medico', 'enfermeria', 'Enfermeria'];
-    private const MOBILE_IDENTITY_ROLES = ['usuario', 'paciente', 'AdminEfector'];
-    private const IDENTITY_ONLY_ROLES = ['usuario', 'paciente'];
+    private const MOBILE_ADMIN_ROLES = ['AdminEfector'];
     private const PERSONAL_SALUD_APP_CLIENTS = ['personalsalud-flutter', 'bioenlace-personalsalud'];
 
     public static function isPersonalSaludRequest(string $client, string $appClient): bool
     {
         return strtolower(trim($client)) === 'mobile'
             && in_array(strtolower(trim($appClient)), self::PERSONAL_SALUD_APP_CLIENTS, true);
+    }
+
+    public static function isPersonalSaludOnboardingRequest(string $method, string $path): bool
+    {
+        $method = strtoupper(trim($method));
+        $path = strtolower(trim($path, '/'));
+
+        return match ($method) {
+            'POST' => preg_match(
+                '~(?:^|/)licencia/(?:registrar-efector|cancelar-suscripcion)$~',
+                $path
+            ) === 1,
+            'GET' => preg_match('~(?:^|/)licencia/estado-checkout$~', $path) === 1,
+            default => false,
+        };
     }
 
     public static function isCurrentUserAllowed(): bool
@@ -95,12 +109,7 @@ final class StaffMobileAccessService
         ));
     }
 
-    /**
-     * Roles clínicos requieren una asignación vigente; cuentas de identidad/paciente
-     * sin asignaciones solo pueden consultar el wizard de sesión.
-     *
-     * @param list<string> $assignedRoles
-     */
+    /** @param list<string> $assignedRoles */
     public static function isMobileAccountAllowed(
         array $assignedRoles,
         bool $hasPersona,
@@ -114,41 +123,23 @@ final class StaffMobileAccessService
             return $hasEfectorAssignment;
         }
 
-        if (self::hasMobileIdentityRole($assignedRoles)) {
+        if (self::hasMobileAdminRole($assignedRoles)) {
             return true;
         }
 
-        return self::isIdentityOnlyAccountAllowed($assignedRoles, $hasEfectorAssignment);
+        return false;
     }
 
     /**
-     * @param list<string> $assignedRoles
-     */
-    private static function isIdentityOnlyAccountAllowed(array $assignedRoles, bool $hasEfectorAssignment): bool
-    {
-        if ($hasEfectorAssignment) {
-            return false;
-        }
-
-        foreach ($assignedRoles as $roleName) {
-            if (!in_array($roleName, self::IDENTITY_ONLY_ROLES, true)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * AdminEfector may authenticate in the app even though the app currently
-     * exposes no AdminEfector-specific operations.
+     * AdminEfector may authenticate in the app; identity/patient-only accounts
+     * must use the patient app or obtain a staff role from an efector.
      *
      * @param list<string> $assignedRoles
      */
-    private static function hasMobileIdentityRole(array $assignedRoles): bool
+    private static function hasMobileAdminRole(array $assignedRoles): bool
     {
         foreach ($assignedRoles as $roleName) {
-            foreach (self::MOBILE_IDENTITY_ROLES as $baseRole) {
+            foreach (self::MOBILE_ADMIN_ROLES as $baseRole) {
                 if ($roleName === $baseRole
                     || str_starts_with((string) $roleName, $baseRole . '_x_efector_')) {
                     return true;

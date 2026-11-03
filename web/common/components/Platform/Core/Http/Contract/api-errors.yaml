@@ -32,7 +32,7 @@ errors:
     http_status: 403
     intent: error
     retryable: false
-    message: "La aplicación móvil no está disponible para este rol."
+    message: "Tu cuenta tiene el perfil Paciente, pero todavía no un rol profesional en un efector. Pedí al administrador de tu centro que te asigne. Si querías crear un espacio de atención, volvé a Crear cuenta y elegí la opción paga: verificaremos tu identidad y reutilizaremos tu cuenta actual, sin crear otra."
   forbidden_detail:
     http_status: 403
     intent: error

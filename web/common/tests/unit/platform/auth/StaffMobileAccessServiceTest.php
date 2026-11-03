@@ -7,12 +7,12 @@ use PHPUnit\Framework\TestCase;
 
 final class StaffMobileAccessServiceTest extends TestCase
 {
-    public function testAllowsUnassignedIdentityOnlyAccountToOpenSessionWizard(): void
+    public function testDeniesAccountsWithOnlyIdentityOrPatientRoles(): void
     {
-        self::assertTrue(StaffMobileAccessService::isMobileAccountAllowed([], true, false));
-        self::assertTrue(StaffMobileAccessService::isMobileAccountAllowed(['usuario'], true, false));
-        self::assertTrue(StaffMobileAccessService::isMobileAccountAllowed(['paciente'], true, false));
-        self::assertTrue(StaffMobileAccessService::isMobileAccountAllowed(['usuario', 'paciente'], true, false));
+        self::assertFalse(StaffMobileAccessService::isMobileAccountAllowed([], true, false));
+        self::assertFalse(StaffMobileAccessService::isMobileAccountAllowed(['usuario'], true, false));
+        self::assertFalse(StaffMobileAccessService::isMobileAccountAllowed(['paciente'], true, false));
+        self::assertFalse(StaffMobileAccessService::isMobileAccountAllowed(['usuario', 'paciente'], true, false));
     }
 
     public function testAllowsAdminEfectorToAuthenticateWithoutMobileAdminOperations(): void
@@ -55,5 +55,33 @@ final class StaffMobileAccessServiceTest extends TestCase
         self::assertTrue(StaffMobileAccessService::isPersonalSaludRequest('mobile', 'bioenlace-personalsalud'));
         self::assertFalse(StaffMobileAccessService::isPersonalSaludRequest('mobile', 'bioenlace-paciente'));
         self::assertFalse(StaffMobileAccessService::isPersonalSaludRequest('web', 'personalsalud-flutter'));
+    }
+
+    public function testAllowsOnlyCommercialOnboardingRoutesForIdentityOnlySessions(): void
+    {
+        self::assertTrue(StaffMobileAccessService::isPersonalSaludOnboardingRequest(
+            'POST',
+            'api/v1/licencia/registrar-efector'
+        ));
+        self::assertTrue(StaffMobileAccessService::isPersonalSaludOnboardingRequest(
+            'GET',
+            'api/v1/licencia/estado-checkout'
+        ));
+        self::assertTrue(StaffMobileAccessService::isPersonalSaludOnboardingRequest(
+            'POST',
+            'api/v1/licencia/cancelar-suscripcion'
+        ));
+        self::assertFalse(StaffMobileAccessService::isPersonalSaludOnboardingRequest(
+            'GET',
+            'api/v1/sesion-operativa'
+        ));
+        self::assertFalse(StaffMobileAccessService::isPersonalSaludOnboardingRequest(
+            'POST',
+            'api/v1/licencia/mi-licencia'
+        ));
+        self::assertFalse(StaffMobileAccessService::isPersonalSaludOnboardingRequest(
+            'GET',
+            'api/v1/licencia/registrar-efector'
+        ));
     }
 }

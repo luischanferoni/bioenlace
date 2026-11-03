@@ -6,7 +6,7 @@ Aplicar la política de acceso en servidor y retirar la división anterior sin r
 
 ## Trabajo
 
-- [ ] Ajustar `StaffMobileAccessService` y login para negar Personal de Salud a Persona/Paciente solo; permitir solo roles explícitamente autorizados, incluyendo AdminEfector después de su asignación.
+- [x] Ajustar `StaffMobileAccessService` y login para negar Personal de Salud a Persona/Paciente solo; permitir solo roles explícitamente autorizados, incluyendo AdminEfector después de su asignación.
 - [ ] Revisar endpoints de login biométrico, bearer JWT, login credenciales y arranque de app para que no haya rutas de bypass por rol dinámico.
 - [ ] No ofrecer wizard/home funcional de Personal de Salud a una cuenta sin rol habilitante; debe permanecer en login y usar «Crear cuenta» para onboarding.
 - [ ] Crear acceso al borrador basado en verificación Didit separado del mecanismo de sesión/roles de Personal de Salud.

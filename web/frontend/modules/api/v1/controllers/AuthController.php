@@ -234,7 +234,10 @@ class AuthController extends BaseController
 
         if (!StaffMobileAccessService::isUserAllowedToLogin($user, $persona)) {
             return $this->fail('forbidden_detail', [
-                'detail' => 'Esta cuenta no tiene acceso desde Personal de Salud. Ingresá desde la web.',
+                'detail' => 'Tu cuenta tiene el perfil Paciente, pero todavía no un rol profesional en un efector. '
+                    . 'Pedí al administrador de tu centro que te asigne. Si querías crear un espacio de atención, '
+                    . 'volvé a Crear cuenta y elegí la opción paga: verificaremos tu identidad y reutilizaremos '
+                    . 'tu cuenta actual, sin crear otra.',
             ]);
         }
 

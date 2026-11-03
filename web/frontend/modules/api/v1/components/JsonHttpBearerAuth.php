@@ -177,6 +177,10 @@ class JsonHttpBearerAuth extends HttpBearerAuth
             && (
                 $persona === null
                 || !StaffMobileAccessService::isUserAllowedToLogin($userModel, $persona)
+            )
+            && !StaffMobileAccessService::isPersonalSaludOnboardingRequest(
+                (string) $request->getMethod(),
+                (string) $request->getPathInfo()
             )) {
             $this->setContractError($response, 'mobile_role_unavailable');
             $response->send();

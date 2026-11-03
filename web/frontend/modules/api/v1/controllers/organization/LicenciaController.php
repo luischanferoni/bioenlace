@@ -161,11 +161,6 @@ class LicenciaController extends BaseController
         try {
             (new SignupAbuseGuard())->assertAllowed($body);
             $data = (new CreateIdentityAccount())->crear($body);
-            if (!StaffMobileAccessService::isUserAllowedToLogin($data['user'], $data['persona'])) {
-                return $this->fail('forbidden_detail', [
-                    'detail' => 'Esta cuenta no tiene acceso desde Personal de Salud. Ingresá desde la web.',
-                ]);
-            }
 
             return $this->success([
                 'id_persona' => (int) $data['persona']->id_persona,

@@ -413,13 +413,6 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                 textAlign: TextAlign.center,
               ),
               BioSpacing.gapH(BioSpacing.sm),
-              Text(
-                'La creación de la cuenta es desde la app y requiere verificar '
-                'tu identidad con DNI y selfie. Elegí una opción; las '
-                'suscripciones son mensuales.',
-                style: BioTypography.body.copyWith(color: tokens.textMuted),
-                textAlign: TextAlign.center,
-              ),
               BioSpacing.gapH(BioSpacing.xl),
               if (!_accountCreated) ...[
                 Container(

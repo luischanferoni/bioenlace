@@ -32,6 +32,7 @@ class LicenciaController extends BaseController
 {
     public static $authenticatorExcept = [
         'catalogo-ministerios',
+        'catalogo-efectores-publicos',
         'planes',
         'cotizar',
         'crear-cuenta',
@@ -61,6 +62,7 @@ class LicenciaController extends BaseController
     {
         $verbs = parent::verbs();
         $verbs['catalogo-ministerios'] = ['GET', 'OPTIONS'];
+        $verbs['catalogo-efectores-publicos'] = ['GET', 'OPTIONS'];
         $verbs['planes'] = ['GET', 'OPTIONS'];
         $verbs['cotizar'] = ['POST', 'OPTIONS'];
         $verbs['crear-cuenta'] = ['POST', 'OPTIONS'];
@@ -91,6 +93,21 @@ class LicenciaController extends BaseController
     }
 
     /**
+     * Busca efectores públicos disponibles en el catálogo local SISA.
+     */
+    public function actionCatalogoEfectoresPublicos()
+    {
+        $query = trim((string) Yii::$app->request->get('q', ''));
+        if (strlen($query) > 80) {
+            return $this->error('La búsqueda supera el largo permitido.', null, 400);
+        }
+
+        return $this->success([
+            'items' => SignUpInstitutionalEfector::searchAvailablePublicEfectores($query),
+        ]);
+    }
+
+    /**
      * @action_name Planes / precios de licencia (metadata)
      */
     public function actionPlanes()
@@ -110,17 +127,24 @@ class LicenciaController extends BaseController
 
         $profile = strtoupper(trim((string) ($body['perfil'] ?? '')));
         $plan = $body['plan'] ?? null;
+        if ($profile !== '' && $profile !== SignUpInstitutionalEfector::PERFIL_ESPACIO_ATENCION) {
+            return $this->error(
+                'El alta comercial usa el contrato unificado ESPACIO_ATENCION.',
+                null,
+                400
+            );
+        }
         if (!is_array($plan)) {
             return $this->error('Indicá un plan válido.', null, 400);
         }
 
         try {
-            $estimate = SignUpInstitutionalEfector::estimatePlanMonthlyQuote($plan, $profile);
+            $estimate = SignUpInstitutionalEfector::estimatePlanMonthlyQuote($plan);
             $pricing = (new MercadoPagoCheckoutService())->calculateArsAmount($estimate['amount_usd']);
             $catalog = SignUpInstitutionalEfector::planesCatalog();
 
             return $this->success([
-                'perfil' => $profile,
+                'perfil' => SignUpInstitutionalEfector::PERFIL_ESPACIO_ATENCION,
                 'billing_period' => 'month',
                 'pricing_version' => (int) ($catalog['version'] ?? 1),
                 'amount_usd' => $pricing['amount_usd'],

@@ -15,9 +15,10 @@ use common\components\Domain\Organization\Pes\Application\UseCase\EnsureAdminEfe
 use common\components\Domain\Organization\Efector\Application\Service\ContactPhoneValidator;
 use common\components\Platform\Core\Product\PricingPesByEncounterClassMetadata;
 use Yii;
+use yii\db\Query;
 
 /**
- * Alta self-service de clínica/efector + AdminEfector + licencia.
+ * Alta self-service de espacio de atención + AdminEfector + licencia.
  */
 final class SignUpInstitutionalEfector
 {
@@ -25,11 +26,9 @@ final class SignUpInstitutionalEfector
 
     public const SECTOR_PRIVADO = 'PRIVADO';
 
-    /** Clínica / centro (N profesionales). */
-    public const PERFIL_CLINICA = 'CLINICA';
+    public const PERFIL_ESPACIO_ATENCION = 'ESPACIO_ATENCION';
 
-    /** Profesional independiente = efector unipersonal (mismo modelo, default max_pes=1). */
-    public const PERFIL_CONSULTORIO = 'CONSULTORIO';
+    private const PERFIL_LEGACY = ['CONSULTORIO', 'CLINICA'];
 
     /** @deprecated usar {@see EnsureAdminEfectorAssignment::ITEM_NAME} */
     public const ITEM_NAME_ADMIN_EFECTOR = EnsureAdminEfectorAssignment::ITEM_NAME;
@@ -45,7 +44,7 @@ final class SignUpInstitutionalEfector
         array $confirmedPayment
     ): array
     {
-        $draft = self::prepareDraft($payload);
+        $draft = self::prepareDraftForPersistedCheckout($payload);
         $perfil = $draft['perfil'];
         $sector = $draft['sector'];
         $ministerio = $draft['ministerio'];
@@ -83,9 +82,7 @@ final class SignUpInstitutionalEfector
             $account = BillingAccountService::createAccount([
                 'nombre' => 'Licencia — ' . $efector->nombre,
                 'tipo' => BillingAccount::TIPO_EFECTOR,
-                'notas' => $perfil === self::PERFIL_CONSULTORIO
-                    ? 'Alta self-service consultorio unipersonal'
-                    : 'Alta self-service institucional',
+                'notas' => 'Alta self-service de espacio de atención.',
                 'activo' => $pagoPorMinisterio ? 0 : 1,
             ]);
             $account->owner_user_id = (int) $user->id;
@@ -101,7 +98,7 @@ final class SignUpInstitutionalEfector
             );
             foreach ($plan['classes'] as $class => $cfg) {
                 BillingAccountService::upsertEntitlement((int) $account->id, $class, [
-                    'max_pes' => (int) $cfg['max_pes'],
+                    'max_pes' => $cfg['max_pes'],
                     'dictado_incluido' => !empty($cfg['dictado_incluido']),
                     'videollamada_permitida' => !empty($cfg['videollamada_permitida']),
                     'activo' => 1,
@@ -130,8 +127,7 @@ final class SignUpInstitutionalEfector
             $log->contacto_email = $admin['email'];
             $log->contacto_telefono = $admin['telefono'];
             $log->contacto_documento = $admin['documento'];
-            $log->notas = ($perfil === self::PERFIL_CONSULTORIO ? '[CONSULTORIO] ' : '')
-                . 'Alta self-service con primer pago confirmado por Mercado Pago.';
+            $log->notas = 'Alta de espacio de atención con primer pago confirmado por Mercado Pago.';
             $log->id_user = (int) $user->id;
             $log->id_billing_account = (int) $account->id;
             $log->id_efector = $idEfector;
@@ -156,7 +152,7 @@ final class SignUpInstitutionalEfector
                 'username' => (string) $user->username,
                 'email' => (string) $user->email,
                 'login_hint' => 'Ingresá en la web clínica con tu e-mail/usuario y la contraseña elegida.',
-                'next_steps' => self::nextStepsForPerfil($perfil),
+                'next_steps' => self::nextStepsForSpace(),
             ];
         } catch (\Throwable $e) {
             $tx->rollBack();
@@ -172,9 +168,35 @@ final class SignUpInstitutionalEfector
      */
     public static function prepareDraft(array $payload): array
     {
-        $perfil = strtoupper(trim((string) ($payload['perfil'] ?? self::PERFIL_CLINICA)));
-        if (!in_array($perfil, [self::PERFIL_CLINICA, self::PERFIL_CONSULTORIO], true)) {
-            throw new \InvalidArgumentException('Perfil de alta inválido (CLINICA o CONSULTORIO).');
+        return self::prepareDraftInternal($payload, false);
+    }
+
+    /**
+     * Keeps already-persisted legacy checkouts fulfillable without accepting them
+     * as new signup requests.
+     *
+     * @param array<string, mixed> $payload
+     * @return array{perfil: string, sector: string, ministerio: ?BillingAccount, efector: array<string, mixed>, plan: array<string, mixed>, amount_usd: float}
+     */
+    public static function prepareDraftForPersistedCheckout(array $payload): array
+    {
+        return self::prepareDraftInternal($payload, true);
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @return array{perfil: string, sector: string, ministerio: ?BillingAccount, efector: array<string, mixed>, plan: array<string, mixed>, amount_usd: float}
+     */
+    private static function prepareDraftInternal(array $payload, bool $allowPersistedLegacyProfile): array
+    {
+        $perfil = strtoupper(trim((string) ($payload['perfil'] ?? self::PERFIL_ESPACIO_ATENCION)));
+        $isLegacyConsultorio = $perfil === 'CONSULTORIO';
+        $isAllowedProfile = $perfil === self::PERFIL_ESPACIO_ATENCION
+            || ($allowPersistedLegacyProfile && in_array($perfil, self::PERFIL_LEGACY, true));
+        if (!$isAllowedProfile) {
+            throw new \InvalidArgumentException(
+                'El alta comercial usa el contrato unificado ESPACIO_ATENCION.'
+            );
         }
 
         $sector = strtoupper(trim((string) ($payload['sector'] ?? '')));
@@ -205,10 +227,9 @@ final class SignUpInstitutionalEfector
             }
         }
 
-        if ($perfil === self::PERFIL_CONSULTORIO && $sector === self::SECTOR_PUBLICO) {
+        if ($isLegacyConsultorio && $sector === self::SECTOR_PUBLICO) {
             throw new \InvalidArgumentException(
-                'El alta de consultorio profesional solo admite sector privado. '
-                . 'Si trabajás en un centro público, pedí que administración del centro te sume a Bioenlace.'
+                'El checkout histórico de consultorio requiere sector privado.'
             );
         }
 
@@ -219,9 +240,16 @@ final class SignUpInstitutionalEfector
             if ((int) ($payload['efector']['id_localidad'] ?? 0) <= 0) {
                 throw new \InvalidArgumentException('Seleccioná una localidad válida para el efector.');
             }
-            $efector = self::normalizeEfector($payload['efector'], $sector, $perfil);
+            $efector = self::normalizeEfector(
+                $payload['efector'],
+                $sector,
+                $allowPersistedLegacyProfile ? $perfil : self::PERFIL_ESPACIO_ATENCION
+            );
         }
-        $plan = self::normalizePlan($payload['plan'] ?? [], $perfil);
+        $plan = self::normalizePlan(
+            $payload['plan'] ?? [],
+            $allowPersistedLegacyProfile ? $perfil : self::PERFIL_ESPACIO_ATENCION
+        );
         $amountUsd = self::estimateMonthlyUsd($plan);
         if ($amountUsd <= 0 || !is_finite($amountUsd)) {
             throw new \InvalidArgumentException('No se pudo calcular un importe válido para el plan.');
@@ -274,6 +302,78 @@ final class SignUpInstitutionalEfector
             'dependencia' => (string) $efector->dependencia,
             'tipologia' => (string) $efector->tipologia,
         ];
+    }
+
+    /**
+     * Busca efectores públicos disponibles para seleccionar durante el alta.
+     *
+     * @return array<int, array{codigo_sisa: string, nombre: string, domicilio: string, localidad: string}>
+     */
+    public static function searchAvailablePublicEfectores(string $query): array
+    {
+        $query = trim($query);
+        if (strlen($query) < 2 || strlen($query) > 80) {
+            return [];
+        }
+
+        $term = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $query) . '%';
+        $ministerioMemberships = (new Query())
+            ->select('membership.id_efector')
+            ->from(['membership' => BillingAccountEfector::tableName()])
+            ->innerJoin(
+                ['account' => BillingAccount::tableName()],
+                'account.id = membership.id_billing_account'
+            )
+            ->where([
+                'membership.rol_membresia' => BillingAccountEfector::ROL_AFILIADO,
+                'membership.deleted_at' => null,
+                'account.tipo' => BillingAccount::TIPO_MINISTERIO,
+                'account.deleted_at' => null,
+            ]);
+        $billingPoolMemberships = (new Query())
+            ->select('membership.id_efector')
+            ->from(['membership' => BillingAccountEfector::tableName()])
+            ->where([
+                'membership.rol_membresia' => BillingAccountEfector::ROL_POOL,
+                'membership.deleted_at' => null,
+            ]);
+
+        return Efector::find()
+            ->alias('efector')
+            ->select([
+                'codigo_sisa' => 'efector.codigo_sisa',
+                'nombre' => 'efector.nombre',
+                'domicilio' => 'efector.domicilio',
+                'localidad' => 'localidad.nombre',
+            ])
+            ->innerJoin(['localidad' => Localidad::tableName()], 'localidad.id_localidad = efector.id_localidad')
+            ->where([
+                'or',
+                ['like', 'efector.nombre', $term, false],
+                ['like', 'efector.codigo_sisa', $term, false],
+            ])
+            ->andWhere([
+                'or',
+                ['efector.estado' => null],
+                ['<>', 'efector.estado', 'INACTIVO'],
+            ])
+            ->andWhere("LOWER(COALESCE(efector.origen_financiamiento, '')) NOT LIKE :private", [
+                ':private' => '%privado%',
+            ])
+            ->andWhere(['not like', 'efector.codigo_sisa', 'W%', false])
+            ->andWhere(['not like', 'efector.codigo_sisa', 'DEV%', false])
+            ->andWhere([
+                'not exists',
+                (clone $ministerioMemberships)->andWhere('membership.id_efector = efector.id_efector'),
+            ])
+            ->andWhere([
+                'not exists',
+                (clone $billingPoolMemberships)->andWhere('membership.id_efector = efector.id_efector'),
+            ])
+            ->orderBy(['efector.nombre' => SORT_ASC, 'efector.codigo_sisa' => SORT_ASC])
+            ->limit(20)
+            ->asArray()
+            ->all();
     }
 
     private static function assertPublicEfectorAvailable(Efector $efector): void
@@ -385,19 +485,12 @@ final class SignUpInstitutionalEfector
     /**
      * @return list<string>
      */
-    public static function nextStepsForPerfil(string $perfil): array
+    public static function nextStepsForSpace(): array
     {
-        if ($perfil === self::PERFIL_CONSULTORIO) {
-            return [
-                'Ingresá a la web clínica con tu usuario y contraseña.',
-                'En el asistente o en la gestión del centro, asignate a vos mismo en un servicio clínico (por ejemplo medicina general / ambulatorio) para poder atender.',
-                'La administración del consultorio ya está habilitada; el paso clínico es el que te permite agenda y captura.',
-            ];
-        }
-
         return [
             'Ingresá a la web clínica con tu usuario y contraseña.',
-            'Desde administración del centro podés invitar profesionales y habilitar servicios.',
+            'Desde administración del espacio podés habilitar servicios y asignar personal.',
+            'La asignación clínica es independiente del rol de administración.',
         ];
     }
 
@@ -439,9 +532,9 @@ final class SignUpInstitutionalEfector
      *
      * @param array<string, mixed> $plan
      */
-    public static function estimatePlanMonthlyUsd(array $plan, string $perfil): float
+    public static function estimatePlanMonthlyUsd(array $plan): float
     {
-        return self::estimatePlanMonthlyQuote($plan, $perfil)['amount_usd'];
+        return self::estimatePlanMonthlyQuote($plan)['amount_usd'];
     }
 
     /**
@@ -457,21 +550,20 @@ final class SignUpInstitutionalEfector
      *     items: list<array{code: string, attentions_per_month: int, unit_amount_usd: float, amount_usd: float}>
      * }
      */
-    public static function estimatePlanMonthlyQuote(array $plan, string $perfil): array
+    public static function estimatePlanMonthlyQuote(array $plan): array
     {
-        $perfil = strtoupper(trim($perfil));
-        if (!in_array($perfil, [self::PERFIL_CLINICA, self::PERFIL_CONSULTORIO], true)) {
-            throw new \InvalidArgumentException('Perfil de alta inválido (CLINICA o CONSULTORIO).');
-        }
-
-        return self::estimateMonthlyQuote(self::normalizePlan($plan, $perfil));
+        return self::estimateMonthlyQuote(self::normalizePlan($plan));
     }
 
     /**
      * @param array<string, mixed> $efector
      * @return array{nombre: string, domicilio: string, telefono: ?string, id_localidad: int, origen_financiamiento: string, dependencia: string, tipologia: string, codigo_sisa: string}
      */
-    private static function normalizeEfector(array $efector, string $sector, string $perfil = self::PERFIL_CLINICA): array
+    private static function normalizeEfector(
+        array $efector,
+        string $sector,
+        string $perfil = self::PERFIL_ESPACIO_ATENCION
+    ): array
     {
         $nombre = trim((string) ($efector['nombre'] ?? ''));
         $domicilio = trim((string) ($efector['domicilio'] ?? ''));
@@ -489,9 +581,7 @@ final class SignUpInstitutionalEfector
         ContactPhoneValidator::assertValid($telefono, 'Teléfono del efector');
 
         $publico = $sector === self::SECTOR_PUBLICO;
-        $tipologia = $perfil === self::PERFIL_CONSULTORIO
-            ? 'CLIN'
-            : ($publico ? 'CAP' : 'CLIN');
+        $tipologia = $perfil === 'CONSULTORIO' ? 'CLIN' : ($publico ? 'CAP' : 'CLIN');
 
         return [
             'nombre' => $nombre,
@@ -507,20 +597,20 @@ final class SignUpInstitutionalEfector
 
     /**
      * @param array<string, mixed> $plan
-     * @return array{classes: array<string, array{max_pes: int, dictado_incluido: bool, videollamada_permitida: bool}>}
+     * @return array{classes: array<string, array{max_pes: null, attentions_per_month: int, dictado_incluido: bool, videollamada_permitida: bool}>}
      */
-    private static function normalizePlan(array $plan, string $perfil = self::PERFIL_CLINICA): array
+    private static function normalizePlan(
+        array $plan,
+        string $perfil = self::PERFIL_ESPACIO_ATENCION
+    ): array
     {
         $raw = $plan['classes'] ?? null;
         if (!is_array($raw) || $raw === []) {
-            // Legacy / vacío: consultorio → AMB×1; clínica sin classes → error (no forzar AMB).
-            if ($perfil === self::PERFIL_CONSULTORIO) {
+            if ($perfil === 'CONSULTORIO') {
                 $raw = [
                     'AMB' => [
+                        'attentions_per_month' => 200,
                         'max_pes' => 1,
-                        'dictado_incluido' => true,
-                        'videollamada_permitida' => !empty($plan['videollamada']),
-                        'attentions_per_month' => (int) (PricingPesByEncounterClassMetadata::loadConfig()['defaults']['consultorio_attentions'] ?? 200),
                     ],
                 ];
             } else {
@@ -538,43 +628,42 @@ final class SignUpInstitutionalEfector
                 continue;
             }
             $attentions = max(0, (int) ($cfg['attentions_per_month'] ?? 0));
-            $max = (int) ($cfg['max_pes'] ?? 0);
-            if ($attentions <= 0 && $max > 0) {
-                $attentions = $max * (int) PricingPesByEncounterClassMetadata::referenceEncountersPerMonth();
+            if ($attentions <= 0 && in_array($perfil, self::PERFIL_LEGACY, true)) {
+                $legacyMaxPes = (int) ($cfg['max_pes'] ?? 0);
+                if ($legacyMaxPes > 0) {
+                    $attentions = $legacyMaxPes
+                        * (int) PricingPesByEncounterClassMetadata::referenceEncountersPerMonth();
+                }
             }
             if ($attentions <= 0) {
                 continue;
             }
-            if ($max <= 0) {
-                $max = PricingPesByEncounterClassMetadata::deriveMaxPesFromAttentions($attentions);
-            }
-            $max = max(1, $max);
             $video = $class === 'AMB' && !empty($cfg['videollamada_permitida']);
+            $maxPes = null;
+            if (in_array($perfil, self::PERFIL_LEGACY, true)) {
+                $maxPes = (int) ($cfg['max_pes'] ?? 0);
+                if ($maxPes <= 0) {
+                    $maxPes = PricingPesByEncounterClassMetadata::deriveMaxPesFromAttentions($attentions);
+                }
+                $maxPes = max(1, $maxPes);
+            }
             $classes[$class] = [
-                'max_pes' => $max,
+                'max_pes' => $maxPes,
                 'attentions_per_month' => $attentions,
                 'dictado_incluido' => true,
                 'videollamada_permitida' => $video,
             ];
         }
-        if ($classes === []) {
-            throw new \InvalidArgumentException('Elegí al menos un tipo de atención (AMB / EMER / IMP).');
-        }
-
-        if ($perfil === self::PERFIL_CONSULTORIO) {
-            if (!isset($classes['AMB'])) {
-                throw new \InvalidArgumentException('El consultorio profesional requiere ambulatorio.');
-            }
-            if (isset($classes['EMER']) || isset($classes['IMP'])) {
+        if ($perfil === 'CONSULTORIO') {
+            if (!isset($classes['AMB']) || isset($classes['EMER']) || isset($classes['IMP'])) {
                 throw new \InvalidArgumentException(
-                    'El consultorio profesional solo admite ambulatorio. Para urgencia o internación usá el alta de clínica / centro.'
+                    'El checkout histórico de consultorio requiere solo atención ambulatoria.'
                 );
             }
-            // Unipersonal: cupo fijo en 1 (ignora max_pes del payload).
             $classes['AMB']['max_pes'] = 1;
-            if (($classes['AMB']['attentions_per_month'] ?? 0) <= 0) {
-                $classes['AMB']['attentions_per_month'] = (int) (PricingPesByEncounterClassMetadata::loadConfig()['defaults']['consultorio_attentions'] ?? 200);
-            }
+        }
+        if ($classes === []) {
+            throw new \InvalidArgumentException('Elegí al menos un tipo de atención (AMB / EMER / IMP).');
         }
 
         return ['classes' => $classes];

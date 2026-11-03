@@ -95,16 +95,12 @@ class StaffSignupService {
   }
 
   Future<Map<String, dynamic>> quoteSignupPlan({
-    required String profile,
     required Map<String, dynamic> plan,
   }) {
     return ApiClient(
       appClient: 'bioenlace-personalsalud',
       traceLabel: 'licencia/cotizar',
-    ).postData(
-      '/licencia/cotizar',
-      body: {'perfil': profile, 'plan': plan},
-    );
+    ).postData('/licencia/cotizar', body: {'plan': plan});
   }
 
   Future<List<Map<String, dynamic>>> searchLocalities(String query) async {
@@ -129,6 +125,22 @@ class StaffSignupService {
     final items = data['items'];
     if (items is! List) {
       throw const FormatException('Respuesta inválida al cargar ministerios.');
+    }
+    return items.whereType<Map>().map((item) {
+      return item.map((key, value) => MapEntry(key.toString(), value));
+    }).toList();
+  }
+
+  Future<List<Map<String, dynamic>>> searchPublicEffectors(String query) async {
+    final data = await ApiClient(
+      appClient: 'bioenlace-personalsalud',
+      traceLabel: 'licencia/catalogo-efectores-publicos',
+    ).getData('/licencia/catalogo-efectores-publicos', query: {'q': query});
+    final items = data['items'];
+    if (items is! List) {
+      throw const FormatException(
+        'Respuesta inválida al buscar efectores públicos.',
+      );
     }
     return items.whereType<Map>().map((item) {
       return item.map((key, value) => MapEntry(key.toString(), value));

@@ -48,28 +48,10 @@
       .map((attentions) => ({ attentions, hint: '' }));
   }
 
-  function defaultAttentions(config, profile) {
+  function defaultAttentions(config) {
     const defaults = (config && config.defaults) || {};
     const presets = attentionVolumePresets(config);
-    if (profile === 'CONSULTORIO') {
-      return Number(defaults.consultorio_attentions) || presets[0]?.attentions || 200;
-    }
-    return (
-      Number(defaults.clinica_attentions) ||
-      presets[5]?.attentions ||
-      presets[presets.length - 1]?.attentions ||
-      5000
-    );
-  }
-
-  function deriveMaxPesFromAttentions(config, attentions) {
-    const reference = Number(
-      config && config.reference_encounters_per_professional_month,
-    );
-    if (!(reference > 0)) {
-      throw new Error('El catálogo no informa el volumen de referencia.');
-    }
-    return Math.max(1, Math.ceil(Number(attentions) / reference));
+    return Number(defaults.initial_attentions) || presets[0]?.attentions || 200;
   }
 
   function readDomSelection(rowsRoot) {
@@ -97,7 +79,7 @@
     return selection;
   }
 
-  function toSignupPlan(selection, config) {
+  function toSignupPlan(selection) {
     const plan = { classes: {} };
     Object.keys((selection && selection.classes) || {}).forEach((code) => {
       const attentions = Math.max(
@@ -106,7 +88,6 @@
       );
       plan.classes[code] = {
         attentions_per_month: attentions,
-        max_pes: deriveMaxPesFromAttentions(config, attentions),
         dictado_incluido: true,
         videollamada_permitida:
           code === 'AMB' &&

@@ -33,7 +33,7 @@ class InstitutionalSignupBillingTest extends Unit
                     'videollamada_permitida' => false,
                 ],
             ],
-        ], 'CLINICA');
+        ]);
 
         $this->assertSame(436.0, $quote['amount_usd']);
         $this->assertSame(620.0, $quote['list_amount_usd']);
@@ -44,6 +44,70 @@ class InstitutionalSignupBillingTest extends Unit
         $this->assertSame(20000, $quote['items'][0]['attentions_per_month']);
         $this->assertSame(0.0218, $quote['items'][0]['unit_amount_usd']);
         $this->assertSame(436.0, $quote['items'][0]['amount_usd']);
+    }
+
+    public function testRetiredCommercialProfilesAreRejected(): void
+    {
+        foreach (['CONSULTORIO', 'CLINICA'] as $profile) {
+            try {
+                SignUpInstitutionalEfector::prepareDraft(['perfil' => $profile]);
+                $this->fail('El perfil comercial legacy debía ser rechazado: ' . $profile);
+            } catch (\InvalidArgumentException $exception) {
+                $this->assertStringContainsString('contrato unificado', $exception->getMessage());
+            }
+        }
+    }
+
+    public function testSignupQuoteUsesUnifiedSpaceProfile(): void
+    {
+        $quote = SignUpInstitutionalEfector::estimatePlanMonthlyQuote([
+            'classes' => [
+                'AMB' => ['attentions_per_month' => 200],
+            ],
+        ]);
+
+        $this->assertGreaterThan(0, $quote['amount_usd']);
+        $this->assertSame(200, $quote['total_attentions']);
+    }
+
+    public function testSisaCatalogSearchRejectsQueriesOutsideSupportedLength(): void
+    {
+        $this->assertSame([], SignUpInstitutionalEfector::searchAvailablePublicEfectores('A'));
+        $this->assertSame([], SignUpInstitutionalEfector::searchAvailablePublicEfectores(str_repeat('x', 81)));
+    }
+
+    public function testUnifiedVolumeDoesNotSetAProfessionalSeatLimit(): void
+    {
+        $normalizer = new \ReflectionMethod(SignUpInstitutionalEfector::class, 'normalizePlan');
+        $normalizer->setAccessible(true);
+
+        $plan = $normalizer->invoke(null, [
+            'classes' => [
+                'AMB' => [
+                    'attentions_per_month' => 200,
+                    'max_pes' => 1,
+                ],
+            ],
+        ]);
+
+        $this->assertNull($plan['classes']['AMB']['max_pes']);
+    }
+
+    public function testPersistedLegacyConsultorioCheckoutKeepsItsExistingLimit(): void
+    {
+        $normalizer = new \ReflectionMethod(SignUpInstitutionalEfector::class, 'normalizePlan');
+        $normalizer->setAccessible(true);
+
+        $plan = $normalizer->invoke(null, [
+            'classes' => [
+                'AMB' => [
+                    'attentions_per_month' => 200,
+                    'max_pes' => 1,
+                ],
+            ],
+        ], 'CONSULTORIO');
+
+        $this->assertSame(1, $plan['classes']['AMB']['max_pes']);
     }
 
     public function testSimFailPanConstant(): void

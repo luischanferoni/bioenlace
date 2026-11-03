@@ -9,13 +9,11 @@ import '../services/staff_signup_service.dart';
 class CommercialSignupScreen extends StatefulWidget {
   const CommercialSignupScreen({
     required this.authToken,
-    required this.profile,
     this.initialPlan,
     super.key,
   });
 
   final String authToken;
-  final String profile;
   final Map<String, dynamic>? initialPlan;
 
   @override
@@ -27,7 +25,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _addressController = TextEditingController();
-  final _sisaCodeController = TextEditingController();
+  final _sisaSearchController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _localityQueryController = TextEditingController();
@@ -38,10 +36,13 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
 
   bool _submitting = false;
   bool _searchingLocalities = false;
+  bool _searchingSisaEfectores = false;
   bool _loadingMinistries = false;
   bool _termsAccepted = false;
   bool _checkoutOpened = false;
   bool _cancellingSubscription = false;
+  int _currentStep = 0;
+  int _sisaSearchRequestId = 0;
   String _sector = 'PRIVADO';
   String? _errorMessage;
   String? _checkoutKey;
@@ -52,11 +53,11 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
   String? _paidThroughAt;
   Map<String, dynamic>? _pricing;
   Map<String, dynamic>? _selectedLocality;
+  Map<String, dynamic>? _selectedSisaEfector;
   List<Map<String, dynamic>> _localities = const [];
+  List<Map<String, dynamic>> _sisaEfectores = const [];
   List<Map<String, dynamic>> _ministries = const [];
   int? _selectedMinistryId;
-
-  bool get _isConsultorio => widget.profile == 'CONSULTORIO';
 
   @override
   void initState() {
@@ -71,7 +72,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
       _impController.text =
           classes['IMP']?['attentions_per_month']?.toString() ?? '';
     }
-    if (!_isConsultorio) _loadMinistries();
+    _loadMinistries();
   }
 
   @override
@@ -79,7 +80,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     WidgetsBinding.instance.removeObserver(this);
     _nameController.dispose();
     _addressController.dispose();
-    _sisaCodeController.dispose();
+    _sisaSearchController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
     _localityQueryController.dispose();
@@ -94,6 +95,41 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     if (state == AppLifecycleState.resumed && _checkoutKey != null) {
       _refreshCheckoutStatus();
     }
+  }
+
+  Future<void> _continueSignup() async {
+    if (_currentStep == 0) {
+      setState(() {
+        _currentStep = 1;
+        _errorMessage = null;
+      });
+      return;
+    }
+
+    if (_currentStep == 1) {
+      if (!_formKey.currentState!.validate()) return;
+      if (_sector == 'PUBLICO' && _selectedSisaEfector == null) {
+        setState(
+          () => _errorMessage =
+              'Buscá y seleccioná un efector del catálogo SISA.',
+        );
+        return;
+      }
+      if (_sector == 'PUBLICO' && _selectedMinistryId == null) {
+        setState(
+          () => _errorMessage =
+              'Seleccioná el ministerio al que pertenece el efector.',
+        );
+        return;
+      }
+      setState(() {
+        _currentStep = 2;
+        _errorMessage = null;
+      });
+      return;
+    }
+
+    await _startCheckout();
   }
 
   Future<void> _loadMinistries() async {
@@ -124,6 +160,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
       });
       return;
     }
+
     setState(() {
       _searchingLocalities = true;
       _selectedLocality = null;
@@ -148,6 +185,49 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     }
   }
 
+  Future<void> _searchSisaEfectores() async {
+    final query = _sisaSearchController.text.trim();
+    final requestId = ++_sisaSearchRequestId;
+    if (query.length < 2) {
+      setState(() {
+        _searchingSisaEfectores = false;
+        _selectedSisaEfector = null;
+        _sisaEfectores = const [];
+        _errorMessage = 'Ingresá al menos dos caracteres para buscar.';
+      });
+      return;
+    }
+
+    setState(() {
+      _searchingSisaEfectores = true;
+      _selectedSisaEfector = null;
+      _sisaEfectores = const [];
+      _errorMessage = null;
+    });
+    try {
+      final results = await _service.searchPublicEffectors(query);
+      if (!mounted ||
+          requestId != _sisaSearchRequestId ||
+          query != _sisaSearchController.text.trim()) {
+        return;
+      }
+      setState(() {
+        _sisaEfectores = results;
+        _searchingSisaEfectores = false;
+        if (results.isEmpty) {
+          _errorMessage =
+              'No encontramos efectores públicos disponibles con esos datos.';
+        }
+      });
+    } catch (error) {
+      if (!mounted || requestId != _sisaSearchRequestId) return;
+      setState(() {
+        _searchingSisaEfectores = false;
+        _errorMessage = _errorText(error);
+      });
+    }
+  }
+
   Future<void> _startCheckout() async {
     if (!_formKey.currentState!.validate()) return;
     if (_sector != 'PUBLICO' && _selectedLocality == null) {
@@ -156,26 +236,21 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
       );
       return;
     }
-    if (!_isConsultorio &&
-        _sector == 'PUBLICO' &&
-        _selectedMinistryId == null) {
+    if (_sector == 'PUBLICO' && _selectedMinistryId == null) {
       setState(
         () => _errorMessage =
             'Seleccioná el ministerio al que pertenece el efector.',
       );
       return;
     }
-    final plan = _isConsultorio
-        ? <String, dynamic>{
-            'classes': {
-              'AMB': {
-                'attentions_per_month': 200,
-                'max_pes': 1,
-                'videollamada_permitida': false,
-              },
-            },
-          }
-        : _clinicPlan();
+    if (_sector == 'PUBLICO' && _selectedSisaEfector == null) {
+      setState(
+        () =>
+            _errorMessage = 'Buscá y seleccioná un efector del catálogo SISA.',
+      );
+      return;
+    }
+    final plan = _selectedPlan();
     if (plan == null) {
       setState(
         () => _errorMessage =
@@ -192,12 +267,12 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
       final body = <String, dynamic>{
         'checkout_request_key': _checkoutRequestKey ??=
             _newCheckoutRequestKey(),
-        'perfil': widget.profile,
+        'perfil': 'ESPACIO_ATENCION',
         'sector': _sector,
         'payer_email': _emailController.text.trim(),
         'contact_phone': _phoneController.text.trim(),
         'efector': _sector == 'PUBLICO'
-            ? {'codigo_sisa': _sisaCodeController.text.trim()}
+            ? {'codigo_sisa': _selectedSisaEfector!['codigo_sisa']}
             : {
                 'nombre': _nameController.text.trim(),
                 'domicilio': _addressController.text.trim(),
@@ -230,6 +305,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
             ?.toString();
         _paidThroughAt = checkout['paid_through_at']?.toString();
         _pricing = checkout;
+        _currentStep = 3;
         _submitting = false;
       });
     } catch (error) {
@@ -241,7 +317,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     }
   }
 
-  Map<String, dynamic>? _clinicPlan() {
+  Map<String, dynamic>? _selectedPlan() {
     final classes = <String, dynamic>{};
     for (final entry in [
       ('AMB', _ambController.text),
@@ -383,6 +459,26 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     );
   }
 
+  Widget _buildSignupProgress() {
+    const steps = ['Sector', 'Efector', 'Servicios y volumen', 'Pago'];
+    final visibleStep = _checkoutKey == null ? _currentStep : 3;
+    final tokens = context.bio;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: BioSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Paso ${visibleStep + 1} de ${steps.length}: ${steps[visibleStep]}',
+            style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
+          ),
+          BioSpacing.gapH(BioSpacing.xs),
+          LinearProgressIndicator(value: (visibleStep + 1) / steps.length),
+        ],
+      ),
+    );
+  }
+
   Widget _buildCheckoutStatus() {
     final tokens = context.bio;
     final status = _checkoutStatus ?? 'PENDING';
@@ -428,7 +524,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
           _priceRow('Total mensual', pricing['amount_total_ars'], bold: true),
           BioSpacing.gapH(BioSpacing.xs),
           Text(
-            'Referencia: USD ${pricing['amount_usd']} × MEP vendedor ${pricing['exchange_rate']} (vigente ${pricing['exchange_rate_effective_date']}).',
+            'La cotización se calcula en pesos y se actualiza antes de confirmar el pago.',
             style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
           ),
           BioSpacing.gapH(BioSpacing.sm),
@@ -497,118 +593,22 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     final tokens = context.bio;
     return Scaffold(
       backgroundColor: tokens.paperBackground,
-      appBar: AppBar(
-        title: Text(
-          _isConsultorio ? 'Crear consultorio' : 'Crear clínica o centro',
-        ),
-      ),
+      appBar: AppBar(title: const Text('Crear espacio de atención')),
       body: SafeArea(
         child: Form(
           key: _formKey,
           child: ListView(
             padding: BioSpacing.pageAll,
             children: [
-              Text(
-                'Datos del efector y suscripción mensual en ARS',
-                style: BioTypography.title,
-              ),
-              BioSpacing.gapH(BioSpacing.md),
-              if (!_isConsultorio && _sector == 'PUBLICO') ...[
-                _textField(
-                  _sisaCodeController,
-                  'Código SISA oficial',
-                  validator: (value) =>
-                      value == null ||
-                          !RegExp(r'^[A-Za-z0-9]{1,15}$').hasMatch(value.trim())
-                      ? 'Ingresá un código SISA válido de hasta 15 caracteres.'
-                      : null,
+              _buildSignupProgress(),
+              if (_checkoutKey != null)
+                _buildCheckoutStatus()
+              else if (_currentStep == 0) ...[
+                Text(
+                  '¿Qué tipo de espacio querés crear?',
+                  style: BioTypography.title,
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: BioSpacing.md),
-                  child: Text(
-                    'Se valida contra el catálogo SISA local. Si el efector ya está afiliado a un ministerio o tiene una cuenta de facturación, no se puede registrar de nuevo.',
-                    style: BioTypography.bodySm.copyWith(
-                      color: tokens.textMuted,
-                    ),
-                  ),
-                ),
-              ] else ...[
-                _textField(_nameController, 'Nombre del efector'),
-                _textField(_addressController, 'Domicilio'),
-                TextFormField(
-                  controller: _localityQueryController,
-                  decoration: InputDecoration(
-                    labelText: 'Localidad',
-                    border: const OutlineInputBorder(),
-                    suffixIcon: IconButton(
-                      onPressed: _searchingLocalities
-                          ? null
-                          : _searchLocalities,
-                      icon: _searchingLocalities
-                          ? const CircularProgressIndicator()
-                          : const Icon(Icons.search),
-                    ),
-                  ),
-                  onFieldSubmitted: (_) => _searchLocalities(),
-                  onChanged: (_) {
-                    if (_selectedLocality != null) {
-                      setState(() {
-                        _selectedLocality = null;
-                        _localities = const [];
-                      });
-                    }
-                  },
-                  validator: (_) => _selectedLocality == null
-                      ? 'Buscá y seleccioná una localidad.'
-                      : null,
-                ),
-                if (_localities.isNotEmpty && _selectedLocality == null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: BioSpacing.xs),
-                    child: DropdownButtonFormField<Map<String, dynamic>>(
-                      decoration: const InputDecoration(
-                        labelText: 'Resultados de localidad',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: _localities.map((item) {
-                        final label =
-                            '${item['nombre']}, ${item['departamento']} (${item['provincia']})';
-                        return DropdownMenuItem(
-                          value: item,
-                          child: Text(label),
-                        );
-                      }).toList(),
-                      onChanged: (item) {
-                        if (item == null) return;
-                        setState(() {
-                          _selectedLocality = item;
-                          _localityQueryController.text =
-                              '${item['nombre']}, ${item['departamento']} (${item['provincia']})';
-                        });
-                      },
-                    ),
-                  ),
-              ],
-              BioSpacing.gapH(BioSpacing.md),
-              _textField(
-                _emailController,
-                'E-mail para el pago y los comprobantes',
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) =>
-                    value == null ||
-                        !RegExp(
-                          r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                        ).hasMatch(value.trim())
-                    ? 'Ingresá un e-mail válido.'
-                    : null,
-              ),
-              _textField(
-                _phoneController,
-                'Teléfono de contacto (opcional)',
-                keyboardType: TextInputType.phone,
-                validator: (_) => null,
-              ),
-              if (!_isConsultorio) ...[
+                BioSpacing.gapH(BioSpacing.md),
                 DropdownButtonFormField<String>(
                   initialValue: _sector,
                   decoration: const InputDecoration(
@@ -621,11 +621,106 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
                   ],
                   onChanged: (value) => setState(() {
                     _sector = value ?? 'PRIVADO';
+                    _selectedSisaEfector = null;
+                    _sisaEfectores = const [];
+                    _selectedMinistryId = null;
                     _errorMessage = null;
                   }),
                 ),
+                BioSpacing.gapH(BioSpacing.md),
+                Text(
+                  _sector == 'PUBLICO'
+                      ? 'Los espacios públicos requieren elegir un ministerio y un efector del catálogo oficial.'
+                      : 'Vas a registrar los datos del efector privado en el siguiente paso.',
+                  style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
+                ),
+              ] else if (_currentStep == 1) ...[
+                Text('Datos del efector', style: BioTypography.title),
+                BioSpacing.gapH(BioSpacing.md),
                 if (_sector == 'PUBLICO') ...[
-                  BioSpacing.gapH(BioSpacing.sm),
+                  TextFormField(
+                    controller: _sisaSearchController,
+                    textInputAction: TextInputAction.search,
+                    onFieldSubmitted: (_) => _searchSisaEfectores(),
+                    onChanged: (_) {
+                      _sisaSearchRequestId++;
+                      if (_selectedSisaEfector != null ||
+                          _sisaEfectores.isNotEmpty ||
+                          _searchingSisaEfectores) {
+                        setState(() {
+                          _searchingSisaEfectores = false;
+                          _selectedSisaEfector = null;
+                          _sisaEfectores = const [];
+                        });
+                      }
+                    },
+                    decoration: InputDecoration(
+                      labelText: 'Buscar efector público',
+                      hintText: 'Nombre o código SISA',
+                      border: const OutlineInputBorder(),
+                      suffixIcon: IconButton(
+                        onPressed: _searchingSisaEfectores
+                            ? null
+                            : _searchSisaEfectores,
+                        icon: const Icon(Icons.search),
+                      ),
+                    ),
+                  ),
+                  if (_searchingSisaEfectores)
+                    const Padding(
+                      padding: EdgeInsets.all(BioSpacing.md),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else if (_sisaEfectores.isNotEmpty)
+                    ..._sisaEfectores.map((efector) {
+                      final selected =
+                          _selectedSisaEfector?['codigo_sisa'] ==
+                          efector['codigo_sisa'];
+                      final locality = efector['localidad']?.toString() ?? '';
+                      final address = efector['domicilio']?.toString() ?? '';
+                      final location = [
+                        address,
+                        locality,
+                      ].where((value) => value.isNotEmpty).join(' · ');
+                      return Card(
+                        child: ListTile(
+                          selected: selected,
+                          title: Text(efector['nombre']?.toString() ?? ''),
+                          subtitle: Text(
+                            [
+                              'SISA ${efector['codigo_sisa']}',
+                              if (location.isNotEmpty) location,
+                            ].join(' · '),
+                          ),
+                          trailing: selected
+                              ? const Icon(Icons.check_circle)
+                              : null,
+                          onTap: () => setState(() {
+                            _selectedSisaEfector = efector;
+                            _errorMessage = null;
+                          }),
+                        ),
+                      );
+                    }),
+                  if (_selectedSisaEfector != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: BioSpacing.md),
+                      child: Text(
+                        'Efector seleccionado: ${_selectedSisaEfector!['nombre']}',
+                        style: BioTypography.bodySm.copyWith(
+                          color: tokens.textMuted,
+                        ),
+                      ),
+                    ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: BioSpacing.md),
+                    child: Text(
+                      'Se valida contra el catálogo SISA local. Si el efector ya está afiliado a un ministerio o tiene una cuenta de facturación, no se puede registrar de nuevo.',
+                      style: BioTypography.bodySm.copyWith(
+                        color: tokens.textMuted,
+                      ),
+                    ),
+                  ),
                   if (_loadingMinistries)
                     const Center(child: CircularProgressIndicator())
                   else
@@ -648,13 +743,71 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
                       onChanged: (value) =>
                           setState(() => _selectedMinistryId = value),
                     ),
+                ] else ...[
+                  _textField(_nameController, 'Nombre del efector'),
+                  _textField(_addressController, 'Domicilio'),
+                  TextFormField(
+                    controller: _localityQueryController,
+                    decoration: InputDecoration(
+                      labelText: 'Localidad',
+                      border: const OutlineInputBorder(),
+                      suffixIcon: IconButton(
+                        onPressed: _searchingLocalities
+                            ? null
+                            : _searchLocalities,
+                        icon: _searchingLocalities
+                            ? const CircularProgressIndicator()
+                            : const Icon(Icons.search),
+                      ),
+                    ),
+                    onFieldSubmitted: (_) => _searchLocalities(),
+                    onChanged: (_) {
+                      if (_selectedLocality != null) {
+                        setState(() {
+                          _selectedLocality = null;
+                          _localities = const [];
+                        });
+                      }
+                    },
+                    validator: (_) => _selectedLocality == null
+                        ? 'Buscá y seleccioná una localidad.'
+                        : null,
+                  ),
+                  if (_localities.isNotEmpty && _selectedLocality == null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: BioSpacing.xs),
+                      child: DropdownButtonFormField<Map<String, dynamic>>(
+                        decoration: const InputDecoration(
+                          labelText: 'Resultados de localidad',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: _localities.map((item) {
+                          final label =
+                              '${item['nombre']}, ${item['departamento']} (${item['provincia']})';
+                          return DropdownMenuItem(
+                            value: item,
+                            child: Text(label),
+                          );
+                        }).toList(),
+                        onChanged: (item) {
+                          if (item == null) return;
+                          setState(() {
+                            _selectedLocality = item;
+                            _localityQueryController.text =
+                                '${item['nombre']}, ${item['departamento']} (${item['provincia']})';
+                          });
+                        },
+                      ),
+                    ),
                 ],
-                BioSpacing.gapH(BioSpacing.md),
-                Text(
-                  'Atenciones mensuales estimadas',
-                  style: BioTypography.title,
-                ),
+              ] else ...[
+                Text('Servicios y volumen mensual', style: BioTypography.title),
                 BioSpacing.gapH(BioSpacing.sm),
+                Text(
+                  'El volumen define la cotización, no la cantidad de personas '
+                  'que podés asignar.',
+                  style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
+                ),
                 _textField(
                   _ambController,
                   'Ambulatorias (0 si no aplica)',
@@ -673,6 +826,24 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
                   keyboardType: TextInputType.number,
                   validator: _validateOptionalVolume,
                 ),
+                _textField(
+                  _emailController,
+                  'E-mail para el pago y los comprobantes',
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (value) =>
+                      value == null ||
+                          !RegExp(
+                            r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                          ).hasMatch(value.trim())
+                      ? 'Ingresá un e-mail válido.'
+                      : null,
+                ),
+                _textField(
+                  _phoneController,
+                  'Teléfono de contacto (opcional)',
+                  keyboardType: TextInputType.phone,
+                  validator: (_) => null,
+                ),
               ],
               if (_errorMessage != null) ...[
                 BioSpacing.gapH(BioSpacing.sm),
@@ -683,19 +854,42 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
                   ),
                 ),
               ],
-              BioSpacing.gapH(BioSpacing.md),
-              if (_checkoutKey == null)
-                BioButton.primary(
-                  label: _submitting
-                      ? 'Preparando checkout…'
-                      : 'Continuar a Mercado Pago',
-                  icon: Icons.payment,
-                  fullWidth: true,
-                  loading: _submitting,
-                  onPressed: _submitting ? null : _startCheckout,
-                )
-              else
-                _buildCheckoutStatus(),
+              if (_checkoutKey == null) ...[
+                BioSpacing.gapH(BioSpacing.md),
+                Row(
+                  children: [
+                    if (_currentStep > 0) ...[
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _submitting
+                              ? null
+                              : () => setState(() {
+                                  _currentStep--;
+                                  _errorMessage = null;
+                                }),
+                          child: const Text('Volver'),
+                        ),
+                      ),
+                      BioSpacing.gapW(BioSpacing.sm),
+                    ],
+                    Expanded(
+                      child: BioButton.primary(
+                        label: _submitting
+                            ? 'Preparando cotización…'
+                            : _currentStep == 2
+                            ? 'Cotizar y continuar'
+                            : 'Continuar',
+                        icon: _currentStep == 2
+                            ? Icons.request_quote_outlined
+                            : Icons.arrow_forward,
+                        fullWidth: true,
+                        loading: _submitting,
+                        onPressed: _submitting ? null : _continueSignup,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
               BioSpacing.gapH(BioSpacing.md),
               if (_checkoutKey == null)
                 Text(

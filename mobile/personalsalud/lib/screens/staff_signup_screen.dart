@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared/shared.dart';
@@ -7,7 +5,7 @@ import 'package:shared/shared.dart';
 import 'commercial_signup_screen.dart';
 import '../services/staff_signup_service.dart';
 
-enum _SignupPath { personalFree, privateConsultorio, clinic }
+enum _SignupPath { personalFree, attentionSpace }
 
 /// Alta personal gratuita o inicio de un alta paga.
 class StaffSignupScreen extends StatefulWidget {
@@ -21,74 +19,20 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
   final StaffSignupService _signupService = StaffSignupService();
   bool _submitting = false;
   bool _accountCreated = false;
-  bool _loadingPlans = true;
-  bool _loadingConsultorioQuote = false;
-  bool _loadingClinicQuote = false;
-  List<int> _attentionPresets = const [];
-  final Map<String, int> _clinicAttentions = {'AMB': 5000};
-  Map<String, dynamic>? _consultorioQuote;
-  Map<String, dynamic>? _clinicQuote;
-  String? _consultorioQuoteError;
-  String? _clinicQuoteError;
-  Timer? _clinicQuoteDebounce;
-  int _clinicQuoteRequestId = 0;
+  bool _loadingQuote = true;
+  Map<String, dynamic>? _spaceQuote;
+  String? _spaceQuoteError;
   String? _pendingVerificationId;
 
   @override
   void initState() {
     super.initState();
-    _loadPlansAndQuotes();
-  }
-
-  @override
-  void dispose() {
-    _clinicQuoteDebounce?.cancel();
-    super.dispose();
+    _refreshSpaceQuote();
   }
 
   void _snack(String msg) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-  }
-
-  Future<void> _loadPlansAndQuotes() async {
-    try {
-      final catalog = await _signupService.fetchSignupPlans();
-      final rawPresets = catalog['attention_volume_presets'];
-      if (rawPresets is! List) {
-        throw const FormatException('El catálogo de planes no es válido.');
-      }
-      final presets =
-          rawPresets
-              .whereType<Map>()
-              .map((item) => int.tryParse(item['attentions']?.toString() ?? ''))
-              .whereType<int>()
-              .where((value) => value > 0)
-              .toSet()
-              .toList()
-            ..sort();
-      if (presets.isEmpty) {
-        throw const FormatException(
-          'El catálogo no tiene volúmenes disponibles.',
-        );
-      }
-      if (!mounted) return;
-      setState(() {
-        _attentionPresets = presets;
-        if (!presets.contains(_clinicAttentions['AMB'])) {
-          _clinicAttentions['AMB'] = presets.first;
-        }
-        _loadingPlans = false;
-      });
-      await Future.wait([_refreshConsultorioQuote(), _refreshClinicQuote()]);
-    } catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _loadingPlans = false;
-        _consultorioQuoteError = _priceErrorText(error);
-        _clinicQuoteError = _priceErrorText(error);
-      });
-    }
   }
 
   String _priceErrorText(Object error) {
@@ -98,98 +42,42 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
         : message;
   }
 
-  Map<String, dynamic> _consultorioPlan() => {
+  Map<String, dynamic> _initialSpacePlan() => {
     'classes': {
       'AMB': {
         'attentions_per_month': 200,
-        'max_pes': 1,
-        'videollamada_permitida': false,
       },
     },
   };
 
-  Map<String, dynamic>? _clinicPlan() {
-    if (_clinicAttentions.isEmpty) return null;
-    return {
-      'classes': _clinicAttentions.map(
-        (code, attentions) => MapEntry(code, {
-          'attentions_per_month': attentions,
-          'max_pes': (attentions / 200).ceil(),
-        }),
-      ),
-    };
-  }
-
-  Future<void> _refreshConsultorioQuote() async {
+  Future<void> _refreshSpaceQuote() async {
     setState(() {
-      _loadingConsultorioQuote = true;
-      _consultorioQuoteError = null;
+      _loadingQuote = true;
+      _spaceQuoteError = null;
     });
     try {
       final quote = await _signupService.quoteSignupPlan(
-        profile: 'CONSULTORIO',
-        plan: _consultorioPlan(),
+        plan: _initialSpacePlan(),
       );
       if (!mounted) return;
       setState(() {
-        _consultorioQuote = quote;
-        _loadingConsultorioQuote = false;
+        _spaceQuote = quote;
+        _loadingQuote = false;
       });
     } catch (error) {
       if (!mounted) return;
       setState(() {
-        _consultorioQuoteError = _priceErrorText(error);
-        _loadingConsultorioQuote = false;
+        _spaceQuoteError = _priceErrorText(error);
+        _loadingQuote = false;
       });
     }
-  }
-
-  Future<void> _refreshClinicQuote() async {
-    final requestId = ++_clinicQuoteRequestId;
-    final plan = _clinicPlan();
-    if (plan == null) {
-      setState(() {
-        _clinicQuote = null;
-        _clinicQuoteError = 'Elegí al menos un tipo de atención.';
-        _loadingClinicQuote = false;
-      });
-      return;
-    }
-    setState(() {
-      _loadingClinicQuote = true;
-      _clinicQuoteError = null;
-    });
-    try {
-      final quote = await _signupService.quoteSignupPlan(
-        profile: 'CLINICA',
-        plan: plan,
-      );
-      if (!mounted || requestId != _clinicQuoteRequestId) return;
-      setState(() {
-        _clinicQuote = quote;
-        _loadingClinicQuote = false;
-      });
-    } catch (error) {
-      if (!mounted || requestId != _clinicQuoteRequestId) return;
-      setState(() {
-        _clinicQuoteError = _priceErrorText(error);
-        _loadingClinicQuote = false;
-      });
-    }
-  }
-
-  void _scheduleClinicQuote() {
-    _clinicQuoteDebounce?.cancel();
-    _clinicQuoteDebounce = Timer(
-      const Duration(milliseconds: 350),
-      _refreshClinicQuote,
-    );
   }
 
   Future<void> _verifyIdentity(
     _SignupPath selectedPath, {
     Map<String, dynamic>? plan,
   }) async {
+    var identityCreated = false;
     setState(() => _submitting = true);
     try {
       final verificationId =
@@ -198,20 +86,26 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
       final account = await _signupService.createAccount(
         verificationId: verificationId,
       );
-      if (!mounted) return;
-      setState(() {
-        _accountCreated = true;
-        _submitting = false;
-        _pendingVerificationId = null;
-      });
-
-      if (selectedPath == _SignupPath.personalFree) return;
+      identityCreated = true;
+      if (selectedPath == _SignupPath.personalFree) {
+        if (!mounted) return;
+        setState(() {
+          _accountCreated = true;
+          _submitting = false;
+          _pendingVerificationId = null;
+        });
+        return;
+      }
 
       final token = account['token']?.toString().trim() ?? '';
       final userId = (account['id_user'] ?? account['id_persona'] ?? '')
           .toString()
           .trim();
-      if (token.isEmpty || userId.isEmpty) return;
+      if (token.isEmpty || userId.isEmpty) {
+        throw StateError(
+          'La cuenta existe, pero la API no devolvió los datos necesarios para continuar.',
+        );
+      }
 
       await AuthTokenStore.instance.write(token);
       if (!mounted) return;
@@ -219,20 +113,19 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
         MaterialPageRoute(
           builder: (_) => CommercialSignupScreen(
             authToken: token,
-            profile: selectedPath == _SignupPath.privateConsultorio
-                ? 'CONSULTORIO'
-                : 'CLINICA',
             initialPlan: plan,
           ),
         ),
       );
     } catch (error) {
       final message = error.toString().replaceFirst('Exception: ', '');
-      if (_accountCreated) {
+      if (identityCreated) {
         _snack(
-          'Tu cuenta está creada, pero no pudimos iniciar la sesión. '
-          'Volvé al inicio e ingresá verificando tu identidad.',
+          'Tu cuenta ya existe, pero no pudimos iniciar el alta del espacio. '
+          'Volvé a Crear cuenta y elegí la opción paga; verificaremos tu '
+          'identidad otra vez y reutilizaremos esta cuenta.',
         );
+        if (mounted) setState(() => _submitting = false);
         return;
       }
       _snack(
@@ -307,85 +200,6 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
     );
   }
 
-  Widget _buildClassSelector(String code, String label) {
-    final selected = _clinicAttentions.containsKey(code);
-    final tokens = context.bio;
-    return Padding(
-      padding: const EdgeInsets.only(top: BioSpacing.sm),
-      child: Column(
-        children: [
-          CheckboxListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(label, style: BioTypography.body),
-            value: selected,
-            onChanged: _loadingPlans
-                ? null
-                : (enabled) {
-                    setState(() {
-                      if (enabled == true) {
-                        _clinicAttentions[code] = _attentionPresets.isNotEmpty
-                            ? _attentionPresets.first
-                            : 200;
-                      } else {
-                        _clinicAttentions.remove(code);
-                      }
-                      _clinicQuote = null;
-                    });
-                    _scheduleClinicQuote();
-                  },
-          ),
-          if (selected)
-            Padding(
-              padding: const EdgeInsets.only(left: BioSpacing.xl),
-              child: DropdownButtonFormField<int>(
-                initialValue: _clinicAttentions[code],
-                decoration: const InputDecoration(
-                  labelText: 'Atenciones por mes',
-                  border: OutlineInputBorder(),
-                ),
-                items: _attentionPresets
-                    .map(
-                      (value) => DropdownMenuItem(
-                        value: value,
-                        child: Text(
-                          '${NumberFormat.decimalPattern('es_AR').format(value)} '
-                          'atenciones / mes',
-                        ),
-                      ),
-                    )
-                    .toList(),
-                onChanged: _loadingPlans
-                    ? null
-                    : (value) {
-                        if (value == null) return;
-                        setState(() {
-                          _clinicAttentions[code] = value;
-                          _clinicQuote = null;
-                        });
-                        _scheduleClinicQuote();
-                      },
-              ),
-            ),
-          if (selected)
-            Padding(
-              padding: const EdgeInsets.only(top: BioSpacing.xs),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  code == 'AMB'
-                      ? 'Consultas ambulatorias'
-                      : code == 'EMER'
-                      ? 'Atenciones de urgencia o guardia'
-                      : 'Atenciones de internación',
-                  style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final tokens = context.bio;
@@ -435,7 +249,11 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                       ),
                       BioSpacing.gapH(BioSpacing.md),
                       BioButton.primary(
-                        label: _signupButtonLabel,
+                        label: _submitting
+                            ? 'Verificando…'
+                            : _pendingVerificationId != null
+                            ? 'Reintentar creación de cuenta'
+                            : 'Crear cuenta personal gratis',
                         icon: Icons.verified_user_outlined,
                         size: BioButtonSize.lg,
                         fullWidth: true,
@@ -456,12 +274,10 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                   ),
                   child: ExpansionTile(
                     title: Text(
-                      'Consultorio propio',
+                      'Crear espacio de atención',
                       style: BioTypography.title,
                     ),
-                    subtitle: const Text(
-                      '1 profesional · 200 atenciones por mes',
-                    ),
+                    subtitle: const Text('Suscripción mensual'),
                     childrenPadding: const EdgeInsets.fromLTRB(
                       BioSpacing.md,
                       0,
@@ -469,84 +285,37 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                       BioSpacing.md,
                     ),
                     children: [
-                      const Text(
-                        'Un espacio privado para atender todos tus pacientes. Incluye '
-                        'todas las funcionalidades.',
+                      Text(
+                        'Configurá un espacio público o privado, elegí los '
+                        'tipos de atención y estimá su volumen mensual. '
+                        'Como referencia, 200 atenciones ambulatorias por mes '
+                        'equivalen aproximadamente a la carga de un profesional; '
+                        'no limitan cuántas personas podés asignar.',
+                        style: BioTypography.body,
                       ),
                       _buildQuoteSummary(
-                        quote: _consultorioQuote,
-                        loading: _loadingPlans || _loadingConsultorioQuote,
-                        error: _consultorioQuoteError,
-                        onRetry: _refreshConsultorioQuote,
+                        quote: _spaceQuote,
+                        loading: _loadingQuote,
+                        error: _spaceQuoteError,
+                        onRetry: _refreshSpaceQuote,
                       ),
                       BioSpacing.gapH(BioSpacing.md),
                       BioButton.primary(
-                        label: _signupButtonLabel,
+                        label: _submitting
+                            ? 'Verificando…'
+                            : _pendingVerificationId != null
+                            ? 'Reintentar creación de cuenta'
+                            : 'Crear espacio de atención',
                         icon: Icons.arrow_forward,
                         size: BioButtonSize.lg,
                         fullWidth: true,
                         loading: _submitting,
                         onPressed:
-                            _submitting ||
-                                _loadingPlans ||
-                                _loadingConsultorioQuote ||
-                                _consultorioQuote == null
+                            _submitting || _loadingQuote || _spaceQuote == null
                             ? null
                             : () => _verifyIdentity(
-                                _SignupPath.privateConsultorio,
-                                plan: _consultorioPlan(),
-                              ),
-                      ),
-                    ],
-                  ),
-                ),
-                BioSpacing.gapH(BioSpacing.sm),
-                Container(
-                  decoration: BoxDecoration(
-                    color: tokens.paperSurface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: tokens.paperDividerDefault),
-                  ),
-                  child: ExpansionTile(
-                    title: Text('Clínica o centro', style: BioTypography.title),
-                    subtitle: const Text('Elegí servicios y volumen mensual'),
-                    childrenPadding: const EdgeInsets.fromLTRB(
-                      BioSpacing.md,
-                      0,
-                      BioSpacing.md,
-                      BioSpacing.md,
-                    ),
-                    children: [
-                      const Text(
-                        'Configurá los tipos de atención que brindás y el '
-                        'volumen mensual aproximado.',
-                      ),
-                      _buildClassSelector('AMB', 'Ambulatorio'),
-                      _buildClassSelector('EMER', 'Urgencia o guardia'),
-                      _buildClassSelector('IMP', 'Internación'),
-                      _buildQuoteSummary(
-                        quote: _clinicQuote,
-                        loading: _loadingPlans || _loadingClinicQuote,
-                        error: _clinicQuoteError,
-                        onRetry: _refreshClinicQuote,
-                      ),
-                      BioSpacing.gapH(BioSpacing.md),
-                      BioButton.primary(
-                        label: _signupButtonLabel,
-                        icon: Icons.arrow_forward,
-                        size: BioButtonSize.lg,
-                        fullWidth: true,
-                        loading: _submitting,
-                        onPressed:
-                            _submitting ||
-                                _loadingPlans ||
-                                _loadingClinicQuote ||
-                                _clinicQuote == null ||
-                                _clinicAttentions.isEmpty
-                            ? null
-                            : () => _verifyIdentity(
-                                _SignupPath.clinic,
-                                plan: _clinicPlan(),
+                                _SignupPath.attentionSpace,
+                                plan: _initialSpacePlan(),
                               ),
                       ),
                     ],
@@ -596,9 +365,4 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
     );
   }
 
-  String get _signupButtonLabel => _submitting
-      ? 'Verificando…'
-      : _pendingVerificationId != null
-      ? 'Reintentar creación de cuenta'
-      : 'Continuar';
 }

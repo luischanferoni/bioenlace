@@ -48,7 +48,7 @@
       hidden.value = '';
       chips.forEach((chip) => chip.classList.remove('is-selected'));
     } else if (!hidden.value) {
-      const def = Pricing.defaultAttentions(config, 'CLINICA');
+      const def = Pricing.defaultAttentions(config);
       setVolume(row, def);
     }
     syncAmbOptions(row);
@@ -166,8 +166,7 @@
       },
       credentials: 'omit',
       body: JSON.stringify({
-        perfil: 'CLINICA',
-        plan: Pricing.toSignupPlan(selection, config),
+        plan: Pricing.toSignupPlan(selection),
       }),
     })
       .then((response) =>
@@ -361,7 +360,7 @@
   function buildRows() {
     if (!rowsEl || !config) return;
     const classes = config.sellable_classes || {};
-    const defaultVol = Pricing.defaultAttentions(config, 'CLINICA');
+    const defaultVol = Pricing.defaultAttentions(config);
     rowsEl.innerHTML = '';
     Object.keys(classes).forEach((code) => {
       const cls = classes[code];
@@ -530,7 +529,7 @@
   window.BioenlacePricingCalculator = {
     getSelection: currentSelection,
     getPlan: function () {
-      return Pricing.toSignupPlan(currentSelection(), config);
+      return Pricing.toSignupPlan(currentSelection());
     },
     getEstimate: function () {
       return latestQuote;

@@ -47,47 +47,47 @@ final class PricingPesByEncounterClassCatalog
         'attention_volume_presets' => [
             0 => [
                 'attentions' => 200,
-                'label' => '1 profesional',
+                'label' => '200 atenciones / mes',
                 'hint' => null,
             ],
             1 => [
                 'attentions' => 400,
-                'label' => '2 profesionales',
+                'label' => '400 atenciones / mes',
                 'hint' => null,
             ],
             2 => [
                 'attentions' => 800,
-                'label' => '4 profesionales',
+                'label' => '800 atenciones / mes',
                 'hint' => null,
             ],
             3 => [
                 'attentions' => 2000,
-                'label' => 'Clínica chica',
+                'label' => '2.000 atenciones / mes',
                 'hint' => null,
             ],
             4 => [
                 'attentions' => 5000,
-                'label' => 'Clínica',
+                'label' => '5.000 atenciones / mes',
                 'hint' => null,
             ],
             5 => [
                 'attentions' => 10000,
-                'label' => 'Centro',
+                'label' => '10.000 atenciones / mes',
                 'hint' => null,
             ],
             6 => [
                 'attentions' => 20000,
-                'label' => 'Centro grande',
+                'label' => '20.000 atenciones / mes',
                 'hint' => null,
             ],
             7 => [
                 'attentions' => 50000,
-                'label' => 'Enterprise',
+                'label' => '50.000 atenciones / mes',
                 'hint' => null,
             ],
             8 => [
                 'attentions' => 100000,
-                'label' => 'Enterprise+',
+                'label' => '100.000 atenciones / mes',
                 'hint' => null,
             ],
         ],
@@ -103,8 +103,7 @@ final class PricingPesByEncounterClassCatalog
             8 => 100000,
         ],
         'defaults' => [
-            'consultorio_attentions' => 200,
-            'clinica_attentions' => 5000,
+            'initial_attentions' => 200,
         ],
         'volume_discount_tiers' => [
             0 => [
@@ -135,8 +134,8 @@ final class PricingPesByEncounterClassCatalog
                 'margin_after_iibb_ganancias_percent' => 40,
             ],
             3 => [
-                'id' => 'enterprise',
-                'label' => 'Enterprise',
+                'id' => 'alto_volumen',
+                'label' => '40.000+ atenciones / mes',
                 'min_attentions' => 40000,
                 'max_attentions' => null,
                 'margin_on_cost_percent' => 117,

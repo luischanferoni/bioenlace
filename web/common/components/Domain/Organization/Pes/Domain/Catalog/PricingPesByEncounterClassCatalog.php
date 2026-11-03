@@ -16,7 +16,7 @@ final class PricingPesByEncounterClassCatalog
         'version' => 11,
         'currency' => 'USD',
         'billing_period' => 'month',
-        'tax_note' => 'El total mensual en ARS incluye IVA; el valor en USD se muestra antes de impuestos.',
+        'tax_note' => 'El total mensual incluye IVA.',
         'default_when_empty' => 'allow_all',
         'reference_encounters_per_professional_month' => 200,
         'cogs_assumptions' => [

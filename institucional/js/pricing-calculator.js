@@ -253,11 +253,8 @@
             escapeHtml(videoAddon) +
             ' · ' +
             Pricing.formatAttentions(item.attentions_per_month) +
-            ' atenciones/mes × ' +
-            formatQuoteUnitPrice(item.unit_amount_usd) +
-            '</span><strong>' +
-            formatQuoteMoney(item.amount_usd, 'USD') +
-            '</strong></div>'
+            ' atenciones/mes ' +
+            '</span></div>'
           );
         })
         .join('');
@@ -272,25 +269,21 @@
             formatQuoteMoney(quote.discount_amount_usd, 'USD') +
             '</strong></div>'
           : '';
-      const rateDate = quote.exchange_rate_effective_date
+      const rateDate = ''/*quote.exchange_rate_effective_date
         ? '<div class="pricing-calc__line"><span>Cotización vigente desde</span><strong>' +
           escapeHtml(quote.exchange_rate_effective_date) +
           '</strong></div>'
-        : '';
+        : ''*/;
       breakdownEl.innerHTML =
         itemLines +
-        discount +
-        '<div class="pricing-calc__line"><span>Precio mensual antes de IVA</span><strong>' +
-        formatQuoteMoney(quote.amount_usd, 'USD') +
-        '</strong></div>' +
+        discount +        
         '<div class="pricing-calc__line"><span>Neto en pesos</span><strong>' +
         formatQuoteMoney(quote.amount_net_ars, 'ARS') +
         '</strong></div>' +
         '<div class="pricing-calc__line"><span>IVA</span><strong>' +
         formatQuoteMoney(quote.vat_ars, 'ARS') +
         '</strong></div>' +
-        rateDate +
-        '<p class="pricing-calc__hint">El total en pesos incluye IVA. El importe final se confirma antes de pagar.</p>';
+        rateDate;
     }
     root.dispatchEvent(
       new CustomEvent('bioenlace:pricing-change', {

@@ -306,8 +306,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                 ),
                 BioSpacing.gapH(BioSpacing.xs),
                 Text(
-                  'Total mensual con impuestos incluidos. '
-                  'El importe final se confirma antes de pagar.',
+                  'Total mensual con impuestos incluidos. ',
                   style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
                 ),
               ],
@@ -478,8 +477,8 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                     ),
                     children: [
                       const Text(
-                        'Un espacio privado para atender pacientes. Incluye '
-                        'agenda, herramientas clínicas y asistente.',
+                        'Un espacio privado para atender todos tus pacientes. Incluye '
+                        'todas las funcionalidades.',
                       ),
                       _buildQuoteSummary(
                         quote: _consultorioQuote,

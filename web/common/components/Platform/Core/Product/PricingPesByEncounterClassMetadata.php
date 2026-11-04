@@ -32,6 +32,79 @@ final class PricingPesByEncounterClassMetadata
     }
 
     /**
+     * Catálogo comercial público: excluye COGS, márgenes y tramos internos.
+     *
+     * Es lo único que se expone en `GET /licencia/planes` (web institucional y
+     * apps móviles). `loadConfig()` sigue devolviendo el catálogo completo para
+     * uso interno.
+     *
+     * @return array<string, mixed>
+     */
+    public static function publicConfig(): array
+    {
+        $config = self::loadConfig();
+
+        $classes = [];
+        foreach ((array) ($config['sellable_classes'] ?? []) as $code => $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $classes[(string) $code] = self::only($row, [
+                'label',
+                'short',
+                'includes_patient_chat',
+                'audio_included',
+                'videollamada_allowed',
+                'includes',
+            ]);
+        }
+
+        $presets = [];
+        foreach ((array) ($config['attention_volume_presets'] ?? []) as $preset) {
+            if (!is_array($preset)) {
+                continue;
+            }
+            $presets[] = self::only($preset, ['attentions', 'label', 'hint']);
+        }
+
+        $addons = [];
+        foreach ((array) ($config['addons'] ?? []) as $code => $addon) {
+            if (!is_array($addon)) {
+                continue;
+            }
+            $addons[(string) $code] = self::only($addon, ['label', 'description', 'default']);
+        }
+
+        return [
+            'version' => (int) ($config['version'] ?? 1),
+            'currency' => (string) ($config['currency'] ?? 'USD'),
+            'billing_period' => (string) ($config['billing_period'] ?? 'month'),
+            'tax_note' => (string) ($config['tax_note'] ?? ''),
+            'reference_encounters_per_professional_month' => (int) ($config['reference_encounters_per_professional_month'] ?? 0),
+            'attention_volume_presets' => $presets,
+            'attention_volume_scale' => self::attentionVolumeScale(),
+            'defaults' => self::only((array) ($config['defaults'] ?? []), ['initial_attentions']),
+            'sellable_classes' => $classes,
+            'non_sellable_default' => (string) ($config['non_sellable_default'] ?? 'disabled'),
+            'addons' => $addons,
+            'simulator' => self::only(
+                (array) ($config['simulator'] ?? []),
+                ['title', 'subtitle', 'cta_label', 'cta_href', 'footnotes']
+            ),
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     * @param list<string> $keys
+     * @return array<string, mixed>
+     */
+    private static function only(array $row, array $keys): array
+    {
+        return array_intersect_key($row, array_flip($keys));
+    }
+
+    /**
      * @return list<string>
      */
     public static function sellableClassCodes(): array

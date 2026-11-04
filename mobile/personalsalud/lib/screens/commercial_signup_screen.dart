@@ -26,9 +26,6 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _localityQueryController = TextEditingController();
-  final _ambController = TextEditingController();
-  final _emerController = TextEditingController();
-  final _impController = TextEditingController();
   final _service = StaffSignupService();
 
   bool _submitting = false;
@@ -40,9 +37,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
   bool _cancellingSubscription = false;
   bool _videollamada = false;
   bool _loadingQuote = false;
-  bool _ambEnabled = true;
-  bool _emerEnabled = false;
-  bool _impEnabled = false;
+  bool _loadingPlans = false;
   int _currentStep = 0;
   int _sisaSearchRequestId = 0;
   String _sector = 'PRIVADO';
@@ -63,7 +58,12 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
   List<Map<String, dynamic>> _sisaEfectores = const [];
   List<Map<String, dynamic>> _ministries = const [];
   int? _selectedMinistryId;
-  Timer? _quoteDebounce;
+  Map<String, dynamic>? _plansCatalog;
+  String? _plansError;
+
+  /// Volumen mensual elegido por tipo de atención (`AMB`, `EMER`, `IMP`).
+  /// Si un tipo no tiene entrada, no se contrata.
+  final Map<String, int> _classVolumes = <String, int>{};
 
   /// La búsqueda de efectores SISA exige más de 3 caracteres.
   static const int _minEfectorSearchLength = 4;
@@ -74,26 +74,24 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     WidgetsBinding.instance.addObserver(this);
     final classes = widget.initialPlan?['classes'];
     if (classes is Map) {
-      _ambController.text =
-          classes['AMB']?['attentions_per_month']?.toString() ?? '';
-      _emerController.text =
-          classes['EMER']?['attentions_per_month']?.toString() ?? '';
-      _impController.text =
-          classes['IMP']?['attentions_per_month']?.toString() ?? '';
-      if (classes.isNotEmpty) {
-        _ambEnabled = classes.containsKey('AMB');
-        _emerEnabled = classes.containsKey('EMER');
-        _impEnabled = classes.containsKey('IMP');
-        _videollamada = classes['AMB']?['videollamada_permitida'] == true;
-      }
+      classes.forEach((code, value) {
+        if (value is! Map) return;
+        final attentions = int.tryParse(
+          value['attentions_per_month']?.toString() ?? '',
+        );
+        if (attentions != null && attentions > 0) {
+          _classVolumes[code.toString()] = attentions;
+        }
+      });
+      _videollamada = classes['AMB']?['videollamada_permitida'] == true;
     }
     _loadMinistries();
+    _loadPlans();
     WidgetsBinding.instance.addPostFrameCallback((_) => _refreshQuote());
   }
 
   @override
   void dispose() {
-    _quoteDebounce?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     _nameController.dispose();
     _addressController.dispose();
@@ -101,9 +99,6 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     _emailController.dispose();
     _phoneController.dispose();
     _localityQueryController.dispose();
-    _ambController.dispose();
-    _emerController.dispose();
-    _impController.dispose();
     super.dispose();
   }
 
@@ -147,9 +142,61 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     await _startCheckout();
   }
 
-  void _scheduleQuoteRefresh() {
-    _quoteDebounce?.cancel();
-    _quoteDebounce = Timer(const Duration(milliseconds: 400), _refreshQuote);
+  Future<void> _loadPlans() async {
+    setState(() {
+      _loadingPlans = true;
+      _plansError = null;
+    });
+    try {
+      final catalog = await _service.fetchSignupPlans();
+      if (!mounted) return;
+      setState(() {
+        _plansCatalog = catalog;
+        _loadingPlans = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _loadingPlans = false;
+        _plansError = _errorText(error);
+      });
+    }
+  }
+
+  /// Catálogo de tipos de atención vendibles (`sellable_classes`).
+  Map<String, dynamic> get _sellableClasses {
+    final raw = _plansCatalog?['sellable_classes'];
+    return raw is Map ? Map<String, dynamic>.from(raw) : const {};
+  }
+
+  /// Grupos de volumen que define el backend (`attention_volume_presets`,
+  /// con fallback a `attention_volume_scale`).
+  List<MapEntry<int, String>> get _volumePresets {
+    final presets = _plansCatalog?['attention_volume_presets'];
+    if (presets is List && presets.isNotEmpty) {
+      return presets
+          .whereType<Map>()
+          .map((preset) {
+            final attentions = int.tryParse(
+              preset['attentions']?.toString() ?? '',
+            );
+            return attentions == null || attentions <= 0
+                ? null
+                : MapEntry(attentions, preset['label']?.toString() ?? '');
+          })
+          .whereType<MapEntry<int, String>>()
+          .toList();
+    }
+    final scale = _plansCatalog?['attention_volume_scale'];
+    if (scale is List) {
+      return scale
+          .map((value) => int.tryParse(value?.toString() ?? ''))
+          .whereType<int>()
+          .where((attentions) => attentions > 0)
+          .map((attentions) => MapEntry(attentions, ''))
+          .toList();
+    }
+    return const [];
   }
 
   Future<void> _refreshQuote() async {
@@ -412,20 +459,14 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
 
   Map<String, dynamic>? _selectedPlan() {
     final classes = <String, dynamic>{};
-    for (final entry in [
-      ('AMB', _ambEnabled, _ambController.text),
-      ('EMER', _emerEnabled, _emerController.text),
-      ('IMP', _impEnabled, _impController.text),
-    ]) {
-      if (!entry.$2) continue;
-      final value = int.tryParse(entry.$3.trim()) ?? 0;
-      if (value > 0) {
-        classes[entry.$1] = {
-          'attentions_per_month': value,
-          'videollamada_permitida': entry.$1 == 'AMB' && _videollamada,
-        };
-      }
-    }
+    _classVolumes.forEach((code, attentions) {
+      if (attentions <= 0) return;
+      classes[code] = {
+        'attentions_per_month': attentions,
+        'dictado_incluido': true,
+        'videollamada_permitida': code == 'AMB' && _videollamada,
+      };
+    });
     return classes.isEmpty ? null : {'classes': classes};
   }
 
@@ -455,7 +496,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
           ? Text(_quoteError!, style: BioTypography.bodySm)
           : _quote == null
           ? Text(
-              'Ingresá el volumen mensual para ver el precio estimado.',
+              'Elegí un volumen para ver el precio estimado.',
               style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
             )
           : Column(
@@ -627,50 +668,120 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     );
   }
 
-  Widget _buildClassSelector({
-    required bool enabled,
-    required String title,
-    required String description,
-    required TextEditingController controller,
-    required ValueChanged<bool> onToggle,
+  Widget _buildClassVolumeGroup({
+    required String code,
+    required Map<String, dynamic> classRow,
   }) {
     final tokens = context.bio;
+    final selected = _classVolumes[code];
+    final label = classRow['label']?.toString() ?? code;
+    final short = classRow['short']?.toString() ?? '';
+    final allowsVideollamada = classRow['videollamada_allowed'] != false;
+    final presets = _volumePresets;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: BioSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            value: enabled,
-            onChanged: (value) {
-              onToggle(value);
-              _refreshQuote();
-            },
-            title: Text(title),
-            subtitle: Text(
-              description,
-              style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
-            ),
+      child: Material(
+        color: tokens.paperSurface,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+            color: selected != null
+                ? Theme.of(context).colorScheme.primary
+                : tokens.paperDividerDefault,
+            width: selected != null ? 2 : 1,
           ),
-          if (enabled)
-            Padding(
-              padding: const EdgeInsets.only(left: BioSpacing.xl),
-              child: TextFormField(
-                controller: controller,
-                keyboardType: TextInputType.number,
-                onChanged: (_) => _scheduleQuoteRefresh(),
-                decoration: const InputDecoration(
-                  labelText: 'Atenciones por mes',
-                  border: OutlineInputBorder(),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(BioSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(label, style: BioTypography.title),
+              if (short.isNotEmpty)
+                Text(
+                  short,
+                  style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
                 ),
-                validator: _validateRequiredVolume,
+              Text(
+                _classPolicyText(classRow),
+                style: BioTypography.caption.copyWith(color: tokens.textMuted),
               ),
-            ),
-        ],
+              BioSpacing.gapH(BioSpacing.sm),
+              Text(
+                'Volumen de atenciones mensual',
+                style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
+              ),
+              BioSpacing.gapH(BioSpacing.xs),
+              Wrap(
+                spacing: BioSpacing.sm,
+                runSpacing: BioSpacing.sm,
+                children: presets
+                    .map(
+                      (preset) => BioChip(
+                        label: _formatAttentions(preset.key),
+                        selected: selected == preset.key,
+                        icon: selected == preset.key ? Icons.check : null,
+                        onTap: () => _selectVolume(code, preset.key),
+                      ),
+                    )
+                    .toList(),
+              ),
+              if (code == 'AMB' && allowsVideollamada) ...[
+                BioSpacing.gapH(BioSpacing.xs),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: _videollamada,
+                  onChanged: selected == null
+                      ? null
+                      : (value) {
+                          setState(() => _videollamada = value);
+                          _refreshQuote();
+                        },
+                  title: const Text('Atención por videollamada'),
+                  subtitle: Text(
+                    selected == null
+                        ? 'Requiere elegir un volumen ambulatorio.'
+                        : 'Habilita consultas ambulatorias por videollamada. '
+                              'Suma la modalidad al precio estimado.',
+                    style: BioTypography.bodySm.copyWith(
+                      color: tokens.textMuted,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
+
+  /// Política del tipo de atención, igual que la web institucional
+  /// (`audio_included` / `videollamada_allowed`).
+  String _classPolicyText(Map<String, dynamic> classRow) {
+    final parts = <String>[
+      classRow['audio_included'] == true ? 'Dictado incluido' : 'Sin dictado',
+      if (classRow['videollamada_allowed'] == false) 'Sin videollamada',
+    ];
+    return parts.join(' · ');
+  }
+
+  void _selectVolume(String code, int attentions) {
+    setState(() {
+      if (_classVolumes[code] == attentions) {
+        _classVolumes.remove(code);
+        if (code == 'AMB') _videollamada = false;
+      } else {
+        _classVolumes[code] = attentions;
+      }
+    });
+    _refreshQuote();
+  }
+
+  String _formatAttentions(int attentions) =>
+      '${NumberFormat.decimalPattern('es_AR').format(attentions)}/mes';
 
   Widget _buildSignupProgress() {
     const steps = [
@@ -1128,61 +1239,44 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
                 ],
               ] else ...[
                 Text(
-                  'Atenciones y volumen mensual',
+                  'Volumen de atenciones mensual por tipo de atención',
                   style: BioTypography.title,
                 ),
                 BioSpacing.gapH(BioSpacing.sm),
                 Text(
-                  'Elegí qué tipos de atención vas a ofrecer y el volumen '
-                  'mensual estimado de cada uno. El volumen define la '
+                  'Elegí el volumen mensual de cada tipo de atención que vas a '
+                  'ofrecer. Podés dejar tipos sin elegir. El volumen define la '
                   'cotización, no la cantidad de personas que podés asignar.',
                   style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
                 ),
                 BioSpacing.gapH(BioSpacing.md),
-                _buildClassSelector(
-                  enabled: _ambEnabled,
-                  title: 'Atención ambulatoria',
-                  description: 'Consultas y seguimiento en consultorio.',
-                  controller: _ambController,
-                  onToggle: (value) => setState(() {
-                    _ambEnabled = value;
-                    if (!value) _videollamada = false;
-                  }),
-                ),
-                _buildClassSelector(
-                  enabled: _emerEnabled,
-                  title: 'Emergencias',
-                  description: 'Guardia y urgencias.',
-                  controller: _emerController,
-                  onToggle: (value) => setState(() => _emerEnabled = value),
-                ),
-                _buildClassSelector(
-                  enabled: _impEnabled,
-                  title: 'Internación',
-                  description: 'Pacientes internados en el efector.',
-                  controller: _impController,
-                  onToggle: (value) => setState(() => _impEnabled = value),
-                ),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  value: _videollamada,
-                  onChanged: _ambEnabled
-                      ? (value) {
-                          setState(() => _videollamada = value);
-                          _refreshQuote();
-                        }
-                      : null,
-                  title: const Text('Atención por videollamada'),
-                  subtitle: Text(
-                    _ambEnabled
-                        ? 'Habilita consultas ambulatorias por videollamada. '
-                              'Suma la modalidad al precio estimado.'
-                        : 'Requiere habilitar la atención ambulatoria.',
-                    style: BioTypography.bodySm.copyWith(
-                      color: tokens.textMuted,
-                    ),
-                  ),
-                ),
+                if (_loadingPlans)
+                  const Padding(
+                    padding: EdgeInsets.all(BioSpacing.md),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else if (_plansError != null)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(_plansError!, style: BioTypography.bodySm),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: _loadPlans,
+                          child: const Text('Reintentar'),
+                        ),
+                      ),
+                    ],
+                  )
+                else ...[
+                  for (final entry in _sellableClasses.entries)
+                    if (entry.value is Map)
+                      _buildClassVolumeGroup(
+                        code: entry.key,
+                        classRow: Map<String, dynamic>.from(entry.value as Map),
+                      ),
+                ],
                 _buildQuoteCard(),
                 _textField(
                   _emailController,
@@ -1254,13 +1348,5 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
         ),
       ),
     );
-  }
-
-  String? _validateRequiredVolume(String? value) {
-    final amount = int.tryParse(value?.trim() ?? '');
-    if (amount == null || amount <= 0) {
-      return 'Ingresá un número entero mayor a cero.';
-    }
-    return null;
   }
 }

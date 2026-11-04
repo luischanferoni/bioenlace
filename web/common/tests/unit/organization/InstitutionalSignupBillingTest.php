@@ -4,6 +4,7 @@ namespace common\tests\unit\organization;
 
 use common\components\Domain\Organization\Efector\Application\UseCase\SignUpInstitutionalEfector;
 use common\components\Domain\Organization\Efector\Infrastructure\External\Billing\SimulatedPaymentGateway;
+use common\components\Platform\Core\Product\PricingPesByEncounterClassMetadata;
 use Codeception\Test\Unit;
 
 class InstitutionalSignupBillingTest extends Unit
@@ -134,5 +135,25 @@ class InstitutionalSignupBillingTest extends Unit
         $this->assertArrayHasKey('sellable_classes', $catalog);
         $this->assertArrayHasKey('AMB', $catalog['sellable_classes']);
         $this->assertArrayHasKey('cogs_usd_per_encounter', $catalog);
+    }
+
+    public function testPublicPlanesCatalogHidesInternalCosts(): void
+    {
+        $catalog = PricingPesByEncounterClassMetadata::publicConfig();
+
+        $this->assertArrayHasKey('sellable_classes', $catalog);
+        $this->assertArrayHasKey('attention_volume_presets', $catalog);
+        $this->assertArrayHasKey('addons', $catalog);
+        $this->assertArrayNotHasKey('cogs_usd_per_encounter', $catalog);
+        $this->assertArrayNotHasKey('cogs_assumptions', $catalog);
+        $this->assertArrayNotHasKey('margin_on_cost_percent', $catalog);
+        $this->assertArrayNotHasKey('volume_discount_tiers', $catalog);
+        $this->assertArrayNotHasKey('cogs_source', $catalog);
+
+        $amb = $catalog['sellable_classes']['AMB'];
+        $this->assertTrue($amb['audio_included']);
+        $this->assertTrue($amb['videollamada_allowed']);
+        $this->assertArrayNotHasKey('product_gates', $amb);
+        $this->assertArrayNotHasKey('max_pes', $amb);
     }
 }

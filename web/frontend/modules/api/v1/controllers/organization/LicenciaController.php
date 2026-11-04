@@ -18,6 +18,7 @@ use common\components\Platform\Core\Auth\DemoSandboxAccessService;
 use common\components\Platform\Core\Auth\DemoSandboxCaptchaService;
 use common\components\Platform\Core\Auth\StaffMobileAccessService;
 use common\components\Platform\Core\Http\Contract\ApiException;
+use common\components\Platform\Core\Product\PricingPesByEncounterClassMetadata;
 use common\models\Geo\Pais;
 use common\models\Geo\Provincia;
 use common\models\Platform\User;
@@ -193,7 +194,8 @@ class LicenciaController extends BaseController
      */
     public function actionPlanes()
     {
-        return $this->success(SignUpInstitutionalEfector::planesCatalog());
+        // Sólo metadata pública: sin COGS, márgenes ni tramos internos.
+        return $this->success(PricingPesByEncounterClassMetadata::publicConfig());
     }
 
     /**

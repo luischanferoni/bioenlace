@@ -51,6 +51,14 @@ class BioTypography {
         height: 1.35,
       );
 
+  static TextStyle get bodySm => const TextStyle(
+        fontFamily: fontFamily,
+        fontSize: 13,
+        fontWeight: FontWeight.w400,
+        color: PaperPalette.paper600,
+        height: 1.45,
+      );
+
   static TextStyle get body => const TextStyle(
         fontFamily: fontFamily,
         fontSize: 14,
@@ -59,9 +67,9 @@ class BioTypography {
         height: 1.45,
       );
 
-  static TextStyle get bodySm => const TextStyle(
+  static TextStyle get bodyLg => const TextStyle(
         fontFamily: fontFamily,
-        fontSize: 13,
+        fontSize: 16,
         fontWeight: FontWeight.w400,
         color: PaperPalette.paper600,
         height: 1.45,

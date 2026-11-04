@@ -65,6 +65,9 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
   int? _selectedMinistryId;
   Timer? _quoteDebounce;
 
+  /// La búsqueda de efectores SISA exige más de 3 caracteres.
+  static const int _minEfectorSearchLength = 4;
+
   @override
   void initState() {
     super.initState();
@@ -122,18 +125,15 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
 
     if (_currentStep == 1) {
       if (!_formKey.currentState!.validate()) return;
-      if (_sector == 'PUBLICO' && _selectedSisaEfector == null) {
-        setState(
-          () => _errorMessage =
-              'Buscá y seleccioná un efector del catálogo SISA.',
-        );
-        return;
-      }
       if (_sector == 'PUBLICO' && _selectedMinistryId == null) {
         setState(
           () => _errorMessage =
               'Seleccioná el ministerio al que pertenece el efector.',
         );
+        return;
+      }
+      if (_sector == 'PUBLICO' && _selectedSisaEfector == null) {
+        setState(() => _errorMessage = 'Buscá y seleccioná un efector.');
         return;
       }
       setState(() {
@@ -212,6 +212,10 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     };
   }
 
+  bool get _canSearchSisaEfectores =>
+      _selectedMinistryId != null &&
+      _sisaSearchController.text.trim().length >= _minEfectorSearchLength;
+
   Future<void> _loadMinistries() async {
     setState(() => _loadingMinistries = true);
     try {
@@ -266,14 +270,22 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
   }
 
   Future<void> _searchSisaEfectores() async {
+    if (_selectedMinistryId == null) {
+      setState(
+        () => _errorMessage =
+            'Seleccioná el ministerio al que pertenece el efector.',
+      );
+      return;
+    }
     final query = _sisaSearchController.text.trim();
     final requestId = ++_sisaSearchRequestId;
-    if (query.length < 2) {
+    if (query.length < _minEfectorSearchLength) {
       setState(() {
         _searchingSisaEfectores = false;
         _selectedSisaEfector = null;
         _sisaEfectores = const [];
-        _errorMessage = 'Ingresá al menos dos caracteres para buscar.';
+        _errorMessage =
+            'Ingresá al menos $_minEfectorSearchLength caracteres para buscar.';
       });
       return;
     }
@@ -324,10 +336,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
       return;
     }
     if (_sector == 'PUBLICO' && _selectedSisaEfector == null) {
-      setState(
-        () =>
-            _errorMessage = 'Buscá y seleccioná un efector del catálogo SISA.',
-      );
+      setState(() => _errorMessage = 'Buscá y seleccioná un efector.');
       return;
     }
     final plan = _selectedPlan();
@@ -810,7 +819,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('¿Qué tipo de espacio querés crear?', style: BioTypography.title),
+        Text('¿Qué tipo de espacio quieres crear?', style: BioTypography.title),
         BioSpacing.gapH(BioSpacing.md),
         option(
           'PRIVADO',
@@ -964,28 +973,60 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
                 Text('Datos del efector', style: BioTypography.title),
                 BioSpacing.gapH(BioSpacing.md),
                 if (_sector == 'PUBLICO') ...[
+                  if (_loadingMinistries)
+                    const Center(child: CircularProgressIndicator())
+                  else
+                    DropdownButtonFormField<int>(
+                      initialValue: _selectedMinistryId,
+                      hint: const Text('Seleccione ministerio'),
+                      decoration: const InputDecoration(
+                        labelText: 'Ministerio',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: _ministries
+                          .map((item) {
+                            final id = int.tryParse(item['id'].toString());
+                            return DropdownMenuItem(
+                              value: id,
+                              child: Text(item['nombre']?.toString() ?? ''),
+                            );
+                          })
+                          .where((item) => item.value != null)
+                          .toList(),
+                      onChanged: (value) => setState(() {
+                        _selectedMinistryId = value;
+                        _sisaSearchRequestId++;
+                        _selectedSisaEfector = null;
+                        _sisaEfectores = const [];
+                        _errorMessage = null;
+                      }),
+                    ),
+                  BioSpacing.gapH(BioSpacing.md),
                   TextFormField(
                     controller: _sisaSearchController,
+                    enabled: _selectedMinistryId != null,
                     textInputAction: TextInputAction.search,
                     onFieldSubmitted: (_) => _searchSisaEfectores(),
                     onChanged: (_) {
                       _sisaSearchRequestId++;
-                      if (_selectedSisaEfector != null ||
-                          _sisaEfectores.isNotEmpty ||
-                          _searchingSisaEfectores) {
-                        setState(() {
-                          _searchingSisaEfectores = false;
-                          _selectedSisaEfector = null;
-                          _sisaEfectores = const [];
-                        });
-                      }
+                      setState(() {
+                        _searchingSisaEfectores = false;
+                        _selectedSisaEfector = null;
+                        _sisaEfectores = const [];
+                      });
                     },
                     decoration: InputDecoration(
                       labelText: 'Buscar efector público',
-                      hintText: 'Nombre o código SISA',
+                      hintText: _selectedMinistryId == null
+                          ? 'Elegí primero un ministerio'
+                          : 'Nombre',
+                      helperText: _selectedMinistryId == null
+                          ? null
+                          : 'Al menos $_minEfectorSearchLength caracteres',
                       border: const OutlineInputBorder(),
                       suffixIcon: IconButton(
-                        onPressed: _searchingSisaEfectores
+                        onPressed:
+                            _searchingSisaEfectores || !_canSearchSisaEfectores
                             ? null
                             : _searchSisaEfectores,
                         icon: const Icon(Icons.search),
@@ -1028,47 +1069,6 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
                         ),
                       );
                     }),
-                  if (_selectedSisaEfector != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: BioSpacing.md),
-                      child: Text(
-                        'Efector seleccionado: ${_selectedSisaEfector!['nombre']}',
-                        style: BioTypography.bodySm.copyWith(
-                          color: tokens.textMuted,
-                        ),
-                      ),
-                    ),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: BioSpacing.md),
-                    child: Text(
-                      'Se valida contra el catálogo SISA local. Si el efector ya está afiliado a un ministerio o tiene una cuenta de facturación, no se puede registrar de nuevo.',
-                      style: BioTypography.bodySm.copyWith(
-                        color: tokens.textMuted,
-                      ),
-                    ),
-                  ),
-                  if (_loadingMinistries)
-                    const Center(child: CircularProgressIndicator())
-                  else
-                    DropdownButtonFormField<int>(
-                      initialValue: _selectedMinistryId,
-                      decoration: const InputDecoration(
-                        labelText: 'Ministerio',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: _ministries
-                          .map((item) {
-                            final id = int.tryParse(item['id'].toString());
-                            return DropdownMenuItem(
-                              value: id,
-                              child: Text(item['nombre']?.toString() ?? ''),
-                            );
-                          })
-                          .where((item) => item.value != null)
-                          .toList(),
-                      onChanged: (value) =>
-                          setState(() => _selectedMinistryId = value),
-                    ),
                 ] else ...[
                   _textField(_nameController, 'Nombre del efector'),
                   _textField(_addressController, 'Domicilio'),
@@ -1218,14 +1218,14 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
                   children: [
                     if (_currentStep > 0) ...[
                       Expanded(
-                        child: OutlinedButton(
+                        child: BioButton.outlinePrimary(
                           onPressed: _submitting
                               ? null
                               : () => setState(() {
                                   _currentStep--;
                                   _errorMessage = null;
                                 }),
-                          child: const Text('Volver'),
+                          label: 'Volver',
                         ),
                       ),
                       BioSpacing.gapW(BioSpacing.sm),
@@ -1249,11 +1249,6 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
                 ),
               ],
               BioSpacing.gapH(BioSpacing.md),
-              if (_checkoutKey == null)
-                Text(
-                  'El efector se crea y activa únicamente cuando Mercado Pago confirma el primer pago.',
-                  style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
-                ),
             ],
           ),
         ),

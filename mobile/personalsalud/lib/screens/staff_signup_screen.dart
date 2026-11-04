@@ -29,7 +29,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
   String? _pendingVerificationId;
 
   bool _loadingProvinces = true;
-  bool _loadingCenters = true;
+  bool _loadingCenters = false;
   String? _centersError;
   String? _provincesError;
   List<Map<String, dynamic>> _provinces = const [];
@@ -40,12 +40,18 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
   Timer? _centerSearchDebounce;
   int _centerSearchRequestId = 0;
 
+  /// La búsqueda de centros sólo se dispara con más de 3 caracteres.
+  static const int _minCenterSearchLength = 4;
+
+  bool _instantCloseFreeTile = false;
+  bool _instantCloseSpaceTile = false;
+
   @override
   void initState() {
     super.initState();
     _refreshSpaceQuote();
     _loadProvinces();
-    _loadCenters();
+    //_loadCenters();
   }
 
   @override
@@ -132,6 +138,39 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
     }
   }
 
+  String get _centerQuery => _centerSearchController.text.trim();
+
+  bool get _canSearchCenters => _centerQuery.length >= _minCenterSearchLength;
+
+  /// Cierra el tile hermano sin animación.
+  ///
+  /// Si ambos animan a la vez (uno se pliega arriba y el otro se abre), el tile
+  /// que el usuario abrió "viaja" por la pantalla mientras se revela: se
+  /// percibe como un delay. Cerrar el hermano de golpe deja una sola animación.
+  void _closeOtherTile(
+    ExpansibleController controller, {
+    required bool isFree,
+  }) {
+    setState(() {
+      if (isFree) {
+        _instantCloseFreeTile = true;
+      } else {
+        _instantCloseSpaceTile = true;
+      }
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      controller.collapse();
+      setState(() {
+        if (isFree) {
+          _instantCloseFreeTile = false;
+        } else {
+          _instantCloseSpaceTile = false;
+        }
+      });
+    });
+  }
+
   void _scheduleCenterSearch() {
     _centerSearchDebounce?.cancel();
     _centerSearchDebounce = Timer(
@@ -141,6 +180,17 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
   }
 
   Future<void> _loadCenters() async {
+    if (!_canSearchCenters) {
+      _centerSearchDebounce?.cancel();
+      if (!mounted) return;
+      setState(() {
+        _centers = const [];
+        _centersError = null;
+        _loadingCenters = false;
+        _centerSearchRequestId++;
+      });
+      return;
+    }
     final requestId = ++_centerSearchRequestId;
     setState(() {
       _loadingCenters = true;
@@ -148,7 +198,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
     });
     try {
       final centers = await _signupService.searchCenters(
-        query: _centerSearchController.text,
+        query: _centerQuery,
         sector: _centerSector,
         idProvincia: _provinceId,
       );
@@ -366,7 +416,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
         Text('¿En qué centro de salud trabajás?', style: BioTypography.title),
         BioSpacing.gapH(BioSpacing.xs),
         Text(
-          'Elegí un centro activo en Bioenlace. Guardaremos tu solicitud para '
+          'Guardaremos tu solicitud para '
           'que la administración del centro pueda incorporarte.',
           style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
         ),
@@ -430,13 +480,28 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
           controller: _centerSearchController,
           textInputAction: TextInputAction.search,
           onFieldSubmitted: (_) => _loadCenters(),
-          onChanged: (_) => _scheduleCenterSearch(),
+          onChanged: (text) {
+            _centerSearchDebounce?.cancel();
+            final canSearch = text.trim().length > 3;
+            setState(() {
+              if (!canSearch) {
+                _centers = const [];
+                _centersError = null;
+                _loadingCenters = false;
+                _centerSearchRequestId++;
+              }
+            });
+            if (canSearch) _scheduleCenterSearch();
+          },
           decoration: InputDecoration(
             labelText: 'Buscar centro',
-            hintText: 'Nombre, código SISA o localidad',
+            hintText: 'Nombre',
+            helperText: 'Ingresá al menos $_minCenterSearchLength caracteres',
             border: const OutlineInputBorder(),
             suffixIcon: IconButton(
-              onPressed: _loadingCenters ? null : _loadCenters,
+              onPressed: _loadingCenters || !_canSearchCenters
+                  ? null
+                  : _loadCenters,
               icon: const Icon(Icons.search),
             ),
           ),
@@ -455,16 +520,19 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
-                  onPressed: _loadCenters,
+                  onPressed: _canSearchCenters ? _loadCenters : null,
                   child: const Text('Reintentar'),
                 ),
               ),
             ],
           )
-        else if (_centers.isEmpty)
+        else if (_centers.isEmpty && _canSearchCenters)
           Text(
             'No encontramos centros con esos filtros.',
-            style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
+            style: BioTypography.bodySm.copyWith(
+              color: IntentPalette.of(UiIntent.warning).base,
+            ),
+            textAlign: TextAlign.center,
           )
         else
           ..._centers.map((center) {
@@ -532,36 +600,35 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
               BioSpacing.gapH(BioSpacing.sm),
               BioSpacing.gapH(BioSpacing.xl),
               if (!_accountCreated) ...[
-                Container(
-                  decoration: BoxDecoration(
-                    color: tokens.paperSurface,
+                Material(
+                  color: tokens.paperSurface,
+                  clipBehavior: Clip.antiAlias,
+                  shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: tokens.paperDividerDefault),
+                    side: BorderSide(color: tokens.paperDividerDefault),
                   ),
                   child: ExpansionTile(
                     controller: _freeTileController,
                     initiallyExpanded: true,
+                    expansionAnimationStyle: _instantCloseFreeTile
+                        ? AnimationStyle.noAnimation
+                        : null,
                     onExpansionChanged: (expanded) {
-                      if (expanded) _spaceTileController.collapse();
+                      if (!expanded) return;
+                      _closeOtherTile(_spaceTileController, isFree: false);
                     },
                     title: Text(
                       'Cuenta personal gratis',
                       style: BioTypography.title,
                     ),
-                    subtitle: const Text('Gratis'),
+                    subtitle: Text('GRATIS', style: BioTypography.caption),
                     childrenPadding: const EdgeInsets.fromLTRB(
-                      BioSpacing.md,
-                      0,
+                      BioSpacing.lg,
+                      BioSpacing.lg,
                       BioSpacing.md,
                       BioSpacing.md,
                     ),
                     children: [
-                      Text(
-                        'Crea tu cuenta de personal de salud y elegí el centro '
-                        'donde trabajás. Un efector debe asignarte un rol '
-                        'clínico para habilitar las funciones asistenciales.',
-                        style: BioTypography.body,
-                      ),
                       BioSpacing.gapH(BioSpacing.md),
                       _buildCenterPicker(),
                       BioSpacing.gapH(BioSpacing.md),
@@ -583,46 +650,51 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                   ),
                 ),
                 BioSpacing.gapH(BioSpacing.sm),
-                Container(
-                  decoration: BoxDecoration(
-                    color: tokens.paperSurface,
+                Material(
+                  color: tokens.paperSurface,
+                  clipBehavior: Clip.antiAlias,
+                  shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: tokens.paperDividerDefault),
+                    side: BorderSide(color: tokens.paperDividerDefault),
                   ),
                   child: ExpansionTile(
                     controller: _spaceTileController,
+                    expansionAnimationStyle: _instantCloseSpaceTile
+                        ? AnimationStyle.noAnimation
+                        : null,
                     onExpansionChanged: (expanded) {
-                      if (expanded) _freeTileController.collapse();
+                      if (!expanded) return;
+                      _closeOtherTile(_freeTileController, isFree: true);
                     },
                     title: Text(
                       'Crear espacio de atención',
                       style: BioTypography.title,
                     ),
-                    subtitle: const Text('Suscripción mensual'),
+                    subtitle: Text(
+                      'SUSCRIPCIÓN MENSUAL',
+                      style: BioTypography.caption,
+                    ),
                     childrenPadding: const EdgeInsets.fromLTRB(
-                      BioSpacing.md,
-                      0,
+                      BioSpacing.lg,
+                      BioSpacing.lg,
                       BioSpacing.md,
                       BioSpacing.md,
                     ),
                     children: [
                       Text(
-                        'Configurá un espacio público o privado, elegí los '
-                        'tipos de atención y estimá su volumen mensual. '
-                        'Como referencia, 200 atenciones ambulatorias por mes '
-                        'equivalen aproximadamente a la carga de un profesional; '
-                        'no limitan cuántas personas podés asignar.',
-                        style: BioTypography.body,
+                        'Seguí los pasos para crear un espacio de atención pago. '
+                        'Presioná el boton de abajo para comenzar a crear tu centro de atención. ',
+                        style: BioTypography.bodyLg,
                       ),
-                      _buildQuoteSummary(
+                      /*_buildQuoteSummary(
                         quote: _spaceQuote,
                         loading: _loadingQuote,
                         error: _spaceQuoteError,
                         onRetry: _refreshSpaceQuote,
-                      ),
+                      ),*/
                       BioSpacing.gapH(BioSpacing.md),
                       BioButton.primary(
-                        label: 'Crear espacio de atención',
+                        label: 'Comenzar',
                         icon: Icons.arrow_forward,
                         size: BioButtonSize.lg,
                         fullWidth: true,

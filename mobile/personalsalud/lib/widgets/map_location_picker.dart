@@ -1,7 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:shared/shared.dart';
+
+import 'google_maps_web_loader.dart';
 
 /// Selector de ubicación sobre Google Maps.
 ///
@@ -35,6 +38,8 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
   LatLng? _marker;
   GoogleMapController? _controller;
   bool _locating = false;
+  bool _mapsReady = !kIsWeb;
+  String? _mapsError;
 
   @override
   void initState() {
@@ -47,6 +52,33 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
     } else {
       _center = _fallbackCenter;
     }
+    if (kIsWeb) {
+      _loadWebMaps();
+    }
+  }
+
+  /// En web hay que esperar a que la JS API de Google Maps esté disponible.
+  Future<void> _loadWebMaps() async {
+    if (!GoogleMapsWebLoader.isConfigured) {
+      if (!mounted) return;
+      setState(() {
+        _mapsReady = false;
+        _mapsError =
+            'Falta configurar la key de Google Maps para web '
+            '(--dart-define=GOOGLE_MAPS_WEB_API_KEY=…).';
+      });
+      return;
+    }
+
+    final ready = await GoogleMapsWebLoader.ensureLoaded();
+    if (!mounted) return;
+    setState(() {
+      _mapsReady = ready;
+      _mapsError = ready
+          ? null
+          : 'No pudimos cargar Google Maps. Revisá la key y que la '
+                '"Maps JavaScript API" esté habilitada.';
+    });
   }
 
   @override
@@ -97,6 +129,37 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
     )?.showSnackBar(SnackBar(content: Text(message)));
   }
 
+  Widget _buildMapsError() {
+    final tokens = context.bio;
+    return Container(
+      padding: const EdgeInsets.all(BioSpacing.md),
+      color: tokens.paperSurfaceSunken,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.map_outlined, size: 28, color: tokens.textMuted),
+          BioSpacing.gapH(BioSpacing.sm),
+          Text(
+            _mapsError!,
+            textAlign: TextAlign.center,
+            style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
+          ),
+          BioSpacing.gapH(BioSpacing.xs),
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _mapsError = null;
+                _mapsReady = false;
+              });
+              _loadWebMaps();
+            },
+            child: const Text('Reintentar'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens = context.bio;
@@ -109,31 +172,35 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
           borderRadius: BorderRadius.circular(12),
           child: SizedBox(
             height: widget.height,
-            child: AbsorbPointer(
-              absorbing: !widget.enabled,
-              child: GoogleMap(
-                initialCameraPosition: CameraPosition(
-                  target: _center,
-                  zoom: marker == null ? 11 : 16,
-                ),
-                onMapCreated: (controller) => _controller = controller,
-                onTap: _select,
-                myLocationButtonEnabled: false,
-                zoomControlsEnabled: false,
-                compassEnabled: false,
-                mapToolbarEnabled: false,
-                markers: marker == null
-                    ? const {}
-                    : {
-                        Marker(
-                          markerId: const MarkerId('efector'),
-                          position: marker,
-                          draggable: widget.enabled,
-                          onDragEnd: _select,
-                        ),
-                      },
-              ),
-            ),
+            child: _mapsError != null
+                ? _buildMapsError()
+                : !_mapsReady
+                ? const Center(child: CircularProgressIndicator())
+                : AbsorbPointer(
+                    absorbing: !widget.enabled,
+                    child: GoogleMap(
+                      initialCameraPosition: CameraPosition(
+                        target: _center,
+                        zoom: marker == null ? 11 : 16,
+                      ),
+                      onMapCreated: (controller) => _controller = controller,
+                      onTap: _select,
+                      myLocationButtonEnabled: false,
+                      zoomControlsEnabled: false,
+                      compassEnabled: false,
+                      mapToolbarEnabled: false,
+                      markers: marker == null
+                          ? const {}
+                          : {
+                              Marker(
+                                markerId: const MarkerId('efector'),
+                                position: marker,
+                                draggable: widget.enabled,
+                                onDragEnd: _select,
+                              ),
+                            },
+                    ),
+                  ),
           ),
         ),
         BioSpacing.gapH(BioSpacing.sm),

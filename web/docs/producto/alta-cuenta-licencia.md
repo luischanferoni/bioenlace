@@ -15,7 +15,7 @@ No se solicita e-mail para crear identidad. El modelo objetivo reemplaza los có
 ## Estado actual de implementación
 
 - La app permite elegir el recorrido profesional personal y crear una cuenta tras Didit, sin pedir e-mail.
-- Consultorio y clínica/centro aparecen como opciones, pero permanecen deshabilitados hasta implementar checkout real, condiciones de venta e intentos persistidos.
+- Consultorio y clínica/centro tienen checkout real de Mercado Pago e intentos persistidos; solo operan en entornos con credenciales configuradas (sin ellas el checkout responde `503`).
 - Una cuenta sin efector puede abrir el wizard informativo, sin obtener permisos clínicos.
 - AdminEfector fue retirado de la allowlist de Personal de Salud.
 - El simulador no se considera un pago válido y queda bloqueado en producción. No usarlo para contratar o activar licencias.
@@ -40,7 +40,7 @@ El alta institucional por `POST /api/v1/licencia/registrar-efector` también res
 
 Antes del checkout se informarán importe, moneda, impuestos, alcance del plan, recurrencia, renovación, cancelación y soporte. Los datos de tarjeta se procesarán mediante checkout alojado o tokenización; Bioenlace no guardará PAN ni CVV. El alta, los intentos y la conciliación deben ser idempotentes. Una licencia no se activa hasta la confirmación del proveedor.
 
-No hay actualmente una pasarela comercial real configurada para estos recorridos. El proveedor, los precios y las condiciones de suscripción deben definirse antes de habilitar los caminos pagos.
+El proveedor es **Mercado Pago con Checkout Pro**: suscripción mensual sin plan asociado, notificaciones firmadas con `X-Signature`, intentos idempotentes, cancelación sin corte inmediato y suspensión automática al vencer el período pagado. La integración está implementada; falta cargar credenciales productivas, el secreto de webhook y la cotización vigente, y completar la prueba end-to-end en sandbox. Detalle operativo: [mercado-pago-checkout-pro.md](../operacion/mercado-pago-checkout-pro.md).
 
 ## Acceso y recuperación
 

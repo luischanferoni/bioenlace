@@ -38,17 +38,18 @@ return [
     /**
      * MercadoPago — checkout de altas pagas (consultorio, clínica/centro).
      * Credenciales y precio ARS para suscripciones de altas comerciales.
+     * Guía operativa: web/docs/operacion/mercado-pago-checkout-pro.md
      *
      * @see web/docs/plans/alta-movil-cuentas-efectores/phases/03-altas-pagas.md
      */
     'mercadoPago' => [
         'accessToken' => null, // Configurar en params-local.php o variables de entorno
         'webhookSecret' => null, // Configurar en params-local.php
-        'notificationUrl' => null, // URL HTTPS pública configurada en Mercado Pago
-        'backUrl' => null, // URL HTTPS de retorno al flujo móvil
+        'notificationUrl'=> 'https://app.bioenlace.io/api/v1/mercado-pago-webhook',
+        'backUrl'        => 'https://app.bioenlace.io/checkout/retorno',
         'currency' => 'ARS',
-        'usdArsRate' => null, // Cotización MEP vendedora revisada trimestralmente
-        'usdArsRateEffectiveDate' => null,
+        'usdArsRate' => 1450.00, // Cotización MEP vendedora revisada trimestralmente
+        'usdArsRateEffectiveDate' => '2026-11-01',
         'vatRate' => 0.21,
     ],
     /**

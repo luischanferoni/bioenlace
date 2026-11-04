@@ -70,6 +70,36 @@ cd mobile/personalsalud/android
 3. `Info.plist` ya expone `GMSApiKey = $(GOOGLE_MAPS_API_KEY)` y el
    `AppDelegate` llama a `GMSServices.provideAPIKey(...)` cuando el valor existe.
 
+## 4b. Key de Web (mapa en Chrome/navegador)
+
+La app compila para web y el plugin federado `google_maps_flutter_web` ya viene
+resuelto; falta la JS API y una key de navegador.
+
+1. Habilitar **Maps JavaScript API** (cuarta API, distinta de Geocoding y de los
+   SDK móviles).
+2. Crear una API key restringida a **Maps JavaScript API** y, en *Application
+   restrictions*, a **HTTP referrers**: `http://localhost:*`, `http://127.0.0.1:*`
+   y el/los dominios de producción. **No reutilizar** la key de Android/iOS: esas
+   están restringidas por package/bundle y el navegador las rechaza.
+3. Pasar la key en el build (no se commitea):
+
+```powershell
+flutter run -d chrome --dart-define=GOOGLE_MAPS_WEB_API_KEY=AIza…
+# producción
+flutter build web --release --dart-define=GOOGLE_MAPS_WEB_API_KEY=AIza…
+```
+
+Cómo funciona: [google_maps_web_loader.dart](../mobile/personalsalud/lib/widgets/google_maps_web_loader.dart)
+selecciona por *conditional import* la implementación web
+(`google_maps_web_loader_web.dart`), que inyecta
+`https://maps.googleapis.com/maps/api/js?...` una sola vez y espera `google.maps`;
+en Android/iOS usa un stub. Si falta la key o la API no está habilitada, el widget
+muestra un mensaje con **Reintentar** en lugar de romper el árbol de widgets.
+
+> En web la key **queda visible en el navegador**: por eso la restricción por
+> referrer es obligatoria. El *reverse geocoding* sigue siendo server-side con su
+> propia key, que nunca se expone.
+
 ## 5. Comportamiento en la app
 
 - Flujo **PRIVADO**: nombre + domicilio + mapa. El usuario toca el mapa o

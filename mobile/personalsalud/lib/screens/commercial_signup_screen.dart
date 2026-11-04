@@ -332,8 +332,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
       setState(() {
         _resolvingLocation = false;
         _resolvedLocation = result;
-        final direccion = result['direccion']?.toString().trim() ?? '';
-        if (direccion.isNotEmpty) _addressController.text = direccion;
+        _addressController.text = _locationAddress(result);
       });
     } catch (error) {
       if (!mounted || requestId != _locationRequestId) return;
@@ -345,6 +344,20 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     }
   }
 
+  /// Dirección del efector: la que devuelve el geocoding y, si no vino, la
+  /// composición localidad / departamento / provincia / país.
+  String _locationAddress(Map<String, dynamic> location) {
+    final direccion = location['direccion']?.toString().trim() ?? '';
+    if (direccion.isNotEmpty) return direccion;
+
+    return <String>[
+      location['localidad']?['nombre']?.toString() ?? '',
+      location['departamento']?['nombre']?.toString() ?? '',
+      location['provincia']?['nombre']?.toString() ?? '',
+      location['pais']?['nombre']?.toString() ?? '',
+    ].where((parte) => parte.isNotEmpty).join(', ');
+  }
+
   Widget _buildResolvedLocation() {
     final tokens = context.bio;
     final location = _resolvedLocation!;
@@ -354,6 +367,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
       location['localidad']?['nombre']?.toString() ?? '',
     ].where((parte) => parte.isNotEmpty).toList();
     final distancia = location['distancia_km']?.toString();
+    final direccion = location['direccion']?.toString().trim() ?? '';
 
     return Material(
       color: tokens.paperSurface,
@@ -377,6 +391,13 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
                         : partes.join(' · '),
                     style: BioTypography.bodySm,
                   ),
+                  if (direccion.isNotEmpty)
+                    Text(
+                      direccion,
+                      style: BioTypography.caption.copyWith(
+                        color: tokens.textMuted,
+                      ),
+                    ),
                   if (distancia != null)
                     Text(
                       'Localidad más cercana a $distancia km',
@@ -448,6 +469,13 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     if (!_formKey.currentState!.validate()) return;
     if (_sector != 'PUBLICO' && _pickedLocation == null) {
       setState(() => _errorMessage = 'Ubicá el efector en el mapa.');
+      return;
+    }
+    if (_sector != 'PUBLICO' && _addressController.text.trim().isEmpty) {
+      setState(
+        () => _errorMessage =
+            'Ubicá el efector en el mapa para que detectemos la dirección.',
+      );
       return;
     }
     if (_sector == 'PUBLICO' && _selectedMinistryId == null) {
@@ -1496,13 +1524,12 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
                     }),
                 ] else ...[
                   _textField(_nameController, 'Nombre del efector'),
-                  _textField(_addressController, 'Domicilio'),
                   Text('Ubicación en el mapa', style: BioTypography.title),
                   BioSpacing.gapH(BioSpacing.xs),
                   Text(
                     'Buscá el lugar por el nombre que cargaste y ubicá el '
                     'efector tocando el mapa. Con la coordenada detectamos '
-                    'país, provincia y localidad.',
+                    'país, provincia, localidad y la dirección exacta.',
                     style: BioTypography.bodySm.copyWith(
                       color: tokens.textMuted,
                     ),

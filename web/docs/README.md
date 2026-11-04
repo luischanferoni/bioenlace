@@ -14,7 +14,7 @@ Historias de producto, arquitectura y pruebas. No es un índice de archivos del 
 | [decisions/](./decisions/README.md) | Decisiones técnicas cerradas (ADR) |
 | [modelo-de-negocio/](./modelo-de-negocio/README.md) | Casos de mercado, vías de ingreso y [business plan](./modelo-de-negocio/business-plan/README.md) |
 | [presentaciones/](./presentaciones/README.md) | Decks comerciales |
-| [operacion/](./operacion/cron-produccion-hostinger.md) | Operación (cron en producción) |
+| [operacion/](./operacion/cron-produccion-hostinger.md) | Operación: cron en producción e [integración de Mercado Pago](./operacion/mercado-pago-checkout-pro.md) |
 
 `plans/` es **temporal**: programas grandes mientras se construyen. Al cerrar, lo vigente queda en `producto/` o `decisions/` y se borra la carpeta. No enlazar `plans/` desde el resto de esta documentación. Índice interno: [plans/README.md](./plans/README.md).
 

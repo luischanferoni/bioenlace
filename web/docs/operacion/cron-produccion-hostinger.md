@@ -125,6 +125,8 @@ Aplica `pending_max_pes` cuando llega el nuevo período (baja de profesionales d
 
 ### 01:00 diario (`0 1 * * *`) — suspender licencias con período vencido
 
+Suspende la cuenta de licencia y pasa el intento a `EXPIRED` cuando `paid_through_at` ya venció. Es el único corte automático de las suscripciones de Mercado Pago: sin este cron, una suscripción cancelada o impaga conserva el acceso. Ver [mercado-pago-checkout-pro.md](./mercado-pago-checkout-pro.md).
+
 ```bash
 /usr/bin/php /home/u257309594/domains/bioenlace.io/repo/web/yii billing-subscription/expire-paid-through >> /home/u257309594/domains/bioenlace.io/repo/web/console/runtime/logs/billing-expire-cron.log 2>&1
 ```

@@ -25,6 +25,8 @@ use common\traits\ParameterQuestionsTrait;
  * @property string $origen_financiamiento
  * @property integer $id_localidad
  * @property string $estado
+ * @property string|null $latitud Coordenada elegida en el mapa del alta
+ * @property string|null $longitud Coordenada elegida en el mapa del alta
  *
  * @property Localidades $idLocalidad
  * @property ServiciosEfector[] $serviciosEfectors
@@ -61,6 +63,9 @@ class Efector extends \yii\db\ActiveRecord
             [['dependencia', 'origen_financiamiento'], 'string', 'max' => 40],
             [['tipologia'], 'string', 'max' => 10],
             [['telefono'], 'string', 'max' => 50],
+            [['latitud', 'longitud'], 'number'],
+            [['latitud'], 'number', 'min' => -90, 'max' => 90],
+            [['longitud'], 'number', 'min' => -180, 'max' => 180],
             
         ];
     }

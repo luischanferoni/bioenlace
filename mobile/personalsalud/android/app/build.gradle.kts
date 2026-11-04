@@ -54,6 +54,16 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // Google Maps: la key se toma de android/local.properties (no versionado)
+        // como `googleMapsApiKey=...`, o de la variable de entorno GOOGLE_MAPS_API_KEY.
+        val googleMapsApiKey = run {
+            val fromLocal = rootProject.file("local.properties").takeIf { it.exists() }?.let { file ->
+                Properties().apply { file.inputStream().use { load(it) } }.getProperty("googleMapsApiKey")
+            }
+            fromLocal ?: System.getenv("GOOGLE_MAPS_API_KEY") ?: ""
+        }
+        manifestPlaceholders["googleMapsApiKey"] = googleMapsApiKey
     }
 
     buildTypes {

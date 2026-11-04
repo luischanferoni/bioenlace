@@ -349,4 +349,13 @@ return [
     'google_cloud_region' => 'us-central1',
     'google_cloud_credentials_path' => null,
     'google_cloud_api_key' => null,
+
+    /*
+     * Google Maps Platform — reverse geocoding del alta comercial.
+     * Habilitar "Geocoding API" en el proyecto y crear una API key restringida
+     * a esa API. Configurar la key en params-local.php.
+     */
+    'google_maps_geocoding_api_key' => null,
+    'google_maps_geocoding_base_url' => 'https://maps.googleapis.com/maps/api/geocode/json',
+    'google_maps_geocoding_timeout' => 8,
 ];

@@ -2,11 +2,13 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:shared/shared.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../services/staff_signup_service.dart';
+import '../widgets/map_location_picker.dart';
 
 class CommercialSignupScreen extends StatefulWidget {
   const CommercialSignupScreen({this.initialPlan, super.key});
@@ -25,11 +27,9 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
   final _sisaSearchController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _localityQueryController = TextEditingController();
   final _service = StaffSignupService();
 
   bool _submitting = false;
-  bool _searchingLocalities = false;
   bool _searchingSisaEfectores = false;
   bool _loadingMinistries = false;
   bool _termsAccepted = false;
@@ -58,14 +58,20 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
   String? _paidThroughAt;
   Map<String, dynamic>? _pricing;
   Map<String, dynamic>? _quote;
-  Map<String, dynamic>? _selectedLocality;
   Map<String, dynamic>? _selectedSisaEfector;
-  List<Map<String, dynamic>> _localities = const [];
   List<Map<String, dynamic>> _sisaEfectores = const [];
   List<Map<String, dynamic>> _ministries = const [];
   int? _selectedMinistryId;
   Map<String, dynamic>? _plansCatalog;
   String? _plansError;
+
+  // Ubicación del efector privado (mapa + resolución en backend).
+  LatLng? _pickedLocation;
+  Map<String, dynamic>? _resolvedLocation;
+  bool _resolvingLocation = false;
+  String? _locationError;
+  int _locationRequestId = 0;
+  Timer? _locationDebounce;
 
   /// Volumen mensual elegido por tipo de atención (`AMB`, `EMER`, `IMP`).
   /// Si un tipo no tiene entrada, no se contrata.
@@ -98,13 +104,13 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
 
   @override
   void dispose() {
+    _locationDebounce?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     _nameController.dispose();
     _addressController.dispose();
     _sisaSearchController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
-    _localityQueryController.dispose();
     super.dispose();
   }
 
@@ -245,11 +251,19 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
         : {
             'nombre': _nameController.text.trim(),
             'domicilio': _addressController.text.trim(),
-            if (_selectedLocality != null) ...{
-              'id_localidad': _selectedLocality!['id'],
-              'localidad': _selectedLocality!['nombre'],
-              'departamento': _selectedLocality!['departamento'],
-              'provincia': _selectedLocality!['provincia'],
+            if (_pickedLocation != null) ...{
+              'lat': _pickedLocation!.latitude,
+              'lng': _pickedLocation!.longitude,
+            },
+            if (_resolvedLocation?['localidad']?['id'] != null) ...{
+              'id_localidad': _resolvedLocation!['localidad']['id'],
+              'localidad': _resolvedLocation!['localidad']['nombre'],
+              if (_resolvedLocation!['departamento']?['nombre'] != null)
+                'departamento': _resolvedLocation!['departamento']['nombre'],
+              if (_resolvedLocation!['provincia']?['nombre'] != null)
+                'provincia': _resolvedLocation!['provincia']['nombre'],
+              if (_resolvedLocation!['pais']?['nombre'] != null)
+                'pais': _resolvedLocation!['pais']['nombre'],
             },
             'telefono': _phoneController.text.trim(),
           };
@@ -287,39 +301,96 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     }
   }
 
-  Future<void> _searchLocalities() async {
-    final query = _localityQueryController.text.trim();
-    if (query.length < 2) {
-      setState(() {
-        _selectedLocality = null;
-        _localities = const [];
-        _errorMessage = 'Ingresá al menos dos letras para buscar la localidad.';
-      });
-      return;
-    }
+  void _onMapLocationChanged(LatLng position) {
+    setState(() {
+      _pickedLocation = position;
+      _locationError = null;
+    });
+    _locationRequestId++;
+    _locationDebounce?.cancel();
+    _locationDebounce = Timer(
+      const Duration(milliseconds: 400),
+      _resolveLocation,
+    );
+  }
+
+  Future<void> _resolveLocation() async {
+    final picked = _pickedLocation;
+    if (picked == null) return;
+    final requestId = ++_locationRequestId;
 
     setState(() {
-      _searchingLocalities = true;
-      _selectedLocality = null;
-      _errorMessage = null;
+      _resolvingLocation = true;
+      _locationError = null;
     });
     try {
-      final results = await _service.searchLocalities(query);
-      if (!mounted) return;
+      final result = await _service.resolveLocation(
+        latitude: picked.latitude,
+        longitude: picked.longitude,
+      );
+      if (!mounted || requestId != _locationRequestId) return;
       setState(() {
-        _localities = results;
-        _searchingLocalities = false;
-        if (results.isEmpty) {
-          _errorMessage = 'No encontramos localidades con ese nombre.';
-        }
+        _resolvingLocation = false;
+        _resolvedLocation = result;
+        final direccion = result['direccion']?.toString().trim() ?? '';
+        if (direccion.isNotEmpty) _addressController.text = direccion;
       });
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted || requestId != _locationRequestId) return;
       setState(() {
-        _searchingLocalities = false;
-        _errorMessage = _errorText(error);
+        _resolvingLocation = false;
+        _resolvedLocation = null;
+        _locationError = _errorText(error);
       });
     }
+  }
+
+  Widget _buildResolvedLocation() {
+    final tokens = context.bio;
+    final location = _resolvedLocation!;
+    final partes = <String>[
+      location['pais']?['nombre']?.toString() ?? '',
+      location['provincia']?['nombre']?.toString() ?? '',
+      location['localidad']?['nombre']?.toString() ?? '',
+    ].where((parte) => parte.isNotEmpty).toList();
+    final distancia = location['distancia_km']?.toString();
+
+    return Material(
+      color: tokens.paperSurface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: tokens.paperDividerDefault),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(BioSpacing.md),
+        child: Row(
+          children: [
+            Icon(Icons.place_outlined, size: 18, color: tokens.textMuted),
+            BioSpacing.gapW(BioSpacing.sm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    partes.isEmpty
+                        ? 'No pudimos determinar la localidad.'
+                        : partes.join(' · '),
+                    style: BioTypography.bodySm,
+                  ),
+                  if (distancia != null)
+                    Text(
+                      'Localidad más cercana a $distancia km',
+                      style: BioTypography.caption.copyWith(
+                        color: tokens.textMuted,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _searchSisaEfectores() async {
@@ -375,10 +446,8 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
 
   Future<void> _startCheckout() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_sector != 'PUBLICO' && _selectedLocality == null) {
-      setState(
-        () => _errorMessage = 'Buscá y seleccioná la localidad del efector.',
-      );
+    if (_sector != 'PUBLICO' && _pickedLocation == null) {
+      setState(() => _errorMessage = 'Ubicá el efector en el mapa.');
       return;
     }
     if (_sector == 'PUBLICO' && _selectedMinistryId == null) {
@@ -1428,59 +1497,45 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
                 ] else ...[
                   _textField(_nameController, 'Nombre del efector'),
                   _textField(_addressController, 'Domicilio'),
-                  TextFormField(
-                    controller: _localityQueryController,
-                    decoration: InputDecoration(
-                      labelText: 'Localidad',
-                      border: const OutlineInputBorder(),
-                      suffixIcon: IconButton(
-                        onPressed: _searchingLocalities
-                            ? null
-                            : _searchLocalities,
-                        icon: _searchingLocalities
-                            ? const CircularProgressIndicator()
-                            : const Icon(Icons.search),
-                      ),
+                  Text('Ubicación en el mapa', style: BioTypography.title),
+                  BioSpacing.gapH(BioSpacing.xs),
+                  Text(
+                    'Buscá el lugar por el nombre que cargaste y ubicá el '
+                    'efector tocando el mapa. Con la coordenada detectamos '
+                    'país, provincia y localidad.',
+                    style: BioTypography.bodySm.copyWith(
+                      color: tokens.textMuted,
                     ),
-                    onFieldSubmitted: (_) => _searchLocalities(),
-                    onChanged: (_) {
-                      if (_selectedLocality != null) {
-                        setState(() {
-                          _selectedLocality = null;
-                          _localities = const [];
-                        });
-                      }
-                    },
-                    validator: (_) => _selectedLocality == null
-                        ? 'Buscá y seleccioná una localidad.'
-                        : null,
                   ),
-                  if (_localities.isNotEmpty && _selectedLocality == null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: BioSpacing.xs),
-                      child: DropdownButtonFormField<Map<String, dynamic>>(
-                        decoration: const InputDecoration(
-                          labelText: 'Resultados de localidad',
-                          border: OutlineInputBorder(),
+                  BioSpacing.gapH(BioSpacing.sm),
+                  MapLocationPicker(
+                    initialLatitude: _pickedLocation?.latitude,
+                    initialLongitude: _pickedLocation?.longitude,
+                    onChanged: _onMapLocationChanged,
+                  ),
+                  BioSpacing.gapH(BioSpacing.sm),
+                  if (_resolvingLocation)
+                    const Center(child: CircularProgressIndicator())
+                  else if (_locationError != null)
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _locationError!,
+                            style: BioTypography.bodySm.copyWith(
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                          ),
                         ),
-                        items: _localities.map((item) {
-                          final label =
-                              '${item['nombre']}, ${item['departamento']} (${item['provincia']})';
-                          return DropdownMenuItem(
-                            value: item,
-                            child: Text(label),
-                          );
-                        }).toList(),
-                        onChanged: (item) {
-                          if (item == null) return;
-                          setState(() {
-                            _selectedLocality = item;
-                            _localityQueryController.text =
-                                '${item['nombre']}, ${item['departamento']} (${item['provincia']})';
-                          });
-                        },
-                      ),
-                    ),
+                        TextButton(
+                          onPressed: _resolveLocation,
+                          child: const Text('Reintentar'),
+                        ),
+                      ],
+                    )
+                  else if (_resolvedLocation != null)
+                    _buildResolvedLocation(),
+                  BioSpacing.gapH(BioSpacing.md),
                 ],
               ] else ...[
                 Text(

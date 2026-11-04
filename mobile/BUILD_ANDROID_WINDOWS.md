@@ -156,6 +156,14 @@ Si falla `lintVitalAnalyzeRelease` con «archivo en uso»:
 2. Si persiste: `cd mobile/paciente/android` → `.\gradlew --stop`, cerrar otros procesos que usen `build/` (IDE, emulador) y borrar `build/`.
 3. Reintentar `flutter build appbundle --release`.
 
+## Google Maps (alta comercial)
+
+El alta privada de espacio de atención usa Google Maps para ubicar el efector.
+La key **no** se versiona: va en `personalsalud/android/local.properties`
+(`googleMapsApiKey=…`) o en la variable de entorno `GOOGLE_MAPS_API_KEY`.
+Guía completa (APIs a habilitar, restricciones y key del servidor):
+[personalsalud/GOOGLE_MAPS_SETUP.md](personalsalud/GOOGLE_MAPS_SETUP.md).
+
 ## Release store
 
 Ver [../RELEASE_SIGNING.md](../RELEASE_SIGNING.md) — **obligatorio** antes de subir a Play Console.

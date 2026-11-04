@@ -140,6 +140,7 @@ return [
                 'POST api/<version:\w+>/licencia/cancelar-suscripcion-didit' => '<version>/licencia/cancelar-suscripcion-didit',
                 'POST api/<version:\w+>/licencia/enviar-verificacion-email' => '<version>/licencia/enviar-verificacion-email',
                 'POST api/<version:\w+>/licencia/estado-email' => '<version>/licencia/estado-email',
+                'POST api/<version:\w+>/licencia/ubicacion' => '<version>/licencia/ubicacion',
                 'POST api/<version:\w+>/licencia/completar-ministerio' => '<version>/licencia/completar-ministerio',
                 'POST api/<version:\w+>/licencia/registrar-efector' => '<version>/licencia/registrar-efector',
                 'POST api/<version:\w+>/mercado-pago-webhook' => '<version>/mercado-pago-webhook/index',

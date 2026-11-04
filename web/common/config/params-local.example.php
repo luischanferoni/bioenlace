@@ -22,6 +22,11 @@ return [
     'google_cloud_region' => 'us-central1',
     // 'google_cloud_api_key' => '', // solo dev local; menos seguro que500 JSON
 
+    // --- Google Maps Platform (alta comercial: reverse geocoding) ---
+    // Habilitar "Geocoding API" en el proyecto y crear una API key restringida a esa API.
+    // La key de mapas del móvil (Maps SDK Android/iOS) es otra y va en el build de la app.
+    // 'google_maps_geocoding_api_key' => '',
+
     // --- Mail (Symfony Mailer). null/vacío = archivo en runtime/mail ---
     // 'mailerDsn' => 'smtp://user:pass@smtp.example.com:587',
     // 'mailerDsn' => 'sendmail://default',

@@ -3,6 +3,7 @@
 namespace frontend\modules\api\v1\controllers\organization;
 
 use frontend\modules\api\v1\controllers\BaseController;
+use common\components\Domain\Geo\Application\Service\GeoLocationResolver;
 use common\components\Domain\Organization\Efector\Application\UseCase\SwitchBillingMembership;
 use common\components\Domain\Organization\Efector\Application\UseCase\SignUpInstitutionalEfector;
 use common\components\Domain\Organization\Efector\Application\Service\CommercialSignupDraftService;
@@ -51,6 +52,7 @@ class LicenciaController extends BaseController
         'cancelar-suscripcion-didit',
         'enviar-verificacion-email',
         'estado-email',
+        'ubicacion',
         'completar-ministerio',
         'solicitar-ministerio',
         'demo-perfiles',
@@ -89,6 +91,7 @@ class LicenciaController extends BaseController
         $verbs['cancelar-suscripcion-didit'] = ['POST', 'OPTIONS'];
         $verbs['enviar-verificacion-email'] = ['POST', 'OPTIONS'];
         $verbs['estado-email'] = ['POST', 'OPTIONS'];
+        $verbs['ubicacion'] = ['POST', 'OPTIONS'];
         $verbs['completar-ministerio'] = ['POST', 'OPTIONS'];
         $verbs['registrar-efector'] = ['POST', 'OPTIONS'];
         $verbs['estado-checkout'] = ['GET', 'OPTIONS'];
@@ -500,6 +503,37 @@ class LicenciaController extends BaseController
         } catch (\Throwable $e) {
             Yii::error($e->getMessage() . "\n" . $e->getTraceAsString(), 'billing.signup');
             return $this->error('No se pudo consultar el checkout. Reintentá más tarde.', null, 503);
+        }
+    }
+
+    /**
+     * Resuelve país/provincia/departamento/localidad a partir de las coordenadas
+     * elegidas en el mapa del alta comercial (reverse geocoding + base geo).
+     */
+    public function actionUbicacion()
+    {
+        $body = Yii::$app->request->getBodyParams();
+        if (!is_array($body)) {
+            return $this->error('Los datos de la ubicación son inválidos.', null, 400);
+        }
+
+        $lat = $body['lat'] ?? $body['latitud'] ?? null;
+        $lng = $body['lng'] ?? $body['longitud'] ?? null;
+        if (!is_numeric($lat) || !is_numeric($lng)) {
+            return $this->error('Indicá latitud y longitud.', null, 400);
+        }
+        $lat = (float) $lat;
+        $lng = (float) $lng;
+        if ($lat < -90 || $lat > 90 || $lng < -180 || $lng > 180) {
+            return $this->error('Las coordenadas están fuera de rango.', null, 400);
+        }
+
+        try {
+            return $this->success((new GeoLocationResolver())->resolve($lat, $lng));
+        } catch (\Throwable $e) {
+            Yii::error($e->getMessage() . "\n" . $e->getTraceAsString(), 'geo.location');
+
+            return $this->error('No pudimos resolver la ubicación. Reintentá.', null, 503);
         }
     }
 

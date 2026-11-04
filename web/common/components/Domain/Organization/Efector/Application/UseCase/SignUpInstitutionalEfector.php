@@ -16,6 +16,7 @@ use common\models\Person\Persona;
 use common\models\Platform\User;
 use common\components\Domain\Organization\Pes\Application\UseCase\EnsureAdminEfectorAssignment;
 use common\components\Domain\Organization\Efector\Application\Service\ContactPhoneValidator;
+use common\components\Domain\Geo\Application\Service\GeoLocationResolver;
 use common\components\Platform\Core\Product\PricingPesByEncounterClassMetadata;
 use Yii;
 use yii\db\Query;
@@ -240,8 +241,13 @@ final class SignUpInstitutionalEfector
             $efector = self::resolvePublicEfector($payload['efector']);
             self::assertAllowedCountry((int) $efector['id_localidad']);
         } else {
-            if ((int) ($payload['efector']['id_localidad'] ?? 0) <= 0) {
-                throw new \InvalidArgumentException('Seleccioná una localidad válida para el efector.');
+            $inputEfector = $payload['efector'];
+            $hasCoordinates = ($inputEfector['lat'] ?? $inputEfector['latitud'] ?? null) !== null
+                || ($inputEfector['lng'] ?? $inputEfector['longitud'] ?? null) !== null;
+            if ((int) ($inputEfector['id_localidad'] ?? 0) <= 0 && !$hasCoordinates) {
+                throw new \InvalidArgumentException(
+                    'Seleccioná una localidad válida o ubicá el efector en el mapa.'
+                );
             }
             $efector = self::normalizeEfector(
                 $payload['efector'],
@@ -702,7 +708,7 @@ final class SignUpInstitutionalEfector
 
     /**
      * @param array<string, mixed> $efector
-     * @return array{nombre: string, domicilio: string, telefono: ?string, id_localidad: int, origen_financiamiento: string, dependencia: string, tipologia: string, codigo_sisa: string}
+     * @return array{nombre: string, domicilio: string, telefono: ?string, id_localidad: int, origen_financiamiento: string, dependencia: string, tipologia: string, codigo_sisa: string, latitud: ?float, longitud: ?float}
      */
     private static function normalizeEfector(
         array $efector,
@@ -716,7 +722,16 @@ final class SignUpInstitutionalEfector
             throw new \InvalidArgumentException('Indicá nombre y domicilio del efectores.');
         }
 
+        [$latitud, $longitud] = self::normalizeCoordinates(
+            $efector['lat'] ?? $efector['latitud'] ?? null,
+            $efector['lng'] ?? $efector['longitud'] ?? null
+        );
+
         $idLocalidad = (int) ($efector['id_localidad'] ?? 0);
+        if ($idLocalidad <= 0 && $latitud !== null && $longitud !== null) {
+            // El mapa del alta puede no traer id_localidad: la resolvemos nosotros.
+            $idLocalidad = (int) (GeoLocationResolver::nearestLocalityId($latitud, $longitud) ?? 0);
+        }
         if ($idLocalidad <= 0) {
             $idLocalidad = self::resolveDefaultLocalidadId();
         }
@@ -737,7 +752,35 @@ final class SignUpInstitutionalEfector
             'dependencia' => $publico ? 'Provincial' : 'Privado',
             'tipologia' => $tipologia,
             'codigo_sisa' => self::generateCodigoSisa(),
+            'latitud' => $latitud,
+            'longitud' => $longitud,
         ];
+    }
+
+    /**
+     * @return array{0: ?float, 1: ?float}
+     */
+    private static function normalizeCoordinates(mixed $latitud, mixed $longitud): array
+    {
+        $hasLat = $latitud !== null && $latitud !== '';
+        $hasLng = $longitud !== null && $longitud !== '';
+        if (!$hasLat && !$hasLng) {
+            return [null, null];
+        }
+        if (!$hasLat || !$hasLng) {
+            throw new \InvalidArgumentException('Indicá latitud y longitud juntas.');
+        }
+        if (!is_numeric($latitud) || !is_numeric($longitud)) {
+            throw new \InvalidArgumentException('Las coordenadas del efector son inválidas.');
+        }
+
+        $lat = round((float) $latitud, 7);
+        $lng = round((float) $longitud, 7);
+        if ($lat < -90 || $lat > 90 || $lng < -180 || $lng > 180) {
+            throw new \InvalidArgumentException('Las coordenadas del efector están fuera de rango.');
+        }
+
+        return [$lat, $lng];
     }
 
     /**
@@ -866,7 +909,7 @@ final class SignUpInstitutionalEfector
     }
 
     /**
-     * @param array{nombre: string, domicilio: string, telefono: ?string, id_localidad: int, origen_financiamiento: string, dependencia: string, tipologia: string, codigo_sisa: string} $data
+     * @param array{nombre: string, domicilio: string, telefono: ?string, id_localidad: int, origen_financiamiento: string, dependencia: string, tipologia: string, codigo_sisa: string, latitud?: ?float, longitud?: ?float} $data
      */
     private static function createEfector(array $data): Efector
     {
@@ -879,6 +922,12 @@ final class SignUpInstitutionalEfector
         $efector->origen_financiamiento = $data['origen_financiamiento'];
         $efector->id_localidad = $data['id_localidad'];
         $efector->telefono = $data['telefono'];
+        if (isset($data['latitud'], $data['longitud'])
+            && $data['latitud'] !== null
+            && $data['longitud'] !== null) {
+            $efector->latitud = (string) $data['latitud'];
+            $efector->longitud = (string) $data['longitud'];
+        }
         $efector->estado = 'ACTIVO';
         $efector->grupo = '0';
         $efector->implementado = 'F';

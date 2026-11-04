@@ -256,6 +256,20 @@ class StaffSignupService {
     );
   }
 
+  /// Resuelve país/provincia/departamento/localidad desde lat/lng (alta privada).
+  Future<Map<String, dynamic>> resolveLocation({
+    required double latitude,
+    required double longitude,
+  }) {
+    return ApiClient(
+      appClient: 'bioenlace-personalsalud',
+      traceLabel: 'licencia/ubicacion',
+    ).postData(
+      '/licencia/ubicacion',
+      body: {'lat': latitude, 'lng': longitude},
+    );
+  }
+
   /// Envía (o reenvía) el mail de confirmación del e-mail del alta.
   Future<Map<String, dynamic>> sendEmailVerification({
     required String verificationId,

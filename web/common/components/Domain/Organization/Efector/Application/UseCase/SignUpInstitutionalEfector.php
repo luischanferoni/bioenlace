@@ -570,8 +570,8 @@ final class SignUpInstitutionalEfector
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             throw new \InvalidArgumentException('La cuenta debe tener un e-mail válido para el alta.');
         }
-        $telefono = trim((string) ($payload['contact_phone'] ?? ''));
-        ContactPhoneValidator::assertValid($telefono, 'Teléfono del administrador');
+        $telefono = ContactPhoneValidator::normalizeMobile((string) ($payload['contact_phone'] ?? '')) ?? '';
+        ContactPhoneValidator::assertValidMobile($telefono, 'Teléfono del administrador');
 
         return [
             'admin' => [

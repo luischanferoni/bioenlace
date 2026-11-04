@@ -65,21 +65,20 @@ class Persona_mails extends \yii\db\ActiveRecord
         return $this->hasOne(Persona::className(), ['id_persona' => 'id_persona']);
     }
     
-    public function beforeSave($insert) {
-        parent::beforeSave($insert);
-        extract($_GET);
+    public function beforeSave($insert)
+    {
+        if (!parent::beforeSave($insert)) {
+            return false;
+        }
 
-        $model_persona = new \common\models\Person\Persona();
-        $model_persona->load(Yii::$app->request->post());
-             
-        if ($insert) {
-           if(isset($idp)){
+        // El alta legacy vincula la persona por query string (?idp=<id_persona>).
+        if ($insert && (int) $this->id_persona <= 0) {
+            $idp = (int) Yii::$app->request->get('idp', 0);
+            if ($idp > 0) {
                 $this->id_persona = $idp;
-            }else{
-                $this->id_persona = $this->id_persona ;
             }
-            
-            }
+        }
+
         return true;
     }
 }

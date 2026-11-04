@@ -255,4 +255,30 @@ class StaffSignupService {
       body: {'verification_id': verificationId, 'checkout_key': checkoutKey},
     );
   }
+
+  /// Envía (o reenvía) el mail de confirmación del e-mail del alta.
+  Future<Map<String, dynamic>> sendEmailVerification({
+    required String verificationId,
+  }) {
+    return ApiClient(
+      appClient: 'bioenlace-personalsalud',
+      traceLabel: 'licencia/enviar-verificacion-email',
+    ).postData(
+      '/licencia/enviar-verificacion-email',
+      body: {'verification_id': verificationId},
+    );
+  }
+
+  /// Estado de confirmación del e-mail del alta.
+  Future<Map<String, dynamic>> emailVerificationStatus({
+    required String verificationId,
+  }) {
+    return ApiClient(
+      appClient: 'bioenlace-personalsalud',
+      traceLabel: 'licencia/estado-email',
+    ).postData(
+      '/licencia/estado-email',
+      body: {'verification_id': verificationId},
+    );
+  }
 }

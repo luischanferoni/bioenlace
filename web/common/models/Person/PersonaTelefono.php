@@ -73,34 +73,31 @@ class PersonaTelefono extends \yii\db\ActiveRecord
         return $this->hasOne(Tipo_telefono::className(), ['id_tipo_telefono' => 'id_tipo_telefono']);
     }
     /**
-     * @return \yii\db\ActiveQuery
+     * @return array<int, array<string, mixed>>
      */
     public function getTelefonosPorPersona($id_persona)
     {
-//         $telefonos_persona = static::find()->indexBy('id_persona_telefono')->asArray()->all(); 
-       $sql='SELECT * FROM `persona_telefono` 
-                WHERE  `persona_telefono`.`id_persona` = '.$id_persona.'';
-        $telefonos=  PersonaTelefono::findBySql($sql)->asArray()->all();
-        return $telefonos;
+        return static::find()
+            ->where(['id_persona' => (int) $id_persona])
+            ->asArray()
+            ->all();
     }
-    
-    
-    public function beforeSave($insert) {
-        parent::beforeSave($insert);
-        extract($_GET);
 
-        var_dump( $model_persona = new \common\models\Person\Persona());
-        $model_persona->load(Yii::$app->request->post());
-             
-        if ($insert) {
-           if(isset($idp)){
+    public function beforeSave($insert)
+    {
+        if (!parent::beforeSave($insert)) {
+            return false;
+        }
+
+        // El alta legacy vincula la persona por query string (?idp=<id_persona>).
+        if ($insert && (int) $this->id_persona <= 0) {
+            $idp = (int) Yii::$app->request->get('idp', 0);
+            if ($idp > 0) {
                 $this->id_persona = $idp;
-            }else{
-                $this->id_persona = $this->id_persona ;
             }
-            
-            }
+        }
+
         return true;
     }
-   
+
 }

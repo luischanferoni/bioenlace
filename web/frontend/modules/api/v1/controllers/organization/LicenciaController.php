@@ -17,6 +17,8 @@ use common\components\Domain\Organization\Efector\Application\Service\StaffAffil
 use common\components\Platform\Core\Auth\DemoSandboxAccessService;
 use common\components\Platform\Core\Auth\DemoSandboxCaptchaService;
 use common\components\Platform\Core\Auth\StaffMobileAccessService;
+use common\components\Platform\Core\Auth\EmailConfirmationSender;
+use common\components\Platform\Core\Auth\EmailDeliveryUnavailableException;
 use common\components\Platform\Core\Http\Contract\ApiException;
 use common\components\Platform\Core\Product\PricingPesByEncounterClassMetadata;
 use common\models\Geo\Pais;
@@ -47,6 +49,8 @@ class LicenciaController extends BaseController
         'registrar-efector-didit',
         'estado-checkout-didit',
         'cancelar-suscripcion-didit',
+        'enviar-verificacion-email',
+        'estado-email',
         'completar-ministerio',
         'solicitar-ministerio',
         'demo-perfiles',
@@ -83,6 +87,8 @@ class LicenciaController extends BaseController
         $verbs['registrar-efector-didit'] = ['POST', 'OPTIONS'];
         $verbs['estado-checkout-didit'] = ['POST', 'OPTIONS'];
         $verbs['cancelar-suscripcion-didit'] = ['POST', 'OPTIONS'];
+        $verbs['enviar-verificacion-email'] = ['POST', 'OPTIONS'];
+        $verbs['estado-email'] = ['POST', 'OPTIONS'];
         $verbs['completar-ministerio'] = ['POST', 'OPTIONS'];
         $verbs['registrar-efector'] = ['POST', 'OPTIONS'];
         $verbs['estado-checkout'] = ['GET', 'OPTIONS'];
@@ -494,6 +500,86 @@ class LicenciaController extends BaseController
         } catch (\Throwable $e) {
             Yii::error($e->getMessage() . "\n" . $e->getTraceAsString(), 'billing.signup');
             return $this->error('No se pudo consultar el checkout. Reintentá más tarde.', null, 503);
+        }
+    }
+
+    /**
+     * Envía (o reenvía) el mail de confirmación del e-mail de la cuenta en alta.
+     *
+     * No bloquea el pago: sólo informa si se envió y el cooldown restante.
+     */
+    public function actionEnviarVerificacionEmail()
+    {
+        $body = Yii::$app->request->getBodyParams();
+        if (!is_array($body)) {
+            return $this->error('Los datos de la solicitud son inválidos.', null, 400);
+        }
+        if (trim((string) ($body['verification_id'] ?? '')) === '') {
+            return $this->error('verification_id es requerido.', null, 400);
+        }
+
+        try {
+            (new SignupAbuseGuard())->assertAllowed($body);
+            $identity = (new CreateIdentityAccount())->crear($body);
+            $result = EmailConfirmationSender::send($identity['user'], !empty($body['force']));
+
+            if ($result['sent']) {
+                return $this->success($result, 'Te enviamos un mail para confirmar tu e-mail.');
+            }
+            if ($result['cooldown_seconds'] > 0) {
+                return $this->success($result, 'Esperá unos segundos antes de pedir otro envío.');
+            }
+
+            return $this->success($result, 'No fue necesario enviar el mail: el e-mail ya está confirmado.');
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), null, 400);
+        } catch (IdentityVerificationException $e) {
+            return $e->isRetryable()
+                ? $this->fail('service_unavailable')
+                : $this->error($e->getMessage(), null, 422);
+        } catch (EmailDeliveryUnavailableException $e) {
+            Yii::error($e->getMessage(), 'billing.email');
+
+            return $this->error(
+                'El envío de e-mails no está disponible. Reintentá más tarde.',
+                null,
+                503
+            );
+        } catch (\Throwable $e) {
+            Yii::error($e->getMessage() . "\n" . $e->getTraceAsString(), 'billing.email');
+
+            return $this->error('No se pudo enviar el mail de confirmación.', null, 503);
+        }
+    }
+
+    /**
+     * Estado de confirmación del e-mail de la cuenta en alta.
+     */
+    public function actionEstadoEmail()
+    {
+        $body = Yii::$app->request->getBodyParams();
+        if (!is_array($body)) {
+            return $this->error('Los datos de consulta son inválidos.', null, 400);
+        }
+        if (trim((string) ($body['verification_id'] ?? '')) === '') {
+            return $this->error('verification_id es requerido.', null, 400);
+        }
+
+        try {
+            (new SignupAbuseGuard())->assertAllowed($body);
+            $identity = (new CreateIdentityAccount())->crear($body);
+
+            return $this->success(EmailConfirmationSender::status($identity['user']));
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), null, 400);
+        } catch (IdentityVerificationException $e) {
+            return $e->isRetryable()
+                ? $this->fail('service_unavailable')
+                : $this->error($e->getMessage(), null, 422);
+        } catch (\Throwable $e) {
+            Yii::error($e->getMessage() . "\n" . $e->getTraceAsString(), 'billing.email');
+
+            return $this->error('No se pudo consultar el estado del e-mail.', null, 503);
         }
     }
 

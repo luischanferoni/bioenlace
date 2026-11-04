@@ -41,7 +41,8 @@ final class CommercialSignupDraftService
             $ministeryId = null;
         }
         $payerEmail = trim((string) ($input['payer_email'] ?? ''));
-        $contactPhone = trim((string) ($input['contact_phone'] ?? ''));
+        $contactPhone = ContactPhoneValidator::normalizeMobile((string) ($input['contact_phone'] ?? '')) ?? '';
+        ContactPhoneValidator::assertValidMobile($contactPhone, 'Teléfono de contacto');
         $checkoutRequestKey = strtolower(trim((string) ($input['checkout_request_key'] ?? '')));
         if ($checkoutRequestKey !== '' && !preg_match('/^[a-f0-9]{48}$/', $checkoutRequestKey)) {
             throw new \InvalidArgumentException('La clave de reanudación del checkout es inválida.');

@@ -73,31 +73,25 @@ class Persona_domicilio extends \yii\db\ActiveRecord
     }
     
     
-    public function beforeSave($insert) {
-        parent::beforeSave($insert);
-        
-        $model = new Persona_domicilio();
-        $model_persona = new Persona();
-        $model_domicilio = new Domicilio();
-        
-        $model_domicilio->load(Yii::$app->request->post());
-        $model_persona->load(Yii::$app->request->post());
-        extract($_GET);
+    public function beforeSave($insert)
+    {
+        if (!parent::beforeSave($insert)) {
+            return false;
+        }
+
+        // El alta legacy vincula la persona por query string (?idp=<id_persona>).
         if ($insert) {
-             if($model->isNewRecord){
-                if(isset($idp)){
-                     $this->id_persona = $idp;
-                 }else{
-                     $this->id_persona = $this->id_persona ;
-                 }
-            $this->id_domicilio = $this->id_domicilio;
-            $this->fecha_alta = date("Y-m-d");
-             }
-            }     
-        
+            if ((int) $this->id_persona <= 0) {
+                $idp = (int) Yii::$app->request->get('idp', 0);
+                if ($idp > 0) {
+                    $this->id_persona = $idp;
+                }
+            }
+            if ((string) $this->fecha_alta === '') {
+                $this->fecha_alta = date('Y-m-d');
+            }
+        }
+
         return true;
     }
-    
-    
-    
 }

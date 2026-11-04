@@ -38,6 +38,12 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
   bool _videollamada = false;
   bool _loadingQuote = false;
   bool _loadingPlans = false;
+  bool _sendingEmailVerification = false;
+  bool _emailStepVisible = false;
+  bool _emailConfirmed = false;
+  String? _emailVerificationTarget;
+  String? _emailVerificationNotice;
+  String? _emailVerificationError;
   int _currentStep = 0;
   int _sisaSearchRequestId = 0;
   String _sector = 'PRIVADO';
@@ -441,7 +447,13 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
         _pricing = checkout;
         _currentStep = 3;
         _submitting = false;
+        _emailStepVisible = true;
+        _emailConfirmed = false;
+        _emailVerificationNotice = null;
+        _emailVerificationError = null;
       });
+      // El envío del mail no bloquea el pago: si falla, se avisa en la tarjeta.
+      await _sendEmailVerification();
     } catch (error) {
       if (error is ApiContractException && error.statusCode == 422) {
         _verificationId = null;
@@ -470,14 +482,15 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     return classes.isEmpty ? null : {'classes': classes};
   }
 
+  /// `es_AR` con el símbolo de moneda adelante: "$ 12.345,67".
   String _formatArs(Object? amount) {
     final value = double.tryParse(amount?.toString() ?? '');
     if (value == null) return '—';
-    return NumberFormat.currency(
+    final formatted = NumberFormat.decimalPatternDigits(
       locale: 'es_AR',
-      symbol: 'ARS ',
       decimalDigits: 2,
     ).format(value);
+    return '\$ $formatted';
   }
 
   Widget _buildQuoteCard() {
@@ -496,14 +509,14 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
           ? Text(_quoteError!, style: BioTypography.bodySm)
           : _quote == null
           ? Text(
-              'Elegí un volumen para ver el precio estimado.',
+              'Elegí un volumen para ver el precio.',
               style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
             )
           : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
-                  'Precio estimado',
+                  'Precio',
                   style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
                 ),
                 Text(
@@ -516,6 +529,171 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
                 ),
               ],
             ),
+    );
+  }
+
+  Future<void> _sendEmailVerification() async {
+    final verificationId = _verificationId;
+    if (verificationId == null || _sendingEmailVerification) return;
+
+    setState(() {
+      _sendingEmailVerification = true;
+      _emailVerificationError = null;
+      _emailVerificationNotice = null;
+    });
+    try {
+      final result = await _service.sendEmailVerification(
+        verificationId: verificationId,
+      );
+      if (!mounted) return;
+      final cooldown = int.tryParse(
+        result['cooldown_seconds']?.toString() ?? '',
+      );
+      setState(() {
+        _sendingEmailVerification = false;
+        _emailConfirmed = result['email_confirmed'] == true;
+        _emailVerificationTarget =
+            result['email']?.toString() ?? _emailController.text.trim();
+        _emailVerificationNotice = result['email_confirmed'] == true
+            ? 'Tu e-mail ya está confirmado.'
+            : cooldown != null && cooldown > 0
+            ? 'Podés pedir otro envío en $cooldown s.'
+            : 'Te enviamos un mail para confirmar tu e-mail.';
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _sendingEmailVerification = false;
+        _emailVerificationTarget ??= _emailController.text.trim();
+        _emailVerificationError = _errorText(error);
+      });
+    }
+  }
+
+  Future<void> _checkEmailVerification() async {
+    final verificationId = _verificationId;
+    if (verificationId == null || _sendingEmailVerification) return;
+
+    setState(() {
+      _sendingEmailVerification = true;
+      _emailVerificationError = null;
+    });
+    try {
+      final result = await _service.emailVerificationStatus(
+        verificationId: verificationId,
+      );
+      if (!mounted) return;
+      final confirmed = result['email_confirmed'] == true;
+      setState(() {
+        _sendingEmailVerification = false;
+        _emailConfirmed = confirmed;
+        _emailVerificationTarget =
+            result['email']?.toString() ?? _emailVerificationTarget;
+        _emailVerificationNotice = confirmed
+            ? '¡Listo! Confirmamos tu e-mail.'
+            : 'Todavía no vimos la confirmación. Abrí el mail y tocá el enlace.';
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _sendingEmailVerification = false;
+        _emailVerificationError = _errorText(error);
+      });
+    }
+  }
+
+  Widget _buildEmailVerificationCard() {
+    final tokens = context.bio;
+    final email = _emailVerificationTarget ?? _emailController.text.trim();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: BioSpacing.sm),
+      child: Material(
+        color: tokens.paperSurface,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: tokens.paperDividerDefault),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(BioSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text('Confirmá tu e-mail', style: BioTypography.title),
+              BioSpacing.gapH(BioSpacing.sm),
+              Text(
+                'Te enviamos un mail a $email para confirmarlo. Podés confirmarlo '
+                'ahora o continuar con el pago: no es obligatorio para suscribirte.',
+                style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
+              ),
+              BioSpacing.gapH(BioSpacing.md),
+              if (_sendingEmailVerification)
+                const Center(child: CircularProgressIndicator())
+              else if (_emailVerificationNotice != null)
+                Row(
+                  children: [
+                    Icon(
+                      _emailConfirmed ? Icons.check_circle : Icons.mail_outline,
+                      size: 18,
+                      color: _emailConfirmed
+                          ? IntentPalette.of(UiIntent.success).base
+                          : tokens.textMuted,
+                    ),
+                    BioSpacing.gapW(BioSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        _emailVerificationNotice!,
+                        style: BioTypography.bodySm.copyWith(
+                          color: tokens.textMuted,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              if (_emailVerificationError != null) ...[
+                BioSpacing.gapH(BioSpacing.sm),
+                Text(
+                  _emailVerificationError!,
+                  style: BioTypography.bodySm.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                ),
+              ],
+              BioSpacing.gapH(BioSpacing.md),
+              BioButton.primary(
+                label: 'Continuar al pago',
+                icon: Icons.arrow_forward,
+                size: BioButtonSize.lg,
+                fullWidth: true,
+                onPressed: () => setState(() => _emailStepVisible = false),
+              ),
+              BioSpacing.gapH(BioSpacing.sm),
+              Row(
+                children: [
+                  Expanded(
+                    child: BioButton.outlinePrimary(
+                      label: 'Reenviar mail',
+                      onPressed: _sendingEmailVerification || _emailConfirmed
+                          ? null
+                          : _sendEmailVerification,
+                    ),
+                  ),
+                  BioSpacing.gapW(BioSpacing.sm),
+                  Expanded(
+                    child: BioButton.outlinePrimary(
+                      label: 'Ya confirmé',
+                      onPressed: _sendingEmailVerification || _emailConfirmed
+                          ? null
+                          : _checkEmailVerification,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -576,6 +754,10 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
       _checkoutRequestKey = null;
       _currentStep = 2;
       _errorMessage = null;
+      _emailStepVisible = false;
+      _emailConfirmed = false;
+      _emailVerificationNotice = null;
+      _emailVerificationError = null;
     });
   }
 
@@ -646,6 +828,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     TextEditingController controller,
     String label, {
     TextInputType? keyboardType,
+    String? hintText,
     String? Function(String?)? validator,
     ValueChanged<String>? onChanged,
   }) {
@@ -657,6 +840,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
         onChanged: onChanged,
         decoration: InputDecoration(
           labelText: label,
+          hintText: hintText,
           border: const OutlineInputBorder(),
         ),
         validator:
@@ -666,6 +850,44 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
                 : null,
       ),
     );
+  }
+
+  /// Teléfono opcional: sólo se valida cuando hay valor y debe ser un celular
+  /// en formato internacional (espejo de `ContactPhoneValidator` del backend).
+  String? _validateOptionalMobile(String? value) {
+    final raw = (value ?? '').trim();
+    if (raw.isEmpty) return null;
+
+    final normalized = _normalizeMobile(raw);
+    if (normalized == null) return null;
+    if (RegExp(r'^\+549\d{10}$').hasMatch(normalized)) return null;
+    if (normalized.startsWith('+54')) {
+      return 'Ingresá un celular, ej. +5491123456789.';
+    }
+    return RegExp(r'^\+[1-9]\d{7,14}$').hasMatch(normalized)
+        ? null
+        : 'Usá formato internacional, ej. +5491123456789.';
+  }
+
+  String? _normalizeMobile(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) return null;
+
+    final hasPlus = trimmed.startsWith('+');
+    final digits = trimmed.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.isEmpty) return trimmed;
+
+    if (RegExp(r'^549\d{10}$').hasMatch(digits)) return '+$digits';
+
+    final national = RegExp(r'^0(\d{2,4}?)15(\d{6,8})$').firstMatch(digits);
+    if (!hasPlus && national != null) {
+      final significant = '${national.group(1)}${national.group(2)}';
+      if (significant.length == 10) return '+549$significant';
+    }
+
+    if (!hasPlus && RegExp(r'^\d{10}$').hasMatch(digits)) return '+549$digits';
+
+    return hasPlus ? '+$digits' : trimmed;
   }
 
   Widget _buildClassVolumeGroup({
@@ -704,16 +926,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
                   short,
                   style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
                 ),
-              Text(
-                _classPolicyText(classRow),
-                style: BioTypography.caption.copyWith(color: tokens.textMuted),
-              ),
               BioSpacing.gapH(BioSpacing.sm),
-              Text(
-                'Volumen de atenciones mensual',
-                style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
-              ),
-              BioSpacing.gapH(BioSpacing.xs),
               Wrap(
                 spacing: BioSpacing.sm,
                 runSpacing: BioSpacing.sm,
@@ -731,7 +944,6 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
               if (code == 'AMB' && allowsVideollamada) ...[
                 BioSpacing.gapH(BioSpacing.xs),
                 SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
                   value: _videollamada,
                   onChanged: selected == null
                       ? null
@@ -743,14 +955,15 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
                   subtitle: Text(
                     selected == null
                         ? 'Requiere elegir un volumen ambulatorio.'
-                        : 'Habilita consultas ambulatorias por videollamada. '
-                              'Suma la modalidad al precio estimado.',
+                        : 'Habilita consultas ambulatorias por videollamada.',
                     style: BioTypography.bodySm.copyWith(
                       color: tokens.textMuted,
                     ),
                   ),
                 ),
               ],
+              BioSpacing.gapH(BioSpacing.md),
+              _buildClassPolicy(classRow),
             ],
           ),
         ),
@@ -758,14 +971,45 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     );
   }
 
-  /// Política del tipo de atención, igual que la web institucional
-  /// (`audio_included` / `videollamada_allowed`).
-  String _classPolicyText(Map<String, dynamic> classRow) {
-    final parts = <String>[
-      classRow['audio_included'] == true ? 'Dictado incluido' : 'Sin dictado',
-      if (classRow['videollamada_allowed'] == false) 'Sin videollamada',
-    ];
-    return parts.join(' · ');
+  /// Política del tipo de atención (`audio_included` / `videollamada_allowed`):
+  /// lo incluido lleva un tilde y lo que no está disponible va tachado.
+  Widget _buildClassPolicy(Map<String, dynamic> classRow) {
+    final tokens = context.bio;
+    final base = BioTypography.caption.copyWith(color: tokens.textMuted);
+    final struck = base.copyWith(decoration: TextDecoration.lineThrough);
+    final checkColor = IntentPalette.of(UiIntent.success).base;
+    final spans = <InlineSpan>[];
+
+    void addSeparator() {
+      if (spans.isNotEmpty) {
+        spans.add(TextSpan(text: '  ·  ', style: base));
+      }
+    }
+
+    if (classRow['audio_included'] == true) {
+      spans.add(
+        WidgetSpan(
+          alignment: PlaceholderAlignment.middle,
+          child: Padding(
+            padding: const EdgeInsets.only(right: BioSpacing.xs),
+            child: Icon(Icons.check, size: 12, color: checkColor),
+          ),
+        ),
+      );
+      spans.add(TextSpan(text: 'Dictado incluido', style: base));
+    } else {
+      spans.add(TextSpan(text: 'Sin dictado', style: struck));
+    }
+
+    if (classRow['videollamada_allowed'] == false) {
+      addSeparator();
+      spans.add(TextSpan(text: 'Sin videollamada', style: struck));
+    }
+
+    return Text.rich(
+      TextSpan(style: base, children: spans),
+      textAlign: TextAlign.right,
+    );
   }
 
   void _selectVolume(String code, int attentions) {
@@ -1050,14 +1294,13 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
   }
 
   Widget _priceRow(String label, dynamic amount, {bool bold = false}) {
-    final value = double.tryParse(amount?.toString() ?? '');
     final style = bold ? BioTypography.title : BioTypography.body;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: BioSpacing.xs),
       child: Row(
         children: [
           Expanded(child: Text(label, style: style)),
-          Text('ARS ${(value ?? 0).toStringAsFixed(2)}', style: style),
+          Text(_formatArs(amount), style: style),
         ],
       ),
     );
@@ -1077,7 +1320,9 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
             children: [
               _buildSignupProgress(),
               if (_checkoutKey != null)
-                _buildCheckoutStatus()
+                _emailStepVisible
+                    ? _buildEmailVerificationCard()
+                    : _buildCheckoutStatus()
               else if (_currentStep == 0)
                 _buildSectorStep()
               else if (_currentStep == 1) ...[
@@ -1282,6 +1527,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
                   _emailController,
                   'E-mail para el pago y los comprobantes',
                   keyboardType: TextInputType.emailAddress,
+                  hintText: 'tu@email.com',
                   validator: (value) =>
                       value == null ||
                           !RegExp(
@@ -1294,7 +1540,8 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
                   _phoneController,
                   'Teléfono de contacto (opcional)',
                   keyboardType: TextInputType.phone,
-                  validator: (_) => null,
+                  hintText: '+5491123456789',
+                  validator: _validateOptionalMobile,
                 ),
               ],
               if (_errorMessage != null) ...[

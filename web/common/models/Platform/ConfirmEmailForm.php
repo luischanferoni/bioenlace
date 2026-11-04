@@ -86,6 +86,9 @@ class ConfirmEmailForm extends Model
         $this->user->email = $this->email;
         $this->user->email_confirmed = 0;
         $this->user->generateConfirmationToken();
+        if ($this->user->hasAttribute('confirmation_sent_at')) {
+            $this->user->confirmation_sent_at = date('Y-m-d H:i:s');
+        }
         if (!$this->user->save(false)) {
             return false;
         }

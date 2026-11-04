@@ -3,6 +3,7 @@
 namespace common\components\Domain\Organization\Billing\Application\Service;
 
 use common\components\Domain\Organization\Efector\Application\Service\CommercialSignupDraftService;
+use common\components\Domain\Organization\Efector\Application\Service\ContactPhoneValidator;
 use common\components\Domain\Organization\Efector\Application\UseCase\SignUpInstitutionalEfector;
 use common\components\Domain\Person\Identity\Application\Service\IdentitySignupAttemptStore;
 use common\models\Organization\BillingAccount;
@@ -48,6 +49,11 @@ final class BillingCheckoutService
         if (!filter_var($payerEmail, FILTER_VALIDATE_EMAIL)) {
             throw new \InvalidArgumentException('Ingresá un e-mail válido para el pago.');
         }
+        $contactPhone = ContactPhoneValidator::normalizeMobile(
+            (string) ($payload['contact_phone'] ?? '')
+        ) ?? '';
+        ContactPhoneValidator::assertValidMobile($contactPhone, 'Teléfono de contacto');
+        $this->promotePayerEmail($user, $payerEmail);
 
         $checkoutKey = strtolower(trim((string) ($payload['checkout_request_key'] ?? '')));
         if (!preg_match('/^[a-f0-9]{48}$/', $checkoutKey)) {
@@ -69,7 +75,7 @@ final class BillingCheckoutService
                 && $existing->perfil === $draft['perfil']
                 && $existing->sector === $draft['sector']
                 && $existing->payer_email === $payerEmail
-                && $existing->contact_phone === (trim((string) ($payload['contact_phone'] ?? '')) ?: null)
+                && $existing->contact_phone === ($contactPhone !== '' ? $contactPhone : null)
                 && (int) $existing->id_billing_account_ministerio === (int) ($draft['ministerio']->id ?? 0)
                 && $existing->plan_json === $planJson
                 && $existing->efector_json === $efectorJson;
@@ -131,7 +137,7 @@ final class BillingCheckoutService
                 ? (int) $draft['ministerio']->id
                 : null;
             $attempt->payer_email = $payerEmail;
-            $attempt->contact_phone = trim((string) ($payload['contact_phone'] ?? '')) ?: null;
+            $attempt->contact_phone = $contactPhone !== '' ? $contactPhone : null;
             $attempt->plan_json = $planJson;
             $attempt->efector_json = $efectorJson;
             $attempt->amount_usd = $amount['amount_usd'];
@@ -206,6 +212,32 @@ final class BillingCheckoutService
         }
 
         return $this->checkoutResponse($attempt);
+    }
+
+    /**
+     * Guarda el e-mail del pagador en el usuario cuando todavía no tiene uno
+     * real (p. ej. el placeholder `@accounts.bioenlace.invalid` de una
+     * identidad creada sin e-mail), para poder confirmarlo por mail.
+     */
+    private function promotePayerEmail(User $user, string $payerEmail): void
+    {
+        $current = strtolower(trim((string) $user->email));
+        if ($current === $payerEmail) {
+            return;
+        }
+        if ($current !== '' && !str_ends_with($current, '@accounts.bioenlace.invalid')) {
+            return;
+        }
+
+        $user->email = $payerEmail;
+        $user->email_confirmed = 0;
+        $user->confirmation_token = null;
+        $attributes = ['email', 'email_confirmed', 'confirmation_token', 'updated_at'];
+        if ($user->hasAttribute('confirmation_sent_at')) {
+            $user->confirmation_sent_at = null;
+            $attributes[] = 'confirmation_sent_at';
+        }
+        $user->save(false, $attributes);
     }
 
     /**

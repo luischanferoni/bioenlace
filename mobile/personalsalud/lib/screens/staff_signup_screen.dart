@@ -325,14 +325,15 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
     );
   }
 
+  /// `es_AR` con el símbolo de moneda adelante: "$ 12.345,67".
   String _formatArs(Object? amount) {
     final value = double.tryParse(amount?.toString() ?? '');
     if (value == null) return '—';
-    return NumberFormat.currency(
+    final formatted = NumberFormat.decimalPatternDigits(
       locale: 'es_AR',
-      symbol: 'ARS ',
       decimalDigits: 2,
     ).format(value);
+    return '\$ $formatted';
   }
 
   Widget _buildQuoteSummary({

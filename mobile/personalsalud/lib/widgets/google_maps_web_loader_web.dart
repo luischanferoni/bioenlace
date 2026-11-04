@@ -7,6 +7,11 @@ import 'package:web/web.dart' as web;
 @JS('google.maps')
 external JSAny? get _googleMaps;
 
+/// `MapTypeId` sólo existe cuando la librería terminó de cargar (con
+/// `loading=async` el objeto `google.maps` aparece antes, pero vacío).
+@JS('google.maps.MapTypeId')
+external JSAny? get _googleMapsMapTypeId;
+
 /// Carga la JS API de Google Maps en web (`google.maps`).
 ///
 /// La key se inyecta en el build: `--dart-define=GOOGLE_MAPS_WEB_API_KEY=…`.
@@ -51,7 +56,7 @@ class GoogleMapsWebLoader {
           web.document.createElement('script') as web.HTMLScriptElement
             ..src =
                 'https://maps.googleapis.com/maps/api/js'
-                '?key=$_key&v=weekly&language=es&region=AR&loading=async'
+                '?key=$_key&v=weekly&language=es&region=AR'
             ..async = true
             ..defer = true;
       script.setAttribute('data-bioenlace-maps', 'true');
@@ -72,6 +77,12 @@ class GoogleMapsWebLoader {
       await loaded.future.timeout(_timeout, onTimeout: () {});
     }
 
+    // El `load` del script puede adelantarse a la inicialización de las clases
+    // (`MapTypeId`); esperamos hasta 2 s a que estén disponibles.
+    for (var attempt = 0; attempt < 20 && !_isReady(); attempt++) {
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    }
+
     _loaded = _isReady();
     if (!_loaded) {
       debugPrint(
@@ -85,7 +96,7 @@ class GoogleMapsWebLoader {
 
   static bool _isReady() {
     try {
-      return _googleMaps != null;
+      return _googleMaps != null && _googleMapsMapTypeId != null;
     } catch (_) {
       return false;
     }

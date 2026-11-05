@@ -22,7 +22,14 @@ final class GoogleGeocodingClient
     }
 
     /**
-     * @return array{direccion: ?string, pais: ?string, pais_iso2: ?string, provincia: ?string, departamento: ?string, localidad: ?string}|null
+     * @return array{
+     *     direccion: ?string,
+     *     pais: ?string,
+     *     pais_iso2: ?string,
+     *     provincia: string[],
+     *     departamento: string[],
+     *     localidad: string[]
+     * }|null
      */
     public function reverse(float $lat, float $lng): ?array
     {
@@ -94,21 +101,42 @@ final class GoogleGeocodingClient
             return null;
         };
 
+        // Varias componentes pueden describir el mismo nivel (en CABA la
+        // `locality` es "Buenos Aires" y el barrio viene en
+        // `sublocality_level_1`): devolvemos todas para que el resolver pruebe
+        // en orden hasta encontrar la que existe en nuestra base.
+        $pickAll = static function (array $types, array $fields) use ($components): array {
+            $values = [];
+            foreach ($fields as $field) {
+                foreach ($types as $type) {
+                    $value = trim((string) ($components[$type][$field] ?? ''));
+                    if ($value !== '' && !in_array($value, $values, true)) {
+                        $values[] = $value;
+                    }
+                }
+            }
+
+            return $values;
+        };
+
         return [
             'direccion' => trim((string) ($result['formatted_address'] ?? '')) ?: null,
             'pais' => $pick(['country'], 'long_name'),
             'pais_iso2' => $pick(['country'], 'short_name'),
-            'provincia' => $pick(['administrative_area_level_1'], 'long_name'),
-            'departamento' => $pick(['administrative_area_level_2'], 'long_name'),
-            'localidad' => $pick(
+            // El `short_name` administrativo es el más específico (CABA) y el
+            // `long_name` el más descriptivo ("Provincia de …"): probamos el
+            // corto primero y dejamos el largo como respaldo.
+            'provincia' => $pickAll(['administrative_area_level_1'], ['short_name', 'long_name']),
+            'departamento' => $pickAll(['administrative_area_level_2'], ['short_name', 'long_name']),
+            'localidad' => $pickAll(
                 [
                     'locality',
-                    'administrative_area_level_3',
                     'sublocality_level_1',
-                    'sublocality',
+                    'sublocality_level_2',
+                    'administrative_area_level_3',
                     'postal_town',
                 ],
-                'long_name'
+                ['long_name']
             ),
         ];
     }

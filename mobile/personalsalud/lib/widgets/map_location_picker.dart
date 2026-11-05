@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -33,6 +34,15 @@ class MapLocationPicker extends StatefulWidget {
 class _MapLocationPickerState extends State<MapLocationPicker> {
   /// Centro por defecto: CABA (el usuario mueve el marcador).
   static const LatLng _fallbackCenter = LatLng(-34.603722, -58.381592);
+
+  /// El mapa vive dentro de un `ListView`: sin un `EagerGestureRecognizer` la
+  /// arena de gestos la gana el scroll del formulario y no se puede panear ni
+  /// hacer zoom nativo. Con esto el mapa se queda con los gestos que empiezan
+  /// sobre él.
+  static final Set<Factory<OneSequenceGestureRecognizer>> _mapGestureRecognizers =
+      <Factory<OneSequenceGestureRecognizer>>{
+        Factory<OneSequenceGestureRecognizer>(EagerGestureRecognizer.new),
+      };
 
   late LatLng _center;
   LatLng? _marker;
@@ -183,6 +193,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
                         target: _center,
                         zoom: marker == null ? 11 : 16,
                       ),
+                      gestureRecognizers: _mapGestureRecognizers,
                       onMapCreated: (controller) => _controller = controller,
                       onTap: _select,
                       myLocationButtonEnabled: false,

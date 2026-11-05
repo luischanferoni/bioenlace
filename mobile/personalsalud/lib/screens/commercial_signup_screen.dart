@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -71,7 +70,10 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
   bool _resolvingLocation = false;
   String? _locationError;
   int _locationRequestId = 0;
-  Timer? _locationDebounce;
+
+  /// Coordenadas para las que ya se resolvió [_resolvedLocation]. El backend se
+  /// consulta al avanzar, no en cada arrastre del marcador.
+  LatLng? _resolvedFor;
 
   /// Volumen mensual elegido por tipo de atención (`AMB`, `EMER`, `IMP`).
   /// Si un tipo no tiene entrada, no se contrata.
@@ -104,7 +106,6 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
 
   @override
   void dispose() {
-    _locationDebounce?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     _nameController.dispose();
     _addressController.dispose();
@@ -142,6 +143,14 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
       if (_sector == 'PUBLICO' && _selectedSisaEfector == null) {
         setState(() => _errorMessage = 'Buscá y seleccioná un efector.');
         return;
+      }
+      if (_sector != 'PUBLICO') {
+        if (_pickedLocation == null) {
+          setState(() => _errorMessage = 'Ubicá el efector en el mapa.');
+          return;
+        }
+        // Recién acá consultamos el backend: mover el pin no dispara llamadas.
+        if (!await _ensureLocationResolved() || !mounted) return;
       }
       setState(() {
         _currentStep = 2;
@@ -305,18 +314,19 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     setState(() {
       _pickedLocation = position;
       _locationError = null;
+      if (_resolvedFor != position) {
+        _resolvedLocation = null;
+      }
     });
-    _locationRequestId++;
-    _locationDebounce?.cancel();
-    _locationDebounce = Timer(
-      const Duration(milliseconds: 400),
-      _resolveLocation,
-    );
   }
 
-  Future<void> _resolveLocation() async {
+  /// Resuelve país/provincia/departamento/localidad para el pin elegido.
+  ///
+  /// Se llama al avanzar (y desde "Reintentar"), no en cada movimiento del
+  /// marcador: cada resolución es una llamada al backend + geocoding.
+  Future<bool> _resolveLocation() async {
     final picked = _pickedLocation;
-    if (picked == null) return;
+    if (picked == null) return false;
     final requestId = ++_locationRequestId;
 
     setState(() {
@@ -328,20 +338,33 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
         latitude: picked.latitude,
         longitude: picked.longitude,
       );
-      if (!mounted || requestId != _locationRequestId) return;
+      if (!mounted || requestId != _locationRequestId) return false;
       setState(() {
         _resolvingLocation = false;
         _resolvedLocation = result;
+        _resolvedFor = picked;
         _addressController.text = _locationAddress(result);
       });
+      return true;
     } catch (error) {
-      if (!mounted || requestId != _locationRequestId) return;
+      if (!mounted || requestId != _locationRequestId) return false;
       setState(() {
         _resolvingLocation = false;
         _resolvedLocation = null;
+        _resolvedFor = null;
         _locationError = _errorText(error);
       });
+      return false;
     }
+  }
+
+  /// Resuelve la ubicación sólo si el pin cambió desde la última resolución.
+  Future<bool> _ensureLocationResolved() async {
+    final picked = _pickedLocation;
+    if (picked == null) return true;
+    if (_resolvedLocation != null && _resolvedFor == picked) return true;
+
+    return _resolveLocation();
   }
 
   /// Dirección del efector: la que devuelve el geocoding y, si no vino, la
@@ -1528,8 +1551,8 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
                   BioSpacing.gapH(BioSpacing.xs),
                   Text(
                     'Buscá el lugar por el nombre que cargaste y ubicá el '
-                    'efector tocando el mapa. Con la coordenada detectamos '
-                    'país, provincia, localidad y la dirección exacta.',
+                    'efector tocando el mapa. Al continuar detectamos país, '
+                    'provincia, localidad y la dirección exacta.',
                     style: BioTypography.bodySm.copyWith(
                       color: tokens.textMuted,
                     ),
@@ -1664,8 +1687,10 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
                             ? Icons.verified_user_outlined
                             : Icons.arrow_forward,
                         fullWidth: true,
-                        loading: _submitting,
-                        onPressed: _submitting ? null : _continueSignup,
+                        loading: _submitting || _resolvingLocation,
+                        onPressed: _submitting || _resolvingLocation
+                            ? null
+                            : _continueSignup,
                       ),
                     ),
                   ],

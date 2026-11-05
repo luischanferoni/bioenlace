@@ -231,15 +231,28 @@ final class MercadoPagoCheckoutService
             $request->setFormat(Client::FORMAT_JSON)->setData($data);
         }
 
-        $response = $request->send();
-        $body = json_decode($response->content, true);
-        if (!$response->isOk() || !is_array($body)) {
-            $statusCode = $response->getStatusCode();
+        try {
+            $response = $request->send();
+            $statusCode = (int) $response->getStatusCode();
+            $content = (string) $response->getContent();
+        } catch (\yii\httpclient\Exception $e) {
+            Yii::error([
+                'event' => 'mercadopago.transport_error',
+                'method' => $method,
+                'path' => $path,
+                'error' => $e->getMessage(),
+            ], 'mercadopago');
+            throw new \RuntimeException('No se pudo conectar con Mercado Pago.', 0, $e);
+        }
+
+        $body = json_decode($content, true);
+        if ($statusCode < 200 || $statusCode >= 300 || !is_array($body)) {
             Yii::error([
                 'event' => 'mercadopago.api_error',
                 'method' => $method,
                 'path' => $path,
                 'status_code' => $statusCode,
+                'response' => mb_substr($content, 0, 500),
             ], 'mercadopago');
             throw new \RuntimeException('Mercado Pago no pudo completar la operación (HTTP ' . $statusCode . ').');
         }

@@ -241,7 +241,18 @@ FROM billing_payment
 ORDER BY id DESC LIMIT 5;
 ```
 
-Logs: canal `mercadopago` en `frontend/runtime/logs/` y `console/runtime/logs/`. Eventos útiles: `mercadopago.api_error`, `mercadopago.checkout_creation_failed`, `mercadopago.checkout_attempt_update_failed`, `mercadopago.webhook_ignored`.
+Logs: canal `mercadopago` en `frontend/runtime/logs/` y `console/runtime/logs/`. Eventos útiles: `mercadopago.api_error` (incluye `status_code` y el body de Mercado Pago), `mercadopago.transport_error` (no hubo respuesta: timeout o red), `mercadopago.checkout_creation_failed`, `mercadopago.checkout_attempt_update_failed`, `mercadopago.webhook_ignored`.
+
+### Diagnóstico de errores frecuentes
+
+| Lo que ve el usuario | Respuesta | Causa probable |
+|---|---|---|
+| "El servicio no está disponible en este momento" / "No se pudo iniciar el checkout" | `503` | Credenciales, URLs o cotización sin configurar; o `mercadopago.api_error` / `mercadopago.transport_error` en el log. |
+| "El checkout no está configurado para este entorno" | `503` | `InvalidConfigException`: falta `accessToken`, la cotización está vencida o `vatRate` es inválido. |
+| "Las URLs de retorno y notificación deben ser HTTPS." | `400` | `backUrl` o `notificationUrl` con `http://` o vacías. |
+| "Este intento ya tuvo un pago rechazado." | `400` | Se reintenta con el mismo `checkout_request_key`; generar uno nuevo. |
+| Webhook responde `401` | `401` | `webhookSecret` incorrecto o `x-signature`/`x-request-id` ausentes. |
+| Webhook responde `500` | `500` | El `data.id` notificado no existe en la cuenta; el intento asociado no se encuentra o el importe no coincide. |
 
 Admin: **Billing checkout attempts** muestra el intento con su payload del proveedor, útil para diagnosticar importes o estados inesperados.
 

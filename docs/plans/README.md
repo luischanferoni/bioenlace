@@ -19,6 +19,17 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Clientes delgados y contrato de API | `clientes-contrato-api/` | Sin implementar; piloto captura + timeline del encounter; veterinaria solo estructura |
 | Paneles web por rol | `paneles-web-por-rol/` | Rediseñado: resolución por dos ejes (rol × encounter); fases 00–06 pendientes |
 | Alta unificada de espacios de atención | `alta-espacio-atencion-unificada/` | Unificación consultorio/clínica, borrador reanudable y AdminEfector tras pago |
+| Deduplicación de transporte HTTP | `deduplicacion-http/` | Base compartido + 16 archivos; fases 01–05 pendientes |
+| Mensajes de respuesta — una sola fuente | `mensajes-respuesta/` | 28 literales en API, 55 snacks en Flutter, 38 en JS; fases 01–04 pendientes |
+| Caché: claves, TTL e invalidación | `cache-claves-ttl/` | 17 archivos, 21 sets y 7 deletes; fase 02 depende del plan HTTP |
+
+## A evaluar (sin plan todavía)
+
+Notas de análisis que todavía no justifican un plan. Ver [a-evaluar/README.md](a-evaluar/README.md).
+
+| Tema | Documento | Estado |
+|------|-----------|--------|
+| Verificación de firmas de webhooks | [a-evaluar/firmas-webhook.md](a-evaluar/firmas-webhook.md) | Faltan clasificar los 5 usos de `hash_equals` |
 
 ## Planes cerrados (carpeta conservada por decisión explícita)
 

@@ -7,13 +7,26 @@ Ubicación: `web/common/components/Platform/Ai/Cost/AICostTracker.php`
 | Métrica | Cuándo se incrementa |
 |---------|----------------------|
 | `evitada_por_cache` | Respuesta desde caché Yii |
-| `evitada_por_dedup` | `RequestDeduplicator` |
+| `evitada_por_dedup` | `RequestDeduplicator::buscarExacto` acierta dentro del mismo request (mismo prompt normalizado + contexto) |
 | `evitada_por_cpu` / `validacion` | Corrección CPU o prompt inválido |
 | `llamada_simulada` | Runner de pruebas / tests (`iniciarEjecucionPrueba`) |
 | `llamada_real` | HTTP OK a Gemini con tracking activo |
 | `tokens.*` | `usageMetadata` de respuesta Google (+ simulación si aplica) |
 | `tokens.cached_content_token_count_simulado` | Estimación local con `vertex_context_cache_simulado` |
 | `por_contexto` | Desglose por segundo argumento de `consultarIA` |
+
+### Observación del match difuso (`ia-dedupe`)
+
+`RequestDeduplicator::observarSimilitud` compara el prompt con lo ya resuelto **en el mismo
+request** y, si la similitud alcanza `RequestDeduplicator::SIMILITUD_MINIMA` (0.85), registra
+en la categoría `ia-dedupe`:
+
+- `event`: `ia_dedupe.similitud_observada`
+- `tipo`, `similitud`, `umbral`, `candidatos`
+- `prompt_hash` / `candidato_hash` (sha256 del prompt normalizado) y `prompt_len`
+
+**No** se loguea el texto (es contenido clínico) y el match difuso **no** devuelve respuestas:
+solo se mide para evaluar más adelante si conviene alguna forma de reutilización.
 
 ### Habilitar medición en staging/producción
 

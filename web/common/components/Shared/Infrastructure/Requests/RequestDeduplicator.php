@@ -5,68 +5,145 @@ namespace common\components\Shared\Infrastructure\Requests;
 use Yii;
 
 /**
- * Deduplicador de requests para evitar llamadas duplicadas.
- * Versión movida desde common\components\RequestDeduplicator.
+ * Deduplicación de requests de IA dentro del mismo request PHP.
+ *
+ * - `buscarExacto()` es la **única** vía que devuelve una respuesta cacheada: mismo tipo y
+ *   prompt normalizado (trim + espacios colapsados). No se normaliza puntuación ni
+ *   mayúsculas: un cambio de puntuación puede cambiar el sentido clínico del prompt.
+ * - `observarSimilitud()` mide qué habría hecho un match difuso y lo registra para análisis
+ *   posterior. **Nunca** devuelve contenido cacheado ni altera el flujo.
+ *
+ * @see \common\components\Platform\Ai\IAManager::consultarIA
  */
-class RequestDeduplicator
+final class RequestDeduplicator
 {
-    private static $requestCache = [];
+    /** Umbral del match difuso. Solo observabilidad: no se usa para responder. */
+    public const SIMILITUD_MINIMA = 0.85;
+
+    /** Categoría de log de la observación de similitud. */
+    public const LOG_CATEGORY = 'ia-dedupe';
+
     private const CACHE_TTL = 300;
-    private const SIMILITUD_MINIMA = 0.85;
 
-    public static function buscarSimilar($prompt, $tipo = 'general')
+    private const MAX_ENTRIES = 1000;
+
+    /** @var array<string, array{prompt: string, response: mixed, tipo: string, timestamp: int}> */
+    private static array $requestCache = [];
+
+    /**
+     * Devuelve la respuesta sólo si el prompt (normalizado) y el tipo coinciden exactamente.
+     *
+     * @param mixed $prompt
+     * @return mixed|null
+     */
+    public static function buscarExacto($prompt, $tipo = 'general')
     {
-        $cacheKey = self::generarCacheKey($prompt, $tipo);
-
-        if (isset(self::$requestCache[$cacheKey])) {
-            $cached = self::$requestCache[$cacheKey];
-            if (time() - $cached['timestamp'] < self::CACHE_TTL) {
-                return $cached['response'];
-            }
-            unset(self::$requestCache[$cacheKey]);
+        $key = self::cacheKey($prompt, $tipo);
+        $cached = self::$requestCache[$key] ?? null;
+        if ($cached === null) {
+            return null;
         }
 
-        foreach (self::$requestCache as $key => $cached) {
-            if ($cached['tipo'] !== $tipo) {
-                continue;
-            }
+        if (time() - $cached['timestamp'] >= self::CACHE_TTL) {
+            unset(self::$requestCache[$key]);
 
-            if (time() - $cached['timestamp'] >= self::CACHE_TTL) {
-                unset(self::$requestCache[$key]);
-                continue;
-            }
-
-            $similitud = self::calcularSimilitud($prompt, $cached['prompt']);
-            if ($similitud >= self::SIMILITUD_MINIMA) {
-                return $cached['response'];
-            }
+            return null;
         }
 
-        return null;
+        return $cached['response'];
     }
 
-    public static function guardar($prompt, $response, $tipo = 'general')
+    /**
+     * @param mixed $prompt
+     * @param mixed $respuesta
+     */
+    public static function guardar($prompt, $respuesta, $tipo = 'general'): void
     {
-        $cacheKey = self::generarCacheKey($prompt, $tipo);
-
-        self::$requestCache[$cacheKey] = [
-            'prompt' => $prompt,
-            'response' => $response,
-            'tipo' => $tipo,
+        self::$requestCache[self::cacheKey($prompt, $tipo)] = [
+            'prompt' => (string) $prompt,
+            'response' => $respuesta,
+            'tipo' => (string) $tipo,
             'timestamp' => time(),
         ];
 
-        if (count(self::$requestCache) > 1000) {
+        if (count(self::$requestCache) > self::MAX_ENTRIES) {
             self::limpiarExpirados();
         }
     }
 
-    private static function generarCacheKey($prompt, $tipo)
+    /**
+     * Mide la similitud del prompt con lo ya guardado en este request y la registra.
+     * Solo observabilidad: no devuelve contenido y no cambia ninguna decisión.
+     *
+     * No se loguea el texto (contenido clínico): van hashes, longitud y similitud.
+     *
+     * @param mixed $prompt
+     * @return array{max: float, candidatos: int} para tests y métricas
+     */
+    public static function observarSimilitud($prompt, $tipo = 'general'): array
     {
-        return $tipo . '_' . md5($prompt);
+        $max = 0.0;
+        $candidatos = 0;
+        $candidato = null;
+
+        foreach (self::$requestCache as $cached) {
+            if ($cached['tipo'] !== (string) $tipo) {
+                continue;
+            }
+            if (time() - $cached['timestamp'] >= self::CACHE_TTL) {
+                continue;
+            }
+
+            $candidatos++;
+            $similitud = self::calcularSimilitud((string) $prompt, $cached['prompt']);
+            if ($similitud > $max) {
+                $max = $similitud;
+                $candidato = $cached['prompt'];
+            }
+        }
+
+        if ($candidatos > 0 && $max >= self::SIMILITUD_MINIMA) {
+            Yii::info([
+                'event' => 'ia_dedupe.similitud_observada',
+                'tipo' => (string) $tipo,
+                'similitud' => round($max, 4),
+                'umbral' => self::SIMILITUD_MINIMA,
+                'prompt_hash' => hash('sha256', self::normalizar($prompt)),
+                'prompt_len' => strlen((string) $prompt),
+                'candidato_hash' => hash('sha256', self::normalizar($candidato ?? '')),
+                'candidatos' => $candidatos,
+            ], self::LOG_CATEGORY);
+        }
+
+        return ['max' => $max, 'candidatos' => $candidatos];
     }
 
-    private static function calcularSimilitud($prompt1, $prompt2)
+    /** @internal tests */
+    public static function resetCacheForTests(): void
+    {
+        self::$requestCache = [];
+    }
+
+    /**
+     * @param mixed $prompt
+     */
+    private static function cacheKey($prompt, $tipo): string
+    {
+        return (string) $tipo . '_' . md5(self::normalizar($prompt));
+    }
+
+    /**
+     * @param mixed $prompt
+     */
+    private static function normalizar($prompt): string
+    {
+        $texto = trim((string) $prompt);
+        $colapsado = preg_replace('/\s+/u', ' ', $texto);
+
+        return $colapsado === null ? $texto : $colapsado;
+    }
+
+    private static function calcularSimilitud(string $prompt1, string $prompt2): float
     {
         $p1 = strtolower(trim($prompt1));
         $p2 = strtolower(trim($prompt2));
@@ -75,10 +152,9 @@ class RequestDeduplicator
             return 1.0;
         }
 
-        // levenshtein() solo admite hasta 255 caracteres; con -1 la fórmula
-        // infla la similitud. Prompts largos (asistente conversacional) comparten
-        // prefijo estable: la similitud por palabras reutilizaría la respuesta
-        // del turno anterior. Sin match exacto → no deduplicar.
+        // levenshtein() solo admite hasta 255 caracteres; con -1 la fórmula infla la
+        // similitud. Prompts largos (asistente conversacional) comparten prefijo estable:
+        // la similitud por palabras reutilizaría la respuesta del turno anterior.
         if (strlen($p1) > 255 || strlen($p2) > 255) {
             return 0.0;
         }
@@ -105,13 +181,7 @@ class RequestDeduplicator
         return ($similitudLevenshtein * 0.3) + ($similitudPalabras * 0.7);
     }
 
-    /** @internal tests */
-    public static function resetCacheForTests(): void
-    {
-        self::$requestCache = [];
-    }
-
-    private static function limpiarExpirados()
+    private static function limpiarExpirados(): void
     {
         $ahora = time();
         foreach (self::$requestCache as $key => $cached) {
@@ -121,5 +191,3 @@ class RequestDeduplicator
         }
     }
 }
-
-

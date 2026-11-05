@@ -661,18 +661,25 @@ class IAManager
                 return null;
             }
             
-            // Verificar deduplicación primero
-            $deduplicado = RequestDeduplicator::buscarSimilar($prompt, $contexto);
-            if ($deduplicado !== null) {
-                \Yii::info("Request duplicado encontrado para: {$contexto}", 'ia-manager');
-                if (class_exists(\common\components\Platform\Ai\Cost\AICostTracker::class)) {
-                    \common\components\Platform\Ai\Cost\AICostTracker::registrarEvitada('dedup', $contexto);
-                }
-                return $deduplicado;
-            }
-            
-            // Verificar cache (solo si no está desactivado)
+            // Caché desactivado: se ignora tanto el caché de Yii como la deduplicación.
             $cacheDesactivado = Yii::$app->params['ia_cache_desactivado'] ?? false;
+
+            // Deduplicación exacta: mismo prompt (normalizado) + contexto, ya resuelto en este request.
+            if (!$cacheDesactivado) {
+                $deduplicado = RequestDeduplicator::buscarExacto($prompt, $contexto);
+                if ($deduplicado !== null) {
+                    \Yii::info("Request duplicado encontrado para: {$contexto}", 'ia-manager');
+                    if (class_exists(\common\components\Platform\Ai\Cost\AICostTracker::class)) {
+                        \common\components\Platform\Ai\Cost\AICostTracker::registrarEvitada('dedup', $contexto);
+                    }
+                    return $deduplicado;
+                }
+            }
+
+            // Observabilidad: qué habría hecho un match difuso. No devuelve contenido ni decide nada.
+            RequestDeduplicator::observarSimilitud($prompt, $contexto);
+
+            // Verificar cache (solo si no está desactivado)
             $cacheKey = 'ia_response_' . md5($prompt . $contexto . $tipoModelo);
             $yiiCache = Yii::$app->cache;
             
@@ -857,7 +864,6 @@ class IAManager
                     
                     // Guardar en cache y deduplicador si es válido (solo si el cache no está desactivado)
                     if ($resultado) {
-                        $cacheDesactivado = Yii::$app->params['ia_cache_desactivado'] ?? false;
                         if (!$cacheDesactivado && $yiiCache) {
                             $ttl = (int)(Yii::$app->params['ia_cache_ttl'] ?? 3600);
                             $yiiCache->set($cacheKey, $resultado, $ttl);
@@ -865,8 +871,9 @@ class IAManager
                         } elseif ($cacheDesactivado) {
                             \Yii::info("⚠️ ESTRUCTURACIÓN: Cache DESACTIVADO - No se guardó en cache", 'ia-manager');
                         }
-                        // Guardar en deduplicador
-                        RequestDeduplicator::guardar($prompt, $resultado, $contexto);
+                        if (!$cacheDesactivado) {
+                            RequestDeduplicator::guardar($prompt, $resultado, $contexto);
+                        }
                     }
                     
                     if ($logger) {

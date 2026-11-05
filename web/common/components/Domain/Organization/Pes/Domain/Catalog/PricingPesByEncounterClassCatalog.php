@@ -143,7 +143,7 @@ final class PricingPesByEncounterClassCatalog
                 'margin_after_iibb_ganancias_percent' => 37.5,
             ],
         ],
-        'cogs_source' => 'web/docs/costos/costos-api.md — conversación del paciente con costo AMB conservador para preprocess + guide con adjuntos e historial; motivos audio por clase; dictado incluido',
+        'cogs_source' => 'docs/negocio/costos/costos-api.md — conversación del paciente con costo AMB conservador para preprocess + guide con adjuntos e historial; motivos audio por clase; dictado incluido',
         'addons' => [
             'videollamada' => [
                 'label' => 'Videollamada',

@@ -11,8 +11,8 @@ use Yii;
  * - Llamadas simuladas: runner de pruebas / tests (nunca HTTP).
  * - Uso Gemini (si ia_usage_tracking_habilitado): tokens y cachedContentTokenCount por contexto.
  *
- * @see web/docs/costos/pruebas-costos-ia.md
- * @see web/docs/costos/estrategias-reduccion/monitoreo.md
+ * @see docs/negocio/costos/pruebas-costos-ia.md
+ * @see docs/negocio/costos/estrategias-reduccion/monitoreo.md
  */
 class AICostTracker
 {

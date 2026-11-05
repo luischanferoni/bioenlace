@@ -1,6 +1,6 @@
 ---
-description: Documentación de producto en web/docs/producto/ (sin carpeta flows/)
-globs: web/docs/producto/**/*.md
+description: Documentación de producto en docs/producto/ (sin carpeta flows/)
+globs: docs/producto/**/*.md
 alwaysApply: false
 ---
 
@@ -31,4 +31,4 @@ Cada archivo describe **una historia de punta a punta** (no un solo endpoint ni 
 - Diagramas mermaid cuando ayuden a ver cron → API → BD → usuario.
 - Nombres de archivo en **kebab-case** minúsculas.
 
-Contratos técnicos del asistente: `web/docs/arquitectura/asistente-motores.md` (lenguaje accesible, sin código).
+Contratos técnicos del asistente: `docs/arquitectura/asistente-motores.md` (lenguaje accesible, sin código).

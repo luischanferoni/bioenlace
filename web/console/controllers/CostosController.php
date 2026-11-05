@@ -11,7 +11,7 @@ use yii\helpers\Console;
 /**
  * Pruebas de costos de IA (conversaciones simuladas, sin HTTP a proveedores).
  *
- * @see web/docs/costos/pruebas-costos-ia.md
+ * @see docs/negocio/costos/pruebas-costos-ia.md
  */
 class CostosController extends Controller
 {

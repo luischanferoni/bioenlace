@@ -40,7 +40,7 @@ return [
 
     /**
      * Acumula usageMetadata de Gemini en AICostTracker (tokens, cachedContentTokenCount por contexto).
-     * Activar en staging para calibrar columnas de costos-api.md; ver web/docs/costos/pruebas-costos-ia.md.
+     * Activar en staging para calibrar columnas de costos-api.md; ver docs/negocio/costos/pruebas-costos-ia.md.
      */
     'ia_usage_tracking_habilitado' => true,
 
@@ -75,7 +75,7 @@ return [
 
     /**
      * Cohortes: activo en API / asistente / móvil (extiende common/config/params-care-cohort.php).
-     * @see web/docs/producto/asistencia-cohortes.md
+     * @see docs/producto/asistencia-cohortes.md
      */
     'care_cohort' => array_replace_recursive(
         require __DIR__ . '/../../common/config/params-care-cohort.php',
@@ -95,7 +95,7 @@ return [
 
     /**
      * STT servidor (Groq / Hugging Face) y política device vs cloud.
-     * Ver web/docs/costos/estrategias-reduccion/stt.md
+     * Ver docs/negocio/costos/estrategias-reduccion/stt.md
      */
     'stt' => [
         /** groq | huggingface */
@@ -151,7 +151,7 @@ return [
      * Acceso demo sandbox desde el sitio institucional (código de un solo uso → /site/demo-entrar).
      * Habilitar en staging/prod controlado; mode ephemeral provisiona médico + seed por visita.
      *
-     * @see web/docs/producto/alta-cuenta-licencia.md
+     * @see docs/producto/alta-cuenta-licencia.md
      */
     'demo_sandbox_habilitado' => true,
     'demo_sandbox' => [

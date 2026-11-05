@@ -18,7 +18,7 @@ use Yii;
 /**
  * Smoke de consultas paciente vía {@see ChatOrchestrator} (IA real, sin simulación de costos).
  *
- * @see web/docs/qa/paciente/asistente-consultas.md
+ * @see docs/qa/paciente/asistente-consultas.md
  * @see web/common/data/qa/asistente-consultas.yaml
  */
 final class PatientAssistantQaService

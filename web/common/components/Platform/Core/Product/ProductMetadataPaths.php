@@ -12,7 +12,7 @@ use common\components\Platform\Ai\Prompt\PromptRegistry;
  *
  * `common/metadata/bioenlace/` queda solo como README histórico (sin YAML).
  *
- * @see web/docs/decisions/ddd-bounded-contexts-capas-y-metadata.md
+ * @see docs/decisions/ddd-bounded-contexts-capas-y-metadata.md
  */
 final class ProductMetadataPaths
 {

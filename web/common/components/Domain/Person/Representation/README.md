@@ -2,7 +2,7 @@
 
 Representación operativa paciente — régimen A (tutela verificada) y régimen B (delegación paciente → representante).
 
-Documentación de producto: [web/docs/producto/representacion-paciente.md](../../../../docs/producto/representacion-paciente.md).
+Documentación de producto: [docs/producto/representacion-paciente.md](../../../../docs/producto/representacion-paciente.md).
 
 ## Servicios
 

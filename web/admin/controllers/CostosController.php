@@ -15,7 +15,7 @@ use yii\web\NotFoundHttpException;
 /**
  * Análisis de costos de uso de IA (pruebas simuladas y telemetría).
  *
- * @see web/docs/costos/pruebas-costos-ia.md
+ * @see docs/negocio/costos/pruebas-costos-ia.md
  */
 class CostosController extends Controller
 {

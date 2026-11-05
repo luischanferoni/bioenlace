@@ -1,0 +1,22 @@
+---
+description: "Servicio = oferta del efector; PES = asignación; acto = SNOMED"
+applyTo: ['**']
+---
+
+<!-- GENERADO por tools/sync-agent-rules.php — editar .cursor/rules/*.mdc -->
+
+# Servicio institucional vs PES vs acto
+
+Frase canónica:
+
+> **`servicios`** = oferta de salud del **efector** (centro).  
+> **PES** = profesional **asignado a** esa oferta.  
+> **Acto** (SNOMED/LOINC) = **qué** se indica o pide.  
+> No modelar actos (ecografía, mamografía…) como filas de `servicios`.
+
+- Glosario producto: [`docs/producto/glosario-servicio-pes-acto.md`](docs/producto/glosario-servicio-pes-acto.md).
+- En docs/PRs/código nuevo: preferir **servicio del centro** / **área** / **línea**; no usar “especialidad” como sinónimo de `id_servicio`.
+- `specialty_code` en `servicios` = tipología de **esa oferta**, no identidad del profesional.
+- Capacidad acto→oferta: `capacity_rules` (ECL) ∪ `linea_acto`. No modelar actos ni admin como filas de `servicios`.
+- Canales (staff extract / paciente chips) alimentan `CareRequest`; coding Acto→SNOMED es dominio (`CareRequestActCodingService`), no otro cerebro.
+- Turnos y PES usan `id_servicio` institucional; pedidos llevan además `code`/`code_system` del acto cuando aplica.

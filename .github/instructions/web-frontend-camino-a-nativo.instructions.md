@@ -1,0 +1,51 @@
+---
+description: "Frontend web clínico — Camino A (nativo Yii, sin HTML en JS)"
+applyTo: ['web/frontend/views/**/*.php', 'web/frontend/web/js/**/*.js', 'web/frontend/controllers/*.php']
+---
+
+<!-- GENERADO por tools/sync-agent-rules.php — editar .cursor/rules/*.mdc -->
+
+# Frontend web: Camino A (nativo Yii)
+
+## Línea de construcción
+
+| Superficie | Cómo |
+|------------|------|
+| **Asistente** | SPA + UI JSON (`kind: ui_definition`) + widgets nativos cuando aplica |
+| **Operación clínica** (HC, listado, captura, tablero) | Vistas nativas Yii: markup en **PHP** (`renderPartial` / `<template>`), JS solo orquesta |
+| **Admin / legacy** | MVC clásico; no mezclar con el asistente |
+
+Negocio y persistencia: **solo API** (`/api/v1/...`).
+
+## Regla dura
+
+**No concatenar HTML clínico/UI en JavaScript** (`html +=`, `innerHTML = '<div…'` de estructura).
+
+Sí permitido en JS:
+
+- `document.importNode(template.content, true)` + `textContent` / `value` / `data-*` / `classList`
+- `innerHTML = ''` para vaciar
+- Asignar HTML **ya renderizado** por el servidor (fragmento PHP / respuesta de partial)
+
+## Patrón
+
+1. Estructura en `views/.../_*.php` o `<template id="tpl-…">`.
+2. Datos desde API JSON (o partial SSR cuando la página ya los tiene).
+3. JS: clonar, rellenar, show/hide (`d-none` / `hidden`), eventos.
+4. Estilos: Bootstrap / `bootstrap-custom` (ver `web-bootstrap-antes-que-css-custom.mdc`).
+
+Referencia: listado pacientes (`_listado_templates.php` + `pacientes-listado.js`); HC episodio (`_episodio_timeline_*.php`, `_timeline_templates.php`).
+
+Vistas delgadas (sin lógica de request/contexto en PHP de la vista): `web-vistas-yii-delgadas.mdc`.
+
+## Qué no es Camino A
+
+- Reescribir todo el producto en React/Vue “porque SPA”.
+- Meter HC/captura en UI JSON genérica.
+- Volver a armar pantallas densas con strings HTML en JS.
+
+## Fuera de alcance (no migrar a templates PHP)
+
+- `spa-home.js` y el renderer de **UI JSON** del asistente (compone pantallas desde manifests JSON).
+- Widgets `ui-widget-*` del asistente.
+- HTML **SSR** ya renderizado por el servidor (partials / `formularioHtml` / respuesta de vista).

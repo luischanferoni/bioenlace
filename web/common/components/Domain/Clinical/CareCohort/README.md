@@ -11,7 +11,7 @@ Generación en cola de packs reutilizables (`assistance_questions`, `followup_pr
 | **Consola / cron** | `console/config/params.php` + `params-local.php` | **No** usa `common/params.php` |
 | Prod GCP / GCS | `console/config/params-local.php` | Obligatorio para generación IA en cron |
 
-Documentación: `web/docs/producto/asistencia-cohortes.md`
+Documentación: `docs/producto/asistencia-cohortes.md`
 
 ## Cron
 

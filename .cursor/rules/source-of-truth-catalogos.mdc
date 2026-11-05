@@ -73,4 +73,4 @@ Cada **lista cerrada** que el runtime valida o inyecta en prompts tiene **exacta
 - Mismo vocabulario en preprocess.yaml y en smart-catalog sin derivación.
 - Enum hardcodeado en `SmartCatalogRoutingService` en lugar del catalog loader.
 
-Guía: [`web/docs/arquitectura/metadata-yaml-uso.md`](web/docs/arquitectura/metadata-yaml-uso.md).
+Guía: [`docs/arquitectura/metadata-yaml-uso.md`](docs/arquitectura/metadata-yaml-uso.md).

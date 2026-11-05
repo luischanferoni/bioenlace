@@ -1,0 +1,78 @@
+---
+description: "Una sola fuente de verdad por catálogo; YAML = textos IA/usuario; mapas técnicos en PHP"
+applyTo: ['**']
+---
+
+<!-- GENERADO por tools/sync-agent-rules.php — editar .cursor/rules/*.mdc -->
+
+# Source of truth — catálogos y listas cerradas
+
+Complementa [`runtime-datos-vs-metadata.mdc`](runtime-datos-vs-metadata.mdc) y [`metadata-yaml-uso.mdc`](metadata-yaml-uso.mdc).
+
+## Principio
+
+Cada **lista cerrada** que el runtime valida o inyecta en prompts tiene **exactamente una fuente** y **un loader PHP** que la consume. Prohibido mantener la misma lista en dos sitios (const PHP + YAML, JSON en prompt + enum en schema, `categories_json` + `categories_human`, etc.).
+
+**YAML del catálogo = vocabulario + textos** (para prompt o UX). **PHP del loader =** `all()` / `isValid()` / `listForPrompt()` y, si hace falta, **mapas técnicos** (wiring id→id, tags extra sin copy). No mezclar esos mapas en el YAML. No mantener capas de retrocompatibilidad en metadata ni en PHP.
+
+## Dónde va cada cosa
+
+| Tipo de dato | Source of truth | Loader / validación |
+|---|---|---|
+| Categorías extracción preprocess | textos: `Platform/Assistant/Application/Catalog/preprocess-extraction-categories.yaml`; **ids**: `HintCandidateProviderInterface::declaredEntities()` | `PreprocessExtractionCategoryCatalog` |
+| `routing_hint` preprocess (id → texto IA) | `Platform/Assistant/Application/Catalog/preprocess-routing-hints.yaml` | `PreprocessRoutingHintCatalog` |
+| Alias / mapas técnicos preprocess (`user_goal`, tags extra) | constantes en `PreprocessRoutingHintCatalog` | mismo loader |
+| Tags preprocess (vocabulario IA) | tags de intents Domain + `extraPreprocessTags()` PHP | `PreprocessTagVocabularyCatalog` |
+| Aspectos HIS / plan declarativo (legado) | constantes `ASPECTS` en `AssistantContextHISAreaAspect` | `AssistantContextHISAreaAspect`, `AssistantContextAreaAspectCatalog` |
+| Entidades hint (flows) | `declaredEntities()` en cada `*HintCandidateProvider` (ownership compuesto) | `HintCandidateProviderRegistry`, `HintResolutionMetadata` |
+| Copy límites de canal (fuera HIS) | `Platform/Assistant/Application/Routing/channel-limits.yaml` | metadata loader |
+| Copy de notificaciones del journey clínico | `Domain/Clinical/Encounter/Application/Catalog/encounter-journey-notifications.yaml` | `EncounterJourneyNotificationCatalog` |
+| Copy de push de resumen publicado | `Domain/Clinical/Encounter/Application/Catalog/encounter-patient-notifications.yaml` | `EncounterPatientSummaryNotificationCatalog` |
+| Copy de notificaciones de encounter async | `Domain/Scheduling/Agenda/Application/Catalog/encounter-async-push-notifications.yaml` | `EncounterAsyncPushNotificationCatalog` |
+| Copy de alertas SLA de bandeja async | `Domain/Scheduling/Agenda/Application/Catalog/encounter-async-inbox-priority-notifications.yaml` | `EncounterAsyncInboxPriorityNotificationCatalog` |
+| Copy de notificaciones B01 (staff/paciente) | `Domain/Clinical/CareCohort/Application/Catalog/care-followup-notifications.yaml` | `CareFollowupNotificationCatalog` |
+| Copy de push de touchpoints post-consulta | `Domain/Clinical/CareCohort/Application/Catalog/care-followup-touchpoint-notifications.yaml` | `CareFollowupTouchpointNotificationCatalog` |
+| Copy de títulos de touchpoints B02 post-alta | `Domain/Clinical/Inpatient/Application/Catalog/post-discharge-followup-copy.yaml` | `PostDischargeFollowupTouchpointCatalog` |
+| Copy de notificaciones B03 (laboratorio) | `Domain/Clinical/Laboratory/Application/Catalog/post-lab-classification-notifications.yaml` | `PostLabClassificationNotificationCatalog` |
+| Copy de explicación de acciones anti no-show | `Domain/Scheduling/BehaviorProfile/Application/Catalog/turno-action-explanations.yaml` | `TurnoAgentActionExplanationCatalog` |
+| Copy de notificaciones del ciclo de vida de turnos | `Domain/Scheduling/Agenda/Application/Catalog/turno-lifecycle-notifications.yaml` | `TurnoLifecycleNotificationCatalog` |
+| Copy del aviso inicial de reubicación de turnos | `Domain/Scheduling/Agenda/Application/Catalog/turno-resolution-notifications.yaml` | `TurnoResolutionNotificationCatalog` |
+| Copy de anti no-show de turnos | `Domain/Scheduling/Agenda/Application/Catalog/turno-antinoshow-notifications.yaml` | `TurnoAntinoshowNotificationCatalog` |
+| Copy de oferta para adelantar turnos | `Domain/Scheduling/Agenda/Application/Catalog/turno-advance-offer-notifications.yaml` | `TurnoAdvanceOfferNotificationCatalog` |
+| Copy de cierre del loop de resolución de turnos | `Domain/Scheduling/Agenda/Application/Catalog/turno-resolucion-loop-close-notifications.yaml` | `TurnoResolucionLoopCloseNotificationCatalog` |
+| Copy de resolución multicanal de turnos | `Domain/Scheduling/Agenda/Application/Catalog/turno-resolucion-multicanal-notifications.yaml` | `TurnoResolucionMulticanalNotificationCatalog` |
+| Copy de opciones de shortlist de resolución | `Domain/Scheduling/Agenda/Application/Catalog/turno-resolucion-shortlist-notifications.yaml` | `TurnoResolucionShortlistNotificationCatalog` |
+| Copy de auto-reserva de resolución | `Domain/Scheduling/Agenda/Application/Catalog/turno-resolucion-auto-reserva-notifications.yaml` | `TurnoResolucionAutoReservaNotificationCatalog` |
+| Copy del ruteo post-cupo | `Domain/Scheduling/Agenda/Application/Catalog/reserva-triage-post-cupo-notifications.yaml` | `ReservaTriagePostCupoNotificationCatalog` |
+| Copy de push de guardia | `Domain/Clinical/Emergency/Application/Catalog/emergency-push-copy.yaml` | `EmergencyPushCopyCatalog` |
+| Copy de push de expediente legal | `Domain/Clinical/LegalExport/Application/Catalog/legal-export-notifications.yaml` | `LegalExportNotificationCatalog` |
+| Copy de push de domicilio verificado | `Domain/Person/Identity/Application/Catalog/patient-address-verification-notifications.yaml` | `PatientAddressVerificationNotificationCatalog` |
+| Copy de acciones delegadas a representante | `Domain/Person/Representation/Application/Catalog/delegated-action-notifications.yaml` | `PersonRepresentationDelegatedActionNotificationCatalog` |
+| Copy de reintentos de integración | `Domain/Clinical/HistoryExchange/Application/Catalog/integration-retry-notifications.yaml` | `IntegrationRetryNotificationCatalog` |
+| Maestros consultados en request (geo, recursos) | **BD** + seed console | servicio dominio + cache |
+
+## Reglas PHP
+
+- **Constantes nombradas** (`PreprocessRoutingHintCatalog::CLARA`, etc.) solo como alias del id string; la lista `all()` / `isValid()` sale del YAML (cuando el catálogo es vocabulario+texto).
+- **Mapas técnicos** viven en el loader; no en un segundo YAML ni en otro service.
+- **Prompts**: placeholders `{…_list}` generados por el loader; no repetir enums en el cuerpo del prompt si ya se inyectan.
+- **Schemas** (`assistant/schemas/*.yaml`): referenciar path del catálogo en `category_values` / notas; no duplicar arrays completos salvo ejemplo ilustrativo.
+- **Validación**: `normalize*` y motores llaman al catalog loader; categorías/hints inventados se descartan.
+
+## Al agregar o cambiar un valor
+
+1. Si es **id + texto** para IA/usuario: editar **solo** el YAML catálogo (o BD + seed si es maestro runtime).
+2. Si es **alias / mapa / tag auxiliar**: editar el **loader PHP**.
+3. Si hace falta código nuevo: extender el **loader existente**, no otra lista en un service.
+4. Test: catálogo carga y constantes nombradas (si existen) siguen en el catálogo.
+5. No copiar la lista al prompt, al schema ni a un `private const` en otro archivo.
+6. Para notificaciones, mantener el copy en el catálogo YAML y las condiciones de disparo en la política PHP; no duplicar mensajes en jobs, schedulers ni agentes.
+
+## Anti-patrones
+
+- `ROUTING_HINTS` en PHP distinto del YAML de routing hints.
+- `aliases:` / `legacy_user_goal:` / listas de ids sin texto en el YAML de hints.
+- Mismo vocabulario en preprocess.yaml y en smart-catalog sin derivación.
+- Enum hardcodeado en `SmartCatalogRoutingService` en lugar del catalog loader.
+
+Guía: [`docs/arquitectura/metadata-yaml-uso.md`](docs/arquitectura/metadata-yaml-uso.md).

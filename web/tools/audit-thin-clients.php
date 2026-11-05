@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Auditoría "clientes delgados" (plan web/docs/plans/clientes-contrato-api, fase 00).
+ * Auditoría "clientes delgados" (plan docs/plans/clientes-contrato-api, fase 00).
  *
  * Cuenta patrones que el programa debe eliminar y compara contra un tope versionado
  * (tools/thin-clients-baseline.json). El tope solo puede bajar.

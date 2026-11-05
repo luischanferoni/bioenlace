@@ -1,0 +1,30 @@
+---
+description: "Lineamientos de arquitectura Yii2 para Bioenlace (backend web + API v1)"
+applyTo: ['web/**']
+---
+
+<!-- GENERADO por tools/sync-agent-rules.php — editar .cursor/rules/*.mdc -->
+
+# Arquitectura y responsabilidades
+
+- **Autenticación**: filtros/middleware/bootstrap. Controllers y negocio asumen usuario autenticado; no chequear `isGuest` ni `Yii::$app->user->id` en cada acción.
+
+- **API como única fuente de negocio**: persistencia y reglas de dominio detrás de la API (`frontend/modules/api/v1/…`). **Web Yii** (`frontend/controllers`): vistas nativas mínimas (`render`, layout); no duplicar lógica ni persistir negocio si ya hay endpoint. **Flutter/móvil**: misma API (cliente HTTP / capa de app; no controllers Yii). Los descriptores `ui_json` y los `custom_widget` se consumen como **JSON**; la UI y los widgets se implementan **en cada cliente** (Flutter: código compartido en `mobile/packages/shared`, sin descargar HTML/JS/CSS del descriptor como sustituto de widgets nativos).
+
+- **Controller API**: delgado — request/response, permisos por ruta, llama a **Services** y modelos; aquí `*HttpException`, JSON y códigos HTTP.
+
+- **Services por dominio** (`common/components/Domain/{Clinical|Scheduling|Person|Organization|…}/…`) y motores en `common/components/Platform/{Assistant|Core|Ui|Ai|…}/…`: lógica pesada; **API, consola, jobs**. Sin HTTP (`*HttpException`, HTML, flash). **No** usar `components/Services/` (eliminado). Dominio: `\InvalidArgumentException`, excepciones en `common`, o retornos que el controller API traduzca. Árbol espejo: [arbol-espejo-dominios.md](docs/arquitectura/arbol-espejo-dominios.md).
+
+- **Modelos (AR)**: persistencia, `rules()`, relaciones, consultas tipo `exists…` sin excepciones HTTP. Sin autorización ni dueño de recurso.
+
+- **Captura clínica (consulta, quirófano, …)**: entrada **texto libre** y/o **audio** (transcripción). Interpretar → mapear al modelo/DTO → si faltan obligatorios, **respuesta pidiendo más texto o audio**; no depender solo de formularios cuando el flujo es conversacional.
+
+- **Lógica transversal** en API: `BaseController` / `ActionFilter` / `behavior`; no copiar `canAccess…` en cada acción.
+
+- **Yii2**: filters, behaviors, `AccessControl` antes de patrones ad hoc; componentes propios solo si Yii2 no alcanza.
+
+- **0 hardcode de comportamiento particular (proyecto completo)**: ver regla [`capas-y-metadata-sin-hardcode.mdc`](capas-y-metadata-sin-hardcode.mdc). Resumen: orquestadores y motores genéricos **no** enumeran pantallas, intents ni reglas de dominio; lo específico va en **metadata** (YAML, JSON, catálogos, params) y en **servicios/modelos/BD**. En el asistente: intents en `SubIntentEngine/schemas/intents/`, enriquecimiento de draft vía `draft_hydrator` en el YAML, UI en `views/json/`.
+- **Servicio ≠ especialidad del profesional ≠ acto SNOMED**: ver [`servicio-institucional-vs-pes-acto.mdc`](servicio-institucional-vs-pes-acto.mdc) y glosario `docs/producto/glosario-servicio-pes-acto.md`.
+- **Límite del YAML (integridad / gates)**: ver [`metadata-yaml-uso.mdc`](metadata-yaml-uso.mdc). YAML = composición y knobs; «¿puede confirmarse / emitirse?» = Yii o servicio de dominio.
+
+- **JavaScript en vistas Yii (`views/…`)**: evitar bloques grandes con `$view->registerJs()` para lógica de página. La lógica vive en **`frontend/web/js/`** (p. ej. **`frontend/web/js/widgets/`** para scripts de UI JSON / widgets), registrada mediante **`AssetBundle`**. Para headers de **`/api/v1`** desde el navegador: el layout define el base en **`window.getBioenlaceApiClientHeaders`** ([`main.php`](web/frontend/views/layouts/main.php), [`main_sinmenuizquierda.php`](web/frontend/views/layouts/main_sinmenuizquierda.php)); el JS compartido debe usar **`window.BioenlaceApiClient.mergeHeaders(extra)`** ([`bioenlace-api-client.js`](web/frontend/web/js/bioenlace-api-client.js)), cargado vía [`BioenlaceApiClientAsset`](web/frontend/assets/BioenlaceApiClientAsset.php) (dependencia de `AppAsset`, asistente SPA, wizard post-login, o `@native_assets_js` cuando el partial llame API). El `extra` añade o sobrescribe cabeceras (p. ej. `X-Requested-With`).

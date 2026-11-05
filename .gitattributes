@@ -1,0 +1,2 @@
+# Los hooks de git se ejecutan con sh/bash: deben conservar LF en cualquier SO.
+.githooks/* text eol=lf

@@ -1,4 +1,4 @@
-# Referencia de costos IA (alineado con web/docs/costos/costos-api.md).
+# Referencia de costos IA (alineado con docs/negocio/costos/costos-api.md).
 # Usado por AICostEstimationService para estimar USD cuando no hay usageMetadata real.
 
 modelo: gemini-2.5-flash-lite
@@ -23,7 +23,7 @@ llamada_referencia:
   candidates_tokens: 500
   cached_ratio: 0.25
 
-# Overrides por contexto IAManager (web/docs/costos/costos-api.md § Contextos).
+# Overrides por contexto IAManager (docs/negocio/costos/costos-api.md § Contextos).
 # volumen_mensual_por_profesional: null = no sumado al Apartado 1 (ver nota en doc).
 contextos:
   asistente-preprocess:

@@ -57,6 +57,6 @@ Si falta el YAML de composición, **los gates hard y la integridad siguen activo
 2. ¿Es mapa de ids, alias técnico o fallback de código? → PHP (loader).
 3. ¿Es lookup de hechos en request? → BD (+ cache); seed en console.
 4. ¿Es “válido / bloquea guardado”? → modelo o servicio de dominio.
-5. ADR integridad: `web/docs/decisions/captura-clinica-contratos-yii-vs-yaml.md`
-6. ADR runtime/cognitivo: `web/docs/decisions/runtime-datos-vs-metadata.md`
-7. Guías: `web/docs/arquitectura/metadata-yaml-uso.md`, `runtime-datos-y-metadata.md`
+5. ADR integridad: `docs/decisions/captura-clinica-contratos-yii-vs-yaml.md`
+6. ADR runtime/cognitivo: `docs/decisions/runtime-datos-vs-metadata.md`
+7. Guías: `docs/arquitectura/metadata-yaml-uso.md`, `runtime-datos-y-metadata.md`

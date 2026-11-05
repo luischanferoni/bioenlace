@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+#
+# pre-commit: sintaxis PHP + reglas sincronizadas + invariante HTTP.
+#
+# Instalación (una vez por clon):
+#   git config core.hooksPath .githooks
+#
+# Escape puntual: git commit --no-verify
+# PHP no estándar: PHP_BIN=/ruta/a/php git commit ...
+
+set -uo pipefail
+
+root="$(git rev-parse --show-toplevel)" || exit 1
+cd "$root" || exit 1
+
+fail=0
+say() { printf '%s\n' "$*" >&2; }
+
+PHP_BIN="${PHP_BIN:-php}"
+if ! command -v "$PHP_BIN" >/dev/null 2>&1; then
+  say "pre-commit: PHP no está en PATH. Definí PHP_BIN o usá: git commit --no-verify"
+  exit 1
+fi
+
+# 1) Sintaxis de los PHP en stage
+mapfile -t staged < <(git diff --cached --name-only --diff-filter=ACM -- '*.php')
+for f in ${staged[@]+"${staged[@]}"}; do
+  [ -f "$f" ] || continue
+  if ! "$PHP_BIN" -l "$f" >/dev/null 2>&1; then
+    say "pre-commit: error de sintaxis en $f"
+    "$PHP_BIN" -l "$f" >&2
+    fail=1
+  fi
+done
+
+# 2) .github/instructions sincronizado con .cursor/rules
+if ! "$PHP_BIN" tools/sync-agent-rules.php --check >/dev/null 2>&1; then
+  say "pre-commit: reglas desincronizadas. Corré: php tools/sync-agent-rules.php"
+  fail=1
+fi
+
+# 3) Invariante de arquitectura (requiere PHP >= 8.1, como el resto de la suite)
+php_id="$("$PHP_BIN" -r 'echo PHP_VERSION_ID;' 2>/dev/null | tail -n 1 || echo 0)"
+if [ "$php_id" -ge 80100 ] 2>/dev/null; then
+  if ! (cd web && "$PHP_BIN" vendor/bin/codecept run unit platform/core/ArchitectureHttpUsageTest.php --no-colors); then
+    say "pre-commit: falló el invariante HTTP (ver common/tests/unit/platform/core/ArchitectureHttpUsageTest.php)."
+    fail=1
+  fi
+else
+  version="$("$PHP_BIN" -r 'echo PHP_VERSION;' 2>/dev/null | tail -n 1)"
+  say "pre-commit: PHP ${version} < 8.1; se omite el test de arquitectura."
+fi
+
+exit "$fail"

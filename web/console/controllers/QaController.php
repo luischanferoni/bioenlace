@@ -11,7 +11,7 @@ use yii\helpers\Console;
 /**
  * Smoke de consultas al asistente (paciente) con IA real.
  *
- * @see web/docs/qa/paciente/asistente-consultas.md
+ * @see docs/qa/paciente/asistente-consultas.md
  * @see web/common/data/qa/asistente-consultas.yaml
  */
 class QaController extends Controller

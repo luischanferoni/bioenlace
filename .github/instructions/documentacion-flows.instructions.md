@@ -1,0 +1,35 @@
+---
+description: "Documentación de producto en docs/producto/ (sin carpeta flows/)"
+applyTo: ['docs/producto/**/*.md']
+---
+
+<!-- GENERADO por tools/sync-agent-rules.php — editar .cursor/rules/*.mdc -->
+
+# Documentación — narrativa en `producto/`
+
+Cada archivo describe **una historia de punta a punta** (no un solo endpoint ni contrato YAML).
+
+## Estructura recomendada
+
+```markdown
+# Título
+
+## De qué se trata
+## Actores
+## Cómo funciona
+(mermaid + pasos en lenguaje natural)
+## Relación con el resto
+```
+
+## Estilo de producto
+
+- No usar la palabra «película».
+- No contrastar app vs web vs asistente: hablar de **Bioenlace** o **el usuario**.
+
+## Estilo
+
+- Sin bloques de código del repositorio.
+- Diagramas mermaid cuando ayuden a ver cron → API → BD → usuario.
+- Nombres de archivo en **kebab-case** minúsculas.
+
+Contratos técnicos del asistente: `docs/arquitectura/asistente-motores.md` (lenguaje accesible, sin código).

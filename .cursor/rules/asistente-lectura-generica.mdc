@@ -24,4 +24,4 @@ alwaysApply: false
 
 Wizard, tablero, listado de producto sin métrica → `intents/read/flows/`. Documentar si es candidato a métrica.
 
-Docs: `web/docs/arquitectura/asistente-lectura-data-access.md`, `web/docs/producto/asistente-y-chat.md`.
+Docs: `docs/arquitectura/asistente-lectura-data-access.md`, `docs/producto/asistente-y-chat.md`.

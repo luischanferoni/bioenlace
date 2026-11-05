@@ -4,7 +4,7 @@ Export saliente de documentación clínica hacia servidor nacional / red jurisdi
 
 ## Documentación de producto
 
-Narrativa end-to-end: `web/docs/producto/interoperabilidad-historia-clinica.md`
+Narrativa end-to-end: `docs/producto/interoperabilidad-historia-clinica.md`
 
 ## Piezas
 

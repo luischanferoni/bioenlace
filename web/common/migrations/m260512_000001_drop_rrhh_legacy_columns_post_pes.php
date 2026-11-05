@@ -3,11 +3,11 @@
 use yii\db\Migration;
 
 /**
- * Retiro de columnas legacy RRHH post-PES (alineado a `web/docs/sql/retiro_legacy_rrhh_post_pes.sql`).
+ * Retiro de columnas legacy RRHH post-PES (alineado a `docs/sql/retiro_legacy_rrhh_post_pes.sql`).
  *
  * ## Pre-requisitos
  *
- * - Diagnóstico OK (`web/docs/sql/diagnostico_pes_antes_eliminar_legacy.sql`).
+ * - Diagnóstico OK (`docs/sql/diagnostico_pes_antes_eliminar_legacy.sql`).
  * - Despliegue de código sin lectura/escritura AR de las columnas listadas (mismo release que esta migración).
  *
  * ## Notas

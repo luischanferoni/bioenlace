@@ -1,0 +1,13 @@
+---
+description: "UI JSON y custom_widget en apps móviles Flutter (shared, sin assets web)."
+applyTo: ['mobile/**/*.dart']
+---
+
+<!-- GENERADO por tools/sync-agent-rules.php — editar .cursor/rules/*.mdc -->
+
+# Móvil: UI JSON y `custom_widget`
+
+- **Fuente de verdad del flujo**: el JSON `kind: ui_definition` desde `/api/v1/ui/<entidad>/<accion>` (GET carga, POST submit con cuerpo **form-urlencoded**, igual que la SPA web).
+- **Nunca** tratar el descriptor como “código ejecutable”: las apps **no** descargan ni ejecutan HTML/JS/CSS declarados en `assets` de un `custom_widget` ni partials “nativos” web para sustituir la UI móvil.
+- **`custom_widget`**: cada `widget_id` conocido debe implementarse **en Dart** en el cliente. Código compartido entre médico y paciente vive en **`mobile/packages/shared`** (p. ej. `lib/ui_json/`); exportar desde `shared.dart`. Evitar copias en una sola app salvo wiring (navegación, `X-App-Client`, tokens).
+- **Nuevos widgets**: añadir el mapeo `widget_id → Widget` en el motor compartido (p. ej. `UiJsonScreen`), documentar contrato en `docs/UI_JSON_CUSTOM_WIDGET.md`.

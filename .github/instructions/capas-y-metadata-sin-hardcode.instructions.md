@@ -1,0 +1,52 @@
+---
+description: "Capas del proyecto y regla transversal de metadata vs hardcode"
+applyTo: ['**']
+---
+
+<!-- GENERADO por tools/sync-agent-rules.php — editar .cursor/rules/*.mdc -->
+
+# Capas y regla «0 hardcode» (todo el proyecto)
+
+## Principio
+
+**No hardcodear comportamiento particular** (por pantalla, rol, intent, entidad, efector, servicio clínico, etc.) en capas altas u orquestadores. Lo específico vive en **metadata declarativa** y en **capas inferiores** (servicios de dominio, modelos, BD).
+
+**No fixes rápidos.** Ante un bug de routing, clasificación, permisos o UX del asistente: no parches locales (`if intent`, regex suelta en PHP, línea en prompt IA, lista hardcodeada). Primero ubicar la capa correcta (YAML, catálogo, servicio de dominio), declarar ahí, cablear con motor genérico existente o extenderlo una sola vez, y test. Un fix rápido que “cierra el ticket” pero duplica reglas se considera deuda inaceptable.
+
+Aplica a **web, API, asistente, móvil y jobs** — no solo al asistente SPA.
+
+## Capas (de arriba abajo)
+
+| Capa | Ejemplos | Responsabilidad |
+|------|----------|-----------------|
+| **Orquestación / entrypoints** | `ChatOrchestrator`, controllers API delgados, `spa-home.js` genérico | Enrutar, permisos HTTP, ensamblar request/response. **Sin** `if (intentId === '…')` ni reglas de negocio. |
+| **Motores genéricos** | `SubIntentEngine`, `IntentEngine`, `UiScreenService`, renderers UI JSON | Interpretar **manifiestos** (YAML, JSON). Agnósticos de dominio clínico/organizacional. |
+| **Metadata / descubrimiento** | Intents YAML, `ui_json`, catálogos RBAC, `UiCatalogOptionDefinitions`, params Yii | **Qué** hacer y **con qué parámetros** — no **cómo** persiste el dominio. |
+| **Servicios de dominio** | `Organization/Service/…`, `Scheduling/Service/…`, `Clinical/…/Service/…` | Reglas de negocio, autorización de recurso, composición de modelos. |
+| **Persistencia (última capa)** | Modelos AR, migraciones, triggers, catálogos en BD (`condiciones_laborales`, etc.) | Datos maestros y vínculos; validaciones de integridad. |
+
+## Qué va en cada sitio
+
+- **YAML / JSON / BD**: pasos de flow, rutas RBAC, handlers registrables (`draft_hydrator.handler`), opciones de catálogo, reglas `business_rules`, presentación UI.
+- **Registry pequeño y estable**: mapa `handler_id → callable` de dominio (p. ej. `FlowDraftHydratorRegistry`); solo IDs, no listas de intents.
+- **Servicios de dominio**: resolver PES, alta idempotente, validar propiedad, persistir condición laboral.
+- **Prohibido en orquestadores**: enumerar `intent_id`, switches por pantalla, duplicar reglas que ya están en YAML o en un service.
+
+## Asistente (casos frecuentes)
+
+- **Flujo conversacional**: `assistant/intents/{create,read,update,delete}/**/*.yaml` + `SubIntentEngine`.
+- **Lectura genérica** (“cuántos / listar / último X”): métrica DataAccess + YAML en `intents/read/` (`metric_id`, params hidratados). Pantallas que no caben: `intents/read/flows/`. No reabrir `data-access.info|listar` como intents NL.
+- **Enriquecer draft antes del motor**: clave raíz `draft_hydrator` en el YAML → `FlowDraftHydratorService` (no en `ChatOrchestrator`).
+- **Pantallas embebibles**: `views/json/…` + API; clientes consumen JSON genéricamente.
+- **Atajos visibles**: `schemas/assistant-shortcuts.yaml` (ver también [`asistente-routing-sin-hardcode.mdc`](asistente-routing-sin-hardcode.mdc)).
+- **Routing NL**: keywords en el YAML de cada intent + desambiguación en `IntentClassifier`; canal (síntoma/trámite) en `ChatChannelPolicy`; prompt de la 2ª IA en `Prompts/guide.yaml`. Ver [`asistente-routing-sin-hardcode.mdc`](asistente-routing-sin-hardcode.mdc).
+
+## Excepciones razonables
+
+- Constantes técnicas (timeouts, límites de paginación, nombres de columnas).
+- Tests y fixtures.
+- Migraciones de datos puntuales.
+
+Cuando dudes: **¿puede declararse en metadata o moverse un nivel abajo?** Si sí, no lo dejes en el orquestador.
+
+**Límite del YAML:** composición y knobs, no integridad clínica ni gates hard. Ver [`metadata-yaml-uso.mdc`](metadata-yaml-uso.mdc) y `docs/arquitectura/metadata-yaml-uso.md`.

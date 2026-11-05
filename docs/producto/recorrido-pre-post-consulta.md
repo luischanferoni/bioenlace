@@ -1,0 +1,111 @@
+# Recorrido pre y post consulta (encounter journey)
+
+## De qué se trata
+
+Orquestación declarativa de **motivos de consulta**, **cuestionario pre-consulta** (care pack) y **seguimiento post-consulta**, con **ventanas temporales**, **elegibilidad** (cuándo no aplica cada fase) y **notificaciones** al paciente.
+
+El paciente opera desde la **app móvil**; el **personal de salud** consume motivos, intake y pre-consulta en **historia clínica / timeline** (web y app Personal de Salud) antes y durante la captura.
+
+## Fases
+
+| Fase | Superficie | Cuándo |
+|------|------------|--------|
+| `motivos_intake` | Formulario UI JSON (preguntas declarativas) | Antes del chat de motivos, misma ventana |
+| `motivos_consulta` | Chat libre (`motivos-consulta/*`) | Antes del turno, dentro de la ventana |
+| `asistencia_pre_consulta` | Flow / UI JSON care pack | Antes del turno, si hay pack de cohorte |
+| `post_consulta` | Touchpoints del pack followup | Tras encounter finalizado |
+
+**No confundir** con **Solicitar Atención → Control/Seguimiento** (consulta clínica por mensaje y CarePlan), que es un canal distinto — [solicitar-atencion.md](solicitar-atencion.md).
+
+## Principios
+
+1. **Metadata / catálogos** — ventanas en `encounter_phase_windows.yaml`, overrides en `encounter_phase_window_overrides.yaml`, elegibilidad en `encounter_phase_eligibility.yaml`, guía del chat en `AppointmentReasonChatGuideCatalog`.
+2. **Servicio de dominio** — `EncounterJourneyService` compone ventana + elegibilidad + `enabled` por fase.
+3. **Sin hardcode en listados ni Flutter** — el listado de turnos y `GET /api/v1/encounter-journey/estado` exponen `journey` y flags legacy (`motivos_input_abierto`, `asistencia_cohorte_disponible`).
+4. **Motivos siguen siendo conversacionales** — la IA corre en lote al cierre de ventana (`motivos-consulta-batch`), no por pregunta del wizard.
+
+## Ventanas (defaults producto)
+
+| Fase | Apertura | Cierre |
+|------|----------|--------|
+| Motivos / intake / pre-consulta | `encounter_journey_preparar_minutos_antes` antes del turno (default **4 h**) | `motivos_consulta_cierre_minutos` antes (params, default **10 min**) |
+| Post-consulta | Al finalizar encounter | +30 días |
+
+Offsets en `encounter_phase_windows.yaml` (`param:encounter_journey_preparar_minutos_antes`, `param:motivos_consulta_cierre_minutos`, etc.).
+
+**Overrides por efector/servicio** (`encounter_phase_window_overrides.yaml`): reglas con `match.id_efector` y/o `match.id_servicio`; gana la regla más específica (más claves en `match`).
+
+## Guía del chat de motivos
+
+Catálogo `AppointmentReasonChatGuideCatalog` (`enabled: true/false`). API paciente `GET /api/v1/encounter-journey/motivos-intake` entrega la guía declarativa del chat (`chat_guide`). No persiste respuestas en el encounter: el motivo clínico canónico sale del chat → Condition rol CC.
+
+**Sin IA en la guía:** textos declarativos. Ver [catalogo-usos-ia.md](catalogo-usos-ia.md) §2.
+
+### Vista staff (historia clínica)
+
+El equipo ve el **resumen de motivos** (Condition CC) y sugerencias clínicas (`ia_clinical_suggestions`) en el bloque de motivos del turno. No hay sección de “preguntas previas” persistidas.
+
+**API:** `GET /api/v1/personas/{id}/historia-clinica?turno_id=` (o `encounter_id=`) incluye `patient_encounter_reasons` con `resumen`, `sugerencias_clinicas`, `imagenes_adjuntas`, etc.
+
+**Orden en timeline (staff):** resumen motivos (chat → Condition CC) → asistencia pre-consulta cohorte (`care_pack_cohorte`) → signos vitales y captura.
+
+**Ventana médico:** la historia clínica sigue la regla de `AppointmentReasonWindowService::isHistoriaClinicaVisibleForEncounter` (p. ej. 1 min antes del turno en ambulatorio).
+
+## Elegibilidad (ejemplos)
+
+- **Motivos:** no aplica sin encounter, async (`SOLICITUD_ASYNC`), turno cancelado/en resolución, clase ≠ AMB.
+- **Pre-consulta:** además requiere cohortes habilitadas, pack assistance ligado y cuestionario no completado.
+- **Post-consulta:** encounter finalizado, pack followup disponible.
+
+Reglas en `encounter_phase_eligibility.yaml`; evaluación en `EncounterJourneyEligibilityService`.
+
+## API
+
+### Paciente (app móvil)
+
+- `GET|POST /api/v1/encounter-journey/estado?turno_id=` — estado completo + flags legacy.
+- `GET /api/v1/encounter-journey/motivos-intake?turno_id=` — guía declarativa del chat de motivos (`chat_guide`).
+- El listado `turnos/listar-como-paciente` incluye `journey` en cada fila.
+
+### Staff (historia clínica)
+
+- `GET /api/v1/personas/{id}/historia-clinica?turno_id=` — resumen clínico del turno; `patient_encounter_reasons` + `care_pack_cohorte` cuando aplica.
+- Sin `turno_id` / `encounter_id`: motivos del turno con mensajes más reciente en el efector (comportamiento legacy del endpoint).
+
+RBAC journey paciente: hereda de `listar-como-paciente` (migración `m260703_120000_api_encounter_journey_estado_rbac`). Historia clínica: `/api/pacientes/historia-clinica`.
+
+## Notificaciones
+
+Al programar turno (`ConfirmTurno`), se encolan recordatorios de fases con anchor `turno_start`. Al finalizar encounter (`EncounterLifecycleService`), se encolan los de `post_consulta` (anchor `encounter_finished`). El cron `turno-notificacion/run` envía push con deep link (`id_turno`, `phase`, opcional `touchpoint_id`).
+
+Los touchpoints del pack followup (`care-pack process-followups`) incluyen `id_turno` y `phase=post_consulta` para abrir el hub o el formulario directamente en la app.
+
+## App paciente (hub journey)
+
+- Hub «Preparar tu consulta» / «Seguimiento post-consulta» en inicio y mis turnos (`encounter_journey_hub_screen`, metadata `journey.phases`).
+- Deep links push: tipos `JOURNEY_*` y `CARE_FOLLOWUP_TOUCHPOINT` con `id_turno` + `phase`.
+
+## Implementación (referencia código)
+
+| Pieza | Ubicación |
+|-------|-----------|
+| Ventanas / elegibilidad | `encounter_phase_windows.yaml`, `encounter_phase_eligibility.yaml`, `EncounterJourneyService` |
+| Guía chat motivos | `AppointmentReasonChatGuideService`, `AppointmentReasonChatGuideCatalogService` |
+| Motivo clínico (staff) | Condition CC vía `EncounterReasonService`; sugerencias en `ia_clinical_suggestions` |
+| UI web timeline | `frontend/views/paciente/timeline/timeline.php` |
+| UI móvil staff | `mobile/personalsalud/…/patient_timeline_screen.dart` |
+| UI móvil paciente | `mobile/packages/shared/lib/clinical/encounter_journey_*` |
+
+## Relación con otros documentos
+
+- [captura-clinica.md](captura-clinica.md) — timeline staff y motivos pre-turno.
+- [turnos.md](turnos.md) — reserva y listado.
+- QA integrado ambulatorio: [../qa/escenarios/ambulatorio/medicina-general.md](../qa/escenarios/ambulatorio/medicina-general.md)
+- [asistencia-cohortes.md](asistencia-cohortes.md) — generación de packs.
+- [consultas-seguimiento.md](consultas-seguimiento.md) — consulta clínica por mensaje y seguimiento de tratamiento (care plan).
+- [triage-reserva-turno.md](triage-reserva-turno.md) — triage al reservar (no sustituye motivos).
+
+## Próximos pasos (producto)
+
+- Resumen compacto del journey (fases completadas) en timeline staff.
+- Si se reintroduce intake estructurado: QuestionnaireResponse (tabla propia), no columnas en `encounter`.

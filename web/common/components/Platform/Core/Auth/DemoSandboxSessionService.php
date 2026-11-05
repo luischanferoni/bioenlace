@@ -15,7 +15,7 @@ use Yii;
 /**
  * Orquesta sesión demo efímera: provision → seed → tracking → purga.
  *
- * @see web/docs/producto/alta-cuenta-licencia.md
+ * @see docs/producto/alta-cuenta-licencia.md
  */
 final class DemoSandboxSessionService
 {

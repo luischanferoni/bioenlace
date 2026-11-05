@@ -7,7 +7,7 @@ use yii\db\Migration;
  *
  * ## Prerrequisitos (obligatorio en producción)
  *
- * - Ejecutar {@see web/docs/sql/diagnostico_pes_antes_eliminar_legacy.sql} y validar:
+ * - Ejecutar {@see docs/sql/diagnostico_pes_antes_eliminar_legacy.sql} y validar:
  *   - `sin_pes_pero_con_legacy` ≈ 0 en tablas críticas (o filas aceptadas como histórico).
  *   - Chequeos de PES huérfano en 0.
  *   - DDL sin FKs inesperadas hacia `rrhh_servicio` (o incluidas en el descubrimiento dinámico).

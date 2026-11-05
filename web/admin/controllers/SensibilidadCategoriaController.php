@@ -10,7 +10,7 @@ use common\models\Clinical\SensibilidadCategoria;
 
 /**
  * CRUD de categorías de sensibilidad (resumen con IA).
- * Plan: web/docs/captura-clinica/flows/timeline-paciente-ia.md
+ * Plan: docs/captura-clinica/flows/timeline-paciente-ia.md
  */
 class SensibilidadCategoriaController extends Controller
 {

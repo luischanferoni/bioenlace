@@ -47,7 +47,7 @@ $this->title = 'Costos de IA';
                     </p>
                     <p class="text-muted small mb-0">
                         Tarifas declaradas en <code>metadata/bioenlace/ai/ai-cost-reference.yaml</code>
-                        (alineado con <code>web/docs/costos/costos-api.md</code>).
+                        (alineado con <code>docs/negocio/costos/costos-api.md</code>).
                         Persistencia histórica en BD aún no implementada.
                     </p>
                 </div>
@@ -103,7 +103,7 @@ $this->title = 'Costos de IA';
     </div>
 
     <p class="text-muted small">
-        Ver documentación en <code>web/docs/costos/pruebas-costos-ia.md</code>
-        y <code>web/docs/costos/estrategias-reduccion/monitoreo.md</code>.
+        Ver documentación en <code>docs/negocio/costos/pruebas-costos-ia.md</code>
+        y <code>docs/negocio/costos/estrategias-reduccion/monitoreo.md</code>.
     </p>
 </div>

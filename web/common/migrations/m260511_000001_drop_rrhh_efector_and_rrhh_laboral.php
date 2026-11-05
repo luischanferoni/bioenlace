@@ -12,10 +12,10 @@ use yii\db\Migration;
  *
  * ## Prerrequisitos sugeridos
  *
- * - Backup y revisión de FKs: `web/docs/sql/diagnostico_pes_antes_eliminar_legacy.sql` (y variantes de entorno).
+ * - Backup y revisión de FKs: `docs/sql/diagnostico_pes_antes_eliminar_legacy.sql` (y variantes de entorno).
  * - Código sin consultas ni AR a estas tablas; columnas `id_rrhh_efector` / joins eliminados o sustituidos donde correspondan.
  * - Migraciones PES previas aplicadas (`m260509_*`, `m260510_*`, etc.) según el plan del entorno.
- * - Opcional: script orientativo `web/docs/sql/retiro_legacy_rrhh_post_pes.sql` (fases de columnas antes de DROP de tablas).
+ * - Opcional: script orientativo `docs/sql/retiro_legacy_rrhh_post_pes.sql` (fases de columnas antes de DROP de tablas).
  *
  * ## Alcance
  *

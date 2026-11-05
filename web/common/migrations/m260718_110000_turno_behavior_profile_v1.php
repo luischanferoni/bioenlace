@@ -10,7 +10,7 @@ use yii\db\Migration;
 /**
  * Fases 1–2 perfil comportamiento turnos: eventos canónicos, perfil materializado y motivos de cancelación.
  *
- * @see web/docs/plans/perfil-comportamiento-turnos/
+ * @see docs/plans/perfil-comportamiento-turnos/
  */
 class m260718_110000_turno_behavior_profile_v1 extends Migration
 {

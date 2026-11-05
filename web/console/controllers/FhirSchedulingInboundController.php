@@ -15,9 +15,9 @@ use yii\console\Controller;
  * php yii fhir-scheduling-inbound/push-outbound
  * php yii fhir-scheduling-inbound/reconcile-schedule-links
  *
- * Cron sugerido: ver web/docs/producto/interoperabilidad-agendamiento-fhir.md
+ * Cron sugerido: ver docs/producto/interoperabilidad-agendamiento-fhir.md
  *
- * @see web/docs/producto/interoperabilidad-agendamiento-fhir.md
+ * @see docs/producto/interoperabilidad-agendamiento-fhir.md
  */
 class FhirSchedulingInboundController extends Controller
 {

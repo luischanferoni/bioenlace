@@ -10,7 +10,7 @@
  *
  * Secretos prod (bucket GCS): common/config/params-local.php o console/frontend params-local.
  *
- * @see web/docs/producto/asistencia-cohortes.md
+ * @see docs/producto/asistencia-cohortes.md
  */
 return [
     'enabled' => false,

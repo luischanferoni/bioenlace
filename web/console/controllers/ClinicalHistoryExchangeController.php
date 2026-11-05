@@ -16,7 +16,7 @@ use yii\console\Controller;
  * php yii clinical-history-exchange/reconcile
  * php yii clinical-history-exchange/reconcile 100
  *
- * @see web/docs/plans/interoperabilidad-historia-clinica/phases/01-estructura-y-cola.md
+ * @see docs/plans/interoperabilidad-historia-clinica/phases/01-estructura-y-cola.md
  */
 class ClinicalHistoryExchangeController extends Controller
 {

@@ -6,7 +6,7 @@ use yii\db\Migration;
  * Retiro módulo COVID entrevista telefónica (clean-legacy Fase 02).
  *
  * Controller y vistas eliminados en Fase 01. Sin referencias en API ni asistente.
- * Plan: web/docs/plans/clean-legacy/
+ * Plan: docs/plans/clean-legacy/
  */
 class m260605_100000_drop_covid_entrevista_tables extends Migration
 {

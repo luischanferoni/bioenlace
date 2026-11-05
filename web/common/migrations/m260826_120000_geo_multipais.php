@@ -6,7 +6,7 @@ use yii\db\Query;
 /**
  * Multi-país: geo_paises, id_pais en provincias, vecinos y recursos institucionales en BD.
  *
- * @see web/docs/decisions/runtime-datos-vs-metadata.md
+ * @see docs/decisions/runtime-datos-vs-metadata.md
  */
 class m260826_120000_geo_multipais extends Migration
 {

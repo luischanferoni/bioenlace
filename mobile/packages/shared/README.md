@@ -47,12 +47,12 @@ está documentado en dos lugares:
   con ejemplos de uso.
 
 Para migrar una pantalla existente al sistema "papel" hay una guía paso a paso
-en [`mobile/docs/design-system-papel.md`](../../../mobile/docs/design-system-papel.md).
+en [`docs/mobile/design-system-papel.md`](../../../docs/mobile/design-system-papel.md).
 
 ## Estado de migración
 
 Migración al sistema "papel" **cerrada** (Bloques A→D del plan
-[`mobile/docs/migracion-medico-cierre.md`](../../../mobile/docs/migracion-medico-cierre.md)):
+[`docs/mobile/migracion-medico-cierre.md`](../../../docs/mobile/migracion-medico-cierre.md)):
 
 - `mobile/paciente`, `mobile/personalsalud` y `mobile/packages/shared` solo dependen
   de `AppTheme.lightTheme`, `Bio*`, `context.bio`, `IntentPalette` y

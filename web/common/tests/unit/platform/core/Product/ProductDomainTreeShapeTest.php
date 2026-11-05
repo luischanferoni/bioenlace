@@ -11,7 +11,7 @@ use Yii;
  *
  * Fuente de dominios: {@see ProductDomainCatalog} ← carpetas en `components/Domain/`.
  *
- * @see web/docs/arquitectura/arbol-espejo-dominios.md
+ * @see docs/arquitectura/arbol-espejo-dominios.md
  */
 final class ProductDomainTreeShapeTest extends Unit
 {

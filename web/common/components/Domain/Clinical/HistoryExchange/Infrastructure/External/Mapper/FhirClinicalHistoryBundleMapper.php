@@ -19,7 +19,7 @@ use common\models\Organization\ProfesionalEfectorServicio;
 /**
  * Arma Bundle FHIR documental para export interoperable.
  *
- * @see web/docs/plans/interoperabilidad-historia-clinica/phases/02-mapper-fhir-bundle.md
+ * @see docs/plans/interoperabilidad-historia-clinica/phases/02-mapper-fhir-bundle.md
  */
 final class FhirClinicalHistoryBundleMapper
 {

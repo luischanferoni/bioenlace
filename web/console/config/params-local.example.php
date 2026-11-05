@@ -8,7 +8,7 @@
  *
  * BD y componentes: console/config/main-local.php
  *
- * @see web/docs/producto/asistencia-cohortes.md
+ * @see docs/producto/asistencia-cohortes.md
  */
 return [
     // --- Vertex / Google Cloud (cohortes batch, IAManager en cron) ---

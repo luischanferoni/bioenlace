@@ -5,7 +5,7 @@ use yii\db\Migration;
 /**
  * Retiro LIS legacy (fase 5): tablas import CSV / NBU.
  *
- * Plan: web/docs/laboratorio/ — ingesta vía diagnostic_report.
+ * Plan: docs/laboratorio/ — ingesta vía diagnostic_report.
  */
 class m260523_100003_drop_legacy_laboratorio_tables extends Migration
 {

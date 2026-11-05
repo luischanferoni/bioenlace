@@ -1,5 +1,5 @@
 # Catálogo ejecutable de consultas al asistente (paciente).
-# Fuente humana: web/docs/qa/paciente/asistente-consultas.md
+# Fuente humana: docs/qa/paciente/asistente-consultas.md
 # Runner: php yii qa/asistente-consultas --userId=<id>
 #
 # Una fila = una clase de prueba (no repetir la misma forma con otro wording/target).
@@ -15,7 +15,7 @@
 #   reply_must_not_contain      (subcadenas case-insensitive)
 
 version: 1
-source_doc: web/docs/qa/paciente/asistente-consultas.md
+source_doc: docs/qa/paciente/asistente-consultas.md
 
 cases:
   # --- Smoke: una fila por puerta mínima ---

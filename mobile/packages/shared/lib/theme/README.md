@@ -266,4 +266,4 @@ Lo que ya viene aplicado por el theme global:
 
 ## Migración
 
-Ver [`mobile/docs/design-system-papel.md`](../../../../mobile/docs/design-system-papel.md).
+Ver [`docs/mobile/design-system-papel.md`](../../../../docs/mobile/design-system-papel.md).

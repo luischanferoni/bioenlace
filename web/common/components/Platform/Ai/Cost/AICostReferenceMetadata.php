@@ -10,7 +10,7 @@ use Yii;
  * Tarifas y tokens de referencia para estimación de costos IA.
  *
  * @see web/common/metadata/bioenlace/ai/ai-cost-reference.yaml
- * @see web/docs/costos/costos-api.md
+ * @see docs/negocio/costos/costos-api.md
  */
 final class AICostReferenceMetadata
 {

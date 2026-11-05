@@ -1,0 +1,43 @@
+---
+description: "Estilo de docs Bioenlace — sin código fuente, anclas, idioma y enlaces"
+applyTo: ['docs/**/*.md']
+---
+
+<!-- GENERADO por tools/sync-agent-rules.php — editar .cursor/rules/*.mdc -->
+
+# Documentación — estilo y enlaces
+
+## Sin código fuente en el cuerpo
+
+- **No** bloques ` ```php `, ` ```json `, ` ```yaml ` ni snippets copiables de implementación.
+- **Sí** anclas textuales: `TurnosController::actionCancelarComoPaciente`, `POST /api/v1/turnos/crear-como-paciente`, `SubIntentEngine/schemas/intents/turnos.crear-como-paciente.yaml`.
+- Excepción mínima: fragmentos de **sintaxis declarativa** (una línea `@paramOption …`) en `plataforma/flows/` si no hay otra forma clara; preferir tablas.
+
+## Idioma y tono
+
+- Español para títulos y prosa.
+- Identificadores técnicos del repo en inglés/camelCase como en el código (`intent_id`, `ui_json`).
+
+## Enlaces
+
+- Relativos dentro de `docs/` (`../Turnos/README.md`, `./flows/foo.md`).
+- Carpeta turnos en disco: `Turnos/` (respetar mayúscula en enlaces para consistencia con el repo).
+- Al mover un doc, actualizar `grep` en repo: referencias en PHP (`@see`, comentarios de migraciones), otros `.md` y README de `common/components/`.
+
+## Decisiones
+
+- Decisión **cerrada** que afecta varios módulos → `docs/decisions/`. Los planes en `docs/plans/` son temporales y se borran al cerrar el plan.
+- Decisión local al dominio → sección en `design.md` (“alternativa descartada”), no un ADR duplicado.
+
+## Referencias desde código
+
+En docblocks PHP o mensajes de consola, apuntar al path estable:
+
+`docs/<dominio>/flows/<archivo>.md`
+
+No rutas obsoletas en raíz de `docs/` (`CAPACIDADES_*.md`, `HIS completo/`, etc.).
+
+## Contratos vivos vs obsoleto
+
+- Marcar obsoleto al inicio (`## Objetivo` + nota) y enlazar el reemplazo (ej. `CHAT_ACTIONS_CONTRACT` → `ASSISTANT_ENVELOPE_CONTRACT`).
+- No borrar contratos obsoletos sin comprobar enlaces entrantes.

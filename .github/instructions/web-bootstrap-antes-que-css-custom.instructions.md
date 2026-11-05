@@ -1,0 +1,41 @@
+---
+description: "Web Yii — Bootstrap primero; CSS custom solo feature/shell que Bootstrap no cubre"
+applyTo: ['web/frontend/views/**/*.{php,css}', 'web/frontend/web/css/**/*.css', 'web/frontend/web/js/**/*.js', 'web/admin/views/**/*.{php,css}', 'web/admin/web/css/**/*.css', 'web/common/web/css/**/*.css']
+---
+
+<!-- GENERADO por tools/sync-agent-rules.php — editar .cursor/rules/*.mdc -->
+
+# Web: Bootstrap antes que CSS custom
+
+## Principio
+
+En vistas Yii (frontend + admin) y assets asociados: **usar utilidades y componentes de Bootstrap** (layout, tipografía, color, espaciado, bordes, cards, badges, alerts, sticky, flex/grid).
+
+**CSS custom de feature/shell** solo cuando el patrón es **muy específico** y Bootstrap no lo prevé (p. ej. línea vertical de timeline, stack SPA, composer fijo, semáforo Manchester).
+
+## Qué NO cuenta como “custom de pantalla”
+
+| Categoría | Ejemplos | Tratamiento |
+|-----------|----------|-------------|
+| Tema Bootstrap Bioenlace | `bootstrap-custom.css` (tokens `--bio-*`, overrides de marca) | **Es Bootstrap** del producto. No inventar otra hoja de tema. |
+| Librería / plugin | `scheduler.css`, `select2.css`, `bootstrap.min.css`, `theme_4.css`, CDN de terceros | **No tocar** / no reimplementar. |
+
+## Qué evitar
+
+- Clases BEM / namespaces por pantalla que solo replican `d-flex`, `row`/`col`, `border`, `p-3`, `bg-light`, `sticky-top`, `small text-muted`, etc.
+- Hojas CSS nuevas por feature si el markup se resuelve con utilidades Bootstrap.
+- Duplicar en CSS lo que ya da `.btn`, `.badge`, `.card`, `.alert`, `.border-start`, `.gap-*`.
+
+## Qué sí justifica CSS custom (feature/shell)
+
+- Decoración no cubierta (puntos/línea de timeline, máscaras, animaciones puntuales).
+- Shell SPA (stack de páginas, sticky toolbar, composer fijo).
+- Dominio clínico sin equivalente BS (colores Manchester 1–5).
+- Overrides **mínimos** sobre un plugin cuando las utilidades no llegan.
+
+## Checklist al tocar UI web
+
+1. ¿Hay utilidad/componente Bootstrap equivalente? → usarlo.
+2. ¿Es tema de marca? → `bootstrap-custom.css`, no una hoja de pantalla.
+3. ¿Es librería? → no tocar.
+4. Si queda CSS de feature: el mínimo indispensable, sin wrapper BEM por cada nodo.

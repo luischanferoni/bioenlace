@@ -25,7 +25,7 @@ alwaysApply: false
 
 - UI JSON: `/api/v1/ui/...` + `kind: ui_definition` (wizards/forms/list/detail genéricos).
 - Vista nativa: pantallas ricas/web‑specific (SPA, layout custom, mucha interacción).
-- Referencia: `web/docs/VISTAS_DINAMICAS_JSON_Y_NATIVAS.md`.
+- Referencia: `docs/VISTAS_DINAMICAS_JSON_Y_NATIVAS.md`.
 
 ## Contrato backend → frontend (acciones del asistente)
 

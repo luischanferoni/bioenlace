@@ -27,7 +27,7 @@ return [
      * true: Simula respuesta OK de REFEPS (clase común SisaAdapter).
      * false: Usa integración real con la API de SISA (requiere configuración completa).
      *
-     * @see web/docs/plans/alta-movil-cuentas-efectores/phases/02-asignacion-y-refeps.md
+     * @see docs/plans/alta-movil-cuentas-efectores/phases/02-asignacion-y-refeps.md
      */
     'sisa' => [
         'mockMode' => true,
@@ -38,9 +38,9 @@ return [
     /**
      * MercadoPago — checkout de altas pagas (consultorio, clínica/centro).
      * Credenciales y precio ARS para suscripciones de altas comerciales.
-     * Guía operativa: web/docs/operacion/mercado-pago-checkout-pro.md
+     * Guía operativa: docs/operacion/mercado-pago-checkout-pro.md
      *
-     * @see web/docs/plans/alta-movil-cuentas-efectores/phases/03-altas-pagas.md
+     * @see docs/plans/alta-movil-cuentas-efectores/phases/03-altas-pagas.md
      */
     'mercadoPago' => [
         'accessToken' => null, // Configurar en params-local.php o variables de entorno
@@ -264,7 +264,7 @@ return [
      * Agendamiento FHIR entrante (HAPI NIS → espejo turnos).
      * Habilitar en params-local cuando el efector use pull de citas.
      *
-     * @see web/docs/producto/interoperabilidad-agendamiento-fhir.md
+     * @see docs/producto/interoperabilidad-agendamiento-fhir.md
      * @see https://nis.msalsgo.gob.ar/fhir
      */
     'fhirSchedulingInbound' => [

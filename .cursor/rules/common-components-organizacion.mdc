@@ -10,8 +10,8 @@ alwaysApply: false
 
 **Antes de crear, mover o refactorizar** cualquier archivo bajo `web/common/components/` o `web/common/models/`, leer:
 
-- [web/docs/arquitectura/common-components.md](web/docs/arquitectura/common-components.md)
-- [web/docs/arquitectura/arbol-espejo-dominios.md](web/docs/arquitectura/arbol-espejo-dominios.md)
+- [docs/arquitectura/common-components.md](docs/arquitectura/common-components.md)
+- [docs/arquitectura/arbol-espejo-dominios.md](docs/arquitectura/arbol-espejo-dominios.md)
 - [web/common/components/README.md](web/common/components/README.md)
 - [web/common/README.md](web/common/README.md) (modelos AR)
 
@@ -41,8 +41,8 @@ Misma palabra de dominio en `components/Domain/`, `models/`, `controllers/`, `vi
 Domain/Clinical/<Modulo>/Application|Domain|Infrastructure/…
 ```
 
-ADR: [clinical-modulos-capacidad.md](web/docs/decisions/clinical-modulos-capacidad.md), [shared-top-level-infrastructure.md](web/docs/decisions/shared-top-level-infrastructure.md), [domain-folder-grammar.md](web/docs/decisions/domain-folder-grammar.md).  
-**Norte DDD (modelo rico):** [ddd-norte-modelo-rico.md](web/docs/decisions/ddd-norte-modelo-rico.md) — Domain primero; Application fino; piloto `Capture/`.
+ADR: [clinical-modulos-capacidad.md](docs/decisions/clinical-modulos-capacidad.md), [shared-top-level-infrastructure.md](docs/decisions/shared-top-level-infrastructure.md), [domain-folder-grammar.md](docs/decisions/domain-folder-grammar.md).  
+**Norte DDD (modelo rico):** [ddd-norte-modelo-rico.md](docs/decisions/ddd-norte-modelo-rico.md) — Domain primero; Application fino; piloto `Capture/`.
 
 **Otros BCs:**
 
@@ -60,7 +60,29 @@ Domain/<BC>/
 - **Scheduling / Terminology / Person** son BCs hermanos, no módulos de Clinical.
 - Sufijos: ver [Domain/README.md](web/common/components/Domain/README.md).
 - **`Platform/Assistant/`**: motores; rubro en metadata + registries.
-- **Application sin HTTP**: no `*HttpException`, HTML ni flash en `*/Application/`.
+- **Application sin HTTP ni I/O de red**: bajo `*/Application/` no se permite
+  `*HttpException`, HTML, flash, ni `yii\httpclient\*`, `curl_*`,
+  `file_get_contents('http…')` / `fopen('http…')`. Un cliente de API externa es un ACL:
+  `Domain/<BC>/[<Modulo>/]Infrastructure/External/<Sistema>/<Sistema>ApiClient.php`.
+- **Transporte genérico reutilizable** (timeouts, retry, idempotencia, JSON, mapeo de error
+  y log): `Shared/Infrastructure/Http/`. No reimplementar por proveedor
+  (ver `dry-solid.mdc` y `ArchitectureHttpUsageTest`).
+
+## Prohibiciones por capa (catálogo cerrado)
+
+Cada fila es una prohibición **verificable**. Las excepciones se justifican en el PR.
+Una fila sin enforcement es una sugerencia: al agregarla, evaluar si merece un
+`Architecture*Test` en `web/common/tests/unit/platform/core/`.
+
+| Capa | Prohibido | Enforcement |
+|---|---|---|
+| `*/Application/` | I/O de red (`yii\httpclient`, `curl_*`, `file_get_contents('http…')`), `*HttpException`, HTML, flash | `ArchitectureHttpUsageTest` + hook `http-guard` |
+| Controllers API | Persistencia directa, reglas de negocio, `canAccess…` copiado por acción | `audit:thin-clients` |
+| `Domain/` (`*Policy`, agregados) | I/O, HTTP, sesión, `Yii::$app->request` | — |
+| `Platform/` (motores) | Casos de dominio enumerados (`if ($intentId === …)`, listas de pantallas) | — |
+| Metadata YAML | Integridad/gates de obligatorios, textos de error técnicos | `audit:thin-clients` |
+| `Shared/` | Reglas de negocio clínico u organizacional | — |
+| `Application/Service` | `new` de colaboradores dentro del método (va por constructor) | — |
 
 ## Modelos AR (`web/common/models/`)
 

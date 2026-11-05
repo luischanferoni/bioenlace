@@ -42,11 +42,11 @@ institucional/
 
 ## Demo sandbox (`js/demo-access.js`)
 
-CTA **Probar demo como médico** (sección personal de salud) → modal con captcha → `POST /api/v1/licencia/demo-acceso` → redirect a `enter_url` (app `/site/demo-entrar`). Al entrar se provisiona un médico efímero + seed en el efector plantilla. Requiere `demo_sandbox_habilitado` en params del frontend. Captcha: `GET /licencia/demo-captcha`. Doc: [alta-cuenta-licencia.md](../web/docs/producto/alta-cuenta-licencia.md).
+CTA **Probar demo como médico** (sección personal de salud) → modal con captcha → `POST /api/v1/licencia/demo-acceso` → redirect a `enter_url` (app `/site/demo-entrar`). Al entrar se provisiona un médico efímero + seed en el efector plantilla. Requiere `demo_sandbox_habilitado` en params del frontend. Captcha: `GET /licencia/demo-captcha`. Doc: [alta-cuenta-licencia.md](../docs/producto/alta-cuenta-licencia.md).
 
 ## Alta de cuenta (`alta.html`)
 
-El alta web self-service fue retirada: `alta.html` ahora redirige a descargar la app **Personal de Salud** (donde se verifica la identidad con documento + selfie y se crea la cuenta) y, para ministerios, al contacto. Documentación de producto: [alta-cuenta-licencia.md](../web/docs/producto/alta-cuenta-licencia.md).
+El alta web self-service fue retirada: `alta.html` ahora redirige a descargar la app **Personal de Salud** (donde se verifica la identidad con documento + selfie y se crea la cuenta) y, para ministerios, al contacto. Documentación de producto: [alta-cuenta-licencia.md](../docs/producto/alta-cuenta-licencia.md).
 
 El CTA del calculador (`precios.html`) ya no pre-carga el plan en un formulario de alta; el alta se completa desde la app.
 
@@ -56,11 +56,11 @@ El CTA del calculador (`precios.html`) ya no pre-carga el plan en un formulario 
 
 La página conserva controles para clases (ambulatorio / urgencia / internación), volumen mensual y videollamada opcional. Los chips, el detalle de prestaciones y el CTA se alimentan del catálogo público del backend. La cotización muestra el total en ARS con IVA y el importe base en USD.
 
-Doc comercial: [matriz-argentina-modulos-precios.md](../web/docs/modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md).
+Doc comercial: [matriz-argentina-modulos-precios.md](../docs/negocio/modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md).
 Catálogo backend: `web/common/components/Domain/Organization/Pes/Domain/Catalog/PricingPesByEncounterClassCatalog.php`.
-STT on-device: [stt.md](../web/docs/costos/estrategias-reduccion/stt.md).  
-Análisis video: [analisis-videollamada-self-host.md](../web/docs/costos/analisis-videollamada-self-host.md).  
-Roadmap video: [videollamadas.md](../web/docs/costos/estrategias-reduccion/videollamadas.md).
+STT on-device: [stt.md](../docs/negocio/costos/estrategias-reduccion/stt.md).  
+Análisis video: [analisis-videollamada-self-host.md](../docs/negocio/costos/analisis-videollamada-self-host.md).  
+Roadmap video: [videollamadas.md](../docs/negocio/costos/estrategias-reduccion/videollamadas.md).
 
 ## Demo del asistente (`js/assistant-demo.js`)
 
@@ -85,12 +85,12 @@ Abrir `http://localhost:8000`.
 
 ## Presentaciones
 
-- [Demo comercial de turnos](../web/docs/presentaciones/demo-comercial-turnos.md) — deck Marp centrado en el recorrido integral de turnos.
-- [Instrucciones de exportación](../web/docs/presentaciones/README.md) — HTML, PDF y PowerPoint.
+- [Demo comercial de turnos](../docs/negocio/presentaciones/demo-comercial-turnos.md) — deck Marp centrado en el recorrido integral de turnos.
+- [Instrucciones de exportación](../docs/negocio/presentaciones/README.md) — HTML, PDF y PowerPoint.
 
 ## Personalización
 
 - **Colores**: variables CSS en `css/styles.css` (`:root`), alineadas al logo (`#093e4d`, `#ff6b6b`, `#38be7f`).
-- **Logo**: `images/logo.svg` desde `web/docs/logo/logo_inkscape.svg`; ícono desde `logo_icono_2.*` con `php web/scripts/generate-favicons.php`.
+- **Logo**: `images/logo.svg` desde `docs/brand/logo_inkscape.svg`; ícono desde `logo_icono_2.*` con `php web/scripts/generate-favicons.php`.
 - **Contenido**: editar textos en `index.html`.
 - **Formulario**: envío vía [Web3Forms](https://web3forms.com) a `info@bioenlace.io` (configurar el destino en el panel de Web3Forms con la misma `access_key`). Lógica en `js/main.js`. El `extra` añade o sobrescribe cabeceras cuando aplica.

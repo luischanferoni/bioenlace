@@ -1,0 +1,49 @@
+---
+description: "Vistas Yii delgadas — sin lógica de request/contexto/URLs en la vista"
+applyTo: ['web/frontend/views/**/*.php', 'web/frontend/controllers/**/*.php', 'web/admin/views/**/*.php', 'web/admin/controllers/**/*.php']
+---
+
+<!-- GENERADO por tools/sync-agent-rules.php — editar .cursor/rules/*.mdc -->
+
+# Vistas Yii delgadas (anti-espagueti)
+
+Complementa Camino A (`web-frontend-camino-a-nativo.mdc`) y Bootstrap-first.
+
+## Principio
+
+La **vista** pinta HTML (y `if` mínimos de presentación). **No** interpreta request, no arma rutas de API/UI, no resuelve contexto de dominio (turno / guardia / internación), no calcula títulos ni flags de negocio.
+
+Eso vive en el **controller** o en un **page builder / presenter** de `frontend/components/…` (o admin), que pasa un view model ya resuelto.
+
+## Qué NO va en la vista
+
+- `Yii::$app->request->get/post` para decidir layout o endpoints
+- `if ($parent === Encounter::PARENT_…)` / switches de contexto clínico
+- Armar query strings o paths de API (`http_build_query`, `'/api/v1/…'`)
+- Roles, permisos o lookups de modelo para flags (`User::hasRole`, recorrer relaciones solo para copy)
+- Lógica que hoy se copiaría a otro cliente (Flutter) — debe estar en API/dominio; la vista web solo consume el resultado
+
+## Qué SÍ va en la vista
+
+- Markup, partials, `<template>`
+- `<?= Html::encode($page['titulo']) ?>`
+- `<?php if ($page['mostrarBannerEpisodio']): ?>` (flag ya calculado)
+- `data-*` / JSON de config **ya armado** por el builder (`json_encode($page['jsConfig'])`)
+- Registro de assets **fijos** de la pantalla; assets **condicionales** se deciden con un flag del view model (o se registran en el controller)
+- JS de pantalla en `frontend/web/js/` + `AssetBundle` (no `<script>` / `registerJs` largos en la vista)
+
+## Patrón
+
+1. Controller lee request, llama dominio/API helpers, obtiene feed/datos.
+2. Page builder → array/DTO (`$page`) con flags, textos, URLs, grupos de UI.
+3. Registrar AssetBundle en el controller; config al JS vía `data-*` / `Json::htmlEncode`.
+4. `return $this->render('…', ['page' => $page, …]);`
+5. Vista: markup + flags del view model.
+
+Referencia: `PacienteController::actionHistoria` + `PacienteHistoriaTimelinePageBuilder` + `PacienteHistoriaTimelineAsset` + `views/paciente/timeline/timeline.php`.
+
+## Anti-patrones
+
+- Bloque de 50+ líneas de PHP al tope de la vista “porque es más rápido”
+- Duplicar en la vista lo que el controller ya sabe (`parent`, `parent_id`)
+- Dejar variables muertas (`$tieneRolX` sin uso)

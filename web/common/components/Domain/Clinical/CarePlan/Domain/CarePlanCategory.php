@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\CarePlan\Domain;
 
 /**
- * Códigos `care_plan.category` — ver `web/docs/dominio/flows/care-plan-categories.md`.
+ * Códigos `care_plan.category` — ver `docs/dominio/flows/care-plan-categories.md`.
  */
 final class CarePlanCategory
 {

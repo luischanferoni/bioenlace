@@ -1,5 +1,5 @@
 # Contrato JSON — 1ª IA (etiquetado). Consumidor: ChatPreprocessService.
-# ADR: web/docs/decisions/asistente-catalogo-inteligente.md
+# ADR: docs/decisions/asistente-catalogo-inteligente.md
 version: 2
 
 description: >

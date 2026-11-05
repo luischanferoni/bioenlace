@@ -1,0 +1,185 @@
+# Asistente: IntentEngine y SubIntentEngine
+
+## Introducción
+
+Cuando un usuario escribe en el chat de Bioenlace, el sistema no responde con una sola pieza de software. Primero **entiende qué quiere hacer** (reservar un turno, ver un resultado de laboratorio, abrir un formulario), y después **lo guía paso a paso** si hace falta elegir fechas, confirmar datos o completar pantallas.
+
+Dos motores cooperan en esa tarea. Están en `web/common/components/Platform/Assistant/`, sobre todo en las carpetas `IntentEngine/` y `SubIntentEngine/`.
+
+---
+
+## Vista general
+
+```mermaid
+flowchart LR
+  subgraph entrada [Entrada]
+    U[Usuario en Bioenlace]
+    API[API asistente enviar]
+  end
+  subgraph clasificacion [Qué quiere hacer]
+    IE[IntentEngine]
+    CAT[Catálogo de acciones permitidas]
+  end
+  subgraph conversacion [Cómo lo hacemos juntos]
+    SIE[SubIntentEngine]
+    YAML[Intents en YAML]
+    UI[Pantallas UI JSON embebidas]
+  end
+  U --> API --> IE
+  IE --> CAT
+  IE -->|acción simple o inicio de flujo| SIE
+  SIE --> YAML
+  SIE --> UI
+  UI --> U
+```
+
+---
+
+## IntentEngine — “¿Qué quiere el usuario?”
+
+**Rol:** elegir la **acción** más acorde al mensaje, entre solo las opciones que el usuario **tiene permiso** de usar (por rol, efector y rutas de la API).
+
+**Piezas principales (nombres de archivo):**
+
+| Pieza | Ubicación aproximada | Idea en una frase |
+|-------|----------------------|-------------------|
+| Clasificador | `IntentEngine/IntentClassifier.php` | Primero reglas por palabras clave; si no alcanza, ayuda de IA entre candidatos permitidos |
+| Catálogo de acciones | `IntentEngine/UiActionCatalog.php` y `Catalog/*` | Lista de “cosas que se pueden abrir” (turnos, laboratorio, recetas…) con rutas API asociadas |
+| Orquestador del chat | `Chat/ChatOrchestrator.php` | Recibe el mensaje, arma el contexto y delega al canal operativo o informativo |
+
+**Qué NO hace:** no lleva el paso a paso de un formulario largo; solo **dispara** la acción correcta o **entrega** el control al SubIntentEngine cuando el intent es conversacional.
+
+**Señales que usa:**
+
+- Texto del usuario y permisos (rutas API del catálogo).
+- `keywords` e `intent_semantics` del YAML de cada intent.
+- Si dos intents empatan de cerca y hay tema HIS → **guide** (incompletas); no botones entre `intent_id`.
+- **Routing raíz:** 1ª IA preprocess (hint `guide` \| `fuera_his` \| `sin_pedido` + tags) → `DiscoveryIndex` → handlers. Guide siempre cuando hay pedido HIS (intent y/o artículo). `IntentClassifier` queda como fallback en `OperationalChannel` (staff).
+
+---
+
+## Discovery unificado y router
+
+Tras preprocess, el mensaje **no** se reparte por un catálogo de puertas Platform. PHP cruza tags con `meta.tags` de estados (YAML Domain) y keywords de artículos BD (`Catalog/DiscoveryIndex`). Aspectos HIS se cargan por **área derivada del intent**, no como puerta NL.
+
+| Pieza | Ubicación | Rol |
+|-------|-----------|-----|
+| Discovery | `Catalog/DiscoveryIndex` | Intents + artículos por tags/texto |
+| Estados | `Catalog/StateTagIndex` | Índice de `meta.tags` de flows |
+| Plan | `Planning/DeclarativePlanService` | Área → aspect loaders + `article:topic` |
+| Handlers | `Chat/Routing/Handlers/*` | Guide / dudosa / fuera HIS |
+| Log | `Planning/AssistantPlanningLogService` | `planning_applied` por mensaje |
+| Guide (2ª IA) | `Prompts/guide.yaml` + `asistente-guide` | Charla con adjuntos |
+
+Entrypoint: `Chat/Routing/ChatRouter.php` → `SmartCatalogRoutingHandlers`. Pedido HIS → `GuideChannel::handleIncomplete`.
+
+ADR: [decisions/asistente-discovery-unificado.md](../decisions/asistente-discovery-unificado.md).
+
+---
+
+## SubIntentEngine — “¿Cómo lo hacemos juntos?”
+
+**Rol:** dentro de un intent ya elegido (por ejemplo “crear turno como paciente”), ejecutar un **guion** de pasos: mostrar una lista, pedir confirmación, abrir una pantalla, guardar datos en un “borrador” compartido entre pasos.
+
+**Piezas principales:**
+
+| Pieza | Ubicación aproximada | Idea en una frase |
+|-------|----------------------|-------------------|
+| Motor | `SubIntentEngine/SubIntentEngine.php` | Lee el YAML del intent y avanza según el statechart (`states`) |
+| Definiciones | `Domain/<BC>/[Modulo/]Application/Flows/intents/*.yaml` (+ platform) | Guion: textos del asistente, qué pantalla abrir, qué datos pedir |
+| Manifiesto de flujo | `FlowManifest/FlowManifest.php` | Describe en runtime qué pasos tiene el flujo (sin duplicar pantallas en otro sitio) |
+
+### Destino de UI (`client_open`)
+
+Los pasos con `open_ui` exponen `client_open` como destino del cliente; no se debe usar una ruta API POST como si fuera una URL de navegación. Los targets conocidos son `intent` para continuar un flow conversacional, `ui_json` para abrir una definición UI JSON y `native` para una pantalla propia del cliente. El flow puede proveer el destino explícitamente; el backend también enriquece acciones de catálogo y rutas con descriptor UI registrado. Los cierres POST-only no reciben una pantalla GET inferida. `AssistantEnvelopeFlowTest` cubre la preservación de targets nativos y la conversión de una ruta de descriptor a `ui_json`.
+| Reglas de negocio | `SubIntentEngine/IntentBusinessRules.php` | Comprueba condiciones antes de entrar al flujo (por ejemplo “falta efector”) |
+| Pantallas embebibles | `frontend/modules/api/v1/views/json/…` | JSON que la interfaz renderiza como formularios y listas |
+
+**Estado entre pasos:** un **draft** (borrador) acumula lo elegido (fecha, profesional, id de encounter, etc.). El normalizador `Service/AssistantDraftNormalizer.php` unifica nombres de campos entre chat y API clínica.
+
+**Qué NO hace:** no reemplaza la lógica de negocio de turnos, laboratorio o recetas; esas reglas viven en **servicios de dominio** detrás de la API. El SubIntentEngine **orquesta la conversación** y llama a esas APIs cuando el YAML indica `open_ui` o envío de formulario.
+
+Los YAML de flujo viven en `Domain/<BC>/Application/Flows/intents/` y, en Clinical, `Domain/Clinical/<Modulo>/Application/Flows/intents/` (más `Platform/Assistant/Application/Flows/intents/` para transversales). Contrato de pasos: `SubIntentEngine/schemas/SUBINTENT_CONTRACT.md`. Las **lecturas** (conteo, listado, último X) no son un YAML por pregunta: motor DataAccess + params hidratados + permiso del intent concreto — [asistente-lectura-data-access.md](asistente-lectura-data-access.md).
+
+**Enriquecimiento del borrador (`draft_hydrator`):** algunos pasos envían solo parte de los datos (p. ej. el cliente manda `id_servicio` pero no el PES). Eso **no** se resuelve con `if (intent_id)` en el orquestador: el YAML del intent declara un `handler` registrado; `FlowDraftHydratorService` lo ejecuta en la capa de dominio antes de avanzar el flow.
+
+---
+
+## Cómo se encadenan en un ejemplo
+
+**Paciente:** “Quiero ver mis resultados de laboratorio”.
+
+1. **API** `asistente/enviar` recibe el mensaje (`ChatController` → orquestador).
+2. **IntentEngine** busca en el catálogo acciones de laboratorio permitidas para ese usuario, clasifica el texto y elige el intent `laboratorio.ver-resultados-como-paciente`.
+3. **SubIntentEngine** carga el YAML de ese intent: primer sub-paso muestra listado (UI JSON); al elegir un informe, siguiente sub-paso abre detalle.
+4. La **interfaz** muestra las pantallas JSON; los datos vienen de la API clínica de laboratorio (persistencia ya hecha por ingestas previas).
+
+```mermaid
+sequenceDiagram
+  participant P as Paciente
+  participant Chat as Chat API
+  participant IE as IntentEngine
+  participant SIE as SubIntentEngine
+  participant Clin as API clínica
+  P->>Chat: mensaje
+  Chat->>IE: clasificar
+  IE->>SIE: intent + permisos OK
+  SIE->>Clin: GET UI JSON / datos
+  Clin-->>SIE: definición o lista
+  SIE-->>Chat: siguiente paso + draft
+  Chat-->>P: mensaje + pantalla embebida
+```
+
+---
+
+## Contenido informativo (InfoContentResolverService)
+
+Cuando el paciente pregunta "¿qué es X?" o "¿cómo funciona X?", el discovery rankea artículos por tags/keywords; el cuerpo se **adjunta** al prompt Guide (2ª IA).
+
+**Resolución jerárquica:** efector → provincia → producto (global). Si el centro tiene un artículo específico sobre el topic, ese prevalece.
+
+**Integración:** siempre Guide + adjunto; no hay envelope de artículo sin 2ª IA.
+
+**Administración:** CRUD en `/admin/info-content-article`. Producto: [contenido-informativo.md](../producto/contenido-informativo.md).
+
+## Contexto HIS (aspectos legado)
+
+Capa de loaders HIS aún registrada (aspectos). **Áreas HIS retiradas:** el plan declarativo ya no se arma por `context_areas`; Guide se alimenta de discovery (`intent_semantics` + artículos).
+
+| Pieza | Ubicación | Rol |
+|-------|-----------|-----|
+| Aspectos | `AssistantContextHISAreaAspect` | Claves JSON del volcado (`appointment.current`, …) |
+| Anclas | `AssistantContextAnchorResolver` | Sujeto, cita referencia, `site_id`, PES |
+| Plan | `DeclarativePlanService` | Hoy: vacío salvo `article:*` de discovery |
+| Loaders | `Domain/*/Assistant/Context/*AspectLoader` | Un aspecto → JSON HIS |
+| Ensamblaje | `DeclarativePlanExecutor` + `GuidePromptAssembler` | Volcado + artículo en prompt guide |
+
+Flujo: preprocess → discovery → Guide. Parámetro: `asistente_planning_debug`. `asistente_context_max_aspects` limita aspectos legado.
+
+## Sinónimos de servicios (HintServiceSynonyms)
+
+El matcher fuzzy de hints (`HintEntityMatcher`) enriquece los terms del usuario con sinónimos de servicios de salud cuando la entidad es `servicio`. Mapa en `terminology/servicio-synonyms.yaml` (ej. "dentista" → odontología, "oculista" → oftalmología). Esto permite que "turno para mi dentista" preseleccione el servicio ODONTOLOGIA sin depender del LLM para generar el sinónimo.
+
+---
+
+## Otros entrypoints (mismo stack, otro canal)
+
+WhatsApp Cloud API (paciente) entra por `whatsapp/webhook`, resuelve identidad y llama al **mismo** `ChatOrchestrator`; solo cambia el transporte y el render (texto/botones/listas). **Alcance:** mensajes iniciados por el paciente; utility proactiva **no** habilitada — [costos-api §7](../negocio/costos/costos-api.md#7-whatsapp-cloud-api-paciente). Smoke: [qa/paciente/asistente-whatsapp.md](../qa/paciente/asistente-whatsapp.md).
+
+No todo pasa por el chat genérico:
+
+| Canal | Entry | Uso |
+|-------|-------|-----|
+| Motivos de consulta | `Encounter/Application/AppointmentReasonMessageService` (`motivos-consulta/*`) | Conversación previa al turno |
+| Captura clínica | `Capture/Application (EncounterController)` | Analizar/guardar texto o audio del encuentro |
+
+Comparten ideas de draft y permisos, pero **no siempre** pasan por el clasificador de intents del chat operativo.
+
+---
+
+## Dónde profundizar en producto
+
+- Experiencia de usuario: [producto/asistente-y-chat.md](../producto/asistente-y-chat.md)
+- Lecturas genéricas (DataAccess): [asistente-lectura-data-access.md](asistente-lectura-data-access.md)
+- Turnos, laboratorio, recetas, guardia, internación: [producto/README.md](../producto/README.md)
+- Intents y frases paciente: [producto/asistente-y-chat.md](../producto/asistente-y-chat.md), [qa/paciente/asistente-consultas.md](../qa/paciente/asistente-consultas.md)

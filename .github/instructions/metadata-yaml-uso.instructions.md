@@ -1,0 +1,64 @@
+---
+description: "Qué va en YAML vs modelos Yii / servicios de dominio (integridad, gates hard, textos vs constantes)"
+applyTo: ['**']
+---
+
+<!-- GENERADO por tools/sync-agent-rules.php — editar .cursor/rules/*.mdc -->
+
+# Metadata YAML — uso correcto
+
+Complementa [`capas-y-metadata-sin-hardcode.mdc`](capas-y-metadata-sin-hardcode.mdc): **declarar en YAML no implica que el YAML sea la fuente de verdad de integridad clínica**.
+
+## Textos vs constantes (catálogos)
+
+En YAML de catálogo / ui-text / prompt van **textos** que terminan vistos por el **usuario final** o por la **IA** (descripciones de enum en prompt, copy UX, `stable_prompt`).
+
+**No** van en YAML:
+
+| Qué | Dónde |
+|-----|--------|
+| Mapas máquina↔máquina (alias id→id, legacy A→B) | Constantes / tablas privadas en el **loader PHP** |
+| Listas auxiliares de ids sin copy (tags extra, etc.) | Mismo loader PHP |
+| Defaults / fallbacks de validación | PHP que consume el catálogo |
+
+Patrón: YAML = `id → descripción|copy`; PHP = `all()` / `isValid()` + mapas técnicos. Ejemplo: `preprocess-routing-hints.yaml` (hints) vs `PreprocessRoutingHintCatalog` (alias, legacy `user_goal`, tags extra).
+
+## Qué SÍ va en YAML / metadata
+
+- Composición de producto: intents, flows, UI JSON, atajos, catálogos RBAC/ABAC declarativos.
+- Esquema de extracción NL (campos que la IA *puede* devolver) y **textos** de orientación al modelo.
+- Knobs operativos: umbrales, timeouts, overrides de post-proceso, flags de política.
+- Manifiestos que motores genéricos interpretan (`SubIntentEngine`, `UiScreenService`, …).
+- ui-text / prompts (copy humano o instrucciones a la IA).
+
+## Qué NO va en YAML
+
+| Decisión | Dónde |
+|----------|--------|
+| ¿Puede confirmarse / emitirse / persistirse? | `rules()` en `*Input`, AR, o servicio de dominio |
+| Obligatoriedad contextual (`when`) | Modelo Yii (p. ej. plazo solo si `follow_up`) |
+| Gates hard de agentes (RDI, etc.) | Escenarios/policy en PHP; YAML solo knobs |
+| Issues resolubles (opciones sin preselección) | `buildIssues()` / `applyResolutionToRow` en `*Input` |
+| Lookup de hechos en request (geo, recursos, maestros) | **BD** + seed console — ver [`runtime-datos-vs-metadata.mdc`](runtime-datos-vs-metadata.mdc) |
+| Alias / mapas de transición / ids sin texto | Loader PHP del catálogo |
+
+Si falta el YAML de composición, **los gates hard y la integridad siguen activos** con defaults de dominio.
+
+## Anti-patrones
+
+- Listas planas `campos_requeridos` / `requeridosPrompt` como hard-required de todo.
+- `required_when` / `field_schema` de integridad en YAML (duplica Yii).
+- “Si no hay YAML, el gate pasa” en agentes o post-proceso.
+- Completar silenciosamente campos clínicos faltantes con IA; sugerir opciones, confirma el profesional.
+- Maestros/catálogos de runtime en metadata “porque son pocas filas”.
+- Bloques `aliases:` / `legacy_*:` / listas de ids huérfanas en un YAML de catálogo “cerrado”.
+
+## Al dudar
+
+1. ¿Es texto para usuario o IA, o composición / knob / prompt? → metadata.
+2. ¿Es mapa de ids, alias técnico o fallback de código? → PHP (loader).
+3. ¿Es lookup de hechos en request? → BD (+ cache); seed en console.
+4. ¿Es “válido / bloquea guardado”? → modelo o servicio de dominio.
+5. ADR integridad: `docs/decisions/captura-clinica-contratos-yii-vs-yaml.md`
+6. ADR runtime/cognitivo: `docs/decisions/runtime-datos-vs-metadata.md`
+7. Guías: `docs/arquitectura/metadata-yaml-uso.md`, `runtime-datos-y-metadata.md`

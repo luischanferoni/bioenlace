@@ -1,0 +1,15 @@
+---
+description: "API v1 — nombres de acciones, permisos y reglas de urlManager"
+applyTo: ['web/frontend/modules/api/v1/controllers/**/*.php', 'web/frontend/config/main.php']
+---
+
+<!-- GENERADO por tools/sync-agent-rules.php — editar .cursor/rules/*.mdc -->
+
+# API v1 — acciones, permisos y enrutado
+
+- **`BaseController` (API v1):** `beforeAction` fija `response->format = JSON` para todas las acciones; no repetir en cada método salvo casos excepcionales (p. ej. guardar/restaurar formato al invocar controladores web desde `UiController` / `CrudController`).
+- **Documentación en código**: el docblock de cada controller API (o la convención del módulo) debe dejar claro qué hace cada acción y, si aplica, el verbo HTTP y el corte de autorización.
+- **Nombres de acción**: cuando una misma operación tiene **sujetos o permisos distintos** (p. ej. el usuario actúa sobre sí mismo vs. staff sobre un tercero vs. ámbito efector), usar **nombres explícitos** que reflejen el ámbito; evitar `create` / `update` / `view` genéricos si generan ambigüedad con el control de acceso.
+- **Permisos (webvimark / ApiGhost)**: alinear la ruta registrada con la convención del proyecto (normalmente **sin** repetir el segmento `v1` en la ruta de permiso si así está configurado el `uniqueId` / filtros). Mantener coherencia entre nombre de acción Yii, patrón de URL y permiso.
+- **`urlManager` (`main.php`)**: reglas **más específicas antes** que los patrones con parámetros amplios; no duplicar el mismo path/método **OPTIONS** apuntando a acciones distintas.
+- **Agenda laboral (`AgendaController`)**: `listar`/`crear`/`actualizar`/`eliminar` = propio RRHH; `listar-para-recurso` (query `id_efector`+`id_rr_hh`) y `crear|actualizar|eliminar-para-recurso` = staff; sin endpoints `ver-*`.

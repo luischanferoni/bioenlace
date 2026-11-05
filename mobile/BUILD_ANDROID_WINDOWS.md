@@ -104,7 +104,7 @@ flutter build appbundle --release --dart-define=DIDIT_PACIENTE_KYC_WORKFLOW_ID=<
 
 Si el workflow no está configurado, la app muestra un error claro en lugar de quedar en loading.
 
-**Reingreso tras cerrar sesión:** conviene `didit_paciente_biometric_workflow_id` en el servidor (workflow Didit solo Biometric Authentication). Si solo existe el KYC, el servidor lo reutiliza como fallback. Ver `web/docs/producto/sesion-paciente-app.md`.
+**Reingreso tras cerrar sesión:** conviene `didit_paciente_biometric_workflow_id` en el servidor (workflow Didit solo Biometric Authentication). Si solo existe el KYC, el servidor lo reutiliza como fallback. Ver `docs/producto/sesion-paciente-app.md`.
 
 Alternativa en CI para login biométrico:
 

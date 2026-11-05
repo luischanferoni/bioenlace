@@ -6,7 +6,7 @@
  *
  * Secretos (credenciales GCP): console/config/params-local.php
  *
- * @see web/docs/producto/asistencia-cohortes.md
+ * @see docs/producto/asistencia-cohortes.md
  */
 return [
     'ia_proveedor' => 'google',

@@ -12,7 +12,7 @@ use common\components\Platform\Core\Product\ProductMetadataPaths;
  * - `components/Domain/<BC>/<Modulo>/Application/Flows/intents/…` (módulo de capacidad)
  * - `components/Platform/Assistant/Application/Flows/intents/…`
  *
- * @see web/docs/decisions/ddd-bounded-contexts-capas-y-metadata.md
+ * @see docs/decisions/ddd-bounded-contexts-capas-y-metadata.md
  */
 final class IntentSchemaPaths
 {

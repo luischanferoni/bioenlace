@@ -33,5 +33,5 @@ Complementa [`metadata-yaml-uso.mdc`](metadata-yaml-uso.mdc) y [`capas-y-metadat
 
 ## Caso de referencia
 
-Geo multi-país y rollout: [`web/docs/arquitectura/runtime-datos-y-metadata.md`](web/docs/arquitectura/runtime-datos-y-metadata.md).  
-ADR: [`web/docs/decisions/runtime-datos-vs-metadata.md`](web/docs/decisions/runtime-datos-vs-metadata.md).
+Geo multi-país y rollout: [`docs/arquitectura/runtime-datos-y-metadata.md`](docs/arquitectura/runtime-datos-y-metadata.md).  
+ADR: [`docs/decisions/runtime-datos-vs-metadata.md`](docs/decisions/runtime-datos-vs-metadata.md).

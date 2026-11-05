@@ -1,0 +1,49 @@
+---
+description: "Frontera entre intents del asistente — sin keywords/tags solapados (A/B/C agenda vs atención)"
+applyTo: ['web/common/components/Domain/*/Application/Flows/intents/**/*.yaml', 'web/common/components/Domain/*/*/Application/Flows/intents/**/*.yaml', 'web/common/components/Platform/Assistant/Application/Catalog/smart-catalog.yaml', 'web/common/components/Platform/Assistant/**/*.php']
+---
+
+<!-- GENERADO por tools/sync-agent-rules.php — editar .cursor/rules/*.mdc -->
+
+# Asistente: frontera de intents sin solape
+
+Complementa [`asistente-routing-sin-hardcode.mdc`](asistente-routing-sin-hardcode.mdc).
+
+## Jobs del paciente
+
+| Zona | Señal | Destino |
+|------|--------|---------|
+| **A** | Cita **con destino** (oferta/profesional / `con|en|para` + token) | `clara` → `turnos.crear-como-paciente` |
+| **B síntoma** | Malestar sin pedir trámite | `incompletas` + CTA `atencion.necesito-atencion` (charla; no abrir triage solo) |
+| **B estudio/control** | Estudio/acto o control/seguimiento explícito | `clara` → `atencion.necesito-atencion` |
+| **C** | Solo “quiero/sacar/pedir un turno” **sin** destino | `incompletas` + CTAs (crear + Solicitar Atención). **No** lanzar flow |
+| **Gestión** | Cancelar / ver mis turnos / mis análisis | `clara` → intent de gestión/lectura (nunca zona C) |
+| **Historial citas** | “turnos que ya tuve / anteriores / pasados” | `clara` → `turnos.ver-turnos-anteriores-como-paciente` (no `ver-mis-turnos`) |
+| **Política plazos** | “hasta cuándo cancelar / multa / reglas” | `clara` → `turnos.consultar-politica-autogestion-flow` (no abrir cancelar) |
+| **Última atención** | “qué me dijo el médico / última consulta” | `clara` → `atencion.ver-ultima-como-paciente` (no historial de turnos ni última vez en oferta) |
+
+## Keywords / semantics (escalable)
+
+- **`intent_semantics`**: contexto 2ª IA — en prompt solo `objective` + `steps`/`outline` (sin `kind` ni `capabilities`). `capabilities` quedan en YAML para gates PHP.
+- **`keywords`**: anclas discriminadoras (3–10 frases cortas). Match contra el mensaje (suele ser `normalized_text` del preprocess) con **fold de acentos** en PHP (`IntentClassifier`, smart-catalog).
+  - Escribir **español correcto con acentos** (`qué`, `última`, `médico`).
+  - **No** duplicar la misma frase sin acento (`que` / `ultima` / `medico`).
+  - **No** enumerar conjugaciones ni “todas las variantes” de consulta: el preprocess normaliza ortografía/abreviaturas; el catálogo cubre NL bare / zona C.
+  - **NL bare / zona C / síntomas**: smart-catalog (`phrases`/`tags`), no inflar el YAML del intent.
+- **`description`**: **retirado** de intents YAML. UX = `action_name`; IA = `objective`.
+- Tags operativos: `AssistantFirstIaAdapter`.
+
+## Prohibido
+
+- Tag/keyword genérico **`turno`** compartido entre crear, ver y atención.
+- Phrases bare de agenda en `turnos.crear-como-paciente` o en `atencion.necesito-atencion`.
+- Token suelto `laboratorio`/`análisis` pelean pedir-estudio vs ver-resultados.
+- Boost / `if intent` en PHP para desempatar A vs B.
+- Listas encyclopédicas de keywords “por si el usuario escribe mal”.
+
+## Checklist
+
+1. ¿Misma phrase/tag en dos filas del catálogo? → separar.
+2. ¿“turno para {acto}”? → **B**.
+3. ¿Bare agenda? → **C** incompletas + `cta_intent_ids`.
+4. Actualizar QA si cambia la frontera.

@@ -10,7 +10,7 @@ namespace common\components\Platform\Core\Product;
  * (`capa/dominio|platform/entidad`). `platform` no es un dominio: es el eje paralelo
  * de motores/transversal en las demás capas.
  *
- * @see web/docs/arquitectura/arbol-espejo-dominios.md
+ * @see docs/arquitectura/arbol-espejo-dominios.md
  */
 final class ProductDomainCatalog
 {

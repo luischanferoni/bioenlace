@@ -1,6 +1,10 @@
 ---
 description: API v1 — dónde se valida auth/sesión; no revalidar en controladores
 alwaysApply: true
+globs:
+  - web/frontend/modules/api/**
+  - web/frontend/components/ApiUser.php
+  - web/frontend/components/BaseUserConfig.php
 ---
 
 # API v1: identidad y sesión (una sola capa)

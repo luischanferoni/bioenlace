@@ -6,7 +6,7 @@ namespace common\components\Platform\Core\Product;
  * Carga políticas (knobs) de agentes desde {@see AgentPolicyRegistry} (PHP en Application del BC).
  * Gates hard e integridad siguen en el dominio; la ausencia de policy no los desactiva.
  *
- * @see web/docs/decisions/ddd-bounded-contexts-capas-y-metadata.md
+ * @see docs/decisions/ddd-bounded-contexts-capas-y-metadata.md
  */
 final class AutonomousAgentMetadata
 {

@@ -1,0 +1,74 @@
+---
+description: "UI nativas embebibles + templates en PHP + UI JSON (sin hardcode, kind→loader)"
+applyTo: ['web/frontend/views/**/*.php', 'web/frontend/web/js/**/*.js', 'web/frontend/controllers/*.php', 'web/common/components/**/*']
+---
+
+<!-- GENERADO por tools/sync-agent-rules.php — editar .cursor/rules/*.mdc -->
+
+# UI nativas embebibles (Web Yii) + Shell SPA
+
+## Principio (0 hardcode)
+
+- **Cero lógica particular por pantalla** (sin `if agenda.crear`, sin regex por URL).
+- Variaciones deben venir de **metadata** (docblock/definición descubierta) y el cliente usa `kind` + `presentation` (sin heurísticas por URL).
+
+## Markup en PHP vs JS (regla práctica)
+
+- **Sin `registerJs` extensos**: el comportamiento de pantalla va en **`frontend/web/js`** + `AssetBundle`; en la vista PHP, preferir `data-*` (o config mínima) para parametrizar URLs/IDs. Ver también la regla global de arquitectura Yii (JS en archivos).
+- La **estructura HTML** (cards, grids, wrappers, textos estáticos) vive en **vistas PHP** (`views/...`), idealmente en **partials** reutilizables.
+- Para ítems que vienen de un **array JSON** (API), **no concatenar HTML largo en JavaScript**.
+- Patrón recomendado: definir **`<template>`** en un partial y en JS solo clonar y rellenar:
+  - `document.importNode(template.content, true)`
+  - rellenar `textContent`, `href` y `data-*`
+  - anexar nodos con `appendChild`
+
+## Cuándo usar UI JSON vs vista nativa
+
+- UI JSON: `/api/v1/ui/...` + `kind: ui_definition` (wizards/forms/list/detail genéricos).
+- Vista nativa: pantallas ricas/web‑specific (SPA, layout custom, mucha interacción).
+- Referencia: `docs/VISTAS_DINAMICAS_JSON_Y_NATIVAS.md`.
+
+## Contrato backend → frontend (acciones del asistente)
+
+- El backend **siempre** debe enviar `action.client_open.kind` (y `presentation` cuando aplica).
+- El frontend **no** debe inferir modo de apertura por URL/regex.
+
+### `client_open.kind`
+
+- **`ui_json`**: descriptor bajo `/api/v1/ui/...` (`client_open.api.route` + `method`).
+- **`native`**: HTML **sin layout Yii** (partial) servido por `frontend/controllers`; el shell hace fetch e inyección (no iframe).
+
+### `client_open.presentation`
+
+- **`inline`**: dentro de la card / área expandida.
+- **`fullscreen`**: stack del shell a pantalla completa; el **payload sigue siendo** JSON o partial sin layout.
+- En **móvil**, `client_open.mobile.screen_id` → pantalla Flutter nativa.
+
+## Reglas para UIs nativas (`kind: native`)
+
+- El endpoint debe renderizar un **partial** (no layout). Evitar `<head>`, `<body>`, `<script src>`, y assets duplicados.
+- El markup debe venir envuelto en un root:
+  - `[data-native-component="<name>"]`
+- El JS del componente debe exponer:
+  - `window.BioenlaceNativeComponents[<name>].init(rootEl)`
+- El JS debe ser **scoped** al contenedor `rootEl`:
+  - no usar IDs globales (`#...`) salvo que estén dentro del root y se busquen con `rootEl.querySelector(...)`
+  - preferir `data-*` para hooks de DOM
+- Si el componente depende de CSS/JS extra (plugins), declararlos en `client_open.assets` y cargarlos por el shell SPA.
+
+## Cómo declarar metadata (sin hardcode en catálogo)
+
+En el docblock de la acción catalogada (`frontend/controllers/*Controller.php`):
+
+- `@native_ui_path /<ruta>` (opcional; override si difiere de la ruta canónica `Url::to` de la acción)
+- `@spa_presentation inline` o `fullscreen`
+- `@native_assets_css` / `@native_assets_js`
+- `@mobile_screen_id` (opcional)
+
+## Ejemplo (Agenda laboral)
+
+- `client_open.kind="native"`
+- `client_open.presentation="inline"`
+- `client_open.web.path` — canónico `/agenda/crear` (acción `actionCrear`) salvo override
+- `client_open.assets`: scheduler + agenda-laboral
+

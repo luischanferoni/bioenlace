@@ -247,14 +247,32 @@ final class MercadoPagoCheckoutService
 
         $body = json_decode($content, true);
         if ($statusCode < 200 || $statusCode >= 300 || !is_array($body)) {
+            $providerMessage = is_array($body)
+                ? trim((string) ($body['message'] ?? $body['error'] ?? ''))
+                : '';
+            $causes = [];
+            if (is_array($body) && is_array($body['cause'] ?? null)) {
+                foreach ($body['cause'] as $cause) {
+                    if (is_array($cause)) {
+                        $causes[] = trim((string) ($cause['code'] ?? '')) . ': '
+                            . trim((string) ($cause['description'] ?? ''));
+                    }
+                }
+            }
             Yii::error([
                 'event' => 'mercadopago.api_error',
                 'method' => $method,
                 'path' => $path,
                 'status_code' => $statusCode,
-                'response' => mb_substr($content, 0, 500),
+                'provider_message' => $providerMessage,
+                'causes' => $causes,
+                'response' => mb_substr($content, 0, 2000),
             ], 'mercadopago');
-            throw new \RuntimeException('Mercado Pago no pudo completar la operación (HTTP ' . $statusCode . ').');
+            throw new \RuntimeException(
+                'Mercado Pago rechazó la operación (HTTP ' . $statusCode . ')'
+                . ($providerMessage !== '' ? ': ' . $providerMessage : '')
+                . ($causes !== [] ? ' [' . implode('; ', $causes) . ']' : '')
+            );
         }
 
         return $body;

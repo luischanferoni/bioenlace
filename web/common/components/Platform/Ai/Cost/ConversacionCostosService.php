@@ -9,7 +9,7 @@ use Yii;
 /**
  * Ejecuta conversaciones de prueba y devuelve métricas de {@see AICostTracker}.
  *
- * @see web/docs/costos/pruebas-costos-ia.md
+ * @see docs/negocio/costos/pruebas-costos-ia.md
  */
 final class ConversacionCostosService
 {

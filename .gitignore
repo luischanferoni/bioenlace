@@ -9,3 +9,7 @@ august-cirrus-*.json
 *.swp
 .DS_Store
 Thumbs.db
+
+# Artefactos de Python (scripts de assets en docs/mobile/play-store)
+__pycache__/
+*.pyc

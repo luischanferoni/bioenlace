@@ -12,6 +12,7 @@ use common\models\Geo\Localidad;
 use common\models\Geo\Barrios;
 
 use common\models\Platform\LoginForm;
+
 class LoginController extends BaseController
 {
 	public $enableCsrfValidation = false;
@@ -38,7 +39,7 @@ class LoginController extends BaseController
 
         if (!Yii::$app->request->post()) {
             \Yii::error("Request sin post en el login");
-            return ['success' => false, 'msg' => 'Ocurrió un error, comuníquese con el personal de Salud Digital'];
+            return ['success' => false, 'msg' => 'Ocurrió un error, comuníquese con el personal de Bioenlace'];
         }
 
         $model->username = Yii::$app->request->post()["username"];
@@ -47,12 +48,6 @@ class LoginController extends BaseController
         if (!$model->login()) {
             return ['success' => false, 'msg' => 'Usuario y/o contraseña incorrectos'];
         }
-
-       // if (!User::hasRole(['Agente'])) {
-            // throw new UnauthorizedHttpException;
-       // }
-
-        //return Yii::$app->user->getIdPersona();
         
         $user = $model->getUser();
         \Yii::info("User id:" . $user->id);
@@ -63,7 +58,7 @@ class LoginController extends BaseController
         if ($efectores == 0) {
             return [
                 'success' => false, 
-                'msg' => 'No se encuentra asignado a ningun servicio en ningun efector, comuníquese con el administrador de su Efector o el personal de Salud Digital'
+                'msg' => 'No se encuentra asignado a ningun servicio en ningun efector, comuníquese con el administrador de su Efector o el personal de Bioenlace'
             ];
         }
         

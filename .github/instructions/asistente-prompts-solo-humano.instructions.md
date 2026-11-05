@@ -1,0 +1,35 @@
+---
+description: "No modificar prompts YAML del asistente/IA ni catálogos inyectados en prompt — solo sugerir en chat"
+applyTo: ['web/common/components/Platform/Assistant/Prompts/guide.yaml', 'web/common/components/Platform/Assistant/Prompts/preprocess.yaml', 'web/common/components/Platform/Assistant/Application/Catalog/preprocess-routing-hints.yaml', 'web/common/components/Platform/Ai/Application/**/*.yaml', 'web/common/components/Domain/**/Prompts/*.yaml']
+---
+
+<!-- GENERADO por tools/sync-agent-rules.php — editar .cursor/rules/*.mdc -->
+
+# Prompts: solo el humano los edita
+
+Los archivos de **prompt** (instrucciones a la IA) y los **catálogos cuyo texto se inyecta en el prompt** los modifica **únicamente el usuario**, a mano.
+
+## Qué cuenta como prompt
+
+- `Platform/Assistant/Prompts/guide.yaml`
+- `Platform/Assistant/Prompts/preprocess.yaml`
+- `Platform/Assistant/Application/Catalog/preprocess-routing-hints.yaml` (descripciones de `routing_hint` → `{routing_hints_list}` en preprocess)
+- `Domain/**/Prompts/*.yaml` con `prompt_template` (p. ej. `Capture/Prompts/capture-extraction.yaml`)
+
+**No** aplica a texto UX (`ui-text.yaml`, `Platform/Assistant/Presentation/*`): ahí sí se puede editar código/metadata de mensajes y rótulos si la tarea lo pide.
+
+## Qué debe hacer el agente
+
+- **Prohibido** crear, editar, mover o borrar esos YAML (incluido “fusionar” guide+synthesis en el YAML, o reescribir hints del catálogo de routing), salvo relocate estructural pedido explícitamente (plan DDD) **sin cambiar el cuerpo**.
+- Si hace falta un cambio de contenido: **mostrar la sugerencia en el chat** (diff o texto propuesto) y **parar**; el usuario lo aplica a mano.
+- Sí puede cambiar PHP/tests/docs/paths que *consumen* prompts/catálogos, sin reescribir el cuerpo del `stable_prompt` ni las descripciones del YAML de hints.
+
+## Ejemplo
+
+```text
+❌ Editar Prompts/guide.yaml para agregar una regla de alarma
+❌ Editar Application/Catalog/preprocess-routing-hints.yaml para cambiar textos de hints
+✅ En el chat: “Sugerencia para guide.yaml: agregar después de la línea X: …”
+✅ En el chat: “Sugerencia para preprocess-routing-hints.yaml: …”
+✅ Cambiar IncompleteRoutingHandler para llamar GuideChannel en vez de SynthesisChannel
+```

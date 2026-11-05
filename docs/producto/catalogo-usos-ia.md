@@ -1,0 +1,162 @@
+# Catálogo de usos de IA en Bioenlace
+
+Referencia rápida: **qué hace cada llamada a modelos**, con el **contexto** que usa `IAManager` (segundo argumento de `consultarIA` / `consultar`) para logs, caché y telemetría (`AICostTracker::por_contexto`).
+
+Modelo por defecto en producción: **`gemini-2.5-flash-lite`** (`vertex_ai_model` en `params.php`). Costos por flujo: [costos-api.md § Capacidades](../negocio/costos/costos-api.md#capacidades-que-consumen-api).
+
+---
+
+## Resumen por tipo de capacidad
+
+| Tipo | Proveedor típico | ¿Genera texto clínico? |
+|------|------------------|-------------------------|
+| **IA generativa (Gemini)** | Vertex / Generative Language API | Sí |
+| **STT (voz → texto)** | Dispositivo, luego HF o Groq en servidor | No (solo transcripción) |
+| **Visión (imagen)** | Google Vision API (verificación facial) | No |
+
+Este documento cubre sobre todo la **IA generativa** y enlaza STT donde comparte el flujo.
+
+---
+
+## Tabla de contextos (`IAManager`)
+
+| Contexto | Quién | Para qué | Frecuencia típica | Código principal |
+|----------|-------|----------|-------------------|------------------|
+| `asistente-preprocess` | Paciente o staff en chat | Normalizar mensaje, fijar `user_goal`, **`context_areas`**, extracciones ligeras | **Cada mensaje raíz** del asistente | `ChatPreprocessService` |
+| `asistente-guide` | Paciente (chat) | 2ª IA: charla, incompletas (HIS), artículos | Cuando guide / incompletas | `GuideChannel`, `InfoContentAssistantService` |
+| `intent-engine-classification` | Paciente o staff | Elegir intent del catálogo cuando las reglas no alcanzan confianza | Ocasional (fallback del motor de intents) | `IntentClassifier` → `IntentEngine` |
+| `motivos-consulta-batch` | Sistema (cron/lote) | Resumir el hilo de motivos como Condition rol CC | **1× por consulta** al cerrar ventana de motivos | `AppointmentReasonBatchService` |
+| `motivos-consulta-insights` | Sistema (tras el lote) | Sugerencias orientativas en `encounter.ia_clinical_suggestions` | **1× por consulta** si hay resumen de motivos | `AppointmentReasonClinicalInsightsService` |
+| `care-pack-assistance-batch` | Sistema (cola sync) | Pack JSON de preguntas pre-consulta por cohorte | **1× por cohort_key** cuando falta pack vigente | `CarePackGenerationService` |
+| `care-pack-followup-batch` | Sistema (cola sync) | Calendario touchpoints + formularios post-consulta | **1× por cohort_key** | `CarePackGenerationService` |
+| `care-pack-education-batch` | Sistema (cola sync) | Módulos educativos reutilizables | **1× por cohort_key** | `CarePackGenerationService` |
+| `care-pack-vertex-batch` | Sistema (Vertex batch) | Misma generación que arriba, vía `batchPredictionJobs` | **1 inferencia / job** en lote GCS | `CarePackVertexBatchPoller` + `AICostTracker` |
+| `analisis-consulta` | Médico (captura) | Extraer JSON estructurado del dictado según categorías del servicio | **1× por análisis** de encounter | `CaptureExtractionService` |
+| `encounter-codificacion-automatica` | Sistema (al guardar) | Elegir códigos CIE-10 y/o SNOMED desde texto clínico y persistir `Condition` | **1× por guardado** de encounter con texto suficiente | `EncounterAutomaticCodingService` |
+| `terminos-contextuales` | — | Reservado en `IAManager`; sin llamadas activas en el repo | — | `IAManager::obtenerTerminosContextuales` |
+
+**Nota:** el canal **operativo** del asistente (turnos, formularios, flujos YAML) usa **reglas PHP** sobre `normalized_text`; no dispara `intent-engine-classification` en el camino habitual (`OperationalChannel` → `classifyAmongItems`).
+
+---
+
+## Por flujo de producto
+
+### 1. Conversación y asistente
+
+```mermaid
+flowchart LR
+  M[Mensaje usuario]
+  P[asistente-preprocess]
+  C[Catálogo PHP]
+  G[asistente-guide]
+  O[Reglas / flujos sin 2.ª IA]
+  M --> P --> C
+  C -->|guide / incompletas| G
+  C -->|clara / dudosa / operational| O
+```
+
+| Paso | Contexto IA | ¿Siempre IA? |
+|------|-------------|--------------|
+| Entender el mensaje | `asistente-preprocess` | Sí (mensaje con texto nuevo); incluye catálogo de áreas HIS |
+| Guía / incompletas (salud, producto, HIS) | `asistente-guide` | Charla forzada o incompletas; prompt puede incluir `context:his` y artículo |
+| Reservar turno, menú, wizard | — | No (reglas + `SubIntentEngine`) |
+| Clasificar intent (motor global) | `intent-engine-classification` | Solo si reglas + IA del classifier |
+
+El volcado HIS (`context:his`) aumenta el tamaño del prompt de la 2ª IA cuando `context_areas` no es vacío; caps en `asistente_context_max_aspects` y `asistente_context_max_chars`. ADR: [asistente-contexto-his-areas-aspectos.md](../decisions/asistente-contexto-his-areas-aspectos.md).
+
+Detalle de producto: [asistente-y-chat.md](asistente-y-chat.md) · Motor: [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md) · Datos al modelo y consentimiento: [ia-datos-y-privacidad.md](ia-datos-y-privacidad.md).
+
+**Onboarding y día a día:** en costos se modela como volumen aparte ([costos-api §3](../negocio/costos/costos-api.md#3-agente-de-ia-para-onboarding-y-tareas-del-día-a-día)); en código **no hay un contexto dedicado** — las preguntas libres reutilizan el mismo stack del asistente (`asistente-preprocess` y, si aplica, conversacional).
+
+---
+
+### 2. Motivos de consulta (antes del turno)
+
+| Paso | Tecnología | Contexto / notas |
+|------|------------|------------------|
+| Guía del chat de motivos (`AppointmentReasonChatGuideCatalog`) | **Sin IA** | Metadata de orientación al chat; no persiste respuestas en encounter |
+| Mensajes del paciente (texto) | Sin IA por mensaje | El chat de motivos no resume en cada nota |
+| Audio en el hilo | STT en servidor (lote) o **futuro** STT en dispositivo | `SpeechToTextManager` en batch; ver [stt.md](../negocio/costos/estrategias-reduccion/stt.md) |
+| Cierre de ventana → resumen | IA | `motivos-consulta-batch` + `PatientAiContextService` (perfil `motivos`) |
+| Sugerencias para el médico | IA | `motivos-consulta-insights` (diagnósticos/prácticas preliminares) |
+
+---
+
+### 3. Captura clínica (durante la atención)
+
+| Paso | Tecnología | Contexto / notas |
+|------|------------|------------------|
+| Dictado / audio | STT dispositivo o servidor | Política `captura_clinica`; contexto telemetría STT, no Gemini |
+| Preparación de texto | **CPU** (SymSpell, abreviaturas) | `CaptureTextService` — no es llamada a Gemini |
+| Análisis → campos del formulario | IA | `analisis-consulta` + contexto clínico (`PatientAiContextService`, perfil `encounter`) |
+| Guardado → codificación diagnóstica | IA | `encounter-codificacion-automatica` — decide CIE-10/SNOMED y persiste (sin UI de sugerencias) |
+
+Detalle: [captura-clinica.md](captura-clinica.md) · API: `clinical/encounter/analizar|guardar`.
+
+---
+
+### 4. Packs de cohorte (asistencia / seguimiento / educación)
+
+| Paso | Modo | Contexto telemetría |
+|------|------|------------------------|
+| Generación sync (cron) | `IAManager` | `care-pack-*-batch` según `pack_type` |
+| Generación Vertex batch | GCS + `batchPredictionJobs` | `care-pack-vertex-batch` |
+| Runtime paciente (formularios) | Sin IA | Lee JSON del pack ya generado |
+
+Operación y cron: [asistencia-cohortes.md](asistencia-cohortes.md).
+
+---
+
+### 5. Transcripción (STT) — no es Gemini
+
+| Uso | Dónde | Camino feliz |
+|-----|-------|--------------|
+| Dictado médico §4 | `CaptureSpeechInputResolver` | **Edge-Cloud Routing** STT: texto en dispositivo; fallback `SpeechToTextManager` / Groq — ver [stt.md § Edge-Cloud](../negocio/costos/estrategias-reduccion/stt.md#edge-cloud-routing-stt) |
+| Notas de voz en motivos | `AppointmentReasonBatchService` | Hoy STT en servidor al procesar lote |
+| Transcribir audio suelto | `POST /api/v1/audio/transcribir` | Igual política dispositivo → servidor |
+
+---
+
+### 6. Otros (fuera de `IAManager`)
+
+| Uso | Tecnología | Notas |
+|-----|------------|-------|
+| Verificación identidad (registro / biométrico) | Didit (KYC + liveness) | `DiditClient`; SDK en móvil; no es LLM |
+| Medios clínicos analizados en nube | Vision (COGS §5 hoy en $0) | Modelo de producto: costo al enviar a analizar |
+
+---
+
+## Qué no usa IA generativa
+
+- Pasos de **flujos guiados** del asistente (`SubIntentEngine`) salvo preprocess al reingresar texto.
+- **Match operativo** de intents por keywords (`classifyAmongItems`).
+- Validaciones de negocio, RBAC, persistencia FHIR.
+- Guía de motivos (`AppointmentReasonChatGuideCatalog`) — metadata del chat; sin persistencia en encounter.
+- Gran parte de **corrección ortográfica** previa al análisis de consulta (diccionario local).
+
+---
+
+## Relación con documentación de costos
+
+| Bloque costos-api | Flujos de este catálogo |
+|-------------------|-------------------------|
+| §1 Conversación | `asistente-preprocess`, `asistente-guide`, `intent-engine-classification` (anexo) |
+| §2 Motivos | `motivos-consulta-batch`, `motivos-consulta-insights`, STT motivos |
+| §3 Onboarding | `asistente-onboarding` (metadata; código: preprocess/conversacional) |
+| §4 Captura | `analisis-consulta`, `encounter-codificacion-automatica`, STT captura |
+| Anexo care packs | `care-pack-*-batch`, `care-pack-vertex-batch` |
+
+Tokens y volúmenes: [costos-api § Contextos](../negocio/costos/costos-api.md#contextos-iamanager-y-tokens-de-referencia) · `ai-cost-reference.yaml`.
+
+Matriz ahorro / caché: [matriz-casos-uso.md](../negocio/costos/estrategias-reduccion/matriz-casos-uso.md).
+
+---
+
+## Relación con otros documentos
+
+- [apps-paciente-personalsalud.md](apps-paciente-personalsalud.md) — experiencia global
+- [asistente-y-chat.md](asistente-y-chat.md) — conversación
+- [ia-datos-y-privacidad.md](ia-datos-y-privacidad.md) — Vertex / CDPA, extracto de HC, interruptor del paciente
+- [captura-clinica.md](captura-clinica.md) — dictado médico
+- [costos-api.md § COGS](../negocio/costos/costos-api.md#cogs-abreviatura) — definición de costo variable
+- Palancas por contexto (modelo, caché, STT): [proveedor-modelo-tokens.md](../negocio/costos/estrategias-reduccion/proveedor-modelo-tokens.md) y [estrategias-reduccion/README.md](../negocio/costos/estrategias-reduccion/README.md)

@@ -1,0 +1,53 @@
+# Context caching implícito (Vertex / Gemini)
+
+Contextos: [catálogo de IA](../../../producto/catalogo-usos-ia.md).
+
+## Qué es
+
+Mecanismo del **servicio de IA de Google** (Vertex / Gemini): detecta **prefijos de entrada repetidos** entre solicitudes recientes y factura esa porción a **tarifa reducida** (`cachedContentTokenCount` en `usageMetadata`).
+
+- **Bioenlace no “activa” nada especial** salvo usar el mismo modelo y repetir el inicio del prompt.
+- **No evita** la llamada al modelo: solo abarata parte del **input**.
+- **No creás** un recurso de caché en la API (eso es la [explícita](context-caching-explicita.md)).
+- La columna **«con context caching»** de [costos-api.md](../costos-api.md) modela un escenario **favorable** (~**25 %** input cacheado en §2–4); **COGS base = columna sin caché**.
+
+## Alineación con Bioenlace
+
+| Aspecto | Estado |
+|---------|--------|
+| Modelo en producción | `vertex_ai_model` → **`gemini-2.5-flash-lite`** (`params.php`) |
+| Estructura de prompt | Preprocess y guide: **instrucciones al inicio**, mensaje al final |
+| Medición | `AICostTracker` + `ia_usage_tracking_habilitado`; complemento con `vertex_context_cache_simulado` |
+
+## Cuándo ayuda en nuestros flujos
+
+Ver [matriz-casos-uso.md](matriz-casos-uso.md). Resumen conservador:
+
+| Contexto (`IAManager`) | % input cacheado (supuesto doc) |
+|------------------------|----------------------------------|
+| `asistente-preprocess` | ~**40 %** |
+| `asistente-guide` | ~**40 %** (prefijo fijo; bloque clínico semi-estable por paciente; historial acotado variable) |
+| `motivos-consulta-batch` | ~**25 %** (+ contexto clínico variable) |
+| `motivos-consulta-insights` | ~**25 %** (1×/consulta; poco peso en COGS total) |
+| `analisis-consulta` | ~**25 %** (+ contexto clínico variable) |
+| `encounter-codificacion-automatica` | ~**25 %** (instrucciones estables + texto variable) |
+| `asistente-onboarding` | ~**25 %** (§3; mismo stack que preprocess en código) |
+| `intent-engine-classification` | ~**25 %** (anexo; bajo volumen) |
+| `care-pack-assistance-batch` | ~**50 %** (plantillas de cohorte repetidas) |
+| `care-pack-followup-batch` | ~**50 %** |
+| `care-pack-education-batch` | ~**50 %** |
+| `care-pack-vertex-batch` | ~**50 %** |
+
+No usar ratios altos (p. ej. 80 %) sin telemetría. Calibrar con `ratio_input_en_cache` por `contexto`.
+
+## Cómo validar
+
+1. `ia_usage_tracking_habilitado => true` y opcional `vertex_context_cache_simulado => true` en `web/frontend/config/params.php`.
+2. Tráfico real o conversaciones de prueba contra Gemini.
+3. Revisar `getResumen()['tokens']` y desglose `por_contexto`.
+4. Comparar con factura Vertex.
+
+## Referencias
+
+- [Vertex – Context caching overview](https://cloud.google.com/vertex-ai/generative-ai/docs/context-cache/context-cache-overview)
+- [costos-api.md – Gemini Flash](../costos-api.md#gemini-flash-tarifas-actuales-y-context-caching)

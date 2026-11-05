@@ -1,0 +1,57 @@
+---
+description: "Routing del asistente — keywords en intents, desambiguación genérica, canal en PHP + texto UX YAML"
+applyTo: ['web/common/components/Platform/Assistant/**/*.php', 'web/common/components/Platform/Assistant/Application/**/*.yaml', 'web/common/components/Platform/Assistant/Channels/**/*.yaml', 'web/common/components/Domain/*/Application/Flows/intents/**/*.yaml', 'web/common/components/Domain/*/*/Application/Flows/intents/**/*.yaml']
+---
+
+<!-- GENERADO por tools/sync-agent-rules.php — editar .cursor/rules/*.mdc -->
+
+# Asistente: routing sin hardcode
+
+## Principio
+
+No enumerar `intent_id` en orquestadores ni en prompts de IA para “elegir la acción”.
+
+**Clasificación de acción (qué intent abrir):**
+
+1. `keywords` / `intent_semantics` en el YAML de **cada intent** (keywords ricas; el preprocess normaliza ortografía y el match hace fold de acentos).
+2. Catálogo inteligente (`smart-catalog.yaml`) + `IntentClassifier`: **solo** score PHP; ganador claro → lanza; empate → incompletas/desambiguación. **Sin IA** de clasificación.
+3. Si no hay match → no-match / sugerencias del catálogo.
+
+**Frontera entre puertas (agenda vs Solicitar Atención, sin tags compartidos):** ver [`asistente-intents-frontera-sin-solape.mdc`](asistente-intents-frontera-sin-solape.mdc).
+
+**Canal (charla vs trámite vs menú vs ambiguous):** `routing_hint` / `routing_result` (catálogo) + `user_goal` derivado para hilo → `ChatRouter`. Predicados de dominio (síntoma, menú, staff) en `ChatChannelPolicy` (PHP). No es configuración de intents.
+
+**Prompt guide (2ª IA, no es un canal):** `Prompts/guide.yaml`. Encauzamiento ambiguous: `Channels/Ambiguous/ui-text.yaml`. Preprocess: `Prompts/preprocess.yaml`.
+
+## Dónde va cada cosa
+
+| Necesidad | Dónde |
+|-----------|--------|
+| Frases NL del intent, flow, `when`/`next` sobre draft | `assistant/intents/**/*.yaml` |
+| Prompt de Guide (2ª IA) | `Prompts/guide.yaml` (PHP ensambla en `Chat/Channels/Guide/`) |
+| Prompt preprocess | `Prompts/preprocess.yaml` |
+| Texto UX + botones de encauzamiento ambiguous | `assistant/channels/Ambiguous/ui-text.yaml` |
+| Prioridad CTA booking + capability_labels | `assistant/routing/booking-offer.yaml` |
+| Texto UX por perfil de cliente | `assistant/ui-text/by-client.yaml` |
+| Familias NL / hints | `assistant/routing/intent-families.yaml`; ownership/hints → `HintResolutionMetadata` (PHP) |
+| ¿Síntoma o turno? ¿Menú? ¿Staff list/edit? | `ChatChannelPolicy` (PHP) |
+| Derivación `user_goal` ↔ `routing_hint` (hilo) | `PreprocessRoutingHintCatalog` (constantes PHP; no YAML) |
+| Atajos visibles | `assistant/assistant-shortcuts.yaml` |
+
+## Al agregar routing NL
+
+1. Enriquecer `keywords` del intent.
+2. Empate ambiguo entre dos puertas: unificar flow o desambiguación del motor — no un YAML de boost.
+3. Cambiar política de canal (p. ej. qué cuenta como síntoma): ajustar `ChatChannelPolicy`.
+4. Cambiar tono de la 2ª IA: `Prompts/guide.yaml`.
+5. Cambiar opciones de encauzamiento: `assistant/channels/Ambiguous/ui-text.yaml`.
+6. Cambiar prompt preprocess: `Prompts/preprocess.yaml`.
+
+## Prompt de la 2ª IA (Guide)
+
+Reglas **transversales** en `stable_prompt`; sin casos particulares ni registros globales de limitaciones. Ver [`asistente-prompts-sin-casos-particulares.mdc`](asistente-prompts-sin-casos-particulares.mdc).
+
+## Excepciones
+
+- Umbrales técnicos del classifier (`RULES_MIN_SCORE`, márgenes).
+- Predicados nombrados estables (`own_agenda_config_edit`) solo para cablear DataAccess `subject_resolver`.

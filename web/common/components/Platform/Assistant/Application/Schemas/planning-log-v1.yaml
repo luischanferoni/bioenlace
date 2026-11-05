@@ -1,5 +1,5 @@
 # Estructura planning_applied — telemetría por mensaje raíz del asistente.
-# ADR: web/docs/decisions/asistente-discovery-unificado.md
+# ADR: docs/decisions/asistente-discovery-unificado.md
 version: 1
 
 envelope_key: planning_applied

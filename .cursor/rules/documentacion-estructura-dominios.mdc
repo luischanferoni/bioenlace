@@ -1,12 +1,12 @@
 ---
-description: Estructura de web/docs (producto, arquitectura, his-completo)
-globs: web/docs/**/*
+description: Estructura de docs/ (producto, arquitectura, his-completo, negocio)
+globs: docs/**/*
 alwaysApply: false
 ---
 
 # Documentación — estructura
 
-Raíz: `web/docs/`. Índice: `web/docs/README.md`.
+Raíz: `docs/`. Índice: `docs/README.md`.
 
 ## Carpetas principales
 
@@ -15,9 +15,13 @@ Raíz: `web/docs/`. Índice: `web/docs/README.md`.
 | `producto/` | Narrativa end-to-end por área (`turnos.md`, `laboratorio.md`, …). Lenguaje natural, diagramas mermaid. **Sin** código ni listas de clases. No usar «película»; no contrastar app / web / asistente (hablar de Bioenlace). |
 | `arquitectura/` | Piezas transversales (p. ej. IntentEngine / SubIntentEngine). Puede nombrar archivos del repo, **sin** bloques de código. |
 | `his-completo/` | Madurez HIS: qué hay / qué falta por módulo. Sin rutas API ni paths de código. |
-| `costos/` | Estimación IA e infra. |
-| `plans/<slug>/` | Planes largos **solo mientras se construye**; al cerrar, volcar a `producto/` o `decisions/` y **borrar** la carpeta. **Prohibido** enlazar a `plans/` desde `producto/`, `README` global, `his-completo/`, etc. |
+| `qa/` | Escenarios clínicos y checklists de prueba por rol. |
+| `operacion/` | Producción: cron, integraciones (Mercado Pago). |
+| `negocio/` | Material **no técnico**: `costos/` (IA e infra), `modelo-de-negocio/`, `presentaciones/`, `legal/` (formularios ARCA/AFIP, planillas societarias). |
+| `brand/` | Logo e identidad visual. |
+| `mobile/` | Design system y assets de Play Store de las apps Flutter. |
 | `decisions/` | ADR transversales. |
+| `plans/<slug>/` | Planes largos **solo mientras se construye**; al cerrar, volcar a `producto/` o `decisions/` y **borrar** la carpeta. **Prohibido** enlazar a `plans/` desde `producto/`, `README` global, `his-completo/`, etc. |
 
 ## No usar
 

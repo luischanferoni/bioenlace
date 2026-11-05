@@ -1,0 +1,37 @@
+---
+description: "Estructura de docs/ (producto, arquitectura, his-completo, negocio)"
+applyTo: ['docs/**/*']
+---
+
+<!-- GENERADO por tools/sync-agent-rules.php — editar .cursor/rules/*.mdc -->
+
+# Documentación — estructura
+
+Raíz: `docs/`. Índice: `docs/README.md`.
+
+## Carpetas principales
+
+| Carpeta | Uso |
+|---------|-----|
+| `producto/` | Narrativa end-to-end por área (`turnos.md`, `laboratorio.md`, …). Lenguaje natural, diagramas mermaid. **Sin** código ni listas de clases. No usar «película»; no contrastar app / web / asistente (hablar de Bioenlace). |
+| `arquitectura/` | Piezas transversales (p. ej. IntentEngine / SubIntentEngine). Puede nombrar archivos del repo, **sin** bloques de código. |
+| `his-completo/` | Madurez HIS: qué hay / qué falta por módulo. Sin rutas API ni paths de código. |
+| `qa/` | Escenarios clínicos y checklists de prueba por rol. |
+| `operacion/` | Producción: cron, integraciones (Mercado Pago). |
+| `negocio/` | Material **no técnico**: `costos/` (IA e infra), `modelo-de-negocio/`, `presentaciones/`, `legal/` (formularios ARCA/AFIP, planillas societarias). |
+| `brand/` | Logo e identidad visual. |
+| `mobile/` | Design system y assets de Play Store de las apps Flutter. |
+| `decisions/` | ADR transversales. |
+| `plans/<slug>/` | Planes largos **solo mientras se construye**; al cerrar, volcar a `producto/` o `decisions/` y **borrar** la carpeta. **Prohibido** enlazar a `plans/` desde `producto/`, `README` global, `his-completo/`, etc. |
+
+## No usar
+
+- Carpetas por “dominio” sueltos (`Turnos/`, `laboratorio/`, `dominio/`, `plataforma/`, `legacy/`) — sustituidos por `producto/` + `his-completo/`.
+- Subcarpeta `flows/` bajo cada tema — el flujo completo va en un `.md` en `producto/`.
+- Nombres `MAYUSCULAS.md` o mezcla arbitraria — usar **kebab-case** en minúsculas (`asistente-motores.md`).
+
+## Nuevo tema de producto
+
+1. Un archivo `producto/<tema>.md` con introducción, actores y diagrama de punta a punta.
+2. Enlace desde `producto/README.md`.
+3. Si hay checklist HIS, actualizar `his-completo/` si aplica.

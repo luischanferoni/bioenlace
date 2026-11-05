@@ -13,7 +13,7 @@ use yii\web\NotFoundHttpException;
 /**
  * Auditoría de agentes de resolución A01/A02/A06 (solo superadmin).
  *
- * @see web/docs/producto/agentes-autonomos.md
+ * @see docs/producto/agentes-autonomos.md
  */
 class ResolucionAuditController extends Controller
 {

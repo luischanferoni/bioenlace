@@ -5,7 +5,7 @@ use yii\db\Migration;
 /**
  * Cola de export FHIR de historia clínica (interoperabilidad saliente).
  *
- * @see web/docs/plans/interoperabilidad-historia-clinica/
+ * @see docs/plans/interoperabilidad-historia-clinica/
  */
 class m260618_100000_clinical_history_outbound extends Migration
 {

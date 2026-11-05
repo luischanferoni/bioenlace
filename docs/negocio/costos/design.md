@@ -1,0 +1,25 @@
+# Costos — Diseño del análisis
+
+## Por qué dos ejes (infra vs API)
+
+Permite decidir **dónde corre el compute** sin mezclar precios de RunPod/GPU con precios por token de Vertex en la misma tabla.
+
+**Alternativa descartada:** un solo Excel global sin separar capex/opex de infra y variable por token.
+
+## Motivos de consulta (app paciente)
+
+Flujo de producto (mayo 2026):
+
+0. **Opcional:** preguntas declarativas previas al chat (`motivos_intake`) — sin costo IA; ver [recorrido-pre-post-consulta.md](../../producto/recorrido-pre-post-consulta.md).
+1. El paciente envía mensajes (texto, audio, imagen) **sin IA por mensaje** — solo persistencia (`motivos-consulta/enviar|subir`).
+2. **Hasta 10 minutos antes del turno** puede seguir cargando (`motivos_consulta_cierre_minutos` en `params.php`).
+3. Al cerrar la ventana, el cron `turno-notificacion/run` ejecuta **`MOTIVOS_IA_BATCH`**: concatena los audios del hilo en **una** STT (Groq) + resume textos (escritos u on-device) → `encounter.reason_text`.
+4. El médico ve intake (si hubo), resumen y cohorte en timeline / app Personal de Salud antes de la captura.
+
+Coste modelado: **400 llamadas IA/mes** (1 por consulta), no 4× por mensaje. Código: `AppointmentReasonWindowService`, `AppointmentReasonBatchService`.
+
+Impacta [costos-api.md](costos-api.md) (Apartado 1) e [infra-costos.md](infra-costos.md) si el lote corre en GPU propia.
+
+## Pruebas
+
+[pruebas-costos-ia.md](pruebas-costos-ia.md) define conversaciones JSON y CLI para simular costo sin llamar a proveedores reales en cada corrida.

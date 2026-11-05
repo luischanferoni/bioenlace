@@ -8,7 +8,7 @@ namespace common\components\Platform\Core\Product;
  * Fuente para migrar `platform/agents/{id}.yaml` → Policy PHP en el BC.
  * `platform` solo si el agente fuera transversal de motor (hoy ninguno).
  *
- * @see web/docs/decisions/ddd-bounded-contexts-capas-y-metadata.md
+ * @see docs/decisions/ddd-bounded-contexts-capas-y-metadata.md
  */
 final class AgentBoundedContextMap
 {

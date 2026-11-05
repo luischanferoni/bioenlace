@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "hooks": {
+    "preToolUse": [
+      {
+        "type": "command",
+        "command": "php .github/hooks/http-guard.php",
+        "timeoutSec": 10
+      }
+    ]
+  }
+}

@@ -7,7 +7,7 @@ use Yii;
 /**
  * Configuración declarativa de STT (params) — proveedor servidor, device vs cloud.
  *
- * @see web/docs/costos/estrategias-reduccion/stt.md
+ * @see docs/negocio/costos/estrategias-reduccion/stt.md
  */
 final class SttConfigService
 {

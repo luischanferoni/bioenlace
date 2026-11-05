@@ -1,0 +1,92 @@
+---
+description: "Empaquetado fijo DDD/CA — carpetas técnicas vs naming de clases"
+applyTo: ['web/common/components/Domain/**/*', 'docs/decisions/ddd-norte*.md', 'docs/decisions/domain-folder-grammar.md']
+---
+
+<!-- GENERADO por tools/sync-agent-rules.php — editar .cursor/rules/*.mdc -->
+
+# Empaquetado Domain (estructura fija + naming)
+
+Fuente: [`ddd-norte-modelo-rico.md`](../../docs/decisions/ddd-norte-modelo-rico.md), [`domain-folder-grammar.md`](../../docs/decisions/domain-folder-grammar.md).
+
+La estructura de carpetas **no cambia** al crear un módulo nuevo. Cambia el **nombre del módulo** y el de las **clases**.
+
+## Qué es técnico vs dominio
+
+| Qué | Dónde |
+|-----|--------|
+| Capacidad de producto | Nombre del **módulo** (`Capture/`, `Encounter/`, …) |
+| Rol arquitectónico (CA/DDD) | **Carpetas** bajo el módulo (`Application/`, `UseCase/`, `Model/`, …) |
+| Concepto de negocio | **Parte central del nombre de clase** (`SaveCapture`, `MedicacionRowContract`) |
+| Rol técnico (sufijo) | **Solo** el catálogo cerrado abajo — son **transversales** a toda la arquitectura |
+
+## Estructura exacta (por módulo)
+
+**Módulo-primero** (`Clinical`, `Organization`, `Scheduling`, `Person`):
+
+```text
+Domain/<BC>/<Modulo>/
+  Application/
+    UseCase/                          # verb phrase (sin sufijo)
+    Presentation/                     # *Presenter
+    Service/                          # *Service | *Resolver | *Applier
+    Authorization/                    # *Access
+    Flows/ | Agents/ | Seed/
+  Domain/
+    Model/ | Catalog/ | Policy/ | Port/ | RowContract/
+  Infrastructure/
+    Persistence/ | External/<Sistema>/ | <Adapter>/
+```
+
+**BC compacto** (`Geo`, `Content`, `Terminology`, …): misma tríada en la raíz del BC (sin `<Modulo>/`) mientras sea mono-capacidad. Ver [ddd-modulo-primero-vs-bc-compacto.md](../../docs/decisions/ddd-modulo-primero-vs-bc-compacto.md).
+
+Solo crear las subcarpetas que el módulo use; **no inventar otras** bajo `Application/` o `Domain/`.
+
+## Sufijos técnicos transversales (catálogo cerrado)
+
+Alineados a Clean Architecture / DDD. **Si no está en esta lista, no es sufijo de arquitectura** (renombrar a uno de la lista o mover de capa).
+
+| Sufijo / forma | Carpeta | Significado |
+|----------------|---------|-------------|
+| Verb phrase (`SaveCapture`) | `Application/UseCase/` | Una intención = una clase |
+| `*Presenter` | `Application/Presentation/` | Forma el payload (ok/fail/array) |
+| `*Service` | `Application/Service/` | Application Service |
+| `*Resolver` | `Application/Service/` | Resuelve un valor de contexto/config |
+| `*Applier` | `Application/Service/` | Aplica un delta/resolución tipada |
+| `*Access` | `Application/Authorization/` | Autorización fina de recurso |
+| `*Agent`, `*AgentPolicy` | `Application/Agents/` | Agente autónomo |
+| Aggregate / VO (sin sufijo) | `Domain/Model/` | p. ej. `ClinicalCapture` |
+| `*Catalog` | `Domain/Catalog/` | Vocabulario cerrado de negocio |
+| `*Policy` | `Domain/Policy/` | Regla de dominio sin I/O (ports sí) |
+| `*Repository`, `*Port`, `*Registry` | `Domain/Port/` | Puerto que Infrastructure implementa |
+| `*RowContract` | `Domain/RowContract/` | Integridad de una fila extraída |
+| `*Connector`, `*Mapper` | `Infrastructure/External/…` | ACL |
+| `*Client`, `*ApiClient` | `Infrastructure/External/<Sistema>/` | Cliente de API externa (ACL) |
+| `*TokenProvider` | `Shared/Infrastructure/Http/Auth/` | OAuth / credenciales reutilizables |
+| ActiveRecord Yii | `common/models/<BC>/` | Persistencia |
+
+### No son sufijos de arquitectura
+
+No usar (ni documentar como patrón): `*Checkpoint`, `*Pipeline`, `*Support`, `*Helper`, `*Manager`, `*Normalizer`, `*Sanitizer`, `*PostProcessor`, `*Overrides`, `*Validator` (en Application; en Domain usá `*Policy`).
+
+## Naming de dominio (parte central)
+
+Patrón: **`[<Contexto>]<Concepto><SufijoTécnico>`**
+
+1. Dentro del módulo no repitas `Clinical`+`Capture` en cada colaborador. Reservá `ClinicalCapture*` al aggregate y anclajes.
+2. Un concepto claro por clase (`CaptureDraftService`, `ExtractionPostProcessService`, `ExtractedTermPolicy`).
+3. Use cases = verbo + objeto (`SaveCapture`, `AnalyzeCaptureDraft`).
+4. AR/tabla (`EncounterCapture`) solo Infra/`common/models`.
+5. Maestros distintos: `EncounterDefinition*`.
+
+## Ejemplo (Capture)
+
+```text
+Application/UseCase/SaveCapture.php
+Application/Presentation/CapturePresenter.php
+Application/Service/CaptureDraftService.php
+Application/Service/ExtractionPostProcessService.php
+Domain/Model/ClinicalCapture.php
+Domain/Policy/ExtractedTermPolicy.php
+Domain/RowContract/MedicacionRowContract.php
+```

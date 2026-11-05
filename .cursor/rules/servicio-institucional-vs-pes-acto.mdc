@@ -12,7 +12,7 @@ Frase canónica:
 > **Acto** (SNOMED/LOINC) = **qué** se indica o pide.  
 > No modelar actos (ecografía, mamografía…) como filas de `servicios`.
 
-- Glosario producto: [`web/docs/producto/glosario-servicio-pes-acto.md`](web/docs/producto/glosario-servicio-pes-acto.md).
+- Glosario producto: [`docs/producto/glosario-servicio-pes-acto.md`](docs/producto/glosario-servicio-pes-acto.md).
 - En docs/PRs/código nuevo: preferir **servicio del centro** / **área** / **línea**; no usar “especialidad” como sinónimo de `id_servicio`.
 - `specialty_code` en `servicios` = tipología de **esa oferta**, no identidad del profesional.
 - Capacidad acto→oferta: `capacity_rules` (ECL) ∪ `linea_acto`. No modelar actos ni admin como filas de `servicios`.

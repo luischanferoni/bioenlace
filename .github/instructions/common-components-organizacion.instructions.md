@@ -1,0 +1,97 @@
+---
+description: "Organización de web/common/components — Platform vs Shared vs Domain"
+applyTo: ['web/common/components/**', 'web/common/models/**']
+---
+
+<!-- GENERADO por tools/sync-agent-rules.php — editar .cursor/rules/*.mdc -->
+
+# common/components: Platform vs Shared vs Domain
+
+**Antes de crear, mover o refactorizar** cualquier archivo bajo `web/common/components/` o `web/common/models/`, leer:
+
+- [docs/arquitectura/common-components.md](docs/arquitectura/common-components.md)
+- [docs/arquitectura/arbol-espejo-dominios.md](docs/arquitectura/arbol-espejo-dominios.md)
+- [web/common/components/README.md](web/common/components/README.md)
+- [web/common/README.md](web/common/README.md) (modelos AR)
+
+## Tres capas
+
+| Capa | Ruta | Qué va |
+|------|------|--------|
+| **Motores** | `web/common/components/Platform/` | Assistant, Core, Ai, Ui — agnóstico del rubro |
+| **Shared** | `web/common/components/Shared/` | Infrastructure técnica + Domain tipos transversales |
+| **Rubro salud** | `web/common/components/Domain/` | Clinical, Scheduling, Person, Organization, Terminology, Content, Geo, Programs |
+
+Metadata YAML (flows, prompts, UI, auth motor): colocalizada en `Domain/<BC>/[Modulo/]Application/Flows/` y `Platform/{Assistant,Ui,Core/Permission,Ai}/…`. Knobs de negocio: PHP `*Catalog` / `*AgentPolicy`. Cableado: `web/common/config/product-registries.php`.
+
+## Invariante de forma (espejo)
+
+```text
+<capa>/<dominio|platform|shared>/…
+```
+
+Misma palabra de dominio en `components/Domain/`, `models/`, `controllers/`, `views/json/` y `tests/unit/`. Flows: `Domain/<BC>/Application/Flows/intents` y/o `Domain/<BC>/<Modulo>/Application/Flows/intents`. Fuente: `ProductDomainCatalog`. `platform` y `shared` son ejes paralelos, **no** bajo `Domain/`.
+
+## Forma interna de Domain
+
+**Clinical (BC grande) — módulo primero** (sin Shared / PHP suelto en raíz del BC):
+
+```text
+Domain/Clinical/<Modulo>/Application|Domain|Infrastructure/…
+```
+
+ADR: [clinical-modulos-capacidad.md](docs/decisions/clinical-modulos-capacidad.md), [shared-top-level-infrastructure.md](docs/decisions/shared-top-level-infrastructure.md), [domain-folder-grammar.md](docs/decisions/domain-folder-grammar.md).  
+**Norte DDD (modelo rico):** [ddd-norte-modelo-rico.md](docs/decisions/ddd-norte-modelo-rico.md) — Domain primero; Application fino; piloto `Capture/`.
+
+**Otros BCs:**
+
+```text
+Domain/<BC>/
+  Application/ | Domain/ | Infrastructure/External/<Sistema>/
+  Assistant/ | Home/ | DataAccess/
+```
+
+- **ACL externos:** `Infrastructure/External/` bajo el módulo Clinical o el BC dueño.
+- **Sufijos:** `*Service`→`Application/`, `*Access`→`Application/Authorization/`, `*Catalog`→`Domain/`, `*Presenter`→`Application/Presentation/`, `*Agent*`→`Application/Agents/`, `*FlowDraftHydrator`→`Assistant/`. Sin `Support/` ni `Mapper/` fuera de External. Sin `Service/` L1.
+- **Negocio** bajo módulo/`Application/`. **No** `Services/`. **No** `Enum/` / `Service/` catch-all en raíz de Clinical.
+- **Clinical**: `Emergency/`, `Inpatient/`, `Encounter/`, `Laboratory/`, `Capture/`, …
+- **Quirófano** → `Domain/Scheduling/…` (área bajo Application cuando se migre).
+- **Scheduling / Terminology / Person** son BCs hermanos, no módulos de Clinical.
+- Sufijos: ver [Domain/README.md](web/common/components/Domain/README.md).
+- **`Platform/Assistant/`**: motores; rubro en metadata + registries.
+- **Application sin HTTP ni I/O de red**: bajo `*/Application/` no se permite
+  `*HttpException`, HTML, flash, ni `yii\httpclient\*`, `curl_*`,
+  `file_get_contents('http…')` / `fopen('http…')`. Un cliente de API externa es un ACL:
+  `Domain/<BC>/[<Modulo>/]Infrastructure/External/<Sistema>/<Sistema>ApiClient.php`.
+- **Transporte genérico reutilizable** (timeouts, retry, idempotencia, JSON, mapeo de error
+  y log): `Shared/Infrastructure/Http/`. No reimplementar por proveedor
+  (ver `dry-solid.mdc` y `ArchitectureHttpUsageTest`).
+
+## Prohibiciones por capa (catálogo cerrado)
+
+Cada fila es una prohibición **verificable**. Las excepciones se justifican en el PR.
+Una fila sin enforcement es una sugerencia: al agregarla, evaluar si merece un
+`Architecture*Test` en `web/common/tests/unit/platform/core/`.
+
+| Capa | Prohibido | Enforcement |
+|---|---|---|
+| `*/Application/` | I/O de red (`yii\httpclient`, `curl_*`, `file_get_contents('http…')`), `*HttpException`, HTML, flash | `ArchitectureHttpUsageTest` + hook `http-guard` |
+| Controllers API | Persistencia directa, reglas de negocio, `canAccess…` copiado por acción | `audit:thin-clients` |
+| `Domain/` (`*Policy`, agregados) | I/O, HTTP, sesión, `Yii::$app->request` | — |
+| `Platform/` (motores) | Casos de dominio enumerados (`if ($intentId === …)`, listas de pantallas) | — |
+| Metadata YAML | Integridad/gates de obligatorios, textos de error técnicos | `audit:thin-clients` |
+| `Shared/` | Reglas de negocio clínico u organizacional | — |
+| `Application/Service` | `new` de colaboradores dentro del método (va por constructor) | — |
+
+## Modelos AR (`web/common/models/`)
+
+- Rutas canónicas: `Person/Persona.php`, `Scheduling/Turno.php`, `Clinical/*`, `Terminology/Snomed/*`.
+- **No** crear alias `@deprecated` en la raíz de `models/` (`Persona.php`, `Turno.php` retirados).
+- Referencias en código, DataAccess YAML y tests: namespace completo (`common\models\Person\Persona`, `common\models\Scheduling\Turno`).
+
+## Regla práctica
+
+- Asistente (motor) → `Platform/Assistant/` + [Assistant/README.md](web/common/components/Platform/Assistant/README.md).
+- Helper HTTP / log / migración → `Shared/Infrastructure/`.
+- Guardia/triage → `Domain/Clinical/Emergency/`.
+- Mapa camas / ingreso → `Domain/Clinical/Inpatient/`.

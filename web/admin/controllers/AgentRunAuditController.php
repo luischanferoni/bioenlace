@@ -13,7 +13,7 @@ use yii\web\NotFoundHttpException;
 /**
  * Auditoría genérica de agent_run (solo superadmin).
  *
- * @see web/docs/producto/agentes-autonomos.md
+ * @see docs/producto/agentes-autonomos.md
  */
 class AgentRunAuditController extends Controller
 {

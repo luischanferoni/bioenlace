@@ -23,7 +23,7 @@ Son otras familias de duplicación y van en planes propios (ver [overview.md](ov
 
 | Fase | Qué | Riesgo | Estado |
 |------|-----|--------|--------|
-| [01](phases/01-base-http.md) | Base HTTP en `Shared/Infrastructure/Http` | Bajo: código nuevo, sin consumidores | Pendiente |
+| [01](phases/01-base-http.md) | Base HTTP en `Shared/Infrastructure/Http` | Bajo: código nuevo, sin consumidores | Hecho |
 | [02](phases/02-billing-mercadopago.md) | Billing / Mercado Pago (dinero) | **Alto**: pagos y webhooks | Pendiente |
 | [03](phases/03-oauth-client-credentials.md) | OAuth `client_credentials` ×3 (LIS, agenda FHIR, HC nacional) | Medio | Pendiente |
 | [04](phases/04-platform-ai-push.md) | Platform IA + push + batch (8 archivos) | Medio: más superficie | Pendiente |

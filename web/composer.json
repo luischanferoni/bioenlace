@@ -40,10 +40,11 @@
     "web-auth/webauthn-lib": "^5.3"
   },
   "require-dev": {
-    "codeception/codeception": "^4.0",
+    "codeception/codeception": "^5.3",
     "yiisoft/yii2-debug": "~2.1.0",
     "yiisoft/yii2-gii": "^2.2.5",
-    "yiisoft/yii2-faker": "~2.0.0"
+    "yiisoft/yii2-faker": "~2.0.0",
+    "codeception/module-yii2": "^1.1"
   },
   "config": {
     "fxp-asset": {

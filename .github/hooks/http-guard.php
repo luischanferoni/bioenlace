@@ -23,6 +23,9 @@ const ALLOWED_SEGMENTS = [
     '/Infrastructure/External/',
 ];
 
+/** Los tests arman el `Client` con transporte falso: mismo criterio que ArchitectureHttpUsageTest. */
+const ALLOWED_PATH_FRAGMENT = 'web/common/tests/';
+
 $raw = (string) stream_get_contents(STDIN);
 $event = json_decode($raw, true);
 if (!is_array($event)) {
@@ -145,6 +148,10 @@ function flatten($node, array &$values, array &$newContent, int $depth, string $
  */
 function isAllowed(string $path, array $legacy = []): bool
 {
+    if (strpos($path, ALLOWED_PATH_FRAGMENT) !== false) {
+        return true;
+    }
+
     foreach (ALLOWED_SEGMENTS as $segment) {
         if (strpos($path, $segment) !== false) {
             return true;

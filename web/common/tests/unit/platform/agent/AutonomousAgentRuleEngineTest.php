@@ -3,9 +3,9 @@
 namespace common\tests\unit\platform\agent;
 
 use common\components\Platform\Agent\AutonomousAgentRuleEngine;
-use common\tests\unit\DbTestCase;
+use Codeception\Test\Unit;
 
-class AutonomousAgentRuleEngineTest extends DbTestCase
+class AutonomousAgentRuleEngineTest extends Unit
 {
     public function testMatchWorseningEvolution(): void
     {

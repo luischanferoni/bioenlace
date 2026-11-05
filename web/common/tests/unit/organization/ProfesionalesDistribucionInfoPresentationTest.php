@@ -11,7 +11,7 @@ class ProfesionalesDistribucionInfoPresenterTest extends Unit
 {
     public function testSingleServiceSentence(): void
     {
-        $result = $this->result([
+        $result = $this->metricResult([
             ['total' => 6, 'id_servicio' => 7, 'servicio_nombre' => 'MED GENERAL'],
         ]);
 
@@ -23,7 +23,7 @@ class ProfesionalesDistribucionInfoPresenterTest extends Unit
 
     public function testMultipleServicesList(): void
     {
-        $result = $this->result([
+        $result = $this->metricResult([
             ['total' => 2, 'id_servicio' => 3, 'servicio_nombre' => 'PEDIATRÍA'],
             ['total' => 6, 'id_servicio' => 7, 'servicio_nombre' => 'MED GENERAL'],
         ]);
@@ -42,7 +42,7 @@ class ProfesionalesDistribucionInfoPresenterTest extends Unit
 
     public function testEmptyGroups(): void
     {
-        $texto = (new ProfesionalesDistribucionInfoPresenter())->buildResumenTexto($this->result([]));
+        $texto = (new ProfesionalesDistribucionInfoPresenter())->buildResumenTexto($this->metricResult([]));
 
         $this->assertSame('En Hospital Demo no hay profesionales asignados a servicios.', $texto);
     }
@@ -50,7 +50,7 @@ class ProfesionalesDistribucionInfoPresenterTest extends Unit
     /**
      * @param list<array<string, mixed>> $groups
      */
-    private function result(array $groups): MetricExecutionResult
+    private function metricResult(array $groups): MetricExecutionResult
     {
         return new MetricExecutionResult(
             'profesionales_conteo_por_servicio_efector',

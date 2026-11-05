@@ -72,7 +72,7 @@ class AICostTrackerTest extends \Codeception\Test\Unit
     {
         AICostTracker::iniciarEjecucionPrueba();
         $json = json_encode([
-            'candidates' => [['content' => ['parts' => [['text' => 'ok']]]]]],
+            'candidates' => [['content' => ['parts' => [['text' => 'ok']]]]],
             'usageMetadata' => [
                 'promptTokenCount' => 1000,
                 'cachedContentTokenCount' => 800,

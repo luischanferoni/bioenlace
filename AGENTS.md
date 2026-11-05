@@ -86,11 +86,22 @@ git config core.hooksPath .githooks   # una vez por clon
 ```bash
 cd web
 composer install
-vendor/bin/codecept run unit                                              # suite completa
-vendor/bin/codecept run unit platform/core/ArchitectureHttpUsageTest.php  # invariante HTTP
-composer audit:thin-clients                                               # ratchet de deuda
-php tools/sync-agent-rules.php --check                                    # reglas sincronizadas
+
+cd common                                                  # la config vive en common/codeception.yml
+../vendor/bin/codecept build                               # tras cambiar suites/actores
+../vendor/bin/codecept run unit                            # suite completa
+../vendor/bin/codecept run unit shared/infrastructure/http # base HTTP compartido
+../vendor/bin/codecept run unit platform/core/ArchitectureHttpUsageTest.php  # invariante HTTP
+
+cd .. && composer audit:thin-clients                       # ratchet de deuda
+php tools/sync-agent-rules.php --check                     # reglas sincronizadas
 ```
 
-PHP ≥ 8.1 (`web/composer.json` exige `>=8.1`; `config.platform.php` = 8.3.30).
-Si `php -v` en PATH muestra 7.4, no es el intérprete del proyecto: apuntá a un binario ≥ 8.1.
+El CLI tiene que ser **PHP ≥ 8.2** con `curl` y `mbstring`: el lock resuelve contra
+`config.platform.php` = 8.3.30 y `web-auth/webauthn-lib` exige `>= 8.2`, así que con 8.1
+el autoload aborta en `platform_check.php`. Si `php -v` en PATH no es ese binario, apuntá
+al correcto (p. ej. `C:\laragon\bin\php\php-8.3.x\php.exe`).
+
+La primera corrida necesita `common/config/test.php` (local, no versionado: `id` + `basePath`);
+lo requiere `common/config/codeception-local.php`. Los tests de DB esperan la base de
+`common/config/test-local.php`.

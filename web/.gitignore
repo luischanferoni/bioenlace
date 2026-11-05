@@ -23,6 +23,7 @@ admin/web/uploads/*
 frontend/runtime/*
 admin/runtime/*
 console/runtime/*
+common/runtime/*
 admin/web/assets
 
 # Logs

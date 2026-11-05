@@ -3,9 +3,9 @@
 namespace common\tests\unit\platform\agent;
 
 use common\components\Domain\Clinical\Laboratory\Application\Service\PostLabClassificationRuleService;
-use common\tests\unit\DbTestCase;
+use Codeception\Test\Unit;
 
-class PostLabClassificationRuleServiceTest extends DbTestCase
+class PostLabClassificationRuleServiceTest extends Unit
 {
     public function testGlucoseElevatedClassifiesControl(): void
     {

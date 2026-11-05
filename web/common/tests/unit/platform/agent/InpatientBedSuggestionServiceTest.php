@@ -4,9 +4,9 @@ namespace common\tests\unit\platform\agent;
 
 use common\components\Domain\Clinical\Inpatient\Application\Service\InpatientBedSuggestionService;
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
-use common\tests\unit\DbTestCase;
+use Codeception\Test\Unit;
 
-class InpatientBedSuggestionServiceTest extends DbTestCase
+class InpatientBedSuggestionServiceTest extends Unit
 {
     protected function _before(): void
     {

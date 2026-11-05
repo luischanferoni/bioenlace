@@ -3,9 +3,9 @@
 namespace common\tests\unit\platform\agent;
 
 use common\components\Domain\Scheduling\Agenda\Application\UseCase\RouteReservaTriagePostCupo;
-use common\tests\unit\DbTestCase;
+use Codeception\Test\Unit;
 
-class RouteReservaTriagePostCupoTest extends DbTestCase
+class RouteReservaTriagePostCupoTest extends Unit
 {
     public function testRecommendsAsyncForCronicoSinCupo(): void
     {

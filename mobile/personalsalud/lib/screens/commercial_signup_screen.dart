@@ -1305,7 +1305,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
         option(
           'PUBLICO',
           'Público',
-          'Efector del catálogo oficial SISA afiliado a un ministerio.',
+          'Efector o Centro de salud pública.',
         ),
       ],
     );

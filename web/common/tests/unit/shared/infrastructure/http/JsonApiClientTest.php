@@ -187,6 +187,32 @@ class JsonApiClientTest extends Unit
         $this->assertStringContainsString('page=2', $url);
     }
 
+    public function testQuerySobreBaseSinPathNoAgregaBarraIntermedia(): void
+    {
+        $transport = (new FakeTransport())->respond(200, '{"status":"OK"}');
+
+        $this->client($transport, [], 'https://maps.test/maps/api/geocode/json')
+            ->get('', ['latlng' => '-34.6138769,-58.4267282']);
+
+        $url = $transport->sent()[0]['url'];
+
+        $this->assertStringStartsWith(
+            'https://maps.test/maps/api/geocode/json?',
+            $url,
+            'La query se pega a la base: `/json/?…` no existe en la API de Google (404).'
+        );
+        $this->assertStringNotContainsString('/json/?', $url);
+    }
+
+    public function testQuerySobreBaseConBarraFinalNoDuplicaLaBarra(): void
+    {
+        $transport = (new FakeTransport())->respond(200, '{}');
+
+        $this->client($transport, [], 'https://api.test/v1/')->get('', ['a' => 'b']);
+
+        $this->assertStringStartsWith('https://api.test/v1?', $transport->sent()[0]['url']);
+    }
+
     public function testLogDeErrorNoIncluyeElAuthorization(): void
     {
         $logger = Yii::getLogger();
@@ -214,10 +240,13 @@ class JsonApiClientTest extends Unit
     }
 
     /** @param array<string, string> $defaultHeaders */
-    private function client(FakeTransport $transport, array $defaultHeaders = []): JsonApiClient
-    {
+    private function client(
+        FakeTransport $transport,
+        array $defaultHeaders = [],
+        string $baseUrl = 'https://api.test'
+    ): JsonApiClient {
         return new JsonApiClient(
-            baseUrl: 'https://api.test',
+            baseUrl: $baseUrl,
             defaultHeaders: $defaultHeaders,
             connectTimeout: 1,
             timeout: 1,

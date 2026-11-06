@@ -36,6 +36,9 @@ $client->get('/Appointment', ['patient' => 'p-1'], [], ['job_id' => 42]);
   `responseBody()`, `isRetryable()`): el ACL decide si devuelve `null`, traduce el texto o propaga.
 - **Log** `http.api_error` con `provider`, `path`, `status_code`, `causes` y el `logContext`
   que aporte el ACL. Nunca loguea `Authorization` ni el cuerpo de la request.
+- **URL**: `baseUrl` + `path`. Un `path` vacío usa la base tal cual; una query suelta
+  (endpoint en la propia base, p. ej. Google Geocoding) se pasa como `''` + array de query y
+  queda `…/json?latlng=…` — nunca `…/json/?latlng=…`, que el proveedor responde 404.
 - **Formatos de body**: array → JSON (lo serializa el base para no perder el `Content-Type`),
   array + urlencoded → form, string → contenido crudo, `MultipartBody` → `multipart/form-data`
   en memoria (audio, imágenes) sin archivo temporal.

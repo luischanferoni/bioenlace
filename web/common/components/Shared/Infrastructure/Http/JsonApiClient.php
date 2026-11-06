@@ -339,6 +339,11 @@ class JsonApiClient
         if ($path === '' || $this->baseUrl === '') {
             return $path === '' ? $this->baseUrl : $path;
         }
+        // Query suelta (`?latlng=…`): se pega a la base sin barra intermedia. Con la barra
+        // (`…/json/?latlng=…`) el endpoint no existe y el proveedor responde 404.
+        if ($path[0] === '?' || $path[0] === '#') {
+            return rtrim($this->baseUrl, '/') . $path;
+        }
 
         return rtrim($this->baseUrl, '/') . '/' . ltrim($path, '/');
     }

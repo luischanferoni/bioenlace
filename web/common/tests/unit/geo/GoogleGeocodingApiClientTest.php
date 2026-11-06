@@ -78,6 +78,11 @@ class GoogleGeocodingApiClientTest extends Unit
         $this->assertSame(['Córdoba'], $resultado['localidad']);
 
         $url = $this->transport->sent()[0]['url'];
+        $this->assertStringStartsWith(
+            GoogleGeocodingApiClient::DEFAULT_BASE_URL . '?',
+            $url,
+            'La ruta de Google no admite barra antes de la query (responde 404).'
+        );
         $this->assertStringContainsString('latlng=-31.4135000%2C-64.1810000', $url);
         $this->assertStringContainsString('key=maps-key', $url);
         $this->assertStringContainsString('language=es', $url);

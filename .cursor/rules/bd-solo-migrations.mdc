@@ -1,0 +1,62 @@
+---
+description: Base de datos — todo cambio de esquema o datos va en migraciones; dumps y conexión local son solo lectura/prueba
+alwaysApply: true
+---
+
+# Base de datos: solo migraciones
+
+Toda mutación del esquema o de datos persistentes vive en **`web/common/migrations/*.php`**.
+La conexión a la BD local y los `.sql` de ejemplo son **herramientas de inspección y prueba**,
+no un lugar para corregir datos.
+
+## Dumps `.sql`
+
+- Los archivos `.sql` de la raíz (p. ej. `u257309594_bioenlace.sql`) son **muestras / backups**.
+- **No editarlos, regenerarlos ni "arreglarlos"** para que la app funcione. No son fuente de verdad.
+- Se pueden importar en una BD temporal **desechable** para reproducir un problema o probar migraciones.
+
+## Conexión local
+
+Permitido:
+
+- Leer estructura y datos (`SHOW CREATE TABLE`, `information_schema`, `SELECT`).
+- Correr y probar migraciones (`php yii migrate`, `migrate/down`, `migrate/up`).
+
+Prohibido fuera de una migración:
+
+- `ALTER`, `CREATE`, `DROP`, `TRUNCATE`, `INSERT`, `UPDATE`, `DELETE` manuales (phpMyAdmin, Workbench,
+  script one-off, consola).
+- Si una prueba necesita datos o columnas nuevas, **primero** se escribe la migración y se corre.
+- Si hace falta un entorno limpio, usar una BD temporal que se pueda descartar.
+
+## Cómo escribir la migración
+
+- Nombre `mYYMMDD_HHMMSS_descripcion.php` en `web/common/migrations/`.
+- `safeUp()` aplica; `safeDown()` revierte lo reversible. Una normalización de datos puede tener
+  `safeDown()` vacío (con comentario del porqué).
+- **Idempotente**: consultar `information_schema` / `$this->db->schema->getTableSchema()` antes de
+  alterar; en una BD ya normalizada no debe emitir DDL.
+- **No editar una migración ya aplicada**: se agrega una nueva.
+- ENUM con `common\components\Shared\Infrastructure\Migration\MigrationEnumColumn` y constantes del
+  AR como única fuente (`migrations-enum-columnas.mdc`).
+- Restaurar cualquier estado de sesión que se cambie (`FOREIGN_KEY_CHECKS`, `sql_mode`, …) con
+  `try/finally`.
+- DDL compatible con MySQL 8: sin ancho de display en enteros (`int`, `tinyint`) y charset `utf8mb4`.
+
+## Verificación
+
+```bash
+cd web
+php -l common/migrations/mXXXXXXXX_XXXXXX_descripcion.php
+php yii migrate --interactive=0          # PHP >= 8.2
+```
+
+- Probar idempotencia cuando aplique: `php yii migrate/down 1` y `php yii migrate/up 1`.
+- El hook `.githooks/pre-commit` corre `php -l` de los PHP en stage.
+
+## No hacer
+
+- Corregir la BD a mano y después escribir una migración "para que quede registrado".
+- Modificar el dump o un `main-local.php` para sortear un error de esquema.
+- `ALTER TABLE` / `UPDATE` ad-hoc desde un controller, servicio de dominio o script de un solo uso.
+- Depender de datos de ejemplo: la migración debe funcionar sobre una BD vacía o legacy.

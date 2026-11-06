@@ -11,13 +11,13 @@ Para dominios cerrados (pocas opciones fijas), usar **ENUM MySQL** con literales
 
 ## Migración
 
-- Usar `common\components\Platform\Infra\Migration\MigrationEnumColumn::mysqlEnum()`.
+- Usar `common\components\Shared\Infrastructure\Migration\MigrationEnumColumn::mysqlEnum()`.
 - Los valores y el default deben coincidir con **constantes del modelo AR** (una sola fuente de verdad en PHP).
 - Incluir `comment` con la lista de valores si ayuda a operación.
 
 ```php
-use common\components\Platform\Infra\Migration\MigrationEnumColumn;
-use common\models\Servicio;
+use common\components\Shared\Infrastructure\Migration\MigrationEnumColumn;
+use common\models\Organization\Servicio;
 
 $this->addColumn($table, 'teleconsulta_politica', MigrationEnumColumn::mysqlEnum(
     Servicio::teleconsultaPoliticaValues(),

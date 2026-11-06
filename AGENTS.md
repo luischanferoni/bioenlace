@@ -33,14 +33,14 @@ archivos de su zona. No hace falta leerlas todas.
 
 | Zona / tarea | Regla |
 |---|---|
-| Siempre (transversal) | `capas-y-metadata-sin-hardcode`, `dry-solid`, `source-of-truth-catalogos`, `runtime-datos-vs-metadata`, `metadata-yaml-uso`, `servicio-institucional-vs-pes-acto` |
+| Siempre (transversal) | `capas-y-metadata-sin-hardcode`, `dry-solid`, `source-of-truth-catalogos`, `runtime-datos-vs-metadata`, `metadata-yaml-uso`, `servicio-institucional-vs-pes-acto`, `bd-solo-migrations` |
 | `web/**` | `arquitectura-yii2-bioenlace` |
 | `web/common/components/**`, `web/common/models/**` | `common-components-organizacion` |
 | `web/common/components/Domain/**` | `ddd-un-eje-por-nivel` |
 | Vistas y controllers web | `web-vistas-yii-delgadas`, `web-frontend-camino-a-nativo`, `web-bootstrap-antes-que-css-custom`, `ui-nativas-embebibles-spa-shell` |
 | `web/frontend/modules/api/v1/**` | `api-v1-acciones-permisos-y-rutas`, `api-v1-autenticacion-y-sesion` |
 | Asistente / IA (intents, prompts, routing) | `asistente-intents-frontera-sin-solape`, `asistente-routing-sin-hardcode`, `asistente-prompts-sin-casos-particulares`, `asistente-prompts-solo-humano`, `asistente-lectura-generica` |
-| `web/common/migrations/**` | `migrations-enum-columnas` |
+| `web/common/migrations/**` | `bd-solo-migrations`, `migrations-enum-columnas` |
 | `docs/**` | `documentacion-estilo-y-enlaces`, `documentacion-estructura-dominios`, `documentacion-flows` |
 | `mobile/**` | `mobile-ui-json-custom-widgets`, `mobile-app-architecture` |
 
@@ -59,6 +59,9 @@ Detalle de arquitectura: [docs/arquitectura/](./docs/arquitectura/) —
   `try/catch` de transporte igual, se extrae.
 - **DRY/SOLID.** Regla de tres para extraer, y al lugar correcto (tabla en `dry-solid`);
   una razón de cambio por clase; colaboradores por constructor, no `new` adentro del método.
+- **Base de datos solo por migraciones.** Esquema y datos persistentes → `web/common/migrations/`.
+  Los `.sql` de la raíz son muestras de solo lectura; la conexión local se usa para inspeccionar
+  estructura/datos y probar migraciones, no para `ALTER`/`INSERT`/`UPDATE` manuales.
 - **API v1** es la única fuente de negocio: web Yii y móvil la consumen, no la duplican.
 - **Prohibiciones por capa**: catálogo cerrado de 8 filas en
   `common-components-organizacion.mdc` (Application sin red, controllers sin persistencia,

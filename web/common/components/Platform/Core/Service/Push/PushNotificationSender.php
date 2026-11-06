@@ -2,6 +2,8 @@
 
 namespace common\components\Platform\Core\Service\Push;
 
+use common\components\Shared\Infrastructure\Http\HttpApiException;
+use common\components\Shared\Infrastructure\Http\JsonApiClient;
 use Yii;
 use common\models\Platform\UserDevice;
 use common\models\Platform\PersonaNotificacion;
@@ -100,20 +102,21 @@ class PushNotificationSender
         $endpoint = FcmPushConfig::get()['httpEndpoint'] ?? null;
         if (!$sent && !empty($endpoint)) {
             try {
-                $client = new \yii\httpclient\Client();
-                $client->createRequest()
-                    ->setMethod('POST')
-                    ->setUrl((string) $endpoint)
-                    ->setFormat(\yii\httpclient\Client::FORMAT_JSON)
-                    ->setData([
-                        'token' => $token,
-                        'provider' => $provider,
-                        'title' => $title,
-                        'body' => $body,
-                        'data' => $dataStr,
-                    ])
-                    ->send();
-            } catch (\Throwable $e) {
+                (new JsonApiClient(
+                    baseUrl: '',
+                    connectTimeout: 5,
+                    timeout: 20,
+                    logCategory: FcmPushConfig::LOG_CATEGORY,
+                    provider: 'push-http',
+                    providerLabel: 'Endpoint de push'
+                ))->post((string) $endpoint, [
+                    'token' => $token,
+                    'provider' => $provider,
+                    'title' => $title,
+                    'body' => $body,
+                    'data' => $dataStr,
+                ]);
+            } catch (HttpApiException $e) {
                 Yii::error('Push HTTP: ' . $e->getMessage(), FcmPushConfig::LOG_CATEGORY);
             }
         }

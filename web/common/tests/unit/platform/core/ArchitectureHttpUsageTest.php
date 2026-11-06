@@ -14,16 +14,14 @@ use yii\helpers\FileHelper;
  *   vive en `Shared/Infrastructure/Http/`.
  * - `Application` no hace red.
  *
- * La deuda aceptada vive en `web/tools/architecture-http-legacy.json` (una sola fuente,
- * compartida con el hook `.github/hooks/http-guard.json`) y solo puede bajar.
+ * No hay allowlist: la deuda llegó a cero con el plan `deduplicacion-http`. Un archivo nuevo
+ * que use transporte directo rompe este test y el hook `.github/hooks/http-guard.json`.
  *
  * @see .cursor/rules/dry-solid.mdc
  * @see .cursor/rules/common-components-organizacion.mdc
  */
 final class ArchitectureHttpUsageTest extends Unit
 {
-    private const BASELINE = 'tools/architecture-http-legacy.json';
-
     /** Fragmentos de ruta donde el uso directo del transporte está permitido. */
     private const ALLOWED_SEGMENTS = [
         '/Infrastructure/External/',
@@ -41,15 +39,10 @@ final class ArchitectureHttpUsageTest extends Unit
         . '|\bcurl_exec\s*\('
         . '|\bfile_get_contents\s*\(\s*[\'"]https?:/i';
 
-    /** @var array{adHoc: string[], applicationHttp: string[]}|null */
-    private static ?array $baseline = null;
-
-    public function testHttpTransportOnlyInExternalAclOrSharedBase(): void
-    {
-        $legacy = $this->baseline()['adHoc'];
+    public function testHttpTransportOnlyInExternalAclOrSharedBase(): void    {
         $offenders = [];
         foreach ($this->scan(['components', 'models'], self::AD_HOC) as $file) {
-            if ($this->isAllowed($file) || in_array($file, $legacy, true)) {
+            if ($this->isAllowed($file)) {
                 continue;
             }
             $offenders[] = $file;
@@ -63,13 +56,9 @@ final class ArchitectureHttpUsageTest extends Unit
 
     public function testApplicationLayerHasNoNetworkIo(): void
     {
-        $legacy = $this->baseline()['applicationHttp'];
         $offenders = [];
         foreach ($this->scan(['components'], self::AD_HOC_ANY) as $file) {
-            if (strpos($file, '/Application/') === false) {
-                continue;
-            }
-            if (in_array($file, $legacy, true)) {
+            if (strpos($file, '/Application/') === false || $this->isAllowed($file)) {
                 continue;
             }
             $offenders[] = $file;
@@ -79,25 +68,6 @@ final class ArchitectureHttpUsageTest extends Unit
             'I/O de red en Application',
             $offenders
         ));
-    }
-
-    public function testLegacyBaselineOnlyShrinks(): void
-    {
-        $base = $this->commonRoot();
-        $stale = [];
-        foreach (array_merge($this->baseline()['adHoc'], $this->baseline()['applicationHttp']) as $file) {
-            $absolute = $base . '/' . $file;
-            if (!is_file($absolute)) {
-                $stale[] = $file . ' (archivo inexistente)';
-                continue;
-            }
-            if (!preg_match(self::AD_HOC_ANY, (string) file_get_contents($absolute))) {
-                $stale[] = $file . ' (ya no tiene HTTP ad-hoc: sacarlo del baseline)';
-            }
-        }
-
-        $this->assertSame([], $stale, "Deuda ya resuelta, actualizar "
-            . self::BASELINE . ":\n  " . implode("\n  ", $stale) . "\n");
     }
 
     /**
@@ -150,29 +120,6 @@ final class ArchitectureHttpUsageTest extends Unit
     private function commonRoot(): string
     {
         return rtrim(str_replace('\\', '/', (string) Yii::getAlias('@common')), '/');
-    }
-
-    /**
-     * @return array{adHoc: string[], applicationHttp: string[]}
-     */
-    private function baseline(): array
-    {
-        if (self::$baseline !== null) {
-            return self::$baseline;
-        }
-
-        $file = dirname($this->commonRoot()) . '/' . self::BASELINE;
-        $this->assertFileExists($file, 'Falta el baseline de deuda HTTP: ' . self::BASELINE);
-
-        $decoded = json_decode((string) file_get_contents($file), true);
-        $this->assertIsArray($decoded, self::BASELINE . ' no es JSON válido.');
-
-        self::$baseline = [
-            'adHoc' => array_values((array) ($decoded['adHoc'] ?? [])),
-            'applicationHttp' => array_values((array) ($decoded['applicationHttp'] ?? [])),
-        ];
-
-        return self::$baseline;
     }
 
     /**

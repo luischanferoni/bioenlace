@@ -3,7 +3,6 @@
 namespace common\components\Platform\Ai\Embeddings;
 
 use Yii;
-use yii\httpclient\Client;
 
 /**
  * Componente para manejo de embeddings semánticos
@@ -103,50 +102,26 @@ class EmbeddingsManager
      */
     private static function generarEmbeddingHuggingFace($texto)
     {
-        try {
-            // Endpoint de HuggingFace Inference Providers (requiere /models/ en la ruta).
-            // La cuota gratuita mensual es limitada: si se agota responde HTTP 402.
-            $modelo = Yii::$app->params['hf_embedding_model'] ?? 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2';
+        // Endpoint de HuggingFace Inference Providers (requiere /models/ en la ruta).
+        // La cuota gratuita mensual es limitada: si se agota responde HTTP 402.
+        $modelo = Yii::$app->params['hf_embedding_model'] ?? 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2';
 
-            $client = new Client();
-            $response = $client->createRequest()
-                ->setMethod('POST')
-                ->setUrl("https://router.huggingface.co/hf-inference/models/{$modelo}")
-                ->addHeaders([
-                    'Authorization' => 'Bearer ' . Yii::$app->params['hf_api_key'],
-                    'Content-Type' => 'application/json'
-                ])
-                ->setContent(json_encode([
-                    'inputs' => $texto,
-                    'options' => [
-                        'wait_for_model' => false
-                    ]
-                ]))
-                ->send();
-
-            if ($response->isOk) {
-                $data = json_decode($response->content, true);
-
-                // HuggingFace devuelve array de floats directamente
-                if (is_array($data) && !empty($data) && is_numeric($data[0] ?? null)) {
-                    return $data;
-                }
-
-                // A veces devuelve [ [ ... ] ]
-                if (is_array($data) && isset($data[0]) && is_array($data[0]) && is_numeric($data[0][0] ?? null)) {
-                    return $data[0];
-                }
-            }
-
-            $status = $response->getStatusCode();
-            $detalle = trim((string) $response->content);
-            if (strlen($detalle) > 300) {
-                $detalle = substr($detalle, 0, 300) . '...';
-            }
-            \Yii::warning("HuggingFace embedding falló: HTTP {$status} {$detalle}", 'embeddings');
-        } catch (\Exception $e) {
-            \Yii::warning("Error HuggingFace embedding: " . $e->getMessage(), 'embeddings');
+        $data = HuggingFaceEmbeddingsClient::featureExtraction($texto, $modelo);
+        if ($data === null) {
+            return null;
         }
+
+        // HuggingFace devuelve array de floats directamente
+        if (!empty($data) && is_numeric($data[0] ?? null)) {
+            return $data;
+        }
+
+        // A veces devuelve [ [ ... ] ]
+        if (isset($data[0]) && is_array($data[0]) && is_numeric($data[0][0] ?? null)) {
+            return $data[0];
+        }
+
+        \Yii::warning('HuggingFace embedding devolvió un formato inesperado', 'embeddings');
 
         return null;
     }

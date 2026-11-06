@@ -81,8 +81,11 @@ git config core.hooksPath .githooks   # una vez por clon
   `web/common/{components,models}` que introduce `yii\httpclient`, `curl_*` o
   `file_get_contents('http…')` fuera de un ACL o de `Shared/Infrastructure/Http/`.
   Es un hook, no una instrucción: actúa aunque el agente "se olvide" de la regla.
-- **Deuda aceptada** en `web/tools/architecture-http-legacy.json`: la consumen el test y el
-  hook (una sola fuente). Solo puede bajar — al migrar un archivo, sacarlo de ahí.
+- **Un solo transporte HTTP.** Todo I/O contra APIs externas pasa por `Shared/Infrastructure/Http/`
+  (cliente base, reintentos, tokens). Un cliente de proveedor es un ACL en
+  `Domain/<BC>/[<Modulo>/]Infrastructure/External/<Sistema>/`. `ArchitectureHttpUsageTest` lo
+  verifica **sin allowlist** y el hook `.github/hooks/http-guard.json` lo bloquea al editar.
+  Decisión: [transporte-http-unico.md](docs/decisions/transporte-http-unico.md).
 
 ## Build & test
 
@@ -105,6 +108,8 @@ El CLI tiene que ser **PHP ≥ 8.2** con `curl` y `mbstring`: el lock resuelve c
 el autoload aborta en `platform_check.php`. Si `php -v` en PATH no es ese binario, apuntá
 al correcto (p. ej. `C:\laragon\bin\php\php-8.3.x\php.exe`).
 
-La primera corrida necesita `common/config/test.php` (local, no versionado: `id` + `basePath`);
-lo requiere `common/config/codeception-local.php`. Los tests de DB esperan la base de
+La primera corrida necesita `common/config/test.php` (local, no versionado). Debe declarar
+`id`, `basePath` y el componente `user` con `class` = `frontend\components\UserConfig`
+(hereda `BaseUserConfig`, que aporta `getIdPersona`/`getIdEfector`): sin eso, todo test que
+toque `Yii::$app->user` falla con "unknown method". Los tests de DB esperan la base de
 `common/config/test-local.php`.

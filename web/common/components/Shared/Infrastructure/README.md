@@ -32,12 +32,17 @@ $client->get('/Appointment', ['patient' => 'p-1'], [], ['job_id' => 42]);
 
 - **No reintenta** un `POST` sin clave de idempotencia; sí un método idempotente
   (`GET`, `HEAD`, `PUT`, `DELETE`) o cualquier request con `Idempotency-Key`.
-- Falla con `HttpApiException` (`provider()`, `statusCode()`, `providerCauses()`,
-  `isRetryable()`): el ACL decide si devuelve `null`, traduce el texto o propaga.
-- Log `http.api_error` con `provider`, `path`, `status_code` y `causes`. Nunca loguea
-  `Authorization` ni el cuerpo de la request.
-- Token: `Auth/AccessTokenProvider`. `OAuthClientCredentialsTokenProvider` cachea e
-  `invalidate()` sirve para reintentar un `401`; `StaticTokenProvider` para API keys.
-  Los tres conectores OAuth del repo (LIS, agenda FHIR, HC nacional) usan el mismo provider.
+- **Falla** con `HttpApiException` (`provider()`, `statusCode()`, `providerCauses()`,
+  `responseBody()`, `isRetryable()`): el ACL decide si devuelve `null`, traduce el texto o propaga.
+- **Log** `http.api_error` con `provider`, `path`, `status_code`, `causes` y el `logContext`
+  que aporte el ACL. Nunca loguea `Authorization` ni el cuerpo de la request.
+- **Formatos de body**: array → JSON (lo serializa el base para no perder el `Content-Type`),
+  array + urlencoded → form, string → contenido crudo, `MultipartBody` → `multipart/form-data`
+  en memoria (audio, imágenes) sin archivo temporal.
+- **Token**: `Auth/AccessTokenProvider`. `OAuthClientCredentialsTokenProvider` y
+  `GoogleServiceAccountTokenProvider` cachean e `invalidate()` sirve para reintentar un `401`;
+  `StaticTokenProvider` para API keys. Los tres conectores OAuth del repo (LIS, agenda FHIR,
+  HC nacional) y los dos de Google (Vertex/Gemini, FCM) usan el mismo provider cada uno.
 
-Tests: `common/tests/unit/shared/infrastructure/http/` (transporte falso, sin red).
+Tests: `common/tests/unit/shared/infrastructure/http/` (transporte falso, sin red). Para
+facades estáticas hay `JsonApiClient::$transportOverride` (`@internal`, sólo tests).

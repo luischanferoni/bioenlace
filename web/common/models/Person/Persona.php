@@ -689,23 +689,17 @@ class Persona extends \yii\db\ActiveRecord
         }
     }
 
+    /**
+     * Cobertura de P.U.C.O. (SEIPA) del documento, o null si no tiene.
+     *
+     * @return array<string, mixed>|null
+     *
+     * @throws \common\components\Domain\Person\Identity\Infrastructure\External\Puco\PucoUnavailableException
+     */
     public static function existe_en_puco($documento)
     {
-        $curl = curl_init();
-        curl_setopt_array($curl, array(
-            CURLOPT_RETURNTRANSFER => 1,
-            CURLOPT_URL => 'https://esalud.msaludsgo.gov.ar/seipa/web/api/coberturas?dni=' . $documento . '&sexo=1',
-        ));
-        $resp = curl_exec($curl);
-        curl_close($curl);
-
-        $arreglo_puco = json_decode($resp);
-        if (count($arreglo_puco) > 0) {
-            $row_puco = (array) $arreglo_puco[0];
-            return $row_puco;
-        } else {
-            return false;
-        }
+        return (new \common\components\Domain\Person\Identity\Infrastructure\External\Puco\PucoApiClient())
+            ->lookup((string) $documento);
     }
 
     public function validarFechaNacimiento($attribute, $params)

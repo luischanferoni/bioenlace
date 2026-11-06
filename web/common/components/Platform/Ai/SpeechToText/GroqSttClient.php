@@ -2,16 +2,27 @@
 
 namespace common\components\Platform\Ai\SpeechToText;
 
+use common\components\Shared\Infrastructure\Http\HttpApiException;
+use common\components\Shared\Infrastructure\Http\JsonApiClient;
+use common\components\Shared\Infrastructure\Http\MultipartBody;
 use Yii;
 
 /**
  * STT vía Groq OpenAI-compatible API (Whisper).
  *
+ * El audio viaja como multipart en memoria: no hace falta escribirlo a un archivo temporal
+ * ni usar `curl_*` a mano.
+ *
  * @see https://console.groq.com/docs/speech-to-text
  */
 final class GroqSttClient
 {
-    private const API_URL = 'https://api.groq.com/openai/v1/audio/transcriptions';
+    public const BASE_URL = 'https://api.groq.com/openai/v1';
+
+    public const LOG_CATEGORY = 'speech-to-text';
+
+    /** Transcripción de audio largo: el timeout más alto del repo. */
+    public const TIMEOUT_SECONDS = 120;
 
     /**
      * @param string $audioData Binario de audio
@@ -21,76 +32,54 @@ final class GroqSttClient
      */
     public static function transcribe($audioData, $modelo, $language = 'es')
     {
-        $apiKey = Yii::$app->params['groq_api_key'] ?? '';
+        $apiKey = (string) (Yii::$app->params['groq_api_key'] ?? '');
         if ($apiKey === '' || $audioData === '') {
             return null;
         }
 
         $extension = self::guessExtension($audioData);
-        $tempFile = tempnam(sys_get_temp_dir(), 'groq_stt_');
-        $audioPath = $tempFile . '.' . $extension;
 
         try {
-            if (!@rename($tempFile, $audioPath)) {
-                $audioPath = $tempFile;
-            }
-            file_put_contents($audioPath, $audioData);
-
-            $mime = self::mimeForExtension($extension);
-            $postFields = [
-                'file' => new \CURLFile($audioPath, $mime, 'audio.' . $extension),
-                'model' => $modelo,
-                'language' => $language,
-                'response_format' => 'json',
-                'temperature' => '0',
-            ];
-
-            $ch = curl_init(self::API_URL);
-            curl_setopt_array($ch, [
-                CURLOPT_POST => true,
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_HTTPHEADER => [
-                    'Authorization: Bearer ' . $apiKey,
-                ],
-                CURLOPT_POSTFIELDS => $postFields,
-                CURLOPT_TIMEOUT => 120,
-            ]);
-
-            $body = curl_exec($ch);
-            $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $curlError = curl_error($ch);
-            curl_close($ch);
-
-            if ($body === false || $httpCode < 200 || $httpCode >= 300) {
-                Yii::error(
-                    'Groq STT HTTP ' . $httpCode . ': ' . ($curlError ?: (string) $body),
-                    'speech-to-text'
-                );
-
-                return null;
-            }
-
-            $data = json_decode((string) $body, true);
-            $texto = trim((string) ($data['text'] ?? ''));
-            if ($texto === '') {
-                return null;
-            }
-
-            return [
-                'texto' => $texto,
-                'confidence' => 0.9,
-            ];
-        } catch (\Throwable $e) {
-            Yii::error('Error llamando API Groq STT: ' . $e->getMessage(), 'speech-to-text');
+            $response = self::client($apiKey)->postMultipart('/audio/transcriptions', new MultipartBody(
+                field: 'file',
+                content: $audioData,
+                fileName: 'audio.' . $extension,
+                mimeType: self::mimeForExtension($extension),
+                fields: [
+                    'model' => $modelo,
+                    'language' => $language,
+                    'response_format' => 'json',
+                    'temperature' => '0',
+                ]
+            ));
+        } catch (HttpApiException $e) {
+            Yii::error('Groq STT HTTP ' . $e->statusCode() . ': ' . $e->getMessage(), self::LOG_CATEGORY);
 
             return null;
-        } finally {
-            if (isset($audioPath) && is_file($audioPath)) {
-                @unlink($audioPath);
-            } elseif (isset($tempFile) && is_file($tempFile)) {
-                @unlink($tempFile);
-            }
         }
+
+        $texto = trim((string) ($response->body()['text'] ?? ''));
+        if ($texto === '') {
+            return null;
+        }
+
+        return [
+            'texto' => $texto,
+            'confidence' => 0.9,
+        ];
+    }
+
+    private static function client(string $apiKey): JsonApiClient
+    {
+        return new JsonApiClient(
+            baseUrl: self::BASE_URL,
+            defaultHeaders: ['Authorization' => 'Bearer ' . $apiKey],
+            connectTimeout: 10,
+            timeout: (float) self::TIMEOUT_SECONDS,
+            logCategory: self::LOG_CATEGORY,
+            provider: 'groq',
+            providerLabel: 'Groq'
+        );
     }
 
     private static function guessExtension(string $audioData): string

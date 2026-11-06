@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Geo\Application\Service;
 
+use common\components\Domain\Geo\Infrastructure\External\GoogleGeocoding\GoogleGeocodingApiClient;
 use yii\db\Expression;
 use yii\db\Query;
 
@@ -78,7 +79,7 @@ final class GeoLocationResolver
      */
     public function resolve(float $lat, float $lng): array
     {
-        $geocoded = (new GoogleGeocodingClient())->reverse($lat, $lng);
+        $geocoded = (new GoogleGeocodingApiClient())->reverse($lat, $lng);
         $nearest = $this->nearestLocality($lat, $lng);
 
         $pais = $this->matchPais($geocoded);

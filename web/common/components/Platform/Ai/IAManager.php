@@ -4,7 +4,9 @@ namespace common\components\Platform\Ai;
 
 use Yii;
 use common\components\Platform\Core\Db\BioenlaceDb;
-use yii\httpclient\Client;
+use common\components\Shared\Infrastructure\Http\HttpApiException;
+use common\components\Shared\Infrastructure\Http\HttpResponse;
+use common\components\Shared\Infrastructure\Http\JsonApiClient;
 use common\components\Platform\Ai\HuggingFace\HuggingFaceRateLimiter;
 use common\components\Shared\Infrastructure\Requests\RequestDeduplicator;
 use common\components\Platform\Ai\Providers\Google\GoogleAuth;
@@ -69,15 +71,15 @@ class IAManager
     
     /**
      * Descomprimir respuesta HTTP si está comprimida
-     * @param \yii\httpclient\Response $response
+     * @param HttpResponse $response
      * @return string Contenido descomprimido
      */
-    private static function descomprimirRespuesta($response)
+    private static function descomprimirRespuesta(HttpResponse $response)
     {
-        $content = $response->content;
+        $content = $response->rawBody();
         
         // Verificar si la respuesta está comprimida
-        $contentEncoding = $response->headers->get('Content-Encoding', '');
+        $contentEncoding = (string) ($response->header('Content-Encoding') ?? '');
         
         if (strtolower($contentEncoding) === 'gzip' || 
             (substr($content, 0, 2) === "\x1f\x8b")) { // Firma gzip
@@ -307,147 +309,20 @@ class IAManager
             'payload' => $payload
         ];
     }
-    
     /**
-     * Obtener token de acceso de Google Cloud (OAuth2)
-     * @return string
+     * Cliente HTTP del proveedor. El endpoint de la configuración es la base: el request va
+     * a `''`, así el ACL no rearma la URL. El timeout es el único dato propio de la IA.
      */
-    private static function obtenerTokenGoogle()
+    private static function apiClient(string $endpoint, string $tipoProveedor): JsonApiClient
     {
-        // Si hay una API key, no necesitamos token
-        if (!empty(Yii::$app->params['google_cloud_api_key'] ?? '')) {
-            return '';
-        }
-        
-        // Ruta al archivo de credenciales (params en common)
-        $credentialsPath = Yii::$app->params['google_cloud_credentials_path'] ?? '';
-        
-        if (empty($credentialsPath) || !file_exists($credentialsPath)) {
-            \Yii::warning('Google Cloud credentials no encontradas. Configure google_cloud_credentials_path o google_cloud_api_key en frontend/config/params-local.php', 'ia-manager');
-            return '';
-        }
-        
-        // Leer credenciales JSON
-        $credentialsJson = file_get_contents($credentialsPath);
-        $credentials = json_decode($credentialsJson, true);
-        
-        if (json_last_error() !== JSON_ERROR_NONE || !isset($credentials['private_key'])) {
-            \Yii::error('Error leyendo credenciales de Google Cloud: ' . json_last_error_msg(), 'ia-manager');
-            return '';
-        }
-        
-        // Verificar si tenemos un token en cache (válido por 1 hora)
-        $cacheKey = 'google_oauth_token_' . md5($credentialsPath);
-        $cachedToken = Yii::$app->cache->get($cacheKey);
-        if ($cachedToken !== false) {
-            return $cachedToken;
-        }
-        
-        // Crear JWT para obtener access token
-        $now = time();
-        $jwt = self::crearJWTGoogle($credentials, $now);
-        
-        if (empty($jwt)) {
-            \Yii::error('Error creando JWT para Google Cloud', 'ia-manager');
-            return '';
-        }
-        
-        // Intercambiar JWT por access token
-        $tokenUri = $credentials['token_uri'] ?? 'https://oauth2.googleapis.com/token';
-        $client = new Client();
-        
-        try {
-            $response = $client->createRequest()
-                ->setMethod('POST')
-                ->setUrl($tokenUri)
-                ->setContent(http_build_query([
-                    'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-                    'assertion' => $jwt
-                ]))
-                ->addHeaders(['Content-Type' => 'application/x-www-form-urlencoded'])
-                ->send();
-            
-            if ($response->isOk) {
-                $tokenData = json_decode($response->content, true);
-                $accessToken = $tokenData['access_token'] ?? '';
-                
-                if (!empty($accessToken)) {
-                    // Guardar en cache (expira en 50 minutos, los tokens duran 1 hora)
-                    $expiresIn = ($tokenData['expires_in'] ?? 3600) - 600; // 10 minutos antes de expirar
-                    Yii::$app->cache->set($cacheKey, $accessToken, $expiresIn);
-                    return $accessToken;
-                }
-            } else {
-                \Yii::error('Error obteniendo token de Google Cloud: ' . $response->statusCode . ' - ' . $response->content, 'ia-manager');
-            }
-        } catch (\Exception $e) {
-            \Yii::error('Excepción obteniendo token de Google Cloud: ' . $e->getMessage(), 'ia-manager');
-        }
-        
-        return '';
-    }
-    
-    /**
-     * Crear JWT para autenticación con Google Cloud
-     * @param array $credentials Credenciales de la cuenta de servicio
-     * @param int $now Timestamp actual
-     * @return string JWT firmado
-     */
-    private static function crearJWTGoogle($credentials, $now)
-    {
-        if (!isset($credentials['private_key']) || !isset($credentials['client_email'])) {
-            return '';
-        }
-        
-        // Headers del JWT
-        $header = [
-            'alg' => 'RS256',
-            'typ' => 'JWT'
-        ];
-        
-        // Claims del JWT
-        $claims = [
-            'iss' => $credentials['client_email'],
-            'scope' => 'https://www.googleapis.com/auth/cloud-platform',
-            'aud' => $credentials['token_uri'] ?? 'https://oauth2.googleapis.com/token',
-            'exp' => $now + 3600, // Expira en 1 hora
-            'iat' => $now
-        ];
-        
-        // Codificar header y claims en base64url
-        $headerEncoded = self::base64UrlEncode(json_encode($header));
-        $claimsEncoded = self::base64UrlEncode(json_encode($claims));
-        
-        // Crear signature
-        $signatureInput = $headerEncoded . '.' . $claimsEncoded;
-        $privateKey = openssl_pkey_get_private($credentials['private_key']);
-        
-        if ($privateKey === false) {
-            \Yii::error('Error obteniendo clave privada de Google Cloud: ' . openssl_error_string(), 'ia-manager');
-            return '';
-        }
-        
-        $signature = '';
-        if (!openssl_sign($signatureInput, $signature, $privateKey, OPENSSL_ALGO_SHA256)) {
-            \Yii::error('Error firmando JWT: ' . openssl_error_string(), 'ia-manager');
-            openssl_free_key($privateKey);
-            return '';
-        }
-        
-        openssl_free_key($privateKey);
-        $signatureEncoded = self::base64UrlEncode($signature);
-        
-        return $signatureInput . '.' . $signatureEncoded;
-    }
-    
-    /**
-     * Codificar en base64url (RFC 4648)
-     * @param string $data
-     * @return string
-     */
-    private static function base64UrlEncode($data)
-    {
-        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+        return new JsonApiClient(
+            baseUrl: $endpoint,
+            connectTimeout: 10,
+            timeout: 180,
+            logCategory: 'ia-manager',
+            provider: $tipoProveedor,
+            providerLabel: 'IA (' . $tipoProveedor . ')'
+        );
     }
 
     /**
@@ -529,7 +404,7 @@ class IAManager
 
     /**
      * Procesar respuesta según el tipo de proveedor
-     * @param \yii\httpclient\Response $response
+     * @param HttpResponse $response
      * @param string $tipo
      * @return string|null
      */
@@ -540,14 +415,14 @@ class IAManager
 
     /**
      * Implementación de instancia para procesar la respuesta según proveedor
-     * @param \yii\httpclient\Response $response
+     * @param HttpResponse $response
      * @param string $tipo
      * @return string|null
      */
     public function procesarRespuestaProveedorInstance($response, $tipo)
     {
         // Log de la respuesta original antes de procesar
-        $responseContent = $response->content ?? '';
+        $responseContent = $response->rawBody();
         $responseContentLength = strlen($responseContent);
         \Yii::info("IAManager::procesarRespuestaProveedorInstance - INICIO. Tipo: {$tipo}. Respuesta original (longitud: {$responseContentLength}): {$responseContent}", 'ia-manager');
         
@@ -788,29 +663,34 @@ class IAManager
             
             BioenlaceDb::releaseConnection();
             try {
-                $client = new Client();
-                $response = $client->createRequest()
-                    ->setMethod('POST')
-                    ->setUrl($proveedorIA['endpoint'])
-                    ->addHeaders($headersConCompresion)
-                    ->setContent($compresion['data'])
-                    ->send();
+                $response = self::apiClient($proveedorIA['endpoint'], $proveedorIA['tipo'] ?? 'ia')
+                    ->post('', $compresion['data'], $headersConCompresion);
+                $statusCode = $response->statusCode();
+                $responseBody = $response->rawBody();
+            } catch (HttpApiException $e) {
+                if ($e->statusCode() === 0) {
+                    // Fallo de transporte: mismo camino que la excepción de antes.
+                    throw $e;
+                }
+                $response = null;
+                $statusCode = $e->statusCode();
+                $responseBody = (string) ($e->responseBody() ?? $e->getMessage());
             } finally {
                 BioenlaceDb::ensureConnection();
             }
 
-            if ($response->isOk) {
+            if ($response !== null) {
                 if (
                     ($proveedorIA['tipo'] ?? '') === 'google'
                     && class_exists(\common\components\Platform\Ai\Cost\AICostTracker::class)
                 ) {
                     \common\components\Platform\Ai\Cost\AICostTracker::registrarUsoDesdeRespuestaGemini(
-                        (string) ($response->content ?? ''),
+                        $responseBody,
                         $contexto
                     );
                     if (class_exists(\common\components\Platform\Ai\Providers\Google\VertexContextCacheSimulator::class)) {
                         \common\components\Platform\Ai\Providers\Google\VertexContextCacheSimulator::complementarTracking(
-                            (string) ($response->content ?? ''),
+                            $responseBody,
                             $contexto,
                             $proveedorIA['_vertex_cache_sim_key'] ?? null
                         );
@@ -858,7 +738,7 @@ class IAManager
                             $resultado ? 'OK' : 'Error procesando respuesta',
                             [
                                 'metodo' => 'IAManager::consultarIA',
-                                'status_code' => $response->getStatusCode(),
+                                'status_code' => $statusCode,
                             ]
                         );
                     }
@@ -868,10 +748,10 @@ class IAManager
             } else {
                 // Registrar error en rate limiter
                 if ($proveedorIA['tipo'] === 'huggingface' && !empty($endpoint)) {
-                    HuggingFaceRateLimiter::registrarError($endpoint, $response->getStatusCode());
+                    HuggingFaceRateLimiter::registrarError($endpoint, $statusCode);
                 }
                 
-                \Yii::error("Error en la respuesta de la IA para {$contexto}: " . $response->getStatusCode() . ' - ' . $response->getContent(), 'ia-manager');
+                \Yii::error("Error en la respuesta de la IA para {$contexto}: " . $statusCode . ' - ' . $responseBody, 'ia-manager');
                 
                 // Registrar error
                 if ($logger) {
@@ -881,8 +761,8 @@ class IAManager
                         'Error en respuesta de IA',
                         [
                             'metodo' => 'IAManager::consultarIA',
-                            'status_code' => $response->getStatusCode(),
-                            'error' => substr($response->getContent(), 0, 200)
+                            'status_code' => $statusCode,
+                            'error' => substr($responseBody, 0, 200)
                         ]
                     );
                 }

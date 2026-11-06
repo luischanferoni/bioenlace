@@ -39,19 +39,6 @@ if (!preg_match('/edit|create|write|patch|replace/', $toolName)) {
     exit(0);
 }
 
-// Deuda aceptada: misma fuente que ArchitectureHttpUsageTest.
-$legacy = [];
-$baselineFile = dirname(__DIR__, 2) . '/web/tools/architecture-http-legacy.json';
-if (is_file($baselineFile)) {
-    $decoded = json_decode((string) file_get_contents($baselineFile), true);
-    if (is_array($decoded)) {
-        $legacy = array_merge(
-            (array) ($decoded['adHoc'] ?? []),
-            (array) ($decoded['applicationHttp'] ?? [])
-        );
-    }
-}
-
 $values = [];
 $newContent = [];
 flatten($event['toolArgs'] ?? [], $values, $newContent, 0, '');
@@ -84,7 +71,7 @@ if ($violates && $targetPath === null) {
     }
 }
 
-if (!$violates || $targetPath === null || isAllowed($targetPath, $legacy)) {
+if (!$violates || $targetPath === null || isAllowed($targetPath)) {
     echo '{}';
     exit(0);
 }
@@ -143,10 +130,7 @@ function flatten($node, array &$values, array &$newContent, int $depth, string $
     }
 }
 
-/**
- * @param string[] $legacy rutas relativas a `web/common`
- */
-function isAllowed(string $path, array $legacy = []): bool
+function isAllowed(string $path): bool
 {
     if (strpos($path, ALLOWED_PATH_FRAGMENT) !== false) {
         return true;
@@ -154,12 +138,6 @@ function isAllowed(string $path, array $legacy = []): bool
 
     foreach (ALLOWED_SEGMENTS as $segment) {
         if (strpos($path, $segment) !== false) {
-            return true;
-        }
-    }
-
-    foreach ($legacy as $entry) {
-        if (strpos($path, 'web/common/' . $entry) !== false) {
             return true;
         }
     }

@@ -1,20 +1,25 @@
 <?php
 
-namespace common\components\Domain\Geo\Application\Service;
+namespace common\components\Domain\Geo\Infrastructure\External\GoogleGeocoding;
 
+use common\components\Shared\Infrastructure\Http\HttpApiException;
+use common\components\Shared\Infrastructure\Http\JsonApiClient;
 use Yii;
-use yii\httpclient\Client;
 
 /**
  * Reverse geocoding contra Google Maps Geocoding API (server-side).
  *
- * La API key se configura en `params-local.php` como
- * `google_maps_geocoding_api_key` (fallback: `google_cloud_api_key`).
- * Sin key, `isConfigured()` devuelve false y el resolver usa sólo la base geo.
+ * La API key se configura en `params-local.php` como `google_maps_geocoding_api_key`
+ * (fallback: `google_cloud_api_key`). Sin key, `isConfigured()` devuelve false y el
+ * resolver usa sólo la base geo.
  */
-final class GoogleGeocodingClient
+final class GoogleGeocodingApiClient
 {
-    private const DEFAULT_BASE_URL = 'https://maps.googleapis.com/maps/api/geocode/json';
+    public const DEFAULT_BASE_URL = 'https://maps.googleapis.com/maps/api/geocode/json';
+
+    public const LOG_CATEGORY = 'geo.geocoding';
+
+    private const DEFAULT_TIMEOUT = 8;
 
     public function isConfigured(): bool
     {
@@ -38,38 +43,23 @@ final class GoogleGeocodingClient
             return null;
         }
 
-        $baseUrl = (string) (Yii::$app->params['google_maps_geocoding_base_url'] ?? self::DEFAULT_BASE_URL);
-        $timeout = (int) (Yii::$app->params['google_maps_geocoding_timeout'] ?? 8);
-
         try {
-            $response = (new Client([
-                'requestConfig' => [
-                    'options' => ['timeout' => $timeout],
-                ],
-            ]))->createRequest()
-                ->setMethod('GET')
-                ->setUrl($baseUrl)
-                ->setData([
-                    'latlng' => sprintf('%.7F,%.7F', $lat, $lng),
-                    'language' => 'es',
-                    'key' => $apiKey,
-                ])
-                ->send();
-
-            $data = $response->getData();
-        } catch (\Throwable $e) {
-            Yii::warning(
-                'Google Geocoding falló: ' . $e->getMessage(),
-                'geo.geocoding'
-            );
+            $response = $this->client()->get('', [
+                'latlng' => sprintf('%.7F,%.7F', $lat, $lng),
+                'language' => 'es',
+                'key' => $apiKey,
+            ]);
+        } catch (HttpApiException $e) {
+            Yii::warning('Google Geocoding falló: ' . $e->getMessage(), self::LOG_CATEGORY);
 
             return null;
         }
 
-        if (!is_array($data) || ($data['status'] ?? '') !== 'OK') {
-            $status = is_array($data) ? (string) ($data['status'] ?? 'UNKNOWN') : 'INVALID_RESPONSE';
+        $data = $response->body();
+        if (($data['status'] ?? '') !== 'OK') {
+            $status = (string) ($data['status'] ?? 'INVALID_RESPONSE');
             if ($status !== 'ZERO_RESULTS') {
-                Yii::warning('Google Geocoding status: ' . $status, 'geo.geocoding');
+                Yii::warning('Google Geocoding status: ' . $status, self::LOG_CATEGORY);
             }
 
             return null;
@@ -139,6 +129,20 @@ final class GoogleGeocodingClient
                 ['long_name']
             ),
         ];
+    }
+
+    private function client(): JsonApiClient
+    {
+        $timeout = (float) (Yii::$app->params['google_maps_geocoding_timeout'] ?? self::DEFAULT_TIMEOUT);
+
+        return new JsonApiClient(
+            baseUrl: (string) (Yii::$app->params['google_maps_geocoding_base_url'] ?? self::DEFAULT_BASE_URL),
+            connectTimeout: min(5.0, $timeout),
+            timeout: $timeout,
+            logCategory: self::LOG_CATEGORY,
+            provider: 'google-geocoding',
+            providerLabel: 'Google Geocoding'
+        );
     }
 
     private function apiKey(): string

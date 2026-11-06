@@ -785,20 +785,26 @@ public function actionListaCandidatos(){
             $persona = \common\models\Person\Persona::getDatosPersonaXDni($dni, $nombre);
             
             //PUCO
-            $persona_puco = \common\models\Person\Persona::existe_en_puco($dni);
-            if (count($persona_puco) > 0) {
+            $puco_disponible = true;
+            try {
+                $persona_puco = \common\models\Person\Persona::existe_en_puco($dni);
+            } catch (\Throwable $e) {
+                Yii::warning('PUCO en alta de persona: ' . $e->getMessage(), 'puco');
+                $persona_puco = null;
+                $puco_disponible = false;
+            }
 
-                $nombre_obrasocial='';
-                if($persona_puco['NombreObraSocial']==''){
+            if (!$puco_disponible) {
+                $mje_puco = "NO se pudo consultar P.U.C.O.";
+            } elseif (is_array($persona_puco) && $persona_puco !== []) {
+                $nombre_obrasocial = trim((string) ($persona_puco['NombreObraSocial'] ?? ''));
+                if ($nombre_obrasocial === '') {
                     $nombre_obrasocial = 'No Especificada';
                 }
-                else {
-                    $nombre_obrasocial=$persona_puco['NombreObraSocial'];
-                }
-                
-                $mje_puco = "Tiene Obra Social ".$nombre_obrasocial.", ".$persona_puco['NombreYApellido'];
-            }
-            else{
+
+                $mje_puco = "Tiene Obra Social " . $nombre_obrasocial . ", "
+                    . (string) ($persona_puco['NombreYApellido'] ?? '');
+            } else {
                 $mje_puco = "NO tiene Obra Social";
             }
 

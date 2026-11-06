@@ -10,7 +10,7 @@ Que ningún módulo cachee credenciales por su cuenta. Los cuatro sitios pasan a
 **Chico (medio día)**, **pero depende de otro plan**.
 
 > Esta fase no escribe lógica nueva: elimina la que existe.
-> Depende de `deduplicacion-http` fases 01 y 03. Si ese plan no arrancó, esta fase se pospone.
+> Depende del transporte HTTP compartido (plan `deduplicacion-http`, ya cerrado).
 
 ## Sitios a migrar
 

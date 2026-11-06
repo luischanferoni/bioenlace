@@ -2,8 +2,9 @@
 
 namespace common\components\Platform\Assistant\WhatsApp;
 
+use common\components\Shared\Infrastructure\Http\HttpApiException;
+use common\components\Shared\Infrastructure\Http\JsonApiClient;
 use Yii;
-use yii\httpclient\Client;
 
 /**
  * Cliente delgado a WhatsApp Cloud API (envio de mensajes).
@@ -56,12 +57,6 @@ final class WhatsAppCloudApiClient
      */
     private function postMessage(array $cfg, string $to, array $message): array
     {
-        $url = sprintf(
-            'https://graph.facebook.com/%s/%s/messages',
-            rawurlencode($cfg['apiVersion']),
-            rawurlencode($cfg['phoneNumberId'])
-        );
-
         $payload = array_merge(
             [
                 'messaging_product' => 'whatsapp',
@@ -72,28 +67,30 @@ final class WhatsAppCloudApiClient
         );
 
         try {
-            $client = new Client(['transport' => 'yii\httpclient\CurlTransport']);
-            $response = $client->createRequest()
-                ->setMethod('POST')
-                ->setUrl($url)
-                ->addHeaders([
-                    'Authorization' => 'Bearer ' . $cfg['accessToken'],
-                    'Content-Type' => 'application/json',
-                ])
-                ->setFormat(Client::FORMAT_JSON)
-                ->setData($payload)
-                ->send();
+            $response = (new JsonApiClient(
+                baseUrl: 'https://graph.facebook.com',
+                defaultHeaders: ['Authorization' => 'Bearer ' . $cfg['accessToken']],
+                connectTimeout: 5,
+                timeout: 30,
+                logCategory: WhatsAppConfig::LOG_CATEGORY,
+                provider: 'whatsapp',
+                providerLabel: 'WhatsApp Cloud API'
+            ))->post(
+                '/' . rawurlencode($cfg['apiVersion']) . '/' . rawurlencode($cfg['phoneNumberId']) . '/messages',
+                $payload
+            );
 
-            if ($response->isOk) {
+            if ($response->isOk()) {
                 return ['ok' => true, 'error' => ''];
             }
 
-            $err = 'to=' . $to . ' status=' . ($response->statusCode ?? '?')
-                . ' body=' . ($response->content ?? '');
-
-            return ['ok' => false, 'error' => $err];
-        } catch (\Throwable $e) {
-            return ['ok' => false, 'error' => 'to=' . $to . ' ex=' . $e->getMessage()];
+            return ['ok' => false, 'error' => 'to=' . $to . ' status=' . $response->statusCode()];
+        } catch (HttpApiException $e) {
+            return [
+                'ok' => false,
+                'error' => 'to=' . $to . ' status=' . $e->statusCode()
+                    . ' body=' . mb_substr((string) $e->responseBody(), 0, 500),
+            ];
         }
     }
 

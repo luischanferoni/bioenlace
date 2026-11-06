@@ -14,7 +14,10 @@ Criterio de esta carpeta, para que el próximo archivo caiga solo:
 |---|---|
 | `audit-thin-clients.php` + `thin-clients-baseline.json` | Cuenta patrones que el programa elimina y compara contra un tope versionado (el tope solo baja). `composer audit:thin-clients` |
 | `inventory_ar_relations.php` | Inventario de relaciones ActiveRecord. `--fail-on-legacy-getid` lo vuelve gate |
-| `architecture-http-legacy.json` | Deuda de transporte HTTP ad-hoc. La comparten `ArchitectureHttpUsageTest` y el hook `http-guard` |
+
+La deuda de transporte HTTP llegó a cero y su baseline se borró: el invariante
+`ArchitectureHttpUsageTest` corre sin allowlist y el hook `http-guard` aplica la misma regla
+al editar. Ver [transporte-http-unico.md](../../docs/decisions/transporte-http-unico.md).
 
 Reglas de la casa:
 

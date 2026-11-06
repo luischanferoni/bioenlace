@@ -2,6 +2,8 @@
 
 namespace common\components\Platform\Core\Service\Push;
 
+use common\components\Shared\Infrastructure\Http\HttpApiException;
+use common\components\Shared\Infrastructure\Http\JsonApiClient;
 use Yii;
 
 /**
@@ -63,29 +65,14 @@ final class FcmHttpSender
             'android' => ['priority' => 'HIGH'],
         ];
 
-        $url = 'https://fcm.googleapis.com/v1/projects/' . rawurlencode($projectId) . '/messages:send';
+        $path = '/v1/projects/' . rawurlencode($projectId) . '/messages:send';
 
         try {
-            $client = new \yii\httpclient\Client();
-            $response = $client->createRequest()
-                ->setMethod('POST')
-                ->setUrl($url)
-                ->addHeaders([
-                    'Authorization' => 'Bearer ' . $accessToken,
-                    'Content-Type' => 'application/json',
-                ])
-                ->setFormat(\yii\httpclient\Client::FORMAT_JSON)
-                ->setData(['message' => $message])
-                ->send();
+            self::fcmClient(['Authorization' => 'Bearer ' . $accessToken])
+                ->post($path, ['message' => $message]);
 
-            if ($response->isOk) {
-                return true;
-            }
-            Yii::error(
-                'FCM v1: ' . ($response->statusCode ?? '?') . ' ' . ($response->content ?? ''),
-                FcmPushConfig::LOG_CATEGORY
-            );
-        } catch (\Throwable $e) {
+            return true;
+        } catch (HttpApiException $e) {
             Yii::error('FCM v1: ' . $e->getMessage(), FcmPushConfig::LOG_CATEGORY);
         }
 
@@ -114,20 +101,41 @@ final class FcmHttpSender
         ];
 
         try {
-            $client = new \yii\httpclient\Client();
-            $response = $client->createRequest()
-                ->setMethod('POST')
-                ->setUrl('https://fcm.googleapis.com/fcm/send')
-                ->addHeaders(['Authorization' => 'key=' . $serverKey])
-                ->setFormat(\yii\httpclient\Client::FORMAT_JSON)
-                ->setData($payload)
-                ->send();
+            self::legacyClient(['Authorization' => 'key=' . $serverKey])->post('/fcm/send', $payload);
 
-            return $response->isOk;
-        } catch (\Throwable $e) {
+            return true;
+        } catch (HttpApiException $e) {
             Yii::error('FCM legacy: ' . $e->getMessage(), FcmPushConfig::LOG_CATEGORY);
 
             return false;
         }
+    }
+
+    /** @param array<string, string> $headers */
+    private static function fcmClient(array $headers): JsonApiClient
+    {
+        return new JsonApiClient(
+            baseUrl: 'https://fcm.googleapis.com',
+            defaultHeaders: $headers,
+            connectTimeout: 5,
+            timeout: 20,
+            logCategory: FcmPushConfig::LOG_CATEGORY,
+            provider: 'fcm',
+            providerLabel: 'FCM'
+        );
+    }
+
+    /** @param array<string, string> $headers */
+    private static function legacyClient(array $headers): JsonApiClient
+    {
+        return new JsonApiClient(
+            baseUrl: 'https://fcm.googleapis.com',
+            defaultHeaders: $headers,
+            connectTimeout: 5,
+            timeout: 20,
+            logCategory: FcmPushConfig::LOG_CATEGORY,
+            provider: 'fcm-legacy',
+            providerLabel: 'FCM legacy'
+        );
     }
 }

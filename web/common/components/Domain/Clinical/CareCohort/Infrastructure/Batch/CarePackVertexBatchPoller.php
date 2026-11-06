@@ -6,6 +6,8 @@ use common\components\Domain\Clinical\CareCohort\Application\Service\CarePackCon
 use common\components\Domain\Clinical\CareCohort\Domain\CarePackType;
 use common\components\Domain\Clinical\CareCohort\Application\Service\CarePackConfig;
 use common\components\Domain\Clinical\CareCohort\Domain\Port\CarePackRepository;
+use common\components\Domain\Clinical\CareCohort\Infrastructure\External\Gcs\GcsApiClient;
+use common\components\Domain\Clinical\CareCohort\Infrastructure\External\Vertex\VertexBatchApiClient;
 use common\models\Clinical\CareCohortPack;
 use common\models\Clinical\CarePackJob;
 use Yii;
@@ -18,16 +20,16 @@ use Yii;
  */
 final class CarePackVertexBatchPoller
 {
-    private VertexBatchPredictionClient $vertex;
+    private VertexBatchApiClient $vertex;
     private CarePackContentService $parser;
     private CarePackRepository $repository;
 
     public function __construct(
-        ?VertexBatchPredictionClient $vertex = null,
+        ?VertexBatchApiClient $vertex = null,
         ?CarePackContentService $parser = null,
         ?CarePackRepository $repository = null
     ) {
-        $this->vertex = $vertex ?? new VertexBatchPredictionClient();
+        $this->vertex = $vertex ?? new VertexBatchApiClient();
         $this->parser = $parser ?? new CarePackContentService();
         $this->repository = $repository ?? new CarePackRepository();
     }
@@ -158,7 +160,7 @@ final class CarePackVertexBatchPoller
         $bucket = substr($path, 0, $slash);
         $objectPrefix = substr($path, $slash + 1);
 
-        $uploader = new GcsSimpleUploader();
+        $uploader = new GcsApiClient();
         $lines = $uploader->downloadJsonlLinesUnderPrefix($bucket, $objectPrefix);
         if ($lines !== []) {
             return $lines;

@@ -16,7 +16,8 @@ final class HttpApiException extends \RuntimeException
         private readonly int $statusCode,
         string $message,
         private readonly array $providerCauses = [],
-        ?\Throwable $previous = null
+        ?\Throwable $previous = null,
+        private readonly ?string $responseBody = null
     ) {
         parent::__construct($message, $statusCode, $previous);
     }
@@ -36,6 +37,15 @@ final class HttpApiException extends \RuntimeException
     public function providerCauses(): array
     {
         return $this->providerCauses;
+    }
+
+    /**
+     * Cuerpo crudo de la respuesta fallida. Existe para que un ACL pueda registrar el
+     * detalle que el proveedor devolvió sin volver a hacer la request.
+     */
+    public function responseBody(): ?string
+    {
+        return $this->responseBody;
     }
 
     public function isRetryable(): bool

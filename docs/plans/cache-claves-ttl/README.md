@@ -14,8 +14,8 @@ O sea: se escribe 3 veces más de lo que se invalida.
 
 1. **Cuatro copias de "cachear un token"** (HC nacional, `IAManager`, `GoogleAuth`,
    `FcmGoogleAuth`), cada una con su cálculo de TTL: `expiresIn`, `expiresIn`,
-   `max(60, expiresIn)`, `max(60, ttl-60)`. Es la misma duplicación de tokens del plan
-   `deduplicacion-http`, vista desde el caché.
+   `max(60, expiresIn)`, `max(60, ttl-60)`. Es la misma duplicación de tokens que resolvió el
+   plan `deduplicacion-http` (cerrado), vista desde el caché.
 2. **TTL mágicos sin criterio común:** `300` hardcodeado en el catálogo de intents,
    `3600` en dos lugares, `315360000` (**10 años**) para términos SNOMED, `0` en RBAC (que
    significa "sin expiración"), y constantes privadas por clase.
@@ -38,7 +38,7 @@ O sea: se escribe 3 veces más de lo que se invalida.
 | Fase | Qué | Estado |
 |------|-----|--------|
 | [01](phases/01-reglas-y-helper.md) | Reglas + helper `CacheStore` | Pendiente |
-| [02](phases/02-tokens.md) | Los 4 cachés de token | Depende de `deduplicacion-http` |
+| [02](phases/02-tokens.md) | Los 4 cachés de token | Transporte HTTP ya unificado |
 | [03](phases/03-derivados-ia.md) | Embeddings, STT, respuesta IA, captura, SNOMED | Pendiente |
 | [04](phases/04-rutas-y-cierre.md) | Rutas/acciones resueltas + cierre | Pendiente |
 
@@ -51,6 +51,6 @@ O sea: se escribe 3 veces más de lo que se invalida.
 
 ## Dependencia
 
-La fase 02 no escribe código nuevo: **consume** el `AccessTokenProvider` de
-`deduplicacion-http` (fase 01 y 03). Si ese plan no avanza, la fase 02 se pospone y este plan
-empieza por la 01, 03 y 04.
+La fase 02 no escribe código de transporte: **consume** el `AccessTokenProvider` de
+`Shared/Infrastructure/Http/Auth/`, que ya existe (plan `deduplicacion-http`, cerrado). Puede
+avanzar sin esperar a otro plan.

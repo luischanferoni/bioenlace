@@ -4,6 +4,8 @@ namespace common\components\Domain\Clinical\CareCohort\Infrastructure\Batch;
 
 use common\components\Domain\Clinical\CareCohort\Application\Service\CarePackConfig;
 use common\components\Domain\Clinical\CareCohort\Application\Service\CarePackPromptService;
+use common\components\Domain\Clinical\CareCohort\Infrastructure\External\Gcs\GcsApiClient;
+use common\components\Domain\Clinical\CareCohort\Infrastructure\External\Vertex\VertexBatchApiClient;
 use common\models\Clinical\CarePackJob;
 use common\models\Clinical\Encounter;
 use Yii;
@@ -14,17 +16,17 @@ use Yii;
 final class CarePackVertexBatchSubmitter
 {
     private CarePackPromptService $prompts;
-    private GcsSimpleUploader $uploader;
-    private VertexBatchPredictionClient $vertex;
+    private GcsApiClient $uploader;
+    private VertexBatchApiClient $vertex;
 
     public function __construct(
         ?CarePackPromptService $prompts = null,
-        ?GcsSimpleUploader $uploader = null,
-        ?VertexBatchPredictionClient $vertex = null
+        ?GcsApiClient $uploader = null,
+        ?VertexBatchApiClient $vertex = null
     ) {
         $this->prompts = $prompts ?? new CarePackPromptService();
-        $this->uploader = $uploader ?? new GcsSimpleUploader();
-        $this->vertex = $vertex ?? new VertexBatchPredictionClient();
+        $this->uploader = $uploader ?? new GcsApiClient();
+        $this->vertex = $vertex ?? new VertexBatchApiClient();
     }
 
     /**

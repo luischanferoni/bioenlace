@@ -33,7 +33,7 @@ Para otro rubro: nuevo `Domain/`, metadata y registries; **`Platform/`** y **`Sh
 
 | Carpeta | Contenido |
 |---------|-----------|
-| **`Shared/Infrastructure/`** | Log resiliente, helpers migración, deduplicación requests, bases HTTP/messaging |
+| **`Shared/Infrastructure/`** | Log resiliente, helpers migración, deduplicación requests, **transporte HTTP único** (`Http/`: cliente base, reintentos, tokens OAuth y de cuentas de servicio) |
 | **`Shared/Domain/`** | Tipos transversales mínimos (sin negocio clínico) |
 
 ACL de sistemas de negocio **no** van aquí. ADR: [shared-top-level-infrastructure.md](../decisions/shared-top-level-infrastructure.md).

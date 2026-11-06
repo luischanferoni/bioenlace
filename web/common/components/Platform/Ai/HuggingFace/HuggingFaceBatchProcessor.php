@@ -2,8 +2,9 @@
 
 namespace common\components\Platform\Ai\HuggingFace;
 
+use common\components\Shared\Infrastructure\Http\HttpApiException;
+use common\components\Shared\Infrastructure\Http\JsonApiClient;
 use Yii;
-use yii\httpclient\Client;
 
 /**
  * Procesador de batch para agrupar múltiples requests de HuggingFace
@@ -112,6 +113,22 @@ class HuggingFaceBatchProcessor
     }
 
     /**
+     * Cliente HTTP del batch. El endpoint llega absoluto desde la configuración del caller.
+     */
+    private static function apiClient(string $apiKey): JsonApiClient
+    {
+        return new JsonApiClient(
+            baseUrl: '',
+            defaultHeaders: ['Authorization' => 'Bearer ' . $apiKey],
+            connectTimeout: 5,
+            timeout: 60,
+            logCategory: 'hf-batch',
+            provider: 'huggingface',
+            providerLabel: 'HuggingFace'
+        );
+    }
+
+    /**
      * Procesar batch nativo (para embeddings que lo soportan)
      */
     private static function procesarBatchNativo($endpoint, $requests)
@@ -144,39 +161,32 @@ class HuggingFaceBatchProcessor
                 return self::procesarIndividual($requests);
             }
 
-            $client = new Client();
-            $response = $client->createRequest()
-                ->setMethod('POST')
-                ->setUrl($endpoint)
-                ->addHeaders([
-                    'Authorization' => 'Bearer ' . $apiKey,
-                    'Content-Type' => 'application/json'
-                ])
-                ->setContent(json_encode([
+            try {
+                $response = self::apiClient((string) $apiKey)->post($endpoint, [
                     'inputs' => $inputs,
                     'options' => [
                         'wait_for_model' => false
                     ]
-                ]))
-                ->send();
+                ]);
+            } catch (HttpApiException $e) {
+                \Yii::error('Error procesando batch nativo: ' . $e->getMessage(), 'hf-batch');
+                return self::procesarIndividual($requests);
+            }
 
-            if ($response->isOk) {
-                $responseData = json_decode($response->content, true);
-                $index = 0;
+            $responseData = $response->body();
+            $index = 0;
+            foreach ($requestMap as $request) {
+                if (isset($responseData[$index])) {
+                    $resultado = [
+                        'success' => true,
+                        'data' => $responseData[$index]
+                    ];
+                    $resultados[$request['id']] = $resultado;
 
-                foreach ($requestMap as $request) {
-                    if (isset($responseData[$index])) {
-                        $resultado = [
-                            'success' => true,
-                            'data' => $responseData[$index]
-                        ];
-                        $resultados[$request['id']] = $resultado;
-
-                        if ($request['callback'] && is_callable($request['callback'])) {
-                            call_user_func($request['callback'], $resultado);
-                        }
-                        $index++;
+                    if ($request['callback'] && is_callable($request['callback'])) {
+                        call_user_func($request['callback'], $resultado);
                     }
+                    $index++;
                 }
             }
         } catch (\Exception $e) {
@@ -221,30 +231,23 @@ class HuggingFaceBatchProcessor
             return ['error' => 'hf_api_key no configurada'];
         }
 
-        $client = new Client();
-        $response = $client->createRequest()
-            ->setMethod('POST')
-            ->setUrl($request['endpoint'])
-            ->addHeaders([
-                'Authorization' => 'Bearer ' . $apiKey,
-                'Content-Type' => 'application/json'
-            ])
-            ->setContent(json_encode($request['payload']))
-            ->send();
+        try {
+            $response = self::apiClient((string) $apiKey)->post($request['endpoint'], $request['payload']);
+        } catch (HttpApiException $e) {
+            HuggingFaceRateLimiter::registrarError($request['endpoint'], $e->statusCode());
 
-        if ($response->isOk) {
-            HuggingFaceRateLimiter::registrarExito($request['endpoint']);
             return [
-                'success' => true,
-                'data' => json_decode($response->content, true)
+                'success' => false,
+                'error' => (string) ($e->responseBody() ?? $e->getMessage()),
+                'status_code' => $e->statusCode()
             ];
         }
 
-        HuggingFaceRateLimiter::registrarError($request['endpoint'], $response->getStatusCode());
+        HuggingFaceRateLimiter::registrarExito($request['endpoint']);
+
         return [
-            'success' => false,
-            'error' => $response->content,
-            'status_code' => $response->getStatusCode()
+            'success' => true,
+            'data' => $response->body()
         ];
     }
 }

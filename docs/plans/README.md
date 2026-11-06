@@ -19,9 +19,9 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Clientes delgados y contrato de API | `clientes-contrato-api/` | Sin implementar; piloto captura + timeline del encounter; veterinaria solo estructura |
 | Paneles web por rol | `paneles-web-por-rol/` | Rediseñado: resolución por dos ejes (rol × encounter); fases 00–06 pendientes |
 | Alta unificada de espacios de atención | `alta-espacio-atencion-unificada/` | Unificación consultorio/clínica, borrador reanudable y AdminEfector tras pago |
-| Deduplicación de transporte HTTP | `deduplicacion-http/` | Base compartido + 16 archivos; fases 01–05 pendientes |
 | Mensajes de respuesta — una sola fuente | `mensajes-respuesta/` | 28 literales en API, 55 snacks en Flutter, 38 en JS; fases 01–04 pendientes |
-| Caché: claves, TTL e invalidación | `cache-claves-ttl/` | 17 archivos, 21 sets y 7 deletes; fase 02 depende del plan HTTP |
+| Caché: claves, TTL e invalidación | `cache-claves-ttl/` | 17 archivos, 21 sets y 7 deletes; la fase 02 ya tiene libre el transporte HTTP |
+| Transporte residual y suite | `transporte-residual-y-suite/` | Transporte a mano en Didit/Snowstorm/MPI y en el admin (fuera del invariante) + suite en 13 errores / 73 fallas; fases 01–04 pendientes |
 
 ## A evaluar (sin plan todavía)
 
@@ -75,6 +75,7 @@ Notas de análisis que todavía no justifican un plan. Ver [a-evaluar/README.md]
 | Alta cuenta móvil con identidad Didit | [alta-cuenta-licencia.md](../producto/alta-cuenta-licencia.md) |
 | RBAC unificado por intents | [decisions/autorizacion-solo-por-intents.md](../decisions/autorizacion-solo-por-intents.md) + [arquitectura/rbac-catalogo-permisos.md](../arquitectura/rbac-catalogo-permisos.md) |
 | Limpieza legacy Yii / modelos / BD | Migraciones y código en repo; sin plan activo |
+| Deduplicación de transporte HTTP | [transporte-http-unico.md](../decisions/transporte-http-unico.md) + `Shared/Infrastructure/README.md` + [common-components.md](../arquitectura/common-components.md) |
 
 ## Convenciones (solo dentro de `plans/`)
 

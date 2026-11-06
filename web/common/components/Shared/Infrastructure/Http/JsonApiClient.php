@@ -18,6 +18,12 @@ class JsonApiClient
 {
     private const LOG_TRUNCATE = 2000;
 
+    /**
+     * @internal Solo para tests: transporte falso para los clientes que construyen su
+     * `JsonApiClient` internamente (facades estáticas). Se resetea en `_after`.
+     */
+    public static ?\yii\httpclient\Transport $transportOverride = null;
+
     private ?Client $httpClient;
 
     /**
@@ -55,6 +61,8 @@ class JsonApiClient
         array $logContext = []
     ): HttpResponse {
         $method = strtoupper($method);
+        // El log usa el path sin query: la query puede llevar secretos (`?key=`, tokens).
+        $logPath = $path;
         if ($query !== []) {
             $path .= (str_contains($path, '?') ? '&' : '?') . http_build_query($query);
         }
@@ -67,7 +75,7 @@ class JsonApiClient
             $attempt++;
 
             try {
-                return $this->sendOnce($method, $path, $body, $headers, $logContext);
+                return $this->sendOnce($method, $path, $body, $headers, $logContext, $logPath);
             } catch (HttpApiException $e) {
                 if (!$retry->shouldRetry($method, $hasIdempotencyKey, $e, $attempt)) {
                     throw $e;
@@ -86,22 +94,41 @@ class JsonApiClient
         return $this->request('GET', $path, null, $headers, $query);
     }
 
-    /** @param array<string, string> $headers */
-    public function post(string $path, mixed $body = null, array $headers = []): HttpResponse
+    /**
+     * @param array<string, string> $headers
+     * @param array<string, scalar|null> $query
+     */
+    public function post(string $path, mixed $body = null, array $headers = [], array $query = []): HttpResponse
+    {
+        return $this->request('POST', $path, $body, $headers, $query);
+    }
+
+    /**
+     * @param array<string, string> $headers
+     * @param array<string, scalar|null> $query
+     */
+    public function put(string $path, mixed $body = null, array $headers = [], array $query = []): HttpResponse
+    {
+        return $this->request('PUT', $path, $body, $headers, $query);
+    }
+
+    /**
+     * @param array<string, string> $headers
+     * @param array<string, scalar|null> $query
+     */
+    public function delete(string $path, mixed $body = null, array $headers = [], array $query = []): HttpResponse
+    {
+        return $this->request('DELETE', $path, $body, $headers, $query);
+    }
+
+    /**
+     * Sube un archivo en memoria como `multipart/form-data`.
+     *
+     * @param array<string, string> $headers
+     */
+    public function postMultipart(string $path, MultipartBody $body, array $headers = []): HttpResponse
     {
         return $this->request('POST', $path, $body, $headers);
-    }
-
-    /** @param array<string, string> $headers */
-    public function put(string $path, mixed $body = null, array $headers = []): HttpResponse
-    {
-        return $this->request('PUT', $path, $body, $headers);
-    }
-
-    /** @param array<string, string> $headers */
-    public function delete(string $path, mixed $body = null, array $headers = []): HttpResponse
-    {
-        return $this->request('DELETE', $path, $body, $headers);
     }
 
     /**
@@ -126,7 +153,13 @@ class JsonApiClient
      */
     protected function extractProviderError(array $body): array
     {
-        $message = trim((string) ($body['message'] ?? $body['error'] ?? ''));
+        // `message` (Mercado Pago) o `error` (string en OpenAI/Groq, objeto en Meta/WhatsApp).
+        $raw = $body['message'] ?? $body['error'] ?? '';
+        if (is_array($raw)) {
+            $raw = $raw['message'] ?? '';
+        }
+        $message = is_scalar($raw) ? trim((string) $raw) : '';
+
         $causes = [];
 
         if (is_array($body['cause'] ?? null)) {
@@ -144,8 +177,14 @@ class JsonApiClient
         return ['message' => $message, 'causes' => $causes];
     }
 
-    private function sendOnce(string $method, string $path, mixed $body, array $headers, array $logContext): HttpResponse
-    {
+    private function sendOnce(
+        string $method,
+        string $path,
+        mixed $body,
+        array $headers,
+        array $logContext,
+        ?string $logPath = null
+    ): HttpResponse {
         $request = $this->client()
             ->createRequest()
             ->setMethod($method)
@@ -172,7 +211,7 @@ class JsonApiClient
                 [],
                 $e
             );
-            $this->logError($method, $path, $exception, $logContext, $e->getMessage());
+            $this->logError($method, $logPath ?? $path, $exception, $logContext, $e->getMessage());
 
             throw $exception;
         }
@@ -194,9 +233,11 @@ class JsonApiClient
             $this->provider,
             $statusCode,
             $this->errorMessage($statusCode, $providerError),
-            $providerError['causes']
+            $providerError['causes'],
+            null,
+            $rawBody
         );
-        $this->logError($method, $path, $exception, $logContext, null, $rawBody);
+        $this->logError($method, $logPath ?? $path, $exception, $logContext, null, $rawBody);
 
         throw $exception;
     }
@@ -213,6 +254,18 @@ class JsonApiClient
      */
     private function applyBody(Request $request, string $method, mixed $body, array $headers): void
     {
+        if ($body instanceof MultipartBody) {
+            foreach ($body->fields as $name => $value) {
+                $request->addData([(string) $name => $value]);
+            }
+            $request->addContent($body->field, $body->content, [
+                'fileName' => $body->fileName,
+                'mimeType' => $body->mimeType,
+            ]);
+
+            return;
+        }
+
         if ($method === 'GET' || $method === 'HEAD') {
             $request->setData($body);
             $request->setFormat(Client::FORMAT_URLENCODED);
@@ -255,7 +308,7 @@ class JsonApiClient
         }
 
         $merged['accept'] ??= 'application/json';
-        if ($body !== null && $method !== 'GET' && $method !== 'HEAD') {
+        if ($body !== null && $method !== 'GET' && $method !== 'HEAD' && !$body instanceof MultipartBody) {
             $merged['content-type'] ??= 'application/json';
         }
 
@@ -283,13 +336,18 @@ class JsonApiClient
         if (preg_match('#^https?://#i', $path)) {
             return $path;
         }
+        if ($path === '' || $this->baseUrl === '') {
+            return $path === '' ? $this->baseUrl : $path;
+        }
 
         return rtrim($this->baseUrl, '/') . '/' . ltrim($path, '/');
     }
 
     private function client(): Client
     {
-        return $this->httpClient ??= new Client(['transport' => CurlTransport::class]);
+        return $this->httpClient ??= new Client([
+            'transport' => self::$transportOverride ?? CurlTransport::class,
+        ]);
     }
 
     private function label(): string

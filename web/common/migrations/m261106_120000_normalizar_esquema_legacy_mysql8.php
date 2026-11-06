@@ -132,15 +132,17 @@ class m261106_120000_normalizar_esquema_legacy_mysql8 extends Migration
         if (!str_starts_with($type, 'float')) {
             return;
         }
+        if (stripos((string) $info['EXTRA'], 'GENERATED') !== false) {
+            return;
+        }
+        if (!$this->isSafeNumericDefault($info['COLUMN_DEFAULT'])) {
+            return;
+        }
 
         $definition = sprintf('DECIMAL(%d,%d)', $precision, $scale);
         $nullable = strtoupper((string) $info['IS_NULLABLE']) === 'YES';
         $definition .= $nullable ? ' NULL' : ' NOT NULL';
-        if ($info['COLUMN_DEFAULT'] !== null) {
-            $definition .= ' DEFAULT ' . $this->db->quoteValue((string) $info['COLUMN_DEFAULT']);
-        } elseif ($nullable) {
-            $definition .= ' DEFAULT NULL';
-        }
+        $definition .= $this->defaultClause($info['COLUMN_DEFAULT'], $nullable);
         if ((string) $info['COLUMN_COMMENT'] !== '') {
             $definition .= ' COMMENT ' . $this->db->quoteValue((string) $info['COLUMN_COMMENT']);
         }
@@ -159,19 +161,20 @@ class m261106_120000_normalizar_esquema_legacy_mysql8 extends Migration
                FROM information_schema.COLUMNS
               WHERE TABLE_SCHEMA = DATABASE()
                 AND DATA_TYPE IN ('tinyint', 'smallint', 'mediumint', 'int', 'bigint')
-                AND COLUMN_TYPE REGEXP '^(tinyint|smallint|mediumint|int|bigint)\\\\([0-9]+\\\\)'"
+                AND COLUMN_TYPE REGEXP '^(tinyint|smallint|mediumint|int|bigint)\\\\([0-9]+\\\\)'
+                AND COALESCE(EXTRA, '') NOT LIKE '%GENERATED%'"
         )->queryAll();
 
         foreach ($rows as $row) {
+            if (!$this->isSafeNumericDefault($row['COLUMN_DEFAULT'])) {
+                continue;
+            }
+
             $baseType = strtoupper((string) preg_replace('/\([0-9]+\)/', '', strtolower($row['COLUMN_TYPE'])));
             $definition = $baseType;
             $nullable = strtoupper((string) $row['IS_NULLABLE']) === 'YES';
             $definition .= $nullable ? ' NULL' : ' NOT NULL';
-            if ($row['COLUMN_DEFAULT'] !== null) {
-                $definition .= ' DEFAULT ' . $this->db->quoteValue((string) $row['COLUMN_DEFAULT']);
-            } elseif ($nullable) {
-                $definition .= ' DEFAULT NULL';
-            }
+            $definition .= $this->defaultClause($row['COLUMN_DEFAULT'], $nullable);
             if (stripos((string) $row['EXTRA'], 'auto_increment') !== false) {
                 $definition .= ' AUTO_INCREMENT';
             }
@@ -272,6 +275,38 @@ class m261106_120000_normalizar_esquema_legacy_mysql8 extends Migration
         )->execute();
     }
 
+    /**
+     * MariaDB devuelve la cadena 'NULL' en `information_schema.COLUMNS.COLUMN_DEFAULT`
+     * para columnas sin default; MySQL devuelve NULL. Se normalizan ambos casos.
+     *
+     * @param string|null $default
+     */
+    private function defaultClause($default, bool $nullable): string
+    {
+        $value = $default === null ? '' : trim((string) $default);
+        if ($value === '' || strcasecmp($value, 'NULL') === 0) {
+            return $nullable ? ' DEFAULT NULL' : '';
+        }
+
+        return ' DEFAULT ' . (is_numeric($value) ? $value : $this->db->quoteValue($value));
+    }
+
+    /**
+     * Un default numérico solo puede ser NULL o un literal numérico. Cualquier otra cosa
+     * (p. ej. `uuid()`) se deja intacta para no reescribir la expresión.
+     *
+     * @param string|null $default
+     */
+    private function isSafeNumericDefault($default): bool
+    {
+        if ($default === null) {
+            return true;
+        }
+        $value = trim((string) $default);
+
+        return $value === '' || strcasecmp($value, 'NULL') === 0 || is_numeric($value);
+    }
+
     private function isEnum(string $columnType): bool
     {
         return str_starts_with(strtolower(trim($columnType)), 'enum(');
@@ -302,12 +337,12 @@ class m261106_120000_normalizar_esquema_legacy_mysql8 extends Migration
     }
 
     /**
-     * @return array{COLUMN_TYPE: string, IS_NULLABLE: string, COLUMN_DEFAULT: string|null, COLUMN_COMMENT: string}|null
+     * @return array{COLUMN_TYPE: string, IS_NULLABLE: string, COLUMN_DEFAULT: string|null, COLUMN_COMMENT: string, EXTRA: string|null}|null
      */
     private function columnInfo(string $table, string $column): ?array
     {
         $row = $this->db->createCommand(
-            'SELECT COLUMN_TYPE, IS_NULLABLE, COLUMN_DEFAULT, COLUMN_COMMENT'
+            'SELECT COLUMN_TYPE, IS_NULLABLE, COLUMN_DEFAULT, COLUMN_COMMENT, EXTRA'
             . ' FROM information_schema.COLUMNS'
             . ' WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :table AND COLUMN_NAME = :column',
             [':table' => $this->rawTableName($table), ':column' => $column]

@@ -14,7 +14,8 @@ use yii\db\Migration;
  * - `servicios_efector.formas_atencion`: valores '' y vocabulario legacy `*_RRHH` → literales
  *   canónicos de {@see ServiciosEfector::FORMAS_ATENCION}.
  * - Columnas `FLOAT(M,D)` → `DECIMAL(M,D)` (MySQL 8 deprecó los dígitos en punto flotante).
- * - Enteros con ancho de display (`int(11)`, `tinyint(1)`, …) → sin ancho.
+ * - Enteros con ancho de display (`int(11)`, `tinyint(1)`, …) → sin ancho (solo MySQL;
+ *   MariaDB los conserva y no los depreca).
  * - Tablas utf8mb3 → utf8mb4 (MySQL 8 deprecó el juego utf8mb3).
  * - Índices duplicados heredados del dump (MySQL avisa "Duplicate index").
  *
@@ -41,7 +42,10 @@ class m261106_120000_normalizar_esquema_legacy_mysql8 extends Migration
         $this->normalizeFormasAtencion();
         $this->normalizeFloatToDecimal('controles_planillas_plz', 'peso', 5, 2);
         $this->normalizeFloatToDecimal('prestaciones_sumar', 'valor', 7, 2);
-        $this->normalizeIntegerDisplayWidths();
+        // El ancho de display en enteros lo deprecó MySQL 8; MariaDB lo sigue usando y no avisa.
+        if (!$this->isMariaDb()) {
+            $this->normalizeIntegerDisplayWidths();
+        }
         $this->convertUtf8mb3ToUtf8mb4();
         $this->dropRedundantLegacyIndexes();
     }
@@ -157,12 +161,16 @@ class m261106_120000_normalizar_esquema_legacy_mysql8 extends Migration
     private function normalizeIntegerDisplayWidths(): void
     {
         $rows = $this->db->createCommand(
-            "SELECT TABLE_NAME, COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_DEFAULT, COLUMN_COMMENT, EXTRA
-               FROM information_schema.COLUMNS
-              WHERE TABLE_SCHEMA = DATABASE()
-                AND DATA_TYPE IN ('tinyint', 'smallint', 'mediumint', 'int', 'bigint')
-                AND COLUMN_TYPE REGEXP '^(tinyint|smallint|mediumint|int|bigint)\\\\([0-9]+\\\\)'
-                AND COALESCE(EXTRA, '') NOT LIKE '%GENERATED%'"
+            "SELECT c.TABLE_NAME, c.COLUMN_NAME, c.COLUMN_TYPE, c.IS_NULLABLE, c.COLUMN_DEFAULT, c.COLUMN_COMMENT, c.EXTRA
+               FROM information_schema.COLUMNS c
+               JOIN information_schema.TABLES t
+                 ON t.TABLE_SCHEMA = c.TABLE_SCHEMA
+                AND t.TABLE_NAME = c.TABLE_NAME
+                AND t.TABLE_TYPE = 'BASE TABLE'
+              WHERE c.TABLE_SCHEMA = DATABASE()
+                AND c.DATA_TYPE IN ('tinyint', 'smallint', 'mediumint', 'int', 'bigint')
+                AND c.COLUMN_TYPE REGEXP '^(tinyint|smallint|mediumint|int|bigint)\\\\([0-9]+\\\\)'
+                AND COALESCE(c.EXTRA, '') NOT LIKE '%GENERATED%'"
         )->queryAll();
 
         foreach ($rows as $row) {
@@ -195,21 +203,25 @@ class m261106_120000_normalizar_esquema_legacy_mysql8 extends Migration
      */
     private function dropRedundantLegacyIndexes(): void
     {
+        // indice redundante => indice que se conserva (mismas columnas)
         $redundant = [
-            'old.rr_hh' => ['id_profesion_rrhh'],
-            'profesional_salud' => ['id_profesion_rrhh'],
-            'persona_domicilios_vinculo' => ['id_persona_id'],
-            'persona_telefono' => ['id_persona_tel'],
-            'turnos' => ['id_efector_t', 'id_servicio_t'],
+            'old.rr_hh' => ['id_profesion_rrhh' => 'id_profesion_idx'],
+            'profesional_salud' => ['id_profesion_rrhh' => 'id_profesion_idx'],
+            'persona_domicilios_vinculo' => ['id_persona_id' => 'id_persona_idx'],
+            'persona_telefono' => ['id_persona_tel' => 'id_persona_idx'],
+            'turnos' => [
+                'id_efector_t' => 'id_efector_turnos',
+                'id_servicio_t' => 'id_servicio_idx',
+            ],
         ];
 
-        foreach ($redundant as $table => $indexes) {
-            foreach ($indexes as $index) {
-                if (!$this->indexExists($table, $index)) {
+        foreach ($redundant as $table => $pairs) {
+            foreach ($pairs as $drop => $keep) {
+                if (!$this->indexExists($table, $drop) || !$this->indexExists($table, $keep)) {
                     continue;
                 }
                 $this->db->createCommand(
-                    'DROP INDEX ' . $this->db->quoteColumnName($index)
+                    'DROP INDEX ' . $this->db->quoteColumnName($drop)
                     . ' ON ' . $this->quoteRawTableName($table)
                 )->execute();
             }
@@ -307,6 +319,17 @@ class m261106_120000_normalizar_esquema_legacy_mysql8 extends Migration
         return $value === '' || strcasecmp($value, 'NULL') === 0 || is_numeric($value);
     }
 
+    private function isMariaDb(): bool
+    {
+        try {
+            $version = (string) $this->db->createCommand('SELECT VERSION()')->queryScalar();
+        } catch (\Throwable $e) {
+            return false;
+        }
+
+        return stripos($version, 'mariadb') !== false;
+    }
+
     private function isEnum(string $columnType): bool
     {
         return str_starts_with(strtolower(trim($columnType)), 'enum(');
@@ -342,9 +365,12 @@ class m261106_120000_normalizar_esquema_legacy_mysql8 extends Migration
     private function columnInfo(string $table, string $column): ?array
     {
         $row = $this->db->createCommand(
-            'SELECT COLUMN_TYPE, IS_NULLABLE, COLUMN_DEFAULT, COLUMN_COMMENT, EXTRA'
-            . ' FROM information_schema.COLUMNS'
-            . ' WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :table AND COLUMN_NAME = :column',
+            'SELECT c.COLUMN_TYPE, c.IS_NULLABLE, c.COLUMN_DEFAULT, c.COLUMN_COMMENT, c.EXTRA'
+            . ' FROM information_schema.COLUMNS c'
+            . ' JOIN information_schema.TABLES t'
+            . '   ON t.TABLE_SCHEMA = c.TABLE_SCHEMA AND t.TABLE_NAME = c.TABLE_NAME'
+            . "   AND t.TABLE_TYPE = 'BASE TABLE'"
+            . ' WHERE c.TABLE_SCHEMA = DATABASE() AND c.TABLE_NAME = :table AND c.COLUMN_NAME = :column',
             [':table' => $this->rawTableName($table), ':column' => $column]
         )->queryOne();
 

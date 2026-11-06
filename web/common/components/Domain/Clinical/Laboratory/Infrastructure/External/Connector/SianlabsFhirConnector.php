@@ -4,12 +4,18 @@ namespace common\components\Domain\Clinical\Laboratory\Infrastructure\External\C
 
 use common\components\Domain\Clinical\Laboratory\Infrastructure\External\Contract\FhirLabResultsConnector;
 use common\components\Domain\Clinical\Laboratory\Infrastructure\External\Exception\LaboratoryConnectorException;
-use Yii;
+use common\components\Shared\Infrastructure\Http\Auth\AccessTokenProvider;
+use common\components\Shared\Infrastructure\Http\Auth\OAuthClientCredentialsTokenProvider;
+use common\components\Shared\Infrastructure\Http\Auth\OAuthTokenException;
+use common\components\Shared\Infrastructure\Http\HttpApiException;
+use common\components\Shared\Infrastructure\Http\JsonApiClient;
 use yii\base\Component;
-use yii\httpclient\Client;
 
 /**
  * LIS Sianlabs — FHIR R4 (OAuth2 client credentials).
+ *
+ * Transporte, reintentos y token los aporta `Shared/Infrastructure/Http`; acá sólo viven
+ * los endpoints y el mapeo de error del conector.
  */
 class SianlabsFhirConnector extends Component implements FhirLabResultsConnector
 {
@@ -23,8 +29,12 @@ class SianlabsFhirConnector extends Component implements FhirLabResultsConnector
 
     public ?string $clientSecret = null;
 
-    /** @var string|null token en caché de request */
-    private ?string $accessToken = null;
+    public int $timeoutSeconds = 20;
+
+    /** @internal seam de test: permite un `Client` con transporte falso, sin red. */
+    public ?JsonApiClient $httpClient = null;
+
+    private ?AccessTokenProvider $tokenProvider = null;
 
     public function getConnectorKey(): string
     {
@@ -33,83 +43,86 @@ class SianlabsFhirConnector extends Component implements FhirLabResultsConnector
 
     public function resolvePatientFhirId(string $documentNumber): ?string
     {
-        $bundle = $this->request('GET', 'Patient?identifier=' . rawurlencode($documentNumber));
+        $bundle = $this->read('Patient', ['identifier' => $documentNumber]);
+
         return $this->extractFirstResourceId($bundle, 'Patient');
     }
 
+    /** @return array<string, mixed> */
     public function fetchDiagnosticReports(string $patientFhirId): array
     {
-        return $this->request('GET', 'DiagnosticReport?patient=' . rawurlencode($patientFhirId));
+        return $this->read('DiagnosticReport', ['patient' => $patientFhirId]);
     }
 
     /**
+     * @param array<string, string> $query
      * @return array<string, mixed>
+     *
+     * @throws LaboratoryConnectorException respuesta no-2xx del LIS
+     * @throws OAuthTokenException no se pudo obtener el token
      */
-    private function request(string $method, string $relativePath): array
+    private function read(string $path, array $query = []): array
     {
-        if ($this->clientId === null || $this->clientSecret === null || $this->clientId === '' || $this->clientSecret === '') {
-            throw new LaboratoryConnectorException('Sianlabs: clientId/clientSecret no configurados en params-local.');
-        }
+        $this->assertCredentials();
 
-        $token = $this->getAccessToken();
-        $url = rtrim($this->baseUrl, '/') . '/' . ltrim($relativePath, '/');
-
-        $client = new Client(['transport' => 'yii\httpclient\CurlTransport']);
-        $response = $client->createRequest()
-            ->setMethod($method)
-            ->setUrl($url)
-            ->addHeaders([
-                'Authorization' => 'Bearer ' . $token,
-                'Accept' => 'application/fhir+json, application/json',
-            ])
-            ->send();
-
-        if (!$response->isOk) {
-            Yii::error([
-                'connector' => $this->connectorKey,
-                'url' => $url,
-                'status' => $response->statusCode,
-                'body' => $response->content,
-            ], 'laboratory-fhir');
-
+        try {
+            $response = $this->api()->get($path, $query, $this->authHeaders());
+        } catch (HttpApiException $e) {
             throw new LaboratoryConnectorException(
-                "Sianlabs HTTP {$response->statusCode} en {$relativePath}"
+                'Sianlabs HTTP ' . $e->statusCode() . ' en ' . $path,
+                0,
+                $e
             );
         }
 
-        $data = $response->data;
-        if (!is_array($data)) {
-            return [];
-        }
-
-        return $data;
+        return $response->body();
     }
 
-    private function getAccessToken(): string
+    private function assertCredentials(): void
     {
-        if ($this->accessToken !== null) {
-            return $this->accessToken;
+        if ($this->clientId === null || $this->clientSecret === null
+            || trim($this->clientId) === '' || trim($this->clientSecret) === '') {
+            throw new LaboratoryConnectorException('Sianlabs: clientId/clientSecret no configurados en params-local.');
+        }
+    }
+
+    /** @return array<string, string> */
+    private function authHeaders(): array
+    {
+        return ['Authorization' => 'Bearer ' . $this->tokenProvider()->token()];
+    }
+
+    private function tokenProvider(): AccessTokenProvider
+    {
+        if ($this->tokenProvider === null) {
+            $this->tokenProvider = new OAuthClientCredentialsTokenProvider(
+                client: $this->api(),
+                tokenPath: (string) $this->tokenUrl,
+                clientId: (string) $this->clientId,
+                clientSecret: (string) $this->clientSecret,
+                cacheKeyPrefix: 'oauth_token_' . $this->connectorKey
+            );
         }
 
-        $tokenUrl = $this->tokenUrl ?? rtrim($this->baseUrl, '/') . '/../oauth/token';
-        $client = new Client(['transport' => 'yii\httpclient\CurlTransport']);
-        $response = $client->createRequest()
-            ->setMethod('POST')
-            ->setUrl($tokenUrl)
-            ->setData([
-                'grant_type' => 'client_credentials',
-                'client_id' => $this->clientId,
-                'client_secret' => $this->clientSecret,
-            ])
-            ->send();
+        return $this->tokenProvider;
+    }
 
-        if (!$response->isOk || empty($response->data['access_token'])) {
-            throw new LaboratoryConnectorException('Sianlabs: no se pudo obtener access_token.');
-        }
+    private function api(): JsonApiClient
+    {
+        return $this->httpClient ??= $this->unauthenticatedClient();
+    }
 
-        $this->accessToken = (string) $response->data['access_token'];
-
-        return $this->accessToken;
+    private function unauthenticatedClient(): JsonApiClient
+    {
+        return new JsonApiClient(
+            baseUrl: $this->baseUrl,
+            defaultHeaders: ['Accept' => 'application/fhir+json, application/json'],
+            connectTimeout: 5,
+            timeout: (float) $this->timeoutSeconds,
+            logCategory: 'laboratory-fhir',
+            provider: $this->connectorKey,
+            providerLabel: 'Sianlabs'
+        );
     }
 
     /**

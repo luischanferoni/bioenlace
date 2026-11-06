@@ -25,6 +25,9 @@ $client = new JsonApiClient(
 $response = $client->post('/preapproval', $payload, ['X-Idempotency-Key' => $key]);
 $response->body();              // array, o [] si el cuerpo no era JSON
 $response->header('Location');  // headers normalizados a minúsculas
+
+// Query params como array, y contexto propio del ACL para el log de error
+$client->get('/Appointment', ['patient' => 'p-1'], [], ['job_id' => 42]);
 ```
 
 - **No reintenta** un `POST` sin clave de idempotencia; sí un método idempotente
@@ -35,5 +38,6 @@ $response->header('Location');  // headers normalizados a minúsculas
   `Authorization` ni el cuerpo de la request.
 - Token: `Auth/AccessTokenProvider`. `OAuthClientCredentialsTokenProvider` cachea e
   `invalidate()` sirve para reintentar un `401`; `StaticTokenProvider` para API keys.
+  Los tres conectores OAuth del repo (LIS, agenda FHIR, HC nacional) usan el mismo provider.
 
 Tests: `common/tests/unit/shared/infrastructure/http/` (transporte falso, sin red).

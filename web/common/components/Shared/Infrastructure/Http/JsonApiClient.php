@@ -43,10 +43,21 @@ class JsonApiClient
     /**
      * @param mixed $body null, array (JSON, o form si el `Content-Type` lo dice) o string crudo
      * @param array<string, string> $headers
+     * @param array<string, scalar|null> $query se agrega a la URL
+     * @param array<string, scalar|null> $logContext datos del ACL para el log de error (job_id, …)
      */
-    public function request(string $method, string $path, mixed $body = null, array $headers = []): HttpResponse
-    {
+    public function request(
+        string $method,
+        string $path,
+        mixed $body = null,
+        array $headers = [],
+        array $query = [],
+        array $logContext = []
+    ): HttpResponse {
         $method = strtoupper($method);
+        if ($query !== []) {
+            $path .= (str_contains($path, '?') ? '&' : '?') . http_build_query($query);
+        }
         $headers = $this->mergeHeaders($method, $headers, $body);
         $retry = $this->retry ?? new RetryPolicy();
         $hasIdempotencyKey = isset($headers['idempotency-key']) || isset($headers['x-idempotency-key']);
@@ -56,7 +67,7 @@ class JsonApiClient
             $attempt++;
 
             try {
-                return $this->sendOnce($method, $path, $body, $headers);
+                return $this->sendOnce($method, $path, $body, $headers, $logContext);
             } catch (HttpApiException $e) {
                 if (!$retry->shouldRetry($method, $hasIdempotencyKey, $e, $attempt)) {
                     throw $e;
@@ -67,12 +78,12 @@ class JsonApiClient
     }
 
     /**
-     * @param array<string, scalar> $query
+     * @param array<string, scalar|null> $query
      * @param array<string, string> $headers
      */
     public function get(string $path, array $query = [], array $headers = []): HttpResponse
     {
-        return $this->request('GET', $path, $query === [] ? null : $query, $headers);
+        return $this->request('GET', $path, null, $headers, $query);
     }
 
     /** @param array<string, string> $headers */
@@ -133,7 +144,7 @@ class JsonApiClient
         return ['message' => $message, 'causes' => $causes];
     }
 
-    private function sendOnce(string $method, string $path, mixed $body, array $headers): HttpResponse
+    private function sendOnce(string $method, string $path, mixed $body, array $headers, array $logContext): HttpResponse
     {
         $request = $this->client()
             ->createRequest()
@@ -161,7 +172,7 @@ class JsonApiClient
                 [],
                 $e
             );
-            $this->logError($method, $path, $exception, $e->getMessage());
+            $this->logError($method, $path, $exception, $logContext, $e->getMessage());
 
             throw $exception;
         }
@@ -185,7 +196,7 @@ class JsonApiClient
             $this->errorMessage($statusCode, $providerError),
             $providerError['causes']
         );
-        $this->logError($method, $path, $exception, null, $rawBody);
+        $this->logError($method, $path, $exception, $logContext, null, $rawBody);
 
         throw $exception;
     }
@@ -194,29 +205,39 @@ class JsonApiClient
      * El formato lo decide el `Content-Type`, no un flag extra: array → JSON (o form si el
      * header lo pide), string → contenido crudo tal cual (FHIR).
      *
+     * El JSON lo serializamos nosotros a propósito: el formatter de Yii pisa el
+     * `Content-Type` con `application/json; charset=UTF-8` y un FHIR necesita mandar
+     * `application/fhir+json` tal cual.
+     *
      * @param array<string, string> $headers
      */
     private function applyBody(Request $request, string $method, mixed $body, array $headers): void
     {
+        if ($method === 'GET' || $method === 'HEAD') {
+            $request->setData($body);
+            $request->setFormat(Client::FORMAT_URLENCODED);
+
+            return;
+        }
+
         if (is_string($body)) {
             $request->setContent($body);
 
             return;
         }
 
-        $request->setData($body);
-
-        if ($method === 'GET' || $method === 'HEAD') {
+        if (str_contains($headers['content-type'] ?? '', 'x-www-form-urlencoded')) {
+            $request->setData($body);
             $request->setFormat(Client::FORMAT_URLENCODED);
 
             return;
         }
 
-        $request->setFormat(
-            str_contains($headers['content-type'] ?? '', 'x-www-form-urlencoded')
-                ? Client::FORMAT_URLENCODED
-                : Client::FORMAT_JSON
-        );
+        $encoded = json_encode($body, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        if ($encoded === false) {
+            throw new \InvalidArgumentException('No se pudo serializar el body de la request a JSON.');
+        }
+        $request->setContent($encoded);
     }
 
     /**
@@ -298,10 +319,11 @@ class JsonApiClient
         string $method,
         string $path,
         HttpApiException $e,
+        array $logContext = [],
         ?string $transportError = null,
         ?string $responseBody = null
     ): void {
-        $context = [
+        $context = $logContext + [
             'event' => 'http.api_error',
             'provider' => $e->provider(),
             'method' => $method,

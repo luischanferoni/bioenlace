@@ -22,15 +22,15 @@ mensaje de error distinto para lo mismo.
 
 ## Tareas
 
-- [ ] `OAuthClientCredentialsTokenProvider` en `Shared/Infrastructure/Http/Auth` con cache
+- [x] `OAuthClientCredentialsTokenProvider` en `Shared/Infrastructure/Http/Auth` con cache
       (`expires_in - 60`) e `invalidate()`.
-- [ ] Migrar `SianlabsFhirConnector` al base + provider.
-- [ ] Migrar `MsalNisFhirSchedulingConnector` (conserva el modo "sin OAuth" cuando no hay
+- [x] Migrar `SianlabsFhirConnector` al base + provider.
+- [x] Migrar `MsalNisFhirSchedulingConnector` (conserva el modo "sin OAuth" cuando no hay
       `tokenUrl`/`clientId`).
-- [ ] Migrar `HttpNationalClinicalHistoryConnector`, preservando el retry en `401` y el
+- [x] Migrar `HttpNationalClinicalHistoryConnector`, preservando el retry en `401` y el
       uso del header `Location` (ahora posible porque `HttpResponse` expone headers).
-- [ ] Unificar el mensaje de error de OAuth: hoy cada conector dice algo distinto.
-- [ ] Tests del provider: cache hit, cache miss, `expires_in` ausente, `invalidate()`.
+- [x] Unificar el mensaje de error de OAuth: hoy cada conector dice algo distinto.
+- [x] Tests del provider: cache hit, cache miss, `expires_in` ausente, `invalidate()`.
 
 ## Aceptación
 

@@ -7,17 +7,25 @@ use common\components\Domain\Clinical\HistoryExchange\Infrastructure\External\Co
 use common\components\Domain\Clinical\HistoryExchange\Infrastructure\External\Dto\ClinicalHistoryExchangeSubmitResult;
 use common\components\Domain\Clinical\HistoryExchange\Infrastructure\External\Dto\ClinicalHistoryExchangeStatusResult;
 use common\components\Domain\Clinical\HistoryExchange\Infrastructure\External\Exception\ClinicalHistoryExchangeException;
+use common\components\Shared\Infrastructure\Http\Auth\AccessTokenProvider;
+use common\components\Shared\Infrastructure\Http\Auth\OAuthClientCredentialsTokenProvider;
+use common\components\Shared\Infrastructure\Http\Auth\OAuthTokenException;
+use common\components\Shared\Infrastructure\Http\HttpApiException;
+use common\components\Shared\Infrastructure\Http\HttpResponse;
+use common\components\Shared\Infrastructure\Http\JsonApiClient;
 use common\models\Clinical\ClinicalHistoryOutboundJob;
-use Yii;
-use yii\httpclient\Client;
+use yii\base\Component;
 
 /**
  * HTTP hacia servidor FHIR nacional / red jurisdiccional.
  *
  * Requiere `baseUrl`, `tokenUrl`, `clientId`, `clientSecret` y `submitPath` en params-local.
  * El path definitivo del contrato estatal se configura sin cambiar código de dominio.
+ *
+ * Transporte, reintentos, parseo y log vienen de `Shared/Infrastructure/Http`; el token, de
+ * `OAuthClientCredentialsTokenProvider` (conserva la clave de caché histórica).
  */
-final class HttpNationalClinicalHistoryConnector implements
+final class HttpNationalClinicalHistoryConnector extends Component implements
     ClinicalHistoryExchangeConnector,
     ClinicalHistorySubmissionStatusConnector
 {
@@ -44,7 +52,10 @@ final class HttpNationalClinicalHistoryConnector implements
 
     public int $timeoutSeconds = 120;
 
-    private ?string $accessToken = null;
+    /** @internal seam de test: permite un `Client` con transporte falso, sin red. */
+    public ?JsonApiClient $httpClient = null;
+
+    private ?AccessTokenProvider $tokenProvider = null;
 
     public function getConnectorKey(): string
     {
@@ -66,50 +77,25 @@ final class HttpNationalClinicalHistoryConnector implements
             );
         }
 
-        if ($this->baseUrl === null || trim($this->baseUrl) === '') {
-            throw new ClinicalHistoryExchangeException(
-                'clinicalHistoryExchange: baseUrl requerido para nacional-fhir.'
+        $this->assertConfigurado();
+        $this->assertCredenciales();
+
+        $context = ['job_id' => (int) $job->id, 'encounter_id' => (int) $job->encounter_id];
+
+        try {
+            $response = $this->send('POST', $this->submitPath, $bundleJson, $context);
+        } catch (HttpApiException $e) {
+            return ClinicalHistoryExchangeSubmitResult::failed(
+                'HTTP ' . $e->statusCode() . ' al enviar Bundle FHIR',
+                $e->isRetryable()
             );
         }
 
-        if ($this->clientId === null || $this->clientSecret === null
-            || trim((string) $this->clientId) === '' || trim((string) $this->clientSecret) === '') {
-            throw new ClinicalHistoryExchangeException(
-                'clinicalHistoryExchange: clientId/clientSecret requeridos para nacional-fhir.'
-            );
-        }
+        $externalId = $this->resolveExternalId($response, $job);
 
-        $url = rtrim($this->baseUrl, '/') . '/' . ltrim($this->submitPath, '/');
-
-        $response = $this->sendAuthenticatedRequest('POST', $url, $bundleJson, true);
-        $status = (int) $response->statusCode;
-        $body = (string) $response->content;
-
-        if ($status >= 200 && $status < 300) {
-            $externalId = $this->resolveExternalId($response->headers, $body, $job);
-
-            return ClinicalHistoryExchangeSubmitResult::sent(
-                $externalId,
-                'Bundle aceptado HTTP ' . $status
-            );
-        }
-
-        $retryable = $status >= 500 || $status === 429 || $status === 0;
-        if ($status >= 400 && $status < 500 && $status !== 429) {
-            $retryable = false;
-        }
-
-        Yii::error([
-            'connector' => $this->connectorKey,
-            'job_id' => (int) $job->id,
-            'encounter_id' => (int) $job->encounter_id,
-            'status' => $status,
-            'body' => mb_substr($body, 0, 2000),
-        ], 'clinical-history-exchange');
-
-        return ClinicalHistoryExchangeSubmitResult::failed(
-            'HTTP ' . $status . ' al enviar Bundle FHIR',
-            $retryable
+        return ClinicalHistoryExchangeSubmitResult::sent(
+            $externalId,
+            'Bundle aceptado HTTP ' . $response->statusCode()
         );
     }
 
@@ -124,30 +110,25 @@ final class HttpNationalClinicalHistoryConnector implements
             return ClinicalHistoryExchangeStatusResult::unsupported();
         }
 
-        if ($this->baseUrl === null || trim($this->baseUrl) === '') {
-            throw new ClinicalHistoryExchangeException(
-                'clinicalHistoryExchange: baseUrl requerido para polling nacional-fhir.'
-            );
-        }
+        $this->assertConfigurado();
+        $this->assertCredenciales();
 
         $lookupId = $this->resolveLookupId($job);
         $relative = str_replace('{id}', rawurlencode($lookupId), $path);
-        $url = rtrim($this->baseUrl, '/') . '/' . ltrim($relative, '/');
+        $context = ['job_id' => (int) $job->id, 'encounter_id' => (int) $job->encounter_id];
 
-        $response = $this->sendAuthenticatedRequest('GET', $url, null, true);
-        $status = (int) $response->statusCode;
-        $body = (string) $response->content;
+        try {
+            $response = $this->send('GET', $relative, null, $context);
+        } catch (HttpApiException $e) {
+            if ($e->statusCode() === 404) {
+                return ClinicalHistoryExchangeStatusResult::notFound('Envío no encontrado HTTP 404');
+            }
 
-        if ($status === 404) {
-            return ClinicalHistoryExchangeStatusResult::notFound('Envío no encontrado HTTP 404');
+            return ClinicalHistoryExchangeStatusResult::notFound('Polling HTTP ' . $e->statusCode());
         }
 
-        if ($status < 200 || $status >= 300) {
-            return ClinicalHistoryExchangeStatusResult::notFound('Polling HTTP ' . $status);
-        }
-
-        $data = json_decode($body, true);
-        if (!is_array($data)) {
+        $data = $response->body();
+        if ($data === []) {
             return ClinicalHistoryExchangeStatusResult::notFound('Respuesta de estado no JSON');
         }
 
@@ -167,58 +148,60 @@ final class HttpNationalClinicalHistoryConnector implements
     }
 
     /**
-     * @return \yii\httpclient\Response
+     * Reintenta una vez tras invalidar el token: el servidor nacional responde `401` cuando
+     * el token cacheado venció antes de su TTL declarado.
+     *
+     * @param array<string, scalar|null> $logContext
+     *
+     * @throws HttpApiException respuesta no-2xx
+     * @throws OAuthTokenException no se pudo obtener el token
      */
-    private function sendAuthenticatedRequest(
-        string $method,
-        string $url,
-        ?string $body,
-        bool $retryOnUnauthorized
-    ) {
-        $token = $this->getAccessToken();
-        $response = $this->createHttpRequest($method, $url, $token, $body)->send();
+    private function send(string $method, string $relativePath, ?string $body, array $logContext): HttpResponse
+    {
+        try {
+            return $this->request($method, $relativePath, $body, $logContext);
+        } catch (HttpApiException $e) {
+            if ($e->statusCode() !== 401) {
+                throw $e;
+            }
 
-        if ($retryOnUnauthorized && (int) $response->statusCode === 401) {
-            $this->invalidateAccessToken();
-            $token = $this->getAccessToken();
-            $response = $this->createHttpRequest($method, $url, $token, $body)->send();
+            $this->tokenProvider()->invalidate();
+
+            return $this->request($method, $relativePath, $body, $logContext);
         }
-
-        return $response;
     }
 
-    /**
-     * @return \yii\httpclient\Request
-     */
-    private function createHttpRequest(string $method, string $url, string $token, ?string $body)
+    /** @param array<string, scalar|null> $logContext */
+    private function request(string $method, string $relativePath, ?string $body, array $logContext): HttpResponse
     {
-        $client = new Client(['transport' => 'yii\httpclient\CurlTransport']);
-        $request = $client->createRequest()
-            ->setMethod($method)
-            ->setUrl($url)
-            ->addHeaders([
-                'Authorization' => 'Bearer ' . $token,
-                'Accept' => 'application/fhir+json, application/json',
-            ])
-            ->setOptions([CURLOPT_TIMEOUT => $this->timeoutSeconds]);
-
+        $headers = [
+            'Authorization' => 'Bearer ' . $this->tokenProvider()->token(),
+            'Accept' => 'application/fhir+json, application/json',
+        ];
         if ($body !== null) {
-            $request->addHeaders(['Content-Type' => 'application/fhir+json']);
-            $request->setContent($body);
+            $headers['Content-Type'] = 'application/fhir+json';
         }
 
-        return $request;
+        return $this->api()->request($method, $relativePath, $body, $headers, [], $logContext);
     }
 
-    private function invalidateAccessToken(): void
+    private function assertConfigurado(): void
     {
-        $this->accessToken = null;
-        if (Yii::$app->cache === null || $this->clientId === null) {
-            return;
+        if ($this->baseUrl === null || trim($this->baseUrl) === '') {
+            throw new ClinicalHistoryExchangeException(
+                'clinicalHistoryExchange: baseUrl requerido para nacional-fhir.'
+            );
         }
+    }
 
-        $cacheKey = 'clinical_history_exchange_token_' . md5($this->connectorKey . (string) $this->clientId);
-        Yii::$app->cache->delete($cacheKey);
+    private function assertCredenciales(): void
+    {
+        if ($this->clientId === null || $this->clientSecret === null
+            || trim($this->clientId) === '' || trim($this->clientSecret) === '') {
+            throw new ClinicalHistoryExchangeException(
+                'clinicalHistoryExchange: clientId/clientSecret requeridos para nacional-fhir.'
+            );
+        }
     }
 
     private function resolveLookupId(ClinicalHistoryOutboundJob $job): string
@@ -231,12 +214,9 @@ final class HttpNationalClinicalHistoryConnector implements
         return 'bioenlace-encounter-' . (int) $job->encounter_id;
     }
 
-  /**
-   * @param \yii\httpclient\HeaderCollection $headers
-   */
-    private function resolveExternalId($headers, string $body, ClinicalHistoryOutboundJob $job): string
+    private function resolveExternalId(HttpResponse $response, ClinicalHistoryOutboundJob $job): string
     {
-        $location = $headers->get('Location') ?? $headers->get('location');
+        $location = $response->header('Location');
         if (is_string($location) && $location !== '') {
             if (preg_match('#/([A-Za-z0-9\-\._]+)$#', $location, $m)) {
                 return $m[1];
@@ -245,66 +225,44 @@ final class HttpNationalClinicalHistoryConnector implements
             return $location;
         }
 
-        $data = json_decode($body, true);
-        if (is_array($data)) {
-            if (!empty($data['id'])) {
-                return (string) $data['id'];
-            }
-            if (!empty($data['identifier']['value'])) {
-                return (string) $data['identifier']['value'];
-            }
+        $data = $response->body();
+        if (!empty($data['id'])) {
+            return (string) $data['id'];
+        }
+        if (!empty($data['identifier']['value'])) {
+            return (string) $data['identifier']['value'];
         }
 
         return 'bioenlace-job-' . (int) $job->id;
     }
 
-    private function getAccessToken(): string
+    private function tokenProvider(): AccessTokenProvider
     {
-        if ($this->accessToken !== null) {
-            return $this->accessToken;
-        }
-
-        $cacheKey = 'clinical_history_exchange_token_' . md5($this->connectorKey . (string) $this->clientId);
-        if (Yii::$app->cache !== null) {
-            $cached = Yii::$app->cache->get($cacheKey);
-            if (is_string($cached) && $cached !== '') {
-                $this->accessToken = $cached;
-
-                return $cached;
-            }
-        }
-
-        $tokenUrl = $this->tokenUrl ?? rtrim((string) $this->baseUrl, '/') . '/oauth/token';
-        $client = new Client(['transport' => 'yii\httpclient\CurlTransport']);
-        $response = $client->createRequest()
-            ->setMethod('POST')
-            ->setUrl($tokenUrl)
-            ->setData([
-                'grant_type' => 'client_credentials',
-                'client_id' => $this->clientId,
-                'client_secret' => $this->clientSecret,
-            ])
-            ->send();
-
-        if (!$response->isOk) {
-            throw new ClinicalHistoryExchangeException(
-                'OAuth nacional-fhir falló HTTP ' . $response->statusCode
+        if ($this->tokenProvider === null) {
+            $this->tokenProvider = new OAuthClientCredentialsTokenProvider(
+                client: $this->api(),
+                tokenPath: trim((string) $this->tokenUrl) !== ''
+                    ? (string) $this->tokenUrl
+                    : rtrim((string) $this->baseUrl, '/') . '/oauth/token',
+                clientId: (string) $this->clientId,
+                clientSecret: (string) $this->clientSecret,
+                // Clave histórica: no invalidar tokens vigentes al desplegar.
+                cacheKey: 'clinical_history_exchange_token_' . md5($this->connectorKey . (string) $this->clientId)
             );
         }
 
-        $data = $response->data;
-        $token = is_array($data) ? (string) ($data['access_token'] ?? '') : '';
-        if ($token === '') {
-            throw new ClinicalHistoryExchangeException('OAuth nacional-fhir: access_token vacío.');
-        }
+        return $this->tokenProvider;
+    }
 
-        $ttl = is_array($data) ? (int) ($data['expires_in'] ?? 3000) : 3000;
-        if (Yii::$app->cache !== null) {
-            Yii::$app->cache->set($cacheKey, $token, max(60, $ttl - 60));
-        }
-
-        $this->accessToken = $token;
-
-        return $token;
+    private function api(): JsonApiClient
+    {
+        return $this->httpClient ??= new JsonApiClient(
+            baseUrl: (string) $this->baseUrl,
+            connectTimeout: 10,
+            timeout: (float) $this->timeoutSeconds,
+            logCategory: 'clinical-history-exchange',
+            provider: $this->connectorKey,
+            providerLabel: 'Historia clínica nacional'
+        );
     }
 }

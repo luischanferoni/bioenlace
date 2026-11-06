@@ -5,12 +5,18 @@ namespace common\components\Domain\Scheduling\Agenda\Infrastructure\External\Nis
 use common\components\Domain\Scheduling\Agenda\Infrastructure\External\NisFhir\Contract\FhirSchedulingInboundConnector;
 use common\components\Domain\Scheduling\Agenda\Infrastructure\External\NisFhir\Exception\FhirSchedulingConnectorException;
 use common\components\Domain\Scheduling\Agenda\Infrastructure\External\NisFhir\Mapper\FhirBundleMapper;
-use Yii;
+use common\components\Shared\Infrastructure\Http\Auth\AccessTokenProvider;
+use common\components\Shared\Infrastructure\Http\Auth\OAuthClientCredentialsTokenProvider;
+use common\components\Shared\Infrastructure\Http\Auth\OAuthTokenException;
+use common\components\Shared\Infrastructure\Http\HttpApiException;
+use common\components\Shared\Infrastructure\Http\JsonApiClient;
 use yii\base\Component;
-use yii\httpclient\Client;
 
 /**
  * HAPI FHIR R4 — NIS MSAL ({@see https://nis.msalsgo.gob.ar/fhir}).
+ *
+ * Con `tokenUrl` + `clientId` + `clientSecret` agrega `Authorization: Bearer`; sin ellos
+ * opera contra un FHIR abierto (modo histórico que el registry usa en desarrollo).
  */
 class MsalNisFhirSchedulingConnector extends Component implements FhirSchedulingInboundConnector
 {
@@ -27,7 +33,10 @@ class MsalNisFhirSchedulingConnector extends Component implements FhirScheduling
 
     public int $timeoutSeconds = 30;
 
-    private ?string $accessToken = null;
+    /** @internal seam de test: permite un `Client` con transporte falso, sin red. */
+    public ?JsonApiClient $httpClient = null;
+
+    private ?AccessTokenProvider $tokenProvider = null;
 
     public function getConnectorKey(): string
     {
@@ -46,22 +55,12 @@ class MsalNisFhirSchedulingConnector extends Component implements FhirScheduling
 
     public function readSchedule(string $id, array $includes = []): array
     {
-        $params = [];
-        if ($includes !== []) {
-            $params['_include'] = implode(',', $includes);
-        }
-
-        return $this->request('GET', 'Schedule/' . rawurlencode($id), $params);
+        return $this->request('GET', 'Schedule/' . rawurlencode($id), $this->includeQuery($includes));
     }
 
     public function readAppointment(string $id, array $includes = []): array
     {
-        $params = [];
-        if ($includes !== []) {
-            $params['_include'] = implode(',', $includes);
-        }
-
-        return $this->request('GET', 'Appointment/' . rawurlencode($id), $params);
+        return $this->request('GET', 'Appointment/' . rawurlencode($id), $this->includeQuery($includes));
     }
 
     public function readResource(string $resourceType, string $id): array
@@ -97,85 +96,79 @@ class MsalNisFhirSchedulingConnector extends Component implements FhirScheduling
      * @param array<string, scalar|null> $query
      * @param array<string, mixed>|null $jsonBody
      * @return array<string, mixed>
+     *
+     * @throws FhirSchedulingConnectorException respuesta no-2xx o cuerpo no-FHIR
+     * @throws OAuthTokenException no se pudo obtener el token
      */
     private function request(string $method, string $relativePath, array $query = [], ?array $jsonBody = null): array
     {
-        $url = rtrim($this->baseUrl, '/') . '/' . ltrim($relativePath, '/');
-        if ($query !== []) {
-            $url .= '?' . http_build_query(array_filter($query, static fn ($v) => $v !== null && $v !== ''));
-        }
-
-        $client = new Client(['transport' => 'yii\httpclient\CurlTransport']);
-        $request = $client->createRequest()
-            ->setMethod($method)
-            ->setUrl($url)
-            ->addHeaders([
-                'Accept' => 'application/fhir+json, application/json',
-            ])
-            ->setOptions(['timeout' => $this->timeoutSeconds]);
-
-        if ($jsonBody !== null) {
-            $request->setFormat(Client::FORMAT_JSON)
-                ->addHeaders(['Content-Type' => 'application/fhir+json'])
-                ->setData($jsonBody);
-        }
+        $headers = ['Accept' => 'application/fhir+json, application/json'];
+        $body = null;
 
         if ($this->usesOAuth()) {
-            $request->addHeaders(['Authorization' => 'Bearer ' . $this->getAccessToken()]);
+            $headers['Authorization'] = 'Bearer ' . $this->tokenProvider()->token();
+        }
+        if ($jsonBody !== null) {
+            $headers['Content-Type'] = 'application/fhir+json';
+            $body = $jsonBody;
         }
 
-        $response = $request->send();
-        if (!$response->isOk) {
-            Yii::error([
-                'connector' => $this->connectorKey,
-                'url' => $url,
-                'status' => $response->statusCode,
-                'body' => $response->content,
-            ], 'fhir-scheduling-inbound');
-
+        try {
+            $response = $this->api()->request(
+                $method,
+                $relativePath,
+                $body,
+                $headers,
+                array_filter($query, static fn ($v) => $v !== null && $v !== '')
+            );
+        } catch (HttpApiException $e) {
             throw new FhirSchedulingConnectorException(
-                "NIS FHIR HTTP {$response->statusCode} en {$relativePath}"
+                'NIS FHIR HTTP ' . $e->statusCode() . ' en ' . $relativePath,
+                0,
+                $e
             );
         }
 
-        $data = $response->data;
-        if (!is_array($data)) {
-            throw new FhirSchedulingConnectorException('Respuesta FHIR no es JSON válido.');
-        }
+        return $response->body();
+    }
 
-        return $data;
+    /** @param list<string> $includes */
+    private function includeQuery(array $includes): array
+    {
+        return $includes === [] ? [] : ['_include' => implode(',', $includes)];
     }
 
     private function usesOAuth(): bool
     {
-        return $this->tokenUrl !== null && $this->tokenUrl !== ''
-            && $this->clientId !== null && $this->clientId !== ''
+        return $this->tokenUrl !== null && trim($this->tokenUrl) !== ''
+            && $this->clientId !== null && trim($this->clientId) !== ''
             && $this->clientSecret !== null && $this->clientSecret !== '';
     }
 
-    private function getAccessToken(): string
+    private function tokenProvider(): AccessTokenProvider
     {
-        if ($this->accessToken !== null) {
-            return $this->accessToken;
+        if ($this->tokenProvider === null) {
+            $this->tokenProvider = new OAuthClientCredentialsTokenProvider(
+                client: $this->api(),
+                tokenPath: (string) $this->tokenUrl,
+                clientId: (string) $this->clientId,
+                clientSecret: (string) $this->clientSecret,
+                cacheKeyPrefix: 'oauth_token_' . $this->connectorKey
+            );
         }
 
-        $client = new Client(['transport' => 'yii\httpclient\CurlTransport']);
-        $response = $client->createRequest()
-            ->setMethod('POST')
-            ->setUrl((string) $this->tokenUrl)
-            ->setData([
-                'grant_type' => 'client_credentials',
-                'client_id' => $this->clientId,
-                'client_secret' => $this->clientSecret,
-            ])
-            ->send();
+        return $this->tokenProvider;
+    }
 
-        if (!$response->isOk || !is_array($response->data) || empty($response->data['access_token'])) {
-            throw new FhirSchedulingConnectorException('No se pudo obtener token OAuth para NIS FHIR.');
-        }
-
-        $this->accessToken = (string) $response->data['access_token'];
-
-        return $this->accessToken;
+    private function api(): JsonApiClient
+    {
+        return $this->httpClient ??= new JsonApiClient(
+            baseUrl: $this->baseUrl,
+            connectTimeout: 5,
+            timeout: (float) $this->timeoutSeconds,
+            logCategory: 'fhir-scheduling-inbound',
+            provider: $this->connectorKey,
+            providerLabel: 'NIS FHIR'
+        );
     }
 }

@@ -47,9 +47,9 @@ class EnqueueClinicalHistoryOutboundTest extends \Codeception\Test\Unit
             static fn (array $e) => $e['resource']['resourceType'] ?? '',
             $bundle['entry']
         );
-        verify($types)->contains('Composition');
-        verify($types)->contains('Encounter');
-        verify($types)->contains('Patient');
+        verify($types)->arrayContains('Composition');
+        verify($types)->arrayContains('Encounter');
+        verify($types)->arrayContains('Patient');
     }
 
     public function testNoEncolaSiMasterDisabled(): void

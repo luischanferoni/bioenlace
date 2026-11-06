@@ -6,6 +6,7 @@ use common\components\Domain\Clinical\CareRequest\Domain\Model\CareRequest;
 use common\components\Domain\Clinical\CareRequest\Domain\CodingSystems;
 use common\components\Domain\Clinical\CareRequest\Domain\CompositeServiceLineActCatalog;
 use common\components\Domain\Clinical\CareRequest\Domain\ServiceLineActCatalogInterface;
+use common\components\Domain\Clinical\CareRequest\Application\Service\CareRequestMetadata;
 
 /**
  * Completa y valida CareRequest (línea × acto) vía catálogo y metadata.

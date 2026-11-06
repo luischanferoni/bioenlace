@@ -4,6 +4,7 @@ namespace common\components\Domain\Clinical\Encounter\Application\UseCase;
 
 use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
 use common\components\Domain\Clinical\Encounter\Domain\Model\Condition as ConditionAggregate;
+use common\components\Domain\Clinical\Encounter\Application\Presentation\ConditionPresentationService;
 use common\models\Clinical\Condition;
 
 /**

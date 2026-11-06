@@ -511,7 +511,6 @@ class SpeechToTextManager
         }
 
         $hfModel = SttConfigService::huggingFaceModel($modeloAlias);
-        \common\components\ModelManager::registrarUso($hfModel, 'stt');
 
         return HuggingFaceSttClient::transcribe($audioData, $hfModel);
     }

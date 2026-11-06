@@ -32,21 +32,6 @@ class IAManager
     }
 
     /**
-     * Extraer ID del modelo desde endpoint
-     * @param string $endpoint
-     * @return string
-     */
-    private static function extraerModeloId($endpoint)
-    {
-        // Extraer nombre del modelo del endpoint
-        // Ejemplo: https://router.huggingface.co/models/llama3.1:8b -> llama3.1:8b
-        if (preg_match('/models\/([^\/]+)/', $endpoint, $matches)) {
-            return $matches[1];
-        }
-        return md5($endpoint);
-    }
-    
-    /**
      * Comprimir datos en tránsito (gzip)
      * @param string $data Datos a comprimir
      * @param string|null $tipoProveedor Tipo de proveedor ('huggingface', 'openai', 'groq', 'ollama', 'google')
@@ -740,16 +725,6 @@ class IAManager
                     $proveedorIA['payload']['parameters']['max_length'] = $maxLengthOptimizado;
                 } elseif (isset($proveedorIA['payload']['options'])) {
                     $proveedorIA['payload']['options']['max_length'] = $maxLengthOptimizado;
-                }
-                
-                // Registrar uso del modelo para gestión de memoria
-                $modeloId = self::extraerModeloId($endpoint);
-                ModelManager::registrarUso($modeloId, $tipoModelo);
-                
-                // Verificar si el modelo debe estar cargado
-                if (!ModelManager::debeEstarCargado($modeloId, $tipoModelo)) {
-                    \Yii::warning("Modelo no disponible en memoria: {$modeloId}. Cargando...", 'ia-manager');
-                    // En un sistema real, aquí se cargaría el modelo
                 }
                 
                 // Verificar rate limiter

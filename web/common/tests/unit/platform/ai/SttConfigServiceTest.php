@@ -51,7 +51,7 @@ class SttConfigServiceTest extends \Codeception\Test\Unit
         verify($snap)->arrayHasKey('proveedor_servidor');
         verify($snap)->arrayHasKey('server_configured');
         verify($snap['server_configured'])->true();
-        verify($snap)->arrayNotHasKey('groq_api_key');
+        verify($snap)->arrayHasNotKey('groq_api_key');
     }
 
     public function testSttDeviceEnabledTienePrioridadSobreLaConfiguracionLegacy(): void

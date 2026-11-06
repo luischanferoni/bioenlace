@@ -8,6 +8,9 @@
  *
  * Hostinger: si aparece SQLSTATE[HY000] [2002] Operation not permitted (rate limit de
  * conexiones nuevas), agregar attributes PDO::ATTR_PERSISTENT => true.
+ *
+ * El `mailer` no va acá: lo define common/config/mailer.php (yii2-symfonymailer, DSN en
+ * params-local). Sobrescribirlo con swiftmailer rompe el arranque.
  */
 return [
     'components' => [
@@ -20,11 +23,6 @@ return [
             // 'attributes' => [
             //     \PDO::ATTR_PERSISTENT => true,
             // ],
-        ],
-        'mailer' => [
-            'class' => 'yii\swiftmailer\Mailer',
-            'viewPath' => '@common/views/mail',
-            'useFileTransport' => true,
         ],
     ],
 ];

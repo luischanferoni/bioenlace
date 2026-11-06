@@ -16,7 +16,7 @@ use Yii;
  * Presencial: todos los servicios con agenda; triage prioriza sugeridos.
  * Teleconsulta / hub: clínico generalista; especialista remoto con derivación.
  */
-final class ReservaTriageServicioSugeridoService
+class ReservaTriageServicioSugeridoService
 {
     private ReservaTriageServicioRolResolver $rolResolver;
 

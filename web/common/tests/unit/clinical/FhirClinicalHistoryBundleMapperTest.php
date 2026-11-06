@@ -41,7 +41,7 @@ class FhirClinicalHistoryBundleMapperTest extends \Codeception\Test\Unit
         );
 
         foreach ($golden['required_resource_types'] as $resourceType) {
-            verify($types)->contains($resourceType);
+            verify($types)->arrayContains($resourceType);
         }
 
         $composition = null;

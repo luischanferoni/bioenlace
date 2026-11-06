@@ -8,6 +8,7 @@ use common\components\Domain\Clinical\Encounter\Application\Presentation\Conditi
 use common\components\Domain\Clinical\CarePlan\Application\Service\PatientActiveCarePlanQueryService;
 use common\components\Domain\Person\Identity\Application\Service\PacienteContextoService;
 use common\components\Domain\Scheduling\Agenda\Domain\Catalog\ControlSeguimientoHubCatalog;
+use common\components\Domain\Scheduling\Agenda\Application\Service\EncounterFollowupIntakeCatalogService;
 use common\models\Person\Persona;
 
 /**

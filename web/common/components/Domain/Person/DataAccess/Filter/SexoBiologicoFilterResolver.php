@@ -5,6 +5,8 @@ namespace common\components\Domain\Person\DataAccess\Filter;
 use common\components\Platform\Core\DataAccess\Filter\FilterResolvedValue;
 use common\components\Platform\Core\DataAccess\Filter\FilterValueResolverContext;
 use common\components\Platform\Core\DataAccess\Filter\FilterValueResolverInterface;
+
+/**
  * sexo_biologico literal o sinónimo NL → código 1|2.
  */
 final class SexoBiologicoFilterResolver implements FilterValueResolverInterface

@@ -6,6 +6,7 @@ use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
 
 use common\components\Domain\Clinical\Encounter\Domain\EncounterStatus;
 use common\components\Domain\Clinical\Encounter\Domain\RequestStatus;
+use common\components\Domain\Clinical\Encounter\Application\Presentation\ConditionPresentationService;
 use common\models\Clinical\Condition;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\MedicationRequest;

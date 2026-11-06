@@ -8,7 +8,7 @@ use common\components\Domain\Clinical\Capture\Domain\Port\TerminologyLookupPort;
  * Policy: ¿un término extraído por IA es clínicamente plausible?
  * Terminología vía {@see TerminologyLookupPort} (sin acoplar a Platform ni adapters).
  */
-final class ExtractedTermPolicy
+class ExtractedTermPolicy
 {
     private TerminologyLookupPort $terminologyLookup;
 

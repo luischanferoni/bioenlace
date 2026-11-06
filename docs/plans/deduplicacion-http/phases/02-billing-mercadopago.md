@@ -18,13 +18,13 @@ descubrirlo acá que en la fase 04 con 8 archivos migrados.
 
 ## Tareas
 
-- [ ] Crear `Domain/Organization/Billing/Infrastructure/External/MercadoPago/MercadoPagoApiClient`
+- [x] Crear `Domain/Organization/Billing/Infrastructure/External/MercadoPago/MercadoPagoApiClient`
       con los 4 endpoints sobre `JsonApiClient`.
-- [ ] `MercadoPagoCheckoutService` conserva pricing ARS/IVA, validaciones de entrada y
+- [x] `MercadoPagoCheckoutService` conserva pricing ARS/IVA, validaciones de entrada y
       `validateWebhookSignature` (no se toca la firma), y delega el HTTP.
-- [ ] Revisar que el mensaje de error que ve el usuario en `BillingCheckoutService` no cambie.
-- [ ] Sacar `MercadoPagoCheckoutService.php` de `applicationHttp` y `adHoc` del baseline.
-- [ ] Tests: el cliente con `Client` falso (éxito, 402 con `cause`, reintento de `POST` con clave).
+- [x] Revisar que el mensaje de error que ve el usuario en `BillingCheckoutService` no cambie.
+- [x] Sacar `MercadoPagoCheckoutService.php` de `applicationHttp` y `adHoc` del baseline.
+- [x] Tests: el cliente con `Client` falso (éxito, 402 con `cause`, reintento de `POST` con clave).
 - [ ] Confirmar comportamiento ante timeout: un `POST /preapproval` con clave puede reintentarse
       sin duplicar suscripción (verificar con el sandbox de MP antes de cerrar la fase).
 

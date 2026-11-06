@@ -12,7 +12,7 @@ class TurnosVerMisTurnosFlowDraftHydratorTest extends \Codeception\Test\Unit
             'Decime cuándo fue la última vez que fui al dentista'
         );
 
-        verify($terms)->contains('dentista');
+        verify($terms)->arrayContains('dentista');
         verify(in_array('ultima', $terms, true))->false();
         verify(in_array('fui', $terms, true))->false();
     }

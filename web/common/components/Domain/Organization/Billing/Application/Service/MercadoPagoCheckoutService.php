@@ -2,25 +2,24 @@
 
 namespace common\components\Domain\Organization\Billing\Application\Service;
 
+use common\components\Domain\Organization\Billing\Infrastructure\External\MercadoPago\MercadoPagoApiClient;
 use Yii;
 use yii\base\InvalidConfigException;
-use yii\httpclient\Client;
-use yii\httpclient\CurlTransport;
 
 final class MercadoPagoCheckoutService
 {
-    private const API_URL = 'https://api.mercadopago.com';
-
     /** @var array<string, mixed> */
     private array $config;
     private bool $useExchangeRateOverride;
+    private ?MercadoPagoApiClient $apiClient;
 
     /**
      * @param array<string, mixed>|null $config
      */
-    public function __construct(?array $config = null)
+    public function __construct(?array $config = null, ?MercadoPagoApiClient $apiClient = null)
     {
         $this->config = $config ?? (Yii::$app->params['mercadoPago'] ?? []);
+        $this->apiClient = $apiClient;
         $this->useExchangeRateOverride = $config !== null
             && array_key_exists('usdArsRate', $config)
             && array_key_exists('usdArsRateEffectiveDate', $config);
@@ -104,7 +103,7 @@ final class MercadoPagoCheckoutService
             }
         }
 
-        $response = $this->request('POST', '/preapproval', [
+        $response = $this->apiClient()->createPreapproval([
             'reason' => $data['reason'],
             'external_reference' => $data['external_reference'],
             'payer_email' => $data['payer_email'],
@@ -137,7 +136,7 @@ final class MercadoPagoCheckoutService
      */
     public function getSubscription(string $subscriptionId): array
     {
-        return $this->request('GET', '/preapproval/' . rawurlencode($subscriptionId));
+        return $this->apiClient()->getPreapproval($subscriptionId);
     }
 
     /**
@@ -145,7 +144,7 @@ final class MercadoPagoCheckoutService
      */
     public function getAuthorizedPayment(string $authorizedPaymentId): array
     {
-        return $this->request('GET', '/authorized_payments/' . rawurlencode($authorizedPaymentId));
+        return $this->apiClient()->getAuthorizedPayment($authorizedPaymentId);
     }
 
     /**
@@ -153,9 +152,7 @@ final class MercadoPagoCheckoutService
      */
     public function cancelSubscription(string $subscriptionId): array
     {
-        return $this->request('PUT', '/preapproval/' . rawurlencode($subscriptionId), [
-            'status' => 'cancelled',
-        ]);
+        return $this->apiClient()->cancelPreapproval($subscriptionId);
     }
 
     /**
@@ -198,83 +195,18 @@ final class MercadoPagoCheckoutService
     }
 
     /**
-     * @param array<string, mixed>|null $data
-     * @return array<string, mixed>
+     * @throws InvalidConfigException si falta el access token
      */
-    private function request(string $method, string $path, ?array $data = null, ?string $idempotencyKey = null): array
+    private function apiClient(): MercadoPagoApiClient
     {
-        $accessToken = trim((string) ($this->config['accessToken'] ?? ''));
-        if ($accessToken === '') {
-            throw new InvalidConfigException('Mercado Pago access token no configurado.');
-        }
-
-        $client = new Client([
-            'baseUrl' => self::API_URL,
-            'transport' => CurlTransport::class,
-        ]);
-        $request = $client->createRequest()
-            ->setMethod($method)
-            ->setUrl($path)
-            ->setHeaders([
-                'Authorization' => 'Bearer ' . $accessToken,
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-            ])
-            ->setOptions([
-                CURLOPT_CONNECTTIMEOUT => 5,
-                CURLOPT_TIMEOUT => 20,
-            ]);
-        if ($idempotencyKey !== null) {
-            $request->addHeaders(['X-Idempotency-Key' => $idempotencyKey]);
-        }
-        if ($data !== null) {
-            $request->setFormat(Client::FORMAT_JSON)->setData($data);
-        }
-
-        try {
-            $response = $request->send();
-            $statusCode = (int) $response->getStatusCode();
-            $content = (string) $response->getContent();
-        } catch (\yii\httpclient\Exception $e) {
-            Yii::error([
-                'event' => 'mercadopago.transport_error',
-                'method' => $method,
-                'path' => $path,
-                'error' => $e->getMessage(),
-            ], 'mercadopago');
-            throw new \RuntimeException('No se pudo conectar con Mercado Pago.', 0, $e);
-        }
-
-        $body = json_decode($content, true);
-        if ($statusCode < 200 || $statusCode >= 300 || !is_array($body)) {
-            $providerMessage = is_array($body)
-                ? trim((string) ($body['message'] ?? $body['error'] ?? ''))
-                : '';
-            $causes = [];
-            if (is_array($body) && is_array($body['cause'] ?? null)) {
-                foreach ($body['cause'] as $cause) {
-                    if (is_array($cause)) {
-                        $causes[] = trim((string) ($cause['code'] ?? '')) . ': '
-                            . trim((string) ($cause['description'] ?? ''));
-                    }
-                }
+        if ($this->apiClient === null) {
+            $accessToken = trim((string) ($this->config['accessToken'] ?? ''));
+            if ($accessToken === '') {
+                throw new InvalidConfigException('Mercado Pago access token no configurado.');
             }
-            Yii::error([
-                'event' => 'mercadopago.api_error',
-                'method' => $method,
-                'path' => $path,
-                'status_code' => $statusCode,
-                'provider_message' => $providerMessage,
-                'causes' => $causes,
-                'response' => mb_substr($content, 0, 2000),
-            ], 'mercadopago');
-            throw new \RuntimeException(
-                'Mercado Pago rechazó la operación (HTTP ' . $statusCode . ')'
-                . ($providerMessage !== '' ? ': ' . $providerMessage : '')
-                . ($causes !== [] ? ' [' . implode('; ', $causes) . ']' : '')
-            );
+            $this->apiClient = new MercadoPagoApiClient($accessToken);
         }
 
-        return $body;
+        return $this->apiClient;
     }
 }

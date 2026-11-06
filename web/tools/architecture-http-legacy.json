@@ -4,7 +4,6 @@
     "components/Domain/Clinical/CareCohort/Infrastructure/Batch/GcsSimpleUploader.php",
     "components/Domain/Clinical/CareCohort/Infrastructure/Batch/VertexBatchPredictionClient.php",
     "components/Domain/Geo/Application/Service/GoogleGeocodingClient.php",
-    "components/Domain/Organization/Billing/Application/Service/MercadoPagoCheckoutService.php",
     "components/Platform/Ai/Embeddings/EmbeddingsManager.php",
     "components/Platform/Ai/Embeddings/HuggingFaceEmbeddingsClient.php",
     "components/Platform/Ai/HuggingFace/HuggingFaceBatchProcessor.php",
@@ -19,7 +18,6 @@
     "models/Person/Persona.php"
   ],
   "applicationHttp": [
-    "components/Domain/Geo/Application/Service/GoogleGeocodingClient.php",
-    "components/Domain/Organization/Billing/Application/Service/MercadoPagoCheckoutService.php"
+    "components/Domain/Geo/Application/Service/GoogleGeocodingClient.php"
   ]
 }

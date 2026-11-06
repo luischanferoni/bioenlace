@@ -21,7 +21,7 @@ class DeviceSttQualityAssessorTest extends \Codeception\Test\Unit
     {
         $r = DeviceSttQualityAssessor::assess('ok', ['confidence' => 0.95], 'captura_clinica');
         verify($r['ok'])->false();
-        verify($r['reasons'])->contains('texto_muy_corto');
+        verify($r['reasons'])->arrayContains('texto_muy_corto');
     }
 
     public function testRechazaConfianzaBajaEnCaptura(): void
@@ -32,7 +32,7 @@ class DeviceSttQualityAssessorTest extends \Codeception\Test\Unit
             'captura_clinica'
         );
         verify($r['ok'])->false();
-        verify($r['reasons'])->contains('confianza_baja');
+        verify($r['reasons'])->arrayContains('confianza_baja');
     }
 
     public function testRechazaResultadoConErrorDelMotor(): void
@@ -44,7 +44,7 @@ class DeviceSttQualityAssessorTest extends \Codeception\Test\Unit
         );
 
         verify($r['ok'])->false();
-        verify($r['reasons'])->contains('error_motor');
+        verify($r['reasons'])->arrayContains('error_motor');
     }
 
     public function testAceptaTextoLocalDeBuenaCalidadConSttServidorHabilitado(): void

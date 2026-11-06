@@ -60,12 +60,7 @@ class ReservaTriageServicioSugeridoServiceTest extends Unit
 
     public function testPriorizarItemsPresencialMantieneTodos(): void
     {
-        $svc = new class extends ReservaTriageServicioSugeridoService {
-            public function resolverParaDraft(array $draft, bool $soloHubPaciente = false): array
-            {
-                return parent::resolverParaDraft($draft, $soloHubPaciente);
-            }
-        };
+        $svc = new ReservaTriageServicioSugeridoService();
         $items = [
             ['id' => '8', 'name' => 'MED CLINICA'],
             ['id' => '66', 'name' => 'DERMATOLOGÍA'],

@@ -43,7 +43,7 @@ class PatientAiContextServiceTest extends \Codeception\Test\Unit
             300
         );
 
-        verify(strlen($block))->lessOrEquals(300);
+        verify(strlen($block))->lessThanOrEqual(300);
         verify(substr($block, -3))->equals('…');
     }
 

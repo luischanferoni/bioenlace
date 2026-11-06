@@ -121,14 +121,14 @@ class SubmitPatientCareRequestTest extends Unit
             ]
         );
         // ReservaTriageServicioSugeridoService usa SubmitPatientCareRequest con DB por defecto;
-        // validamos el contrato de draft + filtrarItemsPorIds vÃ­a resolverParaDraft con draft ya resuelto.
+        // validamos el contrato de draft + filtrarItemsPorIds vía resolverParaDraft con draft ya resuelto.
         $draft = [
             'triage_raiz' => SubmitPatientCareRequest::TRIAGE_RAIZ_ESTUDIO,
             'pedido_acto' => CodingSystems::SNOMED . '|16310003',
             'pedido_linea_ids' => '11',
             'pedido_modo' => CareRequest::MODO_ESTUDIO,
         ];
-        // Sin DB de actos: al resolver de nuevo puede vaciar; set flags como harÃ­a el paciente svc.
+        // Sin DB de actos: al resolver de nuevo puede vaciar; set flags como haría el paciente svc.
         $paciente = new SubmitPatientCareRequest(new ResolveCareRequest($catalog), $catalog);
         $paciente->aplicarFlagsEnDraft($draft);
 
@@ -158,7 +158,7 @@ class SubmitPatientCareRequestTest extends Unit
         $opts = $svc->opcionesActoParaTriagePaso();
         $this->assertCount(1, $opts);
         $this->assertSame(CodingSystems::SNOMED . '|16310003', $opts[0]['code']);
-        $this->assertSame('EcografÃ­a', $opts[0]['label']);
+        $this->assertSame('Ecografía', $opts[0]['label']);
     }
 
     public function testHidratarDesdeMensajeEcografia(): void
@@ -188,7 +188,7 @@ class SubmitPatientCareRequestTest extends Unit
         );
         $svc = new SubmitPatientCareRequest(new ResolveCareRequest($catalog), $catalog);
         $draft = [];
-        $svc->hidratarDesdeMensaje($draft, 'Necesito una ecografÃ­a');
+        $svc->hidratarDesdeMensaje($draft, 'Necesito una ecografía');
 
         $this->assertSame(SubmitPatientCareRequest::TRIAGE_RAIZ_ESTUDIO, $draft['triage_raiz']);
         $this->assertSame(CodingSystems::SNOMED . '|16310003', $draft['pedido_acto']);

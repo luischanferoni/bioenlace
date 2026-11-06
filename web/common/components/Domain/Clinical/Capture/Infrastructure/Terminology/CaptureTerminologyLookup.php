@@ -13,7 +13,7 @@ use yii\db\ActiveRecord;
 /**
  * Adapter Infrastructure: respaldo terminológico local o Snowstorm.
  */
-final class CaptureTerminologyLookup implements TerminologyLookupPort
+class CaptureTerminologyLookup implements TerminologyLookupPort
 {
     private bool $terminologyServiceUnavailable = false;
     private ?SnowstormClient $snowstorm;

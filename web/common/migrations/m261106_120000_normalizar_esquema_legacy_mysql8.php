@@ -257,20 +257,145 @@ class m261106_120000_normalizar_esquema_legacy_mysql8 extends Migration
             'utf8mb3_spanish_ci' => 'utf8mb4_spanish_ci',
         ];
 
-        // Las tablas utf8mb3 se referencian por FK con columnas VARCHAR; hay que convertirlas
-        // en bloque. MySQL valida la compatibilidad entre columnas al hacer CONVERT.
-        $this->db->createCommand('SET FOREIGN_KEY_CHECKS = 0')->execute();
+        // MariaDB rechaza CONVERT sobre columnas usadas en una FK (error 1832), incluso con
+        // FOREIGN_KEY_CHECKS=0. Se sueltan las FKs de columnas string, se convierte y se recrean.
+        $foreignKeys = $this->stringForeignKeysInvolving(array_column($rows, 'TABLE_NAME'));
+        $dropped = [];
+        $error = null;
         try {
-            foreach ($rows as $row) {
-                $collation = $collations[$row['TABLE_COLLATION']] ?? 'utf8mb4_unicode_ci';
+            foreach ($foreignKeys as $fk) {
                 $this->db->createCommand(
-                    'ALTER TABLE ' . $this->db->quoteTableName($row['TABLE_NAME'])
-                    . ' CONVERT TO CHARACTER SET utf8mb4 COLLATE ' . $collation
+                    'ALTER TABLE ' . $this->quoteRawTableName($fk['table'])
+                    . ' DROP FOREIGN KEY ' . $this->db->quoteColumnName($fk['name'])
                 )->execute();
+                $dropped[] = $fk;
             }
-        } finally {
-            $this->db->createCommand('SET FOREIGN_KEY_CHECKS = 1')->execute();
+
+            $this->db->createCommand('SET FOREIGN_KEY_CHECKS = 0')->execute();
+            try {
+                foreach ($rows as $row) {
+                    $collation = $collations[$row['TABLE_COLLATION']] ?? 'utf8mb4_unicode_ci';
+                    $this->db->createCommand(
+                        'ALTER TABLE ' . $this->quoteRawTableName($row['TABLE_NAME'])
+                        . ' CONVERT TO CHARACTER SET utf8mb4 COLLATE ' . $collation
+                    )->execute();
+                }
+            } finally {
+                $this->db->createCommand('SET FOREIGN_KEY_CHECKS = 1')->execute();
+            }
+        } catch (\Throwable $e) {
+            $error = $e;
         }
+
+        $readdError = null;
+        foreach ($dropped as $fk) {
+            try {
+                $this->db->createCommand($this->addForeignKeySql($fk))->execute();
+            } catch (\Throwable $e) {
+                $readdError ??= $e;
+            }
+        }
+
+        if ($error !== null) {
+            throw $error;
+        }
+        if ($readdError !== null) {
+            throw $readdError;
+        }
+    }
+
+    /**
+     * FKs que involucran alguna de las tablas indicadas y usan al menos una columna string.
+     *
+     * @param list<string> $tables
+     * @return list<array{table:string, name:string, columns:list<string>, ref_table:string, ref_columns:list<string>, update_rule:string, delete_rule:string}>
+     */
+    private function stringForeignKeysInvolving(array $tables): array
+    {
+        if ($tables === []) {
+            return [];
+        }
+
+        $in = implode(',', array_map(
+            fn (string $table): string => $this->db->quoteValue($table),
+            $tables
+        ));
+        $rows = $this->db->createCommand(
+            "SELECT k.TABLE_NAME, k.CONSTRAINT_NAME, k.COLUMN_NAME, k.REFERENCED_TABLE_NAME,
+                    k.REFERENCED_COLUMN_NAME, k.ORDINAL_POSITION, r.UPDATE_RULE, r.DELETE_RULE
+               FROM information_schema.KEY_COLUMN_USAGE k
+               JOIN information_schema.REFERENTIAL_CONSTRAINTS r
+                 ON r.CONSTRAINT_SCHEMA = k.CONSTRAINT_SCHEMA
+                AND r.TABLE_NAME = k.TABLE_NAME
+                AND r.CONSTRAINT_NAME = k.CONSTRAINT_NAME
+              WHERE k.TABLE_SCHEMA = DATABASE()
+                AND k.REFERENCED_TABLE_NAME IS NOT NULL
+                AND (k.TABLE_NAME IN ($in) OR k.REFERENCED_TABLE_NAME IN ($in))
+              ORDER BY k.TABLE_NAME, k.CONSTRAINT_NAME, k.ORDINAL_POSITION"
+        )->queryAll();
+
+        $grouped = [];
+        foreach ($rows as $row) {
+            $key = $row['TABLE_NAME'] . '|' . $row['CONSTRAINT_NAME'];
+            if (!isset($grouped[$key])) {
+                $grouped[$key] = [
+                    'table' => $row['TABLE_NAME'],
+                    'name' => $row['CONSTRAINT_NAME'],
+                    'columns' => [],
+                    'ref_table' => $row['REFERENCED_TABLE_NAME'],
+                    'ref_columns' => [],
+                    'update_rule' => $row['UPDATE_RULE'],
+                    'delete_rule' => $row['DELETE_RULE'],
+                ];
+            }
+            $grouped[$key]['columns'][] = $row['COLUMN_NAME'];
+            $grouped[$key]['ref_columns'][] = $row['REFERENCED_COLUMN_NAME'];
+        }
+
+        $stringColumns = [];
+        foreach ($this->db->createCommand(
+            'SELECT TABLE_NAME, COLUMN_NAME FROM information_schema.COLUMNS'
+            . ' WHERE TABLE_SCHEMA = DATABASE() AND CHARACTER_SET_NAME IS NOT NULL'
+        )->queryAll() as $column) {
+            $stringColumns[$column['TABLE_NAME'] . '|' . $column['COLUMN_NAME']] = true;
+        }
+
+        $result = [];
+        foreach ($grouped as $fk) {
+            foreach ($fk['columns'] as $i => $column) {
+                if (
+                    isset($stringColumns[$fk['table'] . '|' . $column])
+                    || isset($stringColumns[$fk['ref_table'] . '|' . $fk['ref_columns'][$i]])
+                ) {
+                    $result[] = $fk;
+                    break;
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param array{table:string, name:string, columns:list<string>, ref_table:string, ref_columns:list<string>, update_rule:string, delete_rule:string} $fk
+     */
+    private function addForeignKeySql(array $fk): string
+    {
+        $columns = implode(',', array_map(
+            fn (string $column): string => $this->db->quoteColumnName($column),
+            $fk['columns']
+        ));
+        $refColumns = implode(',', array_map(
+            fn (string $column): string => $this->db->quoteColumnName($column),
+            $fk['ref_columns']
+        ));
+
+        return 'ALTER TABLE ' . $this->quoteRawTableName($fk['table'])
+            . ' ADD CONSTRAINT ' . $this->db->quoteColumnName($fk['name'])
+            . ' FOREIGN KEY (' . $columns . ')'
+            . ' REFERENCES ' . $this->quoteRawTableName($fk['ref_table']) . ' (' . $refColumns . ')'
+            . ' ON DELETE ' . $fk['delete_rule']
+            . ' ON UPDATE ' . $fk['update_rule'];
     }
 
     /**

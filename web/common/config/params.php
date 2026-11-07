@@ -58,6 +58,14 @@ return [
          * Mercado Pago. Ver docs/operacion/mercado-pago-checkout-pro.md.
          */
         'sandboxSignupEnabled' => false,
+        /**
+         * Pagador de prueba (email, o usuario de prueba: se le agrega
+         * `@testuser.com`). Con credenciales de prueba, el cobrador es un
+         * usuario de prueba y Mercado Pago exige que el pagador también lo sea;
+         * de lo contrario responde 400 "Both payer and collector must be real or
+         * test users". Vacío en producción.
+         */
+        'sandboxBuyerEmail' => null,
     ],
     /**
      * Push FCM de la plataforma (turnos, alertas, mensajes, etc.).

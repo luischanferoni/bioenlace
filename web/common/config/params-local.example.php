@@ -69,6 +69,9 @@ return [
     //     // Solo en entornos NO productivos: habilita el alta de prueba sin
     //     // Didit para validar el checkout en sandbox (botón debug de la app).
     //     'sandboxSignupEnabled' => true,
+    //     // Email del usuario de prueba comprador (o su usuario: se agrega
+    //     // @testuser.com). Requerido para pagar con credenciales de prueba.
+    //     'sandboxBuyerEmail' => 'test_user_000000@testuser.com',
     // ],
 
     // --- Push FCM plataforma (proyecto Firebase distinto de Vertex) ---

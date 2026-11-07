@@ -135,7 +135,7 @@ El snapshot (USD, cotización, fecha de vigencia, neto, IVA y total) se congela 
 En **Tus integraciones → tu aplicación**:
 
 1. **Credenciales de producción** → copiar el *Access Token* (`APP_USR-...`). La *Public Key* no se usa: toda la integración es server-side.
-2. **Credenciales de prueba** → *Access Token* del entorno **Prueba**. En las integraciones actuales este token también empieza con `APP_USR-...`; los `TEST-...` de integraciones viejas siguen siendo válidos. **Ya no se crean "usuarios de prueba"** desde el panel: la cuenta de prueba se genera automáticamente con la aplicación (bloque *Cuenta de prueba* en **Credenciales**). Para pagar en sandbox no se inicia sesión en Mercado Pago (ver [Prueba en sandbox](#prueba-en-sandbox)).
+2. **Credenciales de prueba** → *Access Token* del entorno **Prueba**. En las integraciones actuales este token también empieza con `APP_USR-...`; los `TEST-...` de integraciones viejas siguen siendo válidos. Además, en **Cuentas de prueba** se crea/consulta el **usuario de prueba comprador** (User ID, usuario, contraseña y código de verificación). Es necesario porque, para **suscripciones**, Mercado Pago exige que cobrador y pagador sean ambos de prueba. Ver [Prueba en sandbox](#prueba-en-sandbox).
 3. **Webhooks → Configurar notificaciones**:
    - URL de producción: `https://app.bioenlace.io/api/v1/mercado-pago-webhook`
    - URL de test: la misma o un túnel HTTPS (`ngrok`/`cloudflared`) si se prueba local.
@@ -219,7 +219,7 @@ Respuesta esperada (`201`):
 | Cancelación | `POST licencia/cancelar-suscripcion-didit` | `provider_subscription_status=cancelled`; la licencia sigue activa hasta `paid_through_at` |
 | Firma inválida | POST sin `x-signature` o con secreto distinto | `401` y log `Firma inválida en webhook de Mercado Pago.` |
 
-Las tarjetas de prueba oficiales y sus nombres (APRO/OTHE/CONT) están en la documentación de Mercado Pago. Para sandbox se paga **sin iniciar sesión** en Mercado Pago (ver abajo); nunca usar una tarjeta ni una cuenta reales.
+Las tarjetas de prueba oficiales y sus nombres (APRO/OTHE/CONT) están en la documentación de Mercado Pago. Para **suscripciones** en sandbox se paga con la tarjeta de prueba iniciando sesión como el **usuario de prueba comprador** (o dejando que el checkout use el `payer_email` configurado). Nunca usar una tarjeta ni una cuenta reales.
 
 ### Datos de la tarjeta de prueba
 
@@ -244,8 +244,9 @@ En builds **debug** de la app *Personal de Salud*, el paso **"Verificar identida
 Requisitos y límites:
 
 - Backend no productivo con `mercadoPago.sandboxSignupEnabled = true` en `params-local.php`. Por defecto está en `false` y además el endpoint se bloquea si `YII_ENV` es `prod`.
+- Configurar `mercadoPago.sandboxBuyerEmail` con el **email del usuario de prueba comprador** (o su usuario de prueba, al que se le agrega `@testuser.com`). Con credenciales de prueba, Mercado Pago exige que el pagador sea también un usuario de prueba; si no, responde `400 Both payer and collector must be real or test users`. En producción este parámetro queda vacío y se usa el email del alta.
 - El enlace solo se dibuja en `kDebugMode`; no aparece en builds de tienda.
-- Usar credenciales del entorno **Prueba** y pagar en una ventana **incógnito sin sesión** de Mercado Pago, con cualquier email válido.
+- Usar credenciales del entorno **Prueba** y pagar con la tarjeta de prueba. Si el checkout pide login, ingresar con el **usuario de prueba comprador**; el `payer_email` lo fuerza el backend desde `sandboxBuyerEmail`.
 - Endpoints: `POST licencia/registrar-efector-sandbox`, `POST licencia/estado-checkout-sandbox`, `POST licencia/cancelar-suscripcion-sandbox`.
 
 ### Verificación
@@ -289,7 +290,7 @@ Causas habituales:
 
 | Mensaje de Mercado Pago | Causa | Solución |
 |---|---|---|
-| `Both payer and collector must be real or test users` | Mezcla de modos: el *collector* (dueño del `accessToken`) es de prueba y el `payer_email` es real, o al revés. | Alinear: credenciales del entorno **Prueba** con un email válido, o token de producción con mail real. Ver abajo. |
+| `Both payer and collector must be real or test users` | Mezcla de modos: el *collector* (dueño del `accessToken`) es de prueba y el `payer_email` es real, o al revés. | Configurar `mercadoPago.sandboxBuyerEmail` con el email del usuario de prueba comprador (o su usuario: se agrega `@testuser.com`). Ver abajo. |
 | `Invalid payer email` / `invalid_payer_email` | El `payer_email` no coincide con el modo de las credenciales o es inválido. También ocurre con el placeholder `@accounts.bioenlace.invalid` de una identidad creada sin mail. | En sandbox usar cualquier email válido (o el de la **Cuenta de prueba** del panel); en producción, el mail real del titular. |
 | `invalid_back_url` | `backUrl` vacía, `http://` o con un host que no resuelve. | Usar una URL HTTPS pública. |
 | `invalid_auto_recurring` / `transaction_amount` | Importe `0`, negativo o con más de 2 decimales. | Revisar `usdArsRate`, `vatRate` y el plan del efector. |
@@ -308,12 +309,12 @@ Si `tags` incluye `test_user` (o el email termina en `@testuser.com`), el collec
 
 | Combinación | Resultado |
 |---|---|
-| Token de prueba (entorno **Prueba**) + `payer_email` de cualquier email válido | ✅ válido |
+| Token de prueba + `payer_email` del usuario de prueba comprador | ✅ válido |
 | `APP_USR-...` de producción + mail real del titular | ✅ válido |
-| Token de prueba + mail real de una cuenta de Mercado Pago | ❌ 400 |
-| Token de producción + mail de la cuenta de prueba | ❌ 400 |
+| Token de prueba + mail real | ❌ 400 |
+| Token de producción + mail de usuario de prueba | ❌ 400 |
 
-En sandbox ya **no se crean usuarios compradores**. El mail del pagador puede ser cualquiera válido: se paga en una ventana incógnito sin sesión de Mercado Pago. Si Mercado Pago insiste en la alineación de modos, usar el email de la **Cuenta de prueba** que figura en **Credenciales** (bloque independiente) tanto en la app como en el `curl`. Para producción, cargar el `accessToken` `APP_USR-...` y usar el mail real del titular.
+Para **suscripciones** (a diferencia de Checkout Pro/orders) el pagador debe ser un usuario de prueba cuando el cobrador lo es. Configurar `mercadoPago.sandboxBuyerEmail` con el email del comprador de prueba (o su usuario: se le agrega `@testuser.com`); el backend lo usa como `payer_email` aunque el usuario tipee otro email. En producción el parámetro queda vacío y se usa el mail real del titular.
 
 Un intento fallido con este error queda en `FAILED` y **no** crea suscripción en Mercado Pago, así que el reintento (con `checkout_request_key` nuevo) es limpio una vez corregido el modo.
 

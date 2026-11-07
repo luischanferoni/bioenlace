@@ -45,10 +45,7 @@ final class BillingCheckoutService
         }
 
         $draft = SignUpInstitutionalEfector::prepareDraft($payload);
-        $payerEmail = strtolower(trim((string) ($payload['payer_email'] ?? '')));
-        if (!filter_var($payerEmail, FILTER_VALIDATE_EMAIL)) {
-            throw new \InvalidArgumentException('Ingresá un e-mail válido para el pago.');
-        }
+        $payerEmail = $this->resolvePayerEmail($payload);
         $contactPhone = ContactPhoneValidator::normalizeMobile(
             (string) ($payload['contact_phone'] ?? '')
         ) ?? '';
@@ -212,6 +209,34 @@ final class BillingCheckoutService
         }
 
         return $this->checkoutResponse($attempt);
+    }
+
+    /**
+     * Resuelve el e-mail del pagador.
+     *
+     * En entornos con credenciales de prueba de Mercado Pago, el cobrador es un
+     * usuario de prueba y el pagador también debe serlo. `mercadoPago.sandboxBuyerEmail`
+     * fija ese pagador (email, o usuario de prueba al que se le agrega
+     * `@testuser.com`). En producción el parámetro queda vacío y se usa el email
+     * del alta.
+     *
+     * @param array<string, mixed> $payload
+     * @throws \InvalidArgumentException si el email no es válido
+     */
+    private function resolvePayerEmail(array $payload): string
+    {
+        $configured = strtolower(trim((string) (Yii::$app->params['mercadoPago']['sandboxBuyerEmail'] ?? '')));
+        if ($configured !== '' && !str_contains($configured, '@')) {
+            $configured .= '@testuser.com';
+        }
+        $payerEmail = $configured !== ''
+            ? $configured
+            : strtolower(trim((string) ($payload['payer_email'] ?? '')));
+        if (!filter_var($payerEmail, FILTER_VALIDATE_EMAIL)) {
+            throw new \InvalidArgumentException('Ingresá un e-mail válido para el pago.');
+        }
+
+        return $payerEmail;
     }
 
     /**

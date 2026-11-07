@@ -527,10 +527,10 @@ final class BillingCheckoutService
         foreach ($attemptIds as $attemptId) {
             $transaction = Yii::$app->db->beginTransaction();
             try {
-                $attempt = BillingCheckoutAttempt::find()
-                    ->where(['id' => (int) $attemptId])
-                    ->forUpdate()
-                    ->one();
+                $attempt = BillingCheckoutAttempt::findBySql(
+                    'SELECT * FROM ' . BillingCheckoutAttempt::tableName() . ' WHERE id = :id FOR UPDATE',
+                    [':id' => (int) $attemptId]
+                )->one();
                 if ($attempt === null
                     || $attempt->status !== BillingCheckoutAttempt::STATUS_ACTIVE
                     || $attempt->paid_through_at === null
@@ -540,10 +540,11 @@ final class BillingCheckoutService
                     continue;
                 }
 
-                $account = BillingAccount::find()
-                    ->where(['id' => (int) $attempt->id_billing_account, 'deleted_at' => null])
-                    ->forUpdate()
-                    ->one();
+                $account = BillingAccount::findBySql(
+                    'SELECT * FROM ' . BillingAccount::tableName()
+                    . ' WHERE id = :id AND deleted_at IS NULL FOR UPDATE',
+                    [':id' => (int) $attempt->id_billing_account]
+                )->one();
                 if ($account === null) {
                     throw new \RuntimeException('No se encontró la cuenta de licencia del checkout vencido.');
                 }
@@ -732,10 +733,11 @@ final class BillingCheckoutService
         if ($subscriptionId === '') {
             throw new \RuntimeException('El pago autorizado no contiene preapproval_id.');
         }
-        $attempt = BillingCheckoutAttempt::find()
-            ->where(['provider_subscription_id' => $subscriptionId])
-            ->forUpdate()
-            ->one();
+        $attempt = BillingCheckoutAttempt::findBySql(
+            'SELECT * FROM ' . BillingCheckoutAttempt::tableName()
+            . ' WHERE provider_subscription_id = :sid FOR UPDATE',
+            [':sid' => $subscriptionId]
+        )->one();
         if ($attempt === null) {
             throw new \RuntimeException('No se encontró el intento asociado al pago recibido.');
         }

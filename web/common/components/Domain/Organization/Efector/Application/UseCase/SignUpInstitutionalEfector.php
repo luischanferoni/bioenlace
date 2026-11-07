@@ -67,13 +67,14 @@ final class SignUpInstitutionalEfector
             [$persona, $user] = [$identity['persona'], $identity['user']];
 
             if ((int) ($efectorData['id_efector'] ?? 0) > 0) {
-                $efector = Efector::find()
-                    ->where([
-                        'id_efector' => (int) $efectorData['id_efector'],
-                        'codigo_sisa' => (string) $efectorData['codigo_sisa'],
-                    ])
-                    ->forUpdate()
-                    ->one();
+                $efector = Efector::findBySql(
+                    'SELECT * FROM ' . Efector::tableName()
+                    . ' WHERE id_efector = :id AND codigo_sisa = :sisa FOR UPDATE',
+                    [
+                        ':id' => (int) $efectorData['id_efector'],
+                        ':sisa' => (string) $efectorData['codigo_sisa'],
+                    ]
+                )->one();
                 if ($efector === null) {
                     throw new \InvalidArgumentException('El efector SISA dejó de estar disponible.');
                 }

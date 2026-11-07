@@ -16,6 +16,7 @@ use common\models\Person\Persona;
 use common\models\Platform\User;
 use common\components\Domain\Organization\Pes\Application\UseCase\EnsureAdminEfectorAssignment;
 use common\components\Domain\Organization\Efector\Application\Service\ContactPhoneValidator;
+use common\components\Domain\Organization\Efector\Application\Service\BillingAccountService;
 use common\components\Domain\Geo\Application\Service\GeoLocationResolver;
 use common\components\Platform\Core\Product\PricingPesByEncounterClassMetadata;
 use Yii;

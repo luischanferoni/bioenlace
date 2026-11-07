@@ -858,7 +858,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
   }
 
   Future<void> _openCheckout() async {
-    if (!_termsAccepted) {
+    if (!_checkoutOpened && !_termsAccepted) {
       setState(
         () => _errorMessage =
             'Confirmá que aceptás la suscripción mensual antes de continuar.',
@@ -872,9 +872,10 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     final key = _checkoutKey;
     if (key == null) return;
     final verificationId = _verificationId;
-    if (!_sandboxCheckout && verificationId == null) return;
+    // Sin verificación de Didit el checkout salió por la vía sandbox.
+    final useSandboxStatus = _sandboxCheckout || verificationId == null;
     try {
-      final status = _sandboxCheckout
+      final status = useSandboxStatus
           ? await _service.checkoutStatusSandbox(checkoutKey: key)
           : await _service.checkoutStatus(
               verificationId: verificationId!,
@@ -886,8 +887,9 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
         _providerSubscriptionStatus = status['provider_subscription_status']
             ?.toString();
         _paidThroughAt = status['paid_through_at']?.toString();
-        _checkoutUrl = status['checkout_url']?.toString();
+        _checkoutUrl = status['checkout_url']?.toString() ?? _checkoutUrl;
         _pricing = status;
+        _errorMessage = null;
       });
     } catch (error) {
       if (!mounted) return;
@@ -1382,7 +1384,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         BioSpacing.gapH(BioSpacing.md),
-        if (pricing != null && !_checkoutOpened) ...[
+        if (pricing != null) ...[
           Text('Resumen de la suscripción mensual', style: BioTypography.title),
           BioSpacing.gapH(BioSpacing.sm),
           _priceRow('Neto', pricing['amount_net_ars']),
@@ -1402,18 +1404,28 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
             'El total se debitará automáticamente cada mes. Revisá las condiciones de renovación y cancelación que muestra Mercado Pago antes de autorizar.',
             style: BioTypography.bodySm,
           ),
-          CheckboxListTile(
-            contentPadding: EdgeInsets.zero,
-            value: _termsAccepted,
-            onChanged: (value) =>
-                setState(() => _termsAccepted = value ?? false),
-            title: const Text(
-              'Entiendo y acepto el cargo mensual recurrente indicado.',
+          if (!_checkoutOpened)
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              value: _termsAccepted,
+              onChanged: (value) =>
+                  setState(() => _termsAccepted = value ?? false),
+              title: const Text(
+                'Entiendo y acepto el cargo mensual recurrente indicado.',
+              ),
+              controlAffinity: ListTileControlAffinity.leading,
             ),
-            controlAffinity: ListTileControlAffinity.leading,
-          ),
         ],
         Text(message, style: BioTypography.body),
+        if (_errorMessage != null) ...[
+          BioSpacing.gapH(BioSpacing.sm),
+          Text(
+            _errorMessage!,
+            style: BioTypography.bodySm.copyWith(
+              color: Theme.of(context).colorScheme.error,
+            ),
+          ),
+        ],
         BioSpacing.gapH(BioSpacing.md),
         if (status != 'ACTIVE' && status != 'CANCELLED' && status != 'EXPIRED')
           status == 'FAILED'

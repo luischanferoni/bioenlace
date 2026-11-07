@@ -69,6 +69,16 @@ final class MercadoPagoApiClient
         return $this->send('GET', '/authorized_payments/' . rawurlencode($authorizedPaymentId));
     }
 
+    /**
+     * @return array<string, mixed> `{ results: list<array<string,mixed>>, paging: array<string,mixed> }`
+     */
+    public function searchAuthorizedPayments(string $preapprovalId): array
+    {
+        return $this->send('GET', '/authorized_payments/search', null, [], [
+            'preapproval_id' => $preapprovalId,
+        ]);
+    }
+
     /** @return array<string, mixed> */
     public function cancelPreapproval(string $preapprovalId): array
     {
@@ -78,12 +88,18 @@ final class MercadoPagoApiClient
     /**
      * @param array<string, mixed>|null $body
      * @param array<string, string> $headers
+     * @param array<string, scalar|null> $query
      * @return array<string, mixed>
      */
-    private function send(string $method, string $path, ?array $body = null, array $headers = []): array
-    {
+    private function send(
+        string $method,
+        string $path,
+        ?array $body = null,
+        array $headers = [],
+        array $query = []
+    ): array {
         try {
-            $response = $this->client->request($method, $path, $body, $headers);
+            $response = $this->client->request($method, $path, $body, $headers, $query);
         } catch (HttpApiException $e) {
             if ($e->statusCode() === 0) {
                 throw new \RuntimeException('No se pudo conectar con Mercado Pago.', 0, $e);

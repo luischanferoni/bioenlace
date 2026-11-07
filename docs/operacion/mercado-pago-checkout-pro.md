@@ -252,6 +252,19 @@ Requisitos y límites:
 - Usar credenciales del entorno **Prueba** y pagar con la tarjeta de prueba. Si el checkout pide login, ingresar con el **usuario de prueba comprador**; el `payer_email` lo fuerza el backend desde `sandboxBuyerEmail`.
 - Endpoints: `POST licencia/registrar-efector-sandbox`, `POST licencia/estado-checkout-sandbox`, `POST licencia/cancelar-suscripcion-sandbox`.
 
+### Conciliación con Mercado Pago
+
+`POST licencia/estado-checkout-didit` y `POST licencia/estado-checkout-sandbox` son la fuente para la app. Si el intento sigue `PENDING` y tiene suscripción, **consultan Mercado Pago** en el momento: leen el estado del `preapproval` y, si está `authorized`, buscan el pago aprobado (`GET /authorized_payments/search?preapproval_id=…`) y lo procesan igual que el webhook. Así un webhook perdido o demorado no deja la licencia colgada.
+
+Aun así, para activación automática conviene que el webhook funcione: revisar `webhookSecret` del entorno **Prueba**, que `notificationUrl` sea alcanzable y que la tabla `billing_webhook_event` reciba filas.
+
+Para forzar la conciliación de un checkout puntual (p. ej. el pago ya se hizo pero quedó `PENDING`):
+
+```bash
+cd web
+php yii billing-subscription/reconcile-checkout <checkout_key>
+```
+
 ### Verificación
 
 ```sql

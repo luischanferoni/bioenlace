@@ -295,6 +295,13 @@ final class BillingCheckoutService
             throw new \InvalidArgumentException('No se encontró el checkout solicitado.');
         }
 
+        // Resiliencia ante webhooks perdidos/demorados: si sigue pendiente,
+        // conciliar el estado real contra Mercado Pago.
+        if ($attempt->status === BillingCheckoutAttempt::STATUS_PENDING) {
+            $this->reconcilePendingAttempt($attempt);
+            $attempt = BillingCheckoutAttempt::findOne((int) $attempt->id) ?? $attempt;
+        }
+
         return [
             'checkout_key' => $attempt->checkout_key,
             'status' => $attempt->status,
@@ -310,6 +317,109 @@ final class BillingCheckoutService
             'amount_total_ars' => (float) $attempt->amount_total_ars,
             'currency' => 'ARS',
         ];
+    }
+
+    /**
+     * Fuerza la conciliación de un intento pendiente por `checkout_key`
+     * (operación/CLI). Devuelve `false` si no existe.
+     */
+    public function reconcileByCheckoutKey(string $checkoutKey): bool
+    {
+        $attempt = BillingCheckoutAttempt::findOne([
+            'checkout_key' => $checkoutKey,
+            'deleted_at' => null,
+        ]);
+        if ($attempt === null) {
+            return false;
+        }
+        if ($attempt->status === BillingCheckoutAttempt::STATUS_PENDING) {
+            $this->reconcilePendingAttempt($attempt);
+        }
+
+        return true;
+    }
+
+    /**
+     * Concilia un intento pendiente con Mercado Pago: actualiza el estado de la
+     * suscripción y, si está autorizada, busca el pago aprobado y lo procesa.
+     * Pensado para no depender exclusivamente del webhook (tolerante a fallos).
+     */
+    private function reconcilePendingAttempt(BillingCheckoutAttempt $attempt): void
+    {
+        $subscriptionId = trim((string) $attempt->provider_subscription_id);
+        if ($subscriptionId === '') {
+            return;
+        }
+
+        try {
+            $subscription = $this->mercadoPago()->getSubscription($subscriptionId);
+        } catch (\Throwable $e) {
+            Yii::warning([
+                'event' => 'mercadopago.reconcile_subscription_failed',
+                'checkout_key' => $attempt->checkout_key,
+                'error' => $e->getMessage(),
+            ], 'mercadopago');
+
+            return;
+        }
+
+        $providerStatus = strtolower(trim((string) ($subscription['status'] ?? '')));
+        if ($providerStatus !== (string) $attempt->provider_subscription_status) {
+            $attempt->provider_subscription_status = $providerStatus !== '' ? $providerStatus : null;
+            $attempt->last_provider_payload = $this->encodeJson($subscription);
+            $attempt->save(false, ['provider_subscription_status', 'last_provider_payload', 'updated_at']);
+        }
+
+        if ($providerStatus !== 'authorized') {
+            return;
+        }
+
+        try {
+            $search = $this->mercadoPago()->searchAuthorizedPayments($subscriptionId);
+        } catch (\Throwable $e) {
+            Yii::warning([
+                'event' => 'mercadopago.reconcile_payment_search_failed',
+                'checkout_key' => $attempt->checkout_key,
+                'error' => $e->getMessage(),
+            ], 'mercadopago');
+
+            return;
+        }
+
+        $results = $search['results'] ?? [];
+        if (!is_array($results)) {
+            return;
+        }
+        foreach ($results as $payment) {
+            if (!is_array($payment)) {
+                continue;
+            }
+            $paymentStatus = strtolower(trim((string) ($payment['status'] ?? '')));
+            $paymentId = trim((string) ($payment['id'] ?? ''));
+            if ($paymentId === '' || !in_array($paymentStatus, ['approved', 'processed'], true)) {
+                continue;
+            }
+            if (trim((string) ($payment['preapproval_id'] ?? '')) === '') {
+                $payment['preapproval_id'] = $subscriptionId;
+            }
+            $transaction = Yii::$app->db->beginTransaction();
+            try {
+                $this->processAuthorizedPayment($paymentId, $payment);
+                $transaction->commit();
+            } catch (\Throwable $e) {
+                if ($transaction->isActive) {
+                    $transaction->rollBack();
+                }
+                Yii::warning([
+                    'event' => 'mercadopago.reconcile_payment_failed',
+                    'checkout_key' => $attempt->checkout_key,
+                    'payment_id' => $paymentId,
+                    'error' => $e->getMessage(),
+                ], 'mercadopago');
+            }
+
+            return;
+        }
     }
 
     /**

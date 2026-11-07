@@ -21,7 +21,12 @@ class BillingSubscriptionController extends Controller
      */
     public function options($actionID): array
     {
-        return array_merge(parent::options($actionID), ['userId']);
+        $options = parent::options($actionID);
+        if ($actionID === 'mp-test-payer') {
+            $options[] = 'userId';
+        }
+
+        return $options;
     }
 
     /**
@@ -36,6 +41,30 @@ class BillingSubscriptionController extends Controller
     {
         $expired = (new BillingCheckoutService())->expirePaidThroughSubscriptions();
         $this->stdout('Licencias suspendidas por período pagado vencido: ' . $expired . "\n");
+
+        return ExitCode::OK;
+    }
+
+    /**
+     * Fuerza la conciliación de un checkout pendiente contra Mercado Pago
+     * (útil si se perdió el webhook).
+     *
+     *   php yii billing-subscription/reconcile-checkout <checkout_key>
+     */
+    public function actionReconcileCheckout(string $checkoutKey = ''): int
+    {
+        $checkoutKey = trim($checkoutKey);
+        if ($checkoutKey === '') {
+            $this->stderr("Indicá el checkout_key.\n");
+
+            return ExitCode::USAGE;
+        }
+        if (!(new BillingCheckoutService())->reconcileByCheckoutKey($checkoutKey)) {
+            $this->stderr("No se encontró el checkout {$checkoutKey}.\n");
+
+            return ExitCode::UNSPECIFIED_ERROR;
+        }
+        $this->stdout("Conciliación ejecutada para {$checkoutKey}.\n");
 
         return ExitCode::OK;
     }

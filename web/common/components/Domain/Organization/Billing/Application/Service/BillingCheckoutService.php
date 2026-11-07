@@ -196,6 +196,7 @@ final class BillingCheckoutService
             Yii::error([
                 'event' => 'mercadopago.checkout_creation_failed',
                 'checkout_key' => $checkoutKey,
+                'payer_email' => $omitPayerEmail ? '(omitido)' : $payerEmail,
                 'error' => $e->getMessage(),
             ], 'mercadopago');
             throw new \RuntimeException('No se pudo iniciar el checkout de Mercado Pago. Reintentá más tarde.', 0, $e);

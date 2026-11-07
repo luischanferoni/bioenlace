@@ -244,8 +244,9 @@ En builds **debug** de la app *Personal de Salud*, el paso **"Verificar identida
 Requisitos y límites:
 
 - Backend no productivo con `mercadoPago.sandboxSignupEnabled = true` en `params-local.php`. Por defecto está en `false` y además el endpoint se bloquea si `YII_ENV` es `prod`.
-- Configurar `mercadoPago.sandboxBuyerEmail` con el **email del usuario de prueba comprador** (o su usuario de prueba, al que se le agrega `@testuser.com`). Con credenciales de prueba, Mercado Pago exige que el pagador sea también un usuario de prueba; si no, responde `400 Both payer and collector must be real or test users`. En producción este parámetro queda vacío y se usa el email del alta.
-- Si el panel no muestra el email del comprador, alternativa: `mercadoPago.sandboxOmitPayerEmail = true`. La suscripción se crea sin `payer_email` y el checkout pide login; se ingresa con el **usuario de prueba** y contraseña (con su código de verificación si lo pide).
+- Configurar `mercadoPago.sandboxBuyerEmail` con un email `@testuser.com` (Mercado Pago lo usa como marcador de pagador de prueba; el ejemplo oficial es `test@testuser.com`, también sirve el email del usuario de prueba comprador si lo conocés). Si se envía un email real, Mercado Pago responde `400 Both payer and collector must be real or test users`. En producción el parámetro queda vacío y se usa el email del alta.
+- `sandboxOmitPayerEmail` existe como diagnóstico, pero Mercado Pago exige `payer_email` en `/preapproval` (sin él devuelve `400 User bad request`). Dejarlo en `false`.
+- Si el panel no muestra el email del comprador, no hace falta: usá `sandboxBuyerEmail = 'test@testuser.com'`. La suscripción se asocia a ese pagador de prueba y el checkout acepta la tarjeta de prueba.
 - Cada clic en el botón genera un `checkout_request_key` nuevo, así que no choca con intentos anteriores (`El identificador de checkout ya fue utilizado con otros datos`).
 - El enlace solo se dibuja en `kDebugMode`; no aparece en builds de tienda.
 - Usar credenciales del entorno **Prueba** y pagar con la tarjeta de prueba. Si el checkout pide login, ingresar con el **usuario de prueba comprador**; el `payer_email` lo fuerza el backend desde `sandboxBuyerEmail`.

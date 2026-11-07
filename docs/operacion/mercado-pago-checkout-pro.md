@@ -244,9 +244,9 @@ En builds **debug** de la app *Personal de Salud*, el paso **"Verificar identida
 Requisitos y límites:
 
 - Backend no productivo con `mercadoPago.sandboxSignupEnabled = true` en `params-local.php`. Por defecto está en `false` y además el endpoint se bloquea si `YII_ENV` es `prod`.
-- Configurar `mercadoPago.sandboxBuyerEmail` con un email `@testuser.com` (Mercado Pago lo usa como marcador de pagador de prueba; el ejemplo oficial es `test@testuser.com`, también sirve el email del usuario de prueba comprador si lo conocés). Si se envía un email real, Mercado Pago responde `400 Both payer and collector must be real or test users`. En producción el parámetro queda vacío y se usa el email del alta.
+- Configurar `mercadoPago.sandboxBuyerEmail` con el email de una cuenta de prueba del **mismo site** que el collector (ej. `test_user_<dígitos>@testuser.com`), o directamente con el `nickname` `TESTUSER<dígitos>` (el backend lo traduce a `test_user_<dígitos>@testuser.com`). Si se envía un email real o de otro site, Mercado Pago responde `400 Both payer and collector must be real or test users` o `400 Payer is associated with a different site`. En producción el parámetro queda vacío y se usa el email del alta.
 - `sandboxOmitPayerEmail` existe como diagnóstico, pero Mercado Pago exige `payer_email` en `/preapproval` (sin él devuelve `400 User bad request`). Dejarlo en `false`.
-- Si el panel no muestra el email del comprador, no hace falta: usá `sandboxBuyerEmail = 'test@testuser.com'`. La suscripción se asocia a ese pagador de prueba y el checkout acepta la tarjeta de prueba.
+- Si el panel no muestra el email del comprador, usá su `nickname` (`TESTUSER…`) en `sandboxBuyerEmail` o corré `php yii billing-subscription/mp-test-payer <user-id>` para obtener el `email_derived`.
 - Cada clic en el botón genera un `checkout_request_key` nuevo, así que no choca con intentos anteriores (`El identificador de checkout ya fue utilizado con otros datos`).
 - El enlace solo se dibuja en `kDebugMode`; no aparece en builds de tienda.
 - Usar credenciales del entorno **Prueba** y pagar con la tarjeta de prueba. Si el checkout pide login, ingresar con el **usuario de prueba comprador**; el `payer_email` lo fuerza el backend desde `sandboxBuyerEmail`.
@@ -365,7 +365,7 @@ php yii billing-subscription/mp-test-payer --user-id=3817520526
 php yii billing-subscription/mp-test-payer 3817520526
 ```
 
-Los emails de prueba tienen el formato `test_user_<dígitos>@testuser.com`; el `Usuario` que muestra el panel (`TESTUSER…`) **no** es el email.
+Los emails de prueba tienen el formato `test_user_<dígitos>@testuser.com`; el `Usuario`/`nickname` que muestra el panel (`TESTUSER<dígitos>`) **no** es el email, pero se corresponde: `TESTUSER267653905329592492` → `test_user_267653905329592492@testuser.com`. MP no expone el email de otro usuario por API, así que el comando lo deriva del `nickname` (`email_derived`).
 
 Salida de ejemplo:
 

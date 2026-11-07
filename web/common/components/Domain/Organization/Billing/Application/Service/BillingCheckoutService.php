@@ -218,27 +218,41 @@ final class BillingCheckoutService
      *
      * En entornos con credenciales de prueba de Mercado Pago, el cobrador es un
      * usuario de prueba y el pagador también debe serlo. `mercadoPago.sandboxBuyerEmail`
-     * fija ese pagador (email, o usuario de prueba al que se le agrega
-     * `@testuser.com`). En producción el parámetro queda vacío y se usa el email
-     * del alta.
+     * fija ese pagador (email, o nickname `TESTUSER<dígitos>` que se traduce a
+     * `test_user_<dígitos>@testuser.com`). En producción el parámetro queda vacío
+     * y se usa el email del alta.
      *
      * @param array<string, mixed> $payload
      * @throws \InvalidArgumentException si el email no es válido
      */
     private function resolvePayerEmail(array $payload): string
     {
-        $configured = strtolower(trim((string) (Yii::$app->params['mercadoPago']['sandboxBuyerEmail'] ?? '')));
-        if ($configured !== '' && !str_contains($configured, '@')) {
-            $configured .= '@testuser.com';
-        }
+        $configured = trim((string) (Yii::$app->params['mercadoPago']['sandboxBuyerEmail'] ?? ''));
         $payerEmail = $configured !== ''
-            ? $configured
+            ? $this->normalizeSandboxPayerEmail($configured)
             : strtolower(trim((string) ($payload['payer_email'] ?? '')));
         if (!filter_var($payerEmail, FILTER_VALIDATE_EMAIL)) {
             throw new \InvalidArgumentException('Ingresá un e-mail válido para el pago.');
         }
 
         return $payerEmail;
+    }
+
+    /**
+     * Acepta un email o el nickname de una cuenta de prueba
+     * (`TESTUSER<dígitos>` → `test_user_<dígitos>@testuser.com`).
+     */
+    private function normalizeSandboxPayerEmail(string $value): string
+    {
+        $value = strtolower(trim($value));
+        if (str_contains($value, '@')) {
+            return $value;
+        }
+        if (preg_match('/^testuser(\d+)$/', $value, $matches) === 1) {
+            return 'test_user_' . $matches[1] . '@testuser.com';
+        }
+
+        return $value . '@testuser.com';
     }
 
     /**

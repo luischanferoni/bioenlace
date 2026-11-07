@@ -78,6 +78,24 @@ class BillingSubscriptionController extends Controller
      */
     private function userSummary(array $user): array
     {
-        return array_intersect_key($user, array_flip(['id', 'site_id', 'email', 'username', 'nickname', 'tags']));
+        $summary = array_intersect_key($user, array_flip(['id', 'site_id', 'email', 'username', 'nickname', 'tags']));
+        if (empty($summary['email']) && !empty($summary['nickname'])) {
+            $summary['email_derived'] = $this->deriveEmailFromNickname((string) $summary['nickname']);
+        }
+
+        return $summary;
+    }
+
+    /**
+     * Las cuentas de prueba usan `TESTUSER<dígitos>` como nickname y
+     * `test_user_<dígitos>@testuser.com` como email.
+     */
+    private function deriveEmailFromNickname(string $nickname): ?string
+    {
+        if (preg_match('/^TESTUSER(\d+)$/i', trim($nickname), $matches) === 1) {
+            return 'test_user_' . $matches[1] . '@testuser.com';
+        }
+
+        return null;
     }
 }

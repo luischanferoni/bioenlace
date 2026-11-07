@@ -66,6 +66,12 @@ return [
          * test users". Vacío en producción.
          */
         'sandboxBuyerEmail' => null,
+        /**
+         * Sandbox: crea la suscripción sin `payer_email` para que el checkout
+         * pida el login del usuario de prueba comprador (útil cuando el panel
+         * no muestra un email). Alternativa a `sandboxBuyerEmail`.
+         */
+        'sandboxOmitPayerEmail' => false,
     ],
     /**
      * Push FCM de la plataforma (turnos, alertas, mensajes, etc.).

@@ -531,8 +531,10 @@ class LicenciaController extends BaseController
 
         try {
             $identity = (new SandboxSignupIdentityService())->resolveAccount();
-            // El alta de prueba no usa borrador: es descartable y así puede
-            // repetirse aunque un intento anterior haya activado la licencia.
+            // El alta de prueba no necesita idempotencia entre clics: una clave
+            // nueva evita chocar con intentos previos (p. ej. al cambiar el
+            // pagador de prueba respecto de un intento fallado anterior).
+            $body['checkout_request_key'] = bin2hex(random_bytes(24));
             $checkout = (new BillingCheckoutService())->start(
                 $identity['user'],
                 $identity['persona'],

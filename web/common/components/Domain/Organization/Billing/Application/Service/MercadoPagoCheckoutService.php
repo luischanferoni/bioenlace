@@ -85,7 +85,7 @@ final class MercadoPagoCheckoutService
      *   back_url: string,
      *   notification_url: string,
      *   idempotency_key: string
-     * } $data
+     * } $data `payer_email` vacío omite el pagador y el checkout pide login.
      * @return array{id: string, init_point: string, status: string|null}
      */
     public function createSubscription(array $data): array
@@ -93,7 +93,8 @@ final class MercadoPagoCheckoutService
         if ((float) $data['amount_ars'] <= 0 || !is_finite((float) $data['amount_ars'])) {
             throw new \InvalidArgumentException('El importe de la suscripción debe ser mayor que cero.');
         }
-        if (!filter_var($data['payer_email'], FILTER_VALIDATE_EMAIL)) {
+        $payerEmail = trim((string) ($data['payer_email'] ?? ''));
+        if ($payerEmail !== '' && !filter_var($payerEmail, FILTER_VALIDATE_EMAIL)) {
             throw new \InvalidArgumentException('Se requiere un e-mail válido para crear la suscripción.');
         }
         foreach (['back_url', 'notification_url'] as $urlKey) {
@@ -103,10 +104,9 @@ final class MercadoPagoCheckoutService
             }
         }
 
-        $response = $this->apiClient()->createPreapproval([
+        $payload = [
             'reason' => $data['reason'],
             'external_reference' => $data['external_reference'],
-            'payer_email' => $data['payer_email'],
             'back_url' => $data['back_url'],
             'notification_url' => $data['notification_url'],
             'auto_recurring' => [
@@ -116,7 +116,14 @@ final class MercadoPagoCheckoutService
                 'currency_id' => 'ARS',
             ],
             'status' => 'pending',
-        ], $data['idempotency_key']);
+        ];
+        // Sin payer_email, Mercado Pago pide el login del pagador en el checkout
+        // (útil en sandbox cuando solo se tiene el usuario de prueba).
+        if ($payerEmail !== '') {
+            $payload['payer_email'] = $payerEmail;
+        }
+
+        $response = $this->apiClient()->createPreapproval($payload, $data['idempotency_key']);
 
         $id = trim((string) ($response['id'] ?? ''));
         $initPoint = trim((string) ($response['init_point'] ?? ''));

@@ -173,9 +173,10 @@ final class BillingCheckoutService
         }
         try {
             $config = Yii::$app->params['mercadoPago'] ?? [];
+            $omitPayerEmail = !empty($config['sandboxOmitPayerEmail']);
             $subscription = $this->mercadoPago()->createSubscription([
                 'amount_ars' => (float) $attempt->amount_total_ars,
-                'payer_email' => $payerEmail,
+                'payer_email' => $omitPayerEmail ? '' : $payerEmail,
                 'reason' => mb_substr('Bioenlace - ' . (string) $efector['nombre'], 0, 240),
                 'external_reference' => $checkoutKey,
                 'back_url' => (string) ($config['backUrl'] ?? ''),

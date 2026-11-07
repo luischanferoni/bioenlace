@@ -72,6 +72,9 @@ return [
     //     // Email del usuario de prueba comprador (o su usuario: se agrega
     //     // @testuser.com). Requerido para pagar con credenciales de prueba.
     //     'sandboxBuyerEmail' => 'test_user_000000@testuser.com',
+    //     // Alternativa si no hay email: omitir el pagador y loguearse con el
+    //     // usuario de prueba comprador en el checkout.
+    //     'sandboxOmitPayerEmail' => false,
     // ],
 
     // --- Push FCM plataforma (proyecto Firebase distinto de Vertex) ---

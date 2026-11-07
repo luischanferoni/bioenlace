@@ -495,7 +495,12 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
 
   /// Alta de prueba (solo builds debug): salta Didit y abre el checkout de
   /// Mercado Pago sandbox. El backend debe tener `sandboxSignupEnabled`.
-  Future<void> _startSandboxCheckout() => _submitCheckout(sandbox: true);
+  Future<void> _startSandboxCheckout() async {
+    // Cada prueba genera un intento nuevo; evita reusar una clave con datos
+    // viejos (p. ej. si cambió el pagador de prueba).
+    _checkoutRequestKey = null;
+    await _submitCheckout(sandbox: true);
+  }
 
   Future<void> _submitCheckout({required bool sandbox}) async {
     if (!_formKey.currentState!.validate()) return;

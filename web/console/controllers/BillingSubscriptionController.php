@@ -15,6 +15,23 @@ use yii\console\ExitCode;
  */
 class BillingSubscriptionController extends Controller
 {
+    /**
+     * @param string $actionID
+     * @return string[]
+     */
+    public function options($actionID): array
+    {
+        return array_merge(parent::options($actionID), ['userId']);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function optionAliases(): array
+    {
+        return array_merge(parent::optionAliases(), ['user-id' => 'userId']);
+    }
+
     public function actionExpirePaidThrough(): int
     {
         $expired = (new BillingCheckoutService())->expirePaidThroughSubscriptions();

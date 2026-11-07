@@ -361,7 +361,11 @@ Para saber el `site_id` del collector (dueño del token) y el `email`/`site_id` 
 ```bash
 cd web
 php yii billing-subscription/mp-test-payer --user-id=3817520526
+# en versiones del comando sin el alias: argumento posicional
+php yii billing-subscription/mp-test-payer 3817520526
 ```
+
+Los emails de prueba tienen el formato `test_user_<dígitos>@testuser.com`; el `Usuario` que muestra el panel (`TESTUSER…`) **no** es el email.
 
 Salida de ejemplo:
 

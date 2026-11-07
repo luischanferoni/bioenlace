@@ -265,6 +265,12 @@ cd web
 php yii billing-subscription/reconcile-checkout <checkout_key>
 ```
 
+Imprime un JSON con el resultado (`result`: `processed`, `no_approved_payment`, `payment_failed`, etc.) y los pagos encontrados. Para inspeccionar solo los pagos autorizados de una suscripción:
+
+```bash
+php yii billing-subscription/mp-payments <preapproval_id>
+```
+
 ### Verificación
 
 ```sql

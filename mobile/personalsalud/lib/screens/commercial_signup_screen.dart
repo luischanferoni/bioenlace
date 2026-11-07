@@ -55,6 +55,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
   String? _checkoutUrl;
   String? _checkoutStatus;
   bool _sandboxCheckout = false;
+  bool _refreshingStatus = false;
   String? _quoteError;
   String? _providerSubscriptionStatus;
   String? _paidThroughAt;
@@ -869,8 +870,10 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
   }
 
   Future<void> _refreshCheckoutStatus() async {
+    if (_refreshingStatus) return;
     final key = _checkoutKey;
     if (key == null) return;
+    _refreshingStatus = true;
     final verificationId = _verificationId;
     // Sin verificación de Didit el checkout salió por la vía sandbox.
     final useSandboxStatus = _sandboxCheckout || verificationId == null;
@@ -894,6 +897,8 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     } catch (error) {
       if (!mounted) return;
       setState(() => _errorMessage = _errorText(error));
+    } finally {
+      _refreshingStatus = false;
     }
   }
 

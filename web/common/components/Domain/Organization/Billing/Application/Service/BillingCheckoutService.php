@@ -320,35 +320,42 @@ final class BillingCheckoutService
     }
 
     /**
-     * Fuerza la conciliación de un intento pendiente por `checkout_key`
-     * (operación/CLI). Devuelve `false` si no existe.
+     * Fuerza la conciliación de un intento pendiente por `checkout_key`.
+     *
+     * @return array{found: bool, status?: string, paid_through_at?: string|null, result?: string, error?: string, payments?: list<mixed>}
      */
-    public function reconcileByCheckoutKey(string $checkoutKey): bool
+    public function reconcileByCheckoutKey(string $checkoutKey): array
     {
         $attempt = BillingCheckoutAttempt::findOne([
             'checkout_key' => $checkoutKey,
             'deleted_at' => null,
         ]);
         if ($attempt === null) {
-            return false;
+            return ['found' => false];
         }
+        $result = ['found' => true, 'status' => (string) $attempt->status];
         if ($attempt->status === BillingCheckoutAttempt::STATUS_PENDING) {
-            $this->reconcilePendingAttempt($attempt);
+            $result += $this->reconcilePendingAttempt($attempt);
+            $attempt = BillingCheckoutAttempt::findOne((int) $attempt->id) ?? $attempt;
+            $result['status'] = (string) $attempt->status;
+            $result['paid_through_at'] = $attempt->paid_through_at;
         }
 
-        return true;
+        return $result;
     }
 
     /**
      * Concilia un intento pendiente con Mercado Pago: actualiza el estado de la
      * suscripción y, si está autorizada, busca el pago aprobado y lo procesa.
      * Pensado para no depender exclusivamente del webhook (tolerante a fallos).
+     *
+     * @return array<string, mixed> resumen del resultado (para diagnóstico/CLI)
      */
-    private function reconcilePendingAttempt(BillingCheckoutAttempt $attempt): void
+    private function reconcilePendingAttempt(BillingCheckoutAttempt $attempt): array
     {
         $subscriptionId = trim((string) $attempt->provider_subscription_id);
         if ($subscriptionId === '') {
-            return;
+            return ['result' => 'sin_suscripcion'];
         }
 
         try {
@@ -360,7 +367,7 @@ final class BillingCheckoutService
                 'error' => $e->getMessage(),
             ], 'mercadopago');
 
-            return;
+            return ['result' => 'subscription_failed', 'error' => $e->getMessage()];
         }
 
         $providerStatus = strtolower(trim((string) ($subscription['status'] ?? '')));
@@ -370,8 +377,14 @@ final class BillingCheckoutService
             $attempt->save(false, ['provider_subscription_status', 'last_provider_payload', 'updated_at']);
         }
 
+        $summary = [
+            'subscription_id' => $subscriptionId,
+            'preapproval_status' => $providerStatus,
+            'result' => 'not_authorized',
+            'payments' => [],
+        ];
         if ($providerStatus !== 'authorized') {
-            return;
+            return $summary;
         }
 
         try {
@@ -383,13 +396,23 @@ final class BillingCheckoutService
                 'error' => $e->getMessage(),
             ], 'mercadopago');
 
-            return;
+            return $summary + ['result' => 'payment_search_failed', 'error' => $e->getMessage()];
         }
 
-        $results = $search['results'] ?? [];
+        $results = $search['results'] ?? (array_is_list($search) ? $search : []);
         if (!is_array($results)) {
-            return;
+            $results = [];
         }
+        $summary['payments'] = array_values(array_map(
+            static fn ($payment): array => is_array($payment) ? [
+                'id' => $payment['id'] ?? null,
+                'status' => $payment['status'] ?? null,
+                'transaction_amount' => $payment['transaction_amount'] ?? null,
+                'currency_id' => $payment['currency_id'] ?? null,
+            ] : [],
+            $results
+        ));
+
         foreach ($results as $payment) {
             if (!is_array($payment)) {
                 continue;
@@ -406,6 +429,8 @@ final class BillingCheckoutService
             try {
                 $this->processAuthorizedPayment($paymentId, $payment);
                 $transaction->commit();
+
+                return $summary + ['result' => 'processed', 'payment_id' => $paymentId];
             } catch (\Throwable $e) {
                 if ($transaction->isActive) {
                     $transaction->rollBack();
@@ -416,10 +441,23 @@ final class BillingCheckoutService
                     'payment_id' => $paymentId,
                     'error' => $e->getMessage(),
                 ], 'mercadopago');
-            }
 
-            return;
+                return $summary + [
+                    'result' => 'payment_failed',
+                    'payment_id' => $paymentId,
+                    'error' => $e->getMessage(),
+                ];
+            }
         }
+
+        Yii::warning([
+            'event' => 'mercadopago.reconcile_no_approved_payment',
+            'checkout_key' => $attempt->checkout_key,
+            'preapproval_status' => $providerStatus,
+            'payments' => $summary['payments'],
+        ], 'mercadopago');
+
+        return $summary + ['result' => 'no_approved_payment'];
     }
 
     /**

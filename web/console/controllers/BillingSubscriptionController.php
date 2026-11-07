@@ -37,6 +37,49 @@ class BillingSubscriptionController extends Controller
         return array_merge(parent::optionAliases(), ['user-id' => 'userId']);
     }
 
+    /**
+     * Lista los pagos autorizados de una suscripción (diagnóstico sandbox).
+     *
+     *   php yii billing-subscription/mp-payments <preapproval_id>
+     */
+    public function actionMpPayments(string $preapprovalId = ''): int
+    {
+        $preapprovalId = trim($preapprovalId);
+        if ($preapprovalId === '') {
+            $this->stderr("Indicá el preapproval_id.\n");
+
+            return ExitCode::USAGE;
+        }
+        $token = trim((string) (Yii::$app->params['mercadoPago']['accessToken'] ?? ''));
+        if ($token === '') {
+            $this->stderr("No hay mercadoPago.accessToken configurado.\n");
+
+            return ExitCode::CONFIG;
+        }
+
+        try {
+            $search = (new MercadoPagoApiClient($token))->searchAuthorizedPayments($preapprovalId);
+        } catch (\Throwable $e) {
+            $this->stderr($e->getMessage() . "\n");
+
+            return ExitCode::UNSPECIFIED_ERROR;
+        }
+
+        $results = $search['results'] ?? (array_is_list($search) ? $search : []);
+        $this->stdout('Resultados: ' . count($results) . "\n");
+        foreach ($results as $payment) {
+            if (!is_array($payment)) {
+                continue;
+            }
+            $this->stdout(json_encode(array_intersect_key($payment, array_flip([
+                'id', 'status', 'preapproval_id', 'transaction_amount', 'currency_id',
+                'date_created', 'date_approved', 'payment_method_id', 'type',
+            ])), JSON_UNESCAPED_UNICODE) . "\n");
+        }
+
+        return ExitCode::OK;
+    }
+
     public function actionExpirePaidThrough(): int
     {
         $expired = (new BillingCheckoutService())->expirePaidThroughSubscriptions();
@@ -59,12 +102,13 @@ class BillingSubscriptionController extends Controller
 
             return ExitCode::USAGE;
         }
-        if (!(new BillingCheckoutService())->reconcileByCheckoutKey($checkoutKey)) {
+        $result = (new BillingCheckoutService())->reconcileByCheckoutKey($checkoutKey);
+        if (empty($result['found'])) {
             $this->stderr("No se encontró el checkout {$checkoutKey}.\n");
 
             return ExitCode::UNSPECIFIED_ERROR;
         }
-        $this->stdout("Conciliación ejecutada para {$checkoutKey}.\n");
+        $this->stdout(json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n");
 
         return ExitCode::OK;
     }

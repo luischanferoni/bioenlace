@@ -14,6 +14,7 @@ use common\components\Domain\Organization\Efector\Application\UseCase\CreateIden
 use common\components\Domain\Person\Identity\Application\Service\IdentityVerificationException;
 use common\components\Domain\Organization\Efector\Application\UseCase\CompleteMinistrySignupIdentity;
 use common\components\Domain\Organization\Efector\Application\Service\SignupAbuseGuard;
+use common\components\Domain\Organization\Efector\Application\Service\SandboxSignupIdentityService;
 use common\components\Domain\Organization\Efector\Application\Service\StaffAffiliationRequestService;
 use common\components\Platform\Core\Auth\DemoSandboxAccessService;
 use common\components\Platform\Core\Auth\DemoSandboxCaptchaService;
@@ -35,6 +36,8 @@ use Yii;
  * solicitar-ministerio, demo-perfiles, demo-captcha, demo-acceso, demo-acceso-mobile.
  * Auth cuenta móvil: registrar-efector, estado-checkout.
  * Auth AdminEfector: mi-licencia, desvincular-pago-ministerio, asociar-pago-ministerio.
+ * Prueba sandbox (sin Didit, solo no productivo): registrar-efector-sandbox,
+ * estado-checkout-sandbox, cancelar-suscripcion-sandbox.
  */
 class LicenciaController extends BaseController
 {
@@ -50,6 +53,9 @@ class LicenciaController extends BaseController
         'registrar-efector-didit',
         'estado-checkout-didit',
         'cancelar-suscripcion-didit',
+        'registrar-efector-sandbox',
+        'estado-checkout-sandbox',
+        'cancelar-suscripcion-sandbox',
         'enviar-verificacion-email',
         'estado-email',
         'ubicacion',
@@ -89,6 +95,9 @@ class LicenciaController extends BaseController
         $verbs['registrar-efector-didit'] = ['POST', 'OPTIONS'];
         $verbs['estado-checkout-didit'] = ['POST', 'OPTIONS'];
         $verbs['cancelar-suscripcion-didit'] = ['POST', 'OPTIONS'];
+        $verbs['registrar-efector-sandbox'] = ['POST', 'OPTIONS'];
+        $verbs['estado-checkout-sandbox'] = ['POST', 'OPTIONS'];
+        $verbs['cancelar-suscripcion-sandbox'] = ['POST', 'OPTIONS'];
         $verbs['enviar-verificacion-email'] = ['POST', 'OPTIONS'];
         $verbs['estado-email'] = ['POST', 'OPTIONS'];
         $verbs['ubicacion'] = ['POST', 'OPTIONS'];
@@ -503,6 +512,114 @@ class LicenciaController extends BaseController
         } catch (\Throwable $e) {
             Yii::error($e->getMessage() . "\n" . $e->getTraceAsString(), 'billing.signup');
             return $this->error('No se pudo consultar el checkout. Reintentá más tarde.', null, 503);
+        }
+    }
+
+    /**
+     * Alta de prueba para validar el checkout de Mercado Pago en sandbox sin
+     * pasar por Didit. Solo habilitada con `mercadoPago.sandboxSignupEnabled`
+     * y nunca en producción.
+     *
+     * @action_name Alta de prueba sandbox (Mercado Pago)
+     */
+    public function actionRegistrarEfectorSandbox()
+    {
+        $body = Yii::$app->request->getBodyParams();
+        if (!is_array($body)) {
+            return $this->error('Los datos del alta son inválidos.', null, 400);
+        }
+
+        try {
+            $identity = (new SandboxSignupIdentityService())->resolveAccount();
+            // El alta de prueba no usa borrador: es descartable y así puede
+            // repetirse aunque un intento anterior haya activado la licencia.
+            $checkout = (new BillingCheckoutService())->start(
+                $identity['user'],
+                $identity['persona'],
+                $body
+            );
+
+            return $this->success($checkout, 'Checkout de prueba iniciado.', 201);
+        } catch (\DomainException $e) {
+            return $this->error($e->getMessage(), null, 403);
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), null, 400);
+        } catch (\yii\base\InvalidConfigException $e) {
+            Yii::error($e->getMessage(), 'mercadopago');
+            return $this->error('El checkout no está configurado para este entorno.', null, 503);
+        } catch (\Throwable $e) {
+            Yii::error($e->getMessage() . "\n" . $e->getTraceAsString(), 'mercadopago');
+            return $this->error('No se pudo iniciar el checkout. Reintentá más tarde.', null, 503);
+        }
+    }
+
+    /**
+     * Estado de un checkout de prueba (sandbox) resuelto por la identidad fija.
+     *
+     * @action_name Estado de checkout sandbox (Mercado Pago)
+     */
+    public function actionEstadoCheckoutSandbox()
+    {
+        $body = Yii::$app->request->getBodyParams();
+        if (!is_array($body)) {
+            return $this->error('Los datos de consulta son inválidos.', null, 400);
+        }
+        $checkoutKey = trim((string) ($body['checkout_key'] ?? ''));
+        if ($checkoutKey === '') {
+            return $this->error('checkout_key es requerido.', null, 400);
+        }
+
+        try {
+            $identity = (new SandboxSignupIdentityService())->resolveAccount();
+            $status = (new BillingCheckoutService())->statusForUser(
+                $checkoutKey,
+                (int) $identity['user']->id
+            );
+
+            return $this->success($status);
+        } catch (\DomainException $e) {
+            return $this->error($e->getMessage(), null, 403);
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), null, 404);
+        } catch (\Throwable $e) {
+            Yii::error($e->getMessage() . "\n" . $e->getTraceAsString(), 'billing.signup');
+            return $this->error('No se pudo consultar el checkout. Reintentá más tarde.', null, 503);
+        }
+    }
+
+    /**
+     * Cancela la renovación de un checkout de prueba (sandbox).
+     *
+     * @action_name Cancelar renovación sandbox (Mercado Pago)
+     */
+    public function actionCancelarSuscripcionSandbox()
+    {
+        $body = Yii::$app->request->getBodyParams();
+        if (!is_array($body)) {
+            return $this->error('Los datos de cancelación son inválidos.', null, 400);
+        }
+        $checkoutKey = trim((string) ($body['checkout_key'] ?? ''));
+        if ($checkoutKey === '') {
+            return $this->error('checkout_key es requerido.', null, 400);
+        }
+
+        try {
+            $identity = (new SandboxSignupIdentityService())->resolveAccount();
+
+            return $this->success(
+                (new BillingCheckoutService())->cancelForUser(
+                    $checkoutKey,
+                    (int) $identity['user']->id
+                ),
+                'Se solicitó cancelar la renovación.'
+            );
+        } catch (\DomainException $e) {
+            return $this->error($e->getMessage(), null, 403);
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), null, 404);
+        } catch (\Throwable $e) {
+            Yii::error($e->getMessage() . "\n" . $e->getTraceAsString(), 'mercadopago');
+            return $this->error('No se pudo cancelar la renovación. Reintentá más tarde.', null, 503);
         }
     }
 

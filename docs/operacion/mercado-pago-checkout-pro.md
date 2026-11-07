@@ -135,7 +135,7 @@ El snapshot (USD, cotización, fecha de vigencia, neto, IVA y total) se congela 
 En **Tus integraciones → tu aplicación**:
 
 1. **Credenciales de producción** → copiar el *Access Token* (`APP_USR-...`). La *Public Key* no se usa: toda la integración es server-side.
-2. **Credenciales de prueba** → *Access Token* (`TEST-...`). Además, en **Cuenta → Usuarios de prueba**, crear un usuario **comprador** para poder pagar en sandbox.
+2. **Credenciales de prueba** → *Access Token* del entorno **Prueba**. En las integraciones actuales este token también empieza con `APP_USR-...`; los `TEST-...` de integraciones viejas siguen siendo válidos. **Ya no se crean "usuarios de prueba"** desde el panel: la cuenta de prueba se genera automáticamente con la aplicación (bloque *Cuenta de prueba* en **Credenciales**). Para pagar en sandbox no se inicia sesión en Mercado Pago (ver [Prueba en sandbox](#prueba-en-sandbox)).
 3. **Webhooks → Configurar notificaciones**:
    - URL de producción: `https://app.bioenlace.io/api/v1/mercado-pago-webhook`
    - URL de test: la misma o un túnel HTTPS (`ngrok`/`cloudflared`) si se prueba local.
@@ -153,7 +153,7 @@ Notas:
 
 ### Preparación
 
-1. Copiar el token `TEST-...` y el secreto en `params-local.php`.
+1. Copiar el token y el secreto de **credenciales de prueba** (entorno **Prueba**) en `params-local.php`.
 2. Verificar el token:
 
 ```bash
@@ -170,7 +170,7 @@ curl -i -X POST https://app.bioenlace.io/api/v1/licencia/registrar-efector-didit
     "sector": "PRIVADO",
     "verification_id": "didit_xxx",
     "checkout_request_key": "0f3c1d2e3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b",
-    "payer_email": "test_user_123@testuser.com",
+    "payer_email": "comprador.sandbox@example.com",
     "contact_phone": "1155554444",
     "efector": {
       "nombre": "Consultorio Demo",
@@ -211,7 +211,7 @@ Respuesta esperada (`201`):
 
 | Escenario | Cómo | Resultado esperado |
 |---|---|---|
-| Pago aprobado | Tarjeta de prueba "APRO" + usuario comprador | `status=ACTIVE`, `paid_through_at` con el mismo día del mes siguiente, licencia activa |
+| Pago aprobado | Tarjeta de prueba "APRO" | `status=ACTIVE`, `paid_through_at` con el mismo día del mes siguiente, licencia activa |
 | Pago rechazado | Tarjeta "OTHE" | `status=FAILED`, `reserved_sisa_code` liberado, sin cuenta ni licencia |
 | Pago pendiente | Tarjeta "CONT" (efectivo) | El intento queda `PENDING`; se activa recién cuando el pago se acredita |
 | Webhook repetido | Reenviar el mismo evento | Segundo POST responde 200 sin duplicar `billing_payment` (dedupe por `event_key`) |
@@ -219,7 +219,34 @@ Respuesta esperada (`201`):
 | Cancelación | `POST licencia/cancelar-suscripcion-didit` | `provider_subscription_status=cancelled`; la licencia sigue activa hasta `paid_through_at` |
 | Firma inválida | POST sin `x-signature` o con secreto distinto | `401` y log `Firma inválida en webhook de Mercado Pago.` |
 
-Las tarjetas de prueba oficiales y sus nombres (APRO/OTHE/CONT) están en la documentación de Mercado Pago; usar siempre un **usuario de prueba comprador**, nunca una cuenta real.
+Las tarjetas de prueba oficiales y sus nombres (APRO/OTHE/CONT) están en la documentación de Mercado Pago. Para sandbox se paga **sin iniciar sesión** en Mercado Pago (ver abajo); nunca usar una tarjeta ni una cuenta reales.
+
+### Datos de la tarjeta de prueba
+
+| Campo | Valor |
+|---|---|
+| Número | `5031 7557 3453 0604` (Mastercard crédito) |
+| CVV | `123` |
+| Vencimiento | `11/30` |
+| Titular | `APRO` (pago aprobado) |
+| Documento | `12345678` |
+
+El **nombre del titular** define el resultado: `APRO` aprueba, `OTHE` rechaza, `CONT` deja el pago pendiente. Se puede usar cualquier número de las tarjetas de prueba vigentes con el titular deseado.
+
+### Botón de prueba en la app (modo debug)
+
+En builds **debug** de la app *Personal de Salud*, el paso **"Verificar identidad y continuar al pago"** muestra un enlace secundario **"Probar pago sandbox (sin Didit)"**. Ese atajo:
+
+1. Salta la verificación de Didit y crea o reutiliza una identidad fija de prueba (documento `99999999`).
+2. Crea el checkout contra Mercado Pago con las credenciales configuradas y abre el checkout automáticamente.
+3. Permite consultar el estado y cancelar la renovación igual que el flujo real.
+
+Requisitos y límites:
+
+- Backend no productivo con `mercadoPago.sandboxSignupEnabled = true` en `params-local.php`. Por defecto está en `false` y además el endpoint se bloquea si `YII_ENV` es `prod`.
+- El enlace solo se dibuja en `kDebugMode`; no aparece en builds de tienda.
+- Usar credenciales del entorno **Prueba** y pagar en una ventana **incógnito sin sesión** de Mercado Pago, con cualquier email válido.
+- Endpoints: `POST licencia/registrar-efector-sandbox`, `POST licencia/estado-checkout-sandbox`, `POST licencia/cancelar-suscripcion-sandbox`.
 
 ### Verificación
 
@@ -262,8 +289,8 @@ Causas habituales:
 
 | Mensaje de Mercado Pago | Causa | Solución |
 |---|---|---|
-| `Both payer and collector must be real or test users` | Mezcla de modos: el *collector* (dueño del `accessToken`) es de prueba y el `payer_email` es real, o al revés. | Alinear: token `TEST-` con usuario de prueba comprador, o token `APP_USR-` con mail real. Ver abajo. |
-| `Invalid payer email` / `invalid_payer_email` | El `payer_email` no coincide con el modo de las credenciales: token `TEST-` con un mail real, o token `APP_USR-` con un mail de usuario de prueba. También ocurre con el placeholder `@accounts.bioenlace.invalid` de una identidad creada sin mail. | Alinear token y pagador: en sandbox usar un **usuario de prueba comprador**; en producción, el mail real del titular. |
+| `Both payer and collector must be real or test users` | Mezcla de modos: el *collector* (dueño del `accessToken`) es de prueba y el `payer_email` es real, o al revés. | Alinear: credenciales del entorno **Prueba** con un email válido, o token de producción con mail real. Ver abajo. |
+| `Invalid payer email` / `invalid_payer_email` | El `payer_email` no coincide con el modo de las credenciales o es inválido. También ocurre con el placeholder `@accounts.bioenlace.invalid` de una identidad creada sin mail. | En sandbox usar cualquier email válido (o el de la **Cuenta de prueba** del panel); en producción, el mail real del titular. |
 | `invalid_back_url` | `backUrl` vacía, `http://` o con un host que no resuelve. | Usar una URL HTTPS pública. |
 | `invalid_auto_recurring` / `transaction_amount` | Importe `0`, negativo o con más de 2 decimales. | Revisar `usdArsRate`, `vatRate` y el plan del efector. |
 | `unauthorized` / `invalid_token` | `accessToken` vencido, revocado o de otra aplicación. | Regenerar en **Tus integraciones → Credenciales**. |
@@ -281,12 +308,12 @@ Si `tags` incluye `test_user` (o el email termina en `@testuser.com`), el collec
 
 | Combinación | Resultado |
 |---|---|
-| `TEST-...` + `payer_email` de usuario de prueba comprador | ✅ válido |
-| `APP_USR-...` + mail real del titular | ✅ válido |
-| `TEST-...` + mail real | ❌ 400 |
-| `APP_USR-...` + mail de usuario de prueba | ❌ 400 |
+| Token de prueba (entorno **Prueba**) + `payer_email` de cualquier email válido | ✅ válido |
+| `APP_USR-...` de producción + mail real del titular | ✅ válido |
+| Token de prueba + mail real de una cuenta de Mercado Pago | ❌ 400 |
+| Token de producción + mail de la cuenta de prueba | ❌ 400 |
 
-Para sandbox, crear el comprador en **Tus integraciones → Cuenta → Usuarios de prueba** (tipo *comprador*) y usar ese mail (`test_user_XXXX@testuser.com`) tanto en la app como en el `curl`. Para producción, cargar el `accessToken` `APP_USR-...` y usar el mail real del titular.
+En sandbox ya **no se crean usuarios compradores**. El mail del pagador puede ser cualquiera válido: se paga en una ventana incógnito sin sesión de Mercado Pago. Si Mercado Pago insiste en la alineación de modos, usar el email de la **Cuenta de prueba** que figura en **Credenciales** (bloque independiente) tanto en la app como en el `curl`. Para producción, cargar el `accessToken` `APP_USR-...` y usar el mail real del titular.
 
 Un intento fallido con este error queda en `FAILED` y **no** crea suscripción en Mercado Pago, así que el reintento (con `checkout_request_key` nuevo) es limpio una vez corregido el modo.
 
@@ -297,7 +324,7 @@ cat > /tmp/preapproval.json <<'JSON'
 {
   "reason": "Bioenlace - Consultorio Demo",
   "external_reference": "0f3c1d2e3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b",
-  "payer_email": "test_user_123@testuser.com",
+  "payer_email": "comprador.sandbox@example.com",
   "back_url": "https://app.bioenlace.io/checkout/retorno",
   "notification_url": "https://app.bioenlace.io/api/v1/mercado-pago-webhook",
   "auto_recurring": {

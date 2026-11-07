@@ -1,11 +1,13 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:shared/shared.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../infra/app_texts.dart';
 import '../services/staff_signup_service.dart';
 import '../widgets/map_location_picker.dart';
 
@@ -52,6 +54,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
   String? _checkoutRequestKey;
   String? _checkoutUrl;
   String? _checkoutStatus;
+  bool _sandboxCheckout = false;
   String? _quoteError;
   String? _providerSubscriptionStatus;
   String? _paidThroughAt;
@@ -488,7 +491,13 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     }
   }
 
-  Future<void> _startCheckout() async {
+  Future<void> _startCheckout() => _submitCheckout(sandbox: false);
+
+  /// Alta de prueba (solo builds debug): salta Didit y abre el checkout de
+  /// Mercado Pago sandbox. El backend debe tener `sandboxSignupEnabled`.
+  Future<void> _startSandboxCheckout() => _submitCheckout(sandbox: true);
+
+  Future<void> _submitCheckout({required bool sandbox}) async {
     if (!_formKey.currentState!.validate()) return;
     if (_sector != 'PUBLICO' && _pickedLocation == null) {
       setState(() => _errorMessage = 'Ubicá el efector en el mapa.');
@@ -526,16 +535,6 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
       _errorMessage = null;
     });
     try {
-      var verificationId = _verificationId;
-      if (verificationId == null) {
-        verificationId = await _service.readPendingVerificationId();
-        verificationId ??= await _service.verifyIdentity();
-        await _service.storePendingVerificationId(verificationId);
-        _verificationId = verificationId;
-      }
-      if (!mounted) return;
-      setState(() => _submitting = true);
-
       final body = <String, dynamic>{
         'perfil': 'ESPACIO_ATENCION',
         ..._draftPayload(currentStep: 2),
@@ -543,11 +542,28 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
             _newCheckoutRequestKey(),
         'plan': plan,
       };
-      final checkout = await _service.startCommercialCheckout(
-        verificationId: verificationId,
-        body: body,
-      );
-      await _service.clearPendingVerificationId();
+
+      late final Map<String, dynamic> checkout;
+      if (sandbox) {
+        checkout = await _service.startCommercialSandboxCheckout(body: body);
+      } else {
+        var verificationId = _verificationId;
+        if (verificationId == null) {
+          verificationId = await _service.readPendingVerificationId();
+          verificationId ??= await _service.verifyIdentity();
+          await _service.storePendingVerificationId(verificationId);
+          _verificationId = verificationId;
+        }
+        if (!mounted) return;
+        setState(() => _submitting = true);
+
+        checkout = await _service.startCommercialCheckout(
+          verificationId: verificationId,
+          body: body,
+        );
+        await _service.clearPendingVerificationId();
+      }
+
       final key = checkout['checkout_key']?.toString() ?? '';
       final url = checkout['checkout_url']?.toString() ?? '';
       final checkoutUri = Uri.tryParse(url);
@@ -567,13 +583,18 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
         _pricing = checkout;
         _currentStep = 3;
         _submitting = false;
-        _emailStepVisible = true;
+        _sandboxCheckout = sandbox;
+        _emailStepVisible = !sandbox;
         _emailConfirmed = false;
         _emailVerificationNotice = null;
         _emailVerificationError = null;
       });
-      // El envío del mail no bloquea el pago: si falla, se avisa en la tarjeta.
-      await _sendEmailVerification();
+      if (sandbox) {
+        await _launchCheckoutUrl();
+      } else {
+        // El envío del mail no bloquea el pago: si falla, se avisa en la tarjeta.
+        await _sendEmailVerification();
+      }
     } catch (error) {
       if (error is ApiContractException && error.statusCode == 422) {
         _verificationId = null;
@@ -817,14 +838,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     );
   }
 
-  Future<void> _openCheckout() async {
-    if (!_termsAccepted) {
-      setState(
-        () => _errorMessage =
-            'Confirmá que aceptás la suscripción mensual antes de continuar.',
-      );
-      return;
-    }
+  Future<void> _launchCheckoutUrl() async {
     final url = _checkoutUrl;
     if (url == null) return;
     final uri = Uri.parse(url);
@@ -838,15 +852,29 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     if (mounted) setState(() => _checkoutOpened = true);
   }
 
+  Future<void> _openCheckout() async {
+    if (!_termsAccepted) {
+      setState(
+        () => _errorMessage =
+            'Confirmá que aceptás la suscripción mensual antes de continuar.',
+      );
+      return;
+    }
+    await _launchCheckoutUrl();
+  }
+
   Future<void> _refreshCheckoutStatus() async {
     final key = _checkoutKey;
+    if (key == null) return;
     final verificationId = _verificationId;
-    if (key == null || verificationId == null) return;
+    if (!_sandboxCheckout && verificationId == null) return;
     try {
-      final status = await _service.checkoutStatus(
-        verificationId: verificationId,
-        checkoutKey: key,
-      );
+      final status = _sandboxCheckout
+          ? await _service.checkoutStatusSandbox(checkoutKey: key)
+          : await _service.checkoutStatus(
+              verificationId: verificationId!,
+              checkoutKey: key,
+            );
       if (!mounted) return;
       setState(() {
         _checkoutStatus = status['status']?.toString();
@@ -872,6 +900,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
       _pricing = null;
       _checkoutOpened = false;
       _checkoutRequestKey = null;
+      _sandboxCheckout = false;
       _currentStep = 2;
       _errorMessage = null;
       _emailStepVisible = false;
@@ -903,17 +932,21 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     );
     if (confirmed != true || _checkoutKey == null) return;
     final verificationId = _verificationId;
-    if (verificationId == null) return;
+    if (!_sandboxCheckout && verificationId == null) return;
 
     setState(() {
       _cancellingSubscription = true;
       _errorMessage = null;
     });
     try {
-      final status = await _service.cancelCommercialCheckout(
-        verificationId: verificationId,
-        checkoutKey: _checkoutKey!,
-      );
+      final status = _sandboxCheckout
+          ? await _service.cancelCommercialSandboxCheckout(
+              checkoutKey: _checkoutKey!,
+            )
+          : await _service.cancelCommercialCheckout(
+              verificationId: verificationId!,
+              checkoutKey: _checkoutKey!,
+            );
       if (!mounted) return;
       setState(() {
         _checkoutStatus = status['status']?.toString();
@@ -1695,6 +1728,23 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
                     ),
                   ],
                 ),
+                if (kDebugMode && _currentStep == 2) ...[
+                  BioSpacing.gapH(BioSpacing.sm),
+                  TextButton.icon(
+                    onPressed: _submitting || _resolvingLocation
+                        ? null
+                        : _startSandboxCheckout,
+                    icon: const Icon(Icons.science_outlined, size: 18),
+                    label: const Text(AppTexts.signupSandboxTestButton),
+                  ),
+                  Text(
+                    AppTexts.signupSandboxTestHint,
+                    textAlign: TextAlign.center,
+                    style: BioTypography.bodySm.copyWith(
+                      color: context.bio.textMuted,
+                    ),
+                  ),
+                ],
               ],
               BioSpacing.gapH(BioSpacing.md),
             ],

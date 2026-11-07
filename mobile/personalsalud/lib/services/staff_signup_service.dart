@@ -217,6 +217,17 @@ class StaffSignupService {
     );
   }
 
+  /// Alta de prueba (solo backend no productivo con `sandboxSignupEnabled`):
+  /// crea el checkout de Mercado Pago sin pasar por Didit.
+  Future<Map<String, dynamic>> startCommercialSandboxCheckout({
+    required Map<String, dynamic> body,
+  }) {
+    return ApiClient(
+      appClient: 'bioenlace-personalsalud',
+      traceLabel: 'licencia/registrar-efector-sandbox',
+    ).postData('/licencia/registrar-efector-sandbox', body: body);
+  }
+
   Future<Map<String, dynamic>> checkoutStatus({
     required String verificationId,
     required String checkoutKey,
@@ -227,6 +238,18 @@ class StaffSignupService {
     ).postData(
       '/licencia/estado-checkout-didit',
       body: {'verification_id': verificationId, 'checkout_key': checkoutKey},
+    );
+  }
+
+  Future<Map<String, dynamic>> checkoutStatusSandbox({
+    required String checkoutKey,
+  }) {
+    return ApiClient(
+      appClient: 'bioenlace-personalsalud',
+      traceLabel: 'licencia/estado-checkout-sandbox',
+    ).postData(
+      '/licencia/estado-checkout-sandbox',
+      body: {'checkout_key': checkoutKey},
     );
   }
 
@@ -253,6 +276,18 @@ class StaffSignupService {
     ).postData(
       '/licencia/cancelar-suscripcion-didit',
       body: {'verification_id': verificationId, 'checkout_key': checkoutKey},
+    );
+  }
+
+  Future<Map<String, dynamic>> cancelCommercialSandboxCheckout({
+    required String checkoutKey,
+  }) {
+    return ApiClient(
+      appClient: 'bioenlace-personalsalud',
+      traceLabel: 'licencia/cancelar-suscripcion-sandbox',
+    ).postData(
+      '/licencia/cancelar-suscripcion-sandbox',
+      body: {'checkout_key': checkoutKey},
     );
   }
 

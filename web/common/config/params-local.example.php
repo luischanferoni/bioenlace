@@ -62,6 +62,15 @@ return [
     //     'appDeepLinkBase' => 'https://app.bioenlace.io/',
     // ],
 
+    // --- Mercado Pago (checkout de altas comerciales) ---
+    // 'mercadoPago' => [
+    //     'accessToken' => 'APP_USR-…', // entorno Prueba o producción
+    //     'webhookSecret' => '…',
+    //     // Solo en entornos NO productivos: habilita el alta de prueba sin
+    //     // Didit para validar el checkout en sandbox (botón debug de la app).
+    //     'sandboxSignupEnabled' => true,
+    // ],
+
     // --- Push FCM plataforma (proyecto Firebase distinto de Vertex) ---
     'fcmPush' => [
         'projectId' => 'august-cirrus-482714-f4',

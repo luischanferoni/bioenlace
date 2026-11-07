@@ -51,6 +51,13 @@ return [
         'usdArsRate' => 1450.00, // Cotización MEP vendedora revisada trimestralmente
         'usdArsRateEffectiveDate' => '2026-11-01',
         'vatRate' => 0.21,
+        /**
+         * Habilita el alta de prueba sin Didit para validar el checkout en
+         * sandbox (botón "Probar pago sandbox" en la app en modo debug).
+         * Nunca activar en producción. Requiere credenciales de prueba de
+         * Mercado Pago. Ver docs/operacion/mercado-pago-checkout-pro.md.
+         */
+        'sandboxSignupEnabled' => false,
     ],
     /**
      * Push FCM de la plataforma (turnos, alertas, mensajes, etc.).

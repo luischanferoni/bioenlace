@@ -25,14 +25,8 @@ final class CreateIdentityAccount
     public function crear(array $payload): array
     {
         $verificationId = trim((string) ($payload['verification_id'] ?? ''));
-        if ($verificationId === '') {
-            throw new \InvalidArgumentException('verification_id (Didit) es requerido.');
-        }
-
         $email = trim((string) ($payload['email'] ?? ''));
-        if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            throw new \InvalidArgumentException('E-mail inválido.');
-        }
+        $this->assertVerificationPayload($verificationId, $email);
 
         $identityService = new DiditIdentityService();
         $attemptStore = new IdentitySignupAttemptStore();
@@ -43,6 +37,66 @@ final class CreateIdentityAccount
             throw $e;
         }
         $attemptStore->recordVerification($verificationId, 'approved');
+
+        return $this->persistVerifiedIdentity(
+            $identityService,
+            $attemptStore,
+            $diditResult,
+            $verificationId,
+            $email
+        );
+    }
+
+    /**
+     * Crea la cuenta desde una verificación ya aprobada (p. ej. identidad de
+     * prueba sandbox), sin consultar Didit.
+     *
+     * @param array<string, mixed> $diditResult
+     * @return array{persona: Persona, user: User, es_nueva_persona: bool, es_nuevo_usuario: bool, didit: array<string, mixed>}
+     */
+    public function crearDesdeVerificacionAprobada(
+        array $diditResult,
+        string $verificationId,
+        string $email = ''
+    ): array {
+        $this->assertVerificationPayload($verificationId, $email);
+
+        $attemptStore = new IdentitySignupAttemptStore();
+        $attemptStore->recordVerification($verificationId, 'approved');
+
+        return $this->persistVerifiedIdentity(
+            new DiditIdentityService(),
+            $attemptStore,
+            $diditResult,
+            $verificationId,
+            $email
+        );
+    }
+
+    /**
+     * @throws \InvalidArgumentException
+     */
+    private function assertVerificationPayload(string $verificationId, string $email): void
+    {
+        if ($verificationId === '') {
+            throw new \InvalidArgumentException('verification_id (Didit) es requerido.');
+        }
+        if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new \InvalidArgumentException('E-mail inválido.');
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $diditResult
+     * @return array{persona: Persona, user: User, es_nueva_persona: bool, es_nuevo_usuario: bool, didit: array<string, mixed>}
+     */
+    private function persistVerifiedIdentity(
+        DiditIdentityService $identityService,
+        IdentitySignupAttemptStore $attemptStore,
+        array $diditResult,
+        string $verificationId,
+        string $email
+    ): array {
         $lockName = $this->identityLockName($diditResult);
         $lockAcquired = Yii::$app->db->createCommand(
             'SELECT GET_LOCK(:lockName, :timeout)'

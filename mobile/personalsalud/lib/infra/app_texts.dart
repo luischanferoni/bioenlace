@@ -59,6 +59,10 @@ class AppTexts {
 
   static const cancel = 'Cancelar';
 
+  static const signupSandboxTestButton = 'Probar pago sandbox (sin Didit)';
+  static const signupSandboxTestHint =
+      'Solo pruebas. Usá la tarjeta 5031 7557 3453 0604, titular APRO, DNI 12345678.';
+
   static const timelineLoadedData = 'Datos cargados';
   static const noData = 'Sin datos';
   static const timelineWeight = 'Peso';

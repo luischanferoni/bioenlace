@@ -31,7 +31,7 @@ class EncounterCaptureLogger
         self::$instancia->inicioTiempo = microtime(true);
         self::$instancia->contexto = $contexto;
 
-        $directorioLogs = Yii::getAlias('@sharedRuntime/logs/analisis-consultas');
+        $directorioLogs = Yii::getAlias('@runtime/logs/analisis-consultas');
         if (!is_dir($directorioLogs)) {
             mkdir($directorioLogs, 0755, true);
         }

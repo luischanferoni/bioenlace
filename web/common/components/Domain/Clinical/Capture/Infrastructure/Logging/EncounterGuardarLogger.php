@@ -6,7 +6,7 @@ use Yii;
 
 /**
  * Logger de guardar encounter (mismo estilo que análisis de consulta).
- * Archivos en @sharedRuntime/logs/guardar-encounters/
+ * Archivos en @runtime/logs/guardar-encounters/
  */
 final class EncounterGuardarLogger
 {
@@ -33,11 +33,6 @@ final class EncounterGuardarLogger
     private static function resolveLogPath(string $id): ?string
     {
         $candidates = [];
-        try {
-            $candidates[] = Yii::getAlias('@sharedRuntime/logs/guardar-encounters');
-        } catch (\Throwable $e) {
-            // ignore
-        }
         try {
             $candidates[] = Yii::getAlias('@runtime/logs/guardar-encounters');
         } catch (\Throwable $e) {

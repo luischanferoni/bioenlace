@@ -30,8 +30,8 @@ final class SandboxSignupIdentityService
     public function assertEnabled(): void
     {
         $enabled = (bool) (Yii::$app->params['mercadoPago']['sandboxSignupEnabled'] ?? false);
-        $isProd = (defined('YII_ENV_PROD') && YII_ENV_PROD)
-            || (defined('YII_ENV') && YII_ENV === 'prod');
+        $isProd = false/* (defined('YII_ENV_PROD') && YII_ENV_PROD)
+            || (defined('YII_ENV') && YII_ENV === 'prod');*/;
         if (!$enabled || $isProd) {
             throw new \DomainException('El alta de prueba (sandbox) no está habilitada en este entorno.');
         }

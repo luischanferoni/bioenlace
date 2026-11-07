@@ -8,7 +8,11 @@ use yii\helpers\FileHelper;
 
 final class ImpersonationTicketService
 {
-    private const TICKET_ALIAS = '@sharedRuntime/impersonation/a.txt';
+    /**
+     * Vive en el runtime del frontend: el admin escribe el ticket y el frontend lo
+     * consume, y `@frontend` resuelve la misma ruta desde ambas apps.
+     */
+    private const TICKET_ALIAS = '@frontend/runtime/impersonation/a.txt';
 
     public static function store(int $userId): void
     {

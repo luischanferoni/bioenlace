@@ -396,11 +396,12 @@ final class BillingCheckoutService
                 'error' => $e->getMessage(),
             ], 'mercadopago');
 
-            return $summary + ['result' => 'payment_search_failed', 'error' => $e->getMessage()];
-        }
+            $summary['result'] = 'payment_search_failed';
+            $summary['error'] = $e->getMessage();
 
-        $results = $search['results'] ?? (array_is_list($search) ? $search : []);
-        if (!is_array($results)) {
+            return $summary;
+        }
+        $results = $search['results'] ?? (array_is_list($search) ? $search : []);        if (!is_array($results)) {
             $results = [];
         }
         $summary['payments'] = array_values(array_map(
@@ -430,7 +431,10 @@ final class BillingCheckoutService
                 $this->processAuthorizedPayment($paymentId, $payment);
                 $transaction->commit();
 
-                return $summary + ['result' => 'processed', 'payment_id' => $paymentId];
+                $summary['result'] = 'processed';
+                $summary['payment_id'] = $paymentId;
+
+                return $summary;
             } catch (\Throwable $e) {
                 if ($transaction->isActive) {
                     $transaction->rollBack();
@@ -442,11 +446,11 @@ final class BillingCheckoutService
                     'error' => $e->getMessage(),
                 ], 'mercadopago');
 
-                return $summary + [
-                    'result' => 'payment_failed',
-                    'payment_id' => $paymentId,
-                    'error' => $e->getMessage(),
-                ];
+                $summary['result'] = 'payment_failed';
+                $summary['payment_id'] = $paymentId;
+                $summary['error'] = $e->getMessage();
+
+                return $summary;
             }
         }
 
@@ -457,7 +461,9 @@ final class BillingCheckoutService
             'payments' => $summary['payments'],
         ], 'mercadopago');
 
-        return $summary + ['result' => 'no_approved_payment'];
+        $summary['result'] = 'no_approved_payment';
+
+        return $summary;
     }
 
     /**

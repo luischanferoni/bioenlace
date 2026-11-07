@@ -157,6 +157,14 @@ final class MercadoPagoCheckoutService
     /**
      * @return array<string, mixed>
      */
+    public function searchAuthorizedPayments(string $preapprovalId): array
+    {
+        return $this->apiClient()->searchAuthorizedPayments($preapprovalId);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
     public function cancelSubscription(string $subscriptionId): array
     {
         return $this->apiClient()->cancelPreapproval($subscriptionId);

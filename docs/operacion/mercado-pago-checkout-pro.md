@@ -297,6 +297,8 @@ Causas habituales:
 | `Invalid payer email` / `invalid_payer_email` | El `payer_email` no coincide con el modo de las credenciales o es inválido. También ocurre con el placeholder `@accounts.bioenlace.invalid` de una identidad creada sin mail. | En sandbox usar cualquier email válido (o el de la **Cuenta de prueba** del panel); en producción, el mail real del titular. |
 | `invalid_back_url` | `backUrl` vacía, `http://` o con un host que no resuelve. | Usar una URL HTTPS pública. |
 | `invalid_auto_recurring` / `transaction_amount` | Importe `0`, negativo o con más de 2 decimales. | Revisar `usdArsRate`, `vatRate` y el plan del efector. |
+| `Payer is associated with a different site` (`guest_site_mismatch`) | El pagador de prueba pertenece a otro **site/país** que el collector de la aplicación. | Crear el usuario de prueba comprador en el país del collector y usar su email en `sandboxBuyerEmail`. Ver comando de diagnóstico abajo. |
+| `User bad request` | `/preapproval` sin `payer_email` (o pagador inválido). | Configurar `sandboxBuyerEmail` con un email de prueba del site correcto. |
 | `unauthorized` / `invalid_token` | `accessToken` vencido, revocado o de otra aplicación. | Regenerar en **Tus integraciones → Credenciales**. |
 
 #### `Both payer and collector must be real or test users`
@@ -351,6 +353,27 @@ curl -s -i -X POST https://api.mercadopago.com/preapproval \
 El body de la respuesta indica el campo exacto que Mercado Pago rechaza. `transaction_amount` debe ser un número con hasta dos decimales y `payer_email` un mail válido del mismo modo (test/producción) que el token.
 
 Admin: **Billing checkout attempts** muestra el intento con su payload del proveedor, útil para diagnosticar importes o estados inesperados.
+
+### Diagnóstico del pagador de prueba
+
+Para saber el `site_id` del collector (dueño del token) y el `email`/`site_id` de un usuario de prueba:
+
+```bash
+cd web
+php yii billing-subscription/mp-test-payer --user-id=3817520526
+```
+
+Salida de ejemplo:
+
+```json
+Collector: {"id":123,"site_id":"MLA","email":"test_user_...@testuser.com"}
+Payer: {"id":3817520526,"site_id":"MLA","email":"test_user_...@testuser.com","username":"TESTUSER..."}
+```
+
+Reglas:
+
+- El `site_id` del **payer** debe coincidir con el del **collector**. Si no, creá la cuenta de prueba en el país del collector.
+- Usá el `email` del payer en `mercadoPago.sandboxBuyerEmail` (es el dato que espera `/preapproval`).
 
 ### Reenviar un webhook firmado a mano
 

@@ -52,6 +52,18 @@ final class MercadoPagoApiClient
     }
 
     /** @return array<string, mixed> */
+    public function getMe(): array
+    {
+        return $this->send('GET', '/users/me');
+    }
+
+    /** @return array<string, mixed> */
+    public function getUser(string $userId): array
+    {
+        return $this->send('GET', '/users/' . rawurlencode($userId));
+    }
+
+    /** @return array<string, mixed> */
     public function getAuthorizedPayment(string $authorizedPaymentId): array
     {
         return $this->send('GET', '/authorized_payments/' . rawurlencode($authorizedPaymentId));

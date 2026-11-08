@@ -12,7 +12,7 @@ Habilitar consultorio propio y clínica/centro desde la app con identidad Didit,
 - [x] Activar cuenta, licencia, efector y rol AdminEfector solo después del primer pago aprobado.
 - [x] Derivar identidad y Persona de la sesión autenticada creada desde la app; el flujo comercial no crea Persona/User.
 - [x] Habilitar en Personal de Salud consultorio y clínica/centro; mostrar precio e IVA antes de abrir el checkout hospedado.
-- [x] Consultorio: AdminEfector automático, 200 atenciones AMB por mes y un profesional.
+- [x] Consultorio: AdminEfector automático y 250 atenciones AMB (media jornada) o 500 (jornada completa) por mes; el volumen no fija un tope de personal.
 - [x] Clínica/centro privado: selección de localidad y volumen mensual por clase.
 - [x] Clínica/centro público: exigir código SISA presente y activo en el catálogo local, rechazar afiliación ministerial o cuenta POOL existente, reutilizar el efector oficial y asociarlo al ministerio elegido.
 - [ ] Consultorio: elección opcional de ejercer como Médico/especialidad y alta del rol clínico según la política REFEPS mock.

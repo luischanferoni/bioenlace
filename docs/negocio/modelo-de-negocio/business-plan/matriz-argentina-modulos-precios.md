@@ -1,14 +1,14 @@
 # Matriz Argentina — precio por volumen de atenciones × encounter_class
 
 **Tipo:** business plan · go-to-market Argentina  
-**Última actualización:** 2026-07-23  
+**Última actualización:** 2026-11-08  
 **Alcance:** solo Argentina por ahora; otros países cuando haya validación local.
 
 Precios **orientativos** en USD; no incluyen IVA. Impuestos: [impuestos-argentina.md](../../costos/impuestos-argentina.md).  
 COGS de referencia: [costos-api.md](../../costos/costos-api.md); el presupuesto comercial del chat AMB se distingue de los escenarios por llamada con context caching.
 
 **Modelo vigente:** licencia = **Σ (atenciones_mes[clase] × precio por atención)**.  
-El precio por atención = **COGS_por_atención × (1 + margen sobre costo)**. El margen de lista es **233 %** (~70 % bruto ≈ ~49 % después de IIBB + ganancias). A más **atenciones totales** contratadas (suma ambulatorio + urgencia + internación), baja el margen según tramos. El cliente elige tipos de atención y un **volumen aproximado** (presets). **1 profesional = 200 atenciones / mes**. El **dictado está incluido**; en ambulatorio la **videollamada** es el único add-on opcional. Motivos con audio se presupuestan **por clase**: AMB **~30 %**, EMER **~45 %** (triaje/pases), IMP **~50 %** (enfermería y otros roles); resto texto. El chat paciente (§1) tiene **cupo de 10 mensajes** alrededor del turno (capacidad / headroom para prompts más largos o varias llamadas IA). Lo no contratado **se deshabilita** en sesión operativa y tableros.
+El precio por atención = **COGS_por_atención × (1 + margen sobre costo)**. El margen de lista es **233 %** (~70 % bruto ≈ ~49 % después de IIBB + ganancias). A más **atenciones totales** contratadas (suma ambulatorio + urgencia + internación), baja el margen según tramos. El cliente elige tipos de atención y un **volumen aproximado** (presets). **1 profesional a jornada completa = 500 atenciones AMB / mes** (25 atenciones/día × 20 días; 15 min por atención ≈ 6 h 15 de consulta + ~1 h 45 administrativas); **media jornada = 250** (12–13/día × 20 días). Los presets se ajustan por clase: AMB 500, EMER 700 (guardia de 12 h × 15 turnos) e IMP 400 (20 pases/día × 20 días). El **dictado está incluido**; en ambulatorio la **videollamada** es el único add-on opcional. Motivos con audio se presupuestan **por clase**: AMB **~30 %**, EMER **~45 %** (triaje/pases), IMP **~50 %** (enfermería y otros roles); resto texto. El chat paciente (§1) tiene **cupo de 10 mensajes** alrededor del turno (capacidad / headroom para prompts más largos o varias llamadas IA). Lo no contratado **se deshabilita** en sesión operativa y tableros.
 
 Catálogo backend: [`PricingPesByEncounterClassCatalog.php`](../../../../web/common/components/Domain/Organization/Pes/Domain/Catalog/PricingPesByEncounterClassCatalog.php).
 Calculador público: sitio [`institucional/#precios`](../../../../institucional/index.html).  
@@ -38,7 +38,7 @@ USD/mes ≈ Σ_clase ( atenciones_mes[clase] × precio_por_atención )
 | Motivos EMER (blend **45 %** audio) | **0,0018** | Triaje, pases, notas rápidas |
 | Motivos IMP (blend **50 %** audio) | **0,0019** | Enfermería y otros roles + médico |
 | Captura IA (sin STT profesional) | **0,0006** | Siempre |
-| Dictado / STT profesional (−30 % on-device) | **0,0025** | **Incluido** en todas las clases |
+| Dictado / STT profesional (−30 % on-device) | **0,0025** | **Incluido** en todas las clases · ~5 min × USD 0,0005/min. Con 4 min: **0,0020** (−20 % del STT, −5,4 % del COGS AMB) |
 | Videollamada | **+0,0044** | Solo ambulatorio (opcional) · **40 %** teleconsulta |
 
 **Margen sobre costo (lista):** **233 %**.
@@ -52,7 +52,14 @@ USD/mes ≈ Σ_clase ( atenciones_mes[clase] × precio_por_atención )
 | Grande | 15.000–39.999 | **134 %** | **−30 %** | ~40 % |
 | Enterprise | 40.000+ | **117 %** | **−35 %** | ~37,5 % |
 
-Presets: **1 profesional (200)** · 2 (400) · 4 (800) · Clínica chica (2.000) · … · Enterprise+ (100.000).
+Presets **AMB**: media jornada (250) · jornada completa (500) · 2 profesionales (1.000) · 4 profesionales (2.000) · clínica chica (5.000) · … · enterprise+ (100.000). **EMER**: 350 · 700 · 1.400 · 2.800 · 7.000 · … · 140.000. **IMP**: 200 · 400 · 800 · 1.600 · 4.000 · … · 80.000.
+
+### Referencia de capacidad (de dónde salen los presets)
+
+- **500 AMB** = 25 atenciones atendidas/día × 20 días; 15 min por atención ≈ **375 min (6 h 15) de consulta** dentro de una jornada de 8 h.
+- **250 AMB (media jornada)** = 12–13 atenciones/día × 20 días ≈ **187 min (3 h 07) de consulta** dentro de una media jornada de 4 h.
+- **700 EMER** = guardia de 12 h × 15 turnos × ~4 atenciones/hora (15 min).
+- **400 IMP** = 20 pases o evoluciones/día × 20 días.
 
 ### Precio por atención (lista, sin descuento de tramo)
 
@@ -67,8 +74,9 @@ Presets: **1 profesional (200)** · 2 (400) · 4 (800) · Clínica chica (2.000)
 
 | Perfil | Volumen | USD / mes (orientativo) |
 |--------|---------|------------------------:|
-| **1 profesional** | **200** | **~6,20** |
-| 2 profesionales | 400 | **~12,40** |
+| **Media jornada** | **250** | **~7,75** |
+| **1 profesional (jornada completa)** | **500** | **~15,50** |
+| 2 profesionales | 1.000 | **~31,00** |
 | CIS ejemplo | 20.000 | **~436** (tramo Grande) |
 
 Ejemplo CIS: **20.000** atenciones ambulatorio (dictado incluido) → tramo Grande (−30 %) → **~USD 436 / mes**.
@@ -119,7 +127,7 @@ Un efector sin membresía POOL: sin tope (compat). Cupo compartido: el uso suma 
 
 | Comprador | Selección típica en el calculador |
 |-----------|-----------------------------------|
-| Independiente | Ambulatorio · preset **1 profesional (200)** |
+| Independiente | Ambulatorio · media jornada (250) o jornada completa (500) |
 | Clínica ambulatoria | Ambulatorio × volumen mensual |
 | Sanatorio con guardia | Ambulatorio + urgencia |
 | Sanatorio con camas | Ambulatorio + urgencia + internación |

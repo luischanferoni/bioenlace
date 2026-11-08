@@ -76,12 +76,12 @@ class InstitutionalSignupBillingTest extends Unit
     {
         $quote = SignUpInstitutionalEfector::estimatePlanMonthlyQuote([
             'classes' => [
-                'AMB' => ['attentions_per_month' => 200],
+                'AMB' => ['attentions_per_month' => 250],
             ],
         ]);
 
         $this->assertGreaterThan(0, $quote['amount_usd']);
-        $this->assertSame(200, $quote['total_attentions']);
+        $this->assertSame(250, $quote['total_attentions']);
     }
 
     public function testSisaCatalogSearchRejectsQueriesOutsideSupportedLength(): void

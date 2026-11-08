@@ -45,7 +45,7 @@ Código: [`ChatRouter.php`](../../../../web/common/components/Platform/Assistant
 | `dudosa` / `fuera_de_his` | **0** | — | mensaje límite / aclaración |
 | `clara` / `incompletas` | **+1** guide | `asistente-guide` | discovery + plan declarativo + Guide |
 
-**Nota:** incompletas y charla usan el mismo contexto `asistente-guide` (`GuideChannel` / `GuidePromptAssembler`). Volumen por profesional: ~3.060 llamadas/mes (2.000 preprocess + 1.060 guide).
+**Nota:** incompletas y charla usan el mismo contexto `asistente-guide` (`GuideChannel` / `GuidePromptAssembler`). Volumen por profesional: ~7.650 llamadas/mes (5.000 preprocess + 2.650 guide).
 
 ### Flujo anterior (referencia histórica — user_goal)
 

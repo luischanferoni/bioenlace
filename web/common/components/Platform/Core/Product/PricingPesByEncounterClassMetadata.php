@@ -60,11 +60,28 @@ final class PricingPesByEncounterClassMetadata
         }
 
         $presets = [];
-        foreach ((array) ($config['attention_volume_presets'] ?? []) as $preset) {
-            if (!is_array($preset)) {
+        foreach ((array) ($config['attention_volume_presets'] ?? []) as $code => $rows) {
+            if (!is_array($rows)) {
                 continue;
             }
-            $presets[] = self::only($preset, ['attentions', 'label', 'hint']);
+            $list = [];
+            foreach ($rows as $preset) {
+                if (!is_array($preset)) {
+                    continue;
+                }
+                $list[] = self::only($preset, ['attentions', 'label', 'hint']);
+            }
+            $presets[(string) $code] = $list;
+        }
+
+        $reference = [];
+        foreach ((array) ($config['reference_encounters_per_professional_month'] ?? []) as $code => $value) {
+            $reference[(string) $code] = (int) $value;
+        }
+
+        $defaults = [];
+        foreach ((array) ($config['defaults']['initial_attentions'] ?? []) as $code => $value) {
+            $defaults[(string) $code] = (int) $value;
         }
 
         $addons = [];
@@ -80,10 +97,9 @@ final class PricingPesByEncounterClassMetadata
             'currency' => (string) ($config['currency'] ?? 'USD'),
             'billing_period' => (string) ($config['billing_period'] ?? 'month'),
             'tax_note' => (string) ($config['tax_note'] ?? ''),
-            'reference_encounters_per_professional_month' => (int) ($config['reference_encounters_per_professional_month'] ?? 0),
+            'reference_encounters_per_professional_month' => $reference,
             'attention_volume_presets' => $presets,
-            'attention_volume_scale' => self::attentionVolumeScale(),
-            'defaults' => self::only((array) ($config['defaults'] ?? []), ['initial_attentions']),
+            'defaults' => $defaults,
             'sellable_classes' => $classes,
             'non_sellable_default' => (string) ($config['non_sellable_default'] ?? 'disabled'),
             'addons' => $addons,
@@ -132,17 +148,19 @@ final class PricingPesByEncounterClassMetadata
         return is_array($row) ? $row : null;
     }
 
-    public static function referenceEncountersPerMonth(): float
+    public static function referenceEncountersPerMonth(?string $encounterClass = null): float
     {
-        $ref = (float) (self::loadConfig()['reference_encounters_per_professional_month'] ?? 400);
+        $map = self::loadConfig()['reference_encounters_per_professional_month'] ?? [];
+        $class = $encounterClass !== null ? strtoupper($encounterClass) : 'AMB';
+        $ref = is_array($map) ? (float) ($map[$class] ?? 0) : (float) $map;
 
-        return $ref > 0 ? $ref : 400.0;
+        return $ref > 0 ? $ref : 500.0;
     }
 
     /** @deprecated Usar referenceEncountersPerMonth; se mantiene por compatibilidad. */
     public static function encountersPerMonth(string $encounterClass): float
     {
-        return self::referenceEncountersPerMonth();
+        return self::referenceEncountersPerMonth($encounterClass);
     }
 
     /** @deprecated El precio ya no escala por encounters_per_professional_month. */
@@ -232,7 +250,7 @@ final class PricingPesByEncounterClassMetadata
             $total += (float) ($cogs['patient_chat_amb'] ?? 0);
         }
         if ($audio || $videollamada) {
-            $total += (float) ($cogs['dictado_stt'] ?? 0);
+            $total += self::dictadoCogsPerEncounter();
         }
         if ($videollamada) {
             $total += (float) ($cogs['videollamada'] ?? 0);
@@ -278,17 +296,32 @@ final class PricingPesByEncounterClassMetadata
         return array_values(array_filter($tiers, static fn ($t) => is_array($t)));
     }
 
-    /**
-     * @return list<int>
-     */
-    public static function attentionVolumeScale(): array
+    public static function initialAttentionsForClass(string $encounterClass): ?int
     {
-        $scale = self::loadConfig()['attention_volume_scale'] ?? [];
-        if (!is_array($scale)) {
-            return [];
+        $defaults = self::loadConfig()['defaults']['initial_attentions'] ?? null;
+        if (!is_array($defaults)) {
+            return null;
         }
 
-        return array_values(array_map('intval', array_filter($scale, static fn ($n) => (int) $n > 0)));
+        $n = (int) ($defaults[strtoupper($encounterClass)] ?? 0);
+
+        return $n > 0 ? $n : null;
+    }
+
+    public static function dictadoMinutes(): float
+    {
+        $assumptions = self::loadConfig()['cogs_assumptions'] ?? [];
+        $minutes = (float) ($assumptions['dictado_minutes'] ?? 5);
+
+        return $minutes > 0 ? $minutes : 5.0;
+    }
+
+    public static function dictadoCogsPerEncounter(): float
+    {
+        $assumptions = self::loadConfig()['cogs_assumptions'] ?? [];
+        $perMinute = (float) ($assumptions['dictado_usd_per_minute'] ?? 0.0005);
+
+        return round(self::dictadoMinutes() * $perMinute, 4);
     }
 
     /**
@@ -347,14 +380,14 @@ final class PricingPesByEncounterClassMetadata
         return self::marginOnCostPercentForTotalAttentions($totalPes);
     }
 
-    public static function deriveMaxPesFromAttentions(int $attentions): int
+    public static function deriveMaxPesFromAttentions(int $attentions, string $encounterClass = 'AMB'): int
     {
         $qty = max(0, $attentions);
         if ($qty <= 0) {
             return 0;
         }
 
-        return max(1, (int) ceil($qty / self::referenceEncountersPerMonth()));
+        return max(1, (int) ceil($qty / self::referenceEncountersPerMonth($encounterClass)));
     }
 
     /**

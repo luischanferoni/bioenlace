@@ -4,7 +4,7 @@ Este documento refleja el **costo real** de la infraestructura cuando la IA corr
 
 ## Supuestos base
 
-- **Consultas por médico**: 20/día = 400/mes (20 × 20 días).
+- **Consultas por médico**: 25/día = 500/mes (25 × 20 días; 15 min por atención ≈ 6 h 15 de consulta + ~1 h 45 administrativas). Media jornada: 250/mes.
 - **Consulta típica**: 600–1.500 tokens totales (input + output). A mayor cantidad de tokens, mayor costo por consulta (más tiempo de GPU por inferencia).
 - **Costo real**: se indica por plan y por ítem en las tablas siguientes. Las cifras asumen un **modelo de tamaño estándar**; con **modelos pequeños** (7B u equivalentes) el costo por consulta baja (ver sección [Modelos pequeños](#modelos-pequeños-7b-u-equivalentes-en-nuestra-gpu)).
 
@@ -127,13 +127,13 @@ Cuando la IA corre en nuestra GPU, estas capacidades suman **más llamadas de in
 
 ### 1. Conversación con el paciente (chat asistente)
 
-Mismo supuesto que [costos-api §1](costos-api.md#1-conversación-con-el-paciente): preprocess en cada mensaje + guide cuando routing_result = clara/incompletas → **~3.060 llamadas/mes** (2.000 preprocess + 1.060 guide).
+Mismo supuesto que [costos-api §1](costos-api.md#1-conversación-con-el-paciente): preprocess en cada mensaje + guide cuando routing_result = clara/incompletas → **~7.650 llamadas/mes** (5.000 preprocess + 2.650 guide).
 
 | Concepto | Supuesto | Costo real mensual (por médico) |
 |----------|----------|----------------------------------|
-| Llamadas IA (chat) | **~3.060** | — |
-| **RunPod RTX 3090** ($0.021/llamada) | 3.060 × $0.021 | **aprox. $64.30/médico/mes** |
-| **GCP T4 Preemptible** ($0.0035–0.0095/llamada) | 3.060 × ($0.0035–0.0095) | **aprox. $10.70–29.10/médico/mes** |
+| Llamadas IA (chat) | **~7.650** | — |
+| **RunPod RTX 3090** ($0.021/llamada) | 7.650 × $0.021 | **aprox. $160.65/médico/mes** |
+| **GCP T4 Preemptible** ($0.0035–0.0095/llamada) | 7.650 × ($0.0035–0.0095) | **aprox. $26.78–72.68/médico/mes** |
 
 ---
 
@@ -143,9 +143,9 @@ Una inferencia por consulta al cerrar la ventana de carga (ver [design.md](desig
 
 | Concepto | Supuesto | Costo real mensual (por médico) |
 |----------|----------|----------------------------------|
-| Llamadas IA (resumen motivos) | **400** (1 por consulta) | — |
-| **RunPod RTX 3090** ($0.021/llamada) | 400 × $0.021 | **aprox. $8.40/médico/mes** |
-| **GCP T4 Preemptible** ($0.0035–0.0095/llamada) | 400 × ($0.0035–0.0095) | **aprox. $1.40–3.80/médico/mes** |
+| Llamadas IA (resumen motivos) | **500** (1 por consulta) | — |
+| **RunPod RTX 3090** ($0.021/llamada) | 500 × $0.021 | **aprox. $10.50/médico/mes** |
+| **GCP T4 Preemptible** ($0.0035–0.0095/llamada) | 500 × ($0.0035–0.0095) | **aprox. $1.75–4.75/médico/mes** |
 
 ---
 

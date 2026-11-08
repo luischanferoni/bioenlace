@@ -16,7 +16,7 @@ Flujo de producto (mayo 2026):
 3. Al cerrar la ventana, el cron `turno-notificacion/run` ejecuta **`MOTIVOS_IA_BATCH`**: concatena los audios del hilo en **una** STT (Groq) + resume textos (escritos u on-device) → `encounter.reason_text`.
 4. El médico ve intake (si hubo), resumen y cohorte en timeline / app Personal de Salud antes de la captura.
 
-Coste modelado: **400 llamadas IA/mes** (1 por consulta), no 4× por mensaje. Código: `AppointmentReasonWindowService`, `AppointmentReasonBatchService`.
+Coste modelado: **500 llamadas IA/mes** (1 por consulta), no 4× por mensaje. Código: `AppointmentReasonWindowService`, `AppointmentReasonBatchService`.
 
 Impacta [costos-api.md](costos-api.md) (Apartado 1) e [infra-costos.md](infra-costos.md) si el lote corre en GPU propia.
 

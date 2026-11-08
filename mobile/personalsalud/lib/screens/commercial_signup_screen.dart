@@ -194,34 +194,25 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     return raw is Map ? Map<String, dynamic>.from(raw) : const {};
   }
 
-  /// Grupos de volumen que define el backend (`attention_volume_presets`,
-  /// con fallback a `attention_volume_scale`).
-  List<MapEntry<int, String>> get _volumePresets {
-    final presets = _plansCatalog?['attention_volume_presets'];
-    if (presets is List && presets.isNotEmpty) {
-      return presets
-          .whereType<Map>()
-          .map((preset) {
-            final attentions = int.tryParse(
-              preset['attentions']?.toString() ?? '',
-            );
-            return attentions == null || attentions <= 0
-                ? null
-                : MapEntry(attentions, preset['label']?.toString() ?? '');
-          })
-          .whereType<MapEntry<int, String>>()
-          .toList();
-    }
-    final scale = _plansCatalog?['attention_volume_scale'];
-    if (scale is List) {
-      return scale
-          .map((value) => int.tryParse(value?.toString() ?? ''))
-          .whereType<int>()
-          .where((attentions) => attentions > 0)
-          .map((attentions) => MapEntry(attentions, ''))
-          .toList();
-    }
-    return const [];
+  /// Grupos de volumen que define el backend por tipo de atención
+  /// (`attention_volume_presets[code]`).
+  List<MapEntry<int, String>> _volumePresets(String code) {
+    final byClass = _plansCatalog?['attention_volume_presets'];
+    if (byClass is! Map) return const [];
+    final presets = byClass[code];
+    if (presets is! List) return const [];
+    return presets
+        .whereType<Map>()
+        .map((preset) {
+          final attentions = int.tryParse(
+            preset['attentions']?.toString() ?? '',
+          );
+          return attentions == null || attentions <= 0
+              ? null
+              : MapEntry(attentions, preset['label']?.toString() ?? '');
+        })
+        .whereType<MapEntry<int, String>>()
+        .toList();
   }
 
   Future<void> _refreshQuote() async {
@@ -1064,7 +1055,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     final label = classRow['label']?.toString() ?? code;
     final short = classRow['short']?.toString() ?? '';
     final allowsVideollamada = classRow['videollamada_allowed'] != false;
-    final presets = _volumePresets;
+    final presets = _volumePresets(code);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: BioSpacing.md),
@@ -1096,14 +1087,17 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
                 spacing: BioSpacing.sm,
                 runSpacing: BioSpacing.sm,
                 children: presets
-                    .map(
-                      (preset) => BioChip(
+                    .map((preset) {
+                      final chip = BioChip(
                         label: _formatAttentions(preset.key),
                         selected: selected == preset.key,
                         icon: selected == preset.key ? Icons.check : null,
                         onTap: () => _selectVolume(code, preset.key),
-                      ),
-                    )
+                      );
+                      return preset.value.isEmpty
+                          ? chip
+                          : Tooltip(message: preset.value, child: chip);
+                    })
                     .toList(),
               ),
               if (code == 'AMB' && allowsVideollamada) ...[

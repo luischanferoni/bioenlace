@@ -48,7 +48,10 @@
       hidden.value = '';
       chips.forEach((chip) => chip.classList.remove('is-selected'));
     } else if (!hidden.value) {
-      const def = Pricing.defaultAttentions(config);
+      const def = Pricing.defaultAttentions(
+        config,
+        row.getAttribute('data-class'),
+      );
       setVolume(row, def);
     }
     syncAmbOptions(row);
@@ -322,11 +325,12 @@
   }
 
   function buildVolumeChipsHtml(code, selected) {
-    const presets = Pricing.attentionVolumePresets(config);
+    const presets = Pricing.attentionVolumePresets(config, code);
     const chips = presets
       .map((p) => {
         const sel = String(p.attentions) === String(selected) ? ' is-selected' : '';
-        const title = p.hint ? ' title="' + String(p.hint).replace(/"/g, '&quot;') + '"' : '';
+        const hint = p.hint || p.label;
+        const title = hint ? ' title="' + String(hint).replace(/"/g, '&quot;') + '"' : '';
         return (
           '<button type="button" class="pricing-calc__chip' +
           sel +
@@ -360,7 +364,6 @@
   function buildRows() {
     if (!rowsEl || !config) return;
     const classes = config.sellable_classes || {};
-    const defaultVol = Pricing.defaultAttentions(config);
     rowsEl.innerHTML = '';
     Object.keys(classes).forEach((code) => {
       const cls = classes[code];
@@ -415,7 +418,7 @@
       if (amb) {
         const cb = amb.querySelector('input[name="class_AMB"]');
         if (cb) cb.checked = true;
-        setVolume(amb, defaultVol);
+        setVolume(amb, Pricing.defaultAttentions(config, 'AMB'));
         syncQtyDisabled(amb);
       }
     }

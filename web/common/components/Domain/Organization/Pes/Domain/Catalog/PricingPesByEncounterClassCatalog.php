@@ -13,12 +13,27 @@ final class PricingPesByEncounterClassCatalog
     public static function config(): array
     {
         return [
-        'version' => 11,
+        'version' => 12,
         'currency' => 'USD',
         'billing_period' => 'month',
         'tax_note' => 'El total mensual incluye IVA.',
         'default_when_empty' => 'allow_all',
-        'reference_encounters_per_professional_month' => 200,
+        /*
+         * Capacidad de referencia por profesional y mes (atenciones atendidas).
+         *
+         * AMB jornada completa = 500: 25 atenciones/día × 20 días.
+         *   - 15 min por atención ≈ 6 h 15 de consulta.
+         *   - Dentro de una jornada de 8 h quedan ~1 h 45 para tareas administrativas.
+         * AMB media jornada = 250: 12–13 atenciones/día × 20 días (≈ 3 h 07 de consulta).
+         *
+         * EMER = 700: guardia de 12 h × 15 turnos/mes a 15 min por atención (~4/hora).
+         * IMP = 400: 20 pases/evoluciones por día × 20 días (internación no se mide por turno).
+         */
+        'reference_encounters_per_professional_month' => [
+            'AMB' => 500,
+            'EMER' => 700,
+            'IMP' => 400,
+        ],
         'cogs_assumptions' => [
             'patient_chat_messages_budget' => 10,
             'patient_chat_note' => 'Cupo de 10 msgs alrededor del turno para prompts más largos y posibles múltiples llamadas IA; no implica uso pleno en cada mensaje.',
@@ -30,6 +45,9 @@ final class PricingPesByEncounterClassCatalog
             'motivos_audio_note' => 'Share de atenciones con audio en motivos/notas de voz. AMB ~30%; EMER ~45% (triaje y pases); IMP ~50% (enfermería y otros roles además del médico). Resto texto.',
             'videollamada_share' => 0.4,
             'videollamada_note' => 'Planificación: ~40% de atenciones ambulatorias por videollamada cuando el add-on está contratado (12 min, 2 participantes). COGS infra+storage escalado desde el techo @ 80%.',
+            'dictado_minutes' => 5,
+            'dictado_usd_per_minute' => 0.0005,
+            'dictado_note' => 'STT del profesional: ~5 min por atención × USD 0,0005/min = USD 0,0025. Con 4 min: USD 0,0020 (−20 % del STT, −5,4 % del COGS AMB; −USD 0,85/mes a 500 atenciones).',
         ],
         'cogs_usd_per_encounter' => [
             'patient_chat_amb' => 0.0048,
@@ -40,70 +58,159 @@ final class PricingPesByEncounterClassCatalog
                 'IMP' => 0.0019,
             ],
             'captura_ia' => 0.0006,
-            'dictado_stt' => 0.0025,
             'videollamada' => 0.0044,
         ],
         'margin_on_cost_percent' => 233,
+        // Ladder por clase: 0,5× · 1× · 2× · 4× · 10× · 20× · 40× · 100× · 200× la referencia.
         'attention_volume_presets' => [
-            0 => [
-                'attentions' => 200,
-                'label' => '200 atenciones / mes',
-                'hint' => null,
+            'AMB' => [
+                0 => [
+                    'attentions' => 250,
+                    'label' => 'Media jornada · 250 atenciones / mes',
+                    'hint' => '12–13 atenciones/día × 20 días (≈ 3 h 07 de consulta)',
+                ],
+                1 => [
+                    'attentions' => 500,
+                    'label' => 'Jornada completa · 500 atenciones / mes',
+                    'hint' => '25 atenciones/día × 20 días (≈ 6 h 15 de consulta)',
+                ],
+                2 => [
+                    'attentions' => 1000,
+                    'label' => '2 profesionales · 1.000 atenciones / mes',
+                    'hint' => null,
+                ],
+                3 => [
+                    'attentions' => 2000,
+                    'label' => '2.000 atenciones / mes',
+                    'hint' => null,
+                ],
+                4 => [
+                    'attentions' => 5000,
+                    'label' => '5.000 atenciones / mes',
+                    'hint' => null,
+                ],
+                5 => [
+                    'attentions' => 10000,
+                    'label' => '10.000 atenciones / mes',
+                    'hint' => null,
+                ],
+                6 => [
+                    'attentions' => 20000,
+                    'label' => '20.000 atenciones / mes',
+                    'hint' => null,
+                ],
+                7 => [
+                    'attentions' => 50000,
+                    'label' => '50.000 atenciones / mes',
+                    'hint' => null,
+                ],
+                8 => [
+                    'attentions' => 100000,
+                    'label' => '100.000 atenciones / mes',
+                    'hint' => null,
+                ],
             ],
-            1 => [
-                'attentions' => 400,
-                'label' => '400 atenciones / mes',
-                'hint' => null,
+            'EMER' => [
+                0 => [
+                    'attentions' => 350,
+                    'label' => 'Medio turno de guardia · 350 atenciones / mes',
+                    'hint' => '~7 turnos de 12 h × 15 min por atención',
+                ],
+                1 => [
+                    'attentions' => 700,
+                    'label' => 'Guardia completa · 700 atenciones / mes',
+                    'hint' => '15 turnos de 12 h × 15 min por atención',
+                ],
+                2 => [
+                    'attentions' => 1400,
+                    'label' => '2 profesionales · 1.400 atenciones / mes',
+                    'hint' => null,
+                ],
+                3 => [
+                    'attentions' => 2800,
+                    'label' => '2.800 atenciones / mes',
+                    'hint' => null,
+                ],
+                4 => [
+                    'attentions' => 7000,
+                    'label' => '7.000 atenciones / mes',
+                    'hint' => null,
+                ],
+                5 => [
+                    'attentions' => 14000,
+                    'label' => '14.000 atenciones / mes',
+                    'hint' => null,
+                ],
+                6 => [
+                    'attentions' => 28000,
+                    'label' => '28.000 atenciones / mes',
+                    'hint' => null,
+                ],
+                7 => [
+                    'attentions' => 70000,
+                    'label' => '70.000 atenciones / mes',
+                    'hint' => null,
+                ],
+                8 => [
+                    'attentions' => 140000,
+                    'label' => '140.000 atenciones / mes',
+                    'hint' => null,
+                ],
             ],
-            2 => [
-                'attentions' => 800,
-                'label' => '800 atenciones / mes',
-                'hint' => null,
+            'IMP' => [
+                0 => [
+                    'attentions' => 200,
+                    'label' => 'Media jornada · 200 pases / mes',
+                    'hint' => '10 pases o evoluciones/día × 20 días',
+                ],
+                1 => [
+                    'attentions' => 400,
+                    'label' => 'Jornada completa · 400 pases / mes',
+                    'hint' => '20 pases o evoluciones/día × 20 días',
+                ],
+                2 => [
+                    'attentions' => 800,
+                    'label' => '2 profesionales · 800 pases / mes',
+                    'hint' => null,
+                ],
+                3 => [
+                    'attentions' => 1600,
+                    'label' => '1.600 pases / mes',
+                    'hint' => null,
+                ],
+                4 => [
+                    'attentions' => 4000,
+                    'label' => '4.000 pases / mes',
+                    'hint' => null,
+                ],
+                5 => [
+                    'attentions' => 8000,
+                    'label' => '8.000 pases / mes',
+                    'hint' => null,
+                ],
+                6 => [
+                    'attentions' => 16000,
+                    'label' => '16.000 pases / mes',
+                    'hint' => null,
+                ],
+                7 => [
+                    'attentions' => 40000,
+                    'label' => '40.000 pases / mes',
+                    'hint' => null,
+                ],
+                8 => [
+                    'attentions' => 80000,
+                    'label' => '80.000 pases / mes',
+                    'hint' => null,
+                ],
             ],
-            3 => [
-                'attentions' => 2000,
-                'label' => '2.000 atenciones / mes',
-                'hint' => null,
-            ],
-            4 => [
-                'attentions' => 5000,
-                'label' => '5.000 atenciones / mes',
-                'hint' => null,
-            ],
-            5 => [
-                'attentions' => 10000,
-                'label' => '10.000 atenciones / mes',
-                'hint' => null,
-            ],
-            6 => [
-                'attentions' => 20000,
-                'label' => '20.000 atenciones / mes',
-                'hint' => null,
-            ],
-            7 => [
-                'attentions' => 50000,
-                'label' => '50.000 atenciones / mes',
-                'hint' => null,
-            ],
-            8 => [
-                'attentions' => 100000,
-                'label' => '100.000 atenciones / mes',
-                'hint' => null,
-            ],
-        ],
-        'attention_volume_scale' => [
-            0 => 200,
-            1 => 400,
-            2 => 800,
-            3 => 2000,
-            4 => 5000,
-            5 => 10000,
-            6 => 20000,
-            7 => 50000,
-            8 => 100000,
         ],
         'defaults' => [
-            'initial_attentions' => 200,
+            'initial_attentions' => [
+                'AMB' => 250,
+                'EMER' => 350,
+                'IMP' => 200,
+            ],
         ],
         'volume_discount_tiers' => [
             0 => [

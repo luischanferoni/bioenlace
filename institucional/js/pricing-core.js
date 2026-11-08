@@ -27,31 +27,30 @@
       : true;
   }
 
-  function attentionVolumePresets(config) {
-    const presets = (config && config.attention_volume_presets) || [];
-    if (Array.isArray(presets) && presets.length) {
-      return presets
-        .map((preset) => {
-          const attentions = Number(preset && preset.attentions);
-          if (!(attentions > 0)) return null;
-          return {
-            attentions,
-            hint: (preset && preset.hint) || '',
-          };
-        })
-        .filter(Boolean);
-    }
-    const scale = (config && config.attention_volume_scale) || [];
-    return (Array.isArray(scale) ? scale : [])
-      .map(Number)
-      .filter((attentions) => attentions > 0)
-      .map((attentions) => ({ attentions, hint: '' }));
+  function attentionVolumePresets(config, code) {
+    const byClass = (config && config.attention_volume_presets) || {};
+    const presets = byClass && byClass[code];
+    if (!Array.isArray(presets)) return [];
+    return presets
+      .map((preset) => {
+        const attentions = Number(preset && preset.attentions);
+        if (!(attentions > 0)) return null;
+        return {
+          attentions,
+          label: (preset && preset.label) || '',
+          hint: (preset && preset.hint) || '',
+        };
+      })
+      .filter(Boolean);
   }
 
-  function defaultAttentions(config) {
-    const defaults = (config && config.defaults) || {};
-    const presets = attentionVolumePresets(config);
-    return Number(defaults.initial_attentions) || presets[0]?.attentions || 200;
+  function defaultAttentions(config, code) {
+    const defaults = (config && config.defaults && config.defaults.initial_attentions) || {};
+    const initial =
+      defaults && typeof defaults === 'object' ? Number(defaults[code]) : 0;
+    if (initial > 0) return initial;
+    const presets = attentionVolumePresets(config, code);
+    return presets[0]?.attentions || 250;
   }
 
   function readDomSelection(rowsRoot) {

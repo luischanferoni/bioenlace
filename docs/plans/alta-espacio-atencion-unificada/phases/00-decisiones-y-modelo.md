@@ -6,7 +6,7 @@
 - [x] Persona/User se crean o recuperan después de Didit. La cuenta gratuita no recibe un rol profesional ni acceso a Personal de Salud.
 - [x] La opción paga unifica consultorio y clínica/centro; no se mantienen los perfiles comerciales anteriores por compatibilidad.
 - [x] El titular selecciona sector público o privado; para público elige ministerio y efector oficial SISA.
-- [x] No hay un límite artificial de un profesional. 200 AMB es una referencia orientativa, no una restricción de personal.
+- [x] No hay un límite artificial de un profesional. 250 AMB (media jornada) y 500 AMB (jornada completa) son referencias orientativas, no una restricción de personal.
 - [x] Crear identidad o iniciar checkout no concede AdminEfector ni habilita licencia.
 - [x] Pago aprobado y conciliado activa licencia y asigna AdminEfector.
 - [x] La asignación clínica del titular es posterior y separada de AdminEfector.

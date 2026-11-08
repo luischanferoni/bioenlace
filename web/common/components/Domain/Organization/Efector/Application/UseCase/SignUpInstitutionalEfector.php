@@ -822,7 +822,7 @@ final class SignUpInstitutionalEfector
                 $legacyMaxPes = (int) ($cfg['max_pes'] ?? 0);
                 if ($legacyMaxPes > 0) {
                     $attentions = $legacyMaxPes
-                        * (int) PricingPesByEncounterClassMetadata::referenceEncountersPerMonth();
+                        * (int) PricingPesByEncounterClassMetadata::referenceEncountersPerMonth($class);
                 }
             }
             if ($attentions <= 0) {
@@ -833,7 +833,7 @@ final class SignUpInstitutionalEfector
             if (in_array($perfil, self::PERFIL_LEGACY, true)) {
                 $maxPes = (int) ($cfg['max_pes'] ?? 0);
                 if ($maxPes <= 0) {
-                    $maxPes = PricingPesByEncounterClassMetadata::deriveMaxPesFromAttentions($attentions);
+                    $maxPes = PricingPesByEncounterClassMetadata::deriveMaxPesFromAttentions($attentions, $class);
                 }
                 $maxPes = max(1, $maxPes);
             }
@@ -886,7 +886,6 @@ final class SignUpInstitutionalEfector
 
         $byClass = [];
         $video = false;
-        $ref = (int) PricingPesByEncounterClassMetadata::referenceEncountersPerMonth();
         foreach ($plan['classes'] as $class => $cfg) {
             if (!is_array($cfg)) {
                 continue;
@@ -894,6 +893,7 @@ final class SignUpInstitutionalEfector
             $attentions = (int) ($cfg['attentions_per_month'] ?? 0);
             if ($attentions <= 0) {
                 $maxPes = (int) ($cfg['max_pes'] ?? 0);
+                $ref = (int) PricingPesByEncounterClassMetadata::referenceEncountersPerMonth((string) $class);
                 $attentions = $maxPes > 0 ? $maxPes * $ref : 0;
             }
             if ($attentions <= 0) {

@@ -84,11 +84,11 @@ Tarifas y supuestos por profesional: [costos-api.md](costos-api.md). Aquí solo 
 
 | Concepto | Cálculo | USD por mes |
 |----------|---------|-------------|
-| IA + STT — sin context caching (planificación −30 % STT) | 5.000 x ~2,89 por prof | **~14.450** |
-| IA + STT — con context caching (favorable, −30 % STT) | 5.000 x ~2,73 por prof | **~13.650** |
-| Videollamada §6 (COGS planificado @ 40 %) | 5.000 x 1,75 por prof | **~8.750** |
-| **IA + STT + videollamada** — sin caché | suma filas anteriores | **~23.200** |
-| **IA + STT + videollamada** — con caché | 13.650 + 8.750 | **~22.400** |
+| IA + STT — sin context caching (planificación −30 % STT) | 5.000 x ~5,75 por prof | **~28.750** |
+| IA + STT — con context caching (favorable, −30 % STT) | 5.000 x ~5,37 por prof | **~26.850** |
+| Videollamada §6 (COGS planificado @ 40 %) | 5.000 x 2,19 por prof | **~10.950** |
+| **IA + STT + videollamada** — sin caché | suma filas anteriores | **~39.700** |
+| **IA + STT + videollamada** — con caché | 26.850 + 10.950 | **~37.800** |
 | Aplicación + BD + hosting | *[pendiente presupuesto]* | — |
 
 **Infra app:** clínica de **20 profesionales** → «Infra + soporte» **USD 200–500 por mes** en unit economics ([modelos-pricing](../modelo-de-negocio/business-plan/modelos-pricing-diferenciados.md)); **no escala lineal** a 5.000 usuarios.
@@ -99,15 +99,15 @@ Tarifas y supuestos por profesional: [costos-api.md](costos-api.md). Aquí solo 
 
 ### B) Carga fiscal sobre compras (estimación conservadora)
 
-Base: filas **IA + STT** de la tabla A (~**14.450** sin caché · ~**13.650** con caché; incluye **−30 %** STT on-device). Estrategias adicionales de [estrategias-reduccion/](estrategias-reduccion/README.md) no están más allá de ese −30 %.
+Base: filas **IA + STT** de la tabla A (~**28.750** sin caché · ~**26.850** con caché; incluye **−30 %** STT on-device). Estrategias adicionales de [estrategias-reduccion/](estrategias-reduccion/README.md) no están más allá de ese −30 %.
 
 | Concepto | Sin caché (COGS) | Con caché (favorable) | Notas |
 |----------|------------------|----------------------|--------|
-| Subtotal IA + STT (tabla A) | ~14.450 | ~13.650 | Motivos con audio; STT planificación (−30 %) |
-| IVA 21 % compras (crédito pleno) | +3.035 | +2.867 | RI: **caja ≈ 0** a neto |
-| IVA / percepciones no recuperables | 0 – 2.110 | 0 – 1.993 | Peor caso sobre subtotal |
-| **Costo IA efectivo (peor caso)** | **~14.450 – 16.560** | **~13.650 – 15.643** | Sin crédito o con percepciones |
-| **Costo IA efectivo (RI, normal)** | **~14.450** | **~13.650** | |
+| Subtotal IA + STT (tabla A) | ~28.750 | ~26.850 | Motivos con audio; STT planificación (−30 %) |
+| IVA 21 % compras (crédito pleno) | +6.038 | +5.639 | RI: **caja ≈ 0** a neto |
+| IVA / percepciones no recuperables | 0 – 4.198 | 0 – 3.920 | Peor caso sobre subtotal |
+| **Costo IA efectivo (peor caso)** | **~28.750 – 32.948** | **~26.850 – 30.770** | Sin crédito o con percepciones |
+| **Costo IA efectivo (RI, normal)** | **~28.750** | **~26.850** | |
 
 **Resumen fiscal (compras):** App/BD *[pendiente]*.
 
@@ -128,38 +128,38 @@ Base: filas **IA + STT** de la tabla A (~**14.450** sin caché · ~**13.650** co
 
 | Escenario | ~USD por prof sin caché | ~USD por prof con caché | Precio **neto** 5.000 prof sin caché | Precio **neto** 5.000 prof con caché | Factura **+ IVA 21 %** sin caché | Factura **+ IVA 21 %** con caché | Margen bruto | Margen después IIBB + ganancias |
 |-----------|-------------------------|-------------------------|--------------------------------------|--------------------------------------|----------------------------------|----------------------------------|--------------|--------------------------------|
-| **Solo costo (sin margen)** * | **~2,89** | **~2,73** | **~14.450** | **~13.650** | **~17.485** | **~16.517** | **0 %** · **0 %** | **Pérdida** |
-| **Lista matriz (~70 % bruto)** † | **~9,62** | **~9,09** | **~48.100** | **~45.450** | **~58.201** | **~54.995** | **~70 %** | Ver IIBB+ganancias sobre ese neto |
+| **Solo costo (sin margen)** * | **~5,75** | **~5,37** | **~28.750** | **~26.850** | **~34.788** | **~32.508** | **0 %** · **0 %** | **Pérdida** |
+| **Lista matriz (~70 % bruto)** † | **~19,15** | **~17,88** | **~95.738** | **~89.400** | **~115.843** | **~108.174** | **~70 %** | Ver IIBB+ganancias sobre ese neto |
 | **Variable IA, margen mínimo (histórico)** | **1,8 – 2,0** | **1,8 – 2,0** | **9.000 – 10.000** | **9.000 – 10.000** | **10.890 – 12.100** | **10.890 – 12.100** | **bajo / negativo** * | **bajo / negativo** * |
 
-\* COGS planificación (Apartado 1 intensivo **−30 % STT**): sin caché **~14.450** · con caché **~13.650**. Bruto todo-servidor era ~3,65 / ~3,49.  
-† `2,89 × 3,33 ≈ 9,62`. Lista comercial / metadata: audio add-on **0,98** (no el bruto 1,40).
+\* COGS planificación (Apartado 1 intensivo **−30 % STT**): sin caché **~28.750** · con caché **~26.850**. Bruto todo-servidor (sin −30 % STT): ~6,69 / ~6,31 por prof.  
+† `5,75 × 3,33 ≈ 19,15`. Lista comercial / metadata: audio add-on **1,23** (no el bruto 1,75).
 
 #### Tabla — IA + STT + videollamada (COGS planificado §6)
 
 | Escenario | ~USD por prof sin caché | ~USD por prof con caché | Precio **neto** 5.000 prof sin caché | Precio **neto** 5.000 prof con caché | Factura **+ IVA 21 %** sin caché | Factura **+ IVA 21 %** con caché | Margen bruto |
 |-----------|-------------------------|-------------------------|--------------------------------------|--------------------------------------|----------------------------------|----------------------------------|--------------|
-| **Solo costo (sin margen)** * | **~4,64** | **~4,48** | **~23.200** | **~22.400** | **~28.072** | **~27.104** | **0 %** |
-| **Lista matriz (~70 % bruto)** † | **~15,45** | **~14,92** | **~77.250** | **~74.600** | **~93.473** | **~90.266** | **~70 %** |
+| **Solo costo (sin margen)** * | **~7,94** | **~7,56** | **~39.700** | **~37.800** | **~48.037** | **~45.738** | **0 %** |
+| **Lista matriz (~70 % bruto)** † | **~26,44** | **~25,17** | **~132.200** | **~125.850** | **~159.962** | **~152.279** | **~70 %** |
 
-\* Tabla A + videollamada ([costos-api §6](costos-api.md#6-videollamadas-pacientemédico), **1,75** @ **40 %** tele = self-host; STT una vez con −30 %).  
-† `4,64 × 3,33 ≈ 15,45`.
+\* Tabla A + videollamada ([costos-api §6](costos-api.md#6-videollamadas-pacientemédico), **2,19** @ **40 %** tele = self-host; STT una vez con −30 %).  
+† `7,94 × 3,33 ≈ 26,44`.
 
 La fila «margen mínimo» histórico (1,8–2 por prof) **no cubre** STT ni videollamada; la **lista matriz** usa COGS + 233 %.
 
-#### Detalle aritmético — ejemplo lista matriz, 5.000 prof, solo IA+STT (~9,62/prof)
+#### Detalle aritmético — ejemplo lista matriz, 5.000 prof, solo IA+STT (~19,15/prof)
 
 | Concepto | USD por mes |
 |----------|---------|
-| Facturación neta | 48.100 |
-| IVA 21 % (discriminado en factura) | +10.101 (no es ingreso) |
-| Ingresos brutos (4 %) | −1.924 |
-| Costo IA + STT (planificación) | −14.450 |
-| Utilidad antes ganancias | 31.726 |
-| Ganancias (25 %) | −7.932 |
-| **Resultado variable** (antes de fijos) | **23.794** |
-| **Margen bruto** | **~70 %** (= (48.100 − 14.450) / 48.100) |
-| **Margen después IIBB + ganancias** | **~49 %** (= 23.794 / 48.100) |
+| Facturación neta | 95.738 |
+| IVA 21 % (discriminado en factura) | +20.105 (no es ingreso) |
+| Ingresos brutos (4 %) | −3.830 |
+| Costo IA + STT (planificación) | −28.750 |
+| Utilidad antes ganancias | 63.158 |
+| Ganancias (25 %) | −15.790 |
+| **Resultado variable** (antes de fijos) | **47.368** |
+| **Margen bruto** | **~70 %** (= (95.738 − 28.750) / 95.738) |
+| **Margen después IIBB + ganancias** | **~49 %** (= 47.368 / 95.738) |
 
 #### Detalle aritmético — ejemplo histórico USD 10.000 por mes neto (2 por prof)
 
@@ -168,7 +168,7 @@ La fila «margen mínimo» histórico (1,8–2 por prof) **no cubre** STT ni vid
 | Facturación neta | 10.000 |
 | IVA 21 % (discriminado en factura) | +2.100 (no es ingreso) |
 | Ingresos brutos (4 %) | −400 |
-| Costo IA + STT (planificación) | −14.450 |
+| Costo IA + STT (planificación) | −28.750 |
 | Utilidad antes ganancias | **pérdida** |
 | Ganancias (25 %) | 0 |
 | **Resultado variable** (antes de fijos) | **negativo** |

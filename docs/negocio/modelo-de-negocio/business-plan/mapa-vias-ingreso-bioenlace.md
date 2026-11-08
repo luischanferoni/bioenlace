@@ -101,10 +101,10 @@ Al leer la tabla y el detalle, conviene distinguir cuatro líneas que se repiten
 - **Incluye:** dictado clínico. **Videollamada** es opcional en AMB y suma su COGS al precio.
 
 
-| Plan / alcance (AR) | Para qué | Orden de magnitud (lista, 400 atenciones AMB) |
+| Plan / alcance (AR) | Para qué | Orden de magnitud (lista, 500 atenciones AMB = jornada completa) |
 | ------------------- | -------- | -------------------------------------------- |
-| AMB sin videollamada | Dictado incluido; agenda, captura clínica y chat | ~**USD 12,40/mes**; cotización backend |
-| AMB con videollamada | Teleconsulta self-host (§6), STT incluido | ~**USD 18,24/mes**; cotización backend |
+| AMB sin videollamada | Dictado incluido; agenda, captura clínica y chat | ~**USD 15,50/mes** (media jornada 250: ~USD 7,75); cotización backend |
+| AMB con videollamada | Teleconsulta self-host (§6), STT incluido | ~**USD 22,80/mes** (media jornada 250: ~USD 11,40); cotización backend |
 | Clase EMER / IMP | Tablero guardia / internación | Escala según volumen contratado |
 | Receta electrónica / pack OS | Vías 2 y 5 | Cotización aparte (no en fórmula COGS) |
 

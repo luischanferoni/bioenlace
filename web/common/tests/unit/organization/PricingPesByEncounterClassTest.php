@@ -66,26 +66,47 @@ class PricingPesByEncounterClassTest extends Unit
         $this->assertSame(29.7, $quote['discount_percent']);
     }
 
-    public function testOneProfessionalPrice(): void
+    public function testFullTimeProfessionalPrice(): void
     {
-        // 1 profesional = 200 atenciones → ~USD 6,20
+        // Jornada completa = 500 atenciones → ~USD 15,50
         $quote = PricingPesByEncounterClassMetadata::estimateMonthlyQuote(
-            ['AMB' => 200],
+            ['AMB' => 500],
             true,
             false
         );
-        $this->assertSame(6.2, $quote['amount_usd']);
-        $this->assertSame(200, $quote['total_attentions']);
+        $this->assertSame(15.5, $quote['amount_usd']);
+        $this->assertSame(500, $quote['total_attentions']);
         $this->assertSame([
             'code' => 'AMB',
-            'attentions_per_month' => 200,
+            'attentions_per_month' => 500,
             'unit_amount_usd' => 0.031,
-            'amount_usd' => 6.2,
+            'amount_usd' => 15.5,
         ], $quote['items'][0]);
-        $this->assertSame(6.2, $quote['list_amount_usd']);
+        $this->assertSame(15.5, $quote['list_amount_usd']);
         $this->assertSame(0.0, $quote['discount_amount_usd']);
         $this->assertSame(0.0, $quote['discount_percent']);
-        $this->assertSame(200.0, PricingPesByEncounterClassMetadata::referenceEncountersPerMonth());
+        $this->assertSame(500.0, PricingPesByEncounterClassMetadata::referenceEncountersPerMonth());
+        $this->assertSame(700.0, PricingPesByEncounterClassMetadata::referenceEncountersPerMonth('EMER'));
+        $this->assertSame(400.0, PricingPesByEncounterClassMetadata::referenceEncountersPerMonth('IMP'));
+    }
+
+    public function testHalfTimeProfessionalPrice(): void
+    {
+        // Media jornada = 250 atenciones → ~USD 7,75
+        $quote = PricingPesByEncounterClassMetadata::estimateMonthlyQuote(
+            ['AMB' => 250],
+            true,
+            false
+        );
+        $this->assertSame(7.75, $quote['amount_usd']);
+        $this->assertSame(250, $quote['total_attentions']);
+        $this->assertSame(0.031, $quote['items'][0]['unit_amount_usd']);
+    }
+
+    public function testDictadoMinutesDriveSttCogs(): void
+    {
+        $this->assertSame(5.0, PricingPesByEncounterClassMetadata::dictadoMinutes());
+        $this->assertSame(0.0025, PricingPesByEncounterClassMetadata::dictadoCogsPerEncounter());
     }
 
     public function testDefaultWhenEmptyAllowAll(): void

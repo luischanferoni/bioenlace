@@ -8,7 +8,7 @@
 | Identidad | Didit desde la app; la API crea o recupera Persona/User |
 | Cuenta gratuita | No requiere asignación clínica y no puede entrar a Personal de Salud; las funciones de paciente viven en la app paciente |
 | Espacio de atención | Un solo recorrido para consultorio y clínica/centro; sector, efector, servicios y volúmenes determinan la configuración |
-| Volumen | Configurable según catálogo; 200 AMB es una referencia orientativa, no un máximo de personal |
+| Volumen | Configurable según catálogo por clase; 250 AMB (media jornada) y 500 AMB (jornada completa) son referencias orientativas, no un máximo de personal |
 | Sector | El titular selecciona público o privado |
 | Sector público | Selección obligatoria de ministerio y efector SISA elegible; conservar controles anti-duplicación/afiliación existentes |
 | Pago | Suscripción mensual en ARS por Mercado Pago; el servidor calcula precio, impuestos y snapshot FX |

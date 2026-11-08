@@ -22,7 +22,7 @@ Unificar el alta paga de consultorios y clínicas/centros en un único espacio d
 6. Un webhook firmado y conciliado confirma el pago. La activación crea/activa efector, licencia y asignación AdminEfector idempotentemente.
 7. El titular entra en Personal de Salud como AdminEfector y el asistente le guía para configurar servicios y asignar personal. Si quiere atender, se incorpora como profesional mediante el flujo clínico independiente.
 
-Los 200 AMB pueden ofrecerse como volumen inicial orientativo, equivalente aproximadamente a la carga de un profesional. No representan un límite de personal ni una categoría de producto.
+Los 250 AMB (media jornada) y 500 AMB (jornada completa) pueden ofrecerse como volumen inicial orientativo, equivalente aproximadamente a la carga de un profesional. No representan un límite de personal ni una categoría de producto.
 
 ## Reanudación
 

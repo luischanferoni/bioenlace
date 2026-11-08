@@ -16,26 +16,26 @@ Los **pasos de un flujo operativo** (elegir profesional, completar formulario, e
 
 **Historial en charla guide:** la 2.ª IA guide incluye una **ventana acotada** del hilo (implementación: `GuideHistoryWindow` — foco por área, acotado). El primer mensaje de un tema va casi solo con instrucciones; los siguientes arrastran contexto. Techo de input por llamada guide acotado en la tabla de tokens.
 
-Supuesto de actividad (AMB): **4.000 mensajes por mes** (10 por encounter × 400 encounters). Varios ida y vuelta guide cuentan como **varios mensajes** dentro de esos 10.
+Supuesto de actividad (AMB): **5.000 mensajes por mes** (10 por encounter × 500 encounters). Varios ida y vuelta guide cuentan como **varios mensajes** dentro de esos 10.
 
 #### Volumen de llamadas IA por mensaje (escenario central — ajustar con telemetría)
 
-La 1.ª IA ya corrió; la tabla indica **si hace falta una 2.ª** y cuántas llamadas IA suma ese mensaje en total. Los % suman 100 % de los **4.000** mensajes (10 × 400 encounters, solo AMB en el modelo comercial).
+La 1.ª IA ya corrió; la tabla indica **si hace falta una 2.ª** y cuántas llamadas IA suma ese mensaje en total. Los % suman 100 % de los **5.000** mensajes (10 × 500 encounters, solo AMB en el modelo comercial).
 
 || `routing_result` | Qué escribe el paciente (ejemplos) | Mensajes por mes | ¿2.ª IA? | Total llamadas IA por mensaje |
 ||------------------|-----------------------------------|------------------|----------|-------------------------------|
-|| `clara` / `incompletas` | Pedido claro pero incompleto, síntomas, charla clínica | **2.120** (53 %) | **Sí**, guide con adjuntos | **2** |
-|| `dudosa` | Saludo, mensaje muy corto, sin necesidad clara | **1.880** (47 %) | **No** (solo pide aclaración) | **1** |
+|| `clara` / `incompletas` | Pedido claro pero incompleto, síntomas, charla clínica | **2.650** (53 %) | **Sí**, guide con adjuntos | **2** |
+|| `dudosa` | Saludo, mensaje muy corto, sin necesidad clara | **2.350** (47 %) | **No** (solo pide aclaración) | **1** |
 
 **Cómo se traduce en volumen mensual:**
 
-|| Tipo de llamada | Cálculo (sobre 4.000 mensajes) | Llamadas por mes |
+|| Tipo de llamada | Cálculo (sobre 5.000 mensajes) | Llamadas por mes |
 ||-----------------|--------------------------------|------------------|
-|| 1.ª IA — preprocess (todos) | 4.000 | **4.000** |
-|| 2.ª IA — guide | 2.120 | **2.120** |
-|| **Total Vertex** | 4.000 + 2.120 | **~6.120** |
+|| 1.ª IA — preprocess (todos) | 5.000 | **5.000** |
+|| 2.ª IA — guide | 2.650 | **2.650** |
+|| **Total Vertex** | 5.000 + 2.650 | **~7.650** |
 
-**Por profesional (200 encounters/mes):** ~**3.060** llamadas/mes (2.000 preprocess + 1.060 guide). Ver `ai-cost-reference.yaml`.
+**Por profesional (500 encounters/mes):** ~**7.650** llamadas/mes (5.000 preprocess + 2.650 guide). Ver `ai-cost-reference.yaml`.
 
 #### Tokens y context caching por tipo de llamada
 
@@ -50,14 +50,14 @@ Tarifas Gemini: ver [§ Gemini Flash](#gemini-flash-tarifas-actuales-y-context-c
 
 || Concepto | Sin context caching (COGS) | Con context caching (favorable) |
 ||----------|----------------------------|----------------------------------|
-|| 4.000 x preprocess | ~$0,68 | ~$0,58 |
-|| 2.120 x guide | ~$0,85 | ~$0,73 |
-|| **Total §1** | **~$1,53** | **~$1,31** |
-|| DeepSeek V4 Flash (orden de magnitud) | **~$1,22** | **~$1,10** |
+|| 5.000 x preprocess | ~$0,85 | ~$0,73 |
+|| 2.650 x guide | ~$1,06 | ~$0,91 |
+|| **Total §1** | **~$1,91** | **~$1,64** |
+|| DeepSeek V4 Flash (orden de magnitud) | **~$1,53** | **~$1,38** |
 
-**Por profesional (200 encounters/mes):** ~**$0,77** sin caché · ~**$0,66** con caché.
+**Por profesional (500 encounters/mes):** ~**$1,91** sin caché · ~**$1,64** con caché.
 
-**Escenario alternativo (más guide, 60 % clara/incompletas):** sube a **~$1,68** sin caché · **~$1,44** con caché. **Escenario operativo fuerte (70 % dudosa):** baja a **~$1,38** · **~$1,18**.
+**Escenario alternativo (más guide, 60 % clara/incompletas):** sube a **~$2,10** sin caché · **~$1,80** con caché. **Escenario operativo fuerte (70 % dudosa):** baja a **~$1,73** · **~$1,48**.
 
 Detalle de flujos y caché: [estrategias-reduccion/matriz-casos-uso.md](estrategias-reduccion/matriz-casos-uso.md).
 

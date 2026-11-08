@@ -34,38 +34,86 @@
     }
   }
 
-  function syncQtyDisabled(row) {
+  function volumePresetsForRow(row) {
+    return Pricing.attentionVolumePresets(config, row.getAttribute('data-class'));
+  }
+
+  function syncStepButtons(row) {
+    const range = row.querySelector('[data-volume-range]');
     const enabled = row.querySelector('input[type="checkbox"][name^="class_"]');
-    const hidden = row.querySelector('input[data-attentions]');
-    const chips = row.querySelectorAll('.pricing-calc__chip');
-    if (!enabled || !hidden) return;
-    const on = !!enabled.checked;
-    chips.forEach((chip) => {
-      chip.disabled = !on;
-      chip.setAttribute('aria-disabled', on ? 'false' : 'true');
+    const presets = volumePresetsForRow(row);
+    const index = range ? Number(range.value) || 0 : 0;
+    const on = !!(enabled && enabled.checked);
+    row.querySelectorAll('[data-step]').forEach((button) => {
+      const step = Number(button.getAttribute('data-step')) || 0;
+      button.disabled = !on || (step < 0 ? index <= 0 : index >= presets.length);
     });
-    if (!on) {
-      hidden.value = '';
-      chips.forEach((chip) => chip.classList.remove('is-selected'));
-    } else if (!hidden.value) {
-      const def = Pricing.defaultAttentions(
-        config,
-        row.getAttribute('data-class'),
+  }
+
+  function setVolumeIndex(row, index) {
+    const presets = volumePresetsForRow(row);
+    const max = presets.length;
+    const next = Math.max(0, Math.min(max, parseInt(index, 10) || 0));
+    const range = row.querySelector('[data-volume-range]');
+    const hidden = row.querySelector('input[data-attentions]');
+    const readout = row.querySelector('[data-volume-readout]');
+    const preset = next === 0 ? null : presets[next - 1];
+
+    if (range) {
+      range.value = String(next);
+      range.setAttribute(
+        'aria-valuetext',
+        preset
+          ? Pricing.formatAttentions(preset.attentions) +
+            ' atenciones por mes' +
+            (preset.label ? ', ' + preset.label : '')
+          : 'Sin volumen',
       );
-      setVolume(row, def);
     }
-    syncAmbOptions(row);
+    if (hidden) hidden.value = preset ? String(preset.attentions) : '';
+    if (readout) {
+      if (!preset) {
+        readout.innerHTML =
+          '<strong class="is-empty">Sin volumen</strong>' +
+          '<span>Mové el control o usá − / +</span>';
+      } else {
+        const hint = preset.hint || preset.label || '';
+        readout.innerHTML =
+          '<strong>' +
+          escapeHtml(Pricing.formatAttentions(preset.attentions)) +
+          '/mes</strong>' +
+          (hint ? '<span>' + escapeHtml(hint) + '</span>' : '');
+      }
+    }
+    syncStepButtons(row);
   }
 
   function setVolume(row, attentions) {
+    const presets = volumePresetsForRow(row);
+    const index = presets.findIndex(
+      (preset) => Number(preset.attentions) === Number(attentions),
+    );
+    setVolumeIndex(row, index >= 0 ? index + 1 : 0);
+  }
+
+  function syncQtyDisabled(row) {
+    const enabled = row.querySelector('input[type="checkbox"][name^="class_"]');
+    const range = row.querySelector('[data-volume-range]');
     const hidden = row.querySelector('input[data-attentions]');
-    const chips = row.querySelectorAll('.pricing-calc__chip');
-    if (!hidden) return;
-    const n = String(attentions);
-    hidden.value = n;
-    chips.forEach((chip) => {
-      chip.classList.toggle('is-selected', chip.getAttribute('data-value') === n);
-    });
+    if (!enabled || !range || !hidden) return;
+    const on = !!enabled.checked;
+    range.disabled = !on;
+    if (!on) {
+      setVolumeIndex(row, 0);
+    } else if (!hidden.value) {
+      if (mode === 'signup') {
+        setVolume(row, Pricing.defaultAttentions(config, row.getAttribute('data-class')));
+      } else {
+        setVolumeIndex(row, 0);
+      }
+    }
+    syncStepButtons(row);
+    syncAmbOptions(row);
   }
 
   function recalc() {
@@ -239,7 +287,7 @@
   function renderQuote(selection, quote) {
     if (totalEl) {
       totalEl.textContent =
-        formatQuoteMoney(quote.amount_total_ars, 'ARS') + ' / mes';
+        formatQuoteMoney(quote.amount_total_ars, 'ARS');
     }
     if (breakdownEl) {
       const itemLines = quote.items
@@ -324,35 +372,31 @@
     return '<p class="pricing-calc__policy">Dictado incluido</p>';
   }
 
-  function buildVolumeChipsHtml(code, selected) {
+  function buildVolumeSliderHtml(code, selected) {
     const presets = Pricing.attentionVolumePresets(config, code);
-    const chips = presets
-      .map((p) => {
-        const sel = String(p.attentions) === String(selected) ? ' is-selected' : '';
-        const hint = p.hint || p.label;
-        const title = hint ? ' title="' + String(hint).replace(/"/g, '&quot;') + '"' : '';
-        return (
-          '<button type="button" class="pricing-calc__chip' +
-          sel +
-          '" data-value="' +
-          p.attentions +
-          '"' +
-          title +
-          ' disabled>' +
-          '<strong>' +
-          Pricing.formatAttentions(p.attentions) +
-          '/mes</strong>' +
-          '</button>'
-        );
-      })
-      .join('');
+    const max = presets.length;
+    const maxLabel = max
+      ? Pricing.formatAttentions(presets[max - 1].attentions) + '/mes'
+      : '';
     return (
       '<div class="pricing-calc__qty">' +
       '<span class="pricing-calc__qty-label">Volumen de atenciones mensual</span>' +
-      '<div class="pricing-calc__chips" role="group" aria-label="Volumen de atenciones mensual ' +
-      code +
-      '">' +
-      chips +
+      '<div class="pricing-calc__slider">' +
+      '<button type="button" class="pricing-calc__slider-step" data-step="-1" aria-label="Menos atenciones" disabled>−</button>' +
+      '<div class="pricing-calc__slider-track">' +
+      '<input type="range" min="0" max="' +
+      max +
+      '" step="1" value="0" data-volume-range aria-label="Volumen de atenciones mensual ' +
+      escapeHtml(code) +
+      '" aria-valuetext="Sin volumen" disabled />' +
+      '</div>' +
+      '<button type="button" class="pricing-calc__slider-step" data-step="1" aria-label="Más atenciones" disabled>+</button>' +
+      '</div>' +
+      '<div class="pricing-calc__slider-scale" aria-hidden="true"><span>0</span><span>' +
+      escapeHtml(maxLabel) +
+      '</span></div>' +
+      '<div class="pricing-calc__slider-readout" data-volume-readout aria-live="polite">' +
+      '<strong class="is-empty">Sin volumen</strong><span>Mové el control o usá − / +</span>' +
       '</div>' +
       '<input type="hidden" data-attentions value="' +
       (selected || '') +
@@ -387,7 +431,7 @@
         '</span></label>' +
         optionsHtml +
         '</div>' +
-        buildVolumeChipsHtml(code, '');
+        buildVolumeSliderHtml(code, '');
       rowsEl.appendChild(row);
       const checkbox = row.querySelector('input[name="class_' + code + '"]');
       syncQtyDisabled(row);
@@ -396,10 +440,24 @@
         refreshUnitLabels();
         recalc();
       });
-      row.querySelectorAll('.pricing-calc__chip').forEach((chip) => {
-        chip.addEventListener('click', () => {
-          if (chip.disabled) return;
-          setVolume(row, chip.getAttribute('data-value'));
+      const range = row.querySelector('[data-volume-range]');
+      if (range) {
+        range.addEventListener('input', () => {
+          setVolumeIndex(row, range.value);
+        });
+        range.addEventListener('change', () => {
+          setVolumeIndex(row, range.value);
+          refreshUnitLabels();
+          recalc();
+        });
+      }
+      row.querySelectorAll('[data-step]').forEach((button) => {
+        button.addEventListener('click', () => {
+          if (button.disabled || !range) return;
+          setVolumeIndex(
+            row,
+            Number(range.value) + Number(button.getAttribute('data-step')),
+          );
           refreshUnitLabels();
           recalc();
         });

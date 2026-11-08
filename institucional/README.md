@@ -54,9 +54,9 @@ El CTA del calculador (`precios.html`) ya no pre-carga el plan en un formulario 
 
 `pricing-core.js` contiene utilidades de selección; no calcula precios. En [`precios.html`](precios.html), el catálogo y las estimaciones se consultan en `GET /licencia/planes` y `POST /licencia/cotizar`. El backend es la única fuente de precios, impuestos y conversión a ARS. `alta.html` deriva el alta a la app.
 
-Los `<script>` de pricing llevan un query `?v=YYYYMMDD`: **bumpealo al editar** `pricing-core.js` o `pricing-calculator.js`. Sin eso, los navegadores siguen ejecutando la versión cacheada (por ejemplo, la que aún enviaba `perfil: "CLINICA"` y recibía `request_invalid`).
+Los `<script>` de pricing y el CSS llevan un query `?v=<token>` (p. ej. `20261108b`): **bumpealo al editar** `pricing-core.js`, `pricing-calculator.js` o `styles.css`. Sin eso, los navegadores siguen ejecutando la versión cacheada (por ejemplo, la que aún enviaba `perfil: "CLINICA"` y recibía `request_invalid`).
 
-La página conserva controles para clases (ambulatorio / urgencia / internación), volumen mensual y videollamada opcional. Los chips, el detalle de prestaciones y el CTA se alimentan del catálogo público del backend. La cotización muestra el total en ARS con IVA y el importe base en USD.
+La página conserva controles para clases (ambulatorio / urgencia / internación), volumen mensual y videollamada opcional. El volumen se elige con un **slider** (0 = sin volumen, botones − / + a los costados y arrastre manual); el detalle de prestaciones y el CTA se alimentan del catálogo público del backend. La cotización muestra el total en ARS con IVA y el importe base en USD.
 
 Doc comercial: [matriz-argentina-modulos-precios.md](../docs/negocio/modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md).
 Catálogo backend: `web/common/components/Domain/Organization/Pes/Domain/Catalog/PricingPesByEncounterClassCatalog.php`.

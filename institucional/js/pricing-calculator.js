@@ -354,7 +354,7 @@
       '<button type="button" class="pricing-calc__slider-step" data-step="1" aria-label="Más atenciones" disabled>+</button>' +
       '</div>' +
       '<div class="pricing-calc__slider-readout" data-volume-readout aria-live="polite">' +
-      '<strong class="is-empty">Sin volumen</strong>&nbsp;&nbsp;<span>Mové el control o usá − / +</span>' +
+      '<span>Mové el control o usá − / +</span>' +
       '</div>' +
       '<input type="hidden" data-attentions value="" />' +
       '</div>'

@@ -64,7 +64,7 @@
           ? Pricing.formatAttentions(preset.attentions) +
             ' atenciones por mes' +
             (preset.label ? ', ' + preset.label : '')
-          : 'Sin volumen',
+          : '',
       );
     }
     if (hidden) hidden.value = preset ? String(preset.attentions) : '';

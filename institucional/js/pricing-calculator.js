@@ -71,7 +71,6 @@
     if (readout) {
       if (!preset) {
         readout.innerHTML =
-          '<strong class="is-empty">Sin volumen</strong>&nbsp;&nbsp;' +
           '<span>Mové el control o usá − / +</span>';
       } else {
         const hint = preset.hint || preset.label || '';

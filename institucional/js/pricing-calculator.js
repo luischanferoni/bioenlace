@@ -25,8 +25,8 @@
 
   function syncAmbOptions(row) {
     if (!row || row.getAttribute('data-class') !== 'AMB') return;
-    const enabled = row.querySelector('input[name="class_AMB"]');
-    const on = !!(enabled && enabled.checked);
+    const hidden = row.querySelector('input[data-attentions]');
+    const on = !!(hidden && Number(hidden.value) > 0);
     const video = row.querySelector('input[data-addon="videollamada"]');
     if (video) {
       video.disabled = !on;
@@ -40,13 +40,11 @@
 
   function syncStepButtons(row) {
     const range = row.querySelector('[data-volume-range]');
-    const enabled = row.querySelector('input[type="checkbox"][name^="class_"]');
     const presets = volumePresetsForRow(row);
     const index = range ? Number(range.value) || 0 : 0;
-    const on = !!(enabled && enabled.checked);
     row.querySelectorAll('[data-step]').forEach((button) => {
       const step = Number(button.getAttribute('data-step')) || 0;
-      button.disabled = !on || (step < 0 ? index <= 0 : index >= presets.length);
+      button.disabled = step < 0 ? index <= 0 : index >= presets.length;
     });
   }
 
@@ -59,6 +57,7 @@
     const readout = row.querySelector('[data-volume-readout]');
     const preset = next === 0 ? null : presets[next - 1];
 
+    row.classList.toggle('is-active', !!preset);
     if (range) {
       range.value = String(next);
       range.setAttribute(
@@ -74,7 +73,7 @@
     if (readout) {
       if (!preset) {
         readout.innerHTML =
-          '<strong class="is-empty">Sin volumen</strong>' +
+          '<strong class="is-empty">Sin volumen</strong>&nbsp;&nbsp;' +
           '<span>Mové el control o usá − / +</span>';
       } else {
         const hint = preset.hint || preset.label || '';
@@ -83,33 +82,6 @@
           escapeHtml(Pricing.formatAttentions(preset.attentions)) +
           '/mes</strong> ' +
           (hint ? '<span>' + escapeHtml(hint) + '</span>' : '');
-      }
-    }
-    syncStepButtons(row);
-  }
-
-  function setVolume(row, attentions) {
-    const presets = volumePresetsForRow(row);
-    const index = presets.findIndex(
-      (preset) => Number(preset.attentions) === Number(attentions),
-    );
-    setVolumeIndex(row, index >= 0 ? index + 1 : 0);
-  }
-
-  function syncQtyDisabled(row) {
-    const enabled = row.querySelector('input[type="checkbox"][name^="class_"]');
-    const range = row.querySelector('[data-volume-range]');
-    const hidden = row.querySelector('input[data-attentions]');
-    if (!enabled || !range || !hidden) return;
-    const on = !!enabled.checked;
-    range.disabled = !on;
-    if (!on) {
-      setVolumeIndex(row, 0);
-    } else if (!hidden.value) {
-      if (mode === 'signup') {
-        setVolume(row, Pricing.defaultAttentions(config, row.getAttribute('data-class')));
-      } else {
-        setVolumeIndex(row, 0);
       }
     }
     syncStepButtons(row);
@@ -123,7 +95,6 @@
     const selectedClasses = Object.keys(selection.classes || {});
     window.clearTimeout(quoteTimer);
     latestQuote = null;
-    refreshUnitLabels();
 
     if (totalEl) {
       totalEl.textContent = selectedClasses.length ? 'Calculando…' : '—';
@@ -131,7 +102,7 @@
     if (breakdownEl) {
       if (!selectedClasses.length) {
         breakdownEl.innerHTML =
-          '<p class="pricing-calc__hint">Activá al menos un tipo de atención y elegí un volumen.</p>';
+          '<p class="pricing-calc__hint">Elegí un volumen de atenciones para ver el precio.</p>';
       } else {
         breakdownEl.innerHTML =
           '<p class="pricing-calc__hint">Consultando el precio actualizado…</p>';
@@ -188,14 +159,6 @@
     return currency + ' ' + formatted;
   }
 
-  function formatQuoteUnitPrice(amount) {
-    const formatted = new Intl.NumberFormat('es-AR', {
-      minimumFractionDigits: 4,
-      maximumFractionDigits: 4,
-    }).format(Number(amount));
-    return 'USD ' + formatted;
-  }
-
   function unwrapResponse(body) {
     if (body && body.error) {
       throw new Error(body.error.message || 'No se pudo calcular el precio.');
@@ -240,6 +203,8 @@
           quote.amount_total_ars,
           quote.list_amount_usd,
           quote.discount_amount_usd,
+          quote.list_amount_ars,
+          quote.discount_amount_ars,
           quote.discount_percent,
           quote.total_attentions,
         ].map(Number);
@@ -312,28 +277,22 @@
       const discount =
         discountPercent > 0
           ? '<div class="pricing-calc__line"><span>Precio de lista</span><strong>' +
-            formatQuoteMoney(quote.list_amount_usd, 'USD') +
+            formatQuoteMoney(quote.list_amount_ars, 'ARS') +
             '</strong></div><div class="pricing-calc__line"><span>Descuento por volumen (' +
             escapeHtml(String(discountPercent)) +
             '%)</span><strong>− ' +
-            formatQuoteMoney(quote.discount_amount_usd, 'USD') +
+            formatQuoteMoney(quote.discount_amount_ars, 'ARS') +
             '</strong></div>'
           : '';
-      const rateDate = ''/*quote.exchange_rate_effective_date
-        ? '<div class="pricing-calc__line"><span>Cotización vigente desde</span><strong>' +
-          escapeHtml(quote.exchange_rate_effective_date) +
-          '</strong></div>'
-        : ''*/;
       breakdownEl.innerHTML =
         itemLines +
-        discount +        
-        '<div class="pricing-calc__line"><span>Neto en pesos</span><strong>' +
+        discount +
+        '<div class="pricing-calc__line"><span>Neto</span><strong>' +
         formatQuoteMoney(quote.amount_net_ars, 'ARS') +
         '</strong></div>' +
         '<div class="pricing-calc__line"><span>IVA</span><strong>' +
         formatQuoteMoney(quote.vat_ars, 'ARS') +
-        '</strong></div>' +
-        rateDate;
+        '</strong></div>';
     }
     root.dispatchEvent(
       new CustomEvent('bioenlace:pricing-change', {
@@ -341,10 +300,6 @@
         detail: { selection: selection, estimate: quote },
       }),
     );
-  }
-
-  function refreshUnitLabels() {
-    // Precio unitario no se muestra en la UI; el total y el breakdown alcanzan.
   }
 
   function buildAmbOptionsHtml() {
@@ -356,8 +311,8 @@
       '<label class="pricing-calc__option">' +
       '<input type="checkbox" data-addon="videollamada" disabled />' +
       '<span><strong>' +
-      (video.label || 'Videollamada') +
-      '</strong> <em>(opcional)</em></span></label>' +
+      (video.label || 'Con Videollamada') +
+      '</strong></span></label>' +
       '</div>'
     );
   }
@@ -372,13 +327,12 @@
     return '<p class="pricing-calc__policy">Dictado incluido</p>';
   }
 
-  function buildVolumeSliderHtml(code, selected) {
+  function buildVolumeSliderHtml(code) {
     const presets = Pricing.attentionVolumePresets(config, code);
     const max = presets.length;
 
     return (
       '<div class="pricing-calc__qty">' +
-      '<span class="pricing-calc__qty-label">Volumen de atenciones mensual</span>' +
       '<div class="pricing-calc__slider">' +
       '<button type="button" class="pricing-calc__slider-step" data-step="-1" aria-label="Menos atenciones" disabled>−</button>' +
       '<div class="pricing-calc__slider-track">' +
@@ -386,17 +340,14 @@
       max +
       '" step="1" value="0" data-volume-range aria-label="Volumen de atenciones mensual ' +
       escapeHtml(code) +
-      '" aria-valuetext="Sin volumen" disabled />' +
+      '" aria-valuetext="Sin volumen" />' +
       '</div>' +
       '<button type="button" class="pricing-calc__slider-step" data-step="1" aria-label="Más atenciones" disabled>+</button>' +
       '</div>' +
-      '</span></div>' +
       '<div class="pricing-calc__slider-readout" data-volume-readout aria-live="polite">' +
-      '<strong class="is-empty">Sin volumen</strong><span>Mové el control o usá − / +</span>' +
+      '<strong class="is-empty">Sin volumen</strong>&nbsp;&nbsp;<span>Mové el control o usá − / +</span>' +
       '</div>' +
-      '<input type="hidden" data-attentions value="' +
-      (selected || '') +
-      '" />' +
+      '<input type="hidden" data-attentions value="" />' +
       '</div>'
     );
   }
@@ -413,10 +364,7 @@
       const optionsHtml = code === 'AMB' ? buildAmbOptionsHtml() : buildFixedPolicyHtml(code);
       row.innerHTML =
         '<div class="pricing-calc__main">' +
-        '<label class="pricing-calc__check">' +
-        '<input type="checkbox" name="class_' +
-        escapeHtml(code) +
-        '" />' +
+        '<div class="pricing-calc__check">' +
         '<span class="pricing-calc__check-body">' +
         '<strong>' +
         escapeHtml(cls.label || code) +
@@ -424,18 +372,12 @@
         '<span class="pricing-calc__short">' +
         escapeHtml(cls.short || '') +
         '</span>' +
-        '</span></label>' +
-         buildVolumeSliderHtml(code, '') +
+        '</span></div>' +
+        buildVolumeSliderHtml(code) +
         '</div>' +
         optionsHtml;
       rowsEl.appendChild(row);
-      const checkbox = row.querySelector('input[name="class_' + code + '"]');
-      syncQtyDisabled(row);
-      checkbox.addEventListener('change', () => {
-        syncQtyDisabled(row);
-        refreshUnitLabels();
-        recalc();
-      });
+      setVolumeIndex(row, 0);
       const range = row.querySelector('[data-volume-range]');
       if (range) {
         range.addEventListener('input', () => {
@@ -443,7 +385,6 @@
         });
         range.addEventListener('change', () => {
           setVolumeIndex(row, range.value);
-          refreshUnitLabels();
           recalc();
         });
       }
@@ -454,28 +395,16 @@
             row,
             Number(range.value) + Number(button.getAttribute('data-step')),
           );
-          refreshUnitLabels();
           recalc();
         });
       });
       row.querySelectorAll('input[data-addon]').forEach((input) => {
         input.addEventListener('change', () => {
           syncAmbOptions(row);
-          refreshUnitLabels();
           recalc();
         });
       });
     });
-
-    if (mode === 'signup') {
-      const amb = rowsEl.querySelector('[data-class="AMB"]');
-      if (amb) {
-        const cb = amb.querySelector('input[name="class_AMB"]');
-        if (cb) cb.checked = true;
-        setVolume(amb, Pricing.defaultAttentions(config, 'AMB'));
-        syncQtyDisabled(amb);
-      }
-    }
   }
 
   function escapeHtml(s) {
@@ -643,7 +572,6 @@
       config = catalog;
       fillStaticCopy();
       buildRows();
-      refreshUnitLabels();
       recalc();
       root.classList.add('is-ready');
     })

@@ -44,15 +44,6 @@
       .filter(Boolean);
   }
 
-  function defaultAttentions(config, code) {
-    const defaults = (config && config.defaults && config.defaults.initial_attentions) || {};
-    const initial =
-      defaults && typeof defaults === 'object' ? Number(defaults[code]) : 0;
-    if (initial > 0) return initial;
-    const presets = attentionVolumePresets(config, code);
-    return presets[0]?.attentions || 250;
-  }
-
   function readDomSelection(rowsRoot) {
     const selection = {
       classes: {},
@@ -61,15 +52,13 @@
     if (!rowsRoot) return selection;
     rowsRoot.querySelectorAll('[data-class]').forEach((row) => {
       const code = row.getAttribute('data-class');
-      const enabled = row.querySelector(
-        'input[type="checkbox"][name^="class_"]',
-      );
       const volume = row.querySelector(
         'input[data-attentions], select[data-attentions]',
       );
-      if (!code || !enabled || !volume || !enabled.checked) return;
+      if (!code || !volume) return;
       const attentions = Math.max(0, parseInt(volume.value, 10) || 0);
-      if (attentions > 0) selection.classes[code] = attentions;
+      if (attentions <= 0) return;
+      selection.classes[code] = attentions;
       if (code === 'AMB') {
         const video = row.querySelector('input[data-addon="videollamada"]');
         selection.addons.videollamada = !!(video && video.checked);
@@ -103,6 +92,5 @@
     classIncludesAudio,
     classAllowsVideollamada,
     attentionVolumePresets,
-    defaultAttentions,
   };
 })(typeof window !== 'undefined' ? window : this);

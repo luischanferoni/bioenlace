@@ -56,7 +56,7 @@ El CTA del calculador (`precios.html`) ya no pre-carga el plan en un formulario 
 
 Los `<script>` de pricing y el CSS llevan un query `?v=<token>` (p. ej. `20261108b`): **bumpealo al editar** `pricing-core.js`, `pricing-calculator.js` o `styles.css`. Sin eso, los navegadores siguen ejecutando la versión cacheada (por ejemplo, la que aún enviaba `perfil: "CLINICA"` y recibía `request_invalid`).
 
-La página conserva controles para clases (ambulatorio / urgencia / internación), volumen mensual y videollamada opcional. El volumen se elige con un **slider** (0 = sin volumen, botones − / + a los costados y arrastre manual); el detalle de prestaciones y el CTA se alimentan del catálogo público del backend. La cotización muestra el total en ARS con IVA y el importe base en USD.
+La página conserva controles para clases (ambulatorio / urgencia / internación), volumen mensual y videollamada opcional. Los tipos de atención no tienen casilla de activación: **todos arrancan sin volumen** y se activan recién cuando se elige un volumen. El volumen se elige con un **slider** (0 = sin volumen, botones − / + a los costados y arrastre manual); el detalle de prestaciones y el CTA se alimentan del catálogo público del backend. La cotización muestra total, neto, IVA y —cuando aplica— precio de lista y descuento por volumen, todos en ARS.
 
 Doc comercial: [matriz-argentina-modulos-precios.md](../docs/negocio/modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md).
 Catálogo backend: `web/common/components/Domain/Organization/Pes/Domain/Catalog/PricingPesByEncounterClassCatalog.php`.

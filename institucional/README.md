@@ -58,6 +58,8 @@ Los `<script>` de pricing y el CSS llevan un query `?v=<token>` (p. ej. `2026110
 
 La página conserva controles para clases (ambulatorio / urgencia / internación), volumen mensual y videollamada opcional. Los tipos de atención no tienen casilla de activación: **todos arrancan sin volumen** y se activan recién cuando se elige un volumen. El volumen se elige con un **slider** (0 = sin volumen, botones − / + a los costados y arrastre manual); el detalle de prestaciones y el CTA se alimentan del catálogo público del backend. La cotización muestra total, neto, IVA y —cuando aplica— precio de lista y descuento por volumen, todos en ARS.
 
+Cada tipo de atención muestra su política con la misma lectura que la app **Personal de Salud**: `✓ Dictado incluido` (bandera `audio_included`) y, si la clase no admite video, `× Sin videollamada` tachado (`videollamada_allowed: false`). Por eso el "dictado incluido" **no** se repite en los textos de `includes`: la bandera del catálogo es la única fuente.
+
 Doc comercial: [matriz-argentina-modulos-precios.md](../docs/negocio/modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md).
 Catálogo backend: `web/common/components/Domain/Organization/Pes/Domain/Catalog/PricingPesByEncounterClassCatalog.php`.
 STT on-device: [stt.md](../docs/negocio/costos/estrategias-reduccion/stt.md).  

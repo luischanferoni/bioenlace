@@ -1045,9 +1045,7 @@ section {
 }
 
 .pricing-calc__option {
-    display: flex;
-    gap: 0.45rem;
-    align-items: center;
+    text-align: right;
     font-size: 0.9rem;
     cursor: pointer;
 }
@@ -1057,10 +1055,30 @@ section {
 }
 
 .pricing-calc__policy {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2rem 0.9rem;
     margin: 0;
     font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.pricing-calc__policy-item::before {
+    content: '✓';
+    margin-right: 0.3rem;
+    font-weight: 700;
     color: var(--brand-teal);
+}
+
+.pricing-calc__policy-item.is-off {
+    color: var(--text-muted);
+    text-decoration: line-through;
+}
+
+.pricing-calc__policy-item.is-off::before {
+    content: '×';
     font-weight: 600;
+    color: var(--text-light);
 }
 
 .pricing-calc__check {

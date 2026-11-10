@@ -67,12 +67,12 @@ final class PricingPesByEncounterClassCatalog
                 0 => [
                     'attentions' => 250,
                     'label' => 'Media jornada · 250 atenciones / mes',
-                    'hint' => '~ 12–13 atenciones/día',
+                    'hint' => '~12–13 atenciones/día',
                 ],
                 1 => [
                     'attentions' => 500,
                     'label' => 'Jornada completa · 500 atenciones / mes',
-                    'hint' => '~ 25 atenciones/día',
+                    'hint' => '~25 atenciones/día',
                 ],
                 2 => [
                     'attentions' => 1000,
@@ -114,12 +114,12 @@ final class PricingPesByEncounterClassCatalog
                 0 => [
                     'attentions' => 350,
                     'label' => 'Medio turno de guardia · 350 atenciones / mes',
-                    'hint' => '~ 7 turnos de 12 h',
+                    'hint' => '~7 turnos de 12 h',
                 ],
                 1 => [
                     'attentions' => 700,
                     'label' => 'Guardia completa · 700 atenciones / mes',
-                    'hint' => '~ 15 turnos de 12 h',
+                    'hint' => '~15 turnos de 12 h',
                 ],
                 2 => [
                     'attentions' => 1400,
@@ -161,12 +161,12 @@ final class PricingPesByEncounterClassCatalog
                 0 => [
                     'attentions' => 200,
                     'label' => 'Media jornada · 200 pases / mes',
-                    'hint' => '~ 10 evoluciones/día',
+                    'hint' => '~10 evoluciones/día',
                 ],
                 1 => [
                     'attentions' => 400,
                     'label' => 'Jornada completa · 400 pases / mes',
-                    'hint' => '~ 20 evoluciones/día',
+                    'hint' => '~20 evoluciones/día',
                 ],
                 2 => [
                     'attentions' => 800,
@@ -253,8 +253,8 @@ final class PricingPesByEncounterClassCatalog
         'cogs_source' => 'docs/negocio/costos/costos-api.md — conversación del paciente con costo AMB conservador para preprocess + guide con adjuntos e historial; motivos audio por clase; dictado incluido',
         'addons' => [
             'videollamada' => [
-                'label' => 'Videollamada',
-                'description' => 'Teleconsulta self-host (SFU + TURN + Track Egress + storage). La transcripción ya está cubierta por el dictado incluido.',
+                'label' => 'Con Videollamada',
+                'description' => 'Teleconsulta online. La transcripción ya está cubierta por el dictado incluido.',
                 'default' => false,
             ],
         ],
@@ -267,7 +267,7 @@ final class PricingPesByEncounterClassCatalog
                 'videollamada_allowed' => true,
                 'includes' => [
                     0 => 'Agenda de cupos y reserva paciente',
-                    1 => 'Captura clínica AMB con dictado',
+                    1 => 'Captura clínica AMB',
                     2 => 'App paciente (turnos)',
                     3 => 'Chat paciente alrededor del turno (hasta 10 mensajes)',
                     4 => 'Motivos de consulta (audio según uso real)',
@@ -287,7 +287,7 @@ final class PricingPesByEncounterClassCatalog
                 'includes' => [
                     0 => 'Horario de presencia EMER',
                     1 => 'Tablero de guardia',
-                    2 => 'Captura clínica EMER (dictado incluido)',
+                    2 => 'Captura clínica EMER',
                     3 => 'Motivos de consulta (audio según uso real)',
                 ],
                 'product_gates' => [
@@ -305,7 +305,7 @@ final class PricingPesByEncounterClassCatalog
                 'includes' => [
                     0 => 'Horario de presencia IMP',
                     1 => 'Mapa de camas',
-                    2 => 'Captura / evoluciones (dictado incluido)',
+                    2 => 'Captura / evoluciones',
                     3 => 'Motivos de consulta (audio según uso real)',
                 ],
                 'product_gates' => [

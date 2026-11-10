@@ -302,29 +302,36 @@
     );
   }
 
-  function buildAmbOptionsHtml() {
+  function buildPolicyHtml(code) {
+    const items = [];
+    if (Pricing.classIncludesAudio(config, code)) {
+      items.push(
+        '<span class="pricing-calc__policy-item">Dictado incluido</span>',
+      );
+    } else {
+      items.push(
+        '<span class="pricing-calc__policy-item is-off">Sin dictado</span>',
+      );
+    }
+    if (!Pricing.classAllowsVideollamada(config, code)) {
+      items.push(
+        '<span class="pricing-calc__policy-item is-off">Sin videollamada</span>',
+      );
+    }
+    return '<p class="pricing-calc__policy">' + items.join('') + '</p>';
+  }
+
+  function buildVideollamadaOptionHtml() {
     const video = (config.addons && config.addons.videollamada) || {};
-    const onPlansPage = document.body.classList.contains('pricing-page');
     return (
       '<div class="pricing-calc__amb-options">' +
-      (onPlansPage ? '' : '<span class="pricing-calc__policy">Dictado incluido</span>') +
       '<label class="pricing-calc__option">' +
       '<input type="checkbox" data-addon="videollamada" disabled />' +
       '<span><strong>' +
-      (video.label || 'Con Videollamada') +
+      escapeHtml(video.label || 'Con Videollamada') +
       '</strong></span></label>' +
       '</div>'
     );
-  }
-
-  function buildFixedPolicyHtml(code) {
-    if (document.body.classList.contains('pricing-page')) {
-      return '';
-    }
-    if (Pricing.classIncludesAudio(config, code) && !Pricing.classAllowsVideollamada(config, code)) {
-      return '<p class="pricing-calc__policy">Dictado incluido · Sin videollamada</p>';
-    }
-    return '<p class="pricing-calc__policy">Dictado incluido</p>';
   }
 
   function buildVolumeSliderHtml(code) {
@@ -361,7 +368,8 @@
       const row = document.createElement('div');
       row.className = 'pricing-calc__row';
       row.setAttribute('data-class', code);
-      const optionsHtml = code === 'AMB' ? buildAmbOptionsHtml() : buildFixedPolicyHtml(code);
+      const optionsHtml =
+        buildPolicyHtml(code) + (code === 'AMB' ? buildVideollamadaOptionHtml() : '');
       row.innerHTML =
         '<div class="pricing-calc__main">' +
         '<div class="pricing-calc__check">' +

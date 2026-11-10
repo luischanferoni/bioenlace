@@ -81,7 +81,7 @@
         readout.innerHTML =
           '<strong>' +
           escapeHtml(Pricing.formatAttentions(preset.attentions)) +
-          '/mes</strong>' +
+          '/mes</strong> ' +
           (hint ? '<span>' + escapeHtml(hint) + '</span>' : '');
       }
     }

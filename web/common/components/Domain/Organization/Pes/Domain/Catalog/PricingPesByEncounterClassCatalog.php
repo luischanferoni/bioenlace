@@ -261,7 +261,7 @@ final class PricingPesByEncounterClassCatalog
         'sellable_classes' => [
             'AMB' => [
                 'label' => 'Ambulatorio',
-                'short' => 'Consultorios y turnos',
+                'short' => '',
                 'includes_patient_chat' => true,
                 'audio_included' => true,
                 'videollamada_allowed' => true,
@@ -280,7 +280,7 @@ final class PricingPesByEncounterClassCatalog
             ],
             'EMER' => [
                 'label' => 'Urgencia / guardia',
-                'short' => 'Tablero y horarios de guardia',
+                'short' => '',
                 'includes_patient_chat' => false,
                 'audio_included' => true,
                 'videollamada_allowed' => false,
@@ -298,7 +298,7 @@ final class PricingPesByEncounterClassCatalog
             ],
             'IMP' => [
                 'label' => 'Internación',
-                'short' => 'Piso, camas y evoluciones',
+                'short' => '',
                 'includes_patient_chat' => false,
                 'audio_included' => true,
                 'videollamada_allowed' => false,

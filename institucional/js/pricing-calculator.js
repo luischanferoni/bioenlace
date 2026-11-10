@@ -429,9 +429,9 @@
         escapeHtml(cls.short || '') +
         '</span>' +
         '</span></label>' +
-        optionsHtml +
+         buildVolumeSliderHtml(code, '') +
         '</div>' +
-        buildVolumeSliderHtml(code, '');
+        optionsHtml;
       rowsEl.appendChild(row);
       const checkbox = row.querySelector('input[name="class_' + code + '"]');
       syncQtyDisabled(row);

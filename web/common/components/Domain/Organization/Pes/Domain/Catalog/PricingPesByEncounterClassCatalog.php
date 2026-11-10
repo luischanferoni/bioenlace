@@ -67,16 +67,16 @@ final class PricingPesByEncounterClassCatalog
                 0 => [
                     'attentions' => 250,
                     'label' => 'Media jornada · 250 atenciones / mes',
-                    'hint' => '12–13 atenciones/día × 20 días (≈ 3 h 07 de consulta)',
+                    'hint' => '~ 12–13 atenciones/día',
                 ],
                 1 => [
                     'attentions' => 500,
                     'label' => 'Jornada completa · 500 atenciones / mes',
-                    'hint' => '25 atenciones/día × 20 días (≈ 6 h 15 de consulta)',
+                    'hint' => '~ 25 atenciones/día',
                 ],
                 2 => [
                     'attentions' => 1000,
-                    'label' => '2 profesionales · 1.000 atenciones / mes',
+                    'label' => '1.000 atenciones / mes',
                     'hint' => null,
                 ],
                 3 => [
@@ -114,16 +114,16 @@ final class PricingPesByEncounterClassCatalog
                 0 => [
                     'attentions' => 350,
                     'label' => 'Medio turno de guardia · 350 atenciones / mes',
-                    'hint' => '~7 turnos de 12 h × 15 min por atención',
+                    'hint' => '~ 7 turnos de 12 h',
                 ],
                 1 => [
                     'attentions' => 700,
                     'label' => 'Guardia completa · 700 atenciones / mes',
-                    'hint' => '15 turnos de 12 h × 15 min por atención',
+                    'hint' => '~ 15 turnos de 12 h',
                 ],
                 2 => [
                     'attentions' => 1400,
-                    'label' => '2 profesionales · 1.400 atenciones / mes',
+                    'label' => '1.400 atenciones / mes',
                     'hint' => null,
                 ],
                 3 => [
@@ -161,46 +161,46 @@ final class PricingPesByEncounterClassCatalog
                 0 => [
                     'attentions' => 200,
                     'label' => 'Media jornada · 200 pases / mes',
-                    'hint' => '10 pases o evoluciones/día × 20 días',
+                    'hint' => '~ 10 evoluciones/día',
                 ],
                 1 => [
                     'attentions' => 400,
                     'label' => 'Jornada completa · 400 pases / mes',
-                    'hint' => '20 pases o evoluciones/día × 20 días',
+                    'hint' => '~ 20 evoluciones/día',
                 ],
                 2 => [
                     'attentions' => 800,
-                    'label' => '2 profesionales · 800 pases / mes',
+                    'label' => '800 evoluciones / mes',
                     'hint' => null,
                 ],
                 3 => [
                     'attentions' => 1600,
-                    'label' => '1.600 pases / mes',
+                    'label' => '1.600 evoluciones / mes',
                     'hint' => null,
                 ],
                 4 => [
                     'attentions' => 4000,
-                    'label' => '4.000 pases / mes',
+                    'label' => '4.000 evoluciones / mes',
                     'hint' => null,
                 ],
                 5 => [
                     'attentions' => 8000,
-                    'label' => '8.000 pases / mes',
+                    'label' => '8.000 evoluciones / mes',
                     'hint' => null,
                 ],
                 6 => [
                     'attentions' => 16000,
-                    'label' => '16.000 pases / mes',
+                    'label' => '16.000 evoluciones / mes',
                     'hint' => null,
                 ],
                 7 => [
                     'attentions' => 40000,
-                    'label' => '40.000 pases / mes',
+                    'label' => '40.000 evoluciones / mes',
                     'hint' => null,
                 ],
                 8 => [
                     'attentions' => 80000,
-                    'label' => '80.000 pases / mes',
+                    'label' => '80.000 evoluciones / mes',
                     'hint' => null,
                 ],
             ],

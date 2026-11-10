@@ -375,9 +375,7 @@
   function buildVolumeSliderHtml(code, selected) {
     const presets = Pricing.attentionVolumePresets(config, code);
     const max = presets.length;
-    const maxLabel = max
-      ? Pricing.formatAttentions(presets[max - 1].attentions) + '/mes'
-      : '';
+
     return (
       '<div class="pricing-calc__qty">' +
       '<span class="pricing-calc__qty-label">Volumen de atenciones mensual</span>' +
@@ -392,8 +390,6 @@
       '</div>' +
       '<button type="button" class="pricing-calc__slider-step" data-step="1" aria-label="Más atenciones" disabled>+</button>' +
       '</div>' +
-      '<div class="pricing-calc__slider-scale" aria-hidden="true"><span>0</span><span>' +
-      escapeHtml(maxLabel) +
       '</span></div>' +
       '<div class="pricing-calc__slider-readout" data-volume-readout aria-live="polite">' +
       '<strong class="is-empty">Sin volumen</strong><span>Mové el control o usá − / +</span>' +

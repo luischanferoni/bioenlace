@@ -7,6 +7,15 @@ namespace common\components\Domain\Organization\Pes\Domain\Catalog;
  */
 final class PricingPesByEncounterClassCatalog
 {
+    /** Addon incluido en el precio de esa clase: no se elige, se informa. */
+    public const ADDON_INCLUDED = 'included';
+
+    /** Addon disponible pero opcional: el usuario decide si lo suma. */
+    public const ADDON_OPTIONAL = 'optional';
+
+    /** Addon no disponible para esa clase. */
+    public const ADDON_UNAVAILABLE = 'unavailable';
+
     /**
      * @return array<string, mixed>
      */
@@ -251,11 +260,36 @@ final class PricingPesByEncounterClassCatalog
             ],
         ],
         'cogs_source' => 'docs/negocio/costos/costos-api.md — conversación del paciente con costo AMB conservador para preprocess + guide con adjuntos e historial; motivos audio por clase; dictado incluido',
+        /*
+         * Addons por clase de atención. Cada addon declara su estado por clase:
+         *   included    → viene incluido en el precio (se muestra con tilde, sin control)
+         *   optional    → el usuario lo puede seleccionar (checkbox)
+         *   unavailable → no aplica a esa clase (se muestra tachado si hay copy)
+         * `plan_field` es el campo del contrato `POST /licencia/cotizar`.
+         */
         'addons' => [
+            'dictado' => [
+                'label' => 'Dictado',
+                'included_label' => 'Dictado incluido',
+                'unavailable_label' => 'Sin dictado',
+                'description' => 'Transcripción por voz de la captura clínica.',
+                'plan_field' => 'dictado_incluido',
+                'classes' => [
+                    'AMB' => self::ADDON_INCLUDED,
+                    'EMER' => self::ADDON_INCLUDED,
+                    'IMP' => self::ADDON_INCLUDED,
+                ],
+            ],
             'videollamada' => [
                 'label' => 'Con Videollamada',
+                'unavailable_label' => 'Sin videollamada',
                 'description' => 'Teleconsulta online. La transcripción ya está cubierta por el dictado incluido.',
-                'default' => false,
+                'plan_field' => 'videollamada_permitida',
+                'classes' => [
+                    'AMB' => self::ADDON_OPTIONAL,
+                    'EMER' => self::ADDON_UNAVAILABLE,
+                    'IMP' => self::ADDON_UNAVAILABLE,
+                ],
             ],
         ],
         'sellable_classes' => [
@@ -263,8 +297,6 @@ final class PricingPesByEncounterClassCatalog
                 'label' => 'AMBULATORIO',
                 'short' => '',
                 'includes_patient_chat' => true,
-                'audio_included' => true,
-                'videollamada_allowed' => true,
                 'includes' => [
                     0 => 'Agenda de cupos y reserva paciente',
                     1 => 'Captura clínica AMB',
@@ -282,8 +314,6 @@ final class PricingPesByEncounterClassCatalog
                 'label' => 'URGENCIA / GUARDIA',
                 'short' => '',
                 'includes_patient_chat' => false,
-                'audio_included' => true,
-                'videollamada_allowed' => false,
                 'includes' => [
                     0 => 'Horario de presencia EMER',
                     1 => 'Tablero de guardia',
@@ -300,8 +330,6 @@ final class PricingPesByEncounterClassCatalog
                 'label' => 'INTERNACIÓN',
                 'short' => '',
                 'includes_patient_chat' => false,
-                'audio_included' => true,
-                'videollamada_allowed' => false,
                 'includes' => [
                     0 => 'Horario de presencia IMP',
                     1 => 'Mapa de camas',

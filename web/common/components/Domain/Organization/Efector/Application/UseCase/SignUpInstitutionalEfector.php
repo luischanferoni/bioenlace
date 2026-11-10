@@ -828,7 +828,8 @@ final class SignUpInstitutionalEfector
             if ($attentions <= 0) {
                 continue;
             }
-            $video = $class === 'AMB' && !empty($cfg['videollamada_permitida']);
+            $video = !empty($cfg['videollamada_permitida'])
+                && PricingPesByEncounterClassMetadata::classAllowsVideollamada($class);
             $maxPes = null;
             if (in_array($perfil, self::PERFIL_LEGACY, true)) {
                 $maxPes = (int) ($cfg['max_pes'] ?? 0);
@@ -840,7 +841,7 @@ final class SignUpInstitutionalEfector
             $classes[$class] = [
                 'max_pes' => $maxPes,
                 'attentions_per_month' => $attentions,
-                'dictado_incluido' => true,
+                'dictado_incluido' => PricingPesByEncounterClassMetadata::classIncludesAudio($class),
                 'videollamada_permitida' => $video,
             ];
         }
@@ -901,8 +902,9 @@ final class SignUpInstitutionalEfector
             }
             $code = (string) $class;
             $byClass[$code] = $attentions;
-            if ($code === 'AMB') {
-                $video = $video || !empty($cfg['videollamada_permitida']);
+            if (!empty($cfg['videollamada_permitida'])
+                && PricingPesByEncounterClassMetadata::classAllowsVideollamada($code)) {
+                $video = true;
             }
         }
 

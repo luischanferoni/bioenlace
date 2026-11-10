@@ -23,15 +23,13 @@
     return Pricing.readDomSelection(rowsEl);
   }
 
-  function syncAmbOptions(row) {
-    if (!row || row.getAttribute('data-class') !== 'AMB') return;
+  function syncAddonOptions(row) {
     const hidden = row.querySelector('input[data-attentions]');
     const on = !!(hidden && Number(hidden.value) > 0);
-    const video = row.querySelector('input[data-addon="videollamada"]');
-    if (video) {
-      video.disabled = !on;
-      if (!on) video.checked = false;
-    }
+    row.querySelectorAll('input[data-addon]').forEach((input) => {
+      input.disabled = !on;
+      if (!on) input.checked = false;
+    });
   }
 
   function volumePresetsForRow(row) {
@@ -85,7 +83,7 @@
       }
     }
     syncStepButtons(row);
-    syncAmbOptions(row);
+    syncAddonOptions(row);
   }
 
   function recalc() {
@@ -137,15 +135,12 @@
     return Object.keys(selection.classes || {})
       .map((code) => {
         const row = (config.sellable_classes || {})[code] || {};
-        const extra =
-          code === 'AMB' && selection.addons.videollamada
-            ? ' · videollamada'
-            : '';
+        const addons = Pricing.selectedAddonLabels(config, selection, code);
         return (
           Pricing.formatAttentions(selection.classes[code]) +
           ' · ' +
           (row.label || code) +
-          extra
+          (addons.length ? ' · ' + addons.join(' · ') : '')
         );
       })
       .join(', ');
@@ -180,7 +175,7 @@
       },
       credentials: 'omit',
       body: JSON.stringify({
-        plan: Pricing.toSignupPlan(selection),
+        plan: Pricing.toSignupPlan(config, selection),
       }),
     })
       .then((response) =>
@@ -258,14 +253,11 @@
       const itemLines = quote.items
         .map((item) => {
           const row = (config.sellable_classes || {})[item.code] || {};
-          const videoAddon =
-            item.code === 'AMB' && selection.addons.videollamada
-              ? ' (videollamada)'
-              : '';
+          const addons = Pricing.selectedAddonLabels(config, selection, item.code);
           return (
             '<div class="pricing-calc__line"><span>' +
             escapeHtml(row.label || item.code) +
-            escapeHtml(videoAddon) +
+            (addons.length ? ' (' + escapeHtml(addons.join(', ')) + ')' : '') +
             ' · ' +
             Pricing.formatAttentions(item.attentions_per_month) +
             ' atenciones/mes ' +
@@ -303,35 +295,46 @@
   }
 
   function buildPolicyHtml(code) {
-    const items = [];
-    if (Pricing.classIncludesAudio(config, code)) {
-      items.push(
-        '<span class="pricing-calc__policy-item">Dictado incluido</span>',
-      );
-    } else {
-      items.push(
-        '<span class="pricing-calc__policy-item is-off">Sin dictado</span>',
-      );
-    }
-    if (!Pricing.classAllowsVideollamada(config, code)) {
-      items.push(
-        '<span class="pricing-calc__policy-item is-off">Sin videollamada</span>',
-      );
-    }
-    return '<p class="pricing-calc__policy">' + items.join('') + '</p>';
+    const items = Pricing.addonsForClass(config, code).reduce((all, addon) => {
+      if (addon.state === Pricing.ADDON_INCLUDED) {
+        all.push(
+          '<span class="pricing-calc__policy-item">' +
+            escapeHtml(addon.includedLabel) +
+            '</span>',
+        );
+      } else if (
+        addon.state === Pricing.ADDON_UNAVAILABLE &&
+        addon.unavailableLabel
+      ) {
+        all.push(
+          '<span class="pricing-calc__policy-item is-off">' +
+            escapeHtml(addon.unavailableLabel) +
+            '</span>',
+        );
+      }
+      return all;
+    }, []);
+    return items.length
+      ? '<p class="pricing-calc__policy">' + items.join('') + '</p>'
+      : '';
   }
 
-  function buildVideollamadaOptionHtml() {
-    const video = (config.addons && config.addons.videollamada) || {};
-    return (
-      '<div class="pricing-calc__amb-options">' +
-      '<label class="pricing-calc__option">' +
-      '<input type="checkbox" data-addon="videollamada" disabled />' +
-      '<span><strong>' +
-      escapeHtml(video.label || 'Con Videollamada') +
-      '</strong></span></label>' +
-      '</div>'
-    );
+  function buildAddonOptionsHtml(code) {
+    const items = Pricing.addonsForClass(config, code)
+      .filter((addon) => addon.state === Pricing.ADDON_OPTIONAL)
+      .map(
+        (addon) =>
+          '<label class="pricing-calc__option">' +
+          '<input type="checkbox" data-addon="' +
+          escapeHtml(addon.id) +
+          '" disabled />' +
+          '<span><strong>' +
+          escapeHtml(addon.label) +
+          '</strong></span></label>',
+      );
+    return items.length
+      ? '<div class="pricing-calc__addon-options">' + items.join('') + '</div>'
+      : '';
   }
 
   function buildVolumeSliderHtml(code) {
@@ -368,8 +371,7 @@
       const row = document.createElement('div');
       row.className = 'pricing-calc__row';
       row.setAttribute('data-class', code);
-      const optionsHtml =
-        buildPolicyHtml(code) + (code === 'AMB' ? buildVideollamadaOptionHtml() : '');
+      const optionsHtml = buildPolicyHtml(code) + buildAddonOptionsHtml(code);
       row.innerHTML =
         '<div class="pricing-calc__main">' +
         '<div class="pricing-calc__check">' +
@@ -408,7 +410,7 @@
       });
       row.querySelectorAll('input[data-addon]').forEach((input) => {
         input.addEventListener('change', () => {
-          syncAmbOptions(row);
+          syncAddonOptions(row);
           recalc();
         });
       });
@@ -523,7 +525,7 @@
   window.BioenlacePricingCalculator = {
     getSelection: currentSelection,
     getPlan: function () {
-      return Pricing.toSignupPlan(currentSelection());
+      return Pricing.toSignupPlan(config, currentSelection());
     },
     getEstimate: function () {
       return latestQuote;

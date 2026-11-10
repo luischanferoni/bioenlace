@@ -2,6 +2,8 @@
 
 namespace common\components\Platform\Core\Product;
 
+use common\components\Domain\Organization\Pes\Domain\Catalog\PricingPesByEncounterClassCatalog;
+
 /**
  * Metadata comercial: precio por volumen de atenciones × encounter_class (COGS + margen + add-ons).
  *
@@ -26,7 +28,7 @@ final class PricingPesByEncounterClassMetadata
             return self::$config;
         }
 
-        self::$config = \common\components\Domain\Organization\Pes\Domain\Catalog\PricingPesByEncounterClassCatalog::config();
+        self::$config = PricingPesByEncounterClassCatalog::config();
 
         return self::$config;
     }
@@ -49,14 +51,17 @@ final class PricingPesByEncounterClassMetadata
             if (!is_array($row)) {
                 continue;
             }
-            $classes[(string) $code] = self::only($row, [
+            $class = (string) $code;
+            $public = self::only($row, [
                 'label',
                 'short',
                 'includes_patient_chat',
-                'audio_included',
-                'videollamada_allowed',
                 'includes',
             ]);
+            // Contrato público que ya consumen las apps: se deriva de la matriz de addons.
+            $public['audio_included'] = self::classIncludesAudio($class);
+            $public['videollamada_allowed'] = self::classAllowsVideollamada($class);
+            $classes[$class] = $public;
         }
 
         $presets = [];
@@ -89,7 +94,18 @@ final class PricingPesByEncounterClassMetadata
             if (!is_array($addon)) {
                 continue;
             }
-            $addons[(string) $code] = self::only($addon, ['label', 'description', 'default']);
+            $addon['classes'] = array_map(
+                static fn ($state) => strtolower(trim((string) $state)),
+                (array) ($addon['classes'] ?? [])
+            );
+            $addons[(string) $code] = self::only($addon, [
+                'label',
+                'included_label',
+                'unavailable_label',
+                'description',
+                'plan_field',
+                'classes',
+            ]);
         }
 
         return [
@@ -171,9 +187,8 @@ final class PricingPesByEncounterClassMetadata
 
     public static function classIncludesAudio(string $encounterClass): bool
     {
-        $row = self::classRow($encounterClass);
-
-        return $row !== null && !empty($row['audio_included']);
+        return self::addonState('dictado', $encounterClass)
+            === PricingPesByEncounterClassCatalog::ADDON_INCLUDED;
     }
 
     public static function classIncludesPatientChat(string $encounterClass): bool
@@ -188,15 +203,39 @@ final class PricingPesByEncounterClassMetadata
 
     public static function classAllowsVideollamada(string $encounterClass): bool
     {
-        $row = self::classRow($encounterClass);
-        if ($row === null) {
+        if (!self::isSellableClass($encounterClass)) {
             return false;
         }
-        if (array_key_exists('videollamada_allowed', $row)) {
-            return (bool) $row['videollamada_allowed'];
+
+        return self::addonState('videollamada', $encounterClass)
+            !== PricingPesByEncounterClassCatalog::ADDON_UNAVAILABLE;
+    }
+
+    /**
+     * Estado declarado de un addon para una clase (`included` / `optional` / `unavailable`).
+     */
+    public static function addonState(string $addonId, string $encounterClass): ?string
+    {
+        $addon = self::loadConfig()['addons'][$addonId] ?? null;
+        if (!is_array($addon)) {
+            return null;
+        }
+        $states = $addon['classes'] ?? null;
+        $class = strtoupper($encounterClass);
+        if (!is_array($states) || !array_key_exists($class, $states)) {
+            return null;
         }
 
-        return true;
+        $state = strtolower(trim((string) $states[$class]));
+        $known = [
+            PricingPesByEncounterClassCatalog::ADDON_INCLUDED,
+            PricingPesByEncounterClassCatalog::ADDON_OPTIONAL,
+            PricingPesByEncounterClassCatalog::ADDON_UNAVAILABLE,
+        ];
+
+        return in_array($state, $known, true)
+            ? $state
+            : PricingPesByEncounterClassCatalog::ADDON_UNAVAILABLE;
     }
 
     /**

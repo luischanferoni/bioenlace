@@ -1043,6 +1043,7 @@ section {
     flex-wrap: wrap;
     gap: 0.5rem 1.25rem;
     margin: 0.35rem 0 0;
+    padding-left: 20px;
 }
 
 .pricing-calc__option {
@@ -1062,6 +1063,7 @@ section {
     flex-wrap: wrap;
     gap: 0.2rem 0.9rem;
     margin: 0;
+    padding-left: 20px;
     font-size: 0.8rem;
     color: var(--text-muted);
 }

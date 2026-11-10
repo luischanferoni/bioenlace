@@ -281,7 +281,7 @@ final class PricingPesByEncounterClassCatalog
                 ],
             ],
             'videollamada' => [
-                'label' => 'Incluir Videollamada',
+                'label' => 'Con Videollamada',
                 'unavailable_label' => 'Sin videollamada',
                 'description' => 'Teleconsulta online. La transcripción ya está cubierta por el dictado incluido.',
                 'plan_field' => 'videollamada_permitida',

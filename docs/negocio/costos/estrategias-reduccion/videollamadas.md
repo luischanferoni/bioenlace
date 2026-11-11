@@ -4,12 +4,12 @@
 
 Desglose planificado (escalado lineal desde el techo @ 80 %):
 
-| Componente | USD / prof / mes |
-|------------|------------------|
-| Sala + TURN + Track Egress + ops (self-host + autoescalado) | **~0,94** |
-| Storage + Deep Archive (14 d caliente → frío; 1 copia) | **~1,25** |
-| Transcripción post-call | **0** en este add-on (mismo STT que dictado / §2–§4; se cobra **una sola vez** en el calculador) |
-| **Total COGS videollamada** | **2,19** |
+| Componente | USD / prof / mes | % del add-on |
+|------------|------------------|--------------|
+| Sala + TURN + Track Egress + ops (self-host + autoescalado) | **~0,94** | **42,9 %** |
+| Storage + Deep Archive (14 d caliente → frío; 1 copia) | **~1,25** | **57,1 %** |
+| Transcripción post-call | **0** en este add-on (mismo STT que dictado / §2–§4; se cobra **una sola vez** en el calculador) | **0 %** |
+| **Total COGS videollamada** | **2,19** | **100 %** |
 
 Supuesto de uso de planificación: **40 %** de las consultas × 12 min × 2 participantes ≈ **4.800 participant-minutes / prof / mes** (200 teleconsultas de 500 encounters; ver [analisis-videollamada-self-host.md](../analisis-videollamada-self-host.md)).  
 Histórico: Daily + Deepgram @ 30 % (**9,19**); techo self-host @ 80 % (**3,50**); intermedio **5,00**. Vigente @ 40 %: **2,19** → **0,0044** USD / atención (2,19 / 500).
@@ -33,6 +33,12 @@ Producto: tracks + VAD → motivos (§2) y note → análisis. El costo Groq est
 |--------|-------|------------------------|-------------|
 | **Acordado** | Groq Whisper + VAD (~5 + ~4) | **~9** | En **audio / §2–§4**, una vez |
 | Histórico | Daily → Deepgram | 12 recorded-min | Ya no en lista |
+
+### Si el proveedor de video transcribiera (evaluado y descartado)
+
+Las plataformas de video —Daily, o los plugins de transcripción de LiveKit— ofrecen STT propio, cobrado **por minuto de reunión** (~USD 0,0043–0,0059 recorded/unmuted-min). A 200 teleconsultas × 12 min = **2.400 min/prof/mes**, eso da **USD 10–14 / prof / mes**: **~5–6,5×** todo el add-on actual (**2,19**), y además transcribe silencios y los dos participantes completos (12 min crudos contra **~9 min de voz real** con VAD).
+
+Por eso el modelo deja la transcripción **fuera** del add-on: el video solo entrega **pistas separadas** (Track Egress) y nuestro STT las procesa post-call **una sola vez**, reutilizando los minutos del dictado y de motivos. Contratar transcripción al proveedor de video solo tendría sentido si hiciera falta **transcripción en vivo** dentro de la llamada, capacidad que hoy no está en alcance.
 
 Detalle: [costos-api §6](../costos-api.md#6-videollamadas-pacientemédico), [stt.md](stt.md), [analisis-videollamada-self-host.md](../analisis-videollamada-self-host.md).
 

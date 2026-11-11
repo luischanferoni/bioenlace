@@ -1,6 +1,6 @@
 # Costos IA e infraestructura
 
-Estimación y estrategias de ahorro en dos ejes: **infra propia (GPU)** y **APIs externas**.
+Estimación y estrategias de ahorro en dos ejes: **infra propia (GPU)** y **APIs externas**. La pregunta por un **centro de datos propio** es una decisión aparte —capex, custodia física y escala— y se analiza en [analisis-centro-datos-propio.md](analisis-centro-datos-propio.md).
 
 | Documento | Contenido |
 |-----------|-----------|
@@ -11,6 +11,7 @@ Estimación y estrategias de ahorro en dos ejes: **infra propia (GPU)** y **APIs
 | [costos-api.md](costos-api.md) | Costos APIs (Gemini Flash Lite, comparativa DeepSeek, Groq STT, Vision, WhatsApp reactivo §7; catálogo de contextos) |
 | [costos-didit.md](costos-didit.md) | Didit — KYC y biometría remota (proyección por altas y reingresos) |
 | [analisis-videollamada-self-host.md](analisis-videollamada-self-host.md) | Self-host; Track Egress muxing 1/4/12; 14 d → Deep Archive; COGS video **2,19** @ **40 %** |
+| [analisis-centro-datos-propio.md](analisis-centro-datos-propio.md) | Hardware comprado a 5.000 prof. con **LLM 14B**: GPU (IA) vs medios, capex, +43–67 % vs hoy; solo se justifica comprar GPU para STT |
 | [resumen-costos-bioenlace.md](resumen-costos-bioenlace.md) | Resumen de costos APIs (5.000 prof., sin jerga técnica) |
 | [estrategias-reduccion/](estrategias-reduccion/README.md) | Palancas de ahorro (context caching, STT, caché app, …) |
 | [impuestos-argentina.md](impuestos-argentina.md) | IVA, IIBB, ganancias — referencia AR (pricing y costo efectivo) |

@@ -19,5 +19,6 @@ Comparar escenarios **GPU propia** vs **API managed** y registrar estrategias pa
 | WhatsApp (§7) | ¿Costo Meta del asistente reactivo? **~$0** (utility **no habilitada**) — [costos-api §7](costos-api.md#7-whatsapp-cloud-api-paciente) |
 | Identidad (Didit) | ¿Cuánto cuesta KYC y reingreso biométrico? → [costos-didit.md](costos-didit.md) (500 gratis/mes; luego ~0,33 KYC / ~0,10 reingreso) |
 | Fiscal (AR) | ¿Qué sumar de IVA, IIBB y ganancias al costo y al precio? → [impuestos-argentina.md](impuestos-argentina.md) |
+| Centro de datos | ¿Conviene comprar el hardware? → [analisis-centro-datos-propio.md](analisis-centro-datos-propio.md) (a 5.000 prof. **no**: +43–67 %; GPU solo para STT; LLM 14B; reabrir a ~25.000) |
 
 Detalle en los archivos listados en [README.md](README.md).

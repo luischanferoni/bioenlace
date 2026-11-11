@@ -89,7 +89,7 @@ Tarifas y supuestos por profesional: [costos-api.md](costos-api.md). Aquí solo 
 | Videollamada §6 (COGS planificado @ 40 %) | 5.000 x 2,19 por prof | **~10.950** |
 | **IA + STT + videollamada** — sin caché | suma filas anteriores | **~39.700** |
 | **IA + STT + videollamada** — con caché | 26.850 + 10.950 | **~37.800** |
-| Aplicación + BD + hosting | *[pendiente presupuesto]* | — |
+| Aplicación + BD + hosting + medios | 5.000 x ~0,24–0,40 por prof ([análisis](analisis-centro-datos-propio.md)) | **~1.200–2.000** |
 
 **Infra app:** clínica de **20 profesionales** → «Infra + soporte» **USD 200–500 por mes** en unit economics ([modelos-pricing](../modelo-de-negocio/business-plan/modelos-pricing-diferenciados.md)); **no escala lineal** a 5.000 usuarios.
 

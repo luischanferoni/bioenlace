@@ -14,3 +14,4 @@ Permite decidir **dónde corre el compute** sin mezclar precios de RunPod/GPU co
 | Palancas de ahorro por ítem | [estrategias-reduccion/](estrategias-reduccion/README.md) |
 | Mix porcentual del COGS (qué pesa cada componente) | [resumen-costos-bioenlace.md § Composición del COGS](resumen-costos-bioenlace.md#composición-del-cogs-qué-pesa-en-el-costo) |
 | Conversaciones y CLI de prueba | [pruebas-costos-ia.md](pruebas-costos-ia.md) |
+| ¿Centro de datos propio? IA (GPU) vs videollamada, opciones, capex/opex, break-even y custodia física | [analisis-centro-datos-propio.md](analisis-centro-datos-propio.md) |

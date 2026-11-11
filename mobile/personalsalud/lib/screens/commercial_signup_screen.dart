@@ -36,7 +36,6 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
   bool _termsAccepted = false;
   bool _checkoutOpened = false;
   bool _cancellingSubscription = false;
-  bool _videollamada = false;
   bool _loadingQuote = false;
   bool _loadingPlans = false;
   bool _sendingEmailVerification = false;
@@ -83,6 +82,19 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
   /// Si un tipo no tiene entrada, no se contrata.
   final Map<String, int> _classVolumes = <String, int>{};
 
+  /// Addons de ámbito global (`scope: all`) elegidos: `addonId → seleccionado`.
+  /// Valen para todas las clases contratadas, así que se eligen una sola vez.
+  final Map<String, bool> _globalAddons = <String, bool>{};
+
+  /// Addons opcionales de un solo tipo: `código de clase → addonId → elegido`.
+  final Map<String, Map<String, bool>> _classAddons =
+      <String, Map<String, bool>>{};
+
+  static const String _addonIncluded = 'included';
+  static const String _addonOptional = 'optional';
+  static const String _addonUnavailable = 'unavailable';
+  static const String _addonScopeAll = 'all';
+
   /// La búsqueda de efectores SISA exige más de 3 caracteres.
   static const int _minEfectorSearchLength = 4;
 
@@ -101,7 +113,6 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
           _classVolumes[code.toString()] = attentions;
         }
       });
-      _videollamada = classes['AMB']?['videollamada_permitida'] == true;
     }
     _loadMinistries();
     _loadPlans();
@@ -178,6 +189,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
       setState(() {
         _plansCatalog = catalog;
         _loadingPlans = false;
+        _hydrateAddonSelections();
       });
     } catch (error) {
       if (!mounted) return;
@@ -192,6 +204,61 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
   Map<String, dynamic> get _sellableClasses {
     final raw = _plansCatalog?['sellable_classes'];
     return raw is Map ? Map<String, dynamic>.from(raw) : const {};
+  }
+
+  /// Addons declarados por el backend (`addons`): estado por tipo y ámbito.
+  Map<String, Map<String, dynamic>> get _addons {
+    final raw = _plansCatalog?['addons'];
+    if (raw is! Map) return const {};
+    return raw.map(
+      (key, value) => MapEntry(
+        key.toString(),
+        value is Map ? Map<String, dynamic>.from(value) : <String, dynamic>{},
+      ),
+    );
+  }
+
+  /// Ámbito `all`: el addon aplica a todos los tipos y se elige una sola vez.
+  bool _addonAppliesToAll(Map<String, dynamic> addon) =>
+      addon['scope']?.toString() == _addonScopeAll;
+
+  String _addonState(Map<String, dynamic> addon, String code) {
+    final states = addon['classes'];
+    if (states is! Map) return _addonUnavailable;
+    final state = (states[code] ?? '').toString().trim().toLowerCase();
+    return state == _addonIncluded || state == _addonOptional
+        ? state
+        : _addonUnavailable;
+  }
+
+  bool _addonSelected(String id, Map<String, dynamic> addon, String code) =>
+      _addonAppliesToAll(addon)
+      ? _globalAddons[id] == true
+      : _classAddons[code]?[id] == true;
+
+  /// Estado uniforme de un addon global: alcanza con cualquier tipo vendible.
+  String _globalAddonState(Map<String, dynamic> addon) {
+    final codes = _sellableClasses.keys;
+    return codes.isEmpty ? _addonUnavailable : _addonState(addon, codes.first);
+  }
+
+  /// Recupera la selección de addons que trae el plan inicial del cotizador.
+  void _hydrateAddonSelections() {
+    final classes = widget.initialPlan?['classes'];
+    if (classes is! Map) return;
+    _addons.forEach((id, addon) {
+      final field = addon['plan_field']?.toString() ?? '';
+      if (field.isEmpty) return;
+      for (final entry in classes.entries) {
+        final row = entry.value;
+        if (row is! Map || row[field] != true) continue;
+        if (_addonAppliesToAll(addon)) {
+          _globalAddons[id] = true;
+        } else {
+          (_classAddons[entry.key.toString()] ??= <String, bool>{})[id] = true;
+        }
+      }
+    });
   }
 
   /// Grupos de volumen que define el backend por tipo de atención
@@ -609,13 +676,19 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
 
   Map<String, dynamic>? _selectedPlan() {
     final classes = <String, dynamic>{};
+    final addons = _addons;
     _classVolumes.forEach((code, attentions) {
       if (attentions <= 0) return;
-      classes[code] = {
-        'attentions_per_month': attentions,
-        'dictado_incluido': true,
-        'videollamada_permitida': code == 'AMB' && _videollamada,
-      };
+      final row = <String, dynamic>{'attentions_per_month': attentions};
+      addons.forEach((id, addon) {
+        final field = addon['plan_field']?.toString() ?? '';
+        if (field.isEmpty) return;
+        final state = _addonState(addon, code);
+        row[field] =
+            state == _addonIncluded ||
+            (state == _addonOptional && _addonSelected(id, addon, code));
+      });
+      classes[code] = row;
     });
     return classes.isEmpty ? null : {'classes': classes};
   }
@@ -1054,7 +1127,6 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     final selected = _classVolumes[code];
     final label = classRow['label']?.toString() ?? code;
     final short = classRow['short']?.toString() ?? '';
-    final allowsVideollamada = classRow['videollamada_allowed'] != false;
     final presets = _volumePresets(code);
 
     return Padding(
@@ -1086,43 +1158,21 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
               Wrap(
                 spacing: BioSpacing.sm,
                 runSpacing: BioSpacing.sm,
-                children: presets
-                    .map((preset) {
-                      final chip = BioChip(
-                        label: _formatAttentions(preset.key),
-                        selected: selected == preset.key,
-                        icon: selected == preset.key ? Icons.check : null,
-                        onTap: () => _selectVolume(code, preset.key),
-                      );
-                      return preset.value.isEmpty
-                          ? chip
-                          : Tooltip(message: preset.value, child: chip);
-                    })
-                    .toList(),
+                children: presets.map((preset) {
+                  final chip = BioChip(
+                    label: _formatAttentions(preset.key),
+                    selected: selected == preset.key,
+                    icon: selected == preset.key ? Icons.check : null,
+                    onTap: () => _selectVolume(code, preset.key),
+                  );
+                  return preset.value.isEmpty
+                      ? chip
+                      : Tooltip(message: preset.value, child: chip);
+                }).toList(),
               ),
-              if (code == 'AMB' && allowsVideollamada) ...[
-                BioSpacing.gapH(BioSpacing.xs),
-                SwitchListTile(
-                  value: _videollamada,
-                  onChanged: selected == null
-                      ? null
-                      : (value) {
-                          setState(() => _videollamada = value);
-                          _refreshQuote();
-                        },
-                  title: const Text('Atención por videollamada'),
-                  subtitle: Text(
-                    selected == null
-                        ? 'Requiere elegir un volumen ambulatorio.'
-                        : 'Habilita consultas ambulatorias por videollamada.',
-                    style: BioTypography.bodySm.copyWith(
-                      color: tokens.textMuted,
-                    ),
-                  ),
-                ),
-              ],
+              ..._buildClassAddonControls(code, hasVolume: selected != null),
               BioSpacing.gapH(BioSpacing.md),
-              _buildClassPolicy(classRow),
+              _buildClassPolicy(code),
             ],
           ),
         ),
@@ -1130,9 +1180,142 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     );
   }
 
-  /// Política del tipo de atención (`audio_included` / `videollamada_allowed`):
-  /// lo incluido lleva un tilde y lo que no está disponible va tachado.
-  Widget _buildClassPolicy(Map<String, dynamic> classRow) {
+  /// Addons opcionales que aplican solo a este tipo de atención (`scope: per_class`).
+  List<Widget> _buildClassAddonControls(
+    String code, {
+    required bool hasVolume,
+  }) {
+    final tokens = context.bio;
+    final widgets = <Widget>[];
+    _addons.forEach((id, addon) {
+      if (_addonAppliesToAll(addon)) return;
+      if (_addonState(addon, code) != _addonOptional) return;
+      final description = addon['description']?.toString() ?? '';
+      widgets.addAll([
+        BioSpacing.gapH(BioSpacing.xs),
+        SwitchListTile(
+          value: _classAddons[code]?[id] == true,
+          onChanged: hasVolume
+              ? (value) {
+                  setState(
+                    () => (_classAddons[code] ??= <String, bool>{})[id] = value,
+                  );
+                  _refreshQuote();
+                }
+              : null,
+          title: Text(addon['label']?.toString() ?? id),
+          subtitle: Text(
+            hasVolume
+                ? description
+                : 'Requiere elegir un volumen de atenciones.',
+            style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
+          ),
+        ),
+      ]);
+    });
+    return widgets;
+  }
+
+  /// Addons que aplican a todos los tipos (`scope: all`): se muestran una sola
+  /// vez, debajo de las tarjetas, y valen para todas las clases contratadas.
+  Widget _buildGlobalAddons() {
+    final tokens = context.bio;
+    final items = _addons.entries
+        .where((entry) => _addonAppliesToAll(entry.value))
+        .toList();
+    if (items.isEmpty) return const SizedBox.shrink();
+    final hasVolume = _classVolumes.values.any((value) => value > 0);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: BioSpacing.md),
+      child: Material(
+        color: tokens.paperSurface,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: tokens.paperDividerDefault),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(BioSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Aplica a todos los tipos de atención',
+                style: BioTypography.title,
+              ),
+              BioSpacing.gapH(BioSpacing.xs),
+              Text(
+                'No tenés que elegirlos tipo por tipo: se aplican a todos los '
+                'que contrates.',
+                style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
+              ),
+              for (final entry in items)
+                _buildGlobalAddonRow(
+                  entry.key,
+                  entry.value,
+                  hasVolume: hasVolume,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGlobalAddonRow(
+    String id,
+    Map<String, dynamic> addon, {
+    required bool hasVolume,
+  }) {
+    final tokens = context.bio;
+    final label = addon['label']?.toString() ?? id;
+    final description = addon['description']?.toString() ?? '';
+    final note = BioTypography.bodySm.copyWith(color: tokens.textMuted);
+    final state = _globalAddonState(addon);
+
+    if (state == _addonOptional) {
+      return SwitchListTile(
+        contentPadding: EdgeInsets.zero,
+        value: _globalAddons[id] == true,
+        onChanged: hasVolume
+            ? (value) {
+                setState(() => _globalAddons[id] = value);
+                _refreshQuote();
+              }
+            : null,
+        title: Text(label),
+        subtitle: Text(
+          hasVolume
+              ? description
+              : 'Requiere elegir el volumen de al menos un tipo de atención.',
+          style: note,
+        ),
+      );
+    }
+
+    final included = state == _addonIncluded;
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(
+        included ? Icons.check_circle : Icons.remove_circle_outline,
+        color: included
+            ? IntentPalette.of(UiIntent.success).base
+            : tokens.textMuted,
+      ),
+      title: Text(
+        included
+            ? addon['included_label']?.toString() ?? '$label incluido'
+            : addon['unavailable_label']?.toString() ?? 'Sin $label',
+        style: included ? BioTypography.body : note,
+      ),
+      subtitle: description.isEmpty ? null : Text(description, style: note),
+    );
+  }
+
+  /// Política del tipo de atención: lo incluido lleva un tilde y lo que no está
+  /// disponible va tachado. Los addons globales se informan en su propio bloque.
+  Widget _buildClassPolicy(String code) {
     final tokens = context.bio;
     final base = BioTypography.caption.copyWith(color: tokens.textMuted);
     final struck = base.copyWith(decoration: TextDecoration.lineThrough);
@@ -1145,25 +1328,36 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
       }
     }
 
-    if (classRow['audio_included'] == true) {
-      spans.add(
-        WidgetSpan(
-          alignment: PlaceholderAlignment.middle,
-          child: Padding(
-            padding: const EdgeInsets.only(right: BioSpacing.xs),
-            child: Icon(Icons.check, size: 12, color: checkColor),
+    _addons.forEach((id, addon) {
+      if (_addonAppliesToAll(addon)) return;
+      final label = addon['label']?.toString() ?? id;
+      final state = _addonState(addon, code);
+      if (state == _addonIncluded) {
+        addSeparator();
+        spans.add(
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Padding(
+              padding: const EdgeInsets.only(right: BioSpacing.xs),
+              child: Icon(Icons.check, size: 12, color: checkColor),
+            ),
           ),
-        ),
-      );
-      spans.add(TextSpan(text: 'Dictado incluido', style: base));
-    } else {
-      spans.add(TextSpan(text: 'Sin dictado', style: struck));
-    }
+        );
+        spans.add(
+          TextSpan(
+            text: addon['included_label']?.toString() ?? '$label incluido',
+            style: base,
+          ),
+        );
+      } else if (state == _addonUnavailable) {
+        final unavailable = addon['unavailable_label']?.toString() ?? '';
+        if (unavailable.isEmpty) return;
+        addSeparator();
+        spans.add(TextSpan(text: unavailable, style: struck));
+      }
+    });
 
-    if (classRow['videollamada_allowed'] == false) {
-      addSeparator();
-      spans.add(TextSpan(text: 'Sin videollamada', style: struck));
-    }
+    if (spans.isEmpty) return const SizedBox.shrink();
 
     return Text.rich(
       TextSpan(style: base, children: spans),
@@ -1175,7 +1369,8 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
     setState(() {
       if (_classVolumes[code] == attentions) {
         _classVolumes.remove(code);
-        if (code == 'AMB') _videollamada = false;
+        _classAddons.remove(code);
+        if (_classVolumes.isEmpty) _globalAddons.clear();
       } else {
         _classVolumes[code] = attentions;
       }
@@ -1341,11 +1536,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
           'Consultorio, clínica o centro privado. En el siguiente paso '
               'registrás nombre, domicilio y localidad.',
         ),
-        option(
-          'PUBLICO',
-          'Público',
-          'Efector o Centro de salud pública.',
-        ),
+        option('PUBLICO', 'Público', 'Efector o Centro de salud pública.'),
       ],
     );
   }
@@ -1675,6 +1866,7 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
                         code: entry.key,
                         classRow: Map<String, dynamic>.from(entry.value as Map),
                       ),
+                  _buildGlobalAddons(),
                 ],
                 _buildQuoteCard(),
                 _textField(

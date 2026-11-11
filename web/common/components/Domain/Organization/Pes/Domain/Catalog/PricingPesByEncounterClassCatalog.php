@@ -16,6 +16,12 @@ final class PricingPesByEncounterClassCatalog
     /** Addon no disponible para esa clase. */
     public const ADDON_UNAVAILABLE = 'unavailable';
 
+    /** El addon aplica a todos los tipos vendibles: se elige una sola vez. */
+    public const ADDON_SCOPE_ALL = 'all';
+
+    /** El addon aplica solo a algunos tipos: se elige por tipo de atención. */
+    public const ADDON_SCOPE_PER_CLASS = 'per_class';
+
     /**
      * @return array<string, mixed>
      */
@@ -266,6 +272,11 @@ final class PricingPesByEncounterClassCatalog
          *   optional    → el usuario lo puede seleccionar (checkbox)
          *   unavailable → no aplica a esa clase (se muestra tachado si hay copy)
          * `plan_field` es el campo del contrato `POST /licencia/cotizar`.
+         *
+         * El ámbito (`scope`, ver `PricingPesByEncounterClassMetadata::addonScope()`)
+         * se deriva de esta matriz: si todos los tipos vendibles comparten el mismo
+         * estado elegible el addon se elige una sola vez (`all`); si difiere, se
+         * elige por tipo (`per_class`). No se declara a mano para no duplicar datos.
          */
         'addons' => [
             'dictado' => [

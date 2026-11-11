@@ -98,12 +98,15 @@ final class PricingPesByEncounterClassMetadata
                 static fn ($state) => strtolower(trim((string) $state)),
                 (array) ($addon['classes'] ?? [])
             );
+            $addon['scope'] = self::addonScope((string) $code)
+                ?? PricingPesByEncounterClassCatalog::ADDON_SCOPE_PER_CLASS;
             $addons[(string) $code] = self::only($addon, [
                 'label',
                 'included_label',
                 'unavailable_label',
                 'description',
                 'plan_field',
+                'scope',
                 'classes',
             ]);
         }
@@ -236,6 +239,46 @@ final class PricingPesByEncounterClassMetadata
         return in_array($state, $known, true)
             ? $state
             : PricingPesByEncounterClassCatalog::ADDON_UNAVAILABLE;
+    }
+
+    /**
+     * Ámbito del addon, derivado de la matriz de estados (sin declararlo dos veces):
+     * `all` cuando todos los tipos vendibles comparten el mismo estado elegible
+     * (`included` u `optional`); `per_class` cuando difiere o falta algún tipo.
+     */
+    public static function addonScope(string $addonId): ?string
+    {
+        $addon = self::loadConfig()['addons'][$addonId] ?? null;
+        if (!is_array($addon)) {
+            return null;
+        }
+
+        $states = [];
+        foreach (self::sellableClassCodes() as $class) {
+            $state = self::addonState($addonId, $class);
+            if ($state === null
+                || $state === PricingPesByEncounterClassCatalog::ADDON_UNAVAILABLE
+            ) {
+                return PricingPesByEncounterClassCatalog::ADDON_SCOPE_PER_CLASS;
+            }
+            $states[$state] = true;
+        }
+        if (count($states) !== 1) {
+            return PricingPesByEncounterClassCatalog::ADDON_SCOPE_PER_CLASS;
+        }
+
+        $only = (string) array_key_first($states);
+
+        return in_array(
+            $only,
+            [
+                PricingPesByEncounterClassCatalog::ADDON_INCLUDED,
+                PricingPesByEncounterClassCatalog::ADDON_OPTIONAL,
+            ],
+            true
+        )
+            ? PricingPesByEncounterClassCatalog::ADDON_SCOPE_ALL
+            : PricingPesByEncounterClassCatalog::ADDON_SCOPE_PER_CLASS;
     }
 
     /**

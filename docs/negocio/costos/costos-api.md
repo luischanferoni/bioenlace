@@ -15,6 +15,8 @@ Costos de referencia cuando usamos **APIs externas** (IA, STT, Vision, videollam
 
 Cuando un doc dice «fuera del COGS» o «no en COGS base», significa que **aún no sumamos esa cifra** a las tablas fiscales hasta tener telemetría o piloto.
 
+**Mix porcentual** (cuánto pesa cada componente sobre el COGS por atención, por clase): [resumen-costos-bioenlace.md § Composición del COGS](resumen-costos-bioenlace.md#composición-del-cogs-qué-pesa-en-el-costo).
+
 ---
 - **IA:** Google **Vertex / Gemini** con modelo **`gemini-2.5-flash-lite`** (`vertex_ai_model` en `params.php`). Columna **DeepSeek** = comparativa con **`deepseek-v4-flash`** (API directa); no es producción hoy.
 - **Columnas Google:** **sin context caching** = **COGS base seguro**; **con context caching** = **escenario favorable**, no costo esperado (tokens repetidos a tarifa reducida de Vertex; ver abajo). No incluyen caché de aplicación ni otras tácticas de producto.

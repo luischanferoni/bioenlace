@@ -5,7 +5,7 @@ Estimación y estrategias de ahorro en dos ejes: **infra propia (GPU)** y **APIs
 | Documento | Contenido |
 |-----------|-----------|
 | [overview.md](overview.md) | Objetivo del análisis de costos |
-| [design.md](design.md) | Por qué se separan ejes infra vs API |
+| [design.md](design.md) | Criterio de diseño: por qué dos ejes (infra vs API) y dónde vive cada tema |
 | [infra-costos.md](infra-costos.md) | Costos infra (GPU) |
 | [infra-estrategias.md](infra-estrategias.md) | Estrategias infra |
 | [costos-api.md](costos-api.md) | Costos APIs (Gemini Flash Lite, comparativa DeepSeek, Groq STT, Vision, WhatsApp reactivo §7; catálogo de contextos) |

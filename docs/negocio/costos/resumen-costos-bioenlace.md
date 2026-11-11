@@ -123,6 +123,31 @@ Solo costos de **inteligencia artificial y transcripción de voz** (sin videolla
 
 ---
 
+## Composición del COGS (qué pesa en el costo)
+
+**USD por atención y % del COGS total** de esa configuración. Escenario base de la lista: chat con el presupuesto comercial conservador, motivos con context caching y blend por clase (AMB 30 % con audio, EMER 45 %, IMP 50 %), dictado con −30 % on-device. Valores: catálogo `PricingPesByEncounterClassCatalog`; fórmula y márgenes en [matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md).
+
+| Componente del COGS | Ambulatorio | Ambulatorio + videollamada | Urgencia (EMER) | Internación (IMP) |
+|---------------------|-------------|----------------------------|-----------------|-------------------|
+| Chat del paciente (cupo 10 msgs) | 0,0048 · **51,6 %** | 0,0048 · **35,0 %** | — | — |
+| Motivos de consulta (IA + STT del paciente) | 0,0014 · **15,1 %** | 0,0014 · **10,2 %** | 0,0018 · **36,7 %** | 0,0019 · **38,0 %** |
+| Captura clínica — IA (extracción + codificación) | 0,0006 · **6,5 %** | 0,0006 · **4,4 %** | 0,0006 · **12,2 %** | 0,0006 · **12,0 %** |
+| Dictado — STT del profesional (~5 min) | 0,0025 · **26,9 %** | 0,0025 · **18,2 %** | 0,0025 · **51,0 %** | 0,0025 · **50,0 %** |
+| Videollamada (add-on, 40 % teleconsulta) | — | 0,0044 · **32,1 %** | — | — |
+| **Total por atención** | **0,0093** | **0,0137** | **0,0049** | **0,0050** |
+
+Lectura:
+
+- En **ambulatorio sin video**, el **chat del paciente** es el ítem más pesado (**~52 %**), seguido del **dictado** (**~27 %**); juntos son casi 4 de cada 5 dólares.
+- En **urgencia e internación** (sin chat de paciente), el **dictado** pasa a ser la mitad del costo (**~50 %**) y **motivos** el segundo (**~37 %**).
+- Con **videollamada** contratada, el video se lleva **~32 %** del COGS ambulatorio y el chat baja a **~35 %**.
+- La **IA de captura** (extracción + codificación) es marginal en todas las clases (**4–12 %**).
+- Cada punto del STT se mueve con dos palancas: minutos dictados (5 → 4 min baja el STT 20 %) y transcripción en el dispositivo (−30 %), ver [estrategias-reduccion/stt.md](estrategias-reduccion/stt.md).
+
+> **Por qué no coincide con los totales por capacidad de arriba:** esos totales salen del escenario token a token de [costos-api.md](costos-api.md) (p. ej. chat medido ~0,0038/atención), mientras que esta tabla usa los presupuestos que fija el catálogo comercial para armar el precio de lista (chat AMB **0,0048**/atención, deliberadamente conservador). Misma realidad, dos supuestos: uno mide, el otro presupuesta.
+
+---
+
 ## Notas
 
 - Por profesional y mes (escenario intensivo, 500 atenciones, sin videollamada): **~USD 5,75 bruto · ~USD 5,37 con caché** (incluye `motivos-consulta-insights`, STT médico ~5 min + paciente ~4 min, y contexto clínico en prompts). Detalle y comparativa DeepSeek: [costos-api.md](costos-api.md).

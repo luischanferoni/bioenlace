@@ -7,6 +7,8 @@
   const ADDON_INCLUDED = 'included';
   const ADDON_OPTIONAL = 'optional';
   const ADDON_UNAVAILABLE = 'unavailable';
+  const ADDON_SCOPE_ALL = 'all';
+  const ADDON_SCOPE_PER_CLASS = 'per_class';
 
   function formatAttentions(value) {
     try {
@@ -50,13 +52,33 @@
         includedLabel: addon.included_label || label,
         unavailableLabel: addon.unavailable_label || '',
         planField: addon.plan_field || '',
+        scope: addonScope(addon),
         state: normalizeAddonState((addon.classes || {})[code]),
       };
     });
   }
 
+  function addonScope(addon) {
+    return String((addon && addon.scope) || '').trim().toLowerCase() ===
+      ADDON_SCOPE_ALL
+      ? ADDON_SCOPE_ALL
+      : ADDON_SCOPE_PER_CLASS;
+  }
+
+  function addonsByScope(config, code, scope) {
+    return addonsForClass(config, code).filter(
+      (addon) => addon.scope === scope,
+    );
+  }
+
+  /** Addons del ámbito `all`: el estado es único, así que alcanza con un tipo. */
+  function globalAddons(config) {
+    const classes = Object.keys((config && config.sellable_classes) || {});
+    return addonsByScope(config, classes[0] || '', ADDON_SCOPE_ALL);
+  }
+
   function readDomSelection(rowsRoot) {
-    const selection = { classes: {}, addons: {} };
+    const selection = { classes: {}, addons: {}, globalAddons: {} };
     if (!rowsRoot) return selection;
     rowsRoot.querySelectorAll('[data-class]').forEach((row) => {
       const code = row.getAttribute('data-class');
@@ -73,13 +95,27 @@
       });
       selection.addons[code] = chosen;
     });
+    rowsRoot.querySelectorAll('input[data-addon-scope]').forEach((input) => {
+      selection.globalAddons[input.getAttribute('data-addon-scope')] =
+        !!input.checked;
+    });
     return selection;
   }
 
+  function addonChosen(selection, addon, code) {
+    const chosen =
+      addon.scope === ADDON_SCOPE_ALL
+        ? (selection && selection.globalAddons) || {}
+        : (((selection && selection.addons) || {})[code] || {});
+    return !!chosen[addon.id];
+  }
+
   function selectedAddonLabels(config, selection, code) {
-    const chosen = ((selection && selection.addons) || {})[code] || {};
     return addonsForClass(config, code)
-      .filter((addon) => addon.state === ADDON_OPTIONAL && chosen[addon.id])
+      .filter(
+        (addon) =>
+          addon.state === ADDON_OPTIONAL && addonChosen(selection, addon, code),
+      )
       .map((addon) => addon.label);
   }
 
@@ -90,13 +126,13 @@
         1,
         parseInt(selection.classes[code], 10) || 1,
       );
-      const chosen = ((selection && selection.addons) || {})[code] || {};
       const row = { attentions_per_month: attentions };
       addonsForClass(config, code).forEach((addon) => {
         if (!addon.planField) return;
         row[addon.planField] =
           addon.state === ADDON_INCLUDED ||
-          (addon.state === ADDON_OPTIONAL && !!chosen[addon.id]);
+          (addon.state === ADDON_OPTIONAL &&
+            addonChosen(selection, addon, code));
       });
       plan.classes[code] = row;
     });
@@ -107,9 +143,13 @@
     ADDON_INCLUDED,
     ADDON_OPTIONAL,
     ADDON_UNAVAILABLE,
+    ADDON_SCOPE_ALL,
+    ADDON_SCOPE_PER_CLASS,
     formatAttentions,
     attentionVolumePresets,
     addonsForClass,
+    addonsByScope,
+    globalAddons,
     readDomSelection,
     selectedAddonLabels,
     toSignupPlan,

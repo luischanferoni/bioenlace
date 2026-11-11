@@ -4,6 +4,7 @@ namespace common\tests\unit\organization;
 
 use common\components\Domain\Organization\Efector\Application\UseCase\SignUpInstitutionalEfector;
 use common\components\Domain\Organization\Efector\Infrastructure\External\Billing\SimulatedPaymentGateway;
+use common\components\Domain\Organization\Pes\Domain\Catalog\PricingPesByEncounterClassCatalog;
 use common\components\Platform\Core\Product\PricingPesByEncounterClassMetadata;
 use Codeception\Test\Unit;
 
@@ -155,5 +156,23 @@ class InstitutionalSignupBillingTest extends Unit
         $this->assertTrue($amb['videollamada_allowed']);
         $this->assertArrayNotHasKey('product_gates', $amb);
         $this->assertArrayNotHasKey('max_pes', $amb);
+    }
+
+    public function testAddonScopeIsDerivedFromTheClassMatrix(): void
+    {
+        // Mismo estado en todos los tipos vendibles → se elige una sola vez.
+        $this->assertSame(
+            PricingPesByEncounterClassCatalog::ADDON_SCOPE_ALL,
+            PricingPesByEncounterClassMetadata::addonScope('dictado')
+        );
+        // Estados distintos (opcional en AMB, no disponible en EMER/IMP) → por tipo.
+        $this->assertSame(
+            PricingPesByEncounterClassCatalog::ADDON_SCOPE_PER_CLASS,
+            PricingPesByEncounterClassMetadata::addonScope('videollamada')
+        );
+
+        $catalog = PricingPesByEncounterClassMetadata::publicConfig();
+        $this->assertSame('all', $catalog['addons']['dictado']['scope']);
+        $this->assertSame('per_class', $catalog['addons']['videollamada']['scope']);
     }
 }

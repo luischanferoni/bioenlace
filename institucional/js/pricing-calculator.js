@@ -83,6 +83,7 @@
     }
     syncStepButtons(row);
     syncAddonOptions(row);
+    syncGlobalAddons();
   }
 
   function recalc() {
@@ -294,7 +295,11 @@
   }
 
   function buildPolicyHtml(code) {
-    const items = Pricing.addonsForClass(config, code).reduce((all, addon) => {
+    const items = Pricing.addonsByScope(
+      config,
+      code,
+      Pricing.ADDON_SCOPE_PER_CLASS,
+    ).reduce((all, addon) => {
       if (addon.state === Pricing.ADDON_INCLUDED) {
         all.push(
           '<span class="pricing-calc__policy-item">' +
@@ -319,7 +324,11 @@
   }
 
   function buildAddonOptionsHtml(code) {
-    const items = Pricing.addonsForClass(config, code)
+    const items = Pricing.addonsByScope(
+      config,
+      code,
+      Pricing.ADDON_SCOPE_PER_CLASS,
+    )
       .filter((addon) => addon.state === Pricing.ADDON_OPTIONAL)
       .map(
         (addon) =>
@@ -334,6 +343,60 @@
     return items.length
       ? '<div class="pricing-calc__addon-options">' + items.join('') + '</div>'
       : '';
+  }
+
+  /**
+   * Addons que aplican a todos los tipos de atención: se muestran una sola vez,
+   * debajo de las tarjetas. Los incluidos se informan y los opcionales se eligen
+   * con un único control que vale para todas las clases contratadas.
+   */
+  function buildGlobalAddonsHtml() {
+    const options = [];
+    const policy = [];
+    Pricing.globalAddons(config).forEach((addon) => {
+      if (addon.state === Pricing.ADDON_INCLUDED) {
+        policy.push(
+          '<span class="pricing-calc__policy-item">' +
+            escapeHtml(addon.includedLabel) +
+            '</span>',
+        );
+        return;
+      }
+      if (addon.state === Pricing.ADDON_OPTIONAL) {
+        options.push(
+          '<label class="pricing-calc__option">' +
+            '<input type="checkbox" data-addon-scope="' +
+            escapeHtml(addon.id) +
+            '" disabled />' +
+            '<span><strong>' +
+            escapeHtml(addon.label) +
+            '</strong></span></label>',
+        );
+        return;
+      }
+      if (addon.unavailableLabel) {
+        policy.push(
+          '<span class="pricing-calc__policy-item is-off">' +
+            escapeHtml(addon.unavailableLabel) +
+            '</span>',
+        );
+      }
+    });
+    if (!options.length && !policy.length) return '';
+
+    return (
+      '<div class="pricing-calc__global-addons">' +
+      '<p class="pricing-calc__global-title">Aplica a todos los tipos de atención</p>' +
+      (options.length
+        ? '<div class="pricing-calc__addon-options">' +
+          options.join('') +
+          '</div>'
+        : '') +
+      (policy.length
+        ? '<p class="pricing-calc__policy">' + policy.join('') + '</p>'
+        : '') +
+      '</div>'
+    );
   }
 
   function buildVolumeSliderHtml(code) {
@@ -413,6 +476,34 @@
           recalc();
         });
       });
+    });
+
+    const globalHtml = buildGlobalAddonsHtml();
+    if (globalHtml) {
+      const global = document.createElement('div');
+      global.innerHTML = globalHtml;
+      const block = global.firstElementChild;
+      rowsEl.appendChild(block);
+      block.querySelectorAll('input[data-addon-scope]').forEach((input) => {
+        input.addEventListener('change', () => recalc());
+      });
+    }
+    syncGlobalAddons();
+  }
+
+  /** Un addon del ámbito `all` solo se puede elegir si hay al menos un tipo con volumen. */
+  function syncGlobalAddons() {
+    if (!rowsEl) return;
+    const on = Array.prototype.some.call(
+      rowsEl.querySelectorAll('[data-class]'),
+      (row) => {
+        const hidden = row.querySelector('input[data-attentions]');
+        return !!(hidden && Number(hidden.value) > 0);
+      },
+    );
+    rowsEl.querySelectorAll('input[data-addon-scope]').forEach((input) => {
+      input.disabled = !on;
+      if (!on) input.checked = false;
     });
   }
 

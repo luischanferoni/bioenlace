@@ -43,6 +43,8 @@ USD/mes ≈ Σ_clase ( atenciones_mes[clase] × precio_por_atención )
 
 **Margen sobre costo (lista):** **233 %**.
 
+Mix porcentual de estos componentes sobre el COGS de cada clase: [resumen-costos-bioenlace.md § Composición del COGS](../../costos/resumen-costos-bioenlace.md#composición-del-cogs-qué-pesa-en-el-costo).
+
 ### Descuento por volumen (atenciones / mes)
 
 | Tramo | Atenciones / mes | Margen sobre costo | Descuento vs lista | Margen después IIBB + ganancias (orientativo) |
@@ -136,6 +138,8 @@ Un efector sin membresía POOL: sin tope (compat). Cupo compartido: el uso suma 
 ---
 
 ## Add-ons / fuera de la fórmula
+
+Cada add-on declara su estado **por tipo de atención** (`incluido`, `opcional`, `no disponible`). El **ámbito** se deriva de esa matriz: si todos los tipos vendibles comparten el mismo estado elegible, el add-on aplica a todos y se elige **una sola vez** (no se tilda tipo por tipo); si difiere, se elige por tipo. Hoy el dictado está incluido en todos y la videollamada es opcional solo en ambulatorio.
 
 | Ítem | Notas | Precio orientativo |
 |------|-------|-------------------|

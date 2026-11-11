@@ -33,6 +33,7 @@ Módulos sueltos (referencia): ID Verification 0,15 · Passive Liveness 0,10 · 
 | Reingreso tras cerrar sesión o dispositivo nuevo | App paciente | `POST /api/v1/auth/login-biometrico` | Biometric Auth | **Cada reingreso** que use Didit |
 | Login diario / bloqueo por inactividad | App paciente / Personal | Huella local del teléfono | — | **Sin Didit** |
 | Registro médico (si aplica) | App / API | KYC médico | Full KYC | 1 vez por médico nuevo |
+| Ingreso a la web | Web (`/auth/login`) | App con huella local, passkey del teléfono o recuperación asistida | — | **Sin Didit** |
 
 En producción móvil paciente: **registro** usa KYC; **reingreso tras cerrar sesión** usa Didit remoto (`diditRemoteLoginAfterLogout` en `LoginScreen`). El workflow biométrico se resuelve vía `GET /api/v1/registro/config-movil`.
 
@@ -44,8 +45,23 @@ En producción móvil paciente: **registro** usa KYC; **reingreso tras cerrar se
 | Bloqueo por inactividad (~5 min) | **No** — huella local |
 | Registro (primera vez) | **Sí** — KYC completo |
 | Volver tras **cerrar sesión** o **teléfono nuevo** | **Sí** — biometría remota (o contraseña si está implementada) |
+| Ingresar a la web con el QR y la app | **No** — la app aprueba el acceso |
+| Ingresar a la web sin app | **No** — passkey del teléfono o recuperación asistida |
 
-Didit **no** debe usarse en cada apertura de la app. El escenario D de este doc es solo un **techo** a evitar, no el diseño previsto.
+Didit **no** debe usarse en cada apertura de la app ni en cada ingreso web. El escenario D de este doc es solo un **techo** a evitar, no el diseño previsto.
+
+### Ingreso web (Didit no es el camino)
+
+El ingreso web **no** usa Didit: entra la app con huella local, una passkey del teléfono o, si no hay ninguna, la recuperación asistida. Si se mantuviera Didit como login, el techo sería (workflow biométrico, 0,10 por sesión, con 200 altas KYC por mes):
+
+| Ingresos web con Didit / mes | Fuera del cupo de 500 | Costo (USD/mes) |
+|---|---|---|
+| 100 | 0 | 0 |
+| 1.000 | 700 | 70 |
+| 3.000 | 2.700 | 270 |
+| 10.000 | 9.700 | 970 |
+
+El costo escala con **ingresos**, no con personas, y en computadoras compartidas las sesiones tienen que ser cortas: no hay forma de amortizarlo. De ahí que el login quede fuera de Didit y el gasto de identidad se concentre en el alta.
 
 ---
 

@@ -427,6 +427,7 @@ Orden de magnitud tenant: **< USD 50/mes** en generación sync hasta escalar coh
 |----------|----------------------|------|
 | Full KYC (registro paciente / alta staff) | **~USD 0,33** / sesión | **500 gratis / mes** por workspace |
 | Biometric Authentication (reingreso) | **~USD 0,10** / sesión | Comparte el mismo cupo mensual |
+| Ingreso a la web | App con huella local, passkey del teléfono o recuperación asistida | — | **Sin Didit** |
 | Huella local del dispositivo | **USD 0** | No es Didit |
 
 Proyección por escala (altas, pacientes activos, reingresos tras logout, escenario «Didit en cada apertura» a evitar): **[costos-didit.md](costos-didit.md)**.

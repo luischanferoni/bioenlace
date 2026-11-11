@@ -98,6 +98,23 @@ return [
     'signupAllowedIso2' => ['AR', 'UY'],
     /** Máximo de solicitudes de alta por IP y por hora (rate limit). */
     'signupMaxPerIpHour' => 20,
+    /**
+     * Alta web con el teléfono: vínculo navegador ↔ teléfono (QR + código).
+     * TTL y límites del vínculo; `enabled` apaga la página /alta sin desplegar.
+     */
+    'webSignupPairing' => [
+        'enabled' => true,
+        /** Segundos que el QR espera a que un teléfono abra la URL. */
+        'claimTtlSeconds' => 180,
+        /** Segundos para completar verificación y alta después del reclamo. */
+        'verificationTtlSeconds' => 600,
+        /** Tope absoluto del vínculo, desde su creación. */
+        'maxTtlSeconds' => 900,
+        /** Intentos del código de emparejamiento antes de invalidar el vínculo. */
+        'codeMaxAttempts' => 5,
+        /** Intervalo de consulta de estado desde la computadora. */
+        'statusPollSeconds' => 2,
+    ],
     /** UUID workflow KYC compartido (Didit Console). Configurar en params-local.php */
     'didit_kyc_workflow_id' => null,
     /** Deprecado: alias de didit_kyc_workflow_id, se conserva como fallback. */

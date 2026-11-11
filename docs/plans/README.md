@@ -23,6 +23,7 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Caché: claves, TTL e invalidación | `cache-claves-ttl/` | 17 archivos, 21 sets y 7 deletes; la fase 02 ya tiene libre el transporte HTTP |
 | Transporte residual y suite | `transporte-residual-y-suite/` | Transporte a mano en Didit/Snowstorm/MPI y en el admin (fuera del invariante) + suite en 13 errores / 73 fallas; fases 01–04 pendientes |
 | Motivos pre-turno sin STT | `motivos-pre-turno/` | Cuestionario declarativo, motivo deducido del triage y del asistente; fases 01–05 implementadas, falta prueba en dispositivo |
+| Alta de cuenta desde la web con el teléfono | `alta-cuenta-desde-web/` | QR + código de emparejamiento y Didit hosted en el teléfono; borrador en servidor, e-mail confirmado y aviso de pago; ingreso web sin costo (app, passkey del teléfono, recuperación); fases 00–07 pendientes |
 
 ## A evaluar (sin plan todavía)
 

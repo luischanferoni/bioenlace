@@ -127,7 +127,10 @@ final class StaffEncounterSummaryViewService
             $resumen = null;
         }
 
-        if ($resumen === null && $imagenesAdjuntas === []) {
+        $cuestionario = (new AppointmentReasonQuestionnaireService())->answersView($encounter);
+        $respuestas = $cuestionario['answers'];
+
+        if ($resumen === null && $imagenesAdjuntas === [] && $respuestas === []) {
             return null;
         }
 
@@ -138,15 +141,37 @@ final class StaffEncounterSummaryViewService
         if ($imagenesAdjuntas !== []) {
             $out['imagenes_adjuntas'] = $imagenesAdjuntas;
         }
+        if ($respuestas !== []) {
+            $out['respuestas_cuestionario'] = $respuestas;
+            $out['cuestionario_completado'] = $cuestionario['completed'];
+        }
+        $out['origen'] = $this->origenMotivo($encounter, $mensajes, $respuestas);
 
         return $out;
     }
 
     /**
+     * @param EncounterReasonMessage[] $mensajes
+     * @param list<array<string, mixed>> $respuestas
+     * @return list<string>
+     */
+    private function origenMotivo(Encounter $encounter, array $mensajes, array $respuestas): array
+    {
+        $origen = (new AppointmentReasonInitialContextService())->build($encounter)['sources'];
+        if ($respuestas !== []) {
+            $origen[] = 'cuestionario';
+        }
+        if ($mensajes !== []) {
+            $origen[] = 'chat';
+        }
+
+        return array_values(array_unique($origen));
+    }
+
+    /**
      * @param array{secciones?: list<array{titulo?: string, items?: list<string>}>} $documentacion
      */
-    private function textoYaEnDocumentacion(string $texto, array $documentacion): bool
-    {
+    private function textoYaEnDocumentacion(string $texto, array $documentacion): bool    {
         $norm = mb_strtolower(trim($texto));
         if ($norm === '') {
             return false;

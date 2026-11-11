@@ -5,7 +5,7 @@ import '../utils/app_texts.dart';
 
 import '../services/turnos_service.dart';
 import 'encounter_chat_patient_screen.dart';
-import 'encounter_reasons_chat_screen.dart';
+import 'encounter_reasons_questionnaire_screen.dart';
 
 /// Pantalla "Mis turnos": próximos e historial con paginación por sección.
 class MisTurnosScreen extends StatefulWidget {
@@ -303,11 +303,9 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
       Navigator.push(
         ctx,
         MaterialPageRoute(
-          builder: (_) => EncounterReasonsChatScreen(
+          builder: (_) => EncounterReasonsQuestionnaireScreen(
             encounterId: encounterId,
             authToken: widget.authToken,
-            userId: widget.userId,
-            userName: widget.userName ?? 'Paciente',
             titulo: titulo,
           ),
         ),
@@ -357,11 +355,9 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => EncounterReasonsChatScreen(
+                builder: (_) => EncounterReasonsQuestionnaireScreen(
                   encounterId: encounterId,
                   authToken: widget.authToken,
-                  userId: widget.userId,
-                  userName: widget.userName ?? 'Paciente',
                   titulo: tituloMotivos,
                 ),
               ),

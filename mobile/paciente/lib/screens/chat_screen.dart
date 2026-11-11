@@ -12,7 +12,7 @@ import '../navigation/native_screen_router.dart';
 import '../services/chat_service.dart';
 import '../services/acciones_service.dart';
 import '../utils/turno_resolucion_utils.dart';
-import 'encounter_reasons_chat_screen.dart';
+import 'encounter_reasons_questionnaire_screen.dart';
 
 class ChatScreen extends StatefulWidget {
   final ChatService chatService;
@@ -3504,11 +3504,9 @@ class ChatScreenState extends State<ChatScreen> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => EncounterReasonsChatScreen(
+                                    builder: (_) => EncounterReasonsQuestionnaireScreen(
                                       encounterId: encounterId,
                                       authToken: _asistenteService.authToken,
-                                      userId: widget.chatService.currentUserId,
-                                      userName: widget.chatService.currentUserName,
                                       titulo: AppTexts.chatReasonsTitle,
                                     ),
                                   ),

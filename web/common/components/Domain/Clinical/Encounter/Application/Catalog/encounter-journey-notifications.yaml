@@ -4,11 +4,15 @@ phases:
     - offset: 'param:encounter_journey_preparar_minutos_antes'
       tipo: JOURNEY_MOTIVOS_RECORDATORIO
       title: 'Prepará tu consulta'
-      body: 'Ya podés contarnos tus motivos de consulta para el turno del {fecha}.'
+      body: 'Contanos tus motivos con unas preguntas rápidas para el turno del {fecha}.'
+      action: 'responder_cuestionario'
+      action_label: 'Responder'
     - offset: '-2h'
       tipo: JOURNEY_MOTIVOS_ULTIMO_AVISO
-      title: 'Últimas horas para cargar motivos'
-      body: 'Tu turno es pronto. Podés cargar motivos hasta poco antes del horario.'
+      title: 'Últimas horas para responder'
+      body: 'Tu turno es pronto. Podés responder el cuestionario de motivos hasta poco antes del horario.'
+      action: 'responder_cuestionario'
+      action_label: 'Responder'
   asistencia_pre_consulta:
     - offset: 'param:encounter_journey_preparar_minutos_antes'
       tipo: JOURNEY_PRECONSULTA_RECORDATORIO

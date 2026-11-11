@@ -33,7 +33,22 @@
         <div class="mb-2"><span class="small text-uppercase text-muted">Resumen</span></div>
         <div class="text-body tl-motivos-resumen text-break" style="white-space:pre-wrap" data-slot="resumen"></div>
         <div data-slot="sugerencias"></div>
+        <div data-slot="respuestas"></div>
     </div>
+</template>
+
+<template id="tpl-tl-motivos-respuestas">
+    <div class="mt-3">
+        <div class="small text-uppercase text-muted">Respuestas del paciente</div>
+        <ul class="mb-0" data-slot="respuestas-list"></ul>
+    </div>
+</template>
+
+<template id="tpl-tl-motivos-respuesta">
+    <li class="mb-1">
+        <strong data-field="question"></strong><br>
+        <span data-field="answer"></span>
+    </li>
 </template>
 
 <template id="tpl-tl-motivos-img">

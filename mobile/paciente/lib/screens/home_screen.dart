@@ -14,7 +14,7 @@ import 'care_plans_list_screen.dart';
 import 'condition_detail_screen.dart';
 import 'conditions_list_screen.dart';
 import 'encounter_chat_patient_screen.dart';
-import 'encounter_reasons_chat_screen.dart';
+import 'encounter_reasons_questionnaire_screen.dart';
 import 'encounter_summary_detail_screen.dart';
 import '../widgets/encounter_async_request_card.dart';
 
@@ -538,11 +538,9 @@ class HomeScreenState extends State<HomeScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => EncounterReasonsChatScreen(
+        builder: (_) => EncounterReasonsQuestionnaireScreen(
           encounterId: encounterId,
           authToken: widget.authToken,
-          userId: widget.userId,
-          userName: widget.userName,
           titulo:
               'Motivos · ${_fechaAmigable(t['fecha']?.toString())} · ${_horaSinSegundos(t['hora']?.toString())}',
         ),
@@ -590,11 +588,9 @@ class HomeScreenState extends State<HomeScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => EncounterReasonsChatScreen(
+        builder: (_) => EncounterReasonsQuestionnaireScreen(
           encounterId: encounterId,
           authToken: widget.authToken,
-          userId: widget.userId,
-          userName: widget.userName,
           titulo: titulo,
         ),
       ),

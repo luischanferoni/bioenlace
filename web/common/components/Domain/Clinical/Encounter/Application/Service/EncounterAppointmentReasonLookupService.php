@@ -6,6 +6,7 @@ use common\components\Domain\Clinical\Encounter\Domain\ConditionDiagnosisRole;
 use common\models\Clinical\Condition;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterReasonMessage;
+use common\models\Clinical\EncounterReasonQuestionnaireAnswer;
 use common\models\Scheduling\Turno;
 use yii\db\Expression;
 use yii\db\Query;
@@ -103,6 +104,27 @@ final class EncounterAppointmentReasonLookupService
             ->innerJoin(
                 ['m' => EncounterReasonMessage::tableName()],
                 'm.encounter_id = enc.id'
+            )
+            ->select(['enc.id'])
+            ->limit(1)
+            ->scalar();
+
+        return $id !== false && $id !== null ? (int) $id : null;
+    }
+
+    /**
+     * Encounter del turno más reciente (fecha/hora) que tenga respuestas del cuestionario pre-turno.
+     */
+    public function encounterIdConCuestionarioReciente(int $personaId, ?int $idEfector = null): ?int
+    {
+        if ($personaId <= 0) {
+            return null;
+        }
+
+        $id = $this->baseTurnoEncounterQuery($personaId, $idEfector)
+            ->innerJoin(
+                ['q' => EncounterReasonQuestionnaireAnswer::tableName()],
+                'q.encounter_id = enc.id'
             )
             ->select(['enc.id'])
             ->limit(1)

@@ -8,12 +8,12 @@ use common\models\Clinical\EncounterReasonMessage;
 use Yii;
 
 /**
- * Persistencia del chat pre-consulta (texto / imagen / audio).
+ * Persistencia de adjuntos y textos pre-consulta (texto / imagen).
  * Auth HTTP en el controller; aquí ventana + guardado. Los fallos lanzan {@see ApiException}.
  */
 final class AppointmentReasonMessageService
 {
-    public const UPLOAD_MESSAGE_TYPES = ['imagen', 'audio'];
+    public const UPLOAD_MESSAGE_TYPES = ['imagen'];
 
     /**
      * @return array<string, mixed> Mensaje persistido.
@@ -70,7 +70,7 @@ final class AppointmentReasonMessageService
 
         $ext = trim($extension, '.');
         if ($ext === '') {
-            $ext = $messageType === 'audio' ? 'm4a' : 'jpg';
+            $ext = 'jpg';
         }
         $filename = sprintf('%s_%s.%s', date('YmdHis'), uniqid(), $ext);
 

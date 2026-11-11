@@ -22,8 +22,39 @@ void main() {
     );
   });
 
-  test('recognizes encounter episode parent types case-insensitively', () {
-    final guardia = ContextoEpisodioHistoria.fromJson(<String, dynamic>{
+  test('reads the pre-appointment questionnaire answers', () {
+    final response = HistoriaClinicaResponse.fromJson(<String, dynamic>{
+      'persona': <String, dynamic>{'id': 12},
+      'informacion_medica': <String, dynamic>{},
+      'patient_encounter_reasons': <String, dynamic>{
+        'encounter_id': 34,
+        'messages': [],
+        'respuestas_cuestionario': <dynamic>[
+          <String, dynamic>{
+            'question_id': 'inicio',
+            'question_text': '¿Desde cuándo lo tenés?',
+            'option_id': 'hoy',
+            'option_label': 'Desde hoy',
+            'texto_libre': '',
+          },
+          <String, dynamic>{
+            'question_id': 'medicacion',
+            'question_text': '¿Estás tomando alguna medicación?',
+            'option_id': 'otra',
+            'option_label': 'Otra',
+            'texto_libre': 'Ibuprofeno cada 8 horas',
+          },
+        ],
+      },
+    });
+
+    final answers = response.patientEncounterReasons.respuestasCuestionario;
+    expect(answers, hasLength(2));
+    expect(answers.first.answer, 'Desde hoy');
+    expect(answers.last.answer, 'Otra: Ibuprofeno cada 8 horas');
+  });
+
+  test('recognizes encounter episode parent types case-insensitively', () {    final guardia = ContextoEpisodioHistoria.fromJson(<String, dynamic>{
       'tipo': 'guardia',
       'tipo_label': 'Guardia',
       'intent': 'danger',

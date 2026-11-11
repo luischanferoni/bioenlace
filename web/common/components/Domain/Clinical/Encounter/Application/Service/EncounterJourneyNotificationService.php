@@ -100,6 +100,8 @@ final class EncounterJourneyNotificationService
                     'phase' => $phaseId,
                     'title' => $notif['title'],
                     'body' => $notif['body'],
+                    'action' => (string) ($notif['action'] ?? ''),
+                    'action_label' => (string) ($notif['action_label'] ?? ''),
                 ]
             );
         }

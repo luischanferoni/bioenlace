@@ -22,7 +22,7 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Mensajes de respuesta — una sola fuente | `mensajes-respuesta/` | 28 literales en API, 55 snacks en Flutter, 38 en JS; fases 01–04 pendientes |
 | Caché: claves, TTL e invalidación | `cache-claves-ttl/` | 17 archivos, 21 sets y 7 deletes; la fase 02 ya tiene libre el transporte HTTP |
 | Transporte residual y suite | `transporte-residual-y-suite/` | Transporte a mano en Didit/Snowstorm/MPI y en el admin (fuera del invariante) + suite en 13 errores / 73 fallas; fases 01–04 pendientes |
-| Motivos pre-turno sin STT | `motivos-pre-turno/` | Cuestionario declarativo, motivo deducido del triage y del asistente; fase 01 implementada, 02–05 pendientes |
+| Motivos pre-turno sin STT | `motivos-pre-turno/` | Cuestionario declarativo, motivo deducido del triage y del asistente; fases 01–05 implementadas, falta prueba en dispositivo |
 
 ## A evaluar (sin plan todavía)
 

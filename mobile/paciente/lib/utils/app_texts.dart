@@ -21,11 +21,18 @@ class AppTexts {
   static String chatWith(Object? nombre) => 'Chat con $nombre';
   static const defaultDoctorName = 'médico';
   static const cameraInitializing = 'Inicializando cámara...';
-  static String pendingOnPhone(Object? n) => 'Pendientes en el teléfono ($n)';
-  static const pendingSavedLocally = 'Se guardaron localmente por si falla la conexión.';
   static const reasonsChatClosed =
-      'Ya no podés enviar más mensajes. El médico verá un resumen al iniciar la consulta.';
+      'Ya no podés responder el cuestionario. El médico verá un resumen al iniciar la consulta.';
   static String reasonsSummaryForDoctor(Object? resumen) => 'Resumen para el médico:\n$resumen';
+  static const questionnaireLoadFailed = 'No se pudo cargar el cuestionario de motivos.';
+  static const questionnaireAnswerFailed = 'No se pudo guardar la respuesta.';
+  static const questionnaireSend = 'Enviar';
+  static const questionnaireSkip = 'Omitir';
+  static const questionnaireOther = 'Otra respuesta';
+  static const questionnaireOtherHint = 'Escribí tu respuesta en pocas palabras.';
+  static const questionnaireClosingHint = 'Podés dejarlo vacío si no querés agregar nada.';
+  static const questionnaireCompleted =
+      'Listo. El profesional verá tus respuestas al iniciar la consulta.';
   static const signupBiometricPending =
       'Registramos tu cuenta, pero falta activar la huella del dispositivo.';
   static const signupComplete = 'Completá tu registro';
@@ -59,8 +66,7 @@ class AppTexts {
   static const prescriptionsTitle = 'Recetas';
   static const labResultsTitle = 'Resultados de laboratorio';
   static const ordersTitle = 'Pedidos e indicaciones';
-  static const audioSavedUploading = 'Audio guardado en el teléfono. Subiendo…';
-  static const pendingMessageDeleted = 'Mensaje pendiente eliminado';
+  static const retry = 'Reintentar';
   static String screenNotImplemented(Object? id) => 'Pantalla no implementada: $id';
   static const biometricRequired = 'Biometría requerida';
   static const cameraFocusFirst = 'Primero valida la posición presionando el botón de enfoque';

@@ -382,6 +382,27 @@ class MotivosIntakeStaff {
   }
 }
 
+class MotivoCuestionarioRespuesta {
+  final String question;
+  final String answer;
+
+  MotivoCuestionarioRespuesta({required this.question, required this.answer});
+
+  factory MotivoCuestionarioRespuesta.fromJson(Map<String, dynamic> json) {
+    final option = (json['option_label']?.toString() ?? '').trim();
+    final free = (json['texto_libre']?.toString() ?? '').trim();
+    final answer = free.isEmpty
+        ? option
+        : (option.isEmpty ? free : '$option: $free');
+    return MotivoCuestionarioRespuesta(
+      question: (json['question_text']?.toString() ?? '').trim(),
+      answer: answer,
+    );
+  }
+
+  bool get tieneContenido => question.isNotEmpty || answer.isNotEmpty;
+}
+
 class PatientEncounterReasons {
   final int? encounterId;
   final int? turnoId;
@@ -391,6 +412,7 @@ class PatientEncounterReasons {
   final String? resumenIa;
   final bool resumenPendiente;
   final List<MotivoImagenAdjunta> imagenesAdjuntas;
+  final List<MotivoCuestionarioRespuesta> respuestasCuestionario;
   final EncounterReasonSuggestions? sugerenciasClinicas;
   final MotivosIntakeStaff? motivosIntake;
   final List<EncounterReasonMessageApi> messages;
@@ -404,6 +426,7 @@ class PatientEncounterReasons {
     this.resumenIa,
     this.resumenPendiente = false,
     this.imagenesAdjuntas = const [],
+    this.respuestasCuestionario = const [],
     this.sugerenciasClinicas,
     this.motivosIntake,
     required this.messages,
@@ -446,6 +469,7 @@ class PatientEncounterReasons {
     final resumenTxt =
         json['resumen']?.toString() ?? json['resumen_ia']?.toString();
     final intakeMap = json['motivos_intake'];
+    final respuestasRaw = json['respuestas_cuestionario'];
     return PatientEncounterReasons(
       encounterId: cid,
       turnoId: tid,
@@ -461,6 +485,17 @@ class PatientEncounterReasons {
           json['resumen_pendiente'] == true ||
           json['resumen_ia_pendiente'] == true,
       imagenesAdjuntas: imgs,
+      respuestasCuestionario: respuestasRaw is List
+          ? respuestasRaw
+                .whereType<Map>()
+                .map(
+                  (e) => MotivoCuestionarioRespuesta.fromJson(
+                    Map<String, dynamic>.from(e),
+                  ),
+                )
+                .where((e) => e.tieneContenido)
+                .toList()
+          : <MotivoCuestionarioRespuesta>[],
       sugerenciasClinicas: sugMap is Map
           ? EncounterReasonSuggestions.fromJson(
               Map<String, dynamic>.from(sugMap),

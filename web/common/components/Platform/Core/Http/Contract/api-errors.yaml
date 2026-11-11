@@ -193,7 +193,7 @@ errors:
     http_status: 422
     intent: error
     retryable: false
-    message: "Solo se pueden enviar imágenes o audios."
+    message: "Solo se pueden adjuntar imágenes."
   reason_file_missing:
     http_status: 422
     intent: error

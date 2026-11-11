@@ -9,6 +9,8 @@ use common\components\Domain\Clinical\CareCohort\Application\Service\CarePackEnc
 use common\components\Domain\Clinical\Encounter\Application\Presentation\EncounterStaffDocumentationViewService;
 use common\components\Domain\Clinical\Encounter\Application\Service\AppointmentReasonBatchService;
 use common\components\Domain\Clinical\Encounter\Application\Service\AppointmentReasonClinicalInsightsService;
+use common\components\Domain\Clinical\Encounter\Application\Service\AppointmentReasonInitialContextService;
+use common\components\Domain\Clinical\Encounter\Application\Service\AppointmentReasonQuestionnaireService;
 use common\components\Domain\Clinical\Encounter\Application\Service\AppointmentReasonWindowService;
 use common\components\Domain\Clinical\Encounter\Application\Service\EncounterAppointmentReasonLookupService;
 use common\components\Domain\Clinical\Encounter\Application\UseCase\RecordEncounterReason;
@@ -372,6 +374,7 @@ class PacientesController extends BaseController
             }
         } elseif ($idEfector > 0) {
             $encounterIdAuto = $appointmentReasonLookup->encounterIdConMensajesMotivosRecientes($personaId, $idEfector)
+                ?? $appointmentReasonLookup->encounterIdConCuestionarioReciente($personaId, $idEfector)
                 ?? $appointmentReasonLookup->ultimoEncounterIdDesdeTurno($personaId, $idEfector);
             if ($encounterIdAuto !== null) {
                 $encounter = Encounter::findOne($encounterIdAuto);
@@ -438,6 +441,9 @@ class PacientesController extends BaseController
             $encounterId
         );
         $resumen = $reason !== '' ? $reason : null;
+        $cuestionario = (new AppointmentReasonQuestionnaireService())->answersView($encounter);
+        $respuestas = $cuestionario['answers'];
+        $hayMotivos = $mensajes !== [] || $respuestas !== [];
 
         $patientEncounterReasons = [
             'encounter_id' => $encounterId,
@@ -447,9 +453,12 @@ class PacientesController extends BaseController
             'ventana_medico' => AppointmentReasonWindowService::apiHistoriaClinicaGateState($encounter),
             'resumen' => $resumen,
             'resumen_ia' => $resumen,
-            'resumen_pendiente' => $mensajes !== [] && $resumen === null,
-            'resumen_ia_pendiente' => $mensajes !== [] && $resumen === null,
+            'resumen_pendiente' => $hayMotivos && $resumen === null,
+            'resumen_ia_pendiente' => $hayMotivos && $resumen === null,
             'imagenes_adjuntas' => $imagenesAdjuntas,
+            'respuestas_cuestionario' => $respuestas,
+            'cuestionario_completado' => $cuestionario['completed'],
+            'origen' => $this->origenMotivo($encounter, $mensajes, $respuestas),
             'sugerencias_clinicas' => $insights,
             'messages' => [],
         ];
@@ -467,8 +476,7 @@ class PacientesController extends BaseController
     /**
      * @param array<string, mixed> $emptyPaciente
      * @param list<array<string, mixed>> $turnosConEncounter
-     * @return array{
-     *   encounter_reason_summary: null,
+     * @return array{     *   encounter_reason_summary: null,
      *   patient_encounter_reasons: array<string, mixed>,
      *   turnos_con_encounter: list<array<string, mixed>>,
      *   documentacion_medico: null,
@@ -572,6 +580,26 @@ class PacientesController extends BaseController
             'permitida' => false,
             'motivo' => 'Este turno no admite captura clínica (estado: ' . $estado . ').',
         ];
+    }
+
+    /**
+     * Origen del motivo: triage de reserva, asistente, cuestionario o chat legacy.
+     *
+     * @param EncounterReasonMessage[] $mensajes
+     * @param list<array<string, mixed>> $respuestas
+     * @return list<string>
+     */
+    private function origenMotivo(Encounter $encounter, array $mensajes, array $respuestas): array
+    {
+        $origen = (new AppointmentReasonInitialContextService())->build($encounter)['sources'];
+        if ($respuestas !== []) {
+            $origen[] = 'cuestionario';
+        }
+        if ($mensajes !== []) {
+            $origen[] = 'chat';
+        }
+
+        return array_values(array_unique($origen));
     }
 
     /**

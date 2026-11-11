@@ -10,7 +10,7 @@ El paciente opera desde la **app móvil**; el **personal de salud** consume moti
 
 | Fase | Superficie | Cuándo |
 |------|------------|--------|
-| `motivos_intake` | Formulario UI JSON (preguntas declarativas) | Antes del chat de motivos, misma ventana |
+| `motivos_intake` | Alias API del cuestionario (`encounter-journey/motivos-intake`) | Misma ventana que `motivos_consulta` |
 | `motivos_consulta` | Cuestionario con opciones (`encounter-reasons/cuestionario`); chat libre como compatibilidad | Antes del turno, dentro de la ventana |
 | `asistencia_pre_consulta` | Flow / UI JSON care pack | Antes del turno, si hay pack de cohorte |
 | `post_consulta` | Touchpoints del pack followup | Tras encounter finalizado |
@@ -45,9 +45,9 @@ La guía en texto sigue disponible en `GET /api/v1/encounter-journey/motivos-int
 
 ### Vista staff (historia clínica)
 
-El equipo ve el **resumen de motivos** (Condition CC) y sugerencias clínicas (`ia_clinical_suggestions`) en el bloque de motivos del turno. Las respuestas del cuestionario todavía no se muestran.
+El equipo ve el **resumen de motivos** (Condition CC), las **respuestas del cuestionario pre-turno** y el **origen** del motivo (triage, asistente, cuestionario, chat) en el bloque de motivos del turno, junto con las sugerencias clínicas (`ia_clinical_suggestions`).
 
-**API:** `GET /api/v1/personas/{id}/historia-clinica?turno_id=` (o `encounter_id=`) incluye `patient_encounter_reasons` con `resumen`, `sugerencias_clinicas`, `imagenes_adjuntas`, etc.
+**API:** `GET /api/v1/personas/{id}/historia-clinica?turno_id=` (o `encounter_id=`) incluye `patient_encounter_reasons` con `resumen`, `sugerencias_clinicas`, `imagenes_adjuntas`, `respuestas_cuestionario`, `cuestionario_completado` y `origen`.
 
 **Orden en timeline (staff):** resumen motivos (cuestionario y chat → Condition CC) → asistencia pre-consulta cohorte (`care_pack_cohorte`) → signos vitales y captura.
 
@@ -82,6 +82,8 @@ RBAC journey paciente: hereda de `listar-como-paciente` (migración `m260703_120
 
 Al programar turno (`ConfirmTurno`), se encolan recordatorios de fases con anchor `turno_start`. Al finalizar encounter (`EncounterLifecycleService`), se encolan los de `post_consulta` (anchor `encounter_finished`). El cron `turno-notificacion/run` envía push con deep link (`id_turno`, `phase`, opcional `touchpoint_id`).
 
+Los recordatorios de motivos declaran además `action` y `action_label` en `encounter-journey-notifications.yaml`: el push lleva el botón que abre el cuestionario pre-turno del turno (`JOURNEY_MOTIVOS_RECORDATORIO`, `JOURNEY_MOTIVOS_ULTIMO_AVISO`).
+
 Los touchpoints del pack followup (`care-pack process-followups`) incluyen `id_turno` y `phase=post_consulta` para abrir el hub o el formulario directamente en la app.
 
 ## App paciente (hub journey)
@@ -94,11 +96,12 @@ Los touchpoints del pack followup (`care-pack process-followups`) incluyen `id_t
 | Pieza | Ubicación |
 |-------|-----------|
 | Ventanas / elegibilidad | `encounter_phase_windows.yaml`, `encounter_phase_eligibility.yaml`, `EncounterJourneyService` |
-| Guía chat motivos | `AppointmentReasonChatGuideService`, `AppointmentReasonChatGuideCatalogService` |
+| Cuestionario pre-turno | `AppointmentReasonQuestionnaireCatalog`, `AppointmentReasonQuestionnaireService` |
+| Motivo deducido | `AppointmentReasonInitialContextService`, `AppointmentReasonBatchService` |
 | Motivo clínico (staff) | Condition CC vía `EncounterReasonService`; sugerencias en `ia_clinical_suggestions` |
 | UI web timeline | `frontend/views/paciente/timeline/timeline.php` |
 | UI móvil staff | `mobile/personalsalud/…/patient_timeline_screen.dart` |
-| UI móvil paciente | `mobile/packages/shared/lib/clinical/encounter_journey_*` |
+| UI móvil paciente | `mobile/paciente/…/encounter_reasons_questionnaire_screen.dart` |
 
 ## Relación con otros documentos
 

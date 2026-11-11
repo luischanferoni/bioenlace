@@ -153,8 +153,7 @@ final class AppointmentReasonQuestionnaireService
         ];
     }
 
-    public function isCompleted(int $encounterId): bool
-    {
+    public function isCompleted(int $encounterId): bool    {
         if ($encounterId <= 0) {
             return false;
         }
@@ -173,6 +172,21 @@ final class AppointmentReasonQuestionnaireService
         return EncounterReasonQuestionnaireAnswer::find()
             ->where(['encounter_id' => $encounterId])
             ->exists();
+    }
+
+    /**
+     * Respuestas en orden de catálogo para la vista del staff.
+     *
+     * @return array{answers: list<array<string, mixed>>, completed: bool}
+     */
+    public function answersView(Encounter $encounter): array
+    {
+        $answers = EncounterReasonQuestionnaireAnswer::findForEncounter((int) $encounter->id);
+
+        return [
+            'answers' => $this->serializeAnswers($answers),
+            'completed' => $this->isCompleted((int) $encounter->id),
+        ];
     }
 
     /**

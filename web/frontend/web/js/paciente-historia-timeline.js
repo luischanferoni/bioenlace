@@ -930,6 +930,27 @@
                     sugSlot.appendChild(sugFrag);
                 }
             }
+            var respuestas = mp.respuestas_cuestionario || [];
+            var respSlot = wrap.querySelector('[data-slot="respuestas"]');
+            if (respSlot && respuestas.length) {
+                var respFrag = tlTpl('tpl-tl-motivos-respuestas');
+                if (respFrag) {
+                    var respList = respFrag.querySelector('[data-slot="respuestas-list"]');
+                    respuestas.forEach(function (r) {
+                        var li = tlTpl('tpl-tl-motivos-respuesta');
+                        if (!li) return;
+                        var answer = String(r.option_label || '').trim();
+                        var free = String(r.texto_libre || '').trim();
+                        if (free !== '') {
+                            answer = answer !== '' ? answer + ': ' + free : free;
+                        }
+                        tlSet(li, '[data-field="question"]', r.question_text || '');
+                        tlSet(li, '[data-field="answer"]', answer);
+                        respList.appendChild(li);
+                    });
+                    respSlot.appendChild(respFrag);
+                }
+            }
             el.appendChild(wrap);
             hydrateSecureTimelineMedia(el);
             return;

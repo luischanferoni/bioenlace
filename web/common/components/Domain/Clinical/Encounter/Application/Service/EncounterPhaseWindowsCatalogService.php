@@ -97,6 +97,8 @@ final class EncounterPhaseWindowsCatalogService
                 'tipo' => $tipo,
                 'title' => trim((string) ($row['title'] ?? '')),
                 'body' => trim((string) ($row['body'] ?? '')),
+                'action' => trim((string) ($row['action'] ?? '')),
+                'action_label' => trim((string) ($row['action_label'] ?? '')),
             ];
         }
 
@@ -104,7 +106,7 @@ final class EncounterPhaseWindowsCatalogService
     }
 
     /**
-     * @return array{offset: string, tipo: string, title: string, body: string}|null
+     * @return array{offset: string, tipo: string, title: string, body: string, action: string, action_label: string}|null
      */
     public function notificationByType(string $type): ?array
     {

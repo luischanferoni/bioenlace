@@ -60,6 +60,23 @@ class EncounterReasonsCard extends StatelessWidget {
               AppTexts.timelineReasonsEmpty,
               style: BioTypography.bodySm,
             ),
+          if (mp.respuestasCuestionario.isNotEmpty) ...[
+            BioSpacing.gapH(BioSpacing.lg),
+            Text(
+              AppTexts.timelineReasonsAnswers,
+              style: BioTypography.overline,
+            ),
+            BioSpacing.gapH(BioSpacing.xs),
+            ...mp.respuestasCuestionario.map(
+              (r) => Padding(
+                padding: const EdgeInsets.only(bottom: BioSpacing.xs),
+                child: Text(
+                  '• ${r.question}${r.question.isNotEmpty ? ': ' : ''}${r.answer}',
+                  style: BioTypography.bodySm,
+                ),
+              ),
+            ),
+          ],
           if (sugerencias != null && sugerencias.tieneContenido) ...[
             BioSpacing.gapH(BioSpacing.lg),
             Text(

@@ -77,6 +77,7 @@ class AppTexts {
   static const timelineActionNoScreen =
       'No se puede abrir esta opción en este momento.';
   static const timelineReasonsTitle = 'Motivos de esta consulta';
+  static const timelineReasonsAnswers = 'Respuestas del paciente';
   static const guardiaAdmissionTitle = 'Ingreso a internación';
   static const guardiaLeftTitle = 'Paciente se retiró';
   static const vitalsTriageHint = 'Enteros de 2–3 dígitos. TA sys 50–250 · TA dia 30–150 · FC 20–250.';

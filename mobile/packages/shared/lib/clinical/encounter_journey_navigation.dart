@@ -275,7 +275,7 @@ void abrirFaseEncounterJourney({
   if (phase == null) return;
 
   final surface = phase['surface']?.toString() ?? '';
-  if (surface == 'chat_motivos') {
+  if (surface == 'cuestionario_motivos' || surface == 'chat_motivos') {
     if (phase['enabled'] != true) return;
     final encounterId = encounterIdDesdeTurno(turno);
     if (encounterId == null) return;
@@ -362,6 +362,9 @@ Map<String, String>? journeyPushDesdeData(Map<String, dynamic> data) {
         'encounter_id': data['encounter_id'].toString(),
       if (data['touchpoint_id'] != null)
         'touchpoint_id': data['touchpoint_id'].toString(),
+      if (data['action'] != null) 'action': data['action'].toString(),
+      if (data['action_label'] != null)
+        'action_label': data['action_label'].toString(),
     };
   }
   if (type == 'CARE_FOLLOWUP_TOUCHPOINT') {

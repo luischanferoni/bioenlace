@@ -15,7 +15,7 @@ import 'care_plan_detail_screen.dart';
 import 'configuracion_screen.dart';
 import 'encounter_chat_patient_screen.dart';
 import 'encounter_summary_detail_screen.dart';
-import 'encounter_reasons_chat_screen.dart';
+import 'encounter_reasons_questionnaire_screen.dart';
 import 'paciente_provincia_context_screen.dart';
 import '../config/paciente_intents.dart';
 
@@ -245,14 +245,11 @@ class _MainScreenState extends State<MainScreen> {
     required int encounterId,
     required String titulo,
   }) {
-    final chat = widget.chatService;
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => EncounterReasonsChatScreen(
+        builder: (_) => EncounterReasonsQuestionnaireScreen(
           encounterId: encounterId,
           authToken: widget.authToken,
-          userId: chat.currentUserId,
-          userName: chat.currentUserName,
           titulo: titulo,
         ),
       ),

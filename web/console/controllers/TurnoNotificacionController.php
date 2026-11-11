@@ -116,6 +116,14 @@ class TurnoNotificacionController extends Controller
                         'encounter_id' => $encounter ? (string) $encounter->id : '',
                         'phase' => (string) ($meta['phase'] ?? ''),
                     ];
+                    $action = trim((string) ($meta['action'] ?? $notificationDefinition['action'] ?? ''));
+                    if ($action !== '') {
+                        $pushPayload['action'] = $action;
+                    }
+                    $actionLabel = trim((string) ($meta['action_label'] ?? $notificationDefinition['action_label'] ?? ''));
+                    if ($actionLabel !== '') {
+                        $pushPayload['action_label'] = $actionLabel;
+                    }
                     if (isset($meta['touchpoint_id']) && (int) $meta['touchpoint_id'] > 0) {
                         $pushPayload['touchpoint_id'] = (string) (int) $meta['touchpoint_id'];
                     }

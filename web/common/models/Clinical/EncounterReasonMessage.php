@@ -12,6 +12,8 @@ use yii\db\ActiveRecord;
  *
  * No es el motivo clínico documentado ({@see EncounterReason} / Condition CC).
  *
+ * `TYPE_AUDIO` sólo existe en filas históricas: el flujo de motivos ya no acepta audios.
+ *
  * @property int $id
  * @property int $encounter_id
  * @property int $user_id

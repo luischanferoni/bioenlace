@@ -58,10 +58,10 @@ escriba en un chat libre ni grabe audios**:
 | Fase | Qué | Estado |
 |------|-----|--------|
 | [01 — Backend del cuestionario](phases/01-backend-cuestionario.md) | Catálogo, tabla, servicios, endpoints, deducción y batch sin STT | Implementada |
-| [02 — App paciente](phases/02-app-paciente.md) | Pantalla del cuestionario, sin audio; deep link desde push y desde el turno | Pendiente |
-| [03 — Vista staff](phases/03-vista-staff.md) | Respuestas y origen del motivo en historia clínica / timeline | Pendiente |
-| [04 — Baja de audio](phases/04-baja-de-audio.md) | Retiro de `subir` audio, `pending_motivo_message` y endpoints sin uso | Pendiente |
-| [05 — Notificaciones y cierre](phases/05-notificaciones-y-cierre.md) | Copy de push, deep link con acción, volcado a producto y borrado del plan | Pendiente |
+| [02 — App paciente](phases/02-app-paciente.md) | Pantalla del cuestionario, sin audio; deep link desde push y desde el turno | Implementada |
+| [03 — Vista staff](phases/03-vista-staff.md) | Respuestas y origen del motivo en historia clínica / timeline | Implementada |
+| [04 — Baja de audio](phases/04-baja-de-audio.md) | Retiro de `subir` audio, `pending_motivo_message` y endpoints sin uso | Implementada |
+| [05 — Notificaciones y cierre](phases/05-notificaciones-y-cierre.md) | Copy de push, deep link con acción, volcado a producto y borrado del plan | Implementada |
 
 ## Criterio de cierre
 

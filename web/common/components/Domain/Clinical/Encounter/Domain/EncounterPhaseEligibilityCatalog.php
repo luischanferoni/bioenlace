@@ -17,7 +17,7 @@ final class EncounterPhaseEligibilityCatalog
         'phases' => [
             'motivos_consulta' => [
                 'label' => 'Contanos tus motivos de consulta',
-                'surface' => 'chat_motivos',
+                'surface' => 'cuestionario_motivos',
                 'skip_when_any' => [
                     0 => [
                         'field' => 'encounter_id',

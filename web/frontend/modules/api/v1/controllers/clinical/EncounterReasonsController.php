@@ -83,7 +83,7 @@ class EncounterReasonsController extends BaseController
     }
 
     /**
-     * POST subir archivo (imagen o audio).
+     * POST subir archivo (adjuntar imágenes de estudios; el audio ya no se acepta).
      */
     public function actionSubir()
     {

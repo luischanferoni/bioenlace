@@ -8,6 +8,7 @@ use yii\web\UploadedFile;
 use common\components\Domain\Clinical\Encounter\Application\Service\AppointmentReasonMessageService;
 use common\components\Domain\Clinical\Encounter\Application\Service\AppointmentReasonWindowService;
 use common\components\Domain\Clinical\Encounter\Application\Service\AppointmentReasonChatGuideCatalogService;
+use common\components\Domain\Clinical\Encounter\Application\Service\AppointmentReasonQuestionnaireService;
 use common\components\Domain\Person\Representation\Domain\Model\RepresentationPermission;
 use common\components\Domain\Person\Representation\Application\Service\PersonRepresentationSubjectService;
 use common\models\Person\PersonRelatedAuditLog;
@@ -106,17 +107,6 @@ class EncounterReasonsController extends BaseController
         $ext = $file->getExtension() ?: pathinfo($file->name, PATHINFO_EXTENSION);
         $userId = (int) Yii::$app->user->id;
         $userName = Yii::$app->user->identity->username ?? 'Paciente';
-        $transcript = trim((string) Yii::$app->request->post('transcript', ''));
-        $sttMeta = Yii::$app->request->post('stt_meta');
-        if (is_string($sttMeta) && $sttMeta !== '') {
-            $sttMeta = json_decode($sttMeta, true);
-            if (!is_array($sttMeta)) {
-                return $this->fail('reason_stt_metadata_invalid');
-            }
-        }
-        if (!is_array($sttMeta)) {
-            $sttMeta = [];
-        }
 
         $result = (new AppointmentReasonMessageService())->sendMedia(
             $encounterId,
@@ -124,12 +114,53 @@ class EncounterReasonsController extends BaseController
             (string) $file->tempName,
             (string) $ext,
             $userId,
-            $userName,
-            $transcript,
-            $sttMeta
+            $userName
         );
 
         return $this->finalizeMessageResult($result, $encounter, (string) $messageType);
+    }
+
+    /**
+     * GET /api/v1/encounter-reasons/cuestionario?encounter_id= — cuestionario pre-turno.
+     */
+    public function actionCuestionario()
+    {
+        $encounterId = $this->resolveEncounterIdFromInput(Yii::$app->request->get());
+        if ($encounterId === null) {
+            return $this->fail('encounter_id_required');
+        }
+
+        $encounter = $this->assertEncounterAccess($encounterId, RepresentationPermission::CLINICAL_MOTIVOS);
+
+        return $this->ok((new AppointmentReasonQuestionnaireService())->state($encounter));
+    }
+
+    /**
+     * POST /api/v1/encounter-reasons/responder-cuestionario — guarda una respuesta o el cierre libre.
+     */
+    public function actionResponderCuestionario()
+    {
+        $body = Yii::$app->request->getBodyParams();
+        $encounterId = $this->resolveEncounterIdFromInput($body);
+        if ($encounterId === null) {
+            return $this->fail('encounter_id_required');
+        }
+
+        $encounter = $this->assertEncounterAccess($encounterId, RepresentationPermission::CLINICAL_MOTIVOS);
+
+        $state = (new AppointmentReasonQuestionnaireService())->answer(
+            $encounter,
+            $body,
+            (int) Yii::$app->user->id
+        );
+
+        (new PersonRepresentationSubjectService())->auditDelegatedAction(
+            PersonRelatedAuditLog::ACTION_MOTIVOS_SENT,
+            (int) $encounter->subject_persona_id,
+            ['encounter_id' => (int) $encounter->id, 'question_id' => (string) ($body['question_id'] ?? '')]
+        );
+
+        return $this->ok($state, ['message' => 'Respuesta guardada']);
     }
 
     /**

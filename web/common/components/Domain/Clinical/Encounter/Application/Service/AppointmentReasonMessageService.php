@@ -4,8 +4,6 @@ namespace common\components\Domain\Clinical\Encounter\Application\Service;
 
 use common\components\Domain\Clinical\Encounter\Application\Service\SecureMediaService;
 use common\components\Platform\Core\Http\Contract\ApiException;
-use common\components\Platform\Ai\SpeechToText\DeviceSttQualityAssessor;
-use common\components\Platform\Ai\SpeechToText\SttConfigService;
 use common\models\Clinical\EncounterReasonMessage;
 use Yii;
 
@@ -47,6 +45,9 @@ final class AppointmentReasonMessageService
     /**
      * Guarda el archivo en disco y persiste el mensaje media.
      *
+     * El audio no se transcribe: el motivo se deduce del triage, del asistente y del cuestionario
+     * pre-turno.
+     *
      * @return array<string, mixed>
      * @throws ApiException
      */
@@ -56,9 +57,7 @@ final class AppointmentReasonMessageService
         string $sourceTempPath,
         string $extension,
         int $userId,
-        string $userName,
-        string $transcript = '',
-        array $sttMeta = []
+        string $userName
     ): array {
         if (!in_array($messageType, self::UPLOAD_MESSAGE_TYPES, true)) {
             throw new ApiException('reason_media_type_invalid');
@@ -100,38 +99,6 @@ final class AppointmentReasonMessageService
         $msg->user_name = $userName !== '' ? $userName : 'Paciente';
         $msg->texto = $relativePath;
         $msg->message_type = $messageType;
-        if ($messageType === EncounterReasonMessage::TYPE_AUDIO && trim($transcript) !== '') {
-            $transcript = trim($transcript);
-            $sttMeta = array_intersect_key($sttMeta, array_flip([
-                'provenance',
-                'confidence',
-                'duration_ms',
-                'engine',
-                'locale',
-                'final_result',
-                'on_device',
-                'error',
-                'client_edit_ratio',
-            ]));
-            $deviceEnabled = SttConfigService::isDeviceEnabled();
-            $serverEnabled = SttConfigService::isServerEnabled();
-            $quality = $deviceEnabled
-                ? DeviceSttQualityAssessor::assess($transcript, $sttMeta, 'motivos_consulta')
-                : ['ok' => false, 'needs_server' => true, 'reasons' => ['dispositivo_no_habilitado']];
-            $sttMeta['device_quality'] = $quality;
-            $sttMeta['device_transcript_accepted'] = ($sttMeta['provenance'] ?? null) === 'device'
-                && DeviceSttQualityAssessor::isDeviceTranscriptAccepted(
-                    $transcript,
-                    $quality,
-                    $deviceEnabled,
-                    $serverEnabled
-                );
-            $msg->transcript = $transcript;
-            $msg->stt_meta_json = json_encode(
-                $sttMeta,
-                JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR
-            );
-        }
 
         if (!$msg->save()) {
             @unlink($fullPath);
@@ -153,7 +120,6 @@ final class AppointmentReasonMessageService
             'user_name' => $msg->user_name,
             'message_type' => $msg->message_type,
             'created_at' => $msg->created_at,
-            'transcript' => $msg->transcript,
         ];
     }
 

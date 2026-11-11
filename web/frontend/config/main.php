@@ -428,6 +428,11 @@ return [
                 'OPTIONS api/<version:\w+>/encounter-reasons/enviar' => '<version>/encounter-reasons/enviar',
                 'POST api/<version:\w+>/encounter-reasons/subir' => '<version>/encounter-reasons/subir',
                 'OPTIONS api/<version:\w+>/encounter-reasons/subir' => '<version>/encounter-reasons/subir',
+                // Cuestionario pre-turno de motivos (bot con opciones)
+                'GET api/<version:\w+>/encounter-reasons/cuestionario' => '<version>/encounter-reasons/cuestionario',
+                'OPTIONS api/<version:\w+>/encounter-reasons/cuestionario' => '<version>/encounter-reasons/cuestionario',
+                'POST api/<version:\w+>/encounter-reasons/responder-cuestionario' => '<version>/encounter-reasons/responder-cuestionario',
+                'OPTIONS api/<version:\w+>/encounter-reasons/responder-cuestionario' => '<version>/encounter-reasons/responder-cuestionario',
 
                 // Care packs (cohorte): asistencia pre-consulta
                 'GET api/<version:\w+>/care-packs/assistance' => '<version>/care-packs/assistance',

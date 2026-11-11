@@ -1,8 +1,11 @@
 <?php
 
 /**
- * Procesa en un solo lote todos los mensajes de motivos (texto, audio, imagen)
- * y persiste resumen como Condition rol CC ({@see RecordEncounterReason}).
+ * Procesa en un solo lote los motivos del encounter —triage de reserva, mensajes al asistente,
+ * respuestas del cuestionario pre-turno y textos/imágenes del chat— y persiste el resumen como
+ * Condition rol CC ({@see RecordEncounterReason}).
+ *
+ * Sin STT: el audio no se transcribe.
  */
 
 namespace common\components\Domain\Clinical\Encounter\Application\Service;
@@ -11,8 +14,6 @@ use common\components\Domain\Clinical\Encounter\Application\Service\PatientAiCon
 use common\components\Platform\Ai\Prompt\PromptRegistry;
 use common\components\Platform\Ai\Prompt\YamlPrompt;
 use common\components\Platform\Ai\IAManager;
-use common\components\Platform\Ai\SpeechToText\SpeechToTextManager;
-use common\components\Platform\Ai\SpeechToText\SttConfigService;
 use common\components\Domain\Clinical\Encounter\Application\Service\SecureMediaService;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterReasonMessage;
@@ -49,11 +50,19 @@ final class AppointmentReasonBatchService
             ->orderBy(['created_at' => SORT_ASC])
             ->all();
 
-        if ($messages === []) {
-            return ['ok' => false, 'message' => 'Sin mensajes de motivos'];
+        $initialContext = (new AppointmentReasonInitialContextService())->build($encounter);
+        $questionnaire = (new AppointmentReasonQuestionnaireService())->narrativeForEncounter($encounter);
+
+        if ($messages === [] && $initialContext['narrative'] === '' && $questionnaire['narrative'] === '') {
+            return ['ok' => false, 'message' => 'Sin contenido de motivos'];
         }
 
-        $input = self::buildMotivosInput($messages, $encounterId);
+        $input = self::buildMotivosInput(
+            $messages,
+            $encounterId,
+            (string) $initialContext['narrative'],
+            (string) $questionnaire['narrative']
+        );
         if ($input['transcript'] === '' && $input['imagenes'] === []) {
             return ['ok' => false, 'message' => 'No hay contenido utilizable'];
         }
@@ -83,7 +92,7 @@ final class AppointmentReasonBatchService
     }
 
     /**
-     * Resumen + sugerencias si la ventana del paciente ya cerró y hay mensajes sin procesar.
+     * Resumen + sugerencias si la ventana del paciente ya cerró y hay motivos sin procesar.
      */
     public static function ensureProcessedForMedico(Encounter $encounter): void
     {
@@ -91,10 +100,12 @@ final class AppointmentReasonBatchService
             return;
         }
 
-        $hasMessages = EncounterReasonMessage::find()
+        $hasSources = EncounterReasonMessage::find()
             ->where(['encounter_id' => (int) $encounter->id])
-            ->exists();
-        if (!$hasMessages) {
+            ->exists()
+            || (new AppointmentReasonQuestionnaireService())->hasAnswers((int) $encounter->id)
+            || (new AppointmentReasonInitialContextService())->triageFields($encounter) !== [];
+        if (!$hasSources) {
             return;
         }
 
@@ -139,44 +150,34 @@ final class AppointmentReasonBatchService
      *   imagenes: list<array{ref: string, url: string}>
      * }
      */
-    private static function buildMotivosInput(array $messages, int $encounterId): array
-    {
-        $webRoot = Yii::getAlias('@frontend/web');
-        $lines = [];
+    private static function buildMotivosInput(
+        array $messages,
+        int $encounterId,
+        string $initialNarrative = '',
+        string $questionnaireNarrative = ''
+    ): array {
         $textos = [];
         $imagenes = [];
         $imgIndex = 0;
-        /** @var list<string> $audioPaths */
-        $audioPaths = [];
-        $audioPlaceholderIndex = null;
+        $messageLines = [];
 
         foreach ($messages as $msg) {
             if ($msg->message_type === EncounterReasonMessage::TYPE_TEXTO) {
                 $t = trim((string) $msg->texto);
                 if ($t !== '') {
                     $textos[] = $t;
-                    $lines[] = $t;
+                    $messageLines[] = $t;
                 }
                 continue;
             }
 
             if ($msg->message_type === EncounterReasonMessage::TYPE_AUDIO) {
-                $deviceTranscript = trim((string) $msg->transcript);
-                if ($deviceTranscript !== '' && self::deviceTranscriptAccepted($msg)) {
-                    $textos[] = $deviceTranscript;
-                    $lines[] = '(audio transcripto) ' . $deviceTranscript;
-                    continue;
-                }
-
-                $path = self::resolveLocalPath((string) $msg->texto, $webRoot);
-                if ($path !== null && is_file($path) && SttConfigService::isServerEnabled()) {
-                    if ($audioPlaceholderIndex === null) {
-                        $audioPlaceholderIndex = count($lines);
-                        $lines[] = '';
-                    }
-                    $audioPaths[] = $path;
+                $transcript = trim((string) $msg->transcript);
+                if ($transcript !== '') {
+                    $textos[] = $transcript;
+                    $messageLines[] = '(audio transcripto) ' . $transcript;
                 } else {
-                    $lines[] = '(audio sin transcripción)';
+                    $messageLines[] = '(audio sin transcripción)';
                 }
                 continue;
             }
@@ -186,36 +187,28 @@ final class AppointmentReasonBatchService
                 $ref = 'imagen' . $imgIndex;
                 $url = self::resolveImagenUrl((string) $msg->texto, $encounterId);
                 $imagenes[] = ['ref' => $ref, 'url' => $url];
-                $lines[] = "[{$ref}]";
+                $messageLines[] = "[{$ref}]";
             }
         }
 
-        if ($audioPaths !== [] && $audioPlaceholderIndex !== null) {
-            $stt = SpeechToTextManager::transcribirLote($audioPaths, 'economico');
-            $texto = trim((string) ($stt['texto'] ?? ''));
-            if ($texto !== '') {
-                $textos[] = $texto;
-                $lines[$audioPlaceholderIndex] = '(audio transcrito) ' . $texto;
-            } else {
-                $lines[$audioPlaceholderIndex] = '(audio sin transcripción)';
-            }
+        $sections = [];
+        if (trim($initialNarrative) !== '') {
+            $sections[] = trim($initialNarrative);
+            $textos[] = trim($initialNarrative);
+        }
+        if (trim($questionnaireNarrative) !== '') {
+            $sections[] = "Respuestas del cuestionario pre-turno:\n" . trim($questionnaireNarrative);
+            $textos[] = trim($questionnaireNarrative);
+        }
+        if ($messageLines !== []) {
+            $sections[] = "Mensajes del paciente:\n" . implode("\n", $messageLines);
         }
 
         return [
-            'transcript' => implode("\n", array_values(array_filter(
-                $lines,
-                static fn ($line): bool => $line !== null && $line !== ''
-            ))),
+            'transcript' => implode("\n\n", $sections),
             'textos' => $textos,
             'imagenes' => $imagenes,
         ];
-    }
-
-    private static function deviceTranscriptAccepted(EncounterReasonMessage $message): bool
-    {
-        $metadata = json_decode((string) $message->stt_meta_json, true);
-
-        return is_array($metadata) && ($metadata['device_transcript_accepted'] ?? false) === true;
     }
 
     /**
@@ -331,28 +324,6 @@ final class AppointmentReasonBatchService
             $encounterId,
             $filename
         );
-    }
-
-    private static function resolveLocalPath(string $stored, string $webRoot): ?string
-    {
-        $stored = trim($stored);
-        if ($stored === '') {
-            return null;
-        }
-        if (strpos($stored, 'http') === 0) {
-            $path = parse_url($stored, PHP_URL_PATH);
-            if (!is_string($path) || $path === '') {
-                return null;
-            }
-            $stored = ltrim($path, '/');
-            if (preg_match('#/media/encounter-reasons/\d+/(.+)$#', $stored, $m) === 1) {
-                $stored = 'uploads/motivos_consulta/' . $m[1];
-            }
-        }
-
-        $full = $webRoot . '/' . ltrim($stored, '/');
-
-        return is_file($full) ? $full : null;
     }
 
     /**

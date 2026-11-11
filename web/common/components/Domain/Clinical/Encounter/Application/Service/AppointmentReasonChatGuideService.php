@@ -7,6 +7,7 @@ use common\components\Domain\Person\Representation\Domain\Model\RepresentationPe
 use common\components\Domain\Person\Representation\Application\Service\PersonRepresentationSubjectService;
 use common\models\Clinical\Encounter;
 use common\models\Scheduling\Turno;
+use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
@@ -54,13 +55,20 @@ final class AppointmentReasonChatGuideService
     }
 
     /**
+     * Las respuestas se persisten en el cuestionario pre-turno; esta ruta es su alias de escritura.
+     *
      * @param array<string, mixed> $body
      * @return array<string, mixed>
      */
     public function submitIntake(array $body): array
     {
-        throw new BadRequestHttpException(
-            'Las respuestas se envían por el chat de motivos (encounter-reasons/enviar).'
+        $encounter = $this->resolveEncounter($body);
+        $this->assertPatientAccess($encounter, $body);
+
+        return (new AppointmentReasonQuestionnaireService())->answer(
+            $encounter,
+            $body,
+            (int) Yii::$app->user->id
         );
     }
 

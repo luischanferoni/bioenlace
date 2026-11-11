@@ -11,7 +11,7 @@ El paciente opera desde la **app móvil**; el **personal de salud** consume moti
 | Fase | Superficie | Cuándo |
 |------|------------|--------|
 | `motivos_intake` | Formulario UI JSON (preguntas declarativas) | Antes del chat de motivos, misma ventana |
-| `motivos_consulta` | Chat libre (`motivos-consulta/*`) | Antes del turno, dentro de la ventana |
+| `motivos_consulta` | Cuestionario con opciones (`encounter-reasons/cuestionario`); chat libre como compatibilidad | Antes del turno, dentro de la ventana |
 | `asistencia_pre_consulta` | Flow / UI JSON care pack | Antes del turno, si hay pack de cohorte |
 | `post_consulta` | Touchpoints del pack followup | Tras encounter finalizado |
 
@@ -35,19 +35,21 @@ Offsets en `encounter_phase_windows.yaml` (`param:encounter_journey_preparar_min
 
 **Overrides por efector/servicio** (`encounter_phase_window_overrides.yaml`): reglas con `match.id_efector` y/o `match.id_servicio`; gana la regla más específica (más claves en `match`).
 
-## Guía del chat de motivos
+## Cuestionario y guía de motivos
 
-Catálogo `AppointmentReasonChatGuideCatalog` (`enabled: true/false`). API paciente `GET /api/v1/encounter-journey/motivos-intake` entrega la guía declarativa del chat (`chat_guide`). No persiste respuestas en el encounter: el motivo clínico canónico sale del chat → Condition rol CC.
+Catálogo `AppointmentReasonQuestionnaireCatalog`: preguntas con opciones, una opción «Otra» acotada por pregunta y un cierre libre de 320 caracteres. La selección depende del triage de la reserva (`only_when`, `skip_when_triage_fields`): lo que el paciente ya respondió al reservar no se vuelve a preguntar. Las respuestas se persisten en `interaccion_motivos_cuestionario`.
 
-**Sin IA en la guía:** textos declarativos. Ver [catalogo-usos-ia.md](catalogo-usos-ia.md) §2.
+La guía en texto sigue disponible en `GET /api/v1/encounter-journey/motivos-intake` (`chat_guide`, catálogo `AppointmentReasonChatGuideCatalog`); su `POST` escribe en el cuestionario.
+
+**Sin STT ni IA por respuesta:** el motivo clínico canónico es un único resumen al cierre de ventana, que junta el triage de reserva, los mensajes al asistente anteriores al turno, las respuestas del cuestionario y los textos del chat → Condition rol CC.
 
 ### Vista staff (historia clínica)
 
-El equipo ve el **resumen de motivos** (Condition CC) y sugerencias clínicas (`ia_clinical_suggestions`) en el bloque de motivos del turno. No hay sección de “preguntas previas” persistidas.
+El equipo ve el **resumen de motivos** (Condition CC) y sugerencias clínicas (`ia_clinical_suggestions`) en el bloque de motivos del turno. Las respuestas del cuestionario todavía no se muestran.
 
 **API:** `GET /api/v1/personas/{id}/historia-clinica?turno_id=` (o `encounter_id=`) incluye `patient_encounter_reasons` con `resumen`, `sugerencias_clinicas`, `imagenes_adjuntas`, etc.
 
-**Orden en timeline (staff):** resumen motivos (chat → Condition CC) → asistencia pre-consulta cohorte (`care_pack_cohorte`) → signos vitales y captura.
+**Orden en timeline (staff):** resumen motivos (cuestionario y chat → Condition CC) → asistencia pre-consulta cohorte (`care_pack_cohorte`) → signos vitales y captura.
 
 **Ventana médico:** la historia clínica sigue la regla de `AppointmentReasonWindowService::isHistoriaClinicaVisibleForEncounter` (p. ej. 1 min antes del turno en ambulatorio).
 
@@ -64,7 +66,9 @@ Reglas en `encounter_phase_eligibility.yaml`; evaluación en `EncounterJourneyEl
 ### Paciente (app móvil)
 
 - `GET|POST /api/v1/encounter-journey/estado?turno_id=` — estado completo + flags legacy.
-- `GET /api/v1/encounter-journey/motivos-intake?turno_id=` — guía declarativa del chat de motivos (`chat_guide`).
+- `GET /api/v1/encounter-journey/motivos-intake?turno_id=` — guía declarativa del chat de motivos (`chat_guide`); el `POST` guarda una respuesta del cuestionario.
+- `GET /api/v1/encounter-reasons/cuestionario?encounter_id=` — preguntas pendientes, respuestas y cierre libre.
+- `POST /api/v1/encounter-reasons/responder-cuestionario` — `question_id` + `option_id` (o `otra` con `texto`) y `cierre_libre` con `texto`.
 - El listado `turnos/listar-como-paciente` incluye `journey` en cada fila.
 
 ### Staff (historia clínica)

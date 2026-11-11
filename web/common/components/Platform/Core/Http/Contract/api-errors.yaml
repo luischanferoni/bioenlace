@@ -210,6 +210,37 @@ errors:
     retryable: false
     default_detail: "No se pudo guardar el mensaje."
     message: "{detail}"
+  reason_question_invalid:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "La pregunta no existe en el cuestionario de motivos."
+  reason_question_option_invalid:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "Elegí una de las opciones disponibles."
+  reason_question_not_available:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "Esa pregunta ya no forma parte del cuestionario de este turno."
+  reason_answer_text_required:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "Escribí brevemente tu respuesta."
+  reason_answer_too_long:
+    http_status: 422
+    intent: error
+    retryable: false
+    message: "La respuesta supera el máximo de {max_length} caracteres."
+  reason_answer_save_failed:
+    http_status: 422
+    intent: error
+    retryable: false
+    default_detail: "No se pudo guardar la respuesta."
+    message: "{detail}"
   reason_window_closed:
     http_status: 403
     intent: info

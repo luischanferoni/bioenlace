@@ -67,6 +67,8 @@ final class EncounterJourneyContextService
             'asistencia_completada' => $asistenciaCompletada,
             'motivos_resumen_present' => $encounter !== null
                 && (new RecordEncounterReason())->hasReasons($encounter),
+            'motivos_cuestionario_completado' => $encounterId > 0
+                && (new AppointmentReasonQuestionnaireService())->isCompleted($encounterId),
             'motivos_guia_habilitada' => $motivosGuiaHabilitada,
             'turno_starts_at' => $encounter !== null ? AppointmentReasonWindowService::turnoStartsAt($encounter) : null,
         ];

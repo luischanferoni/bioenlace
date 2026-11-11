@@ -112,7 +112,8 @@ final class OrchestrateEncounterJourney
     private function isCompleted(string $phaseId, array $context): bool
     {
         if ($phaseId === EncounterPhaseWindowsCatalogService::PHASE_MOTIVOS) {
-            return !empty($context['motivos_resumen_present']);
+            return !empty($context['motivos_resumen_present'])
+                || !empty($context['motivos_cuestionario_completado']);
         }
         if ($phaseId === EncounterPhaseWindowsCatalogService::PHASE_ASISTENCIA) {
             return !empty($context['asistencia_completada']);

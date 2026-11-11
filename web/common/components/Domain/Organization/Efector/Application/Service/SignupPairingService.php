@@ -8,13 +8,13 @@ use yii\db\Connection;
 use yii\db\Query;
 
 /**
- * VÃ­nculo de un solo uso entre el navegador que inicia el alta web y el telÃ©fono que
+ * Vínculo de un solo uso entre el navegador que inicia el alta web y el teléfono que
  * verifica la identidad.
  *
- * El token (para el QR) y el cÃ³digo (que se muestra en la computadora) se devuelven
+ * El token (para el QR) y el código (que se muestra en la computadora) se devuelven
  * una sola vez y se persisten hasheados. Las transiciones son `UPDATE` condicionados
- * por el estado anterior: si la fila no cambia, la operaciÃ³n falla. No conoce HTTP,
- * sesiÃ³n ni request: el controlador aporta los identificadores de sesiÃ³n.
+ * por el estado anterior: si la fila no cambia, la operación falla. No conoce HTTP,
+ * sesión ni request: el controlador aporta los identificadores de sesión.
  */
 final class SignupPairingService
 {
@@ -28,7 +28,7 @@ final class SignupPairingService
     private const DEFAULT_MAX_TTL_SECONDS = 900;
     private const DEFAULT_CODE_MAX_ATTEMPTS = 5;
 
-    /** Estado sintÃ©tico cuando el vÃ­nculo no existe o no pertenece a la sesiÃ³n. */
+    /** Estado sintético cuando el vínculo no existe o no pertenece a la sesión. */
     public const STATE_NOT_FOUND = 'NOT_FOUND';
 
     private Connection $db;
@@ -46,8 +46,8 @@ final class SignupPairingService
     }
 
     /**
-     * Crea el vÃ­nculo. Devuelve el token para el QR y el cÃ³digo para la computadora;
-     * el cÃ³digo queda hasheado en base y sÃ³lo se muestra cuando el telÃ©fono lo reclama.
+     * Crea el vínculo. Devuelve el token para el QR y el código para la computadora;
+     * el código queda hasheado en base y sólo se muestra cuando el teléfono lo reclama.
      *
      * @param array{id_efector?: int} $context
      * @return array{pairing_id: string, token: string, code: string, expires_at: int}
@@ -95,7 +95,7 @@ final class SignupPairingService
     }
 
     /**
-     * Reclama el vÃ­nculo desde el telÃ©fono. El token se consume: un segundo telÃ©fono
+     * Reclama el vínculo desde el teléfono. El token se consume: un segundo teléfono
      * que abre la misma URL recibe `already_used`.
      *
      * @return array{pairing_id: string, id_efector: int|null, expires_at: int}
@@ -152,9 +152,9 @@ final class SignupPairingService
     }
 
     /**
-     * Valida el cÃ³digo que el usuario transcribe en el telÃ©fono.
+     * Valida el código que el usuario transcribe en el teléfono.
      *
-     * @throws SignupPairingException con `remainingAttempts` cuando el cÃ³digo no coincide
+     * @throws SignupPairingException con `remainingAttempts` cuando el código no coincide
      */
     public function authorizeDevice(string $pairingId, string $code, string $deviceSessionId): void
     {
@@ -195,7 +195,7 @@ final class SignupPairingService
     }
 
     /**
-     * Registra la sesiÃ³n hosted de Didit creada para este vÃ­nculo.
+     * Registra la sesión hosted de Didit creada para este vínculo.
      */
     public function markVerificationStarted(
         string $pairingId,
@@ -204,7 +204,7 @@ final class SignupPairingService
     ): void {
         $diditSessionId = trim($diditSessionId);
         if ($diditSessionId === '') {
-            throw new \InvalidArgumentException('El identificador de la sesiÃ³n Didit es requerido.');
+            throw new \InvalidArgumentException('El identificador de la sesión Didit es requerido.');
         }
 
         $this->requireDeviceRow($pairingId, $deviceSessionId, SignupPairing::STATE_AUTHORIZED);
@@ -218,14 +218,14 @@ final class SignupPairingService
     }
 
     /**
-     * Deja el vÃ­nculo verificado. El `verification_id` es siempre el que confirmÃ³ el
+     * Deja el vínculo verificado. El `verification_id` es siempre el que confirmó el
      * servidor contra Didit, nunca uno enviado por un cliente.
      */
     public function markVerified(string $pairingId, string $deviceSessionId, string $verificationId): void
     {
         $verificationId = trim($verificationId);
         if ($verificationId === '') {
-            throw new \InvalidArgumentException('El identificador de la verificaciÃ³n es requerido.');
+            throw new \InvalidArgumentException('El identificador de la verificación es requerido.');
         }
 
         $this->requireDeviceRow($pairingId, $deviceSessionId, SignupPairing::STATE_VERIFICATION_STARTED);
@@ -239,7 +239,66 @@ final class SignupPairingService
     }
 
     /**
-     * Cierra el vÃ­nculo con la cuenta creada o reutilizada.
+     * Marca el vínculo como fallido (verificación rechazada por Didit).
+     */
+    public function markFailed(string $pairingId, string $deviceSessionId): void
+    {
+        $this->requireDeviceRow($pairingId, $deviceSessionId, SignupPairing::STATE_VERIFICATION_STARTED);
+        $this->transition(
+            $pairingId,
+            SignupPairing::STATE_VERIFICATION_STARTED,
+            SignupPairing::STATE_FAILED,
+            [],
+            $deviceSessionId
+        );
+    }
+
+    /**
+     * Estado del vínculo para el teléfono que lo reclamó.
+     *
+     * Un pedido desde otra sesión devuelve `NOT_FOUND`: no se distingue de un vínculo
+     * inexistente para no filtrar información.
+     *
+     * @return array{state: string, id_efector: int|null, didit_session_id: string|null, expires_at: int|null}
+     */
+    public function deviceStatus(string $pairingId, string $deviceSessionId): array
+    {
+        $this->assertSessionId($deviceSessionId);
+
+        $notFound = [
+            'state' => self::STATE_NOT_FOUND,
+            'id_efector' => null,
+            'didit_session_id' => null,
+            'expires_at' => null,
+        ];
+
+        $row = (new Query())
+            ->from(SignupPairing::tableName())
+            ->where(['id' => trim($pairingId)])
+            ->one($this->db);
+
+        if (!is_array($row)) {
+            return $notFound;
+        }
+
+        $row = $this->refreshExpiry($row);
+
+        $deviceHash = $row['device_session_hash'];
+        if (!is_string($deviceHash) || $deviceHash === ''
+            || !hash_equals($deviceHash, $this->hashValue($deviceSessionId))) {
+            return $notFound;
+        }
+
+        return [
+            'state' => (string) $row['state'],
+            'id_efector' => $row['id_efector'] !== null ? (int) $row['id_efector'] : null,
+            'didit_session_id' => $row['didit_session_id'] !== null ? (string) $row['didit_session_id'] : null,
+            'expires_at' => (int) $row['expires_at'],
+        ];
+    }
+
+    /**
+     * Cierra el vínculo con la cuenta creada o reutilizada.
      */
     public function markAccountCreated(string $pairingId, int $idPersona, int $idUser): void
     {
@@ -260,7 +319,7 @@ final class SignupPairingService
     }
 
     /**
-     * Estado visible para la computadora que iniciÃ³ el vÃ­nculo.
+     * Estado visible para la computadora que inició el vínculo.
      *
      * @return array{state: string, expires_at?: int}
      */
@@ -410,7 +469,7 @@ final class SignupPairingService
     }
 
     /**
-     * Marca `EXPIRED` cuando el vÃ­nculo venciÃ³ en su etapa actual.
+     * Marca `EXPIRED` cuando el vínculo venció en su etapa actual.
      *
      * @param array<string, mixed> $row
      * @return array<string, mixed>
@@ -501,7 +560,7 @@ final class SignupPairingService
     private function assertSessionId(string $sessionId): void
     {
         if (trim($sessionId) === '') {
-            throw new \InvalidArgumentException('La sesiÃ³n es requerida para operar el vÃ­nculo del alta.');
+            throw new \InvalidArgumentException('La sesión es requerida para operar el vínculo del alta.');
         }
     }
 

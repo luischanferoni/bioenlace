@@ -335,6 +335,57 @@ class SignupPairingServiceTest extends Unit
         $this->assertStringContainsString("DEFAULT '" . SignupPairing::STATE_PENDING . "'", $enum);
     }
 
+    public function testDeviceStatusDevuelveElEstadoAlTelefonoQueReclamo(): void
+    {
+        $started = $this->service->start(self::WEB_SESSION, ['id_efector' => 9]);
+        $pairingId = $this->service->claim($started['token'], self::DEVICE_SESSION)['pairing_id'];
+
+        $status = $this->service->deviceStatus($pairingId, self::DEVICE_SESSION);
+
+        $this->assertSame(SignupPairing::STATE_CLAIMED, $status['state']);
+        $this->assertSame(9, $status['id_efector']);
+        $this->assertNull($status['didit_session_id']);
+    }
+
+    public function testDeviceStatusDesdeOtraSesionNoEncuentraElVinculo(): void
+    {
+        $started = $this->service->start(self::WEB_SESSION);
+        $pairingId = $this->service->claim($started['token'], self::DEVICE_SESSION)['pairing_id'];
+
+        $this->assertSame(
+            SignupPairingService::STATE_NOT_FOUND,
+            $this->service->deviceStatus($pairingId, 'otro-telefono')['state']
+        );
+    }
+
+    public function testDeviceStatusExponeLaSesionDeDiditCreada(): void
+    {
+        $pairingId = $this->authorizedPairing();
+        $this->service->markVerificationStarted($pairingId, self::DEVICE_SESSION, 'didit-session-42');
+
+        $status = $this->service->deviceStatus($pairingId, self::DEVICE_SESSION);
+
+        $this->assertSame(SignupPairing::STATE_VERIFICATION_STARTED, $status['state']);
+        $this->assertSame('didit-session-42', $status['didit_session_id']);
+    }
+
+    public function testMarkFailedSoloDesdeVerificacionIniciada(): void
+    {
+        $pairingId = $this->authorizedPairing();
+
+        try {
+            $this->service->markFailed($pairingId, self::DEVICE_SESSION);
+            $this->fail('No debería fallar un vínculo que todavía no verificó.');
+        } catch (SignupPairingException $e) {
+            $this->assertSame(SignupPairingException::INVALID_STATE, $e->reason);
+        }
+
+        $this->service->markVerificationStarted($pairingId, self::DEVICE_SESSION, 'didit-session-9');
+        $this->service->markFailed($pairingId, self::DEVICE_SESSION);
+
+        $this->assertSame(SignupPairing::STATE_FAILED, $this->row($pairingId)['state']);
+    }
+
     private function claimedPairing(): string
     {
         $started = $this->service->start(self::WEB_SESSION);

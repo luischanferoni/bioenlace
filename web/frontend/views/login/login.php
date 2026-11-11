@@ -70,6 +70,9 @@ $showPasswordForm = isset($model) && ($passwordLoginEnabled ?? true);
                                 <div class="registration-block">
                                     <?= Html::a('¿No podés ingresar? Recuperar acceso', ['/auth/recovery-request']) ?>
                                 </div>
+                                <div class="registration-block mt-2">
+                                    <?= Html::a('Crear cuenta', ['/alta']) ?>
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -4,9 +4,9 @@ namespace frontend\modules\api\v1\controllers\person;
 
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
+use common\components\Domain\Person\Identity\Application\UseCase\CreateHostedIdentityVerification;
 use common\components\Domain\Person\Identity\Application\UseCase\RegisterPerson;
 use common\components\Domain\Person\Identity\Application\UseCase\RegisterPatientByStaff;
-use common\components\Domain\Person\FrontDesk\Infrastructure\External\Identity\Connector\DiditClient;
 
 /**
  * Controlador de registro de pacientes. Las cuentas profesionales se crean desde Personal de Salud.
@@ -232,23 +232,18 @@ class RegistroController extends BaseController
         $body = Yii::$app->request->getBodyParams();
         $callback = trim((string) ($body['callback'] ?? ''));
 
-        $didit = Yii::$container->has(DiditClient::class)
-            ? Yii::$container->get(DiditClient::class)
-            : new DiditClient();
-
-        $session = $didit->createVerificationSession([
-            'callback' => $callback,
-            'vendor_data' => 'staff-' . (int) Yii::$app->user->id,
-            'language' => 'es',
-        ]);
-
-        if (empty($session['success'])) {
-            return $this->error((string) ($session['message'] ?? 'No se pudo crear sesión Didit.'), null, 422);
+        try {
+            $session = (new CreateHostedIdentityVerification())->crear(
+                $callback,
+                'staff-' . (int) Yii::$app->user->id
+            );
+        } catch (\RuntimeException $e) {
+            return $this->error($e->getMessage(), null, 422);
         }
 
         return $this->success([
-            'session_id' => $session['session_id'] ?? '',
-            'url' => $session['url'] ?? '',
+            'session_id' => $session['session_id'],
+            'url' => $session['url'],
         ], 'Sesión Didit creada', 201);
     }
 

@@ -38,7 +38,7 @@ institucional/
 5. **Funcionalidades** — Catálogo por audiencia
 6. **Precios** — Teaser en el index; detalle + calculadora en [`precios.html`](precios.html) (qué incluye / no incluye por clase AMB·EMER·IMP)
 7. **Contacto** — Formulario e información
-8. **Alta** (`alta.html`) — Crear cuenta desde la app Personal de Salud (descarga + verificación de identidad) y contacto para ministerio
+8. **Alta** (`alta.html`) — Crear cuenta desde la web con el teléfono o desde la app Personal de Salud, y contacto para ministerio
 
 ## Demo sandbox (`js/demo-access.js`)
 
@@ -46,9 +46,9 @@ CTA **Probar demo como médico** (sección personal de salud) → modal con capt
 
 ## Alta de cuenta (`alta.html`)
 
-El alta web self-service fue retirada: `alta.html` ahora redirige a descargar la app **Personal de Salud** (donde se verifica la identidad con documento + selfie y se crea la cuenta) y, para ministerios, al contacto. Documentación de producto: [alta-cuenta-licencia.md](../docs/producto/alta-cuenta-licencia.md).
+La página ofrece dos canales: **alta desde la web con el teléfono** (`https://app.bioenlace.io/alta`, QR + código de emparejamiento; la identidad se verifica en el teléfono con Didit) y **alta desde la app Personal de Salud**. Para ministerios se deriva al contacto. Documentación de producto: [alta-cuenta-licencia.md](../docs/producto/alta-cuenta-licencia.md).
 
-El CTA del calculador (`precios.html`) ya no pre-carga el plan en un formulario de alta; el alta se completa desde la app.
+El CTA del calculador (`precios.html`) ya no pre-carga el plan en un formulario de alta; el alta se completa desde la web o desde la app.
 
 ## Calculador (`js/pricing-core.js` + `js/pricing-calculator.js`)
 

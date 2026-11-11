@@ -102,6 +102,17 @@ return [
                 'user-management/auth/activate-account-receive/<token:[\w\-]+>' => 'auth/activate-account-receive',
                 'user-management/auth/confirm-email' => 'auth/confirm-email',
                 'user-management/auth/confirm-email-receive/<token:[\w\-]+>' => 'auth/confirm-email-receive',
+                // Alta de cuenta desde la web (QR + código con el teléfono).
+                'alta' => 'alta/index',
+                'POST alta/vinculo-iniciar' => 'alta/vinculo-iniciar',
+                'POST alta/vinculo-estado' => 'alta/vinculo-estado',
+                'POST alta/vinculo-cancelar' => 'alta/vinculo-cancelar',
+                // Página del teléfono: reclamo del QR, código, Didit y vuelta.
+                'GET alta/telefono/<id:[a-f0-9]{32}>/retorno' => 'alta/telefono-retorno',
+                'POST alta/telefono/<id:[a-f0-9]{32}>/codigo' => 'alta/telefono-codigo',
+                'POST alta/telefono/<id:[a-f0-9]{32}>/didit' => 'alta/telefono-didit',
+                'GET alta/telefono/<id:[a-f0-9]{32}>' => 'alta/telefono',
+                'alta/vinculo/<token:[a-f0-9]{32}>' => 'alta/vinculo',
                 'GET robots.txt' => 'site/robots-txt',
                 'turno/resolucion/<token:[\w\.\-\_=]+>' => 'turno-public/resolucion',
                 'site/inicio' => 'site/sesion-operativa',

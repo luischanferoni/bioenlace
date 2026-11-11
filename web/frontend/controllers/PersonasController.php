@@ -660,28 +660,21 @@ class PersonasController extends Controller
             $callback = Url::to(['personas/registrar-paciente'], true);
         }
 
-        $didit = Yii::$container->has(\common\components\Domain\Person\FrontDesk\Infrastructure\External\Identity\Connector\DiditClient::class)
-            ? Yii::$container->get(\common\components\Domain\Person\FrontDesk\Infrastructure\External\Identity\Connector\DiditClient::class)
-            : new \common\components\Domain\Person\FrontDesk\Infrastructure\External\Identity\Connector\DiditClient();
-
-        $session = $didit->createVerificationSession([
-            'callback' => $callback,
-            'vendor_data' => 'frontend-staff-' . (int) Yii::$app->user->id,
-            'language' => 'es',
-        ]);
-
-        if (empty($session['success'])) {
+        try {
+            $session = (new \common\components\Domain\Person\Identity\Application\UseCase\CreateHostedIdentityVerification())
+                ->crear($callback, 'frontend-staff-' . (int) Yii::$app->user->id);
+        } catch (\RuntimeException $e) {
             return [
                 'success' => false,
-                'message' => (string) ($session['message'] ?? 'No se pudo crear sesión Didit.'),
+                'message' => $e->getMessage(),
             ];
         }
 
         return [
             'success' => true,
             'data' => [
-                'session_id' => $session['session_id'] ?? '',
-                'url' => $session['url'] ?? '',
+                'session_id' => $session['session_id'],
+                'url' => $session['url'],
             ],
         ];
     }

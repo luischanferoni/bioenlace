@@ -2,7 +2,7 @@
 
 ## Modelo acordado (implementación en curso)
 
-La app **Personal de Salud** es el canal de creación de cuenta. La persona verifica su identidad con documento y selfie. Esa verificación acredita identidad, pero no otorga por sí sola habilitación profesional, asignación a un centro, licencia ni acceso clínico.
+La cuenta se crea por dos canales: la app **Personal de Salud** (identidad con documento y selfie) y la **web con el teléfono** (QR + código; la verificación ocurre en el teléfono). En ambos casos la verificación acredita identidad, pero no otorga por sí sola habilitación profesional, asignación a un centro, licencia ni acceso clínico.
 
 Hay tres recorridos:
 
@@ -21,6 +21,18 @@ No se solicita e-mail para crear identidad. El modelo objetivo reemplaza los có
 - El simulador no se considera un pago válido y queda bloqueado en producción. No usarlo para contratar o activar licencias.
 - El endpoint legado de alta comercial sigue presente y debe sustituirse o retirarse al implementar checkout real; no está habilitado como recorrido nuevo.
 - El login web y otros puntos legacy de alta/autenticación aún requieren el corte de la Fase 6; no se consideran parte del flujo nuevo.
+
+## Alta desde la web con el teléfono
+
+En `/alta` la computadora no pide cámara ni documentos. La persona elige el centro de salud, ve un código QR y la pantalla queda esperando.
+
+1. Escanea el QR con la cámara del teléfono; se abre una página temporal.
+2. La computadora muestra un **código de emparejamiento** y la persona lo escribe en el teléfono. Ese paso prueba que quien opera el teléfono ve la pantalla de la computadora: un QR fotografiado a distancia no alcanza para completar el alta.
+3. En el teléfono se ejecuta la verificación de identidad de Didit. Al aprobarse, la computadora crea la cuenta con el centro elegido y registra la solicitud de incorporación.
+
+La cuenta queda igual que en la app: perfil Paciente y solicitud pendiente, sin rol clínico hasta que un administrador del centro lo asigne. El alta no abre sesión en la web.
+
+Nada del alta se guarda en el navegador: lo transitorio vive en el vínculo (token y código hasheados, expiración corta) y lo persistente en el borrador del servidor.
 
 ## REFEPS y asignación
 
@@ -44,11 +56,16 @@ El proveedor es **Mercado Pago con Checkout Pro**: suscripción mensual sin plan
 
 ## Acceso y recuperación
 
-- Web: passkeys/WebAuthn como autenticación principal.
-- App y web: aprobación de un desafío QR desde la app solo para roles habilitados en ambos canales.
-- App: recuperación mediante nueva verificación de identidad.
-- Web-only: recuperación asistida con re-verificación, auditoría y revocación de credenciales/sesiones anteriores.
-- No mantener login de contraseña o códigos como fallback legacy. La migración preserva las relaciones y activos existentes y exige enrolamiento seguro.
+- **Web:** tres caminos, ninguno con costo por uso. El QR de login abre `/ingresar/<challenge>`, que muestra el navegador y la hora del pedido. Desde ahí se entra aprobando en la app (con la biometría local del teléfono), con la passkey del dispositivo o con recuperación asistida. Detalle: [ingreso-web-app-passkey-recuperacion.md](../decisions/ingreso-web-app-passkey-recuperacion.md).
+- **App:** biometría local para desbloquear la sesión guardada; la verificación de identidad se usa sólo al crear la cuenta o al recuperar el acceso en un dispositivo nuevo.
+- **Recuperación asistida:** aprobación humana, código de un solo uso, revocación de credenciales y sesiones, y enrolamiento de una passkey nueva.
+- No se mantiene login de contraseña ni códigos por correo. Las sesiones web son cortas: no hay "recordar este navegador" porque se comparten computadoras.
+
+## Aviso de pago
+
+Cuando se confirma el primer pago de un espacio de atención se envía un aviso al e-mail confirmado del titular: es el único canal que no depende de que haya instalado la app. El copy vive en un catálogo del dominio de facturación y el envío no puede revertir ni demorar el alta: se dispara después de confirmada la operación y un fallo sólo queda registrado.
+
+Por eso el alta paga exige un e-mail real, de la cuenta y confirmado antes de iniciar el checkout. La regla está implementada del lado del servidor y se habilita por entorno (`signupRequireConfirmedEmail`), para no bloquear ventas mientras el envío de e-mails no esté verificado.
 
 ## Ministerios
 
@@ -60,8 +77,18 @@ Desde el sitio institucional, CTA **Probar demo** pide captcha y un código de u
 
 Desde la app **Personal de Salud**, **Probar demo** lista los perfiles staff (`GET …/demo-perfiles`) y llama `POST /api/v1/licencia/demo-acceso-mobile` con el `role` elegido (médico AMB, médico odontología AMB, enfermería o administrativo EMER). Flag `demo_sandbox_habilitado` + knobs en `demo_sandbox` (params), incluido `require_captcha` (web) y `require_captcha_mobile` (app, off por defecto).
 
+## Pendientes del canal web
+
+- **Formulario de alta paga en la web** (consultorio y clínica/centro). Con él llegan el autoguardado del borrador por paso, la reanudación en el paso donde quedó y la pantalla de estado del alta (en proceso, habilitado, cancelado, vencido).
+- **Enrolamiento de passkey** ofrecido al terminar el primer ingreso (la pantalla de gestión ya existe).
+- **Aviso de pago:** registrar el envío por pago y encolar los reintentos. Hoy se dispara una vez al activar la licencia.
+- **Encender `signupRequireConfirmedEmail`** después de verificar el envío de e-mails del entorno; mientras esté apagado, el checkout no exige la confirmación.
+- **Universal Link / App Link** en lugar del esquema propio, para evitar el diálogo del navegador.
+- **Tests de integración con base:** aprobación desde la app, desafío de otra sesión, passkey revocada.
+
 ## Relación con el resto
 
 - Modelo de pool: [matriz-argentina-modulos-precios.md](../negocio/modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md)
 - Decisión: [onboarding-comercial-self-service.md](../decisions/onboarding-comercial-self-service.md)
+- Acceso web: [ingreso-web-app-passkey-recuperacion.md](../decisions/ingreso-web-app-passkey-recuperacion.md)
 - Admin: Licencias / Contratos + Solicitudes alta licencia

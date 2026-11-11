@@ -102,11 +102,14 @@ return [
                 'user-management/auth/activate-account-receive/<token:[\w\-]+>' => 'auth/activate-account-receive',
                 'user-management/auth/confirm-email' => 'auth/confirm-email',
                 'user-management/auth/confirm-email-receive/<token:[\w\-]+>' => 'auth/confirm-email-receive',
+                // Página intermedia del QR de ingreso (la abre el teléfono).
+                'GET ingresar/<challenge:[a-f0-9]{64}>' => 'auth/ingresar',
                 // Alta de cuenta desde la web (QR + código con el teléfono).
                 'alta' => 'alta/index',
                 'POST alta/vinculo-iniciar' => 'alta/vinculo-iniciar',
                 'POST alta/vinculo-estado' => 'alta/vinculo-estado',
                 'POST alta/vinculo-cancelar' => 'alta/vinculo-cancelar',
+                'POST alta/completar' => 'alta/completar',
                 // Página del teléfono: reclamo del QR, código, Didit y vuelta.
                 'GET alta/telefono/<id:[a-f0-9]{32}>/retorno' => 'alta/telefono-retorno',
                 'POST alta/telefono/<id:[a-f0-9]{32}>/codigo' => 'alta/telefono-codigo',

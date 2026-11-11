@@ -136,6 +136,69 @@ class WebAuthController extends Controller
         return $result;
     }
 
+    /**
+     * Página intermedia que abre el teléfono al escanear el QR de ingreso.
+     *
+     * No valida el desafío: el teléfono muestra el contexto del pedido y ofrece
+     * continuar en la app (enlace profundo), con passkey o con recuperación asistida.
+     */
+    public function actionIngresar(string $challenge)
+    {
+        $this->layout = 'loginLayout';
+
+        $deepLinkBase = trim((string) (Yii::$app->params['personalSaludDeepLinkBase'] ?? ''));
+        if ($deepLinkBase === '') {
+            $deepLinkBase = 'bioenlace-personalsalud';
+        }
+
+        return $this->render('//login/ingresar', [
+            'challenge' => $challenge,
+            'appUrl' => rtrim($deepLinkBase, ':/') . '://qr-login/' . $challenge,
+            'requestedAt' => date('H:i'),
+            'deviceLabel' => $this->describeUserAgent((string) Yii::$app->request->getUserAgent()),
+        ]);
+    }
+
+    /**
+     * Etiqueta aproximada del navegador que pide el acceso, para que el teléfono muestre
+     * algo reconocible antes de aprobar.
+     */
+    private function describeUserAgent(string $userAgent): string
+    {
+        $userAgent = strtolower($userAgent);
+
+        $browser = 'Navegador';
+        foreach ([
+            'edg/' => 'Microsoft Edge',
+            'opr/' => 'Opera',
+            'chrome/' => 'Chrome',
+            'firefox/' => 'Firefox',
+            'safari/' => 'Safari',
+        ] as $needle => $label) {
+            if (str_contains($userAgent, $needle)) {
+                $browser = $label;
+                break;
+            }
+        }
+
+        $system = 'Computadora';
+        foreach ([
+            'windows' => 'Windows',
+            'android' => 'Android',
+            'iphone' => 'iPhone',
+            'ipad' => 'iPad',
+            'mac os' => 'macOS',
+            'linux' => 'Linux',
+        ] as $needle => $label) {
+            if (str_contains($userAgent, $needle)) {
+                $system = $label;
+                break;
+            }
+        }
+
+        return $browser . ' en ' . $system;
+    }
+
     public function actionQrLoginStatus(): array
     {
         $challengeId = (string) (Yii::$app->request->getBodyParams()['challengeId'] ?? '');

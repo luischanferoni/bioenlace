@@ -386,6 +386,26 @@ class SignupPairingServiceTest extends Unit
         $this->assertSame(SignupPairing::STATE_FAILED, $this->row($pairingId)['state']);
     }
 
+    public function testCompletionContextExponeLaVerificacionSoloALaComputadora(): void
+    {
+        $started = $this->service->start(self::WEB_SESSION, ['id_efector' => 11]);
+        $pairingId = $this->service->claim($started['token'], self::DEVICE_SESSION)['pairing_id'];
+        $this->service->authorizeDevice($pairingId, $started['code'], self::DEVICE_SESSION);
+        $this->service->markVerificationStarted($pairingId, self::DEVICE_SESSION, 'didit-session-7');
+        $this->service->markVerified($pairingId, self::DEVICE_SESSION, 'didit-session-7');
+
+        $context = $this->service->completionContext(self::WEB_SESSION, $pairingId);
+
+        $this->assertSame(SignupPairing::STATE_VERIFIED, $context['state']);
+        $this->assertSame(11, $context['id_efector']);
+        $this->assertSame('didit-session-7', $context['verification_id']);
+
+        $this->assertSame(
+            SignupPairingService::STATE_NOT_FOUND,
+            $this->service->completionContext('otra-computadora', $pairingId)['state']
+        );
+    }
+
     private function claimedPairing(): string
     {
         $started = $this->service->start(self::WEB_SESSION);

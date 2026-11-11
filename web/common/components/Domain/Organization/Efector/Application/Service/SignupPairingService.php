@@ -298,6 +298,49 @@ final class SignupPairingService
     }
 
     /**
+     * Contexto interno para cerrar el alta desde la computadora que inició el vínculo.
+     *
+     * Devuelve el `verification_id` que confirmó el servidor: el controlador lo usa para
+     * crear la cuenta y nunca lo publica al navegador.
+     *
+     * @return array{state: string, id_efector: int|null, verification_id: string|null, id_persona: int|null, id_user: int|null}
+     */
+    public function completionContext(string $webSessionId, string $pairingId): array
+    {
+        $this->assertSessionId($webSessionId);
+
+        $notFound = [
+            'state' => self::STATE_NOT_FOUND,
+            'id_efector' => null,
+            'verification_id' => null,
+            'id_persona' => null,
+            'id_user' => null,
+        ];
+
+        $row = (new Query())
+            ->from(SignupPairing::tableName())
+            ->where([
+                'id' => trim($pairingId),
+                'web_session_hash' => $this->hashValue($webSessionId),
+            ])
+            ->one($this->db);
+
+        if (!is_array($row)) {
+            return $notFound;
+        }
+
+        $row = $this->refreshExpiry($row);
+
+        return [
+            'state' => (string) $row['state'],
+            'id_efector' => $row['id_efector'] !== null ? (int) $row['id_efector'] : null,
+            'verification_id' => $row['verification_id'] !== null ? (string) $row['verification_id'] : null,
+            'id_persona' => $row['id_persona'] !== null ? (int) $row['id_persona'] : null,
+            'id_user' => $row['id_user'] !== null ? (int) $row['id_user'] : null,
+        ];
+    }
+
+    /**
      * Cierra el vínculo con la cuenta creada o reutilizada.
      */
     public function markAccountCreated(string $pairingId, int $idPersona, int $idUser): void

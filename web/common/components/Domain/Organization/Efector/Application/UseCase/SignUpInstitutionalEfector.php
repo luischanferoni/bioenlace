@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Organization\Efector\Application\UseCase;
 
+use common\components\Domain\Organization\Billing\Application\Service\SpaceSignupPaymentNotifier;
 use common\models\Organization\BillingAccount;
 use common\models\Organization\BillingAccountEfector;
 use common\models\Organization\BillingPayment;
@@ -143,6 +144,11 @@ final class SignUpInstitutionalEfector
             }
 
             $tx->commit();
+
+            (new SpaceSignupPaymentNotifier())->notifyPaymentConfirmed(
+                (string) $user->email,
+                (string) $efector->nombre
+            );
 
             return [
                 'id_user' => (int) $user->id,

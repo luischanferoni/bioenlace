@@ -18,6 +18,8 @@ $showPasswordForm = isset($model) && ($passwordLoginEnabled ?? true);
         class="login-content overflow-hidden"
         data-qr-start-url="<?= Html::encode(Url::to(['/auth/qr-login-start'])) ?>"
         data-qr-status-url="<?= Html::encode(Url::to(['/auth/qr-login-status'])) ?>"
+        data-passkey-options-url="<?= Html::encode(Url::to(['/auth/passkey-login-options'])) ?>"
+        data-passkey-verify-url="<?= Html::encode(Url::to(['/auth/passkey-login-verify'])) ?>"
     >
         <div class="row no-gutters align-items-center bg-white">
             <div class="col-md-12 col-lg-6 align-self-center">
@@ -38,6 +40,13 @@ $showPasswordForm = isset($model) && ($passwordLoginEnabled ?? true);
                                 <button type="button" class="btn btn-outline-primary mb-3" id="qr-login-button" data-bs-toggle="modal" data-bs-target="#qr-login-modal">
                                     Ingresar con la app
                                 </button>
+
+                                <div class="mb-3">
+                                    <button type="button" class="btn btn-link" id="passkey-login-button">
+                                        Ingresar con la passkey de este dispositivo
+                                    </button>
+                                    <p class="text-danger small mb-0" role="status" aria-live="polite" id="passkey-login-message"></p>
+                                </div>
 
                                 <?php if ($showPasswordForm): ?>
                                     <hr class="my-4">

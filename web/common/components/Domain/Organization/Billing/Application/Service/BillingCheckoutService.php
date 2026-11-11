@@ -50,6 +50,16 @@ final class BillingCheckoutService
             (string) ($payload['contact_phone'] ?? '')
         ) ?? '';
         ContactPhoneValidator::assertValidMobile($contactPhone, 'Teléfono de contacto');
+
+        $omitPayerEmail = !empty(Yii::$app->params['mercadoPago']['sandboxOmitPayerEmail']);
+        if (!$omitPayerEmail) {
+            SignupEmailGate::assertReady(
+                (string) $user->email,
+                $payerEmail,
+                (int) $user->email_confirmed === 1
+            );
+        }
+
         $this->promotePayerEmail($user, $payerEmail);
 
         $checkoutKey = strtolower(trim((string) ($payload['checkout_request_key'] ?? '')));
@@ -173,7 +183,6 @@ final class BillingCheckoutService
         }
         try {
             $config = Yii::$app->params['mercadoPago'] ?? [];
-            $omitPayerEmail = !empty($config['sandboxOmitPayerEmail']);
             $subscription = $this->mercadoPago()->createSubscription([
                 'amount_ars' => (float) $attempt->amount_total_ars,
                 'payer_email' => $omitPayerEmail ? '' : $payerEmail,

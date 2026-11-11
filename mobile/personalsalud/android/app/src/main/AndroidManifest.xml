@@ -28,6 +28,14 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- Ingreso a la web: la página intermedia del QR abre la app con
+                 bioenlace-personalsalud://qr-login/<challenge>. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="bioenlace-personalsalud" android:host="qr-login"/>
+            </intent-filter>
         </activity>
         <!-- Google Maps (alta comercial: ubicación del efector).
              La key se inyecta desde android/local.properties o GOOGLE_MAPS_API_KEY.

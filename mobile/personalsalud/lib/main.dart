@@ -14,9 +14,60 @@ import 'auth/personalsalud_session_prefs.dart';
 import 'firebase/firebase_bootstrap.dart';
 import 'screens/main_screen.dart';
 import 'screens/config_wizard_screen.dart';
+import 'package:app_links/app_links.dart';
+import 'auth/qr_login_approve_screen.dart';
 
 // Clave global para el Navigator
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+/// Host del enlace profundo que aprueba un ingreso a la web:
+/// `bioenlace-personalsalud://qr-login/<challenge>`.
+const String _qrLoginDeepLinkHost = 'qr-login';
+
+/// Escucha el enlace del QR de ingreso y abre la pantalla de aprobación.
+Future<void> _listenQrLoginLinks() async {
+  final AppLinks appLinks = AppLinks();
+
+  try {
+    final Uri? initial = await appLinks.getInitialLink();
+    if (initial != null) {
+      _openQrLoginApproval(initial);
+    }
+  } catch (_) {
+    // Sin enlace inicial: la app sigue su arranque normal.
+  }
+
+  appLinks.uriLinkStream.listen(
+    _openQrLoginApproval,
+    onError: (Object _) {},
+  );
+}
+
+void _openQrLoginApproval(Uri uri) {
+  if (uri.scheme != 'bioenlace-personalsalud' || uri.host != _qrLoginDeepLinkHost) {
+    return;
+  }
+  if (uri.pathSegments.isEmpty) {
+    return;
+  }
+  final String challengeId = uri.pathSegments.first.trim();
+  if (challengeId.isEmpty) {
+    return;
+  }
+
+  // El Navigator puede no estar montado cuando llega el enlace inicial.
+  Future<void>.delayed(const Duration(milliseconds: 400), () {
+    final NavigatorState? navigator = navigatorKey.currentState;
+    if (navigator == null) {
+      return;
+    }
+    navigator.push(
+      MaterialPageRoute<bool>(
+        builder: (_) => QrLoginApproveScreen(challengeId: challengeId),
+      ),
+    );
+  });
+}
 
 Future<Map<String, dynamic>> _getUserData() async {
   try {
@@ -97,6 +148,8 @@ void main() {
       userId: userId,
       userName: userName,
     ));
+
+    unawaited(_listenQrLoginLinks());
   }, (error, stack) {
     unawaited(CrashlyticsBootstrap.recordError(error, stack, fatal: true));
   });

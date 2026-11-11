@@ -99,6 +99,17 @@ return [
     /** Máximo de solicitudes de alta por IP y por hora (rate limit). */
     'signupMaxPerIpHour' => 20,
     /**
+     * Esquema de enlace profundo de la app Personal de Salud (aprobación del ingreso web).
+     * El QR de login abre `/ingresar/<challenge>` y esa página arma
+     * `bioenlace-personalsalud://qr-login/<challenge>`.
+     */
+    'personalSaludDeepLinkBase' => 'bioenlace-personalsalud',
+    /**
+     * Alta paga: exigir e-mail real y confirmado antes de iniciar el checkout.
+     * Dejarlo en `false` hasta verificar el envío de e-mails del entorno.
+     */
+    'signupRequireConfirmedEmail' => false,
+    /**
      * Alta web con el teléfono: vínculo navegador ↔ teléfono (QR + código).
      * TTL y límites del vínculo; `enabled` apaga la página /alta sin desplegar.
      */

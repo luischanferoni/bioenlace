@@ -2,9 +2,12 @@
 
 namespace frontend\controllers;
 
+use common\components\Domain\Organization\Efector\Application\Service\CommercialSignupDraftService;
 use common\components\Domain\Organization\Efector\Application\Service\SignupAbuseGuard;
 use common\components\Domain\Organization\Efector\Application\Service\SignupPairingException;
 use common\components\Domain\Organization\Efector\Application\Service\SignupPairingService;
+use common\components\Domain\Organization\Efector\Application\Service\StaffAffiliationRequestService;
+use common\components\Domain\Organization\Efector\Application\UseCase\CreateIdentityAccount;
 use common\components\Domain\Organization\Efector\Application\UseCase\SignUpInstitutionalEfector;
 use common\components\Domain\Person\Identity\Application\Service\DiditIdentityService;
 use common\components\Domain\Person\Identity\Application\Service\IdentityVerificationException;
@@ -33,6 +36,7 @@ class AltaController extends Controller
         'vinculo-iniciar',
         'vinculo-estado',
         'vinculo-cancelar',
+        'completar',
         'telefono-codigo',
     ];
 
@@ -49,6 +53,7 @@ class AltaController extends Controller
                     'vinculo-iniciar' => ['POST'],
                     'vinculo-estado' => ['POST'],
                     'vinculo-cancelar' => ['POST'],
+                    'completar' => ['POST'],
                     'vinculo' => ['GET'],
                     'telefono' => ['GET'],
                     'telefono-codigo' => ['POST'],
@@ -81,6 +86,7 @@ class AltaController extends Controller
                     'iniciar' => Url::to(['/alta/vinculo-iniciar']),
                     'estado' => Url::to(['/alta/vinculo-estado']),
                     'cancelar' => Url::to(['/alta/vinculo-cancelar']),
+                    'completar' => Url::to(['/alta/completar']),
                     'centros' => Url::to(['/api/v1/licencia/catalogo-centros']),
                     'provincias' => Url::to(['/api/v1/licencia/catalogo-provincias']),
                 ],
@@ -358,6 +364,109 @@ class AltaController extends Controller
                 $status,
                 'No pudimos confirmar la verificación con Didit. Probá de nuevo.',
                 true
+            );
+        }
+    }
+
+    /**
+     * Cierra el alta: crea o reutiliza la cuenta con el centro elegido y registra la
+     * solicitud de incorporación.
+     *
+     * El `verification_id` sale del vínculo (confirmado por el servidor), nunca del
+     * navegador. Reintentar sobre un vínculo ya cerrado devuelve el mismo estado.
+     */
+    public function actionCompletar(): array
+    {
+        $body = Yii::$app->request->getBodyParams();
+        if (!is_array($body)) {
+            $body = [];
+        }
+
+        $pairingId = trim((string) ($body['pairing_id'] ?? ''));
+        if ($pairingId === '') {
+            return $this->failure(400, 'Falta el vínculo del alta.');
+        }
+
+        try {
+            (new SignupAbuseGuard())->assertAllowed($body);
+
+            $context = $this->pairingService()->completionContext($this->webSessionId(), $pairingId);
+
+            if ($context['state'] === SignupPairingService::STATE_NOT_FOUND) {
+                return $this->failure(404, 'El vínculo del alta ya no existe. Volvé a empezar.');
+            }
+            if ($context['state'] === SignupPairing::STATE_ACCOUNT_CREATED) {
+                return ['state' => 'ACCOUNT_CREATED', 'already_done' => true];
+            }
+            if ($context['state'] !== SignupPairing::STATE_VERIFIED) {
+                return $this->failure(409, 'El alta todavía no está lista para terminar.');
+            }
+
+            $verificationId = (string) ($context['verification_id'] ?? '');
+            $idEfector = (int) ($context['id_efector'] ?? 0);
+            if ($verificationId === '' || $idEfector <= 0) {
+                return $this->failure(409, 'El alta está incompleta. Volvé a empezar.');
+            }
+
+            $identity = (new CreateIdentityAccount())->crear(['verification_id' => $verificationId]);
+            $idPersona = (int) $identity['persona']->id_persona;
+            $idUser = (int) $identity['user']->id;
+
+            $affiliation = (new StaffAffiliationRequestService())->record($idPersona, $idUser, $idEfector);
+            $this->markCompleted($pairingId, $idPersona, $idUser);
+
+            Yii::info(
+                sprintf('signup-pairing %s: cuenta creada persona=%d', $pairingId, $idPersona),
+                'signup.pairing'
+            );
+
+            return [
+                'state' => 'ACCOUNT_CREATED',
+                'account' => [
+                    'es_nueva_persona' => (bool) $identity['es_nueva_persona'],
+                    'es_nuevo_usuario' => (bool) $identity['es_nuevo_usuario'],
+                ],
+                'affiliation' => [
+                    'status' => (string) ($affiliation['status'] ?? ''),
+                    'nombre_efector' => (string) ($affiliation['nombre_efector'] ?? ''),
+                ],
+                // Alta de espacio de atención sin terminar: el borrador vive en el servidor.
+                'draft_pending' => (new CommercialSignupDraftService())->findForPersona($idPersona) !== null,
+            ];
+        } catch (SignupPairingException $e) {
+            return $this->failure(409, $e->getMessage());
+        } catch (\DomainException $e) {
+            return $this->failure(429, $e->getMessage());
+        } catch (\InvalidArgumentException $e) {
+            return $this->failure(400, $e->getMessage());
+        } catch (IdentityVerificationException $e) {
+            if ($e->isRetryable()) {
+                return $this->failure(503, 'Todavía no pudimos confirmar tu identidad. Reintentá en unos segundos.');
+            }
+
+            return $this->failure(422, 'No pudimos confirmar tu identidad. Volvé a empezar el alta.');
+        } catch (\Throwable $e) {
+            Yii::error($e->getMessage() . "\n" . $e->getTraceAsString(), 'signup.pairing');
+
+            return $this->failure(
+                500,
+                'No pudimos terminar el alta. Reintentá: no vas a duplicar nada.'
+            );
+        }
+    }
+
+    /**
+     * El vínculo pudo cerrarse en un reintento concurrente: si ya está en
+     * `ACCOUNT_CREATED`, el resultado es el mismo y no hay nada más que hacer.
+     */
+    private function markCompleted(string $pairingId, int $idPersona, int $idUser): void
+    {
+        try {
+            $this->pairingService()->markAccountCreated($pairingId, $idPersona, $idUser);
+        } catch (SignupPairingException $e) {
+            Yii::warning(
+                sprintf('signup-pairing %s: cierre concurrente (%s)', $pairingId, $e->reason),
+                'signup.pairing'
             );
         }
     }

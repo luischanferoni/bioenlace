@@ -113,11 +113,11 @@ final class QrLoginService
 
     private static function qrPayload(string $challengeId): string
     {
-        $baseUrl = trim((string) (Yii::$app->params['mobileAppDeepLinkBase'] ?? ''));
-        if ($baseUrl === '') {
-            $baseUrl = 'https://app.bioenlace.io';
-        }
-
-        return rtrim($baseUrl, '/') . '/qr-login/' . $challengeId;
+        // Una sola URL https: el teléfono la abre y la página intermedia decide si
+        // continúa en la app (enlace profundo) o en el navegador (passkey/recuperación).
+        return Yii::$app->urlManager->createAbsoluteUrl([
+            '/auth/ingresar',
+            'challenge' => $challengeId,
+        ]);
     }
 }

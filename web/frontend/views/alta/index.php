@@ -19,6 +19,7 @@ $urls = $page['urls'] ?? [];
         data-iniciar-url="<?= Html::encode($urls['iniciar'] ?? '') ?>"
         data-estado-url="<?= Html::encode($urls['estado'] ?? '') ?>"
         data-cancelar-url="<?= Html::encode($urls['cancelar'] ?? '') ?>"
+        data-completar-url="<?= Html::encode($urls['completar'] ?? '') ?>"
         data-centros-url="<?= Html::encode($urls['centros'] ?? '') ?>"
         data-provincias-url="<?= Html::encode($urls['provincias'] ?? '') ?>"
         data-poll-seconds="<?= (int) ($page['poll_seconds'] ?? 2) ?>"
@@ -161,6 +162,23 @@ $urls = $page['urls'] ?? [];
                                         <p class="text-muted">
                                             Ya verificamos tu identidad. Estamos terminando de crear tu cuenta.
                                         </p>
+                                        <div class="spinner-border text-primary my-3" role="status">
+                                            <span class="visually-hidden">Creando la cuenta</span>
+                                        </div>
+                                    </div>
+
+                                    <div data-panel="result" class="d-none text-center">
+                                        <h2 class="h4 mb-3">Tu cuenta está creada</h2>
+                                        <p class="text-muted" data-result-message></p>
+                                        <p class="text-muted small">
+                                            Tu cuenta todavía no tiene un rol en el centro: un administrador
+                                            tiene que asignártelo para que puedas operar.
+                                        </p>
+                                        <p class="small">
+                                            Podés ingresar desde la app <strong>Personal de Salud</strong> o
+                                            confirmar el acceso desde el teléfono.
+                                        </p>
+                                        <?= Html::a('Ir al ingreso', ['/auth/login'], ['class' => 'btn btn-outline-primary']) ?>
                                     </div>
 
                                     <div data-panel="expired" class="d-none text-center">

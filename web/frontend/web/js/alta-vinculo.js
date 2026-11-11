@@ -18,6 +18,7 @@
         iniciar: root.dataset.iniciarUrl || '',
         estado: root.dataset.estadoUrl || '',
         cancelar: root.dataset.cancelarUrl || '',
+        completar: root.dataset.completarUrl || '',
         centros: root.dataset.centrosUrl || '',
         provincias: root.dataset.provinciasUrl || ''
     };
@@ -45,6 +46,7 @@
         code: root.querySelector('[data-code]'),
         codeStatus: root.querySelector('[data-code-status]'),
         errorMessage: root.querySelector('[data-error-message]'),
+        resultMessage: root.querySelector('[data-result-message]'),
         template: root.querySelector('[data-template="center-result"]')
     };
 
@@ -56,7 +58,8 @@
         pollTimer: null,
         searchTimer: null,
         searchAttempt: 0,
-        pollAttempt: 0
+        pollAttempt: 0,
+        completing: false
     };
 
     function showPanel(name) {
@@ -225,6 +228,7 @@
         stopPolling();
         state.pairingId = '';
         state.code = '';
+        state.completing = false;
         state.pollAttempt++;
         if (els.qr) {
             els.qr.replaceChildren();
@@ -329,9 +333,11 @@
                 showPanel('waiting');
                 break;
             case 'VERIFIED':
+                completeAccount();
+                break;
             case 'ACCOUNT_CREATED':
                 stopPolling();
-                showPanel('ready');
+                showResult({ already_done: true });
                 break;
             case 'EXPIRED':
                 stopPolling();
@@ -348,6 +354,52 @@
             default:
                 break;
         }
+    }
+
+    function completeAccount() {
+        if (state.completing) {
+            return;
+        }
+
+        state.completing = true;
+        stopPolling();
+        showPanel('ready');
+
+        postJson(urls.completar, { pairing_id: state.pairingId })
+            .then(function (data) {
+                state.completing = false;
+                showResult(data || {});
+            })
+            .catch(function (error) {
+                state.completing = false;
+                showError(error.message);
+            });
+    }
+
+    function showResult(data) {
+        var message = '';
+
+        if (data && data.account) {
+            message = data.account.es_nueva_persona
+                ? 'Creamos tu cuenta con los datos que verificaste.'
+                : 'Ya tenías cuenta con esa identidad: la reutilizamos, sin crear otra.';
+
+            if (data.affiliation && data.affiliation.nombre_efector) {
+                message += ' Tu solicitud para ' + data.affiliation.nombre_efector + ' quedó registrada.';
+            }
+
+            if (data.draft_pending) {
+                message += ' Además tenés un alta de espacio de atención sin terminar:'
+                    + ' podés retomarla desde la app Personal de Salud.';
+            }
+        } else {
+            message = 'El alta ya estaba terminada.';
+        }
+
+        if (els.resultMessage) {
+            els.resultMessage.textContent = message;
+        }
+        showPanel('result');
     }
 
     function cancelPairing() {

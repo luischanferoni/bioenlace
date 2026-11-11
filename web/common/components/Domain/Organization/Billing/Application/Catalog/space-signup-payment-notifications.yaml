@@ -1,0 +1,5 @@
+version: 1
+notifications:
+  payment_confirmed:
+    subject: "Tu espacio de atención en Bioenlace está habilitado"
+    body: "Confirmamos el primer pago de {efector}. Tu espacio ya está habilitado y podés administrar servicios y equipos. Si no reconocés este pago, respondé a este mensaje."

@@ -23,7 +23,6 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Caché: claves, TTL e invalidación | `cache-claves-ttl/` | 17 archivos, 21 sets y 7 deletes; la fase 02 ya tiene libre el transporte HTTP |
 | Transporte residual y suite | `transporte-residual-y-suite/` | Transporte a mano en Didit/Snowstorm/MPI y en el admin (fuera del invariante) + suite en 13 errores / 73 fallas; fases 01–04 pendientes |
 | Motivos pre-turno sin STT | `motivos-pre-turno/` | Cuestionario declarativo, motivo deducido del triage y del asistente; fases 01–05 implementadas, falta prueba en dispositivo |
-| Alta de cuenta desde la web con el teléfono | `alta-cuenta-desde-web/` | QR + código de emparejamiento y Didit hosted en el teléfono; borrador en servidor, e-mail confirmado y aviso de pago; ingreso web sin costo (app, passkey del teléfono, recuperación); fases 00–07 pendientes |
 
 ## A evaluar (sin plan todavía)
 
@@ -78,6 +77,7 @@ Notas de análisis que todavía no justifican un plan. Ver [a-evaluar/README.md]
 | RBAC unificado por intents | [decisions/autorizacion-solo-por-intents.md](../decisions/autorizacion-solo-por-intents.md) + [arquitectura/rbac-catalogo-permisos.md](../arquitectura/rbac-catalogo-permisos.md) |
 | Limpieza legacy Yii / modelos / BD | Migraciones y código en repo; sin plan activo |
 | Deduplicación de transporte HTTP | [transporte-http-unico.md](../decisions/transporte-http-unico.md) + `Shared/Infrastructure/README.md` + [common-components.md](../arquitectura/common-components.md) |
+| Alta de cuenta desde la web con el teléfono | [alta-cuenta-licencia.md](../producto/alta-cuenta-licencia.md) + [ingreso-web-app-passkey-recuperacion.md](../decisions/ingreso-web-app-passkey-recuperacion.md) |
 
 ## Convenciones (solo dentro de `plans/`)
 

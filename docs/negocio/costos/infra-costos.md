@@ -139,7 +139,7 @@ Mismo supuesto que [costos-api §1](costos-api.md#1-conversación-con-el-pacient
 
 ### 2. Motivos de consulta (lote IA pre-atención)
 
-Una inferencia por consulta al cerrar la ventana de carga (ver [costos-api.md §2](costos-api.md#2-motivos-de-consulta-chat-dedicado-antes-de-la-atención)).
+Una inferencia por consulta al cerrar la ventana de carga (ver [costos-api.md §2](costos-api.md#2-motivos-de-consulta-cuestionario-y-mensajes-antes-de-la-atención)).
 
 | Concepto | Supuesto | Costo real mensual (por médico) |
 |----------|----------|----------------------------------|

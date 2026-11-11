@@ -1,14 +1,14 @@
 # STT (transcripción de audio)
 
-No usa `IAManager`; en el [catálogo de IA](../../../producto/catalogo-usos-ia.md) figura como capacidad aparte (captura §4, motivos §2, `audio/transcribir`).
+No usa `IAManager`; en el [catálogo de IA](../../../producto/catalogo-usos-ia.md) figura como capacidad aparte (captura §4 y `audio/transcribir`). **Motivos de consulta ya no usa STT**: se retiró el audio y el motivo se deduce del triage de reserva, del asistente y del cuestionario pre-turno.
 
-Baseline en [costos-api.md](../costos-api.md): **Groq Whisper** ~**$0,0007/min** ⇒ bruto **~$1,40**/médico/mes en §4 (**5 min** × 400) y **~$1,12** en §2 caso B (**4 min** × 400). `SpeechToTextManager` usa **Groq por defecto** (`whisper-large-v3-turbo`) para el fallback servidor; Hugging Face queda disponible solo mediante selección explícita en configuración.
+Baseline en [costos-api.md](../costos-api.md): **Groq Whisper** ~**$0,0007/min** ⇒ bruto **~$1,75**/médico/mes en §4 (**5 min** × 500), único flujo con STT. `SpeechToTextManager` usa **Groq por defecto** (`whisper-large-v3-turbo`) para el fallback servidor; Hugging Face queda disponible solo mediante selección explícita en configuración.
 
-**Lista comercial:** se aplica **−30 %** al STT bruto por probabilidad on-device → add-on **audio = 1,23** (matriz / calculador). Total voz planificación **~$2,21**/prof/mes. Ver [costos-api § STT — COGS de planificación](../costos-api.md#cogs-de-planificación-lista-comercial--30--on-device).
+**Lista comercial:** se aplica **−30 %** al STT bruto por probabilidad on-device → add-on **audio = 1,23** (matriz / calculador). Total voz planificación **~$1,23**/prof/mes. Ver [costos-api § STT — COGS de planificación](../costos-api.md#cogs-de-planificación-lista-comercial--30--on-device).
 
-**Videollamada post-call:** STT de la llamada está en §2/§4 (~5+~4 min con VAD), no en el add-on video (**$1,75** self-host sala/storage @ **40 %** tele). En el calculador institucional se cobra **una sola vez** (dictado no se suma encima de videollamada). Histórico Deepgram vía Daily (~$6,19 @ 30 %) ya no es lista; techo @ 80 % era **$3,50**. Detalle: [videollamadas.md](videollamadas.md), [analisis-videollamada-self-host.md](../analisis-videollamada-self-host.md).
+**Videollamada post-call:** el STT de la llamada está en §4 (~5 min con VAD), no en el add-on video (**$1,75** self-host sala/storage @ **40 %** tele). En el calculador institucional se cobra **una sola vez** (dictado no se suma encima de videollamada). Histórico Deepgram vía Daily (~$6,19 @ 30 %) ya no es lista; techo @ 80 % era **$3,50**. Detalle: [videollamadas.md](videollamadas.md), [analisis-videollamada-self-host.md](../analisis-videollamada-self-host.md).
 
-Hoy el flujo dominante es **audio en cliente → STT en servidor** (`POST /api/v1/audio/transcribir`, lote de motivos en `AppointmentReasonBatchService`). En web existe dictado parcial vía `frontend/web/js/speech-input.js` (`webkitSpeechRecognition`), aún no unificado con captura clínica ni motivos móviles.
+Hoy el flujo dominante es **audio en cliente → STT en servidor** (`POST /api/v1/audio/transcribir` y captura clínica). En web existe dictado parcial vía `frontend/web/js/speech-input.js` (`webkitSpeechRecognition`), aún no unificado con captura clínica.
 
 ## Escalera de proveedores (servidor)
 
@@ -18,7 +18,7 @@ Hoy el flujo dominante es **audio en cliente → STT en servidor** (`POST /api/v
 | 1 | **Groq Whisper** | Fallback servidor predeterminado, &lt; 25 MB/archivo | ~$0,0007/min |
 | 2 | Hugging Face | Alternativa opt-in por configuración | Plan HF |
 
-A **5.000+ profesionales**, Groq en servidor puede costar del orden de **~$12.600/mes** (3.600 min/prof × 5.000 en el COGS de referencia: 5 min médico + 4 min paciente). El piso de costo es **no transcribir en servidor** cuando el dispositivo entrega texto usable (§ STT en dispositivo).
+A **5.000+ profesionales**, Groq en servidor puede costar del orden de **~$8.750/mes** (2.500 min/prof × 5.000 en el COGS de referencia: 5 min de dictado médico). El piso de costo es **no transcribir en servidor** cuando el dispositivo entrega texto usable (§ STT en dispositivo).
 
 Estrategia documentada: **STT en dispositivo** + fallback en servidor (Groq) por calidad. El preprocesado técnico en servidor (FFmpeg en `SpeechToTextManager`) es optimización de pipeline.
 
@@ -42,9 +42,9 @@ Fuente: [groq.com/pricing](https://groq.com/pricing), [Speech to Text – GroqDo
 | Regla | Detalle | Impacto en Bioenlace |
 |-------|---------|----------------------|
 | Modelo COGS | **Whisper Large v3 Turbo** (`whisper-large-v3-turbo`) | Alineado a [costos-api § Precios](../costos-api.md#precios-de-referencia-mayo-2026) |
-| Tarifa | **USD 0,04 por hora** de audio transcrito (~**USD 0,00067/min**; redondeo doc **~0,0007**) | §2 ~4 min + §4 ~5 min → bruto **~$3,15**/médico/mes; planificación **−30 %** → **~$2,21** |
+| Tarifa | **USD 0,04 por hora** de audio transcrito (~**USD 0,00067/min**; redondeo doc **~0,0007**) | §4 ~5 min → bruto **~$1,75**/médico/mes; planificación **−30 %** → **~$1,23** |
 | Unidad de cobro | Duración del audio **enviado en cada request** (no tokens) | Un archivo de 45 s factura ~45 s (salvo mínimo) |
-| **Mínimo por request** | **10 s** facturados aunque el clip sea más corto | Varios audios cortos en motivos = **una llamada STT por mensaje** → cada uno cuenta ≥10 s si va a Groq |
+| **Mínimo por request** | **10 s** facturados aunque el clip sea más corto | Dictados fragmentados en varias llamadas pagan el mínimo varias veces; conviene un archivo por encounter |
 | Tamaño máx. | Hasta **25 MB** por archivo (~30 min de audio según Groq) | Por encima del uso clínico típico (dictados cortos) |
 | Otros modelos ASR | Whisper Large v3: **USD 0,111/h**; Distil-Whisper (inglés): **USD 0,02/h** | No usados en el COGS actual |
 
@@ -55,14 +55,13 @@ El [COGS](../costos-api.md#cogs-abreviatura) supone **500 consultas/médico/mes*
 | Flujo | Minutos / encounter | Minutos / mes | USD / mes |
 |-------|---------------------|---------------|-----------|
 | **§4 Captura clínica** (médico) | **~5** | 2.500 | Bruto **~$1,75** · lista **~$1,23** (−30 %) |
-| **§2 Motivos** caso B (paciente) | **~4** | 2.000 | Bruto **~$1,40** · planificación **~$0,98** |
 
 Eso encaja distinto según el flujo (misma tabla en [costos-api § STT](../costos-api.md#supuesto-del-cogs-por-flujo)):
 
 | Flujo | Qué pasa en producto | ¿Cuadra con el supuesto? |
 |-------|----------------------|--------------------------|
 | **§4 Captura clínica** | Audio del médico (dictado o pista de videollamada con VAD); si falla el STT local, va a Groq (~5 min de voz). | **Sí** como techo de planificación. Dictados muy cortos quedan por debajo. |
-| **§2 Motivos de consulta** (caso B) | El paciente puede mandar **varias** notas de voz; el lote concatena y hace **una** llamada Groq (`transcribirLote`). | **Sí** como techo de planificación. Notas cortas ya no multiplican el mínimo de 10 s. **STT en dispositivo** evita la llamada. |
+| **§2 Motivos de consulta** | **Sin audio y sin STT**: cuestionario con opciones + triage de reserva + mensajes al asistente. | — (ya no consume minutos) |
 
 - **FFmpeg** (silencios, compresión): puede acortar el archivo enviado; Groq cobra por **duración transcrita del audio recibido**. No reemplaza el mínimo de 10 s por request.
 
@@ -77,7 +76,7 @@ El micrófono produce **texto en el cliente**; al enviar la captura, el backend 
 | Flujo | § costos-api | Prioridad dispositivo | Notas |
 |-------|--------------|----------------------|--------|
 | Captura clínica (dictado médico) | §4 | Alta | Implementado: dictado local + fallback servidor; ver § Implementación |
-| Motivos de consulta (audio paciente) | §2 caso B | Alta | Implementado en app paciente: dictado local al grabar; si calidad OK → `TYPE_TEXTO` (sin Groq). Si no → audio al lote (`transcribirLote`). |
+| Motivos de consulta | §2 | — | **Sin audio ni STT**: cuestionario con opciones y cierre libre acotado |
 
 ### Contrato API (orientativo, sin implementar aquí)
 
@@ -87,13 +86,13 @@ El micrófono produce **texto en el cliente**; al enviar la captura, el backend 
 
 ### Escenario de costo (planificación vs aspiracional)
 
-| Escenario | % minutos que no van a Groq | STT efectivo vs bruto **$3,15** | Estado |
+| Escenario | % minutos que no van a Groq | STT efectivo vs bruto **$1,75** | Estado |
 |-----------|----------------------------|--------------------------------|--------|
-| **Lista comercial (vigente)** | **~30 %** on-device | **~$2,21** (−30 %); audio matriz **1,23** | En matriz / calculador |
-| Conservador validado | ~50 % | ~$1,58 | Tras telemetría |
-| Objetivo maduro | ~70–80 % | ~$0,50–0,76 | Modelo fit / calidad estable |
+| **Lista comercial (vigente)** | **~30 %** on-device | **~$1,23** (−30 %); audio matriz **1,23** | En matriz / calculador |
+| Conservador validado | ~50 % | ~$0,88 | Tras telemetría |
+| Objetivo maduro | ~70–80 % | ~$0,35–0,53 | Modelo fit / calidad estable |
 
-Si **≥80 %** de los minutos de §2 y §4 llegan ya como texto desde dispositivo, el STT servidor del escenario intensivo puede bajar a **~20 %** del bruto (solo fallbacks). Calibrar con telemetría (§ Monitoreo); **no** bajar el −30 % de lista hasta tener datos.
+Si **≥80 %** de los minutos de §4 llegan ya como texto desde dispositivo, el STT servidor del escenario intensivo puede bajar a **~20 %** del bruto (solo fallbacks). Calibrar con telemetría (§ Monitoreo); **no** bajar el −30 % de lista hasta tener datos.
 
 La implementación actual usa motores del **SO / Web Speech** (ver § Implementación). La evolución prevista para maximizar calidad y minimizar fallback Groq es un **modelo fit on-device** entrenado para Bioenlace (§ siguiente).
 
@@ -105,7 +104,7 @@ La implementación actual usa motores del **SO / Web Speech** (ver § Implementa
 
 ### Objetivo
 
-Que cada profesional transcriba en el **dispositivo** con un motor **ajustado a clínica argentina, tonada regional y su voz**, de modo que la mayoría de dictados §4 (y futuro §2) **no requieran** `SpeechToTextManager` / Groq. Groq sigue disponible con **español neutro** cuando el texto local no pasa calidad o el usuario pide «Transcribir de nuevo».
+Que cada profesional transcriba en el **dispositivo** con un motor **ajustado a clínica argentina, tonada regional y su voz**, de modo que la mayoría de dictados §4 **no requieran** `SpeechToTextManager` / Groq. Groq sigue disponible con **español neutro** cuando el texto local no pasa calidad o el usuario pide «Transcribir de nuevo».
 
 ### Principio de producto
 
@@ -195,7 +194,7 @@ No hay una señal perfecta sin comparar con otra transcripción. Se combinan **s
 
 **Regla:** si `confidence` &lt; umbral configurado → marcar `needs_server_stt` antes de enviar, o enviar audio junto al texto para fallback en servidor.
 
-Umbrales iniciales sugeridos (calibrar en staging): **0,75** para motivos del paciente; **0,85** para dictado médico §4.
+Umbrales iniciales sugeridos (calibrar en staging): **0,85** para dictado médico §4.
 
 ### 2. Heurísticas en cliente (sin costo API)
 
@@ -276,7 +275,6 @@ flowchart TD
 | Motor dispositivo **no disponible** (navegador, permisos) | **Sí** si hay audio; si no, UI solo texto |
 | Flujo configurado `server_only` (piloto calidad) | **Sí** siempre |
 | Muestreo de auditoría | **Sí** en background; no bloquea UX |
-| Mensaje ya `TYPE_TEXTO` en motivos | **No** (ya es el modelo deseado) |
 
 ### Prioridad de proveedor en fallback
 
@@ -289,10 +287,9 @@ Misma [escalera de proveedores](#escalera-de-proveedores-servidor): Groq es el f
 | Capa | Componente |
 |------|------------|
 | Servidor | `DeviceSttQualityAssessor`, `CaptureSpeechInputResolver`; integrado en `CaptureExtractionService::analizar` y `AudioController::actionTranscribir` |
-| Config | `stt_device` en `frontend/config/params.php` (perfiles `captura_clinica`, `motivos_consulta`) |
+| Config | `stt_device` en `frontend/config/params.php` (perfil `captura_clinica`) |
 | Web | `frontend/web/js/encounter-capture-form.js`, `_encounter_capture_form.php` (dictado + analizar + fallback) |
 | Móvil médico | `shared`: `DeviceSpeechDictation`, `EncounterCaptureApi`; `PatientTimelineScreen` |
-| Móvil paciente | `ChatMotivosScreen`: dictado local + audio de respaldo; texto OK → `/enviar`; si no → `/subir` audio |
 
 No requiere migración de BD: metadatos STT viajan en el body del request (`stt`, `audio` opcional).
 
@@ -300,7 +297,7 @@ No requiere migración de BD: metadatos STT viajan en el body del request (`stt`
 
 - `stt.device_enabled` es el interruptor canónico que controla si los clientes pueden iniciar STT local. `stt_device.enabled` solo se consulta como compatibilidad si falta la clave canónica.
 - El endpoint `GET /api/v1/audio/stt-config` informa `device_enabled_source` para mostrar qué clave definió el valor efectivo. Si la configuración no se puede cargar o no tiene el contrato esperado, las apps deshabilitan STT local en lugar de inferir que está habilitado.
-- En móvil, filtrar la consola por `[stt-config]`, `[stt-device]` y `[stt-motivos]`. Se registran plataforma, locale, modo, motor local solicitado/efectivo, errores, confianza, resultado final, duración y tamaño del texto; no se registra el texto dictado.
+- En móvil, filtrar la consola por `[stt-config]` y `[stt-device]`. Se registran plataforma, locale, modo, motor local solicitado/efectivo, errores, confianza, resultado final, duración y tamaño del texto; no se registra el texto dictado.
 - Para investigar errores de reconocimiento, probar una frase breve conocida en el mismo dispositivo y revisar `locale`, `onDevice`, `confidence`, `final`, `durationMs` y `error`. Confianza `0` significa que el motor no la informó, no que la transcripción tenga confianza neutra.
 
 ## Monitoreo (pendiente de implementación)
@@ -317,7 +314,7 @@ Extender [monitoreo.md](monitoreo.md) con métricas STT (memoria, log `stt-cost`
 | `stt_heuristic_reject_count` | Cuántas veces el cliente pidió fallback |
 | `stt_sample_wer_proxy` | En muestreo, distancia texto device vs servidor |
 
-Objetivo operativo inicial: **`stt_fallback_rate` &lt; 15–25 %** en §4 y **&lt; 20 %** en motivos, sin subir quejas de «no entendió el dictado».
+Objetivo operativo inicial: **`stt_fallback_rate` &lt; 15–25 %** en §4, sin subir quejas de «no entendió el dictado».
 
 ---
 
@@ -325,6 +322,6 @@ Objetivo operativo inicial: **`stt_fallback_rate` &lt; 15–25 %** en §4 y **&l
 
 - [Groq pricing](https://groq.com/pricing)
 - [costos-api.md § STT](../costos-api.md#stt)
-- [motivos-consulta.md](motivos-consulta.md)
-- `SpeechToTextManager`, `AudioController::actionTranscribir`, `AppointmentReasonBatchService`
+- [motivos-consulta.md](motivos-consulta.md) — motivos sin STT
+- `SpeechToTextManager`, `AudioController::actionTranscribir`
 - `frontend/web/js/speech-input.js`

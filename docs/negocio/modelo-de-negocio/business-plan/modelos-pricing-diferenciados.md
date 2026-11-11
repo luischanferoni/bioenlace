@@ -108,7 +108,7 @@ En Argentina es más difícil que en EE.UU. o China: márgenes farmacéuticos m�
 | Build faltante | Farmacia, delivery, escala marketing | Farmacia (~38%); sin red comercial propia |
 | Ciclo de venta | Marketing / CAC | 1–12 meses institucional |
 
-**Costos de IA** (referencia [`../../costos/costos-api.md`](../../costos/costos-api.md)): del orden de **USD 1,0–1,1/profesional/mes** en uso intensivo (motivos en 1 lote/consulta, Gemini Flash Lite, Groq STT). No es el cuello de botella; lo son sueldos, ventas e implementación.
+**Costos de IA** (referencia [`../../costos/costos-api.md`](../../costos/costos-api.md)): del orden de **USD 0,9–1,0/profesional/mes** en uso intensivo (motivos en 1 lote/consulta **sin STT**, Gemini Flash Lite, Groq para dictado). No es el cuello de botella; lo son sueldos, ventas e implementación.
 
 Subsidiar consultas gratis compite en un juego de **capital de riesgo + margen retail**, no en el GTM B2B de Bioenlace.
 
@@ -218,7 +218,7 @@ Para clínicas 5–15 profesionales:
 | **Gratis** | Hasta N encounters/mes: ambulatorio básico | USD 0 |
 | **Pago** | Superar umbral; más clases (EMER/IMP); audio; videollamada | Según [matriz](matriz-argentina-modulos-precios.md) (COGS + margen) |
 
-Compite con «HIS caro y complejo» sin regalar consultas al paciente final. El presupuesto comercial AMB vigente es **USD 0,0093 por atención** sin videollamada, incluido el costo conservador de `preprocess` + `guide`; los importes de lista se calculan con el volumen total y el tramo vigente en el backend.
+Compite con «HIS caro y complejo» sin regalar consultas al paciente final. El presupuesto comercial AMB vigente es **USD 0,0085 por atención** sin videollamada (motivos sin STT), incluido el costo conservador de `preprocess` + `guide`; los importes de lista se calculan con el volumen total y el tramo vigente en el backend.
 
 ---
 
@@ -228,12 +228,12 @@ Supuestos: **clínica 20 profesionales**, ~8.000 encounters/año, ~670/mes.
 
 | Concepto | Orden de magnitud (USD/mes) |
 |----------|----------------------------|
-| COGS del presupuesto comercial (13.400 AMB, sin videollamada) | ~**USD 124,62** (13.400 × USD 0,0093/atención) |
-| COGS del presupuesto comercial (13.400 AMB, con videollamada) | ~**USD 183,58** (incluye USD 0,0044/atención de videollamada) |
+| COGS del presupuesto comercial (13.400 AMB, sin videollamada) | ~**USD 113,90** (13.400 × USD 0,0085/atención) |
+| COGS del presupuesto comercial (13.400 AMB, con videollamada) | ~**USD 172,86** (incluye USD 0,0044/atención de videollamada) |
 | Infra + soporte | 200–500 |
 | Costo equipo (amortizado por cliente) | Variable según headcount; meta **gross margin ~70%** |
-| **Precio mensual antes de impuestos** (13.400 atenciones AMB, sin videollamada) | ~**USD 328** (tramo mediano; cotización backend) |
-| **Precio mensual antes de impuestos** (13.400 atenciones AMB, con videollamada) | ~**USD 482** (tramo mediano; cotización backend) |
+| **Precio mensual antes de impuestos** (13.400 atenciones AMB, sin videollamada) | ~**USD 300** (tramo mediano; cotización backend) |
+| **Precio mensual antes de impuestos** (13.400 atenciones AMB, con videollamada) | ~**USD 454** (tramo mediano; cotización backend) |
 | **Ingreso incremental Rx** (opcional) | 200 recetas/mes × USD 1 fee = **USD 200/mes**; rev share farmacia aparte |
 
 El ingreso incremental por receta enrutada es **puente a fulfillment** (vía 5), no margen retail propio. Cifras de lista: [matriz Argentina](matriz-argentina-modulos-precios.md).

@@ -22,18 +22,19 @@ Palancas para bajar el gasto **por debajo** del costo de referencia en [costos-a
 
 ## Prioridad de palancas (según el mix del COGS)
 
-El peso de cada componente está en [resumen-costos-bioenlace.md § Composición del COGS](../resumen-costos-bioenlace.md#composición-del-cogs-qué-pesa-en-el-costo). Ordenado por impacto sobre el COGS ambulatorio (0,0093/atención):
+El peso de cada componente está en [resumen-costos-bioenlace.md § Composición del COGS](../resumen-costos-bioenlace.md#composición-del-cogs-qué-pesa-en-el-costo). Ordenado por impacto sobre el COGS ambulatorio (0,0085/atención):
 
 | Palanca | Componente y peso | Efecto estimado / atención | Detalle |
 |---------|-------------------|----------------------------|---------|
-| Recalibrar el presupuesto de chat a lo medido (0,0048 → ~0,0038) | Chat **51,6 %** | **−0,0010** (−11 % del COGS AMB) | [costos-api §1](../costos-api.md#1-conversación-con-el-paciente-chat-asistente) — decisión de pricing, no de producto |
+| Recalibrar el presupuesto de chat a lo medido (0,0048 → ~0,0038) | Chat **56,5 %** | **−0,0010** (−12 % del COGS AMB) | [costos-api §1](../costos-api.md#1-conversación-con-el-paciente-chat-asistente) — decisión de pricing, no de producto |
 | Activar caché de aplicación y dedup (hoy desactivados por param) | Chat | evita llamadas repetidas; hit rate alto solo en contextos repetitivos | [cache-aplicacion.md](cache-aplicacion.md), [uso-condicional-ia.md](uso-condicional-ia.md) |
-| Más cobertura de STT on-device y dictado de 4 min | Dictado **26,9 %** · EMER/IMP **~50 %** | **−0,0005** por los 4 min; hasta −30 % del STT si sube la cobertura on-device | [stt.md](stt.md) |
-| Audio de motivos transcrito en el dispositivo (baja el share que va a Groq) | Motivos **15,1 %** | **−0,0003** por cada 10 puntos de share menos en AMB | [motivos-consulta.md](motivos-consulta.md) |
+| Más cobertura de STT on-device y dictado de 4 min | Dictado **29,4 %** · EMER/IMP **~68 %** | **−0,0005** por los 4 min; hasta −30 % del STT si sube la cobertura on-device | [stt.md](stt.md) |
 | Archivo de video: 1 pista y audio+transcript en frío | Add-on video **57,1 %** | **−0,0012** o más; lo decide la política de archivo, no la retención caliente | [videollamadas.md](videollamadas.md) |
-| Fusionar análisis + codificación en una sola llamada | Captura IA **6,5 %** | **−0,0001** (riesgo de calidad; medir antes) | [costos-api §4](../costos-api.md#4-captura-clínica-encounter) |
+| Fusionar análisis + codificación en una sola llamada | Captura IA **7,1 %** | **−0,0001** (riesgo de calidad; medir antes) | [costos-api §4](../costos-api.md#4-captura-clínica-encounter) |
 
-Acumulado realista en ambulatorio: **~0,0019/atención** (COGS **0,0093 → 0,0074**, −20 %), que a 500 atenciones y con el margen de lista vigente son **~USD 0,95 de COGS** y **~USD 3,2 de precio** por profesional/mes. Bajar COGS no cambia el margen porcentual: cambia el precio absoluto.
+Acumulado realista en ambulatorio: **~0,0015/atención** (COGS **0,0085 → 0,0070**, −18 %). Bajar COGS no cambia el margen porcentual: cambia el precio absoluto.
+
+**Motivos ya no aporta palancas de STT**: el flujo es un cuestionario con opciones (sin audio) y su único costo es la IA del lote — [motivos-consulta.md](motivos-consulta.md).
 
 ## Relacionado
 

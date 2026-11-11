@@ -113,14 +113,15 @@ Código: [`ChatRouter.php`](../../../../web/common/components/Platform/Assistant
 
 ## Caso 2 — Motivos de consulta (lote)
 
-`AppointmentReasonBatchService`: 1× `motivos-consulta-batch` por encounter; transcript único + **contexto clínico acotado** (`PatientAiContextService`, perfil `motivos`).
+`AppointmentReasonBatchService`: 1× `motivos-consulta-batch` por encounter; junta **triage de reserva + mensajes al asistente + respuestas del cuestionario** y **contexto clínico acotado** (`PatientAiContextService`, perfil `motivos`). **Sin STT**: no hay audio que transcribir.
 
 | Estrategia | Aplica |
 |------------|--------|
 | Implícito | Poco (plantilla + contexto variable por paciente; ~**25 %** input cacheado en COGS favorable) |
 | Explícito / simulado | No rentable (1 uso por consulta) |
 | Caché app | Casi no |
-| Producto | **Idempotencia** (`motivos_ia_processed_at`) |
+| Producto | **Idempotencia** (`motivos_ia_processed_at`); cuestionario con opciones acota el input |
+| **Sin STT** | El flujo dejó de transcribir audio: se eliminó el costo de voz del paciente |
 
 ---
 
@@ -170,7 +171,7 @@ Prompt: `Encounter/Prompts/automatic-coding.yaml` + texto del encounter + contex
 | Caso | Contextos (`IAManager`) | Palanca principal hoy | Context caching (COGS) |
 |------|-------------------------|------------------------|-------------------------|
 | 1 Chat paciente | `asistente-preprocess`, `asistente-guide` | Preprocess + 2.ª IA guide con **historial acotado** | ~**40 %** preprocess · ~**40 %** guide — [costos-api §1](../costos-api.md#1-conversación-con-el-paciente) |
-| 2 Motivos | `motivos-consulta-batch`, `motivos-consulta-insights` (+ STT) | 1 lote + idempotencia; **subir modelo** solo en insights — [proveedor-modelo-tokens](proveedor-modelo-tokens.md) | ~**25 %** favorable |
+| 2 Motivos | `motivos-consulta-batch`, `motivos-consulta-insights` (sin STT) | 1 lote + idempotencia; **subir modelo** solo en insights — [proveedor-modelo-tokens](proveedor-modelo-tokens.md) | ~**25 %** favorable |
 | 3 Médico | `analisis-consulta`, `encounter-codificacion-automatica` (+ STT) | SymSpell + analizar + codificar al guardar | ~**25 %** favorable |
 | 4 Onboarding | mismo asistente | Reglas / FAQ | No priorizar |
 

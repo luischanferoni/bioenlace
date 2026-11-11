@@ -221,10 +221,10 @@ El chat de **motivos** no es el mismo hilo que el asistente general. El cuestion
 
 | ✓   | Tipo                    | Ejemplo                                           | Cobertura    | Qué deberías ver                            |
 | --- | ----------------------- | ------------------------------------------------- | ------------ | ------------------------------------------- |
-| [ ] | Contar el motivo        | *«Voy por el dolor de rodilla que no se me pasa»* | **Pantalla** | Chat de motivos en la ventana (~4 h antes)  |
-| [ ] | Completar intake        | *«Las preguntas de antes de la consulta»*         | **Pantalla** | Formulario previo al chat de motivos        |
+| [ ] | Contar el motivo        | *«Voy por el dolor de rodilla que no se me pasa»* | **Pantalla** | Cuestionario de motivos en la ventana (~4 h antes) |
+| [ ] | Responder el cuestionario | *«Las preguntas de antes de la consulta»*        | **Pantalla** | Bot con preguntas de opciones; «Otra» acotada y cierre final |
 | [ ] | Cuestionario de cohorte | *«Las preguntas del control de hipertensión»*     | **Pantalla** | Pack de asistencia si hay cohorte           |
-| [ ] | Ventana cerrada         | *«No me deja cargar motivos»*                     | **Hoy**      | Mensaje de fuera de ventana; no error crudo |
+| [ ] | Ventana cerrada         | *«No me deja responder los motivos»*              | **Hoy**      | Mensaje de fuera de ventana; no error crudo |
 
 
 **1.** enviá · **2.** enviá (el 1 es en el **chat de motivos** o con un turno ya listado).
@@ -232,7 +232,7 @@ El chat de **motivos** no es el mismo hilo que el asistente general. El cuestion
 
 | ✓   | Tipo             | Ejemplo (pegar / enviar)                                                                        | Cobertura              | Qué deberías ver                               |
 | --- | ---------------- | ----------------------------------------------------------------------------------------------- | ---------------------- | ---------------------------------------------- |
-| [ ] | Audio de motivos | 1. *«Voy por el dolor de rodilla que no se me pasa»* 2. *«Te mando un audio de lo que me pasa»* | **Pantalla**           | Se guarda en el hilo de motivos                |
+| [ ] | Respuesta libre acotada | 1. *«Voy por el dolor de rodilla que no se me pasa»* 2. *«Quiero agregar que empeora al subir escaleras»* | **Pantalla**           | Se guarda como respuesta del cuestionario (sólo «Otra» y cierre libre) |
 | [ ] | Ya lo dije       | 1. *(enviaste motivos)* 2. *«¿El médico va a ver lo que escribí?»*                              | **Hoy** / **Pantalla** | Sí: el equipo lo ve en historia clínica        |
 | [ ] | Preparación      | 1. *«¿Qué turnos tengo?»* 2. *«¿Tengo que ir en ayunas?»*                                       | **Fuera**              | No inventar indicación; puede estar en el pack |
 

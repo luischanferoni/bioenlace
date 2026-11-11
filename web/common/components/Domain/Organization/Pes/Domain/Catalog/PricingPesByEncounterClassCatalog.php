@@ -28,7 +28,7 @@ final class PricingPesByEncounterClassCatalog
     public static function config(): array
     {
         return [
-        'version' => 12,
+        'version' => 13,
         'currency' => 'USD',
         'billing_period' => 'month',
         'tax_note' => 'El total mensual incluye IVA.',
@@ -52,12 +52,7 @@ final class PricingPesByEncounterClassCatalog
         'cogs_assumptions' => [
             'patient_chat_messages_budget' => 10,
             'patient_chat_note' => 'Cupo de 10 msgs alrededor del turno para prompts más largos y posibles múltiples llamadas IA; no implica uso pleno en cada mensaje.',
-            'motivos_audio_share_by_class' => [
-                'AMB' => 0.3,
-                'EMER' => 0.45,
-                'IMP' => 0.5,
-            ],
-            'motivos_audio_note' => 'Share de atenciones con audio en motivos/notas de voz. AMB ~30%; EMER ~45% (triaje y pases); IMP ~50% (enfermería y otros roles además del médico). Resto texto.',
+            'motivos_note' => 'Motivos de consulta sin audio ni STT: cuestionario con opciones, triage de reserva y mensajes al asistente; 1 resumen + insights por consulta. Mismo costo en AMB/EMER/IMP.',
             'videollamada_share' => 0.4,
             'videollamada_note' => 'Planificación: ~40% de atenciones ambulatorias por videollamada cuando el add-on está contratado (12 min, 2 participantes). COGS infra+storage escalado desde el techo @ 80%.',
             'dictado_minutes' => 5,
@@ -66,11 +61,11 @@ final class PricingPesByEncounterClassCatalog
         ],
         'cogs_usd_per_encounter' => [
             'patient_chat_amb' => 0.0048,
-            'motivos_audio' => 0.0014,
-            'motivos_audio_by_class' => [
-                'AMB' => 0.0014,
-                'EMER' => 0.0018,
-                'IMP' => 0.0019,
+            'motivos' => 0.0006,
+            'motivos_by_class' => [
+                'AMB' => 0.0006,
+                'EMER' => 0.0006,
+                'IMP' => 0.0006,
             ],
             'captura_ia' => 0.0006,
             'videollamada' => 0.0044,
@@ -265,7 +260,7 @@ final class PricingPesByEncounterClassCatalog
                 'margin_after_iibb_ganancias_percent' => 37.5,
             ],
         ],
-        'cogs_source' => 'docs/negocio/costos/costos-api.md — conversación del paciente con costo AMB conservador para preprocess + guide con adjuntos e historial; motivos audio por clase; dictado incluido',
+        'cogs_source' => 'docs/negocio/costos/costos-api.md — conversación del paciente con costo AMB conservador para preprocess + guide con adjuntos e historial; motivos sin audio (cuestionario pre-turno); dictado incluido',
         /*
          * Addons por clase de atención. Cada addon declara su estado por clase:
          *   included    → viene incluido en el precio (se muestra con tilde, sin control)
@@ -313,7 +308,7 @@ final class PricingPesByEncounterClassCatalog
                     1 => 'Captura clínica AMB',
                     2 => 'App paciente (turnos)',
                     3 => 'Chat paciente alrededor del turno (hasta 10 mensajes)',
-                    4 => 'Motivos de consulta (audio según uso real)',
+                    4 => 'Motivos de consulta (cuestionario pre-turno)',
                 ],
                 'product_gates' => [
                     0 => 'session_encounter_class',
@@ -329,7 +324,7 @@ final class PricingPesByEncounterClassCatalog
                     0 => 'Horario de presencia EMER',
                     1 => 'Tablero de guardia',
                     2 => 'Captura clínica EMER',
-                    3 => 'Motivos de consulta (audio según uso real)',
+                    3 => 'Motivos de consulta (cuestionario pre-turno)',
                 ],
                 'product_gates' => [
                     0 => 'session_encounter_class',
@@ -345,7 +340,7 @@ final class PricingPesByEncounterClassCatalog
                     0 => 'Horario de presencia IMP',
                     1 => 'Mapa de camas',
                     2 => 'Captura / evoluciones',
-                    3 => 'Motivos de consulta (audio según uso real)',
+                    3 => 'Motivos de consulta (cuestionario pre-turno)',
                 ],
                 'product_gates' => [
                     0 => 'session_encounter_class',

@@ -28,18 +28,18 @@ class PricingPesByEncounterClassTest extends Unit
 
     public function testUnitCogsPerEncounter(): void
     {
-        // AMB: chat 0.0048 + motivos 0.0014 + captura 0.0006 + dictado 0.0025 = 0.0093
-        $this->assertSame(0.0093, PricingPesByEncounterClassMetadata::unitCogsPerEncounter(false, false, 'AMB'));
-        $this->assertSame(0.0093, PricingPesByEncounterClassMetadata::unitCogsPerEncounter(true, false, 'AMB'));
-        // AMB + video: 0.0093 + 0.0044 = 0.0137
-        $this->assertSame(0.0137, PricingPesByEncounterClassMetadata::unitCogsPerEncounter(false, true, 'AMB'));
-        // EMER: motivos 0.0018 (45%) + captura 0.0006 + dictado 0.0025 = 0.0049
-        $this->assertSame(0.0049, PricingPesByEncounterClassMetadata::unitCogsPerEncounter(false, false, 'EMER'));
-        // IMP: motivos 0.0019 (50%) + captura 0.0006 + dictado 0.0025 = 0.0050
-        $this->assertSame(0.0050, PricingPesByEncounterClassMetadata::unitCogsPerEncounter(false, false, 'IMP'));
-        $this->assertSame(0.0014, PricingPesByEncounterClassMetadata::motivosAudioCogsPerEncounter('AMB'));
-        $this->assertSame(0.0018, PricingPesByEncounterClassMetadata::motivosAudioCogsPerEncounter('EMER'));
-        $this->assertSame(0.0019, PricingPesByEncounterClassMetadata::motivosAudioCogsPerEncounter('IMP'));
+        // AMB: chat 0.0048 + motivos 0.0006 + captura 0.0006 + dictado 0.0025 = 0.0085
+        $this->assertSame(0.0085, PricingPesByEncounterClassMetadata::unitCogsPerEncounter(false, false, 'AMB'));
+        $this->assertSame(0.0085, PricingPesByEncounterClassMetadata::unitCogsPerEncounter(true, false, 'AMB'));
+        // AMB + video: 0.0085 + 0.0044 = 0.0129
+        $this->assertSame(0.0129, PricingPesByEncounterClassMetadata::unitCogsPerEncounter(false, true, 'AMB'));
+        // EMER: motivos 0.0006 + captura 0.0006 + dictado 0.0025 = 0.0037
+        $this->assertSame(0.0037, PricingPesByEncounterClassMetadata::unitCogsPerEncounter(false, false, 'EMER'));
+        // IMP: mismo costo, sin audio en motivos
+        $this->assertSame(0.0037, PricingPesByEncounterClassMetadata::unitCogsPerEncounter(false, false, 'IMP'));
+        $this->assertSame(0.0006, PricingPesByEncounterClassMetadata::motivosCogsPerEncounter('AMB'));
+        $this->assertSame(0.0006, PricingPesByEncounterClassMetadata::motivosCogsPerEncounter('EMER'));
+        $this->assertSame(0.0006, PricingPesByEncounterClassMetadata::motivosCogsPerEncounter('IMP'));
     }
 
     public function testVolumeDiscountTiersByAttentions(): void
@@ -53,36 +53,36 @@ class PricingPesByEncounterClassTest extends Unit
 
     public function testEstimateMonthlyTotalByAttentions(): void
     {
-        // 20.000 AMB, tramo grande: unit 0.0218 × 20000 = 436
+        // 20.000 AMB, tramo grande: unit 0.0199 × 20000 = 398
         $total = PricingPesByEncounterClassMetadata::estimateMonthlyTotal(
             ['AMB' => 20000],
             true,
             false
         );
-        $this->assertSame(436.0, $total);
+        $this->assertSame(398.0, $total);
         $quote = PricingPesByEncounterClassMetadata::estimateMonthlyQuote(['AMB' => 20000], true, false);
-        $this->assertSame(620.0, $quote['list_amount_usd']);
-        $this->assertSame(184.0, $quote['discount_amount_usd']);
+        $this->assertSame(566.0, $quote['list_amount_usd']);
+        $this->assertSame(168.0, $quote['discount_amount_usd']);
         $this->assertSame(29.7, $quote['discount_percent']);
     }
 
     public function testFullTimeProfessionalPrice(): void
     {
-        // Jornada completa = 500 atenciones → ~USD 15,50
+        // Jornada completa = 500 atenciones → ~USD 14,15
         $quote = PricingPesByEncounterClassMetadata::estimateMonthlyQuote(
             ['AMB' => 500],
             true,
             false
         );
-        $this->assertSame(15.5, $quote['amount_usd']);
+        $this->assertSame(14.15, $quote['amount_usd']);
         $this->assertSame(500, $quote['total_attentions']);
         $this->assertSame([
             'code' => 'AMB',
             'attentions_per_month' => 500,
-            'unit_amount_usd' => 0.031,
-            'amount_usd' => 15.5,
+            'unit_amount_usd' => 0.0283,
+            'amount_usd' => 14.15,
         ], $quote['items'][0]);
-        $this->assertSame(15.5, $quote['list_amount_usd']);
+        $this->assertSame(14.15, $quote['list_amount_usd']);
         $this->assertSame(0.0, $quote['discount_amount_usd']);
         $this->assertSame(0.0, $quote['discount_percent']);
         $this->assertSame(500.0, PricingPesByEncounterClassMetadata::referenceEncountersPerMonth());
@@ -92,15 +92,15 @@ class PricingPesByEncounterClassTest extends Unit
 
     public function testHalfTimeProfessionalPrice(): void
     {
-        // Media jornada = 250 atenciones → ~USD 7,75
+        // Media jornada = 250 atenciones → ~USD 7,08
         $quote = PricingPesByEncounterClassMetadata::estimateMonthlyQuote(
             ['AMB' => 250],
             true,
             false
         );
-        $this->assertSame(7.75, $quote['amount_usd']);
+        $this->assertSame(7.08, $quote['amount_usd']);
         $this->assertSame(250, $quote['total_attentions']);
-        $this->assertSame(0.031, $quote['items'][0]['unit_amount_usd']);
+        $this->assertSame(0.0283, $quote['items'][0]['unit_amount_usd']);
     }
 
     public function testDictadoMinutesDriveSttCogs(): void

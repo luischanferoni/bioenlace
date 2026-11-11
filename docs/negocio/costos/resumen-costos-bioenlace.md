@@ -10,7 +10,7 @@ Todo se expresa **por profesional y por mes**, siguiendo el recorrido del pacien
 | Escala de referencia    | **5.000 profesionales**                                                         |
 | Consultas atendidas     | **500 por mes** cada uno (25 por día × 20 días; 15 min por atención ≈ 6 h 15 de consulta + ~1 h 45 administrativas). Media jornada: **250/mes** |
 | Conversaciones con el paciente    | **10 mensajes** por consulta ambulatoria (alrededor del turno) |
-| Motivos de consulta | **Siempre con audio** (~4 min voz paciente) + **1 resumen automático** + insights por consulta |
+| Motivos de consulta | **Cuestionario con opciones antes del turno** (sin audio) + **1 resumen automático** + insights por consulta |
 | Captura del médico      | **Siempre audio** — **~5 minutos** de voz del profesional por consulta + análisis del texto   |
 | Fotos clínicas          | **2 por consulta** — hoy **sin costo** en el presupuesto (dentro de franquicia) |
 | Videollamada            | **40 %** de las consultas ambulatorias (cuando el add-on está contratado), **12 minutos**, paciente y médico; COGS add-on **2,19**/prof/mes (**0,0044**/atención a 500 atenciones) |
@@ -42,27 +42,25 @@ El paciente escribe en el chat de la app: turnos, síntomas, dudas o saludos.
 
 ### 2. Motivos de consulta (antes de la atención)
 
-Chat aparte donde el paciente deja **por qué viene**, en texto, audio o fotos, hasta **10 minutos** antes del turno. **No** se analiza cada mensaje al instante; al cerrar el plazo se genera **un solo resumen** para el médico.
+Chat aparte donde el paciente responde **por qué viene** con **preguntas de opción múltiple** (una opción «Otra» acotada por pregunta y un cierre libre de 320 caracteres), hasta **10 minutos** antes del turno. **No** se analiza cada respuesta al instante; al cerrar el plazo se genera **un solo resumen** para el médico. **No hay audio ni transcripción.**
 
 **Paso a paso**
 
-1. El paciente escribe o graba en el chat de motivos (puede ser solo texto, o incluir audios).
-2. Llegada la hora límite, el sistema junta todo el hilo y añade un **resumen clínico acotado** del paciente (alergias, condiciones, medicación).
+1. El paciente responde el cuestionario; el sistema ya sabe qué contó al **reservar el turno** (triage) y en el **chat del asistente**, y no vuelve a preguntar lo mismo.
+2. Llegada la hora límite, el sistema junta el triage, esos mensajes y las respuestas, y añade un **resumen clínico acotado** del paciente (alergias, condiciones, medicación).
 3. **Una** pasada automática (`motivos-consulta-batch`) redacta el motivo de consulta que verá el médico.
 4. **Otra** pasada (`motivos-consulta-insights`) genera sugerencias orientativas preliminares (hipótesis / prácticas).
 
 **Ejemplo**
 
-- Solo texto: *«Dolor de pecho al subir escaleras»* + *«Ya tuve algo parecido el año pasado»* → resumen en un párrafo.
-- Con audio: el paciente habla ~4 minutos (notas de voz o pista de videollamada) → primero se transcribe → luego el mismo resumen único.
+- El paciente eligió «malestar nuevo → pecho» al reservar y respondió «desde hoy», «empeoró», «dolor en el pecho» y un cierre de dos líneas → resumen en un párrafo con eso, sin repetir preguntas.
 
 **Costo mensual (5.000 profesionales)**
 
 
 | Variante                                   | USD       |
 | ------------------------------------------ | --------- |
-| Motivos **solo texto** (batch + insights)      | **1.375** |
-| Motivos **con audio** (~4 min por consulta)  | **8.562,5** |
+| Motivos (batch + insights, sin STT)        | **1.375** |
 
 
 ---
@@ -98,44 +96,44 @@ Durante o después de la consulta el médico **dicta en voz alta** lo que atendi
 
 Solo costos de **inteligencia artificial y transcripción de voz** (sin videollamada ni impuestos).
 
-### Escenario base (motivos del paciente solo en texto)
+### Escenario base
 
 
 | Concepto                                       | USD       |
 | ---------------------------------------------- | --------- |
 | Conversación con el paciente                   | 9.625     |
-| Motivos de consulta (sin audio, batch + insights) | 1.375     |
+| Motivos de consulta (sin STT, batch + insights) | 1.375     |
 | Captura clínica del médico (siempre con audio)      | 10.562,5  |
 | **Subtotal**                                        | **21.562,5** |
 
 
-### Escenario intensivo (motivos con audio + onboarding)
+### Escenario con onboarding
 
 
 | Concepto                                       | USD       |
 | ---------------------------------------------- | --------- |
 | Conversación con el paciente                   | 9.625     |
-| Motivos de consulta (con audio, ~4 min)        | 8.562,5   |
+| Motivos de consulta (sin STT, batch + insights) | 1.375     |
 | Captura clínica del médico (~5 min + IA)       | 10.562,5  |
 | Onboarding (§3)                                | 875       |
-| **Total**                                      | **29.625** |
+| **Total**                                      | **22.437,5** |
 
 
 ---
 
 ## Composición del COGS (qué pesa en el costo)
 
-Dos vistas separadas: **COGS base por atención** (lo que se vende en cada clase) y el **add-on de videollamada** con su propio desglose. En ambas los % son **sobre el total de su propia configuración**. Escenario base de la lista: chat con el presupuesto comercial conservador, motivos con context caching y blend por clase (AMB 30 % con audio, EMER 45 %, IMP 50 %), dictado con −30 % on-device. Valores: catálogo `PricingPesByEncounterClassCatalog`; fórmula y márgenes en [matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md).
+Dos vistas separadas: **COGS base por atención** (lo que se vende en cada clase) y el **add-on de videollamada** con su propio desglose. En ambas los % son **sobre el total de su propia configuración**. Escenario base de la lista: chat con el presupuesto comercial conservador, motivos **sin audio** (cuestionario pre-turno), dictado con −30 % on-device. Valores: catálogo `PricingPesByEncounterClassCatalog`; fórmula y márgenes en [matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md).
 
 ### COGS base por atención (sin videollamada)
 
 | Componente | Ambulatorio | Urgencia (EMER) | Internación (IMP) |
 |------------|-------------|-----------------|-------------------|
-| Chat del paciente (cupo 10 msgs) | 0,0048 · **51,6 %** | — | — |
-| Motivos de consulta (IA + STT del paciente) | 0,0014 · **15,1 %** | 0,0018 · **36,7 %** | 0,0019 · **38,0 %** |
-| Captura clínica — IA (extracción + codificación) | 0,0006 · **6,5 %** | 0,0006 · **12,2 %** | 0,0006 · **12,0 %** |
-| Dictado — STT del profesional (~5 min) | 0,0025 · **26,9 %** | 0,0025 · **51,0 %** | 0,0025 · **50,0 %** |
-| **Total por atención** | **0,0093** | **0,0049** | **0,0050** |
+| Chat del paciente (cupo 10 msgs) | 0,0048 · **56,5 %** | — | — |
+| Motivos de consulta (IA, sin STT) | 0,0006 · **7,1 %** | 0,0006 · **16,2 %** | 0,0006 · **16,2 %** |
+| Captura clínica — IA (extracción + codificación) | 0,0006 · **7,1 %** | 0,0006 · **16,2 %** | 0,0006 · **16,2 %** |
+| Dictado — STT del profesional (~5 min) | 0,0025 · **29,4 %** | 0,0025 · **67,6 %** | 0,0025 · **67,6 %** |
+| **Total por atención** | **0,0085** | **0,0037** | **0,0037** |
 
 ### Add-on videollamada (40 % teleconsulta)
 
@@ -143,18 +141,18 @@ Dos vistas separadas: **COGS base por atención** (lo que se vende en cada clase
 |------------|----------------|--------------|
 | Sala + TURN + Track Egress + ops (self-host, autoescalado) | 0,0019 | **42,9 %** |
 | Storage (14 d caliente → Deep Archive, 1 copia) | 0,0025 | **57,1 %** |
-| Transcripción | 0 | **0 %** (el STT ya está en dictado / motivos) |
+| Transcripción | 0 | **0 %** (el STT ya está en dictado) |
 | **Total add-on** | **0,0044** | **100 %** |
 
-**La videollamada no encarece el chat.** El chat sigue costando 0,0048 con o sin video; su participación baja de **51,6 % a 35,0 %** solo porque el denominador pasa de 0,0093 a 0,0137 (+47 %). Lo mismo aplica a motivos (15,1 % → 10,2 %), captura (6,5 % → 4,4 %) y dictado (26,9 % → 18,2 %). Para una comparación homogénea, usar la tabla base.
+**La videollamada no encarece el chat.** El chat sigue costando 0,0048 con o sin video; su participación baja de **56,5 % a 37,2 %** solo porque el denominador pasa de 0,0085 a 0,0129 (+52 %). Lo mismo aplica a motivos (7,1 % → 4,7 %), captura (7,1 % → 4,7 %) y dictado (29,4 % → 19,4 %). Para una comparación homogénea, usar la tabla base.
 
 Lectura:
 
-- En **ambulatorio sin video**, el **chat del paciente** es el ítem más pesado (**~52 %**), seguido del **dictado** (**~27 %**); juntos son casi 4 de cada 5 dólares.
-- En **urgencia e internación** (sin chat de paciente), el **dictado** pasa a ser la mitad del costo (**~50 %**) y **motivos** el segundo (**~37 %**).
+- En **ambulatorio sin video**, el **chat del paciente** es el ítem más pesado (**~57 %**), seguido del **dictado** (**~29 %**); juntos son casi 9 de cada 10 dólares.
+- En **urgencia e internación** (sin chat de paciente), el **dictado** es **~68 %** del costo y **motivos** el segundo (**~16 %**).
 - En el **add-on video**, el **storage** pesa más que la sala en vivo (**57 % vs 43 %**): retención y calidad de grabación son la palanca, no el SFU.
-- La **IA de captura** (extracción + codificación) es marginal en todas las clases (**4–12 %**).
-- Cada punto del STT se mueve con dos palancas: minutos dictados (5 → 4 min baja el STT 20 %) y transcripción en el dispositivo (−30 %), ver [estrategias-reduccion/stt.md](estrategias-reduccion/stt.md).
+- La **IA de captura** (extracción + codificación) es marginal en todas las clases (**7–16 %**).
+- Cada punto del STT se mueve con dos palancas: minutos dictados (5 → 4 min baja el STT 20 %) y transcripción en el dispositivo (−30 %), ver [estrategias-reduccion/stt.md](estrategias-reduccion/stt.md). **Motivos ya no aporta minutos de STT.**
 
 > **Por qué no coincide con los totales por capacidad de arriba:** esos totales salen del escenario token a token de [costos-api.md](costos-api.md) (p. ej. chat medido ~0,0038/atención), mientras que esta tabla usa los presupuestos que fija el catálogo comercial para armar el precio de lista (chat AMB **0,0048**/atención, deliberadamente conservador). Misma realidad, dos supuestos: uno mide, el otro presupuesta.
 
@@ -162,7 +160,7 @@ Lectura:
 
 ## Notas
 
-- Por profesional y mes (escenario intensivo, 500 atenciones, sin videollamada): **~USD 5,75 bruto · ~USD 5,37 con caché** (incluye `motivos-consulta-insights`, STT médico ~5 min + paciente ~4 min, y contexto clínico en prompts). Detalle y comparativa DeepSeek: [costos-api.md](costos-api.md).
+- Por profesional y mes (500 atenciones, sin videollamada): **~USD 4,31 bruto · ~USD 3,95 con context caching** (incluye `motivos-consulta-insights` y STT médico ~5 min; motivos sin audio). Detalle y comparativa DeepSeek: [costos-api.md](costos-api.md).
 - **Identidad (Didit):** costo aparte por verificación, no por profesional. Con &lt; 500 altas/mes suele ser **USD 0**; proyección: [costos-didit.md](costos-didit.md).
 - **WhatsApp:** asistente solo si el **paciente inicia** el mensaje (Meta ≈ $0). Plantillas utility **no habilitadas**. IA del chat = misma del §1 / app. Ver [costos-api §7](costos-api.md#7-whatsapp-cloud-api-paciente).
 - No incluye videollamada ni impuestos.

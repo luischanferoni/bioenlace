@@ -103,8 +103,8 @@ Al leer la tabla y el detalle, conviene distinguir cuatro líneas que se repiten
 
 | Plan / alcance (AR) | Para qué | Orden de magnitud (lista, 500 atenciones AMB = jornada completa) |
 | ------------------- | -------- | -------------------------------------------- |
-| AMB sin videollamada | Dictado incluido; agenda, captura clínica y chat | ~**USD 15,50/mes** (media jornada 250: ~USD 7,75); cotización backend |
-| AMB con videollamada | Teleconsulta self-host (§6), STT incluido | ~**USD 22,80/mes** (media jornada 250: ~USD 11,40); cotización backend |
+| AMB sin videollamada | Dictado incluido; agenda, captura clínica y chat | ~**USD 14,15/mes** (media jornada 250: ~USD 7,08); cotización backend |
+| AMB con videollamada | Teleconsulta self-host (§6), STT incluido | ~**USD 21,50/mes** (media jornada 250: ~USD 10,75); cotización backend |
 | Clase EMER / IMP | Tablero guardia / internación | Escala según volumen contratado |
 | Receta electrónica / pack OS | Vías 2 y 5 | Cotización aparte (no en fórmula COGS) |
 

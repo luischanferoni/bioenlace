@@ -44,7 +44,7 @@ Para un cálculo más preciso según el volumen real, pueden usar la <a href="ht
 
 Moneda: **USD**. Los importes se indican **sin IVA**.
 
-El monto es **solo por el canal app paciente** (chat alrededor del turno + motivos con audio según uso real; sin captura clínica del personal). Se cotiza de forma orientativa con **9.000 atenciones / mes** de ambulatorio (promedio estimativo; descuento por volumen **−21 %**, tramo Mediano). Para ajustar el monto: <a href="https://bioenlace.io/precios.html" target="_blank" rel="noopener noreferrer">bioenlace.io/precios.html</a>.
+El monto es **solo por el canal app paciente** (chat alrededor del turno + cuestionario de motivos, sin audio, según uso real; sin captura clínica del personal). Se cotiza de forma orientativa con **9.000 atenciones / mes** de ambulatorio (promedio estimativo; descuento por volumen **−21 %**, tramo Mediano). Para ajustar el monto: <a href="https://bioenlace.io/precios.html" target="_blank" rel="noopener noreferrer">bioenlace.io/precios.html</a>.
 
 ### 3.1 Licencia mensual — app paciente
 

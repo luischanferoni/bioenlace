@@ -21,8 +21,8 @@ class InstitutionalSignupBillingTest extends Unit
                 ],
             ],
         ]);
-        // 5000 × 0.0093 × 2.63 (tramo mediano, redondeo unitario) = 122.50
-        $this->assertSame(122.5, $usd);
+        // 5000 × 0.0085 × 2.63 (tramo mediano, redondeo unitario) = 112.00
+        $this->assertSame(112.0, $usd);
     }
 
     public function testEstimatePlanMonthlyQuoteIncludesClassAndVolumeDiscountBreakdown(): void
@@ -37,15 +37,15 @@ class InstitutionalSignupBillingTest extends Unit
             ],
         ]);
 
-        $this->assertSame(436.0, $quote['amount_usd']);
-        $this->assertSame(620.0, $quote['list_amount_usd']);
-        $this->assertSame(184.0, $quote['discount_amount_usd']);
+        $this->assertSame(398.0, $quote['amount_usd']);
+        $this->assertSame(566.0, $quote['list_amount_usd']);
+        $this->assertSame(168.0, $quote['discount_amount_usd']);
         $this->assertSame(29.7, $quote['discount_percent']);
         $this->assertSame(20000, $quote['total_attentions']);
         $this->assertSame('AMB', $quote['items'][0]['code']);
         $this->assertSame(20000, $quote['items'][0]['attentions_per_month']);
-        $this->assertSame(0.0218, $quote['items'][0]['unit_amount_usd']);
-        $this->assertSame(436.0, $quote['items'][0]['amount_usd']);
+        $this->assertSame(0.0199, $quote['items'][0]['unit_amount_usd']);
+        $this->assertSame(398.0, $quote['items'][0]['amount_usd']);
     }
 
     public function testAvailableCentersRejectOverlongQueryWithoutDatabase(): void

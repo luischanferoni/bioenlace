@@ -109,9 +109,9 @@ description: "Presentación comercial centrada en el recorrido integral de turno
   <div class="timeline-time">Al reservar</div>
   <div class="timeline-item">Se conserva triage, servicio, modalidad y contexto de agenda.</div>
   <div class="timeline-time">Ventana previa</div>
-  <div class="timeline-item">El paciente completa intake, motivos conversacionales y asistencia preconsulta cuando aplica.</div>
+  <div class="timeline-item">El paciente responde el cuestionario de motivos (con opciones, sin audio) y la asistencia preconsulta cuando aplica.</div>
   <div class="timeline-time">Al abrir la historia</div>
-  <div class="timeline-item">El equipo ve preguntas previas, resumen de motivos e información de cohorte.</div>
+  <div class="timeline-item">El equipo ve las respuestas del paciente, el resumen de motivos (deducido también del triage de la reserva) e información de cohorte.</div>
   <div class="timeline-time">Después</div>
   <div class="timeline-item">Touchpoints de seguimiento y acceso a planes de tratamiento.</div>
 </div>
@@ -240,7 +240,7 @@ description: "Presentación comercial centrada en el recorrido integral de turno
 <div class="demo-script">
   <div><strong>Paciente:</strong> iniciar “Necesito atención” y recorrer motivo + triage.</div>
   <div><strong>Reserva:</strong> mostrar cuándo aparece modalidad, elegir centro y horario.</div>
-  <div><strong>Preparación:</strong> abrir el journey y cargar motivos previos.</div>
+  <div><strong>Preparación:</strong> abrir el journey y responder el cuestionario de motivos.</div>
   <div><strong>Personal:</strong> abrir la historia con contexto y simular captura clínica.</div>
   <div><strong>Operación:</strong> mostrar reprogramación, opciones de reubicación u oferta de adelantamiento.</div>
   <div><strong>Dirección:</strong> cerrar con indicadores de agenda y políticas configurables.</div>

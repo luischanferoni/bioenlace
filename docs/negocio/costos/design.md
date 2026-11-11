@@ -10,7 +10,7 @@ Permite decidir **dónde corre el compute** sin mezclar precios de RunPod/GPU co
 
 | Tema | Documento |
 |------|-----------|
-| Flujo de motivos de consulta (una sola pasada IA por consulta, cierre 10 min antes del turno) | [costos-api.md §2](costos-api.md#2-motivos-de-consulta-chat-dedicado-antes-de-la-atención) |
+| Flujo de motivos de consulta (una sola pasada IA por consulta, cierre 10 min antes del turno) | [costos-api.md §2](costos-api.md#2-motivos-de-consulta-cuestionario-y-mensajes-antes-de-la-atención) |
 | Palancas de ahorro por ítem | [estrategias-reduccion/](estrategias-reduccion/README.md) |
 | Mix porcentual del COGS (qué pesa cada componente) | [resumen-costos-bioenlace.md § Composición del COGS](resumen-costos-bioenlace.md#composición-del-cogs-qué-pesa-en-el-costo) |
 | Conversaciones y CLI de prueba | [pruebas-costos-ia.md](pruebas-costos-ia.md) |

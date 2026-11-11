@@ -21,7 +21,7 @@
 | Atenciones | 500 × 5.000 | **2,5 M** (~83.000/día) |
 | Llamadas de IA | ~4.785 por profesional | **~24 M** |
 | Tokens de IA | ~6,06 M por profesional (4,48 M in + 1,58 M out) | **~30,3 B** |
-| Minutos de voz a transcribir | 5 min de dictado + 30 % × 4 min de motivos; el audio del video reemplaza, no suma | **~15,5 M min** |
+| Minutos de voz a transcribir | 5 min de dictado médico; motivos **sin audio** y el audio del video reemplaza, no suma | **~12,5 M min** |
 | Videollamada | 40 % × 12 min | **1,0 M teleconsultas** |
 | Fotos clínicas | 2 por atención | **5,0 M** |
 | Datos nuevos (video 1 pista + fotos + audio + base) | acumulan, no se purgan | **110–220 TB/mes** |
@@ -62,7 +62,7 @@ Cómo se llega a esos números:
 | Ritmo medio de inferencia | 30,3 B tokens ÷ 2,59 M s | **~11.700 tokens/s** |
 | Pico | ×2,5–3,5 | **29.000–41.000 tokens/s** |
 | Rendimiento por GPU, modelo 14B | batch continuo | ~3.000–5.000 tokens/s |
-| STT con Whisper large-v3 | 15,5 M min a 40–60× tiempo real | 6–13 GPU |
+| STT con Whisper large-v3 | 12,5 M min a 40–60× tiempo real | 5–11 GPU |
 
 **La cuenta que importa:** si se autohospedan **LLM 14B y STT**, hacen falta **14–19 L40S**. Como se compran en nodos de 8, eso son **2 nodos (16 placas)** si el rendimiento cae en el extremo bajo, o **3 nodos (24 placas)** para cubrir el extremo alto con redundancia. El capex de §3 usa 3 nodos.
 
@@ -110,7 +110,7 @@ El capex de §3 usa **115.000 por nodo**, en el extremo alto, para no subestimar
 | Costo del nodo | 89.000–116.000 | **36.000–50.000** |
 | Potencia del nodo | 3,4 kW | **1,1 kW** |
 | Velocidad relativa en Whisper | 1× | ~1/3 |
-| Nodos para los 15,5 M min | **1** | **3** (24 placas) |
+| Nodos para los 12,5 M min | **1** | **3** (24 placas) |
 | **Costo total para el mismo trabajo** | **89.000–116.000** | **108.000–150.000** |
 | Potencia total | 3,4 kW | 3,3 kW |
 

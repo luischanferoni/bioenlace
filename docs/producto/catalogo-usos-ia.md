@@ -74,10 +74,10 @@ Detalle de producto: [asistente-y-chat.md](asistente-y-chat.md) · Motor: [arqui
 
 | Paso | Tecnología | Contexto / notas |
 |------|------------|------------------|
-| Guía del chat de motivos (`AppointmentReasonChatGuideCatalog`) | **Sin IA** | Metadata de orientación al chat; no persiste respuestas en encounter |
-| Mensajes del paciente (texto) | Sin IA por mensaje | El chat de motivos no resume en cada nota |
-| Audio en el hilo | STT en servidor (lote) o **futuro** STT en dispositivo | `SpeechToTextManager` en batch; ver [stt.md](../negocio/costos/estrategias-reduccion/stt.md) |
-| Cierre de ventana → resumen | IA | `motivos-consulta-batch` + `PatientAiContextService` (perfil `motivos`) |
+| Cuestionario pre-turno (`AppointmentReasonQuestionnaireCatalog`) | **Sin IA** | Preguntas con opciones, «Otra» acotada y cierre libre; selección según el triage de la reserva |
+| Mensajes del paciente (texto) | Sin IA por mensaje | Nada se resume al instante |
+| Audio | **No aplica** | El flujo retiró audio y STT ([stt.md](../negocio/costos/estrategias-reduccion/stt.md)) |
+| Cierre de ventana → resumen | IA | `motivos-consulta-batch` con triage de reserva + mensajes al asistente + respuestas + `PatientAiContextService` (perfil `motivos`) |
 | Sugerencias para el médico | IA | `motivos-consulta-insights` (diagnósticos/prácticas preliminares) |
 
 ---
@@ -112,8 +112,9 @@ Operación y cron: [asistencia-cohortes.md](asistencia-cohortes.md).
 | Uso | Dónde | Camino feliz |
 |-----|-------|--------------|
 | Dictado médico §4 | `CaptureSpeechInputResolver` | **Edge-Cloud Routing** STT: texto en dispositivo; fallback `SpeechToTextManager` / Groq — ver [stt.md § Edge-Cloud](../negocio/costos/estrategias-reduccion/stt.md#edge-cloud-routing-stt) |
-| Notas de voz en motivos | `AppointmentReasonBatchService` | Hoy STT en servidor al procesar lote |
 | Transcribir audio suelto | `POST /api/v1/audio/transcribir` | Igual política dispositivo → servidor |
+
+**Motivos de consulta no usa STT**: ese flujo es un cuestionario con opciones, sin audio.
 
 ---
 
@@ -131,7 +132,7 @@ Operación y cron: [asistencia-cohortes.md](asistencia-cohortes.md).
 - Pasos de **flujos guiados** del asistente (`SubIntentEngine`) salvo preprocess al reingresar texto.
 - **Match operativo** de intents por keywords (`classifyAmongItems`).
 - Validaciones de negocio, RBAC, persistencia FHIR.
-- Guía de motivos (`AppointmentReasonChatGuideCatalog`) — metadata del chat; sin persistencia en encounter.
+- Guía y cuestionario de motivos (`AppointmentReasonChatGuideCatalog`, `AppointmentReasonQuestionnaireCatalog`) — metadata declarativa; las respuestas se persisten en `interaccion_motivos_cuestionario`, sin IA por respuesta.
 - Gran parte de **corrección ortográfica** previa al análisis de consulta (diccionario local).
 
 ---
@@ -141,7 +142,7 @@ Operación y cron: [asistencia-cohortes.md](asistencia-cohortes.md).
 | Bloque costos-api | Flujos de este catálogo |
 |-------------------|-------------------------|
 | §1 Conversación | `asistente-preprocess`, `asistente-guide`, `intent-engine-classification` (anexo) |
-| §2 Motivos | `motivos-consulta-batch`, `motivos-consulta-insights`, STT motivos |
+| §2 Motivos | `motivos-consulta-batch`, `motivos-consulta-insights` (sin STT) |
 | §3 Onboarding | `asistente-onboarding` (metadata; código: preprocess/conversacional) |
 | §4 Captura | `analisis-consulta`, `encounter-codificacion-automatica`, STT captura |
 | Anexo care packs | `care-pack-*-batch`, `care-pack-vertex-batch` |

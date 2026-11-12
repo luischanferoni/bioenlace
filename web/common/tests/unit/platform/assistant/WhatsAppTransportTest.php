@@ -4,7 +4,8 @@ namespace common\tests\unit\platform\assistant;
 
 use Codeception\Test\Unit;
 use common\components\Platform\Assistant\WhatsApp\WhatsAppEnvelopeRenderer;
-use common\components\Platform\Assistant\WhatsApp\WhatsAppIdentityService;
+use common\components\Platform\Assistant\WhatsApp\WhatsAppLinkToken;
+use common\models\Integrations\AsistenteWhatsappVinculo;
 
 class WhatsAppTransportTest extends Unit
 {
@@ -25,12 +26,28 @@ class WhatsAppTransportTest extends Unit
         $this->assertNull(WhatsAppEnvelopeRenderer::decodeCallbackPayload('plain'));
     }
 
-    public function testPhoneMatchNormalizesSuffix(): void
+    public function testVinculoStatesAreClosed(): void
     {
-        $this->assertTrue(WhatsAppIdentityService::phonesMatch('5491112345678', '01112345678'));
-        $this->assertTrue(WhatsAppIdentityService::phonesMatch('5491112345678', '5491112345678'));
-        $this->assertTrue(WhatsAppIdentityService::phonesMatch('5493854336246', '543854336246'));
-        $this->assertFalse(WhatsAppIdentityService::phonesMatch('5491112345678', '5491199999999'));
-        $this->assertSame('5491112345678', WhatsAppIdentityService::digitsOnly('+54 9 11 1234-5678'));
+        $this->assertSame(
+            [
+                AsistenteWhatsappVinculo::ESTADO_PENDIENTE_VERIFICACION,
+                AsistenteWhatsappVinculo::ESTADO_ACTIVO,
+                AsistenteWhatsappVinculo::ESTADO_RECHAZADO,
+                AsistenteWhatsappVinculo::ESTADO_BLOQUEADO,
+                AsistenteWhatsappVinculo::ESTADO_EXPIRADO,
+            ],
+            AsistenteWhatsappVinculo::estadoValues()
+        );
+    }
+
+    public function testLinkTokenIsHashedAndSingleUseReady(): void
+    {
+        $generated = WhatsAppLinkToken::generate(600);
+
+        $this->assertSame(64, strlen($generated['token']));
+        $this->assertSame(hash('sha256', $generated['token']), $generated['hash']);
+        $this->assertFalse(WhatsAppLinkToken::isExpired($generated['expires_at']));
+        $this->assertTrue(WhatsAppLinkToken::isExpired(date('Y-m-d H:i:s', time() - 1)));
+        $this->assertTrue(WhatsAppLinkToken::isExpired(null));
     }
 }

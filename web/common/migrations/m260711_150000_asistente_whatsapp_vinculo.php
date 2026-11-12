@@ -23,7 +23,7 @@ class m260711_150000_asistente_whatsapp_vinculo extends Migration
                 'user_id' => $this->integer()->null(),
                 'id_persona' => $this->integer()->null(),
                 'estado' => MigrationEnumColumn::mysqlEnum(
-                    AsistenteWhatsappVinculo::estadoValues(),
+                    ['PENDIENTE_CONFIRMACION', 'ACTIVO', 'RECHAZADO'],
                     AsistenteWhatsappVinculo::ESTADO_PENDIENTE_CONFIRMACION,
                     true,
                     'PENDIENTE_CONFIRMACION|ACTIVO|RECHAZADO'

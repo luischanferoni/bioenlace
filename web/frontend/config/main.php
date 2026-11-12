@@ -116,6 +116,10 @@ return [
                 'POST alta/telefono/<id:[a-f0-9]{32}>/didit' => 'alta/telefono-didit',
                 'GET alta/telefono/<id:[a-f0-9]{32}>' => 'alta/telefono',
                 'alta/vinculo/<token:[a-f0-9]{32}>' => 'alta/vinculo',
+                // Verificación de identidad del canal WhatsApp (enlace enviado por el asistente).
+                'GET whatsapp-verificacion/<token:[a-f0-9]{64}>/retorno' => 'whatsapp-verification/verificar-retorno',
+                'POST whatsapp-verificacion/<token:[a-f0-9]{64}>/didit' => 'whatsapp-verification/verificar-didit',
+                'GET whatsapp-verificacion/<token:[a-f0-9]{64}>' => 'whatsapp-verification/verificar',
                 'GET robots.txt' => 'site/robots-txt',
                 'turno/resolucion/<token:[\w\.\-\_=]+>' => 'turno-public/resolucion',
                 'site/inicio' => 'site/sesion-operativa',

@@ -10,6 +10,7 @@ Estimación y estrategias de ahorro en dos ejes: **infra propia (GPU)** y **APIs
 | [infra-estrategias.md](infra-estrategias.md) | Estrategias infra |
 | [costos-api.md](costos-api.md) | Costos APIs (Gemini Flash Lite, comparativa DeepSeek, Groq STT, Vision, WhatsApp reactivo §7; catálogo de contextos) |
 | [costos-didit.md](costos-didit.md) | Didit — KYC y biometría remota (proyección por altas y reingresos) |
+| [costos-whatsapp.md](costos-whatsapp.md) | Add-on WhatsApp — mensajes proactivos, step-up Didit y política de datos sensibles |
 | [analisis-videollamada-self-host.md](analisis-videollamada-self-host.md) | Self-host; Track Egress muxing 1/4/12; 14 d → Deep Archive; COGS video **2,19** @ **40 %** |
 | [analisis-centro-datos-propio.md](analisis-centro-datos-propio.md) | Hardware comprado a 5.000 prof. con **LLM 14B**: GPU (IA) vs medios, capex, +43–67 % vs hoy; solo se justifica comprar GPU para STT |
 | [resumen-costos-bioenlace.md](resumen-costos-bioenlace.md) | Resumen de costos APIs (5.000 prof., sin jerga técnica) |
@@ -21,5 +22,6 @@ Estimación y estrategias de ahorro en dos ejes: **infra propia (GPU)** y **APIs
 
 - [matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md) — de COGS a precio lista (margen + add-ons)
 - [producto/asistente-y-chat.md](../../producto/asistente-y-chat.md) — asistente + WhatsApp (solo iniciado por paciente)
+- [costos-whatsapp.md](costos-whatsapp.md) — análisis del add-on opcional de WhatsApp proactivo
 - [producto/turnos.md](../../producto/turnos.md) — notificaciones (push; WhatsApp utility no habilitado)
 - [producto/apps-paciente-personalsalud.md](../../producto/apps-paciente-personalsalud.md)

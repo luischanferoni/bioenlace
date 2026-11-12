@@ -390,6 +390,8 @@ Misma superficie de asistente que la **app móvil paciente**: mismo `ChatOrchest
 
 Referencia de tarifas (por si se reabre utility en el futuro): [Meta WhatsApp pricing](https://developers.facebook.com/docs/whatsapp/pricing/) + rate card USD. Utility dentro de CSW también es $0; el costo aparece al enviar plantillas **fuera** de ventana.
 
+> **Actualización 2026-11-12:** desde el **1/10/2026** Meta cobra los mensajes **service** después de **1.000 por número por mes**; la ventana de 24 h ya no es gratis en todos los casos. El add-on proactivo opcional (plantillas, step-up Didit, política de datos sensibles) se analiza en [costos-whatsapp.md](costos-whatsapp.md).
+
 ---
 
 ## Anexo A — `intent-engine-classification` (fuera del total Apartado 1)

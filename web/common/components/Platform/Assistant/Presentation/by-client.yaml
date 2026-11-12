@@ -56,3 +56,26 @@ messages:
   intent_not_allowed:
     default: "Entendí tu pedido, pero desde tu cuenta no podés hacer ese trámite acá. Si creés que debería estar disponible, consultá en tu centro de salud."
     whatsapp_paciente: "Entendí lo que pedís, pero con esta cuenta no puedo abrir ese trámite. Si necesitás ayuda, escribinos o consultá en tu centro."
+
+  # Verificación de identidad del canal WhatsApp (vínculo y step-up).
+  whatsapp_link_required:
+    default: "Para usar Bioenlace por WhatsApp necesitás verificar tu identidad. Abrí este enlace: {url}"
+    whatsapp_paciente: "Para usar Bioenlace por WhatsApp, verificá tu identidad acá: {url}"
+  whatsapp_link_ready:
+    default: "Listo, tu WhatsApp quedó vinculado."
+  whatsapp_link_no_account:
+    default: "No encontramos una cuenta con tus datos. Instalá la app Bioenlace, cargá este teléfono en tu perfil y volvé a escribirnos."
+  whatsapp_link_failed:
+    default: "No pudimos verificar tu identidad. Probá de nuevo o usá la app Bioenlace."
+  whatsapp_link_retry:
+    default: "Todavía no pudimos confirmar la verificación. Abrí el enlace de nuevo en unos segundos."
+  whatsapp_link_invalid:
+    default: "Este enlace ya no es válido. Escribinos de nuevo para recibir uno nuevo."
+  whatsapp_link_other_number:
+    default: "Este número ya está vinculado a otra cuenta. Usá tu propio número o instalá la app Bioenlace."
+  whatsapp_blocked:
+    default: "No podemos continuar por este número. Usá la app Bioenlace o contactá a tu centro de salud."
+  whatsapp_stepup_required:
+    default: "Para confirmar esta operación necesitás verificar tu identidad. Abrí este enlace: {url}"
+  whatsapp_stepup_failed:
+    default: "No pudimos confirmar tu identidad. La operación no se realizó. Probá de nuevo o usá la app Bioenlace."

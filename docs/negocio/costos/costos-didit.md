@@ -4,6 +4,8 @@
 **Última actualización:** 2026-07-02  
 **Alcance:** verificación de identidad (KYC) y autenticación biométrica remota en app paciente, alta de paciente por staff y login biométrico vía API. **No** incluye huella/Face ID **local** del dispositivo (costo cero).
 
+> **Aviso (2026-11-12):** las tarifas de este documento son de julio 2026. Didit cambió el pricing el **1/11/2026**: el cupo de 500 sesiones gratis pasó a **USD 10 de crédito/mes** (~30 KYC o ~55 biometrías), y una sesión rechazada o abandonada puede contener checks facturables. Las tablas de proyección siguen sirviendo como orden de magnitud, pero **hay que recalibrarlas**. Ver el costo de re-verificación en WhatsApp en [costos-whatsapp.md](costos-whatsapp.md).
+
 Didit es **COGS de identidad**: se factura **por sesión exitosa**, no por profesional ni por consulta. No está mezclado con las tablas por médico de [costos-api.md](costos-api.md); conviene presupuestarlo aparte según **altas de pacientes** y **reingresos** con Didit.
 
 ---

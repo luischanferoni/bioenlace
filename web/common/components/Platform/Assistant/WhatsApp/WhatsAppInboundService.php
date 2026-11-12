@@ -78,10 +78,10 @@ final class WhatsAppInboundService
         $text = $parsed['text'];
         $callback = $parsed['callback'];
 
-        $identityResult = $this->identity->resolveOrBootstrap($waId, $waId, $text);
+        $identityResult = $this->identity->resolveOrBootstrap($waId);
         $status = (string) ($identityResult['status'] ?? '');
 
-        if ($status !== 'linked' && $status !== 'just_linked') {
+        if ($status !== 'linked') {
             $msg = trim((string) ($identityResult['message'] ?? ''));
             if ($msg !== '') {
                 $sent = $this->api->sendText($waId, $msg);
@@ -110,13 +110,13 @@ final class WhatsAppInboundService
 
         $this->setAppClientHeader();
 
-        if ($status === 'just_linked' || !empty($identityResult['menu']) || $this->isMenuCommand($text)) {
+        if (!empty($identityResult['menu']) || $this->isMenuCommand($text)) {
             $intro = trim((string) ($identityResult['message'] ?? ''));
             if ($intro !== '') {
                 $this->api->sendText($waId, $intro);
             }
             $this->sendShortcutsMenu($waId, $userId);
-            if ($status === 'just_linked' || $this->isMenuCommand($text)) {
+            if ($this->isMenuCommand($text)) {
                 return;
             }
         }

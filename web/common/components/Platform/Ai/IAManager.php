@@ -506,7 +506,7 @@ class IAManager
      * @param string $tipoModelo Tipo de modelo para HuggingFace: 'text-generation', 'text-correction', 'analysis'
      * @return array|null
      */
-    public static function consultarIA($prompt, $contexto = 'consulta-general', $tipoModelo = 'text-generation')
+    public static function consultarIA($prompt, $contexto = 'consulta-general', $tipoModelo = 'text-generation', array $meta = [])
     {
         $logger = self::clinicalLogger();
         
@@ -661,6 +661,7 @@ class IAManager
                 return [];
             }
             
+            $aiCallStartedAt = microtime(true);
             BioenlaceDb::releaseConnection();
             try {
                 $response = self::apiClient($proveedorIA['endpoint'], $proveedorIA['tipo'] ?? 'ia')
@@ -677,6 +678,24 @@ class IAManager
                 $responseBody = (string) ($e->responseBody() ?? $e->getMessage());
             } finally {
                 BioenlaceDb::ensureConnection();
+            }
+
+            if (class_exists(\common\components\Platform\Ai\Cost\AIUsageRecorder::class)) {
+                $modeloTelemetria = (string) ($proveedorIA['model'] ?? '');
+                if ($modeloTelemetria === '' && ($proveedorIA['tipo'] ?? '') === 'google') {
+                    $modeloTelemetria = (string) (\Yii::$app->params['vertex_ai_model'] ?? '');
+                }
+                \common\components\Platform\Ai\Cost\AIUsageRecorder::record(
+                    (string) $contexto,
+                    (string) ($proveedorIA['tipo'] ?? 'ia'),
+                    $modeloTelemetria !== '' ? $modeloTelemetria : null,
+                    $tipoModelo,
+                    (string) $responseBody,
+                    (int) round((microtime(true) - $aiCallStartedAt) * 1000),
+                    $statusCode >= 200 && $statusCode < 400,
+                    $meta,
+                    hash('sha256', (string) $prompt)
+                );
             }
 
             if ($response !== null) {
@@ -796,9 +815,9 @@ class IAManager
      * @param string $tipoModelo text-generation | text-correction | analysis
      * @return array|string|null
      */
-    public function consultar($prompt, $contexto = 'consulta-general', $tipoModelo = 'text-generation')
+    public function consultar($prompt, $contexto = 'consulta-general', $tipoModelo = 'text-generation', array $meta = [])
     {
-        return self::consultarIA($prompt, $contexto, $tipoModelo);
+        return self::consultarIA($prompt, $contexto, $tipoModelo, $meta);
     }
 
     /**

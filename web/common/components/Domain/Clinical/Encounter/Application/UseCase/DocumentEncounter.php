@@ -17,6 +17,7 @@ use common\components\Domain\Clinical\Encounter\Application\UseCase\AdvanceCondi
 use common\components\Domain\Clinical\Encounter\Application\UseCase\ApplyEncounterAutomaticCoding;
 use common\components\Domain\Clinical\Encounter\Application\UseCase\AdvanceEncounterLifecycle;
 use common\components\Domain\Clinical\Encounter\Application\Service\EpisodeCaptureDedupService;
+use common\components\Domain\Clinical\Encounter\Application\Service\EncounterCodingJobService;
 use common\components\Domain\Clinical\Encounter\Application\Service\EncounterCapturePersistenceCheck;
 use common\components\Domain\Clinical\CarePlan\Application\UseCase\ManageMedicationRequest;
 use common\components\Domain\Clinical\CarePlan\Application\UseCase\ManageServiceRequest;
@@ -405,43 +406,56 @@ class DocumentEncounter extends Component
                 );
             }
 
-            // Forzar conexión nueva antes de la IA (evita "MySQL server has gone away"
-            // sobre el handle idle y commits fantasmas).
-            try {
-                Yii::$app->db->close();
-            } catch (\Throwable $e) {
-                Yii::warning('encounter.guardar db close pre-coding: ' . $e->getMessage(), 'encounter-doc');
-            }
-
-            $diagnostico['coding'] = ['ok' => true, 'saved' => 0, 'error' => null];
-            try {
-                $savedCoding = ApplyEncounterAutomaticCoding::codeAndPersistForEncounter(
-                    $encounter,
-                    $datosExtraidos,
+            $codingAsync = (bool) (Yii::$app->params['encounter_coding_async_habilitado'] ?? false);
+            if ($codingAsync) {
+                $diagnosisTerms = ApplyEncounterAutomaticCoding::diagnosisTermsFromPayload(
+                    is_array($datosExtraidos) ? $datosExtraidos : [],
                     $configuracion
                 );
-                $savedTreatmentCoding = (new CodeTreatmentRequestSnomed())
-                    ->codeAndPersistForEncounter($encounter);
-                $diagnostico['coding']['diagnosis_saved'] = (int) $savedCoding;
-                $diagnostico['coding']['treatment_request_saved'] = (int) $savedTreatmentCoding;
-                $diagnostico['coding']['saved'] = (int) $savedCoding + (int) $savedTreatmentCoding;
-            } catch (\Throwable $e) {
-                // La documentación clínica ya está committeada; no tumbar el guardar.
-                $diagnostico['coding'] = [
-                    'ok' => false,
-                    'saved' => 0,
-                    'error' => $e->getMessage(),
-                ];
-                Yii::error(
-                    'encounter.guardar coding falló (docs ya persistidas): ' . $e->getMessage(),
-                    'encounter-doc'
-                );
-                $logger->registrar('CODING_ERROR', null, $e->getMessage(), [
-                    'metodo' => 'codeAndPersistForEncounter',
+                $queued = (new EncounterCodingJobService())->enqueue($encounter, $diagnosisTerms);
+                $diagnostico['coding'] = ['ok' => true, 'queued' => $queued, 'saved' => 0, 'error' => null];
+                $logger->registrar('CODING_QUEUED', null, 'job de codificación encolado', [
+                    'metodo' => 'EncounterCodingJobService::enqueue',
                 ]);
+            } else {
+                // Forzar conexión nueva antes de la IA (evita "MySQL server has gone away"
+                // sobre el handle idle y commits fantasmas).
+                try {
+                    Yii::$app->db->close();
+                } catch (\Throwable $e) {
+                    Yii::warning('encounter.guardar db close pre-coding: ' . $e->getMessage(), 'encounter-doc');
+                }
+
+                $diagnostico['coding'] = ['ok' => true, 'saved' => 0, 'error' => null];
+                try {
+                    $savedCoding = ApplyEncounterAutomaticCoding::codeAndPersistForEncounter(
+                        $encounter,
+                        $datosExtraidos,
+                        $configuracion
+                    );
+                    $savedTreatmentCoding = (new CodeTreatmentRequestSnomed())
+                        ->codeAndPersistForEncounter($encounter);
+                    $diagnostico['coding']['diagnosis_saved'] = (int) $savedCoding;
+                    $diagnostico['coding']['treatment_request_saved'] = (int) $savedTreatmentCoding;
+                    $diagnostico['coding']['saved'] = (int) $savedCoding + (int) $savedTreatmentCoding;
+                } catch (\Throwable $e) {
+                    // La documentación clínica ya está committeada; no tumbar el guardar.
+                    $diagnostico['coding'] = [
+                        'ok' => false,
+                        'saved' => 0,
+                        'error' => $e->getMessage(),
+                    ];
+                    Yii::error(
+                        'encounter.guardar coding falló (docs ya persistidas): ' . $e->getMessage(),
+                        'encounter-doc'
+                    );
+                    $logger->registrar('CODING_ERROR', null, $e->getMessage(), [
+                        'metodo' => 'codeAndPersistForEncounter',
+                    ]);
+                }
             }
             $logger->registrar('CHECKPOINT', null, $this->snapshotPersistido($encounter), [
-                'metodo' => 'tras codeAndPersistForEncounter',
+                'metodo' => 'tras codificación (sync/async)',
             ]);
 
             $encounter->refresh();

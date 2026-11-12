@@ -51,6 +51,43 @@ $billable = $resumen['tokens']['billable_input_token_count']; // prompt - cached
 
 Logs: categoría Yii `ia-cost`.
 
+### Telemetría persistente (JSONL + agregado diario)
+
+`AICostTracker` sigue siendo el acumulador en memoria (tests y simulación). Para producción, cada llamada real deja una **línea JSONL** en `@common/runtime/ai-usage/ai-usage-YYYY-MM-DD.jsonl`:
+
+```json
+{"ts":"...","ctx":"analisis-consulta","model":"gemini-2.5-flash-lite",
+ "prompt":1200,"cached":300,"output":600,"thoughts":0,
+ "usd":0.00033,"ms":840,"ok":true,"efector":42,"enc":991,"hash":"sha256:..."}
+```
+
+- **No** guarda prompt ni respuesta: solo contadores, costo, latencia, contexto, efector y hash.
+- No escribe en la BD durante el request; a 38 M llamadas/mes una fila por llamada no escala.
+- Un job nocturno agrega el archivo en `ai_usage_daily` (`fecha × contexto × efector`).
+- El agregado es idempotente: borra las filas del día y las reinserta desde el archivo.
+
+Comandos:
+
+```bash
+php yii ai-usage/aggregate                  # ayer
+php yii ai-usage/aggregate --date=2026-11-12
+php yii ai-usage/aggregate --all
+php yii ai-usage/report --from=2026-11-01 --to=2026-11-30 --group=context
+php yii ai-usage/report --group=efector
+php yii ai-usage/prune --days=30
+php yii ai-usage/status
+```
+
+Activación en `frontend/config/params.php` y `console/config/params.php`:
+
+```php
+'ia_usage_tracking_habilitado' => true,
+'ai_usage_persist_habilitado' => true,
+'ai_usage_log_dir' => '@common/runtime/ai-usage',
+```
+
+`ai_usage_persist_habilitado = false` apaga solo la persistencia; el tracker en memoria sigue.
+
 ## Pruebas sin gastar API
 
 [pruebas-costos-ia.md](../pruebas-costos-ia.md) describe conversaciones JSON y `php yii costos/ejecutar-conversacion`. Esa ruta **simula** IA (`debeSimularIA()`); no mide `cachedContentTokenCount` real.
@@ -66,8 +103,8 @@ cd web && vendor/bin/codecept run unit common/tests/unit/costos/AICostTrackerTes
 | Ítem | Estado |
 |------|--------|
 | Controller CLI/web `costos/ejecutar-conversacion` | Documentado; verificar despliegue en el entorno |
-| Persistencia de métricas (BD, Prometheus) | No implementado; hoy solo memoria del request o resumen en respuesta de prueba |
-| Dashboard por efector | Pendiente |
+| Persistencia de métricas (BD, Prometheus) | **Implementada**: JSONL por llamada + agregado diario `ai_usage_daily` (`ai-usage/aggregate`) |
+| Dashboard por efector | `ai_usage_daily` guarda `id_efector`; falta la vista en admin |
 | Alertas de umbral | Pendiente (ver § gobernanza en [estrategias-api.md](estrategias-api.md)) |
 | Métricas STT (minutos servidor, fallback, calidad device vs server) | Pendiente; definición en [stt.md § Monitoreo](stt.md#monitoreo-pendiente-de-implementación) |
 

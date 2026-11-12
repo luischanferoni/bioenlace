@@ -45,6 +45,22 @@ return [
     'ia_usage_tracking_habilitado' => true,
 
     /**
+     * Codificación clínica diferida: el guardado persiste sin códigos y el
+     * worker `encounter-coding/run` completa diagnóstico, motivos, medicación
+     * y pedidos. **Activar solo cuando el cron esté configurado**; con el flag
+     * en false se mantiene el camino sync actual. Rollback: volver a false.
+     */
+    'encounter_coding_async_habilitado' => false,
+
+    /**
+     * Telemetría de tokens: una línea JSONL por llamada real (sin prompt ni
+     * respuesta) + agregado diario en `ai_usage_daily`.
+     * Cron: php yii ai-usage/aggregate (ver docs/operacion/cron-produccion-hostinger.md).
+     */
+    'ai_usage_persist_habilitado' => true,
+    'ai_usage_log_dir' => '@common/runtime/ai-usage',
+
+    /**
      * Simula cachedContents en local: systemInstruction estable + user variable, registro en memoria
      * y estimación de cachedContentTokenCount si la API no devuelve hits aún.
      */

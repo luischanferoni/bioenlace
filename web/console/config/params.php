@@ -12,6 +12,9 @@ return [
     'ia_proveedor' => 'google',
     'vertex_ai_model' => 'gemini-2.5-flash-lite',
     'ia_usage_tracking_habilitado' => true,
+    'encounter_coding_async_habilitado' => false,
+    'ai_usage_persist_habilitado' => true,
+    'ai_usage_log_dir' => '@common/runtime/ai-usage',
 
     /**
      * Cola care-pack: generación sync, submit/poll Vertex, touchpoints followup.

@@ -54,6 +54,67 @@ final class ApplyEncounterAutomaticCoding
     }
 
     /**
+     * Términos de diagnóstico sin código, para el job diferido.
+     *
+     * @param array<string, mixed> $datosExtraidos
+     * @return list<string>
+     */
+    public static function diagnosisTermsFromPayload(
+        array $datosExtraidos,
+        ?EncounterDefinition $configuracion = null
+    ): array {
+        $terms = [];
+        foreach (self::extractDiagnosisRows($datosExtraidos, $configuracion) as $row) {
+            $term = self::rowTerm($row);
+            if ($term === '') {
+                continue;
+            }
+            $hasCode = trim((string) ($row['codigo'] ?? $row['codigo_cie10'] ?? $row['cie10'] ?? '')) !== ''
+                || trim((string) ($row['codigo_snomed'] ?? '')) !== '';
+            if ($hasCode) {
+                continue;
+            }
+            $terms[] = $term;
+        }
+
+        return array_values(array_unique($terms));
+    }
+
+    /**
+     * Codifica diagnósticos a partir de términos ya extraídos (camino diferido).
+     *
+     * @param list<string> $diagnosisTerms
+     */
+    public static function codeAndPersistForEncounterTerms(Encounter $encounter, array $diagnosisTerms): int
+    {
+        if (!(Yii::$app->params['encounter_auto_codificacion_habilitada'] ?? true)) {
+            return 0;
+        }
+
+        $terms = [];
+        foreach ($diagnosisTerms as $term) {
+            $term = trim((string) $term);
+            if ($term !== '' && !in_array($term, $terms, true)) {
+                $terms[] = $term;
+            }
+        }
+        if ($terms === []) {
+            return 0;
+        }
+
+        $diagnostics = self::inferCodesWithIa(
+            self::buildClinicalTextFromTerms($encounter, $terms),
+            '- ' . implode("\n- ", $terms),
+            (int) $encounter->subject_persona_id
+        );
+        if ($diagnostics === []) {
+            return 0;
+        }
+
+        return self::persistDiagnostics($encounter, $diagnostics);
+    }
+
+    /**
      * @param array<string, mixed> $datosExtraidos
      */
     private static function buildClinicalText(
@@ -66,8 +127,16 @@ final class ApplyEncounterAutomaticCoding
             return '';
         }
 
+        return self::buildClinicalTextFromTerms($encounter, $dxTerms);
+    }
+
+    /**
+     * @param list<string> $terms
+     */
+    private static function buildClinicalTextFromTerms(Encounter $encounter, array $terms): string
+    {
         $parts = [];
-        $parts[] = "Diagnósticos a codificar:\n- " . implode("\n- ", $dxTerms);
+        $parts[] = "Diagnósticos a codificar:\n- " . implode("\n- ", $terms);
 
         // Contexto libre solo como apoyo; el prompt prohíbe codificar síntomas/motivos extras.
         $contexto = [];

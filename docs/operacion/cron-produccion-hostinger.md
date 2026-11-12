@@ -59,6 +59,12 @@ Si falla `php`, probá la versión del panel (`which php`, o `/usr/bin/php82`).
 /usr/bin/php /home/u257309594/domains/bioenlace.io/repo/web/yii encounter-patient-summary/run >> /home/u257309594/domains/bioenlace.io/repo/web/console/runtime/logs/encounter-summary-cron.log 2>&1
 ```
 
+**Codificación clínica diferida** (diagnóstico, motivos, medicación y pedidos):
+
+```bash
+/usr/bin/php /home/u257309594/domains/bioenlace.io/repo/web/yii encounter-coding/run 30 >> /home/u257309594/domains/bioenlace.io/repo/web/console/runtime/logs/encounter-coding-cron.log 2>&1
+```
+
 **Expediente legal staff:**
 
 ```bash
@@ -145,6 +151,22 @@ Elimina borradores `EXPIRED` con más de 30 días de retención. Los checkouts p
 /usr/bin/php /home/u257309594/domains/bioenlace.io/repo/web/yii laboratory-sync/lote 100 0 >> /home/u257309594/domains/bioenlace.io/repo/web/console/runtime/logs/lab-sync-cron.log 2>&1
 ```
 
+### 00:45 diario (`45 0 * * *`) — agregado de telemetría de IA
+
+Agrega el JSONL del día anterior (`@common/runtime/ai-usage/ai-usage-*.jsonl`) en `ai_usage_daily`:
+
+```bash
+/usr/bin/php /home/u257309594/domains/bioenlace.io/repo/web/yii ai-usage/aggregate --all >> /home/u257309594/domains/bioenlace.io/repo/web/console/runtime/logs/ai-usage-cron.log 2>&1
+```
+
+### 02:30 semanal (domingos) — purga de JSONL de IA
+
+Borra archivos crudos con más de 30 días (el agregado diario se conserva):
+
+```bash
+/usr/bin/php /home/u257309594/domains/bioenlace.io/repo/web/yii ai-usage/prune --days=30 >> /home/u257309594/domains/bioenlace.io/repo/web/console/runtime/logs/ai-usage-cron.log 2>&1
+```
+
 ### 03:00 diario (`0 3 * * *`) — métricas guardia
 
 ```bash
@@ -175,12 +197,15 @@ Elimina borradores `EXPIRED` con más de 30 días de retención. Los checkouts p
 |------------|-------------|----------------------------------|
 | Cada minuto | `turno-notificacion/run` | `turno-notif-cron.log` |
 | Cada minuto | `encounter-patient-summary/run` | `encounter-summary-cron.log` |
+| Cada minuto | `encounter-coding/run` | `encounter-coding-cron.log` |
 | Cada minuto | `legal-record-export/run` | `legal-export-cron.log` |
 | Cada 5 min | `turno-advance-offer/run` | `advance-offer-cron.log` |
 | Cada 15–30 min (opc.) | `turno-advance-offer/repair` | `advance-offer-cron.log` |
 | Cada 5 min | `care-pack/run-jobs` | `care-pack-cron.log` |
 | Cada 30 min | `paciente-domicilio/run` | `domicilio-cron.log` |
 | 00:15 diario | `entitlement/apply-pending-downgrades` | `entitlement-downgrade-cron.log` |
+| 00:45 diario | `ai-usage/aggregate` | `ai-usage-cron.log` |
+| 02:30 semanal | `ai-usage/prune` | `ai-usage-cron.log` |
 | 01:00 diario | `billing-subscription/expire-paid-through` | `billing-expire-cron.log` |
 | 01:30 diario | `commercial-signup/purge-drafts` | `commercial-signup-cron.log` |
 

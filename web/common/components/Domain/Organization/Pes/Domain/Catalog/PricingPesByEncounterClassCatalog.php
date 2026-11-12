@@ -236,7 +236,29 @@ final class PricingPesByEncounterClassCatalog
                 'label' => 'Consultas flash',
                 'included_label' => 'Consultas flash',
                 'unavailable_label' => 'Sin consultas flash',
-                'description' => 'El paciente puede realizar consultas rápidas sobre tratamientos activos y sobre su última atención.',
+                'description' => 'El paciente puede enviar mensajes preguntando sobre tratamientos activos y sobre su última atención.',
+                'classes' => [
+                    'AMB' => self::ADDON_INCLUDED,
+                    'EMER' => self::ADDON_INCLUDED,
+                    'IMP' => self::ADDON_INCLUDED,
+                ],
+            ],
+            'agente_anti_ausencias' => [
+                'label' => 'Agente anti ausencias',
+                'included_label' => 'Agente anti ausencias',
+                'unavailable_label' => 'Sin agente anti ausencias',
+                'description' => 'Algoritmos que ayudan a prevenir las ausencias de los pacientes. Buscan ocupar los turnos vacíos y mejorar la eficiencia de la agenda.',
+                'classes' => [
+                    'AMB' => self::ADDON_INCLUDED,
+                    'EMER' => self::ADDON_INCLUDED,
+                    'IMP' => self::ADDON_INCLUDED,
+                ],
+            ],
+            'seguimiento_post_atencion' => [
+                'label' => 'Seguimiento post atención',
+                'included_label' => 'Seguimiento post atención',
+                'unavailable_label' => 'Sin seguimiento post atención',
+                'description' => 'Sistema de seguimiento después de la atención médica o alta de internación para mejorar la experiencia del paciente.',
                 'classes' => [
                     'AMB' => self::ADDON_INCLUDED,
                     'EMER' => self::ADDON_INCLUDED,

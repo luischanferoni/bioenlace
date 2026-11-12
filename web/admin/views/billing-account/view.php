@@ -107,6 +107,9 @@ $rolOptions = BillingAccountEfector::rolOptions();
                             <div class="col-md-2">
                                 <label class="form-label"><?= Html::checkbox('videollamada_permitida', !empty($row['videollamada_permitida']), ['label' => 'Videollamada']) ?></label>
                             </div>
+                            <div class="col-md-2">
+                                <label class="form-label"><?= Html::checkbox('whatsapp_permitido', !empty($row['whatsapp_permitido']), ['label' => 'WhatsApp']) ?></label>
+                            </div>
                             <div class="col-md-1">
                                 <?= Html::submitButton($row ? 'Guardar' : 'Agregar', ['class' => 'btn btn-sm btn-primary']) ?>
                             </div>

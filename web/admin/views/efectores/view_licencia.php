@@ -43,6 +43,7 @@ $affiliations = $affiliations ?? [];
                     <th>Pending</th>
                     <th>Dictado</th>
                     <th>Videollamada</th>
+                    <th>WhatsApp</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -60,10 +61,11 @@ $affiliations = $affiliations ?? [];
                         </td>
                         <td><?= !empty($row['dictado_incluido']) ? 'Sí' : 'No' ?></td>
                         <td><?= !empty($row['videollamada_permitida']) ? 'Sí' : 'No' ?></td>
+                        <td><?= !empty($row['whatsapp_permitido']) ? 'Sí' : 'No' ?></td>
                     </tr>
                 <?php endforeach; ?>
                 <?php if ($summary === []): ?>
-                    <tr><td colspan="6" class="text-muted">Sin clases contratadas en la cuenta.</td></tr>
+                    <tr><td colspan="7" class="text-muted">Sin clases contratadas en la cuenta.</td></tr>
                 <?php endif; ?>
                 </tbody>
             </table>

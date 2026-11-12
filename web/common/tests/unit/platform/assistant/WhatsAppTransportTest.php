@@ -6,6 +6,7 @@ use Codeception\Test\Unit;
 use common\components\Platform\Assistant\WhatsApp\WhatsAppChannelScopeCatalog;
 use common\components\Platform\Assistant\WhatsApp\WhatsAppEnvelopeRenderer;
 use common\components\Platform\Assistant\WhatsApp\WhatsAppLinkToken;
+use common\components\Platform\Assistant\WhatsApp\WhatsAppStatusNormalizer;
 use common\models\Integrations\AsistenteWhatsappVinculo;
 
 class WhatsAppTransportTest extends Unit
@@ -65,5 +66,30 @@ class WhatsAppTransportTest extends Unit
         $this->assertTrue(WhatsAppChannelScopeCatalog::isMutating('turnos.cancelar-como-paciente-flow'));
         $this->assertTrue(WhatsAppChannelScopeCatalog::isMutating('turnos.crear-como-paciente'));
         $this->assertFalse(WhatsAppChannelScopeCatalog::isMutating('turnos.ver-mis-turnos-como-paciente'));
+    }
+
+    public function testStatusNormalizerReadsPricing(): void
+    {
+        $row = WhatsAppStatusNormalizer::normalize([
+            'id' => 'wamid.1',
+            'recipient_id' => '5491112345678',
+            'status' => 'delivered',
+            'timestamp' => '1700000000',
+            'pricing' => [
+                'category' => 'service',
+                'type' => 'free_customer_service',
+                'billable' => false,
+            ],
+            'conversation' => ['id' => 'conv-1'],
+        ]);
+
+        $this->assertNotNull($row);
+        $this->assertSame('wamid.1', $row['wamid']);
+        $this->assertSame('service', $row['pricing_category']);
+        $this->assertSame('free_customer_service', $row['pricing_type']);
+        $this->assertSame(0, $row['billable']);
+        $this->assertSame('conv-1', $row['conversation_id']);
+        $this->assertNotNull($row['event_at']);
+        $this->assertNull(WhatsAppStatusNormalizer::normalize(['status' => 'sent']));
     }
 }

@@ -6,6 +6,7 @@ use common\components\Platform\Assistant\Chat\ChatOrchestrator;
 use common\components\Platform\Assistant\Copy\AssistantChannelCopy;
 use common\components\Platform\Core\Service\Actions\CommonActionsService;
 use common\models\Integrations\AsistenteWhatsappMensaje;
+use common\models\Integrations\AsistenteWhatsappMensajeEstado;
 use common\models\Integrations\AsistenteWhatsappVinculo;
 use Yii;
 use yii\web\Request;
@@ -56,8 +57,34 @@ final class WhatsAppInboundService
                         $this->handleInboundMessage($message, $contactWaId);
                     }
                 }
+
+                $statuses = isset($value['statuses']) && is_array($value['statuses']) ? $value['statuses'] : [];
+                foreach ($statuses as $status) {
+                    if (is_array($status)) {
+                        $this->handleStatus($status);
+                    }
+                }
             }
         }
+    }
+
+    /**
+     * Webhook de estado: guarda pricing y estado para medir el costo de Meta.
+     *
+     * @param array<string, mixed> $status
+     */
+    private function handleStatus(array $status): void
+    {
+        $row = WhatsAppStatusNormalizer::normalize($status);
+        if ($row === null) {
+            return;
+        }
+
+        AsistenteWhatsappMensajeEstado::record($row);
+        Yii::info(
+            'WhatsApp status ' . json_encode($row, JSON_UNESCAPED_UNICODE),
+            WhatsAppConfig::LOG_CATEGORY . '.cost'
+        );
     }
 
     /**
@@ -105,6 +132,19 @@ final class WhatsAppInboundService
 
         if (!$this->identity->establishYiiIdentity($userId, $idPersona)) {
             $this->api->sendText($waId, 'No pudimos iniciar tu sesión. Probá más tarde o usá la app Bioenlace.');
+
+            return;
+        }
+
+        if (!WhatsAppAddonAccessService::allowsPersona($idPersona)) {
+            $this->api->sendText(
+                $waId,
+                AssistantChannelCopy::t(
+                    'whatsapp_addon_disabled',
+                    ['url' => $this->appDeepLink()],
+                    WhatsAppConfig::APP_CLIENT_ID
+                )
+            );
 
             return;
         }

@@ -163,6 +163,7 @@ class BillingAccountController extends Controller
                 'max_pes' => $post['max_pes'] ?? null,
                 'dictado_incluido' => !empty($post['dictado_incluido']),
                 'videollamada_permitida' => !empty($post['videollamada_permitida']),
+                'whatsapp_permitido' => !empty($post['whatsapp_permitido']),
                 'activo' => 1,
             ]);
             EfectorEncounterEntitlementService::syncPendingDowngradeForAccount((int) $model->id);

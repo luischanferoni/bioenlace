@@ -220,7 +220,7 @@ final class EfectorEncounterEntitlementService
     }
 
     /**
-     * @return list<array{code: string, label: string, max_pes: int|null, pending_max_pes: int|null, pending_effective_on: string|null, used: int, dictado_incluido: bool, videollamada_permitida: bool}>
+     * @return list<array{code: string, label: string, max_pes: int|null, pending_max_pes: int|null, pending_effective_on: string|null, used: int, dictado_incluido: bool, videollamada_permitida: bool, whatsapp_permitido: bool}>
      */
     public static function contractSummary(int $idEfector): array
     {
@@ -233,7 +233,35 @@ final class EfectorEncounterEntitlementService
     }
 
     /**
-     * @return list<array{code: string, label: string, max_pes: int|null, pending_max_pes: int|null, pending_effective_on: string|null, used: int, dictado_incluido: bool, videollamada_permitida: bool}>
+     * ¿El efector tiene contratado el add-on WhatsApp en alguna clase activa?
+     */
+    public static function isWhatsappAllowedForEfector(int $idEfector): bool
+    {
+        $accountId = self::resolveAccountIdForEfector($idEfector);
+        if ($accountId === null) {
+            return false;
+        }
+
+        return self::isWhatsappAllowedForAccount($accountId);
+    }
+
+    public static function isWhatsappAllowedForAccount(int $idBillingAccount): bool
+    {
+        if (!self::isBillingAccountActive($idBillingAccount)) {
+            return false;
+        }
+
+        foreach (BillingAccountEncounterEntitlement::findActivasPorAccount($idBillingAccount) as $row) {
+            if ((int) $row->whatsapp_permitido === 1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return list<array{code: string, label: string, max_pes: int|null, pending_max_pes: int|null, pending_effective_on: string|null, used: int, dictado_incluido: bool, videollamada_permitida: bool, whatsapp_permitido: bool}>
      */
     public static function contractSummaryForAccount(int $idBillingAccount): array
     {
@@ -251,6 +279,7 @@ final class EfectorEncounterEntitlementService
                 'used' => self::countBillablePersonasForAccount($idBillingAccount, $code),
                 'dictado_incluido' => (bool) $row->dictado_incluido,
                 'videollamada_permitida' => (bool) $row->videollamada_permitida,
+                'whatsapp_permitido' => (bool) $row->whatsapp_permitido,
             ];
         }
 

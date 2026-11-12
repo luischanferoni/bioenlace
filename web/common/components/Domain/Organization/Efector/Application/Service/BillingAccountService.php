@@ -184,7 +184,7 @@ final class BillingAccountService
     }
 
     /**
-     * @param array{max_pes?: int|null, dictado_incluido?: int|bool, videollamada_permitida?: int|bool, activo?: int} $data
+     * @param array{max_pes?: int|null, dictado_incluido?: int|bool, videollamada_permitida?: int|bool, whatsapp_permitido?: int|bool, activo?: int} $data
      */
     public static function upsertEntitlement(int $idBillingAccount, string $encounterClass, array $data): BillingAccountEncounterEntitlement
     {
@@ -206,6 +206,7 @@ final class BillingAccountService
             $row->encounter_class = $encounterClass;
             $row->dictado_incluido = in_array($encounterClass, ['EMER', 'IMP'], true) ? 1 : 0;
             $row->videollamada_permitida = 0;
+            $row->whatsapp_permitido = 0;
         }
 
         if (array_key_exists('max_pes', $data)) {
@@ -218,6 +219,9 @@ final class BillingAccountService
         }
         if (array_key_exists('videollamada_permitida', $data)) {
             $row->videollamada_permitida = (int) (bool) $data['videollamada_permitida'];
+        }
+        if (array_key_exists('whatsapp_permitido', $data)) {
+            $row->whatsapp_permitido = (int) (bool) $data['whatsapp_permitido'];
         }
         if (array_key_exists('activo', $data)) {
             $row->activo = (int) $data['activo'];

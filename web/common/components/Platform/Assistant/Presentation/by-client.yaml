@@ -85,3 +85,6 @@ messages:
   whatsapp_write_in_app:
     default: "Para confirmar esta operación, abrí la app Bioenlace y verificá tu identidad ahí: {url}"
     whatsapp_paciente: "Para confirmar esta operación, abrí la app Bioenlace y usá tu huella o passkey: {url}"
+  whatsapp_addon_disabled:
+    default: "El WhatsApp de Bioenlace no está habilitado para tu centro. Podés seguir usando la app: {url}"
+    whatsapp_paciente: "Tu centro todavía no tiene WhatsApp habilitado. Usá la app Bioenlace: {url}"

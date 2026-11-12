@@ -16,6 +16,7 @@ use yii\db\ActiveRecord;
  * @property string|null $pending_effective_on
  * @property int $dictado_incluido
  * @property int $videollamada_permitida
+ * @property int $whatsapp_permitido
  * @property int $activo
  */
 class BillingAccountEncounterEntitlement extends ActiveRecord
@@ -57,10 +58,10 @@ class BillingAccountEncounterEntitlement extends ActiveRecord
     {
         return [
             [['id_billing_account', 'encounter_class'], 'required'],
-            [['id_billing_account', 'max_pes', 'pending_max_pes', 'dictado_incluido', 'videollamada_permitida', 'activo'], 'integer'],
+            [['id_billing_account', 'max_pes', 'pending_max_pes', 'dictado_incluido', 'videollamada_permitida', 'whatsapp_permitido', 'activo'], 'integer'],
             [['encounter_class'], 'string', 'max' => 10],
             [['pending_effective_on', 'created_at', 'updated_at', 'deleted_at'], 'safe'],
-            [['dictado_incluido', 'videollamada_permitida'], 'default', 'value' => 0],
+            [['dictado_incluido', 'videollamada_permitida', 'whatsapp_permitido'], 'default', 'value' => 0],
             [['activo'], 'default', 'value' => 1],
         ];
     }
@@ -74,6 +75,7 @@ class BillingAccountEncounterEntitlement extends ActiveRecord
             'pending_effective_on' => 'Pending desde',
             'dictado_incluido' => 'Dictado incluido',
             'videollamada_permitida' => 'Videollamada permitida',
+            'whatsapp_permitido' => 'WhatsApp permitido',
             'activo' => 'Activo',
         ];
     }

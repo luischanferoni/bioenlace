@@ -109,6 +109,7 @@ final class SignUpInstitutionalEfector
                     'max_pes' => $cfg['max_pes'],
                     'dictado_incluido' => !empty($cfg['dictado_incluido']),
                     'videollamada_permitida' => !empty($cfg['videollamada_permitida']),
+                    'whatsapp_permitido' => !empty($cfg['whatsapp_permitido']),
                     'activo' => 1,
                 ]);
             }
@@ -871,7 +872,7 @@ final class SignUpInstitutionalEfector
     }
 
     /**
-     * @param array{classes: array<string, array{max_pes?: int, attentions_per_month?: int, dictado_incluido: bool, videollamada_permitida: bool}>}|array<string, array{max_pes?: int, attentions_per_month?: int, dictado_incluido: bool, videollamada_permitida: bool}> $plan
+     * @param array{classes: array<string, array{max_pes?: int, attentions_per_month?: int, dictado_incluido: bool, videollamada_permitida: bool, whatsapp_permitido: bool}>}|array<string, array{max_pes?: int, attentions_per_month?: int, dictado_incluido: bool, videollamada_permitida: bool, whatsapp_permitido: bool}> $plan
      */
     public static function estimateMonthlyUsd(array $plan): float
     {

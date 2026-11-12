@@ -124,6 +124,7 @@ final class SwitchBillingMembership
                     'max_pes' => (int) $cfg['max_pes'],
                     'dictado_incluido' => !empty($cfg['dictado_incluido']),
                     'videollamada_permitida' => !empty($cfg['videollamada_permitida']),
+                    'whatsapp_permitido' => !empty($cfg['whatsapp_permitido']),
                     'activo' => 1,
                 ]);
             }
@@ -231,7 +232,7 @@ final class SwitchBillingMembership
 
     /**
      * @param array<string, mixed> $plan
-     * @return array<string, array{max_pes: int, dictado_incluido: bool, videollamada_permitida: bool}>
+     * @return array<string, array{max_pes: int, dictado_incluido: bool, videollamada_permitida: bool, whatsapp_permitido: bool}>
      */
     private static function normalizePlanOrCopyFromAccount(array $plan, int $idAccount): array
     {
@@ -246,6 +247,7 @@ final class SwitchBillingMembership
                     'max_pes' => max(1, (int) ($cfg['max_pes'] ?? 1)),
                     'dictado_incluido' => !empty($cfg['dictado_incluido']),
                     'videollamada_permitida' => !empty($cfg['videollamada_permitida']),
+                    'whatsapp_permitido' => !empty($cfg['whatsapp_permitido']),
                 ];
             }
             if ($out !== []) {
@@ -264,10 +266,16 @@ final class SwitchBillingMembership
                 'max_pes' => max(1, (int) ($row['max_pes'] ?? 1)),
                 'dictado_incluido' => !empty($row['dictado_incluido']),
                 'videollamada_permitida' => !empty($row['videollamada_permitida']),
+                'whatsapp_permitido' => !empty($row['whatsapp_permitido']),
             ];
         }
         if ($out === []) {
-            $out['AMB'] = ['max_pes' => 5, 'dictado_incluido' => false, 'videollamada_permitida' => false];
+            $out['AMB'] = [
+                'max_pes' => 5,
+                'dictado_incluido' => false,
+                'videollamada_permitida' => false,
+                'whatsapp_permitido' => false,
+            ];
         }
 
         return $out;

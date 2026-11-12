@@ -11,13 +11,16 @@ Implementado:
 - Addon `whatsapp` en `PricingPesByEncounterClassCatalog`: `optional` en `AMB`, `EMER` e `IMP`, `plan_field` `whatsapp_permitido`.
 - Supuestos y COGS declarados: 1 mensaje service por atención + vinculación Didit amortizada (1 cada 100 atenciones) = USD 0,0293 por atención.
 - Versión del catálogo a 15.
+- Entitlement persistido: columna `whatsapp_permitido` en `billing_account_encounter_entitlement` + migración `m261112_130000`.
+- Alta, cambio de membresía, admin y resumen de contrato leen/escriben el nuevo campo.
+- El canal verifica el add-on por efector del paciente antes de responder (`WhatsAppAddonAccessService`).
 - Test del addon en `PricingPesByEncounterClassTest`.
 
 Pendiente:
 
 - Retirar `includes_patient_chat`: requiere decidir a qué clases se atribuye el COGS de chat del asistente. No se toca en esta entrega para no mover precios sin decisión de producto.
-- Entitlement por efector y bloqueo del canal sin add-on.
 - Medición por efector/mes.
+- Tests de integración con base de datos.
 
 ## Tareas
 
@@ -26,11 +29,11 @@ Pendiente:
 - [x] Declarar `cogs_usd_per_encounter['whatsapp']` con el cálculo de la fase y una nota de que es presupuesto, no consumo medido.
 - [x] Subir la versión del catálogo.
 - [ ] Retirar `includes_patient_chat` del catálogo y de `PricingPesByEncounterClassMetadata`; actualizar `PricingPesByEncounterClassTest`. Requiere decidir la atribución del COGS de chat.
-- [ ] Verificar que `addonPlanFields`, `SignUpInstitutionalEfector` y `LicenciaController::actionCotizar` tomen el nuevo addon sin cambios adicionales.
-- [ ] Persistir el entitlement y exponerlo al canal.
-- [ ] Resolver el efector del paciente y verificar el add-on antes de responder. Si no está habilitado, ofrecer la app.
+- [x] Verificar que `addonPlanFields`, `SignUpInstitutionalEfector` y `LicenciaController::actionCotizar` tomen el nuevo addon: el plan normalizado y la cotización ya iteran `addonPlanFields()`.
+- [x] Persistir el entitlement y exponerlo al canal: columna `whatsapp_permitido` en `billing_account_encounter_entitlement`, migración `m261112_130000_billing_entitlement_whatsapp`.
+- [x] Resolver el efector del paciente y verificar el add-on antes de responder: `WhatsAppAddonAccessService` + `EfectorEncounterEntitlementService::isWhatsappAllowedForEfector`.
 - [ ] Medición por efector y por mes: mensajes service, vinculaciones, costo Meta, costo Didit.
-- [ ] Tests: cotización con y sin add-on, persistencia del entitlement, canal bloqueado sin add-on.
+- [ ] Tests con base de datos: cotización con add-on, persistencia del entitlement, canal bloqueado sin add-on.
 
 ## Criterio de salida
 

@@ -188,10 +188,10 @@ final class PricingPesByEncounterClassCatalog
          */
         'addons' => [
             'autogestion_paciente' => [
-                'label' => 'Autogestión del paciente desde la app',
+                'label' => 'Autogestión del paciente',
                 'included_label' => 'Autogestión del paciente desde la app',
                 'unavailable_label' => 'Sin autogestión del paciente',
-                'description' => 'El paciente reserva, reprograma y confirma turnos desde la app.',
+                'description' => 'El paciente se autogestiona con la ayuda del asistente de IA.',
                 'classes' => [
                     'AMB' => self::ADDON_INCLUDED,
                     'EMER' => self::ADDON_UNAVAILABLE,
@@ -202,7 +202,7 @@ final class PricingPesByEncounterClassCatalog
                 'label' => 'Autogestión del personal de salud',
                 'included_label' => 'Autogestión del personal de salud',
                 'unavailable_label' => 'Sin autogestión del personal de salud',
-                'description' => 'Cada profesional administra su agenda, disponibilidad y pedidos desde la app.',
+                'description' => 'Cada profesional se autogestiona con la ayuda del asistente de IA.',
                 'classes' => [
                     'AMB' => self::ADDON_INCLUDED,
                     'EMER' => self::ADDON_INCLUDED,

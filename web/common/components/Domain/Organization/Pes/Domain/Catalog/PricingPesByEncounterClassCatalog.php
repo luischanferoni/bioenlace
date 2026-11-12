@@ -197,6 +197,18 @@ final class PricingPesByEncounterClassCatalog
                     'EMER' => self::ADDON_UNAVAILABLE,
                     'IMP' => self::ADDON_UNAVAILABLE,
                 ],
+            ],
+            'dictado' => [
+                'label' => 'Informe clínico dictado por voz',
+                'included_label' => 'Informe clínico con dictado por voz',
+                'unavailable_label' => 'Sin dictado por voz',
+                'description' => 'Dictás el informe y se transcribe en la captura clínica.',
+                'plan_field' => 'dictado_incluido',
+                'classes' => [
+                    'AMB' => self::ADDON_INCLUDED,
+                    'EMER' => self::ADDON_INCLUDED,
+                    'IMP' => self::ADDON_INCLUDED,
+                ],
             ],            
             'autogestion_paciente' => [
                 'label' => 'Autogestión del paciente',
@@ -214,18 +226,6 @@ final class PricingPesByEncounterClassCatalog
                 'included_label' => 'Autogestión del personal de salud',
                 'unavailable_label' => 'Sin autogestión del personal de salud',
                 'description' => 'Cada profesional se autogestiona con la ayuda del asistente de IA.',
-                'classes' => [
-                    'AMB' => self::ADDON_INCLUDED,
-                    'EMER' => self::ADDON_INCLUDED,
-                    'IMP' => self::ADDON_INCLUDED,
-                ],
-            ],
-            'dictado' => [
-                'label' => 'Informe clínico dictado por voz',
-                'included_label' => 'Informe clínico con dictado por voz',
-                'unavailable_label' => 'Sin dictado por voz',
-                'description' => 'Dictás el informe y se transcribe en la captura clínica.',
-                'plan_field' => 'dictado_incluido',
                 'classes' => [
                     'AMB' => self::ADDON_INCLUDED,
                     'EMER' => self::ADDON_INCLUDED,

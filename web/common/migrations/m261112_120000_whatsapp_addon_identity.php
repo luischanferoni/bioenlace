@@ -281,17 +281,20 @@ class m261112_120000_whatsapp_addon_identity extends Migration
 
     private function hasIndex(string $table, string $name): bool
     {
-        $schema = $this->db->schema->getTableSchema($table, true);
-        if ($schema === null) {
+        if (!in_array($this->db->driverName, ['mysql', 'mysqli'], true)) {
             return false;
         }
-        foreach ($schema->indexes as $index) {
-            if (($index['name'] ?? '') === $name) {
-                return true;
-            }
-        }
 
-        return false;
+        $exists = $this->db->createCommand(
+            'SELECT 1 FROM information_schema.statistics'
+            . ' WHERE table_schema = DATABASE() AND table_name = :table AND index_name = :index LIMIT 1',
+            [
+                ':table' => $this->db->schema->getRawTableName($table),
+                ':index' => $name,
+            ]
+        )->queryScalar();
+
+        return $exists !== false && $exists !== null;
     }
 
     private function tableOptions(): ?string

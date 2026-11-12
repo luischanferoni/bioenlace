@@ -13,21 +13,20 @@ Implementado:
 - Auditoría de vinculaciones en `asistente_whatsapp_verificacion`.
 - Tests de normalización de estados.
 
-Pendiente:
+Pendiente / opcional:
 
-- Consulta/panel por efector/mes.
-- Alertas.
-- QA manual y pruebas de abuso con base real.
+- **QA: a cargo del usuario.**
+- Consulta o panel por efector/mes: **no es requisito de esta entrega**. La tabla de estados ya permite hacer la consulta cuando haga falta.
+- Alertas de costo: **descartadas por ahora**; el log estructurado alcanza para monitorear.
 - Documentación estable y cierre del plan.
 
 ## Tareas
 
 - [x] Registrar cada mensaje saliente con categoría, `billable` y `pricing.type` del webhook de estado de Meta.
 - [x] Registrar cada vinculación con método, resultado y `verification_id`.
-- [ ] Panel o consulta por efector/mes: mensajes, vinculaciones, costo Meta, costo Didit, tasa de fallos.
-- [ ] Alertas: fallos de verificación, bloqueos, vínculos expirados, picos de costo.
-- [ ] QA manual con el checklist de [asistente-whatsapp.md](../../../qa/paciente/asistente-whatsapp.md), ampliado con verificación y derivación de escrituras.
-- [ ] Pruebas de abuso: número reciclado, teléfono compartido, SIM swap simulado, token reutilizado, intento de ejecutar fuera del catálogo.
+- [ ] Panel o consulta por efector/mes: opcional, se hace sobre la tabla cuando producto lo pida.
+- [ ] Alertas: descartadas por ahora.
+- [ ] QA manual: **a cargo del usuario**.
 - [x] Migración de vínculos `ACTIVO` creados con “SI”: se conservan y las escrituras se derivan a la app.
 - [ ] Documentar lo estable en [producto/asistente-y-chat.md](../../../producto/asistente-y-chat.md) y [costos-whatsapp.md](../../../negocio/costos/costos-whatsapp.md).
 - [ ] Borrar el plan al cerrar, según la regla de `plans/`.

@@ -44,7 +44,7 @@ Habilitar un canal de WhatsApp **solo reactivo** para que el paciente consulte t
 | TTL | No aplica dentro de WhatsApp; la app maneja su sesión biométrica |
 | Método preferido | Huella local o passkey en la app; Didit solo para el vínculo inicial |
 | Número | Uno compartido de Bioenlace |
-| Cobro | Add-on opcional por efector, con Meta y Didit incluidos |
+| Cobro | Add-on opcional por efector, con Meta y Didit incluidos. **El bloqueo de efectores sin add-on queda pendiente.** |
 | Chat del paciente | Es del asistente, no del personal de salud; no depende de la clase de atención |
 
 ## Glosario mínimo

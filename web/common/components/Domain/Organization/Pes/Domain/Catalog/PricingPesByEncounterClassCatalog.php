@@ -51,7 +51,7 @@ final class PricingPesByEncounterClassCatalog
         ],
         'cogs_assumptions' => [
             'patient_chat_messages_budget' => 10,
-            'patient_chat_note' => 'Cupo de 10 msgs alrededor del turno para prompts más largos y posibles múltiples llamadas IA; no implica uso pleno en cada mensaje.',
+            'patient_chat_note' => 'COGS de chat atribuido solo a AMB: en EMER/IMP el paciente no opera el asistente (triage, tablero e ingreso son staff), así que no se asigna consumo de chat por atención. Cupo de 10 msgs alrededor del turno para prompts más largos y posibles múltiples llamadas IA; no implica uso pleno en cada mensaje.',
             'motivos_note' => 'Motivos de consulta sin audio ni STT: cuestionario con opciones, triage de reserva y mensajes al asistente; 1 resumen + insights por consulta. Mismo costo en AMB/EMER/IMP.',
             'videollamada_share' => 0.4,
             'videollamada_note' => 'Planificación: ~40% de atenciones ambulatorias por videollamada cuando el add-on está contratado (12 min, 2 participantes). COGS infra+storage escalado desde el techo @ 80%.',
@@ -204,7 +204,7 @@ final class PricingPesByEncounterClassCatalog
                     'IMP' => self::ADDON_UNAVAILABLE,
                 ],
             ],
-            'whatsapp' => [
+            /*'whatsapp' => [
                 'label' => 'WhatsApp con el paciente',
                 'unavailable_label' => 'Sin WhatsApp',
                 'description' => 'El paciente consulta turnos e información por WhatsApp. Las altas, bajas y modificaciones se confirman en la app con huella o passkey.',
@@ -214,7 +214,7 @@ final class PricingPesByEncounterClassCatalog
                     'EMER' => self::ADDON_OPTIONAL,
                     'IMP' => self::ADDON_OPTIONAL,
                 ],
-            ],
+            ],*/
             'dictado' => [
                 'label' => 'Informe clínico dictado por voz',
                 'included_label' => 'Informe clínico con dictado por voz',

@@ -16,7 +16,7 @@
 - [x] No se persiste una acción pendiente: las escrituras se abren en la app.
 - [x] Vínculos viejos creados con “SI”: lectura permitida y escritura derivada a la app.
 - [x] Passkey: se ofrece registrarla después de la primera verificación, sin obligar.
-- [x] Efector del add-on: se exige al menos un efector activo con el add-on; para una operación atada a un efector, se exige el de esa operación.
+- [ ] **Pendiente:** bloquear los efectores que no pagan el add-on. El entitlement y el servicio de resolución ya existen; la llamada en el canal se activa cuando producto lo decida.
 - [x] Gate de contenido: un intent solo se responde por WhatsApp si está declarado en `Channels/WhatsApp/channel-scope.yaml`; por defecto queda bloqueado. Los intents clínicos no se declaran.
 
 ## Criterio de salida

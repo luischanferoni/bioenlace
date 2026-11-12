@@ -136,19 +136,6 @@ final class WhatsAppInboundService
             return;
         }
 
-        if (!WhatsAppAddonAccessService::allowsPersona($idPersona)) {
-            $this->api->sendText(
-                $waId,
-                AssistantChannelCopy::t(
-                    'whatsapp_addon_disabled',
-                    ['url' => $this->appDeepLink()],
-                    WhatsAppConfig::APP_CLIENT_ID
-                )
-            );
-
-            return;
-        }
-
         $this->setAppClientHeader();
 
         $inboundIntentId = $this->inboundIntentId($vinculo, $callback);

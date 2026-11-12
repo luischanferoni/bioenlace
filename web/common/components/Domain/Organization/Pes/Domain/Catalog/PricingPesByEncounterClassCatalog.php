@@ -28,7 +28,7 @@ final class PricingPesByEncounterClassCatalog
     public static function config(): array
     {
         return [
-        'version' => 13,
+        'version' => 14,
         'currency' => 'USD',
         'billing_period' => 'month',
         'tax_note' => 'El total mensual incluye IVA.',
@@ -71,156 +71,64 @@ final class PricingPesByEncounterClassCatalog
             'videollamada' => 0.0044,
         ],
         'margin_on_cost_percent' => 233,
-        // Ladder por clase: 0,5× · 1× · 2× · 4× · 10× · 20× · 40× · 100× · 200× la referencia.
-        'attention_volume_presets' => [
+        /*
+         * Escala de volumen: cada escalón es un múltiplo de la capacidad de
+         * referencia de la clase. No se escriben volúmenes acá: se calculan en
+         * `PricingPesByEncounterClassMetadata::attentionVolumePresets()`.
+         */
+        'attention_volume_multipliers' => [0.5, 1, 2, 4, 10, 20, 40, 100, 200],
+        /*
+         * Copy de los escalones que tienen nombre propio, por clase. `unit` se
+         * usa para armar el label con el volumen calculado; `steps` se indexa por
+         * multiplicador (0.5, 1, ...) para no depender del orden de la escala.
+         */
+        'attention_volume_copy' => [
             'AMB' => [
-                0 => [
-                    'attentions' => 250,
-                    'label' => 'Media jornada · 250 atenciones / mes',
-                    'hint' => '~12–13 atenciones/día',
-                ],
-                1 => [
-                    'attentions' => 500,
-                    'label' => 'Jornada completa · 500 atenciones / mes',
-                    'hint' => '~25 atenciones/día',
-                ],
-                2 => [
-                    'attentions' => 1000,
-                    'label' => null,
-                    'hint' => null,
-                ],
-                3 => [
-                    'attentions' => 2000,
-                    'label' => null,
-                    'hint' => null,
-                ],
-                4 => [
-                    'attentions' => 5000,
-                    'label' => null,
-                    'hint' => null,
-                ],
-                5 => [
-                    'attentions' => 10000,
-                    'label' => null,
-                    'hint' => null,
-                ],
-                6 => [
-                    'attentions' => 20000,
-                    'label' => null,
-                    'hint' => null,
-                ],
-                7 => [
-                    'attentions' => 50000,
-                    'label' => null,
-                    'hint' => null,
-                ],
-                8 => [
-                    'attentions' => 100000,
-                    'label' => null,
-                    'hint' => null,
+                'unit' => 'atenciones',
+                'steps' => [
+                    '0.5' => [
+                        'prefix' => 'Media jornada',
+                        'hint' => '~12–13 atenciones/día',
+                    ],
+                    '1' => [
+                        'prefix' => 'Jornada completa',
+                        'hint' => '~25 atenciones/día',
+                    ],
                 ],
             ],
             'EMER' => [
-                0 => [
-                    'attentions' => 350,
-                    'label' => 'Medio turno de guardia · 350 atenciones / mes',
-                    'hint' => '~7 turnos de 12 h',
-                ],
-                1 => [
-                    'attentions' => 700,
-                    'label' => 'Guardia completa · 700 atenciones / mes',
-                    'hint' => '~15 turnos de 12 h',
-                ],
-                2 => [
-                    'attentions' => 1400,
-                    'label' => null,
-                    'hint' => null,
-                ],
-                3 => [
-                    'attentions' => 2800,
-                    'label' => null,
-                    'hint' => null,
-                ],
-                4 => [
-                    'attentions' => 7000,
-                    'label' => null,
-                    'hint' => null,
-                ],
-                5 => [
-                    'attentions' => 14000,
-                    'label' => null,
-                    'hint' => null,
-                ],
-                6 => [
-                    'attentions' => 28000,
-                    'label' => null,
-                    'hint' => null,
-                ],
-                7 => [
-                    'attentions' => 70000,
-                    'label' => null,
-                    'hint' => null,
-                ],
-                8 => [
-                    'attentions' => 140000,
-                    'label' => null,
-                    'hint' => null,
+                'unit' => 'atenciones',
+                'steps' => [
+                    '0.5' => [
+                        'prefix' => 'Medio turno de guardia',
+                        'hint' => '~7 turnos de 12 h',
+                    ],
+                    '1' => [
+                        'prefix' => 'Guardia completa',
+                        'hint' => '~15 turnos de 12 h',
+                    ],
                 ],
             ],
             'IMP' => [
-                0 => [
-                    'attentions' => 200,
-                    'label' => 'Media jornada · 200 pases / mes',
-                    'hint' => '~10 evoluciones/día',
-                ],
-                1 => [
-                    'attentions' => 400,
-                    'label' => 'Jornada completa · 400 pases / mes',
-                    'hint' => '~20 evoluciones/día',
-                ],
-                2 => [
-                    'attentions' => 800,
-                    'label' => null,
-                    'hint' => null,
-                ],
-                3 => [
-                    'attentions' => 1600,
-                    'label' => null,
-                    'hint' => null,
-                ],
-                4 => [
-                    'attentions' => 4000,
-                    'label' => null,
-                    'hint' => null,
-                ],
-                5 => [
-                    'attentions' => 8000,
-                    'label' => null,
-                    'hint' => null,
-                ],
-                6 => [
-                    'attentions' => 16000,
-                    'label' => null,
-                    'hint' => null,
-                ],
-                7 => [
-                    'attentions' => 40000,
-                    'label' => null,
-                    'hint' => null,
-                ],
-                8 => [
-                    'attentions' => 80000,
-                    'label' => null,
-                    'hint' => null,
+                'unit' => 'pases',
+                'steps' => [
+                    '0.5' => [
+                        'prefix' => 'Media jornada',
+                        'hint' => '~10 evoluciones/día',
+                    ],
+                    '1' => [
+                        'prefix' => 'Jornada completa',
+                        'hint' => '~20 evoluciones/día',
+                    ],
                 ],
             ],
         ],
+        /*
+         * Volumen inicial de la cotización: media jornada. Se deriva de la
+         * capacidad de referencia, no se declara por clase.
+         */
         'defaults' => [
-            'initial_attentions' => [
-                'AMB' => 250,
-                'EMER' => 350,
-                'IMP' => 200,
-            ],
+            'initial_attentions_multiplier' => 0.5,
         ],
         'volume_discount_tiers' => [
             0 => [
@@ -262,23 +170,50 @@ final class PricingPesByEncounterClassCatalog
         ],
         'cogs_source' => 'docs/negocio/costos/costos-api.md — conversación del paciente con costo AMB conservador para preprocess + guide con adjuntos e historial; motivos sin audio (cuestionario pre-turno); dictado incluido',
         /*
-         * Addons por clase de atención. Cada addon declara su estado por clase:
-         *   included    → viene incluido en el precio (se muestra con tilde, sin control)
-         *   optional    → el usuario lo puede seleccionar (checkbox)
-         *   unavailable → no aplica a esa clase (se muestra tachado si hay copy)
-         * `plan_field` es el campo del contrato `POST /licencia/cotizar`.
+         * Addons (funcionalidades) por clase de atención. Cada addon declara su
+         * estado por clase:
+         *   included    → viene incluido en el precio (se informa dónde aplica)
+         *   optional    → el usuario lo puede seleccionar (checkbox) e impacta el precio
+         *   unavailable → no aplica a esa clase
+         * `plan_field` es el campo del contrato `POST /licencia/cotizar` (solo
+         * addons opcionales que se persisten como entitlement).
          *
          * El ámbito (`scope`, ver `PricingPesByEncounterClassMetadata::addonScope()`)
          * se deriva de esta matriz: si todos los tipos vendibles comparten el mismo
-         * estado elegible el addon se elige una sola vez (`all`); si difiere, se
-         * elige por tipo (`per_class`). No se declara a mano para no duplicar datos.
+         * estado elegible el addon se elige una sola vez (`all`); si difiere, aplica
+         * a algunos (`per_class`). No se declara a mano para no duplicar datos.
+         *
+         * El impacto en el precio de un addon se declara una sola vez en
+         * `cogs_usd_per_encounter[<id del addon>]`; sin entrada no cambia el precio.
          */
         'addons' => [
+            'autogestion_paciente' => [
+                'label' => 'Autogestión del paciente desde la app',
+                'included_label' => 'Autogestión del paciente desde la app',
+                'unavailable_label' => 'Sin autogestión del paciente',
+                'description' => 'El paciente reserva, reprograma y confirma turnos desde la app.',
+                'classes' => [
+                    'AMB' => self::ADDON_INCLUDED,
+                    'EMER' => self::ADDON_UNAVAILABLE,
+                    'IMP' => self::ADDON_UNAVAILABLE,
+                ],
+            ],
+            'autogestion_personal' => [
+                'label' => 'Autogestión del personal de salud',
+                'included_label' => 'Autogestión del personal de salud',
+                'unavailable_label' => 'Sin autogestión del personal de salud',
+                'description' => 'Cada profesional administra su agenda, disponibilidad y pedidos desde la app.',
+                'classes' => [
+                    'AMB' => self::ADDON_INCLUDED,
+                    'EMER' => self::ADDON_INCLUDED,
+                    'IMP' => self::ADDON_INCLUDED,
+                ],
+            ],
             'dictado' => [
-                'label' => 'Dictado',
-                'included_label' => 'Dictado incluido',
-                'unavailable_label' => 'Sin dictado',
-                'description' => 'Transcripción por voz de la captura clínica.',
+                'label' => 'Informe clínico con dictado por voz',
+                'included_label' => 'Informe clínico con dictado por voz',
+                'unavailable_label' => 'Sin dictado por voz',
+                'description' => 'Dictás el informe y se transcribe en la captura clínica.',
                 'plan_field' => 'dictado_incluido',
                 'classes' => [
                     'AMB' => self::ADDON_INCLUDED,
@@ -287,7 +222,7 @@ final class PricingPesByEncounterClassCatalog
                 ],
             ],
             'videollamada' => [
-                'label' => 'Con Videollamada',
+                'label' => 'Videollamada',
                 'unavailable_label' => 'Sin videollamada',
                 'description' => 'Teleconsulta online. La transcripción ya está cubierta por el dictado incluido.',
                 'plan_field' => 'videollamada_permitida',
@@ -303,13 +238,6 @@ final class PricingPesByEncounterClassCatalog
                 'label' => 'AMBULATORIO',
                 'short' => '',
                 'includes_patient_chat' => true,
-                'includes' => [
-                    0 => 'Agenda de cupos y reserva paciente',
-                    1 => 'Captura clínica AMB',
-                    2 => 'App paciente (turnos)',
-                    3 => 'Chat paciente alrededor del turno (hasta 10 mensajes)',
-                    4 => 'Motivos de consulta (cuestionario pre-turno)',
-                ],
                 'product_gates' => [
                     0 => 'session_encounter_class',
                     1 => 'amb_agenda',
@@ -320,12 +248,6 @@ final class PricingPesByEncounterClassCatalog
                 'label' => 'URGENCIA / GUARDIA',
                 'short' => '',
                 'includes_patient_chat' => false,
-                'includes' => [
-                    0 => 'Horario de presencia EMER',
-                    1 => 'Tablero de guardia',
-                    2 => 'Captura clínica EMER',
-                    3 => 'Motivos de consulta (cuestionario pre-turno)',
-                ],
                 'product_gates' => [
                     0 => 'session_encounter_class',
                     1 => 'emer_horario',
@@ -336,12 +258,6 @@ final class PricingPesByEncounterClassCatalog
                 'label' => 'INTERNACIÓN',
                 'short' => '',
                 'includes_patient_chat' => false,
-                'includes' => [
-                    0 => 'Horario de presencia IMP',
-                    1 => 'Mapa de camas',
-                    2 => 'Captura / evoluciones',
-                    3 => 'Motivos de consulta (cuestionario pre-turno)',
-                ],
                 'product_gates' => [
                     0 => 'session_encounter_class',
                     1 => 'imp_horario',
@@ -352,7 +268,7 @@ final class PricingPesByEncounterClassCatalog
         'non_sellable_default' => 'disabled',
         'simulator' => [
             'title' => 'Calculá tu licencia',
-            'subtitle' => 'Elegí tipos de atención y el volumen aproximado. El dictado está incluido; la videollamada es opcional en ambulatorio.',
+            'subtitle' => 'Elegí tipos de atención y el volumen aproximado. Las funcionalidades incluidas y los add-ons se detallan debajo.',
             'cta_label' => 'Crear cuenta',
             'cta_href' => 'alta.html',
             'footnotes' => [

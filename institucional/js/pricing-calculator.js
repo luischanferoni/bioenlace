@@ -23,15 +23,6 @@
     return Pricing.readDomSelection(rowsEl);
   }
 
-  function syncAddonOptions(row) {
-    const hidden = row.querySelector('input[data-attentions]');
-    const on = !!(hidden && Number(hidden.value) > 0);
-    row.querySelectorAll('input[data-addon]').forEach((input) => {
-      input.disabled = !on;
-      if (!on) input.checked = false;
-    });
-  }
-
   function volumePresetsForRow(row) {
     return Pricing.attentionVolumePresets(config, row.getAttribute('data-class'));
   }
@@ -82,8 +73,7 @@
       }
     }
     syncStepButtons(row);
-    syncAddonOptions(row);
-    syncGlobalAddons();
+    syncAddonControls();
   }
 
   function recalc() {
@@ -294,107 +284,62 @@
     );
   }
 
-  function buildPolicyHtml(code) {
-    const items = Pricing.addonsByScope(
-      config,
-      code,
-      Pricing.ADDON_SCOPE_PER_CLASS,
-    ).reduce((all, addon) => {
-      if (addon.state === Pricing.ADDON_INCLUDED) {
-        all.push(
-          '<span class="pricing-calc__policy-item">' +
-            escapeHtml(addon.includedLabel) +
-            '</span>',
-        );
-      } else if (
-        addon.state === Pricing.ADDON_UNAVAILABLE &&
-        addon.unavailableLabel
-      ) {
-        all.push(
-          '<span class="pricing-calc__policy-item is-off">' +
-            escapeHtml(addon.unavailableLabel) +
-            '</span>',
-        );
-      }
-      return all;
-    }, []);
-    return items.length
-      ? '<p class="pricing-calc__policy">' + items.join('') + '</p>'
-      : '';
-  }
+  /**
+   * Funcionalidades y add-ons de la licencia. Cada addon declara su estado por
+   * tipo de atención en el backend: los incluidos se informan (y dónde aplican),
+   * los opcionales se tildan con un único control que impacta en el precio.
+   */
+  function buildGlobalAddonsHtml() {
+    const cards = Pricing.addonEntries(config).map((addon) => {
+      const scope = Pricing.addonScopeLabel(config, addon);
+      const scopeHtml = scope
+        ? '<span class="pricing-calc__addon-scope">Aplica a: ' +
+          escapeHtml(scope) +
+          '</span>'
+        : '';
+      const desc = addon.description
+        ? '<span class="pricing-calc__addon-desc">' +
+          escapeHtml(addon.description) +
+          '</span>'
+        : '';
+      const body =
+        '<span class="pricing-calc__addon-head"><strong>' +
+        escapeHtml(addon.label) +
+        '</strong><span class="pricing-calc__addon-badge is-' +
+        (addon.optionalIn.length ? 'optional' : 'included') +
+        '">' +
+        (addon.optionalIn.length ? 'Opcional' : 'Incluido') +
+        '</span></span>' +
+        desc +
+        scopeHtml;
 
-  function buildAddonOptionsHtml(code) {
-    const items = Pricing.addonsByScope(
-      config,
-      code,
-      Pricing.ADDON_SCOPE_PER_CLASS,
-    )
-      .filter((addon) => addon.state === Pricing.ADDON_OPTIONAL)
-      .map(
-        (addon) =>
-          '<label class="pricing-calc__option">' +
+      if (addon.optionalIn.length) {
+        return (
+          '<label class="pricing-calc__addon is-optional">' +
           '<input type="checkbox" data-addon="' +
           escapeHtml(addon.id) +
           '" disabled />' +
-          '<span><strong>' +
-          escapeHtml(addon.label) +
-          '</strong></span></label>',
-      );
-    return items.length
-      ? '<div class="pricing-calc__addon-options">' + items.join('') + '</div>'
-      : '';
-  }
+          '<span class="pricing-calc__addon-body">' +
+          body +
+          '</span></label>'
+        );
+      }
 
-  /**
-   * Addons que aplican a todos los tipos de atención: se muestran una sola vez,
-   * debajo de las tarjetas. Los incluidos se informan y los opcionales se eligen
-   * con un único control que vale para todas las clases contratadas.
-   */
-  function buildGlobalAddonsHtml() {
-    const options = [];
-    const policy = [];
-    Pricing.globalAddons(config).forEach((addon) => {
-      if (addon.state === Pricing.ADDON_INCLUDED) {
-        policy.push(
-          '<span class="pricing-calc__policy-item">' +
-            escapeHtml(addon.includedLabel) +
-            '</span>',
-        );
-        return;
-      }
-      if (addon.state === Pricing.ADDON_OPTIONAL) {
-        options.push(
-          '<label class="pricing-calc__option">' +
-            '<input type="checkbox" data-addon-scope="' +
-            escapeHtml(addon.id) +
-            '" disabled />' +
-            '<span><strong>' +
-            escapeHtml(addon.label) +
-            '</strong></span></label>',
-        );
-        return;
-      }
-      if (addon.unavailableLabel) {
-        policy.push(
-          '<span class="pricing-calc__policy-item is-off">' +
-            escapeHtml(addon.unavailableLabel) +
-            '</span>',
-        );
-      }
+      return (
+        '<div class="pricing-calc__addon is-included">' +
+        '<span class="pricing-calc__addon-body">' +
+        body +
+        '</span></div>'
+      );
     });
-    if (!options.length && !policy.length) return '';
+    if (!cards.length) return '';
 
     return (
       '<div class="pricing-calc__global-addons">' +
-      '<p class="pricing-calc__global-title">Aplica a todos los tipos de atención</p>' +
-      (options.length
-        ? '<div class="pricing-calc__addon-options">' +
-          options.join('') +
-          '</div>'
-        : '') +
-      (policy.length
-        ? '<p class="pricing-calc__policy">' + policy.join('') + '</p>'
-        : '') +
+      '<p class="pricing-calc__global-title">Funcionalidades y add-ons</p>' +
+      '<div class="pricing-calc__addon-list">' +
+      cards.join('') +
+      '</div>' +
       '</div>'
     );
   }
@@ -433,7 +378,6 @@
       const row = document.createElement('div');
       row.className = 'pricing-calc__row';
       row.setAttribute('data-class', code);
-      const optionsHtml = buildPolicyHtml(code) + buildAddonOptionsHtml(code);
       row.innerHTML =
         '<div class="pricing-calc__main">' +
         '<div class="pricing-calc__check">' +
@@ -446,8 +390,7 @@
         '</span>' +
         '</span></div>' +
         buildVolumeSliderHtml(code) +
-        '</div>' +
-        optionsHtml;
+        '</div>';
       rowsEl.appendChild(row);
       setVolumeIndex(row, 0);
       const range = row.querySelector('[data-volume-range]');
@@ -470,12 +413,6 @@
           recalc();
         });
       });
-      row.querySelectorAll('input[data-addon]').forEach((input) => {
-        input.addEventListener('change', () => {
-          syncAddonOptions(row);
-          recalc();
-        });
-      });
     });
 
     const globalHtml = buildGlobalAddonsHtml();
@@ -484,15 +421,15 @@
       global.innerHTML = globalHtml;
       const block = global.firstElementChild;
       rowsEl.appendChild(block);
-      block.querySelectorAll('input[data-addon-scope]').forEach((input) => {
+      block.querySelectorAll('input[data-addon]').forEach((input) => {
         input.addEventListener('change', () => recalc());
       });
     }
-    syncGlobalAddons();
+    syncAddonControls();
   }
 
-  /** Un addon del ámbito `all` solo se puede elegir si hay al menos un tipo con volumen. */
-  function syncGlobalAddons() {
+  /** Un addon opcional solo se puede elegir si hay volumen en algún tipo de atención. */
+  function syncAddonControls() {
     if (!rowsEl) return;
     const on = Array.prototype.some.call(
       rowsEl.querySelectorAll('[data-class]'),
@@ -501,7 +438,7 @@
         return !!(hidden && Number(hidden.value) > 0);
       },
     );
-    rowsEl.querySelectorAll('input[data-addon-scope]').forEach((input) => {
+    rowsEl.querySelectorAll('input[data-addon]').forEach((input) => {
       input.disabled = !on;
       if (!on) input.checked = false;
     });
@@ -513,28 +450,6 @@
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
-  }
-
-  function fillPlansPageCopy() {
-    const listEl = document.getElementById('pricing-includes-list');
-    if (!listEl || !config) return;
-    const classes = config.sellable_classes || {};
-    const items = Object.keys(classes).reduce((all, code) => {
-      const includes = Array.isArray(classes[code].includes)
-        ? classes[code].includes
-        : [];
-      includes.forEach((item) => {
-        if (item) all.push((classes[code].label || code) + ': ' + item);
-      });
-      return all;
-    }, []);
-    if (!items.length) {
-      listEl.innerHTML = '';
-      const section = document.getElementById('incluye');
-      if (section) section.hidden = true;
-      return;
-    }
-    listEl.innerHTML = items.map((item) => '<li>' + escapeHtml(item) + '</li>').join('');
   }
 
   function fillStaticCopy() {
@@ -563,7 +478,6 @@
     }
     const tax = document.getElementById('pricing-tax-note');
     if (tax && config.tax_note) tax.textContent = config.tax_note;
-    fillPlansPageCopy();
   }
 
   function persistSelectionForSignup(selection) {

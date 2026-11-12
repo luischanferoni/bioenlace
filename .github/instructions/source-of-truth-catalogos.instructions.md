@@ -7,7 +7,10 @@ applyTo: ['**']
 
 # Source of truth — catálogos y listas cerradas
 
-Complementa [`runtime-datos-vs-metadata.mdc`](runtime-datos-vs-metadata.mdc) y [`metadata-yaml-uso.mdc`](metadata-yaml-uso.mdc).
+Complementa [`runtime-datos-vs-metadata.mdc`](runtime-datos-vs-metadata.mdc),
+[`metadata-yaml-uso.mdc`](metadata-yaml-uso.mdc) y
+[`fuente-unica-valores-derivados.mdc`](fuente-unica-valores-derivados.mdc) (todo valor que
+depende de otro se calcula desde su fuente; no se copia).
 
 ## Principio
 

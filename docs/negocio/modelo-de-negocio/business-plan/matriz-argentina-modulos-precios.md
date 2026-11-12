@@ -141,11 +141,14 @@ Un efector sin membresía POOL: sin tope (compat). Cupo compartido: el uso suma 
 
 ## Add-ons / fuera de la fórmula
 
-Cada add-on declara su estado **por tipo de atención** (`incluido`, `opcional`, `no disponible`). El **ámbito** se deriva de esa matriz: si todos los tipos vendibles comparten el mismo estado elegible, el add-on aplica a todos y se elige **una sola vez** (no se tilda tipo por tipo); si difiere, se elige por tipo. Hoy el dictado está incluido en todos y la videollamada es opcional solo en ambulatorio.
+Cada add-on declara su estado **por tipo de atención** (`incluido`, `opcional`, `no disponible`). El **ámbito** se deriva de esa matriz: si todos los tipos vendibles comparten el mismo estado elegible, el add-on aplica a todos y se elige **una sola vez** (no se tilda tipo por tipo); si difiere, aplica solo a algunos tipos. Los add-ons incluidos se informan en el bloque *Funcionalidades y add-ons* del calculador; los opcionales se tildan ahí mismo y mueven el precio.
 
-| Ítem | Notas | Precio orientativo |
-|------|-------|-------------------|
-| Videollamada | En la fórmula (COGS + margen) | Ver tabla arriba |
+| Add-on | Estado | Precio orientativo |
+|--------|--------|-------------------|
+| Autogestión del paciente desde la app | Incluido en ambulatorio | — |
+| Autogestión del personal de salud | Incluido en todas las clases | — |
+| Informe clínico con dictado por voz | Incluido en todas las clases | En la fórmula (COGS STT) |
+| Videollamada | Opcional solo en ambulatorio | COGS + margen (ver tabla arriba) |
 | Implementación + capacitación | One-shot | USD 3–40k según tamaño |
 | Integración LIS | One-shot + mant. | USD 2–8k + 200–800/mes |
 | Autorización OS / prepaga | Otro ciclo | USD 2–15k/mes |

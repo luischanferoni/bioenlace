@@ -156,6 +156,27 @@ class InstitutionalSignupBillingTest extends Unit
         $this->assertTrue($amb['videollamada_allowed']);
         $this->assertArrayNotHasKey('product_gates', $amb);
         $this->assertArrayNotHasKey('max_pes', $amb);
+        $this->assertArrayNotHasKey('includes', $amb);
+    }
+
+    public function testOptionalAddonInPlanChangesQuote(): void
+    {
+        $base = SignUpInstitutionalEfector::estimatePlanMonthlyQuote([
+            'classes' => [
+                'AMB' => ['attentions_per_month' => 500],
+            ],
+        ]);
+        $withVideo = SignUpInstitutionalEfector::estimatePlanMonthlyQuote([
+            'classes' => [
+                'AMB' => [
+                    'attentions_per_month' => 500,
+                    'videollamada_permitida' => true,
+                ],
+            ],
+        ]);
+
+        $this->assertSame(14.15, $base['amount_usd']);
+        $this->assertSame(21.5, $withVideo['amount_usd']);
     }
 
     public function testAddonScopeIsDerivedFromTheClassMatrix(): void

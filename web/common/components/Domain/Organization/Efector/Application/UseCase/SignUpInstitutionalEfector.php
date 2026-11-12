@@ -16,6 +16,7 @@ use common\models\Geo\Provincia;
 use common\models\Person\Persona;
 use common\models\Platform\User;
 use common\components\Domain\Organization\Pes\Application\UseCase\EnsureAdminEfectorAssignment;
+use common\components\Domain\Organization\Pes\Domain\Catalog\PricingPesByEncounterClassCatalog;
 use common\components\Domain\Organization\Efector\Application\Service\ContactPhoneValidator;
 use common\components\Domain\Organization\Efector\Application\Service\BillingAccountService;
 use common\components\Domain\Geo\Application\Service\GeoLocationResolver;
@@ -793,7 +794,7 @@ final class SignUpInstitutionalEfector
 
     /**
      * @param array<string, mixed> $plan
-     * @return array{classes: array<string, array{max_pes: null, attentions_per_month: int, dictado_incluido: bool, videollamada_permitida: bool}>}
+     * @return array{classes: array<string, array<string, mixed>>}
      */
     private static function normalizePlan(
         array $plan,
@@ -834,8 +835,6 @@ final class SignUpInstitutionalEfector
             if ($attentions <= 0) {
                 continue;
             }
-            $video = !empty($cfg['videollamada_permitida'])
-                && PricingPesByEncounterClassMetadata::classAllowsVideollamada($class);
             $maxPes = null;
             if (in_array($perfil, self::PERFIL_LEGACY, true)) {
                 $maxPes = (int) ($cfg['max_pes'] ?? 0);
@@ -844,12 +843,17 @@ final class SignUpInstitutionalEfector
                 }
                 $maxPes = max(1, $maxPes);
             }
-            $classes[$class] = [
+            $row = [
                 'max_pes' => $maxPes,
                 'attentions_per_month' => $attentions,
-                'dictado_incluido' => PricingPesByEncounterClassMetadata::classIncludesAudio($class),
-                'videollamada_permitida' => $video,
             ];
+            foreach (PricingPesByEncounterClassMetadata::addonPlanFields() as $addonId => $field) {
+                $state = PricingPesByEncounterClassMetadata::addonState($addonId, $class);
+                $row[$field] = $state === PricingPesByEncounterClassCatalog::ADDON_INCLUDED
+                    || ($state === PricingPesByEncounterClassCatalog::ADDON_OPTIONAL
+                        && !empty($cfg[$field]));
+            }
+            $classes[$class] = $row;
         }
         if ($perfil === 'CONSULTORIO') {
             if (!isset($classes['AMB']) || isset($classes['EMER']) || isset($classes['IMP'])) {
@@ -892,7 +896,7 @@ final class SignUpInstitutionalEfector
         }
 
         $byClass = [];
-        $video = false;
+        $selectedAddons = [];
         foreach ($plan['classes'] as $class => $cfg) {
             if (!is_array($cfg)) {
                 continue;
@@ -908,14 +912,19 @@ final class SignUpInstitutionalEfector
             }
             $code = (string) $class;
             $byClass[$code] = $attentions;
-            if (!empty($cfg['videollamada_permitida'])
-                && PricingPesByEncounterClassMetadata::classAllowsVideollamada($code)) {
-                $video = true;
+            foreach (PricingPesByEncounterClassMetadata::addonPlanFields() as $addonId => $field) {
+                if (empty($cfg[$field])) {
+                    continue;
+                }
+                if (PricingPesByEncounterClassMetadata::addonState($addonId, $code)
+                    === PricingPesByEncounterClassCatalog::ADDON_OPTIONAL
+                ) {
+                    $selectedAddons[$addonId] = true;
+                }
             }
         }
 
-        // Dictado siempre incluido en el precio.
-        return PricingPesByEncounterClassMetadata::estimateMonthlyQuote($byClass, true, $video);
+        return PricingPesByEncounterClassMetadata::estimateMonthlyQuote($byClass, $selectedAddons);
     }
 
     /**

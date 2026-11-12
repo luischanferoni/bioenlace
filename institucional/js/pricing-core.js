@@ -41,44 +41,73 @@
     return ADDON_UNAVAILABLE;
   }
 
-  function addonsForClass(config, code) {
+  function sellableClasses(config) {
+    const classes = (config && config.sellable_classes) || {};
+    return classes && typeof classes === 'object' ? classes : {};
+  }
+
+  function classLabel(config, code) {
+    const row = sellableClasses(config)[code] || {};
+    return row.label || code;
+  }
+
+  /**
+   * Addons declarados por el backend con su estado por tipo de atención.
+   * `includedIn` / `optionalIn` / `unavailableIn` salen de `addons[*].classes`,
+   * que es la única fuente: el frontend no repite la matriz.
+   */
+  function addonEntries(config) {
     const addons = (config && config.addons) || {};
-    return Object.keys(addons).map((id) => {
-      const addon = addons[id] || {};
-      const label = addon.label || id;
-      return {
-        id,
-        label,
-        includedLabel: addon.included_label || label,
-        unavailableLabel: addon.unavailable_label || '',
-        planField: addon.plan_field || '',
-        scope: addonScope(addon),
-        state: normalizeAddonState((addon.classes || {})[code]),
-      };
-    });
+    const codes = Object.keys(sellableClasses(config));
+    return Object.keys(addons)
+      .map((id) => {
+        const addon = addons[id] || {};
+        const states = {};
+        const includedIn = [];
+        const optionalIn = [];
+        const unavailableIn = [];
+        codes.forEach((code) => {
+          const state = normalizeAddonState((addon.classes || {})[code]);
+          states[code] = state;
+          if (state === ADDON_INCLUDED) includedIn.push(code);
+          else if (state === ADDON_OPTIONAL) optionalIn.push(code);
+          else unavailableIn.push(code);
+        });
+        return {
+          id,
+          label: addon.label || id,
+          includedLabel: addon.included_label || addon.label || id,
+          unavailableLabel: addon.unavailable_label || '',
+          description: addon.description || '',
+          planField: addon.plan_field || '',
+          scope:
+            String(addon.scope || '').trim().toLowerCase() === ADDON_SCOPE_ALL
+              ? ADDON_SCOPE_ALL
+              : ADDON_SCOPE_PER_CLASS,
+          states,
+          includedIn,
+          optionalIn,
+          unavailableIn,
+        };
+      })
+      .filter((addon) => addon.includedIn.length || addon.optionalIn.length);
   }
 
-  function addonScope(addon) {
-    return String((addon && addon.scope) || '').trim().toLowerCase() ===
-      ADDON_SCOPE_ALL
-      ? ADDON_SCOPE_ALL
-      : ADDON_SCOPE_PER_CLASS;
+  /** Tipos de atención a los que aplica el addon (opcionales si los hay). */
+  function addonScopeCodes(addon) {
+    return addon.optionalIn.length ? addon.optionalIn : addon.includedIn;
   }
 
-  function addonsByScope(config, code, scope) {
-    return addonsForClass(config, code).filter(
-      (addon) => addon.scope === scope,
-    );
-  }
-
-  /** Addons del ámbito `all`: el estado es único, así que alcanza con un tipo. */
-  function globalAddons(config) {
-    const classes = Object.keys((config && config.sellable_classes) || {});
-    return addonsByScope(config, classes[0] || '', ADDON_SCOPE_ALL);
+  function addonScopeLabel(config, addon) {
+    const codes = addonScopeCodes(addon);
+    if (!codes.length) return '';
+    const total = Object.keys(sellableClasses(config)).length;
+    if (codes.length === total) return 'Todos los tipos de atención';
+    return codes.map((code) => classLabel(config, code)).join(' · ');
   }
 
   function readDomSelection(rowsRoot) {
-    const selection = { classes: {}, addons: {}, globalAddons: {} };
+    const selection = { classes: {}, addons: {} };
     if (!rowsRoot) return selection;
     rowsRoot.querySelectorAll('[data-class]').forEach((row) => {
       const code = row.getAttribute('data-class');
@@ -89,37 +118,29 @@
       const attentions = Math.max(0, parseInt(volume.value, 10) || 0);
       if (attentions <= 0) return;
       selection.classes[code] = attentions;
-      const chosen = {};
-      row.querySelectorAll('input[data-addon]').forEach((input) => {
-        chosen[input.getAttribute('data-addon')] = !!input.checked;
-      });
-      selection.addons[code] = chosen;
     });
-    rowsRoot.querySelectorAll('input[data-addon-scope]').forEach((input) => {
-      selection.globalAddons[input.getAttribute('data-addon-scope')] =
-        !!input.checked;
+    rowsRoot.querySelectorAll('input[data-addon]').forEach((input) => {
+      selection.addons[input.getAttribute('data-addon')] = !!input.checked;
     });
     return selection;
   }
 
-  function addonChosen(selection, addon, code) {
-    const chosen =
-      addon.scope === ADDON_SCOPE_ALL
-        ? (selection && selection.globalAddons) || {}
-        : (((selection && selection.addons) || {})[code] || {});
-    return !!chosen[addon.id];
+  function addonChosen(selection, addonId) {
+    return !!(((selection && selection.addons) || {})[addonId]);
   }
 
+  /** Addons opcionales elegidos que además aplican a ese tipo de atención. */
   function selectedAddonLabels(config, selection, code) {
-    return addonsForClass(config, code)
+    return addonEntries(config)
       .filter(
         (addon) =>
-          addon.state === ADDON_OPTIONAL && addonChosen(selection, addon, code),
+          addon.optionalIn.indexOf(code) !== -1 && addonChosen(selection, addon.id),
       )
       .map((addon) => addon.label);
   }
 
   function toSignupPlan(config, selection) {
+    const entries = addonEntries(config);
     const plan = { classes: {} };
     Object.keys((selection && selection.classes) || {}).forEach((code) => {
       const attentions = Math.max(
@@ -127,12 +148,11 @@
         parseInt(selection.classes[code], 10) || 1,
       );
       const row = { attentions_per_month: attentions };
-      addonsForClass(config, code).forEach((addon) => {
+      entries.forEach((addon) => {
         if (!addon.planField) return;
         row[addon.planField] =
-          addon.state === ADDON_INCLUDED ||
-          (addon.state === ADDON_OPTIONAL &&
-            addonChosen(selection, addon, code));
+          addon.states[code] === ADDON_INCLUDED ||
+          (addon.states[code] === ADDON_OPTIONAL && addonChosen(selection, addon.id));
       });
       plan.classes[code] = row;
     });
@@ -147,9 +167,8 @@
     ADDON_SCOPE_PER_CLASS,
     formatAttentions,
     attentionVolumePresets,
-    addonsForClass,
-    addonsByScope,
-    globalAddons,
+    addonEntries,
+    addonScopeLabel,
     readDomSelection,
     selectedAddonLabels,
     toSignupPlan,

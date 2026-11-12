@@ -33,7 +33,7 @@ archivos de su zona. No hace falta leerlas todas.
 
 | Zona / tarea | Regla |
 |---|---|
-| Siempre (transversal) | `capas-y-metadata-sin-hardcode`, `dry-solid`, `source-of-truth-catalogos`, `runtime-datos-vs-metadata`, `metadata-yaml-uso`, `servicio-institucional-vs-pes-acto`, `bd-solo-migrations` |
+| Siempre (transversal) | `capas-y-metadata-sin-hardcode`, `dry-solid`, `source-of-truth-catalogos`, `fuente-unica-valores-derivados`, `runtime-datos-vs-metadata`, `metadata-yaml-uso`, `servicio-institucional-vs-pes-acto`, `bd-solo-migrations` |
 | `web/**` | `arquitectura-yii2-bioenlace` |
 | `web/common/components/**`, `web/common/models/**` | `common-components-organizacion` |
 | `web/common/components/Domain/**` | `ddd-un-eje-por-nivel` |
@@ -59,6 +59,10 @@ Detalle de arquitectura: [docs/arquitectura/](./docs/arquitectura/) —
   `try/catch` de transporte igual, se extrae.
 - **DRY/SOLID.** Regla de tres para extraer, y al lugar correcto (tabla en `dry-solid`);
   una razón de cambio por clase; colaboradores por constructor, no `new` adentro del método.
+- **Valores derivados.** Capacidad, presets, límites, políticas y textos que dependen de otro
+  valor se **calculan desde la fuente** (catálogo/loader). No se copian como literales, ni como
+  fallback que contradice la fuente, ni como default en un servicio o en un cliente.
+  Detalle: `fuente-unica-valores-derivados`.
 - **Base de datos solo por migraciones.** Esquema y datos persistentes → `web/common/migrations/`.
   Los `.sql` de la raíz son muestras de solo lectura; la conexión local se usa para inspeccionar
   estructura/datos y probar migraciones, no para `ALTER`/`INSERT`/`UPDATE` manuales.

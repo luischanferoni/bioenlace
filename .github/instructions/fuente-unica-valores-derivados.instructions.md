@@ -1,0 +1,96 @@
+---
+description: "Valor derivado se calcula desde su fuente; prohibido copiarlo en literales, fallbacks, defaults, clientes o docs"
+applyTo: ['**']
+---
+
+<!-- GENERADO por tools/sync-agent-rules.php — editar .cursor/rules/*.mdc -->
+
+# Fuente única para valores derivados
+
+Complementa [`source-of-truth-catalogos.mdc`](source-of-truth-catalogos.mdc) (listas cerradas)
+y [`dry-solid.mdc`](dry-solid.mdc) (cuándo extraer).
+
+## Regla
+
+Todo valor que **depende de otro** se **calcula en runtime desde su fuente**. Copiarlo —aunque
+hoy coincida— crea una segunda fuente que se desfasa en el próximo cambio.
+
+El caso típico es una progresión: la capacidad de referencia por profesional y mes
+(`reference_encounters_per_professional_month`) → los presets de volumen → `max_pes` derivado →
+el entitlement de la cuenta → el copy del sitio → los docs. Cada eslabón se **deriva** del
+anterior; ninguno se vuelve a escribir.
+
+**Test para decidir:** si el valor cambia cuando cambia otro, es derivado. Si cambia por un
+motivo propio, es independiente.
+
+## Alcance
+
+Aplica a **todo el código del monorepo** —`web/` (Yii y API v1), `mobile/`, `institucional/`,
+jobs, migraciones y `tools/`— y a cualquier valor: precios, capacidades, umbrales, límites,
+colores, listas de roles, textos operativos o políticas de producto. No hay "caso chico".
+
+Tampoco se admite **código repetido**: si el mismo bloque cambia por el mismo motivo en dos
+lugares, se extrae al lugar que indica `dry-solid.mdc` (regla de tres). Esta regla cubre
+**datos y valores**; `dry-solid` cubre **código**. Las dos aplican siempre.
+
+## Dónde vive la fuente
+
+Sólo hay tres lugares legítimos para definir un valor:
+
+| Fuente | Cuándo | Ejemplo |
+|---|---|---|
+| **BD** (migración + seed de console) | Maestros y hechos consultados en runtime | geo, recursos, catálogos operativos |
+| **YAML de metadata** | Composición, knobs y copy para IA o usuario final | intents, flows, ui-text |
+| **PHP** | Catálogo declarativo, constantes de dominio y el loader que lo expone | `*Catalog`, `*Metadata`, `*Policy` |
+
+Todo consumidor —controller, servicio, job, app, sitio— **lee a través del loader o del servicio**.
+Si el valor no está en ninguna de las tres fuentes, primero se agrega a la que corresponda; nunca
+se escribe directo en el consumidor.
+
+## Prohibido
+
+- **Fallbacks que contradicen la fuente:** devolver `500` cuando la capacidad no está declarada.
+  Si falta la fuente es error de configuración; fallar explícito es mejor que un default silencioso.
+- **Literales derivados:** presets de volumen escritos a mano cuando ya existe la capacidad;
+  volúmenes legacy (`200`), límites (`max_pes => 5`) o umbrales que salen de un tramo.
+- **Política de dominio inline en servicios:** `dictado_incluido = in_array($class, ['EMER','IMP'])`
+  o `videollamada_permitida = 0`; sale de `addonState()` y del catálogo.
+- **Listas de clases o ids repetidas:** `['AMB','EMER','IMP']` en un `??` cuando existe
+  `EncounterDefinition::ENCOUNTER_CLASS`; ids de addon literales cuando el catálogo los declara.
+- **Defaults duplicados en clientes** (Flutter, JS, HTML): si la API ya expone el valor, se consume.
+- **Tablas de valores copiadas a docs, comentarios o tests.** Se enlaza la fuente; en tests se
+  contrasta contra la fuente, no contra otro literal.
+- **Capas de retrocompatibilidad** que conservan el valor viejo escrito aparte.
+
+## Permitido
+
+- Constantes técnicas sin dependencia (timeouts, códigos de proveedor, tamaños de columna).
+- El **mismo** valor como *default declarado en la fuente* (p. ej. `defaults.initial_attentions`
+  del catálogo); todos los consumidores leen de ahí.
+- Literales en **migraciones ya aplicadas** (son fotografía histórica; no se editan).
+- Ejemplos en docs marcados como ilustrativos, sin pretender ser la fuente.
+
+## Checklist antes de escribir un número o una política
+
+1. ¿De qué otro valor depende? Buscarlo y leerlo.
+2. ¿Existe getter, loader o catálogo? Usarlo. Si no existe, **extender el catálogo o el loader**,
+   no crear otra lista ni otro default en el consumidor.
+3. ¿Agregás un fallback? Solo si repite la fuente o si la ausencia es un estado válido; si no,
+   excepción con mensaje de configuración.
+4. ¿Es un default de servicio o de cliente? Declararlo en la fuente y leerlo desde ahí.
+5. ¿Vas a documentarlo? Enlazar la fuente, no transcribir la tabla.
+6. ¿Test? Comparar el derivado **contra la fuente**, no contra otro número.
+
+## Anti-patrón real (para reconocerlo)
+
+La capacidad 500 / 700 / 400 repetida en los presets de volumen, en el fallback de
+`referenceEncountersPerMonth()`, en el volumen legacy de `normalizePlan`, en `max_pes => 5` de
+`SwitchBillingMembership`, en el default de `BillingAccountService::upsertEntitlement` y en
+`staff_signup_screen.dart`. Cambiar la capacidad no mueve ninguno de esos valores.
+
+## Enforcement
+
+- Test unitario comparativo (derivado contra fuente) en `web/common/tests/unit`.
+- Gate de literales derivados en `web/tools/` con baseline versionado, sumado a
+  `.githooks/pre-commit` junto a `ArchitectureHttpUsageTest`.
+- `php tools/sync-agent-rules.php --check` mantiene esta regla publicada a todos los agentes.

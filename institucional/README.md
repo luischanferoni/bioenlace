@@ -7,7 +7,7 @@ Sitio institucional estático para presentar Bioenlace: asistente conversacional
 ```
 institucional/
 ├── index.html
-├── precios.html           # Planes: qué incluye + calculadora
+├── precios.html           # Planes: calculadora + funcionalidades y add-ons
 ├── alta.html              # Crear cuenta desde la app (descarga + contacto ministerio)
 ├── privacidad.html        # Política de privacidad (apps móviles)
 ├── css/
@@ -36,7 +36,7 @@ institucional/
 3. **Pacientes** — App paciente y seguimiento
 4. **Personal** — Demo del asistente conversacional (listar / editar / crear)
 5. **Funcionalidades** — Catálogo por audiencia
-6. **Precios** — Teaser en el index; detalle + calculadora en [`precios.html`](precios.html) (qué incluye / no incluye por clase AMB·EMER·IMP)
+6. **Precios** — Teaser en el index; detalle + calculadora en [`precios.html`](precios.html) (funcionalidades incluidas y add-ons por clase AMB·EMER·IMP)
 7. **Contacto** — Formulario e información
 8. **Alta** (`alta.html`) — Crear cuenta desde la web con el teléfono o desde la app Personal de Salud, y contacto para ministerio
 
@@ -56,11 +56,11 @@ El CTA del calculador (`precios.html`) ya no pre-carga el plan en un formulario 
 
 Los `<script>` de pricing y el CSS llevan un query `?v=<token>` (p. ej. `20261108b`): **bumpealo al editar** `pricing-core.js`, `pricing-calculator.js` o `styles.css`. Sin eso, los navegadores siguen ejecutando la versión cacheada (por ejemplo, la que aún enviaba `perfil: "CLINICA"` y recibía `request_invalid`).
 
-La página conserva controles para clases (ambulatorio / urgencia / internación), volumen mensual y videollamada opcional. Los tipos de atención no tienen casilla de activación: **todos arrancan sin volumen** y se activan recién cuando se elige un volumen. El volumen se elige con un **slider** (0 = sin volumen, botones − / + a los costados y arrastre manual); el detalle de prestaciones y el CTA se alimentan del catálogo público del backend. La cotización muestra total, neto, IVA y —cuando aplica— precio de lista y descuento por volumen, todos en ARS.
+La página conserva controles para clases (ambulatorio / urgencia / internación), volumen mensual y un bloque de **funcionalidades y add-ons**. Los tipos de atención no tienen casilla de activación: **todos arrancan sin volumen** y se activan recién cuando se elige un volumen. El volumen se elige con un **slider** (0 = sin volumen, botones − / + a los costados y arrastre manual); el bloque de add-ons y el CTA se alimentan del catálogo público del backend. La cotización muestra total, neto, IVA y —cuando aplica— precio de lista y descuento por volumen, todos en ARS.
 
-Cada tipo de atención muestra su política con la misma lectura que la app **Personal de Salud**: los addons **incluidos** se informan con un tilde (`✓ Dictado incluido`), los **opcionales** se ofrecen como checkbox (`Con Videollamada`) y los **no disponibles** se tachan (`× Sin videollamada`). El estado de cada addon por clase se declara una sola vez en `addons[*].classes` del catálogo (`included` / `optional` / `unavailable`); `GET /licencia/planes` lo publica y sigue derivando `audio_included` / `videollamada_allowed` para las apps ya distribuidas.
+El bloque *Funcionalidades y add-ons* lista todos los addons declarados en el catálogo, cada uno con su estado y su alcance por tipo de atención: los **incluidos** se informan (`Incluido` + *Aplica a:* todos los tipos o los que correspondan) y los **opcionales** se ofrecen como checkbox (`Videollamada`) con impacto en el precio. El estado de cada addon por clase se declara una sola vez en `addons[*].classes` del catálogo (`included` / `optional` / `unavailable`) y el alcance (`scope`) se deriva de esa matriz, sin duplicar datos: `all` cuando todos los tipos vendibles comparten estado, `per_class` cuando aplica solo a algunos. `GET /licencia/planes` publica esa matriz y sigue derivando `audio_included` / `videollamada_allowed` para las apps ya distribuidas.
 
-El **ámbito** de cada addon se deriva de esa matriz y no se declara aparte: si todos los tipos vendibles comparten el mismo estado elegible, `scope` es `all` y el addon se muestra **una sola vez** en el bloque *Aplica a todos los tipos de atención*, debajo de las tarjetas (los incluidos con tilde, los opcionales con un único checkbox que vale para todas las clases contratadas). Si los estados difieren, `scope` es `per_class` y se elige por tipo, como antes. Por eso el "dictado incluido" **no** se repite en los textos de `includes` ni en cada tarjeta.
+El precio de un addon opcional se declara una sola vez en `cogs_usd_per_encounter[<id del addon>]` del catálogo: si el addon está tildado y aplica a la clase, `POST /licencia/cotizar` lo suma al COGS. La sección "Qué incluye" y la lista `includes` por clase ya no existen: lo que antes se listaba ahí hoy son addons incluidos.
 
 Doc comercial: [matriz-argentina-modulos-precios.md](../docs/negocio/modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md).
 Catálogo backend: `web/common/components/Domain/Organization/Pes/Domain/Catalog/PricingPesByEncounterClassCatalog.php`.

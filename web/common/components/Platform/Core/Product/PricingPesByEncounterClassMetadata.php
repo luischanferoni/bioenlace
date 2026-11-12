@@ -3,6 +3,7 @@
 namespace common\components\Platform\Core\Product;
 
 use common\components\Domain\Organization\Pes\Domain\Catalog\PricingPesByEncounterClassCatalog;
+use yii\base\InvalidConfigException;
 
 /**
  * Metadata comercial: precio por volumen de atenciones × encounter_class (COGS + margen + add-ons).
@@ -56,7 +57,6 @@ final class PricingPesByEncounterClassMetadata
                 'label',
                 'short',
                 'includes_patient_chat',
-                'includes',
             ]);
             // Contrato público que ya consumen las apps: se deriva de la matriz de addons.
             $public['audio_included'] = self::classIncludesAudio($class);
@@ -64,30 +64,14 @@ final class PricingPesByEncounterClassMetadata
             $classes[$class] = $public;
         }
 
-        $presets = [];
-        foreach ((array) ($config['attention_volume_presets'] ?? []) as $code => $rows) {
-            if (!is_array($rows)) {
-                continue;
-            }
-            $list = [];
-            foreach ($rows as $preset) {
-                if (!is_array($preset)) {
-                    continue;
-                }
-                $list[] = self::only($preset, ['attentions', 'label', 'hint']);
-            }
-            $presets[(string) $code] = $list;
-        }
+        $presets = self::attentionVolumePresets();
 
         $reference = [];
         foreach ((array) ($config['reference_encounters_per_professional_month'] ?? []) as $code => $value) {
             $reference[(string) $code] = (int) $value;
         }
 
-        $defaults = [];
-        foreach ((array) ($config['defaults']['initial_attentions'] ?? []) as $code => $value) {
-            $defaults[(string) $code] = (int) $value;
-        }
+        $defaults = self::initialAttentionsByClass();
 
         $addons = [];
         foreach ((array) ($config['addons'] ?? []) as $code => $addon) {
@@ -167,13 +151,105 @@ final class PricingPesByEncounterClassMetadata
         return is_array($row) ? $row : null;
     }
 
+    /**
+     * Capacidad de referencia por profesional y mes (atenciones atendidas).
+     *
+     * La fuente es el catálogo; si falta la capacidad de una clase es un error de
+     * configuración, no un default silencioso.
+     */
     public static function referenceEncountersPerMonth(?string $encounterClass = null): float
     {
         $map = self::loadConfig()['reference_encounters_per_professional_month'] ?? [];
         $class = $encounterClass !== null ? strtoupper($encounterClass) : 'AMB';
         $ref = is_array($map) ? (float) ($map[$class] ?? 0) : (float) $map;
+        if ($ref <= 0) {
+            throw new InvalidConfigException(
+                'Falta la capacidad de referencia (reference_encounters_per_professional_month) para la clase '
+                . $class . '.'
+            );
+        }
 
-        return $ref > 0 ? $ref : 500.0;
+        return $ref;
+    }
+
+    /**
+     * Escala de volumen por tipo de atención, calculada desde la capacidad de
+     * referencia. El copy (label/hint) sale del catálogo; los volúmenes, no.
+     *
+     * @return array<string, list<array{attentions: int, label: ?string, hint: ?string}>>
+     */
+    public static function attentionVolumePresets(): array
+    {
+        $config = self::loadConfig();
+        $multipliers = $config['attention_volume_multipliers'] ?? null;
+        if (!is_array($multipliers) || $multipliers === []) {
+            throw new InvalidConfigException(
+                'El catálogo de precios no declara attention_volume_multipliers.'
+            );
+        }
+        $copy = $config['attention_volume_copy'] ?? [];
+        $copy = is_array($copy) ? $copy : [];
+
+        $presets = [];
+        foreach (self::sellableClassCodes() as $class) {
+            $reference = self::referenceEncountersPerMonth($class);
+            $classCopy = is_array($copy[$class] ?? null) ? $copy[$class] : [];
+            $unit = trim((string) ($classCopy['unit'] ?? ''));
+            $steps = is_array($classCopy['steps'] ?? null) ? $classCopy['steps'] : [];
+
+            $list = [];
+            foreach ($multipliers as $multiplier) {
+                $factor = (float) $multiplier;
+                if ($factor <= 0) {
+                    continue;
+                }
+                $attentions = (int) round($reference * $factor);
+                $step = $steps[self::multiplierKey($factor)] ?? null;
+                $prefix = is_array($step) ? trim((string) ($step['prefix'] ?? '')) : '';
+                $hint = is_array($step) ? trim((string) ($step['hint'] ?? '')) : '';
+                $list[] = [
+                    'attentions' => $attentions,
+                    'label' => $prefix !== '' && $unit !== ''
+                        ? $prefix . ' · ' . $attentions . ' ' . $unit . ' / mes'
+                        : null,
+                    'hint' => $hint !== '' ? $hint : null,
+                ];
+            }
+            $presets[$class] = $list;
+        }
+
+        return $presets;
+    }
+
+    /**
+     * Volumen inicial de la cotización por clase, derivado de la capacidad de
+     * referencia y del multiplicador declarado en `defaults`.
+     *
+     * @return array<string, int>
+     */
+    public static function initialAttentionsByClass(): array
+    {
+        $multiplier = (float) (self::loadConfig()['defaults']['initial_attentions_multiplier'] ?? 0);
+        if ($multiplier <= 0) {
+            throw new InvalidConfigException(
+                'El catálogo de precios no declara defaults.initial_attentions_multiplier.'
+            );
+        }
+
+        $defaults = [];
+        foreach (self::sellableClassCodes() as $class) {
+            $defaults[$class] = (int) round(self::referenceEncountersPerMonth($class) * $multiplier);
+        }
+
+        return $defaults;
+    }
+
+    /** Clave estable para indexar el copy por multiplicador (0.5, 1, 2, ...). */
+    private static function multiplierKey(float $multiplier): string
+    {
+        $formatted = rtrim(rtrim(number_format($multiplier, 3, '.', ''), '0'), '.');
+
+        return $formatted === '' ? '0' : $formatted;
     }
 
     /** @deprecated Usar referenceEncountersPerMonth; se mantiene por compatibilidad. */
@@ -282,17 +358,97 @@ final class PricingPesByEncounterClassMetadata
     }
 
     /**
-     * @return array{0: bool, 1: bool} [audio, videollamada]
+     * Ids de addons declarados en el catálogo (orden de declaración).
+     *
+     * @return list<string>
      */
-    public static function effectiveAddons(
-        string $encounterClass,
-        bool $audio = false,
-        bool $videollamada = false
-    ): array {
-        $audioEff = $audio || self::classIncludesAudio($encounterClass);
-        $videoEff = $videollamada && self::classAllowsVideollamada($encounterClass);
+    public static function addonIds(): array
+    {
+        $addons = self::loadConfig()['addons'] ?? [];
+        if (!is_array($addons)) {
+            return [];
+        }
 
-        return [$audioEff, $videoEff];
+        return array_map('strval', array_keys($addons));
+    }
+
+    /**
+     * Campo del contrato `POST /licencia/cotizar` que representa el addon.
+     */
+    public static function addonPlanField(string $addonId): string
+    {
+        $addon = self::loadConfig()['addons'][$addonId] ?? null;
+        if (!is_array($addon)) {
+            return '';
+        }
+
+        return trim((string) ($addon['plan_field'] ?? ''));
+    }
+
+    /**
+     * @return array<string, string> addon_id => plan_field (solo addons persistidos)
+     */
+    public static function addonPlanFields(): array
+    {
+        $fields = [];
+        foreach (self::addonIds() as $addonId) {
+            $field = self::addonPlanField($addonId);
+            if ($field !== '') {
+                $fields[$addonId] = $field;
+            }
+        }
+
+        return $fields;
+    }
+
+    /**
+     * COGS USD por atención de cada addon con impacto declarado en el catálogo.
+     *
+     * El dictado se costea con sus supuestos (`cogs_assumptions`); el resto toma
+     * `cogs_usd_per_encounter[<addon_id>]`. Sin entrada, el addon no mueve el precio.
+     *
+     * @return array<string, float>
+     */
+    public static function addonCogsPerEncounter(): array
+    {
+        $cogs = self::loadConfig()['cogs_usd_per_encounter'] ?? [];
+        if (!is_array($cogs)) {
+            $cogs = [];
+        }
+
+        $map = [];
+        foreach (self::addonIds() as $addonId) {
+            if ($addonId === 'dictado') {
+                $map[$addonId] = self::dictadoCogsPerEncounter();
+                continue;
+            }
+            if (isset($cogs[$addonId])) {
+                $map[$addonId] = (float) $cogs[$addonId];
+            }
+        }
+
+        return $map;
+    }
+
+    /**
+     * ¿El addon se cobra en esa clase? Incluido → siempre; opcional → si se eligió.
+     *
+     * @param array<string, bool> $selectedAddons addon_id => elegido
+     */
+    public static function addonAppliesToClass(
+        string $addonId,
+        string $encounterClass,
+        array $selectedAddons = []
+    ): bool {
+        $state = self::addonState($addonId, $encounterClass);
+        if ($state === PricingPesByEncounterClassCatalog::ADDON_INCLUDED) {
+            return true;
+        }
+        if ($state === PricingPesByEncounterClassCatalog::ADDON_OPTIONAL) {
+            return !empty($selectedAddons[$addonId]);
+        }
+
+        return false;
     }
 
     /**
@@ -314,16 +470,14 @@ final class PricingPesByEncounterClassMetadata
     }
 
     /**
-     * COGS USD por atención según add-ons y clase.
+     * COGS USD por atención según los addons vigentes en la clase.
+     *
+     * @param array<string, bool> $selectedAddons addon_id => elegido (solo opcionales)
      */
     public static function unitCogsPerEncounter(
-        bool $audio = false,
-        bool $videollamada = false,
+        array $selectedAddons = [],
         ?string $encounterClass = null
     ): float {
-        if ($encounterClass !== null) {
-            [$audio, $videollamada] = self::effectiveAddons($encounterClass, $audio, $videollamada);
-        }
         $cogs = self::loadConfig()['cogs_usd_per_encounter'] ?? [];
         if (!is_array($cogs)) {
             return 0.0;
@@ -332,33 +486,15 @@ final class PricingPesByEncounterClassMetadata
         if ($encounterClass !== null && self::classIncludesPatientChat($encounterClass)) {
             $total += (float) ($cogs['patient_chat_amb'] ?? 0);
         }
-        if ($audio || $videollamada) {
-            $total += self::dictadoCogsPerEncounter();
-        }
-        if ($videollamada) {
-            $total += (float) ($cogs['videollamada'] ?? 0);
+        foreach (self::addonCogsPerEncounter() as $addonId => $addonCogs) {
+            if ($encounterClass !== null
+                && self::addonAppliesToClass($addonId, $encounterClass, $selectedAddons)
+            ) {
+                $total += $addonCogs;
+            }
         }
 
         return round($total, 4);
-    }
-
-    /**
-     * @deprecated Preferir unitCogsPerEncounter. Compat: COGS × 400 (ref. histórica).
-     */
-    public static function referenceUnitCogs(bool $audio = false, bool $videollamada = false): float
-    {
-        return round(self::unitCogsPerEncounter($audio, $videollamada, 'AMB') * self::referenceEncountersPerMonth(), 4);
-    }
-
-    /**
-     * @deprecated Preferir unitCogsPerEncounter.
-     */
-    public static function unitCogs(
-        bool $audio = false,
-        bool $videollamada = false,
-        ?string $encounterClass = null
-    ): float {
-        return self::unitCogsPerEncounter($audio, $videollamada, $encounterClass);
     }
 
     public static function marginOnCostPercent(): float
@@ -381,11 +517,10 @@ final class PricingPesByEncounterClassMetadata
 
     public static function initialAttentionsForClass(string $encounterClass): ?int
     {
-        $defaults = self::loadConfig()['defaults']['initial_attentions'] ?? null;
-        if (!is_array($defaults)) {
+        if (!self::isSellableClass(strtoupper($encounterClass))) {
             return null;
         }
-
+        $defaults = self::initialAttentionsByClass();
         $n = (int) ($defaults[strtoupper($encounterClass)] ?? 0);
 
         return $n > 0 ? $n : null;
@@ -394,15 +529,25 @@ final class PricingPesByEncounterClassMetadata
     public static function dictadoMinutes(): float
     {
         $assumptions = self::loadConfig()['cogs_assumptions'] ?? [];
-        $minutes = (float) ($assumptions['dictado_minutes'] ?? 5);
+        $minutes = (float) ($assumptions['dictado_minutes'] ?? 0);
+        if ($minutes <= 0) {
+            throw new InvalidConfigException(
+                'El catálogo de precios no declara cogs_assumptions.dictado_minutes.'
+            );
+        }
 
-        return $minutes > 0 ? $minutes : 5.0;
+        return $minutes;
     }
 
     public static function dictadoCogsPerEncounter(): float
     {
         $assumptions = self::loadConfig()['cogs_assumptions'] ?? [];
-        $perMinute = (float) ($assumptions['dictado_usd_per_minute'] ?? 0.0005);
+        $perMinute = (float) ($assumptions['dictado_usd_per_minute'] ?? 0);
+        if ($perMinute <= 0) {
+            throw new InvalidConfigException(
+                'El catálogo de precios no declara cogs_assumptions.dictado_usd_per_minute.'
+            );
+        }
 
         return round(self::dictadoMinutes() * $perMinute, 4);
     }
@@ -476,15 +621,15 @@ final class PricingPesByEncounterClassMetadata
     /**
      * Precio USD / atención = COGS × (1 + margen%).
      *
+     * @param array<string, bool> $selectedAddons addon_id => elegido (solo opcionales)
      * @param int|null $totalAttentions atenciones totales del contrato; null = margen de lista.
      */
     public static function unitPrice(
-        bool $audio = false,
-        bool $videollamada = false,
+        array $selectedAddons = [],
         ?string $encounterClass = null,
         ?int $totalAttentions = null
     ): float {
-        $cogs = self::unitCogsPerEncounter($audio, $videollamada, $encounterClass);
+        $cogs = self::unitCogsPerEncounter($selectedAddons, $encounterClass);
         $margin = $totalAttentions === null
             ? self::marginOnCostPercent()
             : self::marginOnCostPercentForTotalAttentions($totalAttentions);
@@ -498,7 +643,7 @@ final class PricingPesByEncounterClassMetadata
             return null;
         }
 
-        return self::unitPrice(false, false, $encounterClass, $totalAttentions);
+        return self::unitPrice([], $encounterClass, $totalAttentions);
     }
 
     public static function defaultWhenEmptyAllowAll(): bool
@@ -510,17 +655,18 @@ final class PricingPesByEncounterClassMetadata
 
     /**
      * @param array<string, int> $attentionsByClass code => atenciones / mes
+     * @param array<string, bool> $selectedAddons addon_id => elegido (solo opcionales)
      */
     public static function estimateMonthlyTotal(
         array $attentionsByClass,
-        bool $audio = false,
-        bool $videollamada = false
+        array $selectedAddons = []
     ): float {
-        return self::estimateMonthlyQuote($attentionsByClass, $audio, $videollamada)['amount_usd'];
+        return self::estimateMonthlyQuote($attentionsByClass, $selectedAddons)['amount_usd'];
     }
 
     /**
      * @param array<string, int> $attentionsByClass code => atenciones / mes
+     * @param array<string, bool> $selectedAddons addon_id => elegido (solo opcionales)
      * @return array{
      *     amount_usd: float,
      *     list_amount_usd: float,
@@ -532,8 +678,7 @@ final class PricingPesByEncounterClassMetadata
      */
     public static function estimateMonthlyQuote(
         array $attentionsByClass,
-        bool $audio = false,
-        bool $videollamada = false
+        array $selectedAddons = []
     ): array {
         $totalAttentions = 0;
         foreach ($attentionsByClass as $qty) {
@@ -548,8 +693,8 @@ final class PricingPesByEncounterClassMetadata
             if (!self::isSellableClass($code) || (int) $qty <= 0) {
                 continue;
             }
-            $unitPrice = self::unitPrice($audio, $videollamada, $code, $totalAttentions);
-            $listUnitPrice = self::unitPrice($audio, $videollamada, $code);
+            $unitPrice = self::unitPrice($selectedAddons, $code, $totalAttentions);
+            $listUnitPrice = self::unitPrice($selectedAddons, $code);
             $lineTotal = $unitPrice * (int) $qty;
             $lineListTotal = $listUnitPrice * (int) $qty;
             $total += $lineTotal;

@@ -8,10 +8,10 @@ Precios **orientativos** en USD; no incluyen IVA. Impuestos: [impuestos-argentin
 COGS de referencia: [costos-api.md](../../costos/costos-api.md); el presupuesto comercial del chat AMB se distingue de los escenarios por llamada con context caching.
 
 **Modelo vigente:** licencia = **Σ (atenciones_mes[clase] × precio por atención)**.  
-El precio por atención = **COGS_por_atención × (1 + margen sobre costo)**. El margen de lista es **233 %** (~70 % bruto ≈ ~49 % después de IIBB + ganancias). A más **atenciones totales** contratadas (suma ambulatorio + urgencia + internación), baja el margen según tramos. El cliente elige tipos de atención y un **volumen aproximado** (presets). **1 profesional a jornada completa = 500 atenciones AMB / mes** (25 atenciones/día × 20 días; 15 min por atención ≈ 6 h 15 de consulta + ~1 h 45 administrativas); **media jornada = 250** (12–13/día × 20 días). Los presets se ajustan por clase: AMB 500, EMER 700 (guardia de 12 h × 15 turnos) e IMP 400 (20 pases/día × 20 días). El **dictado está incluido**; en ambulatorio la **videollamada** es el único add-on opcional. **Motivos de consulta ya no usa audio ni STT**: es un cuestionario con opciones y su costo es el mismo en las tres clases (**0,0006**/atención). El chat paciente (§1) tiene **cupo de 10 mensajes** alrededor del turno (capacidad / headroom para prompts más largos o varias llamadas IA). Lo no contratado **se deshabilita** en sesión operativa y tableros.
+El precio por atención = **COGS_por_atención × (1 + margen sobre costo)**. El margen de lista es **233 %** (~70 % bruto ≈ **42,9 %** después de IIBB + ganancias; ~42,5 % incluyendo IDCB). A más **atenciones totales** contratadas (suma ambulatorio + urgencia + internación), baja el margen según tramos. El cliente elige tipos de atención y un **volumen aproximado** (presets). **1 profesional a jornada completa = 500 atenciones AMB / mes** (25 atenciones/día × 20 días; 15 min por atención ≈ 6 h 15 de consulta + ~1 h 45 administrativas); **media jornada = 250** (12–13/día × 20 días). Los presets se ajustan por clase: AMB 500, EMER 700 (guardia de 12 h × 15 turnos) e IMP 400 (20 pases/día × 20 días). El **dictado está incluido**; en ambulatorio la **videollamada** es el único add-on opcional. **Motivos de consulta ya no usa audio ni STT**: es un cuestionario con opciones y su costo es el mismo en las tres clases (**0,0006**/atención). El chat paciente (§1) tiene **cupo de 10 mensajes** alrededor del turno (capacidad / headroom para prompts más largos o varias llamadas IA). Lo no contratado **se deshabilita** en sesión operativa y tableros.
 
 > **Recalibración aplicada (2026-11-11):** estas cifras reflejan motivos sin STT. El catálogo backend
-> (`PricingPesByEncounterClassCatalog` v13: `motivos` / `motivos_by_class` = 0,0006) y el sitio
+> (`PricingPesByEncounterClassCatalog` v16: `motivos` / `motivos_by_class` = 0,0006) y el sitio
 > institucional, que lee `GET /licencia/planes`, ya cotizan con estos valores.
 
 Catálogo backend: [`PricingPesByEncounterClassCatalog.php`](../../../../web/common/components/Domain/Organization/Pes/Domain/Catalog/PricingPesByEncounterClassCatalog.php).
@@ -51,10 +51,12 @@ Mix porcentual de estos componentes sobre el COGS de cada clase: [resumen-costos
 
 | Tramo | Atenciones / mes | Margen sobre costo | Descuento vs lista | Margen después IIBB + ganancias (orientativo) |
 |-------|------------------|--------------------|--------------------|-----------------------------------------------|
-| Precio base | 1–4.999 | **233 %** | 0 % | ~49 % |
-| Mediano | 5.000–14.999 | **163 %** | **−21 %** | ~43,5 % |
-| Grande | 15.000–39.999 | **134 %** | **−30 %** | ~40 % |
-| Enterprise | 40.000+ | **117 %** | **−35 %** | ~37,5 % |
+| Precio base | 1–4.999 | **233 %** | 0 % | ~42,9 % |
+| Mediano | 5.000–14.999 | **163 %** | **−21 %** | ~37,7 % |
+| Grande | 15.000–39.999 | **134 %** | **−30 %** | ~34,6 % |
+| Enterprise | 40.000+ | **117 %** | **−35 %** | ~32,4 % |
+
+El margen después de impuestos **se deriva** de los `tax_assumptions` del catálogo (`iibb_rate_percent`, `income_tax_rate_percent`, `bank_debit_credit_tax_percent`), no se escribe a mano. La tabla muestra el escenario **sin IDCB** (IIBB 4 % Santiago del Estero + ganancias 35 %); con IDCB 0,6 %: 42,5 / 37,3 / 34,2 / 32,1. Detalle: [impuestos-argentina.md](../../costos/impuestos-argentina.md).
 
 Presets **AMB**: media jornada (250) · jornada completa (500) · 2 profesionales (1.000) · 4 profesionales (2.000) · clínica chica (5.000) · … · enterprise+ (100.000). **EMER**: 350 · 700 · 1.400 · 2.800 · 7.000 · … · 140.000. **IMP**: 200 · 400 · 800 · 1.600 · 4.000 · … · 80.000.
 

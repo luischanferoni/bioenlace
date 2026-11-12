@@ -161,8 +161,8 @@ Lectura:
 ## Notas
 
 - Por profesional y mes (500 atenciones, sin videollamada): **~USD 4,31 bruto · ~USD 3,95 con context caching** (incluye `motivos-consulta-insights` y STT médico ~5 min; motivos sin audio). Detalle y comparativa DeepSeek: [costos-api.md](costos-api.md).
-- **Identidad (Didit):** costo aparte por verificación, no por profesional. Con &lt; 500 altas/mes suele ser **USD 0**; proyección: [costos-didit.md](costos-didit.md).
-- **WhatsApp:** asistente solo si el **paciente inicia** el mensaje (Meta ≈ $0). Plantillas utility **no habilitadas**. IA del chat = misma del §1 / app. Ver [costos-api §7](costos-api.md#7-whatsapp-cloud-api-paciente).
+- **Identidad (Didit):** costo aparte por verificación, no por profesional. El cupo pasó de 500 sesiones a **USD 10 de crédito/mes**; proyección: [costos-didit.md](costos-didit.md).
+- **WhatsApp:** asistente solo si el **paciente inicia** el mensaje. **Meta ya no es $0**: desde el 1/10/2026 se cobran los mensajes **service** después de **1.000 por número por mes**. El COGS vigente del chat **no incluye** ese costo; si se habilita WhatsApp como canal, hay que presupuestarlo. Plantillas utility **no habilitadas**. Ver [costos-whatsapp.md](costos-whatsapp.md).
 - No incluye videollamada ni impuestos.
-- **Precio de lista al cliente:** no es este COGS. Se aplica margen sobre costo (lista **233 %** ≈ 70 % bruto ≈ 49 % después IIBB + ganancias; baja por tramos de PES) y add-ons opcionales (audio / videollamada). Ver [matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md) e [impuestos-argentina.md](impuestos-argentina.md).
+- **Precio de lista al cliente:** no es este COGS. Se aplica margen sobre costo (lista **233 %** ≈ 70 % bruto ≈ **42,9 %** después de IIBB + ganancias, ~42,5 % con IDCB; baja por tramos de atenciones) y add-ons opcionales (dictado / videollamada). Ver [matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md) e [impuestos-argentina.md](impuestos-argentina.md).
 

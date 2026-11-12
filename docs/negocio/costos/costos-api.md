@@ -34,8 +34,8 @@ Por médico por mes, en orden del recorrido del paciente (detalle y costes en §
 - **§3 Onboarding y día a día:** 500 llamadas a la IA por mes (`asistente-onboarding` en metadata; en código reutiliza preprocess/guide)
 - **§4 Captura clínica (encounter):** **siempre** audio del médico por consulta — **~5 min** STT (2.500 min/mes) + **500** llamadas `analisis-consulta` + **500** llamadas `encounter-codificacion-automatica` al guardar. Sin variante solo texto en el modelo de costos. Alineado a voz típica en consulta (~12 min de reloj → ~5 min de habla del profesional). Con **4 min** de dictado: **2.000 min/mes** y **−USD 0,35/prof/mes** de STT.
 - **§5 Medios (fotos, etc.):** 2 fotos por encounter (Vision)
-- **§6 Videollamada:** self-host; COGS planificado **1,75** @ **40 %** tele = sala/TURN/Track Egress + storage (**sin** STT duplicado: mismo que dictado, una vez en el calculador). Antes techo @ 80 % (**3,50**) — ver [§6](#6-videollamadas-pacientemédico) y [analisis-videollamada-self-host.md](analisis-videollamada-self-host.md).
-- **§7 WhatsApp (alcance actual):** solo respuestas a mensajes **iniciados por el paciente** (service window Meta ≈ $0; IA = §1). **Utility / plantillas proactivas: no habilitadas** — ver [§7](#7-whatsapp-cloud-api-paciente).
+- **§6 Videollamada:** self-host; COGS planificado **2,19** @ **40 %** tele = sala/TURN/Track Egress + storage (**sin** STT duplicado: mismo que dictado, una vez en el calculador). Antes techo @ 80 % (**3,50**) — ver [§6](#6-videollamadas-pacientemédico) y [analisis-videollamada-self-host.md](analisis-videollamada-self-host.md).
+- **§7 WhatsApp (alcance actual):** solo respuestas a mensajes **iniciados por el paciente**. **El costo Meta ya no es $0**: desde el 1/10/2026 los mensajes **service** se cobran después de **1.000 por número por mes** (IA = §1). **Utility / plantillas proactivas: no habilitadas** — ver [§7](#7-whatsapp-cloud-api-paciente) y [costos-whatsapp.md](costos-whatsapp.md).
 
 ---
 
@@ -50,7 +50,7 @@ Por médico por mes, en orden del recorrido del paciente (detalle y costes en §
 | **Daily** — real-time transcription (Deepgram) | **~$0.0059 por unmuted pax-min** | Fuera de alcance (no planificado) | Ídem |
 | **Vision API** (Label, Text, Face, etc.) | 1.000 unidades por mes gratis; luego $1.50 por 1.000 | Fotos §5 | [cloud.google.com/vision/pricing](https://cloud.google.com/vision/pricing) |
 | **DeepSeek** — V4 Flash (API) | **$0.14 / $0.0028 / $0.28** por 1M (input miss / cache hit / output) | Comparativa IA | [DeepSeek API pricing](https://api-docs.deepseek.com/quick_start/pricing) |
-| **WhatsApp Cloud API** — service (ventana 24 h) | **$0** por mensaje no-plantilla / utility dentro de CSW | Asistente reactivo §7 (alcance actual) | [Meta WhatsApp pricing](https://developers.facebook.com/docs/whatsapp/pricing/) |
+| **WhatsApp Cloud API** — service (ventana 24 h) | **$0** hasta **1.000 service por número/mes**; luego se cobra (desde 1/10/2026) | Asistente reactivo §7; no presupuestado en el COGS vigente | [Meta WhatsApp pricing](https://developers.facebook.com/docs/whatsapp/pricing/) |
 | **WhatsApp Cloud API** — utility (Argentina) | **~$0,026** por plantilla entregada (list rate USD; Oct 2025) | **Fuera de alcance** (no habilitado) | Idem + rate card USD |
 
 Para **Vertex AI / Gemini** conviene revisar el [Calculador de precios de Google Cloud](https://cloud.google.com/products/calculator) y la [tabla de precios de Gemini en Vertex AI](https://cloud.google.com/vertex-ai/generative-ai/pricing) (revisar cada 6–12 meses). Videollamadas y post-call STT: [Daily pricing](https://www.daily.co/pricing/video-sdk/) y [estrategias-reduccion/videollamadas.md](estrategias-reduccion/videollamadas.md). Las tarifas WhatsApp por país/categoría cambian con los rate cards de Meta (revisar cada actualización trimestral).
@@ -290,7 +290,7 @@ Tarifas Gemini: ver [§ Gemini Flash](#gemini-flash-tarifas-actuales-y-context-c
 
 Detalle de flujos y caché: [estrategias-reduccion/matriz-casos-uso.md](estrategias-reduccion/matriz-casos-uso.md).
 
-> **Nota comercial (pricing):** el COGS §2 que entra al calculador es **sin audio** (no hay STT en motivos): **0,0006** por atención en las tres clases, valor que coincide con el caso texto medido (~0,00055). El catálogo `PricingPesByEncounterClassCatalog` (v14) ya usa `motivos` / `motivos_by_class` = 0,0006; el sitio institucional toma esos valores de `GET /licencia/planes`. El cupo de **10 mensajes** en §1 es capacidad / headroom (prompts más largos o varias llamadas IA), no un supuesto de uso pleno en cada mensaje.
+> **Nota comercial (pricing):** el COGS §2 que entra al calculador es **sin audio** (no hay STT en motivos): **0,0006** por atención en las tres clases, valor que coincide con el caso texto medido (~0,00055). El catálogo `PricingPesByEncounterClassCatalog` (v16) ya usa `motivos` / `motivos_by_class` = 0,0006; el sitio institucional toma esos valores de `GET /licencia/planes`. El cupo de **10 mensajes** en §1 es capacidad / headroom (prompts más largos o varias llamadas IA), no un supuesto de uso pleno en cada mensaje.
 
 > **Presupuesto comercial del chat AMB:** el catálogo de precios reserva **USD 0,0048 por atención** para la conversación del paciente, en lugar del supuesto anterior de **USD 0,0019**. El ajuste reconoce el costo de `preprocess` en cada mensaje y que `guide` puede sumar una segunda llamada con adjuntos de discovery, contexto clínico e historial; el tamaño real del prompt de `guide` puede crecer según el caso. Es un presupuesto conservador del modelo comercial, no una medición de tokens promedio ni una garantía de uso pleno del cupo de 10 mensajes. Las tablas de §1 describen escenarios de llamadas y caching con supuestos propios; no son la fuente del precio de licencia. Recalibrar el presupuesto con telemetría de tokens y uso real antes de reducirlo.
 
@@ -386,9 +386,9 @@ Misma superficie de asistente que la **app móvil paciente**: mismo `ChatOrchest
 | **Utility** (recordatorios, resolución, adelantamiento, anti no-show, etc.) | **No habilitado** | ~$0,026 AR / msg (list USD) si se usara | **N/A — fuera de alcance** |
 | Marketing / authentication | **No habilitado** | Rate card Meta | **N/A** |
 
-**COGS Meta del alcance actual:** **~$0**/prof/mes (solo service window). El costo variable sigue siendo el §1 de IA, atribuido al volumen de chat (app o WhatsApp), no un add-on Meta.
+**COGS Meta del alcance actual:** **no es $0**. Desde el 1/10/2026 los mensajes service se cobran después de **1.000 por número por mes**. El modelo de COGS vigente **asume canal app** y no presupuesta Meta; si WhatsApp se habilita como canal del chat incluido, hay que sumar ese costo. El costo variable de IA sigue siendo el §1, atribuido al volumen de chat (app o WhatsApp), no un add-on Meta.
 
-Referencia de tarifas (por si se reabre utility en el futuro): [Meta WhatsApp pricing](https://developers.facebook.com/docs/whatsapp/pricing/) + rate card USD. Utility dentro de CSW también es $0; el costo aparece al enviar plantillas **fuera** de ventana.
+Referencia de tarifas: [Meta WhatsApp pricing](https://developers.facebook.com/docs/whatsapp/pricing/) + rate card USD. El cupo de 1.000 service/número/mes es el único alivio; con un número compartido entre efectores es irrelevante. Las plantillas utility siempre se pagan.
 
 > **Actualización 2026-11-12:** desde el **1/10/2026** Meta cobra los mensajes **service** después de **1.000 por número por mes**; la ventana de 24 h ya no es gratis en todos los casos. El add-on proactivo opcional (plantillas, step-up Didit, política de datos sensibles) se analiza en [costos-whatsapp.md](costos-whatsapp.md).
 
@@ -438,7 +438,7 @@ Proyección por escala (altas, pacientes activos, reingresos tras logout, escena
 
 ## Resumen: costo real por API (por médico por mes)
 
-**Apartado 1:** IA generativa (Gemini y comparativa DeepSeek), incluido §4 con STT e **insights** de §2. **Apartado 2:** Vision (§5). **Apartado 3:** videollamadas (§6). **§7 WhatsApp** (reactivo): Meta **~$0**; no es fila de COGS aparte. Anexos A y B: [fuera del total](#anexo-a--intent-engine-classification-fuera-del-total-apartado-1).
+**Apartado 1:** IA generativa (Gemini y comparativa DeepSeek), incluido §4 con STT e **insights** de §2. **Apartado 2:** Vision (§5). **Apartado 3:** videollamadas (§6). **§7 WhatsApp** (reactivo): Meta **no es $0** (cupo de 1.000 service/número/mes); no es fila de COGS aparte. Anexos A y B: [fuera del total](#anexo-a--intent-engine-classification-fuera-del-total-apartado-1).
 
 ### Apartado 1 – IA generativa + STT captura clínica
 
@@ -463,13 +463,13 @@ Ver totales en [§6](#6-videollamadas-pacientemédico).
 
 | Concepto | Costo (USD por médico por mes) |
 |----------|-------------------------------|
-| Sala / TURN / ops + storage | **1,75** |
+| Sala / TURN / ops + storage | **2,19** |
 | Post-call STT | **0** aquí (mismo que dictado; una vez en calculador) |
-| **COGS planificación (lista comercial)** | **1,75** |
+| **COGS planificación (lista comercial)** | **2,19** |
 
 ### Apartado 4 – WhatsApp (§7)
 
-**Alcance actual:** solo asistente iniciado por el paciente → Meta **~$0**/prof/mes. Utility **no habilitada**. Detalle: [§7](#7-whatsapp-cloud-api-paciente).
+**Alcance actual:** solo asistente iniciado por el paciente. **Meta no es $0**: desde el 1/10/2026 los mensajes service se cobran después de **1.000 por número/mes**. El modelo vigente asume canal app y no lo presupuesta. Utility **no habilitada**. Detalle: [§7](#7-whatsapp-cloud-api-paciente).
 
 ### Total general (por profesional, 500 encounters/mes)
 
@@ -484,9 +484,9 @@ Ver totales en [§6](#6-videollamadas-pacientemédico).
 
 **Orden de magnitud uso intensivo (todo incluido):** bruto todo-servidor **~USD 6,7**/prof/mes; con **−30 % STT on-device** en planificación **~USD 6,2**/prof/mes. Solo IA + STT + Vision (sin video): bruto **~USD 4,31**; con context caching **~USD 3,95**.
 
-**WhatsApp (§7, alcance actual):** Meta **~$0** (sin utility). La IA del chat sigue en §1.
+**WhatsApp (§7, alcance actual):** Meta según volumen (cupo de 1.000 service/número/mes); no presupuestado en el COGS vigente. La IA del chat sigue en §1.
 
-**De COGS a precio de lista:** la licencia comercial usa **USD por atención** (`cogs_usd_per_encounter`) × volumen mensual × margen (lista **233 %**; tramos por atenciones totales). Motivos **sin audio** (cuestionario pre-turno); chat paciente **10 msgs solo ambulatorio**. Videollamada **incluye** STT profesional una vez. Detalle: [matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md). El catálogo vigente está en `common/components/Domain/Organization/Pes/Domain/Catalog/PricingPesByEncounterClassCatalog.php` (v13, motivos sin audio); web y app solicitan las cotizaciones al backend.
+**De COGS a precio de lista:** la licencia comercial usa **USD por atención** (`cogs_usd_per_encounter`) × volumen mensual × margen (lista **233 %**; tramos por atenciones totales). Motivos **sin audio** (cuestionario pre-turno); chat paciente **10 msgs solo ambulatorio**. Videollamada **incluye** STT profesional una vez. El margen después de impuestos se deriva de los `tax_assumptions` del catálogo. Detalle: [matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md). El catálogo vigente está en `common/components/Domain/Organization/Pes/Domain/Catalog/PricingPesByEncounterClassCatalog.php` (v16, motivos sin audio); web y app solicitan las cotizaciones al backend.
 
 **Nota:** Si la IA corre en **nuestra infra**, los ítems del apartado 1 figuran en [infra-costos.md](infra-costos.md) y no se duplican aquí. El apartado 3 usa COGS planificado **2,19** @ **40 %** tele (self-host; STT no duplicado) — ver [videollamadas.md](estrategias-reduccion/videollamadas.md).
 

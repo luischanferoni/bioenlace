@@ -201,6 +201,46 @@ class PricingPesByEncounterClassTest extends Unit
         $this->assertSame(0.0293, PricingPesByEncounterClassMetadata::addonCogsPerEncounter()['whatsapp']);
     }
 
+    public function testAfterTaxMarginsDeriveFromCatalogAssumptions(): void
+    {
+        $tax = PricingPesByEncounterClassMetadata::taxAssumptions();
+        $this->assertSame('Santiago del Estero (AR)', $tax['jurisdiction']);
+        $this->assertSame(4.0, $tax['iibb_rate_percent']);
+        $this->assertSame(35.0, $tax['income_tax_rate_percent']);
+
+        // (1 − 0,04 − 1/3,33) × 0,65 = 42,9 %; con IDCB 0,6 % = 42,5 %.
+        $this->assertSame(42.9, PricingPesByEncounterClassMetadata::afterTaxMarginPercent(233));
+        $this->assertSame(42.5, PricingPesByEncounterClassMetadata::afterTaxMarginPercent(233, true));
+        $this->assertSame(37.7, PricingPesByEncounterClassMetadata::afterTaxMarginPercent(163));
+        $this->assertSame(34.6, PricingPesByEncounterClassMetadata::afterTaxMarginPercent(134));
+        $this->assertSame(32.4, PricingPesByEncounterClassMetadata::afterTaxMarginPercent(117));
+
+        $lista = PricingPesByEncounterClassMetadata::tierForTotalAttentions(200);
+        $this->assertSame(42.9, $lista['margin_after_iibb_ganancias_percent']);
+        $this->assertSame(42.5, $lista['margin_after_all_taxes_percent']);
+    }
+
+    public function testChangingTaxAssumptionsRecomputesMargins(): void
+    {
+        $config = PricingPesByEncounterClassMetadata::loadConfig();
+        $config['tax_assumptions']['iibb_rate_percent'] = 3.0;
+        $config['tax_assumptions']['income_tax_rate_percent'] = 25.0;
+        $property = new \ReflectionProperty(PricingPesByEncounterClassMetadata::class, 'config');
+        $property->setAccessible(true);
+
+        try {
+            $property->setValue(null, $config);
+            // (1 − 0,03 − 1/3,33) × 0,75 = 50,2 %
+            $this->assertSame(50.2, PricingPesByEncounterClassMetadata::afterTaxMarginPercent(233));
+            $this->assertSame(
+                50.2,
+                PricingPesByEncounterClassMetadata::tierForTotalAttentions(200)['margin_after_iibb_ganancias_percent']
+            );
+        } finally {
+            PricingPesByEncounterClassMetadata::reset();
+        }
+    }
+
     public function testDefaultWhenEmptyAllowAll(): void
     {
         $this->assertTrue(PricingPesByEncounterClassMetadata::defaultWhenEmptyAllowAll());

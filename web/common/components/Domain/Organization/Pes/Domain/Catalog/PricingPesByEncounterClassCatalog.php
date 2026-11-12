@@ -28,7 +28,7 @@ final class PricingPesByEncounterClassCatalog
     public static function config(): array
     {
         return [
-        'version' => 15,
+        'version' => 16,
         'currency' => 'USD',
         'billing_period' => 'month',
         'tax_note' => 'El total mensual incluye IVA.',
@@ -77,6 +77,29 @@ final class PricingPesByEncounterClassCatalog
             'whatsapp' => 0.0293,
         ],
         'margin_on_cost_percent' => 233,
+        /*
+         * Supuestos fiscales (Argentina) de los que se DERIVA el margen después
+         * de impuestos. No escribir ese margen a mano en los tramos: se calcula
+         * en `PricingPesByEncounterClassMetadata::afterTaxMarginPercent()`.
+         *
+         * iibb_rate_percent: Santiago del Estero, servicios en general
+         *   (valor de planificación; validar contra la Ley Impositiva vigente y
+         *   el coeficiente del Convenio Multilateral si se factura fuera).
+         * income_tax_rate_percent: tramo marginal superior de la escala
+         *   25/30/35 % (Ley 27.743). Criterio conservador a escala; con
+         *   utilidades bajas la tasa efectiva es menor.
+         * bank_debit_credit_tax_percent: IDCB 0,6 % sobre créditos y débitos.
+         *   Parte puede computarse como pago a cuenta; se modela completo.
+         *
+         * Las percepciones/retenciones de IIBB de clientes no cambian el
+         * impuesto total (son caja y saldo a favor), por eso no entran acá.
+         */
+        'tax_assumptions' => [
+            'jurisdiction' => 'Santiago del Estero (AR)',
+            'iibb_rate_percent' => 4.0,
+            'income_tax_rate_percent' => 35.0,
+            'bank_debit_credit_tax_percent' => 0.6,
+        ],
         /*
          * Escala de volumen: cada escalón es un múltiplo de la capacidad de
          * referencia de la clase. No se escriben volúmenes acá: se calculan en
@@ -144,7 +167,6 @@ final class PricingPesByEncounterClassCatalog
                 'max_attentions' => 4999,
                 'margin_on_cost_percent' => 233,
                 'discount_vs_list_percent' => 0,
-                'margin_after_iibb_ganancias_percent' => 49,
             ],
             1 => [
                 'id' => 'mediano',
@@ -153,7 +175,6 @@ final class PricingPesByEncounterClassCatalog
                 'max_attentions' => 14999,
                 'margin_on_cost_percent' => 163,
                 'discount_vs_list_percent' => 21,
-                'margin_after_iibb_ganancias_percent' => 43.5,
             ],
             2 => [
                 'id' => 'grande',
@@ -162,7 +183,6 @@ final class PricingPesByEncounterClassCatalog
                 'max_attentions' => 39999,
                 'margin_on_cost_percent' => 134,
                 'discount_vs_list_percent' => 30,
-                'margin_after_iibb_ganancias_percent' => 40,
             ],
             3 => [
                 'id' => 'alto_volumen',
@@ -171,7 +191,6 @@ final class PricingPesByEncounterClassCatalog
                 'max_attentions' => null,
                 'margin_on_cost_percent' => 117,
                 'discount_vs_list_percent' => 35,
-                'margin_after_iibb_ganancias_percent' => 37.5,
             ],
         ],
         'cogs_source' => 'docs/negocio/costos/costos-api.md — conversación del paciente con costo AMB conservador para preprocess + guide con adjuntos e historial; motivos sin audio (cuestionario pre-turno); dictado incluido',

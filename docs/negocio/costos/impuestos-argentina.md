@@ -15,9 +15,10 @@ Los precios de la [matriz Argentina](../modelo-de-negocio/business-plan/matriz-a
 | Forma societaria | SRL o SA, **Responsable Inscripto** (IVA) |
 | Actividad | Servicios de software / SaaS (código AFIP según contrato real) |
 | Facturación | Clientes en Argentina (B2B); precios de referencia en **USD** |
-| Ingresos brutos (IIBB) | **3%–5%** sobre facturación bruta (promedio ilustrativo; varía por jurisdicción y convenio multilateral) |
-| Ganancias (imp. cédulo) | **25%** sobre utilidad impositiva anual (equivalente mensual en ejemplos) |
-| IVA | **21%** (alícuota general servicios) |
+| Ingresos brutos (IIBB) | **4%** de planificación — **Santiago del Estero**, servicios en general (validar con el contador y con el coeficiente del Convenio Multilateral si se factura fuera) |
+| Ganancias (imp. a las ganancias) | **35%** — tramo marginal superior de la escala **25 / 30 / 35%** (Ley 27.743); criterio conservador a escala (con utilidades bajas la efectiva es menor) |
+| IDCB (débitos y créditos) | **0,6%** sobre cobranzas y pagos; parte puede computarse como pago a cuenta (se modela completo, conservador) |
+| IVA | **21%** (alícuota general servicios; se discrimina, no entra en márgenes) |
 | Uso de IA (escala 5.000 prof.) | Intensivo, motivos sin audio (cuestionario) — COGS por prof en [costos-api.md](costos-api.md#resumen-costo-real-por-api-por-médico-por-mes) |
 
 **No cubre:** monotributo, exportación de servicios con tratamiento especial, retenciones en licitación pública, percepciones aduaneras en detalle, impuesto PAIS en cada operación, ni convenios impositivos provincia por provincia.
@@ -56,23 +57,33 @@ La documentación de **costos técnicos** (capas 1–2 parcial) no sustituye el 
 
 ## Ingresos brutos (IIBB)
 
-- Impuesto **provincial** (y convenio multilateral si facturás en varias provincias).
-- Base: **ingresos brutos** por la actividad (facturación), no por el costo de IA.
+- Impuesto **provincial** (y Convenio Multilateral si facturás en varias provincias).
+- Base: **ingresos brutos** por la actividad (facturación neta de IVA), no por el costo de IA.
+- **Es deducible de ganancias**: se resta antes de aplicar la tasa.
 - Para **armar precio** hacia el cliente:  
   `precio neto objetivo × (1 + alícuota IIBB estimada)` o incluir IIBB en el margen deseado.
 
-Alícuota **orientativa** en tablas: **3%–5%** del monto facturado (validar en CABA / provincia del cliente y del domicilio fiscal).
+Alícuota de planificación en tablas: **4%** — **Santiago del Estero**, servicios en general. No es una alícuota única nacional: depende de la jurisdicción y del coeficiente del Convenio Multilateral. Validar con el contador.
+
+Las **percepciones y retenciones de IIBB** que aplican los clientes al pagar (típicamente 2–3 %) no cambian el impuesto total: son caja y saldo a favor. Si no se computan, se paga dos veces.
 
 ---
 
 ## Impuesto a las ganancias
 
-- Aplica sobre **utilidad** (ingresos − costos deducibles − amortizaciones), no sobre facturación bruta.
-- Tasa de referencia en ejemplos: **25%** (sociedades; puede variar por régimen y año fiscal).
+- Aplica sobre **utilidad** (ingresos − costos deducibles − IIBB − IDCB − amortizaciones), no sobre facturación bruta.
+- Escala vigente (Ley 27.743): **25% / 30% / 35%** por tramos de ganancia neta imponible, con umbrales ajustados por IPC. En tablas se usa **35%** (tramo marginal superior) como criterio conservador a escala.
 - En un modelo mensual:  
-  `ganancias estimada ≈ max(0, facturación − costo directo − gastos fijos − IIBB − otros) × 25%`
+  `ganancias estimada ≈ max(0, facturación − costo directo − gastos fijos − IIBB − IDCB − otros) × 35%`
 
 No se prorratea de forma exacta sin balance; las tablas siguientes usan **órdenes de magnitud**.
+
+## Impuesto sobre débitos y créditos (IDCB)
+
+- **0,6%** sobre cada crédito y débito en cuentas bancarias.
+- Grava tanto las **cobranzas** (sobre ingresos) como los **pagos a proveedores** (sobre costos).
+- Parte puede computarse como pago a cuenta de ganancias/IVA según el régimen; en las tablas se modela el **0,6% completo** (conservador).
+- Es una de las omisiones más frecuentes en modelos de pricing: no aparece en la factura, pero se paga igual.
 
 ---
 
@@ -113,7 +124,7 @@ Base: filas **IA + STT** de la tabla A (~**21.550** sin caché · ~**19.750** co
 
 ### C) Cotización orientativa — variable IA (5.000 prof., uso intensivo)
 
-**Lista comercial vigente:** [matriz Argentina](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md) — `precio = COGS × (1 + margen%/100)` con margen de lista **233 %** (~70 % bruto ≈ ~49 % después IIBB + ganancias) y tramos por volumen de PES. COGS de esta sección = tabla A / [costos-api](costos-api.md).
+**Lista comercial vigente:** [matriz Argentina](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md) — `precio = COGS × (1 + margen%/100)` con margen de lista **233 %** (~70 % bruto ≈ **42,9 %** después de IIBB + ganancias; ~**42,5 %** incluyendo IDCB) y tramos por volumen de atenciones. COGS de esta sección = tabla A / [costos-api](costos-api.md).
 
 #### Qué es cada margen (importante)
 
@@ -121,7 +132,7 @@ Base: filas **IA + STT** de la tabla A (~**21.550** sin caché · ~**19.750** co
 |---------|---------|---------------------|
 | **Margen bruto (*gross margin*)** | `(Precio neto − costo IA) / Precio neto` | **No.** Solo resta el costo directo documentado (IA+STT±video). Es la métrica del business plan (~70 % objetivo en software). |
 | **Margen sobre costo (*markup*)** | `(Precio − COGS) / COGS` | **No.** En metadata: `margin_on_cost_percent` (233 % → bruto ~70 %). |
-| **Margen después IIBB + ganancias** | `(Precio − IIBB − costo IA − ganancias) / Precio` | **Sí.** IIBB **4 %** s/ facturación neta; ganancias **25 %** s/ utilidad antes de imp. a las ganancias (`utilidad = precio − IIBB − costo IA`). |
+| **Margen después IIBB + ganancias** | `(Precio − IIBB − IDCB − costo IA − ganancias) / Precio` | **Sí.** IIBB **4 %** s/ facturación neta; ganancias **35 %** s/ utilidad antes del impuesto (`utilidad = precio − IIBB − IDCB − costo IA`). IIBB e IDCB se restan antes porque son deducibles. |
 | **IVA 21 %** | Sobre factura al cliente | **No entra** en ningún margen: se discrimina; el cliente lo usa como crédito fiscal (B2B). |
 
 #### Tabla — solo IA + STT (sin videollamada)
@@ -154,12 +165,14 @@ La fila «margen mínimo» histórico (1,8–2 por prof) **no cubre** STT ni vid
 | Facturación neta | 71.750 |
 | IVA 21 % (discriminado en factura) | +15.068 (no es ingreso) |
 | Ingresos brutos (4 %) | −2.870 |
+| IDCB (0,6 % de la cobranza) | −431 |
 | Costo IA + STT (planificación) | −21.550 |
-| Utilidad antes ganancias | 47.330 |
-| Ganancias (25 %) | −11.833 |
-| **Resultado variable** (antes de fijos) | **35.497** |
+| Utilidad antes de ganancias | 46.899 |
+| Ganancias (35 %) | −16.415 |
+| **Resultado variable** (antes de fijos) | **30.484** |
 | **Margen bruto** | **~70 %** (= (71.750 − 21.550) / 71.750) |
-| **Margen después IIBB + ganancias** | **~49 %** (= 35.497 / 71.750) |
+| **Margen después IIBB + ganancias** | **~42,9 %** (sin IDCB: 30.765 / 71.750) |
+| **Margen después de todos los impuestos** | **~42,5 %** (= 30.484 / 71.750) |
 
 #### Detalle aritmético — ejemplo histórico USD 10.000 por mes neto (2 por prof)
 
@@ -170,7 +183,7 @@ La fila «margen mínimo» histórico (1,8–2 por prof) **no cubre** STT ni vid
 | Ingresos brutos (4 %) | −400 |
 | Costo IA + STT (planificación) | −21.550 |
 | Utilidad antes ganancias | **pérdida** |
-| Ganancias (25 %) | 0 |
+| Ganancias (35 %) | 0 |
 | **Resultado variable** (antes de fijos) | **negativo** |
 | **Margen bruto** | **negativo** (el precio histórico ya no cubre COGS) |
 
@@ -179,10 +192,10 @@ La fila «margen mínimo» histórico (1,8–2 por prof) **no cubre** STT ni vid
 ## Cómo usar esto en pricing
 
 1. **Costo directo** (tabla A o B / [costos-api](costos-api.md)) → COGS por profesional (base ± audio ± videollamada).  
-2. **Aplicar margen sobre costo** (`volume_discount_tiers` / `margin_on_cost_percent` en metadata; lista **233 %** ≈ 70 % bruto ≈ 49 % después IIBB + ganancias) → precio unitario según PES totales.  
+2. **Aplicar margen sobre costo** (`volume_discount_tiers` / `margin_on_cost_percent` en metadata; lista **233 %** ≈ 70 % bruto ≈ 42,9 % después de IIBB + ganancias, 42,5 % con IDCB) → precio unitario según atenciones totales. El margen después de impuestos **se deriva** de `tax_assumptions`, no se escribe a mano.  
 3. **× cantidad de profesionales** por clase contratada (AMB / EMER / IMP).  
 4. **+ Gastos fijos** (sueldos, ventas, implementación) → no están en `docs/costos/` de APIs; ajustar margen o fee one-shot si hace falta.  
-5. **+ IIBB** sobre precio de venta estimado (o incluirlo en el margen deseado).  
+5. **+ IIBB** sobre precio de venta estimado (o incluirlo en el margen deseado) y **+ IDCB** sobre cobranzas y pagos.  
 6. **IVA** en factura al cliente local (**+21%** discriminado).  
 7. **Ganancias** sobre utilidad anual (reserva en plan financiero, no siempre en precio mensual).
 

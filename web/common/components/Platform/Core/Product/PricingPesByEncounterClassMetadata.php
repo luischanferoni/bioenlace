@@ -503,6 +503,58 @@ final class PricingPesByEncounterClassMetadata
     }
 
     /**
+     * Supuestos fiscales declarados en el catálogo (Argentina).
+     *
+     * @return array{jurisdiction: string, iibb_rate_percent: float, income_tax_rate_percent: float, bank_debit_credit_tax_percent: float}
+     */
+    public static function taxAssumptions(): array
+    {
+        $assumptions = self::loadConfig()['tax_assumptions'] ?? [];
+        if (!is_array($assumptions)) {
+            $assumptions = [];
+        }
+
+        return [
+            'jurisdiction' => (string) ($assumptions['jurisdiction'] ?? ''),
+            'iibb_rate_percent' => (float) ($assumptions['iibb_rate_percent'] ?? 0),
+            'income_tax_rate_percent' => (float) ($assumptions['income_tax_rate_percent'] ?? 0),
+            'bank_debit_credit_tax_percent' => (float) ($assumptions['bank_debit_credit_tax_percent'] ?? 0),
+        ];
+    }
+
+    /**
+     * Margen neto sobre precio después de impuestos sobre la venta.
+     *
+     * `neto = (1 − IIBB − IDCB − COGS/precio) × (1 − ganancias)`, con
+     * `COGS/precio = 1 / (1 + margen sobre costo)`. IIBB e IDCB son deducibles
+     * de ganancias, por eso se restan antes de aplicar la tasa.
+     */
+    public static function afterTaxMarginPercent(float $marginOnCostPercent, bool $includeBankTax = false): float
+    {
+        $tax = self::taxAssumptions();
+        $sellingTaxRate = $tax['iibb_rate_percent'] / 100
+            + ($includeBankTax ? $tax['bank_debit_credit_tax_percent'] / 100 : 0.0);
+        $cogsShare = 1 / (1 + $marginOnCostPercent / 100);
+
+        return round((1 - $sellingTaxRate - $cogsShare) * (1 - $tax['income_tax_rate_percent'] / 100) * 100, 1);
+    }
+
+    /**
+     * Agrega al tramo los márgenes después de impuestos derivados del catálogo.
+     *
+     * @param array<string, mixed> $tier
+     * @return array<string, mixed>
+     */
+    private static function withAfterTaxMargins(array $tier): array
+    {
+        $margin = (float) ($tier['margin_on_cost_percent'] ?? self::marginOnCostPercent());
+        $tier['margin_after_iibb_ganancias_percent'] = self::afterTaxMarginPercent($margin);
+        $tier['margin_after_all_taxes_percent'] = self::afterTaxMarginPercent($margin, true);
+
+        return $tier;
+    }
+
+    /**
      * @return list<array<string, mixed>>
      */
     public static function volumeDiscountTiers(): array
@@ -560,14 +612,14 @@ final class PricingPesByEncounterClassMetadata
         $n = max(0, $totalAttentions);
         $tiers = self::volumeDiscountTiers();
         if ($tiers === []) {
-            return [
+            return self::withAfterTaxMargins([
                 'id' => 'lista',
                 'label' => 'Precio base',
                 'min_attentions' => 1,
                 'max_attentions' => null,
                 'margin_on_cost_percent' => self::marginOnCostPercent(),
                 'discount_vs_list_percent' => 0,
-            ];
+            ]);
         }
 
         $fallback = $tiers[0];
@@ -576,14 +628,14 @@ final class PricingPesByEncounterClassMetadata
             $maxRaw = $tier['max_attentions'] ?? $tier['max_pes'] ?? null;
             $max = $maxRaw === null || $maxRaw === '' ? null : (int) $maxRaw;
             if ($n >= $min && ($max === null || $n <= $max)) {
-                return $tier;
+                return self::withAfterTaxMargins($tier);
             }
             if ($n >= $min) {
                 $fallback = $tier;
             }
         }
 
-        return $fallback;
+        return self::withAfterTaxMargins($fallback);
     }
 
     /** @deprecated Usar tierForTotalAttentions */

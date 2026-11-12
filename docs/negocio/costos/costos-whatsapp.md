@@ -115,7 +115,7 @@ Costo por atención:
 
 Costo por profesional/mes: `COGS/atención × N`.
 
-Margen de lista del catálogo: **233 % sobre costo** (precio = COGS × 3,33).
+Margen de lista del catálogo: **233 % sobre costo** (precio = COGS × 3,33). Los add-ons opcionales usan su propio margen (`addon_margin_on_cost_percent`), separado del de la licencia.
 
 ---
 

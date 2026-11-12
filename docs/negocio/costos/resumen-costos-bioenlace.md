@@ -12,7 +12,7 @@ Todo se expresa **por profesional y por mes**, siguiendo el recorrido del pacien
 | Conversaciones con el paciente    | **10 mensajes** por consulta ambulatoria (alrededor del turno) |
 | Motivos de consulta | **Cuestionario con opciones antes del turno** (sin audio) + **1 resumen automático** + insights por consulta |
 | Captura del médico      | **Siempre audio** — **~5 minutos** de voz del profesional por consulta + análisis del texto   |
-| Fotos clínicas          | **2 por consulta** — hoy **sin costo** en el presupuesto (dentro de franquicia) |
+| Análisis de imágenes      | **No se ofrece** por el momento — costo $0 por alcance, no por franquicia |
 | Videollamada            | **40 %** de las consultas ambulatorias (cuando el add-on está contratado), **12 minutos**, paciente y médico; COGS add-on **2,19**/prof/mes (**0,0044**/atención a 500 atenciones) |
 
 
@@ -85,9 +85,9 @@ Durante o después de la consulta el médico **dicta en voz alta** lo que atendi
 
 ---
 
-### 4. Fotos y videollamada (referencia)
+### 4. Imágenes y videollamada (referencia)
 
-- **Fotos:** compartir imágenes clínicas; costo presupuestado **cero** hoy.
+- **Análisis de imágenes:** **no se ofrece** por el momento; costo $0 por alcance (no por franquicia).
 - **Videollamada:** add-on con COGS planificado **USD 2,19**/prof/mes @ **40 %** teleconsulta (self-host sala/TURN/Track Egress/storage; STT una vez, mismo que dictado). Detalle: [costos-api §6](costos-api.md#6-videollamadas-pacientemédico), [videollamadas.md](estrategias-reduccion/videollamadas.md). No incluido en los totales de IA de abajo.
 
 ---
@@ -118,6 +118,8 @@ Solo costos de **inteligencia artificial y transcripción de voz** (sin videolla
 | Onboarding (§3)                                | 875       |
 | **Total**                                      | **22.437,5** |
 
+> **Infra app:** además del bloque de IA + STT, el catálogo reserva **0,03/prof/mes** (2–3 VPS KVM2 compartidos) → **150/mes** a 5.000 profesionales. El COGS que usa el pricing es **IA + STT + infra ≈ 21.700/mes** (sin videollamada ni impuestos). **No incluye análisis de imágenes: no se ofrece.**
+
 
 ---
 
@@ -129,11 +131,14 @@ Dos vistas separadas: **COGS base por atención** (lo que se vende en cada clase
 
 | Componente | Ambulatorio | Urgencia (EMER) | Internación (IMP) |
 |------------|-------------|-----------------|-------------------|
-| Chat del paciente (cupo 10 msgs) | 0,0048 · **56,5 %** | — | — |
-| Motivos de consulta (IA, sin STT) | 0,0006 · **7,1 %** | 0,0006 · **16,2 %** | 0,0006 · **16,2 %** |
-| Captura clínica — IA (extracción + codificación) | 0,0006 · **7,1 %** | 0,0006 · **16,2 %** | 0,0006 · **16,2 %** |
-| Dictado — STT del profesional (~5 min) | 0,0025 · **29,4 %** | 0,0025 · **67,6 %** | 0,0025 · **67,6 %** |
-| **Total por atención** | **0,0085** | **0,0037** | **0,0037** |
+| Chat del paciente (cupo 10 msgs) | 0,0048 · **55,4 %** | — | — |
+| Motivos de consulta (IA, sin STT) | 0,0006 · **6,9 %** | 0,0006 · **15,6 %** | 0,0006 · **15,5 %** |
+| Captura clínica — IA (extracción + codificación) | 0,0007 · **8,1 %** | 0,0007 · **18,2 %** | 0,0007 · **18,1 %** |
+| Dictado — STT del profesional (~5 min) | 0,0025 · **28,9 %** | 0,0025 · **65,1 %** | 0,0025 · **64,5 %** |
+| Infra app + BD + backups + monitoreo | 0,00006 · **0,7 %** | 0,000043 · **1,1 %** | 0,000075 · **1,9 %** |
+| **Total por atención** | **0,00866** | **0,003843** | **0,003875** |
+
+Infra: **0,03/prof/mes** repartido entre las atenciones de referencia (AMB 500, EMER 700, IMP 400). Base: 2–3 VPS KVM2 compartidos (~USD 90–160/mes total). Sin análisis de imágenes (no se ofrece); el storage de video va en el add-on.
 
 ### Add-on videollamada (40 % teleconsulta)
 
@@ -144,14 +149,14 @@ Dos vistas separadas: **COGS base por atención** (lo que se vende en cada clase
 | Transcripción | 0 | **0 %** (el STT ya está en dictado) |
 | **Total add-on** | **0,0044** | **100 %** |
 
-**La videollamada no encarece el chat.** El chat sigue costando 0,0048 con o sin video; su participación baja de **56,5 % a 37,2 %** solo porque el denominador pasa de 0,0085 a 0,0129 (+52 %). Lo mismo aplica a motivos (7,1 % → 4,7 %), captura (7,1 % → 4,7 %) y dictado (29,4 % → 19,4 %). Para una comparación homogénea, usar la tabla base.
+**La videollamada no encarece el chat.** El chat sigue costando 0,0048 con o sin video; su participación baja de **55,4 % a 36,8 %** solo porque el denominador pasa de 0,00866 a 0,01306 (+51 %). Lo mismo aplica a motivos (6,9 % → 4,6 %), captura (8,1 % → 5,4 %), dictado (28,9 % → 19,1 %) e infra (0,7 % → 0,5 %). Para una comparación homogénea, usar la tabla base.
 
 Lectura:
 
-- En **ambulatorio sin video**, el **chat del paciente** es el ítem más pesado (**~57 %**), seguido del **dictado** (**~29 %**); juntos son casi 9 de cada 10 dólares.
-- En **urgencia e internación** (sin chat de paciente), el **dictado** es **~68 %** del costo y **motivos** el segundo (**~16 %**).
+- En **ambulatorio sin video**, el **chat del paciente** es el ítem más pesado (**~55 %**), seguido del **dictado** (**~29 %**); juntos son ~84 %.
+- En **urgencia e internación** (sin chat de paciente), el **dictado** es **~65 %** del costo.
 - En el **add-on video**, el **storage** pesa más que la sala en vivo (**57 % vs 43 %**): retención y calidad de grabación son la palanca, no el SFU.
-- La **IA de captura** (extracción + codificación) es marginal en todas las clases (**7–16 %**).
+- La **IA de captura** (extracción + codificación) es **8–18 %**; la **infra** es marginal (**0,7–1,9 %**).
 - Cada punto del STT se mueve con dos palancas: minutos dictados (5 → 4 min baja el STT 20 %) y transcripción en el dispositivo (−30 %), ver [estrategias-reduccion/stt.md](estrategias-reduccion/stt.md). **Motivos ya no aporta minutos de STT.**
 
 > **Por qué no coincide con los totales por capacidad de arriba:** esos totales salen del escenario token a token de [costos-api.md](costos-api.md) (p. ej. chat medido ~0,0038/atención), mientras que esta tabla usa los presupuestos que fija el catálogo comercial para armar el precio de lista (chat AMB **0,0048**/atención, deliberadamente conservador). Misma realidad, dos supuestos: uno mide, el otro presupuesta.

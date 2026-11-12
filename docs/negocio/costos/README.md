@@ -8,7 +8,7 @@ Estimación y estrategias de ahorro en dos ejes: **infra propia (GPU)** y **APIs
 | [design.md](design.md) | Criterio de diseño: por qué dos ejes (infra vs API) y dónde vive cada tema |
 | [infra-costos.md](infra-costos.md) | Costos infra (GPU) |
 | [infra-estrategias.md](infra-estrategias.md) | Estrategias infra |
-| [costos-api.md](costos-api.md) | Costos APIs (Gemini Flash Lite, comparativa DeepSeek, Groq STT, Vision, WhatsApp reactivo §7; catálogo de contextos) |
+| [costos-api.md](costos-api.md) | Costos APIs (Gemini Flash Lite, comparativa DeepSeek, Groq STT, WhatsApp reactivo §7; catálogo de contextos). Análisis de imágenes: no ofrecido |
 | [costos-didit.md](costos-didit.md) | Didit — KYC y biometría remota (proyección por altas y reingresos) |
 | [costos-whatsapp.md](costos-whatsapp.md) | Add-on WhatsApp — mensajes proactivos, step-up Didit y política de datos sensibles |
 | [analisis-videollamada-self-host.md](analisis-videollamada-self-host.md) | Self-host; Track Egress muxing 1/4/12; 14 d → Deep Archive; COGS video **2,19** @ **40 %** |

@@ -273,7 +273,7 @@ Total híbrido: **6.840–11.940/mes** contra **5.400** de API pura. **Sigue per
 
 | Etapa | Escala | Qué hacer |
 |-------|-------:|-----------|
-| **0 — Ahora** | 0–5.000 | No comprar. Medir costo real por servicio y cerrar el hueco de presupuesto de app + BD + medios (~0,24–0,40 por profesional). |
+| **0 — Ahora** | 0–5.000 | No comprar. Medir costo real por servicio y cerrar el hueco de presupuesto de app + BD + backups (~0,02–0,03 por profesional: 2–3 VPS KVM2 compartidos ≈ USD 90–160/mes a 5.000 profesionales). |
 | **1 — Optimizar** | 5.000 | Retención de video y fotos, audio crudo borrado tras transcribir, ciclo 14 d → archivo frío. **Mueve el costo más que cualquier compra.** |
 | **2 — GPU, solo STT** | 5.000 | Benchmark de Whisper con audio real. Si rinde ≥ 60×, comprar **un nodo de 8 L40S** para transcripción y dejar el LLM por API. El nodo de L4 sale más barato de entrada, pero para este volumen pide tres (§2.2). |
 | **3 — Revisar** | 25.000 | Reevaluar sala propia completa con los números medidos, no con los de este documento. |

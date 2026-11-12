@@ -21,8 +21,8 @@ class InstitutionalSignupBillingTest extends Unit
                 ],
             ],
         ]);
-        // 5000 × 0.0085 × 2.63 (tramo mediano, redondeo unitario) = 112.00
-        $this->assertSame(112.0, $usd);
+        // 5000 × 0.00866 × 2.63 (tramo mediano, redondeo unitario) = 114.0
+        $this->assertSame(114.0, $usd);
     }
 
     public function testEstimatePlanMonthlyQuoteIncludesClassAndVolumeDiscountBreakdown(): void
@@ -37,15 +37,15 @@ class InstitutionalSignupBillingTest extends Unit
             ],
         ]);
 
-        $this->assertSame(398.0, $quote['amount_usd']);
-        $this->assertSame(566.0, $quote['list_amount_usd']);
-        $this->assertSame(168.0, $quote['discount_amount_usd']);
-        $this->assertSame(29.7, $quote['discount_percent']);
+        $this->assertSame(406.0, $quote['amount_usd']);
+        $this->assertSame(576.0, $quote['list_amount_usd']);
+        $this->assertSame(170.0, $quote['discount_amount_usd']);
+        $this->assertSame(29.5, $quote['discount_percent']);
         $this->assertSame(20000, $quote['total_attentions']);
         $this->assertSame('AMB', $quote['items'][0]['code']);
         $this->assertSame(20000, $quote['items'][0]['attentions_per_month']);
-        $this->assertSame(0.0199, $quote['items'][0]['unit_amount_usd']);
-        $this->assertSame(398.0, $quote['items'][0]['amount_usd']);
+        $this->assertSame(0.0203, $quote['items'][0]['unit_amount_usd']);
+        $this->assertSame(406.0, $quote['items'][0]['amount_usd']);
     }
 
     public function testAvailableCentersRejectOverlongQueryWithoutDatabase(): void
@@ -175,8 +175,8 @@ class InstitutionalSignupBillingTest extends Unit
             ],
         ]);
 
-        $this->assertSame(14.15, $base['amount_usd']);
-        $this->assertSame(21.5, $withVideo['amount_usd']);
+        $this->assertSame(14.4, $base['amount_usd']);
+        $this->assertSame(21.75, $withVideo['amount_usd']);
     }
 
     public function testAddonScopeIsDerivedFromTheClassMatrix(): void

@@ -218,7 +218,7 @@ Para clínicas 5–15 profesionales:
 | **Gratis** | Hasta N encounters/mes: ambulatorio básico | USD 0 |
 | **Pago** | Superar umbral; más clases (EMER/IMP); audio; videollamada | Según [matriz](matriz-argentina-modulos-precios.md) (COGS + margen) |
 
-Compite con «HIS caro y complejo» sin regalar consultas al paciente final. El presupuesto comercial AMB vigente es **USD 0,0085 por atención** sin videollamada (motivos sin STT), incluido el costo conservador de `preprocess` + `guide`; los importes de lista se calculan con el volumen total y el tramo vigente en el backend.
+Compite con «HIS caro y complejo» sin regalar consultas al paciente final. El presupuesto comercial AMB vigente es **USD 0,0087 por atención** sin videollamada (chat conservador, motivos sin STT, dictado e **infra app**), incluido el costo conservador de `preprocess` + `guide`; los importes de lista se calculan con el volumen total y el tramo vigente en el backend.
 
 ---
 
@@ -228,12 +228,12 @@ Supuestos: **clínica 20 profesionales**, ~8.000 encounters/año, ~670/mes.
 
 | Concepto | Orden de magnitud (USD/mes) |
 |----------|----------------------------|
-| COGS del presupuesto comercial (13.400 AMB, sin videollamada) | ~**USD 113,90** (13.400 × USD 0,0085/atención) |
-| COGS del presupuesto comercial (13.400 AMB, con videollamada) | ~**USD 172,86** (incluye USD 0,0044/atención de videollamada) |
-| Infra + soporte | 200–500 |
+| COGS del presupuesto comercial (13.400 AMB, sin videollamada) | ~**USD 116** (13.400 × USD 0,0087/atención) |
+| COGS del presupuesto comercial (13.400 AMB, con videollamada) | ~**USD 175** (incluye USD 0,0044/atención de videollamada) |
+| Soporte y operación del cliente (fuera del COGS por atención) | 200–500 |
 | Costo equipo (amortizado por cliente) | Variable según headcount; meta **gross margin ~70%** |
-| **Precio mensual antes de impuestos** (13.400 atenciones AMB, sin videollamada) | ~**USD 300** (tramo mediano; cotización backend) |
-| **Precio mensual antes de impuestos** (13.400 atenciones AMB, con videollamada) | ~**USD 454** (tramo mediano; cotización backend) |
+| **Precio mensual antes de impuestos** (13.400 atenciones AMB, sin videollamada) | ~**USD 306** (tramo mediano; cotización backend) |
+| **Precio mensual antes de impuestos** (13.400 atenciones AMB, con videollamada) | ~**USD 460** (tramo mediano; cotización backend) |
 | **Ingreso incremental Rx** (opcional) | 200 recetas/mes × USD 1 fee = **USD 200/mes**; rev share farmacia aparte |
 
 El ingreso incremental por receta enrutada es **puente a fulfillment** (vía 5), no margen retail propio. Cifras de lista: [matriz Argentina](matriz-argentina-modulos-precios.md).

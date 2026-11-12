@@ -8,7 +8,7 @@ Precios **orientativos** en USD; no incluyen IVA. Impuestos: [impuestos-argentin
 COGS de referencia: [costos-api.md](../../costos/costos-api.md); el presupuesto comercial del chat AMB se distingue de los escenarios por llamada con context caching.
 
 **Modelo vigente:** licencia = **Σ (atenciones_mes[clase] × precio por atención)**.  
-El precio por atención = **COGS_por_atención × (1 + margen sobre costo)**. El margen de lista es **233 %** (~70 % bruto ≈ **42,9 %** después de IIBB + ganancias; ~42,5 % incluyendo IDCB). A más **atenciones totales** contratadas (suma ambulatorio + urgencia + internación), baja el margen según tramos. El cliente elige tipos de atención y un **volumen aproximado** (presets). **1 profesional a jornada completa = 500 atenciones AMB / mes** (25 atenciones/día × 20 días; 15 min por atención ≈ 6 h 15 de consulta + ~1 h 45 administrativas); **media jornada = 250** (12–13/día × 20 días). Los presets se ajustan por clase: AMB 500, EMER 700 (guardia de 12 h × 15 turnos) e IMP 400 (20 pases/día × 20 días). El **dictado está incluido**; en ambulatorio la **videollamada** es el único add-on opcional. **Motivos de consulta ya no usa audio ni STT**: es un cuestionario con opciones y su costo es el mismo en las tres clases (**0,0006**/atención). El chat paciente (§1) tiene **cupo de 10 mensajes** alrededor del turno (capacidad / headroom para prompts más largos o varias llamadas IA). Lo no contratado **se deshabilita** en sesión operativa y tableros.
+El precio por atención = **COGS_por_atención × (1 + margen sobre costo)**. El margen de lista es **233 %** (~70 % bruto ≈ **42,9 %** después de IIBB + ganancias; ~42,5 % incluyendo IDCB); los add-ons opcionales tienen su propio margen (`addon_margin_on_cost_percent`). A más **atenciones totales** contratadas (suma ambulatorio + urgencia + internación), baja el margen según tramos. El cliente elige tipos de atención y un **volumen aproximado** (presets). **1 profesional a jornada completa = 500 atenciones AMB / mes** (25 atenciones/día × 20 días; 15 min por atención ≈ 6 h 15 de consulta + ~1 h 45 administrativas); **media jornada = 250** (12–13/día × 20 días). Los presets se ajustan por clase: AMB 500, EMER 700 (guardia de 12 h × 15 turnos) e IMP 400 (20 pases/día × 20 días). El **dictado está incluido**; en ambulatorio la **videollamada** es el único add-on opcional. **Motivos de consulta ya no usa audio ni STT**: es un cuestionario con opciones y su costo es el mismo en las tres clases (**0,0006**/atención). El chat paciente (§1) tiene **cupo de 10 mensajes** alrededor del turno (capacidad / headroom para prompts más largos o varias llamadas IA). Lo no contratado **se deshabilita** en sesión operativa y tableros.
 
 > **Recalibración aplicada (2026-11-11):** estas cifras reflejan motivos sin STT. El catálogo backend
 > (`PricingPesByEncounterClassCatalog` v16: `motivos` / `motivos_by_class` = 0,0006) y el sitio
@@ -26,9 +26,10 @@ Admin: Licencias / Contratos.
 ## Fórmula
 
 ```
-COGS_atención = motivos + captura_ia + dictado_stt
+COGS_atención = motivos + captura_ia + dictado_stt + infra
               + (AMB ? patient_chat_amb : 0)          # cupo 10 msgs (capacidad)
               + (videollamada ? videollamada : 0)
+infra = infra_usd_per_professional_month / atenciones_de_referencia(clase)
 atenciones_totales = Σ atenciones_mes[clase]
 margen% = tramo(atenciones_totales).margin_on_cost_percent
 precio_por_atención = COGS_atención × (1 + margen%/100)
@@ -40,7 +41,8 @@ USD/mes ≈ Σ_clase ( atenciones_mes[clase] × precio_por_atención )
 | Chat paciente AMB (cupo 10 mensajes) | **0,0048** | Solo ambulatorio · presupuesto conservador para preprocess + guide |
 | Motivos (sin audio, mismas tres clases) | **0,0006** | Cuestionario pre-turno + 1 resumen + insights |
 | Captura IA (sin STT profesional) | **0,0006** | Siempre |
-| Dictado / STT profesional (−30 % on-device) | **0,0025** | **Incluido** en todas las clases · ~5 min × USD 0,0005/min. Con 4 min: **0,0020** (−20 % del STT, −5,4 % del COGS AMB) |
+| Dictado / STT profesional (−30 % on-device) | **0,0025** | **Incluido** en todas las clases · ~5 min × USD 0,0005/min. Con 4 min: **0,0020** (−20 % del STT) |
+| Infra app (app + BD + backups + monitoreo) | **0,00006 · 0,000043 · 0,000075** | 0,03/prof/mes repartido en AMB 500 / EMER 700 / IMP 400. Base: 2–3 VPS KVM2 compartidos (~USD 90–160/mes total) |
 | Videollamada | **+0,0044** | Solo ambulatorio (opcional) · **40 %** teleconsulta |
 
 **Margen sobre costo (lista):** **233 %**.
@@ -71,21 +73,21 @@ Presets **AMB**: media jornada (250) · jornada completa (500) · 2 profesionale
 
 | Configuración | COGS / atención | Precio lista / atención |
 |---------------|----------------:|------------------------:|
-| Ambulatorio (chat + motivos + captura + **dictado**) | 0,0085 | **~0,0283** |
-| Ambulatorio + videollamada | 0,0129 | **~0,0430** |
-| Urgencia (motivos + dictado) | 0,0037 | **~0,0123** |
-| Internación (motivos + dictado) | 0,0037 | **~0,0123** |
+| Ambulatorio (chat + motivos + captura + dictado + infra) | 0,0087 | **~0,0288** |
+| Ambulatorio + videollamada | 0,0131 | **~0,0435** |
+| Urgencia (motivos + captura + dictado + infra) | 0,0038 | **~0,0128** |
+| Internación (motivos + captura + dictado + infra) | 0,0039 | **~0,0129** |
 
 ### Lectura rápida
 
 | Perfil | Volumen | USD / mes (orientativo) |
 |--------|---------|------------------------:|
-| **Media jornada** | **250** | **~7,08** |
-| **1 profesional (jornada completa)** | **500** | **~14,15** |
-| 2 profesionales | 1.000 | **~28,30** |
-| CIS ejemplo | 20.000 | **~398** (tramo Grande) |
+| **Media jornada** | **250** | **~7,20** |
+| **1 profesional (jornada completa)** | **500** | **~14,40** |
+| 2 profesionales | 1.000 | **~28,80** |
+| CIS ejemplo | 20.000 | **~406** (tramo Grande) |
 
-Ejemplo CIS: **20.000** atenciones ambulatorio (dictado incluido) → tramo Grande (−30 %) → **~USD 398 / mes**.
+Ejemplo CIS: **20.000** atenciones ambulatorio (dictado + infra incluidos) → tramo Grande (−30 %) → **~USD 406 / mes**.
 
 **Regla comercial:** videollamada no duplica el STT (el dictado ya está en el COGS base). Motivos no aporta minutos de STT.
 
@@ -144,6 +146,16 @@ Un efector sin membresía POOL: sin tope (compat). Cupo compartido: el uso suma 
 ## Add-ons / fuera de la fórmula
 
 Cada add-on declara su estado **por tipo de atención** (`incluido`, `opcional`, `no disponible`). El **ámbito** se deriva de esa matriz: si todos los tipos vendibles comparten el mismo estado elegible, el add-on aplica a todos y se elige **una sola vez** (no se tilda tipo por tipo); si difiere, aplica solo a algunos tipos. Los add-ons incluidos se informan en el bloque *Funcionalidades y add-ons* del calculador; los opcionales se tildan ahí mismo y mueven el precio.
+
+Los add-ons **opcionales** tienen su propio margen (`addon_margin_on_cost_percent`), separado del margen de la licencia. Así se puede abaratar la videollamada sin tocar el precio base. Escenario sobre AMB (COGS video **0,0044**/atención, 500 atenciones):
+
+| Margen del add-on | Precio video / atención | USD/prof/mes (solo el add-on) | Margen neto del add-on (IIBB + IDCB + ganancias) |
+|---|---:|---:|---:|
+| 233 % (actual) | **0,0147** | **7,33** | 42,5 % |
+| 150 % | **0,0110** | **5,50** | 36,0 % |
+| 100 % | **0,0088** | **4,40** | 29,5 % |
+
+El margen de la licencia (tabla de tramos) no cambia: solo se mueve la porción del add-on.
 
 | Add-on | Estado | Precio orientativo |
 |--------|--------|-------------------|

@@ -50,13 +50,15 @@ final class PricingPesByEncounterClassCatalog
             'IMP' => 400,
         ],
         'cogs_assumptions' => [
+            'infra_usd_per_professional_month' => 0.03,
+            'infra_note' => 'App + BD + backups + monitoreo, por profesional/mes. Base: 2–3 VPS tipo KVM2 (Hostinger ~ARS 44.000/mes c/u; el tope ~ARS 145.000) ≈ USD 90–160/mes en total, compartidos entre todos los tenants; a 5.000 profesionales son USD 0,02–0,03. Se reparte entre las atenciones de referencia de cada clase. No incluye análisis de imágenes ni storage de video (este último va en el add-on de videollamada). Medir con la factura real.',
             'patient_chat_messages_budget' => 10,
             'patient_chat_note' => 'COGS de chat atribuido solo a AMB: en EMER/IMP el paciente no opera el asistente (triage, tablero e ingreso son staff), así que no se asigna consumo de chat por atención. Cupo de 10 msgs alrededor del turno para prompts más largos y posibles múltiples llamadas IA; no implica uso pleno en cada mensaje.',
             'motivos_note' => 'Motivos de consulta sin audio ni STT: cuestionario con opciones, triage de reserva y mensajes al asistente; 1 resumen + insights por consulta. Mismo costo en AMB/EMER/IMP.',
             'videollamada_share' => 0.4,
             'videollamada_note' => 'Planificación: ~40% de atenciones ambulatorias por videollamada cuando el add-on está contratado (12 min, 2 participantes). COGS infra+storage escalado desde el techo @ 80%.',
             'dictado_minutes' => 5,
-            'dictado_usd_per_minute' => 0.0005,
+            'dictado_effective_usd_per_minute' => 0.0005,
             'dictado_note' => 'STT del profesional: ~5 min por atención × USD 0,0005/min = USD 0,0025. Con 4 min: USD 0,0020 (−20 % del STT, −5,4 % del COGS AMB; −USD 0,85/mes a 500 atenciones).',
             'whatsapp_service_messages_per_encounter' => 1.0,
             'whatsapp_service_usd_per_message' => 0.026,
@@ -72,11 +74,17 @@ final class PricingPesByEncounterClassCatalog
                 'EMER' => 0.0006,
                 'IMP' => 0.0006,
             ],
-            'captura_ia' => 0.0006,
+            'captura_ia' => 0.0007,
             'videollamada' => 0.0044,
             'whatsapp' => 0.0293,
         ],
         'margin_on_cost_percent' => 233,
+        /*
+         * Margen propio de los add-ons opcionales (p. ej. videollamada), separado
+         * del margen de la licencia para poder abaratarlos sin tocar el precio
+         * base. Usar el mismo valor = mismo criterio que la licencia.
+         */
+        'addon_margin_on_cost_percent' => 233,
         /*
          * Supuestos fiscales (Argentina) de los que se DERIVA el margen después
          * de impuestos. No escribir ese margen a mano en los tramos: se calcula

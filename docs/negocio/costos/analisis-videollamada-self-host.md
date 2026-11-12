@@ -281,7 +281,7 @@ Supuestos: 5.000 prof, **80 %** tele, TURN sí, **Track Egress (muxing)**, VAD, 
 
 **COGS lista vigente:** **2,19** USD/prof/mes @ **40 %** tele (500 encounters) = infra buffer **~0,94** + storage buffer **~1,25**; **0,0044** por atención.
 
-Precio lista (margen 233 % sobre COGS):
+Precio lista (margen de licencia 233 %; el add-on usa `addon_margin_on_cost_percent`):
 
 | COGS video | Delta lista aprox. |
 |------------|--------------------|

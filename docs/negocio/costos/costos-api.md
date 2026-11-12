@@ -1,6 +1,6 @@
 # Costos – Uso de APIs
 
-Costos de referencia cuando usamos **APIs externas** (IA, STT, Vision, videollamadas), alineados con **Bioenlace en producción**:
+Costos de referencia cuando usamos **APIs externas** (IA, STT, videollamadas), alineados con **Bioenlace en producción**:
 
 ## COGS (abreviatura)
 
@@ -8,10 +8,11 @@ Costos de referencia cuando usamos **APIs externas** (IA, STT, Vision, videollam
 
 | Incluye | No incluye |
 |---------|------------|
-| APIs de IA, STT, Vision, videollamada según supuestos §1–§6 | Precio de licencia al cliente, soporte, ventas, marketing |
-| Escenario **intensivo** modelado (p. ej. 500 consultas/médico/mes) | Infra fija (servidores, salarios) — ver [infra-costos.md](infra-costos.md) |
+| APIs de IA, STT, videollamada según supuestos §1–§6 | Precio de licencia al cliente, soporte, ventas, marketing |
+| Escenario **intensivo** modelado (p. ej. 500 consultas/médico/mes) | Infra fija (servidores, salarios) — ver [infra-costos.md](infra-costos.md). El **precio de lista** sí agrega infra app por profesional (0,30/mes) |
 | Columna **«sin context caching»** = **COGS base** (conservador, costo esperado) | Palancas de [estrategias-reduccion/](estrategias-reduccion/README.md) hasta validarlas en producción |
 | Columna **«con context caching»** = escenario **favorable**, no presupuesto garantizado | Impuestos — ver [impuestos-argentina.md](impuestos-argentina.md) |
+| — | Análisis de imágenes (Vision): **no se ofrece**; no entra en el COGS |
 
 Cuando un doc dice «fuera del COGS» o «no en COGS base», significa que **aún no sumamos esa cifra** a las tablas fiscales hasta tener telemetría o piloto.
 
@@ -33,7 +34,7 @@ Por médico por mes, en orden del recorrido del paciente (detalle y costes en §
 - **§2 Motivos de consulta:** 1 llamada `motivos-consulta-batch` + **1** `motivos-consulta-insights` por encounter (si hay resumen). **Sin STT**: el motivo se arma con el triage de reserva, los mensajes al asistente anteriores al turno y el cuestionario pre-turno — ver [§ STT](#stt).
 - **§3 Onboarding y día a día:** 500 llamadas a la IA por mes (`asistente-onboarding` en metadata; en código reutiliza preprocess/guide)
 - **§4 Captura clínica (encounter):** **siempre** audio del médico por consulta — **~5 min** STT (2.500 min/mes) + **500** llamadas `analisis-consulta` + **500** llamadas `encounter-codificacion-automatica` al guardar. Sin variante solo texto en el modelo de costos. Alineado a voz típica en consulta (~12 min de reloj → ~5 min de habla del profesional). Con **4 min** de dictado: **2.000 min/mes** y **−USD 0,35/prof/mes** de STT.
-- **§5 Medios (fotos, etc.):** 2 fotos por encounter (Vision)
+- **§5 Medios (fotos):** **no se ofrece análisis de imágenes**; costo 0 por decisión de producto, no por franquicia
 - **§6 Videollamada:** self-host; COGS planificado **2,19** @ **40 %** tele = sala/TURN/Track Egress + storage (**sin** STT duplicado: mismo que dictado, una vez en el calculador). Antes techo @ 80 % (**3,50**) — ver [§6](#6-videollamadas-pacientemédico) y [analisis-videollamada-self-host.md](analisis-videollamada-self-host.md).
 - **§7 WhatsApp (alcance actual):** solo respuestas a mensajes **iniciados por el paciente**. **El costo Meta ya no es $0**: desde el 1/10/2026 los mensajes **service** se cobran después de **1.000 por número por mes** (IA = §1). **Utility / plantillas proactivas: no habilitadas** — ver [§7](#7-whatsapp-cloud-api-paciente) y [costos-whatsapp.md](costos-whatsapp.md).
 
@@ -48,7 +49,7 @@ Por médico por mes, en orden del recorrido del paciente (detalle y costes en §
 | **Groq** — Whisper Large v3 Turbo | **~$0.0007 por min** ($0.04 por h); **mín. 10 s por request** | STT (§4); opción B post-call video (§6) | [groq.com/pricing](https://groq.com/pricing), [GroqDocs STT](https://console.groq.com/docs/speech-to-text) |
 | **Daily** — post-call transcription (Deepgram) | **~$0.0043 por recorded-min** | Histórico; **no** en COGS §6 vigente | [Daily pricing](https://www.daily.co/pricing/video-sdk/), [Transcription](https://docs.daily.co/docs/guides/features/transcription) |
 | **Daily** — real-time transcription (Deepgram) | **~$0.0059 por unmuted pax-min** | Fuera de alcance (no planificado) | Ídem |
-| **Vision API** (Label, Text, Face, etc.) | 1.000 unidades por mes gratis; luego $1.50 por 1.000 | Fotos §5 | [cloud.google.com/vision/pricing](https://cloud.google.com/vision/pricing) |
+| **Vision API** (Label, Text, Face, etc.) | 1.000 unidades por mes gratis; luego $1.50 por 1.000 | **No se usa**: no se ofrece análisis de imágenes | [cloud.google.com/vision/pricing](https://cloud.google.com/vision/pricing) |
 | **DeepSeek** — V4 Flash (API) | **$0.14 / $0.0028 / $0.28** por 1M (input miss / cache hit / output) | Comparativa IA | [DeepSeek API pricing](https://api-docs.deepseek.com/quick_start/pricing) |
 | **WhatsApp Cloud API** — service (ventana 24 h) | **$0** hasta **1.000 service por número/mes**; luego se cobra (desde 1/10/2026) | Asistente reactivo §7; no presupuestado en el COGS vigente | [Meta WhatsApp pricing](https://developers.facebook.com/docs/whatsapp/pricing/) |
 | **WhatsApp Cloud API** — utility (Argentina) | **~$0,026** por plantilla entregada (list rate USD; Oct 2025) | **Fuera de alcance** (no habilitado) | Idem + rate card USD |
@@ -339,13 +340,13 @@ Flujo: audio (dictado o pista de videollamada) → STT → transcripción → **
 
 ---
 
-### 5. Intercambio de fotos y videos (Vision)
+### 5. Análisis de imágenes — no se ofrece
 
-**Modelo de uso**: Los medios no se almacenan en cloud; solo hay costo cuando se envía a la nube para analizar (Vision). El audio de captura clínica va en §4. Ver [producto/flows/capacidades-paciente-medico.md](../../producto/apps-paciente-personalsalud.md).
+**Decisión de producto:** Bioenlace **no ofrece análisis de imágenes** (Vision) por el momento. El costo es **$0** por alcance, no por franquicia. Si en el futuro se habilita, recordar que el free tier de Vision es **1.000 unidades/mes por proyecto** (no por médico): a 500 atenciones × 2 fotos × 5.000 profesionales serían ~USD 7.500/mes.
 
 | Concepto | Supuesto | Costo real mensual (por médico) |
 |----------|----------|----------------------------------|
-| **Vision** (fotos compartidas) | supuesto §5 | **$0** |
+| **Vision** | No se ofrece | **$0** |
 | **Total §5** | — | **$0 por médico por mes** |
 
 ---
@@ -438,7 +439,7 @@ Proyección por escala (altas, pacientes activos, reingresos tras logout, escena
 
 ## Resumen: costo real por API (por médico por mes)
 
-**Apartado 1:** IA generativa (Gemini y comparativa DeepSeek), incluido §4 con STT e **insights** de §2. **Apartado 2:** Vision (§5). **Apartado 3:** videollamadas (§6). **§7 WhatsApp** (reactivo): Meta **no es $0** (cupo de 1.000 service/número/mes); no es fila de COGS aparte. Anexos A y B: [fuera del total](#anexo-a--intent-engine-classification-fuera-del-total-apartado-1).
+**Apartado 1:** IA generativa (Gemini y comparativa DeepSeek), incluido §4 con STT e **insights** de §2. **Apartado 2:** análisis de imágenes — **no se ofrece**. **Apartado 3:** videollamadas (§6). **§7 WhatsApp** (reactivo): Meta **no es $0** (cupo de 1.000 service/número/mes); no es fila de COGS aparte. Anexos A y B: [fuera del total](#anexo-a--intent-engine-classification-fuera-del-total-apartado-1).
 
 ### Apartado 1 – IA generativa + STT captura clínica
 
@@ -450,11 +451,11 @@ Proyección por escala (altas, pacientes activos, reingresos tras logout, escena
 | Captura clínica (§4, **IA + STT ~5 min**) | ~$1.69 | ~$1.65 | ~$1.65 / ~$1.63 |
 | **Total Apartado 1 — motivos sin audio + chat 10 msgs** | **~$2.95** | **~$2.73** | **~$2.70 / ~$2.58** |
 
-### Apartado 2 – Medios (Vision §5)
+### Apartado 2 – Análisis de imágenes (no se ofrece)
 
 | Concepto | Costo real (USD por médico por mes) |
 |----------|-----------------------------|
-| Vision (§5) | $0 |
+| Vision | **No se ofrece** · $0 por alcance |
 | **Total (Apartado 2)** | **$0** |
 
 ### Apartado 3 – Videollamadas (§6)
@@ -482,7 +483,7 @@ Ver totales en [§6](#6-videollamadas-pacientemédico).
 | **Total con videollamada** | **~$6,50** | **~$6,14** | **~$5,99** |
 | + Onboarding §3 | **+$0,18** | **+$0,15** | **+$0,14** |
 
-**Orden de magnitud uso intensivo (todo incluido):** bruto todo-servidor **~USD 6,7**/prof/mes; con **−30 % STT on-device** en planificación **~USD 6,2**/prof/mes. Solo IA + STT + Vision (sin video): bruto **~USD 4,31**; con context caching **~USD 3,95**.
+**Orden de magnitud uso intensivo (todo incluido):** bruto todo-servidor **~USD 6,7**/prof/mes; con **−30 % STT on-device** en planificación **~USD 6,2**/prof/mes. Solo IA + STT (sin video): bruto **~USD 4,31**; con context caching **~USD 3,95**. El **precio de lista** agrega infra app (0,03/prof/mes).
 
 **WhatsApp (§7, alcance actual):** Meta según volumen (cupo de 1.000 service/número/mes); no presupuestado en el COGS vigente. La IA del chat sigue en §1.
 

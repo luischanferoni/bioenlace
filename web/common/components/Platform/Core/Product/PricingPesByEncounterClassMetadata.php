@@ -470,6 +470,24 @@ final class PricingPesByEncounterClassMetadata
     }
 
     /**
+     * COGS de infraestructura de aplicación por atención.
+     *
+     * El costo de app + BD + hosting + medios se declara por profesional/mes y
+     * se reparte entre las atenciones de referencia de la clase (AMB 500,
+     * EMER 700, IMP 400). Sin clase, se usa la referencia AMB.
+     */
+    public static function infraCogsPerEncounter(?string $encounterClass = null): float
+    {
+        $assumptions = self::loadConfig()['cogs_assumptions'] ?? [];
+        $perProfessionalMonth = (float) ($assumptions['infra_usd_per_professional_month'] ?? 0);
+        if ($perProfessionalMonth <= 0) {
+            return 0.0;
+        }
+
+        return $perProfessionalMonth / self::referenceEncountersPerMonth($encounterClass ?? 'AMB');
+    }
+
+    /**
      * COGS USD por atención según los addons vigentes en la clase.
      *
      * @param array<string, bool> $selectedAddons addon_id => elegido (solo opcionales)
@@ -482,7 +500,9 @@ final class PricingPesByEncounterClassMetadata
         if (!is_array($cogs)) {
             return 0.0;
         }
-        $total = self::motivosCogsPerEncounter($encounterClass) + (float) ($cogs['captura_ia'] ?? 0);
+        $total = self::motivosCogsPerEncounter($encounterClass)
+            + (float) ($cogs['captura_ia'] ?? 0)
+            + self::infraCogsPerEncounter($encounterClass);
         if ($encounterClass !== null && self::classIncludesPatientChat($encounterClass)) {
             $total += (float) ($cogs['patient_chat_amb'] ?? 0);
         }
@@ -494,12 +514,22 @@ final class PricingPesByEncounterClassMetadata
             }
         }
 
-        return round($total, 4);
+        return round($total, 6);
     }
 
     public static function marginOnCostPercent(): float
     {
         return (float) (self::loadConfig()['margin_on_cost_percent'] ?? 0);
+    }
+
+    /**
+     * Margen sobre costo de los add-ons opcionales. Sin declaración, usa el de la licencia.
+     */
+    public static function addonMarginOnCostPercent(): float
+    {
+        $value = self::loadConfig()['addon_margin_on_cost_percent'] ?? null;
+
+        return $value === null ? self::marginOnCostPercent() : (float) $value;
     }
 
     /**
@@ -594,10 +624,10 @@ final class PricingPesByEncounterClassMetadata
     public static function dictadoCogsPerEncounter(): float
     {
         $assumptions = self::loadConfig()['cogs_assumptions'] ?? [];
-        $perMinute = (float) ($assumptions['dictado_usd_per_minute'] ?? 0);
+        $perMinute = (float) ($assumptions['dictado_effective_usd_per_minute'] ?? 0);
         if ($perMinute <= 0) {
             throw new InvalidConfigException(
-                'El catálogo de precios no declara cogs_assumptions.dictado_usd_per_minute.'
+                'El catálogo de precios no declara cogs_assumptions.dictado_effective_usd_per_minute.'
             );
         }
 
@@ -671,7 +701,37 @@ final class PricingPesByEncounterClassMetadata
     }
 
     /**
-     * Precio USD / atención = COGS × (1 + margen%).
+     * COGS USD por atención aportado por los add-ons OPCIONALES elegidos.
+     *
+     * Los add-ons incluidos (p. ej. dictado) son parte del COGS base; solo los
+     * opcionales se separan para aplicarles su propio margen.
+     *
+     * @param array<string, bool> $selectedAddons addon_id => elegido (solo opcionales)
+     */
+    public static function addonCogsForClass(array $selectedAddons = [], ?string $encounterClass = null): float
+    {
+        if ($encounterClass === null) {
+            return 0.0;
+        }
+
+        $total = 0.0;
+        foreach (self::addonCogsPerEncounter() as $addonId => $addonCogs) {
+            if (self::addonState($addonId, $encounterClass) !== PricingPesByEncounterClassCatalog::ADDON_OPTIONAL) {
+                continue;
+            }
+            if (!empty($selectedAddons[$addonId])) {
+                $total += $addonCogs;
+            }
+        }
+
+        return $total;
+    }
+
+    /**
+     * Precio USD / atención = COGS base × (1 + margen) + COGS de add-ons × (1 + margen add-on).
+     *
+     * El margen de la licencia y el de los add-ons opcionales se aplican por
+     * separado para poder abaratar un add-on sin mover el precio base.
      *
      * @param array<string, bool> $selectedAddons addon_id => elegido (solo opcionales)
      * @param int|null $totalAttentions atenciones totales del contrato; null = margen de lista.
@@ -681,12 +741,17 @@ final class PricingPesByEncounterClassMetadata
         ?string $encounterClass = null,
         ?int $totalAttentions = null
     ): float {
-        $cogs = self::unitCogsPerEncounter($selectedAddons, $encounterClass);
+        $totalCogs = self::unitCogsPerEncounter($selectedAddons, $encounterClass);
+        $addonCogs = self::addonCogsForClass($selectedAddons, $encounterClass);
+        $baseCogs = max(0.0, $totalCogs - $addonCogs);
         $margin = $totalAttentions === null
             ? self::marginOnCostPercent()
             : self::marginOnCostPercentForTotalAttentions($totalAttentions);
 
-        return round($cogs * (1 + $margin / 100), 4);
+        return round(
+            $baseCogs * (1 + $margin / 100) + $addonCogs * (1 + self::addonMarginOnCostPercent() / 100),
+            4
+        );
     }
 
     public static function pricePerPes(string $encounterClass, ?int $totalAttentions = null): ?float

@@ -28,25 +28,33 @@ class PricingPesByEncounterClassTest extends Unit
 
     public function testUnitCogsPerEncounter(): void
     {
-        // AMB: chat 0.0048 + motivos 0.0006 + captura 0.0006 + dictado 0.0025 = 0.0085
-        $this->assertSame(0.0085, PricingPesByEncounterClassMetadata::unitCogsPerEncounter([], 'AMB'));
-        // AMB + video (addon opcional elegido): 0.0085 + 0.0044 = 0.0129
+        // AMB: chat 0.0048 + motivos 0.0006 + captura 0.0007 + dictado 0.0025 + infra 0.00006 = 0.00866
+        $this->assertSame(0.00866, PricingPesByEncounterClassMetadata::unitCogsPerEncounter([], 'AMB'));
+        // AMB + video (addon opcional elegido): 0.00866 + 0.0044 = 0.01306
         $this->assertSame(
-            0.0129,
+            0.01306,
             PricingPesByEncounterClassMetadata::unitCogsPerEncounter(['videollamada' => true], 'AMB')
         );
-        // EMER: motivos 0.0006 + captura 0.0006 + dictado 0.0025 = 0.0037
-        $this->assertSame(0.0037, PricingPesByEncounterClassMetadata::unitCogsPerEncounter([], 'EMER'));
-        // IMP: mismo costo, sin audio en motivos
-        $this->assertSame(0.0037, PricingPesByEncounterClassMetadata::unitCogsPerEncounter([], 'IMP'));
+        // EMER: motivos 0.0006 + captura 0.0007 + dictado 0.0025 + infra (0.03/700) = 0.003843
+        $this->assertSame(0.003843, PricingPesByEncounterClassMetadata::unitCogsPerEncounter([], 'EMER'));
+        // IMP: mismo costo + infra (0.03/400)
+        $this->assertSame(0.003875, PricingPesByEncounterClassMetadata::unitCogsPerEncounter([], 'IMP'));
         // La videollamada no aplica a EMER: elegirla no mueve el COGS.
         $this->assertSame(
-            0.0037,
+            0.003843,
             PricingPesByEncounterClassMetadata::unitCogsPerEncounter(['videollamada' => true], 'EMER')
         );
         $this->assertSame(0.0006, PricingPesByEncounterClassMetadata::motivosCogsPerEncounter('AMB'));
         $this->assertSame(0.0006, PricingPesByEncounterClassMetadata::motivosCogsPerEncounter('EMER'));
         $this->assertSame(0.0006, PricingPesByEncounterClassMetadata::motivosCogsPerEncounter('IMP'));
+    }
+
+    public function testInfraCogsIsSpreadOverReferenceEncounters(): void
+    {
+        $this->assertEqualsWithDelta(0.03 / 500, PricingPesByEncounterClassMetadata::infraCogsPerEncounter('AMB'), 1e-9);
+        $this->assertEqualsWithDelta(0.03 / 500, PricingPesByEncounterClassMetadata::infraCogsPerEncounter(), 1e-9);
+        $this->assertEqualsWithDelta(0.03 / 700, PricingPesByEncounterClassMetadata::infraCogsPerEncounter('EMER'), 1e-9);
+        $this->assertEqualsWithDelta(0.03 / 400, PricingPesByEncounterClassMetadata::infraCogsPerEncounter('IMP'), 1e-9);
     }
 
     public function testVolumeDiscountTiersByAttentions(): void
@@ -60,28 +68,28 @@ class PricingPesByEncounterClassTest extends Unit
 
     public function testEstimateMonthlyTotalByAttentions(): void
     {
-        // 20.000 AMB, tramo grande: unit 0.0199 × 20000 = 398
+        // 20.000 AMB, tramo grande: unit 0.0203 × 20000 = 406
         $total = PricingPesByEncounterClassMetadata::estimateMonthlyTotal(['AMB' => 20000]);
-        $this->assertSame(398.0, $total);
+        $this->assertSame(406.0, $total);
         $quote = PricingPesByEncounterClassMetadata::estimateMonthlyQuote(['AMB' => 20000]);
-        $this->assertSame(566.0, $quote['list_amount_usd']);
-        $this->assertSame(168.0, $quote['discount_amount_usd']);
-        $this->assertSame(29.7, $quote['discount_percent']);
+        $this->assertSame(576.0, $quote['list_amount_usd']);
+        $this->assertSame(170.0, $quote['discount_amount_usd']);
+        $this->assertSame(29.5, $quote['discount_percent']);
     }
 
     public function testFullTimeProfessionalPrice(): void
     {
-        // Jornada completa = 500 atenciones → ~USD 14,15
+        // Jornada completa = 500 atenciones → ~USD 14,40
         $quote = PricingPesByEncounterClassMetadata::estimateMonthlyQuote(['AMB' => 500]);
-        $this->assertSame(14.15, $quote['amount_usd']);
+        $this->assertSame(14.4, $quote['amount_usd']);
         $this->assertSame(500, $quote['total_attentions']);
         $this->assertSame([
             'code' => 'AMB',
             'attentions_per_month' => 500,
-            'unit_amount_usd' => 0.0283,
-            'amount_usd' => 14.15,
+            'unit_amount_usd' => 0.0288,
+            'amount_usd' => 14.4,
         ], $quote['items'][0]);
-        $this->assertSame(14.15, $quote['list_amount_usd']);
+        $this->assertSame(14.4, $quote['list_amount_usd']);
         $this->assertSame(0.0, $quote['discount_amount_usd']);
         $this->assertSame(0.0, $quote['discount_percent']);
         $this->assertSame(500.0, PricingPesByEncounterClassMetadata::referenceEncountersPerMonth());
@@ -91,11 +99,11 @@ class PricingPesByEncounterClassTest extends Unit
 
     public function testHalfTimeProfessionalPrice(): void
     {
-        // Media jornada = 250 atenciones → ~USD 7,08
+        // Media jornada = 250 atenciones → ~USD 7,20
         $quote = PricingPesByEncounterClassMetadata::estimateMonthlyQuote(['AMB' => 250]);
-        $this->assertSame(7.08, $quote['amount_usd']);
+        $this->assertSame(7.2, $quote['amount_usd']);
         $this->assertSame(250, $quote['total_attentions']);
-        $this->assertSame(0.0283, $quote['items'][0]['unit_amount_usd']);
+        $this->assertSame(0.0288, $quote['items'][0]['unit_amount_usd']);
     }
 
     public function testDictadoMinutesDriveSttCogs(): void
@@ -186,19 +194,17 @@ class PricingPesByEncounterClassTest extends Unit
             ['videollamada' => true]
         );
 
-        $this->assertSame(14.15, $base['amount_usd']);
-        $this->assertSame(21.5, $withVideo['amount_usd']);
+        $this->assertSame(14.4, $base['amount_usd']);
+        $this->assertSame(21.75, $withVideo['amount_usd']);
     }
 
-    public function testWhatsappAddonIsOptionalInAllClasses(): void
+    public function testWhatsappAddonIsDeclaredButDisabled(): void
     {
-        foreach (['AMB', 'EMER', 'IMP'] as $class) {
-            $this->assertSame('optional', PricingPesByEncounterClassMetadata::addonState('whatsapp', $class));
-        }
-
-        $this->assertSame('all', PricingPesByEncounterClassMetadata::addonScope('whatsapp'));
-        $this->assertSame('whatsapp_permitido', PricingPesByEncounterClassMetadata::addonPlanField('whatsapp'));
-        $this->assertSame(0.0293, PricingPesByEncounterClassMetadata::addonCogsPerEncounter()['whatsapp']);
+        // El add-on de WhatsApp está comentado en el catálogo: no se ofrece ni
+        // mueve el precio. La config queda para una habilitación futura.
+        $this->assertNotContains('whatsapp', PricingPesByEncounterClassMetadata::addonIds());
+        $this->assertNull(PricingPesByEncounterClassMetadata::addonState('whatsapp', 'AMB'));
+        $this->assertArrayNotHasKey('whatsapp', PricingPesByEncounterClassMetadata::addonCogsPerEncounter());
     }
 
     public function testAfterTaxMarginsDeriveFromCatalogAssumptions(): void
@@ -236,6 +242,28 @@ class PricingPesByEncounterClassTest extends Unit
                 50.2,
                 PricingPesByEncounterClassMetadata::tierForTotalAttentions(200)['margin_after_iibb_ganancias_percent']
             );
+        } finally {
+            PricingPesByEncounterClassMetadata::reset();
+        }
+    }
+
+    public function testAddonMarginIsIndependentFromLicenseMargin(): void
+    {
+        $config = PricingPesByEncounterClassMetadata::loadConfig();
+        $config['addon_margin_on_cost_percent'] = 100.0;
+        $property = new \ReflectionProperty(PricingPesByEncounterClassMetadata::class, 'config');
+        $property->setAccessible(true);
+
+        try {
+            $property->setValue(null, $config);
+            // base 0.00866 × 3.33 + video 0.0044 × 2 = 0.037638 → 0.0376 × 500 = 18.80
+            $quote = PricingPesByEncounterClassMetadata::estimateMonthlyQuote(
+                ['AMB' => 500],
+                ['videollamada' => true]
+            );
+            $this->assertSame(18.8, $quote['amount_usd']);
+            // El precio base no se mueve.
+            $this->assertSame(14.4, PricingPesByEncounterClassMetadata::estimateMonthlyQuote(['AMB' => 500])['amount_usd']);
         } finally {
             PricingPesByEncounterClassMetadata::reset();
         }

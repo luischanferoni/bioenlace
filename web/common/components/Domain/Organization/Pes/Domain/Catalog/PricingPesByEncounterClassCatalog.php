@@ -187,6 +187,17 @@ final class PricingPesByEncounterClassCatalog
          * `cogs_usd_per_encounter[<id del addon>]`; sin entrada no cambia el precio.
          */
         'addons' => [
+            'videollamada' => [
+                'label' => 'Videollamada',
+                'unavailable_label' => 'Sin videollamada',
+                'description' => 'Teleconsulta online. La transcripción ya está cubierta por el dictado incluido.',
+                'plan_field' => 'videollamada_permitida',
+                'classes' => [
+                    'AMB' => self::ADDON_OPTIONAL,
+                    'EMER' => self::ADDON_UNAVAILABLE,
+                    'IMP' => self::ADDON_UNAVAILABLE,
+                ],
+            ],            
             'autogestion_paciente' => [
                 'label' => 'Autogestión del paciente',
                 'included_label' => 'Autogestión del paciente desde la app',
@@ -210,7 +221,7 @@ final class PricingPesByEncounterClassCatalog
                 ],
             ],
             'dictado' => [
-                'label' => 'Informe clínico con dictado por voz',
+                'label' => 'Informe clínico dictado por voz',
                 'included_label' => 'Informe clínico con dictado por voz',
                 'unavailable_label' => 'Sin dictado por voz',
                 'description' => 'Dictás el informe y se transcribe en la captura clínica.',
@@ -221,17 +232,17 @@ final class PricingPesByEncounterClassCatalog
                     'IMP' => self::ADDON_INCLUDED,
                 ],
             ],
-            'videollamada' => [
-                'label' => 'Videollamada',
-                'unavailable_label' => 'Sin videollamada',
-                'description' => 'Teleconsulta online. La transcripción ya está cubierta por el dictado incluido.',
-                'plan_field' => 'videollamada_permitida',
+            'consultas_flash' => [
+                'label' => 'Consultas flash',
+                'included_label' => 'Consultas flash',
+                'unavailable_label' => 'Sin consultas flash',
+                'description' => 'El paciente puede realizar consultas rápidas sobre tratamientos activos y sobre su última atención.',
                 'classes' => [
-                    'AMB' => self::ADDON_OPTIONAL,
-                    'EMER' => self::ADDON_UNAVAILABLE,
-                    'IMP' => self::ADDON_UNAVAILABLE,
+                    'AMB' => self::ADDON_INCLUDED,
+                    'EMER' => self::ADDON_INCLUDED,
+                    'IMP' => self::ADDON_INCLUDED,
                 ],
-            ],
+            ],            
         ],
         'sellable_classes' => [
             'AMB' => [

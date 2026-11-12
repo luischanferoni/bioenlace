@@ -13,6 +13,7 @@ return [
     'vertex_ai_model' => 'gemini-2.5-flash-lite',
     'ia_usage_tracking_habilitado' => true,
     'encounter_coding_async_habilitado' => false,
+    'encounter_coding_delay_hours' => 48,
     'ai_usage_persist_habilitado' => true,
     'ai_usage_log_dir' => '@common/runtime/ai-usage',
 

@@ -3,6 +3,7 @@
 namespace console\controllers;
 
 use common\components\Domain\Clinical\Encounter\Application\Service\EncounterCodingJobService;
+use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterCodingJob;
 use yii\console\Controller;
 use yii\console\ExitCode;
@@ -12,10 +13,28 @@ use yii\console\ExitCode;
  *
  * Cron: php yii encounter-coding/run 30
  * Estado: php yii encounter-coding/status [--id=]
- * Reintento: php yii encounter-coding/retry <id>
+ * Reintento: php yii encounter-coding/retry <id> [--force]
  */
 class EncounterCodingController extends Controller
 {
+    /**
+     * Reencola aunque el encounter esté anulado (solo para inspección manual).
+     */
+    public $force = false;
+
+    /**
+     * @param string $actionID
+     * @return list<string>
+     */
+    public function options($actionID): array
+    {
+        $options = parent::options($actionID);
+        if ($actionID === 'retry') {
+            $options[] = 'force';
+        }
+
+        return $options;
+    }
     public function actionRun($limit = 30): int
     {
         $result = (new EncounterCodingJobService())->run((int) $limit);
@@ -63,6 +82,23 @@ class EncounterCodingController extends Controller
             $this->stderr("No existe el job {$id}.\n");
 
             return ExitCode::UNSPECIFIED_ERROR;
+        }
+
+        $encounter = Encounter::findOne(['id' => (int) $job->encounter_id, 'deleted_at' => null]);
+        $annulment = $encounter === null
+            ? 'inexistente o eliminado'
+            : EncounterCodingJobService::annulmentReason($encounter);
+
+        if ($annulment !== null) {
+            if (!$this->force) {
+                $this->stderr(
+                    "El encounter {$job->encounter_id} no está vigente ({$annulment}): no se reencola.\n"
+                    . "Usá --force solo si necesitás inspeccionar el job de todas formas.\n"
+                );
+
+                return ExitCode::UNSPECIFIED_ERROR;
+            }
+            $this->stdout("Aviso: encounter {$job->encounter_id} no vigente ({$annulment}); reencolando por --force.\n");
         }
 
         $job->status = EncounterCodingJob::STATUS_PENDING;

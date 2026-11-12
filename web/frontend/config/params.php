@@ -51,6 +51,7 @@ return [
      * en false se mantiene el camino sync actual. Rollback: volver a false.
      */
     'encounter_coding_async_habilitado' => false,
+    'encounter_coding_delay_hours' => 48,
 
     /**
      * Telemetría de tokens: una línea JSONL por llamada real (sin prompt ni

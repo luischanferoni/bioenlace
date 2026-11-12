@@ -12,6 +12,7 @@ use yii\db\ActiveRecord;
  * @property string|null $diagnosis_terms_json
  * @property string $status
  * @property int $attempts
+ * @property int $rerun_requested
  * @property string|null $last_error
  * @property string $scheduled_at
  * @property string|null $started_at
@@ -25,6 +26,7 @@ class EncounterCodingJob extends ActiveRecord
     public const STATUS_RUNNING = 'RUNNING';
     public const STATUS_DONE = 'DONE';
     public const STATUS_FAILED = 'FAILED';
+    public const STATUS_SKIPPED = 'SKIPPED';
 
     public const MAX_ATTEMPTS = 5;
 
@@ -70,15 +72,33 @@ class EncounterCodingJob extends ActiveRecord
         return $terms;
     }
 
-    public function markDone(): void
+    public function markDone(?int $rerunDelaySeconds = null): void
     {
         $now = date('Y-m-d H:i:s');
-        $this->status = self::STATUS_DONE;
         $this->finished_at = $now;
         $this->updated_at = $now;
         $this->diagnosis_terms_json = null;
         $this->last_error = null;
-        $this->save(false, ['status', 'finished_at', 'updated_at', 'diagnosis_terms_json', 'last_error']);
+
+        if ((int) $this->rerun_requested === 1) {
+            $this->status = self::STATUS_PENDING;
+            $this->attempts = 0;
+            $this->rerun_requested = 0;
+            $this->scheduled_at = date('Y-m-d H:i:s', time() + max(0, (int) $rerunDelaySeconds));
+        } else {
+            $this->status = self::STATUS_DONE;
+        }
+
+        $this->save(false, [
+            'status',
+            'attempts',
+            'rerun_requested',
+            'scheduled_at',
+            'finished_at',
+            'updated_at',
+            'diagnosis_terms_json',
+            'last_error',
+        ]);
     }
 
     public function markFailed(string $error): void
@@ -94,5 +114,19 @@ class EncounterCodingJob extends ActiveRecord
         }
         $this->updated_at = $now;
         $this->save(false, ['status', 'finished_at', 'scheduled_at', 'updated_at', 'last_error']);
+    }
+
+    /**
+     * Encounter anulado: no se codifica y no se reintenta.
+     */
+    public function markSkipped(string $reason): void
+    {
+        $now = date('Y-m-d H:i:s');
+        $this->status = self::STATUS_SKIPPED;
+        $this->finished_at = $now;
+        $this->updated_at = $now;
+        $this->diagnosis_terms_json = null;
+        $this->last_error = mb_substr($reason, 0, 2000);
+        $this->save(false, ['status', 'finished_at', 'updated_at', 'diagnosis_terms_json', 'last_error']);
     }
 }

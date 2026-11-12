@@ -65,6 +65,10 @@ Si falla `php`, probá la versión del panel (`which php`, o `/usr/bin/php82`).
 /usr/bin/php /home/u257309594/domains/bioenlace.io/repo/web/yii encounter-coding/run 30 >> /home/u257309594/domains/bioenlace.io/repo/web/console/runtime/logs/encounter-coding-cron.log 2>&1
 ```
 
+El worker solo procesa jobs cuya `scheduled_at` ya venció. Por defecto se encolan **48 h después del último guardado** (`encounter_coding_delay_hours` en `params.php`); así se codifica cuando el encounter terminó de editarse.
+
+Una edición del encounter **crea un registro nuevo y anula el anterior** (`cancelled`, `entered-in-error` o soft-delete), de modo que cada encounter recibe su propio job. El worker descarta (`SKIPPED`) los jobs del encounter anulado: nunca se codifica un registro que ya no es el vigente. Si por algún motivo se reutiliza el mismo `encounter_id`, el job se reencola con la misma ventana de 48 h.
+
 **Expediente legal staff:**
 
 ```bash

@@ -69,71 +69,47 @@ El match de `PersonaTelefono` deja de ser prueba de identidad. Como máximo pued
 
 ## Step-up y assurance
 
-### Escalera de métodos
+La verificación fuerte ocurre en dos momentos distintos:
 
-| Orden | Método | Costo marginal | Requisito |
-|-------|--------|----------------|-----------|
-| 1 | Huella local de la app | 0 | App instalada y sesión de paciente |
-| 2 | Passkey WebAuthn | 0 | Passkey registrada en el origen de Bioenlace |
-| 3 | Didit biométrico | ~USD 0,18 | Workflow biométrico configurado |
+| Momento | Dónde | Método | Costo |
+|---------|-------|--------|-------|
+| Vincular el número | Página web de verificación | Didit KYC contra una Persona existente | ~USD 0,33 |
+| Confirmar una escritura | App Bioenlace | Huella local o passkey | 0 |
 
-El paciente puede no tener passkey: se ofrece registrarla después de la primera verificación exitosa, para que las próximas escrituras sean gratis.
+WhatsApp **no ejecuta escrituras**. Cuando el paciente pide un alta, baja o modificación, el canal responde con un enlace a la app; la app ya exige huella/passkey antes de ejecutar. Así el step-up es el nativo de la app, no un token dentro del chat.
 
-### Token de step-up
-
-- La página de verificación emite un token opaco, de un solo uso, con TTL de 10 minutos.
-- El token se guarda hasheado en el servidor y se vincula a `wa_id`, `id_persona` y a la acción pendiente.
-- La operación pendiente se guarda con su ruta, cuerpo y hash del draft; no se confía en lo que el paciente reescriba en el chat.
-- Al volver a WhatsApp, el sistema consume el token, compara la identidad y ejecuta la operación una sola vez.
-
-### Passkey
-
-- Se reutiliza `PasskeyAuthenticationService::authenticationOptions` y `authenticate`, con un propósito nuevo `whatsapp-stepup`.
-- La página de step-up debe vivir en el mismo origen/RP ID que las passkeys existentes (`app.bioenlace.io`), para que el navegador encuentre la credencial.
-- La aserción devuelve el `User`; se compara con el `user_id` del vínculo. Si no coincide, se rechaza.
-- No se inicia sesión web: el step-up solo habilita la operación de WhatsApp.
-
-### Didit
+### Didit para el vínculo
 
 - Se crea una sesión hosted con `vendor_data` opaco (sin PII).
-- Al aprobarse, `getBiometricAuth` devuelve `linked_document` o `didit_reference_id`.
-- Se compara con la Persona del vínculo. Si no coincide, no se ejecuta.
-- Se registra `verification_id`, método, resultado y expiración para auditoría.
+- Al aprobarse, `getIdentityVerification` devuelve `documento`.
+- Se busca una Persona única por documento. Si no existe o no tiene usuario, se rechaza y se explica.
+- Se registra `verification_id`, método, resultado y consumo para auditoría.
+
+### Passkey y huella local
+
+- La app ya usa huella local/passkey para su sesión; no se introduce un segundo mecanismo dentro de WhatsApp.
+- Si en el futuro se habilita una escritura dentro del canal, se reutiliza `PasskeyAuthenticationService` con un propósito `whatsapp-stepup` y TTL corto. El estado `verification_expires_at` del vínculo queda reservado para eso.
 
 ## Gate de escrituras
 
 ### Clasificación de contenido
 
-Además de la assurance, cada intent declara si puede responderse por WhatsApp (`whatsapp: allowed`). El default es bloqueado. Los intents clínicos no se declaran y el canal responde con un enlace a la app. Esto evita que un cambio futuro en el asistente exponga datos clínicos por WhatsApp sin decisión explícita.
+La lista de intents que WhatsApp puede responder vive en `Channels/WhatsApp/channel-scope.yaml`. Default: bloqueado. Los intents clínicos no se declaran y el canal responde con un enlace a la app. La metadata se carga con `WhatsAppChannelScopeCatalog`.
 
 ### Clasificación de escrituras
 
-- Cada intent mutante declara `assurance: step_up` en su manifiesto (carpetas `create`, `update`, `delete`).
-- Un test de arquitectura recorre los intents y falla si uno de escritura no declara assurance.
-- Los intents de `read` no lo declaran.
+Cada intent del catálogo declara `mutating: true` o `false`. Si es `true`, el canal no lo ejecuta: envía a la app. El menú de atajos también se filtra por el catálogo.
 
 ### Punto de control
 
-Hay dos capas, por defensa en profundidad:
+1. **Antes de ejecutar el asistente**: `WhatsAppInboundService` resuelve el intent del callback o de la sesión del flow. Si no está permitido, responde con el enlace a la app. Si es mutating, responde “hacelo en la app”.
+2. **Después del routing raíz**: si el envelope trae un `intent_id` no permitido o mutating, se descarta la respuesta y se envía el enlace a la app. Así un pedido en lenguaje natural no filtra datos clínicos ni inicia una escritura.
 
-1. **Canal WhatsApp**: antes de continuar un intent o callback mutante, `WhatsAppInboundService` exige un step-up vigente. Si no lo hay, guarda la acción pendiente y responde con el enlace.
-2. **API de escritura**: la ruta que ejecuta el `flow_submit` verifica la assurance de la sesión. Si el cliente es `whatsapp-paciente`, exige el token de step-up; si es la app o la web, usa su sesión normal.
-
-La regla de assurance no se duplica por ruta: se declara una vez en el manifiesto del intent y se resuelve por `intent_id`.
-
-### Flujo de una escritura
-
-1. El paciente pide “cancelar mi turno”.
-2. El asistente arma el draft y llega al paso de confirmación.
-3. El canal detecta `assurance: step_up` y que no hay token vigente.
-4. Guarda la acción pendiente y responde con el enlace de verificación.
-5. El paciente verifica y vuelve con el token.
-6. El canal consume el token, valida identidad y ejecuta el `flow_submit` una sola vez.
-7. Responde el resultado. Si la identidad no coincide, no ejecuta y explica.
+No hay acción pendiente ni token de step-up dentro de WhatsApp en esta entrega.
 
 ### Operaciones que no se pueden completar por WhatsApp
 
-Si un paso del flow requiere `client_open` (calendario, selector rico), el canal ya responde con deep link a la app. Esas operaciones quedan fuera del MVP de escritura por WhatsApp; el step-up se exige igual cuando la operación se ejecute desde la app.
+Todas las escrituras del paciente tienen `open_ui` y se completan en la app. El canal solo muestra el enlace. El step-up lo hace la app.
 
 ## Modelo de datos
 
@@ -142,16 +118,15 @@ Si un paso del flow requiere `client_open` (calendario, selector rico), el canal
 | Tabla | Uso |
 |-------|-----|
 | `asistente_whatsapp_vinculo` | Se amplía con estado, verificación, token de vinculación, intentos y consentimiento |
-| `asistente_whatsapp_verificacion` | Auditoría de cada step-up: `wa_id`, `id_persona`, método, `verification_id`, estado, `expires_at`, `consumed_at` |
-| `asistente_whatsapp_accion_pendiente` | Acción mutante esperando step-up: ruta, cuerpo, hash del draft, token, expiración, estado |
+| `asistente_whatsapp_verificacion` | Auditoría de cada verificación: `wa_id`, `id_persona`, método, `verification_id`, estado, `expires_at`, `consumed_at` |
 
 Migraciones nuevas; no se edita `m260711_150000_asistente_whatsapp_vinculo`.
 
 ### Idempotencia
 
 - El `wamid` ya se deduplica en `asistente_whatsapp_mensaje`.
-- El token de step-up y la acción pendiente se consumen en una transacción.
-- Reintentos de Meta o del paciente no duplican la operación.
+- El token de vinculación se invalida al completar la verificación.
+- Reintentos de Meta o del paciente no duplican la vinculación.
 
 ## Seguridad y privacidad
 

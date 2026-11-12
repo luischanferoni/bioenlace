@@ -2,25 +2,23 @@
 
 ## Objetivo
 
-Habilitar un canal de WhatsApp **solo reactivo** para que el paciente consulte turnos e información y ejecute trámites simples con el asistente, con identidad verificada y step-up biométrico antes de cualquier escritura. El add-on se contrata opcionalmente por efector.
+Habilitar un canal de WhatsApp **solo reactivo** para que el paciente consulte turnos e información con el asistente, con identidad verificada al vincular el número. Las escrituras se completan en la app, donde la huella local o la passkey hacen el step-up justo antes de ejecutar. El add-on se contrata opcionalmente por efector.
 
 ## Flujo objetivo
 
 1. El paciente escribe al número de Bioenlace.
 2. Si el `wa_id` no está vinculado, el sistema responde con un enlace opaco a una página de verificación. No revela nombre ni datos del paciente.
-3. En la página, el paciente se verifica con el método disponible: huella local de la app, passkey o Didit.
+3. En la página, el paciente se verifica con Didit.
 4. Si la identidad coincide con una Persona registrada, el número queda vinculado. Si no coincide o no existe cuenta, se explica que use su propio número o instale la app.
-5. Las consultas de lectura (turnos, información, estado de trámite) se responden por el asistente.
-6. Antes de un alta, baja o modificación, el asistente pide un step-up. Se abre un enlace, el paciente verifica con huella, passkey o Didit, y vuelve a WhatsApp con un token de un solo uso.
-7. El sistema compara la identidad verificada con la Persona vinculada. Si no coincide, no ejecuta y explica el motivo.
-8. La operación se ejecuta una sola vez, con auditoría y TTL corto.
+5. Las consultas de lectura permitidas (turnos, información) se responden por el asistente.
+6. Si el pedido es un alta, baja o modificación, el canal **no ejecuta**: envía a la app, donde la huella/passkey hace el step-up y la operación se completa.
 
 ## Alcance
 
 - Vinculación de número con verificación fuerte.
 - Lecturas por asistente: turnos, información, estado de trámites.
-- Escrituras: reservar, cancelar, reprogramar y trámites equivalentes del paciente.
-- Step-up con passkey, huella local de la app o Didit.
+- Escrituras: reservar, cancelar, reprogramar y trámites equivalentes. WhatsApp las deriva a la app, que hace el step-up.
+- Step-up con huella local o passkey en la app; Didit solo para vincular el número.
 - Add-on opcional con costo de Meta y Didit.
 - Número compartido de Bioenlace.
 - Auditoría, rate limit, expiración de vínculos y consentimiento.
@@ -41,10 +39,10 @@ Habilitar un canal de WhatsApp **solo reactivo** para que el paciente consulte t
 | Alcance del canal | Solo reactivo; el paciente inicia la conversación |
 | Plantillas | No se usan; todo ocurre dentro de la ventana de 24 h |
 | Contenido | Sin datos clínicos; solo turnos, información y trámites |
-| Identidad inicial | Verificación fuerte con huella, passkey o Didit; nunca "SI" |
-| Escrituras | Step-up inmediatamente antes de ejecutar; token de un solo uso |
-| TTL | Corto: 10 minutos o consumo, lo que ocurra primero |
-| Método preferido | Huella local de la app, luego passkey, luego Didit |
+| Identidad inicial | Didit KYC contra una Persona existente; nunca "SI" |
+| Escrituras | No se ejecutan en WhatsApp: se abren en la app, que exige huella/passkey |
+| TTL | No aplica dentro de WhatsApp; la app maneja su sesión biométrica |
+| Método preferido | Huella local o passkey en la app; Didit solo para el vínculo inicial |
 | Número | Uno compartido de Bioenlace |
 | Cobro | Add-on opcional por efector, con Meta y Didit incluidos |
 | Chat del paciente | Es del asistente, no del personal de salud; no depende de la clase de atención |

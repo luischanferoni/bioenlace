@@ -1,7 +1,6 @@
 <?php
 
 use common\components\Shared\Infrastructure\Migration\MigrationEnumColumn;
-use common\models\Integrations\AsistenteWhatsappAccionPendiente;
 use common\models\Integrations\AsistenteWhatsappVerificacion;
 use common\models\Integrations\AsistenteWhatsappVinculo;
 use yii\db\Migration;
@@ -30,7 +29,6 @@ class m261112_120000_whatsapp_addon_identity extends Migration
         $this->ensureVinculoEstadoEnum($vinculo);
         $this->ensureVinculoColumns($vinculo);
         $this->ensureVerificacionTable();
-        $this->ensureAccionPendienteTable();
     }
 
     public function safeDown()
@@ -40,9 +38,6 @@ class m261112_120000_whatsapp_addon_identity extends Migration
         }
 
         $vinculo = '{{%asistente_whatsapp_vinculo}}';
-        if ($this->db->schema->getTableSchema('{{%asistente_whatsapp_accion_pendiente}}', true) !== null) {
-            $this->dropTable('{{%asistente_whatsapp_accion_pendiente}}');
-        }
         if ($this->db->schema->getTableSchema('{{%asistente_whatsapp_verificacion}}', true) !== null) {
             $this->dropTable('{{%asistente_whatsapp_verificacion}}');
         }
@@ -264,41 +259,6 @@ class m261112_120000_whatsapp_addon_identity extends Migration
         $this->createIndex('idx_wa_verificacion_wa_created', $table, ['wa_id', 'created_at']);
         $this->createIndex('idx_wa_verificacion_didit_session', $table, ['didit_session_id']);
         $this->createIndex('idx_wa_verificacion_status_expires', $table, ['status', 'expires_at']);
-    }
-
-    private function ensureAccionPendienteTable(): void
-    {
-        $table = '{{%asistente_whatsapp_accion_pendiente}}';
-        if ($this->db->schema->getTableSchema($table, true) !== null) {
-            return;
-        }
-
-        $this->createTable($table, [
-            'id' => $this->primaryKey()->unsigned(),
-            'wa_id' => $this->string(64)->notNull(),
-            'user_id' => $this->integer()->null(),
-            'id_persona' => $this->integer()->null(),
-            'intent_id' => $this->string(128)->null(),
-            'subintent_id' => $this->string(128)->null(),
-            'route' => $this->string(255)->notNull(),
-            'method' => $this->string(8)->notNull()->defaultValue('POST'),
-            'body_json' => $this->text()->null(),
-            'draft_hash' => $this->char(64)->null(),
-            'token_hash' => $this->char(64)->notNull(),
-            'status' => MigrationEnumColumn::mysqlEnum(
-                AsistenteWhatsappAccionPendiente::statusValues(),
-                AsistenteWhatsappAccionPendiente::STATUS_PENDING,
-                true,
-                'PENDING|EXECUTED|REJECTED|EXPIRED'
-            ),
-            'expires_at' => $this->dateTime()->notNull(),
-            'consumed_at' => $this->dateTime()->null(),
-            'created_at' => $this->dateTime()->notNull()->defaultExpression('CURRENT_TIMESTAMP'),
-            'updated_at' => $this->dateTime()->null(),
-        ], $this->tableOptions());
-
-        $this->createIndex('uq_wa_accion_token_hash', $table, ['token_hash'], true);
-        $this->createIndex('idx_wa_accion_wa_status', $table, ['wa_id', 'status']);
     }
 
     /**

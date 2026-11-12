@@ -1,0 +1,31 @@
+# Tipo: metadata de canal
+# Propósito: qué intents puede responder WhatsApp y cuáles se derivan a la app.
+# Consumidor: WhatsAppChannelScopeCatalog.
+#
+# Default: bloqueado. Un intent no listado acá no se responde por WhatsApp.
+# `mutating: true` → no se ejecuta en WhatsApp: se envía a la app, donde la
+# huella local/passkey hace el step-up justo antes de escribir.
+version: 1
+
+intents:
+  # Lecturas transaccionales del paciente.
+  turnos.ver-mis-turnos-como-paciente:
+    mutating: false
+  turnos.ver-turnos-anteriores-como-paciente:
+    mutating: false
+  turnos.ver-ultimo-en-oferta-como-paciente:
+    mutating: false
+  turnos.consultar-politica-autogestion-flow:
+    mutating: false
+
+  # Escrituras: se completan en la app.
+  turnos.crear-como-paciente:
+    mutating: true
+  turnos.cancelar-como-paciente-flow:
+    mutating: true
+  turnos.modificar-como-paciente-flow:
+    mutating: true
+  turnos.reubicar-como-paciente-flow:
+    mutating: true
+  turnos.confirmar-asistencia-flow:
+    mutating: true

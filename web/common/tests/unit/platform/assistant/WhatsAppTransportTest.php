@@ -3,6 +3,7 @@
 namespace common\tests\unit\platform\assistant;
 
 use Codeception\Test\Unit;
+use common\components\Platform\Assistant\WhatsApp\WhatsAppChannelScopeCatalog;
 use common\components\Platform\Assistant\WhatsApp\WhatsAppEnvelopeRenderer;
 use common\components\Platform\Assistant\WhatsApp\WhatsAppLinkToken;
 use common\models\Integrations\AsistenteWhatsappVinculo;
@@ -49,5 +50,20 @@ class WhatsAppTransportTest extends Unit
         $this->assertFalse(WhatsAppLinkToken::isExpired($generated['expires_at']));
         $this->assertTrue(WhatsAppLinkToken::isExpired(date('Y-m-d H:i:s', time() - 1)));
         $this->assertTrue(WhatsAppLinkToken::isExpired(null));
+    }
+
+    public function testChannelScopeBlocksClinicalAndUnknownIntents(): void
+    {
+        $this->assertTrue(WhatsAppChannelScopeCatalog::isAllowed('turnos.ver-mis-turnos-como-paciente'));
+        $this->assertFalse(WhatsAppChannelScopeCatalog::isAllowed('laboratorio.ver-resultados-como-paciente'));
+        $this->assertFalse(WhatsAppChannelScopeCatalog::isAllowed('atencion.necesito-atencion'));
+        $this->assertFalse(WhatsAppChannelScopeCatalog::isAllowed('intent.inexistente'));
+    }
+
+    public function testChannelScopeMarksWrites(): void
+    {
+        $this->assertTrue(WhatsAppChannelScopeCatalog::isMutating('turnos.cancelar-como-paciente-flow'));
+        $this->assertTrue(WhatsAppChannelScopeCatalog::isMutating('turnos.crear-como-paciente'));
+        $this->assertFalse(WhatsAppChannelScopeCatalog::isMutating('turnos.ver-mis-turnos-como-paciente'));
     }
 }

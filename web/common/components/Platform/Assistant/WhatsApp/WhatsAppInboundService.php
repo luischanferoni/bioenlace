@@ -3,6 +3,7 @@
 namespace common\components\Platform\Assistant\WhatsApp;
 
 use common\components\Platform\Assistant\Chat\ChatOrchestrator;
+use common\components\Platform\Assistant\Copy\AssistantChannelCopy;
 use common\components\Platform\Core\Service\Actions\CommonActionsService;
 use common\models\Integrations\AsistenteWhatsappMensaje;
 use common\models\Integrations\AsistenteWhatsappVinculo;
@@ -110,6 +111,11 @@ final class WhatsAppInboundService
 
         $this->setAppClientHeader();
 
+        $inboundIntentId = $this->inboundIntentId($vinculo, $callback);
+        if (!$this->enforceChannelScope($waId, $inboundIntentId)) {
+            return;
+        }
+
         if (!empty($identityResult['menu']) || $this->isMenuCommand($text)) {
             $intro = trim((string) ($identityResult['message'] ?? ''));
             if ($intro !== '') {
@@ -140,6 +146,11 @@ final class WhatsAppInboundService
             );
             $this->api->sendText($waId, 'Hubo un error al procesar tu mensaje. Intentá de nuevo.');
 
+            return;
+        }
+
+        $envelopeIntentId = $this->envelopeIntentId($envelope);
+        if (!$this->enforceChannelScope($waId, $envelopeIntentId)) {
             return;
         }
 
@@ -295,7 +306,7 @@ final class WhatsAppInboundService
             }
             $actionId = trim((string) ($action['action_id'] ?? ''));
             $name = trim((string) ($action['name'] ?? $actionId));
-            if ($actionId === '' || $name === '') {
+            if ($actionId === '' || $name === '' || !WhatsAppChannelScopeCatalog::isAllowed($actionId)) {
                 continue;
             }
             $rows[] = [
@@ -308,7 +319,7 @@ final class WhatsAppInboundService
         if ($rows === []) {
             $this->api->sendText(
                 $waId,
-                'Escribí lo que necesitás (por ejemplo: cancelar un turno) o pedí ayuda.'
+                'Escribí lo que necesitás (por ejemplo: ver mis turnos) o pedí ayuda.'
             );
 
             return;
@@ -319,6 +330,76 @@ final class WhatsAppInboundService
             '¿En qué te ayudo? Elegí una opción o escribí tu pedido.',
             $rows
         );
+    }
+
+    private function inboundIntentId(AsistenteWhatsappVinculo $vinculo, ?array $callback): string
+    {
+        if ($callback !== null) {
+            if ($callback['type'] === 'intent_id' || $callback['type'] === 'action_id') {
+                return trim((string) $callback['value']);
+            }
+        }
+
+        $session = $vinculo->getFlowSessionArray();
+
+        return trim((string) ($session['intent_id'] ?? ''));
+    }
+
+    /**
+     * @param array<string, mixed> $envelope
+     */
+    private function envelopeIntentId(array $envelope): string
+    {
+        $session = isset($envelope['session']) && is_array($envelope['session']) ? $envelope['session'] : [];
+
+        return trim((string) ($session['intent_id'] ?? ($envelope['intent_id'] ?? '')));
+    }
+
+    /**
+     * Un intent clínico o no declarado se deriva a la app. Una escritura también:
+     * la app es la que hace el step-up (huella local/passkey) antes de escribir.
+     */
+    private function enforceChannelScope(string $waId, string $intentId): bool
+    {
+        $intentId = trim($intentId);
+        if ($intentId === '') {
+            return true;
+        }
+
+        $url = $this->appDeepLink();
+
+        if (!WhatsAppChannelScopeCatalog::isAllowed($intentId)) {
+            $this->api->sendText(
+                $waId,
+                AssistantChannelCopy::t(
+                    'whatsapp_channel_redirect',
+                    ['url' => $url],
+                    WhatsAppConfig::APP_CLIENT_ID
+                )
+            );
+
+            return false;
+        }
+
+        if (WhatsAppChannelScopeCatalog::isMutating($intentId)) {
+            $this->api->sendText(
+                $waId,
+                AssistantChannelCopy::t(
+                    'whatsapp_write_in_app',
+                    ['url' => $url],
+                    WhatsAppConfig::APP_CLIENT_ID
+                )
+            );
+
+            return false;
+        }
+
+        return true;
+    }
+
+    private function appDeepLink(): string
+    {
+        return rtrim(WhatsAppConfig::get()['appDeepLinkBase'], '/') . '/';
     }
 
     private function isMenuCommand(string $text): bool

@@ -79,3 +79,9 @@ messages:
     default: "Para confirmar esta operación necesitás verificar tu identidad. Abrí este enlace: {url}"
   whatsapp_stepup_failed:
     default: "No pudimos confirmar tu identidad. La operación no se realizó. Probá de nuevo o usá la app Bioenlace."
+  whatsapp_channel_redirect:
+    default: "Eso no lo puedo hacer por WhatsApp. Abrí la app Bioenlace: {url}"
+    whatsapp_paciente: "Eso lo tenés que hacer en la app Bioenlace. Abrila acá: {url}"
+  whatsapp_write_in_app:
+    default: "Para confirmar esta operación, abrí la app Bioenlace y verificá tu identidad ahí: {url}"
+    whatsapp_paciente: "Para confirmar esta operación, abrí la app Bioenlace y usá tu huella o passkey: {url}"

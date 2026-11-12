@@ -28,7 +28,7 @@ final class PricingPesByEncounterClassCatalog
     public static function config(): array
     {
         return [
-        'version' => 14,
+        'version' => 15,
         'currency' => 'USD',
         'billing_period' => 'month',
         'tax_note' => 'El total mensual incluye IVA.',
@@ -58,6 +58,11 @@ final class PricingPesByEncounterClassCatalog
             'dictado_minutes' => 5,
             'dictado_usd_per_minute' => 0.0005,
             'dictado_note' => 'STT del profesional: ~5 min por atención × USD 0,0005/min = USD 0,0025. Con 4 min: USD 0,0020 (−20 % del STT, −5,4 % del COGS AMB; −USD 0,85/mes a 500 atenciones).',
+            'whatsapp_service_messages_per_encounter' => 1.0,
+            'whatsapp_service_usd_per_message' => 0.026,
+            'whatsapp_didit_links_per_encounter' => 0.01,
+            'whatsapp_didit_link_usd' => 0.33,
+            'whatsapp_note' => 'Solo reactivo: 1 mensaje service por atención + vinculación Didit amortizada (1 cada 100 atenciones). Sin plantillas proactivas. Las escrituras se derivan a la app, que hace el step-up con huella/passkey; por eso no hay Didit por escritura.',
         ],
         'cogs_usd_per_encounter' => [
             'patient_chat_amb' => 0.0048,
@@ -69,6 +74,7 @@ final class PricingPesByEncounterClassCatalog
             ],
             'captura_ia' => 0.0006,
             'videollamada' => 0.0044,
+            'whatsapp' => 0.0293,
         ],
         'margin_on_cost_percent' => 233,
         /*
@@ -196,6 +202,17 @@ final class PricingPesByEncounterClassCatalog
                     'AMB' => self::ADDON_OPTIONAL,
                     'EMER' => self::ADDON_UNAVAILABLE,
                     'IMP' => self::ADDON_UNAVAILABLE,
+                ],
+            ],
+            'whatsapp' => [
+                'label' => 'WhatsApp con el paciente',
+                'unavailable_label' => 'Sin WhatsApp',
+                'description' => 'El paciente consulta turnos e información por WhatsApp. Las altas, bajas y modificaciones se confirman en la app con huella o passkey.',
+                'plan_field' => 'whatsapp_permitido',
+                'classes' => [
+                    'AMB' => self::ADDON_OPTIONAL,
+                    'EMER' => self::ADDON_OPTIONAL,
+                    'IMP' => self::ADDON_OPTIONAL,
                 ],
             ],
             'dictado' => [

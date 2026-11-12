@@ -170,6 +170,12 @@ final class ProductMetadataPaths
         return self::assistantChannelDir($channelName) . DIRECTORY_SEPARATOR . 'ui-text.yaml';
     }
 
+    /** Alcance de intents por canal (p. ej. WhatsApp `channel-scope.yaml`). */
+    public static function assistantChannelScopeFile(string $channelName): string
+    {
+        return self::assistantChannelDir($channelName) . DIRECTORY_SEPARATOR . 'channel-scope.yaml';
+    }
+
     public static function assistantCatalogDir(): string
     {
         return self::assistantDir() . DIRECTORY_SEPARATOR . 'Application' . DIRECTORY_SEPARATOR . 'Catalog';

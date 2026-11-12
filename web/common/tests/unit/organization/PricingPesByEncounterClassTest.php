@@ -54,7 +54,7 @@ class PricingPesByEncounterClassTest extends Unit
         $this->assertSame('lista', PricingPesByEncounterClassMetadata::tierForTotalAttentions(200)['id']);
         $this->assertSame('mediano', PricingPesByEncounterClassMetadata::tierForTotalAttentions(5000)['id']);
         $this->assertSame('grande', PricingPesByEncounterClassMetadata::tierForTotalAttentions(20000)['id']);
-        $this->assertSame('enterprise', PricingPesByEncounterClassMetadata::tierForTotalAttentions(40000)['id']);
+        $this->assertSame('alto_volumen', PricingPesByEncounterClassMetadata::tierForTotalAttentions(40000)['id']);
         $this->assertSame(134.0, PricingPesByEncounterClassMetadata::marginOnCostPercentForTotalAttentions(20000));
     }
 
@@ -188,6 +188,17 @@ class PricingPesByEncounterClassTest extends Unit
 
         $this->assertSame(14.15, $base['amount_usd']);
         $this->assertSame(21.5, $withVideo['amount_usd']);
+    }
+
+    public function testWhatsappAddonIsOptionalInAllClasses(): void
+    {
+        foreach (['AMB', 'EMER', 'IMP'] as $class) {
+            $this->assertSame('optional', PricingPesByEncounterClassMetadata::addonState('whatsapp', $class));
+        }
+
+        $this->assertSame('all', PricingPesByEncounterClassMetadata::addonScope('whatsapp'));
+        $this->assertSame('whatsapp_permitido', PricingPesByEncounterClassMetadata::addonPlanField('whatsapp'));
+        $this->assertSame(0.0293, PricingPesByEncounterClassMetadata::addonCogsPerEncounter()['whatsapp']);
     }
 
     public function testDefaultWhenEmptyAllowAll(): void

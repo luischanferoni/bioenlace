@@ -17,7 +17,7 @@
 | ¿El vínculo teléfono↔paciente alcanza? | **No.** Hoy es un match de `PersonaTelefono` + respuesta "SI". No prueba que del otro lado esté el paciente: número reciclado, teléfono compartido, SIM swap. |
 | ¿Dónde entregar datos clínicos? | **En la app** (huella local, costo cero). WhatsApp para lo transaccional y, si hay que mostrar algo clínico, con step-up Didit de corta duración. |
 | ¿Una ley obliga a cifrado extremo a extremo? | **No.** La Ley 25.326 exige medidas de seguridad y confidencialidad (arts. 9 y 10), no E2E. Pero Cloud API **no** es E2E y Meta procesa el contenido: para salud sigue siendo un tercero en el exterior (art. 12). |
-| ¿La cuenta cierra con cost-plus? | **No con volumen pleno.** A tarifa de lista, el add-on tendría que costar cientos de USD por profesional/mes. Acotado a lo transaccional, cae a ~USD 26/prof/mes; si eso ya es prohibitivo, la salida es BYO WABA o paquetes prepagos. |
+| ¿La cuenta cierra con cost-plus? | **No con volumen pleno.** Acotado a reactivo sin datos clínicos y con las escrituras en la app, el COGS queda en **USD 0,0293/atención (~USD 14,65/prof/mes)**: por debajo del umbral de USD 26. |
 
 ---
 
@@ -293,9 +293,9 @@ Conclusión práctica: si el mensaje no contiene datos clínicos y solo invita a
 | `id` | `whatsapp` |
 | Estado | `optional` en todas las clases (`AMB`, `EMER`, `IMP`) |
 | `plan_field` | `whatsapp_permitido` |
-| COGS | Por atención, con presupuesto de mensajes y step-up declarados en `cogs_assumptions` |
-| Incluye | Avisos proactivos, asistente reactivo, enlaces de step-up |
-| No incluye | IA del chat (ya en §1), datos clínicos completos (siempre app o step-up) |
+| COGS | USD 0,0293/atención: 1 mensaje service + vinculación Didit amortizada. Sin Didit por escritura (la hace la app). |
+| Incluye | Avisos reactivos, asistente, enlaces de vinculación |
+| No incluye | IA del chat (ya en §1), datos clínicos, escrituras (se completan en la app) |
 
 Dos formas de llevarlo al catálogo, a decidir:
 
@@ -303,6 +303,8 @@ Dos formas de llevarlo al catálogo, a decidir:
 2. **Presupuesto de mensajes + excedente**: el add-on incluye un bloque de mensajes por atención y el excedente se factura. Requiere extender el modelo de precios, que hoy solo conoce COGS por atención.
 
 Recomendación: empezar por (1) con un presupuesto acotado (2 mensajes utility + 1 service + step-up con TTL), y migrar a (2) cuando haya telemetría real de mensajes por atención.
+
+> **Recorte final:** el escenario B de §5 (~USD 0,20/atención) asumía Didit por escritura. Con el diseño implementado —escrituras derivadas a la app, que hace el step-up con huella/passkey— el COGS baja a **USD 0,0293/atención (~USD 14,65/prof/mes)**, por debajo del umbral de USD 26. No hay Didit por escritura.
 
 ---
 

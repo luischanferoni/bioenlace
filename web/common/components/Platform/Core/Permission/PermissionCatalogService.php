@@ -89,9 +89,11 @@ final class PermissionCatalogService
             try {
                 $chunk = Yaml::parseFile($path);
             } catch (\Throwable $e) {
+                \Yii::error('DataAccess YAML inválido (' . $path . '): ' . $e->getMessage(), __METHOD__);
                 continue;
             }
             if (!is_array($chunk)) {
+                \Yii::error('DataAccess YAML sin mapa (' . $path . ').', __METHOD__);
                 continue;
             }
             $entity = trim((string) ($chunk['entity'] ?? ''));
@@ -249,6 +251,7 @@ final class PermissionCatalogService
                     $raw = $parsed;
                 }
             } catch (\Throwable $e) {
+                \Yii::error('Intent YAML inválido (' . $path . '): ' . $e->getMessage(), __METHOD__);
                 $raw = [];
             }
         }

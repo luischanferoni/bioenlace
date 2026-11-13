@@ -102,11 +102,17 @@ final class IntentRequestContextService
         try {
             $data = Yaml::parseFile($path);
         } catch (\Throwable $e) {
-            return null;
+            throw new \yii\base\InvalidConfigException(
+                'Intent inválido (' . $path . '): ' . $e->getMessage(),
+                0,
+                $e
+            );
         }
 
         if (!is_array($data)) {
-            return null;
+            throw new \yii\base\InvalidConfigException(
+                'El intent ' . $intentId . ' no contiene un mapa YAML válido.'
+            );
         }
 
         $sr = $data['subject_resolution'] ?? null;

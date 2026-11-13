@@ -8,6 +8,7 @@ use common\components\Domain\Person\Identity\Application\Service\RefepsProfessio
 use common\components\Domain\Person\Identity\Application\Service\RefepsVerificationException;
 use common\components\Domain\Person\Identity\Application\Service\PersonCuilService;
 use common\components\Domain\Person\Identity\Application\UseCase\CreatePendingIdentity;
+use common\components\Platform\Core\Permission\OperationalRoleManifest;
 use common\models\Person\Persona;
 use common\models\Organization\ProfesionalEfectorServicio as ProfesionalEfectorServicioModel;
 use common\models\Organization\Servicio;
@@ -201,15 +202,10 @@ final class EnsurePesAssignment
 
     private static function serviceRequiresProfessionalVerification(Servicio $servicio): bool
     {
-        $nonClinicalRoles = [
-            'AdminEfector',
-            'AdminMinisterio',
-            'nivelCentral',
-            'Administrativo',
-            'facturista',
-        ];
+        $manifest = new OperationalRoleManifest();
+        $canonical = $manifest->canonicalFor(trim((string) ($servicio->item_name ?? '')));
 
-        return !in_array(trim((string) ($servicio->item_name ?? '')), $nonClinicalRoles, true);
+        return $manifest->flag($canonical, 'requiere_verificacion_profesional', true);
     }
 
 }

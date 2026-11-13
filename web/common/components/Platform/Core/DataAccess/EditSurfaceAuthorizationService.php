@@ -175,6 +175,13 @@ final class EditSurfaceAuthorizationService
             $spec = QuerySpec::fromParams($metricId, $params);
             ScopeCheckerRegistry::get($checkerId)->assertAndResolve($spec, $ctx);
         } catch (\Throwable $e) {
+            // Fail-closed, pero el error de configuración no puede quedar oculto.
+            \Yii::error(
+                'Edit surface «' . ($surface['id'] ?? '?') . '» no pudo verificar scope «'
+                . $checkerId . '»: ' . $e->getMessage(),
+                __METHOD__
+            );
+
             return false;
         }
 

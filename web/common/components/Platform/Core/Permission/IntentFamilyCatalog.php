@@ -54,10 +54,14 @@ final class IntentFamilyCatalog
         try {
             $parsed = Yaml::parseFile($file);
         } catch (\Throwable $e) {
+            \Yii::error('intent-families.yaml inválido: ' . $e->getMessage(), __METHOD__);
+
             return;
         }
 
         if (!is_array($parsed)) {
+            \Yii::error('intent-families.yaml no contiene un mapa.', __METHOD__);
+
             return;
         }
 

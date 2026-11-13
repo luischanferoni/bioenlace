@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:shared/shared.dart';
 
 import 'commercial_signup_screen.dart';
@@ -23,9 +22,6 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
 
   bool _submitting = false;
   bool _accountCreated = false;
-  bool _loadingQuote = true;
-  Map<String, dynamic>? _spaceQuote;
-  String? _spaceQuoteError;
   String? _pendingVerificationId;
 
   bool _loadingProvinces = true;
@@ -49,7 +45,6 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
   @override
   void initState() {
     super.initState();
-    _refreshSpaceQuote();
     _loadProvinces();
     //_loadCenters();
   }
@@ -68,13 +63,6 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  String _priceErrorText(Object error) {
-    final message = error.toString().replaceFirst('Exception: ', '').trim();
-    return message.isEmpty
-        ? 'No pudimos consultar el precio. Intentá nuevamente.'
-        : message;
-  }
-
   String _catalogErrorText(Object error, String resource) {
     final fallback =
         'No pudimos cargar $resource. Reintentá en unos instantes.';
@@ -84,35 +72,6 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
       return error.message;
     }
     return userFriendlyErrorMessage(error, fallback: fallback);
-  }
-
-  Map<String, dynamic> _initialSpacePlan() => {
-    'classes': {
-      'AMB': {'attentions_per_month': 200, 'videollamada_permitida': false},
-    },
-  };
-
-  Future<void> _refreshSpaceQuote() async {
-    setState(() {
-      _loadingQuote = true;
-      _spaceQuoteError = null;
-    });
-    try {
-      final quote = await _signupService.quoteSignupPlan(
-        plan: _initialSpacePlan(),
-      );
-      if (!mounted) return;
-      setState(() {
-        _spaceQuote = quote;
-        _loadingQuote = false;
-      });
-    } catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _spaceQuoteError = _priceErrorText(error);
-        _loadingQuote = false;
-      });
-    }
   }
 
   Future<void> _loadProvinces() async {
@@ -318,70 +277,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
 
   void _openCommercialSignup() {
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) =>
-            CommercialSignupScreen(initialPlan: _initialSpacePlan()),
-      ),
-    );
-  }
-
-  /// `es_AR` con el símbolo de moneda adelante: "$ 12.345,67".
-  String _formatArs(Object? amount) {
-    final value = double.tryParse(amount?.toString() ?? '');
-    if (value == null) return '—';
-    final formatted = NumberFormat.decimalPatternDigits(
-      locale: 'es_AR',
-      decimalDigits: 2,
-    ).format(value);
-    return '\$ $formatted';
-  }
-
-  Widget _buildQuoteSummary({
-    required Map<String, dynamic>? quote,
-    required bool loading,
-    required String? error,
-    required VoidCallback onRetry,
-  }) {
-    final tokens = context.bio;
-    return Container(
-      margin: const EdgeInsets.only(top: BioSpacing.sm),
-      padding: const EdgeInsets.all(BioSpacing.md),
-      decoration: BoxDecoration(
-        color: tokens.paperBackground,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: loading
-          ? const Center(child: CircularProgressIndicator())
-          : error != null
-          ? Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(error, style: BioTypography.bodySm),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: onRetry,
-                    child: const Text('Reintentar'),
-                  ),
-                ),
-              ],
-            )
-          : quote == null
-          ? const Text('No hay una cotización disponible.')
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${_formatArs(quote['amount_total_ars'])} por mes',
-                  style: BioTypography.title,
-                ),
-                BioSpacing.gapH(BioSpacing.xs),
-                Text(
-                  'Total mensual con impuestos incluidos. ',
-                  style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
-                ),
-              ],
-            ),
+      MaterialPageRoute(builder: (_) => const CommercialSignupScreen()),
     );
   }
 
@@ -687,19 +583,13 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                         'Presioná el boton de abajo para comenzar a crear tu centro de atención. ',
                         style: BioTypography.bodyLg,
                       ),
-                      /*_buildQuoteSummary(
-                        quote: _spaceQuote,
-                        loading: _loadingQuote,
-                        error: _spaceQuoteError,
-                        onRetry: _refreshSpaceQuote,
-                      ),*/
                       BioSpacing.gapH(BioSpacing.md),
                       BioButton.primary(
                         label: 'Comenzar',
                         icon: Icons.arrow_forward,
                         size: BioButtonSize.lg,
                         fullWidth: true,
-                        onPressed: _loadingQuote ? null : _openCommercialSignup,
+                        onPressed: _openCommercialSignup,
                       ),
                     ],
                   ),

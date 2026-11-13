@@ -2,7 +2,9 @@
 
 **Estado:** análisis **abierto**, sin compra ni decisión.  
 **Fecha de captura:** 2026-11-11. Precios **de orden de magnitud**: revalidar con cotización.  
-**Escala:** **5.000 profesionales**, 500 atenciones/mes cada uno ⇒ **2,5 M atenciones/mes**.  
+**Escala:** **5.000 profesionales**, 500 atenciones/mes cada uno
+([capacidad de referencia](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md#referencia-de-capacidad-de-dónde-salen-los-presets))
+⇒ **2,5 M atenciones/mes**.  
 **Supuesto:** se **compra** todo el hardware, GPU incluidas. No se evalúan equipos alquilados. La referencia de contraste es el costo actual con servicios gestionados.
 
 ## Conclusión

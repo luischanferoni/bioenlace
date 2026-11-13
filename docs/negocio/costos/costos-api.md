@@ -366,7 +366,7 @@ STT post-call: **~9 min de voz** (médico ~5 + paciente ~4, con VAD) → ya mode
 | **COGS de planificación (matriz / calculador)** | Suma de las filas anteriores | **2,19** |
 | Histórico @ 80 % / Daily+Deepgram / techo 5,00 | Ya no es lista | Era **3,50** / **9,19** / **5,00** |
 
-Por atención contratada (500 encounters/prof/mes; 40 % = 200 teleconsultas): **2,19 / 500 ≈ 0,0044** USD.
+Por atención contratada (500 encounters/prof/mes, [capacidad de referencia](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md#referencia-de-capacidad-de-dónde-salen-los-presets); 40 % = 200 teleconsultas): **2,19 / 500 ≈ 0,0044** USD.
 
 Real-time Deepgram (~$0,0059/unmuted pax-min): **fuera de alcance**.
 

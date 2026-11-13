@@ -130,6 +130,33 @@ class OperationalRoleManifestTest extends Unit
         $this->assertSame('enfermeria', $manifest->select(['enfermeria', 'Medico']));
     }
 
+    public function testProfessionalVerificationRequirementIsPerRole(): void
+    {
+        $manifest = new OperationalRoleManifest();
+
+        $this->assertFalse(
+            $manifest->flag('admin_efector', 'requiere_verificacion_profesional', true)
+        );
+        $this->assertFalse(
+            $manifest->flag('administrativo', 'requiere_verificacion_profesional', true)
+        );
+        $this->assertTrue($manifest->flag('medico', 'requiere_verificacion_profesional', true));
+        $this->assertTrue($manifest->flag('enfermeria', 'requiere_verificacion_profesional', true));
+        $this->assertTrue($manifest->flag(null, 'requiere_verificacion_profesional', true));
+    }
+
+    public function testStaffChatRolesComeFromTheManifest(): void
+    {
+        $manifest = new OperationalRoleManifest();
+        $names = $manifest->namesWithFlag('responde_chat_async');
+
+        foreach (['medico', 'Medico', 'enfermeria', 'Enfermeria'] as $name) {
+            $this->assertContains($name, $names);
+        }
+        $this->assertNotContains('administrativo', $names);
+        $this->assertNotContains('paciente', $names);
+    }
+
     public function testSelectAllOrdersByPrecedence(): void
     {
         $manifest = new OperationalRoleManifest();

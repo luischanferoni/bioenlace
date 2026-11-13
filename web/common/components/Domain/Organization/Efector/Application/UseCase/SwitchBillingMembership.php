@@ -4,6 +4,7 @@ namespace common\components\Domain\Organization\Efector\Application\UseCase;
 
 use common\components\Domain\Organization\Efector\Application\Service\EfectorEncounterEntitlementService;
 use common\components\Domain\Organization\Efector\Application\UseCase\SignUpInstitutionalEfector;
+use common\components\Platform\Core\Product\PricingPesByEncounterClassMetadata;
 use common\models\Organization\BillingAccount;
 use common\models\Organization\BillingAccountEfector;
 use common\models\Organization\BillingSignupRequest;
@@ -243,12 +244,7 @@ final class SwitchBillingMembership
                 if (!is_array($cfg)) {
                     continue;
                 }
-                $out[$class] = [
-                    'max_pes' => max(1, (int) ($cfg['max_pes'] ?? 1)),
-                    'dictado_incluido' => !empty($cfg['dictado_incluido']),
-                    'videollamada_permitida' => !empty($cfg['videollamada_permitida']),
-                    'whatsapp_permitido' => !empty($cfg['whatsapp_permitido']),
-                ];
+                $out[$class] = self::planRowForClass($class, $cfg);
             }
             if ($out !== []) {
                 return $out;
@@ -262,22 +258,55 @@ final class SwitchBillingMembership
             if ($code === '') {
                 continue;
             }
+            // Sin tope explícito en el contrato anterior, el nuevo parte del uso actual.
+            $maxPes = $row['max_pes'] !== null
+                ? max(1, (int) $row['max_pes'])
+                : max(1, (int) ($row['used'] ?? 0));
             $out[$code] = [
-                'max_pes' => max(1, (int) ($row['max_pes'] ?? 1)),
+                'max_pes' => $maxPes,
                 'dictado_incluido' => !empty($row['dictado_incluido']),
                 'videollamada_permitida' => !empty($row['videollamada_permitida']),
                 'whatsapp_permitido' => !empty($row['whatsapp_permitido']),
             ];
         }
         if ($out === []) {
-            $out['AMB'] = [
-                'max_pes' => 5,
-                'dictado_incluido' => false,
-                'videollamada_permitida' => false,
-                'whatsapp_permitido' => false,
-            ];
+            $initial = PricingPesByEncounterClassMetadata::initialAttentionsForClass('AMB');
+            if ($initial === null) {
+                throw new \InvalidArgumentException(
+                    'El catálogo de precios no declara volumen inicial para AMB.'
+                );
+            }
+            $out['AMB'] = self::planRowForClass('AMB', ['attentions_per_month' => $initial]);
         }
 
         return $out;
+    }
+
+    /**
+     * Fila del contrato resuelta con la política del catálogo: el volumen y el
+     * addon incluido no dependen de lo que mande el cliente.
+     *
+     * @param array<string, mixed> $cfg
+     * @return array{max_pes: int, dictado_incluido: bool, videollamada_permitida: bool, whatsapp_permitido: bool}
+     */
+    private static function planRowForClass(string $class, array $cfg): array
+    {
+        $attentions = (int) ($cfg['attentions_per_month'] ?? 0);
+        $maxPes = (int) ($cfg['max_pes'] ?? 0);
+        if ($maxPes <= 0 && $attentions > 0) {
+            $maxPes = PricingPesByEncounterClassMetadata::deriveMaxPesFromAttentions($attentions, $class);
+        }
+        if ($maxPes <= 0) {
+            $initial = PricingPesByEncounterClassMetadata::initialAttentionsForClass($class);
+            if ($initial !== null) {
+                $maxPes = PricingPesByEncounterClassMetadata::deriveMaxPesFromAttentions($initial, $class);
+            }
+        }
+
+        $row = ['max_pes' => max(1, $maxPes)]
+            + PricingPesByEncounterClassMetadata::addonPlanValues($class, $cfg);
+        $row += ['whatsapp_permitido' => !empty($cfg['whatsapp_permitido'])];
+
+        return $row;
     }
 }

@@ -184,6 +184,9 @@ curl -i -X POST https://app.bioenlace.io/api/v1/licencia/registrar-efector-didit
   }'
 ```
 
+El volumen y el tope del ejemplo son **ilustrativos**; el plan contratado los define y el backend
+cotiza ([matriz de precios](../negocio/modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md)).
+
 `checkout_request_key` debe ser **48 caracteres hexadecimales**. Es la clave de idempotencia: repetir la llamada con la misma clave y los mismos datos devuelve el mismo `checkout_url` sin crear otra suscripción.
 
 Respuesta esperada (`201`):

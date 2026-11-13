@@ -279,7 +279,7 @@ return [
         'enabled' => false,
         'default' => 'null',
         'exchange_profile' => 'encounter-document-v1',
-        'encounter_classes' => ['AMB', 'EMER', 'IMP'],
+        'encounter_classes' => \common\models\Clinical\EncounterDefinition::ENCOUNTER_CLASS_CLINICAL_EXPORT,
         'excluded_efector_ids' => [],
         'allowed_efector_ids' => null,
         'log_bundle_snapshot' => false,

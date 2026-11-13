@@ -51,4 +51,10 @@ else
   say "pre-commit: PHP ${version} < 8.1; se omite el test de arquitectura."
 fi
 
+# 4) Valores derivados: literales que deben leerse de su fuente
+if ! (cd web && "$PHP_BIN" tools/audit-derived-values.php); then
+  say "pre-commit: hay literales de valores derivados (ver web/tools/audit-derived-values.php)."
+  fail=1
+fi
+
 exit "$fail"

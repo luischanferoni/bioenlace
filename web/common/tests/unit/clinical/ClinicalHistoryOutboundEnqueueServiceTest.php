@@ -7,6 +7,7 @@ use common\components\Domain\Clinical\HistoryExchange\Application\UseCase\Enqueu
 use common\components\Domain\Clinical\HistoryExchange\Infrastructure\External\ClinicalHistoryExchangeRegistry;
 use common\components\Domain\Clinical\HistoryExchange\Infrastructure\External\Mapper\FhirClinicalHistoryBundleMapper;
 use common\models\Clinical\Encounter;
+use common\models\Clinical\EncounterDefinition;
 
 class EnqueueClinicalHistoryOutboundTest extends \Codeception\Test\Unit
 {
@@ -16,7 +17,7 @@ class EnqueueClinicalHistoryOutboundTest extends \Codeception\Test\Unit
             'enabled' => true,
             'default' => 'null',
             'exchange_profile' => 'encounter-document-v1',
-            'encounter_classes' => ['AMB', 'EMER', 'IMP'],
+            'encounter_classes' => EncounterDefinition::ENCOUNTER_CLASS_CLINICAL_EXPORT,
             'retry' => ['delay_after_finalize_seconds' => 0],
             'connectors' => [
                 'null' => [

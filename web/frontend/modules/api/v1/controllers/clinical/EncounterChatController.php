@@ -12,6 +12,7 @@ use common\components\Domain\Scheduling\Agenda\Application\Service\EncounterAsyn
 use common\components\Domain\Scheduling\Agenda\Application\Service\EncounterAsyncChatPolicyService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\EncounterAsyncMetaService;
 use common\components\Domain\Scheduling\Agenda\Application\Service\EncounterAsyncIntakeContextService;
+use common\components\Platform\Core\Permission\OperationalRoleManifest;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
 use frontend\modules\api\v1\controllers\clinical\ClinicalAccessTrait;
@@ -207,13 +208,14 @@ class EncounterChatController extends BaseController
             }
         }
 
+        $staffChatRoles = (new OperationalRoleManifest())->namesWithFlag('responde_chat_async');
         if (
             $encounter->parent_type === Encounter::PARENT_SOLICITUD_ASYNC
-            && in_array($user_role, ['medico', 'enfermeria'], true)
+            && in_array($user_role, $staffChatRoles, true)
         ) {
             $prevStaffCount = EncounterChatMessage::find()
                 ->where(['encounter_id' => $encounterId])
-                ->andWhere(['user_role' => ['medico', 'enfermeria']])
+                ->andWhere(['user_role' => $staffChatRoles])
                 ->andWhere(['<', 'id', (int) $chatMessage->id])
                 ->count();
             if ($prevStaffCount === 0) {

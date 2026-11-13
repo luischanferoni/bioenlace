@@ -68,6 +68,8 @@
   "scripts": {
     "audit:thin-clients": "php tools/audit-thin-clients.php",
     "audit:thin-clients:report": "php tools/audit-thin-clients.php --report",
+    "audit:derived-values": "php tools/audit-derived-values.php",
+    "audit:derived-values:report": "php tools/audit-derived-values.php --report",
     "post-create-project-cmd": [
       "yii\\composer\\Installer::postCreateProject"
     ]

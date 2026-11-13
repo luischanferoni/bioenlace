@@ -129,6 +129,11 @@ Dos vistas separadas: **COGS base por atención** (lo que se vende en cada clase
 
 ### COGS base por atención (sin videollamada)
 
+> **Documento canónico de la composición del COGS.** Esta tabla es la vista humana de
+> `PricingPesByEncounterClassCatalog`; si cambia el catálogo, se actualiza acá. El precio de lista,
+> los tramos y los presets viven en
+> [matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md).
+
 | Componente | Ambulatorio | Urgencia (EMER) | Internación (IMP) |
 |------------|-------------|-----------------|-------------------|
 | Chat del paciente (cupo 10 msgs) | 0,0048 · **55,4 %** | — | — |
@@ -138,7 +143,7 @@ Dos vistas separadas: **COGS base por atención** (lo que se vende en cada clase
 | Infra app + BD + backups + monitoreo | 0,00006 · **0,7 %** | 0,000043 · **1,1 %** | 0,000075 · **1,9 %** |
 | **Total por atención** | **0,00866** | **0,003843** | **0,003875** |
 
-Infra: **0,03/prof/mes** repartido entre las atenciones de referencia (AMB 500, EMER 700, IMP 400). Base: 2–3 VPS KVM2 compartidos (~USD 90–160/mes total). Sin análisis de imágenes (no se ofrece); el storage de video va en el add-on.
+Infra: **0,03/prof/mes** repartido entre las [atenciones de referencia de cada clase](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md#referencia-de-capacidad-de-dónde-salen-los-presets). Base: 2–3 VPS KVM2 compartidos (~USD 90–160/mes total). Sin análisis de imágenes (no se ofrece); el storage de video va en el add-on.
 
 ### Add-on videollamada (40 % teleconsulta)
 

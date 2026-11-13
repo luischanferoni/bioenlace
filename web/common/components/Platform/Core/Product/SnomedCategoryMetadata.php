@@ -2,6 +2,8 @@
 
 namespace common\components\Platform\Core\Product;
 
+use yii\base\InvalidConfigException;
+
 /**
  * Metadata de categorías SNOMED para codificación ({@see SnomedTerminologyMetadata}).
  */
@@ -9,26 +11,32 @@ final class SnomedCategoryMetadata
 {
     public static function semanticConfidenceThreshold(): float
     {
-        $section = SnomedTerminologyMetadata::config()['semantic_matching'] ?? [];
-        if (!is_array($section)) {
-            return 0.7;
+        $section = SnomedTerminologyMetadata::config()['semantic_matching'] ?? null;
+        if (!is_array($section)
+            || !array_key_exists('confidence_threshold', $section)
+            || !is_numeric($section['confidence_threshold'])
+        ) {
+            throw new InvalidConfigException(
+                'El catálogo SNOMED no declara semantic_matching.confidence_threshold.'
+            );
         }
 
-        $threshold = $section['confidence_threshold'] ?? 0.7;
-
-        return is_numeric($threshold) ? (float) $threshold : 0.7;
+        return (float) $section['confidence_threshold'];
     }
 
     public static function candidateLimit(): int
     {
-        $section = SnomedTerminologyMetadata::config()['semantic_matching'] ?? [];
-        if (!is_array($section)) {
-            return 20;
+        $section = SnomedTerminologyMetadata::config()['semantic_matching'] ?? null;
+        if (!is_array($section)
+            || !array_key_exists('candidate_limit', $section)
+            || !is_numeric($section['candidate_limit'])
+        ) {
+            throw new InvalidConfigException(
+                'El catálogo SNOMED no declara semantic_matching.candidate_limit.'
+            );
         }
 
-        $limit = $section['candidate_limit'] ?? 20;
-
-        return is_numeric($limit) ? max(1, (int) $limit) : 20;
+        return max(1, (int) $section['candidate_limit']);
     }
 
     public static function eclForCategory(string $categoryKey): ?string

@@ -2,6 +2,8 @@
 
 namespace common\components\Platform\Core\Product;
 
+use yii\base\InvalidConfigException;
+
 /**
  * Perfiles de búsqueda SNOMED ({@see SnomedTerminologyMetadata}).
  */
@@ -49,9 +51,14 @@ final class SnomedSearchProfileMetadata
             }
         }
 
-        $default = self::searchSection()['default_limit'] ?? 10;
+        $default = self::searchSection()['default_limit'] ?? null;
+        if (!is_numeric($default)) {
+            throw new InvalidConfigException(
+                'El catálogo SNOMED no declara search.default_limit.'
+            );
+        }
 
-        return is_numeric($default) ? max(1, (int) $default) : 10;
+        return max(1, (int) $default);
     }
 
     public static function returnFormatForProfile(string $profileKey): string

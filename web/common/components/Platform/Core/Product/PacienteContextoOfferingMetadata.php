@@ -4,6 +4,7 @@ namespace common\components\Platform\Core\Product;
 
 use Symfony\Component\Yaml\Yaml;
 use Yii;
+use yii\base\InvalidConfigException;
 
 /**
  * Metadata de encauzamiento paciente ({@see ProductMetadataPaths::pacienteContextoOfferingFile()}).
@@ -81,9 +82,11 @@ final class PacienteContextoOfferingMetadata
         try {
             $data = Yaml::parseFile($path);
         } catch (\Throwable $e) {
-            Yii::warning('PacienteContextoOfferingMetadata: YAML inválido: ' . $e->getMessage(), __METHOD__);
-
-            return self::$config;
+            throw new InvalidConfigException(
+                'paciente-contexto-offering.yaml inválido (' . $path . '): ' . $e->getMessage(),
+                0,
+                $e
+            );
         }
 
         self::$config = is_array($data) ? $data : [];

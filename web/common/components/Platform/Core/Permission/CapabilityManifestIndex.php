@@ -40,9 +40,11 @@ final class CapabilityManifestIndex
             try {
                 $parsed = Yaml::parseFile($path);
             } catch (\Throwable $e) {
+                \Yii::error('Capability YAML inválido (' . $path . '): ' . $e->getMessage(), __METHOD__);
                 continue;
             }
             if (!is_array($parsed)) {
+                \Yii::error('Capability YAML sin mapa (' . $path . ').', __METHOD__);
                 continue;
             }
             $rows = $parsed['capabilities'] ?? [];

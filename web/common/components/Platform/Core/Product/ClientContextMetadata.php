@@ -5,6 +5,7 @@ namespace common\components\Platform\Core\Product;
 use common\components\Platform\Core\Permission\RbacRoleQueryService;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
+use yii\base\InvalidConfigException;
 
 /**
  * Metadata de contexto cliente ({@see ProductMetadataPaths::clientContextFile()}).
@@ -216,9 +217,11 @@ final class ClientContextMetadata
         try {
             $data = Yaml::parseFile($path);
         } catch (\Throwable $e) {
-            Yii::warning('ClientContextMetadata: YAML inválido: ' . $e->getMessage(), __METHOD__);
-
-            return self::$config;
+            throw new InvalidConfigException(
+                'client-context.yaml inválido (' . $path . '): ' . $e->getMessage(),
+                0,
+                $e
+            );
         }
 
         if (!is_array($data)) {

@@ -35,6 +35,15 @@ class EncounterDefinition extends ActiveRecord
      */
     public const ENCOUNTER_CLASS_SESSION_SELECTABLE = ['AMB', 'EMER', 'IMP', 'VR'];
 
+    /**
+     * Clases que se exportan al repositorio nacional de historia clínica.
+     * VR queda fuera: los encuentros virtuales no se publican como documento
+     * de encuentro presencial.
+     *
+     * @var list<string>
+     */
+    public const ENCOUNTER_CLASS_CLINICAL_EXPORT = ['AMB', 'EMER', 'IMP'];
+
     private const ENCOUNTER_CLASS_CAPABILITIES = [
         'AMB' => ['appointments', 'date_navigation'],
         'EMER' => ['emergency_board', 'patient_admission', 'emergency_polling'],

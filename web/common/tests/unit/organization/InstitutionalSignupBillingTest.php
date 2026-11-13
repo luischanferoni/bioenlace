@@ -125,6 +125,21 @@ class InstitutionalSignupBillingTest extends Unit
         $this->assertSame(1, $plan['classes']['AMB']['max_pes']);
     }
 
+    public function testLegacyConsultorioDefaultVolumeComesFromTheCatalog(): void
+    {
+        $normalizer = new \ReflectionMethod(SignUpInstitutionalEfector::class, 'normalizePlan');
+        $normalizer->setAccessible(true);
+
+        $plan = $normalizer->invoke(null, ['classes' => []], 'CONSULTORIO');
+
+        $this->assertSame(
+            PricingPesByEncounterClassMetadata::initialAttentionsForClass('AMB'),
+            $plan['classes']['AMB']['attentions_per_month']
+        );
+        $this->assertTrue($plan['classes']['AMB']['dictado_incluido']);
+        $this->assertFalse($plan['classes']['AMB']['videollamada_permitida']);
+    }
+
     public function testSimFailPanConstant(): void
     {
         $this->assertSame('4000000000000002', SimulatedPaymentGateway::SIM_FAIL_PAN);

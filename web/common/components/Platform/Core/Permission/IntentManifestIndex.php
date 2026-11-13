@@ -110,9 +110,11 @@ final class IntentManifestIndex
             try {
                 $data = Yaml::parseFile($path);
             } catch (\Throwable $e) {
+                \Yii::error('Intent YAML inválido (' . $path . '): ' . $e->getMessage(), __METHOD__);
                 continue;
             }
             if (!is_array($data)) {
+                \Yii::error('Intent YAML sin mapa (' . $path . ').', __METHOD__);
                 continue;
             }
 

@@ -33,7 +33,7 @@ archivos de su zona. No hace falta leerlas todas.
 
 | Zona / tarea | Regla |
 |---|---|
-| Siempre (transversal) | `capas-y-metadata-sin-hardcode`, `dry-solid`, `source-of-truth-catalogos`, `fuente-unica-valores-derivados`, `runtime-datos-vs-metadata`, `metadata-yaml-uso`, `servicio-institucional-vs-pes-acto`, `bd-solo-migrations` |
+| Siempre (transversal) | `capas-y-metadata-sin-hardcode`, `dry-solid`, `source-of-truth-catalogos`, `fuente-unica-valores-derivados`, `configuracion-sin-fallbacks`, `runtime-datos-vs-metadata`, `metadata-yaml-uso`, `servicio-institucional-vs-pes-acto`, `bd-solo-migrations` |
 | `web/**` | `arquitectura-yii2-bioenlace` |
 | `web/common/components/**`, `web/common/models/**` | `common-components-organizacion` |
 | `web/common/components/Domain/**` | `ddd-un-eje-por-nivel` |

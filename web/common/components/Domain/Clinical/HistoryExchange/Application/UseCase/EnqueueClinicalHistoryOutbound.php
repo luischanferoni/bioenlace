@@ -25,7 +25,8 @@ final class EnqueueClinicalHistoryOutbound
         }
 
         $config = ClinicalHistoryExchangeRegistry::config();
-        $classes = $config['encounter_classes'] ?? ['AMB', 'EMER', 'IMP'];
+        $classes = $config['encounter_classes']
+            ?? \common\models\Clinical\EncounterDefinition::ENCOUNTER_CLASS_CLINICAL_EXPORT;
         if (!is_array($classes) || !in_array($encounter->encounter_class, $classes, true)) {
             return null;
         }

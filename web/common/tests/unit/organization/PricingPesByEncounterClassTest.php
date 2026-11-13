@@ -3,6 +3,7 @@
 namespace common\tests\unit\organization;
 
 use Codeception\Test\Unit;
+use common\components\Domain\Organization\Pes\Domain\Catalog\PricingPesByEncounterClassCatalog;
 use common\components\Platform\Core\Product\PricingPesByEncounterClassMetadata;
 
 class PricingPesByEncounterClassTest extends Unit
@@ -51,10 +52,22 @@ class PricingPesByEncounterClassTest extends Unit
 
     public function testInfraCogsIsSpreadOverReferenceEncounters(): void
     {
-        $this->assertEqualsWithDelta(0.03 / 500, PricingPesByEncounterClassMetadata::infraCogsPerEncounter('AMB'), 1e-9);
-        $this->assertEqualsWithDelta(0.03 / 500, PricingPesByEncounterClassMetadata::infraCogsPerEncounter(), 1e-9);
-        $this->assertEqualsWithDelta(0.03 / 700, PricingPesByEncounterClassMetadata::infraCogsPerEncounter('EMER'), 1e-9);
-        $this->assertEqualsWithDelta(0.03 / 400, PricingPesByEncounterClassMetadata::infraCogsPerEncounter('IMP'), 1e-9);
+        $infra = (float) PricingPesByEncounterClassMetadata::loadConfig()
+            ['cogs_assumptions']['infra_usd_per_professional_month'];
+
+        foreach (PricingPesByEncounterClassMetadata::sellableClassCodes() as $class) {
+            $reference = PricingPesByEncounterClassMetadata::referenceEncountersPerMonth($class);
+            $this->assertEqualsWithDelta(
+                $infra / $reference,
+                PricingPesByEncounterClassMetadata::infraCogsPerEncounter($class),
+                1e-9
+            );
+        }
+        $this->assertEqualsWithDelta(
+            $infra / PricingPesByEncounterClassMetadata::referenceEncountersPerMonth('AMB'),
+            PricingPesByEncounterClassMetadata::infraCogsPerEncounter(),
+            1e-9
+        );
     }
 
     public function testVolumeDiscountTiersByAttentions(): void
@@ -108,20 +121,32 @@ class PricingPesByEncounterClassTest extends Unit
 
     public function testDictadoMinutesDriveSttCogs(): void
     {
-        $this->assertSame(5.0, PricingPesByEncounterClassMetadata::dictadoMinutes());
-        $this->assertSame(0.0025, PricingPesByEncounterClassMetadata::dictadoCogsPerEncounter());
+        $assumptions = PricingPesByEncounterClassMetadata::loadConfig()['cogs_assumptions'];
+        $this->assertSame((float) $assumptions['dictado_minutes'], PricingPesByEncounterClassMetadata::dictadoMinutes());
+        $this->assertEqualsWithDelta(
+            (float) $assumptions['dictado_minutes'] * (float) $assumptions['dictado_effective_usd_per_minute'],
+            PricingPesByEncounterClassMetadata::dictadoCogsPerEncounter(),
+            1e-9
+        );
     }
 
     public function testVolumePresetsDeriveFromReferenceCapacity(): void
     {
         $presets = PricingPesByEncounterClassMetadata::attentionVolumePresets();
+        $multipliers = array_values(array_map(
+            'floatval',
+            (array) PricingPesByEncounterClassMetadata::loadConfig()['attention_volume_multipliers']
+        ));
+        $one = array_search(1.0, $multipliers, true);
+        $last = count($multipliers) - 1;
 
         foreach (PricingPesByEncounterClassMetadata::sellableClassCodes() as $class) {
             $reference = PricingPesByEncounterClassMetadata::referenceEncountersPerMonth($class);
-            $this->assertCount(9, $presets[$class]);
-            $this->assertSame((int) round($reference * 0.5), $presets[$class][0]['attentions']);
-            $this->assertSame((int) round($reference), $presets[$class][1]['attentions']);
-            $this->assertSame((int) round($reference * 200), $presets[$class][8]['attentions']);
+            $this->assertCount(count($multipliers), $presets[$class]);
+            $this->assertSame((int) round($reference * $multipliers[0]), $presets[$class][0]['attentions']);
+            $this->assertNotFalse($one);
+            $this->assertSame((int) round($reference * $multipliers[$one]), $presets[$class][$one]['attentions']);
+            $this->assertSame((int) round($reference * $multipliers[$last]), $presets[$class][$last]['attentions']);
         }
 
         // El copy sigue saliendo del catálogo y no repite el volumen.
@@ -160,6 +185,60 @@ class PricingPesByEncounterClassTest extends Unit
         } finally {
             PricingPesByEncounterClassMetadata::reset();
         }
+    }
+
+    public function testMissingVolumeTiersFailExplicitly(): void
+    {
+        $broken = PricingPesByEncounterClassMetadata::loadConfig();
+        unset($broken['volume_discount_tiers']);
+        $property = new \ReflectionProperty(PricingPesByEncounterClassMetadata::class, 'config');
+        $property->setAccessible(true);
+
+        try {
+            $property->setValue(null, $broken);
+            $this->expectException(\yii\base\InvalidConfigException::class);
+            PricingPesByEncounterClassMetadata::tierForTotalAttentions(1);
+        } finally {
+            PricingPesByEncounterClassMetadata::reset();
+        }
+    }
+
+    public function testAddonPlanValuesFollowTheCatalogMatrix(): void
+    {
+        foreach (PricingPesByEncounterClassMetadata::sellableClassCodes() as $class) {
+            $values = PricingPesByEncounterClassMetadata::addonPlanValues($class);
+            foreach (PricingPesByEncounterClassMetadata::addonPlanFields() as $addonId => $field) {
+                $state = PricingPesByEncounterClassMetadata::addonState($addonId, $class);
+                $this->assertSame(
+                    $state === PricingPesByEncounterClassCatalog::ADDON_INCLUDED,
+                    $values[$field],
+                    $class . '/' . $addonId
+                );
+            }
+        }
+    }
+
+    public function testIncludedAddonCannotBeDisabledByTheClient(): void
+    {
+        $this->assertTrue(
+            PricingPesByEncounterClassMetadata::addonPlanValues('AMB', ['dictado_incluido' => false])['dictado_incluido']
+        );
+        $this->assertTrue(
+            PricingPesByEncounterClassMetadata::addonPlanValues('AMB', ['videollamada_permitida' => true])['videollamada_permitida']
+        );
+        $this->assertFalse(
+            PricingPesByEncounterClassMetadata::addonPlanValues('EMER', ['videollamada_permitida' => true])['videollamada_permitida']
+        );
+    }
+
+    public function testListTierInheritsTheLicenseMargin(): void
+    {
+        $tiers = PricingPesByEncounterClassMetadata::volumeDiscountTiers();
+        $this->assertArrayNotHasKey('margin_on_cost_percent', $tiers[0]);
+        $this->assertSame(
+            PricingPesByEncounterClassMetadata::marginOnCostPercent(),
+            PricingPesByEncounterClassMetadata::marginOnCostPercentForTotalAttentions(1)
+        );
     }
 
     public function testAddonCatalogDeclaresInclusionPerClass(): void

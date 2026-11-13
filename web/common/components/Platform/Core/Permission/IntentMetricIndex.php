@@ -68,6 +68,7 @@ final class IntentMetricIndex
                             $metricId = trim((string) ($parsed['metric_id'] ?? ''));
                         }
                     } catch (\Throwable $e) {
+                        \Yii::error('Intent YAML inválido (' . $path . '): ' . $e->getMessage(), __METHOD__);
                         $metricId = '';
                     }
                 }

@@ -69,11 +69,6 @@ final class PricingPesByEncounterClassCatalog
         'cogs_usd_per_encounter' => [
             'patient_chat_amb' => 0.0048,
             'motivos' => 0.0006,
-            'motivos_by_class' => [
-                'AMB' => 0.0006,
-                'EMER' => 0.0006,
-                'IMP' => 0.0006,
-            ],
             'captura_ia' => 0.0007,
             'videollamada' => 0.0044,
             'whatsapp' => 0.0293,
@@ -173,7 +168,6 @@ final class PricingPesByEncounterClassCatalog
                 'label' => 'Precio base',
                 'min_attentions' => 1,
                 'max_attentions' => 4999,
-                'margin_on_cost_percent' => 233,
                 'discount_vs_list_percent' => 0,
             ],
             1 => [
@@ -248,6 +242,7 @@ final class PricingPesByEncounterClassCatalog
                 'unavailable_label' => 'Sin dictado por voz',
                 'description' => 'Dictás el informe y se transcribe en la captura clínica.',
                 'plan_field' => 'dictado_incluido',
+                'cogs_from_assumptions' => true,
                 'classes' => [
                     'AMB' => self::ADDON_INCLUDED,
                     'EMER' => self::ADDON_INCLUDED,

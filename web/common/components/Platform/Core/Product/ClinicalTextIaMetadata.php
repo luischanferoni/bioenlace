@@ -5,6 +5,7 @@ namespace common\components\Platform\Core\Product;
 use common\components\Platform\Ai\Prompt\PromptRegistry;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
+use yii\base\InvalidConfigException;
 
 /**
  * Metadata de prompts/heurísticas IA para texto clínico ({@see ProductMetadataPaths::clinicalTextIaFiles()}).
@@ -62,9 +63,9 @@ final class ClinicalTextIaMetadata
             return $clinicalText;
         }
 
-        $max = $maxDiagnosticos ?? (int) ($section['max_diagnosticos'] ?? 8);
+        $max = $maxDiagnosticos ?? self::encounterAutomaticCodingMaxDiagnosticos();
         if ($max < 1) {
-            $max = 8;
+            $max = self::encounterAutomaticCodingMaxDiagnosticos();
         }
 
         $hintsBlock = trim($diagnosisHints) !== ''
@@ -80,14 +81,18 @@ final class ClinicalTextIaMetadata
 
     public static function encounterAutomaticCodingMaxDiagnosticos(): int
     {
-        $section = self::loadConfig()['encounter_automatic_coding'] ?? [];
-        if (!is_array($section)) {
-            return 8;
+        $section = self::loadConfig()['encounter_automatic_coding'] ?? null;
+        if (!is_array($section)
+            || !array_key_exists('max_diagnosticos', $section)
+            || !is_numeric($section['max_diagnosticos'])
+            || (int) $section['max_diagnosticos'] < 1
+        ) {
+            throw new InvalidConfigException(
+                'La metadata clínica no declara encounter_automatic_coding.max_diagnosticos.'
+            );
         }
 
-        $max = (int) ($section['max_diagnosticos'] ?? 8);
-
-        return $max > 0 ? $max : 8;
+        return (int) $section['max_diagnosticos'];
     }
 
     /**
@@ -401,14 +406,17 @@ final class ClinicalTextIaMetadata
 
     public static function llmConfidenceContextTermBoost(): float
     {
-        $section = self::loadConfig()['llm_correction_confidence'] ?? [];
-        if (!is_array($section)) {
-            return 0.0;
+        $section = self::loadConfig()['llm_correction_confidence'] ?? null;
+        if (!is_array($section)
+            || !array_key_exists('context_term_boost', $section)
+            || !is_numeric($section['context_term_boost'])
+        ) {
+            throw new InvalidConfigException(
+                'La metadata clínica no declara llm_correction_confidence.context_term_boost.'
+            );
         }
 
-        $boost = $section['context_term_boost'] ?? 0.0;
-
-        return is_numeric($boost) ? (float) $boost : 0.0;
+        return (float) $section['context_term_boost'];
     }
 
     public static function resetCacheForTests(): void
@@ -447,9 +455,11 @@ final class ClinicalTextIaMetadata
         try {
             $data = Yaml::parseFile($path);
         } catch (\Throwable $e) {
-            Yii::warning('ClinicalTextIaMetadata: YAML inválido (' . basename($path) . '): ' . $e->getMessage(), __METHOD__);
-
-            return [];
+            throw new InvalidConfigException(
+                'Metadata clínica inválida (' . $path . '): ' . $e->getMessage(),
+                0,
+                $e
+            );
         }
 
         return is_array($data) ? $data : [];

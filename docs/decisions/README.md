@@ -10,6 +10,8 @@ Registro de decisiones **cerradas** que afectan a más de un módulo o que convi
 | Capabilities UI nativa | RBAC assignable guardia/encounter/panel fuera de intents NL | [autorizacion-capabilities-ui-nativa.md](autorizacion-capabilities-ui-nativa.md) |
 | Captura clínica: Yii vs YAML | Integridad en `*Input` / servicios; YAML = prompts y knobs | [captura-clinica-contratos-yii-vs-yaml.md](captura-clinica-contratos-yii-vs-yaml.md) |
 | Runtime datos vs metadata | Maestros/catálogos en BD + seed console; YAML = composición | [runtime-datos-vs-metadata.md](runtime-datos-vs-metadata.md) |
+| Valores derivados: una sola fuente | Derivar de la capacidad/catálogo; sin literales ni fallbacks; docs canónicos | [valores-derivados-fuente-unica.md](valores-derivados-fuente-unica.md) |
+| Configuración sin fallbacks silenciosos | Valor requerido faltante = error; defaults sólo si están en la fuente; `catch` de config no inventa | [configuracion-sin-fallbacks.md](configuracion-sin-fallbacks.md) |
 | Contexto HIS asistente (áreas obsoletas) | Sin `context_areas`; aspectos/loaders legado; discovery → Guide | [asistente-contexto-his-areas-aspectos.md](asistente-contexto-his-areas-aspectos.md) |
 | Canal guide asistente | Fusión clinical + informational; 2ª IA unificada | [asistente-canal-guide.md](asistente-canal-guide.md) |
 | Asistente — discovery unificado | Hints guide/fuera_his/sin_pedido; DiscoveryIndex; Guide siempre; sin puertas direct-doors | [asistente-discovery-unificado.md](asistente-discovery-unificado.md) |

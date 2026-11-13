@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Organization\Efector\Application\Service;
 
+use common\components\Platform\Core\Product\PricingPesByEncounterClassMetadata;
 use common\models\Organization\BillingAccount;
 use common\models\Organization\BillingAccountEfector;
 use common\models\Organization\BillingAccountEncounterEntitlement;
@@ -204,9 +205,9 @@ final class BillingAccountService
             $row = new BillingAccountEncounterEntitlement();
             $row->id_billing_account = $idBillingAccount;
             $row->encounter_class = $encounterClass;
-            $row->dictado_incluido = in_array($encounterClass, ['EMER', 'IMP'], true) ? 1 : 0;
-            $row->videollamada_permitida = 0;
-            $row->whatsapp_permitido = 0;
+            foreach (PricingPesByEncounterClassMetadata::addonPlanValues($encounterClass) as $field => $selected) {
+                $row->$field = (int) $selected;
+            }
         }
 
         if (array_key_exists('max_pes', $data)) {

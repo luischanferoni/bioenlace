@@ -10,6 +10,16 @@ YAML describe **qué hacer y con qué parámetros**. No decide por sí solo **si
 
 Si falta un archivo YAML, el producto no debe «abrir» gates duros ni inventar integridad: deben seguir vigentes los defaults del dominio.
 
+### Configuración faltante: fallar explícito
+
+Un YAML de composición puede ser opcional; un **valor de negocio requerido** no. Si el loader
+necesita `confidence_threshold`, `max_diagnosticos`, capacidad o precio y la clave no está, lanza
+`InvalidConfigException` con la ruta o la clave. No se devuelve `0`, `[]` ni un default inventado.
+
+Regla: «configuración sin fallbacks silenciosos». Implementación de referencia:
+`PricingPesByEncounterClassMetadata::requiredFloat()`. Un `catch` de configuración se propaga o se
+envuelve con contexto; un `catch` de I/O opcional puede devolver `null`/`[]` **sólo si lo loguea**.
+
 ### Textos vs constantes en catálogos
 
 Los YAML de catálogo / ui-text / prompt llevan **textos** que ve el usuario o la IA (descripciones inyectadas en prompts, copy UX).

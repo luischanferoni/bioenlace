@@ -23,7 +23,6 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Caché: claves, TTL e invalidación | `cache-claves-ttl/` | 17 archivos, 21 sets y 7 deletes; la fase 02 ya tiene libre el transporte HTTP |
 | Transporte residual y suite | `transporte-residual-y-suite/` | Transporte a mano en Didit/Snowstorm/MPI y en el admin (fuera del invariante) + suite en 13 errores / 73 fallas; fases 01–04 pendientes |
 | Motivos pre-turno sin STT | `motivos-pre-turno/` | Cuestionario declarativo, motivo deducido del triage y del asistente; fases 01–05 implementadas, falta prueba en dispositivo |
-| Valores derivados: una sola fuente | `valores-derivados-fuente-unica/` | Regla publicada; fase 01 implementada (presets y defaults derivados); 02–05 pendientes |
 | Add-on WhatsApp reactivo | `addon-whatsapp-reactivo/` | Solo reactivo, sin datos clínicos; step-up antes de escribir; fases 00–04 pendientes |
 
 ## A evaluar (sin plan todavía)
@@ -44,6 +43,8 @@ Notas de análisis que todavía no justifican un plan. Ver [a-evaluar/README.md]
 
 | Plan | Documentación estable |
 |------|------------------------|
+| Valores derivados: una sola fuente | [valores-derivados-fuente-unica.md](../decisions/valores-derivados-fuente-unica.md) + [docs/README.md § Fuente única](../README.md#fuente-única-y-jerarquía-de-documentos) |
+| Configuración sin fallbacks silenciosos | [configuracion-sin-fallbacks.md](../decisions/configuracion-sin-fallbacks.md) + [metadata-yaml-uso.md § Configuración faltante](../arquitectura/metadata-yaml-uso.md#configuración-faltante-fallar-explícito) |
 | Asistente — discovery unificado | [asistente-discovery-unificado.md](../decisions/asistente-discovery-unificado.md) + [asistente-y-chat.md](../producto/asistente-y-chat.md) + [contenido-informativo.md](../producto/contenido-informativo.md) + [asistente-motores.md](../arquitectura/asistente-motores.md) |
 | Guía siempre | [asistente-y-chat.md](../producto/asistente-y-chat.md) |
 | Auditoría captura clínica | [captura-clinica.md](../producto/captura-clinica.md) (sección auditoría del pipeline) |

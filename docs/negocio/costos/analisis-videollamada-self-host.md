@@ -130,6 +130,9 @@ Con muxing puro, 4 instancias base son el **punto de partida** (no un techo fijo
 | Minutos STT / mes (tele) | 1.350 | **~2.000** (400 × 5) | **~1.000** (200 × 5) |
 | Participantes (pax-min sala) | 2 × 12 × 120 | 2 × 12 × 320 = **7.680** | 2 × 12 × 160 = **3.840** |
 
+La capacidad de 500 encounters/prof/mes es la referencia del catálogo
+([capacidad](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md#referencia-de-capacidad-de-dónde-salen-los-presets)); el resto de los supuestos de esta tabla son propios del análisis de videollamada.
+
 ### Desglose de 12 min de videollamada (planificación)
 
 | Componente | % del tiempo | Minutos |

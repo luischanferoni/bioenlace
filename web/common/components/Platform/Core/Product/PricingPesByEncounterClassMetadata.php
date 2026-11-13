@@ -124,6 +124,23 @@ final class PricingPesByEncounterClassMetadata
     }
 
     /**
+     * Lee un valor numérico obligatorio del catálogo. Si falta, es error de
+     * configuración, no un default silencioso.
+     *
+     * @param array<string, mixed> $source
+     */
+    private static function requiredFloat(array $source, string $key, string $context): float
+    {
+        if (!array_key_exists($key, $source) || !is_numeric($source[$key])) {
+            throw new InvalidConfigException(
+                'El catálogo de precios no declara ' . $context . $key . '.'
+            );
+        }
+
+        return (float) $source[$key];
+    }
+
+    /**
      * @return list<string>
      */
     public static function sellableClassCodes(): array
@@ -161,7 +178,8 @@ final class PricingPesByEncounterClassMetadata
     {
         $map = self::loadConfig()['reference_encounters_per_professional_month'] ?? [];
         $class = $encounterClass !== null ? strtoupper($encounterClass) : 'AMB';
-        $ref = is_array($map) ? (float) ($map[$class] ?? 0) : (float) $map;
+        $raw = is_array($map) ? ($map[$class] ?? null) : $map;
+        $ref = $raw !== null ? (float) $raw : 0.0;
         if ($ref <= 0) {
             throw new InvalidConfigException(
                 'Falta la capacidad de referencia (reference_encounters_per_professional_month) para la clase '
@@ -229,7 +247,8 @@ final class PricingPesByEncounterClassMetadata
      */
     public static function initialAttentionsByClass(): array
     {
-        $multiplier = (float) (self::loadConfig()['defaults']['initial_attentions_multiplier'] ?? 0);
+        $multiplierRaw = self::loadConfig()['defaults']['initial_attentions_multiplier'] ?? null;
+        $multiplier = $multiplierRaw !== null ? (float) $multiplierRaw : 0.0;
         if ($multiplier <= 0) {
             throw new InvalidConfigException(
                 'El catálogo de precios no declara defaults.initial_attentions_multiplier.'
@@ -273,11 +292,8 @@ final class PricingPesByEncounterClassMetadata
     public static function classIncludesPatientChat(string $encounterClass): bool
     {
         $row = self::classRow($encounterClass);
-        if ($row !== null && array_key_exists('includes_patient_chat', $row)) {
-            return (bool) $row['includes_patient_chat'];
-        }
 
-        return $encounterClass === 'AMB';
+        return $row !== null && !empty($row['includes_patient_chat']);
     }
 
     public static function classAllowsVideollamada(string $encounterClass): bool
@@ -402,6 +418,32 @@ final class PricingPesByEncounterClassMetadata
     }
 
     /**
+     * Campos de addon del plan resueltos para una clase:
+     * `included` → siempre seleccionado; `optional` → lo que eligió el cliente;
+     * `unavailable` → nunca. Es la única regla de política; no se repite en
+     * servicios ni clientes.
+     *
+     * @param array<string, mixed> $planRow fila del contrato (puede venir vacía)
+     * @return array<string, bool> plan_field => seleccionado
+     */
+    public static function addonPlanValues(string $encounterClass, array $planRow = []): array
+    {
+        $values = [];
+        foreach (self::addonPlanFields() as $addonId => $field) {
+            $state = self::addonState($addonId, $encounterClass);
+            if ($state === PricingPesByEncounterClassCatalog::ADDON_INCLUDED) {
+                $values[$field] = true;
+            } elseif ($state === PricingPesByEncounterClassCatalog::ADDON_OPTIONAL) {
+                $values[$field] = !empty($planRow[$field]);
+            } else {
+                $values[$field] = false;
+            }
+        }
+
+        return $values;
+    }
+
+    /**
      * COGS USD por atención de cada addon con impacto declarado en el catálogo.
      *
      * El dictado se costea con sus supuestos (`cogs_assumptions`); el resto toma
@@ -416,9 +458,10 @@ final class PricingPesByEncounterClassMetadata
             $cogs = [];
         }
 
+        $addons = self::loadConfig()['addons'] ?? [];
         $map = [];
         foreach (self::addonIds() as $addonId) {
-            if ($addonId === 'dictado') {
+            if (!empty($addons[$addonId]['cogs_from_assumptions'])) {
                 $map[$addonId] = self::dictadoCogsPerEncounter();
                 continue;
             }
@@ -460,28 +503,29 @@ final class PricingPesByEncounterClassMetadata
         if (!is_array($cogs)) {
             return 0.0;
         }
-        // Compat: configuración previa con blend de audio por clase.
-        $byClass = $cogs['motivos_by_class'] ?? $cogs['motivos_audio_by_class'] ?? null;
-        if (is_array($byClass) && $encounterClass !== null && array_key_exists($encounterClass, $byClass)) {
-            return (float) $byClass[$encounterClass];
-        }
 
-        return (float) ($cogs['motivos'] ?? $cogs['motivos_audio'] ?? 0);
+        return self::requiredFloat($cogs, 'motivos', 'cogs_usd_per_encounter.');
     }
 
     /**
      * COGS de infraestructura de aplicación por atención.
      *
      * El costo de app + BD + hosting + medios se declara por profesional/mes y
-     * se reparte entre las atenciones de referencia de la clase (AMB 500,
-     * EMER 700, IMP 400). Sin clase, se usa la referencia AMB.
+     * se reparte entre las atenciones de referencia de la clase. Sin clase, se
+     * usa la referencia AMB.
      */
     public static function infraCogsPerEncounter(?string $encounterClass = null): float
     {
         $assumptions = self::loadConfig()['cogs_assumptions'] ?? [];
-        $perProfessionalMonth = (float) ($assumptions['infra_usd_per_professional_month'] ?? 0);
+        $perProfessionalMonth = self::requiredFloat(
+            is_array($assumptions) ? $assumptions : [],
+            'infra_usd_per_professional_month',
+            'cogs_assumptions.'
+        );
         if ($perProfessionalMonth <= 0) {
-            return 0.0;
+            throw new InvalidConfigException(
+                'El catálogo de precios no declara cogs_assumptions.infra_usd_per_professional_month.'
+            );
         }
 
         return $perProfessionalMonth / self::referenceEncountersPerMonth($encounterClass ?? 'AMB');
@@ -501,10 +545,10 @@ final class PricingPesByEncounterClassMetadata
             return 0.0;
         }
         $total = self::motivosCogsPerEncounter($encounterClass)
-            + (float) ($cogs['captura_ia'] ?? 0)
+            + self::requiredFloat($cogs, 'captura_ia', 'cogs_usd_per_encounter.')
             + self::infraCogsPerEncounter($encounterClass);
         if ($encounterClass !== null && self::classIncludesPatientChat($encounterClass)) {
-            $total += (float) ($cogs['patient_chat_amb'] ?? 0);
+            $total += self::requiredFloat($cogs, 'patient_chat_amb', 'cogs_usd_per_encounter.');
         }
         foreach (self::addonCogsPerEncounter() as $addonId => $addonCogs) {
             if ($encounterClass !== null
@@ -519,7 +563,14 @@ final class PricingPesByEncounterClassMetadata
 
     public static function marginOnCostPercent(): float
     {
-        return (float) (self::loadConfig()['margin_on_cost_percent'] ?? 0);
+        $value = self::loadConfig()['margin_on_cost_percent'] ?? null;
+        if ($value === null) {
+            throw new InvalidConfigException(
+                'El catálogo de precios no declara margin_on_cost_percent.'
+            );
+        }
+
+        return (float) $value;
     }
 
     /**
@@ -539,16 +590,25 @@ final class PricingPesByEncounterClassMetadata
      */
     public static function taxAssumptions(): array
     {
-        $assumptions = self::loadConfig()['tax_assumptions'] ?? [];
+        $assumptions = self::loadConfig()['tax_assumptions'] ?? null;
         if (!is_array($assumptions)) {
-            $assumptions = [];
+            throw new InvalidConfigException(
+                'El catálogo de precios no declara tax_assumptions.'
+            );
+        }
+        foreach (['iibb_rate_percent', 'income_tax_rate_percent', 'bank_debit_credit_tax_percent'] as $key) {
+            if (!array_key_exists($key, $assumptions)) {
+                throw new InvalidConfigException(
+                    'El catálogo de precios no declara tax_assumptions.' . $key . '.'
+                );
+            }
         }
 
         return [
             'jurisdiction' => (string) ($assumptions['jurisdiction'] ?? ''),
-            'iibb_rate_percent' => (float) ($assumptions['iibb_rate_percent'] ?? 0),
-            'income_tax_rate_percent' => (float) ($assumptions['income_tax_rate_percent'] ?? 0),
-            'bank_debit_credit_tax_percent' => (float) ($assumptions['bank_debit_credit_tax_percent'] ?? 0),
+            'iibb_rate_percent' => (float) $assumptions['iibb_rate_percent'],
+            'income_tax_rate_percent' => (float) $assumptions['income_tax_rate_percent'],
+            'bank_debit_credit_tax_percent' => (float) $assumptions['bank_debit_credit_tax_percent'],
         ];
     }
 
@@ -603,7 +663,7 @@ final class PricingPesByEncounterClassMetadata
             return null;
         }
         $defaults = self::initialAttentionsByClass();
-        $n = (int) ($defaults[strtoupper($encounterClass)] ?? 0);
+        $n = (int) ($defaults[strtoupper($encounterClass)] ?? null);
 
         return $n > 0 ? $n : null;
     }
@@ -611,7 +671,8 @@ final class PricingPesByEncounterClassMetadata
     public static function dictadoMinutes(): float
     {
         $assumptions = self::loadConfig()['cogs_assumptions'] ?? [];
-        $minutes = (float) ($assumptions['dictado_minutes'] ?? 0);
+        $minutesRaw = $assumptions['dictado_minutes'] ?? null;
+        $minutes = $minutesRaw !== null ? (float) $minutesRaw : 0.0;
         if ($minutes <= 0) {
             throw new InvalidConfigException(
                 'El catálogo de precios no declara cogs_assumptions.dictado_minutes.'
@@ -624,7 +685,8 @@ final class PricingPesByEncounterClassMetadata
     public static function dictadoCogsPerEncounter(): float
     {
         $assumptions = self::loadConfig()['cogs_assumptions'] ?? [];
-        $perMinute = (float) ($assumptions['dictado_effective_usd_per_minute'] ?? 0);
+        $perMinuteRaw = $assumptions['dictado_effective_usd_per_minute'] ?? null;
+        $perMinute = $perMinuteRaw !== null ? (float) $perMinuteRaw : 0.0;
         if ($perMinute <= 0) {
             throw new InvalidConfigException(
                 'El catálogo de precios no declara cogs_assumptions.dictado_effective_usd_per_minute.'
@@ -642,19 +704,15 @@ final class PricingPesByEncounterClassMetadata
         $n = max(0, $totalAttentions);
         $tiers = self::volumeDiscountTiers();
         if ($tiers === []) {
-            return self::withAfterTaxMargins([
-                'id' => 'lista',
-                'label' => 'Precio base',
-                'min_attentions' => 1,
-                'max_attentions' => null,
-                'margin_on_cost_percent' => self::marginOnCostPercent(),
-                'discount_vs_list_percent' => 0,
-            ]);
+            throw new InvalidConfigException(
+                'El catálogo de precios no declara volume_discount_tiers.'
+            );
         }
 
         $fallback = $tiers[0];
         foreach ($tiers as $tier) {
-            $min = (int) ($tier['min_attentions'] ?? $tier['min_pes'] ?? 0);
+            $minRaw = $tier['min_attentions'] ?? $tier['min_pes'] ?? null;
+            $min = $minRaw !== null ? (int) $minRaw : 0;
             $maxRaw = $tier['max_attentions'] ?? $tier['max_pes'] ?? null;
             $max = $maxRaw === null || $maxRaw === '' ? null : (int) $maxRaw;
             if ($n >= $min && ($max === null || $n <= $max)) {
@@ -829,7 +887,7 @@ final class PricingPesByEncounterClassMetadata
         $discountAmount = round(max(0, $listTotal - $total), 2);
         $discountPercent = $listTotal > 0 && $discountAmount > 0
             ? round(($discountAmount / $listTotal) * 100, 1)
-            : (float) (self::tierForTotalAttentions($totalAttentions)['discount_vs_list_percent'] ?? 0);
+            : (float) (self::tierForTotalAttentions($totalAttentions)['discount_vs_list_percent'] ?? null);
 
         return [
             'amount_usd' => $total,

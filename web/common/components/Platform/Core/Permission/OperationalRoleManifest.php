@@ -167,6 +167,52 @@ final class OperationalRoleManifest
     }
 
     /**
+     * Bandera declarada por el rol en `roles.yaml`.
+     *
+     * El default sólo aplica cuando la bandera no está declarada; si el rol es
+     * desconocido, se usa el default explícito del llamador.
+     */
+    public function flag(?string $canonical, string $flag, bool $default = false): bool
+    {
+        if ($canonical === null || $canonical === '') {
+            return $default;
+        }
+
+        $row = $this->roleRow($canonical);
+        if ($row === null) {
+            return $default;
+        }
+
+        return (bool) ($row[$flag] ?? $default);
+    }
+
+    /**
+     * Nombres aceptados (canónico + alias) de los roles que declaran la bandera
+     * en true. Sirve para comparar contra `item_name` persistidos sin repetir
+     * la lista en un servicio o controlador.
+     *
+     * @return list<string>
+     */
+    public function namesWithFlag(string $flag): array
+    {
+        $aliases = $this->aliases();
+        $out = [];
+        foreach ($this->canonicalRoles() as $canonical) {
+            if (!$this->flag($canonical, $flag)) {
+                continue;
+            }
+            $out[] = $canonical;
+            foreach ($aliases as $alias => $target) {
+                if ($target === $canonical) {
+                    $out[] = $alias;
+                }
+            }
+        }
+
+        return array_values(array_unique($out));
+    }
+
+    /**
      * Etiqueta del ítem de inicio del menú lateral para el rol (por defecto «Pacientes»).
      */
     public function homeNavLabel(?string $canonical, string $default = 'Pacientes'): string

@@ -40,6 +40,8 @@ final class DatabaseAttributeDefinitionSource
                 ->orderBy(['entity_group_key' => SORT_ASC])
                 ->column();
         } catch (\Throwable $e) {
+            \Yii::error('DataAccess: no se pudieron cargar los grupos de atributos: ' . $e->getMessage(), __METHOD__);
+
             return [];
         }
 
@@ -84,6 +86,8 @@ final class DatabaseAttributeDefinitionSource
                 ->orderBy(['entity_group_key' => SORT_ASC, 'sort_order' => SORT_ASC, 'field_name' => SORT_ASC])
                 ->all();
         } catch (\Throwable $e) {
+            \Yii::error('DataAccess: no se pudieron cargar los atributos: ' . $e->getMessage(), __METHOD__);
+
             return [];
         }
 

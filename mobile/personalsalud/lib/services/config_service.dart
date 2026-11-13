@@ -72,9 +72,16 @@ class ConfigService {
   /// Catálogo público de encounter classes (pantallas que no pasan por el wizard).
   Future<List<EncounterClass>> getEncounterClasses() async {
     final data = await _api.getData('/catalogos/encounter-classes');
-    final raw = data['encounter_classes'] as List<dynamic>? ?? [];
+    final raw = data['encounter_classes'];
+    if (raw is! List) {
+      throw ApiContractException(
+        message: 'El catálogo de tipos de atención no vino en la respuesta.',
+        code: 'encounter_classes_missing',
+      );
+    }
     return raw
-        .map((c) => EncounterClass.fromJson(c as Map<String, dynamic>))
+        .whereType<Map<String, dynamic>>()
+        .map(EncounterClass.fromJson)
         .where((c) => c.code.isNotEmpty)
         .toList();
   }

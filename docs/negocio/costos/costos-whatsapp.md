@@ -28,7 +28,7 @@
 - El add-on habilita: avisos proactivos por plantilla, asistente reactivo y los enlaces de verificación de identidad.
 - Sin add-on: se mantiene **push** y el asistente dentro de la app.
 
-**Hallazgo a reconciliar antes de implementar:** el catálogo de precios declara `includes_patient_chat = true` solo para `AMB` y `false` para `EMER`/`IMP`, y hay un test que fija eso. Si el chat está disponible para todos, ese dato del catálogo quedó atrás y el costo de chat se está atribuyendo solo a ambulatorio.
+**Resuelto:** el catálogo declara `includes_patient_chat = true` solo para `AMB` por decisión de producto: en `EMER`/`IMP` el paciente no opera el asistente (triage, tablero e ingreso son staff). El add-on de WhatsApp, si se habilita, se cotiza por separado y no cambia ese dato.
 
 ---
 
@@ -106,7 +106,7 @@ Parámetros:
 | `r_u` | USD por plantilla utility entregada | 0,007 / 0,013 / 0,026 (sensibilidad) |
 | `r_s` | USD por mensaje service después del cupo | Igual a `r_u` hasta validar Billing |
 | `c_d` | USD por step-up biométrico Didit | **0,18** = liveness pasivo 0,10 + face match 0,05 + device/IP 0,03 |
-| `N` | Atenciones por profesional/mes | 500 |
+| `N` | Atenciones por profesional/mes | 500 (capacidad de referencia del catálogo) |
 | `M_u`, `M_s`, `V` | Mensajes y verificaciones por atención | Según escenario |
 
 Costo por atención:
@@ -115,6 +115,8 @@ Costo por atención:
 
 Costo por profesional/mes: `COGS/atención × N`.
 
+`N` y el margen salen del catálogo; la referencia vigente está en
+[matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md#referencia-de-capacidad-de-dónde-salen-los-presets).
 Margen de lista del catálogo: **233 % sobre costo** (precio = COGS × 3,33). Los add-ons opcionales usan su propio margen (`addon_margin_on_cost_percent`), separado del de la licencia.
 
 ---

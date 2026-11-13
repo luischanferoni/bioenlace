@@ -37,6 +37,9 @@ final class SignUpInstitutionalEfector
 
     private const PERFIL_LEGACY = ['CONSULTORIO', 'CLINICA'];
 
+    /** Tope de personal del checkout histórico de consultorio (no aplica al alta unificada). */
+    private const LEGACY_CONSULTORIO_MAX_PES = 1;
+
     /** @deprecated usar {@see EnsureAdminEfectorAssignment::ITEM_NAME} */
     public const ITEM_NAME_ADMIN_EFECTOR = EnsureAdminEfectorAssignment::ITEM_NAME;
 
@@ -805,10 +808,16 @@ final class SignUpInstitutionalEfector
         $raw = $plan['classes'] ?? null;
         if (!is_array($raw) || $raw === []) {
             if ($perfil === 'CONSULTORIO') {
+                $initial = PricingPesByEncounterClassMetadata::initialAttentionsForClass('AMB');
+                if ($initial === null) {
+                    throw new \InvalidArgumentException(
+                        'El catálogo de precios no declara volumen inicial para AMB.'
+                    );
+                }
                 $raw = [
                     'AMB' => [
-                        'attentions_per_month' => 200,
-                        'max_pes' => 1,
+                        'attentions_per_month' => $initial,
+                        'max_pes' => self::LEGACY_CONSULTORIO_MAX_PES,
                     ],
                 ];
             } else {
@@ -847,13 +856,7 @@ final class SignUpInstitutionalEfector
             $row = [
                 'max_pes' => $maxPes,
                 'attentions_per_month' => $attentions,
-            ];
-            foreach (PricingPesByEncounterClassMetadata::addonPlanFields() as $addonId => $field) {
-                $state = PricingPesByEncounterClassMetadata::addonState($addonId, $class);
-                $row[$field] = $state === PricingPesByEncounterClassCatalog::ADDON_INCLUDED
-                    || ($state === PricingPesByEncounterClassCatalog::ADDON_OPTIONAL
-                        && !empty($cfg[$field]));
-            }
+            ] + PricingPesByEncounterClassMetadata::addonPlanValues($class, $cfg);
             $classes[$class] = $row;
         }
         if ($perfil === 'CONSULTORIO') {
@@ -862,7 +865,7 @@ final class SignUpInstitutionalEfector
                     'El checkout histórico de consultorio requiere solo atención ambulatoria.'
                 );
             }
-            $classes['AMB']['max_pes'] = 1;
+            $classes['AMB']['max_pes'] = self::LEGACY_CONSULTORIO_MAX_PES;
         }
         if ($classes === []) {
             throw new \InvalidArgumentException('Elegí al menos un tipo de atención (AMB / EMER / IMP).');

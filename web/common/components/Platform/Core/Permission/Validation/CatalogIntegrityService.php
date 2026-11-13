@@ -91,9 +91,11 @@ final class CatalogIntegrityService
             try {
                 $data = Yaml::parseFile($path);
             } catch (\Throwable $e) {
+                $errors[] = 'YAML inválido (' . $path . '): ' . $e->getMessage();
                 continue;
             }
             if (!is_array($data)) {
+                $errors[] = 'YAML sin mapa (' . $path . ').';
                 continue;
             }
             $intentId = trim((string) ($data['intent_id'] ?? IntentSchemaPaths::intentIdFromPath($path)));
@@ -301,9 +303,11 @@ final class CatalogIntegrityService
             try {
                 $chunk = Yaml::parseFile($path);
             } catch (\Throwable $e) {
+                \Yii::error('DataAccess YAML inválido (' . $path . '): ' . $e->getMessage(), __METHOD__);
                 continue;
             }
             if (!is_array($chunk)) {
+                \Yii::error('DataAccess YAML sin mapa (' . $path . ').', __METHOD__);
                 continue;
             }
             $entity = trim((string) ($chunk['entity'] ?? ''));
@@ -358,9 +362,11 @@ final class CatalogIntegrityService
             try {
                 $chunk = Yaml::parseFile($path);
             } catch (\Throwable $e) {
+                $warnings[] = 'DataAccess YAML inválido (' . $path . '): ' . $e->getMessage();
                 continue;
             }
             if (!is_array($chunk)) {
+                $warnings[] = 'DataAccess YAML sin mapa (' . $path . ').';
                 continue;
             }
             $entity = trim((string) ($chunk['entity'] ?? ''));
@@ -457,7 +463,7 @@ final class CatalogIntegrityService
         try {
             $parsed = Yaml::parseFile($configFile);
         } catch (\Throwable $e) {
-            return [];
+            return ['domain-operation-policies.yaml ilegible: ' . $e->getMessage()];
         }
 
         $operations = is_array($parsed['operations'] ?? null) ? $parsed['operations'] : [];
@@ -491,7 +497,7 @@ final class CatalogIntegrityService
         try {
             $parsed = Yaml::parseFile($configFile);
         } catch (\Throwable $e) {
-            return [];
+            return ['domain-operation-policies.yaml ilegible: ' . $e->getMessage()];
         }
 
         $catalogKeys = [];
@@ -652,9 +658,11 @@ final class CatalogIntegrityService
             try {
                 $data = Yaml::parseFile($path);
             } catch (\Throwable $e) {
+                $errors[] = 'YAML inválido (' . $path . '): ' . $e->getMessage();
                 continue;
             }
             if (!is_array($data)) {
+                $errors[] = 'YAML sin mapa (' . $path . ').';
                 continue;
             }
             $intentId = trim((string) ($data['intent_id'] ?? IntentSchemaPaths::intentIdFromPath($path)));
@@ -679,9 +687,11 @@ final class CatalogIntegrityService
             try {
                 $data = Yaml::parseFile($path);
             } catch (\Throwable $e) {
+                $warnings[] = 'YAML inválido (' . $path . '): ' . $e->getMessage();
                 continue;
             }
             if (!is_array($data)) {
+                $warnings[] = 'YAML sin mapa (' . $path . ').';
                 continue;
             }
             $intentId = trim((string) ($data['intent_id'] ?? IntentSchemaPaths::intentIdFromPath($path)));

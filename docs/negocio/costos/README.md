@@ -20,6 +20,7 @@ Estimación y estrategias de ahorro en dos ejes: **infra propia (GPU)** y **APIs
 
 ## Relacionado
 
+- [docs/README.md § Fuente única](../../README.md#fuente-única-y-jerarquía-de-documentos) — qué documento es canónico por dominio
 - [matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md) — de COGS a precio lista (margen + add-ons)
 - [producto/asistente-y-chat.md](../../producto/asistente-y-chat.md) — asistente + WhatsApp (solo iniciado por paciente)
 - [costos-whatsapp.md](costos-whatsapp.md) — análisis del add-on opcional de WhatsApp proactivo

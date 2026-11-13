@@ -109,7 +109,9 @@ Al leer la tabla y el detalle, conviene distinguir cuatro líneas que se repiten
 | Receta electrónica / pack OS | Vías 2 y 5 | Cotización aparte (no en fórmula COGS) |
 
 
-Ver [matriz-argentina-modulos-precios.md](matriz-argentina-modulos-precios.md). Calculador: sitio institucional `#precios` (término público: **profesional**, no PES).
+Las cifras de la tabla son **ejemplos ilustrativos** de la lista vigente; la tabla canónica de
+capacidad, presets y tramos está en [matriz-argentina-modulos-precios.md](matriz-argentina-modulos-precios.md).
+Calculador: sitio institucional `#precios` (término público: **profesional**, no PES).
 
 #### Fuera de la fórmula de ingreso
 

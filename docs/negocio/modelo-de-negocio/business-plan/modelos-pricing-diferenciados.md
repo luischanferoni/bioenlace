@@ -226,6 +226,10 @@ Compite con «HIS caro y complejo» sin regalar consultas al paciente final. El 
 
 Supuestos: **clínica 20 profesionales**, ~8.000 encounters/año, ~670/mes.
 
+> Cifras de **escenario ilustrativo**. El precio vigente lo calcula el backend y la tabla canónica
+> de capacidad, tramos y presets es
+> [matriz-argentina-modulos-precios.md](matriz-argentina-modulos-precios.md).
+
 | Concepto | Orden de magnitud (USD/mes) |
 |----------|----------------------------|
 | COGS del presupuesto comercial (13.400 AMB, sin videollamada) | ~**USD 116** (13.400 × USD 0,0087/atención) |

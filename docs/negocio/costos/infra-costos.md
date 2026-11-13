@@ -4,7 +4,7 @@ Este documento refleja el **costo real** de la infraestructura cuando la IA corr
 
 ## Supuestos base
 
-- **Consultas por médico**: 25/día = 500/mes (25 × 20 días; 15 min por atención ≈ 6 h 15 de consulta + ~1 h 45 administrativas). Media jornada: 250/mes.
+- **Consultas por médico**: 25/día = 500/mes (25 × 20 días; 15 min por atención ≈ 6 h 15 de consulta + ~1 h 45 administrativas). Media jornada: 250/mes. Es la [capacidad de referencia](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md#referencia-de-capacidad-de-dónde-salen-los-presets) del catálogo, no un límite de producto.
 - **Consulta típica**: 600–1.500 tokens totales (input + output). A mayor cantidad de tokens, mayor costo por consulta (más tiempo de GPU por inferencia).
 - **Costo real**: se indica por plan y por ítem en las tablas siguientes. Las cifras asumen un **modelo de tamaño estándar**; con **modelos pequeños** (7B u equivalentes) el costo por consulta baja (ver sección [Modelos pequeños](#modelos-pequeños-7b-u-equivalentes-en-nuestra-gpu)).
 

@@ -19,8 +19,6 @@ use yii\db\Query;
  */
 final class EfectorEncounterEntitlementService
 {
-    private const CLASS_PRIORITY = ['AMB', 'EMER', 'IMP', 'VR'];
-
     /**
      * Clases de producto activas para sesión / allow_all (sin OBSENC/HH).
      *
@@ -326,7 +324,7 @@ final class EfectorEncounterEntitlementService
             return null;
         }
 
-        foreach (self::CLASS_PRIORITY as $code) {
+        foreach (EncounterDefinition::ENCOUNTER_CLASS_SESSION_SELECTABLE as $code) {
             if (in_array($code, $defs, true)) {
                 return $code;
             }

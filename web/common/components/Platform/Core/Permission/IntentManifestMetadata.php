@@ -222,11 +222,17 @@ final class IntentManifestMetadata
         try {
             $parsed = Yaml::parseFile($configFile);
         } catch (\Throwable $e) {
-            return false;
+            throw new \yii\base\InvalidConfigException(
+                'domain-operation-policies.yaml inválido: ' . $e->getMessage(),
+                0,
+                $e
+            );
         }
 
         if (!is_array($parsed)) {
-            return false;
+            throw new \yii\base\InvalidConfigException(
+                'domain-operation-policies.yaml no contiene un mapa de operaciones.'
+            );
         }
 
         $operations = is_array($parsed['operations'] ?? null) ? $parsed['operations'] : [];

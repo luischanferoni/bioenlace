@@ -16,27 +16,36 @@ version: 1
 #   Enfermería y médico trabajan por turnos propios; administración opera la cola del servicio.
 # `panel_red`: si el rol opera cuentas de red (ministerio) y ve sus indicadores.
 # `home_nav_label`: etiqueta del ítem de inicio en el menú lateral (por defecto «Pacientes»).
+# `requiere_verificacion_profesional`: si el alta exige REFEPS (por defecto true).
+# `responde_chat_async`: si el rol responde el chat de solicitudes async (staff clínico).
 roles:
   admin_ministerio:
     nombre: AdminMinisterio
     panel_red: true
     home_nav_label: Red
+    requiere_verificacion_profesional: false
   nivel_central:
     nombre: nivelCentral
     panel_red: true
     home_nav_label: Red
+    requiere_verificacion_profesional: false
   admin_efector:
     nombre: AdminEfector
     home_nav_label: Gestión
+    requiere_verificacion_profesional: false
   administrativo:
     nombre: Administrativo
     requiere_horario_activo: false
+    requiere_verificacion_profesional: false
   facturista:
     nombre: facturista
+    requiere_verificacion_profesional: false
   enfermeria:
     nombre: enfermeria
+    responde_chat_async: true
   medico:
     nombre: Medico
+    responde_chat_async: true
 
 # Alias aceptados (auth_assignment.item_name y servicios.item_name) → clave canónica.
 # La comparación es exacta y sensible a mayúsculas: listar las variantes reales en uso.

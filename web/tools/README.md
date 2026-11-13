@@ -13,6 +13,7 @@ Criterio de esta carpeta, para que el próximo archivo caiga solo:
 | Archivo | Qué hace |
 |---|---|
 | `audit-thin-clients.php` + `thin-clients-baseline.json` | Cuenta patrones que el programa elimina y compara contra un tope versionado (el tope solo baja). `composer audit:thin-clients` |
+| `audit-derived-values.php` + `derived-values-baseline.json` | Detecta literales de valores derivados (volumen, `max_pes`, política de addons, listas de clases) y fallbacks numéricos en el loader. `composer audit:derived-values` |
 | `inventory_ar_relations.php` | Inventario de relaciones ActiveRecord. `--fail-on-legacy-getid` lo vuelve gate |
 
 La deuda de transporte HTTP llegó a cero y su baseline se borró: el invariante

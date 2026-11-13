@@ -189,14 +189,30 @@ class _CommercialSignupScreenState extends State<CommercialSignupScreen>
       setState(() {
         _plansCatalog = catalog;
         _loadingPlans = false;
+        _seedInitialVolumes();
         _hydrateAddonSelections();
       });
+      await _refreshQuote();
     } catch (error) {
       if (!mounted) return;
       setState(() {
         _loadingPlans = false;
         _plansError = _errorText(error);
       });
+    }
+  }
+
+  /// Sin plan inicial, el primer tipo vendible arranca con el volumen que
+  /// publica el backend (`defaults`). El cliente no inventa un plan.
+  void _seedInitialVolumes() {
+    if (_classVolumes.isNotEmpty) return;
+    final codes = _sellableClasses.keys;
+    final defaults = _plansCatalog?['defaults'];
+    if (codes.isEmpty || defaults is! Map) return;
+    final first = codes.first;
+    final attentions = int.tryParse(defaults[first]?.toString() ?? '');
+    if (attentions != null && attentions > 0) {
+      _classVolumes[first] = attentions;
     }
   }
 

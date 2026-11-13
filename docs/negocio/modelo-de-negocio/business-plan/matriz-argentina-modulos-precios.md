@@ -11,11 +11,17 @@ COGS de referencia: [costos-api.md](../../costos/costos-api.md); el presupuesto 
 El precio por atención = **COGS_por_atención × (1 + margen sobre costo)**. El margen de lista es **233 %** (~70 % bruto ≈ **42,9 %** después de IIBB + ganancias; ~42,5 % incluyendo IDCB); los add-ons opcionales tienen su propio margen (`addon_margin_on_cost_percent`). A más **atenciones totales** contratadas (suma ambulatorio + urgencia + internación), baja el margen según tramos. El cliente elige tipos de atención y un **volumen aproximado** (presets). **1 profesional a jornada completa = 500 atenciones AMB / mes** (25 atenciones/día × 20 días; 15 min por atención ≈ 6 h 15 de consulta + ~1 h 45 administrativas); **media jornada = 250** (12–13/día × 20 días). Los presets se ajustan por clase: AMB 500, EMER 700 (guardia de 12 h × 15 turnos) e IMP 400 (20 pases/día × 20 días). El **dictado está incluido**; en ambulatorio la **videollamada** es el único add-on opcional. **Motivos de consulta ya no usa audio ni STT**: es un cuestionario con opciones y su costo es el mismo en las tres clases (**0,0006**/atención). El chat paciente (§1) tiene **cupo de 10 mensajes** alrededor del turno (capacidad / headroom para prompts más largos o varias llamadas IA). Lo no contratado **se deshabilita** en sesión operativa y tableros.
 
 > **Recalibración aplicada (2026-11-11):** estas cifras reflejan motivos sin STT. El catálogo backend
-> (`PricingPesByEncounterClassCatalog` v16: `motivos` / `motivos_by_class` = 0,0006) y el sitio
+> (`PricingPesByEncounterClassCatalog` v16: `motivos` = 0,0006) y el sitio
 > institucional, que lee `GET /licencia/planes`, ya cotizan con estos valores.
 
 Catálogo backend: [`PricingPesByEncounterClassCatalog.php`](../../../../web/common/components/Domain/Organization/Pes/Domain/Catalog/PricingPesByEncounterClassCatalog.php).
 Calculador público: sitio [`institucional/#precios`](../../../../institucional/index.html).  
+
+> **Documento canónico de precio de licencia.** Esta es la vista humana de la capacidad, los
+> tramos y los presets del catálogo. No copies estas tablas en otros documentos: enlazá acá.
+> La composición del COGS por atención vive en
+> [resumen-costos-bioenlace.md](../../costos/resumen-costos-bioenlace.md#cogs-base-por-atención-sin-videollamada).
+
 Entitlements BD: `billing_account` + `billing_account_encounter_entitlement` (pool de profesionales derivados del volumen). Legacy: `efector_encounter_entitlement` (backfill).  
 Admin: Licencias / Contratos.
 
@@ -36,16 +42,11 @@ precio_por_atención = COGS_atención × (1 + margen%/100)
 USD/mes ≈ Σ_clase ( atenciones_mes[clase] × precio_por_atención )
 ```
 
-| Componente COGS comercial (USD / atención) | USD | Notas |
-|--------------------------------------------|----:|-------|
-| Chat paciente AMB (cupo 10 mensajes) | **0,0048** | Solo ambulatorio · presupuesto conservador para preprocess + guide |
-| Motivos (sin audio, mismas tres clases) | **0,0006** | Cuestionario pre-turno + 1 resumen + insights |
-| Captura IA (sin STT profesional) | **0,0006** | Siempre |
-| Dictado / STT profesional (−30 % on-device) | **0,0025** | **Incluido** en todas las clases · ~5 min × USD 0,0005/min. Con 4 min: **0,0020** (−20 % del STT) |
-| Infra app (app + BD + backups + monitoreo) | **0,00006 · 0,000043 · 0,000075** | 0,03/prof/mes repartido en AMB 500 / EMER 700 / IMP 400. Base: 2–3 VPS KVM2 compartidos (~USD 90–160/mes total) |
-| Videollamada | **+0,0044** | Solo ambulatorio (opcional) · **40 %** teleconsulta |
+La composición del COGS por clase —chat, motivos, captura, dictado e infra— es la tabla
+canónica de [resumen-costos-bioenlace.md § COGS base por atención](../../costos/resumen-costos-bioenlace.md#cogs-base-por-atención-sin-videollamada).
+Este documento no la repite: sólo aplica margen y precio sobre esos componentes.
 
-**Margen sobre costo (lista):** **233 %**.
+**Margen sobre costo (lista):** **233 %** (`margin_on_cost_percent` del catálogo).
 
 Mix porcentual de estos componentes sobre el COGS de cada clase: [resumen-costos-bioenlace.md § Composición del COGS](../../costos/resumen-costos-bioenlace.md#composición-del-cogs-qué-pesa-en-el-costo).
 
@@ -60,9 +61,15 @@ Mix porcentual de estos componentes sobre el COGS de cada clase: [resumen-costos
 
 El margen después de impuestos **se deriva** de los `tax_assumptions` del catálogo (`iibb_rate_percent`, `income_tax_rate_percent`, `bank_debit_credit_tax_percent`), no se escribe a mano. La tabla muestra el escenario **sin IDCB** (IIBB 4 % Santiago del Estero + ganancias 35 %); con IDCB 0,6 %: 42,5 / 37,3 / 34,2 / 32,1. Detalle: [impuestos-argentina.md](../../costos/impuestos-argentina.md).
 
+Los tramos y sus márgenes salen de `volume_discount_tiers`; los presets, de
+`attention_volume_multipliers` × la capacidad de referencia. No se editan acá.
+
 Presets **AMB**: media jornada (250) · jornada completa (500) · 2 profesionales (1.000) · 4 profesionales (2.000) · clínica chica (5.000) · … · enterprise+ (100.000). **EMER**: 350 · 700 · 1.400 · 2.800 · 7.000 · … · 140.000. **IMP**: 200 · 400 · 800 · 1.600 · 4.000 · … · 80.000.
 
 ### Referencia de capacidad (de dónde salen los presets)
+
+Fuente: `reference_encounters_per_professional_month` del catálogo. Los presets se calculan desde
+esta capacidad; no se escriben volúmenes a mano en otros documentos.
 
 - **500 AMB** = 25 atenciones atendidas/día × 20 días; 15 min por atención ≈ **375 min (6 h 15) de consulta** dentro de una jornada de 8 h.
 - **250 AMB (media jornada)** = 12–13 atenciones/día × 20 días ≈ **187 min (3 h 07) de consulta** dentro de una media jornada de 4 h.
@@ -71,12 +78,12 @@ Presets **AMB**: media jornada (250) · jornada completa (500) · 2 profesionale
 
 ### Precio por atención (lista, sin descuento de tramo)
 
-| Configuración | COGS / atención | Precio lista / atención |
-|---------------|----------------:|------------------------:|
-| Ambulatorio (chat + motivos + captura + dictado + infra) | 0,0087 | **~0,0288** |
-| Ambulatorio + videollamada | 0,0131 | **~0,0435** |
-| Urgencia (motivos + captura + dictado + infra) | 0,0038 | **~0,0128** |
-| Internación (motivos + captura + dictado + infra) | 0,0039 | **~0,0129** |
+| Configuración | Precio lista / atención |
+|---------------|------------------------:|
+| Ambulatorio (chat + motivos + captura + dictado + infra) | **~0,0288** |
+| Ambulatorio + videollamada | **~0,0435** |
+| Urgencia (motivos + captura + dictado + infra) | **~0,0128** |
+| Internación (motivos + captura + dictado + infra) | **~0,0129** |
 
 ### Lectura rápida
 

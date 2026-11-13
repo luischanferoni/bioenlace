@@ -4,6 +4,7 @@ namespace admin\controllers;
 
 use common\components\Domain\Organization\Efector\Application\Service\BillingAccountService;
 use common\components\Domain\Organization\Efector\Application\Service\EfectorEncounterEntitlementService;
+use common\components\Platform\Core\Product\PricingPesByEncounterClassMetadata;
 use common\models\Organization\BillingAccount;
 use common\models\Organization\BillingAccountEncounterEntitlement;
 use common\models\Organization\BillingAccountEfector;
@@ -62,7 +63,7 @@ class BillingAccountController extends Controller
             'model' => $model,
             'summary' => $summary,
             'members' => $members,
-            'sellableClasses' => ['AMB', 'EMER', 'IMP'],
+            'sellableClasses' => PricingPesByEncounterClassMetadata::sellableClassCodes(),
             'classLabels' => EncounterDefinition::ENCOUNTER_CLASS,
         ]);
     }

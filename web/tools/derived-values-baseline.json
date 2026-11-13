@@ -1,0 +1,13 @@
+{
+    "counters": {
+        "literal_plan_volume": 0,
+        "literal_max_pes": 0,
+        "inline_addon_policy": 0,
+        "encounter_class_list": 0,
+        "dart_plan_volume": 0,
+        "inline_role_list": 0,
+        "capacity_literal_in_metadata": 0,
+        "catalog_numeric_fallback": 1,
+        "config_catch_default": 0
+    }
+}

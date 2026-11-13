@@ -24,6 +24,7 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Transporte residual y suite | `transporte-residual-y-suite/` | Transporte a mano en Didit/Snowstorm/MPI y en el admin (fuera del invariante) + suite en 13 errores / 73 fallas; fases 01–04 pendientes |
 | Motivos pre-turno sin STT | `motivos-pre-turno/` | Cuestionario declarativo, motivo deducido del triage y del asistente; fases 01–05 implementadas, falta prueba en dispositivo |
 | Add-on WhatsApp reactivo | `addon-whatsapp-reactivo/` | Solo reactivo, sin datos clínicos; step-up antes de escribir; fases 00–04 pendientes |
+| Especialidades clínicas | `especialidades-clinicas/` | Catálogo único + odontología en observación; fases 00–02 cerradas, 03–17 pendientes |
 
 ## A evaluar (sin plan todavía)
 

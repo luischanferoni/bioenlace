@@ -14,6 +14,8 @@ use common\components\Domain\Clinical\CarePlan\Application\Service\CarePlanServi
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Condition;
 use common\models\Clinical\Encounter;
+use common\models\Clinical\Observation;
+use common\models\Clinical\ObservationOdontologyExt;
 use common\models\Clinical\Procedure;
 use common\models\Clinical\ProcedureOdontologyExt;
 
@@ -69,6 +71,7 @@ final class OdontologyEncounterService
         return [
             'procedures' => $procDtos,
             'conditions' => $condOut,
+            'toothStates' => $this->toothStatesForEncounter($encounterId),
         ];
     }
 
@@ -114,43 +117,38 @@ final class OdontologyEncounterService
     }
 
     /**
-     * @return list<array{pieza: int|string|null, codigo: string|null, caras?: string|null, tipo?: string|null}>
+     * Estado acumulado de las piezas hasta el encounter indicado.
+     *
+     * @return list<array{pieza: string|null, codigo: string|null, caras: string|null, tipo: string|null, tiempo: string|null}>
      */
     public function getCpoStatesForPersonUntilEncounter(int $personaId, int $encounterId): array
     {
-        $rows = Condition::find()
-            ->alias('c')
-            ->select(['c.note'])
-            ->innerJoin(['enc' => Encounter::tableName()], 'enc.id = c.encounter_id')
-            ->where([
-                'enc.subject_persona_id' => $personaId,
-                'c.clinical_status' => ConditionClinicalStatus::ACTIVE,
-            ])
-            ->andWhere(['<=', 'enc.id', $encounterId])
-            ->andWhere(['enc.deleted_at' => null, 'c.deleted_at' => null])
-            ->andWhere(['like', 'c.note', 'odontology_state:', false])
-            ->asArray()
-            ->all();
-
-        $out = [];
-        foreach ($rows as $row) {
-            $meta = $this->parseOdontologyStateNote($row['note'] ?? null);
-            if ($meta === []) {
-                continue;
-            }
-            $out[] = [
-                'pieza' => $meta['pieza'] ?? null,
-                'codigo' => isset($meta['codigo']) ? (string) $meta['codigo'] : null,
-                'caras' => $meta['caras'] ?? null,
-                'tipo' => $meta['tipo'] ?? null,
-            ];
-        }
-
-        return $out;
+        return $this->mapStateRows(
+            $this->stateQuery()
+                ->andWhere(['enc.subject_persona_id' => $personaId])
+                ->andWhere(['<=', 'enc.id', $encounterId])
+                ->asArray()
+                ->all()
+        );
     }
 
     /**
-     * @return list<array{pieza: int|string|null, codigo: string|null, caras?: string|null, tipo?: string|null}>
+     * Estado dental registrado en un encounter.
+     *
+     * @return list<array{pieza: string|null, codigo: string|null, caras: string|null, tipo: string|null, tiempo: string|null}>
+     */
+    public function toothStatesForEncounter(int $encounterId): array
+    {
+        return $this->mapStateRows(
+            $this->stateQuery()
+                ->andWhere(['o.encounter_id' => $encounterId])
+                ->asArray()
+                ->all()
+        );
+    }
+
+    /**
+     * @return list<array{pieza: string|null, codigo: string|null, caras: string|null, tipo: string|null, tiempo: string|null}>
      */
     public function getCpoStatesForPerson(int $personaId): array
     {
@@ -166,6 +164,29 @@ final class OdontologyEncounterService
     }
 
     /**
+     * Campos normalizados de un estado dental extraído.
+     *
+     * @param array<string, mixed> $row
+     * @return array{pieza: string|null, codigo: string, caras: string|null, tipo: string|null, termino: string|null, tiempo: string|null}|null
+     */
+    public static function toothStateFields(array $row): ?array
+    {
+        $codigo = OdontologiaItemRowContract::extractCodigo($row);
+        if ($codigo === '') {
+            return null;
+        }
+
+        return [
+            'pieza' => OdontologiaItemRowContract::extractPieza($row) ?: null,
+            'codigo' => $codigo,
+            'caras' => OdontologiaItemRowContract::extractCaras($row) ?: null,
+            'tipo' => OdontologiaItemRowContract::extractTipo($row) ?: null,
+            'termino' => OdontologiaItemRowContract::extractTermino($row),
+            'tiempo' => OdontologiaItemRowContract::extractTiempo($row),
+        ];
+    }
+
+    /**
      * @param mixed $payload filas de estado dental
      */
     public function persistToothStates(Encounter $encounter, $payload): void
@@ -177,20 +198,39 @@ final class OdontologyEncounterService
             if (!is_array($row)) {
                 continue;
             }
-            $codigo = OdontologiaItemRowContract::extractCodigo($row);
-            if ($codigo === '') {
+            $fields = self::toothStateFields($row);
+            if ($fields === null) {
                 continue;
             }
-            $condition = new Condition();
-            $condition->encounter_id = $encounter->id;
-            $condition->subject_persona_id = $encounter->subject_persona_id;
-            $condition->code = is_numeric($codigo) ? $codigo : null;
-            $condition->display = OdontologiaItemRowContract::extractTermino($row);
-            $condition->clinical_status = ConditionClinicalStatus::ACTIVE;
-            $condition->verification_status = ConditionVerificationStatus::CONFIRMED;
-            $condition->recorded_date = date('Y-m-d H:i:s');
-            $condition->note = $this->buildOdontologyStateNote($row);
-            $condition->save(false);
+
+            $observation = new Observation();
+            $observation->encounter_id = $encounter->id;
+            $observation->subject_persona_id = $encounter->subject_persona_id;
+            $observation->status = 'final';
+            $observation->category = Observation::CATEGORY_ODONTOLOGY;
+            $observation->code = $fields['codigo'];
+            $observation->code_system = 'http://snomed.info/sct';
+            $observation->value_string = $fields['termino'];
+            $observation->value_json = json_encode([
+                'pieza' => $fields['pieza'],
+                'caras' => $fields['caras'],
+                'tipo' => $fields['tipo'],
+            ], JSON_UNESCAPED_UNICODE);
+            $observation->effective_datetime = date('Y-m-d H:i:s');
+            if (!$observation->save()) {
+                throw new \RuntimeException(
+                    'Observation odonto estado: ' . json_encode($observation->getErrors())
+                );
+            }
+
+            $ext = new ObservationOdontologyExt();
+            $ext->observation_id = $observation->id;
+            $ext->tooth_number = $fields['pieza'];
+            $ext->surfaces = $fields['caras'];
+            $ext->time_qualifier = $fields['tiempo'];
+            if (!$ext->save()) {
+                throw new \RuntimeException('Observation odonto ext: ' . json_encode($ext->getErrors()));
+            }
         }
     }
 
@@ -282,18 +322,71 @@ final class OdontologyEncounterService
     }
 
     /**
-     * @param array<string, mixed> $row
+     * Consulta base de estados dentales con su extensión de pieza.
+     *
+     * @return \yii\db\ActiveQuery
      */
-    private function buildOdontologyStateNote(array $row): string
+    private function stateQuery()
     {
-        $meta = [
-            'pieza' => OdontologiaItemRowContract::extractPieza($row) ?: null,
-            'caras' => OdontologiaItemRowContract::extractCaras($row) ?: null,
-            'tipo' => OdontologiaItemRowContract::extractTipo($row) ?: null,
-            'codigo' => OdontologiaItemRowContract::extractCodigo($row) ?: null,
-        ];
+        return Observation::find()
+            ->alias('o')
+            ->innerJoin(['e' => ObservationOdontologyExt::tableName()], 'e.observation_id = o.id')
+            ->innerJoin(['enc' => Encounter::tableName()], 'enc.id = o.encounter_id')
+            ->select([
+                'o.id',
+                'o.code',
+                'o.value_json',
+                'e.tooth_number',
+                'e.surfaces',
+                'e.time_qualifier',
+            ])
+            ->where([
+                'o.category' => Observation::CATEGORY_ODONTOLOGY,
+                'o.deleted_at' => null,
+                'enc.deleted_at' => null,
+            ])
+            ->andWhere(['not', ['o.status' => 'entered-in-error']])
+            ->orderBy(['o.id' => SORT_ASC]);
+    }
 
-        return 'odontology_state:' . json_encode($meta, JSON_UNESCAPED_UNICODE);
+    /**
+     * @param list<array<string, mixed>> $rows
+     * @return list<array{pieza: string|null, codigo: string|null, caras: string|null, tipo: string|null, tiempo: string|null}>
+     */
+    private function mapStateRows(array $rows): array
+    {
+        $out = [];
+        foreach ($rows as $row) {
+            $meta = $this->decodeValueJson($row['value_json'] ?? null);
+            $out[] = [
+                'pieza' => isset($row['tooth_number']) && $row['tooth_number'] !== ''
+                    ? (string) $row['tooth_number']
+                    : null,
+                'codigo' => isset($row['code']) && $row['code'] !== '' ? (string) $row['code'] : null,
+                'caras' => isset($row['surfaces']) && $row['surfaces'] !== ''
+                    ? (string) $row['surfaces']
+                    : null,
+                'tipo' => isset($meta['tipo']) ? (string) $meta['tipo'] : null,
+                'tiempo' => isset($row['time_qualifier']) && $row['time_qualifier'] !== ''
+                    ? (string) $row['time_qualifier']
+                    : null,
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function decodeValueJson($valueJson): array
+    {
+        if (!is_string($valueJson) || $valueJson === '') {
+            return [];
+        }
+        $decoded = json_decode($valueJson, true);
+
+        return is_array($decoded) ? $decoded : [];
     }
 
     /**
@@ -310,17 +403,5 @@ final class OdontologyEncounterService
         return is_array($decoded) ? $decoded : [];
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    private function parseOdontologyStateNote(?string $note): array
-    {
-        if ($note === null || strpos($note, 'odontology_state:') !== 0) {
-            return [];
-        }
-        $json = substr($note, strlen('odontology_state:'));
-        $decoded = json_decode($json, true);
 
-        return is_array($decoded) ? $decoded : [];
-    }
 }

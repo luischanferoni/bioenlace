@@ -81,6 +81,7 @@ final class DemoSandboxPurgeService
         '{{%device_request}}',
         '{{%nutrition_order}}',
         '{{%vision_prescription}}',
+        '{{%observation_odontology_ext}}',
         '{{%care_assistance_response}}',
         '{{%care_encounter_pack}}',
         '{{%care_followup_touchpoint_queue}}',

@@ -12,7 +12,7 @@ Los `key` de cada campo son las claves que la IA devuelve, tomadas de `PROMPT_FI
 
 | Especialidad | Carpeta | Recursos | API |
 |--------------|---------|----------|-----|
-| Odontología | `Odontology/` | `procedure` + `procedure_odontology_ext`, `condition` (meta en `note`) | `GET …/encounter/<id>/odontology` |
+| Odontología | `Odontology/` | `procedure` + `procedure_odontology_ext`, `observation` + `observation_odontology_ext`, `condition` (diagnósticos) | `GET …/encounter/<id>/odontology` |
 | Oftalmología | `Ophthalmology/` | `observation` (category `ophthalmology`), `vision_prescription` | `GET …/encounter/<id>/ophthalmology` |
 
 Odontología extrae `Tipo`, `Codigo`, `Pieza`, `Caras` y `Tiempo` (PASADA/PRESENTE/FUTURA). `OdontologyEncounterService` resuelve esos campos con los extractores del contrato, así una clave capitalizada (`Pieza`) o en minúscula (`pieza`) persiste igual.
@@ -22,9 +22,12 @@ Odontología extrae `Tipo`, `Codigo`, `Pieza`, `Caras` y `Tiempo` (PASADA/PRESEN
 `EncounterDocumentationService::guardar` enruta por `workflow_json` → `relacion`:
 
 - `EncounterDentalPractice` → `OdontologyEncounterService::persistPractices` (+ care plan `odontology`)
-- `EncounterDentalDiagnosis` → `persistDiagnostics`
+- `EncounterDentalDiagnosis` → `persistDiagnostics` (Condition con metadatos en `note`)
+- `EncounterDentalStatus` → `persistToothStates` (`observation` categoría `odontology` + `observation_odontology_ext`)
 - `OphthalmologyPractice` / `OphthalmologyStudy` → `OphthalmologyEncounterService::persistPractices`
 - `OphthalmologyLensPrescription` → `persistLensPrescription`
+
+El **estado de una pieza** se lee de `observation` unida a su extensión (`tooth_number`, `surfaces`, `time_qualifier`), no de la nota de una condición. La migración `m261113_130000` crea la extensión y copia los estados legacy que vivían como nota `odontology_state:`.
 
 Solo se persisten modelos listados en la definición del encounter (`EncounterDefinitionSpecialtyRegistry::isModelAllowed`).
 

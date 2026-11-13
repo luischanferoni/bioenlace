@@ -462,4 +462,67 @@ void main() {
     expect(documentation.secciones.single.items, ['Control clínico']);
     expect(documentation.secciones.single.fields, isEmpty);
   });
-}
+  test('reads the odontogram block of the clinical history', () {
+    final response = HistoriaClinicaResponse.fromJson(<String, dynamic>{
+      'persona': <String, dynamic>{'id': 12, 'nombre_completo': 'Paciente'},
+      'informacion_medica': <String, dynamic>{},
+      'odontograma': <String, dynamic>{
+        'teeth': [
+          <String, dynamic>{
+            'tooth': '16',
+            'dentition': 'permanent',
+            'history': [
+              <String, dynamic>{
+                'codigo': '33070004',
+                'caras': 'O',
+                'tiempo': 'PASADA',
+                'registradoEn': '2026-11-13 16:52:05',
+              },
+              <String, dynamic>{
+                'display': 'Obturada',
+                'codigo': 'obturada',
+                'tiempo': 'PRESENTE',
+              },
+            ],
+          },
+          <String, dynamic>{
+            'tooth': '51',
+            'dentition': 'temporary',
+            'history': <dynamic>[],
+          },
+        ],
+        'totals': <String, dynamic>{'teeth': 2, 'states': 2, 'unassigned': 1},
+      },
+    });
+
+    final odontograma = response.odontograma;
+    expect(odontograma.vacio, isFalse);
+    expect(odontograma.piezas, hasLength(2));
+    expect(odontograma.totalPiezas, 2);
+    expect(odontograma.totalEstados, 2);
+
+    final pieza = odontograma.piezas.first;
+    expect(pieza.numero, '16');
+    expect(pieza.denticion, 'permanent');
+    expect(pieza.historia, hasLength(2));
+    expect(pieza.actual?.etiqueta, 'Obturada');
+    expect(pieza.actual?.tiempo, 'PRESENTE');
+    expect(pieza.historia.first.etiqueta, '33070004');
+    expect(pieza.historia.first.caras, 'O');
+    expect(pieza.historia.first.registradoEn, '2026-11-13 16:52:05');
+
+    final temporaria = odontograma.piezas.last;
+    expect(temporaria.denticion, 'temporary');
+    expect(temporaria.historia, isEmpty);
+    expect(temporaria.actual, isNull);
+  });
+
+  test('treats a missing odontogram as empty', () {
+    final response = HistoriaClinicaResponse.fromJson(<String, dynamic>{
+      'persona': <String, dynamic>{'id': 12, 'nombre_completo': 'Paciente'},
+      'informacion_medica': <String, dynamic>{},
+    });
+
+    expect(response.odontograma.vacio, isTrue);
+    expect(response.odontograma.piezas, isEmpty);
+  });}

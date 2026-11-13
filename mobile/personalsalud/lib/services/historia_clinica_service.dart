@@ -1379,6 +1379,114 @@ class EvolucionInternacionItem {
   }
 }
 
+/// Bloque `odontograma` de GET /personas/{id}/historia-clinica.
+class OdontogramaClinica {
+  final List<OdontogramaPieza> piezas;
+  final int totalPiezas;
+  final int totalEstados;
+
+  const OdontogramaClinica({
+    this.piezas = const [],
+    this.totalPiezas = 0,
+    this.totalEstados = 0,
+  });
+
+  bool get vacio => piezas.isEmpty;
+
+  factory OdontogramaClinica.fromJson(Map<String, dynamic>? json) {
+    if (json == null) return const OdontogramaClinica();
+
+    final raw = json['teeth'] as List<dynamic>? ?? const [];
+    final piezas = <OdontogramaPieza>[];
+    for (final item in raw) {
+      if (item is Map) {
+        piezas.add(OdontogramaPieza.fromJson(Map<String, dynamic>.from(item)));
+      }
+    }
+
+    int totalFrom(String key) {
+      final totals = json['totals'];
+      if (totals is! Map) return 0;
+      final value = totals[key];
+      if (value is int) return value;
+      return int.tryParse('${value ?? ''}') ?? 0;
+    }
+
+    return OdontogramaClinica(
+      piezas: piezas,
+      totalPiezas: totalFrom('teeth'),
+      totalEstados: totalFrom('states'),
+    );
+  }
+}
+
+/// Pieza dental con su historia de estados, del más antiguo al más reciente.
+class OdontogramaPieza {
+  final String numero;
+  final String? denticion;
+  final List<OdontogramaEstado> historia;
+
+  const OdontogramaPieza({
+    required this.numero,
+    this.denticion,
+    this.historia = const [],
+  });
+
+  OdontogramaEstado? get actual => historia.isEmpty ? null : historia.last;
+
+  factory OdontogramaPieza.fromJson(Map<String, dynamic> json) {
+    final raw = json['history'] as List<dynamic>? ?? const [];
+    final historia = <OdontogramaEstado>[];
+    for (final item in raw) {
+      if (item is Map) {
+        historia.add(OdontogramaEstado.fromJson(Map<String, dynamic>.from(item)));
+      }
+    }
+    final denticion = json['dentition']?.toString().trim();
+
+    return OdontogramaPieza(
+      numero: '${json['tooth'] ?? ''}'.trim(),
+      denticion: denticion == null || denticion.isEmpty ? null : denticion,
+      historia: historia,
+    );
+  }
+}
+
+/// Estado registrado de una pieza.
+class OdontogramaEstado {
+  final String codigo;
+  final String display;
+  final String caras;
+  final String tiempo;
+  final String registradoEn;
+
+  const OdontogramaEstado({
+    this.codigo = '',
+    this.display = '',
+    this.caras = '',
+    this.tiempo = '',
+    this.registradoEn = '',
+  });
+
+  /// Texto del estado: display, código o tipo; vacío si no hay ninguno.
+  String get etiqueta {
+    if (display.isNotEmpty) return display;
+    if (codigo.isNotEmpty) return codigo;
+    return '';
+  }
+
+  factory OdontogramaEstado.fromJson(Map<String, dynamic> json) {
+    String text(String key) => '${json[key] ?? ''}'.trim();
+
+    return OdontogramaEstado(
+      codigo: text('codigo'),
+      display: text('display'),
+      caras: text('caras'),
+      tiempo: text('tiempo'),
+      registradoEn: text('registradoEn'),
+    );
+  }
+}
 class HistoriaClinicaResponse {
   final PersonaData persona;
   final InformacionMedica informacionMedica;
@@ -1388,6 +1496,7 @@ class HistoriaClinicaResponse {
   final ContextoEpisodioHistoria? contextoEpisodio;
   final TimelineEpisodioFeed? timelineEpisodio;
   final SignosVitalesEpisodio? signosVitalesEpisodio;
+  final OdontogramaClinica odontograma;
   final CarePackCohorteStaff? carePackCohorte;
   final bool careCohortHabilitado;
   final DocumentacionMedico documentacionMedico;
@@ -1407,6 +1516,7 @@ class HistoriaClinicaResponse {
     this.contextoEpisodio,
     this.timelineEpisodio,
     this.signosVitalesEpisodio,
+    this.odontograma = const OdontogramaClinica(),
     this.carePackCohorte,
     this.careCohortHabilitado = false,
     required this.documentacionMedico,
@@ -1482,6 +1592,11 @@ class HistoriaClinicaResponse {
             )
           : null,
       careCohortHabilitado: json['care_cohort_habilitado'] == true,
+      odontograma: OdontogramaClinica.fromJson(
+        json['odontograma'] is Map
+            ? Map<String, dynamic>.from(json['odontograma'] as Map)
+            : null,
+      ),
       documentacionMedico: DocumentacionMedico.fromJson(
         json['documentacion_medico'] as Map<String, dynamic>?,
       ),

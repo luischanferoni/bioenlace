@@ -139,6 +139,20 @@ class AppTexts {
       'Sin signos vitales. Se cargan en la captura de la consulta (texto/audio) o en el triage de admisión.';
   static String vitalsHistoryMeasurements(Object? n) => 'Historial ($n mediciones)';
   static String vitalsHistoryRecords(Object? n) => 'Historial ($n registros)';
+  static const odontogramTitle = 'Odontograma';
+  static const odontogramHint =
+      'Piezas con registro odontológico. Las piezas sin registro no se muestran.';
+  static const odontogramPermanent = 'Dentición permanente';
+  static const odontogramTemporary = 'Dentición temporaria';
+  static const odontogramUnclassified = 'Sin dentición clasificada';
+  static const odontogramNoDetail = 'Sin detalle';
+  static const odontogramPast = 'Pasada';
+  static const odontogramPresent = 'Presente';
+  static const odontogramFuture = 'Futura';
+  static const odontogramNoMoment = 'Sin momento';
+  static String odontogramTooth(Object? numero) => 'Pieza $numero';
+  static String odontogramSurfaces(Object? caras) => 'Caras $caras';
+  static String odontogramHistory(Object? n) => 'Historial ($n estados)';
   static const appointmentNext = 'Siguiente turno';
   static const appointmentsEmptyForDate = 'No hay turnos programados para esta fecha.';
   static String appointmentTime(Object? hora) => 'Hora: $hora';

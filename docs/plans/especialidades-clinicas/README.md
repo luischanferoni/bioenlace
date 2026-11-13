@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|--------|
 | Slug | `especialidades-clinicas` |
-| Estado | En ejecución — fases 00, 01 y 02 cerradas; 03 en adelante pendientes |
+| Estado | En ejecución — fases 00 a 05 cerradas (odontología completa); 06 en adelante pendientes |
 | Dueño | Producto clínico / Backend |
 | Relación | Extiende [captura-clinica.md](../../producto/captura-clinica.md) y [07-servicios-y-especialidades.md](../../his-completo/07-servicios-y-especialidades.md) |
 

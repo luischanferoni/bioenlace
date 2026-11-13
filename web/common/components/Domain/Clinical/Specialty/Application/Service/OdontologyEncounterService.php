@@ -119,7 +119,7 @@ final class OdontologyEncounterService
     /**
      * Estado acumulado de las piezas hasta el encounter indicado.
      *
-     * @return list<array{pieza: string|null, codigo: string|null, caras: string|null, tipo: string|null, tiempo: string|null}>
+     * @return list<array{pieza: string|null, codigo: string|null, caras: string|null, tipo: string|null, tiempo: string|null, display: string|null, encounterId: int|null, registradoEn: string|null}>
      */
     public function getCpoStatesForPersonUntilEncounter(int $personaId, int $encounterId): array
     {
@@ -135,7 +135,7 @@ final class OdontologyEncounterService
     /**
      * Estado dental registrado en un encounter.
      *
-     * @return list<array{pieza: string|null, codigo: string|null, caras: string|null, tipo: string|null, tiempo: string|null}>
+     * @return list<array{pieza: string|null, codigo: string|null, caras: string|null, tipo: string|null, tiempo: string|null, display: string|null, encounterId: int|null, registradoEn: string|null}>
      */
     public function toothStatesForEncounter(int $encounterId): array
     {
@@ -148,7 +148,95 @@ final class OdontologyEncounterService
     }
 
     /**
-     * @return list<array{pieza: string|null, codigo: string|null, caras: string|null, tipo: string|null, tiempo: string|null}>
+     * Agrupa los estados por pieza para dibujar el odontograma.
+     *
+     * Las piezas sin registro no se inventan: el cliente dibuja el diente sano.
+     *
+     * @param list<array<string, mixed>> $states
+     * @return array{encounterId: int, teeth: list<array<string, mixed>>, totals: array{teeth: int, states: int, unassigned: int}}
+     */
+    public static function buildOdontogram(array $states, int $encounterId): array
+    {
+        $byTooth = [];
+        $unassigned = 0;
+        $stateCount = 0;
+
+        foreach ($states as $state) {
+            $stateCount++;
+            $tooth = isset($state['pieza']) ? trim((string) $state['pieza']) : '';
+            if ($tooth === '') {
+                $unassigned++;
+                continue;
+            }
+            $byTooth[$tooth][] = $state;
+        }
+
+        uksort($byTooth, static function ($left, $right): int {
+            if (ctype_digit((string) $left) && ctype_digit((string) $right)) {
+                return (int) $left <=> (int) $right;
+            }
+
+            return strcmp((string) $left, (string) $right);
+        });
+
+        $teeth = [];
+        foreach ($byTooth as $tooth => $history) {
+            $teeth[] = [
+                'tooth' => (string) $tooth,
+                'dentition' => OdontologiaItemRowContract::dentitionForTooth((string) $tooth),
+                'current' => $history[count($history) - 1],
+                'history' => array_values($history),
+            ];
+        }
+
+        return [
+            'encounterId' => $encounterId,
+            'teeth' => $teeth,
+            'totals' => [
+                'teeth' => count($teeth),
+                'states' => $stateCount,
+                'unassigned' => $unassigned,
+            ],
+        ];
+    }
+
+    /**
+     * Odontograma del paciente al cierre del encounter indicado.
+     *
+     * @return array{encounterId: int, teeth: list<array<string, mixed>>, totals: array{teeth: int, states: int, unassigned: int}}
+     */
+    public function odontogramForEncounter(Encounter $encounter): array
+    {
+        return self::buildOdontogram(
+            $this->getCpoStatesForPersonUntilEncounter(
+                (int) $encounter->subject_persona_id,
+                (int) $encounter->id
+            ),
+            (int) $encounter->id
+        );
+    }
+
+    /**
+     * Odontograma del paciente a la fecha de su último encounter registrado.
+     *
+     * @return array{encounterId: int, teeth: list<array<string, mixed>>, totals: array{teeth: int, states: int, unassigned: int}}
+     */
+    public function odontogramForPerson(int $personaId): array
+    {
+        $lastEncounterId = (int) Encounter::find()
+            ->where(['subject_persona_id' => $personaId, 'deleted_at' => null])
+            ->max('id');
+
+        return self::buildOdontogram(
+            $lastEncounterId > 0
+                ? $this->getCpoStatesForPersonUntilEncounter($personaId, $lastEncounterId)
+                : [],
+            max(0, $lastEncounterId)
+        );
+    }
+
+    /**
+     * @return list<array{pieza: string|null, codigo: string|null, caras: string|null, tipo: string|null, tiempo: string|null, display: string|null, encounterId: int|null, registradoEn: string|null}>
      */
     public function getCpoStatesForPerson(int $personaId): array
     {
@@ -335,7 +423,10 @@ final class OdontologyEncounterService
             ->select([
                 'o.id',
                 'o.code',
+                'o.value_string',
                 'o.value_json',
+                'o.encounter_id',
+                'o.effective_datetime',
                 'e.tooth_number',
                 'e.surfaces',
                 'e.time_qualifier',
@@ -351,7 +442,7 @@ final class OdontologyEncounterService
 
     /**
      * @param list<array<string, mixed>> $rows
-     * @return list<array{pieza: string|null, codigo: string|null, caras: string|null, tipo: string|null, tiempo: string|null}>
+     * @return list<array{pieza: string|null, codigo: string|null, caras: string|null, tipo: string|null, tiempo: string|null, display: string|null, encounterId: int|null, registradoEn: string|null}>
      */
     private function mapStateRows(array $rows): array
     {
@@ -370,6 +461,11 @@ final class OdontologyEncounterService
                 'tiempo' => isset($row['time_qualifier']) && $row['time_qualifier'] !== ''
                     ? (string) $row['time_qualifier']
                     : null,
+                'display' => isset($row['value_string']) && $row['value_string'] !== ''
+                    ? (string) $row['value_string']
+                    : null,
+                'encounterId' => isset($row['encounter_id']) ? (int) $row['encounter_id'] : null,
+                'registradoEn' => isset($row['effective_datetime']) ? (string) $row['effective_datetime'] : null,
             ];
         }
 

@@ -1,31 +1,42 @@
 # Fase 04 — Odontograma en la historia web
 
-**Estado:** pendiente.
+**Estado:** cerrada.
 
 ## Objetivo
 
 Que el odontograma se vea dentro de la historia clínica del paciente en la web, como
 interfaz común y no como pantalla del asistente.
 
-## Alcance
+## Entregado
 
-- Partial de la línea de tiempo de la historia clínica que dibuja las piezas.
-- Selección de pieza y cara con detalle del estado registrado.
-- Sin HTML armado en JavaScript: los datos llegan del endpoint y la vista los recorre.
-- Estados por momento diferenciados visualmente —pasado, presente, futuro—.
-- Estados vacíos explícitos: paciente sin registros odontológicos.
-- Estilos con Bootstrap primero; CSS propio sólo para el dibujo de la pieza.
+- [x] Sección del odontograma en la línea de tiempo, visible sólo si el paciente tiene
+      estados registrados.
+- [x] Piezas agrupadas por dentición —permanente, temporaria, sin clasificar— en el
+      orden que devuelve el servicio.
+- [x] Cada pieza muestra su estado actual con el momento diferenciado por color, y
+      despliega su historia con fecha, caras y momento.
+- [x] Un view builder traduce los datos a filas listas para pintar: la vista sólo
+      recorre y codifica.
+- [x] Desplegado con el componente de colapso de Bootstrap; sin JavaScript propio para
+      esta pantalla y sin HTML armado en JS.
+- [x] Sólo utilidades de Bootstrap para la grilla; sin hoja de estilos nueva.
+- [x] Tests del view model: agrupado, orden, clases y etiquetas por momento, prioridad
+      de texto y saneamiento del identificador de destino.
+
+## Verificación
+
+Se renderizó el partial con un odontograma de prueba y se comprobó que emite el título,
+las piezas de ambas denticiones, el identificador de destino, los badges por momento,
+las caras y la fecha corta.
 
 ## Fuera de alcance
 
 - Edición del estado desde el odontograma.
-- Animaciones o comparación entre encuentros.
+- Comparación entre encuentros.
+- Dibujo anatómico de la pieza.
 
-## Criterio de cierre
+## Resultado
 
-La historia clínica muestra el odontograma del paciente con los datos registrados, en
-tablet y escritorio, sin errores de consola y sin lógica clínica en la vista.
+La historia web muestra el odontograma. Falta la app:
+[fase 05](05-flutter-odontograma.md).
 
-## Depende de
-
-[Fase 03](03-api-odontograma.md).

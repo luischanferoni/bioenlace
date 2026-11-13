@@ -35,6 +35,33 @@ final class OdontologiaItemRowContract
 
     public const DEFAULT_TIME_QUALIFIER = 'PRESENTE';
 
+    public const DENTITION_PERMANENT = 'permanent';
+    public const DENTITION_TEMPORARY = 'temporary';
+
+    /**
+     * Dentición según la notación FDI: 11–48 permanentes, 51–85 temporarias.
+     */
+    public static function dentitionForTooth(?string $tooth): ?string
+    {
+        if ($tooth === null) {
+            return null;
+        }
+        $value = trim($tooth);
+        if ($value === '' || !ctype_digit($value)) {
+            return null;
+        }
+        $number = (int) $value;
+
+        if ($number >= 11 && $number <= 48) {
+            return self::DENTITION_PERMANENT;
+        }
+        if ($number >= 51 && $number <= 85) {
+            return self::DENTITION_TEMPORARY;
+        }
+
+        return null;
+    }
+
     public static function matchesModelo(string $modelo): bool
     {
         return ExtractedRowFields::matchesModelo($modelo, ...self::MODELOS);

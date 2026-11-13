@@ -15,6 +15,8 @@ Los `key` de cada campo son las claves que la IA devuelve, tomadas de `PROMPT_FI
 | Odontología | `Odontology/` | `procedure` + `procedure_odontology_ext`, `observation` + `observation_odontology_ext`, `condition` (diagnósticos) | `GET …/encounter/<id>/odontology` |
 | Oftalmología | `Ophthalmology/` | `observation` (category `ophthalmology`), `vision_prescription` | `GET …/encounter/<id>/ophthalmology` |
 
+La respuesta de odontología incluye `procedures`, `conditions`, `toothStates` (estado del encounter) y `odontogram` (estado acumulado del paciente hasta ese encuentro, agrupado por pieza con `current` e `history`). La historia clínica (`GET …/personas/<id>/historia-clinica`) publica el mismo odontograma en la clave `odontograma`.
+
 Odontología extrae `Tipo`, `Codigo`, `Pieza`, `Caras` y `Tiempo` (PASADA/PRESENTE/FUTURA). `OdontologyEncounterService` resuelve esos campos con los extractores del contrato, así una clave capitalizada (`Pieza`) o en minúscula (`pieza`) persiste igual.
 
 ## Persistencia IA / guardar encounter

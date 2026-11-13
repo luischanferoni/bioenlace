@@ -11,6 +11,10 @@ use frontend\modules\api\v1\controllers\BaseController;
  * Datos odontológicos de un encounter.
  *
  * GET /api/v1/clinical/encounter/<encounterId>/odontology
+ *
+ * Devuelve las prácticas y diagnósticos del encounter, el estado de las piezas
+ * registrado en ese encounter y el odontograma acumulado del paciente hasta ese
+ * encuentro. La autorización es la del encounter (`assertEncounterAccess`).
  */
 class OdontologyController extends BaseController
 {
@@ -43,6 +47,7 @@ class OdontologyController extends BaseController
 
         return $this->ok(array_merge($bundle, [
             'encounterId' => (int) $encounter->id,
+            'odontogram' => $this->service->odontogramForEncounter($encounter),
             'enabledSpecialties' => $specialties,
             'specialtyMetadata' => (new EncounterDefinitionSpecialtyRegistry())
                 ->metadataForSpecialties($specialties),

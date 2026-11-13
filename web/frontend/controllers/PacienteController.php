@@ -13,6 +13,7 @@ use common\models\Clinical\EncounterDefinition;
 use common\components\Domain\Clinical\Encounter\Application\Service\EncounterCaptureContextService;
 use common\components\Domain\Clinical\Encounter\Application\UseCase\RecordEncounterReason;
 use common\components\Domain\Clinical\Encounter\Application\Service\EpisodioTimelineService;
+use common\components\Domain\Clinical\Specialty\Application\Service\OdontologyEncounterService;
 use common\components\Domain\Clinical\Capture\Application\Service\EncounterDefinitionBootstrapService;
 use common\components\Platform\Core\Http\Contract\ApiErrorCatalog;
 use common\components\Platform\Core\Http\Contract\ApiException;
@@ -90,7 +91,8 @@ class PacienteController extends Controller
             $timelineEpisodio,
             $parent !== null ? (string) $parent : null,
             $parentId,
-            (string) Yii::$app->request->get('vista', '')
+            (string) Yii::$app->request->get('vista', ''),
+            (new OdontologyEncounterService())->odontogramForPerson((int) $paciente->id_persona)
         );
 
         $this->view->title = $page['pageTitle'];

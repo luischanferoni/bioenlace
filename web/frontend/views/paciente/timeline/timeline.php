@@ -188,6 +188,10 @@ $tlConfigAttr = Html::encode(Json::encode($page['jsConfig']));
                             <h6 class="mb-2 text-primary"><b>Datos cargados</b></h6>
                             <div id="tl_documentacion_medico" class="text-body"></div>
                         </div>
+
+                        <?php if ($page['odontograma']['visible']): ?>
+                            <?= $this->render('_odontograma', ['odontograma' => $page['odontograma']]) ?>
+                        <?php endif; ?>
                     </div>
 
                     <!-- Contenido automático con loading -->

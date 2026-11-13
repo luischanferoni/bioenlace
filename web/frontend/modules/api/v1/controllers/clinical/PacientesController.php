@@ -25,6 +25,7 @@ use common\components\Domain\Clinical\Encounter\Application\Presentation\Conditi
 use common\components\Domain\Clinical\Encounter\Application\Service\EpisodioHistoriaBannerService;
 use common\components\Domain\Clinical\Encounter\Application\Service\EpisodioSignosVitalesService;
 use common\components\Domain\Clinical\Encounter\Application\Service\EpisodioTimelineService;
+use common\components\Domain\Clinical\Specialty\Application\Service\OdontologyEncounterService;
 use common\components\Domain\Person\Identity\Application\Service\PersonaSignosVitalesService;
 use frontend\modules\api\v1\controllers\clinical\ClinicalAccessTrait;
 /**
@@ -228,6 +229,7 @@ class PacientesController extends BaseController
             ],
             'signos_vitales' => $signosVitales,
             'signos_vitales_episodio' => $signosVitalesEpisodio,
+            'odontograma' => (new OdontologyEncounterService())->odontogramForPerson((int) $persona->id_persona),
             'patient_encounter_reasons' => $patientEncounterReasons,
             'contexto_episodio' => $contextoEpisodio,
             'timeline_episodio' => $timelineEpisodio,

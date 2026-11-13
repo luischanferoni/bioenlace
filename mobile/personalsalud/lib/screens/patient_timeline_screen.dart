@@ -36,6 +36,7 @@ import 'timeline/capture/capture_review_panel.dart';
 import 'timeline/capture/pending_captures_panel.dart';
 import 'timeline/blocks/informacion_medica_card.dart';
 import 'timeline/blocks/motivos_intake_card.dart';
+import 'timeline/blocks/odontograma_card.dart';
 import 'timeline/blocks/paciente_header_card.dart';
 import 'timeline/blocks/signos_vitales_card.dart';
 
@@ -340,6 +341,12 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                               SignosVitalesCard(sv:
                                 _historiaClinicaData!.signosVitales,
                               ),
+                            if (!_historiaClinicaData!.odontograma.vacio) ...[
+                              BioSpacing.gapH(BioSpacing.md),
+                              OdontogramaCard(odontograma:
+                                _historiaClinicaData!.odontograma,
+                              ),
+                            ],
                             if (_esCapturaEpisodio) ...[
                               BioSpacing.gapH(BioSpacing.md),
                               EpisodioBanner(ctx: _historiaClinicaData!.contextoEpisodio, onAction: _onEpisodioAccion),

@@ -3,6 +3,7 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
+use common\components\Domain\Clinical\Capture\Domain\RowContract\OdontologiaItemRowContract;
 use common\components\Domain\Clinical\Specialty\Application\Service\OdontologyEncounterService;
 
 /**
@@ -57,5 +58,69 @@ class OdontologyToothStateTest extends Unit
 
         $this->assertNotNull($fields);
         $this->assertNull($fields['tiempo']);
+    }
+
+    public function testDentitionFollowsFdiNotation(): void
+    {
+        $this->assertSame(
+            OdontologiaItemRowContract::DENTITION_PERMANENT,
+            OdontologiaItemRowContract::dentitionForTooth('16')
+        );
+        $this->assertSame(
+            OdontologiaItemRowContract::DENTITION_PERMANENT,
+            OdontologiaItemRowContract::dentitionForTooth('48')
+        );
+        $this->assertSame(
+            OdontologiaItemRowContract::DENTITION_TEMPORARY,
+            OdontologiaItemRowContract::dentitionForTooth('51')
+        );
+        $this->assertSame(
+            OdontologiaItemRowContract::DENTITION_TEMPORARY,
+            OdontologiaItemRowContract::dentitionForTooth('85')
+        );
+
+        foreach (['', '49', '50', '86', 'derecha', null] as $invalid) {
+            $this->assertNull(OdontologiaItemRowContract::dentitionForTooth($invalid));
+        }
+    }
+
+    public function testBuildOdontogramGroupsByToothAndKeepsHistory(): void
+    {
+        $states = [
+            ['pieza' => '16', 'codigo' => '33070004', 'caras' => 'O', 'tipo' => 'Carie', 'tiempo' => 'PASADA'],
+            ['pieza' => '11', 'codigo' => 'ausente', 'caras' => null, 'tipo' => null, 'tiempo' => null],
+            ['pieza' => '16', 'codigo' => 'obturada', 'caras' => 'O', 'tipo' => 'Estado', 'tiempo' => 'PRESENTE'],
+            ['pieza' => null, 'codigo' => '543', 'caras' => null, 'tipo' => null, 'tiempo' => null],
+        ];
+
+        $chart = OdontologyEncounterService::buildOdontogram($states, 42);
+
+        $this->assertSame(42, $chart['encounterId']);
+        $this->assertSame(['11', '16'], array_column($chart['teeth'], 'tooth'));
+        $this->assertSame(
+            [OdontologiaItemRowContract::DENTITION_PERMANENT, OdontologiaItemRowContract::DENTITION_PERMANENT],
+            array_column($chart['teeth'], 'dentition')
+        );
+
+        $first = $chart['teeth'][0];
+        $this->assertSame('ausente', $first['current']['codigo']);
+        $this->assertCount(1, $first['history']);
+
+        $second = $chart['teeth'][1];
+        $this->assertSame('obturada', $second['current']['codigo']);
+        $this->assertCount(2, $second['history']);
+
+        $this->assertSame(
+            ['teeth' => 2, 'states' => 4, 'unassigned' => 1],
+            $chart['totals']
+        );
+    }
+
+    public function testBuildOdontogramWithoutStatesIsEmpty(): void
+    {
+        $chart = OdontologyEncounterService::buildOdontogram([], 7);
+
+        $this->assertSame([], $chart['teeth']);
+        $this->assertSame(['teeth' => 0, 'states' => 0, 'unassigned' => 0], $chart['totals']);
     }
 }

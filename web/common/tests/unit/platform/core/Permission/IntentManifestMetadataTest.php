@@ -3,6 +3,7 @@
 namespace common\tests\unit\platform\core\Permission;
 
 use Codeception\Test\Unit;
+use common\components\Platform\Assistant\Catalog\IntentSchemaPaths;
 use common\components\Platform\Core\Permission\IntentFamilyCatalog;
 use common\components\Platform\Core\Permission\IntentManifestIndex;
 use common\components\Platform\Core\Permission\IntentManifestMetadata;
@@ -13,14 +14,15 @@ class IntentManifestMetadataTest extends Unit
 {
     protected function _before(): void
     {
+        IntentSchemaPaths::resetIndexCache();
         IntentManifestIndex::resetCache();
         IntentFamilyCatalog::resetCache();
     }
 
     public function testPilotCondicionLaboralIntentIsValid(): void
     {
-        $path = dirname(__DIR__, 5)
-            . '/metadata/bioenlace/organization/intents/update/condicion-laboral.editar-propio.yaml';
+        $path = IntentSchemaPaths::resolveFileForIntentId('condicion-laboral.editar-propio');
+        $this->assertNotNull($path);
         $this->assertFileExists($path);
 
         $data = Yaml::parseFile($path);

@@ -14,17 +14,38 @@ final class DomainOperationPolicyCatalog
     /**
      * Operaciones solo ABAC (sin permiso assignable en auth_item; RBAC vía ruta/intent padre).
      *
+     * Las claves legacy (`Turno.*`, `Internacion.*`, …) no son assignables en el
+     * modelo de intents: la asignación vive en el intent/capability padre y la
+     * política de recurso decide el ABAC. `CatalogIntegrityDomainPoliciesTest`
+     * exige que toda operación del YAML esté acá o en el catálogo.
+     *
      * @var list<string>
      */
     public const DOMAIN_ONLY_OPERATIONS = [
-        'Encounter.access',
+        'Atencion.view_last',
+        'Atencion.view_mine',
         'Clinical.staff_efector',
+        'Encounter.access',
+        'GuardiaEpisode.triage',
+        'GuardiaEpisode.view_board',
+        'InpatientEpicrisisTemplate.admin',
+        'Internacion.change_bed',
+        'Internacion.create',
+        'Internacion.discharge',
         'Internacion.staff_access',
-        'ProfesionalEfectorServicio.flow_closure_staff',
-        'ProfesionalEfectorServicio.flow_closure_own',
-        'ProfesionalEfectorServicio.condicion_laboral_staff',
+        'Internacion.view_map',
         'ProfesionalEfectorServicio.condicion_laboral_own',
+        'ProfesionalEfectorServicio.condicion_laboral_staff',
+        'ProfesionalEfectorServicio.create',
+        'ProfesionalEfectorServicio.delete',
+        'ProfesionalEfectorServicio.flow_closure_own',
+        'ProfesionalEfectorServicio.flow_closure_staff',
         'ProfesionalEfectorServicio.pes_own',
+        'Turno.cancel',
+        'Turno.confirmar_asistencia',
+        'Turno.create',
+        'Turno.reprogramar',
+        'Turno.view_conflicts',
     ];
 
     private static function configFile(): string

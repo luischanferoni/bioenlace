@@ -7,6 +7,7 @@ use common\components\Domain\Clinical\Specialty\Domain\EncounterDefinitionSpecia
 
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\Capture\Domain\Policy\CaptureCompletenessPolicy;
+use common\components\Domain\Clinical\Capture\Domain\RowContract\OdontologiaItemRowContract;
 use common\models\Clinical\Input\OdontologiaItemInput;
 use common\models\Clinical\Input\OftalmologiaEstudioInput;
 
@@ -16,6 +17,40 @@ class SpecialtyCaptureInputTest extends Unit
     {
         $input = OdontologiaItemInput::fromExtractedRow(['Codigo' => 'Obturación']);
         $this->assertTrue($input->validate());
+    }
+
+    public function testOdontologiaMapsDentalFieldsFromPromptKeys(): void
+    {
+        $input = OdontologiaItemInput::fromExtractedRow([
+            'Codigo' => 'Obturación',
+            'Pieza' => '16',
+            'Caras' => 'M',
+            'Tiempo' => 'futura',
+        ]);
+
+        $this->assertTrue($input->validate(), implode(' ', $input->getFirstErrors()));
+        $this->assertSame('16', $input->pieza);
+        $this->assertSame('M', $input->caras);
+        $this->assertSame('FUTURA', $input->tiempo);
+    }
+
+    public function testOdontologiaDiscardsUnknownTimeQualifier(): void
+    {
+        $input = OdontologiaItemInput::fromExtractedRow(['Codigo' => 'Limpieza', 'Tiempo' => 'ayer']);
+
+        $this->assertNull($input->tiempo);
+        $this->assertTrue($input->validate());
+    }
+
+    public function testOdontologiaStillRequiresTipoOrCodigoWhenOnlyDentalFieldsCome(): void
+    {
+        $input = OdontologiaItemInput::fromExtractedRow(['Pieza' => '16']);
+
+        $this->assertFalse($input->validate());
+        $this->assertSame(
+            [OdontologiaItemRowContract::FIELD_TIPO, OdontologiaItemRowContract::FIELD_CODIGO],
+            $input->missingFieldsForCompleteness()
+        );
     }
 
     public function testOdontologiaRejectsEmpty(): void
@@ -120,8 +155,14 @@ class SpecialtyCaptureInputTest extends Unit
             array_column($byCode['odontology']['sections'], 'key')
         );
         $this->assertSame([1, 2, 3], array_column($byCode['odontology']['sections'], 'order'));
+        $promptFields = OdontologiaItemInput::promptFieldNames();
+        $this->assertSame(
+            [OdontologiaItemRowContract::FIELD_PIEZA, OdontologiaItemRowContract::FIELD_CARAS, OdontologiaItemRowContract::FIELD_TIEMPO],
+            array_slice($promptFields, 2)
+        );
         foreach ($byCode['odontology']['sections'] as $section) {
-            $this->assertSame([1, 2], array_column($section['fields'], 'order'));
+            $this->assertSame($promptFields, array_column($section['fields'], 'key'));
+            $this->assertSame(range(1, count($promptFields)), array_column($section['fields'], 'order'));
             $this->assertSame(
                 [
                     'type' => 'at_least_one',

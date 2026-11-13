@@ -29,7 +29,7 @@ final class OftalmologiaEstudioInput extends Model
      */
     public static function promptFieldNames(): array
     {
-        return [self::FIELD_CODIGO, self::FIELD_OJO, self::FIELD_INFORME];
+        return OftalmologiaEstudioRowContract::PROMPT_FIELDS;
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Clinical\Specialty\Application\Service;
 
+use common\components\Domain\Clinical\Capture\Domain\RowContract\OdontologiaItemRowContract;
 use common\components\Domain\Clinical\Encounter\Domain\ConditionVerificationStatus;
 
 use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
@@ -89,9 +90,9 @@ final class OdontologyEncounterService
             $procedure = new Procedure();
             $procedure->encounter_id = $encounter->id;
             $procedure->subject_persona_id = $encounter->subject_persona_id;
-            $procedure->status = $this->statusFromTimeQualifier($row['tiempo'] ?? null);
-            $procedure->code = (string) ($row['codigo'] ?? $row['conceptId'] ?? '');
-            $procedure->display = $row['termino'] ?? $row['Nombre de la practica'] ?? null;
+            $procedure->status = $this->statusFromTimeQualifier(OdontologiaItemRowContract::extractTiempo($row));
+            $procedure->code = OdontologiaItemRowContract::extractCodigo($row);
+            $procedure->display = OdontologiaItemRowContract::extractTermino($row);
             $procedure->performed_datetime = date('Y-m-d H:i:s');
             if (!$procedure->save()) {
                 throw new \RuntimeException('Procedure odonto: ' . json_encode($procedure->getErrors()));
@@ -99,9 +100,9 @@ final class OdontologyEncounterService
 
             $ext = new ProcedureOdontologyExt();
             $ext->procedure_id = $procedure->id;
-            $ext->tooth_number = isset($row['pieza']) ? (string) $row['pieza'] : null;
-            $ext->surfaces = isset($row['caras']) ? (string) $row['caras'] : null;
-            $ext->time_qualifier = $this->normalizeTimeQualifier($row['tiempo'] ?? null);
+            $ext->tooth_number = OdontologiaItemRowContract::extractPieza($row) ?: null;
+            $ext->surfaces = OdontologiaItemRowContract::extractCaras($row) ?: null;
+            $ext->time_qualifier = $this->normalizeTimeQualifier(OdontologiaItemRowContract::extractTiempo($row));
             if (!$ext->save()) {
                 throw new \RuntimeException('Procedure odonto ext: ' . json_encode($ext->getErrors()));
             }
@@ -176,15 +177,15 @@ final class OdontologyEncounterService
             if (!is_array($row)) {
                 continue;
             }
-            $codigo = $row['codigo'] ?? null;
-            if ($codigo === null || $codigo === '') {
+            $codigo = OdontologiaItemRowContract::extractCodigo($row);
+            if ($codigo === '') {
                 continue;
             }
             $condition = new Condition();
             $condition->encounter_id = $encounter->id;
             $condition->subject_persona_id = $encounter->subject_persona_id;
-            $condition->code = is_numeric($codigo) ? (string) $codigo : null;
-            $condition->display = $row['termino'] ?? null;
+            $condition->code = is_numeric($codigo) ? $codigo : null;
+            $condition->display = OdontologiaItemRowContract::extractTermino($row);
             $condition->clinical_status = ConditionClinicalStatus::ACTIVE;
             $condition->verification_status = ConditionVerificationStatus::CONFIRMED;
             $condition->recorded_date = date('Y-m-d H:i:s');
@@ -205,18 +206,19 @@ final class OdontologyEncounterService
             if (!is_array($row)) {
                 continue;
             }
+            $codigo = OdontologiaItemRowContract::extractCodigo($row);
+            if ($codigo === '') {
+                continue;
+            }
             $condition = new Condition();
             $condition->encounter_id = $encounter->id;
             $condition->subject_persona_id = $encounter->subject_persona_id;
-            $condition->code = (string) ($row['codigo'] ?? $row['conceptId'] ?? '');
-            $condition->display = $row['termino'] ?? null;
+            $condition->code = $codigo;
+            $condition->display = OdontologiaItemRowContract::extractTermino($row);
             $condition->clinical_status = ConditionClinicalStatus::ACTIVE;
             $condition->verification_status = ConditionVerificationStatus::CONFIRMED;
             $condition->recorded_date = date('Y-m-d H:i:s');
             $condition->note = $this->buildOdontologyNote($row);
-            if ($condition->code === '') {
-                continue;
-            }
             $condition->save(false);
         }
     }
@@ -252,17 +254,17 @@ final class OdontologyEncounterService
         return $t === 'FUTURA' ? ProcedureStatus::PREPARATION : ProcedureStatus::COMPLETED;
     }
 
-    private function normalizeTimeQualifier(?string $tiempo): ?string
+    private function normalizeTimeQualifier(?string $tiempo): string
     {
         if ($tiempo === null || $tiempo === '') {
-            return 'PRESENTE';
+            return OdontologiaItemRowContract::DEFAULT_TIME_QUALIFIER;
         }
         $u = strtoupper(trim($tiempo));
-        if (in_array($u, ['PASADA', 'PRESENTE', 'FUTURA'], true)) {
+        if (in_array($u, OdontologiaItemRowContract::TIME_QUALIFIERS, true)) {
             return $u;
         }
 
-        return 'PRESENTE';
+        return OdontologiaItemRowContract::DEFAULT_TIME_QUALIFIER;
     }
 
     /**
@@ -271,9 +273,9 @@ final class OdontologyEncounterService
     private function buildOdontologyNote(array $row): string
     {
         $meta = [
-            'pieza' => $row['pieza'] ?? null,
-            'caras' => $row['caras'] ?? null,
-            'tipo' => $row['tipo'] ?? null,
+            'pieza' => OdontologiaItemRowContract::extractPieza($row) ?: null,
+            'caras' => OdontologiaItemRowContract::extractCaras($row) ?: null,
+            'tipo' => OdontologiaItemRowContract::extractTipo($row) ?: null,
         ];
 
         return 'odontology:' . json_encode($meta, JSON_UNESCAPED_UNICODE);
@@ -285,10 +287,10 @@ final class OdontologyEncounterService
     private function buildOdontologyStateNote(array $row): string
     {
         $meta = [
-            'pieza' => $row['pieza'] ?? null,
-            'caras' => $row['caras'] ?? null,
-            'tipo' => $row['tipo'] ?? null,
-            'codigo' => $row['codigo'] ?? null,
+            'pieza' => OdontologiaItemRowContract::extractPieza($row) ?: null,
+            'caras' => OdontologiaItemRowContract::extractCaras($row) ?: null,
+            'tipo' => OdontologiaItemRowContract::extractTipo($row) ?: null,
+            'codigo' => OdontologiaItemRowContract::extractCodigo($row) ?: null,
         ];
 
         return 'odontology_state:' . json_encode($meta, JSON_UNESCAPED_UNICODE);

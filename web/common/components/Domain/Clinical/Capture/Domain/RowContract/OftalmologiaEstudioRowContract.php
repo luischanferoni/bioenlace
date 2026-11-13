@@ -13,6 +13,9 @@ final class OftalmologiaEstudioRowContract
     public const FIELD_OJO = 'Ojo';
     public const FIELD_INFORME = 'Informe';
 
+    /** @var list<string> claves que la IA debe devolver por fila (fuente única del prompt) */
+    public const PROMPT_FIELDS = [self::FIELD_CODIGO, self::FIELD_OJO, self::FIELD_INFORME];
+
     public static function matchesModelo(string $modelo): bool
     {
         return ExtractedRowFields::matchesModelo($modelo, self::MODELO);

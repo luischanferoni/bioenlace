@@ -1,0 +1,32 @@
+# SUGERENCIA — no es un prompt activo.
+#
+# Copia hermana de `capture-extraction.yaml` con los textos que debería llevar su
+# bloque `category_hints`. No está registrada en `common/config/prompts.php`, así
+# que ningún runtime la carga: es una propuesta para revisión humana.
+#
+# Qué cambia respecto del original:
+#   - Odontología: explicita Pieza (FDI), Caras (M, O, D, V, L, P) y Tiempo
+#     (PASADA | PRESENTE | FUTURA), que el contrato ya pide en `PROMPT_FIELDS`.
+#   - Oftalmología: agrega subdatos de práctica y receta de lentes.
+#   - Enfermería: recupera FR, SatO2, glucemia, Glasgow, peso y talla, que hoy
+#     están comentados en `EncounterNursingCare::requeridosPrompt()`.
+
+version: 2
+
+encounter_capture_extraction:
+  category_hints:
+    EncounterReason: queja o síntoma referido (cefalea, dolor, malestar, etc.); no lo dejes vacío si el texto lo menciona
+    EncounterDiagnosis: diagnóstico, evolución o enfermedad nombrada por el profesional
+    EncounterMedication: medicación mencionada o indicada; objetos Nombre+Tipo(mentioned|ordered)+Cantidad+Via+Frecuencia+tipos/duración — si Tipo=ordered exigir Cantidad y Frecuencia
+    EncounterPractice: mediciones o prácticas realizadas en el encounter (ECG, etc.); objetos Practica+Resultado+Codigo — Resultado y Codigo opcionales; nunca reposo/dieta/control; las cifras de signos vitales (TA, FC, FR, SatO2, temp) van en EncounterNursingCare
+    EncounterReferralRequest: derivación/pedido a otro servicio del centro O conducta de guardia (pase a internación/UCI, derivación a otra institución); campos Servicio (área institucional), Acto, Modo (consulta|interconsulta|practica|estudio); si el profesional indica internar / UCI / cama, dejalo explícito en Servicio o Acto (p. ej. "internación")
+    EncounterInstruction: instrucciones al paciente (reposo, hidratación, control, alta domiciliaria, pautas de alarma); objetos Indicacion+Tipo(counseling|conditional|follow_up)+Plazo dias — plazo solo si Tipo=follow_up o hay días explícitos; nunca signos vitales ni TA; en guardia, si da el alta o indica control, reflejalo acá
+    EncounterNursingCare: signos vitales medidos o dictados durante el encounter (TA sistólica/diastólica, FC, FR, saturación O2, temperatura, glucemia, Glasgow, peso, talla); sugerí cargarlos si el profesional menciona cifras o si faltan en el episodio
+    OphthalmologyPractice: práctica o procedimiento oftalmológico; objetos Ojo(OD|OI|AO)+Prueba+Estado+Informe+Tipo — Ojo obligatorio cuando la práctica es monocular
+    OphthalmologyStudy: estudio oftalmológico solicitado o realizado; objetos Codigo+Ojo+Informe
+    OphthalmologyLensPrescription: receta o indicación de lentes; un objeto por receta con OD y OI, cada uno con Esfera+Cilindro+Eje+Adicion — unidades en dioptrías, eje en grados
+    EncounterDentalPractice: práctica odontológica realizada, en curso o planificada; objetos Tipo+Codigo+Pieza+Caras+Tiempo — Pieza en notación FDI (11–48 permanentes, 51–85 temporarias); Caras M,O,D,V,L,P cuando la práctica es por cara; Tiempo PASADA|PRESENTE|FUTURA
+    EncounterDentalDiagnosis: diagnóstico odontológico; objetos Tipo+Codigo+Pieza+Caras — no repitas en Diagnóstico la práctica ya registrada
+    EncounterDentalStatus: estado de una pieza (caries, obturada, ausente, corona, implante, endodoncia); objetos Tipo+Codigo+Pieza+Caras — una fila por pieza; no repitas el estado si no cambió respecto del último registro
+    EncounterNutritionOrder: régimen o indicación de internación
+    EncounterFluidBalance: balance hídrico

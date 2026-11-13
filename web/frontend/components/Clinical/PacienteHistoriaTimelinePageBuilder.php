@@ -36,6 +36,7 @@ final class PacienteHistoriaTimelinePageBuilder
      *   timelineEpisodioItemCount: int,
      *   registerGuardiaAssets: bool,
      *   odontograma: array<string, mixed>,
+     *   recetaLentes: array<string, mixed>,
      *   jsConfig: array<string, mixed>
      * }
      */
@@ -45,7 +46,8 @@ final class PacienteHistoriaTimelinePageBuilder
         ?string $parent,
         int $parentId,
         string $vistaQuery = '',
-        ?array $odontograma = null
+        ?array $odontograma = null,
+        ?array $recetaLentes = null
     ): array {
         $personaId = (int) $persona->id_persona;
         $parentUpper = strtoupper(trim((string) $parent));
@@ -111,6 +113,7 @@ final class PacienteHistoriaTimelinePageBuilder
             'timelineEpisodioItemCount' => $timelineEpisodioItemCount,
             'registerGuardiaAssets' => $esContextoGuardia,
             'odontograma' => OdontogramaViewBuilder::build($odontograma),
+            'recetaLentes' => RecetaLentesViewBuilder::build($recetaLentes),
             'jsConfig' => $jsConfig,
         ];
     }

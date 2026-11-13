@@ -15,9 +15,9 @@ Los `key` de cada campo son las claves que la IA devuelve, tomadas de `PROMPT_FI
 | Odontología | `Odontology/` | `procedure` + `procedure_odontology_ext`, `observation` + `observation_odontology_ext`, `condition` (diagnósticos) | `GET …/encounter/<id>/odontology` |
 | Oftalmología | `Ophthalmology/` | `observation` (category `ophthalmology`), `vision_prescription` | `GET …/encounter/<id>/ophthalmology` |
 
-La respuesta de odontología incluye `procedures`, `conditions`, `toothStates` (estado del encounter) y `odontogram` (estado acumulado del paciente hasta ese encuentro, agrupado por pieza con `current` e `history`). La historia clínica (`GET …/personas/<id>/historia-clinica`) publica el mismo odontograma en la clave `odontograma`.
+La respuesta de odontología incluye `procedures`, `conditions`, `toothStates` (estado del encounter) y `odontogram` (estado acumulado del paciente hasta ese encuentro, agrupado por pieza con `current` e `history`). La historia clínica (`GET …/personas/<id>/historia-clinica`) publica el odontograma en `odontograma` y la última receta de lentes en `receta_lentes`.
 
-Odontología extrae `Tipo`, `Codigo`, `Pieza`, `Caras` y `Tiempo` (PASADA/PRESENTE/FUTURA). `OdontologyEncounterService` resuelve esos campos con los extractores del contrato, así una clave capitalizada (`Pieza`) o en minúscula (`pieza`) persiste igual.
+Odontología extrae `Tipo`, `Codigo`, `Pieza`, `Caras` y `Tiempo` (PASADA/PRESENTE/FUTURA). Oftalmología extrae `Codigo`, `Ojo` (OD/OI/AO), `Prueba`, `Estado`, `Informe` y `Tipo` en prácticas, `Codigo`, `Ojo` e `Informe` en estudios, y las ocho medidas de la receta de lentes. `OdontologyEncounterService` y `OphthalmologyEncounterService` resuelven esos campos con los extractores del contrato, así una clave capitalizada (`Pieza`, `OD esfera`) o en snake_case (`pieza`, `od_esfera`) persiste igual.
 
 ## Persistencia IA / guardar encounter
 
@@ -39,5 +39,4 @@ Solo se persisten modelos listados en la definición del encounter (`EncounterDe
 - Obstetricia (`observation` panel)
 - Enfermería (`procedure` / `task`) y completar `requeridosPrompt` de `EncounterNursingCare`
 - `device_request` prótesis odonto
-- Pedir a la IA los campos de `OphthalmologyPractice` y `OphthalmologyLensPrescription` (hoy `extracted: false`)
 - Yii web / UI JSON por especialidad (fase 11)

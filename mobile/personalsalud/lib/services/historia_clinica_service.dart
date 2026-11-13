@@ -1379,6 +1379,64 @@ class EvolucionInternacionItem {
   }
 }
 
+/// Bloque `receta_lentes` de GET /personas/{id}/historia-clinica.
+class RecetaLentesClinica {
+  final String registradoEn;
+  final RecetaLentesOjo od;
+  final RecetaLentesOjo oi;
+
+  const RecetaLentesClinica({
+    this.registradoEn = '',
+    this.od = const RecetaLentesOjo(),
+    this.oi = const RecetaLentesOjo(),
+  });
+
+  bool get vacia => od.vacia && oi.vacia;
+
+  factory RecetaLentesClinica.fromJson(Map<String, dynamic>? json) {
+    if (json == null) return const RecetaLentesClinica();
+
+    return RecetaLentesClinica(
+      registradoEn: '${json['registradoEn'] ?? ''}'.trim(),
+      od: RecetaLentesOjo.fromJson(
+        json['od'] is Map ? Map<String, dynamic>.from(json['od'] as Map) : null,
+      ),
+      oi: RecetaLentesOjo.fromJson(
+        json['oi'] is Map ? Map<String, dynamic>.from(json['oi'] as Map) : null,
+      ),
+    );
+  }
+}
+
+/// Medidas de un ojo en la receta de lentes.
+class RecetaLentesOjo {
+  final String esfera;
+  final String cilindro;
+  final String eje;
+  final String adicion;
+
+  const RecetaLentesOjo({
+    this.esfera = '',
+    this.cilindro = '',
+    this.eje = '',
+    this.adicion = '',
+  });
+
+  bool get vacia =>
+      esfera.isEmpty && cilindro.isEmpty && eje.isEmpty && adicion.isEmpty;
+
+  factory RecetaLentesOjo.fromJson(Map<String, dynamic>? json) {
+    if (json == null) return const RecetaLentesOjo();
+    String text(String key) => '${json[key] ?? ''}'.trim();
+
+    return RecetaLentesOjo(
+      esfera: text('esfera'),
+      cilindro: text('cilindro'),
+      eje: text('eje'),
+      adicion: text('adicion'),
+    );
+  }
+}
 /// Bloque `odontograma` de GET /personas/{id}/historia-clinica.
 class OdontogramaClinica {
   final List<OdontogramaPieza> piezas;
@@ -1497,6 +1555,7 @@ class HistoriaClinicaResponse {
   final TimelineEpisodioFeed? timelineEpisodio;
   final SignosVitalesEpisodio? signosVitalesEpisodio;
   final OdontogramaClinica odontograma;
+  final RecetaLentesClinica recetaLentes;
   final CarePackCohorteStaff? carePackCohorte;
   final bool careCohortHabilitado;
   final DocumentacionMedico documentacionMedico;
@@ -1517,6 +1576,7 @@ class HistoriaClinicaResponse {
     this.timelineEpisodio,
     this.signosVitalesEpisodio,
     this.odontograma = const OdontogramaClinica(),
+    this.recetaLentes = const RecetaLentesClinica(),
     this.carePackCohorte,
     this.careCohortHabilitado = false,
     required this.documentacionMedico,
@@ -1595,6 +1655,11 @@ class HistoriaClinicaResponse {
       odontograma: OdontogramaClinica.fromJson(
         json['odontograma'] is Map
             ? Map<String, dynamic>.from(json['odontograma'] as Map)
+            : null,
+      ),
+      recetaLentes: RecetaLentesClinica.fromJson(
+        json['receta_lentes'] is Map
+            ? Map<String, dynamic>.from(json['receta_lentes'] as Map)
             : null,
       ),
       documentacionMedico: DocumentacionMedico.fromJson(

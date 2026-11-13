@@ -525,4 +525,46 @@ void main() {
 
     expect(response.odontograma.vacio, isTrue);
     expect(response.odontograma.piezas, isEmpty);
+  });
+  test('reads the lens prescription block of the clinical history', () {
+    final response = HistoriaClinicaResponse.fromJson(<String, dynamic>{
+      'persona': <String, dynamic>{'id': 12, 'nombre_completo': 'Paciente'},
+      'informacion_medica': <String, dynamic>{},
+      'receta_lentes': <String, dynamic>{
+        'encounterId': 34,
+        'registradoEn': '2026-11-13 16:52:05',
+        'od': <String, dynamic>{
+          'esfera': '-1.25',
+          'cilindro': '-0.50',
+          'eje': '90',
+          'adicion': '+1.00',
+        },
+        'oi': <String, dynamic>{'esfera': '-0.75', 'eje': '80'},
+      },
+    });
+
+    final receta = response.recetaLentes;
+    expect(receta.vacia, isFalse);
+    expect(receta.registradoEn, '2026-11-13 16:52:05');
+    expect(receta.od.esfera, '-1.25');
+    expect(receta.od.cilindro, '-0.50');
+    expect(receta.od.eje, '90');
+    expect(receta.od.adicion, '+1.00');
+    expect(receta.oi.esfera, '-0.75');
+    expect(receta.oi.cilindro, isEmpty);
+    expect(receta.oi.eje, '80');
+    expect(receta.oi.adicion, isEmpty);
+    expect(receta.oi.vacia, isFalse);
+  });
+
+  test('treats a missing lens prescription as empty', () {
+    final response = HistoriaClinicaResponse.fromJson(<String, dynamic>{
+      'persona': <String, dynamic>{'id': 12, 'nombre_completo': 'Paciente'},
+      'informacion_medica': <String, dynamic>{},
+    });
+
+    expect(response.recetaLentes.vacia, isTrue);
+    expect(response.recetaLentes.od.vacia, isTrue);
+    expect(response.recetaLentes.oi.vacia, isTrue);
+    expect(response.recetaLentes.registradoEn, isEmpty);
   });}

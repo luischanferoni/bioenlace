@@ -5,6 +5,8 @@ namespace common\components\Domain\Clinical\Specialty\Domain\Catalog;
 use common\components\Domain\Clinical\Capture\Domain\Catalog\EncounterDefinitionWorkflowCatalog;
 use common\components\Domain\Clinical\Capture\Domain\RowContract\OdontologiaItemRowContract;
 use common\components\Domain\Clinical\Capture\Domain\RowContract\OftalmologiaEstudioRowContract;
+use common\components\Domain\Clinical\Capture\Domain\RowContract\OftalmologiaPracticaRowContract;
+use common\components\Domain\Clinical\Capture\Domain\RowContract\OftalmologiaRecetaRowContract;
 
 /**
  * Fuente única de las especialidades clínicas y de lo que se interpreta en cada una.
@@ -202,35 +204,9 @@ final class ClinicalSpecialtyCatalog
                 'Ojo, prueba, estado e informe de cada práctica y estudio, y receta de lentes '
                 . 'con esfera, cilindro, eje y adición por ojo.',
                 [
-                    [
-                        'key' => 'OphthalmologyPractice',
-                        'label' => 'Prácticas oftalmológicas',
-                        'order' => 1,
-                        'fields' => [
-                            self::field('ojo', 'Ojo', null, 'text', 1, false),
-                            self::field('prueba', 'Prueba', null, 'text', 2, false),
-                            self::field('estado', 'Estado', null, 'text', 3, false),
-                            self::field('informe', 'Informe', null, 'text', 4, false),
-                            self::field('tipo', 'Tipo', null, 'text', 5, false),
-                        ],
-                        'validation' => ['type' => 'at_least_one', 'fields' => ['Codigo', 'Informe']],
-                    ],
+                    self::practiceSection(),
                     self::studySection(),
-                    [
-                        'key' => 'OphthalmologyLensPrescription',
-                        'label' => 'Receta de lentes',
-                        'order' => 3,
-                        'fields' => [
-                            self::field('od_esfera', 'OD esfera', 'D', 'decimal', 1, false),
-                            self::field('od_cilindro', 'OD cilindro', 'D', 'decimal', 2, false),
-                            self::field('od_eje', 'OD eje', '°', 'integer', 3, false),
-                            self::field('od_add', 'OD adición', 'D', 'decimal', 4, false),
-                            self::field('oi_esfera', 'OI esfera', 'D', 'decimal', 5, false),
-                            self::field('oi_cilindro', 'OI cilindro', 'D', 'decimal', 6, false),
-                            self::field('oi_eje', 'OI eje', '°', 'integer', 7, false),
-                            self::field('oi_add', 'OI adición', 'D', 'decimal', 8, false),
-                        ],
-                    ],
+                    self::lensSection(),
                 ]
             ),
             self::OPHTHALMOLOGY_OPTOMETRY => self::planned(
@@ -488,6 +464,91 @@ final class ClinicalSpecialtyCatalog
             'validation' => [
                 'type' => 'at_least_one',
                 'fields' => [OdontologiaItemRowContract::FIELD_TIPO, OdontologiaItemRowContract::FIELD_CODIGO],
+            ],
+        ];
+    }
+
+    /**
+     * Sección de prácticas oftalmológicas: campos desde el contrato de fila.
+     *
+     * @return array<string, mixed>
+     */
+    private static function practiceSection(): array
+    {
+        $labels = [
+            OftalmologiaPracticaRowContract::FIELD_CODIGO => ['Código', null, 'text'],
+            OftalmologiaPracticaRowContract::FIELD_OJO => ['Ojo', null, 'enum'],
+            OftalmologiaPracticaRowContract::FIELD_PRUEBA => ['Prueba', null, 'text'],
+            OftalmologiaPracticaRowContract::FIELD_ESTADO => ['Estado', null, 'text'],
+            OftalmologiaPracticaRowContract::FIELD_INFORME => ['Informe', null, 'text'],
+            OftalmologiaPracticaRowContract::FIELD_TIPO => ['Tipo', null, 'text'],
+        ];
+
+        $fields = [];
+        $index = 0;
+        foreach (OftalmologiaPracticaRowContract::PROMPT_FIELDS as $promptKey) {
+            $index++;
+            [$fieldLabel, $unit, $format] = $labels[$promptKey] ?? [$promptKey, null, 'text'];
+            $fields[] = self::field(
+                $promptKey,
+                $fieldLabel,
+                $unit,
+                $format,
+                $index,
+                true,
+                $format === 'enum' ? OftalmologiaPracticaRowContract::EYE_VALUES : null
+            );
+        }
+
+        return [
+            'key' => OftalmologiaPracticaRowContract::MODELO,
+            'label' => 'Prácticas oftalmológicas',
+            'order' => 1,
+            'fields' => $fields,
+            'validation' => [
+                'type' => 'at_least_one',
+                'fields' => [
+                    OftalmologiaPracticaRowContract::FIELD_CODIGO,
+                    OftalmologiaPracticaRowContract::FIELD_PRUEBA,
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * Sección de receta de lentes: una fila con ambos ojos.
+     *
+     * @return array<string, mixed>
+     */
+    private static function lensSection(): array
+    {
+        $labels = [
+            OftalmologiaRecetaRowContract::FIELD_OD_ESFERA => ['OD esfera', 'D', 'decimal'],
+            OftalmologiaRecetaRowContract::FIELD_OD_CILINDRO => ['OD cilindro', 'D', 'decimal'],
+            OftalmologiaRecetaRowContract::FIELD_OD_EJE => ['OD eje', '°', 'integer'],
+            OftalmologiaRecetaRowContract::FIELD_OD_ADICION => ['OD adición', 'D', 'decimal'],
+            OftalmologiaRecetaRowContract::FIELD_OI_ESFERA => ['OI esfera', 'D', 'decimal'],
+            OftalmologiaRecetaRowContract::FIELD_OI_CILINDRO => ['OI cilindro', 'D', 'decimal'],
+            OftalmologiaRecetaRowContract::FIELD_OI_EJE => ['OI eje', '°', 'integer'],
+            OftalmologiaRecetaRowContract::FIELD_OI_ADICION => ['OI adición', 'D', 'decimal'],
+        ];
+
+        $fields = [];
+        $index = 0;
+        foreach (OftalmologiaRecetaRowContract::PROMPT_FIELDS as $promptKey) {
+            $index++;
+            [$fieldLabel, $unit, $format] = $labels[$promptKey] ?? [$promptKey, null, 'text'];
+            $fields[] = self::field($promptKey, $fieldLabel, $unit, $format, $index, true);
+        }
+
+        return [
+            'key' => OftalmologiaRecetaRowContract::MODELO,
+            'label' => 'Receta de lentes',
+            'order' => 3,
+            'fields' => $fields,
+            'validation' => [
+                'type' => 'at_least_one',
+                'fields' => OftalmologiaRecetaRowContract::PROMPT_FIELDS,
             ],
         ];
     }

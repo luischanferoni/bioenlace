@@ -38,6 +38,7 @@ import 'timeline/blocks/informacion_medica_card.dart';
 import 'timeline/blocks/motivos_intake_card.dart';
 import 'timeline/blocks/odontograma_card.dart';
 import 'timeline/blocks/paciente_header_card.dart';
+import 'timeline/blocks/receta_lentes_card.dart';
 import 'timeline/blocks/signos_vitales_card.dart';
 
 class PatientTimelineScreen extends StatefulWidget {
@@ -345,6 +346,12 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                               BioSpacing.gapH(BioSpacing.md),
                               OdontogramaCard(odontograma:
                                 _historiaClinicaData!.odontograma,
+                              ),
+                            ],
+                            if (!_historiaClinicaData!.recetaLentes.vacia) ...[
+                              BioSpacing.gapH(BioSpacing.md),
+                              RecetaLentesCard(receta:
+                                _historiaClinicaData!.recetaLentes,
                               ),
                             ],
                             if (_esCapturaEpisodio) ...[

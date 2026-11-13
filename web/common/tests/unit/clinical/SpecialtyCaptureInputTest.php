@@ -10,6 +10,8 @@ use common\components\Domain\Clinical\Capture\Domain\Policy\CaptureCompletenessP
 use common\components\Domain\Clinical\Capture\Domain\RowContract\OdontologiaItemRowContract;
 use common\models\Clinical\Input\OdontologiaItemInput;
 use common\models\Clinical\Input\OftalmologiaEstudioInput;
+use common\models\Clinical\Input\OftalmologiaPracticaInput;
+use common\models\Clinical\Input\OftalmologiaRecetaInput;
 
 class SpecialtyCaptureInputTest extends Unit
 {
@@ -66,6 +68,126 @@ class SpecialtyCaptureInputTest extends Unit
         ]);
         $this->assertTrue($input->validate());
         $this->assertSame([], $input->missingFieldsForCompleteness());
+    }
+
+    public function testOftalmologiaPracticaMapsPromptFields(): void
+    {
+        $input = OftalmologiaPracticaInput::fromExtractedRow([
+            'Codigo' => '252100006',
+            'Ojo' => 'od',
+            'Prueba' => 'Agudeza visual',
+            'Estado' => 'realizada',
+            'Informe' => 'AV 10/10',
+            'Tipo' => 'control',
+        ]);
+
+        $this->assertTrue($input->validate(), implode(' ', $input->getFirstErrors()));
+        $this->assertSame('252100006', $input->codigo);
+        $this->assertSame('OD', $input->ojo);
+        $this->assertSame('Agudeza visual', $input->prueba);
+        $this->assertSame('realizada', $input->estado);
+        $this->assertSame('AV 10/10', $input->informe);
+        $this->assertSame('control', $input->tipo);
+    }
+
+    public function testOftalmologiaPracticaNeedsCodigoOrPrueba(): void
+    {
+        $this->assertTrue(OftalmologiaPracticaInput::fromExtractedRow(['Prueba' => 'Biometría'])->validate());
+
+        $empty = OftalmologiaPracticaInput::fromExtractedRow(['Ojo' => 'OI']);
+        $this->assertFalse($empty->validate());
+        $this->assertSame(
+            [
+                \common\components\Domain\Clinical\Capture\Domain\RowContract\OftalmologiaPracticaRowContract::FIELD_CODIGO,
+                \common\components\Domain\Clinical\Capture\Domain\RowContract\OftalmologiaPracticaRowContract::FIELD_PRUEBA,
+            ],
+            $empty->missingFieldsForCompleteness()
+        );
+    }
+
+    public function testOftalmologiaPracticaDiscardsInvalidEye(): void
+    {
+        $input = OftalmologiaPracticaInput::fromExtractedRow([
+            'Codigo' => '252100006',
+            'Ojo' => 'derecho',
+        ]);
+
+        $this->assertNull($input->ojo);
+        $this->assertTrue($input->validate());
+    }
+
+    public function testOftalmologiaRecetaMapsBothEyesFromPromptKeys(): void
+    {
+        $input = OftalmologiaRecetaInput::fromExtractedRow([
+            'OD esfera' => '-1.25',
+            'OD cilindro' => '-0.50',
+            'OD eje' => '90',
+            'OD adicion' => '+1.00',
+            'OI esfera' => '-0.75',
+            'OI eje' => '80',
+        ]);
+
+        $this->assertTrue($input->validate());
+        $this->assertSame('-1.25', $input->odEsfera);
+        $this->assertSame('-0.50', $input->odCilindro);
+        $this->assertSame('90', $input->odEje);
+        $this->assertSame('+1.00', $input->odAdicion);
+        $this->assertSame('-0.75', $input->oiEsfera);
+        $this->assertNull($input->oiCilindro);
+        $this->assertSame('80', $input->oiEje);
+        $this->assertSame([], $input->missingFieldsForCompleteness());
+    }
+
+    public function testOftalmologiaRecetaReadsLegacySnakeCaseKeys(): void
+    {
+        $input = OftalmologiaRecetaInput::fromExtractedRow([
+            'od_esfera' => '-2.00',
+            'oi_add' => '+2.50',
+        ]);
+
+        $this->assertSame('-2.00', $input->odEsfera);
+        $this->assertSame('+2.50', $input->oiAdicion);
+    }
+
+    public function testOftalmologiaRecetaWithoutValuesIsIncomplete(): void
+    {
+        $input = OftalmologiaRecetaInput::fromExtractedRow([]);
+
+        $this->assertSame(
+            OftalmologiaRecetaInput::promptFieldNames(),
+            $input->missingFieldsForCompleteness()
+        );
+    }
+
+    public function testCompletenessUsesOphthalmologyContracts(): void
+    {
+        $svc = RowContractService::completenessValidator();
+
+        $practice = $svc->validate(
+            ['Prácticas oftalmológicas' => [['Ojo' => 'OD']]],
+            [[
+                'titulo' => 'Prácticas oftalmológicas',
+                'modelo' => 'OphthalmologyPractice',
+                'requerido' => false,
+                'campos_requeridos' => OftalmologiaPracticaInput::promptFieldNames(),
+            ]]
+        );
+        $this->assertFalse($practice['complete']);
+        $this->assertSame(
+            ['Codigo', 'Prueba'],
+            $practice['incomplete_items'][0]['missing_fields']
+        );
+
+        $prescription = $svc->validate(
+            ['Receta de lentes' => [['OD esfera' => '-1.00']]],
+            [[
+                'titulo' => 'Receta de lentes',
+                'modelo' => 'OphthalmologyLensPrescription',
+                'requerido' => false,
+                'campos_requeridos' => OftalmologiaRecetaInput::promptFieldNames(),
+            ]]
+        );
+        $this->assertTrue($prescription['complete'], $prescription['message']);
     }
 
     public function testCompletenessDiscoversOdontologiaContractByModelName(): void
@@ -172,12 +294,12 @@ class SpecialtyCaptureInputTest extends Unit
             );
         }
         $this->assertSame(
-            ['ojo', 'prueba', 'estado', 'informe', 'tipo'],
+            OftalmologiaPracticaInput::promptFieldNames(),
             array_column($byCode['ophthalmology']['sections'][0]['fields'], 'key')
         );
         $this->assertSame([1, 2, 3], array_column($byCode['ophthalmology']['sections'], 'order'));
         $this->assertSame(
-            [1, 2, 3, 4, 5],
+            range(1, count(OftalmologiaPracticaInput::promptFieldNames())),
             array_column($byCode['ophthalmology']['sections'][0]['fields'], 'order')
         );
         $this->assertSame(
@@ -193,11 +315,15 @@ class SpecialtyCaptureInputTest extends Unit
         foreach ($prescription['fields'] as $field) {
             $fieldsByKey[$field['key']] = $field;
         }
+        $this->assertSame(
+            OftalmologiaRecetaInput::promptFieldNames(),
+            array_column($prescription['fields'], 'key')
+        );
         $this->assertSame([1, 2, 3, 4, 5, 6, 7, 8], array_column($prescription['fields'], 'order'));
-        $this->assertSame('decimal', $fieldsByKey['od_esfera']['format']);
-        $this->assertSame('D', $fieldsByKey['od_esfera']['unit']);
-        $this->assertSame('integer', $fieldsByKey['od_eje']['format']);
-        $this->assertSame('°', $fieldsByKey['od_eje']['unit']);
+        $this->assertSame('decimal', $fieldsByKey['OD esfera']['format']);
+        $this->assertSame('D', $fieldsByKey['OD esfera']['unit']);
+        $this->assertSame('integer', $fieldsByKey['OD eje']['format']);
+        $this->assertSame('°', $fieldsByKey['OD eje']['unit']);
         $this->assertNotContains('unknown', array_column($metadata, 'code'));
     }
 }

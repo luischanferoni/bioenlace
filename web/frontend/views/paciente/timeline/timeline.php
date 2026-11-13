@@ -192,6 +192,10 @@ $tlConfigAttr = Html::encode(Json::encode($page['jsConfig']));
                         <?php if ($page['odontograma']['visible']): ?>
                             <?= $this->render('_odontograma', ['odontograma' => $page['odontograma']]) ?>
                         <?php endif; ?>
+
+                        <?php if ($page['recetaLentes']['visible']): ?>
+                            <?= $this->render('_receta_lentes', ['receta' => $page['recetaLentes']]) ?>
+                        <?php endif; ?>
                     </div>
 
                     <!-- Contenido automático con loading -->

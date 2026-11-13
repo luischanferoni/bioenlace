@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|--------|
 | Slug | `especialidades-clinicas` |
-| Estado | En ejecución — fases 00 a 05 cerradas (odontología completa); 06 en adelante pendientes |
+| Estado | En ejecución — fases 00 a 07 cerradas (odontología y oftalmología completas); 08 en adelante pendientes |
 | Dueño | Producto clínico / Backend |
 | Relación | Extiende [captura-clinica.md](../../producto/captura-clinica.md) y [07-servicios-y-especialidades.md](../../his-completo/07-servicios-y-especialidades.md) |
 
@@ -48,6 +48,8 @@ muestra** (interfaces comunes en web y Flutter, no UI JSON del asistente).
 - [phases/03-api-odontograma.md](phases/03-api-odontograma.md) — endpoint del odontograma
 - [phases/04-web-odontograma.md](phases/04-web-odontograma.md) — odontograma en la historia web
 - [phases/05-flutter-odontograma.md](phases/05-flutter-odontograma.md) — odontograma en la app
+- [phases/06-oftalmologia-extraccion.md](phases/06-oftalmologia-extraccion.md) — campos de práctica y receta
+- [phases/07-oftalmologia-receta.md](phases/07-oftalmologia-receta.md) — grilla de receta en web y app
 
 ## Fases siguientes
 
@@ -55,8 +57,6 @@ Se ejecutan de a una y no requieren las anteriores completas, salvo donde se ind
 
 | Fase | Entrega | Depende de |
 |------|---------|-----------|
-| 06 | Oftalmología: pedir campos de práctica y receta de lentes | 00 |
-| 07 | Oftalmología: grilla de receta en web y Flutter | 06 |
 | 08 | Enfermería: completar signos vitales y prácticas | 00 |
 | 09 | Pediatría: categoría propia con percentiles | 08 |
 | 10 | Obstetricia: panel prenatal | 02 |

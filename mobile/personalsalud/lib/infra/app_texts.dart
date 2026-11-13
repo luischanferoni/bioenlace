@@ -153,6 +153,14 @@ class AppTexts {
   static String odontogramTooth(Object? numero) => 'Pieza $numero';
   static String odontogramSurfaces(Object? caras) => 'Caras $caras';
   static String odontogramHistory(Object? n) => 'Historial ($n estados)';
+  static const lensTitle = 'Receta de lentes';
+  static const lensEyeOd = 'OD';
+  static const lensEyeOi = 'OI';
+  static const lensSphere = 'Esfera';
+  static const lensCylinder = 'Cilindro';
+  static const lensAxis = 'Eje';
+  static const lensAddition = 'Adición';
+  static const lensNoValue = '—';
   static const appointmentNext = 'Siguiente turno';
   static const appointmentsEmptyForDate = 'No hay turnos programados para esta fecha.';
   static String appointmentTime(Object? hora) => 'Hora: $hora';

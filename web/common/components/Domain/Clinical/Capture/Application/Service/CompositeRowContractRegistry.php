@@ -9,6 +9,7 @@ use common\components\Domain\Clinical\Capture\Domain\RowContract\ReasonRowContra
 use common\components\Domain\Clinical\Capture\Domain\RowContract\ExtractedRowFields;
 use common\components\Domain\Clinical\Capture\Domain\RowContract\IndicacionRowContract;
 use common\components\Domain\Clinical\Capture\Domain\RowContract\MedicacionRowContract;
+use common\components\Domain\Clinical\Capture\Domain\RowContract\EnfermeriaSignosVitalesRowContract;
 use common\components\Domain\Clinical\Capture\Domain\RowContract\OdontologiaItemRowContract;
 use common\components\Domain\Clinical\Capture\Domain\RowContract\OftalmologiaEstudioRowContract;
 use common\components\Domain\Clinical\Capture\Domain\RowContract\OftalmologiaPracticaRowContract;
@@ -35,6 +36,7 @@ final class CompositeRowContractRegistry implements RowContractRegistry
         OftalmologiaEstudioRowContract::MODELO => OftalmologiaEstudioRowContract::class,
         OftalmologiaPracticaRowContract::MODELO => OftalmologiaPracticaRowContract::class,
         OftalmologiaRecetaRowContract::MODELO => OftalmologiaRecetaRowContract::class,
+        EnfermeriaSignosVitalesRowContract::MODELO => EnfermeriaSignosVitalesRowContract::class,
         IndicacionRowContract::MODELO => IndicacionRowContract::class,
         MedicacionRowContract::MODELO => MedicacionRowContract::class,
         BalanceHidricoRowContract::MODELO => BalanceHidricoRowContract::class,

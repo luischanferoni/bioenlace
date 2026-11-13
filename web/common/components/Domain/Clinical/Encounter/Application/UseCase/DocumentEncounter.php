@@ -3,6 +3,7 @@
 namespace common\components\Domain\Clinical\Encounter\Application\UseCase;
 
 use common\components\Domain\Clinical\Capture\Application\Service\RowContractService;
+use common\components\Domain\Clinical\Capture\Domain\RowContract\EnfermeriaSignosVitalesRowContract;
 use common\components\Domain\Clinical\Encounter\Domain\ConditionVerificationStatus;
 use common\components\Domain\Clinical\Encounter\Domain\ConditionClinicalStatus;
 use common\components\Domain\Clinical\Emergency\Application\UseCase\RecordEmergencyEncounterOutcome;
@@ -1560,7 +1561,7 @@ class DocumentEncounter extends Component
      */
     private function persistSignosVitalesEnfermeria(Encounter $encounter, $payload): int
     {
-        $datos = $this->normalizeSignosVitalesPayload($payload);
+        $datos = is_array($payload) ? EnfermeriaSignosVitalesRowContract::normalize($payload) : [];
         if ($datos === []) {
             return 0;
         }
@@ -1583,86 +1584,6 @@ class DocumentEncounter extends Component
         }
 
         return 1;
-    }
-
-    /**
-     * @param mixed $payload
-     * @return array<string, mixed>
-     */
-    private function normalizeSignosVitalesPayload($payload): array
-    {
-        if (!is_array($payload)) {
-            return [];
-        }
-        // Lista de un solo objeto (extracción IA).
-        if (isset($payload[0]) && is_array($payload[0])) {
-            $merged = [];
-            foreach ($payload as $row) {
-                if (is_array($row)) {
-                    $merged = array_merge($merged, $row);
-                }
-            }
-            $payload = $merged;
-        }
-
-        $map = [
-            'ta_sistolica' => 'sistolica',
-            'ta sistolica' => 'sistolica',
-            'sistolica' => 'sistolica',
-            'bp_sys' => 'sistolica',
-            'ta_diastolica' => 'diastolica',
-            'ta diastolica' => 'diastolica',
-            'diastolica' => 'diastolica',
-            'bp_dia' => 'diastolica',
-            'frecuencia cardiaca' => 'fc',
-            'frecuencia_cardiaca' => 'fc',
-            'fc' => 'fc',
-            'hr' => 'fc',
-            'frecuencia respiratoria' => 'fr',
-            'frecuencia_respiratoria' => 'fr',
-            'fr' => 'fr',
-            'rr' => 'fr',
-            'saturacion o2' => 'sat_o2',
-            'saturacion' => 'sat_o2',
-            'sat_o2' => 'sat_o2',
-            'spo2' => 'sat_o2',
-            'temperatura' => 'temperatura',
-            'temp' => 'temperatura',
-            'temp_c' => 'temperatura',
-            'glucemia' => 'glucemia_capilar',
-            'glucemia_capilar' => 'glucemia_capilar',
-            'glucose' => 'glucemia_capilar',
-            'glasgow' => 'glasgow',
-            'peso' => 'peso',
-            'talla' => 'talla',
-        ];
-
-        $out = [];
-        foreach ($payload as $k => $v) {
-            if ($v === null || $v === '') {
-                continue;
-            }
-            $key = strtolower(trim((string) $k));
-            $key = str_replace(['á', 'é', 'í', 'ó', 'ú'], ['a', 'e', 'i', 'o', 'u'], $key);
-            if (!isset($map[$key])) {
-                continue;
-            }
-            $canon = $map[$key];
-            if (is_numeric($v) || (is_string($v) && is_numeric(str_replace(',', '.', $v)))) {
-                $out[$canon] = is_string($v) ? str_replace(',', '.', $v) : $v;
-            } else {
-                $out[$canon] = $v;
-            }
-        }
-
-        if (isset($out['sistolica'], $out['diastolica'])) {
-            $out['TensionArterial1'] = [
-                'sistolica' => $out['sistolica'],
-                'diastolica' => $out['diastolica'],
-            ];
-        }
-
-        return $out;
     }
 
     /**

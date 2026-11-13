@@ -6,6 +6,7 @@ use common\models\Organization\Efector;
 use common\models\Organization\ProfesionalEfectorServicio;
 use common\models\Person\Persona;
 
+use common\components\Domain\Clinical\Capture\Domain\RowContract\EnfermeriaSignosVitalesRowContract;
 use common\models\Clinical\Encounter;
 use Yii;
 use yii\validators\NumberValidator;
@@ -93,28 +94,14 @@ class EncounterNursingCare extends \yii\db\ActiveRecord
 
     /**
      * Campos en lenguaje natural para prompts de IA (signos vitales / enfermería).
+     *
      * @return list<string>
      */
     public function requeridosPrompt()
     {
-        return [
-            'TA sistolica',
-            'TA diastolica',
-            'Frecuencia cardiaca',
-            //'Frecuencia respiratoria',
-            //'Saturacion O2',
-            'Temperatura',
-            //'Glucemia',
-            //'Glasgow',
-            //'Peso',
-            //'Talla',
-        ];
+        return EnfermeriaSignosVitalesRowContract::PROMPT_FIELDS;
     }
 
-
-    /**
-     * @inheritdoc
-     */
     public function attributeLabels()
     {
         return [

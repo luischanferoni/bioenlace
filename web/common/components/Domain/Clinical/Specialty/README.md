@@ -37,6 +37,6 @@ Solo se persisten modelos listados en la definición del encounter (`EncounterDe
 
 - Salud mental (`mental-health` care plan + sesiones)
 - Obstetricia (`observation` panel)
-- Enfermería (`procedure` / `task`) y completar `requeridosPrompt` de `EncounterNursingCare`
+- Enfermería (`procedure` / `task`) como prácticas de enfermería fuera de la captura
 - `device_request` prótesis odonto
 - Yii web / UI JSON por especialidad (fase 11)

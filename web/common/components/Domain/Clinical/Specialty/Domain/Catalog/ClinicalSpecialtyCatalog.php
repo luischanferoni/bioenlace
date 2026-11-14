@@ -3,6 +3,12 @@
 namespace common\components\Domain\Clinical\Specialty\Domain\Catalog;
 
 use common\components\Domain\Clinical\Capture\Domain\Catalog\EncounterDefinitionWorkflowCatalog;
+use common\components\Domain\Clinical\Capture\Domain\RowContract\EnfermeriaSignosVitalesRowContract;
+use common\components\Domain\Clinical\Capture\Domain\RowContract\KinesiologiaSesionRowContract;
+use common\components\Domain\Clinical\Capture\Domain\RowContract\NutricionEvaluacionRowContract;
+use common\components\Domain\Clinical\Capture\Domain\RowContract\ObstetriciaControlRowContract;
+use common\components\Domain\Clinical\Capture\Domain\RowContract\SaludMentalSesionRowContract;
+use common\components\Domain\Clinical\Specialty\Domain\Catalog\MentalHealthInstrumentCatalog;
 use common\components\Domain\Clinical\Capture\Domain\RowContract\OdontologiaItemRowContract;
 use common\components\Domain\Clinical\Capture\Domain\RowContract\OftalmologiaEstudioRowContract;
 use common\components\Domain\Clinical\Capture\Domain\RowContract\OftalmologiaPracticaRowContract;
@@ -66,7 +72,7 @@ final class ClinicalSpecialtyCatalog
     public const STATUS_PLANNED = 'planned';
 
     /**
-     * @return array<string, array{code: string, label: string, status: string, public_copy: string, sections: list<array<string, mixed>>}>
+     * @return array<string, array{code: string, label: string, status: string, public_copy: string, sections: list<array<string, mixed>>, extra_sections: list<array<string, mixed>>}>
      */
     public static function all(): array
     {
@@ -100,13 +106,26 @@ final class ClinicalSpecialtyCatalog
     }
 
     /**
-     * Secciones de captura declaradas para la especialidad.
+     * Secciones de captura propias de la especialidad (reemplazan al workflow estándar).
      *
      * @return list<array<string, mixed>>
      */
     public static function sectionsFor(string $code): array
     {
         return self::definitions()[$code]['sections'] ?? [];
+    }
+
+    /**
+     * Categorías que la especialidad agrega al workflow estándar.
+     *
+     * No identifican a la especialidad: el modelo de captura sigue perteneciendo a
+     * quien lo declaró como sección propia.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function extraSectionsFor(string $code): array
+    {
+        return self::definitions()[$code]['extra_sections'] ?? [];
     }
 
     /**
@@ -117,7 +136,8 @@ final class ClinicalSpecialtyCatalog
     public static function extractedFieldsFor(string $code): array
     {
         $out = [];
-        foreach (self::sectionsFor($code) as $section) {
+        $sections = array_merge(self::sectionsFor($code), self::extraSectionsFor($code));
+        foreach ($sections as $section) {
             foreach ($section['fields'] as $field) {
                 if (($field['extracted'] ?? true) === true) {
                     $out[$field['key']] = $field['label'];
@@ -172,7 +192,7 @@ final class ClinicalSpecialtyCatalog
     }
 
     /**
-     * @return array<string, array{code: string, label: string, status: string, public_copy: string, sections: list<array<string, mixed>>}>
+     * @return array<string, array{code: string, label: string, status: string, public_copy: string, sections: list<array<string, mixed>>, extra_sections: list<array<string, mixed>>}>
      */
     private static function definitions(): array
     {
@@ -218,7 +238,11 @@ final class ClinicalSpecialtyCatalog
                 self::NURSING,
                 'Enfermería',
                 'Signos vitales y antropometría en cada control, con el registro de las prácticas '
-                . 'de enfermería realizadas.'
+                . 'de enfermería realizadas.',
+                [self::vitalsSection(
+                    'Signos vitales',
+                    EnfermeriaSignosVitalesRowContract::PROMPT_FIELDS
+                )]
             ),
             self::GENERAL_MEDICINE => self::standard(
                 self::GENERAL_MEDICINE,
@@ -229,35 +253,43 @@ final class ClinicalSpecialtyCatalog
             self::PEDIATRICS => self::standard(
                 self::PEDIATRICS,
                 'Pediatría',
-                'Peso, talla, perímetro cefálico e IMC con sus percentiles, además del registro '
-                . 'clínico completo y las inmunizaciones.'
+                'Peso, talla, perímetro cefálico y circunferencia abdominal en cada control, '
+                . 'graficados en las curvas de crecimiento junto al registro clínico completo.',
+                [self::vitalsSection(
+                    'Signos vitales y antropometría',
+                    EnfermeriaSignosVitalesRowContract::ANTHROPOMETRY_FIELDS
+                )]
             ),
             self::NEONATOLOGY => self::planned(
                 self::NEONATOLOGY,
                 'Neonatología',
                 'Peso al nacer, edad gestacional, Apgar y tipo de parto del recién nacido.'
             ),
-            self::OBSTETRICS => self::planned(
+            self::OBSTETRICS => self::specific(
                 self::OBSTETRICS,
                 'Obstetricia',
                 'FUM, edad gestacional, gravidez y paridad, altura uterina, latido fetal, '
-                . 'presentación y controles prenatales.'
+                . 'presentación y controles prenatales.',
+                [self::obstetricSection()]
             ),
             self::GYNECOLOGY => self::planned(
                 self::GYNECOLOGY,
                 'Ginecología',
                 'Ciclo menstrual, método anticonceptivo, PAP, colposcopía y estudios de imagen.'
             ),
-            self::MENTAL_HEALTH => self::planned(
+            self::MENTAL_HEALTH => self::specific(
                 self::MENTAL_HEALTH,
                 'Salud mental',
-                'Estado mental, escalas de screening y evolución por sesión dentro del plan de '
-                . 'tratamiento.'
+                'Estado mental, riesgo, evolución por sesión y escalas de screening como PHQ-9 '
+                . 'y GAD-7 con su puntaje e interpretación.',
+                [self::mentalHealthSection()]
             ),
-            self::PSYCHOLOGY => self::planned(
+            self::PSYCHOLOGY => self::standard(
                 self::PSYCHOLOGY,
                 'Psicología',
-                'Motivo de la sesión, objetivos y evolución, con seguimiento del plan terapéutico.'
+                'Motivo de la sesión, objetivos, evolución y adherencia, con seguimiento del '
+                . 'plan terapéutico.',
+                [self::mentalHealthSection()]
             ),
             self::CARDIOLOGY => self::planned(
                 self::CARDIOLOGY,
@@ -311,15 +343,19 @@ final class ClinicalSpecialtyCatalog
                 'Anestesiología',
                 'Clasificación ASA, vía aérea y tipo de anestesia de cada procedimiento.'
             ),
-            self::NUTRITION => self::standard(
+            self::NUTRITION => self::specific(
                 self::NUTRITION,
                 'Nutrición',
-                'Antropometría, composición corporal y plan alimentario indicado.'
+                'Peso, talla, cintura y composición corporal con el IMC calculado, más el plan '
+                . 'alimentario y su adherencia.',
+                [self::nutritionSection()]
             ),
-            self::KINESIOLOGY => self::standard(
+            self::KINESIOLOGY => self::specific(
                 self::KINESIOLOGY,
                 'Kinesiología y fisiatría',
-                'Rango de movilidad, fuerza e intensidad del dolor en cada sesión del plan.'
+                'Región y lado, rango de movilidad, fuerza muscular e intensidad del dolor en '
+                . 'cada sesión del plan.',
+                [self::kinesiologySection()]
             ),
             self::GERIATRICS => self::planned(
                 self::GERIATRICS,
@@ -383,7 +419,7 @@ final class ClinicalSpecialtyCatalog
 
     /**
      * @param list<array<string, mixed>> $sections
-     * @return array{code: string, label: string, status: string, public_copy: string, sections: list<array<string, mixed>>}
+     * @return array{code: string, label: string, status: string, public_copy: string, sections: list<array<string, mixed>>, extra_sections: list<array<string, mixed>>}
      */
     private static function specific(string $code, string $label, string $publicCopy, array $sections): array
     {
@@ -393,25 +429,32 @@ final class ClinicalSpecialtyCatalog
             'status' => self::STATUS_SPECIFIC,
             'public_copy' => $publicCopy,
             'sections' => $sections,
+            'extra_sections' => [],
         ];
     }
 
     /**
-     * @return array{code: string, label: string, status: string, public_copy: string, sections: list<array<string, mixed>>}
+     * @param list<array<string, mixed>> $extraSections categorías sumadas al workflow estándar
+     * @return array{code: string, label: string, status: string, public_copy: string, sections: list<array<string, mixed>>, extra_sections: list<array<string, mixed>>}
      */
-    private static function standard(string $code, string $label, string $publicCopy): array
-    {
+    private static function standard(
+        string $code,
+        string $label,
+        string $publicCopy,
+        array $extraSections = []
+    ): array {
         return [
             'code' => $code,
             'label' => $label,
             'status' => self::STATUS_STANDARD,
             'public_copy' => $publicCopy,
             'sections' => [],
+            'extra_sections' => $extraSections,
         ];
     }
 
     /**
-     * @return array{code: string, label: string, status: string, public_copy: string, sections: list<array<string, mixed>>}
+     * @return array{code: string, label: string, status: string, public_copy: string, sections: list<array<string, mixed>>, extra_sections: list<array<string, mixed>>}
      */
     private static function planned(string $code, string $label, string $publicCopy): array
     {
@@ -421,6 +464,7 @@ final class ClinicalSpecialtyCatalog
             'status' => self::STATUS_PLANNED,
             'public_copy' => $publicCopy,
             'sections' => [],
+            'extra_sections' => [],
         ];
     }
 
@@ -464,6 +508,236 @@ final class ClinicalSpecialtyCatalog
             'validation' => [
                 'type' => 'at_least_one',
                 'fields' => [OdontologiaItemRowContract::FIELD_TIPO, OdontologiaItemRowContract::FIELD_CODIGO],
+            ],
+        ];
+    }
+
+    /**
+     * Evaluación nutricional: el IMC se declara derivado, no extraído.
+     *
+     * @return array<string, mixed>
+     */
+    private static function nutritionSection(): array
+    {
+        $labels = [
+            NutricionEvaluacionRowContract::FIELD_PESO => ['Peso', 'kg', 'decimal'],
+            NutricionEvaluacionRowContract::FIELD_TALLA => ['Talla', 'cm', 'decimal'],
+            NutricionEvaluacionRowContract::FIELD_CINTURA => ['Circunferencia de cintura', 'cm', 'decimal'],
+            NutricionEvaluacionRowContract::FIELD_GRASA => ['Porcentaje de grasa', '%', 'decimal'],
+            NutricionEvaluacionRowContract::FIELD_OBJETIVO => ['Objetivo', null, 'text'],
+            NutricionEvaluacionRowContract::FIELD_PLAN => ['Plan alimentario', null, 'text'],
+            NutricionEvaluacionRowContract::FIELD_ADHERENCIA => ['Adherencia', null, 'text'],
+        ];
+
+        $fields = [];
+        $index = 0;
+        foreach (NutricionEvaluacionRowContract::PROMPT_FIELDS as $promptKey) {
+            $index++;
+            [$fieldLabel, $unit, $format] = $labels[$promptKey] ?? [$promptKey, null, 'text'];
+            $fields[] = self::field($promptKey, $fieldLabel, $unit, $format, $index, true);
+        }
+        $fields[] = self::field(
+            NutricionEvaluacionRowContract::FIELD_IMC,
+            'IMC (calculado)',
+            'kg/m2',
+            'decimal',
+            $index + 1,
+            false
+        );
+
+        return [
+            'key' => NutricionEvaluacionRowContract::MODELO,
+            'label' => 'Evaluación nutricional',
+            'order' => 1,
+            'fields' => $fields,
+            'validation' => [
+                'type' => 'at_least_one',
+                'fields' => NutricionEvaluacionRowContract::PROMPT_FIELDS,
+            ],
+        ];
+    }
+
+    /**
+     * Sesión de kinesiología.
+     *
+     * @return array<string, mixed>
+     */
+    private static function kinesiologySection(): array
+    {
+        $labels = [
+            KinesiologiaSesionRowContract::FIELD_REGION => ['Región', null, 'text'],
+            KinesiologiaSesionRowContract::FIELD_LADO => ['Lado', null, 'enum'],
+            KinesiologiaSesionRowContract::FIELD_MOVILIDAD => ['Rango de movilidad', '°', 'integer'],
+            KinesiologiaSesionRowContract::FIELD_FUERZA => ['Fuerza muscular', '/5', 'integer'],
+            KinesiologiaSesionRowContract::FIELD_DOLOR => ['Dolor EVA', '/10', 'integer'],
+            KinesiologiaSesionRowContract::FIELD_EJERCICIO => ['Ejercicio indicado', null, 'text'],
+            KinesiologiaSesionRowContract::FIELD_SESIONES => ['Sesiones indicadas', null, 'integer'],
+            KinesiologiaSesionRowContract::FIELD_EVOLUCION => ['Evolución', null, 'text'],
+        ];
+
+        $fields = [];
+        $index = 0;
+        foreach (KinesiologiaSesionRowContract::PROMPT_FIELDS as $promptKey) {
+            $index++;
+            [$fieldLabel, $unit, $format] = $labels[$promptKey] ?? [$promptKey, null, 'text'];
+            $fields[] = self::field(
+                $promptKey,
+                $fieldLabel,
+                $unit,
+                $format,
+                $index,
+                true,
+                $format === 'enum' ? KinesiologiaSesionRowContract::SIDES : null
+            );
+        }
+
+        return [
+            'key' => KinesiologiaSesionRowContract::MODELO,
+            'label' => 'Sesión de kinesiología',
+            'order' => 1,
+            'fields' => $fields,
+            'validation' => [
+                'type' => 'at_least_one',
+                'fields' => KinesiologiaSesionRowContract::PROMPT_FIELDS,
+            ],
+        ];
+    }
+
+    /**
+     * Sesión de salud mental: campos clínicos más el puntaje de cada instrumento.
+     *
+     * Los instrumentos salen del catálogo de escalas; agregar uno no requiere tocar
+     * esta sección.
+     *
+     * @return array<string, mixed>
+     */
+    private static function mentalHealthSection(): array
+    {
+        $labels = [
+            SaludMentalSesionRowContract::FIELD_MOTIVO => ['Motivo de la sesión', null, 'text'],
+            SaludMentalSesionRowContract::FIELD_ESTADO_MENTAL => ['Estado mental', null, 'text'],
+            SaludMentalSesionRowContract::FIELD_RIESGO_SUICIDA => ['Riesgo suicida', null, 'text'],
+            SaludMentalSesionRowContract::FIELD_OBJETIVOS => ['Objetivos', null, 'text'],
+            SaludMentalSesionRowContract::FIELD_EVOLUCION => ['Evolución', null, 'text'],
+            SaludMentalSesionRowContract::FIELD_ADHERENCIA => ['Adherencia', null, 'text'],
+            SaludMentalSesionRowContract::FIELD_SUENO => ['Sueño', null, 'text'],
+            SaludMentalSesionRowContract::FIELD_SUSTANCIAS => ['Consumo de sustancias', null, 'text'],
+        ];
+
+        $fields = [];
+        $index = 0;
+        foreach (SaludMentalSesionRowContract::SESSION_FIELDS as $promptKey) {
+            $index++;
+            [$fieldLabel, $unit, $format] = $labels[$promptKey] ?? [$promptKey, null, 'text'];
+            $fields[] = self::field($promptKey, $fieldLabel, $unit, $format, $index, true);
+        }
+        foreach (MentalHealthInstrumentCatalog::all() as $instrument) {
+            $index++;
+            $fields[] = self::field(
+                $instrument['label'],
+                $instrument['label'] . ' (puntaje)',
+                $instrument['unit'],
+                'integer',
+                $index,
+                true
+            );
+        }
+
+        return [
+            'key' => SaludMentalSesionRowContract::MODELO,
+            'label' => 'Sesión de salud mental',
+            'order' => 1,
+            'fields' => $fields,
+            'validation' => [
+                'type' => 'at_least_one',
+                'fields' => SaludMentalSesionRowContract::promptFields(),
+            ],
+        ];
+    }
+
+    /**
+     * Control prenatal: una fila por control, cada campo con su código de observación.
+     *
+     * @return array<string, mixed>
+     */
+    private static function obstetricSection(): array
+    {
+        $units = [
+            ObstetriciaControlRowContract::FIELD_EDAD_GESTACIONAL => ['Edad gestacional', 'sem', 'decimal'],
+            ObstetriciaControlRowContract::FIELD_GRAVIDEZ => ['Gravidez', null, 'integer'],
+            ObstetriciaControlRowContract::FIELD_PARIDAD => ['Paridad', null, 'integer'],
+            ObstetriciaControlRowContract::FIELD_ABORTOS => ['Abortos', null, 'integer'],
+            ObstetriciaControlRowContract::FIELD_ALTURA_UTERINA => ['Altura uterina', 'cm', 'decimal'],
+            ObstetriciaControlRowContract::FIELD_LATIDO_FETAL => ['Latido fetal', 'lpm', 'integer'],
+            ObstetriciaControlRowContract::FIELD_PRESENTACION => ['Presentación fetal', null, 'text'],
+            ObstetriciaControlRowContract::FIELD_FUM => ['FUM', null, 'date'],
+            ObstetriciaControlRowContract::FIELD_EDEMA => ['Edema', null, 'text'],
+            ObstetriciaControlRowContract::FIELD_PROTEINURIA => ['Proteinuria', null, 'text'],
+            ObstetriciaControlRowContract::FIELD_MOVIMIENTOS_FETALES => ['Movimientos fetales', null, 'text'],
+        ];
+
+        $fields = [];
+        $index = 0;
+        foreach (ObstetriciaControlRowContract::PROMPT_FIELDS as $promptKey) {
+            $index++;
+            [$fieldLabel, $unit, $format] = $units[$promptKey] ?? [$promptKey, null, 'text'];
+            $fields[] = self::field($promptKey, $fieldLabel, $unit, $format, $index, true);
+        }
+
+        return [
+            'key' => ObstetriciaControlRowContract::MODELO,
+            'label' => 'Control prenatal',
+            'order' => 1,
+            'fields' => $fields,
+            'validation' => [
+                'type' => 'at_least_one',
+                'fields' => ObstetriciaControlRowContract::PROMPT_FIELDS,
+            ],
+        ];
+    }
+
+    /**
+     * Antropometría del control pediátrico: alimenta las curvas de crecimiento.
+     *
+     * Las medidas son las del contrato de signos vitales, filtradas a las que el
+     * gráfico consume. No identifican a la especialidad: cualquier encounter con
+     * esta categoría mide crecimiento.
+     *
+     * @return array<string, mixed>
+     */
+    private static function vitalsSection(string $label, array $validationFields): array
+    {
+        $labels = [
+            EnfermeriaSignosVitalesRowContract::FIELD_TA_SISTOLICA => ['TA sistólica', 'mmHg', 'integer'],
+            EnfermeriaSignosVitalesRowContract::FIELD_TA_DIASTOLICA => ['TA diastólica', 'mmHg', 'integer'],
+            EnfermeriaSignosVitalesRowContract::FIELD_FC => ['Frecuencia cardíaca', 'lpm', 'integer'],
+            EnfermeriaSignosVitalesRowContract::FIELD_FR => ['Frecuencia respiratoria', 'rpm', 'integer'],
+            EnfermeriaSignosVitalesRowContract::FIELD_SAT_O2 => ['Saturación O₂', '%', 'integer'],
+            EnfermeriaSignosVitalesRowContract::FIELD_TEMPERATURA => ['Temperatura', '°C', 'decimal'],
+            EnfermeriaSignosVitalesRowContract::FIELD_GLUCEMIA => ['Glucemia', 'mg/dL', 'integer'],
+            EnfermeriaSignosVitalesRowContract::FIELD_GLASGOW => ['Glasgow', 'pts', 'integer'],
+            EnfermeriaSignosVitalesRowContract::FIELD_PESO => ['Peso', 'kg', 'decimal'],
+            EnfermeriaSignosVitalesRowContract::FIELD_TALLA => ['Talla', 'cm', 'decimal'],
+            EnfermeriaSignosVitalesRowContract::FIELD_PERIMETRO_CEFALICO => ['Perímetro cefálico', 'cm', 'decimal'],
+            EnfermeriaSignosVitalesRowContract::FIELD_CIRCUNFERENCIA_ABDOMINAL => ['Circunferencia abdominal', 'cm', 'decimal'],
+        ];
+
+        $fields = [];
+        $index = 0;
+        foreach (EnfermeriaSignosVitalesRowContract::PROMPT_FIELDS as $promptKey) {
+            $index++;
+            [$fieldLabel, $unit, $format] = $labels[$promptKey] ?? [$promptKey, null, 'decimal'];
+            $fields[] = self::field($promptKey, $fieldLabel, $unit, $format, $index, true);
+        }
+
+        return [
+            'key' => EnfermeriaSignosVitalesRowContract::MODELO,
+            'label' => $label,
+            'order' => 100,
+            'fields' => $fields,
+            'validation' => [
+                'type' => 'at_least_one',
+                'fields' => $validationFields,
             ],
         ];
     }

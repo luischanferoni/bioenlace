@@ -37,6 +37,10 @@ final class PacienteHistoriaTimelinePageBuilder
      *   registerGuardiaAssets: bool,
      *   odontograma: array<string, mixed>,
      *   recetaLentes: array<string, mixed>,
+     *   panelPrenatal: array<string, mixed>,
+     *   panelSaludMental: array<string, mixed>,
+     *   panelNutricion: array<string, mixed>,
+     *   panelKinesiologia: array<string, mixed>,
      *   jsConfig: array<string, mixed>
      * }
      */
@@ -47,7 +51,11 @@ final class PacienteHistoriaTimelinePageBuilder
         int $parentId,
         string $vistaQuery = '',
         ?array $odontograma = null,
-        ?array $recetaLentes = null
+        ?array $recetaLentes = null,
+        ?array $panelPrenatal = null,
+        array $panelSaludMental = [],
+        array $panelNutricion = [],
+        array $panelKinesiologia = []
     ): array {
         $personaId = (int) $persona->id_persona;
         $parentUpper = strtoupper(trim((string) $parent));
@@ -114,6 +122,10 @@ final class PacienteHistoriaTimelinePageBuilder
             'registerGuardiaAssets' => $esContextoGuardia,
             'odontograma' => OdontogramaViewBuilder::build($odontograma),
             'recetaLentes' => RecetaLentesViewBuilder::build($recetaLentes),
+            'panelPrenatal' => PanelValoresViewBuilder::build($panelPrenatal ?? []),
+            'panelSaludMental' => PanelSaludMentalViewBuilder::build($panelSaludMental),
+            'panelNutricion' => PanelValoresViewBuilder::build($panelNutricion),
+            'panelKinesiologia' => PanelValoresViewBuilder::build($panelKinesiologia),
             'jsConfig' => $jsConfig,
         ];
     }

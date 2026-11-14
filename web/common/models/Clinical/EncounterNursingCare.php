@@ -95,11 +95,19 @@ class EncounterNursingCare extends \yii\db\ActiveRecord
     /**
      * Campos en lenguaje natural para prompts de IA (signos vitales / enfermería).
      *
+     * Constante además del método para poder leerlos sin instanciar el modelo
+     * (el AR necesita `Yii::$app->user` para sus comportamientos).
+     *
+     * @var list<string>
+     */
+    public const PROMPT_FIELDS = EnfermeriaSignosVitalesRowContract::PROMPT_FIELDS;
+
+    /**
      * @return list<string>
      */
     public function requeridosPrompt()
     {
-        return EnfermeriaSignosVitalesRowContract::PROMPT_FIELDS;
+        return self::PROMPT_FIELDS;
     }
 
     public function attributeLabels()

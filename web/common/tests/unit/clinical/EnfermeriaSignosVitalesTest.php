@@ -4,6 +4,7 @@ namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\Capture\Application\Service\RowContractService;
+use common\components\Domain\Clinical\Capture\Domain\Catalog\EncounterDefinitionWorkflowCatalog;
 use common\components\Domain\Clinical\Capture\Domain\RowContract\EnfermeriaSignosVitalesRowContract;
 
 /**
@@ -128,5 +129,54 @@ class EnfermeriaSignosVitalesTest extends Unit
         );
 
         $this->assertTrue($result['complete'], $result['message']);
+    }
+    public function testAnthropometryAliasesReachTheGrowthCurveKeys(): void
+    {
+        $datos = EnfermeriaSignosVitalesRowContract::normalize([
+            'Perimetro cefalico' => '47',
+            'PC' => '47',
+            'Circunferencia abdominal' => '50,5',
+        ]);
+
+        $this->assertSame('47', $datos[EnfermeriaSignosVitalesRowContract::CANON_PERIMETRO_CEFALICO]);
+        $this->assertSame('50.5', $datos[EnfermeriaSignosVitalesRowContract::CANON_CIRCUNFERENCIA_ABDOMINAL]);
+    }
+
+    public function testAnthropometryIsASubsetOfThePromptFields(): void
+    {
+        foreach (EnfermeriaSignosVitalesRowContract::ANTHROPOMETRY_FIELDS as $field) {
+            $this->assertContains($field, EnfermeriaSignosVitalesRowContract::PROMPT_FIELDS);
+        }
+    }
+
+    public function testModelExposesTheSameFieldsAsTheContract(): void
+    {
+        $this->assertSame(
+            EnfermeriaSignosVitalesRowContract::PROMPT_FIELDS,
+            \common\models\Clinical\EncounterNursingCare::PROMPT_FIELDS
+        );
+    }
+
+    public function testPediatricWorkflowIncludesTheGrowthStep(): void
+    {
+        $template = EncounterDefinitionWorkflowCatalog::TEMPLATE_AMB_PEDIATRICS;
+        $steps = EncounterDefinitionWorkflowCatalog::templates()[$template];
+        $models = array_column($steps, 'relacion');
+
+        $this->assertContains('EncounterNursingCare', $models);
+        $this->assertContains('EncounterReason', $models);
+        $this->assertSame(
+            $template,
+            EncounterDefinitionWorkflowCatalog::templateForServiceName('PEDIATRIA', 'AMB')
+        );
+    }
+
+    public function testStandardAmbulatoryDoesNotAddVitals(): void
+    {
+        $steps = EncounterDefinitionWorkflowCatalog::templates()[
+            EncounterDefinitionWorkflowCatalog::TEMPLATE_AMB_STANDARD
+        ];
+
+        $this->assertNotContains('EncounterNursingCare', array_column($steps, 'relacion'));
     }
 }

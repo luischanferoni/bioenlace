@@ -15,6 +15,10 @@ use common\components\Domain\Clinical\Encounter\Application\UseCase\RecordEncoun
 use common\components\Domain\Clinical\Encounter\Application\Service\EpisodioTimelineService;
 use common\components\Domain\Clinical\Specialty\Application\Service\OdontologyEncounterService;
 use common\components\Domain\Clinical\Specialty\Application\Service\OphthalmologyEncounterService;
+use common\components\Domain\Clinical\Specialty\Application\Service\KinesiologyEncounterService;
+use common\components\Domain\Clinical\Specialty\Application\Service\MentalHealthEncounterService;
+use common\components\Domain\Clinical\Specialty\Application\Service\NutritionEncounterService;
+use common\components\Domain\Clinical\Specialty\Application\Service\ObstetricsEncounterService;
 use common\components\Domain\Clinical\Capture\Application\Service\EncounterDefinitionBootstrapService;
 use common\components\Platform\Core\Http\Contract\ApiErrorCatalog;
 use common\components\Platform\Core\Http\Contract\ApiException;
@@ -94,7 +98,11 @@ class PacienteController extends Controller
             $parentId,
             (string) Yii::$app->request->get('vista', ''),
             (new OdontologyEncounterService())->odontogramForPerson((int) $paciente->id_persona),
-            (new OphthalmologyEncounterService())->latestLensPrescriptionForPerson((int) $paciente->id_persona)
+            (new OphthalmologyEncounterService())->latestLensPrescriptionForPerson((int) $paciente->id_persona),
+            (new ObstetricsEncounterService())->controlsForPerson((int) $paciente->id_persona),
+            (new MentalHealthEncounterService())->sessionsForPerson((int) $paciente->id_persona),
+            (new NutritionEncounterService())->assessmentsForPerson((int) $paciente->id_persona),
+            (new KinesiologyEncounterService())->sessionsForPerson((int) $paciente->id_persona)
         );
 
         $this->view->title = $page['pageTitle'];

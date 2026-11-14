@@ -196,6 +196,34 @@ $tlConfigAttr = Html::encode(Json::encode($page['jsConfig']));
                         <?php if ($page['recetaLentes']['visible']): ?>
                             <?= $this->render('_receta_lentes', ['receta' => $page['recetaLentes']]) ?>
                         <?php endif; ?>
+
+                        <?php if ($page['panelPrenatal']['visible']): ?>
+                            <?= $this->render('_panel_valores', [
+                                'panel' => $page['panelPrenatal'],
+                                'titulo' => 'Control prenatal',
+                                'subtitulo' => 'Últimos controles registrados del embarazo.',
+                            ]) ?>
+                        <?php endif; ?>
+
+                        <?php if ($page['panelNutricion']['visible']): ?>
+                            <?= $this->render('_panel_valores', [
+                                'panel' => $page['panelNutricion'],
+                                'titulo' => 'Evaluación nutricional',
+                                'subtitulo' => 'Antropometría, composición corporal y plan indicado.',
+                            ]) ?>
+                        <?php endif; ?>
+
+                        <?php if ($page['panelKinesiologia']['visible']): ?>
+                            <?= $this->render('_panel_valores', [
+                                'panel' => $page['panelKinesiologia'],
+                                'titulo' => 'Kinesiología',
+                                'subtitulo' => 'Movilidad, fuerza y dolor por sesión.',
+                            ]) ?>
+                        <?php endif; ?>
+
+                        <?php if ($page['panelSaludMental']['visible']): ?>
+                            <?= $this->render('_salud_mental', ['saludMental' => $page['panelSaludMental']]) ?>
+                        <?php endif; ?>
                     </div>
 
                     <!-- Contenido automático con loading -->

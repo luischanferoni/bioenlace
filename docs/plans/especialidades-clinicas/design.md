@@ -50,6 +50,13 @@ El nivel 3 es el que se está abandonando: el odontograma se armaba parseando la
 de la condición. El nivel 4 se reserva para odontograma, traumatología y los paneles
 que necesitan agregación por campo.
 
+Un panel (control prenatal, evaluación nutricional, sesión de kinesiología) se
+persiste con **una observación por parámetro** más una fila en
+`observation_panel_ext` que dice a qué panel pertenece cada una. Así la evolución de
+un solo valor se grafica sin parsear nada. La mecánica de escritura y lectura vive en
+`ClinicalPanelService`, genérico sobre `ClinicalPanelContract`: la especialidad aporta
+el contrato, no otra copia del ciclo de persistencia.
+
 ### Alternativa descartada
 
 Un modelo materializado del odontograma (una fila por paciente y pieza) se descartó
@@ -99,6 +106,15 @@ del catálogo. Un verificador en modo comprobación falla si el HTML quedó desa
 
 Como el repositorio no tiene integración continua, el test es la única barrera que no
 se puede esquivar con una bandera local.
+
+**Qué queda afuera de la publicación**
+
+- Las especialidades en estado `planned` no se publican: la sección cierra diciendo que
+  el resto se configura.
+- Un campo con `extracted => false` no se publica como valor interpretado. El IMC es el
+  caso: se calcula, no se pide.
+- El test además exige que cada chip publicado exista como campo extraído de alguna
+  especialidad, para que editar el HTML a mano tampoco alcance.
 
 ## Riesgos
 

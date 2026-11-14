@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|--------|
 | Slug | `especialidades-clinicas` |
-| Estado | En ejecución — fases 00 a 08 cerradas; 09 en adelante pendientes |
+| Estado | En ejecución — fases 00 a 12 y 16 cerradas; 13 a 15 y 17 pendientes |
 | Dueño | Producto clínico / Backend |
 | Relación | Extiende [captura-clinica.md](../../producto/captura-clinica.md) y [07-servicios-y-especialidades.md](../../his-completo/07-servicios-y-especialidades.md) |
 
@@ -51,6 +51,11 @@ muestra** (interfaces comunes en web y Flutter, no UI JSON del asistente).
 - [phases/06-oftalmologia-extraccion.md](phases/06-oftalmologia-extraccion.md) — campos de práctica y receta
 - [phases/07-oftalmologia-receta.md](phases/07-oftalmologia-receta.md) — grilla de receta en web y app
 - [phases/08-enfermeria-signos-vitales.md](phases/08-enfermeria-signos-vitales.md) — diez signos vitales en captura
+- [phases/09-pediatria-antropometria.md](phases/09-pediatria-antropometria.md) — antropometría y curvas de crecimiento
+- [phases/10-obstetricia-control-prenatal.md](phases/10-obstetricia-control-prenatal.md) — control prenatal como observaciones
+- [phases/11-salud-mental-escalas.md](phases/11-salud-mental-escalas.md) — sesiones y escalas con severidad derivada
+- [phases/12-nutricion-kinesiologia.md](phases/12-nutricion-kinesiologia.md) — panel genérico, IMC derivado y escalas validadas
+- [phases/16-institucional-generado.md](phases/16-institucional-generado.md) — sección pública generada desde el catálogo, con gate
 
 ## Fases siguientes
 
@@ -58,14 +63,9 @@ Se ejecutan de a una y no requieren las anteriores completas, salvo donde se ind
 
 | Fase | Entrega | Depende de |
 |------|---------|-----------|
-| 09 | Pediatría: categoría propia con percentiles | 08 |
-| 10 | Obstetricia: panel prenatal | 02 |
-| 11 | Salud mental y psicología: sesiones y escalas | 02 |
-| 12 | Nutrición y kinesiología: planes de tratamiento | 00 |
 | 13 | Paneles de cardiología, neumonología, endocrinología y neurología | 02 |
 | 14 | Traumatología: extensión por región y lado | 02 |
 | 15 | Resto de especialidades: sólo catálogo y copy | 00 |
-| 16 | Institucional: generador de la sección y gate de sincronización | 00, 15 |
 | 17 | QA por especialidad y cierre del plan | todas |
 
 ## Dependencias

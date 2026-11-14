@@ -454,6 +454,96 @@ section {
     margin-top: 1rem;
 }
 
+/* Especialidades clínicas */
+.especialidades {
+    background: var(--bg-light);
+}
+
+.especialidades-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.25rem;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.especialidad-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    background: var(--bg-white);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.35rem;
+    transition: var(--transition);
+}
+
+.especialidad-card:hover {
+    border-color: var(--brand-teal-muted);
+    box-shadow: var(--shadow-sm);
+}
+
+.especialidad-card__title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--brand-dark);
+    line-height: 1.35;
+    margin: 0;
+}
+
+.especialidad-card__copy {
+    font-size: 0.875rem;
+    color: var(--text-light);
+    line-height: 1.6;
+    margin: 0;
+}
+
+.especialidad-card__fields {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.especialidad-chip {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--brand-dark);
+    background: var(--complement-pale);
+    border-radius: 999px;
+    padding: 0.2rem 0.6rem;
+    line-height: 1.4;
+}
+
+.especialidad-card__standard {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin: 0;
+    padding-top: 0.5rem;
+    border-top: 1px dashed var(--border-color);
+}
+
+.especialidades-note {
+    max-width: 1100px;
+    margin: 1.75rem auto 0;
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.especialidades-note a {
+    color: var(--brand-teal);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.especialidades-note a:hover {
+    text-decoration: underline;
+}
+
 /* Beneficios (staff + IA) */
 .benefits {
     background: var(--bg-light);

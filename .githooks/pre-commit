@@ -57,4 +57,10 @@ if ! (cd web && "$PHP_BIN" tools/audit-derived-values.php); then
   fail=1
 fi
 
+# 5) Sección de especialidades del sitio institucional generada desde el catálogo
+if ! "$PHP_BIN" tools/generate-institutional-specialties.php --check >/dev/null 2>&1; then
+  say "pre-commit: especialidades del sitio desfasadas del catálogo. Corré: php tools/generate-institutional-specialties.php"
+  fail=1
+fi
+
 exit "$fail"

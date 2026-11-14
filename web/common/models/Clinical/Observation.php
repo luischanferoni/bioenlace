@@ -11,6 +11,10 @@ class Observation extends ActiveRecord
     public const CATEGORY_EXAM = 'exam';
     public const CATEGORY_OPHTHALMOLOGY = 'ophthalmology';
     public const CATEGORY_ODONTOLOGY = 'odontology';
+    public const CATEGORY_OBSTETRICS = 'obstetrics';
+    public const CATEGORY_MENTAL_HEALTH = 'mental-health';
+    public const CATEGORY_NUTRITION = 'nutrition';
+    public const CATEGORY_KINESIOLOGY = 'kinesiology';
 
     public static function tableName(): string
     {

@@ -10,6 +10,11 @@ final class EncounterDefinitionWorkflowCatalog
     public const TEMPLATE_AMB_STANDARD = 'amb_standard';
     public const TEMPLATE_AMB_OPHTHALMOLOGY = 'amb_ophthalmology';
     public const TEMPLATE_AMB_ODONTOLOGY = 'amb_odontology';
+    public const TEMPLATE_AMB_PEDIATRICS = 'amb_pediatrics';
+    public const TEMPLATE_AMB_OBSTETRICS = 'amb_obstetrics';
+    public const TEMPLATE_AMB_MENTAL_HEALTH = 'amb_mental_health';
+    public const TEMPLATE_AMB_NUTRITION = 'amb_nutrition';
+    public const TEMPLATE_AMB_KINESIOLOGY = 'amb_kinesiology';
     public const TEMPLATE_IMP_STANDARD = 'imp_standard';
     public const TEMPLATE_EMER_STANDARD = 'emer_standard';
     public const TEMPLATE_AMB_NURSING = 'amb_nursing';
@@ -45,6 +50,46 @@ final class EncounterDefinitionWorkflowCatalog
                 self::step('Diagnósticos odontológicos', 'EncounterDentalDiagnosis', false),
                 self::step('Estado dental', 'EncounterDentalStatus', false),
                 self::step('Medicación', 'EncounterMedication', false),
+            ],
+            self::TEMPLATE_AMB_PEDIATRICS => [
+                self::step('Motivos de consulta', 'EncounterReason', false),
+                self::step('Diagnóstico', 'EncounterDiagnosis', false),
+                self::step('Antropometría y crecimiento', 'EncounterNursingCare', false),
+                self::step('Medicación', 'EncounterMedication', false),
+                self::step('Prácticas realizadas', 'EncounterPractice', false),
+                self::step('Indicaciones', 'EncounterInstruction', false),
+                self::step('Derivaciones', 'EncounterReferralRequest', false),
+            ],
+            self::TEMPLATE_AMB_OBSTETRICS => [
+                self::step('Motivos de consulta', 'EncounterReason', false),
+                self::step('Control prenatal', 'EncounterObstetricControl', false),
+                self::step('Diagnóstico', 'EncounterDiagnosis', false),
+                self::step('Signos vitales', 'EncounterNursingCare', false),
+                self::step('Medicación', 'EncounterMedication', false),
+                self::step('Indicaciones', 'EncounterInstruction', false),
+                self::step('Derivaciones', 'EncounterReferralRequest', false),
+            ],
+            self::TEMPLATE_AMB_MENTAL_HEALTH => [
+                self::step('Motivos de consulta', 'EncounterReason', false),
+                self::step('Sesión', 'EncounterMentalHealthSession', false),
+                self::step('Diagnóstico', 'EncounterDiagnosis', false),
+                self::step('Medicación', 'EncounterMedication', false),
+                self::step('Indicaciones', 'EncounterInstruction', false),
+                self::step('Derivaciones', 'EncounterReferralRequest', false),
+            ],
+            self::TEMPLATE_AMB_NUTRITION => [
+                self::step('Motivos de consulta', 'EncounterReason', false),
+                self::step('Evaluación nutricional', 'EncounterNutritionAssessment', false),
+                self::step('Diagnóstico', 'EncounterDiagnosis', false),
+                self::step('Indicaciones', 'EncounterInstruction', false),
+                self::step('Derivaciones', 'EncounterReferralRequest', false),
+            ],
+            self::TEMPLATE_AMB_KINESIOLOGY => [
+                self::step('Motivos de consulta', 'EncounterReason', false),
+                self::step('Sesión de kinesiología', 'EncounterKinesiologySession', false),
+                self::step('Diagnóstico', 'EncounterDiagnosis', false),
+                self::step('Indicaciones', 'EncounterInstruction', false),
+                self::step('Derivaciones', 'EncounterReferralRequest', false),
             ],
             self::TEMPLATE_EMER_STANDARD => [
                 self::step('Motivos de consulta', 'EncounterReason', false),
@@ -141,6 +186,41 @@ final class EncounterDefinitionWorkflowCatalog
             if (str_contains($name, $needle)) {
                 return self::TEMPLATE_AMB_OPHTHALMOLOGY;
             }
+        }
+
+        if (str_contains($name, 'OBSTETR') || str_contains($name, 'PRENATAL') || str_contains($name, 'EMBARAZ')) {
+            return self::TEMPLATE_AMB_OBSTETRICS;
+        }
+
+        foreach ([
+            'NUTRICION', 'NUTRICIÓN', 'ALIMENTAR',
+        ] as $needle) {
+            if (str_contains($name, $needle)) {
+                return self::TEMPLATE_AMB_NUTRITION;
+            }
+        }
+
+        foreach ([
+            'KINESIOLOG', 'FISIATR', 'REHABILITAC',
+        ] as $needle) {
+            if (str_contains($name, $needle)) {
+                return self::TEMPLATE_AMB_KINESIOLOGY;
+            }
+        }
+
+        foreach ([
+            'SALUD MENTAL',
+            'PSIQUIATR',
+            'PSICOLOG',
+            'PSICOTERAP',
+        ] as $needle) {
+            if (str_contains($name, $needle)) {
+                return self::TEMPLATE_AMB_MENTAL_HEALTH;
+            }
+        }
+
+        if (str_contains($name, 'PEDIATR') || str_contains($name, 'NEO NAT') || str_contains($name, 'NEONAT')) {
+            return self::TEMPLATE_AMB_PEDIATRICS;
         }
 
         return self::TEMPLATE_AMB_STANDARD;

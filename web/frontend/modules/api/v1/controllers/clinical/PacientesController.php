@@ -25,8 +25,12 @@ use common\components\Domain\Clinical\Encounter\Application\Presentation\Conditi
 use common\components\Domain\Clinical\Encounter\Application\Service\EpisodioHistoriaBannerService;
 use common\components\Domain\Clinical\Encounter\Application\Service\EpisodioSignosVitalesService;
 use common\components\Domain\Clinical\Encounter\Application\Service\EpisodioTimelineService;
+use common\components\Domain\Clinical\Specialty\Application\Service\KinesiologyEncounterService;
+use common\components\Domain\Clinical\Specialty\Application\Service\NutritionEncounterService;
 use common\components\Domain\Clinical\Specialty\Application\Service\OdontologyEncounterService;
 use common\components\Domain\Clinical\Specialty\Application\Service\OphthalmologyEncounterService;
+use common\components\Domain\Clinical\Specialty\Application\Service\MentalHealthEncounterService;
+use common\components\Domain\Clinical\Specialty\Application\Service\ObstetricsEncounterService;
 use common\components\Domain\Person\Identity\Application\Service\PersonaSignosVitalesService;
 use frontend\modules\api\v1\controllers\clinical\ClinicalAccessTrait;
 /**
@@ -232,6 +236,10 @@ class PacientesController extends BaseController
             'signos_vitales_episodio' => $signosVitalesEpisodio,
             'odontograma' => (new OdontologyEncounterService())->odontogramForPerson((int) $persona->id_persona),
             'receta_lentes' => (new OphthalmologyEncounterService())->latestLensPrescriptionForPerson((int) $persona->id_persona),
+            'control_prenatal' => (new ObstetricsEncounterService())->controlsForPerson((int) $persona->id_persona),
+            'salud_mental' => (new MentalHealthEncounterService())->sessionsForPerson((int) $persona->id_persona),
+            'nutricion' => (new NutritionEncounterService())->assessmentsForPerson((int) $persona->id_persona),
+            'kinesiologia' => (new KinesiologyEncounterService())->sessionsForPerson((int) $persona->id_persona),
             'patient_encounter_reasons' => $patientEncounterReasons,
             'contexto_episodio' => $contextoEpisodio,
             'timeline_episodio' => $timelineEpisodio,

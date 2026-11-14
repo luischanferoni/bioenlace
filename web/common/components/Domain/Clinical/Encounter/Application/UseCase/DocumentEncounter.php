@@ -25,6 +25,10 @@ use common\components\Domain\Clinical\CarePlan\Application\UseCase\ManageService
 use common\components\Domain\Clinical\CarePlan\Application\UseCase\CodeTreatmentRequestSnomed;
 use common\components\Domain\Clinical\Specialty\Domain\EncounterDefinitionSpecialtyRegistry;
 use common\components\Domain\Clinical\Inpatient\Application\Service\InpatientEncounterAuxService;
+use common\components\Domain\Clinical\Specialty\Application\Service\KinesiologyEncounterService;
+use common\components\Domain\Clinical\Specialty\Application\Service\MentalHealthEncounterService;
+use common\components\Domain\Clinical\Specialty\Application\Service\NutritionEncounterService;
+use common\components\Domain\Clinical\Specialty\Application\Service\ObstetricsEncounterService;
 use common\components\Domain\Clinical\Specialty\Application\Service\OdontologyEncounterService;
 use common\components\Domain\Clinical\Specialty\Application\Service\OphthalmologyEncounterService;
 use common\components\Domain\Clinical\Encounter\Application\UseCase\RecordEncounterReason;
@@ -51,6 +55,10 @@ class DocumentEncounter extends Component
     private ManageMedicationRequest $medications;
     private ManageServiceRequest $serviceRequests;
     private OdontologyEncounterService $odontology;
+    private ObstetricsEncounterService $obstetrics;
+    private MentalHealthEncounterService $mentalHealth;
+    private NutritionEncounterService $nutrition;
+    private KinesiologyEncounterService $kinesiology;
     private OphthalmologyEncounterService $ophthalmology;
     private InpatientEncounterAuxService $inpatientAux;
     private EncounterDefinitionSpecialtyRegistry $specialtyRegistry;
@@ -71,6 +79,10 @@ class DocumentEncounter extends Component
         $this->medications = $medications ?? new ManageMedicationRequest($this->carePlans);
         $this->serviceRequests = $serviceRequests ?? new ManageServiceRequest($this->carePlans);
         $this->odontology = $odontology ?? new OdontologyEncounterService($this->carePlans);
+        $this->obstetrics = new ObstetricsEncounterService();
+        $this->mentalHealth = new MentalHealthEncounterService();
+        $this->nutrition = new NutritionEncounterService();
+        $this->kinesiology = new KinesiologyEncounterService();
         $this->ophthalmology = $ophthalmology ?? new OphthalmologyEncounterService();
         $this->inpatientAux = $inpatientAux ?? new InpatientEncounterAuxService();
         $this->specialtyRegistry = $specialtyRegistry ?? new EncounterDefinitionSpecialtyRegistry();
@@ -1278,6 +1290,22 @@ class DocumentEncounter extends Component
                     $created = $this->persistSignosVitalesEnfermeria($encounter, $payload);
                     $stat['accion'] = 'signos_vitales';
                     $stat['created'] = $created;
+                    break;
+                case 'EncounterObstetricControl':
+                    $stat['created'] = $this->obstetrics->persistControl($encounter, $payload);
+                    $stat['accion'] = 'control_prenatal';
+                    break;
+                case 'EncounterMentalHealthSession':
+                    $stat['created'] = $this->mentalHealth->persistSession($encounter, $payload);
+                    $stat['accion'] = 'sesion_salud_mental';
+                    break;
+                case 'EncounterNutritionAssessment':
+                    $stat['created'] = $this->nutrition->persistAssessment($encounter, $payload);
+                    $stat['accion'] = 'evaluacion_nutricional';
+                    break;
+                case 'EncounterKinesiologySession':
+                    $stat['created'] = $this->kinesiology->persistSession($encounter, $payload);
+                    $stat['accion'] = 'sesion_kinesiologia';
                     break;
                 case 'EncounterMedicationAdministration':
                     $this->persistMedicationSupplies($encounter, $payload);

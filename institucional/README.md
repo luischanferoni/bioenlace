@@ -36,9 +36,27 @@ institucional/
 3. **Pacientes** — App paciente y seguimiento
 4. **Personal** — Demo del asistente conversacional (listar / editar / crear)
 5. **Funcionalidades** — Catálogo por audiencia
-6. **Precios** — Teaser en el index; detalle + calculadora en [`precios.html`](precios.html) (funcionalidades incluidas y add-ons por clase AMB·EMER·IMP)
-7. **Contacto** — Formulario e información
-8. **Alta** (`alta.html`) — Crear cuenta desde la web con el teléfono o desde la app Personal de Salud, y contacto para ministerio
+6. **Especialidades clínicas** — Qué interpreta Bioenlace en cada especialidad (generada desde el catálogo)
+7. **Precios** — Teaser en el index; detalle + calculadora en [`precios.html`](precios.html) (funcionalidades incluidas y add-ons por clase AMB·EMER·IMP)
+8. **Contacto** — Formulario e información
+9. **Alta** (`alta.html`) — Crear cuenta desde la web con el teléfono o desde la app Personal de Salud, y contacto para ministerio
+
+## Especialidades clínicas (bloque generado)
+
+La sección `#especialidades` del index **no se edita a mano**: se genera desde
+`ClinicalSpecialtyCatalog` (la misma fuente que usa la captura clínica) y vive entre los
+marcadores `<!-- BEGIN:especialidades -->` y `<!-- END:especialidades -->`.
+
+```bash
+php tools/generate-institutional-specialties.php          # reescribe el bloque
+php tools/generate-institutional-specialties.php --check  # exit 1 si está desfasado
+```
+
+El `--check` corre en `.githooks/pre-commit` y en la suite
+(`InstitutionalSpecialtiesSectionTest`), así que no se puede publicar el sitio con una
+lista de especialidades o de campos que ya no coincide con lo que el sistema interpreta.
+Los campos publicados son exactamente los `extracted` del catálogo: un valor derivado
+(por ejemplo el IMC) no se publica como campo interpretado.
 
 ## Demo sandbox (`js/demo-access.js`)
 
@@ -98,5 +116,5 @@ Abrir `http://localhost:8000`.
 
 - **Colores**: variables CSS en `css/styles.css` (`:root`), alineadas al logo (`#093e4d`, `#ff6b6b`, `#38be7f`).
 - **Logo**: `images/logo.svg` desde `docs/brand/logo_inkscape.svg`; ícono desde `logo_icono_2.*` con `php web/scripts/generate-favicons.php`.
-- **Contenido**: editar textos en `index.html`.
+- **Contenido**: editar textos en `index.html`. La sección de especialidades se regenera con `php tools/generate-institutional-specialties.php` (no se edita a mano).
 - **Formulario**: envío vía [Web3Forms](https://web3forms.com) a `info@bioenlace.io` (configurar el destino en el panel de Web3Forms con la misma `access_key`). Lógica en `js/main.js`. El `extra` añade o sobrescribe cabeceras cuando aplica.

@@ -25,6 +25,8 @@ final class EnfermeriaSignosVitalesRowContract
     public const FIELD_GLASGOW = 'Glasgow';
     public const FIELD_PESO = 'Peso';
     public const FIELD_TALLA = 'Talla';
+    public const FIELD_PERIMETRO_CEFALICO = 'Perimetro cefalico';
+    public const FIELD_CIRCUNFERENCIA_ABDOMINAL = 'Circunferencia abdominal';
 
     /** @var list<string> claves que la IA debe devolver por fila (fuente única del prompt) */
     public const PROMPT_FIELDS = [
@@ -38,6 +40,20 @@ final class EnfermeriaSignosVitalesRowContract
         self::FIELD_GLASGOW,
         self::FIELD_PESO,
         self::FIELD_TALLA,
+        self::FIELD_PERIMETRO_CEFALICO,
+        self::FIELD_CIRCUNFERENCIA_ABDOMINAL,
+    ];
+
+    /**
+     * Antropometría: alimenta las curvas de crecimiento y la valoración nutricional.
+     *
+     * @var list<string>
+     */
+    public const ANTHROPOMETRY_FIELDS = [
+        self::FIELD_PESO,
+        self::FIELD_TALLA,
+        self::FIELD_PERIMETRO_CEFALICO,
+        self::FIELD_CIRCUNFERENCIA_ABDOMINAL,
     ];
 
     public const CANON_SISTOLICA = 'sistolica';
@@ -50,6 +66,8 @@ final class EnfermeriaSignosVitalesRowContract
     public const CANON_GLASGOW = 'glasgow';
     public const CANON_PESO = 'peso';
     public const CANON_TALLA = 'talla';
+    public const CANON_PERIMETRO_CEFALICO = 'perimetro_cefalico';
+    public const CANON_CIRCUNFERENCIA_ABDOMINAL = 'circunferencia_abdominal';
     public const CANON_TENSION = 'TensionArterial1';
 
     /** @var array<string, string> alias normalizado (minúscula, sin tildes) → clave canónica */
@@ -83,6 +101,11 @@ final class EnfermeriaSignosVitalesRowContract
         'glasgow' => self::CANON_GLASGOW,
         'peso' => self::CANON_PESO,
         'talla' => self::CANON_TALLA,
+        'perimetro cefalico' => self::CANON_PERIMETRO_CEFALICO,
+        'perimetro_cefalico' => self::CANON_PERIMETRO_CEFALICO,
+        'pc' => self::CANON_PERIMETRO_CEFALICO,
+        'circunferencia abdominal' => self::CANON_CIRCUNFERENCIA_ABDOMINAL,
+        'circunferencia_abdominal' => self::CANON_CIRCUNFERENCIA_ABDOMINAL,
     ];
 
     public static function matchesModelo(string $modelo): bool

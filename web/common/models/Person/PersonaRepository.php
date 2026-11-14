@@ -84,13 +84,13 @@ select max(
   and NOT (
 	if(JSON_VALUE(datos , '$.peso'),
         JSON_VALUE(datos , '$.peso'), 
-        JSON_VALUE(datos , '$.162879003p')) IS NULL
+        JSON_VALUE(datos , '$."162879003p"')) IS NULL
 	AND if(JSON_VALUE(datos , '$.talla'),
         JSON_VALUE(datos , '$.talla'),
-        JSON_VALUE(datos , '$.162879003t')) IS NULL
+        JSON_VALUE(datos , '$."162879003t"')) IS NULL
 	AND if(JSON_VALUE(datos , '$.perimetro_cefalico'),
         JSON_VALUE(datos , '$.perimetro_cefalico'),
-        JSON_VALUE(datos , '$.363812007')) IS NULL
+        JSON_VALUE(datos , '$."363812007"')) IS NULL
 	)
 ;
 EOL;
@@ -110,26 +110,26 @@ SELECT
   	CAST(
         if(JSON_VALUE(datos , '$.peso'),
             JSON_VALUE(datos , '$.peso'),
-            JSON_VALUE(datos , '$.162879003p'))
+            JSON_VALUE(datos , '$."162879003p"'))
         as float)
   	) as peso, 
   JSON_ARRAYAGG(
     CAST(
         if(JSON_VALUE(datos , '$.talla'),
             JSON_VALUE(datos , '$.talla'),
-            JSON_VALUE(datos , '$.162879003t'))
+            JSON_VALUE(datos , '$."162879003t"'))
         as float)
     ) as talla,
   JSON_ARRAYAGG(
     ROUND(
       if(JSON_VALUE(datos , '$.peso'), 
         JSON_VALUE(datos , '$.peso'), 
-        JSON_VALUE(datos , '$.162879003p'))
+        JSON_VALUE(datos , '$."162879003p"'))
       /
       POW(
         if(JSON_VALUE(datos , '$.talla'),  
           JSON_VALUE(datos , '$.talla'), 
-          JSON_VALUE(datos , '$.162879003t'))
+          JSON_VALUE(datos , '$."162879003t"'))
           * 0.01,
         2
       ),
@@ -139,7 +139,7 @@ SELECT
     CAST(
         if(JSON_VALUE(datos , '$.perimetro_cefalico'),
             JSON_VALUE(datos , '$.perimetro_cefalico'),
-            JSON_VALUE(datos , '$.363812007'))
+            JSON_VALUE(datos , '$."363812007"'))
         as float)
     ) as perimetro_cefalico,
   JSON_ARRAYAGG(
@@ -155,13 +155,13 @@ where
 and NOT (
 	if(JSON_VALUE(datos , '$.peso'),
         JSON_VALUE(datos , '$.peso'), 
-        JSON_VALUE(datos , '$.162879003p')) IS NULL
+        JSON_VALUE(datos , '$."162879003p"')) IS NULL
 	AND if(JSON_VALUE(datos , '$.talla'),
         JSON_VALUE(datos , '$.talla'),
-        JSON_VALUE(datos , '$.162879003t')) IS NULL
+        JSON_VALUE(datos , '$."162879003t"')) IS NULL
 	AND if(JSON_VALUE(datos , '$.perimetro_cefalico'),
         JSON_VALUE(datos , '$.perimetro_cefalico'),
-        JSON_VALUE(datos , '$.363812007')) IS NULL
+        JSON_VALUE(datos , '$."363812007"')) IS NULL
 	)
 order by fecha_creacion 
 ;
@@ -181,24 +181,24 @@ SELECT
   	CAST(
         if(JSON_VALUE(datos , '$.peso'),
             JSON_VALUE(datos , '$.peso'),
-            JSON_VALUE(datos , '$.162879003p'))
+            JSON_VALUE(datos , '$."162879003p"'))
         as float)
   	as peso,
     CAST(
         if(JSON_VALUE(datos , '$.talla'),
             JSON_VALUE(datos , '$.talla'),
-            JSON_VALUE(datos , '$.162879003t'))
+            JSON_VALUE(datos , '$."162879003t"'))
         as float)
     as talla,
     ROUND(
       if(JSON_VALUE(datos , '$.peso'), 
         JSON_VALUE(datos , '$.peso'), 
-        JSON_VALUE(datos , '$.162879003p'))
+        JSON_VALUE(datos , '$."162879003p"'))
       /
       POW(
         if(JSON_VALUE(datos , '$.talla'),  
           JSON_VALUE(datos , '$.talla'), 
-          JSON_VALUE(datos , '$.162879003t'))
+          JSON_VALUE(datos , '$."162879003t"'))
           * 0.01,
         2
       ),
